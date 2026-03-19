@@ -1,0 +1,52 @@
+{
+    "name": "clawql-mcp-server",
+    "version": "1.0.0",
+    "description": "MCP server for GCP Cloud Run with GraphQL optimization layer and spec-based search",
+    "license": "Apache-2.0",
+    "type": "module",
+    "main": "dist/server.js",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/danielsmithdevelopment/ClawQL.git"
+    },
+    "keywords": [
+        "mcp",
+        "model-context-protocol",
+        "gcp",
+        "cloud-run",
+        "graphql",
+        "openapi",
+        "claude",
+        "cursor"
+    ],
+    "files": [
+        "dist",
+        "src",
+        "README.md",
+        "LICENSE",
+        ".env.example"
+    ],
+    "scripts": {
+      "build": "tsc",
+      "start": "node dist/server.js",
+      "dev": "tsx src/server.ts",
+      "graphql": "bun src/graphql-proxy.ts",
+      "test": "bun test src"
+    },
+    "dependencies": {
+      "@modelcontextprotocol/sdk": "^1.0.0",
+      "openapi-to-graphql": "^3.0.5",
+      "express": "^4.18.2",
+      "graphql": "^16.8.1",
+      "graphql-http": "^1.22.0",
+      "node-fetch": "^3.3.2",
+      "zod": "^3.22.4",
+      "swagger2openapi": "^7.0.8"
+    },
+    "devDependencies": {
+      "@types/express": "^4.17.21",
+      "@types/node": "^20.0.0",
+      "tsx": "^4.7.0",
+      "typescript": "^5.3.0"
+    }
+}
