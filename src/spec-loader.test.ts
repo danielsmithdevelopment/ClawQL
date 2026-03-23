@@ -1,9 +1,128 @@
 import { describe, expect, it } from "bun:test";
 import {
   discoveryToOpenAPI,
+  sanitizeOpenAPIObject,
+  sanitizeOpenAPIDocument,
   sanitizeSchemaNode,
+  type OpenAPIDoc,
   type Operation,
 } from "./spec-loader.js";
+import { operationsFromOpenAPI } from "./openapi-operations.js";
+
+describe("operationsFromOpenAPI", () => {
+  it("extracts operations from a minimal OpenAPI 3 doc", () => {
+    const doc = {
+      openapi: "3.0.0",
+      info: { title: "Petstore", version: "1" },
+      servers: [{ url: "https://api.example.com" }],
+      paths: {
+        "/pets": {
+          get: {
+            operationId: "listPets",
+            parameters: [
+              {
+                name: "limit",
+                in: "query",
+                required: false,
+                schema: { type: "integer" },
+              },
+            ],
+            responses: { "200": { description: "ok" } },
+          },
+        },
+      },
+      components: { schemas: {} },
+    };
+    const ops = operationsFromOpenAPI(doc);
+    expect(ops.length).toBe(1);
+    expect(ops[0].id).toBe("listPets");
+    expect(ops[0].method).toBe("GET");
+    expect(ops[0].parameters.limit?.location).toBe("query");
+  });
+});
+
+describe("sanitizeOpenAPIDocument", () => {
+  it("renames 4xx/5xx response keys to 4XX/5XX for oas-validator", () => {
+    const doc: OpenAPIDoc = {
+      openapi: "3.0.3",
+      info: { title: "t", version: "1" },
+      paths: {
+        "/x": {
+          get: {
+            responses: {
+              "4xx": { description: "client error" },
+              "5xx": { description: "server error" },
+              "200": { description: "ok" },
+            },
+          },
+        },
+      },
+      components: { schemas: {} },
+    };
+    const out = sanitizeOpenAPIDocument(doc);
+    const responses = (out.paths["/x"] as Record<string, unknown>).get as {
+      responses: Record<string, unknown>;
+    };
+    expect(responses.responses["4XX"]).toBeDefined();
+    expect(responses.responses["5XX"]).toBeDefined();
+    expect(responses.responses["4xx"]).toBeUndefined();
+    expect(responses.responses["5xx"]).toBeUndefined();
+  });
+
+  it("injects a stub security scheme when referenced but missing (Cloudflare)", () => {
+    const doc: OpenAPIDoc = {
+      openapi: "3.0.3",
+      info: { title: "t", version: "1" },
+      paths: {
+        "/upload": {
+          post: {
+            security: [{ assets_jwt: [] }],
+            responses: { "200": { description: "ok" } },
+          },
+        },
+      },
+      components: {
+        schemas: {},
+        securitySchemes: {
+          api_token: { type: "http", scheme: "bearer" },
+        },
+      },
+    };
+    const out = sanitizeOpenAPIDocument(doc);
+    expect(out.components.securitySchemes?.assets_jwt).toMatchObject({
+      type: "http",
+      scheme: "bearer",
+    });
+  });
+});
+
+describe("sanitizeOpenAPIObject", () => {
+  it("adds nullable when default is null (Jira / oas-validator interop)", () => {
+    const out = sanitizeOpenAPIObject({
+      schema: {
+        type: "array",
+        items: { default: null, type: "string" },
+      },
+    }) as Record<string, unknown>;
+    const items = (out.schema as Record<string, unknown>).items as Record<
+      string,
+      unknown
+    >;
+    expect(items.nullable).toBe(true);
+    expect(items.default).toBeNull();
+  });
+
+  it("normalizes shorthand items: string", () => {
+    const out = sanitizeOpenAPIObject({
+      schema: { type: "array", items: "string" },
+    }) as Record<string, unknown>;
+    const items = (out.schema as Record<string, unknown>).items as Record<
+      string,
+      unknown
+    >;
+    expect(items.type).toBe("string");
+  });
+});
 
 describe("sanitizeSchemaNode", () => {
   it("removes Discovery-only metadata and non-standard any type", () => {
