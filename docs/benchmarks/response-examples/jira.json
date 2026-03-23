@@ -1,0 +1,53 @@
+{
+  "fullRest": {
+    "expand": "renderedFields,names,schema",
+    "id": "10042",
+    "self": "https://your-domain.atlassian.net/rest/api/3/issue/10042",
+    "key": "K8S-101",
+    "fields": {
+      "summary": "Wire GKE service to Cloudflare DNS",
+      "description": {
+        "type": "doc",
+        "version": 1,
+        "content": [
+          {
+            "type": "paragraph",
+            "content": [{ "type": "text", "text": "Full issue body with many paragraphs and links..." }]
+          }
+        ]
+      },
+      "comment": {
+        "comments": [],
+        "maxResults": 0,
+        "total": 0,
+        "startAt": 0
+      },
+      "status": {
+        "name": "In Progress",
+        "id": "3",
+        "statusCategory": { "key": "indeterminate", "name": "In Progress" }
+      },
+      "issuetype": { "name": "Task", "id": "10001", "subtask": false },
+      "priority": { "name": "High", "id": "2" },
+      "assignee": {
+        "accountId": "5b10a2844c20165700ede21f",
+        "displayName": "Daniel Smith",
+        "emailAddress": "danielsmith@example.com"
+      },
+      "labels": ["kubernetes", "google", "cloudflare"],
+      "components": [{ "name": "Platform" }],
+      "fixVersions": [],
+      "attachment": [],
+      "worklog": { "startAt": 0, "maxResults": 20, "total": 0, "worklogs": [] },
+      "watches": { "watchCount": 1, "isWatching": true },
+      "subtasks": [],
+      "customfield_10000": null
+    }
+  },
+  "graphql": {
+    "id": "10042",
+    "key": "K8S-101",
+    "self": "https://your-domain.atlassian.net/rest/api/3/issue/10042",
+    "summary": "Wire GKE service to Cloudflare DNS"
+  }
+}

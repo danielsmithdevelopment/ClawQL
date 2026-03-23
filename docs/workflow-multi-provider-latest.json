@@ -1,0 +1,1572 @@
+{
+  "meta": {
+    "generatedAt": "2026-03-23T04:08:36.064Z",
+    "bundledOffline": true,
+    "dueDateNextFriday": "2026-03-27",
+    "uniqueOperationsConsidered": 54
+  },
+  "jiraDraft": {
+    "summary": "[Multi-cloud] GKE + Cloudflare DNS/caching — API requests & rollout tracking",
+    "descriptionPlain": "## Goal\nDocument the REST/API work to: (1) stand up GKE and deploy a service, (2) expose it in a way compatible with Cloudflare source IPs (https://www.cloudflare.com/ips/ (publish IPv4/IPv6 ranges; use on GCP firewall / load balancer allowlists as needed).), (3) point Cloudflare DNS at the cluster/LB endpoint with appropriate caching.\n\n## Due date\n2026-03-27 (next Friday, UTC date used for API fields).\n\n## Google Cloud (GKE / networking) — candidate operations (from ClawQL search)\n- `POST` container.projects.locations.clusters.create — `v1/projects/{projectsId}/locations/{locationsId}/clusters`\n- `POST` container.projects.zones.clusters.create — `v1/projects/{projectId}/zones/{zone}/clusters`\n- `DELETE` container.projects.zones.clusters.delete — `v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}`\n- `POST` container.projects.zones.clusters.locations — `v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/locations`\n- `DELETE` container.projects.locations.clusters.delete — `v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}`\n- `GET` container.projects.locations.getServerConfig — `v1/projects/{projectsId}/locations/{locationsId}/serverConfig`\n- `POST` container.projects.locations.clusters.setLocations — `v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:setLocations`\n- `GET` container.projects.zones.getServerconfig — `v1/projects/{projectId}/zones/{zone}/serverconfig`\n- `POST` container.projects.locations.clusters.completeIpRotation — `v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:completeIpRotation`\n- `POST` container.projects.locations.clusters.startIpRotation — `v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:startIpRotation`\n- `POST` container.projects.zones.clusters.completeIpRotation — `v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}:completeIpRotation`\n- `POST` container.projects.zones.clusters.startIpRotation — `v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}:startIpRotation`\n\n## Cloudflare — candidate operations\n- `POST` dns-records-for-a-zone-create-dns-record — `zones/{zone_id}/dns_records`\n- `GET` dns-records-for-a-zone-list-dns-records — `zones/{zone_id}/dns_records`\n- `GET` dns-records-for-a-zone-dns-record-details — `zones/{zone_id}/dns_records/{dns_record_id}`\n- `PUT` dns-records-for-a-zone-update-dns-record — `zones/{zone_id}/dns_records/{dns_record_id}`\n- `PATCH` dns-records-for-a-zone-patch-dns-record — `zones/{zone_id}/dns_records/{dns_record_id}`\n- `GET` web3-hostname-ipfs-universal-path-gateway-content-list-details — `zones/{zone_id}/web3/hostnames/{identifier}/ipfs_universal_path/content_list`\n- `PUT` web3-hostname-update-ipfs-universal-path-gateway-content-list — `zones/{zone_id}/web3/hostnames/{identifier}/ipfs_universal_path/content_list`\n- `GET` web3-hostname-ipfs-universal-path-gateway-content-list-entry-details — `zones/{zone_id}/web3/hostnames/{identifier}/ipfs_universal_path/content_list/entries/{content_list_entry_identifier}`\n- `PUT` web3-hostname-edit-ipfs-universal-path-gateway-content-list-entry — `zones/{zone_id}/web3/hostnames/{identifier}/ipfs_universal_path/content_list/entries/{content_list_entry_identifier}`\n- `GET` account-load-balancer-pools-pool-health-details — `accounts/{account_id}/load_balancers/pools/{pool_id}/health`\n- `GET` load-balancer-pools-pool-health-details — `user/load_balancers/pools/{pool_id}/health`\n- `POST` diagnostics-endpoint-healthcheck-create — `accounts/{account_id}/diagnostics/endpoint-healthchecks`\n\n## Jira — candidate operations\n- `GET` com.atlassian.jira.rest.v2.issue.IssueResource.getCreateIssueMeta_get — `rest/api/3/issue/createmeta`\n- `POST` com.atlassian.jira.rest.v2.issue.ProjectResource.createProject_post — `rest/api/3/project`\n- `POST` com.atlassian.jira.rest.v2.issue.ProjectCategoryResource.createProjectCategory_post — `rest/api/3/projectCategory`\n- `GET` com.atlassian.jira.rest.v2.issue.ProjectIssueSecurityLevelSchemeResource.getIssueSecurityScheme_get — `rest/api/3/project/{projectKeyOrId}/issuesecuritylevelscheme`\n- `POST` com.atlassian.jira.rest.v2.issue.IssueResource.createIssue_post — `rest/api/3/issue`\n- `PUT` com.atlassian.jira.rest.v2.issue.IssueResource.assignIssue_put — `rest/api/3/issue/{issueIdOrKey}/assignee`\n- `GET` com.atlassian.jira.rest.v2.issue.UserResource.findAssignableUsers_get — `rest/api/3/user/assignable/search`\n- `DELETE` com.atlassian.jira.rest.v2.issue.field.IssueFieldOptionResource.replaceIssueFieldOption_delete — `rest/api/3/field/{fieldKey}/option/{optionId}/issue`\n\n## Notes\n- Use GCP firewall / LB allowlists with Cloudflare published IP ranges where you intend to restrict ingress.\n- Cloudflare: configure DNS (proxied/orange-cloud) and cache rules appropriate for your API vs static assets.\n- Validate Jira `createmeta` for required fields before POST /rest/api/3/issue.",
+    "descriptionAdf": {
+      "type": "doc",
+      "version": 1,
+      "content": [
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Goal Document the REST/API work to: (1) stand up GKE and deploy a service, (2) expose it in a way compatible with Cloudflare source IPs (https://www.cloudflare.com/ips/ (publish IPv4/IPv6 ranges; use on GCP firewall / load balancer allowlists as needed).), (3) point Cloudflare DNS at the cluster/LB endpoint with appropriate caching."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Due date 2026-03-27 (next Friday, UTC date used for API fields)."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Google Cloud (GKE / networking) — candidate operations (from ClawQL search) - `POST` container.projects.locations.clusters.create — `v1/projects/{projectsId}/locations/{locationsId}/clusters` - `POST` container.projects.zones.clusters.create — `v1/projects/{projectId}/zones/{zone}/clusters` - `DELETE` container.projects.zones.clusters.delete — `v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}` - `POST` container.projects.zones.clusters.locations — `v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/locations` - `DELETE` container.projects.locations.clusters.delete — `v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}` - `GET` container.projects.locations.getServerConfig — `v1/projects/{projectsId}/locations/{locationsId}/serverConfig` - `POST` container.projects.locations.clusters.setLocations — `v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:setLocations` - `GET` container.projects.zones.getServerconfig — `v1/projects/{projectId}/zones/{zone}/serverconfig` - `POST` container.projects.locations.clusters.completeIpRotation — `v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:completeIpRotation` - `POST` container.projects.locations.clusters.startIpRotation — `v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:startIpRotation` - `POST` container.projects.zones.clusters.completeIpRotation — `v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}:completeIpRotation` - `POST` container.projects.zones.clusters.startIpRotation — `v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}:startIpRotation`"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Cloudflare — candidate operations - `POST` dns-records-for-a-zone-create-dns-record — `zones/{zone_id}/dns_records` - `GET` dns-records-for-a-zone-list-dns-records — `zones/{zone_id}/dns_records` - `GET` dns-records-for-a-zone-dns-record-details — `zones/{zone_id}/dns_records/{dns_record_id}` - `PUT` dns-records-for-a-zone-update-dns-record — `zones/{zone_id}/dns_records/{dns_record_id}` - `PATCH` dns-records-for-a-zone-patch-dns-record — `zones/{zone_id}/dns_records/{dns_record_id}` - `GET` web3-hostname-ipfs-universal-path-gateway-content-list-details — `zones/{zone_id}/web3/hostnames/{identifier}/ipfs_universal_path/content_list` - `PUT` web3-hostname-update-ipfs-universal-path-gateway-content-list — `zones/{zone_id}/web3/hostnames/{identifier}/ipfs_universal_path/content_list` - `GET` web3-hostname-ipfs-universal-path-gateway-content-list-entry-details — `zones/{zone_id}/web3/hostnames/{identifier}/ipfs_universal_path/content_list/entries/{content_list_entry_identifier}` - `PUT` web3-hostname-edit-ipfs-universal-path-gateway-content-list-entry — `zones/{zone_id}/web3/hostnames/{identifier}/ipfs_universal_path/content_list/entries/{content_list_entry_identifier}` - `GET` account-load-balancer-pools-pool-health-details — `accounts/{account_id}/load_balancers/pools/{pool_id}/health` - `GET` load-balancer-pools-pool-health-details — `user/load_balancers/pools/{pool_id}/health` - `POST` diagnostics-endpoint-healthcheck-create — `accounts/{account_id}/diagnostics/endpoint-healthchecks`"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Jira — candidate operations - `GET` com.atlassian.jira.rest.v2.issue.IssueResource.getCreateIssueMeta_get — `rest/api/3/issue/createmeta` - `POST` com.atlassian.jira.rest.v2.issue.ProjectResource.createProject_post — `rest/api/3/project` - `POST` com.atlassian.jira.rest.v2.issue.ProjectCategoryResource.createProjectCategory_post — `rest/api/3/projectCategory` - `GET` com.atlassian.jira.rest.v2.issue.ProjectIssueSecurityLevelSchemeResource.getIssueSecurityScheme_get — `rest/api/3/project/{projectKeyOrId}/issuesecuritylevelscheme` - `POST` com.atlassian.jira.rest.v2.issue.IssueResource.createIssue_post — `rest/api/3/issue` - `PUT` com.atlassian.jira.rest.v2.issue.IssueResource.assignIssue_put — `rest/api/3/issue/{issueIdOrKey}/assignee` - `GET` com.atlassian.jira.rest.v2.issue.UserResource.findAssignableUsers_get — `rest/api/3/user/assignable/search` - `DELETE` com.atlassian.jira.rest.v2.issue.field.IssueFieldOptionResource.replaceIssueFieldOption_delete — `rest/api/3/field/{fieldKey}/option/{optionId}/issue`"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Notes - Use GCP firewall / LB allowlists with Cloudflare published IP ranges where you intend to restrict ingress. - Cloudflare: configure DNS (proxied/orange-cloud) and cache rules appropriate for your API vs static assets. - Validate Jira `createmeta` for required fields before POST /rest/api/3/issue."
+            }
+          ]
+        }
+      ]
+    },
+    "labels": [
+      "kubernetes",
+      "google",
+      "cloudflare"
+    ],
+    "duedate": "2026-03-27"
+  },
+  "steps": [
+    {
+      "provider": "google",
+      "title": "GKE — create / manage clusters",
+      "queries": [
+        {
+          "query": "create kubernetes cluster GKE regional zonal",
+          "hitCount": 5,
+          "topHits": [
+            {
+              "score": 25,
+              "matchedOn": [
+                "id:container.projects.locations.clusters.create",
+                "description(partial)",
+                "resource:clusters",
+                "description",
+                "path:v1/projects/{projectsId}/locations/{locationsId}/clusters"
+              ],
+              "operation": {
+                "id": "container.projects.locations.clusters.create",
+                "method": "POST",
+                "path": "v1/projects/{projectsId}/locations/{locationsId}/clusters",
+                "description": "Creates a cluster, consisting of the specified number and type of Google Compute Engine instances. By default, the cluster is created in the project's [default network](https://cloud.google.com/compute/docs/networks-and-firewalls#networks). One firewall is added for the cluster. "
+              }
+            },
+            {
+              "score": 25,
+              "matchedOn": [
+                "id:container.projects.zones.clusters.create",
+                "description(partial)",
+                "resource:clusters",
+                "description",
+                "path:v1/projects/{projectId}/zones/{zone}/clusters"
+              ],
+              "operation": {
+                "id": "container.projects.zones.clusters.create",
+                "method": "POST",
+                "path": "v1/projects/{projectId}/zones/{zone}/clusters",
+                "description": "Creates a cluster, consisting of the specified number and type of Google Compute Engine instances. By default, the cluster is created in the project's [default network](https://cloud.google.com/compute/docs/networks-and-firewalls#networks). One firewall is added for the cluster. "
+              }
+            },
+            {
+              "score": 25,
+              "matchedOn": [
+                "description(partial)",
+                "description",
+                "id:container.projects.zones.clusters.delete",
+                "resource:clusters",
+                "path:v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}",
+                "param"
+              ],
+              "operation": {
+                "id": "container.projects.zones.clusters.delete",
+                "method": "DELETE",
+                "path": "v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}",
+                "description": "Deletes the cluster, including the Kubernetes endpoint and all worker nodes. Firewalls and routes that were configured during cluster creation are also deleted. Other Google Compute Engine resources that might be in use by the cluster, such as load balancer resources, are not del"
+              }
+            },
+            {
+              "score": 24,
+              "matchedOn": [
+                "description",
+                "id:container.projects.zones.clusters.locations",
+                "resource:clusters",
+                "path:v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/locations",
+                "param"
+              ],
+              "operation": {
+                "id": "container.projects.zones.clusters.locations",
+                "method": "POST",
+                "path": "v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/locations",
+                "description": "Sets the locations for a specific cluster. Deprecated. Use [projects.locations.clusters.update](https://cloud.google.com/kubernetes-engine/docs/reference/rest/v1/projects.locations.clusters/update) instead."
+              }
+            },
+            {
+              "score": 22,
+              "matchedOn": [
+                "description(partial)",
+                "description",
+                "id:container.projects.locations.clusters.delete",
+                "resource:clusters",
+                "param"
+              ],
+              "operation": {
+                "id": "container.projects.locations.clusters.delete",
+                "method": "DELETE",
+                "path": "v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}",
+                "description": "Deletes the cluster, including the Kubernetes endpoint and all worker nodes. Firewalls and routes that were configured during cluster creation are also deleted. Other Google Compute Engine resources that might be in use by the cluster, such as load balancer resources, are not del"
+              }
+            }
+          ]
+        },
+        {
+          "query": "deploy application workload container image kubernetes engine",
+          "hitCount": 5,
+          "topHits": [
+            {
+              "score": 14,
+              "matchedOn": [
+                "id:container.projects.locations.getServerConfig",
+                "description"
+              ],
+              "operation": {
+                "id": "container.projects.locations.getServerConfig",
+                "method": "GET",
+                "path": "v1/projects/{projectsId}/locations/{locationsId}/serverConfig",
+                "description": "Returns configuration info about the Google Kubernetes Engine service."
+              }
+            },
+            {
+              "score": 14,
+              "matchedOn": [
+                "id:container.projects.locations.clusters.delete",
+                "description"
+              ],
+              "operation": {
+                "id": "container.projects.locations.clusters.delete",
+                "method": "DELETE",
+                "path": "v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}",
+                "description": "Deletes the cluster, including the Kubernetes endpoint and all worker nodes. Firewalls and routes that were configured during cluster creation are also deleted. Other Google Compute Engine resources that might be in use by the cluster, such as load balancer resources, are not del"
+              }
+            },
+            {
+              "score": 14,
+              "matchedOn": [
+                "id:container.projects.locations.clusters.setLocations",
+                "description"
+              ],
+              "operation": {
+                "id": "container.projects.locations.clusters.setLocations",
+                "method": "POST",
+                "path": "v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:setLocations",
+                "description": "Sets the locations for a specific cluster. Deprecated. Use [projects.locations.clusters.update](https://cloud.google.com/kubernetes-engine/docs/reference/rest/v1/projects.locations.clusters/update) instead."
+              }
+            },
+            {
+              "score": 14,
+              "matchedOn": [
+                "id:container.projects.zones.getServerconfig",
+                "description"
+              ],
+              "operation": {
+                "id": "container.projects.zones.getServerconfig",
+                "method": "GET",
+                "path": "v1/projects/{projectId}/zones/{zone}/serverconfig",
+                "description": "Returns configuration info about the Google Kubernetes Engine service."
+              }
+            },
+            {
+              "score": 14,
+              "matchedOn": [
+                "id:container.projects.zones.clusters.delete",
+                "description"
+              ],
+              "operation": {
+                "id": "container.projects.zones.clusters.delete",
+                "method": "DELETE",
+                "path": "v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}",
+                "description": "Deletes the cluster, including the Kubernetes endpoint and all worker nodes. Firewalls and routes that were configured during cluster creation are also deleted. Other Google Compute Engine resources that might be in use by the cluster, such as load balancer resources, are not del"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "provider": "google",
+      "title": "GKE — expose service & network (incl. Cloudflare-friendly ingress)",
+      "queries": [
+        {
+          "query": "kubernetes service load balancer external IP expose",
+          "hitCount": 5,
+          "topHits": [
+            {
+              "score": 13,
+              "matchedOn": [
+                "id:container.projects.locations.clusters.completeIpRotation",
+                "description",
+                "path:v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:completeIpRotation"
+              ],
+              "operation": {
+                "id": "container.projects.locations.clusters.completeIpRotation",
+                "method": "POST",
+                "path": "v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:completeIpRotation",
+                "description": "Completes master IP rotation."
+              }
+            },
+            {
+              "score": 13,
+              "matchedOn": [
+                "id:container.projects.locations.clusters.startIpRotation",
+                "description",
+                "path:v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:startIpRotation"
+              ],
+              "operation": {
+                "id": "container.projects.locations.clusters.startIpRotation",
+                "method": "POST",
+                "path": "v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:startIpRotation",
+                "description": "Starts master IP rotation."
+              }
+            },
+            {
+              "score": 13,
+              "matchedOn": [
+                "id:container.projects.zones.clusters.completeIpRotation",
+                "description",
+                "path:v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}:completeIpRotation"
+              ],
+              "operation": {
+                "id": "container.projects.zones.clusters.completeIpRotation",
+                "method": "POST",
+                "path": "v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}:completeIpRotation",
+                "description": "Completes master IP rotation."
+              }
+            },
+            {
+              "score": 13,
+              "matchedOn": [
+                "id:container.projects.zones.clusters.startIpRotation",
+                "description",
+                "path:v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}:startIpRotation"
+              ],
+              "operation": {
+                "id": "container.projects.zones.clusters.startIpRotation",
+                "method": "POST",
+                "path": "v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}:startIpRotation",
+                "description": "Starts master IP rotation."
+              }
+            },
+            {
+              "score": 12,
+              "matchedOn": [
+                "description"
+              ],
+              "operation": {
+                "id": "container.projects.locations.clusters.delete",
+                "method": "DELETE",
+                "path": "v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}",
+                "description": "Deletes the cluster, including the Kubernetes endpoint and all worker nodes. Firewalls and routes that were configured during cluster creation are also deleted. Other Google Compute Engine resources that might be in use by the cluster, such as load balancer resources, are not del"
+              }
+            }
+          ]
+        },
+        {
+          "query": "compute firewall rule ingress allow tcp source ip range",
+          "hitCount": 5,
+          "topHits": [
+            {
+              "score": 16,
+              "matchedOn": [
+                "description"
+              ],
+              "operation": {
+                "id": "container.projects.locations.clusters.create",
+                "method": "POST",
+                "path": "v1/projects/{projectsId}/locations/{locationsId}/clusters",
+                "description": "Creates a cluster, consisting of the specified number and type of Google Compute Engine instances. By default, the cluster is created in the project's [default network](https://cloud.google.com/compute/docs/networks-and-firewalls#networks). One firewall is added for the cluster. "
+              }
+            },
+            {
+              "score": 16,
+              "matchedOn": [
+                "description"
+              ],
+              "operation": {
+                "id": "container.projects.zones.clusters.create",
+                "method": "POST",
+                "path": "v1/projects/{projectId}/zones/{zone}/clusters",
+                "description": "Creates a cluster, consisting of the specified number and type of Google Compute Engine instances. By default, the cluster is created in the project's [default network](https://cloud.google.com/compute/docs/networks-and-firewalls#networks). One firewall is added for the cluster. "
+              }
+            },
+            {
+              "score": 13,
+              "matchedOn": [
+                "id:container.projects.locations.clusters.completeIpRotation",
+                "description",
+                "path:v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:completeIpRotation"
+              ],
+              "operation": {
+                "id": "container.projects.locations.clusters.completeIpRotation",
+                "method": "POST",
+                "path": "v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:completeIpRotation",
+                "description": "Completes master IP rotation."
+              }
+            },
+            {
+              "score": 13,
+              "matchedOn": [
+                "id:container.projects.locations.clusters.startIpRotation",
+                "description",
+                "path:v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:startIpRotation"
+              ],
+              "operation": {
+                "id": "container.projects.locations.clusters.startIpRotation",
+                "method": "POST",
+                "path": "v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:startIpRotation",
+                "description": "Starts master IP rotation."
+              }
+            },
+            {
+              "score": 13,
+              "matchedOn": [
+                "id:container.projects.zones.clusters.completeIpRotation",
+                "description",
+                "path:v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}:completeIpRotation"
+              ],
+              "operation": {
+                "id": "container.projects.zones.clusters.completeIpRotation",
+                "method": "POST",
+                "path": "v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}:completeIpRotation",
+                "description": "Completes master IP rotation."
+              }
+            }
+          ]
+        },
+        {
+          "query": "container clusters get credentials kubectl",
+          "hitCount": 5,
+          "topHits": [
+            {
+              "score": 30,
+              "matchedOn": [
+                "id:container.projects.zones.clusters.get",
+                "resource:clusters",
+                "path:v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}",
+                "method:GET",
+                "description(partial)"
+              ],
+              "operation": {
+                "id": "container.projects.zones.clusters.get",
+                "method": "GET",
+                "path": "v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}",
+                "description": "Gets the details of a specific cluster."
+              }
+            },
+            {
+              "score": 27,
+              "matchedOn": [
+                "id:container.projects.locations.clusters.list",
+                "resource:clusters",
+                "description",
+                "path:v1/projects/{projectsId}/locations/{locationsId}/clusters",
+                "method:GET"
+              ],
+              "operation": {
+                "id": "container.projects.locations.clusters.list",
+                "method": "GET",
+                "path": "v1/projects/{projectsId}/locations/{locationsId}/clusters",
+                "description": "Lists all clusters owned by a project in either the specified zone or all zones."
+              }
+            },
+            {
+              "score": 27,
+              "matchedOn": [
+                "id:container.projects.locations.clusters.get",
+                "resource:clusters",
+                "method:GET",
+                "description(partial)"
+              ],
+              "operation": {
+                "id": "container.projects.locations.clusters.get",
+                "method": "GET",
+                "path": "v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}",
+                "description": "Gets the details of a specific cluster."
+              }
+            },
+            {
+              "score": 27,
+              "matchedOn": [
+                "id:container.projects.locations.clusters.getJwks",
+                "resource:clusters",
+                "method:GET",
+                "description(partial)"
+              ],
+              "operation": {
+                "id": "container.projects.locations.clusters.getJwks",
+                "method": "GET",
+                "path": "v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}/jwks",
+                "description": "Gets the public component of the cluster signing keys in JSON Web Key format."
+              }
+            },
+            {
+              "score": 27,
+              "matchedOn": [
+                "id:container.projects.zones.clusters.list",
+                "resource:clusters",
+                "description",
+                "path:v1/projects/{projectId}/zones/{zone}/clusters",
+                "method:GET"
+              ],
+              "operation": {
+                "id": "container.projects.zones.clusters.list",
+                "method": "GET",
+                "path": "v1/projects/{projectId}/zones/{zone}/clusters",
+                "description": "Lists all clusters owned by a project in either the specified zone or all zones."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "provider": "cloudflare",
+      "title": "Cloudflare — DNS & proxy toward cluster endpoint",
+      "queries": [
+        {
+          "query": "create dns record zone A CNAME proxy",
+          "hitCount": 5,
+          "topHits": [
+            {
+              "score": 57,
+              "matchedOn": [
+                "id:dns-records-for-a-zone-create-dns-record",
+                "description",
+                "resource:dns_records",
+                "path:zones/{zone_id}/dns_records",
+                "param"
+              ],
+              "operation": {
+                "id": "dns-records-for-a-zone-create-dns-record",
+                "method": "POST",
+                "path": "zones/{zone_id}/dns_records",
+                "description": "Create DNS Record"
+              }
+            },
+            {
+              "score": 44,
+              "matchedOn": [
+                "id:dns-records-for-a-zone-list-dns-records",
+                "resource:dns_records",
+                "description",
+                "path:zones/{zone_id}/dns_records",
+                "description(partial)",
+                "param"
+              ],
+              "operation": {
+                "id": "dns-records-for-a-zone-list-dns-records",
+                "method": "GET",
+                "path": "zones/{zone_id}/dns_records",
+                "description": "List DNS Records"
+              }
+            },
+            {
+              "score": 41,
+              "matchedOn": [
+                "id:dns-records-for-a-zone-dns-record-details",
+                "description",
+                "path:zones/{zone_id}/dns_records/{dns_record_id}",
+                "param"
+              ],
+              "operation": {
+                "id": "dns-records-for-a-zone-dns-record-details",
+                "method": "GET",
+                "path": "zones/{zone_id}/dns_records/{dns_record_id}",
+                "description": "DNS Record Details"
+              }
+            },
+            {
+              "score": 41,
+              "matchedOn": [
+                "id:dns-records-for-a-zone-update-dns-record",
+                "description",
+                "path:zones/{zone_id}/dns_records/{dns_record_id}",
+                "param"
+              ],
+              "operation": {
+                "id": "dns-records-for-a-zone-update-dns-record",
+                "method": "PUT",
+                "path": "zones/{zone_id}/dns_records/{dns_record_id}",
+                "description": "Overwrite DNS Record"
+              }
+            },
+            {
+              "score": 41,
+              "matchedOn": [
+                "id:dns-records-for-a-zone-patch-dns-record",
+                "description",
+                "path:zones/{zone_id}/dns_records/{dns_record_id}",
+                "param"
+              ],
+              "operation": {
+                "id": "dns-records-for-a-zone-patch-dns-record",
+                "method": "PATCH",
+                "path": "zones/{zone_id}/dns_records/{dns_record_id}",
+                "description": "Update DNS Record"
+              }
+            }
+          ]
+        },
+        {
+          "query": "list dns records filter name content",
+          "hitCount": 5,
+          "topHits": [
+            {
+              "score": 50,
+              "matchedOn": [
+                "id:dns-records-for-a-zone-list-dns-records",
+                "description",
+                "resource:dns_records",
+                "path:zones/{zone_id}/dns_records",
+                "param"
+              ],
+              "operation": {
+                "id": "dns-records-for-a-zone-list-dns-records",
+                "method": "GET",
+                "path": "zones/{zone_id}/dns_records",
+                "description": "List DNS Records"
+              }
+            },
+            {
+              "score": 45,
+              "matchedOn": [
+                "id:web3-hostname-ipfs-universal-path-gateway-content-list-details",
+                "resource:content_list",
+                "description",
+                "path:zones/{zone_id}/web3/hostnames/{identifier}/ipfs_universal_path/content_list"
+              ],
+              "operation": {
+                "id": "web3-hostname-ipfs-universal-path-gateway-content-list-details",
+                "method": "GET",
+                "path": "zones/{zone_id}/web3/hostnames/{identifier}/ipfs_universal_path/content_list",
+                "description": "IPFS Universal Path Gateway Content List Details"
+              }
+            },
+            {
+              "score": 45,
+              "matchedOn": [
+                "id:web3-hostname-update-ipfs-universal-path-gateway-content-list",
+                "resource:content_list",
+                "description",
+                "path:zones/{zone_id}/web3/hostnames/{identifier}/ipfs_universal_path/content_list"
+              ],
+              "operation": {
+                "id": "web3-hostname-update-ipfs-universal-path-gateway-content-list",
+                "method": "PUT",
+                "path": "zones/{zone_id}/web3/hostnames/{identifier}/ipfs_universal_path/content_list",
+                "description": "Update IPFS Universal Path Gateway Content List"
+              }
+            },
+            {
+              "score": 39,
+              "matchedOn": [
+                "id:web3-hostname-ipfs-universal-path-gateway-content-list-entry-details",
+                "description",
+                "path:zones/{zone_id}/web3/hostnames/{identifier}/ipfs_universal_path/content_list/entries/{content_list_entry_identifier}",
+                "param"
+              ],
+              "operation": {
+                "id": "web3-hostname-ipfs-universal-path-gateway-content-list-entry-details",
+                "method": "GET",
+                "path": "zones/{zone_id}/web3/hostnames/{identifier}/ipfs_universal_path/content_list/entries/{content_list_entry_identifier}",
+                "description": "IPFS Universal Path Gateway Content List Entry Details"
+              }
+            },
+            {
+              "score": 39,
+              "matchedOn": [
+                "id:web3-hostname-edit-ipfs-universal-path-gateway-content-list-entry",
+                "description",
+                "path:zones/{zone_id}/web3/hostnames/{identifier}/ipfs_universal_path/content_list/entries/{content_list_entry_identifier}",
+                "param"
+              ],
+              "operation": {
+                "id": "web3-hostname-edit-ipfs-universal-path-gateway-content-list-entry",
+                "method": "PUT",
+                "path": "zones/{zone_id}/web3/hostnames/{identifier}/ipfs_universal_path/content_list/entries/{content_list_entry_identifier}",
+                "description": "Edit IPFS Universal Path Gateway Content List Entry"
+              }
+            }
+          ]
+        },
+        {
+          "query": "load balancer pool origin health check",
+          "hitCount": 5,
+          "topHits": [
+            {
+              "score": 51,
+              "matchedOn": [
+                "id:account-load-balancer-pools-pool-health-details",
+                "path:accounts/{account_id}/load_balancers/pools/{pool_id}/health",
+                "description",
+                "param",
+                "resource:health"
+              ],
+              "operation": {
+                "id": "account-load-balancer-pools-pool-health-details",
+                "method": "GET",
+                "path": "accounts/{account_id}/load_balancers/pools/{pool_id}/health",
+                "description": "Pool Health Details"
+              }
+            },
+            {
+              "score": 51,
+              "matchedOn": [
+                "id:load-balancer-pools-pool-health-details",
+                "path:user/load_balancers/pools/{pool_id}/health",
+                "description",
+                "param",
+                "resource:health"
+              ],
+              "operation": {
+                "id": "load-balancer-pools-pool-health-details",
+                "method": "GET",
+                "path": "user/load_balancers/pools/{pool_id}/health",
+                "description": "Pool Health Details"
+              }
+            },
+            {
+              "score": 36,
+              "matchedOn": [
+                "id:diagnostics-endpoint-healthcheck-create",
+                "resource:endpoint-healthchecks",
+                "description",
+                "path:accounts/{account_id}/diagnostics/endpoint-healthchecks"
+              ],
+              "operation": {
+                "id": "diagnostics-endpoint-healthcheck-create",
+                "method": "POST",
+                "path": "accounts/{account_id}/diagnostics/endpoint-healthchecks",
+                "description": "Endpoint Health Check"
+              }
+            },
+            {
+              "score": 36,
+              "matchedOn": [
+                "id:account-load-balancer-pools-create-pool",
+                "path:accounts/{account_id}/load_balancers/pools",
+                "resource:pools",
+                "description"
+              ],
+              "operation": {
+                "id": "account-load-balancer-pools-create-pool",
+                "method": "POST",
+                "path": "accounts/{account_id}/load_balancers/pools",
+                "description": "Create Pool"
+              }
+            },
+            {
+              "score": 36,
+              "matchedOn": [
+                "id:load-balancer-pools-create-pool",
+                "path:user/load_balancers/pools",
+                "resource:pools",
+                "description"
+              ],
+              "operation": {
+                "id": "load-balancer-pools-create-pool",
+                "method": "POST",
+                "path": "user/load_balancers/pools",
+                "description": "Create Pool"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "provider": "cloudflare",
+      "title": "Cloudflare — caching / performance for HTTP(S) to origin",
+      "queries": [
+        {
+          "query": "cache rules cache reserve ttl bypass",
+          "hitCount": 5,
+          "topHits": [
+            {
+              "score": 54,
+              "matchedOn": [
+                "id:zone-cache-settings-get-cache-reserve-setting",
+                "resource:cache_reserve",
+                "description",
+                "path:zones/{zone_id}/cache/cache_reserve"
+              ],
+              "operation": {
+                "id": "zone-cache-settings-get-cache-reserve-setting",
+                "method": "GET",
+                "path": "zones/{zone_id}/cache/cache_reserve",
+                "description": "Get Cache Reserve setting"
+              }
+            },
+            {
+              "score": 54,
+              "matchedOn": [
+                "id:zone-cache-settings-change-cache-reserve-setting",
+                "resource:cache_reserve",
+                "description",
+                "path:zones/{zone_id}/cache/cache_reserve"
+              ],
+              "operation": {
+                "id": "zone-cache-settings-change-cache-reserve-setting",
+                "method": "PATCH",
+                "path": "zones/{zone_id}/cache/cache_reserve",
+                "description": "Change Cache Reserve setting"
+              }
+            },
+            {
+              "score": 54,
+              "matchedOn": [
+                "id:zone-cache-settings-get-cache-reserve-clear",
+                "resource:cache_reserve_clear",
+                "description",
+                "path:zones/{zone_id}/cache/cache_reserve_clear"
+              ],
+              "operation": {
+                "id": "zone-cache-settings-get-cache-reserve-clear",
+                "method": "GET",
+                "path": "zones/{zone_id}/cache/cache_reserve_clear",
+                "description": "Get Cache Reserve Clear"
+              }
+            },
+            {
+              "score": 54,
+              "matchedOn": [
+                "id:zone-cache-settings-start-cache-reserve-clear",
+                "resource:cache_reserve_clear",
+                "description",
+                "path:zones/{zone_id}/cache/cache_reserve_clear"
+              ],
+              "operation": {
+                "id": "zone-cache-settings-start-cache-reserve-clear",
+                "method": "POST",
+                "path": "zones/{zone_id}/cache/cache_reserve_clear",
+                "description": "Start Cache Reserve Clear"
+              }
+            },
+            {
+              "score": 54,
+              "matchedOn": [
+                "id:smart-shield-settings-get-cache-reserve-clear",
+                "resource:cache_reserve_clear",
+                "description",
+                "path:zones/{zone_id}/smart_shield/cache_reserve_clear"
+              ],
+              "operation": {
+                "id": "smart-shield-settings-get-cache-reserve-clear",
+                "method": "GET",
+                "path": "zones/{zone_id}/smart_shield/cache_reserve_clear",
+                "description": "Get Cache Reserve Clear"
+              }
+            }
+          ]
+        },
+        {
+          "query": "zone settings cache always online",
+          "hitCount": 5,
+          "topHits": [
+            {
+              "score": 35,
+              "matchedOn": [
+                "id:zone-cache-settings-get-cache-reserve-setting",
+                "path:zones/{zone_id}/cache/cache_reserve",
+                "param",
+                "resource:cache_reserve",
+                "description"
+              ],
+              "operation": {
+                "id": "zone-cache-settings-get-cache-reserve-setting",
+                "method": "GET",
+                "path": "zones/{zone_id}/cache/cache_reserve",
+                "description": "Get Cache Reserve setting"
+              }
+            },
+            {
+              "score": 35,
+              "matchedOn": [
+                "id:zone-cache-settings-change-cache-reserve-setting",
+                "path:zones/{zone_id}/cache/cache_reserve",
+                "param",
+                "resource:cache_reserve",
+                "description"
+              ],
+              "operation": {
+                "id": "zone-cache-settings-change-cache-reserve-setting",
+                "method": "PATCH",
+                "path": "zones/{zone_id}/cache/cache_reserve",
+                "description": "Change Cache Reserve setting"
+              }
+            },
+            {
+              "score": 35,
+              "matchedOn": [
+                "id:zone-cache-settings-get-cache-reserve-clear",
+                "path:zones/{zone_id}/cache/cache_reserve_clear",
+                "param",
+                "resource:cache_reserve_clear",
+                "description"
+              ],
+              "operation": {
+                "id": "zone-cache-settings-get-cache-reserve-clear",
+                "method": "GET",
+                "path": "zones/{zone_id}/cache/cache_reserve_clear",
+                "description": "Get Cache Reserve Clear"
+              }
+            },
+            {
+              "score": 35,
+              "matchedOn": [
+                "id:zone-cache-settings-start-cache-reserve-clear",
+                "path:zones/{zone_id}/cache/cache_reserve_clear",
+                "param",
+                "resource:cache_reserve_clear",
+                "description"
+              ],
+              "operation": {
+                "id": "zone-cache-settings-start-cache-reserve-clear",
+                "method": "POST",
+                "path": "zones/{zone_id}/cache/cache_reserve_clear",
+                "description": "Start Cache Reserve Clear"
+              }
+            },
+            {
+              "score": 35,
+              "matchedOn": [
+                "id:zone-cache-settings-get-regional-tiered-cache-setting",
+                "path:zones/{zone_id}/cache/regional_tiered_cache",
+                "param",
+                "resource:regional_tiered_cache",
+                "description"
+              ],
+              "operation": {
+                "id": "zone-cache-settings-get-regional-tiered-cache-setting",
+                "method": "GET",
+                "path": "zones/{zone_id}/cache/regional_tiered_cache",
+                "description": "Get Regional Tiered Cache setting"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "provider": "jira",
+      "title": "Jira — issue tracking for multi-cloud work",
+      "queries": [
+        {
+          "query": "create issue project fields summary",
+          "hitCount": 5,
+          "topHits": [
+            {
+              "score": 35,
+              "matchedOn": [
+                "id:com.atlassian.jira.rest.v2.issue.IssueResource.getCreateIssueMeta_get",
+                "resource:createmeta",
+                "description",
+                "path:rest/api/3/issue/createmeta",
+                "param"
+              ],
+              "operation": {
+                "id": "com.atlassian.jira.rest.v2.issue.IssueResource.getCreateIssueMeta_get",
+                "method": "GET",
+                "path": "rest/api/3/issue/createmeta",
+                "description": "Get create issue metadata"
+              }
+            },
+            {
+              "score": 34,
+              "matchedOn": [
+                "id:com.atlassian.jira.rest.v2.issue.ProjectResource.createProject_post",
+                "description",
+                "resource:project",
+                "path:rest/api/3/project"
+              ],
+              "operation": {
+                "id": "com.atlassian.jira.rest.v2.issue.ProjectResource.createProject_post",
+                "method": "POST",
+                "path": "rest/api/3/project",
+                "description": "Create project"
+              }
+            },
+            {
+              "score": 34,
+              "matchedOn": [
+                "id:com.atlassian.jira.rest.v2.issue.ProjectCategoryResource.createProjectCategory_post",
+                "description",
+                "resource:projectCategory",
+                "path:rest/api/3/projectCategory"
+              ],
+              "operation": {
+                "id": "com.atlassian.jira.rest.v2.issue.ProjectCategoryResource.createProjectCategory_post",
+                "method": "POST",
+                "path": "rest/api/3/projectCategory",
+                "description": "Create project category"
+              }
+            },
+            {
+              "score": 33,
+              "matchedOn": [
+                "id:com.atlassian.jira.rest.v2.issue.ProjectIssueSecurityLevelSchemeResource.getIssueSecurityScheme_get",
+                "resource:issuesecuritylevelscheme",
+                "description",
+                "path:rest/api/3/project/{projectKeyOrId}/issuesecuritylevelscheme",
+                "param"
+              ],
+              "operation": {
+                "id": "com.atlassian.jira.rest.v2.issue.ProjectIssueSecurityLevelSchemeResource.getIssueSecurityScheme_get",
+                "method": "GET",
+                "path": "rest/api/3/project/{projectKeyOrId}/issuesecuritylevelscheme",
+                "description": "Get project issue security scheme"
+              }
+            },
+            {
+              "score": 28,
+              "matchedOn": [
+                "id:com.atlassian.jira.rest.v2.issue.IssueResource.createIssue_post",
+                "description",
+                "resource:issue",
+                "path:rest/api/3/issue"
+              ],
+              "operation": {
+                "id": "com.atlassian.jira.rest.v2.issue.IssueResource.createIssue_post",
+                "method": "POST",
+                "path": "rest/api/3/issue",
+                "description": "Create issue"
+              }
+            }
+          ]
+        },
+        {
+          "query": "assign issue accountId assignee",
+          "hitCount": 5,
+          "topHits": [
+            {
+              "score": 41,
+              "matchedOn": [
+                "id:com.atlassian.jira.rest.v2.issue.IssueResource.assignIssue_put",
+                "resource:assignee",
+                "description",
+                "path:rest/api/3/issue/{issueIdOrKey}/assignee",
+                "param"
+              ],
+              "operation": {
+                "id": "com.atlassian.jira.rest.v2.issue.IssueResource.assignIssue_put",
+                "method": "PUT",
+                "path": "rest/api/3/issue/{issueIdOrKey}/assignee",
+                "description": "Assign issue"
+              }
+            },
+            {
+              "score": 21,
+              "matchedOn": [
+                "id:com.atlassian.jira.rest.v2.issue.UserResource.findAssignableUsers_get",
+                "description(partial)",
+                "path:rest/api/3/user/assignable/search",
+                "param"
+              ],
+              "operation": {
+                "id": "com.atlassian.jira.rest.v2.issue.UserResource.findAssignableUsers_get",
+                "method": "GET",
+                "path": "rest/api/3/user/assignable/search",
+                "description": "Find users assignable to issues"
+              }
+            },
+            {
+              "score": 18,
+              "matchedOn": [
+                "id:com.atlassian.jira.rest.v2.issue.field.IssueFieldOptionResource.replaceIssueFieldOption_delete",
+                "resource:issue",
+                "description",
+                "path:rest/api/3/field/{fieldKey}/option/{optionId}/issue"
+              ],
+              "operation": {
+                "id": "com.atlassian.jira.rest.v2.issue.field.IssueFieldOptionResource.replaceIssueFieldOption_delete",
+                "method": "DELETE",
+                "path": "rest/api/3/field/{fieldKey}/option/{optionId}/issue",
+                "description": "Replace issue field option"
+              }
+            },
+            {
+              "score": 18,
+              "matchedOn": [
+                "id:com.atlassian.jira.rest.v2.issue.IssueResource.createIssue_post",
+                "resource:issue",
+                "description",
+                "path:rest/api/3/issue"
+              ],
+              "operation": {
+                "id": "com.atlassian.jira.rest.v2.issue.IssueResource.createIssue_post",
+                "method": "POST",
+                "path": "rest/api/3/issue",
+                "description": "Create issue"
+              }
+            },
+            {
+              "score": 18,
+              "matchedOn": [
+                "id:com.atlassian.jira.rest.v2.issue.LinkIssueResource.linkIssues_post",
+                "resource:issueLink",
+                "description",
+                "path:rest/api/3/issueLink"
+              ],
+              "operation": {
+                "id": "com.atlassian.jira.rest.v2.issue.LinkIssueResource.linkIssues_post",
+                "method": "POST",
+                "path": "rest/api/3/issueLink",
+                "description": "Create issue link"
+              }
+            }
+          ]
+        },
+        {
+          "query": "edit issue labels duedate priority",
+          "hitCount": 5,
+          "topHits": [
+            {
+              "score": 35,
+              "matchedOn": [
+                "id:com.atlassian.jira.rest.v2.issue.IssueResource.getEditIssueMeta_get",
+                "resource:editmeta",
+                "description",
+                "path:rest/api/3/issue/{issueIdOrKey}/editmeta",
+                "param"
+              ],
+              "operation": {
+                "id": "com.atlassian.jira.rest.v2.issue.IssueResource.getEditIssueMeta_get",
+                "method": "GET",
+                "path": "rest/api/3/issue/{issueIdOrKey}/editmeta",
+                "description": "Get edit issue metadata"
+              }
+            },
+            {
+              "score": 27,
+              "matchedOn": [
+                "id:com.atlassian.jira.rest.v2.issue.IssueResource.editIssue_put",
+                "description",
+                "param",
+                "path:rest/api/3/issue/{issueIdOrKey}"
+              ],
+              "operation": {
+                "id": "com.atlassian.jira.rest.v2.issue.IssueResource.editIssue_put",
+                "method": "PUT",
+                "path": "rest/api/3/issue/{issueIdOrKey}",
+                "description": "Edit issue"
+              }
+            },
+            {
+              "score": 20,
+              "matchedOn": [
+                "id:com.atlassian.jira.rest.v2.issue.PriorityResource.getPriorities_get",
+                "resource:priority",
+                "path:rest/api/3/priority"
+              ],
+              "operation": {
+                "id": "com.atlassian.jira.rest.v2.issue.PriorityResource.getPriorities_get",
+                "method": "GET",
+                "path": "rest/api/3/priority",
+                "description": "Get priorities"
+              }
+            },
+            {
+              "score": 19,
+              "matchedOn": [
+                "id:com.atlassian.jira.rest.v2.issue.PriorityResource.getPriority_get",
+                "description",
+                "path:rest/api/3/priority/{id}"
+              ],
+              "operation": {
+                "id": "com.atlassian.jira.rest.v2.issue.PriorityResource.getPriority_get",
+                "method": "GET",
+                "path": "rest/api/3/priority/{id}",
+                "description": "Get priority"
+              }
+            },
+            {
+              "score": 18,
+              "matchedOn": [
+                "resource:edit",
+                "path:rest/api/3/field/{fieldKey}/option/suggestions/edit",
+                "id:com.atlassian.jira.rest.v2.issue.field.IssueFieldOptionResource.getSelectableIssueFieldOptions_get",
+                "description"
+              ],
+              "operation": {
+                "id": "com.atlassian.jira.rest.v2.issue.field.IssueFieldOptionResource.getSelectableIssueFieldOptions_get",
+                "method": "GET",
+                "path": "rest/api/3/field/{fieldKey}/option/suggestions/edit",
+                "description": "Get selectable issue field options"
+              }
+            }
+          ]
+        },
+        {
+          "query": "get create issue metadata createmeta",
+          "hitCount": 5,
+          "topHits": [
+            {
+              "score": 58,
+              "matchedOn": [
+                "id:com.atlassian.jira.rest.v2.issue.IssueResource.getCreateIssueMeta_get",
+                "method:GET",
+                "description",
+                "resource:createmeta",
+                "path:rest/api/3/issue/createmeta",
+                "param"
+              ],
+              "operation": {
+                "id": "com.atlassian.jira.rest.v2.issue.IssueResource.getCreateIssueMeta_get",
+                "method": "GET",
+                "path": "rest/api/3/issue/createmeta",
+                "description": "Get create issue metadata"
+              }
+            },
+            {
+              "score": 32,
+              "matchedOn": [
+                "id:com.atlassian.jira.rest.v2.issue.IssueResource.getEditIssueMeta_get",
+                "method:GET",
+                "description",
+                "path:rest/api/3/issue/{issueIdOrKey}/editmeta",
+                "param"
+              ],
+              "operation": {
+                "id": "com.atlassian.jira.rest.v2.issue.IssueResource.getEditIssueMeta_get",
+                "method": "GET",
+                "path": "rest/api/3/issue/{issueIdOrKey}/editmeta",
+                "description": "Get edit issue metadata"
+              }
+            },
+            {
+              "score": 31,
+              "matchedOn": [
+                "id:com.atlassian.jira.rest.v2.issue.IssueLinkTypeResource.getIssueLinkTypes_get",
+                "method:GET",
+                "description",
+                "resource:issueLinkType",
+                "path:rest/api/3/issueLinkType"
+              ],
+              "operation": {
+                "id": "com.atlassian.jira.rest.v2.issue.IssueLinkTypeResource.getIssueLinkTypes_get",
+                "method": "GET",
+                "path": "rest/api/3/issueLinkType",
+                "description": "Get issue link types"
+              }
+            },
+            {
+              "score": 31,
+              "matchedOn": [
+                "id:com.atlassian.jira.rest.v2.issue.IssueSecuritySchemeResource.getIssueSecuritySchemes_get",
+                "method:GET",
+                "description",
+                "resource:issuesecurityschemes",
+                "path:rest/api/3/issuesecurityschemes"
+              ],
+              "operation": {
+                "id": "com.atlassian.jira.rest.v2.issue.IssueSecuritySchemeResource.getIssueSecuritySchemes_get",
+                "method": "GET",
+                "path": "rest/api/3/issuesecurityschemes",
+                "description": "Get issue security schemes"
+              }
+            },
+            {
+              "score": 31,
+              "matchedOn": [
+                "id:com.atlassian.jira.rest.v2.issue.IssueTypeResource.getIssueAllTypes_get",
+                "method:GET",
+                "description",
+                "resource:issuetype",
+                "path:rest/api/3/issuetype"
+              ],
+              "operation": {
+                "id": "com.atlassian.jira.rest.v2.issue.IssueTypeResource.getIssueAllTypes_get",
+                "method": "GET",
+                "path": "rest/api/3/issuetype",
+                "description": "Get all issue types for user"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "uniqueOperations": [
+    {
+      "provider": "google",
+      "id": "container.projects.locations.clusters.create",
+      "method": "POST",
+      "path": "v1/projects/{projectsId}/locations/{locationsId}/clusters"
+    },
+    {
+      "provider": "google",
+      "id": "container.projects.zones.clusters.create",
+      "method": "POST",
+      "path": "v1/projects/{projectId}/zones/{zone}/clusters"
+    },
+    {
+      "provider": "google",
+      "id": "container.projects.zones.clusters.delete",
+      "method": "DELETE",
+      "path": "v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}"
+    },
+    {
+      "provider": "google",
+      "id": "container.projects.zones.clusters.locations",
+      "method": "POST",
+      "path": "v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/locations"
+    },
+    {
+      "provider": "google",
+      "id": "container.projects.locations.clusters.delete",
+      "method": "DELETE",
+      "path": "v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}"
+    },
+    {
+      "provider": "google",
+      "id": "container.projects.locations.getServerConfig",
+      "method": "GET",
+      "path": "v1/projects/{projectsId}/locations/{locationsId}/serverConfig"
+    },
+    {
+      "provider": "google",
+      "id": "container.projects.locations.clusters.setLocations",
+      "method": "POST",
+      "path": "v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:setLocations"
+    },
+    {
+      "provider": "google",
+      "id": "container.projects.zones.getServerconfig",
+      "method": "GET",
+      "path": "v1/projects/{projectId}/zones/{zone}/serverconfig"
+    },
+    {
+      "provider": "google",
+      "id": "container.projects.locations.clusters.completeIpRotation",
+      "method": "POST",
+      "path": "v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:completeIpRotation"
+    },
+    {
+      "provider": "google",
+      "id": "container.projects.locations.clusters.startIpRotation",
+      "method": "POST",
+      "path": "v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:startIpRotation"
+    },
+    {
+      "provider": "google",
+      "id": "container.projects.zones.clusters.completeIpRotation",
+      "method": "POST",
+      "path": "v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}:completeIpRotation"
+    },
+    {
+      "provider": "google",
+      "id": "container.projects.zones.clusters.startIpRotation",
+      "method": "POST",
+      "path": "v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}:startIpRotation"
+    },
+    {
+      "provider": "google",
+      "id": "container.projects.zones.clusters.get",
+      "method": "GET",
+      "path": "v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}"
+    },
+    {
+      "provider": "google",
+      "id": "container.projects.locations.clusters.list",
+      "method": "GET",
+      "path": "v1/projects/{projectsId}/locations/{locationsId}/clusters"
+    },
+    {
+      "provider": "google",
+      "id": "container.projects.locations.clusters.get",
+      "method": "GET",
+      "path": "v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}"
+    },
+    {
+      "provider": "google",
+      "id": "container.projects.locations.clusters.getJwks",
+      "method": "GET",
+      "path": "v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}/jwks"
+    },
+    {
+      "provider": "google",
+      "id": "container.projects.zones.clusters.list",
+      "method": "GET",
+      "path": "v1/projects/{projectId}/zones/{zone}/clusters"
+    },
+    {
+      "provider": "cloudflare",
+      "id": "dns-records-for-a-zone-create-dns-record",
+      "method": "POST",
+      "path": "zones/{zone_id}/dns_records"
+    },
+    {
+      "provider": "cloudflare",
+      "id": "dns-records-for-a-zone-list-dns-records",
+      "method": "GET",
+      "path": "zones/{zone_id}/dns_records"
+    },
+    {
+      "provider": "cloudflare",
+      "id": "dns-records-for-a-zone-dns-record-details",
+      "method": "GET",
+      "path": "zones/{zone_id}/dns_records/{dns_record_id}"
+    },
+    {
+      "provider": "cloudflare",
+      "id": "dns-records-for-a-zone-update-dns-record",
+      "method": "PUT",
+      "path": "zones/{zone_id}/dns_records/{dns_record_id}"
+    },
+    {
+      "provider": "cloudflare",
+      "id": "dns-records-for-a-zone-patch-dns-record",
+      "method": "PATCH",
+      "path": "zones/{zone_id}/dns_records/{dns_record_id}"
+    },
+    {
+      "provider": "cloudflare",
+      "id": "web3-hostname-ipfs-universal-path-gateway-content-list-details",
+      "method": "GET",
+      "path": "zones/{zone_id}/web3/hostnames/{identifier}/ipfs_universal_path/content_list"
+    },
+    {
+      "provider": "cloudflare",
+      "id": "web3-hostname-update-ipfs-universal-path-gateway-content-list",
+      "method": "PUT",
+      "path": "zones/{zone_id}/web3/hostnames/{identifier}/ipfs_universal_path/content_list"
+    },
+    {
+      "provider": "cloudflare",
+      "id": "web3-hostname-ipfs-universal-path-gateway-content-list-entry-details",
+      "method": "GET",
+      "path": "zones/{zone_id}/web3/hostnames/{identifier}/ipfs_universal_path/content_list/entries/{content_list_entry_identifier}"
+    },
+    {
+      "provider": "cloudflare",
+      "id": "web3-hostname-edit-ipfs-universal-path-gateway-content-list-entry",
+      "method": "PUT",
+      "path": "zones/{zone_id}/web3/hostnames/{identifier}/ipfs_universal_path/content_list/entries/{content_list_entry_identifier}"
+    },
+    {
+      "provider": "cloudflare",
+      "id": "account-load-balancer-pools-pool-health-details",
+      "method": "GET",
+      "path": "accounts/{account_id}/load_balancers/pools/{pool_id}/health"
+    },
+    {
+      "provider": "cloudflare",
+      "id": "load-balancer-pools-pool-health-details",
+      "method": "GET",
+      "path": "user/load_balancers/pools/{pool_id}/health"
+    },
+    {
+      "provider": "cloudflare",
+      "id": "diagnostics-endpoint-healthcheck-create",
+      "method": "POST",
+      "path": "accounts/{account_id}/diagnostics/endpoint-healthchecks"
+    },
+    {
+      "provider": "cloudflare",
+      "id": "account-load-balancer-pools-create-pool",
+      "method": "POST",
+      "path": "accounts/{account_id}/load_balancers/pools"
+    },
+    {
+      "provider": "cloudflare",
+      "id": "load-balancer-pools-create-pool",
+      "method": "POST",
+      "path": "user/load_balancers/pools"
+    },
+    {
+      "provider": "cloudflare",
+      "id": "zone-cache-settings-get-cache-reserve-setting",
+      "method": "GET",
+      "path": "zones/{zone_id}/cache/cache_reserve"
+    },
+    {
+      "provider": "cloudflare",
+      "id": "zone-cache-settings-change-cache-reserve-setting",
+      "method": "PATCH",
+      "path": "zones/{zone_id}/cache/cache_reserve"
+    },
+    {
+      "provider": "cloudflare",
+      "id": "zone-cache-settings-get-cache-reserve-clear",
+      "method": "GET",
+      "path": "zones/{zone_id}/cache/cache_reserve_clear"
+    },
+    {
+      "provider": "cloudflare",
+      "id": "zone-cache-settings-start-cache-reserve-clear",
+      "method": "POST",
+      "path": "zones/{zone_id}/cache/cache_reserve_clear"
+    },
+    {
+      "provider": "cloudflare",
+      "id": "smart-shield-settings-get-cache-reserve-clear",
+      "method": "GET",
+      "path": "zones/{zone_id}/smart_shield/cache_reserve_clear"
+    },
+    {
+      "provider": "cloudflare",
+      "id": "zone-cache-settings-get-regional-tiered-cache-setting",
+      "method": "GET",
+      "path": "zones/{zone_id}/cache/regional_tiered_cache"
+    },
+    {
+      "provider": "jira",
+      "id": "com.atlassian.jira.rest.v2.issue.IssueResource.getCreateIssueMeta_get",
+      "method": "GET",
+      "path": "rest/api/3/issue/createmeta"
+    },
+    {
+      "provider": "jira",
+      "id": "com.atlassian.jira.rest.v2.issue.ProjectResource.createProject_post",
+      "method": "POST",
+      "path": "rest/api/3/project"
+    },
+    {
+      "provider": "jira",
+      "id": "com.atlassian.jira.rest.v2.issue.ProjectCategoryResource.createProjectCategory_post",
+      "method": "POST",
+      "path": "rest/api/3/projectCategory"
+    },
+    {
+      "provider": "jira",
+      "id": "com.atlassian.jira.rest.v2.issue.ProjectIssueSecurityLevelSchemeResource.getIssueSecurityScheme_get",
+      "method": "GET",
+      "path": "rest/api/3/project/{projectKeyOrId}/issuesecuritylevelscheme"
+    },
+    {
+      "provider": "jira",
+      "id": "com.atlassian.jira.rest.v2.issue.IssueResource.createIssue_post",
+      "method": "POST",
+      "path": "rest/api/3/issue"
+    },
+    {
+      "provider": "jira",
+      "id": "com.atlassian.jira.rest.v2.issue.IssueResource.assignIssue_put",
+      "method": "PUT",
+      "path": "rest/api/3/issue/{issueIdOrKey}/assignee"
+    },
+    {
+      "provider": "jira",
+      "id": "com.atlassian.jira.rest.v2.issue.UserResource.findAssignableUsers_get",
+      "method": "GET",
+      "path": "rest/api/3/user/assignable/search"
+    },
+    {
+      "provider": "jira",
+      "id": "com.atlassian.jira.rest.v2.issue.field.IssueFieldOptionResource.replaceIssueFieldOption_delete",
+      "method": "DELETE",
+      "path": "rest/api/3/field/{fieldKey}/option/{optionId}/issue"
+    },
+    {
+      "provider": "jira",
+      "id": "com.atlassian.jira.rest.v2.issue.LinkIssueResource.linkIssues_post",
+      "method": "POST",
+      "path": "rest/api/3/issueLink"
+    },
+    {
+      "provider": "jira",
+      "id": "com.atlassian.jira.rest.v2.issue.IssueResource.getEditIssueMeta_get",
+      "method": "GET",
+      "path": "rest/api/3/issue/{issueIdOrKey}/editmeta"
+    },
+    {
+      "provider": "jira",
+      "id": "com.atlassian.jira.rest.v2.issue.IssueResource.editIssue_put",
+      "method": "PUT",
+      "path": "rest/api/3/issue/{issueIdOrKey}"
+    },
+    {
+      "provider": "jira",
+      "id": "com.atlassian.jira.rest.v2.issue.PriorityResource.getPriorities_get",
+      "method": "GET",
+      "path": "rest/api/3/priority"
+    },
+    {
+      "provider": "jira",
+      "id": "com.atlassian.jira.rest.v2.issue.PriorityResource.getPriority_get",
+      "method": "GET",
+      "path": "rest/api/3/priority/{id}"
+    },
+    {
+      "provider": "jira",
+      "id": "com.atlassian.jira.rest.v2.issue.field.IssueFieldOptionResource.getSelectableIssueFieldOptions_get",
+      "method": "GET",
+      "path": "rest/api/3/field/{fieldKey}/option/suggestions/edit"
+    },
+    {
+      "provider": "jira",
+      "id": "com.atlassian.jira.rest.v2.issue.IssueLinkTypeResource.getIssueLinkTypes_get",
+      "method": "GET",
+      "path": "rest/api/3/issueLinkType"
+    },
+    {
+      "provider": "jira",
+      "id": "com.atlassian.jira.rest.v2.issue.IssueSecuritySchemeResource.getIssueSecuritySchemes_get",
+      "method": "GET",
+      "path": "rest/api/3/issuesecurityschemes"
+    },
+    {
+      "provider": "jira",
+      "id": "com.atlassian.jira.rest.v2.issue.IssueTypeResource.getIssueAllTypes_get",
+      "method": "GET",
+      "path": "rest/api/3/issuetype"
+    }
+  ]
+}

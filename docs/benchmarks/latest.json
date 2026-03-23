@@ -1,0 +1,138 @@
+{
+  "meta": {
+    "runAt": "2026-03-23T04:15:26.647Z",
+    "charsPerToken": 4,
+    "method": "Phase 1: full OpenAPI JSON vs top-5 search payload. Phase 2: full REST response body vs GraphQL response body (execution payload). Default bodies from docs/benchmarks/response-examples; BENCHMARK_LIVE=1 replaces with real calls when both succeed. Phase 1 raw dumps omitted from markdown.",
+    "excerptChars": 900,
+    "bundledOffline": true,
+    "benchmarkLive": false,
+    "fixtureDir": "docs/benchmarks/response-examples"
+  },
+  "providers": [
+    {
+      "provider": "google",
+      "query": "create gke kubernetes cluster with node pools, then fetch cluster details and endpoint",
+      "operationId": "container.projects.locations.clusters.list",
+      "responseSchema": "ListClustersResponse",
+      "fullSpecTokens": 84436,
+      "top5SearchPayloadTokens": 2167,
+      "phase1TokensSaved": 82269,
+      "phase1Multiplier": 38.96,
+      "phase1PercentReduction": 97.43,
+      "phase1BeforeChars": 337742,
+      "phase1AfterChars": 8668,
+      "phase2Documentation": {
+        "responseSchemaTokens": 110,
+        "selectedFieldsTokens": 14,
+        "tokensSaved": 96
+      },
+      "phase2Payload": {
+        "source": "fixture",
+        "fullRestTokens": 421,
+        "graphqlResponseTokens": 76,
+        "tokensSaved": 345,
+        "multiplier": 5.54,
+        "percentReduction": 81.95,
+        "restError": null,
+        "graphqlError": null
+      },
+      "sideBySide": {
+        "phase2": {
+          "beforeChars": 1685,
+          "beforePreview": "{\n  \"clusters\": [\n    {\n      \"name\": \"projects/demo-proj/locations/us-central1/clusters/prod\",\n      \"selfLink\": \"https://container.googleapis.com/v1/projects/demo-proj/locations/us-central1/clusters/prod\",\n      \"location\": \"us-central1\",\n      \"endpoint\": \"34.118.229.12\",\n      \"initialClusterVersion\": \"1.29.0-gke.1108000\",\n      \"currentMasterVersion\": \"1.29.0-gke.1108000\",\n      \"status\": \"RUNNING\",\n      \"statusMessage\": \"All cluster resources are up to date.\",\n      \"subnetwork\": \"default\",\n      \"nodePools\": [\n        {\n          \"name\": \"default-pool\",\n          \"config\": {\n            \"machineType\": \"e2-medium\",\n            \"diskSizeGb\": 100,\n            \"oauthScopes\": [\n              \"https://www.googleapis.com/auth/devstorage.read_only\"\n            ]\n          },\n          \"initialNodeCount\": 3,\n          \"status\": \"RUNNING\",\n          \"version\": \"1.29.0-gke.1108000\"\n        \n… [truncated; 1685 chars total]",
+          "afterChars": 303,
+          "afterPreview": "{\n  \"clusters\": [\n    {\n      \"name\": \"projects/demo-proj/locations/us-central1/clusters/prod\",\n      \"status\": \"RUNNING\",\n      \"endpoint\": \"34.118.229.12\",\n      \"selfLink\": \"https://container.googleapis.com/v1/projects/demo-proj/locations/us-central1/clusters/prod\"\n    }\n  ],\n  \"nextPageToken\": \"\"\n}",
+          "source": "fixture"
+        }
+      }
+    },
+    {
+      "provider": "jira",
+      "query": "create issue in project, assign owner, set highest priority, due date, labels, then update description",
+      "operationId": "com.atlassian.jira.rest.v2.issue.IssueResource.getIssue_get",
+      "responseSchema": "IssueBean",
+      "fullSpecTokens": 266579,
+      "top5SearchPayloadTokens": 901,
+      "phase1TokensSaved": 265678,
+      "phase1Multiplier": 295.87,
+      "phase1PercentReduction": 99.66,
+      "phase1BeforeChars": 1066316,
+      "phase1AfterChars": 3605,
+      "phase2Documentation": {
+        "responseSchemaTokens": 537,
+        "selectedFieldsTokens": 5,
+        "tokensSaved": 532
+      },
+      "phase2Payload": {
+        "source": "fixture",
+        "fullRestTokens": 386,
+        "graphqlResponseTokens": 40,
+        "tokensSaved": 346,
+        "multiplier": 9.65,
+        "percentReduction": 89.64,
+        "restError": null,
+        "graphqlError": null
+      },
+      "sideBySide": {
+        "phase2": {
+          "beforeChars": 1543,
+          "beforePreview": "{\n  \"expand\": \"renderedFields,names,schema\",\n  \"id\": \"10042\",\n  \"self\": \"https://your-domain.atlassian.net/rest/api/3/issue/10042\",\n  \"key\": \"K8S-101\",\n  \"fields\": {\n    \"summary\": \"Wire GKE service to Cloudflare DNS\",\n    \"description\": {\n      \"type\": \"doc\",\n      \"version\": 1,\n      \"content\": [\n        {\n          \"type\": \"paragraph\",\n          \"content\": [\n            {\n              \"type\": \"text\",\n              \"text\": \"Full issue body with many paragraphs and links...\"\n            }\n          ]\n        }\n      ]\n    },\n    \"comment\": {\n      \"comments\": [],\n      \"maxResults\": 0,\n      \"total\": 0,\n      \"startAt\": 0\n    },\n    \"status\": {\n      \"name\": \"In Progress\",\n      \"id\": \"3\",\n      \"statusCategory\": {\n        \"key\": \"indeterminate\",\n        \"name\": \"In Progress\"\n      }\n    },\n    \"issuetype\": {\n      \"name\": \"Task\",\n      \"id\": \"10001\",\n      \"subtask\": false\n    },\n    \n… [truncated; 1543 chars total]",
+          "afterChars": 160,
+          "afterPreview": "{\n  \"id\": \"10042\",\n  \"key\": \"K8S-101\",\n  \"self\": \"https://your-domain.atlassian.net/rest/api/3/issue/10042\",\n  \"summary\": \"Wire GKE service to Cloudflare DNS\"\n}",
+          "source": "fixture"
+        }
+      }
+    },
+    {
+      "provider": "cloudflare",
+      "query": "create a DNS record with proxy enabled, set ttl and tags, then list and filter records by name and content",
+      "operationId": "dns-records-for-a-zone-list-dns-records",
+      "responseSchema": "dns-records_dns_response_collection",
+      "fullSpecTokens": 2206098,
+      "top5SearchPayloadTokens": 2377,
+      "phase1TokensSaved": 2203721,
+      "phase1Multiplier": 928.1,
+      "phase1PercentReduction": 99.89,
+      "phase1BeforeChars": 8824392,
+      "phase1AfterChars": 9509,
+      "phase2Documentation": {
+        "responseSchemaTokens": 57,
+        "selectedFieldsTokens": 29,
+        "tokensSaved": 28
+      },
+      "phase2Payload": {
+        "source": "fixture",
+        "fullRestTokens": 177,
+        "graphqlResponseTokens": 80,
+        "tokensSaved": 97,
+        "multiplier": 2.21,
+        "percentReduction": 54.8,
+        "restError": null,
+        "graphqlError": null
+      },
+      "sideBySide": {
+        "phase2": {
+          "beforeChars": 707,
+          "beforePreview": "{\n  \"result\": [\n    {\n      \"id\": \"f1f2f3f4f5f6f7f8f9fafbfcfdfeff\",\n      \"zone_id\": \"a1b2c3d4e5f6789012345678901234ab\",\n      \"zone_name\": \"example.com\",\n      \"name\": \"api.example.com\",\n      \"type\": \"A\",\n      \"content\": \"203.0.113.10\",\n      \"proxiable\": true,\n      \"proxied\": true,\n      \"ttl\": 1,\n      \"locked\": false,\n      \"meta\": {},\n      \"created_on\": \"2025-01-15T10:00:00.12345Z\",\n      \"modified_on\": \"2025-03-01T08:22:11.98765Z\",\n      \"data\": {},\n      \"tags\": [\n        \"gke\",\n        \"production\"\n      ]\n    }\n  ],\n  \"result_info\": {\n    \"page\": 1,\n    \"per_page\": 100,\n    \"count\": 1,\n    \"total_count\": 1,\n    \"total_pages\": 1\n  },\n  \"success\": true,\n  \"errors\": [],\n  \"messages\": []\n}",
+          "afterChars": 318,
+          "afterPreview": "{\n  \"result\": [\n    {\n      \"id\": \"f1f2f3f4f5f6f7f8f9fafbfcfdfeff\",\n      \"name\": \"api.example.com\",\n      \"type\": \"A\",\n      \"content\": \"203.0.113.10\",\n      \"proxied\": true,\n      \"ttl\": 1\n    }\n  ],\n  \"result_info\": {\n    \"page\": 1,\n    \"per_page\": 100,\n    \"total_count\": 1\n  },\n  \"success\": true,\n  \"errors\": []\n}",
+          "source": "fixture"
+        }
+      }
+    }
+  ],
+  "averages": {
+    "phase1": {
+      "fullSpecTokensAvg": 852371,
+      "top5SearchPayloadTokensAvg": 1815,
+      "tokensSavedAvg": 850556,
+      "percentReductionAvg": 99.79
+    },
+    "phase2Payload": {
+      "fullRestTokensAvg": 328,
+      "graphqlResponseTokensAvg": 65,
+      "tokensSavedAvg": 263,
+      "percentReductionAvg": 80.18
+    }
+  }
+}

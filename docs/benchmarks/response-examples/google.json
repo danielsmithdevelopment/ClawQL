@@ -1,0 +1,58 @@
+{
+  "fullRest": {
+    "clusters": [
+      {
+        "name": "projects/demo-proj/locations/us-central1/clusters/prod",
+        "selfLink": "https://container.googleapis.com/v1/projects/demo-proj/locations/us-central1/clusters/prod",
+        "location": "us-central1",
+        "endpoint": "34.118.229.12",
+        "initialClusterVersion": "1.29.0-gke.1108000",
+        "currentMasterVersion": "1.29.0-gke.1108000",
+        "status": "RUNNING",
+        "statusMessage": "All cluster resources are up to date.",
+        "subnetwork": "default",
+        "nodePools": [
+          {
+            "name": "default-pool",
+            "config": {
+              "machineType": "e2-medium",
+              "diskSizeGb": 100,
+              "oauthScopes": ["https://www.googleapis.com/auth/devstorage.read_only"]
+            },
+            "initialNodeCount": 3,
+            "status": "RUNNING",
+            "version": "1.29.0-gke.1108000"
+          }
+        ],
+        "network": "default",
+        "addonsConfig": {
+          "httpLoadBalancing": { "disabled": false },
+          "kubernetesDashboard": { "disabled": true }
+        },
+        "masterAuth": {
+          "clusterCaCertificate": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUM..."
+        },
+        "legacyAbac": {},
+        "autoscaling": { "enableNodeAutoprovisioning": false },
+        "networkPolicy": {},
+        "ipAllocationPolicy": { "useIpAliases": true },
+        "masterAuthorizedNetworksConfig": {},
+        "databaseEncryption": { "state": "DECRYPTED" },
+        "shieldedNodes": { "enabled": true },
+        "releaseChannel": { "channel": "REGULAR" }
+      }
+    ],
+    "missingZones": []
+  },
+  "graphql": {
+    "clusters": [
+      {
+        "name": "projects/demo-proj/locations/us-central1/clusters/prod",
+        "status": "RUNNING",
+        "endpoint": "34.118.229.12",
+        "selfLink": "https://container.googleapis.com/v1/projects/demo-proj/locations/us-central1/clusters/prod"
+      }
+    ],
+    "nextPageToken": ""
+  }
+}
