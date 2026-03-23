@@ -6,8 +6,12 @@ start avoids downloading multi‑MB specs.
 | `CLAWQL_PROVIDER` | Spec file | Notes |
 |-------------------|-----------|--------|
 | `jira` | `atlassian/jira/openapi.yaml` | Atlassian community Jira OpenAPI (YAML) |
-| `google` | `google/discovery.json` | Google Kubernetes Engine (GKE) discovery (`container.googleapis.com`, v1) |
+| `google` | `google/discovery.json` | Default: **GKE** only (`container.googleapis.com` v1). See **`google-apis-lookup.json`** for *all* Google APIs. |
 | `cloudflare` | `cloudflare/openapi.yaml` | Official [Cloudflare API schemas](https://github.com/cloudflare/api-schemas) OpenAPI (large; ~tens of MB) |
+
+**Google API catalog (all services):** The repo includes a snapshot of Google’s public [Discovery directory](https://www.googleapis.com/discovery/v1/apis) as `google/discovery-directory.json` and a slim index `google/google-apis-lookup.json` (id → `discoveryRestUrl`, docs link, `preferred`). Refresh with `npm run fetch-google-discovery-directory` (also runs at the end of `npm run fetch-provider-specs`). Details: [`docs/google-apis-lookup.md`](../docs/google-apis-lookup.md).
+
+**Google “top 20” offline bundle:** Pinned Discovery JSON (and optional `introspection.json` / `schema.graphql`) for IAM, Compute, Storage, GKE, Cloud Run, Pub/Sub, BigQuery, and 13 more — under [`google/apis/`](google/apis/README.md). Manifest: `google/google-top20-apis.json`. Refresh: `npm run fetch-google-top20` then `npm run build && npm run pregenerate-google-top20-graphql`, or `npm run refresh-google-top20`.
 
 **Precedence:** `CLAWQL_SPEC_PATH` / `CLAWQL_SPEC_URL` / `CLAWQL_DISCOVERY_URL`
 always override `CLAWQL_PROVIDER` (bring-your-own spec unchanged).

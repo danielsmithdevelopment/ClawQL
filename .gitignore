@@ -39,3 +39,6 @@ coverage/
 
 # Optional local notes
 *.local.md
+
+# Optional bulk download of every Google Discovery doc (can be huge)
+providers/google/discovery-cache/

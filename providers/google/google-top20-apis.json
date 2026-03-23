@@ -1,0 +1,145 @@
+{
+  "description": "Curated Google Cloud / platform APIs: pinned Discovery docs + optional GraphQL artifacts under providers/google/apis/<slug>/. Full catalog remains in google-apis-lookup.json.",
+  "apis": [
+    {
+      "slug": "iam-v2",
+      "id": "iam:v2",
+      "title": "Identity and Access Management (IAM) API",
+      "discoveryRestUrl": "https://iam.googleapis.com/$discovery/rest?version=v2",
+      "documentationLink": "https://cloud.google.com/iam/"
+    },
+    {
+      "slug": "compute-v1",
+      "id": "compute:v1",
+      "title": "Compute Engine API",
+      "discoveryRestUrl": "https://www.googleapis.com/discovery/v1/apis/compute/v1/rest",
+      "documentationLink": "https://developers.google.com/compute/docs/reference/latest/"
+    },
+    {
+      "slug": "storage-v1",
+      "id": "storage:v1",
+      "title": "Cloud Storage API",
+      "discoveryRestUrl": "https://storage.googleapis.com/$discovery/rest?version=v1",
+      "documentationLink": "https://cloud.google.com/storage/docs/apis"
+    },
+    {
+      "slug": "container-v1",
+      "id": "container:v1",
+      "title": "Kubernetes Engine API",
+      "discoveryRestUrl": "https://container.googleapis.com/$discovery/rest?version=v1",
+      "documentationLink": "https://cloud.google.com/kubernetes-engine/docs/"
+    },
+    {
+      "slug": "run-v2",
+      "id": "run:v2",
+      "title": "Cloud Run Admin API",
+      "discoveryRestUrl": "https://run.googleapis.com/$discovery/rest?version=v2",
+      "documentationLink": "https://cloud.google.com/run/"
+    },
+    {
+      "slug": "pubsub-v1",
+      "id": "pubsub:v1",
+      "title": "Cloud Pub/Sub API",
+      "discoveryRestUrl": "https://pubsub.googleapis.com/$discovery/rest?version=v1",
+      "documentationLink": "https://cloud.google.com/pubsub/docs"
+    },
+    {
+      "slug": "bigquery-v2",
+      "id": "bigquery:v2",
+      "title": "BigQuery API",
+      "discoveryRestUrl": "https://bigquery.googleapis.com/$discovery/rest?version=v2",
+      "documentationLink": "https://cloud.google.com/bigquery/"
+    },
+    {
+      "slug": "cloudresourcemanager-v3",
+      "id": "cloudresourcemanager:v3",
+      "title": "Cloud Resource Manager API",
+      "discoveryRestUrl": "https://cloudresourcemanager.googleapis.com/$discovery/rest?version=v3",
+      "documentationLink": "https://cloud.google.com/resource-manager"
+    },
+    {
+      "slug": "logging-v2",
+      "id": "logging:v2",
+      "title": "Cloud Logging API",
+      "discoveryRestUrl": "https://logging.googleapis.com/$discovery/rest?version=v2",
+      "documentationLink": "https://cloud.google.com/logging/docs/"
+    },
+    {
+      "slug": "monitoring-v3",
+      "id": "monitoring:v3",
+      "title": "Cloud Monitoring API",
+      "discoveryRestUrl": "https://monitoring.googleapis.com/$discovery/rest?version=v3",
+      "documentationLink": "https://cloud.google.com/monitoring/api/"
+    },
+    {
+      "slug": "secretmanager-v1",
+      "id": "secretmanager:v1",
+      "title": "Secret Manager API",
+      "discoveryRestUrl": "https://secretmanager.googleapis.com/$discovery/rest?version=v1",
+      "documentationLink": "https://cloud.google.com/secret-manager/"
+    },
+    {
+      "slug": "cloudfunctions-v2",
+      "id": "cloudfunctions:v2",
+      "title": "Cloud Functions API",
+      "discoveryRestUrl": "https://cloudfunctions.googleapis.com/$discovery/rest?version=v2",
+      "documentationLink": "https://cloud.google.com/functions"
+    },
+    {
+      "slug": "cloudbuild-v2",
+      "id": "cloudbuild:v2",
+      "title": "Cloud Build API",
+      "discoveryRestUrl": "https://cloudbuild.googleapis.com/$discovery/rest?version=v2",
+      "documentationLink": "https://cloud.google.com/cloud-build/docs/"
+    },
+    {
+      "slug": "cloudkms-v1",
+      "id": "cloudkms:v1",
+      "title": "Cloud Key Management Service (KMS) API",
+      "discoveryRestUrl": "https://cloudkms.googleapis.com/$discovery/rest?version=v1",
+      "documentationLink": "https://cloud.google.com/kms/"
+    },
+    {
+      "slug": "sqladmin-v1",
+      "id": "sqladmin:v1",
+      "title": "Cloud SQL Admin API",
+      "discoveryRestUrl": "https://sqladmin.googleapis.com/$discovery/rest?version=v1",
+      "documentationLink": "https://cloud.google.com/sql/docs"
+    },
+    {
+      "slug": "gkehub-v2",
+      "id": "gkehub:v2",
+      "title": "GKE Hub API",
+      "discoveryRestUrl": "https://gkehub.googleapis.com/$discovery/rest?version=v2",
+      "documentationLink": "https://cloud.google.com/anthos/multicluster-management/connect/registering-a-cluster"
+    },
+    {
+      "slug": "artifactregistry-v1",
+      "id": "artifactregistry:v1",
+      "title": "Artifact Registry API",
+      "discoveryRestUrl": "https://artifactregistry.googleapis.com/$discovery/rest?version=v1",
+      "documentationLink": "https://cloud.google.com/artifacts/docs/"
+    },
+    {
+      "slug": "serviceusage-v1",
+      "id": "serviceusage:v1",
+      "title": "Service Usage API",
+      "discoveryRestUrl": "https://serviceusage.googleapis.com/$discovery/rest?version=v1",
+      "documentationLink": "https://cloud.google.com/service-usage/"
+    },
+    {
+      "slug": "dns-v1",
+      "id": "dns:v1",
+      "title": "Cloud DNS API",
+      "discoveryRestUrl": "https://dns.googleapis.com/$discovery/rest?version=v1",
+      "documentationLink": "https://cloud.google.com/dns/docs"
+    },
+    {
+      "slug": "servicenetworking-v1",
+      "id": "servicenetworking:v1",
+      "title": "Service Networking API",
+      "discoveryRestUrl": "https://servicenetworking.googleapis.com/$discovery/rest?version=v1",
+      "documentationLink": "https://cloud.google.com/service-infrastructure/docs/service-networking/getting-started"
+    }
+  ]
+}

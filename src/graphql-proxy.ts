@@ -24,7 +24,14 @@ import { buildGraphQLSchema } from "./graphql-schema-builder.js";
 const PORT = process.env.GRAPHQL_PORT ? parseInt(process.env.GRAPHQL_PORT) : 4000;
 
 async function main() {
-  const { openapi } = await loadSpec();
+  const loaded = await loadSpec();
+  const { openapi } = loaded;
+  if (loaded.multi) {
+    console.error(
+      "[graphql-proxy] Multi-spec env detected: building GraphQL from the **first** API only. " +
+        "MCP `execute` uses REST for all merged APIs — this server is optional for multi-spec workflows."
+    );
+  }
   const baseUrl = resolveApiBaseUrl(openapi);
 
   const prov = process.env.CLAWQL_PROVIDER?.trim();

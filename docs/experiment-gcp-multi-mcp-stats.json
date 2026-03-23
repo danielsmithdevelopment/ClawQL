@@ -1,0 +1,82 @@
+{
+  "sourceReport": "docs/workflow-gcp-multi-latest.json",
+  "generatedAt": "2026-03-23T05:22:54.608Z",
+  "mergedOperationCount": 1985,
+  "discoveryJsonTotalBytes": 11157299,
+  "discoveryApproxTokens": 2789325,
+  "searchCallCount": 11,
+  "crossCuttingResponseBytes": 12963,
+  "crossCuttingApproxTokens": 3241,
+  "workflowStepsResponseBytesTotal": 107817,
+  "totalSearchToolOutputBytes": 120780,
+  "totalSearchToolOutputApproxTokens": 30195,
+  "savingsVsEmbeddingAllDiscoveryJson": {
+    "discoveryBytes": 11157299,
+    "searchOutputBytes": 120780,
+    "byteRatio": 92.3770409008114,
+    "approxTokensIfPastedAllDiscovery": 2789325,
+    "approxTokensInSearchOutputs": 30195
+  },
+  "perStep": [
+    {
+      "section": "0. Service Usage — enable APIs",
+      "query": "batch enable services projects serviceusage",
+      "responseTextBytes": 6685,
+      "approxTokens": 1672
+    },
+    {
+      "section": "1. Resource Manager — project IAM",
+      "query": "get IAM policy project set bindings cloudresourcemanager",
+      "responseTextBytes": 6854,
+      "approxTokens": 1714
+    },
+    {
+      "section": "2. Networking & firewall",
+      "query": "compute firewall insert network subnet VPC ingress",
+      "responseTextBytes": 10320,
+      "approxTokens": 2580
+    },
+    {
+      "section": "3. GKE cluster",
+      "query": "create kubernetes cluster regional container locations",
+      "responseTextBytes": 7500,
+      "approxTokens": 1875
+    },
+    {
+      "section": "4. Logging",
+      "query": "logging sink create export logs BigQuery storage destination",
+      "responseTextBytes": 12128,
+      "approxTokens": 3032
+    },
+    {
+      "section": "5. Monitoring",
+      "query": "monitoring alert policy notification channel time series",
+      "responseTextBytes": 34280,
+      "approxTokens": 8570
+    },
+    {
+      "section": "6. Load balancing (Compute)",
+      "query": "global forwarding rule backend service health check url map HTTPS proxy",
+      "responseTextBytes": 7251,
+      "approxTokens": 1813
+    },
+    {
+      "section": "7. Cloud DNS",
+      "query": "DNS managed zone resource record set create A record",
+      "responseTextBytes": 9238,
+      "approxTokens": 2310
+    },
+    {
+      "section": "8. Cloud Storage",
+      "query": "storage bucket insert objects upload IAM policy",
+      "responseTextBytes": 5932,
+      "approxTokens": 1483
+    },
+    {
+      "section": "9. BigQuery",
+      "query": "BigQuery dataset query job insert table",
+      "responseTextBytes": 7629,
+      "approxTokens": 1908
+    }
+  ]
+}

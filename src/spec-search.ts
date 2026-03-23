@@ -69,12 +69,17 @@ function scoreOperation(
   const matchedOn: string[] = [];
 
   const idSegments = op.id.toLowerCase().split(".");
+  const labelLower = op.specLabel?.toLowerCase() ?? "";
   const descLower = op.description.toLowerCase();
   const pathLower = op.path.toLowerCase();
   const methodLower = op.method.toLowerCase();
   const paramNames = Object.keys(op.parameters).map((k) => k.toLowerCase());
 
   for (const term of terms) {
+    if (labelLower && labelLower.includes(term)) {
+      score += WEIGHTS.operationIdSegment;
+      matchedOn.push(`spec:${labelLower}`);
+    }
     // Operation ID segments
     if (idSegments.some((seg) => seg.includes(term))) {
       score += WEIGHTS.operationIdSegment;
@@ -163,6 +168,7 @@ export function formatSearchResults(results: SearchResult[]): string {
         requestBody: r.operation.requestBody ?? null,
         responseSchema: r.operation.responseBody ?? null,
         score: r.score,
+        specLabel: r.operation.specLabel ?? null,
       })),
     },
     null,

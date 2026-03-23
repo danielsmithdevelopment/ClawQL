@@ -8,6 +8,20 @@ full OpenAPI definitions into context.
 (converted automatically), or a **Google Discovery** document URL. If you set
 nothing, the demo default is the **Cloud Run v2** discovery spec.
 
+### Latest benchmark (bundled `google` · `jira` · `cloudflare`)
+
+Reproducible script: `npm run benchmark:tokens` → [`docs/benchmarks/latest.md`](docs/benchmarks/latest.md) · [`docs/benchmarks/REPRODUCE.md`](docs/benchmarks/REPRODUCE.md).  
+Token estimate: **~4 characters per token**. Phase 2 compares **full REST response JSON** vs **GraphQL response JSON** (representative [fixtures](docs/benchmarks/response-examples/); optional live calls with `BENCHMARK_LIVE=1`).
+
+| Provider | Phase 1 — full spec → top-5 `search` | Phase 2 — REST body → GraphQL body |
+|----------|--------------------------------------|-------------------------------------|
+| **google** (GKE list clusters) | 84,436 → 2,167 (**82,269 saved**, ~39×, **97.4%**) | 421 → 76 (**345 saved**, ~5.5×, **82.0%**) |
+| **jira** (get issue) | 266,579 → 901 (**265,678 saved**, ~296×, **99.7%**) | 386 → 40 (**346 saved**, ~9.7×, **89.6%**) |
+| **cloudflare** (list DNS records) | 2,206,098 → 2,377 (**2,203,721 saved**, ~928×, **99.9%**) | 177 → 80 (**97 saved**, ~2.2×, **54.8%**) |
+| **Average (3 providers)** | **~852,371 → ~1,815** (**~850,556 saved**, **~99.8%**) | **~328 → ~65** (**~263 saved**, **~80.2%**) |
+
+Phase 1 = planning context; Phase 2 = execution payloads returned to the agent.
+
 ---
 
 ## Install (npm / yarn / bun)
@@ -75,6 +89,8 @@ If your environment skips lifecycle scripts, run `npm run build` once manually.
 | Variable | Meaning |
 |----------|---------|
 | `CLAWQL_SPEC_PATH` | Path to local OpenAPI JSON/YAML (or `OPENAPI_SPEC_PATH`) |
+| `CLAWQL_SPEC_PATHS` | Comma/semicolon/newline-separated paths — **merge** many specs in **one** process (overrides single-spec vars when set) |
+| `CLAWQL_GOOGLE_TOP20_SPECS` | Set `1`/`true`/`yes` to load the curated multi-API list from `providers/google/google-top20-apis.json` (same merge behavior) |
 | `CLAWQL_SPEC_URL` | URL to fetch OpenAPI JSON/YAML |
 | `CLAWQL_DISCOVERY_URL` | Google Discovery JSON URL (e.g. other GCP APIs) |
 | `CLAWQL_PROVIDER` | Use a **bundled** preset (`jira`, `google`, `cloudflare`) when no path/URL/discovery env is set |
@@ -82,6 +98,9 @@ If your environment skips lifecycle scripts, run `npm run build` once manually.
 | `CLAWQL_API_BASE_URL` | Override REST base URL (if spec has no `servers` or you need a different host) |
 | `CLAWQL_BEARER_TOKEN` | `Authorization: Bearer …` for upstream calls (or legacy `GOOGLE_ACCESS_TOKEN`) |
 | `CLAWQL_HTTP_HEADERS` | JSON object of extra headers, merged with bearer |
+
+**GCP multi-service:** use **`CLAWQL_GOOGLE_TOP20_SPECS=1`** or **`CLAWQL_SPEC_PATHS`** so `search` / `execute` see every merged API in one server; `execute` uses REST in that mode. See [`docs/workflow-gcp-multi-service.md`](docs/workflow-gcp-multi-service.md).  
+**Integration check:** `npm run workflow:gcp-multi` runs **`tools/call` → `search`** over real MCP stdio and writes `docs/workflow-gcp-multi-latest.json` (full `CallToolResult` + parsed body). `npm run workflow:gcp-multi:direct` is a faster in-process-only variant for debugging rankers. Experiment write-up (queries, APIs, token heuristic, MCP samples): [`docs/experiment-gcp-multi-mcp-workflow.md`](docs/experiment-gcp-multi-mcp-workflow.md); `npm run report:gcp-multi-experiment` refreshes [`docs/experiment-gcp-multi-mcp-stats.json`](docs/experiment-gcp-multi-mcp-stats.json).
 
 If **none** of the spec variables are set, ClawQL loads the default **Cloud Run
 v2** discovery URL. Set **`CLAWQL_PROVIDER=jira`**, **`google`**, or **`cloudflare`** to prefer
@@ -148,124 +167,19 @@ Agent
 
 ---
 
-## Two-phase Token Optimization
+## How the two phases save tokens
 
-This project intentionally optimizes in **two separate phases**.
+| | **Phase 1 — planning** | **Phase 2 — execution** |
+|---|------------------------|-------------------------|
+| **Mechanism** | Two MCP tools (`search`, `execute`) + in-memory index — agents don’t load the full OpenAPI into context. | Internal GraphQL projects only the fields `execute` asks for; lean JSON vs a full REST body. |
+| **Typical win** | **Input** tokens: full spec → small `search` hits (see table above). On the default **Cloud Run** spec alone: ~66k → ~2k tokens per lookup (~97% smaller). | **Output** tokens: fat REST JSON → smaller GraphQL-shaped JSON (see table above; side-by-side JSON in [`latest.md`](docs/benchmarks/latest.md)). |
+| **Tradeoff** | — | Small **input** cost for the GraphQL query + variables. |
 
-### Phase 1 — Tool surface optimization (54 endpoints -> 2 MCP tools)
+**Why smaller planning context matters:** Long prompts can hurt accuracy even when retrieval is correct — e.g. [Du et al., EMNLP 2025](https://aclanthology.org/2025.findings-emnlp.1264/), [Liu et al., TACL 2024](https://aclanthology.org/2024.tacl-1.9/).
 
-Instead of exposing dozens of endpoint-specific tools, ClawQL exposes:
+**Pricing:** Many models bill **output** higher than **input**; Phase 2 targets execution payload size.
 
-- `search`
-- `execute`
-
-The agent discovers operations on demand from the in-memory index, instead of
-loading a giant endpoint/tool catalog up front.
-
-Measured on current Cloud Run v2 spec:
-
-- Full generated OpenAPI object: ~`66,296` tokens
-- Top-5 search result payload: ~`1,925` tokens
-- Approx reduction per lookup: ~`64,371` tokens (~`34x`, ~`97%` smaller)
-
-This is the **first major win**: drastically smaller planning/selection context.
-
-**Beyond cost — agent quality:** Packing huge specs or dozens of tool definitions into
-the model’s context isn’t just expensive; it can **hurt task performance**. The
-model must route and reason over more text before it gets to the user’s goal.
-Recent work shows that **input length alone** can reduce accuracy even when
-everything relevant was retrieved correctly — see Du et al., [*Context Length
-Alone Hurts LLM Performance Despite Perfect
-Retrieval*](https://aclanthology.org/2025.findings-emnlp.1264/) (Findings of
-EMNLP 2025). Separately, Liu et al.’s widely cited study [*Lost in the Middle:
-How Language Models Use Long
-Contexts*](https://aclanthology.org/2024.tacl-1.9/) (TACL 2024; originally
-[arXiv:2307.03172](https://arxiv.org/abs/2307.03172)) shows that model accuracy
-can depend strongly on **where** evidence sits inside a long prompt. Together,
-these motivate keeping planning context small: ClawQL’s two-tool surface plus
-on-demand `search` is aimed at **reducing that context bloat** for planning and
-tool selection, not only token bills.
-
-### Phase 2 — Response shaping optimization (GraphQL field selection)
-
-After the operation is chosen, GraphQL is used as a private execution layer to
-return only requested fields instead of full REST payload shapes.
-
-Measured from current schemas/field selection:
-
-- Full `GoogleCloudRunV2Service` schema shape: ~`2,671` tokens
-- Default list-services field selection expression: ~`20` tokens
-- Approx shape reduction: ~`2,651` tokens (~`133x`, ~`99%` smaller)
-
-This is the **second win**: smaller execution responses entering the model
-context window.
-
-#### How GraphQL saves tokens (before vs after)
-
-GraphQL reduces tokens by projecting only the fields needed for the task.
-
-- **Before (unshaped/full object):**
-  - A Cloud Run Service object can include many nested sections (traffic, template,
-    scaling, conditions, labels/annotations, etc.).
-  - Measured full `GoogleCloudRunV2Service` schema shape: ~`2,671` tokens.
-
-- **After (GraphQL-shaped):**
-  - In our list-services test, the resolved query field was
-    `googleCloudRunV2ListServicesResponse`.
-  - The selected fields were:
-    - `services { name uri latestReadyRevision reconciling createTime }`
-    - `nextPageToken`
-  - Measured field-selection shape: ~`20` tokens.
-
-- **Reduction from shaping alone:**
-  - ~`2,671` -> ~`20` tokens
-  - ~`2,651` tokens saved
-  - ~`133x` smaller (~`99.3%` reduction)
-
-Practical effect: once authenticated, each execution call returns a much leaner
-JSON payload to the model than a full REST-style object dump.
-
-> Notes:
-> - Token counts are estimated with `~4 chars/token`.
-> - Actual runtime savings vary by operation and returned list size/page size.
-> - The numbers above were measured from this repo's generated spec on 2026-03-19.
-
-### Input vs output token breakdown
-
-The two phases optimize **different sides** of the bill:
-
-| Phase | Primary win | Approx input impact | Approx output impact |
-|------|-------------|---------------------|----------------------|
-| **1 — Two tools** | Avoid loading the full spec/catalog | **~64,371 tokens saved** (66,296 → 1,925) | Small / indirect |
-| **2 — GraphQL shaping** | Lean execution payloads | Adds **~82 tokens** (GraphQL query + variables for list-services) | **~2,651 tokens saved** per shape (2,671 → 20) |
-
-- **Phase 1** is mostly an **input-token** reduction (planning / selection context).
-- **Phase 2** is mostly an **output-token** reduction (what comes back from the API call), with a small **input** cost for the GraphQL document and variables.
-
-**Pricing note:** Many providers charge **more per output token** than per input token (rates vary by model and change over time). That makes response shaping especially valuable when execution payloads would otherwise be large.
-
-### Provider benchmark breakdown (Phase 1 + Phase 2)
-
-The script measures **both** phases:
-
-- **Phase 1:** full serialized OpenAPI vs **top-5 `search`** result payload (planning / selection context).
-- **Phase 2 (execution payloads):** **full REST response JSON** (unfiltered body) vs **GraphQL response JSON** (same operation with a lean field selection — what `execute` returns). Default bodies come from committed **fixtures** in [`docs/benchmarks/response-examples/`](docs/benchmarks/response-examples/) (no credentials). Set **`BENCHMARK_LIVE=1`** + provider env to swap in **live** REST + GraphQL responses when both calls succeed — [`docs/benchmarks/REPRODUCE.md`](docs/benchmarks/REPRODUCE.md).
-
-`latest.json` also includes **`phase2Documentation`** (OpenAPI response schema vs field-selection string) as a separate *documentation-cost* estimate.
-
-Raw Phase 1 payloads are **omitted** from `latest.md` (too large). **Side-by-side** shows real JSON excerpts for Phase 2: fat REST vs lean GraphQL.
-
-**Reproduce:** `npm run benchmark:tokens` → [`docs/benchmarks/latest.json`](docs/benchmarks/latest.json) and [`docs/benchmarks/latest.md`](docs/benchmarks/latest.md). Snapshot below matches a recent run; re-run after spec changes.
-
-| Provider | Complex query (Phase 1 search) | Operation | Phase 1 (input) | Phase 2 (full REST JSON → GraphQL JSON) |
-|---|---|---|---|---|
-| `google` | "create gke kubernetes cluster…" | `container.projects.locations.clusters.list` | `84,436 → 2,167` (**82,269 saved**, `39.0x`, `97.4%`) | `421 → 76` (**345 saved**, `5.5x`, `82.0%`) |
-| `jira` | "create issue in project…" | `com.atlassian.jira.rest.v2.issue.IssueResource.getIssue_get` | `266,579 → 901` (**265,678 saved**, `295.9x`, `99.7%`) | `386 → 40` (**346 saved**, `9.7x`, `89.6%`) |
-| `cloudflare` | "create a DNS record…" | `dns-records-for-a-zone-list-dns-records` | `2,206,098 → 2,377` (**2,203,721 saved**, `928.1x`, `99.9%`) | `177 → 80` (**97 saved**, `2.2x`, `54.8%`) |
-
-**Average across all 3 providers:** Phase 1 `~852,371 → ~1,815` tokens (**~850,556 saved**, ~`99.8%`); Phase 2 **payload** `~328 → ~65` (**~263 saved**, ~`80.2%`).
-
-Token estimate uses `~4 chars/token`. Exact numbers drift with spec versions; re-run the script after changing bundled specs.
+**Reproduce / refresh numbers:** `npm run benchmark:tokens` (writes [`docs/benchmarks/latest.json`](docs/benchmarks/latest.json) + [`latest.md`](docs/benchmarks/latest.md)). `latest.json` also stores `phase2Documentation` (schema vs field-string doc cost) separately.
 
 ---
 
@@ -419,7 +333,11 @@ proxy at `http://localhost:4000/graphql` while it is running.
 
 ## Other GCP APIs (Discovery)
 
-Discovery-style APIs can be pointed at without code changes:
+Google lists **every** public Discovery API at [`https://www.googleapis.com/discovery/v1/apis`](https://www.googleapis.com/discovery/v1/apis). The repo vendors a snapshot as [`providers/google/google-apis-lookup.json`](providers/google/google-apis-lookup.json) (search by `id` / `title`, copy `discoveryRestUrl`). See [`docs/google-apis-lookup.md`](docs/google-apis-lookup.md) to refresh it.
+
+**Offline top 20:** IAM, Compute, Storage, GKE, Cloud Run, Pub/Sub, BigQuery, and 13 more are pre-downloaded under [`providers/google/apis/`](providers/google/apis/README.md) with optional GraphQL artifacts — see [`providers/google/google-top20-apis.json`](providers/google/google-top20-apis.json).
+
+Point ClawQL at any one Discovery document:
 
 ```bash
 export CLAWQL_DISCOVERY_URL="https://compute.googleapis.com/\$discovery/rest?version=v1"

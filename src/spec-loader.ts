@@ -11,7 +11,7 @@
  */
 
 import { readFile } from "node:fs/promises";
-import { resolve as resolvePath } from "node:path";
+import { basename, dirname, resolve as resolvePath } from "node:path";
 import fetch from "node-fetch";
 import { parse as parseYaml } from "yaml";
 import { convertObj } from "swagger2openapi";
@@ -35,6 +35,13 @@ export interface LoadedSpec {
   /** Original document (Discovery or OpenAPI) for debugging. */
   rawSource: Record<string, unknown>;
   openapi: OpenAPIDoc;
+  /**
+   * When `multi` is true, one OpenAPI doc per loaded file (same order as operations' `specIndex`).
+   * `openapi` remains the first document (GraphQL proxy / legacy callers).
+   */
+  openapis?: OpenAPIDoc[];
+  /** Multiple Discovery/OpenAPI files merged into one operation index; execute uses REST per spec. */
+  multi?: boolean;
 }
 
 // Minimal typings for the Google Discovery format
@@ -57,7 +64,8 @@ interface DiscoveryMethod {
   id: string;
   httpMethod: string;
   path: string;
-  flatPath: string;
+  /** Some APIs (e.g. Cloud Storage) omit this; `path` is used instead. */
+  flatPath?: string;
   description?: string;
   parameters?: Record<string, DiscoveryParam>;
   scopes?: string[];
@@ -480,6 +488,110 @@ export async function loadOpenAPIFromAbsolutePath(
 }
 
 // ─────────────────────────────────────────────
+// Multi-spec (merged operation index, REST per operation)
+// ─────────────────────────────────────────────
+
+function isTruthyEnv(v: string | undefined): boolean {
+  if (!v?.trim()) return false;
+  const t = v.trim().toLowerCase();
+  return t === "1" || t === "true" || t === "yes";
+}
+
+/** Derive a short label from a spec path (e.g. .../compute-v1/discovery.json → compute-v1). */
+export function labelFromSpecPath(relOrAbs: string): string {
+  const normalized = relOrAbs.replace(/\\/g, "/");
+  const parts = normalized.split("/").filter(Boolean);
+  const last = parts[parts.length - 1] ?? "spec";
+  if (
+    last === "discovery.json" ||
+    last.endsWith(".json") ||
+    last.endsWith(".yaml") ||
+    last.endsWith(".yml")
+  ) {
+    const parent = parts[parts.length - 2];
+    if (parent) return parent;
+  }
+  return last.replace(/\.(yaml|yml|json)$/i, "");
+}
+
+async function resolveMultiSpecItems(): Promise<
+  { abs: string; label: string }[] | null
+> {
+  const pathsEnv = process.env.CLAWQL_SPEC_PATHS?.trim();
+  if (pathsEnv) {
+    const parts = pathsEnv.split(/[,;\n]/).map((s) => s.trim()).filter(Boolean);
+    return parts.map((p) => ({
+      abs: resolvePath(process.cwd(), p),
+      label: labelFromSpecPath(p),
+    }));
+  }
+  if (isTruthyEnv(process.env.CLAWQL_GOOGLE_TOP20_SPECS)) {
+    const root = getPackageRoot();
+    const manifestPath = resolvePath(root, "providers/google/google-top20-apis.json");
+    const text = await readFile(manifestPath, "utf-8");
+    const data = JSON.parse(text) as { apis: Array<{ slug: string }> };
+    if (!Array.isArray(data.apis)) {
+      throw new Error("google-top20-apis.json: expected apis[]");
+    }
+    return data.apis.map((a) => ({
+      abs: resolvePath(root, "providers/google/apis", a.slug, "discovery.json"),
+      label: a.slug,
+    }));
+  }
+  return null;
+}
+
+async function loadMultiSpecFromItems(
+  items: { abs: string; label: string }[]
+): Promise<LoadedSpec> {
+  if (items.length === 0) {
+    throw new Error("Multi-spec: no spec paths resolved.");
+  }
+
+  const openapis: OpenAPIDoc[] = [];
+  const allOps: Operation[] = [];
+  const seenIds = new Set<string>();
+  const sources: unknown[] = [];
+
+  for (let i = 0; i < items.length; i++) {
+    const { abs, label } = items[i];
+    console.error(`[spec-loader] multi ${i + 1}/${items.length}: ${label} → ${abs}`);
+    const text = await readFile(abs, "utf-8");
+    const raw = parseSpecText(text);
+    const loaded = await buildLoadedSpec(raw);
+    openapis.push(loaded.openapi);
+    sources.push(loaded.rawSource);
+
+    for (const op of loaded.operations) {
+      let id = op.id;
+      if (seenIds.has(id)) {
+        id = `${label}::${op.id}`;
+      }
+      seenIds.add(id);
+      allOps.push({
+        ...op,
+        id,
+        specIndex: i,
+        specLabel: label,
+      });
+    }
+  }
+
+  return {
+    operations: allOps,
+    openapis,
+    openapi: openapis[0],
+    multi: true,
+    rawSource: {
+      multi: true,
+      count: items.length,
+      labels: items.map((x) => x.label),
+      sources,
+    } as Record<string, unknown>,
+  };
+}
+
+// ─────────────────────────────────────────────
 // Fetch + cache
 // ─────────────────────────────────────────────
 
@@ -491,6 +603,16 @@ export function resetSpecCache(): void {
 
 export async function loadSpec(): Promise<LoadedSpec> {
   if (cachedSpec) return cachedSpec;
+
+  const multiItems = await resolveMultiSpecItems();
+  if (multiItems) {
+    const loaded = await loadMultiSpecFromItems(multiItems);
+    cachedSpec = loaded;
+    console.error(
+      `[spec-loader] Multi-spec: ${multiItems.length} APIs merged → ${loaded.operations.length} operations (REST execution; GraphQL not used for execute)`
+    );
+    return cachedSpec;
+  }
 
   const source = resolveSpecSource();
   const raw = await loadRawDocument(source);
@@ -559,11 +681,16 @@ function methodToOperation(m: DiscoveryMethod, resourceName: string): Operation 
     };
   }
 
+  const path = m.path;
+  const flatPath = m.flatPath ?? m.path;
+  if (!flatPath || typeof flatPath !== "string") {
+    throw new Error(`Discovery method ${m.id} missing path/flatPath`);
+  }
   return {
     id: m.id,
     method: m.httpMethod,
-    path: m.path,
-    flatPath: m.flatPath,
+    path,
+    flatPath,
     description: m.description ?? "",
     resource: resourceName,
     parameters: params,
@@ -590,8 +717,9 @@ export function discoveryToOpenAPI(
     for (const scope of op.scopes) {
       oauthScopes[scope] = scope;
     }
+    const routeTemplate = op.flatPath ?? op.path;
     const oaPath =
-      "/" + op.flatPath.replace(/\{[+]?(\w+)\}/g, "{$1}");
+      "/" + String(routeTemplate).replace(/\{[+]?(\w+)\}/g, "{$1}");
 
     if (!paths[oaPath]) paths[oaPath] = {};
 

@@ -13,6 +13,12 @@ export interface Operation {
   scopes: string[];
   requestBody?: string;
   responseBody?: string;
+  /**
+   * When multiple specs are loaded, index into `LoadedSpec.openapis` for this operation.
+   */
+  specIndex?: number;
+  /** Short label for search results, e.g. `compute-v1`. */
+  specLabel?: string;
 }
 
 export interface ParameterInfo {

@@ -46,6 +46,13 @@ export function resetSchemaFieldCache(): void {
  * Returns whether disk cache was applied.
  */
 export async function preloadSchemaFieldCacheFromDisk(): Promise<boolean> {
+  const spec = await loadSpec();
+  if (spec.multi) {
+    console.error(
+      "[tools] Multi-spec mode: skipping GraphQL introspection cache (execute uses REST)."
+    );
+    return false;
+  }
   const parsed = await tryLoadIntrospectionFromDisk();
   if (!parsed) return false;
   schemaFieldCachePromise = Promise.resolve(parsed);
@@ -107,7 +114,8 @@ export function registerTools(server: McpServer) {
         ),
     },
     async ({ operationId, args, fields }) => {
-      const { operations, openapi } = await loadSpec();
+      const loaded = await loadSpec();
+      const { operations, openapi, openapis, multi } = loaded;
       const op = operations.find((o) => o.id === operationId);
 
       if (!op) {
@@ -117,6 +125,33 @@ export function registerTools(server: McpServer) {
             text: JSON.stringify({
               error: `Unknown operationId: "${operationId}". Use search() to find valid operation IDs.`,
             }),
+          }],
+        };
+      }
+
+      const openapiForOp =
+        multi && openapis?.length
+          ? openapis[op.specIndex ?? 0]
+          : openapi;
+
+      if (multi) {
+        const fallback = await executeRestOperation(op, args, openapiForOp);
+        if (!fallback.ok) {
+          return {
+            content: [{
+              type: "text",
+              text: JSON.stringify({
+                error: fallback.error,
+                specLabel: op.specLabel ?? null,
+                hint: "Multi-spec mode uses REST only (no GraphQL). Check path/query/body args.",
+              }),
+            }],
+          };
+        }
+        return {
+          content: [{
+            type: "text",
+            text: JSON.stringify(fallback.data, null, 2),
           }],
         };
       }
@@ -152,7 +187,7 @@ export function registerTools(server: McpServer) {
           content: [{ type: "text", text: JSON.stringify(data[fieldName], null, 2) }],
         };
       } catch (err: unknown) {
-        const fallback = await executeRestOperation(op, args, openapi);
+        const fallback = await executeRestOperation(op, args, openapiForOp);
         if (!fallback.ok) {
           const reason = err instanceof Error ? err.message : String(err);
           return {

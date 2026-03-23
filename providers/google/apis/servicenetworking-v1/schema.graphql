@@ -1,0 +1,1248 @@
+directive @enum(subgraph: String, value: String) on ENUM_VALUE
+
+directive @httpOperation(subgraph: String, path: String, operationSpecificHeaders: [[String]], httpMethod: HTTPMethod, isBinary: Boolean, requestBaseBody: ObjMap, queryParamArgMap: ObjMap, queryStringOptionsByParam: ObjMap, jsonApiFields: Boolean, queryStringOptions: ObjMap) on FIELD_DEFINITION
+
+directive @transport(subgraph: String, kind: String, location: String, headers: [[String]], queryStringOptions: ObjMap, queryParams: [[String]]) repeatable on SCHEMA
+
+type Query {
+  """
+  Lists operations that match the specified filter in the request. If the server doesn't support this method, it returns `UNIMPLEMENTED`.
+  """
+  servicenetworking_operations_list(
+    """The standard list filter."""
+    filter: String
+
+    """The standard list page size."""
+    pageSize: Int
+
+    """The standard list page token."""
+    pageToken: String
+
+    """
+    When set to `true`, operations that are reachable are returned as normal, and those that are unreachable are returned in the ListOperationsResponse.unreachable field. This can only be `true` when reading across collections. For example, when `parent` is set to `"projects/example/locations/-"`. This field is not supported by default and will result in an `UNIMPLEMENTED` error if set unless explicitly documented otherwise in service or product specific documentation.
+    """
+    returnPartialSuccess: Boolean
+  ): ListOperationsResponse
+
+  """
+  Gets the latest state of a long-running operation. Clients can use this method to poll the operation result at intervals as recommended by the API service.
+  """
+  servicenetworking_operations_get(
+    """Path parameter operationsId"""
+    operationsId: String!
+  ): Operation
+
+  """
+  List the private connections that are configured in a service consumer's VPC network.
+  """
+  servicenetworking_services_connections_list(
+    """Path parameter servicesId"""
+    servicesId: String!
+
+    """
+    Required. The name of service consumer's VPC network that's connected with service producer network through a private connection. The network name must be in the following format: `projects/{project}/global/networks/{network}`. {project} is a project number, such as in `12345` that includes the VPC service consumer's VPC network. {network} is the name of the service consumer's VPC network.
+    """
+    network: String
+  ): ListConnectionsResponse
+
+  """
+  Consumers use this method to find out the state of VPC Service Controls. The controls could be enabled or disabled for a connection.
+  """
+  servicenetworking_services_projects_global_networks_getVpcServiceControls(
+    """Path parameter servicesId"""
+    servicesId: String!
+
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter networksId"""
+    networksId: String!
+  ): VpcServiceControls
+
+  """
+  Service producers use this method to get the configuration of their connection including the import/export of custom routes and subnetwork routes with public IP.
+  """
+  servicenetworking_services_projects_global_networks_get(
+    """Path parameter servicesId"""
+    servicesId: String!
+
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter networksId"""
+    networksId: String!
+
+    """
+    Optional. When true, include the used IP ranges as part of the GetConsumerConfig output. This includes routes created inside the service networking network, consumer network, peers of the consumer network, and reserved ranges inside the service networking network. By default, this is false
+    """
+    includeUsedIpRanges: Boolean
+  ): ConsumerConfig
+
+  """
+  * Service producers can use this method to retrieve a list of available DNS zones in the shared producer host project and the matching peering zones in the consumer project. *
+  """
+  servicenetworking_services_projects_global_networks_dnsZones_list(
+    """Path parameter servicesId"""
+    servicesId: String!
+
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter networksId"""
+    networksId: String!
+  ): ListDnsZonesResponse
+
+  """
+  Service producers can use this method to retrieve a DNS zone in the shared producer host project and the matching peering zones in consumer project
+  """
+  servicenetworking_services_projects_global_networks_dnsZones_get(
+    """Path parameter servicesId"""
+    servicesId: String!
+
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter networksId"""
+    networksId: String!
+
+    """Path parameter dnsZonesId"""
+    dnsZonesId: String!
+  ): GetDnsZoneResponse
+
+  """Lists peered DNS domains for a connection."""
+  servicenetworking_services_projects_global_networks_peeredDnsDomains_list(
+    """Path parameter servicesId"""
+    servicesId: String!
+
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter networksId"""
+    networksId: String!
+  ): ListPeeredDnsDomainsResponse
+
+  """
+  Producers can use this method to retrieve information about the DNS record set added to the private zone inside the shared tenant host project associated with a consumer network.
+  """
+  servicenetworking_services_dnsRecordSets_get(
+    """Path parameter servicesId"""
+    servicesId: String!
+
+    """
+    Required. The consumer network containing the record set. Must be in the form of projects/{project}/global/networks/{network}
+    """
+    consumerNetwork: String
+
+    """Required. The name of the zone containing the record set."""
+    zone: String
+
+    """Required. The domain name of the zone containing the recordset."""
+    domain: String
+
+    """
+    Required. RecordSet Type eg. type='A'. See the list of [Supported DNS Types](https://cloud.google.com/dns/records/json-record).
+    """
+    type: String
+  ): DnsRecordSet
+
+  """
+  Producers can use this method to retrieve a list of available DNS RecordSets available inside the private zone on the tenant host project accessible from their network.
+  """
+  servicenetworking_services_dnsRecordSets_list(
+    """Path parameter servicesId"""
+    servicesId: String!
+
+    """
+    Required. The network that the consumer is using to connect with services. Must be in the form of projects/{project}/global/networks/{network} {project} is the project number, as in '12345' {network} is the network name.
+    """
+    consumerNetwork: String
+
+    """
+    Required. The name of the private DNS zone in the shared producer host project from which the record set will be removed.
+    """
+    zone: String
+  ): ListDnsRecordSetsResponse
+}
+
+"""The response message for Operations.ListOperations."""
+type ListOperationsResponse {
+  """A list of operations that matches the specified filter in the request."""
+  operations: [Operation]
+
+  """The standard List next-page token."""
+  nextPageToken: String
+
+  """
+  Unordered list. Unreachable resources. Populated when the request sets `ListOperationsRequest.return_partial_success` and reads across collections. For example, when attempting to list all resources across all supported locations.
+  """
+  unreachable: [String]
+}
+
+"""
+This resource represents a long-running operation that is the result of a network API call.
+"""
+type Operation {
+  """
+  The server-assigned name, which is only unique within the same service that originally returns it. If you use the default HTTP mapping, the `name` should be a resource name ending with `operations/{unique_id}`.
+  """
+  name: String
+
+  """
+  Service-specific metadata associated with the operation. It typically contains progress information and common metadata such as create time. Some services might not provide such metadata. Any method that returns a long-running operation should document the metadata type, if any.
+  """
+  metadata: JSON
+
+  """
+  If the value is `false`, it means the operation is still in progress. If `true`, the operation is completed, and either `error` or `response` is available.
+  """
+  done: Boolean
+  error: Status
+
+  """
+  The normal, successful response of the operation. If the original method returns no data on success, such as `Delete`, the response is `google.protobuf.Empty`. If the original method is standard `Get`/`Create`/`Update`, the response should be the resource. For other methods, the response should have the type `XxxResponse`, where `Xxx` is the original method name. For example, if the original method name is `TakeSnapshot()`, the inferred response type is `TakeSnapshotResponse`.
+  """
+  response: JSON
+}
+
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSON @specifiedBy(url: "http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf")
+
+"""
+The `Status` type defines a logical error model that is suitable for different programming environments, including REST APIs and RPC APIs. It is used by [gRPC](https://github.com/grpc). Each `Status` message contains three pieces of data: error code, error message, and error details. You can find out more about this error model and how to work with it in the [API Design Guide](https://cloud.google.com/apis/design/errors).
+"""
+type Status {
+  """The status code, which should be an enum value of google.rpc.Code."""
+  code: Int
+
+  """
+  A developer-facing error message, which should be in English. Any user-facing error message should be localized and sent in the google.rpc.Status.details field, or localized by the client.
+  """
+  message: String
+
+  """
+  A list of messages that carry the error details. There is a common set of message types for APIs to use.
+  """
+  details: [JSON]
+}
+
+"""
+ListConnectionsResponse is the response to list peering states for the given service and consumer project.
+"""
+type ListConnectionsResponse {
+  """The list of Connections."""
+  connections: [Connection]
+}
+
+"""
+Represents a private connection resource. A private connection is implemented as a VPC Network Peering connection between a service producer's VPC network and a service consumer's VPC network.
+"""
+type Connection {
+  """
+  Required. The name of service consumer's VPC network that's connected with service producer network, in the following format: `projects/{project}/global/networks/{network}`. `{project}` is a project number, such as in `12345` that includes the VPC service consumer's VPC network. `{network}` is the name of the service consumer's VPC network.
+  """
+  network: String
+
+  """
+  The name of one or more allocated IP address ranges for this service producer of type `PEERING`. Note that invoking CreateConnection method with a different range when connection is already established will not modify already provisioned service producer subnetworks. If CreateConnection method is invoked repeatedly to reconnect when peering connection had been disconnected on the consumer side, leaving this field empty will restore previously allocated IP ranges.
+  """
+  reservedPeeringRanges: [String]
+
+  """
+  Output only. The name of the VPC Network Peering connection that was created by the service producer.
+  """
+  peering: String
+
+  """
+  Output only. The name of the peering service that's associated with this connection, in the following format: `services/{service name}`.
+  """
+  service: String
+}
+
+"""Response for the get VPC Service Controls request."""
+type VpcServiceControls {
+  """
+  Output only. Indicates whether the VPC Service Controls are enabled or disabled for the connection. If the consumer called the EnableVpcServiceControls method, then this is true. If the consumer called DisableVpcServiceControls, then this is false. The default is false.
+  """
+  enabled: Boolean
+}
+
+"""Configuration information for a private service access connection."""
+type ConsumerConfig {
+  """
+  Output only. The VPC host network that is used to host managed service instances. In the format, projects/{project}/global/networks/{network} where {project} is the project number e.g. '12345' and {network} is the network name.
+  """
+  producerNetwork: String
+
+  """Import custom routes flag value for peering from consumer to producer."""
+  consumerImportCustomRoutes: Boolean
+
+  """Export custom routes flag value for peering from consumer to producer."""
+  consumerExportCustomRoutes: Boolean
+
+  """Import custom routes flag value for peering from producer to consumer."""
+  producerImportCustomRoutes: Boolean
+
+  """Export custom routes flag value for peering from producer to consumer."""
+  producerExportCustomRoutes: Boolean
+
+  """
+  Import subnet routes with public ip flag value for peering from consumer to producer.
+  """
+  consumerImportSubnetRoutesWithPublicIp: Boolean
+
+  """
+  Export subnet routes with public ip flag value for peering from consumer to producer.
+  """
+  consumerExportSubnetRoutesWithPublicIp: Boolean
+
+  """
+  Import subnet routes with public ip flag value for peering from producer to consumer.
+  """
+  producerImportSubnetRoutesWithPublicIp: Boolean
+
+  """
+  Export subnet routes with public ip flag value for peering from producer to consumer.
+  """
+  producerExportSubnetRoutesWithPublicIp: Boolean
+
+  """
+  Output only. The reserved ranges associated with this private service access connection.
+  """
+  reservedRanges: [GoogleCloudServicenetworkingV1ConsumerConfigReservedRange]
+
+  """
+  Output only. Indicates whether the VPC Service Controls reference architecture is configured for the producer VPC host network.
+  """
+  vpcScReferenceArchitectureEnabled: Boolean
+
+  """Output only. The IP ranges already in use by consumer or producer"""
+  usedIpRanges: [String]
+
+  """Represents one or multiple Cloud SQL configurations."""
+  cloudsqlConfigs: [CloudSQLConfig]
+
+  """Output only. If this is true, consumer peering is active."""
+  consumerPeeringActive: Boolean
+}
+
+"""
+Allocated IP address ranges for this private service access connection.
+"""
+type GoogleCloudServicenetworkingV1ConsumerConfigReservedRange {
+  """The name of the reserved range."""
+  name: String
+
+  """The prefix length of the reserved range."""
+  ipPrefixLength: Int
+
+  """
+  The starting address of the reserved range. The address must be a valid IPv4 address in the x.x.x.x format. This value combined with the IP prefix length is the CIDR range for the reserved range.
+  """
+  address: String
+}
+
+"""Cloud SQL configuration."""
+type CloudSQLConfig {
+  """Required. Peering service used for peering with the Cloud SQL project."""
+  service: String
+
+  """Required. The project number of the Cloud SQL umbrella project."""
+  umbrellaProject: BigInt
+
+  """
+  Required. The name of the umbrella network in the Cloud SQL umbrella project.
+  """
+  umbrellaNetwork: String
+}
+
+"""
+The `BigInt` scalar type represents non-fractional signed whole numeric values.
+"""
+scalar BigInt
+
+"""
+Represents all DNS zones in the shared producer host project and the matching peering zones in the consumer project.
+"""
+type ListDnsZonesResponse {
+  """
+  All pairs of private DNS zones in the shared producer host project and the matching peering zones in the consumer project..
+  """
+  dnsZonePairs: [DnsZonePair]
+}
+
+"""* Represents a pair of private and peering DNS zone resources. *"""
+type DnsZonePair {
+  producerPrivateZone: DnsZone
+  consumerPeeringZone: DnsZone
+}
+
+"""Represents a DNS zone resource."""
+type DnsZone {
+  """
+  User assigned name for this resource. Must be unique within the project. The name must be 1-63 characters long, must begin with a letter, end with a letter or digit, and only contain lowercase letters, digits or dashes.
+  """
+  name: String
+
+  """
+  The DNS name suffix of this zone e.g. `example.com.`. Cloud DNS requires that a DNS suffix ends with a trailing dot.
+  """
+  dnsSuffix: String
+}
+
+"""
+Represents managed DNS zones created in the shared Producer host and consumer projects.
+"""
+type GetDnsZoneResponse {
+  producerPrivateZone: DnsZone
+  consumerPeeringZone: DnsZone
+}
+
+"""Response to list peered DNS domains for a given connection."""
+type ListPeeredDnsDomainsResponse {
+  """The list of peered DNS domains."""
+  peeredDnsDomains: [PeeredDnsDomain]
+}
+
+"""
+DNS domain suffix for which requests originating in the producer VPC network are resolved in the associated consumer VPC network.
+"""
+type PeeredDnsDomain {
+  """
+  Required. User assigned name for this resource. Must be unique within the consumer network. The name must be 1-63 characters long, must begin with a letter, end with a letter or digit, and only contain lowercase letters, digits or dashes.
+  """
+  name: String
+
+  """
+  The DNS domain name suffix e.g. `example.com.`. Cloud DNS requires that a DNS suffix ends with a trailing dot.
+  """
+  dnsSuffix: String
+}
+
+"""Represents a DNS record set resource."""
+type DnsRecordSet {
+  """
+  Required. The DNS or domain name of the record set, e.g. `test.example.com`. Cloud DNS requires that a DNS suffix ends with a trailing dot.
+  """
+  domain: String
+
+  """Required. The identifier of a supported record type."""
+  type: String
+
+  """
+  Required. The period of time for which this RecordSet can be cached by resolvers.
+  """
+  ttl: String
+
+  """
+  Required. As defined in RFC 1035 (section 5) and RFC 1034 (section 3.6.1) for examples see https://cloud.google.com/dns/records/json-record.
+  """
+  data: [String]
+}
+
+"""Represents all DNS RecordSets associated with the producer network"""
+type ListDnsRecordSetsResponse {
+  """DNS record Set Resource"""
+  dnsRecordSets: [DnsRecordSet]
+}
+
+type Mutation {
+  """
+  Deletes a long-running operation. This method indicates that the client is no longer interested in the operation result. It does not cancel the operation. If the server doesn't support this method, it returns `google.rpc.Code.UNIMPLEMENTED`.
+  """
+  servicenetworking_operations_delete(
+    """Path parameter operationsId"""
+    operationsId: String!
+  ): JSON
+
+  """
+  Starts asynchronous cancellation on a long-running operation. The server makes a best effort to cancel the operation, but success is not guaranteed. If the server doesn't support this method, it returns `google.rpc.Code.UNIMPLEMENTED`. Clients can use Operations.GetOperation or other methods to check whether the cancellation succeeded or whether the operation completed despite cancellation. On successful cancellation, the operation is not deleted; instead, it becomes an operation with an Operation.error value with a google.rpc.Status.code of `1`, corresponding to `Code.CANCELLED`.
+  """
+  servicenetworking_operations_cancel(
+    """Path parameter operationsId"""
+    operationsId: String!
+
+    """The request message for Operations.CancelOperation."""
+    input: JSON
+  ): JSON
+
+  """Disables VPC service controls for a connection."""
+  servicenetworking_services_disableVpcServiceControls(
+    """Path parameter servicesId"""
+    servicesId: String!
+    input: DisableVpcServiceControlsRequest_Input
+  ): Operation
+
+  """Enables VPC service controls for a connection."""
+  servicenetworking_services_enableVpcServiceControls(
+    """Path parameter servicesId"""
+    servicesId: String!
+    input: EnableVpcServiceControlsRequest_Input
+  ): Operation
+
+  """
+  For service producers, provisions a new subnet in a peered service's shared VPC network in the requested region and with the requested size that's expressed as a CIDR range (number of leading bits of ipV4 network mask). The method checks against the assigned allocated ranges to find a non-conflicting IP address range. The method will reuse a subnet if subsequent calls contain the same subnet name, region, and prefix length. This method will make producer's tenant project to be a shared VPC service project as needed.
+  """
+  servicenetworking_services_addSubnetwork(
+    """Path parameter servicesId"""
+    servicesId: String!
+
+    """Path parameter servicesId1"""
+    servicesId1: String!
+
+    """Path parameter servicesId2"""
+    servicesId2: String!
+    input: AddSubnetworkRequest_Input
+  ): Operation
+
+  """
+  Service producers can use this method to find a currently unused range within consumer allocated ranges. This returned range is not reserved, and not guaranteed to remain unused. It will validate previously provided allocated ranges, find non-conflicting sub-range of requested size (expressed in number of leading bits of ipv4 network mask, as in CIDR range notation).
+  """
+  servicenetworking_services_searchRange(
+    """Path parameter servicesId"""
+    servicesId: String!
+    input: SearchRangeRequest_Input
+  ): Operation
+
+  """
+  Service producers use this method to validate if the consumer provided network, project and requested range are valid. This allows them to use a fail-fast mechanism for consumer requests, and not have to wait for AddSubnetwork operation completion to determine if user request is invalid.
+  """
+  servicenetworking_services_validate(
+    """Path parameter servicesId"""
+    servicesId: String!
+    input: ValidateConsumerConfigRequest_Input
+  ): ValidateConsumerConfigResponse
+
+  """
+  Creates a private connection that establishes a VPC Network Peering connection to a VPC network in the service producer's organization. The administrator of the service consumer's VPC network invokes this method. The administrator must assign one or more allocated IP ranges for provisioning subnetworks in the service producer's VPC network. This connection is used for all supported services in the service producer's organization, so it only needs to be invoked once.
+  """
+  servicenetworking_services_connections_create(
+    """Path parameter servicesId"""
+    servicesId: String!
+    input: Connection_Input
+  ): Operation
+
+  """Deletes a private service access connection."""
+  servicenetworking_services_connections_deleteConnection(
+    """Path parameter servicesId"""
+    servicesId: String!
+
+    """Path parameter connectionsId"""
+    connectionsId: String!
+    input: DeleteConnectionRequest_Input
+  ): Operation
+
+  """Updates the allocated ranges that are assigned to a connection."""
+  servicenetworking_services_connections_patch(
+    """Path parameter servicesId"""
+    servicesId: String!
+
+    """Path parameter connectionsId"""
+    connectionsId: String!
+
+    """
+    The update mask. If this is omitted, it defaults to "*". You can only update the listed peering ranges.
+    """
+    updateMask: String
+
+    """
+    If a previously defined allocated range is removed, force flag must be set to true.
+    """
+    force: Boolean
+    input: Connection_Input
+  ): Operation
+
+  """
+  Service producers use this method to update the configuration of their connection including the import/export of custom routes and subnetwork routes with public IP.
+  """
+  servicenetworking_services_projects_global_networks_updateConsumerConfig(
+    """Path parameter servicesId"""
+    servicesId: String!
+
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter networksId"""
+    networksId: String!
+    input: UpdateConsumerConfigRequest_Input
+  ): Operation
+
+  """
+  Creates a peered DNS domain which sends requests for records in given namespace originating in the service producer VPC network to the consumer VPC network to be resolved.
+  """
+  servicenetworking_services_projects_global_networks_peeredDnsDomains_create(
+    """Path parameter servicesId"""
+    servicesId: String!
+
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter networksId"""
+    networksId: String!
+    input: PeeredDnsDomain_Input
+  ): Operation
+
+  """Deletes a peered DNS domain."""
+  servicenetworking_services_projects_global_networks_peeredDnsDomains_delete(
+    """Path parameter servicesId"""
+    servicesId: String!
+
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter networksId"""
+    networksId: String!
+
+    """Path parameter peeredDnsDomainsId"""
+    peeredDnsDomainsId: String!
+  ): Operation
+
+  """
+  Service producers can use this method to add roles in the shared VPC host project. Each role is bound to the provided member. Each role must be selected from within an allowlisted set of roles. Each role is applied at only the granularity specified in the allowlist.
+  """
+  servicenetworking_services_roles_add(
+    """Path parameter servicesId"""
+    servicesId: String!
+    input: AddRolesRequest_Input
+  ): Operation
+
+  """
+  Service producers can use this method to add private DNS zones in the shared producer host project and matching peering zones in the consumer project.
+  """
+  servicenetworking_services_dnsZones_add(
+    """Path parameter servicesId"""
+    servicesId: String!
+    input: AddDnsZoneRequest_Input
+  ): Operation
+
+  """
+  Service producers can use this method to remove private DNS zones in the shared producer host project and matching peering zones in the consumer project.
+  """
+  servicenetworking_services_dnsZones_remove(
+    """Path parameter servicesId"""
+    servicesId: String!
+    input: RemoveDnsZoneRequest_Input
+  ): Operation
+
+  """
+  Service producers can use this method to add DNS record sets to private DNS zones in the shared producer host project.
+  """
+  servicenetworking_services_dnsRecordSets_add(
+    """Path parameter servicesId"""
+    servicesId: String!
+    input: AddDnsRecordSetRequest_Input
+  ): Operation
+
+  """
+  Service producers can use this method to remove DNS record sets from private DNS zones in the shared producer host project.
+  """
+  servicenetworking_services_dnsRecordSets_remove(
+    """Path parameter servicesId"""
+    servicesId: String!
+    input: RemoveDnsRecordSetRequest_Input
+  ): Operation
+
+  """
+  Service producers can use this method to update DNS record sets from private DNS zones in the shared producer host project.
+  """
+  servicenetworking_services_dnsRecordSets_update(
+    """Path parameter servicesId"""
+    servicesId: String!
+    input: UpdateDnsRecordSetRequest_Input
+  ): Operation
+}
+
+"""Request to disable VPC service controls."""
+input DisableVpcServiceControlsRequest_Input {
+  """
+  Required. The network that the consumer is using to connect with services. Must be in the form of projects/{project}/global/networks/{network} {project} is a project number, as in '12345' {network} is network name.
+  """
+  consumerNetwork: String
+}
+
+"""Request to enable VPC service controls."""
+input EnableVpcServiceControlsRequest_Input {
+  """
+  Required. The network that the consumer is using to connect with services. Must be in the form of projects/{project}/global/networks/{network} {project} is a project number, as in '12345' {network} is network name.
+  """
+  consumerNetwork: String
+}
+
+"""Request to create a subnetwork in a previously peered service network."""
+input AddSubnetworkRequest_Input {
+  """
+  Required. The name of the service consumer's VPC network. The network must have an existing private connection that was provisioned through the connections.create method. The name must be in the following format: `projects/{project}/global/networks/{network}`, where {project} is a project number, such as `12345`. {network} is the name of a VPC network in the project.
+  """
+  consumerNetwork: String
+
+  """
+  Required. A name for the new subnet. For information about the naming requirements, see [subnetwork](https://cloud.google.com/compute/docs/reference/rest/v1/subnetworks) in the Compute API documentation.
+  """
+  subnetwork: String
+
+  """
+  Required. The name of a [region](https://cloud.google.com/compute/docs/regions-zones) for the subnet, such `europe-west1`.
+  """
+  region: String
+
+  """
+  Required. The prefix length of the subnet's IP address range. Use CIDR range notation, such as `29` to provision a subnet with an `x.x.x.x/29` CIDR range. The IP address range is drawn from a pool of available ranges in the service consumer's allocated range. GCE disallows subnets with prefix_length > 29
+  """
+  ipPrefixLength: Int
+
+  """Optional. Description of the subnet."""
+  description: String
+
+  """
+  A list of members that are granted the `roles/servicenetworking.subnetworkAdmin` role on the subnet.
+  """
+  subnetworkUsers: [String]
+
+  """
+  Required. A resource that represents the service consumer, such as `projects/123456`. The project number can be different from the value in the consumer network parameter. For example, the network might be part of a Shared VPC network. In those cases, Service Networking validates that this resource belongs to that Shared VPC.
+  """
+  consumer: String
+
+  """
+  Optional. The starting address of a range. The address must be a valid IPv4 address in the x.x.x.x format. This value combined with the IP prefix range is the CIDR range for the subnet. The range must be within the allocated range that is assigned to the private connection. If the CIDR range isn't available, the call fails.
+  """
+  requestedAddress: String
+
+  """
+  Optional. A list of secondary IP ranges to be created within the new subnetwork.
+  """
+  secondaryIpRangeSpecs: [SecondaryIpRangeSpec_Input]
+
+  """
+  Optional. The private IPv6 google access type for the VMs in this subnet. For information about the access types that can be set using this field, see [subnetwork](https://cloud.google.com/compute/docs/reference/rest/v1/subnetworks) in the Compute API documentation.
+  """
+  privateIpv6GoogleAccess: String
+
+  """
+  Optional. The name of one or more allocated IP address ranges associated with this private service access connection. If no range names are provided all ranges associated with this connection will be considered. If a CIDR range with the specified IP prefix length is not available within these ranges, the call fails.
+  """
+  requestedRanges: [String]
+
+  """
+  Optional. Enable outside allocation using public IP addresses. Any public IP range may be specified. If this field is provided, we will not use customer reserved ranges for this primary IP range.
+  """
+  outsideAllocationPublicIpRange: String
+
+  """
+  Optional. Defines the purpose field of the subnet, e.g. 'PRIVATE_SERVICE_CONNECT'. For information about the purposes that can be set using this field, see [subnetwork](https://cloud.google.com/compute/docs/reference/rest/v1/subnetworks) in the Compute API documentation.
+  """
+  purpose: String
+
+  """
+  Optional. The IAM permission check determines whether the consumer project has 'servicenetworking.services.use' permission or not.
+  """
+  checkServiceNetworkingUsePermission: Boolean
+
+  """
+  Optional. Specifies if Service Networking should use a custom time bucket for GCE idempotency. If false, Service Networking uses a 300 second (5 minute) GCE idempotency window. If true, Service Networking uses a custom idempotency window provided by the user in field compute_idempotency_window.
+  """
+  useCustomComputeIdempotencyWindow: Boolean
+
+  """
+  Optional. Specifies a custom time bucket for GCE subnetwork request idempotency. If two equivalent concurrent requests are made, GCE will know to ignore the request if it has already been completed or is in progress. Only requests with matching compute_idempotency_window have guaranteed idempotency. Changing this time window between requests results in undefined behavior. Zero (or empty) value with custom_compute_idempotency_window=true specifies no idempotency (i.e. no request ID is provided to GCE). Maximum value of 14 days (enforced by GCE limit).
+  """
+  computeIdempotencyWindow: String
+
+  """
+  Optional. Defines the allowSubnetCidrRoutesOverlap field of the subnet, e.g. Available in alpha and beta according to [Compute API documentation](https://cloud.google.com/compute/docs/reference/rest/beta/subnetworks/insert)
+  """
+  allowSubnetCidrRoutesOverlap: Boolean
+
+  """
+  Optional. Defines the role field of the subnet, e.g. 'ACTIVE'. For information about the roles that can be set using this field, see [subnetwork](https://cloud.google.com/compute/docs/reference/rest/v1/subnetworks) in the Compute API documentation.
+  """
+  role: String
+
+  """
+  Optional. The url of an Internal Range. Eg: `projects//locations/global/internalRanges/`. If specified, it means that the subnetwork cidr will be created using the combination of requested_address/ip_prefix_length. Note that the subnet cidr has to be within the cidr range of this Internal Range.
+  """
+  internalRange: String
+
+  """
+  Optional. Skips validating if the requested_address is in use by SN VPC’s peering group. Compute Engine will still perform this check and fail the request if the requested_address is in use. Note that Compute Engine does not check for the existence of dynamic routes when performing this check. Caller of this API should make sure that there are no dynamic routes overlapping with the requested_address/prefix_length IP address range otherwise the created subnet could cause misrouting.
+  """
+  skipRequestedAddressValidation: Boolean
+}
+
+input SecondaryIpRangeSpec_Input {
+  """
+  Required. A name for the secondary IP range. The name must be 1-63 characters long, and comply with RFC1035. The name must be unique within the subnetwork.
+  """
+  rangeName: String
+
+  """
+  Required. The prefix length of the secondary IP range. Use CIDR range notation, such as `30` to provision a secondary IP range with an `x.x.x.x/30` CIDR range. The IP address range is drawn from a pool of available ranges in the service consumer's allocated range.
+  """
+  ipPrefixLength: Int
+
+  """
+  Optional. The starting address of a range. The address must be a valid IPv4 address in the x.x.x.x format. This value combined with the IP prefix range is the CIDR range for the secondary IP range. The range must be within the allocated range that is assigned to the private connection. If the CIDR range isn't available, the call fails.
+  """
+  requestedAddress: String
+
+  """
+  Optional. Enable outside allocation using public IP addresses. Any public IP range may be specified. If this field is provided, we will not use customer reserved ranges for this secondary IP range.
+  """
+  outsideAllocationPublicIpRange: String
+}
+
+"""Request to search for an unused range within allocated ranges."""
+input SearchRangeRequest_Input {
+  """
+  Required. Network name in the consumer project. This network must have been already peered with a shared VPC network using CreateConnection method. Must be in a form 'projects/{project}/global/networks/{network}'. {project} is a project number, as in '12345' {network} is network name.
+  """
+  network: String
+
+  """
+  Required. The prefix length of the IP range. Use usual CIDR range notation. For example, '30' to find unused x.x.x.x/30 CIDR range. Actual range will be determined using allocated range for the consumer peered network and returned in the result.
+  """
+  ipPrefixLength: Int
+}
+
+type ValidateConsumerConfigResponse {
+  """Indicates whether all the requested validations passed."""
+  isValid: Boolean
+  validationError: mutation_servicenetworking_services_validate_validationError
+
+  """
+  List of subnetwork candidates from the request which exist with the `ip_cidr_range`, `secondary_ip_cider_ranges`, and `outside_allocation` fields set.
+  """
+  existingSubnetworkCandidates: [Subnetwork]
+}
+
+"""The first validation which failed."""
+enum mutation_servicenetworking_services_validate_validationError {
+  VALIDATION_ERROR_UNSPECIFIED
+  VALIDATION_NOT_REQUESTED
+  SERVICE_NETWORKING_NOT_ENABLED
+  NETWORK_NOT_FOUND
+  NETWORK_NOT_PEERED
+  NETWORK_PEERING_DELETED
+  NETWORK_NOT_IN_CONSUMERS_PROJECT
+  NETWORK_NOT_IN_CONSUMERS_HOST_PROJECT
+  HOST_PROJECT_NOT_FOUND
+  CONSUMER_PROJECT_NOT_SERVICE_PROJECT
+  RANGES_EXHAUSTED
+  RANGES_NOT_RESERVED
+  RANGES_DELETED_LATER
+  COMPUTE_API_NOT_ENABLED
+  USE_PERMISSION_NOT_FOUND
+  SN_SERVICE_AGENT_PERMISSION_DENIED_ON_CONSUMER_PROJECT
+}
+
+"""
+Represents a subnet that was created or discovered by a private access management service.
+"""
+type Subnetwork {
+  """Subnetwork name. See https://cloud.google.com/compute/docs/vpc/"""
+  name: String
+
+  """Subnetwork CIDR range in `10.x.x.x/y` format."""
+  ipCidrRange: String
+
+  """
+  In the Shared VPC host project, the VPC network that's peered with the consumer network. For example: `projects/1234321/global/networks/host-network`
+  """
+  network: String
+
+  """
+  This is a discovered subnet that is not within the current consumer allocated ranges.
+  """
+  outsideAllocation: Boolean
+
+  """List of secondary IP ranges in this subnetwork."""
+  secondaryIpRanges: [SecondaryIpRange]
+
+  """GCP region where the subnetwork is located."""
+  region: String
+}
+
+type SecondaryIpRange {
+  """Name of the secondary IP range."""
+  rangeName: String
+
+  """Secondary IP CIDR range in `x.x.x.x/y` format."""
+  ipCidrRange: String
+}
+
+input ValidateConsumerConfigRequest_Input {
+  """
+  Required. The network that the consumer is using to connect with services. Must be in the form of projects/{project}/global/networks/{network} {project} is a project number, as in '12345' {network} is network name.
+  """
+  consumerNetwork: String
+
+  """
+  The validations will be performed in the order listed in the ValidationError enum. The first failure will return. If a validation is not requested, then the next one will be performed. SERVICE_NETWORKING_NOT_ENABLED and NETWORK_NOT_PEERED checks are performed for all requests where validation is requested. NETWORK_NOT_FOUND and NETWORK_DISCONNECTED checks are done for requests that have validate_network set to true.
+  """
+  validateNetwork: Boolean
+  consumerProject: ConsumerProject_Input
+  rangeReservation: RangeReservation_Input
+
+  """
+  Optional. The IAM permission check determines whether the consumer project has 'servicenetworking.services.use' permission or not.
+  """
+  checkServiceNetworkingUsePermission: Boolean
+}
+
+"""Represents a consumer project."""
+input ConsumerProject_Input {
+  """
+  Required. Project number of the consumer that is launching the service instance. It can own the network that is peered with Google or, be a service project in an XPN where the host project has the network.
+  """
+  projectNum: BigInt
+}
+
+"""Represents a range reservation."""
+input RangeReservation_Input {
+  """
+  Required. The size of the desired subnet. Use usual CIDR range notation. For example, '29' to find unused x.x.x.x/29 CIDR range. The goal is to determine if one of the allocated ranges has enough free space for a subnet of the requested size. GCE disallows subnets with prefix_length > 29
+  """
+  ipPrefixLength: Int
+
+  """
+  Optional. The size of the desired secondary ranges for the subnet. Use usual CIDR range notation. For example, '29' to find unused x.x.x.x/29 CIDR range. The goal is to determine that the allocated ranges have enough free space for all the requested secondary ranges. GCE disallows subnets with prefix_length > 29
+  """
+  secondaryRangeIpPrefixLengths: [Int]
+
+  """
+  Optional. The name of one or more allocated IP address ranges associated with this private service access connection. If no range names are provided all ranges associated with this connection will be considered. If a CIDR range with the specified IP prefix length is not available within these ranges the validation fails.
+  """
+  requestedRanges: [String]
+
+  """
+  Optional. List of subnetwork candidates to validate. The required input fields are `name`, `network`, and `region`. Subnetworks from this list which exist will be returned in the response with the `ip_cidr_range`, `secondary_ip_cider_ranges`, and `outside_allocation` fields set.
+  """
+  subnetworkCandidates: [Subnetwork_Input]
+}
+
+"""
+Represents a subnet that was created or discovered by a private access management service.
+"""
+input Subnetwork_Input {
+  """Subnetwork name. See https://cloud.google.com/compute/docs/vpc/"""
+  name: String
+
+  """Subnetwork CIDR range in `10.x.x.x/y` format."""
+  ipCidrRange: String
+
+  """
+  In the Shared VPC host project, the VPC network that's peered with the consumer network. For example: `projects/1234321/global/networks/host-network`
+  """
+  network: String
+
+  """
+  This is a discovered subnet that is not within the current consumer allocated ranges.
+  """
+  outsideAllocation: Boolean
+
+  """List of secondary IP ranges in this subnetwork."""
+  secondaryIpRanges: [SecondaryIpRange_Input]
+
+  """GCP region where the subnetwork is located."""
+  region: String
+}
+
+input SecondaryIpRange_Input {
+  """Name of the secondary IP range."""
+  rangeName: String
+
+  """Secondary IP CIDR range in `x.x.x.x/y` format."""
+  ipCidrRange: String
+}
+
+"""
+Represents a private connection resource. A private connection is implemented as a VPC Network Peering connection between a service producer's VPC network and a service consumer's VPC network.
+"""
+input Connection_Input {
+  """
+  Required. The name of service consumer's VPC network that's connected with service producer network, in the following format: `projects/{project}/global/networks/{network}`. `{project}` is a project number, such as in `12345` that includes the VPC service consumer's VPC network. `{network}` is the name of the service consumer's VPC network.
+  """
+  network: String
+
+  """
+  The name of one or more allocated IP address ranges for this service producer of type `PEERING`. Note that invoking CreateConnection method with a different range when connection is already established will not modify already provisioned service producer subnetworks. If CreateConnection method is invoked repeatedly to reconnect when peering connection had been disconnected on the consumer side, leaving this field empty will restore previously allocated IP ranges.
+  """
+  reservedPeeringRanges: [String]
+
+  """
+  Output only. The name of the VPC Network Peering connection that was created by the service producer.
+  """
+  peering: String
+
+  """
+  Output only. The name of the peering service that's associated with this connection, in the following format: `services/{service name}`.
+  """
+  service: String
+}
+
+"""
+Request to delete a private service access connection. The call will fail if there are any managed service instances using this connection.
+"""
+input DeleteConnectionRequest_Input {
+  """
+  Required. The network that the consumer is using to connect with services. Must be in the form of projects/{project}/global/networks/{network} {project} is a project number, as in '12345' {network} is a network name.
+  """
+  consumerNetwork: String
+}
+
+"""
+Request to update the configuration of a service networking connection including the import/export of custom routes and subnetwork routes with public IP.
+"""
+input UpdateConsumerConfigRequest_Input {
+  consumerConfig: ConsumerConfig_Input
+}
+
+"""Configuration information for a private service access connection."""
+input ConsumerConfig_Input {
+  """
+  Output only. The VPC host network that is used to host managed service instances. In the format, projects/{project}/global/networks/{network} where {project} is the project number e.g. '12345' and {network} is the network name.
+  """
+  producerNetwork: String
+
+  """Import custom routes flag value for peering from consumer to producer."""
+  consumerImportCustomRoutes: Boolean
+
+  """Export custom routes flag value for peering from consumer to producer."""
+  consumerExportCustomRoutes: Boolean
+
+  """Import custom routes flag value for peering from producer to consumer."""
+  producerImportCustomRoutes: Boolean
+
+  """Export custom routes flag value for peering from producer to consumer."""
+  producerExportCustomRoutes: Boolean
+
+  """
+  Import subnet routes with public ip flag value for peering from consumer to producer.
+  """
+  consumerImportSubnetRoutesWithPublicIp: Boolean
+
+  """
+  Export subnet routes with public ip flag value for peering from consumer to producer.
+  """
+  consumerExportSubnetRoutesWithPublicIp: Boolean
+
+  """
+  Import subnet routes with public ip flag value for peering from producer to consumer.
+  """
+  producerImportSubnetRoutesWithPublicIp: Boolean
+
+  """
+  Export subnet routes with public ip flag value for peering from producer to consumer.
+  """
+  producerExportSubnetRoutesWithPublicIp: Boolean
+
+  """
+  Output only. The reserved ranges associated with this private service access connection.
+  """
+  reservedRanges: [GoogleCloudServicenetworkingV1ConsumerConfigReservedRange_Input]
+
+  """
+  Output only. Indicates whether the VPC Service Controls reference architecture is configured for the producer VPC host network.
+  """
+  vpcScReferenceArchitectureEnabled: Boolean
+
+  """Output only. The IP ranges already in use by consumer or producer"""
+  usedIpRanges: [String]
+
+  """Represents one or multiple Cloud SQL configurations."""
+  cloudsqlConfigs: [CloudSQLConfig_Input]
+
+  """Output only. If this is true, consumer peering is active."""
+  consumerPeeringActive: Boolean
+}
+
+"""
+Allocated IP address ranges for this private service access connection.
+"""
+input GoogleCloudServicenetworkingV1ConsumerConfigReservedRange_Input {
+  """The name of the reserved range."""
+  name: String
+
+  """The prefix length of the reserved range."""
+  ipPrefixLength: Int
+
+  """
+  The starting address of the reserved range. The address must be a valid IPv4 address in the x.x.x.x format. This value combined with the IP prefix length is the CIDR range for the reserved range.
+  """
+  address: String
+}
+
+"""Cloud SQL configuration."""
+input CloudSQLConfig_Input {
+  """Required. Peering service used for peering with the Cloud SQL project."""
+  service: String
+
+  """Required. The project number of the Cloud SQL umbrella project."""
+  umbrellaProject: BigInt
+
+  """
+  Required. The name of the umbrella network in the Cloud SQL umbrella project.
+  """
+  umbrellaNetwork: String
+}
+
+"""
+DNS domain suffix for which requests originating in the producer VPC network are resolved in the associated consumer VPC network.
+"""
+input PeeredDnsDomain_Input {
+  """
+  Required. User assigned name for this resource. Must be unique within the consumer network. The name must be 1-63 characters long, must begin with a letter, end with a letter or digit, and only contain lowercase letters, digits or dashes.
+  """
+  name: String
+
+  """
+  The DNS domain name suffix e.g. `example.com.`. Cloud DNS requires that a DNS suffix ends with a trailing dot.
+  """
+  dnsSuffix: String
+}
+
+"""
+Request for AddRoles to allow Service Producers to add roles in the shared VPC host project for them to use.
+"""
+input AddRolesRequest_Input {
+  """
+  Required. The network that the consumer is using to connect with services. Must be in the form of projects/{project}/global/networks/{network} {project} is a project number, as in '12345' {network} is a network name.
+  """
+  consumerNetwork: String
+
+  """Required. List of policy bindings to add to shared VPC host project."""
+  policyBinding: [PolicyBinding_Input]
+}
+
+"""Grouping of IAM role and IAM member."""
+input PolicyBinding_Input {
+  """
+  Required. Role to apply. Only allowlisted roles can be used at the specified granularity. The role must be one of the following: - 'roles/container.hostServiceAgentUser' applied on the shared VPC host project - 'roles/compute.securityAdmin' applied on the shared VPC host project - 'roles/compute.networkAdmin' applied on the shared VPC host project - 'roles/tpu.xpnAgent' applied on the shared VPC host project - 'roles/dns.admin' applied on the shared VPC host project - 'roles/logging.admin' applied on the shared VPC host project - 'roles/monitoring.viewer' applied on the shared VPC host project - 'roles/servicemanagement.quotaViewer' applied on the shared VPC host project
+  """
+  role: String
+
+  """
+  Required. Member to bind the role with. See /iam/docs/reference/rest/v1/Policy#Binding for how to format each member. Eg. - user:myuser@mydomain.com - serviceAccount:my-service-account@app.gserviceaccount.com
+  """
+  member: String
+}
+
+"""
+Request to add a private managed DNS zone in the shared producer host project and a matching DNS peering zone in the consumer project.
+"""
+input AddDnsZoneRequest_Input {
+  """
+  Required. The network that the consumer is using to connect with services. Must be in the form of projects/{project}/global/networks/{network} {project} is the project number, as in '12345' {network} is the network name.
+  """
+  consumerNetwork: String
+
+  """
+  Required. The name for both the private zone in the shared producer host project and the peering zone in the consumer project. Must be unique within both projects. The name must be 1-63 characters long, must begin with a letter, end with a letter or digit, and only contain lowercase letters, digits or dashes.
+  """
+  name: String
+
+  """
+  Required. The DNS name suffix for the zones e.g. `example.com.`. Cloud DNS requires that a DNS suffix ends with a trailing dot.
+  """
+  dnsSuffix: String
+}
+
+"""
+Request to remove a private managed DNS zone in the shared producer host project and a matching DNS peering zone in the consumer project.
+"""
+input RemoveDnsZoneRequest_Input {
+  """
+  Required. The network that the consumer is using to connect with services. Must be in the form of projects/{project}/global/networks/{network} {project} is the project number, as in '12345' {network} is the network name.
+  """
+  consumerNetwork: String
+
+  """
+  Required. The name for both the private zone in the shared producer host project and the peering zone in the consumer project.
+  """
+  name: String
+}
+
+"""
+Request to add a record set to a private managed DNS zone in the shared producer host project.
+"""
+input AddDnsRecordSetRequest_Input {
+  """
+  Required. The network that the consumer is using to connect with services. Must be in the form of projects/{project}/global/networks/{network} {project} is the project number, as in '12345' {network} is the network name.
+  """
+  consumerNetwork: String
+
+  """
+  Required. The name of the private DNS zone in the shared producer host project to which the record set will be added.
+  """
+  zone: String
+  dnsRecordSet: DnsRecordSet_Input
+}
+
+"""Represents a DNS record set resource."""
+input DnsRecordSet_Input {
+  """
+  Required. The DNS or domain name of the record set, e.g. `test.example.com`. Cloud DNS requires that a DNS suffix ends with a trailing dot.
+  """
+  domain: String
+
+  """Required. The identifier of a supported record type."""
+  type: String
+
+  """
+  Required. The period of time for which this RecordSet can be cached by resolvers.
+  """
+  ttl: String
+
+  """
+  Required. As defined in RFC 1035 (section 5) and RFC 1034 (section 3.6.1) for examples see https://cloud.google.com/dns/records/json-record.
+  """
+  data: [String]
+}
+
+"""
+Request to remove a record set from a private managed DNS zone in the shared producer host project. The name, type, ttl, and data values must all exactly match an existing record set in the specified zone.
+"""
+input RemoveDnsRecordSetRequest_Input {
+  """
+  Required. The network that the consumer is using to connect with services. Must be in the form of projects/{project}/global/networks/{network} {project} is the project number, as in '12345' {network} is the network name.
+  """
+  consumerNetwork: String
+
+  """
+  Required. The name of the private DNS zone in the shared producer host project from which the record set will be removed.
+  """
+  zone: String
+  dnsRecordSet: DnsRecordSet_Input
+}
+
+"""
+Request to update a record set from a private managed DNS zone in the shared producer host project. The name, type, ttl, and data values of the existing record set must all exactly match an existing record set in the specified zone.
+"""
+input UpdateDnsRecordSetRequest_Input {
+  """
+  Required. The network that the consumer is using to connect with services. Must be in the form of projects/{project}/global/networks/{network} {project} is the project number, as in '12345' {network} is the network name.
+  """
+  consumerNetwork: String
+
+  """
+  Required. The name of the private DNS zone in the shared producer host project from which the record set will be removed.
+  """
+  zone: String
+  existingDnsRecordSet: DnsRecordSet_Input
+  newDnsRecordSet: DnsRecordSet_Input
+}
+
+enum HTTPMethod {
+  GET
+  HEAD
+  POST
+  PUT
+  DELETE
+  CONNECT
+  OPTIONS
+  TRACE
+  PATCH
+}
+
+scalar ObjMap
