@@ -1,58 +1,55 @@
 /**
  * graphql-schema-builder.ts
  *
- * Converts the Cloud Run OpenAPI 3.0 spec (derived from the Discovery doc)
- * into a live GraphQL schema using openapi-to-graphql.
- *
- * Resolvers are auto-generated and proxy to the real Cloud Run REST API,
- * injecting the bearer token from the environment (GOOGLE_ACCESS_TOKEN)
- * or Application Default Credentials.
- *
- * The MCP server then executes targeted GraphQL queries against this schema,
- * selecting only the fields it needs — keeping responses lean before they
- * land in the agent's context window.
+ * Builds a live GraphQL schema from OpenAPI 3 via **@omnigraph/openapi**
+ * (the same stack as [GraphQL Mesh OpenAPI](https://the-guild.dev/graphql/mesh/docs/handlers/openapi)).
+ * Resolvers proxy to the upstream REST API with headers from
+ * CLAWQL_HTTP_HEADERS, CLAWQL_BEARER_TOKEN, and/or GOOGLE_ACCESS_TOKEN.
  */
 
-import { createGraphQLSchema } from "openapi-to-graphql";
+import loadGraphQLSchemaFromOpenAPI from "@omnigraph/openapi";
 import type { GraphQLSchema } from "graphql";
+import { getPackageRoot } from "./package-root.js";
 
 interface SchemaResult {
   schema: GraphQLSchema;
   contextValue: Record<string, unknown>;
 }
 
+function mergeAuthHeaders(): Record<string, string> {
+  const out: Record<string, string> = {};
+  const raw = process.env.CLAWQL_HTTP_HEADERS;
+  if (raw) {
+    try {
+      Object.assign(out, JSON.parse(raw) as Record<string, string>);
+    } catch {
+      console.error("[graphql-schema] Invalid CLAWQL_HTTP_HEADERS (expected JSON object)");
+    }
+  }
+  const bearer =
+    process.env.CLAWQL_BEARER_TOKEN || process.env.GOOGLE_ACCESS_TOKEN;
+  if (bearer && !out.Authorization && !out.authorization) {
+    out.Authorization = `Bearer ${bearer}`;
+  }
+  return out;
+}
+
 export async function buildGraphQLSchema(
   openapi: object,
   baseUrl: string
 ): Promise<SchemaResult> {
-  const token = process.env.GOOGLE_ACCESS_TOKEN;
+  const headers = mergeAuthHeaders();
 
-  const { schema, report } = await createGraphQLSchema(
-    // openapi-to-graphql accepts an OpenAPI 3.x object directly
-    openapi as Parameters<typeof createGraphQLSchema>[0],
-    {
-      baseUrl,
-      // Inject the Google OAuth token into every resolver's HTTP call
-      headers: token
-        ? { Authorization: `Bearer ${token}` }
-        : {},
-      // Don't add viewer wrapper — we handle auth at the header level
-      viewer: false,
-      // Resolve all $ref schemas inline so the schema is self-contained
-      fillEmptyResponses: true,
-      // Report warnings but don't throw
-      strict: false,
-      // Cloud Run discovery-derived schemas include non-standard fields (e.g. "id")
-      // that fail OAS schema validation but still work for translation.
-      oasValidatorOptions: { validateSchema: false },
-    }
-  );
-
-  if (report.warnings.length > 0) {
-    console.error(
-      `[graphql-schema] ${report.warnings.length} warnings during schema build.`
-    );
-  }
+  // `source` may be a file path, URL, or an in-memory OpenAPI object (Mesh dereferences it).
+  const schema = await loadGraphQLSchemaFromOpenAPI("ClawQL", {
+    source: openapi as never,
+    endpoint: baseUrl,
+    cwd: getPackageRoot(),
+    operationHeaders:
+      Object.keys(headers).length > 0 ? headers : undefined,
+    // Fewer union types on large specs; still returns JSON bodies.
+    ignoreErrorResponses: true,
+  });
 
   return { schema, contextValue: {} };
 }

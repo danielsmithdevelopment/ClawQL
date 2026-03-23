@@ -1,32 +1,27 @@
 /**
- * server.ts — Cloud Run MCP Server
+ * server.ts — ClawQL MCP Server
  *
- * Entry point. Boots the MCP server over stdio (standard for Claude Desktop,
- * Cursor, and any MCP-compatible agent framework).
+ * Entry point. Boots the MCP server over stdio (Claude Desktop, Cursor, etc.).
  *
- * Architecture:
+ *   Agent → MCP (this file) → search / execute → graphql-client → graphql-proxy → REST API
  *
- *   Agent
- *     └─▶ MCP Server (this file)
- *           ├─▶ search tool  ──▶ spec-search.ts (in-memory, zero latency)
- *           └─▶ execution tools  ──▶ graphql-client.ts
- *                                        └─▶ graphql-proxy (localhost:4000)
- *                                              └─▶ Cloud Run REST API
+ * Spec source: CLAWQL_SPEC_PATH, CLAWQL_SPEC_URL, CLAWQL_DISCOVERY_URL, or default
+ * Cloud Run discovery. See README and .env.example.
  *
- * Environment variables:
- *   GOOGLE_ACCESS_TOKEN   OAuth2 bearer token for Cloud Run API calls
- *   GRAPHQL_URL           Override GraphQL proxy URL (default: localhost:4000/graphql)
- *   GRAPHQL_PORT          Port for the GraphQL proxy (default: 4000)
+ *   GRAPHQL_URL     GraphQL proxy URL (default http://localhost:4000/graphql)
+ *   GRAPHQL_PORT    Only if you spawn the proxy yourself (default 4000)
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { loadSpec } from "./spec-loader.js";
-import { registerTools } from "./tools.js";
+import { preloadSchemaFieldCacheFromDisk, registerTools } from "./tools.js";
 
 async function main() {
   // Pre-warm the spec cache on startup so the first search call is fast
   await loadSpec();
+  // Prefer pregenerated introspection.json (bundled or CLAWQL_INTROSPECTION_PATH) over live proxy introspection
+  await preloadSchemaFieldCacheFromDisk();
 
   const server = new McpServer({
     name: "cloudrun-mcp",

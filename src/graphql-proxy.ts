@@ -1,35 +1,45 @@
 /**
  * graphql-proxy.ts
  *
- * Spins up a local GraphQL server generated automatically from the Cloud Run
- * OpenAPI spec (converted from Google Discovery format).
+ * Local GraphQL server generated from your OpenAPI 3 spec (see spec-loader).
  *
- * This is the PRIVATE layer — agents never call this directly. The MCP server
- * calls it internally, constructing precise queries that fetch only the fields
- * needed before returning lean responses to the agent.
+ * Agents do not call this directly — the MCP `execute` tool uses it internally
+ * to run field-selected GraphQL against the upstream REST API.
  *
  * Usage:
  *   node dist/graphql-proxy.js
- *   (or started as a child process by the MCP server)
+ *   clawql-graphql   (when installed from npm)
  *
- * Requires:
- *   GOOGLE_ACCESS_TOKEN env var (or use Application Default Credentials)
+ * Configure the spec via CLAWQL_SPEC_PATH / CLAWQL_SPEC_URL / defaults (see README).
  */
 
+import { resolve as resolvePath } from "node:path";
 import express from "express";
 import { createHandler } from "graphql-http/lib/use/express";
-import { loadSpec } from "./spec-loader.js";
+import { getPackageRoot } from "./package-root.js";
+import { resolveBundledProvider } from "./provider-registry.js";
+import { loadSpec, resolveApiBaseUrl } from "./spec-loader.js";
 import { buildGraphQLSchema } from "./graphql-schema-builder.js";
 
 const PORT = process.env.GRAPHQL_PORT ? parseInt(process.env.GRAPHQL_PORT) : 4000;
 
 async function main() {
-  const { openapi, rawDiscovery } = await loadSpec();
+  const { openapi } = await loadSpec();
+  const baseUrl = resolveApiBaseUrl(openapi);
+
+  const prov = process.env.CLAWQL_PROVIDER?.trim();
+  const bundled = prov ? resolveBundledProvider(prov) : undefined;
+  if (bundled?.bundledIntrospectionPath) {
+    const intro = resolvePath(getPackageRoot(), bundled.bundledIntrospectionPath);
+    console.error(
+      `[graphql-proxy] MCP may use pregenerated introspection at ${intro} (this server still builds executable resolvers from OpenAPI).`
+    );
+  }
 
   console.error("[graphql-proxy] Building GraphQL schema from OpenAPI spec…");
   const { schema, contextValue } = await buildGraphQLSchema(
     openapi,
-    rawDiscovery.rootUrl as string
+    baseUrl
   );
 
   const app = express();

@@ -1,25 +1,31 @@
 /**
  * tools.ts
  *
- * Two tools only — exactly like the Cloudflare Code Mode pattern:
- *
- *   search(query)              — discover operations from the spec
- *   execute(operationId, args) — run one, with GraphQL field selection internally
- *
- * The agent workflow:
- *   1. search("list services in a region")
- *      → returns matching operations with their parameters
- *   2. execute("run.projects.locations.services.list", { parent: "projects/my-proj/locations/us-central1" })
- *      → MCP server constructs a targeted GraphQL query internally
- *      → only requested fields come back
- *      → lean response returned to agent
+ * Two tools: search (spec discovery) and execute (GraphQL-backed REST call).
+ * GraphQL field names are resolved via schema introspection — see resolveGraphQLField.
  */
 
+import { readFile } from "node:fs/promises";
+import { isAbsolute, resolve as resolvePath } from "node:path";
+import { sanitizeNameForGraphQL } from "@graphql-mesh/utils";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { loadSpec } from "./spec-loader.js";
+import { getPackageRoot } from "./package-root.js";
+import { resolveBundledProvider } from "./provider-registry.js";
+import {
+  buildVarArgs,
+  buildVarDeclarations,
+  capturePathParams,
+  discoveryTypeToGraphQL,
+  lowerFirst,
+  normalizeArgsForField,
+  operationIdToGraphQLName,
+  operationIdToRunStyleName,
+} from "./graphql-execute-helpers.js";
+import { loadSpec, resolveApiBaseUrl } from "./spec-loader.js";
 import { searchOperations, formatSearchResults } from "./spec-search.js";
 import { createGraphQLClient } from "./graphql-client.js";
+import { executeRestOperation } from "./rest-operation.js";
 import type { Operation } from "./spec-loader.js";
 
 const gql = createGraphQLClient();
@@ -28,6 +34,23 @@ let schemaFieldCachePromise: Promise<{
   query: GraphQLFieldInfo[];
   mutation: GraphQLFieldInfo[];
 }> | null = null;
+
+/** Clear cached GraphQL field names (e.g. after changing CLAWQL_PROVIDER / spec). */
+export function resetSchemaFieldCache(): void {
+  schemaFieldCachePromise = null;
+}
+
+/**
+ * On MCP startup: if `CLAWQL_INTROSPECTION_PATH` or bundled `introspection.json` exists,
+ * load it so the first `execute` never hits the GraphQL proxy for field-name introspection.
+ * Returns whether disk cache was applied.
+ */
+export async function preloadSchemaFieldCacheFromDisk(): Promise<boolean> {
+  const parsed = await tryLoadIntrospectionFromDisk();
+  if (!parsed) return false;
+  schemaFieldCachePromise = Promise.resolve(parsed);
+  return true;
+}
 
 export function registerTools(server: McpServer) {
 
@@ -84,7 +107,7 @@ export function registerTools(server: McpServer) {
         ),
     },
     async ({ operationId, args, fields }) => {
-      const { operations } = await loadSpec();
+      const { operations, openapi } = await loadSpec();
       const op = operations.find((o) => o.id === operationId);
 
       if (!op) {
@@ -98,38 +121,55 @@ export function registerTools(server: McpServer) {
         };
       }
 
-      const isGet = op.method === "GET";
-      const gqlOpType = isGet ? "query" : "mutation";
-      const { fieldName, fieldArgs } = await resolveGraphQLField(op, gqlOpType);
-      const normalizedArgs = normalizeArgsForField(op, args, fieldArgs);
-      const selectedFields = fields?.length
-        ? fields.join("\n        ")
-        : defaultFields(operationId);
-
-      const varDecls = buildVarDeclarations(op, normalizedArgs);
-      const varArgs = buildVarArgs(normalizedArgs);
-
-      const gqlDocument = `
-        ${gqlOpType} Execute(${varDecls}) {
-          ${fieldName}(${varArgs}) {
-            ${selectedFields}
-          }
-        }
-      `;
-
       try {
+        const isGet = op.method === "GET";
+        const gqlOpType = isGet ? "query" : "mutation";
+        const { fieldName, fieldArgs } = await resolveGraphQLField(op, gqlOpType);
+        const normalizedArgs = normalizeArgsForField(op, args, fieldArgs);
+        const selectedFields = fields?.length
+          ? fields.join("\n        ")
+          : defaultFields(operationId);
+
+        const varDecls = buildVarDeclarations(op, normalizedArgs);
+        const varArgs = buildVarArgs(normalizedArgs);
+        const header =
+          varDecls.trim().length > 0
+            ? `${gqlOpType} Execute(${varDecls})`
+            : `${gqlOpType} Execute`;
+        const fieldCall =
+          varArgs.trim().length > 0 ? `${fieldName}(${varArgs})` : fieldName;
+
+        const gqlDocument = `
+          ${header} {
+            ${fieldCall} {
+              ${selectedFields}
+            }
+          }
+        `;
+
         const data = await gql.query<Record<string, unknown>>(gqlDocument, normalizedArgs);
         return {
           content: [{ type: "text", text: JSON.stringify(data[fieldName], null, 2) }],
         };
-      } catch (err) {
+      } catch (err: unknown) {
+        const fallback = await executeRestOperation(op, args, openapi);
+        if (!fallback.ok) {
+          const reason = err instanceof Error ? err.message : String(err);
+          return {
+            content: [{
+              type: "text",
+              text: JSON.stringify({
+                error: reason,
+                fallbackError: fallback.error,
+                hint: "GraphQL execution failed and REST fallback also failed.",
+              }),
+            }],
+          };
+        }
         return {
           content: [{
             type: "text",
-            text: JSON.stringify({
-              error: String(err),
-              hint: "Check args match parameters from search(). Common aggregate args like 'parent'/'name' are auto-expanded when possible.",
-            }),
+            text: JSON.stringify(fallback.data, null, 2),
           }],
         };
       }
@@ -141,59 +181,45 @@ export function registerTools(server: McpServer) {
 // Helpers
 // ─────────────────────────────────────────────────────────────
 
-/**
- * Derive the GraphQL query name from a Discovery operation.
- * openapi-to-graphql uses the flatPath to name fields, e.g.:
- *   flatPath: "v2/projects/{projectsId}/locations/{locationsId}/services"
- *   method:   list
- *   → v2ProjectsLocationsServicesList
- */
-function operationIdToGraphQLName(op: Operation): string {
-  const segments = op.flatPath
-    .split("/")
-    .filter((s) => !s.startsWith("{") && s.length > 0);
-
-  const methodSuffix = op.id.split(".").pop() ?? "";
-
-  return (
-    segments[0] +
-    segments.slice(1).map((s) => s.charAt(0).toUpperCase() + s.slice(1)).join("") +
-    methodSuffix.charAt(0).toUpperCase() + methodSuffix.slice(1)
-  );
+function resolveIntrospectionFilePath(): string | null {
+  const explicit = process.env.CLAWQL_INTROSPECTION_PATH?.trim();
+  if (explicit) {
+    return isAbsolute(explicit)
+      ? explicit
+      : resolvePath(process.cwd(), explicit);
+  }
+  const prov = process.env.CLAWQL_PROVIDER?.trim();
+  if (prov) {
+    const p = resolveBundledProvider(prov);
+    if (p?.bundledIntrospectionPath) {
+      return resolvePath(getPackageRoot(), p.bundledIntrospectionPath);
+    }
+  }
+  return null;
 }
 
-function operationIdToRunStyleName(op: Operation): string {
-  const parts = op.id.split(".");
-  if (parts.length === 0) return op.id;
-  return parts[0] + parts.slice(1).map(capitalize).join("");
-}
-
-function lowerFirst(input: string): string {
-  return input ? input.charAt(0).toLowerCase() + input.slice(1) : input;
-}
-
-function capitalize(input: string): string {
-  return input ? input.charAt(0).toUpperCase() + input.slice(1) : input;
-}
-
-async function getSchemaFieldCache(): Promise<{
+async function tryLoadIntrospectionFromDisk(): Promise<{
   query: GraphQLFieldInfo[];
   mutation: GraphQLFieldInfo[];
-}> {
-  if (!schemaFieldCachePromise) {
-    schemaFieldCachePromise = gql.query<{
+} | null> {
+  const introPath = resolveIntrospectionFilePath();
+  if (!introPath) return null;
+  try {
+    const text = await readFile(introPath, "utf-8");
+    const data = JSON.parse(text) as {
       __schema: {
-        queryType: { fields: Array<{ name: string; args: Array<{ name: string }> }> };
-        mutationType: { fields: Array<{ name: string; args: Array<{ name: string }> }> } | null;
+        queryType: {
+          fields: Array<{ name: string; args: Array<{ name: string }> }>;
+        };
+        mutationType: {
+          fields: Array<{ name: string; args: Array<{ name: string }> }>;
+        } | null;
       };
-    }>(`
-      query IntrospectRootFields {
-        __schema {
-          queryType { fields { name args { name } } }
-          mutationType { fields { name args { name } } }
-        }
-      }
-    `).then((data) => ({
+    };
+    console.error(
+      `[tools] Using pregenerated GraphQL introspection (disk): ${introPath}`
+    );
+    return {
       query: data.__schema.queryType.fields.map((f) => ({
         name: f.name,
         args: f.args.map((a) => a.name),
@@ -202,7 +228,53 @@ async function getSchemaFieldCache(): Promise<{
         name: f.name,
         args: f.args.map((a) => a.name),
       })),
-    }));
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function getSchemaFieldCache(): Promise<{
+  query: GraphQLFieldInfo[];
+  mutation: GraphQLFieldInfo[];
+}> {
+  if (!schemaFieldCachePromise) {
+    schemaFieldCachePromise = (async (): Promise<{
+      query: GraphQLFieldInfo[];
+      mutation: GraphQLFieldInfo[];
+    }> => {
+      // 1) Pregenerated file (CLAWQL_INTROSPECTION_PATH or bundled path for CLAWQL_PROVIDER)
+      const fromDisk = await tryLoadIntrospectionFromDisk();
+      if (fromDisk) return fromDisk;
+      // 2) Live introspection against graphql-proxy (requires OpenAPI→GraphQL build)
+      const data = await gql.query<{
+        __schema: {
+          queryType: {
+            fields: Array<{ name: string; args: Array<{ name: string }> }>;
+          };
+          mutationType: {
+            fields: Array<{ name: string; args: Array<{ name: string }> }>;
+          } | null;
+        };
+      }>(`
+      query IntrospectRootFields {
+        __schema {
+          queryType { fields { name args { name } } }
+          mutationType { fields { name args { name } } }
+        }
+      }
+    `);
+      return {
+        query: data.__schema.queryType.fields.map((f) => ({
+          name: f.name,
+          args: f.args.map((a) => a.name),
+        })),
+        mutation: (data.__schema.mutationType?.fields ?? []).map((f) => ({
+          name: f.name,
+          args: f.args.map((a) => a.name),
+        })),
+      };
+    })();
   }
   return schemaFieldCachePromise;
 }
@@ -216,6 +288,8 @@ async function resolveGraphQLField(
   const byName = new Map(available.map((f) => [f.name, f.args]));
 
   const candidates: string[] = [];
+  // Omnigraph / GraphQL Mesh OpenAPI handler: field names from operationId
+  candidates.push(sanitizeNameForGraphQL(op.id));
   candidates.push(operationIdToRunStyleName(op));
   candidates.push(operationIdToGraphQLName(op));
   if (op.responseBody) candidates.push(lowerFirst(op.responseBody));
@@ -229,83 +303,6 @@ async function resolveGraphQLField(
   throw new Error(
     `No GraphQL ${gqlOpType} field found for operation "${op.id}". Tried: ${candidates.join(", ")}`
   );
-}
-
-function normalizeArgsForField(
-  op: Operation,
-  rawArgs: Record<string, unknown>,
-  expectedArgs: string[]
-): Record<string, unknown> {
-  const args: Record<string, unknown> = { ...rawArgs };
-  const expected = new Set(expectedArgs);
-
-  if (typeof args.parent === "string") {
-    const parent = args.parent;
-    const parentMatch = parent.match(/^projects\/([^/]+)\/locations\/([^/]+)$/);
-    if (parentMatch) {
-      if (expected.has("projectsId") && args.projectsId === undefined) {
-        args.projectsId = parentMatch[1];
-      }
-      if (expected.has("locationsId") && args.locationsId === undefined) {
-        args.locationsId = parentMatch[2];
-      }
-    }
-  }
-
-  if (typeof args.name === "string") {
-    const captures = capturePathParams(op.flatPath, args.name);
-    for (const [key, value] of Object.entries(captures)) {
-      if (expected.has(key) && args[key] === undefined) {
-        args[key] = value;
-      }
-    }
-  }
-
-  return Object.fromEntries(
-    Object.entries(args).filter(([key]) => expected.has(key))
-  );
-}
-
-function capturePathParams(
-  flatPath: string,
-  value: string
-): Record<string, string> {
-  const templateParts = flatPath.split("/").filter(Boolean);
-  const valueParts = value.split("/").filter(Boolean);
-  if (templateParts.length !== valueParts.length) return {};
-
-  const out: Record<string, string> = {};
-  for (let i = 0; i < templateParts.length; i++) {
-    const tpl = templateParts[i];
-    const actual = valueParts[i];
-    const match = tpl.match(/^\{(\w+)\}$/);
-    if (match) {
-      out[match[1]] = actual;
-      continue;
-    }
-    if (tpl !== actual) return {};
-  }
-  return out;
-}
-
-function buildVarDeclarations(op: Operation, args: Record<string, unknown>): string {
-  return Object.keys(args).map((key) => {
-    const param = op.parameters[key];
-    const gqlType = param ? discoveryTypeToGraphQL(param.type, param.required) : "String";
-    return `$${key}: ${gqlType}`;
-  }).join(", ");
-}
-
-function buildVarArgs(args: Record<string, unknown>): string {
-  return Object.keys(args).map((key) => `${key}: $${key}`).join(", ");
-}
-
-function discoveryTypeToGraphQL(type: string, required?: boolean): string {
-  const base: Record<string, string> = {
-    string: "String", integer: "Int", boolean: "Boolean", number: "Float",
-  };
-  const gql = base[type] ?? "String";
-  return required ? `${gql}!` : gql;
 }
 
 /** Default field selection so the agent gets useful data without specifying fields. */
@@ -340,3 +337,15 @@ function defaultFields(operationId: string): string {
     return "name done error { code message }";
   return "name";
 }
+
+// Narrow test surface for critical path helper behavior.
+export const __testUtils = {
+  operationIdToGraphQLName,
+  operationIdToRunStyleName,
+  normalizeArgsForField,
+  capturePathParams,
+  buildVarDeclarations,
+  buildVarArgs,
+  discoveryTypeToGraphQL,
+  defaultFields,
+};
