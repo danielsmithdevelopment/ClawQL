@@ -21,6 +21,7 @@ import { getPackageRoot } from "./package-root.js";
 import {
   listBundledProviderIds,
   resolveBundledProvider,
+  resolveBundledProviderGroup,
   type BundledProvider,
 } from "./provider-registry.js";
 
@@ -546,6 +547,7 @@ export function labelFromSpecPath(relOrAbs: string): string {
 async function resolveMultiSpecItems(): Promise<
   { abs: string; label: string }[] | null
 > {
+  const providerRaw = process.env.CLAWQL_PROVIDER?.trim().toLowerCase();
   const pathsEnv = process.env.CLAWQL_SPEC_PATHS?.trim();
   if (pathsEnv) {
     const parts = pathsEnv.split(/[,;\n]/).map((s) => s.trim()).filter(Boolean);
@@ -554,19 +556,12 @@ async function resolveMultiSpecItems(): Promise<
       label: labelFromSpecPath(p),
     }));
   }
-  if (isTruthyEnv(process.env.CLAWQL_GOOGLE_TOP20_SPECS)) {
-    const root = getPackageRoot();
-    const manifestPath = resolvePath(root, "providers/google/google-top20-apis.json");
-    const text = await readFile(manifestPath, "utf-8");
-    const data = JSON.parse(text) as { apis: Array<{ slug: string }> };
-    if (!Array.isArray(data.apis)) {
-      throw new Error("google-top20-apis.json: expected apis[]");
-    }
-    return data.apis.map((a) => ({
-      abs: resolvePath(root, "providers/google/apis", a.slug, "discovery.json"),
-      label: a.slug,
-    }));
-  }
+  // Back-compat alias for the registry group `google-top20`.
+  const groupKey = isTruthyEnv(process.env.CLAWQL_GOOGLE_TOP20_SPECS)
+    ? "google-top20"
+    : providerRaw;
+  const groupedProviders = await resolveBundledProviderGroup(groupKey);
+  if (groupedProviders) return groupedProviders;
   return null;
 }
 

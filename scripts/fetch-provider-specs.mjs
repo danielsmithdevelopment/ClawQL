@@ -21,6 +21,11 @@ const TARGETS = [
     out: "providers/atlassian/jira/openapi.yaml",
   },
   {
+    id: "bitbucket",
+    url: "https://raw.githubusercontent.com/magmax/atlassian-openapi/master/spec/bitbucket.yaml",
+    out: "providers/atlassian/bitbucket/openapi.yaml",
+  },
+  {
     id: "cloudflare",
     url: "https://raw.githubusercontent.com/cloudflare/api-schemas/refs/heads/main/openapi.yaml",
     out: "providers/cloudflare/openapi.yaml",

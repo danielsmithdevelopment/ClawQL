@@ -5,8 +5,11 @@ start avoids downloading multi‑MB specs.
 
 | `CLAWQL_PROVIDER` | Spec file | Notes |
 |-------------------|-----------|--------|
+| `atlassian` | `atlassian/jira/openapi.yaml` + `atlassian/bitbucket/openapi.yaml` | Loads both Atlassian specs in one merged operation index (multi-spec mode) |
 | `jira` | `atlassian/jira/openapi.yaml` | Atlassian community Jira OpenAPI (YAML) |
+| `bitbucket` | `atlassian/bitbucket/openapi.yaml` | Atlassian community Bitbucket OpenAPI (YAML) |
 | `google` | `google/discovery.json` | Default: **GKE** only (`container.googleapis.com` v1). See **`google-apis-lookup.json`** for *all* Google APIs. |
+| `google-top20` | `google/apis/<slug>/discovery.json` (20 files from manifest) | Loads curated Google top-20 services into one merged operation index (multi-spec mode) |
 | `cloudflare` | `cloudflare/openapi.yaml` | Official [Cloudflare API schemas](https://github.com/cloudflare/api-schemas) OpenAPI (large; ~tens of MB) |
 
 **Google API catalog (all services):** The repo includes a snapshot of Google’s public [Discovery directory](https://www.googleapis.com/discovery/v1/apis) as `google/discovery-directory.json` and a slim index `google/google-apis-lookup.json` (id → `discoveryRestUrl`, docs link, `preferred`). Refresh with `npm run fetch-google-discovery-directory` (also runs at the end of `npm run fetch-provider-specs`). Details: [`docs/google-apis-lookup.md`](../docs/google-apis-lookup.md).

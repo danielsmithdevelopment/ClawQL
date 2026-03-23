@@ -3,6 +3,10 @@
  * pregenerated GraphQL artifacts (see scripts/pregenerate-provider-graphql.ts).
  */
 
+import { readFile } from "node:fs/promises";
+import { resolve as resolvePath } from "node:path";
+import { getPackageRoot } from "./package-root.js";
+
 export interface BundledProvider {
   id: string;
   /** Relative to package root */
@@ -16,6 +20,19 @@ export interface BundledProvider {
   bundledSchemaSdlPath?: string;
 }
 
+export type ProviderGroupItem = { abs: string; label: string };
+export type BundledProviderGroupResolver = () => Promise<ProviderGroupItem[]>;
+
+/**
+ * Named presets that compose multiple specs into one merged index.
+ * - `providers`: references ids from BUNDLED_PROVIDERS
+ * - `resolve`: custom resolver for manifest-backed groups (e.g. google-top20)
+ */
+export interface BundledProviderGroup {
+  providers?: string[];
+  resolve?: BundledProviderGroupResolver;
+}
+
 export const BUNDLED_PROVIDERS: Record<string, BundledProvider> = {
   jira: {
     id: "jira",
@@ -25,6 +42,15 @@ export const BUNDLED_PROVIDERS: Record<string, BundledProvider> = {
       "https://raw.githubusercontent.com/magmax/atlassian-openapi/master/spec/jira.yaml",
     bundledIntrospectionPath: "providers/atlassian/jira/introspection.json",
     bundledSchemaSdlPath: "providers/atlassian/jira/schema.graphql",
+  },
+  bitbucket: {
+    id: "bitbucket",
+    bundledSpecPath: "providers/atlassian/bitbucket/openapi.yaml",
+    format: "openapi",
+    fallbackUrl:
+      "https://raw.githubusercontent.com/magmax/atlassian-openapi/master/spec/bitbucket.yaml",
+    bundledIntrospectionPath: "providers/atlassian/bitbucket/introspection.json",
+    bundledSchemaSdlPath: "providers/atlassian/bitbucket/schema.graphql",
   },
   google: {
     id: "google",
@@ -46,6 +72,25 @@ export const BUNDLED_PROVIDERS: Record<string, BundledProvider> = {
   },
 };
 
+async function resolveGoogleTop20Items(): Promise<ProviderGroupItem[]> {
+  const root = getPackageRoot();
+  const manifestPath = resolvePath(root, "providers/google/google-top20-apis.json");
+  const text = await readFile(manifestPath, "utf-8");
+  const data = JSON.parse(text) as { apis: Array<{ slug: string }> };
+  if (!Array.isArray(data.apis)) {
+    throw new Error("google-top20-apis.json: expected apis[]");
+  }
+  return data.apis.map((a) => ({
+    abs: resolvePath(root, "providers/google/apis", a.slug, "discovery.json"),
+    label: a.slug,
+  }));
+}
+
+export const BUNDLED_PROVIDER_GROUPS: Record<string, BundledProviderGroup> = {
+  atlassian: { providers: ["jira", "bitbucket"] },
+  "google-top20": { resolve: resolveGoogleTop20Items },
+};
+
 export function resolveBundledProvider(
   raw: string | undefined
 ): BundledProvider | undefined {
@@ -55,4 +100,26 @@ export function resolveBundledProvider(
 
 export function listBundledProviderIds(): string[] {
   return Object.keys(BUNDLED_PROVIDERS);
+}
+
+export async function resolveBundledProviderGroup(
+  raw: string | undefined
+): Promise<ProviderGroupItem[] | undefined> {
+  if (!raw?.trim()) return undefined;
+  const group = BUNDLED_PROVIDER_GROUPS[raw.trim().toLowerCase()];
+  if (!group) return undefined;
+  if (group.resolve) return group.resolve();
+  const ids = group.providers ?? [];
+  return ids.map((id) => {
+    const p = BUNDLED_PROVIDERS[id];
+    if (!p) {
+      throw new Error(
+        `Bundled provider group "${raw.trim()}" references unknown provider "${id}".`
+      );
+    }
+    return {
+      abs: resolvePath(getPackageRoot(), p.bundledSpecPath),
+      label: p.id,
+    };
+  });
 }
