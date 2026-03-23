@@ -5,7 +5,7 @@
  * - Local file (JSON or YAML OpenAPI 3 / Swagger 2), or
  * - URL to fetch the same, or
  * - Google Discovery document URL, or
- * - Default: Cloud Run v2 discovery (legacy demo).
+ * - Default: bundled Cloudflare OpenAPI (fallback URL if local bundle missing).
  *
  * Produces a flattened Operation list for search + OpenAPI 3 for GraphQL.
  */
@@ -26,9 +26,8 @@ import {
 
 export type { Operation, ParameterInfo } from "./operation-types.js";
 
-/** Default demo: Cloud Run v2 discovery document (when no bundled provider / spec env). */
-export const DEFAULT_DISCOVERY_URL =
-  "https://run.googleapis.com/$discovery/rest?version=v2";
+/** Default bundled provider id used when no spec env/provider is set. */
+export const DEFAULT_PROVIDER_ID = "cloudflare";
 
 export interface LoadedSpec {
   operations: Operation[];
@@ -408,13 +407,43 @@ async function loadRawDocument(source: SpecSource): Promise<unknown> {
       }
     }
     case "default": {
+      const entry = resolveBundledProvider(DEFAULT_PROVIDER_ID);
+      if (!entry) {
+        throw new Error(
+          `[spec-loader] Default provider "${DEFAULT_PROVIDER_ID}" is not registered.`
+        );
+      }
       console.error(
-        `[spec-loader] No spec env / CLAWQL_PROVIDER — using default Cloud Run discovery: ${DEFAULT_DISCOVERY_URL}`
+        `[spec-loader] No spec env / CLAWQL_PROVIDER — using default bundled provider "${entry.id}" (${entry.bundledSpecPath})`
       );
-      const res = await fetch(DEFAULT_DISCOVERY_URL);
-      if (!res.ok) throw new Error(`Failed to fetch spec: ${res.status}`);
-      const text = await res.text();
-      return parseSpecText(text);
+      const root = getPackageRoot();
+      const abs = resolvePath(root, entry.bundledSpecPath);
+      try {
+        const text = await readFile(abs, "utf-8");
+        console.error(
+          `[spec-loader] Using bundled local OpenAPI (no network): ${abs}`
+        );
+        return parseSpecText(text);
+      } catch (e: unknown) {
+        const err = e as NodeJS.ErrnoException;
+        if (err?.code !== "ENOENT") throw e;
+        if (bundledOfflineNoRemoteFetch()) {
+          throw new Error(
+            `Bundled spec file missing: ${abs}. ` +
+              `Run \`npm run fetch-provider-specs\` or clear CLAWQL_BUNDLED_OFFLINE.`
+          );
+        }
+        console.error(
+          `[spec-loader] Bundled file missing; fetching fallback: ${entry.fallbackUrl}`
+        );
+        const res = await fetch(entry.fallbackUrl);
+        if (!res.ok) {
+          throw new Error(
+            `Failed to fetch provider fallback (${entry.id}): ${res.status}`
+          );
+        }
+        return parseSpecText(await res.text());
+      }
     }
     case "discovery": {
       console.error(`[spec-loader] discovery URL: ${source.url}`);

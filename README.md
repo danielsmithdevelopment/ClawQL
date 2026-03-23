@@ -5,8 +5,9 @@ layer for lean responses, and **spec-driven discovery** so agents don’t load
 full OpenAPI definitions into context.
 
 **Bring your own OpenAPI 3** (JSON/YAML file or URL), or use **Swagger 2**
-(converted automatically), or a **Google Discovery** document URL. If you set
-nothing, the demo default is the **Cloud Run v2** discovery spec.
+(converted automatically), or a **Google Discovery** document URL. If no spec
+env is set, ClawQL defaults to the bundled **Cloudflare** OpenAPI provider
+(falls back to Cloudflare's published OpenAPI URL if the local bundle is missing).
 
 ### Latest benchmark (bundled `google` · `jira` · `cloudflare`)
 
@@ -100,12 +101,13 @@ If your environment skips lifecycle scripts, run `npm run build` once manually.
 | `CLAWQL_HTTP_HEADERS` | JSON object of extra headers, merged with bearer |
 
 **GCP multi-service:** use **`CLAWQL_GOOGLE_TOP20_SPECS=1`** or **`CLAWQL_SPEC_PATHS`** so `search` / `execute` see every merged API in one server; `execute` uses REST in that mode. See [`docs/workflow-gcp-multi-service.md`](docs/workflow-gcp-multi-service.md).  
-**Integration check:** `npm run workflow:gcp-multi` runs **`tools/call` → `search`** over real MCP stdio and writes `docs/workflow-gcp-multi-latest.json` (full `CallToolResult` + parsed body). `npm run workflow:gcp-multi:direct` is a faster in-process-only variant for debugging rankers. Experiment write-up (queries, APIs, token heuristic, MCP samples): [`docs/experiment-gcp-multi-mcp-workflow.md`](docs/experiment-gcp-multi-mcp-workflow.md); `npm run report:gcp-multi-experiment` refreshes [`docs/experiment-gcp-multi-mcp-stats.json`](docs/experiment-gcp-multi-mcp-stats.json).
+**Integration check:** `npm run workflow:gcp-multi` runs **`tools/call` → `search`** over real MCP stdio and writes `docs/workflow-gcp-multi-latest.json` (full `CallToolResult` + parsed body). `npm run workflow:gcp-multi:direct` is a faster in-process-only variant for debugging rankers. One-page results summary: [`docs/gcp-multi-mcp-test-summary.md`](docs/gcp-multi-mcp-test-summary.md). Detailed experiment write-up (queries, APIs, token heuristic, MCP samples): [`docs/experiment-gcp-multi-mcp-workflow.md`](docs/experiment-gcp-multi-mcp-workflow.md); `npm run report:gcp-multi-experiment` refreshes [`docs/experiment-gcp-multi-mcp-stats.json`](docs/experiment-gcp-multi-mcp-stats.json).
 
-If **none** of the spec variables are set, ClawQL loads the default **Cloud Run
-v2** discovery URL. Set **`CLAWQL_PROVIDER=jira`**, **`google`**, or **`cloudflare`** to prefer
-the **on-disk** copies under `providers/` (see `providers/README.md`); if a
-bundled file is missing, the registry **fallback URL** is fetched instead.
+If **none** of the spec variables are set, ClawQL loads the default bundled
+provider (**`cloudflare`**). Set **`CLAWQL_PROVIDER=jira`**, **`google`**, or
+**`cloudflare`** to pick a bundled preset explicitly (see `providers/README.md`);
+if a bundled file is missing, the provider registry **fallback URL** is fetched
+unless `CLAWQL_BUNDLED_OFFLINE=1`.
 
 Maintainers: `npm run fetch-provider-specs` downloads specs; `npm run pregenerate-graphql`
 (after `npm run build`) writes `introspection.json` / `schema.graphql` for each

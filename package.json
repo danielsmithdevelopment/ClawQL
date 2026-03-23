@@ -41,6 +41,7 @@
         "docs/workflow-multi-provider.md",
         "docs/google-apis-lookup.md",
         "docs/workflow-gcp-multi-service.md",
+        "docs/gcp-multi-mcp-test-summary.md",
         "docs/experiment-gcp-multi-mcp-workflow.md",
         "docs/experiment-gcp-multi-mcp-stats.json",
         "LICENSE",
