@@ -105,12 +105,11 @@ Execution result:
 }
 ```
 
-Conclusion: GraphQL pipeline is executing through to Cloud Run, and failure is now auth-related (`401`) rather than schema/build/runtime.
+Conclusion: GraphQL pipeline is executing through to Cloud Run, and failure is now credential-related (`401`) rather than schema/build/runtime.
 
 ## Notes / Follow-up
 
-- To get successful data responses, set a valid Google access token:
-  - `export GOOGLE_ACCESS_TOKEN=$(gcloud auth print-access-token)`
+- To get successful data responses, provide valid Google API credentials.
 - The generated GraphQL query name for list services currently differs from the helper assumption in `tools.ts`.
   - Current schema exposes `googleCloudRunV2ListServicesResponse` (not `v2ProjectsLocationsServicesList`).
   - If desired, update query-name resolution logic to map directly from introspected schema names or from OASGraph report metadata.
@@ -148,4 +147,4 @@ Conclusion:
 
 - Field-name mismatch is resolved.
 - Argument-shape mismatch (`parent` vs split IDs) is resolved for this path.
-- Remaining failure is expected auth (`401`) until a valid GCP token is provided.
+- Remaining failure is expected credential error (`401`) until valid GCP credentials are provided.

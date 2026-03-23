@@ -19,21 +19,7 @@ No API keys required.
 
 ## Create a real Jira issue (optional)
 
-Jira Cloud needs a **project key**, **auth**, and an **assignee `accountId`** (not display name). Resolve `accountId` from the Jira UI or `GET /rest/api/3/user/search?query=danielsmith`.
-
-```bash
-export WORKFLOW_CREATE_JIRA_ISSUE=1
-export CLAWQL_API_BASE_URL="https://YOURSITE.atlassian.net"
-export CLAWQL_HTTP_HEADERS='{"Authorization":"Basic ..."}'   # or Bearer
-export WORKFLOW_JIRA_PROJECT_KEY="PROJ"
-export WORKFLOW_JIRA_ASSIGNEE_ACCOUNT_ID="5b10a2844c20165700ede21f"
-# optional: WORKFLOW_JIRA_ISSUE_TYPE_NAME=Task
-# optional: WORKFLOW_JIRA_LABELS="kubernetes,google,cloudflare"
-
-npm run workflow:multi-provider
-```
-
-If `issuetype` by name fails, set `WORKFLOW_JIRA_ISSUE_TYPE_NAME` to match your project, or use `createmeta` to pick an `id`.
+Jira live issue creation is temporarily undocumented while credential strategy is being finalized.
 
 ## What this does *not* do
 

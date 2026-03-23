@@ -34,41 +34,10 @@ Outputs:
 - `docs/benchmarks/latest.json`
 - `docs/benchmarks/latest.md` — Phase 2 side-by-side: **full REST JSON** vs **GraphQL JSON**
 
-## Optional: live REST + GraphQL (`BENCHMARK_LIVE=1`)
+## Optional live mode (`BENCHMARK_LIVE=1`)
 
-**Google (GKE list clusters)**
-
-```bash
-export BENCHMARK_LIVE=1
-export CLAWQL_PROVIDER=google
-export BENCHMARK_GOOGLE_PARENT="projects/YOUR_PROJECT/locations/us-central1"
-export GOOGLE_ACCESS_TOKEN="$(gcloud auth print-access-token)"
-npm run benchmark:tokens
-```
-
-**Jira (get issue)**
-
-```bash
-export BENCHMARK_LIVE=1
-export CLAWQL_PROVIDER=jira
-export CLAWQL_API_BASE_URL="https://YOURSITE.atlassian.net"
-export BENCHMARK_JIRA_ISSUE_KEY="PROJ-123"
-export CLAWQL_HTTP_HEADERS='{"Authorization":"Basic ..."}'
-npm run benchmark:tokens
-```
-
-**Cloudflare (list DNS records)**
-
-```bash
-export BENCHMARK_LIVE=1
-export CLAWQL_PROVIDER=cloudflare
-export CLAWQL_API_BASE_URL="https://api.cloudflare.com/client/v4"
-export BENCHMARK_CLOUDFLARE_ZONE_ID="your_zone_id"
-export CLAWQL_BEARER_TOKEN="your_cloudflare_api_token"
-npm run benchmark:tokens
-```
-
-> **Note:** Full Cloudflare OpenAPI → GraphQL schema build can be slow or memory-heavy.
+Live credential/setup instructions are temporarily undocumented while credential strategy is being finalized.
+Offline fixture-based benchmarks remain fully reproducible via `npm run benchmark:tokens`.
 
 ## CI / regression (optional)
 

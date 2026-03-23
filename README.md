@@ -19,7 +19,6 @@ Token estimate: **~4 characters per token**. Phase 2 compares **full REST respon
 | **google** (GKE list clusters) | 84,436 → 2,167 (**82,269 saved**, ~39×, **97.4%**) | 421 → 76 (**345 saved**, ~5.5×, **82.0%**) |
 | **jira** (get issue) | 266,579 → 901 (**265,678 saved**, ~296×, **99.7%**) | 386 → 40 (**346 saved**, ~9.7×, **89.6%**) |
 | **cloudflare** (list DNS records) | 2,206,098 → 2,377 (**2,203,721 saved**, ~928×, **99.9%**) | 177 → 80 (**97 saved**, ~2.2×, **54.8%**) |
-| **Average (3 providers)** | **~852,371 → ~1,815** (**~850,556 saved**, **~99.8%**) | **~328 → ~65** (**~263 saved**, **~80.2%**) |
 
 Phase 1 = planning context; Phase 2 = execution payloads returned to the agent.
 
@@ -44,7 +43,6 @@ Example (after `npm install -g clawql-mcp-server` or with local `node_modules/.b
 
 ```bash
 export CLAWQL_SPEC_PATH=./openapi.yaml
-export CLAWQL_BEARER_TOKEN=…   # if your API needs auth
 clawql-graphql &               # terminal 1 — listens on GRAPHQL_PORT (default 4000)
 clawql-mcp                     # terminal 2 — MCP over stdio
 ```
@@ -97,8 +95,6 @@ If your environment skips lifecycle scripts, run `npm run build` once manually.
 | `CLAWQL_PROVIDER` | Use a **bundled** preset (`jira`, `google`, `cloudflare`) when no path/URL/discovery env is set |
 | `CLAWQL_INTROSPECTION_PATH` | Pregenerated GraphQL introspection JSON (optional; speeds MCP `execute` field matching) |
 | `CLAWQL_API_BASE_URL` | Override REST base URL (if spec has no `servers` or you need a different host) |
-| `CLAWQL_BEARER_TOKEN` | `Authorization: Bearer …` for upstream calls (or legacy `GOOGLE_ACCESS_TOKEN`) |
-| `CLAWQL_HTTP_HEADERS` | JSON object of extra headers, merged with bearer |
 
 **GCP multi-service:** use **`CLAWQL_GOOGLE_TOP20_SPECS=1`** or **`CLAWQL_SPEC_PATHS`** so `search` / `execute` see every merged API in one server; `execute` uses REST in that mode. See [`docs/workflow-gcp-multi-service.md`](docs/workflow-gcp-multi-service.md).  
 **Integration check:** `npm run workflow:gcp-multi` runs **`tools/call` → `search`** over real MCP stdio and writes `docs/workflow-gcp-multi-latest.json` (full `CallToolResult` + parsed body). `npm run workflow:gcp-multi:direct` is a faster in-process-only variant for debugging rankers. One-page results summary: [`docs/gcp-multi-mcp-test-summary.md`](docs/gcp-multi-mcp-test-summary.md). Detailed experiment write-up (queries, APIs, token heuristic, MCP samples): [`docs/experiment-gcp-multi-mcp-workflow.md`](docs/experiment-gcp-multi-mcp-workflow.md); `npm run report:gcp-multi-experiment` refreshes [`docs/experiment-gcp-multi-mcp-stats.json`](docs/experiment-gcp-multi-mcp-stats.json).
@@ -117,7 +113,7 @@ provider where **`@omnigraph/openapi`** succeeds (**use Bun** — see `providers
 multi-step **`search`** scenario across **Google (GKE)**, **Cloudflare**, and **Jira**
 (GKE deploy → Cloudflare DNS/caching → Jira tracking), and writes
 [`docs/workflow-multi-provider-latest.json`](docs/workflow-multi-provider-latest.json).
-Optional live **Jira issue create** via env vars — see [`docs/workflow-multi-provider.md`](docs/workflow-multi-provider.md).
+Live Jira issue-create instructions are currently omitted — see [`docs/workflow-multi-provider.md`](docs/workflow-multi-provider.md).
 
 See `.env.example` for a full list.
 
@@ -221,17 +217,7 @@ npm install
 # or: bun install
 ```
 
-### 2. Authenticate with GCP
-
-```bash
-# Option A — Application Default Credentials (recommended for local dev)
-gcloud auth application-default login
-
-# Option B — Export a token directly
-export GOOGLE_ACCESS_TOKEN=$(gcloud auth print-access-token)
-```
-
-### 3. Start the GraphQL proxy
+### 2. Start the GraphQL proxy
 
 The GraphQL proxy must be running before the MCP server makes execution calls.
 Run it in a separate terminal or as a background process:
@@ -242,7 +228,7 @@ npm run graphql
 # GraphQL proxy running at http://localhost:4000/graphql
 ```
 
-### 4. Start the MCP server
+### 3. Start the MCP server
 
 ```bash
 npm run dev          # development (tsx, no build step)
@@ -250,7 +236,7 @@ npm run build && npm start  # production
 # or: bun run dev / bun run build && bun run start
 ```
 
-### 5. Run tests
+### 4. Run tests
 
 Tests use [Bun](https://bun.sh)’s test runner (`bun test`).
 
@@ -274,7 +260,6 @@ binary name:
       "args": ["-p", "clawql-mcp-server", "clawql-mcp"],
       "env": {
         "CLAWQL_SPEC_PATH": "/absolute/path/to/openapi.yaml",
-        "CLAWQL_BEARER_TOKEN": "your-token-if-needed",
         "GRAPHQL_URL": "http://localhost:4000/graphql"
       }
     }
@@ -343,7 +328,6 @@ Point ClawQL at any one Discovery document:
 
 ```bash
 export CLAWQL_DISCOVERY_URL="https://compute.googleapis.com/\$discovery/rest?version=v1"
-# plus auth (e.g. CLAWQL_BEARER_TOKEN or CLAWQL_HTTP_HEADERS)
 ```
 
 ---

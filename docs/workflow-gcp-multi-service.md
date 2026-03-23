@@ -13,9 +13,6 @@ For a faster in-process ranking check only (no MCP), use `npm run workflow:gcp-m
 
 **Write-up:** queries, services, size/token comparison, and illustrative MCP request/response shapes — [`experiment-gcp-multi-mcp-workflow.md`](experiment-gcp-multi-mcp-workflow.md). Refresh stats: `npm run report:gcp-multi-experiment`.
 
-> **Auth**  
-> Set `CLAWQL_BEARER_TOKEN` (or `gcloud auth print-access-token`). Many calls need `https://www.googleapis.com/auth/cloud-platform` scope.
-
 Replace placeholders:
 
 | Placeholder | Meaning |
