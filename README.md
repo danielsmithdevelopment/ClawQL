@@ -1,9 +1,121 @@
 # ClawQL
-MCP server that reduces token consumption by abstracting all tool calls into just two top-level functions and utilizes graphql to filter responses to exclusively the data needed. Focused on cloud doc interaction to start but able to be extended into other areas as needed and customized for specific use cases.
 
-MCP server for the GCP Cloud Run API, with a **GraphQL optimization layer** and
-**spec-driven endpoint discovery** — so agents can find and query Cloud Run
-efficiently without burning context on 54 raw endpoints.
+MCP server with **two tools** (`search`, `execute`), an internal **GraphQL**
+layer for lean responses, and **spec-driven discovery** so agents don’t load
+full OpenAPI definitions into context.
+
+**Bring your own OpenAPI 3** (JSON/YAML file or URL), or use **Swagger 2**
+(converted automatically), or a **Google Discovery** document URL. If you set
+nothing, the demo default is the **Cloud Run v2** discovery spec.
+
+---
+
+## Install (npm / yarn / bun)
+
+```bash
+npm install clawql-mcp-server
+# yarn add clawql-mcp-server
+# bun add clawql-mcp-server
+```
+
+Binaries (after install):
+
+| Command | Purpose |
+|--------|---------|
+| `clawql-mcp` | MCP server on stdio (what Cursor/Claude connect to) |
+| `clawql-graphql` | Local GraphQL proxy used by `execute` |
+
+Example (after `npm install -g clawql-mcp-server` or with local `node_modules/.bin` on `PATH`):
+
+```bash
+export CLAWQL_SPEC_PATH=./openapi.yaml
+export CLAWQL_BEARER_TOKEN=…   # if your API needs auth
+clawql-graphql &               # terminal 1 — listens on GRAPHQL_PORT (default 4000)
+clawql-mcp                     # terminal 2 — MCP over stdio
+```
+
+Run a published package **without** a global install:
+
+```bash
+npx -p clawql-mcp-server clawql-graphql
+npx -p clawql-mcp-server clawql-mcp
+```
+
+(`npx clawql-mcp` alone expects an npm package literally named `clawql-mcp`; this
+repo publishes as **`clawql-mcp-server`**, so use `-p` as above.)
+
+### Quick start for agent users
+
+For most users, this is enough to get an agent connected:
+
+```bash
+# terminal 1
+npx -p clawql-mcp-server clawql-graphql
+
+# terminal 2
+CLAWQL_SPEC_PATH=./openapi.yaml npx -p clawql-mcp-server clawql-mcp
+```
+
+Then point your MCP client (Cursor/Claude Desktop) to the `clawql-mcp` command.
+
+### Installing from GitHub source (instead of npm registry)
+
+If you install directly from git, `prepare` now runs automatically to build `dist/`.
+
+```bash
+npm i github:danielsmithdevelopment/ClawQL
+```
+
+If your environment skips lifecycle scripts, run `npm run build` once manually.
+
+---
+
+## Configure the API spec
+
+| Variable | Meaning |
+|----------|---------|
+| `CLAWQL_SPEC_PATH` | Path to local OpenAPI JSON/YAML (or `OPENAPI_SPEC_PATH`) |
+| `CLAWQL_SPEC_URL` | URL to fetch OpenAPI JSON/YAML |
+| `CLAWQL_DISCOVERY_URL` | Google Discovery JSON URL (e.g. other GCP APIs) |
+| `CLAWQL_PROVIDER` | Use a **bundled** preset (`jira`, `google`, `cloudflare`) when no path/URL/discovery env is set |
+| `CLAWQL_INTROSPECTION_PATH` | Pregenerated GraphQL introspection JSON (optional; speeds MCP `execute` field matching) |
+| `CLAWQL_API_BASE_URL` | Override REST base URL (if spec has no `servers` or you need a different host) |
+| `CLAWQL_BEARER_TOKEN` | `Authorization: Bearer …` for upstream calls (or legacy `GOOGLE_ACCESS_TOKEN`) |
+| `CLAWQL_HTTP_HEADERS` | JSON object of extra headers, merged with bearer |
+
+If **none** of the spec variables are set, ClawQL loads the default **Cloud Run
+v2** discovery URL. Set **`CLAWQL_PROVIDER=jira`**, **`google`**, or **`cloudflare`** to prefer
+the **on-disk** copies under `providers/` (see `providers/README.md`); if a
+bundled file is missing, the registry **fallback URL** is fetched instead.
+
+Maintainers: `npm run fetch-provider-specs` downloads specs; `npm run pregenerate-graphql`
+(after `npm run build`) writes `introspection.json` / `schema.graphql` for each
+provider where **`@omnigraph/openapi`** succeeds (**use Bun** — see `providers/README.md`).
+
+**Multi-provider workflow (offline):** `npm run workflow:multi-provider` runs a
+multi-step **`search`** scenario across **Google (GKE)**, **Cloudflare**, and **Jira**
+(GKE deploy → Cloudflare DNS/caching → Jira tracking), and writes
+[`docs/workflow-multi-provider-latest.json`](docs/workflow-multi-provider-latest.json).
+Optional live **Jira issue create** via env vars — see [`docs/workflow-multi-provider.md`](docs/workflow-multi-provider.md).
+
+See `.env.example` for a full list.
+
+**Large / vendor OpenAPI docs:** The design goal is **the full spec** — token
+efficiency comes from **search + selective `execute`**, not from trimming the
+document. ClawQL therefore applies **normalization** (e.g. shorthand `items`,
+`default: null` + `nullable`, refs, empty servers) so huge specs load reliably.
+The GraphQL layer uses **`@omnigraph/openapi`** (same engine as [GraphQL Mesh OpenAPI](https://the-guild.dev/graphql/mesh/docs/handlers/openapi));
+some mega-specs may still hit **translation** edge cases. When GraphQL
+fails, **`execute` falls back to REST** using the same OpenAPI operation map.
+Improving resilience means extending sanitization and/or the translator — not
+shipping a smaller spec.
+
+Want to **fix translation upstream** (GraphQL Mesh / Omnigraph)? See
+**[`docs/OPENAPI_TO_GRAPHQL_UPSTREAM.md`](docs/OPENAPI_TO_GRAPHQL_UPSTREAM.md)** and
+**[`CONTRIBUTING.md`](CONTRIBUTING.md)**.
+
+**MVP note:** Search is lightweight keyword scoring over operation metadata.
+Very large specs may need a different retrieval strategy later.
 
 ---
 
@@ -15,26 +127,24 @@ Agent
         ├─▶ search tool  ──▶ In-memory spec search  (zero latency, zero tokens)
         └─▶ execute tool  ──▶ GraphQL Client
                                     └─▶ GraphQL Proxy  (localhost:4000)
-                                          │  [openapi-to-graphql, auto-generated]
+                                          │  [@omnigraph/openapi / Mesh, auto-generated]
                                           │  [selects ONLY requested fields]
-                                          └─▶ Cloud Run REST API  (run.googleapis.com)
+                                          └─▶ Your REST API  (from OpenAPI servers / CLAWQL_API_BASE_URL)
 ```
 
 **Key design principles:**
 
-1. **`search` first, `execute` second.** The agent calls `search("list
-   services by region")` to discover which operation to run and what parameters it
-   takes — without loading all endpoint definitions into context upfront.
+1. **`search` first, `execute` second.** The agent calls `search("…")` to discover
+   which operation to run and what parameters it takes — without loading the full
+   spec into context upfront.
 
 2. **GraphQL is a private optimization layer.** Agents never see or write
    GraphQL. `execute` constructs a precise internal query that
    fetches only the fields needed, keeping responses lean before they land in
    the agent's context window.
 
-3. **Single source of truth.** Both the search index and the GraphQL schema are
-   derived automatically from the Cloud Run v2 discovery spec at
-   `https://run.googleapis.com/$discovery/rest?version=v2`. When Google adds
-   endpoints, `search` discovers them automatically.
+3. **Single source of truth.** The search index and GraphQL schema are derived
+   from the same loaded spec (OpenAPI 3, or Discovery → OpenAPI for Google APIs).
 
 ---
 
@@ -132,7 +242,30 @@ The two phases optimize **different sides** of the bill:
 - **Phase 1** is mostly an **input-token** reduction (planning / selection context).
 - **Phase 2** is mostly an **output-token** reduction (what comes back from the API call), with a small **input** cost for the GraphQL document and variables.
 
-**Pricing note:** Many providers charge **more per output token** than per input token (rates vary by model and change over time). That makes Phase 2 especially valuable when execution responses would otherwise be large — even though Phase 1 saves more tokens in absolute count.
+**Pricing note:** Many providers charge **more per output token** than per input token (rates vary by model and change over time). That makes response shaping especially valuable when execution payloads would otherwise be large.
+
+### Provider benchmark breakdown (Phase 1 + Phase 2)
+
+The script measures **both** phases:
+
+- **Phase 1:** full serialized OpenAPI vs **top-5 `search`** result payload (planning / selection context).
+- **Phase 2 (execution payloads):** **full REST response JSON** (unfiltered body) vs **GraphQL response JSON** (same operation with a lean field selection — what `execute` returns). Default bodies come from committed **fixtures** in [`docs/benchmarks/response-examples/`](docs/benchmarks/response-examples/) (no credentials). Set **`BENCHMARK_LIVE=1`** + provider env to swap in **live** REST + GraphQL responses when both calls succeed — [`docs/benchmarks/REPRODUCE.md`](docs/benchmarks/REPRODUCE.md).
+
+`latest.json` also includes **`phase2Documentation`** (OpenAPI response schema vs field-selection string) as a separate *documentation-cost* estimate.
+
+Raw Phase 1 payloads are **omitted** from `latest.md` (too large). **Side-by-side** shows real JSON excerpts for Phase 2: fat REST vs lean GraphQL.
+
+**Reproduce:** `npm run benchmark:tokens` → [`docs/benchmarks/latest.json`](docs/benchmarks/latest.json) and [`docs/benchmarks/latest.md`](docs/benchmarks/latest.md). Snapshot below matches a recent run; re-run after spec changes.
+
+| Provider | Complex query (Phase 1 search) | Operation | Phase 1 (input) | Phase 2 (full REST JSON → GraphQL JSON) |
+|---|---|---|---|---|
+| `google` | "create gke kubernetes cluster…" | `container.projects.locations.clusters.list` | `84,436 → 2,167` (**82,269 saved**, `39.0x`, `97.4%`) | `421 → 76` (**345 saved**, `5.5x`, `82.0%`) |
+| `jira` | "create issue in project…" | `com.atlassian.jira.rest.v2.issue.IssueResource.getIssue_get` | `266,579 → 901` (**265,678 saved**, `295.9x`, `99.7%`) | `386 → 40` (**346 saved**, `9.7x`, `89.6%`) |
+| `cloudflare` | "create a DNS record…" | `dns-records-for-a-zone-list-dns-records` | `2,206,098 → 2,377` (**2,203,721 saved**, `928.1x`, `99.9%`) | `177 → 80` (**97 saved**, `2.2x`, `54.8%`) |
+
+**Average across all 3 providers:** Phase 1 `~852,371 → ~1,815` tokens (**~850,556 saved**, ~`99.8%`); Phase 2 **payload** `~328 → ~65` (**~263 saved**, ~`80.2%`).
+
+Token estimate uses `~4 chars/token`. Exact numbers drift with spec versions; re-run the script after changing bundled specs.
 
 ---
 
@@ -140,8 +273,8 @@ The two phases optimize **different sides** of the bill:
 
 | Tool | Description |
 |---|---|
-| `search` | Search the Cloud Run spec by natural language intent |
-| `execute` | Run a discovered operation by discovery `operationId`, with optional GraphQL field selection |
+| `search` | Search the active OpenAPI/Discovery spec by natural language intent |
+| `execute` | Run a discovered operation by `operationId`, with optional GraphQL field selection |
 
 ### Agent workflow example
 
@@ -214,7 +347,29 @@ bun test
 
 ## Claude Desktop / Cursor config
 
-Add to your MCP config (`claude_desktop_config.json` or `.cursor/mcp.json`):
+**Installed from npm** (recommended): use `npx` with `-p clawql-mcp-server` and the
+binary name:
+
+```json
+{
+  "mcpServers": {
+    "clawql": {
+      "command": "npx",
+      "args": ["-p", "clawql-mcp-server", "clawql-mcp"],
+      "env": {
+        "CLAWQL_SPEC_PATH": "/absolute/path/to/openapi.yaml",
+        "CLAWQL_BEARER_TOKEN": "your-token-if-needed",
+        "GRAPHQL_URL": "http://localhost:4000/graphql"
+      }
+    }
+  }
+}
+```
+
+Start `clawql-graphql` (same `-p` pattern) in another terminal first, or use a
+process manager.
+
+**From a git checkout** (development):
 
 ```json
 {
@@ -223,7 +378,7 @@ Add to your MCP config (`claude_desktop_config.json` or `.cursor/mcp.json`):
       "command": "node",
       "args": ["/absolute/path/to/ClawQL/dist/server.js"],
       "env": {
-        "GOOGLE_ACCESS_TOKEN": "your-token-here",
+        "CLAWQL_SPEC_PATH": "/absolute/path/to/openapi.yaml",
         "GRAPHQL_URL": "http://localhost:4000/graphql"
       }
     }
@@ -231,7 +386,7 @@ Add to your MCP config (`claude_desktop_config.json` or `.cursor/mcp.json`):
 }
 ```
 
-Or using `tsx` for development:
+Or with `tsx`:
 
 ```json
 {
@@ -240,7 +395,7 @@ Or using `tsx` for development:
       "command": "npx",
       "args": ["tsx", "/absolute/path/to/ClawQL/src/server.ts"],
       "env": {
-        "GOOGLE_ACCESS_TOKEN": "your-token-here"
+        "CLAWQL_SPEC_PATH": "/absolute/path/to/openapi.yaml"
       }
     }
   }
@@ -262,22 +417,20 @@ proxy at `http://localhost:4000/graphql` while it is running.
 
 ---
 
-## Extending to other GCP APIs
+## Other GCP APIs (Discovery)
 
-The same pattern works for any GCP API that exposes a Discovery document:
+Discovery-style APIs can be pointed at without code changes:
 
-```typescript
-// Just change the discovery URL in spec-loader.ts:
-const DISCOVERY_URL = "https://compute.googleapis.com/$discovery/rest?version=v1";
-// → Compute Engine MCP server, same two-layer architecture
+```bash
+export CLAWQL_DISCOVERY_URL="https://compute.googleapis.com/\$discovery/rest?version=v1"
+# plus auth (e.g. CLAWQL_BEARER_TOKEN or CLAWQL_HTTP_HEADERS)
 ```
 
 ---
 
 ## Maintainer notes (publishing)
 
-1. Set `repository.url` in `package.json` to your real GitHub URL (placeholder:
-   `YOUR_USERNAME`).
+1. Confirm `repository.url` in `package.json` matches your GitHub repo.
 2. Run `npm run build` (or `bun run build`) and `npm test` (or `bun test`).
 3. Never commit secrets: use `.env` locally (ignored); see `.env.example` for
    documented variables.
