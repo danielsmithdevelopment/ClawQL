@@ -70,6 +70,48 @@ export const BUNDLED_PROVIDERS: Record<string, BundledProvider> = {
     bundledIntrospectionPath: "providers/cloudflare/introspection.json",
     bundledSchemaSdlPath: "providers/cloudflare/schema.graphql",
   },
+  /** GitHub REST (very large). Prefer committed `providers/github/openapi.yaml`. */
+  github: {
+    id: "github",
+    bundledSpecPath: "providers/github/openapi.yaml",
+    format: "openapi",
+    fallbackUrl:
+      "https://raw.githubusercontent.com/github/rest-api-description/main/descriptions/api.github.com/api.github.com.yaml",
+    bundledIntrospectionPath: "providers/github/introspection.json",
+    bundledSchemaSdlPath: "providers/github/schema.graphql",
+  },
+  /** Slack Web API (OpenAPI 2; loader converts to OAS3). Official copy at api.slack.com/specs. */
+  slack: {
+    id: "slack",
+    bundledSpecPath: "providers/slack/openapi.json",
+    format: "openapi",
+    fallbackUrl: "https://api.slack.com/specs/openapi/v2/slack_web.json",
+    bundledIntrospectionPath: "providers/slack/introspection.json",
+    bundledSchemaSdlPath: "providers/slack/schema.graphql",
+  },
+  /** Sentry public API (dereferenced bundle from getsentry/sentry-api-schema). */
+  sentry: {
+    id: "sentry",
+    bundledSpecPath: "providers/sentry/openapi.json",
+    format: "openapi",
+    fallbackUrl:
+      "https://raw.githubusercontent.com/getsentry/sentry-api-schema/main/openapi-derefed.json",
+    bundledIntrospectionPath: "providers/sentry/introspection.json",
+    bundledSchemaSdlPath: "providers/sentry/schema.graphql",
+  },
+  /**
+   * n8n Public API (bundled spec extracted from Swagger UI; see scripts/fetch-n8n-openapi.mjs).
+   * Fallback: same file on the default upstream repo (for clones without `providers/n8n/openapi.json`).
+   */
+  n8n: {
+    id: "n8n",
+    bundledSpecPath: "providers/n8n/openapi.json",
+    format: "openapi",
+    fallbackUrl:
+      "https://raw.githubusercontent.com/danielsmithdevelopment/ClawQL/main/providers/n8n/openapi.json",
+    bundledIntrospectionPath: "providers/n8n/introspection.json",
+    bundledSchemaSdlPath: "providers/n8n/schema.graphql",
+  },
 };
 
 async function resolveGoogleTop50Items(): Promise<ProviderGroupItem[]> {
@@ -98,10 +140,35 @@ async function resolveDefaultMultiProviderItems(): Promise<ProviderGroupItem[]> 
   ];
 }
 
+/**
+ * In a merged load, `specLabel` is each Google top50 API slug (e.g. `container-v1`) or
+ * one of these vendor ids — every bundled provider except the single-file `google` discovery.
+ */
+export const BUNDLED_MERGED_VENDOR_LABELS: readonly string[] = Object.keys(
+  BUNDLED_PROVIDERS
+)
+  .filter((id) => id !== "google")
+  .sort();
+
+async function resolveAllBundledProvidersItems(): Promise<ProviderGroupItem[]> {
+  const root = getPackageRoot();
+  const google = await resolveGoogleTop50Items();
+  const rest = BUNDLED_MERGED_VENDOR_LABELS.map((id) => {
+    const p = BUNDLED_PROVIDERS[id];
+    return {
+      abs: resolvePath(root, p.bundledSpecPath),
+      label: p.id,
+    };
+  });
+  return [...google, ...rest];
+}
+
 export const BUNDLED_PROVIDER_GROUPS: Record<string, BundledProviderGroup> = {
   atlassian: { providers: ["jira", "bitbucket"] },
   "google-top50": { resolve: resolveGoogleTop50Items },
   "default-multi-provider": { resolve: resolveDefaultMultiProviderItems },
+  /** Google top50 + every other bundled vendor (Jira, Bitbucket, Cloudflare, GitHub, Slack, Sentry, n8n). */
+  "all-providers": { resolve: resolveAllBundledProvidersItems },
 };
 
 export function resolveBundledProvider(
@@ -113,6 +180,10 @@ export function resolveBundledProvider(
 
 export function listBundledProviderIds(): string[] {
   return Object.keys(BUNDLED_PROVIDERS);
+}
+
+export function listBundledProviderGroupIds(): string[] {
+  return Object.keys(BUNDLED_PROVIDER_GROUPS);
 }
 
 export async function resolveBundledProviderGroup(

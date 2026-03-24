@@ -6,6 +6,7 @@
  * - URL to fetch the same, or
  * - Google Discovery document URL, or
  * - Default: bundled multi-provider set (Google top50 + Cloudflare + Jira).
+ * - Optional merged preset: CLAWQL_PROVIDER=all-providers (top50 + all other bundled vendors).
  *
  * Produces a flattened Operation list for search + OpenAPI 3 for GraphQL.
  */
@@ -19,6 +20,7 @@ import type { Operation, ParameterInfo } from "./operation-types.js";
 import { operationsFromOpenAPI } from "./openapi-operations.js";
 import { getPackageRoot } from "./package-root.js";
 import {
+  listBundledProviderGroupIds,
   listBundledProviderIds,
   resolveBundledProvider,
   resolveBundledProviderGroup,
@@ -322,7 +324,9 @@ function resolveSpecSource(): SpecSource {
   if (bundled) return { kind: "bundled", entry: bundled };
   if (providerRaw?.trim()) {
     throw new Error(
-      `Unknown CLAWQL_PROVIDER="${providerRaw.trim()}". Built-ins: ${listBundledProviderIds().join(", ")}`
+      `Unknown CLAWQL_PROVIDER="${providerRaw.trim()}". ` +
+        `Single: ${listBundledProviderIds().join(", ")}. ` +
+        `Merged presets: ${listBundledProviderGroupIds().join(", ")}`
     );
   }
 
@@ -471,7 +475,11 @@ async function loadRawDocument(source: SpecSource): Promise<unknown> {
 
 async function normalizeToOpenAPI(raw: unknown): Promise<unknown> {
   if (isSwagger2(raw)) {
-    const { openapi } = await convertObj(raw as object, {});
+    const { openapi } = await convertObj(raw as object, {
+      patch: true,
+      /** e.g. Slack Web API spec uses JSON Schema unions Slack’s own generator emits. */
+      warnOnly: true,
+    });
     return openapi;
   }
   return raw;
@@ -566,11 +574,15 @@ async function resolveMultiSpecItems(): Promise<
       label: labelFromSpecPath(p),
     }));
   }
-  const groupKey = useGoogleTop50
-    ? "google-top50"
-    : providerRaw;
-  const groupedProviders = await resolveBundledProviderGroup(groupKey);
-  if (groupedProviders) return groupedProviders;
+  // Merged preset on CLAWQL_PROVIDER (wins over CLAWQL_GOOGLE_TOP50_SPECS alone).
+  if (providerRaw) {
+    const grouped = await resolveBundledProviderGroup(providerRaw);
+    if (grouped) return grouped;
+  }
+  if (useGoogleTop50) {
+    const grouped = await resolveBundledProviderGroup("google-top50");
+    if (grouped) return grouped;
+  }
   // No config: load a rich default set for first-run complex workflows.
   if (!filePath && !specUrl && !discoveryUrl && !providerRaw && !useGoogleTop50) {
     console.error(

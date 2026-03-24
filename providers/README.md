@@ -8,8 +8,17 @@ start avoids downloading multi‑MB specs.
 | `google` | `google/discovery.json` | Single Google Discovery spec (GKE). For multi-service Google, use `CLAWQL_GOOGLE_TOP50_SPECS=1` or `CLAWQL_SPEC_PATHS`. |
 | `atlassian` | `atlassian/jira/openapi.yaml` + `atlassian/bitbucket/openapi.yaml` | Loads both Atlassian specs in one merged operation index (multi-spec mode). |
 | `cloudflare` | `cloudflare/openapi.yaml` | Official [Cloudflare API schemas](https://github.com/cloudflare/api-schemas) OpenAPI (large; ~tens of MB). |
+| `github` | `github/openapi.yaml` | [github/rest-api-description](https://github.com/github/rest-api-description) `api.github.com` bundle (very large; thousands of operations). |
+| `slack` | `slack/openapi.json` | Official Web API spec from [api.slack.com/specs](https://api.slack.com/specs) (OpenAPI 2; loader upgrades). |
+| `sentry` | `sentry/openapi.json` | Dereferenced public API from [getsentry/sentry-api-schema](https://github.com/getsentry/sentry-api-schema) (`openapi-derefed.json`). |
+| `n8n` | `n8n/openapi.json` | n8n Public API (bundled JSON; refresh via `npm run fetch-n8n-openapi` against a running instance). |
+| `jira` | `atlassian/jira/openapi.yaml` | Jira Cloud REST (alias of single-spec mode; also part of `atlassian` / default merge). |
+| `bitbucket` | `atlassian/bitbucket/openapi.yaml` | Bitbucket Cloud REST (alias; also part of `atlassian` / `all-providers`). |
+| `google-top50` | *(merged preset)* | Curated [`google-top50-apis.json`](google/google-top50-apis.json) only (~50 Discovery specs). |
+| `default-multi-provider` | *(merged preset)* | Same as **no spec env**: top50 + Cloudflare + Jira. |
+| `all-providers` | *(merged preset)* | Top50 + **every** other `BUNDLED_PROVIDERS` vendor (adds Bitbucket, GitHub, Slack, Sentry, n8n, …). |
 
-Compatibility aliases currently supported: `jira`, `bitbucket`.
+Compatibility aliases for merged groups: `atlassian` = Jira + Bitbucket together.
 
 **Google API catalog (all services):** The repo includes a snapshot of Google’s public [Discovery directory](https://www.googleapis.com/discovery/v1/apis) as `google/discovery-directory.json` and a slim index `google/google-apis-lookup.json` (id → `discoveryRestUrl`, docs link, `preferred`). Refresh with `npm run fetch-google-discovery-directory` (also runs at the end of `npm run fetch-provider-specs`). Details: [`docs/google-apis-lookup.md`](../docs/google-apis-lookup.md).
 
@@ -17,9 +26,11 @@ Compatibility aliases currently supported: `jira`, `bitbucket`.
 
 **Default no-config mode:** when no spec env vars are set, ClawQL loads a bundled multi-provider set (`google-top50` + `cloudflare` + `jira`) so complex cross-provider search works on first install.
 
-**Precedence:** `CLAWQL_SPEC_PATHS` / `CLAWQL_GOOGLE_TOP50_SPECS` override
-`CLAWQL_SPEC_PATH` / `CLAWQL_SPEC_URL` / `CLAWQL_DISCOVERY_URL`, which override
-`CLAWQL_PROVIDER`.
+**All-providers merged preset:** set **`CLAWQL_PROVIDER=all-providers`** to load **Google top50 + every other bundled vendor** (Jira, Bitbucket, Cloudflare, GitHub, Slack, Sentry, n8n) in one merged operation index. This wins over **`CLAWQL_GOOGLE_TOP50_SPECS`** when both are set. Adding a new entry under `BUNDLED_PROVIDERS` automatically includes it here.
+
+**Precedence (multi-spec):** `CLAWQL_SPEC_PATHS` (explicit file list) → **`CLAWQL_PROVIDER`** when it names a **merged** preset (`google-top50`, `default-multi-provider`, `all-providers`, `atlassian`) → **`CLAWQL_GOOGLE_TOP50_SPECS=1`** (same as loading `google-top50` when provider is not a merged preset) → default bundle when nothing else is set.
+
+**Precedence (single-spec):** `CLAWQL_SPEC_PATH` / `CLAWQL_SPEC_URL` / `CLAWQL_DISCOVERY_URL` override **`CLAWQL_PROVIDER`** for a **single** bundled id (`cloudflare`, `jira`, …).
 
 **Local-first:** Bundled specs are read from disk first; the remote fallback URL is
 only used if the file is missing **and** `CLAWQL_BUNDLED_OFFLINE` is not set (`1` /
@@ -36,6 +47,12 @@ From the repo root (needs network):
 
 ```bash
 npm run fetch-provider-specs
+```
+
+**n8n** is not included in that script (the bundled spec is served inside Swagger UI, not as a static URL). With a running n8n instance and the public API enabled, run:
+
+```bash
+N8N_BASE_URL=http://127.0.0.1:5678 npm run fetch-n8n-openapi
 ```
 
 ## Pregenerate GraphQL artifacts

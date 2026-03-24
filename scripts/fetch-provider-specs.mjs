@@ -30,6 +30,21 @@ const TARGETS = [
     url: "https://raw.githubusercontent.com/cloudflare/api-schemas/refs/heads/main/openapi.yaml",
     out: "providers/cloudflare/openapi.yaml",
   },
+  {
+    id: "github",
+    url: "https://raw.githubusercontent.com/github/rest-api-description/main/descriptions/api.github.com/api.github.com.yaml",
+    out: "providers/github/openapi.yaml",
+  },
+  {
+    id: "slack",
+    url: "https://api.slack.com/specs/openapi/v2/slack_web.json",
+    out: "providers/slack/openapi.json",
+  },
+  {
+    id: "sentry",
+    url: "https://raw.githubusercontent.com/getsentry/sentry-api-schema/main/openapi-derefed.json",
+    out: "providers/sentry/openapi.json",
+  },
 ];
 
 async function main() {

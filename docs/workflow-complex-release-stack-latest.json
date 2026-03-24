@@ -1,0 +1,3270 @@
+{
+  "meta": {
+    "generatedAt": "2026-03-24T23:02:54.376Z",
+    "clawqlProviderPreset": "all-providers",
+    "logicalProviders": [
+      "google",
+      "bitbucket",
+      "cloudflare",
+      "github",
+      "jira",
+      "n8n",
+      "sentry",
+      "slack"
+    ],
+    "scenario": "GKE + expose service + GCP firewall (Cloudflare IPs) + CF DNS/cache + Sentry + GH Actions daily deploy + Slack + n8n → GitHub release + Jira (+ Bitbucket in bundled all-providers preset)",
+    "bundledOffline": true,
+    "dueDateOneWeek": "2026-03-31",
+    "assigneeDisplayName": "Daniel Smith",
+    "mergedOperationCount": 8990,
+    "providerOperationCounts": {
+      "google": 4141,
+      "bitbucket": 262,
+      "cloudflare": 2706,
+      "github": 1099,
+      "jira": 336,
+      "n8n": 59,
+      "sentry": 215,
+      "slack": 172
+    },
+    "uniqueOperationsConsidered": 128
+  },
+  "jiraDraft": {
+    "summary": "[Release stack] GKE + Cloudflare + Sentry + GitHub Actions + Slack + n8n — end-to-end runbook",
+    "descriptionPlain": "## Assignee\nDaniel Smith — set Jira Cloud **accountId** via WORKFLOW_JIRA_ASSIGNEE_ACCOUNT_ID for API assignee.\n\n## Due\n2026-03-31 (seven days from workflow generation, local calendar date).\n\n## Priority\nHigh (see Jira API field priority in create payload).\n\n## Goal (orchestration)\n1) Stand up GKE and deploy a service; expose it with a Kubernetes Service.\n2) Restrict ingress on GCP to **Cloudflare published IP ranges** where appropriate (https://www.cloudflare.com/ips/ (use published IPv4/IPv6 ranges on GCP firewall / LB allowlists).).\n3) Cloudflare DNS (proxied) toward the LB/origin; tune **caching** to reduce GKE load.\n4) **Sentry** SDK/chart on the workload with default org/project + release tracking.\n5) **GitHub Actions** pipeline: build container and redeploy to GKE **daily** (schedule + kubectl/gcloud or deploy action).\n6) **Slack** notifications to the **release** channel for each major step (build, deploy, DNS, cache, Sentry verify).\n7) **n8n** workflow: on message in release channel → create an **official GitHub Release** (or tag) via API.\n8) Optionally mirror CI artifacts or PR flow in **Bitbucket** (repos / Pipelines) if your org standardizes on Atlassian.\n9) This Jira ticket tracks the above; labels identify each toolchain.\n\n---\n## Google Cloud (GKE / networking)\n- `POST` container.projects.locations.clusters.create — `v1/projects/{projectsId}/locations/{locationsId}/clusters`\n- `POST` container.projects.zones.clusters.create — `v1/projects/{projectId}/zones/{zone}/clusters`\n- `POST` container.projects.zones.clusters.locations — `v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/locations`\n- `DELETE` container.projects.zones.clusters.delete — `v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}`\n- `POST` container.projects.zones.clusters.completeIpRotation — `v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}:completeIpRotation`\n- `POST` container.projects.zones.clusters.nodePools.autoscaling — `v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/nodePools/{nodePoolId}/autoscaling`\n- `POST` container.projects.locations.clusters.nodePools.setAutoscaling — `v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}/nodePools/{nodePoolsId}:setAutoscaling`\n- `POST` container.projects.locations.clusters.nodePools.create — `v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}/nodePools`\n- `POST` container.projects.zones.clusters.nodePools.create — `v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/nodePools`\n- `POST` container.projects.zones.clusters.nodePools.setSize — `v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/nodePools/{nodePoolId}/setSize`\n- `POST` networksecurity.projects.locations.interceptDeployments.create — `v1beta1/projects/{projectsId}/locations/{locationsId}/interceptDeployments`\n- `POST` networksecurity.projects.locations.mirroringDeployments.create — `v1beta1/projects/{projectsId}/locations/{locationsId}/mirroringDeployments`\n- `POST` networksecurity.projects.locations.interceptDeploymentGroups.create — `v1beta1/projects/{projectsId}/locations/{locationsId}/interceptDeploymentGroups`\n- `POST` networksecurity.projects.locations.mirroringDeploymentGroups.create — `v1beta1/projects/{projectsId}/locations/{locationsId}/mirroringDeploymentGroups`\n\n## Cloudflare\n- `POST` dns-records-for-a-zone-create-dns-record — `zones/{zone_id}/dns_records`\n- `GET` dns-records-for-a-zone-list-dns-records — `zones/{zone_id}/dns_records`\n- `GET` dns-records-for-a-zone-dns-record-details — `zones/{zone_id}/dns_records/{dns_record_id}`\n- `PUT` dns-records-for-a-zone-update-dns-record — `zones/{zone_id}/dns_records/{dns_record_id}`\n- `PATCH` dns-records-for-a-zone-patch-dns-record — `zones/{zone_id}/dns_records/{dns_record_id}`\n- `GET` zone-level-authenticated-origin-pulls-get-certificate-details — `zones/{zone_id}/origin_tls_client_auth/{certificate_id}`\n- `GET` zones-0-get — `zones/{zone_id}`\n- `GET` bot-management-for-a-zone-get-config — `zones/{zone_id}/bot_management`\n- `GET` account-level-custom-nameservers-usage-for-a-zone-get-account-custom-nameserver-related-zone-metadata — `zones/{zone_id}/custom_ns`\n- `GET` zone-lockdown-get-a-zone-lockdown-rule — `zones/{zone_id}/firewall/lockdowns/{lock_downs_id}`\n\n## Sentry\n- `POST` Create a New Project — `api/0/teams/{organization_id_or_slug}/{team_id_or_slug}/projects/`\n- `POST` (DEPRECATED) Create an Issue Alert Rule for a Project — `api/0/projects/{organization_id_or_slug}/{project_id_or_slug}/rules/`\n- `GET` List an Organization's Projects — `api/0/organizations/{organization_id_or_slug}/projects/`\n- `GET` List a Project's Organization Members — `api/0/projects/{organization_id_or_slug}/{project_id_or_slug}/members/`\n- `POST` (DEPRECATED) Create a Metric Alert Rule for an Organization — `api/0/organizations/{organization_id_or_slug}/alert-rules/`\n- `GET` List an Organization's Client Keys — `api/0/organizations/{organization_id_or_slug}/project-keys/`\n- `POST` Create a New Client Key — `api/0/projects/{organization_id_or_slug}/{project_id_or_slug}/keys/`\n- `GET` List a Project's Client Keys — `api/0/projects/{organization_id_or_slug}/{project_id_or_slug}/keys/`\n- `GET` Retrieve a Client Key — `api/0/projects/{organization_id_or_slug}/{project_id_or_slug}/keys/{key_id}/`\n- `PUT` Update a Client Key — `api/0/projects/{organization_id_or_slug}/{project_id_or_slug}/keys/{key_id}/`\n\n## GitHub\n- `POST` actions/create-workflow-dispatch — `repos/{owner}/{repo}/actions/workflows/{workflow_id}/dispatches`\n- `POST` repos/create-dispatch-event — `repos/{owner}/{repo}/dispatches`\n- `GET` actions/get-private-repo-fork-pr-workflows-settings-repository — `repos/{owner}/{repo}/actions/permissions/fork-pr-workflows-private-repos`\n- `PUT` actions/set-private-repo-fork-pr-workflows-settings-repository — `repos/{owner}/{repo}/actions/permissions/fork-pr-workflows-private-repos`\n- `GET` actions/get-github-actions-default-workflow-permissions-repository — `repos/{owner}/{repo}/actions/permissions/workflow`\n- `GET` actions/list-repo-organization-secrets — `repos/{owner}/{repo}/actions/organization-secrets`\n- `GET` actions/list-repo-secrets — `repos/{owner}/{repo}/actions/secrets`\n- `GET` actions/get-allowed-actions-repository — `repos/{owner}/{repo}/actions/permissions/selected-actions`\n- `PUT` actions/set-allowed-actions-repository — `repos/{owner}/{repo}/actions/permissions/selected-actions`\n- `GET` actions/list-org-secrets — `orgs/{org}/actions/secrets`\n\n## Slack\n- `POST` chat_postMessage — `chat.postMessage`\n- `GET` admin_conversations_ekm_listOriginalConnectedChannelInfo — `admin.conversations.ekm.listOriginalConnectedChannelInfo`\n- `POST` chat_meMessage — `chat.meMessage`\n- `POST` chat_postEphemeral — `chat.postEphemeral`\n- `POST` chat_scheduleMessage — `chat.scheduleMessage`\n- `GET` conversations_history — `conversations.history`\n- `GET` admin_conversations_getConversationPrefs — `admin.conversations.getConversationPrefs`\n- `GET` admin_conversations_getTeams — `admin.conversations.getTeams`\n\n## n8n\n- `POST` post_workflows — `workflows`\n- `GET` get_workflows — `workflows`\n- `GET` get_workflows_id — `workflows/{id}`\n- `PUT` put_workflows_id — `workflows/{id}`\n- `DELETE` delete_workflows_id — `workflows/{id}`\n- `POST` post_workflows_id_deactivate — `workflows/{id}/deactivate`\n- `POST` post_workflows_id_activate — `workflows/{id}/activate`\n\n## Bitbucket\n- `POST` create_teams_by_username_projects — `teams/{username}/projects/`\n- `POST` create_pipeline_for_repository — `repositories/{workspace}/{repo_slug}/pipelines/`\n- `POST` create_repository_pipeline_schedule — `repositories/{workspace}/{repo_slug}/pipelines_config/schedules/`\n- `POST` create_repository_pipeline_known_host — `repositories/{workspace}/{repo_slug}/pipelines_config/ssh/known_hosts/`\n- `POST` create_repository_pipeline_variable — `repositories/{workspace}/{repo_slug}/pipelines_config/variables/`\n- `POST` stop_pipeline — `repositories/{workspace}/{repo_slug}/pipelines/{pipeline_uuid}/stopPipeline`\n- `GET` get_repositories_by_username_by_repo_slug_commits — `repositories/{username}/{repo_slug}/commits`\n- `POST` create_repositories_by_username_by_repo_slug_commits — `repositories/{username}/{repo_slug}/commits`\n\n## Jira (meta)\n- `GET` com.atlassian.jira.rest.v2.issue.IssueResource.getCreateIssueMeta_get — `rest/api/3/issue/createmeta`\n- `POST` com.atlassian.jira.rest.v2.issue.IssueResource.createIssue_post — `rest/api/3/issue`\n- `POST` com.atlassian.jira.rest.v2.issue.IssueLinkTypeResource.createIssueLinkType_post — `rest/api/3/issueLinkType`\n- `POST` com.atlassian.jira.rest.v2.issue.IssueTypeResource.createIssueType_post — `rest/api/3/issuetype`\n- `POST` com.atlassian.jira.rest.v2.issue.IssueResource.createOrUpdateRemoteIssueLink_post — `rest/api/3/issue/{issueIdOrKey}/remotelink`\n- `GET` com.atlassian.jira.rest.v2.issue.IssueResource.getEditIssueMeta_get — `rest/api/3/issue/{issueIdOrKey}/editmeta`\n\n## Notes\n- ClawQL `search` results above are **candidates** from bundled OpenAPI; validate paths/versions before calling live APIs.\n- n8n: design workflow with Slack trigger + GitHub “create release” HTTP node or GitHub app token.\n- GitHub Actions: use OIDC to GCP where possible; avoid long-lived keys in secrets.",
+    "descriptionAdf": {
+      "type": "doc",
+      "version": 1,
+      "content": [
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Assignee Daniel Smith — set Jira Cloud **accountId** via WORKFLOW_JIRA_ASSIGNEE_ACCOUNT_ID for API assignee."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Due 2026-03-31 (seven days from workflow generation, local calendar date)."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Priority High (see Jira API field priority in create payload)."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Goal (orchestration) 1) Stand up GKE and deploy a service; expose it with a Kubernetes Service. 2) Restrict ingress on GCP to **Cloudflare published IP ranges** where appropriate (https://www.cloudflare.com/ips/ (use published IPv4/IPv6 ranges on GCP firewall / LB allowlists).). 3) Cloudflare DNS (proxied) toward the LB/origin; tune **caching** to reduce GKE load. 4) **Sentry** SDK/chart on the workload with default org/project + release tracking. 5) **GitHub Actions** pipeline: build container and redeploy to GKE **daily** (schedule + kubectl/gcloud or deploy action). 6) **Slack** notifications to the **release** channel for each major step (build, deploy, DNS, cache, Sentry verify). 7) **n8n** workflow: on message in release channel → create an **official GitHub Release** (or tag) via API. 8) Optionally mirror CI artifacts or PR flow in **Bitbucket** (repos / Pipelines) if your org standardizes on Atlassian. 9) This Jira ticket tracks the above; labels identify each toolchain."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "--- ## Google Cloud (GKE / networking) - `POST` container.projects.locations.clusters.create — `v1/projects/{projectsId}/locations/{locationsId}/clusters` - `POST` container.projects.zones.clusters.create — `v1/projects/{projectId}/zones/{zone}/clusters` - `POST` container.projects.zones.clusters.locations — `v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/locations` - `DELETE` container.projects.zones.clusters.delete — `v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}` - `POST` container.projects.zones.clusters.completeIpRotation — `v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}:completeIpRotation` - `POST` container.projects.zones.clusters.nodePools.autoscaling — `v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/nodePools/{nodePoolId}/autoscaling` - `POST` container.projects.locations.clusters.nodePools.setAutoscaling — `v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}/nodePools/{nodePoolsId}:setAutoscaling` - `POST` container.projects.locations.clusters.nodePools.create — `v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}/nodePools` - `POST` container.projects.zones.clusters.nodePools.create — `v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/nodePools` - `POST` container.projects.zones.clusters.nodePools.setSize — `v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/nodePools/{nodePoolId}/setSize` - `POST` networksecurity.projects.locations.interceptDeployments.create — `v1beta1/projects/{projectsId}/locations/{locationsId}/interceptDeployments` - `POST` networksecurity.projects.locations.mirroringDeployments.create — `v1beta1/projects/{projectsId}/locations/{locationsId}/mirroringDeployments` - `POST` networksecurity.projects.locations.interceptDeploymentGroups.create — `v1beta1/projects/{projectsId}/locations/{locationsId}/interceptDeploymentGroups` - `POST` networksecurity.projects.locations.mirroringDeploymentGroups.create — `v1beta1/projects/{projectsId}/locations/{locationsId}/mirroringDeploymentGroups`"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Cloudflare - `POST` dns-records-for-a-zone-create-dns-record — `zones/{zone_id}/dns_records` - `GET` dns-records-for-a-zone-list-dns-records — `zones/{zone_id}/dns_records` - `GET` dns-records-for-a-zone-dns-record-details — `zones/{zone_id}/dns_records/{dns_record_id}` - `PUT` dns-records-for-a-zone-update-dns-record — `zones/{zone_id}/dns_records/{dns_record_id}` - `PATCH` dns-records-for-a-zone-patch-dns-record — `zones/{zone_id}/dns_records/{dns_record_id}` - `GET` zone-level-authenticated-origin-pulls-get-certificate-details — `zones/{zone_id}/origin_tls_client_auth/{certificate_id}` - `GET` zones-0-get — `zones/{zone_id}` - `GET` bot-management-for-a-zone-get-config — `zones/{zone_id}/bot_management` - `GET` account-level-custom-nameservers-usage-for-a-zone-get-account-custom-nameserver-related-zone-metadata — `zones/{zone_id}/custom_ns` - `GET` zone-lockdown-get-a-zone-lockdown-rule — `zones/{zone_id}/firewall/lockdowns/{lock_downs_id}`"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Sentry - `POST` Create a New Project — `api/0/teams/{organization_id_or_slug}/{team_id_or_slug}/projects/` - `POST` (DEPRECATED) Create an Issue Alert Rule for a Project — `api/0/projects/{organization_id_or_slug}/{project_id_or_slug}/rules/` - `GET` List an Organization's Projects — `api/0/organizations/{organization_id_or_slug}/projects/` - `GET` List a Project's Organization Members — `api/0/projects/{organization_id_or_slug}/{project_id_or_slug}/members/` - `POST` (DEPRECATED) Create a Metric Alert Rule for an Organization — `api/0/organizations/{organization_id_or_slug}/alert-rules/` - `GET` List an Organization's Client Keys — `api/0/organizations/{organization_id_or_slug}/project-keys/` - `POST` Create a New Client Key — `api/0/projects/{organization_id_or_slug}/{project_id_or_slug}/keys/` - `GET` List a Project's Client Keys — `api/0/projects/{organization_id_or_slug}/{project_id_or_slug}/keys/` - `GET` Retrieve a Client Key — `api/0/projects/{organization_id_or_slug}/{project_id_or_slug}/keys/{key_id}/` - `PUT` Update a Client Key — `api/0/projects/{organization_id_or_slug}/{project_id_or_slug}/keys/{key_id}/`"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "## GitHub - `POST` actions/create-workflow-dispatch — `repos/{owner}/{repo}/actions/workflows/{workflow_id}/dispatches` - `POST` repos/create-dispatch-event — `repos/{owner}/{repo}/dispatches` - `GET` actions/get-private-repo-fork-pr-workflows-settings-repository — `repos/{owner}/{repo}/actions/permissions/fork-pr-workflows-private-repos` - `PUT` actions/set-private-repo-fork-pr-workflows-settings-repository — `repos/{owner}/{repo}/actions/permissions/fork-pr-workflows-private-repos` - `GET` actions/get-github-actions-default-workflow-permissions-repository — `repos/{owner}/{repo}/actions/permissions/workflow` - `GET` actions/list-repo-organization-secrets — `repos/{owner}/{repo}/actions/organization-secrets` - `GET` actions/list-repo-secrets — `repos/{owner}/{repo}/actions/secrets` - `GET` actions/get-allowed-actions-repository — `repos/{owner}/{repo}/actions/permissions/selected-actions` - `PUT` actions/set-allowed-actions-repository — `repos/{owner}/{repo}/actions/permissions/selected-actions` - `GET` actions/list-org-secrets — `orgs/{org}/actions/secrets`"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Slack - `POST` chat_postMessage — `chat.postMessage` - `GET` admin_conversations_ekm_listOriginalConnectedChannelInfo — `admin.conversations.ekm.listOriginalConnectedChannelInfo` - `POST` chat_meMessage — `chat.meMessage` - `POST` chat_postEphemeral — `chat.postEphemeral` - `POST` chat_scheduleMessage — `chat.scheduleMessage` - `GET` conversations_history — `conversations.history` - `GET` admin_conversations_getConversationPrefs — `admin.conversations.getConversationPrefs` - `GET` admin_conversations_getTeams — `admin.conversations.getTeams`"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "## n8n - `POST` post_workflows — `workflows` - `GET` get_workflows — `workflows` - `GET` get_workflows_id — `workflows/{id}` - `PUT` put_workflows_id — `workflows/{id}` - `DELETE` delete_workflows_id — `workflows/{id}` - `POST` post_workflows_id_deactivate — `workflows/{id}/deactivate` - `POST` post_workflows_id_activate — `workflows/{id}/activate`"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Bitbucket - `POST` create_teams_by_username_projects — `teams/{username}/projects/` - `POST` create_pipeline_for_repository — `repositories/{workspace}/{repo_slug}/pipelines/` - `POST` create_repository_pipeline_schedule — `repositories/{workspace}/{repo_slug}/pipelines_config/schedules/` - `POST` create_repository_pipeline_known_host — `repositories/{workspace}/{repo_slug}/pipelines_config/ssh/known_hosts/` - `POST` create_repository_pipeline_variable — `repositories/{workspace}/{repo_slug}/pipelines_config/variables/` - `POST` stop_pipeline — `repositories/{workspace}/{repo_slug}/pipelines/{pipeline_uuid}/stopPipeline` - `GET` get_repositories_by_username_by_repo_slug_commits — `repositories/{username}/{repo_slug}/commits` - `POST` create_repositories_by_username_by_repo_slug_commits — `repositories/{username}/{repo_slug}/commits`"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Jira (meta) - `GET` com.atlassian.jira.rest.v2.issue.IssueResource.getCreateIssueMeta_get — `rest/api/3/issue/createmeta` - `POST` com.atlassian.jira.rest.v2.issue.IssueResource.createIssue_post — `rest/api/3/issue` - `POST` com.atlassian.jira.rest.v2.issue.IssueLinkTypeResource.createIssueLinkType_post — `rest/api/3/issueLinkType` - `POST` com.atlassian.jira.rest.v2.issue.IssueTypeResource.createIssueType_post — `rest/api/3/issuetype` - `POST` com.atlassian.jira.rest.v2.issue.IssueResource.createOrUpdateRemoteIssueLink_post — `rest/api/3/issue/{issueIdOrKey}/remotelink` - `GET` com.atlassian.jira.rest.v2.issue.IssueResource.getEditIssueMeta_get — `rest/api/3/issue/{issueIdOrKey}/editmeta`"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Notes - ClawQL `search` results above are **candidates** from bundled OpenAPI; validate paths/versions before calling live APIs. - n8n: design workflow with Slack trigger + GitHub “create release” HTTP node or GitHub app token. - GitHub Actions: use OIDC to GCP where possible; avoid long-lived keys in secrets."
+            }
+          ]
+        }
+      ]
+    },
+    "labels": [
+      "google-gke",
+      "cloudflare",
+      "sentry",
+      "github-actions",
+      "slack",
+      "n8n",
+      "bitbucket",
+      "release-channel",
+      "firewall-allowlist"
+    ],
+    "duedate": "2026-03-31",
+    "priorityName": "High"
+  },
+  "steps": [
+    {
+      "provider": "google",
+      "title": "Google — GKE cluster & workload",
+      "queries": [
+        {
+          "query": "create kubernetes cluster container.googleapis.com regional",
+          "hitCount": 5,
+          "topHits": [
+            {
+              "score": 42,
+              "matchedOn": [
+                "id:container.projects.locations.clusters.create",
+                "description(partial)",
+                "resource:clusters",
+                "description",
+                "path:v1/projects/{projectsId}/locations/{locationsId}/clusters",
+                "spec:container-v1"
+              ],
+              "operation": {
+                "id": "container.projects.locations.clusters.create",
+                "method": "POST",
+                "path": "v1/projects/{projectsId}/locations/{locationsId}/clusters",
+                "description": "Creates a cluster, consisting of the specified number and type of Google Compute Engine instances. By default, the cluster is created in the project's [default network](https://cloud.google.com/compute/docs/networks-and-firewalls#networks). One firewall is added for the cluster. "
+              }
+            },
+            {
+              "score": 42,
+              "matchedOn": [
+                "id:container.projects.zones.clusters.create",
+                "description(partial)",
+                "resource:clusters",
+                "description",
+                "path:v1/projects/{projectId}/zones/{zone}/clusters",
+                "spec:container-v1"
+              ],
+              "operation": {
+                "id": "container.projects.zones.clusters.create",
+                "method": "POST",
+                "path": "v1/projects/{projectId}/zones/{zone}/clusters",
+                "description": "Creates a cluster, consisting of the specified number and type of Google Compute Engine instances. By default, the cluster is created in the project's [default network](https://cloud.google.com/compute/docs/networks-and-firewalls#networks). One firewall is added for the cluster. "
+              }
+            },
+            {
+              "score": 40,
+              "matchedOn": [
+                "description",
+                "id:container.projects.zones.clusters.locations",
+                "resource:clusters",
+                "path:v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/locations",
+                "param",
+                "spec:container-v1"
+              ],
+              "operation": {
+                "id": "container.projects.zones.clusters.locations",
+                "method": "POST",
+                "path": "v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/locations",
+                "description": "Sets the locations for a specific cluster. Deprecated. Use [projects.locations.clusters.update](https://cloud.google.com/kubernetes-engine/docs/reference/rest/v1/projects.locations.clusters/update) instead."
+              }
+            },
+            {
+              "score": 38,
+              "matchedOn": [
+                "description(partial)",
+                "description",
+                "id:container.projects.zones.clusters.delete",
+                "resource:clusters",
+                "path:v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}",
+                "param",
+                "spec:container-v1"
+              ],
+              "operation": {
+                "id": "container.projects.zones.clusters.delete",
+                "method": "DELETE",
+                "path": "v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}",
+                "description": "Deletes the cluster, including the Kubernetes endpoint and all worker nodes. Firewalls and routes that were configured during cluster creation are also deleted. Other Google Compute Engine resources that might be in use by the cluster, such as load balancer resources, are not del"
+              }
+            },
+            {
+              "score": 38,
+              "matchedOn": [
+                "id:container.projects.zones.clusters.completeIpRotation",
+                "resource:clusters",
+                "path:v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}:completeIpRotation",
+                "param",
+                "spec:container-v1",
+                "description(partial)"
+              ],
+              "operation": {
+                "id": "container.projects.zones.clusters.completeIpRotation",
+                "method": "POST",
+                "path": "v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}:completeIpRotation",
+                "description": "Completes master IP rotation."
+              }
+            }
+          ]
+        },
+        {
+          "query": "node pool create autoscaling kubernetes engine",
+          "hitCount": 5,
+          "topHits": [
+            {
+              "score": 53,
+              "matchedOn": [
+                "id:container.projects.zones.clusters.nodePools.autoscaling",
+                "resource:nodePools",
+                "description",
+                "path:v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/nodePools/{nodePoolId}/autoscaling",
+                "param"
+              ],
+              "operation": {
+                "id": "container.projects.zones.clusters.nodePools.autoscaling",
+                "method": "POST",
+                "path": "v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/nodePools/{nodePoolId}/autoscaling",
+                "description": "Sets the autoscaling settings for the specified node pool."
+              }
+            },
+            {
+              "score": 43,
+              "matchedOn": [
+                "id:container.projects.locations.clusters.nodePools.setAutoscaling",
+                "resource:nodePools",
+                "description",
+                "path:v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}/nodePools/{nodePoolsId}:setAutoscaling"
+              ],
+              "operation": {
+                "id": "container.projects.locations.clusters.nodePools.setAutoscaling",
+                "method": "POST",
+                "path": "v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}/nodePools/{nodePoolsId}:setAutoscaling",
+                "description": "Sets the autoscaling settings for the specified node pool."
+              }
+            },
+            {
+              "score": 43,
+              "matchedOn": [
+                "id:container.projects.locations.clusters.nodePools.create",
+                "resource:nodePools",
+                "description",
+                "path:v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}/nodePools",
+                "description(partial)"
+              ],
+              "operation": {
+                "id": "container.projects.locations.clusters.nodePools.create",
+                "method": "POST",
+                "path": "v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}/nodePools",
+                "description": "Creates a node pool for a cluster."
+              }
+            },
+            {
+              "score": 43,
+              "matchedOn": [
+                "id:container.projects.zones.clusters.nodePools.create",
+                "resource:nodePools",
+                "description",
+                "path:v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/nodePools",
+                "description(partial)"
+              ],
+              "operation": {
+                "id": "container.projects.zones.clusters.nodePools.create",
+                "method": "POST",
+                "path": "v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/nodePools",
+                "description": "Creates a node pool for a cluster."
+              }
+            },
+            {
+              "score": 41,
+              "matchedOn": [
+                "id:container.projects.zones.clusters.nodePools.setSize",
+                "resource:nodePools",
+                "description",
+                "path:v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/nodePools/{nodePoolId}/setSize",
+                "param",
+                "description(partial)"
+              ],
+              "operation": {
+                "id": "container.projects.zones.clusters.nodePools.setSize",
+                "method": "POST",
+                "path": "v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/nodePools/{nodePoolId}/setSize",
+                "description": "Sets the size for a specific node pool. The new size will be used for all replicas, including future replicas created by modifying NodePool.locations."
+              }
+            }
+          ]
+        },
+        {
+          "query": "deploy workload deployment rolling update kubernetes",
+          "hitCount": 5,
+          "topHits": [
+            {
+              "score": 37,
+              "matchedOn": [
+                "id:networksecurity.projects.locations.interceptDeployments.create",
+                "resource:interceptDeployments",
+                "description(partial)",
+                "path:v1beta1/projects/{projectsId}/locations/{locationsId}/interceptDeployments",
+                "param",
+                "description"
+              ],
+              "operation": {
+                "id": "networksecurity.projects.locations.interceptDeployments.create",
+                "method": "POST",
+                "path": "v1beta1/projects/{projectsId}/locations/{locationsId}/interceptDeployments",
+                "description": "Creates a deployment in a given project and location. See https://google.aip.dev/133."
+              }
+            },
+            {
+              "score": 37,
+              "matchedOn": [
+                "id:networksecurity.projects.locations.mirroringDeployments.create",
+                "resource:mirroringDeployments",
+                "description(partial)",
+                "path:v1beta1/projects/{projectsId}/locations/{locationsId}/mirroringDeployments",
+                "param",
+                "description"
+              ],
+              "operation": {
+                "id": "networksecurity.projects.locations.mirroringDeployments.create",
+                "method": "POST",
+                "path": "v1beta1/projects/{projectsId}/locations/{locationsId}/mirroringDeployments",
+                "description": "Creates a deployment in a given project and location. See https://google.aip.dev/133."
+              }
+            },
+            {
+              "score": 37,
+              "matchedOn": [
+                "id:networksecurity.projects.locations.interceptDeploymentGroups.create",
+                "resource:interceptDeploymentGroups",
+                "description(partial)",
+                "path:v1beta1/projects/{projectsId}/locations/{locationsId}/interceptDeploymentGroups",
+                "param",
+                "description"
+              ],
+              "operation": {
+                "id": "networksecurity.projects.locations.interceptDeploymentGroups.create",
+                "method": "POST",
+                "path": "v1beta1/projects/{projectsId}/locations/{locationsId}/interceptDeploymentGroups",
+                "description": "Creates a deployment group in a given project and location. See https://google.aip.dev/133."
+              }
+            },
+            {
+              "score": 37,
+              "matchedOn": [
+                "id:networksecurity.projects.locations.mirroringDeploymentGroups.create",
+                "resource:mirroringDeploymentGroups",
+                "description(partial)",
+                "path:v1beta1/projects/{projectsId}/locations/{locationsId}/mirroringDeploymentGroups",
+                "param",
+                "description"
+              ],
+              "operation": {
+                "id": "networksecurity.projects.locations.mirroringDeploymentGroups.create",
+                "method": "POST",
+                "path": "v1beta1/projects/{projectsId}/locations/{locationsId}/mirroringDeploymentGroups",
+                "description": "Creates a deployment group in a given project and location. See https://google.aip.dev/133."
+              }
+            },
+            {
+              "score": 37,
+              "matchedOn": [
+                "id:osconfig.projects.patchDeployments.create",
+                "resource:patchDeployments",
+                "description(partial)",
+                "path:v1/projects/{projectsId}/patchDeployments",
+                "param",
+                "description"
+              ],
+              "operation": {
+                "id": "osconfig.projects.patchDeployments.create",
+                "method": "POST",
+                "path": "v1/projects/{projectsId}/patchDeployments",
+                "description": "Create an OS Config patch deployment."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "provider": "google",
+      "title": "Google — Service (expose deployment) & firewall for Cloudflare IPs",
+      "queries": [
+        {
+          "query": "kubernetes service type load balancer external IP",
+          "hitCount": 5,
+          "topHits": [
+            {
+              "score": 30,
+              "matchedOn": [
+                "id:aiplatform.projects.locations.featurestores.entityTypes.readFeatureValues",
+                "resource:entityTypes",
+                "description(partial)",
+                "path:v1/projects/{projectsId}/locations/{locationsId}/featurestores/{featurestoresId}/entityTypes/{entityTypesId}:readFeatureValues",
+                "param",
+                "spec:aiplatform-v1"
+              ],
+              "operation": {
+                "id": "aiplatform.projects.locations.featurestores.entityTypes.readFeatureValues",
+                "method": "POST",
+                "path": "v1/projects/{projectsId}/locations/{locationsId}/featurestores/{featurestoresId}/entityTypes/{entityTypesId}:readFeatureValues",
+                "description": "Reads Feature values of a specific entity of an EntityType. For reading feature values of multiple entities of an EntityType, please use StreamingReadFeatureValues."
+              }
+            },
+            {
+              "score": 29,
+              "matchedOn": [
+                "id:aiplatform.projects.locations.featurestores.entityTypes.streamingReadFeatureValues",
+                "resource:entityTypes",
+                "path:v1/projects/{projectsId}/locations/{locationsId}/featurestores/{featurestoresId}/entityTypes/{entityTypesId}:streamingReadFeatureValues",
+                "param",
+                "spec:aiplatform-v1",
+                "description(partial)"
+              ],
+              "operation": {
+                "id": "aiplatform.projects.locations.featurestores.entityTypes.streamingReadFeatureValues",
+                "method": "POST",
+                "path": "v1/projects/{projectsId}/locations/{locationsId}/featurestores/{featurestoresId}/entityTypes/{entityTypesId}:streamingReadFeatureValues",
+                "description": "Reads Feature values for multiple entities. Depending on their size, data for different entities may be broken up across multiple responses."
+              }
+            },
+            {
+              "score": 29,
+              "matchedOn": [
+                "id:aiplatform.projects.locations.featurestores.entityTypes.writeFeatureValues",
+                "resource:entityTypes",
+                "description(partial)",
+                "path:v1/projects/{projectsId}/locations/{locationsId}/featurestores/{featurestoresId}/entityTypes/{entityTypesId}:writeFeatureValues",
+                "param",
+                "spec:aiplatform-v1"
+              ],
+              "operation": {
+                "id": "aiplatform.projects.locations.featurestores.entityTypes.writeFeatureValues",
+                "method": "POST",
+                "path": "v1/projects/{projectsId}/locations/{locationsId}/featurestores/{featurestoresId}/entityTypes/{entityTypesId}:writeFeatureValues",
+                "description": "Writes Feature values of one or more entities of an EntityType. The Feature values are merged into existing entities if any. The Feature values to be written must have timestamp within the online storage retention."
+              }
+            },
+            {
+              "score": 29,
+              "matchedOn": [
+                "id:aiplatform.projects.locations.featurestores.entityTypes.create",
+                "resource:entityTypes",
+                "description(partial)",
+                "path:v1/projects/{projectsId}/locations/{locationsId}/featurestores/{featurestoresId}/entityTypes",
+                "param",
+                "spec:aiplatform-v1"
+              ],
+              "operation": {
+                "id": "aiplatform.projects.locations.featurestores.entityTypes.create",
+                "method": "POST",
+                "path": "v1/projects/{projectsId}/locations/{locationsId}/featurestores/{featurestoresId}/entityTypes",
+                "description": "Creates a new EntityType in a given Featurestore."
+              }
+            },
+            {
+              "score": 29,
+              "matchedOn": [
+                "id:aiplatform.projects.locations.featurestores.entityTypes.importFeatureValues",
+                "resource:entityTypes",
+                "path:v1/projects/{projectsId}/locations/{locationsId}/featurestores/{featurestoresId}/entityTypes/{entityTypesId}:importFeatureValues",
+                "param",
+                "spec:aiplatform-v1",
+                "description(partial)"
+              ],
+              "operation": {
+                "id": "aiplatform.projects.locations.featurestores.entityTypes.importFeatureValues",
+                "method": "POST",
+                "path": "v1/projects/{projectsId}/locations/{locationsId}/featurestores/{featurestoresId}/entityTypes/{entityTypesId}:importFeatureValues",
+                "description": "Imports Feature values into the Featurestore from a source storage. The progress of the import is tracked by the returned operation. The imported features are guaranteed to be visible to subsequent read operations after the operation is marked as successfully done. If an import o"
+              }
+            }
+          ]
+        },
+        {
+          "query": "compute firewall rule create allow tcp source range ingress",
+          "hitCount": 5,
+          "topHits": [
+            {
+              "score": 45,
+              "matchedOn": [
+                "spec:compute-v1",
+                "id:compute.firewallPolicies.addRule",
+                "resource:firewallPolicies",
+                "description",
+                "path:locations/global/firewallPolicies/{firewallPolicy}/addRule",
+                "param"
+              ],
+              "operation": {
+                "id": "compute.firewallPolicies.addRule",
+                "method": "POST",
+                "path": "locations/global/firewallPolicies/{firewallPolicy}/addRule",
+                "description": "Inserts a rule into a firewall policy."
+              }
+            },
+            {
+              "score": 45,
+              "matchedOn": [
+                "spec:compute-v1",
+                "id:compute.networkFirewallPolicies.addRule",
+                "resource:networkFirewallPolicies",
+                "description",
+                "path:projects/{project}/global/firewallPolicies/{firewallPolicy}/addRule",
+                "param"
+              ],
+              "operation": {
+                "id": "compute.networkFirewallPolicies.addRule",
+                "method": "POST",
+                "path": "projects/{project}/global/firewallPolicies/{firewallPolicy}/addRule",
+                "description": "Inserts a rule into a firewall policy."
+              }
+            },
+            {
+              "score": 45,
+              "matchedOn": [
+                "spec:compute-v1",
+                "id:compute.networkFirewallPolicies.addPacketMirroringRule",
+                "resource:networkFirewallPolicies",
+                "description",
+                "path:projects/{project}/global/firewallPolicies/{firewallPolicy}/addPacketMirroringRule",
+                "param"
+              ],
+              "operation": {
+                "id": "compute.networkFirewallPolicies.addPacketMirroringRule",
+                "method": "POST",
+                "path": "projects/{project}/global/firewallPolicies/{firewallPolicy}/addPacketMirroringRule",
+                "description": "Inserts a packet mirroring rule into a firewall policy."
+              }
+            },
+            {
+              "score": 45,
+              "matchedOn": [
+                "spec:compute-v1",
+                "id:compute.regionNetworkFirewallPolicies.addRule",
+                "resource:regionNetworkFirewallPolicies",
+                "description",
+                "path:projects/{project}/regions/{region}/firewallPolicies/{firewallPolicy}/addRule",
+                "param"
+              ],
+              "operation": {
+                "id": "compute.regionNetworkFirewallPolicies.addRule",
+                "method": "POST",
+                "path": "projects/{project}/regions/{region}/firewallPolicies/{firewallPolicy}/addRule",
+                "description": "Inserts a rule into a network firewall policy."
+              }
+            },
+            {
+              "score": 44,
+              "matchedOn": [
+                "spec:compute-v1",
+                "id:compute.firewallPolicies.cloneRules",
+                "resource:firewallPolicies",
+                "description",
+                "path:locations/global/firewallPolicies/{firewallPolicy}/cloneRules",
+                "param",
+                "description(partial)"
+              ],
+              "operation": {
+                "id": "compute.firewallPolicies.cloneRules",
+                "method": "POST",
+                "path": "locations/global/firewallPolicies/{firewallPolicy}/cloneRules",
+                "description": "Copies rules to the specified firewall policy."
+              }
+            }
+          ]
+        },
+        {
+          "query": "network endpoint group kubernetes ingress",
+          "hitCount": 5,
+          "topHits": [
+            {
+              "score": 60,
+              "matchedOn": [
+                "id:compute.networkEndpointGroups.get",
+                "resource:networkEndpointGroups",
+                "description",
+                "path:projects/{project}/zones/{zone}/networkEndpointGroups/{networkEndpointGroup}",
+                "param"
+              ],
+              "operation": {
+                "id": "compute.networkEndpointGroups.get",
+                "method": "GET",
+                "path": "projects/{project}/zones/{zone}/networkEndpointGroups/{networkEndpointGroup}",
+                "description": "Returns the specified network endpoint group."
+              }
+            },
+            {
+              "score": 60,
+              "matchedOn": [
+                "id:compute.networkEndpointGroups.delete",
+                "resource:networkEndpointGroups",
+                "description",
+                "path:projects/{project}/zones/{zone}/networkEndpointGroups/{networkEndpointGroup}",
+                "param"
+              ],
+              "operation": {
+                "id": "compute.networkEndpointGroups.delete",
+                "method": "DELETE",
+                "path": "projects/{project}/zones/{zone}/networkEndpointGroups/{networkEndpointGroup}",
+                "description": "Deletes the specified network endpoint group. The network endpoints in the\nNEG and the VM instances they belong to are not terminated when the NEG is\ndeleted. Note that the NEG cannot be deleted if there are backend services\nreferencing it."
+              }
+            },
+            {
+              "score": 60,
+              "matchedOn": [
+                "id:compute.networkEndpointGroups.attachNetworkEndpoints",
+                "resource:networkEndpointGroups",
+                "description",
+                "path:projects/{project}/zones/{zone}/networkEndpointGroups/{networkEndpointGroup}/attachNetworkEndpoints",
+                "param"
+              ],
+              "operation": {
+                "id": "compute.networkEndpointGroups.attachNetworkEndpoints",
+                "method": "POST",
+                "path": "projects/{project}/zones/{zone}/networkEndpointGroups/{networkEndpointGroup}/attachNetworkEndpoints",
+                "description": "Attach a list of network endpoints to the specified network endpoint group."
+              }
+            },
+            {
+              "score": 60,
+              "matchedOn": [
+                "id:compute.networkEndpointGroups.detachNetworkEndpoints",
+                "resource:networkEndpointGroups",
+                "description",
+                "path:projects/{project}/zones/{zone}/networkEndpointGroups/{networkEndpointGroup}/detachNetworkEndpoints",
+                "param"
+              ],
+              "operation": {
+                "id": "compute.networkEndpointGroups.detachNetworkEndpoints",
+                "method": "POST",
+                "path": "projects/{project}/zones/{zone}/networkEndpointGroups/{networkEndpointGroup}/detachNetworkEndpoints",
+                "description": "Detach a list of network endpoints from the specified network endpoint\ngroup."
+              }
+            },
+            {
+              "score": 60,
+              "matchedOn": [
+                "id:compute.networkEndpointGroups.listNetworkEndpoints",
+                "resource:networkEndpointGroups",
+                "description",
+                "path:projects/{project}/zones/{zone}/networkEndpointGroups/{networkEndpointGroup}/listNetworkEndpoints",
+                "param"
+              ],
+              "operation": {
+                "id": "compute.networkEndpointGroups.listNetworkEndpoints",
+                "method": "POST",
+                "path": "projects/{project}/zones/{zone}/networkEndpointGroups/{networkEndpointGroup}/listNetworkEndpoints",
+                "description": "Lists the network endpoints in the specified network endpoint group."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "provider": "cloudflare",
+      "title": "Cloudflare — DNS to GKE / LB origin",
+      "queries": [
+        {
+          "query": "dns record create zone A CNAME proxied",
+          "hitCount": 5,
+          "topHits": [
+            {
+              "score": 57,
+              "matchedOn": [
+                "id:dns-records-for-a-zone-create-dns-record",
+                "resource:dns_records",
+                "description",
+                "path:zones/{zone_id}/dns_records",
+                "param"
+              ],
+              "operation": {
+                "id": "dns-records-for-a-zone-create-dns-record",
+                "method": "POST",
+                "path": "zones/{zone_id}/dns_records",
+                "description": "Create DNS Record"
+              }
+            },
+            {
+              "score": 46,
+              "matchedOn": [
+                "id:dns-records-for-a-zone-list-dns-records",
+                "resource:dns_records",
+                "description",
+                "path:zones/{zone_id}/dns_records",
+                "description(partial)",
+                "param"
+              ],
+              "operation": {
+                "id": "dns-records-for-a-zone-list-dns-records",
+                "method": "GET",
+                "path": "zones/{zone_id}/dns_records",
+                "description": "List DNS Records"
+              }
+            },
+            {
+              "score": 41,
+              "matchedOn": [
+                "id:dns-records-for-a-zone-dns-record-details",
+                "description",
+                "path:zones/{zone_id}/dns_records/{dns_record_id}",
+                "param"
+              ],
+              "operation": {
+                "id": "dns-records-for-a-zone-dns-record-details",
+                "method": "GET",
+                "path": "zones/{zone_id}/dns_records/{dns_record_id}",
+                "description": "DNS Record Details"
+              }
+            },
+            {
+              "score": 41,
+              "matchedOn": [
+                "id:dns-records-for-a-zone-update-dns-record",
+                "description",
+                "path:zones/{zone_id}/dns_records/{dns_record_id}",
+                "param"
+              ],
+              "operation": {
+                "id": "dns-records-for-a-zone-update-dns-record",
+                "method": "PUT",
+                "path": "zones/{zone_id}/dns_records/{dns_record_id}",
+                "description": "Overwrite DNS Record"
+              }
+            },
+            {
+              "score": 41,
+              "matchedOn": [
+                "id:dns-records-for-a-zone-patch-dns-record",
+                "description",
+                "path:zones/{zone_id}/dns_records/{dns_record_id}",
+                "param"
+              ],
+              "operation": {
+                "id": "dns-records-for-a-zone-patch-dns-record",
+                "method": "PATCH",
+                "path": "zones/{zone_id}/dns_records/{dns_record_id}",
+                "description": "Update DNS Record"
+              }
+            }
+          ]
+        },
+        {
+          "query": "zone details get",
+          "hitCount": 5,
+          "topHits": [
+            {
+              "score": 34,
+              "matchedOn": [
+                "id:zone-level-authenticated-origin-pulls-get-certificate-details",
+                "path:zones/{zone_id}/origin_tls_client_auth/{certificate_id}",
+                "param",
+                "description",
+                "method:GET"
+              ],
+              "operation": {
+                "id": "zone-level-authenticated-origin-pulls-get-certificate-details",
+                "method": "GET",
+                "path": "zones/{zone_id}/origin_tls_client_auth/{certificate_id}",
+                "description": "Get Certificate Details"
+              }
+            },
+            {
+              "score": 28,
+              "matchedOn": [
+                "id:zones-0-get",
+                "description",
+                "path:zones/{zone_id}",
+                "param",
+                "method:GET"
+              ],
+              "operation": {
+                "id": "zones-0-get",
+                "method": "GET",
+                "path": "zones/{zone_id}",
+                "description": "Zone Details"
+              }
+            },
+            {
+              "score": 28,
+              "matchedOn": [
+                "id:bot-management-for-a-zone-get-config",
+                "description",
+                "path:zones/{zone_id}/bot_management",
+                "param",
+                "method:GET"
+              ],
+              "operation": {
+                "id": "bot-management-for-a-zone-get-config",
+                "method": "GET",
+                "path": "zones/{zone_id}/bot_management",
+                "description": "Get Zone Bot Management Config"
+              }
+            },
+            {
+              "score": 28,
+              "matchedOn": [
+                "id:account-level-custom-nameservers-usage-for-a-zone-get-account-custom-nameserver-related-zone-metadata",
+                "description",
+                "path:zones/{zone_id}/custom_ns",
+                "param",
+                "method:GET"
+              ],
+              "operation": {
+                "id": "account-level-custom-nameservers-usage-for-a-zone-get-account-custom-nameserver-related-zone-metadata",
+                "method": "GET",
+                "path": "zones/{zone_id}/custom_ns",
+                "description": "Get Account Custom Nameserver Related Zone Metadata"
+              }
+            },
+            {
+              "score": 28,
+              "matchedOn": [
+                "id:zone-lockdown-get-a-zone-lockdown-rule",
+                "description",
+                "path:zones/{zone_id}/firewall/lockdowns/{lock_downs_id}",
+                "param",
+                "method:GET"
+              ],
+              "operation": {
+                "id": "zone-lockdown-get-a-zone-lockdown-rule",
+                "method": "GET",
+                "path": "zones/{zone_id}/firewall/lockdowns/{lock_downs_id}",
+                "description": "Get a Zone Lockdown rule"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "provider": "cloudflare",
+      "title": "Cloudflare — caching / edge to reduce origin load",
+      "queries": [
+        {
+          "query": "cache rules configuration",
+          "hitCount": 5,
+          "topHits": [
+            {
+              "score": 20,
+              "matchedOn": [
+                "id:ip-access-rules-for-an-account-list-ip-access-rules",
+                "resource:rules",
+                "description",
+                "path:accounts/{account_id}/firewall/access_rules/rules",
+                "param"
+              ],
+              "operation": {
+                "id": "ip-access-rules-for-an-account-list-ip-access-rules",
+                "method": "GET",
+                "path": "accounts/{account_id}/firewall/access_rules/rules",
+                "description": "List IP Access rules"
+              }
+            },
+            {
+              "score": 20,
+              "matchedOn": [
+                "id:magic-network-monitoring-configuration-list-rules-and-account-configuration",
+                "description"
+              ],
+              "operation": {
+                "id": "magic-network-monitoring-configuration-list-rules-and-account-configuration",
+                "method": "GET",
+                "path": "accounts/{account_id}/mnm/config/full",
+                "description": "List rules and account configuration"
+              }
+            },
+            {
+              "score": 20,
+              "matchedOn": [
+                "id:web-analytics-list-rules",
+                "resource:rules",
+                "description",
+                "path:accounts/{account_id}/rum/v2/{ruleset_id}/rules",
+                "param"
+              ],
+              "operation": {
+                "id": "web-analytics-list-rules",
+                "method": "GET",
+                "path": "accounts/{account_id}/rum/v2/{ruleset_id}/rules",
+                "description": "List rules in Web Analytics ruleset"
+              }
+            },
+            {
+              "score": 20,
+              "matchedOn": [
+                "id:web-analytics-modify-rules",
+                "resource:rules",
+                "description",
+                "path:accounts/{account_id}/rum/v2/{ruleset_id}/rules",
+                "param"
+              ],
+              "operation": {
+                "id": "web-analytics-modify-rules",
+                "method": "POST",
+                "path": "accounts/{account_id}/rum/v2/{ruleset_id}/rules",
+                "description": "Update Web Analytics rules"
+              }
+            },
+            {
+              "score": 20,
+              "matchedOn": [
+                "id:ip-access-rules-for-a-user-list-ip-access-rules",
+                "resource:rules",
+                "description",
+                "path:user/firewall/access_rules/rules",
+                "param"
+              ],
+              "operation": {
+                "id": "ip-access-rules-for-a-user-list-ip-access-rules",
+                "method": "GET",
+                "path": "user/firewall/access_rules/rules",
+                "description": "List IP Access rules"
+              }
+            }
+          ]
+        },
+        {
+          "query": "zone settings cache level",
+          "hitCount": 5,
+          "topHits": [
+            {
+              "score": 37,
+              "matchedOn": [
+                "id:waiting-room-get-zone-settings",
+                "description",
+                "path:zones/{zone_id}/waiting_rooms/settings",
+                "param",
+                "resource:settings"
+              ],
+              "operation": {
+                "id": "waiting-room-get-zone-settings",
+                "method": "GET",
+                "path": "zones/{zone_id}/waiting_rooms/settings",
+                "description": "Get zone-level Waiting Room settings"
+              }
+            },
+            {
+              "score": 37,
+              "matchedOn": [
+                "id:waiting-room-update-zone-settings",
+                "description",
+                "path:zones/{zone_id}/waiting_rooms/settings",
+                "param",
+                "resource:settings"
+              ],
+              "operation": {
+                "id": "waiting-room-update-zone-settings",
+                "method": "PUT",
+                "path": "zones/{zone_id}/waiting_rooms/settings",
+                "description": "Update zone-level Waiting Room settings"
+              }
+            },
+            {
+              "score": 37,
+              "matchedOn": [
+                "id:waiting-room-patch-zone-settings",
+                "description",
+                "path:zones/{zone_id}/waiting_rooms/settings",
+                "param",
+                "resource:settings"
+              ],
+              "operation": {
+                "id": "waiting-room-patch-zone-settings",
+                "method": "PATCH",
+                "path": "zones/{zone_id}/waiting_rooms/settings",
+                "description": "Patch zone-level Waiting Room settings"
+              }
+            },
+            {
+              "score": 36,
+              "matchedOn": [
+                "id:api-shield-schema-validation-retrieve-zone-level-settings",
+                "description",
+                "path:zones/{zone_id}/api_gateway/settings/schema_validation"
+              ],
+              "operation": {
+                "id": "api-shield-schema-validation-retrieve-zone-level-settings",
+                "method": "GET",
+                "path": "zones/{zone_id}/api_gateway/settings/schema_validation",
+                "description": "Retrieve zone level schema validation settings"
+              }
+            },
+            {
+              "score": 36,
+              "matchedOn": [
+                "id:api-shield-schema-validation-update-zone-level-settings",
+                "description",
+                "path:zones/{zone_id}/api_gateway/settings/schema_validation"
+              ],
+              "operation": {
+                "id": "api-shield-schema-validation-update-zone-level-settings",
+                "method": "PUT",
+                "path": "zones/{zone_id}/api_gateway/settings/schema_validation",
+                "description": "Update zone level schema validation settings"
+              }
+            }
+          ]
+        },
+        {
+          "query": "tiered cache smart topology",
+          "hitCount": 5,
+          "topHits": [
+            {
+              "score": 62,
+              "matchedOn": [
+                "id:smart-tiered-cache-get-smart-tiered-cache-setting",
+                "resource:tiered_cache_smart_topology_enable",
+                "description",
+                "path:zones/{zone_id}/cache/tiered_cache_smart_topology_enable"
+              ],
+              "operation": {
+                "id": "smart-tiered-cache-get-smart-tiered-cache-setting",
+                "method": "GET",
+                "path": "zones/{zone_id}/cache/tiered_cache_smart_topology_enable",
+                "description": "Get Smart Tiered Cache setting"
+              }
+            },
+            {
+              "score": 62,
+              "matchedOn": [
+                "id:smart-tiered-cache-patch-smart-tiered-cache-setting",
+                "resource:tiered_cache_smart_topology_enable",
+                "description",
+                "path:zones/{zone_id}/cache/tiered_cache_smart_topology_enable"
+              ],
+              "operation": {
+                "id": "smart-tiered-cache-patch-smart-tiered-cache-setting",
+                "method": "PATCH",
+                "path": "zones/{zone_id}/cache/tiered_cache_smart_topology_enable",
+                "description": "Patch Smart Tiered Cache setting"
+              }
+            },
+            {
+              "score": 62,
+              "matchedOn": [
+                "id:smart-tiered-cache-delete-smart-tiered-cache-setting",
+                "resource:tiered_cache_smart_topology_enable",
+                "description",
+                "path:zones/{zone_id}/cache/tiered_cache_smart_topology_enable"
+              ],
+              "operation": {
+                "id": "smart-tiered-cache-delete-smart-tiered-cache-setting",
+                "method": "DELETE",
+                "path": "zones/{zone_id}/cache/tiered_cache_smart_topology_enable",
+                "description": "Delete Smart Tiered Cache setting"
+              }
+            },
+            {
+              "score": 36,
+              "matchedOn": [
+                "id:zone-cache-settings-get-regional-tiered-cache-setting",
+                "resource:regional_tiered_cache",
+                "description",
+                "path:zones/{zone_id}/cache/regional_tiered_cache"
+              ],
+              "operation": {
+                "id": "zone-cache-settings-get-regional-tiered-cache-setting",
+                "method": "GET",
+                "path": "zones/{zone_id}/cache/regional_tiered_cache",
+                "description": "Get Regional Tiered Cache setting"
+              }
+            },
+            {
+              "score": 36,
+              "matchedOn": [
+                "id:zone-cache-settings-change-regional-tiered-cache-setting",
+                "resource:regional_tiered_cache",
+                "description",
+                "path:zones/{zone_id}/cache/regional_tiered_cache"
+              ],
+              "operation": {
+                "id": "zone-cache-settings-change-regional-tiered-cache-setting",
+                "method": "PATCH",
+                "path": "zones/{zone_id}/cache/regional_tiered_cache",
+                "description": "Change Regional Tiered Cache setting"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "provider": "sentry",
+      "title": "Sentry — org/project/DSN & releases (GKE workload)",
+      "queries": [
+        {
+          "query": "create project organization",
+          "hitCount": 5,
+          "topHits": [
+            {
+              "score": 37,
+              "matchedOn": [
+                "id:Create a New Project",
+                "description",
+                "resource:projects",
+                "path:api/0/teams/{organization_id_or_slug}/{team_id_or_slug}/projects/",
+                "param"
+              ],
+              "operation": {
+                "id": "Create a New Project",
+                "method": "POST",
+                "path": "api/0/teams/{organization_id_or_slug}/{team_id_or_slug}/projects/",
+                "description": "Create a new project bound to a team.\n\n        Note: If your organization has disabled member project creation, the `org:write` or `team:admin` scope is required.\n        "
+              }
+            },
+            {
+              "score": 34,
+              "matchedOn": [
+                "id:(DEPRECATED) Create an Issue Alert Rule for a Project",
+                "description",
+                "path:api/0/projects/{organization_id_or_slug}/{project_id_or_slug}/rules/",
+                "param"
+              ],
+              "operation": {
+                "id": "(DEPRECATED) Create an Issue Alert Rule for a Project",
+                "method": "POST",
+                "path": "api/0/projects/{organization_id_or_slug}/{project_id_or_slug}/rules/",
+                "description": "## Deprecated\n🚧 Use [Create a Monitor for a Project](/api/monitors/create-a-monitor-for-a-project) and [Create an Alert for an Organization](/api/monitors/create-an-alert-for-an-organization) instead.\n\n\nCreate a new issue alert rule for the given project.\n\nAn issue alert rule tr"
+              }
+            },
+            {
+              "score": 30,
+              "matchedOn": [
+                "id:List an Organization's Projects",
+                "resource:projects",
+                "description(partial)",
+                "path:api/0/organizations/{organization_id_or_slug}/projects/",
+                "description",
+                "param"
+              ],
+              "operation": {
+                "id": "List an Organization's Projects",
+                "method": "GET",
+                "path": "api/0/organizations/{organization_id_or_slug}/projects/",
+                "description": "Return a list of projects bound to a organization."
+              }
+            },
+            {
+              "score": 30,
+              "matchedOn": [
+                "id:List a Project's Organization Members",
+                "description",
+                "path:api/0/projects/{organization_id_or_slug}/{project_id_or_slug}/members/",
+                "param"
+              ],
+              "operation": {
+                "id": "List a Project's Organization Members",
+                "method": "GET",
+                "path": "api/0/projects/{organization_id_or_slug}/{project_id_or_slug}/members/",
+                "description": "Returns a list of active organization members that belong to any team assigned to the project."
+              }
+            },
+            {
+              "score": 29,
+              "matchedOn": [
+                "id:(DEPRECATED) Create a Metric Alert Rule for an Organization",
+                "description",
+                "path:api/0/organizations/{organization_id_or_slug}/alert-rules/",
+                "param"
+              ],
+              "operation": {
+                "id": "(DEPRECATED) Create a Metric Alert Rule for an Organization",
+                "method": "POST",
+                "path": "api/0/organizations/{organization_id_or_slug}/alert-rules/",
+                "description": "## Deprecated\n🚧 Use [Create a Monitor for a Project](/api/monitors/create-a-monitor-for-a-project) and [Create an Alert for an Organization](/api/monitors/create-an-alert-for-an-organization) instead.\n\n\nCreate a new metric alert rule for the given organization.\n\nA metric alert r"
+              }
+            }
+          ]
+        },
+        {
+          "query": "dsn key client key",
+          "hitCount": 5,
+          "topHits": [
+            {
+              "score": 47,
+              "matchedOn": [
+                "description(partial)",
+                "id:List an Organization's Client Keys",
+                "resource:project-keys",
+                "description",
+                "path:api/0/organizations/{organization_id_or_slug}/project-keys/"
+              ],
+              "operation": {
+                "id": "List an Organization's Client Keys",
+                "method": "GET",
+                "path": "api/0/organizations/{organization_id_or_slug}/project-keys/",
+                "description": "Return a list of client keys (DSNs) for all projects in an organization.\n\nThis paginated endpoint lists client keys across all projects in an organization. Each key includes the project ID\nto identify which project it belongs to.\n\nQuery Parameters:\n- team: Filter by team slug or "
+              }
+            },
+            {
+              "score": 46,
+              "matchedOn": [
+                "id:Create a New Client Key",
+                "resource:keys",
+                "description",
+                "path:api/0/projects/{organization_id_or_slug}/{project_id_or_slug}/keys/"
+              ],
+              "operation": {
+                "id": "Create a New Client Key",
+                "method": "POST",
+                "path": "api/0/projects/{organization_id_or_slug}/{project_id_or_slug}/keys/",
+                "description": "Create a new client key bound to a project.  The key's secret and public key\nare generated by the server."
+              }
+            },
+            {
+              "score": 40,
+              "matchedOn": [
+                "id:List a Project's Client Keys",
+                "resource:keys",
+                "description(partial)",
+                "path:api/0/projects/{organization_id_or_slug}/{project_id_or_slug}/keys/",
+                "description"
+              ],
+              "operation": {
+                "id": "List a Project's Client Keys",
+                "method": "GET",
+                "path": "api/0/projects/{organization_id_or_slug}/{project_id_or_slug}/keys/",
+                "description": "Return a list of client keys bound to a project."
+              }
+            },
+            {
+              "score": 40,
+              "matchedOn": [
+                "id:Retrieve a Client Key",
+                "description",
+                "path:api/0/projects/{organization_id_or_slug}/{project_id_or_slug}/keys/{key_id}/",
+                "param"
+              ],
+              "operation": {
+                "id": "Retrieve a Client Key",
+                "method": "GET",
+                "path": "api/0/projects/{organization_id_or_slug}/{project_id_or_slug}/keys/{key_id}/",
+                "description": "Return a client key bound to a project."
+              }
+            },
+            {
+              "score": 40,
+              "matchedOn": [
+                "id:Update a Client Key",
+                "description",
+                "path:api/0/projects/{organization_id_or_slug}/{project_id_or_slug}/keys/{key_id}/",
+                "param"
+              ],
+              "operation": {
+                "id": "Update a Client Key",
+                "method": "PUT",
+                "path": "api/0/projects/{organization_id_or_slug}/{project_id_or_slug}/keys/{key_id}/",
+                "description": "Update various settings for a client key."
+              }
+            }
+          ]
+        },
+        {
+          "query": "release create deploy",
+          "hitCount": 5,
+          "topHits": [
+            {
+              "score": 35,
+              "matchedOn": [
+                "description",
+                "path:api/0/organizations/{organization_id_or_slug}/releases/{version}/deploys/",
+                "id:Create a Deploy",
+                "resource:deploys"
+              ],
+              "operation": {
+                "id": "Create a Deploy",
+                "method": "POST",
+                "path": "api/0/organizations/{organization_id_or_slug}/releases/{version}/deploys/",
+                "description": "Create a deploy for a given release."
+              }
+            },
+            {
+              "score": 28,
+              "matchedOn": [
+                "id:Create a New Release for an Organization",
+                "resource:releases",
+                "description",
+                "path:api/0/organizations/{organization_id_or_slug}/releases/"
+              ],
+              "operation": {
+                "id": "Create a New Release for an Organization",
+                "method": "POST",
+                "path": "api/0/organizations/{organization_id_or_slug}/releases/",
+                "description": "Create a new release for the given organization.  Releases are used by\nSentry to improve its error reporting abilities by correlating\nfirst seen events with the release that might have introduced the\nproblem.\nReleases are also necessary for source maps and other debug features\nth"
+              }
+            },
+            {
+              "score": 24,
+              "matchedOn": [
+                "id:List a Release's Deploys",
+                "path:api/0/organizations/{organization_id_or_slug}/releases/{version}/deploys/",
+                "resource:deploys",
+                "description(partial)"
+              ],
+              "operation": {
+                "id": "List a Release's Deploys",
+                "method": "GET",
+                "path": "api/0/organizations/{organization_id_or_slug}/releases/{version}/deploys/",
+                "description": "Returns a list of deploys based on the organization, version, and project."
+              }
+            },
+            {
+              "score": 20,
+              "matchedOn": [
+                "id:Retrieve Statuses of Release Thresholds (Alpha)",
+                "resource:release-threshold-statuses",
+                "description",
+                "path:api/0/organizations/{organization_id_or_slug}/release-threshold-statuses/",
+                "param"
+              ],
+              "operation": {
+                "id": "Retrieve Statuses of Release Thresholds (Alpha)",
+                "method": "GET",
+                "path": "api/0/organizations/{organization_id_or_slug}/release-threshold-statuses/",
+                "description": "**`[WARNING]`**: This API is an experimental Alpha feature and is subject to change!\n\nList all derived statuses of releases that fall within the provided start/end datetimes.\n\nConstructs a response key'd off \\{`release_version`\\}-\\{`project_slug`\\} that lists thresholds with thei"
+              }
+            },
+            {
+              "score": 15,
+              "matchedOn": [
+                "id:List an Organization's Releases",
+                "resource:releases",
+                "description(partial)",
+                "path:api/0/organizations/{organization_id_or_slug}/releases/"
+              ],
+              "operation": {
+                "id": "List an Organization's Releases",
+                "method": "GET",
+                "path": "api/0/organizations/{organization_id_or_slug}/releases/",
+                "description": "Return a list of releases for a given organization."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "provider": "github",
+      "title": "GitHub Actions — build image & deploy to GKE on schedule",
+      "queries": [
+        {
+          "query": "create workflow dispatch repository",
+          "hitCount": 5,
+          "topHits": [
+            {
+              "score": 41,
+              "matchedOn": [
+                "id:actions/create-workflow-dispatch",
+                "description",
+                "path:repos/{owner}/{repo}/actions/workflows/{workflow_id}/dispatches",
+                "resource:dispatches"
+              ],
+              "operation": {
+                "id": "actions/create-workflow-dispatch",
+                "method": "POST",
+                "path": "repos/{owner}/{repo}/actions/workflows/{workflow_id}/dispatches",
+                "description": "Create a workflow dispatch event"
+              }
+            },
+            {
+              "score": 32,
+              "matchedOn": [
+                "id:repos/create-dispatch-event",
+                "description",
+                "resource:dispatches",
+                "path:repos/{owner}/{repo}/dispatches"
+              ],
+              "operation": {
+                "id": "repos/create-dispatch-event",
+                "method": "POST",
+                "path": "repos/{owner}/{repo}/dispatches",
+                "description": "Create a repository dispatch event"
+              }
+            },
+            {
+              "score": 28,
+              "matchedOn": [
+                "id:actions/get-private-repo-fork-pr-workflows-settings-repository",
+                "resource:fork-pr-workflows-private-repos",
+                "description",
+                "path:repos/{owner}/{repo}/actions/permissions/fork-pr-workflows-private-repos"
+              ],
+              "operation": {
+                "id": "actions/get-private-repo-fork-pr-workflows-settings-repository",
+                "method": "GET",
+                "path": "repos/{owner}/{repo}/actions/permissions/fork-pr-workflows-private-repos",
+                "description": "Get private repo fork PR workflow settings for a repository"
+              }
+            },
+            {
+              "score": 28,
+              "matchedOn": [
+                "id:actions/set-private-repo-fork-pr-workflows-settings-repository",
+                "resource:fork-pr-workflows-private-repos",
+                "description",
+                "path:repos/{owner}/{repo}/actions/permissions/fork-pr-workflows-private-repos"
+              ],
+              "operation": {
+                "id": "actions/set-private-repo-fork-pr-workflows-settings-repository",
+                "method": "PUT",
+                "path": "repos/{owner}/{repo}/actions/permissions/fork-pr-workflows-private-repos",
+                "description": "Set private repo fork PR workflow settings for a repository"
+              }
+            },
+            {
+              "score": 28,
+              "matchedOn": [
+                "id:actions/get-github-actions-default-workflow-permissions-repository",
+                "resource:workflow",
+                "description",
+                "path:repos/{owner}/{repo}/actions/permissions/workflow"
+              ],
+              "operation": {
+                "id": "actions/get-github-actions-default-workflow-permissions-repository",
+                "method": "GET",
+                "path": "repos/{owner}/{repo}/actions/permissions/workflow",
+                "description": "Get default workflow permissions for a repository"
+              }
+            }
+          ]
+        },
+        {
+          "query": "repository secrets actions",
+          "hitCount": 5,
+          "topHits": [
+            {
+              "score": 31,
+              "matchedOn": [
+                "description",
+                "id:actions/list-repo-organization-secrets",
+                "resource:organization-secrets",
+                "path:repos/{owner}/{repo}/actions/organization-secrets"
+              ],
+              "operation": {
+                "id": "actions/list-repo-organization-secrets",
+                "method": "GET",
+                "path": "repos/{owner}/{repo}/actions/organization-secrets",
+                "description": "List repository organization secrets"
+              }
+            },
+            {
+              "score": 31,
+              "matchedOn": [
+                "description",
+                "id:actions/list-repo-secrets",
+                "resource:secrets",
+                "path:repos/{owner}/{repo}/actions/secrets"
+              ],
+              "operation": {
+                "id": "actions/list-repo-secrets",
+                "method": "GET",
+                "path": "repos/{owner}/{repo}/actions/secrets",
+                "description": "List repository secrets"
+              }
+            },
+            {
+              "score": 28,
+              "matchedOn": [
+                "id:actions/get-allowed-actions-repository",
+                "description",
+                "resource:selected-actions",
+                "path:repos/{owner}/{repo}/actions/permissions/selected-actions"
+              ],
+              "operation": {
+                "id": "actions/get-allowed-actions-repository",
+                "method": "GET",
+                "path": "repos/{owner}/{repo}/actions/permissions/selected-actions",
+                "description": "Get allowed actions and reusable workflows for a repository"
+              }
+            },
+            {
+              "score": 28,
+              "matchedOn": [
+                "id:actions/set-allowed-actions-repository",
+                "description",
+                "resource:selected-actions",
+                "path:repos/{owner}/{repo}/actions/permissions/selected-actions"
+              ],
+              "operation": {
+                "id": "actions/set-allowed-actions-repository",
+                "method": "PUT",
+                "path": "repos/{owner}/{repo}/actions/permissions/selected-actions",
+                "description": "Set allowed actions and reusable workflows for a repository"
+              }
+            },
+            {
+              "score": 27,
+              "matchedOn": [
+                "id:actions/list-org-secrets",
+                "resource:secrets",
+                "description",
+                "path:orgs/{org}/actions/secrets"
+              ],
+              "operation": {
+                "id": "actions/list-org-secrets",
+                "method": "GET",
+                "path": "orgs/{org}/actions/secrets",
+                "description": "List organization secrets"
+              }
+            }
+          ]
+        },
+        {
+          "query": "cron schedule workflow yaml",
+          "hitCount": 5,
+          "topHits": [
+            {
+              "score": 18,
+              "matchedOn": [
+                "id:actions/get-private-repo-fork-pr-workflows-settings-organization",
+                "resource:fork-pr-workflows-private-repos",
+                "description",
+                "path:orgs/{org}/actions/permissions/fork-pr-workflows-private-repos"
+              ],
+              "operation": {
+                "id": "actions/get-private-repo-fork-pr-workflows-settings-organization",
+                "method": "GET",
+                "path": "orgs/{org}/actions/permissions/fork-pr-workflows-private-repos",
+                "description": "Get private repo fork PR workflow settings for an organization"
+              }
+            },
+            {
+              "score": 18,
+              "matchedOn": [
+                "id:actions/set-private-repo-fork-pr-workflows-settings-organization",
+                "resource:fork-pr-workflows-private-repos",
+                "description",
+                "path:orgs/{org}/actions/permissions/fork-pr-workflows-private-repos"
+              ],
+              "operation": {
+                "id": "actions/set-private-repo-fork-pr-workflows-settings-organization",
+                "method": "PUT",
+                "path": "orgs/{org}/actions/permissions/fork-pr-workflows-private-repos",
+                "description": "Set private repo fork PR workflow settings for an organization"
+              }
+            },
+            {
+              "score": 18,
+              "matchedOn": [
+                "id:actions/get-github-actions-default-workflow-permissions-organization",
+                "resource:workflow",
+                "description",
+                "path:orgs/{org}/actions/permissions/workflow"
+              ],
+              "operation": {
+                "id": "actions/get-github-actions-default-workflow-permissions-organization",
+                "method": "GET",
+                "path": "orgs/{org}/actions/permissions/workflow",
+                "description": "Get default workflow permissions for an organization"
+              }
+            },
+            {
+              "score": 18,
+              "matchedOn": [
+                "id:actions/set-github-actions-default-workflow-permissions-organization",
+                "resource:workflow",
+                "description",
+                "path:orgs/{org}/actions/permissions/workflow"
+              ],
+              "operation": {
+                "id": "actions/set-github-actions-default-workflow-permissions-organization",
+                "method": "PUT",
+                "path": "orgs/{org}/actions/permissions/workflow",
+                "description": "Set default workflow permissions for an organization"
+              }
+            },
+            {
+              "score": 18,
+              "matchedOn": [
+                "id:actions/get-private-repo-fork-pr-workflows-settings-repository",
+                "resource:fork-pr-workflows-private-repos",
+                "description",
+                "path:repos/{owner}/{repo}/actions/permissions/fork-pr-workflows-private-repos"
+              ],
+              "operation": {
+                "id": "actions/get-private-repo-fork-pr-workflows-settings-repository",
+                "method": "GET",
+                "path": "repos/{owner}/{repo}/actions/permissions/fork-pr-workflows-private-repos",
+                "description": "Get private repo fork PR workflow settings for a repository"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "provider": "slack",
+      "title": "Slack — notify release channel per pipeline step",
+      "queries": [
+        {
+          "query": "chat.postMessage channel",
+          "hitCount": 5,
+          "topHits": [
+            {
+              "score": 32,
+              "matchedOn": [
+                "id:chat_postMessage",
+                "resource:chat.postMessage",
+                "path:chat.postMessage",
+                "description"
+              ],
+              "operation": {
+                "id": "chat_postMessage",
+                "method": "POST",
+                "path": "chat.postMessage",
+                "description": "Sends a message to a channel."
+              }
+            },
+            {
+              "score": 20,
+              "matchedOn": [
+                "id:admin_conversations_ekm_listOriginalConnectedChannelInfo",
+                "resource:admin.conversations.ekm.listOriginalConnectedChannelInfo",
+                "description",
+                "path:admin.conversations.ekm.listOriginalConnectedChannelInfo",
+                "param"
+              ],
+              "operation": {
+                "id": "admin_conversations_ekm_listOriginalConnectedChannelInfo",
+                "method": "GET",
+                "path": "admin.conversations.ekm.listOriginalConnectedChannelInfo",
+                "description": "List all disconnected channels—i.e., channels that were once connected to other workspaces and then disconnected—and the corresponding original channel IDs for key revocation with EKM."
+              }
+            },
+            {
+              "score": 18,
+              "matchedOn": [
+                "id:chat_meMessage",
+                "resource:chat.meMessage",
+                "path:chat.meMessage",
+                "description"
+              ],
+              "operation": {
+                "id": "chat_meMessage",
+                "method": "POST",
+                "path": "chat.meMessage",
+                "description": "Share a me message into a channel."
+              }
+            },
+            {
+              "score": 18,
+              "matchedOn": [
+                "id:chat_postEphemeral",
+                "resource:chat.postEphemeral",
+                "path:chat.postEphemeral",
+                "description"
+              ],
+              "operation": {
+                "id": "chat_postEphemeral",
+                "method": "POST",
+                "path": "chat.postEphemeral",
+                "description": "Sends an ephemeral message to a user in a channel."
+              }
+            },
+            {
+              "score": 18,
+              "matchedOn": [
+                "id:chat_scheduleMessage",
+                "resource:chat.scheduleMessage",
+                "path:chat.scheduleMessage",
+                "description"
+              ],
+              "operation": {
+                "id": "chat_scheduleMessage",
+                "method": "POST",
+                "path": "chat.scheduleMessage",
+                "description": "Schedules a message to be sent to a channel."
+              }
+            }
+          ]
+        },
+        {
+          "query": "conversations.history channel",
+          "hitCount": 5,
+          "topHits": [
+            {
+              "score": 34,
+              "matchedOn": [
+                "id:admin_conversations_ekm_listOriginalConnectedChannelInfo",
+                "resource:admin.conversations.ekm.listOriginalConnectedChannelInfo",
+                "path:admin.conversations.ekm.listOriginalConnectedChannelInfo",
+                "description",
+                "param"
+              ],
+              "operation": {
+                "id": "admin_conversations_ekm_listOriginalConnectedChannelInfo",
+                "method": "GET",
+                "path": "admin.conversations.ekm.listOriginalConnectedChannelInfo",
+                "description": "List all disconnected channels—i.e., channels that were once connected to other workspaces and then disconnected—and the corresponding original channel IDs for key revocation with EKM."
+              }
+            },
+            {
+              "score": 34,
+              "matchedOn": [
+                "id:conversations_history",
+                "resource:conversations.history",
+                "path:conversations.history",
+                "description",
+                "param"
+              ],
+              "operation": {
+                "id": "conversations_history",
+                "method": "GET",
+                "path": "conversations.history",
+                "description": "Fetches a conversation's history of messages and events."
+              }
+            },
+            {
+              "score": 20,
+              "matchedOn": [
+                "id:admin_conversations_getConversationPrefs",
+                "resource:admin.conversations.getConversationPrefs",
+                "path:admin.conversations.getConversationPrefs",
+                "description",
+                "param"
+              ],
+              "operation": {
+                "id": "admin_conversations_getConversationPrefs",
+                "method": "GET",
+                "path": "admin.conversations.getConversationPrefs",
+                "description": "Get conversation preferences for a public or private channel."
+              }
+            },
+            {
+              "score": 20,
+              "matchedOn": [
+                "id:admin_conversations_getTeams",
+                "resource:admin.conversations.getTeams",
+                "path:admin.conversations.getTeams",
+                "description",
+                "param"
+              ],
+              "operation": {
+                "id": "admin_conversations_getTeams",
+                "method": "GET",
+                "path": "admin.conversations.getTeams",
+                "description": "Get all the workspaces a given public or private channel is connected to within this Enterprise org."
+              }
+            },
+            {
+              "score": 20,
+              "matchedOn": [
+                "id:admin_conversations_restrictAccess_listGroups",
+                "resource:admin.conversations.restrictAccess.listGroups",
+                "path:admin.conversations.restrictAccess.listGroups",
+                "description",
+                "param"
+              ],
+              "operation": {
+                "id": "admin_conversations_restrictAccess_listGroups",
+                "method": "GET",
+                "path": "admin.conversations.restrictAccess.listGroups",
+                "description": "List all IDP Groups linked to a channel"
+              }
+            }
+          ]
+        },
+        {
+          "query": "incoming webhook",
+          "hitCount": 0,
+          "topHits": []
+        }
+      ]
+    },
+    {
+      "provider": "n8n",
+      "title": "n8n — automation (e.g. GitHub release from Slack trigger)",
+      "queries": [
+        {
+          "query": "create workflow",
+          "hitCount": 5,
+          "topHits": [
+            {
+              "score": 22,
+              "matchedOn": [
+                "description",
+                "id:post_workflows",
+                "resource:workflows",
+                "path:workflows"
+              ],
+              "operation": {
+                "id": "post_workflows",
+                "method": "POST",
+                "path": "workflows",
+                "description": "Create a workflow"
+              }
+            },
+            {
+              "score": 15,
+              "matchedOn": [
+                "id:get_workflows",
+                "resource:workflows",
+                "description(partial)",
+                "path:workflows"
+              ],
+              "operation": {
+                "id": "get_workflows",
+                "method": "GET",
+                "path": "workflows",
+                "description": "Retrieve all workflows"
+              }
+            },
+            {
+              "score": 13,
+              "matchedOn": [
+                "id:get_workflows_id",
+                "description",
+                "path:workflows/{id}"
+              ],
+              "operation": {
+                "id": "get_workflows_id",
+                "method": "GET",
+                "path": "workflows/{id}",
+                "description": "Retrieve a workflow"
+              }
+            },
+            {
+              "score": 13,
+              "matchedOn": [
+                "id:put_workflows_id",
+                "description",
+                "path:workflows/{id}"
+              ],
+              "operation": {
+                "id": "put_workflows_id",
+                "method": "PUT",
+                "path": "workflows/{id}",
+                "description": "Update a workflow"
+              }
+            },
+            {
+              "score": 13,
+              "matchedOn": [
+                "id:delete_workflows_id",
+                "description",
+                "path:workflows/{id}"
+              ],
+              "operation": {
+                "id": "delete_workflows_id",
+                "method": "DELETE",
+                "path": "workflows/{id}",
+                "description": "Delete a workflow"
+              }
+            }
+          ]
+        },
+        {
+          "query": "activate workflow",
+          "hitCount": 5,
+          "topHits": [
+            {
+              "score": 28,
+              "matchedOn": [
+                "id:post_workflows_id_deactivate",
+                "resource:deactivate",
+                "description(partial)",
+                "path:workflows/{id}/deactivate",
+                "description"
+              ],
+              "operation": {
+                "id": "post_workflows_id_deactivate",
+                "method": "POST",
+                "path": "workflows/{id}/deactivate",
+                "description": "Deactivate a workflow"
+              }
+            },
+            {
+              "score": 27,
+              "matchedOn": [
+                "id:post_workflows_id_activate",
+                "resource:activate",
+                "path:workflows/{id}/activate",
+                "description"
+              ],
+              "operation": {
+                "id": "post_workflows_id_activate",
+                "method": "POST",
+                "path": "workflows/{id}/activate",
+                "description": "Publish a workflow"
+              }
+            },
+            {
+              "score": 18,
+              "matchedOn": [
+                "id:post_workflows",
+                "resource:workflows",
+                "description",
+                "path:workflows"
+              ],
+              "operation": {
+                "id": "post_workflows",
+                "method": "POST",
+                "path": "workflows",
+                "description": "Create a workflow"
+              }
+            },
+            {
+              "score": 15,
+              "matchedOn": [
+                "id:get_workflows",
+                "resource:workflows",
+                "description(partial)",
+                "path:workflows"
+              ],
+              "operation": {
+                "id": "get_workflows",
+                "method": "GET",
+                "path": "workflows",
+                "description": "Retrieve all workflows"
+              }
+            },
+            {
+              "score": 13,
+              "matchedOn": [
+                "id:get_workflows_id",
+                "description",
+                "path:workflows/{id}"
+              ],
+              "operation": {
+                "id": "get_workflows_id",
+                "method": "GET",
+                "path": "workflows/{id}",
+                "description": "Retrieve a workflow"
+              }
+            }
+          ]
+        },
+        {
+          "query": "webhook trigger",
+          "hitCount": 0,
+          "topHits": []
+        }
+      ]
+    },
+    {
+      "provider": "bitbucket",
+      "title": "Bitbucket — repos & Pipelines (optional mirror to GitHub flow)",
+      "queries": [
+        {
+          "query": "repository create project",
+          "hitCount": 5,
+          "topHits": [
+            {
+              "score": 25,
+              "matchedOn": [
+                "id:create_teams_by_username_projects",
+                "description(partial)",
+                "resource:projects",
+                "description",
+                "path:teams/{username}/projects/"
+              ],
+              "operation": {
+                "id": "create_teams_by_username_projects",
+                "method": "POST",
+                "path": "teams/{username}/projects/",
+                "description": "Creates a new project.\n\nNote that the avatar has to be embedded as either a data-url\nor a URL to an external image as shown in the examples below:\n\n```\n$ body=$(cat << EOF\n{\n    \"name\": \"Mars Project\",\n    \"key\": \"MARS\",\n    \"description\": \"Software for colonizing mars.\",\n    \"li"
+              }
+            },
+            {
+              "score": 20,
+              "matchedOn": [
+                "id:create_pipeline_for_repository",
+                "description"
+              ],
+              "operation": {
+                "id": "create_pipeline_for_repository",
+                "method": "POST",
+                "path": "repositories/{workspace}/{repo_slug}/pipelines/",
+                "description": "Endpoint to create and initiate a pipeline. \nThere are a couple of different options to initiate a pipeline, where the payload of the request will determine which type of pipeline will be instantiated.\n# Trigger a Pipeline for a branch\nOne way to trigger pipelines is by specifyin"
+              }
+            },
+            {
+              "score": 20,
+              "matchedOn": [
+                "id:create_repository_pipeline_schedule",
+                "description"
+              ],
+              "operation": {
+                "id": "create_repository_pipeline_schedule",
+                "method": "POST",
+                "path": "repositories/{workspace}/{repo_slug}/pipelines_config/schedules/",
+                "description": "Create a schedule for the given repository."
+              }
+            },
+            {
+              "score": 20,
+              "matchedOn": [
+                "id:create_repository_pipeline_known_host",
+                "description"
+              ],
+              "operation": {
+                "id": "create_repository_pipeline_known_host",
+                "method": "POST",
+                "path": "repositories/{workspace}/{repo_slug}/pipelines_config/ssh/known_hosts/",
+                "description": "Create a repository level known host."
+              }
+            },
+            {
+              "score": 20,
+              "matchedOn": [
+                "id:create_repository_pipeline_variable",
+                "description"
+              ],
+              "operation": {
+                "id": "create_repository_pipeline_variable",
+                "method": "POST",
+                "path": "repositories/{workspace}/{repo_slug}/pipelines_config/variables/",
+                "description": "Create a repository level variable."
+              }
+            }
+          ]
+        },
+        {
+          "query": "pipeline run commit",
+          "hitCount": 5,
+          "topHits": [
+            {
+              "score": 22,
+              "matchedOn": [
+                "id:create_pipeline_for_repository",
+                "resource:pipelines",
+                "description",
+                "path:repositories/{workspace}/{repo_slug}/pipelines/"
+              ],
+              "operation": {
+                "id": "create_pipeline_for_repository",
+                "method": "POST",
+                "path": "repositories/{workspace}/{repo_slug}/pipelines/",
+                "description": "Endpoint to create and initiate a pipeline. \nThere are a couple of different options to initiate a pipeline, where the payload of the request will determine which type of pipeline will be instantiated.\n# Trigger a Pipeline for a branch\nOne way to trigger pipelines is by specifyin"
+              }
+            },
+            {
+              "score": 20,
+              "matchedOn": [
+                "id:stop_pipeline",
+                "resource:stopPipeline",
+                "description",
+                "path:repositories/{workspace}/{repo_slug}/pipelines/{pipeline_uuid}/stopPipeline",
+                "param"
+              ],
+              "operation": {
+                "id": "stop_pipeline",
+                "method": "POST",
+                "path": "repositories/{workspace}/{repo_slug}/pipelines/{pipeline_uuid}/stopPipeline",
+                "description": "Signal the stop of a pipeline and all of its steps that not have completed yet."
+              }
+            },
+            {
+              "score": 18,
+              "matchedOn": [
+                "id:get_repositories_by_username_by_repo_slug_commits",
+                "resource:commits",
+                "description",
+                "path:repositories/{username}/{repo_slug}/commits"
+              ],
+              "operation": {
+                "id": "get_repositories_by_username_by_repo_slug_commits",
+                "method": "GET",
+                "path": "repositories/{username}/{repo_slug}/commits",
+                "description": "These are the repository's commits. They are paginated and returned\nin reverse chronological order, similar to the output of `git log` and\n`hg log`. Like these tools, the DAG can be filtered.\n\n## GET /repositories/{username}/{repo_slug}/commits/\n\nReturns all commits in the repo i"
+              }
+            },
+            {
+              "score": 18,
+              "matchedOn": [
+                "id:create_repositories_by_username_by_repo_slug_commits",
+                "resource:commits",
+                "description",
+                "path:repositories/{username}/{repo_slug}/commits"
+              ],
+              "operation": {
+                "id": "create_repositories_by_username_by_repo_slug_commits",
+                "method": "POST",
+                "path": "repositories/{username}/{repo_slug}/commits",
+                "description": "Identical to `GET /repositories/{username}/{repo_slug}/commits`,\nexcept that POST allows clients to place the include and exclude\nparameters in the request body to avoid URL length issues.\n\n**Note that this resource does NOT support new commit creation.**"
+              }
+            },
+            {
+              "score": 15,
+              "matchedOn": [
+                "id:get_repositories_by_username_by_repo_slug_pullrequests_by_pull_request_id_commits",
+                "resource:commits",
+                "description(partial)",
+                "path:repositories/{username}/{repo_slug}/pullrequests/{pull_request_id}/commits"
+              ],
+              "operation": {
+                "id": "get_repositories_by_username_by_repo_slug_pullrequests_by_pull_request_id_commits",
+                "method": "GET",
+                "path": "repositories/{username}/{repo_slug}/pullrequests/{pull_request_id}/commits",
+                "description": "Returns a paginated list of the pull request's commits.\n\nThese are the commits that are being merged into the destination\nbranch when the pull requests gets accepted."
+              }
+            }
+          ]
+        },
+        {
+          "query": "pull request create",
+          "hitCount": 5,
+          "topHits": [
+            {
+              "score": 46,
+              "matchedOn": [
+                "id:create_repositories_by_username_by_repo_slug_pullrequests",
+                "resource:pullrequests",
+                "description",
+                "path:repositories/{username}/{repo_slug}/pullrequests"
+              ],
+              "operation": {
+                "id": "create_repositories_by_username_by_repo_slug_pullrequests",
+                "method": "POST",
+                "path": "repositories/{username}/{repo_slug}/pullrequests",
+                "description": "Creates a new pull request where the destination repository is\nthis repository and the author is the authenticated user.\n\nThe minimum required fields to create a pull request are `title` and\n`source`, specified by a branch name.\n\n```\ncurl https://api.bitbucket.org/2.0/repositorie"
+              }
+            },
+            {
+              "score": 37,
+              "matchedOn": [
+                "id:create_repositories_by_username_by_repo_slug_pullrequests_by_pull_request_id_comments",
+                "description",
+                "path:repositories/{username}/{repo_slug}/pullrequests/{pull_request_id}/comments",
+                "param",
+                "description(partial)"
+              ],
+              "operation": {
+                "id": "create_repositories_by_username_by_repo_slug_pullrequests_by_pull_request_id_comments",
+                "method": "POST",
+                "path": "repositories/{username}/{repo_slug}/pullrequests/{pull_request_id}/comments",
+                "description": "Creates a new pull request comment.\n\nReturns the newly created pull request comment."
+              }
+            },
+            {
+              "score": 33,
+              "matchedOn": [
+                "id:get_repositories_by_username_by_repo_slug_pullrequests",
+                "resource:pullrequests",
+                "description",
+                "path:repositories/{username}/{repo_slug}/pullrequests",
+                "description(partial)"
+              ],
+              "operation": {
+                "id": "get_repositories_by_username_by_repo_slug_pullrequests",
+                "method": "GET",
+                "path": "repositories/{username}/{repo_slug}/pullrequests",
+                "description": "Returns all pull requests on the specified repository.\n\nBy default only open pull requests are returned. This can be controlled\nusing the `state` query parameter. To retrieve pull requests that are\nin one of multiple states, repeat the `state` parameter for each\nindividual state."
+              }
+            },
+            {
+              "score": 33,
+              "matchedOn": [
+                "id:get_pullrequests_for_commit",
+                "resource:pullrequests",
+                "description",
+                "path:repositories/{workspace}/{repo_slug}/commit/{commit}/pullrequests",
+                "description(partial)"
+              ],
+              "operation": {
+                "id": "get_pullrequests_for_commit",
+                "method": "GET",
+                "path": "repositories/{workspace}/{repo_slug}/commit/{commit}/pullrequests",
+                "description": "Returns a paginated list of all pull requests as part of which this commit was reviewed."
+              }
+            },
+            {
+              "score": 32,
+              "matchedOn": [
+                "id:create_repositories_by_username_by_repo_slug_pullrequests_by_pull_request_id_approve",
+                "description",
+                "path:repositories/{username}/{repo_slug}/pullrequests/{pull_request_id}/approve"
+              ],
+              "operation": {
+                "id": "create_repositories_by_username_by_repo_slug_pullrequests_by_pull_request_id_approve",
+                "method": "POST",
+                "path": "repositories/{username}/{repo_slug}/pullrequests/{pull_request_id}/approve",
+                "description": "Approve the specified pull request as the authenticated user."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "provider": "jira",
+      "title": "Jira — track rollout (issue fields, assignee, labels)",
+      "queries": [
+        {
+          "query": "create issue rest api",
+          "hitCount": 5,
+          "topHits": [
+            {
+              "score": 45,
+              "matchedOn": [
+                "id:com.atlassian.jira.rest.v2.issue.IssueResource.getCreateIssueMeta_get",
+                "resource:createmeta",
+                "description",
+                "path:rest/api/3/issue/createmeta",
+                "param"
+              ],
+              "operation": {
+                "id": "com.atlassian.jira.rest.v2.issue.IssueResource.getCreateIssueMeta_get",
+                "method": "GET",
+                "path": "rest/api/3/issue/createmeta",
+                "description": "Get create issue metadata"
+              }
+            },
+            {
+              "score": 40,
+              "matchedOn": [
+                "id:com.atlassian.jira.rest.v2.issue.IssueResource.createIssue_post",
+                "description",
+                "resource:issue",
+                "path:rest/api/3/issue"
+              ],
+              "operation": {
+                "id": "com.atlassian.jira.rest.v2.issue.IssueResource.createIssue_post",
+                "method": "POST",
+                "path": "rest/api/3/issue",
+                "description": "Create issue"
+              }
+            },
+            {
+              "score": 40,
+              "matchedOn": [
+                "id:com.atlassian.jira.rest.v2.issue.IssueLinkTypeResource.createIssueLinkType_post",
+                "description",
+                "resource:issueLinkType",
+                "path:rest/api/3/issueLinkType"
+              ],
+              "operation": {
+                "id": "com.atlassian.jira.rest.v2.issue.IssueLinkTypeResource.createIssueLinkType_post",
+                "method": "POST",
+                "path": "rest/api/3/issueLinkType",
+                "description": "Create issue link type"
+              }
+            },
+            {
+              "score": 40,
+              "matchedOn": [
+                "id:com.atlassian.jira.rest.v2.issue.IssueTypeResource.createIssueType_post",
+                "description",
+                "resource:issuetype",
+                "path:rest/api/3/issuetype"
+              ],
+              "operation": {
+                "id": "com.atlassian.jira.rest.v2.issue.IssueTypeResource.createIssueType_post",
+                "method": "POST",
+                "path": "rest/api/3/issuetype",
+                "description": "Create issue type"
+              }
+            },
+            {
+              "score": 37,
+              "matchedOn": [
+                "id:com.atlassian.jira.rest.v2.issue.IssueResource.createOrUpdateRemoteIssueLink_post",
+                "description",
+                "path:rest/api/3/issue/{issueIdOrKey}/remotelink",
+                "param"
+              ],
+              "operation": {
+                "id": "com.atlassian.jira.rest.v2.issue.IssueResource.createOrUpdateRemoteIssueLink_post",
+                "method": "POST",
+                "path": "rest/api/3/issue/{issueIdOrKey}/remotelink",
+                "description": "Create or update remote issue link"
+              }
+            }
+          ]
+        },
+        {
+          "query": "edit issue labels priority duedate",
+          "hitCount": 5,
+          "topHits": [
+            {
+              "score": 35,
+              "matchedOn": [
+                "id:com.atlassian.jira.rest.v2.issue.IssueResource.getEditIssueMeta_get",
+                "resource:editmeta",
+                "description",
+                "path:rest/api/3/issue/{issueIdOrKey}/editmeta",
+                "param"
+              ],
+              "operation": {
+                "id": "com.atlassian.jira.rest.v2.issue.IssueResource.getEditIssueMeta_get",
+                "method": "GET",
+                "path": "rest/api/3/issue/{issueIdOrKey}/editmeta",
+                "description": "Get edit issue metadata"
+              }
+            },
+            {
+              "score": 27,
+              "matchedOn": [
+                "id:com.atlassian.jira.rest.v2.issue.IssueResource.editIssue_put",
+                "description",
+                "param",
+                "path:rest/api/3/issue/{issueIdOrKey}"
+              ],
+              "operation": {
+                "id": "com.atlassian.jira.rest.v2.issue.IssueResource.editIssue_put",
+                "method": "PUT",
+                "path": "rest/api/3/issue/{issueIdOrKey}",
+                "description": "Edit issue"
+              }
+            },
+            {
+              "score": 20,
+              "matchedOn": [
+                "id:com.atlassian.jira.rest.v2.issue.PriorityResource.getPriorities_get",
+                "resource:priority",
+                "path:rest/api/3/priority"
+              ],
+              "operation": {
+                "id": "com.atlassian.jira.rest.v2.issue.PriorityResource.getPriorities_get",
+                "method": "GET",
+                "path": "rest/api/3/priority",
+                "description": "Get priorities"
+              }
+            },
+            {
+              "score": 19,
+              "matchedOn": [
+                "id:com.atlassian.jira.rest.v2.issue.PriorityResource.getPriority_get",
+                "description",
+                "path:rest/api/3/priority/{id}"
+              ],
+              "operation": {
+                "id": "com.atlassian.jira.rest.v2.issue.PriorityResource.getPriority_get",
+                "method": "GET",
+                "path": "rest/api/3/priority/{id}",
+                "description": "Get priority"
+              }
+            },
+            {
+              "score": 18,
+              "matchedOn": [
+                "resource:edit",
+                "path:rest/api/3/field/{fieldKey}/option/suggestions/edit",
+                "id:com.atlassian.jira.rest.v2.issue.field.IssueFieldOptionResource.getSelectableIssueFieldOptions_get",
+                "description"
+              ],
+              "operation": {
+                "id": "com.atlassian.jira.rest.v2.issue.field.IssueFieldOptionResource.getSelectableIssueFieldOptions_get",
+                "method": "GET",
+                "path": "rest/api/3/field/{fieldKey}/option/suggestions/edit",
+                "description": "Get selectable issue field options"
+              }
+            }
+          ]
+        },
+        {
+          "query": "assign issue accountId",
+          "hitCount": 5,
+          "topHits": [
+            {
+              "score": 33,
+              "matchedOn": [
+                "id:com.atlassian.jira.rest.v2.issue.IssueResource.assignIssue_put",
+                "resource:assignee",
+                "description",
+                "path:rest/api/3/issue/{issueIdOrKey}/assignee",
+                "param"
+              ],
+              "operation": {
+                "id": "com.atlassian.jira.rest.v2.issue.IssueResource.assignIssue_put",
+                "method": "PUT",
+                "path": "rest/api/3/issue/{issueIdOrKey}/assignee",
+                "description": "Assign issue"
+              }
+            },
+            {
+              "score": 21,
+              "matchedOn": [
+                "id:com.atlassian.jira.rest.v2.issue.UserResource.findAssignableUsers_get",
+                "description(partial)",
+                "path:rest/api/3/user/assignable/search",
+                "param"
+              ],
+              "operation": {
+                "id": "com.atlassian.jira.rest.v2.issue.UserResource.findAssignableUsers_get",
+                "method": "GET",
+                "path": "rest/api/3/user/assignable/search",
+                "description": "Find users assignable to issues"
+              }
+            },
+            {
+              "score": 18,
+              "matchedOn": [
+                "id:com.atlassian.jira.rest.v2.issue.field.IssueFieldOptionResource.replaceIssueFieldOption_delete",
+                "resource:issue",
+                "description",
+                "path:rest/api/3/field/{fieldKey}/option/{optionId}/issue"
+              ],
+              "operation": {
+                "id": "com.atlassian.jira.rest.v2.issue.field.IssueFieldOptionResource.replaceIssueFieldOption_delete",
+                "method": "DELETE",
+                "path": "rest/api/3/field/{fieldKey}/option/{optionId}/issue",
+                "description": "Replace issue field option"
+              }
+            },
+            {
+              "score": 18,
+              "matchedOn": [
+                "id:com.atlassian.jira.rest.v2.issue.IssueResource.createIssue_post",
+                "resource:issue",
+                "description",
+                "path:rest/api/3/issue"
+              ],
+              "operation": {
+                "id": "com.atlassian.jira.rest.v2.issue.IssueResource.createIssue_post",
+                "method": "POST",
+                "path": "rest/api/3/issue",
+                "description": "Create issue"
+              }
+            },
+            {
+              "score": 18,
+              "matchedOn": [
+                "id:com.atlassian.jira.rest.v2.issue.LinkIssueResource.linkIssues_post",
+                "resource:issueLink",
+                "description",
+                "path:rest/api/3/issueLink"
+              ],
+              "operation": {
+                "id": "com.atlassian.jira.rest.v2.issue.LinkIssueResource.linkIssues_post",
+                "method": "POST",
+                "path": "rest/api/3/issueLink",
+                "description": "Create issue link"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "uniqueOperations": [
+    {
+      "provider": "google",
+      "id": "container.projects.locations.clusters.create",
+      "method": "POST",
+      "path": "v1/projects/{projectsId}/locations/{locationsId}/clusters"
+    },
+    {
+      "provider": "google",
+      "id": "container.projects.zones.clusters.create",
+      "method": "POST",
+      "path": "v1/projects/{projectId}/zones/{zone}/clusters"
+    },
+    {
+      "provider": "google",
+      "id": "container.projects.zones.clusters.locations",
+      "method": "POST",
+      "path": "v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/locations"
+    },
+    {
+      "provider": "google",
+      "id": "container.projects.zones.clusters.delete",
+      "method": "DELETE",
+      "path": "v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}"
+    },
+    {
+      "provider": "google",
+      "id": "container.projects.zones.clusters.completeIpRotation",
+      "method": "POST",
+      "path": "v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}:completeIpRotation"
+    },
+    {
+      "provider": "google",
+      "id": "container.projects.zones.clusters.nodePools.autoscaling",
+      "method": "POST",
+      "path": "v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/nodePools/{nodePoolId}/autoscaling"
+    },
+    {
+      "provider": "google",
+      "id": "container.projects.locations.clusters.nodePools.setAutoscaling",
+      "method": "POST",
+      "path": "v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}/nodePools/{nodePoolsId}:setAutoscaling"
+    },
+    {
+      "provider": "google",
+      "id": "container.projects.locations.clusters.nodePools.create",
+      "method": "POST",
+      "path": "v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}/nodePools"
+    },
+    {
+      "provider": "google",
+      "id": "container.projects.zones.clusters.nodePools.create",
+      "method": "POST",
+      "path": "v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/nodePools"
+    },
+    {
+      "provider": "google",
+      "id": "container.projects.zones.clusters.nodePools.setSize",
+      "method": "POST",
+      "path": "v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/nodePools/{nodePoolId}/setSize"
+    },
+    {
+      "provider": "google",
+      "id": "networksecurity.projects.locations.interceptDeployments.create",
+      "method": "POST",
+      "path": "v1beta1/projects/{projectsId}/locations/{locationsId}/interceptDeployments"
+    },
+    {
+      "provider": "google",
+      "id": "networksecurity.projects.locations.mirroringDeployments.create",
+      "method": "POST",
+      "path": "v1beta1/projects/{projectsId}/locations/{locationsId}/mirroringDeployments"
+    },
+    {
+      "provider": "google",
+      "id": "networksecurity.projects.locations.interceptDeploymentGroups.create",
+      "method": "POST",
+      "path": "v1beta1/projects/{projectsId}/locations/{locationsId}/interceptDeploymentGroups"
+    },
+    {
+      "provider": "google",
+      "id": "networksecurity.projects.locations.mirroringDeploymentGroups.create",
+      "method": "POST",
+      "path": "v1beta1/projects/{projectsId}/locations/{locationsId}/mirroringDeploymentGroups"
+    },
+    {
+      "provider": "google",
+      "id": "osconfig.projects.patchDeployments.create",
+      "method": "POST",
+      "path": "v1/projects/{projectsId}/patchDeployments"
+    },
+    {
+      "provider": "google",
+      "id": "aiplatform.projects.locations.featurestores.entityTypes.readFeatureValues",
+      "method": "POST",
+      "path": "v1/projects/{projectsId}/locations/{locationsId}/featurestores/{featurestoresId}/entityTypes/{entityTypesId}:readFeatureValues"
+    },
+    {
+      "provider": "google",
+      "id": "aiplatform.projects.locations.featurestores.entityTypes.streamingReadFeatureValues",
+      "method": "POST",
+      "path": "v1/projects/{projectsId}/locations/{locationsId}/featurestores/{featurestoresId}/entityTypes/{entityTypesId}:streamingReadFeatureValues"
+    },
+    {
+      "provider": "google",
+      "id": "aiplatform.projects.locations.featurestores.entityTypes.writeFeatureValues",
+      "method": "POST",
+      "path": "v1/projects/{projectsId}/locations/{locationsId}/featurestores/{featurestoresId}/entityTypes/{entityTypesId}:writeFeatureValues"
+    },
+    {
+      "provider": "google",
+      "id": "aiplatform.projects.locations.featurestores.entityTypes.create",
+      "method": "POST",
+      "path": "v1/projects/{projectsId}/locations/{locationsId}/featurestores/{featurestoresId}/entityTypes"
+    },
+    {
+      "provider": "google",
+      "id": "aiplatform.projects.locations.featurestores.entityTypes.importFeatureValues",
+      "method": "POST",
+      "path": "v1/projects/{projectsId}/locations/{locationsId}/featurestores/{featurestoresId}/entityTypes/{entityTypesId}:importFeatureValues"
+    },
+    {
+      "provider": "google",
+      "id": "compute.firewallPolicies.addRule",
+      "method": "POST",
+      "path": "locations/global/firewallPolicies/{firewallPolicy}/addRule"
+    },
+    {
+      "provider": "google",
+      "id": "compute.networkFirewallPolicies.addRule",
+      "method": "POST",
+      "path": "projects/{project}/global/firewallPolicies/{firewallPolicy}/addRule"
+    },
+    {
+      "provider": "google",
+      "id": "compute.networkFirewallPolicies.addPacketMirroringRule",
+      "method": "POST",
+      "path": "projects/{project}/global/firewallPolicies/{firewallPolicy}/addPacketMirroringRule"
+    },
+    {
+      "provider": "google",
+      "id": "compute.regionNetworkFirewallPolicies.addRule",
+      "method": "POST",
+      "path": "projects/{project}/regions/{region}/firewallPolicies/{firewallPolicy}/addRule"
+    },
+    {
+      "provider": "google",
+      "id": "compute.firewallPolicies.cloneRules",
+      "method": "POST",
+      "path": "locations/global/firewallPolicies/{firewallPolicy}/cloneRules"
+    },
+    {
+      "provider": "google",
+      "id": "compute.networkEndpointGroups.get",
+      "method": "GET",
+      "path": "projects/{project}/zones/{zone}/networkEndpointGroups/{networkEndpointGroup}"
+    },
+    {
+      "provider": "google",
+      "id": "compute.networkEndpointGroups.delete",
+      "method": "DELETE",
+      "path": "projects/{project}/zones/{zone}/networkEndpointGroups/{networkEndpointGroup}"
+    },
+    {
+      "provider": "google",
+      "id": "compute.networkEndpointGroups.attachNetworkEndpoints",
+      "method": "POST",
+      "path": "projects/{project}/zones/{zone}/networkEndpointGroups/{networkEndpointGroup}/attachNetworkEndpoints"
+    },
+    {
+      "provider": "google",
+      "id": "compute.networkEndpointGroups.detachNetworkEndpoints",
+      "method": "POST",
+      "path": "projects/{project}/zones/{zone}/networkEndpointGroups/{networkEndpointGroup}/detachNetworkEndpoints"
+    },
+    {
+      "provider": "google",
+      "id": "compute.networkEndpointGroups.listNetworkEndpoints",
+      "method": "POST",
+      "path": "projects/{project}/zones/{zone}/networkEndpointGroups/{networkEndpointGroup}/listNetworkEndpoints"
+    },
+    {
+      "provider": "cloudflare",
+      "id": "dns-records-for-a-zone-create-dns-record",
+      "method": "POST",
+      "path": "zones/{zone_id}/dns_records"
+    },
+    {
+      "provider": "cloudflare",
+      "id": "dns-records-for-a-zone-list-dns-records",
+      "method": "GET",
+      "path": "zones/{zone_id}/dns_records"
+    },
+    {
+      "provider": "cloudflare",
+      "id": "dns-records-for-a-zone-dns-record-details",
+      "method": "GET",
+      "path": "zones/{zone_id}/dns_records/{dns_record_id}"
+    },
+    {
+      "provider": "cloudflare",
+      "id": "dns-records-for-a-zone-update-dns-record",
+      "method": "PUT",
+      "path": "zones/{zone_id}/dns_records/{dns_record_id}"
+    },
+    {
+      "provider": "cloudflare",
+      "id": "dns-records-for-a-zone-patch-dns-record",
+      "method": "PATCH",
+      "path": "zones/{zone_id}/dns_records/{dns_record_id}"
+    },
+    {
+      "provider": "cloudflare",
+      "id": "zone-level-authenticated-origin-pulls-get-certificate-details",
+      "method": "GET",
+      "path": "zones/{zone_id}/origin_tls_client_auth/{certificate_id}"
+    },
+    {
+      "provider": "cloudflare",
+      "id": "zones-0-get",
+      "method": "GET",
+      "path": "zones/{zone_id}"
+    },
+    {
+      "provider": "cloudflare",
+      "id": "bot-management-for-a-zone-get-config",
+      "method": "GET",
+      "path": "zones/{zone_id}/bot_management"
+    },
+    {
+      "provider": "cloudflare",
+      "id": "account-level-custom-nameservers-usage-for-a-zone-get-account-custom-nameserver-related-zone-metadata",
+      "method": "GET",
+      "path": "zones/{zone_id}/custom_ns"
+    },
+    {
+      "provider": "cloudflare",
+      "id": "zone-lockdown-get-a-zone-lockdown-rule",
+      "method": "GET",
+      "path": "zones/{zone_id}/firewall/lockdowns/{lock_downs_id}"
+    },
+    {
+      "provider": "cloudflare",
+      "id": "ip-access-rules-for-an-account-list-ip-access-rules",
+      "method": "GET",
+      "path": "accounts/{account_id}/firewall/access_rules/rules"
+    },
+    {
+      "provider": "cloudflare",
+      "id": "magic-network-monitoring-configuration-list-rules-and-account-configuration",
+      "method": "GET",
+      "path": "accounts/{account_id}/mnm/config/full"
+    },
+    {
+      "provider": "cloudflare",
+      "id": "web-analytics-list-rules",
+      "method": "GET",
+      "path": "accounts/{account_id}/rum/v2/{ruleset_id}/rules"
+    },
+    {
+      "provider": "cloudflare",
+      "id": "web-analytics-modify-rules",
+      "method": "POST",
+      "path": "accounts/{account_id}/rum/v2/{ruleset_id}/rules"
+    },
+    {
+      "provider": "cloudflare",
+      "id": "ip-access-rules-for-a-user-list-ip-access-rules",
+      "method": "GET",
+      "path": "user/firewall/access_rules/rules"
+    },
+    {
+      "provider": "cloudflare",
+      "id": "waiting-room-get-zone-settings",
+      "method": "GET",
+      "path": "zones/{zone_id}/waiting_rooms/settings"
+    },
+    {
+      "provider": "cloudflare",
+      "id": "waiting-room-update-zone-settings",
+      "method": "PUT",
+      "path": "zones/{zone_id}/waiting_rooms/settings"
+    },
+    {
+      "provider": "cloudflare",
+      "id": "waiting-room-patch-zone-settings",
+      "method": "PATCH",
+      "path": "zones/{zone_id}/waiting_rooms/settings"
+    },
+    {
+      "provider": "cloudflare",
+      "id": "api-shield-schema-validation-retrieve-zone-level-settings",
+      "method": "GET",
+      "path": "zones/{zone_id}/api_gateway/settings/schema_validation"
+    },
+    {
+      "provider": "cloudflare",
+      "id": "api-shield-schema-validation-update-zone-level-settings",
+      "method": "PUT",
+      "path": "zones/{zone_id}/api_gateway/settings/schema_validation"
+    },
+    {
+      "provider": "cloudflare",
+      "id": "smart-tiered-cache-get-smart-tiered-cache-setting",
+      "method": "GET",
+      "path": "zones/{zone_id}/cache/tiered_cache_smart_topology_enable"
+    },
+    {
+      "provider": "cloudflare",
+      "id": "smart-tiered-cache-patch-smart-tiered-cache-setting",
+      "method": "PATCH",
+      "path": "zones/{zone_id}/cache/tiered_cache_smart_topology_enable"
+    },
+    {
+      "provider": "cloudflare",
+      "id": "smart-tiered-cache-delete-smart-tiered-cache-setting",
+      "method": "DELETE",
+      "path": "zones/{zone_id}/cache/tiered_cache_smart_topology_enable"
+    },
+    {
+      "provider": "cloudflare",
+      "id": "zone-cache-settings-get-regional-tiered-cache-setting",
+      "method": "GET",
+      "path": "zones/{zone_id}/cache/regional_tiered_cache"
+    },
+    {
+      "provider": "cloudflare",
+      "id": "zone-cache-settings-change-regional-tiered-cache-setting",
+      "method": "PATCH",
+      "path": "zones/{zone_id}/cache/regional_tiered_cache"
+    },
+    {
+      "provider": "sentry",
+      "id": "Create a New Project",
+      "method": "POST",
+      "path": "api/0/teams/{organization_id_or_slug}/{team_id_or_slug}/projects/"
+    },
+    {
+      "provider": "sentry",
+      "id": "(DEPRECATED) Create an Issue Alert Rule for a Project",
+      "method": "POST",
+      "path": "api/0/projects/{organization_id_or_slug}/{project_id_or_slug}/rules/"
+    },
+    {
+      "provider": "sentry",
+      "id": "List an Organization's Projects",
+      "method": "GET",
+      "path": "api/0/organizations/{organization_id_or_slug}/projects/"
+    },
+    {
+      "provider": "sentry",
+      "id": "List a Project's Organization Members",
+      "method": "GET",
+      "path": "api/0/projects/{organization_id_or_slug}/{project_id_or_slug}/members/"
+    },
+    {
+      "provider": "sentry",
+      "id": "(DEPRECATED) Create a Metric Alert Rule for an Organization",
+      "method": "POST",
+      "path": "api/0/organizations/{organization_id_or_slug}/alert-rules/"
+    },
+    {
+      "provider": "sentry",
+      "id": "List an Organization's Client Keys",
+      "method": "GET",
+      "path": "api/0/organizations/{organization_id_or_slug}/project-keys/"
+    },
+    {
+      "provider": "sentry",
+      "id": "Create a New Client Key",
+      "method": "POST",
+      "path": "api/0/projects/{organization_id_or_slug}/{project_id_or_slug}/keys/"
+    },
+    {
+      "provider": "sentry",
+      "id": "List a Project's Client Keys",
+      "method": "GET",
+      "path": "api/0/projects/{organization_id_or_slug}/{project_id_or_slug}/keys/"
+    },
+    {
+      "provider": "sentry",
+      "id": "Retrieve a Client Key",
+      "method": "GET",
+      "path": "api/0/projects/{organization_id_or_slug}/{project_id_or_slug}/keys/{key_id}/"
+    },
+    {
+      "provider": "sentry",
+      "id": "Update a Client Key",
+      "method": "PUT",
+      "path": "api/0/projects/{organization_id_or_slug}/{project_id_or_slug}/keys/{key_id}/"
+    },
+    {
+      "provider": "sentry",
+      "id": "Create a Deploy",
+      "method": "POST",
+      "path": "api/0/organizations/{organization_id_or_slug}/releases/{version}/deploys/"
+    },
+    {
+      "provider": "sentry",
+      "id": "Create a New Release for an Organization",
+      "method": "POST",
+      "path": "api/0/organizations/{organization_id_or_slug}/releases/"
+    },
+    {
+      "provider": "sentry",
+      "id": "List a Release's Deploys",
+      "method": "GET",
+      "path": "api/0/organizations/{organization_id_or_slug}/releases/{version}/deploys/"
+    },
+    {
+      "provider": "sentry",
+      "id": "Retrieve Statuses of Release Thresholds (Alpha)",
+      "method": "GET",
+      "path": "api/0/organizations/{organization_id_or_slug}/release-threshold-statuses/"
+    },
+    {
+      "provider": "sentry",
+      "id": "List an Organization's Releases",
+      "method": "GET",
+      "path": "api/0/organizations/{organization_id_or_slug}/releases/"
+    },
+    {
+      "provider": "github",
+      "id": "actions/create-workflow-dispatch",
+      "method": "POST",
+      "path": "repos/{owner}/{repo}/actions/workflows/{workflow_id}/dispatches"
+    },
+    {
+      "provider": "github",
+      "id": "repos/create-dispatch-event",
+      "method": "POST",
+      "path": "repos/{owner}/{repo}/dispatches"
+    },
+    {
+      "provider": "github",
+      "id": "actions/get-private-repo-fork-pr-workflows-settings-repository",
+      "method": "GET",
+      "path": "repos/{owner}/{repo}/actions/permissions/fork-pr-workflows-private-repos"
+    },
+    {
+      "provider": "github",
+      "id": "actions/set-private-repo-fork-pr-workflows-settings-repository",
+      "method": "PUT",
+      "path": "repos/{owner}/{repo}/actions/permissions/fork-pr-workflows-private-repos"
+    },
+    {
+      "provider": "github",
+      "id": "actions/get-github-actions-default-workflow-permissions-repository",
+      "method": "GET",
+      "path": "repos/{owner}/{repo}/actions/permissions/workflow"
+    },
+    {
+      "provider": "github",
+      "id": "actions/list-repo-organization-secrets",
+      "method": "GET",
+      "path": "repos/{owner}/{repo}/actions/organization-secrets"
+    },
+    {
+      "provider": "github",
+      "id": "actions/list-repo-secrets",
+      "method": "GET",
+      "path": "repos/{owner}/{repo}/actions/secrets"
+    },
+    {
+      "provider": "github",
+      "id": "actions/get-allowed-actions-repository",
+      "method": "GET",
+      "path": "repos/{owner}/{repo}/actions/permissions/selected-actions"
+    },
+    {
+      "provider": "github",
+      "id": "actions/set-allowed-actions-repository",
+      "method": "PUT",
+      "path": "repos/{owner}/{repo}/actions/permissions/selected-actions"
+    },
+    {
+      "provider": "github",
+      "id": "actions/list-org-secrets",
+      "method": "GET",
+      "path": "orgs/{org}/actions/secrets"
+    },
+    {
+      "provider": "github",
+      "id": "actions/get-private-repo-fork-pr-workflows-settings-organization",
+      "method": "GET",
+      "path": "orgs/{org}/actions/permissions/fork-pr-workflows-private-repos"
+    },
+    {
+      "provider": "github",
+      "id": "actions/set-private-repo-fork-pr-workflows-settings-organization",
+      "method": "PUT",
+      "path": "orgs/{org}/actions/permissions/fork-pr-workflows-private-repos"
+    },
+    {
+      "provider": "github",
+      "id": "actions/get-github-actions-default-workflow-permissions-organization",
+      "method": "GET",
+      "path": "orgs/{org}/actions/permissions/workflow"
+    },
+    {
+      "provider": "github",
+      "id": "actions/set-github-actions-default-workflow-permissions-organization",
+      "method": "PUT",
+      "path": "orgs/{org}/actions/permissions/workflow"
+    },
+    {
+      "provider": "slack",
+      "id": "chat_postMessage",
+      "method": "POST",
+      "path": "chat.postMessage"
+    },
+    {
+      "provider": "slack",
+      "id": "admin_conversations_ekm_listOriginalConnectedChannelInfo",
+      "method": "GET",
+      "path": "admin.conversations.ekm.listOriginalConnectedChannelInfo"
+    },
+    {
+      "provider": "slack",
+      "id": "chat_meMessage",
+      "method": "POST",
+      "path": "chat.meMessage"
+    },
+    {
+      "provider": "slack",
+      "id": "chat_postEphemeral",
+      "method": "POST",
+      "path": "chat.postEphemeral"
+    },
+    {
+      "provider": "slack",
+      "id": "chat_scheduleMessage",
+      "method": "POST",
+      "path": "chat.scheduleMessage"
+    },
+    {
+      "provider": "slack",
+      "id": "conversations_history",
+      "method": "GET",
+      "path": "conversations.history"
+    },
+    {
+      "provider": "slack",
+      "id": "admin_conversations_getConversationPrefs",
+      "method": "GET",
+      "path": "admin.conversations.getConversationPrefs"
+    },
+    {
+      "provider": "slack",
+      "id": "admin_conversations_getTeams",
+      "method": "GET",
+      "path": "admin.conversations.getTeams"
+    },
+    {
+      "provider": "slack",
+      "id": "admin_conversations_restrictAccess_listGroups",
+      "method": "GET",
+      "path": "admin.conversations.restrictAccess.listGroups"
+    },
+    {
+      "provider": "n8n",
+      "id": "post_workflows",
+      "method": "POST",
+      "path": "workflows"
+    },
+    {
+      "provider": "n8n",
+      "id": "get_workflows",
+      "method": "GET",
+      "path": "workflows"
+    },
+    {
+      "provider": "n8n",
+      "id": "get_workflows_id",
+      "method": "GET",
+      "path": "workflows/{id}"
+    },
+    {
+      "provider": "n8n",
+      "id": "put_workflows_id",
+      "method": "PUT",
+      "path": "workflows/{id}"
+    },
+    {
+      "provider": "n8n",
+      "id": "delete_workflows_id",
+      "method": "DELETE",
+      "path": "workflows/{id}"
+    },
+    {
+      "provider": "n8n",
+      "id": "post_workflows_id_deactivate",
+      "method": "POST",
+      "path": "workflows/{id}/deactivate"
+    },
+    {
+      "provider": "n8n",
+      "id": "post_workflows_id_activate",
+      "method": "POST",
+      "path": "workflows/{id}/activate"
+    },
+    {
+      "provider": "bitbucket",
+      "id": "create_teams_by_username_projects",
+      "method": "POST",
+      "path": "teams/{username}/projects/"
+    },
+    {
+      "provider": "bitbucket",
+      "id": "create_pipeline_for_repository",
+      "method": "POST",
+      "path": "repositories/{workspace}/{repo_slug}/pipelines/"
+    },
+    {
+      "provider": "bitbucket",
+      "id": "create_repository_pipeline_schedule",
+      "method": "POST",
+      "path": "repositories/{workspace}/{repo_slug}/pipelines_config/schedules/"
+    },
+    {
+      "provider": "bitbucket",
+      "id": "create_repository_pipeline_known_host",
+      "method": "POST",
+      "path": "repositories/{workspace}/{repo_slug}/pipelines_config/ssh/known_hosts/"
+    },
+    {
+      "provider": "bitbucket",
+      "id": "create_repository_pipeline_variable",
+      "method": "POST",
+      "path": "repositories/{workspace}/{repo_slug}/pipelines_config/variables/"
+    },
+    {
+      "provider": "bitbucket",
+      "id": "stop_pipeline",
+      "method": "POST",
+      "path": "repositories/{workspace}/{repo_slug}/pipelines/{pipeline_uuid}/stopPipeline"
+    },
+    {
+      "provider": "bitbucket",
+      "id": "get_repositories_by_username_by_repo_slug_commits",
+      "method": "GET",
+      "path": "repositories/{username}/{repo_slug}/commits"
+    },
+    {
+      "provider": "bitbucket",
+      "id": "create_repositories_by_username_by_repo_slug_commits",
+      "method": "POST",
+      "path": "repositories/{username}/{repo_slug}/commits"
+    },
+    {
+      "provider": "bitbucket",
+      "id": "get_repositories_by_username_by_repo_slug_pullrequests_by_pull_request_id_commits",
+      "method": "GET",
+      "path": "repositories/{username}/{repo_slug}/pullrequests/{pull_request_id}/commits"
+    },
+    {
+      "provider": "bitbucket",
+      "id": "create_repositories_by_username_by_repo_slug_pullrequests",
+      "method": "POST",
+      "path": "repositories/{username}/{repo_slug}/pullrequests"
+    },
+    {
+      "provider": "bitbucket",
+      "id": "create_repositories_by_username_by_repo_slug_pullrequests_by_pull_request_id_comments",
+      "method": "POST",
+      "path": "repositories/{username}/{repo_slug}/pullrequests/{pull_request_id}/comments"
+    },
+    {
+      "provider": "bitbucket",
+      "id": "get_repositories_by_username_by_repo_slug_pullrequests",
+      "method": "GET",
+      "path": "repositories/{username}/{repo_slug}/pullrequests"
+    },
+    {
+      "provider": "bitbucket",
+      "id": "get_pullrequests_for_commit",
+      "method": "GET",
+      "path": "repositories/{workspace}/{repo_slug}/commit/{commit}/pullrequests"
+    },
+    {
+      "provider": "bitbucket",
+      "id": "create_repositories_by_username_by_repo_slug_pullrequests_by_pull_request_id_approve",
+      "method": "POST",
+      "path": "repositories/{username}/{repo_slug}/pullrequests/{pull_request_id}/approve"
+    },
+    {
+      "provider": "jira",
+      "id": "com.atlassian.jira.rest.v2.issue.IssueResource.getCreateIssueMeta_get",
+      "method": "GET",
+      "path": "rest/api/3/issue/createmeta"
+    },
+    {
+      "provider": "jira",
+      "id": "com.atlassian.jira.rest.v2.issue.IssueResource.createIssue_post",
+      "method": "POST",
+      "path": "rest/api/3/issue"
+    },
+    {
+      "provider": "jira",
+      "id": "com.atlassian.jira.rest.v2.issue.IssueLinkTypeResource.createIssueLinkType_post",
+      "method": "POST",
+      "path": "rest/api/3/issueLinkType"
+    },
+    {
+      "provider": "jira",
+      "id": "com.atlassian.jira.rest.v2.issue.IssueTypeResource.createIssueType_post",
+      "method": "POST",
+      "path": "rest/api/3/issuetype"
+    },
+    {
+      "provider": "jira",
+      "id": "com.atlassian.jira.rest.v2.issue.IssueResource.createOrUpdateRemoteIssueLink_post",
+      "method": "POST",
+      "path": "rest/api/3/issue/{issueIdOrKey}/remotelink"
+    },
+    {
+      "provider": "jira",
+      "id": "com.atlassian.jira.rest.v2.issue.IssueResource.getEditIssueMeta_get",
+      "method": "GET",
+      "path": "rest/api/3/issue/{issueIdOrKey}/editmeta"
+    },
+    {
+      "provider": "jira",
+      "id": "com.atlassian.jira.rest.v2.issue.IssueResource.editIssue_put",
+      "method": "PUT",
+      "path": "rest/api/3/issue/{issueIdOrKey}"
+    },
+    {
+      "provider": "jira",
+      "id": "com.atlassian.jira.rest.v2.issue.PriorityResource.getPriorities_get",
+      "method": "GET",
+      "path": "rest/api/3/priority"
+    },
+    {
+      "provider": "jira",
+      "id": "com.atlassian.jira.rest.v2.issue.PriorityResource.getPriority_get",
+      "method": "GET",
+      "path": "rest/api/3/priority/{id}"
+    },
+    {
+      "provider": "jira",
+      "id": "com.atlassian.jira.rest.v2.issue.field.IssueFieldOptionResource.getSelectableIssueFieldOptions_get",
+      "method": "GET",
+      "path": "rest/api/3/field/{fieldKey}/option/suggestions/edit"
+    },
+    {
+      "provider": "jira",
+      "id": "com.atlassian.jira.rest.v2.issue.IssueResource.assignIssue_put",
+      "method": "PUT",
+      "path": "rest/api/3/issue/{issueIdOrKey}/assignee"
+    },
+    {
+      "provider": "jira",
+      "id": "com.atlassian.jira.rest.v2.issue.UserResource.findAssignableUsers_get",
+      "method": "GET",
+      "path": "rest/api/3/user/assignable/search"
+    },
+    {
+      "provider": "jira",
+      "id": "com.atlassian.jira.rest.v2.issue.field.IssueFieldOptionResource.replaceIssueFieldOption_delete",
+      "method": "DELETE",
+      "path": "rest/api/3/field/{fieldKey}/option/{optionId}/issue"
+    },
+    {
+      "provider": "jira",
+      "id": "com.atlassian.jira.rest.v2.issue.LinkIssueResource.linkIssues_post",
+      "method": "POST",
+      "path": "rest/api/3/issueLink"
+    }
+  ]
+}
