@@ -5,7 +5,7 @@
  * - Local file (JSON or YAML OpenAPI 3 / Swagger 2), or
  * - URL to fetch the same, or
  * - Google Discovery document URL, or
- * - Default: bundled Cloudflare OpenAPI (fallback URL if local bundle missing).
+ * - Default: bundled multi-provider set (Google top50 + Cloudflare + Jira).
  *
  * Produces a flattened Operation list for search + OpenAPI 3 for GraphQL.
  */
@@ -27,7 +27,7 @@ import {
 
 export type { Operation, ParameterInfo } from "./operation-types.js";
 
-/** Default bundled provider id used when no spec env/provider is set. */
+/** Default bundled provider id used by the single-provider fallback path. */
 export const DEFAULT_PROVIDER_ID = "cloudflare";
 
 export interface LoadedSpec {
@@ -547,8 +547,18 @@ export function labelFromSpecPath(relOrAbs: string): string {
 async function resolveMultiSpecItems(): Promise<
   { abs: string; label: string }[] | null
 > {
+  const filePath =
+    process.env.CLAWQL_SPEC_PATH ||
+    process.env.OPENAPI_SPEC_PATH ||
+    process.env.OPENAPI_FILE;
+  const specUrl =
+    process.env.CLAWQL_SPEC_URL || process.env.OPENAPI_SPEC_URL;
+  const discoveryUrl =
+    process.env.CLAWQL_DISCOVERY_URL ||
+    process.env.GOOGLE_DISCOVERY_URL;
   const providerRaw = process.env.CLAWQL_PROVIDER?.trim().toLowerCase();
   const pathsEnv = process.env.CLAWQL_SPEC_PATHS?.trim();
+  const useGoogleTop50 = isTruthyEnv(process.env.CLAWQL_GOOGLE_TOP50_SPECS);
   if (pathsEnv) {
     const parts = pathsEnv.split(/[,;\n]/).map((s) => s.trim()).filter(Boolean);
     return parts.map((p) => ({
@@ -556,11 +566,19 @@ async function resolveMultiSpecItems(): Promise<
       label: labelFromSpecPath(p),
     }));
   }
-  const groupKey = isTruthyEnv(process.env.CLAWQL_GOOGLE_TOP50_SPECS)
+  const groupKey = useGoogleTop50
     ? "google-top50"
     : providerRaw;
   const groupedProviders = await resolveBundledProviderGroup(groupKey);
   if (groupedProviders) return groupedProviders;
+  // No config: load a rich default set for first-run complex workflows.
+  if (!filePath && !specUrl && !discoveryUrl && !providerRaw && !useGoogleTop50) {
+    console.error(
+      "[spec-loader] No spec env/provider set — using default multi-provider bundle: google-top50 + cloudflare + jira"
+    );
+    const defaultGroup = await resolveBundledProviderGroup("default-multi-provider");
+    if (defaultGroup) return defaultGroup;
+  }
   return null;
 }
 

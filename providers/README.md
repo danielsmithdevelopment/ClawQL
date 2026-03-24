@@ -15,6 +15,8 @@ Compatibility aliases currently supported: `jira`, `bitbucket`.
 
 **Google “top 50” offline bundle:** Pinned Discovery JSON (and optional `introspection.json` / `schema.graphql`) for common GCP services — under [`google/apis/`](google/apis/README.md). Manifest: `google/google-top50-apis.json`. Refresh: `npm run fetch-google-top50` then `npm run build && npm run pregenerate-google-top50-graphql`, or `npm run refresh-google-top50`.
 
+**Default no-config mode:** when no spec env vars are set, ClawQL loads a bundled multi-provider set (`google-top50` + `cloudflare` + `jira`) so complex cross-provider search works on first install.
+
 **Precedence:** `CLAWQL_SPEC_PATHS` / `CLAWQL_GOOGLE_TOP50_SPECS` override
 `CLAWQL_SPEC_PATH` / `CLAWQL_SPEC_URL` / `CLAWQL_DISCOVERY_URL`, which override
 `CLAWQL_PROVIDER`.

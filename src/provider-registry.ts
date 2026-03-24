@@ -86,9 +86,22 @@ async function resolveGoogleTop50Items(): Promise<ProviderGroupItem[]> {
   }));
 }
 
+async function resolveDefaultMultiProviderItems(): Promise<ProviderGroupItem[]> {
+  const root = getPackageRoot();
+  const google = await resolveGoogleTop50Items();
+  const cloudflare = BUNDLED_PROVIDERS.cloudflare;
+  const jira = BUNDLED_PROVIDERS.jira;
+  return [
+    ...google,
+    { abs: resolvePath(root, cloudflare.bundledSpecPath), label: cloudflare.id },
+    { abs: resolvePath(root, jira.bundledSpecPath), label: jira.id },
+  ];
+}
+
 export const BUNDLED_PROVIDER_GROUPS: Record<string, BundledProviderGroup> = {
   atlassian: { providers: ["jira", "bitbucket"] },
   "google-top50": { resolve: resolveGoogleTop50Items },
+  "default-multi-provider": { resolve: resolveDefaultMultiProviderItems },
 };
 
 export function resolveBundledProvider(

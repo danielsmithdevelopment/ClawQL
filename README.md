@@ -174,7 +174,7 @@ Set **one mode**. Precedence (highest → lowest):
 1. `CLAWQL_SPEC_PATHS` / `CLAWQL_GOOGLE_TOP50_SPECS` (multi-spec mode)
 2. `CLAWQL_SPEC_PATH` / `CLAWQL_SPEC_URL` / `CLAWQL_DISCOVERY_URL`
 3. `CLAWQL_PROVIDER` (bundled preset)
-4. built-in default provider (`cloudflare`)
+4. built-in default multi-provider bundle (`google-top50 + cloudflare + jira`)
 
 | Variable | Meaning |
 |----------|---------|
@@ -190,9 +190,10 @@ Set **one mode**. Precedence (highest → lowest):
 **GCP multi-service:** use **`CLAWQL_GOOGLE_TOP50_SPECS=1`** or **`CLAWQL_SPEC_PATHS`** so `search` / `execute` see every merged API in one server; `execute` uses REST in that mode. See [`docs/workflow-gcp-multi-service.md`](docs/workflow-gcp-multi-service.md).  
 **Integration check:** `npm run workflow:gcp-multi` runs **`tools/call` → `search`** over real MCP stdio and writes `docs/workflow-gcp-multi-latest.json` (full `CallToolResult` + parsed body). `npm run workflow:gcp-multi:direct` is a faster in-process-only variant for debugging rankers. One-page results summary: [`docs/gcp-multi-mcp-test-summary.md`](docs/gcp-multi-mcp-test-summary.md). Detailed experiment write-up (queries, APIs, token heuristic, MCP samples): [`docs/experiment-gcp-multi-mcp-workflow.md`](docs/experiment-gcp-multi-mcp-workflow.md); `npm run report:gcp-multi-experiment` refreshes [`docs/experiment-gcp-multi-mcp-stats.json`](docs/experiment-gcp-multi-mcp-stats.json).
 
-If **none** of the spec variables are set, ClawQL loads the default bundled
-provider (**`cloudflare`**). Set **`CLAWQL_PROVIDER=google`**,
-**`atlassian`**, or **`cloudflare`** to pick a bundled preset explicitly (see
+If **none** of the spec variables are set, ClawQL loads a default bundled
+multi-provider set (**Google top50 + Cloudflare + Jira**) so first-run complex
+queries work out-of-the-box. Set **`CLAWQL_PROVIDER=google`**,
+**`atlassian`**, or **`cloudflare`** to force a specific bundled preset (see
 `providers/README.md`).  
 Compatibility aliases currently also exist for **`jira`** and **`bitbucket`**.
 if a bundled file is missing, the provider registry **fallback URL** is fetched
