@@ -71,6 +71,7 @@
         "workflow:gcp-multi": "npm run build && node scripts/mcp-workflow-gcp-multi.mjs",
         "workflow:gcp-multi:direct": "npm run build && node scripts/workflow-gcp-multi-direct.mjs",
         "report:gcp-multi-experiment": "node scripts/report-gcp-multi-experiment.mjs",
+        "report:all-providers-benchmark": "npm run build && node scripts/report-all-providers-workflow-benchmark.mjs",
         "test": "bun test src"
     },
     "dependencies": {

@@ -83,3 +83,11 @@ Optional Jira POST preview (same pattern as multi-provider):
 ```bash
 WORKFLOW_PREVIEW_JIRA_REQUEST=1 npm run workflow:complex-release-stack
 ```
+
+Refresh planning-context stats (spec bytes vs workflow JSON):
+
+```bash
+npm run report:all-providers-benchmark
+```
+
+Writes [`all-providers-complex-workflow/experiment-all-providers-complex-workflow-stats.json`](all-providers-complex-workflow/experiment-all-providers-complex-workflow-stats.json). Narrative: [`all-providers-complex-workflow/experiment-all-providers-complex-workflow.md`](all-providers-complex-workflow/experiment-all-providers-complex-workflow.md).

@@ -6,24 +6,82 @@ full OpenAPI definitions into context.
 
 **Bring your own OpenAPI 3** (JSON/YAML file or URL), or use **Swagger 2**
 (converted automatically), or a **Google Discovery** document URL. If no spec
-env is set, ClawQL defaults to the bundled **Cloudflare** OpenAPI provider
-(falls back to Cloudflare's published OpenAPI URL if the local bundle is missing).
+env is set, ClawQL defaults to a bundled **multi-provider** merge (**Google top50 +
+Cloudflare + Jira**). Single-provider **`cloudflare`** and other presets are
+available via **`CLAWQL_PROVIDER`** (see [`providers/README.md`](providers/README.md)).
 
-## Highlight: Multi-provider complex workflow (most impressive benchmark)
+## Highlight: All-providers complex release-stack (largest benchmark)
 
-> 🏆 **Best benchmark so far:** end-to-end multi-provider planning context reduced by **99.88%** (**861.98x smaller**).
+> 🏆 **Best benchmark so far** by **absolute planning-context savings**: **~13.83M tokens** not pasted into context vs embedding the **full merged spec corpus** for **`CLAWQL_PROVIDER=all-providers`**.
 
-This is the strongest planning-context result so far: one realistic workflow spanning
-**Google Cloud + Cloudflare + Jira** with a single coherent objective.
+One end-to-end scenario across **Google top50 + Bitbucket + Cloudflare + GitHub + Jira + n8n + Sentry + Slack** (57 on-disk specs, **8,990** operations): GKE and networking, Cloudflare DNS/cache, Sentry, GitHub Actions, Slack and n8n automation, optional Bitbucket, and a Jira runbook draft.
 
-**Goal**
+**Goal (abbreviated)**
 
-- Stand up a GKE cluster and deploy a workload, then expose it via external service/LB endpoints.
-- Restrict ingress appropriately for Cloudflare fronting by using Cloudflare-published IPv4/IPv6 ranges in GCP firewall/LB allowlists where needed.
-- Configure Cloudflare DNS and proxying to the cluster/LB endpoint, plus caching/performance behavior suitable for API traffic vs static assets.
-- Prepare a Jira issue payload that captures rollout scope, assignee, due date, labels, and implementation notes for execution tracking.
+- GKE cluster, workload, Service exposure; GCP firewall patterns compatible with Cloudflare source IP ranges.
+- Cloudflare DNS (proxied) and caching toward the origin.
+- Sentry project/DSN/releases; GitHub Actions scheduled deploy; Slack notifications; n8n workflow toward GitHub releases; optional Bitbucket repos/Pipelines.
+- Jira issue draft: sections by vendor, labels, due +7 days, High priority.
 
-**Workflow query sequence (exact)**
+**Workflow query sequence (exact)** — `npm run workflow:complex-release-stack`
+
+- `create kubernetes cluster container.googleapis.com regional`
+- `node pool create autoscaling kubernetes engine`
+- `deploy workload deployment rolling update kubernetes`
+- `kubernetes service type load balancer external IP`
+- `compute firewall rule create allow tcp source range ingress`
+- `network endpoint group kubernetes ingress`
+- `dns record create zone A CNAME proxied`
+- `zone details get`
+- `cache rules configuration`
+- `zone settings cache level`
+- `tiered cache smart topology`
+- `create project organization`
+- `dsn key client key`
+- `release create deploy`
+- `create workflow dispatch repository`
+- `repository secrets actions`
+- `cron schedule workflow yaml`
+- `chat.postMessage channel`
+- `conversations.history channel`
+- `incoming webhook`
+- `create workflow`
+- `activate workflow`
+- `webhook trigger`
+- `repository create project`
+- `pipeline run commit`
+- `pull request create`
+- `create issue rest api`
+- `edit issue labels priority duedate`
+- `assign issue accountId`
+
+**Specs loaded for this run**
+
+- Google top50 Discovery bundle
+- Bitbucket, Cloudflare, GitHub, Jira, n8n, Sentry, Slack OpenAPI (bundled)
+
+**Measured savings (planning context)**
+
+- Full loaded specs: `55,475,059` bytes (~`13,868,765` tokens)
+- Workflow output: `144,764` bytes (~`36,191` tokens) — [`docs/workflow-complex-release-stack-latest.json`](docs/workflow-complex-release-stack-latest.json)
+- Savings: `13,832,574` tokens (**`99.74%`** reduction, **`383.21x`** smaller)
+
+The **compression ratio** is lower than the lighter three-provider benchmark below because this report is a richer JSON artifact—but the **on-disk spec surface is ~36% larger** and **~3.6M more tokens** are saved vs pasting every spec.
+
+Details and reproducible stats:
+
+- [`docs/benchmarks/all-providers-complex-workflow/experiment-all-providers-complex-workflow.md`](docs/benchmarks/all-providers-complex-workflow/experiment-all-providers-complex-workflow.md)
+- [`docs/benchmarks/all-providers-complex-workflow/experiment-all-providers-complex-workflow-stats.json`](docs/benchmarks/all-providers-complex-workflow/experiment-all-providers-complex-workflow-stats.json)
+
+---
+
+## Strong benchmark: Default multi-provider (GKE + Cloudflare + Jira)
+
+> **99.88%** / **861.98x** on a **smaller** three-provider corpus—still an excellent result when you only merge the default install bundle.
+
+One realistic workflow spanning **Google Cloud + Cloudflare + Jira** with a single coherent objective (GKE → Cloudflare → Jira tracking).
+
+**Workflow query sequence (exact)** — `npm run workflow:multi-provider`
 
 - `create kubernetes cluster GKE regional zonal`
 - `deploy application workload container image kubernetes engine`
