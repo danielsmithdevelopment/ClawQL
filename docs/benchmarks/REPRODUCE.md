@@ -66,3 +66,20 @@ Notes:
 
 - Uses the same token heuristic as other benchmarks: `approxTokens = ceil(bytes / 4)`.
 - This is a **spec corpus vs workflow output** comparison (not REST payload vs GraphQL payload).
+
+## All-providers / complex release-stack workflow
+
+Offline **`search`** across **Google top50 + every other bundled vendor** (merged preset **`CLAWQL_PROVIDER=all-providers`**):
+
+```bash
+npm run workflow:complex-release-stack
+```
+
+- Writes [`docs/workflow-complex-release-stack-latest.json`](../workflow-complex-release-stack-latest.json) (ranked hits, Jira draft, per-vendor operation counts).
+- Guide: [`docs/workflow-complex-release-stack.md`](../workflow-complex-release-stack.md).
+
+Optional Jira POST preview (same pattern as multi-provider):
+
+```bash
+WORKFLOW_PREVIEW_JIRA_REQUEST=1 npm run workflow:complex-release-stack
+```

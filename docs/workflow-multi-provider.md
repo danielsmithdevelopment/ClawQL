@@ -1,10 +1,12 @@
 # Multi-provider workflow test (GKE + Cloudflare + Jira)
 
-This repo includes an offline **search** workflow that walks the same scenario an agent would use across all three bundled providers:
+This repo includes an offline **search** workflow that walks the same scenario an agent would use across the **default** three-way merge (**Google top50** + **Cloudflare** + **Jira**), same as a fresh install with no spec env vars:
 
-1. **Google (GKE)** — create/manage clusters, deploy workloads, expose services, networking hints (bundled spec is **Kubernetes Engine API only**; Compute Engine firewall APIs are not in this spec—use `CLAWQL_SPEC_PATH` for a broader Google OpenAPI if needed).
+1. **Google (top50 Discovery)** — GKE, Compute (firewall), networking, and other curated GCP APIs from [`google-top50-apis.json`](../providers/google/google-top50-apis.json).
 2. **Cloudflare** — DNS records, proxy, cache rules, zone settings.
 3. **Jira** — create issue, assign, labels, due date, create metadata.
+
+**Broader merge (all bundled vendors):** use **`CLAWQL_PROVIDER=all-providers`** and see [`workflow-complex-release-stack.md`](workflow-complex-release-stack.md) / `npm run workflow:complex-release-stack`.
 
 ## Run (offline)
 

@@ -4,9 +4,11 @@ This guide outlines a **logical order** of Google Cloud API calls to stand up **
 
 > **Multi-service in one MCP process**  
 > Set **`CLAWQL_GOOGLE_TOP50_SPECS=1`** to merge the curated list in [`providers/google/google-top50-apis.json`](../providers/google/google-top50-apis.json) (each `providers/google/apis/<slug>/discovery.json`) into **one** operation list — **no** extra servers.  
+> Or set **`CLAWQL_PROVIDER=google-top50`** (same merge as the flag above, when no other merged preset applies).  
+> Or set **`CLAWQL_PROVIDER=all-providers`** to merge **Google top50 + every other bundled vendor** (Cloudflare, Jira, GitHub, …) — see [`providers/README.md`](../providers/README.md).  
 > Or set **`CLAWQL_SPEC_PATHS`** to a comma/semicolon/newline-separated list of spec paths (any mix of local OpenAPI or Discovery JSON).  
-> **Priority:** if either multi env is set, it **replaces** single-spec `CLAWQL_SPEC_PATH` / `CLAWQL_DISCOVERY_URL` and `CLAWQL_PROVIDER` for loading.  
-> **Execution:** merged mode uses **REST** for `execute` (correct Discovery doc per operation). The optional GraphQL proxy, if started, builds its schema from the **first** API only — use MCP `search` + `execute` for cross-API GCP flows.
+> **Precedence (multi-spec):** `CLAWQL_SPEC_PATHS` → **`CLAWQL_PROVIDER`** when it names a merged preset (`google-top50`, `default-multi-provider`, `all-providers`, `atlassian`) → **`CLAWQL_GOOGLE_TOP50_SPECS`** → default bundle. Explicit **`CLAWQL_SPEC_PATH`** / URL / discovery still win for **single-spec** mode when multi-spec resolution does not apply.  
+> **Execution:** merged mode uses **REST** for `execute` (correct source doc per operation). The optional GraphQL proxy, if started, builds its schema from the **first** API only — use MCP `search` + `execute` for cross-API GCP flows.
 
 **Try it offline (real MCP stdio):** `npm run workflow:gcp-multi` spawns the MCP server (`dist/server.js`), issues **`tools/call` → `search`** for each workflow query (same wire path as Cursor/Claude), and writes [`docs/workflow-gcp-multi-latest.json`](../workflow-gcp-multi-latest.json) including the full **`CallToolResult`** envelope + parsed JSON body.  
 For a faster in-process ranking check only (no MCP), use `npm run workflow:gcp-multi:direct` → `docs/workflow-gcp-multi-direct-latest.json`.

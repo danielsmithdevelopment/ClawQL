@@ -171,10 +171,11 @@ bun test
 
 Set **one mode**. Precedence (highest → lowest):
 
-1. `CLAWQL_SPEC_PATHS` / `CLAWQL_GOOGLE_TOP50_SPECS` (multi-spec mode)
-2. `CLAWQL_SPEC_PATH` / `CLAWQL_SPEC_URL` / `CLAWQL_DISCOVERY_URL`
-3. `CLAWQL_PROVIDER` (bundled preset)
-4. built-in default multi-provider bundle (`google-top50 + cloudflare + jira`)
+1. `CLAWQL_SPEC_PATHS` — merge explicit spec files
+2. `CLAWQL_PROVIDER` — merge when it names a **preset** (`google-top50`, `default-multi-provider`, `all-providers`, `atlassian`)
+3. `CLAWQL_GOOGLE_TOP50_SPECS` — merge **google-top50** if #1–2 did not apply
+4. Default merge (`google-top50 + cloudflare + jira`) when no spec env is set
+5. `CLAWQL_SPEC_PATH` / `CLAWQL_SPEC_URL` / `CLAWQL_DISCOVERY_URL`, or **single** `CLAWQL_PROVIDER` (`cloudflare`, `github`, …)
 
 | Variable | Meaning |
 |----------|---------|
@@ -183,18 +184,18 @@ Set **one mode**. Precedence (highest → lowest):
 | `CLAWQL_GOOGLE_TOP50_SPECS` | Curated Google top50 multi-spec mode (`1`/`true`/`yes`) |
 | `CLAWQL_SPEC_URL` | URL to fetch OpenAPI JSON/YAML |
 | `CLAWQL_DISCOVERY_URL` | Google Discovery JSON URL (e.g. other GCP APIs) |
-| `CLAWQL_PROVIDER` | Use a **bundled** preset (`google`, `atlassian`, `cloudflare`) when no path/URL/discovery env is set |
+| `CLAWQL_PROVIDER` | **Single** bundled spec (`google`, `cloudflare`, …) or **merged** preset (`google-top50`, `default-multi-provider`, `all-providers`, `atlassian`) when no path/URL/discovery env is set |
 | `CLAWQL_INTROSPECTION_PATH` | Pregenerated GraphQL introspection JSON (optional; speeds MCP `execute` field matching) |
 | `CLAWQL_API_BASE_URL` | Override REST base URL (if spec has no `servers` or you need a different host) |
 
-**GCP multi-service:** use **`CLAWQL_GOOGLE_TOP50_SPECS=1`** or **`CLAWQL_SPEC_PATHS`** so `search` / `execute` see every merged API in one server; `execute` uses REST in that mode. See [`docs/workflow-gcp-multi-service.md`](docs/workflow-gcp-multi-service.md).  
+**GCP multi-service:** use **`CLAWQL_GOOGLE_TOP50_SPECS=1`**, **`CLAWQL_PROVIDER=google-top50`**, or **`CLAWQL_SPEC_PATHS`** so `search` / `execute` see every merged API in one server; `execute` uses REST in that mode. For **every bundled vendor** (Google top50 + Jira, Bitbucket, Cloudflare, GitHub, Slack, Sentry, n8n), use **`CLAWQL_PROVIDER=all-providers`**. See [`docs/workflow-gcp-multi-service.md`](docs/workflow-gcp-multi-service.md).  
 **Integration check:** `npm run workflow:gcp-multi` runs **`tools/call` → `search`** over real MCP stdio and writes `docs/workflow-gcp-multi-latest.json` (full `CallToolResult` + parsed body). `npm run workflow:gcp-multi:direct` is a faster in-process-only variant for debugging rankers. One-page results summary: [`docs/gcp-multi-mcp-test-summary.md`](docs/gcp-multi-mcp-test-summary.md). Detailed experiment write-up (queries, APIs, token heuristic, MCP samples): [`docs/experiment-gcp-multi-mcp-workflow.md`](docs/experiment-gcp-multi-mcp-workflow.md); `npm run report:gcp-multi-experiment` refreshes [`docs/experiment-gcp-multi-mcp-stats.json`](docs/experiment-gcp-multi-mcp-stats.json).
 
 If **none** of the spec variables are set, ClawQL loads a default bundled
 multi-provider set (**Google top50 + Cloudflare + Jira**) so first-run complex
 queries work out-of-the-box. Set **`CLAWQL_PROVIDER=google`**,
-**`atlassian`**, or **`cloudflare`** to force a specific bundled preset (see
-`providers/README.md`).  
+**`atlassian`**, **`cloudflare`**, **`github`**, **`slack`**, **`sentry`**, or **`n8n`**
+to force a specific bundled spec or merged preset (see `providers/README.md`; **`all-providers`** = top50 + all other bundled vendors).  
 Compatibility aliases currently also exist for **`jira`** and **`bitbucket`**.
 if a bundled file is missing, the provider registry **fallback URL** is fetched
 unless `CLAWQL_BUNDLED_OFFLINE=1`.
@@ -208,6 +209,8 @@ multi-step **`search`** scenario across **Google (GKE)**, **Cloudflare**, and **
 (GKE deploy → Cloudflare DNS/caching → Jira tracking), and writes
 [`docs/workflow-multi-provider-latest.json`](docs/workflow-multi-provider-latest.json).
 Live Jira issue-create instructions are currently omitted — see [`docs/workflow-multi-provider.md`](docs/workflow-multi-provider.md).
+
+**Complex release-stack (offline):** `npm run workflow:complex-release-stack` runs a broader **`search`** path across **Google (top50)** and **every other bundled vendor** using **`CLAWQL_PROVIDER=all-providers`**. Output: [`docs/workflow-complex-release-stack-latest.json`](docs/workflow-complex-release-stack-latest.json). Details: [`docs/workflow-complex-release-stack.md`](docs/workflow-complex-release-stack.md).
 
 See `.env.example` for a full list.
 
