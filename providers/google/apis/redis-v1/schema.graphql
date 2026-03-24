@@ -1,0 +1,2692 @@
+directive @enum(subgraph: String, value: String) on ENUM_VALUE
+
+directive @httpOperation(subgraph: String, path: String, operationSpecificHeaders: [[String]], httpMethod: HTTPMethod, isBinary: Boolean, requestBaseBody: ObjMap, queryParamArgMap: ObjMap, queryStringOptionsByParam: ObjMap, jsonApiFields: Boolean, queryStringOptions: ObjMap) on FIELD_DEFINITION
+
+directive @transport(subgraph: String, kind: String, location: String, headers: [[String]], queryStringOptions: ObjMap, queryParams: [[String]]) repeatable on SCHEMA
+
+type Query {
+  """
+  Lists information about the supported locations for this service. This method can be called in two ways: * **List all public locations:** Use the path `GET /v1/locations`. * **List project-visible locations:** Use the path `GET /v1/projects/{project_id}/locations`. This may include public locations as well as private or other locations specifically visible to the project.
+  """
+  redis_projects_locations_list(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """
+    A filter to narrow down results to a preferred subset. The filtering language accepts strings like `"displayName=tokyo"`, and is documented in more detail in [AIP-160](https://google.aip.dev/160).
+    """
+    filter: String
+
+    """
+    The maximum number of results to return. If not set, the service selects a default.
+    """
+    pageSize: Int
+
+    """
+    A page token received from the `next_page_token` field in the response. Send that page token to receive the subsequent page.
+    """
+    pageToken: String
+
+    """
+    Optional. Do not use this field. It is unsupported and is ignored unless explicitly documented otherwise. This is primarily for internal usage.
+    """
+    extraLocationTypes: String
+  ): ListLocationsResponse
+
+  """Gets information about a location."""
+  redis_projects_locations_get(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+  ): Location
+
+  """
+  Gets the details of regional certificate authority information for Redis cluster.
+  """
+  redis_projects_locations_getSharedRegionalCertificateAuthority(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+  ): SharedRegionalCertificateAuthority
+
+  """
+  Lists operations that match the specified filter in the request. If the server doesn't support this method, it returns `UNIMPLEMENTED`.
+  """
+  redis_projects_locations_operations_list(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """The standard list filter."""
+    filter: String
+
+    """The standard list page size."""
+    pageSize: Int
+
+    """The standard list page token."""
+    pageToken: String
+
+    """
+    When set to `true`, operations that are reachable are returned as normal, and those that are unreachable are returned in the ListOperationsResponse.unreachable field. This can only be `true` when reading across collections. For example, when `parent` is set to `"projects/example/locations/-"`. This field is not supported by default and will result in an `UNIMPLEMENTED` error if set unless explicitly documented otherwise in service or product specific documentation.
+    """
+    returnPartialSuccess: Boolean
+  ): ListOperationsResponse
+
+  """
+  Gets the latest state of a long-running operation. Clients can use this method to poll the operation result at intervals as recommended by the API service.
+  """
+  redis_projects_locations_operations_get(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter operationsId"""
+    operationsId: String!
+  ): Operation
+
+  """
+  Lists all Redis clusters owned by a project in either the specified location (region) or all locations. The location should have the following format: * `projects/{project_id}/locations/{location_id}` If `location_id` is specified as `-` (wildcard), then all regions available to the project are queried, and the results are aggregated.
+  """
+  redis_projects_locations_clusters_list(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """
+    The maximum number of items to return. If not specified, a default value of 1000 will be used by the service. Regardless of the page_size value, the response may include a partial list and a caller should only rely on response's `next_page_token` to determine if there are more clusters left to be queried.
+    """
+    pageSize: Int
+
+    """
+    The `next_page_token` value returned from a previous ListClusters request, if any.
+    """
+    pageToken: String
+  ): ListClustersResponse
+
+  """Gets the details of a specific Redis cluster."""
+  redis_projects_locations_clusters_get(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter clustersId"""
+    clustersId: String!
+  ): Cluster
+
+  """
+  Gets the details of certificate authority information for Redis cluster.
+  """
+  redis_projects_locations_clusters_getCertificateAuthority(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter clustersId"""
+    clustersId: String!
+  ): CertificateAuthority
+
+  """
+  Lists all backup collections owned by a consumer project in either the specified location (region) or all locations. If `location_id` is specified as `-` (wildcard), then all regions available to the project are queried, and the results are aggregated.
+  """
+  redis_projects_locations_backupCollections_list(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """
+    Optional. The maximum number of items to return. If not specified, a default value of 1000 will be used by the service. Regardless of the page_size value, the response may include a partial list and a caller should only rely on response's `next_page_token` to determine if there are more clusters left to be queried.
+    """
+    pageSize: Int
+
+    """
+    Optional. The `next_page_token` value returned from a previous [ListBackupCollections] request, if any.
+    """
+    pageToken: String
+  ): ListBackupCollectionsResponse
+
+  """Get a backup collection."""
+  redis_projects_locations_backupCollections_get(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter backupCollectionsId"""
+    backupCollectionsId: String!
+  ): BackupCollection
+
+  """Lists all backups owned by a backup collection."""
+  redis_projects_locations_backupCollections_backups_list(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter backupCollectionsId"""
+    backupCollectionsId: String!
+
+    """
+    Optional. The maximum number of items to return. If not specified, a default value of 1000 will be used by the service. Regardless of the page_size value, the response may include a partial list and a caller should only rely on response's `next_page_token` to determine if there are more clusters left to be queried.
+    """
+    pageSize: Int
+
+    """
+    Optional. The `next_page_token` value returned from a previous [ListBackupCollections] request, if any.
+    """
+    pageToken: String
+  ): ListBackupsResponse
+
+  """Gets the details of a specific backup."""
+  redis_projects_locations_backupCollections_backups_get(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter backupCollectionsId"""
+    backupCollectionsId: String!
+
+    """Path parameter backupsId"""
+    backupsId: String!
+  ): Backup
+
+  """
+  Lists all Redis instances owned by a project in either the specified location (region) or all locations. The location should have the following format: * `projects/{project_id}/locations/{location_id}` If `location_id` is specified as `-` (wildcard), then all regions available to the project are queried, and the results are aggregated.
+  """
+  redis_projects_locations_instances_list(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """
+    The maximum number of items to return. If not specified, a default value of 1000 will be used by the service. Regardless of the page_size value, the response may include a partial list and a caller should only rely on response's `next_page_token` to determine if there are more instances left to be queried.
+    """
+    pageSize: Int
+
+    """
+    The `next_page_token` value returned from a previous ListInstances request, if any.
+    """
+    pageToken: String
+  ): ListInstancesResponse
+
+  """Gets the details of a specific Redis instance."""
+  redis_projects_locations_instances_get(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter instancesId"""
+    instancesId: String!
+  ): Instance
+
+  """
+  Gets the AUTH string for a Redis instance. If AUTH is not enabled for the instance the response will be empty. This information is not included in the details returned to GetInstance.
+  """
+  redis_projects_locations_instances_getAuthString(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter instancesId"""
+    instancesId: String!
+  ): InstanceAuthString
+}
+
+"""The response message for Locations.ListLocations."""
+type ListLocationsResponse {
+  """A list of locations that matches the specified filter in the request."""
+  locations: [Location]
+
+  """The standard List next-page token."""
+  nextPageToken: String
+}
+
+"""A resource that represents a Google Cloud location."""
+type Location {
+  """
+  Full resource name for the region. For example: "projects/example-project/locations/us-east1".
+  """
+  name: String
+
+  """Resource ID for the region. For example: "us-east1"."""
+  locationId: String
+
+  """
+  The friendly name for this location, typically a nearby city name. For example, "Tokyo".
+  """
+  displayName: String
+
+  """
+  Cross-service attributes for the location. For example {"cloud.googleapis.com/region": "us-east1"}
+  """
+  labels: JSON
+
+  """
+  Output only. The set of available zones in the location. The map is keyed by the lowercase ID of each zone, as defined by Compute Engine. These keys can be specified in `location_id` or `alternative_location_id` fields when creating a Redis instance.
+  """
+  metadata: JSON
+}
+
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSON @specifiedBy(url: "http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf")
+
+"""Shared regional certificate authority"""
+type SharedRegionalCertificateAuthority {
+  managedServerCa: RegionalManagedCertificateAuthority
+
+  """
+  Identifier. Unique name of the resource in this scope including project and location using the form: `projects/{project}/locations/{location}/sharedRegionalCertificateAuthority`
+  """
+  name: String
+}
+
+"""CA certificate chains for redis managed server authentication."""
+type RegionalManagedCertificateAuthority {
+  """
+  The PEM encoded CA certificate chains for redis managed server authentication
+  """
+  caCerts: [RegionalCertChain]
+}
+
+"""The certificates that form the CA chain, from leaf to root order."""
+type RegionalCertChain {
+  """The certificates that form the CA chain, from leaf to root order."""
+  certificates: [String]
+}
+
+"""The response message for Operations.ListOperations."""
+type ListOperationsResponse {
+  """A list of operations that matches the specified filter in the request."""
+  operations: [Operation]
+
+  """The standard List next-page token."""
+  nextPageToken: String
+
+  """
+  Unordered list. Unreachable resources. Populated when the request sets `ListOperationsRequest.return_partial_success` and reads across collections. For example, when attempting to list all resources across all supported locations.
+  """
+  unreachable: [String]
+}
+
+"""
+This resource represents a long-running operation that is the result of a network API call.
+"""
+type Operation {
+  """
+  The server-assigned name, which is only unique within the same service that originally returns it. If you use the default HTTP mapping, the `name` should be a resource name ending with `operations/{unique_id}`.
+  """
+  name: String
+
+  """
+  { `createTime`: The time the operation was created. `endTime`: The time the operation finished running. `target`: Server-defined resource path for the target of the operation. `verb`: Name of the verb executed by the operation. `statusDetail`: Human-readable status of the operation, if any. `cancelRequested`: Identifies whether the user has requested cancellation of the operation. Operations that have successfully been cancelled have Operation.error value with a google.rpc.Status.code of 1, corresponding to `Code.CANCELLED`. `apiVersion`: API version used to start the operation. }
+  """
+  metadata: JSON
+
+  """
+  If the value is `false`, it means the operation is still in progress. If `true`, the operation is completed, and either `error` or `response` is available.
+  """
+  done: Boolean
+  error: Status
+
+  """
+  The normal, successful response of the operation. If the original method returns no data on success, such as `Delete`, the response is `google.protobuf.Empty`. If the original method is standard `Get`/`Create`/`Update`, the response should be the resource. For other methods, the response should have the type `XxxResponse`, where `Xxx` is the original method name. For example, if the original method name is `TakeSnapshot()`, the inferred response type is `TakeSnapshotResponse`.
+  """
+  response: JSON
+}
+
+"""
+The `Status` type defines a logical error model that is suitable for different programming environments, including REST APIs and RPC APIs. It is used by [gRPC](https://github.com/grpc). Each `Status` message contains three pieces of data: error code, error message, and error details. You can find out more about this error model and how to work with it in the [API Design Guide](https://cloud.google.com/apis/design/errors).
+"""
+type Status {
+  """The status code, which should be an enum value of google.rpc.Code."""
+  code: Int
+
+  """
+  A developer-facing error message, which should be in English. Any user-facing error message should be localized and sent in the google.rpc.Status.details field, or localized by the client.
+  """
+  message: String
+
+  """
+  A list of messages that carry the error details. There is a common set of message types for APIs to use.
+  """
+  details: [JSON]
+}
+
+"""Response for ListClusters."""
+type ListClustersResponse {
+  """
+  A list of Redis clusters in the project in the specified location, or across all locations. If the `location_id` in the parent field of the request is "-", all regions available to the project are queried, and the results aggregated. If in such an aggregated query a location is unavailable, a placeholder Redis entry is included in the response with the `name` field set to a value of the form `projects/{project_id}/locations/{location_id}/clusters/`- and the `status` field set to ERROR and `status_message` field set to "location not available for ListClusters".
+  """
+  clusters: [Cluster]
+
+  """
+  Token to retrieve the next page of results, or empty if there are no more results in the list.
+  """
+  nextPageToken: String
+
+  """Locations that could not be reached."""
+  unreachable: [String]
+}
+
+"""A cluster instance."""
+type Cluster {
+  gcsSource: GcsBackupSource
+  managedBackupSource: ManagedBackupSource
+
+  """
+  Required. Identifier. Unique name of the resource in this scope including project and location using the form: `projects/{project_id}/locations/{location_id}/clusters/{cluster_id}`
+  """
+  name: String
+
+  """
+  Output only. The timestamp associated with the cluster creation request.
+  """
+  createTime: String
+  state: query_redis_projects_locations_clusters_list_clusters_items_state
+
+  """Output only. System assigned, unique identifier for the cluster."""
+  uid: String
+
+  """Optional. The number of replica nodes per shard."""
+  replicaCount: Int
+  authorizationMode: query_redis_projects_locations_clusters_list_clusters_items_authorizationMode
+  transitEncryptionMode: query_redis_projects_locations_clusters_list_clusters_items_transitEncryptionMode
+
+  """
+  Output only. Redis memory size in GB for the entire cluster rounded up to the next integer.
+  """
+  sizeGb: Int
+
+  """Optional. Number of shards for the Redis cluster."""
+  shardCount: Int
+
+  """
+  Optional. Each PscConfig configures the consumer network where IPs will be designated to the cluster for client access through Private Service Connect Automation. Currently, only one PscConfig is supported.
+  """
+  pscConfigs: [PscConfig]
+
+  """
+  Output only. Endpoints created on each given network, for Redis clients to connect to the cluster. Currently only one discovery endpoint is supported.
+  """
+  discoveryEndpoints: [DiscoveryEndpoint]
+
+  """
+  Output only. The list of PSC connections that are auto-created through service connectivity automation.
+  """
+  pscConnections: [PscConnection]
+  stateInfo: StateInfo
+  nodeType: query_redis_projects_locations_clusters_list_clusters_items_nodeType
+  persistenceConfig: ClusterPersistenceConfig
+
+  """
+  Optional. Key/Value pairs of customer overrides for mutable Redis Configs
+  """
+  redisConfigs: JSON
+
+  """
+  Output only. Precise value of redis memory size in GB for the entire cluster.
+  """
+  preciseSizeGb: Float
+  zoneDistributionConfig: ZoneDistributionConfig
+  crossClusterReplicationConfig: CrossClusterReplicationConfig
+
+  """
+  Optional. The delete operation will fail when the value is set to true.
+  """
+  deletionProtectionEnabled: Boolean
+  maintenancePolicy: ClusterMaintenancePolicy
+  maintenanceSchedule: ClusterMaintenanceSchedule
+
+  """Optional. Output only. Reserved for future use."""
+  satisfiesPzs: Boolean
+
+  """Optional. Output only. Reserved for future use."""
+  satisfiesPzi: Boolean
+
+  """Output only. Service attachment details to configure Psc connections"""
+  pscServiceAttachments: [PscServiceAttachment]
+
+  """Optional. A list of cluster endpoints."""
+  clusterEndpoints: [ClusterEndpoint]
+
+  """Optional. Input only. Simulate a maintenance event."""
+  simulateMaintenanceEvent: Boolean
+
+  """
+  Optional. Output only. The backup collection full resource name. Example: projects/{project}/locations/{location}/backupCollections/{collection}
+  """
+  backupCollection: String
+
+  """Optional. The KMS key used to encrypt the at-rest data of the cluster."""
+  kmsKey: String
+
+  """
+  Optional. Input only. Ondemand maintenance for the cluster. This field can be used to trigger ondemand critical update on the cluster.
+  """
+  ondemandMaintenance: Boolean @deprecated(reason: "deprecated")
+  automatedBackupConfig: AutomatedBackupConfig
+  encryptionInfo: EncryptionInfo
+
+  """
+  Optional. If true, cluster endpoints that are created and registered by customers can be deleted asynchronously. That is, such a cluster endpoint can be de-registered before the forwarding rules in the cluster endpoint are deleted.
+  """
+  asyncClusterEndpointsDeletionEnabled: Boolean
+
+  """
+  Optional. This field can be used to trigger self service update to indicate the desired maintenance version. The input to this field can be determined by the available_maintenance_versions field.
+  """
+  maintenanceVersion: String
+
+  """
+  Output only. This field represents the actual maintenance version of the cluster.
+  """
+  effectiveMaintenanceVersion: String
+
+  """
+  Output only. This field is used to determine the available maintenance versions for the self service update.
+  """
+  availableMaintenanceVersions: [String]
+
+  """Optional. Immutable. Deprecated, do not use."""
+  allowFewerZonesDeployment: Boolean @deprecated(reason: "deprecated")
+
+  """Optional. Labels to represent user-provided metadata."""
+  labels: JSON
+  serverCaMode: query_redis_projects_locations_clusters_list_clusters_items_serverCaMode
+
+  """
+  Optional. Customer-managed CA pool for the cluster. Only applicable for BYOCA i.e. if server_ca_mode is SERVER_CA_MODE_CUSTOMER_MANAGED_CAS_CA. Format: "projects/{project}/locations/{region}/caPools/{ca_pool}".
+  """
+  serverCaPool: String
+
+  """Optional. Input only. Rotate the server certificates."""
+  rotateServerCertificate: Boolean
+
+  """Optional. The ACL policy to be applied to the cluster."""
+  aclPolicy: String
+}
+
+"""
+Backups stored in Cloud Storage buckets. The Cloud Storage buckets need to be the same region as the clusters.
+"""
+type GcsBackupSource {
+  """
+  Optional. URIs of the Cloud Storage objects to import. Example: gs://bucket1/object1, gs://bucket2/folder2/object2
+  """
+  uris: [String]
+}
+
+"""Backups that generated and managed by memorystore."""
+type ManagedBackupSource {
+  """
+  Optional. Example: //redis.googleapis.com/projects/{project}/locations/{location}/backupCollections/{collection}/backups/{backup} A shorter version (without the prefix) of the backup name is also supported, like projects/{project}/locations/{location}/backupCollections/{collection}/backups/{backup_id} In this case, it assumes the backup is under redis.googleapis.com.
+  """
+  backup: String
+}
+
+"""
+Output only. The current state of this cluster. Can be CREATING, READY, UPDATING, DELETING and SUSPENDED
+"""
+enum query_redis_projects_locations_clusters_list_clusters_items_state {
+  STATE_UNSPECIFIED
+  CREATING
+  ACTIVE
+  UPDATING
+  DELETING
+}
+
+"""
+Optional. The authorization mode of the Redis cluster. If not provided, auth feature is disabled for the cluster.
+"""
+enum query_redis_projects_locations_clusters_list_clusters_items_authorizationMode {
+  AUTH_MODE_UNSPECIFIED
+  AUTH_MODE_IAM_AUTH
+  AUTH_MODE_DISABLED
+}
+
+"""
+Optional. The in-transit encryption for the Redis cluster. If not provided, encryption is disabled for the cluster.
+"""
+enum query_redis_projects_locations_clusters_list_clusters_items_transitEncryptionMode {
+  TRANSIT_ENCRYPTION_MODE_UNSPECIFIED
+  TRANSIT_ENCRYPTION_MODE_DISABLED
+  TRANSIT_ENCRYPTION_MODE_SERVER_AUTHENTICATION
+}
+
+type PscConfig {
+  """
+  Required. The network where the IP address of the discovery endpoint will be reserved, in the form of projects/{network_project}/global/networks/{network_id}.
+  """
+  network: String
+}
+
+"""
+Endpoints on each network, for Redis clients to connect to the cluster.
+"""
+type DiscoveryEndpoint {
+  """
+  Output only. Address of the exposed Redis endpoint used by clients to connect to the service. The address could be either IP or hostname.
+  """
+  address: String
+
+  """Output only. The port number of the exposed Redis endpoint."""
+  port: Int
+  pscConfig: PscConfig
+}
+
+"""Details of consumer resources in a PSC connection."""
+type PscConnection {
+  """
+  Output only. port will only be set for Primary/Reader or Discovery endpoint.
+  """
+  port: Int
+
+  """
+  Required. The PSC connection id of the forwarding rule connected to the service attachment.
+  """
+  pscConnectionId: String
+
+  """
+  Required. The IP allocated on the consumer network for the PSC forwarding rule.
+  """
+  address: String
+
+  """
+  Required. The URI of the consumer side forwarding rule. Example: projects/{projectNumOrId}/regions/us-east1/forwardingRules/{resourceId}.
+  """
+  forwardingRule: String
+
+  """
+  Optional. Project ID of the consumer project where the forwarding rule is created in.
+  """
+  projectId: String
+
+  """
+  Required. The consumer network where the IP address resides, in the form of projects/{project_id}/global/networks/{network_id}.
+  """
+  network: String
+
+  """
+  Required. The service attachment which is the target of the PSC connection, in the form of projects/{project-id}/regions/{region}/serviceAttachments/{service-attachment-id}.
+  """
+  serviceAttachment: String
+  pscConnectionStatus: query_redis_projects_locations_clusters_list_clusters_items_pscConnections_items_pscConnectionStatus
+  connectionType: query_redis_projects_locations_clusters_list_clusters_items_pscConnections_items_connectionType
+}
+
+"""
+Output only. The status of the PSC connection. Please note that this value is updated periodically. To get the latest status of a PSC connection, follow https://cloud.google.com/vpc/docs/configure-private-service-connect-services#endpoint-details.
+"""
+enum query_redis_projects_locations_clusters_list_clusters_items_pscConnections_items_pscConnectionStatus {
+  PSC_CONNECTION_STATUS_UNSPECIFIED
+  PSC_CONNECTION_STATUS_ACTIVE
+  PSC_CONNECTION_STATUS_NOT_FOUND
+}
+
+"""Output only. Type of the PSC connection."""
+enum query_redis_projects_locations_clusters_list_clusters_items_pscConnections_items_connectionType {
+  CONNECTION_TYPE_UNSPECIFIED
+  CONNECTION_TYPE_DISCOVERY
+  CONNECTION_TYPE_PRIMARY
+  CONNECTION_TYPE_READER
+}
+
+"""Represents additional information about the state of the cluster."""
+type StateInfo {
+  updateInfo: UpdateInfo
+}
+
+"""Represents information about an updating cluster."""
+type UpdateInfo {
+  """Target number of shards for redis cluster"""
+  targetShardCount: Int
+
+  """Target number of replica nodes per shard."""
+  targetReplicaCount: Int
+  targetNodeType: query_redis_projects_locations_clusters_list_clusters_items_stateInfo_updateInfo_targetNodeType
+}
+
+"""Target node type for redis cluster."""
+enum query_redis_projects_locations_clusters_list_clusters_items_stateInfo_updateInfo_targetNodeType {
+  NODE_TYPE_UNSPECIFIED
+  REDIS_SHARED_CORE_NANO
+  REDIS_HIGHMEM_MEDIUM
+  REDIS_HIGHMEM_XLARGE
+  REDIS_STANDARD_SMALL
+}
+
+"""
+Optional. The type of a redis node in the cluster. NodeType determines the underlying machine-type of a redis node.
+"""
+enum query_redis_projects_locations_clusters_list_clusters_items_nodeType {
+  NODE_TYPE_UNSPECIFIED
+  REDIS_SHARED_CORE_NANO
+  REDIS_HIGHMEM_MEDIUM
+  REDIS_HIGHMEM_XLARGE
+  REDIS_STANDARD_SMALL
+}
+
+"""Configuration of the persistence functionality."""
+type ClusterPersistenceConfig {
+  mode: query_redis_projects_locations_clusters_list_clusters_items_persistenceConfig_mode
+  rdbConfig: RDBConfig
+  aofConfig: AOFConfig
+}
+
+"""Optional. The mode of persistence."""
+enum query_redis_projects_locations_clusters_list_clusters_items_persistenceConfig_mode {
+  PERSISTENCE_MODE_UNSPECIFIED
+  DISABLED
+  RDB
+  AOF
+}
+
+"""Configuration of the RDB based persistence."""
+type RDBConfig {
+  rdbSnapshotPeriod: query_redis_projects_locations_clusters_list_clusters_items_persistenceConfig_rdbConfig_rdbSnapshotPeriod
+
+  """
+  Optional. The time that the first snapshot was/will be attempted, and to which future snapshots will be aligned. If not provided, the current time will be used.
+  """
+  rdbSnapshotStartTime: String
+}
+
+"""Optional. Period between RDB snapshots."""
+enum query_redis_projects_locations_clusters_list_clusters_items_persistenceConfig_rdbConfig_rdbSnapshotPeriod {
+  SNAPSHOT_PERIOD_UNSPECIFIED
+  ONE_HOUR
+  SIX_HOURS
+  TWELVE_HOURS
+  TWENTY_FOUR_HOURS
+}
+
+"""Configuration of the AOF based persistence."""
+type AOFConfig {
+  appendFsync: query_redis_projects_locations_clusters_list_clusters_items_persistenceConfig_aofConfig_appendFsync
+}
+
+"""Optional. fsync configuration."""
+enum query_redis_projects_locations_clusters_list_clusters_items_persistenceConfig_aofConfig_appendFsync {
+  APPEND_FSYNC_UNSPECIFIED
+  NO
+  EVERYSEC
+  ALWAYS
+}
+
+"""Zone distribution config for allocation of cluster resources."""
+type ZoneDistributionConfig {
+  mode: query_redis_projects_locations_clusters_list_clusters_items_zoneDistributionConfig_mode
+
+  """
+  Optional. When SINGLE ZONE distribution is selected, zone field would be used to allocate all resources in that zone. This is not applicable to MULTI_ZONE, and would be ignored for MULTI_ZONE clusters.
+  """
+  zone: String
+}
+
+"""
+Optional. The mode of zone distribution. Defaults to MULTI_ZONE, when not specified.
+"""
+enum query_redis_projects_locations_clusters_list_clusters_items_zoneDistributionConfig_mode {
+  ZONE_DISTRIBUTION_MODE_UNSPECIFIED
+  MULTI_ZONE
+  SINGLE_ZONE
+}
+
+"""Cross cluster replication config."""
+type CrossClusterReplicationConfig {
+  clusterRole: query_redis_projects_locations_clusters_list_clusters_items_crossClusterReplicationConfig_clusterRole
+  primaryCluster: RemoteCluster
+
+  """
+  List of secondary clusters that are replicating from this primary cluster. This field is only set for a primary cluster.
+  """
+  secondaryClusters: [RemoteCluster]
+
+  """
+  Output only. The last time cross cluster replication config was updated.
+  """
+  updateTime: String
+  membership: Membership
+}
+
+"""Output only. The role of the cluster in cross cluster replication."""
+enum query_redis_projects_locations_clusters_list_clusters_items_crossClusterReplicationConfig_clusterRole {
+  CLUSTER_ROLE_UNSPECIFIED
+  NONE
+  PRIMARY
+  SECONDARY
+}
+
+"""
+Details of the remote cluster associated with this cluster in a cross cluster replication setup.
+"""
+type RemoteCluster {
+  """
+  Output only. The full resource path of the remote cluster in the format: projects//locations//clusters/
+  """
+  cluster: String
+
+  """Output only. The unique identifier of the remote cluster."""
+  uid: String
+}
+
+"""
+An output only view of all the member clusters participating in the cross cluster replication.
+"""
+type Membership {
+  primaryCluster: RemoteCluster
+
+  """
+  Output only. The list of secondary clusters replicating from the primary cluster.
+  """
+  secondaryClusters: [RemoteCluster]
+}
+
+"""Maintenance policy per cluster."""
+type ClusterMaintenancePolicy {
+  """
+  Output only. The time when the policy was created i.e. Maintenance Window or Deny Period was assigned.
+  """
+  createTime: String
+
+  """
+  Output only. The time when the policy was updated i.e. Maintenance Window or Deny Period was updated.
+  """
+  updateTime: String
+
+  """
+  Optional. Maintenance window that is applied to resources covered by this policy. Minimum 1. For the current version, the maximum number of weekly_maintenance_window is expected to be one.
+  """
+  weeklyMaintenanceWindow: [ClusterWeeklyMaintenanceWindow]
+}
+
+"""Time window specified for weekly operations."""
+type ClusterWeeklyMaintenanceWindow {
+  day: query_redis_projects_locations_clusters_list_clusters_items_maintenancePolicy_weeklyMaintenanceWindow_items_day
+  startTime: TimeOfDay
+}
+
+"""
+Optional. Allows to define schedule that runs specified day of the week.
+"""
+enum query_redis_projects_locations_clusters_list_clusters_items_maintenancePolicy_weeklyMaintenanceWindow_items_day {
+  DAY_OF_WEEK_UNSPECIFIED
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+"""
+Represents a time of day. The date and time zone are either not significant or are specified elsewhere. An API may choose to allow leap seconds. Related types are google.type.Date and `google.protobuf.Timestamp`.
+"""
+type TimeOfDay {
+  """
+  Hours of a day in 24 hour format. Must be greater than or equal to 0 and typically must be less than or equal to 23. An API may choose to allow the value "24:00:00" for scenarios like business closing time.
+  """
+  hours: Int
+
+  """
+  Minutes of an hour. Must be greater than or equal to 0 and less than or equal to 59.
+  """
+  minutes: Int
+
+  """
+  Seconds of a minute. Must be greater than or equal to 0 and typically must be less than or equal to 59. An API may allow the value 60 if it allows leap-seconds.
+  """
+  seconds: Int
+
+  """
+  Fractions of seconds, in nanoseconds. Must be greater than or equal to 0 and less than or equal to 999,999,999.
+  """
+  nanos: Int
+}
+
+"""Upcoming maintenance schedule."""
+type ClusterMaintenanceSchedule {
+  """
+  Output only. The start time of any upcoming scheduled maintenance for this instance.
+  """
+  startTime: String
+
+  """
+  Output only. The end time of any upcoming scheduled maintenance for this instance.
+  """
+  endTime: String
+}
+
+"""
+Configuration of a service attachment of the cluster, for creating PSC connections.
+"""
+type PscServiceAttachment {
+  """
+  Output only. Service attachment URI which your self-created PscConnection should use as target
+  """
+  serviceAttachment: String
+  connectionType: query_redis_projects_locations_clusters_list_clusters_items_pscServiceAttachments_items_connectionType
+}
+
+"""
+Output only. Type of a PSC connection targeting this service attachment.
+"""
+enum query_redis_projects_locations_clusters_list_clusters_items_pscServiceAttachments_items_connectionType {
+  CONNECTION_TYPE_UNSPECIFIED
+  CONNECTION_TYPE_DISCOVERY
+  CONNECTION_TYPE_PRIMARY
+  CONNECTION_TYPE_READER
+}
+
+"""
+ClusterEndpoint consists of PSC connections that are created as a group in each VPC network for accessing the cluster. In each group, there shall be one connection for each service attachment in the cluster.
+"""
+type ClusterEndpoint {
+  """
+  Required. A group of PSC connections. They are created in the same VPC network, one for each service attachment in the cluster.
+  """
+  connections: [ConnectionDetail]
+}
+
+"""Detailed information of each PSC connection."""
+type ConnectionDetail {
+  pscAutoConnection: PscAutoConnection
+  pscConnection: PscConnection
+}
+
+"""
+Details of consumer resources in a PSC connection that is created through Service Connectivity Automation.
+"""
+type PscAutoConnection {
+  """
+  Output only. The PSC connection id of the forwarding rule connected to the service attachment.
+  """
+  pscConnectionId: String
+
+  """
+  Output only. The IP allocated on the consumer network for the PSC forwarding rule.
+  """
+  address: String
+
+  """
+  Output only. The URI of the consumer side forwarding rule. Example: projects/{projectNumOrId}/regions/us-east1/forwardingRules/{resourceId}.
+  """
+  forwardingRule: String
+
+  """
+  Required. The consumer project_id where the forwarding rule is created from.
+  """
+  projectId: String
+
+  """
+  Required. The consumer network where the IP address resides, in the form of projects/{project_id}/global/networks/{network_id}.
+  """
+  network: String
+
+  """
+  Output only. The service attachment which is the target of the PSC connection, in the form of projects/{project-id}/regions/{region}/serviceAttachments/{service-attachment-id}.
+  """
+  serviceAttachment: String
+  pscConnectionStatus: query_redis_projects_locations_clusters_list_clusters_items_clusterEndpoints_items_connections_items_pscAutoConnection_pscConnectionStatus
+  connectionType: query_redis_projects_locations_clusters_list_clusters_items_clusterEndpoints_items_connections_items_pscAutoConnection_connectionType
+}
+
+"""
+Output only. The status of the PSC connection. Please note that this value is updated periodically. Please use Private Service Connect APIs for the latest status.
+"""
+enum query_redis_projects_locations_clusters_list_clusters_items_clusterEndpoints_items_connections_items_pscAutoConnection_pscConnectionStatus {
+  PSC_CONNECTION_STATUS_UNSPECIFIED
+  PSC_CONNECTION_STATUS_ACTIVE
+  PSC_CONNECTION_STATUS_NOT_FOUND
+}
+
+"""Output only. Type of the PSC connection."""
+enum query_redis_projects_locations_clusters_list_clusters_items_clusterEndpoints_items_connections_items_pscAutoConnection_connectionType {
+  CONNECTION_TYPE_UNSPECIFIED
+  CONNECTION_TYPE_DISCOVERY
+  CONNECTION_TYPE_PRIMARY
+  CONNECTION_TYPE_READER
+}
+
+"""The automated backup config for a cluster."""
+type AutomatedBackupConfig {
+  fixedFrequencySchedule: FixedFrequencySchedule
+  automatedBackupMode: query_redis_projects_locations_clusters_list_clusters_items_automatedBackupConfig_automatedBackupMode
+
+  """
+  Optional. How long to keep automated backups before the backups are deleted. The value should be between 1 day and 365 days. If not specified, the default value is 35 days.
+  """
+  retention: String
+}
+
+"""
+This schedule allows the backup to be triggered at a fixed frequency (currently only daily is supported).
+"""
+type FixedFrequencySchedule {
+  startTime: TimeOfDay
+}
+
+"""
+Optional. The automated backup mode. If the mode is disabled, the other fields will be ignored.
+"""
+enum query_redis_projects_locations_clusters_list_clusters_items_automatedBackupConfig_automatedBackupMode {
+  AUTOMATED_BACKUP_MODE_UNSPECIFIED
+  DISABLED
+  ENABLED
+}
+
+"""
+EncryptionInfo describes the encryption information of a cluster or a backup.
+"""
+type EncryptionInfo {
+  encryptionType: query_redis_projects_locations_clusters_list_clusters_items_encryptionInfo_encryptionType
+
+  """
+  Output only. KMS key versions that are being used to protect the data at-rest.
+  """
+  kmsKeyVersions: [String]
+  kmsKeyPrimaryState: query_redis_projects_locations_clusters_list_clusters_items_encryptionInfo_kmsKeyPrimaryState
+
+  """
+  Output only. The most recent time when the encryption info was updated.
+  """
+  lastUpdateTime: String
+}
+
+"""Output only. Type of encryption."""
+enum query_redis_projects_locations_clusters_list_clusters_items_encryptionInfo_encryptionType {
+  TYPE_UNSPECIFIED
+  GOOGLE_DEFAULT_ENCRYPTION
+  CUSTOMER_MANAGED_ENCRYPTION
+}
+
+"""
+Output only. The state of the primary version of the KMS key perceived by the system. This field is not populated in backups.
+"""
+enum query_redis_projects_locations_clusters_list_clusters_items_encryptionInfo_kmsKeyPrimaryState {
+  KMS_KEY_STATE_UNSPECIFIED
+  ENABLED
+  PERMISSION_DENIED
+  DISABLED
+  DESTROYED
+  DESTROY_SCHEDULED
+  EKM_KEY_UNREACHABLE_DETECTED
+  BILLING_DISABLED
+  UNKNOWN_FAILURE
+}
+
+"""Optional. Server CA mode for the cluster."""
+enum query_redis_projects_locations_clusters_list_clusters_items_serverCaMode {
+  SERVER_CA_MODE_UNSPECIFIED
+  SERVER_CA_MODE_GOOGLE_MANAGED_PER_INSTANCE_CA
+  SERVER_CA_MODE_GOOGLE_MANAGED_SHARED_CA
+  SERVER_CA_MODE_CUSTOMER_MANAGED_CAS_CA
+}
+
+"""Redis cluster certificate authority"""
+type CertificateAuthority {
+  managedServerCa: ManagedCertificateAuthority
+
+  """
+  Identifier. Unique name of the resource in this scope including project, location and cluster using the form: `projects/{project}/locations/{location}/clusters/{cluster}/certificateAuthority`
+  """
+  name: String
+}
+
+type ManagedCertificateAuthority {
+  """
+  The PEM encoded CA certificate chains for redis managed server authentication
+  """
+  caCerts: [CertChain]
+}
+
+type CertChain {
+  """The certificates that form the CA chain, from leaf to root order."""
+  certificates: [String]
+}
+
+"""Response for [ListBackupCollections]."""
+type ListBackupCollectionsResponse {
+  """
+  A list of backupCollections in the project. If the `location_id` in the parent field of the request is "-", all regions available to the project are queried, and the results aggregated. If in such an aggregated query a location is unavailable, a placeholder backupCollection entry is included in the response with the `name` field set to a value of the form `projects/{project_id}/locations/{location_id}/backupCollections/`- and the `status` field set to ERROR and `status_message` field set to "location not available for ListBackupCollections".
+  """
+  backupCollections: [BackupCollection]
+
+  """
+  Token to retrieve the next page of results, or empty if there are no more results in the list.
+  """
+  nextPageToken: String
+
+  """Locations that could not be reached."""
+  unreachable: [String]
+}
+
+"""BackupCollection of a cluster."""
+type BackupCollection {
+  """Identifier. Full resource path of the backup collection."""
+  name: String
+
+  """Output only. The cluster uid of the backup collection."""
+  clusterUid: String
+
+  """
+  Output only. The full resource path of the cluster the backup collection belongs to. Example: projects/{project}/locations/{location}/clusters/{cluster}
+  """
+  cluster: String
+
+  """
+  Output only. The KMS key used to encrypt the backups under this backup collection.
+  """
+  kmsKey: String
+
+  """
+  Output only. System assigned unique identifier of the backup collection.
+  """
+  uid: String
+
+  """Output only. The time when the backup collection was created."""
+  createTime: String
+
+  """Output only. Total size of all backups in the backup collection."""
+  totalBackupSizeBytes: BigInt
+
+  """Output only. Total number of backups in the backup collection."""
+  totalBackupCount: BigInt
+
+  """
+  Output only. The last time a backup was created in the backup collection.
+  """
+  lastBackupTime: String
+}
+
+"""
+The `BigInt` scalar type represents non-fractional signed whole numeric values.
+"""
+scalar BigInt
+
+"""Response for [ListBackups]."""
+type ListBackupsResponse {
+  """A list of backups in the project."""
+  backups: [Backup]
+
+  """
+  Token to retrieve the next page of results, or empty if there are no more results in the list.
+  """
+  nextPageToken: String
+
+  """Backups that could not be reached."""
+  unreachable: [String]
+}
+
+"""Backup of a cluster."""
+type Backup {
+  """
+  Identifier. Full resource path of the backup. the last part of the name is the backup id with the following format: [YYYYMMDDHHMMSS]_[Shorted Cluster UID] OR customer specified while backup cluster. Example: 20240515123000_1234
+  """
+  name: String
+
+  """Output only. The time when the backup was created."""
+  createTime: String
+
+  """Output only. Cluster resource path of this backup."""
+  cluster: String
+
+  """Output only. Cluster uid of this backup."""
+  clusterUid: String
+
+  """Output only. Total size of the backup in bytes."""
+  totalSizeBytes: BigInt
+
+  """Output only. The time when the backup will expire."""
+  expireTime: String
+
+  """Output only. redis-7.2, valkey-7.5"""
+  engineVersion: String
+
+  """Output only. List of backup files of the backup."""
+  backupFiles: [BackupFile]
+  nodeType: query_redis_projects_locations_backupCollections_backups_list_backups_items_nodeType
+
+  """Output only. Number of replicas for the cluster."""
+  replicaCount: Int
+
+  """Output only. Number of shards for the cluster."""
+  shardCount: Int
+  backupType: query_redis_projects_locations_backupCollections_backups_list_backups_items_backupType
+  state: query_redis_projects_locations_backupCollections_backups_list_backups_items_state
+  encryptionInfo: EncryptionInfo
+
+  """Output only. System assigned unique identifier of the backup."""
+  uid: String
+}
+
+"""Backup is consisted of multiple backup files."""
+type BackupFile {
+  """Output only. e.g: .rdb"""
+  fileName: String
+
+  """Output only. Size of the backup file in bytes."""
+  sizeBytes: BigInt
+
+  """Output only. The time when the backup file was created."""
+  createTime: String
+}
+
+"""Output only. Node type of the cluster."""
+enum query_redis_projects_locations_backupCollections_backups_list_backups_items_nodeType {
+  NODE_TYPE_UNSPECIFIED
+  REDIS_SHARED_CORE_NANO
+  REDIS_HIGHMEM_MEDIUM
+  REDIS_HIGHMEM_XLARGE
+  REDIS_STANDARD_SMALL
+}
+
+"""Output only. Type of the backup."""
+enum query_redis_projects_locations_backupCollections_backups_list_backups_items_backupType {
+  BACKUP_TYPE_UNSPECIFIED
+  ON_DEMAND
+  AUTOMATED
+}
+
+"""Output only. State of the backup."""
+enum query_redis_projects_locations_backupCollections_backups_list_backups_items_state {
+  STATE_UNSPECIFIED
+  CREATING
+  ACTIVE
+  DELETING
+  SUSPENDED
+}
+
+"""Response for ListInstances."""
+type ListInstancesResponse {
+  """
+  A list of Redis instances in the project in the specified location, or across all locations. If the `location_id` in the parent field of the request is "-", all regions available to the project are queried, and the results aggregated. If in such an aggregated query a location is unavailable, a placeholder Redis entry is included in the response with the `name` field set to a value of the form `projects/{project_id}/locations/{location_id}/instances/`- and the `status` field set to ERROR and `status_message` field set to "location not available for ListInstances".
+  """
+  instances: [Instance]
+
+  """
+  Token to retrieve the next page of results, or empty if there are no more results in the list.
+  """
+  nextPageToken: String
+
+  """Locations that could not be reached."""
+  unreachable: [String]
+}
+
+"""A Memorystore for Redis instance."""
+type Instance {
+  """
+  Required. Unique name of the resource in this scope including project and location using the form: `projects/{project_id}/locations/{location_id}/instances/{instance_id}` Note: Redis instances are managed and addressed at regional level so location_id here refers to a GCP region; however, users may choose which specific zone (or collection of zones for cross-zone instances) an instance should be provisioned in. Refer to location_id and alternative_location_id fields for more details.
+  """
+  name: String
+
+  """An arbitrary and optional user-provided name for the instance."""
+  displayName: String
+
+  """Resource labels to represent user provided metadata"""
+  labels: JSON
+
+  """
+  Optional. The zone where the instance will be provisioned. If not provided, the service will choose a zone from the specified region for the instance. For standard tier, additional nodes will be added across multiple zones for protection against zonal failures. If specified, at least one node will be provisioned in this zone.
+  """
+  locationId: String
+
+  """
+  Optional. If specified, at least one node will be provisioned in this zone in addition to the zone specified in location_id. Only applicable to standard tier. If provided, it must be a different zone from the one provided in [location_id]. Additional nodes beyond the first 2 will be placed in zones selected by the service.
+  """
+  alternativeLocationId: String
+
+  """
+  Optional. The version of Redis software. If not provided, the default version will be used. Currently, the supported values are: * `REDIS_3_2` for Redis 3.2 compatibility * `REDIS_4_0` for Redis 4.0 compatibility * `REDIS_5_0` for Redis 5.0 compatibility * `REDIS_6_X` for Redis 6.x compatibility * `REDIS_7_0` for Redis 7.0 compatibility (default) * `REDIS_7_2` for Redis 7.2 compatibility
+  """
+  redisVersion: String
+
+  """
+  Optional. For DIRECT_PEERING mode, the CIDR range of internal addresses that are reserved for this instance. Range must be unique and non-overlapping with existing subnets in an authorized network. For PRIVATE_SERVICE_ACCESS mode, the name of one allocated IP address ranges associated with this private service access connection. If not provided, the service will choose an unused /29 block, for example, 10.0.0.0/29 or 192.168.0.0/29. For READ_REPLICAS_ENABLED the default block size is /28.
+  """
+  reservedIpRange: String
+
+  """
+  Optional. Additional IP range for node placement. Required when enabling read replicas on an existing instance. For DIRECT_PEERING mode value must be a CIDR range of size /28, or "auto". For PRIVATE_SERVICE_ACCESS mode value must be the name of an allocated address range associated with the private service access connection, or "auto".
+  """
+  secondaryIpRange: String
+
+  """
+  Output only. Hostname or IP address of the exposed Redis endpoint used by clients to connect to the service.
+  """
+  host: String
+
+  """Output only. The port number of the exposed Redis endpoint."""
+  port: Int
+
+  """
+  Output only. The current zone where the Redis primary node is located. In basic tier, this will always be the same as [location_id]. In standard tier, this can be the zone of any node in the instance.
+  """
+  currentLocationId: String
+
+  """Output only. The time the instance was created."""
+  createTime: String
+  state: query_redis_projects_locations_instances_list_instances_items_state
+
+  """
+  Output only. Additional information about the current status of this instance, if available.
+  """
+  statusMessage: String
+
+  """
+  Optional. Redis configuration parameters, according to [Redis configuration](https://redis.io/docs/latest/operate/oss_and_stack/management/config/). Currently, the only supported parameters are: Redis version 3.2 and newer: * maxmemory-policy * notify-keyspace-events Redis version 4.0 and newer: * activedefrag * lfu-decay-time * lfu-log-factor * maxmemory-gb Redis version 5.0 and newer: * stream-node-max-bytes * stream-node-max-entries
+  """
+  redisConfigs: JSON
+  tier: query_redis_projects_locations_instances_list_instances_items_tier
+
+  """Required. Redis memory size in GiB."""
+  memorySizeGb: Int
+
+  """
+  Optional. The full name of the Google Compute Engine [network](https://cloud.google.com/vpc/docs/vpc) to which the instance is connected. If left unspecified, the `default` network will be used.
+  """
+  authorizedNetwork: String
+
+  """
+  Output only. Cloud IAM identity used by import / export operations to transfer data to/from Cloud Storage. Format is "serviceAccount:". The value may change over time for a given instance so should be checked before each import/export operation.
+  """
+  persistenceIamIdentity: String
+  connectMode: query_redis_projects_locations_instances_list_instances_items_connectMode
+
+  """
+  Optional. Indicates whether OSS Redis AUTH is enabled for the instance. If set to "true" AUTH is enabled on the instance. Default value is "false" meaning AUTH is disabled.
+  """
+  authEnabled: Boolean
+
+  """Output only. List of server CA certificates for the instance."""
+  serverCaCerts: [TlsCertificate]
+  transitEncryptionMode: query_redis_projects_locations_instances_list_instances_items_transitEncryptionMode
+  maintenancePolicy: MaintenancePolicy
+  maintenanceSchedule: MaintenanceSchedule
+
+  """
+  Optional. The number of replica nodes. The valid range for the Standard Tier with read replicas enabled is [1-5] and defaults to 2. If read replicas are not enabled for a Standard Tier instance, the only valid value is 1 and the default is 1. The valid value for basic tier is 0 and the default is also 0.
+  """
+  replicaCount: Int
+
+  """Output only. Info per node."""
+  nodes: [NodeInfo]
+
+  """
+  Output only. Hostname or IP address of the exposed readonly Redis endpoint. Standard tier only. Targets all healthy replica nodes in instance. Replication is asynchronous and replica nodes will exhibit some lag behind the primary. Write requests must target 'host'.
+  """
+  readEndpoint: String
+
+  """
+  Output only. The port number of the exposed readonly redis endpoint. Standard tier only. Write requests should target 'port'.
+  """
+  readEndpointPort: Int
+  readReplicasMode: query_redis_projects_locations_instances_list_instances_items_readReplicasMode
+
+  """
+  Optional. The KMS key reference that the customer provides when trying to create the instance.
+  """
+  customerManagedKey: String
+  persistenceConfig: PersistenceConfig
+
+  """Optional. reasons that causes instance in "SUSPENDED" state."""
+  suspensionReasons: [query_redis_projects_locations_instances_list_instances_items_suspensionReasons_items]
+
+  """
+  Optional. The self service update maintenance version. The version is date based such as "20210712_00_00".
+  """
+  maintenanceVersion: String
+
+  """
+  Optional. The available maintenance versions that an instance could update to.
+  """
+  availableMaintenanceVersions: [String]
+
+  """Optional. Output only. Reserved for future use."""
+  satisfiesPzs: Boolean
+
+  """Optional. Output only. Reserved for future use."""
+  satisfiesPzi: Boolean
+
+  """
+  Optional. Input only. Immutable. Tag keys/values directly bound to this resource. For example: "123/environment": "production", "123/costCenter": "marketing"
+  """
+  tags: JSON
+}
+
+"""Output only. The current state of this instance."""
+enum query_redis_projects_locations_instances_list_instances_items_state {
+  STATE_UNSPECIFIED
+  CREATING
+  READY
+  UPDATING
+  DELETING
+  REPAIRING
+  MAINTENANCE
+  IMPORTING
+  FAILING_OVER
+}
+
+"""Required. The service tier of the instance."""
+enum query_redis_projects_locations_instances_list_instances_items_tier {
+  TIER_UNSPECIFIED
+  BASIC
+  STANDARD_HA
+}
+
+"""
+Optional. The network connect mode of the Redis instance. If not provided, the connect mode defaults to DIRECT_PEERING.
+"""
+enum query_redis_projects_locations_instances_list_instances_items_connectMode {
+  CONNECT_MODE_UNSPECIFIED
+  DIRECT_PEERING
+  PRIVATE_SERVICE_ACCESS
+}
+
+"""TlsCertificate Resource"""
+type TlsCertificate {
+  """Serial number, as extracted from the certificate."""
+  serialNumber: String
+
+  """PEM representation."""
+  cert: String
+
+  """
+  Output only. The time when the certificate was created in [RFC 3339](https://tools.ietf.org/html/rfc3339) format, for example `2020-05-18T00:00:00.094Z`.
+  """
+  createTime: String
+
+  """
+  Output only. The time when the certificate expires in [RFC 3339](https://tools.ietf.org/html/rfc3339) format, for example `2020-05-18T00:00:00.094Z`.
+  """
+  expireTime: String
+
+  """Sha1 Fingerprint of the certificate."""
+  sha1Fingerprint: String
+}
+
+"""
+Optional. The TLS mode of the Redis instance. If not provided, TLS is disabled for the instance.
+"""
+enum query_redis_projects_locations_instances_list_instances_items_transitEncryptionMode {
+  TRANSIT_ENCRYPTION_MODE_UNSPECIFIED
+  SERVER_AUTHENTICATION
+  DISABLED
+}
+
+"""Maintenance policy for an instance."""
+type MaintenancePolicy {
+  """Output only. The time when the policy was created."""
+  createTime: String
+
+  """Output only. The time when the policy was last updated."""
+  updateTime: String
+
+  """
+  Optional. Description of what this policy is for. Create/Update methods return INVALID_ARGUMENT if the length is greater than 512.
+  """
+  description: String
+
+  """
+  Optional. Maintenance window that is applied to resources covered by this policy. Minimum 1. For the current version, the maximum number of weekly_window is expected to be one.
+  """
+  weeklyMaintenanceWindow: [WeeklyMaintenanceWindow]
+}
+
+"""
+Time window in which disruptive maintenance updates occur. Non-disruptive updates can occur inside or outside this window.
+"""
+type WeeklyMaintenanceWindow {
+  day: query_redis_projects_locations_instances_list_instances_items_maintenancePolicy_weeklyMaintenanceWindow_items_day
+  startTime: TimeOfDay
+
+  """
+  Output only. Duration of the maintenance window. The current window is fixed at 1 hour.
+  """
+  duration: String
+}
+
+"""Required. The day of week that maintenance updates occur."""
+enum query_redis_projects_locations_instances_list_instances_items_maintenancePolicy_weeklyMaintenanceWindow_items_day {
+  DAY_OF_WEEK_UNSPECIFIED
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+"""
+Upcoming maintenance schedule. If no maintenance is scheduled, fields are not populated.
+"""
+type MaintenanceSchedule {
+  """
+  Output only. The start time of any upcoming scheduled maintenance for this instance.
+  """
+  startTime: String
+
+  """
+  Output only. The end time of any upcoming scheduled maintenance for this instance.
+  """
+  endTime: String
+
+  """If the scheduled maintenance can be rescheduled, default is true."""
+  canReschedule: Boolean @deprecated(reason: "deprecated")
+
+  """
+  Output only. The deadline that the maintenance schedule start time can not go beyond, including reschedule.
+  """
+  scheduleDeadlineTime: String
+}
+
+"""Node specific properties."""
+type NodeInfo {
+  """Output only. Node identifying string. e.g. 'node-0', 'node-1'"""
+  id: String
+
+  """Output only. Location of the node."""
+  zone: String
+}
+
+"""
+Optional. Read replicas mode for the instance. Defaults to READ_REPLICAS_DISABLED.
+"""
+enum query_redis_projects_locations_instances_list_instances_items_readReplicasMode {
+  READ_REPLICAS_MODE_UNSPECIFIED
+  READ_REPLICAS_DISABLED
+  READ_REPLICAS_ENABLED
+}
+
+"""Configuration of the persistence functionality."""
+type PersistenceConfig {
+  persistenceMode: query_redis_projects_locations_instances_list_instances_items_persistenceConfig_persistenceMode
+  rdbSnapshotPeriod: query_redis_projects_locations_instances_list_instances_items_persistenceConfig_rdbSnapshotPeriod
+
+  """
+  Output only. The next time that a snapshot attempt is scheduled to occur.
+  """
+  rdbNextSnapshotTime: String
+
+  """
+  Optional. Date and time that the first snapshot was/will be attempted, and to which future snapshots will be aligned. If not provided, the current time will be used.
+  """
+  rdbSnapshotStartTime: String
+}
+
+"""
+Optional. Controls whether Persistence features are enabled. If not provided, the existing value will be used.
+"""
+enum query_redis_projects_locations_instances_list_instances_items_persistenceConfig_persistenceMode {
+  PERSISTENCE_MODE_UNSPECIFIED
+  DISABLED
+  RDB
+}
+
+"""
+Optional. Period between RDB snapshots. Snapshots will be attempted every period starting from the provided snapshot start time. For example, a start time of 01/01/2033 06:45 and SIX_HOURS snapshot period will do nothing until 01/01/2033, and then trigger snapshots every day at 06:45, 12:45, 18:45, and 00:45 the next day, and so on. If not provided, TWENTY_FOUR_HOURS will be used as default.
+"""
+enum query_redis_projects_locations_instances_list_instances_items_persistenceConfig_rdbSnapshotPeriod {
+  SNAPSHOT_PERIOD_UNSPECIFIED
+  ONE_HOUR
+  SIX_HOURS
+  TWELVE_HOURS
+  TWENTY_FOUR_HOURS
+}
+
+enum query_redis_projects_locations_instances_list_instances_items_suspensionReasons_items {
+  SUSPENSION_REASON_UNSPECIFIED
+  CUSTOMER_MANAGED_KEY_ISSUE
+}
+
+"""Instance AUTH string details."""
+type InstanceAuthString {
+  """AUTH string set on the instance."""
+  authString: String
+}
+
+type Mutation {
+  """
+  Deletes a long-running operation. This method indicates that the client is no longer interested in the operation result. It does not cancel the operation. If the server doesn't support this method, it returns `google.rpc.Code.UNIMPLEMENTED`.
+  """
+  redis_projects_locations_operations_delete(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter operationsId"""
+    operationsId: String!
+  ): JSON
+
+  """
+  Starts asynchronous cancellation on a long-running operation. The server makes a best effort to cancel the operation, but success is not guaranteed. If the server doesn't support this method, it returns `google.rpc.Code.UNIMPLEMENTED`. Clients can use Operations.GetOperation or other methods to check whether the cancellation succeeded or whether the operation completed despite cancellation. On successful cancellation, the operation is not deleted; instead, it becomes an operation with an Operation.error value with a google.rpc.Status.code of `1`, corresponding to `Code.CANCELLED`.
+  """
+  redis_projects_locations_operations_cancel(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter operationsId"""
+    operationsId: String!
+  ): JSON
+
+  """
+  Creates a Redis cluster based on the specified properties. The creation is executed asynchronously and callers may check the returned operation to track its progress. Once the operation is completed the Redis cluster will be fully functional. The completed longrunning.Operation will contain the new cluster object in the response field. The returned operation is automatically deleted after a few hours, so there is no need to call DeleteOperation.
+  """
+  redis_projects_locations_clusters_create(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """
+    Required. The logical name of the Redis cluster in the customer project with the following restrictions: * Must contain only lowercase letters, numbers, and hyphens. * Must start with a letter. * Must be between 1-63 characters. * Must end with a number or a letter. * Must be unique within the customer project / location
+    """
+    clusterId: String
+
+    """Optional. Idempotent request UUID."""
+    requestId: String
+    input: Cluster_Input
+  ): Operation
+
+  """
+  Updates the metadata and configuration of a specific Redis cluster. Completed longrunning.Operation will contain the new cluster object in the response field. The returned operation is automatically deleted after a few hours, so there is no need to call DeleteOperation.
+  """
+  redis_projects_locations_clusters_patch(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter clustersId"""
+    clustersId: String!
+
+    """
+    Required. Mask of fields to update. At least one path must be supplied in this field. The elements of the repeated paths field may only include these fields from Cluster: * `size_gb` * `replica_count` * `cluster_endpoints`
+    """
+    updateMask: String
+
+    """Optional. Idempotent request UUID."""
+    requestId: String
+    input: Cluster_Input
+  ): Operation
+
+  """
+  Deletes a specific Redis cluster. Cluster stops serving and data is deleted.
+  """
+  redis_projects_locations_clusters_delete(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter clustersId"""
+    clustersId: String!
+
+    """Optional. Idempotent request UUID."""
+    requestId: String
+  ): Operation
+
+  """Reschedules upcoming maintenance event."""
+  redis_projects_locations_clusters_rescheduleClusterMaintenance(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter clustersId"""
+    clustersId: String!
+    input: RescheduleClusterMaintenanceRequest_Input
+  ): Operation
+
+  """
+  Backup Redis Cluster. If this is the first time a backup is being created, a backup collection will be created at the backend, and this backup belongs to this collection. Both collection and backup will have a resource name. Backup will be executed for each shard. A replica (primary if nonHA) will be selected to perform the execution. Backup call will be rejected if there is an ongoing backup or update operation. Be aware that during preview, if the cluster's internal software version is too old, critical update will be performed before actual backup. Once the internal software version is updated to the minimum version required by the backup feature, subsequent backups will not require critical update. After preview, there will be no critical update needed for backup.
+  """
+  redis_projects_locations_clusters_backup(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter clustersId"""
+    clustersId: String!
+    input: BackupClusterRequest_Input
+  ): Operation
+
+  """Deletes a specific backup."""
+  redis_projects_locations_backupCollections_backups_delete(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter backupCollectionsId"""
+    backupCollectionsId: String!
+
+    """Path parameter backupsId"""
+    backupsId: String!
+
+    """Optional. Idempotent request UUID."""
+    requestId: String
+  ): Operation
+
+  """Exports a specific backup to a customer target Cloud Storage URI."""
+  redis_projects_locations_backupCollections_backups_export(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter backupCollectionsId"""
+    backupCollectionsId: String!
+
+    """Path parameter backupsId"""
+    backupsId: String!
+    input: ExportBackupRequest_Input
+  ): Operation
+
+  """
+  Creates a Redis instance based on the specified tier and memory size. By default, the instance is accessible from the project's [default network](https://cloud.google.com/vpc/docs/vpc). The creation is executed asynchronously and callers may check the returned operation to track its progress. Once the operation is completed the Redis instance will be fully functional. Completed longrunning.Operation will contain the new instance object in the response field. The returned operation is automatically deleted after a few hours, so there is no need to call DeleteOperation.
+  """
+  redis_projects_locations_instances_create(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """
+    Required. The logical name of the Redis instance in the customer project with the following restrictions: * Must contain only lowercase letters, numbers, and hyphens. * Must start with a letter. * Must be between 1-40 characters. * Must end with a number or a letter. * Must be unique within the customer project / location
+    """
+    instanceId: String
+    input: Instance_Input
+  ): Operation
+
+  """
+  Updates the metadata and configuration of a specific Redis instance. Completed longrunning.Operation will contain the new instance object in the response field. The returned operation is automatically deleted after a few hours, so there is no need to call DeleteOperation.
+  """
+  redis_projects_locations_instances_patch(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter instancesId"""
+    instancesId: String!
+
+    """
+    Required. Mask of fields to update. At least one path must be supplied in this field. The elements of the repeated paths field may only include these fields from Instance: * `displayName` * `labels` * `memorySizeGb` * `redisConfig` * `replica_count`
+    """
+    updateMask: String
+    input: Instance_Input
+  ): Operation
+
+  """
+  Deletes a specific Redis instance. Instance stops serving and data is deleted.
+  """
+  redis_projects_locations_instances_delete(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter instancesId"""
+    instancesId: String!
+  ): Operation
+
+  """
+  Upgrades Redis instance to the newer Redis version specified in the request.
+  """
+  redis_projects_locations_instances_upgrade(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter instancesId"""
+    instancesId: String!
+    input: UpgradeInstanceRequest_Input
+  ): Operation
+
+  """
+  Import a Redis RDB snapshot file from Cloud Storage into a Redis instance. Redis may stop serving during this operation. Instance state will be IMPORTING for entire operation. When complete, the instance will contain only data from the imported file. The returned operation is automatically deleted after a few hours, so there is no need to call DeleteOperation.
+  """
+  redis_projects_locations_instances_import(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter instancesId"""
+    instancesId: String!
+    input: ImportInstanceRequest_Input
+  ): Operation
+
+  """
+  Export Redis instance data into a Redis RDB format file in Cloud Storage. Redis will continue serving during this operation. The returned operation is automatically deleted after a few hours, so there is no need to call DeleteOperation.
+  """
+  redis_projects_locations_instances_export(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter instancesId"""
+    instancesId: String!
+    input: ExportInstanceRequest_Input
+  ): Operation
+
+  """
+  Initiates a failover of the primary node to current replica node for a specific STANDARD tier Cloud Memorystore for Redis instance.
+  """
+  redis_projects_locations_instances_failover(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter instancesId"""
+    instancesId: String!
+    input: FailoverInstanceRequest_Input
+  ): Operation
+
+  """
+  Reschedule maintenance for a given instance in a given project and location.
+  """
+  redis_projects_locations_instances_rescheduleMaintenance(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter instancesId"""
+    instancesId: String!
+    input: RescheduleMaintenanceRequest_Input
+  ): Operation
+}
+
+"""A cluster instance."""
+input Cluster_Input {
+  gcsSource: GcsBackupSource_Input
+  managedBackupSource: ManagedBackupSource_Input
+
+  """
+  Required. Identifier. Unique name of the resource in this scope including project and location using the form: `projects/{project_id}/locations/{location_id}/clusters/{cluster_id}`
+  """
+  name: String
+
+  """
+  Output only. The timestamp associated with the cluster creation request.
+  """
+  createTime: String
+  state: query_redis_projects_locations_clusters_list_clusters_items_state
+
+  """Output only. System assigned, unique identifier for the cluster."""
+  uid: String
+
+  """Optional. The number of replica nodes per shard."""
+  replicaCount: Int
+  authorizationMode: query_redis_projects_locations_clusters_list_clusters_items_authorizationMode
+  transitEncryptionMode: query_redis_projects_locations_clusters_list_clusters_items_transitEncryptionMode
+
+  """
+  Output only. Redis memory size in GB for the entire cluster rounded up to the next integer.
+  """
+  sizeGb: Int
+
+  """Optional. Number of shards for the Redis cluster."""
+  shardCount: Int
+
+  """
+  Optional. Each PscConfig configures the consumer network where IPs will be designated to the cluster for client access through Private Service Connect Automation. Currently, only one PscConfig is supported.
+  """
+  pscConfigs: [PscConfig_Input]
+
+  """
+  Output only. Endpoints created on each given network, for Redis clients to connect to the cluster. Currently only one discovery endpoint is supported.
+  """
+  discoveryEndpoints: [DiscoveryEndpoint_Input]
+
+  """
+  Output only. The list of PSC connections that are auto-created through service connectivity automation.
+  """
+  pscConnections: [PscConnection_Input]
+  stateInfo: StateInfo_Input
+  nodeType: query_redis_projects_locations_clusters_list_clusters_items_nodeType
+  persistenceConfig: ClusterPersistenceConfig_Input
+
+  """
+  Optional. Key/Value pairs of customer overrides for mutable Redis Configs
+  """
+  redisConfigs: JSON
+
+  """
+  Output only. Precise value of redis memory size in GB for the entire cluster.
+  """
+  preciseSizeGb: Float
+  zoneDistributionConfig: ZoneDistributionConfig_Input
+  crossClusterReplicationConfig: CrossClusterReplicationConfig_Input
+
+  """
+  Optional. The delete operation will fail when the value is set to true.
+  """
+  deletionProtectionEnabled: Boolean
+  maintenancePolicy: ClusterMaintenancePolicy_Input
+  maintenanceSchedule: ClusterMaintenanceSchedule_Input
+
+  """Optional. Output only. Reserved for future use."""
+  satisfiesPzs: Boolean
+
+  """Optional. Output only. Reserved for future use."""
+  satisfiesPzi: Boolean
+
+  """Output only. Service attachment details to configure Psc connections"""
+  pscServiceAttachments: [PscServiceAttachment_Input]
+
+  """Optional. A list of cluster endpoints."""
+  clusterEndpoints: [ClusterEndpoint_Input]
+
+  """Optional. Input only. Simulate a maintenance event."""
+  simulateMaintenanceEvent: Boolean
+
+  """
+  Optional. Output only. The backup collection full resource name. Example: projects/{project}/locations/{location}/backupCollections/{collection}
+  """
+  backupCollection: String
+
+  """Optional. The KMS key used to encrypt the at-rest data of the cluster."""
+  kmsKey: String
+
+  """
+  Optional. Input only. Ondemand maintenance for the cluster. This field can be used to trigger ondemand critical update on the cluster.
+  """
+  ondemandMaintenance: Boolean
+  automatedBackupConfig: AutomatedBackupConfig_Input
+  encryptionInfo: EncryptionInfo_Input
+
+  """
+  Optional. If true, cluster endpoints that are created and registered by customers can be deleted asynchronously. That is, such a cluster endpoint can be de-registered before the forwarding rules in the cluster endpoint are deleted.
+  """
+  asyncClusterEndpointsDeletionEnabled: Boolean
+
+  """
+  Optional. This field can be used to trigger self service update to indicate the desired maintenance version. The input to this field can be determined by the available_maintenance_versions field.
+  """
+  maintenanceVersion: String
+
+  """
+  Output only. This field represents the actual maintenance version of the cluster.
+  """
+  effectiveMaintenanceVersion: String
+
+  """
+  Output only. This field is used to determine the available maintenance versions for the self service update.
+  """
+  availableMaintenanceVersions: [String]
+
+  """Optional. Immutable. Deprecated, do not use."""
+  allowFewerZonesDeployment: Boolean
+
+  """Optional. Labels to represent user-provided metadata."""
+  labels: JSON
+  serverCaMode: query_redis_projects_locations_clusters_list_clusters_items_serverCaMode
+
+  """
+  Optional. Customer-managed CA pool for the cluster. Only applicable for BYOCA i.e. if server_ca_mode is SERVER_CA_MODE_CUSTOMER_MANAGED_CAS_CA. Format: "projects/{project}/locations/{region}/caPools/{ca_pool}".
+  """
+  serverCaPool: String
+
+  """Optional. Input only. Rotate the server certificates."""
+  rotateServerCertificate: Boolean
+
+  """Optional. The ACL policy to be applied to the cluster."""
+  aclPolicy: String
+}
+
+"""
+Backups stored in Cloud Storage buckets. The Cloud Storage buckets need to be the same region as the clusters.
+"""
+input GcsBackupSource_Input {
+  """
+  Optional. URIs of the Cloud Storage objects to import. Example: gs://bucket1/object1, gs://bucket2/folder2/object2
+  """
+  uris: [String]
+}
+
+"""Backups that generated and managed by memorystore."""
+input ManagedBackupSource_Input {
+  """
+  Optional. Example: //redis.googleapis.com/projects/{project}/locations/{location}/backupCollections/{collection}/backups/{backup} A shorter version (without the prefix) of the backup name is also supported, like projects/{project}/locations/{location}/backupCollections/{collection}/backups/{backup_id} In this case, it assumes the backup is under redis.googleapis.com.
+  """
+  backup: String
+}
+
+input PscConfig_Input {
+  """
+  Required. The network where the IP address of the discovery endpoint will be reserved, in the form of projects/{network_project}/global/networks/{network_id}.
+  """
+  network: String
+}
+
+"""
+Endpoints on each network, for Redis clients to connect to the cluster.
+"""
+input DiscoveryEndpoint_Input {
+  """
+  Output only. Address of the exposed Redis endpoint used by clients to connect to the service. The address could be either IP or hostname.
+  """
+  address: String
+
+  """Output only. The port number of the exposed Redis endpoint."""
+  port: Int
+  pscConfig: PscConfig_Input
+}
+
+"""Details of consumer resources in a PSC connection."""
+input PscConnection_Input {
+  """
+  Output only. port will only be set for Primary/Reader or Discovery endpoint.
+  """
+  port: Int
+
+  """
+  Required. The PSC connection id of the forwarding rule connected to the service attachment.
+  """
+  pscConnectionId: String
+
+  """
+  Required. The IP allocated on the consumer network for the PSC forwarding rule.
+  """
+  address: String
+
+  """
+  Required. The URI of the consumer side forwarding rule. Example: projects/{projectNumOrId}/regions/us-east1/forwardingRules/{resourceId}.
+  """
+  forwardingRule: String
+
+  """
+  Optional. Project ID of the consumer project where the forwarding rule is created in.
+  """
+  projectId: String
+
+  """
+  Required. The consumer network where the IP address resides, in the form of projects/{project_id}/global/networks/{network_id}.
+  """
+  network: String
+
+  """
+  Required. The service attachment which is the target of the PSC connection, in the form of projects/{project-id}/regions/{region}/serviceAttachments/{service-attachment-id}.
+  """
+  serviceAttachment: String
+  pscConnectionStatus: query_redis_projects_locations_clusters_list_clusters_items_pscConnections_items_pscConnectionStatus
+  connectionType: query_redis_projects_locations_clusters_list_clusters_items_pscConnections_items_connectionType
+}
+
+"""Represents additional information about the state of the cluster."""
+input StateInfo_Input {
+  updateInfo: UpdateInfo_Input
+}
+
+"""Represents information about an updating cluster."""
+input UpdateInfo_Input {
+  """Target number of shards for redis cluster"""
+  targetShardCount: Int
+
+  """Target number of replica nodes per shard."""
+  targetReplicaCount: Int
+  targetNodeType: query_redis_projects_locations_clusters_list_clusters_items_stateInfo_updateInfo_targetNodeType
+}
+
+"""Configuration of the persistence functionality."""
+input ClusterPersistenceConfig_Input {
+  mode: query_redis_projects_locations_clusters_list_clusters_items_persistenceConfig_mode
+  rdbConfig: RDBConfig_Input
+  aofConfig: AOFConfig_Input
+}
+
+"""Configuration of the RDB based persistence."""
+input RDBConfig_Input {
+  rdbSnapshotPeriod: query_redis_projects_locations_clusters_list_clusters_items_persistenceConfig_rdbConfig_rdbSnapshotPeriod
+
+  """
+  Optional. The time that the first snapshot was/will be attempted, and to which future snapshots will be aligned. If not provided, the current time will be used.
+  """
+  rdbSnapshotStartTime: String
+}
+
+"""Configuration of the AOF based persistence."""
+input AOFConfig_Input {
+  appendFsync: query_redis_projects_locations_clusters_list_clusters_items_persistenceConfig_aofConfig_appendFsync
+}
+
+"""Zone distribution config for allocation of cluster resources."""
+input ZoneDistributionConfig_Input {
+  mode: query_redis_projects_locations_clusters_list_clusters_items_zoneDistributionConfig_mode
+
+  """
+  Optional. When SINGLE ZONE distribution is selected, zone field would be used to allocate all resources in that zone. This is not applicable to MULTI_ZONE, and would be ignored for MULTI_ZONE clusters.
+  """
+  zone: String
+}
+
+"""Cross cluster replication config."""
+input CrossClusterReplicationConfig_Input {
+  clusterRole: query_redis_projects_locations_clusters_list_clusters_items_crossClusterReplicationConfig_clusterRole
+  primaryCluster: RemoteCluster_Input
+
+  """
+  List of secondary clusters that are replicating from this primary cluster. This field is only set for a primary cluster.
+  """
+  secondaryClusters: [RemoteCluster_Input]
+
+  """
+  Output only. The last time cross cluster replication config was updated.
+  """
+  updateTime: String
+  membership: Membership_Input
+}
+
+"""
+Details of the remote cluster associated with this cluster in a cross cluster replication setup.
+"""
+input RemoteCluster_Input {
+  """
+  Output only. The full resource path of the remote cluster in the format: projects//locations//clusters/
+  """
+  cluster: String
+
+  """Output only. The unique identifier of the remote cluster."""
+  uid: String
+}
+
+"""
+An output only view of all the member clusters participating in the cross cluster replication.
+"""
+input Membership_Input {
+  primaryCluster: RemoteCluster_Input
+
+  """
+  Output only. The list of secondary clusters replicating from the primary cluster.
+  """
+  secondaryClusters: [RemoteCluster_Input]
+}
+
+"""Maintenance policy per cluster."""
+input ClusterMaintenancePolicy_Input {
+  """
+  Output only. The time when the policy was created i.e. Maintenance Window or Deny Period was assigned.
+  """
+  createTime: String
+
+  """
+  Output only. The time when the policy was updated i.e. Maintenance Window or Deny Period was updated.
+  """
+  updateTime: String
+
+  """
+  Optional. Maintenance window that is applied to resources covered by this policy. Minimum 1. For the current version, the maximum number of weekly_maintenance_window is expected to be one.
+  """
+  weeklyMaintenanceWindow: [ClusterWeeklyMaintenanceWindow_Input]
+}
+
+"""Time window specified for weekly operations."""
+input ClusterWeeklyMaintenanceWindow_Input {
+  day: query_redis_projects_locations_clusters_list_clusters_items_maintenancePolicy_weeklyMaintenanceWindow_items_day
+  startTime: TimeOfDay_Input
+}
+
+"""
+Represents a time of day. The date and time zone are either not significant or are specified elsewhere. An API may choose to allow leap seconds. Related types are google.type.Date and `google.protobuf.Timestamp`.
+"""
+input TimeOfDay_Input {
+  """
+  Hours of a day in 24 hour format. Must be greater than or equal to 0 and typically must be less than or equal to 23. An API may choose to allow the value "24:00:00" for scenarios like business closing time.
+  """
+  hours: Int
+
+  """
+  Minutes of an hour. Must be greater than or equal to 0 and less than or equal to 59.
+  """
+  minutes: Int
+
+  """
+  Seconds of a minute. Must be greater than or equal to 0 and typically must be less than or equal to 59. An API may allow the value 60 if it allows leap-seconds.
+  """
+  seconds: Int
+
+  """
+  Fractions of seconds, in nanoseconds. Must be greater than or equal to 0 and less than or equal to 999,999,999.
+  """
+  nanos: Int
+}
+
+"""Upcoming maintenance schedule."""
+input ClusterMaintenanceSchedule_Input {
+  """
+  Output only. The start time of any upcoming scheduled maintenance for this instance.
+  """
+  startTime: String
+
+  """
+  Output only. The end time of any upcoming scheduled maintenance for this instance.
+  """
+  endTime: String
+}
+
+"""
+Configuration of a service attachment of the cluster, for creating PSC connections.
+"""
+input PscServiceAttachment_Input {
+  """
+  Output only. Service attachment URI which your self-created PscConnection should use as target
+  """
+  serviceAttachment: String
+  connectionType: query_redis_projects_locations_clusters_list_clusters_items_pscServiceAttachments_items_connectionType
+}
+
+"""
+ClusterEndpoint consists of PSC connections that are created as a group in each VPC network for accessing the cluster. In each group, there shall be one connection for each service attachment in the cluster.
+"""
+input ClusterEndpoint_Input {
+  """
+  Required. A group of PSC connections. They are created in the same VPC network, one for each service attachment in the cluster.
+  """
+  connections: [ConnectionDetail_Input]
+}
+
+"""Detailed information of each PSC connection."""
+input ConnectionDetail_Input {
+  pscAutoConnection: PscAutoConnection_Input
+  pscConnection: PscConnection_Input
+}
+
+"""
+Details of consumer resources in a PSC connection that is created through Service Connectivity Automation.
+"""
+input PscAutoConnection_Input {
+  """
+  Output only. The PSC connection id of the forwarding rule connected to the service attachment.
+  """
+  pscConnectionId: String
+
+  """
+  Output only. The IP allocated on the consumer network for the PSC forwarding rule.
+  """
+  address: String
+
+  """
+  Output only. The URI of the consumer side forwarding rule. Example: projects/{projectNumOrId}/regions/us-east1/forwardingRules/{resourceId}.
+  """
+  forwardingRule: String
+
+  """
+  Required. The consumer project_id where the forwarding rule is created from.
+  """
+  projectId: String
+
+  """
+  Required. The consumer network where the IP address resides, in the form of projects/{project_id}/global/networks/{network_id}.
+  """
+  network: String
+
+  """
+  Output only. The service attachment which is the target of the PSC connection, in the form of projects/{project-id}/regions/{region}/serviceAttachments/{service-attachment-id}.
+  """
+  serviceAttachment: String
+  pscConnectionStatus: query_redis_projects_locations_clusters_list_clusters_items_clusterEndpoints_items_connections_items_pscAutoConnection_pscConnectionStatus
+  connectionType: query_redis_projects_locations_clusters_list_clusters_items_clusterEndpoints_items_connections_items_pscAutoConnection_connectionType
+}
+
+"""The automated backup config for a cluster."""
+input AutomatedBackupConfig_Input {
+  fixedFrequencySchedule: FixedFrequencySchedule_Input
+  automatedBackupMode: query_redis_projects_locations_clusters_list_clusters_items_automatedBackupConfig_automatedBackupMode
+
+  """
+  Optional. How long to keep automated backups before the backups are deleted. The value should be between 1 day and 365 days. If not specified, the default value is 35 days.
+  """
+  retention: String
+}
+
+"""
+This schedule allows the backup to be triggered at a fixed frequency (currently only daily is supported).
+"""
+input FixedFrequencySchedule_Input {
+  startTime: TimeOfDay_Input
+}
+
+"""
+EncryptionInfo describes the encryption information of a cluster or a backup.
+"""
+input EncryptionInfo_Input {
+  encryptionType: query_redis_projects_locations_clusters_list_clusters_items_encryptionInfo_encryptionType
+
+  """
+  Output only. KMS key versions that are being used to protect the data at-rest.
+  """
+  kmsKeyVersions: [String]
+  kmsKeyPrimaryState: query_redis_projects_locations_clusters_list_clusters_items_encryptionInfo_kmsKeyPrimaryState
+
+  """
+  Output only. The most recent time when the encryption info was updated.
+  """
+  lastUpdateTime: String
+}
+
+"""Request for rescheduling a cluster maintenance."""
+input RescheduleClusterMaintenanceRequest_Input {
+  rescheduleType: mutationInput_redis_projects_locations_clusters_rescheduleClusterMaintenance_input_rescheduleType
+
+  """
+  Optional. Timestamp when the maintenance shall be rescheduled to if reschedule_type=SPECIFIC_TIME, in RFC 3339 format, for example `2012-11-15T16:19:00.094Z`.
+  """
+  scheduleTime: String
+}
+
+"""
+Required. If reschedule type is SPECIFIC_TIME, must set up schedule_time as well.
+"""
+enum mutationInput_redis_projects_locations_clusters_rescheduleClusterMaintenance_input_rescheduleType {
+  RESCHEDULE_TYPE_UNSPECIFIED
+  IMMEDIATE
+  SPECIFIC_TIME
+}
+
+"""Request for [BackupCluster]."""
+input BackupClusterRequest_Input {
+  """
+  Optional. TTL for the backup to expire. Value range is 1 day to 100 years. If not specified, the default value is 100 years.
+  """
+  ttl: String
+
+  """
+  Optional. The id of the backup to be created. If not specified, the default value ([YYYYMMDDHHMMSS]_[Shortened Cluster UID] is used.
+  """
+  backupId: String
+}
+
+"""Request for [ExportBackup]."""
+input ExportBackupRequest_Input {
+  """Google Cloud Storage bucket, like "my-bucket"."""
+  gcsBucket: String
+}
+
+"""A Memorystore for Redis instance."""
+input Instance_Input {
+  """
+  Required. Unique name of the resource in this scope including project and location using the form: `projects/{project_id}/locations/{location_id}/instances/{instance_id}` Note: Redis instances are managed and addressed at regional level so location_id here refers to a GCP region; however, users may choose which specific zone (or collection of zones for cross-zone instances) an instance should be provisioned in. Refer to location_id and alternative_location_id fields for more details.
+  """
+  name: String
+
+  """An arbitrary and optional user-provided name for the instance."""
+  displayName: String
+
+  """Resource labels to represent user provided metadata"""
+  labels: JSON
+
+  """
+  Optional. The zone where the instance will be provisioned. If not provided, the service will choose a zone from the specified region for the instance. For standard tier, additional nodes will be added across multiple zones for protection against zonal failures. If specified, at least one node will be provisioned in this zone.
+  """
+  locationId: String
+
+  """
+  Optional. If specified, at least one node will be provisioned in this zone in addition to the zone specified in location_id. Only applicable to standard tier. If provided, it must be a different zone from the one provided in [location_id]. Additional nodes beyond the first 2 will be placed in zones selected by the service.
+  """
+  alternativeLocationId: String
+
+  """
+  Optional. The version of Redis software. If not provided, the default version will be used. Currently, the supported values are: * `REDIS_3_2` for Redis 3.2 compatibility * `REDIS_4_0` for Redis 4.0 compatibility * `REDIS_5_0` for Redis 5.0 compatibility * `REDIS_6_X` for Redis 6.x compatibility * `REDIS_7_0` for Redis 7.0 compatibility (default) * `REDIS_7_2` for Redis 7.2 compatibility
+  """
+  redisVersion: String
+
+  """
+  Optional. For DIRECT_PEERING mode, the CIDR range of internal addresses that are reserved for this instance. Range must be unique and non-overlapping with existing subnets in an authorized network. For PRIVATE_SERVICE_ACCESS mode, the name of one allocated IP address ranges associated with this private service access connection. If not provided, the service will choose an unused /29 block, for example, 10.0.0.0/29 or 192.168.0.0/29. For READ_REPLICAS_ENABLED the default block size is /28.
+  """
+  reservedIpRange: String
+
+  """
+  Optional. Additional IP range for node placement. Required when enabling read replicas on an existing instance. For DIRECT_PEERING mode value must be a CIDR range of size /28, or "auto". For PRIVATE_SERVICE_ACCESS mode value must be the name of an allocated address range associated with the private service access connection, or "auto".
+  """
+  secondaryIpRange: String
+
+  """
+  Output only. Hostname or IP address of the exposed Redis endpoint used by clients to connect to the service.
+  """
+  host: String
+
+  """Output only. The port number of the exposed Redis endpoint."""
+  port: Int
+
+  """
+  Output only. The current zone where the Redis primary node is located. In basic tier, this will always be the same as [location_id]. In standard tier, this can be the zone of any node in the instance.
+  """
+  currentLocationId: String
+
+  """Output only. The time the instance was created."""
+  createTime: String
+  state: query_redis_projects_locations_instances_list_instances_items_state
+
+  """
+  Output only. Additional information about the current status of this instance, if available.
+  """
+  statusMessage: String
+
+  """
+  Optional. Redis configuration parameters, according to [Redis configuration](https://redis.io/docs/latest/operate/oss_and_stack/management/config/). Currently, the only supported parameters are: Redis version 3.2 and newer: * maxmemory-policy * notify-keyspace-events Redis version 4.0 and newer: * activedefrag * lfu-decay-time * lfu-log-factor * maxmemory-gb Redis version 5.0 and newer: * stream-node-max-bytes * stream-node-max-entries
+  """
+  redisConfigs: JSON
+  tier: query_redis_projects_locations_instances_list_instances_items_tier
+
+  """Required. Redis memory size in GiB."""
+  memorySizeGb: Int
+
+  """
+  Optional. The full name of the Google Compute Engine [network](https://cloud.google.com/vpc/docs/vpc) to which the instance is connected. If left unspecified, the `default` network will be used.
+  """
+  authorizedNetwork: String
+
+  """
+  Output only. Cloud IAM identity used by import / export operations to transfer data to/from Cloud Storage. Format is "serviceAccount:". The value may change over time for a given instance so should be checked before each import/export operation.
+  """
+  persistenceIamIdentity: String
+  connectMode: query_redis_projects_locations_instances_list_instances_items_connectMode
+
+  """
+  Optional. Indicates whether OSS Redis AUTH is enabled for the instance. If set to "true" AUTH is enabled on the instance. Default value is "false" meaning AUTH is disabled.
+  """
+  authEnabled: Boolean
+
+  """Output only. List of server CA certificates for the instance."""
+  serverCaCerts: [TlsCertificate_Input]
+  transitEncryptionMode: query_redis_projects_locations_instances_list_instances_items_transitEncryptionMode
+  maintenancePolicy: MaintenancePolicy_Input
+  maintenanceSchedule: MaintenanceSchedule_Input
+
+  """
+  Optional. The number of replica nodes. The valid range for the Standard Tier with read replicas enabled is [1-5] and defaults to 2. If read replicas are not enabled for a Standard Tier instance, the only valid value is 1 and the default is 1. The valid value for basic tier is 0 and the default is also 0.
+  """
+  replicaCount: Int
+
+  """Output only. Info per node."""
+  nodes: [NodeInfo_Input]
+
+  """
+  Output only. Hostname or IP address of the exposed readonly Redis endpoint. Standard tier only. Targets all healthy replica nodes in instance. Replication is asynchronous and replica nodes will exhibit some lag behind the primary. Write requests must target 'host'.
+  """
+  readEndpoint: String
+
+  """
+  Output only. The port number of the exposed readonly redis endpoint. Standard tier only. Write requests should target 'port'.
+  """
+  readEndpointPort: Int
+  readReplicasMode: query_redis_projects_locations_instances_list_instances_items_readReplicasMode
+
+  """
+  Optional. The KMS key reference that the customer provides when trying to create the instance.
+  """
+  customerManagedKey: String
+  persistenceConfig: PersistenceConfig_Input
+
+  """Optional. reasons that causes instance in "SUSPENDED" state."""
+  suspensionReasons: [query_redis_projects_locations_instances_list_instances_items_suspensionReasons_items]
+
+  """
+  Optional. The self service update maintenance version. The version is date based such as "20210712_00_00".
+  """
+  maintenanceVersion: String
+
+  """
+  Optional. The available maintenance versions that an instance could update to.
+  """
+  availableMaintenanceVersions: [String]
+
+  """Optional. Output only. Reserved for future use."""
+  satisfiesPzs: Boolean
+
+  """Optional. Output only. Reserved for future use."""
+  satisfiesPzi: Boolean
+
+  """
+  Optional. Input only. Immutable. Tag keys/values directly bound to this resource. For example: "123/environment": "production", "123/costCenter": "marketing"
+  """
+  tags: JSON
+}
+
+"""TlsCertificate Resource"""
+input TlsCertificate_Input {
+  """Serial number, as extracted from the certificate."""
+  serialNumber: String
+
+  """PEM representation."""
+  cert: String
+
+  """
+  Output only. The time when the certificate was created in [RFC 3339](https://tools.ietf.org/html/rfc3339) format, for example `2020-05-18T00:00:00.094Z`.
+  """
+  createTime: String
+
+  """
+  Output only. The time when the certificate expires in [RFC 3339](https://tools.ietf.org/html/rfc3339) format, for example `2020-05-18T00:00:00.094Z`.
+  """
+  expireTime: String
+
+  """Sha1 Fingerprint of the certificate."""
+  sha1Fingerprint: String
+}
+
+"""Maintenance policy for an instance."""
+input MaintenancePolicy_Input {
+  """Output only. The time when the policy was created."""
+  createTime: String
+
+  """Output only. The time when the policy was last updated."""
+  updateTime: String
+
+  """
+  Optional. Description of what this policy is for. Create/Update methods return INVALID_ARGUMENT if the length is greater than 512.
+  """
+  description: String
+
+  """
+  Optional. Maintenance window that is applied to resources covered by this policy. Minimum 1. For the current version, the maximum number of weekly_window is expected to be one.
+  """
+  weeklyMaintenanceWindow: [WeeklyMaintenanceWindow_Input]
+}
+
+"""
+Time window in which disruptive maintenance updates occur. Non-disruptive updates can occur inside or outside this window.
+"""
+input WeeklyMaintenanceWindow_Input {
+  day: query_redis_projects_locations_instances_list_instances_items_maintenancePolicy_weeklyMaintenanceWindow_items_day
+  startTime: TimeOfDay_Input
+
+  """
+  Output only. Duration of the maintenance window. The current window is fixed at 1 hour.
+  """
+  duration: String
+}
+
+"""
+Upcoming maintenance schedule. If no maintenance is scheduled, fields are not populated.
+"""
+input MaintenanceSchedule_Input {
+  """
+  Output only. The start time of any upcoming scheduled maintenance for this instance.
+  """
+  startTime: String
+
+  """
+  Output only. The end time of any upcoming scheduled maintenance for this instance.
+  """
+  endTime: String
+
+  """If the scheduled maintenance can be rescheduled, default is true."""
+  canReschedule: Boolean
+
+  """
+  Output only. The deadline that the maintenance schedule start time can not go beyond, including reschedule.
+  """
+  scheduleDeadlineTime: String
+}
+
+"""Node specific properties."""
+input NodeInfo_Input {
+  """Output only. Node identifying string. e.g. 'node-0', 'node-1'"""
+  id: String
+
+  """Output only. Location of the node."""
+  zone: String
+}
+
+"""Configuration of the persistence functionality."""
+input PersistenceConfig_Input {
+  persistenceMode: query_redis_projects_locations_instances_list_instances_items_persistenceConfig_persistenceMode
+  rdbSnapshotPeriod: query_redis_projects_locations_instances_list_instances_items_persistenceConfig_rdbSnapshotPeriod
+
+  """
+  Output only. The next time that a snapshot attempt is scheduled to occur.
+  """
+  rdbNextSnapshotTime: String
+
+  """
+  Optional. Date and time that the first snapshot was/will be attempted, and to which future snapshots will be aligned. If not provided, the current time will be used.
+  """
+  rdbSnapshotStartTime: String
+}
+
+"""Request for UpgradeInstance."""
+input UpgradeInstanceRequest_Input {
+  """
+  Required. Specifies the target version of Redis software to upgrade to.
+  """
+  redisVersion: String
+}
+
+"""Request for Import."""
+input ImportInstanceRequest_Input {
+  inputConfig: InputConfig_Input
+}
+
+"""The input content"""
+input InputConfig_Input {
+  gcsSource: GcsSource_Input
+}
+
+"""The Cloud Storage location for the input content"""
+input GcsSource_Input {
+  """Required. Source data URI. (e.g. 'gs://my_bucket/my_object')."""
+  uri: String
+}
+
+"""Request for Export."""
+input ExportInstanceRequest_Input {
+  outputConfig: OutputConfig_Input
+}
+
+"""The output content"""
+input OutputConfig_Input {
+  gcsDestination: GcsDestination_Input
+}
+
+"""The Cloud Storage location for the output content"""
+input GcsDestination_Input {
+  """
+  Required. Data destination URI (e.g. 'gs://my_bucket/my_object'). Existing files will be overwritten.
+  """
+  uri: String
+}
+
+"""Request for Failover."""
+input FailoverInstanceRequest_Input {
+  dataProtectionMode: mutationInput_redis_projects_locations_instances_failover_input_dataProtectionMode
+}
+
+"""
+Optional. Available data protection modes that the user can choose. If it's unspecified, data protection mode will be LIMITED_DATA_LOSS by default.
+"""
+enum mutationInput_redis_projects_locations_instances_failover_input_dataProtectionMode {
+  DATA_PROTECTION_MODE_UNSPECIFIED
+  LIMITED_DATA_LOSS
+  FORCE_DATA_LOSS
+}
+
+"""Request for RescheduleMaintenance."""
+input RescheduleMaintenanceRequest_Input {
+  rescheduleType: mutationInput_redis_projects_locations_instances_rescheduleMaintenance_input_rescheduleType
+
+  """
+  Optional. Timestamp when the maintenance shall be rescheduled to if reschedule_type=SPECIFIC_TIME, in RFC 3339 format, for example `2012-11-15T16:19:00.094Z`.
+  """
+  scheduleTime: String
+}
+
+"""
+Required. If reschedule type is SPECIFIC_TIME, must set up schedule_time as well.
+"""
+enum mutationInput_redis_projects_locations_instances_rescheduleMaintenance_input_rescheduleType {
+  RESCHEDULE_TYPE_UNSPECIFIED
+  IMMEDIATE
+  NEXT_AVAILABLE_WINDOW
+  SPECIFIC_TIME
+}
+
+enum HTTPMethod {
+  GET
+  HEAD
+  POST
+  PUT
+  DELETE
+  CONNECT
+  OPTIONS
+  TRACE
+  PATCH
+}
+
+scalar ObjMap

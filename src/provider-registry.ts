@@ -26,7 +26,7 @@ export type BundledProviderGroupResolver = () => Promise<ProviderGroupItem[]>;
 /**
  * Named presets that compose multiple specs into one merged index.
  * - `providers`: references ids from BUNDLED_PROVIDERS
- * - `resolve`: custom resolver for manifest-backed groups (e.g. google-top20)
+ * - `resolve`: custom resolver for manifest-backed groups (e.g. google-top50)
  */
 export interface BundledProviderGroup {
   providers?: string[];
@@ -72,13 +72,13 @@ export const BUNDLED_PROVIDERS: Record<string, BundledProvider> = {
   },
 };
 
-async function resolveGoogleTop20Items(): Promise<ProviderGroupItem[]> {
+async function resolveGoogleTop50Items(): Promise<ProviderGroupItem[]> {
   const root = getPackageRoot();
-  const manifestPath = resolvePath(root, "providers/google/google-top20-apis.json");
+  const manifestPath = resolvePath(root, "providers/google/google-top50-apis.json");
   const text = await readFile(manifestPath, "utf-8");
   const data = JSON.parse(text) as { apis: Array<{ slug: string }> };
   if (!Array.isArray(data.apis)) {
-    throw new Error("google-top20-apis.json: expected apis[]");
+    throw new Error("google-top50-apis.json: expected apis[]");
   }
   return data.apis.map((a) => ({
     abs: resolvePath(root, "providers/google/apis", a.slug, "discovery.json"),
@@ -88,7 +88,7 @@ async function resolveGoogleTop20Items(): Promise<ProviderGroupItem[]> {
 
 export const BUNDLED_PROVIDER_GROUPS: Record<string, BundledProviderGroup> = {
   atlassian: { providers: ["jira", "bitbucket"] },
-  "google-top20": { resolve: resolveGoogleTop20Items },
+  "google-top50": { resolve: resolveGoogleTop50Items },
 };
 
 export function resolveBundledProvider(

@@ -20,6 +20,10 @@
  *   WORKFLOW_JIRA_ASSIGNEE_ACCOUNT_ID=... \
  *   node scripts/workflow-gke-cloudflare-jira.mjs
  *
+ * Dry-run (show request payload only; do not POST):
+ *   WORKFLOW_PREVIEW_JIRA_REQUEST=1 \
+ *   node scripts/workflow-gke-cloudflare-jira.mjs
+ *
  * Jira Cloud assignee uses **accountId** (find via Jira UI or GET /rest/api/3/user/search).
  */
 
@@ -110,6 +114,7 @@ function plainToAdf(text) {
 
 async function runSearchWorkflow() {
   process.env.CLAWQL_BUNDLED_OFFLINE = process.env.CLAWQL_BUNDLED_OFFLINE ?? "1";
+  process.env.CLAWQL_GOOGLE_TOP50_SPECS = process.env.CLAWQL_GOOGLE_TOP50_SPECS ?? "1";
 
   const { loadSpec, resetSpecCache } = await import(
     join(ROOT, "dist", "spec-loader.js")
@@ -120,9 +125,24 @@ async function runSearchWorkflow() {
 
   const stepsOut = [];
   const opIndex = new Map();
+  const providerOperationCounts = {};
+
+  // True operation totals per provider spec (independent of top search hits shown).
+  for (const provider of PROVIDERS) {
+    process.env.CLAWQL_PROVIDER = provider;
+    process.env.CLAWQL_GOOGLE_TOP50_SPECS = provider === "google" ? "1" : "0";
+    resetSpecCache();
+    const { operations } = await loadSpec();
+    providerOperationCounts[provider] = operations.length;
+  }
+  const mergedOperationCount = Object.values(providerOperationCounts).reduce(
+    (sum, count) => sum + count,
+    0
+  );
 
   for (const step of WORKFLOW) {
     process.env.CLAWQL_PROVIDER = step.provider;
+    process.env.CLAWQL_GOOGLE_TOP50_SPECS = step.provider === "google" ? "1" : "0";
     resetSpecCache();
     const { operations } = await loadSpec();
 
@@ -199,6 +219,8 @@ async function runSearchWorkflow() {
       generatedAt: new Date().toISOString(),
       bundledOffline: process.env.CLAWQL_BUNDLED_OFFLINE === "1",
       dueDateNextFriday: due,
+      mergedOperationCount,
+      providerOperationCounts,
       uniqueOperationsConsidered: opIndex.size,
     },
     jiraDraft: {
@@ -214,7 +236,10 @@ async function runSearchWorkflow() {
 }
 
 async function maybeCreateJiraIssue(draft) {
-  if (process.env.WORKFLOW_CREATE_JIRA_ISSUE !== "1") {
+  const shouldCreate = process.env.WORKFLOW_CREATE_JIRA_ISSUE === "1";
+  const shouldPreview = process.env.WORKFLOW_PREVIEW_JIRA_REQUEST === "1";
+
+  if (!shouldCreate && !shouldPreview) {
     return { skipped: true, reason: "Set WORKFLOW_CREATE_JIRA_ISSUE=1 to POST to Jira" };
   }
 
@@ -226,7 +251,7 @@ async function maybeCreateJiraIssue(draft) {
   const issueTypeName =
     process.env.WORKFLOW_JIRA_ISSUE_TYPE_NAME?.trim() || "Task";
 
-  if (!base || !projectKey) {
+  if (shouldCreate && (!base || !projectKey)) {
     return {
       skipped: false,
       ok: false,
@@ -264,7 +289,32 @@ async function maybeCreateJiraIssue(draft) {
 
   const body = { fields };
 
-  const url = `${base}/rest/api/3/issue`;
+  const url = base ? `${base}/rest/api/3/issue` : "<missing-base-url>/rest/api/3/issue";
+  const redactedHeaders = Object.fromEntries(
+    Object.entries(headers).map(([k, v]) => [
+      k,
+      k.toLowerCase() === "authorization" ? "<redacted>" : v,
+    ])
+  );
+
+  if (shouldPreview) {
+    const missingConfig = [];
+    if (!base) missingConfig.push("CLAWQL_API_BASE_URL (or JIRA_SITE)");
+    if (!projectKey) missingConfig.push("WORKFLOW_JIRA_PROJECT_KEY");
+    return {
+      preview: true,
+      skipped: true,
+      reason: "Dry run enabled; request not sent",
+      missingConfig,
+      request: {
+        method: "POST",
+        url,
+        headers: redactedHeaders,
+        body,
+      },
+    };
+  }
+
   const res = await fetch(url, {
     method: "POST",
     headers,
@@ -288,7 +338,13 @@ async function main() {
 
   console.log("=== ClawQL multi-provider workflow (search-only) ===\n");
   console.log(`Providers: ${PROVIDERS.join(", ")}`);
-  console.log(`Unique operations indexed (cumulative): ${report.meta.uniqueOperationsConsidered}`);
+  console.log(`Merged operations indexed across provider specs: ${report.meta.mergedOperationCount}`);
+  console.log(
+    `Per-provider operation counts: ${Object.entries(report.meta.providerOperationCounts)
+      .map(([provider, count]) => `${provider}=${count}`)
+      .join(", ")}`
+  );
+  console.log(`Unique candidate operations shown in this report: ${report.meta.uniqueOperationsConsidered}`);
   console.log(`Draft due date (next Friday): ${report.meta.dueDateNextFriday}\n`);
 
   for (const step of report.steps) {
@@ -312,9 +368,9 @@ async function main() {
 
   console.log("--- Jira draft (summary) ---");
   console.log(report.jiraDraft.summary);
-  console.log("\n--- Jira draft (description, plain excerpt) ---");
-  console.log(report.jiraDraft.descriptionPlain.slice(0, 1200));
-  console.log(report.jiraDraft.descriptionPlain.length > 1200 ? "\n… [truncated]\n" : "\n");
+console.log("\n--- Jira draft (description, full) ---");
+console.log(report.jiraDraft.descriptionPlain);
+console.log("");
 
   const jiraResult = await maybeCreateJiraIssue(report.jiraDraft);
   console.log("--- Jira API ---");
@@ -326,6 +382,7 @@ async function main() {
         ok: true,
         exit: "success",
         reportPath: outPath,
+        mergedOperationCount: report.meta.mergedOperationCount,
         jira: jiraResult,
       },
       null,

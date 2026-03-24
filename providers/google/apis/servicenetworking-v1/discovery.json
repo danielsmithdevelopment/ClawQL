@@ -1,35 +1,12 @@
 {
-  "description": "Provides automatic management of network configurations necessary for certain services.",
-  "baseUrl": "https://servicenetworking.googleapis.com/",
-  "discoveryVersion": "v1",
-  "protocol": "rest",
   "ownerName": "Google",
-  "basePath": "",
-  "rootUrl": "https://servicenetworking.googleapis.com/",
-  "title": "Service Networking API",
+  "discoveryVersion": "v1",
   "batchPath": "batch",
   "version": "v1",
   "canonicalName": "Service Networking",
-  "auth": {
-    "oauth2": {
-      "scopes": {
-        "https://www.googleapis.com/auth/cloud-platform": {
-          "description": "See, edit, configure, and delete your Google Cloud data and see the email address for your Google Account."
-        },
-        "https://www.googleapis.com/auth/service.management": {
-          "description": "Manage your Google API service configuration"
-        }
-      }
-    }
-  },
-  "servicePath": "",
-  "name": "servicenetworking",
-  "documentationLink": "https://cloud.google.com/service-infrastructure/docs/service-networking/getting-started",
-  "icons": {
-    "x16": "http://www.google.com/images/icons/product/search-16.gif",
-    "x32": "http://www.google.com/images/icons/product/search-32.gif"
-  },
-  "kind": "discovery#restDescription",
+  "mtlsRootUrl": "https://servicenetworking.mtls.googleapis.com/",
+  "rootUrl": "https://servicenetworking.googleapis.com/",
+  "version_module": true,
   "parameters": {
     "access_token": {
       "type": "string",
@@ -107,10 +84,32 @@
       "location": "query"
     }
   },
+  "fullyEncodeReservedExpansion": true,
+  "protocol": "rest",
+  "basePath": "",
+  "description": "Provides automatic management of network configurations necessary for certain services.",
+  "icons": {
+    "x16": "http://www.google.com/images/icons/product/search-16.gif",
+    "x32": "http://www.google.com/images/icons/product/search-32.gif"
+  },
+  "revision": "20260316",
+  "auth": {
+    "oauth2": {
+      "scopes": {
+        "https://www.googleapis.com/auth/cloud-platform": {
+          "description": "See, edit, configure, and delete your Google Cloud data and see the email address for your Google Account."
+        },
+        "https://www.googleapis.com/auth/service.management": {
+          "description": "Manage your Google API service configuration"
+        }
+      }
+    }
+  },
+  "servicePath": "",
+  "baseUrl": "https://servicenetworking.googleapis.com/",
+  "title": "Service Networking API",
+  "documentationLink": "https://cloud.google.com/service-infrastructure/docs/service-networking/getting-started",
   "ownerDomain": "google.com",
-  "version_module": true,
-  "mtlsRootUrl": "https://servicenetworking.mtls.googleapis.com/",
-  "id": "servicenetworking:v1",
   "schemas": {
     "ListOperationsResponse": {
       "id": "ListOperationsResponse",
@@ -3451,7 +3450,7 @@
       "properties": {}
     }
   },
-  "revision": "20260316",
+  "kind": "discovery#restDescription",
   "resources": {
     "operations": {
       "methods": {
@@ -4379,5 +4378,6 @@
       }
     }
   },
-  "fullyEncodeReservedExpansion": true
+  "name": "servicenetworking",
+  "id": "servicenetworking:v1"
 }

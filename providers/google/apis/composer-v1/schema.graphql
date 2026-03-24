@@ -1,0 +1,2090 @@
+directive @enum(subgraph: String, value: String) on ENUM_VALUE
+
+directive @httpOperation(subgraph: String, path: String, operationSpecificHeaders: [[String]], httpMethod: HTTPMethod, isBinary: Boolean, requestBaseBody: ObjMap, queryParamArgMap: ObjMap, queryStringOptionsByParam: ObjMap, jsonApiFields: Boolean, queryStringOptions: ObjMap) on FIELD_DEFINITION
+
+directive @transport(subgraph: String, kind: String, location: String, headers: [[String]], queryStringOptions: ObjMap, queryParams: [[String]]) repeatable on SCHEMA
+
+type Query {
+  """
+  Lists operations that match the specified filter in the request. If the server doesn't support this method, it returns `UNIMPLEMENTED`.
+  """
+  composer_projects_locations_operations_list(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """The standard list filter."""
+    filter: String
+
+    """The standard list page size."""
+    pageSize: Int
+
+    """The standard list page token."""
+    pageToken: String
+
+    """
+    When set to `true`, operations that are reachable are returned as normal, and those that are unreachable are returned in the ListOperationsResponse.unreachable field. This can only be `true` when reading across collections. For example, when `parent` is set to `"projects/example/locations/-"`. This field is not supported by default and will result in an `UNIMPLEMENTED` error if set unless explicitly documented otherwise in service or product specific documentation.
+    """
+    returnPartialSuccess: Boolean
+  ): ListOperationsResponse
+
+  """
+  Gets the latest state of a long-running operation. Clients can use this method to poll the operation result at intervals as recommended by the API service.
+  """
+  composer_projects_locations_operations_get(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter operationsId"""
+    operationsId: String!
+  ): Operation
+
+  """List environments."""
+  composer_projects_locations_environments_list(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """The maximum number of environments to return."""
+    pageSize: Int
+
+    """
+    The next_page_token value returned from a previous List request, if any.
+    """
+    pageToken: String
+  ): ListEnvironmentsResponse
+
+  """Get an existing environment."""
+  composer_projects_locations_environments_get(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter environmentsId"""
+    environmentsId: String!
+  ): Environment
+
+  """Fetches database properties."""
+  composer_projects_locations_environments_fetchDatabaseProperties(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter environmentsId"""
+    environmentsId: String!
+  ): FetchDatabasePropertiesResponse
+
+  """
+  Lists workloads in a Cloud Composer environment. Workload is a unit that runs a single Composer component. This method is supported for Cloud Composer environments in versions composer-2.*.*-airflow-*.*.* and newer.
+  """
+  composer_projects_locations_environments_workloads_list(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter environmentsId"""
+    environmentsId: String!
+
+    """Optional. The maximum number of environments to return."""
+    pageSize: Int
+
+    """
+    Optional. The next_page_token value returned from a previous List request, if any.
+    """
+    pageToken: String
+
+    """
+    Optional. The list filter. Currently only supports equality on the type field. The value of a field specified in the filter expression must be one ComposerWorkloadType enum option. It's possible to get multiple types using "OR" operator, e.g.: "type=SCHEDULER OR type=CELERY_WORKER". If not specified, all items are returned.
+    """
+    filter: String
+  ): ListWorkloadsResponse
+
+  """
+  Lists user workloads Secrets. This method is supported for Cloud Composer environments in versions composer-3-airflow-*.*.*-build.* and newer.
+  """
+  composer_projects_locations_environments_userWorkloadsSecrets_list(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter environmentsId"""
+    environmentsId: String!
+
+    """Optional. The maximum number of Secrets to return."""
+    pageSize: Int
+
+    """
+    Optional. The next_page_token value returned from a previous List request, if any.
+    """
+    pageToken: String
+  ): ListUserWorkloadsSecretsResponse
+
+  """
+  Gets an existing user workloads Secret. Values of the "data" field in the response are cleared. This method is supported for Cloud Composer environments in versions composer-3-airflow-*.*.*-build.* and newer.
+  """
+  composer_projects_locations_environments_userWorkloadsSecrets_get(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter environmentsId"""
+    environmentsId: String!
+
+    """Path parameter userWorkloadsSecretsId"""
+    userWorkloadsSecretsId: String!
+  ): UserWorkloadsSecret
+
+  """
+  Lists user workloads ConfigMaps. This method is supported for Cloud Composer environments in versions composer-3-airflow-*.*.*-build.* and newer.
+  """
+  composer_projects_locations_environments_userWorkloadsConfigMaps_list(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter environmentsId"""
+    environmentsId: String!
+
+    """Optional. The maximum number of ConfigMaps to return."""
+    pageSize: Int
+
+    """
+    Optional. The next_page_token value returned from a previous List request, if any.
+    """
+    pageToken: String
+  ): ListUserWorkloadsConfigMapsResponse
+
+  """
+  Gets an existing user workloads ConfigMap. This method is supported for Cloud Composer environments in versions composer-3-airflow-*.*.*-build.* and newer.
+  """
+  composer_projects_locations_environments_userWorkloadsConfigMaps_get(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter environmentsId"""
+    environmentsId: String!
+
+    """Path parameter userWorkloadsConfigMapsId"""
+    userWorkloadsConfigMapsId: String!
+  ): UserWorkloadsConfigMap
+
+  """List ImageVersions for provided location."""
+  composer_projects_locations_imageVersions_list(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """The maximum number of image_versions to return."""
+    pageSize: Int
+
+    """
+    The next_page_token value returned from a previous List request, if any.
+    """
+    pageToken: String
+
+    """Whether or not image versions from old releases should be included."""
+    includePastReleases: Boolean
+  ): ListImageVersionsResponse
+}
+
+"""The response message for Operations.ListOperations."""
+type ListOperationsResponse {
+  """A list of operations that matches the specified filter in the request."""
+  operations: [Operation]
+
+  """The standard List next-page token."""
+  nextPageToken: String
+
+  """
+  Unordered list. Unreachable resources. Populated when the request sets `ListOperationsRequest.return_partial_success` and reads across collections. For example, when attempting to list all resources across all supported locations.
+  """
+  unreachable: [String]
+}
+
+"""
+This resource represents a long-running operation that is the result of a network API call.
+"""
+type Operation {
+  """
+  The server-assigned name, which is only unique within the same service that originally returns it. If you use the default HTTP mapping, the `name` should be a resource name ending with `operations/{unique_id}`.
+  """
+  name: String
+
+  """
+  Service-specific metadata associated with the operation. It typically contains progress information and common metadata such as create time. Some services might not provide such metadata. Any method that returns a long-running operation should document the metadata type, if any.
+  """
+  metadata: JSON
+
+  """
+  If the value is `false`, it means the operation is still in progress. If `true`, the operation is completed, and either `error` or `response` is available.
+  """
+  done: Boolean
+  error: Status
+
+  """
+  The normal, successful response of the operation. If the original method returns no data on success, such as `Delete`, the response is `google.protobuf.Empty`. If the original method is standard `Get`/`Create`/`Update`, the response should be the resource. For other methods, the response should have the type `XxxResponse`, where `Xxx` is the original method name. For example, if the original method name is `TakeSnapshot()`, the inferred response type is `TakeSnapshotResponse`.
+  """
+  response: JSON
+}
+
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSON @specifiedBy(url: "http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf")
+
+"""
+The `Status` type defines a logical error model that is suitable for different programming environments, including REST APIs and RPC APIs. It is used by [gRPC](https://github.com/grpc). Each `Status` message contains three pieces of data: error code, error message, and error details. You can find out more about this error model and how to work with it in the [API Design Guide](https://cloud.google.com/apis/design/errors).
+"""
+type Status {
+  """The status code, which should be an enum value of google.rpc.Code."""
+  code: Int
+
+  """
+  A developer-facing error message, which should be in English. Any user-facing error message should be localized and sent in the google.rpc.Status.details field, or localized by the client.
+  """
+  message: String
+
+  """
+  A list of messages that carry the error details. There is a common set of message types for APIs to use.
+  """
+  details: [JSON]
+}
+
+"""The environments in a project and location."""
+type ListEnvironmentsResponse {
+  """The list of environments returned by a ListEnvironmentsRequest."""
+  environments: [Environment]
+
+  """The page token used to query for the next page if one exists."""
+  nextPageToken: String
+}
+
+"""An environment for running orchestration tasks."""
+type Environment {
+  """
+  Identifier. The resource name of the environment, in the form: "projects/{projectId}/locations/{locationId}/environments/{environmentId}" EnvironmentId must start with a lowercase letter followed by up to 63 lowercase letters, numbers, or hyphens, and cannot end with a hyphen.
+  """
+  name: String
+  config: EnvironmentConfig
+
+  """
+  Output only. The UUID (Universally Unique IDentifier) associated with this environment. This value is generated when the environment is created.
+  """
+  uuid: String
+  state: query_composer_projects_locations_environments_list_environments_items_state
+
+  """Output only. The time at which this environment was created."""
+  createTime: String
+
+  """Output only. The time at which this environment was last modified."""
+  updateTime: String
+
+  """
+  Optional. User-defined labels for this environment. The labels map can contain no more than 64 entries. Entries of the labels map are UTF8 strings that comply with the following restrictions: * Keys must conform to regexp: \p{Ll}\p{Lo}{0,62} * Values must conform to regexp: [\p{Ll}\p{Lo}\p{N}_-]{0,63} * Both keys and values are additionally constrained to be <= 128 bytes in size.
+  """
+  labels: JSON
+
+  """Output only. Reserved for future use."""
+  satisfiesPzs: Boolean
+
+  """Output only. Reserved for future use."""
+  satisfiesPzi: Boolean
+  storageConfig: StorageConfig
+}
+
+"""Configuration information for an environment."""
+type EnvironmentConfig {
+  """
+  Output only. The Kubernetes Engine cluster used to run this environment.
+  """
+  gkeCluster: String
+
+  """
+  Output only. The Cloud Storage prefix of the DAGs for this environment. Although Cloud Storage objects reside in a flat namespace, a hierarchical file tree can be simulated using "/"-delimited object name prefixes. DAG objects for this environment reside in a simulated directory with the given prefix.
+  """
+  dagGcsPrefix: String
+
+  """
+  The number of nodes in the Kubernetes Engine cluster that will be used to run this environment. This field is supported for Cloud Composer environments in versions composer-1.*.*-airflow-*.*.*.
+  """
+  nodeCount: Int
+  softwareConfig: SoftwareConfig
+  nodeConfig: NodeConfig
+  privateEnvironmentConfig: PrivateEnvironmentConfig
+  webServerNetworkAccessControl: WebServerNetworkAccessControl
+  databaseConfig: DatabaseConfig
+  webServerConfig: WebServerConfig
+  encryptionConfig: EncryptionConfig
+  maintenanceWindow: MaintenanceWindow
+  workloadsConfig: WorkloadsConfig
+  environmentSize: query_composer_projects_locations_environments_list_environments_items_config_environmentSize
+
+  """
+  Output only. The URI of the Apache Airflow Web UI hosted within this environment (see [Airflow web interface](/composer/docs/how-to/accessing/airflow-web-interface)).
+  """
+  airflowUri: String
+
+  """
+  Output only. The 'bring your own identity' variant of the URI of the Apache Airflow Web UI hosted within this environment, to be accessed with external identities using workforce identity federation (see [Access environments with workforce identity federation](/composer/docs/composer-2/access-environments-with-workforce-identity-federation)).
+  """
+  airflowByoidUri: String
+  masterAuthorizedNetworksConfig: MasterAuthorizedNetworksConfig
+  recoveryConfig: RecoveryConfig
+  resilienceMode: query_composer_projects_locations_environments_list_environments_items_config_resilienceMode
+  dataRetentionConfig: DataRetentionConfig
+}
+
+"""
+Specifies the selection and configuration of software inside the environment.
+"""
+type SoftwareConfig {
+  """
+  Optional. The version of the software running in the environment. This encapsulates both the version of Cloud Composer functionality and the version of Apache Airflow. It must match the regular expression `composer-([0-9]+(\.[0-9]+\.[0-9]+(-preview\.[0-9]+)?)?|latest)-airflow-([0-9]+(\.[0-9]+(\.[0-9]+)?)?)`. When used as input, the server also checks if the provided version is supported and denies the request for an unsupported version. The Cloud Composer portion of the image version is a full [semantic version](https://semver.org), or an alias in the form of major version number or `latest`. When an alias is provided, the server replaces it with the current Cloud Composer version that satisfies the alias. The Apache Airflow portion of the image version is a full semantic version that points to one of the supported Apache Airflow versions, or an alias in the form of only major or major.minor versions specified. When an alias is provided, the server replaces it with the latest Apache Airflow version that satisfies the alias and is supported in the given Cloud Composer version. In all cases, the resolved image version is stored in the same field. See also [version list](/composer/docs/concepts/versioning/composer-versions) and [versioning overview](/composer/docs/concepts/versioning/composer-versioning-overview).
+  """
+  imageVersion: String
+
+  """
+  Optional. Apache Airflow configuration properties to override. Property keys contain the section and property names, separated by a hyphen, for example "core-dags_are_paused_at_creation". Section names must not contain hyphens ("-"), opening square brackets ("["), or closing square brackets ("]"). The property name must not be empty and must not contain an equals sign ("=") or semicolon (";"). Section and property names must not contain a period ("."). Apache Airflow configuration property names must be written in [snake_case](https://en.wikipedia.org/wiki/Snake_case). Property values can contain any character, and can be written in any lower/upper case format. Certain Apache Airflow configuration property values are [blocked](/composer/docs/concepts/airflow-configurations), and cannot be overridden.
+  """
+  airflowConfigOverrides: JSON
+
+  """
+  Optional. Custom Python Package Index (PyPI) packages to be installed in the environment. Keys refer to the lowercase package name such as "numpy" and values are the lowercase extras and version specifier such as "==1.12.0", "[devel,gcp_api]", or "[devel]>=1.8.2, <1.9.2". To specify a package without pinning it to a version specifier, use the empty string as the value.
+  """
+  pypiPackages: JSON
+
+  """
+  Optional. Additional environment variables to provide to the Apache Airflow scheduler, worker, and webserver processes. Environment variable names must match the regular expression `a-zA-Z_*`. They cannot specify Apache Airflow software configuration overrides (they cannot match the regular expression `AIRFLOW__[A-Z0-9_]+__[A-Z0-9_]+`), and they cannot match any of the following reserved names: * `AIRFLOW_HOME` * `C_FORCE_ROOT` * `CONTAINER_NAME` * `DAGS_FOLDER` * `GCP_PROJECT` * `GCS_BUCKET` * `GKE_CLUSTER_NAME` * `SQL_DATABASE` * `SQL_INSTANCE` * `SQL_PASSWORD` * `SQL_PROJECT` * `SQL_REGION` * `SQL_USER`
+  """
+  envVariables: JSON
+
+  """
+  Optional. The major version of Python used to run the Apache Airflow scheduler, worker, and webserver processes. Can be set to '2' or '3'. If not specified, the default is '3'. Cannot be updated. This field is only supported for Cloud Composer environments in versions composer-1.*.*-airflow-*.*.*. Environments in newer versions always use Python major version 3.
+  """
+  pythonVersion: String
+
+  """
+  Optional. The number of schedulers for Airflow. This field is supported for Cloud Composer environments in versions composer-1.*.*-airflow-2.*.*.
+  """
+  schedulerCount: Int
+  cloudDataLineageIntegration: CloudDataLineageIntegration
+  webServerPluginsMode: query_composer_projects_locations_environments_list_environments_items_config_softwareConfig_webServerPluginsMode
+}
+
+"""Configuration for Cloud Data Lineage integration."""
+type CloudDataLineageIntegration {
+  """Optional. Whether or not Cloud Data Lineage integration is enabled."""
+  enabled: Boolean
+}
+
+"""
+Optional. Whether or not the web server uses custom plugins. If unspecified, the field defaults to `PLUGINS_ENABLED`. This field is supported for Cloud Composer environments in versions composer-3-airflow-*.*.*-build.* and newer.
+"""
+enum query_composer_projects_locations_environments_list_environments_items_config_softwareConfig_webServerPluginsMode {
+  WEB_SERVER_PLUGINS_MODE_UNSPECIFIED
+  PLUGINS_DISABLED
+  PLUGINS_ENABLED
+}
+
+"""
+The configuration information for the Kubernetes Engine nodes running the Apache Airflow software.
+"""
+type NodeConfig {
+  """
+  Optional. The Compute Engine [zone](/compute/docs/regions-zones) in which to deploy the VMs used to run the Apache Airflow software, specified as a [relative resource name](/apis/design/resource_names#relative_resource_name). For example: "projects/{projectId}/zones/{zoneId}". This `location` must belong to the enclosing environment's project and location. If both this field and `nodeConfig.machineType` are specified, `nodeConfig.machineType` must belong to this `location`; if both are unspecified, the service will pick a zone in the Compute Engine region corresponding to the Cloud Composer location, and propagate that choice to both fields. If only one field (`location` or `nodeConfig.machineType`) is specified, the location information from the specified field will be propagated to the unspecified field. This field is supported for Cloud Composer environments in versions composer-1.*.*-airflow-*.*.*.
+  """
+  location: String
+
+  """
+  Optional. The Compute Engine [machine type](/compute/docs/machine-types) used for cluster instances, specified as a [relative resource name](/apis/design/resource_names#relative_resource_name). For example: "projects/{projectId}/zones/{zoneId}/machineTypes/{machineTypeId}". The `machineType` must belong to the enclosing environment's project and location. If both this field and `nodeConfig.location` are specified, this `machineType` must belong to the `nodeConfig.location`; if both are unspecified, the service will pick a zone in the Compute Engine region corresponding to the Cloud Composer location, and propagate that choice to both fields. If exactly one of this field and `nodeConfig.location` is specified, the location information from the specified field will be propagated to the unspecified field. The `machineTypeId` must not be a [shared-core machine type](/compute/docs/machine-types#sharedcore). If this field is unspecified, the `machineTypeId` defaults to "n1-standard-1". This field is supported for Cloud Composer environments in versions composer-1.*.*-airflow-*.*.*.
+  """
+  machineType: String
+
+  """
+  Optional. The Compute Engine network to be used for machine communications, specified as a [relative resource name](/apis/design/resource_names#relative_resource_name). For example: "projects/{projectId}/global/networks/{networkId}". If unspecified, the "default" network ID in the environment's project is used. If a [Custom Subnet Network](/vpc/docs/vpc#vpc_networks_and_subnets) is provided, `nodeConfig.subnetwork` must also be provided. For [Shared VPC](/vpc/docs/shared-vpc) subnetwork requirements, see `nodeConfig.subnetwork`.
+  """
+  network: String
+
+  """
+  Optional. The Compute Engine subnetwork to be used for machine communications, specified as a [relative resource name](/apis/design/resource_names#relative_resource_name). For example: "projects/{projectId}/regions/{regionId}/subnetworks/{subnetworkId}" If a subnetwork is provided, `nodeConfig.network` must also be provided, and the subnetwork must belong to the enclosing environment's project and location.
+  """
+  subnetwork: String
+
+  """
+  Optional. The disk size in GB used for node VMs. Minimum size is 30GB. If unspecified, defaults to 100GB. Cannot be updated. This field is supported for Cloud Composer environments in versions composer-1.*.*-airflow-*.*.*.
+  """
+  diskSizeGb: Int
+
+  """
+  Optional. The set of Google API scopes to be made available on all node VMs. If `oauth_scopes` is empty, defaults to ["https://www.googleapis.com/auth/cloud-platform"]. Cannot be updated. This field is supported for Cloud Composer environments in versions composer-1.*.*-airflow-*.*.*.
+  """
+  oauthScopes: [String]
+
+  """
+  Optional. The Google Cloud Platform Service Account to be used by the node VMs. If a service account is not specified, the "default" Compute Engine service account is used. Cannot be updated.
+  """
+  serviceAccount: String
+
+  """
+  Optional. The list of instance tags applied to all node VMs. Tags are used to identify valid sources or targets for network firewalls. Each tag within the list must comply with [RFC1035](https://www.ietf.org/rfc/rfc1035.txt). Cannot be updated.
+  """
+  tags: [String]
+  ipAllocationPolicy: IPAllocationPolicy
+
+  """
+  Optional. Deploys 'ip-masq-agent' daemon set in the GKE cluster and defines nonMasqueradeCIDRs equals to pod IP range so IP masquerading is used for all destination addresses, except between pods traffic. See: https://cloud.google.com/kubernetes-engine/docs/how-to/ip-masquerade-agent
+  """
+  enableIpMasqAgent: Boolean
+
+  """
+  Optional. Network Attachment that Cloud Composer environment is connected to, which provides connectivity with a user's VPC network. Takes precedence over network and subnetwork settings. If not provided, but network and subnetwork are defined during environment, it will be provisioned. If not provided and network and subnetwork are also empty, then connectivity to user's VPC network is disabled. Network attachment must be provided in format projects/{project}/regions/{region}/networkAttachments/{networkAttachment}. This field is supported for Cloud Composer environments in versions composer-3-airflow-*.*.*-build.* and newer.
+  """
+  composerNetworkAttachment: String
+
+  """
+  Optional. The IP range in CIDR notation to use internally by Cloud Composer. IP addresses are not reserved - and the same range can be used by multiple Cloud Composer environments. In case of overlap, IPs from this range will not be accessible in the user's VPC network. Cannot be updated. If not specified, the default value of '100.64.128.0/20' is used. This field is supported for Cloud Composer environments in versions composer-3-airflow-*.*.*-build.* and newer.
+  """
+  composerInternalIpv4CidrBlock: String
+}
+
+"""
+Configuration for controlling how IPs are allocated in the GKE cluster running the Apache Airflow software.
+"""
+type IPAllocationPolicy {
+  """
+  Optional. Whether or not to enable Alias IPs in the GKE cluster. If `true`, a VPC-native cluster is created. This field is only supported for Cloud Composer environments in versions composer-1.*.*-airflow-*.*.*. Environments in newer versions always use VPC-native GKE clusters.
+  """
+  useIpAliases: Boolean
+
+  """
+  Optional. The name of the GKE cluster's secondary range used to allocate IP addresses to pods. For Cloud Composer environments in versions composer-1.*.*-airflow-*.*.*, this field is applicable only when `use_ip_aliases` is true.
+  """
+  clusterSecondaryRangeName: String
+
+  """
+  Optional. The IP address range used to allocate IP addresses to pods in the GKE cluster. For Cloud Composer environments in versions composer-1.*.*-airflow-*.*.*, this field is applicable only when `use_ip_aliases` is true. Set to blank to have GKE choose a range with the default size. Set to /netmask (e.g. `/14`) to have GKE choose a range with a specific netmask. Set to a [CIDR](https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing) notation (e.g. `10.96.0.0/14`) from the RFC-1918 private networks (e.g. `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`) to pick a specific range to use.
+  """
+  clusterIpv4CidrBlock: String
+
+  """
+  Optional. The name of the services' secondary range used to allocate IP addresses to the GKE cluster. For Cloud Composer environments in versions composer-1.*.*-airflow-*.*.*, this field is applicable only when `use_ip_aliases` is true.
+  """
+  servicesSecondaryRangeName: String
+
+  """
+  Optional. The IP address range of the services IP addresses in this GKE cluster. For Cloud Composer environments in versions composer-1.*.*-airflow-*.*.*, this field is applicable only when `use_ip_aliases` is true. Set to blank to have GKE choose a range with the default size. Set to /netmask (e.g. `/14`) to have GKE choose a range with a specific netmask. Set to a [CIDR](https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing) notation (e.g. `10.96.0.0/14`) from the RFC-1918 private networks (e.g. `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`) to pick a specific range to use.
+  """
+  servicesIpv4CidrBlock: String
+}
+
+"""
+The configuration information for configuring a Private IP Cloud Composer environment.
+"""
+type PrivateEnvironmentConfig {
+  networkingType: query_composer_projects_locations_environments_list_environments_items_config_privateEnvironmentConfig_networkingType
+
+  """
+  Optional. If `true`, a Private IP Cloud Composer environment is created. If this field is set to true, `IPAllocationPolicy.use_ip_aliases` must be set to true for Cloud Composer environments in versions composer-1.*.*-airflow-*.*.*. This field is going to be deprecated. Use `networking_type` instead.
+  """
+  enablePrivateEnvironment: Boolean
+
+  """
+  Optional. If `true`, builds performed during operations that install Python packages have only private connectivity to Google services (including Artifact Registry) and VPC network (if either `NodeConfig.network` and `NodeConfig.subnetwork` fields or `NodeConfig.composer_network_attachment` field are specified). If `false`, the builds also have access to the internet. This field is supported for Cloud Composer environments in versions composer-3-airflow-*.*.*-build.* and newer.
+  """
+  enablePrivateBuildsOnly: Boolean
+  privateClusterConfig: PrivateClusterConfig
+
+  """
+  Optional. The CIDR block from which IP range for web server will be reserved. Needs to be disjoint from `private_cluster_config.master_ipv4_cidr_block` and `cloud_sql_ipv4_cidr_block`. This field is supported for Cloud Composer environments in versions composer-1.*.*-airflow-*.*.*.
+  """
+  webServerIpv4CidrBlock: String
+
+  """
+  Optional. The CIDR block from which IP range in tenant project will be reserved for Cloud SQL. Needs to be disjoint from `web_server_ipv4_cidr_block`.
+  """
+  cloudSqlIpv4CidrBlock: String
+
+  """
+  Output only. The IP range reserved for the tenant project's App Engine VMs. This field is supported for Cloud Composer environments in versions composer-1.*.*-airflow-*.*.*.
+  """
+  webServerIpv4ReservedRange: String
+
+  """
+  Optional. The CIDR block from which IP range for Cloud Composer Network in tenant project will be reserved. Needs to be disjoint from private_cluster_config.master_ipv4_cidr_block and cloud_sql_ipv4_cidr_block. This field is supported for Cloud Composer environments in versions composer-2.*.*-airflow-*.*.* and newer.
+  """
+  cloudComposerNetworkIpv4CidrBlock: String
+
+  """
+  Output only. The IP range reserved for the tenant project's Cloud Composer network. This field is supported for Cloud Composer environments in versions composer-2.*.*-airflow-*.*.* and newer.
+  """
+  cloudComposerNetworkIpv4ReservedRange: String
+
+  """
+  Optional. When enabled, IPs from public (non-RFC1918) ranges can be used for `IPAllocationPolicy.cluster_ipv4_cidr_block` and `IPAllocationPolicy.service_ipv4_cidr_block`.
+  """
+  enablePrivatelyUsedPublicIps: Boolean
+
+  """
+  Optional. When specified, the environment will use Private Service Connect instead of VPC peerings to connect to Cloud SQL in the Tenant Project, and the PSC endpoint in the Customer Project will use an IP address from this subnetwork.
+  """
+  cloudComposerConnectionSubnetwork: String
+  networkingConfig: NetworkingConfig
+}
+
+"""
+Optional. Networking type for the environment, either private or public.
+"""
+enum query_composer_projects_locations_environments_list_environments_items_config_privateEnvironmentConfig_networkingType {
+  NETWORKING_TYPE_UNSPECIFIED
+  PRIVATE
+  PUBLIC
+}
+
+"""
+Configuration options for the private GKE cluster in a Cloud Composer environment.
+"""
+type PrivateClusterConfig {
+  """
+  Optional. If `true`, access to the public endpoint of the GKE cluster is denied.
+  """
+  enablePrivateEndpoint: Boolean
+
+  """
+  Optional. The CIDR block from which IPv4 range for GKE master will be reserved. If left blank, the default value of '172.16.0.0/23' is used.
+  """
+  masterIpv4CidrBlock: String
+
+  """
+  Output only. The IP range in CIDR notation to use for the hosted master network. This range is used for assigning internal IP addresses to the GKE cluster master or set of masters and to the internal load balancer virtual IP. This range must not overlap with any other ranges in use within the cluster's network.
+  """
+  masterIpv4ReservedRange: String
+}
+
+"""
+Configuration options for networking connections in the Composer 2 environment.
+"""
+type NetworkingConfig {
+  connectionType: query_composer_projects_locations_environments_list_environments_items_config_privateEnvironmentConfig_networkingConfig_connectionType
+}
+
+"""
+Optional. Indicates the user requested specific connection type between Tenant and Customer projects. You cannot set networking connection type in public IP environment.
+"""
+enum query_composer_projects_locations_environments_list_environments_items_config_privateEnvironmentConfig_networkingConfig_connectionType {
+  CONNECTION_TYPE_UNSPECIFIED
+  VPC_PEERING
+  PRIVATE_SERVICE_CONNECT
+}
+
+"""Network-level access control policy for the Airflow web server."""
+type WebServerNetworkAccessControl {
+  """A collection of allowed IP ranges with descriptions."""
+  allowedIpRanges: [AllowedIpRange]
+}
+
+"""Allowed IP range with user-provided description."""
+type AllowedIpRange {
+  """
+  IP address or range, defined using CIDR notation, of requests that this rule applies to. Examples: `192.168.1.1` or `192.168.0.0/16` or `2001:db8::/32` or `2001:0db8:0000:0042:0000:8a2e:0370:7334`. IP range prefixes should be properly truncated. For example, `1.2.3.4/24` should be truncated to `1.2.3.0/24`. Similarly, for IPv6, `2001:db8::1/32` should be truncated to `2001:db8::/32`.
+  """
+  value: String
+
+  """
+  Optional. User-provided description. It must contain at most 300 characters.
+  """
+  description: String
+}
+
+"""
+The configuration of Cloud SQL instance that is used by the Apache Airflow software.
+"""
+type DatabaseConfig {
+  """
+  Optional. Cloud SQL machine type used by Airflow database. It has to be one of: db-n1-standard-2, db-n1-standard-4, db-n1-standard-8 or db-n1-standard-16. If not specified, db-n1-standard-2 will be used. Supported for Cloud Composer environments in versions composer-1.*.*-airflow-*.*.*.
+  """
+  machineType: String
+
+  """
+  Optional. The Compute Engine zone where the Airflow database is created. If zone is provided, it must be in the region selected for the environment. If zone is not provided, a zone is automatically selected. The zone can only be set during environment creation. Supported for Cloud Composer environments in versions composer-2.*.*-airflow-*.*.*.
+  """
+  zone: String
+}
+
+"""
+The configuration settings for the Airflow web server App Engine instance. Supported for Cloud Composer environments in versions composer-1.*.*-airflow-*.*.*
+"""
+type WebServerConfig {
+  """
+  Optional. Machine type on which Airflow web server is running. It has to be one of: composer-n1-webserver-2, composer-n1-webserver-4 or composer-n1-webserver-8. If not specified, composer-n1-webserver-2 will be used. Value custom is returned only in response, if Airflow web server parameters were manually changed to a non-standard values.
+  """
+  machineType: String
+}
+
+"""
+The encryption options for the Cloud Composer environment and its dependencies.Supported for Cloud Composer environments in versions composer-1.*.*-airflow-*.*.*.
+"""
+type EncryptionConfig {
+  """
+  Optional. Customer-managed Encryption Key available through Google's Key Management Service. Cannot be updated. If not specified, Google-managed key will be used.
+  """
+  kmsKeyName: String
+}
+
+"""
+The configuration settings for Cloud Composer maintenance window. The following example: ``` { "startTime":"2019-08-01T01:00:00Z" "endTime":"2019-08-01T07:00:00Z" "recurrence":"FREQ=WEEKLY;BYDAY=TU,WE" } ``` would define a maintenance window between 01 and 07 hours UTC during each Tuesday and Wednesday.
+"""
+type MaintenanceWindow {
+  """
+  Required. Start time of the first recurrence of the maintenance window.
+  """
+  startTime: String
+
+  """
+  Required. Maintenance window end time. It is used only to calculate the duration of the maintenance window. The value for end-time must be in the future, relative to `start_time`.
+  """
+  endTime: String
+
+  """
+  Required. Maintenance window recurrence. Format is a subset of [RFC-5545](https://tools.ietf.org/html/rfc5545) `RRULE`. The only allowed values for `FREQ` field are `FREQ=DAILY` and `FREQ=WEEKLY;BYDAY=...` Example values: `FREQ=WEEKLY;BYDAY=TU,WE`, `FREQ=DAILY`.
+  """
+  recurrence: String
+}
+
+"""
+The Kubernetes workloads configuration for GKE cluster associated with the Cloud Composer environment. Supported for Cloud Composer environments in versions composer-2.*.*-airflow-*.*.* and newer.
+"""
+type WorkloadsConfig {
+  scheduler: SchedulerResource
+  webServer: WebServerResource
+  worker: WorkerResource
+  triggerer: TriggererResource
+  dagProcessor: DagProcessorResource
+}
+
+"""Configuration for resources used by Airflow schedulers."""
+type SchedulerResource {
+  """
+  Optional. CPU request and limit for a single Airflow scheduler replica.
+  """
+  cpu: Float
+
+  """
+  Optional. Memory (GB) request and limit for a single Airflow scheduler replica.
+  """
+  memoryGb: Float
+
+  """
+  Optional. Storage (GB) request and limit for a single Airflow scheduler replica.
+  """
+  storageGb: Float
+
+  """Optional. The number of schedulers."""
+  count: Int
+}
+
+"""Configuration for resources used by Airflow web server."""
+type WebServerResource {
+  """Optional. CPU request and limit for Airflow web server."""
+  cpu: Float
+
+  """Optional. Memory (GB) request and limit for Airflow web server."""
+  memoryGb: Float
+
+  """Optional. Storage (GB) request and limit for Airflow web server."""
+  storageGb: Float
+}
+
+"""Configuration for resources used by Airflow workers."""
+type WorkerResource {
+  """Optional. CPU request and limit for a single Airflow worker replica."""
+  cpu: Float
+
+  """
+  Optional. Memory (GB) request and limit for a single Airflow worker replica.
+  """
+  memoryGb: Float
+
+  """
+  Optional. Storage (GB) request and limit for a single Airflow worker replica.
+  """
+  storageGb: Float
+
+  """Optional. Minimum number of workers for autoscaling."""
+  minCount: Int
+
+  """Optional. Maximum number of workers for autoscaling."""
+  maxCount: Int
+}
+
+"""Configuration for resources used by Airflow triggerers."""
+type TriggererResource {
+  """Optional. The number of triggerers."""
+  count: Int
+
+  """
+  Optional. CPU request and limit for a single Airflow triggerer replica.
+  """
+  cpu: Float
+
+  """
+  Optional. Memory (GB) request and limit for a single Airflow triggerer replica.
+  """
+  memoryGb: Float
+}
+
+"""
+Configuration for resources used by Airflow DAG processors. This field is supported for Cloud Composer environments in versions composer-3-airflow-*.*.*-build.* and newer.
+"""
+type DagProcessorResource {
+  """
+  Optional. CPU request and limit for a single Airflow DAG processor replica.
+  """
+  cpu: Float
+
+  """
+  Optional. Memory (GB) request and limit for a single Airflow DAG processor replica.
+  """
+  memoryGb: Float
+
+  """
+  Optional. Storage (GB) request and limit for a single Airflow DAG processor replica.
+  """
+  storageGb: Float
+
+  """
+  Optional. The number of DAG processors. If not provided or set to 0, a single DAG processor instance will be created.
+  """
+  count: Int
+}
+
+"""
+Optional. The size of the Cloud Composer environment. This field is supported for Cloud Composer environments in versions composer-2.*.*-airflow-*.*.* and newer.
+"""
+enum query_composer_projects_locations_environments_list_environments_items_config_environmentSize {
+  ENVIRONMENT_SIZE_UNSPECIFIED
+  ENVIRONMENT_SIZE_SMALL
+  ENVIRONMENT_SIZE_MEDIUM
+  ENVIRONMENT_SIZE_LARGE
+  ENVIRONMENT_SIZE_EXTRA_LARGE
+}
+
+"""
+Configuration options for the master authorized networks feature. Enabled master authorized networks will disallow all external traffic to access Kubernetes master through HTTPS except traffic from the given CIDR blocks, Google Compute Engine Public IPs and Google Prod IPs.
+"""
+type MasterAuthorizedNetworksConfig {
+  """
+  Optional. Whether or not master authorized networks feature is enabled.
+  """
+  enabled: Boolean
+
+  """
+  Up to 50 external networks that could access Kubernetes master through HTTPS.
+  """
+  cidrBlocks: [CidrBlock]
+}
+
+"""CIDR block with an optional name."""
+type CidrBlock {
+  """User-defined name that identifies the CIDR block."""
+  displayName: String
+
+  """CIDR block that must be specified in CIDR notation."""
+  cidrBlock: String
+}
+
+"""The Recovery settings of an environment."""
+type RecoveryConfig {
+  scheduledSnapshotsConfig: ScheduledSnapshotsConfig
+}
+
+"""The configuration for scheduled snapshot creation mechanism."""
+type ScheduledSnapshotsConfig {
+  """Optional. Whether scheduled snapshots creation is enabled."""
+  enabled: Boolean
+
+  """
+  Optional. The Cloud Storage location for storing automatically created snapshots.
+  """
+  snapshotLocation: String
+
+  """
+  Optional. The cron expression representing the time when snapshots creation mechanism runs. This field is subject to additional validation around frequency of execution.
+  """
+  snapshotCreationSchedule: String
+
+  """
+  Optional. Time zone that sets the context to interpret snapshot_creation_schedule.
+  """
+  timeZone: String
+}
+
+"""
+Optional. Resilience mode of the Cloud Composer Environment. This field is supported for Cloud Composer environments in versions composer-2.2.0-airflow-*.*.* and newer.
+"""
+enum query_composer_projects_locations_environments_list_environments_items_config_resilienceMode {
+  RESILIENCE_MODE_UNSPECIFIED
+  HIGH_RESILIENCE
+}
+
+"""
+The configuration setting for Airflow database data retention mechanism.
+"""
+type DataRetentionConfig {
+  airflowMetadataRetentionConfig: AirflowMetadataRetentionPolicyConfig
+  taskLogsRetentionConfig: TaskLogsRetentionConfig
+}
+
+"""The policy for airflow metadata database retention."""
+type AirflowMetadataRetentionPolicyConfig {
+  retentionMode: query_composer_projects_locations_environments_list_environments_items_config_dataRetentionConfig_airflowMetadataRetentionConfig_retentionMode
+
+  """Optional. How many days data should be retained for."""
+  retentionDays: Int
+}
+
+"""Optional. Retention can be either enabled or disabled."""
+enum query_composer_projects_locations_environments_list_environments_items_config_dataRetentionConfig_airflowMetadataRetentionConfig_retentionMode {
+  RETENTION_MODE_UNSPECIFIED
+  RETENTION_MODE_ENABLED
+  RETENTION_MODE_DISABLED
+}
+
+"""The configuration setting for Task Logs."""
+type TaskLogsRetentionConfig {
+  storageMode: query_composer_projects_locations_environments_list_environments_items_config_dataRetentionConfig_taskLogsRetentionConfig_storageMode
+}
+
+"""Optional. The mode of storage for Airflow workers task logs."""
+enum query_composer_projects_locations_environments_list_environments_items_config_dataRetentionConfig_taskLogsRetentionConfig_storageMode {
+  TASK_LOGS_STORAGE_MODE_UNSPECIFIED
+  CLOUD_LOGGING_AND_CLOUD_STORAGE
+  CLOUD_LOGGING_ONLY
+}
+
+"""The current state of the environment."""
+enum query_composer_projects_locations_environments_list_environments_items_state {
+  STATE_UNSPECIFIED
+  CREATING
+  RUNNING
+  UPDATING
+  DELETING
+  ERROR
+}
+
+"""The configuration for data storage in the environment."""
+type StorageConfig {
+  """
+  Optional. The name of the Cloud Storage bucket used by the environment. No `gs://` prefix.
+  """
+  bucket: String
+}
+
+"""Response for FetchDatabasePropertiesRequest."""
+type FetchDatabasePropertiesResponse {
+  """The Compute Engine zone that the instance is currently serving from."""
+  primaryGceZone: String
+
+  """
+  The Compute Engine zone that the failover instance is currently serving from for a regional Cloud SQL instance.
+  """
+  secondaryGceZone: String
+
+  """
+  The availability status of the failover replica. A false status indicates that the failover replica is out of sync. The primary instance can only fail over to the failover replica when the status is true.
+  """
+  isFailoverReplicaAvailable: Boolean
+}
+
+"""Response to ListWorkloadsRequest."""
+type ListWorkloadsResponse {
+  """The list of environment workloads."""
+  workloads: [ComposerWorkload]
+
+  """The page token used to query for the next page if one exists."""
+  nextPageToken: String
+}
+
+"""Information about a single workload."""
+type ComposerWorkload {
+  """Name of a workload."""
+  name: String
+  type: query_composer_projects_locations_environments_workloads_list_workloads_items_type
+  status: ComposerWorkloadStatus
+}
+
+"""Type of a workload."""
+enum query_composer_projects_locations_environments_workloads_list_workloads_items_type {
+  COMPOSER_WORKLOAD_TYPE_UNSPECIFIED
+  CELERY_WORKER
+  KUBERNETES_WORKER
+  KUBERNETES_OPERATOR_POD
+  SCHEDULER
+  DAG_PROCESSOR
+  TRIGGERER
+  WEB_SERVER
+  REDIS
+}
+
+"""Workload status."""
+type ComposerWorkloadStatus {
+  state: query_composer_projects_locations_environments_workloads_list_workloads_items_status_state
+
+  """Output only. Text to provide more descriptive status."""
+  statusMessage: String
+
+  """Output only. Detailed message of the status."""
+  detailedStatusMessage: String
+}
+
+"""Output only. Workload state."""
+enum query_composer_projects_locations_environments_workloads_list_workloads_items_status_state {
+  COMPOSER_WORKLOAD_STATE_UNSPECIFIED
+  PENDING
+  OK
+  WARNING
+  ERROR
+  SUCCEEDED
+  FAILED
+}
+
+"""The user workloads Secrets for a given environment."""
+type ListUserWorkloadsSecretsResponse {
+  """The list of Secrets returned by a ListUserWorkloadsSecretsRequest."""
+  userWorkloadsSecrets: [UserWorkloadsSecret]
+
+  """The page token used to query for the next page if one exists."""
+  nextPageToken: String
+}
+
+"""
+User workloads Secret used by Airflow tasks that run with Kubernetes executor or KubernetesPodOperator.
+"""
+type UserWorkloadsSecret {
+  """
+  Identifier. The resource name of the Secret, in the form: "projects/{projectId}/locations/{locationId}/environments/{environmentId}/userWorkloadsSecrets/{userWorkloadsSecretId}"
+  """
+  name: String
+
+  """
+  Optional. The "data" field of Kubernetes Secret, organized in key-value pairs, which can contain sensitive values such as a password, a token, or a key. The values for all keys have to be base64-encoded strings. For details see: https://kubernetes.io/docs/concepts/configuration/secret/ Example: { "example": "ZXhhbXBsZV92YWx1ZQ==", "another-example": "YW5vdGhlcl9leGFtcGxlX3ZhbHVl" }
+  """
+  data: JSON
+}
+
+"""The user workloads ConfigMaps for a given environment."""
+type ListUserWorkloadsConfigMapsResponse {
+  """
+  The list of ConfigMaps returned by a ListUserWorkloadsConfigMapsRequest.
+  """
+  userWorkloadsConfigMaps: [UserWorkloadsConfigMap]
+
+  """The page token used to query for the next page if one exists."""
+  nextPageToken: String
+}
+
+"""
+User workloads ConfigMap used by Airflow tasks that run with Kubernetes executor or KubernetesPodOperator.
+"""
+type UserWorkloadsConfigMap {
+  """
+  Identifier. The resource name of the ConfigMap, in the form: "projects/{projectId}/locations/{locationId}/environments/{environmentId}/userWorkloadsConfigMaps/{userWorkloadsConfigMapId}"
+  """
+  name: String
+
+  """
+  Optional. The "data" field of Kubernetes ConfigMap, organized in key-value pairs. For details see: https://kubernetes.io/docs/concepts/configuration/configmap/ Example: { "example_key": "example_value", "another_key": "another_value" }
+  """
+  data: JSON
+}
+
+"""The ImageVersions in a project and location."""
+type ListImageVersionsResponse {
+  """The list of supported ImageVersions in a location."""
+  imageVersions: [ImageVersion]
+
+  """The page token used to query for the next page if one exists."""
+  nextPageToken: String
+}
+
+"""ImageVersion information"""
+type ImageVersion {
+  """
+  The string identifier of the ImageVersion, in the form: "composer-x.y.z-airflow-a.b.c"
+  """
+  imageVersionId: String
+
+  """
+  Whether this is the default ImageVersion used by Composer during environment creation if no input ImageVersion is specified.
+  """
+  isDefault: Boolean
+
+  """supported python versions"""
+  supportedPythonVersions: [String]
+  releaseDate: Date
+
+  """
+  Whether it is impossible to create an environment with the image version.
+  """
+  creationDisabled: Boolean
+
+  """
+  Whether it is impossible to upgrade an environment running with the image version.
+  """
+  upgradeDisabled: Boolean
+}
+
+"""
+Represents a whole or partial calendar date, such as a birthday. The time of day and time zone are either specified elsewhere or are insignificant. The date is relative to the Gregorian Calendar. This can represent one of the following: * A full date, with non-zero year, month, and day values. * A month and day, with a zero year (for example, an anniversary). * A year on its own, with a zero month and a zero day. * A year and month, with a zero day (for example, a credit card expiration date). Related types: * google.type.TimeOfDay * google.type.DateTime * google.protobuf.Timestamp
+"""
+type Date {
+  """
+  Year of the date. Must be from 1 to 9999, or 0 to specify a date without a year.
+  """
+  year: Int
+
+  """
+  Month of a year. Must be from 1 to 12, or 0 to specify a year without a month and day.
+  """
+  month: Int
+
+  """
+  Day of a month. Must be from 1 to 31 and valid for the year and month, or 0 to specify a year by itself or a year and month where the day isn't significant.
+  """
+  day: Int
+}
+
+type Mutation {
+  """
+  Deletes a long-running operation. This method indicates that the client is no longer interested in the operation result. It does not cancel the operation. If the server doesn't support this method, it returns `google.rpc.Code.UNIMPLEMENTED`.
+  """
+  composer_projects_locations_operations_delete(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter operationsId"""
+    operationsId: String!
+  ): JSON
+
+  """Create a new environment."""
+  composer_projects_locations_environments_create(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+    input: Environment_Input
+  ): Operation
+
+  """Update an environment."""
+  composer_projects_locations_environments_patch(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter environmentsId"""
+    environmentsId: String!
+
+    """
+    Required. A comma-separated list of paths, relative to `Environment`, of fields to update. For example, to set the version of scikit-learn to install in the environment to 0.19.0 and to remove an existing installation of numpy, the `updateMask` parameter would include the following two `paths` values: "config.softwareConfig.pypiPackages.scikit-learn" and "config.softwareConfig.pypiPackages.numpy". The included patch environment would specify the scikit-learn version as follows: { "config":{ "softwareConfig":{ "pypiPackages":{ "scikit-learn":"==0.19.0" } } } } Note that in the above example, any existing PyPI packages other than scikit-learn and numpy will be unaffected. Only one update type may be included in a single request's `updateMask`. For example, one cannot update both the PyPI packages and labels in the same request. However, it is possible to update multiple members of a map field simultaneously in the same request. For example, to set the labels "label1" and "label2" while clearing "label3" (assuming it already exists), one can provide the paths "labels.label1", "labels.label2", and "labels.label3" and populate the patch environment as follows: { "labels":{ "label1":"new-label1-value" "label2":"new-label2-value" } } Note that in the above example, any existing labels that are not included in the `updateMask` will be unaffected. It is also possible to replace an entire map field by providing the map field's path in the `updateMask`. The new value of the field will be that which is provided in the patch environment. For example, to delete all pre-existing user-specified PyPI packages and install botocore at version 1.7.14, the `updateMask` would contain the path "config.softwareConfig.pypiPackages", and the patch environment would be the following: { "config":{ "softwareConfig":{ "pypiPackages":{ "botocore":"==1.7.14" } } } } **Note:** Only the following fields can be updated: * `config.softwareConfig.pypiPackages` * Replace all custom custom PyPI packages. If a replacement package map is not included in `environment`, all custom PyPI packages are cleared. It is an error to provide both this mask and a mask specifying an individual package. * `config.softwareConfig.pypiPackages.`packagename * Update the custom PyPI package *packagename*, preserving other packages. To delete the package, include it in `updateMask`, and omit the mapping for it in `environment.config.softwareConfig.pypiPackages`. It is an error to provide both a mask of this form and the `config.softwareConfig.pypiPackages` mask. * `labels` * Replace all environment labels. If a replacement labels map is not included in `environment`, all labels are cleared. It is an error to provide both this mask and a mask specifying one or more individual labels. * `labels.`labelName * Set the label named *labelName*, while preserving other labels. To delete the label, include it in `updateMask` and omit its mapping in `environment.labels`. It is an error to provide both a mask of this form and the `labels` mask. * `config.nodeCount` * Horizontally scale the number of nodes in the environment. An integer greater than or equal to 3 must be provided in the `config.nodeCount` field. Supported for Cloud Composer environments in versions composer-1.*.*-airflow-*.*.*. * `config.webServerNetworkAccessControl` * Replace the environment's current `WebServerNetworkAccessControl`. * `config.softwareConfig.airflowConfigOverrides` * Replace all Apache Airflow config overrides. If a replacement config overrides map is not included in `environment`, all config overrides are cleared. It is an error to provide both this mask and a mask specifying one or more individual config overrides. * `config.softwareConfig.airflowConfigOverrides.`section-name * Override the Apache Airflow config property *name* in the section named *section*, preserving other properties. To delete the property override, include it in `updateMask` and omit its mapping in `environment.config.softwareConfig.airflowConfigOverrides`. It is an error to provide both a mask of this form and the `config.softwareConfig.airflowConfigOverrides` mask. * `config.softwareConfig.envVariables` * Replace all environment variables. If a replacement environment variable map is not included in `environment`, all custom environment variables are cleared. * `config.softwareConfig.schedulerCount` * Horizontally scale the number of schedulers in Airflow. A positive integer not greater than the number of nodes must be provided in the `config.softwareConfig.schedulerCount` field. Supported for Cloud Composer environments in versions composer-1.*.*-airflow-2.*.*. * `config.databaseConfig.machineType` * Cloud SQL machine type used by Airflow database. It has to be one of: db-n1-standard-2, db-n1-standard-4, db-n1-standard-8 or db-n1-standard-16. Supported for Cloud Composer environments in versions composer-1.*.*-airflow-*.*.*. * `config.webServerConfig.machineType` * Machine type on which Airflow web server is running. It has to be one of: composer-n1-webserver-2, composer-n1-webserver-4 or composer-n1-webserver-8. Supported for Cloud Composer environments in versions composer-1.*.*-airflow-*.*.*.
+    """
+    updateMask: String
+    input: Environment_Input
+  ): Operation
+
+  """Delete an environment."""
+  composer_projects_locations_environments_delete(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter environmentsId"""
+    environmentsId: String!
+  ): Operation
+
+  """Restart Airflow web server."""
+  composer_projects_locations_environments_restartWebServer(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter environmentsId"""
+    environmentsId: String!
+
+    """Restart Airflow web server."""
+    input: JSON
+  ): Operation
+
+  """Executes Airflow CLI command."""
+  composer_projects_locations_environments_executeAirflowCommand(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter environmentsId"""
+    environmentsId: String!
+    input: ExecuteAirflowCommandRequest_Input
+  ): ExecuteAirflowCommandResponse
+
+  """Stops Airflow CLI command execution."""
+  composer_projects_locations_environments_stopAirflowCommand(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter environmentsId"""
+    environmentsId: String!
+    input: StopAirflowCommandRequest_Input
+  ): StopAirflowCommandResponse
+
+  """Polls Airflow CLI command execution and fetches logs."""
+  composer_projects_locations_environments_pollAirflowCommand(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter environmentsId"""
+    environmentsId: String!
+    input: PollAirflowCommandRequest_Input
+  ): PollAirflowCommandResponse
+
+  """
+  Check if an upgrade operation on the environment will succeed. In case of problems detailed info can be found in the returned Operation.
+  """
+  composer_projects_locations_environments_checkUpgrade(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter environmentsId"""
+    environmentsId: String!
+    input: CheckUpgradeRequest_Input
+  ): Operation
+
+  """
+  Creates a snapshots of a Cloud Composer environment. As a result of this operation, snapshot of environment's state is stored in a location specified in the SaveSnapshotRequest.
+  """
+  composer_projects_locations_environments_saveSnapshot(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter environmentsId"""
+    environmentsId: String!
+    input: SaveSnapshotRequest_Input
+  ): Operation
+
+  """
+  Loads a snapshot of a Cloud Composer environment. As a result of this operation, a snapshot of environment's specified in LoadSnapshotRequest is loaded into the environment.
+  """
+  composer_projects_locations_environments_loadSnapshot(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter environmentsId"""
+    environmentsId: String!
+    input: LoadSnapshotRequest_Input
+  ): Operation
+
+  """Triggers database failover (only for highly resilient environments)."""
+  composer_projects_locations_environments_databaseFailover(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter environmentsId"""
+    environmentsId: String!
+
+    """
+    Request to trigger database failover (only for highly resilient environments).
+    """
+    input: JSON
+  ): Operation
+
+  """
+  Creates a user workloads Secret. This method is supported for Cloud Composer environments in versions composer-3-airflow-*.*.*-build.* and newer.
+  """
+  composer_projects_locations_environments_userWorkloadsSecrets_create(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter environmentsId"""
+    environmentsId: String!
+    input: UserWorkloadsSecret_Input
+  ): UserWorkloadsSecret
+
+  """
+  Updates a user workloads Secret. This method is supported for Cloud Composer environments in versions composer-3-airflow-*.*.*-build.* and newer.
+  """
+  composer_projects_locations_environments_userWorkloadsSecrets_update(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter environmentsId"""
+    environmentsId: String!
+
+    """Path parameter userWorkloadsSecretsId"""
+    userWorkloadsSecretsId: String!
+    input: UserWorkloadsSecret_Input
+  ): UserWorkloadsSecret
+
+  """
+  Deletes a user workloads Secret. This method is supported for Cloud Composer environments in versions composer-3-airflow-*.*.*-build.* and newer.
+  """
+  composer_projects_locations_environments_userWorkloadsSecrets_delete(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter environmentsId"""
+    environmentsId: String!
+
+    """Path parameter userWorkloadsSecretsId"""
+    userWorkloadsSecretsId: String!
+  ): JSON
+
+  """
+  Creates a user workloads ConfigMap. This method is supported for Cloud Composer environments in versions composer-3-airflow-*.*.*-build.* and newer.
+  """
+  composer_projects_locations_environments_userWorkloadsConfigMaps_create(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter environmentsId"""
+    environmentsId: String!
+    input: UserWorkloadsConfigMap_Input
+  ): UserWorkloadsConfigMap
+
+  """
+  Updates a user workloads ConfigMap. This method is supported for Cloud Composer environments in versions composer-3-airflow-*.*.*-build.* and newer.
+  """
+  composer_projects_locations_environments_userWorkloadsConfigMaps_update(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter environmentsId"""
+    environmentsId: String!
+
+    """Path parameter userWorkloadsConfigMapsId"""
+    userWorkloadsConfigMapsId: String!
+    input: UserWorkloadsConfigMap_Input
+  ): UserWorkloadsConfigMap
+
+  """
+  Deletes a user workloads ConfigMap. This method is supported for Cloud Composer environments in versions composer-3-airflow-*.*.*-build.* and newer.
+  """
+  composer_projects_locations_environments_userWorkloadsConfigMaps_delete(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter environmentsId"""
+    environmentsId: String!
+
+    """Path parameter userWorkloadsConfigMapsId"""
+    userWorkloadsConfigMapsId: String!
+  ): JSON
+}
+
+"""An environment for running orchestration tasks."""
+input Environment_Input {
+  """
+  Identifier. The resource name of the environment, in the form: "projects/{projectId}/locations/{locationId}/environments/{environmentId}" EnvironmentId must start with a lowercase letter followed by up to 63 lowercase letters, numbers, or hyphens, and cannot end with a hyphen.
+  """
+  name: String
+  config: EnvironmentConfig_Input
+
+  """
+  Output only. The UUID (Universally Unique IDentifier) associated with this environment. This value is generated when the environment is created.
+  """
+  uuid: String
+  state: query_composer_projects_locations_environments_list_environments_items_state
+
+  """Output only. The time at which this environment was created."""
+  createTime: String
+
+  """Output only. The time at which this environment was last modified."""
+  updateTime: String
+
+  """
+  Optional. User-defined labels for this environment. The labels map can contain no more than 64 entries. Entries of the labels map are UTF8 strings that comply with the following restrictions: * Keys must conform to regexp: \p{Ll}\p{Lo}{0,62} * Values must conform to regexp: [\p{Ll}\p{Lo}\p{N}_-]{0,63} * Both keys and values are additionally constrained to be <= 128 bytes in size.
+  """
+  labels: JSON
+
+  """Output only. Reserved for future use."""
+  satisfiesPzs: Boolean
+
+  """Output only. Reserved for future use."""
+  satisfiesPzi: Boolean
+  storageConfig: StorageConfig_Input
+}
+
+"""Configuration information for an environment."""
+input EnvironmentConfig_Input {
+  """
+  Output only. The Kubernetes Engine cluster used to run this environment.
+  """
+  gkeCluster: String
+
+  """
+  Output only. The Cloud Storage prefix of the DAGs for this environment. Although Cloud Storage objects reside in a flat namespace, a hierarchical file tree can be simulated using "/"-delimited object name prefixes. DAG objects for this environment reside in a simulated directory with the given prefix.
+  """
+  dagGcsPrefix: String
+
+  """
+  The number of nodes in the Kubernetes Engine cluster that will be used to run this environment. This field is supported for Cloud Composer environments in versions composer-1.*.*-airflow-*.*.*.
+  """
+  nodeCount: Int
+  softwareConfig: SoftwareConfig_Input
+  nodeConfig: NodeConfig_Input
+  privateEnvironmentConfig: PrivateEnvironmentConfig_Input
+  webServerNetworkAccessControl: WebServerNetworkAccessControl_Input
+  databaseConfig: DatabaseConfig_Input
+  webServerConfig: WebServerConfig_Input
+  encryptionConfig: EncryptionConfig_Input
+  maintenanceWindow: MaintenanceWindow_Input
+  workloadsConfig: WorkloadsConfig_Input
+  environmentSize: query_composer_projects_locations_environments_list_environments_items_config_environmentSize
+
+  """
+  Output only. The URI of the Apache Airflow Web UI hosted within this environment (see [Airflow web interface](/composer/docs/how-to/accessing/airflow-web-interface)).
+  """
+  airflowUri: String
+
+  """
+  Output only. The 'bring your own identity' variant of the URI of the Apache Airflow Web UI hosted within this environment, to be accessed with external identities using workforce identity federation (see [Access environments with workforce identity federation](/composer/docs/composer-2/access-environments-with-workforce-identity-federation)).
+  """
+  airflowByoidUri: String
+  masterAuthorizedNetworksConfig: MasterAuthorizedNetworksConfig_Input
+  recoveryConfig: RecoveryConfig_Input
+  resilienceMode: query_composer_projects_locations_environments_list_environments_items_config_resilienceMode
+  dataRetentionConfig: DataRetentionConfig_Input
+}
+
+"""
+Specifies the selection and configuration of software inside the environment.
+"""
+input SoftwareConfig_Input {
+  """
+  Optional. The version of the software running in the environment. This encapsulates both the version of Cloud Composer functionality and the version of Apache Airflow. It must match the regular expression `composer-([0-9]+(\.[0-9]+\.[0-9]+(-preview\.[0-9]+)?)?|latest)-airflow-([0-9]+(\.[0-9]+(\.[0-9]+)?)?)`. When used as input, the server also checks if the provided version is supported and denies the request for an unsupported version. The Cloud Composer portion of the image version is a full [semantic version](https://semver.org), or an alias in the form of major version number or `latest`. When an alias is provided, the server replaces it with the current Cloud Composer version that satisfies the alias. The Apache Airflow portion of the image version is a full semantic version that points to one of the supported Apache Airflow versions, or an alias in the form of only major or major.minor versions specified. When an alias is provided, the server replaces it with the latest Apache Airflow version that satisfies the alias and is supported in the given Cloud Composer version. In all cases, the resolved image version is stored in the same field. See also [version list](/composer/docs/concepts/versioning/composer-versions) and [versioning overview](/composer/docs/concepts/versioning/composer-versioning-overview).
+  """
+  imageVersion: String
+
+  """
+  Optional. Apache Airflow configuration properties to override. Property keys contain the section and property names, separated by a hyphen, for example "core-dags_are_paused_at_creation". Section names must not contain hyphens ("-"), opening square brackets ("["), or closing square brackets ("]"). The property name must not be empty and must not contain an equals sign ("=") or semicolon (";"). Section and property names must not contain a period ("."). Apache Airflow configuration property names must be written in [snake_case](https://en.wikipedia.org/wiki/Snake_case). Property values can contain any character, and can be written in any lower/upper case format. Certain Apache Airflow configuration property values are [blocked](/composer/docs/concepts/airflow-configurations), and cannot be overridden.
+  """
+  airflowConfigOverrides: JSON
+
+  """
+  Optional. Custom Python Package Index (PyPI) packages to be installed in the environment. Keys refer to the lowercase package name such as "numpy" and values are the lowercase extras and version specifier such as "==1.12.0", "[devel,gcp_api]", or "[devel]>=1.8.2, <1.9.2". To specify a package without pinning it to a version specifier, use the empty string as the value.
+  """
+  pypiPackages: JSON
+
+  """
+  Optional. Additional environment variables to provide to the Apache Airflow scheduler, worker, and webserver processes. Environment variable names must match the regular expression `a-zA-Z_*`. They cannot specify Apache Airflow software configuration overrides (they cannot match the regular expression `AIRFLOW__[A-Z0-9_]+__[A-Z0-9_]+`), and they cannot match any of the following reserved names: * `AIRFLOW_HOME` * `C_FORCE_ROOT` * `CONTAINER_NAME` * `DAGS_FOLDER` * `GCP_PROJECT` * `GCS_BUCKET` * `GKE_CLUSTER_NAME` * `SQL_DATABASE` * `SQL_INSTANCE` * `SQL_PASSWORD` * `SQL_PROJECT` * `SQL_REGION` * `SQL_USER`
+  """
+  envVariables: JSON
+
+  """
+  Optional. The major version of Python used to run the Apache Airflow scheduler, worker, and webserver processes. Can be set to '2' or '3'. If not specified, the default is '3'. Cannot be updated. This field is only supported for Cloud Composer environments in versions composer-1.*.*-airflow-*.*.*. Environments in newer versions always use Python major version 3.
+  """
+  pythonVersion: String
+
+  """
+  Optional. The number of schedulers for Airflow. This field is supported for Cloud Composer environments in versions composer-1.*.*-airflow-2.*.*.
+  """
+  schedulerCount: Int
+  cloudDataLineageIntegration: CloudDataLineageIntegration_Input
+  webServerPluginsMode: query_composer_projects_locations_environments_list_environments_items_config_softwareConfig_webServerPluginsMode
+}
+
+"""Configuration for Cloud Data Lineage integration."""
+input CloudDataLineageIntegration_Input {
+  """Optional. Whether or not Cloud Data Lineage integration is enabled."""
+  enabled: Boolean
+}
+
+"""
+The configuration information for the Kubernetes Engine nodes running the Apache Airflow software.
+"""
+input NodeConfig_Input {
+  """
+  Optional. The Compute Engine [zone](/compute/docs/regions-zones) in which to deploy the VMs used to run the Apache Airflow software, specified as a [relative resource name](/apis/design/resource_names#relative_resource_name). For example: "projects/{projectId}/zones/{zoneId}". This `location` must belong to the enclosing environment's project and location. If both this field and `nodeConfig.machineType` are specified, `nodeConfig.machineType` must belong to this `location`; if both are unspecified, the service will pick a zone in the Compute Engine region corresponding to the Cloud Composer location, and propagate that choice to both fields. If only one field (`location` or `nodeConfig.machineType`) is specified, the location information from the specified field will be propagated to the unspecified field. This field is supported for Cloud Composer environments in versions composer-1.*.*-airflow-*.*.*.
+  """
+  location: String
+
+  """
+  Optional. The Compute Engine [machine type](/compute/docs/machine-types) used for cluster instances, specified as a [relative resource name](/apis/design/resource_names#relative_resource_name). For example: "projects/{projectId}/zones/{zoneId}/machineTypes/{machineTypeId}". The `machineType` must belong to the enclosing environment's project and location. If both this field and `nodeConfig.location` are specified, this `machineType` must belong to the `nodeConfig.location`; if both are unspecified, the service will pick a zone in the Compute Engine region corresponding to the Cloud Composer location, and propagate that choice to both fields. If exactly one of this field and `nodeConfig.location` is specified, the location information from the specified field will be propagated to the unspecified field. The `machineTypeId` must not be a [shared-core machine type](/compute/docs/machine-types#sharedcore). If this field is unspecified, the `machineTypeId` defaults to "n1-standard-1". This field is supported for Cloud Composer environments in versions composer-1.*.*-airflow-*.*.*.
+  """
+  machineType: String
+
+  """
+  Optional. The Compute Engine network to be used for machine communications, specified as a [relative resource name](/apis/design/resource_names#relative_resource_name). For example: "projects/{projectId}/global/networks/{networkId}". If unspecified, the "default" network ID in the environment's project is used. If a [Custom Subnet Network](/vpc/docs/vpc#vpc_networks_and_subnets) is provided, `nodeConfig.subnetwork` must also be provided. For [Shared VPC](/vpc/docs/shared-vpc) subnetwork requirements, see `nodeConfig.subnetwork`.
+  """
+  network: String
+
+  """
+  Optional. The Compute Engine subnetwork to be used for machine communications, specified as a [relative resource name](/apis/design/resource_names#relative_resource_name). For example: "projects/{projectId}/regions/{regionId}/subnetworks/{subnetworkId}" If a subnetwork is provided, `nodeConfig.network` must also be provided, and the subnetwork must belong to the enclosing environment's project and location.
+  """
+  subnetwork: String
+
+  """
+  Optional. The disk size in GB used for node VMs. Minimum size is 30GB. If unspecified, defaults to 100GB. Cannot be updated. This field is supported for Cloud Composer environments in versions composer-1.*.*-airflow-*.*.*.
+  """
+  diskSizeGb: Int
+
+  """
+  Optional. The set of Google API scopes to be made available on all node VMs. If `oauth_scopes` is empty, defaults to ["https://www.googleapis.com/auth/cloud-platform"]. Cannot be updated. This field is supported for Cloud Composer environments in versions composer-1.*.*-airflow-*.*.*.
+  """
+  oauthScopes: [String]
+
+  """
+  Optional. The Google Cloud Platform Service Account to be used by the node VMs. If a service account is not specified, the "default" Compute Engine service account is used. Cannot be updated.
+  """
+  serviceAccount: String
+
+  """
+  Optional. The list of instance tags applied to all node VMs. Tags are used to identify valid sources or targets for network firewalls. Each tag within the list must comply with [RFC1035](https://www.ietf.org/rfc/rfc1035.txt). Cannot be updated.
+  """
+  tags: [String]
+  ipAllocationPolicy: IPAllocationPolicy_Input
+
+  """
+  Optional. Deploys 'ip-masq-agent' daemon set in the GKE cluster and defines nonMasqueradeCIDRs equals to pod IP range so IP masquerading is used for all destination addresses, except between pods traffic. See: https://cloud.google.com/kubernetes-engine/docs/how-to/ip-masquerade-agent
+  """
+  enableIpMasqAgent: Boolean
+
+  """
+  Optional. Network Attachment that Cloud Composer environment is connected to, which provides connectivity with a user's VPC network. Takes precedence over network and subnetwork settings. If not provided, but network and subnetwork are defined during environment, it will be provisioned. If not provided and network and subnetwork are also empty, then connectivity to user's VPC network is disabled. Network attachment must be provided in format projects/{project}/regions/{region}/networkAttachments/{networkAttachment}. This field is supported for Cloud Composer environments in versions composer-3-airflow-*.*.*-build.* and newer.
+  """
+  composerNetworkAttachment: String
+
+  """
+  Optional. The IP range in CIDR notation to use internally by Cloud Composer. IP addresses are not reserved - and the same range can be used by multiple Cloud Composer environments. In case of overlap, IPs from this range will not be accessible in the user's VPC network. Cannot be updated. If not specified, the default value of '100.64.128.0/20' is used. This field is supported for Cloud Composer environments in versions composer-3-airflow-*.*.*-build.* and newer.
+  """
+  composerInternalIpv4CidrBlock: String
+}
+
+"""
+Configuration for controlling how IPs are allocated in the GKE cluster running the Apache Airflow software.
+"""
+input IPAllocationPolicy_Input {
+  """
+  Optional. Whether or not to enable Alias IPs in the GKE cluster. If `true`, a VPC-native cluster is created. This field is only supported for Cloud Composer environments in versions composer-1.*.*-airflow-*.*.*. Environments in newer versions always use VPC-native GKE clusters.
+  """
+  useIpAliases: Boolean
+
+  """
+  Optional. The name of the GKE cluster's secondary range used to allocate IP addresses to pods. For Cloud Composer environments in versions composer-1.*.*-airflow-*.*.*, this field is applicable only when `use_ip_aliases` is true.
+  """
+  clusterSecondaryRangeName: String
+
+  """
+  Optional. The IP address range used to allocate IP addresses to pods in the GKE cluster. For Cloud Composer environments in versions composer-1.*.*-airflow-*.*.*, this field is applicable only when `use_ip_aliases` is true. Set to blank to have GKE choose a range with the default size. Set to /netmask (e.g. `/14`) to have GKE choose a range with a specific netmask. Set to a [CIDR](https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing) notation (e.g. `10.96.0.0/14`) from the RFC-1918 private networks (e.g. `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`) to pick a specific range to use.
+  """
+  clusterIpv4CidrBlock: String
+
+  """
+  Optional. The name of the services' secondary range used to allocate IP addresses to the GKE cluster. For Cloud Composer environments in versions composer-1.*.*-airflow-*.*.*, this field is applicable only when `use_ip_aliases` is true.
+  """
+  servicesSecondaryRangeName: String
+
+  """
+  Optional. The IP address range of the services IP addresses in this GKE cluster. For Cloud Composer environments in versions composer-1.*.*-airflow-*.*.*, this field is applicable only when `use_ip_aliases` is true. Set to blank to have GKE choose a range with the default size. Set to /netmask (e.g. `/14`) to have GKE choose a range with a specific netmask. Set to a [CIDR](https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing) notation (e.g. `10.96.0.0/14`) from the RFC-1918 private networks (e.g. `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`) to pick a specific range to use.
+  """
+  servicesIpv4CidrBlock: String
+}
+
+"""
+The configuration information for configuring a Private IP Cloud Composer environment.
+"""
+input PrivateEnvironmentConfig_Input {
+  networkingType: query_composer_projects_locations_environments_list_environments_items_config_privateEnvironmentConfig_networkingType
+
+  """
+  Optional. If `true`, a Private IP Cloud Composer environment is created. If this field is set to true, `IPAllocationPolicy.use_ip_aliases` must be set to true for Cloud Composer environments in versions composer-1.*.*-airflow-*.*.*. This field is going to be deprecated. Use `networking_type` instead.
+  """
+  enablePrivateEnvironment: Boolean
+
+  """
+  Optional. If `true`, builds performed during operations that install Python packages have only private connectivity to Google services (including Artifact Registry) and VPC network (if either `NodeConfig.network` and `NodeConfig.subnetwork` fields or `NodeConfig.composer_network_attachment` field are specified). If `false`, the builds also have access to the internet. This field is supported for Cloud Composer environments in versions composer-3-airflow-*.*.*-build.* and newer.
+  """
+  enablePrivateBuildsOnly: Boolean
+  privateClusterConfig: PrivateClusterConfig_Input
+
+  """
+  Optional. The CIDR block from which IP range for web server will be reserved. Needs to be disjoint from `private_cluster_config.master_ipv4_cidr_block` and `cloud_sql_ipv4_cidr_block`. This field is supported for Cloud Composer environments in versions composer-1.*.*-airflow-*.*.*.
+  """
+  webServerIpv4CidrBlock: String
+
+  """
+  Optional. The CIDR block from which IP range in tenant project will be reserved for Cloud SQL. Needs to be disjoint from `web_server_ipv4_cidr_block`.
+  """
+  cloudSqlIpv4CidrBlock: String
+
+  """
+  Output only. The IP range reserved for the tenant project's App Engine VMs. This field is supported for Cloud Composer environments in versions composer-1.*.*-airflow-*.*.*.
+  """
+  webServerIpv4ReservedRange: String
+
+  """
+  Optional. The CIDR block from which IP range for Cloud Composer Network in tenant project will be reserved. Needs to be disjoint from private_cluster_config.master_ipv4_cidr_block and cloud_sql_ipv4_cidr_block. This field is supported for Cloud Composer environments in versions composer-2.*.*-airflow-*.*.* and newer.
+  """
+  cloudComposerNetworkIpv4CidrBlock: String
+
+  """
+  Output only. The IP range reserved for the tenant project's Cloud Composer network. This field is supported for Cloud Composer environments in versions composer-2.*.*-airflow-*.*.* and newer.
+  """
+  cloudComposerNetworkIpv4ReservedRange: String
+
+  """
+  Optional. When enabled, IPs from public (non-RFC1918) ranges can be used for `IPAllocationPolicy.cluster_ipv4_cidr_block` and `IPAllocationPolicy.service_ipv4_cidr_block`.
+  """
+  enablePrivatelyUsedPublicIps: Boolean
+
+  """
+  Optional. When specified, the environment will use Private Service Connect instead of VPC peerings to connect to Cloud SQL in the Tenant Project, and the PSC endpoint in the Customer Project will use an IP address from this subnetwork.
+  """
+  cloudComposerConnectionSubnetwork: String
+  networkingConfig: NetworkingConfig_Input
+}
+
+"""
+Configuration options for the private GKE cluster in a Cloud Composer environment.
+"""
+input PrivateClusterConfig_Input {
+  """
+  Optional. If `true`, access to the public endpoint of the GKE cluster is denied.
+  """
+  enablePrivateEndpoint: Boolean
+
+  """
+  Optional. The CIDR block from which IPv4 range for GKE master will be reserved. If left blank, the default value of '172.16.0.0/23' is used.
+  """
+  masterIpv4CidrBlock: String
+
+  """
+  Output only. The IP range in CIDR notation to use for the hosted master network. This range is used for assigning internal IP addresses to the GKE cluster master or set of masters and to the internal load balancer virtual IP. This range must not overlap with any other ranges in use within the cluster's network.
+  """
+  masterIpv4ReservedRange: String
+}
+
+"""
+Configuration options for networking connections in the Composer 2 environment.
+"""
+input NetworkingConfig_Input {
+  connectionType: query_composer_projects_locations_environments_list_environments_items_config_privateEnvironmentConfig_networkingConfig_connectionType
+}
+
+"""Network-level access control policy for the Airflow web server."""
+input WebServerNetworkAccessControl_Input {
+  """A collection of allowed IP ranges with descriptions."""
+  allowedIpRanges: [AllowedIpRange_Input]
+}
+
+"""Allowed IP range with user-provided description."""
+input AllowedIpRange_Input {
+  """
+  IP address or range, defined using CIDR notation, of requests that this rule applies to. Examples: `192.168.1.1` or `192.168.0.0/16` or `2001:db8::/32` or `2001:0db8:0000:0042:0000:8a2e:0370:7334`. IP range prefixes should be properly truncated. For example, `1.2.3.4/24` should be truncated to `1.2.3.0/24`. Similarly, for IPv6, `2001:db8::1/32` should be truncated to `2001:db8::/32`.
+  """
+  value: String
+
+  """
+  Optional. User-provided description. It must contain at most 300 characters.
+  """
+  description: String
+}
+
+"""
+The configuration of Cloud SQL instance that is used by the Apache Airflow software.
+"""
+input DatabaseConfig_Input {
+  """
+  Optional. Cloud SQL machine type used by Airflow database. It has to be one of: db-n1-standard-2, db-n1-standard-4, db-n1-standard-8 or db-n1-standard-16. If not specified, db-n1-standard-2 will be used. Supported for Cloud Composer environments in versions composer-1.*.*-airflow-*.*.*.
+  """
+  machineType: String
+
+  """
+  Optional. The Compute Engine zone where the Airflow database is created. If zone is provided, it must be in the region selected for the environment. If zone is not provided, a zone is automatically selected. The zone can only be set during environment creation. Supported for Cloud Composer environments in versions composer-2.*.*-airflow-*.*.*.
+  """
+  zone: String
+}
+
+"""
+The configuration settings for the Airflow web server App Engine instance. Supported for Cloud Composer environments in versions composer-1.*.*-airflow-*.*.*
+"""
+input WebServerConfig_Input {
+  """
+  Optional. Machine type on which Airflow web server is running. It has to be one of: composer-n1-webserver-2, composer-n1-webserver-4 or composer-n1-webserver-8. If not specified, composer-n1-webserver-2 will be used. Value custom is returned only in response, if Airflow web server parameters were manually changed to a non-standard values.
+  """
+  machineType: String
+}
+
+"""
+The encryption options for the Cloud Composer environment and its dependencies.Supported for Cloud Composer environments in versions composer-1.*.*-airflow-*.*.*.
+"""
+input EncryptionConfig_Input {
+  """
+  Optional. Customer-managed Encryption Key available through Google's Key Management Service. Cannot be updated. If not specified, Google-managed key will be used.
+  """
+  kmsKeyName: String
+}
+
+"""
+The configuration settings for Cloud Composer maintenance window. The following example: ``` { "startTime":"2019-08-01T01:00:00Z" "endTime":"2019-08-01T07:00:00Z" "recurrence":"FREQ=WEEKLY;BYDAY=TU,WE" } ``` would define a maintenance window between 01 and 07 hours UTC during each Tuesday and Wednesday.
+"""
+input MaintenanceWindow_Input {
+  """
+  Required. Start time of the first recurrence of the maintenance window.
+  """
+  startTime: String
+
+  """
+  Required. Maintenance window end time. It is used only to calculate the duration of the maintenance window. The value for end-time must be in the future, relative to `start_time`.
+  """
+  endTime: String
+
+  """
+  Required. Maintenance window recurrence. Format is a subset of [RFC-5545](https://tools.ietf.org/html/rfc5545) `RRULE`. The only allowed values for `FREQ` field are `FREQ=DAILY` and `FREQ=WEEKLY;BYDAY=...` Example values: `FREQ=WEEKLY;BYDAY=TU,WE`, `FREQ=DAILY`.
+  """
+  recurrence: String
+}
+
+"""
+The Kubernetes workloads configuration for GKE cluster associated with the Cloud Composer environment. Supported for Cloud Composer environments in versions composer-2.*.*-airflow-*.*.* and newer.
+"""
+input WorkloadsConfig_Input {
+  scheduler: SchedulerResource_Input
+  webServer: WebServerResource_Input
+  worker: WorkerResource_Input
+  triggerer: TriggererResource_Input
+  dagProcessor: DagProcessorResource_Input
+}
+
+"""Configuration for resources used by Airflow schedulers."""
+input SchedulerResource_Input {
+  """
+  Optional. CPU request and limit for a single Airflow scheduler replica.
+  """
+  cpu: Float
+
+  """
+  Optional. Memory (GB) request and limit for a single Airflow scheduler replica.
+  """
+  memoryGb: Float
+
+  """
+  Optional. Storage (GB) request and limit for a single Airflow scheduler replica.
+  """
+  storageGb: Float
+
+  """Optional. The number of schedulers."""
+  count: Int
+}
+
+"""Configuration for resources used by Airflow web server."""
+input WebServerResource_Input {
+  """Optional. CPU request and limit for Airflow web server."""
+  cpu: Float
+
+  """Optional. Memory (GB) request and limit for Airflow web server."""
+  memoryGb: Float
+
+  """Optional. Storage (GB) request and limit for Airflow web server."""
+  storageGb: Float
+}
+
+"""Configuration for resources used by Airflow workers."""
+input WorkerResource_Input {
+  """Optional. CPU request and limit for a single Airflow worker replica."""
+  cpu: Float
+
+  """
+  Optional. Memory (GB) request and limit for a single Airflow worker replica.
+  """
+  memoryGb: Float
+
+  """
+  Optional. Storage (GB) request and limit for a single Airflow worker replica.
+  """
+  storageGb: Float
+
+  """Optional. Minimum number of workers for autoscaling."""
+  minCount: Int
+
+  """Optional. Maximum number of workers for autoscaling."""
+  maxCount: Int
+}
+
+"""Configuration for resources used by Airflow triggerers."""
+input TriggererResource_Input {
+  """Optional. The number of triggerers."""
+  count: Int
+
+  """
+  Optional. CPU request and limit for a single Airflow triggerer replica.
+  """
+  cpu: Float
+
+  """
+  Optional. Memory (GB) request and limit for a single Airflow triggerer replica.
+  """
+  memoryGb: Float
+}
+
+"""
+Configuration for resources used by Airflow DAG processors. This field is supported for Cloud Composer environments in versions composer-3-airflow-*.*.*-build.* and newer.
+"""
+input DagProcessorResource_Input {
+  """
+  Optional. CPU request and limit for a single Airflow DAG processor replica.
+  """
+  cpu: Float
+
+  """
+  Optional. Memory (GB) request and limit for a single Airflow DAG processor replica.
+  """
+  memoryGb: Float
+
+  """
+  Optional. Storage (GB) request and limit for a single Airflow DAG processor replica.
+  """
+  storageGb: Float
+
+  """
+  Optional. The number of DAG processors. If not provided or set to 0, a single DAG processor instance will be created.
+  """
+  count: Int
+}
+
+"""
+Configuration options for the master authorized networks feature. Enabled master authorized networks will disallow all external traffic to access Kubernetes master through HTTPS except traffic from the given CIDR blocks, Google Compute Engine Public IPs and Google Prod IPs.
+"""
+input MasterAuthorizedNetworksConfig_Input {
+  """
+  Optional. Whether or not master authorized networks feature is enabled.
+  """
+  enabled: Boolean
+
+  """
+  Up to 50 external networks that could access Kubernetes master through HTTPS.
+  """
+  cidrBlocks: [CidrBlock_Input]
+}
+
+"""CIDR block with an optional name."""
+input CidrBlock_Input {
+  """User-defined name that identifies the CIDR block."""
+  displayName: String
+
+  """CIDR block that must be specified in CIDR notation."""
+  cidrBlock: String
+}
+
+"""The Recovery settings of an environment."""
+input RecoveryConfig_Input {
+  scheduledSnapshotsConfig: ScheduledSnapshotsConfig_Input
+}
+
+"""The configuration for scheduled snapshot creation mechanism."""
+input ScheduledSnapshotsConfig_Input {
+  """Optional. Whether scheduled snapshots creation is enabled."""
+  enabled: Boolean
+
+  """
+  Optional. The Cloud Storage location for storing automatically created snapshots.
+  """
+  snapshotLocation: String
+
+  """
+  Optional. The cron expression representing the time when snapshots creation mechanism runs. This field is subject to additional validation around frequency of execution.
+  """
+  snapshotCreationSchedule: String
+
+  """
+  Optional. Time zone that sets the context to interpret snapshot_creation_schedule.
+  """
+  timeZone: String
+}
+
+"""
+The configuration setting for Airflow database data retention mechanism.
+"""
+input DataRetentionConfig_Input {
+  airflowMetadataRetentionConfig: AirflowMetadataRetentionPolicyConfig_Input
+  taskLogsRetentionConfig: TaskLogsRetentionConfig_Input
+}
+
+"""The policy for airflow metadata database retention."""
+input AirflowMetadataRetentionPolicyConfig_Input {
+  retentionMode: query_composer_projects_locations_environments_list_environments_items_config_dataRetentionConfig_airflowMetadataRetentionConfig_retentionMode
+
+  """Optional. How many days data should be retained for."""
+  retentionDays: Int
+}
+
+"""The configuration setting for Task Logs."""
+input TaskLogsRetentionConfig_Input {
+  storageMode: query_composer_projects_locations_environments_list_environments_items_config_dataRetentionConfig_taskLogsRetentionConfig_storageMode
+}
+
+"""The configuration for data storage in the environment."""
+input StorageConfig_Input {
+  """
+  Optional. The name of the Cloud Storage bucket used by the environment. No `gs://` prefix.
+  """
+  bucket: String
+}
+
+"""Response to ExecuteAirflowCommandRequest."""
+type ExecuteAirflowCommandResponse {
+  """The unique ID of the command execution for polling."""
+  executionId: String
+
+  """The name of the pod where the command is executed."""
+  pod: String
+
+  """The namespace of the pod where the command is executed."""
+  podNamespace: String
+
+  """Error message. Empty if there was no error."""
+  error: String
+}
+
+"""Execute Airflow Command request."""
+input ExecuteAirflowCommandRequest_Input {
+  """Airflow command."""
+  command: String
+
+  """Airflow subcommand."""
+  subcommand: String
+
+  """
+  Parameters for the Airflow command/subcommand as an array of arguments. It may contain positional arguments like `["my-dag-id"]`, key-value parameters like `["--foo=bar"]` or `["--foo","bar"]`, or other flags like `["-f"]`.
+  """
+  parameters: [String]
+}
+
+"""Response to StopAirflowCommandRequest."""
+type StopAirflowCommandResponse {
+  """Whether the execution is still running."""
+  isDone: Boolean
+
+  """Output message from stopping execution request."""
+  output: [String]
+}
+
+"""Stop Airflow Command request."""
+input StopAirflowCommandRequest_Input {
+  """The unique ID of the command execution."""
+  executionId: String
+
+  """The name of the pod where the command is executed."""
+  pod: String
+
+  """The namespace of the pod where the command is executed."""
+  podNamespace: String
+
+  """
+  If true, the execution is terminated forcefully (SIGKILL). If false, the execution is stopped gracefully, giving it time for cleanup.
+  """
+  force: Boolean
+}
+
+"""Response to PollAirflowCommandRequest."""
+type PollAirflowCommandResponse {
+  """
+  Output from the command execution. It may not contain the full output and the caller may need to poll for more lines.
+  """
+  output: [Line]
+
+  """
+  Whether the command execution has finished and there is no more output.
+  """
+  outputEnd: Boolean
+  exitInfo: ExitInfo
+}
+
+"""Contains information about a single line from logs."""
+type Line {
+  """Number of the line."""
+  lineNumber: Int
+
+  """Text content of the log line."""
+  content: String
+}
+
+"""Information about how a command ended."""
+type ExitInfo {
+  """The exit code from the command execution."""
+  exitCode: Int
+
+  """Error message. Empty if there was no error."""
+  error: String
+}
+
+"""Poll Airflow Command request."""
+input PollAirflowCommandRequest_Input {
+  """The unique ID of the command execution."""
+  executionId: String
+
+  """The name of the pod where the command is executed."""
+  pod: String
+
+  """The namespace of the pod where the command is executed."""
+  podNamespace: String
+
+  """Line number from which new logs should be fetched."""
+  nextLineNumber: Int
+}
+
+"""Request to check whether image upgrade will succeed."""
+input CheckUpgradeRequest_Input {
+  """
+  Optional. The version of the software running in the environment. This encapsulates both the version of Cloud Composer functionality and the version of Apache Airflow. It must match the regular expression `composer-([0-9]+(\.[0-9]+\.[0-9]+(-preview\.[0-9]+)?)?|latest)-airflow-([0-9]+(\.[0-9]+(\.[0-9]+)?)?)`. When used as input, the server also checks if the provided version is supported and denies the request for an unsupported version. The Cloud Composer portion of the image version is a full [semantic version](https://semver.org), or an alias in the form of major version number or `latest`. When an alias is provided, the server replaces it with the current Cloud Composer version that satisfies the alias. The Apache Airflow portion of the image version is a full semantic version that points to one of the supported Apache Airflow versions, or an alias in the form of only major or major.minor versions specified. When an alias is provided, the server replaces it with the latest Apache Airflow version that satisfies the alias and is supported in the given Cloud Composer version. In all cases, the resolved image version is stored in the same field. See also [version list](/composer/docs/concepts/versioning/composer-versions) and [versioning overview](/composer/docs/concepts/versioning/composer-versioning-overview).
+  """
+  imageVersion: String
+}
+
+"""Request to create a snapshot of a Cloud Composer environment."""
+input SaveSnapshotRequest_Input {
+  """
+  Location in a Cloud Storage where the snapshot is going to be stored, e.g.: "gs://my-bucket/snapshots".
+  """
+  snapshotLocation: String
+}
+
+"""Request to load a snapshot into a Cloud Composer environment."""
+input LoadSnapshotRequest_Input {
+  """
+  A Cloud Storage path to a snapshot to load, e.g.: "gs://my-bucket/snapshots/project_location_environment_timestamp".
+  """
+  snapshotPath: String
+
+  """
+  Whether or not to skip installing Pypi packages when loading the environment's state.
+  """
+  skipPypiPackagesInstallation: Boolean
+
+  """
+  Whether or not to skip setting environment variables when loading the environment's state.
+  """
+  skipEnvironmentVariablesSetting: Boolean
+
+  """
+  Whether or not to skip setting Airflow overrides when loading the environment's state.
+  """
+  skipAirflowOverridesSetting: Boolean
+
+  """
+  Whether or not to skip copying Cloud Storage data when loading the environment's state.
+  """
+  skipGcsDataCopying: Boolean
+}
+
+"""
+User workloads Secret used by Airflow tasks that run with Kubernetes executor or KubernetesPodOperator.
+"""
+input UserWorkloadsSecret_Input {
+  """
+  Identifier. The resource name of the Secret, in the form: "projects/{projectId}/locations/{locationId}/environments/{environmentId}/userWorkloadsSecrets/{userWorkloadsSecretId}"
+  """
+  name: String
+
+  """
+  Optional. The "data" field of Kubernetes Secret, organized in key-value pairs, which can contain sensitive values such as a password, a token, or a key. The values for all keys have to be base64-encoded strings. For details see: https://kubernetes.io/docs/concepts/configuration/secret/ Example: { "example": "ZXhhbXBsZV92YWx1ZQ==", "another-example": "YW5vdGhlcl9leGFtcGxlX3ZhbHVl" }
+  """
+  data: JSON
+}
+
+"""
+User workloads ConfigMap used by Airflow tasks that run with Kubernetes executor or KubernetesPodOperator.
+"""
+input UserWorkloadsConfigMap_Input {
+  """
+  Identifier. The resource name of the ConfigMap, in the form: "projects/{projectId}/locations/{locationId}/environments/{environmentId}/userWorkloadsConfigMaps/{userWorkloadsConfigMapId}"
+  """
+  name: String
+
+  """
+  Optional. The "data" field of Kubernetes ConfigMap, organized in key-value pairs. For details see: https://kubernetes.io/docs/concepts/configuration/configmap/ Example: { "example_key": "example_value", "another_key": "another_value" }
+  """
+  data: JSON
+}
+
+enum HTTPMethod {
+  GET
+  HEAD
+  POST
+  PUT
+  DELETE
+  CONNECT
+  OPTIONS
+  TRACE
+  PATCH
+}
+
+scalar ObjMap

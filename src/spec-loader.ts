@@ -556,9 +556,8 @@ async function resolveMultiSpecItems(): Promise<
       label: labelFromSpecPath(p),
     }));
   }
-  // Back-compat alias for the registry group `google-top20`.
-  const groupKey = isTruthyEnv(process.env.CLAWQL_GOOGLE_TOP20_SPECS)
-    ? "google-top20"
+  const groupKey = isTruthyEnv(process.env.CLAWQL_GOOGLE_TOP50_SPECS)
+    ? "google-top50"
     : providerRaw;
   const groupedProviders = await resolveBundledProviderGroup(groupKey);
   if (groupedProviders) return groupedProviders;

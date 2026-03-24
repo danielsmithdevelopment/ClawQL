@@ -1,30 +1,12 @@
 {
-  "servicePath": "",
-  "title": "Service Usage API",
-  "batchPath": "batch",
-  "auth": {
-    "oauth2": {
-      "scopes": {
-        "https://www.googleapis.com/auth/cloud-platform": {
-          "description": "See, edit, configure, and delete your Google Cloud data and see the email address for your Google Account."
-        },
-        "https://www.googleapis.com/auth/cloud-platform.read-only": {
-          "description": "View your data across Google Cloud services and see the email address of your Google Account"
-        },
-        "https://www.googleapis.com/auth/service.management": {
-          "description": "Manage your Google API service configuration"
-        }
-      }
-    }
-  },
-  "ownerDomain": "google.com",
-  "description": "Enables services that service consumers want to use on Google Cloud Platform, lists the available or enabled services, or disables services that service consumers no longer use.",
-  "basePath": "",
-  "rootUrl": "https://serviceusage.googleapis.com/",
-  "canonicalName": "Service Usage",
-  "revision": "20260227",
+  "discoveryVersion": "v1",
   "id": "serviceusage:v1",
-  "baseUrl": "https://serviceusage.googleapis.com/",
+  "documentationLink": "https://cloud.google.com/service-usage/",
+  "batchPath": "batch",
+  "fullyEncodeReservedExpansion": true,
+  "revision": "20260227",
+  "kind": "discovery#restDescription",
+  "name": "serviceusage",
   "parameters": {
     "access_token": {
       "type": "string",
@@ -102,17 +84,359 @@
       "location": "query"
     }
   },
-  "ownerName": "Google",
-  "fullyEncodeReservedExpansion": true,
+  "protocol": "rest",
   "icons": {
     "x16": "http://www.google.com/images/icons/product/search-16.gif",
     "x32": "http://www.google.com/images/icons/product/search-32.gif"
   },
-  "version_module": true,
-  "kind": "discovery#restDescription",
+  "resources": {
+    "operations": {
+      "methods": {
+        "list": {
+          "id": "serviceusage.operations.list",
+          "path": "v1/operations",
+          "flatPath": "v1/operations",
+          "httpMethod": "GET",
+          "parameters": {
+            "name": {
+              "description": "The name of the operation's parent resource.",
+              "location": "query",
+              "type": "string"
+            },
+            "filter": {
+              "description": "The standard list filter.",
+              "location": "query",
+              "type": "string"
+            },
+            "pageSize": {
+              "description": "The standard list page size.",
+              "location": "query",
+              "type": "integer",
+              "format": "int32"
+            },
+            "pageToken": {
+              "description": "The standard list page token.",
+              "location": "query",
+              "type": "string"
+            },
+            "returnPartialSuccess": {
+              "description": "When set to `true`, operations that are reachable are returned as normal, and those that are unreachable are returned in the ListOperationsResponse.unreachable field. This can only be `true` when reading across collections. For example, when `parent` is set to `\"projects/example/locations/-\"`. This field is not supported by default and will result in an `UNIMPLEMENTED` error if set unless explicitly documented otherwise in service or product specific documentation.",
+              "location": "query",
+              "type": "boolean"
+            }
+          },
+          "parameterOrder": [],
+          "response": {
+            "$ref": "ListOperationsResponse"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/service.management"
+          ],
+          "description": "Lists operations that match the specified filter in the request. If the server doesn't support this method, it returns `UNIMPLEMENTED`."
+        },
+        "get": {
+          "id": "serviceusage.operations.get",
+          "path": "v1/{+name}",
+          "flatPath": "v1/operations/{operationsId}",
+          "httpMethod": "GET",
+          "parameters": {
+            "name": {
+              "description": "The name of the operation resource.",
+              "pattern": "^operations/[^/]+$",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "parameterOrder": [
+            "name"
+          ],
+          "response": {
+            "$ref": "Operation"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/service.management"
+          ],
+          "description": "Gets the latest state of a long-running operation. Clients can use this method to poll the operation result at intervals as recommended by the API service."
+        },
+        "delete": {
+          "id": "serviceusage.operations.delete",
+          "path": "v1/{+name}",
+          "flatPath": "v1/operations/{operationsId}",
+          "httpMethod": "DELETE",
+          "parameters": {
+            "name": {
+              "description": "The name of the operation resource to be deleted.",
+              "pattern": "^operations/.*$",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "parameterOrder": [
+            "name"
+          ],
+          "response": {
+            "$ref": "Empty"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/service.management"
+          ],
+          "description": "Deletes a long-running operation. This method indicates that the client is no longer interested in the operation result. It does not cancel the operation. If the server doesn't support this method, it returns `google.rpc.Code.UNIMPLEMENTED`."
+        },
+        "cancel": {
+          "id": "serviceusage.operations.cancel",
+          "path": "v1/{+name}:cancel",
+          "flatPath": "v1/operations/{operationsId}:cancel",
+          "httpMethod": "POST",
+          "parameters": {
+            "name": {
+              "description": "The name of the operation resource to be cancelled.",
+              "pattern": "^operations/.*$",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "parameterOrder": [
+            "name"
+          ],
+          "request": {
+            "$ref": "CancelOperationRequest"
+          },
+          "response": {
+            "$ref": "Empty"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/service.management"
+          ],
+          "description": "Starts asynchronous cancellation on a long-running operation. The server makes a best effort to cancel the operation, but success is not guaranteed. If the server doesn't support this method, it returns `google.rpc.Code.UNIMPLEMENTED`. Clients can use Operations.GetOperation or other methods to check whether the cancellation succeeded or whether the operation completed despite cancellation. On successful cancellation, the operation is not deleted; instead, it becomes an operation with an Operation.error value with a google.rpc.Status.code of `1`, corresponding to `Code.CANCELLED`."
+        }
+      }
+    },
+    "services": {
+      "methods": {
+        "enable": {
+          "id": "serviceusage.services.enable",
+          "path": "v1/{+name}:enable",
+          "flatPath": "v1/{v1Id}/{v1Id1}/services/{servicesId}:enable",
+          "httpMethod": "POST",
+          "parameters": {
+            "name": {
+              "description": "Name of the consumer and service to enable the service on. The `EnableService` and `DisableService` methods currently only support projects. Enabling a service requires that the service is public or is shared with the user enabling the service. An example name would be: `projects/123/services/serviceusage.googleapis.com` where `123` is the project number.",
+              "pattern": "^[^/]+/[^/]+/services/[^/]+$",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "parameterOrder": [
+            "name"
+          ],
+          "request": {
+            "$ref": "EnableServiceRequest"
+          },
+          "response": {
+            "$ref": "Operation"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/service.management"
+          ],
+          "description": "Enable a service so that it can be used with a project."
+        },
+        "disable": {
+          "id": "serviceusage.services.disable",
+          "path": "v1/{+name}:disable",
+          "flatPath": "v1/{v1Id}/{v1Id1}/services/{servicesId}:disable",
+          "httpMethod": "POST",
+          "parameters": {
+            "name": {
+              "description": "Name of the consumer and service to disable the service on. The enable and disable methods currently only support projects. An example name would be: `projects/123/services/serviceusage.googleapis.com` where `123` is the project number.",
+              "pattern": "^[^/]+/[^/]+/services/[^/]+$",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "parameterOrder": [
+            "name"
+          ],
+          "request": {
+            "$ref": "DisableServiceRequest"
+          },
+          "response": {
+            "$ref": "Operation"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/service.management"
+          ],
+          "description": "Disable a service so that it can no longer be used with a project. This prevents unintended usage that may cause unexpected billing charges or security leaks. It is not valid to call the disable method on a service that is not currently enabled. Callers will receive a `FAILED_PRECONDITION` status if the target service is not currently enabled."
+        },
+        "get": {
+          "id": "serviceusage.services.get",
+          "path": "v1/{+name}",
+          "flatPath": "v1/{v1Id}/{v1Id1}/services/{servicesId}",
+          "httpMethod": "GET",
+          "parameters": {
+            "name": {
+              "description": "Name of the consumer and service to get the `ConsumerState` for. An example name would be: `projects/123/services/serviceusage.googleapis.com` where `123` is the project number.",
+              "pattern": "^[^/]+/[^/]+/services/[^/]+$",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "parameterOrder": [
+            "name"
+          ],
+          "response": {
+            "$ref": "GoogleApiServiceusageV1Service"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/cloud-platform.read-only"
+          ],
+          "description": "Returns the service configuration and enabled state for a given service."
+        },
+        "list": {
+          "id": "serviceusage.services.list",
+          "path": "v1/{+parent}/services",
+          "flatPath": "v1/{v1Id}/{v1Id1}/services",
+          "httpMethod": "GET",
+          "parameters": {
+            "parent": {
+              "description": "Parent to search for services on. An example name would be: `projects/123` where `123` is the project number.",
+              "pattern": "^[^/]+/[^/]+$",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            },
+            "pageSize": {
+              "description": "Requested size of the next page of data. Requested page size cannot exceed 200. If not set, the default page size is 50.",
+              "location": "query",
+              "type": "integer",
+              "format": "int32"
+            },
+            "pageToken": {
+              "description": "Token identifying which result to start with, which is returned by a previous list call.",
+              "location": "query",
+              "type": "string"
+            },
+            "filter": {
+              "description": "Only list services that conform to the given filter. The allowed filter strings are `state:ENABLED` and `state:DISABLED`.",
+              "location": "query",
+              "type": "string"
+            }
+          },
+          "parameterOrder": [
+            "parent"
+          ],
+          "response": {
+            "$ref": "ListServicesResponse"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/cloud-platform.read-only"
+          ],
+          "description": "List all services available to the specified project, and the current state of those services with respect to the project. The list includes all public services, all services for which the calling user has the `servicemanagement.services.bind` permission, and all services that have already been enabled on the project. The list can be filtered to only include services in a specific state, for example to only include services enabled on the project. WARNING: If you need to query enabled services frequently or across an organization, you should use [Cloud Asset Inventory API](https://cloud.google.com/asset-inventory/docs/apis), which provides higher throughput and richer filtering capability."
+        },
+        "batchEnable": {
+          "id": "serviceusage.services.batchEnable",
+          "path": "v1/{+parent}/services:batchEnable",
+          "flatPath": "v1/{v1Id}/{v1Id1}/services:batchEnable",
+          "httpMethod": "POST",
+          "parameters": {
+            "parent": {
+              "description": "Parent to enable services on. An example name would be: `projects/123` where `123` is the project number. The `BatchEnableServices` method currently only supports projects.",
+              "pattern": "^[^/]+/[^/]+$",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "parameterOrder": [
+            "parent"
+          ],
+          "request": {
+            "$ref": "BatchEnableServicesRequest"
+          },
+          "response": {
+            "$ref": "Operation"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/service.management"
+          ],
+          "description": "Enable multiple services on a project. The operation is atomic: if enabling any service fails, then the entire batch fails, and no state changes occur. To enable a single service, use the `EnableService` method instead."
+        },
+        "batchGet": {
+          "id": "serviceusage.services.batchGet",
+          "path": "v1/{+parent}/services:batchGet",
+          "flatPath": "v1/{v1Id}/{v1Id1}/services:batchGet",
+          "httpMethod": "GET",
+          "parameters": {
+            "parent": {
+              "description": "Parent to retrieve services from. If this is set, the parent of all of the services specified in `names` must match this field. An example name would be: `projects/123` where `123` is the project number. The `BatchGetServices` method currently only supports projects.",
+              "pattern": "^[^/]+/[^/]+$",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            },
+            "names": {
+              "description": "Names of the services to retrieve. An example name would be: `projects/123/services/serviceusage.googleapis.com` where `123` is the project number. A single request can get a maximum of 30 services at a time.",
+              "location": "query",
+              "repeated": true,
+              "type": "string"
+            }
+          },
+          "parameterOrder": [
+            "parent"
+          ],
+          "response": {
+            "$ref": "BatchGetServicesResponse"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/cloud-platform.read-only"
+          ],
+          "description": "Returns the service configurations and enabled states for a given list of services."
+        }
+      }
+    }
+  },
+  "auth": {
+    "oauth2": {
+      "scopes": {
+        "https://www.googleapis.com/auth/cloud-platform": {
+          "description": "See, edit, configure, and delete your Google Cloud data and see the email address for your Google Account."
+        },
+        "https://www.googleapis.com/auth/cloud-platform.read-only": {
+          "description": "View your data across Google Cloud services and see the email address of your Google Account"
+        },
+        "https://www.googleapis.com/auth/service.management": {
+          "description": "Manage your Google API service configuration"
+        }
+      }
+    }
+  },
   "version": "v1",
-  "name": "serviceusage",
+  "description": "Enables services that service consumers want to use on Google Cloud Platform, lists the available or enabled services, or disables services that service consumers no longer use.",
+  "ownerDomain": "google.com",
+  "canonicalName": "Service Usage",
+  "rootUrl": "https://serviceusage.googleapis.com/",
+  "ownerName": "Google",
+  "title": "Service Usage API",
+  "version_module": true,
   "mtlsRootUrl": "https://serviceusage.mtls.googleapis.com/",
+  "basePath": "",
+  "servicePath": "",
+  "baseUrl": "https://serviceusage.googleapis.com/",
   "schemas": {
     "ListOperationsResponse": {
       "id": "ListOperationsResponse",
@@ -3625,330 +3949,6 @@
       "description": "Metadata for the `UpdateMcpPolicy` method.",
       "type": "object",
       "properties": {}
-    }
-  },
-  "protocol": "rest",
-  "discoveryVersion": "v1",
-  "documentationLink": "https://cloud.google.com/service-usage/",
-  "resources": {
-    "operations": {
-      "methods": {
-        "list": {
-          "id": "serviceusage.operations.list",
-          "path": "v1/operations",
-          "flatPath": "v1/operations",
-          "httpMethod": "GET",
-          "parameters": {
-            "name": {
-              "description": "The name of the operation's parent resource.",
-              "location": "query",
-              "type": "string"
-            },
-            "filter": {
-              "description": "The standard list filter.",
-              "location": "query",
-              "type": "string"
-            },
-            "pageSize": {
-              "description": "The standard list page size.",
-              "location": "query",
-              "type": "integer",
-              "format": "int32"
-            },
-            "pageToken": {
-              "description": "The standard list page token.",
-              "location": "query",
-              "type": "string"
-            },
-            "returnPartialSuccess": {
-              "description": "When set to `true`, operations that are reachable are returned as normal, and those that are unreachable are returned in the ListOperationsResponse.unreachable field. This can only be `true` when reading across collections. For example, when `parent` is set to `\"projects/example/locations/-\"`. This field is not supported by default and will result in an `UNIMPLEMENTED` error if set unless explicitly documented otherwise in service or product specific documentation.",
-              "location": "query",
-              "type": "boolean"
-            }
-          },
-          "parameterOrder": [],
-          "response": {
-            "$ref": "ListOperationsResponse"
-          },
-          "scopes": [
-            "https://www.googleapis.com/auth/cloud-platform",
-            "https://www.googleapis.com/auth/service.management"
-          ],
-          "description": "Lists operations that match the specified filter in the request. If the server doesn't support this method, it returns `UNIMPLEMENTED`."
-        },
-        "get": {
-          "id": "serviceusage.operations.get",
-          "path": "v1/{+name}",
-          "flatPath": "v1/operations/{operationsId}",
-          "httpMethod": "GET",
-          "parameters": {
-            "name": {
-              "description": "The name of the operation resource.",
-              "pattern": "^operations/[^/]+$",
-              "location": "path",
-              "required": true,
-              "type": "string"
-            }
-          },
-          "parameterOrder": [
-            "name"
-          ],
-          "response": {
-            "$ref": "Operation"
-          },
-          "scopes": [
-            "https://www.googleapis.com/auth/cloud-platform",
-            "https://www.googleapis.com/auth/service.management"
-          ],
-          "description": "Gets the latest state of a long-running operation. Clients can use this method to poll the operation result at intervals as recommended by the API service."
-        },
-        "delete": {
-          "id": "serviceusage.operations.delete",
-          "path": "v1/{+name}",
-          "flatPath": "v1/operations/{operationsId}",
-          "httpMethod": "DELETE",
-          "parameters": {
-            "name": {
-              "description": "The name of the operation resource to be deleted.",
-              "pattern": "^operations/.*$",
-              "location": "path",
-              "required": true,
-              "type": "string"
-            }
-          },
-          "parameterOrder": [
-            "name"
-          ],
-          "response": {
-            "$ref": "Empty"
-          },
-          "scopes": [
-            "https://www.googleapis.com/auth/cloud-platform",
-            "https://www.googleapis.com/auth/service.management"
-          ],
-          "description": "Deletes a long-running operation. This method indicates that the client is no longer interested in the operation result. It does not cancel the operation. If the server doesn't support this method, it returns `google.rpc.Code.UNIMPLEMENTED`."
-        },
-        "cancel": {
-          "id": "serviceusage.operations.cancel",
-          "path": "v1/{+name}:cancel",
-          "flatPath": "v1/operations/{operationsId}:cancel",
-          "httpMethod": "POST",
-          "parameters": {
-            "name": {
-              "description": "The name of the operation resource to be cancelled.",
-              "pattern": "^operations/.*$",
-              "location": "path",
-              "required": true,
-              "type": "string"
-            }
-          },
-          "parameterOrder": [
-            "name"
-          ],
-          "request": {
-            "$ref": "CancelOperationRequest"
-          },
-          "response": {
-            "$ref": "Empty"
-          },
-          "scopes": [
-            "https://www.googleapis.com/auth/cloud-platform",
-            "https://www.googleapis.com/auth/service.management"
-          ],
-          "description": "Starts asynchronous cancellation on a long-running operation. The server makes a best effort to cancel the operation, but success is not guaranteed. If the server doesn't support this method, it returns `google.rpc.Code.UNIMPLEMENTED`. Clients can use Operations.GetOperation or other methods to check whether the cancellation succeeded or whether the operation completed despite cancellation. On successful cancellation, the operation is not deleted; instead, it becomes an operation with an Operation.error value with a google.rpc.Status.code of `1`, corresponding to `Code.CANCELLED`."
-        }
-      }
-    },
-    "services": {
-      "methods": {
-        "enable": {
-          "id": "serviceusage.services.enable",
-          "path": "v1/{+name}:enable",
-          "flatPath": "v1/{v1Id}/{v1Id1}/services/{servicesId}:enable",
-          "httpMethod": "POST",
-          "parameters": {
-            "name": {
-              "description": "Name of the consumer and service to enable the service on. The `EnableService` and `DisableService` methods currently only support projects. Enabling a service requires that the service is public or is shared with the user enabling the service. An example name would be: `projects/123/services/serviceusage.googleapis.com` where `123` is the project number.",
-              "pattern": "^[^/]+/[^/]+/services/[^/]+$",
-              "location": "path",
-              "required": true,
-              "type": "string"
-            }
-          },
-          "parameterOrder": [
-            "name"
-          ],
-          "request": {
-            "$ref": "EnableServiceRequest"
-          },
-          "response": {
-            "$ref": "Operation"
-          },
-          "scopes": [
-            "https://www.googleapis.com/auth/cloud-platform",
-            "https://www.googleapis.com/auth/service.management"
-          ],
-          "description": "Enable a service so that it can be used with a project."
-        },
-        "disable": {
-          "id": "serviceusage.services.disable",
-          "path": "v1/{+name}:disable",
-          "flatPath": "v1/{v1Id}/{v1Id1}/services/{servicesId}:disable",
-          "httpMethod": "POST",
-          "parameters": {
-            "name": {
-              "description": "Name of the consumer and service to disable the service on. The enable and disable methods currently only support projects. An example name would be: `projects/123/services/serviceusage.googleapis.com` where `123` is the project number.",
-              "pattern": "^[^/]+/[^/]+/services/[^/]+$",
-              "location": "path",
-              "required": true,
-              "type": "string"
-            }
-          },
-          "parameterOrder": [
-            "name"
-          ],
-          "request": {
-            "$ref": "DisableServiceRequest"
-          },
-          "response": {
-            "$ref": "Operation"
-          },
-          "scopes": [
-            "https://www.googleapis.com/auth/cloud-platform",
-            "https://www.googleapis.com/auth/service.management"
-          ],
-          "description": "Disable a service so that it can no longer be used with a project. This prevents unintended usage that may cause unexpected billing charges or security leaks. It is not valid to call the disable method on a service that is not currently enabled. Callers will receive a `FAILED_PRECONDITION` status if the target service is not currently enabled."
-        },
-        "get": {
-          "id": "serviceusage.services.get",
-          "path": "v1/{+name}",
-          "flatPath": "v1/{v1Id}/{v1Id1}/services/{servicesId}",
-          "httpMethod": "GET",
-          "parameters": {
-            "name": {
-              "description": "Name of the consumer and service to get the `ConsumerState` for. An example name would be: `projects/123/services/serviceusage.googleapis.com` where `123` is the project number.",
-              "pattern": "^[^/]+/[^/]+/services/[^/]+$",
-              "location": "path",
-              "required": true,
-              "type": "string"
-            }
-          },
-          "parameterOrder": [
-            "name"
-          ],
-          "response": {
-            "$ref": "GoogleApiServiceusageV1Service"
-          },
-          "scopes": [
-            "https://www.googleapis.com/auth/cloud-platform",
-            "https://www.googleapis.com/auth/cloud-platform.read-only"
-          ],
-          "description": "Returns the service configuration and enabled state for a given service."
-        },
-        "list": {
-          "id": "serviceusage.services.list",
-          "path": "v1/{+parent}/services",
-          "flatPath": "v1/{v1Id}/{v1Id1}/services",
-          "httpMethod": "GET",
-          "parameters": {
-            "parent": {
-              "description": "Parent to search for services on. An example name would be: `projects/123` where `123` is the project number.",
-              "pattern": "^[^/]+/[^/]+$",
-              "location": "path",
-              "required": true,
-              "type": "string"
-            },
-            "pageSize": {
-              "description": "Requested size of the next page of data. Requested page size cannot exceed 200. If not set, the default page size is 50.",
-              "location": "query",
-              "type": "integer",
-              "format": "int32"
-            },
-            "pageToken": {
-              "description": "Token identifying which result to start with, which is returned by a previous list call.",
-              "location": "query",
-              "type": "string"
-            },
-            "filter": {
-              "description": "Only list services that conform to the given filter. The allowed filter strings are `state:ENABLED` and `state:DISABLED`.",
-              "location": "query",
-              "type": "string"
-            }
-          },
-          "parameterOrder": [
-            "parent"
-          ],
-          "response": {
-            "$ref": "ListServicesResponse"
-          },
-          "scopes": [
-            "https://www.googleapis.com/auth/cloud-platform",
-            "https://www.googleapis.com/auth/cloud-platform.read-only"
-          ],
-          "description": "List all services available to the specified project, and the current state of those services with respect to the project. The list includes all public services, all services for which the calling user has the `servicemanagement.services.bind` permission, and all services that have already been enabled on the project. The list can be filtered to only include services in a specific state, for example to only include services enabled on the project. WARNING: If you need to query enabled services frequently or across an organization, you should use [Cloud Asset Inventory API](https://cloud.google.com/asset-inventory/docs/apis), which provides higher throughput and richer filtering capability."
-        },
-        "batchEnable": {
-          "id": "serviceusage.services.batchEnable",
-          "path": "v1/{+parent}/services:batchEnable",
-          "flatPath": "v1/{v1Id}/{v1Id1}/services:batchEnable",
-          "httpMethod": "POST",
-          "parameters": {
-            "parent": {
-              "description": "Parent to enable services on. An example name would be: `projects/123` where `123` is the project number. The `BatchEnableServices` method currently only supports projects.",
-              "pattern": "^[^/]+/[^/]+$",
-              "location": "path",
-              "required": true,
-              "type": "string"
-            }
-          },
-          "parameterOrder": [
-            "parent"
-          ],
-          "request": {
-            "$ref": "BatchEnableServicesRequest"
-          },
-          "response": {
-            "$ref": "Operation"
-          },
-          "scopes": [
-            "https://www.googleapis.com/auth/cloud-platform",
-            "https://www.googleapis.com/auth/service.management"
-          ],
-          "description": "Enable multiple services on a project. The operation is atomic: if enabling any service fails, then the entire batch fails, and no state changes occur. To enable a single service, use the `EnableService` method instead."
-        },
-        "batchGet": {
-          "id": "serviceusage.services.batchGet",
-          "path": "v1/{+parent}/services:batchGet",
-          "flatPath": "v1/{v1Id}/{v1Id1}/services:batchGet",
-          "httpMethod": "GET",
-          "parameters": {
-            "parent": {
-              "description": "Parent to retrieve services from. If this is set, the parent of all of the services specified in `names` must match this field. An example name would be: `projects/123` where `123` is the project number. The `BatchGetServices` method currently only supports projects.",
-              "pattern": "^[^/]+/[^/]+$",
-              "location": "path",
-              "required": true,
-              "type": "string"
-            },
-            "names": {
-              "description": "Names of the services to retrieve. An example name would be: `projects/123/services/serviceusage.googleapis.com` where `123` is the project number. A single request can get a maximum of 30 services at a time.",
-              "location": "query",
-              "repeated": true,
-              "type": "string"
-            }
-          },
-          "parameterOrder": [
-            "parent"
-          ],
-          "response": {
-            "$ref": "BatchGetServicesResponse"
-          },
-          "scopes": [
-            "https://www.googleapis.com/auth/cloud-platform",
-            "https://www.googleapis.com/auth/cloud-platform.read-only"
-          ],
-          "description": "Returns the service configurations and enabled states for a given list of services."
-        }
-      }
     }
   }
 }

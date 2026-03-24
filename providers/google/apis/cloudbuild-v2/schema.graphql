@@ -5,15 +5,6 @@ directive @httpOperation(subgraph: String, path: String, operationSpecificHeader
 directive @transport(subgraph: String, kind: String, location: String, headers: [[String]], queryStringOptions: ObjMap, queryParams: [[String]]) repeatable on SCHEMA
 
 type Query {
-  """Gets information about a location."""
-  cloudbuild_projects_locations_get(
-    """Path parameter projectsId"""
-    projectsId: String!
-
-    """Path parameter locationsId"""
-    locationsId: String!
-  ): Location
-
   """
   Lists information about the supported locations for this service. This method can be called in two ways: * **List all public locations:** Use the path `GET /v1/locations`. * **List project-visible locations:** Use the path `GET /v1/projects/{project_id}/locations`. This may include public locations as well as private or other locations specifically visible to the project.
   """
@@ -22,14 +13,14 @@ type Query {
     projectsId: String!
 
     """
-    A page token received from the `next_page_token` field in the response. Send that page token to receive the subsequent page.
-    """
-    pageToken: String
-
-    """
     The maximum number of results to return. If not set, the service selects a default.
     """
     pageSize: Int
+
+    """
+    A page token received from the `next_page_token` field in the response. Send that page token to receive the subsequent page.
+    """
+    pageToken: String
 
     """
     Optional. Do not use this field. It is unsupported and is ignored unless explicitly documented otherwise. This is primarily for internal usage.
@@ -41,6 +32,15 @@ type Query {
     """
     filter: String
   ): ListLocationsResponse
+
+  """Gets information about a location."""
+  cloudbuild_projects_locations_get(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+  ): Location
 
   """
   Gets the latest state of a long-running operation. Clients can use this method to poll the operation result at intervals as recommended by the API service.
@@ -95,16 +95,16 @@ type Query {
     """Path parameter locationsId"""
     locationsId: String!
 
+    """
+    Optional. If set to true, the response will return partial results when some regions are unreachable. If set to false, the response will fail if any region is unreachable.
+    """
+    returnPartialSuccess: Boolean
+
     """Number of results to return in the list."""
     pageSize: Int
 
     """Page start."""
     pageToken: String
-
-    """
-    Optional. If set to true, the response will return partial results when some regions are unreachable. If set to false, the response will fail if any region is unreachable.
-    """
-    returnPartialSuccess: Boolean
   ): ListConnectionsResponse
 
   """
@@ -120,40 +120,12 @@ type Query {
     """Path parameter connectionsId"""
     connectionsId: String!
 
+    """Page start."""
+    pageToken: String
+
     """Number of results to return in the list. Default to 20."""
     pageSize: Int
-
-    """Page start."""
-    pageToken: String
   ): FetchLinkableRepositoriesResponse
-
-  """Lists Repositories in a given connection."""
-  cloudbuild_projects_locations_connections_repositories_list(
-    """Path parameter projectsId"""
-    projectsId: String!
-
-    """Path parameter locationsId"""
-    locationsId: String!
-
-    """Path parameter connectionsId"""
-    connectionsId: String!
-
-    """Page start."""
-    pageToken: String
-
-    """Number of results to return in the list."""
-    pageSize: Int
-
-    """
-    Optional. If set to true, the response will return partial results when some regions are unreachable. If set to false, the response will fail if any region is unreachable.
-    """
-    returnPartialSuccess: Boolean
-
-    """
-    A filter expression that filters resources listed in the response. Expressions must follow API improvement proposal [AIP-160](https://google.aip.dev/160). e.g. `remote_uri:"https://github.com*"`.
-    """
-    filter: String
-  ): ListRepositoriesResponse
 
   """Gets details of a single repository."""
   cloudbuild_projects_locations_connections_repositories_get(
@@ -170,6 +142,34 @@ type Query {
     repositoriesId: String!
   ): Repository
 
+  """Lists Repositories in a given connection."""
+  cloudbuild_projects_locations_connections_repositories_list(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter connectionsId"""
+    connectionsId: String!
+
+    """
+    A filter expression that filters resources listed in the response. Expressions must follow API improvement proposal [AIP-160](https://google.aip.dev/160). e.g. `remote_uri:"https://github.com*"`.
+    """
+    filter: String
+
+    """Number of results to return in the list."""
+    pageSize: Int
+
+    """Page start."""
+    pageToken: String
+
+    """
+    Optional. If set to true, the response will return partial results when some regions are unreachable. If set to false, the response will fail if any region is unreachable.
+    """
+    returnPartialSuccess: Boolean
+  ): ListRepositoriesResponse
+
   """Fetch the list of branches or tags for a given repository."""
   cloudbuild_projects_locations_connections_repositories_fetchGitRefs(
     """Path parameter projectsId"""
@@ -184,23 +184,35 @@ type Query {
     """Path parameter repositoriesId"""
     repositoriesId: String!
 
+    """Optional. Number of results to return in the list. Default to 20."""
+    pageSize: Int
+
     """Type of refs to fetch"""
     refType: String
 
     """Optional. Page start."""
     pageToken: String
-
-    """Optional. Number of results to return in the list. Default to 20."""
-    pageSize: Int
   ): FetchGitRefsResponse
+}
+
+"""The response message for Locations.ListLocations."""
+type ListLocationsResponse {
+  """A list of locations that matches the specified filter in the request."""
+  locations: [Location]
+
+  """The standard List next-page token."""
+  nextPageToken: String
 }
 
 """A resource that represents a Google Cloud location."""
 type Location {
+  """The canonical id for this location. For example: `"us-east1"`."""
+  locationId: String
+
   """
-  Resource name for the location, which may vary between implementations. For example: `"projects/example-project/locations/us-east1"`
+  Cross-service attributes for the location. For example {"cloud.googleapis.com/region": "us-east1"}
   """
-  name: String
+  labels: JSON
 
   """
   The friendly name for this location, typically a nearby city name. For example, "Tokyo".
@@ -212,28 +224,16 @@ type Location {
   """
   metadata: JSON
 
-  """The canonical id for this location. For example: `"us-east1"`."""
-  locationId: String
-
   """
-  Cross-service attributes for the location. For example {"cloud.googleapis.com/region": "us-east1"}
+  Resource name for the location, which may vary between implementations. For example: `"projects/example-project/locations/us-east1"`
   """
-  labels: JSON
+  name: String
 }
 
 """
 The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
 """
 scalar JSON @specifiedBy(url: "http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf")
-
-"""The response message for Locations.ListLocations."""
-type ListLocationsResponse {
-  """A list of locations that matches the specified filter in the request."""
-  locations: [Location]
-
-  """The standard List next-page token."""
-  nextPageToken: String
-}
 
 """
 This resource represents a long-running operation that is the result of a network API call.
@@ -285,14 +285,6 @@ An Identity and Access Management (IAM) policy, which specifies access controls 
 """
 type Policy {
   """
-  Associates a list of `members`, or principals, with a `role`. Optionally, may specify a `condition` that determines how and when the `bindings` are applied. Each of the `bindings` must contain at least one principal. The `bindings` in a `Policy` can refer to up to 1,500 principals; up to 250 of these principals can be Google groups. Each occurrence of a principal counts towards these limits. For example, if the `bindings` grant 50 different roles to `user:alice@example.com`, and not to any other principal, then you can add another 1,450 principals to the `bindings` in the `Policy`.
-  """
-  bindings: [Binding]
-
-  """Specifies cloud audit logging configuration for this policy."""
-  auditConfigs: [AuditConfig]
-
-  """
   `etag` is used for optimistic concurrency control as a way to help prevent simultaneous updates of a policy from overwriting each other. It is strongly suggested that systems make use of the `etag` in the read-modify-write cycle to perform policy updates in order to avoid race conditions: An `etag` is returned in the response to `getIamPolicy`, and systems are expected to put that etag in the request to `setIamPolicy` to ensure that their change will be applied to the same version of the policy. **Important:** If you use IAM Conditions, you must include the `etag` field whenever you call `setIamPolicy`. If you omit this field, then IAM allows you to overwrite a version `3` policy with a version `1` policy, and all of the conditions in the version `3` policy are lost.
   """
   etag: Byte
@@ -301,7 +293,18 @@ type Policy {
   Specifies the format of the policy. Valid values are `0`, `1`, and `3`. Requests that specify an invalid value are rejected. Any operation that affects conditional role bindings must specify version `3`. This requirement applies to the following operations: * Getting a policy that includes a conditional role binding * Adding a conditional role binding to a policy * Changing a conditional role binding in a policy * Removing any role binding, with or without a condition, from a policy that includes conditions **Important:** If you use IAM Conditions, you must include the `etag` field whenever you call `setIamPolicy`. If you omit this field, then IAM allows you to overwrite a version `3` policy with a version `1` policy, and all of the conditions in the version `3` policy are lost. If a policy does not include any conditions, operations on that policy may specify any valid version or leave the field unset. To learn which resources support conditions in their IAM policies, see the [IAM documentation](https://cloud.google.com/iam/help/conditions/resource-policies).
   """
   version: Int
+
+  """
+  Associates a list of `members`, or principals, with a `role`. Optionally, may specify a `condition` that determines how and when the `bindings` are applied. Each of the `bindings` must contain at least one principal. The `bindings` in a `Policy` can refer to up to 1,500 principals; up to 250 of these principals can be Google groups. Each occurrence of a principal counts towards these limits. For example, if the `bindings` grant 50 different roles to `user:alice@example.com`, and not to any other principal, then you can add another 1,450 principals to the `bindings` in the `Policy`.
+  """
+  bindings: [Binding]
+
+  """Specifies cloud audit logging configuration for this policy."""
+  auditConfigs: [AuditConfig]
 }
+
+"""The `Byte` scalar type represents byte value as a Buffer"""
+scalar Byte
 
 """Associates `members`, or principals, with a `role`."""
 type Binding {
@@ -323,6 +326,11 @@ Represents a textual expression in the Common Expression Language (CEL) syntax. 
 """
 type Expr {
   """
+  Optional. Title for the expression, i.e. a short string describing its purpose. This can be used e.g. in UIs which allow to enter the expression.
+  """
+  title: String
+
+  """
   Textual representation of an expression in Common Expression Language syntax.
   """
   expression: String
@@ -336,11 +344,6 @@ type Expr {
   Optional. String indicating the location of the expression for error reporting, e.g. a file name and a position in the file.
   """
   location: String
-
-  """
-  Optional. Title for the expression, i.e. a short string describing its purpose. This can be used e.g. in UIs which allow to enter the expression.
-  """
-  title: String
 }
 
 """
@@ -376,17 +379,21 @@ enum query_cloudbuild_projects_locations_connections_getIamPolicy_auditConfigs_i
   DATA_READ
 }
 
-"""The `Byte` scalar type represents byte value as a Buffer"""
-scalar Byte
-
 """
 A connection to a SCM like GitHub, GitHub Enterprise, Bitbucket Data Center, Bitbucket Cloud or GitLab.
 """
 type Connection {
+  githubConfig: GitHubConfig
+
   """
   Output only. Server assigned timestamp for when the connection was updated.
   """
   updateTime: String
+
+  """
+  Immutable. The resource name of the connection, in the format `projects/{project}/locations/{location}/connections/{connection_id}`.
+  """
+  name: String
 
   """
   Optional. If disabled is set to true, functionality is disabled for this connection. Repository based API methods and webhooks processing for repositories in this connection will be disabled.
@@ -394,33 +401,27 @@ type Connection {
   disabled: Boolean
 
   """
-  Immutable. The resource name of the connection, in the format `projects/{project}/locations/{location}/connections/{connection_id}`.
+  Output only. Set to true when the connection is being set up or updated in the background.
   """
-  name: String
-  githubConfig: GitHubConfig
+  reconciling: Boolean
   githubEnterpriseConfig: GoogleDevtoolsCloudbuildV2GitHubEnterpriseConfig
-
-  """Optional. Allows clients to store small amounts of arbitrary data."""
-  annotations: JSON
   bitbucketDataCenterConfig: BitbucketDataCenterConfig
   bitbucketCloudConfig: BitbucketCloudConfig
   installationState: InstallationState
 
-  """
-  Output only. Set to true when the connection is being set up or updated in the background.
-  """
-  reconciling: Boolean
-
-  """
-  Output only. Server assigned timestamp for when the connection was created.
-  """
-  createTime: String
-  gitlabConfig: GoogleDevtoolsCloudbuildV2GitLabConfig
+  """Optional. Allows clients to store small amounts of arbitrary data."""
+  annotations: JSON
 
   """
   This checksum is computed by the server based on the value of other fields, and may be sent on update and delete requests to ensure the client has an up-to-date value before proceeding.
   """
   etag: String
+  gitlabConfig: GoogleDevtoolsCloudbuildV2GitLabConfig
+
+  """
+  Output only. Server assigned timestamp for when the connection was created.
+  """
+  createTime: String
 }
 
 """Configuration for connections to github.com."""
@@ -450,19 +451,9 @@ type OAuthCredential {
 
 """Configuration for connections to an instance of GitHub Enterprise."""
 type GoogleDevtoolsCloudbuildV2GitHubEnterpriseConfig {
-  """
-  Optional. SecretManager resource containing the private key of the GitHub App, formatted as `projects/*/secrets/*/versions/*`.
-  """
-  privateKeySecretVersion: String
-
-  """Optional. ID of the installation of the GitHub App."""
-  appInstallationId: BigInt
-
-  """Required. API Key used for authentication of webhook events."""
-  apiKey: String
-
-  """Optional. SSL certificate to use for requests to GitHub Enterprise."""
-  sslCa: String
+  """Optional. Id of the GitHub App created from the manifest."""
+  appId: BigInt
+  serviceDirectoryConfig: GoogleDevtoolsCloudbuildV2ServiceDirectoryConfig
 
   """
   Required. The URI of the GitHub Enterprise host this connection is for.
@@ -479,10 +470,20 @@ type GoogleDevtoolsCloudbuildV2GitHubEnterpriseConfig {
 
   """Output only. GitHub Enterprise version installed at the host_uri."""
   serverVersion: String
-  serviceDirectoryConfig: GoogleDevtoolsCloudbuildV2ServiceDirectoryConfig
 
-  """Optional. Id of the GitHub App created from the manifest."""
-  appId: BigInt
+  """Required. API Key used for authentication of webhook events."""
+  apiKey: String
+
+  """Optional. SSL certificate to use for requests to GitHub Enterprise."""
+  sslCa: String
+
+  """Optional. ID of the installation of the GitHub App."""
+  appInstallationId: BigInt
+
+  """
+  Optional. SecretManager resource containing the private key of the GitHub App, formatted as `projects/*/secrets/*/versions/*`.
+  """
+  privateKeySecretVersion: String
 }
 
 """
@@ -498,17 +499,6 @@ type GoogleDevtoolsCloudbuildV2ServiceDirectoryConfig {
 """Configuration for connections to Bitbucket Data Center."""
 type BitbucketDataCenterConfig {
   serviceDirectoryConfig: GoogleDevtoolsCloudbuildV2ServiceDirectoryConfig
-  authorizerCredential: UserCredential
-
-  """
-  Optional. SSL certificate to use for requests to the Bitbucket Data Center.
-  """
-  sslCa: String
-
-  """
-  Output only. Version of the Bitbucket Data Center running on the `host_uri`.
-  """
-  serverVersion: String
 
   """
   Required. The URI of the Bitbucket Data Center instance or cluster this connection is for.
@@ -520,6 +510,17 @@ type BitbucketDataCenterConfig {
   """
   webhookSecretSecretVersion: String
   readAuthorizerCredential: UserCredential
+
+  """
+  Output only. Version of the Bitbucket Data Center running on the `host_uri`.
+  """
+  serverVersion: String
+
+  """
+  Optional. SSL certificate to use for requests to the Bitbucket Data Center.
+  """
+  sslCa: String
+  authorizerCredential: UserCredential
 }
 
 """
@@ -537,6 +538,8 @@ type UserCredential {
 
 """Configuration for connections to Bitbucket Cloud."""
 type BitbucketCloudConfig {
+  authorizerCredential: UserCredential
+
   """
   Required. The Bitbucket Cloud Workspace ID to be connected to Google Cloud Platform.
   """
@@ -547,7 +550,6 @@ type BitbucketCloudConfig {
   """
   webhookSecretSecretVersion: String
   readAuthorizerCredential: UserCredential
-  authorizerCredential: UserCredential
 }
 
 """
@@ -558,12 +560,12 @@ type InstallationState {
   Output only. Message of what the user should do next to continue the installation. Empty string if the installation is already complete.
   """
   message: String
+  stage: query_cloudbuild_projects_locations_connections_get_installationState_stage
 
   """
   Output only. Link to follow for next action. Empty string if the installation is already complete.
   """
   actionUri: String
-  stage: query_cloudbuild_projects_locations_connections_get_installationState_stage
 }
 
 """Output only. Current step of the installation process."""
@@ -603,14 +605,14 @@ type GoogleDevtoolsCloudbuildV2GitLabConfig {
 
 """Message for response to listing Connections."""
 type ListConnectionsResponse {
+  """Locations that could not be reached."""
+  unreachable: [String]
+
   """The list of Connections."""
   connections: [Connection]
 
   """A token identifying a page of results the server should return."""
   nextPageToken: String
-
-  """Locations that could not be reached."""
-  unreachable: [String]
 }
 
 """Response message for FetchLinkableRepositories."""
@@ -624,11 +626,6 @@ type FetchLinkableRepositoriesResponse {
 
 """A repository associated to a parent connection."""
 type Repository {
-  """
-  This checksum is computed by the server based on the value of other fields, and may be sent on update and delete requests to ensure the client has an up-to-date value before proceeding.
-  """
-  etag: String
-
   """Optional. Allows clients to store small amounts of arbitrary data."""
   annotations: JSON
 
@@ -652,27 +649,32 @@ type Repository {
 
   """Required. Git Clone HTTPS URI."""
   remoteUri: String
+
+  """
+  This checksum is computed by the server based on the value of other fields, and may be sent on update and delete requests to ensure the client has an up-to-date value before proceeding.
+  """
+  etag: String
 }
 
 """Message for response to listing Repositories."""
 type ListRepositoriesResponse {
-  """Locations that could not be reached."""
-  unreachable: [String]
-
   """The list of Repositories."""
   repositories: [Repository]
 
   """A token identifying a page of results the server should return."""
   nextPageToken: String
+
+  """Locations that could not be reached."""
+  unreachable: [String]
 }
 
 """Response for fetching git refs"""
 type FetchGitRefsResponse {
-  """A token identifying a page of results the server should return."""
-  nextPageToken: String
-
   """Name of the refs fetched."""
   refNames: [String]
+
+  """A token identifying a page of results the server should return."""
+  nextPageToken: String
 }
 
 type Mutation {
@@ -719,9 +721,6 @@ type Mutation {
     """Path parameter connectionsId"""
     connectionsId: String!
 
-    """The list of fields to be updated."""
-    updateMask: String
-
     """
     If set to true, and the connection is not found a new connection will be created. In this situation `update_mask` is ignored. The creation will succeed only if the input connection has all the necessary information (e.g a github_config with both user_oauth_token and installation_id properties).
     """
@@ -731,6 +730,9 @@ type Mutation {
     The current etag of the connection. If an etag is provided and does not match the current etag of the connection, update will be blocked and an ABORTED error will be returned.
     """
     etag: String
+
+    """The list of fields to be updated."""
+    updateMask: String
     input: Connection_Input
   ): Operation
 
@@ -745,13 +747,13 @@ type Mutation {
     """Path parameter connectionsId"""
     connectionsId: String!
 
+    """If set, validate the request, but do not actually post it."""
+    validateOnly: Boolean
+
     """
     The current etag of the connection. If an etag is provided and does not match the current etag of the connection, deletion will be blocked and an ABORTED error will be returned.
     """
     etag: String
-
-    """If set, validate the request, but do not actually post it."""
-    validateOnly: Boolean
   ): Operation
 
   """Creates a Connection."""
@@ -799,6 +801,29 @@ type Mutation {
     input: SetIamPolicyRequest_Input
   ): Policy
 
+  """Deletes a single repository."""
+  cloudbuild_projects_locations_connections_repositories_delete(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter connectionsId"""
+    connectionsId: String!
+
+    """Path parameter repositoriesId"""
+    repositoriesId: String!
+
+    """If set, validate the request, but do not actually post it."""
+    validateOnly: Boolean
+
+    """
+    The current etag of the repository. If an etag is provided and does not match the current etag of the repository, deletion will be blocked and an ABORTED error will be returned.
+    """
+    etag: String
+  ): Operation
+
   """Creates a Repository."""
   cloudbuild_projects_locations_connections_repositories_create(
     """Path parameter projectsId"""
@@ -815,29 +840,6 @@ type Mutation {
     """
     repositoryId: String
     input: Repository_Input
-  ): Operation
-
-  """Deletes a single repository."""
-  cloudbuild_projects_locations_connections_repositories_delete(
-    """Path parameter projectsId"""
-    projectsId: String!
-
-    """Path parameter locationsId"""
-    locationsId: String!
-
-    """Path parameter connectionsId"""
-    connectionsId: String!
-
-    """Path parameter repositoriesId"""
-    repositoriesId: String!
-
-    """
-    The current etag of the repository. If an etag is provided and does not match the current etag of the repository, deletion will be blocked and an ABORTED error will be returned.
-    """
-    etag: String
-
-    """If set, validate the request, but do not actually post it."""
-    validateOnly: Boolean
   ): Operation
 
   """Fetches read/write token of a given repository."""
@@ -910,10 +912,17 @@ input TestIamPermissionsRequest_Input {
 A connection to a SCM like GitHub, GitHub Enterprise, Bitbucket Data Center, Bitbucket Cloud or GitLab.
 """
 input Connection_Input {
+  githubConfig: GitHubConfig_Input
+
   """
   Output only. Server assigned timestamp for when the connection was updated.
   """
   updateTime: String
+
+  """
+  Immutable. The resource name of the connection, in the format `projects/{project}/locations/{location}/connections/{connection_id}`.
+  """
+  name: String
 
   """
   Optional. If disabled is set to true, functionality is disabled for this connection. Repository based API methods and webhooks processing for repositories in this connection will be disabled.
@@ -921,33 +930,27 @@ input Connection_Input {
   disabled: Boolean
 
   """
-  Immutable. The resource name of the connection, in the format `projects/{project}/locations/{location}/connections/{connection_id}`.
+  Output only. Set to true when the connection is being set up or updated in the background.
   """
-  name: String
-  githubConfig: GitHubConfig_Input
+  reconciling: Boolean
   githubEnterpriseConfig: GoogleDevtoolsCloudbuildV2GitHubEnterpriseConfig_Input
-
-  """Optional. Allows clients to store small amounts of arbitrary data."""
-  annotations: JSON
   bitbucketDataCenterConfig: BitbucketDataCenterConfig_Input
   bitbucketCloudConfig: BitbucketCloudConfig_Input
   installationState: InstallationState_Input
 
-  """
-  Output only. Set to true when the connection is being set up or updated in the background.
-  """
-  reconciling: Boolean
-
-  """
-  Output only. Server assigned timestamp for when the connection was created.
-  """
-  createTime: String
-  gitlabConfig: GoogleDevtoolsCloudbuildV2GitLabConfig_Input
+  """Optional. Allows clients to store small amounts of arbitrary data."""
+  annotations: JSON
 
   """
   This checksum is computed by the server based on the value of other fields, and may be sent on update and delete requests to ensure the client has an up-to-date value before proceeding.
   """
   etag: String
+  gitlabConfig: GoogleDevtoolsCloudbuildV2GitLabConfig_Input
+
+  """
+  Output only. Server assigned timestamp for when the connection was created.
+  """
+  createTime: String
 }
 
 """Configuration for connections to github.com."""
@@ -972,19 +975,9 @@ input OAuthCredential_Input {
 
 """Configuration for connections to an instance of GitHub Enterprise."""
 input GoogleDevtoolsCloudbuildV2GitHubEnterpriseConfig_Input {
-  """
-  Optional. SecretManager resource containing the private key of the GitHub App, formatted as `projects/*/secrets/*/versions/*`.
-  """
-  privateKeySecretVersion: String
-
-  """Optional. ID of the installation of the GitHub App."""
-  appInstallationId: BigInt
-
-  """Required. API Key used for authentication of webhook events."""
-  apiKey: String
-
-  """Optional. SSL certificate to use for requests to GitHub Enterprise."""
-  sslCa: String
+  """Optional. Id of the GitHub App created from the manifest."""
+  appId: BigInt
+  serviceDirectoryConfig: GoogleDevtoolsCloudbuildV2ServiceDirectoryConfig_Input
 
   """
   Required. The URI of the GitHub Enterprise host this connection is for.
@@ -1001,10 +994,20 @@ input GoogleDevtoolsCloudbuildV2GitHubEnterpriseConfig_Input {
 
   """Output only. GitHub Enterprise version installed at the host_uri."""
   serverVersion: String
-  serviceDirectoryConfig: GoogleDevtoolsCloudbuildV2ServiceDirectoryConfig_Input
 
-  """Optional. Id of the GitHub App created from the manifest."""
-  appId: BigInt
+  """Required. API Key used for authentication of webhook events."""
+  apiKey: String
+
+  """Optional. SSL certificate to use for requests to GitHub Enterprise."""
+  sslCa: String
+
+  """Optional. ID of the installation of the GitHub App."""
+  appInstallationId: BigInt
+
+  """
+  Optional. SecretManager resource containing the private key of the GitHub App, formatted as `projects/*/secrets/*/versions/*`.
+  """
+  privateKeySecretVersion: String
 }
 
 """
@@ -1020,17 +1023,6 @@ input GoogleDevtoolsCloudbuildV2ServiceDirectoryConfig_Input {
 """Configuration for connections to Bitbucket Data Center."""
 input BitbucketDataCenterConfig_Input {
   serviceDirectoryConfig: GoogleDevtoolsCloudbuildV2ServiceDirectoryConfig_Input
-  authorizerCredential: UserCredential_Input
-
-  """
-  Optional. SSL certificate to use for requests to the Bitbucket Data Center.
-  """
-  sslCa: String
-
-  """
-  Output only. Version of the Bitbucket Data Center running on the `host_uri`.
-  """
-  serverVersion: String
 
   """
   Required. The URI of the Bitbucket Data Center instance or cluster this connection is for.
@@ -1042,6 +1034,17 @@ input BitbucketDataCenterConfig_Input {
   """
   webhookSecretSecretVersion: String
   readAuthorizerCredential: UserCredential_Input
+
+  """
+  Output only. Version of the Bitbucket Data Center running on the `host_uri`.
+  """
+  serverVersion: String
+
+  """
+  Optional. SSL certificate to use for requests to the Bitbucket Data Center.
+  """
+  sslCa: String
+  authorizerCredential: UserCredential_Input
 }
 
 """
@@ -1059,6 +1062,8 @@ input UserCredential_Input {
 
 """Configuration for connections to Bitbucket Cloud."""
 input BitbucketCloudConfig_Input {
+  authorizerCredential: UserCredential_Input
+
   """
   Required. The Bitbucket Cloud Workspace ID to be connected to Google Cloud Platform.
   """
@@ -1069,7 +1074,6 @@ input BitbucketCloudConfig_Input {
   """
   webhookSecretSecretVersion: String
   readAuthorizerCredential: UserCredential_Input
-  authorizerCredential: UserCredential_Input
 }
 
 """
@@ -1080,12 +1084,12 @@ input InstallationState_Input {
   Output only. Message of what the user should do next to continue the installation. Empty string if the installation is already complete.
   """
   message: String
+  stage: query_cloudbuild_projects_locations_connections_get_installationState_stage
 
   """
   Output only. Link to follow for next action. Empty string if the installation is already complete.
   """
   actionUri: String
-  stage: query_cloudbuild_projects_locations_connections_get_installationState_stage
 }
 
 """
@@ -1147,14 +1151,6 @@ An Identity and Access Management (IAM) policy, which specifies access controls 
 """
 input Policy_Input {
   """
-  Associates a list of `members`, or principals, with a `role`. Optionally, may specify a `condition` that determines how and when the `bindings` are applied. Each of the `bindings` must contain at least one principal. The `bindings` in a `Policy` can refer to up to 1,500 principals; up to 250 of these principals can be Google groups. Each occurrence of a principal counts towards these limits. For example, if the `bindings` grant 50 different roles to `user:alice@example.com`, and not to any other principal, then you can add another 1,450 principals to the `bindings` in the `Policy`.
-  """
-  bindings: [Binding_Input]
-
-  """Specifies cloud audit logging configuration for this policy."""
-  auditConfigs: [AuditConfig_Input]
-
-  """
   `etag` is used for optimistic concurrency control as a way to help prevent simultaneous updates of a policy from overwriting each other. It is strongly suggested that systems make use of the `etag` in the read-modify-write cycle to perform policy updates in order to avoid race conditions: An `etag` is returned in the response to `getIamPolicy`, and systems are expected to put that etag in the request to `setIamPolicy` to ensure that their change will be applied to the same version of the policy. **Important:** If you use IAM Conditions, you must include the `etag` field whenever you call `setIamPolicy`. If you omit this field, then IAM allows you to overwrite a version `3` policy with a version `1` policy, and all of the conditions in the version `3` policy are lost.
   """
   etag: Byte
@@ -1163,6 +1159,14 @@ input Policy_Input {
   Specifies the format of the policy. Valid values are `0`, `1`, and `3`. Requests that specify an invalid value are rejected. Any operation that affects conditional role bindings must specify version `3`. This requirement applies to the following operations: * Getting a policy that includes a conditional role binding * Adding a conditional role binding to a policy * Changing a conditional role binding in a policy * Removing any role binding, with or without a condition, from a policy that includes conditions **Important:** If you use IAM Conditions, you must include the `etag` field whenever you call `setIamPolicy`. If you omit this field, then IAM allows you to overwrite a version `3` policy with a version `1` policy, and all of the conditions in the version `3` policy are lost. If a policy does not include any conditions, operations on that policy may specify any valid version or leave the field unset. To learn which resources support conditions in their IAM policies, see the [IAM documentation](https://cloud.google.com/iam/help/conditions/resource-policies).
   """
   version: Int
+
+  """
+  Associates a list of `members`, or principals, with a `role`. Optionally, may specify a `condition` that determines how and when the `bindings` are applied. Each of the `bindings` must contain at least one principal. The `bindings` in a `Policy` can refer to up to 1,500 principals; up to 250 of these principals can be Google groups. Each occurrence of a principal counts towards these limits. For example, if the `bindings` grant 50 different roles to `user:alice@example.com`, and not to any other principal, then you can add another 1,450 principals to the `bindings` in the `Policy`.
+  """
+  bindings: [Binding_Input]
+
+  """Specifies cloud audit logging configuration for this policy."""
+  auditConfigs: [AuditConfig_Input]
 }
 
 """Associates `members`, or principals, with a `role`."""
@@ -1185,6 +1189,11 @@ Represents a textual expression in the Common Expression Language (CEL) syntax. 
 """
 input Expr_Input {
   """
+  Optional. Title for the expression, i.e. a short string describing its purpose. This can be used e.g. in UIs which allow to enter the expression.
+  """
+  title: String
+
+  """
   Textual representation of an expression in Common Expression Language syntax.
   """
   expression: String
@@ -1198,11 +1207,6 @@ input Expr_Input {
   Optional. String indicating the location of the expression for error reporting, e.g. a file name and a position in the file.
   """
   location: String
-
-  """
-  Optional. Title for the expression, i.e. a short string describing its purpose. This can be used e.g. in UIs which allow to enter the expression.
-  """
-  title: String
 }
 
 """
@@ -1232,11 +1236,6 @@ input AuditLogConfig_Input {
 
 """A repository associated to a parent connection."""
 input Repository_Input {
-  """
-  This checksum is computed by the server based on the value of other fields, and may be sent on update and delete requests to ensure the client has an up-to-date value before proceeding.
-  """
-  etag: String
-
   """Optional. Allows clients to store small amounts of arbitrary data."""
   annotations: JSON
 
@@ -1260,6 +1259,11 @@ input Repository_Input {
 
   """Required. Git Clone HTTPS URI."""
   remoteUri: String
+
+  """
+  This checksum is computed by the server based on the value of other fields, and may be sent on update and delete requests to ensure the client has an up-to-date value before proceeding.
+  """
+  etag: String
 }
 
 """Message for responding to get read/write token."""
@@ -1291,14 +1295,14 @@ input CreateRepositoryRequest_Input {
   repository: Repository_Input
 
   """
-  Required. The connection to contain the repository. If the request is part of a BatchCreateRepositoriesRequest, this field should be empty or match the parent specified there.
-  """
-  parent: String
-
-  """
   Required. The ID to use for the repository, which will become the final component of the repository's resource name. This ID should be unique in the connection. Allows alphanumeric characters and any of -._~%!$&'()*+,;=@.
   """
   repositoryId: String
+
+  """
+  Required. The connection to contain the repository. If the request is part of a BatchCreateRepositoriesRequest, this field should be empty or match the parent specified there.
+  """
+  parent: String
 }
 
 enum HTTPMethod {

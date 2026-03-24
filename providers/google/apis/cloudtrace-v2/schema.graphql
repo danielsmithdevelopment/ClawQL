@@ -1,0 +1,532 @@
+directive @dictionary(subgraph: String) on FIELD_DEFINITION
+
+directive @enum(subgraph: String, value: String) on ENUM_VALUE
+
+directive @httpOperation(subgraph: String, path: String, operationSpecificHeaders: [[String]], httpMethod: HTTPMethod, isBinary: Boolean, requestBaseBody: ObjMap, queryParamArgMap: ObjMap, queryStringOptionsByParam: ObjMap, jsonApiFields: Boolean, queryStringOptions: ObjMap) on FIELD_DEFINITION
+
+directive @transport(subgraph: String, kind: String, location: String, headers: [[String]], queryStringOptions: ObjMap, queryParams: [[String]]) repeatable on SCHEMA
+
+type Query {
+  dummy: String
+}
+
+type Mutation {
+  """
+  Batch writes new spans to new or existing traces. You cannot update existing spans. If a span ID already exists, an additional copy of the span will be stored.
+  """
+  cloudtrace_projects_traces_batchWrite(
+    """Path parameter projectsId"""
+    projectsId: String!
+    input: BatchWriteSpansRequest_Input
+  ): JSON
+
+  """
+  Creates a new span. If a span ID already exists, an additional copy of the span will be stored.
+  """
+  cloudtrace_projects_traces_spans_createSpan(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter tracesId"""
+    tracesId: String!
+
+    """Path parameter spansId"""
+    spansId: String!
+    input: Span_Input
+  ): Span
+}
+
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSON @specifiedBy(url: "http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf")
+
+"""The request message for the `BatchWriteSpans` method."""
+input BatchWriteSpansRequest_Input {
+  """
+  Required. A list of new spans. The span names must not match existing spans, otherwise the results are undefined.
+  """
+  spans: [Span_Input]
+}
+
+"""
+A span represents a single operation within a trace. Spans can be nested to form a trace tree. Often, a trace contains a root span that describes the end-to-end latency, and one or more subspans for its sub-operations. A trace can also contain multiple root spans, or none at all. Spans do not need to be contiguous. There might be gaps or overlaps between spans in a trace.
+"""
+input Span_Input {
+  """
+  Required. The resource name of the span in the following format: * `projects/[PROJECT_ID]/traces/[TRACE_ID]/spans/[SPAN_ID]` `[TRACE_ID]` is a unique identifier for a trace within a project; it is a 32-character hexadecimal encoding of a 16-byte array. It should not be zero. `[SPAN_ID]` is a unique identifier for a span within a trace; it is a 16-character hexadecimal encoding of an 8-byte array. It should not be zero. .
+  """
+  name: String
+
+  """Required. The `[SPAN_ID]` portion of the span's resource name."""
+  spanId: String
+
+  """
+  The `[SPAN_ID]` of this span's parent span. If this is a root span, then this field must be empty.
+  """
+  parentSpanId: String
+  displayName: TruncatableString_Input
+
+  """
+  Required. The start time of the span. On the client side, this is the time kept by the local machine where the span execution starts. On the server side, this is the time when the server's application handler starts running.
+  """
+  startTime: String
+
+  """
+  Required. The end time of the span. On the client side, this is the time kept by the local machine where the span execution ends. On the server side, this is the time when the server application handler stops running.
+  """
+  endTime: String
+  attributes: Attributes_Input
+  stackTrace: StackTrace_Input
+  timeEvents: TimeEvents_Input
+  links: Links_Input
+  status: Status_Input
+
+  """
+  Optional. Set this parameter to indicate whether this span is in the same process as its parent. If you do not set this parameter, Trace is unable to take advantage of this helpful information.
+  """
+  sameProcessAsParentSpan: Boolean
+
+  """
+  Optional. The number of child spans that were generated while this span was active. If set, allows implementation to detect missing child spans.
+  """
+  childSpanCount: Int
+  spanKind: mutation_cloudtrace_projects_traces_spans_createSpan_spanKind
+}
+
+"""Represents a string that might be shortened to a specified length."""
+input TruncatableString_Input {
+  """
+  The shortened string. For example, if the original string is 500 bytes long and the limit of the string is 128 bytes, then `value` contains the first 128 bytes of the 500-byte string. Truncation always happens on a UTF8 character boundary. If there are multi-byte characters in the string, then the length of the shortened string might be less than the size limit.
+  """
+  value: String
+
+  """
+  The number of bytes removed from the original string. If this value is 0, then the string was not shortened.
+  """
+  truncatedByteCount: Int
+}
+
+"""A set of attributes as key-value pairs."""
+input Attributes_Input {
+  attributeMap: JSON
+
+  """
+  The number of attributes that were discarded. Attributes can be discarded because their keys are too long or because there are too many attributes. If this value is 0 then all attributes are valid.
+  """
+  droppedAttributesCount: Int
+}
+
+"""A call stack appearing in a trace."""
+input StackTrace_Input {
+  stackFrames: StackFrames_Input
+
+  """
+  The hash ID is used to conserve network bandwidth for duplicate stack traces within a single trace. Often multiple spans will have identical stack traces. The first occurrence of a stack trace should contain both the `stackFrame` content and a value in `stackTraceHashId`. Subsequent spans within the same request can refer to that stack trace by only setting `stackTraceHashId`.
+  """
+  stackTraceHashId: BigInt
+}
+
+"""A collection of stack frames, which can be truncated."""
+input StackFrames_Input {
+  """Stack frames in this call stack."""
+  frame: [StackFrame_Input]
+
+  """
+  The number of stack frames that were dropped because there were too many stack frames. If this value is 0, then no stack frames were dropped.
+  """
+  droppedFramesCount: Int
+}
+
+"""Represents a single stack frame in a stack trace."""
+input StackFrame_Input {
+  functionName: TruncatableString_Input
+  originalFunctionName: TruncatableString_Input
+  fileName: TruncatableString_Input
+
+  """The line number in `file_name` where the function call appears."""
+  lineNumber: BigInt
+
+  """
+  The column number where the function call appears, if available. This is important in JavaScript because of its anonymous functions.
+  """
+  columnNumber: BigInt
+  loadModule: Module_Input
+  sourceVersion: TruncatableString_Input
+}
+
+"""
+The `BigInt` scalar type represents non-fractional signed whole numeric values.
+"""
+scalar BigInt
+
+"""Binary module."""
+input Module_Input {
+  module: TruncatableString_Input
+  buildId: TruncatableString_Input
+}
+
+"""
+A collection of `TimeEvent`s. A `TimeEvent` is a time-stamped annotation on the span, consisting of either user-supplied key:value pairs, or details of a message sent/received between Spans.
+"""
+input TimeEvents_Input {
+  """A collection of `TimeEvent`s."""
+  timeEvent: [TimeEvent_Input]
+
+  """
+  The number of dropped annotations in all the included time events. If the value is 0, then no annotations were dropped.
+  """
+  droppedAnnotationsCount: Int
+
+  """
+  The number of dropped message events in all the included time events. If the value is 0, then no message events were dropped.
+  """
+  droppedMessageEventsCount: Int
+}
+
+"""A time-stamped annotation or message event in the Span."""
+input TimeEvent_Input {
+  """The timestamp indicating the time the event occurred."""
+  time: String
+  annotation: Annotation_Input
+  messageEvent: MessageEvent_Input
+}
+
+"""Text annotation with a set of attributes."""
+input Annotation_Input {
+  description: TruncatableString_Input
+  attributes: Attributes_Input
+}
+
+"""An event describing a message sent/received between Spans."""
+input MessageEvent_Input {
+  type: mutation_cloudtrace_projects_traces_spans_createSpan_timeEvents_timeEvent_items_messageEvent_type
+
+  """
+  An identifier for the MessageEvent's message that can be used to match `SENT` and `RECEIVED` MessageEvents.
+  """
+  id: BigInt
+
+  """The number of uncompressed bytes sent or received."""
+  uncompressedSizeBytes: BigInt
+
+  """
+  The number of compressed bytes sent or received. If missing, the compressed size is assumed to be the same size as the uncompressed size.
+  """
+  compressedSizeBytes: BigInt
+}
+
+"""
+Type of MessageEvent. Indicates whether the message was sent or received.
+"""
+enum mutation_cloudtrace_projects_traces_spans_createSpan_timeEvents_timeEvent_items_messageEvent_type {
+  TYPE_UNSPECIFIED
+  SENT
+  RECEIVED
+}
+
+"""
+A collection of links, which are references from this span to a span in the same or different trace.
+"""
+input Links_Input {
+  """A collection of links."""
+  link: [Link_Input]
+
+  """
+  The number of dropped links after the maximum size was enforced. If this value is 0, then no links were dropped.
+  """
+  droppedLinksCount: Int
+}
+
+"""
+A pointer from the current span to another span in the same trace or in a different trace. For example, this can be used in batching operations, where a single batch handler processes multiple requests from different traces or when the handler receives a request from a different project.
+"""
+input Link_Input {
+  """The `[TRACE_ID]` for a trace within a project."""
+  traceId: String
+
+  """The `[SPAN_ID]` for a span within a trace."""
+  spanId: String
+  type: mutation_cloudtrace_projects_traces_spans_createSpan_links_link_items_type
+  attributes: Attributes_Input
+}
+
+"""The relationship of the current span relative to the linked span."""
+enum mutation_cloudtrace_projects_traces_spans_createSpan_links_link_items_type {
+  TYPE_UNSPECIFIED
+  CHILD_LINKED_SPAN
+  PARENT_LINKED_SPAN
+}
+
+"""
+The `Status` type defines a logical error model that is suitable for different programming environments, including REST APIs and RPC APIs. It is used by [gRPC](https://github.com/grpc). Each `Status` message contains three pieces of data: error code, error message, and error details. You can find out more about this error model and how to work with it in the [API Design Guide](https://cloud.google.com/apis/design/errors).
+"""
+input Status_Input {
+  """The status code, which should be an enum value of google.rpc.Code."""
+  code: Int
+
+  """
+  A developer-facing error message, which should be in English. Any user-facing error message should be localized and sent in the google.rpc.Status.details field, or localized by the client.
+  """
+  message: String
+
+  """
+  A list of messages that carry the error details. There is a common set of message types for APIs to use.
+  """
+  details: [JSON]
+}
+
+"""
+Optional. Distinguishes between spans generated in a particular context. For example, two spans with the same name may be distinguished using `CLIENT` (caller) and `SERVER` (callee) to identify an RPC call.
+"""
+enum mutation_cloudtrace_projects_traces_spans_createSpan_spanKind {
+  SPAN_KIND_UNSPECIFIED
+  INTERNAL
+  SERVER
+  CLIENT
+  PRODUCER
+  CONSUMER
+}
+
+"""
+A span represents a single operation within a trace. Spans can be nested to form a trace tree. Often, a trace contains a root span that describes the end-to-end latency, and one or more subspans for its sub-operations. A trace can also contain multiple root spans, or none at all. Spans do not need to be contiguous. There might be gaps or overlaps between spans in a trace.
+"""
+type Span {
+  """
+  Required. The resource name of the span in the following format: * `projects/[PROJECT_ID]/traces/[TRACE_ID]/spans/[SPAN_ID]` `[TRACE_ID]` is a unique identifier for a trace within a project; it is a 32-character hexadecimal encoding of a 16-byte array. It should not be zero. `[SPAN_ID]` is a unique identifier for a span within a trace; it is a 16-character hexadecimal encoding of an 8-byte array. It should not be zero. .
+  """
+  name: String
+
+  """Required. The `[SPAN_ID]` portion of the span's resource name."""
+  spanId: String
+
+  """
+  The `[SPAN_ID]` of this span's parent span. If this is a root span, then this field must be empty.
+  """
+  parentSpanId: String
+  displayName: TruncatableString
+
+  """
+  Required. The start time of the span. On the client side, this is the time kept by the local machine where the span execution starts. On the server side, this is the time when the server's application handler starts running.
+  """
+  startTime: String
+
+  """
+  Required. The end time of the span. On the client side, this is the time kept by the local machine where the span execution ends. On the server side, this is the time when the server application handler stops running.
+  """
+  endTime: String
+  attributes: Attributes
+  stackTrace: StackTrace
+  timeEvents: TimeEvents
+  links: Links
+  status: Status
+
+  """
+  Optional. Set this parameter to indicate whether this span is in the same process as its parent. If you do not set this parameter, Trace is unable to take advantage of this helpful information.
+  """
+  sameProcessAsParentSpan: Boolean
+
+  """
+  Optional. The number of child spans that were generated while this span was active. If set, allows implementation to detect missing child spans.
+  """
+  childSpanCount: Int
+  spanKind: mutation_cloudtrace_projects_traces_spans_createSpan_spanKind
+}
+
+"""Represents a string that might be shortened to a specified length."""
+type TruncatableString {
+  """
+  The shortened string. For example, if the original string is 500 bytes long and the limit of the string is 128 bytes, then `value` contains the first 128 bytes of the 500-byte string. Truncation always happens on a UTF8 character boundary. If there are multi-byte characters in the string, then the length of the shortened string might be less than the size limit.
+  """
+  value: String
+
+  """
+  The number of bytes removed from the original string. If this value is 0, then the string was not shortened.
+  """
+  truncatedByteCount: Int
+}
+
+"""A set of attributes as key-value pairs."""
+type Attributes {
+  attributeMap: mutation_cloudtrace_projects_traces_spans_createSpan_attributes_attributeMap
+
+  """
+  The number of attributes that were discarded. Attributes can be discarded because their keys are too long or because there are too many attributes. If this value is 0 then all attributes are valid.
+  """
+  droppedAttributesCount: Int
+}
+
+"""
+A set of attributes. Each attribute's key can be up to 128 bytes long. The value can be a string up to 256 bytes, a signed 64-bit integer, or the boolean values `true` or `false`. For example: "/instance_id": { "string_value": { "value": "my-instance" } } "/http/request_bytes": { "int_value": 300 } "example.com/myattribute": { "bool_value": false }
+"""
+type mutation_cloudtrace_projects_traces_spans_createSpan_attributes_attributeMap {
+  additionalProperties: [AttributeValue_entry]
+}
+
+type AttributeValue_entry {
+  key: ID!
+  value: AttributeValue
+}
+
+"""The allowed types for `[VALUE]` in a `[KEY]:[VALUE]` attribute."""
+type AttributeValue {
+  stringValue: TruncatableString
+
+  """A 64-bit signed integer."""
+  intValue: BigInt
+
+  """A Boolean value represented by `true` or `false`."""
+  boolValue: Boolean
+}
+
+"""A call stack appearing in a trace."""
+type StackTrace {
+  stackFrames: StackFrames
+
+  """
+  The hash ID is used to conserve network bandwidth for duplicate stack traces within a single trace. Often multiple spans will have identical stack traces. The first occurrence of a stack trace should contain both the `stackFrame` content and a value in `stackTraceHashId`. Subsequent spans within the same request can refer to that stack trace by only setting `stackTraceHashId`.
+  """
+  stackTraceHashId: BigInt
+}
+
+"""A collection of stack frames, which can be truncated."""
+type StackFrames {
+  """Stack frames in this call stack."""
+  frame: [StackFrame]
+
+  """
+  The number of stack frames that were dropped because there were too many stack frames. If this value is 0, then no stack frames were dropped.
+  """
+  droppedFramesCount: Int
+}
+
+"""Represents a single stack frame in a stack trace."""
+type StackFrame {
+  functionName: TruncatableString
+  originalFunctionName: TruncatableString
+  fileName: TruncatableString
+
+  """The line number in `file_name` where the function call appears."""
+  lineNumber: BigInt
+
+  """
+  The column number where the function call appears, if available. This is important in JavaScript because of its anonymous functions.
+  """
+  columnNumber: BigInt
+  loadModule: Module
+  sourceVersion: TruncatableString
+}
+
+"""Binary module."""
+type Module {
+  module: TruncatableString
+  buildId: TruncatableString
+}
+
+"""
+A collection of `TimeEvent`s. A `TimeEvent` is a time-stamped annotation on the span, consisting of either user-supplied key:value pairs, or details of a message sent/received between Spans.
+"""
+type TimeEvents {
+  """A collection of `TimeEvent`s."""
+  timeEvent: [TimeEvent]
+
+  """
+  The number of dropped annotations in all the included time events. If the value is 0, then no annotations were dropped.
+  """
+  droppedAnnotationsCount: Int
+
+  """
+  The number of dropped message events in all the included time events. If the value is 0, then no message events were dropped.
+  """
+  droppedMessageEventsCount: Int
+}
+
+"""A time-stamped annotation or message event in the Span."""
+type TimeEvent {
+  """The timestamp indicating the time the event occurred."""
+  time: String
+  annotation: Annotation
+  messageEvent: MessageEvent
+}
+
+"""Text annotation with a set of attributes."""
+type Annotation {
+  description: TruncatableString
+  attributes: Attributes
+}
+
+"""An event describing a message sent/received between Spans."""
+type MessageEvent {
+  type: mutation_cloudtrace_projects_traces_spans_createSpan_timeEvents_timeEvent_items_messageEvent_type
+
+  """
+  An identifier for the MessageEvent's message that can be used to match `SENT` and `RECEIVED` MessageEvents.
+  """
+  id: BigInt
+
+  """The number of uncompressed bytes sent or received."""
+  uncompressedSizeBytes: BigInt
+
+  """
+  The number of compressed bytes sent or received. If missing, the compressed size is assumed to be the same size as the uncompressed size.
+  """
+  compressedSizeBytes: BigInt
+}
+
+"""
+A collection of links, which are references from this span to a span in the same or different trace.
+"""
+type Links {
+  """A collection of links."""
+  link: [Link]
+
+  """
+  The number of dropped links after the maximum size was enforced. If this value is 0, then no links were dropped.
+  """
+  droppedLinksCount: Int
+}
+
+"""
+A pointer from the current span to another span in the same trace or in a different trace. For example, this can be used in batching operations, where a single batch handler processes multiple requests from different traces or when the handler receives a request from a different project.
+"""
+type Link {
+  """The `[TRACE_ID]` for a trace within a project."""
+  traceId: String
+
+  """The `[SPAN_ID]` for a span within a trace."""
+  spanId: String
+  type: mutation_cloudtrace_projects_traces_spans_createSpan_links_link_items_type
+  attributes: Attributes
+}
+
+"""
+The `Status` type defines a logical error model that is suitable for different programming environments, including REST APIs and RPC APIs. It is used by [gRPC](https://github.com/grpc). Each `Status` message contains three pieces of data: error code, error message, and error details. You can find out more about this error model and how to work with it in the [API Design Guide](https://cloud.google.com/apis/design/errors).
+"""
+type Status {
+  """The status code, which should be an enum value of google.rpc.Code."""
+  code: Int
+
+  """
+  A developer-facing error message, which should be in English. Any user-facing error message should be localized and sent in the google.rpc.Status.details field, or localized by the client.
+  """
+  message: String
+
+  """
+  A list of messages that carry the error details. There is a common set of message types for APIs to use.
+  """
+  details: [JSON]
+}
+
+enum HTTPMethod {
+  GET
+  HEAD
+  POST
+  PUT
+  DELETE
+  CONNECT
+  OPTIONS
+  TRACE
+  PATCH
+}
+
+scalar ObjMap

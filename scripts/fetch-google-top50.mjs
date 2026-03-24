@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
- * Download Discovery JSON for the curated list in providers/google/google-top20-apis.json
+ * Download Discovery JSON for the curated list in providers/google/google-top50-apis.json
  * into providers/google/apis/<slug>/discovery.json
  *
- * Run: node scripts/fetch-google-top20.mjs
+ * Run: node scripts/fetch-google-top50.mjs
  */
 import { mkdir, writeFile, copyFile, readFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
@@ -11,7 +11,7 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const MANIFEST = join(root, "providers/google/google-top20-apis.json");
+const MANIFEST = join(root, "providers/google/google-top50-apis.json");
 const BUNDLED_CONTAINER = join(root, "providers/google/discovery.json");
 
 async function main() {
@@ -19,7 +19,7 @@ async function main() {
   const manifest = JSON.parse(raw);
   const apis = manifest.apis;
   if (!Array.isArray(apis) || apis.length === 0) {
-    throw new Error("google-top20-apis.json: missing apis[]");
+    throw new Error("google-top50-apis.json: missing apis[]");
   }
 
   const outBase = join(root, "providers/google/apis");
@@ -55,7 +55,7 @@ async function main() {
 
   const meta = {
     fetchedAt,
-    sourceManifest: "providers/google/google-top20-apis.json",
+    sourceManifest: "providers/google/google-top50-apis.json",
     count: apis.length,
     containerCopiedFromBundled: copied > 0,
   };

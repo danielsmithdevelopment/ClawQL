@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Recompute byte/token stats for docs/experiment-gcp-multi-mcp-workflow.md
- * from docs/workflow-gcp-multi-latest.json + providers/google/google-top20-apis.json.
+ * from docs/workflow-gcp-multi-latest.json + providers/google/google-top50-apis.json.
  *
  *   node scripts/report-gcp-multi-experiment.mjs
  *   node scripts/report-gcp-multi-experiment.mjs --json   # machine-readable only
@@ -14,7 +14,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const REPORT_PATH = join(ROOT, "docs", "workflow-gcp-multi-latest.json");
-const MANIFEST_PATH = join(ROOT, "providers", "google", "google-top20-apis.json");
+const MANIFEST_PATH = join(ROOT, "providers", "google", "google-top50-apis.json");
 const STATS_OUT = join(ROOT, "docs", "experiment-gcp-multi-mcp-stats.json");
 
 function tok(bytes) {
@@ -90,7 +90,7 @@ if (args.has("--md")) {
   console.log("| Metric | Value |");
   console.log("|--------|-------|");
   console.log(
-    `| Sum of 20 × \`discovery.json\` (on disk) | ${s.discoveryJsonTotalBytes.toLocaleString()} bytes (~${s.discoveryApproxTokens.toLocaleString()} tok†) |`
+    `| Sum of curated Google \`discovery.json\` files (on disk) | ${s.discoveryJsonTotalBytes.toLocaleString()} bytes (~${s.discoveryApproxTokens.toLocaleString()} tok†) |`
   );
   console.log(
     `| Sum of 11 × \`search\` tool **text** payloads | ${s.totalSearchToolOutputBytes.toLocaleString()} bytes (~${s.totalSearchToolOutputApproxTokens.toLocaleString()} tok†) |`

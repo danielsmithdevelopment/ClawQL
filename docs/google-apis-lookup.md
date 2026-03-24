@@ -13,7 +13,7 @@ Google publishes a single **Discovery Service** directory that lists **all** pub
 |------|---------|
 | [`providers/google/discovery-directory.json`](../providers/google/discovery-directory.json) | Verbatim `discovery#directoryList` JSON from the URL above. |
 | [`providers/google/google-apis-lookup.json`](../providers/google/google-apis-lookup.json) | Slim index: `id`, `title`, `discoveryRestUrl`, `documentationLink`, `preferred`, etc. |
-| [`providers/google/google-top20-apis.json`](../providers/google/google-top20-apis.json) | Curated **20** GCP APIs we pre-download and optionally pregenerate GraphQL for. |
+| [`providers/google/google-top50-apis.json`](../providers/google/google-top50-apis.json) | Curated **50** GCP APIs we pre-download and optionally pregenerate GraphQL for. |
 | [`providers/google/apis/`](../providers/google/apis/README.md) | On-disk `discovery.json` (+ `introspection.json` / `schema.graphql` when generation succeeds) per [top-20 README](../providers/google/apis/README.md). |
 
 The bundled **`CLAWQL_PROVIDER=google`** default remains the **Container API** discovery doc only ([`providers/google/discovery.json`](../providers/google/discovery.json)) — one API at a time for `search` / `execute`. The directory files are a **catalog** to pick the right `CLAWQL_DISCOVERY_URL`. For **offline** use of popular services without fetching, prefer paths under **`providers/google/apis/<slug>/discovery.json`** (see top-20 list).
@@ -39,12 +39,12 @@ CLAWQL_DISCOVERY_URL="https://run.googleapis.com/\$discovery/rest?version=v2" cl
 
 Unset `CLAWQL_PROVIDER` when you set `CLAWQL_DISCOVERY_URL` (provider is ignored if discovery URL is set — see [`providers/README.md`](../providers/README.md)).
 
-## Pre-downloaded “top 20” GCP services
+## Pre-downloaded “top 50” GCP services
 
 We **maintain** pinned Discovery docs (and GraphQL artifacts when Omnigraph succeeds) for 20 common APIs — IAM, Compute, Storage, GKE, Cloud Run, Pub/Sub, BigQuery, etc. Refresh:
 
 ```bash
-npm run refresh-google-top20
+npm run refresh-google-top50
 ```
 
 Details: [`providers/google/apis/README.md`](../providers/google/apis/README.md).

@@ -1,0 +1,1588 @@
+directive @enum(subgraph: String, value: String) on ENUM_VALUE
+
+directive @dictionary(subgraph: String) on FIELD_DEFINITION
+
+directive @httpOperation(subgraph: String, path: String, operationSpecificHeaders: [[String]], httpMethod: HTTPMethod, isBinary: Boolean, requestBaseBody: ObjMap, queryParamArgMap: ObjMap, queryStringOptionsByParam: ObjMap, jsonApiFields: Boolean, queryStringOptions: ObjMap) on FIELD_DEFINITION
+
+directive @transport(subgraph: String, kind: String, location: String, headers: [[String]], queryStringOptions: ObjMap, queryParams: [[String]]) repeatable on SCHEMA
+
+type Query {
+  """
+  Gets the requested Recommender Config. There is only one instance of the config for each Recommender.
+  """
+  recommender_projects_locations_recommenders_getConfig(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter recommendersId"""
+    recommendersId: String!
+  ): GoogleCloudRecommenderV1RecommenderConfig
+
+  """
+  Lists recommendations for the specified Cloud Resource. Requires the recommender.*.list IAM permission for the specified recommender.
+  """
+  recommender_projects_locations_recommenders_recommendations_list(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter recommendersId"""
+    recommendersId: String!
+
+    """
+    Optional. The maximum number of results to return from this request. Non-positive values are ignored. If not specified, the server will determine the number of results to return.
+    """
+    pageSize: Int
+
+    """
+    Optional. If present, retrieves the next batch of results from the preceding call to this method. `page_token` must be the value of `next_page_token` from the previous response. The values of other method parameters must be identical to those in the previous call.
+    """
+    pageToken: String
+
+    """
+    Filter expression to restrict the recommendations returned. Supported filter fields: * `state_info.state` * `recommenderSubtype` * `priority` * `targetResources` Examples: * `stateInfo.state = ACTIVE OR stateInfo.state = DISMISSED` * `recommenderSubtype = REMOVE_ROLE OR recommenderSubtype = REPLACE_ROLE` * `priority = P1 OR priority = P2` * `targetResources : //compute.googleapis.com/projects/1234/zones/us-central1-a/instances/instance-1` * `stateInfo.state = ACTIVE AND (priority = P1 OR priority = P2)` The max allowed filter length is 500 characters. (These expressions are based on the filter language described at https://google.aip.dev/160)
+    """
+    filter: String
+  ): GoogleCloudRecommenderV1ListRecommendationsResponse
+
+  """
+  Gets the requested recommendation. Requires the recommender.*.get IAM permission for the specified recommender.
+  """
+  recommender_projects_locations_recommenders_recommendations_get(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter recommendersId"""
+    recommendersId: String!
+
+    """Path parameter recommendationsId"""
+    recommendationsId: String!
+  ): GoogleCloudRecommenderV1Recommendation
+
+  """
+  Gets the requested InsightTypeConfig. There is only one instance of the config for each InsightType.
+  """
+  recommender_projects_locations_insightTypes_getConfig(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter insightTypesId"""
+    insightTypesId: String!
+  ): GoogleCloudRecommenderV1InsightTypeConfig
+
+  """
+  Lists insights for the specified Cloud Resource. Requires the recommender.*.list IAM permission for the specified insight type.
+  """
+  recommender_projects_locations_insightTypes_insights_list(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter insightTypesId"""
+    insightTypesId: String!
+
+    """
+    Optional. The maximum number of results to return from this request. Non-positive values are ignored. If not specified, the server will determine the number of results to return.
+    """
+    pageSize: Int
+
+    """
+    Optional. If present, retrieves the next batch of results from the preceding call to this method. `page_token` must be the value of `next_page_token` from the previous response. The values of other method parameters must be identical to those in the previous call.
+    """
+    pageToken: String
+
+    """
+    Optional. Filter expression to restrict the insights returned. Supported filter fields: * `stateInfo.state` * `insightSubtype` * `severity` * `targetResources` Examples: * `stateInfo.state = ACTIVE OR stateInfo.state = DISMISSED` * `insightSubtype = PERMISSIONS_USAGE` * `severity = CRITICAL OR severity = HIGH` * `targetResources : //compute.googleapis.com/projects/1234/zones/us-central1-a/instances/instance-1` * `stateInfo.state = ACTIVE AND (severity = CRITICAL OR severity = HIGH)` The max allowed filter length is 500 characters. (These expressions are based on the filter language described at https://google.aip.dev/160)
+    """
+    filter: String
+  ): GoogleCloudRecommenderV1ListInsightsResponse
+
+  """
+  Gets the requested insight. Requires the recommender.*.get IAM permission for the specified insight type.
+  """
+  recommender_projects_locations_insightTypes_insights_get(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter insightTypesId"""
+    insightTypesId: String!
+
+    """Path parameter insightsId"""
+    insightsId: String!
+  ): GoogleCloudRecommenderV1Insight
+
+  """
+  Gets the requested Recommender Config. There is only one instance of the config for each Recommender.
+  """
+  recommender_billingAccounts_locations_recommenders_getConfig(
+    """Path parameter billingAccountsId"""
+    billingAccountsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter recommendersId"""
+    recommendersId: String!
+  ): GoogleCloudRecommenderV1RecommenderConfig
+
+  """
+  Lists recommendations for the specified Cloud Resource. Requires the recommender.*.list IAM permission for the specified recommender.
+  """
+  recommender_billingAccounts_locations_recommenders_recommendations_list(
+    """Path parameter billingAccountsId"""
+    billingAccountsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter recommendersId"""
+    recommendersId: String!
+
+    """
+    Optional. The maximum number of results to return from this request. Non-positive values are ignored. If not specified, the server will determine the number of results to return.
+    """
+    pageSize: Int
+
+    """
+    Optional. If present, retrieves the next batch of results from the preceding call to this method. `page_token` must be the value of `next_page_token` from the previous response. The values of other method parameters must be identical to those in the previous call.
+    """
+    pageToken: String
+
+    """
+    Filter expression to restrict the recommendations returned. Supported filter fields: * `state_info.state` * `recommenderSubtype` * `priority` * `targetResources` Examples: * `stateInfo.state = ACTIVE OR stateInfo.state = DISMISSED` * `recommenderSubtype = REMOVE_ROLE OR recommenderSubtype = REPLACE_ROLE` * `priority = P1 OR priority = P2` * `targetResources : //compute.googleapis.com/projects/1234/zones/us-central1-a/instances/instance-1` * `stateInfo.state = ACTIVE AND (priority = P1 OR priority = P2)` The max allowed filter length is 500 characters. (These expressions are based on the filter language described at https://google.aip.dev/160)
+    """
+    filter: String
+  ): GoogleCloudRecommenderV1ListRecommendationsResponse
+
+  """
+  Gets the requested recommendation. Requires the recommender.*.get IAM permission for the specified recommender.
+  """
+  recommender_billingAccounts_locations_recommenders_recommendations_get(
+    """Path parameter billingAccountsId"""
+    billingAccountsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter recommendersId"""
+    recommendersId: String!
+
+    """Path parameter recommendationsId"""
+    recommendationsId: String!
+  ): GoogleCloudRecommenderV1Recommendation
+
+  """
+  Gets the requested InsightTypeConfig. There is only one instance of the config for each InsightType.
+  """
+  recommender_billingAccounts_locations_insightTypes_getConfig(
+    """Path parameter billingAccountsId"""
+    billingAccountsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter insightTypesId"""
+    insightTypesId: String!
+  ): GoogleCloudRecommenderV1InsightTypeConfig
+
+  """
+  Lists insights for the specified Cloud Resource. Requires the recommender.*.list IAM permission for the specified insight type.
+  """
+  recommender_billingAccounts_locations_insightTypes_insights_list(
+    """Path parameter billingAccountsId"""
+    billingAccountsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter insightTypesId"""
+    insightTypesId: String!
+
+    """
+    Optional. The maximum number of results to return from this request. Non-positive values are ignored. If not specified, the server will determine the number of results to return.
+    """
+    pageSize: Int
+
+    """
+    Optional. If present, retrieves the next batch of results from the preceding call to this method. `page_token` must be the value of `next_page_token` from the previous response. The values of other method parameters must be identical to those in the previous call.
+    """
+    pageToken: String
+
+    """
+    Optional. Filter expression to restrict the insights returned. Supported filter fields: * `stateInfo.state` * `insightSubtype` * `severity` * `targetResources` Examples: * `stateInfo.state = ACTIVE OR stateInfo.state = DISMISSED` * `insightSubtype = PERMISSIONS_USAGE` * `severity = CRITICAL OR severity = HIGH` * `targetResources : //compute.googleapis.com/projects/1234/zones/us-central1-a/instances/instance-1` * `stateInfo.state = ACTIVE AND (severity = CRITICAL OR severity = HIGH)` The max allowed filter length is 500 characters. (These expressions are based on the filter language described at https://google.aip.dev/160)
+    """
+    filter: String
+  ): GoogleCloudRecommenderV1ListInsightsResponse
+
+  """
+  Gets the requested insight. Requires the recommender.*.get IAM permission for the specified insight type.
+  """
+  recommender_billingAccounts_locations_insightTypes_insights_get(
+    """Path parameter billingAccountsId"""
+    billingAccountsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter insightTypesId"""
+    insightTypesId: String!
+
+    """Path parameter insightsId"""
+    insightsId: String!
+  ): GoogleCloudRecommenderV1Insight
+
+  """
+  Lists insights for the specified Cloud Resource. Requires the recommender.*.list IAM permission for the specified insight type.
+  """
+  recommender_folders_locations_insightTypes_insights_list(
+    """Path parameter foldersId"""
+    foldersId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter insightTypesId"""
+    insightTypesId: String!
+
+    """
+    Optional. The maximum number of results to return from this request. Non-positive values are ignored. If not specified, the server will determine the number of results to return.
+    """
+    pageSize: Int
+
+    """
+    Optional. If present, retrieves the next batch of results from the preceding call to this method. `page_token` must be the value of `next_page_token` from the previous response. The values of other method parameters must be identical to those in the previous call.
+    """
+    pageToken: String
+
+    """
+    Optional. Filter expression to restrict the insights returned. Supported filter fields: * `stateInfo.state` * `insightSubtype` * `severity` * `targetResources` Examples: * `stateInfo.state = ACTIVE OR stateInfo.state = DISMISSED` * `insightSubtype = PERMISSIONS_USAGE` * `severity = CRITICAL OR severity = HIGH` * `targetResources : //compute.googleapis.com/projects/1234/zones/us-central1-a/instances/instance-1` * `stateInfo.state = ACTIVE AND (severity = CRITICAL OR severity = HIGH)` The max allowed filter length is 500 characters. (These expressions are based on the filter language described at https://google.aip.dev/160)
+    """
+    filter: String
+  ): GoogleCloudRecommenderV1ListInsightsResponse
+
+  """
+  Gets the requested insight. Requires the recommender.*.get IAM permission for the specified insight type.
+  """
+  recommender_folders_locations_insightTypes_insights_get(
+    """Path parameter foldersId"""
+    foldersId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter insightTypesId"""
+    insightTypesId: String!
+
+    """Path parameter insightsId"""
+    insightsId: String!
+  ): GoogleCloudRecommenderV1Insight
+
+  """
+  Lists recommendations for the specified Cloud Resource. Requires the recommender.*.list IAM permission for the specified recommender.
+  """
+  recommender_folders_locations_recommenders_recommendations_list(
+    """Path parameter foldersId"""
+    foldersId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter recommendersId"""
+    recommendersId: String!
+
+    """
+    Optional. The maximum number of results to return from this request. Non-positive values are ignored. If not specified, the server will determine the number of results to return.
+    """
+    pageSize: Int
+
+    """
+    Optional. If present, retrieves the next batch of results from the preceding call to this method. `page_token` must be the value of `next_page_token` from the previous response. The values of other method parameters must be identical to those in the previous call.
+    """
+    pageToken: String
+
+    """
+    Filter expression to restrict the recommendations returned. Supported filter fields: * `state_info.state` * `recommenderSubtype` * `priority` * `targetResources` Examples: * `stateInfo.state = ACTIVE OR stateInfo.state = DISMISSED` * `recommenderSubtype = REMOVE_ROLE OR recommenderSubtype = REPLACE_ROLE` * `priority = P1 OR priority = P2` * `targetResources : //compute.googleapis.com/projects/1234/zones/us-central1-a/instances/instance-1` * `stateInfo.state = ACTIVE AND (priority = P1 OR priority = P2)` The max allowed filter length is 500 characters. (These expressions are based on the filter language described at https://google.aip.dev/160)
+    """
+    filter: String
+  ): GoogleCloudRecommenderV1ListRecommendationsResponse
+
+  """
+  Gets the requested recommendation. Requires the recommender.*.get IAM permission for the specified recommender.
+  """
+  recommender_folders_locations_recommenders_recommendations_get(
+    """Path parameter foldersId"""
+    foldersId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter recommendersId"""
+    recommendersId: String!
+
+    """Path parameter recommendationsId"""
+    recommendationsId: String!
+  ): GoogleCloudRecommenderV1Recommendation
+
+  """
+  Gets the requested Recommender Config. There is only one instance of the config for each Recommender.
+  """
+  recommender_organizations_locations_recommenders_getConfig(
+    """Path parameter organizationsId"""
+    organizationsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter recommendersId"""
+    recommendersId: String!
+  ): GoogleCloudRecommenderV1RecommenderConfig
+
+  """
+  Lists recommendations for the specified Cloud Resource. Requires the recommender.*.list IAM permission for the specified recommender.
+  """
+  recommender_organizations_locations_recommenders_recommendations_list(
+    """Path parameter organizationsId"""
+    organizationsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter recommendersId"""
+    recommendersId: String!
+
+    """
+    Optional. The maximum number of results to return from this request. Non-positive values are ignored. If not specified, the server will determine the number of results to return.
+    """
+    pageSize: Int
+
+    """
+    Optional. If present, retrieves the next batch of results from the preceding call to this method. `page_token` must be the value of `next_page_token` from the previous response. The values of other method parameters must be identical to those in the previous call.
+    """
+    pageToken: String
+
+    """
+    Filter expression to restrict the recommendations returned. Supported filter fields: * `state_info.state` * `recommenderSubtype` * `priority` * `targetResources` Examples: * `stateInfo.state = ACTIVE OR stateInfo.state = DISMISSED` * `recommenderSubtype = REMOVE_ROLE OR recommenderSubtype = REPLACE_ROLE` * `priority = P1 OR priority = P2` * `targetResources : //compute.googleapis.com/projects/1234/zones/us-central1-a/instances/instance-1` * `stateInfo.state = ACTIVE AND (priority = P1 OR priority = P2)` The max allowed filter length is 500 characters. (These expressions are based on the filter language described at https://google.aip.dev/160)
+    """
+    filter: String
+  ): GoogleCloudRecommenderV1ListRecommendationsResponse
+
+  """
+  Gets the requested recommendation. Requires the recommender.*.get IAM permission for the specified recommender.
+  """
+  recommender_organizations_locations_recommenders_recommendations_get(
+    """Path parameter organizationsId"""
+    organizationsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter recommendersId"""
+    recommendersId: String!
+
+    """Path parameter recommendationsId"""
+    recommendationsId: String!
+  ): GoogleCloudRecommenderV1Recommendation
+
+  """
+  Gets the requested InsightTypeConfig. There is only one instance of the config for each InsightType.
+  """
+  recommender_organizations_locations_insightTypes_getConfig(
+    """Path parameter organizationsId"""
+    organizationsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter insightTypesId"""
+    insightTypesId: String!
+  ): GoogleCloudRecommenderV1InsightTypeConfig
+
+  """
+  Lists insights for the specified Cloud Resource. Requires the recommender.*.list IAM permission for the specified insight type.
+  """
+  recommender_organizations_locations_insightTypes_insights_list(
+    """Path parameter organizationsId"""
+    organizationsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter insightTypesId"""
+    insightTypesId: String!
+
+    """
+    Optional. The maximum number of results to return from this request. Non-positive values are ignored. If not specified, the server will determine the number of results to return.
+    """
+    pageSize: Int
+
+    """
+    Optional. If present, retrieves the next batch of results from the preceding call to this method. `page_token` must be the value of `next_page_token` from the previous response. The values of other method parameters must be identical to those in the previous call.
+    """
+    pageToken: String
+
+    """
+    Optional. Filter expression to restrict the insights returned. Supported filter fields: * `stateInfo.state` * `insightSubtype` * `severity` * `targetResources` Examples: * `stateInfo.state = ACTIVE OR stateInfo.state = DISMISSED` * `insightSubtype = PERMISSIONS_USAGE` * `severity = CRITICAL OR severity = HIGH` * `targetResources : //compute.googleapis.com/projects/1234/zones/us-central1-a/instances/instance-1` * `stateInfo.state = ACTIVE AND (severity = CRITICAL OR severity = HIGH)` The max allowed filter length is 500 characters. (These expressions are based on the filter language described at https://google.aip.dev/160)
+    """
+    filter: String
+  ): GoogleCloudRecommenderV1ListInsightsResponse
+
+  """
+  Gets the requested insight. Requires the recommender.*.get IAM permission for the specified insight type.
+  """
+  recommender_organizations_locations_insightTypes_insights_get(
+    """Path parameter organizationsId"""
+    organizationsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter insightTypesId"""
+    insightTypesId: String!
+
+    """Path parameter insightsId"""
+    insightsId: String!
+  ): GoogleCloudRecommenderV1Insight
+}
+
+"""Configuration for a Recommender."""
+type GoogleCloudRecommenderV1RecommenderConfig {
+  """
+  Identifier. Name of recommender config. Eg, projects/[PROJECT_NUMBER]/locations/[LOCATION]/recommenders/[RECOMMENDER_ID]/config
+  """
+  name: String
+  recommenderGenerationConfig: GoogleCloudRecommenderV1RecommenderGenerationConfig
+
+  """
+  Fingerprint of the RecommenderConfig. Provides optimistic locking when updating.
+  """
+  etag: String
+
+  """Last time when the config was updated."""
+  updateTime: String
+
+  """
+  Output only. Immutable. The revision ID of the config. A new revision is committed whenever the config is changed in any way. The format is an 8-character hexadecimal string.
+  """
+  revisionId: String
+
+  """
+  Allows clients to store small amounts of arbitrary data. Annotations must follow the Kubernetes syntax. The total size of all keys and values combined is limited to 256k. Key can have 2 segments: prefix (optional) and name (required), separated by a slash (/). Prefix must be a DNS subdomain. Name must be 63 characters or less, begin and end with alphanumerics, with dashes (-), underscores (_), dots (.), and alphanumerics between.
+  """
+  annotations: JSON
+
+  """
+  A user-settable field to provide a human-readable name to be used in user interfaces.
+  """
+  displayName: String
+}
+
+"""
+A Configuration to customize the generation of recommendations. Eg, customizing the lookback period considered when generating a recommendation.
+"""
+type GoogleCloudRecommenderV1RecommenderGenerationConfig {
+  """
+  Parameters for this RecommenderGenerationConfig. These configs can be used by or are applied to all subtypes.
+  """
+  params: JSON
+}
+
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSON @specifiedBy(url: "http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf")
+
+"""Response to the `ListRecommendations` method."""
+type GoogleCloudRecommenderV1ListRecommendationsResponse {
+  """The set of recommendations for the `parent` resource."""
+  recommendations: [GoogleCloudRecommenderV1Recommendation]
+
+  """
+  A token that can be used to request the next page of results. This field is empty if there are no additional results.
+  """
+  nextPageToken: String
+}
+
+"""
+A recommendation along with a suggested action. E.g., a rightsizing recommendation for an underutilized VM, IAM role recommendations, etc
+"""
+type GoogleCloudRecommenderV1Recommendation {
+  """Identifier. Name of recommendation."""
+  name: String
+
+  """
+  Free-form human readable summary in English. The maximum length is 500 characters.
+  """
+  description: String
+
+  """
+  Contains an identifier for a subtype of recommendations produced for the same recommender. Subtype is a function of content and impact, meaning a new subtype might be added when significant changes to `content` or `primary_impact.category` are introduced. See the Recommenders section to see a list of subtypes for a given Recommender. Examples: For recommender = "google.iam.policy.Recommender", recommender_subtype can be one of "REMOVE_ROLE"/"REPLACE_ROLE"
+  """
+  recommenderSubtype: String
+
+  """
+  Last time this recommendation was refreshed by the system that created it in the first place.
+  """
+  lastRefreshTime: String
+  primaryImpact: GoogleCloudRecommenderV1Impact
+
+  """
+  Optional set of additional impact that this recommendation may have when trying to optimize for the primary category. These may be positive or negative.
+  """
+  additionalImpact: [GoogleCloudRecommenderV1Impact]
+  priority: query_recommender_projects_locations_recommenders_recommendations_list_recommendations_items_priority
+  content: GoogleCloudRecommenderV1RecommendationContent
+  stateInfo: GoogleCloudRecommenderV1RecommendationStateInfo
+
+  """
+  Fingerprint of the Recommendation. Provides optimistic locking when updating states.
+  """
+  etag: String
+
+  """Insights that led to this recommendation."""
+  associatedInsights: [GoogleCloudRecommenderV1RecommendationInsightReference]
+
+  """
+  Corresponds to a mutually exclusive group ID within a recommender. A non-empty ID indicates that the recommendation belongs to a mutually exclusive group. This means that only one recommendation within the group is suggested to be applied.
+  """
+  xorGroupId: String
+
+  """Fully qualified resource names that this recommendation is targeting."""
+  targetResources: [String]
+}
+
+"""Contains the impact a recommendation can have for a given category."""
+type GoogleCloudRecommenderV1Impact {
+  category: query_recommender_projects_locations_recommenders_recommendations_list_recommendations_items_primaryImpact_category
+  costProjection: GoogleCloudRecommenderV1CostProjection
+  securityProjection: GoogleCloudRecommenderV1SecurityProjection
+  sustainabilityProjection: GoogleCloudRecommenderV1SustainabilityProjection
+  reliabilityProjection: GoogleCloudRecommenderV1ReliabilityProjection
+
+  """The service that this impact is associated with."""
+  service: String
+}
+
+"""Category that is being targeted."""
+enum query_recommender_projects_locations_recommenders_recommendations_list_recommendations_items_primaryImpact_category {
+  CATEGORY_UNSPECIFIED
+  COST
+  SECURITY
+  PERFORMANCE
+  MANAGEABILITY
+  SUSTAINABILITY
+  RELIABILITY
+}
+
+"""
+Contains metadata about how much money a recommendation can save or incur.
+"""
+type GoogleCloudRecommenderV1CostProjection {
+  cost: GoogleTypeMoney
+
+  """Duration for which this cost applies."""
+  duration: String
+  costInLocalCurrency: GoogleTypeMoney
+}
+
+"""Represents an amount of money with its currency type."""
+type GoogleTypeMoney {
+  """The three-letter currency code defined in ISO 4217."""
+  currencyCode: String
+
+  """
+  The whole units of the amount. For example if `currencyCode` is `"USD"`, then 1 unit is one US dollar.
+  """
+  units: BigInt
+
+  """
+  Number of nano (10^-9) units of the amount. The value must be between -999,999,999 and +999,999,999 inclusive. If `units` is positive, `nanos` must be positive or zero. If `units` is zero, `nanos` can be positive, zero, or negative. If `units` is negative, `nanos` must be negative or zero. For example $-1.75 is represented as `units`=-1 and `nanos`=-750,000,000.
+  """
+  nanos: Int
+}
+
+"""
+The `BigInt` scalar type represents non-fractional signed whole numeric values.
+"""
+scalar BigInt
+
+"""Contains various ways of describing the impact on Security."""
+type GoogleCloudRecommenderV1SecurityProjection {
+  """
+  Additional security impact details that is provided by the recommender.
+  """
+  details: JSON
+}
+
+"""
+Contains metadata about how much sustainability a recommendation can save or incur.
+"""
+type GoogleCloudRecommenderV1SustainabilityProjection {
+  """
+  Carbon Footprint generated in kg of CO2 equivalent. Chose kg_c_o2e so that the name renders correctly in camelCase (kgCO2e).
+  """
+  kgCO2e: Float
+
+  """Duration for which this sustainability applies."""
+  duration: String
+}
+
+"""Contains information on the impact of a reliability recommendation."""
+type GoogleCloudRecommenderV1ReliabilityProjection {
+  """Reliability risks mitigated by this recommendation."""
+  risks: [query_recommender_projects_locations_recommenders_recommendations_list_recommendations_items_primaryImpact_reliabilityProjection_risks_items]
+
+  """Per-recommender projection."""
+  details: JSON
+}
+
+enum query_recommender_projects_locations_recommenders_recommendations_list_recommendations_items_primaryImpact_reliabilityProjection_risks_items {
+  RISK_TYPE_UNSPECIFIED
+  SERVICE_DISRUPTION
+  DATA_LOSS
+  ACCESS_DENY
+}
+
+"""Recommendation's priority."""
+enum query_recommender_projects_locations_recommenders_recommendations_list_recommendations_items_priority {
+  PRIORITY_UNSPECIFIED
+  P4
+  P3
+  P2
+  P1
+}
+
+"""Contains what resources are changing and how they are changing."""
+type GoogleCloudRecommenderV1RecommendationContent {
+  """
+  Operations to one or more Google Cloud resources grouped in such a way that, all operations within one group are expected to be performed atomically and in an order.
+  """
+  operationGroups: [GoogleCloudRecommenderV1OperationGroup]
+
+  """Condensed overview information about the recommendation."""
+  overview: JSON
+}
+
+"""Group of operations that need to be performed atomically."""
+type GoogleCloudRecommenderV1OperationGroup {
+  """
+  List of operations across one or more resources that belong to this group. Loosely based on RFC6902 and should be performed in the order they appear.
+  """
+  operations: [GoogleCloudRecommenderV1Operation]
+}
+
+"""
+Contains an operation for a resource loosely based on the JSON-PATCH format with support for: * Custom filters for describing partial array patch. * Extended path values for describing nested arrays. * Custom fields for describing the resource for which the operation is being described. * Allows extension to custom operations not natively supported by RFC6902. See https://tools.ietf.org/html/rfc6902 for details on the original RFC.
+"""
+type GoogleCloudRecommenderV1Operation {
+  """
+  Type of this operation. Contains one of 'add', 'remove', 'replace', 'move', 'copy', 'test' and custom operations. This field is case-insensitive and always populated.
+  """
+  action: String
+
+  """
+  Type of GCP resource being modified/tested. This field is always populated. Example: cloudresourcemanager.googleapis.com/Project, compute.googleapis.com/Instance
+  """
+  resourceType: String
+
+  """
+  Contains the fully qualified resource name. This field is always populated. ex: //cloudresourcemanager.googleapis.com/projects/foo.
+  """
+  resource: String
+
+  """
+  Path to the target field being operated on. If the operation is at the resource level, then path should be "/". This field is always populated.
+  """
+  path: String
+
+  """
+  Can be set with action 'copy' to copy resource configuration across different resources of the same type. Example: A resource clone can be done via action = 'copy', path = "/", from = "/", source_resource = and resource_name = . This field is empty for all other values of `action`.
+  """
+  sourceResource: String
+
+  """
+  Can be set with action 'copy' or 'move' to indicate the source field within resource or source_resource, ignored if provided for other operation types.
+  """
+  sourcePath: String
+
+  """
+  Value for the `path` field. Will be set for actions:'add'/'replace'. Maybe set for action: 'test'. Either this or `value_matcher` will be set for 'test' operation. An exact match must be performed.
+  """
+  value: JSON
+  valueMatcher: GoogleCloudRecommenderV1ValueMatcher
+
+  """
+  Set of filters to apply if `path` refers to array elements or nested array elements in order to narrow down to a single unique element that is being tested/modified. This is intended to be an exact match per filter. To perform advanced matching, use path_value_matchers. * Example: ``` { "/versions/*/name" : "it-123" "/versions/*/targetSize/percent": 20 } ``` * Example: ``` { "/bindings/*/role": "roles/owner" "/bindings/*/condition" : null } ``` * Example: ``` { "/bindings/*/role": "roles/owner" "/bindings/*/members/*" : ["x@example.com", "y@example.com"] } ``` When both path_filters and path_value_matchers are set, an implicit AND must be performed.
+  """
+  pathFilters: JSON
+  pathValueMatchers: query_recommender_projects_locations_recommenders_recommendations_list_recommendations_items_content_operationGroups_items_operations_items_pathValueMatchers
+}
+
+"""Contains various matching options for values for a GCP resource field."""
+type GoogleCloudRecommenderV1ValueMatcher {
+  """
+  To be used for full regex matching. The regular expression is using the Google RE2 syntax (https://github.com/google/re2/wiki/Syntax), so to be used with RE2::FullMatch
+  """
+  matchesPattern: String
+}
+
+"""
+Similar to path_filters, this contains set of filters to apply if `path` field refers to array elements. This is meant to support value matching beyond exact match. To perform exact match, use path_filters. When both path_filters and path_value_matchers are set, an implicit AND must be performed.
+"""
+type query_recommender_projects_locations_recommenders_recommendations_list_recommendations_items_content_operationGroups_items_operations_items_pathValueMatchers {
+  additionalProperties: [GoogleCloudRecommenderV1ValueMatcher2_entry]
+}
+
+type GoogleCloudRecommenderV1ValueMatcher2_entry {
+  key: ID!
+  value: GoogleCloudRecommenderV1ValueMatcher2
+}
+
+"""Contains various matching options for values for a GCP resource field."""
+type GoogleCloudRecommenderV1ValueMatcher2 {
+  """
+  To be used for full regex matching. The regular expression is using the Google RE2 syntax (https://github.com/google/re2/wiki/Syntax), so to be used with RE2::FullMatch
+  """
+  matchesPattern: String
+}
+
+"""Information for state. Contains state and metadata."""
+type GoogleCloudRecommenderV1RecommendationStateInfo {
+  state: query_recommender_projects_locations_recommenders_recommendations_list_recommendations_items_stateInfo_state
+
+  """
+  A map of metadata for the state, provided by user or automations systems.
+  """
+  stateMetadata: JSON
+}
+
+"""The state of the recommendation, Eg ACTIVE, SUCCEEDED, FAILED."""
+enum query_recommender_projects_locations_recommenders_recommendations_list_recommendations_items_stateInfo_state {
+  STATE_UNSPECIFIED
+  ACTIVE
+  CLAIMED
+  SUCCEEDED
+  FAILED
+  DISMISSED
+}
+
+"""Reference to an associated insight."""
+type GoogleCloudRecommenderV1RecommendationInsightReference {
+  """
+  Insight resource name, e.g. projects/[PROJECT_NUMBER]/locations/[LOCATION]/insightTypes/[INSIGHT_TYPE_ID]/insights/[INSIGHT_ID]
+  """
+  insight: String
+}
+
+"""Configuration for an InsightType."""
+type GoogleCloudRecommenderV1InsightTypeConfig {
+  """
+  Identifier. Name of insight type config. Eg, projects/[PROJECT_NUMBER]/locations/[LOCATION]/insightTypes/[INSIGHT_TYPE_ID]/config
+  """
+  name: String
+  insightTypeGenerationConfig: GoogleCloudRecommenderV1InsightTypeGenerationConfig
+
+  """
+  Fingerprint of the InsightTypeConfig. Provides optimistic locking when updating.
+  """
+  etag: String
+
+  """Last time when the config was updated."""
+  updateTime: String
+
+  """
+  Output only. Immutable. The revision ID of the config. A new revision is committed whenever the config is changed in any way. The format is an 8-character hexadecimal string.
+  """
+  revisionId: String
+
+  """
+  Allows clients to store small amounts of arbitrary data. Annotations must follow the Kubernetes syntax. The total size of all keys and values combined is limited to 256k. Key can have 2 segments: prefix (optional) and name (required), separated by a slash (/). Prefix must be a DNS subdomain. Name must be 63 characters or less, begin and end with alphanumerics, with dashes (-), underscores (_), dots (.), and alphanumerics between.
+  """
+  annotations: JSON
+
+  """
+  A user-settable field to provide a human-readable name to be used in user interfaces.
+  """
+  displayName: String
+}
+
+"""
+A configuration to customize the generation of insights. Eg, customizing the lookback period considered when generating a insight.
+"""
+type GoogleCloudRecommenderV1InsightTypeGenerationConfig {
+  """
+  Parameters for this InsightTypeGenerationConfig. These configs can be used by or are applied to all subtypes.
+  """
+  params: JSON
+}
+
+"""Response to the `ListInsights` method."""
+type GoogleCloudRecommenderV1ListInsightsResponse {
+  """The set of insights for the `parent` resource."""
+  insights: [GoogleCloudRecommenderV1Insight]
+
+  """
+  A token that can be used to request the next page of results. This field is empty if there are no additional results.
+  """
+  nextPageToken: String
+}
+
+"""
+An insight along with the information used to derive the insight. The insight may have associated recommendations as well.
+"""
+type GoogleCloudRecommenderV1Insight {
+  """Identifier. Name of the insight."""
+  name: String
+
+  """
+  Free-form human readable summary in English. The maximum length is 500 characters.
+  """
+  description: String
+
+  """Fully qualified resource names that this insight is targeting."""
+  targetResources: [String]
+
+  """
+  Insight subtype. Insight content schema will be stable for a given subtype.
+  """
+  insightSubtype: String
+
+  """
+  A struct of custom fields to explain the insight. Example: "grantedPermissionsCount": "1000"
+  """
+  content: JSON
+
+  """Timestamp of the latest data used to generate the insight."""
+  lastRefreshTime: String
+
+  """
+  Observation period that led to the insight. The source data used to generate the insight ends at last_refresh_time and begins at (last_refresh_time - observation_period).
+  """
+  observationPeriod: String
+  stateInfo: GoogleCloudRecommenderV1InsightStateInfo
+  category: query_recommender_projects_locations_insightTypes_insights_list_insights_items_category
+  severity: query_recommender_projects_locations_insightTypes_insights_list_insights_items_severity
+
+  """
+  Fingerprint of the Insight. Provides optimistic locking when updating states.
+  """
+  etag: String
+
+  """Recommendations derived from this insight."""
+  associatedRecommendations: [GoogleCloudRecommenderV1InsightRecommendationReference]
+}
+
+"""Information related to insight state."""
+type GoogleCloudRecommenderV1InsightStateInfo {
+  state: query_recommender_projects_locations_insightTypes_insights_list_insights_items_stateInfo_state
+
+  """
+  A map of metadata for the state, provided by user or automations systems.
+  """
+  stateMetadata: JSON
+}
+
+"""Insight state."""
+enum query_recommender_projects_locations_insightTypes_insights_list_insights_items_stateInfo_state {
+  STATE_UNSPECIFIED
+  ACTIVE
+  ACCEPTED
+  DISMISSED
+}
+
+"""Category being targeted by the insight."""
+enum query_recommender_projects_locations_insightTypes_insights_list_insights_items_category {
+  CATEGORY_UNSPECIFIED
+  COST
+  SECURITY
+  PERFORMANCE
+  MANAGEABILITY
+  SUSTAINABILITY
+  RELIABILITY
+}
+
+"""Insight's severity."""
+enum query_recommender_projects_locations_insightTypes_insights_list_insights_items_severity {
+  SEVERITY_UNSPECIFIED
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+"""Reference to an associated recommendation."""
+type GoogleCloudRecommenderV1InsightRecommendationReference {
+  """
+  Recommendation resource name, e.g. projects/[PROJECT_NUMBER]/locations/[LOCATION]/recommenders/[RECOMMENDER_ID]/recommendations/[RECOMMENDATION_ID]
+  """
+  recommendation: String
+}
+
+type Mutation {
+  """
+  Updates a Recommender Config. This will create a new revision of the config.
+  """
+  recommender_projects_locations_recommenders_updateConfig(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter recommendersId"""
+    recommendersId: String!
+
+    """The list of fields to be updated."""
+    updateMask: String
+
+    """
+    If true, validate the request and preview the change, but do not actually update it.
+    """
+    validateOnly: Boolean
+    input: GoogleCloudRecommenderV1RecommenderConfig_Input
+  ): GoogleCloudRecommenderV1RecommenderConfig
+
+  """
+  Mark the Recommendation State as Dismissed. Users can use this method to indicate to the Recommender API that an ACTIVE recommendation has to be marked back as DISMISSED. MarkRecommendationDismissed can be applied to recommendations in ACTIVE state. Requires the recommender.*.update IAM permission for the specified recommender.
+  """
+  recommender_projects_locations_recommenders_recommendations_markDismissed(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter recommendersId"""
+    recommendersId: String!
+
+    """Path parameter recommendationsId"""
+    recommendationsId: String!
+    input: GoogleCloudRecommenderV1MarkRecommendationDismissedRequest_Input
+  ): GoogleCloudRecommenderV1Recommendation
+
+  """
+  Marks the Recommendation State as Claimed. Users can use this method to indicate to the Recommender API that they are starting to apply the recommendation themselves. This stops the recommendation content from being updated. Associated insights are frozen and placed in the ACCEPTED state. MarkRecommendationClaimed can be applied to recommendations in CLAIMED, SUCCEEDED, FAILED, or ACTIVE state. Requires the recommender.*.update IAM permission for the specified recommender.
+  """
+  recommender_projects_locations_recommenders_recommendations_markClaimed(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter recommendersId"""
+    recommendersId: String!
+
+    """Path parameter recommendationsId"""
+    recommendationsId: String!
+    input: GoogleCloudRecommenderV1MarkRecommendationClaimedRequest_Input
+  ): GoogleCloudRecommenderV1Recommendation
+
+  """
+  Marks the Recommendation State as Succeeded. Users can use this method to indicate to the Recommender API that they have applied the recommendation themselves, and the operation was successful. This stops the recommendation content from being updated. Associated insights are frozen and placed in the ACCEPTED state. MarkRecommendationSucceeded can be applied to recommendations in ACTIVE, CLAIMED, SUCCEEDED, or FAILED state. Requires the recommender.*.update IAM permission for the specified recommender.
+  """
+  recommender_projects_locations_recommenders_recommendations_markSucceeded(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter recommendersId"""
+    recommendersId: String!
+
+    """Path parameter recommendationsId"""
+    recommendationsId: String!
+    input: GoogleCloudRecommenderV1MarkRecommendationSucceededRequest_Input
+  ): GoogleCloudRecommenderV1Recommendation
+
+  """
+  Marks the Recommendation State as Failed. Users can use this method to indicate to the Recommender API that they have applied the recommendation themselves, and the operation failed. This stops the recommendation content from being updated. Associated insights are frozen and placed in the ACCEPTED state. MarkRecommendationFailed can be applied to recommendations in ACTIVE, CLAIMED, SUCCEEDED, or FAILED state. Requires the recommender.*.update IAM permission for the specified recommender.
+  """
+  recommender_projects_locations_recommenders_recommendations_markFailed(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter recommendersId"""
+    recommendersId: String!
+
+    """Path parameter recommendationsId"""
+    recommendationsId: String!
+    input: GoogleCloudRecommenderV1MarkRecommendationFailedRequest_Input
+  ): GoogleCloudRecommenderV1Recommendation
+
+  """
+  Updates an InsightTypeConfig change. This will create a new revision of the config.
+  """
+  recommender_projects_locations_insightTypes_updateConfig(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter insightTypesId"""
+    insightTypesId: String!
+
+    """The list of fields to be updated."""
+    updateMask: String
+
+    """
+    If true, validate the request and preview the change, but do not actually update it.
+    """
+    validateOnly: Boolean
+    input: GoogleCloudRecommenderV1InsightTypeConfig_Input
+  ): GoogleCloudRecommenderV1InsightTypeConfig
+
+  """
+  Marks the Insight State as Accepted. Users can use this method to indicate to the Recommender API that they have applied some action based on the insight. This stops the insight content from being updated. MarkInsightAccepted can be applied to insights in ACTIVE state. Requires the recommender.*.update IAM permission for the specified insight.
+  """
+  recommender_projects_locations_insightTypes_insights_markAccepted(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter insightTypesId"""
+    insightTypesId: String!
+
+    """Path parameter insightsId"""
+    insightsId: String!
+    input: GoogleCloudRecommenderV1MarkInsightAcceptedRequest_Input
+  ): GoogleCloudRecommenderV1Insight
+
+  """
+  Updates a Recommender Config. This will create a new revision of the config.
+  """
+  recommender_billingAccounts_locations_recommenders_updateConfig(
+    """Path parameter billingAccountsId"""
+    billingAccountsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter recommendersId"""
+    recommendersId: String!
+
+    """The list of fields to be updated."""
+    updateMask: String
+
+    """
+    If true, validate the request and preview the change, but do not actually update it.
+    """
+    validateOnly: Boolean
+    input: GoogleCloudRecommenderV1RecommenderConfig_Input
+  ): GoogleCloudRecommenderV1RecommenderConfig
+
+  """
+  Mark the Recommendation State as Dismissed. Users can use this method to indicate to the Recommender API that an ACTIVE recommendation has to be marked back as DISMISSED. MarkRecommendationDismissed can be applied to recommendations in ACTIVE state. Requires the recommender.*.update IAM permission for the specified recommender.
+  """
+  recommender_billingAccounts_locations_recommenders_recommendations_markDismissed(
+    """Path parameter billingAccountsId"""
+    billingAccountsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter recommendersId"""
+    recommendersId: String!
+
+    """Path parameter recommendationsId"""
+    recommendationsId: String!
+    input: GoogleCloudRecommenderV1MarkRecommendationDismissedRequest_Input
+  ): GoogleCloudRecommenderV1Recommendation
+
+  """
+  Marks the Recommendation State as Claimed. Users can use this method to indicate to the Recommender API that they are starting to apply the recommendation themselves. This stops the recommendation content from being updated. Associated insights are frozen and placed in the ACCEPTED state. MarkRecommendationClaimed can be applied to recommendations in CLAIMED, SUCCEEDED, FAILED, or ACTIVE state. Requires the recommender.*.update IAM permission for the specified recommender.
+  """
+  recommender_billingAccounts_locations_recommenders_recommendations_markClaimed(
+    """Path parameter billingAccountsId"""
+    billingAccountsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter recommendersId"""
+    recommendersId: String!
+
+    """Path parameter recommendationsId"""
+    recommendationsId: String!
+    input: GoogleCloudRecommenderV1MarkRecommendationClaimedRequest_Input
+  ): GoogleCloudRecommenderV1Recommendation
+
+  """
+  Marks the Recommendation State as Succeeded. Users can use this method to indicate to the Recommender API that they have applied the recommendation themselves, and the operation was successful. This stops the recommendation content from being updated. Associated insights are frozen and placed in the ACCEPTED state. MarkRecommendationSucceeded can be applied to recommendations in ACTIVE, CLAIMED, SUCCEEDED, or FAILED state. Requires the recommender.*.update IAM permission for the specified recommender.
+  """
+  recommender_billingAccounts_locations_recommenders_recommendations_markSucceeded(
+    """Path parameter billingAccountsId"""
+    billingAccountsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter recommendersId"""
+    recommendersId: String!
+
+    """Path parameter recommendationsId"""
+    recommendationsId: String!
+    input: GoogleCloudRecommenderV1MarkRecommendationSucceededRequest_Input
+  ): GoogleCloudRecommenderV1Recommendation
+
+  """
+  Marks the Recommendation State as Failed. Users can use this method to indicate to the Recommender API that they have applied the recommendation themselves, and the operation failed. This stops the recommendation content from being updated. Associated insights are frozen and placed in the ACCEPTED state. MarkRecommendationFailed can be applied to recommendations in ACTIVE, CLAIMED, SUCCEEDED, or FAILED state. Requires the recommender.*.update IAM permission for the specified recommender.
+  """
+  recommender_billingAccounts_locations_recommenders_recommendations_markFailed(
+    """Path parameter billingAccountsId"""
+    billingAccountsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter recommendersId"""
+    recommendersId: String!
+
+    """Path parameter recommendationsId"""
+    recommendationsId: String!
+    input: GoogleCloudRecommenderV1MarkRecommendationFailedRequest_Input
+  ): GoogleCloudRecommenderV1Recommendation
+
+  """
+  Updates an InsightTypeConfig change. This will create a new revision of the config.
+  """
+  recommender_billingAccounts_locations_insightTypes_updateConfig(
+    """Path parameter billingAccountsId"""
+    billingAccountsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter insightTypesId"""
+    insightTypesId: String!
+
+    """The list of fields to be updated."""
+    updateMask: String
+
+    """
+    If true, validate the request and preview the change, but do not actually update it.
+    """
+    validateOnly: Boolean
+    input: GoogleCloudRecommenderV1InsightTypeConfig_Input
+  ): GoogleCloudRecommenderV1InsightTypeConfig
+
+  """
+  Marks the Insight State as Accepted. Users can use this method to indicate to the Recommender API that they have applied some action based on the insight. This stops the insight content from being updated. MarkInsightAccepted can be applied to insights in ACTIVE state. Requires the recommender.*.update IAM permission for the specified insight.
+  """
+  recommender_billingAccounts_locations_insightTypes_insights_markAccepted(
+    """Path parameter billingAccountsId"""
+    billingAccountsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter insightTypesId"""
+    insightTypesId: String!
+
+    """Path parameter insightsId"""
+    insightsId: String!
+    input: GoogleCloudRecommenderV1MarkInsightAcceptedRequest_Input
+  ): GoogleCloudRecommenderV1Insight
+
+  """
+  Marks the Insight State as Accepted. Users can use this method to indicate to the Recommender API that they have applied some action based on the insight. This stops the insight content from being updated. MarkInsightAccepted can be applied to insights in ACTIVE state. Requires the recommender.*.update IAM permission for the specified insight.
+  """
+  recommender_folders_locations_insightTypes_insights_markAccepted(
+    """Path parameter foldersId"""
+    foldersId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter insightTypesId"""
+    insightTypesId: String!
+
+    """Path parameter insightsId"""
+    insightsId: String!
+    input: GoogleCloudRecommenderV1MarkInsightAcceptedRequest_Input
+  ): GoogleCloudRecommenderV1Insight
+
+  """
+  Mark the Recommendation State as Dismissed. Users can use this method to indicate to the Recommender API that an ACTIVE recommendation has to be marked back as DISMISSED. MarkRecommendationDismissed can be applied to recommendations in ACTIVE state. Requires the recommender.*.update IAM permission for the specified recommender.
+  """
+  recommender_folders_locations_recommenders_recommendations_markDismissed(
+    """Path parameter foldersId"""
+    foldersId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter recommendersId"""
+    recommendersId: String!
+
+    """Path parameter recommendationsId"""
+    recommendationsId: String!
+    input: GoogleCloudRecommenderV1MarkRecommendationDismissedRequest_Input
+  ): GoogleCloudRecommenderV1Recommendation
+
+  """
+  Marks the Recommendation State as Claimed. Users can use this method to indicate to the Recommender API that they are starting to apply the recommendation themselves. This stops the recommendation content from being updated. Associated insights are frozen and placed in the ACCEPTED state. MarkRecommendationClaimed can be applied to recommendations in CLAIMED, SUCCEEDED, FAILED, or ACTIVE state. Requires the recommender.*.update IAM permission for the specified recommender.
+  """
+  recommender_folders_locations_recommenders_recommendations_markClaimed(
+    """Path parameter foldersId"""
+    foldersId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter recommendersId"""
+    recommendersId: String!
+
+    """Path parameter recommendationsId"""
+    recommendationsId: String!
+    input: GoogleCloudRecommenderV1MarkRecommendationClaimedRequest_Input
+  ): GoogleCloudRecommenderV1Recommendation
+
+  """
+  Marks the Recommendation State as Succeeded. Users can use this method to indicate to the Recommender API that they have applied the recommendation themselves, and the operation was successful. This stops the recommendation content from being updated. Associated insights are frozen and placed in the ACCEPTED state. MarkRecommendationSucceeded can be applied to recommendations in ACTIVE, CLAIMED, SUCCEEDED, or FAILED state. Requires the recommender.*.update IAM permission for the specified recommender.
+  """
+  recommender_folders_locations_recommenders_recommendations_markSucceeded(
+    """Path parameter foldersId"""
+    foldersId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter recommendersId"""
+    recommendersId: String!
+
+    """Path parameter recommendationsId"""
+    recommendationsId: String!
+    input: GoogleCloudRecommenderV1MarkRecommendationSucceededRequest_Input
+  ): GoogleCloudRecommenderV1Recommendation
+
+  """
+  Marks the Recommendation State as Failed. Users can use this method to indicate to the Recommender API that they have applied the recommendation themselves, and the operation failed. This stops the recommendation content from being updated. Associated insights are frozen and placed in the ACCEPTED state. MarkRecommendationFailed can be applied to recommendations in ACTIVE, CLAIMED, SUCCEEDED, or FAILED state. Requires the recommender.*.update IAM permission for the specified recommender.
+  """
+  recommender_folders_locations_recommenders_recommendations_markFailed(
+    """Path parameter foldersId"""
+    foldersId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter recommendersId"""
+    recommendersId: String!
+
+    """Path parameter recommendationsId"""
+    recommendationsId: String!
+    input: GoogleCloudRecommenderV1MarkRecommendationFailedRequest_Input
+  ): GoogleCloudRecommenderV1Recommendation
+
+  """
+  Updates a Recommender Config. This will create a new revision of the config.
+  """
+  recommender_organizations_locations_recommenders_updateConfig(
+    """Path parameter organizationsId"""
+    organizationsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter recommendersId"""
+    recommendersId: String!
+
+    """The list of fields to be updated."""
+    updateMask: String
+
+    """
+    If true, validate the request and preview the change, but do not actually update it.
+    """
+    validateOnly: Boolean
+    input: GoogleCloudRecommenderV1RecommenderConfig_Input
+  ): GoogleCloudRecommenderV1RecommenderConfig
+
+  """
+  Mark the Recommendation State as Dismissed. Users can use this method to indicate to the Recommender API that an ACTIVE recommendation has to be marked back as DISMISSED. MarkRecommendationDismissed can be applied to recommendations in ACTIVE state. Requires the recommender.*.update IAM permission for the specified recommender.
+  """
+  recommender_organizations_locations_recommenders_recommendations_markDismissed(
+    """Path parameter organizationsId"""
+    organizationsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter recommendersId"""
+    recommendersId: String!
+
+    """Path parameter recommendationsId"""
+    recommendationsId: String!
+    input: GoogleCloudRecommenderV1MarkRecommendationDismissedRequest_Input
+  ): GoogleCloudRecommenderV1Recommendation
+
+  """
+  Marks the Recommendation State as Claimed. Users can use this method to indicate to the Recommender API that they are starting to apply the recommendation themselves. This stops the recommendation content from being updated. Associated insights are frozen and placed in the ACCEPTED state. MarkRecommendationClaimed can be applied to recommendations in CLAIMED, SUCCEEDED, FAILED, or ACTIVE state. Requires the recommender.*.update IAM permission for the specified recommender.
+  """
+  recommender_organizations_locations_recommenders_recommendations_markClaimed(
+    """Path parameter organizationsId"""
+    organizationsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter recommendersId"""
+    recommendersId: String!
+
+    """Path parameter recommendationsId"""
+    recommendationsId: String!
+    input: GoogleCloudRecommenderV1MarkRecommendationClaimedRequest_Input
+  ): GoogleCloudRecommenderV1Recommendation
+
+  """
+  Marks the Recommendation State as Succeeded. Users can use this method to indicate to the Recommender API that they have applied the recommendation themselves, and the operation was successful. This stops the recommendation content from being updated. Associated insights are frozen and placed in the ACCEPTED state. MarkRecommendationSucceeded can be applied to recommendations in ACTIVE, CLAIMED, SUCCEEDED, or FAILED state. Requires the recommender.*.update IAM permission for the specified recommender.
+  """
+  recommender_organizations_locations_recommenders_recommendations_markSucceeded(
+    """Path parameter organizationsId"""
+    organizationsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter recommendersId"""
+    recommendersId: String!
+
+    """Path parameter recommendationsId"""
+    recommendationsId: String!
+    input: GoogleCloudRecommenderV1MarkRecommendationSucceededRequest_Input
+  ): GoogleCloudRecommenderV1Recommendation
+
+  """
+  Marks the Recommendation State as Failed. Users can use this method to indicate to the Recommender API that they have applied the recommendation themselves, and the operation failed. This stops the recommendation content from being updated. Associated insights are frozen and placed in the ACCEPTED state. MarkRecommendationFailed can be applied to recommendations in ACTIVE, CLAIMED, SUCCEEDED, or FAILED state. Requires the recommender.*.update IAM permission for the specified recommender.
+  """
+  recommender_organizations_locations_recommenders_recommendations_markFailed(
+    """Path parameter organizationsId"""
+    organizationsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter recommendersId"""
+    recommendersId: String!
+
+    """Path parameter recommendationsId"""
+    recommendationsId: String!
+    input: GoogleCloudRecommenderV1MarkRecommendationFailedRequest_Input
+  ): GoogleCloudRecommenderV1Recommendation
+
+  """
+  Updates an InsightTypeConfig change. This will create a new revision of the config.
+  """
+  recommender_organizations_locations_insightTypes_updateConfig(
+    """Path parameter organizationsId"""
+    organizationsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter insightTypesId"""
+    insightTypesId: String!
+
+    """The list of fields to be updated."""
+    updateMask: String
+
+    """
+    If true, validate the request and preview the change, but do not actually update it.
+    """
+    validateOnly: Boolean
+    input: GoogleCloudRecommenderV1InsightTypeConfig_Input
+  ): GoogleCloudRecommenderV1InsightTypeConfig
+
+  """
+  Marks the Insight State as Accepted. Users can use this method to indicate to the Recommender API that they have applied some action based on the insight. This stops the insight content from being updated. MarkInsightAccepted can be applied to insights in ACTIVE state. Requires the recommender.*.update IAM permission for the specified insight.
+  """
+  recommender_organizations_locations_insightTypes_insights_markAccepted(
+    """Path parameter organizationsId"""
+    organizationsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter insightTypesId"""
+    insightTypesId: String!
+
+    """Path parameter insightsId"""
+    insightsId: String!
+    input: GoogleCloudRecommenderV1MarkInsightAcceptedRequest_Input
+  ): GoogleCloudRecommenderV1Insight
+}
+
+"""Configuration for a Recommender."""
+input GoogleCloudRecommenderV1RecommenderConfig_Input {
+  """
+  Identifier. Name of recommender config. Eg, projects/[PROJECT_NUMBER]/locations/[LOCATION]/recommenders/[RECOMMENDER_ID]/config
+  """
+  name: String
+  recommenderGenerationConfig: GoogleCloudRecommenderV1RecommenderGenerationConfig_Input
+
+  """
+  Fingerprint of the RecommenderConfig. Provides optimistic locking when updating.
+  """
+  etag: String
+
+  """Last time when the config was updated."""
+  updateTime: String
+
+  """
+  Output only. Immutable. The revision ID of the config. A new revision is committed whenever the config is changed in any way. The format is an 8-character hexadecimal string.
+  """
+  revisionId: String
+
+  """
+  Allows clients to store small amounts of arbitrary data. Annotations must follow the Kubernetes syntax. The total size of all keys and values combined is limited to 256k. Key can have 2 segments: prefix (optional) and name (required), separated by a slash (/). Prefix must be a DNS subdomain. Name must be 63 characters or less, begin and end with alphanumerics, with dashes (-), underscores (_), dots (.), and alphanumerics between.
+  """
+  annotations: JSON
+
+  """
+  A user-settable field to provide a human-readable name to be used in user interfaces.
+  """
+  displayName: String
+}
+
+"""
+A Configuration to customize the generation of recommendations. Eg, customizing the lookback period considered when generating a recommendation.
+"""
+input GoogleCloudRecommenderV1RecommenderGenerationConfig_Input {
+  """
+  Parameters for this RecommenderGenerationConfig. These configs can be used by or are applied to all subtypes.
+  """
+  params: JSON
+}
+
+"""Request for the `MarkRecommendationDismissed` Method."""
+input GoogleCloudRecommenderV1MarkRecommendationDismissedRequest_Input {
+  """Fingerprint of the Recommendation. Provides optimistic locking."""
+  etag: String
+}
+
+"""Request for the `MarkRecommendationClaimed` Method."""
+input GoogleCloudRecommenderV1MarkRecommendationClaimedRequest_Input {
+  """
+  State properties to include with this state. Overwrites any existing `state_metadata`. Keys must match the regex `/^a-z0-9{0,62}$/`. Values must match the regex `/^[a-zA-Z0-9_./-]{0,255}$/`.
+  """
+  stateMetadata: JSON
+
+  """
+  Required. Fingerprint of the Recommendation. Provides optimistic locking.
+  """
+  etag: String
+}
+
+"""Request for the `MarkRecommendationSucceeded` Method."""
+input GoogleCloudRecommenderV1MarkRecommendationSucceededRequest_Input {
+  """
+  State properties to include with this state. Overwrites any existing `state_metadata`. Keys must match the regex `/^a-z0-9{0,62}$/`. Values must match the regex `/^[a-zA-Z0-9_./-]{0,255}$/`.
+  """
+  stateMetadata: JSON
+
+  """
+  Required. Fingerprint of the Recommendation. Provides optimistic locking.
+  """
+  etag: String
+}
+
+"""Request for the `MarkRecommendationFailed` Method."""
+input GoogleCloudRecommenderV1MarkRecommendationFailedRequest_Input {
+  """
+  State properties to include with this state. Overwrites any existing `state_metadata`. Keys must match the regex `/^a-z0-9{0,62}$/`. Values must match the regex `/^[a-zA-Z0-9_./-]{0,255}$/`.
+  """
+  stateMetadata: JSON
+
+  """
+  Required. Fingerprint of the Recommendation. Provides optimistic locking.
+  """
+  etag: String
+}
+
+"""Configuration for an InsightType."""
+input GoogleCloudRecommenderV1InsightTypeConfig_Input {
+  """
+  Identifier. Name of insight type config. Eg, projects/[PROJECT_NUMBER]/locations/[LOCATION]/insightTypes/[INSIGHT_TYPE_ID]/config
+  """
+  name: String
+  insightTypeGenerationConfig: GoogleCloudRecommenderV1InsightTypeGenerationConfig_Input
+
+  """
+  Fingerprint of the InsightTypeConfig. Provides optimistic locking when updating.
+  """
+  etag: String
+
+  """Last time when the config was updated."""
+  updateTime: String
+
+  """
+  Output only. Immutable. The revision ID of the config. A new revision is committed whenever the config is changed in any way. The format is an 8-character hexadecimal string.
+  """
+  revisionId: String
+
+  """
+  Allows clients to store small amounts of arbitrary data. Annotations must follow the Kubernetes syntax. The total size of all keys and values combined is limited to 256k. Key can have 2 segments: prefix (optional) and name (required), separated by a slash (/). Prefix must be a DNS subdomain. Name must be 63 characters or less, begin and end with alphanumerics, with dashes (-), underscores (_), dots (.), and alphanumerics between.
+  """
+  annotations: JSON
+
+  """
+  A user-settable field to provide a human-readable name to be used in user interfaces.
+  """
+  displayName: String
+}
+
+"""
+A configuration to customize the generation of insights. Eg, customizing the lookback period considered when generating a insight.
+"""
+input GoogleCloudRecommenderV1InsightTypeGenerationConfig_Input {
+  """
+  Parameters for this InsightTypeGenerationConfig. These configs can be used by or are applied to all subtypes.
+  """
+  params: JSON
+}
+
+"""Request for the `MarkInsightAccepted` method."""
+input GoogleCloudRecommenderV1MarkInsightAcceptedRequest_Input {
+  """
+  Optional. State properties user wish to include with this state. Full replace of the current state_metadata.
+  """
+  stateMetadata: JSON
+
+  """Required. Fingerprint of the Insight. Provides optimistic locking."""
+  etag: String
+}
+
+enum HTTPMethod {
+  GET
+  HEAD
+  POST
+  PUT
+  DELETE
+  CONNECT
+  OPTIONS
+  TRACE
+  PATCH
+}
+
+scalar ObjMap

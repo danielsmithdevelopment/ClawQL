@@ -1,0 +1,559 @@
+directive @enum(subgraph: String, value: String) on ENUM_VALUE
+
+directive @httpOperation(subgraph: String, path: String, operationSpecificHeaders: [[String]], httpMethod: HTTPMethod, isBinary: Boolean, requestBaseBody: ObjMap, queryParamArgMap: ObjMap, queryStringOptionsByParam: ObjMap, jsonApiFields: Boolean, queryStringOptions: ObjMap) on FIELD_DEFINITION
+
+directive @transport(subgraph: String, kind: String, location: String, headers: [[String]], queryStringOptions: ObjMap, queryParams: [[String]]) repeatable on SCHEMA
+
+type Query {
+  """
+  Lists information about the supported locations for this service. This method can be called in two ways: * **List all public locations:** Use the path `GET /v1/locations`. * **List project-visible locations:** Use the path `GET /v1/projects/{project_id}/locations`. This may include public locations as well as private or other locations specifically visible to the project.
+  """
+  workflows_projects_locations_list(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """
+    A filter to narrow down results to a preferred subset. The filtering language accepts strings like `"displayName=tokyo"`, and is documented in more detail in [AIP-160](https://google.aip.dev/160).
+    """
+    filter: String
+
+    """
+    The maximum number of results to return. If not set, the service selects a default.
+    """
+    pageSize: Int
+
+    """
+    A page token received from the `next_page_token` field in the response. Send that page token to receive the subsequent page.
+    """
+    pageToken: String
+
+    """
+    Optional. Do not use this field. It is unsupported and is ignored unless explicitly documented otherwise. This is primarily for internal usage.
+    """
+    extraLocationTypes: String
+  ): ListLocationsResponse
+
+  """Gets information about a location."""
+  workflows_projects_locations_get(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+  ): Location
+
+  """
+  Lists operations that match the specified filter in the request. If the server doesn't support this method, it returns `UNIMPLEMENTED`.
+  """
+  workflows_projects_locations_operations_list(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """The standard list filter."""
+    filter: String
+
+    """The standard list page size."""
+    pageSize: Int
+
+    """The standard list page token."""
+    pageToken: String
+
+    """
+    When set to `true`, operations that are reachable are returned as normal, and those that are unreachable are returned in the ListOperationsResponse.unreachable field. This can only be `true` when reading across collections. For example, when `parent` is set to `"projects/example/locations/-"`. This field is not supported by default and will result in an `UNIMPLEMENTED` error if set unless explicitly documented otherwise in service or product specific documentation.
+    """
+    returnPartialSuccess: Boolean
+  ): ListOperationsResponse
+
+  """
+  Gets the latest state of a long-running operation. Clients can use this method to poll the operation result at intervals as recommended by the API service.
+  """
+  workflows_projects_locations_operations_get(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter operationsId"""
+    operationsId: String!
+  ): Operation
+
+  """
+  Lists workflows in a given project and location. The default order is not specified.
+  """
+  workflows_projects_locations_workflows_list(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """
+    Maximum number of workflows to return per call. The service might return fewer than this value even if not at the end of the collection. If a value is not specified, a default value of 500 is used. The maximum permitted value is 1000 and values greater than 1000 are coerced down to 1000.
+    """
+    pageSize: Int
+
+    """
+    A page token, received from a previous `ListWorkflows` call. Provide this to retrieve the subsequent page. When paginating, all other parameters provided to `ListWorkflows` must match the call that provided the page token.
+    """
+    pageToken: String
+
+    """
+    Filter to restrict results to specific workflows. For details, see AIP-160. For example, if you are using the Google APIs Explorer: `state="SUCCEEDED"` or `createTime>"2023-08-01" AND state="FAILED"`
+    """
+    filter: String
+
+    """
+    Comma-separated list of fields that specify the order of the results. Default sorting order for a field is ascending. To specify descending order for a field, append a "desc" suffix. If not specified, the results are returned in an unspecified order.
+    """
+    orderBy: String
+  ): ListWorkflowsResponse
+
+  """Gets details of a single workflow."""
+  workflows_projects_locations_workflows_get(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter workflowsId"""
+    workflowsId: String!
+
+    """
+    Optional. The revision of the workflow to retrieve. If the revision_id is empty, the latest revision is retrieved. The format is "000001-a4d", where the first six characters define the zero-padded decimal revision number. They are followed by a hyphen and three hexadecimal characters.
+    """
+    revisionId: String
+  ): Workflow
+
+  """Lists revisions for a given workflow."""
+  workflows_projects_locations_workflows_listRevisions(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter workflowsId"""
+    workflowsId: String!
+
+    """
+    The maximum number of revisions to return per page. If a value is not specified, a default value of 20 is used. The maximum permitted value is 100. Values greater than 100 are coerced down to 100.
+    """
+    pageSize: Int
+
+    """
+    The page token, received from a previous ListWorkflowRevisions call. Provide this to retrieve the subsequent page.
+    """
+    pageToken: String
+  ): ListWorkflowRevisionsResponse
+}
+
+"""The response message for Locations.ListLocations."""
+type ListLocationsResponse {
+  """A list of locations that matches the specified filter in the request."""
+  locations: [Location]
+
+  """The standard List next-page token."""
+  nextPageToken: String
+}
+
+"""A resource that represents a Google Cloud location."""
+type Location {
+  """
+  Resource name for the location, which may vary between implementations. For example: `"projects/example-project/locations/us-east1"`
+  """
+  name: String
+
+  """The canonical id for this location. For example: `"us-east1"`."""
+  locationId: String
+
+  """
+  The friendly name for this location, typically a nearby city name. For example, "Tokyo".
+  """
+  displayName: String
+
+  """
+  Cross-service attributes for the location. For example {"cloud.googleapis.com/region": "us-east1"}
+  """
+  labels: JSON
+
+  """
+  Service-specific metadata. For example the available capacity at the given location.
+  """
+  metadata: JSON
+}
+
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSON @specifiedBy(url: "http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf")
+
+"""The response message for Operations.ListOperations."""
+type ListOperationsResponse {
+  """A list of operations that matches the specified filter in the request."""
+  operations: [Operation]
+
+  """The standard List next-page token."""
+  nextPageToken: String
+
+  """
+  Unordered list. Unreachable resources. Populated when the request sets `ListOperationsRequest.return_partial_success` and reads across collections. For example, when attempting to list all resources across all supported locations.
+  """
+  unreachable: [String]
+}
+
+"""
+This resource represents a long-running operation that is the result of a network API call.
+"""
+type Operation {
+  """
+  The server-assigned name, which is only unique within the same service that originally returns it. If you use the default HTTP mapping, the `name` should be a resource name ending with `operations/{unique_id}`.
+  """
+  name: String
+
+  """
+  Service-specific metadata associated with the operation. It typically contains progress information and common metadata such as create time. Some services might not provide such metadata. Any method that returns a long-running operation should document the metadata type, if any.
+  """
+  metadata: JSON
+
+  """
+  If the value is `false`, it means the operation is still in progress. If `true`, the operation is completed, and either `error` or `response` is available.
+  """
+  done: Boolean
+  error: Status
+
+  """
+  The normal, successful response of the operation. If the original method returns no data on success, such as `Delete`, the response is `google.protobuf.Empty`. If the original method is standard `Get`/`Create`/`Update`, the response should be the resource. For other methods, the response should have the type `XxxResponse`, where `Xxx` is the original method name. For example, if the original method name is `TakeSnapshot()`, the inferred response type is `TakeSnapshotResponse`.
+  """
+  response: JSON
+}
+
+"""
+The `Status` type defines a logical error model that is suitable for different programming environments, including REST APIs and RPC APIs. It is used by [gRPC](https://github.com/grpc). Each `Status` message contains three pieces of data: error code, error message, and error details. You can find out more about this error model and how to work with it in the [API Design Guide](https://cloud.google.com/apis/design/errors).
+"""
+type Status {
+  """The status code, which should be an enum value of google.rpc.Code."""
+  code: Int
+
+  """
+  A developer-facing error message, which should be in English. Any user-facing error message should be localized and sent in the google.rpc.Status.details field, or localized by the client.
+  """
+  message: String
+
+  """
+  A list of messages that carry the error details. There is a common set of message types for APIs to use.
+  """
+  details: [JSON]
+}
+
+"""Response for the ListWorkflows method."""
+type ListWorkflowsResponse {
+  """The workflows that match the request."""
+  workflows: [Workflow]
+
+  """
+  A token, which can be sent as `page_token` to retrieve the next page. If this field is omitted, there are no subsequent pages.
+  """
+  nextPageToken: String
+
+  """Unreachable resources."""
+  unreachable: [String]
+}
+
+"""Workflow program to be executed by Workflows."""
+type Workflow {
+  """
+  The resource name of the workflow. Format: projects/{project}/locations/{location}/workflows/{workflow}. This is a workflow-wide field and is not tied to a specific revision.
+  """
+  name: String
+
+  """
+  Description of the workflow provided by the user. Must be at most 1000 Unicode characters long. This is a workflow-wide field and is not tied to a specific revision.
+  """
+  description: String
+  state: query_workflows_projects_locations_workflows_list_workflows_items_state
+
+  """
+  Output only. The revision of the workflow. A new revision of a workflow is created as a result of updating the following properties of a workflow: - Service account - Workflow code to be executed The format is "000001-a4d", where the first six characters define the zero-padded revision ordinal number. They are followed by a hyphen and three hexadecimal random characters.
+  """
+  revisionId: String
+
+  """
+  Output only. The timestamp for when the workflow was created. This is a workflow-wide field and is not tied to a specific revision.
+  """
+  createTime: String
+
+  """
+  Output only. The timestamp for when the workflow was last updated. This is a workflow-wide field and is not tied to a specific revision.
+  """
+  updateTime: String
+
+  """
+  Output only. The timestamp for the latest revision of the workflow's creation.
+  """
+  revisionCreateTime: String
+
+  """
+  Labels associated with this workflow. Labels can contain at most 64 entries. Keys and values can be no longer than 63 characters and can only contain lowercase letters, numeric characters, underscores, and dashes. Label keys must start with a letter. International characters are allowed. This is a workflow-wide field and is not tied to a specific revision.
+  """
+  labels: JSON
+
+  """
+  The service account associated with the latest workflow version. This service account represents the identity of the workflow and determines what permissions the workflow has. Format: projects/{project}/serviceAccounts/{account} or {account} Using `-` as a wildcard for the `{project}` or not providing one at all will infer the project from the account. The `{account}` value can be the `email` address or the `unique_id` of the service account. If not provided, workflow will use the project's default service account. Modifying this field for an existing workflow results in a new workflow revision.
+  """
+  serviceAccount: String
+
+  """Workflow code to be executed. The size limit is 128KB."""
+  sourceContents: String
+
+  """
+  Optional. The resource name of a KMS crypto key used to encrypt or decrypt the data associated with the workflow. Format: projects/{project}/locations/{location}/keyRings/{keyRing}/cryptoKeys/{cryptoKey} Using `-` as a wildcard for the `{project}` or not providing one at all will infer the project from the account. If not provided, data associated with the workflow will not be CMEK-encrypted.
+  """
+  cryptoKeyName: String
+  stateError: StateError
+  callLogLevel: query_workflows_projects_locations_workflows_list_workflows_items_callLogLevel
+
+  """
+  Optional. User-defined environment variables associated with this workflow revision. This map has a maximum length of 20. Each string can take up to 4KiB. Keys cannot be empty strings and cannot start with "GOOGLE" or "WORKFLOWS".
+  """
+  userEnvVars: JSON
+  executionHistoryLevel: query_workflows_projects_locations_workflows_list_workflows_items_executionHistoryLevel
+
+  """
+  Output only. A list of all KMS crypto keys used to encrypt or decrypt the data associated with the workflow.
+  """
+  allKmsKeys: [String]
+
+  """
+  Output only. A list of all KMS crypto key versions used to encrypt or decrypt the data associated with the workflow.
+  """
+  allKmsKeysVersions: [String]
+
+  """
+  Output only. The resource name of a KMS crypto key version used to encrypt or decrypt the data associated with the workflow. Format: projects/{project}/locations/{location}/keyRings/{keyRing}/cryptoKeys/{cryptoKey}/cryptoKeyVersions/{cryptoKeyVersion}
+  """
+  cryptoKeyVersion: String
+
+  """Optional. Input only. Immutable. Tags associated with this workflow."""
+  tags: JSON
+}
+
+"""Output only. State of the workflow deployment."""
+enum query_workflows_projects_locations_workflows_list_workflows_items_state {
+  STATE_UNSPECIFIED
+  ACTIVE
+  UNAVAILABLE
+}
+
+"""Describes an error related to the current state of the workflow."""
+type StateError {
+  """Provides specifics about the error."""
+  details: String
+  type: query_workflows_projects_locations_workflows_list_workflows_items_stateError_type
+}
+
+"""The type of this state error."""
+enum query_workflows_projects_locations_workflows_list_workflows_items_stateError_type {
+  TYPE_UNSPECIFIED
+  KMS_ERROR
+}
+
+"""
+Optional. Describes the level of platform logging to apply to calls and call responses during executions of this workflow. If both the workflow and the execution specify a logging level, the execution level takes precedence.
+"""
+enum query_workflows_projects_locations_workflows_list_workflows_items_callLogLevel {
+  CALL_LOG_LEVEL_UNSPECIFIED
+  LOG_ALL_CALLS
+  LOG_ERRORS_ONLY
+  LOG_NONE
+}
+
+"""
+Optional. Describes the execution history level to apply to this workflow.
+"""
+enum query_workflows_projects_locations_workflows_list_workflows_items_executionHistoryLevel {
+  EXECUTION_HISTORY_LEVEL_UNSPECIFIED
+  EXECUTION_HISTORY_BASIC
+  EXECUTION_HISTORY_DETAILED
+}
+
+"""Response for the ListWorkflowRevisions method."""
+type ListWorkflowRevisionsResponse {
+  """The revisions of the workflow, ordered in reverse chronological order."""
+  workflows: [Workflow]
+
+  """
+  A token, which can be sent as `page_token` to retrieve the next page. If this field is omitted, there are no subsequent pages.
+  """
+  nextPageToken: String
+}
+
+type Mutation {
+  """
+  Deletes a long-running operation. This method indicates that the client is no longer interested in the operation result. It does not cancel the operation. If the server doesn't support this method, it returns `google.rpc.Code.UNIMPLEMENTED`.
+  """
+  workflows_projects_locations_operations_delete(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter operationsId"""
+    operationsId: String!
+  ): JSON
+
+  """
+  Creates a new workflow. If a workflow with the specified name already exists in the specified project and location, the long running operation returns a ALREADY_EXISTS error.
+  """
+  workflows_projects_locations_workflows_create(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """
+    Required. The ID of the workflow to be created. It has to fulfill the following requirements: * Must contain only letters, numbers, underscores and hyphens. * Must start with a letter. * Must be between 1-64 characters. * Must end with a number or a letter. * Must be unique within the customer project and location.
+    """
+    workflowId: String
+    input: Workflow_Input
+  ): Operation
+
+  """
+  Deletes a workflow with the specified name. This method also cancels and deletes all running executions of the workflow.
+  """
+  workflows_projects_locations_workflows_delete(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter workflowsId"""
+    workflowsId: String!
+  ): Operation
+
+  """
+  Updates an existing workflow. Running this method has no impact on already running executions of the workflow. A new revision of the workflow might be created as a result of a successful update operation. In that case, the new revision is used in new workflow executions.
+  """
+  workflows_projects_locations_workflows_patch(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter workflowsId"""
+    workflowsId: String!
+
+    """
+    List of fields to be updated. If not present, the entire workflow will be updated.
+    """
+    updateMask: String
+    input: Workflow_Input
+  ): Operation
+}
+
+"""Workflow program to be executed by Workflows."""
+input Workflow_Input {
+  """
+  The resource name of the workflow. Format: projects/{project}/locations/{location}/workflows/{workflow}. This is a workflow-wide field and is not tied to a specific revision.
+  """
+  name: String
+
+  """
+  Description of the workflow provided by the user. Must be at most 1000 Unicode characters long. This is a workflow-wide field and is not tied to a specific revision.
+  """
+  description: String
+  state: query_workflows_projects_locations_workflows_list_workflows_items_state
+
+  """
+  Output only. The revision of the workflow. A new revision of a workflow is created as a result of updating the following properties of a workflow: - Service account - Workflow code to be executed The format is "000001-a4d", where the first six characters define the zero-padded revision ordinal number. They are followed by a hyphen and three hexadecimal random characters.
+  """
+  revisionId: String
+
+  """
+  Output only. The timestamp for when the workflow was created. This is a workflow-wide field and is not tied to a specific revision.
+  """
+  createTime: String
+
+  """
+  Output only. The timestamp for when the workflow was last updated. This is a workflow-wide field and is not tied to a specific revision.
+  """
+  updateTime: String
+
+  """
+  Output only. The timestamp for the latest revision of the workflow's creation.
+  """
+  revisionCreateTime: String
+
+  """
+  Labels associated with this workflow. Labels can contain at most 64 entries. Keys and values can be no longer than 63 characters and can only contain lowercase letters, numeric characters, underscores, and dashes. Label keys must start with a letter. International characters are allowed. This is a workflow-wide field and is not tied to a specific revision.
+  """
+  labels: JSON
+
+  """
+  The service account associated with the latest workflow version. This service account represents the identity of the workflow and determines what permissions the workflow has. Format: projects/{project}/serviceAccounts/{account} or {account} Using `-` as a wildcard for the `{project}` or not providing one at all will infer the project from the account. The `{account}` value can be the `email` address or the `unique_id` of the service account. If not provided, workflow will use the project's default service account. Modifying this field for an existing workflow results in a new workflow revision.
+  """
+  serviceAccount: String
+
+  """Workflow code to be executed. The size limit is 128KB."""
+  sourceContents: String
+
+  """
+  Optional. The resource name of a KMS crypto key used to encrypt or decrypt the data associated with the workflow. Format: projects/{project}/locations/{location}/keyRings/{keyRing}/cryptoKeys/{cryptoKey} Using `-` as a wildcard for the `{project}` or not providing one at all will infer the project from the account. If not provided, data associated with the workflow will not be CMEK-encrypted.
+  """
+  cryptoKeyName: String
+  stateError: StateError_Input
+  callLogLevel: query_workflows_projects_locations_workflows_list_workflows_items_callLogLevel
+
+  """
+  Optional. User-defined environment variables associated with this workflow revision. This map has a maximum length of 20. Each string can take up to 4KiB. Keys cannot be empty strings and cannot start with "GOOGLE" or "WORKFLOWS".
+  """
+  userEnvVars: JSON
+  executionHistoryLevel: query_workflows_projects_locations_workflows_list_workflows_items_executionHistoryLevel
+
+  """
+  Output only. A list of all KMS crypto keys used to encrypt or decrypt the data associated with the workflow.
+  """
+  allKmsKeys: [String]
+
+  """
+  Output only. A list of all KMS crypto key versions used to encrypt or decrypt the data associated with the workflow.
+  """
+  allKmsKeysVersions: [String]
+
+  """
+  Output only. The resource name of a KMS crypto key version used to encrypt or decrypt the data associated with the workflow. Format: projects/{project}/locations/{location}/keyRings/{keyRing}/cryptoKeys/{cryptoKey}/cryptoKeyVersions/{cryptoKeyVersion}
+  """
+  cryptoKeyVersion: String
+
+  """Optional. Input only. Immutable. Tags associated with this workflow."""
+  tags: JSON
+}
+
+"""Describes an error related to the current state of the workflow."""
+input StateError_Input {
+  """Provides specifics about the error."""
+  details: String
+  type: query_workflows_projects_locations_workflows_list_workflows_items_stateError_type
+}
+
+enum HTTPMethod {
+  GET
+  HEAD
+  POST
+  PUT
+  DELETE
+  CONNECT
+  OPTIONS
+  TRACE
+  PATCH
+}
+
+scalar ObjMap

@@ -1,0 +1,4043 @@
+directive @enum(subgraph: String, value: String) on ENUM_VALUE
+
+directive @httpOperation(subgraph: String, path: String, operationSpecificHeaders: [[String]], httpMethod: HTTPMethod, isBinary: Boolean, requestBaseBody: ObjMap, queryParamArgMap: ObjMap, queryStringOptionsByParam: ObjMap, jsonApiFields: Boolean, queryStringOptions: ObjMap) on FIELD_DEFINITION
+
+directive @transport(subgraph: String, kind: String, location: String, headers: [[String]], queryStringOptions: ObjMap, queryParams: [[String]]) repeatable on SCHEMA
+
+type Query {
+  """Gets information about a location."""
+  networkmanagement_projects_locations_get(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+  ): Location
+
+  """
+  Lists information about the supported locations for this service. This method can be called in two ways: * **List all public locations:** Use the path `GET /v1/locations`. * **List project-visible locations:** Use the path `GET /v1/projects/{project_id}/locations`. This may include public locations as well as private or other locations specifically visible to the project.
+  """
+  networkmanagement_projects_locations_list(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """
+    A filter to narrow down results to a preferred subset. The filtering language accepts strings like `"displayName=tokyo"`, and is documented in more detail in [AIP-160](https://google.aip.dev/160).
+    """
+    filter: String
+
+    """
+    Optional. Do not use this field. It is unsupported and is ignored unless explicitly documented otherwise. This is primarily for internal usage.
+    """
+    extraLocationTypes: String
+
+    """
+    A page token received from the `next_page_token` field in the response. Send that page token to receive the subsequent page.
+    """
+    pageToken: String
+
+    """
+    The maximum number of results to return. If not set, the service selects a default.
+    """
+    pageSize: Int
+  ): ListLocationsResponse
+
+  """
+  Gets the latest state of a long-running operation. Clients can use this method to poll the operation result at intervals as recommended by the API service.
+  """
+  networkmanagement_projects_locations_global_operations_get(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter operationsId"""
+    operationsId: String!
+  ): Operation
+
+  """
+  Lists operations that match the specified filter in the request. If the server doesn't support this method, it returns `UNIMPLEMENTED`.
+  """
+  networkmanagement_projects_locations_global_operations_list(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """The standard list page size."""
+    pageSize: Int
+
+    """The standard list page token."""
+    pageToken: String
+
+    """
+    When set to `true`, operations that are reachable are returned as normal, and those that are unreachable are returned in the ListOperationsResponse.unreachable field. This can only be `true` when reading across collections. For example, when `parent` is set to `"projects/example/locations/-"`. This field is not supported by default and will result in an `UNIMPLEMENTED` error if set unless explicitly documented otherwise in service or product specific documentation.
+    """
+    returnPartialSuccess: Boolean
+
+    """The standard list filter."""
+    filter: String
+  ): ListOperationsResponse
+
+  """Gets the details of a specific Connectivity Test."""
+  networkmanagement_projects_locations_global_connectivityTests_get(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter connectivityTestsId"""
+    connectivityTestsId: String!
+  ): ConnectivityTest
+
+  """Lists all Connectivity Tests owned by a project."""
+  networkmanagement_projects_locations_global_connectivityTests_list(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Page token from an earlier query, as returned in `next_page_token`."""
+    pageToken: String
+
+    """Number of `ConnectivityTests` to return."""
+    pageSize: Int
+
+    """Field to use to sort the list."""
+    orderBy: String
+
+    """
+    Lists the `ConnectivityTests` that match the filter expression. A filter expression filters the resources listed in the response. The expression must be of the form ` ` where operators: `<`, `>`, `<=`, `>=`, `!=`, `=`, `:` are supported (colon `:` represents a HAS operator which is roughly synonymous with equality). can refer to a proto or JSON field, or a synthetic field. Field names can be camelCase or snake_case. Examples: - Filter by name: name = "projects/proj-1/locations/global/connectivityTests/test-1 - Filter by labels: - Resources that have a key called `foo` labels.foo:* - Resources that have a key called `foo` whose value is `bar` labels.foo = bar
+    """
+    filter: String
+  ): ListConnectivityTestsResponse
+
+  """
+  Gets the access control policy for a resource. Returns an empty policy if the resource exists and does not have a policy set.
+  """
+  networkmanagement_projects_locations_global_connectivityTests_getIamPolicy(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter connectivityTestsId"""
+    connectivityTestsId: String!
+
+    """
+    Optional. The maximum policy version that will be used to format the policy. Valid values are 0, 1, and 3. Requests specifying an invalid value will be rejected. Requests for policies with any conditional role bindings must specify version 3. Policies with no conditional role bindings may specify any valid value or leave the field unset. The policy in the response might use the policy version that you specified, or it might use a lower policy version. For example, if you specify version 3, but the policy has no conditional role bindings, the response uses version 1. To learn which resources support conditions in their IAM policies, see the [IAM documentation](https://cloud.google.com/iam/help/conditions/resource-policies).
+    """
+    options_requestedPolicyVersion: Int
+  ): Policy
+
+  """Gets the details of a specific `VpcFlowLogsConfig`."""
+  networkmanagement_projects_locations_vpcFlowLogsConfigs_get(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter vpcFlowLogsConfigsId"""
+    vpcFlowLogsConfigsId: String!
+  ): VpcFlowLogsConfig
+
+  """
+  ShowEffectiveFlowLogsConfigs returns a list of all VPC Flow Logs configurations applicable to a specified resource.
+  """
+  networkmanagement_projects_locations_vpcFlowLogsConfigs_showEffectiveFlowLogsConfigs(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """
+    Optional. Number of `EffectiveVpcFlowLogsConfigs` to return. Default is 30.
+    """
+    pageSize: Int
+
+    """
+    Optional. Page token from an earlier query, as returned in `next_page_token`.
+    """
+    pageToken: String
+
+    """
+    Optional. Lists the `EffectiveVpcFlowLogsConfigs` that match the filter expression. A filter expression must use the supported [CEL logic operators] (https://cloud.google.com/vpc/docs/about-flow-logs-records#supported_cel_logic_operators).
+    """
+    filter: String
+
+    """
+    Required. The resource to get the effective VPC Flow Logs configuration for. The resource must belong to the same project as the parent. The resource must be a network, subnetwork, interconnect attachment, VPN tunnel, or a project.
+    """
+    resource: String
+  ): ShowEffectiveFlowLogsConfigsResponse
+
+  """
+  QueryOrgVpcFlowLogsConfigs returns a list of all organization-level VPC Flow Logs configurations applicable to the specified project.
+  """
+  networkmanagement_projects_locations_vpcFlowLogsConfigs_queryOrgVpcFlowLogsConfigs(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Optional. Number of `VpcFlowLogsConfigs` to return."""
+    pageSize: Int
+
+    """
+    Optional. Page token from an earlier query, as returned in `next_page_token`.
+    """
+    pageToken: String
+
+    """
+    Optional. Lists the `VpcFlowLogsConfigs` that match the filter expression. A filter expression must use the supported [CEL logic operators] (https://cloud.google.com/vpc/docs/about-flow-logs-records#supported_cel_logic_operators).
+    """
+    filter: String
+  ): QueryOrgVpcFlowLogsConfigsResponse
+
+  """Lists all `VpcFlowLogsConfigs` in a given project."""
+  networkmanagement_projects_locations_vpcFlowLogsConfigs_list(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """
+    Optional. Lists the `VpcFlowLogsConfigs` that match the filter expression. A filter expression must use the supported [CEL logic operators] (https://cloud.google.com/vpc/docs/about-flow-logs-records#supported_cel_logic_operators).
+    """
+    filter: String
+
+    """Optional. Field to use to sort the list."""
+    orderBy: String
+
+    """Optional. Number of `VpcFlowLogsConfigs` to return."""
+    pageSize: Int
+
+    """
+    Optional. Page token from an earlier query, as returned in `next_page_token`.
+    """
+    pageToken: String
+  ): ListVpcFlowLogsConfigsResponse
+
+  """
+  Lists information about the supported locations for this service. This method can be called in two ways: * **List all public locations:** Use the path `GET /v1/locations`. * **List project-visible locations:** Use the path `GET /v1/projects/{project_id}/locations`. This may include public locations as well as private or other locations specifically visible to the project.
+  """
+  networkmanagement_organizations_locations_list(
+    """Path parameter organizationsId"""
+    organizationsId: String!
+
+    """
+    The maximum number of results to return. If not set, the service selects a default.
+    """
+    pageSize: Int
+
+    """
+    A page token received from the `next_page_token` field in the response. Send that page token to receive the subsequent page.
+    """
+    pageToken: String
+
+    """
+    A filter to narrow down results to a preferred subset. The filtering language accepts strings like `"displayName=tokyo"`, and is documented in more detail in [AIP-160](https://google.aip.dev/160).
+    """
+    filter: String
+
+    """
+    Optional. Do not use this field. It is unsupported and is ignored unless explicitly documented otherwise. This is primarily for internal usage.
+    """
+    extraLocationTypes: String
+  ): ListLocationsResponse
+
+  """Gets information about a location."""
+  networkmanagement_organizations_locations_get(
+    """Path parameter organizationsId"""
+    organizationsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+  ): Location
+
+  """
+  Gets the latest state of a long-running operation. Clients can use this method to poll the operation result at intervals as recommended by the API service.
+  """
+  networkmanagement_organizations_locations_global_operations_get(
+    """Path parameter organizationsId"""
+    organizationsId: String!
+
+    """Path parameter operationsId"""
+    operationsId: String!
+  ): Operation
+
+  """
+  Lists operations that match the specified filter in the request. If the server doesn't support this method, it returns `UNIMPLEMENTED`.
+  """
+  networkmanagement_organizations_locations_global_operations_list(
+    """Path parameter organizationsId"""
+    organizationsId: String!
+
+    """
+    When set to `true`, operations that are reachable are returned as normal, and those that are unreachable are returned in the ListOperationsResponse.unreachable field. This can only be `true` when reading across collections. For example, when `parent` is set to `"projects/example/locations/-"`. This field is not supported by default and will result in an `UNIMPLEMENTED` error if set unless explicitly documented otherwise in service or product specific documentation.
+    """
+    returnPartialSuccess: Boolean
+
+    """The standard list filter."""
+    filter: String
+
+    """The standard list page token."""
+    pageToken: String
+
+    """The standard list page size."""
+    pageSize: Int
+  ): ListOperationsResponse
+
+  """Gets the details of a specific `VpcFlowLogsConfig`."""
+  networkmanagement_organizations_locations_vpcFlowLogsConfigs_get(
+    """Path parameter organizationsId"""
+    organizationsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter vpcFlowLogsConfigsId"""
+    vpcFlowLogsConfigsId: String!
+  ): VpcFlowLogsConfig
+
+  """Lists all `VpcFlowLogsConfigs` in a given organization."""
+  networkmanagement_organizations_locations_vpcFlowLogsConfigs_list(
+    """Path parameter organizationsId"""
+    organizationsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """
+    Optional. Page token from an earlier query, as returned in `next_page_token`.
+    """
+    pageToken: String
+
+    """Optional. Number of `VpcFlowLogsConfigs` to return."""
+    pageSize: Int
+
+    """
+    Optional. Lists the `VpcFlowLogsConfigs` that match the filter expression. A filter expression must use the supported [CEL logic operators] (https://cloud.google.com/vpc/docs/about-flow-logs-records#supported_cel_logic_operators).
+    """
+    filter: String
+
+    """Optional. Field to use to sort the list."""
+    orderBy: String
+  ): ListVpcFlowLogsConfigsResponse
+}
+
+"""A resource that represents a Google Cloud location."""
+type Location {
+  """
+  The friendly name for this location, typically a nearby city name. For example, "Tokyo".
+  """
+  displayName: String
+
+  """
+  Cross-service attributes for the location. For example {"cloud.googleapis.com/region": "us-east1"}
+  """
+  labels: JSON
+
+  """
+  Service-specific metadata. For example the available capacity at the given location.
+  """
+  metadata: JSON
+
+  """The canonical id for this location. For example: `"us-east1"`."""
+  locationId: String
+
+  """
+  Resource name for the location, which may vary between implementations. For example: `"projects/example-project/locations/us-east1"`
+  """
+  name: String
+}
+
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSON @specifiedBy(url: "http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf")
+
+"""The response message for Locations.ListLocations."""
+type ListLocationsResponse {
+  """A list of locations that matches the specified filter in the request."""
+  locations: [Location]
+
+  """The standard List next-page token."""
+  nextPageToken: String
+}
+
+"""
+This resource represents a long-running operation that is the result of a network API call.
+"""
+type Operation {
+  """
+  If the value is `false`, it means the operation is still in progress. If `true`, the operation is completed, and either `error` or `response` is available.
+  """
+  done: Boolean
+  error: Status
+
+  """
+  The server-assigned name, which is only unique within the same service that originally returns it. If you use the default HTTP mapping, the `name` should be a resource name ending with `operations/{unique_id}`.
+  """
+  name: String
+
+  """
+  The normal, successful response of the operation. If the original method returns no data on success, such as `Delete`, the response is `google.protobuf.Empty`. If the original method is standard `Get`/`Create`/`Update`, the response should be the resource. For other methods, the response should have the type `XxxResponse`, where `Xxx` is the original method name. For example, if the original method name is `TakeSnapshot()`, the inferred response type is `TakeSnapshotResponse`.
+  """
+  response: JSON
+
+  """
+  Service-specific metadata associated with the operation. It typically contains progress information and common metadata such as create time. Some services might not provide such metadata. Any method that returns a long-running operation should document the metadata type, if any.
+  """
+  metadata: JSON
+}
+
+"""
+The `Status` type defines a logical error model that is suitable for different programming environments, including REST APIs and RPC APIs. It is used by [gRPC](https://github.com/grpc). Each `Status` message contains three pieces of data: error code, error message, and error details. You can find out more about this error model and how to work with it in the [API Design Guide](https://cloud.google.com/apis/design/errors).
+"""
+type Status {
+  """
+  A list of messages that carry the error details. There is a common set of message types for APIs to use.
+  """
+  details: [JSON]
+
+  """The status code, which should be an enum value of google.rpc.Code."""
+  code: Int
+
+  """
+  A developer-facing error message, which should be in English. Any user-facing error message should be localized and sent in the google.rpc.Status.details field, or localized by the client.
+  """
+  message: String
+}
+
+"""The response message for Operations.ListOperations."""
+type ListOperationsResponse {
+  """A list of operations that matches the specified filter in the request."""
+  operations: [Operation]
+
+  """The standard List next-page token."""
+  nextPageToken: String
+
+  """
+  Unordered list. Unreachable resources. Populated when the request sets `ListOperationsRequest.return_partial_success` and reads across collections. For example, when attempting to list all resources across all supported locations.
+  """
+  unreachable: [String]
+}
+
+"""A Connectivity Test for a network reachability analysis."""
+type ConnectivityTest {
+  """
+  Whether run analysis for the return path from destination to source. Default value is false.
+  """
+  roundTrip: Boolean
+
+  """
+  Identifier. Unique name of the resource using the form: `projects/{project_id}/locations/global/connectivityTests/{test}`
+  """
+  name: String
+
+  """Output only. The time the test was created."""
+  createTime: String
+
+  """
+  The user-supplied description of the Connectivity Test. Maximum of 512 characters.
+  """
+  description: String
+
+  """
+  Whether the analysis should skip firewall checking. Default value is false.
+  """
+  bypassFirewallChecks: Boolean
+
+  """
+  Other projects that may be relevant for reachability analysis. This is applicable to scenarios where a test can cross project boundaries.
+  """
+  relatedProjects: [String]
+
+  """Resource labels to represent user-provided metadata."""
+  labels: JSON
+  source: Endpoint
+  probingDetails: ProbingDetails
+
+  """Output only. The display name of a Connectivity Test."""
+  displayName: String
+  destination: Endpoint
+
+  """IP Protocol of the test. When not provided, "TCP" is assumed."""
+  protocol: String
+  returnReachabilityDetails: ReachabilityDetails
+  reachabilityDetails: ReachabilityDetails
+
+  """Output only. The time the test's configuration was updated."""
+  updateTime: String
+}
+
+"""Source or destination of the Connectivity Test."""
+type Endpoint {
+  """A Compute Engine instance URI."""
+  instance: String
+  networkType: query_networkmanagement_projects_locations_global_connectivityTests_get_source_networkType
+
+  """
+  A [Redis Instance](https://cloud.google.com/memorystore/docs/redis) URI. Applicable only to destination endpoint.
+  """
+  redisInstance: String
+  appEngineVersion: AppEngineVersionEndpoint
+
+  """
+  The IP protocol port of the endpoint. Only applicable when protocol is TCP or UDP.
+  """
+  port: Int
+
+  """
+  For source endpoints, endpoint project ID. Used according to the `network_type`. Not relevant for destination endpoints.
+  """
+  projectId: String
+  cloudFunction: CloudFunctionEndpoint
+
+  """
+  A forwarding rule and its corresponding IP address represent the frontend configuration of a Google Cloud load balancer. Forwarding rules are also used for protocol forwarding, Private Service Connect and other network services to provide forwarding information in the control plane. Applicable only to destination endpoint. Format: `projects/{project}/global/forwardingRules/{id}` or `projects/{project}/regions/{region}/forwardingRules/{id}`
+  """
+  forwardingRule: String
+
+  """A [Cloud SQL](https://cloud.google.com/sql) instance URI."""
+  cloudSqlInstance: String
+  forwardingRuleTarget: query_networkmanagement_projects_locations_global_connectivityTests_get_source_forwardingRuleTarget
+
+  """
+  A [GKE Pod](https://cloud.google.com/kubernetes-engine/docs/concepts/pod) URI.
+  """
+  gkePod: String
+
+  """
+  A VPC network URI. For source endpoints, used according to the `network_type`. For destination endpoints, used only when the source is an external IP address endpoint, and the destination is an internal IP address endpoint.
+  """
+  network: String
+
+  """
+  A cluster URI for [Google Kubernetes Engine cluster control plane](https://cloud.google.com/kubernetes-engine/docs/concepts/cluster-architecture).
+  """
+  gkeMasterCluster: String
+
+  """
+  A [Redis Cluster](https://cloud.google.com/memorystore/docs/cluster) URI. Applicable only to destination endpoint.
+  """
+  redisCluster: String
+  loadBalancerType: query_networkmanagement_projects_locations_global_connectivityTests_get_source_loadBalancerType
+  cloudRunRevision: CloudRunRevisionEndpoint
+
+  """
+  The IP address of the endpoint, which can be an external or internal IP.
+  """
+  ipAddress: String
+
+  """
+  Output only. ID of the load balancer the forwarding rule points to. Empty for forwarding rules not related to load balancers.
+  """
+  loadBalancerId: String
+
+  """
+  DNS endpoint of [Google Kubernetes Engine cluster control plane](https://cloud.google.com/kubernetes-engine/docs/concepts/cluster-architecture). Requires gke_master_cluster to be set, can't be used simultaneoulsly with ip_address or network. Applicable only to destination endpoint.
+  """
+  fqdn: String
+}
+
+"""
+For source endpoints, type of the network where the endpoint is located. Not relevant for destination endpoints.
+"""
+enum query_networkmanagement_projects_locations_global_connectivityTests_get_source_networkType {
+  NETWORK_TYPE_UNSPECIFIED
+  GCP_NETWORK
+  NON_GCP_NETWORK
+  INTERNET
+}
+
+"""Wrapper for the App Engine service version attributes."""
+type AppEngineVersionEndpoint {
+  """
+  An [App Engine](https://cloud.google.com/appengine) [service version](https://cloud.google.com/appengine/docs/admin-api/reference/rest/v1/apps.services.versions) name.
+  """
+  uri: String
+}
+
+"""Wrapper for Cloud Function attributes."""
+type CloudFunctionEndpoint {
+  """A [Cloud Function](https://cloud.google.com/functions) name."""
+  uri: String
+}
+
+"""Output only. Specifies the type of the target of the forwarding rule."""
+enum query_networkmanagement_projects_locations_global_connectivityTests_get_source_forwardingRuleTarget {
+  FORWARDING_RULE_TARGET_UNSPECIFIED
+  INSTANCE
+  LOAD_BALANCER
+  VPN_GATEWAY
+  PSC
+}
+
+"""Output only. Type of the load balancer the forwarding rule points to."""
+enum query_networkmanagement_projects_locations_global_connectivityTests_get_source_loadBalancerType {
+  LOAD_BALANCER_TYPE_UNSPECIFIED
+  HTTPS_ADVANCED_LOAD_BALANCER
+  HTTPS_LOAD_BALANCER
+  REGIONAL_HTTPS_LOAD_BALANCER
+  INTERNAL_HTTPS_LOAD_BALANCER
+  SSL_PROXY_LOAD_BALANCER
+  TCP_PROXY_LOAD_BALANCER
+  INTERNAL_TCP_PROXY_LOAD_BALANCER
+  NETWORK_LOAD_BALANCER
+  LEGACY_NETWORK_LOAD_BALANCER
+  TCP_UDP_INTERNAL_LOAD_BALANCER
+}
+
+"""Wrapper for Cloud Run revision attributes."""
+type CloudRunRevisionEndpoint {
+  """
+  A [Cloud Run](https://cloud.google.com/run) [revision](https://cloud.google.com/run/docs/reference/rest/v1/namespaces.revisions/get) URI. The format is: projects/{project}/locations/{location}/revisions/{revision}
+  """
+  uri: String
+
+  """
+  Output only. The URI of the Cloud Run service that the revision belongs to. The format is: projects/{project}/locations/{location}/services/{service}
+  """
+  serviceUri: String
+}
+
+"""Results of active probing from the last run of the test."""
+type ProbingDetails {
+  abortCause: query_networkmanagement_projects_locations_global_connectivityTests_get_probingDetails_abortCause
+  result: query_networkmanagement_projects_locations_global_connectivityTests_get_probingDetails_result
+
+  """Whether all relevant edge devices were probed."""
+  probedAllDevices: Boolean
+  error: Status
+  destinationEgressLocation: EdgeLocation
+  probingLatency: LatencyDistribution
+
+  """Number of probes that reached the destination."""
+  successfulProbeCount: Int
+  endpointInfo: EndpointInfo
+
+  """Probing results for all edge devices."""
+  edgeResponses: [SingleEdgeResponse]
+
+  """Number of probes sent."""
+  sentProbeCount: Int
+
+  """The time that reachability was assessed through active probing."""
+  verifyTime: String
+}
+
+"""The reason probing was aborted."""
+enum query_networkmanagement_projects_locations_global_connectivityTests_get_probingDetails_abortCause {
+  PROBING_ABORT_CAUSE_UNSPECIFIED
+  PERMISSION_DENIED
+  NO_SOURCE_LOCATION
+}
+
+"""The overall result of active probing."""
+enum query_networkmanagement_projects_locations_global_connectivityTests_get_probingDetails_result {
+  PROBING_RESULT_UNSPECIFIED
+  REACHABLE
+  UNREACHABLE
+  REACHABILITY_INCONSISTENT
+  UNDETERMINED
+}
+
+"""
+Representation of a network edge location as per https://cloud.google.com/vpc/docs/edge-locations.
+"""
+type EdgeLocation {
+  """Name of the metropolitan area."""
+  metropolitanArea: String
+}
+
+"""Describes measured latency distribution."""
+type LatencyDistribution {
+  """Representative latency percentiles."""
+  latencyPercentiles: [LatencyPercentile]
+}
+
+"""Latency percentile rank and value."""
+type LatencyPercentile {
+  """
+  percent-th percentile of latency observed, in microseconds. Fraction of percent/100 of samples have latency lower or equal to the value of this field.
+  """
+  latencyMicros: BigInt
+
+  """Percentage of samples this data point applies to."""
+  percent: Int
+}
+
+"""
+The `BigInt` scalar type represents non-fractional signed whole numeric values.
+"""
+scalar BigInt
+
+"""
+For display only. The specification of the endpoints for the test. EndpointInfo is derived from source and destination Endpoint and validated by the backend data plane model.
+"""
+type EndpointInfo {
+  """URI of the network where this packet originates from."""
+  sourceNetworkUri: String
+
+  """Destination IP address."""
+  destinationIp: String
+
+  """URI of the source telemetry agent this packet originates from."""
+  sourceAgentUri: String
+
+  """IP protocol in string format, for example: "TCP", "UDP", "ICMP"."""
+  protocol: String
+
+  """Source port. Only valid when protocol is TCP or UDP."""
+  sourcePort: Int
+
+  """Source IP address."""
+  sourceIp: String
+
+  """Destination port. Only valid when protocol is TCP or UDP."""
+  destinationPort: Int
+
+  """URI of the network where this packet is sent to."""
+  destinationNetworkUri: String
+}
+
+"""Probing results for a single edge device."""
+type SingleEdgeResponse {
+  probingLatency: LatencyDistribution
+
+  """
+  Router name in the format '{router}.{metroshard}'. For example: pf01.aaa01, pr02.aaa01.
+  """
+  destinationRouter: String
+
+  """Number of probes sent."""
+  sentProbeCount: Int
+  destinationEgressLocation: EdgeLocation
+
+  """Number of probes that reached the destination."""
+  successfulProbeCount: Int
+  result: query_networkmanagement_projects_locations_global_connectivityTests_get_probingDetails_edgeResponses_items_result
+}
+
+"""The overall result of active probing for this egress device."""
+enum query_networkmanagement_projects_locations_global_connectivityTests_get_probingDetails_edgeResponses_items_result {
+  PROBING_RESULT_UNSPECIFIED
+  REACHABLE
+  UNREACHABLE
+  REACHABILITY_INCONSISTENT
+  UNDETERMINED
+}
+
+"""Results of the configuration analysis from the last run of the test."""
+type ReachabilityDetails {
+  result: query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_result
+
+  """
+  Result may contain a list of traces if a test has multiple possible paths in the network, such as when destination endpoint is a load balancer with multiple backends.
+  """
+  traces: [Trace]
+
+  """The time of the configuration analysis."""
+  verifyTime: String
+  error: Status
+}
+
+"""The overall result of the test's configuration analysis."""
+enum query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_result {
+  RESULT_UNSPECIFIED
+  REACHABLE
+  UNREACHABLE
+  AMBIGUOUS
+  UNDETERMINED
+}
+
+"""
+Trace represents one simulated packet forwarding path. * Each trace contains multiple ordered steps. * Each step is in a particular state with associated configuration. * State is categorized as final or non-final states. * Each final state has a reason associated. * Each trace must end with a final state (the last step). ``` |---------------------Trace----------------------| Step1(State) Step2(State) --- StepN(State(final)) ```
+"""
+type Trace {
+  """
+  A trace of a test contains multiple steps from the initial state to the final state (delivered, dropped, forwarded, or aborted). The steps are ordered by the processing sequence within the simulated network state machine. It is critical to preserve the order of the steps and avoid reordering or sorting them.
+  """
+  steps: [Step]
+
+  """
+  ID of trace. For forward traces, this ID is unique for each trace. For return traces, it matches ID of associated forward trace. A single forward trace can be associated with none, one or more than one return trace.
+  """
+  forwardTraceId: Int
+  endpointInfo: EndpointInfo
+}
+
+"""
+A simulated forwarding path is composed of multiple steps. Each step has a well-defined state and an associated configuration.
+"""
+type Step {
+  """Project ID that contains the configuration this step is validating."""
+  projectId: String
+  route: RouteInfo
+  forwardingRule: ForwardingRuleInfo
+
+  """A description of the step. Usually this is a summary of the state."""
+  description: String
+  state: query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_state
+
+  """This is a step that leads to the final state Drop."""
+  causesDrop: Boolean
+  firewall: FirewallInfo
+  endpoint: EndpointInfo
+  cloudRunRevision: CloudRunRevisionInfo
+  proxyConnection: ProxyConnectionInfo
+  vpnGateway: VpnGatewayInfo
+  drop: DropInfo
+  googleService: GoogleServiceInfo
+  ngfwPacketInspection: NgfwPacketInspectionInfo
+  deliver: DeliverInfo
+  loadBalancer: LoadBalancerInfo
+  ipMasqueradingSkipped: IpMasqueradingSkippedInfo
+  gkeNetworkPolicySkipped: GkeNetworkPolicySkippedInfo
+  redisCluster: RedisClusterInfo
+  cloudFunction: CloudFunctionInfo
+  gkeMaster: GKEMasterInfo
+  abort: AbortInfo
+  gkeNetworkPolicy: GkeNetworkPolicyInfo
+  vpnTunnel: VpnTunnelInfo
+  forward: ForwardInfo
+  cloudSqlInstance: CloudSQLInstanceInfo
+  interconnectAttachment: InterconnectAttachmentInfo
+  instance: InstanceInfo
+  hybridSubnet: HybridSubnetInfo
+  redisInstance: RedisInstanceInfo
+  appEngineVersion: AppEngineVersionInfo
+  serverlessExternalConnection: ServerlessExternalConnectionInfo
+  nat: NatInfo
+  storageBucket: StorageBucketInfo
+  vpcConnector: VpcConnectorInfo
+  directVpcEgressConnection: DirectVpcEgressConnectionInfo
+  gkePod: GkePodInfo
+  network: NetworkInfo
+  loadBalancerBackendInfo: LoadBalancerBackendInfo
+  serverlessNeg: ServerlessNegInfo
+}
+
+"""For display only. Metadata associated with a Compute Engine route."""
+type RouteInfo {
+  """
+  For ADVERTISED dynamic routes, the URI of the Cloud Router that advertised the corresponding IP prefix.
+  """
+  advertisedRouteSourceRouterUri: String
+
+  """
+  URI of a route. SUBNET, STATIC, PEERING_SUBNET (only for peering network) and POLICY_BASED routes only.
+  """
+  uri: String
+
+  """
+  For PEERING_SUBNET and PEERING_DYNAMIC routes that are advertised by NCC Hub, the URI of the corresponding route in NCC Hub's routing table.
+  """
+  nccHubRouteUri: String
+  nextHopType: query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_route_nextHopType
+
+  """Protocols of the route. POLICY_BASED routes only."""
+  protocols: [String]
+
+  """
+  String type of the next hop of the route (for example, "VPN tunnel"). Deprecated in favor of the next_hop_type and next_hop_uri fields, not used in new tests.
+  """
+  nextHop: String @deprecated(reason: "deprecated")
+
+  """Instance tags of the route."""
+  instanceTags: [String]
+
+  """
+  URI of the NCC Hub the route is advertised by. PEERING_SUBNET and PEERING_DYNAMIC routes that are advertised by NCC Hub only.
+  """
+  nccHubUri: String
+
+  """
+  For ADVERTISED routes, the URI of their next hop, i.e. the URI of the hybrid endpoint (VPN tunnel, Interconnect attachment, NCC router appliance) the advertised prefix is advertised through, or URI of the source peered network. Deprecated in favor of the next_hop_uri field, not used in new tests.
+  """
+  advertisedRouteNextHopUri: String @deprecated(reason: "deprecated")
+  routeType: query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_route_routeType
+
+  """Name of a route."""
+  displayName: String
+
+  """Source port ranges of the route. POLICY_BASED routes only."""
+  srcPortRanges: [String]
+
+  """
+  URI of the destination NCC Spoke. PEERING_SUBNET and PEERING_DYNAMIC routes that are advertised by NCC Hub only.
+  """
+  nccSpokeUri: String
+
+  """Source IP address range of the route. POLICY_BASED routes only."""
+  srcIpRange: String
+
+  """
+  Region of the route. DYNAMIC, PEERING_DYNAMIC, POLICY_BASED and ADVERTISED routes only. If set for POLICY_BASED route, this is a region of VLAN attachments for Cloud Interconnect the route applies to.
+  """
+  region: String
+
+  """URI of the next hop resource."""
+  nextHopUri: String
+
+  """Destination port ranges of the route. POLICY_BASED routes only."""
+  destPortRanges: [String]
+
+  """
+  For PEERING_SUBNET and PEERING_STATIC routes, the URI of the originating SUBNET/STATIC route.
+  """
+  originatingRouteUri: String
+
+  """Destination IP range of the route."""
+  destIpRange: String
+  routeScope: query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_route_routeScope @deprecated(reason: "deprecated")
+
+  """
+  For PEERING_SUBNET, PEERING_STATIC and PEERING_DYNAMIC routes, the name of the originating SUBNET/STATIC/DYNAMIC route.
+  """
+  originatingRouteDisplayName: String
+
+  """URI of a VPC network where route is located."""
+  networkUri: String
+
+  """Priority of the route."""
+  priority: Int
+
+  """URI of a VPC network where the next hop resource is located."""
+  nextHopNetworkUri: String
+}
+
+"""Type of next hop."""
+enum query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_route_nextHopType {
+  NEXT_HOP_TYPE_UNSPECIFIED
+  NEXT_HOP_IP
+  NEXT_HOP_INSTANCE
+  NEXT_HOP_NETWORK
+  NEXT_HOP_PEERING
+  NEXT_HOP_INTERCONNECT
+  NEXT_HOP_VPN_TUNNEL
+  NEXT_HOP_VPN_GATEWAY
+  NEXT_HOP_INTERNET_GATEWAY
+  NEXT_HOP_BLACKHOLE
+  NEXT_HOP_ILB
+  NEXT_HOP_ROUTER_APPLIANCE
+  NEXT_HOP_NCC_HUB
+  SECURE_WEB_PROXY_GATEWAY
+}
+
+"""Type of route."""
+enum query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_route_routeType {
+  ROUTE_TYPE_UNSPECIFIED
+  SUBNET
+  STATIC
+  DYNAMIC
+  PEERING_SUBNET
+  PEERING_STATIC
+  PEERING_DYNAMIC
+  POLICY_BASED
+  ADVERTISED
+}
+
+"""
+Indicates where route is applicable. Deprecated, routes with NCC_HUB scope are not included in the trace in new tests.
+"""
+enum query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_route_routeScope {
+  ROUTE_SCOPE_UNSPECIFIED
+  NETWORK
+  NCC_HUB
+}
+
+"""
+For display only. Metadata associated with a Compute Engine forwarding rule.
+"""
+type ForwardingRuleInfo {
+  """Protocol defined in the forwarding rule that matches the packet."""
+  matchedProtocol: String
+
+  """Target type of the forwarding rule."""
+  target: String
+
+  """PSC Google API target this forwarding rule targets (if applicable)."""
+  pscGoogleApiTarget: String
+
+  """Port range defined in the forwarding rule that matches the packet."""
+  matchedPortRange: String
+
+  """Network URI."""
+  networkUri: String
+
+  """
+  URI of the PSC service attachment this forwarding rule targets (if applicable).
+  """
+  pscServiceAttachmentUri: String
+
+  """Name of the forwarding rule."""
+  displayName: String
+
+  """
+  Name of the load balancer the forwarding rule belongs to. Empty for forwarding rules not related to load balancers (like PSC forwarding rules).
+  """
+  loadBalancerName: String
+
+  """Region of the forwarding rule. Set only for regional forwarding rules."""
+  region: String
+
+  """VIP of the forwarding rule."""
+  vip: String
+
+  """URI of the forwarding rule."""
+  uri: String
+}
+
+"""Each step is in one of the pre-defined states."""
+enum query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_state {
+  STATE_UNSPECIFIED
+  START_FROM_INSTANCE
+  START_FROM_INTERNET
+  START_FROM_GOOGLE_SERVICE
+  START_FROM_PRIVATE_NETWORK
+  START_FROM_GKE_MASTER
+  START_FROM_CLOUD_SQL_INSTANCE
+  START_FROM_GKE_POD
+  START_FROM_REDIS_INSTANCE
+  START_FROM_REDIS_CLUSTER
+  START_FROM_CLOUD_FUNCTION
+  START_FROM_APP_ENGINE_VERSION
+  START_FROM_CLOUD_RUN_REVISION
+  START_FROM_STORAGE_BUCKET
+  START_FROM_PSC_PUBLISHED_SERVICE
+  START_FROM_SERVERLESS_NEG
+  APPLY_INGRESS_FIREWALL_RULE
+  APPLY_EGRESS_FIREWALL_RULE
+  APPLY_ROUTE
+  APPLY_FORWARDING_RULE
+  ANALYZE_LOAD_BALANCER_BACKEND
+  SPOOFING_APPROVED
+  ARRIVE_AT_INSTANCE
+  ARRIVE_AT_INTERNAL_LOAD_BALANCER
+  ARRIVE_AT_EXTERNAL_LOAD_BALANCER
+  ARRIVE_AT_HYBRID_SUBNET
+  ARRIVE_AT_VPN_GATEWAY
+  ARRIVE_AT_VPN_TUNNEL
+  ARRIVE_AT_INTERCONNECT_ATTACHMENT
+  ARRIVE_AT_VPC_CONNECTOR
+  ARRIVE_AT_GKE_POD
+  DIRECT_VPC_EGRESS_CONNECTION
+  SERVERLESS_EXTERNAL_CONNECTION
+  NGFW_PACKET_INSPECTION
+  NAT
+  SKIP_GKE_POD_IP_MASQUERADING
+  SKIP_GKE_INGRESS_NETWORK_POLICY
+  SKIP_GKE_EGRESS_NETWORK_POLICY
+  APPLY_INGRESS_GKE_NETWORK_POLICY
+  APPLY_EGRESS_GKE_NETWORK_POLICY
+  PROXY_CONNECTION
+  DELIVER
+  DROP
+  FORWARD
+  ABORT
+  VIEWER_PERMISSION_MISSING
+}
+
+"""
+For display only. Metadata associated with a VPC firewall rule, an implied VPC firewall rule, or a firewall policy rule.
+"""
+type FirewallInfo {
+  """
+  The URI of the firewall policy that this rule is associated with. This field is not applicable to VPC firewall rules and implied VPC firewall rules.
+  """
+  policyUri: String
+
+  """The priority of the firewall rule."""
+  priority: Int
+
+  """
+  The URI of the VPC network that the firewall rule is associated with. This field is not applicable to hierarchical firewall policy rules.
+  """
+  networkUri: String
+
+  """
+  The display name of the firewall rule. This field might be empty for firewall policy rules.
+  """
+  displayName: String
+  firewallRuleType: query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_firewall_firewallRuleType
+
+  """Possible values: INGRESS, EGRESS"""
+  direction: String
+
+  """The target service accounts specified by the firewall rule."""
+  targetServiceAccounts: [String]
+  targetType: query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_firewall_targetType
+
+  """
+  The name of the firewall policy that this rule is associated with. This field is not applicable to VPC firewall rules and implied VPC firewall rules.
+  """
+  policy: String
+
+  """
+  The target tags defined by the VPC firewall rule. This field is not applicable to firewall policy rules.
+  """
+  targetTags: [String]
+
+  """
+  The priority of the firewall policy that this rule is associated with. This field is not applicable to VPC firewall rules and implied VPC firewall rules.
+  """
+  policyPriority: Int
+
+  """
+  The URI of the firewall rule. This field is not applicable to implied VPC firewall rules.
+  """
+  uri: String
+
+  """Possible values: ALLOW, DENY, APPLY_SECURITY_PROFILE_GROUP"""
+  action: String
+}
+
+"""The firewall rule's type."""
+enum query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_firewall_firewallRuleType {
+  FIREWALL_RULE_TYPE_UNSPECIFIED
+  HIERARCHICAL_FIREWALL_POLICY_RULE
+  VPC_FIREWALL_RULE
+  IMPLIED_VPC_FIREWALL_RULE
+  SERVERLESS_VPC_ACCESS_MANAGED_FIREWALL_RULE
+  NETWORK_FIREWALL_POLICY_RULE
+  NETWORK_REGIONAL_FIREWALL_POLICY_RULE
+  SYSTEM_NETWORK_FIREWALL_POLICY_RULE
+  SYSTEM_REGIONAL_NETWORK_FIREWALL_POLICY_RULE
+  UNSUPPORTED_FIREWALL_POLICY_RULE
+  TRACKING_STATE
+  ANALYSIS_SKIPPED
+}
+
+"""Target type of the firewall rule."""
+enum query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_firewall_targetType {
+  TARGET_TYPE_UNSPECIFIED
+  INSTANCES
+  INTERNAL_MANAGED_LB
+}
+
+"""For display only. Metadata associated with a Cloud Run revision."""
+type CloudRunRevisionInfo {
+  """Name of a Cloud Run revision."""
+  displayName: String
+
+  """Location in which this revision is deployed."""
+  location: String
+
+  """URI of a Cloud Run revision."""
+  uri: String
+
+  """URI of Cloud Run service this revision belongs to."""
+  serviceUri: String
+}
+
+"""For display only. Metadata associated with ProxyConnection."""
+type ProxyConnectionInfo {
+  """Source IP address of an original connection."""
+  oldSourceIp: String
+
+  """
+  Source port of a new connection. Only valid when protocol is TCP or UDP.
+  """
+  newSourcePort: Int
+
+  """Uri of proxy subnet."""
+  subnetUri: String
+
+  """Destination IP address of a new connection."""
+  newDestinationIp: String
+
+  """
+  Destination port of a new connection. Only valid when protocol is TCP or UDP.
+  """
+  newDestinationPort: Int
+
+  """URI of the network where connection is proxied."""
+  networkUri: String
+
+  """IP protocol in string format, for example: "TCP", "UDP", "ICMP"."""
+  protocol: String
+
+  """Destination IP address of an original connection"""
+  oldDestinationIp: String
+
+  """Source IP address of a new connection."""
+  newSourceIp: String
+
+  """
+  Destination port of an original connection. Only valid when protocol is TCP or UDP.
+  """
+  oldDestinationPort: Int
+
+  """
+  Source port of an original connection. Only valid when protocol is TCP or UDP.
+  """
+  oldSourcePort: Int
+}
+
+"""
+For display only. Metadata associated with a Compute Engine VPN gateway.
+"""
+type VpnGatewayInfo {
+  """Name of a VPN gateway."""
+  displayName: String
+
+  """
+  A VPN tunnel that is associated with this VPN gateway. There may be multiple VPN tunnels configured on a VPN gateway, and only the one relevant to the test is displayed.
+  """
+  vpnTunnelUri: String
+
+  """URI of a VPN gateway."""
+  uri: String
+
+  """URI of a Compute Engine network where the VPN gateway is configured."""
+  networkUri: String
+
+  """IP address of the VPN gateway."""
+  ipAddress: String
+
+  """Name of a Google Cloud region where this VPN gateway is configured."""
+  region: String
+}
+
+"""Details of the final state "drop" and associated resource."""
+type DropInfo {
+  """Destination IP address of the dropped packet (if relevant)."""
+  destinationIp: String
+
+  """Geolocation (region code) of the source IP address (if relevant)."""
+  sourceGeolocationCode: String
+
+  """Geolocation (region code) of the destination IP address (if relevant)."""
+  destinationGeolocationCode: String
+  cause: query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_drop_cause
+
+  """Source IP address of the dropped packet (if relevant)."""
+  sourceIp: String
+
+  """URI of the resource that caused the drop."""
+  resourceUri: String
+
+  """Region of the dropped packet (if relevant)."""
+  region: String
+}
+
+"""Cause that the packet is dropped."""
+enum query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_drop_cause {
+  CAUSE_UNSPECIFIED
+  UNKNOWN_EXTERNAL_ADDRESS
+  FOREIGN_IP_DISALLOWED
+  FIREWALL_RULE
+  NO_ROUTE
+  ROUTE_BLACKHOLE
+  ROUTE_WRONG_NETWORK
+  ROUTE_NEXT_HOP_IP_ADDRESS_NOT_RESOLVED
+  ROUTE_NEXT_HOP_RESOURCE_NOT_FOUND
+  ROUTE_NEXT_HOP_INSTANCE_WRONG_NETWORK
+  ROUTE_NEXT_HOP_INSTANCE_NON_PRIMARY_IP
+  ROUTE_NEXT_HOP_FORWARDING_RULE_IP_MISMATCH
+  ROUTE_NEXT_HOP_VPN_TUNNEL_NOT_ESTABLISHED
+  ROUTE_NEXT_HOP_FORWARDING_RULE_TYPE_INVALID
+  NO_ROUTE_FROM_INTERNET_TO_PRIVATE_IPV6_ADDRESS
+  NO_ROUTE_FROM_INTERNET_TO_PRIVATE_IPV4_ADDRESS
+  NO_ROUTE_FROM_EXTERNAL_IPV6_SOURCE_TO_PRIVATE_IPV6_ADDRESS
+  VPN_TUNNEL_LOCAL_SELECTOR_MISMATCH
+  VPN_TUNNEL_REMOTE_SELECTOR_MISMATCH
+  PRIVATE_TRAFFIC_TO_INTERNET
+  PRIVATE_GOOGLE_ACCESS_DISALLOWED
+  PRIVATE_GOOGLE_ACCESS_VIA_VPN_TUNNEL_UNSUPPORTED
+  NO_EXTERNAL_ADDRESS
+  UNKNOWN_INTERNAL_ADDRESS
+  FORWARDING_RULE_MISMATCH
+  FORWARDING_RULE_NO_INSTANCES
+  FIREWALL_BLOCKING_LOAD_BALANCER_BACKEND_HEALTH_CHECK
+  INGRESS_FIREWALL_TAGS_UNSUPPORTED_BY_DIRECT_VPC_EGRESS
+  INSTANCE_NOT_RUNNING
+  GKE_CLUSTER_NOT_RUNNING
+  GKE_POD_NOT_RUNNING
+  CLOUD_SQL_INSTANCE_NOT_RUNNING
+  REDIS_INSTANCE_NOT_RUNNING
+  REDIS_CLUSTER_NOT_RUNNING
+  TRAFFIC_TYPE_BLOCKED
+  GKE_MASTER_UNAUTHORIZED_ACCESS
+  CLOUD_SQL_INSTANCE_UNAUTHORIZED_ACCESS
+  DROPPED_INSIDE_GKE_SERVICE
+  DROPPED_INSIDE_CLOUD_SQL_SERVICE
+  GOOGLE_MANAGED_SERVICE_NO_PEERING
+  GOOGLE_MANAGED_SERVICE_NO_PSC_ENDPOINT
+  GKE_PSC_ENDPOINT_MISSING
+  CLOUD_SQL_INSTANCE_NO_IP_ADDRESS
+  GKE_CONTROL_PLANE_REGION_MISMATCH
+  PUBLIC_GKE_CONTROL_PLANE_TO_PRIVATE_DESTINATION
+  GKE_CONTROL_PLANE_NO_ROUTE
+  CLOUD_SQL_INSTANCE_NOT_CONFIGURED_FOR_EXTERNAL_TRAFFIC
+  PUBLIC_CLOUD_SQL_INSTANCE_TO_PRIVATE_DESTINATION
+  CLOUD_SQL_INSTANCE_NO_ROUTE
+  CLOUD_SQL_CONNECTOR_REQUIRED
+  CLOUD_FUNCTION_NOT_ACTIVE
+  VPC_CONNECTOR_NOT_SET
+  VPC_CONNECTOR_NOT_RUNNING
+  VPC_CONNECTOR_SERVERLESS_TRAFFIC_BLOCKED
+  VPC_CONNECTOR_HEALTH_CHECK_TRAFFIC_BLOCKED
+  FORWARDING_RULE_REGION_MISMATCH
+  PSC_CONNECTION_NOT_ACCEPTED
+  PSC_ENDPOINT_ACCESSED_FROM_PEERED_NETWORK
+  PSC_NEG_PRODUCER_ENDPOINT_NO_GLOBAL_ACCESS
+  PSC_NEG_PRODUCER_FORWARDING_RULE_MULTIPLE_PORTS
+  CLOUD_SQL_PSC_NEG_UNSUPPORTED
+  NO_NAT_SUBNETS_FOR_PSC_SERVICE_ATTACHMENT
+  PSC_TRANSITIVITY_NOT_PROPAGATED
+  HYBRID_NEG_NON_DYNAMIC_ROUTE_MATCHED
+  HYBRID_NEG_NON_LOCAL_DYNAMIC_ROUTE_MATCHED
+  CLOUD_RUN_REVISION_NOT_READY
+  DROPPED_INSIDE_PSC_SERVICE_PRODUCER
+  LOAD_BALANCER_HAS_NO_PROXY_SUBNET
+  CLOUD_NAT_NO_ADDRESSES
+  ROUTING_LOOP
+  DROPPED_INSIDE_GOOGLE_MANAGED_SERVICE
+  LOAD_BALANCER_BACKEND_INVALID_NETWORK
+  BACKEND_SERVICE_NAMED_PORT_NOT_DEFINED
+  DESTINATION_IS_PRIVATE_NAT_IP_RANGE
+  DROPPED_INSIDE_REDIS_INSTANCE_SERVICE
+  REDIS_INSTANCE_UNSUPPORTED_PORT
+  REDIS_INSTANCE_CONNECTING_FROM_PUPI_ADDRESS
+  REDIS_INSTANCE_NO_ROUTE_TO_DESTINATION_NETWORK
+  REDIS_INSTANCE_NO_EXTERNAL_IP
+  REDIS_INSTANCE_UNSUPPORTED_PROTOCOL
+  DROPPED_INSIDE_REDIS_CLUSTER_SERVICE
+  REDIS_CLUSTER_UNSUPPORTED_PORT
+  REDIS_CLUSTER_NO_EXTERNAL_IP
+  REDIS_CLUSTER_UNSUPPORTED_PROTOCOL
+  NO_ADVERTISED_ROUTE_TO_GCP_DESTINATION
+  NO_TRAFFIC_SELECTOR_TO_GCP_DESTINATION
+  NO_KNOWN_ROUTE_FROM_PEERED_NETWORK_TO_DESTINATION
+  PRIVATE_NAT_TO_PSC_ENDPOINT_UNSUPPORTED
+  PSC_PORT_MAPPING_PORT_MISMATCH
+  PSC_PORT_MAPPING_WITHOUT_PSC_CONNECTION_UNSUPPORTED
+  UNSUPPORTED_ROUTE_MATCHED_FOR_NAT64_DESTINATION
+  TRAFFIC_FROM_HYBRID_ENDPOINT_TO_INTERNET_DISALLOWED
+  NO_MATCHING_NAT64_GATEWAY
+  NO_CONFIGURED_PRIVATE_NAT64_RULE
+  LOAD_BALANCER_BACKEND_IP_VERSION_MISMATCH
+  NO_KNOWN_ROUTE_FROM_NCC_NETWORK_TO_DESTINATION
+  CLOUD_NAT_PROTOCOL_UNSUPPORTED
+  L2_INTERCONNECT_UNSUPPORTED_PROTOCOL
+  L2_INTERCONNECT_UNSUPPORTED_PORT
+  L2_INTERCONNECT_DESTINATION_IP_MISMATCH
+  NCC_ROUTE_WITHIN_HYBRID_SUBNET_UNSUPPORTED
+  HYBRID_SUBNET_REGION_MISMATCH
+  HYBRID_SUBNET_NO_ROUTE
+  GKE_NETWORK_POLICY
+  NO_VALID_ROUTE_FROM_GOOGLE_MANAGED_NETWORK_TO_DESTINATION
+}
+
+"""
+For display only. Details of a Google Service sending packets to a VPC network. Although the source IP might be a publicly routable address, some Google Services use special routes within Google production infrastructure to reach Compute Engine Instances. https://cloud.google.com/vpc/docs/routes#special_return_paths
+"""
+type GoogleServiceInfo {
+  googleServiceType: query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_googleService_googleServiceType
+
+  """Source IP address."""
+  sourceIp: String
+}
+
+"""Recognized type of a Google Service."""
+enum query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_googleService_googleServiceType {
+  GOOGLE_SERVICE_TYPE_UNSPECIFIED
+  IAP
+  GFE_PROXY_OR_HEALTH_CHECK_PROBER
+  CLOUD_DNS
+  GOOGLE_API
+  GOOGLE_API_PSC
+  GOOGLE_API_VPC_SC
+  SERVERLESS_VPC_ACCESS
+}
+
+"""
+For display only. Metadata associated with a layer 7 packet inspection by the firewall.
+"""
+type NgfwPacketInspectionInfo {
+  """
+  URI of the security profile group associated with this firewall packet inspection.
+  """
+  securityProfileGroupUri: String
+}
+
+"""Details of the final state "deliver" and associated resource."""
+type DeliverInfo {
+  """IP address of the target (if applicable)."""
+  ipAddress: String
+
+  """URI of the resource that the packet is delivered to."""
+  resourceUri: String
+  googleServiceType: query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_deliver_googleServiceType
+
+  """
+  Name of the Cloud Storage Bucket the packet is delivered to (if applicable).
+  """
+  storageBucket: String
+
+  """PSC Google API target the packet is delivered to (if applicable)."""
+  pscGoogleApiTarget: String
+  target: query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_deliver_target
+}
+
+"""
+Recognized type of a Google Service the packet is delivered to (if applicable).
+"""
+enum query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_deliver_googleServiceType {
+  GOOGLE_SERVICE_TYPE_UNSPECIFIED
+  IAP
+  GFE_PROXY_OR_HEALTH_CHECK_PROBER
+  CLOUD_DNS
+  PRIVATE_GOOGLE_ACCESS
+  SERVERLESS_VPC_ACCESS
+}
+
+"""Target type where the packet is delivered to."""
+enum query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_deliver_target {
+  TARGET_UNSPECIFIED
+  INSTANCE
+  INTERNET
+  GOOGLE_API
+  GKE_MASTER
+  CLOUD_SQL_INSTANCE
+  PSC_PUBLISHED_SERVICE
+  PSC_GOOGLE_API
+  PSC_VPC_SC
+  SERVERLESS_NEG
+  STORAGE_BUCKET
+  PRIVATE_NETWORK
+  CLOUD_FUNCTION
+  APP_ENGINE_VERSION
+  CLOUD_RUN_REVISION
+  GOOGLE_MANAGED_SERVICE
+  REDIS_INSTANCE
+  REDIS_CLUSTER
+  GKE_POD
+}
+
+"""For display only. Metadata associated with a load balancer."""
+type LoadBalancerInfo {
+  loadBalancerType: query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_loadBalancer_loadBalancerType
+
+  """Information for the loadbalancer backends."""
+  backends: [LoadBalancerBackend]
+  backendType: query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_loadBalancer_backendType
+
+  """
+  URI of the health check for the load balancer. Deprecated and no longer populated as different load balancer backends might have different health checks.
+  """
+  healthCheckUri: String @deprecated(reason: "deprecated")
+
+  """Backend configuration URI."""
+  backendUri: String
+}
+
+"""Type of the load balancer."""
+enum query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_loadBalancer_loadBalancerType {
+  LOAD_BALANCER_TYPE_UNSPECIFIED
+  INTERNAL_TCP_UDP
+  NETWORK_TCP_UDP
+  HTTP_PROXY
+  TCP_PROXY
+  SSL_PROXY
+}
+
+"""
+For display only. Metadata associated with a specific load balancer backend.
+"""
+type LoadBalancerBackend {
+  healthCheckFirewallState: query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_loadBalancer_backends_items_healthCheckFirewallState
+
+  """URI of a Compute Engine instance or network endpoint."""
+  uri: String
+
+  """
+  A list of firewall rule URIs allowing probes from health check IP ranges.
+  """
+  healthCheckAllowingFirewallRules: [String]
+
+  """
+  A list of firewall rule URIs blocking probes from health check IP ranges.
+  """
+  healthCheckBlockingFirewallRules: [String]
+
+  """Name of a Compute Engine instance or network endpoint."""
+  displayName: String
+}
+
+"""State of the health check firewall configuration."""
+enum query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_loadBalancer_backends_items_healthCheckFirewallState {
+  HEALTH_CHECK_FIREWALL_STATE_UNSPECIFIED
+  CONFIGURED
+  MISCONFIGURED
+}
+
+"""Type of load balancer's backend configuration."""
+enum query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_loadBalancer_backendType {
+  BACKEND_TYPE_UNSPECIFIED
+  BACKEND_SERVICE
+  TARGET_POOL
+  TARGET_INSTANCE
+}
+
+"""
+For display only. Contains information about why IP masquerading was skipped for the packet.
+"""
+type IpMasqueradingSkippedInfo {
+  """
+  The matched non-masquerade IP range. Only set if reason is DESTINATION_IP_IN_CONFIGURED_NON_MASQUERADE_RANGE or DESTINATION_IP_IN_DEFAULT_NON_MASQUERADE_RANGE.
+  """
+  nonMasqueradeRange: String
+  reason: query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_ipMasqueradingSkipped_reason
+}
+
+"""Reason why IP masquerading was not applied."""
+enum query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_ipMasqueradingSkipped_reason {
+  REASON_UNSPECIFIED
+  DESTINATION_IP_IN_CONFIGURED_NON_MASQUERADE_RANGE
+  DESTINATION_IP_IN_DEFAULT_NON_MASQUERADE_RANGE
+  DESTINATION_ON_SAME_NODE
+  DEFAULT_SNAT_DISABLED
+  NO_MASQUERADING_FOR_IPV6
+  POD_USES_NODE_NETWORK_NAMESPACE
+  NO_MASQUERADING_FOR_RETURN_PACKET
+}
+
+"""
+For display only. Contains information about why GKE Network Policy evaluation was skipped.
+"""
+type GkeNetworkPolicySkippedInfo {
+  reason: query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_gkeNetworkPolicySkipped_reason
+}
+
+"""Reason why Network Policy evaluation was skipped."""
+enum query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_gkeNetworkPolicySkipped_reason {
+  REASON_UNSPECIFIED
+  NETWORK_POLICY_DISABLED
+  INGRESS_SOURCE_ON_SAME_NODE
+  EGRESS_FROM_NODE_NETWORK_NAMESPACE_POD
+  NETWORK_POLICY_NOT_APPLIED_TO_RESPONSE_TRAFFIC
+  NETWORK_POLICY_ANALYSIS_UNSUPPORTED
+}
+
+"""For display only. Metadata associated with a Redis Cluster."""
+type RedisClusterInfo {
+  """Secondary endpoint IP address of a Redis Cluster."""
+  secondaryEndpointIpAddress: String
+
+  """
+  URI of a Redis Cluster in format "projects/{project_id}/locations/{location}/clusters/{cluster_id}"
+  """
+  uri: String
+
+  """
+  URI of the network containing the Redis Cluster endpoints in format "projects/{project_id}/global/networks/{network_id}".
+  """
+  networkUri: String
+
+  """Discovery endpoint IP address of a Redis Cluster."""
+  discoveryEndpointIpAddress: String
+
+  """Name of a Redis Cluster."""
+  displayName: String
+
+  """
+  Name of the region in which the Redis Cluster is defined. For example, "us-central1".
+  """
+  location: String
+}
+
+"""For display only. Metadata associated with a Cloud Function."""
+type CloudFunctionInfo {
+  """URI of a Cloud Function."""
+  uri: String
+
+  """Latest successfully deployed version id of the Cloud Function."""
+  versionId: BigInt
+
+  """Name of a Cloud Function."""
+  displayName: String
+
+  """Location in which the Cloud Function is deployed."""
+  location: String
+}
+
+"""
+For display only. Metadata associated with a Google Kubernetes Engine (GKE) cluster master.
+"""
+type GKEMasterInfo {
+  """External IP address of a GKE cluster control plane."""
+  externalIp: String
+
+  """URI of a GKE cluster."""
+  clusterUri: String
+
+  """URI of a GKE cluster network."""
+  clusterNetworkUri: String
+
+  """DNS endpoint of a GKE cluster control plane."""
+  dnsEndpoint: String
+
+  """Internal IP address of a GKE cluster control plane."""
+  internalIp: String
+}
+
+"""Details of the final state "abort" and associated resource."""
+type AbortInfo {
+  """
+  List of project IDs the user specified in the request but lacks access to. In this case, analysis is aborted with the PERMISSION_DENIED cause.
+  """
+  projectsMissingPermission: [String]
+
+  """URI of the resource that caused the abort."""
+  resourceUri: String
+  cause: query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_abort_cause
+
+  """IP address that caused the abort."""
+  ipAddress: String
+}
+
+"""Causes that the analysis is aborted."""
+enum query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_abort_cause {
+  CAUSE_UNSPECIFIED
+  UNKNOWN_NETWORK
+  UNKNOWN_PROJECT
+  NO_EXTERNAL_IP
+  UNINTENDED_DESTINATION
+  SOURCE_ENDPOINT_NOT_FOUND
+  MISMATCHED_SOURCE_NETWORK
+  DESTINATION_ENDPOINT_NOT_FOUND
+  MISMATCHED_DESTINATION_NETWORK
+  UNKNOWN_IP
+  GOOGLE_MANAGED_SERVICE_UNKNOWN_IP
+  SOURCE_IP_ADDRESS_NOT_IN_SOURCE_NETWORK
+  PERMISSION_DENIED
+  PERMISSION_DENIED_NO_CLOUD_NAT_CONFIGS
+  PERMISSION_DENIED_NO_NEG_ENDPOINT_CONFIGS
+  PERMISSION_DENIED_NO_CLOUD_ROUTER_CONFIGS
+  NO_SOURCE_LOCATION
+  NO_SOURCE_GCP_NETWORK_LOCATION
+  NO_SOURCE_NON_GCP_NETWORK_LOCATION
+  NO_SOURCE_INTERNET_LOCATION
+  INVALID_ARGUMENT
+  TRACE_TOO_LONG
+  INTERNAL_ERROR
+  UNSUPPORTED
+  MISMATCHED_IP_VERSION
+  GKE_KONNECTIVITY_PROXY_UNSUPPORTED
+  RESOURCE_CONFIG_NOT_FOUND
+  VM_INSTANCE_CONFIG_NOT_FOUND
+  NETWORK_CONFIG_NOT_FOUND
+  FIREWALL_CONFIG_NOT_FOUND
+  ROUTE_CONFIG_NOT_FOUND
+  GOOGLE_MANAGED_SERVICE_AMBIGUOUS_PSC_ENDPOINT
+  GOOGLE_MANAGED_SERVICE_AMBIGUOUS_ENDPOINT
+  SOURCE_PSC_CLOUD_SQL_UNSUPPORTED
+  SOURCE_EXTERNAL_CLOUD_SQL_UNSUPPORTED
+  SOURCE_REDIS_CLUSTER_UNSUPPORTED
+  SOURCE_REDIS_INSTANCE_UNSUPPORTED
+  SOURCE_FORWARDING_RULE_UNSUPPORTED
+  NON_ROUTABLE_IP_ADDRESS
+  UNKNOWN_ISSUE_IN_GOOGLE_MANAGED_PROJECT
+  UNSUPPORTED_GOOGLE_MANAGED_PROJECT_CONFIG
+  NO_SERVERLESS_IP_RANGES
+  IP_VERSION_PROTOCOL_MISMATCH
+  GKE_POD_UNKNOWN_ENDPOINT_LOCATION
+}
+
+"""For display only. Metadata associated with a GKE Network Policy."""
+type GkeNetworkPolicyInfo {
+  """Possible values: INGRESS, EGRESS"""
+  direction: String
+
+  """The name of the Network Policy."""
+  displayName: String
+
+  """
+  The URI of the Network Policy. Format for a Network Policy in a zonal cluster: `projects//zones//clusters//k8s/namespaces//networking.k8s.io/networkpolicies/` Format for a Network Policy in a regional cluster: `projects//locations//clusters//k8s/namespaces//networking.k8s.io/networkpolicies/`
+  """
+  uri: String
+
+  """Possible values: ALLOW, DENY"""
+  action: String
+}
+
+"""
+For display only. Metadata associated with a Compute Engine VPN tunnel.
+"""
+type VpnTunnelInfo {
+  """Remote VPN gateway's IP address."""
+  remoteGatewayIp: String
+
+  """Local VPN gateway's IP address."""
+  sourceGatewayIp: String
+
+  """URI of a Compute Engine network where the VPN tunnel is configured."""
+  networkUri: String
+
+  """Name of a Google Cloud region where this VPN tunnel is configured."""
+  region: String
+
+  """URI of a VPN tunnel."""
+  uri: String
+  routingType: query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_vpnTunnel_routingType
+
+  """URI of a VPN gateway at remote end of the tunnel."""
+  remoteGateway: String
+
+  """URI of the VPN gateway at local end of the tunnel."""
+  sourceGateway: String
+
+  """Name of a VPN tunnel."""
+  displayName: String
+}
+
+"""Type of the routing policy."""
+enum query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_vpnTunnel_routingType {
+  ROUTING_TYPE_UNSPECIFIED
+  ROUTE_BASED
+  POLICY_BASED
+  DYNAMIC
+}
+
+"""Details of the final state "forward" and associated resource."""
+type ForwardInfo {
+  target: query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_forward_target
+
+  """IP address of the target (if applicable)."""
+  ipAddress: String
+
+  """URI of the resource that the packet is forwarded to."""
+  resourceUri: String
+}
+
+"""Target type where this packet is forwarded to."""
+enum query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_forward_target {
+  TARGET_UNSPECIFIED
+  PEERING_VPC
+  VPN_GATEWAY
+  INTERCONNECT
+  GKE_MASTER
+  IMPORTED_CUSTOM_ROUTE_NEXT_HOP
+  CLOUD_SQL_INSTANCE
+  ANOTHER_PROJECT
+  NCC_HUB
+  ROUTER_APPLIANCE
+  SECURE_WEB_PROXY_GATEWAY
+}
+
+"""For display only. Metadata associated with a Cloud SQL instance."""
+type CloudSQLInstanceInfo {
+  """Region in which the Cloud SQL instance is running."""
+  region: String
+
+  """URI of a Cloud SQL instance."""
+  uri: String
+
+  """
+  URI of a Cloud SQL instance network or empty string if the instance does not have one.
+  """
+  networkUri: String
+
+  """External IP address of a Cloud SQL instance."""
+  externalIp: String
+
+  """Internal IP address of a Cloud SQL instance."""
+  internalIp: String
+
+  """Name of a Cloud SQL instance."""
+  displayName: String
+}
+
+"""For display only. Metadata associated with an Interconnect attachment."""
+type InterconnectAttachmentInfo {
+  type: query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_interconnectAttachment_type
+
+  """Appliance IP address that was matched for L2_DEDICATED attachments."""
+  l2AttachmentMatchedIpAddress: String
+
+  """URI of the Cloud Router to be used for dynamic routing."""
+  cloudRouterUri: String
+
+  """Name of an Interconnect attachment."""
+  displayName: String
+
+  """
+  Name of a Google Cloud region where the Interconnect attachment is configured.
+  """
+  region: String
+
+  """URI of an Interconnect attachment."""
+  uri: String
+
+  """
+  URI of the Interconnect where the Interconnect attachment is configured.
+  """
+  interconnectUri: String
+}
+
+"""The type of interconnect attachment this is."""
+enum query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_interconnectAttachment_type {
+  TYPE_UNSPECIFIED
+  DEDICATED
+  PARTNER
+  PARTNER_PROVIDER
+  L2_DEDICATED
+}
+
+"""For display only. Metadata associated with a Compute Engine instance."""
+type InstanceInfo {
+  """
+  URI of the PSC network attachment the NIC is attached to (if relevant).
+  """
+  pscNetworkAttachmentUri: String
+
+  """Internal IP address of the network interface."""
+  internalIp: String
+
+  """URI of a Compute Engine network."""
+  networkUri: String
+
+  """Name of the network interface of a Compute Engine instance."""
+  interface: String
+
+  """External IP address of the network interface."""
+  externalIp: String
+
+  """Network tags configured on the instance."""
+  networkTags: [String]
+
+  """Name of a Compute Engine instance."""
+  displayName: String
+
+  """URI of a Compute Engine instance."""
+  uri: String
+
+  """Service account authorized for the instance."""
+  serviceAccount: String @deprecated(reason: "deprecated")
+
+  """
+  Indicates whether the Compute Engine instance is running. Deprecated: use the `status` field instead.
+  """
+  running: Boolean @deprecated(reason: "deprecated")
+  status: query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_instance_status
+}
+
+"""The status of the instance."""
+enum query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_instance_status {
+  STATUS_UNSPECIFIED
+  RUNNING
+  NOT_RUNNING
+}
+
+"""For display only. Metadata associated with a hybrid subnet."""
+type HybridSubnetInfo {
+  """Name of a Google Cloud region where the hybrid subnet is configured."""
+  region: String
+
+  """URI of a hybrid subnet."""
+  uri: String
+
+  """Name of a hybrid subnet."""
+  displayName: String
+}
+
+"""For display only. Metadata associated with a Cloud Redis Instance."""
+type RedisInstanceInfo {
+  """Name of a Cloud Redis Instance."""
+  displayName: String
+
+  """Read endpoint IP address of a Cloud Redis Instance (if applicable)."""
+  readEndpointIp: String
+
+  """URI of a Cloud Redis Instance."""
+  uri: String
+
+  """URI of a Cloud Redis Instance network."""
+  networkUri: String
+
+  """Primary endpoint IP address of a Cloud Redis Instance."""
+  primaryEndpointIp: String
+
+  """Region in which the Cloud Redis Instance is defined."""
+  region: String
+}
+
+"""For display only. Metadata associated with an App Engine version."""
+type AppEngineVersionInfo {
+  """Name of an App Engine version."""
+  displayName: String
+
+  """App Engine execution environment for a version."""
+  environment: String
+
+  """URI of an App Engine version."""
+  uri: String
+
+  """Runtime of the App Engine version."""
+  runtime: String
+}
+
+"""
+For display only. Metadata associated with a serverless public connection.
+"""
+type ServerlessExternalConnectionInfo {
+  """Selected starting IP address, from the Google dynamic address pool."""
+  selectedIpAddress: String
+}
+
+"""For display only. Metadata associated with NAT."""
+type NatInfo {
+  """Source IP address before NAT translation."""
+  oldSourceIp: String
+
+  """
+  Source port after NAT translation. Only valid when protocol is TCP or UDP.
+  """
+  newSourcePort: Int
+
+  """URI of the network where NAT translation takes place."""
+  networkUri: String
+
+  """IP protocol in string format, for example: "TCP", "UDP", "ICMP"."""
+  protocol: String
+  cloudNatGatewayType: query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_nat_cloudNatGatewayType
+
+  """
+  Destination port before NAT translation. Only valid when protocol is TCP or UDP.
+  """
+  oldDestinationPort: Int
+
+  """The name of Cloud NAT Gateway. Only valid when type is CLOUD_NAT."""
+  natGatewayName: String
+
+  """Uri of the Cloud Router. Only valid when type is CLOUD_NAT."""
+  routerUri: String
+  type: query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_nat_type
+
+  """Destination IP address after NAT translation."""
+  newDestinationIp: String
+
+  """
+  Destination port after NAT translation. Only valid when protocol is TCP or UDP.
+  """
+  newDestinationPort: Int
+
+  """Destination IP address before NAT translation."""
+  oldDestinationIp: String
+
+  """Source IP address after NAT translation."""
+  newSourceIp: String
+
+  """
+  Source port before NAT translation. Only valid when protocol is TCP or UDP.
+  """
+  oldSourcePort: Int
+}
+
+"""Type of Cloud NAT gateway. Only valid when `type` is CLOUD_NAT."""
+enum query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_nat_cloudNatGatewayType {
+  CLOUD_NAT_GATEWAY_TYPE_UNSPECIFIED
+  PUBLIC_NAT44
+  PUBLIC_NAT64
+  PRIVATE_NAT_NCC
+  PRIVATE_NAT_HYBRID
+  PRIVATE_NAT64
+}
+
+"""Type of NAT."""
+enum query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_nat_type {
+  TYPE_UNSPECIFIED
+  INTERNAL_TO_EXTERNAL
+  EXTERNAL_TO_INTERNAL
+  CLOUD_NAT
+  PRIVATE_SERVICE_CONNECT
+  GKE_POD_IP_MASQUERADING
+}
+
+"""For display only. Metadata associated with Storage Bucket."""
+type StorageBucketInfo {
+  """Cloud Storage Bucket name."""
+  bucket: String
+}
+
+"""For display only. Metadata associated with a VPC connector."""
+type VpcConnectorInfo {
+  """URI of a VPC connector."""
+  uri: String
+
+  """Name of a VPC connector."""
+  displayName: String
+
+  """Location in which the VPC connector is deployed."""
+  location: String
+}
+
+"""
+For display only. Metadata associated with a serverless direct VPC egress connection.
+"""
+type DirectVpcEgressConnectionInfo {
+  """Region in which the Direct VPC egress is deployed."""
+  region: String
+
+  """URI of direct access subnetwork."""
+  subnetworkUri: String
+
+  """URI of direct access network."""
+  networkUri: String
+
+  """Selected IP range."""
+  selectedIpRange: String
+
+  """Selected starting IP address, from the selected IP range."""
+  selectedIpAddress: String
+}
+
+"""
+For display only. Metadata associated with a Google Kubernetes Engine (GKE) Pod.
+"""
+type GkePodInfo {
+  """URI of the network containing the GKE Pod."""
+  networkUri: String
+
+  """
+  URI of a GKE Pod. For Pods in regional Clusters, the URI format is: `projects/{project}/locations/{location}/clusters/{cluster}/k8s/namespaces/{namespace}/pods/{pod}` For Pods in zonal Clusters, the URI format is: `projects/{project}/zones/{zone}/clusters/{cluster}/k8s/namespaces/{namespace}/pods/{pod}`
+  """
+  podUri: String
+
+  """
+  IP address of a GKE Pod. If the Pod is dual-stack, this is the IP address relevant to the trace.
+  """
+  ipAddress: String
+}
+
+"""For display only. Metadata associated with a Compute Engine network."""
+type NetworkInfo {
+  """The region of the subnet matching the source IP address of the test."""
+  region: String
+
+  """The IP range of the subnet matching the source IP address of the test."""
+  matchedIpRange: String
+
+  """URI of a Compute Engine network."""
+  uri: String
+
+  """URI of the subnet matching the source IP address of the test."""
+  matchedSubnetUri: String
+
+  """Name of a Compute Engine network."""
+  displayName: String
+}
+
+"""For display only. Metadata associated with the load balancer backend."""
+type LoadBalancerBackendInfo {
+  """
+  URI of the PSC service attachment this PSC NEG backend targets (if applicable).
+  """
+  pscServiceAttachmentUri: String
+
+  """
+  URI of the network endpoint group this backend belongs to (if applicable).
+  """
+  networkEndpointGroupUri: String
+
+  """URI of the backend bucket this backend targets (if applicable)."""
+  backendBucketUri: String
+
+  """
+  Display name of the backend. For example, it might be an instance name for the instance group backends, or an IP address and port for zonal network endpoint group backends.
+  """
+  name: String
+
+  """
+  URI of the backend instance (if applicable). Populated for instance group backends, and zonal NEG backends.
+  """
+  instanceUri: String
+
+  """URI of the health check attached to this backend (if applicable)."""
+  healthCheckUri: String
+  healthCheckFirewallsConfigState: query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_loadBalancerBackendInfo_healthCheckFirewallsConfigState
+
+  """URI of the instance group this backend belongs to (if applicable)."""
+  instanceGroupUri: String
+
+  """URI of the backend service this backend belongs to (if applicable)."""
+  backendServiceUri: String
+
+  """PSC Google API target this PSC NEG backend targets (if applicable)."""
+  pscGoogleApiTarget: String
+}
+
+"""
+Output only. Health check firewalls configuration state for the backend. This is a result of the static firewall analysis (verifying that health check traffic from required IP ranges to the backend is allowed or not). The backend might still be unhealthy even if these firewalls are configured. Please refer to the documentation for more information: https://cloud.google.com/load-balancing/docs/firewall-rules
+"""
+enum query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_loadBalancerBackendInfo_healthCheckFirewallsConfigState {
+  HEALTH_CHECK_FIREWALLS_CONFIG_STATE_UNSPECIFIED
+  FIREWALLS_CONFIGURED
+  FIREWALLS_PARTIALLY_CONFIGURED
+  FIREWALLS_NOT_CONFIGURED
+  FIREWALLS_UNSUPPORTED
+}
+
+"""
+For display only. Metadata associated with the serverless network endpoint group backend.
+"""
+type ServerlessNegInfo {
+  """URI of the serverless network endpoint group."""
+  negUri: String
+}
+
+"""Response for the `ListConnectivityTests` method."""
+type ListConnectivityTestsResponse {
+  """
+  Locations that could not be reached (when querying all locations with `-`).
+  """
+  unreachable: [String]
+
+  """List of Connectivity Tests."""
+  resources: [ConnectivityTest]
+
+  """Page token to fetch the next set of Connectivity Tests."""
+  nextPageToken: String
+}
+
+"""
+An Identity and Access Management (IAM) policy, which specifies access controls for Google Cloud resources. A `Policy` is a collection of `bindings`. A `binding` binds one or more `members`, or principals, to a single `role`. Principals can be user accounts, service accounts, Google groups, and domains (such as G Suite). A `role` is a named list of permissions; each `role` can be an IAM predefined role or a user-created custom role. For some types of Google Cloud resources, a `binding` can also specify a `condition`, which is a logical expression that allows access to a resource only if the expression evaluates to `true`. A condition can add constraints based on attributes of the request, the resource, or both. To learn which resources support conditions in their IAM policies, see the [IAM documentation](https://cloud.google.com/iam/help/conditions/resource-policies). **JSON example:** ``` { "bindings": [ { "role": "roles/resourcemanager.organizationAdmin", "members": [ "user:mike@example.com", "group:admins@example.com", "domain:google.com", "serviceAccount:my-project-id@appspot.gserviceaccount.com" ] }, { "role": "roles/resourcemanager.organizationViewer", "members": [ "user:eve@example.com" ], "condition": { "title": "expirable access", "description": "Does not grant access after Sep 2020", "expression": "request.time < timestamp('2020-10-01T00:00:00.000Z')", } } ], "etag": "BwWWja0YfJA=", "version": 3 } ``` **YAML example:** ``` bindings: - members: - user:mike@example.com - group:admins@example.com - domain:google.com - serviceAccount:my-project-id@appspot.gserviceaccount.com role: roles/resourcemanager.organizationAdmin - members: - user:eve@example.com role: roles/resourcemanager.organizationViewer condition: title: expirable access description: Does not grant access after Sep 2020 expression: request.time < timestamp('2020-10-01T00:00:00.000Z') etag: BwWWja0YfJA= version: 3 ``` For a description of IAM and its features, see the [IAM documentation](https://cloud.google.com/iam/docs/).
+"""
+type Policy {
+  """
+  `etag` is used for optimistic concurrency control as a way to help prevent simultaneous updates of a policy from overwriting each other. It is strongly suggested that systems make use of the `etag` in the read-modify-write cycle to perform policy updates in order to avoid race conditions: An `etag` is returned in the response to `getIamPolicy`, and systems are expected to put that etag in the request to `setIamPolicy` to ensure that their change will be applied to the same version of the policy. **Important:** If you use IAM Conditions, you must include the `etag` field whenever you call `setIamPolicy`. If you omit this field, then IAM allows you to overwrite a version `3` policy with a version `1` policy, and all of the conditions in the version `3` policy are lost.
+  """
+  etag: Byte
+
+  """
+  Specifies the format of the policy. Valid values are `0`, `1`, and `3`. Requests that specify an invalid value are rejected. Any operation that affects conditional role bindings must specify version `3`. This requirement applies to the following operations: * Getting a policy that includes a conditional role binding * Adding a conditional role binding to a policy * Changing a conditional role binding in a policy * Removing any role binding, with or without a condition, from a policy that includes conditions **Important:** If you use IAM Conditions, you must include the `etag` field whenever you call `setIamPolicy`. If you omit this field, then IAM allows you to overwrite a version `3` policy with a version `1` policy, and all of the conditions in the version `3` policy are lost. If a policy does not include any conditions, operations on that policy may specify any valid version or leave the field unset. To learn which resources support conditions in their IAM policies, see the [IAM documentation](https://cloud.google.com/iam/help/conditions/resource-policies).
+  """
+  version: Int
+
+  """
+  Associates a list of `members`, or principals, with a `role`. Optionally, may specify a `condition` that determines how and when the `bindings` are applied. Each of the `bindings` must contain at least one principal. The `bindings` in a `Policy` can refer to up to 1,500 principals; up to 250 of these principals can be Google groups. Each occurrence of a principal counts towards these limits. For example, if the `bindings` grant 50 different roles to `user:alice@example.com`, and not to any other principal, then you can add another 1,450 principals to the `bindings` in the `Policy`.
+  """
+  bindings: [Binding]
+
+  """Specifies cloud audit logging configuration for this policy."""
+  auditConfigs: [AuditConfig]
+}
+
+"""The `Byte` scalar type represents byte value as a Buffer"""
+scalar Byte
+
+"""Associates `members`, or principals, with a `role`."""
+type Binding {
+  """
+  Specifies the principals requesting access for a Google Cloud resource. `members` can have the following values: * `allUsers`: A special identifier that represents anyone who is on the internet; with or without a Google account. * `allAuthenticatedUsers`: A special identifier that represents anyone who is authenticated with a Google account or a service account. Does not include identities that come from external identity providers (IdPs) through identity federation. * `user:{emailid}`: An email address that represents a specific Google account. For example, `alice@example.com` . * `serviceAccount:{emailid}`: An email address that represents a Google service account. For example, `my-other-app@appspot.gserviceaccount.com`. * `serviceAccount:{projectid}.svc.id.goog[{namespace}/{kubernetes-sa}]`: An identifier for a [Kubernetes service account](https://cloud.google.com/kubernetes-engine/docs/how-to/kubernetes-service-accounts). For example, `my-project.svc.id.goog[my-namespace/my-kubernetes-sa]`. * `group:{emailid}`: An email address that represents a Google group. For example, `admins@example.com`. * `domain:{domain}`: The G Suite domain (primary) that represents all the users of that domain. For example, `google.com` or `example.com`. * `principal://iam.googleapis.com/locations/global/workforcePools/{pool_id}/subject/{subject_attribute_value}`: A single identity in a workforce identity pool. * `principalSet://iam.googleapis.com/locations/global/workforcePools/{pool_id}/group/{group_id}`: All workforce identities in a group. * `principalSet://iam.googleapis.com/locations/global/workforcePools/{pool_id}/attribute.{attribute_name}/{attribute_value}`: All workforce identities with a specific attribute value. * `principalSet://iam.googleapis.com/locations/global/workforcePools/{pool_id}/*`: All identities in a workforce identity pool. * `principal://iam.googleapis.com/projects/{project_number}/locations/global/workloadIdentityPools/{pool_id}/subject/{subject_attribute_value}`: A single identity in a workload identity pool. * `principalSet://iam.googleapis.com/projects/{project_number}/locations/global/workloadIdentityPools/{pool_id}/group/{group_id}`: A workload identity pool group. * `principalSet://iam.googleapis.com/projects/{project_number}/locations/global/workloadIdentityPools/{pool_id}/attribute.{attribute_name}/{attribute_value}`: All identities in a workload identity pool with a certain attribute. * `principalSet://iam.googleapis.com/projects/{project_number}/locations/global/workloadIdentityPools/{pool_id}/*`: All identities in a workload identity pool. * `deleted:user:{emailid}?uid={uniqueid}`: An email address (plus unique identifier) representing a user that has been recently deleted. For example, `alice@example.com?uid=123456789012345678901`. If the user is recovered, this value reverts to `user:{emailid}` and the recovered user retains the role in the binding. * `deleted:serviceAccount:{emailid}?uid={uniqueid}`: An email address (plus unique identifier) representing a service account that has been recently deleted. For example, `my-other-app@appspot.gserviceaccount.com?uid=123456789012345678901`. If the service account is undeleted, this value reverts to `serviceAccount:{emailid}` and the undeleted service account retains the role in the binding. * `deleted:group:{emailid}?uid={uniqueid}`: An email address (plus unique identifier) representing a Google group that has been recently deleted. For example, `admins@example.com?uid=123456789012345678901`. If the group is recovered, this value reverts to `group:{emailid}` and the recovered group retains the role in the binding. * `deleted:principal://iam.googleapis.com/locations/global/workforcePools/{pool_id}/subject/{subject_attribute_value}`: Deleted single identity in a workforce identity pool. For example, `deleted:principal://iam.googleapis.com/locations/global/workforcePools/my-pool-id/subject/my-subject-attribute-value`.
+  """
+  members: [String]
+  condition: Expr
+
+  """
+  Role that is assigned to the list of `members`, or principals. For example, `roles/viewer`, `roles/editor`, or `roles/owner`. For an overview of the IAM roles and permissions, see the [IAM documentation](https://cloud.google.com/iam/docs/roles-overview). For a list of the available pre-defined roles, see [here](https://cloud.google.com/iam/docs/understanding-roles).
+  """
+  role: String
+}
+
+"""
+Represents a textual expression in the Common Expression Language (CEL) syntax. CEL is a C-like expression language. The syntax and semantics of CEL are documented at https://github.com/google/cel-spec. Example (Comparison): title: "Summary size limit" description: "Determines if a summary is less than 100 chars" expression: "document.summary.size() < 100" Example (Equality): title: "Requestor is owner" description: "Determines if requestor is the document owner" expression: "document.owner == request.auth.claims.email" Example (Logic): title: "Public documents" description: "Determine whether the document should be publicly visible" expression: "document.type != 'private' && document.type != 'internal'" Example (Data Manipulation): title: "Notification string" description: "Create a notification string with a timestamp." expression: "'New message received at ' + string(document.create_time)" The exact variables and functions that may be referenced within an expression are determined by the service that evaluates it. See the service documentation for additional information.
+"""
+type Expr {
+  """
+  Textual representation of an expression in Common Expression Language syntax.
+  """
+  expression: String
+
+  """
+  Optional. Description of the expression. This is a longer text which describes the expression, e.g. when hovered over it in a UI.
+  """
+  description: String
+
+  """
+  Optional. Title for the expression, i.e. a short string describing its purpose. This can be used e.g. in UIs which allow to enter the expression.
+  """
+  title: String
+
+  """
+  Optional. String indicating the location of the expression for error reporting, e.g. a file name and a position in the file.
+  """
+  location: String
+}
+
+"""
+Specifies the audit configuration for a service. The configuration determines which permission types are logged, and what identities, if any, are exempted from logging. An AuditConfig must have one or more AuditLogConfigs. If there are AuditConfigs for both `allServices` and a specific service, the union of the two AuditConfigs is used for that service: the log_types specified in each AuditConfig are enabled, and the exempted_members in each AuditLogConfig are exempted. Example Policy with multiple AuditConfigs: { "audit_configs": [ { "service": "allServices", "audit_log_configs": [ { "log_type": "DATA_READ", "exempted_members": [ "user:jose@example.com" ] }, { "log_type": "DATA_WRITE" }, { "log_type": "ADMIN_READ" } ] }, { "service": "sampleservice.googleapis.com", "audit_log_configs": [ { "log_type": "DATA_READ" }, { "log_type": "DATA_WRITE", "exempted_members": [ "user:aliya@example.com" ] } ] } ] } For sampleservice, this policy enables DATA_READ, DATA_WRITE and ADMIN_READ logging. It also exempts `jose@example.com` from DATA_READ logging, and `aliya@example.com` from DATA_WRITE logging.
+"""
+type AuditConfig {
+  """
+  Specifies a service that will be enabled for audit logging. For example, `storage.googleapis.com`, `cloudsql.googleapis.com`. `allServices` is a special value that covers all services.
+  """
+  service: String
+
+  """The configuration for logging of each type of permission."""
+  auditLogConfigs: [AuditLogConfig]
+}
+
+"""
+Provides the configuration for logging a type of permissions. Example: { "audit_log_configs": [ { "log_type": "DATA_READ", "exempted_members": [ "user:jose@example.com" ] }, { "log_type": "DATA_WRITE" } ] } This enables 'DATA_READ' and 'DATA_WRITE' logging, while exempting jose@example.com from DATA_READ logging.
+"""
+type AuditLogConfig {
+  """
+  Specifies the identities that do not cause logging for this type of permission. Follows the same format of Binding.members.
+  """
+  exemptedMembers: [String]
+  logType: query_networkmanagement_projects_locations_global_connectivityTests_getIamPolicy_auditConfigs_items_auditLogConfigs_items_logType
+}
+
+"""The log type that this config enables."""
+enum query_networkmanagement_projects_locations_global_connectivityTests_getIamPolicy_auditConfigs_items_auditLogConfigs_items_logType {
+  LOG_TYPE_UNSPECIFIED
+  ADMIN_READ
+  DATA_WRITE
+  DATA_READ
+}
+
+"""A configuration to generate VPC Flow Logs."""
+type VpcFlowLogsConfig {
+  """
+  Traffic will be logged from the Interconnect Attachment. Format: projects/{project_id}/regions/{region}/interconnectAttachments/{name}
+  """
+  interconnectAttachment: String
+  state: query_networkmanagement_projects_locations_vpcFlowLogsConfigs_get_state
+  targetResourceState: query_networkmanagement_projects_locations_vpcFlowLogsConfigs_get_targetResourceState
+  aggregationInterval: query_networkmanagement_projects_locations_vpcFlowLogsConfigs_get_aggregationInterval
+  crossProjectMetadata: query_networkmanagement_projects_locations_vpcFlowLogsConfigs_get_crossProjectMetadata
+
+  """
+  Identifier. Unique name of the configuration. The name can have one of the following forms: - For project-level configurations: `projects/{project_id}/locations/global/vpcFlowLogsConfigs/{vpc_flow_logs_config_id}` - For organization-level configurations: `organizations/{organization_id}/locations/global/vpcFlowLogsConfigs/{vpc_flow_logs_config_id}`
+  """
+  name: String
+
+  """
+  Optional. Export filter used to define which VPC Flow Logs should be logged.
+  """
+  filterExpr: String
+
+  """Output only. The time the config was created."""
+  createTime: String
+
+  """Optional. Resource labels to represent user-provided metadata."""
+  labels: JSON
+
+  """
+  Optional. The user-supplied description of the VPC Flow Logs configuration. Maximum of 512 characters.
+  """
+  description: String
+
+  """
+  Traffic will be logged from the VPN Tunnel. Format: projects/{project_id}/regions/{region}/vpnTunnels/{name}
+  """
+  vpnTunnel: String
+  metadata: query_networkmanagement_projects_locations_vpcFlowLogsConfigs_get_metadata
+
+  """
+  Traffic will be logged from VMs, VPN tunnels and Interconnect Attachments within the network. Format: projects/{project_id}/global/networks/{name}
+  """
+  network: String
+
+  """Output only. The time the config was updated."""
+  updateTime: String
+
+  """
+  Optional. The value of the field must be in (0, 1]. The sampling rate of VPC Flow Logs where 1.0 means all collected logs are reported. Setting the sampling rate to 0.0 is not allowed. If you want to disable VPC Flow Logs, use the state field instead. Default value is 1.0.
+  """
+  flowSampling: Float
+
+  """
+  Optional. Custom metadata fields to include in the reported VPC flow logs. Can only be specified if "metadata" was set to CUSTOM_METADATA.
+  """
+  metadataFields: [String]
+
+  """
+  Traffic will be logged from VMs within the subnetwork. Format: projects/{project_id}/regions/{region}/subnetworks/{name}
+  """
+  subnet: String
+}
+
+"""
+Optional. The state of the VPC Flow Log configuration. Default value is ENABLED. When creating a new configuration, it must be enabled. Setting state=DISABLED will pause the log generation for this config.
+"""
+enum query_networkmanagement_projects_locations_vpcFlowLogsConfigs_get_state {
+  STATE_UNSPECIFIED
+  ENABLED
+  DISABLED
+}
+
+"""
+Output only. Describes the state of the configured target resource for diagnostic purposes.
+"""
+enum query_networkmanagement_projects_locations_vpcFlowLogsConfigs_get_targetResourceState {
+  TARGET_RESOURCE_STATE_UNSPECIFIED
+  TARGET_RESOURCE_EXISTS
+  TARGET_RESOURCE_DOES_NOT_EXIST
+}
+
+"""
+Optional. The aggregation interval for the logs. Default value is INTERVAL_5_SEC.
+"""
+enum query_networkmanagement_projects_locations_vpcFlowLogsConfigs_get_aggregationInterval {
+  AGGREGATION_INTERVAL_UNSPECIFIED
+  INTERVAL_5_SEC
+  INTERVAL_30_SEC
+  INTERVAL_1_MIN
+  INTERVAL_5_MIN
+  INTERVAL_10_MIN
+  INTERVAL_15_MIN
+}
+
+"""
+Optional. Determines whether to include cross project annotations in the logs. This field is available only for organization configurations. If not specified in org configs will be set to CROSS_PROJECT_METADATA_ENABLED.
+"""
+enum query_networkmanagement_projects_locations_vpcFlowLogsConfigs_get_crossProjectMetadata {
+  CROSS_PROJECT_METADATA_UNSPECIFIED
+  CROSS_PROJECT_METADATA_ENABLED
+  CROSS_PROJECT_METADATA_DISABLED
+}
+
+"""
+Optional. Configures whether all, none or a subset of metadata fields should be added to the reported VPC flow logs. Default value is INCLUDE_ALL_METADATA.
+"""
+enum query_networkmanagement_projects_locations_vpcFlowLogsConfigs_get_metadata {
+  METADATA_UNSPECIFIED
+  INCLUDE_ALL_METADATA
+  EXCLUDE_ALL_METADATA
+  CUSTOM_METADATA
+}
+
+"""Response for the `ShowEffectiveFlowLogsConfigs` method."""
+type ShowEffectiveFlowLogsConfigsResponse {
+  """List of Effective Vpc Flow Logs configurations."""
+  effectiveFlowLogsConfigs: [EffectiveVpcFlowLogsConfig]
+
+  """Page token to fetch the next set of configurations."""
+  nextPageToken: String
+
+  """
+  Locations that could not be reached (when querying all locations with `-`).
+  """
+  unreachable: [String]
+}
+
+"""
+A configuration to generate a response for GetEffectiveVpcFlowLogsConfig request.
+"""
+type EffectiveVpcFlowLogsConfig {
+  """
+  Traffic will be logged from the Interconnect Attachment. Format: projects/{project_id}/regions/{region}/interconnectAttachments/{name}
+  """
+  interconnectAttachment: String
+  state: query_networkmanagement_projects_locations_vpcFlowLogsConfigs_showEffectiveFlowLogsConfigs_effectiveFlowLogsConfigs_items_state
+  aggregationInterval: query_networkmanagement_projects_locations_vpcFlowLogsConfigs_showEffectiveFlowLogsConfigs_effectiveFlowLogsConfigs_items_aggregationInterval
+  crossProjectMetadata: query_networkmanagement_projects_locations_vpcFlowLogsConfigs_showEffectiveFlowLogsConfigs_effectiveFlowLogsConfigs_items_crossProjectMetadata
+
+  """
+  Unique name of the configuration. The name can have one of the following forms: - For project-level configurations: `projects/{project_id}/locations/global/vpcFlowLogsConfigs/{vpc_flow_logs_config_id}` - For organization-level configurations: `organizations/{organization_id}/locations/global/vpcFlowLogsConfigs/{vpc_flow_logs_config_id}` - For a Compute config, the name will be the path of the subnet: `projects/{project_id}/regions/{region}/subnetworks/{subnet_id}`
+  """
+  name: String
+
+  """Export filter used to define which VPC Flow Logs should be logged."""
+  filterExpr: String
+
+  """
+  Traffic will be logged from the VPN Tunnel. Format: projects/{project_id}/regions/{region}/vpnTunnels/{name}
+  """
+  vpnTunnel: String
+  metadata: query_networkmanagement_projects_locations_vpcFlowLogsConfigs_showEffectiveFlowLogsConfigs_effectiveFlowLogsConfigs_items_metadata
+
+  """
+  Traffic will be logged from VMs, VPN tunnels and Interconnect Attachments within the network. Format: projects/{project_id}/global/networks/{name}
+  """
+  network: String
+
+  """
+  Custom metadata fields to include in the reported VPC flow logs. Can only be specified if "metadata" was set to CUSTOM_METADATA.
+  """
+  metadataFields: [String]
+
+  """
+  Traffic will be logged from VMs within the subnetwork. Format: projects/{project_id}/regions/{region}/subnetworks/{name}
+  """
+  subnet: String
+
+  """
+  The value of the field must be in (0, 1]. The sampling rate of VPC Flow Logs where 1.0 means all collected logs are reported. Setting the sampling rate to 0.0 is not allowed. If you want to disable VPC Flow Logs, use the state field instead. Default value is 1.0.
+  """
+  flowSampling: Float
+  scope: query_networkmanagement_projects_locations_vpcFlowLogsConfigs_showEffectiveFlowLogsConfigs_effectiveFlowLogsConfigs_items_scope
+}
+
+"""
+The state of the VPC Flow Log configuration. Default value is ENABLED. When creating a new configuration, it must be enabled. Setting state=DISABLED will pause the log generation for this config.
+"""
+enum query_networkmanagement_projects_locations_vpcFlowLogsConfigs_showEffectiveFlowLogsConfigs_effectiveFlowLogsConfigs_items_state {
+  STATE_UNSPECIFIED
+  ENABLED
+  DISABLED
+}
+
+"""
+The aggregation interval for the logs. Default value is INTERVAL_5_SEC.
+"""
+enum query_networkmanagement_projects_locations_vpcFlowLogsConfigs_showEffectiveFlowLogsConfigs_effectiveFlowLogsConfigs_items_aggregationInterval {
+  AGGREGATION_INTERVAL_UNSPECIFIED
+  INTERVAL_5_SEC
+  INTERVAL_30_SEC
+  INTERVAL_1_MIN
+  INTERVAL_5_MIN
+  INTERVAL_10_MIN
+  INTERVAL_15_MIN
+}
+
+"""
+Determines whether to include cross project annotations in the logs. This field is available only for organization configurations. If not specified in org configs will be set to CROSS_PROJECT_METADATA_ENABLED.
+"""
+enum query_networkmanagement_projects_locations_vpcFlowLogsConfigs_showEffectiveFlowLogsConfigs_effectiveFlowLogsConfigs_items_crossProjectMetadata {
+  CROSS_PROJECT_METADATA_UNSPECIFIED
+  CROSS_PROJECT_METADATA_ENABLED
+  CROSS_PROJECT_METADATA_DISABLED
+}
+
+"""
+Configures whether all, none or a subset of metadata fields should be added to the reported VPC flow logs. Default value is INCLUDE_ALL_METADATA.
+"""
+enum query_networkmanagement_projects_locations_vpcFlowLogsConfigs_showEffectiveFlowLogsConfigs_effectiveFlowLogsConfigs_items_metadata {
+  METADATA_UNSPECIFIED
+  INCLUDE_ALL_METADATA
+  EXCLUDE_ALL_METADATA
+  CUSTOM_METADATA
+}
+
+"""
+Specifies the scope of the config (e.g., SUBNET, NETWORK, ORGANIZATION..).
+"""
+enum query_networkmanagement_projects_locations_vpcFlowLogsConfigs_showEffectiveFlowLogsConfigs_effectiveFlowLogsConfigs_items_scope {
+  SCOPE_UNSPECIFIED
+  SUBNET
+  COMPUTE_API_SUBNET
+  NETWORK
+  VPN_TUNNEL
+  INTERCONNECT_ATTACHMENT
+  ORGANIZATION
+}
+
+"""Response for the `QueryVpcFlowLogsConfigs` method."""
+type QueryOrgVpcFlowLogsConfigsResponse {
+  """List of VPC Flow Log configurations."""
+  vpcFlowLogsConfigs: [VpcFlowLogsConfig]
+
+  """Page token to fetch the next set of configurations."""
+  nextPageToken: String
+
+  """
+  Locations that could not be reached (when querying all locations with `-`).
+  """
+  unreachable: [String]
+}
+
+"""Response for the `ListVpcFlowLogsConfigs` method."""
+type ListVpcFlowLogsConfigsResponse {
+  """
+  Locations that could not be reached (when querying all locations with `-`).
+  """
+  unreachable: [String]
+
+  """List of VPC Flow Log configurations."""
+  vpcFlowLogsConfigs: [VpcFlowLogsConfig]
+
+  """Page token to fetch the next set of configurations."""
+  nextPageToken: String
+}
+
+type Mutation {
+  """
+  Deletes a long-running operation. This method indicates that the client is no longer interested in the operation result. It does not cancel the operation. If the server doesn't support this method, it returns `google.rpc.Code.UNIMPLEMENTED`.
+  """
+  networkmanagement_projects_locations_global_operations_delete(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter operationsId"""
+    operationsId: String!
+  ): JSON
+
+  """
+  Starts asynchronous cancellation on a long-running operation. The server makes a best effort to cancel the operation, but success is not guaranteed. If the server doesn't support this method, it returns `google.rpc.Code.UNIMPLEMENTED`. Clients can use Operations.GetOperation or other methods to check whether the cancellation succeeded or whether the operation completed despite cancellation. On successful cancellation, the operation is not deleted; instead, it becomes an operation with an Operation.error value with a google.rpc.Status.code of `1`, corresponding to `Code.CANCELLED`.
+  """
+  networkmanagement_projects_locations_global_operations_cancel(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter operationsId"""
+    operationsId: String!
+
+    """The request message for Operations.CancelOperation."""
+    input: JSON
+  ): JSON
+
+  """Deletes a specific `ConnectivityTest`."""
+  networkmanagement_projects_locations_global_connectivityTests_delete(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter connectivityTestsId"""
+    connectivityTestsId: String!
+  ): Operation
+
+  """
+  Updates the configuration of an existing `ConnectivityTest`. After you update a test, the reachability analysis is performed as part of the long running operation, which completes when the analysis completes. The Reachability state in the test resource is updated with the new result. If the endpoint specifications in `ConnectivityTest` are invalid (for example, they contain non-existent resources in the network, or the user does not have read permissions to the network configurations of listed projects), then the reachability result returns a value of UNKNOWN. If the endpoint specifications in `ConnectivityTest` are incomplete, the reachability result returns a value of `AMBIGUOUS`. See the documentation in `ConnectivityTest` for more details.
+  """
+  networkmanagement_projects_locations_global_connectivityTests_patch(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter connectivityTestsId"""
+    connectivityTestsId: String!
+
+    """
+    Required. Mask of fields to update. At least one path must be supplied in this field.
+    """
+    updateMask: String
+    input: ConnectivityTest_Input
+  ): Operation
+
+  """
+  Sets the access control policy on the specified resource. Replaces any existing policy. Can return `NOT_FOUND`, `INVALID_ARGUMENT`, and `PERMISSION_DENIED` errors.
+  """
+  networkmanagement_projects_locations_global_connectivityTests_setIamPolicy(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter connectivityTestsId"""
+    connectivityTestsId: String!
+    input: SetIamPolicyRequest_Input
+  ): Policy
+
+  """
+  Rerun an existing `ConnectivityTest`. After the user triggers the rerun, the reachability analysis is performed as part of the long running operation, which completes when the analysis completes. Even though the test configuration remains the same, the reachability result may change due to underlying network configuration changes. If the endpoint specifications in `ConnectivityTest` become invalid (for example, specified resources are deleted in the network, or you lost read permissions to the network configurations of listed projects), then the reachability result returns a value of `UNKNOWN`.
+  """
+  networkmanagement_projects_locations_global_connectivityTests_rerun(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter connectivityTestsId"""
+    connectivityTestsId: String!
+
+    """Request for the `RerunConnectivityTest` method."""
+    input: JSON
+  ): Operation
+
+  """
+  Creates a new Connectivity Test. After you create a test, the reachability analysis is performed as part of the long running operation, which completes when the analysis completes. If the endpoint specifications in `ConnectivityTest` are invalid (for example, containing non-existent resources in the network, or you don't have read permissions to the network configurations of listed projects), then the reachability result returns a value of `UNKNOWN`. If the endpoint specifications in `ConnectivityTest` are incomplete, the reachability result returns a value of AMBIGUOUS. For more information, see the Connectivity Test documentation.
+  """
+  networkmanagement_projects_locations_global_connectivityTests_create(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """
+    Required. The logical name of the Connectivity Test in your project with the following restrictions: * Must contain only lowercase letters, numbers, and hyphens. * Must start with a letter. * Must be between 1-40 characters. * Must end with a number or a letter. * Must be unique within the customer project
+    """
+    testId: String
+    input: ConnectivityTest_Input
+  ): Operation
+
+  """
+  Returns permissions that a caller has on the specified resource. If the resource does not exist, this will return an empty set of permissions, not a `NOT_FOUND` error. Note: This operation is designed to be used for building permission-aware UIs and command-line tools, not for authorization checking. This operation may "fail open" without warning.
+  """
+  networkmanagement_projects_locations_global_connectivityTests_testIamPermissions(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter connectivityTestsId"""
+    connectivityTestsId: String!
+    input: TestIamPermissionsRequest_Input
+  ): TestIamPermissionsResponse
+
+  """Deletes a specific `VpcFlowLogsConfig`."""
+  networkmanagement_projects_locations_vpcFlowLogsConfigs_delete(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter vpcFlowLogsConfigsId"""
+    vpcFlowLogsConfigsId: String!
+  ): Operation
+
+  """
+  Updates an existing `VpcFlowLogsConfig`. If a configuration with the exact same settings already exists (even if the ID is different), the creation fails. Notes: 1. Updating a configuration with `state=DISABLED` will fail 2. The following fields are not considered as settings for the purpose of the check mentioned above, therefore - updating another configuration with the same fields but different values for the following fields will fail as well: * name * create_time * update_time * labels * description
+  """
+  networkmanagement_projects_locations_vpcFlowLogsConfigs_patch(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter vpcFlowLogsConfigsId"""
+    vpcFlowLogsConfigsId: String!
+
+    """
+    Required. Mask of fields to update. At least one path must be supplied in this field. For example, to change the state of the configuration to ENABLED, specify `update_mask` = `"state"`, and the `vpc_flow_logs_config` would be: `vpc_flow_logs_config = { name = "projects/my-project/locations/global/vpcFlowLogsConfigs/my-config" state = "ENABLED" }`
+    """
+    updateMask: String
+    input: VpcFlowLogsConfig_Input
+  ): Operation
+
+  """
+  Creates a new `VpcFlowLogsConfig`. If a configuration with the exact same settings already exists (even if the ID is different), the creation fails. Notes: 1. Creating a configuration with `state=DISABLED` will fail 2. The following fields are not considered as settings for the purpose of the check mentioned above, therefore - creating another configuration with the same fields but different values for the following fields will fail as well: * name * create_time * update_time * labels * description
+  """
+  networkmanagement_projects_locations_vpcFlowLogsConfigs_create(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Required. ID of the `VpcFlowLogsConfig`."""
+    vpcFlowLogsConfigId: String
+    input: VpcFlowLogsConfig_Input
+  ): Operation
+
+  """
+  Deletes a long-running operation. This method indicates that the client is no longer interested in the operation result. It does not cancel the operation. If the server doesn't support this method, it returns `google.rpc.Code.UNIMPLEMENTED`.
+  """
+  networkmanagement_organizations_locations_global_operations_delete(
+    """Path parameter organizationsId"""
+    organizationsId: String!
+
+    """Path parameter operationsId"""
+    operationsId: String!
+  ): JSON
+
+  """
+  Starts asynchronous cancellation on a long-running operation. The server makes a best effort to cancel the operation, but success is not guaranteed. If the server doesn't support this method, it returns `google.rpc.Code.UNIMPLEMENTED`. Clients can use Operations.GetOperation or other methods to check whether the cancellation succeeded or whether the operation completed despite cancellation. On successful cancellation, the operation is not deleted; instead, it becomes an operation with an Operation.error value with a google.rpc.Status.code of `1`, corresponding to `Code.CANCELLED`.
+  """
+  networkmanagement_organizations_locations_global_operations_cancel(
+    """Path parameter organizationsId"""
+    organizationsId: String!
+
+    """Path parameter operationsId"""
+    operationsId: String!
+
+    """The request message for Operations.CancelOperation."""
+    input: JSON
+  ): JSON
+
+  """
+  Updates an existing `VpcFlowLogsConfig`. If a configuration with the exact same settings already exists (even if the ID is different), the creation fails. Notes: 1. Updating a configuration with `state=DISABLED` will fail 2. The following fields are not considered as settings for the purpose of the check mentioned above, therefore - updating another configuration with the same fields but different values for the following fields will fail as well: * name * create_time * update_time * labels * description
+  """
+  networkmanagement_organizations_locations_vpcFlowLogsConfigs_patch(
+    """Path parameter organizationsId"""
+    organizationsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter vpcFlowLogsConfigsId"""
+    vpcFlowLogsConfigsId: String!
+
+    """
+    Required. Mask of fields to update. At least one path must be supplied in this field. For example, to change the state of the configuration to ENABLED, specify `update_mask` = `"state"`, and the `vpc_flow_logs_config` would be: `vpc_flow_logs_config = { name = "projects/my-project/locations/global/vpcFlowLogsConfigs/my-config" state = "ENABLED" }`
+    """
+    updateMask: String
+    input: VpcFlowLogsConfig_Input
+  ): Operation
+
+  """Deletes a specific `VpcFlowLogsConfig`."""
+  networkmanagement_organizations_locations_vpcFlowLogsConfigs_delete(
+    """Path parameter organizationsId"""
+    organizationsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter vpcFlowLogsConfigsId"""
+    vpcFlowLogsConfigsId: String!
+  ): Operation
+
+  """
+  Creates a new `VpcFlowLogsConfig`. If a configuration with the exact same settings already exists (even if the ID is different), the creation fails. Notes: 1. Creating a configuration with `state=DISABLED` will fail 2. The following fields are not considered as settings for the purpose of the check mentioned above, therefore - creating another configuration with the same fields but different values for the following fields will fail as well: * name * create_time * update_time * labels * description
+  """
+  networkmanagement_organizations_locations_vpcFlowLogsConfigs_create(
+    """Path parameter organizationsId"""
+    organizationsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Required. ID of the `VpcFlowLogsConfig`."""
+    vpcFlowLogsConfigId: String
+    input: VpcFlowLogsConfig_Input
+  ): Operation
+}
+
+"""A Connectivity Test for a network reachability analysis."""
+input ConnectivityTest_Input {
+  """
+  Whether run analysis for the return path from destination to source. Default value is false.
+  """
+  roundTrip: Boolean
+
+  """
+  Identifier. Unique name of the resource using the form: `projects/{project_id}/locations/global/connectivityTests/{test}`
+  """
+  name: String
+
+  """Output only. The time the test was created."""
+  createTime: String
+
+  """
+  The user-supplied description of the Connectivity Test. Maximum of 512 characters.
+  """
+  description: String
+
+  """
+  Whether the analysis should skip firewall checking. Default value is false.
+  """
+  bypassFirewallChecks: Boolean
+
+  """
+  Other projects that may be relevant for reachability analysis. This is applicable to scenarios where a test can cross project boundaries.
+  """
+  relatedProjects: [String]
+
+  """Resource labels to represent user-provided metadata."""
+  labels: JSON
+  source: Endpoint_Input
+  probingDetails: ProbingDetails_Input
+
+  """Output only. The display name of a Connectivity Test."""
+  displayName: String
+  destination: Endpoint_Input
+
+  """IP Protocol of the test. When not provided, "TCP" is assumed."""
+  protocol: String
+  returnReachabilityDetails: ReachabilityDetails_Input
+  reachabilityDetails: ReachabilityDetails_Input
+
+  """Output only. The time the test's configuration was updated."""
+  updateTime: String
+}
+
+"""Source or destination of the Connectivity Test."""
+input Endpoint_Input {
+  """A Compute Engine instance URI."""
+  instance: String
+  networkType: query_networkmanagement_projects_locations_global_connectivityTests_get_source_networkType
+
+  """
+  A [Redis Instance](https://cloud.google.com/memorystore/docs/redis) URI. Applicable only to destination endpoint.
+  """
+  redisInstance: String
+  appEngineVersion: AppEngineVersionEndpoint_Input
+
+  """
+  The IP protocol port of the endpoint. Only applicable when protocol is TCP or UDP.
+  """
+  port: Int
+
+  """
+  For source endpoints, endpoint project ID. Used according to the `network_type`. Not relevant for destination endpoints.
+  """
+  projectId: String
+  cloudFunction: CloudFunctionEndpoint_Input
+
+  """
+  A forwarding rule and its corresponding IP address represent the frontend configuration of a Google Cloud load balancer. Forwarding rules are also used for protocol forwarding, Private Service Connect and other network services to provide forwarding information in the control plane. Applicable only to destination endpoint. Format: `projects/{project}/global/forwardingRules/{id}` or `projects/{project}/regions/{region}/forwardingRules/{id}`
+  """
+  forwardingRule: String
+
+  """A [Cloud SQL](https://cloud.google.com/sql) instance URI."""
+  cloudSqlInstance: String
+  forwardingRuleTarget: query_networkmanagement_projects_locations_global_connectivityTests_get_source_forwardingRuleTarget
+
+  """
+  A [GKE Pod](https://cloud.google.com/kubernetes-engine/docs/concepts/pod) URI.
+  """
+  gkePod: String
+
+  """
+  A VPC network URI. For source endpoints, used according to the `network_type`. For destination endpoints, used only when the source is an external IP address endpoint, and the destination is an internal IP address endpoint.
+  """
+  network: String
+
+  """
+  A cluster URI for [Google Kubernetes Engine cluster control plane](https://cloud.google.com/kubernetes-engine/docs/concepts/cluster-architecture).
+  """
+  gkeMasterCluster: String
+
+  """
+  A [Redis Cluster](https://cloud.google.com/memorystore/docs/cluster) URI. Applicable only to destination endpoint.
+  """
+  redisCluster: String
+  loadBalancerType: query_networkmanagement_projects_locations_global_connectivityTests_get_source_loadBalancerType
+  cloudRunRevision: CloudRunRevisionEndpoint_Input
+
+  """
+  The IP address of the endpoint, which can be an external or internal IP.
+  """
+  ipAddress: String
+
+  """
+  Output only. ID of the load balancer the forwarding rule points to. Empty for forwarding rules not related to load balancers.
+  """
+  loadBalancerId: String
+
+  """
+  DNS endpoint of [Google Kubernetes Engine cluster control plane](https://cloud.google.com/kubernetes-engine/docs/concepts/cluster-architecture). Requires gke_master_cluster to be set, can't be used simultaneoulsly with ip_address or network. Applicable only to destination endpoint.
+  """
+  fqdn: String
+}
+
+"""Wrapper for the App Engine service version attributes."""
+input AppEngineVersionEndpoint_Input {
+  """
+  An [App Engine](https://cloud.google.com/appengine) [service version](https://cloud.google.com/appengine/docs/admin-api/reference/rest/v1/apps.services.versions) name.
+  """
+  uri: String
+}
+
+"""Wrapper for Cloud Function attributes."""
+input CloudFunctionEndpoint_Input {
+  """A [Cloud Function](https://cloud.google.com/functions) name."""
+  uri: String
+}
+
+"""Wrapper for Cloud Run revision attributes."""
+input CloudRunRevisionEndpoint_Input {
+  """
+  A [Cloud Run](https://cloud.google.com/run) [revision](https://cloud.google.com/run/docs/reference/rest/v1/namespaces.revisions/get) URI. The format is: projects/{project}/locations/{location}/revisions/{revision}
+  """
+  uri: String
+
+  """
+  Output only. The URI of the Cloud Run service that the revision belongs to. The format is: projects/{project}/locations/{location}/services/{service}
+  """
+  serviceUri: String
+}
+
+"""Results of active probing from the last run of the test."""
+input ProbingDetails_Input {
+  abortCause: query_networkmanagement_projects_locations_global_connectivityTests_get_probingDetails_abortCause
+  result: query_networkmanagement_projects_locations_global_connectivityTests_get_probingDetails_result
+
+  """Whether all relevant edge devices were probed."""
+  probedAllDevices: Boolean
+  error: Status_Input
+  destinationEgressLocation: EdgeLocation_Input
+  probingLatency: LatencyDistribution_Input
+
+  """Number of probes that reached the destination."""
+  successfulProbeCount: Int
+  endpointInfo: EndpointInfo_Input
+
+  """Probing results for all edge devices."""
+  edgeResponses: [SingleEdgeResponse_Input]
+
+  """Number of probes sent."""
+  sentProbeCount: Int
+
+  """The time that reachability was assessed through active probing."""
+  verifyTime: String
+}
+
+"""
+The `Status` type defines a logical error model that is suitable for different programming environments, including REST APIs and RPC APIs. It is used by [gRPC](https://github.com/grpc). Each `Status` message contains three pieces of data: error code, error message, and error details. You can find out more about this error model and how to work with it in the [API Design Guide](https://cloud.google.com/apis/design/errors).
+"""
+input Status_Input {
+  """
+  A list of messages that carry the error details. There is a common set of message types for APIs to use.
+  """
+  details: [JSON]
+
+  """The status code, which should be an enum value of google.rpc.Code."""
+  code: Int
+
+  """
+  A developer-facing error message, which should be in English. Any user-facing error message should be localized and sent in the google.rpc.Status.details field, or localized by the client.
+  """
+  message: String
+}
+
+"""
+Representation of a network edge location as per https://cloud.google.com/vpc/docs/edge-locations.
+"""
+input EdgeLocation_Input {
+  """Name of the metropolitan area."""
+  metropolitanArea: String
+}
+
+"""Describes measured latency distribution."""
+input LatencyDistribution_Input {
+  """Representative latency percentiles."""
+  latencyPercentiles: [LatencyPercentile_Input]
+}
+
+"""Latency percentile rank and value."""
+input LatencyPercentile_Input {
+  """
+  percent-th percentile of latency observed, in microseconds. Fraction of percent/100 of samples have latency lower or equal to the value of this field.
+  """
+  latencyMicros: BigInt
+
+  """Percentage of samples this data point applies to."""
+  percent: Int
+}
+
+"""
+For display only. The specification of the endpoints for the test. EndpointInfo is derived from source and destination Endpoint and validated by the backend data plane model.
+"""
+input EndpointInfo_Input {
+  """URI of the network where this packet originates from."""
+  sourceNetworkUri: String
+
+  """Destination IP address."""
+  destinationIp: String
+
+  """URI of the source telemetry agent this packet originates from."""
+  sourceAgentUri: String
+
+  """IP protocol in string format, for example: "TCP", "UDP", "ICMP"."""
+  protocol: String
+
+  """Source port. Only valid when protocol is TCP or UDP."""
+  sourcePort: Int
+
+  """Source IP address."""
+  sourceIp: String
+
+  """Destination port. Only valid when protocol is TCP or UDP."""
+  destinationPort: Int
+
+  """URI of the network where this packet is sent to."""
+  destinationNetworkUri: String
+}
+
+"""Probing results for a single edge device."""
+input SingleEdgeResponse_Input {
+  probingLatency: LatencyDistribution_Input
+
+  """
+  Router name in the format '{router}.{metroshard}'. For example: pf01.aaa01, pr02.aaa01.
+  """
+  destinationRouter: String
+
+  """Number of probes sent."""
+  sentProbeCount: Int
+  destinationEgressLocation: EdgeLocation_Input
+
+  """Number of probes that reached the destination."""
+  successfulProbeCount: Int
+  result: query_networkmanagement_projects_locations_global_connectivityTests_get_probingDetails_edgeResponses_items_result
+}
+
+"""Results of the configuration analysis from the last run of the test."""
+input ReachabilityDetails_Input {
+  result: query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_result
+
+  """
+  Result may contain a list of traces if a test has multiple possible paths in the network, such as when destination endpoint is a load balancer with multiple backends.
+  """
+  traces: [Trace_Input]
+
+  """The time of the configuration analysis."""
+  verifyTime: String
+  error: Status_Input
+}
+
+"""
+Trace represents one simulated packet forwarding path. * Each trace contains multiple ordered steps. * Each step is in a particular state with associated configuration. * State is categorized as final or non-final states. * Each final state has a reason associated. * Each trace must end with a final state (the last step). ``` |---------------------Trace----------------------| Step1(State) Step2(State) --- StepN(State(final)) ```
+"""
+input Trace_Input {
+  """
+  A trace of a test contains multiple steps from the initial state to the final state (delivered, dropped, forwarded, or aborted). The steps are ordered by the processing sequence within the simulated network state machine. It is critical to preserve the order of the steps and avoid reordering or sorting them.
+  """
+  steps: [Step_Input]
+
+  """
+  ID of trace. For forward traces, this ID is unique for each trace. For return traces, it matches ID of associated forward trace. A single forward trace can be associated with none, one or more than one return trace.
+  """
+  forwardTraceId: Int
+  endpointInfo: EndpointInfo_Input
+}
+
+"""
+A simulated forwarding path is composed of multiple steps. Each step has a well-defined state and an associated configuration.
+"""
+input Step_Input {
+  """Project ID that contains the configuration this step is validating."""
+  projectId: String
+  route: RouteInfo_Input
+  forwardingRule: ForwardingRuleInfo_Input
+
+  """A description of the step. Usually this is a summary of the state."""
+  description: String
+  state: query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_state
+
+  """This is a step that leads to the final state Drop."""
+  causesDrop: Boolean
+  firewall: FirewallInfo_Input
+  endpoint: EndpointInfo_Input
+  cloudRunRevision: CloudRunRevisionInfo_Input
+  proxyConnection: ProxyConnectionInfo_Input
+  vpnGateway: VpnGatewayInfo_Input
+  drop: DropInfo_Input
+  googleService: GoogleServiceInfo_Input
+  ngfwPacketInspection: NgfwPacketInspectionInfo_Input
+  deliver: DeliverInfo_Input
+  loadBalancer: LoadBalancerInfo_Input
+  ipMasqueradingSkipped: IpMasqueradingSkippedInfo_Input
+  gkeNetworkPolicySkipped: GkeNetworkPolicySkippedInfo_Input
+  redisCluster: RedisClusterInfo_Input
+  cloudFunction: CloudFunctionInfo_Input
+  gkeMaster: GKEMasterInfo_Input
+  abort: AbortInfo_Input
+  gkeNetworkPolicy: GkeNetworkPolicyInfo_Input
+  vpnTunnel: VpnTunnelInfo_Input
+  forward: ForwardInfo_Input
+  cloudSqlInstance: CloudSQLInstanceInfo_Input
+  interconnectAttachment: InterconnectAttachmentInfo_Input
+  instance: InstanceInfo_Input
+  hybridSubnet: HybridSubnetInfo_Input
+  redisInstance: RedisInstanceInfo_Input
+  appEngineVersion: AppEngineVersionInfo_Input
+  serverlessExternalConnection: ServerlessExternalConnectionInfo_Input
+  nat: NatInfo_Input
+  storageBucket: StorageBucketInfo_Input
+  vpcConnector: VpcConnectorInfo_Input
+  directVpcEgressConnection: DirectVpcEgressConnectionInfo_Input
+  gkePod: GkePodInfo_Input
+  network: NetworkInfo_Input
+  loadBalancerBackendInfo: LoadBalancerBackendInfo_Input
+  serverlessNeg: ServerlessNegInfo_Input
+}
+
+"""For display only. Metadata associated with a Compute Engine route."""
+input RouteInfo_Input {
+  """
+  For ADVERTISED dynamic routes, the URI of the Cloud Router that advertised the corresponding IP prefix.
+  """
+  advertisedRouteSourceRouterUri: String
+
+  """
+  URI of a route. SUBNET, STATIC, PEERING_SUBNET (only for peering network) and POLICY_BASED routes only.
+  """
+  uri: String
+
+  """
+  For PEERING_SUBNET and PEERING_DYNAMIC routes that are advertised by NCC Hub, the URI of the corresponding route in NCC Hub's routing table.
+  """
+  nccHubRouteUri: String
+  nextHopType: query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_route_nextHopType
+
+  """Protocols of the route. POLICY_BASED routes only."""
+  protocols: [String]
+
+  """
+  String type of the next hop of the route (for example, "VPN tunnel"). Deprecated in favor of the next_hop_type and next_hop_uri fields, not used in new tests.
+  """
+  nextHop: String
+
+  """Instance tags of the route."""
+  instanceTags: [String]
+
+  """
+  URI of the NCC Hub the route is advertised by. PEERING_SUBNET and PEERING_DYNAMIC routes that are advertised by NCC Hub only.
+  """
+  nccHubUri: String
+
+  """
+  For ADVERTISED routes, the URI of their next hop, i.e. the URI of the hybrid endpoint (VPN tunnel, Interconnect attachment, NCC router appliance) the advertised prefix is advertised through, or URI of the source peered network. Deprecated in favor of the next_hop_uri field, not used in new tests.
+  """
+  advertisedRouteNextHopUri: String
+  routeType: query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_route_routeType
+
+  """Name of a route."""
+  displayName: String
+
+  """Source port ranges of the route. POLICY_BASED routes only."""
+  srcPortRanges: [String]
+
+  """
+  URI of the destination NCC Spoke. PEERING_SUBNET and PEERING_DYNAMIC routes that are advertised by NCC Hub only.
+  """
+  nccSpokeUri: String
+
+  """Source IP address range of the route. POLICY_BASED routes only."""
+  srcIpRange: String
+
+  """
+  Region of the route. DYNAMIC, PEERING_DYNAMIC, POLICY_BASED and ADVERTISED routes only. If set for POLICY_BASED route, this is a region of VLAN attachments for Cloud Interconnect the route applies to.
+  """
+  region: String
+
+  """URI of the next hop resource."""
+  nextHopUri: String
+
+  """Destination port ranges of the route. POLICY_BASED routes only."""
+  destPortRanges: [String]
+
+  """
+  For PEERING_SUBNET and PEERING_STATIC routes, the URI of the originating SUBNET/STATIC route.
+  """
+  originatingRouteUri: String
+
+  """Destination IP range of the route."""
+  destIpRange: String
+  routeScope: query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_route_routeScope
+
+  """
+  For PEERING_SUBNET, PEERING_STATIC and PEERING_DYNAMIC routes, the name of the originating SUBNET/STATIC/DYNAMIC route.
+  """
+  originatingRouteDisplayName: String
+
+  """URI of a VPC network where route is located."""
+  networkUri: String
+
+  """Priority of the route."""
+  priority: Int
+
+  """URI of a VPC network where the next hop resource is located."""
+  nextHopNetworkUri: String
+}
+
+"""
+For display only. Metadata associated with a Compute Engine forwarding rule.
+"""
+input ForwardingRuleInfo_Input {
+  """Protocol defined in the forwarding rule that matches the packet."""
+  matchedProtocol: String
+
+  """Target type of the forwarding rule."""
+  target: String
+
+  """PSC Google API target this forwarding rule targets (if applicable)."""
+  pscGoogleApiTarget: String
+
+  """Port range defined in the forwarding rule that matches the packet."""
+  matchedPortRange: String
+
+  """Network URI."""
+  networkUri: String
+
+  """
+  URI of the PSC service attachment this forwarding rule targets (if applicable).
+  """
+  pscServiceAttachmentUri: String
+
+  """Name of the forwarding rule."""
+  displayName: String
+
+  """
+  Name of the load balancer the forwarding rule belongs to. Empty for forwarding rules not related to load balancers (like PSC forwarding rules).
+  """
+  loadBalancerName: String
+
+  """Region of the forwarding rule. Set only for regional forwarding rules."""
+  region: String
+
+  """VIP of the forwarding rule."""
+  vip: String
+
+  """URI of the forwarding rule."""
+  uri: String
+}
+
+"""
+For display only. Metadata associated with a VPC firewall rule, an implied VPC firewall rule, or a firewall policy rule.
+"""
+input FirewallInfo_Input {
+  """
+  The URI of the firewall policy that this rule is associated with. This field is not applicable to VPC firewall rules and implied VPC firewall rules.
+  """
+  policyUri: String
+
+  """The priority of the firewall rule."""
+  priority: Int
+
+  """
+  The URI of the VPC network that the firewall rule is associated with. This field is not applicable to hierarchical firewall policy rules.
+  """
+  networkUri: String
+
+  """
+  The display name of the firewall rule. This field might be empty for firewall policy rules.
+  """
+  displayName: String
+  firewallRuleType: query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_firewall_firewallRuleType
+
+  """Possible values: INGRESS, EGRESS"""
+  direction: String
+
+  """The target service accounts specified by the firewall rule."""
+  targetServiceAccounts: [String]
+  targetType: query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_firewall_targetType
+
+  """
+  The name of the firewall policy that this rule is associated with. This field is not applicable to VPC firewall rules and implied VPC firewall rules.
+  """
+  policy: String
+
+  """
+  The target tags defined by the VPC firewall rule. This field is not applicable to firewall policy rules.
+  """
+  targetTags: [String]
+
+  """
+  The priority of the firewall policy that this rule is associated with. This field is not applicable to VPC firewall rules and implied VPC firewall rules.
+  """
+  policyPriority: Int
+
+  """
+  The URI of the firewall rule. This field is not applicable to implied VPC firewall rules.
+  """
+  uri: String
+
+  """Possible values: ALLOW, DENY, APPLY_SECURITY_PROFILE_GROUP"""
+  action: String
+}
+
+"""For display only. Metadata associated with a Cloud Run revision."""
+input CloudRunRevisionInfo_Input {
+  """Name of a Cloud Run revision."""
+  displayName: String
+
+  """Location in which this revision is deployed."""
+  location: String
+
+  """URI of a Cloud Run revision."""
+  uri: String
+
+  """URI of Cloud Run service this revision belongs to."""
+  serviceUri: String
+}
+
+"""For display only. Metadata associated with ProxyConnection."""
+input ProxyConnectionInfo_Input {
+  """Source IP address of an original connection."""
+  oldSourceIp: String
+
+  """
+  Source port of a new connection. Only valid when protocol is TCP or UDP.
+  """
+  newSourcePort: Int
+
+  """Uri of proxy subnet."""
+  subnetUri: String
+
+  """Destination IP address of a new connection."""
+  newDestinationIp: String
+
+  """
+  Destination port of a new connection. Only valid when protocol is TCP or UDP.
+  """
+  newDestinationPort: Int
+
+  """URI of the network where connection is proxied."""
+  networkUri: String
+
+  """IP protocol in string format, for example: "TCP", "UDP", "ICMP"."""
+  protocol: String
+
+  """Destination IP address of an original connection"""
+  oldDestinationIp: String
+
+  """Source IP address of a new connection."""
+  newSourceIp: String
+
+  """
+  Destination port of an original connection. Only valid when protocol is TCP or UDP.
+  """
+  oldDestinationPort: Int
+
+  """
+  Source port of an original connection. Only valid when protocol is TCP or UDP.
+  """
+  oldSourcePort: Int
+}
+
+"""
+For display only. Metadata associated with a Compute Engine VPN gateway.
+"""
+input VpnGatewayInfo_Input {
+  """Name of a VPN gateway."""
+  displayName: String
+
+  """
+  A VPN tunnel that is associated with this VPN gateway. There may be multiple VPN tunnels configured on a VPN gateway, and only the one relevant to the test is displayed.
+  """
+  vpnTunnelUri: String
+
+  """URI of a VPN gateway."""
+  uri: String
+
+  """URI of a Compute Engine network where the VPN gateway is configured."""
+  networkUri: String
+
+  """IP address of the VPN gateway."""
+  ipAddress: String
+
+  """Name of a Google Cloud region where this VPN gateway is configured."""
+  region: String
+}
+
+"""Details of the final state "drop" and associated resource."""
+input DropInfo_Input {
+  """Destination IP address of the dropped packet (if relevant)."""
+  destinationIp: String
+
+  """Geolocation (region code) of the source IP address (if relevant)."""
+  sourceGeolocationCode: String
+
+  """Geolocation (region code) of the destination IP address (if relevant)."""
+  destinationGeolocationCode: String
+  cause: query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_drop_cause
+
+  """Source IP address of the dropped packet (if relevant)."""
+  sourceIp: String
+
+  """URI of the resource that caused the drop."""
+  resourceUri: String
+
+  """Region of the dropped packet (if relevant)."""
+  region: String
+}
+
+"""
+For display only. Details of a Google Service sending packets to a VPC network. Although the source IP might be a publicly routable address, some Google Services use special routes within Google production infrastructure to reach Compute Engine Instances. https://cloud.google.com/vpc/docs/routes#special_return_paths
+"""
+input GoogleServiceInfo_Input {
+  googleServiceType: query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_googleService_googleServiceType
+
+  """Source IP address."""
+  sourceIp: String
+}
+
+"""
+For display only. Metadata associated with a layer 7 packet inspection by the firewall.
+"""
+input NgfwPacketInspectionInfo_Input {
+  """
+  URI of the security profile group associated with this firewall packet inspection.
+  """
+  securityProfileGroupUri: String
+}
+
+"""Details of the final state "deliver" and associated resource."""
+input DeliverInfo_Input {
+  """IP address of the target (if applicable)."""
+  ipAddress: String
+
+  """URI of the resource that the packet is delivered to."""
+  resourceUri: String
+  googleServiceType: query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_deliver_googleServiceType
+
+  """
+  Name of the Cloud Storage Bucket the packet is delivered to (if applicable).
+  """
+  storageBucket: String
+
+  """PSC Google API target the packet is delivered to (if applicable)."""
+  pscGoogleApiTarget: String
+  target: query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_deliver_target
+}
+
+"""For display only. Metadata associated with a load balancer."""
+input LoadBalancerInfo_Input {
+  loadBalancerType: query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_loadBalancer_loadBalancerType
+
+  """Information for the loadbalancer backends."""
+  backends: [LoadBalancerBackend_Input]
+  backendType: query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_loadBalancer_backendType
+
+  """
+  URI of the health check for the load balancer. Deprecated and no longer populated as different load balancer backends might have different health checks.
+  """
+  healthCheckUri: String
+
+  """Backend configuration URI."""
+  backendUri: String
+}
+
+"""
+For display only. Metadata associated with a specific load balancer backend.
+"""
+input LoadBalancerBackend_Input {
+  healthCheckFirewallState: query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_loadBalancer_backends_items_healthCheckFirewallState
+
+  """URI of a Compute Engine instance or network endpoint."""
+  uri: String
+
+  """
+  A list of firewall rule URIs allowing probes from health check IP ranges.
+  """
+  healthCheckAllowingFirewallRules: [String]
+
+  """
+  A list of firewall rule URIs blocking probes from health check IP ranges.
+  """
+  healthCheckBlockingFirewallRules: [String]
+
+  """Name of a Compute Engine instance or network endpoint."""
+  displayName: String
+}
+
+"""
+For display only. Contains information about why IP masquerading was skipped for the packet.
+"""
+input IpMasqueradingSkippedInfo_Input {
+  """
+  The matched non-masquerade IP range. Only set if reason is DESTINATION_IP_IN_CONFIGURED_NON_MASQUERADE_RANGE or DESTINATION_IP_IN_DEFAULT_NON_MASQUERADE_RANGE.
+  """
+  nonMasqueradeRange: String
+  reason: query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_ipMasqueradingSkipped_reason
+}
+
+"""
+For display only. Contains information about why GKE Network Policy evaluation was skipped.
+"""
+input GkeNetworkPolicySkippedInfo_Input {
+  reason: query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_gkeNetworkPolicySkipped_reason
+}
+
+"""For display only. Metadata associated with a Redis Cluster."""
+input RedisClusterInfo_Input {
+  """Secondary endpoint IP address of a Redis Cluster."""
+  secondaryEndpointIpAddress: String
+
+  """
+  URI of a Redis Cluster in format "projects/{project_id}/locations/{location}/clusters/{cluster_id}"
+  """
+  uri: String
+
+  """
+  URI of the network containing the Redis Cluster endpoints in format "projects/{project_id}/global/networks/{network_id}".
+  """
+  networkUri: String
+
+  """Discovery endpoint IP address of a Redis Cluster."""
+  discoveryEndpointIpAddress: String
+
+  """Name of a Redis Cluster."""
+  displayName: String
+
+  """
+  Name of the region in which the Redis Cluster is defined. For example, "us-central1".
+  """
+  location: String
+}
+
+"""For display only. Metadata associated with a Cloud Function."""
+input CloudFunctionInfo_Input {
+  """URI of a Cloud Function."""
+  uri: String
+
+  """Latest successfully deployed version id of the Cloud Function."""
+  versionId: BigInt
+
+  """Name of a Cloud Function."""
+  displayName: String
+
+  """Location in which the Cloud Function is deployed."""
+  location: String
+}
+
+"""
+For display only. Metadata associated with a Google Kubernetes Engine (GKE) cluster master.
+"""
+input GKEMasterInfo_Input {
+  """External IP address of a GKE cluster control plane."""
+  externalIp: String
+
+  """URI of a GKE cluster."""
+  clusterUri: String
+
+  """URI of a GKE cluster network."""
+  clusterNetworkUri: String
+
+  """DNS endpoint of a GKE cluster control plane."""
+  dnsEndpoint: String
+
+  """Internal IP address of a GKE cluster control plane."""
+  internalIp: String
+}
+
+"""Details of the final state "abort" and associated resource."""
+input AbortInfo_Input {
+  """
+  List of project IDs the user specified in the request but lacks access to. In this case, analysis is aborted with the PERMISSION_DENIED cause.
+  """
+  projectsMissingPermission: [String]
+
+  """URI of the resource that caused the abort."""
+  resourceUri: String
+  cause: query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_abort_cause
+
+  """IP address that caused the abort."""
+  ipAddress: String
+}
+
+"""For display only. Metadata associated with a GKE Network Policy."""
+input GkeNetworkPolicyInfo_Input {
+  """Possible values: INGRESS, EGRESS"""
+  direction: String
+
+  """The name of the Network Policy."""
+  displayName: String
+
+  """
+  The URI of the Network Policy. Format for a Network Policy in a zonal cluster: `projects//zones//clusters//k8s/namespaces//networking.k8s.io/networkpolicies/` Format for a Network Policy in a regional cluster: `projects//locations//clusters//k8s/namespaces//networking.k8s.io/networkpolicies/`
+  """
+  uri: String
+
+  """Possible values: ALLOW, DENY"""
+  action: String
+}
+
+"""
+For display only. Metadata associated with a Compute Engine VPN tunnel.
+"""
+input VpnTunnelInfo_Input {
+  """Remote VPN gateway's IP address."""
+  remoteGatewayIp: String
+
+  """Local VPN gateway's IP address."""
+  sourceGatewayIp: String
+
+  """URI of a Compute Engine network where the VPN tunnel is configured."""
+  networkUri: String
+
+  """Name of a Google Cloud region where this VPN tunnel is configured."""
+  region: String
+
+  """URI of a VPN tunnel."""
+  uri: String
+  routingType: query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_vpnTunnel_routingType
+
+  """URI of a VPN gateway at remote end of the tunnel."""
+  remoteGateway: String
+
+  """URI of the VPN gateway at local end of the tunnel."""
+  sourceGateway: String
+
+  """Name of a VPN tunnel."""
+  displayName: String
+}
+
+"""Details of the final state "forward" and associated resource."""
+input ForwardInfo_Input {
+  target: query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_forward_target
+
+  """IP address of the target (if applicable)."""
+  ipAddress: String
+
+  """URI of the resource that the packet is forwarded to."""
+  resourceUri: String
+}
+
+"""For display only. Metadata associated with a Cloud SQL instance."""
+input CloudSQLInstanceInfo_Input {
+  """Region in which the Cloud SQL instance is running."""
+  region: String
+
+  """URI of a Cloud SQL instance."""
+  uri: String
+
+  """
+  URI of a Cloud SQL instance network or empty string if the instance does not have one.
+  """
+  networkUri: String
+
+  """External IP address of a Cloud SQL instance."""
+  externalIp: String
+
+  """Internal IP address of a Cloud SQL instance."""
+  internalIp: String
+
+  """Name of a Cloud SQL instance."""
+  displayName: String
+}
+
+"""For display only. Metadata associated with an Interconnect attachment."""
+input InterconnectAttachmentInfo_Input {
+  type: query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_interconnectAttachment_type
+
+  """Appliance IP address that was matched for L2_DEDICATED attachments."""
+  l2AttachmentMatchedIpAddress: String
+
+  """URI of the Cloud Router to be used for dynamic routing."""
+  cloudRouterUri: String
+
+  """Name of an Interconnect attachment."""
+  displayName: String
+
+  """
+  Name of a Google Cloud region where the Interconnect attachment is configured.
+  """
+  region: String
+
+  """URI of an Interconnect attachment."""
+  uri: String
+
+  """
+  URI of the Interconnect where the Interconnect attachment is configured.
+  """
+  interconnectUri: String
+}
+
+"""For display only. Metadata associated with a Compute Engine instance."""
+input InstanceInfo_Input {
+  """
+  URI of the PSC network attachment the NIC is attached to (if relevant).
+  """
+  pscNetworkAttachmentUri: String
+
+  """Internal IP address of the network interface."""
+  internalIp: String
+
+  """URI of a Compute Engine network."""
+  networkUri: String
+
+  """Name of the network interface of a Compute Engine instance."""
+  interface: String
+
+  """External IP address of the network interface."""
+  externalIp: String
+
+  """Network tags configured on the instance."""
+  networkTags: [String]
+
+  """Name of a Compute Engine instance."""
+  displayName: String
+
+  """URI of a Compute Engine instance."""
+  uri: String
+
+  """Service account authorized for the instance."""
+  serviceAccount: String
+
+  """
+  Indicates whether the Compute Engine instance is running. Deprecated: use the `status` field instead.
+  """
+  running: Boolean
+  status: query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_instance_status
+}
+
+"""For display only. Metadata associated with a hybrid subnet."""
+input HybridSubnetInfo_Input {
+  """Name of a Google Cloud region where the hybrid subnet is configured."""
+  region: String
+
+  """URI of a hybrid subnet."""
+  uri: String
+
+  """Name of a hybrid subnet."""
+  displayName: String
+}
+
+"""For display only. Metadata associated with a Cloud Redis Instance."""
+input RedisInstanceInfo_Input {
+  """Name of a Cloud Redis Instance."""
+  displayName: String
+
+  """Read endpoint IP address of a Cloud Redis Instance (if applicable)."""
+  readEndpointIp: String
+
+  """URI of a Cloud Redis Instance."""
+  uri: String
+
+  """URI of a Cloud Redis Instance network."""
+  networkUri: String
+
+  """Primary endpoint IP address of a Cloud Redis Instance."""
+  primaryEndpointIp: String
+
+  """Region in which the Cloud Redis Instance is defined."""
+  region: String
+}
+
+"""For display only. Metadata associated with an App Engine version."""
+input AppEngineVersionInfo_Input {
+  """Name of an App Engine version."""
+  displayName: String
+
+  """App Engine execution environment for a version."""
+  environment: String
+
+  """URI of an App Engine version."""
+  uri: String
+
+  """Runtime of the App Engine version."""
+  runtime: String
+}
+
+"""
+For display only. Metadata associated with a serverless public connection.
+"""
+input ServerlessExternalConnectionInfo_Input {
+  """Selected starting IP address, from the Google dynamic address pool."""
+  selectedIpAddress: String
+}
+
+"""For display only. Metadata associated with NAT."""
+input NatInfo_Input {
+  """Source IP address before NAT translation."""
+  oldSourceIp: String
+
+  """
+  Source port after NAT translation. Only valid when protocol is TCP or UDP.
+  """
+  newSourcePort: Int
+
+  """URI of the network where NAT translation takes place."""
+  networkUri: String
+
+  """IP protocol in string format, for example: "TCP", "UDP", "ICMP"."""
+  protocol: String
+  cloudNatGatewayType: query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_nat_cloudNatGatewayType
+
+  """
+  Destination port before NAT translation. Only valid when protocol is TCP or UDP.
+  """
+  oldDestinationPort: Int
+
+  """The name of Cloud NAT Gateway. Only valid when type is CLOUD_NAT."""
+  natGatewayName: String
+
+  """Uri of the Cloud Router. Only valid when type is CLOUD_NAT."""
+  routerUri: String
+  type: query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_nat_type
+
+  """Destination IP address after NAT translation."""
+  newDestinationIp: String
+
+  """
+  Destination port after NAT translation. Only valid when protocol is TCP or UDP.
+  """
+  newDestinationPort: Int
+
+  """Destination IP address before NAT translation."""
+  oldDestinationIp: String
+
+  """Source IP address after NAT translation."""
+  newSourceIp: String
+
+  """
+  Source port before NAT translation. Only valid when protocol is TCP or UDP.
+  """
+  oldSourcePort: Int
+}
+
+"""For display only. Metadata associated with Storage Bucket."""
+input StorageBucketInfo_Input {
+  """Cloud Storage Bucket name."""
+  bucket: String
+}
+
+"""For display only. Metadata associated with a VPC connector."""
+input VpcConnectorInfo_Input {
+  """URI of a VPC connector."""
+  uri: String
+
+  """Name of a VPC connector."""
+  displayName: String
+
+  """Location in which the VPC connector is deployed."""
+  location: String
+}
+
+"""
+For display only. Metadata associated with a serverless direct VPC egress connection.
+"""
+input DirectVpcEgressConnectionInfo_Input {
+  """Region in which the Direct VPC egress is deployed."""
+  region: String
+
+  """URI of direct access subnetwork."""
+  subnetworkUri: String
+
+  """URI of direct access network."""
+  networkUri: String
+
+  """Selected IP range."""
+  selectedIpRange: String
+
+  """Selected starting IP address, from the selected IP range."""
+  selectedIpAddress: String
+}
+
+"""
+For display only. Metadata associated with a Google Kubernetes Engine (GKE) Pod.
+"""
+input GkePodInfo_Input {
+  """URI of the network containing the GKE Pod."""
+  networkUri: String
+
+  """
+  URI of a GKE Pod. For Pods in regional Clusters, the URI format is: `projects/{project}/locations/{location}/clusters/{cluster}/k8s/namespaces/{namespace}/pods/{pod}` For Pods in zonal Clusters, the URI format is: `projects/{project}/zones/{zone}/clusters/{cluster}/k8s/namespaces/{namespace}/pods/{pod}`
+  """
+  podUri: String
+
+  """
+  IP address of a GKE Pod. If the Pod is dual-stack, this is the IP address relevant to the trace.
+  """
+  ipAddress: String
+}
+
+"""For display only. Metadata associated with a Compute Engine network."""
+input NetworkInfo_Input {
+  """The region of the subnet matching the source IP address of the test."""
+  region: String
+
+  """The IP range of the subnet matching the source IP address of the test."""
+  matchedIpRange: String
+
+  """URI of a Compute Engine network."""
+  uri: String
+
+  """URI of the subnet matching the source IP address of the test."""
+  matchedSubnetUri: String
+
+  """Name of a Compute Engine network."""
+  displayName: String
+}
+
+"""For display only. Metadata associated with the load balancer backend."""
+input LoadBalancerBackendInfo_Input {
+  """
+  URI of the PSC service attachment this PSC NEG backend targets (if applicable).
+  """
+  pscServiceAttachmentUri: String
+
+  """
+  URI of the network endpoint group this backend belongs to (if applicable).
+  """
+  networkEndpointGroupUri: String
+
+  """URI of the backend bucket this backend targets (if applicable)."""
+  backendBucketUri: String
+
+  """
+  Display name of the backend. For example, it might be an instance name for the instance group backends, or an IP address and port for zonal network endpoint group backends.
+  """
+  name: String
+
+  """
+  URI of the backend instance (if applicable). Populated for instance group backends, and zonal NEG backends.
+  """
+  instanceUri: String
+
+  """URI of the health check attached to this backend (if applicable)."""
+  healthCheckUri: String
+  healthCheckFirewallsConfigState: query_networkmanagement_projects_locations_global_connectivityTests_get_returnReachabilityDetails_traces_items_steps_items_loadBalancerBackendInfo_healthCheckFirewallsConfigState
+
+  """URI of the instance group this backend belongs to (if applicable)."""
+  instanceGroupUri: String
+
+  """URI of the backend service this backend belongs to (if applicable)."""
+  backendServiceUri: String
+
+  """PSC Google API target this PSC NEG backend targets (if applicable)."""
+  pscGoogleApiTarget: String
+}
+
+"""
+For display only. Metadata associated with the serverless network endpoint group backend.
+"""
+input ServerlessNegInfo_Input {
+  """URI of the serverless network endpoint group."""
+  negUri: String
+}
+
+"""Request message for `SetIamPolicy` method."""
+input SetIamPolicyRequest_Input {
+  policy: Policy_Input
+
+  """
+  OPTIONAL: A FieldMask specifying which fields of the policy to modify. Only the fields in the mask will be modified. If no mask is provided, the following default mask is used: `paths: "bindings, etag"`
+  """
+  updateMask: String
+}
+
+"""
+An Identity and Access Management (IAM) policy, which specifies access controls for Google Cloud resources. A `Policy` is a collection of `bindings`. A `binding` binds one or more `members`, or principals, to a single `role`. Principals can be user accounts, service accounts, Google groups, and domains (such as G Suite). A `role` is a named list of permissions; each `role` can be an IAM predefined role or a user-created custom role. For some types of Google Cloud resources, a `binding` can also specify a `condition`, which is a logical expression that allows access to a resource only if the expression evaluates to `true`. A condition can add constraints based on attributes of the request, the resource, or both. To learn which resources support conditions in their IAM policies, see the [IAM documentation](https://cloud.google.com/iam/help/conditions/resource-policies). **JSON example:** ``` { "bindings": [ { "role": "roles/resourcemanager.organizationAdmin", "members": [ "user:mike@example.com", "group:admins@example.com", "domain:google.com", "serviceAccount:my-project-id@appspot.gserviceaccount.com" ] }, { "role": "roles/resourcemanager.organizationViewer", "members": [ "user:eve@example.com" ], "condition": { "title": "expirable access", "description": "Does not grant access after Sep 2020", "expression": "request.time < timestamp('2020-10-01T00:00:00.000Z')", } } ], "etag": "BwWWja0YfJA=", "version": 3 } ``` **YAML example:** ``` bindings: - members: - user:mike@example.com - group:admins@example.com - domain:google.com - serviceAccount:my-project-id@appspot.gserviceaccount.com role: roles/resourcemanager.organizationAdmin - members: - user:eve@example.com role: roles/resourcemanager.organizationViewer condition: title: expirable access description: Does not grant access after Sep 2020 expression: request.time < timestamp('2020-10-01T00:00:00.000Z') etag: BwWWja0YfJA= version: 3 ``` For a description of IAM and its features, see the [IAM documentation](https://cloud.google.com/iam/docs/).
+"""
+input Policy_Input {
+  """
+  `etag` is used for optimistic concurrency control as a way to help prevent simultaneous updates of a policy from overwriting each other. It is strongly suggested that systems make use of the `etag` in the read-modify-write cycle to perform policy updates in order to avoid race conditions: An `etag` is returned in the response to `getIamPolicy`, and systems are expected to put that etag in the request to `setIamPolicy` to ensure that their change will be applied to the same version of the policy. **Important:** If you use IAM Conditions, you must include the `etag` field whenever you call `setIamPolicy`. If you omit this field, then IAM allows you to overwrite a version `3` policy with a version `1` policy, and all of the conditions in the version `3` policy are lost.
+  """
+  etag: Byte
+
+  """
+  Specifies the format of the policy. Valid values are `0`, `1`, and `3`. Requests that specify an invalid value are rejected. Any operation that affects conditional role bindings must specify version `3`. This requirement applies to the following operations: * Getting a policy that includes a conditional role binding * Adding a conditional role binding to a policy * Changing a conditional role binding in a policy * Removing any role binding, with or without a condition, from a policy that includes conditions **Important:** If you use IAM Conditions, you must include the `etag` field whenever you call `setIamPolicy`. If you omit this field, then IAM allows you to overwrite a version `3` policy with a version `1` policy, and all of the conditions in the version `3` policy are lost. If a policy does not include any conditions, operations on that policy may specify any valid version or leave the field unset. To learn which resources support conditions in their IAM policies, see the [IAM documentation](https://cloud.google.com/iam/help/conditions/resource-policies).
+  """
+  version: Int
+
+  """
+  Associates a list of `members`, or principals, with a `role`. Optionally, may specify a `condition` that determines how and when the `bindings` are applied. Each of the `bindings` must contain at least one principal. The `bindings` in a `Policy` can refer to up to 1,500 principals; up to 250 of these principals can be Google groups. Each occurrence of a principal counts towards these limits. For example, if the `bindings` grant 50 different roles to `user:alice@example.com`, and not to any other principal, then you can add another 1,450 principals to the `bindings` in the `Policy`.
+  """
+  bindings: [Binding_Input]
+
+  """Specifies cloud audit logging configuration for this policy."""
+  auditConfigs: [AuditConfig_Input]
+}
+
+"""Associates `members`, or principals, with a `role`."""
+input Binding_Input {
+  """
+  Specifies the principals requesting access for a Google Cloud resource. `members` can have the following values: * `allUsers`: A special identifier that represents anyone who is on the internet; with or without a Google account. * `allAuthenticatedUsers`: A special identifier that represents anyone who is authenticated with a Google account or a service account. Does not include identities that come from external identity providers (IdPs) through identity federation. * `user:{emailid}`: An email address that represents a specific Google account. For example, `alice@example.com` . * `serviceAccount:{emailid}`: An email address that represents a Google service account. For example, `my-other-app@appspot.gserviceaccount.com`. * `serviceAccount:{projectid}.svc.id.goog[{namespace}/{kubernetes-sa}]`: An identifier for a [Kubernetes service account](https://cloud.google.com/kubernetes-engine/docs/how-to/kubernetes-service-accounts). For example, `my-project.svc.id.goog[my-namespace/my-kubernetes-sa]`. * `group:{emailid}`: An email address that represents a Google group. For example, `admins@example.com`. * `domain:{domain}`: The G Suite domain (primary) that represents all the users of that domain. For example, `google.com` or `example.com`. * `principal://iam.googleapis.com/locations/global/workforcePools/{pool_id}/subject/{subject_attribute_value}`: A single identity in a workforce identity pool. * `principalSet://iam.googleapis.com/locations/global/workforcePools/{pool_id}/group/{group_id}`: All workforce identities in a group. * `principalSet://iam.googleapis.com/locations/global/workforcePools/{pool_id}/attribute.{attribute_name}/{attribute_value}`: All workforce identities with a specific attribute value. * `principalSet://iam.googleapis.com/locations/global/workforcePools/{pool_id}/*`: All identities in a workforce identity pool. * `principal://iam.googleapis.com/projects/{project_number}/locations/global/workloadIdentityPools/{pool_id}/subject/{subject_attribute_value}`: A single identity in a workload identity pool. * `principalSet://iam.googleapis.com/projects/{project_number}/locations/global/workloadIdentityPools/{pool_id}/group/{group_id}`: A workload identity pool group. * `principalSet://iam.googleapis.com/projects/{project_number}/locations/global/workloadIdentityPools/{pool_id}/attribute.{attribute_name}/{attribute_value}`: All identities in a workload identity pool with a certain attribute. * `principalSet://iam.googleapis.com/projects/{project_number}/locations/global/workloadIdentityPools/{pool_id}/*`: All identities in a workload identity pool. * `deleted:user:{emailid}?uid={uniqueid}`: An email address (plus unique identifier) representing a user that has been recently deleted. For example, `alice@example.com?uid=123456789012345678901`. If the user is recovered, this value reverts to `user:{emailid}` and the recovered user retains the role in the binding. * `deleted:serviceAccount:{emailid}?uid={uniqueid}`: An email address (plus unique identifier) representing a service account that has been recently deleted. For example, `my-other-app@appspot.gserviceaccount.com?uid=123456789012345678901`. If the service account is undeleted, this value reverts to `serviceAccount:{emailid}` and the undeleted service account retains the role in the binding. * `deleted:group:{emailid}?uid={uniqueid}`: An email address (plus unique identifier) representing a Google group that has been recently deleted. For example, `admins@example.com?uid=123456789012345678901`. If the group is recovered, this value reverts to `group:{emailid}` and the recovered group retains the role in the binding. * `deleted:principal://iam.googleapis.com/locations/global/workforcePools/{pool_id}/subject/{subject_attribute_value}`: Deleted single identity in a workforce identity pool. For example, `deleted:principal://iam.googleapis.com/locations/global/workforcePools/my-pool-id/subject/my-subject-attribute-value`.
+  """
+  members: [String]
+  condition: Expr_Input
+
+  """
+  Role that is assigned to the list of `members`, or principals. For example, `roles/viewer`, `roles/editor`, or `roles/owner`. For an overview of the IAM roles and permissions, see the [IAM documentation](https://cloud.google.com/iam/docs/roles-overview). For a list of the available pre-defined roles, see [here](https://cloud.google.com/iam/docs/understanding-roles).
+  """
+  role: String
+}
+
+"""
+Represents a textual expression in the Common Expression Language (CEL) syntax. CEL is a C-like expression language. The syntax and semantics of CEL are documented at https://github.com/google/cel-spec. Example (Comparison): title: "Summary size limit" description: "Determines if a summary is less than 100 chars" expression: "document.summary.size() < 100" Example (Equality): title: "Requestor is owner" description: "Determines if requestor is the document owner" expression: "document.owner == request.auth.claims.email" Example (Logic): title: "Public documents" description: "Determine whether the document should be publicly visible" expression: "document.type != 'private' && document.type != 'internal'" Example (Data Manipulation): title: "Notification string" description: "Create a notification string with a timestamp." expression: "'New message received at ' + string(document.create_time)" The exact variables and functions that may be referenced within an expression are determined by the service that evaluates it. See the service documentation for additional information.
+"""
+input Expr_Input {
+  """
+  Textual representation of an expression in Common Expression Language syntax.
+  """
+  expression: String
+
+  """
+  Optional. Description of the expression. This is a longer text which describes the expression, e.g. when hovered over it in a UI.
+  """
+  description: String
+
+  """
+  Optional. Title for the expression, i.e. a short string describing its purpose. This can be used e.g. in UIs which allow to enter the expression.
+  """
+  title: String
+
+  """
+  Optional. String indicating the location of the expression for error reporting, e.g. a file name and a position in the file.
+  """
+  location: String
+}
+
+"""
+Specifies the audit configuration for a service. The configuration determines which permission types are logged, and what identities, if any, are exempted from logging. An AuditConfig must have one or more AuditLogConfigs. If there are AuditConfigs for both `allServices` and a specific service, the union of the two AuditConfigs is used for that service: the log_types specified in each AuditConfig are enabled, and the exempted_members in each AuditLogConfig are exempted. Example Policy with multiple AuditConfigs: { "audit_configs": [ { "service": "allServices", "audit_log_configs": [ { "log_type": "DATA_READ", "exempted_members": [ "user:jose@example.com" ] }, { "log_type": "DATA_WRITE" }, { "log_type": "ADMIN_READ" } ] }, { "service": "sampleservice.googleapis.com", "audit_log_configs": [ { "log_type": "DATA_READ" }, { "log_type": "DATA_WRITE", "exempted_members": [ "user:aliya@example.com" ] } ] } ] } For sampleservice, this policy enables DATA_READ, DATA_WRITE and ADMIN_READ logging. It also exempts `jose@example.com` from DATA_READ logging, and `aliya@example.com` from DATA_WRITE logging.
+"""
+input AuditConfig_Input {
+  """
+  Specifies a service that will be enabled for audit logging. For example, `storage.googleapis.com`, `cloudsql.googleapis.com`. `allServices` is a special value that covers all services.
+  """
+  service: String
+
+  """The configuration for logging of each type of permission."""
+  auditLogConfigs: [AuditLogConfig_Input]
+}
+
+"""
+Provides the configuration for logging a type of permissions. Example: { "audit_log_configs": [ { "log_type": "DATA_READ", "exempted_members": [ "user:jose@example.com" ] }, { "log_type": "DATA_WRITE" } ] } This enables 'DATA_READ' and 'DATA_WRITE' logging, while exempting jose@example.com from DATA_READ logging.
+"""
+input AuditLogConfig_Input {
+  """
+  Specifies the identities that do not cause logging for this type of permission. Follows the same format of Binding.members.
+  """
+  exemptedMembers: [String]
+  logType: query_networkmanagement_projects_locations_global_connectivityTests_getIamPolicy_auditConfigs_items_auditLogConfigs_items_logType
+}
+
+"""Response message for `TestIamPermissions` method."""
+type TestIamPermissionsResponse {
+  """
+  A subset of `TestPermissionsRequest.permissions` that the caller is allowed.
+  """
+  permissions: [String]
+}
+
+"""Request message for `TestIamPermissions` method."""
+input TestIamPermissionsRequest_Input {
+  """
+  The set of permissions to check for the `resource`. Permissions with wildcards (such as `*` or `storage.*`) are not allowed. For more information see [IAM Overview](https://cloud.google.com/iam/docs/overview#permissions).
+  """
+  permissions: [String]
+}
+
+"""A configuration to generate VPC Flow Logs."""
+input VpcFlowLogsConfig_Input {
+  """
+  Traffic will be logged from the Interconnect Attachment. Format: projects/{project_id}/regions/{region}/interconnectAttachments/{name}
+  """
+  interconnectAttachment: String
+  state: query_networkmanagement_projects_locations_vpcFlowLogsConfigs_get_state
+  targetResourceState: query_networkmanagement_projects_locations_vpcFlowLogsConfigs_get_targetResourceState
+  aggregationInterval: query_networkmanagement_projects_locations_vpcFlowLogsConfigs_get_aggregationInterval
+  crossProjectMetadata: query_networkmanagement_projects_locations_vpcFlowLogsConfigs_get_crossProjectMetadata
+
+  """
+  Identifier. Unique name of the configuration. The name can have one of the following forms: - For project-level configurations: `projects/{project_id}/locations/global/vpcFlowLogsConfigs/{vpc_flow_logs_config_id}` - For organization-level configurations: `organizations/{organization_id}/locations/global/vpcFlowLogsConfigs/{vpc_flow_logs_config_id}`
+  """
+  name: String
+
+  """
+  Optional. Export filter used to define which VPC Flow Logs should be logged.
+  """
+  filterExpr: String
+
+  """Output only. The time the config was created."""
+  createTime: String
+
+  """Optional. Resource labels to represent user-provided metadata."""
+  labels: JSON
+
+  """
+  Optional. The user-supplied description of the VPC Flow Logs configuration. Maximum of 512 characters.
+  """
+  description: String
+
+  """
+  Traffic will be logged from the VPN Tunnel. Format: projects/{project_id}/regions/{region}/vpnTunnels/{name}
+  """
+  vpnTunnel: String
+  metadata: query_networkmanagement_projects_locations_vpcFlowLogsConfigs_get_metadata
+
+  """
+  Traffic will be logged from VMs, VPN tunnels and Interconnect Attachments within the network. Format: projects/{project_id}/global/networks/{name}
+  """
+  network: String
+
+  """Output only. The time the config was updated."""
+  updateTime: String
+
+  """
+  Optional. The value of the field must be in (0, 1]. The sampling rate of VPC Flow Logs where 1.0 means all collected logs are reported. Setting the sampling rate to 0.0 is not allowed. If you want to disable VPC Flow Logs, use the state field instead. Default value is 1.0.
+  """
+  flowSampling: Float
+
+  """
+  Optional. Custom metadata fields to include in the reported VPC flow logs. Can only be specified if "metadata" was set to CUSTOM_METADATA.
+  """
+  metadataFields: [String]
+
+  """
+  Traffic will be logged from VMs within the subnetwork. Format: projects/{project_id}/regions/{region}/subnetworks/{name}
+  """
+  subnet: String
+}
+
+enum HTTPMethod {
+  GET
+  HEAD
+  POST
+  PUT
+  DELETE
+  CONNECT
+  OPTIONS
+  TRACE
+  PATCH
+}
+
+scalar ObjMap

@@ -7,7 +7,7 @@
  *   npm run workflow:gcp-multi
  *
  * Env (inherited; defaults shown):
- *   CLAWQL_GOOGLE_TOP20_SPECS=1  CLAWQL_BUNDLED_OFFLINE=1
+ *   CLAWQL_GOOGLE_TOP50_SPECS=1  CLAWQL_BUNDLED_OFFLINE=1
  *
  * Output: docs/workflow-gcp-multi-latest.json
  */
@@ -81,10 +81,33 @@ function serializeMcpToolResult(result) {
   };
 }
 
+function parseSearchResultsFromMcpCall(mcpCallToolResult) {
+  const textBlocks = (mcpCallToolResult?.content ?? []).filter((b) => b.type === "text");
+  for (const block of textBlocks) {
+    try {
+      const parsed = JSON.parse(block.text);
+      if (parsed && Array.isArray(parsed.results)) return parsed.results;
+    } catch {
+      // Ignore non-JSON text blocks.
+    }
+  }
+  return [];
+}
+
+function normalizeOperation(hit) {
+  const op = hit?.operation ?? hit ?? {};
+  return {
+    id: op.id ?? "(missing operation id)",
+    method: op.method ?? "UNKNOWN",
+    path: op.path ?? op.flatPath ?? "(missing path)",
+    score: hit?.score ?? 0,
+  };
+}
+
 async function main() {
   const serverLogs = [];
   const childEnv = { ...process.env };
-  childEnv.CLAWQL_GOOGLE_TOP20_SPECS = process.env.CLAWQL_GOOGLE_TOP20_SPECS ?? "1";
+  childEnv.CLAWQL_GOOGLE_TOP50_SPECS = process.env.CLAWQL_GOOGLE_TOP50_SPECS ?? "1";
   childEnv.CLAWQL_BUNDLED_OFFLINE = process.env.CLAWQL_BUNDLED_OFFLINE ?? "1";
   delete childEnv.CLAWQL_PROVIDER;
   delete childEnv.CLAWQL_SPEC_PATH;
@@ -160,7 +183,7 @@ async function main() {
       },
       clientInfo: { name: "clawql-gcp-multi-workflow", version: "1.0.0" },
       env: {
-        CLAWQL_GOOGLE_TOP20_SPECS: process.env.CLAWQL_GOOGLE_TOP20_SPECS ?? "1",
+        CLAWQL_GOOGLE_TOP50_SPECS: process.env.CLAWQL_GOOGLE_TOP50_SPECS ?? "1",
         CLAWQL_BUNDLED_OFFLINE: process.env.CLAWQL_BUNDLED_OFFLINE ?? "1",
       },
       mergedOperationCount,
@@ -173,10 +196,126 @@ async function main() {
     workflowSteps,
   };
 
+  const uniqueOperations = new Map();
+  const callPlan = [];
+  for (const step of workflowSteps) {
+    const hits = parseSearchResultsFromMcpCall(step.mcpCallToolResult);
+    for (const hit of hits) {
+      const op = normalizeOperation(hit);
+      if (!uniqueOperations.has(op.id)) uniqueOperations.set(op.id, op);
+    }
+    const top = hits.slice(0, 2).map(normalizeOperation);
+    callPlan.push({
+      section: step.section,
+      query: step.query,
+      proposedCalls: top.map((op) => ({
+        id: op.id,
+        method: op.method,
+        path: op.path,
+      })),
+    });
+  }
+
+  const gcpSummary =
+    "[GCP multi-service] API call plan — enable services, networking, GKE, observability, DNS, storage, and analytics";
+  const gcpDescriptionLines = [
+    "## Goal",
+    "Summarize the most relevant Google Cloud API operations discovered by ClawQL search to stand up a multi-service GCP deployment end-to-end.",
+    "",
+    "## Candidate operations (from ClawQL search)",
+    ...[...uniqueOperations.values()]
+      .slice(0, 20)
+      .map((op) => `- \`${op.method}\` ${op.id} — \`${op.path}\``),
+    "",
+    "## Proposed call sequence to finish task",
+    ...callPlan.flatMap((step) => [
+      `### ${step.section}`,
+      `Query: "${step.query}"`,
+      ...step.proposedCalls.map((op) => `- \`${op.method}\` ${op.id} — \`${op.path}\``),
+      "",
+    ]),
+    "## Notes",
+    "- This is a search-driven plan; validate IAM permissions, project/location values, and resource names before execution.",
+    "- Prefer project-scoped endpoints where equivalent org/folder variants exist.",
+  ];
+  const gcpDescriptionPlain = gcpDescriptionLines.join("\n").trim();
+  out.gcpDraft = {
+    summary: gcpSummary,
+    descriptionPlain: gcpDescriptionPlain,
+    proposedCallPlan: callPlan,
+    uniqueOperations: [...uniqueOperations.values()],
+  };
+
   const dest = join(ROOT, "docs", "workflow-gcp-multi-latest.json");
   await writeFile(dest, JSON.stringify(out, null, 2), "utf-8");
 
-  console.log(JSON.stringify(out, null, 2));
+  const crossResults = parseSearchResultsFromMcpCall(out.crossCutting.mcpCallToolResult);
+
+  console.log("=== ClawQL GCP multi-spec workflow (MCP search) ===\n");
+  console.log("Provider: google (top 50 specs, merged)");
+  if (out.meta.mergedOperationCount != null) {
+    console.log(`Merged operations indexed: ${out.meta.mergedOperationCount}`);
+  }
+  console.log(
+    `Mode: bundledOffline=${out.meta.env.CLAWQL_BUNDLED_OFFLINE}, via=${out.meta.transport}\n`
+  );
+
+  console.log("--- Cross-cutting query ---");
+  console.log(`Query: "${out.crossCutting.query}" (${crossResults.length} hits)`);
+  for (let i = 0; i < crossResults.length; i++) {
+    const hit = crossResults[i];
+    const op = hit.operation ?? hit;
+    const method = op.method ?? "UNKNOWN";
+    const id = op.id ?? "(missing operation id)";
+    const path = op.path ?? op.flatPath ?? "(missing path)";
+    const score = hit.score ?? 0;
+    const matchedOn = Array.isArray(hit.matchedOn) ? hit.matchedOn : [];
+    console.log(
+      `  ${i + 1}. ${method} ${id}\n     ${path}\n     score=${score} [${matchedOn.join(", ")}]`
+    );
+  }
+  console.log("");
+
+  for (const step of out.workflowSteps) {
+    const stepResults = parseSearchResultsFromMcpCall(step.mcpCallToolResult);
+    console.log(`--- ${step.section} ---`);
+    console.log(`Query: "${step.query}" (${stepResults.length} hits)`);
+    for (let i = 0; i < stepResults.length; i++) {
+      const hit = stepResults[i];
+      const op = hit.operation ?? hit;
+      const method = op.method ?? "UNKNOWN";
+      const id = op.id ?? "(missing operation id)";
+      const path = op.path ?? op.flatPath ?? "(missing path)";
+      const score = hit.score ?? 0;
+      const matchedOn = Array.isArray(hit.matchedOn) ? hit.matchedOn : [];
+      console.log(
+        `  ${i + 1}. ${method} ${id}\n     ${path}\n     score=${score} [${matchedOn.join(", ")}]`
+      );
+    }
+    console.log("");
+  }
+
+  console.log("--- Run metadata ---");
+  console.log(`reportPath: ${dest}`);
+  console.log(`generatedAt: ${out.meta.generatedAt}`);
+  console.log("\n--- GCP draft (summary) ---");
+  console.log(out.gcpDraft.summary);
+  console.log("\n--- GCP draft (description, full) ---");
+  console.log(out.gcpDraft.descriptionPlain);
+  console.log("");
+  console.log(
+    JSON.stringify(
+      {
+        ok: true,
+        exit: "success",
+        reportPath: dest,
+        mergedOperationCount: out.meta.mergedOperationCount,
+        draftSummary: out.gcpDraft.summary,
+      },
+      null,
+      2
+    )
+  );
   console.error(`\n[mcp-workflow-gcp-multi] Wrote ${dest} (MCP tools/call → search)`);
 }
 

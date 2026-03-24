@@ -3,8 +3,7 @@
 This guide outlines a **logical order** of Google Cloud API calls to stand up **GKE**, **IAM**, **firewall**, **logging**, **monitoring**, **load balancing**, **DNS**, **Cloud Storage**, and **BigQuery**. It maps to **`operationId`** values from the bundled Discovery docs under [`providers/google/apis/`](../providers/google/apis/README.md).
 
 > **Multi-service in one MCP process**  
-> Set **`CLAWQL_GOOGLE_TOP20_SPECS=1`** to merge the curated list in [`providers/google/google-top20-apis.json`](../providers/google/google-top20-apis.json) (each `providers/google/apis/<slug>/discovery.json`) into **one** operation list — **no** extra servers.  
-> Legacy alias: **`CLAWQL_PROVIDER=google-top20`** (same behavior).  
+> Set **`CLAWQL_GOOGLE_TOP50_SPECS=1`** to merge the curated list in [`providers/google/google-top50-apis.json`](../providers/google/google-top50-apis.json) (each `providers/google/apis/<slug>/discovery.json`) into **one** operation list — **no** extra servers.  
 > Or set **`CLAWQL_SPEC_PATHS`** to a comma/semicolon/newline-separated list of spec paths (any mix of local OpenAPI or Discovery JSON).  
 > **Priority:** if either multi env is set, it **replaces** single-spec `CLAWQL_SPEC_PATH` / `CLAWQL_DISCOVERY_URL` and `CLAWQL_PROVIDER` for loading.  
 > **Execution:** merged mode uses **REST** for `execute` (correct Discovery doc per operation). The optional GraphQL proxy, if started, builds its schema from the **first** API only — use MCP `search` + `execute` for cross-API GCP flows.
@@ -214,7 +213,7 @@ Repeat with `compute-v1`, `logging-v2`, etc., after switching `CLAWQL_SPEC_PATH`
 
 ## Related docs
 
-- [Google APIs lookup (full index + top 20 bundle)](google-apis-lookup.md)  
+- [Google APIs lookup (full index + top 50 bundle)](google-apis-lookup.md)
 - [Bundled `providers/google/apis/` README](../providers/google/apis/README.md)
 
 This document is a **route map** for API ordering and **operationId** discovery — not a substitute for security review, quotas, org policies, or production Terraform/IaC.

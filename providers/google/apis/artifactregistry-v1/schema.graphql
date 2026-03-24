@@ -13,15 +13,6 @@ type Query {
     projectsId: String!
   ): ProjectSettings
 
-  """Retrieves the VPCSC Config for the Project."""
-  artifactregistry_projects_locations_getVpcscConfig(
-    """Path parameter projectsId"""
-    projectsId: String!
-
-    """Path parameter locationsId"""
-    locationsId: String!
-  ): VPCSCConfig
-
   """
   Lists information about the supported locations for this service. This method can be called in two ways: * **List all public locations:** Use the path `GET /v1/locations`. * **List project-visible locations:** Use the path `GET /v1/projects/{project_id}/locations`. This may include public locations as well as private or other locations specifically visible to the project.
   """
@@ -35,6 +26,11 @@ type Query {
     filter: String
 
     """
+    Optional. Do not use this field. It is unsupported and is ignored unless explicitly documented otherwise. This is primarily for internal usage.
+    """
+    extraLocationTypes: String
+
+    """
     The maximum number of results to return. If not set, the service selects a default.
     """
     pageSize: Int
@@ -43,12 +39,16 @@ type Query {
     A page token received from the `next_page_token` field in the response. Send that page token to receive the subsequent page.
     """
     pageToken: String
-
-    """
-    Optional. Do not use this field. It is unsupported and is ignored unless explicitly documented otherwise. This is primarily for internal usage.
-    """
-    extraLocationTypes: String
   ): ListLocationsResponse
+
+  """Retrieves the VPCSC Config for the Project."""
+  artifactregistry_projects_locations_getVpcscConfig(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+  ): VPCSCConfig
 
   """Gets information about a location."""
   artifactregistry_projects_locations_get(
@@ -58,6 +58,15 @@ type Query {
     """Path parameter locationsId"""
     locationsId: String!
   ): Location
+
+  """Retrieves the project configuration."""
+  artifactregistry_projects_locations_getProjectConfig(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+  ): ProjectConfig
 
   """
   Gets the latest state of a long-running operation. Clients can use this method to poll the operation result at intervals as recommended by the API service.
@@ -73,33 +82,6 @@ type Query {
     operationsId: String!
   ): Operation
 
-  """Lists repositories."""
-  artifactregistry_projects_locations_repositories_list(
-    """Path parameter projectsId"""
-    projectsId: String!
-
-    """Path parameter locationsId"""
-    locationsId: String!
-
-    """
-    The maximum number of repositories to return. Maximum page size is 1,000.
-    """
-    pageSize: Int
-
-    """
-    The next_page_token value returned from a previous list request, if any.
-    """
-    pageToken: String
-
-    """
-    Optional. An expression for filtering the results of the request. Filter rules are case insensitive. The fields eligible for filtering are: * `name` Examples of using a filter: To filter the results of your request to repositories with the name `my-repo` in project `my-project` in the `us-central` region, append the following filter expression to your request: * `name="projects/my-project/locations/us-central1/repositories/my-repo"` You can also use wildcards to match any number of characters before or after the value: * `name="projects/my-project/locations/us-central1/repositories/my-*"` * `name="projects/my-project/locations/us-central1/repositories/*repo"` * `name="projects/my-project/locations/us-central1/repositories/*repo*"`
-    """
-    filter: String
-
-    """Optional. The field to order the results by."""
-    orderBy: String
-  ): ListRepositoriesResponse
-
   """Gets a repository."""
   artifactregistry_projects_locations_repositories_get(
     """Path parameter projectsId"""
@@ -111,6 +93,33 @@ type Query {
     """Path parameter repositoriesId"""
     repositoriesId: String!
   ): Repository
+
+  """Lists repositories."""
+  artifactregistry_projects_locations_repositories_list(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """
+    Optional. An expression for filtering the results of the request. Filter rules are case insensitive. The fields eligible for filtering are: * `name` Examples of using a filter: To filter the results of your request to repositories with the name `my-repo` in project `my-project` in the `us-central` region, append the following filter expression to your request: * `name="projects/my-project/locations/us-central1/repositories/my-repo"` You can also use wildcards to match any number of characters before or after the value: * `name="projects/my-project/locations/us-central1/repositories/my-*"` * `name="projects/my-project/locations/us-central1/repositories/*repo"` * `name="projects/my-project/locations/us-central1/repositories/*repo*"`
+    """
+    filter: String
+
+    """
+    The maximum number of repositories to return. Maximum page size is 1,000.
+    """
+    pageSize: Int
+
+    """
+    The next_page_token value returned from a previous list request, if any.
+    """
+    pageToken: String
+
+    """Optional. The field to order the results by."""
+    orderBy: String
+  ): ListRepositoriesResponse
 
   """Gets the IAM policy for a given resource."""
   artifactregistry_projects_locations_repositories_getIamPolicy(
@@ -129,8 +138,8 @@ type Query {
     options_requestedPolicyVersion: Int
   ): Policy
 
-  """Lists docker images."""
-  artifactregistry_projects_locations_repositories_dockerImages_list(
+  """Lists attachments."""
+  artifactregistry_projects_locations_repositories_attachments_list(
     """Path parameter projectsId"""
     projectsId: String!
 
@@ -139,56 +148,25 @@ type Query {
 
     """Path parameter repositoriesId"""
     repositoriesId: String!
-
-    """The maximum number of artifacts to return. Maximum page size is 1,000."""
-    pageSize: Int
 
     """
     The next_page_token value returned from a previous list request, if any.
     """
     pageToken: String
 
-    """The field to order the results by."""
-    orderBy: String
-  ): ListDockerImagesResponse
+    """
+    Optional. An expression for filtering the results of the request. Filter rules are case insensitive. The fields eligible for filtering are: * `target` * `type` * `attachment_namespace`
+    """
+    filter: String
 
-  """Gets a docker image."""
-  artifactregistry_projects_locations_repositories_dockerImages_get(
-    """Path parameter projectsId"""
-    projectsId: String!
-
-    """Path parameter locationsId"""
-    locationsId: String!
-
-    """Path parameter repositoriesId"""
-    repositoriesId: String!
-
-    """Path parameter dockerImagesId"""
-    dockerImagesId: String!
-  ): DockerImage
-
-  """Lists maven artifacts."""
-  artifactregistry_projects_locations_repositories_mavenArtifacts_list(
-    """Path parameter projectsId"""
-    projectsId: String!
-
-    """Path parameter locationsId"""
-    locationsId: String!
-
-    """Path parameter repositoriesId"""
-    repositoriesId: String!
-
-    """The maximum number of artifacts to return. Maximum page size is 1,000."""
+    """
+    The maximum number of attachments to return. Maximum page size is 1,000.
+    """
     pageSize: Int
+  ): ListAttachmentsResponse
 
-    """
-    The next_page_token value returned from a previous list request, if any.
-    """
-    pageToken: String
-  ): ListMavenArtifactsResponse
-
-  """Gets a maven artifact."""
-  artifactregistry_projects_locations_repositories_mavenArtifacts_get(
+  """Gets an attachment."""
+  artifactregistry_projects_locations_repositories_attachments_get(
     """Path parameter projectsId"""
     projectsId: String!
 
@@ -198,44 +176,9 @@ type Query {
     """Path parameter repositoriesId"""
     repositoriesId: String!
 
-    """Path parameter mavenArtifactsId"""
-    mavenArtifactsId: String!
-  ): MavenArtifact
-
-  """Lists npm packages."""
-  artifactregistry_projects_locations_repositories_npmPackages_list(
-    """Path parameter projectsId"""
-    projectsId: String!
-
-    """Path parameter locationsId"""
-    locationsId: String!
-
-    """Path parameter repositoriesId"""
-    repositoriesId: String!
-
-    """The maximum number of artifacts to return. Maximum page size is 1,000."""
-    pageSize: Int
-
-    """
-    The next_page_token value returned from a previous list request, if any.
-    """
-    pageToken: String
-  ): ListNpmPackagesResponse
-
-  """Gets a npm package."""
-  artifactregistry_projects_locations_repositories_npmPackages_get(
-    """Path parameter projectsId"""
-    projectsId: String!
-
-    """Path parameter locationsId"""
-    locationsId: String!
-
-    """Path parameter repositoriesId"""
-    repositoriesId: String!
-
-    """Path parameter npmPackagesId"""
-    npmPackagesId: String!
-  ): NpmPackage
+    """Path parameter attachmentsId"""
+    attachmentsId: String!
+  ): Attachment
 
   """Lists python packages."""
   artifactregistry_projects_locations_repositories_pythonPackages_list(
@@ -272,34 +215,6 @@ type Query {
     pythonPackagesId: String!
   ): PythonPackage
 
-  """Lists packages."""
-  artifactregistry_projects_locations_repositories_packages_list(
-    """Path parameter projectsId"""
-    projectsId: String!
-
-    """Path parameter locationsId"""
-    locationsId: String!
-
-    """Path parameter repositoriesId"""
-    repositoriesId: String!
-
-    """The maximum number of packages to return. Maximum page size is 1,000."""
-    pageSize: Int
-
-    """
-    The next_page_token value returned from a previous list request, if any.
-    """
-    pageToken: String
-
-    """
-    Optional. An expression for filtering the results of the request. Filter rules are case insensitive. The fields eligible for filtering are: * `name` * `annotations` Examples of using a filter: To filter the results of your request to packages with the name `my-package` in project `my-project` in the `us-central` region, in repository `my-repo`, append the following filter expression to your request: * `name="projects/my-project/locations/us-central1/repositories/my-repo/packages/my-package"` You can also use wildcards to match any number of characters before or after the value: * `name="projects/my-project/locations/us-central1/repositories/my-repo/packages/my-*"` * `name="projects/my-project/locations/us-central1/repositories/my-repo/packages/*package"` * `name="projects/my-project/locations/us-central1/repositories/my-repo/packages/*pack*"` To filter the results of your request to packages with the annotation key-value pair [`external_link`: `external_link_value`], append the following filter expression to your request": * `"annotations.external_link:external_link_value"` To filter the results just for a specific annotation key `external_link`, append the following filter expression to your request: * `"annotations.external_link"` If the annotation key or value contains special characters, you can escape them by surrounding the value with backticks. For example, to filter the results of your request to packages with the annotation key-value pair [`external.link`:`https://example.com/my-package`], append the following filter expression to your request: * `` "annotations.`external.link`:`https://example.com/my-package`" `` You can also filter with annotations with a wildcard to match any number of characters before or after the value: * `` "annotations.*_link:`*example.com*`" ``
-    """
-    filter: String
-
-    """Optional. The field to order the results by."""
-    orderBy: String
-  ): ListPackagesResponse
-
   """Gets a package."""
   artifactregistry_projects_locations_repositories_packages_get(
     """Path parameter projectsId"""
@@ -315,6 +230,34 @@ type Query {
     packagesId: String!
   ): Package
 
+  """Lists packages."""
+  artifactregistry_projects_locations_repositories_packages_list(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter repositoriesId"""
+    repositoriesId: String!
+
+    """
+    Optional. An expression for filtering the results of the request. Filter rules are case insensitive. The fields eligible for filtering are: * `name` * `annotations` Examples of using a filter: To filter the results of your request to packages with the name `my-package` in project `my-project` in the `us-central` region, in repository `my-repo`, append the following filter expression to your request: * `name="projects/my-project/locations/us-central1/repositories/my-repo/packages/my-package"` You can also use wildcards to match any number of characters before or after the value: * `name="projects/my-project/locations/us-central1/repositories/my-repo/packages/my-*"` * `name="projects/my-project/locations/us-central1/repositories/my-repo/packages/*package"` * `name="projects/my-project/locations/us-central1/repositories/my-repo/packages/*pack*"` To filter the results of your request to packages with the annotation key-value pair [`external_link`: `external_link_value`], append the following filter expression to your request": * `"annotations.external_link:external_link_value"` To filter the results just for a specific annotation key `external_link`, append the following filter expression to your request: * `"annotations.external_link"` If the annotation key or value contains special characters, you can escape them by surrounding the value with backticks. For example, to filter the results of your request to packages with the annotation key-value pair [`external.link`:`https://example.com/my-package`], append the following filter expression to your request: * `` "annotations.`external.link`:`https://example.com/my-package`" `` You can also filter with annotations with a wildcard to match any number of characters before or after the value: * `` "annotations.*_link:`*example.com*`" ``
+    """
+    filter: String
+
+    """
+    The next_page_token value returned from a previous list request, if any.
+    """
+    pageToken: String
+
+    """Optional. The field to order the results by."""
+    orderBy: String
+
+    """The maximum number of packages to return. Maximum page size is 1,000."""
+    pageSize: Int
+  ): ListPackagesResponse
+
   """Lists versions."""
   artifactregistry_projects_locations_repositories_packages_versions_list(
     """Path parameter projectsId"""
@@ -329,6 +272,14 @@ type Query {
     """Path parameter packagesId"""
     packagesId: String!
 
+    """
+    Optional. An expression for filtering the results of the request. Filter rules are case insensitive. The fields eligible for filtering are: * `name` * `annotations` Examples of using a filter: To filter the results of your request to versions with the name `my-version` in project `my-project` in the `us-central` region, in repository `my-repo`, append the following filter expression to your request: * `name="projects/my-project/locations/us-central1/repositories/my-repo/packages/my-package/versions/my-version"` You can also use wildcards to match any number of characters before or after the value: * `name="projects/my-project/locations/us-central1/repositories/my-repo/packages/my-package/versions/*version"` * `name="projects/my-project/locations/us-central1/repositories/my-repo/packages/my-package/versions/my*"` * `name="projects/my-project/locations/us-central1/repositories/my-repo/packages/my-package/versions/*version*"` To filter the results of your request to versions with the annotation key-value pair [`external_link`: `external_link_value`], append the following filter expression to your request: * `"annotations.external_link:external_link_value"` To filter just for a specific annotation key `external_link`, append the following filter expression to your request: * `"annotations.external_link"` If the annotation key or value contains special characters, you can escape them by surrounding the value with backticks. For example, to filter the results of your request to versions with the annotation key-value pair [`external.link`:`https://example.com/my-version`], append the following filter expression to your request: * `` "annotations.`external.link`:`https://example.com/my-version`" `` You can also filter with annotations with a wildcard to match any number of characters before or after the value: * `` "annotations.*_link:`*example.com*`" ``
+    """
+    filter: String
+
+    """The view that should be returned in the response."""
+    view: String
+
     """The maximum number of versions to return. Maximum page size is 1,000."""
     pageSize: Int
 
@@ -337,16 +288,8 @@ type Query {
     """
     pageToken: String
 
-    """The view that should be returned in the response."""
-    view: String
-
     """Optional. The field to order the results by."""
     orderBy: String
-
-    """
-    Optional. An expression for filtering the results of the request. Filter rules are case insensitive. The fields eligible for filtering are: * `name` * `annotations` Examples of using a filter: To filter the results of your request to versions with the name `my-version` in project `my-project` in the `us-central` region, in repository `my-repo`, append the following filter expression to your request: * `name="projects/my-project/locations/us-central1/repositories/my-repo/packages/my-package/versions/my-version"` You can also use wildcards to match any number of characters before or after the value: * `name="projects/my-project/locations/us-central1/repositories/my-repo/packages/my-package/versions/*version"` * `name="projects/my-project/locations/us-central1/repositories/my-repo/packages/my-package/versions/my*"` * `name="projects/my-project/locations/us-central1/repositories/my-repo/packages/my-package/versions/*version*"` To filter the results of your request to versions with the annotation key-value pair [`external_link`: `external_link_value`], append the following filter expression to your request: * `"annotations.external_link:external_link_value"` To filter just for a specific annotation key `external_link`, append the following filter expression to your request: * `"annotations.external_link"` If the annotation key or value contains special characters, you can escape them by surrounding the value with backticks. For example, to filter the results of your request to versions with the annotation key-value pair [`external.link`:`https://example.com/my-version`], append the following filter expression to your request: * `` "annotations.`external.link`:`https://example.com/my-version`" `` You can also filter with annotations with a wildcard to match any number of characters before or after the value: * `` "annotations.*_link:`*example.com*`" ``
-    """
-    filter: String
   ): ListVersionsResponse
 
   """Gets a version"""
@@ -370,34 +313,6 @@ type Query {
     view: String
   ): Version
 
-  """Lists tags."""
-  artifactregistry_projects_locations_repositories_packages_tags_list(
-    """Path parameter projectsId"""
-    projectsId: String!
-
-    """Path parameter locationsId"""
-    locationsId: String!
-
-    """Path parameter repositoriesId"""
-    repositoriesId: String!
-
-    """Path parameter packagesId"""
-    packagesId: String!
-
-    """
-    An expression for filtering the results of the request. Filter rules are case insensitive. The fields eligible for filtering are: * `name` * `version` Examples of using a filter: To filter the results of your request to tags with the name `my-tag` in package `my-package` in repository `my-repo` in project "`y-project` in the us-central region, append the following filter expression to your request: * `name="projects/my-project/locations/us-central1/repositories/my-repo/packages/my-package/tags/my-tag"` You can also use wildcards to match any number of characters before or after the value: * `name="projects/my-project/locations/us-central1/repositories/my-repo/packages/my-package/tags/my*"` * `name="projects/my-project/locations/us-central1/repositories/my-repo/packages/my-package/tags/*tag"` * `name="projects/my-project/locations/us-central1/repositories/my-repo/packages/my-package/tags/*tag*"` To filter the results of your request to tags applied to the version `1.0` in package `my-package`, append the following filter expression to your request: * `version="projects/my-project/locations/us-central1/repositories/my-repo/packages/my-package/versions/1.0"`
-    """
-    filter: String
-
-    """The maximum number of tags to return. Maximum page size is 1,000."""
-    pageSize: Int
-
-    """
-    The next_page_token value returned from a previous list request, if any.
-    """
-    pageToken: String
-  ): ListTagsResponse
-
   """Gets a tag."""
   artifactregistry_projects_locations_repositories_packages_tags_get(
     """Path parameter projectsId"""
@@ -416,8 +331,8 @@ type Query {
     tagsId: String!
   ): Tag
 
-  """Lists files."""
-  artifactregistry_projects_locations_repositories_files_list(
+  """Lists tags."""
+  artifactregistry_projects_locations_repositories_packages_tags_list(
     """Path parameter projectsId"""
     projectsId: String!
 
@@ -427,13 +342,33 @@ type Query {
     """Path parameter repositoriesId"""
     repositoriesId: String!
 
+    """Path parameter packagesId"""
+    packagesId: String!
+
     """
-    An expression for filtering the results of the request. Filter rules are case insensitive. The fields eligible for filtering are: * `name` * `owner` * `annotations` Examples of using a filter: To filter the results of your request to files with the name `my_file.txt` in project `my-project` in the `us-central` region, in repository `my-repo`, append the following filter expression to your request: * `name="projects/my-project/locations/us-central1/repositories/my-repo/files/my-file.txt"` You can also use wildcards to match any number of characters before or after the value: * `name="projects/my-project/locations/us-central1/repositories/my-repo/files/my-*"` * `name="projects/my-project/locations/us-central1/repositories/my-repo/files/*file.txt"` * `name="projects/my-project/locations/us-central1/repositories/my-repo/files/*file*"` To filter the results of your request to files owned by the version `1.0` in package `pkg1`, append the following filter expression to your request: * `owner="projects/my-project/locations/us-central1/repositories/my-repo/packages/my-package/versions/1.0"` To filter the results of your request to files with the annotation key-value pair [`external_link`: `external_link_value`], append the following filter expression to your request: * `"annotations.external_link:external_link_value"` To filter just for a specific annotation key `external_link`, append the following filter expression to your request: * `"annotations.external_link"` If the annotation key or value contains special characters, you can escape them by surrounding the value with backticks. For example, to filter the results of your request to files with the annotation key-value pair [`external.link`:`https://example.com/my-file`], append the following filter expression to your request: * `` "annotations.`external.link`:`https://example.com/my-file`" `` You can also filter with annotations with a wildcard to match any number of characters before or after the value: * `` "annotations.*_link:`*example.com*`" ``
+    The next_page_token value returned from a previous list request, if any.
+    """
+    pageToken: String
+
+    """
+    An expression for filtering the results of the request. Filter rules are case insensitive. The fields eligible for filtering are: * `name` * `version` Examples of using a filter: To filter the results of your request to tags with the name `my-tag` in package `my-package` in repository `my-repo` in project "`y-project` in the us-central region, append the following filter expression to your request: * `name="projects/my-project/locations/us-central1/repositories/my-repo/packages/my-package/tags/my-tag"` You can also use wildcards to match any number of characters before or after the value: * `name="projects/my-project/locations/us-central1/repositories/my-repo/packages/my-package/tags/my*"` * `name="projects/my-project/locations/us-central1/repositories/my-repo/packages/my-package/tags/*tag"` * `name="projects/my-project/locations/us-central1/repositories/my-repo/packages/my-package/tags/*tag*"` To filter the results of your request to tags applied to the version `1.0` in package `my-package`, append the following filter expression to your request: * `version="projects/my-project/locations/us-central1/repositories/my-repo/packages/my-package/versions/1.0"`
     """
     filter: String
 
-    """The maximum number of files to return. Maximum page size is 1,000."""
+    """The maximum number of tags to return. Maximum page size is 1,000."""
     pageSize: Int
+  ): ListTagsResponse
+
+  """Lists docker images."""
+  artifactregistry_projects_locations_repositories_dockerImages_list(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter repositoriesId"""
+    repositoriesId: String!
 
     """
     The next_page_token value returned from a previous list request, if any.
@@ -442,10 +377,13 @@ type Query {
 
     """The field to order the results by."""
     orderBy: String
-  ): ListFilesResponse
 
-  """Gets a file."""
-  artifactregistry_projects_locations_repositories_files_get(
+    """The maximum number of artifacts to return. Maximum page size is 1,000."""
+    pageSize: Int
+  ): ListDockerImagesResponse
+
+  """Gets a docker image."""
+  artifactregistry_projects_locations_repositories_dockerImages_get(
     """Path parameter projectsId"""
     projectsId: String!
 
@@ -455,24 +393,9 @@ type Query {
     """Path parameter repositoriesId"""
     repositoriesId: String!
 
-    """Path parameter filesId"""
-    filesId: String!
-  ): GoogleDevtoolsArtifactregistryV1File
-
-  """Download a file."""
-  artifactregistry_projects_locations_repositories_files_download(
-    """Path parameter projectsId"""
-    projectsId: String!
-
-    """Path parameter locationsId"""
-    locationsId: String!
-
-    """Path parameter repositoriesId"""
-    repositoriesId: String!
-
-    """Path parameter filesId"""
-    filesId: String!
-  ): JSON
+    """Path parameter dockerImagesId"""
+    dockerImagesId: String!
+  ): DockerImage
 
   """Lists rules."""
   artifactregistry_projects_locations_repositories_rules_list(
@@ -509,8 +432,8 @@ type Query {
     rulesId: String!
   ): GoogleDevtoolsArtifactregistryV1Rule
 
-  """Lists attachments."""
-  artifactregistry_projects_locations_repositories_attachments_list(
+  """Lists npm packages."""
+  artifactregistry_projects_locations_repositories_npmPackages_list(
     """Path parameter projectsId"""
     projectsId: String!
 
@@ -520,24 +443,17 @@ type Query {
     """Path parameter repositoriesId"""
     repositoriesId: String!
 
-    """
-    Optional. An expression for filtering the results of the request. Filter rules are case insensitive. The fields eligible for filtering are: * `target` * `type` * `attachment_namespace`
-    """
-    filter: String
-
-    """
-    The maximum number of attachments to return. Maximum page size is 1,000.
-    """
+    """The maximum number of artifacts to return. Maximum page size is 1,000."""
     pageSize: Int
 
     """
     The next_page_token value returned from a previous list request, if any.
     """
     pageToken: String
-  ): ListAttachmentsResponse
+  ): ListNpmPackagesResponse
 
-  """Gets an attachment."""
-  artifactregistry_projects_locations_repositories_attachments_get(
+  """Gets a npm package."""
+  artifactregistry_projects_locations_repositories_npmPackages_get(
     """Path parameter projectsId"""
     projectsId: String!
 
@@ -547,23 +463,116 @@ type Query {
     """Path parameter repositoriesId"""
     repositoriesId: String!
 
-    """Path parameter attachmentsId"""
-    attachmentsId: String!
-  ): Attachment
+    """Path parameter npmPackagesId"""
+    npmPackagesId: String!
+  ): NpmPackage
+
+  """Lists files."""
+  artifactregistry_projects_locations_repositories_files_list(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter repositoriesId"""
+    repositoriesId: String!
+
+    """
+    The next_page_token value returned from a previous list request, if any.
+    """
+    pageToken: String
+
+    """The field to order the results by."""
+    orderBy: String
+
+    """The maximum number of files to return. Maximum page size is 1,000."""
+    pageSize: Int
+
+    """
+    An expression for filtering the results of the request. Filter rules are case insensitive. The fields eligible for filtering are: * `name` * `owner` * `annotations` Examples of using a filter: To filter the results of your request to files with the name `my_file.txt` in project `my-project` in the `us-central` region, in repository `my-repo`, append the following filter expression to your request: * `name="projects/my-project/locations/us-central1/repositories/my-repo/files/my-file.txt"` You can also use wildcards to match any number of characters before or after the value: * `name="projects/my-project/locations/us-central1/repositories/my-repo/files/my-*"` * `name="projects/my-project/locations/us-central1/repositories/my-repo/files/*file.txt"` * `name="projects/my-project/locations/us-central1/repositories/my-repo/files/*file*"` To filter the results of your request to files owned by the version `1.0` in package `pkg1`, append the following filter expression to your request: * `owner="projects/my-project/locations/us-central1/repositories/my-repo/packages/my-package/versions/1.0"` To filter the results of your request to files with the annotation key-value pair [`external_link`: `external_link_value`], append the following filter expression to your request: * `"annotations.external_link:external_link_value"` To filter just for a specific annotation key `external_link`, append the following filter expression to your request: * `"annotations.external_link"` If the annotation key or value contains special characters, you can escape them by surrounding the value with backticks. For example, to filter the results of your request to files with the annotation key-value pair [`external.link`:`https://example.com/my-file`], append the following filter expression to your request: * `` "annotations.`external.link`:`https://example.com/my-file`" `` You can also filter with annotations with a wildcard to match any number of characters before or after the value: * `` "annotations.*_link:`*example.com*`" ``
+    """
+    filter: String
+  ): ListFilesResponse
+
+  """Gets a file."""
+  artifactregistry_projects_locations_repositories_files_get(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter repositoriesId"""
+    repositoriesId: String!
+
+    """Path parameter filesId"""
+    filesId: String!
+  ): GoogleDevtoolsArtifactregistryV1File
+
+  """Download a file."""
+  artifactregistry_projects_locations_repositories_files_download(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter repositoriesId"""
+    repositoriesId: String!
+
+    """Path parameter filesId"""
+    filesId: String!
+  ): JSON
+
+  """Lists maven artifacts."""
+  artifactregistry_projects_locations_repositories_mavenArtifacts_list(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter repositoriesId"""
+    repositoriesId: String!
+
+    """
+    The next_page_token value returned from a previous list request, if any.
+    """
+    pageToken: String
+
+    """The maximum number of artifacts to return. Maximum page size is 1,000."""
+    pageSize: Int
+  ): ListMavenArtifactsResponse
+
+  """Gets a maven artifact."""
+  artifactregistry_projects_locations_repositories_mavenArtifacts_get(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter repositoriesId"""
+    repositoriesId: String!
+
+    """Path parameter mavenArtifactsId"""
+    mavenArtifactsId: String!
+  ): MavenArtifact
 }
 
 """The Artifact Registry settings that apply to a Project."""
 type ProjectSettings {
   """
-  The name of the project's settings. Always of the form: projects/{project-id}/projectSettings In update request: never set In response: always set
-  """
-  name: String
-  legacyRedirectionState: query_artifactregistry_projects_getProjectSettings_legacyRedirectionState
-
-  """
   The percentage of pull traffic to redirect from GCR to AR when using partial redirection.
   """
   pullPercent: Int
+  legacyRedirectionState: query_artifactregistry_projects_getProjectSettings_legacyRedirectionState
+
+  """
+  The name of the project's settings. Always of the form: projects/{project-id}/projectSettings In update request: never set In response: always set
+  """
+  name: String
 }
 
 """The redirection state of the legacy repositories in this project."""
@@ -576,13 +585,54 @@ enum query_artifactregistry_projects_getProjectSettings_legacyRedirectionState {
   REDIRECTION_FROM_GCR_IO_PARTIAL_AND_COPYING
 }
 
+"""The response message for Locations.ListLocations."""
+type ListLocationsResponse {
+  """The standard List next-page token."""
+  nextPageToken: String
+
+  """A list of locations that matches the specified filter in the request."""
+  locations: [Location]
+}
+
+"""A resource that represents a Google Cloud location."""
+type Location {
+  """
+  The friendly name for this location, typically a nearby city name. For example, "Tokyo".
+  """
+  displayName: String
+
+  """
+  Service-specific metadata. For example the available capacity at the given location.
+  """
+  metadata: JSON
+
+  """
+  Cross-service attributes for the location. For example {"cloud.googleapis.com/region": "us-east1"}
+  """
+  labels: JSON
+
+  """
+  Resource name for the location, which may vary between implementations. For example: `"projects/example-project/locations/us-east1"`
+  """
+  name: String
+
+  """The canonical id for this location. For example: `"us-east1"`."""
+  locationId: String
+}
+
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSON @specifiedBy(url: "http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf")
+
 """The Artifact Registry VPC SC config that apply to a Project."""
 type VPCSCConfig {
+  vpcscPolicy: query_artifactregistry_projects_locations_getVpcscConfig_vpcscPolicy
+
   """
   The name of the project's VPC SC Config. Always of the form: projects/{projectID}/locations/{location}/vpcscConfig In update request: never set In response: always set
   """
   name: String
-  vpcscPolicy: query_artifactregistry_projects_locations_getVpcscConfig_vpcscPolicy
 }
 
 """
@@ -594,50 +644,54 @@ enum query_artifactregistry_projects_locations_getVpcscConfig_vpcscPolicy {
   ALLOW
 }
 
-"""The response message for Locations.ListLocations."""
-type ListLocationsResponse {
-  """A list of locations that matches the specified filter in the request."""
-  locations: [Location]
+"""The Artifact Registry logging configurations that apply to a Project."""
+type ProjectConfig {
+  platformLogsConfig: PlatformLogsConfig
 
-  """The standard List next-page token."""
-  nextPageToken: String
-}
-
-"""A resource that represents a Google Cloud location."""
-type Location {
   """
-  Resource name for the location, which may vary between implementations. For example: `"projects/example-project/locations/us-east1"`
+  Identifier. The name of the project's configuration. Always of the form: projects/{project}/locations/{location}/projectConfig
   """
   name: String
+}
 
-  """The canonical id for this location. For example: `"us-east1"`."""
-  locationId: String
+"""The platform logs config for a project or a repository."""
+type PlatformLogsConfig {
+  loggingState: query_artifactregistry_projects_locations_getProjectConfig_platformLogsConfig_loggingState
+  severityLevel: query_artifactregistry_projects_locations_getProjectConfig_platformLogsConfig_severityLevel
+}
 
-  """
-  The friendly name for this location, typically a nearby city name. For example, "Tokyo".
-  """
-  displayName: String
-
-  """
-  Cross-service attributes for the location. For example {"cloud.googleapis.com/region": "us-east1"}
-  """
-  labels: JSON
-
-  """
-  Service-specific metadata. For example the available capacity at the given location.
-  """
-  metadata: JSON
+"""Optional. The state of the platform logs: enabled or disabled."""
+enum query_artifactregistry_projects_locations_getProjectConfig_platformLogsConfig_loggingState {
+  LOGGING_STATE_UNSPECIFIED
+  ENABLED
+  DISABLED
 }
 
 """
-The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+Optional. The severity level for the logs. Logs will be generated if their severity level is >= than the value of the severity level mentioned here.
 """
-scalar JSON @specifiedBy(url: "http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf")
+enum query_artifactregistry_projects_locations_getProjectConfig_platformLogsConfig_severityLevel {
+  SEVERITY_LEVEL_UNSPECIFIED
+  DEBUG
+  INFO
+  NOTICE
+  WARNING
+  ERROR
+  CRITICAL
+  ALERT
+  EMERGENCY
+}
 
 """
 This resource represents a long-running operation that is the result of a network API call.
 """
 type Operation {
+  """
+  The normal, successful response of the operation. If the original method returns no data on success, such as `Delete`, the response is `google.protobuf.Empty`. If the original method is standard `Get`/`Create`/`Update`, the response should be the resource. For other methods, the response should have the type `XxxResponse`, where `Xxx` is the original method name. For example, if the original method name is `TakeSnapshot()`, the inferred response type is `TakeSnapshotResponse`.
+  """
+  response: JSON
+  error: Status
+
   """
   The server-assigned name, which is only unique within the same service that originally returns it. If you use the default HTTP mapping, the `name` should be a resource name ending with `operations/{unique_id}`.
   """
@@ -652,12 +706,6 @@ type Operation {
   If the value is `false`, it means the operation is still in progress. If `true`, the operation is completed, and either `error` or `response` is available.
   """
   done: Boolean
-  error: Status
-
-  """
-  The normal, successful response of the operation. If the original method returns no data on success, such as `Delete`, the response is `google.protobuf.Empty`. If the original method is standard `Get`/`Create`/`Update`, the response should be the resource. For other methods, the response should have the type `XxxResponse`, where `Xxx` is the original method name. For example, if the original method name is `TakeSnapshot()`, the inferred response type is `TakeSnapshotResponse`.
-  """
-  response: JSON
 }
 
 """
@@ -678,29 +726,36 @@ type Status {
   details: [JSON]
 }
 
-"""The response from listing repositories."""
-type ListRepositoriesResponse {
-  """The repositories returned."""
-  repositories: [Repository]
-
-  """
-  The token to retrieve the next page of repositories, or empty if there are no more repositories to return.
-  """
-  nextPageToken: String
-}
-
 """A Repository for storing artifacts with a specific format."""
 type Repository {
-  mavenConfig: MavenRepositoryConfig
-  dockerConfig: DockerRepositoryConfig
-  virtualRepositoryConfig: VirtualRepositoryConfig
-  remoteRepositoryConfig: RemoteRepositoryConfig
+  cleanupPolicies: query_artifactregistry_projects_locations_repositories_get_cleanupPolicies
 
   """
-  The name of the repository, for example: `projects/p1/locations/us-central1/repositories/repo1`. For each location in a project, repository names must be unique.
+  Optional. If true, the cleanup pipeline is prevented from deleting versions in this repository.
   """
-  name: String
-  format: query_artifactregistry_projects_locations_repositories_list_repositories_items_format
+  cleanupPolicyDryRun: Boolean
+  virtualRepositoryConfig: VirtualRepositoryConfig
+
+  """
+  Optional. If this is true, an unspecified repo type will be treated as error rather than defaulting to standard.
+  """
+  disallowUnspecifiedMode: Boolean
+
+  """Output only. Whether or not this repository satisfies PZS."""
+  satisfiesPzs: Boolean
+  remoteRepositoryConfig: RemoteRepositoryConfig
+  dockerConfig: DockerRepositoryConfig
+
+  """Output only. Whether or not this repository satisfies PZI."""
+  satisfiesPzi: Boolean
+  format: query_artifactregistry_projects_locations_repositories_get_format
+
+  """Output only. The time when the repository was last updated."""
+  updateTime: String
+
+  """Output only. The time when the repository was created."""
+  createTime: String
+  mavenConfig: MavenRepositoryConfig
 
   """The user-provided description of the repository."""
   description: String
@@ -709,74 +764,98 @@ type Repository {
   Labels with user-defined metadata. This field may contain up to 64 entries. Label keys and values may be no longer than 63 characters. Label keys must begin with a lowercase letter and may only contain lowercase letters, numeric characters, underscores, and dashes.
   """
   labels: JSON
-
-  """Output only. The time when the repository was created."""
-  createTime: String
-
-  """Output only. The time when the repository was last updated."""
-  updateTime: String
-
-  """
-  The Cloud KMS resource name of the customer managed encryption key that's used to encrypt the contents of the Repository. Has the form: `projects/my-project/locations/my-region/keyRings/my-kr/cryptoKeys/my-key`. This value may not be changed after the Repository has been created.
-  """
-  kmsKeyName: String
-  mode: query_artifactregistry_projects_locations_repositories_list_repositories_items_mode
-  cleanupPolicies: query_artifactregistry_projects_locations_repositories_list_repositories_items_cleanupPolicies
+  platformLogsConfig: PlatformLogsConfig
 
   """
   Output only. The size, in bytes, of all artifact storage in this repository. Repositories that are generally available or in public preview use this to calculate storage costs.
   """
   sizeBytes: BigInt
-
-  """Output only. Whether or not this repository satisfies PZS."""
-  satisfiesPzs: Boolean
+  mode: query_artifactregistry_projects_locations_repositories_get_mode
 
   """
-  Optional. If true, the cleanup pipeline is prevented from deleting versions in this repository.
+  The Cloud KMS resource name of the customer managed encryption key that's used to encrypt the contents of the Repository. Has the form: `projects/my-project/locations/my-region/keyRings/my-kr/cryptoKeys/my-key`. This value may not be changed after the Repository has been created.
   """
-  cleanupPolicyDryRun: Boolean
+  kmsKeyName: String
   vulnerabilityScanningConfig: VulnerabilityScanningConfig
-
-  """
-  Optional. If this is true, an unspecified repo type will be treated as error rather than defaulting to standard.
-  """
-  disallowUnspecifiedMode: Boolean
-
-  """Output only. Whether or not this repository satisfies PZI."""
-  satisfiesPzi: Boolean
 
   """
   Output only. The repository endpoint, for example: `us-docker.pkg.dev/my-proj/my-repo`.
   """
   registryUri: String
+
+  """
+  The name of the repository, for example: `projects/p1/locations/us-central1/repositories/repo1`. For each location in a project, repository names must be unique.
+  """
+  name: String
 }
 
 """
-MavenRepositoryConfig is maven related repository details. Provides additional configuration details for repositories of the maven format type.
+Optional. Cleanup policies for this repository. Cleanup policies indicate when certain package versions can be automatically deleted. Map keys are policy IDs supplied by users during policy creation. They must unique within a repository and be under 128 characters in length.
 """
-type MavenRepositoryConfig {
-  """
-  The repository with this flag will allow publishing the same snapshot versions.
-  """
-  allowSnapshotOverwrites: Boolean
-  versionPolicy: query_artifactregistry_projects_locations_repositories_list_repositories_items_mavenConfig_versionPolicy
+type query_artifactregistry_projects_locations_repositories_get_cleanupPolicies {
+  additionalProperties: [CleanupPolicy_entry]
 }
 
-"""Version policy defines the versions that the registry will accept."""
-enum query_artifactregistry_projects_locations_repositories_list_repositories_items_mavenConfig_versionPolicy {
-  VERSION_POLICY_UNSPECIFIED
-  RELEASE
-  SNAPSHOT
+type CleanupPolicy_entry {
+  key: ID!
+  value: CleanupPolicy
+}
+
+"""Artifact policy configuration for repository cleanup policies."""
+type CleanupPolicy {
+  mostRecentVersions: CleanupPolicyMostRecentVersions
+  action: query_artifactregistry_projects_locations_repositories_get_cleanupPolicies_additionalProperties_action
+  condition: CleanupPolicyCondition
+
+  """The user-provided ID of the cleanup policy."""
+  id: String
 }
 
 """
-DockerRepositoryConfig is docker related repository details. Provides additional configuration details for repositories of the docker format type.
+CleanupPolicyMostRecentVersions is an alternate condition of a CleanupPolicy for retaining a minimum number of versions.
 """
-type DockerRepositoryConfig {
-  """
-  The repository which enabled this flag prevents all tags from being modified, moved or deleted. This does not prevent tags from being created.
-  """
-  immutableTags: Boolean
+type CleanupPolicyMostRecentVersions {
+  """Minimum number of versions to keep."""
+  keepCount: Int
+
+  """List of package name prefixes that will apply this rule."""
+  packageNamePrefixes: [String]
+}
+
+"""Policy action."""
+enum query_artifactregistry_projects_locations_repositories_get_cleanupPolicies_additionalProperties_action {
+  ACTION_UNSPECIFIED
+  DELETE
+  KEEP
+}
+
+"""
+CleanupPolicyCondition is a set of conditions attached to a CleanupPolicy. If multiple entries are set, all must be satisfied for the condition to be satisfied.
+"""
+type CleanupPolicyCondition {
+  """Match versions by tag prefix. Applied on any prefix match."""
+  tagPrefixes: [String]
+
+  """Match versions newer than a duration."""
+  newerThan: String
+
+  """Match versions by version name prefix. Applied on any prefix match."""
+  versionNamePrefixes: [String]
+
+  """Match versions older than a duration."""
+  olderThan: String
+
+  """Match versions by package prefix. Applied on any prefix match."""
+  packageNamePrefixes: [String]
+  tagState: query_artifactregistry_projects_locations_repositories_get_cleanupPolicies_additionalProperties_condition_tagState
+}
+
+"""Match versions by tag status."""
+enum query_artifactregistry_projects_locations_repositories_get_cleanupPolicies_additionalProperties_condition_tagState {
+  TAG_STATE_UNSPECIFIED
+  TAGGED
+  UNTAGGED
+  ANY
 }
 
 """Virtual repository configuration."""
@@ -789,6 +868,11 @@ type VirtualRepositoryConfig {
 
 """Artifact policy configuration for the repository contents."""
 type UpstreamPolicy {
+  """
+  Entries with a greater priority value take precedence in the pull order.
+  """
+  priority: Int
+
   """The user-provided ID of the upstream policy."""
   id: String
 
@@ -796,43 +880,38 @@ type UpstreamPolicy {
   A reference to the repository resource, for example: `projects/p1/locations/us-central1/repositories/repo1`.
   """
   repository: String
-
-  """
-  Entries with a greater priority value take precedence in the pull order.
-  """
-  priority: Int
 }
 
 """Remote repository configuration."""
 type RemoteRepositoryConfig {
   dockerRepository: DockerRepository
-  mavenRepository: MavenRepository
-  npmRepository: NpmRepository
   pythonRepository: PythonRepository
-  aptRepository: AptRepository
   yumRepository: YumRepository
-  commonRepository: CommonRemoteRepository
 
   """The description of the remote source."""
   description: String
   upstreamCredentials: UpstreamCredentials
+  aptRepository: AptRepository
+  commonRepository: CommonRemoteRepository
 
   """
   Input only. A create/update remote repo option to avoid making a HEAD/GET request to validate a remote repo and any supplied upstream credentials.
   """
   disableUpstreamValidation: Boolean
+  mavenRepository: MavenRepository
+  npmRepository: NpmRepository
 }
 
 """Configuration for a Docker remote repository."""
 type DockerRepository {
-  publicRepository: query_artifactregistry_projects_locations_repositories_list_repositories_items_remoteRepositoryConfig_dockerRepository_publicRepository
+  publicRepository: query_artifactregistry_projects_locations_repositories_get_remoteRepositoryConfig_dockerRepository_publicRepository
   customRepository: GoogleDevtoolsArtifactregistryV1RemoteRepositoryConfigDockerRepositoryCustomRepository
 }
 
 """
 One of the publicly available Docker repositories supported by Artifact Registry.
 """
-enum query_artifactregistry_projects_locations_repositories_list_repositories_items_remoteRepositoryConfig_dockerRepository_publicRepository {
+enum query_artifactregistry_projects_locations_repositories_get_remoteRepositoryConfig_dockerRepository_publicRepository {
   PUBLIC_REPOSITORY_UNSPECIFIED
   DOCKER_HUB
 }
@@ -845,60 +924,16 @@ type GoogleDevtoolsArtifactregistryV1RemoteRepositoryConfigDockerRepositoryCusto
   uri: String
 }
 
-"""Configuration for a Maven remote repository."""
-type MavenRepository {
-  publicRepository: query_artifactregistry_projects_locations_repositories_list_repositories_items_remoteRepositoryConfig_mavenRepository_publicRepository
-  customRepository: GoogleDevtoolsArtifactregistryV1RemoteRepositoryConfigMavenRepositoryCustomRepository
-}
-
-"""
-One of the publicly available Maven repositories supported by Artifact Registry.
-"""
-enum query_artifactregistry_projects_locations_repositories_list_repositories_items_remoteRepositoryConfig_mavenRepository_publicRepository {
-  PUBLIC_REPOSITORY_UNSPECIFIED
-  MAVEN_CENTRAL
-}
-
-"""Customer-specified publicly available remote repository."""
-type GoogleDevtoolsArtifactregistryV1RemoteRepositoryConfigMavenRepositoryCustomRepository {
-  """
-  An http/https uri reference to the upstream remote repository, for ex: "https://my.maven.registry/".
-  """
-  uri: String
-}
-
-"""Configuration for a Npm remote repository."""
-type NpmRepository {
-  publicRepository: query_artifactregistry_projects_locations_repositories_list_repositories_items_remoteRepositoryConfig_npmRepository_publicRepository
-  customRepository: GoogleDevtoolsArtifactregistryV1RemoteRepositoryConfigNpmRepositoryCustomRepository
-}
-
-"""
-One of the publicly available Npm repositories supported by Artifact Registry.
-"""
-enum query_artifactregistry_projects_locations_repositories_list_repositories_items_remoteRepositoryConfig_npmRepository_publicRepository {
-  PUBLIC_REPOSITORY_UNSPECIFIED
-  NPMJS
-}
-
-"""Customer-specified publicly available remote repository."""
-type GoogleDevtoolsArtifactregistryV1RemoteRepositoryConfigNpmRepositoryCustomRepository {
-  """
-  An http/https uri reference to the upstream remote repository, for ex: "https://my.npm.registry/".
-  """
-  uri: String
-}
-
 """Configuration for a Python remote repository."""
 type PythonRepository {
-  publicRepository: query_artifactregistry_projects_locations_repositories_list_repositories_items_remoteRepositoryConfig_pythonRepository_publicRepository
+  publicRepository: query_artifactregistry_projects_locations_repositories_get_remoteRepositoryConfig_pythonRepository_publicRepository
   customRepository: GoogleDevtoolsArtifactregistryV1RemoteRepositoryConfigPythonRepositoryCustomRepository
 }
 
 """
 One of the publicly available Python repositories supported by Artifact Registry.
 """
-enum query_artifactregistry_projects_locations_repositories_list_repositories_items_remoteRepositoryConfig_pythonRepository_publicRepository {
+enum query_artifactregistry_projects_locations_repositories_get_remoteRepositoryConfig_pythonRepository_publicRepository {
   PUBLIC_REPOSITORY_UNSPECIFIED
   PYPI
 }
@@ -907,40 +942,6 @@ enum query_artifactregistry_projects_locations_repositories_list_repositories_it
 type GoogleDevtoolsArtifactregistryV1RemoteRepositoryConfigPythonRepositoryCustomRepository {
   """
   An http/https uri reference to the upstream remote repository, for ex: "https://my.python.registry/".
-  """
-  uri: String
-}
-
-"""Configuration for an Apt remote repository."""
-type AptRepository {
-  publicRepository: GoogleDevtoolsArtifactregistryV1RemoteRepositoryConfigAptRepositoryPublicRepository
-  customRepository: GoogleDevtoolsArtifactregistryV1RemoteRepositoryConfigAptRepositoryCustomRepository
-}
-
-"""
-Publicly available Apt repositories constructed from a common repository base and a custom repository path.
-"""
-type GoogleDevtoolsArtifactregistryV1RemoteRepositoryConfigAptRepositoryPublicRepository {
-  repositoryBase: query_artifactregistry_projects_locations_repositories_list_repositories_items_remoteRepositoryConfig_aptRepository_publicRepository_repositoryBase
-
-  """
-  A custom field to define a path to a specific repository from the base.
-  """
-  repositoryPath: String
-}
-
-"""A common public repository base for Apt."""
-enum query_artifactregistry_projects_locations_repositories_list_repositories_items_remoteRepositoryConfig_aptRepository_publicRepository_repositoryBase {
-  REPOSITORY_BASE_UNSPECIFIED
-  DEBIAN
-  UBUNTU
-  DEBIAN_SNAPSHOT
-}
-
-"""Customer-specified publicly available remote repository."""
-type GoogleDevtoolsArtifactregistryV1RemoteRepositoryConfigAptRepositoryCustomRepository {
-  """
-  An http/https uri reference to the upstream remote repository, for ex: "https://my.apt.registry/".
   """
   uri: String
 }
@@ -955,7 +956,7 @@ type YumRepository {
 Publicly available Yum repositories constructed from a common repository base and a custom repository path.
 """
 type GoogleDevtoolsArtifactregistryV1RemoteRepositoryConfigYumRepositoryPublicRepository {
-  repositoryBase: query_artifactregistry_projects_locations_repositories_list_repositories_items_remoteRepositoryConfig_yumRepository_publicRepository_repositoryBase
+  repositoryBase: query_artifactregistry_projects_locations_repositories_get_remoteRepositoryConfig_yumRepository_publicRepository_repositoryBase
 
   """
   A custom field to define a path to a specific repository from the base.
@@ -964,7 +965,7 @@ type GoogleDevtoolsArtifactregistryV1RemoteRepositoryConfigYumRepositoryPublicRe
 }
 
 """A common public repository base for Yum."""
-enum query_artifactregistry_projects_locations_repositories_list_repositories_items_remoteRepositoryConfig_yumRepository_publicRepository_repositoryBase {
+enum query_artifactregistry_projects_locations_repositories_get_remoteRepositoryConfig_yumRepository_publicRepository_repositoryBase {
   REPOSITORY_BASE_UNSPECIFIED
   CENTOS
   CENTOS_DEBUG
@@ -979,12 +980,6 @@ type GoogleDevtoolsArtifactregistryV1RemoteRepositoryConfigYumRepositoryCustomRe
   """
   An http/https uri reference to the upstream remote repository, for ex: "https://my.yum.registry/".
   """
-  uri: String
-}
-
-"""Common remote repository settings type."""
-type CommonRemoteRepository {
-  """Required. A common public repository base for remote repository."""
   uri: String
 }
 
@@ -1004,8 +999,102 @@ type UsernamePasswordCredentials {
   passwordSecretVersion: String
 }
 
+"""Configuration for an Apt remote repository."""
+type AptRepository {
+  publicRepository: GoogleDevtoolsArtifactregistryV1RemoteRepositoryConfigAptRepositoryPublicRepository
+  customRepository: GoogleDevtoolsArtifactregistryV1RemoteRepositoryConfigAptRepositoryCustomRepository
+}
+
+"""
+Publicly available Apt repositories constructed from a common repository base and a custom repository path.
+"""
+type GoogleDevtoolsArtifactregistryV1RemoteRepositoryConfigAptRepositoryPublicRepository {
+  repositoryBase: query_artifactregistry_projects_locations_repositories_get_remoteRepositoryConfig_aptRepository_publicRepository_repositoryBase
+
+  """
+  A custom field to define a path to a specific repository from the base.
+  """
+  repositoryPath: String
+}
+
+"""A common public repository base for Apt."""
+enum query_artifactregistry_projects_locations_repositories_get_remoteRepositoryConfig_aptRepository_publicRepository_repositoryBase {
+  REPOSITORY_BASE_UNSPECIFIED
+  DEBIAN
+  UBUNTU
+  DEBIAN_SNAPSHOT
+}
+
+"""Customer-specified publicly available remote repository."""
+type GoogleDevtoolsArtifactregistryV1RemoteRepositoryConfigAptRepositoryCustomRepository {
+  """
+  An http/https uri reference to the upstream remote repository, for ex: "https://my.apt.registry/".
+  """
+  uri: String
+}
+
+"""Common remote repository settings type."""
+type CommonRemoteRepository {
+  """Required. A common public repository base for remote repository."""
+  uri: String
+}
+
+"""Configuration for a Maven remote repository."""
+type MavenRepository {
+  publicRepository: query_artifactregistry_projects_locations_repositories_get_remoteRepositoryConfig_mavenRepository_publicRepository
+  customRepository: GoogleDevtoolsArtifactregistryV1RemoteRepositoryConfigMavenRepositoryCustomRepository
+}
+
+"""
+One of the publicly available Maven repositories supported by Artifact Registry.
+"""
+enum query_artifactregistry_projects_locations_repositories_get_remoteRepositoryConfig_mavenRepository_publicRepository {
+  PUBLIC_REPOSITORY_UNSPECIFIED
+  MAVEN_CENTRAL
+}
+
+"""Customer-specified publicly available remote repository."""
+type GoogleDevtoolsArtifactregistryV1RemoteRepositoryConfigMavenRepositoryCustomRepository {
+  """
+  An http/https uri reference to the upstream remote repository, for ex: "https://my.maven.registry/".
+  """
+  uri: String
+}
+
+"""Configuration for a Npm remote repository."""
+type NpmRepository {
+  publicRepository: query_artifactregistry_projects_locations_repositories_get_remoteRepositoryConfig_npmRepository_publicRepository
+  customRepository: GoogleDevtoolsArtifactregistryV1RemoteRepositoryConfigNpmRepositoryCustomRepository
+}
+
+"""
+One of the publicly available Npm repositories supported by Artifact Registry.
+"""
+enum query_artifactregistry_projects_locations_repositories_get_remoteRepositoryConfig_npmRepository_publicRepository {
+  PUBLIC_REPOSITORY_UNSPECIFIED
+  NPMJS
+}
+
+"""Customer-specified publicly available remote repository."""
+type GoogleDevtoolsArtifactregistryV1RemoteRepositoryConfigNpmRepositoryCustomRepository {
+  """
+  An http/https uri reference to the upstream remote repository, for ex: "https://my.npm.registry/".
+  """
+  uri: String
+}
+
+"""
+DockerRepositoryConfig is docker related repository details. Provides additional configuration details for repositories of the docker format type.
+"""
+type DockerRepositoryConfig {
+  """
+  The repository which enabled this flag prevents all tags from being modified, moved or deleted. This does not prevent tags from being created.
+  """
+  immutableTags: Boolean
+}
+
 """Optional. The format of packages that are stored in the repository."""
-enum query_artifactregistry_projects_locations_repositories_list_repositories_items_format {
+enum query_artifactregistry_projects_locations_repositories_get_format {
   FORMAT_UNSPECIFIED
   DOCKER
   MAVEN
@@ -1020,8 +1109,31 @@ enum query_artifactregistry_projects_locations_repositories_list_repositories_it
   RUBY
 }
 
+"""
+MavenRepositoryConfig is maven related repository details. Provides additional configuration details for repositories of the maven format type.
+"""
+type MavenRepositoryConfig {
+  """
+  The repository with this flag will allow publishing the same snapshot versions.
+  """
+  allowSnapshotOverwrites: Boolean
+  versionPolicy: query_artifactregistry_projects_locations_repositories_get_mavenConfig_versionPolicy
+}
+
+"""Version policy defines the versions that the registry will accept."""
+enum query_artifactregistry_projects_locations_repositories_get_mavenConfig_versionPolicy {
+  VERSION_POLICY_UNSPECIFIED
+  RELEASE
+  SNAPSHOT
+}
+
+"""
+The `BigInt` scalar type represents non-fractional signed whole numeric values.
+"""
+scalar BigInt
+
 """Optional. The mode of the repository."""
-enum query_artifactregistry_projects_locations_repositories_list_repositories_items_mode {
+enum query_artifactregistry_projects_locations_repositories_get_mode {
   MODE_UNSPECIFIED
   STANDARD_REPOSITORY
   VIRTUAL_REPOSITORY
@@ -1031,98 +1143,23 @@ enum query_artifactregistry_projects_locations_repositories_list_repositories_it
 }
 
 """
-Optional. Cleanup policies for this repository. Cleanup policies indicate when certain package versions can be automatically deleted. Map keys are policy IDs supplied by users during policy creation. They must unique within a repository and be under 128 characters in length.
-"""
-type query_artifactregistry_projects_locations_repositories_list_repositories_items_cleanupPolicies {
-  additionalProperties: [CleanupPolicy_entry]
-}
-
-type CleanupPolicy_entry {
-  key: ID!
-  value: CleanupPolicy
-}
-
-"""Artifact policy configuration for repository cleanup policies."""
-type CleanupPolicy {
-  condition: CleanupPolicyCondition
-  mostRecentVersions: CleanupPolicyMostRecentVersions
-
-  """The user-provided ID of the cleanup policy."""
-  id: String
-  action: query_artifactregistry_projects_locations_repositories_list_repositories_items_cleanupPolicies_additionalProperties_action
-}
-
-"""
-CleanupPolicyCondition is a set of conditions attached to a CleanupPolicy. If multiple entries are set, all must be satisfied for the condition to be satisfied.
-"""
-type CleanupPolicyCondition {
-  tagState: query_artifactregistry_projects_locations_repositories_list_repositories_items_cleanupPolicies_additionalProperties_condition_tagState
-
-  """Match versions by tag prefix. Applied on any prefix match."""
-  tagPrefixes: [String]
-
-  """Match versions by version name prefix. Applied on any prefix match."""
-  versionNamePrefixes: [String]
-
-  """Match versions by package prefix. Applied on any prefix match."""
-  packageNamePrefixes: [String]
-
-  """Match versions older than a duration."""
-  olderThan: String
-
-  """Match versions newer than a duration."""
-  newerThan: String
-}
-
-"""Match versions by tag status."""
-enum query_artifactregistry_projects_locations_repositories_list_repositories_items_cleanupPolicies_additionalProperties_condition_tagState {
-  TAG_STATE_UNSPECIFIED
-  TAGGED
-  UNTAGGED
-  ANY
-}
-
-"""
-CleanupPolicyMostRecentVersions is an alternate condition of a CleanupPolicy for retaining a minimum number of versions.
-"""
-type CleanupPolicyMostRecentVersions {
-  """List of package name prefixes that will apply this rule."""
-  packageNamePrefixes: [String]
-
-  """Minimum number of versions to keep."""
-  keepCount: Int
-}
-
-"""Policy action."""
-enum query_artifactregistry_projects_locations_repositories_list_repositories_items_cleanupPolicies_additionalProperties_action {
-  ACTION_UNSPECIFIED
-  DELETE
-  KEEP
-}
-
-"""
-The `BigInt` scalar type represents non-fractional signed whole numeric values.
-"""
-scalar BigInt
-
-"""
 Config on whether to perform vulnerability scanning for resources in this repository, as well as output fields describing current state.
 """
 type VulnerabilityScanningConfig {
-  enablementConfig: query_artifactregistry_projects_locations_repositories_list_repositories_items_vulnerabilityScanningConfig_enablementConfig
-
-  """Output only. The last time this repository config was enabled."""
-  lastEnableTime: String
-  enablementState: query_artifactregistry_projects_locations_repositories_list_repositories_items_vulnerabilityScanningConfig_enablementState
+  enablementConfig: query_artifactregistry_projects_locations_repositories_get_vulnerabilityScanningConfig_enablementConfig
 
   """Output only. Reason for the repository state."""
   enablementStateReason: String
+
+  """Output only. The last time this repository config was enabled."""
+  lastEnableTime: String
+  enablementState: query_artifactregistry_projects_locations_repositories_get_vulnerabilityScanningConfig_enablementState
 }
 
 """
 Optional. Config for whether this repository has vulnerability scanning disabled.
 """
-enum query_artifactregistry_projects_locations_repositories_list_repositories_items_vulnerabilityScanningConfig_enablementConfig {
+enum query_artifactregistry_projects_locations_repositories_get_vulnerabilityScanningConfig_enablementConfig {
   ENABLEMENT_CONFIG_UNSPECIFIED
   INHERITED
   DISABLED
@@ -1131,11 +1168,22 @@ enum query_artifactregistry_projects_locations_repositories_list_repositories_it
 """
 Output only. State of feature enablement, combining repository enablement config and API enablement state.
 """
-enum query_artifactregistry_projects_locations_repositories_list_repositories_items_vulnerabilityScanningConfig_enablementState {
+enum query_artifactregistry_projects_locations_repositories_get_vulnerabilityScanningConfig_enablementState {
   ENABLEMENT_STATE_UNSPECIFIED
   SCANNING_UNSUPPORTED
   SCANNING_DISABLED
   SCANNING_ACTIVE
+}
+
+"""The response from listing repositories."""
+type ListRepositoriesResponse {
+  """
+  The token to retrieve the next page of repositories, or empty if there are no more repositories to return.
+  """
+  nextPageToken: String
+
+  """The repositories returned."""
+  repositories: [Repository]
 }
 
 """
@@ -1143,14 +1191,14 @@ An Identity and Access Management (IAM) policy, which specifies access controls 
 """
 type Policy {
   """
-  Specifies the format of the policy. Valid values are `0`, `1`, and `3`. Requests that specify an invalid value are rejected. Any operation that affects conditional role bindings must specify version `3`. This requirement applies to the following operations: * Getting a policy that includes a conditional role binding * Adding a conditional role binding to a policy * Changing a conditional role binding in a policy * Removing any role binding, with or without a condition, from a policy that includes conditions **Important:** If you use IAM Conditions, you must include the `etag` field whenever you call `setIamPolicy`. If you omit this field, then IAM allows you to overwrite a version `3` policy with a version `1` policy, and all of the conditions in the version `3` policy are lost. If a policy does not include any conditions, operations on that policy may specify any valid version or leave the field unset. To learn which resources support conditions in their IAM policies, see the [IAM documentation](https://cloud.google.com/iam/help/conditions/resource-policies).
-  """
-  version: Int
-
-  """
   Associates a list of `members`, or principals, with a `role`. Optionally, may specify a `condition` that determines how and when the `bindings` are applied. Each of the `bindings` must contain at least one principal. The `bindings` in a `Policy` can refer to up to 1,500 principals; up to 250 of these principals can be Google groups. Each occurrence of a principal counts towards these limits. For example, if the `bindings` grant 50 different roles to `user:alice@example.com`, and not to any other principal, then you can add another 1,450 principals to the `bindings` in the `Policy`.
   """
   bindings: [Binding]
+
+  """
+  Specifies the format of the policy. Valid values are `0`, `1`, and `3`. Requests that specify an invalid value are rejected. Any operation that affects conditional role bindings must specify version `3`. This requirement applies to the following operations: * Getting a policy that includes a conditional role binding * Adding a conditional role binding to a policy * Changing a conditional role binding in a policy * Removing any role binding, with or without a condition, from a policy that includes conditions **Important:** If you use IAM Conditions, you must include the `etag` field whenever you call `setIamPolicy`. If you omit this field, then IAM allows you to overwrite a version `3` policy with a version `1` policy, and all of the conditions in the version `3` policy are lost. If a policy does not include any conditions, operations on that policy may specify any valid version or leave the field unset. To learn which resources support conditions in their IAM policies, see the [IAM documentation](https://cloud.google.com/iam/help/conditions/resource-policies).
+  """
+  version: Int
 
   """
   `etag` is used for optimistic concurrency control as a way to help prevent simultaneous updates of a policy from overwriting each other. It is strongly suggested that systems make use of the `etag` in the read-modify-write cycle to perform policy updates in order to avoid race conditions: An `etag` is returned in the response to `getIamPolicy`, and systems are expected to put that etag in the request to `setIamPolicy` to ensure that their change will be applied to the same version of the policy. **Important:** If you use IAM Conditions, you must include the `etag` field whenever you call `setIamPolicy`. If you omit this field, then IAM allows you to overwrite a version `3` policy with a version `1` policy, and all of the conditions in the version `3` policy are lost.
@@ -1177,16 +1225,6 @@ Represents a textual expression in the Common Expression Language (CEL) syntax. 
 """
 type Expr {
   """
-  Textual representation of an expression in Common Expression Language syntax.
-  """
-  expression: String
-
-  """
-  Optional. Title for the expression, i.e. a short string describing its purpose. This can be used e.g. in UIs which allow to enter the expression.
-  """
-  title: String
-
-  """
   Optional. Description of the expression. This is a longer text which describes the expression, e.g. when hovered over it in a UI.
   """
   description: String
@@ -1195,202 +1233,101 @@ type Expr {
   Optional. String indicating the location of the expression for error reporting, e.g. a file name and a position in the file.
   """
   location: String
+
+  """
+  Optional. Title for the expression, i.e. a short string describing its purpose. This can be used e.g. in UIs which allow to enter the expression.
+  """
+  title: String
+
+  """
+  Textual representation of an expression in Common Expression Language syntax.
+  """
+  expression: String
 }
 
 """The `Byte` scalar type represents byte value as a Buffer"""
 scalar Byte
 
-"""The response from listing docker images."""
-type ListDockerImagesResponse {
-  """The docker images returned."""
-  dockerImages: [DockerImage]
+"""The response from listing attachments."""
+type ListAttachmentsResponse {
+  """The attachments returned."""
+  attachments: [Attachment]
 
   """
-  The token to retrieve the next page of artifacts, or empty if there are no more artifacts to return.
+  The token to retrieve the next page of attachments, or empty if there are no more attachments to return.
   """
   nextPageToken: String
 }
 
 """
-DockerImage represents a docker artifact. The following fields are returned as untyped metadata in the Version resource, using camelcase keys (i.e. metadata.imageSizeBytes): * imageSizeBytes * mediaType * buildTime
+An Attachment refers to additional metadata that can be attached to artifacts in Artifact Registry. An attachment consists of one or more files.
 """
-type DockerImage {
+type Attachment {
+  """Type of attachment. E.g. `application/vnd.spdx+json`"""
+  type: String
+
   """
-  Required. registry_location, project_id, repository_name and image id forms a unique image name:`projects//locations//repositories//dockerImages/`. For example, "projects/test-project/locations/us-west4/repositories/test-repo/dockerImages/ nginx@sha256:e9954c1fc875017be1c3e36eca16be2d9e9bccc4bf072163515467d6a823c7cf", where "us-west4" is the registry_location, "test-project" is the project_id, "test-repo" is the repository_name and "nginx@sha256:e9954c1fc875017be1c3e36eca16be2d9e9bccc4bf072163515467d6a823c7cf" is the image's digest.
+  Optional. User annotations. These attributes can only be set and used by the user, and not by Artifact Registry. See https://google.aip.dev/128#annotations for more details such as format and size limitations.
+  """
+  annotations: JSON
+
+  """
+  Required. The files that belong to this attachment. If the file ID part contains slashes, they are escaped. E.g. `projects/p1/locations/us-central1/repositories/repo1/files/sha:`.
+  """
+  files: [String]
+
+  """
+  The name of the attachment. E.g. `projects/p1/locations/us/repositories/repo/attachments/sbom`.
   """
   name: String
 
-  """
-  Required. URL to access the image. Example: us-west4-docker.pkg.dev/test-project/test-repo/nginx@sha256:e9954c1fc875017be1c3e36eca16be2d9e9bccc4bf072163515467d6a823c7cf
-  """
-  uri: String
-
-  """Tags attached to this image."""
-  tags: [String]
-
-  """
-  Calculated size of the image. This field is returned as the 'metadata.imageSizeBytes' field in the Version resource.
-  """
-  imageSizeBytes: BigInt
-
-  """Time the image was uploaded."""
-  uploadTime: String
-
-  """
-  Media type of this image, e.g. "application/vnd.docker.distribution.manifest.v2+json". This field is returned as the 'metadata.mediaType' field in the Version resource.
-  """
-  mediaType: String
-
-  """
-  The time this image was built. This field is returned as the 'metadata.buildTime' field in the Version resource. The build time is returned to the client as an RFC 3339 string, which can be easily used with the JavaScript Date constructor.
-  """
-  buildTime: String
-
-  """Output only. The time when the docker image was last updated."""
+  """Output only. The time when the attachment was last updated."""
   updateTime: String
 
   """
-  ArtifactType of this image, e.g. "application/vnd.example+type". If the `subject_digest` is set and no `artifact_type` is given, the `media_type` will be considered as the `artifact_type`. This field is returned as the `metadata.artifactType` field in the Version resource.
+  Required. The target the attachment is for, can be a Version, Package or Repository. E.g. `projects/p1/locations/us-central1/repositories/repo1/packages/p1/versions/v1`.
   """
-  artifactType: String
+  target: String
 
   """
-  Optional. For multi-arch images (manifest lists), this field contains the list of image manifests.
+  Output only. The name of the OCI version that this attachment created. Only populated for Docker attachments. E.g. `projects/p1/locations/us-central1/repositories/repo1/packages/p1/versions/v1`.
   """
-  imageManifests: [ImageManifest]
-}
-
-"""Details of a single image manifest within a multi-arch image."""
-type ImageManifest {
-  """
-  Optional. The CPU architecture of the image. Values are provided by the Docker client and are not validated by Artifact Registry. Example values include "amd64", "arm64", "ppc64le", "s390x", "riscv64", "mips64le", etc.
-  """
-  architecture: String
+  ociVersionName: String
 
   """
-  Optional. The operating system of the image. Values are provided by the Docker client and are not validated by Artifact Registry. Example values include "linux", "windows", "darwin", "aix", etc.
+  The namespace this attachment belongs to. E.g. If an attachment is created by artifact analysis, namespace is set to `artifactanalysis.googleapis.com`.
   """
-  os: String
+  attachmentNamespace: String
 
-  """Optional. The manifest digest, in the format "sha256:"."""
-  digest: String
-
-  """
-  Optional. The media type of the manifest, e.g., "application/vnd.docker.distribution.manifest.v2+json"
-  """
-  mediaType: String
-
-  """
-  Optional. The OS version of the image, for example on Windows `10.0.14393.1066`.
-  """
-  osVersion: String
-
-  """
-  Optional. The required OS features for the image, for example on Windows `win32k`.
-  """
-  osFeatures: [String]
-
-  """
-  Optional. The variant of the CPU in the image, for example `v7` to specify ARMv7 when architecture is `arm`.
-  """
-  variant: String
-}
-
-"""The response from listing maven artifacts."""
-type ListMavenArtifactsResponse {
-  """The maven artifacts returned."""
-  mavenArtifacts: [MavenArtifact]
-
-  """
-  The token to retrieve the next page of artifacts, or empty if there are no more artifacts to return.
-  """
-  nextPageToken: String
-}
-
-"""MavenArtifact represents a maven artifact."""
-type MavenArtifact {
-  """
-  Required. registry_location, project_id, repository_name and maven_artifact forms a unique artifact For example, "projects/test-project/locations/us-west4/repositories/test-repo/mavenArtifacts/ com.google.guava:guava:31.0-jre", where "us-west4" is the registry_location, "test-project" is the project_id, "test-repo" is the repository_name and "com.google.guava:guava:31.0-jre" is the maven artifact.
-  """
-  name: String
-
-  """
-  Required. URL to access the pom file of the artifact. Example: us-west4-maven.pkg.dev/test-project/test-repo/com/google/guava/guava/31.0/guava-31.0.pom
-  """
-  pomUri: String
-
-  """Group ID for the artifact. Example: com.google.guava"""
-  groupId: String
-
-  """Artifact ID for the artifact."""
-  artifactId: String
-
-  """Version of this artifact."""
-  version: String
-
-  """Output only. Time the artifact was created."""
+  """Output only. The time when the attachment was created."""
   createTime: String
-
-  """Output only. Time the artifact was updated."""
-  updateTime: String
-}
-
-"""The response from listing npm packages."""
-type ListNpmPackagesResponse {
-  """The npm packages returned."""
-  npmPackages: [NpmPackage]
-
-  """
-  The token to retrieve the next page of artifacts, or empty if there are no more artifacts to return.
-  """
-  nextPageToken: String
-}
-
-"""NpmPackage represents an npm artifact."""
-type NpmPackage {
-  """
-  Required. registry_location, project_id, repository_name and npm_package forms a unique package For example, "projects/test-project/locations/us-west4/repositories/test-repo/npmPackages/ npm_test:1.0.0", where "us-west4" is the registry_location, "test-project" is the project_id, "test-repo" is the repository_name and npm_test:1.0.0" is the npm package.
-  """
-  name: String
-
-  """Package for the artifact."""
-  packageName: String
-
-  """Version of this package."""
-  version: String
-
-  """Tags attached to this package."""
-  tags: [String]
-
-  """Output only. Time the package was created."""
-  createTime: String
-
-  """Output only. Time the package was updated."""
-  updateTime: String
 }
 
 """The response from listing python packages."""
 type ListPythonPackagesResponse {
-  """The python packages returned."""
-  pythonPackages: [PythonPackage]
-
   """
   The token to retrieve the next page of artifacts, or empty if there are no more artifacts to return.
   """
   nextPageToken: String
+
+  """The python packages returned."""
+  pythonPackages: [PythonPackage]
 }
 
 """PythonPackage represents a python artifact."""
 type PythonPackage {
   """
+  Required. URL to access the package. Example: us-west4-python.pkg.dev/test-project/test-repo/python_package/file-name-1.0.0.tar.gz
+  """
+  uri: String
+
+  """
   Required. registry_location, project_id, repository_name and python_package forms a unique package name:`projects//locations//repository//pythonPackages/`. For example, "projects/test-project/locations/us-west4/repositories/test-repo/pythonPackages/ python_package:1.0.0", where "us-west4" is the registry_location, "test-project" is the project_id, "test-repo" is the repository_name and python_package:1.0.0" is the python package.
   """
   name: String
 
-  """
-  Required. URL to access the package. Example: us-west4-python.pkg.dev/test-project/test-repo/python_package/file-name-1.0.0.tar.gz
-  """
-  uri: String
+  """Output only. Time the package was updated."""
+  updateTime: String
 
   """Package for the artifact."""
   packageName: String
@@ -1400,34 +1337,20 @@ type PythonPackage {
 
   """Output only. Time the package was created."""
   createTime: String
-
-  """Output only. Time the package was updated."""
-  updateTime: String
-}
-
-"""The response from listing packages."""
-type ListPackagesResponse {
-  """The packages returned."""
-  packages: [Package]
-
-  """
-  The token to retrieve the next page of packages, or empty if there are no more packages to return.
-  """
-  nextPageToken: String
 }
 
 """Packages are named collections of versions."""
 type Package {
-  """
-  The name of the package, for example: `projects/p1/locations/us-central1/repositories/repo1/packages/pkg1`. If the package ID part contains slashes, the slashes are escaped.
-  """
-  name: String
-
   """The display name of the package."""
   displayName: String
 
   """The time when the package was created."""
   createTime: String
+
+  """
+  The name of the package, for example: `projects/p1/locations/us-central1/repositories/repo1/packages/pkg1`. If the package ID part contains slashes, the slashes are escaped.
+  """
+  name: String
 
   """
   The time when the package was last updated. This includes publishing a new version of the package.
@@ -1436,6 +1359,17 @@ type Package {
 
   """Optional. Client specified annotations."""
   annotations: JSON
+}
+
+"""The response from listing packages."""
+type ListPackagesResponse {
+  """
+  The token to retrieve the next page of packages, or empty if there are no more packages to return.
+  """
+  nextPageToken: String
+
+  """The packages returned."""
+  packages: [Package]
 }
 
 """The response from listing versions."""
@@ -1458,47 +1392,32 @@ type Version {
   """
   name: String
 
-  """Optional. Description of the version, as specified in its metadata."""
-  description: String
-
-  """The time when the version was created."""
-  createTime: String
-
   """The time when the version was last updated."""
   updateTime: String
+
+  """
+  Output only. Immutable reference for the version, calculated based on the version's content. Currently we only support dirsum_sha256 hash algorithm. Additional hash algorithms may be added in the future.
+  """
+  fingerprints: [Hash]
 
   """
   Output only. A list of related tags. Will contain up to 100 tags that reference this version.
   """
   relatedTags: [Tag]
 
+  """Optional. Client specified annotations."""
+  annotations: JSON
+
+  """The time when the version was created."""
+  createTime: String
+
+  """Optional. Description of the version, as specified in its metadata."""
+  description: String
+
   """
   Output only. Repository-specific Metadata stored against this version. The fields returned are defined by the underlying repository-specific resource. Currently, the resources could be: DockerImage MavenArtifact
   """
   metadata: JSON
-
-  """Optional. Client specified annotations."""
-  annotations: JSON
-
-  """
-  Output only. Immutable reference for the version, calculated based on the version's content. Currently we only support dirsum_sha256 hash algorithm. Additional hash algorithms may be added in the future.
-  """
-  fingerprints: [Hash]
-}
-
-"""
-Tags point to a version and represent an alternative name that can be used to access the version.
-"""
-type Tag {
-  """
-  The name of the tag, for example: "projects/p1/locations/us-central1/repositories/repo1/packages/pkg1/tags/tag1". If the package part contains slashes, the slashes are escaped. The tag part can only have characters in [a-zA-Z0-9\-._~:@], anything else must be URL encoded.
-  """
-  name: String
-
-  """
-  The name of the version the tag refers to, for example: `projects/p1/locations/us-central1/repositories/repo1/packages/pkg1/versions/sha256:5243811` If the package or version ID parts contain slashes, the slashes are escaped.
-  """
-  version: String
 }
 
 """A hash of file content."""
@@ -1517,6 +1436,21 @@ enum query_artifactregistry_projects_locations_repositories_packages_versions_li
   DIRSUM_SHA256
 }
 
+"""
+Tags point to a version and represent an alternative name that can be used to access the version.
+"""
+type Tag {
+  """
+  The name of the tag, for example: "projects/p1/locations/us-central1/repositories/repo1/packages/pkg1/tags/tag1". If the package part contains slashes, the slashes are escaped. The tag part can only have characters in [a-zA-Z0-9\-._~:@], anything else must be URL encoded.
+  """
+  name: String
+
+  """
+  The name of the version the tag refers to, for example: `projects/p1/locations/us-central1/repositories/repo1/packages/pkg1/versions/sha256:5243811` If the package or version ID parts contain slashes, the slashes are escaped.
+  """
+  version: String
+}
+
 """The response from listing tags."""
 type ListTagsResponse {
   """The tags returned."""
@@ -1528,48 +1462,100 @@ type ListTagsResponse {
   nextPageToken: String
 }
 
-"""The response from listing files."""
-type ListFilesResponse {
-  """The files returned."""
-  files: [GoogleDevtoolsArtifactregistryV1File]
-
+"""The response from listing docker images."""
+type ListDockerImagesResponse {
   """
-  The token to retrieve the next page of files, or empty if there are no more files to return.
+  The token to retrieve the next page of artifacts, or empty if there are no more artifacts to return.
   """
   nextPageToken: String
+
+  """The docker images returned."""
+  dockerImages: [DockerImage]
 }
 
 """
-Files store content that is potentially associated with Packages or Versions.
+DockerImage represents a docker artifact. The following fields are returned as untyped metadata in the Version resource, using camelcase keys (i.e. metadata.imageSizeBytes): * imageSizeBytes * mediaType * buildTime
 """
-type GoogleDevtoolsArtifactregistryV1File {
+type DockerImage {
   """
-  The name of the file, for example: `projects/p1/locations/us-central1/repositories/repo1/files/a%2Fb%2Fc.txt`. If the file ID part contains slashes, they are escaped.
+  Required. URL to access the image. Example: us-west4-docker.pkg.dev/test-project/test-repo/nginx@sha256:e9954c1fc875017be1c3e36eca16be2d9e9bccc4bf072163515467d6a823c7cf
+  """
+  uri: String
+
+  """
+  The time this image was built. This field is returned as the 'metadata.buildTime' field in the Version resource. The build time is returned to the client as an RFC 3339 string, which can be easily used with the JavaScript Date constructor.
+  """
+  buildTime: String
+
+  """Time the image was uploaded."""
+  uploadTime: String
+
+  """
+  Media type of this image, e.g. "application/vnd.docker.distribution.manifest.v2+json". This field is returned as the 'metadata.mediaType' field in the Version resource.
+  """
+  mediaType: String
+
+  """
+  Calculated size of the image. This field is returned as the 'metadata.imageSizeBytes' field in the Version resource.
+  """
+  imageSizeBytes: BigInt
+
+  """
+  ArtifactType of this image, e.g. "application/vnd.example+type". If the `subject_digest` is set and no `artifact_type` is given, the `media_type` will be considered as the `artifact_type`. This field is returned as the `metadata.artifactType` field in the Version resource.
+  """
+  artifactType: String
+
+  """
+  Required. registry_location, project_id, repository_name and image id forms a unique image name:`projects//locations//repositories//dockerImages/`. For example, "projects/test-project/locations/us-west4/repositories/test-repo/dockerImages/ nginx@sha256:e9954c1fc875017be1c3e36eca16be2d9e9bccc4bf072163515467d6a823c7cf", where "us-west4" is the registry_location, "test-project" is the project_id, "test-repo" is the repository_name and "nginx@sha256:e9954c1fc875017be1c3e36eca16be2d9e9bccc4bf072163515467d6a823c7cf" is the image's digest.
   """
   name: String
 
-  """The size of the File in bytes."""
-  sizeBytes: BigInt
+  """Tags attached to this image."""
+  tags: [String]
 
-  """The hashes of the file content."""
-  hashes: [Hash]
-
-  """Output only. The time when the File was created."""
-  createTime: String
-
-  """Output only. The time when the File was last updated."""
+  """Output only. The time when the docker image was last updated."""
   updateTime: String
 
-  """The name of the Package or Version that owns this file, if any."""
-  owner: String
+  """
+  Optional. For multi-arch images (manifest lists), this field contains the list of image manifests.
+  """
+  imageManifests: [ImageManifest]
+}
+
+"""Details of a single image manifest within a multi-arch image."""
+type ImageManifest {
+  """
+  Optional. The media type of the manifest, e.g., "application/vnd.docker.distribution.manifest.v2+json"
+  """
+  mediaType: String
 
   """
-  Output only. The time when the last attempt to refresh the file's data was made. Only set when the repository is remote.
+  Optional. The CPU architecture of the image. Values are provided by the Docker client and are not validated by Artifact Registry. Example values include "amd64", "arm64", "ppc64le", "s390x", "riscv64", "mips64le", etc.
   """
-  fetchTime: String
+  architecture: String
 
-  """Optional. Client specified annotations."""
-  annotations: JSON
+  """
+  Optional. The OS version of the image, for example on Windows `10.0.14393.1066`.
+  """
+  osVersion: String
+
+  """
+  Optional. The required OS features for the image, for example on Windows `win32k`.
+  """
+  osFeatures: [String]
+
+  """
+  Optional. The variant of the CPU in the image, for example `v7` to specify ARMv7 when architecture is `arm`.
+  """
+  variant: String
+
+  """
+  Optional. The operating system of the image. Values are provided by the Docker client and are not validated by Artifact Registry. Example values include "linux", "windows", "darwin", "aix", etc.
+  """
+  os: String
+
+  """Optional. The manifest digest, in the format "sha256:"."""
+  digest: String
 }
 
 """The response from listing rules."""
@@ -1587,18 +1573,24 @@ type ListRulesResponse {
 A rule defines the deny or allow action of the operation it applies to and the conditions required for the rule to apply. You can set one rule for an entire repository and one rule for each package within.
 """
 type GoogleDevtoolsArtifactregistryV1Rule {
-  """
-  The name of the rule, for example: `projects/p1/locations/us-central1/repositories/repo1/rules/rule1`.
-  """
-  name: String
-  action: query_artifactregistry_projects_locations_repositories_rules_list_rules_items_action
   operation: query_artifactregistry_projects_locations_repositories_rules_list_rules_items_operation
-  condition: Expr
 
   """
   The package ID the rule applies to. If empty, this rule applies to all packages inside the repository.
   """
   packageId: String
+
+  """
+  The name of the rule, for example: `projects/p1/locations/us-central1/repositories/repo1/rules/rule1`.
+  """
+  name: String
+  condition: Expr
+  action: query_artifactregistry_projects_locations_repositories_rules_list_rules_items_action
+}
+
+enum query_artifactregistry_projects_locations_repositories_rules_list_rules_items_operation {
+  OPERATION_UNSPECIFIED
+  DOWNLOAD
 }
 
 """The action this rule takes."""
@@ -1608,64 +1600,121 @@ enum query_artifactregistry_projects_locations_repositories_rules_list_rules_ite
   DENY
 }
 
-enum query_artifactregistry_projects_locations_repositories_rules_list_rules_items_operation {
-  OPERATION_UNSPECIFIED
-  DOWNLOAD
-}
-
-"""The response from listing attachments."""
-type ListAttachmentsResponse {
-  """The attachments returned."""
-  attachments: [Attachment]
+"""The response from listing npm packages."""
+type ListNpmPackagesResponse {
+  """The npm packages returned."""
+  npmPackages: [NpmPackage]
 
   """
-  The token to retrieve the next page of attachments, or empty if there are no more attachments to return.
+  The token to retrieve the next page of artifacts, or empty if there are no more artifacts to return.
   """
   nextPageToken: String
 }
 
-"""
-An Attachment refers to additional metadata that can be attached to artifacts in Artifact Registry. An attachment consists of one or more files.
-"""
-type Attachment {
+"""NpmPackage represents an npm artifact."""
+type NpmPackage {
+  """Version of this package."""
+  version: String
+
+  """Output only. Time the package was created."""
+  createTime: String
+
   """
-  The name of the attachment. E.g. `projects/p1/locations/us/repositories/repo/attachments/sbom`.
+  Required. registry_location, project_id, repository_name and npm_package forms a unique package For example, "projects/test-project/locations/us-west4/repositories/test-repo/npmPackages/ npm_test:1.0.0", where "us-west4" is the registry_location, "test-project" is the project_id, "test-repo" is the repository_name and npm_test:1.0.0" is the npm package.
   """
   name: String
 
-  """
-  Required. The target the attachment is for, can be a Version, Package or Repository. E.g. `projects/p1/locations/us-central1/repositories/repo1/packages/p1/versions/v1`.
-  """
-  target: String
+  """Tags attached to this package."""
+  tags: [String]
 
-  """Type of attachment. E.g. `application/vnd.spdx+json`"""
-  type: String
+  """Output only. Time the package was updated."""
+  updateTime: String
 
-  """
-  The namespace this attachment belongs to. E.g. If an attachment is created by artifact analysis, namespace is set to `artifactanalysis.googleapis.com`.
-  """
-  attachmentNamespace: String
+  """Package for the artifact."""
+  packageName: String
+}
 
+"""The response from listing files."""
+type ListFilesResponse {
   """
-  Optional. User annotations. These attributes can only be set and used by the user, and not by Artifact Registry. See https://google.aip.dev/128#annotations for more details such as format and size limitations.
+  The token to retrieve the next page of files, or empty if there are no more files to return.
   """
-  annotations: JSON
+  nextPageToken: String
 
-  """Output only. The time when the attachment was created."""
+  """The files returned."""
+  files: [GoogleDevtoolsArtifactregistryV1File]
+}
+
+"""
+Files store content that is potentially associated with Packages or Versions.
+"""
+type GoogleDevtoolsArtifactregistryV1File {
+  """The size of the File in bytes."""
+  sizeBytes: BigInt
+
+  """Output only. The time when the File was created."""
   createTime: String
 
-  """Output only. The time when the attachment was last updated."""
+  """The name of the Package or Version that owns this file, if any."""
+  owner: String
+
+  """
+  Output only. The time when the last attempt to refresh the file's data was made. Only set when the repository is remote.
+  """
+  fetchTime: String
+
+  """Optional. Client specified annotations."""
+  annotations: JSON
+
+  """The hashes of the file content."""
+  hashes: [Hash]
+
+  """
+  The name of the file, for example: `projects/p1/locations/us-central1/repositories/repo1/files/a%2Fb%2Fc.txt`. If the file ID part contains slashes, they are escaped.
+  """
+  name: String
+
+  """Output only. The time when the File was last updated."""
+  updateTime: String
+}
+
+"""The response from listing maven artifacts."""
+type ListMavenArtifactsResponse {
+  """The maven artifacts returned."""
+  mavenArtifacts: [MavenArtifact]
+
+  """
+  The token to retrieve the next page of artifacts, or empty if there are no more artifacts to return.
+  """
+  nextPageToken: String
+}
+
+"""MavenArtifact represents a maven artifact."""
+type MavenArtifact {
+  """
+  Required. registry_location, project_id, repository_name and maven_artifact forms a unique artifact For example, "projects/test-project/locations/us-west4/repositories/test-repo/mavenArtifacts/ com.google.guava:guava:31.0-jre", where "us-west4" is the registry_location, "test-project" is the project_id, "test-repo" is the repository_name and "com.google.guava:guava:31.0-jre" is the maven artifact.
+  """
+  name: String
+
+  """Output only. Time the artifact was updated."""
   updateTime: String
 
   """
-  Required. The files that belong to this attachment. If the file ID part contains slashes, they are escaped. E.g. `projects/p1/locations/us-central1/repositories/repo1/files/sha:`.
+  Required. URL to access the pom file of the artifact. Example: us-west4-maven.pkg.dev/test-project/test-repo/com/google/guava/guava/31.0/guava-31.0.pom
   """
-  files: [String]
+  pomUri: String
 
-  """
-  Output only. The name of the OCI version that this attachment created. Only populated for Docker attachments. E.g. `projects/p1/locations/us-central1/repositories/repo1/packages/p1/versions/v1`.
-  """
-  ociVersionName: String
+  """Group ID for the artifact. Example: com.google.guava"""
+  groupId: String
+
+  """Version of this artifact."""
+  version: String
+
+  """Artifact ID for the artifact."""
+  artifactId: String
+
+  """Output only. Time the artifact was created."""
+  createTime: String
 }
 
 type Mutation {
@@ -1692,20 +1741,37 @@ type Mutation {
     input: VPCSCConfig_Input
   ): VPCSCConfig
 
-  """
-  Creates a repository. The returned Operation will finish once the repository has been created. Its response will be the created Repository.
-  """
-  artifactregistry_projects_locations_repositories_create(
+  """Updates the project configuration."""
+  artifactregistry_projects_locations_updateProjectConfig(
     """Path parameter projectsId"""
     projectsId: String!
 
     """Path parameter locationsId"""
     locationsId: String!
 
-    """Required. The repository id to use for this repository."""
-    repositoryId: String
-    input: Repository_Input
-  ): Operation
+    """
+    Optional. Field mask to support partial updates. See https://protobuf.dev/reference/protobuf/google.protobuf/#field-mask for more details.
+    """
+    updateMask: String
+    input: ProjectConfig_Input
+  ): ProjectConfig
+
+  """
+  Starts asynchronous cancellation on a long-running operation. The server makes a best effort to cancel the operation, but success is not guaranteed. If the server doesn't support this method, it returns `google.rpc.Code.UNIMPLEMENTED`. Clients can use Operations.GetOperation or other methods to check whether the cancellation succeeded or whether the operation completed despite cancellation. On successful cancellation, the operation is not deleted; instead, it becomes an operation with an Operation.error value with a google.rpc.Status.code of `1`, corresponding to `Code.CANCELLED`.
+  """
+  artifactregistry_projects_locations_operations_cancel(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter operationsId"""
+    operationsId: String!
+
+    """The request message for Operations.CancelOperation."""
+    input: JSON
+  ): JSON
 
   """Updates a repository."""
   artifactregistry_projects_locations_repositories_patch(
@@ -1739,32 +1805,6 @@ type Mutation {
     repositoriesId: String!
   ): Operation
 
-  """Updates the IAM policy for a given resource."""
-  artifactregistry_projects_locations_repositories_setIamPolicy(
-    """Path parameter projectsId"""
-    projectsId: String!
-
-    """Path parameter locationsId"""
-    locationsId: String!
-
-    """Path parameter repositoriesId"""
-    repositoriesId: String!
-    input: SetIamPolicyRequest_Input
-  ): Policy
-
-  """Tests if the caller has a list of permissions on a resource."""
-  artifactregistry_projects_locations_repositories_testIamPermissions(
-    """Path parameter projectsId"""
-    projectsId: String!
-
-    """Path parameter locationsId"""
-    locationsId: String!
-
-    """Path parameter repositoriesId"""
-    repositoriesId: String!
-    input: TestIamPermissionsRequest_Input
-  ): TestIamPermissionsResponse
-
   """Exports an artifact to a Cloud Storage bucket."""
   artifactregistry_projects_locations_repositories_exportArtifact(
     """Path parameter projectsId"""
@@ -1779,9 +1819,22 @@ type Mutation {
   ): Operation
 
   """
-  Imports Apt artifacts. The returned Operation will complete once the resources are imported. Package, Version, and File resources are created based on the imported artifacts. Imported artifacts that conflict with existing resources are ignored.
+  Creates a repository. The returned Operation will finish once the repository has been created. Its response will be the created Repository.
   """
-  artifactregistry_projects_locations_repositories_aptArtifacts_import(
+  artifactregistry_projects_locations_repositories_create(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Required. The repository id to use for this repository."""
+    repositoryId: String
+    input: Repository_Input
+  ): Operation
+
+  """Tests if the caller has a list of permissions on a resource."""
+  artifactregistry_projects_locations_repositories_testIamPermissions(
     """Path parameter projectsId"""
     projectsId: String!
 
@@ -1790,13 +1843,61 @@ type Mutation {
 
     """Path parameter repositoriesId"""
     repositoriesId: String!
-    input: ImportAptArtifactsRequest_Input
+    input: TestIamPermissionsRequest_Input
+  ): TestIamPermissionsResponse
+
+  """Updates the IAM policy for a given resource."""
+  artifactregistry_projects_locations_repositories_setIamPolicy(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter repositoriesId"""
+    repositoriesId: String!
+    input: SetIamPolicyRequest_Input
+  ): Policy
+
+  """
+  Directly uploads a Go module. The returned Operation will complete once the Go module is uploaded. Package, Version, and File resources are created based on the uploaded Go module.
+  """
+  artifactregistry_projects_locations_repositories_goModules_upload(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter repositoriesId"""
+    repositoriesId: String!
+
+    """The request to upload a Go module."""
+    input: JSON
+  ): UploadGoModuleMediaResponse
+
+  """
+  Creates an attachment. The returned Operation will finish once the attachment has been created. Its response will be the created attachment.
+  """
+  artifactregistry_projects_locations_repositories_attachments_create(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter repositoriesId"""
+    repositoriesId: String!
+
+    """Required. The attachment id to use for this attachment."""
+    attachmentId: String
+    input: Attachment_Input
   ): Operation
 
   """
-  Directly uploads an Apt artifact. The returned Operation will complete once the resources are uploaded. Package, Version, and File resources are created based on the imported artifact. Imported artifacts that conflict with existing resources are ignored.
+  Deletes an attachment. The returned Operation will finish once the attachments has been deleted. It will not have any Operation metadata and will return a `google.protobuf.Empty` response.
   """
-  artifactregistry_projects_locations_repositories_aptArtifacts_upload(
+  artifactregistry_projects_locations_repositories_attachments_delete(
     """Path parameter projectsId"""
     projectsId: String!
 
@@ -1806,9 +1907,227 @@ type Mutation {
     """Path parameter repositoriesId"""
     repositoriesId: String!
 
-    """The request to upload an artifact."""
-    input: JSON
-  ): UploadAptArtifactMediaResponse
+    """Path parameter attachmentsId"""
+    attachmentsId: String!
+  ): Operation
+
+  """
+  Deletes a package and all of its versions and tags. The returned operation will complete once the package has been deleted.
+  """
+  artifactregistry_projects_locations_repositories_packages_delete(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter repositoriesId"""
+    repositoriesId: String!
+
+    """Path parameter packagesId"""
+    packagesId: String!
+  ): Operation
+
+  """Updates a package."""
+  artifactregistry_projects_locations_repositories_packages_patch(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter repositoriesId"""
+    repositoriesId: String!
+
+    """Path parameter packagesId"""
+    packagesId: String!
+
+    """
+    The update mask applies to the resource. For the `FieldMask` definition, see https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#fieldmask
+    """
+    updateMask: String
+    input: Package_Input
+  ): Package
+
+  """Updates a version."""
+  artifactregistry_projects_locations_repositories_packages_versions_patch(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter repositoriesId"""
+    repositoriesId: String!
+
+    """Path parameter packagesId"""
+    packagesId: String!
+
+    """Path parameter versionsId"""
+    versionsId: String!
+
+    """
+    The update mask applies to the resource. For the `FieldMask` definition, see https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#fieldmask
+    """
+    updateMask: String
+    input: Version_Input
+  ): Version
+
+  """
+  Deletes a version and all of its content. The returned operation will complete once the version has been deleted.
+  """
+  artifactregistry_projects_locations_repositories_packages_versions_delete(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter repositoriesId"""
+    repositoriesId: String!
+
+    """Path parameter packagesId"""
+    packagesId: String!
+
+    """Path parameter versionsId"""
+    versionsId: String!
+
+    """
+    By default, a version that is tagged may not be deleted. If force=true, the version and any tags pointing to the version are deleted.
+    """
+    force: Boolean
+  ): Operation
+
+  """
+  Deletes multiple versions across a repository. The returned operation will complete once the versions have been deleted.
+  """
+  artifactregistry_projects_locations_repositories_packages_versions_batchDelete(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter repositoriesId"""
+    repositoriesId: String!
+
+    """Path parameter packagesId"""
+    packagesId: String!
+    input: BatchDeleteVersionsRequest_Input
+  ): Operation
+
+  """Deletes a tag."""
+  artifactregistry_projects_locations_repositories_packages_tags_delete(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter repositoriesId"""
+    repositoriesId: String!
+
+    """Path parameter packagesId"""
+    packagesId: String!
+
+    """Path parameter tagsId"""
+    tagsId: String!
+  ): JSON
+
+  """Updates a tag."""
+  artifactregistry_projects_locations_repositories_packages_tags_patch(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter repositoriesId"""
+    repositoriesId: String!
+
+    """Path parameter packagesId"""
+    packagesId: String!
+
+    """Path parameter tagsId"""
+    tagsId: String!
+
+    """
+    The update mask applies to the resource. For the `FieldMask` definition, see https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#fieldmask
+    """
+    updateMask: String
+    input: Tag_Input
+  ): Tag
+
+  """Creates a tag."""
+  artifactregistry_projects_locations_repositories_packages_tags_create(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter repositoriesId"""
+    repositoriesId: String!
+
+    """Path parameter packagesId"""
+    packagesId: String!
+
+    """The tag id to use for this repository."""
+    tagId: String
+    input: Tag_Input
+  ): Tag
+
+  """Creates a rule."""
+  artifactregistry_projects_locations_repositories_rules_create(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter repositoriesId"""
+    repositoriesId: String!
+
+    """The rule id to use for this repository."""
+    ruleId: String
+    input: GoogleDevtoolsArtifactregistryV1Rule_Input
+  ): GoogleDevtoolsArtifactregistryV1Rule
+
+  """Deletes a rule."""
+  artifactregistry_projects_locations_repositories_rules_delete(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter repositoriesId"""
+    repositoriesId: String!
+
+    """Path parameter rulesId"""
+    rulesId: String!
+  ): JSON
+
+  """Updates a rule."""
+  artifactregistry_projects_locations_repositories_rules_patch(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter repositoriesId"""
+    repositoriesId: String!
+
+    """Path parameter rulesId"""
+    rulesId: String!
+
+    """
+    The update mask applies to the resource. For the `FieldMask` definition, see https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#fieldmask
+    """
+    updateMask: String
+    input: GoogleDevtoolsArtifactregistryV1Rule_Input
+  ): GoogleDevtoolsArtifactregistryV1Rule
 
   """
   Imports Yum (RPM) artifacts. The returned Operation will complete once the resources are imported. Package, Version, and File resources are created based on the imported artifacts. Imported artifacts that conflict with existing resources are ignored.
@@ -1841,6 +2160,21 @@ type Mutation {
     """The request to upload an artifact."""
     input: JSON
   ): UploadYumArtifactMediaResponse
+
+  """
+  Directly uploads a KFP artifact. The returned Operation will complete once the resource is uploaded. Package, Version, and File resources will be created based on the uploaded artifact. Uploaded artifacts that conflict with existing resources will be overwritten.
+  """
+  artifactregistry_projects_locations_repositories_kfpArtifacts_upload(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter repositoriesId"""
+    repositoriesId: String!
+    input: UploadKfpArtifactRequest_Input
+  ): UploadKfpArtifactMediaResponse
 
   """
   Imports GooGet artifacts. The returned Operation will complete once the resources are imported. Package, Version, and File resources are created based on the imported artifacts. Imported artifacts that conflict with existing resources are ignored.
@@ -1889,221 +2223,6 @@ type Mutation {
     input: UploadGenericArtifactRequest_Input
   ): UploadGenericArtifactMediaResponse
 
-  """
-  Directly uploads a KFP artifact. The returned Operation will complete once the resource is uploaded. Package, Version, and File resources will be created based on the uploaded artifact. Uploaded artifacts that conflict with existing resources will be overwritten.
-  """
-  artifactregistry_projects_locations_repositories_kfpArtifacts_upload(
-    """Path parameter projectsId"""
-    projectsId: String!
-
-    """Path parameter locationsId"""
-    locationsId: String!
-
-    """Path parameter repositoriesId"""
-    repositoriesId: String!
-    input: UploadKfpArtifactRequest_Input
-  ): UploadKfpArtifactMediaResponse
-
-  """
-  Directly uploads a Go module. The returned Operation will complete once the Go module is uploaded. Package, Version, and File resources are created based on the uploaded Go module.
-  """
-  artifactregistry_projects_locations_repositories_goModules_upload(
-    """Path parameter projectsId"""
-    projectsId: String!
-
-    """Path parameter locationsId"""
-    locationsId: String!
-
-    """Path parameter repositoriesId"""
-    repositoriesId: String!
-
-    """The request to upload a Go module."""
-    input: JSON
-  ): UploadGoModuleMediaResponse
-
-  """
-  Deletes a package and all of its versions and tags. The returned operation will complete once the package has been deleted.
-  """
-  artifactregistry_projects_locations_repositories_packages_delete(
-    """Path parameter projectsId"""
-    projectsId: String!
-
-    """Path parameter locationsId"""
-    locationsId: String!
-
-    """Path parameter repositoriesId"""
-    repositoriesId: String!
-
-    """Path parameter packagesId"""
-    packagesId: String!
-  ): Operation
-
-  """Updates a package."""
-  artifactregistry_projects_locations_repositories_packages_patch(
-    """Path parameter projectsId"""
-    projectsId: String!
-
-    """Path parameter locationsId"""
-    locationsId: String!
-
-    """Path parameter repositoriesId"""
-    repositoriesId: String!
-
-    """Path parameter packagesId"""
-    packagesId: String!
-
-    """
-    The update mask applies to the resource. For the `FieldMask` definition, see https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#fieldmask
-    """
-    updateMask: String
-    input: Package_Input
-  ): Package
-
-  """
-  Deletes a version and all of its content. The returned operation will complete once the version has been deleted.
-  """
-  artifactregistry_projects_locations_repositories_packages_versions_delete(
-    """Path parameter projectsId"""
-    projectsId: String!
-
-    """Path parameter locationsId"""
-    locationsId: String!
-
-    """Path parameter repositoriesId"""
-    repositoriesId: String!
-
-    """Path parameter packagesId"""
-    packagesId: String!
-
-    """Path parameter versionsId"""
-    versionsId: String!
-
-    """
-    By default, a version that is tagged may not be deleted. If force=true, the version and any tags pointing to the version are deleted.
-    """
-    force: Boolean
-  ): Operation
-
-  """Updates a version."""
-  artifactregistry_projects_locations_repositories_packages_versions_patch(
-    """Path parameter projectsId"""
-    projectsId: String!
-
-    """Path parameter locationsId"""
-    locationsId: String!
-
-    """Path parameter repositoriesId"""
-    repositoriesId: String!
-
-    """Path parameter packagesId"""
-    packagesId: String!
-
-    """Path parameter versionsId"""
-    versionsId: String!
-
-    """
-    The update mask applies to the resource. For the `FieldMask` definition, see https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#fieldmask
-    """
-    updateMask: String
-    input: Version_Input
-  ): Version
-
-  """
-  Deletes multiple versions across a repository. The returned operation will complete once the versions have been deleted.
-  """
-  artifactregistry_projects_locations_repositories_packages_versions_batchDelete(
-    """Path parameter projectsId"""
-    projectsId: String!
-
-    """Path parameter locationsId"""
-    locationsId: String!
-
-    """Path parameter repositoriesId"""
-    repositoriesId: String!
-
-    """Path parameter packagesId"""
-    packagesId: String!
-    input: BatchDeleteVersionsRequest_Input
-  ): Operation
-
-  """Creates a tag."""
-  artifactregistry_projects_locations_repositories_packages_tags_create(
-    """Path parameter projectsId"""
-    projectsId: String!
-
-    """Path parameter locationsId"""
-    locationsId: String!
-
-    """Path parameter repositoriesId"""
-    repositoriesId: String!
-
-    """Path parameter packagesId"""
-    packagesId: String!
-
-    """The tag id to use for this repository."""
-    tagId: String
-    input: Tag_Input
-  ): Tag
-
-  """Updates a tag."""
-  artifactregistry_projects_locations_repositories_packages_tags_patch(
-    """Path parameter projectsId"""
-    projectsId: String!
-
-    """Path parameter locationsId"""
-    locationsId: String!
-
-    """Path parameter repositoriesId"""
-    repositoriesId: String!
-
-    """Path parameter packagesId"""
-    packagesId: String!
-
-    """Path parameter tagsId"""
-    tagsId: String!
-
-    """
-    The update mask applies to the resource. For the `FieldMask` definition, see https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#fieldmask
-    """
-    updateMask: String
-    input: Tag_Input
-  ): Tag
-
-  """Deletes a tag."""
-  artifactregistry_projects_locations_repositories_packages_tags_delete(
-    """Path parameter projectsId"""
-    projectsId: String!
-
-    """Path parameter locationsId"""
-    locationsId: String!
-
-    """Path parameter repositoriesId"""
-    repositoriesId: String!
-
-    """Path parameter packagesId"""
-    packagesId: String!
-
-    """Path parameter tagsId"""
-    tagsId: String!
-  ): JSON
-
-  """
-  Deletes a file and all of its content. It is only allowed on generic repositories. The returned operation will complete once the file has been deleted.
-  """
-  artifactregistry_projects_locations_repositories_files_delete(
-    """Path parameter projectsId"""
-    projectsId: String!
-
-    """Path parameter locationsId"""
-    locationsId: String!
-
-    """Path parameter repositoriesId"""
-    repositoriesId: String!
-
-    """Path parameter filesId"""
-    filesId: String!
-  ): Operation
-
   """Updates a file."""
   artifactregistry_projects_locations_repositories_files_patch(
     """Path parameter projectsId"""
@@ -2126,6 +2245,23 @@ type Mutation {
   ): GoogleDevtoolsArtifactregistryV1File
 
   """
+  Deletes a file and all of its content. It is only allowed on generic repositories. The returned operation will complete once the file has been deleted.
+  """
+  artifactregistry_projects_locations_repositories_files_delete(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter repositoriesId"""
+    repositoriesId: String!
+
+    """Path parameter filesId"""
+    filesId: String!
+  ): Operation
+
+  """
   Directly uploads a file to a repository. The returned Operation will complete once the resources are uploaded.
   """
   artifactregistry_projects_locations_repositories_files_upload(
@@ -2140,62 +2276,10 @@ type Mutation {
     input: UploadFileRequest_Input
   ): UploadFileMediaResponse
 
-  """Creates a rule."""
-  artifactregistry_projects_locations_repositories_rules_create(
-    """Path parameter projectsId"""
-    projectsId: String!
-
-    """Path parameter locationsId"""
-    locationsId: String!
-
-    """Path parameter repositoriesId"""
-    repositoriesId: String!
-
-    """The rule id to use for this repository."""
-    ruleId: String
-    input: GoogleDevtoolsArtifactregistryV1Rule_Input
-  ): GoogleDevtoolsArtifactregistryV1Rule
-
-  """Updates a rule."""
-  artifactregistry_projects_locations_repositories_rules_patch(
-    """Path parameter projectsId"""
-    projectsId: String!
-
-    """Path parameter locationsId"""
-    locationsId: String!
-
-    """Path parameter repositoriesId"""
-    repositoriesId: String!
-
-    """Path parameter rulesId"""
-    rulesId: String!
-
-    """
-    The update mask applies to the resource. For the `FieldMask` definition, see https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#fieldmask
-    """
-    updateMask: String
-    input: GoogleDevtoolsArtifactregistryV1Rule_Input
-  ): GoogleDevtoolsArtifactregistryV1Rule
-
-  """Deletes a rule."""
-  artifactregistry_projects_locations_repositories_rules_delete(
-    """Path parameter projectsId"""
-    projectsId: String!
-
-    """Path parameter locationsId"""
-    locationsId: String!
-
-    """Path parameter repositoriesId"""
-    repositoriesId: String!
-
-    """Path parameter rulesId"""
-    rulesId: String!
-  ): JSON
-
   """
-  Creates an attachment. The returned Operation will finish once the attachment has been created. Its response will be the created attachment.
+  Imports Apt artifacts. The returned Operation will complete once the resources are imported. Package, Version, and File resources are created based on the imported artifacts. Imported artifacts that conflict with existing resources are ignored.
   """
-  artifactregistry_projects_locations_repositories_attachments_create(
+  artifactregistry_projects_locations_repositories_aptArtifacts_import(
     """Path parameter projectsId"""
     projectsId: String!
 
@@ -2204,16 +2288,13 @@ type Mutation {
 
     """Path parameter repositoriesId"""
     repositoriesId: String!
-
-    """Required. The attachment id to use for this attachment."""
-    attachmentId: String
-    input: Attachment_Input
+    input: ImportAptArtifactsRequest_Input
   ): Operation
 
   """
-  Deletes an attachment. The returned Operation will finish once the attachments has been deleted. It will not have any Operation metadata and will return a `google.protobuf.Empty` response.
+  Directly uploads an Apt artifact. The returned Operation will complete once the resources are uploaded. Package, Version, and File resources are created based on the imported artifact. Imported artifacts that conflict with existing resources are ignored.
   """
-  artifactregistry_projects_locations_repositories_attachments_delete(
+  artifactregistry_projects_locations_repositories_aptArtifacts_upload(
     """Path parameter projectsId"""
     projectsId: String!
 
@@ -2223,46 +2304,81 @@ type Mutation {
     """Path parameter repositoriesId"""
     repositoriesId: String!
 
-    """Path parameter attachmentsId"""
-    attachmentsId: String!
-  ): Operation
+    """The request to upload an artifact."""
+    input: JSON
+  ): UploadAptArtifactMediaResponse
 }
 
 """The Artifact Registry settings that apply to a Project."""
 input ProjectSettings_Input {
   """
-  The name of the project's settings. Always of the form: projects/{project-id}/projectSettings In update request: never set In response: always set
-  """
-  name: String
-  legacyRedirectionState: query_artifactregistry_projects_getProjectSettings_legacyRedirectionState
-
-  """
   The percentage of pull traffic to redirect from GCR to AR when using partial redirection.
   """
   pullPercent: Int
+  legacyRedirectionState: query_artifactregistry_projects_getProjectSettings_legacyRedirectionState
+
+  """
+  The name of the project's settings. Always of the form: projects/{project-id}/projectSettings In update request: never set In response: always set
+  """
+  name: String
 }
 
 """The Artifact Registry VPC SC config that apply to a Project."""
 input VPCSCConfig_Input {
+  vpcscPolicy: query_artifactregistry_projects_locations_getVpcscConfig_vpcscPolicy
+
   """
   The name of the project's VPC SC Config. Always of the form: projects/{projectID}/locations/{location}/vpcscConfig In update request: never set In response: always set
   """
   name: String
-  vpcscPolicy: query_artifactregistry_projects_locations_getVpcscConfig_vpcscPolicy
+}
+
+"""The Artifact Registry logging configurations that apply to a Project."""
+input ProjectConfig_Input {
+  platformLogsConfig: PlatformLogsConfig_Input
+
+  """
+  Identifier. The name of the project's configuration. Always of the form: projects/{project}/locations/{location}/projectConfig
+  """
+  name: String
+}
+
+"""The platform logs config for a project or a repository."""
+input PlatformLogsConfig_Input {
+  loggingState: query_artifactregistry_projects_locations_getProjectConfig_platformLogsConfig_loggingState
+  severityLevel: query_artifactregistry_projects_locations_getProjectConfig_platformLogsConfig_severityLevel
 }
 
 """A Repository for storing artifacts with a specific format."""
 input Repository_Input {
-  mavenConfig: MavenRepositoryConfig_Input
-  dockerConfig: DockerRepositoryConfig_Input
-  virtualRepositoryConfig: VirtualRepositoryConfig_Input
-  remoteRepositoryConfig: RemoteRepositoryConfig_Input
+  cleanupPolicies: JSON
 
   """
-  The name of the repository, for example: `projects/p1/locations/us-central1/repositories/repo1`. For each location in a project, repository names must be unique.
+  Optional. If true, the cleanup pipeline is prevented from deleting versions in this repository.
   """
-  name: String
-  format: query_artifactregistry_projects_locations_repositories_list_repositories_items_format
+  cleanupPolicyDryRun: Boolean
+  virtualRepositoryConfig: VirtualRepositoryConfig_Input
+
+  """
+  Optional. If this is true, an unspecified repo type will be treated as error rather than defaulting to standard.
+  """
+  disallowUnspecifiedMode: Boolean
+
+  """Output only. Whether or not this repository satisfies PZS."""
+  satisfiesPzs: Boolean
+  remoteRepositoryConfig: RemoteRepositoryConfig_Input
+  dockerConfig: DockerRepositoryConfig_Input
+
+  """Output only. Whether or not this repository satisfies PZI."""
+  satisfiesPzi: Boolean
+  format: query_artifactregistry_projects_locations_repositories_get_format
+
+  """Output only. The time when the repository was last updated."""
+  updateTime: String
+
+  """Output only. The time when the repository was created."""
+  createTime: String
+  mavenConfig: MavenRepositoryConfig_Input
 
   """The user-provided description of the repository."""
   description: String
@@ -2271,67 +2387,29 @@ input Repository_Input {
   Labels with user-defined metadata. This field may contain up to 64 entries. Label keys and values may be no longer than 63 characters. Label keys must begin with a lowercase letter and may only contain lowercase letters, numeric characters, underscores, and dashes.
   """
   labels: JSON
-
-  """Output only. The time when the repository was created."""
-  createTime: String
-
-  """Output only. The time when the repository was last updated."""
-  updateTime: String
-
-  """
-  The Cloud KMS resource name of the customer managed encryption key that's used to encrypt the contents of the Repository. Has the form: `projects/my-project/locations/my-region/keyRings/my-kr/cryptoKeys/my-key`. This value may not be changed after the Repository has been created.
-  """
-  kmsKeyName: String
-  mode: query_artifactregistry_projects_locations_repositories_list_repositories_items_mode
-  cleanupPolicies: JSON
+  platformLogsConfig: PlatformLogsConfig_Input
 
   """
   Output only. The size, in bytes, of all artifact storage in this repository. Repositories that are generally available or in public preview use this to calculate storage costs.
   """
   sizeBytes: BigInt
-
-  """Output only. Whether or not this repository satisfies PZS."""
-  satisfiesPzs: Boolean
+  mode: query_artifactregistry_projects_locations_repositories_get_mode
 
   """
-  Optional. If true, the cleanup pipeline is prevented from deleting versions in this repository.
+  The Cloud KMS resource name of the customer managed encryption key that's used to encrypt the contents of the Repository. Has the form: `projects/my-project/locations/my-region/keyRings/my-kr/cryptoKeys/my-key`. This value may not be changed after the Repository has been created.
   """
-  cleanupPolicyDryRun: Boolean
+  kmsKeyName: String
   vulnerabilityScanningConfig: VulnerabilityScanningConfig_Input
-
-  """
-  Optional. If this is true, an unspecified repo type will be treated as error rather than defaulting to standard.
-  """
-  disallowUnspecifiedMode: Boolean
-
-  """Output only. Whether or not this repository satisfies PZI."""
-  satisfiesPzi: Boolean
 
   """
   Output only. The repository endpoint, for example: `us-docker.pkg.dev/my-proj/my-repo`.
   """
   registryUri: String
-}
 
-"""
-MavenRepositoryConfig is maven related repository details. Provides additional configuration details for repositories of the maven format type.
-"""
-input MavenRepositoryConfig_Input {
   """
-  The repository with this flag will allow publishing the same snapshot versions.
+  The name of the repository, for example: `projects/p1/locations/us-central1/repositories/repo1`. For each location in a project, repository names must be unique.
   """
-  allowSnapshotOverwrites: Boolean
-  versionPolicy: query_artifactregistry_projects_locations_repositories_list_repositories_items_mavenConfig_versionPolicy
-}
-
-"""
-DockerRepositoryConfig is docker related repository details. Provides additional configuration details for repositories of the docker format type.
-"""
-input DockerRepositoryConfig_Input {
-  """
-  The repository which enabled this flag prevents all tags from being modified, moved or deleted. This does not prevent tags from being created.
-  """
-  immutableTags: Boolean
+  name: String
 }
 
 """Virtual repository configuration."""
@@ -2344,6 +2422,11 @@ input VirtualRepositoryConfig_Input {
 
 """Artifact policy configuration for the repository contents."""
 input UpstreamPolicy_Input {
+  """
+  Entries with a greater priority value take precedence in the pull order.
+  """
+  priority: Int
+
   """The user-provided ID of the upstream policy."""
   id: String
 
@@ -2351,36 +2434,31 @@ input UpstreamPolicy_Input {
   A reference to the repository resource, for example: `projects/p1/locations/us-central1/repositories/repo1`.
   """
   repository: String
-
-  """
-  Entries with a greater priority value take precedence in the pull order.
-  """
-  priority: Int
 }
 
 """Remote repository configuration."""
 input RemoteRepositoryConfig_Input {
   dockerRepository: DockerRepository_Input
-  mavenRepository: MavenRepository_Input
-  npmRepository: NpmRepository_Input
   pythonRepository: PythonRepository_Input
-  aptRepository: AptRepository_Input
   yumRepository: YumRepository_Input
-  commonRepository: CommonRemoteRepository_Input
 
   """The description of the remote source."""
   description: String
   upstreamCredentials: UpstreamCredentials_Input
+  aptRepository: AptRepository_Input
+  commonRepository: CommonRemoteRepository_Input
 
   """
   Input only. A create/update remote repo option to avoid making a HEAD/GET request to validate a remote repo and any supplied upstream credentials.
   """
   disableUpstreamValidation: Boolean
+  mavenRepository: MavenRepository_Input
+  npmRepository: NpmRepository_Input
 }
 
 """Configuration for a Docker remote repository."""
 input DockerRepository_Input {
-  publicRepository: query_artifactregistry_projects_locations_repositories_list_repositories_items_remoteRepositoryConfig_dockerRepository_publicRepository
+  publicRepository: query_artifactregistry_projects_locations_repositories_get_remoteRepositoryConfig_dockerRepository_publicRepository
   customRepository: GoogleDevtoolsArtifactregistryV1RemoteRepositoryConfigDockerRepositoryCustomRepository_Input
 }
 
@@ -2392,37 +2470,9 @@ input GoogleDevtoolsArtifactregistryV1RemoteRepositoryConfigDockerRepositoryCust
   uri: String
 }
 
-"""Configuration for a Maven remote repository."""
-input MavenRepository_Input {
-  publicRepository: query_artifactregistry_projects_locations_repositories_list_repositories_items_remoteRepositoryConfig_mavenRepository_publicRepository
-  customRepository: GoogleDevtoolsArtifactregistryV1RemoteRepositoryConfigMavenRepositoryCustomRepository_Input
-}
-
-"""Customer-specified publicly available remote repository."""
-input GoogleDevtoolsArtifactregistryV1RemoteRepositoryConfigMavenRepositoryCustomRepository_Input {
-  """
-  An http/https uri reference to the upstream remote repository, for ex: "https://my.maven.registry/".
-  """
-  uri: String
-}
-
-"""Configuration for a Npm remote repository."""
-input NpmRepository_Input {
-  publicRepository: query_artifactregistry_projects_locations_repositories_list_repositories_items_remoteRepositoryConfig_npmRepository_publicRepository
-  customRepository: GoogleDevtoolsArtifactregistryV1RemoteRepositoryConfigNpmRepositoryCustomRepository_Input
-}
-
-"""Customer-specified publicly available remote repository."""
-input GoogleDevtoolsArtifactregistryV1RemoteRepositoryConfigNpmRepositoryCustomRepository_Input {
-  """
-  An http/https uri reference to the upstream remote repository, for ex: "https://my.npm.registry/".
-  """
-  uri: String
-}
-
 """Configuration for a Python remote repository."""
 input PythonRepository_Input {
-  publicRepository: query_artifactregistry_projects_locations_repositories_list_repositories_items_remoteRepositoryConfig_pythonRepository_publicRepository
+  publicRepository: query_artifactregistry_projects_locations_repositories_get_remoteRepositoryConfig_pythonRepository_publicRepository
   customRepository: GoogleDevtoolsArtifactregistryV1RemoteRepositoryConfigPythonRepositoryCustomRepository_Input
 }
 
@@ -2430,32 +2480,6 @@ input PythonRepository_Input {
 input GoogleDevtoolsArtifactregistryV1RemoteRepositoryConfigPythonRepositoryCustomRepository_Input {
   """
   An http/https uri reference to the upstream remote repository, for ex: "https://my.python.registry/".
-  """
-  uri: String
-}
-
-"""Configuration for an Apt remote repository."""
-input AptRepository_Input {
-  publicRepository: GoogleDevtoolsArtifactregistryV1RemoteRepositoryConfigAptRepositoryPublicRepository_Input
-  customRepository: GoogleDevtoolsArtifactregistryV1RemoteRepositoryConfigAptRepositoryCustomRepository_Input
-}
-
-"""
-Publicly available Apt repositories constructed from a common repository base and a custom repository path.
-"""
-input GoogleDevtoolsArtifactregistryV1RemoteRepositoryConfigAptRepositoryPublicRepository_Input {
-  repositoryBase: query_artifactregistry_projects_locations_repositories_list_repositories_items_remoteRepositoryConfig_aptRepository_publicRepository_repositoryBase
-
-  """
-  A custom field to define a path to a specific repository from the base.
-  """
-  repositoryPath: String
-}
-
-"""Customer-specified publicly available remote repository."""
-input GoogleDevtoolsArtifactregistryV1RemoteRepositoryConfigAptRepositoryCustomRepository_Input {
-  """
-  An http/https uri reference to the upstream remote repository, for ex: "https://my.apt.registry/".
   """
   uri: String
 }
@@ -2470,7 +2494,7 @@ input YumRepository_Input {
 Publicly available Yum repositories constructed from a common repository base and a custom repository path.
 """
 input GoogleDevtoolsArtifactregistryV1RemoteRepositoryConfigYumRepositoryPublicRepository_Input {
-  repositoryBase: query_artifactregistry_projects_locations_repositories_list_repositories_items_remoteRepositoryConfig_yumRepository_publicRepository_repositoryBase
+  repositoryBase: query_artifactregistry_projects_locations_repositories_get_remoteRepositoryConfig_yumRepository_publicRepository_repositoryBase
 
   """
   A custom field to define a path to a specific repository from the base.
@@ -2483,12 +2507,6 @@ input GoogleDevtoolsArtifactregistryV1RemoteRepositoryConfigYumRepositoryCustomR
   """
   An http/https uri reference to the upstream remote repository, for ex: "https://my.yum.registry/".
   """
-  uri: String
-}
-
-"""Common remote repository settings type."""
-input CommonRemoteRepository_Input {
-  """Required. A common public repository base for remote repository."""
   uri: String
 }
 
@@ -2508,18 +2526,133 @@ input UsernamePasswordCredentials_Input {
   passwordSecretVersion: String
 }
 
+"""Configuration for an Apt remote repository."""
+input AptRepository_Input {
+  publicRepository: GoogleDevtoolsArtifactregistryV1RemoteRepositoryConfigAptRepositoryPublicRepository_Input
+  customRepository: GoogleDevtoolsArtifactregistryV1RemoteRepositoryConfigAptRepositoryCustomRepository_Input
+}
+
+"""
+Publicly available Apt repositories constructed from a common repository base and a custom repository path.
+"""
+input GoogleDevtoolsArtifactregistryV1RemoteRepositoryConfigAptRepositoryPublicRepository_Input {
+  repositoryBase: query_artifactregistry_projects_locations_repositories_get_remoteRepositoryConfig_aptRepository_publicRepository_repositoryBase
+
+  """
+  A custom field to define a path to a specific repository from the base.
+  """
+  repositoryPath: String
+}
+
+"""Customer-specified publicly available remote repository."""
+input GoogleDevtoolsArtifactregistryV1RemoteRepositoryConfigAptRepositoryCustomRepository_Input {
+  """
+  An http/https uri reference to the upstream remote repository, for ex: "https://my.apt.registry/".
+  """
+  uri: String
+}
+
+"""Common remote repository settings type."""
+input CommonRemoteRepository_Input {
+  """Required. A common public repository base for remote repository."""
+  uri: String
+}
+
+"""Configuration for a Maven remote repository."""
+input MavenRepository_Input {
+  publicRepository: query_artifactregistry_projects_locations_repositories_get_remoteRepositoryConfig_mavenRepository_publicRepository
+  customRepository: GoogleDevtoolsArtifactregistryV1RemoteRepositoryConfigMavenRepositoryCustomRepository_Input
+}
+
+"""Customer-specified publicly available remote repository."""
+input GoogleDevtoolsArtifactregistryV1RemoteRepositoryConfigMavenRepositoryCustomRepository_Input {
+  """
+  An http/https uri reference to the upstream remote repository, for ex: "https://my.maven.registry/".
+  """
+  uri: String
+}
+
+"""Configuration for a Npm remote repository."""
+input NpmRepository_Input {
+  publicRepository: query_artifactregistry_projects_locations_repositories_get_remoteRepositoryConfig_npmRepository_publicRepository
+  customRepository: GoogleDevtoolsArtifactregistryV1RemoteRepositoryConfigNpmRepositoryCustomRepository_Input
+}
+
+"""Customer-specified publicly available remote repository."""
+input GoogleDevtoolsArtifactregistryV1RemoteRepositoryConfigNpmRepositoryCustomRepository_Input {
+  """
+  An http/https uri reference to the upstream remote repository, for ex: "https://my.npm.registry/".
+  """
+  uri: String
+}
+
+"""
+DockerRepositoryConfig is docker related repository details. Provides additional configuration details for repositories of the docker format type.
+"""
+input DockerRepositoryConfig_Input {
+  """
+  The repository which enabled this flag prevents all tags from being modified, moved or deleted. This does not prevent tags from being created.
+  """
+  immutableTags: Boolean
+}
+
+"""
+MavenRepositoryConfig is maven related repository details. Provides additional configuration details for repositories of the maven format type.
+"""
+input MavenRepositoryConfig_Input {
+  """
+  The repository with this flag will allow publishing the same snapshot versions.
+  """
+  allowSnapshotOverwrites: Boolean
+  versionPolicy: query_artifactregistry_projects_locations_repositories_get_mavenConfig_versionPolicy
+}
+
 """
 Config on whether to perform vulnerability scanning for resources in this repository, as well as output fields describing current state.
 """
 input VulnerabilityScanningConfig_Input {
-  enablementConfig: query_artifactregistry_projects_locations_repositories_list_repositories_items_vulnerabilityScanningConfig_enablementConfig
-
-  """Output only. The last time this repository config was enabled."""
-  lastEnableTime: String
-  enablementState: query_artifactregistry_projects_locations_repositories_list_repositories_items_vulnerabilityScanningConfig_enablementState
+  enablementConfig: query_artifactregistry_projects_locations_repositories_get_vulnerabilityScanningConfig_enablementConfig
 
   """Output only. Reason for the repository state."""
   enablementStateReason: String
+
+  """Output only. The last time this repository config was enabled."""
+  lastEnableTime: String
+  enablementState: query_artifactregistry_projects_locations_repositories_get_vulnerabilityScanningConfig_enablementState
+}
+
+"""The request for exporting an artifact to a destination."""
+input ExportArtifactRequest_Input {
+  """
+  The artifact version to export. Format: projects/{project}/locations/{location}/repositories/{repository}/packages/{package}/versions/{version}
+  """
+  sourceVersion: String
+
+  """
+  The artifact tag to export. Format:projects/{project}/locations/{location}/repositories/{repository}/packages/{package}/tags/{tag}
+  """
+  sourceTag: String
+
+  """
+  The Cloud Storage path to export the artifact to. Should start with the bucket name, and optionally have a directory path. Examples: `dst_bucket`, `dst_bucket/sub_dir`. Existing objects with the same path will be overwritten.
+  """
+  gcsPath: String
+}
+
+"""Response message for `TestIamPermissions` method."""
+type TestIamPermissionsResponse {
+  """
+  A subset of `TestPermissionsRequest.permissions` that the caller is allowed.
+  """
+  permissions: [String]
+}
+
+"""Request message for `TestIamPermissions` method."""
+input TestIamPermissionsRequest_Input {
+  """
+  The set of permissions to check for the `resource`. Permissions with wildcards (such as `*` or `storage.*`) are not allowed. For more information see [IAM Overview](https://cloud.google.com/iam/docs/overview#permissions).
+  """
+  permissions: [String]
 }
 
 """Request message for `SetIamPolicy` method."""
@@ -2532,14 +2665,14 @@ An Identity and Access Management (IAM) policy, which specifies access controls 
 """
 input Policy_Input {
   """
-  Specifies the format of the policy. Valid values are `0`, `1`, and `3`. Requests that specify an invalid value are rejected. Any operation that affects conditional role bindings must specify version `3`. This requirement applies to the following operations: * Getting a policy that includes a conditional role binding * Adding a conditional role binding to a policy * Changing a conditional role binding in a policy * Removing any role binding, with or without a condition, from a policy that includes conditions **Important:** If you use IAM Conditions, you must include the `etag` field whenever you call `setIamPolicy`. If you omit this field, then IAM allows you to overwrite a version `3` policy with a version `1` policy, and all of the conditions in the version `3` policy are lost. If a policy does not include any conditions, operations on that policy may specify any valid version or leave the field unset. To learn which resources support conditions in their IAM policies, see the [IAM documentation](https://cloud.google.com/iam/help/conditions/resource-policies).
-  """
-  version: Int
-
-  """
   Associates a list of `members`, or principals, with a `role`. Optionally, may specify a `condition` that determines how and when the `bindings` are applied. Each of the `bindings` must contain at least one principal. The `bindings` in a `Policy` can refer to up to 1,500 principals; up to 250 of these principals can be Google groups. Each occurrence of a principal counts towards these limits. For example, if the `bindings` grant 50 different roles to `user:alice@example.com`, and not to any other principal, then you can add another 1,450 principals to the `bindings` in the `Policy`.
   """
   bindings: [Binding_Input]
+
+  """
+  Specifies the format of the policy. Valid values are `0`, `1`, and `3`. Requests that specify an invalid value are rejected. Any operation that affects conditional role bindings must specify version `3`. This requirement applies to the following operations: * Getting a policy that includes a conditional role binding * Adding a conditional role binding to a policy * Changing a conditional role binding in a policy * Removing any role binding, with or without a condition, from a policy that includes conditions **Important:** If you use IAM Conditions, you must include the `etag` field whenever you call `setIamPolicy`. If you omit this field, then IAM allows you to overwrite a version `3` policy with a version `1` policy, and all of the conditions in the version `3` policy are lost. If a policy does not include any conditions, operations on that policy may specify any valid version or leave the field unset. To learn which resources support conditions in their IAM policies, see the [IAM documentation](https://cloud.google.com/iam/help/conditions/resource-policies).
+  """
+  version: Int
 
   """
   `etag` is used for optimistic concurrency control as a way to help prevent simultaneous updates of a policy from overwriting each other. It is strongly suggested that systems make use of the `etag` in the read-modify-write cycle to perform policy updates in order to avoid race conditions: An `etag` is returned in the response to `getIamPolicy`, and systems are expected to put that etag in the request to `setIamPolicy` to ensure that their change will be applied to the same version of the policy. **Important:** If you use IAM Conditions, you must include the `etag` field whenever you call `setIamPolicy`. If you omit this field, then IAM allows you to overwrite a version `3` policy with a version `1` policy, and all of the conditions in the version `3` policy are lost.
@@ -2566,16 +2699,6 @@ Represents a textual expression in the Common Expression Language (CEL) syntax. 
 """
 input Expr_Input {
   """
-  Textual representation of an expression in Common Expression Language syntax.
-  """
-  expression: String
-
-  """
-  Optional. Title for the expression, i.e. a short string describing its purpose. This can be used e.g. in UIs which allow to enter the expression.
-  """
-  title: String
-
-  """
   Optional. Description of the expression. This is a longer text which describes the expression, e.g. when hovered over it in a UI.
   """
   description: String
@@ -2584,61 +2707,179 @@ input Expr_Input {
   Optional. String indicating the location of the expression for error reporting, e.g. a file name and a position in the file.
   """
   location: String
+
+  """
+  Optional. Title for the expression, i.e. a short string describing its purpose. This can be used e.g. in UIs which allow to enter the expression.
+  """
+  title: String
+
+  """
+  Textual representation of an expression in Common Expression Language syntax.
+  """
+  expression: String
 }
 
-"""Response message for `TestIamPermissions` method."""
-type TestIamPermissionsResponse {
-  """
-  A subset of `TestPermissionsRequest.permissions` that the caller is allowed.
-  """
-  permissions: [String]
-}
-
-"""Request message for `TestIamPermissions` method."""
-input TestIamPermissionsRequest_Input {
-  """
-  The set of permissions to check for the `resource`. Permissions with wildcards (such as `*` or `storage.*`) are not allowed. For more information see [IAM Overview](https://cloud.google.com/iam/docs/overview#permissions).
-  """
-  permissions: [String]
-}
-
-"""The request for exporting an artifact to a destination."""
-input ExportArtifactRequest_Input {
-  """
-  The artifact version to export. Format: projects/{project}/locations/{location}/repositories/{repository}/packages/{package}/versions/{version}
-  """
-  sourceVersion: String
-
-  """
-  The artifact tag to export. Format:projects/{project}/locations/{location}/repositories/{repository}/packages/{package}/tags/{tag}
-  """
-  sourceTag: String
-
-  """
-  The Cloud Storage path to export the artifact to. Should start with the bucket name, and optionally have a directory path. Examples: `dst_bucket`, `dst_bucket/sub_dir`. Existing objects with the same path will be overwritten.
-  """
-  gcsPath: String
-}
-
-"""The request to import new apt artifacts."""
-input ImportAptArtifactsRequest_Input {
-  gcsSource: ImportAptArtifactsGcsSource_Input
-}
-
-"""Google Cloud Storage location where the artifacts currently reside."""
-input ImportAptArtifactsGcsSource_Input {
-  """Cloud Storage paths URI (e.g., gs://my_bucket//my_object)."""
-  uris: [String]
-
-  """
-  Supports URI wildcards for matching multiple objects from a single URI.
-  """
-  useWildcards: Boolean
-}
-
-"""The response to upload an artifact."""
-type UploadAptArtifactMediaResponse {
+"""The response to upload a Go module."""
+type UploadGoModuleMediaResponse {
   operation: Operation
+}
+
+"""
+An Attachment refers to additional metadata that can be attached to artifacts in Artifact Registry. An attachment consists of one or more files.
+"""
+input Attachment_Input {
+  """Type of attachment. E.g. `application/vnd.spdx+json`"""
+  type: String
+
+  """
+  Optional. User annotations. These attributes can only be set and used by the user, and not by Artifact Registry. See https://google.aip.dev/128#annotations for more details such as format and size limitations.
+  """
+  annotations: JSON
+
+  """
+  Required. The files that belong to this attachment. If the file ID part contains slashes, they are escaped. E.g. `projects/p1/locations/us-central1/repositories/repo1/files/sha:`.
+  """
+  files: [String]
+
+  """
+  The name of the attachment. E.g. `projects/p1/locations/us/repositories/repo/attachments/sbom`.
+  """
+  name: String
+
+  """Output only. The time when the attachment was last updated."""
+  updateTime: String
+
+  """
+  Required. The target the attachment is for, can be a Version, Package or Repository. E.g. `projects/p1/locations/us-central1/repositories/repo1/packages/p1/versions/v1`.
+  """
+  target: String
+
+  """
+  Output only. The name of the OCI version that this attachment created. Only populated for Docker attachments. E.g. `projects/p1/locations/us-central1/repositories/repo1/packages/p1/versions/v1`.
+  """
+  ociVersionName: String
+
+  """
+  The namespace this attachment belongs to. E.g. If an attachment is created by artifact analysis, namespace is set to `artifactanalysis.googleapis.com`.
+  """
+  attachmentNamespace: String
+
+  """Output only. The time when the attachment was created."""
+  createTime: String
+}
+
+"""Packages are named collections of versions."""
+input Package_Input {
+  """The display name of the package."""
+  displayName: String
+
+  """The time when the package was created."""
+  createTime: String
+
+  """
+  The name of the package, for example: `projects/p1/locations/us-central1/repositories/repo1/packages/pkg1`. If the package ID part contains slashes, the slashes are escaped.
+  """
+  name: String
+
+  """
+  The time when the package was last updated. This includes publishing a new version of the package.
+  """
+  updateTime: String
+
+  """Optional. Client specified annotations."""
+  annotations: JSON
+}
+
+"""
+The body of a version resource. A version resource represents a collection of components, such as files and other data. This may correspond to a version in many package management schemes.
+"""
+input Version_Input {
+  """
+  The name of the version, for example: `projects/p1/locations/us-central1/repositories/repo1/packages/pkg1/versions/art1`. If the package or version ID parts contain slashes, the slashes are escaped.
+  """
+  name: String
+
+  """The time when the version was last updated."""
+  updateTime: String
+
+  """
+  Output only. Immutable reference for the version, calculated based on the version's content. Currently we only support dirsum_sha256 hash algorithm. Additional hash algorithms may be added in the future.
+  """
+  fingerprints: [Hash_Input]
+
+  """
+  Output only. A list of related tags. Will contain up to 100 tags that reference this version.
+  """
+  relatedTags: [Tag_Input]
+
+  """Optional. Client specified annotations."""
+  annotations: JSON
+
+  """The time when the version was created."""
+  createTime: String
+
+  """Optional. Description of the version, as specified in its metadata."""
+  description: String
+
+  """
+  Output only. Repository-specific Metadata stored against this version. The fields returned are defined by the underlying repository-specific resource. Currently, the resources could be: DockerImage MavenArtifact
+  """
+  metadata: JSON
+}
+
+"""A hash of file content."""
+input Hash_Input {
+  type: query_artifactregistry_projects_locations_repositories_packages_versions_list_versions_items_fingerprints_items_type
+
+  """The hash value."""
+  value: Byte
+}
+
+"""
+Tags point to a version and represent an alternative name that can be used to access the version.
+"""
+input Tag_Input {
+  """
+  The name of the tag, for example: "projects/p1/locations/us-central1/repositories/repo1/packages/pkg1/tags/tag1". If the package part contains slashes, the slashes are escaped. The tag part can only have characters in [a-zA-Z0-9\-._~:@], anything else must be URL encoded.
+  """
+  name: String
+
+  """
+  The name of the version the tag refers to, for example: `projects/p1/locations/us-central1/repositories/repo1/packages/pkg1/versions/sha256:5243811` If the package or version ID parts contain slashes, the slashes are escaped.
+  """
+  version: String
+}
+
+"""The request to delete multiple versions across a repository."""
+input BatchDeleteVersionsRequest_Input {
+  """
+  Required. The names of the versions to delete. The maximum number of versions deleted per batch is determined by the service and is dependent on the available resources in the region.
+  """
+  names: [String]
+
+  """
+  If true, the request is performed without deleting data, following AIP-163.
+  """
+  validateOnly: Boolean
+}
+
+"""
+A rule defines the deny or allow action of the operation it applies to and the conditions required for the rule to apply. You can set one rule for an entire repository and one rule for each package within.
+"""
+input GoogleDevtoolsArtifactregistryV1Rule_Input {
+  operation: query_artifactregistry_projects_locations_repositories_rules_list_rules_items_operation
+
+  """
+  The package ID the rule applies to. If empty, this rule applies to all packages inside the repository.
+  """
+  packageId: String
+
+  """
+  The name of the rule, for example: `projects/p1/locations/us-central1/repositories/repo1/rules/rule1`.
+  """
+  name: String
+  condition: Expr_Input
+  action: query_artifactregistry_projects_locations_repositories_rules_list_rules_items_action
 }
 
 """The request to import new yum artifacts."""
@@ -2660,6 +2901,20 @@ input ImportYumArtifactsGcsSource_Input {
 """The response to upload an artifact."""
 type UploadYumArtifactMediaResponse {
   operation: Operation
+}
+
+"""The response to upload an artifact."""
+type UploadKfpArtifactMediaResponse {
+  operation: Operation
+}
+
+"""The request to upload an artifact."""
+input UploadKfpArtifactRequest_Input {
+  """Tags to be created with the version."""
+  tags: [String]
+
+  """Description of the package version."""
+  description: String
 }
 
 """The request to import new googet artifacts."""
@@ -2693,11 +2948,6 @@ The request to upload a generic artifact. The created GenericArtifact will have 
 """
 input UploadGenericArtifactRequest_Input {
   """
-  The ID of the package of the generic artifact. If the package does not exist, a new package will be created. The `package_id` should start and end with a letter or number, only contain letters, numbers, hyphens, underscores, and periods, and not exceed 256 characters.
-  """
-  packageId: String
-
-  """
   The ID of the version of the generic artifact. If the version does not exist, a new version will be created. The version_id must start and end with a letter or number, can only contain lowercase letters, numbers, the following characters [-.+~:], i.e.[a-z0-9-.+~:] and cannot exceed a total of 128 characters. Creating a version called `latest` is not allowed.
   """
   versionId: String
@@ -2706,142 +2956,22 @@ input UploadGenericArtifactRequest_Input {
   The name of the file of the generic artifact to be uploaded. E.g. `example-file.zip` The filename is limited to letters, numbers, and url safe characters, i.e. [a-zA-Z0-9-_.~@].
   """
   filename: String
-}
-
-"""The response to upload an artifact."""
-type UploadKfpArtifactMediaResponse {
-  operation: Operation
-}
-
-"""The request to upload an artifact."""
-input UploadKfpArtifactRequest_Input {
-  """Tags to be created with the version."""
-  tags: [String]
-
-  """Description of the package version."""
-  description: String
-}
-
-"""The response to upload a Go module."""
-type UploadGoModuleMediaResponse {
-  operation: Operation
-}
-
-"""Packages are named collections of versions."""
-input Package_Input {
-  """
-  The name of the package, for example: `projects/p1/locations/us-central1/repositories/repo1/packages/pkg1`. If the package ID part contains slashes, the slashes are escaped.
-  """
-  name: String
-
-  """The display name of the package."""
-  displayName: String
-
-  """The time when the package was created."""
-  createTime: String
 
   """
-  The time when the package was last updated. This includes publishing a new version of the package.
+  The ID of the package of the generic artifact. If the package does not exist, a new package will be created. The `package_id` should start and end with a letter or number, only contain letters, numbers, hyphens, underscores, and periods, and not exceed 256 characters.
   """
-  updateTime: String
-
-  """Optional. Client specified annotations."""
-  annotations: JSON
-}
-
-"""
-The body of a version resource. A version resource represents a collection of components, such as files and other data. This may correspond to a version in many package management schemes.
-"""
-input Version_Input {
-  """
-  The name of the version, for example: `projects/p1/locations/us-central1/repositories/repo1/packages/pkg1/versions/art1`. If the package or version ID parts contain slashes, the slashes are escaped.
-  """
-  name: String
-
-  """Optional. Description of the version, as specified in its metadata."""
-  description: String
-
-  """The time when the version was created."""
-  createTime: String
-
-  """The time when the version was last updated."""
-  updateTime: String
-
-  """
-  Output only. A list of related tags. Will contain up to 100 tags that reference this version.
-  """
-  relatedTags: [Tag_Input]
-
-  """
-  Output only. Repository-specific Metadata stored against this version. The fields returned are defined by the underlying repository-specific resource. Currently, the resources could be: DockerImage MavenArtifact
-  """
-  metadata: JSON
-
-  """Optional. Client specified annotations."""
-  annotations: JSON
-
-  """
-  Output only. Immutable reference for the version, calculated based on the version's content. Currently we only support dirsum_sha256 hash algorithm. Additional hash algorithms may be added in the future.
-  """
-  fingerprints: [Hash_Input]
-}
-
-"""
-Tags point to a version and represent an alternative name that can be used to access the version.
-"""
-input Tag_Input {
-  """
-  The name of the tag, for example: "projects/p1/locations/us-central1/repositories/repo1/packages/pkg1/tags/tag1". If the package part contains slashes, the slashes are escaped. The tag part can only have characters in [a-zA-Z0-9\-._~:@], anything else must be URL encoded.
-  """
-  name: String
-
-  """
-  The name of the version the tag refers to, for example: `projects/p1/locations/us-central1/repositories/repo1/packages/pkg1/versions/sha256:5243811` If the package or version ID parts contain slashes, the slashes are escaped.
-  """
-  version: String
-}
-
-"""A hash of file content."""
-input Hash_Input {
-  type: query_artifactregistry_projects_locations_repositories_packages_versions_list_versions_items_fingerprints_items_type
-
-  """The hash value."""
-  value: Byte
-}
-
-"""The request to delete multiple versions across a repository."""
-input BatchDeleteVersionsRequest_Input {
-  """
-  Required. The names of the versions to delete. The maximum number of versions deleted per batch is determined by the service and is dependent on the available resources in the region.
-  """
-  names: [String]
-
-  """
-  If true, the request is performed without deleting data, following AIP-163.
-  """
-  validateOnly: Boolean
+  packageId: String
 }
 
 """
 Files store content that is potentially associated with Packages or Versions.
 """
 input GoogleDevtoolsArtifactregistryV1File_Input {
-  """
-  The name of the file, for example: `projects/p1/locations/us-central1/repositories/repo1/files/a%2Fb%2Fc.txt`. If the file ID part contains slashes, they are escaped.
-  """
-  name: String
-
   """The size of the File in bytes."""
   sizeBytes: BigInt
 
-  """The hashes of the file content."""
-  hashes: [Hash_Input]
-
   """Output only. The time when the File was created."""
   createTime: String
-
-  """Output only. The time when the File was last updated."""
-  updateTime: String
 
   """The name of the Package or Version that owns this file, if any."""
   owner: String
@@ -2853,6 +2983,17 @@ input GoogleDevtoolsArtifactregistryV1File_Input {
 
   """Optional. Client specified annotations."""
   annotations: JSON
+
+  """The hashes of the file content."""
+  hashes: [Hash_Input]
+
+  """
+  The name of the file, for example: `projects/p1/locations/us-central1/repositories/repo1/files/a%2Fb%2Fc.txt`. If the file ID part contains slashes, they are escaped.
+  """
+  name: String
+
+  """Output only. The time when the File was last updated."""
+  updateTime: String
 }
 
 """The response to upload a generic artifact."""
@@ -2868,66 +3009,25 @@ input UploadFileRequest_Input {
   fileId: String
 }
 
-"""
-A rule defines the deny or allow action of the operation it applies to and the conditions required for the rule to apply. You can set one rule for an entire repository and one rule for each package within.
-"""
-input GoogleDevtoolsArtifactregistryV1Rule_Input {
-  """
-  The name of the rule, for example: `projects/p1/locations/us-central1/repositories/repo1/rules/rule1`.
-  """
-  name: String
-  action: query_artifactregistry_projects_locations_repositories_rules_list_rules_items_action
-  operation: query_artifactregistry_projects_locations_repositories_rules_list_rules_items_operation
-  condition: Expr_Input
-
-  """
-  The package ID the rule applies to. If empty, this rule applies to all packages inside the repository.
-  """
-  packageId: String
+"""The request to import new apt artifacts."""
+input ImportAptArtifactsRequest_Input {
+  gcsSource: ImportAptArtifactsGcsSource_Input
 }
 
-"""
-An Attachment refers to additional metadata that can be attached to artifacts in Artifact Registry. An attachment consists of one or more files.
-"""
-input Attachment_Input {
+"""Google Cloud Storage location where the artifacts currently reside."""
+input ImportAptArtifactsGcsSource_Input {
   """
-  The name of the attachment. E.g. `projects/p1/locations/us/repositories/repo/attachments/sbom`.
+  Supports URI wildcards for matching multiple objects from a single URI.
   """
-  name: String
+  useWildcards: Boolean
 
-  """
-  Required. The target the attachment is for, can be a Version, Package or Repository. E.g. `projects/p1/locations/us-central1/repositories/repo1/packages/p1/versions/v1`.
-  """
-  target: String
+  """Cloud Storage paths URI (e.g., gs://my_bucket//my_object)."""
+  uris: [String]
+}
 
-  """Type of attachment. E.g. `application/vnd.spdx+json`"""
-  type: String
-
-  """
-  The namespace this attachment belongs to. E.g. If an attachment is created by artifact analysis, namespace is set to `artifactanalysis.googleapis.com`.
-  """
-  attachmentNamespace: String
-
-  """
-  Optional. User annotations. These attributes can only be set and used by the user, and not by Artifact Registry. See https://google.aip.dev/128#annotations for more details such as format and size limitations.
-  """
-  annotations: JSON
-
-  """Output only. The time when the attachment was created."""
-  createTime: String
-
-  """Output only. The time when the attachment was last updated."""
-  updateTime: String
-
-  """
-  Required. The files that belong to this attachment. If the file ID part contains slashes, they are escaped. E.g. `projects/p1/locations/us-central1/repositories/repo1/files/sha:`.
-  """
-  files: [String]
-
-  """
-  Output only. The name of the OCI version that this attachment created. Only populated for Docker attachments. E.g. `projects/p1/locations/us-central1/repositories/repo1/packages/p1/versions/v1`.
-  """
-  ociVersionName: String
+"""The response to upload an artifact."""
+type UploadAptArtifactMediaResponse {
+  operation: Operation
 }
 
 enum HTTPMethod {

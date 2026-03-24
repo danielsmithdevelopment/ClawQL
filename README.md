@@ -9,18 +9,63 @@ full OpenAPI definitions into context.
 env is set, ClawQL defaults to the bundled **Cloudflare** OpenAPI provider
 (falls back to Cloudflare's published OpenAPI URL if the local bundle is missing).
 
-### Latest benchmark (bundled `google` · `jira` · `cloudflare`)
+## Highlight: Multi-provider complex workflow (most impressive benchmark)
 
-Reproducible script: `npm run benchmark:tokens` → [`docs/benchmarks/latest.md`](docs/benchmarks/latest.md) · [`docs/benchmarks/REPRODUCE.md`](docs/benchmarks/REPRODUCE.md).  
-Token estimate: **~4 characters per token**. Phase 2 compares **full REST response JSON** vs **GraphQL response JSON** (representative [fixtures](docs/benchmarks/response-examples/); optional live calls with `BENCHMARK_LIVE=1`).
+> 🏆 **Best benchmark so far:** end-to-end multi-provider planning context reduced by **99.88%** (**861.98x smaller**).
 
-| Provider | Phase 1 — full spec → top-5 `search` | Phase 2 — REST body → GraphQL body |
-|----------|--------------------------------------|-------------------------------------|
-| **google** (GKE list clusters) | 84,436 → 2,167 (**82,269 saved**, ~39×, **97.4%**) | 421 → 76 (**345 saved**, ~5.5×, **82.0%**) |
-| **jira** (get issue) | 266,579 → 901 (**265,678 saved**, ~296×, **99.7%**) | 386 → 40 (**346 saved**, ~9.7×, **89.6%**) |
-| **cloudflare** (list DNS records) | 2,206,098 → 2,377 (**2,203,721 saved**, ~928×, **99.9%**) | 177 → 80 (**97 saved**, ~2.2×, **54.8%**) |
+This is the strongest planning-context result so far: one realistic workflow spanning
+**Google Cloud + Cloudflare + Jira** with a single coherent objective.
 
-Phase 1 = planning context; Phase 2 = execution payloads returned to the agent.
+**Goal**
+
+- Stand up a GKE cluster and deploy a workload, then expose it via external service/LB endpoints.
+- Restrict ingress appropriately for Cloudflare fronting by using Cloudflare-published IPv4/IPv6 ranges in GCP firewall/LB allowlists where needed.
+- Configure Cloudflare DNS and proxying to the cluster/LB endpoint, plus caching/performance behavior suitable for API traffic vs static assets.
+- Prepare a Jira issue payload that captures rollout scope, assignee, due date, labels, and implementation notes for execution tracking.
+
+**Workflow query sequence (exact)**
+
+- `create kubernetes cluster GKE regional zonal`
+- `deploy application workload container image kubernetes engine`
+- `kubernetes service load balancer external IP expose`
+- `compute firewall rule ingress allow tcp source ip range`
+- `container clusters get credentials kubectl`
+- `create dns record zone A CNAME proxy`
+- `list dns records filter name content`
+- `load balancer pool origin health check`
+- `cache rules cache reserve ttl bypass`
+- `zone settings cache always online`
+- `create issue project fields summary`
+- `assign issue accountId assignee`
+- `edit issue labels duedate priority`
+- `get create issue metadata createmeta`
+
+**Specs loaded for this run**
+
+- Google top50 Discovery bundle
+- Cloudflare full OpenAPI
+- Jira OpenAPI
+
+**Measured savings (planning context)**
+
+- Full loaded specs: `40,835,581` bytes (~`10,208,896` tokens)
+- Workflow output: `47,374` bytes (~`11,844` tokens)
+- Savings: `10,197,052` tokens (`99.88%` reduction, `861.98x` smaller)
+
+Details and reproducible stats:
+
+- [`docs/benchmarks/multi-provider-complex-workflow/experiment-multi-provider-complex-workflow.md`](docs/benchmarks/multi-provider-complex-workflow/experiment-multi-provider-complex-workflow.md)
+- [`docs/benchmarks/multi-provider-complex-workflow/experiment-multi-provider-complex-workflow-stats.json`](docs/benchmarks/multi-provider-complex-workflow/experiment-multi-provider-complex-workflow-stats.json)
+
+## Latest benchmark (bundled `google` · `jira` · `cloudflare`)
+
+For detailed per-provider results and reproduction steps:
+
+- [`docs/benchmarks/latest.md`](docs/benchmarks/latest.md)
+- [`docs/benchmarks/latest.json`](docs/benchmarks/latest.json)
+- [`docs/benchmarks/REPRODUCE.md`](docs/benchmarks/REPRODUCE.md)
+
+Quick context: token estimates use `~4 chars/token`; Phase 1 measures planning-context reduction (`full spec -> top-5 search`), and Phase 2 measures execution-payload reduction (`full REST JSON -> GraphQL JSON`).
 
 ---
 
@@ -57,7 +102,7 @@ npx -p clawql-mcp-server clawql-mcp
 (`npx clawql-mcp` alone expects an npm package literally named `clawql-mcp`; this
 repo publishes as **`clawql-mcp-server`**, so use `-p` as above.)
 
-### Quick start for agent users
+## Quick start for agent users
 
 For most users, this is enough to get an agent connected:
 
@@ -71,7 +116,7 @@ CLAWQL_SPEC_PATH=./openapi.yaml npx -p clawql-mcp-server clawql-mcp
 
 Then point your MCP client (Cursor/Claude Desktop) to the `clawql-mcp` command.
 
-### Installing from GitHub source (instead of npm registry)
+## Installing from GitHub source (instead of npm registry)
 
 If you install directly from git, `prepare` now runs automatically to build `dist/`.
 
@@ -83,11 +128,50 @@ If your environment skips lifecycle scripts, run `npm run build` once manually.
 
 ---
 
+## Setup
+
+### 1. Install dependencies
+
+```bash
+npm install
+# or: bun install
+```
+
+### 2. Start the GraphQL proxy
+
+The GraphQL proxy must be running before the MCP server makes execution calls.
+Run it in a separate terminal or as a background process:
+
+```bash
+npm run graphql
+# or: bun run graphql
+# GraphQL proxy running at http://localhost:4000/graphql
+```
+
+### 3. Start the MCP server
+
+```bash
+npm run dev          # development (tsx, no build step)
+npm run build && npm start  # production
+# or: bun run dev / bun run build && bun run start
+```
+
+### 4. Run tests
+
+Tests use [Bun](https://bun.sh)’s test runner (`bun test`).
+
+```bash
+bun test
+# or: npm test  (runs `bun test src` per package.json)
+```
+
+---
+
 ## Configure the API spec
 
 Set **one mode**. Precedence (highest → lowest):
 
-1. `CLAWQL_SPEC_PATHS` / `CLAWQL_GOOGLE_TOP20_SPECS` (multi-spec mode)
+1. `CLAWQL_SPEC_PATHS` / `CLAWQL_GOOGLE_TOP50_SPECS` (multi-spec mode)
 2. `CLAWQL_SPEC_PATH` / `CLAWQL_SPEC_URL` / `CLAWQL_DISCOVERY_URL`
 3. `CLAWQL_PROVIDER` (bundled preset)
 4. built-in default provider (`cloudflare`)
@@ -96,22 +180,21 @@ Set **one mode**. Precedence (highest → lowest):
 |----------|---------|
 | `CLAWQL_SPEC_PATH` | Path to local OpenAPI JSON/YAML (or `OPENAPI_SPEC_PATH`) |
 | `CLAWQL_SPEC_PATHS` | Comma/semicolon/newline-separated paths — **merge** many specs in **one** process (overrides single-spec vars when set) |
-| `CLAWQL_GOOGLE_TOP20_SPECS` | Legacy alias (`1`/`true`/`yes`) for the curated Google top20 multi-spec mode |
+| `CLAWQL_GOOGLE_TOP50_SPECS` | Curated Google top50 multi-spec mode (`1`/`true`/`yes`) |
 | `CLAWQL_SPEC_URL` | URL to fetch OpenAPI JSON/YAML |
 | `CLAWQL_DISCOVERY_URL` | Google Discovery JSON URL (e.g. other GCP APIs) |
 | `CLAWQL_PROVIDER` | Use a **bundled** preset (`google`, `atlassian`, `cloudflare`) when no path/URL/discovery env is set |
 | `CLAWQL_INTROSPECTION_PATH` | Pregenerated GraphQL introspection JSON (optional; speeds MCP `execute` field matching) |
 | `CLAWQL_API_BASE_URL` | Override REST base URL (if spec has no `servers` or you need a different host) |
 
-**GCP multi-service:** use **`CLAWQL_GOOGLE_TOP20_SPECS=1`** or **`CLAWQL_SPEC_PATHS`** so `search` / `execute` see every merged API in one server; `execute` uses REST in that mode. See [`docs/workflow-gcp-multi-service.md`](docs/workflow-gcp-multi-service.md).  
+**GCP multi-service:** use **`CLAWQL_GOOGLE_TOP50_SPECS=1`** or **`CLAWQL_SPEC_PATHS`** so `search` / `execute` see every merged API in one server; `execute` uses REST in that mode. See [`docs/workflow-gcp-multi-service.md`](docs/workflow-gcp-multi-service.md).  
 **Integration check:** `npm run workflow:gcp-multi` runs **`tools/call` → `search`** over real MCP stdio and writes `docs/workflow-gcp-multi-latest.json` (full `CallToolResult` + parsed body). `npm run workflow:gcp-multi:direct` is a faster in-process-only variant for debugging rankers. One-page results summary: [`docs/gcp-multi-mcp-test-summary.md`](docs/gcp-multi-mcp-test-summary.md). Detailed experiment write-up (queries, APIs, token heuristic, MCP samples): [`docs/experiment-gcp-multi-mcp-workflow.md`](docs/experiment-gcp-multi-mcp-workflow.md); `npm run report:gcp-multi-experiment` refreshes [`docs/experiment-gcp-multi-mcp-stats.json`](docs/experiment-gcp-multi-mcp-stats.json).
 
 If **none** of the spec variables are set, ClawQL loads the default bundled
 provider (**`cloudflare`**). Set **`CLAWQL_PROVIDER=google`**,
 **`atlassian`**, or **`cloudflare`** to pick a bundled preset explicitly (see
 `providers/README.md`).  
-Compatibility aliases currently also exist for **`jira`**, **`bitbucket`**, and
-**`google-top20`**.
+Compatibility aliases currently also exist for **`jira`** and **`bitbucket`**.
 if a bundled file is missing, the provider registry **fallback URL** is fetched
 unless `CLAWQL_BUNDLED_OFFLINE=1`.
 
@@ -218,45 +301,6 @@ Agent
 
 ---
 
-## Setup
-
-### 1. Install dependencies
-
-```bash
-npm install
-# or: bun install
-```
-
-### 2. Start the GraphQL proxy
-
-The GraphQL proxy must be running before the MCP server makes execution calls.
-Run it in a separate terminal or as a background process:
-
-```bash
-npm run graphql
-# or: bun run graphql
-# GraphQL proxy running at http://localhost:4000/graphql
-```
-
-### 3. Start the MCP server
-
-```bash
-npm run dev          # development (tsx, no build step)
-npm run build && npm start  # production
-# or: bun run dev / bun run build && bun run start
-```
-
-### 4. Run tests
-
-Tests use [Bun](https://bun.sh)’s test runner (`bun test`).
-
-```bash
-bun test
-# or: npm test  (runs `bun test src` per package.json)
-```
-
----
-
 ## Claude Desktop / Cursor config
 
 **Installed from npm** (recommended): use `npx` with `-p clawql-mcp-server` and the
@@ -332,7 +376,7 @@ proxy at `http://localhost:4000/graphql` while it is running.
 
 Google lists **every** public Discovery API at [`https://www.googleapis.com/discovery/v1/apis`](https://www.googleapis.com/discovery/v1/apis). The repo vendors a snapshot as [`providers/google/google-apis-lookup.json`](providers/google/google-apis-lookup.json) (search by `id` / `title`, copy `discoveryRestUrl`). See [`docs/google-apis-lookup.md`](docs/google-apis-lookup.md) to refresh it.
 
-**Offline top 20:** IAM, Compute, Storage, GKE, Cloud Run, Pub/Sub, BigQuery, and 13 more are pre-downloaded under [`providers/google/apis/`](providers/google/apis/README.md) with optional GraphQL artifacts — see [`providers/google/google-top20-apis.json`](providers/google/google-top20-apis.json).
+**Offline top 50:** curated Google APIs are pre-downloaded under [`providers/google/apis/`](providers/google/apis/README.md) with optional GraphQL artifacts — see [`providers/google/google-top50-apis.json`](providers/google/google-top50-apis.json).
 
 Point ClawQL at any one Discovery document:
 

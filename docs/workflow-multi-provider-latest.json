@@ -1,13 +1,19 @@
 {
   "meta": {
-    "generatedAt": "2026-03-23T04:08:36.064Z",
+    "generatedAt": "2026-03-24T06:46:51.802Z",
     "bundledOffline": true,
     "dueDateNextFriday": "2026-03-27",
-    "uniqueOperationsConsidered": 54
+    "mergedOperationCount": 7174,
+    "providerOperationCounts": {
+      "google": 4141,
+      "cloudflare": 2697,
+      "jira": 336
+    },
+    "uniqueOperationsConsidered": 62
   },
   "jiraDraft": {
     "summary": "[Multi-cloud] GKE + Cloudflare DNS/caching — API requests & rollout tracking",
-    "descriptionPlain": "## Goal\nDocument the REST/API work to: (1) stand up GKE and deploy a service, (2) expose it in a way compatible with Cloudflare source IPs (https://www.cloudflare.com/ips/ (publish IPv4/IPv6 ranges; use on GCP firewall / load balancer allowlists as needed).), (3) point Cloudflare DNS at the cluster/LB endpoint with appropriate caching.\n\n## Due date\n2026-03-27 (next Friday, UTC date used for API fields).\n\n## Google Cloud (GKE / networking) — candidate operations (from ClawQL search)\n- `POST` container.projects.locations.clusters.create — `v1/projects/{projectsId}/locations/{locationsId}/clusters`\n- `POST` container.projects.zones.clusters.create — `v1/projects/{projectId}/zones/{zone}/clusters`\n- `DELETE` container.projects.zones.clusters.delete — `v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}`\n- `POST` container.projects.zones.clusters.locations — `v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/locations`\n- `DELETE` container.projects.locations.clusters.delete — `v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}`\n- `GET` container.projects.locations.getServerConfig — `v1/projects/{projectsId}/locations/{locationsId}/serverConfig`\n- `POST` container.projects.locations.clusters.setLocations — `v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:setLocations`\n- `GET` container.projects.zones.getServerconfig — `v1/projects/{projectId}/zones/{zone}/serverconfig`\n- `POST` container.projects.locations.clusters.completeIpRotation — `v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:completeIpRotation`\n- `POST` container.projects.locations.clusters.startIpRotation — `v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:startIpRotation`\n- `POST` container.projects.zones.clusters.completeIpRotation — `v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}:completeIpRotation`\n- `POST` container.projects.zones.clusters.startIpRotation — `v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}:startIpRotation`\n\n## Cloudflare — candidate operations\n- `POST` dns-records-for-a-zone-create-dns-record — `zones/{zone_id}/dns_records`\n- `GET` dns-records-for-a-zone-list-dns-records — `zones/{zone_id}/dns_records`\n- `GET` dns-records-for-a-zone-dns-record-details — `zones/{zone_id}/dns_records/{dns_record_id}`\n- `PUT` dns-records-for-a-zone-update-dns-record — `zones/{zone_id}/dns_records/{dns_record_id}`\n- `PATCH` dns-records-for-a-zone-patch-dns-record — `zones/{zone_id}/dns_records/{dns_record_id}`\n- `GET` web3-hostname-ipfs-universal-path-gateway-content-list-details — `zones/{zone_id}/web3/hostnames/{identifier}/ipfs_universal_path/content_list`\n- `PUT` web3-hostname-update-ipfs-universal-path-gateway-content-list — `zones/{zone_id}/web3/hostnames/{identifier}/ipfs_universal_path/content_list`\n- `GET` web3-hostname-ipfs-universal-path-gateway-content-list-entry-details — `zones/{zone_id}/web3/hostnames/{identifier}/ipfs_universal_path/content_list/entries/{content_list_entry_identifier}`\n- `PUT` web3-hostname-edit-ipfs-universal-path-gateway-content-list-entry — `zones/{zone_id}/web3/hostnames/{identifier}/ipfs_universal_path/content_list/entries/{content_list_entry_identifier}`\n- `GET` account-load-balancer-pools-pool-health-details — `accounts/{account_id}/load_balancers/pools/{pool_id}/health`\n- `GET` load-balancer-pools-pool-health-details — `user/load_balancers/pools/{pool_id}/health`\n- `POST` diagnostics-endpoint-healthcheck-create — `accounts/{account_id}/diagnostics/endpoint-healthchecks`\n\n## Jira — candidate operations\n- `GET` com.atlassian.jira.rest.v2.issue.IssueResource.getCreateIssueMeta_get — `rest/api/3/issue/createmeta`\n- `POST` com.atlassian.jira.rest.v2.issue.ProjectResource.createProject_post — `rest/api/3/project`\n- `POST` com.atlassian.jira.rest.v2.issue.ProjectCategoryResource.createProjectCategory_post — `rest/api/3/projectCategory`\n- `GET` com.atlassian.jira.rest.v2.issue.ProjectIssueSecurityLevelSchemeResource.getIssueSecurityScheme_get — `rest/api/3/project/{projectKeyOrId}/issuesecuritylevelscheme`\n- `POST` com.atlassian.jira.rest.v2.issue.IssueResource.createIssue_post — `rest/api/3/issue`\n- `PUT` com.atlassian.jira.rest.v2.issue.IssueResource.assignIssue_put — `rest/api/3/issue/{issueIdOrKey}/assignee`\n- `GET` com.atlassian.jira.rest.v2.issue.UserResource.findAssignableUsers_get — `rest/api/3/user/assignable/search`\n- `DELETE` com.atlassian.jira.rest.v2.issue.field.IssueFieldOptionResource.replaceIssueFieldOption_delete — `rest/api/3/field/{fieldKey}/option/{optionId}/issue`\n\n## Notes\n- Use GCP firewall / LB allowlists with Cloudflare published IP ranges where you intend to restrict ingress.\n- Cloudflare: configure DNS (proxied/orange-cloud) and cache rules appropriate for your API vs static assets.\n- Validate Jira `createmeta` for required fields before POST /rest/api/3/issue.",
+    "descriptionPlain": "## Goal\nDocument the REST/API work to: (1) stand up GKE and deploy a service, (2) expose it in a way compatible with Cloudflare source IPs (https://www.cloudflare.com/ips/ (publish IPv4/IPv6 ranges; use on GCP firewall / load balancer allowlists as needed).), (3) point Cloudflare DNS at the cluster/LB endpoint with appropriate caching.\n\n## Due date\n2026-03-27 (next Friday, UTC date used for API fields).\n\n## Google Cloud (GKE / networking) — candidate operations (from ClawQL search)\n- `POST` redis.projects.locations.clusters.create — `v1/projects/{projectsId}/locations/{locationsId}/clusters`\n- `POST` bigtableadmin.projects.instances.clusters.create — `v2/projects/{projectsId}/instances/{instancesId}/clusters`\n- `POST` container.projects.locations.clusters.create — `v1/projects/{projectsId}/locations/{locationsId}/clusters`\n- `POST` container.projects.zones.clusters.create — `v1/projects/{projectId}/zones/{zone}/clusters`\n- `DELETE` container.projects.zones.clusters.delete — `v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}`\n- `POST` clouddeploy.projects.locations.deployPolicies.create — `v1/projects/{projectsId}/locations/{locationsId}/deployPolicies`\n- `GET` clouddeploy.projects.locations.deployPolicies.list — `v1/projects/{projectsId}/locations/{locationsId}/deployPolicies`\n- `GET` compute.images.get — `projects/{project}/global/images/{image}`\n- `DELETE` compute.images.delete — `projects/{project}/global/images/{image}`\n- `POST` compute.images.deprecate — `projects/{project}/global/images/{image}/deprecate`\n- `POST` servicecontrol.services.check — `v1/services/{serviceName}:check`\n- `POST` servicecontrol.services.report — `v1/services/{serviceName}:report`\n\n## Cloudflare — candidate operations\n- `POST` dns-records-for-a-zone-create-dns-record — `zones/{zone_id}/dns_records`\n- `GET` dns-records-for-a-zone-list-dns-records — `zones/{zone_id}/dns_records`\n- `GET` dns-records-for-a-zone-dns-record-details — `zones/{zone_id}/dns_records/{dns_record_id}`\n- `PUT` dns-records-for-a-zone-update-dns-record — `zones/{zone_id}/dns_records/{dns_record_id}`\n- `PATCH` dns-records-for-a-zone-patch-dns-record — `zones/{zone_id}/dns_records/{dns_record_id}`\n- `GET` web3-hostname-ipfs-universal-path-gateway-content-list-details — `zones/{zone_id}/web3/hostnames/{identifier}/ipfs_universal_path/content_list`\n- `PUT` web3-hostname-update-ipfs-universal-path-gateway-content-list — `zones/{zone_id}/web3/hostnames/{identifier}/ipfs_universal_path/content_list`\n- `GET` web3-hostname-ipfs-universal-path-gateway-content-list-entry-details — `zones/{zone_id}/web3/hostnames/{identifier}/ipfs_universal_path/content_list/entries/{content_list_entry_identifier}`\n- `PUT` web3-hostname-edit-ipfs-universal-path-gateway-content-list-entry — `zones/{zone_id}/web3/hostnames/{identifier}/ipfs_universal_path/content_list/entries/{content_list_entry_identifier}`\n- `GET` account-load-balancer-pools-pool-health-details — `accounts/{account_id}/load_balancers/pools/{pool_id}/health`\n- `GET` load-balancer-pools-pool-health-details — `user/load_balancers/pools/{pool_id}/health`\n- `POST` diagnostics-endpoint-healthcheck-create — `accounts/{account_id}/diagnostics/endpoint-healthchecks`\n\n## Jira — candidate operations\n- `GET` com.atlassian.jira.rest.v2.issue.IssueResource.getCreateIssueMeta_get — `rest/api/3/issue/createmeta`\n- `POST` com.atlassian.jira.rest.v2.issue.ProjectResource.createProject_post — `rest/api/3/project`\n- `POST` com.atlassian.jira.rest.v2.issue.ProjectCategoryResource.createProjectCategory_post — `rest/api/3/projectCategory`\n- `GET` com.atlassian.jira.rest.v2.issue.ProjectIssueSecurityLevelSchemeResource.getIssueSecurityScheme_get — `rest/api/3/project/{projectKeyOrId}/issuesecuritylevelscheme`\n- `POST` com.atlassian.jira.rest.v2.issue.IssueResource.createIssue_post — `rest/api/3/issue`\n- `PUT` com.atlassian.jira.rest.v2.issue.IssueResource.assignIssue_put — `rest/api/3/issue/{issueIdOrKey}/assignee`\n- `GET` com.atlassian.jira.rest.v2.issue.UserResource.findAssignableUsers_get — `rest/api/3/user/assignable/search`\n- `DELETE` com.atlassian.jira.rest.v2.issue.field.IssueFieldOptionResource.replaceIssueFieldOption_delete — `rest/api/3/field/{fieldKey}/option/{optionId}/issue`\n\n## Notes\n- Use GCP firewall / LB allowlists with Cloudflare published IP ranges where you intend to restrict ingress.\n- Cloudflare: configure DNS (proxied/orange-cloud) and cache rules appropriate for your API vs static assets.\n- Validate Jira `createmeta` for required fields before POST /rest/api/3/issue.",
     "descriptionAdf": {
       "type": "doc",
       "version": 1,
@@ -35,7 +41,7 @@
           "content": [
             {
               "type": "text",
-              "text": "## Google Cloud (GKE / networking) — candidate operations (from ClawQL search) - `POST` container.projects.locations.clusters.create — `v1/projects/{projectsId}/locations/{locationsId}/clusters` - `POST` container.projects.zones.clusters.create — `v1/projects/{projectId}/zones/{zone}/clusters` - `DELETE` container.projects.zones.clusters.delete — `v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}` - `POST` container.projects.zones.clusters.locations — `v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/locations` - `DELETE` container.projects.locations.clusters.delete — `v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}` - `GET` container.projects.locations.getServerConfig — `v1/projects/{projectsId}/locations/{locationsId}/serverConfig` - `POST` container.projects.locations.clusters.setLocations — `v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:setLocations` - `GET` container.projects.zones.getServerconfig — `v1/projects/{projectId}/zones/{zone}/serverconfig` - `POST` container.projects.locations.clusters.completeIpRotation — `v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:completeIpRotation` - `POST` container.projects.locations.clusters.startIpRotation — `v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:startIpRotation` - `POST` container.projects.zones.clusters.completeIpRotation — `v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}:completeIpRotation` - `POST` container.projects.zones.clusters.startIpRotation — `v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}:startIpRotation`"
+              "text": "## Google Cloud (GKE / networking) — candidate operations (from ClawQL search) - `POST` redis.projects.locations.clusters.create — `v1/projects/{projectsId}/locations/{locationsId}/clusters` - `POST` bigtableadmin.projects.instances.clusters.create — `v2/projects/{projectsId}/instances/{instancesId}/clusters` - `POST` container.projects.locations.clusters.create — `v1/projects/{projectsId}/locations/{locationsId}/clusters` - `POST` container.projects.zones.clusters.create — `v1/projects/{projectId}/zones/{zone}/clusters` - `DELETE` container.projects.zones.clusters.delete — `v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}` - `POST` clouddeploy.projects.locations.deployPolicies.create — `v1/projects/{projectsId}/locations/{locationsId}/deployPolicies` - `GET` clouddeploy.projects.locations.deployPolicies.list — `v1/projects/{projectsId}/locations/{locationsId}/deployPolicies` - `GET` compute.images.get — `projects/{project}/global/images/{image}` - `DELETE` compute.images.delete — `projects/{project}/global/images/{image}` - `POST` compute.images.deprecate — `projects/{project}/global/images/{image}/deprecate` - `POST` servicecontrol.services.check — `v1/services/{serviceName}:check` - `POST` servicecontrol.services.report — `v1/services/{serviceName}:report`"
             }
           ]
         },
@@ -85,6 +91,40 @@
           "hitCount": 5,
           "topHits": [
             {
+              "score": 27,
+              "matchedOn": [
+                "id:redis.projects.locations.clusters.create",
+                "description(partial)",
+                "resource:clusters",
+                "description",
+                "path:v1/projects/{projectsId}/locations/{locationsId}/clusters",
+                "param"
+              ],
+              "operation": {
+                "id": "redis.projects.locations.clusters.create",
+                "method": "POST",
+                "path": "v1/projects/{projectsId}/locations/{locationsId}/clusters",
+                "description": "Creates a Redis cluster based on the specified properties. The creation is executed asynchronously and callers may check the returned operation to track its progress. Once the operation is completed the Redis cluster will be fully functional. The completed longrunning.Operation w"
+              }
+            },
+            {
+              "score": 27,
+              "matchedOn": [
+                "id:bigtableadmin.projects.instances.clusters.create",
+                "description(partial)",
+                "resource:clusters",
+                "description",
+                "path:v2/projects/{projectsId}/instances/{instancesId}/clusters",
+                "param"
+              ],
+              "operation": {
+                "id": "bigtableadmin.projects.instances.clusters.create",
+                "method": "POST",
+                "path": "v2/projects/{projectsId}/instances/{instancesId}/clusters",
+                "description": "Creates a cluster within an instance. Note that exactly one of Cluster.serve_nodes and Cluster.cluster_config.cluster_autoscaling_config can be set. If serve_nodes is set to non-zero, then the cluster is manually scaled. If cluster_config.cluster_autoscaling_config is non-empty, "
+              }
+            },
+            {
               "score": 25,
               "matchedOn": [
                 "id:container.projects.locations.clusters.create",
@@ -132,38 +172,6 @@
                 "path": "v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}",
                 "description": "Deletes the cluster, including the Kubernetes endpoint and all worker nodes. Firewalls and routes that were configured during cluster creation are also deleted. Other Google Compute Engine resources that might be in use by the cluster, such as load balancer resources, are not del"
               }
-            },
-            {
-              "score": 24,
-              "matchedOn": [
-                "description",
-                "id:container.projects.zones.clusters.locations",
-                "resource:clusters",
-                "path:v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/locations",
-                "param"
-              ],
-              "operation": {
-                "id": "container.projects.zones.clusters.locations",
-                "method": "POST",
-                "path": "v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/locations",
-                "description": "Sets the locations for a specific cluster. Deprecated. Use [projects.locations.clusters.update](https://cloud.google.com/kubernetes-engine/docs/reference/rest/v1/projects.locations.clusters/update) instead."
-              }
-            },
-            {
-              "score": 22,
-              "matchedOn": [
-                "description(partial)",
-                "description",
-                "id:container.projects.locations.clusters.delete",
-                "resource:clusters",
-                "param"
-              ],
-              "operation": {
-                "id": "container.projects.locations.clusters.delete",
-                "method": "DELETE",
-                "path": "v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}",
-                "description": "Deletes the cluster, including the Kubernetes endpoint and all worker nodes. Firewalls and routes that were configured during cluster creation are also deleted. Other Google Compute Engine resources that might be in use by the cluster, such as load balancer resources, are not del"
-              }
             }
           ]
         },
@@ -172,68 +180,84 @@
           "hitCount": 5,
           "topHits": [
             {
-              "score": 14,
+              "score": 23,
               "matchedOn": [
-                "id:container.projects.locations.getServerConfig",
-                "description"
+                "spec:clouddeploy-v1",
+                "id:clouddeploy.projects.locations.deployPolicies.create",
+                "resource:deployPolicies",
+                "description(partial)",
+                "path:v1/projects/{projectsId}/locations/{locationsId}/deployPolicies",
+                "param"
               ],
               "operation": {
-                "id": "container.projects.locations.getServerConfig",
-                "method": "GET",
-                "path": "v1/projects/{projectsId}/locations/{locationsId}/serverConfig",
-                "description": "Returns configuration info about the Google Kubernetes Engine service."
-              }
-            },
-            {
-              "score": 14,
-              "matchedOn": [
-                "id:container.projects.locations.clusters.delete",
-                "description"
-              ],
-              "operation": {
-                "id": "container.projects.locations.clusters.delete",
-                "method": "DELETE",
-                "path": "v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}",
-                "description": "Deletes the cluster, including the Kubernetes endpoint and all worker nodes. Firewalls and routes that were configured during cluster creation are also deleted. Other Google Compute Engine resources that might be in use by the cluster, such as load balancer resources, are not del"
-              }
-            },
-            {
-              "score": 14,
-              "matchedOn": [
-                "id:container.projects.locations.clusters.setLocations",
-                "description"
-              ],
-              "operation": {
-                "id": "container.projects.locations.clusters.setLocations",
+                "id": "clouddeploy.projects.locations.deployPolicies.create",
                 "method": "POST",
-                "path": "v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:setLocations",
-                "description": "Sets the locations for a specific cluster. Deprecated. Use [projects.locations.clusters.update](https://cloud.google.com/kubernetes-engine/docs/reference/rest/v1/projects.locations.clusters/update) instead."
+                "path": "v1/projects/{projectsId}/locations/{locationsId}/deployPolicies",
+                "description": "Creates a new DeployPolicy in a given project and location."
               }
             },
             {
-              "score": 14,
+              "score": 21,
               "matchedOn": [
-                "id:container.projects.zones.getServerconfig",
-                "description"
+                "spec:clouddeploy-v1",
+                "id:clouddeploy.projects.locations.deployPolicies.list",
+                "resource:deployPolicies",
+                "description(partial)",
+                "path:v1/projects/{projectsId}/locations/{locationsId}/deployPolicies"
               ],
               "operation": {
-                "id": "container.projects.zones.getServerconfig",
+                "id": "clouddeploy.projects.locations.deployPolicies.list",
                 "method": "GET",
-                "path": "v1/projects/{projectId}/zones/{zone}/serverconfig",
-                "description": "Returns configuration info about the Google Kubernetes Engine service."
+                "path": "v1/projects/{projectsId}/locations/{locationsId}/deployPolicies",
+                "description": "Lists DeployPolicies in a given project and location."
               }
             },
             {
-              "score": 14,
+              "score": 20,
               "matchedOn": [
-                "id:container.projects.zones.clusters.delete",
-                "description"
+                "id:compute.images.get",
+                "resource:images",
+                "description",
+                "path:projects/{project}/global/images/{image}",
+                "param"
               ],
               "operation": {
-                "id": "container.projects.zones.clusters.delete",
+                "id": "compute.images.get",
+                "method": "GET",
+                "path": "projects/{project}/global/images/{image}",
+                "description": "Returns the specified image."
+              }
+            },
+            {
+              "score": 20,
+              "matchedOn": [
+                "id:compute.images.delete",
+                "resource:images",
+                "description",
+                "path:projects/{project}/global/images/{image}",
+                "param"
+              ],
+              "operation": {
+                "id": "compute.images.delete",
                 "method": "DELETE",
-                "path": "v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}",
-                "description": "Deletes the cluster, including the Kubernetes endpoint and all worker nodes. Firewalls and routes that were configured during cluster creation are also deleted. Other Google Compute Engine resources that might be in use by the cluster, such as load balancer resources, are not del"
+                "path": "projects/{project}/global/images/{image}",
+                "description": "Deletes the specified image."
+              }
+            },
+            {
+              "score": 20,
+              "matchedOn": [
+                "id:compute.images.deprecate",
+                "resource:images",
+                "description",
+                "path:projects/{project}/global/images/{image}/deprecate",
+                "param"
+              ],
+              "operation": {
+                "id": "compute.images.deprecate",
+                "method": "POST",
+                "path": "projects/{project}/global/images/{image}/deprecate",
+                "description": "Sets the deprecation status of an image.\n\nIf an empty request body is given, clears the deprecation status instead."
               }
             }
           ]
@@ -249,71 +273,88 @@
           "hitCount": 5,
           "topHits": [
             {
-              "score": 13,
+              "score": 26,
               "matchedOn": [
-                "id:container.projects.locations.clusters.completeIpRotation",
+                "spec:servicecontrol-v1",
+                "id:servicecontrol.services.check",
+                "resource:services",
                 "description",
-                "path:v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:completeIpRotation"
+                "path:v1/services/{serviceName}:check",
+                "param"
               ],
               "operation": {
-                "id": "container.projects.locations.clusters.completeIpRotation",
+                "id": "servicecontrol.services.check",
                 "method": "POST",
-                "path": "v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:completeIpRotation",
-                "description": "Completes master IP rotation."
+                "path": "v1/services/{serviceName}:check",
+                "description": "Checks whether an operation on a service should be allowed to proceed based on the configuration of the service and related policies. It must be called before the operation is executed. If feasible, the client should cache the check results and reuse them for 60 seconds. In case "
               }
             },
             {
-              "score": 13,
+              "score": 26,
               "matchedOn": [
-                "id:container.projects.locations.clusters.startIpRotation",
+                "spec:servicecontrol-v1",
+                "id:servicecontrol.services.report",
+                "resource:services",
                 "description",
-                "path:v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:startIpRotation"
+                "path:v1/services/{serviceName}:report",
+                "param"
               ],
               "operation": {
-                "id": "container.projects.locations.clusters.startIpRotation",
+                "id": "servicecontrol.services.report",
                 "method": "POST",
-                "path": "v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:startIpRotation",
-                "description": "Starts master IP rotation."
+                "path": "v1/services/{serviceName}:report",
+                "description": "Reports operation results to Google Service Control, such as logs and metrics. It should be called after an operation is completed. If feasible, the client should aggregate reporting data for up to 5 seconds to reduce API traffic. Limiting aggregation to 5 seconds is to reduce da"
               }
             },
             {
-              "score": 13,
+              "score": 26,
               "matchedOn": [
-                "id:container.projects.zones.clusters.completeIpRotation",
+                "spec:servicecontrol-v1",
+                "id:servicecontrol.services.allocateQuota",
+                "resource:services",
                 "description",
-                "path:v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}:completeIpRotation"
+                "path:v1/services/{serviceName}:allocateQuota",
+                "param"
               ],
               "operation": {
-                "id": "container.projects.zones.clusters.completeIpRotation",
+                "id": "servicecontrol.services.allocateQuota",
                 "method": "POST",
-                "path": "v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}:completeIpRotation",
-                "description": "Completes master IP rotation."
+                "path": "v1/services/{serviceName}:allocateQuota",
+                "description": "Attempts to allocate quota for the specified consumer. It should be called before the operation is executed. This method requires the `servicemanagement.services.quota` permission on the specified service. For more information, see [Cloud IAM](https://cloud.google.com/iam). **NOT"
               }
             },
             {
-              "score": 13,
+              "score": 26,
               "matchedOn": [
-                "id:container.projects.zones.clusters.startIpRotation",
+                "spec:servicemanagement-v1",
+                "id:servicemanagement.services.get",
+                "resource:services",
                 "description",
-                "path:v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}:startIpRotation"
+                "path:v1/services/{serviceName}",
+                "param"
               ],
               "operation": {
-                "id": "container.projects.zones.clusters.startIpRotation",
-                "method": "POST",
-                "path": "v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}:startIpRotation",
-                "description": "Starts master IP rotation."
+                "id": "servicemanagement.services.get",
+                "method": "GET",
+                "path": "v1/services/{serviceName}",
+                "description": "Gets a managed service. Authentication is required unless the service is public."
               }
             },
             {
-              "score": 12,
+              "score": 26,
               "matchedOn": [
-                "description"
+                "spec:servicemanagement-v1",
+                "id:servicemanagement.services.getConfig",
+                "resource:services",
+                "description",
+                "path:v1/services/{serviceName}/config",
+                "param"
               ],
               "operation": {
-                "id": "container.projects.locations.clusters.delete",
-                "method": "DELETE",
-                "path": "v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}",
-                "description": "Deletes the cluster, including the Kubernetes endpoint and all worker nodes. Firewalls and routes that were configured during cluster creation are also deleted. Other Google Compute Engine resources that might be in use by the cluster, such as load balancer resources, are not del"
+                "id": "servicemanagement.services.getConfig",
+                "method": "GET",
+                "path": "v1/services/{serviceName}/config",
+                "description": "Gets a service configuration (version) for a managed service."
               }
             }
           ]
@@ -323,69 +364,89 @@
           "hitCount": 5,
           "topHits": [
             {
-              "score": 16,
+              "score": 45,
               "matchedOn": [
-                "description"
-              ],
-              "operation": {
-                "id": "container.projects.locations.clusters.create",
-                "method": "POST",
-                "path": "v1/projects/{projectsId}/locations/{locationsId}/clusters",
-                "description": "Creates a cluster, consisting of the specified number and type of Google Compute Engine instances. By default, the cluster is created in the project's [default network](https://cloud.google.com/compute/docs/networks-and-firewalls#networks). One firewall is added for the cluster. "
-              }
-            },
-            {
-              "score": 16,
-              "matchedOn": [
-                "description"
-              ],
-              "operation": {
-                "id": "container.projects.zones.clusters.create",
-                "method": "POST",
-                "path": "v1/projects/{projectId}/zones/{zone}/clusters",
-                "description": "Creates a cluster, consisting of the specified number and type of Google Compute Engine instances. By default, the cluster is created in the project's [default network](https://cloud.google.com/compute/docs/networks-and-firewalls#networks). One firewall is added for the cluster. "
-              }
-            },
-            {
-              "score": 13,
-              "matchedOn": [
-                "id:container.projects.locations.clusters.completeIpRotation",
+                "spec:compute-v1",
+                "id:compute.firewallPolicies.addRule",
+                "resource:firewallPolicies",
                 "description",
-                "path:v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:completeIpRotation"
+                "path:locations/global/firewallPolicies/{firewallPolicy}/addRule",
+                "param"
               ],
               "operation": {
-                "id": "container.projects.locations.clusters.completeIpRotation",
+                "id": "compute.firewallPolicies.addRule",
                 "method": "POST",
-                "path": "v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:completeIpRotation",
-                "description": "Completes master IP rotation."
+                "path": "locations/global/firewallPolicies/{firewallPolicy}/addRule",
+                "description": "Inserts a rule into a firewall policy."
               }
             },
             {
-              "score": 13,
+              "score": 45,
               "matchedOn": [
-                "id:container.projects.locations.clusters.startIpRotation",
+                "spec:compute-v1",
+                "id:compute.networkFirewallPolicies.addRule",
+                "resource:networkFirewallPolicies",
                 "description",
-                "path:v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:startIpRotation"
+                "path:projects/{project}/global/firewallPolicies/{firewallPolicy}/addRule",
+                "param"
               ],
               "operation": {
-                "id": "container.projects.locations.clusters.startIpRotation",
+                "id": "compute.networkFirewallPolicies.addRule",
                 "method": "POST",
-                "path": "v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:startIpRotation",
-                "description": "Starts master IP rotation."
+                "path": "projects/{project}/global/firewallPolicies/{firewallPolicy}/addRule",
+                "description": "Inserts a rule into a firewall policy."
               }
             },
             {
-              "score": 13,
+              "score": 45,
               "matchedOn": [
-                "id:container.projects.zones.clusters.completeIpRotation",
+                "spec:compute-v1",
+                "id:compute.networkFirewallPolicies.addPacketMirroringRule",
+                "resource:networkFirewallPolicies",
                 "description",
-                "path:v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}:completeIpRotation"
+                "path:projects/{project}/global/firewallPolicies/{firewallPolicy}/addPacketMirroringRule",
+                "param"
               ],
               "operation": {
-                "id": "container.projects.zones.clusters.completeIpRotation",
+                "id": "compute.networkFirewallPolicies.addPacketMirroringRule",
                 "method": "POST",
-                "path": "v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}:completeIpRotation",
-                "description": "Completes master IP rotation."
+                "path": "projects/{project}/global/firewallPolicies/{firewallPolicy}/addPacketMirroringRule",
+                "description": "Inserts a packet mirroring rule into a firewall policy."
+              }
+            },
+            {
+              "score": 45,
+              "matchedOn": [
+                "spec:compute-v1",
+                "id:compute.regionNetworkFirewallPolicies.addRule",
+                "resource:regionNetworkFirewallPolicies",
+                "description",
+                "path:projects/{project}/regions/{region}/firewallPolicies/{firewallPolicy}/addRule",
+                "param"
+              ],
+              "operation": {
+                "id": "compute.regionNetworkFirewallPolicies.addRule",
+                "method": "POST",
+                "path": "projects/{project}/regions/{region}/firewallPolicies/{firewallPolicy}/addRule",
+                "description": "Inserts a rule into a network firewall policy."
+              }
+            },
+            {
+              "score": 44,
+              "matchedOn": [
+                "spec:compute-v1",
+                "id:compute.firewallPolicies.cloneRules",
+                "resource:firewallPolicies",
+                "description",
+                "path:locations/global/firewallPolicies/{firewallPolicy}/cloneRules",
+                "param",
+                "description(partial)"
+              ],
+              "operation": {
+                "id": "compute.firewallPolicies.cloneRules",
+                "method": "POST",
+                "path": "locations/global/firewallPolicies/{firewallPolicy}/cloneRules",
+                "description": "Copies rules to the specified firewall policy."
               }
             }
           ]
@@ -395,8 +456,9 @@
           "hitCount": 5,
           "topHits": [
             {
-              "score": 30,
+              "score": 36,
               "matchedOn": [
+                "spec:container-v1",
                 "id:container.projects.zones.clusters.get",
                 "resource:clusters",
                 "path:v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}",
@@ -411,8 +473,9 @@
               }
             },
             {
-              "score": 27,
+              "score": 33,
               "matchedOn": [
+                "spec:container-v1",
                 "id:container.projects.locations.clusters.list",
                 "resource:clusters",
                 "description",
@@ -427,8 +490,9 @@
               }
             },
             {
-              "score": 27,
+              "score": 33,
               "matchedOn": [
+                "spec:container-v1",
                 "id:container.projects.locations.clusters.get",
                 "resource:clusters",
                 "method:GET",
@@ -442,8 +506,9 @@
               }
             },
             {
-              "score": 27,
+              "score": 33,
               "matchedOn": [
+                "spec:container-v1",
                 "id:container.projects.locations.clusters.getJwks",
                 "resource:clusters",
                 "method:GET",
@@ -457,8 +522,9 @@
               }
             },
             {
-              "score": 27,
+              "score": 33,
               "matchedOn": [
+                "spec:container-v1",
                 "id:container.projects.zones.clusters.list",
                 "resource:clusters",
                 "description",
@@ -1246,6 +1312,18 @@
   "uniqueOperations": [
     {
       "provider": "google",
+      "id": "redis.projects.locations.clusters.create",
+      "method": "POST",
+      "path": "v1/projects/{projectsId}/locations/{locationsId}/clusters"
+    },
+    {
+      "provider": "google",
+      "id": "bigtableadmin.projects.instances.clusters.create",
+      "method": "POST",
+      "path": "v2/projects/{projectsId}/instances/{instancesId}/clusters"
+    },
+    {
+      "provider": "google",
       "id": "container.projects.locations.clusters.create",
       "method": "POST",
       "path": "v1/projects/{projectsId}/locations/{locationsId}/clusters"
@@ -1264,57 +1342,93 @@
     },
     {
       "provider": "google",
-      "id": "container.projects.zones.clusters.locations",
+      "id": "clouddeploy.projects.locations.deployPolicies.create",
       "method": "POST",
-      "path": "v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/locations"
+      "path": "v1/projects/{projectsId}/locations/{locationsId}/deployPolicies"
     },
     {
       "provider": "google",
-      "id": "container.projects.locations.clusters.delete",
+      "id": "clouddeploy.projects.locations.deployPolicies.list",
+      "method": "GET",
+      "path": "v1/projects/{projectsId}/locations/{locationsId}/deployPolicies"
+    },
+    {
+      "provider": "google",
+      "id": "compute.images.get",
+      "method": "GET",
+      "path": "projects/{project}/global/images/{image}"
+    },
+    {
+      "provider": "google",
+      "id": "compute.images.delete",
       "method": "DELETE",
-      "path": "v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}"
+      "path": "projects/{project}/global/images/{image}"
     },
     {
       "provider": "google",
-      "id": "container.projects.locations.getServerConfig",
+      "id": "compute.images.deprecate",
+      "method": "POST",
+      "path": "projects/{project}/global/images/{image}/deprecate"
+    },
+    {
+      "provider": "google",
+      "id": "servicecontrol.services.check",
+      "method": "POST",
+      "path": "v1/services/{serviceName}:check"
+    },
+    {
+      "provider": "google",
+      "id": "servicecontrol.services.report",
+      "method": "POST",
+      "path": "v1/services/{serviceName}:report"
+    },
+    {
+      "provider": "google",
+      "id": "servicecontrol.services.allocateQuota",
+      "method": "POST",
+      "path": "v1/services/{serviceName}:allocateQuota"
+    },
+    {
+      "provider": "google",
+      "id": "servicemanagement.services.get",
       "method": "GET",
-      "path": "v1/projects/{projectsId}/locations/{locationsId}/serverConfig"
+      "path": "v1/services/{serviceName}"
     },
     {
       "provider": "google",
-      "id": "container.projects.locations.clusters.setLocations",
-      "method": "POST",
-      "path": "v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:setLocations"
-    },
-    {
-      "provider": "google",
-      "id": "container.projects.zones.getServerconfig",
+      "id": "servicemanagement.services.getConfig",
       "method": "GET",
-      "path": "v1/projects/{projectId}/zones/{zone}/serverconfig"
+      "path": "v1/services/{serviceName}/config"
     },
     {
       "provider": "google",
-      "id": "container.projects.locations.clusters.completeIpRotation",
+      "id": "compute.firewallPolicies.addRule",
       "method": "POST",
-      "path": "v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:completeIpRotation"
+      "path": "locations/global/firewallPolicies/{firewallPolicy}/addRule"
     },
     {
       "provider": "google",
-      "id": "container.projects.locations.clusters.startIpRotation",
+      "id": "compute.networkFirewallPolicies.addRule",
       "method": "POST",
-      "path": "v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:startIpRotation"
+      "path": "projects/{project}/global/firewallPolicies/{firewallPolicy}/addRule"
     },
     {
       "provider": "google",
-      "id": "container.projects.zones.clusters.completeIpRotation",
+      "id": "compute.networkFirewallPolicies.addPacketMirroringRule",
       "method": "POST",
-      "path": "v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}:completeIpRotation"
+      "path": "projects/{project}/global/firewallPolicies/{firewallPolicy}/addPacketMirroringRule"
     },
     {
       "provider": "google",
-      "id": "container.projects.zones.clusters.startIpRotation",
+      "id": "compute.regionNetworkFirewallPolicies.addRule",
       "method": "POST",
-      "path": "v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}:startIpRotation"
+      "path": "projects/{project}/regions/{region}/firewallPolicies/{firewallPolicy}/addRule"
+    },
+    {
+      "provider": "google",
+      "id": "compute.firewallPolicies.cloneRules",
+      "method": "POST",
+      "path": "locations/global/firewallPolicies/{firewallPolicy}/cloneRules"
     },
     {
       "provider": "google",

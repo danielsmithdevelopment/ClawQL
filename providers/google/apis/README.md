@@ -1,6 +1,6 @@
-# Curated Google APIs (top 20)
+# Curated Google APIs (top 50)
 
-This folder contains **pinned Discovery JSON** for 20 common Google Cloud services, plus **`introspection.json`** / **`schema.graphql`** when `npm run pregenerate-google-top20-graphql` succeeds.
+This folder contains **pinned Discovery JSON** for 50 common Google Cloud services, plus **`introspection.json`** / **`schema.graphql`** when `npm run pregenerate-google-top50-graphql` succeeds.
 
 | Slug | API |
 |------|-----|
@@ -30,10 +30,10 @@ This folder contains **pinned Discovery JSON** for 20 common Google Cloud servic
 **Refresh this bundle:**
 
 ```bash
-npm run fetch-google-top20
-npm run build && npm run pregenerate-google-top20-graphql
+npm run fetch-google-top50
+npm run build && npm run pregenerate-google-top50-graphql
 # or
-npm run refresh-google-top20
+npm run refresh-google-top50
 ```
 
 Use a specific API offline with ClawQL:
@@ -43,4 +43,4 @@ export CLAWQL_SPEC_PATH="$PWD/providers/google/apis/run-v2/discovery.json"
 # Discovery is converted internally; same as CLAWQL_DISCOVERY_URL for that service.
 ```
 
-Manifest: [`../google-top20-apis.json`](../google-top20-apis.json).
+Manifest: [`../google-top50-apis.json`](../google-top50-apis.json).

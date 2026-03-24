@@ -42,3 +42,27 @@ Offline fixture-based benchmarks remain fully reproducible via `npm run benchmar
 ## CI / regression (optional)
 
 Run `npm run benchmark:tokens` offline and compare `latest.json` to a golden file.
+
+## Multi-provider complex workflow benchmark
+
+This benchmark captures **planning-context savings** for the cross-provider workflow
+(Google top50 + Cloudflare + Jira), comparing:
+
+- full loaded spec corpus size
+- emitted workflow output size (`multi-provider-test.md`)
+
+Run:
+
+```bash
+npm run workflow:multi-provider > multi-provider-test.md 2>&1
+```
+
+Results:
+
+- `docs/benchmarks/multi-provider-complex-workflow/experiment-multi-provider-complex-workflow-stats.json`
+- `docs/benchmarks/multi-provider-complex-workflow/experiment-multi-provider-complex-workflow.md`
+
+Notes:
+
+- Uses the same token heuristic as other benchmarks: `approxTokens = ceil(bytes / 4)`.
+- This is a **spec corpus vs workflow output** comparison (not REST payload vs GraphQL payload).

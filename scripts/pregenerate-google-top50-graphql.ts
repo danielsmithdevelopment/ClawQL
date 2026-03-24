@@ -2,10 +2,8 @@
  * For each providers/google/apis/<slug>/discovery.json, run @omnigraph/openapi and write:
  *   introspection.json, schema.graphql
  *
- * Run after build + fetch-google-top20:
- *   npm run build && npm run fetch-google-top20 && npm run pregenerate-google-top20-graphql
- *
- * Large specs (e.g. Compute Engine) may fail or require significant memory; the script logs and continues.
+ * Run after build + fetch-google-top50:
+ *   npm run build && npm run fetch-google-top50 && npm run pregenerate-google-top50-graphql
  */
 import { mkdir, writeFile, readdir } from "node:fs/promises";
 import { dirname, resolve as resolvePath } from "node:path";
@@ -28,7 +26,7 @@ async function main() {
 
   const apisDir = resolvePath(root, APIS_ROOT);
   if (!existsSync(apisDir)) {
-    console.error(`[pregenerate-top20] Missing ${APIS_ROOT} — run npm run fetch-google-top20`);
+    console.error(`[pregenerate-top50] Missing ${APIS_ROOT} — run npm run fetch-google-top50`);
     process.exit(1);
   }
 
@@ -39,7 +37,7 @@ async function main() {
   for (const slug of slugs) {
     const specAbs = resolvePath(apisDir, slug, "discovery.json");
     if (!existsSync(specAbs)) {
-      console.warn(`[pregenerate-top20] Skip ${slug}: no discovery.json`);
+      console.warn(`[pregenerate-top50] Skip ${slug}: no discovery.json`);
       continue;
     }
 
@@ -48,20 +46,20 @@ async function main() {
       const loaded = await loadOpenAPIFromAbsolutePath(specAbs);
       openapi = loaded.openapi;
     } catch (e) {
-      console.warn(`[pregenerate-top20] Skip ${slug}: load failed`, e);
+      console.warn(`[pregenerate-top50] Skip ${slug}: load failed`, e);
       continue;
     }
 
-    let baseUrl: string;
+    let baseUrl;
     try {
       baseUrl = resolveApiBaseUrl(openapi);
     } catch {
-      baseUrl = process.env.CLAWQL_API_BASE_URL!;
+      baseUrl = process.env.CLAWQL_API_BASE_URL;
     }
 
     try {
       const { schema } = await buildGraphQLSchema(
-        openapi as unknown as object,
+        openapi,
         baseUrl
       );
       const intro = introspectionFromSchema(schema);
@@ -71,9 +69,9 @@ async function main() {
       await mkdir(dirname(introPath), { recursive: true });
       await writeFile(introPath, JSON.stringify(intro), "utf-8");
       await writeFile(sdlPath, sdl, "utf-8");
-      console.error(`[pregenerate-top20] Wrote ${slug}`);
+      console.error(`[pregenerate-top50] Wrote ${slug}`);
     } catch (e) {
-      console.warn(`[pregenerate-top20] Skip ${slug}: GraphQL build failed`, e);
+      console.warn(`[pregenerate-top50] Skip ${slug}: GraphQL build failed`, e);
     }
   }
 }

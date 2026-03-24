@@ -72,7 +72,7 @@ function hitSummary(h) {
 
 async function main() {
   process.env.CLAWQL_BUNDLED_OFFLINE = process.env.CLAWQL_BUNDLED_OFFLINE ?? "1";
-  process.env.CLAWQL_GOOGLE_TOP20_SPECS = process.env.CLAWQL_GOOGLE_TOP20_SPECS ?? "1";
+  process.env.CLAWQL_GOOGLE_TOP50_SPECS = process.env.CLAWQL_GOOGLE_TOP50_SPECS ?? "1";
   delete process.env.CLAWQL_PROVIDER;
   delete process.env.CLAWQL_SPEC_PATH;
   delete process.env.CLAWQL_DISCOVERY_URL;
@@ -109,7 +109,7 @@ async function main() {
       generatedAt: new Date().toISOString(),
       transport: "in-process (not MCP)",
       env: {
-        CLAWQL_GOOGLE_TOP20_SPECS: process.env.CLAWQL_GOOGLE_TOP20_SPECS,
+        CLAWQL_GOOGLE_TOP50_SPECS: process.env.CLAWQL_GOOGLE_TOP50_SPECS,
         CLAWQL_BUNDLED_OFFLINE: process.env.CLAWQL_BUNDLED_OFFLINE,
       },
       mergedOperationCount: operations.length,

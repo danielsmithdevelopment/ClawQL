@@ -1,0 +1,1432 @@
+directive @httpOperation(subgraph: String, path: String, operationSpecificHeaders: [[String]], httpMethod: HTTPMethod, isBinary: Boolean, requestBaseBody: ObjMap, queryParamArgMap: ObjMap, queryStringOptionsByParam: ObjMap, jsonApiFields: Boolean, queryStringOptions: ObjMap) on FIELD_DEFINITION
+
+directive @transport(subgraph: String, kind: String, location: String, headers: [[String]], queryStringOptions: ObjMap, queryParams: [[String]]) repeatable on SCHEMA
+
+type Query {
+  """Get recaptcha secure param."""
+  identitytoolkit_relyingparty_getRecaptchaParam: GetRecaptchaParamResponse
+
+  """Get token signing public key."""
+  identitytoolkit_relyingparty_getPublicKeys: JSON
+
+  """Get project configuration."""
+  identitytoolkit_relyingparty_getProjectConfig(
+    """GCP project number of the request."""
+    projectNumber: String
+
+    """Delegated GCP project number of the request."""
+    delegatedProjectNumber: String
+  ): IdentitytoolkitRelyingpartyGetProjectConfigResponse
+}
+
+"""Response of getting recaptcha param."""
+type GetRecaptchaParamResponse {
+  """The fixed string "identitytoolkit#GetRecaptchaParamResponse"."""
+  kind: String
+
+  """
+  The stoken field for the recaptcha widget, used to request captcha challenge.
+  """
+  recaptchaStoken: String
+
+  """Site key registered at recaptcha."""
+  recaptchaSiteKey: String
+}
+
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSON @specifiedBy(url: "http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf")
+
+"""Response of getting the project configuration."""
+type IdentitytoolkitRelyingpartyGetProjectConfigResponse {
+  legacyResetPasswordTemplate: EmailTemplate
+
+  """Authorized domains."""
+  authorizedDomains: [String]
+  dynamicLinksDomain: String
+  resetPasswordTemplate: EmailTemplate
+
+  """Whether to use email sending provided by Firebear."""
+  useEmailSending: Boolean
+  changeEmailTemplate: EmailTemplate
+
+  """OAuth2 provider configuration."""
+  idpConfig: [IdpConfig]
+
+  """Whether anonymous user is enabled."""
+  enableAnonymousUser: Boolean
+  verifyEmailTemplate: EmailTemplate
+
+  """Browser API key, needed when making http request to Apiary."""
+  apiKey: String
+
+  """Whether to allow password user sign in or sign up."""
+  allowPasswordUser: Boolean
+
+  """Project ID of the relying party."""
+  projectId: String
+}
+
+"""Template for an email template."""
+type EmailTemplate {
+  """From address of the email."""
+  from: String
+
+  """Email body format."""
+  format: String
+
+  """From display name."""
+  fromDisplayName: String
+
+  """Email body."""
+  body: String
+
+  """Reply-to address."""
+  replyTo: String
+
+  """Subject of the email."""
+  subject: String
+}
+
+"""Template for a single idp configuration."""
+type IdpConfig {
+  """Whitelisted client IDs for audience check."""
+  whitelistedAudiences: [String]
+
+  """
+  Percent of users who will be prompted/redirected federated login for this IDP.
+  """
+  experimentPercent: Int
+
+  """Whether this IDP is enabled."""
+  enabled: Boolean
+
+  """OAuth2 provider."""
+  provider: String
+
+  """OAuth2 client ID."""
+  clientId: String
+
+  """OAuth2 client secret."""
+  secret: String
+}
+
+type Mutation {
+  """Batch upload existing user accounts."""
+  identitytoolkit_relyingparty_uploadAccount(input: IdentitytoolkitRelyingpartyUploadAccountRequest_Input): UploadAccountResponse
+
+  """Delete user account."""
+  identitytoolkit_relyingparty_deleteAccount(input: IdentitytoolkitRelyingpartyDeleteAccountRequest_Input): DeleteAccountResponse
+
+  """Verifies the user entered password."""
+  identitytoolkit_relyingparty_verifyPassword(input: IdentitytoolkitRelyingpartyVerifyPasswordRequest_Input): VerifyPasswordResponse
+
+  """Get a code for user action confirmation."""
+  identitytoolkit_relyingparty_getOobConfirmationCode(input: Relyingparty_Input): GetOobConfirmationCodeResponse
+
+  """Batch download user accounts."""
+  identitytoolkit_relyingparty_downloadAccount(input: IdentitytoolkitRelyingpartyDownloadAccountRequest_Input): DownloadAccountResponse
+
+  """Creates the URI used by the IdP to authenticate the user."""
+  identitytoolkit_relyingparty_createAuthUri(input: IdentitytoolkitRelyingpartyCreateAuthUriRequest_Input): CreateAuthUriResponse
+
+  """Sign out user."""
+  identitytoolkit_relyingparty_signOutUser(input: IdentitytoolkitRelyingpartySignOutUserRequest_Input): IdentitytoolkitRelyingpartySignOutUserResponse
+
+  """Reset password for a user."""
+  identitytoolkit_relyingparty_emailLinkSignin(input: IdentitytoolkitRelyingpartyEmailLinkSigninRequest_Input): EmailLinkSigninResponse
+
+  """Verifies the developer asserted ID token."""
+  identitytoolkit_relyingparty_verifyCustomToken(input: IdentitytoolkitRelyingpartyVerifyCustomTokenRequest_Input): VerifyCustomTokenResponse
+
+  """Send SMS verification code."""
+  identitytoolkit_relyingparty_sendVerificationCode(input: IdentitytoolkitRelyingpartySendVerificationCodeRequest_Input): IdentitytoolkitRelyingpartySendVerificationCodeResponse
+
+  """
+  Verifies ownership of a phone number and creates/updates the user account accordingly.
+  """
+  identitytoolkit_relyingparty_verifyPhoneNumber(input: IdentitytoolkitRelyingpartyVerifyPhoneNumberRequest_Input): IdentitytoolkitRelyingpartyVerifyPhoneNumberResponse
+
+  """Set account info for a user."""
+  identitytoolkit_relyingparty_setAccountInfo(input: IdentitytoolkitRelyingpartySetAccountInfoRequest_Input): SetAccountInfoResponse
+
+  """Verifies the assertion returned by the IdP."""
+  identitytoolkit_relyingparty_verifyAssertion(input: IdentitytoolkitRelyingpartyVerifyAssertionRequest_Input): VerifyAssertionResponse
+
+  """Reset password for a user."""
+  identitytoolkit_relyingparty_resetPassword(input: IdentitytoolkitRelyingpartyResetPasswordRequest_Input): ResetPasswordResponse
+
+  """Set project configuration."""
+  identitytoolkit_relyingparty_setProjectConfig(input: IdentitytoolkitRelyingpartySetProjectConfigRequest_Input): IdentitytoolkitRelyingpartySetProjectConfigResponse
+
+  """Signup new user."""
+  identitytoolkit_relyingparty_signupNewUser(input: IdentitytoolkitRelyingpartySignupNewUserRequest_Input): SignupNewUserResponse
+
+  """Returns the account info."""
+  identitytoolkit_relyingparty_getAccountInfo(input: IdentitytoolkitRelyingpartyGetAccountInfoRequest_Input): GetAccountInfoResponse
+}
+
+"""Respone of uploading accounts in batch."""
+type UploadAccountResponse {
+  """The error encountered while processing the account info."""
+  error: [mutation_identitytoolkit_relyingparty_uploadAccount_error_items]
+
+  """The fixed string "identitytoolkit#UploadAccountResponse"."""
+  kind: String
+}
+
+type mutation_identitytoolkit_relyingparty_uploadAccount_error_items {
+  """The index of the malformed account, starting from 0."""
+  index: Int
+
+  """Detailed error message for the account info."""
+  message: String
+}
+
+"""Request to upload user account in batch."""
+input IdentitytoolkitRelyingpartyUploadAccountRequest_Input {
+  parallelization: Int
+
+  """Rounds for hash calculation. Used by scrypt and similar algorithms."""
+  rounds: Int
+
+  """The key for to hash the password."""
+  signerKey: Byte
+
+  """Whether allow overwrite existing account when user local_id exists."""
+  allowOverwrite: Boolean
+
+  """The following 4 fields are for standard scrypt algorithm."""
+  cpuMemCost: Int
+
+  """The password hash algorithm."""
+  hashAlgorithm: String
+
+  """The salt separator."""
+  saltSeparator: Byte
+
+  """
+  If true, backend will do sanity check(including duplicate email and federated id) when uploading account.
+  """
+  sanityCheck: Boolean
+
+  """
+  Specify which project (field value is actually project id) to operate. Only used when provided credential.
+  """
+  targetProjectId: String
+
+  """Memory cost for hash calculation. Used by scrypt similar algorithms."""
+  memoryCost: Int
+
+  """
+  GCP project number of the requesting delegated app. Currently only intended for Firebase V1 migration.
+  """
+  delegatedProjectNumber: BigInt
+  blockSize: Int
+  dkLen: Int
+
+  """The account info to be stored."""
+  users: [UserInfo_Input]
+}
+
+"""The `Byte` scalar type represents byte value as a Buffer"""
+scalar Byte
+
+"""
+The `BigInt` scalar type represents non-fractional signed whole numeric values.
+"""
+scalar BigInt
+
+"""Template for an individual account info."""
+input UserInfo_Input {
+  """The timestamp when the password was last updated."""
+  passwordUpdatedAt: Float
+
+  """last login timestamp."""
+  lastLoginAt: BigInt
+
+  """Whether the email has been verified."""
+  emailVerified: Boolean
+
+  """The email of the user."""
+  email: String
+
+  """The user's hashed password."""
+  passwordHash: Byte
+
+  """User creation timestamp."""
+  createdAt: BigInt
+
+  """Whether the user is disabled."""
+  disabled: Boolean
+
+  """User's phone number."""
+  phoneNumber: String
+
+  """Whether the user is authenticated by the developer."""
+  customAuth: Boolean
+
+  """User's screen name at Twitter or login name at Github."""
+  screenName: String
+
+  """Timestamp in seconds for valid login token."""
+  validSince: BigInt
+
+  """The user's plain text password."""
+  rawPassword: String
+
+  """The IDP of the user."""
+  providerUserInfo: [mutation_identitytoolkit_relyingparty_downloadAccount_users_items_providerUserInfo_items_Input]
+
+  """The local ID of the user."""
+  localId: String
+
+  """The user's password salt."""
+  salt: Byte
+
+  """The name of the user."""
+  displayName: String
+
+  """The custom attributes to be set in the user's id token."""
+  customAttributes: String
+
+  """The URL of the user profile photo."""
+  photoUrl: String
+
+  """Version of the user's password."""
+  version: Int
+}
+
+input mutation_identitytoolkit_relyingparty_downloadAccount_users_items_providerUserInfo_items_Input {
+  """User's email at IDP."""
+  email: String
+
+  """User's screen name at Twitter or login name at Github."""
+  screenName: String
+
+  """The user's display name at the IDP."""
+  displayName: String
+
+  """User's phone number."""
+  phoneNumber: String
+
+  """User's raw identifier directly returned from IDP."""
+  rawId: String
+
+  """The user's photo url at the IDP."""
+  photoUrl: String
+
+  """User's identifier at IDP."""
+  federatedId: String
+
+  """
+  The IdP ID. For white listed IdPs it's a short domain name, e.g., google.com, aol.com, live.net and yahoo.com. For other OpenID IdPs it's the OP identifier.
+  """
+  providerId: String
+}
+
+"""Respone of deleting account."""
+type DeleteAccountResponse {
+  """The fixed string "identitytoolkit#DeleteAccountResponse"."""
+  kind: String
+}
+
+"""Request to delete account."""
+input IdentitytoolkitRelyingpartyDeleteAccountRequest_Input {
+  """
+  GCP project number of the requesting delegated app. Currently only intended for Firebase V1 migration.
+  """
+  delegatedProjectNumber: BigInt
+
+  """The GITKit token or STS id token of the authenticated user."""
+  idToken: String
+
+  """The local ID of the user."""
+  localId: String
+}
+
+"""Request of verifying the password."""
+type VerifyPasswordResponse {
+  """The lifetime in seconds of the OAuth2 access token."""
+  oauthExpireIn: Int
+
+  """The fixed string "identitytoolkit#VerifyPasswordResponse"."""
+  kind: String
+
+  """The GITKit token for authenticated user."""
+  idToken: String
+
+  """
+  The RP local ID if it's already been mapped to the IdP account identified by the federated ID.
+  """
+  localId: String
+
+  """
+  The email returned by the IdP. NOTE: The federated login user may not own the email.
+  """
+  email: String
+
+  """The OAuth2 authorization code."""
+  oauthAuthorizationCode: String
+
+  """Whether the email is registered."""
+  registered: Boolean
+
+  """The name of the user."""
+  displayName: String
+
+  """
+  If idToken is STS id token, then this field will be expiration time of STS id token in seconds.
+  """
+  expiresIn: BigInt
+
+  """The URI of the user's photo at IdP"""
+  photoUrl: String
+
+  """If idToken is STS id token, then this field will be refresh token."""
+  refreshToken: String
+
+  """The OAuth2 access token."""
+  oauthAccessToken: String
+}
+
+"""Request to verify the password."""
+input IdentitytoolkitRelyingpartyVerifyPasswordRequest_Input {
+  """Whether return sts id token and refresh token instead of gitkit token."""
+  returnSecureToken: Boolean
+
+  """
+  GCP project number of the requesting delegated app. Currently only intended for Firebase V1 migration.
+  """
+  delegatedProjectNumber: BigInt
+
+  """
+  For multi-tenant use cases, in order to construct sign-in URL with the correct IDP parameters, Firebear needs to know which Tenant to retrieve IDP configs from.
+  """
+  tenantId: String
+
+  """Tenant project number to be used for idp discovery."""
+  tenantProjectNumber: String
+
+  """The GITKit token of the authenticated user."""
+  idToken: String
+
+  """The email of the user."""
+  email: String
+
+  """
+  The GITKit token for the non-trusted IDP, which is to be confirmed by the user.
+  """
+  pendingIdToken: String
+
+  """The captcha challenge."""
+  captchaChallenge: String
+
+  """Instance id token of the app."""
+  instanceId: String
+
+  """Response to the captcha."""
+  captchaResponse: String
+
+  """The password inputed by the user."""
+  password: String
+}
+
+"""
+Response of getting a code for user confirmation (reset password, change email etc.).
+"""
+type GetOobConfirmationCodeResponse {
+  """The code to be send to the user."""
+  oobCode: String
+
+  """The email address that the email is sent to."""
+  email: String
+
+  """The fixed string "identitytoolkit#GetOobConfirmationCodeResponse"."""
+  kind: String
+}
+
+"""
+Request of getting a code for user confirmation (reset password, change email etc.)
+"""
+input Relyingparty_Input {
+  """
+  whether or not the app can handle the oob code without first going to web
+  """
+  canHandleCodeInApp: Boolean
+
+  """The recaptcha challenge presented to the user."""
+  challenge: String
+
+  """
+  minimum version of the app. if the version on the device is lower than this version then the user is taken to the play store to upgrade the app
+  """
+  androidMinimumVersion: String
+
+  """
+  whether or not to install the android app on the device where the link is opened
+  """
+  androidInstallApp: Boolean
+
+  """The new email if the code is for email change."""
+  newEmail: String
+
+  """The IP address of the user."""
+  userIp: String
+
+  """The user's Gitkit login token for email change."""
+  idToken: String
+
+  """The email of the user."""
+  email: String
+
+  """android package name of the android app to handle the action code"""
+  androidPackageName: String
+
+  """The recaptcha response from the user."""
+  captchaResp: String
+
+  """The fixed string "identitytoolkit#relyingparty"."""
+  kind: String = "identitytoolkit#relyingparty"
+
+  """The url to continue to the Gitkit app"""
+  continueUrl: String
+
+  """The request type."""
+  requestType: String
+
+  """iOS app store id to download the app if it's not already installed"""
+  iOSAppStoreId: String
+
+  """the iOS bundle id of iOS app to handle the action code"""
+  iOSBundleId: String
+}
+
+"""Response of downloading accounts in batch."""
+type DownloadAccountResponse {
+  """
+  The next page token. To be used in a subsequent request to return the next page of results.
+  """
+  nextPageToken: String
+
+  """The user accounts data."""
+  users: [UserInfo]
+
+  """The fixed string "identitytoolkit#DownloadAccountResponse"."""
+  kind: String
+}
+
+"""Template for an individual account info."""
+type UserInfo {
+  """The timestamp when the password was last updated."""
+  passwordUpdatedAt: Float
+
+  """last login timestamp."""
+  lastLoginAt: BigInt
+
+  """Whether the email has been verified."""
+  emailVerified: Boolean
+
+  """The email of the user."""
+  email: String
+
+  """The user's hashed password."""
+  passwordHash: Byte
+
+  """User creation timestamp."""
+  createdAt: BigInt
+
+  """Whether the user is disabled."""
+  disabled: Boolean
+
+  """User's phone number."""
+  phoneNumber: String
+
+  """Whether the user is authenticated by the developer."""
+  customAuth: Boolean
+
+  """User's screen name at Twitter or login name at Github."""
+  screenName: String
+
+  """Timestamp in seconds for valid login token."""
+  validSince: BigInt
+
+  """The user's plain text password."""
+  rawPassword: String
+
+  """The IDP of the user."""
+  providerUserInfo: [mutation_identitytoolkit_relyingparty_downloadAccount_users_items_providerUserInfo_items]
+
+  """The local ID of the user."""
+  localId: String
+
+  """The user's password salt."""
+  salt: Byte
+
+  """The name of the user."""
+  displayName: String
+
+  """The custom attributes to be set in the user's id token."""
+  customAttributes: String
+
+  """The URL of the user profile photo."""
+  photoUrl: String
+
+  """Version of the user's password."""
+  version: Int
+}
+
+type mutation_identitytoolkit_relyingparty_downloadAccount_users_items_providerUserInfo_items {
+  """User's email at IDP."""
+  email: String
+
+  """User's screen name at Twitter or login name at Github."""
+  screenName: String
+
+  """The user's display name at the IDP."""
+  displayName: String
+
+  """User's phone number."""
+  phoneNumber: String
+
+  """User's raw identifier directly returned from IDP."""
+  rawId: String
+
+  """The user's photo url at the IDP."""
+  photoUrl: String
+
+  """User's identifier at IDP."""
+  federatedId: String
+
+  """
+  The IdP ID. For white listed IdPs it's a short domain name, e.g., google.com, aol.com, live.net and yahoo.com. For other OpenID IdPs it's the OP identifier.
+  """
+  providerId: String
+}
+
+"""Request to download user account in batch."""
+input IdentitytoolkitRelyingpartyDownloadAccountRequest_Input {
+  """
+  The token for the next page. This should be taken from the previous response.
+  """
+  nextPageToken: String
+
+  """
+  Specify which project (field value is actually project id) to operate. Only used when provided credential.
+  """
+  targetProjectId: String
+
+  """
+  GCP project number of the requesting delegated app. Currently only intended for Firebase V1 migration.
+  """
+  delegatedProjectNumber: BigInt
+
+  """The max number of results to return in the response."""
+  maxResults: Int
+}
+
+"""Response of creating the IDP authentication URL."""
+type CreateAuthUriResponse {
+  """all providers the user has once used to do federated login"""
+  allProviders: [String]
+
+  """Whether the user is registered if the identifier is an email."""
+  registered: Boolean
+
+  """True if captcha is required."""
+  captchaRequired: Boolean
+
+  """True if the authUri is for user's existing provider."""
+  forExistingProvider: Boolean
+
+  """
+  Session ID which should be passed in the following verifyAssertion request.
+  """
+  sessionId: String
+
+  """All sign-in methods this user has used."""
+  signinMethods: [String]
+
+  """The provider ID of the auth URI."""
+  providerId: String
+
+  """The URI used by the IDP to authenticate the user."""
+  authUri: String
+
+  """The fixed string identitytoolkit#CreateAuthUriResponse"."""
+  kind: String
+}
+
+"""Request to get the IDP authentication URL."""
+input IdentitytoolkitRelyingpartyCreateAuthUriRequest_Input {
+  """
+  The URI to which the IDP redirects the user after the federated login flow.
+  """
+  continueUri: String
+
+  """
+  The query parameter that client can customize by themselves in auth url. The following parameters are reserved for server so that they cannot be customized by clients: client_id, response_type, scope, redirect_uri, state, oauth_token.
+  """
+  customParameter: JSON
+
+  """
+  The IdP ID. For white listed IdPs it's a short domain name e.g. google.com, aol.com, live.net and yahoo.com. For other OpenID IdPs it's the OP identifier.
+  """
+  providerId: String
+
+  """
+  Optional realm for OpenID protocol. The sub string "scheme://domain:port" of the param "continueUri" is used if this is not set.
+  """
+  openidRealm: String
+
+  """The native app package for OTA installation."""
+  otaApp: String
+
+  """
+  Additional oauth scopes, beyond the basid user profile, that the user would be prompted to grant
+  """
+  oauthScope: String
+
+  """
+  The opaque value used by the client to maintain context info between the authentication request and the IDP callback.
+  """
+  context: String
+
+  """
+  The app ID of the mobile app, base64(CERT_SHA1):PACKAGE_NAME for Android, BUNDLE_ID for iOS.
+  """
+  appId: String
+
+  """The developer's consumer key for OpenId OAuth Extension"""
+  oauthConsumerKey: String
+
+  """
+  The hosted domain to restrict sign-in to accounts at that domain for Google Apps hosted accounts.
+  """
+  hostedDomain: String
+
+  """Tenant project number to be used for idp discovery."""
+  tenantProjectNumber: String
+
+  """The relying party OAuth client ID."""
+  clientId: String
+
+  """The email or federated ID of the user."""
+  identifier: String
+
+  """
+  Explicitly specify the auth flow type. Currently only support "CODE_FLOW" type. The field is only used for Google provider.
+  """
+  authFlowType: String
+
+  """The session_id passed by client."""
+  sessionId: String
+
+  """
+  For multi-tenant use cases, in order to construct sign-in URL with the correct IDP parameters, Firebear needs to know which Tenant to retrieve IDP configs from.
+  """
+  tenantId: String
+}
+
+"""Response of signing out user."""
+type IdentitytoolkitRelyingpartySignOutUserResponse {
+  """The local ID of the user."""
+  localId: String
+}
+
+"""Request to sign out user."""
+input IdentitytoolkitRelyingpartySignOutUserRequest_Input {
+  """Instance id token of the app."""
+  instanceId: String
+
+  """The local ID of the user."""
+  localId: String
+}
+
+"""Response of email signIn."""
+type EmailLinkSigninResponse {
+  """The fixed string "identitytoolkit#EmailLinkSigninResponse"."""
+  kind: String
+
+  """Expiration time of STS id token in seconds."""
+  expiresIn: BigInt
+
+  """The refresh token for the signed in user."""
+  refreshToken: String
+
+  """The user's email."""
+  email: String
+
+  """The STS id token to login the newly signed in user."""
+  idToken: String
+
+  """Whether the user is new."""
+  isNewUser: Boolean
+
+  """The RP local ID of the user."""
+  localId: String
+}
+
+"""Request to sign in with email."""
+input IdentitytoolkitRelyingpartyEmailLinkSigninRequest_Input {
+  """Token for linking flow."""
+  idToken: String
+
+  """The confirmation code."""
+  oobCode: String
+
+  """The email address of the user."""
+  email: String
+}
+
+"""Response from verifying a custom token"""
+type VerifyCustomTokenResponse {
+  """The GITKit token for authenticated user."""
+  idToken: String
+
+  """True if it's a new user sign-in, false if it's a returning user."""
+  isNewUser: Boolean
+
+  """The fixed string "identitytoolkit#VerifyCustomTokenResponse"."""
+  kind: String
+
+  """If idToken is STS id token, then this field will be refresh token."""
+  refreshToken: String
+
+  """
+  If idToken is STS id token, then this field will be expiration time of STS id token in seconds.
+  """
+  expiresIn: BigInt
+}
+
+"""Request to verify a custom token"""
+input IdentitytoolkitRelyingpartyVerifyCustomTokenRequest_Input {
+  """Instance id token of the app."""
+  instanceId: String
+
+  """Whether return sts id token and refresh token instead of gitkit token."""
+  returnSecureToken: Boolean
+
+  """The custom token to verify"""
+  token: String
+
+  """
+  GCP project number of the requesting delegated app. Currently only intended for Firebase V1 migration.
+  """
+  delegatedProjectNumber: BigInt
+}
+
+"""Response for Identitytoolkit-SendVerificationCode"""
+type IdentitytoolkitRelyingpartySendVerificationCodeResponse {
+  """Encrypted session information"""
+  sessionInfo: String
+}
+
+"""Request for Identitytoolkit-SendVerificationCode"""
+input IdentitytoolkitRelyingpartySendVerificationCodeRequest_Input {
+  """Secret delivered to iOS app via APNS."""
+  iosSecret: String
+
+  """Recaptcha solution."""
+  recaptchaToken: String
+
+  """Receipt of successful app token validation with APNS."""
+  iosReceipt: String
+
+  """The phone number to send the verification code to in E.164 format."""
+  phoneNumber: String
+}
+
+"""Response for Identitytoolkit-VerifyPhoneNumber"""
+type IdentitytoolkitRelyingpartyVerifyPhoneNumberResponse {
+  temporaryProof: String
+  verificationProof: String
+  verificationProofExpiresIn: BigInt
+  idToken: String
+  localId: String
+  expiresIn: BigInt
+  temporaryProofExpiresIn: BigInt
+  refreshToken: String
+  phoneNumber: String
+  isNewUser: Boolean
+}
+
+"""Request for Identitytoolkit-VerifyPhoneNumber"""
+input IdentitytoolkitRelyingpartyVerifyPhoneNumberRequest_Input {
+  code: String
+  operation: String
+  temporaryProof: String
+  verificationProof: String
+  phoneNumber: String
+
+  """
+  The session info previously returned by IdentityToolkit-SendVerificationCode.
+  """
+  sessionInfo: String
+  idToken: String
+}
+
+"""Respone of setting the account information."""
+type SetAccountInfoResponse {
+  """The fixed string "identitytoolkit#SetAccountInfoResponse"."""
+  kind: String
+
+  """The user's profiles at the associated IdPs."""
+  providerUserInfo: [mutation_identitytoolkit_relyingparty_setAccountInfo_providerUserInfo_items]
+
+  """
+  If idToken is STS id token, then this field will be expiration time of STS id token in seconds.
+  """
+  expiresIn: BigInt
+
+  """The new email the user attempts to change to."""
+  newEmail: String
+
+  """The photo url of the user."""
+  photoUrl: String
+
+  """If idToken is STS id token, then this field will be refresh token."""
+  refreshToken: String
+
+  """If email has been verified."""
+  emailVerified: Boolean
+
+  """The Gitkit id token to login the newly sign up user."""
+  idToken: String
+
+  """The local ID of the user."""
+  localId: String
+
+  """The email of the user."""
+  email: String
+
+  """The user's hashed password."""
+  passwordHash: Byte
+
+  """The name of the user."""
+  displayName: String
+}
+
+type mutation_identitytoolkit_relyingparty_setAccountInfo_providerUserInfo_items {
+  """User's identifier at IDP."""
+  federatedId: String
+
+  """
+  The IdP ID. For whitelisted IdPs it's a short domain name, e.g., google.com, aol.com, live.net and yahoo.com. For other OpenID IdPs it's the OP identifier.
+  """
+  providerId: String
+
+  """The user's display name at the IDP."""
+  displayName: String
+
+  """The user's photo url at the IDP."""
+  photoUrl: String
+}
+
+"""Request to set the account information."""
+input IdentitytoolkitRelyingpartySetAccountInfoRequest_Input {
+  """The attributes users request to delete."""
+  deleteAttribute: [String]
+
+  """The captcha challenge."""
+  captchaChallenge: String
+
+  """Instance id token of the app."""
+  instanceId: String
+
+  """The photo url of the user."""
+  photoUrl: String
+
+  """Response to the captcha."""
+  captchaResponse: String
+
+  """Whether to disable the user."""
+  disableUser: Boolean
+
+  """The local ID of the user."""
+  localId: String
+
+  """The custom attributes to be set in the user's id token."""
+  customAttributes: String
+
+  """The IDPs the user request to delete."""
+  deleteProvider: [String]
+
+  """The name of the user."""
+  displayName: String
+
+  """Timestamp in seconds for valid login token."""
+  validSince: BigInt
+
+  """
+  GCP project number of the requesting delegated app. Currently only intended for Firebase V1 migration.
+  """
+  delegatedProjectNumber: BigInt
+
+  """The out-of-band code of the change email request."""
+  oobCode: String
+
+  """Privileged caller can update user with specified phone number."""
+  phoneNumber: String
+
+  """The timestamp when the account is created."""
+  createdAt: BigInt
+
+  """Mark the user to upgrade to federated login."""
+  upgradeToFederatedLogin: Boolean
+
+  """The new password of the user."""
+  password: String
+
+  """Mark the email as verified or not."""
+  emailVerified: Boolean
+
+  """The GITKit token of the authenticated user."""
+  idToken: String
+
+  """The email of the user."""
+  email: String
+
+  """Whether return sts id token and refresh token instead of gitkit token."""
+  returnSecureToken: Boolean
+
+  """The associated IDPs of the user."""
+  provider: [String]
+
+  """Last login timestamp."""
+  lastLoginAt: BigInt
+}
+
+"""Response of verifying the IDP assertion."""
+type VerifyAssertionResponse {
+  """The OAuth2 authorization code."""
+  oauthAuthorizationCode: String
+
+  """
+  The value is true if the IDP is also the email provider. It means the user owns the email.
+  """
+  emailVerified: Boolean
+
+  """The ID token."""
+  idToken: String
+
+  """
+  Whether need client to supply email to complete the federated login flow.
+  """
+  needEmail: Boolean
+
+  """The user approved request token for the OpenID OAuth extension."""
+  oauthRequestToken: String
+
+  """
+  The RP local ID if it's already been mapped to the IdP account identified by the federated ID.
+  """
+  localId: String
+
+  """
+  When action is 'map', contains the idps which can be used for confirmation.
+  """
+  verifiedProvider: [String]
+
+  """The OAuth2 access token."""
+  oauthAccessToken: String
+
+  """
+  The IdP ID. For white listed IdPs it's a short domain name e.g. google.com, aol.com, live.net and yahoo.com. If the "providerId" param is set to OpenID OP identifer other than the whilte listed IdPs the OP identifier is returned. If the "identifier" param is federated ID in the createAuthUri request. The domain part of the federated ID is returned.
+  """
+  providerId: String
+
+  """
+  Whether the assertion is from a non-trusted IDP and need account linking confirmation.
+  """
+  needConfirmation: Boolean
+
+  """The lifetime in seconds of the OAuth2 access token."""
+  oauthExpireIn: Int
+
+  """True if it's a new user sign-in, false if it's a returning user."""
+  isNewUser: Boolean
+
+  """URL for OTA app installation."""
+  appInstallationUrl: String
+
+  """The birth date of the IdP account."""
+  dateOfBirth: String
+
+  """
+  The email returned by the IdP. NOTE: The federated login user may not own the email.
+  """
+  email: String
+
+  """The nick name of the user."""
+  nickName: String
+
+  """
+  The original email stored in the mapping storage. It's returned when the federated ID is associated to a different email.
+  """
+  originalEmail: String
+
+  """If idToken is STS id token, then this field will be refresh token."""
+  refreshToken: String
+
+  """Raw IDP-returned user info."""
+  rawUserInfo: String
+
+  """The first name of the user."""
+  firstName: String
+
+  """It's true if the email is recycled."""
+  emailRecycled: Boolean
+
+  """Client error code."""
+  errorMessage: String
+
+  """The full name of the user."""
+  fullName: String
+
+  """The language preference of the user."""
+  language: String
+
+  """
+  It's the identifier param in the createAuthUri request if the identifier is an email. It can be used to check whether the user input email is different from the asserted email.
+  """
+  inputEmail: String
+
+  """The last name of the user."""
+  lastName: String
+
+  """The display name of the user."""
+  displayName: String
+
+  """The action code."""
+  action: String
+
+  """The OIDC id token."""
+  oauthIdToken: String
+
+  """The custom scheme used by mobile app."""
+  appScheme: String
+
+  """The timezone of the user."""
+  timeZone: String
+
+  """The URI of the public accessible profiel picture."""
+  photoUrl: String
+
+  """
+  If idToken is STS id token, then this field will be expiration time of STS id token in seconds.
+  """
+  expiresIn: BigInt
+
+  """The screen_name of a Twitter user or the login name at Github."""
+  screenName: String
+
+  """
+  The opaque value used by the client to maintain context info between the authentication request and the IDP callback.
+  """
+  context: String
+
+  """The unique ID identifies the IdP account."""
+  federatedId: String
+
+  """The fixed string "identitytoolkit#VerifyAssertionResponse"."""
+  kind: String
+
+  """The OAuth1 access token secret."""
+  oauthTokenSecret: String
+
+  """The scope for the OpenID OAuth extension."""
+  oauthScope: String
+}
+
+"""Request to verify the IDP assertion."""
+input IdentitytoolkitRelyingpartyVerifyAssertionRequest_Input {
+  """
+  Session ID, which should match the one in previous createAuthUri request.
+  """
+  sessionId: String
+
+  """
+  Whether return 200 and IDP credential rather than throw exception when federated id is already linked.
+  """
+  returnIdpCredential: Boolean
+
+  """Tenant project number to be used for idp discovery."""
+  tenantProjectNumber: String
+
+  """The GITKit token of the authenticated user."""
+  idToken: String
+
+  """
+  The URI to which the IDP redirects the user back. It may contain federated login result params added by the IDP.
+  """
+  requestUri: String
+
+  """
+  The GITKit token for the non-trusted IDP pending to be confirmed by the user.
+  """
+  pendingIdToken: String
+
+  """
+  For multi-tenant use cases, in order to construct sign-in URL with the correct IDP parameters, Firebear needs to know which Tenant to retrieve IDP configs from.
+  """
+  tenantId: String
+
+  """Whether return sts id token and refresh token instead of gitkit token."""
+  returnSecureToken: Boolean
+
+  """The post body if the request is a HTTP POST."""
+  postBody: String
+
+  """Whether to return refresh tokens."""
+  returnRefreshToken: Boolean
+
+  """Instance id token of the app."""
+  instanceId: String
+
+  """
+  When it's true, automatically creates a new account if the user doesn't exist. When it's false, allows existing user to sign in normally and throws exception if the user doesn't exist.
+  """
+  autoCreate: Boolean
+
+  """
+  GCP project number of the requesting delegated app. Currently only intended for Firebase V1 migration.
+  """
+  delegatedProjectNumber: BigInt
+}
+
+"""Response of resetting the password."""
+type ResetPasswordResponse {
+  """The request type."""
+  requestType: String
+
+  """
+  The user's email. If the out-of-band code is for email recovery, the user's original email.
+  """
+  email: String
+
+  """The fixed string "identitytoolkit#ResetPasswordResponse"."""
+  kind: String
+
+  """If the out-of-band code is for email recovery, the user's new email."""
+  newEmail: String
+}
+
+"""Request to reset the password."""
+input IdentitytoolkitRelyingpartyResetPasswordRequest_Input {
+  """The email address of the user."""
+  email: String
+
+  """The old password inputted by the user."""
+  oldPassword: String
+
+  """The new password inputted by the user."""
+  newPassword: String
+
+  """The confirmation code."""
+  oobCode: String
+}
+
+"""Response of setting the project configuration."""
+type IdentitytoolkitRelyingpartySetProjectConfigResponse {
+  """Project ID of the relying party."""
+  projectId: String
+}
+
+"""Request to set the project configuration."""
+input IdentitytoolkitRelyingpartySetProjectConfigRequest_Input {
+  changeEmailTemplate: EmailTemplate_Input
+
+  """Oauth2 provider configuration."""
+  idpConfig: [IdpConfig_Input]
+
+  """
+  GCP project number of the requesting delegated app. Currently only intended for Firebase V1 migration.
+  """
+  delegatedProjectNumber: BigInt
+  resetPasswordTemplate: EmailTemplate_Input
+
+  """Whether to use email sending provided by Firebear."""
+  useEmailSending: Boolean
+
+  """Authorized domains for widget redirect."""
+  authorizedDomains: [String]
+  legacyResetPasswordTemplate: EmailTemplate_Input
+
+  """Whether to allow password user sign in or sign up."""
+  allowPasswordUser: Boolean
+
+  """Browser API key, needed when making http request to Apiary."""
+  apiKey: String
+
+  """Whether to enable anonymous user."""
+  enableAnonymousUser: Boolean
+  verifyEmailTemplate: EmailTemplate_Input
+}
+
+"""Template for an email template."""
+input EmailTemplate_Input {
+  """From address of the email."""
+  from: String
+
+  """Email body format."""
+  format: String
+
+  """From display name."""
+  fromDisplayName: String
+
+  """Email body."""
+  body: String
+
+  """Reply-to address."""
+  replyTo: String
+
+  """Subject of the email."""
+  subject: String
+}
+
+"""Template for a single idp configuration."""
+input IdpConfig_Input {
+  """Whitelisted client IDs for audience check."""
+  whitelistedAudiences: [String]
+
+  """
+  Percent of users who will be prompted/redirected federated login for this IDP.
+  """
+  experimentPercent: Int
+
+  """Whether this IDP is enabled."""
+  enabled: Boolean
+
+  """OAuth2 provider."""
+  provider: String
+
+  """OAuth2 client ID."""
+  clientId: String
+
+  """OAuth2 client secret."""
+  secret: String
+}
+
+"""
+Response of signing up new user, creating anonymous user or anonymous user reauth.
+"""
+type SignupNewUserResponse {
+  """The fixed string "identitytoolkit#SignupNewUserResponse"."""
+  kind: String
+
+  """
+  If idToken is STS id token, then this field will be expiration time of STS id token in seconds.
+  """
+  expiresIn: BigInt
+
+  """If idToken is STS id token, then this field will be refresh token."""
+  refreshToken: String
+
+  """The email of the user."""
+  email: String
+
+  """The name of the user."""
+  displayName: String
+
+  """The Gitkit id token to login the newly sign up user."""
+  idToken: String
+
+  """The RP local ID of the user."""
+  localId: String
+}
+
+"""
+Request to signup new user, create anonymous user or anonymous user reauth.
+"""
+input IdentitytoolkitRelyingpartySignupNewUserRequest_Input {
+  """Privileged caller can create user with specified user id."""
+  localId: String
+
+  """The name of the user."""
+  displayName: String
+
+  """The captcha challenge."""
+  captchaChallenge: String
+
+  """Instance id token of the app."""
+  instanceId: String
+
+  """The photo url of the user."""
+  photoUrl: String
+
+  """Response to the captcha."""
+  captchaResponse: String
+
+  """Whether to disable the user. Only can be used by service account."""
+  disabled: Boolean
+
+  """Privileged caller can create user with specified phone number."""
+  phoneNumber: String
+
+  """Tenant project number to be used for idp discovery."""
+  tenantProjectNumber: String
+
+  """
+  Mark the email as verified or not. Only can be used by service account.
+  """
+  emailVerified: Boolean
+
+  """The GITKit token of the authenticated user."""
+  idToken: String
+
+  """The email of the user."""
+  email: String
+
+  """The new password of the user."""
+  password: String
+
+  """
+  For multi-tenant use cases, in order to construct sign-in URL with the correct IDP parameters, Firebear needs to know which Tenant to retrieve IDP configs from.
+  """
+  tenantId: String
+}
+
+"""Response of getting account information."""
+type GetAccountInfoResponse {
+  """The fixed string "identitytoolkit#GetAccountInfoResponse"."""
+  kind: String
+
+  """The info of the users."""
+  users: [UserInfo]
+}
+
+"""Request to get the account information."""
+input IdentitytoolkitRelyingpartyGetAccountInfoRequest_Input {
+  """
+  GCP project number of the requesting delegated app. Currently only intended for Firebase V1 migration.
+  """
+  delegatedProjectNumber: BigInt
+
+  """Privileged caller can query users by specified phone number."""
+  phoneNumber: [String]
+
+  """The list of emails of the users to inquiry."""
+  email: [String]
+
+  """The GITKit token of the authenticated user."""
+  idToken: String
+
+  """The list of local ID's of the users to inquiry."""
+  localId: [String]
+}
+
+enum HTTPMethod {
+  GET
+  HEAD
+  POST
+  PUT
+  DELETE
+  CONNECT
+  OPTIONS
+  TRACE
+  PATCH
+}
+
+scalar ObjMap

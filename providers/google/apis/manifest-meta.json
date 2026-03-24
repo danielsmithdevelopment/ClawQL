@@ -1,6 +1,6 @@
 {
-  "fetchedAt": "2026-03-23T05:06:39.595Z",
-  "sourceManifest": "providers/google/google-top20-apis.json",
-  "count": 20,
+  "fetchedAt": "2026-03-24T06:34:59.332Z",
+  "sourceManifest": "providers/google/google-top50-apis.json",
+  "count": 50,
   "containerCopiedFromBundled": true
 }

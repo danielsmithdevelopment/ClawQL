@@ -1,6 +1,6 @@
-# Experiment: GCP multi-spec MCP workflow (`search` over 20 Google APIs)
+# Experiment: GCP multi-spec MCP workflow (`search` over 50 Google APIs)
 
-This document records a **repeatable experiment**: run ClawQL as a **real MCP server over stdio**, merge **20** bundled Google Discovery specs in one process, then issue **`search`** calls the same way Cursor / Claude Desktop would — and compare **token-ish cost** of tool outputs vs pasting **all** raw `discovery.json` bytes.
+This document records a **repeatable experiment**: run ClawQL as a **real MCP server over stdio**, merge **50** bundled Google Discovery specs in one process, then issue **`search`** calls the same way Cursor / Claude Desktop would — and compare **token-ish cost** of tool outputs vs pasting **all** raw `discovery.json` bytes.
 
 ## How to reproduce
 
@@ -20,7 +20,7 @@ Stats below match **`meta.generatedAt`:** `2026-03-23T05:22:54.608Z` — re-run 
 
 | Variable | Value |
 |----------|--------|
-| `CLAWQL_GOOGLE_TOP20_SPECS` | `1` |
+| `CLAWQL_GOOGLE_TOP50_SPECS` | `1` |
 | `CLAWQL_BUNDLED_OFFLINE` | `1` |
 | `CLAWQL_PROVIDER` / `CLAWQL_SPEC_PATH` / `CLAWQL_DISCOVERY_URL` | **unset** (so multi-spec merge wins) |
 
@@ -67,7 +67,7 @@ enable APIs batch GKE cluster firewall logging monitoring DNS bucket BigQuery
 
 ## Services loaded (merged operation index)
 
-Manifest: [`providers/google/google-top20-apis.json`](../providers/google/google-top20-apis.json). Each API loads `providers/google/apis/<slug>/discovery.json`.
+Manifest: [`providers/google/google-top50-apis.json`](../providers/google/google-top50-apis.json). Each API loads `providers/google/apis/<slug>/discovery.json`.
 
 | Slug | Discovery `id` | Title |
 |------|----------------|--------|

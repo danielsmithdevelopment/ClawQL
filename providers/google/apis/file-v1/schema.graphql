@@ -1,0 +1,1541 @@
+directive @enum(subgraph: String, value: String) on ENUM_VALUE
+
+directive @httpOperation(subgraph: String, path: String, operationSpecificHeaders: [[String]], httpMethod: HTTPMethod, isBinary: Boolean, requestBaseBody: ObjMap, queryParamArgMap: ObjMap, queryStringOptionsByParam: ObjMap, jsonApiFields: Boolean, queryStringOptions: ObjMap) on FIELD_DEFINITION
+
+directive @transport(subgraph: String, kind: String, location: String, headers: [[String]], queryStringOptions: ObjMap, queryParams: [[String]]) repeatable on SCHEMA
+
+type Query {
+  """
+  Lists information about the supported locations for this service. This method can be called in two ways: * **List all public locations:** Use the path `GET /v1/locations`. * **List project-visible locations:** Use the path `GET /v1/projects/{project_id}/locations`. This may include public locations as well as private or other locations specifically visible to the project.
+  """
+  file_projects_locations_list(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """
+    A filter to narrow down results to a preferred subset. The filtering language accepts strings like `"displayName=tokyo"`, and is documented in more detail in [AIP-160](https://google.aip.dev/160).
+    """
+    filter: String
+
+    """
+    The maximum number of results to return. If not set, the service selects a default.
+    """
+    pageSize: Int
+
+    """
+    A page token received from the `next_page_token` field in the response. Send that page token to receive the subsequent page.
+    """
+    pageToken: String
+
+    """
+    Optional. Do not use this field. It is unsupported and is ignored unless explicitly documented otherwise. This is primarily for internal usage.
+    """
+    extraLocationTypes: String
+  ): ListLocationsResponse
+
+  """Gets information about a location."""
+  file_projects_locations_get(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+  ): Location
+
+  """
+  Lists operations that match the specified filter in the request. If the server doesn't support this method, it returns `UNIMPLEMENTED`.
+  """
+  file_projects_locations_operations_list(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """The standard list filter."""
+    filter: String
+
+    """The standard list page size."""
+    pageSize: Int
+
+    """The standard list page token."""
+    pageToken: String
+
+    """
+    When set to `true`, operations that are reachable are returned as normal, and those that are unreachable are returned in the ListOperationsResponse.unreachable field. This can only be `true` when reading across collections. For example, when `parent` is set to `"projects/example/locations/-"`. This field is not supported by default and will result in an `UNIMPLEMENTED` error if set unless explicitly documented otherwise in service or product specific documentation.
+    """
+    returnPartialSuccess: Boolean
+  ): ListOperationsResponse
+
+  """
+  Gets the latest state of a long-running operation. Clients can use this method to poll the operation result at intervals as recommended by the API service.
+  """
+  file_projects_locations_operations_get(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter operationsId"""
+    operationsId: String!
+  ): Operation
+
+  """
+  Lists all instances in a project for either a specified location or for all locations.
+  """
+  file_projects_locations_instances_list(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """The maximum number of items to return."""
+    pageSize: Int
+
+    """
+    The next_page_token value to use if there are additional results to retrieve for this list request.
+    """
+    pageToken: String
+
+    """
+    Sort results. Supported values are "name", "name desc" or "" (unsorted).
+    """
+    orderBy: String
+
+    """List filter."""
+    filter: String
+  ): ListInstancesResponse
+
+  """Gets the details of a specific instance."""
+  file_projects_locations_instances_get(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter instancesId"""
+    instancesId: String!
+  ): Instance
+
+  """
+  Lists all snapshots in a project for either a specified location or for all locations.
+  """
+  file_projects_locations_instances_snapshots_list(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter instancesId"""
+    instancesId: String!
+
+    """The maximum number of items to return."""
+    pageSize: Int
+
+    """
+    The next_page_token value to use if there are additional results to retrieve for this list request.
+    """
+    pageToken: String
+
+    """
+    Sort results. Supported values are "name", "name desc" or "" (unsorted).
+    """
+    orderBy: String
+
+    """List filter."""
+    filter: String
+
+    """
+    Optional. If true, allow partial responses for multi-regional Aggregated List requests.
+    """
+    returnPartialSuccess: Boolean
+  ): ListSnapshotsResponse
+
+  """Gets the details of a specific snapshot."""
+  file_projects_locations_instances_snapshots_get(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter instancesId"""
+    instancesId: String!
+
+    """Path parameter snapshotsId"""
+    snapshotsId: String!
+  ): Snapshot
+
+  """
+  Lists all backups in a project for either a specified location or for all locations.
+  """
+  file_projects_locations_backups_list(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """The maximum number of items to return."""
+    pageSize: Int
+
+    """
+    The next_page_token value to use if there are additional results to retrieve for this list request.
+    """
+    pageToken: String
+
+    """
+    Sort results. Supported values are "name", "name desc" or "" (unsorted).
+    """
+    orderBy: String
+
+    """List filter."""
+    filter: String
+  ): ListBackupsResponse
+
+  """Gets the details of a specific backup."""
+  file_projects_locations_backups_get(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter backupsId"""
+    backupsId: String!
+  ): Backup
+}
+
+"""The response message for Locations.ListLocations."""
+type ListLocationsResponse {
+  """A list of locations that matches the specified filter in the request."""
+  locations: [Location]
+
+  """The standard List next-page token."""
+  nextPageToken: String
+}
+
+"""A resource that represents a Google Cloud location."""
+type Location {
+  """
+  Resource name for the location, which may vary between implementations. For example: `"projects/example-project/locations/us-east1"`
+  """
+  name: String
+
+  """The canonical id for this location. For example: `"us-east1"`."""
+  locationId: String
+
+  """
+  The friendly name for this location, typically a nearby city name. For example, "Tokyo".
+  """
+  displayName: String
+
+  """
+  Cross-service attributes for the location. For example {"cloud.googleapis.com/region": "us-east1"}
+  """
+  labels: JSON
+
+  """
+  Service-specific metadata. For example the available capacity at the given location.
+  """
+  metadata: JSON
+}
+
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSON @specifiedBy(url: "http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf")
+
+"""The response message for Operations.ListOperations."""
+type ListOperationsResponse {
+  """A list of operations that matches the specified filter in the request."""
+  operations: [Operation]
+
+  """The standard List next-page token."""
+  nextPageToken: String
+
+  """
+  Unordered list. Unreachable resources. Populated when the request sets `ListOperationsRequest.return_partial_success` and reads across collections. For example, when attempting to list all resources across all supported locations.
+  """
+  unreachable: [String]
+}
+
+"""
+This resource represents a long-running operation that is the result of a network API call.
+"""
+type Operation {
+  """
+  The server-assigned name, which is only unique within the same service that originally returns it. If you use the default HTTP mapping, the `name` should be a resource name ending with `operations/{unique_id}`.
+  """
+  name: String
+
+  """
+  Service-specific metadata associated with the operation. It typically contains progress information and common metadata such as create time. Some services might not provide such metadata. Any method that returns a long-running operation should document the metadata type, if any.
+  """
+  metadata: JSON
+
+  """
+  If the value is `false`, it means the operation is still in progress. If `true`, the operation is completed, and either `error` or `response` is available.
+  """
+  done: Boolean
+  error: Status
+
+  """
+  The normal, successful response of the operation. If the original method returns no data on success, such as `Delete`, the response is `google.protobuf.Empty`. If the original method is standard `Get`/`Create`/`Update`, the response should be the resource. For other methods, the response should have the type `XxxResponse`, where `Xxx` is the original method name. For example, if the original method name is `TakeSnapshot()`, the inferred response type is `TakeSnapshotResponse`.
+  """
+  response: JSON
+}
+
+"""
+The `Status` type defines a logical error model that is suitable for different programming environments, including REST APIs and RPC APIs. It is used by [gRPC](https://github.com/grpc). Each `Status` message contains three pieces of data: error code, error message, and error details. You can find out more about this error model and how to work with it in the [API Design Guide](https://cloud.google.com/apis/design/errors).
+"""
+type Status {
+  """The status code, which should be an enum value of google.rpc.Code."""
+  code: Int
+
+  """
+  A developer-facing error message, which should be in English. Any user-facing error message should be localized and sent in the google.rpc.Status.details field, or localized by the client.
+  """
+  message: String
+
+  """
+  A list of messages that carry the error details. There is a common set of message types for APIs to use.
+  """
+  details: [JSON]
+}
+
+"""ListInstancesResponse is the result of ListInstancesRequest."""
+type ListInstancesResponse {
+  """
+  A list of instances in the project for the specified location. If the `{location}` value in the request is "-", the response contains a list of instances from all locations. If any location is unreachable, the response will only return instances in reachable locations and the "unreachable" field will be populated with a list of unreachable locations.
+  """
+  instances: [Instance]
+
+  """
+  The token you can use to retrieve the next page of results. Not returned if there are no more results in the list.
+  """
+  nextPageToken: String
+
+  """Unordered list. Locations that could not be reached."""
+  unreachable: [String]
+}
+
+"""A Filestore instance."""
+type Instance {
+  """
+  Output only. The resource name of the instance, in the format `projects/{project}/locations/{location}/instances/{instance}`.
+  """
+  name: String
+
+  """The description of the instance (2048 characters or less)."""
+  description: String
+  state: query_file_projects_locations_instances_list_instances_items_state
+
+  """
+  Output only. Additional information about the instance state, if available.
+  """
+  statusMessage: String
+
+  """Output only. The time when the instance was created."""
+  createTime: String
+  tier: query_file_projects_locations_instances_list_instances_items_tier
+
+  """Resource labels to represent user provided metadata."""
+  labels: JSON
+
+  """
+  File system shares on the instance. For this version, only a single file share is supported.
+  """
+  fileShares: [FileShareConfig]
+
+  """
+  VPC networks to which the instance is connected. For this version, only a single network is supported.
+  """
+  networks: [NetworkConfig]
+
+  """
+  Server-specified ETag for the instance resource to prevent simultaneous updates from overwriting each other.
+  """
+  etag: String
+
+  """Output only. Reserved for future use."""
+  satisfiesPzs: Boolean
+
+  """Output only. Reserved for future use."""
+  satisfiesPzi: Boolean
+
+  """KMS key name used for data encryption."""
+  kmsKeyName: String
+
+  """
+  Output only. Field indicates all the reasons the instance is in "SUSPENDED" state.
+  """
+  suspensionReasons: [query_file_projects_locations_instances_list_instances_items_suspensionReasons_items]
+  replication: Replication
+
+  """
+  Optional. Input only. Immutable. Tag key-value pairs bound to this resource. Each key must be a namespaced name and each value a short name. Example: "123456789012/environment" : "production", "123456789013/costCenter" : "marketing" See the documentation for more information: - Namespaced name: https://cloud.google.com/resource-manager/docs/tags/tags-creating-and-managing#retrieving_tag_key - Short name: https://cloud.google.com/resource-manager/docs/tags/tags-creating-and-managing#retrieving_tag_value
+  """
+  tags: JSON
+  protocol: query_file_projects_locations_instances_list_instances_items_protocol
+  directoryServices: DirectoryServicesConfig
+
+  """
+  Output only. Indicates whether this instance supports configuring its performance. If true, the user can configure the instance's performance by using the 'performance_config' field.
+  """
+  customPerformanceSupported: Boolean
+  performanceConfig: PerformanceConfig
+  performanceLimits: PerformanceLimits
+
+  """
+  Optional. Indicates whether the instance is protected against deletion.
+  """
+  deletionProtectionEnabled: Boolean
+
+  """Optional. The reason for enabling deletion protection."""
+  deletionProtectionReason: String
+
+  """Output only. The minimum capacity of the instance in GB."""
+  minCapacityGb: BigInt
+
+  """Output only. The maximum capacity of the instance in GB."""
+  maxCapacityGb: BigInt
+
+  """
+  Output only. The incremental increase or decrease in capacity, designated in some number of GB.
+  """
+  capacityStepSizeGb: BigInt
+}
+
+"""Output only. The instance state."""
+enum query_file_projects_locations_instances_list_instances_items_state {
+  STATE_UNSPECIFIED
+  CREATING
+  READY
+  REPAIRING
+  DELETING
+  ERROR
+  RESTORING
+  SUSPENDED
+  SUSPENDING
+  RESUMING
+  REVERTING
+  PROMOTING
+}
+
+"""The service tier of the instance."""
+enum query_file_projects_locations_instances_list_instances_items_tier {
+  TIER_UNSPECIFIED
+  STANDARD
+  PREMIUM
+  BASIC_HDD
+  BASIC_SSD
+  HIGH_SCALE_SSD
+  ENTERPRISE
+  ZONAL
+  REGIONAL
+}
+
+"""File share configuration for the instance."""
+type FileShareConfig {
+  """
+  Required. The name of the file share. Must use 1-16 characters for the basic service tier and 1-63 characters for all other service tiers. Must use lowercase letters, numbers, or underscores `[a-z0-9_]`. Must start with a letter. Immutable.
+  """
+  name: String
+
+  """
+  File share capacity in gigabytes (GB). Filestore defines 1 GB as 1024^3 bytes.
+  """
+  capacityGb: BigInt
+
+  """
+  The resource name of the backup, in the format `projects/{project_number}/locations/{location_id}/backups/{backup_id}`, that this file share has been restored from.
+  """
+  sourceBackup: String
+
+  """
+  The resource name of the BackupDR backup, in the format `projects/{project_id}/locations/{location_id}/backupVaults/{backupvault_id}/dataSources/{datasource_id}/backups/{backup_id}`, TODO (b/443690479) - Remove visibility restrictions once the feature is ready
+  """
+  sourceBackupdrBackup: String
+
+  """
+  Nfs Export Options. There is a limit of 10 export options per file share.
+  """
+  nfsExportOptions: [NfsExportOptions]
+}
+
+"""
+The `BigInt` scalar type represents non-fractional signed whole numeric values.
+"""
+scalar BigInt
+
+"""NFS export options specifications."""
+type NfsExportOptions {
+  """
+  List of either an IPv4 addresses in the format `{octet1}.{octet2}.{octet3}.{octet4}` or CIDR ranges in the format `{octet1}.{octet2}.{octet3}.{octet4}/{mask size}` which may mount the file share. Overlapping IP ranges are not allowed, both within and across NfsExportOptions. An error will be returned. The limit is 64 IP ranges/addresses for each FileShareConfig among all NfsExportOptions.
+  """
+  ipRanges: [String]
+
+  """
+  Optional. The source VPC network for ip_ranges. Required for instances using Private Service Connect, optional otherwise. If provided, must be the same network specified in the `NetworkConfig.network` field.
+  """
+  network: String
+  accessMode: query_file_projects_locations_instances_list_instances_items_fileShares_items_nfsExportOptions_items_accessMode
+  squashMode: query_file_projects_locations_instances_list_instances_items_fileShares_items_nfsExportOptions_items_squashMode
+
+  """
+  An integer representing the anonymous user id with a default value of 65534. Anon_uid may only be set with squash_mode of ROOT_SQUASH. An error will be returned if this field is specified for other squash_mode settings.
+  """
+  anonUid: BigInt
+
+  """
+  An integer representing the anonymous group id with a default value of 65534. Anon_gid may only be set with squash_mode of ROOT_SQUASH. An error will be returned if this field is specified for other squash_mode settings.
+  """
+  anonGid: BigInt
+}
+
+"""
+Either READ_ONLY, for allowing only read requests on the exported directory, or READ_WRITE, for allowing both read and write requests. The default is READ_WRITE.
+"""
+enum query_file_projects_locations_instances_list_instances_items_fileShares_items_nfsExportOptions_items_accessMode {
+  ACCESS_MODE_UNSPECIFIED
+  READ_ONLY
+  READ_WRITE
+}
+
+"""
+Either NO_ROOT_SQUASH, for allowing root access on the exported directory, or ROOT_SQUASH, for not allowing root access. The default is NO_ROOT_SQUASH.
+"""
+enum query_file_projects_locations_instances_list_instances_items_fileShares_items_nfsExportOptions_items_squashMode {
+  SQUASH_MODE_UNSPECIFIED
+  NO_ROOT_SQUASH
+  ROOT_SQUASH
+}
+
+"""Network configuration for the instance."""
+type NetworkConfig {
+  """
+  The name of the Google Compute Engine [VPC network](https://cloud.google.com/vpc/docs/vpc) to which the instance is connected.
+  """
+  network: String
+
+  """
+  Internet protocol versions for which the instance has IP addresses assigned.
+  """
+  modes: [query_file_projects_locations_instances_list_instances_items_networks_items_modes_items]
+
+  """
+  Optional, reserved_ip_range can have one of the following two types of values. * CIDR range value when using DIRECT_PEERING connect mode. * [Allocated IP address range](https://cloud.google.com/compute/docs/ip-addresses/reserve-static-internal-ip-address) when using PRIVATE_SERVICE_ACCESS connect mode. When the name of an allocated IP address range is specified, it must be one of the ranges associated with the private service access connection. When specified as a direct CIDR value, it must be a /29 CIDR block for Basic tier, a /24 CIDR block for High Scale tier, or a /26 CIDR block for Enterprise tier in one of the [internal IP address ranges](https://www.arin.net/reference/research/statistics/address_filters/) that identifies the range of IP addresses reserved for this instance. For example, 10.0.0.0/29, 192.168.0.0/24 or 192.168.0.0/26, respectively. The range you specify can't overlap with either existing subnets or assigned IP address ranges for other Filestore instances in the selected VPC network.
+  """
+  reservedIpRange: String
+
+  """
+  Output only. IPv4 addresses in the format `{octet1}.{octet2}.{octet3}.{octet4}` or IPv6 addresses in the format `{block1}:{block2}:{block3}:{block4}:{block5}:{block6}:{block7}:{block8}`.
+  """
+  ipAddresses: [String]
+  connectMode: query_file_projects_locations_instances_list_instances_items_networks_items_connectMode
+  pscConfig: PscConfig
+}
+
+enum query_file_projects_locations_instances_list_instances_items_networks_items_modes_items {
+  ADDRESS_MODE_UNSPECIFIED
+  MODE_IPV4
+  MODE_IPV6
+}
+
+"""
+The network connect mode of the Filestore instance. If not provided, the connect mode defaults to DIRECT_PEERING.
+"""
+enum query_file_projects_locations_instances_list_instances_items_networks_items_connectMode {
+  CONNECT_MODE_UNSPECIFIED
+  DIRECT_PEERING
+  PRIVATE_SERVICE_ACCESS
+  PRIVATE_SERVICE_CONNECT
+}
+
+"""Private Service Connect configuration."""
+type PscConfig {
+  """
+  Optional. Consumer service project in which the Private Service Connect endpoint would be set up. This is optional, and only relevant in case the network is a shared VPC. If this is not specified, the endpoint would be setup in the VPC host project.
+  """
+  endpointProject: String
+}
+
+enum query_file_projects_locations_instances_list_instances_items_suspensionReasons_items {
+  SUSPENSION_REASON_UNSPECIFIED
+  KMS_KEY_ISSUE
+}
+
+"""Optional. The configuration used to replicate an instance."""
+type Replication {
+  role: query_file_projects_locations_instances_list_instances_items_replication_role
+
+  """
+  Optional. Replication configuration for the replica instance associated with this instance. Only a single replica is supported.
+  """
+  replicas: [ReplicaConfig]
+}
+
+"""
+Optional. The replication role. When creating a new replica, this field must be set to `STANDBY`.
+"""
+enum query_file_projects_locations_instances_list_instances_items_replication_role {
+  ROLE_UNSPECIFIED
+  ACTIVE
+  STANDBY
+}
+
+"""Replica configuration for the instance."""
+type ReplicaConfig {
+  state: query_file_projects_locations_instances_list_instances_items_replication_replicas_items_state
+
+  """Output only. The time when the replica state was updated."""
+  stateUpdateTime: String
+
+  """
+  Output only. Additional information about the replication state, if available.
+  """
+  stateReasons: [query_file_projects_locations_instances_list_instances_items_replication_replicas_items_stateReasons_items]
+
+  """
+  Optional. The name of the source instance for the replica, in the format `projects/{project}/locations/{location}/instances/{instance}`. This field is required when creating a replica.
+  """
+  peerInstance: String
+
+  """
+  Output only. The timestamp of the latest replication snapshot taken on the active instance and is already replicated safely.
+  """
+  lastActiveSyncTime: String
+}
+
+"""Output only. The replica state."""
+enum query_file_projects_locations_instances_list_instances_items_replication_replicas_items_state {
+  STATE_UNSPECIFIED
+  CREATING
+  READY
+  REMOVING
+  FAILED
+  PROMOTING
+  PAUSING
+  PAUSED
+  RESUMING
+}
+
+enum query_file_projects_locations_instances_list_instances_items_replication_replicas_items_stateReasons_items {
+  STATE_REASON_UNSPECIFIED
+  PEER_INSTANCE_UNREACHABLE
+  REMOVE_FAILED
+  PAUSE_FAILED
+  RESUME_FAILED
+}
+
+"""
+Immutable. The protocol indicates the access protocol for all shares in the instance. This field is immutable and it cannot be changed after the instance has been created. Default value: `NFS_V3`.
+"""
+enum query_file_projects_locations_instances_list_instances_items_protocol {
+  FILE_PROTOCOL_UNSPECIFIED
+  NFS_V3
+  NFS_V4_1
+}
+
+"""Directory Services configuration for Kerberos-based authentication."""
+type DirectoryServicesConfig {
+  ldap: LdapConfig
+}
+
+"""LdapConfig contains all the parameters for connecting to LDAP servers."""
+type LdapConfig {
+  """Required. The LDAP domain name in the format of `my-domain.com`."""
+  domain: String
+
+  """
+  Required. The servers names are used for specifying the LDAP servers names. The LDAP servers names can come with two formats: 1. DNS name, for example: `ldap.example1.com`, `ldap.example2.com`. 2. IP address, for example: `10.0.0.1`, `10.0.0.2`, `10.0.0.3`. All servers names must be in the same format: either all DNS names or all IP addresses.
+  """
+  servers: [String]
+
+  """
+  Optional. The users Organizational Unit (OU) is optional. This parameter is a hint to allow faster lookup in the LDAP namespace. In case that this parameter is not provided, Filestore instance will query the whole LDAP namespace.
+  """
+  usersOu: String
+
+  """
+  Optional. The groups Organizational Unit (OU) is optional. This parameter is a hint to allow faster lookup in the LDAP namespace. In case that this parameter is not provided, Filestore instance will query the whole LDAP namespace.
+  """
+  groupsOu: String
+}
+
+"""
+Used for setting the performance configuration. If the user doesn't specify PerformanceConfig, automatically provision the default performance settings as described in https://cloud.google.com/filestore/docs/performance. Larger instances will be linearly set to more IOPS. If the instance's capacity is increased or decreased, its performance will be automatically adjusted upwards or downwards accordingly (respectively).
+"""
+type PerformanceConfig {
+  iopsPerTb: IOPSPerTB
+  fixedIops: FixedIOPS
+}
+
+"""IOPS per TB. Filestore defines TB as 1024^4 bytes (TiB)."""
+type IOPSPerTB {
+  """Required. Maximum IOPS per TiB."""
+  maxIopsPerTb: BigInt
+}
+
+"""Fixed IOPS (input/output operations per second) parameters."""
+type FixedIOPS {
+  """Required. Maximum IOPS."""
+  maxIops: BigInt
+}
+
+"""
+The enforced performance limits, calculated from the instance's performance configuration.
+"""
+type PerformanceLimits {
+  """Output only. The maximum IOPS."""
+  maxIops: BigInt
+
+  """Output only. The maximum read IOPS."""
+  maxReadIops: BigInt
+
+  """Output only. The maximum write IOPS."""
+  maxWriteIops: BigInt
+
+  """Output only. The maximum read throughput in bytes per second."""
+  maxReadThroughputBps: BigInt
+
+  """Output only. The maximum write throughput in bytes per second."""
+  maxWriteThroughputBps: BigInt
+}
+
+"""ListSnapshotsResponse is the result of ListSnapshotsRequest."""
+type ListSnapshotsResponse {
+  """A list of snapshots in the project for the specified instance."""
+  snapshots: [Snapshot]
+
+  """
+  The token you can use to retrieve the next page of results. Not returned if there are no more results in the list.
+  """
+  nextPageToken: String
+
+  """Unordered list. Locations that could not be reached."""
+  unreachable: [String]
+}
+
+"""A Filestore snapshot."""
+type Snapshot {
+  """
+  Output only. The resource name of the snapshot, in the format `projects/{project_id}/locations/{location_id}/instances/{instance_id}/snapshots/{snapshot_id}`.
+  """
+  name: String
+
+  """
+  A description of the snapshot with 2048 characters or less. Requests with longer descriptions will be rejected.
+  """
+  description: String
+  state: query_file_projects_locations_instances_snapshots_list_snapshots_items_state
+
+  """Output only. The time when the snapshot was created."""
+  createTime: String
+
+  """Resource labels to represent user provided metadata."""
+  labels: JSON
+
+  """
+  Output only. The amount of bytes needed to allocate a full copy of the snapshot content
+  """
+  filesystemUsedBytes: BigInt
+
+  """
+  Optional. Input only. Immutable. Tag key-value pairs bound to this resource. Each key must be a namespaced name and each value a short name. Example: "123456789012/environment" : "production", "123456789013/costCenter" : "marketing" See the documentation for more information: - Namespaced name: https://cloud.google.com/resource-manager/docs/tags/tags-creating-and-managing#retrieving_tag_key - Short name: https://cloud.google.com/resource-manager/docs/tags/tags-creating-and-managing#retrieving_tag_value
+  """
+  tags: JSON
+}
+
+"""Output only. The snapshot state."""
+enum query_file_projects_locations_instances_snapshots_list_snapshots_items_state {
+  STATE_UNSPECIFIED
+  CREATING
+  READY
+  DELETING
+}
+
+"""ListBackupsResponse is the result of ListBackupsRequest."""
+type ListBackupsResponse {
+  """
+  A list of backups in the project for the specified location. If the `{location}` value in the request is "-", the response contains a list of backups from all locations. If any location is unreachable, the response will only return backups in reachable locations and the "unreachable" field will be populated with a list of unreachable locations.
+  """
+  backups: [Backup]
+
+  """
+  The token you can use to retrieve the next page of results. Not returned if there are no more results in the list.
+  """
+  nextPageToken: String
+
+  """Unordered list. Locations that could not be reached."""
+  unreachable: [String]
+}
+
+"""A Filestore backup."""
+type Backup {
+  """
+  Output only. The resource name of the backup, in the format `projects/{project_number}/locations/{location_id}/backups/{backup_id}`.
+  """
+  name: String
+
+  """
+  A description of the backup with 2048 characters or less. Requests with longer descriptions will be rejected.
+  """
+  description: String
+  state: query_file_projects_locations_backups_list_backups_items_state
+
+  """Output only. The time when the backup was created."""
+  createTime: String
+
+  """Resource labels to represent user provided metadata."""
+  labels: JSON
+
+  """
+  Output only. Capacity of the source file share when the backup was created.
+  """
+  capacityGb: BigInt
+
+  """
+  Output only. The size of the storage used by the backup. As backups share storage, this number is expected to change with backup creation/deletion.
+  """
+  storageBytes: BigInt
+
+  """
+  The resource name of the source Filestore instance, in the format `projects/{project_number}/locations/{location_id}/instances/{instance_id}`, used to create this backup.
+  """
+  sourceInstance: String
+
+  """
+  Name of the file share in the source Filestore instance that the backup is created from.
+  """
+  sourceFileShare: String
+  sourceInstanceTier: query_file_projects_locations_backups_list_backups_items_sourceInstanceTier
+
+  """
+  Output only. Amount of bytes that will be downloaded if the backup is restored. This may be different than storage bytes, since sequential backups of the same disk will share storage.
+  """
+  downloadBytes: BigInt
+
+  """Output only. Reserved for future use."""
+  satisfiesPzs: Boolean
+
+  """Output only. Reserved for future use."""
+  satisfiesPzi: Boolean
+
+  """Immutable. KMS key name used for data encryption."""
+  kmsKey: String
+
+  """
+  Optional. Input only. Immutable. Tag key-value pairs bound to this resource. Each key must be a namespaced name and each value a short name. Example: "123456789012/environment" : "production", "123456789013/costCenter" : "marketing" See the documentation for more information: - Namespaced name: https://cloud.google.com/resource-manager/docs/tags/tags-creating-and-managing#retrieving_tag_key - Short name: https://cloud.google.com/resource-manager/docs/tags/tags-creating-and-managing#retrieving_tag_value
+  """
+  tags: JSON
+  fileSystemProtocol: query_file_projects_locations_backups_list_backups_items_fileSystemProtocol
+}
+
+"""Output only. The backup state."""
+enum query_file_projects_locations_backups_list_backups_items_state {
+  STATE_UNSPECIFIED
+  CREATING
+  FINALIZING
+  READY
+  DELETING
+  INVALID
+}
+
+"""
+Output only. The service tier of the source Filestore instance that this backup is created from.
+"""
+enum query_file_projects_locations_backups_list_backups_items_sourceInstanceTier {
+  TIER_UNSPECIFIED
+  STANDARD
+  PREMIUM
+  BASIC_HDD
+  BASIC_SSD
+  HIGH_SCALE_SSD
+  ENTERPRISE
+  ZONAL
+  REGIONAL
+}
+
+"""
+Output only. The file system protocol of the source Filestore instance that this backup is created from.
+"""
+enum query_file_projects_locations_backups_list_backups_items_fileSystemProtocol {
+  FILE_PROTOCOL_UNSPECIFIED
+  NFS_V3
+  NFS_V4_1
+}
+
+type Mutation {
+  """
+  Deletes a long-running operation. This method indicates that the client is no longer interested in the operation result. It does not cancel the operation. If the server doesn't support this method, it returns `google.rpc.Code.UNIMPLEMENTED`.
+  """
+  file_projects_locations_operations_delete(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter operationsId"""
+    operationsId: String!
+  ): JSON
+
+  """
+  Starts asynchronous cancellation on a long-running operation. The server makes a best effort to cancel the operation, but success is not guaranteed. If the server doesn't support this method, it returns `google.rpc.Code.UNIMPLEMENTED`. Clients can use Operations.GetOperation or other methods to check whether the cancellation succeeded or whether the operation completed despite cancellation. On successful cancellation, the operation is not deleted; instead, it becomes an operation with an Operation.error value with a google.rpc.Status.code of `1`, corresponding to `Code.CANCELLED`.
+  """
+  file_projects_locations_operations_cancel(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter operationsId"""
+    operationsId: String!
+
+    """The request message for Operations.CancelOperation."""
+    input: JSON
+  ): JSON
+
+  """
+  Creates an instance. When creating from a backup, the capacity of the new instance needs to be equal to or larger than the capacity of the backup (and also equal to or larger than the minimum capacity of the tier).
+  """
+  file_projects_locations_instances_create(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """
+    Required. The name of the instance to create. The name must be unique for the specified project and location.
+    """
+    instanceId: String
+    input: Instance_Input
+  ): Operation
+
+  """Updates the settings of a specific instance."""
+  file_projects_locations_instances_patch(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter instancesId"""
+    instancesId: String!
+
+    """
+    Mask of fields to update. At least one path must be supplied in this field. The elements of the repeated paths field may only include these fields: * "description" * "file_shares" * "labels" * "performance_config" * "deletion_protection_enabled" * "deletion_protection_reason"
+    """
+    updateMask: String
+    input: Instance_Input
+  ): Operation
+
+  """Deletes an instance."""
+  file_projects_locations_instances_delete(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter instancesId"""
+    instancesId: String!
+
+    """
+    If set to true, all snapshots of the instance will also be deleted. (Otherwise, the request will only work if the instance has no snapshots.)
+    """
+    force: Boolean
+  ): Operation
+
+  """
+  Restores an existing instance's file share from a backup. The capacity of the instance needs to be equal to or larger than the capacity of the backup (and also equal to or larger than the minimum capacity of the tier).
+  """
+  file_projects_locations_instances_restore(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter instancesId"""
+    instancesId: String!
+    input: RestoreInstanceRequest_Input
+  ): Operation
+
+  """Revert an existing instance's file system to a specified snapshot."""
+  file_projects_locations_instances_revert(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter instancesId"""
+    instancesId: String!
+    input: RevertInstanceRequest_Input
+  ): Operation
+
+  """Promote the standby instance (replica)."""
+  file_projects_locations_instances_promoteReplica(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter instancesId"""
+    instancesId: String!
+    input: PromoteReplicaRequest_Input
+  ): Operation
+
+  """
+  Pause the standby instance (replica). WARNING: This operation makes the standby instance's NFS filesystem writable. Any data written to the standby instance while paused will be lost when the replica is resumed or promoted.
+  """
+  file_projects_locations_instances_pauseReplica(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter instancesId"""
+    instancesId: String!
+
+    """PauseReplicaRequest pauses a Filestore standby instance (replica)."""
+    input: JSON
+  ): Operation
+
+  """
+  Resume the standby instance (replica). WARNING: Any data written to the standby instance while paused will be lost when the replica is resumed.
+  """
+  file_projects_locations_instances_resumeReplica(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter instancesId"""
+    instancesId: String!
+
+    """ResumeReplicaRequest resumes a Filestore standby instance (replica)."""
+    input: JSON
+  ): Operation
+
+  """Creates a snapshot."""
+  file_projects_locations_instances_snapshots_create(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter instancesId"""
+    instancesId: String!
+
+    """
+    Required. The ID to use for the snapshot. The ID must be unique within the specified instance. This value must start with a lowercase letter followed by up to 62 lowercase letters, numbers, or hyphens, and cannot end with a hyphen.
+    """
+    snapshotId: String
+    input: Snapshot_Input
+  ): Operation
+
+  """Deletes a snapshot."""
+  file_projects_locations_instances_snapshots_delete(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter instancesId"""
+    instancesId: String!
+
+    """Path parameter snapshotsId"""
+    snapshotsId: String!
+  ): Operation
+
+  """Updates the settings of a specific snapshot."""
+  file_projects_locations_instances_snapshots_patch(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter instancesId"""
+    instancesId: String!
+
+    """Path parameter snapshotsId"""
+    snapshotsId: String!
+
+    """
+    Required. Mask of fields to update. At least one path must be supplied in this field.
+    """
+    updateMask: String
+    input: Snapshot_Input
+  ): Operation
+
+  """Creates a backup."""
+  file_projects_locations_backups_create(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """
+    Required. The ID to use for the backup. The ID must be unique within the specified project and location. This value must start with a lowercase letter followed by up to 62 lowercase letters, numbers, or hyphens, and cannot end with a hyphen. Values that do not match this pattern will trigger an INVALID_ARGUMENT error.
+    """
+    backupId: String
+    input: Backup_Input
+  ): Operation
+
+  """Deletes a backup."""
+  file_projects_locations_backups_delete(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter backupsId"""
+    backupsId: String!
+  ): Operation
+
+  """Updates the settings of a specific backup."""
+  file_projects_locations_backups_patch(
+    """Path parameter projectsId"""
+    projectsId: String!
+
+    """Path parameter locationsId"""
+    locationsId: String!
+
+    """Path parameter backupsId"""
+    backupsId: String!
+
+    """
+    Required. Mask of fields to update. At least one path must be supplied in this field.
+    """
+    updateMask: String
+    input: Backup_Input
+  ): Operation
+}
+
+"""A Filestore instance."""
+input Instance_Input {
+  """
+  Output only. The resource name of the instance, in the format `projects/{project}/locations/{location}/instances/{instance}`.
+  """
+  name: String
+
+  """The description of the instance (2048 characters or less)."""
+  description: String
+  state: query_file_projects_locations_instances_list_instances_items_state
+
+  """
+  Output only. Additional information about the instance state, if available.
+  """
+  statusMessage: String
+
+  """Output only. The time when the instance was created."""
+  createTime: String
+  tier: query_file_projects_locations_instances_list_instances_items_tier
+
+  """Resource labels to represent user provided metadata."""
+  labels: JSON
+
+  """
+  File system shares on the instance. For this version, only a single file share is supported.
+  """
+  fileShares: [FileShareConfig_Input]
+
+  """
+  VPC networks to which the instance is connected. For this version, only a single network is supported.
+  """
+  networks: [NetworkConfig_Input]
+
+  """
+  Server-specified ETag for the instance resource to prevent simultaneous updates from overwriting each other.
+  """
+  etag: String
+
+  """Output only. Reserved for future use."""
+  satisfiesPzs: Boolean
+
+  """Output only. Reserved for future use."""
+  satisfiesPzi: Boolean
+
+  """KMS key name used for data encryption."""
+  kmsKeyName: String
+
+  """
+  Output only. Field indicates all the reasons the instance is in "SUSPENDED" state.
+  """
+  suspensionReasons: [query_file_projects_locations_instances_list_instances_items_suspensionReasons_items]
+  replication: Replication_Input
+
+  """
+  Optional. Input only. Immutable. Tag key-value pairs bound to this resource. Each key must be a namespaced name and each value a short name. Example: "123456789012/environment" : "production", "123456789013/costCenter" : "marketing" See the documentation for more information: - Namespaced name: https://cloud.google.com/resource-manager/docs/tags/tags-creating-and-managing#retrieving_tag_key - Short name: https://cloud.google.com/resource-manager/docs/tags/tags-creating-and-managing#retrieving_tag_value
+  """
+  tags: JSON
+  protocol: query_file_projects_locations_instances_list_instances_items_protocol
+  directoryServices: DirectoryServicesConfig_Input
+
+  """
+  Output only. Indicates whether this instance supports configuring its performance. If true, the user can configure the instance's performance by using the 'performance_config' field.
+  """
+  customPerformanceSupported: Boolean
+  performanceConfig: PerformanceConfig_Input
+  performanceLimits: PerformanceLimits_Input
+
+  """
+  Optional. Indicates whether the instance is protected against deletion.
+  """
+  deletionProtectionEnabled: Boolean
+
+  """Optional. The reason for enabling deletion protection."""
+  deletionProtectionReason: String
+
+  """Output only. The minimum capacity of the instance in GB."""
+  minCapacityGb: BigInt
+
+  """Output only. The maximum capacity of the instance in GB."""
+  maxCapacityGb: BigInt
+
+  """
+  Output only. The incremental increase or decrease in capacity, designated in some number of GB.
+  """
+  capacityStepSizeGb: BigInt
+}
+
+"""File share configuration for the instance."""
+input FileShareConfig_Input {
+  """
+  Required. The name of the file share. Must use 1-16 characters for the basic service tier and 1-63 characters for all other service tiers. Must use lowercase letters, numbers, or underscores `[a-z0-9_]`. Must start with a letter. Immutable.
+  """
+  name: String
+
+  """
+  File share capacity in gigabytes (GB). Filestore defines 1 GB as 1024^3 bytes.
+  """
+  capacityGb: BigInt
+
+  """
+  The resource name of the backup, in the format `projects/{project_number}/locations/{location_id}/backups/{backup_id}`, that this file share has been restored from.
+  """
+  sourceBackup: String
+
+  """
+  The resource name of the BackupDR backup, in the format `projects/{project_id}/locations/{location_id}/backupVaults/{backupvault_id}/dataSources/{datasource_id}/backups/{backup_id}`, TODO (b/443690479) - Remove visibility restrictions once the feature is ready
+  """
+  sourceBackupdrBackup: String
+
+  """
+  Nfs Export Options. There is a limit of 10 export options per file share.
+  """
+  nfsExportOptions: [NfsExportOptions_Input]
+}
+
+"""NFS export options specifications."""
+input NfsExportOptions_Input {
+  """
+  List of either an IPv4 addresses in the format `{octet1}.{octet2}.{octet3}.{octet4}` or CIDR ranges in the format `{octet1}.{octet2}.{octet3}.{octet4}/{mask size}` which may mount the file share. Overlapping IP ranges are not allowed, both within and across NfsExportOptions. An error will be returned. The limit is 64 IP ranges/addresses for each FileShareConfig among all NfsExportOptions.
+  """
+  ipRanges: [String]
+
+  """
+  Optional. The source VPC network for ip_ranges. Required for instances using Private Service Connect, optional otherwise. If provided, must be the same network specified in the `NetworkConfig.network` field.
+  """
+  network: String
+  accessMode: query_file_projects_locations_instances_list_instances_items_fileShares_items_nfsExportOptions_items_accessMode
+  squashMode: query_file_projects_locations_instances_list_instances_items_fileShares_items_nfsExportOptions_items_squashMode
+
+  """
+  An integer representing the anonymous user id with a default value of 65534. Anon_uid may only be set with squash_mode of ROOT_SQUASH. An error will be returned if this field is specified for other squash_mode settings.
+  """
+  anonUid: BigInt
+
+  """
+  An integer representing the anonymous group id with a default value of 65534. Anon_gid may only be set with squash_mode of ROOT_SQUASH. An error will be returned if this field is specified for other squash_mode settings.
+  """
+  anonGid: BigInt
+}
+
+"""Network configuration for the instance."""
+input NetworkConfig_Input {
+  """
+  The name of the Google Compute Engine [VPC network](https://cloud.google.com/vpc/docs/vpc) to which the instance is connected.
+  """
+  network: String
+
+  """
+  Internet protocol versions for which the instance has IP addresses assigned.
+  """
+  modes: [query_file_projects_locations_instances_list_instances_items_networks_items_modes_items]
+
+  """
+  Optional, reserved_ip_range can have one of the following two types of values. * CIDR range value when using DIRECT_PEERING connect mode. * [Allocated IP address range](https://cloud.google.com/compute/docs/ip-addresses/reserve-static-internal-ip-address) when using PRIVATE_SERVICE_ACCESS connect mode. When the name of an allocated IP address range is specified, it must be one of the ranges associated with the private service access connection. When specified as a direct CIDR value, it must be a /29 CIDR block for Basic tier, a /24 CIDR block for High Scale tier, or a /26 CIDR block for Enterprise tier in one of the [internal IP address ranges](https://www.arin.net/reference/research/statistics/address_filters/) that identifies the range of IP addresses reserved for this instance. For example, 10.0.0.0/29, 192.168.0.0/24 or 192.168.0.0/26, respectively. The range you specify can't overlap with either existing subnets or assigned IP address ranges for other Filestore instances in the selected VPC network.
+  """
+  reservedIpRange: String
+
+  """
+  Output only. IPv4 addresses in the format `{octet1}.{octet2}.{octet3}.{octet4}` or IPv6 addresses in the format `{block1}:{block2}:{block3}:{block4}:{block5}:{block6}:{block7}:{block8}`.
+  """
+  ipAddresses: [String]
+  connectMode: query_file_projects_locations_instances_list_instances_items_networks_items_connectMode
+  pscConfig: PscConfig_Input
+}
+
+"""Private Service Connect configuration."""
+input PscConfig_Input {
+  """
+  Optional. Consumer service project in which the Private Service Connect endpoint would be set up. This is optional, and only relevant in case the network is a shared VPC. If this is not specified, the endpoint would be setup in the VPC host project.
+  """
+  endpointProject: String
+}
+
+"""Optional. The configuration used to replicate an instance."""
+input Replication_Input {
+  role: query_file_projects_locations_instances_list_instances_items_replication_role
+
+  """
+  Optional. Replication configuration for the replica instance associated with this instance. Only a single replica is supported.
+  """
+  replicas: [ReplicaConfig_Input]
+}
+
+"""Replica configuration for the instance."""
+input ReplicaConfig_Input {
+  state: query_file_projects_locations_instances_list_instances_items_replication_replicas_items_state
+
+  """Output only. The time when the replica state was updated."""
+  stateUpdateTime: String
+
+  """
+  Output only. Additional information about the replication state, if available.
+  """
+  stateReasons: [query_file_projects_locations_instances_list_instances_items_replication_replicas_items_stateReasons_items]
+
+  """
+  Optional. The name of the source instance for the replica, in the format `projects/{project}/locations/{location}/instances/{instance}`. This field is required when creating a replica.
+  """
+  peerInstance: String
+
+  """
+  Output only. The timestamp of the latest replication snapshot taken on the active instance and is already replicated safely.
+  """
+  lastActiveSyncTime: String
+}
+
+"""Directory Services configuration for Kerberos-based authentication."""
+input DirectoryServicesConfig_Input {
+  ldap: LdapConfig_Input
+}
+
+"""LdapConfig contains all the parameters for connecting to LDAP servers."""
+input LdapConfig_Input {
+  """Required. The LDAP domain name in the format of `my-domain.com`."""
+  domain: String
+
+  """
+  Required. The servers names are used for specifying the LDAP servers names. The LDAP servers names can come with two formats: 1. DNS name, for example: `ldap.example1.com`, `ldap.example2.com`. 2. IP address, for example: `10.0.0.1`, `10.0.0.2`, `10.0.0.3`. All servers names must be in the same format: either all DNS names or all IP addresses.
+  """
+  servers: [String]
+
+  """
+  Optional. The users Organizational Unit (OU) is optional. This parameter is a hint to allow faster lookup in the LDAP namespace. In case that this parameter is not provided, Filestore instance will query the whole LDAP namespace.
+  """
+  usersOu: String
+
+  """
+  Optional. The groups Organizational Unit (OU) is optional. This parameter is a hint to allow faster lookup in the LDAP namespace. In case that this parameter is not provided, Filestore instance will query the whole LDAP namespace.
+  """
+  groupsOu: String
+}
+
+"""
+Used for setting the performance configuration. If the user doesn't specify PerformanceConfig, automatically provision the default performance settings as described in https://cloud.google.com/filestore/docs/performance. Larger instances will be linearly set to more IOPS. If the instance's capacity is increased or decreased, its performance will be automatically adjusted upwards or downwards accordingly (respectively).
+"""
+input PerformanceConfig_Input {
+  iopsPerTb: IOPSPerTB_Input
+  fixedIops: FixedIOPS_Input
+}
+
+"""IOPS per TB. Filestore defines TB as 1024^4 bytes (TiB)."""
+input IOPSPerTB_Input {
+  """Required. Maximum IOPS per TiB."""
+  maxIopsPerTb: BigInt
+}
+
+"""Fixed IOPS (input/output operations per second) parameters."""
+input FixedIOPS_Input {
+  """Required. Maximum IOPS."""
+  maxIops: BigInt
+}
+
+"""
+The enforced performance limits, calculated from the instance's performance configuration.
+"""
+input PerformanceLimits_Input {
+  """Output only. The maximum IOPS."""
+  maxIops: BigInt
+
+  """Output only. The maximum read IOPS."""
+  maxReadIops: BigInt
+
+  """Output only. The maximum write IOPS."""
+  maxWriteIops: BigInt
+
+  """Output only. The maximum read throughput in bytes per second."""
+  maxReadThroughputBps: BigInt
+
+  """Output only. The maximum write throughput in bytes per second."""
+  maxWriteThroughputBps: BigInt
+}
+
+"""
+RestoreInstanceRequest restores an existing instance's file share from a backup.
+"""
+input RestoreInstanceRequest_Input {
+  """
+  Required. Name of the file share in the Filestore instance that the backup is being restored to.
+  """
+  fileShare: String
+
+  """
+  The resource name of the backup, in the format `projects/{project_number}/locations/{location_id}/backups/{backup_id}`.
+  """
+  sourceBackup: String
+}
+
+"""
+RevertInstanceRequest reverts the given instance's file share to the specified snapshot.
+"""
+input RevertInstanceRequest_Input {
+  """
+  Required. The snapshot resource ID, in the format 'my-snapshot', where the specified ID is the {snapshot_id} of the fully qualified name like `projects/{project_id}/locations/{location_id}/instances/{instance_id}/snapshots/{snapshot_id}`
+  """
+  targetSnapshotId: String
+}
+
+"""PromoteReplicaRequest promotes a Filestore standby instance (replica)."""
+input PromoteReplicaRequest_Input {
+  """
+  Optional. The resource name of the peer instance to promote, in the format `projects/{project_id}/locations/{location_id}/instances/{instance_id}`. The peer instance is required if the operation is called on an active instance.
+  """
+  peerInstance: String
+}
+
+"""A Filestore snapshot."""
+input Snapshot_Input {
+  """
+  Output only. The resource name of the snapshot, in the format `projects/{project_id}/locations/{location_id}/instances/{instance_id}/snapshots/{snapshot_id}`.
+  """
+  name: String
+
+  """
+  A description of the snapshot with 2048 characters or less. Requests with longer descriptions will be rejected.
+  """
+  description: String
+  state: query_file_projects_locations_instances_snapshots_list_snapshots_items_state
+
+  """Output only. The time when the snapshot was created."""
+  createTime: String
+
+  """Resource labels to represent user provided metadata."""
+  labels: JSON
+
+  """
+  Output only. The amount of bytes needed to allocate a full copy of the snapshot content
+  """
+  filesystemUsedBytes: BigInt
+
+  """
+  Optional. Input only. Immutable. Tag key-value pairs bound to this resource. Each key must be a namespaced name and each value a short name. Example: "123456789012/environment" : "production", "123456789013/costCenter" : "marketing" See the documentation for more information: - Namespaced name: https://cloud.google.com/resource-manager/docs/tags/tags-creating-and-managing#retrieving_tag_key - Short name: https://cloud.google.com/resource-manager/docs/tags/tags-creating-and-managing#retrieving_tag_value
+  """
+  tags: JSON
+}
+
+"""A Filestore backup."""
+input Backup_Input {
+  """
+  Output only. The resource name of the backup, in the format `projects/{project_number}/locations/{location_id}/backups/{backup_id}`.
+  """
+  name: String
+
+  """
+  A description of the backup with 2048 characters or less. Requests with longer descriptions will be rejected.
+  """
+  description: String
+  state: query_file_projects_locations_backups_list_backups_items_state
+
+  """Output only. The time when the backup was created."""
+  createTime: String
+
+  """Resource labels to represent user provided metadata."""
+  labels: JSON
+
+  """
+  Output only. Capacity of the source file share when the backup was created.
+  """
+  capacityGb: BigInt
+
+  """
+  Output only. The size of the storage used by the backup. As backups share storage, this number is expected to change with backup creation/deletion.
+  """
+  storageBytes: BigInt
+
+  """
+  The resource name of the source Filestore instance, in the format `projects/{project_number}/locations/{location_id}/instances/{instance_id}`, used to create this backup.
+  """
+  sourceInstance: String
+
+  """
+  Name of the file share in the source Filestore instance that the backup is created from.
+  """
+  sourceFileShare: String
+  sourceInstanceTier: query_file_projects_locations_backups_list_backups_items_sourceInstanceTier
+
+  """
+  Output only. Amount of bytes that will be downloaded if the backup is restored. This may be different than storage bytes, since sequential backups of the same disk will share storage.
+  """
+  downloadBytes: BigInt
+
+  """Output only. Reserved for future use."""
+  satisfiesPzs: Boolean
+
+  """Output only. Reserved for future use."""
+  satisfiesPzi: Boolean
+
+  """Immutable. KMS key name used for data encryption."""
+  kmsKey: String
+
+  """
+  Optional. Input only. Immutable. Tag key-value pairs bound to this resource. Each key must be a namespaced name and each value a short name. Example: "123456789012/environment" : "production", "123456789013/costCenter" : "marketing" See the documentation for more information: - Namespaced name: https://cloud.google.com/resource-manager/docs/tags/tags-creating-and-managing#retrieving_tag_key - Short name: https://cloud.google.com/resource-manager/docs/tags/tags-creating-and-managing#retrieving_tag_value
+  """
+  tags: JSON
+  fileSystemProtocol: query_file_projects_locations_backups_list_backups_items_fileSystemProtocol
+}
+
+enum HTTPMethod {
+  GET
+  HEAD
+  POST
+  PUT
+  DELETE
+  CONNECT
+  OPTIONS
+  TRACE
+  PATCH
+}
+
+scalar ObjMap
