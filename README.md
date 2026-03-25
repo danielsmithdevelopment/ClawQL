@@ -10,7 +10,98 @@ env is set, ClawQL defaults to a bundled **multi-provider** merge (**Google top5
 Cloudflare + Jira**). Single-provider **`cloudflare`** and other presets are
 available via **`CLAWQL_PROVIDER`** (see [`providers/README.md`](providers/README.md)).
 
-## Highlight: All-providers complex release-stack (largest benchmark)
+## TL;DR
+
+- **Install:** `npm install clawql-mcp` — full [Install](#install-npm--yarn--bun) notes (binaries, `npx`, **~90 MB** on disk).
+- **Run in two terminals** (no global install; point at your OpenAPI file):
+
+```bash
+npx -p clawql-mcp clawql-graphql
+CLAWQL_SPEC_PATH=./openapi.yaml npx clawql-mcp
+```
+
+- **Benchmarks & raw artifacts:** [Benchmarks and results](#benchmarks-and-results) — quick links to [all-providers stats](docs/benchmarks/all-providers-complex-workflow/experiment-all-providers-complex-workflow-stats.json), [default multi-provider stats](docs/benchmarks/multi-provider-complex-workflow/experiment-multi-provider-complex-workflow-stats.json), and workflow JSON outputs.
+
+---
+
+## Install (npm / yarn / bun)
+
+```bash
+npm install clawql-mcp
+# yarn add clawql-mcp
+# bun add clawql-mcp
+```
+
+**Registry size:** The published package is large (**~10 MB** compressed, **~90+ MB** installed) because it ships **`providers/`** — bundled OpenAPI/Discovery specs for **offline** lookup. That is intentional; expect longer installs and higher disk use than a typical small utility.
+
+Binaries (after install):
+
+| Command | Purpose |
+|--------|---------|
+| `clawql-mcp` | MCP server on stdio (what Cursor/Claude connect to) |
+| `clawql-mcp-http` | MCP over Streamable HTTP (`PORT`, `/mcp`, `/healthz`) |
+| `clawql-graphql` | Local GraphQL proxy used by `execute` |
+
+Supported **ESM subpaths** (see `package.json` → `exports`): `clawql-mcp` (stdio entry), `clawql-mcp/server-http`, `clawql-mcp/graphql-proxy`. Prefer the **binaries** above for normal use; imports run the same startup side effects as `node dist/...`.
+
+Example (after `npm install -g clawql-mcp` or with local `node_modules/.bin` on `PATH`):
+
+```bash
+export CLAWQL_SPEC_PATH=./openapi.yaml
+clawql-graphql &               # terminal 1 — listens on GRAPHQL_PORT (default 4000)
+clawql-mcp                     # terminal 2 — MCP over stdio
+```
+
+Run a published package **without** a global install:
+
+```bash
+npx -p clawql-mcp clawql-graphql
+npx clawql-mcp                 # same as: npx -p clawql-mcp clawql-mcp
+```
+
+(`clawql-graphql` still uses `npx -p clawql-mcp` so `npx` picks the binary from that package.)
+
+### Docker
+
+A multi-stage [Distroless](https://github.com/GoogleContainerTools/distroless) image bundles `dist/`, `bin/`, and `providers/` for local spec lookup. Build and run (stdio) are documented in [`docker/README.md`](docker/README.md).
+
+### Remote MCP (HTTP)
+
+ClawQL can run as a networked MCP server using Streamable HTTP:
+
+```bash
+PORT=8080 npm run start:http
+```
+
+Default endpoint when running locally as above: `http://localhost:8080/mcp` (health: `/healthz`). **Your real URL may differ** (other port, Docker/K8s, tunnel, Cloud Run). For Cursor, use a remote server entry with `"url": "<your-endpoint>/mcp"` — see [`.cursor/mcp.json.example`](.cursor/mcp.json.example) (copy to gitignored `.cursor/mcp.json`) and [`docker/README.md`](docker/README.md).
+
+**From the npm package** (no clone): `PORT=8080 npx -p clawql-mcp clawql-mcp-http`. **From a repo checkout:** `npm run start:http` runs the same binary.
+
+Point your MCP client at `clawql-mcp` on stdio as in [TL;DR](#tldr) (two terminals).
+
+## Installing from GitHub source (instead of npm registry)
+
+If you install directly from git, run **`npm run build`** once so `dist/` exists (the **npm registry** tarball already includes `dist/`).
+
+```bash
+npm i github:danielsmithdevelopment/ClawQL
+npm run build
+```
+
+## Benchmarks and results
+
+These sections compare **planning-context size** (merged specs on disk vs. small `search` / workflow outputs), **not** a per-call API bill. See [Planning-context numbers vs your API bill](#planning-context-numbers-vs-your-api-bill) for caveats.
+
+**Jump to data:**
+
+| Scenario | Workflow output (JSON) | Stats JSON | Markdown write-up |
+|----------|------------------------|------------|-------------------|
+| **All-providers** complex release-stack | [`workflow-complex-release-stack-latest.json`](docs/workflow-complex-release-stack-latest.json) | [`experiment-all-providers-complex-workflow-stats.json`](docs/benchmarks/all-providers-complex-workflow/experiment-all-providers-complex-workflow-stats.json) | [`experiment-all-providers-complex-workflow.md`](docs/benchmarks/all-providers-complex-workflow/experiment-all-providers-complex-workflow.md) |
+| **Default multi-provider** (GKE + Cloudflare + Jira) | [`workflow-multi-provider-latest.json`](docs/workflow-multi-provider-latest.json) | [`experiment-multi-provider-complex-workflow-stats.json`](docs/benchmarks/multi-provider-complex-workflow/experiment-multi-provider-complex-workflow-stats.json) | [`experiment-multi-provider-complex-workflow.md`](docs/benchmarks/multi-provider-complex-workflow/experiment-multi-provider-complex-workflow.md) |
+
+**More:** phase-1/phase-2 token repro ([`latest.json`](docs/benchmarks/latest.json), [`latest.md`](docs/benchmarks/latest.md)) via `npm run benchmark:tokens` — full steps in [`docs/benchmarks/REPRODUCE.md`](docs/benchmarks/REPRODUCE.md). See also [How the two phases save tokens](#how-the-two-phases-save-tokens) below.
+
+### Highlight: All-providers complex release-stack (largest benchmark)
 
 > 🏆 **Best benchmark so far** by **absolute planning-context savings**: **~13.83M tokens** not pasted into context vs embedding the **full merged spec corpus** for **`CLAWQL_PROVIDER=all-providers`**.
 
@@ -73,9 +164,7 @@ Details and reproducible stats:
 - [`docs/benchmarks/all-providers-complex-workflow/experiment-all-providers-complex-workflow.md`](docs/benchmarks/all-providers-complex-workflow/experiment-all-providers-complex-workflow.md)
 - [`docs/benchmarks/all-providers-complex-workflow/experiment-all-providers-complex-workflow-stats.json`](docs/benchmarks/all-providers-complex-workflow/experiment-all-providers-complex-workflow-stats.json)
 
----
-
-## Strong benchmark: Default multi-provider (GKE + Cloudflare + Jira)
+### Strong benchmark: Default multi-provider (GKE + Cloudflare + Jira)
 
 > **99.88%** / **861.98x** on a **smaller** three-provider corpus—still an excellent result when you only merge the default install bundle.
 
@@ -142,79 +231,6 @@ Assume the agent **never uses ClawQL** and instead keeps the **entire** provider
 
 ---
 
-## Install (npm / yarn / bun)
-
-```bash
-npm install clawql-mcp
-# yarn add clawql-mcp
-# bun add clawql-mcp
-```
-
-**Registry size:** The published package is large (**~10 MB** compressed, **~90+ MB** installed) because it ships **`providers/`** — bundled OpenAPI/Discovery specs for **offline** lookup. That is intentional; expect longer installs and higher disk use than a typical small utility.
-
-Binaries (after install):
-
-| Command | Purpose |
-|--------|---------|
-| `clawql-mcp` | MCP server on stdio (what Cursor/Claude connect to) |
-| `clawql-graphql` | Local GraphQL proxy used by `execute` |
-
-Example (after `npm install -g clawql-mcp` or with local `node_modules/.bin` on `PATH`):
-
-```bash
-export CLAWQL_SPEC_PATH=./openapi.yaml
-clawql-graphql &               # terminal 1 — listens on GRAPHQL_PORT (default 4000)
-clawql-mcp                     # terminal 2 — MCP over stdio
-```
-
-Run a published package **without** a global install:
-
-```bash
-npx -p clawql-mcp clawql-graphql
-npx clawql-mcp                 # same as: npx -p clawql-mcp clawql-mcp
-```
-
-(`clawql-graphql` still uses `npx -p clawql-mcp` so `npx` picks the binary from that package.)
-
-### Docker
-
-A multi-stage [Distroless](https://github.com/GoogleContainerTools/distroless) image bundles `dist/`, `bin/`, and `providers/` for local spec lookup. Build and run (stdio) are documented in [`docker/README.md`](docker/README.md).
-
-### Remote MCP (HTTP)
-
-ClawQL can run as a networked MCP server using Streamable HTTP:
-
-```bash
-PORT=8080 npm run start:http
-```
-
-Default endpoint when running locally as above: `http://localhost:8080/mcp` (health: `/healthz`). **Your real URL may differ** (other port, Docker/K8s, tunnel, Cloud Run). For Cursor, use a remote server entry with `"url": "<your-endpoint>/mcp"` — see [`.cursor/mcp.json.example`](.cursor/mcp.json.example) (copy to gitignored `.cursor/mcp.json`) and [`docker/README.md`](docker/README.md).
-
-## Quick start for agent users
-
-For most users, this is enough to get an agent connected:
-
-```bash
-# terminal 1
-npx -p clawql-mcp clawql-graphql
-
-# terminal 2
-CLAWQL_SPEC_PATH=./openapi.yaml npx clawql-mcp
-```
-
-Then point your MCP client (Cursor/Claude Desktop) to the `clawql-mcp` command.
-
-## Installing from GitHub source (instead of npm registry)
-
-If you install directly from git, run **`npm run build`** once so `dist/` exists (the **npm registry** tarball already includes `dist/`).
-
-```bash
-npm i github:danielsmithdevelopment/ClawQL
-npm run build
-```
-
----
-
 ## Setup
 
 ### 1. Install dependencies
@@ -245,10 +261,11 @@ npm run build && npm start  # production
 
 ### 4. Run tests
 
-Tests use [Vitest](https://vitest.dev/) (`npm test`).
+Tests use [Vitest](https://vitest.dev/) (`npm test`; `pretest` compiles `dist/` for the stdio smoke test). Coverage (v8): `npm run test:coverage` runs **`build` first**, then Vitest with coverage (text summary + HTML under `coverage/`).
 
 ```bash
 npm test
+npm run test:coverage
 ```
 
 ---
@@ -524,8 +541,9 @@ export CLAWQL_DISCOVERY_URL="https://compute.googleapis.com/\$discovery/rest?ver
 ## Maintainer notes (publishing)
 
 1. Confirm `repository.url` in `package.json` matches your GitHub repo.
-2. Run `npm run build` (or `bun run build`) and `npm test`.
-3. Never commit secrets: use `.env` locally (ignored); see `.env.example` for
+2. Run `npm test` (runs `pretest` → `build`, then Vitest).
+3. `@modelcontextprotocol/sdk` is pinned with a **1.27.x–compatible** semver range (`^1.27.1`); bump intentionally when upgrading the SDK.
+4. Never commit secrets: use `.env` locally (ignored); see `.env.example` for
    documented variables.
-4. `dist/` and `node_modules/` are gitignored — build before release or let CI
+5. `dist/` and `node_modules/` are gitignored — build before release or let CI
    produce `dist/` for consumers who install from npm.
