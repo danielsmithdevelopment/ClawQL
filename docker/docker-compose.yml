@@ -1,0 +1,25 @@
+services:
+  clawql-mcp-http:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: clawql-mcp:local
+    container_name: clawql-mcp-http
+    environment:
+      GRAPHQL_URL: http://clawql-graphql:4000/graphql
+      CLAWQL_PROVIDER: google-top50
+      PORT: 8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      - clawql-graphql
+
+  clawql-graphql:
+    image: clawql-mcp:local
+    container_name: clawql-graphql
+    command: ["dist/graphql-proxy.js"]
+    environment:
+      CLAWQL_PROVIDER: google-top50
+      GRAPHQL_PORT: 4000
+    ports:
+      - "4000:4000"
