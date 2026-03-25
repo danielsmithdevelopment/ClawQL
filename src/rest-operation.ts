@@ -26,6 +26,28 @@ export function mergedAuthHeaders(): Record<string, string> {
   return out;
 }
 
+/** Build JSON body: drop path/query args so `owner`/`repo` are not sent in PATCH/POST bodies. */
+export function buildRestRequestBodyFromArgs(
+  op: Operation,
+  args: Record<string, unknown>
+): Record<string, unknown> {
+  const pathTemplate = op.path?.includes("{+") ? op.path : op.flatPath;
+  const exclude = new Set<string>();
+  for (const m of pathTemplate.matchAll(/\{[+]?(\w+)\}/g)) {
+    exclude.add(m[1]);
+  }
+  for (const [name, p] of Object.entries(op.parameters)) {
+    if (p.location === "path" || p.location === "query") exclude.add(name);
+  }
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(args)) {
+    if (exclude.has(k)) continue;
+    if (v === undefined) continue;
+    out[k] = v;
+  }
+  return out;
+}
+
 export function renderPath(
   template: string,
   args: Record<string, unknown>
@@ -76,7 +98,7 @@ export async function executeRestOperation(
   const init: FetchRequestInit = { method, headers };
   if (method !== "GET" && method !== "HEAD" && op.requestBody) {
     headers["Content-Type"] = "application/json";
-    init.body = JSON.stringify(args);
+    init.body = JSON.stringify(buildRestRequestBodyFromArgs(op, args));
   }
 
   try {

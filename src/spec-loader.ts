@@ -293,6 +293,55 @@ export function sanitizeOpenAPIObject(value: unknown): unknown {
   return output;
 }
 
+function hasApiBaseUrlOverride(): boolean {
+  return !!(
+    process.env.CLAWQL_API_BASE_URL?.trim() ||
+    process.env.API_BASE_URL?.trim()
+  );
+}
+
+/**
+ * Specs loaded from a URL may list a path-only server (e.g. `/api/v3`).
+ * Resolve against the document URL origin so REST/GraphQL targets are absolute.
+ */
+function absolutizeRelativeOpenApiServers(
+  openapi: OpenAPIDoc,
+  documentUrl: string
+): void {
+  const servers = openapi.servers;
+  if (!servers?.length) return;
+  let originNoSlash: string;
+  try {
+    originNoSlash = new URL(documentUrl).origin.replace(/\/$/, "");
+  } catch {
+    return;
+  }
+  for (const s of servers) {
+    if (typeof s.url !== "string") continue;
+    const u = s.url.trim();
+    if (u.startsWith("//")) {
+      try {
+        const proto = new URL(documentUrl).protocol;
+        s.url = new URL(`${proto}${u}`).toString().replace(/\/$/, "");
+      } catch {
+        /* keep */
+      }
+      continue;
+    }
+    if (u.startsWith("/")) {
+      s.url = `${originNoSlash}${u}`.replace(/\/$/, "");
+      continue;
+    }
+    if (!/^[a-z][a-z0-9+.-]*:/i.test(u)) {
+      try {
+        s.url = new URL(u, documentUrl).toString().replace(/\/$/, "");
+      } catch {
+        /* keep */
+      }
+    }
+  }
+}
+
 // ─────────────────────────────────────────────
 // Spec source config (env)
 // ─────────────────────────────────────────────
@@ -670,6 +719,9 @@ export async function loadSpec(): Promise<LoadedSpec> {
   const source = resolveSpecSource();
   const raw = await loadRawDocument(source);
   const loaded = await buildLoadedSpec(raw);
+  if (source.kind === "url" && !hasApiBaseUrlOverride()) {
+    absolutizeRelativeOpenApiServers(loaded.openapi, source.url);
+  }
 
   cachedSpec = loaded;
   console.error(

@@ -2,6 +2,9 @@
  * Shared operation shape for Discovery-derived and native OpenAPI specs.
  */
 
+/** Set on `Operation.requestBody` when the spec uses an inline JSON schema (no `components/schemas` ref). */
+export const INLINE_OPENAPI_REQUEST_BODY = "__clawql_inline_request_body__";
+
 export interface Operation {
   id: string;
   method: string;

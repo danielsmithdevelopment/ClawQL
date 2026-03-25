@@ -6,6 +6,7 @@
 import { sanitizeNameForGraphQL } from "@graphql-mesh/utils";
 import type { GraphQLSchema } from "graphql";
 import type { Operation } from "./spec-loader.js";
+import { INLINE_OPENAPI_REQUEST_BODY } from "./operation-types.js";
 
 export function operationIdToGraphQLName(op: Operation): string {
   const segments = op.flatPath
@@ -61,7 +62,12 @@ export function resolveGraphQLFieldFromSchema(
   candidates.push(operationIdToRunStyleName(op));
   candidates.push(operationIdToGraphQLName(op));
   if (op.responseBody) candidates.push(lowerFirst(op.responseBody));
-  if (op.requestBody) candidates.push(lowerFirst(op.requestBody));
+  if (
+    op.requestBody &&
+    op.requestBody !== INLINE_OPENAPI_REQUEST_BODY
+  ) {
+    candidates.push(lowerFirst(op.requestBody));
+  }
 
   for (const candidate of candidates) {
     const args = byName.get(candidate);

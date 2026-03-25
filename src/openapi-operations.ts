@@ -3,6 +3,7 @@
  */
 
 import type { Operation, ParameterInfo } from "./operation-types.js";
+import { INLINE_OPENAPI_REQUEST_BODY } from "./operation-types.js";
 
 /** Minimal shape we need from OpenAPI (avoids importing full openapi-types). */
 export interface OpenAPIDocLike {
@@ -141,6 +142,7 @@ function extractRequestBodySchemaName(requestBody: unknown): string | undefined 
     if (!media?.schema) continue;
     const name = schemaRefToName(media.schema);
     if (name) return name;
+    return INLINE_OPENAPI_REQUEST_BODY;
   }
   return undefined;
 }
