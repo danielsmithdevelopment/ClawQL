@@ -20,8 +20,9 @@
 
 import fetch from "node-fetch";
 
-const GRAPHQL_URL =
-  process.env.GRAPHQL_URL ?? "http://localhost:4000/graphql";
+function getGraphqlUrl(): string {
+  return process.env.GRAPHQL_URL ?? "http://localhost:4000/graphql";
+}
 
 export interface GraphQLResponse<T = unknown> {
   data?: T;
@@ -33,7 +34,7 @@ export function createGraphQLClient() {
     gqlQuery: string,
     variables?: Record<string, unknown>
   ): Promise<T> {
-    const res = await fetch(GRAPHQL_URL, {
+    const res = await fetch(getGraphqlUrl(), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ query: gqlQuery, variables }),

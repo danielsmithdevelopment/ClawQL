@@ -332,6 +332,12 @@ Agent
                                           │  [selects ONLY requested fields]
                                           └─▶ Your REST API  (from OpenAPI servers / CLAWQL_API_BASE_URL)
 ```
+An agent connects to ClawQL over MCP stdio and uses two tools:
+
+- `search` runs against an in-memory operation index built from the loaded spec(s), so discovery is fast and does not require sending full OpenAPI documents into prompt context.
+- `execute` resolves the selected operation and calls the local GraphQL proxy, which projects only requested fields before invoking the upstream REST API (using spec `servers` or `CLAWQL_API_BASE_URL`).
+
+In multi-spec mode, ClawQL keeps one merged operation index for discovery and executes each operation against its owning spec.
 
 **Key design principles:**
 
