@@ -17,6 +17,8 @@
  * Usage (offline search against bundled specs by default):
  *   npm run build && npm run workflow:complex-release-stack
  *
+ * Real MCP (stdio or HTTP): `npm run workflow:complex-release-stack:mcp` (see that script).
+ *
  * Jira dry-run (show POST body, no network to Jira unless you also set create):
  *   WORKFLOW_PREVIEW_JIRA_REQUEST=1 npm run workflow:complex-release-stack
  *
@@ -32,6 +34,7 @@
 import { writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { COMPLEX_RELEASE_STACK_WORKFLOW as WORKFLOW } from "./complex-release-stack-steps.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -59,99 +62,6 @@ function plainToAdf(text) {
     })),
   };
 }
-
-/** Ordered steps: each runs `search` with queries on that provider's spec. */
-const WORKFLOW = [
-  {
-    provider: "google",
-    title: "Google — GKE cluster & workload",
-    queries: [
-      "create kubernetes cluster container.googleapis.com regional",
-      "node pool create autoscaling kubernetes engine",
-      "deploy workload deployment rolling update kubernetes",
-    ],
-  },
-  {
-    provider: "google",
-    title: "Google — Service (expose deployment) & firewall for Cloudflare IPs",
-    queries: [
-      "kubernetes service type load balancer external IP",
-      "compute firewall rule create allow tcp source range ingress",
-      "network endpoint group kubernetes ingress",
-    ],
-  },
-  {
-    provider: "cloudflare",
-    title: "Cloudflare — DNS to GKE / LB origin",
-    queries: [
-      "dns record create zone A CNAME proxied",
-      "zone details get",
-    ],
-  },
-  {
-    provider: "cloudflare",
-    title: "Cloudflare — caching / edge to reduce origin load",
-    queries: [
-      "cache rules configuration",
-      "zone settings cache level",
-      "tiered cache smart topology",
-    ],
-  },
-  {
-    provider: "sentry",
-    title: "Sentry — org/project/DSN & releases (GKE workload)",
-    queries: [
-      "create project organization",
-      "dsn key client key",
-      "release create deploy",
-    ],
-  },
-  {
-    provider: "github",
-    title: "GitHub Actions — build image & deploy to GKE on schedule",
-    queries: [
-      "create workflow dispatch repository",
-      "repository secrets actions",
-      "cron schedule workflow yaml",
-    ],
-  },
-  {
-    provider: "slack",
-    title: "Slack — notify release channel per pipeline step",
-    queries: [
-      "chat.postMessage channel",
-      "conversations.history channel",
-      "incoming webhook",
-    ],
-  },
-  {
-    provider: "n8n",
-    title: "n8n — automation (e.g. GitHub release from Slack trigger)",
-    queries: [
-      "create workflow",
-      "activate workflow",
-      "webhook trigger",
-    ],
-  },
-  {
-    provider: "bitbucket",
-    title: "Bitbucket — repos & Pipelines (optional mirror to GitHub flow)",
-    queries: [
-      "repository create project",
-      "pipeline run commit",
-      "pull request create",
-    ],
-  },
-  {
-    provider: "jira",
-    title: "Jira — track rollout (issue fields, assignee, labels)",
-    queries: [
-      "create issue rest api",
-      "edit issue labels priority duedate",
-      "assign issue accountId",
-    ],
-  },
-];
 
 function operationsForLogicalProvider(allOperations, logicalProvider, openapiLabelSet) {
   if (logicalProvider === "google") {

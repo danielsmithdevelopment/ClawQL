@@ -76,7 +76,7 @@ export function registerTools(server: McpServer) {
           "'get IAM policy for a job', 'cancel a running execution'."
         ),
       limit: z
-        .number().int().min(1).max(10).default(5)
+        .number().int().min(1).max(50).default(5)
         .describe("Max number of matching operations to return."),
     },
     async ({ query, limit }) => {
