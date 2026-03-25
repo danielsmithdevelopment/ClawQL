@@ -1,0 +1,14 @@
+{
+  "openapi": "3.0.3",
+  "info": { "title": "PetstoreA", "version": "1" },
+  "servers": [{ "url": "https://pets-a.example.com" }],
+  "paths": {
+    "/pets": {
+      "get": {
+        "operationId": "listPets",
+        "responses": { "200": { "description": "ok" } }
+      }
+    }
+  },
+  "components": { "schemas": {} }
+}

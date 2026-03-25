@@ -38,4 +38,33 @@ describe("spec-search", () => {
     expect(json.results).toEqual([]);
     expect(json.message).toContain("No matching operations found");
   });
+
+  it("respects limit when returning results", () => {
+    const operations: Operation[] = Array.from({ length: 20 }, (_, i) => ({
+      ...baseOp,
+      id: `svc.op${i}`,
+      description: `operation number ${i} widget`,
+    })) as Operation[];
+    const out = searchOperations(operations, "widget", 7);
+    expect(out.length).toBe(7);
+  });
+
+  it("boosts score when query term matches specLabel", () => {
+    const operations: Operation[] = [
+      {
+        ...baseOp,
+        id: "cloud.generic.list",
+        description: "list something generic",
+        specLabel: "slack",
+      } as Operation,
+      {
+        ...baseOp,
+        id: "other.vendor.list",
+        description: "slack incoming message webhook documentation",
+        specLabel: "cloudflare",
+      } as Operation,
+    ];
+    const out = searchOperations(operations, "slack", 2);
+    expect(out[0].operation.specLabel).toBe("slack");
+  });
 });

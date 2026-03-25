@@ -44,5 +44,16 @@ describe("provider-registry", () => {
   it("returns undefined for unknown group", async () => {
     await expect(resolveBundledProviderGroup("unknown-group")).resolves.toBeUndefined();
   });
+
+  it("resolves all-providers to many bundled vendors", async () => {
+    const items = await resolveBundledProviderGroup("all-providers");
+    expect(items).toBeDefined();
+    expect(items!.length).toBeGreaterThan(20);
+    const labels = new Set(items!.map((x) => x.label));
+    expect(labels.has("slack")).toBe(true);
+    expect(labels.has("n8n")).toBe(true);
+    expect(labels.has("github")).toBe(true);
+    expect(items!.every((x) => x.abs.includes("/providers/"))).toBe(true);
+  });
 });
 

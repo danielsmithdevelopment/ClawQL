@@ -15,15 +15,33 @@
 
 import { resolve as resolvePath } from "node:path";
 import express from "express";
+import type { Express } from "express";
 import { createHandler } from "graphql-http/lib/use/express";
 import { getPackageRoot } from "./package-root.js";
 import { resolveBundledProvider } from "./provider-registry.js";
 import { loadSpec, resolveApiBaseUrl } from "./spec-loader.js";
 import { buildGraphQLSchema } from "./graphql-schema-builder.js";
 
-const PORT = process.env.GRAPHQL_PORT ? parseInt(process.env.GRAPHQL_PORT) : 4000;
+const PORT = process.env.GRAPHQL_PORT ? parseInt(process.env.GRAPHQL_PORT, 10) : 4000;
 
-async function main() {
+export type CreateGraphqlProxyAppResult = {
+  app: Express;
+  /** Port the caller should listen on (from GRAPHQL_PORT or override). */
+  port: number;
+};
+
+export type CreateGraphqlProxyAppOptions = {
+  /** Listen port when using `startGraphqlProxy`; default from env. */
+  port?: number;
+};
+
+/**
+ * Build Express app with `/health` and `/graphql` (graphql-http handler).
+ */
+export async function createGraphqlProxyApp(
+  options: CreateGraphqlProxyAppOptions = {}
+): Promise<CreateGraphqlProxyAppResult> {
+  const port = options.port ?? PORT;
   const loaded = await loadSpec();
   const { openapi } = loaded;
   if (loaded.multi) {
@@ -44,20 +62,15 @@ async function main() {
   }
 
   console.error("[graphql-proxy] Building GraphQL schema from OpenAPI spec…");
-  const { schema, contextValue } = await buildGraphQLSchema(
-    openapi,
-    baseUrl
-  );
+  const { schema, contextValue } = await buildGraphQLSchema(openapi, baseUrl);
 
   const app = express();
   app.use(express.json());
 
-  // Health check
   app.get("/health", (_req, res) => {
-    res.json({ status: "ok", endpoint: `http://localhost:${PORT}/graphql` });
+    res.json({ status: "ok", endpoint: `http://localhost:${port}/graphql` });
   });
 
-  // GraphQL endpoint
   app.all(
     "/graphql",
     createHandler({
@@ -66,9 +79,20 @@ async function main() {
     })
   );
 
-  app.listen(PORT, () => {
-    console.error(`[graphql-proxy] Running at http://localhost:${PORT}/graphql`);
+  return { app, port };
+}
+
+export async function startGraphqlProxy(
+  options: CreateGraphqlProxyAppOptions = {}
+): Promise<void> {
+  const { app, port } = await createGraphqlProxyApp(options);
+  app.listen(port, () => {
+    console.error(`[graphql-proxy] Running at http://localhost:${port}/graphql`);
   });
+}
+
+async function main() {
+  await startGraphqlProxy();
 }
 
 main().catch((err) => {

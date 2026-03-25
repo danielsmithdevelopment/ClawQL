@@ -6,6 +6,7 @@
  */
 
 import { randomUUID } from "node:crypto";
+import type { Express } from "express";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { createMcpExpressApp } from "@modelcontextprotocol/sdk/server/express.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
@@ -14,8 +15,7 @@ import { loadSpec } from "./spec-loader.js";
 import { preloadSchemaFieldCacheFromDisk, registerTools } from "./tools.js";
 
 const PORT = Number.parseInt(process.env.PORT ?? process.env.MCP_PORT ?? "8080", 10);
-const MCP_PATH = process.env.MCP_PATH?.trim() || "/mcp";
-const transports = new Map<string, StreamableHTTPServerTransport>();
+const DEFAULT_MCP_PATH = "/mcp";
 
 function buildServer(): McpServer {
   const server = new McpServer({
@@ -34,20 +34,38 @@ function jsonRpcError(res: import("express").Response, message: string, code = -
   });
 }
 
-async function main() {
-  // Preload bundled specs / caches so first remote call is fast.
-  await loadSpec();
-  await preloadSchemaFieldCacheFromDisk();
+export type CreateMcpHttpAppOptions = {
+  /** Override MCP route (default `process.env.MCP_PATH` or `/mcp`). */
+  mcpPath?: string;
+  /** Express / DNS rebinding host (default `process.env.MCP_HOST` or `0.0.0.0`). */
+  host?: string;
+  /** Skip spec preload (tests that mock `loadSpec` upstream). */
+  skipSpecPreload?: boolean;
+};
+
+/**
+ * Build Express app with `/healthz` and Streamable HTTP MCP on `mcpPath`.
+ * Each call uses a fresh session transport map (safe for parallel tests).
+ */
+export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): Promise<Express> {
+  if (!options.skipSpecPreload) {
+    await loadSpec();
+    await preloadSchemaFieldCacheFromDisk();
+  }
+
+  const mcpPath =
+    (options.mcpPath?.trim() || process.env.MCP_PATH?.trim() || DEFAULT_MCP_PATH);
+  const transports = new Map<string, StreamableHTTPServerTransport>();
 
   const app = createMcpExpressApp({
-    host: process.env.MCP_HOST || "0.0.0.0",
+    host: options.host || process.env.MCP_HOST || "0.0.0.0",
   });
 
   app.get("/healthz", (_req, res) => {
-    res.json({ status: "ok", transport: "streamable-http", endpoint: MCP_PATH });
+    res.json({ status: "ok", transport: "streamable-http", endpoint: mcpPath });
   });
 
-  app.post(MCP_PATH, async (req, res) => {
+  app.post(mcpPath, async (req, res) => {
     const sessionId = req.header("mcp-session-id");
     try {
       let transport: StreamableHTTPServerTransport | undefined;
@@ -93,7 +111,7 @@ async function main() {
     }
   });
 
-  app.get(MCP_PATH, async (req, res) => {
+  app.get(mcpPath, async (req, res) => {
     const sessionId = req.header("mcp-session-id");
     if (!sessionId) {
       jsonRpcError(res, "Bad Request: missing mcp-session-id.");
@@ -107,7 +125,7 @@ async function main() {
     await transport.handleRequest(req, res);
   });
 
-  app.delete(MCP_PATH, async (req, res) => {
+  app.delete(mcpPath, async (req, res) => {
     const sessionId = req.header("mcp-session-id");
     if (!sessionId) {
       jsonRpcError(res, "Bad Request: missing mcp-session-id.");
@@ -121,9 +139,16 @@ async function main() {
     await transport.handleRequest(req, res);
   });
 
+  return app;
+}
+
+async function main() {
+  const app = await createMcpHttpApp();
   app.listen(PORT, () => {
+    const path =
+      process.env.MCP_PATH?.trim() || DEFAULT_MCP_PATH;
     console.error(
-      `[clawql-mcp-http] Streamable HTTP MCP listening on http://0.0.0.0:${PORT}${MCP_PATH}`
+      `[clawql-mcp-http] Streamable HTTP MCP listening on http://0.0.0.0:${PORT}${path}`
     );
   });
 }

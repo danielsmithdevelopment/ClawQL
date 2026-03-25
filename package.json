@@ -4,7 +4,13 @@
     "description": "MCP server: search + execute any OpenAPI 3 API with an internal GraphQL optimization layer",
     "license": "Apache-2.0",
     "type": "module",
-    "main": "dist/server.js",
+    "main": "./dist/server.js",
+    "exports": {
+        ".": "./dist/server.js",
+        "./server-http": "./dist/server-http.js",
+        "./graphql-proxy": "./dist/graphql-proxy.js",
+        "./package.json": "./package.json"
+    },
     "bin": {
         "clawql-mcp": "./bin/clawql-mcp.mjs",
         "clawql-mcp-http": "./bin/clawql-mcp-http.mjs",
@@ -71,11 +77,13 @@
         "workflow:gcp-multi:direct": "npm run build && node scripts/workflow-gcp-multi-direct.mjs",
         "report:gcp-multi-experiment": "node scripts/report-gcp-multi-experiment.mjs",
         "report:all-providers-benchmark": "npm run build && node scripts/report-all-providers-workflow-benchmark.mjs",
-        "test": "vitest run"
+        "pretest": "npm run build",
+        "test": "vitest run",
+        "test:coverage": "npm run build && vitest run --coverage"
     },
     "dependencies": {
         "@graphql-mesh/utils": "^0.104.29",
-        "@modelcontextprotocol/sdk": "^1.0.0",
+        "@modelcontextprotocol/sdk": "^1.27.1",
         "@omnigraph/openapi": "^0.109.41",
         "express": "^4.18.2",
         "graphql": "^16.8.1",
@@ -88,6 +96,7 @@
     "devDependencies": {
         "@types/express": "^4.17.21",
         "@types/node": "^20.0.0",
+        "@vitest/coverage-v8": "^4.1.1",
         "tsx": "^4.7.0",
         "typescript": "^5.3.0",
         "vitest": "^4.1.1"

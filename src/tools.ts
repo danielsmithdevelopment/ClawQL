@@ -60,11 +60,120 @@ export async function preloadSchemaFieldCacheFromDisk(): Promise<boolean> {
   return true;
 }
 
-export function registerTools(server: McpServer) {
+/** MCP `search` implementation (exported for tests). */
+export async function handleClawqlSearchToolInput(params: {
+  query: string;
+  limit: number;
+}): Promise<{ content: { type: "text"; text: string }[] }> {
+  const { operations } = await loadSpec();
+  const results = searchOperations(operations, params.query, params.limit);
+  return {
+    content: [{ type: "text", text: formatSearchResults(results) }],
+  };
+}
 
-  // ─────────────────────────────────────────
-  // search()
-  // ─────────────────────────────────────────
+/** MCP `execute` implementation (exported for tests). */
+export async function handleClawqlExecuteToolInput(params: {
+  operationId: string;
+  args: Record<string, unknown>;
+  fields?: string[];
+}): Promise<{ content: { type: "text"; text: string }[] }> {
+  const { operationId, args, fields } = params;
+  const loaded = await loadSpec();
+  const { operations, openapi, openapis, multi } = loaded;
+  const op = operations.find((o) => o.id === operationId);
+
+  if (!op) {
+    return {
+      content: [{
+        type: "text",
+        text: JSON.stringify({
+          error: `Unknown operationId: "${operationId}". Use search() to find valid operation IDs.`,
+        }),
+      }],
+    };
+  }
+
+  const openapiForOp =
+    multi && openapis?.length ? openapis[op.specIndex ?? 0] : openapi;
+
+  if (multi) {
+    const fallback = await executeRestOperation(op, args, openapiForOp);
+    if (!fallback.ok) {
+      return {
+        content: [{
+          type: "text",
+          text: JSON.stringify({
+            error: fallback.error,
+            specLabel: op.specLabel ?? null,
+            hint: "Multi-spec mode uses REST only (no GraphQL). Check path/query/body args.",
+          }),
+        }],
+      };
+    }
+    return {
+      content: [{
+        type: "text",
+        text: JSON.stringify(fallback.data, null, 2),
+      }],
+    };
+  }
+
+  try {
+    const isGet = op.method === "GET";
+    const gqlOpType = isGet ? "query" : "mutation";
+    const { fieldName, fieldArgs } = await resolveGraphQLField(op, gqlOpType);
+    const normalizedArgs = normalizeArgsForField(op, args, fieldArgs);
+    const selectedFields = fields?.length
+      ? fields.join("\n        ")
+      : defaultFields(operationId);
+
+    const varDecls = buildVarDeclarations(op, normalizedArgs);
+    const varArgs = buildVarArgs(normalizedArgs);
+    const header =
+      varDecls.trim().length > 0
+        ? `${gqlOpType} Execute(${varDecls})`
+        : `${gqlOpType} Execute`;
+    const fieldCall =
+      varArgs.trim().length > 0 ? `${fieldName}(${varArgs})` : fieldName;
+
+    const gqlDocument = `
+          ${header} {
+            ${fieldCall} {
+              ${selectedFields}
+            }
+          }
+        `;
+
+    const data = await gql.query<Record<string, unknown>>(gqlDocument, normalizedArgs);
+    return {
+      content: [{ type: "text", text: JSON.stringify(data[fieldName], null, 2) }],
+    };
+  } catch (err: unknown) {
+    const fallback = await executeRestOperation(op, args, openapiForOp);
+    if (!fallback.ok) {
+      const reason = err instanceof Error ? err.message : String(err);
+      return {
+        content: [{
+          type: "text",
+          text: JSON.stringify({
+            error: reason,
+            fallbackError: fallback.error,
+            hint: "GraphQL execution failed and REST fallback also failed.",
+          }),
+        }],
+      };
+    }
+    return {
+      content: [{
+        type: "text",
+        text: JSON.stringify(fallback.data, null, 2),
+      }],
+    };
+  }
+}
+
+export function registerTools(server: McpServer) {
   server.tool(
     "search",
     {
@@ -79,18 +188,9 @@ export function registerTools(server: McpServer) {
         .number().int().min(1).max(50).default(5)
         .describe("Max number of matching operations to return."),
     },
-    async ({ query, limit }) => {
-      const { operations } = await loadSpec();
-      const results = searchOperations(operations, query, limit);
-      return {
-        content: [{ type: "text", text: formatSearchResults(results) }],
-      };
-    }
+    handleClawqlSearchToolInput
   );
 
-  // ─────────────────────────────────────────
-  // execute()
-  // ─────────────────────────────────────────
   server.tool(
     "execute",
     {
@@ -114,102 +214,7 @@ export function registerTools(server: McpServer) {
           "Omit to get a sensible default. E.g. ['name', 'uri', 'latestReadyRevision']"
         ),
     },
-    async ({ operationId, args, fields }) => {
-      const loaded = await loadSpec();
-      const { operations, openapi, openapis, multi } = loaded;
-      const op = operations.find((o) => o.id === operationId);
-
-      if (!op) {
-        return {
-          content: [{
-            type: "text",
-            text: JSON.stringify({
-              error: `Unknown operationId: "${operationId}". Use search() to find valid operation IDs.`,
-            }),
-          }],
-        };
-      }
-
-      const openapiForOp =
-        multi && openapis?.length
-          ? openapis[op.specIndex ?? 0]
-          : openapi;
-
-      if (multi) {
-        const fallback = await executeRestOperation(op, args, openapiForOp);
-        if (!fallback.ok) {
-          return {
-            content: [{
-              type: "text",
-              text: JSON.stringify({
-                error: fallback.error,
-                specLabel: op.specLabel ?? null,
-                hint: "Multi-spec mode uses REST only (no GraphQL). Check path/query/body args.",
-              }),
-            }],
-          };
-        }
-        return {
-          content: [{
-            type: "text",
-            text: JSON.stringify(fallback.data, null, 2),
-          }],
-        };
-      }
-
-      try {
-        const isGet = op.method === "GET";
-        const gqlOpType = isGet ? "query" : "mutation";
-        const { fieldName, fieldArgs } = await resolveGraphQLField(op, gqlOpType);
-        const normalizedArgs = normalizeArgsForField(op, args, fieldArgs);
-        const selectedFields = fields?.length
-          ? fields.join("\n        ")
-          : defaultFields(operationId);
-
-        const varDecls = buildVarDeclarations(op, normalizedArgs);
-        const varArgs = buildVarArgs(normalizedArgs);
-        const header =
-          varDecls.trim().length > 0
-            ? `${gqlOpType} Execute(${varDecls})`
-            : `${gqlOpType} Execute`;
-        const fieldCall =
-          varArgs.trim().length > 0 ? `${fieldName}(${varArgs})` : fieldName;
-
-        const gqlDocument = `
-          ${header} {
-            ${fieldCall} {
-              ${selectedFields}
-            }
-          }
-        `;
-
-        const data = await gql.query<Record<string, unknown>>(gqlDocument, normalizedArgs);
-        return {
-          content: [{ type: "text", text: JSON.stringify(data[fieldName], null, 2) }],
-        };
-      } catch (err: unknown) {
-        const fallback = await executeRestOperation(op, args, openapiForOp);
-        if (!fallback.ok) {
-          const reason = err instanceof Error ? err.message : String(err);
-          return {
-            content: [{
-              type: "text",
-              text: JSON.stringify({
-                error: reason,
-                fallbackError: fallback.error,
-                hint: "GraphQL execution failed and REST fallback also failed.",
-              }),
-            }],
-          };
-        }
-        return {
-          content: [{
-            type: "text",
-            text: JSON.stringify(fallback.data, null, 2),
-          }],
-        };
-      }
-    }
+    handleClawqlExecuteToolInput
   );
 }
 
