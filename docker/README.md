@@ -53,16 +53,43 @@ Future Compose / Kubernetes / Helm manifests can live under `docker/` (or split 
 
 ## Docker Compose (local)
 
-Run both services together:
+Run both services together (containers use **`restart: unless-stopped`** so they come back after Docker Desktop or host reboot):
 
 ```bash
-docker compose -f docker/docker-compose.yml up --build
+docker compose -f docker/docker-compose.yml up -d --build
+```
+
+Or from the repo root:
+
+```bash
+make local-docker-up
 ```
 
 Endpoints:
 - MCP HTTP: `http://localhost:8080/mcp`
 - MCP health: `http://localhost:8080/healthz`
 - GraphQL proxy: `http://localhost:4000/graphql`
+
+**Cursor MCP:** use a Streamable HTTP server whose URL points at your MCP endpoint (default for this compose/K8s setup: `http://localhost:8080/mcp`). Do not assume everyone uses the same URL — copy `.cursor/mcp.json.example` to `.cursor/mcp.json` (gitignored) and set `url` to localhost, a tunnel, or your cluster ingress. You can also set **`${env:VAR}`** in `url` via [Cursor config interpolation](https://cursor.com/docs/context/mcp) if you prefer env-based URLs.
+
+## Kubernetes on Docker Desktop (local image)
+
+1. Enable **Kubernetes** in Docker Desktop (Settings → Kubernetes → Enable cluster).
+2. Build the image and apply the **`local`** overlay (LoadBalancer on **8080** for MCP):
+
+```bash
+make local-k8s-up
+# or: bash scripts/local-k8s-docker-desktop.sh
+```
+
+This tags **`clawql-mcp:latest`** (same daemon as Docker Desktop; no registry push). The overlay lives at `docker/kustomize/overlays/local`.
+
+- **`kubectl` context:** The script targets **`docker-desktop`** when that context exists (so your default context can stay on EKS or another cluster).
+- **Restart behavior:** Deployments keep **`replicas: 1`** and Kubernetes **restarts failed containers** automatically (Pod `restartPolicy` is `Always`).
+- **MCP URL:** `http://localhost:8080/mcp` once `kubectl -n clawql get svc clawql-mcp-http` shows an external address (often `localhost` on Docker Desktop).
+- **Teardown:** `kubectl delete namespace clawql` (or `kubectl --context docker-desktop delete namespace clawql`)
+
+For remote clusters, use `docker/kustomize/overlays/dev` or `prod` and `scripts/deploy-k8s.sh` with a pushed image.
 
 Cloud Run deployment guide/script:
 - [`docs/deploy-cloud-run.md`](../docs/deploy-cloud-run.md)

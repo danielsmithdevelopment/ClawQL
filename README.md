@@ -187,7 +187,7 @@ ClawQL can run as a networked MCP server using Streamable HTTP:
 PORT=8080 npm run start:http
 ```
 
-Endpoint: `http://localhost:8080/mcp` (health: `/healthz`).
+Default endpoint when running locally as above: `http://localhost:8080/mcp` (health: `/healthz`). **Your real URL may differ** (other port, Docker/K8s, tunnel, Cloud Run). For Cursor, use a remote server entry with `"url": "<your-endpoint>/mcp"` — see [`.cursor/mcp.json.example`](.cursor/mcp.json.example) (copy to gitignored `.cursor/mcp.json`) and [`docker/README.md`](docker/README.md).
 
 ## Quick start for agent users
 
@@ -400,7 +400,9 @@ In multi-spec mode, ClawQL keeps one merged operation index for discovery and ex
 
 ## Claude Desktop / Cursor config
 
-**Installed from npm** (recommended): use `npx` with `-p clawql-mcp-server` and the
+**Streamable HTTP** (e.g. `npm run start:http`, Docker, or Kubernetes): in Cursor, add an MCP server with a **`url`** (not `command`). Copy [`.cursor/mcp.json.example`](.cursor/mcp.json.example) to **`.cursor/mcp.json`** (ignored by git) and set `url` to your MCP base (defaults in the example match local compose/K8s); or use **`~/.cursor/mcp.json`** for all workspaces. See [`docker/README.md`](docker/README.md) for deployment URLs and [Cursor’s MCP docs](https://cursor.com/docs/context/mcp) for `${env:…}` interpolation.
+
+**stdio** — **Installed from npm** (recommended): use `npx` with `-p clawql-mcp-server` and the
 binary name:
 
 ```json
