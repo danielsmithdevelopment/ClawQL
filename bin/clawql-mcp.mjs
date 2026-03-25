@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * CLI entry for the MCP server (stdio).
- * Installed via: npx clawql-mcp / npm i -g clawql-mcp-server
+ * Installed via: npx clawql-mcp / npm i -g clawql-mcp
  */
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";

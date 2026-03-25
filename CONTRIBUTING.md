@@ -23,5 +23,5 @@ where to report issues (GraphQL Mesh / Omnigraph monorepo) and how to reproduce.
 
 ## Code style
 
-- TypeScript in `src/`; run `npm run build` before submitting.
-- Run `npm test` / `bun test src` as appropriate.
+- TypeScript in `src/`; after `npm install` from a **git checkout**, run **`npm run build`** once (the published npm package ships `dist/`; only clones need a local compile).
+- Run `npm test` (Vitest) before submitting.

@@ -145,10 +145,12 @@ Assume the agent **never uses ClawQL** and instead keeps the **entire** provider
 ## Install (npm / yarn / bun)
 
 ```bash
-npm install clawql-mcp-server
-# yarn add clawql-mcp-server
-# bun add clawql-mcp-server
+npm install clawql-mcp
+# yarn add clawql-mcp
+# bun add clawql-mcp
 ```
+
+**Registry size:** The published package is large (**~10 MB** compressed, **~90+ MB** installed) because it ships **`providers/`** — bundled OpenAPI/Discovery specs for **offline** lookup. That is intentional; expect longer installs and higher disk use than a typical small utility.
 
 Binaries (after install):
 
@@ -157,7 +159,7 @@ Binaries (after install):
 | `clawql-mcp` | MCP server on stdio (what Cursor/Claude connect to) |
 | `clawql-graphql` | Local GraphQL proxy used by `execute` |
 
-Example (after `npm install -g clawql-mcp-server` or with local `node_modules/.bin` on `PATH`):
+Example (after `npm install -g clawql-mcp` or with local `node_modules/.bin` on `PATH`):
 
 ```bash
 export CLAWQL_SPEC_PATH=./openapi.yaml
@@ -168,12 +170,11 @@ clawql-mcp                     # terminal 2 — MCP over stdio
 Run a published package **without** a global install:
 
 ```bash
-npx -p clawql-mcp-server clawql-graphql
-npx -p clawql-mcp-server clawql-mcp
+npx -p clawql-mcp clawql-graphql
+npx clawql-mcp                 # same as: npx -p clawql-mcp clawql-mcp
 ```
 
-(`npx clawql-mcp` alone expects an npm package literally named `clawql-mcp`; this
-repo publishes as **`clawql-mcp-server`**, so use `-p` as above.)
+(`clawql-graphql` still uses `npx -p clawql-mcp` so `npx` picks the binary from that package.)
 
 ### Docker
 
@@ -195,23 +196,22 @@ For most users, this is enough to get an agent connected:
 
 ```bash
 # terminal 1
-npx -p clawql-mcp-server clawql-graphql
+npx -p clawql-mcp clawql-graphql
 
 # terminal 2
-CLAWQL_SPEC_PATH=./openapi.yaml npx -p clawql-mcp-server clawql-mcp
+CLAWQL_SPEC_PATH=./openapi.yaml npx clawql-mcp
 ```
 
 Then point your MCP client (Cursor/Claude Desktop) to the `clawql-mcp` command.
 
 ## Installing from GitHub source (instead of npm registry)
 
-If you install directly from git, `prepare` now runs automatically to build `dist/`.
+If you install directly from git, run **`npm run build`** once so `dist/` exists (the **npm registry** tarball already includes `dist/`).
 
 ```bash
 npm i github:danielsmithdevelopment/ClawQL
+npm run build
 ```
-
-If your environment skips lifecycle scripts, run `npm run build` once manually.
 
 ---
 
@@ -245,11 +245,10 @@ npm run build && npm start  # production
 
 ### 4. Run tests
 
-Tests use [Bun](https://bun.sh)’s test runner (`bun test`).
+Tests use [Vitest](https://vitest.dev/) (`npm test`).
 
 ```bash
-bun test
-# or: npm test  (runs `bun test src` per package.json)
+npm test
 ```
 
 ---
@@ -298,6 +297,8 @@ multi-step **`search`** scenario across **Google (GKE)**, **Cloudflare**, and **
 Live Jira issue-create instructions are currently omitted — see [`docs/workflow-multi-provider.md`](docs/workflow-multi-provider.md).
 
 **Complex release-stack (offline):** `npm run workflow:complex-release-stack` runs a broader **`search`** path across **Google (top50)** and **every other bundled vendor** using **`CLAWQL_PROVIDER=all-providers`**. Output: [`docs/workflow-complex-release-stack-latest.json`](docs/workflow-complex-release-stack-latest.json). Details: [`docs/workflow-complex-release-stack.md`](docs/workflow-complex-release-stack.md).
+
+**Same scenario via real MCP (`search`, dry run by default):** `npm run workflow:complex-release-stack:mcp` runs **`search`** only (no **`execute`** → no upstream REST). Spawns the stdio server, or set **`CLAWQL_MCP_URL`** (e.g. `http://127.0.0.1:8080/mcp`) for an HTTP server that must use **`all-providers`**. For optional **`execute`** smoke tests with placeholder args: **`WORKFLOW_MCP_EXECUTE=1`** or **`npm run workflow:complex-release-stack:mcp:live`**. Writes [`docs/workflow-complex-release-stack-mcp-latest.json`](docs/workflow-complex-release-stack-mcp-latest.json).
 
 See `.env.example` for a full list.
 
@@ -402,7 +403,7 @@ In multi-spec mode, ClawQL keeps one merged operation index for discovery and ex
 
 **Streamable HTTP** (e.g. `npm run start:http`, Docker, or Kubernetes): in Cursor, add an MCP server with a **`url`** (not `command`). Copy [`.cursor/mcp.json.example`](.cursor/mcp.json.example) to **`.cursor/mcp.json`** (ignored by git) and set `url` to your MCP base (defaults in the example match local compose/K8s); or use **`~/.cursor/mcp.json`** for all workspaces. See [`docker/README.md`](docker/README.md) for deployment URLs and [Cursor’s MCP docs](https://cursor.com/docs/context/mcp) for `${env:…}` interpolation.
 
-**stdio** — **Installed from npm** (recommended): use `npx` with `-p clawql-mcp-server` and the
+**stdio** — **Installed from npm** (recommended): use `npx` with `-p clawql-mcp` and the
 binary name:
 
 ```json
@@ -410,7 +411,7 @@ binary name:
   "mcpServers": {
     "clawql": {
       "command": "npx",
-      "args": ["-p", "clawql-mcp-server", "clawql-mcp"],
+      "args": ["-p", "clawql-mcp", "clawql-mcp"],
       "env": {
         "CLAWQL_SPEC_PATH": "/absolute/path/to/openapi.yaml",
         "GRAPHQL_URL": "http://localhost:4000/graphql"
@@ -523,7 +524,7 @@ export CLAWQL_DISCOVERY_URL="https://compute.googleapis.com/\$discovery/rest?ver
 ## Maintainer notes (publishing)
 
 1. Confirm `repository.url` in `package.json` matches your GitHub repo.
-2. Run `npm run build` (or `bun run build`) and `npm test` (or `bun test`).
+2. Run `npm run build` (or `bun run build`) and `npm test`.
 3. Never commit secrets: use `.env` locally (ignored); see `.env.example` for
    documented variables.
 4. `dist/` and `node_modules/` are gitignored — build before release or let CI

@@ -1,93 +1,96 @@
-import { beforeEach, describe, expect, it, mock } from "bun:test";
 import {
   GraphQLNonNull,
   GraphQLObjectType,
   GraphQLSchema,
   GraphQLString,
 } from "graphql";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Operation } from "./operation-types.js";
 
 type Mode = "success" | "build-fail" | "missing-field" | "resolver-error";
-let mode: Mode = "success";
 
-function makeSuccessSchema(): GraphQLSchema {
-  const ResultType = new GraphQLObjectType({
-    name: "Result",
-    fields: {
-      name: { type: GraphQLString },
-    },
-  });
+const testCtx = vi.hoisted(() => {
+  const state = { mode: "success" as Mode };
 
-  const QueryType = new GraphQLObjectType({
-    name: "Query",
-    fields: {
-      // Matches operationIdToRunStyleName(op)
-      runProjectsLocationsServicesGet: {
-        type: ResultType,
-        args: {
-          projectsId: { type: new GraphQLNonNull(GraphQLString) },
-        },
-        resolve: (_src, args) => ({ name: `svc-${args.projectsId}` }),
+  function makeSuccessSchema(): GraphQLSchema {
+    const ResultType = new GraphQLObjectType({
+      name: "Result",
+      fields: {
+        name: { type: GraphQLString },
       },
-    },
-  });
+    });
 
-  return new GraphQLSchema({ query: QueryType });
-}
-
-function makeMissingFieldSchema(): GraphQLSchema {
-  const QueryType = new GraphQLObjectType({
-    name: "Query",
-    fields: {
-      somethingElse: {
-        type: GraphQLString,
-        resolve: () => "x",
-      },
-    },
-  });
-  return new GraphQLSchema({ query: QueryType });
-}
-
-function makeResolverErrorSchema(): GraphQLSchema {
-  const ResultType = new GraphQLObjectType({
-    name: "Result",
-    fields: {
-      name: { type: GraphQLString },
-    },
-  });
-  const QueryType = new GraphQLObjectType({
-    name: "Query",
-    fields: {
-      runProjectsLocationsServicesGet: {
-        type: ResultType,
-        args: {
-          projectsId: { type: new GraphQLNonNull(GraphQLString) },
-        },
-        resolve: () => {
-          throw new Error("resolver exploded");
+    const QueryType = new GraphQLObjectType({
+      name: "Query",
+      fields: {
+        runProjectsLocationsServicesGet: {
+          type: ResultType,
+          args: {
+            projectsId: { type: new GraphQLNonNull(GraphQLString) },
+          },
+          resolve: (_src, args) => ({ name: `svc-${args.projectsId}` }),
         },
       },
-    },
-  });
-  return new GraphQLSchema({ query: QueryType });
-}
+    });
 
-mock.module("./graphql-schema-builder.js", () => ({
+    return new GraphQLSchema({ query: QueryType });
+  }
+
+  function makeMissingFieldSchema(): GraphQLSchema {
+    const QueryType = new GraphQLObjectType({
+      name: "Query",
+      fields: {
+        somethingElse: {
+          type: GraphQLString,
+          resolve: () => "x",
+        },
+      },
+    });
+    return new GraphQLSchema({ query: QueryType });
+  }
+
+  function makeResolverErrorSchema(): GraphQLSchema {
+    const ResultType = new GraphQLObjectType({
+      name: "Result",
+      fields: {
+        name: { type: GraphQLString },
+      },
+    });
+    const QueryType = new GraphQLObjectType({
+      name: "Query",
+      fields: {
+        runProjectsLocationsServicesGet: {
+          type: ResultType,
+          args: {
+            projectsId: { type: new GraphQLNonNull(GraphQLString) },
+          },
+          resolve: () => {
+            throw new Error("resolver exploded");
+          },
+        },
+      },
+    });
+    return new GraphQLSchema({ query: QueryType });
+  }
+
+  return { state, makeSuccessSchema, makeMissingFieldSchema, makeResolverErrorSchema };
+});
+
+vi.mock("./graphql-schema-builder.js", () => ({
   buildGraphQLSchema: async () => {
+    const mode = testCtx.state.mode;
     if (mode === "build-fail") {
       throw new Error("schema build failed");
     }
     if (mode === "missing-field") {
-      return { schema: makeMissingFieldSchema(), contextValue: {} };
+      return { schema: testCtx.makeMissingFieldSchema(), contextValue: {} };
     }
     if (mode === "resolver-error") {
-      return { schema: makeResolverErrorSchema(), contextValue: {} };
+      return { schema: testCtx.makeResolverErrorSchema(), contextValue: {} };
     }
-    return { schema: makeSuccessSchema(), contextValue: {} };
+    return { schema: testCtx.makeSuccessSchema(), contextValue: {} };
   },
 }));
-
-const subjectPromise = import("./graphql-in-process-execute.js");
 
 const op: Operation = {
   id: "run.projects.locations.services.get",
@@ -105,12 +108,12 @@ const op: Operation = {
 
 describe("graphql-in-process-execute", () => {
   beforeEach(() => {
-    mode = "success";
+    testCtx.state.mode = "success";
   });
 
   it("returns ok=false when schema build fails", async () => {
-    mode = "build-fail";
-    const { executeOperationGraphQL } = await subjectPromise;
+    testCtx.state.mode = "build-fail";
+    const { executeOperationGraphQL } = await import("./graphql-in-process-execute.js");
     const out = await executeOperationGraphQL(
       {},
       "http://example.com",
@@ -122,8 +125,8 @@ describe("graphql-in-process-execute", () => {
   });
 
   it("returns ok=false when no GraphQL field matches operation", async () => {
-    mode = "missing-field";
-    const { executeOperationGraphQL } = await subjectPromise;
+    testCtx.state.mode = "missing-field";
+    const { executeOperationGraphQL } = await import("./graphql-in-process-execute.js");
     const out = await executeOperationGraphQL(
       {},
       "http://example.com",
@@ -140,8 +143,8 @@ describe("graphql-in-process-execute", () => {
   });
 
   it("returns ok=false when resolver throws", async () => {
-    mode = "resolver-error";
-    const { executeOperationGraphQL } = await subjectPromise;
+    testCtx.state.mode = "resolver-error";
+    const { executeOperationGraphQL } = await import("./graphql-in-process-execute.js");
     const out = await executeOperationGraphQL(
       {},
       "http://example.com",
@@ -153,8 +156,8 @@ describe("graphql-in-process-execute", () => {
   });
 
   it("returns root field data on success", async () => {
-    mode = "success";
-    const { executeOperationGraphQL } = await subjectPromise;
+    testCtx.state.mode = "success";
+    const { executeOperationGraphQL } = await import("./graphql-in-process-execute.js");
     const out = await executeOperationGraphQL(
       {},
       "http://example.com",
@@ -165,4 +168,3 @@ describe("graphql-in-process-execute", () => {
     expect(out).toEqual({ ok: true, data: { name: "svc-p1" } });
   });
 });
-

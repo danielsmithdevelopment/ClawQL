@@ -1,5 +1,5 @@
 {
-    "name": "clawql-mcp-server",
+    "name": "clawql-mcp",
     "version": "1.0.0",
     "description": "MCP server: search + execute any OpenAPI 3 API with an internal GraphQL optimization layer",
     "license": "Apache-2.0",
@@ -7,7 +7,7 @@
     "main": "dist/server.js",
     "bin": {
         "clawql-mcp": "./bin/clawql-mcp.mjs",
-    "clawql-mcp-http": "./bin/clawql-mcp-http.mjs",
+        "clawql-mcp-http": "./bin/clawql-mcp-http.mjs",
         "clawql-graphql": "./bin/clawql-graphql.mjs"
     },
     "engines": {
@@ -16,6 +16,10 @@
     "repository": {
         "type": "git",
         "url": "https://github.com/danielsmithdevelopment/ClawQL.git"
+    },
+    "homepage": "https://github.com/danielsmithdevelopment/ClawQL#readme",
+    "bugs": {
+        "url": "https://github.com/danielsmithdevelopment/ClawQL/issues"
     },
     "keywords": [
         "mcp",
@@ -33,29 +37,17 @@
     "files": [
         "dist",
         "bin",
-        "src",
         "providers",
-        "scripts",
         "README.md",
-        "docs/benchmarks",
-        "docs/benchmarks/response-examples",
-        "docs/case_studies",
-        "docs/workflow-multi-provider.md",
-        "docs/workflow-complex-release-stack.md",
-        "docs/google-apis-lookup.md",
-        "docs/workflow-gcp-multi-service.md",
-        "docs/gcp-multi-mcp-test-summary.md",
-        "docs/experiment-gcp-multi-mcp-workflow.md",
-        "docs/experiment-gcp-multi-mcp-stats.json",
         "LICENSE",
-        ".env.example"
+        ".env.example",
+        ".cursor/mcp.json.example"
     ],
     "scripts": {
         "build": "tsc",
-        "prepare": "npm run build",
         "prepublishOnly": "npm run build",
-    "start": "node dist/server.js",
-    "start:http": "node dist/server-http.js",
+        "start": "node dist/server.js",
+        "start:http": "node dist/server-http.js",
         "dev": "tsx src/server.ts",
         "graphql": "node dist/graphql-proxy.js",
         "fetch-provider-specs": "node scripts/fetch-provider-specs.mjs && node scripts/fetch-google-discovery-directory.mjs",
@@ -73,11 +65,13 @@
         "benchmark:tokens": "npm run build && node scripts/benchmark-provider-tokens.mjs",
         "workflow:multi-provider": "npm run build && node scripts/workflow-gke-cloudflare-jira.mjs",
         "workflow:complex-release-stack": "npm run build && node scripts/workflow-complex-release-stack.mjs",
+        "workflow:complex-release-stack:mcp": "npm run build && node scripts/mcp-workflow-complex-release-stack.mjs",
+        "workflow:complex-release-stack:mcp:live": "npm run build && WORKFLOW_MCP_EXECUTE=1 node scripts/mcp-workflow-complex-release-stack.mjs",
         "workflow:gcp-multi": "npm run build && node scripts/mcp-workflow-gcp-multi.mjs",
         "workflow:gcp-multi:direct": "npm run build && node scripts/workflow-gcp-multi-direct.mjs",
         "report:gcp-multi-experiment": "node scripts/report-gcp-multi-experiment.mjs",
         "report:all-providers-benchmark": "npm run build && node scripts/report-all-providers-workflow-benchmark.mjs",
-        "test": "bun test src"
+        "test": "vitest run"
     },
     "dependencies": {
         "@graphql-mesh/utils": "^0.104.29",
@@ -95,6 +89,7 @@
         "@types/express": "^4.17.21",
         "@types/node": "^20.0.0",
         "tsx": "^4.7.0",
-        "typescript": "^5.3.0"
+        "typescript": "^5.3.0",
+        "vitest": "^4.1.1"
     }
 }

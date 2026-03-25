@@ -1,11 +1,11 @@
 npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
 
-> clawql-mcp-server@1.0.0 workflow:gcp-multi
+> clawql-mcp@1.0.0 workflow:gcp-multi
 > npm run build && node scripts/mcp-workflow-gcp-multi.mjs
 
 npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
 
-> clawql-mcp-server@1.0.0 build
+> clawql-mcp@1.0.0 build
 > tsc
 
 === ClawQL GCP multi-spec workflow (MCP search) ===

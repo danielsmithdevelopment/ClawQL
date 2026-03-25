@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "vitest";
 import { __testUtils } from "./tools.js";
 import type { Operation } from "./spec-loader.js";
 

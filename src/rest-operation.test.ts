@@ -1,7 +1,8 @@
-import { afterEach, describe, expect, it } from "bun:test";
+import { afterEach, describe, expect, it } from "vitest";
 import { executeRestOperation, mergedAuthHeaders, renderPath } from "./rest-operation.js";
 import type { OpenAPIDoc } from "./spec-loader.js";
 import type { Operation } from "./operation-types.js";
+import { withFetchServer } from "./test-utils/fetch-test-server.js";
 
 function makeOpenApi(serverUrl: string): OpenAPIDoc {
   return {
@@ -61,95 +62,72 @@ describe("rest-operation helpers", () => {
 
 describe("executeRestOperation", () => {
   it("executes GET and sends non-path args as query params", async () => {
-    const server = Bun.serve({
-      port: 0,
-      fetch(req) {
-        const url = new URL(req.url);
-        expect(req.method).toBe("GET");
-        expect(url.pathname).toBe("/v1/items/abc");
-        expect(url.searchParams.get("q")).toBe("hello");
-        expect(url.searchParams.get("itemId")).toBeNull();
-        return Response.json({ ok: true, id: "abc" });
-      },
-    });
-    try {
+    await withFetchServer(async (req) => {
+      const url = new URL(req.url);
+      expect(req.method).toBe("GET");
+      expect(url.pathname).toBe("/v1/items/abc");
+      expect(url.searchParams.get("q")).toBe("hello");
+      expect(url.searchParams.get("itemId")).toBeNull();
+      return Response.json({ ok: true, id: "abc" });
+    }, async (origin) => {
       const out = await executeRestOperation(
         makeOp(),
         { itemId: "abc", q: "hello" },
-        makeOpenApi(`http://127.0.0.1:${server.port}`)
+        makeOpenApi(origin)
       );
       expect(out).toEqual({ ok: true, data: { ok: true, id: "abc" } });
-    } finally {
-      server.stop(true);
-    }
+    });
   });
 
   it("executes POST with JSON body when requestBody is present", async () => {
-    const server = Bun.serve({
-      port: 0,
-      async fetch(req) {
-        expect(req.method).toBe("POST");
-        expect(req.headers.get("content-type")).toContain("application/json");
-        const url = new URL(req.url);
-        expect(url.pathname).toBe("/v1/items/abc");
-        expect(url.searchParams.get("q")).toBe("hello");
-        const body = await req.json();
-        // Path and query args are not duplicated in JSON body (see buildRestRequestBodyFromArgs).
-        expect(body).toMatchObject({ note: "create" });
-        return Response.json({ ok: true });
-      },
-    });
-    try {
+    await withFetchServer(async (req) => {
+      expect(req.method).toBe("POST");
+      expect(req.headers.get("content-type")).toContain("application/json");
+      const url = new URL(req.url);
+      expect(url.pathname).toBe("/v1/items/abc");
+      expect(url.searchParams.get("q")).toBe("hello");
+      const body = await req.json();
+      expect(body).toMatchObject({ note: "create" });
+      return Response.json({ ok: true });
+    }, async (origin) => {
       const out = await executeRestOperation(
         makeOp({ method: "POST", requestBody: "CreateReq" }),
         { itemId: "abc", q: "hello", note: "create" },
-        makeOpenApi(`http://127.0.0.1:${server.port}`)
+        makeOpenApi(origin)
       );
       expect(out).toEqual({ ok: true, data: { ok: true } });
-    } finally {
-      server.stop(true);
-    }
+    });
   });
 
   it("returns formatted error on non-OK response", async () => {
-    const server = Bun.serve({
-      port: 0,
-      fetch() {
-        return new Response("bad upstream", { status: 500 });
-      },
-    });
-    try {
-      const out = await executeRestOperation(
-        makeOp(),
-        { itemId: "abc" },
-        makeOpenApi(`http://127.0.0.1:${server.port}`)
-      );
-      expect(out.ok).toBe(false);
-      if (!out.ok) {
-        expect(out.error).toContain("REST HTTP 500: bad upstream");
+    await withFetchServer(
+      () => new Response("bad upstream", { status: 500 }),
+      async (origin) => {
+        const out = await executeRestOperation(
+          makeOp(),
+          { itemId: "abc" },
+          makeOpenApi(origin)
+        );
+        expect(out.ok).toBe(false);
+        if (!out.ok) {
+          expect(out.error).toContain("REST HTTP 500: bad upstream");
+        }
       }
-    } finally {
-      server.stop(true);
-    }
+    );
   });
 
   it("falls back to raw text payload for non-JSON success bodies", async () => {
-    const server = Bun.serve({
-      port: 0,
-      fetch() {
-        return new Response("plain-text");
-      },
-    });
-    try {
-      const out = await executeRestOperation(
-        makeOp(),
-        { itemId: "abc" },
-        makeOpenApi(`http://127.0.0.1:${server.port}`)
-      );
-      expect(out).toEqual({ ok: true, data: "plain-text" });
-    } finally {
-      server.stop(true);
-    }
+    await withFetchServer(
+      () => new Response("plain-text"),
+      async (origin) => {
+        const out = await executeRestOperation(
+          makeOp(),
+          { itemId: "abc" },
+          makeOpenApi(origin)
+        );
+        expect(out).toEqual({ ok: true, data: "plain-text" });
+      }
+    );
   });
 
   it("returns error if OpenAPI has no resolvable base URL", async () => {
@@ -165,4 +143,3 @@ describe("executeRestOperation", () => {
     }
   });
 });
-

@@ -1,11 +1,11 @@
 npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
 
-> clawql-mcp-server@1.0.0 workflow:multi-provider
+> clawql-mcp@1.0.0 workflow:multi-provider
 > npm run build && node scripts/workflow-gke-cloudflare-jira.mjs
 
 npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
 
-> clawql-mcp-server@1.0.0 build
+> clawql-mcp@1.0.0 build
 > tsc
 
 [spec-loader] multi 1/50: iam-v2 → /Users/danielsmith/ClawQL/providers/google/apis/iam-v2/discovery.json
