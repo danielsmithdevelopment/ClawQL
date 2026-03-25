@@ -13,12 +13,30 @@ available via **`CLAWQL_PROVIDER`** (see [`providers/README.md`](providers/READM
 ## TL;DR
 
 - **Install:** `npm install clawql-mcp` — full [Install](#install-npm--yarn--bun) notes (binaries, `npx`, **~90 MB** on disk).
-- **Run in two terminals** (no global install; point at your OpenAPI file):
+- **Run** (no global install; **two terminals** — GraphQL proxy, then MCP). **Pick one** spec source:
 
-```bash
-npx -p clawql-mcp clawql-graphql
-CLAWQL_SPEC_PATH=./openapi.yaml npx clawql-mcp
-```
+  1. **Bundled specs** — nothing to download; uses pre-shipped `providers/` in the package (**`CLAWQL_PROVIDER=all-providers`** = every bundled vendor):
+
+     ```bash
+     npx -p clawql-mcp clawql-graphql
+     CLAWQL_PROVIDER=all-providers npx clawql-mcp
+     ```
+
+  2. **Local OpenAPI** (JSON/YAML; Swagger 2 is converted) — path on disk:
+
+     ```bash
+     npx -p clawql-mcp clawql-graphql
+     CLAWQL_SPEC_PATH=./openapi.yaml npx clawql-mcp
+     ```
+
+  3. **Remote spec** — HTTPS URL to OpenAPI (or YAML/JSON):
+
+     ```bash
+     npx -p clawql-mcp clawql-graphql
+     CLAWQL_SPEC_URL=https://example.com/openapi.json npx clawql-mcp
+     ```
+
+  **Google Discovery** (GCP APIs, etc.): use **`CLAWQL_DISCOVERY_URL`** instead of `CLAWQL_SPEC_URL`. Merge many specs or other presets: [Configure the API spec](#configure-the-api-spec).
 
 - **Benchmarks & raw artifacts:** [Benchmarks and results](#benchmarks-and-results) — quick links to [all-providers stats](docs/benchmarks/all-providers-complex-workflow/experiment-all-providers-complex-workflow-stats.json), [default multi-provider stats](docs/benchmarks/multi-provider-complex-workflow/experiment-multi-provider-complex-workflow-stats.json), and workflow JSON outputs.
 
@@ -47,7 +65,7 @@ Supported **ESM subpaths** (see `package.json` → `exports`): `clawql-mcp` (std
 Example (after `npm install -g clawql-mcp` or with local `node_modules/.bin` on `PATH`):
 
 ```bash
-export CLAWQL_SPEC_PATH=./openapi.yaml
+export CLAWQL_PROVIDER=all-providers
 clawql-graphql &               # terminal 1 — listens on GRAPHQL_PORT (default 4000)
 clawql-mcp                     # terminal 2 — MCP over stdio
 ```
@@ -56,10 +74,12 @@ Run a published package **without** a global install:
 
 ```bash
 npx -p clawql-mcp clawql-graphql
-npx clawql-mcp                 # same as: npx -p clawql-mcp clawql-mcp
+CLAWQL_PROVIDER=all-providers npx clawql-mcp
 ```
 
 (`clawql-graphql` still uses `npx -p clawql-mcp` so `npx` picks the binary from that package.)
+
+Same **two-terminal** pattern with a **local file** (`CLAWQL_SPEC_PATH=…`) or **URL** (`CLAWQL_SPEC_URL=…` / `CLAWQL_DISCOVERY_URL=…`) — see [TL;DR](#tldr).
 
 ### Docker
 
