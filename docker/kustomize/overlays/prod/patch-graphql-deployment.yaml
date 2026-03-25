@@ -8,6 +8,9 @@ spec:
     spec:
       containers:
         - name: clawql-graphql
+          env:
+            - name: NODE_OPTIONS
+              value: "--max-old-space-size=1536"
           resources:
             requests:
               cpu: "500m"

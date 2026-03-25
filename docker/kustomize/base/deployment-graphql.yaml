@@ -27,6 +27,8 @@ spec:
               value: google-top50
             - name: GRAPHQL_PORT
               value: "4000"
+            - name: NODE_OPTIONS
+              value: "--max-old-space-size=768"
           resources:
             requests:
               cpu: "250m"

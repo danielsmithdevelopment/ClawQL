@@ -32,6 +32,30 @@ spec:
               value: /mcp
             - name: CLAWQL_BUNDLED_OFFLINE
               value: "1"
+            # Multi-spec merge can exceed Node's default ~512Mi heap; size within cgroup limit (leave headroom for native alloc).
+            - name: NODE_OPTIONS
+              value: "--max-old-space-size=1536"
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 10
+            failureThreshold: 36
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
           resources:
             requests:
               cpu: "500m"

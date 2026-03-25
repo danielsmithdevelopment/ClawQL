@@ -10,6 +10,7 @@ patches:
   - path: patch-mcp-service.yaml
   - path: patch-mcp-deployment.yaml
   - path: patch-graphql-deployment.yaml
+  - path: patch-all-providers-env.yaml
 
 images:
   - name: clawql-mcp

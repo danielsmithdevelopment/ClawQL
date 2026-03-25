@@ -8,6 +8,9 @@ spec:
     spec:
       containers:
         - name: clawql-mcp-http
+          env:
+            - name: NODE_OPTIONS
+              value: "--max-old-space-size=3072"
           resources:
             requests:
               cpu: "1"
