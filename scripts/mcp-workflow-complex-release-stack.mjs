@@ -47,6 +47,31 @@ function serializeMcpToolResult(result) {
   };
 }
 
+function toolResultTextBlocks(serialized) {
+  return (serialized?.content ?? [])
+    .filter((b) => b.type === "text")
+    .map((b) => b.text)
+    .join("\n");
+}
+
+/** When the MCP server is an older build, `search` limit may still be capped (e.g. max 10). */
+function parseSearchLimitValidationMax(serialized) {
+  const text = toolResultTextBlocks(serialized);
+  if (!text) return null;
+  const looksLikeLimitError =
+    serialized?.isError ||
+    text.includes("32602") ||
+    text.includes("Invalid arguments") ||
+    text.includes("Input validation error");
+  if (!looksLikeLimitError) return null;
+  if (!text.includes("limit") && !text.includes("Limit")) return null;
+  const quoted = text.match(/"maximum"\s*:\s*(\d+)/);
+  if (quoted) return Number(quoted[1]);
+  const prose = text.match(/less than or equal to (\d+)/i);
+  if (prose) return Number(prose[1]);
+  return null;
+}
+
 function parseSearchResultsFromMcpCall(mcpCallToolResult) {
   const textBlocks = (mcpCallToolResult?.content ?? []).filter(
     (b) => b.type === "text"
@@ -276,12 +301,44 @@ async function main() {
   const { client, transport, serverLogs, mode, url } = await createTransportAndClient();
 
   try {
+    let detectedMcpSearchLimitMax = null;
+    let warnedLegacySearchLimit = false;
+
     async function mcpSearch(query, limit) {
-      const result = await client.callTool({
-        name: "search",
-        arguments: { query, limit },
-      });
-      return serializeMcpToolResult(result);
+      const call = async (lim) => {
+        const result = await client.callTool({
+          name: "search",
+          arguments: { query, limit: lim },
+        });
+        return serializeMcpToolResult(result);
+      };
+
+      let lim =
+        detectedMcpSearchLimitMax != null
+          ? Math.min(limit, detectedMcpSearchLimitMax)
+          : limit;
+
+      let res = await call(lim);
+      let inferred = parseSearchLimitValidationMax(res);
+      if (inferred != null && lim > inferred) {
+        detectedMcpSearchLimitMax = inferred;
+        if (!warnedLegacySearchLimit) {
+          warnedLegacySearchLimit = true;
+          console.error(
+            `[mcp-workflow] MCP server rejected search limit > ${inferred} (older image; tool schema still caps limit). Rebuild/redeploy clawql-mcp for up to ${MCP_SEARCH_HARD_CAP}. Capping this run.`
+          );
+        }
+        lim = inferred;
+        res = await call(lim);
+      }
+
+      if (parseSearchLimitValidationMax(res) != null) {
+        console.error(
+          `[mcp-workflow] search tool error: ${toolResultTextBlocks(res).slice(0, 400)}`
+        );
+      }
+
+      return res;
     }
 
     async function mcpExecute(operationId, args) {
@@ -379,6 +436,7 @@ async function main() {
         executeEachQuery,
         searchLimitQuick,
         searchLimitWide,
+        detectedMcpSearchLimitMax,
         mergedOperationCount,
         serverStderrTail: mode === "stdio" ? stderrJoined.slice(-12000) : null,
         note:
@@ -442,6 +500,11 @@ function printConsoleSummary(out, dest) {
   console.log(
     `Search → provider pick: up to ${out.meta.searchLimitQuick} hits, then up to ${out.meta.searchLimitWide} if no vendor match (MCP search allows max ${MCP_SEARCH_HARD_CAP}).`
   );
+  if (out.meta.detectedMcpSearchLimitMax != null) {
+    console.log(
+      `Note: this MCP server only accepts search limit ≤ ${out.meta.detectedMcpSearchLimitMax} (older image). Rebuild/redeploy clawql-mcp for wider searches.`
+    );
+  }
   console.log("");
 
   for (const step of out.steps) {
