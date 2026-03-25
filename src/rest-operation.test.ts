@@ -90,15 +90,19 @@ describe("executeRestOperation", () => {
       async fetch(req) {
         expect(req.method).toBe("POST");
         expect(req.headers.get("content-type")).toContain("application/json");
+        const url = new URL(req.url);
+        expect(url.pathname).toBe("/v1/items/abc");
+        expect(url.searchParams.get("q")).toBe("hello");
         const body = await req.json();
-        expect(body).toMatchObject({ itemId: "abc", q: "hello" });
+        // Path and query args are not duplicated in JSON body (see buildRestRequestBodyFromArgs).
+        expect(body).toMatchObject({ note: "create" });
         return Response.json({ ok: true });
       },
     });
     try {
       const out = await executeRestOperation(
         makeOp({ method: "POST", requestBody: "CreateReq" }),
-        { itemId: "abc", q: "hello" },
+        { itemId: "abc", q: "hello", note: "create" },
         makeOpenApi(`http://127.0.0.1:${server.port}`)
       );
       expect(out).toEqual({ ok: true, data: { ok: true } });

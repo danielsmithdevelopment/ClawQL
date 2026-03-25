@@ -31,8 +31,8 @@ describe("provider-registry", () => {
     expect(items?.every((x) => x.abs.includes("/providers/atlassian/"))).toBe(true);
   });
 
-  it("resolves google-top20 group from manifest", async () => {
-    const items = await resolveBundledProviderGroup("google-top20");
+  it("resolves google-top50 group from manifest", async () => {
+    const items = await resolveBundledProviderGroup("google-top50");
     expect(items).toBeDefined();
     expect(items!.length).toBeGreaterThan(10);
     expect(items!.some((x) => x.label === "compute-v1")).toBe(true);
