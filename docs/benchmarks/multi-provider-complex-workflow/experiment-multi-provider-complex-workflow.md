@@ -25,6 +25,13 @@ It mirrors the existing benchmark heuristic of **`approxTokens = ceil(bytes / 4)
 | Reduction | `99.88%` |
 | Compression ratio (before/after) | `861.98x` |
 
+## Hypothetical naive workflow (full spec in context)
+
+See `hypotheticalNaiveFullSpecInContext` in [`experiment-multi-provider-complex-workflow-stats.json`](experiment-multi-provider-complex-workflow-stats.json) for the same **14-query** run with:
+
+- **Variant A:** each provider corpus loaded **once** when switching vendor (**~10.2M** spec tokens total).
+- **Variant B:** full active-provider spec on **every** of the 14 model turns (**~50.7M** spec-input tokens, spec-only).
+
 ## Spec size breakdown
 
 | Source | Bytes | ~Tokens |

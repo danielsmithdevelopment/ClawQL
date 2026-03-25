@@ -30,6 +30,30 @@
     "approxTokensSaved": 10197052,
     "percentReduction": 99.88
   },
+  "hypotheticalNaiveFullSpecInContext": {
+    "description": "14 search intents in workflow-gke-cloudflare-jira.mjs: 5 Google + 5 Cloudflare + 4 Jira. Token counts are ceil(specBytes/4) per provider corpus on disk.",
+    "providerSpecApproxTokens": {
+      "googleTop50": 5130764,
+      "cloudflare": 4766363,
+      "jira": 311769
+    },
+    "modelTurnsPerProvider": { "google": 5, "cloudflare": 5, "jira": 4 },
+    "variantA_exclusiveContextPerProvider": {
+      "assumption": "Start fresh when switching provider; load that provider’s full spec once when entering the segment. Count total unique spec tokens materialized across the workflow (each of the three corpora exactly once).",
+      "totalSpecTokensApprox": 10208896,
+      "note": "Same total as pasting all three specs once if every byte is loaded exactly once across the run; ignores duplicate resends within a segment."
+    },
+    "variantB_fullSpecResentEveryModelTurn": {
+      "assumption": "Each of the 14 model requests includes the full spec for the active provider in the input (typical stateless chat API without prompt caching). Spec-only input tokens; excludes growing chat history and queries.",
+      "totalSpecInputTokensApprox": 50732711,
+      "calculation": "5*5130764 + 5*4766363 + 4*311769"
+    },
+    "clawqlOfflineWorkflowArtifactApproxTokens": 11844,
+    "savingsVsVariantB_specOnlyVsArtifact": {
+      "approxTokensSaved": 50720867,
+      "note": "Compares variant B spec-only subtotal to offline workflow JSON token estimate; does not include assistant output or tool wrappers on either side."
+    }
+  },
   "meta": {
     "charsPerToken": 4,
     "method": "Compare bytes/tokens for full loaded provider specs vs emitted multi-provider workflow output captured in multi-provider-test.md."

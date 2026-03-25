@@ -115,15 +115,30 @@ Details and reproducible stats:
 - [`docs/benchmarks/multi-provider-complex-workflow/experiment-multi-provider-complex-workflow.md`](docs/benchmarks/multi-provider-complex-workflow/experiment-multi-provider-complex-workflow.md)
 - [`docs/benchmarks/multi-provider-complex-workflow/experiment-multi-provider-complex-workflow-stats.json`](docs/benchmarks/multi-provider-complex-workflow/experiment-multi-provider-complex-workflow-stats.json)
 
-## Latest benchmark (bundled `google` · `jira` · `cloudflare`)
-
-For detailed per-provider results and reproduction steps:
-
-- [`docs/benchmarks/latest.md`](docs/benchmarks/latest.md)
-- [`docs/benchmarks/latest.json`](docs/benchmarks/latest.json)
-- [`docs/benchmarks/REPRODUCE.md`](docs/benchmarks/REPRODUCE.md)
-
 Quick context: token estimates use `~4 chars/token`; Phase 1 measures planning-context reduction (`full spec -> top-5 search`), and Phase 2 measures execution-payload reduction (`full REST JSON -> GraphQL JSON`).
+
+### Planning-context numbers vs your API bill
+
+The **~10M / ~14M token** figures in the highlights above are **not** “what one MCP call costs” or a forecast line item on a provider dashboard. They compare two **static blobs**: the byte size of **all merged spec files on disk** (as if you pasted that text into context once) vs the byte size of **one** offline workflow report JSON. It is a **thought experiment** about how big “give the model every operation definition” would be.
+
+**Normal ClawQL usage:** specs live **inside the MCP server**. The model never receives the full OpenAPI pile; it sends **`search` queries** and gets back **short ranked lists** (and later **`execute`** results). So you are **not** automatically charged ~10M input tokens per step from spec loading.
+
+**If you did paste full specs into a chat thread:** on most APIs, that text becomes part of **conversation history**, so **later turns** can still be billed on a **very large input** each request (unless the provider **prompt-caches** a stable prefix—then accounting differs). So yes—**huge pasted context tends to stick around and compound** across turns; that is exactly the failure mode these benchmarks contrast against.
+
+**After completing a full multi-step workflow** (e.g. the 14 `search` intents in the default multi-provider list): billable usage is the **sum over each model request** of (prompt + history + tool **outputs** that round + assistant text). There is no single repo-wide number: it depends on model, tool verbosity, and how large each **`execute`** response is. For a disciplined agent using only **`search`/`execute`** without pasting specs, expect **roughly tens of thousands to low hundreds of thousands** of tokens for such a run—not millions—**unless** responses or transcripts are huge.
+
+#### Hypothetical naive baseline (same 14-query multi-provider workflow)
+
+Assume the agent **never uses ClawQL** and instead keeps the **entire** provider spec in the model context whenever it works on that vendor. Query mix matches [`scripts/workflow-gke-cloudflare-jira.mjs`](scripts/workflow-gke-cloudflare-jira.mjs): **5** Google + **5** Cloudflare + **4** Jira = **14** model steps. Spec sizes match on-disk bundles ([`experiment-multi-provider-complex-workflow-stats.json`](docs/benchmarks/multi-provider-complex-workflow/experiment-multi-provider-complex-workflow-stats.json)): **~5.13M**, **~4.77M**, and **~0.31M** tokens respectively (`ceil(bytes / 4)` per corpus).
+
+| Variant | Assumption | Approx spec-related tokens (workflow) |
+|--------|------------|----------------------------------------|
+| **A — Exclusive context per provider** | Clear context when switching vendor; each provider’s **full** spec is loaded **once** when that segment starts (no duplicate loads). | **~10.2M** total spec tokens materialized (`5.13M + 4.77M + 0.31M`) — same as “paste each corpus once” across the run. |
+| **B — Full spec on every turn** | Each of the **14** requests includes the **full** spec for the **current** provider (common if the API **re-sends** the whole prompt and there is **no** effective prompt cache). Spec-only; ignores extra history and user queries. | **~50.7M** (`5×5.13M + 5×4.77M + 4×0.31M`). |
+
+**ClawQL comparison anchor:** the committed offline workflow capture is **~11.8k** tokens ([`multi-provider-test.md`](multi-provider-test.md) / stats JSON). That is **not** identical to 14 live MCP turns (which add tool envelopes and assistant text), but it is the same order of magnitude as **search-only** planning context.
+
+**Order-of-magnitude savings vs variant B (spec-only vs ~12k artifact):** **~50.7M − ~12k ≈ ~50.7M** fewer tokens attributed to carrying full specs—**>99.97%** on that slice. Versus variant A, **~10.2M − ~12k ≈ ~10.2M** on the same slice. Real dashboards also charge **assistant output**, **tool metadata**, and **history**, so totals are higher on both sides; the table isolates the **spec** component the README highlight is about.
 
 ---
 
@@ -332,7 +347,7 @@ Agent
 
 **Pricing:** Many models bill **output** higher than **input**; Phase 2 targets execution payload size.
 
-**Reproduce / refresh numbers:** `npm run benchmark:tokens` (writes [`docs/benchmarks/latest.json`](docs/benchmarks/latest.json) + [`latest.md`](docs/benchmarks/latest.md)). `latest.json` also stores `phase2Documentation` (schema vs field-string doc cost) separately.
+**Reproduce / refresh numbers:** `npm run benchmark:tokens` (writes [`docs/benchmarks/latest.json`](docs/benchmarks/latest.json) + [`latest.md`](docs/benchmarks/latest.md)). Full steps (fixtures vs live, golden file): [`docs/benchmarks/REPRODUCE.md`](docs/benchmarks/REPRODUCE.md). `latest.json` also stores `phase2Documentation` (schema vs field-string doc cost) separately.
 
 ---
 
