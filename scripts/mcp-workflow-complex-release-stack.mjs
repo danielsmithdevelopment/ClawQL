@@ -497,12 +497,13 @@ function printConsoleSummary(out, dest) {
   if (out.meta.mergedOperationCount != null) {
     console.log(`Merged operations (from server stderr): ${out.meta.mergedOperationCount}`);
   }
-  console.log(
-    `Search → provider pick: up to ${out.meta.searchLimitQuick} hits, then up to ${out.meta.searchLimitWide} if no vendor match (MCP search allows max ${MCP_SEARCH_HARD_CAP}).`
-  );
   if (out.meta.detectedMcpSearchLimitMax != null) {
     console.log(
-      `Note: this MCP server only accepts search limit ≤ ${out.meta.detectedMcpSearchLimitMax} (older image). Rebuild/redeploy clawql-mcp for wider searches.`
+      `Search → provider pick: MCP server caps \`search\` at ${out.meta.detectedMcpSearchLimitMax} hits (older image). The “wide” pass cannot see deeper results until you rebuild/redeploy clawql-mcp (then limit up to ${MCP_SEARCH_HARD_CAP}).`
+    );
+  } else {
+    console.log(
+      `Search → provider pick: up to ${out.meta.searchLimitQuick} hits, then up to ${out.meta.searchLimitWide} if no vendor match (MCP search allows max ${MCP_SEARCH_HARD_CAP}).`
     );
   }
   console.log("");
@@ -519,9 +520,17 @@ function printConsoleSummary(out, dest) {
       if (!m && hits.length > 0 && step.provider !== "google") {
         const top = hits[0];
         const slug = top.specLabel ?? "(none)";
-        const widened = q.searchWidened ? " (after widen)" : "";
+        const widened = q.searchWidened ? " (wide pass used same cap)" : "";
+        const cap = out.meta.detectedMcpSearchLimitMax;
+        const capped =
+          cap != null &&
+          typeof out.meta.searchLimitWide === "number" &&
+          cap < out.meta.searchLimitWide;
+        const tail = capped
+          ? `rebuild/redeploy the MCP image so \`search\` allows limit ${MCP_SEARCH_HARD_CAP} (then a wider pool can include "${step.provider}"). Or use a more specific query.`
+          : `try a narrower query or WORKFLOW_MCP_SEARCH_LIMIT (wide, max ${MCP_SEARCH_HARD_CAP}). Confirm CLAWQL_PROVIDER=all-providers on the MCP pod.`;
         console.log(
-          `    hint: top hit specLabel=${slug} (want "${step.provider}") in top ${hits.length} results${widened} — another vendor ranked higher; try a narrower query or increase WORKFLOW_MCP_SEARCH_LIMIT (wide, max ${MCP_SEARCH_HARD_CAP}). If this persists, check CLAWQL_PROVIDER=all-providers on the MCP pod.`
+          `    hint: top hit specLabel=${slug} (want "${step.provider}") in top ${hits.length} results${widened} — another vendor ranked higher; ${tail}`
         );
       }
       if (q.executeSummary) {
