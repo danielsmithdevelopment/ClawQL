@@ -1,0 +1,12 @@
+# Docker Desktop maps LoadBalancer to localhost — use port 8080 for MCP (Cursor, curl).
+apiVersion: v1
+kind: Service
+metadata:
+  name: clawql-mcp-http
+spec:
+  type: LoadBalancer
+  ports:
+    - $patch: replace
+    - name: http
+      port: 8080
+      targetPort: 8080

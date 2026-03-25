@@ -1,0 +1,18 @@
+# Same resource profile as dev overlay (laptop-friendly).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clawql-graphql
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+        - name: clawql-graphql
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "384Mi"
+            limits:
+              cpu: "500m"
+              memory: "768Mi"
