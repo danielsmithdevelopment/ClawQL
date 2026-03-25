@@ -1,0 +1,17 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clawql-mcp-http
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+        - name: clawql-mcp-http
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "1"
+              memory: "1Gi"

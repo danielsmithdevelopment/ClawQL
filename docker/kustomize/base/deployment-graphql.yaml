@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clawql-graphql
+  labels:
+    app: clawql-graphql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: clawql-graphql
+  template:
+    metadata:
+      labels:
+        app: clawql-graphql
+    spec:
+      containers:
+        - name: clawql-graphql
+          image: clawql-mcp:latest
+          imagePullPolicy: IfNotPresent
+          args: ["dist/graphql-proxy.js"]
+          ports:
+            - containerPort: 4000
+              name: http
+          env:
+            - name: CLAWQL_PROVIDER
+              value: google-top50
+            - name: GRAPHQL_PORT
+              value: "4000"
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "1"
+              memory: "1Gi"

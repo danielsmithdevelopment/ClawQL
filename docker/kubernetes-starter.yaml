@@ -1,0 +1,118 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: clawql
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clawql-graphql
+  namespace: clawql
+  labels:
+    app: clawql-graphql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: clawql-graphql
+  template:
+    metadata:
+      labels:
+        app: clawql-graphql
+    spec:
+      containers:
+        - name: clawql-graphql
+          image: clawql-mcp:latest
+          imagePullPolicy: IfNotPresent
+          args: ["dist/graphql-proxy.js"]
+          ports:
+            - containerPort: 4000
+              name: http
+          env:
+            - name: CLAWQL_PROVIDER
+              value: google-top50
+            - name: GRAPHQL_PORT
+              value: "4000"
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "1"
+              memory: "1Gi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: clawql-graphql
+  namespace: clawql
+  labels:
+    app: clawql-graphql
+spec:
+  type: ClusterIP
+  selector:
+    app: clawql-graphql
+  ports:
+    - name: http
+      port: 4000
+      targetPort: 4000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clawql-mcp-http
+  namespace: clawql
+  labels:
+    app: clawql-mcp-http
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: clawql-mcp-http
+  template:
+    metadata:
+      labels:
+        app: clawql-mcp-http
+    spec:
+      containers:
+        - name: clawql-mcp-http
+          image: clawql-mcp:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: CLAWQL_PROVIDER
+              value: google-top50
+            - name: GRAPHQL_URL
+              value: http://clawql-graphql:4000/graphql
+            - name: PORT
+              value: "8080"
+            - name: MCP_PATH
+              value: /mcp
+            - name: CLAWQL_BUNDLED_OFFLINE
+              value: "1"
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "2"
+              memory: "2Gi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: clawql-mcp-http
+  namespace: clawql
+  labels:
+    app: clawql-mcp-http
+spec:
+  # Switch to Ingress if your cluster standardizes on that.
+  type: LoadBalancer
+  selector:
+    app: clawql-mcp-http
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080

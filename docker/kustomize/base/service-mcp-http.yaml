@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: clawql-mcp-http
+  labels:
+    app: clawql-mcp-http
+spec:
+  type: LoadBalancer
+  selector:
+    app: clawql-mcp-http
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080

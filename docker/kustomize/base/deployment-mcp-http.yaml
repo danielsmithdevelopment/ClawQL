@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clawql-mcp-http
+  labels:
+    app: clawql-mcp-http
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: clawql-mcp-http
+  template:
+    metadata:
+      labels:
+        app: clawql-mcp-http
+    spec:
+      containers:
+        - name: clawql-mcp-http
+          image: clawql-mcp:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: CLAWQL_PROVIDER
+              value: google-top50
+            - name: GRAPHQL_URL
+              value: http://clawql-graphql:4000/graphql
+            - name: PORT
+              value: "8080"
+            - name: MCP_PATH
+              value: /mcp
+            - name: CLAWQL_BUNDLED_OFFLINE
+              value: "1"
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "2"
+              memory: "2Gi"
