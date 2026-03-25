@@ -1,0 +1,16 @@
+# Build context for `docker build -f docker/Dockerfile .`
+node_modules
+dist
+.git
+.github
+.cursor
+.env
+.env.*
+*.log
+.DS_Store
+docs
+scripts
+multi-provider-test.md
+coverage
+**/*.test.ts
+**/__tests__

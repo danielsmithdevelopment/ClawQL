@@ -7,6 +7,7 @@
     "main": "dist/server.js",
     "bin": {
         "clawql-mcp": "./bin/clawql-mcp.mjs",
+    "clawql-mcp-http": "./bin/clawql-mcp-http.mjs",
         "clawql-graphql": "./bin/clawql-graphql.mjs"
     },
     "engines": {
@@ -53,7 +54,8 @@
         "build": "tsc",
         "prepare": "npm run build",
         "prepublishOnly": "npm run build",
-        "start": "node dist/server.js",
+    "start": "node dist/server.js",
+    "start:http": "node dist/server-http.js",
         "dev": "tsx src/server.ts",
         "graphql": "node dist/graphql-proxy.js",
         "fetch-provider-specs": "node scripts/fetch-provider-specs.mjs && node scripts/fetch-google-discovery-directory.mjs",
@@ -81,7 +83,6 @@
         "@graphql-mesh/utils": "^0.104.29",
         "@modelcontextprotocol/sdk": "^1.0.0",
         "@omnigraph/openapi": "^0.109.41",
-        "clawql-mcp-server": "github:danielsmithdevelopment/ClawQL",
         "express": "^4.18.2",
         "graphql": "^16.8.1",
         "graphql-http": "^1.22.0",

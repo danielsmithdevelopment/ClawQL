@@ -175,6 +175,20 @@ npx -p clawql-mcp-server clawql-mcp
 (`npx clawql-mcp` alone expects an npm package literally named `clawql-mcp`; this
 repo publishes as **`clawql-mcp-server`**, so use `-p` as above.)
 
+### Docker
+
+A multi-stage [Distroless](https://github.com/GoogleContainerTools/distroless) image bundles `dist/`, `bin/`, and `providers/` for local spec lookup. Build and run (stdio) are documented in [`docker/README.md`](docker/README.md).
+
+### Remote MCP (HTTP)
+
+ClawQL can run as a networked MCP server using Streamable HTTP:
+
+```bash
+PORT=8080 npm run start:http
+```
+
+Endpoint: `http://localhost:8080/mcp` (health: `/healthz`).
+
 ## Quick start for agent users
 
 For most users, this is enough to get an agent connected:
@@ -432,6 +446,41 @@ Or with `tsx`:
     }
   }
 }
+```
+
+---
+
+## Cloud Run deployment (remote MCP)
+
+Run ClawQL in Cloud Run as two services:
+
+- `clawql-mcp-http` (MCP endpoint at `/mcp`)
+- `clawql-graphql` (GraphQL proxy endpoint at `/graphql`)
+
+Use the one-shot deployment script:
+
+```bash
+PROJECT_ID="your-project-id" \
+REGION="us-central1" \
+bash scripts/deploy-cloud-run.sh
+```
+
+Or via `make`:
+
+```bash
+PROJECT_ID="your-project-id" REGION="us-central1" make deploy-cloud-run
+```
+
+After deploy, point agents at:
+
+- `https://<mcp-service-url>/mcp`
+
+Full guide + options are in [`docs/deploy-cloud-run.md`](docs/deploy-cloud-run.md).
+
+For Kubernetes overlays (`dev` / `prod`) with image-tag injection:
+
+```bash
+ENV=dev IMAGE=us-central1-docker.pkg.dev/<project>/<repo>/clawql-mcp TAG=<tag> make deploy-k8s
 ```
 
 ---
