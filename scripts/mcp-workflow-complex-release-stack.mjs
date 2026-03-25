@@ -520,15 +520,27 @@ function printConsoleSummary(out, dest) {
       if (!m && hits.length > 0 && step.provider !== "google") {
         const top = hits[0];
         const slug = top.specLabel ?? "(none)";
-        const widened = q.searchWidened ? " (wide pass used same cap)" : "";
         const cap = out.meta.detectedMcpSearchLimitMax;
+        const wide = out.meta.searchLimitWide ?? MCP_SEARCH_HARD_CAP;
+        const quick = out.meta.searchLimitQuick ?? 10;
+        const widened = q.searchWidened
+          ? cap != null && cap < wide && hits.length <= quick
+            ? " (wide pass capped by server — same pool as quick)"
+            : ` (after widen; search limit ${q.searchLimitUsed ?? wide})`
+          : "";
         const capped =
           cap != null &&
           typeof out.meta.searchLimitWide === "number" &&
           cap < out.meta.searchLimitWide;
+        const filledWidePool =
+          !capped && q.searchWidened && hits.length >= wide;
         const tail = capped
           ? `rebuild/redeploy the MCP image so \`search\` allows limit ${MCP_SEARCH_HARD_CAP} (then a wider pool can include "${step.provider}"). Or use a more specific query.`
-          : `try a narrower query or WORKFLOW_MCP_SEARCH_LIMIT (wide, max ${MCP_SEARCH_HARD_CAP}). Confirm CLAWQL_PROVIDER=all-providers on the MCP pod.`;
+          : filledWidePool && wide < MCP_SEARCH_HARD_CAP
+            ? `try WORKFLOW_MCP_SEARCH_LIMIT=${MCP_SEARCH_HARD_CAP} or a query that names the vendor/API (e.g. "slack incoming webhook", "n8n webhook"). Confirm CLAWQL_PROVIDER=all-providers on the MCP pod.`
+            : filledWidePool
+              ? `search already at max ${MCP_SEARCH_HARD_CAP} hits; try a vendor-specific query so "${step.provider}" ranks higher. Confirm CLAWQL_PROVIDER=all-providers on the MCP pod.`
+              : `try a narrower query or raise WORKFLOW_MCP_SEARCH_LIMIT (wide, max ${MCP_SEARCH_HARD_CAP}). Confirm CLAWQL_PROVIDER=all-providers on the MCP pod.`;
         console.log(
           `    hint: top hit specLabel=${slug} (want "${step.provider}") in top ${hits.length} results${widened} — another vendor ranked higher; ${tail}`
         );

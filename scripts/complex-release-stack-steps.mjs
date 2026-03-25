@@ -65,7 +65,7 @@ export const COMPLEX_RELEASE_STACK_WORKFLOW = [
     queries: [
       "chat.postMessage channel",
       "conversations.history channel",
-      "incoming webhook",
+      "slack incoming webhook url",
     ],
   },
   {
@@ -74,7 +74,7 @@ export const COMPLEX_RELEASE_STACK_WORKFLOW = [
     queries: [
       "create workflow",
       "activate workflow",
-      "webhook trigger",
+      "n8n retrieve workflow executions",
     ],
   },
   {
