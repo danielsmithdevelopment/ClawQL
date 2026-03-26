@@ -4,11 +4,33 @@ MCP server with **two tools** (`search`, `execute`), an internal **GraphQL**
 layer for lean responses, and **spec-driven discovery** so agents don’t load
 full OpenAPI definitions into context.
 
+**What is MCP?** [Model Context Protocol](https://modelcontextprotocol.io) is how
+clients such as [Cursor](https://cursor.com/docs/context/mcp) or Claude Desktop
+run this server over **stdio** or **HTTP** and expose `search` / `execute` as
+tools to the model.
+
+**Why two processes?** `search` runs inside the MCP process. The **`execute`**
+tool calls a **local GraphQL proxy** (`clawql-graphql`, default
+`http://localhost:4000/graphql`) so responses stay field-selected and small; that
+proxy must be running **before** you use `execute` (second terminal or process
+manager). Deployments (Docker/K8s/Cloud Run) wire both for you.
+
 **Bring your own OpenAPI 3** (JSON/YAML file or URL), or use **Swagger 2**
 (converted automatically), or a **Google Discovery** document URL. If no spec
 env is set, ClawQL defaults to a bundled **multi-provider** merge (**Google top50 +
 Cloudflare + Jira**). Single-provider **`cloudflare`** and other presets are
 available via **`CLAWQL_PROVIDER`** (see [`providers/README.md`](providers/README.md)).
+
+**Repo vs npm:** GitHub **`ClawQL`** — published package **`clawql-mcp`**.
+
+## First 5 minutes
+
+1. Install: `npm install clawql-mcp` (or use `npx -p clawql-mcp` as below; expect **~90 MB** on disk, see [Install](#install-npm--yarn--bun)).
+2. **Terminal 1:** `npx -p clawql-mcp clawql-graphql`
+3. **Terminal 2:** `npx -p clawql-mcp clawql-mcp` (default bundled specs) **or** `CLAWQL_PROVIDER=all-providers npx -p clawql-mcp clawql-mcp`
+4. Point your MCP client at **`clawql-mcp`** on stdio; set **`GRAPHQL_URL=http://localhost:4000/graphql`** if the client env needs it — see [Claude Desktop / Cursor config](#claude-desktop--cursor-config).
+
+From there: custom spec via `CLAWQL_SPEC_PATH` / `CLAWQL_SPEC_URL`, or read [Configure the API spec](#configure-the-api-spec) for merged presets and precedence.
 
 ## TL;DR
 
@@ -292,13 +314,30 @@ npm run test:coverage
 
 ## Configure the API spec
 
-Set **one mode**. Precedence (highest → lowest):
+Selection is implemented in **two stages** in [`src/spec-loader.ts`](src/spec-loader.ts) (`resolveMultiSpecItems` → else single-spec). Use this as the single precedence story (see also `.env.example`).
 
-1. `CLAWQL_SPEC_PATHS` — merge explicit spec files
-2. `CLAWQL_PROVIDER` — merge when it names a **preset** (`google-top50`, `default-multi-provider`, `all-providers`, `atlassian`)
-3. `CLAWQL_GOOGLE_TOP50_SPECS` — merge **google-top50** if #1–2 did not apply
-4. Default merge (`google-top50 + cloudflare + jira`) when no spec env is set
-5. `CLAWQL_SPEC_PATH` / `CLAWQL_SPEC_URL` / `CLAWQL_DISCOVERY_URL`, or **single** `CLAWQL_PROVIDER` (`cloudflare`, `github`, …)
+### Stage 1 — Multi-spec merge (merged operation index)
+
+Used when any of the following applies (checked in this order):
+
+1. **`CLAWQL_SPEC_PATHS`** — merge these local files (comma, semicolon, or newline separated).
+2. **`CLAWQL_PROVIDER`** — if it names a **merged preset** (`google-top50`, `default-multi-provider`, `all-providers`, `atlassian`, …), load that bundle.
+3. **`CLAWQL_GOOGLE_TOP50_SPECS`** (`1` / `true` / `yes`) — merge curated **google-top50** if #1–2 did not already select multi-spec.
+4. **Built-in default merge** — only if **`CLAWQL_SPEC_PATHS`**, **`CLAWQL_SPEC_PATH`**, **`CLAWQL_SPEC_URL`**, **`CLAWQL_DISCOVERY_URL`**, **`CLAWQL_PROVIDER`**, and **`CLAWQL_GOOGLE_TOP50_SPECS`** are all unset: **google top50 + Cloudflare + Jira** (`default-multi-provider`).
+
+If Stage 1 runs, you get one merged **search** index; **`execute`** uses **REST** per spec (see server logs: GraphQL is not used for multi-spec execute).
+
+### Stage 2 — Single spec (first match wins)
+
+If Stage 1 does **not** apply, one document is loaded in this order:
+
+1. **`CLAWQL_SPEC_PATH`** (or `OPENAPI_SPEC_PATH` / `OPENAPI_FILE`)
+2. **`CLAWQL_SPEC_URL`** (or `OPENAPI_SPEC_URL`)
+3. **`CLAWQL_DISCOVERY_URL`** (or `GOOGLE_DISCOVERY_URL`)
+4. **`CLAWQL_PROVIDER`** — **single** bundled vendor (`cloudflare`, `github`, …), not a merged preset
+5. Rare fallback if nothing above matches (see code path `kind: "default"`)
+
+**Examples:** `CLAWQL_SPEC_PATH=./openapi.yaml` skips Stage 1 and loads that file. `CLAWQL_PROVIDER=cloudflare` alone is a **single** bundle (Stage 2). Empty env triggers Stage 1’s **default merge**, not a single-spec default.
 
 | Variable | Meaning |
 |----------|---------|
@@ -307,20 +346,18 @@ Set **one mode**. Precedence (highest → lowest):
 | `CLAWQL_GOOGLE_TOP50_SPECS` | Curated Google top50 multi-spec mode (`1`/`true`/`yes`) |
 | `CLAWQL_SPEC_URL` | URL to fetch OpenAPI JSON/YAML |
 | `CLAWQL_DISCOVERY_URL` | Google Discovery JSON URL (e.g. other GCP APIs) |
-| `CLAWQL_PROVIDER` | **Single** bundled spec (`google`, `cloudflare`, …) or **merged** preset (`google-top50`, `default-multi-provider`, `all-providers`, `atlassian`) when no path/URL/discovery env is set |
+| `CLAWQL_PROVIDER` | **Merged** preset in Stage 1, or **single** bundled vendor in Stage 2 — see [Configure the API spec](#configure-the-api-spec) (not both at once) |
 | `CLAWQL_INTROSPECTION_PATH` | Pregenerated GraphQL introspection JSON (optional; speeds MCP `execute` field matching) |
 | `CLAWQL_API_BASE_URL` | Override REST base URL (if spec has no `servers` or you need a different host) |
 
 **GCP multi-service:** use **`CLAWQL_GOOGLE_TOP50_SPECS=1`**, **`CLAWQL_PROVIDER=google-top50`**, or **`CLAWQL_SPEC_PATHS`** so `search` / `execute` see every merged API in one server; `execute` uses REST in that mode. For **every bundled vendor** (Google top50 + Jira, Bitbucket, Cloudflare, GitHub, Slack, Sentry, n8n), use **`CLAWQL_PROVIDER=all-providers`**. See [`docs/workflow-gcp-multi-service.md`](docs/workflow-gcp-multi-service.md).  
 **Integration check:** `npm run workflow:gcp-multi` runs **`tools/call` → `search`** over real MCP stdio and writes `docs/workflow-gcp-multi-latest.json` (full `CallToolResult` + parsed body). `npm run workflow:gcp-multi:direct` is a faster in-process-only variant for debugging rankers. One-page results summary: [`docs/gcp-multi-mcp-test-summary.md`](docs/gcp-multi-mcp-test-summary.md). Detailed experiment write-up (queries, APIs, token heuristic, MCP samples): [`docs/experiment-gcp-multi-mcp-workflow.md`](docs/experiment-gcp-multi-mcp-workflow.md); `npm run report:gcp-multi-experiment` refreshes [`docs/experiment-gcp-multi-mcp-stats.json`](docs/experiment-gcp-multi-mcp-stats.json).
 
-If **none** of the spec variables are set, ClawQL loads a default bundled
-multi-provider set (**Google top50 + Cloudflare + Jira**) so first-run complex
-queries work out-of-the-box. Set **`CLAWQL_PROVIDER=google`**,
+The default **first-run** bundle is **Stage 1 #4** above. To use another bundled spec or merged preset, set **`CLAWQL_PROVIDER`** — e.g. **`google`**,
 **`atlassian`**, **`cloudflare`**, **`github`**, **`slack`**, **`sentry`**, or **`n8n`**
-to force a specific bundled spec or merged preset (see `providers/README.md`; **`all-providers`** = top50 + all other bundled vendors).  
-Compatibility aliases currently also exist for **`jira`** and **`bitbucket`**.
-if a bundled file is missing, the provider registry **fallback URL** is fetched
+(see `providers/README.md`; **`all-providers`** = top50 + all other bundled vendors).  
+Compatibility aliases currently also exist for **`jira`** and **`bitbucket`**.  
+If a bundled file is missing, the provider registry **fallback URL** is fetched
 unless `CLAWQL_BUNDLED_OFFLINE=1`.
 
 Maintainers: `npm run fetch-provider-specs` downloads specs; `npm run pregenerate-graphql`

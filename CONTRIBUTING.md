@@ -25,3 +25,4 @@ where to report issues (GraphQL Mesh / Omnigraph monorepo) and how to reproduce.
 
 - TypeScript in `src/`; after `npm install` from a **git checkout**, run **`npm run build`** once (the published npm package ships `dist/`; only clones need a local compile).
 - Run `npm test` (Vitest) before submitting.
+- **Bun** is only needed for maintainer scripts such as `pregenerate-graphql` / `pregenerate-google-top50-graphql` — not for `npm run build`, `npm test`, or normal local runs.
