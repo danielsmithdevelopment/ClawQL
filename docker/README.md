@@ -91,6 +91,33 @@ This tags **`clawql-mcp:latest`** (same daemon as Docker Desktop; no registry pu
 - **Cold start:** The MCP container loads every bundled spec before `listen()`; hitting `:8080` too early can produce `fetch failed` / “other side closed” in Node. Wait until `curl http://localhost:8080/healthz` returns `{"status":"ok"…}` or the pod is **Ready** (the MCP Deployment includes `/healthz` startup/readiness probes). The `workflow:complex-release-stack:mcp` script polls `/healthz` when `CLAWQL_MCP_URL` is set.
 - **Teardown:** `kubectl delete namespace clawql` (or `kubectl --context docker-desktop delete namespace clawql`)
 
+### GitHub API auth (`CLAWQL_BEARER_TOKEN`) on Docker Desktop K8s
+
+ClawQL adds `Authorization: Bearer …` from **`CLAWQL_BEARER_TOKEN`** (see `src/rest-operation.ts`). For **`issues/create`** and other GitHub `execute` calls, set it in the cluster:
+
+1. **One-shot (recommended):** from the ClawQL repo root, with `gh` logged in:
+
+   ```bash
+   bash scripts/k8s-docker-desktop-set-github-token.sh
+   ```
+
+   This creates/updates Secret **`clawql-github-auth`** in namespace **`clawql`**, attaches **`CLAWQL_BEARER_TOKEN`** to **`deployment/clawql-mcp-http`**, and **`rollout restart`**s it.
+
+   You can also pipe a PAT: `gh auth token | bash scripts/k8s-docker-desktop-set-github-token.sh`, or `export CLAWQL_BEARER_TOKEN=…` before the script.
+
+2. **Manual:**
+
+   ```bash
+   kubectl create secret generic clawql-github-auth -n clawql \
+     --from-literal=CLAWQL_BEARER_TOKEN="$(gh auth token)" \
+     --dry-run=client -o yaml | kubectl apply -f -
+   kubectl -n clawql set env deployment/clawql-mcp-http \
+     --from=secret/clawql-github-auth --keys=CLAWQL_BEARER_TOKEN --overwrite
+   kubectl -n clawql rollout restart deployment/clawql-mcp-http
+   ```
+
+**Note:** Re-applying the Kustomize overlay (`kubectl apply -k docker/kustomize/overlays/local`) resets the Deployment to the YAML on disk and **drops** env injected only via `kubectl set env`. Re-run the script after a full re-apply, or add a permanent `secretKeyRef` patch to your overlay.
+
 For remote clusters, use `docker/kustomize/overlays/dev` or `prod` and `scripts/deploy-k8s.sh` with a pushed image.
 
 Cloud Run deployment guide/script:
