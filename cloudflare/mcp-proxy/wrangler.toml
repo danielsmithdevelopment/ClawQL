@@ -1,0 +1,17 @@
+# Reverse proxy: public Worker URL → your Node `clawql-mcp-http` origin.
+#
+# 1. Deploy ClawQL HTTP somewhere reachable (Fly, Railway, Cloud Run, VPS, etc.).
+#    Run with execute support: same host must reach `clawql-graphql` (see repo README).
+#    For Gallery: CLAWQL_CORS_ALLOW_ORIGIN=* on the origin, OR rely on this Worker only.
+#
+# 2. Set secret:  wrangler secret put ORIGIN
+#    Value: base URL only, no path — e.g. https://clawql-mcp.fly.dev
+#
+# 3. Deploy:     npx wrangler deploy
+#
+# Skill secret line 1: https://<your-worker>.<subdomain>.workers.dev/mcp
+
+name = "clawql-mcp-proxy"
+main = "src/index.ts"
+compatibility_date = "2025-04-01"
+# Optional: add [vars] ORIGIN = "https://..." for a public dev backend (secrets override vars).

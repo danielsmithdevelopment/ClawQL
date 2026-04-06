@@ -560,11 +560,36 @@ After deploy, point agents at:
 
 Full guide + options are in [`docs/deploy-cloud-run.md`](docs/deploy-cloud-run.md).
 
-For Kubernetes overlays (`dev` / `prod`) with image-tag injection:
+---
+
+## Kubernetes (local MCP on Docker Desktop)
+
+Run **MCP Streamable HTTP** and **clawql-graphql** in a local cluster so clients can use a fixed URL (typically **`http://localhost:8080/mcp`**) instead of stdio.
+
+1. Enable **Kubernetes** in Docker Desktop.
+2. From the repo root:
+
+   ```bash
+   make local-k8s-up
+   # or: bash scripts/local-k8s-docker-desktop.sh
+   ```
+
+   This builds **`clawql-mcp:latest`**, applies **`docker/kustomize/overlays/local`**, and waits for rollouts. The script uses the **`docker-desktop`** kubectl context when present.
+
+3. **Health:** `curl -s http://localhost:8080/healthz` should return `{"status":"ok",...}` before connecting the client.
+4. **GitHub / bearer auth:** `bash scripts/k8s-docker-desktop-set-github-token.sh` (or set `CLAWQL_BEARER_TOKEN` via a Secret) — see [`docker/README.md`](docker/README.md).
+
+**Teardown:** `kubectl --context docker-desktop delete namespace clawql`
+
+Longer-form docs for operators: [`website/src/app/kubernetes/page.mdx`](website/src/app/kubernetes/page.mdx) (served at **`/kubernetes`** when you run the Next.js site in **`website/`**).
+
+**Remote clusters** (`dev` / `prod` overlays, registry image + tag):
 
 ```bash
 ENV=dev IMAGE=us-central1-docker.pkg.dev/<project>/<repo>/clawql-mcp TAG=<tag> make deploy-k8s
 ```
+
+See [`docs/deploy-k8s.md`](docs/deploy-k8s.md).
 
 ---
 

@@ -17,6 +17,41 @@ import { preloadSchemaFieldCacheFromDisk, registerTools } from "./tools.js";
 const PORT = Number.parseInt(process.env.PORT ?? process.env.MCP_PORT ?? "8080", 10);
 const DEFAULT_MCP_PATH = "/mcp";
 
+/**
+ * When `CLAWQL_CORS_ALLOW_ORIGIN` is set (e.g. `*` for Gallery / mobile webviews),
+ * enable CORS + OPTIONS preflight so browser `fetch` to `/mcp` works.
+ */
+function applyCorsIfConfigured(
+  req: import("express").Request,
+  res: import("express").Response,
+  next: import("express").NextFunction
+): void {
+  const allow = process.env.CLAWQL_CORS_ALLOW_ORIGIN?.trim();
+  if (!allow) {
+    next();
+    return;
+  }
+  res.setHeader("Access-Control-Allow-Origin", allow);
+  if (allow !== "*") {
+    res.setHeader("Vary", "Origin");
+  }
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Accept, Authorization, mcp-session-id, mcp-protocol-version"
+  );
+  res.setHeader(
+    "Access-Control-Expose-Headers",
+    "mcp-session-id, Mcp-Session-Id, mcp-protocol-version"
+  );
+  res.setHeader("Access-Control-Max-Age", "86400");
+  if (req.method === "OPTIONS") {
+    res.sendStatus(204);
+    return;
+  }
+  next();
+}
+
 function buildServer(): McpServer {
   const server = new McpServer({
     name: "clawql-mcp",
@@ -60,6 +95,8 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   const app = createMcpExpressApp({
     host: options.host || process.env.MCP_HOST || "0.0.0.0",
   });
+
+  app.use(applyCorsIfConfigured);
 
   app.get("/healthz", (_req, res) => {
     res.json({ status: "ok", transport: "streamable-http", endpoint: mcpPath });
