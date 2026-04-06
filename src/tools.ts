@@ -31,6 +31,28 @@ import { INLINE_OPENAPI_REQUEST_BODY } from "./operation-types.js";
 
 const gql = createGraphQLClient();
 type GraphQLFieldInfo = { name: string; args: string[] };
+
+/**
+ * REST execute paths (multi-spec or GraphQL→REST fallback) return the full HTTP JSON body.
+ * When the caller passed `fields`, keep only those top-level keys so behavior aligns with
+ * the GraphQL selection set (nested GraphQL fragments are not parsed—list top-level names).
+ */
+export function projectRestByFields(data: unknown, fields: string[] | undefined): unknown {
+  if (!fields?.length) return data;
+  const pick = (item: unknown): unknown => {
+    if (item !== null && typeof item === "object" && !Array.isArray(item)) {
+      const obj = item as Record<string, unknown>;
+      const out: Record<string, unknown> = {};
+      for (const f of fields) {
+        if (Object.prototype.hasOwnProperty.call(obj, f)) out[f] = obj[f];
+      }
+      return out;
+    }
+    return item;
+  };
+  if (Array.isArray(data)) return data.map(pick);
+  return pick(data);
+}
 let schemaFieldCachePromise: Promise<{
   query: GraphQLFieldInfo[];
   mutation: GraphQLFieldInfo[];
@@ -114,7 +136,7 @@ export async function handleClawqlExecuteToolInput(params: {
     return {
       content: [{
         type: "text",
-        text: JSON.stringify(fallback.data, null, 2),
+        text: JSON.stringify(projectRestByFields(fallback.data, fields), null, 2),
       }],
     };
   }
@@ -167,7 +189,7 @@ export async function handleClawqlExecuteToolInput(params: {
     return {
       content: [{
         type: "text",
-        text: JSON.stringify(fallback.data, null, 2),
+        text: JSON.stringify(projectRestByFields(fallback.data, fields), null, 2),
       }],
     };
   }
@@ -394,4 +416,5 @@ export const __testUtils = {
   buildVarArgs,
   discoveryTypeToGraphQL,
   defaultFields,
+  projectRestByFields,
 };
