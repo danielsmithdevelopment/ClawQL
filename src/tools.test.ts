@@ -61,4 +61,31 @@ describe("tools helpers", () => {
       "bindings"
     );
   });
+
+  it("projectRestByFields leaves data unchanged when fields omitted", () => {
+    const row = { a: 1, b: { c: 2 } };
+    expect(__testUtils.projectRestByFields(row, undefined)).toBe(row);
+    expect(__testUtils.projectRestByFields(row, [])).toBe(row);
+  });
+
+  it("projectRestByFields keeps only listed top-level keys", () => {
+    expect(
+      __testUtils.projectRestByFields(
+        { html_url: "u", number: 43, user: { login: "x" }, extra: 1 },
+        ["html_url", "number"]
+      )
+    ).toEqual({ html_url: "u", number: 43 });
+  });
+
+  it("projectRestByFields maps over arrays", () => {
+    expect(
+      __testUtils.projectRestByFields(
+        [
+          { sha: "a", commit: {} },
+          { sha: "b", tree: {} },
+        ],
+        ["sha"]
+      )
+    ).toEqual([{ sha: "a" }, { sha: "b" }]);
+  });
 });

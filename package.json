@@ -1,6 +1,6 @@
 {
     "name": "clawql-mcp",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "MCP server: search + execute any OpenAPI 3 API with an internal GraphQL optimization layer",
     "license": "Apache-2.0",
     "type": "module",
