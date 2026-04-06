@@ -88,4 +88,32 @@ describe("tools helpers", () => {
       )
     ).toEqual([{ sha: "a" }, { sha: "b" }]);
   });
+
+  it("executeOutputFields uses GitHub pull defaults when fields omitted", () => {
+    expect(__testUtils.executeOutputFields("pulls/create", undefined)).toEqual([
+      "html_url",
+      "number",
+      "title",
+      "state",
+      "url",
+    ]);
+    expect(__testUtils.executeOutputFields("pulls/get", undefined)).toEqual([
+      "html_url",
+      "number",
+      "title",
+      "state",
+      "url",
+    ]);
+  });
+
+  it("executeOutputFields prefers explicit fields", () => {
+    expect(__testUtils.executeOutputFields("pulls/create", ["html_url", "number"])).toEqual([
+      "html_url",
+      "number",
+    ]);
+  });
+
+  it("executeOutputFields returns undefined for unknown ops without caller fields", () => {
+    expect(__testUtils.executeOutputFields("repos/get", undefined)).toBeUndefined();
+  });
 });

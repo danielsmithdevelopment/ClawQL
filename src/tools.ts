@@ -53,6 +53,32 @@ export function projectRestByFields(data: unknown, fields: string[] | undefined)
   if (Array.isArray(data)) return data.map(pick);
   return pick(data);
 }
+
+/**
+ * When `execute` omits `fields`, use these for GitHub pull mutations/get: GraphQL selection
+ * plus a final top-level pick. The Mesh/OpenAPI layer often returns the full REST JSON even
+ * when the document asks for scalars only.
+ */
+function defaultExecuteOutputFields(operationId: string): string[] | undefined {
+  switch (operationId) {
+    case "pulls/create":
+    case "pulls/update":
+    case "pulls/get":
+      return ["html_url", "number", "title", "state", "url"];
+    default:
+      return undefined;
+  }
+}
+
+/** Effective field list for GraphQL selection and post-response projection. */
+export function executeOutputFields(
+  operationId: string,
+  fields: string[] | undefined
+): string[] | undefined {
+  if (fields && fields.length > 0) return fields;
+  return defaultExecuteOutputFields(operationId);
+}
+
 let schemaFieldCachePromise: Promise<{
   query: GraphQLFieldInfo[];
   mutation: GraphQLFieldInfo[];
@@ -119,6 +145,8 @@ export async function handleClawqlExecuteToolInput(params: {
   const openapiForOp =
     multi && openapis?.length ? openapis[op.specIndex ?? 0] : openapi;
 
+  const outputFields = executeOutputFields(operationId, fields);
+
   if (multi) {
     const fallback = await executeRestOperation(op, args, openapiForOp);
     if (!fallback.ok) {
@@ -136,7 +164,7 @@ export async function handleClawqlExecuteToolInput(params: {
     return {
       content: [{
         type: "text",
-        text: JSON.stringify(projectRestByFields(fallback.data, fields), null, 2),
+        text: JSON.stringify(projectRestByFields(fallback.data, outputFields), null, 2),
       }],
     };
   }
@@ -146,8 +174,8 @@ export async function handleClawqlExecuteToolInput(params: {
     const gqlOpType = isGet ? "query" : "mutation";
     const { fieldName, fieldArgs } = await resolveGraphQLField(op, gqlOpType);
     const normalizedArgs = normalizeArgsForField(op, args, fieldArgs);
-    const selectedFields = fields?.length
-      ? fields.join("\n        ")
+    const selectedFields = outputFields?.length
+      ? outputFields.join("\n        ")
       : defaultFields(operationId);
 
     const varDecls = buildVarDeclarations(op, normalizedArgs);
@@ -168,8 +196,12 @@ export async function handleClawqlExecuteToolInput(params: {
         `;
 
     const data = await gql.query<Record<string, unknown>>(gqlDocument, normalizedArgs);
+    const raw = data[fieldName];
     return {
-      content: [{ type: "text", text: JSON.stringify(data[fieldName], null, 2) }],
+      content: [{
+        type: "text",
+        text: JSON.stringify(projectRestByFields(raw, outputFields), null, 2),
+      }],
     };
   } catch (err: unknown) {
     const fallback = await executeRestOperation(op, args, openapiForOp);
@@ -189,7 +221,7 @@ export async function handleClawqlExecuteToolInput(params: {
     return {
       content: [{
         type: "text",
-        text: JSON.stringify(projectRestByFields(fallback.data, fields), null, 2),
+        text: JSON.stringify(projectRestByFields(fallback.data, outputFields), null, 2),
       }],
     };
   }
@@ -417,4 +449,5 @@ export const __testUtils = {
   discoveryTypeToGraphQL,
   defaultFields,
   projectRestByFields,
+  executeOutputFields,
 };
