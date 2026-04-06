@@ -68,7 +68,6 @@
         "smoke:cloudflare": "node scripts/smoke-cloudflare.mjs",
         "smoke:github-commits": "npm run build && node scripts/smoke-github-commits.mjs",
         "clawql:github-repo-description": "npm run build && node scripts/clawql-github-patch-repo-description.mjs",
-        "clawql:github-create-pr": "npm run build && node scripts/clawql-github-create-pr.mjs",
         "benchmark:tokens": "npm run build && node scripts/benchmark-provider-tokens.mjs",
         "workflow:multi-provider": "npm run build && node scripts/workflow-gke-cloudflare-jira.mjs",
         "workflow:complex-release-stack": "npm run build && node scripts/workflow-complex-release-stack.mjs",
