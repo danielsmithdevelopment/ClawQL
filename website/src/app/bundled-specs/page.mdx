@@ -1,0 +1,32 @@
+export const metadata = {
+  title: 'Bundled specs',
+  description:
+    'CLAWQL_PROVIDER presets and bundled vendor OpenAPI/Discovery files shipped with clawql-mcp.',
+}
+
+# Bundled specs
+
+The npm package ships **`providers/`**—optional on-disk API descriptions so cold start avoids downloading multi‑MB specs. **`CLAWQL_PROVIDER`** selects a **single vendor**, a **merged preset**, or interacts with [Spec configuration](/spec-configuration) precedence. {{ className: 'lead' }}
+
+## Presets and vendors
+
+| `CLAWQL_PROVIDER` | Notes |
+| --- | --- |
+| `google-top50` | Merged ~50 curated Google Discovery services |
+| `default-multi-provider` | Same as **no spec env**: top50 + Cloudflare + Jira |
+| `all-providers` | Top50 **plus** every other bundled vendor (GitHub, Slack, Sentry, n8n, …) |
+| `atlassian` | Jira + Bitbucket merged |
+| `google` | Single Discovery example (GKE); use top50 for multi-service |
+| `cloudflare`, `github`, `slack`, `sentry`, `n8n`, `jira`, `bitbucket` | Single bundled OpenAPI/Discovery per vendor |
+
+Aliases: **`jira`** / **`bitbucket`** map to their standalone bundles; **`atlassian`** merges both.
+
+## Offline and refresh
+
+Bundled files are read **from disk first**. If a file is missing, the registry may fetch a **fallback URL** unless **`CLAWQL_BUNDLED_OFFLINE=1`**.
+
+Maintainers refresh specs with **`npm run fetch-provider-specs`** (see [`providers/README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/providers/README.md)). Optional GraphQL artifacts: **`npm run pregenerate-graphql`** (Bun recommended).
+
+## Default first run
+
+With **no** spec-related environment variables, ClawQL loads **`default-multi-provider`** so cross-vendor **`search`** works immediately after install.

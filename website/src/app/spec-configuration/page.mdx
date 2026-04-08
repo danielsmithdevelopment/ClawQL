@@ -1,0 +1,67 @@
+export const metadata = {
+  title: 'Spec configuration',
+  description:
+    'How ClawQL loads OpenAPI, Swagger 2, Google Discovery, and merged provider bundles via environment variables.',
+}
+
+# Spec configuration
+
+ClawQL builds an in-memory operation index from **OpenAPI 3** (JSON/YAML), **Swagger 2** (auto-upgraded), **Google Discovery** documents, or **bundled presets** under `providers/`. Selection follows a **two-stage** precedence implemented in `src/spec-loader.ts`. {{ className: 'lead' }}
+
+## Overview
+
+- **Multi-spec mode:** one merged **search** index; **`execute`** uses **REST** per owning spec (see [GraphQL proxy](/graphql-proxy)).
+- **Single-spec mode:** one document; **`execute`** can use the internal GraphQL layer when translation succeeds, with **REST fallback** on failure.
+
+## Stage 1 — Multi-spec merge
+
+Used when any of these applies (order matters):
+
+1. **`CLAWQL_SPEC_PATHS`** — merge local files (comma, semicolon, or newline separated).
+2. **`CLAWQL_PROVIDER`** — merged preset (`google-top50`, `default-multi-provider`, `all-providers`, `atlassian`, …).
+3. **`CLAWQL_GOOGLE_TOP50_SPECS`** (`1` / `true` / `yes`) — curated Google top 50 if not already merged above.
+4. **Built-in default** — only when no spec-related env vars are set: **Google top 50 + Cloudflare + Jira** (`default-multi-provider`).
+
+## Stage 2 — Single spec
+
+If Stage 1 does **not** apply, the first match wins:
+
+1. **`CLAWQL_SPEC_PATH`** (aliases: `OPENAPI_SPEC_PATH`, `OPENAPI_FILE`)
+2. **`CLAWQL_SPEC_URL`** (alias: `OPENAPI_SPEC_URL`)
+3. **`CLAWQL_DISCOVERY_URL`** (alias: `GOOGLE_DISCOVERY_URL`)
+4. **`CLAWQL_PROVIDER`** — **single** bundled vendor (`cloudflare`, `github`, …), not a merged preset
+5. Rare fallback (`kind: "default"` in code)
+
+**Examples:** `CLAWQL_SPEC_PATH=./openapi.yaml` skips Stage 1. `CLAWQL_PROVIDER=cloudflare` alone loads Cloudflare as a **single** bundle. An empty environment triggers the **default multi-provider merge**, not an arbitrary single-spec default.
+
+## Environment variables
+
+| Variable | Meaning |
+| --- | --- |
+| `CLAWQL_SPEC_PATH` | Local OpenAPI JSON/YAML |
+| `CLAWQL_SPEC_PATHS` | Multiple paths → **merge** |
+| `CLAWQL_SPEC_URL` | Fetch OpenAPI from HTTPS |
+| `CLAWQL_DISCOVERY_URL` | Google Discovery JSON URL |
+| `CLAWQL_PROVIDER` | Merged preset (Stage 1) or single vendor (Stage 2) |
+| `CLAWQL_GOOGLE_TOP50_SPECS` | Enable top-50 Google merge shortcut |
+| `CLAWQL_INTROSPECTION_PATH` | Pregenerated GraphQL introspection JSON (optional) |
+| `CLAWQL_API_BASE_URL` | Override REST base URL |
+| `CLAWQL_BUNDLED_OFFLINE` | `1` / `true` — do not fetch missing bundled files from the network |
+
+Full list: [`.env.example`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/.env.example) in the repo.
+
+## Google Discovery
+
+Use **`CLAWQL_DISCOVERY_URL`** for GCP and other Google APIs, for example:
+
+```bash
+export CLAWQL_DISCOVERY_URL="https://compute.googleapis.com/\$discovery/rest?version=v1"
+```
+
+The repo vendors a lookup snapshot and docs for refreshing it: [`docs/google-apis-lookup.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/google-apis-lookup.md). Bundled **top 50** APIs are described under [`providers/google/`](https://github.com/danielsmithdevelopment/ClawQL/tree/main/providers/google).
+
+<div className="not-prose">
+  <Button href="/bundled-specs" variant="text" arrow="right">
+    <>Bundled providers and presets</>
+  </Button>
+</div>

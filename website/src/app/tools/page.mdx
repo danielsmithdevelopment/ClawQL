@@ -1,0 +1,31 @@
+export const metadata = {
+  title: 'Tools',
+  description:
+    'ClawQL MCP tools: search for operations by intent, execute with lean field-selected responses.',
+}
+
+# Tools
+
+ClawQL exposes exactly **two** MCP tools. Agents call **`search`** to discover operations and parameters, then **`execute`** to run a chosen **`operationId`** with optional field selection. {{ className: 'lead' }}
+
+## `search`
+
+Searches the active OpenAPI/Discovery corpus by **natural language intent** and returns a **short ranked list** of matching operations (paths, methods, parameters, summaries). Work happens against an **in-memory index** inside the MCP process—full specs are not pasted into the model context.
+
+## `execute`
+
+Runs a discovered operation by **`operationId`** with arguments shaped from the spec. Internally, single-spec mode prefers the **GraphQL proxy** so only requested fields flow back; **multi-spec** and some translation failures use **REST** directly. Agents do **not** author GraphQL; the server builds the internal query.
+
+## Typical workflow
+
+```
+1. search("delete a Cloud Run service")
+   → top hits with operationId, method, path, parameters
+
+2. execute("run.projects.locations.services.delete", {
+     name: "projects/my-proj/locations/us-central1/services/my-svc"
+   })
+   → lean JSON (GraphQL-shaped or REST fallback)
+```
+
+See [GraphQL proxy](/graphql-proxy) for when the proxy participates and how **`GRAPHQL_URL`** is wired.

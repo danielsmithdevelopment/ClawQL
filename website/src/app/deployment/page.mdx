@@ -1,0 +1,55 @@
+export const metadata = {
+  title: 'Deployment',
+  description:
+    'Run ClawQL with Docker, Streamable HTTP, Google Cloud Run, or Kubernetes (see Kubernetes guide for local MCP).',
+}
+
+# Deployment
+
+Production-style setups run **two services**: the **MCP HTTP** server (`clawql-mcp-http`) and the **GraphQL proxy** (`clawql-graphql`). Wire them on the same network and point **`GRAPHQL_URL`** at the proxy from the MCP service. {{ className: 'lead' }}
+
+## Streamable HTTP
+
+From the published package:
+
+```bash
+PORT=8080 npx -p clawql-mcp clawql-mcp-http
+```
+
+Default local MCP endpoint: **`http://localhost:8080/mcp`**, health **`/healthz`**. Your real URL depends on port, ingress, or tunneling—configure the client with **`url`**, not **`command`**.
+
+## Docker
+
+The repo ships a multi-stage **Distroless** image (`docker/README.md`) with `dist/`, `bin/`, and `providers/` for offline bundled specs. Build, run, and compose examples:
+
+[`github.com/danielsmithdevelopment/ClawQL/blob/main/docker/README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docker/README.md)
+
+## Cloud Run
+
+One-shot script (sets project/region via env):
+
+```bash
+PROJECT_ID="your-project-id" \
+REGION="us-central1" \
+bash scripts/deploy-cloud-run.sh
+```
+
+Or with Make:
+
+```bash
+PROJECT_ID="your-project-id" REGION="us-central1" make deploy-cloud-run
+```
+
+After deploy, agents use **`https://<mcp-service-url>/mcp`**. Full options: [`docs/deploy-cloud-run.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deploy-cloud-run.md).
+
+## Kubernetes
+
+**Local MCP on Docker Desktop** (build `clawql-mcp:latest`, namespace `clawql`, **`http://localhost:8080/mcp`**) is covered on the dedicated guide: **[Kubernetes](/kubernetes)**.
+
+For **remote** clusters, overlays for `dev` / `prod` with image tag injection:
+
+```bash
+ENV=dev IMAGE=us-central1-docker.pkg.dev/<project>/<repo>/clawql-mcp TAG=<tag> make deploy-k8s
+```
+
+Details: [`docs/deploy-k8s.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deploy-k8s.md). Extended container and manifest notes: [`docker/README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docker/README.md).

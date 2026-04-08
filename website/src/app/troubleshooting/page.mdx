@@ -1,0 +1,37 @@
+export const metadata = {
+  title: 'Troubleshooting',
+  description:
+    'Common ClawQL issues: two-process setup, GraphQL translation, search limits, and large OpenAPI documents.',
+}
+
+# Troubleshooting
+
+ClawQL is designed around **spec-driven discovery** and a **lean execution path**. Most confusion comes from process wiring, spec selection, or expectations about retrieval quality on huge APIs. {{ className: 'lead' }}
+
+## Two processes
+
+**Symptom:** `execute` fails or hangs when GraphQL is unreachable.
+
+**Fix:** Run **`clawql-graphql`** before **`clawql-mcp`**, or use a deployment that starts both (Docker/Kubernetes/Cloud Run). Set **`GRAPHQL_URL`** if the proxy is not on `http://localhost:4000/graphql`.
+
+## GraphQL vs REST
+
+The proxy uses **`@omnigraph/openapi`** (same family as [GraphQL Mesh OpenAPI](https://the-guild.dev/graphql/mesh/docs/handlers/openapi)). Some vendor specs hit **translation edge cases**.
+
+**Behavior:** When GraphQL resolution fails, **`execute` falls back to REST** using the same OpenAPI operation map. **`search`** always uses the full OpenAPI-derived index.
+
+**Multi-spec mode:** **`execute`** uses **REST** for merged corpora; GraphQL applies to single-spec paths where the schema builds cleanly.
+
+## Search behavior
+
+Search is intentionally **lightweight keyword scoring** over operation metadata (MVP). On **very large** specs you may see noisy rankings or misses; future work may swap in stronger retrieval.
+
+## Large specs
+
+ClawQL **normalizes** specs (refs, nullable patterns, shorthand `items`, empty servers) so large documents load reliably. The design goal is **keep the full spec**—efficiency comes from **`search` + selective `execute`**, not from deleting operations.
+
+If startup or pregenerate steps OOM or fail, see maintainer notes in [`providers/README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/providers/README.md) and optional **`CLAWQL_INTROSPECTION_PATH`**.
+
+## Contributing upstream
+
+To improve OpenAPI→GraphQL translation for everyone, see [`docs/OPENAPI_TO_GRAPHQL_UPSTREAM.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/OPENAPI_TO_GRAPHQL_UPSTREAM.md) and [`CONTRIBUTING.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/CONTRIBUTING.md).

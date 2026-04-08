@@ -1,0 +1,73 @@
+export const metadata = {
+  title: 'Quickstart',
+  description:
+    'Run ClawQL in two terminals: GraphQL proxy and MCP server, then connect your assistant.',
+}
+
+# Quickstart
+
+You can be up and running in a few minutes with **`npx`**—no global install required. You need **two processes**: the GraphQL proxy (**`clawql-graphql`**) and the MCP server (**`clawql-mcp`**). {{ className: 'lead' }}
+
+<Note>
+  The published package is **large on disk** (~90+ MB) because it ships bundled specs under **`providers/`**. That is intentional for offline discovery.
+</Note>
+
+## 1. Start the GraphQL proxy
+
+```bash
+npx -p clawql-mcp clawql-graphql
+```
+
+Listens on **`http://localhost:4000/graphql`** by default (`GRAPHQL_PORT` overrides the port).
+
+## 2. Start the MCP server
+
+In a **second** terminal:
+
+```bash
+npx -p clawql-mcp clawql-mcp
+```
+
+For every bundled vendor at once:
+
+```bash
+CLAWQL_PROVIDER=all-providers npx -p clawql-mcp clawql-mcp
+```
+
+## 3. Connect your client
+
+Add an MCP server entry that runs **`clawql-mcp`** on stdio (see [MCP clients](/mcp-clients)). If your host needs an explicit proxy URL:
+
+```text
+GRAPHQL_URL=http://localhost:4000/graphql
+```
+
+## 4. Use your own API spec
+
+**Local file**
+
+```bash
+npx -p clawql-mcp clawql-graphql
+CLAWQL_SPEC_PATH=./openapi.yaml npx -p clawql-mcp clawql-mcp
+```
+
+**Remote OpenAPI**
+
+```bash
+npx -p clawql-mcp clawql-graphql
+CLAWQL_SPEC_URL=https://example.com/openapi.json npx -p clawql-mcp clawql-mcp
+```
+
+**Google Discovery**
+
+```bash
+CLAWQL_DISCOVERY_URL="https://compute.googleapis.com/\$discovery/rest?version=v1" npx -p clawql-mcp clawql-mcp
+```
+
+(Keep **`clawql-graphql`** running for **`execute`**.)
+
+## Next steps
+
+- [Install](/install) — binaries, Docker, HTTP transport
+- [Spec configuration](/spec-configuration) — merge rules and environment variables
+- [Tools](/tools) — **`search`** and **`execute`**

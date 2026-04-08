@@ -1,5 +1,5 @@
-# Full multi-vendor merge (matches `npm run workflow:complex-release-stack:mcp` over HTTP).
-# Base uses google-top50 only; local Docker Desktop dev expects Cursor + release-stack workflows.
+# Local Docker Desktop: single bundled spec (lighter than all-providers merge).
+# Switch value to all-providers (or another CLAWQL_PROVIDER) when you need multi-vendor again.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -11,7 +11,7 @@ spec:
         - name: clawql-mcp-http
           env:
             - name: CLAWQL_PROVIDER
-              value: all-providers
+              value: github
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -24,4 +24,4 @@ spec:
         - name: clawql-graphql
           env:
             - name: CLAWQL_PROVIDER
-              value: all-providers
+              value: github
