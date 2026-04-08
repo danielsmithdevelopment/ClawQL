@@ -1,0 +1,24 @@
+export const metadata = {
+  title: 'Benchmarks',
+  description:
+    'How ClawQL benchmark numbers are produced, what they measure, and links to reproducible artifacts in the repo.',
+}
+
+# Benchmarks
+
+The ClawQL README highlights **planning-context** comparisons: the byte size of **merged on-disk specs** versus **offline workflow outputs** from multi-step **`search`** scenarios. These numbers illustrate how expensive it would be to paste **entire** OpenAPI corpora into a thread—not a guaranteed line item on a provider dashboard. {{ className: 'lead' }}
+
+## What the highlights measure
+
+- **All-providers complex release-stack** — broad scenario across Google top50 plus Bitbucket, Cloudflare, GitHub, Jira, n8n, Sentry, Slack. Artifacts: [`docs/workflow-complex-release-stack-latest.json`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/workflow-complex-release-stack-latest.json), stats under [`docs/benchmarks/all-providers-complex-workflow/`](https://github.com/danielsmithdevelopment/ClawQL/tree/main/docs/benchmarks/all-providers-complex-workflow).
+- **Default multi-provider** — Google + Cloudflare + Jira. Artifacts: [`docs/workflow-multi-provider-latest.json`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/workflow-multi-provider-latest.json), stats under [`docs/benchmarks/multi-provider-complex-workflow/`](https://github.com/danielsmithdevelopment/ClawQL/tree/main/docs/benchmarks/multi-provider-complex-workflow).
+
+Token estimates in docs often use **~4 characters per token** as a heuristic.
+
+## Reproduce
+
+- **Phase 1 / Phase 2 token repro:** `npm run benchmark:tokens` → [`docs/benchmarks/latest.json`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/latest.json) and [`latest.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/latest.md). Full steps: [`docs/benchmarks/REPRODUCE.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/REPRODUCE.md).
+
+## Normal usage vs pasted specs
+
+Under typical ClawQL usage, specs stay **inside the server**; the model issues **`search`** / **`execute`** and receives **bounded** tool outputs. Total billed tokens depend on model, history, and response sizes—see the README section **“Planning-context numbers vs your API bill”** for careful interpretation.

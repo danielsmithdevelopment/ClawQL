@@ -84,7 +84,7 @@ make local-k8s-up
 
 This tags **`clawql-mcp:latest`** (same daemon as Docker Desktop; no registry push). The overlay lives at `docker/kustomize/overlays/local`.
 
-- **`CLAWQL_PROVIDER`:** The **local** overlay sets **`all-providers`** (Google top50 + Cloudflare, GitHub, Jira, …) so multi-vendor MCP clients and **`workflow:complex-release-stack:mcp`** over HTTP behave like stdio. This uses more memory than **`google-top50`** alone; the **base** manifest still defaults to **`google-top50`** for lighter clusters.
+- **`CLAWQL_PROVIDER`:** The **local** overlay sets **`github`** only (lighter RAM on a laptop). Edit `docker/kustomize/overlays/local/patch-local-provider-env.yaml` to **`all-providers`** when you need the full merge for multi-vendor MCP or **`workflow:complex-release-stack:mcp`** over HTTP. The **base** manifest defaults to **`google-top50`** when no overlay patch applies.
 - **`kubectl` context:** The script targets **`docker-desktop`** when that context exists (so your default context can stay on EKS or another cluster).
 - **Restart behavior:** Deployments keep **`replicas: 1`** and Kubernetes **restarts failed containers** automatically (Pod `restartPolicy` is `Always`).
 - **MCP URL:** `http://localhost:8080/mcp` once `kubectl -n clawql get svc clawql-mcp-http` shows an external address (often `localhost` on Docker Desktop).

@@ -1,0 +1,67 @@
+export const metadata = {
+  title: 'MCP clients',
+  description:
+    'Configure Cursor, Claude Desktop, or other MCP hosts for ClawQL over stdio or HTTP, including GRAPHQL_URL.',
+}
+
+# MCP clients
+
+[Model Context Protocol](https://modelcontextprotocol.io) is how editors and assistants connect to ClawQL and expose the **`search`** and **`execute`** tools. [Cursor](https://cursor.com/docs/context/mcp) and Claude Desktop are common hosts. {{ className: 'lead' }}
+
+## What is MCP?
+
+The MCP server runs as a subprocess (**stdio**) or over the network (**HTTP**). Your client configuration supplies environment variables such as spec paths or `CLAWQL_PROVIDER`. The **`execute`** tool expects a running **GraphQL proxy** unless you are only using **`search`**.
+
+## stdio (npm)
+
+Use `npx` with `-p clawql-mcp` so the binary resolves from the package:
+
+```json
+{
+  "mcpServers": {
+    "clawql": {
+      "command": "npx",
+      "args": ["-p", "clawql-mcp", "clawql-mcp"],
+      "env": {
+        "CLAWQL_SPEC_PATH": "/absolute/path/to/openapi.yaml",
+        "GRAPHQL_URL": "http://localhost:4000/graphql"
+      }
+    }
+  }
+}
+```
+
+Start **`clawql-graphql`** in another terminal (same `npx -p clawql-mcp` pattern) before calling **`execute`**.
+
+## stdio (git checkout)
+
+```json
+{
+  "mcpServers": {
+    "clawql": {
+      "command": "node",
+      "args": ["/absolute/path/to/ClawQL/dist/server.js"],
+      "env": {
+        "CLAWQL_SPEC_PATH": "/absolute/path/to/openapi.yaml",
+        "GRAPHQL_URL": "http://localhost:4000/graphql"
+      }
+    }
+  }
+}
+```
+
+For development you can run `tsx` against `src/server.ts` instead; ensure the repo is built for production-style runs.
+
+## Streamable HTTP
+
+For `clawql-mcp-http`, Docker, Kubernetes, or Cloud Run, configure your client with a **`url`** (not `command`). Copy [`.cursor/mcp.json.example`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/.cursor/mcp.json.example) to **`.cursor/mcp.json`** and set the base URL your deployment exposes. See [Deployment](/deployment).
+
+## GraphQL URL
+
+- Default proxy URL: **`http://localhost:4000/graphql`**
+- Override with **`GRAPHQL_URL`** if the proxy listens elsewhere.
+- **`GRAPHQL_PORT`** applies when you start the proxy yourself (default **4000**).
+
+<Note>
+  **`search`** runs entirely inside the MCP process. **`execute`** calls the GraphQL proxy so responses can be field-selected; keep the proxy running whenever agents need to execute operations.
+</Note>

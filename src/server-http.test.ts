@@ -17,9 +17,11 @@ describe("server-http", () => {
     saved.CLAWQL_SPEC_PATH = process.env.CLAWQL_SPEC_PATH;
     saved.CLAWQL_PROVIDER = process.env.CLAWQL_PROVIDER;
     saved.CLAWQL_SPEC_PATHS = process.env.CLAWQL_SPEC_PATHS;
+    saved.CLAWQL_CORS_ALLOW_ORIGIN = process.env.CLAWQL_CORS_ALLOW_ORIGIN;
     process.env.CLAWQL_SPEC_PATH = minimalSpec;
     delete process.env.CLAWQL_PROVIDER;
     delete process.env.CLAWQL_SPEC_PATHS;
+    delete process.env.CLAWQL_CORS_ALLOW_ORIGIN;
     resetSpecCache();
     resetSchemaFieldCache();
   });
@@ -105,6 +107,41 @@ describe("server-http", () => {
         }),
       });
       expect(res.status).toBe(400);
+    });
+  });
+
+  it("OPTIONS /mcp returns 204 when CLAWQL_CORS_ALLOW_ORIGIN=*", async () => {
+    process.env.CLAWQL_CORS_ALLOW_ORIGIN = "*";
+    await withHttpServer(async (base) => {
+      const res = await fetch(`${base}/mcp`, { method: "OPTIONS" });
+      expect(res.status).toBe(204);
+      expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
+      expect(res.headers.get("Access-Control-Expose-Headers") ?? "").toMatch(/mcp-session-id/i);
+    });
+  });
+
+  it("POST /mcp initialize includes CORS headers when CLAWQL_CORS_ALLOW_ORIGIN=*", async () => {
+    process.env.CLAWQL_CORS_ALLOW_ORIGIN = "*";
+    await withHttpServer(async (base) => {
+      const res = await fetch(`${base}/mcp`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json, text/event-stream",
+        },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: 1,
+          method: "initialize",
+          params: {
+            protocolVersion: "2024-11-05",
+            capabilities: {},
+            clientInfo: { name: "vitest", version: "1.0.0" },
+          },
+        }),
+      });
+      expect(res.ok).toBe(true);
+      expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
     });
   });
 });

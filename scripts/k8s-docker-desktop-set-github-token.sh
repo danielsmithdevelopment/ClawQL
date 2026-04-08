@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Create/update a Kubernetes Secret with CLAWQL_BEARER_TOKEN (from gh or stdin),
-# wire it into clawql-mcp-http, and restart the deployment.
+# wire it into clawql-mcp-http, set CORS for browser/Gallery clients, and restart.
 #
 # Prerequisites:
 #   - Docker Desktop Kubernetes running; context docker-desktop (or docker-for-desktop)
@@ -11,6 +11,11 @@
 #   bash scripts/k8s-docker-desktop-set-github-token.sh
 #   gh auth token | bash scripts/k8s-docker-desktop-set-github-token.sh
 #   CLAWQL_BEARER_TOKEN=ghp_xxx bash scripts/k8s-docker-desktop-set-github-token.sh
+#
+# CORS (CLAWQL_CORS_ALLOW_ORIGIN on clawql-mcp-http — see server-http.ts):
+#   Default: *  (Gallery / iPhone webview, Cloudflare Tunnel, etc.)
+#   Override: CLAWQL_CORS_ALLOW_ORIGIN=https://your.app
+#   Opt out:  CLAWQL_SKIP_CORS=1  (removes CLAWQL_CORS_ALLOW_ORIGIN from the deployment)
 #
 set -euo pipefail
 
@@ -65,6 +70,17 @@ kc -n "$NAMESPACE" set env "deployment/$DEPLOY" \
   --from="secret/${SECRET_NAME}" \
   --keys=CLAWQL_BEARER_TOKEN \
   --overwrite
+
+if [[ "${CLAWQL_SKIP_CORS:-}" == "1" ]]; then
+  echo "==> Removing CLAWQL_CORS_ALLOW_ORIGIN from deployment/$DEPLOY (CLAWQL_SKIP_CORS=1)"
+  kc -n "$NAMESPACE" set env "deployment/$DEPLOY" CLAWQL_CORS_ALLOW_ORIGIN- 2>/dev/null || true
+else
+  CORS_ORIGIN="${CLAWQL_CORS_ALLOW_ORIGIN:-*}"
+  echo "==> Setting CLAWQL_CORS_ALLOW_ORIGIN=$CORS_ORIGIN on deployment/$DEPLOY"
+  kc -n "$NAMESPACE" set env "deployment/$DEPLOY" \
+    CLAWQL_CORS_ALLOW_ORIGIN="$CORS_ORIGIN" \
+    --overwrite
+fi
 
 echo "==> Restarting deployment/$DEPLOY"
 kc -n "$NAMESPACE" rollout restart "deployment/$DEPLOY"

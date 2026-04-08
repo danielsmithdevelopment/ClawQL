@@ -1,0 +1,104 @@
+export const metadata = {
+  title: 'Kubernetes',
+  description:
+    'Run ClawQL MCP over Streamable HTTP on local Kubernetes (Docker Desktop) or remote clusters.',
+}
+
+# Kubernetes
+
+ClawQL is usually deployed as **two workloads**: **`clawql-mcp-http`** (MCP Streamable HTTP on **`/mcp`**) and **`clawql-graphql`** (GraphQL proxy). The MCP pods set **`GRAPHQL_URL`** to the in-cluster GraphQL service so **`execute`** can use GraphQL where supported. {{ className: 'lead' }}
+
+## Local MCP on Docker Desktop
+
+Use this when you want a **stable URL** (for example **`http://localhost:8080/mcp`**) for Cursor or other MCP clients, without running `npx` in a terminal.
+
+### Prerequisites
+
+- Docker Desktop with **Kubernetes** enabled (Settings → Kubernetes).
+- **`kubectl`** on your PATH (Docker Desktop installs it).
+- Repo clone at the version you want to run.
+
+### One-shot install
+
+From the **repository root**:
+
+```bash
+make local-k8s-up
+```
+
+Or:
+
+```bash
+bash scripts/local-k8s-docker-desktop.sh
+```
+
+This **builds** the image as **`clawql-mcp:latest`** in the same Docker daemon Kubernetes uses, **applies** the Kustomize overlay at **`docker/kustomize/overlays/local`**, and waits for rollouts.
+
+### Endpoints and client config
+
+- **MCP (Streamable HTTP):** `http://localhost:8080/mcp`
+- **Health:** `curl -s http://localhost:8080/healthz`
+
+Point your MCP client at **`url`** (not stdio **`command`**). Example shape:
+
+```json
+{
+  "mcpServers": {
+    "clawql": {
+      "url": "http://localhost:8080/mcp"
+    }
+  }
+}
+```
+
+Use your real host if you tunnel or expose the service elsewhere.
+
+### What the local overlay sets
+
+- **Namespace:** `clawql`
+- **`CLAWQL_PROVIDER`:** **`all-providers`** (bundled multi-spec preset). That matches broad stdio workflows but uses **more memory** than **`google-top50`** alone.
+- **`kubectl` context:** the script prefers **`docker-desktop`** when present so you do not accidentally apply to another cluster.
+
+Cold start can take a while while specs load. Wait until **`/healthz`** returns **`{"status":"ok",...}`** or the pod is **Ready** before the client connects.
+
+### GitHub and other authenticated APIs
+
+`execute` sends **`Authorization: Bearer …`** when **`CLAWQL_BEARER_TOKEN`** is set (see `.env.example`). For GitHub, inject a token into the MCP deployment:
+
+```bash
+bash scripts/k8s-docker-desktop-set-github-token.sh
+```
+
+With **`gh`** logged in, or pipe a PAT: `gh auth token | bash scripts/k8s-docker-desktop-set-github-token.sh`.
+
+Re-applying the overlay **`kubectl apply -k docker/kustomize/overlays/local`** resets the Deployment YAML; **re-run** the script afterward if you only injected env with **`kubectl set env`**, or add a **`secretKeyRef`** patch to your overlay for a permanent setup.
+
+### Rebuild after code changes
+
+The image tag stays **`clawql-mcp:latest`**. After you change the repo, rebuild and recycle pods:
+
+```bash
+make local-k8s-up
+kubectl --context docker-desktop -n clawql rollout restart deployment/clawql-graphql deployment/clawql-mcp-http
+```
+
+### Teardown
+
+```bash
+kubectl --context docker-desktop delete namespace clawql
+```
+
+## Remote clusters (dev / prod)
+
+For registries and image tags (not the local **`latest`** flow), use overlays and the deploy script:
+
+```bash
+ENV=dev IMAGE=us-central1-docker.pkg.dev/<project>/<repo>/clawql-mcp TAG=<tag> make deploy-k8s
+```
+
+Full checklist: [`docs/deploy-k8s.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deploy-k8s.md).
+
+## More detail in the repo
+
+- Container build, Compose, and extended K8s notes: [`docker/README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docker/README.md)
+- Starter manifest: `docker/kubernetes-starter.yaml`

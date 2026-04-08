@@ -1,0 +1,38 @@
+export const metadata = {
+  title: 'Concepts',
+  description:
+    'ClawQL architecture: MCP, search index, GraphQL optimization, and how two phases save tokens.',
+}
+
+# Concepts
+
+ClawQL connects **agents** to **REST-shaped APIs** through a thin MCP surface, without asking models to ingest full OpenAPI documents up front. {{ className: 'lead' }}
+
+## Architecture
+
+```
+Agent
+  └─▶ MCP Server  (stdio or HTTP)
+        ├─▶ search tool  ──▶ In-memory spec index
+        └─▶ execute tool  ──▶ GraphQL client (single-spec)
+                                    └─▶ GraphQL proxy  (clawql-graphql)
+                                          └─▶ Your REST API
+```
+
+In **multi-spec** mode, **`search`** uses one merged index while **`execute`** routes each operation to the correct spec (REST).
+
+## Design principles
+
+1. **`search` first, `execute` second** — discover `operationId` and parameters without loading the entire spec into context.
+2. **GraphQL is internal** — agents never write GraphQL; the server builds precise selections to keep tool outputs small.
+3. **Single source of truth** — the index and execution map derive from the same loaded OpenAPI/Discovery documents.
+
+## How the two phases save tokens
+
+| | **Phase 1 — planning** | **Phase 2 — execution** |
+| --- | --- | --- |
+| **Mechanism** | `search` + in-memory index instead of pasting full specs | Internal GraphQL projection (when available) vs fat REST JSON |
+| **Typical win** | Input: huge spec text → short ranked hits | Output: smaller structured payloads returned to the model |
+| **Tradeoff** | — | Small extra input for the internal query + variables |
+
+Benchmarks in the repo compare **planning-context size** (merged specs on disk vs workflow/search artifacts) to illustrate scale—not a literal per-call “API bill” from a model provider. See [Benchmarks](/benchmarks).

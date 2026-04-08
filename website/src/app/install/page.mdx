@@ -1,0 +1,60 @@
+export const metadata = {
+  title: 'Install',
+  description:
+    'Install the clawql-mcp package, understand binaries and disk size, and run ClawQL with npx or Docker.',
+}
+
+# Install
+
+ClawQL is published as **`clawql-mcp`** on npm. The package ships bundled OpenAPI and Discovery specs under `providers/` so discovery works offline—expect a **large install** (~90+ MB on disk) compared to a typical small CLI. {{ className: 'lead' }}
+
+## npm / yarn / bun
+
+```bash
+npm install clawql-mcp
+# yarn add clawql-mcp
+# bun add clawql-mcp
+```
+
+Registry tarballs are ~10 MB compressed; installed size is dominated by bundled specs.
+
+## Binaries
+
+After install, these commands are on your `PATH` (or use `npx -p clawql-mcp <binary>`):
+
+| Command | Purpose |
+| --- | --- |
+| `clawql-mcp` | MCP server on **stdio** (Cursor, Claude Desktop, etc.) |
+| `clawql-mcp-http` | MCP over **Streamable HTTP** (`PORT`, `/mcp`, `/healthz`) |
+| `clawql-graphql` | Local **GraphQL proxy** used by the `execute` tool |
+
+## Run without a global install
+
+Typical local setup uses **two terminals**: GraphQL proxy first, then the MCP server.
+
+```bash
+npx -p clawql-mcp clawql-graphql
+CLAWQL_PROVIDER=all-providers npx -p clawql-mcp clawql-mcp
+```
+
+Point your MCP client at **`clawql-mcp`** on stdio. If the client needs an explicit GraphQL URL, set **`GRAPHQL_URL=http://localhost:4000/graphql`** (see [MCP clients](/mcp-clients)).
+
+## Docker and HTTP
+
+- **Docker:** multi-stage image and stdio/compose notes live in the repo’s [`docker/README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docker/README.md).
+- **Remote MCP:** `PORT=8080 npx -p clawql-mcp clawql-mcp-http` — default local endpoint `http://localhost:8080/mcp` (health: `/healthz`). See [Deployment](/deployment).
+
+## Install from GitHub
+
+If you install from git instead of the registry, run **`npm run build`** once so `dist/` exists (the published npm tarball already includes `dist/`).
+
+```bash
+npm i github:danielsmithdevelopment/ClawQL
+npm run build
+```
+
+<div className="not-prose">
+  <Button href="/quickstart" variant="text" arrow="right">
+    <>Continue to Quickstart</>
+  </Button>
+</div>
