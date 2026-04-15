@@ -3,7 +3,7 @@
  *
  * Entry point. Boots the MCP server over stdio (Claude Desktop, Cursor, etc.).
  *
- *   Agent → MCP (this file) → search / execute → graphql-client → graphql-proxy → REST API
+ *   Agent → MCP (this file) → search / execute / code → graphql-client → graphql-proxy → REST API
  *
  * Spec source: CLAWQL_SPEC_PATH, CLAWQL_SPEC_URL, CLAWQL_DISCOVERY_URL, or default
  * Cloud Run discovery. See README and .env.example.
