@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
-# Create/update a Kubernetes Secret with CLAWQL_BEARER_TOKEN (from gh or stdin),
-# wire it into clawql-mcp-http, set CORS for browser/Gallery clients, and restart.
+# Create/update a Kubernetes Secret with GitHub + optional Cloudflare API tokens,
+# wire them into clawql-mcp-http, set CORS for browser/Gallery clients, and restart.
+#
+# For the default merged bundle (GitHub + Cloudflare), set both:
+#   CLAWQL_GITHUB_TOKEN / CLAWQL_CLOUDFLARE_API_TOKEN
+# (see src/auth-headers.ts). CLAWQL_BEARER_TOKEN still works for single-vendor or as a fallback.
 #
 # Prerequisites:
 #   - Docker Desktop Kubernetes running; context docker-desktop (or docker-for-desktop)
@@ -10,7 +14,8 @@
 # Usage:
 #   bash scripts/k8s-docker-desktop-set-github-token.sh
 #   gh auth token | bash scripts/k8s-docker-desktop-set-github-token.sh
-#   CLAWQL_BEARER_TOKEN=ghp_xxx bash scripts/k8s-docker-desktop-set-github-token.sh
+#   CLAWQL_GITHUB_TOKEN=ghp_xxx bash scripts/k8s-docker-desktop-set-github-token.sh
+#   CLAWQL_CLOUDFLARE_API_TOKEN=… CLAWQL_GITHUB_TOKEN=… bash scripts/k8s-docker-desktop-set-github-token.sh
 #
 # CORS (CLAWQL_CORS_ALLOW_ORIGIN on clawql-mcp-http — see server-http.ts):
 #   Default: *  (Gallery / iPhone webview, Cloudflare Tunnel, etc.)
@@ -42,11 +47,11 @@ if ! kc get ns "$NAMESPACE" >/dev/null 2>&1; then
   exit 1
 fi
 
-TOKEN="${CLAWQL_BEARER_TOKEN:-}"
+TOKEN="${CLAWQL_GITHUB_TOKEN:-${CLAWQL_BEARER_TOKEN:-}}"
 if [[ -z "$TOKEN" ]]; then
   if [[ -t 0 ]]; then
     if ! command -v gh >/dev/null 2>&1; then
-      echo "ERROR: No CLAWQL_BEARER_TOKEN and gh not on PATH. Install gh or export CLAWQL_BEARER_TOKEN."
+      echo "ERROR: No CLAWQL_GITHUB_TOKEN/CLAWQL_BEARER_TOKEN and gh not on PATH. Install gh or export a token."
       exit 1
     fi
     TOKEN="$(gh auth token)"
@@ -56,19 +61,33 @@ if [[ -z "$TOKEN" ]]; then
 fi
 
 if [[ -z "${TOKEN// }" ]]; then
-  echo "ERROR: empty token"
+  echo "ERROR: empty GitHub token"
   exit 1
 fi
 
-echo "==> Creating/updating secret $SECRET_NAME in namespace $NAMESPACE"
-kc -n "$NAMESPACE" create secret generic "$SECRET_NAME" \
-  --from-literal=CLAWQL_BEARER_TOKEN="$TOKEN" \
-  --dry-run=client -o yaml | kc apply -f -
+CF_TOKEN="${CLAWQL_CLOUDFLARE_API_TOKEN:-}"
 
-echo "==> Attaching secret env to deployment/$DEPLOY (CLAWQL_BEARER_TOKEN)"
+echo "==> Creating/updating secret $SECRET_NAME in namespace $NAMESPACE"
+if [[ -n "${CF_TOKEN// }" ]]; then
+  kc -n "$NAMESPACE" create secret generic "$SECRET_NAME" \
+    --from-literal=CLAWQL_GITHUB_TOKEN="$TOKEN" \
+    --from-literal=CLAWQL_CLOUDFLARE_API_TOKEN="$CF_TOKEN" \
+    --dry-run=client -o yaml | kc apply -f -
+else
+  kc -n "$NAMESPACE" create secret generic "$SECRET_NAME" \
+    --from-literal=CLAWQL_GITHUB_TOKEN="$TOKEN" \
+    --dry-run=client -o yaml | kc apply -f -
+fi
+
+ENV_KEYS="CLAWQL_GITHUB_TOKEN"
+if [[ -n "${CF_TOKEN// }" ]]; then
+  ENV_KEYS="CLAWQL_GITHUB_TOKEN,CLAWQL_CLOUDFLARE_API_TOKEN"
+fi
+
+echo "==> Attaching secret env to deployment/$DEPLOY ($ENV_KEYS)"
 kc -n "$NAMESPACE" set env "deployment/$DEPLOY" \
   --from="secret/${SECRET_NAME}" \
-  --keys=CLAWQL_BEARER_TOKEN \
+  --keys="$ENV_KEYS" \
   --overwrite
 
 if [[ "${CLAWQL_SKIP_CORS:-}" == "1" ]]; then

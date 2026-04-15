@@ -5,26 +5,11 @@
 
 import fetch from "node-fetch";
 import type { RequestInit as FetchRequestInit } from "node-fetch";
+import { mergedAuthHeaders } from "./auth-headers.js";
 import { resolveApiBaseUrl, type OpenAPIDoc } from "./spec-loader.js";
 import type { Operation } from "./spec-loader.js";
 
-export function mergedAuthHeaders(): Record<string, string> {
-  const out: Record<string, string> = {};
-  const raw = process.env.CLAWQL_HTTP_HEADERS;
-  if (raw) {
-    try {
-      Object.assign(out, JSON.parse(raw) as Record<string, string>);
-    } catch {
-      // ignore
-    }
-  }
-  const bearer =
-    process.env.CLAWQL_BEARER_TOKEN || process.env.GOOGLE_ACCESS_TOKEN;
-  if (bearer && !out.Authorization && !out.authorization) {
-    out.Authorization = `Bearer ${bearer}`;
-  }
-  return out;
-}
+export { mergedAuthHeaders };
 
 /** Build JSON body: drop path/query args so `owner`/`repo` are not sent in PATCH/POST bodies. */
 export function buildRestRequestBodyFromArgs(
@@ -93,7 +78,7 @@ export async function executeRestOperation(
   const method = op.method.toUpperCase();
   const headers: Record<string, string> = {
     Accept: "application/json",
-    ...mergedAuthHeaders(),
+    ...mergedAuthHeaders(op.specLabel),
   };
   const init: FetchRequestInit = { method, headers };
   if (method !== "GET" && method !== "HEAD" && op.requestBody) {

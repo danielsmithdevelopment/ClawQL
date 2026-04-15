@@ -34,6 +34,12 @@ afterEach(() => {
   delete process.env.CLAWQL_HTTP_HEADERS;
   delete process.env.CLAWQL_BEARER_TOKEN;
   delete process.env.GOOGLE_ACCESS_TOKEN;
+  delete process.env.CLAWQL_GITHUB_TOKEN;
+  delete process.env.GITHUB_TOKEN;
+  delete process.env.GH_TOKEN;
+  delete process.env.CLAWQL_CLOUDFLARE_API_TOKEN;
+  delete process.env.CLOUDFLARE_API_TOKEN;
+  delete process.env.CLAWQL_PROVIDER;
 });
 
 describe("rest-operation helpers", () => {
@@ -56,6 +62,31 @@ describe("rest-operation helpers", () => {
     process.env.CLAWQL_BEARER_TOKEN = "abc";
     expect(mergedAuthHeaders()).toEqual({
       Authorization: "Token xyz",
+    });
+  });
+
+  it("uses CLAWQL_GITHUB_TOKEN for specLabel github over CLAWQL_BEARER_TOKEN", () => {
+    process.env.CLAWQL_BEARER_TOKEN = "generic";
+    process.env.CLAWQL_GITHUB_TOKEN = "gh_tok";
+    expect(mergedAuthHeaders("github")).toEqual({
+      Authorization: "Bearer gh_tok",
+    });
+  });
+
+  it("uses CLOUDFLARE_API_TOKEN for specLabel cloudflare over CLAWQL_BEARER_TOKEN", () => {
+    process.env.CLAWQL_BEARER_TOKEN = "generic";
+    process.env.CLOUDFLARE_API_TOKEN = "cf_tok";
+    expect(mergedAuthHeaders("cloudflare")).toEqual({
+      Authorization: "Bearer cf_tok",
+    });
+  });
+
+  it("uses CLAWQL_PROVIDER when specLabel is unset (single-vendor)", () => {
+    process.env.CLAWQL_PROVIDER = "github";
+    process.env.CLAWQL_GITHUB_TOKEN = "gh_only";
+    delete process.env.CLAWQL_BEARER_TOKEN;
+    expect(mergedAuthHeaders()).toEqual({
+      Authorization: "Bearer gh_only",
     });
   });
 });

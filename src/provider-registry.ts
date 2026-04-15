@@ -130,13 +130,11 @@ async function resolveGoogleTop50Items(): Promise<ProviderGroupItem[]> {
 
 async function resolveDefaultMultiProviderItems(): Promise<ProviderGroupItem[]> {
   const root = getPackageRoot();
-  const google = await resolveGoogleTop50Items();
   const cloudflare = BUNDLED_PROVIDERS.cloudflare;
-  const jira = BUNDLED_PROVIDERS.jira;
+  const github = BUNDLED_PROVIDERS.github;
   return [
-    ...google,
+    { abs: resolvePath(root, github.bundledSpecPath), label: github.id },
     { abs: resolvePath(root, cloudflare.bundledSpecPath), label: cloudflare.id },
-    { abs: resolvePath(root, jira.bundledSpecPath), label: jira.id },
   ];
 }
 
@@ -166,6 +164,7 @@ async function resolveAllBundledProvidersItems(): Promise<ProviderGroupItem[]> {
 export const BUNDLED_PROVIDER_GROUPS: Record<string, BundledProviderGroup> = {
   atlassian: { providers: ["jira", "bitbucket"] },
   "google-top50": { resolve: resolveGoogleTop50Items },
+  /** Same as no spec env: GitHub + Cloudflare (see `resolveDefaultMultiProviderItems`). */
   "default-multi-provider": { resolve: resolveDefaultMultiProviderItems },
   /** Google top50 + every other bundled vendor (Jira, Bitbucket, Cloudflare, GitHub, Slack, Sentry, n8n). */
   "all-providers": { resolve: resolveAllBundledProvidersItems },

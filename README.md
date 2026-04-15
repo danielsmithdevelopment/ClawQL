@@ -14,8 +14,8 @@ manager). Deployments (Docker/K8s/Cloud Run) wire both for you.
 
 **Bring your own OpenAPI 3** (JSON/YAML file or URL), or use **Swagger 2**
 (converted automatically), or a **Google Discovery** document URL. If no spec
-env is set, ClawQL defaults to a bundled **multi-provider** merge (**Google top50 +
-Cloudflare + Jira**). Single-provider **`cloudflare`** and other presets are
+env is set, ClawQL defaults to a bundled **multi-provider** merge (**GitHub +
+Cloudflare**). Single-provider **`cloudflare`** and other presets are
 available via **`CLAWQL_PROVIDER`** (see [`providers/README.md`](providers/README.md)).
 
 **Repo vs npm:** GitHub **`ClawQL`** — published package **`clawql-mcp`**.
@@ -322,7 +322,7 @@ Used when any of the following applies (checked in this order):
 1. **`CLAWQL_SPEC_PATHS`** — merge these local files (comma, semicolon, or newline separated).
 2. **`CLAWQL_PROVIDER`** — if it names a **merged preset** (`google-top50`, `default-multi-provider`, `all-providers`, `atlassian`, …), load that bundle.
 3. **`CLAWQL_GOOGLE_TOP50_SPECS`** (`1` / `true` / `yes`) — merge curated **google-top50** if #1–2 did not already select multi-spec.
-4. **Built-in default merge** — only if **`CLAWQL_SPEC_PATHS`**, **`CLAWQL_SPEC_PATH`**, **`CLAWQL_SPEC_URL`**, **`CLAWQL_DISCOVERY_URL`**, **`CLAWQL_PROVIDER`**, and **`CLAWQL_GOOGLE_TOP50_SPECS`** are all unset: **google top50 + Cloudflare + Jira** (`default-multi-provider`).
+4. **Built-in default merge** — only if **`CLAWQL_SPEC_PATHS`**, **`CLAWQL_SPEC_PATH`**, **`CLAWQL_SPEC_URL`**, **`CLAWQL_DISCOVERY_URL`**, **`CLAWQL_PROVIDER`**, and **`CLAWQL_GOOGLE_TOP50_SPECS`** are all unset: **GitHub + Cloudflare** (`default-multi-provider`).
 
 If Stage 1 runs, you get one merged **search** index; **`execute`** uses **REST** per spec (see server logs: GraphQL is not used for multi-spec execute).
 
@@ -354,11 +354,14 @@ If Stage 1 does **not** apply, one document is loaded in this order:
 | `CLAWQL_CLOUDFLARE_ACCOUNT_ID` | Optional; sent as `CF-Account-ID` on bridge requests. |
 | `CLAWQL_SANDBOX_PERSISTENCE_MODE` | Default `session` / `ephemeral` / `persistent` for sandbox tool calls (overridable per call). |
 | `CLAWQL_SANDBOX_TIMEOUT_MS` | Max wait for each bridge request (default `120000`). |
+| `CLAWQL_GITHUB_TOKEN` | GitHub PAT / fine-grained token for **`execute`** when the operation is from the **github** spec (or `CLAWQL_PROVIDER=github`). Also accepts **`GITHUB_TOKEN`** / **`GH_TOKEN`**. |
+| `CLAWQL_CLOUDFLARE_API_TOKEN` | Cloudflare API token for **`execute`** when the operation is from the **cloudflare** spec (or `CLAWQL_PROVIDER=cloudflare`). Also accepts **`CLOUDFLARE_API_TOKEN`**. |
+| `CLAWQL_BEARER_TOKEN` | Fallback bearer when a provider-specific token is not set; also used for Google and other merged labels. |
 
 **GCP multi-service:** use **`CLAWQL_GOOGLE_TOP50_SPECS=1`**, **`CLAWQL_PROVIDER=google-top50`**, or **`CLAWQL_SPEC_PATHS`** so `search` / `execute` see every merged API in one server; `execute` uses REST in that mode. For **every bundled vendor** (Google top50 + Jira, Bitbucket, Cloudflare, GitHub, Slack, Sentry, n8n), use **`CLAWQL_PROVIDER=all-providers`**. See [`docs/workflow-gcp-multi-service.md`](docs/workflow-gcp-multi-service.md).  
 **Integration check:** `npm run workflow:gcp-multi` runs **`tools/call` → `search`** over real MCP stdio and writes `docs/workflow-gcp-multi-latest.json` (full `CallToolResult` + parsed body). `npm run workflow:gcp-multi:direct` is a faster in-process-only variant for debugging rankers. One-page results summary: [`docs/gcp-multi-mcp-test-summary.md`](docs/gcp-multi-mcp-test-summary.md). Detailed experiment write-up (queries, APIs, token heuristic, MCP samples): [`docs/experiment-gcp-multi-mcp-workflow.md`](docs/experiment-gcp-multi-mcp-workflow.md); `npm run report:gcp-multi-experiment` refreshes [`docs/experiment-gcp-multi-mcp-stats.json`](docs/experiment-gcp-multi-mcp-stats.json).
 
-The default **first-run** bundle is **Stage 1 #4** above. To use another bundled spec or merged preset, set **`CLAWQL_PROVIDER`** — e.g. **`google`**,
+The default **first-run** bundle is **Stage 1 #4** above (**GitHub + Cloudflare**). Set **`CLAWQL_GITHUB_TOKEN`** and **`CLAWQL_CLOUDFLARE_API_TOKEN`** together so **`execute`** can call both APIs. To use another bundled spec or merged preset, set **`CLAWQL_PROVIDER`** — e.g. **`google`**,
 **`atlassian`**, **`cloudflare`**, **`github`**, **`slack`**, **`sentry`**, or **`n8n`**
 (see `providers/README.md`; **`all-providers`** = top50 + all other bundled vendors).  
 Compatibility aliases currently also exist for **`jira`** and **`bitbucket`**.  
@@ -590,7 +593,7 @@ Run **MCP Streamable HTTP** and **clawql-graphql** in a local cluster so clients
    This builds **`clawql-mcp:latest`**, applies **`docker/kustomize/overlays/local`**, and waits for rollouts. The script uses the **`docker-desktop`** kubectl context when present.
 
 3. **Health:** `curl -s http://localhost:8080/healthz` should return `{"status":"ok",...}` before connecting the client.
-4. **GitHub / bearer auth:** `bash scripts/k8s-docker-desktop-set-github-token.sh` (or set `CLAWQL_BEARER_TOKEN` via a Secret) — see [`docker/README.md`](docker/README.md).
+4. **GitHub + Cloudflare auth:** `bash scripts/k8s-docker-desktop-set-github-token.sh` (optional `CLAWQL_CLOUDFLARE_API_TOKEN` in the environment for the same run). See [`docker/README.md`](docker/README.md).
 
 **Teardown:** `kubectl --context docker-desktop delete namespace clawql`
 

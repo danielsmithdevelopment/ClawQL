@@ -86,16 +86,16 @@ make local-k8s-up
 
 This tags **`clawql-mcp:latest`** (same daemon as Docker Desktop; no registry push). The overlay lives at `docker/kustomize/overlays/local`.
 
-- **`CLAWQL_PROVIDER`:** The **local** overlay sets **`github`** only (lighter RAM on a laptop). Edit `docker/kustomize/overlays/local/patch-local-provider-env.yaml` to **`all-providers`** when you need the full merge for multi-vendor MCP or **`workflow:complex-release-stack:mcp`** over HTTP. The **base** manifest defaults to **`google-top50`** when no overlay patch applies.
+- **`CLAWQL_PROVIDER`:** The **local** overlay sets **`default-multi-provider`** (GitHub + Cloudflare, same as bare `npx clawql-mcp`). Edit `docker/kustomize/overlays/local/patch-local-provider-env.yaml` to **`all-providers`** when you need the full merge for multi-vendor MCP or **`workflow:complex-release-stack:mcp`** over HTTP. The **base** manifest defaults to **`google-top50`** when no overlay patch applies.
 - **`kubectl` context:** The script targets **`docker-desktop`** when that context exists (so your default context can stay on EKS or another cluster).
 - **Restart behavior:** Deployments keep **`replicas: 1`** and Kubernetes **restarts failed containers** automatically (Pod `restartPolicy` is `Always`).
 - **MCP URL:** `http://localhost:8080/mcp` once `kubectl -n clawql get svc clawql-mcp-http` shows an external address (often `localhost` on Docker Desktop).
 - **Cold start:** The MCP container loads every bundled spec before `listen()`; hitting `:8080` too early can produce `fetch failed` / “other side closed” in Node. Wait until `curl http://localhost:8080/healthz` returns `{"status":"ok"…}` or the pod is **Ready** (the MCP Deployment includes `/healthz` startup/readiness probes). The `workflow:complex-release-stack:mcp` script polls `/healthz` when `CLAWQL_MCP_URL` is set.
 - **Teardown:** `kubectl delete namespace clawql` (or `kubectl --context docker-desktop delete namespace clawql`)
 
-### GitHub API auth (`CLAWQL_BEARER_TOKEN`) on Docker Desktop K8s
+### GitHub + Cloudflare API auth on Docker Desktop K8s
 
-ClawQL adds `Authorization: Bearer …` from **`CLAWQL_BEARER_TOKEN`** (see `src/rest-operation.ts`). For **`issues/create`** and other GitHub `execute` calls, set it in the cluster:
+Merged **`execute`** calls pick the bearer per vendor (`specLabel`): **`CLAWQL_GITHUB_TOKEN`** / **`GITHUB_TOKEN`** for GitHub operations and **`CLAWQL_CLOUDFLARE_API_TOKEN`** / **`CLOUDFLARE_API_TOKEN`** for Cloudflare (see `src/auth-headers.ts`). **`CLAWQL_BEARER_TOKEN`** remains a fallback. For the default **GitHub + Cloudflare** bundle, set both tokens in the cluster.
 
 1. **One-shot (recommended):** from the ClawQL repo root, with `gh` logged in:
 
@@ -103,18 +103,19 @@ ClawQL adds `Authorization: Bearer …` from **`CLAWQL_BEARER_TOKEN`** (see `src
    bash scripts/k8s-docker-desktop-set-github-token.sh
    ```
 
-   This creates/updates Secret **`clawql-github-auth`** in namespace **`clawql`**, attaches **`CLAWQL_BEARER_TOKEN`** to **`deployment/clawql-mcp-http`**, and **`rollout restart`**s it.
+   Optional: `export CLAWQL_CLOUDFLARE_API_TOKEN=…` in the same shell so the script stores **both** keys in Secret **`clawql-github-auth`** and attaches **`CLAWQL_GITHUB_TOKEN`** (and **`CLAWQL_CLOUDFLARE_API_TOKEN`** when set) to **`deployment/clawql-mcp-http`**, then **`rollout restart`**s it.
 
-   You can also pipe a PAT: `gh auth token | bash scripts/k8s-docker-desktop-set-github-token.sh`, or `export CLAWQL_BEARER_TOKEN=…` before the script.
+   You can also pipe a PAT: `gh auth token | bash scripts/k8s-docker-desktop-set-github-token.sh`, or `export CLAWQL_GITHUB_TOKEN=…` / `CLAWQL_BEARER_TOKEN=…` before the script.
 
 2. **Manual:**
 
    ```bash
    kubectl create secret generic clawql-github-auth -n clawql \
-     --from-literal=CLAWQL_BEARER_TOKEN="$(gh auth token)" \
+     --from-literal=CLAWQL_GITHUB_TOKEN="$(gh auth token)" \
+     --from-literal=CLAWQL_CLOUDFLARE_API_TOKEN="YOUR_CF_TOKEN" \
      --dry-run=client -o yaml | kubectl apply -f -
    kubectl -n clawql set env deployment/clawql-mcp-http \
-     --from=secret/clawql-github-auth --keys=CLAWQL_BEARER_TOKEN --overwrite
+     --from=secret/clawql-github-auth --keys=CLAWQL_GITHUB_TOKEN,CLAWQL_CLOUDFLARE_API_TOKEN --overwrite
    kubectl -n clawql rollout restart deployment/clawql-mcp-http
    ```
 
