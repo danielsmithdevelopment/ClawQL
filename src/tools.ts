@@ -3,6 +3,7 @@
  *
  * Core tools: search (spec discovery) and execute (GraphQL-backed REST call).
  * Optional: code / sandbox_exec — remote execution via cloudflare/sandbox-bridge Worker.
+ * Optional: memory_ingest — Obsidian Markdown pages under CLAWQL_OBSIDIAN_VAULT_PATH.
  * GraphQL field names are resolved via schema introspection — see resolveGraphQLField.
  */
 
@@ -28,6 +29,7 @@ import { searchOperations, formatSearchResults } from "./spec-search.js";
 import { createGraphQLClient } from "./graphql-client.js";
 import { executeRestOperation } from "./rest-operation.js";
 import { handleClawqlCodeToolInput } from "./sandbox-bridge-client.js";
+import { handleMemoryIngestToolInput } from "./memory-ingest.js";
 import type { Operation } from "./spec-loader.js";
 import { INLINE_OPENAPI_REQUEST_BODY } from "./operation-types.js";
 
@@ -304,6 +306,39 @@ export function registerTools(server: McpServer) {
 
   server.tool("code", sandboxCodeSchema, handleClawqlCodeToolInput);
   server.tool("sandbox_exec", sandboxCodeSchema, handleClawqlCodeToolInput);
+
+  server.tool(
+    "memory_ingest",
+    {
+      title: z
+        .string()
+        .min(1)
+        .describe("Suggested Obsidian page title (used for the file name and heading)."),
+      insights: z.string().optional().describe("Key insights to persist."),
+      conversation: z
+        .string()
+        .optional()
+        .describe("Conversation transcript or summary text."),
+      toolOutputs: z
+        .union([z.string(), z.array(z.string())])
+        .optional()
+        .describe("Tool result body, or a list of results to record."),
+      wikilinks: z
+        .array(z.string())
+        .optional()
+        .describe(
+          "Other vault page names to link with Obsidian [[wikilinks]] (plain names; brackets optional)."
+        ),
+      sessionId: z.string().optional().describe("Optional session label (shown in the note)."),
+      append: z
+        .boolean()
+        .optional()
+        .describe(
+          "When the page already exists, append a new section (default true). Set false to replace the file."
+        ),
+    },
+    handleMemoryIngestToolInput
+  );
 }
 
 // ─────────────────────────────────────────────────────────────
