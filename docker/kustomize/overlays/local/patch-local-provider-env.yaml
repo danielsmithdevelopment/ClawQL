@@ -1,5 +1,5 @@
-# Local Docker Desktop: single bundled spec (lighter than all-providers merge).
-# Switch value to all-providers (or another CLAWQL_PROVIDER) when you need multi-vendor again.
+# Local Docker Desktop: same default merge as bare npm (GitHub + Cloudflare).
+# Pin github, cloudflare, google-top50, or all-providers if you prefer.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -11,7 +11,7 @@ spec:
         - name: clawql-mcp-http
           env:
             - name: CLAWQL_PROVIDER
-              value: github
+              value: default-multi-provider
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -24,4 +24,4 @@ spec:
         - name: clawql-graphql
           env:
             - name: CLAWQL_PROVIDER
-              value: github
+              value: default-multi-provider

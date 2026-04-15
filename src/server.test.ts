@@ -79,6 +79,8 @@ describe("server (stdio)", () => {
         const names = new Set(tools.map((t) => t.name));
         expect(names.has("search")).toBe(true);
         expect(names.has("execute")).toBe(true);
+        expect(names.has("code")).toBe(true);
+        expect(names.has("sandbox_exec")).toBe(true);
       } finally {
         await client.close();
       }

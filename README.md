@@ -1,13 +1,10 @@
 # ClawQL
 
-MCP server with **two tools** (`search`, `execute`), an internal **GraphQL**
-layer for lean responses, and **spec-driven discovery** so agents don’t load
-full OpenAPI definitions into context.
+MCP server with **`search`** and **`execute`** (OpenAPI/Discovery), plus optional **`code`** / **`sandbox_exec`** (isolated execution via a [Cloudflare Sandbox](https://developers.cloudflare.com/sandbox/) **bridge Worker**). An internal **GraphQL** layer keeps **`execute`** responses lean; **spec-driven discovery** means agents don’t load full OpenAPI definitions into context.
 
 **What is MCP?** [Model Context Protocol](https://modelcontextprotocol.io) is how
 clients such as [Cursor](https://cursor.com/docs/context/mcp) or Claude Desktop
-run this server over **stdio** or **HTTP** and expose `search` / `execute` as
-tools to the model.
+run this server over **stdio** or **HTTP** and expose **`search`**, **`execute`**, and (when configured) **`code`** / **`sandbox_exec`** to the model.
 
 **Why two processes?** `search` runs inside the MCP process. The **`execute`**
 tool calls a **local GraphQL proxy** (`clawql-graphql`, default
@@ -17,8 +14,8 @@ manager). Deployments (Docker/K8s/Cloud Run) wire both for you.
 
 **Bring your own OpenAPI 3** (JSON/YAML file or URL), or use **Swagger 2**
 (converted automatically), or a **Google Discovery** document URL. If no spec
-env is set, ClawQL defaults to a bundled **multi-provider** merge (**Google top50 +
-Cloudflare + Jira**). Single-provider **`cloudflare`** and other presets are
+env is set, ClawQL defaults to a bundled **multi-provider** merge (**GitHub +
+Cloudflare**). Single-provider **`cloudflare`** and other presets are
 available via **`CLAWQL_PROVIDER`** (see [`providers/README.md`](providers/README.md)).
 
 **Repo vs npm:** GitHub **`ClawQL`** — published package **`clawql-mcp`**.
@@ -325,7 +322,7 @@ Used when any of the following applies (checked in this order):
 1. **`CLAWQL_SPEC_PATHS`** — merge these local files (comma, semicolon, or newline separated).
 2. **`CLAWQL_PROVIDER`** — if it names a **merged preset** (`google-top50`, `default-multi-provider`, `all-providers`, `atlassian`, …), load that bundle.
 3. **`CLAWQL_GOOGLE_TOP50_SPECS`** (`1` / `true` / `yes`) — merge curated **google-top50** if #1–2 did not already select multi-spec.
-4. **Built-in default merge** — only if **`CLAWQL_SPEC_PATHS`**, **`CLAWQL_SPEC_PATH`**, **`CLAWQL_SPEC_URL`**, **`CLAWQL_DISCOVERY_URL`**, **`CLAWQL_PROVIDER`**, and **`CLAWQL_GOOGLE_TOP50_SPECS`** are all unset: **google top50 + Cloudflare + Jira** (`default-multi-provider`).
+4. **Built-in default merge** — only if **`CLAWQL_SPEC_PATHS`**, **`CLAWQL_SPEC_PATH`**, **`CLAWQL_SPEC_URL`**, **`CLAWQL_DISCOVERY_URL`**, **`CLAWQL_PROVIDER`**, and **`CLAWQL_GOOGLE_TOP50_SPECS`** are all unset: **GitHub + Cloudflare** (`default-multi-provider`).
 
 If Stage 1 runs, you get one merged **search** index; **`execute`** uses **REST** per spec (see server logs: GraphQL is not used for multi-spec execute).
 
@@ -352,11 +349,19 @@ If Stage 1 does **not** apply, one document is loaded in this order:
 | `CLAWQL_INTROSPECTION_PATH` | Pregenerated GraphQL introspection JSON (optional; speeds MCP `execute` field matching) |
 | `CLAWQL_API_BASE_URL` | Override REST base URL (if spec has no `servers` or you need a different host) |
 | `CLAWQL_OBSIDIAN_VAULT_PATH` | Absolute path to an Obsidian Markdown vault (shared volume/NFS). When set, the server **checks** the path exists and is readable/writable at startup. Omit locally to skip the check; container images default to **`/vault`** (see [Docker](docker/README.md)). Used with **[ClawQL-Agent](https://github.com/danielsmithdevelopment/ClawQL-Agent)** and future memory tools. |
+| `CLAWQL_SANDBOX_BRIDGE_URL` | Origin of the [sandbox bridge Worker](cloudflare/sandbox-bridge/README.md) (e.g. `https://….workers.dev`). Required for **`code`** / **`sandbox_exec`**. |
+| `CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN` | Bearer token for **`POST /exec`**; must match the Worker `BRIDGE_SECRET`. |
+| `CLAWQL_CLOUDFLARE_ACCOUNT_ID` | Optional; sent as `CF-Account-ID` on bridge requests. |
+| `CLAWQL_SANDBOX_PERSISTENCE_MODE` | Default `session` / `ephemeral` / `persistent` for sandbox tool calls (overridable per call). |
+| `CLAWQL_SANDBOX_TIMEOUT_MS` | Max wait for each bridge request (default `120000`). |
+| `CLAWQL_GITHUB_TOKEN` | GitHub PAT / fine-grained token for **`execute`** when the operation is from the **github** spec (or `CLAWQL_PROVIDER=github`). Also accepts **`GITHUB_TOKEN`** / **`GH_TOKEN`**. |
+| `CLAWQL_CLOUDFLARE_API_TOKEN` | Cloudflare API token for **`execute`** when the operation is from the **cloudflare** spec (or `CLAWQL_PROVIDER=cloudflare`). Also accepts **`CLOUDFLARE_API_TOKEN`**. |
+| `CLAWQL_BEARER_TOKEN` | Fallback bearer when a provider-specific token is not set; also used for Google and other merged labels. |
 
 **GCP multi-service:** use **`CLAWQL_GOOGLE_TOP50_SPECS=1`**, **`CLAWQL_PROVIDER=google-top50`**, or **`CLAWQL_SPEC_PATHS`** so `search` / `execute` see every merged API in one server; `execute` uses REST in that mode. For **every bundled vendor** (Google top50 + Jira, Bitbucket, Cloudflare, GitHub, Slack, Sentry, n8n), use **`CLAWQL_PROVIDER=all-providers`**. See [`docs/workflow-gcp-multi-service.md`](docs/workflow-gcp-multi-service.md).  
 **Integration check:** `npm run workflow:gcp-multi` runs **`tools/call` → `search`** over real MCP stdio and writes `docs/workflow-gcp-multi-latest.json` (full `CallToolResult` + parsed body). `npm run workflow:gcp-multi:direct` is a faster in-process-only variant for debugging rankers. One-page results summary: [`docs/gcp-multi-mcp-test-summary.md`](docs/gcp-multi-mcp-test-summary.md). Detailed experiment write-up (queries, APIs, token heuristic, MCP samples): [`docs/experiment-gcp-multi-mcp-workflow.md`](docs/experiment-gcp-multi-mcp-workflow.md); `npm run report:gcp-multi-experiment` refreshes [`docs/experiment-gcp-multi-mcp-stats.json`](docs/experiment-gcp-multi-mcp-stats.json).
 
-The default **first-run** bundle is **Stage 1 #4** above. To use another bundled spec or merged preset, set **`CLAWQL_PROVIDER`** — e.g. **`google`**,
+The default **first-run** bundle is **Stage 1 #4** above (**GitHub + Cloudflare**). Set **`CLAWQL_GITHUB_TOKEN`** and **`CLAWQL_CLOUDFLARE_API_TOKEN`** together so **`execute`** can call both APIs. To use another bundled spec or merged preset, set **`CLAWQL_PROVIDER`** — e.g. **`google`**,
 **`atlassian`**, **`cloudflare`**, **`github`**, **`slack`**, **`sentry`**, or **`n8n`**
 (see `providers/README.md`; **`all-providers`** = top50 + all other bundled vendors).  
 Compatibility aliases currently also exist for **`jira`** and **`bitbucket`**.  
@@ -455,12 +460,14 @@ In multi-spec mode, ClawQL keeps one merged operation index for discovery and ex
 
 ## Tools
 
-**Shipped today:** **`search`** and **`execute`** (see [Architecture](#architecture)). **[ClawQL-Agent](https://github.com/danielsmithdevelopment/ClawQL-Agent)** layers orchestration, long-term memory, and optional sandboxes on top; additional first-class MCP tools are part of **[parity milestone #11](https://github.com/danielsmithdevelopment/ClawQL/issues/11)**.
+**Core tools:** **`search`** and **`execute`** (see [Architecture](#architecture)). **`code`** and **`sandbox_exec`** are the same tool under two names; they run snippets in **Cloudflare Sandboxes** through the HTTP bridge in [`cloudflare/sandbox-bridge/`](cloudflare/sandbox-bridge/README.md) (set **`CLAWQL_SANDBOX_BRIDGE_URL`** and **`CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN`** — see `.env.example`). **`memory_ingest` / `memory_recall`** remain on **[parity milestone #11](https://github.com/danielsmithdevelopment/ClawQL/issues/11)**.
 
 | Tool | Description |
 |---|---|
 | `search` | Search the active OpenAPI/Discovery spec by natural language intent |
 | `execute` | Run a discovered operation by `operationId`, with optional GraphQL field selection |
+| `code` | Run `code` + `language` in an isolated sandbox (alias: `sandbox_exec`) |
+| `sandbox_exec` | Same as `code` — use one name consistently in agent prompts |
 
 ### Agent workflow example
 
@@ -586,7 +593,7 @@ Run **MCP Streamable HTTP** and **clawql-graphql** in a local cluster so clients
    This builds **`clawql-mcp:latest`**, applies **`docker/kustomize/overlays/local`**, and waits for rollouts. The script uses the **`docker-desktop`** kubectl context when present.
 
 3. **Health:** `curl -s http://localhost:8080/healthz` should return `{"status":"ok",...}` before connecting the client.
-4. **GitHub / bearer auth:** `bash scripts/k8s-docker-desktop-set-github-token.sh` (or set `CLAWQL_BEARER_TOKEN` via a Secret) — see [`docker/README.md`](docker/README.md).
+4. **GitHub + Cloudflare auth:** `bash scripts/k8s-docker-desktop-set-github-token.sh` (optional `CLAWQL_CLOUDFLARE_API_TOKEN` in the environment for the same run). See [`docker/README.md`](docker/README.md).
 
 **Teardown:** `kubectl --context docker-desktop delete namespace clawql`
 
@@ -604,9 +611,8 @@ See [`docs/deploy-k8s.md`](docs/deploy-k8s.md).
 
 ## Extending the server
 
-The default MCP surface is **`search`** and **`execute`**. To add more tools
-(e.g. `memory_*`, `code()` — see **[ClawQL-Agent](https://github.com/danielsmithdevelopment/ClawQL-Agent)** / [#11](https://github.com/danielsmithdevelopment/ClawQL/issues/11)), register them in `src/tools.ts` the same way
-(`server.tool(...)`). Vault path configuration and filesystem helpers for Obsidian-backed tools are in **`src/vault-config.ts`** and **`src/vault-utils.ts`**.
+The default API surface is **`search`** and **`execute`**; **`code`** / **`sandbox_exec`** are registered in the same module and call **`src/sandbox-bridge-client.ts`**. To add more tools
+(e.g. `memory_*` — see **[ClawQL-Agent](https://github.com/danielsmithdevelopment/ClawQL-Agent)** / [#11](https://github.com/danielsmithdevelopment/ClawQL/issues/11)), register them in `src/tools.ts` the same way (`server.tool(...)`). Vault path configuration and filesystem helpers for Obsidian-backed tools are in **`src/vault-config.ts`** and **`src/vault-utils.ts`**.
 
 GraphQL field names are **auto-resolved** in `execute` via schema introspection
 (candidates include run-style names, legacy path-derived names, and response-type

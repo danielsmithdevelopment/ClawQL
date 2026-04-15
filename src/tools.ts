@@ -1,7 +1,8 @@
 /**
  * tools.ts
  *
- * Two tools: search (spec discovery) and execute (GraphQL-backed REST call).
+ * Core tools: search (spec discovery) and execute (GraphQL-backed REST call).
+ * Optional: code / sandbox_exec — remote execution via cloudflare/sandbox-bridge Worker.
  * GraphQL field names are resolved via schema introspection — see resolveGraphQLField.
  */
 
@@ -26,6 +27,7 @@ import { loadSpec, resolveApiBaseUrl } from "./spec-loader.js";
 import { searchOperations, formatSearchResults } from "./spec-search.js";
 import { createGraphQLClient } from "./graphql-client.js";
 import { executeRestOperation } from "./rest-operation.js";
+import { handleClawqlCodeToolInput } from "./sandbox-bridge-client.js";
 import type { Operation } from "./spec-loader.js";
 import { INLINE_OPENAPI_REQUEST_BODY } from "./operation-types.js";
 
@@ -270,6 +272,38 @@ export function registerTools(server: McpServer) {
     },
     handleClawqlExecuteToolInput
   );
+
+  const sandboxCodeSchema = {
+    code: z
+      .string()
+      .describe("Source code to run in an isolated Cloudflare Sandbox (via deployed bridge Worker)."),
+    language: z
+      .enum(["python", "javascript", "shell"])
+      .describe(
+        "python (python3), javascript (Node .mjs), or shell (posix sh script body)."
+      ),
+    sessionId: z
+      .string()
+      .optional()
+      .describe(
+        "When persistenceMode is session or persistent, reuse the same id to keep a stable sandbox filesystem (e.g. persist files across calls)."
+      ),
+    persistenceMode: z
+      .enum(["ephemeral", "session", "persistent"])
+      .optional()
+      .describe(
+        "Overrides CLAWQL_SANDBOX_PERSISTENCE_MODE. ephemeral = new sandbox each call; session = per sessionId; persistent = one shared sandbox."
+      ),
+    timeoutMs: z
+      .number()
+      .int()
+      .min(1000)
+      .optional()
+      .describe("Optional wall-clock limit in ms (capped by CLAWQL_SANDBOX_TIMEOUT_MS_MAX)."),
+  };
+
+  server.tool("code", sandboxCodeSchema, handleClawqlCodeToolInput);
+  server.tool("sandbox_exec", sandboxCodeSchema, handleClawqlCodeToolInput);
 }
 
 // ─────────────────────────────────────────────────────────────

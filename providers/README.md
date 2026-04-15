@@ -12,10 +12,10 @@ start avoids downloading multi‑MB specs.
 | `slack` | `slack/openapi.json` | Official Web API spec from [api.slack.com/specs](https://api.slack.com/specs) (OpenAPI 2; loader upgrades). |
 | `sentry` | `sentry/openapi.json` | Dereferenced public API from [getsentry/sentry-api-schema](https://github.com/getsentry/sentry-api-schema) (`openapi-derefed.json`). |
 | `n8n` | `n8n/openapi.json` | n8n Public API (bundled JSON; refresh via `npm run fetch-n8n-openapi` against a running instance). |
-| `jira` | `atlassian/jira/openapi.yaml` | Jira Cloud REST (alias of single-spec mode; also part of `atlassian` / default merge). |
+| `jira` | `atlassian/jira/openapi.yaml` | Jira Cloud REST (alias of single-spec mode; also part of `atlassian` / `all-providers`). |
 | `bitbucket` | `atlassian/bitbucket/openapi.yaml` | Bitbucket Cloud REST (alias; also part of `atlassian` / `all-providers`). |
 | `google-top50` | *(merged preset)* | Curated [`google-top50-apis.json`](google/google-top50-apis.json) only (~50 Discovery specs). |
-| `default-multi-provider` | *(merged preset)* | Same as **no spec env**: top50 + Cloudflare + Jira. |
+| `default-multi-provider` | *(merged preset)* | Same as **no spec env**: GitHub + Cloudflare. |
 | `all-providers` | *(merged preset)* | Top50 + **every** other `BUNDLED_PROVIDERS` vendor (adds Bitbucket, GitHub, Slack, Sentry, n8n, …). |
 
 Compatibility aliases for merged groups: `atlassian` = Jira + Bitbucket together.
@@ -24,7 +24,7 @@ Compatibility aliases for merged groups: `atlassian` = Jira + Bitbucket together
 
 **Google “top 50” offline bundle:** Pinned Discovery JSON (and optional `introspection.json` / `schema.graphql`) for common GCP services — under [`google/apis/`](google/apis/README.md). Manifest: `google/google-top50-apis.json`. Refresh: `npm run fetch-google-top50` then `npm run build && npm run pregenerate-google-top50-graphql`, or `npm run refresh-google-top50`.
 
-**Default no-config mode:** when no spec env vars are set, ClawQL loads a bundled multi-provider set (`google-top50` + `cloudflare` + `jira`) so complex cross-provider search works on first install.
+**Default no-config mode:** when no spec env vars are set, ClawQL loads a bundled multi-provider set (**GitHub + Cloudflare**) so agents can **`search`** / **`execute`** both APIs in one process. Set **`CLAWQL_GITHUB_TOKEN`** and **`CLAWQL_CLOUDFLARE_API_TOKEN`** (or **`GITHUB_TOKEN`** / **`CLOUDFLARE_API_TOKEN`**) together for live calls — see `src/auth-headers.ts`.
 
 **All-providers merged preset:** set **`CLAWQL_PROVIDER=all-providers`** to load **Google top50 + every other bundled vendor** (Jira, Bitbucket, Cloudflare, GitHub, Slack, Sentry, n8n) in one merged operation index. This wins over **`CLAWQL_GOOGLE_TOP50_SPECS`** when both are set. Adding a new entry under `BUNDLED_PROVIDERS` automatically includes it here.
 
