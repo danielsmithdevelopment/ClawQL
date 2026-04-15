@@ -1,6 +1,6 @@
 # Memory, Obsidian, and the “LLM wiki” pattern
 
-This note explains **why** ClawQL supports an Obsidian vault path and a **`memory_ingest`** tool, in terms readers may have seen described as **Karpathy-style** or **incremental wiki** memory.
+This note explains **why** ClawQL supports an Obsidian vault path and a **`memory_ingest`** tool, in terms readers may have seen described as **Karpathy-style** or **incremental wiki** memory. For all MCP tools (including **`memory_recall`**), see **[mcp-tools.md](mcp-tools.md)**.
 
 ## Beyond one-shot RAG
 

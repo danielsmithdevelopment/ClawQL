@@ -5,7 +5,7 @@ import { HeroPattern } from '@/components/HeroPattern'
 export const metadata = {
   title: 'ClawQL documentation',
   description:
-    'ClawQL is an MCP server with search and execute tools, an internal GraphQL layer, and spec-driven discovery for OpenAPI and Google APIs.',
+    'ClawQL is an MCP server: core search and execute tools, optional sandbox_exec and Obsidian memory tools, internal GraphQL layer, and spec-driven discovery for OpenAPI and Google APIs.',
 }
 
 export const sections = [
@@ -17,7 +17,7 @@ export const sections = [
 
 # ClawQL documentation
 
-**ClawQL** is an MCP server with two tools—**`search`** and **`execute`**—plus an internal **GraphQL** projection layer so agents can work with **OpenAPI 3**, **Swagger 2**, or **Google Discovery** APIs without loading full specifications into context. {{ className: 'lead' }}
+**ClawQL** registers **core** tools **`search`** and **`execute`**, plus optional **`sandbox_exec`** (remote code in a Cloudflare Sandbox via bridge), **`memory_ingest`**, and **`memory_recall`** (Obsidian vault). An internal **GraphQL** projection layer keeps API responses lean for **OpenAPI 3**, **Swagger 2**, and **Google Discovery**. [Full tool reference (repo)](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp-tools.md). {{ className: 'lead' }}
 
 <div className="not-prose mt-6 mb-16 flex gap-3">
   <Button href="/quickstart" arrow="right">

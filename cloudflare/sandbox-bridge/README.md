@@ -1,6 +1,6 @@
 # ClawQL sandbox bridge (Cloudflare Worker)
 
-The [Sandbox SDK](https://developers.cloudflare.com/sandbox/) runs **inside Workers** with a container binding. The Node-based `clawql-mcp` server cannot load `@cloudflare/sandbox` directly, so this Worker exposes a small **POST `/exec`** API that the MCP tools **`code`** and **`sandbox_exec`** call using HTTP.
+The [Sandbox SDK](https://developers.cloudflare.com/sandbox/) runs **inside Workers** with a container binding. The Node-based `clawql-mcp` server cannot load `@cloudflare/sandbox` directly, so this Worker exposes a small **POST `/exec`** API that the MCP **`sandbox_exec`** tool calls using HTTP.
 
 ## Deploy
 

@@ -1,10 +1,10 @@
 # ClawQL
 
-MCP server with **`search`** and **`execute`** (OpenAPI/Discovery), plus optional **`code`** / **`sandbox_exec`** (isolated execution via a [Cloudflare Sandbox](https://developers.cloudflare.com/sandbox/) **bridge Worker**). An internal **GraphQL** layer keeps **`execute`** responses lean; **spec-driven discovery** means agents don’t load full OpenAPI definitions into context.
+MCP server: **core** tools **`search`** and **`execute`** (OpenAPI/Discovery), plus optional **`sandbox_exec`** ([Cloudflare Sandbox](https://developers.cloudflare.com/sandbox/) **bridge Worker**), **`memory_ingest`**, and **`memory_recall`** (Obsidian vault). An internal **GraphQL** layer keeps **`execute`** responses lean; **spec-driven discovery** means agents don’t load full OpenAPI definitions into context. Full tool reference: **[`docs/mcp-tools.md`](docs/mcp-tools.md)**.
 
 **What is MCP?** [Model Context Protocol](https://modelcontextprotocol.io) is how
 clients such as [Cursor](https://cursor.com/docs/context/mcp) or Claude Desktop
-run this server over **stdio** or **HTTP** and expose **`search`**, **`execute`**, and (when configured) **`code`** / **`sandbox_exec`** to the model.
+run this server over **stdio** or **HTTP** and expose **`search`**, **`execute`**, and (when configured) **`sandbox_exec`**, **`memory_ingest`**, **`memory_recall`** to the model.
 
 **Why two processes?** `search` runs inside the MCP process. The **`execute`**
 tool calls a **local GraphQL proxy** (`clawql-graphql`, default
@@ -20,7 +20,7 @@ available via **`CLAWQL_PROVIDER`** (see [`providers/README.md`](providers/READM
 
 **Repo vs npm:** GitHub **`ClawQL`** — published package **`clawql-mcp`**.
 
-**Enterprise agent stack:** **[ClawQL-Agent](https://github.com/danielsmithdevelopment/ClawQL-Agent)** is the local-first Docker platform (LangGraph, Obsidian knowledge graph, optional Cloudflare Sandboxes, Langfuse) that uses **this repo** as the MCP **API engine** — token-efficient **`search` / `execute`** over OpenAPI/Discovery. The agent README’s unified tool story (`code()` / `sandbox_exec()`, `memory_ingest()`, `memory_recall()`) is the **parity target** for ClawQL; **`memory_ingest`** and **`memory_recall`** run when **`CLAWQL_OBSIDIAN_VAULT_PATH`** is set (see [Obsidian vault](#obsidian-vault-optional) and [`docs/memory-obsidian.md`](docs/memory-obsidian.md)). Further parity items are tracked in **[#11](https://github.com/danielsmithdevelopment/ClawQL/issues/11)**. Optional **`CLAWQL_OBSIDIAN_VAULT_PATH`** configures a shared Obsidian vault path for that roadmap (validated at startup when set; Docker/K8s default **`/vault`** — see [Obsidian vault](#obsidian-vault-optional)).
+**Enterprise agent stack:** **[ClawQL-Agent](https://github.com/danielsmithdevelopment/ClawQL-Agent)** is the local-first Docker platform (LangGraph, Obsidian knowledge graph, optional Cloudflare Sandboxes, Langfuse) that uses **this repo** as the MCP **API engine** — token-efficient **`search` / `execute`** over OpenAPI/Discovery. The agent README’s unified tool story (`sandbox_exec()`, `memory_ingest()`, `memory_recall()`) is the **parity target** for ClawQL; **`memory_ingest`** and **`memory_recall`** run when **`CLAWQL_OBSIDIAN_VAULT_PATH`** is set (see [Obsidian vault](#obsidian-vault-optional) and [`docs/memory-obsidian.md`](docs/memory-obsidian.md)). Further parity items are tracked in **[#11](https://github.com/danielsmithdevelopment/ClawQL/issues/11)**. Optional **`CLAWQL_OBSIDIAN_VAULT_PATH`** configures a shared Obsidian vault path for that roadmap (validated at startup when set; Docker/K8s default **`/vault`** — see [Obsidian vault](#obsidian-vault-optional)).
 
 ## First 5 minutes
 
@@ -58,6 +58,8 @@ From there: custom spec via `CLAWQL_SPEC_PATH` / `CLAWQL_SPEC_URL`, or read [Con
      ```
 
   **Google Discovery** (GCP APIs, etc.): use **`CLAWQL_DISCOVERY_URL`** instead of `CLAWQL_SPEC_URL`. Merge many specs or other presets: [Configure the API spec](#configure-the-api-spec).
+
+- **All MCP tools (API + vault + sandbox):** see **[`docs/mcp-tools.md`](docs/mcp-tools.md)** — examples for `sandbox_exec`, `memory_ingest`, `memory_recall`, env vars.
 
 - **Benchmarks & raw artifacts:** [Benchmarks and results](#benchmarks-and-results) — quick links to [all-providers stats](docs/benchmarks/all-providers-complex-workflow/experiment-all-providers-complex-workflow-stats.json), [default multi-provider stats](docs/benchmarks/multi-provider-complex-workflow/experiment-multi-provider-complex-workflow-stats.json), and workflow JSON outputs.
 
@@ -104,7 +106,7 @@ Same **two-terminal** pattern with a **local file** (`CLAWQL_SPEC_PATH=…`) or 
 
 ### Docker
 
-A multi-stage [Distroless](https://github.com/GoogleContainerTools/distroless) image bundles `dist/`, `bin/`, and `providers/` for local spec lookup. Build and run (stdio) are documented in [`docker/README.md`](docker/README.md).
+A multi-stage [Distroless](https://github.com/GoogleContainerTools/distroless) image bundles `dist/`, `bin/`, and `providers/` for local spec lookup. Build and run (stdio) are documented in [`docker/README.md`](docker/README.md). The image sets **`CLAWQL_OBSIDIAN_VAULT_PATH=/vault`** so **`memory_ingest`** / **`memory_recall`** can run when `/vault` is mounted; **`sandbox_exec`** still needs **`CLAWQL_SANDBOX_BRIDGE_URL`** and a deployed [sandbox bridge](cloudflare/sandbox-bridge/README.md) (not bundled in the image).
 
 ### Remote MCP (HTTP)
 
@@ -349,7 +351,7 @@ If Stage 1 does **not** apply, one document is loaded in this order:
 | `CLAWQL_INTROSPECTION_PATH` | Pregenerated GraphQL introspection JSON (optional; speeds MCP `execute` field matching) |
 | `CLAWQL_API_BASE_URL` | Override REST base URL (if spec has no `servers` or you need a different host) |
 | `CLAWQL_OBSIDIAN_VAULT_PATH` | Absolute path to an Obsidian Markdown vault (shared volume/NFS). When set, the server **checks** the path exists and is readable/writable at startup. Omit locally to skip the check; container images default to **`/vault`** (see [Docker](docker/README.md)). Used with **[ClawQL-Agent](https://github.com/danielsmithdevelopment/ClawQL-Agent)** and future memory tools. |
-| `CLAWQL_SANDBOX_BRIDGE_URL` | Origin of the [sandbox bridge Worker](cloudflare/sandbox-bridge/README.md) (e.g. `https://….workers.dev`). Required for **`code`** / **`sandbox_exec`**. |
+| `CLAWQL_SANDBOX_BRIDGE_URL` | Origin of the [sandbox bridge Worker](cloudflare/sandbox-bridge/README.md) (e.g. `https://….workers.dev`). Required for **`sandbox_exec`**. |
 | `CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN` | Bearer token for **`POST /exec`**; must match the Worker `BRIDGE_SECRET`. |
 | `CLAWQL_CLOUDFLARE_ACCOUNT_ID` | Optional; sent as `CF-Account-ID` on bridge requests. |
 | `CLAWQL_SANDBOX_PERSISTENCE_MODE` | Default `session` / `ephemeral` / `persistent` for sandbox tool calls (overridable per call). |
@@ -419,18 +421,20 @@ Very large specs may need a different retrieval strategy later.
 
 ```
 Agent
-  └─▶ MCP Server  (stdio)
+  └─▶ MCP Server  (stdio / HTTP)
         ├─▶ search tool  ──▶ In-memory spec search  (zero latency, zero tokens)
-        └─▶ execute tool  ──▶ GraphQL Client
-                                    └─▶ GraphQL Proxy  (localhost:4000)
-                                          │  [@omnigraph/openapi / Mesh, auto-generated]
-                                          │  [selects ONLY requested fields]
-                                          └─▶ Your REST API  (from OpenAPI servers / CLAWQL_API_BASE_URL)
+        ├─▶ execute tool  ──▶ GraphQL Client ──▶ GraphQL Proxy (localhost:4000) ──▶ REST API
+        ├─▶ sandbox_exec  ──▶ HTTPS ──▶ Cloudflare Sandbox bridge Worker (optional)
+        └─▶ memory_ingest / memory_recall  ──▶ Obsidian vault on disk (optional)
 ```
-An agent connects to ClawQL over MCP stdio and uses two tools:
+An agent connects to ClawQL over MCP and registers **up to five tools** (see [`docs/mcp-tools.md`](docs/mcp-tools.md)):
 
-- `search` runs against an in-memory operation index built from the loaded spec(s), so discovery is fast and does not require sending full OpenAPI documents into prompt context.
-- `execute` resolves the selected operation and calls the local GraphQL proxy, which projects only requested fields before invoking the upstream REST API (using spec `servers` or `CLAWQL_API_BASE_URL`).
+- **`search`** — in-memory operation index from the loaded spec(s); no upstream HTTP.
+- **`execute`** — GraphQL proxy (single-spec) or REST (multi-spec) for lean responses.
+- **`sandbox_exec`** — run snippet in remote Cloudflare Sandbox via **`CLAWQL_SANDBOX_BRIDGE_URL`** (not local execution).
+- **`memory_ingest`** / **`memory_recall`** — require **`CLAWQL_OBSIDIAN_VAULT_PATH`**.
+
+Core API workflow remains **`search` → `execute`**. Optional tools do not replace the GraphQL proxy for REST APIs.
 
 In multi-spec mode, ClawQL keeps one merged operation index for discovery and executes each operation against its owning spec.
 
@@ -468,14 +472,13 @@ In multi-spec mode, ClawQL keeps one merged operation index for discovery and ex
 
 ## Tools
 
-**Core tools:** **`search`** and **`execute`** (see [Architecture](#architecture)). **`code`** and **`sandbox_exec`** are the same tool under two names; they run snippets in **Cloudflare Sandboxes** through the HTTP bridge in [`cloudflare/sandbox-bridge/`](cloudflare/sandbox-bridge/README.md) (set **`CLAWQL_SANDBOX_BRIDGE_URL`** and **`CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN`** — see `.env.example`). **`memory_ingest`** / **`memory_recall`** need a configured vault (see [Obsidian vault](#obsidian-vault-optional)). Remaining parity work is tracked on **[#11](https://github.com/danielsmithdevelopment/ClawQL/issues/11)**.
+**Core tools:** **`search`** and **`execute`** (see [Architecture](#architecture)). **`sandbox_exec`** runs snippets in **Cloudflare Sandboxes** through the HTTP bridge in [`cloudflare/sandbox-bridge/`](cloudflare/sandbox-bridge/README.md) (set **`CLAWQL_SANDBOX_BRIDGE_URL`** and **`CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN`** — see `.env.example`). The tool name avoids confusion with “coding locally”; arguments still use a **`code`** field for the source string. **`memory_ingest`** / **`memory_recall`** need a configured vault (see [Obsidian vault](#obsidian-vault-optional)). Remaining parity work is tracked on **[#11](https://github.com/danielsmithdevelopment/ClawQL/issues/11)**.
 
 | Tool | Description |
 |---|---|
 | `search` | Search the active OpenAPI/Discovery spec by natural language intent |
 | `execute` | Run a discovered operation by `operationId`, with optional GraphQL field selection |
-| `code` | Run `code` + `language` in an isolated sandbox (alias: `sandbox_exec`) |
-| `sandbox_exec` | Same as `code` — use one name consistently in agent prompts |
+| `sandbox_exec` | Remote sandbox: pass **`code`** (source) + **`language`**; not your local shell |
 | `memory_ingest` | Compile insights / tool output / conversation into Obsidian notes (`ClawQL/Memory/…`) when the vault path is set — see [`docs/memory-obsidian.md`](docs/memory-obsidian.md) |
 | `memory_recall` | Keyword search over vault Markdown plus `[[wikilinks]]` hops (no embeddings; tunable via `CLAWQL_MEMORY_RECALL_*`) |
 
@@ -496,6 +499,26 @@ In multi-spec mode, ClawQL keeps one merged operation index for discovery and ex
      })
    → GraphQL internally maps args + resolves the real field name; returns lean JSON
 ```
+
+### Optional tools (quick examples)
+
+**`sandbox_exec`** (**deploy [cloudflare/sandbox-bridge](cloudflare/sandbox-bridge/README.md) first**). The **`code`** key is the snippet body sent to the remote sandbox:
+
+```json
+{ "code": "print('ok')", "language": "python", "sessionId": "s1" }
+```
+
+Vault (**set `CLAWQL_OBSIDIAN_VAULT_PATH`**):
+
+```json
+{ "title": "Runbook", "insights": "Remember to rotate tokens.", "wikilinks": ["Security"] }
+```
+
+```json
+{ "query": "rotate token kubernetes", "limit": 5, "maxDepth": 2 }
+```
+
+More parameters and env defaults: **[`docs/mcp-tools.md`](docs/mcp-tools.md)**.
 
 ---
 
@@ -621,7 +644,7 @@ See [`docs/deploy-k8s.md`](docs/deploy-k8s.md).
 
 ## Extending the server
 
-The default API surface is **`search`** and **`execute`**; **`code`** / **`sandbox_exec`** call **`src/sandbox-bridge-client.ts`**; **`memory_ingest`** / **`memory_recall`** use **`src/memory-ingest.ts`**, **`src/memory-recall.ts`**, and **`src/vault-config.ts`** / **`src/vault-utils.ts`**. To add more tools
+The default API surface is **`search`** and **`execute`**; **`sandbox_exec`** calls **`src/sandbox-bridge-client.ts`**; **`memory_ingest`** / **`memory_recall`** use **`src/memory-ingest.ts`**, **`src/memory-recall.ts`**, and **`src/vault-config.ts`** / **`src/vault-utils.ts`**. To add more tools
 (see **[ClawQL-Agent](https://github.com/danielsmithdevelopment/ClawQL-Agent)** / [#11](https://github.com/danielsmithdevelopment/ClawQL/issues/11)), register them in `src/tools.ts` the same way (`server.tool(...)`).
 
 GraphQL field names are **auto-resolved** in `execute` via schema introspection
