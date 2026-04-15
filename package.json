@@ -12,16 +12,16 @@
         "./package.json": "./package.json"
     },
     "bin": {
-        "clawql-mcp": "./bin/clawql-mcp.mjs",
-        "clawql-mcp-http": "./bin/clawql-mcp-http.mjs",
-        "clawql-graphql": "./bin/clawql-graphql.mjs"
+        "clawql-mcp": "bin/clawql-mcp.mjs",
+        "clawql-mcp-http": "bin/clawql-mcp-http.mjs",
+        "clawql-graphql": "bin/clawql-graphql.mjs"
     },
     "engines": {
         "node": ">=18"
     },
     "repository": {
         "type": "git",
-        "url": "https://github.com/danielsmithdevelopment/ClawQL.git"
+        "url": "git+https://github.com/danielsmithdevelopment/ClawQL.git"
     },
     "homepage": "https://github.com/danielsmithdevelopment/ClawQL#readme",
     "bugs": {
