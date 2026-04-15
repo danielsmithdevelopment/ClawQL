@@ -23,6 +23,8 @@ available via **`CLAWQL_PROVIDER`** (see [`providers/README.md`](providers/READM
 
 **Repo vs npm:** GitHub **`ClawQL`** — published package **`clawql-mcp`**.
 
+**Enterprise agent stack:** **[ClawQL-Agent](https://github.com/danielsmithdevelopment/ClawQL-Agent)** is the local-first Docker platform (LangGraph, Obsidian knowledge graph, optional Cloudflare Sandboxes, Langfuse) that uses **this repo** as the MCP **API engine** — token-efficient **`search` / `execute`** over OpenAPI/Discovery. The agent README’s unified tool story (`code()` / `sandbox_exec()`, `memory_ingest()`, `memory_recall()`) is the **parity target** for ClawQL; shipped tools and env wiring are tracked in-repo (see **[#11 — Parity milestone](https://github.com/danielsmithdevelopment/ClawQL/issues/11)**). Optional **`CLAWQL_OBSIDIAN_VAULT_PATH`** configures a shared Obsidian vault path for that roadmap (validated at startup when set; Docker/K8s default **`/vault`** — see [Obsidian vault](#obsidian-vault-optional)).
+
 ## First 5 minutes
 
 1. Install: `npm install clawql-mcp` (or use `npx -p clawql-mcp` as below; expect **~90 MB** on disk, see [Install](#install-npm--yarn--bun)).
@@ -349,6 +351,7 @@ If Stage 1 does **not** apply, one document is loaded in this order:
 | `CLAWQL_PROVIDER` | **Merged** preset in Stage 1, or **single** bundled vendor in Stage 2 — see [Configure the API spec](#configure-the-api-spec) (not both at once) |
 | `CLAWQL_INTROSPECTION_PATH` | Pregenerated GraphQL introspection JSON (optional; speeds MCP `execute` field matching) |
 | `CLAWQL_API_BASE_URL` | Override REST base URL (if spec has no `servers` or you need a different host) |
+| `CLAWQL_OBSIDIAN_VAULT_PATH` | Absolute path to an Obsidian Markdown vault (shared volume/NFS). When set, the server **checks** the path exists and is readable/writable at startup. Omit locally to skip the check; container images default to **`/vault`** (see [Docker](docker/README.md)). Used with **[ClawQL-Agent](https://github.com/danielsmithdevelopment/ClawQL-Agent)** and future memory tools. |
 
 **GCP multi-service:** use **`CLAWQL_GOOGLE_TOP50_SPECS=1`**, **`CLAWQL_PROVIDER=google-top50`**, or **`CLAWQL_SPEC_PATHS`** so `search` / `execute` see every merged API in one server; `execute` uses REST in that mode. For **every bundled vendor** (Google top50 + Jira, Bitbucket, Cloudflare, GitHub, Slack, Sentry, n8n), use **`CLAWQL_PROVIDER=all-providers`**. See [`docs/workflow-gcp-multi-service.md`](docs/workflow-gcp-multi-service.md).  
 **Integration check:** `npm run workflow:gcp-multi` runs **`tools/call` → `search`** over real MCP stdio and writes `docs/workflow-gcp-multi-latest.json` (full `CallToolResult` + parsed body). `npm run workflow:gcp-multi:direct` is a faster in-process-only variant for debugging rankers. One-page results summary: [`docs/gcp-multi-mcp-test-summary.md`](docs/gcp-multi-mcp-test-summary.md). Detailed experiment write-up (queries, APIs, token heuristic, MCP samples): [`docs/experiment-gcp-multi-mcp-workflow.md`](docs/experiment-gcp-multi-mcp-workflow.md); `npm run report:gcp-multi-experiment` refreshes [`docs/experiment-gcp-multi-mcp-stats.json`](docs/experiment-gcp-multi-mcp-stats.json).
@@ -375,6 +378,10 @@ Live Jira issue-create instructions are currently omitted — see [`docs/workflo
 **Same scenario via real MCP (`search`, dry run by default):** `npm run workflow:complex-release-stack:mcp` runs **`search`** only (no **`execute`** → no upstream REST). Spawns the stdio server, or set **`CLAWQL_MCP_URL`** (e.g. `http://127.0.0.1:8080/mcp`) for an HTTP server that must use **`all-providers`**. For optional **`execute`** smoke tests with placeholder args: **`WORKFLOW_MCP_EXECUTE=1`** or **`npm run workflow:complex-release-stack:mcp:live`**. Writes [`docs/workflow-complex-release-stack-mcp-latest.json`](docs/workflow-complex-release-stack-mcp-latest.json).
 
 See `.env.example` for a full list.
+
+### Obsidian vault (optional)
+
+Set **`CLAWQL_OBSIDIAN_VAULT_PATH`** when you mount a directory for **Obsidian**-compatible Markdown (e.g. alongside **[ClawQL-Agent](https://github.com/danielsmithdevelopment/ClawQL-Agent)** or a future **`memory_ingest` / `memory_recall`** MCP surface). If unset or empty, no vault check runs. If set, startup fails fast when the path is missing, not a directory, or not readable/writable. Implementation helpers live in **`src/vault-config.ts`** and **`src/vault-utils.ts`** (safe paths + cooperative write lock under the vault root).
 
 **Large / vendor OpenAPI docs:** The design goal is **the full spec** — token
 efficiency comes from **search + selective `execute`**, not from trimming the
@@ -447,6 +454,8 @@ In multi-spec mode, ClawQL keeps one merged operation index for discovery and ex
 ---
 
 ## Tools
+
+**Shipped today:** **`search`** and **`execute`** (see [Architecture](#architecture)). **[ClawQL-Agent](https://github.com/danielsmithdevelopment/ClawQL-Agent)** layers orchestration, long-term memory, and optional sandboxes on top; additional first-class MCP tools are part of **[parity milestone #11](https://github.com/danielsmithdevelopment/ClawQL/issues/11)**.
 
 | Tool | Description |
 |---|---|
@@ -595,9 +604,9 @@ See [`docs/deploy-k8s.md`](docs/deploy-k8s.md).
 
 ## Extending the server
 
-The default surface is **two tools** (`search`, `execute`). To add more MCP tools
-(e.g. convenience wrappers), register them in `src/tools.ts` the same way
-(`server.tool(...)`).
+The default MCP surface is **`search`** and **`execute`**. To add more tools
+(e.g. `memory_*`, `code()` — see **[ClawQL-Agent](https://github.com/danielsmithdevelopment/ClawQL-Agent)** / [#11](https://github.com/danielsmithdevelopment/ClawQL/issues/11)), register them in `src/tools.ts` the same way
+(`server.tool(...)`). Vault path configuration and filesystem helpers for Obsidian-backed tools are in **`src/vault-config.ts`** and **`src/vault-utils.ts`**.
 
 GraphQL field names are **auto-resolved** in `execute` via schema introspection
 (candidates include run-style names, legacy path-derived names, and response-type
