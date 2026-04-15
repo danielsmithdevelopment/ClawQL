@@ -24,7 +24,7 @@
 #
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
 SECRET_NAME="${SECRET_NAME:-clawql-github-auth}"
@@ -56,7 +56,8 @@ if [[ -z "$TOKEN" ]]; then
     fi
     TOKEN="$(gh auth token)"
   else
-    TOKEN="$(cat)"
+    TOKEN=""
+    IFS= read -r TOKEN || true
   fi
 fi
 

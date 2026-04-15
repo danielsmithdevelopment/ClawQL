@@ -12,7 +12,7 @@ set -euo pipefail
 # MCP (after LoadBalancer is ready): http://localhost:8080/mcp
 # Health: curl -s http://localhost:8080/healthz
 
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
 OVERLAY="${ROOT}/docker/kustomize/overlays/local"

@@ -35,9 +35,9 @@ fi
 IMAGE_URI="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/${IMAGE}:${TAG}"
 
 if [[ "${ALLOW_UNAUTH}" == "true" ]]; then
-  AUTH_FLAG="--allow-unauthenticated"
+  AUTH_ARGS=(--allow-unauthenticated)
 else
-  AUTH_FLAG="--no-allow-unauthenticated"
+  AUTH_ARGS=(--no-allow-unauthenticated)
 fi
 
 echo "==> Using project: ${PROJECT_ID}"
@@ -67,7 +67,7 @@ gcloud run deploy "${GRAPHQL_SERVICE}" \
   --image "${IMAGE_URI}" \
   --region "${REGION}" \
   --platform managed \
-  ${AUTH_FLAG} \
+  "${AUTH_ARGS[@]}" \
   --command node \
   --args dist/graphql-proxy.js \
   --set-env-vars "CLAWQL_PROVIDER=${PROVIDER},GRAPHQL_PORT=4000,PORT=4000,CLAWQL_BUNDLED_OFFLINE=1" \
@@ -101,7 +101,7 @@ gcloud run deploy "${MCP_SERVICE}" \
   --image "${IMAGE_URI}" \
   --region "${REGION}" \
   --platform managed \
-  ${AUTH_FLAG} \
+  "${AUTH_ARGS[@]}" \
   --set-env-vars "${MCP_ENV_VARS}" \
   --port 8080 \
   --cpu 2 \
