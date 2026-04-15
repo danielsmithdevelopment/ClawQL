@@ -12,7 +12,8 @@ services:
       CLAWQL_OBSIDIAN_VAULT_PATH: /vault
       PORT: 8080
     volumes:
-      - clawql-obsidian-vault:/vault
+      # Host Obsidian vault (memory_ingest / memory_recall). Override with CLAWQL_VAULT_HOST_PATH.
+      - ${CLAWQL_VAULT_HOST_PATH:-${HOME}/.ClawQL}:/vault
     ports:
       - "8080:8080"
     depends_on:
@@ -29,5 +30,3 @@ services:
     ports:
       - "4000:4000"
 
-volumes:
-  clawql-obsidian-vault:
