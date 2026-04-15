@@ -107,4 +107,4 @@ Writes **`ClawQL/Memory/<slug>.md`** with YAML frontmatter and optional `[[wikil
 }
 ```
 
-Returns JSON with **`results[]`**: `path`, `score`, `depth`, `reason` (`keyword` | `link`), `snippet`, optional `linkFrom`. **No vector embeddings** — lexical match + graph expansion via wikilinks. See [issue #16](https://github.com/danielsmithdevelopment/ClawQL/issues/16) for future semantic search.
+Returns JSON with **`results[]`**: `path`, `score`, `depth`, `reason` (`keyword` | `link`), `snippet`, optional `linkFrom`. **No vector embeddings** — lexical match + graph expansion via wikilinks. See [issue #16](https://github.com/danielsmithdevelopment/ClawQL/issues/16) and [vector-search-design.md](vector-search-design.md) for planned semantic retrieval (SQLite + Postgres backends).
