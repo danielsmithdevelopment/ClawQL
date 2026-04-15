@@ -1,12 +1,12 @@
 export const metadata = {
   title: 'Tools',
   description:
-    'ClawQL MCP tools: search for operations by intent, execute with lean field-selected responses.',
+    'ClawQL MCP tools: search and execute for APIs; optional sandbox_exec and Obsidian memory tools.',
 }
 
 # Tools
 
-ClawQL exposes exactly **two** MCP tools. Agents call **`search`** to discover operations and parameters, then **`execute`** to run a chosen **`operationId`** with optional field selection. {{ className: 'lead' }}
+ClawQL exposes **five** tools when optional features are configured; the **data plane** for REST/Discovery APIs is **`search`** then **`execute`**. Agents call **`search`** to discover operations and parameters, then **`execute`** to run a chosen **`operationId`** with optional field selection. [Canonical reference with examples](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp-tools.md). {{ className: 'lead' }}
 
 ## `search`
 
@@ -29,3 +29,12 @@ Runs a discovered operation by **`operationId`** with arguments shaped from the 
 ```
 
 See [GraphQL proxy](/graphql-proxy) for when the proxy participates and how **`GRAPHQL_URL`** is wired.
+
+## Optional tools
+
+| Tool | Needs |
+|------|--------|
+| `sandbox_exec` | Deployed [sandbox bridge](https://github.com/danielsmithdevelopment/ClawQL/tree/main/cloudflare/sandbox-bridge) Worker + `CLAWQL_SANDBOX_BRIDGE_URL` (remote sandbox; args include **`code`**) |
+| `memory_ingest`, `memory_recall` | `CLAWQL_OBSIDIAN_VAULT_PATH` (writable vault directory) |
+
+They do not replace **`execute`** for calling upstream APIs.

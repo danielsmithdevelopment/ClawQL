@@ -32,7 +32,7 @@ const resources: Array<Resource> = [
     href: '/tools',
     name: 'Tools',
     description:
-      'The search and execute MCP tools: discover operations, then run them with lean responses.',
+      'Core search and execute; optional sandbox_exec and Obsidian memory tools — discover, run APIs, and more.',
     icon: BoltIcon,
     pattern: {
       y: 16,

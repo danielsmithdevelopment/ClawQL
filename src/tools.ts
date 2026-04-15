@@ -2,7 +2,7 @@
  * tools.ts
  *
  * Core tools: search (spec discovery) and execute (GraphQL-backed REST call).
- * Optional: code / sandbox_exec — remote execution via cloudflare/sandbox-bridge Worker.
+ * Optional: sandbox_exec — remote execution via cloudflare/sandbox-bridge Worker.
  * Optional: memory_ingest / memory_recall — Obsidian vault notes (ingest + recall).
  * GraphQL field names are resolved via schema introspection — see resolveGraphQLField.
  */
@@ -305,7 +305,6 @@ export function registerTools(server: McpServer) {
       .describe("Optional wall-clock limit in ms (capped by CLAWQL_SANDBOX_TIMEOUT_MS_MAX)."),
   };
 
-  server.tool("code", sandboxCodeSchema, handleClawqlCodeToolInput);
   server.tool("sandbox_exec", sandboxCodeSchema, handleClawqlCodeToolInput);
 
   server.tool(

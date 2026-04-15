@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     default: 'ClawQL',
   },
   description:
-    'MCP server with search and execute tools, internal GraphQL projection, and OpenAPI-driven discovery.',
+    'MCP server: search and execute for APIs; optional sandbox_exec and memory tools; internal GraphQL projection and OpenAPI-driven discovery.',
   icons: {
     icon: [{ url: '/ClawQL-logo.jpeg', type: 'image/jpeg' }],
     apple: [{ url: '/ClawQL-logo.jpeg', type: 'image/jpeg' }],
