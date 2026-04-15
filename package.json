@@ -1,6 +1,6 @@
 {
     "name": "clawql-mcp",
-    "version": "1.0.2",
+    "version": "2.0.0",
     "description": "MCP server: search + execute any OpenAPI 3 API with an internal GraphQL optimization layer",
     "license": "Apache-2.0",
     "type": "module",
@@ -45,6 +45,7 @@
         "bin",
         "providers",
         "README.md",
+        "CHANGELOG.md",
         "LICENSE",
         ".env.example",
         ".cursor/mcp.json.example"
@@ -79,7 +80,11 @@
         "report:all-providers-benchmark": "npm run build && node scripts/report-all-providers-workflow-benchmark.mjs",
         "pretest": "npm run build",
         "test": "vitest run",
-        "test:coverage": "npm run build && vitest run --coverage"
+        "test:coverage": "npm run build && vitest run --coverage",
+        "release:git-tag": "bash scripts/git-release-tag.sh",
+        "release:git-tag:push": "bash scripts/git-release-tag.sh --push",
+        "release:git-backfill-tags": "bash scripts/git-backfill-npm-release-tags.sh",
+        "release:git-backfill-tags:push": "bash scripts/git-backfill-npm-release-tags.sh --push"
     },
     "dependencies": {
         "@graphql-mesh/utils": "^0.104.29",
