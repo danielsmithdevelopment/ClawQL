@@ -5,7 +5,7 @@
  * - Local file (JSON or YAML OpenAPI 3 / Swagger 2), or
  * - URL to fetch the same, or
  * - Google Discovery document URL, or
- * - Default: bundled multi-provider set (GitHub + Cloudflare).
+ * - Default: bundled multi-provider set (Google top50 + Cloudflare + GitHub).
  * - Optional merged preset: CLAWQL_PROVIDER=all-providers (top50 + all other bundled vendors).
  *
  * Produces a flattened Operation list for search + OpenAPI 3 for GraphQL.
@@ -632,10 +632,10 @@ async function resolveMultiSpecItems(): Promise<
     const grouped = await resolveBundledProviderGroup("google-top50");
     if (grouped) return grouped;
   }
-  // No config: load a lean default set for first-run GitHub + Cloudflare workflows.
+  // No config: default merge — Google top50 + Cloudflare + GitHub.
   if (!filePath && !specUrl && !discoveryUrl && !providerRaw && !useGoogleTop50) {
     console.error(
-      "[spec-loader] No spec env/provider set — using default multi-provider bundle: github + cloudflare"
+      "[spec-loader] No spec env/provider set — using default multi-provider bundle: google-top50 + cloudflare + github"
     );
     const defaultGroup = await resolveBundledProviderGroup("default-multi-provider");
     if (defaultGroup) return defaultGroup;

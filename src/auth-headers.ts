@@ -12,10 +12,20 @@ function trimEnv(...keys: string[]): string | undefined {
 }
 
 /**
+ * True for bundled single provider `google`, or Google top50 manifest slugs
+ * (e.g. `compute-v1`, `networksecurity-v1beta1`, `dataflow-v1b3`).
+ */
+export function isGoogleDiscoverySpecLabel(label: string): boolean {
+  const s = label.trim().toLowerCase();
+  if (s === "google") return true;
+  return /^[a-z0-9][a-z0-9-]*-v[a-z0-9]+$/i.test(s);
+}
+
+/**
  * Resolve `Authorization: Bearer …` for an operation.
- * - When `specLabel` is set (multi-spec merge), it selects GitHub vs Cloudflare tokens.
- * - When unset, `CLAWQL_PROVIDER` selects the same for single-vendor mode.
- * - Falls back to `CLAWQL_BEARER_TOKEN` / `GOOGLE_ACCESS_TOKEN`.
+ * - `specLabel` `github` / `cloudflare` → provider-specific env vars.
+ * - Google top50 slugs (see `isGoogleDiscoverySpecLabel`) or `CLAWQL_PROVIDER=google` → GCP/OAuth access token env vars.
+ * - Other merged vendors (e.g. Jira in `all-providers`) → `CLAWQL_BEARER_TOKEN` / `GOOGLE_ACCESS_TOKEN`.
  */
 export function mergedAuthHeaders(specLabel?: string): Record<string, string> {
   const out: Record<string, string> = {};
@@ -53,13 +63,18 @@ export function mergedAuthHeaders(specLabel?: string): Record<string, string> {
       "CLAWQL_BEARER_TOKEN",
       "GOOGLE_ACCESS_TOKEN"
     );
-  } else {
+  } else if (
+    (label && isGoogleDiscoverySpecLabel(label)) ||
+    effective === "google" ||
+    effective === "google-top50"
+  ) {
     bearer = trimEnv(
-      "CLAWQL_BEARER_TOKEN",
+      "CLAWQL_GOOGLE_ACCESS_TOKEN",
       "GOOGLE_ACCESS_TOKEN",
-      "CLAWQL_CLOUDFLARE_API_TOKEN",
-      "CLOUDFLARE_API_TOKEN"
+      "CLAWQL_BEARER_TOKEN"
     );
+  } else {
+    bearer = trimEnv("CLAWQL_BEARER_TOKEN", "GOOGLE_ACCESS_TOKEN");
   }
 
   if (bearer) {

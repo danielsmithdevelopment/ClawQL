@@ -1,4 +1,4 @@
-# Local Docker Desktop: same default merge as bare npm (GitHub + Cloudflare).
+# Local Docker Desktop: same default merge as bare npm (Google top50 + Cloudflare + GitHub).
 # Pin github, cloudflare, google-top50, or all-providers if you prefer.
 apiVersion: apps/v1
 kind: Deployment

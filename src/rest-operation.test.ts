@@ -34,6 +34,7 @@ afterEach(() => {
   delete process.env.CLAWQL_HTTP_HEADERS;
   delete process.env.CLAWQL_BEARER_TOKEN;
   delete process.env.GOOGLE_ACCESS_TOKEN;
+  delete process.env.CLAWQL_GOOGLE_ACCESS_TOKEN;
   delete process.env.CLAWQL_GITHUB_TOKEN;
   delete process.env.GITHUB_TOKEN;
   delete process.env.GH_TOKEN;
@@ -87,6 +88,14 @@ describe("rest-operation helpers", () => {
     delete process.env.CLAWQL_BEARER_TOKEN;
     expect(mergedAuthHeaders()).toEqual({
       Authorization: "Bearer gh_only",
+    });
+  });
+
+  it("uses GOOGLE_ACCESS_TOKEN for Google top50 specLabel", () => {
+    process.env.CLAWQL_BEARER_TOKEN = "generic";
+    process.env.GOOGLE_ACCESS_TOKEN = "ya29.gcp";
+    expect(mergedAuthHeaders("container-v1")).toEqual({
+      Authorization: "Bearer ya29.gcp",
     });
   });
 });
