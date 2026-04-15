@@ -8,7 +8,7 @@ services:
     restart: unless-stopped
     environment:
       GRAPHQL_URL: http://clawql-graphql:4000/graphql
-      CLAWQL_PROVIDER: google-top50
+      CLAWQL_PROVIDER: github
       CLAWQL_OBSIDIAN_VAULT_PATH: /vault
       PORT: 8080
     volumes:
@@ -25,7 +25,7 @@ services:
     restart: unless-stopped
     command: ["dist/graphql-proxy.js"]
     environment:
-      CLAWQL_PROVIDER: google-top50
+      CLAWQL_PROVIDER: github
       GRAPHQL_PORT: 4000
     ports:
       - "4000:4000"
