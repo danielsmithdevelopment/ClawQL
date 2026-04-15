@@ -64,4 +64,5 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: rhysd/actionlint@v1
+      # Pinned release: floating @v1 is not published on this action repo.
+      - uses: rhysd/actionlint@v1.7.12
