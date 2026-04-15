@@ -1,4 +1,4 @@
-# Regression gate: TypeScript build + Vitest on supported Node versions,
+# Regression gate: TypeScript build + Vitest on Node 20+ LTS/current,
 # ShellCheck on bash deploy scripts, actionlint on workflow YAML.
 
 name: CI
@@ -24,7 +24,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: [18, 20, 22]
+        node-version: [20, 22, 24]
     steps:
       - uses: actions/checkout@v4
 
