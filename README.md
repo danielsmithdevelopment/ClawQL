@@ -20,7 +20,7 @@ available via **`CLAWQL_PROVIDER`** (see [`providers/README.md`](providers/READM
 
 **Repo vs npm:** GitHub **`ClawQL`** — published package **`clawql-mcp`**.
 
-**Enterprise agent stack:** **[ClawQL-Agent](https://github.com/danielsmithdevelopment/ClawQL-Agent)** is the local-first Docker platform (LangGraph, Obsidian knowledge graph, optional Cloudflare Sandboxes, Langfuse) that uses **this repo** as the MCP **API engine** — token-efficient **`search` / `execute`** over OpenAPI/Discovery. The agent README’s unified tool story (`sandbox_exec()`, `memory_ingest()`, `memory_recall()`) is the **parity target** for ClawQL; **`memory_ingest`** and **`memory_recall`** run when **`CLAWQL_OBSIDIAN_VAULT_PATH`** is set (see [Obsidian vault](#obsidian-vault-optional) and [`docs/memory-obsidian.md`](docs/memory-obsidian.md)). Further parity items are tracked in **[#11](https://github.com/danielsmithdevelopment/ClawQL/issues/11)**. Optional **`CLAWQL_OBSIDIAN_VAULT_PATH`** configures a shared Obsidian vault path for that roadmap (validated at startup when set; Docker/K8s default **`/vault`** — see [Obsidian vault](#obsidian-vault-optional)).
+**Enterprise agent stack:** **[ClawQL-Agent](https://github.com/danielsmithdevelopment/ClawQL-Agent)** is the local-first Docker platform (LangGraph, Obsidian knowledge graph, optional Cloudflare Sandboxes, Langfuse) that uses **this repo** as the MCP **API engine** — token-efficient **`search` / `execute`** over OpenAPI/Discovery. **ClawQL Parity v1** is complete: this server exposes the same unified MCP surface as the agent README (`sandbox_exec()`, `memory_ingest()`, `memory_recall()` alongside **`search`/`execute`**); see **[#11](https://github.com/danielsmithdevelopment/ClawQL/issues/11)**. **`memory_ingest`** and **`memory_recall`** run when **`CLAWQL_OBSIDIAN_VAULT_PATH`** is set (see [Obsidian vault](#obsidian-vault-optional) and [`docs/memory-obsidian.md`](docs/memory-obsidian.md)). Optional **`CLAWQL_OBSIDIAN_VAULT_PATH`** configures a shared Obsidian vault path (validated at startup when set; Docker/K8s default **`/vault`** — see [Obsidian vault](#obsidian-vault-optional)).
 
 ## First 5 minutes
 
@@ -472,7 +472,7 @@ In multi-spec mode, ClawQL keeps one merged operation index for discovery and ex
 
 ## Tools
 
-**Core tools:** **`search`** and **`execute`** (see [Architecture](#architecture)). **`sandbox_exec`** runs snippets in **Cloudflare Sandboxes** through the HTTP bridge in [`cloudflare/sandbox-bridge/`](cloudflare/sandbox-bridge/README.md) (set **`CLAWQL_SANDBOX_BRIDGE_URL`** and **`CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN`** — see `.env.example`). The tool name avoids confusion with “coding locally”; arguments still use a **`code`** field for the source string. **`memory_ingest`** / **`memory_recall`** need a configured vault (see [Obsidian vault](#obsidian-vault-optional)). Remaining parity work is tracked on **[#11](https://github.com/danielsmithdevelopment/ClawQL/issues/11)**.
+**Core tools:** **`search`** and **`execute`** (see [Architecture](#architecture)). **`sandbox_exec`** runs snippets in **Cloudflare Sandboxes** through the HTTP bridge in [`cloudflare/sandbox-bridge/`](cloudflare/sandbox-bridge/README.md) (set **`CLAWQL_SANDBOX_BRIDGE_URL`** and **`CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN`** — see `.env.example`). The tool name avoids confusion with “coding locally”; arguments still use a **`code`** field for the source string. **`memory_ingest`** / **`memory_recall`** need a configured vault (see [Obsidian vault](#obsidian-vault-optional)). Orchestration-specific features live in **[ClawQL-Agent](https://github.com/danielsmithdevelopment/ClawQL-Agent)**; deeper MCP ideas may be tracked in new issues (e.g. semantic search in **[#16](https://github.com/danielsmithdevelopment/ClawQL/issues/16)**).
 
 | Tool | Description |
 |---|---|
@@ -645,7 +645,7 @@ See [`docs/deploy-k8s.md`](docs/deploy-k8s.md).
 ## Extending the server
 
 The default API surface is **`search`** and **`execute`**; **`sandbox_exec`** calls **`src/sandbox-bridge-client.ts`**; **`memory_ingest`** / **`memory_recall`** use **`src/memory-ingest.ts`**, **`src/memory-recall.ts`**, and **`src/vault-config.ts`** / **`src/vault-utils.ts`**. To add more tools
-(see **[ClawQL-Agent](https://github.com/danielsmithdevelopment/ClawQL-Agent)** / [#11](https://github.com/danielsmithdevelopment/ClawQL/issues/11)), register them in `src/tools.ts` the same way (`server.tool(...)`).
+(see **[ClawQL-Agent](https://github.com/danielsmithdevelopment/ClawQL-Agent)** for product-level extensions), register them in `src/tools.ts` the same way (`server.tool(...)`).
 
 GraphQL field names are **auto-resolved** in `execute` via schema introspection
 (candidates include run-style names, legacy path-derived names, and response-type

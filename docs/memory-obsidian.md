@@ -33,4 +33,4 @@ The design stays **lightweight**: the vault remains the source of truth; retriev
 ## See also
 
 - **[ClawQL-Agent](https://github.com/danielsmithdevelopment/ClawQL-Agent)** — full stack that combines ClawQL MCP with orchestration and vault-backed memory.
-- **[Parity milestone #11](https://github.com/danielsmithdevelopment/ClawQL/issues/11)** — remaining stack parity (beyond ingest/recall).
+- **[Parity v1 #11](https://github.com/danielsmithdevelopment/ClawQL/issues/11)** — MCP surface aligned with the agent stack (complete); future retrieval work may follow **[#16](https://github.com/danielsmithdevelopment/ClawQL/issues/16)**.
