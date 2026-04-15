@@ -4,6 +4,11 @@ set -euo pipefail
 # Deploy ClawQL as two Cloud Run services:
 # - MCP HTTP service
 # - GraphQL proxy service
+#
+# Optional MCP env (export before running; see docs/deploy-cloud-run.md):
+#   CLAWQL_OBSIDIAN_VAULT_PATH   — memory_ingest / memory_recall (default in image: /vault)
+#   CLAWQL_SANDBOX_BRIDGE_URL    — sandbox_exec (Cloudflare Worker origin)
+#   CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN — bridge shared secret (prefer Secret Manager in prod)
 
 PROJECT_ID="${PROJECT_ID:-}"
 REGION="${REGION:-us-central1}"
@@ -78,13 +83,26 @@ GRAPHQL_BASE_URL="$(gcloud run services describe "${GRAPHQL_SERVICE}" \
   --format='value(status.url)')"
 GRAPHQL_URL="${GRAPHQL_BASE_URL}/graphql"
 
+# MCP env: base + optional vault / Cloudflare Sandbox bridge (memory_ingest / memory_recall / sandbox_exec).
+# Prefer Secret Manager for CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN in production (see docs/deploy-cloud-run.md).
+MCP_ENV_VARS="CLAWQL_PROVIDER=${PROVIDER},GRAPHQL_URL=${GRAPHQL_URL},PORT=8080,MCP_PATH=/mcp,CLAWQL_BUNDLED_OFFLINE=1"
+if [[ -n "${CLAWQL_OBSIDIAN_VAULT_PATH:-}" ]]; then
+  MCP_ENV_VARS="${MCP_ENV_VARS},CLAWQL_OBSIDIAN_VAULT_PATH=${CLAWQL_OBSIDIAN_VAULT_PATH}"
+fi
+if [[ -n "${CLAWQL_SANDBOX_BRIDGE_URL:-}" ]]; then
+  MCP_ENV_VARS="${MCP_ENV_VARS},CLAWQL_SANDBOX_BRIDGE_URL=${CLAWQL_SANDBOX_BRIDGE_URL}"
+fi
+if [[ -n "${CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN:-}" ]]; then
+  MCP_ENV_VARS="${MCP_ENV_VARS},CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN=${CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN}"
+fi
+
 echo "==> Deploying MCP service: ${MCP_SERVICE}"
 gcloud run deploy "${MCP_SERVICE}" \
   --image "${IMAGE_URI}" \
   --region "${REGION}" \
   --platform managed \
   ${AUTH_FLAG} \
-  --set-env-vars "CLAWQL_PROVIDER=${PROVIDER},GRAPHQL_URL=${GRAPHQL_URL},PORT=8080,MCP_PATH=/mcp,CLAWQL_BUNDLED_OFFLINE=1" \
+  --set-env-vars "${MCP_ENV_VARS}" \
   --port 8080 \
   --cpu 2 \
   --memory 2Gi \

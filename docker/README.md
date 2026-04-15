@@ -143,6 +143,7 @@ Included resources:
 - Namespace: `clawql`
 - Deployments: `clawql-mcp-http`, `clawql-graphql`
 - Services: internal `clawql-graphql` + external `clawql-mcp-http` (`LoadBalancer`)
+- MCP pod: **`CLAWQL_OBSIDIAN_VAULT_PATH=/vault`** with an **`emptyDir`** volume at `/vault` (aligned with `docker/kustomize/base/deployment-mcp-http.yaml`) so **`memory_ingest`** / **`memory_recall`** can run. Replace `emptyDir` with a PVC or hostPath when you need a persistent Obsidian folder. **`sandbox_exec`** still requires **`CLAWQL_SANDBOX_BRIDGE_URL`** + token env (see [`.env.example`](../.env.example) and [`docs/mcp-tools.md`](../docs/mcp-tools.md)).
 
 After the external IP is ready, use:
 - `http://<external-ip>/mcp`
