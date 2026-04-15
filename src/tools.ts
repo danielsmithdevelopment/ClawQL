@@ -3,7 +3,7 @@
  *
  * Core tools: search (spec discovery) and execute (GraphQL-backed REST call).
  * Optional: code / sandbox_exec — remote execution via cloudflare/sandbox-bridge Worker.
- * Optional: memory_ingest — Obsidian Markdown pages under CLAWQL_OBSIDIAN_VAULT_PATH.
+ * Optional: memory_ingest / memory_recall — Obsidian vault notes (ingest + recall).
  * GraphQL field names are resolved via schema introspection — see resolveGraphQLField.
  */
 
@@ -30,6 +30,7 @@ import { createGraphQLClient } from "./graphql-client.js";
 import { executeRestOperation } from "./rest-operation.js";
 import { handleClawqlCodeToolInput } from "./sandbox-bridge-client.js";
 import { handleMemoryIngestToolInput } from "./memory-ingest.js";
+import { handleMemoryRecallToolInput } from "./memory-recall.js";
 import type { Operation } from "./spec-loader.js";
 import { INLINE_OPENAPI_REQUEST_BODY } from "./operation-types.js";
 
@@ -338,6 +339,42 @@ export function registerTools(server: McpServer) {
         ),
     },
     handleMemoryIngestToolInput
+  );
+
+  server.tool(
+    "memory_recall",
+    {
+      query: z
+        .string()
+        .min(1)
+        .describe(
+          "Natural language or keywords to find in vault Markdown (filename + body + headings)."
+        ),
+      limit: z
+        .number()
+        .int()
+        .min(1)
+        .max(50)
+        .optional()
+        .describe("Max notes to return (default: CLAWQL_MEMORY_RECALL_LIMIT or 10)."),
+      maxDepth: z
+        .number()
+        .int()
+        .min(0)
+        .max(10)
+        .optional()
+        .describe(
+          "How many wikilink hops to follow from keyword hits (default: CLAWQL_MEMORY_RECALL_MAX_DEPTH or 2)."
+        ),
+      minScore: z
+        .number()
+        .min(0)
+        .optional()
+        .describe(
+          "Minimum keyword match score to seed a note (default: CLAWQL_MEMORY_RECALL_MIN_SCORE or 1)."
+        ),
+    },
+    handleMemoryRecallToolInput
   );
 }
 
