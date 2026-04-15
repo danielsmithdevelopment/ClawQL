@@ -94,6 +94,8 @@ spec:
               value: /mcp
             - name: CLAWQL_BUNDLED_OFFLINE
               value: "1"
+            - name: CLAWQL_OBSIDIAN_VAULT_PATH
+              value: /vault
             - name: NODE_OPTIONS
               value: "--max-old-space-size=1536"
           startupProbe:
@@ -124,6 +126,12 @@ spec:
             limits:
               cpu: "2"
               memory: "2Gi"
+          volumeMounts:
+            - name: obsidian-vault
+              mountPath: /vault
+      volumes:
+        - name: obsidian-vault
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service

@@ -28,7 +28,9 @@ WORKDIR /app
 ENV NODE_ENV=production
 # Prefer bundled files on disk; avoids surprise network fetches when a spec is missing.
 ENV CLAWQL_BUNDLED_OFFLINE=1
+# Writable mount for memory_* tools; override at runtime if your orchestrator mounts elsewhere.
 ENV CLAWQL_OBSIDIAN_VAULT_PATH=/vault
+# Optional at runtime (not baked in): CLAWQL_SANDBOX_BRIDGE_URL, CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN for sandbox_exec.
 
 COPY --from=builder --chown=nonroot:nonroot /app/node_modules ./node_modules
 COPY --from=builder --chown=nonroot:nonroot /app/dist ./dist
