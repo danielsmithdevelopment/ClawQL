@@ -13,6 +13,7 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { loadSpec } from "./spec-loader.js";
 import { preloadSchemaFieldCacheFromDisk, registerTools } from "./tools.js";
+import { validateObsidianVaultAtStartup } from "./vault-config.js";
 
 const PORT = Number.parseInt(process.env.PORT ?? process.env.MCP_PORT ?? "8080", 10);
 const DEFAULT_MCP_PATH = "/mcp";
@@ -86,6 +87,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   if (!options.skipSpecPreload) {
     await loadSpec();
     await preloadSchemaFieldCacheFromDisk();
+    await validateObsidianVaultAtStartup();
   }
 
   const mcpPath =

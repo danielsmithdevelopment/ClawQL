@@ -32,6 +32,8 @@ docker run --rm -p 8080:8080 -e CLAWQL_PROVIDER=github clawql-mcp
 
 Single-spec `execute` uses a GraphQL proxy at `GRAPHQL_URL` (default `http://localhost:4000/graphql`). Point it at a reachable proxy or use multi-spec presets (REST execution) when you do not run the proxy beside the container.
 
+**Obsidian vault:** The image sets **`CLAWQL_OBSIDIAN_VAULT_PATH=/vault`** and includes a writable **`/vault`** directory for **[ClawQL-Agent](https://github.com/danielsmithdevelopment/ClawQL-Agent)** / future memory tooling. Compose mounts a named volume at `/vault`; override the path or mount your host Obsidian folder as needed. See the main [README](../README.md#obsidian-vault-optional).
+
 ## Run (stdio, optional)
 
 If you specifically want stdio mode in a container:

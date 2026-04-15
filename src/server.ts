@@ -16,12 +16,14 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { loadSpec } from "./spec-loader.js";
 import { preloadSchemaFieldCacheFromDisk, registerTools } from "./tools.js";
+import { validateObsidianVaultAtStartup } from "./vault-config.js";
 
 async function main() {
   // Pre-warm the spec cache on startup so the first search call is fast
   await loadSpec();
   // Prefer pregenerated introspection.json (bundled or CLAWQL_INTROSPECTION_PATH) over live proxy introspection
   await preloadSchemaFieldCacheFromDisk();
+  await validateObsidianVaultAtStartup();
 
   const server = new McpServer({
     name: "cloudrun-mcp",

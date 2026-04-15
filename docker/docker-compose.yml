@@ -9,7 +9,10 @@ services:
     environment:
       GRAPHQL_URL: http://clawql-graphql:4000/graphql
       CLAWQL_PROVIDER: google-top50
+      CLAWQL_OBSIDIAN_VAULT_PATH: /vault
       PORT: 8080
+    volumes:
+      - clawql-obsidian-vault:/vault
     ports:
       - "8080:8080"
     depends_on:
@@ -25,3 +28,6 @@ services:
       GRAPHQL_PORT: 4000
     ports:
       - "4000:4000"
+
+volumes:
+  clawql-obsidian-vault:

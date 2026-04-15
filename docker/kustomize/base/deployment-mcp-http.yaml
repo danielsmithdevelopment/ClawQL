@@ -24,6 +24,8 @@ spec:
           env:
             - name: CLAWQL_PROVIDER
               value: google-top50
+            - name: CLAWQL_OBSIDIAN_VAULT_PATH
+              value: /vault
             - name: GRAPHQL_URL
               value: http://clawql-graphql:4000/graphql
             - name: PORT
@@ -63,3 +65,9 @@ spec:
             limits:
               cpu: "2"
               memory: "2Gi"
+          volumeMounts:
+            - name: obsidian-vault
+              mountPath: /vault
+      volumes:
+        - name: obsidian-vault
+          emptyDir: {}

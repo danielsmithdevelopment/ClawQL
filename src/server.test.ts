@@ -3,6 +3,8 @@
  * `npm test` runs `pretest` → `build` so the entry exists.
  */
 
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
@@ -45,6 +47,7 @@ describe("server (stdio)", () => {
     async () => {
       const childEnv = { ...process.env };
       childEnv.CLAWQL_SPEC_PATH = minimalSpec;
+      childEnv.CLAWQL_OBSIDIAN_VAULT_PATH = mkdtempSync(join(tmpdir(), "clawql-vault-"));
       delete childEnv.CLAWQL_PROVIDER;
       delete childEnv.CLAWQL_SPEC_PATHS;
       delete childEnv.CLAWQL_API_BASE_URL;
