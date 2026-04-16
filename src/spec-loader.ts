@@ -12,7 +12,7 @@
  */
 
 import { readFile } from "node:fs/promises";
-import { basename, dirname, resolve as resolvePath } from "node:path";
+import { resolve as resolvePath } from "node:path";
 import fetch from "node-fetch";
 import { parse as parseYaml } from "yaml";
 import { convertObj } from "swagger2openapi";
@@ -96,16 +96,9 @@ export interface OpenAPIDoc {
   };
 }
 
-const DISCOVERY_SCHEMA_METADATA_KEYS = new Set([
-  "id",
-  "enumDescriptions",
-  "enumDeprecated",
-]);
+const DISCOVERY_SCHEMA_METADATA_KEYS = new Set(["id", "enumDescriptions", "enumDeprecated"]);
 
-export function sanitizeSchemaNode(
-  value: unknown,
-  inPropertiesMap = false
-): unknown {
+export function sanitizeSchemaNode(value: unknown, inPropertiesMap = false): unknown {
   if (Array.isArray(value)) {
     return value.map((item) => sanitizeSchemaNode(item, false));
   }
@@ -118,10 +111,7 @@ export function sanitizeSchemaNode(
   const output: Record<string, unknown> = {};
 
   for (const [key, child] of Object.entries(input)) {
-    if (
-      DISCOVERY_SCHEMA_METADATA_KEYS.has(key) &&
-      (!inPropertiesMap || key !== "id")
-    ) {
+    if (DISCOVERY_SCHEMA_METADATA_KEYS.has(key) && (!inPropertiesMap || key !== "id")) {
       continue;
     }
     if (key === "type" && child === "any") {
@@ -145,9 +135,7 @@ export function sanitizeSchemaNode(
 
 /** Full OpenAPI normalization pipeline (used by `loadSpec` / scripts). Exported for tests. */
 export function sanitizeOpenAPIDocument(doc: OpenAPIDoc): OpenAPIDoc {
-  const normalized = normalizeWildcardResponseKeysInDoc(
-    sanitizeOpenAPIObject(doc)
-  ) as OpenAPIDoc;
+  const normalized = normalizeWildcardResponseKeysInDoc(sanitizeOpenAPIObject(doc)) as OpenAPIDoc;
   ensureReferencedSecuritySchemesExist(normalized);
   const components = normalized.components ?? { schemas: {} };
   const serverOverride = process.env.CLAWQL_API_BASE_URL || process.env.API_BASE_URL;
@@ -158,17 +146,14 @@ export function sanitizeOpenAPIDocument(doc: OpenAPIDoc): OpenAPIDoc {
     filteredServers.length > 0
       ? filteredServers
       : serverOverride
-      ? [{ url: serverOverride }]
-      : undefined;
+        ? [{ url: serverOverride }]
+        : undefined;
   return {
     ...normalized,
     ...(servers ? { servers } : {}),
     components: {
       ...components,
-      schemas: sanitizeSchemaNode(components.schemas ?? {}) as Record<
-        string,
-        unknown
-      >,
+      schemas: sanitizeSchemaNode(components.schemas ?? {}) as Record<string, unknown>,
     },
   };
 }
@@ -189,12 +174,7 @@ function normalizeWildcardResponseKeysInDoc(value: unknown): unknown {
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(o)) {
     let next = v;
-    if (
-      k === "responses" &&
-      v &&
-      typeof v === "object" &&
-      !Array.isArray(v)
-    ) {
+    if (k === "responses" && v && typeof v === "object" && !Array.isArray(v)) {
       const r = v as Record<string, unknown>;
       const renamed: Record<string, unknown> = {};
       for (const [code, resp] of Object.entries(r)) {
@@ -217,8 +197,7 @@ function normalizeWildcardResponseKeysInDoc(value: unknown): unknown {
  */
 function ensureReferencedSecuritySchemesExist(openapi: OpenAPIDoc): void {
   const schemes =
-    (openapi.components?.securitySchemes as Record<string, unknown> | undefined) ??
-    {};
+    (openapi.components?.securitySchemes as Record<string, unknown> | undefined) ?? {};
   const defined = new Set(Object.keys(schemes));
   const used = new Set<string>();
 
@@ -283,31 +262,21 @@ export function sanitizeOpenAPIObject(value: unknown): unknown {
   // JSON Schema / OpenAPI: `default: null` with a non-null `type` must pair with
   // `nullable: true`. Real specs (e.g. Jira) omit nullable; oas-validator then
   // compares typeof default ("object" in JS) to type name and throws.
-  if (
-    "default" in output &&
-    output.default === null &&
-    output.nullable !== true
-  ) {
+  if ("default" in output && output.default === null && output.nullable !== true) {
     output.nullable = true;
   }
   return output;
 }
 
 function hasApiBaseUrlOverride(): boolean {
-  return !!(
-    process.env.CLAWQL_API_BASE_URL?.trim() ||
-    process.env.API_BASE_URL?.trim()
-  );
+  return !!(process.env.CLAWQL_API_BASE_URL?.trim() || process.env.API_BASE_URL?.trim());
 }
 
 /**
  * Specs loaded from a URL may list a path-only server (e.g. `/api/v3`).
  * Resolve against the document URL origin so REST/GraphQL targets are absolute.
  */
-function absolutizeRelativeOpenApiServers(
-  openapi: OpenAPIDoc,
-  documentUrl: string
-): void {
+function absolutizeRelativeOpenApiServers(openapi: OpenAPIDoc, documentUrl: string): void {
   const servers = openapi.servers;
   if (!servers?.length) return;
   let originNoSlash: string;
@@ -355,14 +324,9 @@ type SpecSource =
 
 function resolveSpecSource(): SpecSource {
   const filePath =
-    process.env.CLAWQL_SPEC_PATH ||
-    process.env.OPENAPI_SPEC_PATH ||
-    process.env.OPENAPI_FILE;
-  const specUrl =
-    process.env.CLAWQL_SPEC_URL || process.env.OPENAPI_SPEC_URL;
-  const discoveryUrl =
-    process.env.CLAWQL_DISCOVERY_URL ||
-    process.env.GOOGLE_DISCOVERY_URL;
+    process.env.CLAWQL_SPEC_PATH || process.env.OPENAPI_SPEC_PATH || process.env.OPENAPI_FILE;
+  const specUrl = process.env.CLAWQL_SPEC_URL || process.env.OPENAPI_SPEC_URL;
+  const discoveryUrl = process.env.CLAWQL_DISCOVERY_URL || process.env.GOOGLE_DISCOVERY_URL;
   const providerRaw = process.env.CLAWQL_PROVIDER;
 
   if (filePath) return { kind: "file", path: filePath };
@@ -392,9 +356,7 @@ function parseSpecText(text: string): unknown {
 
 function isSwagger2(obj: unknown): boolean {
   return (
-    typeof obj === "object" &&
-    obj !== null &&
-    (obj as Record<string, unknown>).swagger === "2.0"
+    typeof obj === "object" && obj !== null && (obj as Record<string, unknown>).swagger === "2.0"
   );
 }
 
@@ -402,10 +364,7 @@ function isDiscoveryDoc(obj: unknown): obj is DiscoveryDoc {
   if (!obj || typeof obj !== "object") return false;
   const o = obj as Record<string, unknown>;
   return (
-    typeof o.rootUrl === "string" &&
-    o.resources != null &&
-    !("openapi" in o) &&
-    !("swagger" in o)
+    typeof o.rootUrl === "string" && o.resources != null && !("openapi" in o) && !("swagger" in o)
   );
 }
 
@@ -418,11 +377,7 @@ function isOpenAPI3(obj: unknown): obj is OpenAPIDoc {
 /** When set, bundled providers never fetch the fallback URL if the local file is missing. */
 function bundledOfflineNoRemoteFetch(): boolean {
   const v = process.env.CLAWQL_BUNDLED_OFFLINE?.trim();
-  return (
-    v === "1" ||
-    v?.toLowerCase() === "true" ||
-    v?.toLowerCase() === "yes"
-  );
+  return v === "1" || v?.toLowerCase() === "true" || v?.toLowerCase() === "yes";
 }
 
 async function loadRawDocument(source: SpecSource): Promise<unknown> {
@@ -430,14 +385,10 @@ async function loadRawDocument(source: SpecSource): Promise<unknown> {
     case "bundled": {
       const root = getPackageRoot();
       const abs = resolvePath(root, source.entry.bundledSpecPath);
-      console.error(
-        `[spec-loader] bundled provider "${source.entry.id}" → ${abs}`
-      );
+      console.error(`[spec-loader] bundled provider "${source.entry.id}" → ${abs}`);
       try {
         const text = await readFile(abs, "utf-8");
-        console.error(
-          `[spec-loader] Using bundled local OpenAPI (no network): ${abs}`
-        );
+        console.error(`[spec-loader] Using bundled local OpenAPI (no network): ${abs}`);
         return parseSpecText(text);
       } catch (e: unknown) {
         const err = e as NodeJS.ErrnoException;
@@ -453,9 +404,7 @@ async function loadRawDocument(source: SpecSource): Promise<unknown> {
         );
         const res = await fetch(source.entry.fallbackUrl);
         if (!res.ok) {
-          throw new Error(
-            `Failed to fetch provider fallback (${source.entry.id}): ${res.status}`
-          );
+          throw new Error(`Failed to fetch provider fallback (${source.entry.id}): ${res.status}`);
         }
         return parseSpecText(await res.text());
       }
@@ -474,9 +423,7 @@ async function loadRawDocument(source: SpecSource): Promise<unknown> {
       const abs = resolvePath(root, entry.bundledSpecPath);
       try {
         const text = await readFile(abs, "utf-8");
-        console.error(
-          `[spec-loader] Using bundled local OpenAPI (no network): ${abs}`
-        );
+        console.error(`[spec-loader] Using bundled local OpenAPI (no network): ${abs}`);
         return parseSpecText(text);
       } catch (e: unknown) {
         const err = e as NodeJS.ErrnoException;
@@ -492,9 +439,7 @@ async function loadRawDocument(source: SpecSource): Promise<unknown> {
         );
         const res = await fetch(entry.fallbackUrl);
         if (!res.ok) {
-          throw new Error(
-            `Failed to fetch provider fallback (${entry.id}): ${res.status}`
-          );
+          throw new Error(`Failed to fetch provider fallback (${entry.id}): ${res.status}`);
         }
         return parseSpecText(await res.text());
       }
@@ -535,7 +480,7 @@ async function normalizeToOpenAPI(raw: unknown): Promise<unknown> {
 }
 
 async function buildLoadedSpec(raw: unknown): Promise<LoadedSpec> {
-  let doc = await normalizeToOpenAPI(raw);
+  const doc = await normalizeToOpenAPI(raw);
 
   if (isDiscoveryDoc(doc)) {
     const discovery = doc;
@@ -554,7 +499,7 @@ async function buildLoadedSpec(raw: unknown): Promise<LoadedSpec> {
     );
   }
 
-  let openapi = sanitizeOpenAPIDocument(doc);
+  const openapi = sanitizeOpenAPIDocument(doc);
   const operations = operationsFromOpenAPI(openapi);
   return {
     operations,
@@ -566,9 +511,7 @@ async function buildLoadedSpec(raw: unknown): Promise<LoadedSpec> {
 /**
  * Load a local OpenAPI / Discovery / Swagger file by absolute path (build scripts).
  */
-export async function loadOpenAPIFromAbsolutePath(
-  absolutePath: string
-): Promise<LoadedSpec> {
+export async function loadOpenAPIFromAbsolutePath(absolutePath: string): Promise<LoadedSpec> {
   const text = await readFile(absolutePath, "utf-8");
   const raw = parseSpecText(text);
   return buildLoadedSpec(raw);
@@ -601,23 +544,19 @@ export function labelFromSpecPath(relOrAbs: string): string {
   return last.replace(/\.(yaml|yml|json)$/i, "");
 }
 
-async function resolveMultiSpecItems(): Promise<
-  { abs: string; label: string }[] | null
-> {
+async function resolveMultiSpecItems(): Promise<{ abs: string; label: string }[] | null> {
   const filePath =
-    process.env.CLAWQL_SPEC_PATH ||
-    process.env.OPENAPI_SPEC_PATH ||
-    process.env.OPENAPI_FILE;
-  const specUrl =
-    process.env.CLAWQL_SPEC_URL || process.env.OPENAPI_SPEC_URL;
-  const discoveryUrl =
-    process.env.CLAWQL_DISCOVERY_URL ||
-    process.env.GOOGLE_DISCOVERY_URL;
+    process.env.CLAWQL_SPEC_PATH || process.env.OPENAPI_SPEC_PATH || process.env.OPENAPI_FILE;
+  const specUrl = process.env.CLAWQL_SPEC_URL || process.env.OPENAPI_SPEC_URL;
+  const discoveryUrl = process.env.CLAWQL_DISCOVERY_URL || process.env.GOOGLE_DISCOVERY_URL;
   const providerRaw = process.env.CLAWQL_PROVIDER?.trim().toLowerCase();
   const pathsEnv = process.env.CLAWQL_SPEC_PATHS?.trim();
   const useGoogleTop50 = isTruthyEnv(process.env.CLAWQL_GOOGLE_TOP50_SPECS);
   if (pathsEnv) {
-    const parts = pathsEnv.split(/[,;\n]/).map((s) => s.trim()).filter(Boolean);
+    const parts = pathsEnv
+      .split(/[,;\n]/)
+      .map((s) => s.trim())
+      .filter(Boolean);
     return parts.map((p) => ({
       abs: resolvePath(process.cwd(), p),
       label: labelFromSpecPath(p),
@@ -810,10 +749,7 @@ function methodToOperation(m: DiscoveryMethod, resourceName: string): Operation 
 // (enough for Omnigraph / GraphQL translation to consume)
 // ─────────────────────────────────────────────
 
-export function discoveryToOpenAPI(
-  doc: DiscoveryDoc,
-  operations: Operation[]
-): OpenAPIDoc {
+export function discoveryToOpenAPI(doc: DiscoveryDoc, operations: Operation[]): OpenAPIDoc {
   const baseUrl = (doc.rootUrl as string).replace(/\/$/, "");
   const paths: Record<string, Record<string, unknown>> = {};
   const oauthScopes: Record<string, string> = {};
@@ -823,8 +759,7 @@ export function discoveryToOpenAPI(
       oauthScopes[scope] = scope;
     }
     const routeTemplate = op.flatPath ?? op.path;
-    const oaPath =
-      "/" + String(routeTemplate).replace(/\{[+]?(\w+)\}/g, "{$1}");
+    const oaPath = "/" + String(routeTemplate).replace(/\{[+]?(\w+)\}/g, "{$1}");
 
     if (!paths[oaPath]) paths[oaPath] = {};
 
@@ -842,9 +777,7 @@ export function discoveryToOpenAPI(
         schema: { type: p.type },
       }));
 
-    const templateVars = Array.from(oaPath.matchAll(/\{(\w+)\}/g)).map(
-      (match) => match[1]
-    );
+    const templateVars = Array.from(oaPath.matchAll(/\{(\w+)\}/g)).map((match) => match[1]);
     for (const name of templateVars) {
       if (!parameters.some((param) => param.name === name)) {
         parameters.push({
@@ -897,20 +830,17 @@ export function discoveryToOpenAPI(
     openapi: "3.0.3",
     info: {
       title:
-        typeof doc.title === "string" && doc.title.trim().length > 0
-          ? doc.title
-          : "Google API",
+        typeof doc.title === "string" && doc.title.trim().length > 0 ? doc.title : "Google API",
       version:
-        typeof doc.version === "string" && doc.version.trim().length > 0
-          ? doc.version
-          : "v1",
+        typeof doc.version === "string" && doc.version.trim().length > 0 ? doc.version : "v1",
     },
     servers: [{ url: baseUrl }],
     paths,
     components: {
-      schemas: sanitizeSchemaNode(
-        (doc.schemas as Record<string, unknown>) ?? {}
-      ) as Record<string, unknown>,
+      schemas: sanitizeSchemaNode((doc.schemas as Record<string, unknown>) ?? {}) as Record<
+        string,
+        unknown
+      >,
       securitySchemes: {
         oauth2: {
           type: "oauth2",

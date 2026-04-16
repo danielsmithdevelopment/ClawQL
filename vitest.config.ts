@@ -9,11 +9,7 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "text-summary", "html"],
       include: ["src/**/*.ts"],
-      exclude: [
-        "src/**/*.test.ts",
-        "src/test-utils/**",
-        "src/swagger2openapi.d.ts",
-      ],
+      exclude: ["src/**/*.test.ts", "src/test-utils/**", "src/swagger2openapi.d.ts"],
     },
   },
 });

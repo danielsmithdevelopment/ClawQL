@@ -18,10 +18,10 @@ Stats below match **`meta.generatedAt`:** `2026-03-23T05:22:54.608Z` — re-run 
 
 ## Environment (child process)
 
-| Variable | Value |
-|----------|--------|
-| `CLAWQL_GOOGLE_TOP50_SPECS` | `1` |
-| `CLAWQL_BUNDLED_OFFLINE` | `1` |
+| Variable                                                        | Value                                |
+| --------------------------------------------------------------- | ------------------------------------ |
+| `CLAWQL_GOOGLE_TOP50_SPECS`                                     | `1`                                  |
+| `CLAWQL_BUNDLED_OFFLINE`                                        | `1`                                  |
 | `CLAWQL_PROVIDER` / `CLAWQL_SPEC_PATH` / `CLAWQL_DISCOVERY_URL` | **unset** (so multi-spec merge wins) |
 
 Server startup (stderr) ends with:
@@ -48,18 +48,18 @@ enable APIs batch GKE cluster firewall logging monitoring DNS bucket BigQuery
 
 ### Workflow steps (aligned with [`workflow-gcp-multi-service.md`](workflow-gcp-multi-service.md))
 
-| # | Section | Query | `limit` |
-|---|---------|---------|---------|
-| 0 | Service Usage — enable APIs | `batch enable services projects serviceusage` | 5 |
-| 1 | Resource Manager — project IAM | `get IAM policy project set bindings cloudresourcemanager` | 5 |
-| 2 | Networking & firewall | `compute firewall insert network subnet VPC ingress` | 5 |
-| 3 | GKE cluster | `create kubernetes cluster regional container locations` | 5 |
-| 4 | Logging | `logging sink create export logs BigQuery storage destination` | 5 |
-| 5 | Monitoring | `monitoring alert policy notification channel time series` | 5 |
-| 6 | Load balancing (Compute) | `global forwarding rule backend service health check url map HTTPS proxy` | 5 |
-| 7 | Cloud DNS | `DNS managed zone resource record set create A record` | 5 |
-| 8 | Cloud Storage | `storage bucket insert objects upload IAM policy` | 5 |
-| 9 | BigQuery | `BigQuery dataset query job insert table` | 5 |
+| #   | Section                        | Query                                                                     | `limit` |
+| --- | ------------------------------ | ------------------------------------------------------------------------- | ------- |
+| 0   | Service Usage — enable APIs    | `batch enable services projects serviceusage`                             | 5       |
+| 1   | Resource Manager — project IAM | `get IAM policy project set bindings cloudresourcemanager`                | 5       |
+| 2   | Networking & firewall          | `compute firewall insert network subnet VPC ingress`                      | 5       |
+| 3   | GKE cluster                    | `create kubernetes cluster regional container locations`                  | 5       |
+| 4   | Logging                        | `logging sink create export logs BigQuery storage destination`            | 5       |
+| 5   | Monitoring                     | `monitoring alert policy notification channel time series`                | 5       |
+| 6   | Load balancing (Compute)       | `global forwarding rule backend service health check url map HTTPS proxy` | 5       |
+| 7   | Cloud DNS                      | `DNS managed zone resource record set create A record`                    | 5       |
+| 8   | Cloud Storage                  | `storage bucket insert objects upload IAM policy`                         | 5       |
+| 9   | BigQuery                       | `BigQuery dataset query job insert table`                                 | 5       |
 
 **Total `search` calls:** 1 + 10 = **11**.
 
@@ -69,28 +69,28 @@ enable APIs batch GKE cluster firewall logging monitoring DNS bucket BigQuery
 
 Manifest: [`providers/google/google-top50-apis.json`](../providers/google/google-top50-apis.json). Each API loads `providers/google/apis/<slug>/discovery.json`.
 
-| Slug | Discovery `id` | Title |
-|------|----------------|--------|
-| `iam-v2` | `iam:v2` | Identity and Access Management (IAM) API |
-| `compute-v1` | `compute:v1` | Compute Engine API |
-| `storage-v1` | `storage:v1` | Cloud Storage API |
-| `container-v1` | `container:v1` | Kubernetes Engine API |
-| `run-v2` | `run:v2` | Cloud Run Admin API |
-| `pubsub-v1` | `pubsub:v1` | Cloud Pub/Sub API |
-| `bigquery-v2` | `bigquery:v2` | BigQuery API |
-| `cloudresourcemanager-v3` | `cloudresourcemanager:v3` | Cloud Resource Manager API |
-| `logging-v2` | `logging:v2` | Cloud Logging API |
-| `monitoring-v3` | `monitoring:v3` | Cloud Monitoring API |
-| `secretmanager-v1` | `secretmanager:v1` | Secret Manager API |
-| `cloudfunctions-v2` | `cloudfunctions:v2` | Cloud Functions API |
-| `cloudbuild-v2` | `cloudbuild:v2` | Cloud Build API |
-| `cloudkms-v1` | `cloudkms:v1` | Cloud Key Management Service (KMS) API |
-| `sqladmin-v1` | `sqladmin:v1` | Cloud SQL Admin API |
-| `gkehub-v2` | `gkehub:v2` | GKE Hub API |
-| `artifactregistry-v1` | `artifactregistry:v1` | Artifact Registry API |
-| `serviceusage-v1` | `serviceusage:v1` | Service Usage API |
-| `dns-v1` | `dns:v1` | Cloud DNS API |
-| `servicenetworking-v1` | `servicenetworking:v1` | Service Networking API |
+| Slug                      | Discovery `id`            | Title                                    |
+| ------------------------- | ------------------------- | ---------------------------------------- |
+| `iam-v2`                  | `iam:v2`                  | Identity and Access Management (IAM) API |
+| `compute-v1`              | `compute:v1`              | Compute Engine API                       |
+| `storage-v1`              | `storage:v1`              | Cloud Storage API                        |
+| `container-v1`            | `container:v1`            | Kubernetes Engine API                    |
+| `run-v2`                  | `run:v2`                  | Cloud Run Admin API                      |
+| `pubsub-v1`               | `pubsub:v1`               | Cloud Pub/Sub API                        |
+| `bigquery-v2`             | `bigquery:v2`             | BigQuery API                             |
+| `cloudresourcemanager-v3` | `cloudresourcemanager:v3` | Cloud Resource Manager API               |
+| `logging-v2`              | `logging:v2`              | Cloud Logging API                        |
+| `monitoring-v3`           | `monitoring:v3`           | Cloud Monitoring API                     |
+| `secretmanager-v1`        | `secretmanager:v1`        | Secret Manager API                       |
+| `cloudfunctions-v2`       | `cloudfunctions:v2`       | Cloud Functions API                      |
+| `cloudbuild-v2`           | `cloudbuild:v2`           | Cloud Build API                          |
+| `cloudkms-v1`             | `cloudkms:v1`             | Cloud Key Management Service (KMS) API   |
+| `sqladmin-v1`             | `sqladmin:v1`             | Cloud SQL Admin API                      |
+| `gkehub-v2`               | `gkehub:v2`               | GKE Hub API                              |
+| `artifactregistry-v1`     | `artifactregistry:v1`     | Artifact Registry API                    |
+| `serviceusage-v1`         | `serviceusage:v1`         | Service Usage API                        |
+| `dns-v1`                  | `dns:v1`                  | Cloud DNS API                            |
+| `servicenetworking-v1`    | `servicenetworking:v1`    | Service Networking API                   |
 
 **Merged operations:** **1985** (from [`workflow-gcp-multi-latest.json`](workflow-gcp-multi-latest.json) `meta.mergedOperationCount`).
 
@@ -102,31 +102,31 @@ Manifest: [`providers/google/google-top50-apis.json`](../providers/google/google
 
 **Caveat:** “Tokens” here are **not** from a real tokenizer. We use **`approxTokens = ceil(bytes_utf8 / 4)`** as a cheap scale (same order of magnitude as many English/JSON estimates). Use [`report-gcp-multi-experiment.mjs`](../scripts/report-gcp-multi-experiment.mjs) to refresh.
 
-| Metric | Value |
-|--------|-------|
-| Sum of 20 × `discovery.json` (on disk) | 11,157,299 bytes (~2,789,325 tok†) |
-| Sum of 11 × `search` tool **text** payloads (`content[0].text`) | 120,780 bytes (~30,195 tok†) |
-| Ratio (discovery bytes / search-output bytes) | **~92.4×** smaller for the tool-output side |
+| Metric                                                          | Value                                       |
+| --------------------------------------------------------------- | ------------------------------------------- |
+| Sum of 20 × `discovery.json` (on disk)                          | 11,157,299 bytes (~2,789,325 tok†)          |
+| Sum of 11 × `search` tool **text** payloads (`content[0].text`) | 120,780 bytes (~30,195 tok†)                |
+| Ratio (discovery bytes / search-output bytes)                   | **~92.4×** smaller for the tool-output side |
 
 † Approximate tokens: `ceil(bytes / 4)`.
 
 ### Per-call output size (search tool text only)
 
-| Step | Response bytes | ~tokens |
-|------|----------------|---------|
-| Cross-cutting (limit 10) | 12,963 | 3,241 |
-| 0. Service Usage — enable APIs | 6,685 | 1,672 |
-| 1. Resource Manager — project IAM | 6,854 | 1,714 |
-| 2. Networking & firewall | 10,320 | 2,580 |
-| 3. GKE cluster | 7,500 | 1,875 |
-| 4. Logging | 12,128 | 3,032 |
-| 5. Monitoring | 34,280 | 8,570 |
-| 6. Load balancing (Compute) | 7,251 | 1,813 |
-| 7. Cloud DNS | 9,238 | 2,310 |
-| 8. Cloud Storage | 5,932 | 1,483 |
-| 9. BigQuery | 7,629 | 1,908 |
+| Step                              | Response bytes | ~tokens |
+| --------------------------------- | -------------- | ------- |
+| Cross-cutting (limit 10)          | 12,963         | 3,241   |
+| 0. Service Usage — enable APIs    | 6,685          | 1,672   |
+| 1. Resource Manager — project IAM | 6,854          | 1,714   |
+| 2. Networking & firewall          | 10,320         | 2,580   |
+| 3. GKE cluster                    | 7,500          | 1,875   |
+| 4. Logging                        | 12,128         | 3,032   |
+| 5. Monitoring                     | 34,280         | 8,570   |
+| 6. Load balancing (Compute)       | 7,251          | 1,813   |
+| 7. Cloud DNS                      | 9,238          | 2,310   |
+| 8. Cloud Storage                  | 5,932          | 1,483   |
+| 9. BigQuery                       | 7,629          | 1,908   |
 
-*Largest step:* Monitoring (many parameters/descriptions on top hits).
+_Largest step:_ Monitoring (many parameters/descriptions on top hits).
 
 ---
 

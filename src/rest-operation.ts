@@ -33,10 +33,7 @@ export function buildRestRequestBodyFromArgs(
   return out;
 }
 
-export function renderPath(
-  template: string,
-  args: Record<string, unknown>
-): string {
+export function renderPath(template: string, args: Record<string, unknown>): string {
   return template.replace(/\{[+]?(\w+)\}/g, (_m, name: string) => {
     const v = args[name];
     if (v === undefined || v === null) return `{${name}}`;

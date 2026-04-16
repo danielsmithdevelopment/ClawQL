@@ -18,10 +18,10 @@ Both were driven through the MCP server (`dist/server.js`)—not through ad-hoc 
 
 ## What we ran (reproducible)
 
-| Action | Mechanism | Script / notes |
-|--------|-----------|----------------|
-| List commits on `main` | `execute` → `repos/list-commits` | [`scripts/smoke-github-commits.mjs`](../../scripts/smoke-github-commits.mjs) — `npm run smoke:github-commits` |
-| Patch description | `execute` → `repos/update` | [`scripts/clawql-github-patch-repo-description.mjs`](../../scripts/clawql-github-patch-repo-description.mjs) — `npm run clawql:github-repo-description` |
+| Action                 | Mechanism                        | Script / notes                                                                                                                                          |
+| ---------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| List commits on `main` | `execute` → `repos/list-commits` | [`scripts/smoke-github-commits.mjs`](../../scripts/smoke-github-commits.mjs) — `npm run smoke:github-commits`                                           |
+| Patch description      | `execute` → `repos/update`       | [`scripts/clawql-github-patch-repo-description.mjs`](../../scripts/clawql-github-patch-repo-description.mjs) — `npm run clawql:github-repo-description` |
 
 Example environment:
 
@@ -81,8 +81,8 @@ npm run clawql:github-repo-description
 
 For human-driven discovery, natural-language **`search`** queries surface the right `operationId` among **~1,099** indexed GitHub REST operations—without loading the raw OpenAPI file into the model. Example intents used in development:
 
-- List commits: *“GitHub REST list commits for repository GET repos owner repo commits”* → `repos/list-commits` ranked highly (e.g. **#2** in top 10).
-- Update repo: *“PATCH update a repository repos owner”* → `repos/update` within the top hits (e.g. **#5** in top 15).
+- List commits: _“GitHub REST list commits for repository GET repos owner repo commits”_ → `repos/list-commits` ranked highly (e.g. **#2** in top 10).
+- Update repo: _“PATCH update a repository repos owner”_ → `repos/update` within the top hits (e.g. **#5** in top 15).
 
 ## Platform note: inline `requestBody` and `repos/update`
 
@@ -97,39 +97,39 @@ Relevant code: [`operation-types.ts`](../../src/operation-types.ts), [`openapi-o
 
 ## Token usage: before vs after (planning context)
 
-This comparison answers: *“If the model had to ‘know’ the GitHub REST surface, how big is that text vs what ClawQL returns for **`search`?*”*
+This comparison answers: _“If the model had to ‘know’ the GitHub REST surface, how big is that text vs what ClawQL returns for \*\*`search`?_”\*
 
-It is **not** a guarantee of your invoice line item: real billing depends on the full prompt, history, tool envelopes, and model pricing (see [README.md — *Planning-context numbers vs your API bill*](../README.md#planning-context-numbers-vs-your-api-bill)).
+It is **not** a guarantee of your invoice line item: real billing depends on the full prompt, history, tool envelopes, and model pricing (see [README.md — _Planning-context numbers vs your API bill_](../README.md#planning-context-numbers-vs-your-api-bill)).
 
 ### Measured inputs (March 2025, local workspace)
 
-| Artifact | Bytes | ≈ Tokens (`÷ 4`) |
-|-----------|------:|-----------------:|
-| Bundled GitHub OpenAPI (`providers/github/openapi.yaml`) | 9,128,768 | **2,282,192** |
-| `search` result JSON (top 10) for *list commits* intent | 6,285 | **1,572** |
-| `search` result JSON (top 15) for *update repository* intent | 7,241 | **1,811** |
+| Artifact                                                     |     Bytes | ≈ Tokens (`÷ 4`) |
+| ------------------------------------------------------------ | --------: | ---------------: |
+| Bundled GitHub OpenAPI (`providers/github/openapi.yaml`)     | 9,128,768 |    **2,282,192** |
+| `search` result JSON (top 10) for _list commits_ intent      |     6,285 |        **1,572** |
+| `search` result JSON (top 15) for _update repository_ intent |     7,241 |        **1,811** |
 
 ### Baseline (“before”) — naive full spec in context
 
 Assume the assistant must have the **entire** GitHub v3 bundle in the conversational context **once** to pick operations by hand (equivalent to pasting `openapi.yaml`).
 
-| Scenario | Spec-related tokens |
-|----------|--------------------:|
-| **Full OpenAPI pasted once** | **2,282,192** |
-| **Full OpenAPI pasted on *two* separate planning turns** (e.g. commit task, then description task) | **4,564,384** |
+| Scenario                                                                                           | Spec-related tokens |
+| -------------------------------------------------------------------------------------------------- | ------------------: |
+| **Full OpenAPI pasted once**                                                                       |       **2,282,192** |
+| **Full OpenAPI pasted on _two_ separate planning turns** (e.g. commit task, then description task) |       **4,564,384** |
 
 ### With ClawQL (“after”) — `search` only for planning
 
-| Scenario | Planning output tokens (tool text only) |
-|----------|----------------------------------------:|
-| **Two `search` calls** (intents above) | **1,572 + 1,811 = 3,383** |
+| Scenario                               | Planning output tokens (tool text only) |
+| -------------------------------------- | --------------------------------------: |
+| **Two `search` calls** (intents above) |               **1,572 + 1,811 = 3,383** |
 
 ### Savings (planning surface only)
 
-| Comparison | Savings |
-|------------|---------|
-| One full spec **vs** two searches | **2,282,192 − 3,383 ≈ 2,278,809** tokens (**~99.85%** smaller planning blob, **~674×** reduction) |
-| Two pasted specs **vs** two searches | **4,564,384 − 3,383 ≈ 4,561,001** tokens (**~99.93%** smaller) |
+| Comparison                           | Savings                                                                                           |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------- |
+| One full spec **vs** two searches    | **2,282,192 − 3,383 ≈ 2,278,809** tokens (**~99.85%** smaller planning blob, **~674×** reduction) |
+| Two pasted specs **vs** two searches | **4,564,384 − 3,383 ≈ 4,561,001** tokens (**~99.93%** smaller)                                    |
 
 **Important nuance:** In normal ClawQL use, the **spec never enters the model at all**—it stays in the MCP server. The table above compares against a **failure mode** (pasting or otherwise materializing the full OpenAPI). The **`execute`** step still returns **GitHub’s JSON** (often large for `repos/update`); savings on execution payloads depend on using the internal GraphQL path when available—REST fallback returns the same bodies as calling the HTTP API directly.
 

@@ -7,7 +7,7 @@ ClawQL treats **vault Markdown** as the **source of truth**. Derived state can l
 
 **No SQLite unless you opt in:** if **`CLAWQL_OBSIDIAN_VAULT_PATH`** is unset or **`CLAWQL_MEMORY_DB=0`**, ClawQL does **not** create or use **`memory.db`** — same as before vectors existed.
 
-**When hybrid memory is on** (vault configured and **`memory.db` enabled): the relational index (documents, chunks, wikilinks) lives in **`memory.db`** — that is the default local index beside your Markdown.
+**When hybrid memory is on** (vault configured and **`memory.db` enabled): the relational index (documents, chunks, wikilinks) lives in **`memory.db`\*\* — that is the default local index beside your Markdown.
 
 **Vector storage choice (postgres backend only):** by default, embeddings are **dual-written** to **`vault_chunk.embedding`** and to Postgres (**parity + offline fallback**). Set **`CLAWQL_MEMORY_VECTOR_DUAL_WRITE=0`** to store vectors **only in Postgres** (smaller `memory.db`; no BLOB fallback for the vector leg). **`sqlite`** backend always keeps vectors in **`memory.db`** only.
 
@@ -15,12 +15,12 @@ ClawQL treats **vault Markdown** as the **source of truth**. Derived state can l
 
 ## Choosing vector options (tradeoffs)
 
-| You want… | Set | Tradeoffs |
-|-----------|-----|-----------|
-| **No semantic vectors** | `CLAWQL_VECTOR_BACKEND` unset / `off` | Lightest: keyword + wikilinks only. No embedding API calls or vector storage. |
-| **Vectors beside the vault, minimal ops** | `CLAWQL_VECTOR_BACKEND=sqlite` + embedding API key | **Pros:** Single **`memory.db`** file (sql.js), portable, no database server. **Cons:** Vector search is **in-process** cosine over loaded chunks (fine for typical vault sizes; not a server-side ANN index). |
-| **Postgres + pgvector** | `CLAWQL_VECTOR_BACKEND=postgres` + **`CLAWQL_VECTOR_DATABASE_URL`** + embedding API | **Pros:** **`pgvector`** queries (`<=>`), can add IVFFlat/HNSW in Postgres, HA/backup story, shared DB for teams. **Cons:** Run and secure Postgres; requires **`vector`** extension; extra moving part. |
-| **“Postgres mode” but no URL yet** | `CLAWQL_VECTOR_BACKEND=postgres` without **`CLAWQL_VECTOR_DATABASE_URL`** | **Automatic fallback:** runtime uses **`memory.db`** vectors only (same as **`sqlite`**). A **one-time warning** is logged; set **`CLAWQL_VECTOR_BACKEND=sqlite`** explicitly if that is intentional. |
+| You want…                                 | Set                                                                                 | Tradeoffs                                                                                                                                                                                                      |
+| ----------------------------------------- | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **No semantic vectors**                   | `CLAWQL_VECTOR_BACKEND` unset / `off`                                               | Lightest: keyword + wikilinks only. No embedding API calls or vector storage.                                                                                                                                  |
+| **Vectors beside the vault, minimal ops** | `CLAWQL_VECTOR_BACKEND=sqlite` + embedding API key                                  | **Pros:** Single **`memory.db`** file (sql.js), portable, no database server. **Cons:** Vector search is **in-process** cosine over loaded chunks (fine for typical vault sizes; not a server-side ANN index). |
+| **Postgres + pgvector**                   | `CLAWQL_VECTOR_BACKEND=postgres` + **`CLAWQL_VECTOR_DATABASE_URL`** + embedding API | **Pros:** **`pgvector`** queries (`<=>`), can add IVFFlat/HNSW in Postgres, HA/backup story, shared DB for teams. **Cons:** Run and secure Postgres; requires **`vector`** extension; extra moving part.       |
+| **“Postgres mode” but no URL yet**        | `CLAWQL_VECTOR_BACKEND=postgres` without **`CLAWQL_VECTOR_DATABASE_URL`**           | **Automatic fallback:** runtime uses **`memory.db`** vectors only (same as **`sqlite`**). A **one-time warning** is logged; set **`CLAWQL_VECTOR_BACKEND=sqlite`** explicitly if that is intentional.          |
 
 **Dual-write (when effective backend is Postgres and URL is set):** default **`CLAWQL_MEMORY_VECTOR_DUAL_WRITE`** is on — vectors exist in **both** Postgres and **`vault_chunk.embedding`**. **Pros:** Portable copy in the vault folder; **`memory_recall`** tries pgvector first, then **falls back** to SQLite BLOB ranking if the PG query fails or returns nothing. **Cons:** Duplicate storage for embeddings. Set **`CLAWQL_MEMORY_VECTOR_DUAL_WRITE=0`** to keep vectors **only in Postgres** (smaller `memory.db`; rely on PG availability for the vector leg).
 
@@ -30,13 +30,13 @@ ClawQL treats **vault Markdown** as the **source of truth**. Derived state can l
 
 ## Defaults (best practice)
 
-| Concern | Default | Optional upgrade |
-|--------|---------|------------------|
-| Canonical notes | Vault `.md` | — |
-| Structured index (documents, chunks, wikilinks) | **`memory.db`** (sql.js) | Same; Postgres is not a drop-in replacement for this file today |
-| Chunk vectors | **`sqlite`** — KNN in-process over `memory.db` BLOBs | **`postgres`** + URL — pgvector KNN; dual-write BLOBs by default; **no URL → sqlite vectors** (fallback) |
-| Future: Cuckoo membership (#25) | TBD (likely SQLite blobs or Postgres BYTEA) | Same table layout in PG for scale-out |
-| Future: Merkle / integrity (#37) | TBD | Postgres-friendly for multi-replica |
+| Concern                                         | Default                                              | Optional upgrade                                                                                         |
+| ----------------------------------------------- | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Canonical notes                                 | Vault `.md`                                          | —                                                                                                        |
+| Structured index (documents, chunks, wikilinks) | **`memory.db`** (sql.js)                             | Same; Postgres is not a drop-in replacement for this file today                                          |
+| Chunk vectors                                   | **`sqlite`** — KNN in-process over `memory.db` BLOBs | **`postgres`** + URL — pgvector KNN; dual-write BLOBs by default; **no URL → sqlite vectors** (fallback) |
+| Future: Cuckoo membership (#25)                 | TBD (likely SQLite blobs or Postgres BYTEA)          | Same table layout in PG for scale-out                                                                    |
+| Future: Merkle / integrity (#37)                | TBD                                                  | Postgres-friendly for multi-replica                                                                      |
 
 **Why SQLite stays default for vectors-on-disk:** it ships beside **`Memory/`** with zero ops. **Why Postgres exists:** pgvector ANN, connection pooling, and shared infrastructure for teams that already run Postgres.
 

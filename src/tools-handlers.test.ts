@@ -40,7 +40,12 @@ describe("MCP tool handlers", () => {
     ];
     vi.spyOn(specLoader, "loadSpec").mockResolvedValue({
       operations,
-      openapi: { openapi: "3.0.0", info: { title: "x", version: "1" }, paths: {}, components: { schemas: {} } },
+      openapi: {
+        openapi: "3.0.0",
+        info: { title: "x", version: "1" },
+        paths: {},
+        components: { schemas: {} },
+      },
       rawSource: {},
     });
 
@@ -57,7 +62,12 @@ describe("MCP tool handlers", () => {
   it("handleClawqlExecuteToolInput returns error for unknown operationId", async () => {
     vi.spyOn(specLoader, "loadSpec").mockResolvedValue({
       operations: [],
-      openapi: { openapi: "3.0.0", info: { title: "x", version: "1" }, paths: {}, components: { schemas: {} } },
+      openapi: {
+        openapi: "3.0.0",
+        info: { title: "x", version: "1" },
+        paths: {},
+        components: { schemas: {} },
+      },
       rawSource: {},
     });
     const out = await handleClawqlExecuteToolInput({
@@ -128,34 +138,33 @@ describe("MCP tool handlers", () => {
 
   it("handleClawqlExecuteToolInput uses in-process GraphQL for single-spec", async () => {
     await withFetchServer(
-        async (req) => {
-          const path = new URL(req.url).pathname;
-          if (req.method === "GET" && path.startsWith("/pets")) {
-            return new Response(JSON.stringify([{ id: 1, name: "dog" }]), {
-              status: 200,
-              headers: { "Content-Type": "application/json" },
-            });
-          }
-          return new Response("not found", { status: 404 });
-        },
-        async (origin) => {
-          const openapi: OpenAPIDoc = {
-            openapi: "3.0.3",
-            info: { title: "Pet", version: "1" },
-            servers: [{ url: origin }],
-            paths: {
-              "/pets": {
-                get: {
-                  operationId: "listPets",
-                  responses: {
-                    "200": {
-                      description: "ok",
-                      content: {
-                        "application/json": {
-                          schema: {
-                            type: "array",
-                            items: { type: "object", additionalProperties: true },
-                          },
+      async (req) => {
+        const path = new URL(req.url).pathname;
+        if (req.method === "GET" && path.startsWith("/pets")) {
+          return new Response(JSON.stringify([{ id: 1, name: "dog" }]), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+        return new Response("not found", { status: 404 });
+      },
+      async (origin) => {
+        const openapi: OpenAPIDoc = {
+          openapi: "3.0.3",
+          info: { title: "Pet", version: "1" },
+          servers: [{ url: origin }],
+          paths: {
+            "/pets": {
+              get: {
+                operationId: "listPets",
+                responses: {
+                  "200": {
+                    description: "ok",
+                    content: {
+                      "application/json": {
+                        schema: {
+                          type: "array",
+                          items: { type: "object", additionalProperties: true },
                         },
                       },
                     },
@@ -163,38 +172,39 @@ describe("MCP tool handlers", () => {
                 },
               },
             },
-            components: { schemas: {} },
-          };
+          },
+          components: { schemas: {} },
+        };
 
-          vi.spyOn(specLoader, "loadSpec").mockResolvedValue({
-            operations: [
-              {
-                id: "listPets",
-                method: "GET",
-                path: "/pets",
-                flatPath: "/pets",
-                description: "list",
-                resource: "pets",
-                parameters: {},
-              } as Operation,
-            ],
-            openapi,
-            multi: false,
-            rawSource: {},
-          });
+        vi.spyOn(specLoader, "loadSpec").mockResolvedValue({
+          operations: [
+            {
+              id: "listPets",
+              method: "GET",
+              path: "/pets",
+              flatPath: "/pets",
+              description: "list",
+              resource: "pets",
+              parameters: {},
+            } as Operation,
+          ],
+          openapi,
+          multi: false,
+          rawSource: {},
+        });
 
-          resetSpecCache();
-          resetSchemaFieldCache();
+        resetSpecCache();
+        resetSchemaFieldCache();
 
-          const out = await handleClawqlExecuteToolInput({
-            operationId: "listPets",
-            args: {},
-          });
-          const data = JSON.parse(out.content[0].text) as unknown;
-          expect(Array.isArray(data)).toBe(true);
-          expect((data as { name: string }[])[0]?.name).toBe("dog");
-        }
-      );
+        const out = await handleClawqlExecuteToolInput({
+          operationId: "listPets",
+          args: {},
+        });
+        const data = JSON.parse(out.content[0].text) as unknown;
+        expect(Array.isArray(data)).toBe(true);
+        expect((data as { name: string }[])[0]?.name).toBe("dog");
+      }
+    );
   });
 });
 

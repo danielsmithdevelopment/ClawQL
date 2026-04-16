@@ -68,11 +68,12 @@ export function resolveEmbeddingConfig(): EmbeddingConfig | null {
   if (getObsidianVaultPath() === null) return null;
 
   const apiKey =
-    process.env.CLAWQL_EMBEDDING_API_KEY?.trim() ||
-    process.env.OPENAI_API_KEY?.trim() ||
-    "";
+    process.env.CLAWQL_EMBEDDING_API_KEY?.trim() || process.env.OPENAI_API_KEY?.trim() || "";
   if (!apiKey) return null;
-  const baseUrl = (process.env.CLAWQL_EMBEDDING_BASE_URL?.trim() || DEFAULT_BASE).replace(/\/$/, "");
+  const baseUrl = (process.env.CLAWQL_EMBEDDING_BASE_URL?.trim() || DEFAULT_BASE).replace(
+    /\/$/,
+    ""
+  );
   const model = process.env.CLAWQL_EMBEDDING_MODEL?.trim() || DEFAULT_MODEL;
   return { baseUrl, model, apiKey };
 }

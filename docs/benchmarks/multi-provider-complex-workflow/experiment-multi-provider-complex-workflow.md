@@ -17,13 +17,13 @@ It mirrors the existing benchmark heuristic of **`approxTokens = ceil(bytes / 4)
 
 ## Savings summary
 
-| Metric | Value |
-|---|---|
-| Total loaded spec bytes | `40,835,581` bytes (~`10,208,896` tok) |
-| Workflow output bytes | `47,374` bytes (~`11,844` tok) |
-| Approx tokens saved | `10,197,052` |
-| Reduction | `99.88%` |
-| Compression ratio (before/after) | `861.98x` |
+| Metric                           | Value                                  |
+| -------------------------------- | -------------------------------------- |
+| Total loaded spec bytes          | `40,835,581` bytes (~`10,208,896` tok) |
+| Workflow output bytes            | `47,374` bytes (~`11,844` tok)         |
+| Approx tokens saved              | `10,197,052`                           |
+| Reduction                        | `99.88%`                               |
+| Compression ratio (before/after) | `861.98x`                              |
 
 ## Hypothetical naive workflow (full spec in context)
 
@@ -34,21 +34,21 @@ See `hypotheticalNaiveFullSpecInContext` in [`experiment-multi-provider-complex-
 
 ## Spec size breakdown
 
-| Source | Bytes | ~Tokens |
-|---|---:|---:|
-| Google top50 Discovery | `20,523,053` | `5,130,764` |
-| Cloudflare OpenAPI | `19,065,452` | `4,766,363` |
-| Jira OpenAPI | `1,247,076` | `311,769` |
-| **Total** | **`40,835,581`** | **`10,208,896`** |
+| Source                 |            Bytes |          ~Tokens |
+| ---------------------- | ---------------: | ---------------: |
+| Google top50 Discovery |     `20,523,053` |      `5,130,764` |
+| Cloudflare OpenAPI     |     `19,065,452` |      `4,766,363` |
+| Jira OpenAPI           |      `1,247,076` |        `311,769` |
+| **Total**              | **`40,835,581`** | **`10,208,896`** |
 
 ## Workflow output profile
 
-| Metric | Value |
-|---|---|
-| Search steps | `5` |
-| Search queries | `14` |
-| Output file | `multi-provider-test.md` |
-| Output size | `47,374` bytes |
+| Metric         | Value                    |
+| -------------- | ------------------------ |
+| Search steps   | `5`                      |
+| Search queries | `14`                     |
+| Output file    | `multi-provider-test.md` |
+| Output size    | `47,374` bytes           |
 
 ## Notes
 

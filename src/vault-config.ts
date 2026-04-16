@@ -47,9 +47,7 @@ export async function validateObsidianVaultAtStartup(): Promise<void> {
     await access(vault, constants.R_OK | constants.W_OK);
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
-    throw new Error(
-      `CLAWQL_OBSIDIAN_VAULT_PATH: not readable/writable: ${vault} (${msg})`
-    );
+    throw new Error(`CLAWQL_OBSIDIAN_VAULT_PATH: not readable/writable: ${vault} (${msg})`);
   }
   console.error(`[clawql-mcp] Obsidian vault: ${vault}`);
 }

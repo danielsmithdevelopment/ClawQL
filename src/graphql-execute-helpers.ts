@@ -9,15 +9,16 @@ import type { Operation } from "./spec-loader.js";
 import { INLINE_OPENAPI_REQUEST_BODY } from "./operation-types.js";
 
 export function operationIdToGraphQLName(op: Operation): string {
-  const segments = op.flatPath
-    .split("/")
-    .filter((s) => !s.startsWith("{") && s.length > 0);
+  const segments = op.flatPath.split("/").filter((s) => !s.startsWith("{") && s.length > 0);
 
   const methodSuffix = op.id.split(".").pop() ?? "";
 
   return (
     segments[0] +
-    segments.slice(1).map((s) => s.charAt(0).toUpperCase() + s.slice(1)).join("") +
+    segments
+      .slice(1)
+      .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
+      .join("") +
     methodSuffix.charAt(0).toUpperCase() +
     methodSuffix.slice(1)
   );
@@ -47,25 +48,19 @@ export function resolveGraphQLFieldFromSchema(
   op: Operation,
   gqlOpType: "query" | "mutation"
 ): { fieldName: string; fieldArgs: string[] } {
-  const root =
-    gqlOpType === "query" ? schema.getQueryType() : schema.getMutationType();
+  const root = gqlOpType === "query" ? schema.getQueryType() : schema.getMutationType();
   if (!root) {
     throw new Error(`No GraphQL ${gqlOpType} type in schema`);
   }
   const fields = root.getFields();
-  const byName = new Map(
-    Object.entries(fields).map(([k, v]) => [k, v.args.map((a) => a.name)])
-  );
+  const byName = new Map(Object.entries(fields).map(([k, v]) => [k, v.args.map((a) => a.name)]));
 
   const candidates: string[] = [];
   candidates.push(sanitizeNameForGraphQL(op.id));
   candidates.push(operationIdToRunStyleName(op));
   candidates.push(operationIdToGraphQLName(op));
   if (op.responseBody) candidates.push(lowerFirst(op.responseBody));
-  if (
-    op.requestBody &&
-    op.requestBody !== INLINE_OPENAPI_REQUEST_BODY
-  ) {
+  if (op.requestBody && op.requestBody !== INLINE_OPENAPI_REQUEST_BODY) {
     candidates.push(lowerFirst(op.requestBody));
   }
 
@@ -109,15 +104,10 @@ export function normalizeArgsForField(
     }
   }
 
-  return Object.fromEntries(
-    Object.entries(args).filter(([key]) => expected.has(key))
-  );
+  return Object.fromEntries(Object.entries(args).filter(([key]) => expected.has(key)));
 }
 
-export function capturePathParams(
-  flatPath: string,
-  value: string
-): Record<string, string> {
+export function capturePathParams(flatPath: string, value: string): Record<string, string> {
   const templateParts = flatPath.split("/").filter(Boolean);
   const valueParts = value.split("/").filter(Boolean);
   if (templateParts.length !== valueParts.length) return {};
@@ -136,16 +126,11 @@ export function capturePathParams(
   return out;
 }
 
-export function buildVarDeclarations(
-  op: Operation,
-  args: Record<string, unknown>
-): string {
+export function buildVarDeclarations(op: Operation, args: Record<string, unknown>): string {
   return Object.keys(args)
     .map((key) => {
       const param = op.parameters[key];
-      const gqlType = param
-        ? discoveryTypeToGraphQL(param.type, param.required)
-        : "String";
+      const gqlType = param ? discoveryTypeToGraphQL(param.type, param.required) : "String";
       return `$${key}: ${gqlType}`;
     })
     .join(", ");

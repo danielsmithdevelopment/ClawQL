@@ -5,10 +5,7 @@
 
 import pg from "pg";
 import { runPostgresHybridMemoryMigrations } from "../memory-backends/postgres-migrations.js";
-import {
-  aggregateScoresToDocumentBest,
-  type VectorRankedRow,
-} from "../memory-embedding.js";
+import { aggregateScoresToDocumentBest, type VectorRankedRow } from "../memory-embedding.js";
 
 let pool: pg.Pool | null = null;
 let shutdownHooksRegistered = false;
@@ -112,9 +109,10 @@ export async function upsertPostgresChunkVectors(
     await ensurePgVectorSchema(client);
     await client.query("BEGIN");
     if (paths.length > 0) {
-      await client.query(`DELETE FROM clawql_memory_chunk_vector WHERE document_path = ANY($1::text[])`, [
-        paths,
-      ]);
+      await client.query(
+        `DELETE FROM clawql_memory_chunk_vector WHERE document_path = ANY($1::text[])`,
+        [paths]
+      );
     }
     for (const { path, chunks } of planned) {
       for (const c of chunks) {

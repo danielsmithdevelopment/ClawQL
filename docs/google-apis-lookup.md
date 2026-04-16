@@ -9,12 +9,12 @@ Google publishes a single **Discovery Service** directory that lists **all** pub
 
 ## Files in this repo
 
-| File | Purpose |
-|------|---------|
-| [`providers/google/discovery-directory.json`](../providers/google/discovery-directory.json) | Verbatim `discovery#directoryList` JSON from the URL above. |
-| [`providers/google/google-apis-lookup.json`](../providers/google/google-apis-lookup.json) | Slim index: `id`, `title`, `discoveryRestUrl`, `documentationLink`, `preferred`, etc. |
-| [`providers/google/google-top50-apis.json`](../providers/google/google-top50-apis.json) | Curated **50** GCP APIs we pre-download and optionally pregenerate GraphQL for. |
-| [`providers/google/apis/`](../providers/google/apis/README.md) | On-disk `discovery.json` (+ `introspection.json` / `schema.graphql` when generation succeeds) per [top-20 README](../providers/google/apis/README.md). |
+| File                                                                                        | Purpose                                                                                                                                                |
+| ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [`providers/google/discovery-directory.json`](../providers/google/discovery-directory.json) | Verbatim `discovery#directoryList` JSON from the URL above.                                                                                            |
+| [`providers/google/google-apis-lookup.json`](../providers/google/google-apis-lookup.json)   | Slim index: `id`, `title`, `discoveryRestUrl`, `documentationLink`, `preferred`, etc.                                                                  |
+| [`providers/google/google-top50-apis.json`](../providers/google/google-top50-apis.json)     | Curated **50** GCP APIs we pre-download and optionally pregenerate GraphQL for.                                                                        |
+| [`providers/google/apis/`](../providers/google/apis/README.md)                              | On-disk `discovery.json` (+ `introspection.json` / `schema.graphql` when generation succeeds) per [top-20 README](../providers/google/apis/README.md). |
 
 The bundled **`CLAWQL_PROVIDER=google`** default remains the **Container API** discovery doc only ([`providers/google/discovery.json`](../providers/google/discovery.json)) — one API at a time for `search` / `execute`. The directory files are a **catalog** to pick the right `CLAWQL_DISCOVERY_URL`. For **offline** use of popular services without fetching, prefer paths under **`providers/google/apis/<slug>/discovery.json`** (see top-20 list).
 
@@ -48,7 +48,7 @@ npm run refresh-google-top50
 
 Details: [`providers/google/apis/README.md`](../providers/google/apis/README.md).
 
-## Optional: download *all* Discovery documents locally
+## Optional: download _all_ Discovery documents locally
 
 Not recommended for normal use (hundreds of MB). Cache goes to `providers/google/discovery-cache/` (gitignored).
 

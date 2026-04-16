@@ -80,6 +80,10 @@
         "pretest": "npm run build",
         "test": "vitest run",
         "test:coverage": "npm run build && vitest run --coverage",
+        "lint": "eslint \"src/**/*.ts\" \"vitest.config.ts\" --max-warnings 0",
+        "lint:fix": "eslint \"src/**/*.ts\" \"vitest.config.ts\" --fix",
+        "format": "prettier --write \"src/**/*.{ts,tsx}\" \"docs/**/*.md\" \".github/**/*.yml\" \"*.md\" \"vitest.config.ts\" \"eslint.config.js\" \"tsconfig.json\" \".prettierrc.json\"",
+        "format:check": "prettier --check \"src/**/*.{ts,tsx}\" \"docs/**/*.md\" \".github/**/*.yml\" \"*.md\" \"vitest.config.ts\" \"eslint.config.js\" \"tsconfig.json\" \".prettierrc.json\"",
         "release:git-tag": "bash scripts/git-release-tag.sh",
         "release:git-tag:push": "bash scripts/git-release-tag.sh --push",
         "release:git-backfill-tags": "bash scripts/git-backfill-npm-release-tags.sh",
@@ -100,13 +104,17 @@
         "zod": "^3.22.4"
     },
     "devDependencies": {
+        "@eslint/js": "^9.39.4",
         "@types/express": "^4.17.21",
         "@types/node": "^20.0.0",
         "@types/pg": "^8.20.0",
         "@types/sql.js": "^1.4.11",
         "@vitest/coverage-v8": "^4.1.1",
+        "eslint": "^9.39.4",
+        "prettier": "^3.4.2",
         "tsx": "^4.7.0",
         "typescript": "^5.3.0",
+        "typescript-eslint": "^8.58.2",
         "vitest": "^4.1.1"
     }
 }

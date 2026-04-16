@@ -2,17 +2,17 @@
 
 End-to-end **search** exercise using the merged preset **`CLAWQL_PROVIDER=all-providers`**: **Google top50** plus **every other** entry in `BUNDLED_PROVIDERS` (Jira, Bitbucket, Cloudflare, GitHub, Slack, Sentry, n8n — new vendors are included automatically when registered).
 
-| Phase | Provider | Intent |
-|--------|----------|--------|
-| Cluster & deploy | Google (top50) | GKE cluster, workloads, Service exposure |
-| Ingress lockdown | Google (top50) | Firewall / NEG patterns toward Cloudflare IP ranges |
-| Edge | Cloudflare | DNS to origin, caching / cache rules |
-| Observability | Sentry | Projects, DSN, releases tied to deploys |
-| CI/CD | GitHub Actions | Scheduled workflows, secrets, deploy hooks |
-| Comms | Slack | `chat.postMessage` to a release channel per step |
-| Automation | n8n | Workflow: Slack → create GitHub release |
-| SCM (optional) | Bitbucket | Repos / Pipelines mirror to the same story |
-| Tracking | Jira | One ticket, sections by tool, labels, due +7 days, High priority |
+| Phase            | Provider       | Intent                                                           |
+| ---------------- | -------------- | ---------------------------------------------------------------- |
+| Cluster & deploy | Google (top50) | GKE cluster, workloads, Service exposure                         |
+| Ingress lockdown | Google (top50) | Firewall / NEG patterns toward Cloudflare IP ranges              |
+| Edge             | Cloudflare     | DNS to origin, caching / cache rules                             |
+| Observability    | Sentry         | Projects, DSN, releases tied to deploys                          |
+| CI/CD            | GitHub Actions | Scheduled workflows, secrets, deploy hooks                       |
+| Comms            | Slack          | `chat.postMessage` to a release channel per step                 |
+| Automation       | n8n            | Workflow: Slack → create GitHub release                          |
+| SCM (optional)   | Bitbucket      | Repos / Pipelines mirror to the same story                       |
+| Tracking         | Jira           | One ticket, sections by tool, labels, due +7 days, High priority |
 
 ## Run (offline `search` only)
 
@@ -49,7 +49,7 @@ npm run workflow:complex-release-stack
 
 Display name in the ticket description defaults to **Daniel Smith**; override with `WORKFLOW_JIRA_ASSIGNEE_DISPLAY_NAME`.
 
-## What this does *not* do
+## What this does _not_ do
 
 It does **not** provision infrastructure or call third-party APIs except optional Jira `POST /rest/api/3/issue`. It validates that ClawQL `search` returns plausible operations for each natural-language step against the **merged** spec set (REST `execute` in this mode routes per operation’s source spec).
 

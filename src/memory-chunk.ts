@@ -45,8 +45,7 @@ export function planVaultMarkdownChunks(
   fullMarkdown: string,
   options?: { maxChunkChars?: number }
 ): VaultChunkPlan {
-  const maxChunkChars =
-    options?.maxChunkChars ?? envInt("CLAWQL_MEMORY_CHUNK_MAX_CHARS", 2000);
+  const maxChunkChars = options?.maxChunkChars ?? envInt("CLAWQL_MEMORY_CHUNK_MAX_CHARS", 2000);
   const indexBody = stripVaultFrontmatter(fullMarkdown);
   const indexBodySha256 = sha256Utf8(indexBody);
   const chunks: VaultChunkPlan["chunks"] = [];

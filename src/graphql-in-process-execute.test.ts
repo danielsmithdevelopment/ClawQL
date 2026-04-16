@@ -1,9 +1,4 @@
-import {
-  GraphQLNonNull,
-  GraphQLObjectType,
-  GraphQLSchema,
-  GraphQLString,
-} from "graphql";
+import { GraphQLNonNull, GraphQLObjectType, GraphQLSchema, GraphQLString } from "graphql";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Operation } from "./operation-types.js";
 
@@ -96,8 +91,7 @@ const op: Operation = {
   id: "run.projects.locations.services.get",
   method: "GET",
   path: "v2/projects/{projectsId}/locations/{locationsId}/services/{servicesId}",
-  flatPath:
-    "v2/projects/{projectsId}/locations/{locationsId}/services/{servicesId}",
+  flatPath: "v2/projects/{projectsId}/locations/{locationsId}/services/{servicesId}",
   description: "Get service",
   resource: "services",
   parameters: {

@@ -45,8 +45,7 @@ export async function runIngestExternalKnowledge(
       stub: true,
       enabled: false,
       vaultConfigured,
-      hint:
-        "External bulk ingest is not enabled. Set CLAWQL_EXTERNAL_INGEST=1 to receive the stub roadmap JSON (still no network import). See docs/external-ingest.md.",
+      hint: "External bulk ingest is not enabled. Set CLAWQL_EXTERNAL_INGEST=1 to receive the stub roadmap JSON (still no network import). See docs/external-ingest.md.",
       message:
         "Feature disabled. This MCP tool is reserved for future bulk import (Notion, Confluence, GitHub, …) into the vault and memory.db pipeline used by memory_ingest / memory_recall.",
       roadmap: [],

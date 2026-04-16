@@ -18,15 +18,7 @@ export interface OpenAPIDocLike {
   info: { title: string; version: string };
 }
 
-const HTTP_METHODS = [
-  "get",
-  "post",
-  "put",
-  "patch",
-  "delete",
-  "head",
-  "options",
-] as const;
+const HTTP_METHODS = ["get", "post", "put", "patch", "delete", "head", "options"] as const;
 
 export function operationsFromOpenAPI(doc: OpenAPIDocLike): Operation[] {
   const paths = doc.paths ?? {};
@@ -101,17 +93,13 @@ function mapOpenAPIParameters(params: unknown): Record<string, ParameterInfo> {
     if (!name) continue;
 
     const schema = (param.schema as Record<string, unknown>) || {};
-    const type =
-      typeof schema.type === "string"
-        ? schema.type
-        : "string";
+    const type = typeof schema.type === "string" ? schema.type : "string";
 
     out[name] = {
       type,
       location: loc as "path" | "query",
       required: Boolean(param.required),
-      description:
-        typeof param.description === "string" ? param.description : "",
+      description: typeof param.description === "string" ? param.description : "",
     };
   }
 
@@ -174,10 +162,7 @@ function extractResponseSchemaName(responses: unknown): string | undefined {
   return undefined;
 }
 
-function extractScopes(
-  operationSecurity: unknown,
-  doc: OpenAPIDocLike
-): string[] {
+function extractScopes(operationSecurity: unknown, doc: OpenAPIDocLike): string[] {
   const scopes = new Set<string>();
   const collect = (sec: unknown) => {
     if (!Array.isArray(sec)) return;

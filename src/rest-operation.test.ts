@@ -102,52 +102,54 @@ describe("rest-operation helpers", () => {
 
 describe("executeRestOperation", () => {
   it("executes GET and sends non-path args as query params", async () => {
-    await withFetchServer(async (req) => {
-      const url = new URL(req.url);
-      expect(req.method).toBe("GET");
-      expect(url.pathname).toBe("/v1/items/abc");
-      expect(url.searchParams.get("q")).toBe("hello");
-      expect(url.searchParams.get("itemId")).toBeNull();
-      return Response.json({ ok: true, id: "abc" });
-    }, async (origin) => {
-      const out = await executeRestOperation(
-        makeOp(),
-        { itemId: "abc", q: "hello" },
-        makeOpenApi(origin)
-      );
-      expect(out).toEqual({ ok: true, data: { ok: true, id: "abc" } });
-    });
+    await withFetchServer(
+      async (req) => {
+        const url = new URL(req.url);
+        expect(req.method).toBe("GET");
+        expect(url.pathname).toBe("/v1/items/abc");
+        expect(url.searchParams.get("q")).toBe("hello");
+        expect(url.searchParams.get("itemId")).toBeNull();
+        return Response.json({ ok: true, id: "abc" });
+      },
+      async (origin) => {
+        const out = await executeRestOperation(
+          makeOp(),
+          { itemId: "abc", q: "hello" },
+          makeOpenApi(origin)
+        );
+        expect(out).toEqual({ ok: true, data: { ok: true, id: "abc" } });
+      }
+    );
   });
 
   it("executes POST with JSON body when requestBody is present", async () => {
-    await withFetchServer(async (req) => {
-      expect(req.method).toBe("POST");
-      expect(req.headers.get("content-type")).toContain("application/json");
-      const url = new URL(req.url);
-      expect(url.pathname).toBe("/v1/items/abc");
-      expect(url.searchParams.get("q")).toBe("hello");
-      const body = await req.json();
-      expect(body).toMatchObject({ note: "create" });
-      return Response.json({ ok: true });
-    }, async (origin) => {
-      const out = await executeRestOperation(
-        makeOp({ method: "POST", requestBody: "CreateReq" }),
-        { itemId: "abc", q: "hello", note: "create" },
-        makeOpenApi(origin)
-      );
-      expect(out).toEqual({ ok: true, data: { ok: true } });
-    });
+    await withFetchServer(
+      async (req) => {
+        expect(req.method).toBe("POST");
+        expect(req.headers.get("content-type")).toContain("application/json");
+        const url = new URL(req.url);
+        expect(url.pathname).toBe("/v1/items/abc");
+        expect(url.searchParams.get("q")).toBe("hello");
+        const body = await req.json();
+        expect(body).toMatchObject({ note: "create" });
+        return Response.json({ ok: true });
+      },
+      async (origin) => {
+        const out = await executeRestOperation(
+          makeOp({ method: "POST", requestBody: "CreateReq" }),
+          { itemId: "abc", q: "hello", note: "create" },
+          makeOpenApi(origin)
+        );
+        expect(out).toEqual({ ok: true, data: { ok: true } });
+      }
+    );
   });
 
   it("returns formatted error on non-OK response", async () => {
     await withFetchServer(
       () => new Response("bad upstream", { status: 500 }),
       async (origin) => {
-        const out = await executeRestOperation(
-          makeOp(),
-          { itemId: "abc" },
-          makeOpenApi(origin)
-        );
+        const out = await executeRestOperation(makeOp(), { itemId: "abc" }, makeOpenApi(origin));
         expect(out.ok).toBe(false);
         if (!out.ok) {
           expect(out.error).toContain("REST HTTP 500: bad upstream");
@@ -160,11 +162,7 @@ describe("executeRestOperation", () => {
     await withFetchServer(
       () => new Response("plain-text"),
       async (origin) => {
-        const out = await executeRestOperation(
-          makeOp(),
-          { itemId: "abc" },
-          makeOpenApi(origin)
-        );
+        const out = await executeRestOperation(makeOp(), { itemId: "abc" }, makeOpenApi(origin));
         expect(out).toEqual({ ok: true, data: "plain-text" });
       }
     );

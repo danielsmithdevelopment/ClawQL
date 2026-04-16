@@ -31,7 +31,7 @@ import { handleClawqlCodeToolInput } from "./sandbox-bridge-client.js";
 import { handleIngestExternalKnowledgeToolInput } from "./external-ingest.js";
 import { handleMemoryIngestToolInput } from "./memory-ingest.js";
 import { handleMemoryRecallToolInput } from "./memory-recall.js";
-import type { OpenAPIDoc, Operation } from "./spec-loader.js";
+import type { OpenAPIDoc } from "./spec-loader.js";
 
 type GraphQLFieldInfo = { name: string; args: string[] };
 
@@ -127,17 +127,18 @@ export async function handleClawqlExecuteToolInput(params: {
 
   if (!op) {
     return {
-      content: [{
-        type: "text",
-        text: JSON.stringify({
-          error: `Unknown operationId: "${operationId}". Use search() to find valid operation IDs.`,
-        }),
-      }],
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify({
+            error: `Unknown operationId: "${operationId}". Use search() to find valid operation IDs.`,
+          }),
+        },
+      ],
     };
   }
 
-  const openapiForOp =
-    multi && openapis?.length ? openapis[op.specIndex ?? 0] : openapi;
+  const openapiForOp = multi && openapis?.length ? openapis[op.specIndex ?? 0] : openapi;
 
   const outputFields = executeOutputFields(operationId, fields);
 
@@ -145,21 +146,25 @@ export async function handleClawqlExecuteToolInput(params: {
     const fallback = await executeRestOperation(op, args, openapiForOp);
     if (!fallback.ok) {
       return {
-        content: [{
-          type: "text",
-          text: JSON.stringify({
-            error: fallback.error,
-            specLabel: op.specLabel ?? null,
-            hint: "Multi-spec mode uses REST only (no GraphQL). Check path/query/body args.",
-          }),
-        }],
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({
+              error: fallback.error,
+              specLabel: op.specLabel ?? null,
+              hint: "Multi-spec mode uses REST only (no GraphQL). Check path/query/body args.",
+            }),
+          },
+        ],
       };
     }
     return {
-      content: [{
-        type: "text",
-        text: JSON.stringify(projectRestByFields(fallback.data, outputFields), null, 2),
-      }],
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(projectRestByFields(fallback.data, outputFields), null, 2),
+        },
+      ],
     };
   }
 
@@ -180,35 +185,37 @@ export async function handleClawqlExecuteToolInput(params: {
       throw new Error(inProc.error);
     }
     return {
-      content: [{
-        type: "text",
-        text: JSON.stringify(
-          projectRestByFields(inProc.data, outputFields),
-          null,
-          2
-        ),
-      }],
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(projectRestByFields(inProc.data, outputFields), null, 2),
+        },
+      ],
     };
   } catch (err: unknown) {
     const fallback = await executeRestOperation(op, args, openapiForOp);
     if (!fallback.ok) {
       const reason = err instanceof Error ? err.message : String(err);
       return {
-        content: [{
-          type: "text",
-          text: JSON.stringify({
-            error: reason,
-            fallbackError: fallback.error,
-            hint: "GraphQL execution failed and REST fallback also failed.",
-          }),
-        }],
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({
+              error: reason,
+              fallbackError: fallback.error,
+              hint: "GraphQL execution failed and REST fallback also failed.",
+            }),
+          },
+        ],
       };
     }
     return {
-      content: [{
-        type: "text",
-        text: JSON.stringify(projectRestByFields(fallback.data, outputFields), null, 2),
-      }],
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(projectRestByFields(fallback.data, outputFields), null, 2),
+        },
+      ],
     };
   }
 }
@@ -221,11 +228,15 @@ export function registerTools(server: McpServer) {
         .string()
         .describe(
           "Natural language description of what you want to do. " +
-          "E.g. 'list services in a region', 'delete a revision', " +
-          "'get IAM policy for a job', 'cancel a running execution'."
+            "E.g. 'list services in a region', 'delete a revision', " +
+            "'get IAM policy for a job', 'cancel a running execution'."
         ),
       limit: z
-        .number().int().min(1).max(50).default(5)
+        .number()
+        .int()
+        .min(1)
+        .max(50)
+        .default(5)
         .describe("Max number of matching operations to return."),
     },
     handleClawqlSearchToolInput
@@ -238,20 +249,20 @@ export function registerTools(server: McpServer) {
         .string()
         .describe(
           "The operation ID from search() results. " +
-          "E.g. 'run.projects.locations.services.list'."
+            "E.g. 'run.projects.locations.services.list'."
         ),
       args: z
         .record(z.unknown())
         .describe(
           "Key/value map of parameters for the operation (path + query params). " +
-          "E.g. { parent: 'projects/my-proj/locations/us-central1', pageSize: 10 }"
+            "E.g. { parent: 'projects/my-proj/locations/us-central1', pageSize: 10 }"
         ),
       fields: z
         .array(z.string())
         .optional()
         .describe(
           "Optional response fields to return. Fewer fields = smaller context window usage. " +
-          "Omit to get a sensible default. E.g. ['name', 'uri', 'latestReadyRevision']"
+            "Omit to get a sensible default. E.g. ['name', 'uri', 'latestReadyRevision']"
         ),
     },
     handleClawqlExecuteToolInput
@@ -260,12 +271,12 @@ export function registerTools(server: McpServer) {
   const sandboxCodeSchema = {
     code: z
       .string()
-      .describe("Source code to run in an isolated Cloudflare Sandbox (via deployed bridge Worker)."),
+      .describe(
+        "Source code to run in an isolated Cloudflare Sandbox (via deployed bridge Worker)."
+      ),
     language: z
       .enum(["python", "javascript", "shell"])
-      .describe(
-        "python (python3), javascript (Node .mjs), or shell (posix sh script body)."
-      ),
+      .describe("python (python3), javascript (Node .mjs), or shell (posix sh script body)."),
     sessionId: z
       .string()
       .optional()
@@ -296,10 +307,7 @@ export function registerTools(server: McpServer) {
         .min(1)
         .describe("Suggested Obsidian page title (used for the file name and heading)."),
       insights: z.string().optional().describe("Key insights to persist."),
-      conversation: z
-        .string()
-        .optional()
-        .describe("Conversation transcript or summary text."),
+      conversation: z.string().optional().describe("Conversation transcript or summary text."),
       toolOutputs: z
         .union([z.string(), z.array(z.string())])
         .optional()
@@ -388,9 +396,7 @@ export function registerTools(server: McpServer) {
 function resolveIntrospectionFilePath(): string | null {
   const explicit = process.env.CLAWQL_INTROSPECTION_PATH?.trim();
   if (explicit) {
-    return isAbsolute(explicit)
-      ? explicit
-      : resolvePath(process.cwd(), explicit);
+    return isAbsolute(explicit) ? explicit : resolvePath(process.cwd(), explicit);
   }
   const prov = process.env.CLAWQL_PROVIDER?.trim();
   if (prov) {
@@ -420,9 +426,7 @@ async function tryLoadIntrospectionFromDisk(): Promise<{
         } | null;
       };
     };
-    console.error(
-      `[tools] Using pregenerated GraphQL introspection (disk): ${introPath}`
-    );
+    console.error(`[tools] Using pregenerated GraphQL introspection (disk): ${introPath}`);
     return {
       query: data.__schema.queryType.fields.map((f) => ({
         name: f.name,
@@ -460,11 +464,12 @@ function defaultFields(operationId: string): string {
     return "name done error { code message } metadata";
   if (operationId.includes(".executions.get"))
     return "name job succeededCount failedCount runningCount completionTime createTime";
-  if (operationId.includes("IamPolicy"))
-    return "version bindings { role members }";
+  if (operationId.includes("IamPolicy")) return "version bindings { role members }";
   if (
-    operationId.includes(".create") || operationId.includes(".patch") ||
-    operationId.includes(".delete") || operationId.includes(".run") ||
+    operationId.includes(".create") ||
+    operationId.includes(".patch") ||
+    operationId.includes(".delete") ||
+    operationId.includes(".run") ||
     operationId.includes(".cancel")
   )
     return "name done error { code message }";

@@ -17,10 +17,7 @@ interface SchemaResult {
   contextValue: Record<string, unknown>;
 }
 
-export async function buildGraphQLSchema(
-  openapi: object,
-  baseUrl: string
-): Promise<SchemaResult> {
+export async function buildGraphQLSchema(openapi: object, baseUrl: string): Promise<SchemaResult> {
   const headers = mergedAuthHeaders();
 
   // `source` may be a file path, URL, or an in-memory OpenAPI object (Mesh dereferences it).
@@ -28,8 +25,7 @@ export async function buildGraphQLSchema(
     source: openapi as never,
     endpoint: baseUrl,
     cwd: getPackageRoot(),
-    operationHeaders:
-      Object.keys(headers).length > 0 ? headers : undefined,
+    operationHeaders: Object.keys(headers).length > 0 ? headers : undefined,
     // Fewer union types on large specs; still returns JSON bodies.
     ignoreErrorResponses: true,
   });

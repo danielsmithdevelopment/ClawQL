@@ -10,10 +10,10 @@ This document explains **what was built**, **why**, **how the pieces fit togethe
 
 ### 1.1 Issue tracking
 
-| Item | Role |
-|------|------|
-| **[#27](https://github.com/danielsmithdevelopment/ClawQL/issues/27)** | Primary driver: **`memory.db` schema**, **wikilink relations**, **chunking contract**, migrations, ingest + recall wiring. |
-| **[#24](https://github.com/danielsmithdevelopment/ClawQL/issues/24)** | Epic: hybrid memory (sqlite-vec + Cuckoo + vault); this work is the **relational foundation** before vectors and membership filters land. |
+| Item                                                                  | Role                                                                                                                                                                                                                                             |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **[#27](https://github.com/danielsmithdevelopment/ClawQL/issues/27)** | Primary driver: **`memory.db` schema**, **wikilink relations**, **chunking contract**, migrations, ingest + recall wiring.                                                                                                                       |
+| **[#24](https://github.com/danielsmithdevelopment/ClawQL/issues/24)** | Epic: hybrid memory (sqlite-vec + Cuckoo + vault); this work is the **relational foundation** before vectors and membership filters land.                                                                                                        |
 | **[#16](https://github.com/danielsmithdevelopment/ClawQL/issues/16)** | **Shipped for `memory_recall`:** optional embeddings + sqlite/postgres vector backends (see **`hybrid-memory-backends.md`**). **Still open / future:** semantic retrieval for spec **`search`**; **`vector-search-design.md`** tracks direction. |
 
 ### 1.2 Product intent
@@ -66,13 +66,13 @@ See **[memory-db-schema.md](memory-db-schema.md)** for column-by-column tables.
 
 **Module:** `src/memory-chunk.ts`
 
-| Step | Behavior |
-|------|----------|
-| 1 | Strip YAML frontmatter via **`stripVaultFrontmatter`** (same semantics as recall). |
-| 2 | Compute **`index_body_sha256`** over the indexable body string. |
-| 3 | Split the body on **regex `\n{2,}`** (paragraph boundaries). |
-| 4 | For each paragraph, **trim** for stored text; **offsets** (`char_start`, `char_end`) refer to positions in the **indexable body** (UTF-16 indices, consistent with JavaScript `String` indexing). |
-| 5 | If a trimmed paragraph exceeds **`CLAWQL_MEMORY_CHUNK_MAX_CHARS`** (default **2000**, env override), split into consecutive windows of at most that length (**no overlap** in v1). |
+| Step | Behavior                                                                                                                                                                                          |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1    | Strip YAML frontmatter via **`stripVaultFrontmatter`** (same semantics as recall).                                                                                                                |
+| 2    | Compute **`index_body_sha256`** over the indexable body string.                                                                                                                                   |
+| 3    | Split the body on **regex `\n{2,}`** (paragraph boundaries).                                                                                                                                      |
+| 4    | For each paragraph, **trim** for stored text; **offsets** (`char_start`, `char_end`) refer to positions in the **indexable body** (UTF-16 indices, consistent with JavaScript `String` indexing). |
+| 5    | If a trimmed paragraph exceeds **`CLAWQL_MEMORY_CHUNK_MAX_CHARS`** (default **2000**, env override), split into consecutive windows of at most that length (**no overlap** in v1).                |
 
 **Stable chunk primary key:**
 
@@ -98,42 +98,42 @@ Implemented as **`vaultChunkId()`** so re-ingest replaces the same logical chunk
 
 ## 6. Module map (source files)
 
-| File | Responsibility |
-|------|----------------|
-| **`src/vault-markdown.ts`** | Shared **`stripVaultFrontmatter`**, **`extractWikilinkTargets`** — single definition for recall, chunking, and DB sync. |
-| **`src/memory-slug-index.ts`** | **`listVaultMarkdownRelPaths`**: directory walk honoring `CLAWQL_MEMORY_RECALL_MAX_FILES`, skipping dot dirs. **`buildSlugToVaultPath`**: slug index from `{ path, text }[]`. |
-| **`src/memory-chunk.ts`** | **`planVaultMarkdownChunks`**, **`vaultChunkId`**, strategy constant **`CHUNK_STRATEGY_PARAGRAPH_V1`**. |
-| **`src/memory-db.ts`** | sql.js init (`require.resolve("sql.js")` → `sql-wasm.wasm` next to `dist/sql-wasm.js` — works with package **exports**), path resolution, **`migrate`**, **`syncMemoryDbFromDocuments`**, **`syncMemoryDbForVaultScanRoot`**, **`loadWikilinkEdgesFromDatabase`**, **`recallSyncDbEnabled`**, **`memoryDbSyncEnabled`**. |
-| **`src/memory-recall.ts`** | Uses slug index + vault markdown helpers; optional **`syncMemoryDbFromDocuments`** when **`CLAWQL_MEMORY_DB_SYNC_ON_RECALL=1`**; merges DB edges when DB enabled; optional vector KNN via **`memory-embedding`** when **`CLAWQL_VECTOR_BACKEND=sqlite`**. Re-exports **`extractWikilinkTargets`** for compatibility. |
-| **`src/memory-embedding.ts`** | OpenAI-compatible **`/embeddings`**, **`vectorBackend()`** vs **`effectiveVectorBackend()`** (postgres without URL → sqlite vectors), float32 BLOB helpers, shared ranking (**#26**). |
-| **`src/vector-store/pgvector.ts`** | **Postgres + pgvector**: pool, shutdown hooks, upsert after sync, `<=>` KNN for **`memory_recall`**. |
-| **`src/memory-backends/postgres-migrations.ts`** | Versioned DDL (`clawql_pg_schema_migrations`); migration **1** = chunk vector table. |
-| **`src/memory-backends/types.ts`** | Extension-point types (vectors today; Cuckoo / Merkle placeholders). |
-| **`src/memory-ingest.ts`** | After vault lock completes successfully, **`await import("./memory-db.js")`** then **`syncMemoryDbForVaultScanRoot`** — **dynamic import** avoids a static circular dependency (`memory-db` imports `slugifyTitle` from `memory-ingest`). Then **`updateProviderIndexPage`** (see **`memory-provider-index.ts`**) when enabled. |
-| **`src/memory-provider-index.ts`** | Writes **`_INDEX_{Provider}.md`** under the recall scan root after successful ingest; **content-fingerprint** skip avoids rewriting when the note list is unchanged ([#38](https://github.com/danielsmithdevelopment/ClawQL/issues/38)). |
-| **`src/memory-db.test.ts`**, **`src/memory-chunk.test.ts`** | Contract + persistence tests. |
-| **`src/memory-ingest.test.ts`**, **`src/memory-provider-index.test.ts`** | Asserts **`memory.db`** exists after ingest; index page generation + idempotency. |
+| File                                                                     | Responsibility                                                                                                                                                                                                                                                                                                                  |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`src/vault-markdown.ts`**                                              | Shared **`stripVaultFrontmatter`**, **`extractWikilinkTargets`** — single definition for recall, chunking, and DB sync.                                                                                                                                                                                                         |
+| **`src/memory-slug-index.ts`**                                           | **`listVaultMarkdownRelPaths`**: directory walk honoring `CLAWQL_MEMORY_RECALL_MAX_FILES`, skipping dot dirs. **`buildSlugToVaultPath`**: slug index from `{ path, text }[]`.                                                                                                                                                   |
+| **`src/memory-chunk.ts`**                                                | **`planVaultMarkdownChunks`**, **`vaultChunkId`**, strategy constant **`CHUNK_STRATEGY_PARAGRAPH_V1`**.                                                                                                                                                                                                                         |
+| **`src/memory-db.ts`**                                                   | sql.js init (`require.resolve("sql.js")` → `sql-wasm.wasm` next to `dist/sql-wasm.js` — works with package **exports**), path resolution, **`migrate`**, **`syncMemoryDbFromDocuments`**, **`syncMemoryDbForVaultScanRoot`**, **`loadWikilinkEdgesFromDatabase`**, **`recallSyncDbEnabled`**, **`memoryDbSyncEnabled`**.        |
+| **`src/memory-recall.ts`**                                               | Uses slug index + vault markdown helpers; optional **`syncMemoryDbFromDocuments`** when **`CLAWQL_MEMORY_DB_SYNC_ON_RECALL=1`**; merges DB edges when DB enabled; optional vector KNN via **`memory-embedding`** when **`CLAWQL_VECTOR_BACKEND=sqlite`**. Re-exports **`extractWikilinkTargets`** for compatibility.            |
+| **`src/memory-embedding.ts`**                                            | OpenAI-compatible **`/embeddings`**, **`vectorBackend()`** vs **`effectiveVectorBackend()`** (postgres without URL → sqlite vectors), float32 BLOB helpers, shared ranking (**#26**).                                                                                                                                           |
+| **`src/vector-store/pgvector.ts`**                                       | **Postgres + pgvector**: pool, shutdown hooks, upsert after sync, `<=>` KNN for **`memory_recall`**.                                                                                                                                                                                                                            |
+| **`src/memory-backends/postgres-migrations.ts`**                         | Versioned DDL (`clawql_pg_schema_migrations`); migration **1** = chunk vector table.                                                                                                                                                                                                                                            |
+| **`src/memory-backends/types.ts`**                                       | Extension-point types (vectors today; Cuckoo / Merkle placeholders).                                                                                                                                                                                                                                                            |
+| **`src/memory-ingest.ts`**                                               | After vault lock completes successfully, **`await import("./memory-db.js")`** then **`syncMemoryDbForVaultScanRoot`** — **dynamic import** avoids a static circular dependency (`memory-db` imports `slugifyTitle` from `memory-ingest`). Then **`updateProviderIndexPage`** (see **`memory-provider-index.ts`**) when enabled. |
+| **`src/memory-provider-index.ts`**                                       | Writes **`_INDEX_{Provider}.md`** under the recall scan root after successful ingest; **content-fingerprint** skip avoids rewriting when the note list is unchanged ([#38](https://github.com/danielsmithdevelopment/ClawQL/issues/38)).                                                                                        |
+| **`src/memory-db.test.ts`**, **`src/memory-chunk.test.ts`**              | Contract + persistence tests.                                                                                                                                                                                                                                                                                                   |
+| **`src/memory-ingest.test.ts`**, **`src/memory-provider-index.test.ts`** | Asserts **`memory.db`** exists after ingest; index page generation + idempotency.                                                                                                                                                                                                                                               |
 
 ---
 
 ## 7. Environment variables (operator reference)
 
-| Variable | Default / behavior |
-|----------|---------------------|
-| **`CLAWQL_OBSIDIAN_VAULT_PATH`** | Required for any vault or DB behavior (unchanged). |
-| **`CLAWQL_MEMORY_DB`** | Set **`0`** to disable DB sync on ingest, DB merge on recall, and DB refresh on recall. |
-| **`CLAWQL_MEMORY_DB_PATH`** | Relative path is resolved **under the vault** via `resolveVaultPath` (no `..`). Default **`memory.db`**. Absolute paths allowed for custom mount layouts. |
-| **`CLAWQL_MEMORY_DB_SYNC_ON_RECALL`** | Set **`1`** to run **`syncMemoryDbFromDocuments`** with the same file set recall just read (full sql.js **export** each time — heavier). Default **unset / off**. |
-| **`CLAWQL_MEMORY_CHUNK_MAX_CHARS`** | Paragraph window size before hard-split (`2000`). |
-| **`CLAWQL_MEMORY_RECALL_SCAN_ROOT`**, **`CLAWQL_MEMORY_RECALL_MAX_FILES`** | Define which files participate in both recall and **ingest-triggered full rescan**. |
-| **`CLAWQL_VECTOR_BACKEND`** | Default **off** (unset): keyword + wikilinks only. **`sqlite`**: chunk vectors + in-process KNN in **`memory.db`**. **`postgres`**: **`pgvector`** when **`CLAWQL_VECTOR_DATABASE_URL`** is set; otherwise SQLite vectors + one-time warning. Full tradeoffs: **[hybrid-memory-backends.md](hybrid-memory-backends.md)**. |
-| **`CLAWQL_VECTOR_DATABASE_URL`** | Postgres URL when **`CLAWQL_VECTOR_BACKEND=postgres`** and you want server-side ANN; optional at first deploy. |
-| **`CLAWQL_EMBEDDING_*`**, **`OPENAI_API_KEY`** | OpenAI-compatible **`/embeddings`** for hybrid recall; see **[README.md](../README.md)** env table. |
-| **`CLAWQL_MEMORY_VECTOR_*`** | Vector leg tuning for **`memory_recall`**: similarity floor, score scaling, KNN caps, Postgres **dual-write** (see README). |
-| **`CLAWQL_MCP_LOG_TOOLS`** | Set **`1`** to emit **shape-only** **`console.error`** lines for **`memory_ingest`** / **`memory_recall`** (field lengths and flags — **no** query text, titles, or bodies). |
-| **`CLAWQL_CUCKOO_*`** | **Reserved** for approximate membership ([#25](https://github.com/danielsmithdevelopment/ClawQL/issues/25)); not read by the runtime yet. |
-| **`CLAWQL_MEMORY_INDEX_PAGE`** | Set **`0`** to skip **`_INDEX_*.md`** generation after ingest. Default: **on** (when vault tools run). |
-| **`CLAWQL_MEMORY_INDEX_PROVIDER`** | Display name + filename token for **`_INDEX_{Provider}.md`** (sanitized). Default **`ClawQL`**. |
+| Variable                                                                   | Default / behavior                                                                                                                                                                                                                                                                                                        |
+| -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`CLAWQL_OBSIDIAN_VAULT_PATH`**                                           | Required for any vault or DB behavior (unchanged).                                                                                                                                                                                                                                                                        |
+| **`CLAWQL_MEMORY_DB`**                                                     | Set **`0`** to disable DB sync on ingest, DB merge on recall, and DB refresh on recall.                                                                                                                                                                                                                                   |
+| **`CLAWQL_MEMORY_DB_PATH`**                                                | Relative path is resolved **under the vault** via `resolveVaultPath` (no `..`). Default **`memory.db`**. Absolute paths allowed for custom mount layouts.                                                                                                                                                                 |
+| **`CLAWQL_MEMORY_DB_SYNC_ON_RECALL`**                                      | Set **`1`** to run **`syncMemoryDbFromDocuments`** with the same file set recall just read (full sql.js **export** each time — heavier). Default **unset / off**.                                                                                                                                                         |
+| **`CLAWQL_MEMORY_CHUNK_MAX_CHARS`**                                        | Paragraph window size before hard-split (`2000`).                                                                                                                                                                                                                                                                         |
+| **`CLAWQL_MEMORY_RECALL_SCAN_ROOT`**, **`CLAWQL_MEMORY_RECALL_MAX_FILES`** | Define which files participate in both recall and **ingest-triggered full rescan**.                                                                                                                                                                                                                                       |
+| **`CLAWQL_VECTOR_BACKEND`**                                                | Default **off** (unset): keyword + wikilinks only. **`sqlite`**: chunk vectors + in-process KNN in **`memory.db`**. **`postgres`**: **`pgvector`** when **`CLAWQL_VECTOR_DATABASE_URL`** is set; otherwise SQLite vectors + one-time warning. Full tradeoffs: **[hybrid-memory-backends.md](hybrid-memory-backends.md)**. |
+| **`CLAWQL_VECTOR_DATABASE_URL`**                                           | Postgres URL when **`CLAWQL_VECTOR_BACKEND=postgres`** and you want server-side ANN; optional at first deploy.                                                                                                                                                                                                            |
+| **`CLAWQL_EMBEDDING_*`**, **`OPENAI_API_KEY`**                             | OpenAI-compatible **`/embeddings`** for hybrid recall; see **[README.md](../README.md)** env table.                                                                                                                                                                                                                       |
+| **`CLAWQL_MEMORY_VECTOR_*`**                                               | Vector leg tuning for **`memory_recall`**: similarity floor, score scaling, KNN caps, Postgres **dual-write** (see README).                                                                                                                                                                                               |
+| **`CLAWQL_MCP_LOG_TOOLS`**                                                 | Set **`1`** to emit **shape-only** **`console.error`** lines for **`memory_ingest`** / **`memory_recall`** (field lengths and flags — **no** query text, titles, or bodies).                                                                                                                                              |
+| **`CLAWQL_CUCKOO_*`**                                                      | **Reserved** for approximate membership ([#25](https://github.com/danielsmithdevelopment/ClawQL/issues/25)); not read by the runtime yet.                                                                                                                                                                                 |
+| **`CLAWQL_MEMORY_INDEX_PAGE`**                                             | Set **`0`** to skip **`_INDEX_*.md`** generation after ingest. Default: **on** (when vault tools run).                                                                                                                                                                                                                    |
+| **`CLAWQL_MEMORY_INDEX_PROVIDER`**                                         | Display name + filename token for **`_INDEX_{Provider}.md`** (sanitized). Default **`ClawQL`**.                                                                                                                                                                                                                           |
 
 **Staged rollout:** start with **`CLAWQL_MEMORY_DB`** default (sidecar on when the vault is set) and vectors **off**; enable **`CLAWQL_VECTOR_BACKEND=sqlite`** when you want semantic seeds without Postgres; move to **`postgres`** when you need **`pgvector`** in a shared DB. **`CLAWQL_MEMORY_DB=0`** disables the SQLite sidecar entirely (lexical recall from vault files only).
 
@@ -179,13 +179,13 @@ Each **`loadWikilinkEdgesFromDatabase`** call: open/read or empty, migrate, sele
 
 ## 11. Follow-on work (not in this change)
 
-| Issue | Topic |
-|-------|--------|
-| **#26** | sqlite-vec + embedding pipeline; populate `embedding` / `embedding_model`. |
-| **#25** | Cuckoo membership layer keyed off stable ids from this schema. |
+| Issue   | Topic                                                                                                                                                         |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **#26** | sqlite-vec + embedding pipeline; populate `embedding` / `embedding_model`.                                                                                    |
+| **#25** | Cuckoo membership layer keyed off stable ids from this schema.                                                                                                |
 | **#28** | ~~Operator docs + optional tool-shape logging~~ — **done** (this section + **`CLAWQL_MCP_LOG_TOOLS`**). **Cuckoo** env names remain reserved pending **#25**. |
-| **#38** | ~~Auto **`_INDEX_{Provider}.md`** after ingest~~ — **done** (**`memory-provider-index.ts`**). |
-| **#30** | Observability: FPR, rebuild, multi-worker MCP HTTP. |
+| **#38** | ~~Auto **`_INDEX_{Provider}.md`** after ingest~~ — **done** (**`memory-provider-index.ts`**).                                                                 |
+| **#30** | Observability: FPR, rebuild, multi-worker MCP HTTP.                                                                                                           |
 
 ---
 

@@ -4,11 +4,7 @@
 
 import { createHash } from "node:crypto";
 import { getObsidianVaultPath } from "./vault-config.js";
-import {
-  readVaultTextFile,
-  withVaultWriteLock,
-  writeVaultTextFileAtomic,
-} from "./vault-utils.js";
+import { readVaultTextFile, withVaultWriteLock, writeVaultTextFileAtomic } from "./vault-utils.js";
 import { logMcpToolShape } from "./mcp-tool-log.js";
 
 const MEMORY_DIR = "Memory";
@@ -51,7 +47,10 @@ function normalizeWikilink(name: string): string {
 function formatToolOutputs(toolOutputs: string | string[] | undefined): string {
   if (toolOutputs === undefined) return "";
   if (Array.isArray(toolOutputs)) {
-    return toolOutputs.map((s) => s.trim()).filter(Boolean).join("\n\n---\n\n");
+    return toolOutputs
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .join("\n\n---\n\n");
   }
   return toolOutputs.trim();
 }

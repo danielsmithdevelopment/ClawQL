@@ -31,7 +31,10 @@ import {
   vectorDualWriteToMemoryDb,
   type ChunkWithEmbedding,
 } from "./memory-embedding.js";
-import { loadPostgresChunkVectorsByPaths, upsertPostgresChunkVectors } from "./vector-store/pgvector.js";
+import {
+  loadPostgresChunkVectorsByPaths,
+  upsertPostgresChunkVectors,
+} from "./vector-store/pgvector.js";
 
 const SCHEMA_VERSION = 1;
 
@@ -402,10 +405,8 @@ export async function syncMemoryDbFromDocuments(
 
         const dualVecToSqlite = vectorDualWriteToMemoryDb();
         for (const c of chunks) {
-          const embBlob =
-            dualVecToSqlite && c.floatVec ? float32ArrayToBlob(c.floatVec) : null;
-          const embModel =
-            dualVecToSqlite && c.floatVec ? c.embeddingModel : null;
+          const embBlob = dualVecToSqlite && c.floatVec ? float32ArrayToBlob(c.floatVec) : null;
+          const embModel = dualVecToSqlite && c.floatVec ? c.embeddingModel : null;
           insChunk.run([
             c.id,
             path,
@@ -564,4 +565,3 @@ export async function loadWikilinkEdgesFromDatabase(
     db.close();
   }
 }
-
