@@ -1,6 +1,6 @@
 /**
  * memory_recall MCP tool — keyword search + wikilink graph traversal in the vault.
- * Lightweight (no embeddings); suitable for agent loops.
+ * Optional vector seeds when CLAWQL_VECTOR_BACKEND is sqlite (BLOB KNN) or postgres (pgvector).
  */
 
 import { getObsidianVaultPath } from "./vault-config.js";
@@ -17,8 +17,9 @@ import {
   embedQuery,
   rankDocumentsByChunkSimilarity,
   resolveEmbeddingConfig,
-  vectorSqliteBackendEnabled,
+  vectorBackend,
 } from "./memory-embedding.js";
+import { queryPostgresVectorKnn } from "./vector-store/pgvector.js";
 import { listVaultMarkdownRelPaths, buildSlugToVaultPath } from "./memory-slug-index.js";
 import { extractWikilinkTargets, stripVaultFrontmatter } from "./vault-markdown.js";
 
@@ -223,16 +224,22 @@ export async function runMemoryRecall(input: MemoryRecallInput): Promise<MemoryR
   }
 
   const vectorByRel = new Map<string, number>();
-  if (vectorSqliteBackendEnabled() && memoryDbSyncEnabled()) {
-    const embCfg = resolveEmbeddingConfig();
-    if (embCfg) {
-      try {
-        const qEmb = await embedQuery(query, embCfg);
-        if (qEmb.length > 0) {
+  const embCfg = resolveEmbeddingConfig();
+  if (embCfg && memoryDbSyncEnabled()) {
+    try {
+      const qEmb = await embedQuery(query, embCfg);
+      if (qEmb.length > 0) {
+        const topChunks = envInt("CLAWQL_MEMORY_VECTOR_TOP_CHUNKS", 80);
+        const maxDocs = envInt("CLAWQL_MEMORY_VECTOR_MAX_DOCS", 12);
+        const vb = vectorBackend();
+        if (vb === "postgres") {
+          const ranked = await queryPostgresVectorKnn(qEmb, mdFiles, { topChunks, maxDocs });
+          for (const r of ranked) {
+            vectorByRel.set(r.path, r.score);
+          }
+        } else if (vb === "sqlite") {
           const chunks = await loadChunkEmbeddingsForDocuments(vault, mdFiles);
           if (chunks.length > 0) {
-            const topChunks = envInt("CLAWQL_MEMORY_VECTOR_TOP_CHUNKS", 80);
-            const maxDocs = envInt("CLAWQL_MEMORY_VECTOR_MAX_DOCS", 12);
             const ranked = rankDocumentsByChunkSimilarity(qEmb, chunks, {
               topChunks,
               maxDocs,
@@ -242,10 +249,10 @@ export async function runMemoryRecall(input: MemoryRecallInput): Promise<MemoryR
             }
           }
         }
-      } catch (e: unknown) {
-        const msg = e instanceof Error ? e.message : String(e);
-        console.error(`[clawql-mcp] memory_recall vector pass failed: ${msg}`);
       }
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error(`[clawql-mcp] memory_recall vector pass failed: ${msg}`);
     }
   }
 

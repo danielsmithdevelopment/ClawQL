@@ -26,8 +26,10 @@ import {
   embedTexts,
   float32ArrayToBlob,
   resolveEmbeddingConfig,
+  vectorBackend,
   type ChunkWithEmbedding,
 } from "./memory-embedding.js";
+import { loadPostgresChunkVectorsByPaths, upsertPostgresChunkVectors } from "./vector-store/pgvector.js";
 
 const SCHEMA_VERSION = 1;
 
@@ -237,7 +239,13 @@ export async function syncMemoryDbFromDocuments(
     migrate(db);
 
     const normPaths = documents.map((d) => d.path.replace(/\\/g, "/"));
-    const oldEmbByPath = await loadExistingChunkEmbeddings(db, normPaths);
+    const vb = vectorBackend();
+    const oldEmbByPath =
+      vb === "sqlite"
+        ? await loadExistingChunkEmbeddings(db, normPaths)
+        : new Map<string, Map<string, OldChunkEmb>>();
+    const pgChunkMap =
+      vb === "postgres" ? await loadPostgresChunkVectorsByPaths(normPaths) : new Map();
     const embedConfig = resolveEmbeddingConfig();
 
     type PlannedChunk = {
@@ -247,7 +255,7 @@ export async function syncMemoryDbFromDocuments(
       charEnd: number;
       text: string;
       contentSha256: string;
-      embedding: Uint8Array | null;
+      floatVec: Float32Array | null;
       embeddingModel: string | null;
     };
 
@@ -272,19 +280,36 @@ export async function syncMemoryDbFromDocuments(
         const id = vaultChunkId(path, CHUNK_STRATEGY_PARAGRAPH_V1, c.ordinal, c.contentSha256);
 
         if (embedConfig) {
-          const prev = oldMap.get(id);
-          if (prev && prev.model === embedConfig.model) {
-            chunks.push({
-              id,
-              ordinal: c.ordinal,
-              charStart: c.charStart,
-              charEnd: c.charEnd,
-              text: c.text,
-              contentSha256: c.contentSha256,
-              embedding: prev.blob,
-              embeddingModel: embedConfig.model,
-            });
-            continue;
+          if (vb === "sqlite") {
+            const prev = oldMap.get(id);
+            if (prev && prev.model === embedConfig.model) {
+              chunks.push({
+                id,
+                ordinal: c.ordinal,
+                charStart: c.charStart,
+                charEnd: c.charEnd,
+                text: c.text,
+                contentSha256: c.contentSha256,
+                floatVec: blobToFloat32Array(prev.blob),
+                embeddingModel: embedConfig.model,
+              });
+              continue;
+            }
+          } else if (vb === "postgres") {
+            const prev = pgChunkMap.get(id);
+            if (prev && prev.model === embedConfig.model) {
+              chunks.push({
+                id,
+                ordinal: c.ordinal,
+                charStart: c.charStart,
+                charEnd: c.charEnd,
+                text: c.text,
+                contentSha256: c.contentSha256,
+                floatVec: prev.vector,
+                embeddingModel: embedConfig.model,
+              });
+              continue;
+            }
           }
           toEmbedTexts.push(c.text);
           toEmbedRef.push({ pi: planned.length, ci: chunks.length });
@@ -295,7 +320,7 @@ export async function syncMemoryDbFromDocuments(
             charEnd: c.charEnd,
             text: c.text,
             contentSha256: c.contentSha256,
-            embedding: null,
+            floatVec: null,
             embeddingModel: null,
           });
           continue;
@@ -308,7 +333,7 @@ export async function syncMemoryDbFromDocuments(
           charEnd: c.charEnd,
           text: c.text,
           contentSha256: c.contentSha256,
-          embedding: null,
+          floatVec: null,
           embeddingModel: null,
         });
       }
@@ -324,7 +349,7 @@ export async function syncMemoryDbFromDocuments(
           const vec = vectors[i];
           if (!vec) continue;
           const row = planned[ref.pi]!.chunks[ref.ci]!;
-          row.embedding = float32ArrayToBlob(vec);
+          row.floatVec = vec;
           row.embeddingModel = model;
         }
       } catch (e: unknown) {
@@ -373,7 +398,11 @@ export async function syncMemoryDbFromDocuments(
           indexedAt,
         ]);
 
+        const storeSqliteVec = vb === "sqlite";
         for (const c of chunks) {
+          const embBlob =
+            storeSqliteVec && c.floatVec ? float32ArrayToBlob(c.floatVec) : null;
+          const embModel = storeSqliteVec && c.floatVec ? c.embeddingModel : null;
           insChunk.run([
             c.id,
             path,
@@ -383,8 +412,8 @@ export async function syncMemoryDbFromDocuments(
             c.text,
             c.contentSha256,
             plan.strategy,
-            c.embeddingModel,
-            c.embedding,
+            embModel,
+            embBlob,
           ]);
         }
 
@@ -407,6 +436,25 @@ export async function syncMemoryDbFromDocuments(
     }
 
     await persistDb(db, absDb);
+
+    if (vb === "postgres" && embedConfig) {
+      try {
+        await upsertPostgresChunkVectors(
+          planned.map((p) => ({
+            path: p.path,
+            chunks: p.chunks.map((c) => ({
+              id: c.id,
+              text: c.text,
+              floatVec: c.floatVec,
+              embeddingModel: c.embeddingModel,
+            })),
+          }))
+        );
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        console.error(`[clawql-mcp] postgres vector sync failed: ${msg}`);
+      }
+    }
   } finally {
     db.close();
   }

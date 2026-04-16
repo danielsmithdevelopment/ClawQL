@@ -8,7 +8,7 @@ ClawQL exposes **five** tools over MCP (stdio or Streamable HTTP). The **core** 
 | `execute` | Single-spec: in-process OpenAPI→GraphQL; multi-spec: REST | Run one operation with lean responses |
 | `sandbox_exec` | `CLAWQL_SANDBOX_BRIDGE_URL` + token | Run a snippet in a remote Cloudflare Sandbox via Worker bridge (not local execution) |
 | `memory_ingest` | `CLAWQL_OBSIDIAN_VAULT_PATH` | Write Obsidian Markdown under `Memory/`; refreshes **`memory.db`** (see **[memory-db-schema.md](memory-db-schema.md)**) when enabled |
-| `memory_recall` | `CLAWQL_OBSIDIAN_VAULT_PATH` | Keyword search + `[[wikilink]]` hops; optionally merges edges from **`memory.db`**, optional **vector KNN** when **`CLAWQL_VECTOR_BACKEND=sqlite`** + **`CLAWQL_EMBEDDING_*`** / **`OPENAI_API_KEY`**; can resync the DB when **`CLAWQL_MEMORY_DB_SYNC_ON_RECALL=1`** |
+| `memory_recall` | `CLAWQL_OBSIDIAN_VAULT_PATH` | Keyword search + `[[wikilink]]` hops; optionally merges edges from **`memory.db`**, optional **vector KNN** when **`CLAWQL_VECTOR_BACKEND`** is **`sqlite`** (BLOBs in **`memory.db`**) or **`postgres`** (**pgvector** + **`CLAWQL_VECTOR_DATABASE_URL`**) with **`CLAWQL_EMBEDDING_*`**; can resync the DB when **`CLAWQL_MEMORY_DB_SYNC_ON_RECALL=1`** |
 
 See also: **[memory-obsidian.md](memory-obsidian.md)** (vault concepts), **[memory-db-schema.md](memory-db-schema.md)** (SQLite sidecar), **[README](../README.md)** (install, env tables), **[cloudflare/sandbox-bridge/README.md](../cloudflare/sandbox-bridge/README.md)** (Worker deploy).
 
@@ -107,4 +107,4 @@ Writes **`Memory/<slug>.md`** with YAML frontmatter and optional `[[wikilinks]]`
 }
 ```
 
-Returns JSON with **`results[]`**: `path`, `score`, `depth`, `reason` (`keyword` | `link` | `vector`), `snippet`, optional `linkFrom`. Lexical match + graph expansion via wikilinks; **optional vectors** when **`CLAWQL_VECTOR_BACKEND=sqlite`** and an embedding API key is set — see README env table (`CLAWQL_EMBEDDING_*`, `CLAWQL_MEMORY_VECTOR_*`). Vectors are stored as float32 BLOBs in **`memory.db`** (sql.js; in-process cosine KNN). Postgres / pgvector remains future work; see [vector-search-design.md](vector-search-design.md) and [#16](https://github.com/danielsmithdevelopment/ClawQL/issues/16).
+Returns JSON with **`results[]`**: `path`, `score`, `depth`, `reason` (`keyword` | `link` | `vector`), `snippet`, optional `linkFrom`. Lexical match + graph expansion via wikilinks; **optional vectors** when **`CLAWQL_VECTOR_BACKEND`** is set (**`sqlite`** or **`postgres`**) and an embedding API key is set — see README (`CLAWQL_EMBEDDING_*`, `CLAWQL_VECTOR_DATABASE_URL`, `CLAWQL_MEMORY_VECTOR_*`). **`sqlite`:** float32 BLOBs in **`memory.db`**, in-process cosine KNN. **`postgres`:** **pgvector** table `clawql_memory_chunk_vector`, cosine ordering in SQL. See [vector-search-design.md](vector-search-design.md) and [#16](https://github.com/danielsmithdevelopment/ClawQL/issues/16).

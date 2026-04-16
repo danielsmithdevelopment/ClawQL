@@ -353,7 +353,9 @@ If Stage 1 does **not** apply, one document is loaded in this order:
 | `CLAWQL_MEMORY_DB_PATH` | SQLite file path: default **`memory.db`** under the vault; may be an **absolute** path. See [`docs/memory-db-schema.md`](docs/memory-db-schema.md). |
 | `CLAWQL_MEMORY_DB_SYNC_ON_RECALL` | Set to **`1`** to rewrite **`memory.db`** from every **`memory_recall`** scan (optional; heavier than ingest-only sync). |
 | `CLAWQL_MEMORY_CHUNK_MAX_CHARS` | `paragraph_v1` chunker max window size before hard-split (`2000`). |
-| `CLAWQL_VECTOR_BACKEND` | Set to **`sqlite`** to enable embedding sync + vector seeds in **`memory_recall`** (requires **`memory.db`** + **`CLAWQL_EMBEDDING_API_KEY`** or **`OPENAI_API_KEY`**). Default: off. |
+| `CLAWQL_VECTOR_BACKEND` | **`sqlite`** — vectors in **`memory.db`** as float32 BLOBs (sql.js; in-process KNN). **`postgres`** — vectors in **Postgres + pgvector** (see **`CLAWQL_VECTOR_DATABASE_URL`**); **`memory.db`** still holds documents / wikilinks. Requires **`memory.db`** enabled (not **`CLAWQL_MEMORY_DB=0`**) + embedding API key. Default: off. |
+| `CLAWQL_VECTOR_DATABASE_URL` | Postgres connection string when **`CLAWQL_VECTOR_BACKEND=postgres`** (database must have **`CREATE EXTENSION vector`** — the server runs **`CREATE EXTENSION IF NOT EXISTS vector`** on first use). |
+| `CLAWQL_EMBEDDING_DIMENSION` | Vector width for the pgvector column and API validation (default **`1536`**, e.g. `text-embedding-3-small`). |
 | `CLAWQL_EMBEDDING_BASE_URL` | OpenAI-compatible API base (default `https://api.openai.com/v1`). |
 | `CLAWQL_EMBEDDING_MODEL` | Embedding model id (default `text-embedding-3-small`). |
 | `CLAWQL_EMBEDDING_API_KEY` | API key for embeddings (falls back to **`OPENAI_API_KEY`**). |
@@ -479,7 +481,7 @@ In multi-spec mode, ClawQL keeps one merged operation index for discovery and ex
 | `execute` | Run a discovered operation by `operationId`, with optional GraphQL field selection |
 | `sandbox_exec` | Remote sandbox: pass **`code`** (source) + **`language`**; not your local shell |
 | `memory_ingest` | Compile insights / tool output / conversation into Obsidian notes (`Memory/…`) when the vault path is set — see [`docs/memory-obsidian.md`](docs/memory-obsidian.md) |
-| `memory_recall` | Keyword search over vault Markdown plus `[[wikilinks]]` hops; optional vector KNN when **`CLAWQL_VECTOR_BACKEND=sqlite`** and embeddings are configured (see env table) |
+| `memory_recall` | Keyword search over vault Markdown plus `[[wikilinks]]` hops; optional vector KNN when **`CLAWQL_VECTOR_BACKEND`** is **`sqlite`** or **`postgres`** and embeddings are configured (see env table) |
 
 ### Agent workflow example
 

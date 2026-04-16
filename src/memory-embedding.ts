@@ -1,6 +1,7 @@
 /**
- * Optional embedding pipeline for hybrid memory (#26).
- * Vectors are stored as float32 BLOBs on `vault_chunk` (sql.js cannot load sqlite-vec); KNN runs in-process.
+ * Optional embedding pipeline for hybrid memory (#26 / #28).
+ * - **sqlite:** float32 BLOBs on `vault_chunk` (sql.js; in-process KNN).
+ * - **postgres:** `CLAWQL_VECTOR_DATABASE_URL` + pgvector (`<=>` cosine in SQL).
  */
 
 import { getObsidianVaultPath } from "./vault-config.js";
@@ -11,20 +12,39 @@ export type EmbeddingConfig = {
   apiKey: string;
 };
 
+/** Where chunk vectors are indexed for recall. */
+export type VectorBackend = "off" | "sqlite" | "postgres";
+
 const DEFAULT_BASE = "https://api.openai.com/v1";
 const DEFAULT_MODEL = "text-embedding-3-small";
 const EMBED_BATCH = 64;
 
-/** `CLAWQL_VECTOR_BACKEND=sqlite` enables BLOB embeddings + recall KNN (requires vault + memory.db). */
-export function vectorSqliteBackendEnabled(): boolean {
-  if (process.env.CLAWQL_MEMORY_DB === "0") return false;
-  if (getObsidianVaultPath() === null) return false;
+export function vectorBackend(): VectorBackend {
   const v = process.env.CLAWQL_VECTOR_BACKEND?.trim().toLowerCase();
-  return v === "sqlite";
+  if (v === "sqlite" || v === "sql") return "sqlite";
+  if (v === "postgres" || v === "postgresql" || v === "pg" || v === "pgvector") return "postgres";
+  return "off";
+}
+
+/**
+ * True when embeddings API + vector backend are configured (sqlite or postgres).
+ */
+export function vectorRecallEnabled(): boolean {
+  return resolveEmbeddingConfig() !== null;
+}
+
+/** @deprecated Prefer {@link vectorBackend} === `"sqlite"`. */
+export function vectorSqliteBackendEnabled(): boolean {
+  return vectorBackend() === "sqlite" && resolveEmbeddingConfig() !== null;
 }
 
 export function resolveEmbeddingConfig(): EmbeddingConfig | null {
-  if (!vectorSqliteBackendEnabled()) return null;
+  const b = vectorBackend();
+  if (b === "off") return null;
+  if (process.env.CLAWQL_MEMORY_DB === "0") return null;
+  if (getObsidianVaultPath() === null) return null;
+  if (b === "postgres" && !process.env.CLAWQL_VECTOR_DATABASE_URL?.trim()) return null;
+
   const apiKey =
     process.env.CLAWQL_EMBEDDING_API_KEY?.trim() ||
     process.env.OPENAI_API_KEY?.trim() ||
@@ -123,6 +143,33 @@ export type ChunkWithEmbedding = {
   embedding: Float32Array;
 };
 
+export type VectorRankedRow = {
+  documentPath: string;
+  chunkId: string;
+  score: number;
+};
+
+/** Collapse chunk scores to one row per document (best chunk wins). */
+export function aggregateScoresToDocumentBest(
+  rows: VectorRankedRow[],
+  maxDocs: number
+): { path: string; score: number; chunkId: string }[] {
+  const bestByPath = new Map<string, { score: number; chunkId: string }>();
+  for (const r of rows) {
+    const prev = bestByPath.get(r.documentPath);
+    if (!prev || r.score > prev.score) {
+      bestByPath.set(r.documentPath, { score: r.score, chunkId: r.chunkId });
+    }
+  }
+  const out = [...bestByPath.entries()].map(([path, v]) => ({
+    path,
+    score: v.score,
+    chunkId: v.chunkId,
+  }));
+  out.sort((a, b) => b.score - a.score);
+  return out.slice(0, maxDocs);
+}
+
 /**
  * Per-document max cosine(query, chunk); returns paths sorted by score descending.
  */
@@ -134,26 +181,12 @@ export function rankDocumentsByChunkSimilarity(
   const topChunks = opts?.topChunks ?? 80;
   const maxDocs = opts?.maxDocs ?? 12;
 
-  const scored = chunks.map((c) => ({
-    ...c,
-    sim: cosineSimilarity(query, c.embedding),
+  const scored: VectorRankedRow[] = chunks.map((c) => ({
+    documentPath: c.documentPath,
+    chunkId: c.chunkId,
+    score: cosineSimilarity(query, c.embedding),
   }));
-  scored.sort((a, b) => b.sim - a.sim);
+  scored.sort((a, b) => b.score - a.score);
   const slice = scored.slice(0, topChunks);
-
-  const bestByPath = new Map<string, { score: number; chunkId: string }>();
-  for (const s of slice) {
-    const prev = bestByPath.get(s.documentPath);
-    if (!prev || s.sim > prev.score) {
-      bestByPath.set(s.documentPath, { score: s.sim, chunkId: s.chunkId });
-    }
-  }
-
-  const out = [...bestByPath.entries()].map(([path, v]) => ({
-    path,
-    score: v.score,
-    chunkId: v.chunkId,
-  }));
-  out.sort((a, b) => b.score - a.score);
-  return out.slice(0, maxDocs);
+  return aggregateScoresToDocumentBest(slice, maxDocs);
 }

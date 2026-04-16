@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Hybrid `memory_recall` (issue [#26](https://github.com/danielsmithdevelopment/ClawQL/issues/26)):** optional OpenAI-compatible **embeddings** (`CLAWQL_VECTOR_BACKEND=sqlite` + `CLAWQL_EMBEDDING_*`) write float32 vectors into **`vault_chunk.embedding`** during **`memory.db`** sync; **`memory_recall`** runs in-process **KNN** (cosine) alongside lexical + wikilinks. Uses **sql.js**-friendly BLOB storage (no native sqlite-vec extension in this build).
+- **Hybrid `memory_recall` (issues [#26](https://github.com/danielsmithdevelopment/ClawQL/issues/26), [#28](https://github.com/danielsmithdevelopment/ClawQL/issues/28)):** pluggable **vector backends** — **`CLAWQL_VECTOR_BACKEND=sqlite`** stores float32 vectors in **`vault_chunk.embedding`** (sql.js; in-process cosine KNN), or **`postgres`** stores vectors in **Postgres + pgvector** (`clawql_memory_chunk_vector`, cosine via `<=>`) using **`CLAWQL_VECTOR_DATABASE_URL`**. Same OpenAI-compatible **`/embeddings`** pipeline (**`CLAWQL_EMBEDDING_*`**). Dependency: **`pg`** for the Postgres backend.
 
 ## [3.0.1] - 2026-04-16
 

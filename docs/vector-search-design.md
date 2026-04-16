@@ -72,9 +72,9 @@ Same embedding provider and chunking code; only **connection + SQL** differ.
 
 ## Phasing (suggested)
 
-1. **Interface + SQLite** — **`CLAWQL_VECTOR_BACKEND=sqlite`** with float32 BLOBs on `vault_chunk` + OpenAI-compatible **`/embeddings`** (implemented in ClawQL **#26**; sql.js build uses in-process KNN, not the sqlite-vec loadable extension).
-2. **Postgres + pgvector** — second implementation behind the same interface; Docker Compose service optional.
-3. **Hybrid & tuning** — FTS / keyword + vector, score fusion, reindex hooks (partially: `memory_recall` fuses lexical + vector + wikilinks today).
+1. **Interface + SQLite (file-backed)** — **`CLAWQL_VECTOR_BACKEND=sqlite`**: float32 BLOBs on `vault_chunk` + OpenAI-compatible **`/embeddings`** (sql.js / in-process KNN; no sqlite-vec loadable extension in the WASM build).
+2. **Postgres + pgvector** — **`CLAWQL_VECTOR_BACKEND=postgres`** + **`CLAWQL_VECTOR_DATABASE_URL`**: table **`clawql_memory_chunk_vector`**, cosine via **`<=>`**, auto-**`CREATE EXTENSION vector`** on first connect (implemented; **`pg`** dependency).
+3. **Hybrid & tuning** — `memory_recall` fuses lexical + vector + wikilinks; optional IVFFLAT / HNSW indexes in Postgres are operator-managed, not created by ClawQL yet.
 
 ## Open decisions
 

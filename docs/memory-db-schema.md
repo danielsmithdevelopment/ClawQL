@@ -48,8 +48,8 @@ Embeddable segments for semantic search (text populated today; vector columns re
 | `text` | TEXT | Chunk plain text used for embeddings / lexical snippets. |
 | `content_sha256` | TEXT | SHA-256 of `text`. |
 | `chunk_strategy` | TEXT | Same as parent contract (`paragraph_v1`). |
-| `embedding_model` | TEXT NULL | Set when **`CLAWQL_VECTOR_BACKEND=sqlite`** sync fills vectors (e.g. `text-embedding-3-small`). |
-| `embedding` | BLOB NULL | Float32 vector payload (little-endian); **KNN runs in-process** (sql.js cannot load the sqlite-vec extension). |
+| `embedding_model` | TEXT NULL | Set when **`CLAWQL_VECTOR_BACKEND=sqlite`** sync fills vectors (e.g. `text-embedding-3-small`). **NULL** when **`CLAWQL_VECTOR_BACKEND=postgres`** (vectors live only in Postgres). |
+| `embedding` | BLOB NULL | Float32 vector payload (little-endian) for **`sqlite`** backend; **KNN runs in-process**. **NULL** when using **`postgres`** vector backend (see pgvector table below). |
 
 ### `wikilink_edge`
 
@@ -75,7 +75,11 @@ Implemented in **`src/memory-chunk.ts`**:
 ## Runtime
 
 - **Engine:** [sql.js](https://github.com/sql-js/sql.js/) (WASM). No native `node-gyp` modules; compatible with `npm ci --ignore-scripts` and the Distroless image build.
-- **Recall:** When the DB is enabled, `memory_recall` **merges** stored `wikilink_edge` rows whose `to_resolved_path` is still present in the current scan into the in-memory graph (helps when the DB was populated from a wider scan than the current `CLAWQL_MEMORY_RECALL_SCAN_ROOT`). Optional **`CLAWQL_MEMORY_DB_SYNC_ON_RECALL=1`** rewrites the DB from the files touched in that recall (heavier). With **`CLAWQL_VECTOR_BACKEND=sqlite`** and embeddings configured, recall also runs **cosine KNN** over `vault_chunk` rows for the current scan (see issue [#26](https://github.com/danielsmithdevelopment/ClawQL/issues/26)).
+- **Recall:** When the DB is enabled, `memory_recall` **merges** stored `wikilink_edge` rows whose `to_resolved_path` is still present in the current scan into the in-memory graph (helps when the DB was populated from a wider scan than the current `CLAWQL_MEMORY_RECALL_SCAN_ROOT`). Optional **`CLAWQL_MEMORY_DB_SYNC_ON_RECALL=1`** rewrites the DB from the files touched in that recall (heavier). With **`CLAWQL_VECTOR_BACKEND=sqlite`** and embeddings configured, recall runs **cosine KNN** over `vault_chunk` rows. With **`CLAWQL_VECTOR_BACKEND=postgres`**, vectors are queried from **Postgres** (`clawql_memory_chunk_vector`, see **`src/vector-store/pgvector.ts`**).
+
+### Postgres (`CLAWQL_VECTOR_BACKEND=postgres`)
+
+Separate database (**`CLAWQL_VECTOR_DATABASE_URL`**). Extension **`vector`**, table **`clawql_memory_chunk_vector`** (`chunk_id` PK, `document_path`, `text`, `embedding vector(dim)`, `embedding_model`, `embedding_dim`, `updated_at`). Cosine retrieval uses **`<=>`** in SQL. Dimension defaults to **`CLAWQL_EMBEDDING_DIMENSION=1536`**; changing it after `CREATE TABLE` requires a manual migration if the table already exists.
 
 ## See also
 
