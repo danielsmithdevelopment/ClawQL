@@ -126,11 +126,8 @@ describe("MCP tool handlers", () => {
     );
   });
 
-  it("handleClawqlExecuteToolInput uses in-process GraphQL when CLAWQL_COMBINED_MODE=1", async () => {
-    const prevCombined = process.env.CLAWQL_COMBINED_MODE;
-    process.env.CLAWQL_COMBINED_MODE = "1";
-    try {
-      await withFetchServer(
+  it("handleClawqlExecuteToolInput uses in-process GraphQL for single-spec", async () => {
+    await withFetchServer(
         async (req) => {
           const path = new URL(req.url).pathname;
           if (req.method === "GET" && path.startsWith("/pets")) {
@@ -198,10 +195,6 @@ describe("MCP tool handlers", () => {
           expect((data as { name: string }[])[0]?.name).toBe("dog");
         }
       );
-    } finally {
-      if (prevCombined === undefined) delete process.env.CLAWQL_COMBINED_MODE;
-      else process.env.CLAWQL_COMBINED_MODE = prevCombined;
-    }
   });
 });
 

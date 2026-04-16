@@ -46,7 +46,7 @@ const resources: Array<Resource> = [
     href: '/graphql-proxy',
     name: 'GraphQL proxy',
     description:
-      'Why clawql-graphql runs beside the MCP server and how execute uses GraphQL or REST.',
+      'How in-process GraphQL keeps execute responses lean (single-spec) vs REST (multi-spec).',
     icon: CogIcon,
     pattern: {
       y: -6,

@@ -250,7 +250,7 @@ export const navigation: Array<NavGroup> = [
     title: 'Reference',
     links: [
       { title: 'Tools', href: '/tools' },
-      { title: 'GraphQL proxy', href: '/graphql-proxy' },
+      { title: 'GraphQL layer', href: '/graphql-proxy' },
       { title: 'Bundled specs', href: '/bundled-specs' },
       { title: 'Concepts', href: '/concepts' },
       { title: 'Benchmarks', href: '/benchmarks' },

@@ -3,13 +3,10 @@
  *
  * Entry point. Boots the MCP server over stdio (Claude Desktop, Cursor, etc.).
  *
- *   Agent → MCP (this file) → search / execute / sandbox_exec / memory_* → GraphQL (in-process if CLAWQL_COMBINED_MODE, else graphql-client → graphql-proxy) → REST API
+ *   Agent → MCP (this file) → search / execute / sandbox_exec / memory_* → in-process GraphQL (single-spec) → REST API
  *
  * Spec source: CLAWQL_SPEC_PATH, CLAWQL_SPEC_URL, CLAWQL_DISCOVERY_URL, or default
  * Cloud Run discovery. See README and .env.example.
- *
- *   GRAPHQL_URL     GraphQL proxy URL (default http://localhost:4000/graphql)
- *   GRAPHQL_PORT    Only if you spawn the proxy yourself (default 4000)
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";

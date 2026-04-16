@@ -7,7 +7,6 @@ services:
     container_name: clawql-mcp-http
     restart: unless-stopped
     environment:
-      GRAPHQL_URL: http://clawql-graphql:4000/graphql
       CLAWQL_PROVIDER: github
       CLAWQL_OBSIDIAN_VAULT_PATH: /vault
       PORT: 8080
@@ -16,17 +15,4 @@ services:
       - ${CLAWQL_VAULT_HOST_PATH:-${HOME}/.ClawQL}:/vault
     ports:
       - "8080:8080"
-    depends_on:
-      - clawql-graphql
-
-  clawql-graphql:
-    image: clawql-mcp:local
-    container_name: clawql-graphql
-    restart: unless-stopped
-    command: ["dist/graphql-proxy.js"]
-    environment:
-      CLAWQL_PROVIDER: github
-      GRAPHQL_PORT: 4000
-    ports:
-      - "4000:4000"
 

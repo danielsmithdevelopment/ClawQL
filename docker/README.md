@@ -30,7 +30,7 @@ Override provider/spec [as in `.env.example`](../.env.example), for example:
 docker run --rm -p 8080:8080 -e CLAWQL_PROVIDER=github clawql-mcp
 ```
 
-Single-spec `execute` uses a GraphQL proxy at `GRAPHQL_URL` (default `http://localhost:4000/graphql`). Point it at a reachable proxy or use multi-spec presets (REST execution) when you do not run the proxy beside the container.
+Single-spec `execute` uses in-process OpenAPI→GraphQL. **`clawql-mcp-http`** serves **`/graphql`** on the same port as **`/mcp`**. Multi-spec presets use REST for `execute`.
 
 **Obsidian vault:** The image sets **`CLAWQL_OBSIDIAN_VAULT_PATH=/vault`** and includes a writable **`/vault`** directory for **`memory_ingest`** / **`memory_recall`** and **[ClawQL-Agent](https://github.com/danielsmithdevelopment/ClawQL-Agent)**. **`docker-compose.yml`** bind-mounts **`${CLAWQL_VAULT_HOST_PATH:-${HOME}/.ClawQL}`** → **`/vault`** so notes persist on the host (override **`CLAWQL_VAULT_HOST_PATH`** for a different folder). See the main [README](../README.md#obsidian-vault-optional).
 
@@ -52,7 +52,7 @@ docker run -i --rm --entrypoint node clawql-mcp dist/server.js
 |------|---------|
 | `docker/Dockerfile` | Multi-stage build → distroless runtime |
 | `.dockerignore` | Keeps build context small (root; used by `docker build` from `.`) |
-| `docker/docker-compose.yml` | Local two-service stack (`clawql-mcp-http` + `clawql-graphql`) |
+| `docker/docker-compose.yml` | Local stack (`clawql-mcp-http` only) |
 | `docker/kubernetes-starter.yaml` | Starter K8s namespace + Deployments + Services |
 
 Future Compose / Kubernetes / Helm manifests can live under `docker/` (or split to `deploy/`) without changing this image.
@@ -145,8 +145,8 @@ kubectl apply -f docker/kubernetes-starter.yaml
 
 Included resources:
 - Namespace: `clawql`
-- Deployments: `clawql-mcp-http`, `clawql-graphql`
-- Services: internal `clawql-graphql` + external `clawql-mcp-http` (`LoadBalancer`)
+- Deployment: `clawql-mcp-http`
+- Service: `clawql-mcp-http` (`LoadBalancer`)
 - MCP pod: **`CLAWQL_OBSIDIAN_VAULT_PATH=/vault`** with an **`emptyDir`** volume at `/vault` in the starter and Kustomize **base** (`docker/kustomize/base/deployment-mcp-http.yaml`) so **`memory_ingest`** / **`memory_recall`** can run. For a **persistent** host vault (e.g. **`~/.ClawQL`**), use the **`local`** overlay via **`make local-k8s-up`**, which generates a **`hostPath`** patch — or replace **`emptyDir`** with a PVC or **`hostPath`** yourself. **`sandbox_exec`** still requires **`CLAWQL_SANDBOX_BRIDGE_URL`** + token env (see [`.env.example`](../.env.example) and [`docs/mcp-tools.md`](../docs/mcp-tools.md)).
 
 After the external IP is ready, use:

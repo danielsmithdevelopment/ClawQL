@@ -6,7 +6,7 @@ export const metadata = {
 
 # Deployment
 
-Production-style setups run **two services**: the **MCP HTTP** server (`clawql-mcp-http`) and the **GraphQL proxy** (`clawql-graphql`). Wire them on the same network and point **`GRAPHQL_URL`** at the proxy from the MCP service. {{ className: 'lead' }}
+Production-style setups run **one** service: **`clawql-mcp-http`** exposes MCP at **`/mcp`** and GraphQL at **`/graphql`** on the same port. {{ className: 'lead' }}
 
 ## Streamable HTTP
 

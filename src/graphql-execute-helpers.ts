@@ -29,7 +29,7 @@ export function operationIdToRunStyleName(op: Operation): string {
   return parts[0] + parts.slice(1).map(capitalize).join("");
 }
 
-/** Exported for tools.resolveGraphQLField candidate list. */
+/** Candidate names for matching an OpenAPI operation to a GraphQL root field. */
 export function lowerFirst(input: string): string {
   return input ? input.charAt(0).toLowerCase() + input.slice(1) : input;
 }
@@ -40,7 +40,7 @@ function capitalize(input: string): string {
 
 /**
  * Resolve the root GraphQL field for an operation using the live built schema
- * (same candidate order as tools.resolveGraphQLField).
+ * (consistent candidate order for schema-based resolution).
  */
 export function resolveGraphQLFieldFromSchema(
   schema: GraphQLSchema,

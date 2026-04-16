@@ -13,8 +13,7 @@
     },
     "bin": {
         "clawql-mcp": "bin/clawql-mcp.mjs",
-        "clawql-mcp-http": "bin/clawql-mcp-http.mjs",
-        "clawql-graphql": "bin/clawql-graphql.mjs"
+        "clawql-mcp-http": "bin/clawql-mcp-http.mjs"
     },
     "engines": {
         "node": ">=20"
@@ -56,7 +55,6 @@
         "start": "node dist/server.js",
         "start:http": "node dist/server-http.js",
         "dev": "tsx src/server.ts",
-        "graphql": "node dist/graphql-proxy.js",
         "fetch-provider-specs": "node scripts/fetch-provider-specs.mjs && node scripts/fetch-google-discovery-directory.mjs",
         "fetch-n8n-openapi": "node scripts/fetch-n8n-openapi.mjs",
         "fetch-google-discovery-directory": "node scripts/fetch-google-discovery-directory.mjs",

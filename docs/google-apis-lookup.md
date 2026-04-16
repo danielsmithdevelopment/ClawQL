@@ -33,8 +33,7 @@ npm run fetch-provider-specs
 
 ```bash
 export CLAWQL_DISCOVERY_URL="https://run.googleapis.com/\$discovery/rest?version=v2"
-clawql-graphql &
-CLAWQL_DISCOVERY_URL="https://run.googleapis.com/\$discovery/rest?version=v2" clawql-mcp
+clawql-mcp
 ```
 
 Unset `CLAWQL_PROVIDER` when you set `CLAWQL_DISCOVERY_URL` (provider is ignored if discovery URL is set — see [`providers/README.md`](../providers/README.md)).

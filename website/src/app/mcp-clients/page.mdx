@@ -1,7 +1,7 @@
 export const metadata = {
   title: 'MCP clients',
   description:
-    'Configure Cursor, Claude Desktop, or other MCP hosts for ClawQL over stdio or HTTP: GRAPHQL_URL, vault, sandbox bridge.',
+    'Configure Cursor, Claude Desktop, or other MCP hosts for ClawQL over stdio or HTTP: spec env, vault, sandbox bridge.',
 }
 
 # MCP clients
@@ -10,7 +10,7 @@ export const metadata = {
 
 ## What is MCP?
 
-The MCP server runs as a subprocess (**stdio**) or over the network (**HTTP**). Your client configuration supplies environment variables such as spec paths or `CLAWQL_PROVIDER`. The **`execute`** tool expects a running **GraphQL proxy** unless you are only using **`search`**.
+The MCP server runs as a subprocess (**stdio**) or over the network (**HTTP**). Your client configuration supplies environment variables such as spec paths or **`CLAWQL_PROVIDER`**. Single-spec **`execute`** uses **in-process** OpenAPI→GraphQL; no separate GraphQL service is required.
 
 ## stdio (npm)
 
@@ -23,15 +23,12 @@ Use `npx` with `-p clawql-mcp` so the binary resolves from the package:
       "command": "npx",
       "args": ["-p", "clawql-mcp", "clawql-mcp"],
       "env": {
-        "CLAWQL_SPEC_PATH": "/absolute/path/to/openapi.yaml",
-        "GRAPHQL_URL": "http://localhost:4000/graphql"
+        "CLAWQL_SPEC_PATH": "/absolute/path/to/openapi.yaml"
       }
     }
   }
 }
 ```
-
-Start **`clawql-graphql`** in another terminal (same `npx -p clawql-mcp` pattern) before calling **`execute`**.
 
 ## stdio (git checkout)
 
@@ -42,8 +39,7 @@ Start **`clawql-graphql`** in another terminal (same `npx -p clawql-mcp` pattern
       "command": "node",
       "args": ["/absolute/path/to/ClawQL/dist/server.js"],
       "env": {
-        "CLAWQL_SPEC_PATH": "/absolute/path/to/openapi.yaml",
-        "GRAPHQL_URL": "http://localhost:4000/graphql"
+        "CLAWQL_SPEC_PATH": "/absolute/path/to/openapi.yaml"
       }
     }
   }
@@ -54,14 +50,8 @@ For development you can run `tsx` against `src/server.ts` instead; ensure the re
 
 ## Streamable HTTP
 
-For `clawql-mcp-http`, Docker, Kubernetes, or Cloud Run, configure your client with a **`url`** (not `command`). Copy [`.cursor/mcp.json.example`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/.cursor/mcp.json.example) to **`.cursor/mcp.json`** and set the base URL your deployment exposes. See [Deployment](/deployment).
-
-## GraphQL URL
-
-- Default proxy URL: **`http://localhost:4000/graphql`**
-- Override with **`GRAPHQL_URL`** if the proxy listens elsewhere.
-- **`GRAPHQL_PORT`** applies when you start the proxy yourself (default **4000**).
+For `clawql-mcp-http`, Docker, Kubernetes, or Cloud Run, configure your client with a **`url`** (not `command`). Copy [`.cursor/mcp.json.example`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/.cursor/mcp.json.example) to **`.cursor/mcp.json`** and set the base URL your deployment exposes. See [Deployment](/deployment). GraphQL debugging is available at **`/graphql`** on the same origin.
 
 <Note>
-  **`search`** runs entirely inside the MCP process. **`execute`** calls the GraphQL proxy so responses can be field-selected; keep the proxy running whenever agents need to execute operations.
+  **`search`** and **`execute`** run in one process. **`clawql-mcp-http`** serves **`/mcp`**, **`/healthz`**, and **`/graphql`** on the same server.
 </Note>

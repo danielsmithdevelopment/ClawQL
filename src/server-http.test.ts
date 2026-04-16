@@ -18,14 +18,10 @@ describe("server-http", () => {
     saved.CLAWQL_PROVIDER = process.env.CLAWQL_PROVIDER;
     saved.CLAWQL_SPEC_PATHS = process.env.CLAWQL_SPEC_PATHS;
     saved.CLAWQL_CORS_ALLOW_ORIGIN = process.env.CLAWQL_CORS_ALLOW_ORIGIN;
-    saved.CLAWQL_COMBINED_MODE = process.env.CLAWQL_COMBINED_MODE;
-    saved.CLAWQL_GRAPHQL_EXTERNAL_URL = process.env.CLAWQL_GRAPHQL_EXTERNAL_URL;
     process.env.CLAWQL_SPEC_PATH = minimalSpec;
     delete process.env.CLAWQL_PROVIDER;
     delete process.env.CLAWQL_SPEC_PATHS;
     delete process.env.CLAWQL_CORS_ALLOW_ORIGIN;
-    delete process.env.CLAWQL_COMBINED_MODE;
-    delete process.env.CLAWQL_GRAPHQL_EXTERNAL_URL;
     resetSpecCache();
     resetSchemaFieldCache();
   });
@@ -56,8 +52,7 @@ describe("server-http", () => {
     }
   }
 
-  it("POST /graphql responds when CLAWQL_COMBINED_MODE=1", async () => {
-    process.env.CLAWQL_COMBINED_MODE = "1";
+  it("POST /graphql returns schema introspection", async () => {
     await withHttpServer(async (base) => {
       const res = await fetch(`${base}/graphql`, {
         method: "POST",

@@ -1,7 +1,5 @@
 /**
- * Mount in-process `/graphql` on an existing Express app (Streamable HTTP MCP server).
- * Same schema as standalone `clawql-graphql` — lives in its own module so importing it
- * does not run the `clawql-graphql` CLI entrypoint.
+ * Mount in-process `/graphql` on the Streamable HTTP MCP app (same process as `/mcp`).
  */
 
 import type { Express } from "express";

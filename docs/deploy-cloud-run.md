@@ -1,11 +1,6 @@
-# Deploy ClawQL on Cloud Run (2-service)
+# Deploy ClawQL on Cloud Run (single service)
 
-This deploy pattern runs ClawQL as two Cloud Run services:
-
-- `clawql-mcp-http` (remote MCP endpoint at `/mcp`)
-- `clawql-graphql` (GraphQL proxy used by `execute` in single-spec mode)
-
-Both services use the same container image; they differ by command/env.
+This deploy pattern runs ClawQL as **one** Cloud Run service (**`clawql-mcp-http`**): remote MCP at **`/mcp`**, in-process GraphQL at **`/graphql`** on the same URL.
 
 ## Prerequisites
 
@@ -26,7 +21,7 @@ bash scripts/deploy-cloud-run.sh
 Or use `make`:
 
 ```bash
-PROJECT_ID="your-project-id" REGION="us-central1" make deploy-cloud-run
+PROJECT_ID="your-project-id" REGION=us-central1 make deploy-cloud-run
 ```
 
 Optional inputs:
@@ -36,10 +31,9 @@ Optional inputs:
 - `TAG` (default: current git short SHA, fallback `manual`)
 - `PROVIDER` (default: `google-top50`)
 - `MCP_SERVICE` (default: `clawql-mcp-http`)
-- `GRAPHQL_SERVICE` (default: `clawql-graphql`)
 - `ALLOW_UNAUTH` (`true` or `false`, default: `true`)
 
-Optional **MCP-only** environment variables (exported before running the script; appended to the MCP Cloud Run service only):
+Optional **MCP** environment variables (exported before running the script):
 
 | Variable | Enables | Notes |
 |----------|---------|--------|
@@ -59,46 +53,23 @@ PROJECT_ID="your-project-id" REGION="us-central1" bash scripts/deploy-cloud-run.
 
 1. Creates Artifact Registry repo (idempotent).
 2. Builds and pushes image via Cloud Build.
-3. Deploys `clawql-graphql`:
-   - command: `node`
-   - args: `dist/graphql-proxy.js`
-   - port `4000`
-4. Reads GraphQL service URL.
-5. Deploys `clawql-mcp-http`:
-   - default command from image (`dist/server-http.js`)
-   - port `8080`
-   - env `GRAPHQL_URL=<graphql-service-url>/graphql`
-6. Prints final MCP endpoint.
+3. Deploys **`clawql-mcp-http`** (`dist/server-http.js`, port **8080**).
+4. Prints MCP base URL, **`/mcp`**, **`/healthz`**, and **`/graphql`**.
 
 ## Result
 
-- MCP endpoint URL:
-  - `https://<mcp-service-url>/mcp`
-- Health:
-  - `https://<mcp-service-url>/healthz`
+- MCP endpoint: `https://<mcp-service-url>/mcp`
+- GraphQL (same host): `https://<mcp-service-url>/graphql`
+- Health: `https://<mcp-service-url>/healthz`
 
 ## Notes
 
 - For private deployments, set `ALLOW_UNAUTH=false`.
-- Current sizing defaults in script:
-  - MCP: `2 vCPU`, `2Gi`, `min-instances=1`
-  - GraphQL: `1 vCPU`, `1Gi`, `min-instances=0`
+- Default sizing: `2 vCPU`, `2Gi`, `min-instances=1` on the MCP service.
 - Tune provider scope (`PROVIDER`) for latency/cost.
-- **Optional tools** (`sandbox_exec`, `memory_*`) work the same as locally: configure env on the **MCP** service only. The GraphQL service does not need vault or sandbox variables.
-- With **no** optional env vars set, behavior matches a **search + execute** deployment (image defaults still set `CLAWQL_OBSIDIAN_VAULT_PATH=/vault` in the container; memory tools write under `/vault` on ephemeral instance storage unless you add a durable volume).
+- **Optional tools** (`sandbox_exec`, `memory_*`) use env on the same service.
+- With **no** optional env vars set, behavior matches a **search + execute** deployment (image defaults may still set `CLAWQL_OBSIDIAN_VAULT_PATH=/vault` in the container).
 
 ### Secrets (sandbox token)
 
-Avoid passing `CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN` on the command line in CI. Create a secret and attach it to the MCP service:
-
-```bash
-# One-time: store the bridge shared secret
-echo -n 'your-bridge-secret' | gcloud secrets create clawql-sandbox-token \
-  --data-file=- --replication-policy=automatic
-
-gcloud run services update clawql-mcp-http \
-  --region "${REGION}" \
-  --set-secrets="CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN=clawql-sandbox-token:latest"
-```
-
-You still need `CLAWQL_SANDBOX_BRIDGE_URL` set (via `gcloud run services update --set-env-vars` or the deploy script with `export` for non-secret values).
+Use [Secret Manager](https://cloud.google.com/secret-manager/docs) for production tokens; wire them into the Cloud Run service as secret env vars rather than plain `export` in shell history.
