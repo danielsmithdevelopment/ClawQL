@@ -17,8 +17,6 @@ import { preloadSchemaFieldCacheFromDisk, registerTools } from "./tools.js";
 import { validateObsidianVaultAtStartup } from "./vault-config.js";
 import { registerPostgresPoolShutdownHooks } from "./vector-store/pgvector.js";
 
-registerPostgresPoolShutdownHooks();
-
 const PORT = Number.parseInt(process.env.PORT ?? process.env.MCP_PORT ?? "8080", 10);
 const DEFAULT_MCP_PATH = "/mcp";
 
@@ -188,6 +186,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
 }
 
 async function main() {
+  registerPostgresPoolShutdownHooks();
   const app = await createMcpHttpApp();
   app.listen(PORT, () => {
     const path =
