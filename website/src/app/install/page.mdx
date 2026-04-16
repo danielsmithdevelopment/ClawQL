@@ -25,24 +25,20 @@ After install, these commands are on your `PATH` (or use `npx -p clawql-mcp <bin
 | Command | Purpose |
 | --- | --- |
 | `clawql-mcp` | MCP server on **stdio** (Cursor, Claude Desktop, etc.) |
-| `clawql-mcp-http` | MCP over **Streamable HTTP** (`PORT`, `/mcp`, `/healthz`) |
-| `clawql-graphql` | Local **GraphQL proxy** used by the `execute` tool |
+| `clawql-mcp-http` | MCP over **Streamable HTTP** (`PORT`, `/mcp`, `/healthz`, `/graphql`) |
 
 ## Run without a global install
 
-Typical local setup uses **two terminals**: GraphQL proxy first, then the MCP server.
-
 ```bash
-npx -p clawql-mcp clawql-graphql
 CLAWQL_PROVIDER=all-providers npx -p clawql-mcp clawql-mcp
 ```
 
-Point your MCP client at **`clawql-mcp`** on stdio. If the client needs an explicit GraphQL URL, set **`GRAPHQL_URL=http://localhost:4000/graphql`** (see [MCP clients](/mcp-clients)).
+Point your MCP client at **`clawql-mcp`** on stdio (see [MCP clients](/mcp-clients)).
 
 ## Docker and HTTP
 
 - **Docker:** multi-stage image and stdio/compose notes live in the repo’s [`docker/README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docker/README.md).
-- **Remote MCP:** `PORT=8080 npx -p clawql-mcp clawql-mcp-http` — default local endpoint `http://localhost:8080/mcp` (health: `/healthz`). See [Deployment](/deployment).
+- **Remote MCP:** `PORT=8080 npx -p clawql-mcp clawql-mcp-http` — default local endpoint `http://localhost:8080/mcp` (health: `/healthz`, GraphQL: `/graphql`). See [Deployment](/deployment).
 
 ## Install from GitHub
 

@@ -26,8 +26,6 @@ spec:
               value: google-top50
             - name: CLAWQL_OBSIDIAN_VAULT_PATH
               value: /vault
-            - name: GRAPHQL_URL
-              value: http://clawql-graphql:4000/graphql
             - name: PORT
               value: "8080"
             - name: MCP_PATH

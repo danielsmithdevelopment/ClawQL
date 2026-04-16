@@ -1,6 +1,6 @@
 {
     "name": "clawql-mcp",
-    "version": "2.0.0",
+    "version": "3.0.1",
     "description": "MCP server: search + execute any OpenAPI 3 API with an internal GraphQL optimization layer",
     "license": "Apache-2.0",
     "type": "module",
@@ -13,8 +13,7 @@
     },
     "bin": {
         "clawql-mcp": "bin/clawql-mcp.mjs",
-        "clawql-mcp-http": "bin/clawql-mcp-http.mjs",
-        "clawql-graphql": "bin/clawql-graphql.mjs"
+        "clawql-mcp-http": "bin/clawql-mcp-http.mjs"
     },
     "engines": {
         "node": ">=20"
@@ -51,12 +50,12 @@
         ".cursor/mcp.json.example"
     ],
     "scripts": {
-        "build": "tsc",
+        "clean": "rm -rf dist",
+        "build": "npm run clean && tsc",
         "prepublishOnly": "npm run build",
         "start": "node dist/server.js",
         "start:http": "node dist/server-http.js",
         "dev": "tsx src/server.ts",
-        "graphql": "node dist/graphql-proxy.js",
         "fetch-provider-specs": "node scripts/fetch-provider-specs.mjs && node scripts/fetch-google-discovery-directory.mjs",
         "fetch-n8n-openapi": "node scripts/fetch-n8n-openapi.mjs",
         "fetch-google-discovery-directory": "node scripts/fetch-google-discovery-directory.mjs",

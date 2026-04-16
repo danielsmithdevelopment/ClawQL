@@ -12,7 +12,7 @@ const guides = [
     href: '/mcp-clients',
     name: 'MCP clients',
     description:
-      'Wire Cursor, Claude Desktop, or HTTP hosts with stdio, GRAPHQL_URL, and environment.',
+      'Wire Cursor, Claude Desktop, or HTTP hosts with stdio, spec env, vault, and sandbox bridge.',
   },
   {
     href: '/spec-configuration',

@@ -5,8 +5,6 @@ namespace: clawql
 
 resources:
   - namespace.yaml
-  - deployment-graphql.yaml
-  - service-graphql.yaml
   - deployment-mcp-http.yaml
   - service-mcp-http.yaml
 

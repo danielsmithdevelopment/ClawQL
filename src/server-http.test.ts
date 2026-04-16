@@ -52,6 +52,23 @@ describe("server-http", () => {
     }
   }
 
+  it("POST /graphql returns schema introspection", async () => {
+    await withHttpServer(async (base) => {
+      const res = await fetch(`${base}/graphql`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          query: "{ __schema { queryType { name } } }",
+        }),
+      });
+      expect(res.ok).toBe(true);
+      const body = (await res.json()) as {
+        data?: { __schema?: { queryType?: { name?: string } } };
+      };
+      expect(body.data?.__schema?.queryType?.name).toBeTruthy();
+    });
+  });
+
   it("GET /healthz returns ok and endpoint path", async () => {
     await withHttpServer(async (base) => {
       const res = await fetch(`${base}/healthz`);

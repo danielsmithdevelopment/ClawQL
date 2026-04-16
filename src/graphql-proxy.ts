@@ -6,14 +6,14 @@
  * Agents do not call this directly — the MCP `execute` tool uses it internally
  * to run field-selected GraphQL against the upstream REST API.
  *
- * Usage:
- *   node dist/graphql-proxy.js
- *   clawql-graphql   (when installed from npm)
+ * Programmatic use: `createGraphqlProxyApp()` for tests or custom servers.
+ * Direct `node dist/graphql-proxy.js` runs a standalone listener (optional; not required for MCP).
  *
  * Configure the spec via CLAWQL_SPEC_PATH / CLAWQL_SPEC_URL / defaults (see README).
  */
 
 import { resolve as resolvePath } from "node:path";
+import { pathToFileURL } from "node:url";
 import express from "express";
 import type { Express } from "express";
 import { createHandler } from "graphql-http/lib/use/express";
@@ -95,7 +95,19 @@ async function main() {
   await startGraphqlProxy();
 }
 
-main().catch((err) => {
-  console.error("[graphql-proxy] Fatal error:", err);
-  process.exit(1);
-});
+function isMainModule(): boolean {
+  const entry = process.argv[1];
+  if (!entry) return false;
+  try {
+    return import.meta.url === pathToFileURL(entry).href;
+  } catch {
+    return false;
+  }
+}
+
+if (isMainModule()) {
+  main().catch((err) => {
+    console.error("[graphql-proxy] Fatal error:", err);
+    process.exit(1);
+  });
+}

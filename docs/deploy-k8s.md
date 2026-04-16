@@ -1,11 +1,6 @@
 # Deploy ClawQL on Kubernetes (Kustomize)
 
-This deploy pattern runs ClawQL as two Kubernetes workloads:
-
-- `clawql-mcp-http` (remote MCP endpoint at `/mcp`)
-- `clawql-graphql` (GraphQL proxy used by `execute` in single-spec mode)
-
-Both services use the same container image; they differ by command/env.
+This deploy pattern runs ClawQL as **one** workload (**`clawql-mcp-http`**): MCP at **`/mcp`**, GraphQL at **`/graphql`** on the same service.
 
 ## Prerequisites
 

@@ -4,12 +4,11 @@
  * Core tools: search (spec discovery) and execute (GraphQL-backed REST call).
  * Optional: sandbox_exec — remote execution via cloudflare/sandbox-bridge Worker.
  * Optional: memory_ingest / memory_recall — Obsidian vault notes (ingest + recall).
- * GraphQL field names are resolved via schema introspection — see resolveGraphQLField.
+ * Single-spec `execute` runs OpenAPI→GraphQL in-process; field resolution uses `graphql-execute-helpers`.
  */
 
 import { readFile } from "node:fs/promises";
 import { isAbsolute, resolve as resolvePath } from "node:path";
-import { sanitizeNameForGraphQL } from "@graphql-mesh/utils";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { getPackageRoot } from "./package-root.js";
@@ -19,22 +18,19 @@ import {
   buildVarDeclarations,
   capturePathParams,
   discoveryTypeToGraphQL,
-  lowerFirst,
   normalizeArgsForField,
   operationIdToGraphQLName,
   operationIdToRunStyleName,
 } from "./graphql-execute-helpers.js";
+import { executeOperationGraphQL } from "./graphql-in-process-execute.js";
 import { loadSpec, resolveApiBaseUrl } from "./spec-loader.js";
 import { searchOperations, formatSearchResults } from "./spec-search.js";
-import { createGraphQLClient } from "./graphql-client.js";
 import { executeRestOperation } from "./rest-operation.js";
 import { handleClawqlCodeToolInput } from "./sandbox-bridge-client.js";
 import { handleMemoryIngestToolInput } from "./memory-ingest.js";
 import { handleMemoryRecallToolInput } from "./memory-recall.js";
-import type { Operation } from "./spec-loader.js";
-import { INLINE_OPENAPI_REQUEST_BODY } from "./operation-types.js";
+import type { OpenAPIDoc, Operation } from "./spec-loader.js";
 
-const gql = createGraphQLClient();
 type GraphQLFieldInfo = { name: string; args: string[] };
 
 /**
@@ -84,20 +80,9 @@ export function executeOutputFields(
   return defaultExecuteOutputFields(operationId);
 }
 
-let schemaFieldCachePromise: Promise<{
-  query: GraphQLFieldInfo[];
-  mutation: GraphQLFieldInfo[];
-}> | null = null;
-
-/** Clear cached GraphQL field names (e.g. after changing CLAWQL_PROVIDER / spec). */
-export function resetSchemaFieldCache(): void {
-  schemaFieldCachePromise = null;
-}
-
 /**
- * On MCP startup: if `CLAWQL_INTROSPECTION_PATH` or bundled `introspection.json` exists,
- * load it so the first `execute` never hits the GraphQL proxy for field-name introspection.
- * Returns whether disk cache was applied.
+ * On startup: log whether pregenerated GraphQL introspection exists on disk (optional).
+ * Returns whether a file was found (for smoke scripts and diagnostics).
  */
 export async function preloadSchemaFieldCacheFromDisk(): Promise<boolean> {
   const spec = await loadSpec();
@@ -109,9 +94,11 @@ export async function preloadSchemaFieldCacheFromDisk(): Promise<boolean> {
   }
   const parsed = await tryLoadIntrospectionFromDisk();
   if (!parsed) return false;
-  schemaFieldCachePromise = Promise.resolve(parsed);
   return true;
 }
+
+/** @deprecated No-op; retained for test compatibility. */
+export function resetSchemaFieldCache(): void {}
 
 /** MCP `search` implementation (exported for tests). */
 export async function handleClawqlSearchToolInput(params: {
@@ -175,37 +162,29 @@ export async function handleClawqlExecuteToolInput(params: {
   }
 
   try {
-    const isGet = op.method === "GET";
-    const gqlOpType = isGet ? "query" : "mutation";
-    const { fieldName, fieldArgs } = await resolveGraphQLField(op, gqlOpType);
-    const normalizedArgs = normalizeArgsForField(op, args, fieldArgs);
     const selectedFields = outputFields?.length
       ? outputFields.join("\n        ")
       : defaultFields(operationId);
 
-    const varDecls = buildVarDeclarations(op, normalizedArgs);
-    const varArgs = buildVarArgs(normalizedArgs);
-    const header =
-      varDecls.trim().length > 0
-        ? `${gqlOpType} Execute(${varDecls})`
-        : `${gqlOpType} Execute`;
-    const fieldCall =
-      varArgs.trim().length > 0 ? `${fieldName}(${varArgs})` : fieldName;
-
-    const gqlDocument = `
-          ${header} {
-            ${fieldCall} {
-              ${selectedFields}
-            }
-          }
-        `;
-
-    const data = await gql.query<Record<string, unknown>>(gqlDocument, normalizedArgs);
-    const raw = data[fieldName];
+    const baseUrl = resolveApiBaseUrl(openapiForOp as OpenAPIDoc);
+    const inProc = await executeOperationGraphQL(
+      openapiForOp as OpenAPIDoc,
+      baseUrl,
+      op,
+      args,
+      selectedFields
+    );
+    if (!inProc.ok) {
+      throw new Error(inProc.error);
+    }
     return {
       content: [{
         type: "text",
-        text: JSON.stringify(projectRestByFields(raw, outputFields), null, 2),
+        text: JSON.stringify(
+          projectRestByFields(inProc.data, outputFields),
+          null,
+          2
+        ),
       }],
     };
   } catch (err: unknown) {
@@ -432,82 +411,6 @@ async function tryLoadIntrospectionFromDisk(): Promise<{
   } catch {
     return null;
   }
-}
-
-async function getSchemaFieldCache(): Promise<{
-  query: GraphQLFieldInfo[];
-  mutation: GraphQLFieldInfo[];
-}> {
-  if (!schemaFieldCachePromise) {
-    schemaFieldCachePromise = (async (): Promise<{
-      query: GraphQLFieldInfo[];
-      mutation: GraphQLFieldInfo[];
-    }> => {
-      // 1) Pregenerated file (CLAWQL_INTROSPECTION_PATH or bundled path for CLAWQL_PROVIDER)
-      const fromDisk = await tryLoadIntrospectionFromDisk();
-      if (fromDisk) return fromDisk;
-      // 2) Live introspection against graphql-proxy (requires OpenAPI→GraphQL build)
-      const data = await gql.query<{
-        __schema: {
-          queryType: {
-            fields: Array<{ name: string; args: Array<{ name: string }> }>;
-          };
-          mutationType: {
-            fields: Array<{ name: string; args: Array<{ name: string }> }>;
-          } | null;
-        };
-      }>(`
-      query IntrospectRootFields {
-        __schema {
-          queryType { fields { name args { name } } }
-          mutationType { fields { name args { name } } }
-        }
-      }
-    `);
-      return {
-        query: data.__schema.queryType.fields.map((f) => ({
-          name: f.name,
-          args: f.args.map((a) => a.name),
-        })),
-        mutation: (data.__schema.mutationType?.fields ?? []).map((f) => ({
-          name: f.name,
-          args: f.args.map((a) => a.name),
-        })),
-      };
-    })();
-  }
-  return schemaFieldCachePromise;
-}
-
-async function resolveGraphQLField(
-  op: Operation,
-  gqlOpType: "query" | "mutation"
-): Promise<{ fieldName: string; fieldArgs: string[] }> {
-  const cache = await getSchemaFieldCache();
-  const available = gqlOpType === "query" ? cache.query : cache.mutation;
-  const byName = new Map(available.map((f) => [f.name, f.args]));
-
-  const candidates: string[] = [];
-  // Omnigraph / GraphQL Mesh OpenAPI handler: field names from operationId
-  candidates.push(sanitizeNameForGraphQL(op.id));
-  candidates.push(operationIdToRunStyleName(op));
-  candidates.push(operationIdToGraphQLName(op));
-  if (op.responseBody) candidates.push(lowerFirst(op.responseBody));
-  if (
-    op.requestBody &&
-    op.requestBody !== INLINE_OPENAPI_REQUEST_BODY
-  ) {
-    candidates.push(lowerFirst(op.requestBody));
-  }
-
-  for (const candidate of candidates) {
-    const args = byName.get(candidate);
-    if (args) return { fieldName: candidate, fieldArgs: args };
-  }
-
-  throw new Error(
-    `No GraphQL ${gqlOpType} field found for operation "${op.id}". Tried: ${candidates.join(", ")}`
-  );
 }
 
 /** Default field selection so the agent gets useful data without specifying fields. */

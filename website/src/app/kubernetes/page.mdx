@@ -6,7 +6,7 @@ export const metadata = {
 
 # Kubernetes
 
-ClawQL is usually deployed as **two workloads**: **`clawql-mcp-http`** (MCP Streamable HTTP on **`/mcp`**) and **`clawql-graphql`** (GraphQL proxy). The MCP pods set **`GRAPHQL_URL`** to the in-cluster GraphQL service so **`execute`** can use GraphQL where supported. {{ className: 'lead' }}
+ClawQL is usually deployed as **`clawql-mcp-http`** (MCP Streamable HTTP on **`/mcp`**, GraphQL on **`/graphql`** on the same service). {{ className: 'lead' }}
 
 ## Local MCP on Docker Desktop
 
@@ -79,7 +79,7 @@ The image tag stays **`clawql-mcp:latest`**. After you change the repo, rebuild 
 
 ```bash
 make local-k8s-up
-kubectl --context docker-desktop -n clawql rollout restart deployment/clawql-graphql deployment/clawql-mcp-http
+kubectl --context docker-desktop -n clawql rollout restart deployment/clawql-mcp-http
 ```
 
 ### Teardown

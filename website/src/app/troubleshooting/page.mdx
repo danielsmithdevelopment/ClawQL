@@ -1,22 +1,16 @@
 export const metadata = {
   title: 'Troubleshooting',
   description:
-    'Common ClawQL issues: two-process setup, GraphQL translation, search limits, and large OpenAPI documents.',
+    'Common ClawQL issues: GraphQL translation, search limits, and large OpenAPI documents.',
 }
 
 # Troubleshooting
 
-ClawQL is designed around **spec-driven discovery** and a **lean execution path**. Most confusion comes from process wiring, spec selection, or expectations about retrieval quality on huge APIs. {{ className: 'lead' }}
-
-## Two processes
-
-**Symptom:** `execute` fails or hangs when GraphQL is unreachable.
-
-**Fix:** Run **`clawql-graphql`** before **`clawql-mcp`**, or use a deployment that starts both (Docker/Kubernetes/Cloud Run). Set **`GRAPHQL_URL`** if the proxy is not on `http://localhost:4000/graphql`.
+ClawQL is designed around **spec-driven discovery** and a **lean execution path**. Most confusion comes from spec selection or expectations about retrieval quality on huge APIs. {{ className: 'lead' }}
 
 ## GraphQL vs REST
 
-The proxy uses **`@omnigraph/openapi`** (same family as [GraphQL Mesh OpenAPI](https://the-guild.dev/graphql/mesh/docs/handlers/openapi)). Some vendor specs hit **translation edge cases**.
+In-process GraphQL uses **`@omnigraph/openapi`** (same family as [GraphQL Mesh OpenAPI](https://the-guild.dev/graphql/mesh/docs/handlers/openapi)). Some vendor specs hit **translation edge cases**.
 
 **Behavior:** When GraphQL resolution fails, **`execute` falls back to REST** using the same OpenAPI operation map. **`search`** always uses the full OpenAPI-derived index.
 

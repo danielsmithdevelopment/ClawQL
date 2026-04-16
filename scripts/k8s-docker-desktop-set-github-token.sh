@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # Create/update a Kubernetes Secret with GitHub + optional Cloudflare + optional Google tokens,
-# wire them into clawql-mcp-http and clawql-graphql, set CORS on MCP HTTP, and restart.
+# wire them into clawql-mcp-http, set CORS on MCP HTTP, and restart.
 #
 # Auth resolution (see src/auth-headers.ts mergedAuthHeaders):
 # - Operations with specLabel "github" use CLAWQL_GITHUB_TOKEN (and friends).
 # - With CLAWQL_PROVIDER=default-multi-provider, REST fallback often needs CLAWQL_BEARER_TOKEN
 #   when the effective label is not "github". We store the same PAT as both CLAWQL_GITHUB_TOKEN
-#   and CLAWQL_BEARER_TOKEN so GitHub REST execute works from both MCP and GraphQL.
+#   and CLAWQL_BEARER_TOKEN so GitHub REST execute works.
 #
 # For the default merged bundle (Google top50 + Cloudflare + GitHub), set:
 #   CLAWQL_GITHUB_TOKEN, CLAWQL_CLOUDFLARE_API_TOKEN, CLAWQL_GOOGLE_ACCESS_TOKEN or GOOGLE_ACCESS_TOKEN
@@ -36,7 +36,6 @@ SECRET_NAME="${SECRET_NAME:-clawql-github-auth}"
 NAMESPACE="${NAMESPACE:-clawql}"
 # Backward compat: DEPLOY was the MCP deployment name only.
 DEPLOY_MCP="${DEPLOY_MCP:-${DEPLOY:-clawql-mcp-http}}"
-DEPLOY_GRAPHQL="${DEPLOY_GRAPHQL:-clawql-graphql}"
 
 KUBECTL_FLAG=()
 if kubectl config get-contexts -o name 2>/dev/null | grep -qx 'docker-desktop'; then
@@ -112,7 +111,6 @@ attach_secret_env() {
 }
 
 attach_secret_env "$DEPLOY_MCP"
-attach_secret_env "$DEPLOY_GRAPHQL"
 
 if [[ "${CLAWQL_SKIP_CORS:-}" == "1" ]]; then
   echo "==> Removing CLAWQL_CORS_ALLOW_ORIGIN from deployment/$DEPLOY_MCP (CLAWQL_SKIP_CORS=1)"
@@ -127,17 +125,13 @@ else
   fi
 fi
 
-echo "==> Restarting deployments ($DEPLOY_MCP, $DEPLOY_GRAPHQL if present)"
+echo "==> Restarting deployment $DEPLOY_MCP"
 if kc -n "$NAMESPACE" get "deployment/$DEPLOY_MCP" >/dev/null 2>&1; then
   kc -n "$NAMESPACE" rollout restart "deployment/$DEPLOY_MCP"
   kc -n "$NAMESPACE" rollout status "deployment/$DEPLOY_MCP" --timeout=300s
-fi
-if kc -n "$NAMESPACE" get "deployment/$DEPLOY_GRAPHQL" >/dev/null 2>&1; then
-  kc -n "$NAMESPACE" rollout restart "deployment/$DEPLOY_GRAPHQL"
-  kc -n "$NAMESPACE" rollout status "deployment/$DEPLOY_GRAPHQL" --timeout=300s
 fi
 
 echo ""
 echo "Done. MCP: http://localhost:8080/mcp"
 echo "Health:  curl -s http://localhost:8080/healthz"
-echo "GraphQL (in-cluster): service/clawql-graphql:4000 — execute uses this; both deployments get CLAWQL_GITHUB_TOKEN + CLAWQL_BEARER_TOKEN."
+echo "GraphQL: same pod — http://localhost:8080/graphql (in-process with MCP)."

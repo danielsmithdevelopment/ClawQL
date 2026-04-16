@@ -80,7 +80,6 @@ echo "==> Applying ${OVERLAY}"
 kubectl "${KUBECTL_FLAG[@]}" apply -k "${OVERLAY}"
 
 echo "==> Waiting for rollouts (namespace clawql)"
-kubectl "${KUBECTL_FLAG[@]}" -n clawql rollout status deployment/clawql-graphql --timeout=300s
 kubectl "${KUBECTL_FLAG[@]}" -n clawql rollout status deployment/clawql-mcp-http --timeout=300s
 
 echo ""

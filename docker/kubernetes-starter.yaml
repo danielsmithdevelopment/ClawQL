@@ -6,62 +6,6 @@ metadata:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: clawql-graphql
-  namespace: clawql
-  labels:
-    app: clawql-graphql
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: clawql-graphql
-  template:
-    metadata:
-      labels:
-        app: clawql-graphql
-    spec:
-      containers:
-        - name: clawql-graphql
-          image: clawql-mcp:latest
-          imagePullPolicy: IfNotPresent
-          args: ["dist/graphql-proxy.js"]
-          ports:
-            - containerPort: 4000
-              name: http
-          env:
-            - name: CLAWQL_PROVIDER
-              value: google-top50
-            - name: GRAPHQL_PORT
-              value: "4000"
-            - name: NODE_OPTIONS
-              value: "--max-old-space-size=768"
-          resources:
-            requests:
-              cpu: "250m"
-              memory: "512Mi"
-            limits:
-              cpu: "1"
-              memory: "1Gi"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: clawql-graphql
-  namespace: clawql
-  labels:
-    app: clawql-graphql
-spec:
-  type: ClusterIP
-  selector:
-    app: clawql-graphql
-  ports:
-    - name: http
-      port: 4000
-      targetPort: 4000
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
   name: clawql-mcp-http
   namespace: clawql
   labels:
@@ -86,8 +30,6 @@ spec:
           env:
             - name: CLAWQL_PROVIDER
               value: google-top50
-            - name: GRAPHQL_URL
-              value: http://clawql-graphql:4000/graphql
             - name: PORT
               value: "8080"
             - name: MCP_PATH

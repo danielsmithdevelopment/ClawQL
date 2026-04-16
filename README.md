@@ -6,11 +6,7 @@ MCP server: **core** tools **`search`** and **`execute`** (OpenAPI/Discovery), p
 clients such as [Cursor](https://cursor.com/docs/context/mcp) or Claude Desktop
 run this server over **stdio** or **HTTP** and expose **`search`**, **`execute`**, and (when configured) **`sandbox_exec`**, **`memory_ingest`**, **`memory_recall`** to the model.
 
-**Why two processes?** `search` runs inside the MCP process. The **`execute`**
-tool calls a **local GraphQL proxy** (`clawql-graphql`, default
-`http://localhost:4000/graphql`) so responses stay field-selected and small; that
-proxy must be running **before** you use `execute` (second terminal or process
-manager). Deployments (Docker/K8s/Cloud Run) wire both for you.
+**Architecture:** **`search`** and **`execute`** run in one MCP process. For single-spec APIs, **`execute`** uses an internal **OpenAPI→GraphQL** path so responses stay field-selected and small; **`clawql-mcp-http`** also exposes **`/graphql`** on the same port for debugging. Multi-spec **`execute`** uses REST only.
 
 **Bring your own OpenAPI 3** (JSON/YAML file or URL), or use **Swagger 2**
 (converted automatically), or a **Google Discovery** document URL. If no spec
@@ -25,35 +21,31 @@ available via **`CLAWQL_PROVIDER`** (see [`providers/README.md`](providers/READM
 ## First 5 minutes
 
 1. Install: `npm install clawql-mcp` (or use `npx -p clawql-mcp` as below; expect **~90 MB** on disk, see [Install](#install-npm--yarn--bun)).
-2. **Terminal 1:** `npx -p clawql-mcp clawql-graphql`
-3. **Terminal 2:** `npx -p clawql-mcp clawql-mcp` (default bundled specs) **or** `CLAWQL_PROVIDER=all-providers npx -p clawql-mcp clawql-mcp`
-4. Point your MCP client at **`clawql-mcp`** on stdio; set **`GRAPHQL_URL=http://localhost:4000/graphql`** if the client env needs it — see [Claude Desktop / Cursor config](#claude-desktop--cursor-config).
+2. Run **`npx -p clawql-mcp clawql-mcp`** (default bundled specs) **or** `CLAWQL_PROVIDER=all-providers npx -p clawql-mcp clawql-mcp`
+3. Point your MCP client at **`clawql-mcp`** on stdio — see [Claude Desktop / Cursor config](#claude-desktop--cursor-config).
 
 From there: custom spec via `CLAWQL_SPEC_PATH` / `CLAWQL_SPEC_URL`, or read [Configure the API spec](#configure-the-api-spec) for merged presets and precedence.
 
 ## TL;DR
 
 - **Install:** `npm install clawql-mcp` — full [Install](#install-npm--yarn--bun) notes (binaries, `npx`, **~90 MB** on disk).
-- **Run** (no global install; **two terminals** — GraphQL proxy, then MCP). **Pick one** spec source:
+- **Run** (no global install). **Pick one** spec source:
 
   1. **Bundled specs** — nothing to download; uses pre-shipped `providers/` in the package (**`CLAWQL_PROVIDER=all-providers`** = every bundled vendor):
 
      ```bash
-     npx -p clawql-mcp clawql-graphql
      CLAWQL_PROVIDER=all-providers npx clawql-mcp
      ```
 
   2. **Local OpenAPI** (JSON/YAML; Swagger 2 is converted) — path on disk:
 
      ```bash
-     npx -p clawql-mcp clawql-graphql
      CLAWQL_SPEC_PATH=./openapi.yaml npx clawql-mcp
      ```
 
   3. **Remote spec** — HTTPS URL to OpenAPI (or YAML/JSON):
 
      ```bash
-     npx -p clawql-mcp clawql-graphql
      CLAWQL_SPEC_URL=https://example.com/openapi.json npx clawql-mcp
      ```
 
@@ -80,29 +72,24 @@ Binaries (after install):
 | Command | Purpose |
 |--------|---------|
 | `clawql-mcp` | MCP server on stdio (what Cursor/Claude connect to) |
-| `clawql-mcp-http` | MCP over Streamable HTTP (`PORT`, `/mcp`, `/healthz`) |
-| `clawql-graphql` | Local GraphQL proxy used by `execute` |
+| `clawql-mcp-http` | MCP over Streamable HTTP (`PORT`, `/mcp`, `/healthz`, `/graphql`) |
 
-Supported **ESM subpaths** (see `package.json` → `exports`): `clawql-mcp` (stdio entry), `clawql-mcp/server-http`, `clawql-mcp/graphql-proxy`. Prefer the **binaries** above for normal use; imports run the same startup side effects as `node dist/...`.
+Supported **ESM subpaths** (see `package.json` → `exports`): `clawql-mcp` (stdio entry), `clawql-mcp/server-http`, `clawql-mcp/graphql-proxy` (programmatic OpenAPI→GraphQL app builder). Prefer the **binaries** above for normal use.
 
 Example (after `npm install -g clawql-mcp` or with local `node_modules/.bin` on `PATH`):
 
 ```bash
 export CLAWQL_PROVIDER=all-providers
-clawql-graphql &               # terminal 1 — listens on GRAPHQL_PORT (default 4000)
-clawql-mcp                     # terminal 2 — MCP over stdio
+clawql-mcp
 ```
 
 Run a published package **without** a global install:
 
 ```bash
-npx -p clawql-mcp clawql-graphql
 CLAWQL_PROVIDER=all-providers npx clawql-mcp
 ```
 
-(`clawql-graphql` still uses `npx -p clawql-mcp` so `npx` picks the binary from that package.)
-
-Same **two-terminal** pattern with a **local file** (`CLAWQL_SPEC_PATH=…`) or **URL** (`CLAWQL_SPEC_URL=…` / `CLAWQL_DISCOVERY_URL=…`) — see [TL;DR](#tldr).
+Same pattern with a **local file** (`CLAWQL_SPEC_PATH=…`) or **URL** (`CLAWQL_SPEC_URL=…` / `CLAWQL_DISCOVERY_URL=…`) — see [TL;DR](#tldr).
 
 ### Docker
 
@@ -541,16 +528,12 @@ binary name:
       "command": "npx",
       "args": ["-p", "clawql-mcp", "clawql-mcp"],
       "env": {
-        "CLAWQL_SPEC_PATH": "/absolute/path/to/openapi.yaml",
-        "GRAPHQL_URL": "http://localhost:4000/graphql"
+        "CLAWQL_SPEC_PATH": "/absolute/path/to/openapi.yaml"
       }
     }
   }
 }
 ```
-
-Start `clawql-graphql` (same `-p` pattern) in another terminal first, or use a
-process manager.
 
 **From a git checkout** (development):
 
@@ -561,8 +544,7 @@ process manager.
       "command": "node",
       "args": ["/absolute/path/to/ClawQL/dist/server.js"],
       "env": {
-        "CLAWQL_SPEC_PATH": "/absolute/path/to/openapi.yaml",
-        "GRAPHQL_URL": "http://localhost:4000/graphql"
+        "CLAWQL_SPEC_PATH": "/absolute/path/to/openapi.yaml"
       }
     }
   }
@@ -589,10 +571,7 @@ Or with `tsx`:
 
 ## Cloud Run deployment (remote MCP)
 
-Run ClawQL in Cloud Run as two services:
-
-- `clawql-mcp-http` (MCP endpoint at `/mcp`)
-- `clawql-graphql` (GraphQL proxy endpoint at `/graphql`)
+Run ClawQL in Cloud Run as one service (**`clawql-mcp-http`**: MCP at **`/mcp`**, GraphQL at **`/graphql`** on the same URL).
 
 Use the one-shot deployment script:
 
@@ -618,7 +597,7 @@ Full guide + options are in [`docs/deploy-cloud-run.md`](docs/deploy-cloud-run.m
 
 ## Kubernetes (local MCP on Docker Desktop)
 
-Run **MCP Streamable HTTP** and **clawql-graphql** in a local cluster so clients can use a fixed URL (typically **`http://localhost:8080/mcp`**) instead of stdio.
+Run **MCP Streamable HTTP** in a local cluster so clients can use a fixed URL (typically **`http://localhost:8080/mcp`**) instead of stdio. **`/graphql`** is on the same service.
 
 1. Enable **Kubernetes** in Docker Desktop.
 2. From the repo root:

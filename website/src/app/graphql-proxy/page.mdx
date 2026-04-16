@@ -1,24 +1,20 @@
 export const metadata = {
-  title: 'GraphQL proxy',
+  title: 'GraphQL layer',
   description:
-    'Why ClawQL runs clawql-graphql alongside the MCP server, and how execute uses GraphQL or REST.',
+    'How ClawQL uses OpenAPI→GraphQL inside the MCP process for lean execute responses.',
 }
 
-# GraphQL proxy
+# GraphQL layer
 
-The **`clawql-graphql`** process exposes **`http://localhost:4000/graphql`** by default. **`execute`** calls this proxy so responses can be **field-projected** before they reach the model—smaller payloads than many raw REST bodies. {{ className: 'lead' }}
+Single-spec **`execute`** runs **OpenAPI→GraphQL** **in the same process** as **`clawql-mcp`** / **`clawql-mcp-http`**, so responses can be **field-projected** before they reach the model—smaller payloads than many raw REST bodies. Streamable HTTP also exposes **`/graphql`** on the MCP port for debugging. {{ className: 'lead' }}
 
-## Why a second process?
+## Same process as MCP
 
-**`search`** is satisfied entirely inside **`clawql-mcp`**. **`execute`** delegates to the proxy so GraphQL resolution, introspection-driven field matching, and upstream HTTP stay **isolated** from the stdio MCP lifecycle. Deployments treat both as first-class services with a stable internal URL (`GRAPHQL_URL`).
-
-## How it maps to your API
-
-The proxy is generated from the same **OpenAPI** (or Discovery→OpenAPI) as search, using **`@omnigraph/openapi`** in the [GraphQL Mesh](https://the-guild.dev/graphql/mesh/docs/handlers/openapi) family. Upstream calls use spec **`servers`** or **`CLAWQL_API_BASE_URL`**.
+**`search`** and **`execute`** share one runtime. **`execute`** builds the GraphQL schema from the loaded spec, resolves the operation field, and proxies to upstream REST with **`@omnigraph/openapi`** (same engine as [GraphQL Mesh OpenAPI](https://the-guild.dev/graphql/mesh/docs/handlers/openapi)). Upstream calls use spec **`servers`** or **`CLAWQL_API_BASE_URL`**.
 
 ## Multi-spec and fallback
 
 - **Merged specs:** **`execute`** uses **REST** per owning document; GraphQL is not the execution path for that mode today.
 - **Single spec:** GraphQL is preferred when the schema builds; on translation or runtime errors, **`execute` falls back to REST** with the same operation map.
 
-Pregenerated **`introspection.json`** (bundled or `CLAWQL_INTROSPECTION_PATH`) speeds field matching at MCP startup.
+Pregenerated **`introspection.json`** (bundled or **`CLAWQL_INTROSPECTION_PATH`**) speeds field matching at MCP startup.
