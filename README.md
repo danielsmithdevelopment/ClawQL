@@ -30,7 +30,6 @@ From there: custom spec via `CLAWQL_SPEC_PATH` / `CLAWQL_SPEC_URL`, or read [Con
 
 - **Install:** `npm install clawql-mcp` — full [Install](#install-npm--yarn--bun) notes (binaries, `npx`, **~90 MB** on disk).
 - **Run** (no global install). **Pick one** spec source:
-
   1. **Bundled specs** — nothing to download; uses pre-shipped `providers/` in the package (**`CLAWQL_PROVIDER=all-providers`** = every bundled vendor):
 
      ```bash
