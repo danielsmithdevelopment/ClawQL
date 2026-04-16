@@ -24,6 +24,9 @@ import {
   operationIdToGraphQLName,
   operationIdToRunStyleName,
 } from "./graphql-execute-helpers.js";
+import { useInProcessGraphQL } from "./graphql-combined-mode.js";
+import { executeOperationGraphQL } from "./graphql-in-process-execute.js";
+import { introspectRootFieldsFromOpenApi } from "./graphql-introspection-local.js";
 import { loadSpec, resolveApiBaseUrl } from "./spec-loader.js";
 import { searchOperations, formatSearchResults } from "./spec-search.js";
 import { createGraphQLClient } from "./graphql-client.js";
@@ -31,7 +34,7 @@ import { executeRestOperation } from "./rest-operation.js";
 import { handleClawqlCodeToolInput } from "./sandbox-bridge-client.js";
 import { handleMemoryIngestToolInput } from "./memory-ingest.js";
 import { handleMemoryRecallToolInput } from "./memory-recall.js";
-import type { Operation } from "./spec-loader.js";
+import type { OpenAPIDoc, Operation } from "./spec-loader.js";
 import { INLINE_OPENAPI_REQUEST_BODY } from "./operation-types.js";
 
 const gql = createGraphQLClient();
@@ -182,6 +185,30 @@ export async function handleClawqlExecuteToolInput(params: {
     const selectedFields = outputFields?.length
       ? outputFields.join("\n        ")
       : defaultFields(operationId);
+
+    if (useInProcessGraphQL()) {
+      const baseUrl = resolveApiBaseUrl(openapiForOp as OpenAPIDoc);
+      const inProc = await executeOperationGraphQL(
+        openapiForOp as OpenAPIDoc,
+        baseUrl,
+        op,
+        args,
+        selectedFields
+      );
+      if (!inProc.ok) {
+        throw new Error(inProc.error);
+      }
+      return {
+        content: [{
+          type: "text",
+          text: JSON.stringify(
+            projectRestByFields(inProc.data, outputFields),
+            null,
+            2
+          ),
+        }],
+      };
+    }
 
     const varDecls = buildVarDeclarations(op, normalizedArgs);
     const varArgs = buildVarArgs(normalizedArgs);
@@ -446,6 +473,17 @@ async function getSchemaFieldCache(): Promise<{
       // 1) Pregenerated file (CLAWQL_INTROSPECTION_PATH or bundled path for CLAWQL_PROVIDER)
       const fromDisk = await tryLoadIntrospectionFromDisk();
       if (fromDisk) return fromDisk;
+      if (useInProcessGraphQL()) {
+        const loaded = await loadSpec();
+        if (loaded.multi) {
+          throw new Error(
+            "[tools] CLAWQL_COMBINED_MODE: multi-spec execute uses REST only; " +
+              "cannot introspect GraphQL root fields. Set CLAWQL_INTROSPECTION_PATH or unset COMBINED_MODE."
+          );
+        }
+        const baseUrl = resolveApiBaseUrl(loaded.openapi);
+        return introspectRootFieldsFromOpenApi(loaded.openapi, baseUrl);
+      }
       // 2) Live introspection against graphql-proxy (requires OpenAPI→GraphQL build)
       const data = await gql.query<{
         __schema: {

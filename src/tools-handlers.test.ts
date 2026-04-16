@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as specLoader from "./spec-loader.js";
+import { resetSpecCache } from "./spec-loader.js";
 import type { OpenAPIDoc } from "./spec-loader.js";
 import type { Operation } from "./spec-loader.js";
 import { handleMemoryIngestToolInput } from "./memory-ingest.js";
@@ -123,6 +124,84 @@ describe("MCP tool handlers", () => {
         expect(data.ok).toBe(true);
       }
     );
+  });
+
+  it("handleClawqlExecuteToolInput uses in-process GraphQL when CLAWQL_COMBINED_MODE=1", async () => {
+    const prevCombined = process.env.CLAWQL_COMBINED_MODE;
+    process.env.CLAWQL_COMBINED_MODE = "1";
+    try {
+      await withFetchServer(
+        async (req) => {
+          const path = new URL(req.url).pathname;
+          if (req.method === "GET" && path.startsWith("/pets")) {
+            return new Response(JSON.stringify([{ id: 1, name: "dog" }]), {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
+            });
+          }
+          return new Response("not found", { status: 404 });
+        },
+        async (origin) => {
+          const openapi: OpenAPIDoc = {
+            openapi: "3.0.3",
+            info: { title: "Pet", version: "1" },
+            servers: [{ url: origin }],
+            paths: {
+              "/pets": {
+                get: {
+                  operationId: "listPets",
+                  responses: {
+                    "200": {
+                      description: "ok",
+                      content: {
+                        "application/json": {
+                          schema: {
+                            type: "array",
+                            items: { type: "object", additionalProperties: true },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            components: { schemas: {} },
+          };
+
+          vi.spyOn(specLoader, "loadSpec").mockResolvedValue({
+            operations: [
+              {
+                id: "listPets",
+                method: "GET",
+                path: "/pets",
+                flatPath: "/pets",
+                description: "list",
+                resource: "pets",
+                parameters: {},
+              } as Operation,
+            ],
+            openapi,
+            multi: false,
+            rawSource: {},
+          });
+
+          resetSpecCache();
+          resetSchemaFieldCache();
+
+          const out = await handleClawqlExecuteToolInput({
+            operationId: "listPets",
+            args: {},
+          });
+          const data = JSON.parse(out.content[0].text) as unknown;
+          expect(Array.isArray(data)).toBe(true);
+          expect((data as { name: string }[])[0]?.name).toBe("dog");
+        }
+      );
+    } finally {
+      if (prevCombined === undefined) delete process.env.CLAWQL_COMBINED_MODE;
+      else process.env.CLAWQL_COMBINED_MODE = prevCombined;
+    }
   });
 });
 

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Unified GraphQL path ([#34](https://github.com/danielsmithdevelopment/ClawQL/issues/34)):** optional **`CLAWQL_COMBINED_MODE=1`** runs OpenAPI→GraphQL **`execute`** in-process (no **`GRAPHQL_URL`** hop). Streamable HTTP (**`clawql-mcp-http`**) mounts **`/graphql`** on the same server when combined mode is on. **`CLAWQL_GRAPHQL_EXTERNAL_URL`** forces split (HTTP) mode and overrides **`GRAPHQL_URL`**.
 - **`memory.db`** (SQLite via **sql.js**) colocated with the vault: **`vault_document`**, **`vault_chunk`** (`paragraph_v1` chunking contract), and **`wikilink_edge`** rows; rebuilt after successful **`memory_ingest`**, merged into **`memory_recall`** wikilink traversal when enabled. Operator reference: **`docs/memory-db-schema.md`**.
 
 ## [2.0.0] - 2026-04-14

@@ -349,6 +349,8 @@ If Stage 1 does **not** apply, one document is loaded in this order:
 | `CLAWQL_DISCOVERY_URL` | Google Discovery JSON URL (e.g. other GCP APIs) |
 | `CLAWQL_PROVIDER` | **Merged** preset in Stage 1, or **single** bundled vendor in Stage 2 — see [Configure the API spec](#configure-the-api-spec) (not both at once) |
 | `CLAWQL_INTROSPECTION_PATH` | Pregenerated GraphQL introspection JSON (optional; speeds MCP `execute` field matching) |
+| `CLAWQL_COMBINED_MODE` | Set to **`1`** / **`true`** / **`yes`** to run GraphQL **`execute`** in-process (no `GRAPHQL_URL` hop). With **`npm run start:http`**, **`/graphql`** is served on the same port for debugging ([#34](https://github.com/danielsmithdevelopment/ClawQL/issues/34)). |
+| `CLAWQL_GRAPHQL_EXTERNAL_URL` | Optional explicit GraphQL HTTP URL for split mode; when set, overrides **`GRAPHQL_URL`** and disables in-process execution even if **`CLAWQL_COMBINED_MODE`** is set. |
 | `CLAWQL_API_BASE_URL` | Override REST base URL (if spec has no `servers` or you need a different host) |
 | `CLAWQL_OBSIDIAN_VAULT_PATH` | Absolute path to an Obsidian Markdown vault (shared volume/NFS). When set, the server **checks** the path exists and is readable/writable at startup. Omit locally to skip the check; container images default to **`/vault`** (see [Docker](docker/README.md)). Used with **[ClawQL-Agent](https://github.com/danielsmithdevelopment/ClawQL-Agent)** and future memory tools. |
 | `CLAWQL_SANDBOX_BRIDGE_URL` | Origin of the [sandbox bridge Worker](cloudflare/sandbox-bridge/README.md) (e.g. `https://….workers.dev`). Required for **`sandbox_exec`**. |

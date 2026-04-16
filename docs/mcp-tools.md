@@ -5,7 +5,7 @@ ClawQL exposes **five** tools over MCP (stdio or Streamable HTTP). The **core** 
 | Tool | Requires | Purpose |
 |------|----------|---------|
 | `search` | Loaded spec | Rank operations by natural-language intent |
-| `execute` | GraphQL proxy (`GRAPHQL_URL`) for single-spec; REST in multi-spec | Run one operation with lean responses |
+| `execute` | Single-spec: GraphQL via **`GRAPHQL_URL`** (split) or in-process when **`CLAWQL_COMBINED_MODE=1`**; multi-spec: REST | Run one operation with lean responses |
 | `sandbox_exec` | `CLAWQL_SANDBOX_BRIDGE_URL` + token | Run a snippet in a remote Cloudflare Sandbox via Worker bridge (not local execution) |
 | `memory_ingest` | `CLAWQL_OBSIDIAN_VAULT_PATH` | Write Obsidian Markdown under `Memory/`; refreshes **`memory.db`** (see **[memory-db-schema.md](memory-db-schema.md)**) when enabled |
 | `memory_recall` | `CLAWQL_OBSIDIAN_VAULT_PATH` | Keyword search + `[[wikilink]]` hops; optionally merges edges from **`memory.db`** and can resync the DB when **`CLAWQL_MEMORY_DB_SYNC_ON_RECALL=1`** |

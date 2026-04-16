@@ -21,6 +21,8 @@
 import fetch from "node-fetch";
 
 function getGraphqlUrl(): string {
+  const explicit = process.env.CLAWQL_GRAPHQL_EXTERNAL_URL?.trim();
+  if (explicit) return explicit;
   return process.env.GRAPHQL_URL ?? "http://localhost:4000/graphql";
 }
 

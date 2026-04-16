@@ -4,6 +4,7 @@ import { withFetchServer } from "./test-utils/fetch-test-server.js";
 
 afterEach(() => {
   delete process.env.GRAPHQL_URL;
+  delete process.env.CLAWQL_GRAPHQL_EXTERNAL_URL;
 });
 
 describe("graphql-client", () => {
@@ -62,5 +63,22 @@ describe("graphql-client", () => {
         "GraphQL response contained no data."
       );
     });
+  });
+
+  it("prefers CLAWQL_GRAPHQL_EXTERNAL_URL over GRAPHQL_URL", async () => {
+    await withFetchServer(
+      async (req) => {
+        const body = await req.json();
+        expect(body.query).toContain("ping");
+        return Response.json({ data: { ping: "from-external" } });
+      },
+      async (origin) => {
+        process.env.GRAPHQL_URL = "http://wrong-host.invalid/graphql";
+        process.env.CLAWQL_GRAPHQL_EXTERNAL_URL = `${origin}/graphql`;
+        const client = createGraphQLClient();
+        const out = await client.query<{ ping: string }>("query X { ping }");
+        expect(out.ping).toBe("from-external");
+      }
+    );
   });
 });

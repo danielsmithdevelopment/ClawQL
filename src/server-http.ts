@@ -11,6 +11,8 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { createMcpExpressApp } from "@modelcontextprotocol/sdk/server/express.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
+import { useInProcessGraphQL } from "./graphql-combined-mode.js";
+import { attachGraphqlHttpToMcpApp } from "./graphql-http-attach.js";
 import { loadSpec } from "./spec-loader.js";
 import { preloadSchemaFieldCacheFromDisk, registerTools } from "./tools.js";
 import { validateObsidianVaultAtStartup } from "./vault-config.js";
@@ -99,6 +101,10 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   });
 
   app.use(applyCorsIfConfigured);
+
+  if (useInProcessGraphQL()) {
+    await attachGraphqlHttpToMcpApp(app);
+  }
 
   app.get("/healthz", (_req, res) => {
     res.json({ status: "ok", transport: "streamable-http", endpoint: mcpPath });

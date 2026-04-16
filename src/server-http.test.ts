@@ -18,10 +18,14 @@ describe("server-http", () => {
     saved.CLAWQL_PROVIDER = process.env.CLAWQL_PROVIDER;
     saved.CLAWQL_SPEC_PATHS = process.env.CLAWQL_SPEC_PATHS;
     saved.CLAWQL_CORS_ALLOW_ORIGIN = process.env.CLAWQL_CORS_ALLOW_ORIGIN;
+    saved.CLAWQL_COMBINED_MODE = process.env.CLAWQL_COMBINED_MODE;
+    saved.CLAWQL_GRAPHQL_EXTERNAL_URL = process.env.CLAWQL_GRAPHQL_EXTERNAL_URL;
     process.env.CLAWQL_SPEC_PATH = minimalSpec;
     delete process.env.CLAWQL_PROVIDER;
     delete process.env.CLAWQL_SPEC_PATHS;
     delete process.env.CLAWQL_CORS_ALLOW_ORIGIN;
+    delete process.env.CLAWQL_COMBINED_MODE;
+    delete process.env.CLAWQL_GRAPHQL_EXTERNAL_URL;
     resetSpecCache();
     resetSchemaFieldCache();
   });
@@ -51,6 +55,24 @@ describe("server-http", () => {
       await once(server, "close");
     }
   }
+
+  it("POST /graphql responds when CLAWQL_COMBINED_MODE=1", async () => {
+    process.env.CLAWQL_COMBINED_MODE = "1";
+    await withHttpServer(async (base) => {
+      const res = await fetch(`${base}/graphql`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          query: "{ __schema { queryType { name } } }",
+        }),
+      });
+      expect(res.ok).toBe(true);
+      const body = (await res.json()) as {
+        data?: { __schema?: { queryType?: { name?: string } } };
+      };
+      expect(body.data?.__schema?.queryType?.name).toBeTruthy();
+    });
+  });
 
   it("GET /healthz returns ok and endpoint path", async () => {
     await withHttpServer(async (base) => {
