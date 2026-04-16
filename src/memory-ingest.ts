@@ -9,6 +9,7 @@ import {
   withVaultWriteLock,
   writeVaultTextFileAtomic,
 } from "./vault-utils.js";
+import { logMcpToolShape } from "./mcp-tool-log.js";
 
 const MEMORY_DIR = "Memory";
 
@@ -221,6 +222,19 @@ export async function runMemoryIngest(input: MemoryIngestInput): Promise<MemoryI
 export async function handleMemoryIngestToolInput(
   params: MemoryIngestInput
 ): Promise<{ content: { type: "text"; text: string }[] }> {
+  logMcpToolShape("memory_ingest", {
+    titleChars: params.title?.length ?? 0,
+    append: params.append,
+    hasInsights: Boolean(params.insights?.trim()),
+    hasConversation: Boolean(params.conversation?.trim()),
+    hasToolOutputs: Boolean(
+      typeof params.toolOutputs === "string"
+        ? params.toolOutputs.trim()
+        : params.toolOutputs?.some((s) => s.trim())
+    ),
+    wikilinkCount: params.wikilinks?.length ?? 0,
+    hasSessionId: Boolean(params.sessionId?.trim()),
+  });
   const result = await runMemoryIngest(params);
   return {
     content: [{ type: "text", text: JSON.stringify(result, null, 2) }],

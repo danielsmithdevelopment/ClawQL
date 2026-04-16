@@ -14,7 +14,7 @@ This document explains **what was built**, **why**, **how the pieces fit togethe
 |------|------|
 | **[#27](https://github.com/danielsmithdevelopment/ClawQL/issues/27)** | Primary driver: **`memory.db` schema**, **wikilink relations**, **chunking contract**, migrations, ingest + recall wiring. |
 | **[#24](https://github.com/danielsmithdevelopment/ClawQL/issues/24)** | Epic: hybrid memory (sqlite-vec + Cuckoo + vault); this work is the **relational foundation** before vectors and membership filters land. |
-| **[#16](https://github.com/danielsmithdevelopment/ClawQL/issues/16)** | Future: embeddings for `memory_recall` and spec `search`; **`vector-search-design.md`** describes direction. |
+| **[#16](https://github.com/danielsmithdevelopment/ClawQL/issues/16)** | **Shipped for `memory_recall`:** optional embeddings + sqlite/postgres vector backends (see **`hybrid-memory-backends.md`**). **Still open / future:** semantic retrieval for spec **`search`**; **`vector-search-design.md`** tracks direction. |
 
 ### 1.2 Product intent
 
@@ -125,6 +125,14 @@ Implemented as **`vaultChunkId()`** so re-ingest replaces the same logical chunk
 | **`CLAWQL_MEMORY_DB_SYNC_ON_RECALL`** | Set **`1`** to run **`syncMemoryDbFromDocuments`** with the same file set recall just read (full sql.js **export** each time — heavier). Default **unset / off**. |
 | **`CLAWQL_MEMORY_CHUNK_MAX_CHARS`** | Paragraph window size before hard-split (`2000`). |
 | **`CLAWQL_MEMORY_RECALL_SCAN_ROOT`**, **`CLAWQL_MEMORY_RECALL_MAX_FILES`** | Define which files participate in both recall and **ingest-triggered full rescan**. |
+| **`CLAWQL_VECTOR_BACKEND`** | Default **off** (unset): keyword + wikilinks only. **`sqlite`**: chunk vectors + in-process KNN in **`memory.db`**. **`postgres`**: **`pgvector`** when **`CLAWQL_VECTOR_DATABASE_URL`** is set; otherwise SQLite vectors + one-time warning. Full tradeoffs: **[hybrid-memory-backends.md](hybrid-memory-backends.md)**. |
+| **`CLAWQL_VECTOR_DATABASE_URL`** | Postgres URL when **`CLAWQL_VECTOR_BACKEND=postgres`** and you want server-side ANN; optional at first deploy. |
+| **`CLAWQL_EMBEDDING_*`**, **`OPENAI_API_KEY`** | OpenAI-compatible **`/embeddings`** for hybrid recall; see **[README.md](../README.md)** env table. |
+| **`CLAWQL_MEMORY_VECTOR_*`** | Vector leg tuning for **`memory_recall`**: similarity floor, score scaling, KNN caps, Postgres **dual-write** (see README). |
+| **`CLAWQL_MCP_LOG_TOOLS`** | Set **`1`** to emit **shape-only** **`console.error`** lines for **`memory_ingest`** / **`memory_recall`** (field lengths and flags — **no** query text, titles, or bodies). |
+| **`CLAWQL_CUCKOO_*`** | **Reserved** for approximate membership ([#25](https://github.com/danielsmithdevelopment/ClawQL/issues/25)); not read by the runtime yet. |
+
+**Staged rollout:** start with **`CLAWQL_MEMORY_DB`** default (sidecar on when the vault is set) and vectors **off**; enable **`CLAWQL_VECTOR_BACKEND=sqlite`** when you want semantic seeds without Postgres; move to **`postgres`** when you need **`pgvector`** in a shared DB. **`CLAWQL_MEMORY_DB=0`** disables the SQLite sidecar entirely (lexical recall from vault files only).
 
 ---
 
@@ -172,7 +180,7 @@ Each **`loadWikilinkEdgesFromDatabase`** call: open/read or empty, migrate, sele
 |-------|--------|
 | **#26** | sqlite-vec + embedding pipeline; populate `embedding` / `embedding_model`. |
 | **#25** | Cuckoo membership layer keyed off stable ids from this schema. |
-| **#28** | `CLAWQL_VECTOR_*` / `CLAWQL_CUCKOO_*` MCP + operator docs consolidation. |
+| **#28** | ~~Operator docs + optional tool-shape logging~~ — **done** (this section + **`CLAWQL_MCP_LOG_TOOLS`**). **Cuckoo** env names remain reserved pending **#25**. |
 | **#30** | Observability: FPR, rebuild, multi-worker MCP HTTP. |
 
 ---
@@ -188,5 +196,5 @@ Each **`loadWikilinkEdgesFromDatabase`** call: open/read or empty, migrate, sele
 
 - **[memory-db-schema.md](memory-db-schema.md)** — DDL-oriented reference.
 - **[memory-obsidian.md](memory-obsidian.md)** — why the vault exists; link to sidecar.
-- **[vector-search-design.md](vector-search-design.md)** — future vectors.
+- **[vector-search-design.md](vector-search-design.md)** — vector/embeddings design; **`memory_recall`** hybrid behavior is implemented; spec **`search`** vectors remain directional.
 - **[mcp-tools.md](mcp-tools.md)** — MCP tool table updated for ingest/recall + DB behavior.
