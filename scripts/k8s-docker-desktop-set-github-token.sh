@@ -1,10 +1,15 @@
 #!/usr/bin/env bash
 # Create/update a Kubernetes Secret with GitHub + optional Cloudflare + optional Google tokens,
-# wire them into clawql-mcp-http, set CORS for browser/Gallery clients, and restart.
+# wire them into clawql-mcp-http and clawql-graphql, set CORS on MCP HTTP, and restart.
+#
+# Auth resolution (see src/auth-headers.ts mergedAuthHeaders):
+# - Operations with specLabel "github" use CLAWQL_GITHUB_TOKEN (and friends).
+# - With CLAWQL_PROVIDER=default-multi-provider, REST fallback often needs CLAWQL_BEARER_TOKEN
+#   when the effective label is not "github". We store the same PAT as both CLAWQL_GITHUB_TOKEN
+#   and CLAWQL_BEARER_TOKEN so GitHub REST execute works from both MCP and GraphQL.
 #
 # For the default merged bundle (Google top50 + Cloudflare + GitHub), set:
 #   CLAWQL_GITHUB_TOKEN, CLAWQL_CLOUDFLARE_API_TOKEN, CLAWQL_GOOGLE_ACCESS_TOKEN or GOOGLE_ACCESS_TOKEN
-# (see src/auth-headers.ts). CLAWQL_BEARER_TOKEN still works as a fallback.
 #
 # Prerequisites:
 #   - Docker Desktop Kubernetes running; context docker-desktop (or docker-for-desktop)
@@ -29,7 +34,9 @@ cd "$ROOT"
 
 SECRET_NAME="${SECRET_NAME:-clawql-github-auth}"
 NAMESPACE="${NAMESPACE:-clawql}"
-DEPLOY="${DEPLOY:-clawql-mcp-http}"
+# Backward compat: DEPLOY was the MCP deployment name only.
+DEPLOY_MCP="${DEPLOY_MCP:-${DEPLOY:-clawql-mcp-http}}"
+DEPLOY_GRAPHQL="${DEPLOY_GRAPHQL:-clawql-graphql}"
 
 KUBECTL_FLAG=()
 if kubectl config get-contexts -o name 2>/dev/null | grep -qx 'docker-desktop'; then
@@ -70,18 +77,20 @@ CF_TOKEN="${CLAWQL_CLOUDFLARE_API_TOKEN:-}"
 GOOGLE_TOKEN="${CLAWQL_GOOGLE_ACCESS_TOKEN:-${GOOGLE_ACCESS_TOKEN:-}}"
 
 echo "==> Creating/updating secret $SECRET_NAME in namespace $NAMESPACE"
+# Same PAT as CLAWQL_BEARER_TOKEN so mergedAuthHeaders() fallback works under default-multi-provider.
 SECRET_ARGS=( -n "$NAMESPACE" create secret generic "$SECRET_NAME"
-  --from-literal=CLAWQL_GITHUB_TOKEN="$TOKEN" )
+  --from-literal=CLAWQL_GITHUB_TOKEN="$TOKEN"
+  --from-literal=CLAWQL_BEARER_TOKEN="$TOKEN" )
 if [[ -n "${CF_TOKEN// }" ]]; then
   SECRET_ARGS+=( --from-literal=CLAWQL_CLOUDFLARE_API_TOKEN="$CF_TOKEN" )
 fi
 if [[ -n "${GOOGLE_TOKEN// }" ]]; then
-  SECRET_ARGS+=( --from-literal=GOOGLE_ACCESS_TOKEN="$GOOGLE_TOKEN" )
+  SECRET_ARGS+=( --from-literal=GOOGLE_ACCESS_TOKEN="$GOOGLE_ACCESS_TOKEN" )
 fi
 SECRET_ARGS+=( --dry-run=client -o yaml )
 kc "${SECRET_ARGS[@]}" | kc apply -f -
 
-ENV_KEYS="CLAWQL_GITHUB_TOKEN"
+ENV_KEYS="CLAWQL_GITHUB_TOKEN,CLAWQL_BEARER_TOKEN"
 if [[ -n "${CF_TOKEN// }" ]]; then
   ENV_KEYS="${ENV_KEYS},CLAWQL_CLOUDFLARE_API_TOKEN"
 fi
@@ -89,27 +98,46 @@ if [[ -n "${GOOGLE_TOKEN// }" ]]; then
   ENV_KEYS="${ENV_KEYS},GOOGLE_ACCESS_TOKEN"
 fi
 
-echo "==> Attaching secret env to deployment/$DEPLOY ($ENV_KEYS)"
-kc -n "$NAMESPACE" set env "deployment/$DEPLOY" \
-  --from="secret/${SECRET_NAME}" \
-  --keys="$ENV_KEYS" \
-  --overwrite
+attach_secret_env() {
+  local dep="$1"
+  if ! kc -n "$NAMESPACE" get "deployment/$dep" >/dev/null 2>&1; then
+    echo "WARN: deployment/$dep not found — skip env attach (install ClawQL k8s or check name)."
+    return 0
+  fi
+  echo "==> Attaching secret env to deployment/$dep ($ENV_KEYS)"
+  kc -n "$NAMESPACE" set env "deployment/$dep" \
+    --from="secret/${SECRET_NAME}" \
+    --keys="$ENV_KEYS" \
+    --overwrite
+}
+
+attach_secret_env "$DEPLOY_MCP"
+attach_secret_env "$DEPLOY_GRAPHQL"
 
 if [[ "${CLAWQL_SKIP_CORS:-}" == "1" ]]; then
-  echo "==> Removing CLAWQL_CORS_ALLOW_ORIGIN from deployment/$DEPLOY (CLAWQL_SKIP_CORS=1)"
-  kc -n "$NAMESPACE" set env "deployment/$DEPLOY" CLAWQL_CORS_ALLOW_ORIGIN- 2>/dev/null || true
+  echo "==> Removing CLAWQL_CORS_ALLOW_ORIGIN from deployment/$DEPLOY_MCP (CLAWQL_SKIP_CORS=1)"
+  kc -n "$NAMESPACE" set env "deployment/$DEPLOY_MCP" CLAWQL_CORS_ALLOW_ORIGIN- 2>/dev/null || true
 else
   CORS_ORIGIN="${CLAWQL_CORS_ALLOW_ORIGIN:-*}"
-  echo "==> Setting CLAWQL_CORS_ALLOW_ORIGIN=$CORS_ORIGIN on deployment/$DEPLOY"
-  kc -n "$NAMESPACE" set env "deployment/$DEPLOY" \
-    CLAWQL_CORS_ALLOW_ORIGIN="$CORS_ORIGIN" \
-    --overwrite
+  if kc -n "$NAMESPACE" get "deployment/$DEPLOY_MCP" >/dev/null 2>&1; then
+    echo "==> Setting CLAWQL_CORS_ALLOW_ORIGIN=$CORS_ORIGIN on deployment/$DEPLOY_MCP"
+    kc -n "$NAMESPACE" set env "deployment/$DEPLOY_MCP" \
+      CLAWQL_CORS_ALLOW_ORIGIN="$CORS_ORIGIN" \
+      --overwrite
+  fi
 fi
 
-echo "==> Restarting deployment/$DEPLOY"
-kc -n "$NAMESPACE" rollout restart "deployment/$DEPLOY"
-kc -n "$NAMESPACE" rollout status "deployment/$DEPLOY" --timeout=300s
+echo "==> Restarting deployments ($DEPLOY_MCP, $DEPLOY_GRAPHQL if present)"
+if kc -n "$NAMESPACE" get "deployment/$DEPLOY_MCP" >/dev/null 2>&1; then
+  kc -n "$NAMESPACE" rollout restart "deployment/$DEPLOY_MCP"
+  kc -n "$NAMESPACE" rollout status "deployment/$DEPLOY_MCP" --timeout=300s
+fi
+if kc -n "$NAMESPACE" get "deployment/$DEPLOY_GRAPHQL" >/dev/null 2>&1; then
+  kc -n "$NAMESPACE" rollout restart "deployment/$DEPLOY_GRAPHQL"
+  kc -n "$NAMESPACE" rollout status "deployment/$DEPLOY_GRAPHQL" --timeout=300s
+fi
 
 echo ""
 echo "Done. MCP: http://localhost:8080/mcp"
 echo "Health:  curl -s http://localhost:8080/healthz"
+echo "GraphQL (in-cluster): service/clawql-graphql:4000 — execute uses this; both deployments get CLAWQL_GITHUB_TOKEN + CLAWQL_BEARER_TOKEN."
