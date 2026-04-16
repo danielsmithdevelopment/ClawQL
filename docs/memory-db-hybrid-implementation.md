@@ -109,9 +109,10 @@ Implemented as **`vaultChunkId()`** so re-ingest replaces the same logical chunk
 | **`src/vector-store/pgvector.ts`** | **Postgres + pgvector**: pool, shutdown hooks, upsert after sync, `<=>` KNN for **`memory_recall`**. |
 | **`src/memory-backends/postgres-migrations.ts`** | Versioned DDL (`clawql_pg_schema_migrations`); migration **1** = chunk vector table. |
 | **`src/memory-backends/types.ts`** | Extension-point types (vectors today; Cuckoo / Merkle placeholders). |
-| **`src/memory-ingest.ts`** | After vault lock completes successfully, **`await import("./memory-db.js")`** then **`syncMemoryDbForVaultScanRoot`** — **dynamic import** avoids a static circular dependency (`memory-db` imports `slugifyTitle` from `memory-ingest`). |
+| **`src/memory-ingest.ts`** | After vault lock completes successfully, **`await import("./memory-db.js")`** then **`syncMemoryDbForVaultScanRoot`** — **dynamic import** avoids a static circular dependency (`memory-db` imports `slugifyTitle` from `memory-ingest`). Then **`updateProviderIndexPage`** (see **`memory-provider-index.ts`**) when enabled. |
+| **`src/memory-provider-index.ts`** | Writes **`_INDEX_{Provider}.md`** under the recall scan root after successful ingest; **content-fingerprint** skip avoids rewriting when the note list is unchanged ([#38](https://github.com/danielsmithdevelopment/ClawQL/issues/38)). |
 | **`src/memory-db.test.ts`**, **`src/memory-chunk.test.ts`** | Contract + persistence tests. |
-| **`src/memory-ingest.test.ts`** | Asserts **`memory.db`** exists after ingest. |
+| **`src/memory-ingest.test.ts`**, **`src/memory-provider-index.test.ts`** | Asserts **`memory.db`** exists after ingest; index page generation + idempotency. |
 
 ---
 
@@ -131,6 +132,8 @@ Implemented as **`vaultChunkId()`** so re-ingest replaces the same logical chunk
 | **`CLAWQL_MEMORY_VECTOR_*`** | Vector leg tuning for **`memory_recall`**: similarity floor, score scaling, KNN caps, Postgres **dual-write** (see README). |
 | **`CLAWQL_MCP_LOG_TOOLS`** | Set **`1`** to emit **shape-only** **`console.error`** lines for **`memory_ingest`** / **`memory_recall`** (field lengths and flags — **no** query text, titles, or bodies). |
 | **`CLAWQL_CUCKOO_*`** | **Reserved** for approximate membership ([#25](https://github.com/danielsmithdevelopment/ClawQL/issues/25)); not read by the runtime yet. |
+| **`CLAWQL_MEMORY_INDEX_PAGE`** | Set **`0`** to skip **`_INDEX_*.md`** generation after ingest. Default: **on** (when vault tools run). |
+| **`CLAWQL_MEMORY_INDEX_PROVIDER`** | Display name + filename token for **`_INDEX_{Provider}.md`** (sanitized). Default **`ClawQL`**. |
 
 **Staged rollout:** start with **`CLAWQL_MEMORY_DB`** default (sidecar on when the vault is set) and vectors **off**; enable **`CLAWQL_VECTOR_BACKEND=sqlite`** when you want semantic seeds without Postgres; move to **`postgres`** when you need **`pgvector`** in a shared DB. **`CLAWQL_MEMORY_DB=0`** disables the SQLite sidecar entirely (lexical recall from vault files only).
 
@@ -154,7 +157,7 @@ Each **`loadWikilinkEdgesFromDatabase`** call: open/read or empty, migrate, sele
 
 ### 8.3 Error handling
 
-- **Ingest:** DB sync failures are **`console.error`** only; ingest still returns success for the Markdown write.
+- **Ingest:** DB sync and **provider index** failures are **`console.error`** only; ingest still returns success for the Markdown write.
 - **Recall:** DB sync (when enabled) and merge failures are logged; recall still returns lexical + parsed-graph results.
 
 ---
@@ -181,6 +184,7 @@ Each **`loadWikilinkEdgesFromDatabase`** call: open/read or empty, migrate, sele
 | **#26** | sqlite-vec + embedding pipeline; populate `embedding` / `embedding_model`. |
 | **#25** | Cuckoo membership layer keyed off stable ids from this schema. |
 | **#28** | ~~Operator docs + optional tool-shape logging~~ — **done** (this section + **`CLAWQL_MCP_LOG_TOOLS`**). **Cuckoo** env names remain reserved pending **#25**. |
+| **#38** | ~~Auto **`_INDEX_{Provider}.md`** after ingest~~ — **done** (**`memory-provider-index.ts`**). |
 | **#30** | Observability: FPR, rebuild, multi-worker MCP HTTP. |
 
 ---

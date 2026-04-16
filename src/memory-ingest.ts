@@ -214,6 +214,13 @@ export async function runMemoryIngest(input: MemoryIngestInput): Promise<MemoryI
       const msg = e instanceof Error ? e.message : String(e);
       console.error(`[clawql-mcp] memory.db sync after ingest failed: ${msg}`);
     }
+    try {
+      const { updateProviderIndexPage } = await import("./memory-provider-index.js");
+      await updateProviderIndexPage(vault);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error(`[clawql-mcp] provider index update after ingest failed: ${msg}`);
+    }
   }
 
   return result;

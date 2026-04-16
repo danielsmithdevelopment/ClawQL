@@ -353,6 +353,8 @@ If Stage 1 does **not** apply, one document is loaded in this order:
 | `CLAWQL_MEMORY_DB_PATH` | SQLite file path: default **`memory.db`** under the vault; may be an **absolute** path. See [`docs/memory-db-schema.md`](docs/memory-db-schema.md). |
 | `CLAWQL_MEMORY_DB_SYNC_ON_RECALL` | Set to **`1`** to rewrite **`memory.db`** from every **`memory_recall`** scan (optional; heavier than ingest-only sync). |
 | `CLAWQL_MEMORY_CHUNK_MAX_CHARS` | `paragraph_v1` chunker max window size before hard-split (`2000`). |
+| `CLAWQL_MEMORY_INDEX_PAGE` | Set to **`0`** to skip auto **`_INDEX_*.md`** pages after **`memory_ingest`**. Default: enabled (vault tools). |
+| `CLAWQL_MEMORY_INDEX_PROVIDER` | Label for **`_INDEX_{Provider}.md`** (filename sanitized). Default **`ClawQL`**. See **[`docs/memory-obsidian.md`](docs/memory-obsidian.md)** ([#38](https://github.com/danielsmithdevelopment/ClawQL/issues/38)). |
 | `CLAWQL_VECTOR_BACKEND` | **`sqlite`** — vectors + KNN in **`memory.db`**. **`postgres`** — pgvector when **`CLAWQL_VECTOR_DATABASE_URL`** is set; **if unset**, vectors use **`memory.db`** only (fallback). Default: off. Tradeoffs: **[`docs/hybrid-memory-backends.md`](docs/hybrid-memory-backends.md)**. |
 | `CLAWQL_VECTOR_DATABASE_URL` | Postgres URL for pgvector when backend is **`postgres`**. Optional at first deploy: without it, ClawQL uses SQLite vectors and logs a warning. Requires **`CREATE EXTENSION vector`** (server runs **`CREATE EXTENSION IF NOT EXISTS vector`** on first use). |
 | `CLAWQL_MEMORY_VECTOR_DUAL_WRITE` | When **Postgres is actually used** (URL set), default **`1`**: also store vector BLOBs in **`memory.db`**. **`0`** = Postgres-only vectors. Ignored when the effective backend is **`sqlite`**. |

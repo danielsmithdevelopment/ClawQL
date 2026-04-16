@@ -21,12 +21,12 @@ ClawQL does not require Obsidian; any editor works. Obsidian is the usual refere
 ## How ClawQL fits in
 
 - **`CLAWQL_OBSIDIAN_VAULT_PATH`** points the MCP server at a vault directory (validated at startup when set).
-- **`memory_ingest`** writes structured notes under **`Memory/`** (see `src/memory-ingest.ts`), with YAML frontmatter and optional **`[[wikilinks]]`** to other pages.
-- **`memory_recall`** (`src/memory-recall.ts`) does **keyword scoring** over Markdown (plus headings / filenames) and **walks the wikilink graph** (forward + backward) up to a configurable depth. It does **not** load embedding models—tuned for low latency in agent loops. Tune defaults with **`CLAWQL_MEMORY_RECALL_*`** env vars (see README).
+- **`memory_ingest`** writes structured notes under **`Memory/`** (see `src/memory-ingest.ts`), with YAML frontmatter and optional **`[[wikilinks]]`** to other pages. After each successful, non-skipped write (and **`memory.db`** sync when enabled), ClawQL can refresh a top-level **`_INDEX_{Provider}.md`** in the same recall subtree — a navigable list of notes with **`[[wikilinks]]`** (disable with **`CLAWQL_MEMORY_INDEX_PAGE=0`**; label via **`CLAWQL_MEMORY_INDEX_PROVIDER`**). See **[#38](https://github.com/danielsmithdevelopment/ClawQL/issues/38)** and **[memory-db-hybrid-implementation.md](memory-db-hybrid-implementation.md)**.
+- **`memory_recall`** (`src/memory-recall.ts`) is **hybrid**: it always does **keyword scoring** over Markdown (body, headings, filenames) and **walks the wikilink graph** (forward + backward) up to **`CLAWQL_MEMORY_RECALL_MAX_DEPTH`**. When **`CLAWQL_VECTOR_BACKEND`** is **`sqlite`** or **`postgres`**, **`memory.db`** is enabled, and an embedding API key is set (**`OPENAI_API_KEY`** or **`CLAWQL_EMBEDDING_API_KEY`**), it also runs an **optional vector leg**: the query is embedded via an **OpenAI-compatible `/embeddings` HTTP API** (no local embedding weights shipped in ClawQL), chunk vectors are ranked (SQLite BLOB KNN in-process and/or **Postgres + pgvector**), and hits can be seeded by similarity as well as keywords. Results include **`reason: "keyword" | "link" | "vector"`**. Defaults and tuning: **`CLAWQL_MEMORY_RECALL_*`**, **`CLAWQL_MEMORY_VECTOR_*`**, **`CLAWQL_VECTOR_*`** — see **[README.md](../README.md)** and **[hybrid-memory-backends.md](hybrid-memory-backends.md)**.
 
-The design stays **lightweight**: the vault remains the source of truth; retrieval is “good enough” lexical + graph context rather than semantic vectors in-process.
+If **`CLAWQL_VECTOR_BACKEND`** is unset / **`off`** (default), recall stays **lexical + wikilinks only** — no embedding API calls.
 
-For the **structured sidecar** (`memory.db`: chunks + wikilink edges for hybrid / sqlite-vec work), see **[memory-db-schema.md](memory-db-schema.md)** and the full build narrative **[memory-db-hybrid-implementation.md](memory-db-hybrid-implementation.md)**.
+For the **structured sidecar** (`memory.db`: chunks, optional chunk vectors, wikilink edges), see **[memory-db-schema.md](memory-db-schema.md)**, **[memory-db-hybrid-implementation.md](memory-db-hybrid-implementation.md)**, and **[hybrid-memory-backends.md](hybrid-memory-backends.md)**.
 
 ## Wikilinks and semantics
 
@@ -35,4 +35,4 @@ For the **structured sidecar** (`memory.db`: chunks + wikilink edges for hybrid 
 ## See also
 
 - **[ClawQL-Agent](https://github.com/danielsmithdevelopment/ClawQL-Agent)** — full stack that combines ClawQL MCP with orchestration and vault-backed memory.
-- **[Parity v1 #11](https://github.com/danielsmithdevelopment/ClawQL/issues/11)** — MCP surface aligned with the agent stack (complete); future retrieval work may follow **[#16](https://github.com/danielsmithdevelopment/ClawQL/issues/16)** ([design: vector backends](vector-search-design.md)).
+- **[Parity v1 #11](https://github.com/danielsmithdevelopment/ClawQL/issues/11)** — MCP surface aligned with the agent stack (complete). Optional vault vectors for **`memory_recall`** are implemented (**[#16](https://github.com/danielsmithdevelopment/ClawQL/issues/16)** — remaining scope may include spec **`search`** semantics); see **[hybrid-memory-backends.md](hybrid-memory-backends.md)** and **[vector-search-design.md](vector-search-design.md)**.

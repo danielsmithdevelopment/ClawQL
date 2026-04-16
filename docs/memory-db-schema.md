@@ -1,6 +1,6 @@
 # `memory.db` schema (hybrid memory, issue #27)
 
-ClawQL stores a **file-backed SQLite** database beside the Obsidian vault (default **`memory.db`**) to back the hybrid memory track: **structured rows** today (documents, paragraph chunks, wikilink edges), and **vector columns** reserved for sqlite-vec / embeddings in later issues.
+ClawQL stores a **file-backed SQLite** database beside the Obsidian vault (default **`memory.db`**) to back the hybrid memory track: **structured rows** (documents, paragraph chunks, wikilink edges), plus **optional float32 vectors** on **`vault_chunk`** when **`CLAWQL_VECTOR_BACKEND=sqlite`** or dual-write with **`postgres`** (see **[hybrid-memory-backends.md](hybrid-memory-backends.md)**).
 
 **Implementation narrative (modules, flows, migrations, tests):** **[memory-db-hybrid-implementation.md](memory-db-hybrid-implementation.md)**.
 
@@ -37,7 +37,7 @@ One row per indexed Markdown path (vault-relative, `/` separators).
 
 ### `vault_chunk`
 
-Embeddable segments for semantic search (text populated today; vector columns reserved).
+Embeddable segments for semantic search (text always; **`embedding`** / **`embedding_model`** populated when the embedding pipeline is enabled).
 
 | Column | Type | Description |
 |--------|------|-------------|
