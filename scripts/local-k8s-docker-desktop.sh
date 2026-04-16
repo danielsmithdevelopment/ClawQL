@@ -20,21 +20,26 @@ OVERLAY="${ROOT}/docker/kustomize/overlays/local"
 # Mount a host Obsidian vault at the same path as docker-compose (CLAWQL_VAULT_HOST_PATH → /vault).
 # Base deployment uses emptyDir — without this patch, memory_ingest only persists in the pod.
 VAULT_HOST_PATH="${CLAWQL_LOCAL_VAULT_HOST_PATH:-$HOME/.ClawQL}"
-PATCH_FILE="${OVERLAY}/patch-mcp-vault-hostpath.yaml"
-cat > "${PATCH_FILE}" <<EOF
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: clawql-mcp-http
-spec:
-  template:
-    spec:
-      volumes:
-        - name: obsidian-vault
-          hostPath:
-            path: ${VAULT_HOST_PATH}
-            type: DirectoryOrCreate
-EOF
+# JSON Patch (RFC 6902): strategic-merge YAML would merge hostPath into the base volume
+# alongside emptyDir ("may not specify more than one volume type"). Replace volumes[0].
+PATCH_FILE="${OVERLAY}/patch-mcp-vault-hostpath.json"
+export VAULT_HOST_PATH
+python3 <<'PY' >"${PATCH_FILE}"
+import json, os
+
+path = os.environ["VAULT_HOST_PATH"]
+patch = [
+    {
+        "op": "replace",
+        "path": "/spec/template/spec/volumes/0",
+        "value": {
+            "name": "obsidian-vault",
+            "hostPath": {"path": path, "type": "DirectoryOrCreate"},
+        },
+    }
+]
+print(json.dumps(patch))
+PY
 echo "==> Obsidian vault hostPath (clawql-mcp-http): ${VAULT_HOST_PATH}"
 echo "    (override with CLAWQL_LOCAL_VAULT_HOST_PATH=/absolute/path/to/vault)"
 
