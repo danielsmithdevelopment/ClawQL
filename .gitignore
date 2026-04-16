@@ -39,6 +39,10 @@ Thumbs.db
 coverage/
 .nyc_output/
 
+# ESLint / Prettier (local + CI caches)
+.eslintcache
+.prettier-cache
+
 # Optional local notes
 *.local.md
 

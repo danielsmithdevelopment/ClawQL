@@ -1,4 +1,5 @@
 # Code scanning for JavaScript/TypeScript — https://docs.github.com/code-security/code-scanning
+# Kept separate from ci.yml so scheduled runs do not execute the full test matrix.
 name: CodeQL
 
 on:
