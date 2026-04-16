@@ -22,6 +22,7 @@ import {
 import { queryPostgresVectorKnn } from "./vector-store/pgvector.js";
 import { listVaultMarkdownRelPaths, buildSlugToVaultPath } from "./memory-slug-index.js";
 import { extractWikilinkTargets, stripVaultFrontmatter } from "./vault-markdown.js";
+import { logMcpToolShape } from "./mcp-tool-log.js";
 
 /** Re-export for tests and callers that imported from this module. */
 export { extractWikilinkTargets } from "./vault-markdown.js";
@@ -133,6 +134,12 @@ export async function runMemoryRecall(input: MemoryRecallInput): Promise<MemoryR
   }
 
   const query = input.query?.trim();
+  logMcpToolShape("memory_recall", {
+    queryChars: query?.length ?? 0,
+    limit: input.limit,
+    maxDepth: input.maxDepth,
+    minScore: input.minScore,
+  });
   if (!query) {
     return { ok: false, error: "query is required" };
   }

@@ -72,7 +72,7 @@ Runs a snippet in an isolated **Cloudflare Sandbox** through a **Worker** you de
 
 ## `memory_ingest`
 
-**Env:** `CLAWQL_OBSIDIAN_VAULT_PATH` (directory must exist and be writable at startup).
+**Env:** `CLAWQL_OBSIDIAN_VAULT_PATH` (directory must exist and be writable at startup). Optional **`CLAWQL_MCP_LOG_TOOLS=1`**: stderr logs **tool shape** only (e.g. title length), never note bodies.
 
 **Input:**
 
@@ -94,7 +94,7 @@ Writes **`Memory/<slug>.md`** with YAML frontmatter and optional `[[wikilinks]]`
 
 ## `memory_recall`
 
-**Env:** `CLAWQL_OBSIDIAN_VAULT_PATH`, optional `CLAWQL_MEMORY_RECALL_*` (scan root, limits, depth, snippet size).
+**Env:** `CLAWQL_OBSIDIAN_VAULT_PATH`, optional `CLAWQL_MEMORY_RECALL_*` (scan root, limits, depth, snippet size). Optional **`CLAWQL_MCP_LOG_TOOLS=1`**: stderr logs **tool shape** only (e.g. query character count), never query text.
 
 **Input:**
 
