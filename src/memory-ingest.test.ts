@@ -30,15 +30,15 @@ describe("memory-ingest", () => {
     expect(slugifyTitle("!!!")).toBe("note");
   });
 
-  it("runMemoryIngest writes Obsidian markdown under ClawQL/Memory", async () => {
+  it("runMemoryIngest writes Obsidian markdown under Memory", async () => {
     const r = await runMemoryIngest({
       title: "Test Note",
       insights: "Learned something.",
       wikilinks: ["Other"],
     });
     expect(r.ok).toBe(true);
-    expect(r.path).toBe("ClawQL/Memory/test-note.md");
-    const text = await readFile(join(dir, "ClawQL", "Memory", "test-note.md"), "utf8");
+    expect(r.path).toBe("Memory/test-note.md");
+    const text = await readFile(join(dir, "Memory", "test-note.md"), "utf8");
     expect(text).toContain("clawql_ingest: true");
     expect(text).toContain("# Test Note");
     expect(text).toContain("[[Other]]");
@@ -59,7 +59,7 @@ describe("memory-ingest", () => {
     await runMemoryIngest({ title: "Multi", insights: "one" });
     const r = await runMemoryIngest({ title: "Multi", insights: "two" });
     expect(r.skipped).toBeUndefined();
-    const text = await readFile(join(dir, "ClawQL", "Memory", "multi.md"), "utf8");
+    const text = await readFile(join(dir, "Memory", "multi.md"), "utf8");
     expect(text).toContain("one");
     expect(text).toContain("two");
     const hashes = extractIngestHashes(text);
@@ -76,6 +76,6 @@ describe("memory-ingest", () => {
   it("writes memory.db under the vault after successful ingest", async () => {
     const r = await runMemoryIngest({ title: "Indexed", insights: "hello" });
     expect(r.ok).toBe(true);
-    await access(join(dir, ".clawql", "memory.db"), constants.R_OK);
+    await access(join(dir, "memory.db"), constants.R_OK);
   });
 });

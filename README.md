@@ -356,14 +356,14 @@ If Stage 1 does **not** apply, one document is loaded in this order:
 | `CLAWQL_CLOUDFLARE_ACCOUNT_ID` | Optional; sent as `CF-Account-ID` on bridge requests. |
 | `CLAWQL_SANDBOX_PERSISTENCE_MODE` | Default `session` / `ephemeral` / `persistent` for sandbox tool calls (overridable per call). |
 | `CLAWQL_SANDBOX_TIMEOUT_MS` | Max wait for each bridge request (default `120000`). |
-| `CLAWQL_MEMORY_RECALL_SCAN_ROOT` | Subfolder under the vault to scan (default `ClawQL/Memory`). Set to empty to scan the whole vault. |
+| `CLAWQL_MEMORY_RECALL_SCAN_ROOT` | Subfolder under the vault to scan (default `Memory`). Set to empty to scan the whole vault. |
 | `CLAWQL_MEMORY_RECALL_LIMIT` | Default max notes returned by **`memory_recall`** (`10`). |
 | `CLAWQL_MEMORY_RECALL_MAX_DEPTH` | Default wikilink hops from a keyword hit (`2`). |
 | `CLAWQL_MEMORY_RECALL_MIN_SCORE` | Minimum keyword score to seed a note (`1`). |
 | `CLAWQL_MEMORY_RECALL_MAX_FILES` | Safety cap on Markdown files scanned (`2000`). |
 | `CLAWQL_MEMORY_RECALL_SNIPPET_CHARS` | Snippet length in characters (`520`). |
 | `CLAWQL_MEMORY_DB` | Set to **`0`** to disable the **`memory.db`** sidecar (no sync after ingest, no wikilink merge in recall). |
-| `CLAWQL_MEMORY_DB_PATH` | SQLite file path: default **`.clawql/memory.db`** under the vault; may be an **absolute** path. See [`docs/memory-db-schema.md`](docs/memory-db-schema.md). |
+| `CLAWQL_MEMORY_DB_PATH` | SQLite file path: default **`memory.db`** under the vault; may be an **absolute** path. See [`docs/memory-db-schema.md`](docs/memory-db-schema.md). |
 | `CLAWQL_MEMORY_DB_SYNC_ON_RECALL` | Set to **`1`** to rewrite **`memory.db`** from every **`memory_recall`** scan (optional; heavier than ingest-only sync). |
 | `CLAWQL_MEMORY_CHUNK_MAX_CHARS` | `paragraph_v1` chunker max window size before hard-split (`2000`). |
 | `CLAWQL_GITHUB_TOKEN` | GitHub PAT / fine-grained token for **`execute`** when the operation is from the **github** spec (or `CLAWQL_PROVIDER=github`). Also accepts **`GITHUB_TOKEN`** / **`GH_TOKEN`**. |
@@ -401,7 +401,7 @@ See `.env.example` for a full list.
 
 Set **`CLAWQL_OBSIDIAN_VAULT_PATH`** when you mount a directory for **Obsidian**-compatible Markdown (e.g. alongside **[ClawQL-Agent](https://github.com/danielsmithdevelopment/ClawQL-Agent)** or **`memory_ingest` / `memory_recall`**). If unset or empty, no vault check runs. If set, startup fails fast when the path is missing, not a directory, or not readable/writable. Implementation helpers live in **`src/vault-config.ts`** and **`src/vault-utils.ts`** (safe paths + cooperative write lock under the vault root).
 
-**Concepts (why a vault):** Long-running agents often avoid *only* stuffing context with retrieved chunks. A complementary pattern—sometimes called **Karpathy-style** or an **“LLM wiki”**—is to **compile** durable notes as Markdown on disk and **link** them with **`[[wikilinks]]`**, so memory **compounds** across sessions. **Obsidian** is a common viewer (plain files, graph + backlinks); the agent writes; humans browse and edit. That pattern is sketched in [Karpathy’s `llm-wiki` gist](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f). ClawQL’s **`memory_ingest`** writes under **`ClawQL/Memory/`** when the vault path is set. See **[`docs/memory-obsidian.md`](docs/memory-obsidian.md)** for a fuller background.
+**Concepts (why a vault):** Long-running agents often avoid *only* stuffing context with retrieved chunks. A complementary pattern—sometimes called **Karpathy-style** or an **“LLM wiki”**—is to **compile** durable notes as Markdown on disk and **link** them with **`[[wikilinks]]`**, so memory **compounds** across sessions. **Obsidian** is a common viewer (plain files, graph + backlinks); the agent writes; humans browse and edit. That pattern is sketched in [Karpathy’s `llm-wiki` gist](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f). ClawQL’s **`memory_ingest`** writes under **`Memory/`** when the vault path is set. See **[`docs/memory-obsidian.md`](docs/memory-obsidian.md)** for a fuller background.
 
 **Large / vendor OpenAPI docs:** The design goal is **the full spec** — token
 efficiency comes from **search + selective `execute`**, not from trimming the
@@ -484,7 +484,7 @@ In multi-spec mode, ClawQL keeps one merged operation index for discovery and ex
 | `search` | Search the active OpenAPI/Discovery spec by natural language intent |
 | `execute` | Run a discovered operation by `operationId`, with optional GraphQL field selection |
 | `sandbox_exec` | Remote sandbox: pass **`code`** (source) + **`language`**; not your local shell |
-| `memory_ingest` | Compile insights / tool output / conversation into Obsidian notes (`ClawQL/Memory/…`) when the vault path is set — see [`docs/memory-obsidian.md`](docs/memory-obsidian.md) |
+| `memory_ingest` | Compile insights / tool output / conversation into Obsidian notes (`Memory/…`) when the vault path is set — see [`docs/memory-obsidian.md`](docs/memory-obsidian.md) |
 | `memory_recall` | Keyword search over vault Markdown plus `[[wikilinks]]` hops (no embeddings; tunable via `CLAWQL_MEMORY_RECALL_*`) |
 
 ### Agent workflow example

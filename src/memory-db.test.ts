@@ -31,7 +31,7 @@ describe("memory-db", () => {
 
   it("resolveMemoryDatabasePath defaults under the vault", () => {
     expect(resolveMemoryDatabasePath(dir).startsWith(dir)).toBe(true);
-    expect(resolveMemoryDatabasePath(dir)).toMatch(/\.clawql[/\\]memory\.db$/);
+    expect(resolveMemoryDatabasePath(dir)).toMatch(/memory\.db$/);
   });
 
   it("syncMemoryDbFromDocuments writes chunks and wikilink edges", async () => {

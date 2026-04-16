@@ -10,7 +10,7 @@ import {
   writeVaultTextFileAtomic,
 } from "./vault-utils.js";
 
-const MEMORY_DIR = "ClawQL/Memory";
+const MEMORY_DIR = "Memory";
 
 export type MemoryIngestInput = {
   title: string;

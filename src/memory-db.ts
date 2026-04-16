@@ -34,13 +34,13 @@ async function loadSqlJs(): Promise<ReturnType<typeof initSqlJs>> {
   return sqlJsPromise;
 }
 
-/** When unset or relative, DB lives under the vault (default `.clawql/memory.db`). */
+/** When unset or relative, DB lives under the vault (default `memory.db`). */
 export function resolveMemoryDatabasePath(vaultRoot: string): string {
   const raw = process.env.CLAWQL_MEMORY_DB_PATH?.trim();
   if (raw && isAbsolute(raw)) {
     return raw;
   }
-  const rel = (raw || ".clawql/memory.db").replace(/\\/g, "/").replace(/^\/+/, "");
+  const rel = (raw || "memory.db").replace(/\\/g, "/").replace(/^\/+/, "");
   return resolveVaultPath(vaultRoot, rel);
 }
 
@@ -167,7 +167,7 @@ async function persistDb(db: Database, absDbPath: string): Promise<void> {
 
 function defaultScanRoot(): string {
   const v = process.env.CLAWQL_MEMORY_RECALL_SCAN_ROOT;
-  if (v === undefined) return "ClawQL/Memory";
+  if (v === undefined) return "Memory";
   const t = v.trim();
   return t === "" ? "" : t;
 }

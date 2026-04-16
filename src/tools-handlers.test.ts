@@ -203,7 +203,7 @@ describe("optional tool handlers (MCP content shape)", () => {
       expect(out.content[0].type).toBe("text");
       const parsed = JSON.parse(out.content[0].text) as { ok: boolean; path?: string };
       expect(parsed.ok).toBe(true);
-      expect(parsed.path).toBe("ClawQL/Memory/handler-note.md");
+      expect(parsed.path).toBe("Memory/handler-note.md");
     });
 
     it("returns ok false when vault is not configured", async () => {
@@ -222,13 +222,13 @@ describe("optional tool handlers (MCP content shape)", () => {
     beforeEach(async () => {
       dir = await mkdtemp(join(tmpdir(), "clawql-vault-"));
       process.env.CLAWQL_OBSIDIAN_VAULT_PATH = dir;
-      await mkdir(join(dir, "ClawQL", "Memory"), { recursive: true });
+      await mkdir(join(dir, "Memory"), { recursive: true });
       await writeFile(
-        join(dir, "ClawQL/Memory/note-a.md"),
+        join(dir, "Memory/note-a.md"),
         ["# A", "", "keyword match pat rotation [[Note B]]", ""].join("\n"),
         "utf8"
       );
-      await writeFile(join(dir, "ClawQL/Memory/note-b.md"), ["# B", "", "body b", ""].join("\n"), "utf8");
+      await writeFile(join(dir, "Memory/note-b.md"), ["# B", "", "body b", ""].join("\n"), "utf8");
     });
 
     afterEach(async () => {
