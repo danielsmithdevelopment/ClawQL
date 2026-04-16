@@ -155,7 +155,7 @@ export async function runMemoryIngest(input: MemoryIngestInput): Promise<MemoryI
     try {
       existing = await readVaultTextFile(vault, rel);
     } catch {
-      existing = "";
+      // missing file → keep existing as ""
     }
 
     if (existing && extractIngestHashes(existing).has(hash)) {

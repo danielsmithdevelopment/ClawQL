@@ -396,7 +396,8 @@ async function loadRawDocument(source: SpecSource): Promise<unknown> {
         if (bundledOfflineNoRemoteFetch()) {
           throw new Error(
             `Bundled spec file missing: ${abs}. ` +
-              `Run \`npm run fetch-provider-specs\` or clear CLAWQL_BUNDLED_OFFLINE.`
+              `Run \`npm run fetch-provider-specs\` or clear CLAWQL_BUNDLED_OFFLINE.`,
+            { cause: e }
           );
         }
         console.error(
@@ -404,7 +405,9 @@ async function loadRawDocument(source: SpecSource): Promise<unknown> {
         );
         const res = await fetch(source.entry.fallbackUrl);
         if (!res.ok) {
-          throw new Error(`Failed to fetch provider fallback (${source.entry.id}): ${res.status}`);
+          throw new Error(`Failed to fetch provider fallback (${source.entry.id}): ${res.status}`, {
+            cause: e,
+          });
         }
         return parseSpecText(await res.text());
       }
@@ -431,7 +434,8 @@ async function loadRawDocument(source: SpecSource): Promise<unknown> {
         if (bundledOfflineNoRemoteFetch()) {
           throw new Error(
             `Bundled spec file missing: ${abs}. ` +
-              `Run \`npm run fetch-provider-specs\` or clear CLAWQL_BUNDLED_OFFLINE.`
+              `Run \`npm run fetch-provider-specs\` or clear CLAWQL_BUNDLED_OFFLINE.`,
+            { cause: e }
           );
         }
         console.error(
@@ -439,7 +443,9 @@ async function loadRawDocument(source: SpecSource): Promise<unknown> {
         );
         const res = await fetch(entry.fallbackUrl);
         if (!res.ok) {
-          throw new Error(`Failed to fetch provider fallback (${entry.id}): ${res.status}`);
+          throw new Error(`Failed to fetch provider fallback (${entry.id}): ${res.status}`, {
+            cause: e,
+          });
         }
         return parseSpecText(await res.text());
       }

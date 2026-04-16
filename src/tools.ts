@@ -252,7 +252,7 @@ export function registerTools(server: McpServer) {
             "E.g. 'run.projects.locations.services.list'."
         ),
       args: z
-        .record(z.unknown())
+        .record(z.string(), z.unknown())
         .describe(
           "Key/value map of parameters for the operation (path + query params). " +
             "E.g. { parent: 'projects/my-proj/locations/us-central1', pageSize: 10 }"

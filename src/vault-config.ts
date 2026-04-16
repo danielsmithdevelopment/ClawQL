@@ -37,7 +37,8 @@ export async function validateObsidianVaultAtStartup(): Promise<void> {
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
     throw new Error(
-      `CLAWQL_OBSIDIAN_VAULT_PATH: path does not exist or is inaccessible: ${vault} (${msg})`
+      `CLAWQL_OBSIDIAN_VAULT_PATH: path does not exist or is inaccessible: ${vault} (${msg})`,
+      { cause: e }
     );
   }
   if (!st.isDirectory()) {
@@ -47,7 +48,9 @@ export async function validateObsidianVaultAtStartup(): Promise<void> {
     await access(vault, constants.R_OK | constants.W_OK);
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
-    throw new Error(`CLAWQL_OBSIDIAN_VAULT_PATH: not readable/writable: ${vault} (${msg})`);
+    throw new Error(`CLAWQL_OBSIDIAN_VAULT_PATH: not readable/writable: ${vault} (${msg})`, {
+      cause: e,
+    });
   }
   console.error(`[clawql-mcp] Obsidian vault: ${vault}`);
 }
