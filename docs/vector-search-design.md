@@ -72,9 +72,9 @@ Same embedding provider and chunking code; only **connection + SQL** differ.
 
 ## Phasing (suggested)
 
-1. **Interface + SQLite** — smallest dependency footprint for developers; prove end-to-end ingest + query.
-2. **Postgres + pgvector** — second implementation behind the same interface; Docker Compose service optional.
-3. **Hybrid & tuning** — FTS / keyword + vector, score fusion, reindex hooks.
+1. **Interface + SQLite (file-backed)** — **`CLAWQL_VECTOR_BACKEND=sqlite`**: float32 BLOBs on `vault_chunk` + OpenAI-compatible **`/embeddings`** (sql.js / in-process KNN; no sqlite-vec loadable extension in the WASM build).
+2. **Postgres + pgvector** — **`CLAWQL_VECTOR_BACKEND=postgres`** + **`CLAWQL_VECTOR_DATABASE_URL`**: table **`clawql_memory_chunk_vector`**, cosine via **`<=>`**, auto-**`CREATE EXTENSION vector`** on first connect (implemented; **`pg`** dependency).
+3. **Hybrid & tuning** — `memory_recall` fuses lexical + vector + wikilinks; optional IVFFLAT / HNSW indexes in Postgres are operator-managed, not created by ClawQL yet.
 
 ## Open decisions
 
@@ -84,6 +84,7 @@ Same embedding provider and chunking code; only **connection + SQL** differ.
 
 ## Related docs
 
+- [`hybrid-memory-backends.md`](hybrid-memory-backends.md) — **SQLite (default) vs Postgres (optional)** for vectors and future hybrid artifacts.
 - [`memory-obsidian.md`](memory-obsidian.md) — vault semantics for ingest/recall today.
 - [`memory-db-schema.md`](memory-db-schema.md) — **`memory.db`** layout (chunks + wikilinks today; vector columns reserved).
 - [`mcp-tools.md`](mcp-tools.md) — current MCP tools (no vector fields until shipped).

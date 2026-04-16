@@ -1,0 +1,15 @@
+---
+description: Never merge GitHub PRs until CI checks have completed successfully
+alwaysApply: true
+---
+
+# Git / PR merges — wait for CI
+
+When merging pull requests (GitHub / `gh pr merge`):
+
+- **Never** merge immediately after creating a PR or without verifying CI.
+- **Always** wait for required checks to finish and pass before merging.
+- Prefer: `gh pr merge <n> --merge --auto` (GitHub waits for branch protection + green checks).
+- Or: poll `gh pr checks <n>` until all required checks succeed (or stop on failure).
+
+If branch protection blocks merge until green, do not bypass it. Do not assume checks are optional.

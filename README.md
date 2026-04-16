@@ -353,6 +353,16 @@ If Stage 1 does **not** apply, one document is loaded in this order:
 | `CLAWQL_MEMORY_DB_PATH` | SQLite file path: default **`memory.db`** under the vault; may be an **absolute** path. See [`docs/memory-db-schema.md`](docs/memory-db-schema.md). |
 | `CLAWQL_MEMORY_DB_SYNC_ON_RECALL` | Set to **`1`** to rewrite **`memory.db`** from every **`memory_recall`** scan (optional; heavier than ingest-only sync). |
 | `CLAWQL_MEMORY_CHUNK_MAX_CHARS` | `paragraph_v1` chunker max window size before hard-split (`2000`). |
+| `CLAWQL_VECTOR_BACKEND` | **`sqlite`** — vectors + KNN in **`memory.db`**. **`postgres`** — pgvector when **`CLAWQL_VECTOR_DATABASE_URL`** is set; **if unset**, vectors use **`memory.db`** only (fallback). Default: off. Tradeoffs: **[`docs/hybrid-memory-backends.md`](docs/hybrid-memory-backends.md)**. |
+| `CLAWQL_VECTOR_DATABASE_URL` | Postgres URL for pgvector when backend is **`postgres`**. Optional at first deploy: without it, ClawQL uses SQLite vectors and logs a warning. Requires **`CREATE EXTENSION vector`** (server runs **`CREATE EXTENSION IF NOT EXISTS vector`** on first use). |
+| `CLAWQL_MEMORY_VECTOR_DUAL_WRITE` | When **Postgres is actually used** (URL set), default **`1`**: also store vector BLOBs in **`memory.db`**. **`0`** = Postgres-only vectors. Ignored when the effective backend is **`sqlite`**. |
+| `CLAWQL_EMBEDDING_DIMENSION` | Vector width for the pgvector column and API validation (default **`1536`**, e.g. `text-embedding-3-small`). See **[`docs/hybrid-memory-backends.md`](docs/hybrid-memory-backends.md)** for SQLite vs Postgres roles. |
+| `CLAWQL_EMBEDDING_BASE_URL` | OpenAI-compatible API base (default `https://api.openai.com/v1`). |
+| `CLAWQL_EMBEDDING_MODEL` | Embedding model id (default `text-embedding-3-small`). |
+| `CLAWQL_EMBEDDING_API_KEY` | API key for embeddings (falls back to **`OPENAI_API_KEY`**). |
+| `CLAWQL_MEMORY_VECTOR_MIN_SIM` | Min cosine similarity (0–1) to seed **`memory_recall`** from vectors (`0.28`). |
+| `CLAWQL_MEMORY_VECTOR_SCORE_BOOST` | Scale vector similarity into lexical score space for ranking (`50`). |
+| `CLAWQL_MEMORY_VECTOR_TOP_CHUNKS` / `CLAWQL_MEMORY_VECTOR_MAX_DOCS` | Caps for vector KNN candidate chunks / distinct notes (`80` / `12`). |
 | `CLAWQL_GITHUB_TOKEN` | GitHub PAT / fine-grained token for **`execute`** when the operation is from the **github** spec (or `CLAWQL_PROVIDER=github`). Also accepts **`GITHUB_TOKEN`** / **`GH_TOKEN`**. |
 | `CLAWQL_CLOUDFLARE_API_TOKEN` | Cloudflare API token for **`execute`** when the operation is from the **cloudflare** spec (or `CLAWQL_PROVIDER=cloudflare`). Also accepts **`CLOUDFLARE_API_TOKEN`**. |
 | `CLAWQL_GOOGLE_ACCESS_TOKEN` | OAuth access token for **Google Cloud** APIs (`compute-v1`, … top50 slugs, or `CLAWQL_PROVIDER=google` / `google-top50`). Also accepts **`GOOGLE_ACCESS_TOKEN`**. |
@@ -472,7 +482,7 @@ In multi-spec mode, ClawQL keeps one merged operation index for discovery and ex
 | `execute` | Run a discovered operation by `operationId`, with optional GraphQL field selection |
 | `sandbox_exec` | Remote sandbox: pass **`code`** (source) + **`language`**; not your local shell |
 | `memory_ingest` | Compile insights / tool output / conversation into Obsidian notes (`Memory/…`) when the vault path is set — see [`docs/memory-obsidian.md`](docs/memory-obsidian.md) |
-| `memory_recall` | Keyword search over vault Markdown plus `[[wikilinks]]` hops (no embeddings; tunable via `CLAWQL_MEMORY_RECALL_*`) |
+| `memory_recall` | Keyword search over vault Markdown plus `[[wikilinks]]` hops; optional vector KNN when **`CLAWQL_VECTOR_BACKEND`** is **`sqlite`** or **`postgres`** and embeddings are configured (see env table) |
 
 ### Agent workflow example
 

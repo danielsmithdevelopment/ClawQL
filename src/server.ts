@@ -14,8 +14,10 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { loadSpec } from "./spec-loader.js";
 import { preloadSchemaFieldCacheFromDisk, registerTools } from "./tools.js";
 import { validateObsidianVaultAtStartup } from "./vault-config.js";
+import { registerPostgresPoolShutdownHooks } from "./vector-store/pgvector.js";
 
 async function main() {
+  registerPostgresPoolShutdownHooks();
   // Pre-warm the spec cache on startup so the first search call is fast
   await loadSpec();
   // Prefer pregenerated introspection.json (bundled or CLAWQL_INTROSPECTION_PATH) over live proxy introspection

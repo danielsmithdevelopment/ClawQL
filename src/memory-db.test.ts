@@ -2,7 +2,7 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import initSqlJs from "sql.js";
 import {
   loadWikilinkEdgesFromDatabase,
@@ -13,12 +13,16 @@ import {
 describe("memory-db", () => {
   const savedVault = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
   const savedDbOff = process.env.CLAWQL_MEMORY_DB;
+  const savedVector = process.env.CLAWQL_VECTOR_BACKEND;
+  const savedKey = process.env.CLAWQL_EMBEDDING_API_KEY;
   let dir: string;
 
   beforeEach(async () => {
     dir = await mkdtemp(join(tmpdir(), "clawql-vault-db-"));
     process.env.CLAWQL_OBSIDIAN_VAULT_PATH = dir;
     delete process.env.CLAWQL_MEMORY_DB;
+    delete process.env.CLAWQL_VECTOR_BACKEND;
+    delete process.env.CLAWQL_EMBEDDING_API_KEY;
   });
 
   afterEach(async () => {
@@ -26,6 +30,11 @@ describe("memory-db", () => {
     else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = savedVault;
     if (savedDbOff === undefined) delete process.env.CLAWQL_MEMORY_DB;
     else process.env.CLAWQL_MEMORY_DB = savedDbOff;
+    if (savedVector === undefined) delete process.env.CLAWQL_VECTOR_BACKEND;
+    else process.env.CLAWQL_VECTOR_BACKEND = savedVector;
+    if (savedKey === undefined) delete process.env.CLAWQL_EMBEDDING_API_KEY;
+    else process.env.CLAWQL_EMBEDDING_API_KEY = savedKey;
+    vi.unstubAllGlobals();
     await rm(dir, { recursive: true, force: true });
   });
 
@@ -81,5 +90,48 @@ describe("memory-db", () => {
     ]);
     const edges = await loadWikilinkEdgesFromDatabase(dir, ["a.md"]);
     expect(edges.some((e) => e.fromPath === "a.md" && e.toPath === "b.md")).toBe(true);
+  });
+
+  it("syncMemoryDbFromDocuments stores embeddings when vector backend + mock API", async () => {
+    process.env.CLAWQL_VECTOR_BACKEND = "sqlite";
+    process.env.CLAWQL_EMBEDDING_API_KEY = "test-key";
+
+    const dim = 8;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation(async (_url: string, init?: { body?: string }) => {
+        const body = init?.body ? (JSON.parse(init.body) as { input?: string[] }) : {};
+        const n = Array.isArray(body.input) ? body.input.length : 1;
+        return {
+          ok: true,
+          json: async () => ({
+            model: "mock",
+            data: Array.from({ length: n }, (_, index) => ({
+              index,
+              embedding: Array.from({ length: dim }, (_, i) => (i === 0 ? 1 : 0)),
+            })),
+          }),
+        };
+      })
+    );
+
+    /* Single paragraph → one chunk (avoid \n\n splitting). */
+    await writeFile(join(dir, "solo.md"), "Hello world.", "utf8");
+    const text = await readFile(join(dir, "solo.md"), "utf8");
+
+    await syncMemoryDbFromDocuments(dir, [{ path: "solo.md", text, mtimeMs: 1 }]);
+
+    const dbPath = resolveMemoryDatabasePath(dir);
+    const raw = await readFile(dbPath);
+    const require = createRequire(import.meta.url);
+    const sqlEntry = require.resolve("sql.js");
+    const wasmPath = join(dirname(sqlEntry), "sql-wasm.wasm");
+    const SQL = await initSqlJs({ locateFile: () => wasmPath });
+    const db = new SQL.Database(raw);
+    const rows = db.exec(
+      "SELECT COUNT(*) AS c FROM vault_chunk WHERE embedding IS NOT NULL AND embedding_model IS NOT NULL"
+    );
+    expect(Number(rows[0]!.values[0]![0])).toBeGreaterThan(0);
+    db.close();
   });
 });
