@@ -7,7 +7,7 @@ ClawQL exposes **five** tools over MCP (stdio or Streamable HTTP). The **core** 
 | `search` | Loaded spec | Rank operations by natural-language intent |
 | `execute` | Single-spec: in-process OpenAPI→GraphQL; multi-spec: REST | Run one operation with lean responses |
 | `sandbox_exec` | `CLAWQL_SANDBOX_BRIDGE_URL` + token | Run a snippet in a remote Cloudflare Sandbox via Worker bridge (not local execution) |
-| `memory_ingest` | `CLAWQL_OBSIDIAN_VAULT_PATH` | Write Obsidian Markdown under `Memory/`; refreshes **`memory.db`** (see **[memory-db-schema.md](memory-db-schema.md)**) when enabled |
+| `memory_ingest` | `CLAWQL_OBSIDIAN_VAULT_PATH` | Write Obsidian Markdown under `Memory/`; refreshes **`memory.db`** when enabled; optional **`_INDEX_*.md`** hub page ([#38](https://github.com/danielsmithdevelopment/ClawQL/issues/38)) |
 | `memory_recall` | `CLAWQL_OBSIDIAN_VAULT_PATH` | Keyword search + `[[wikilink]]` hops; optionally merges edges from **`memory.db`**, optional **vector KNN** when **`CLAWQL_VECTOR_BACKEND`** is **`sqlite`** (BLOBs in **`memory.db`**) or **`postgres`** (**pgvector** + **`CLAWQL_VECTOR_DATABASE_URL`**) with **`CLAWQL_EMBEDDING_*`**; can resync the DB when **`CLAWQL_MEMORY_DB_SYNC_ON_RECALL=1`** |
 
 See also: **[memory-obsidian.md](memory-obsidian.md)** (vault concepts), **[memory-db-schema.md](memory-db-schema.md)** (SQLite sidecar), **[README](../README.md)** (install, env tables), **[cloudflare/sandbox-bridge/README.md](../cloudflare/sandbox-bridge/README.md)** (Worker deploy).
@@ -88,7 +88,7 @@ Runs a snippet in an isolated **Cloudflare Sandbox** through a **Worker** you de
 }
 ```
 
-Writes **`Memory/<slug>.md`** with YAML frontmatter and optional `[[wikilinks]]`. Duplicate payloads (same content hash) are skipped when appending.
+Writes **`Memory/<slug>.md`** with YAML frontmatter and optional `[[wikilinks]]`. Duplicate payloads (same content hash) are skipped when appending. When enabled (default), also maintains **`Memory/_INDEX_{Provider}.md`** (or under **`CLAWQL_MEMORY_RECALL_SCAN_ROOT`**) listing notes in that subtree — **`CLAWQL_MEMORY_INDEX_PAGE=0`** to disable; **`CLAWQL_MEMORY_INDEX_PROVIDER`** sets the label/filename (see **[memory-obsidian.md](memory-obsidian.md)**, [#38](https://github.com/danielsmithdevelopment/ClawQL/issues/38)).
 
 ---
 

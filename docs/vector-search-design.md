@@ -1,6 +1,8 @@
-# Vector search & embeddings — backend design (draft)
+# Vector search & embeddings — backend design
 
-This note captures a **direction** for **[#16](https://github.com/danielsmithdevelopment/ClawQL/issues/16)** (optional semantic retrieval for `memory_recall` and spec `search`). It is **not** a committed roadmap until implementation lands.
+> **Status (2026):** Vault **`memory_recall`** hybrid retrieval (**lexical + optional vectors + wikilinks**) is **implemented**. See **[hybrid-memory-backends.md](hybrid-memory-backends.md)** and **[memory-obsidian.md](memory-obsidian.md)** for operator truth. This document still records **design intent**, **phasing history**, and **remaining** work (notably spec **`search`** semantics).
+
+This note tracks **[#16](https://github.com/danielsmithdevelopment/ClawQL/issues/16)** (optional semantic retrieval for `memory_recall` and spec `search`). The **`memory_recall`** path described below is **live** when **`CLAWQL_VECTOR_BACKEND`** is **`sqlite`** or **`postgres`** and embeddings are configured; spec **`search`** integration remains **future**.
 
 ## Goals
 
@@ -53,8 +55,8 @@ Implementations:
 Selection:
 
 - **`CLAWQL_VECTOR_BACKEND=off|sqlite|postgres`** (default `off`).
-- **SQLite:** e.g. `CLAWQL_VECTOR_SQLITE_PATH` (absolute path to a file; created as needed).
-- **Postgres:** e.g. `CLAWQL_VECTOR_DATABASE_URL` (connection string; app enables `pgvector` extension in migration or documents manual `CREATE EXTENSION`).
+- **SQLite vectors:** float32 BLOBs on **`vault_chunk.embedding`** inside **`memory.db`** (path via **`CLAWQL_MEMORY_DB_PATH`** / vault layout — see **[hybrid-memory-backends.md](hybrid-memory-backends.md)**), not a separate sqlite file.
+- **Postgres:** **`CLAWQL_VECTOR_DATABASE_URL`** (connection string; migrations run **`CREATE EXTENSION IF NOT EXISTS vector`**).
 
 ### 4. SQLite vs Postgres — when to use which
 
@@ -65,16 +67,16 @@ Selection:
 
 Same embedding provider and chunking code; only **connection + SQL** differ.
 
-### 5. Integration points (future)
+### 5. Integration points
 
-- **`memory_recall`:** hybrid lexical + vector + wikilink graph (weights TBD).
-- **`search`:** optional vector re-rank or parallel index over operation descriptions when an index exists; fallback to current keyword ranker in `spec-search`.
+- **`memory_recall`:** **implemented** — hybrid lexical + vector seeds + wikilink graph; fusion via **`CLAWQL_MEMORY_VECTOR_*`** (see **`src/memory-recall.ts`**).
+- **`search` (OpenAPI spec):** **future** — optional vector re-rank or parallel index over operation descriptions when an index exists; fallback to current keyword ranker in `spec-search`.
 
-## Phasing (suggested)
+## Phasing
 
-1. **Interface + SQLite (file-backed)** — **`CLAWQL_VECTOR_BACKEND=sqlite`**: float32 BLOBs on `vault_chunk` + OpenAI-compatible **`/embeddings`** (sql.js / in-process KNN; no sqlite-vec loadable extension in the WASM build).
-2. **Postgres + pgvector** — **`CLAWQL_VECTOR_BACKEND=postgres`** + **`CLAWQL_VECTOR_DATABASE_URL`**: table **`clawql_memory_chunk_vector`**, cosine via **`<=>`**, auto-**`CREATE EXTENSION vector`** on first connect (implemented; **`pg`** dependency).
-3. **Hybrid & tuning** — `memory_recall` fuses lexical + vector + wikilinks; optional IVFFLAT / HNSW indexes in Postgres are operator-managed, not created by ClawQL yet.
+1. **Interface + SQLite (`memory.db` BLOBs)** — **Done for `memory_recall`.** **`CLAWQL_VECTOR_BACKEND=sqlite`**: float32 BLOBs on `vault_chunk` + OpenAI-compatible **`/embeddings`** (sql.js / in-process KNN; no sqlite-vec loadable extension in the WASM build).
+2. **Postgres + pgvector** — **Done for `memory_recall`.** **`CLAWQL_VECTOR_BACKEND=postgres`** + **`CLAWQL_VECTOR_DATABASE_URL`**: table **`clawql_memory_chunk_vector`**, cosine via **`<=>`**, **`CREATE EXTENSION vector`** on migrate (**`pg`** dependency); optional dual-write to **`vault_chunk.embedding`**.
+3. **Hybrid & tuning** — **Done (recall).** `memory_recall` fuses lexical + vector + wikilinks; optional IVFFLAT / HNSW indexes in Postgres are operator-managed, not created by ClawQL yet.
 
 ## Open decisions
 
@@ -86,5 +88,5 @@ Same embedding provider and chunking code; only **connection + SQL** differ.
 
 - [`hybrid-memory-backends.md`](hybrid-memory-backends.md) — **SQLite (default) vs Postgres (optional)** for vectors and future hybrid artifacts.
 - [`memory-obsidian.md`](memory-obsidian.md) — vault semantics for ingest/recall today.
-- [`memory-db-schema.md`](memory-db-schema.md) — **`memory.db`** layout (chunks + wikilinks today; vector columns reserved).
-- [`mcp-tools.md`](mcp-tools.md) — current MCP tools (no vector fields until shipped).
+- [`memory-db-schema.md`](memory-db-schema.md) — **`memory.db`** layout (chunks, wikilinks, optional **`vault_chunk.embedding`** when vectors are enabled).
+- [`mcp-tools.md`](mcp-tools.md) — MCP tools reference (including **`memory_recall`** hybrid / vector behavior).
