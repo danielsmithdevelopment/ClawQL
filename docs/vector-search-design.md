@@ -85,4 +85,5 @@ Same embedding provider and chunking code; only **connection + SQL** differ.
 ## Related docs
 
 - [`memory-obsidian.md`](memory-obsidian.md) — vault semantics for ingest/recall today.
+- [`memory-db-schema.md`](memory-db-schema.md) — **`memory.db`** layout (chunks + wikilinks today; vector columns reserved).
 - [`mcp-tools.md`](mcp-tools.md) — current MCP tools (no vector fields until shipped).

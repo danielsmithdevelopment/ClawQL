@@ -1,4 +1,5 @@
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { constants } from "node:fs";
+import { access, mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -70,5 +71,11 @@ describe("memory-ingest", () => {
     const r = await runMemoryIngest({ title: "X" });
     expect(r.ok).toBe(false);
     expect(r.error).toMatch(/CLAWQL_OBSIDIAN_VAULT_PATH/);
+  });
+
+  it("writes memory.db under the vault after successful ingest", async () => {
+    const r = await runMemoryIngest({ title: "Indexed", insights: "hello" });
+    expect(r.ok).toBe(true);
+    await access(join(dir, ".clawql", "memory.db"), constants.R_OK);
   });
 });

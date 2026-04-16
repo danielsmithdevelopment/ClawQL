@@ -26,6 +26,8 @@ ClawQL does not require Obsidian; any editor works. Obsidian is the usual refere
 
 The design stays **lightweight**: the vault remains the source of truth; retrieval is “good enough” lexical + graph context rather than semantic vectors in-process.
 
+For the **structured sidecar** (`memory.db`: chunks + wikilink edges for hybrid / sqlite-vec work), see **[memory-db-schema.md](memory-db-schema.md)** and the full build narrative **[memory-db-hybrid-implementation.md](memory-db-hybrid-implementation.md)**.
+
 ## Wikilinks and semantics
 
 `[[Page Name]]` links are **untyped**: they mean “related page,” not “contradicts” vs “supports.” For richer semantics, teams combine tags, folders, or prose in the note body—same as in human-maintained wikis.
