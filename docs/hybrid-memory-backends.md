@@ -5,7 +5,7 @@ ClawQL treats **vault Markdown** as the **source of truth**. Derived state can l
 1. **`memory.db` (SQLite via sql.js)** — **default**, colocated with the vault (same folder or `CLAWQL_MEMORY_DB_PATH`). No extra service, ideal for laptops and single-node agents.
 2. **Postgres** — **optional**, for operators who want HA, concurrent writers, pgvector indexes, backups, and room for **Cuckoo filters** and **Merkle-style integrity** artifacts without stuffing everything into one SQLite file.
 
-You can use **one or both**: today, **relational document/chunk/wikilink rows** are always written to **`memory.db`** when enabled; **vectors** go either into **`vault_chunk.embedding`** (sqlite backend) or into **Postgres** (postgres backend), never duplicated in both for the same deployment mode.
+**Feature parity:** whichever vector backend you choose, you get the same hybrid **`memory_recall`** (lexical + vector seeds + wikilinks) and the same embedding pipeline. **`memory.db`** always receives **`vault_chunk.embedding`** BLOBs when embeddings succeed (**dual-write**), so the SQLite file stays a complete portable index beside the vault. With **`CLAWQL_VECTOR_BACKEND=postgres`**, the same vectors are **also** upserted into **`clawql_memory_chunk_vector`** for **pgvector** ANN queries; recall uses Postgres first and **falls back** to in-process cosine over `memory.db` if the PG query fails or returns no rows.
 
 ---
 
@@ -15,7 +15,7 @@ You can use **one or both**: today, **relational document/chunk/wikilink rows** 
 |--------|---------|------------------|
 | Canonical notes | Vault `.md` | — |
 | Structured index (documents, chunks, wikilinks) | **`memory.db`** (sql.js) | Same; Postgres is not a drop-in replacement for this file today |
-| Chunk vectors | **`CLAWQL_VECTOR_BACKEND=sqlite`** (BLOB + in-process KNN) | **`CLAWQL_VECTOR_BACKEND=postgres`** + **`CLAWQL_VECTOR_DATABASE_URL`** |
+| Chunk vectors | **`CLAWQL_VECTOR_BACKEND=sqlite`** (KNN in-process over `memory.db` BLOBs) | **`CLAWQL_VECTOR_BACKEND=postgres`** + **`CLAWQL_VECTOR_DATABASE_URL`** (KNN via pgvector; **same BLOBs in `memory.db`**) |
 | Future: Cuckoo membership (#25) | TBD (likely SQLite blobs or Postgres BYTEA) | Same table layout in PG for scale-out |
 | Future: Merkle / integrity (#37) | TBD | Postgres-friendly for multi-replica |
 

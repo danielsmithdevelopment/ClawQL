@@ -1,6 +1,7 @@
 /**
  * Colocated SQLite `memory.db` — schema + migrations + vault document / chunk / wikilink sync (#27).
- * Optional chunk embeddings for hybrid recall (#26) — vectors as float32 BLOBs (sql.js has no sqlite-vec).
+ * Optional chunk embeddings for hybrid recall (#26) — float32 BLOBs on `vault_chunk` for every backend
+ * (dual-write when postgres is selected; pgvector is additional — see docs/hybrid-memory-backends.md).
  *
  * Uses sql.js (WASM) so installs work with `npm ci --ignore-scripts` and Node 20+ CI.
  */
@@ -398,11 +399,10 @@ export async function syncMemoryDbFromDocuments(
           indexedAt,
         ]);
 
-        const storeSqliteVec = vb === "sqlite";
+        /* Dual-write: always persist vectors into memory.db when present so sqlite and postgres backends share the same on-disk artifact (portability + recall fallback). */
         for (const c of chunks) {
-          const embBlob =
-            storeSqliteVec && c.floatVec ? float32ArrayToBlob(c.floatVec) : null;
-          const embModel = storeSqliteVec && c.floatVec ? c.embeddingModel : null;
+          const embBlob = c.floatVec ? float32ArrayToBlob(c.floatVec) : null;
+          const embModel = c.floatVec ? c.embeddingModel : null;
           insChunk.run([
             c.id,
             path,

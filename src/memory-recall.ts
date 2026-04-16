@@ -232,22 +232,33 @@ export async function runMemoryRecall(input: MemoryRecallInput): Promise<MemoryR
         const topChunks = envInt("CLAWQL_MEMORY_VECTOR_TOP_CHUNKS", 80);
         const maxDocs = envInt("CLAWQL_MEMORY_VECTOR_MAX_DOCS", 12);
         const vb = vectorBackend();
+        const rankFromMemoryDbBlobs = async () => {
+          const chunks = await loadChunkEmbeddingsForDocuments(vault, mdFiles);
+          if (chunks.length === 0) return [];
+          return rankDocumentsByChunkSimilarity(qEmb, chunks, {
+            topChunks,
+            maxDocs,
+          });
+        };
+
+        let ranked: { path: string; score: number; chunkId: string }[] = [];
         if (vb === "postgres") {
-          const ranked = await queryPostgresVectorKnn(qEmb, mdFiles, { topChunks, maxDocs });
-          for (const r of ranked) {
-            vectorByRel.set(r.path, r.score);
+          try {
+            ranked = await queryPostgresVectorKnn(qEmb, mdFiles, { topChunks, maxDocs });
+          } catch (pgErr: unknown) {
+            const msg = pgErr instanceof Error ? pgErr.message : String(pgErr);
+            console.error(`[clawql-mcp] memory_recall pgvector query failed, trying memory.db: ${msg}`);
+            ranked = [];
+          }
+          if (ranked.length === 0) {
+            ranked = await rankFromMemoryDbBlobs();
           }
         } else if (vb === "sqlite") {
-          const chunks = await loadChunkEmbeddingsForDocuments(vault, mdFiles);
-          if (chunks.length > 0) {
-            const ranked = rankDocumentsByChunkSimilarity(qEmb, chunks, {
-              topChunks,
-              maxDocs,
-            });
-            for (const r of ranked) {
-              vectorByRel.set(r.path, r.score);
-            }
-          }
+          ranked = await rankFromMemoryDbBlobs();
+        }
+
+        for (const r of ranked) {
+          vectorByRel.set(r.path, r.score);
         }
       }
     } catch (e: unknown) {
