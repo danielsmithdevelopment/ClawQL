@@ -72,9 +72,9 @@ Same embedding provider and chunking code; only **connection + SQL** differ.
 
 ## Phasing (suggested)
 
-1. **Interface + SQLite** — smallest dependency footprint for developers; prove end-to-end ingest + query.
+1. **Interface + SQLite** — **`CLAWQL_VECTOR_BACKEND=sqlite`** with float32 BLOBs on `vault_chunk` + OpenAI-compatible **`/embeddings`** (implemented in ClawQL **#26**; sql.js build uses in-process KNN, not the sqlite-vec loadable extension).
 2. **Postgres + pgvector** — second implementation behind the same interface; Docker Compose service optional.
-3. **Hybrid & tuning** — FTS / keyword + vector, score fusion, reindex hooks.
+3. **Hybrid & tuning** — FTS / keyword + vector, score fusion, reindex hooks (partially: `memory_recall` fuses lexical + vector + wikilinks today).
 
 ## Open decisions
 

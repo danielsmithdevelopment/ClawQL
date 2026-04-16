@@ -7,11 +7,18 @@ import { getObsidianVaultPath } from "./vault-config.js";
 import { readVaultTextFile } from "./vault-utils.js";
 import { slugifyTitle } from "./memory-ingest.js";
 import {
+  loadChunkEmbeddingsForDocuments,
   loadWikilinkEdgesFromDatabase,
   memoryDbSyncEnabled,
   recallSyncDbEnabled,
   syncMemoryDbFromDocuments,
 } from "./memory-db.js";
+import {
+  embedQuery,
+  rankDocumentsByChunkSimilarity,
+  resolveEmbeddingConfig,
+  vectorSqliteBackendEnabled,
+} from "./memory-embedding.js";
 import { listVaultMarkdownRelPaths, buildSlugToVaultPath } from "./memory-slug-index.js";
 import { extractWikilinkTargets, stripVaultFrontmatter } from "./vault-markdown.js";
 
@@ -32,7 +39,7 @@ export type RecallHit = {
   path: string;
   score: number;
   depth: number;
-  reason: "keyword" | "link";
+  reason: "keyword" | "link" | "vector";
   linkFrom?: string;
   snippet: string;
 };
@@ -50,6 +57,13 @@ function envInt(key: string, def: number): number {
   const v = process.env[key]?.trim();
   if (!v) return def;
   const n = Number.parseInt(v, 10);
+  return Number.isFinite(n) ? n : def;
+}
+
+function envFloat(key: string, def: number): number {
+  const v = process.env[key]?.trim();
+  if (!v) return def;
+  const n = Number.parseFloat(v);
   return Number.isFinite(n) ? n : def;
 }
 
@@ -208,20 +222,68 @@ export async function runMemoryRecall(input: MemoryRecallInput): Promise<MemoryR
     return [...new Set([...a, ...b])];
   }
 
-  const seeds = files
-    .filter((f) => f.score >= minScore)
-    .sort((a, b) => b.score - a.score)
-    .map((f) => f.rel);
+  const vectorByRel = new Map<string, number>();
+  if (vectorSqliteBackendEnabled() && memoryDbSyncEnabled()) {
+    const embCfg = resolveEmbeddingConfig();
+    if (embCfg) {
+      try {
+        const qEmb = await embedQuery(query, embCfg);
+        if (qEmb.length > 0) {
+          const chunks = await loadChunkEmbeddingsForDocuments(vault, mdFiles);
+          if (chunks.length > 0) {
+            const topChunks = envInt("CLAWQL_MEMORY_VECTOR_TOP_CHUNKS", 80);
+            const maxDocs = envInt("CLAWQL_MEMORY_VECTOR_MAX_DOCS", 12);
+            const ranked = rankDocumentsByChunkSimilarity(qEmb, chunks, {
+              topChunks,
+              maxDocs,
+            });
+            for (const r of ranked) {
+              vectorByRel.set(r.path, r.score);
+            }
+          }
+        }
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        console.error(`[clawql-mcp] memory_recall vector pass failed: ${msg}`);
+      }
+    }
+  }
 
-  const scoreByRel = new Map(files.map((f) => [f.rel, f.score]));
+  const vectorBoost = envFloat("CLAWQL_MEMORY_VECTOR_SCORE_BOOST", 50);
+  const minVectorSim = envFloat("CLAWQL_MEMORY_VECTOR_MIN_SIM", 0.28);
+  const scoreByRel = new Map<string, number>();
+  for (const f of files) {
+    const vs = vectorByRel.get(f.rel) ?? 0;
+    scoreByRel.set(f.rel, Math.max(f.score, vs * vectorBoost));
+  }
+  for (const [p, sim] of vectorByRel) {
+    if (!scoreByRel.has(p)) scoreByRel.set(p, sim * vectorBoost);
+  }
 
-  type Q = { rel: string; depth: number; reason: "keyword" | "link"; from?: string };
+  const seedSet = new Set<string>();
+  for (const f of files) {
+    if (f.score >= minScore) seedSet.add(f.rel);
+  }
+  for (const [p, sim] of vectorByRel) {
+    if (sim >= minVectorSim) seedSet.add(p);
+  }
+  const seeds = [...seedSet].sort(
+    (a, b) => (scoreByRel.get(b) ?? 0) - (scoreByRel.get(a) ?? 0)
+  );
+
+  type Q = { rel: string; depth: number; reason: "keyword" | "link" | "vector"; from?: string };
   const queue: Q[] = [];
   const seen = new Set<string>();
 
   for (const s of seeds) {
     if (!seen.has(s)) {
-      queue.push({ rel: s, depth: 0, reason: "keyword" });
+      const kw = files.find((x) => x.rel === s);
+      const kwOk = (kw?.score ?? 0) >= minScore;
+      queue.push({
+        rel: s,
+        depth: 0,
+        reason: kwOk ? "keyword" : "vector",
+      });
       seen.add(s);
     }
   }

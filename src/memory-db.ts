@@ -1,5 +1,6 @@
 /**
  * Colocated SQLite `memory.db` — schema + migrations + vault document / chunk / wikilink sync (#27).
+ * Optional chunk embeddings for hybrid recall (#26) — vectors as float32 BLOBs (sql.js has no sqlite-vec).
  *
  * Uses sql.js (WASM) so installs work with `npm ci --ignore-scripts` and Node 20+ CI.
  */
@@ -20,6 +21,13 @@ import {
 } from "./memory-chunk.js";
 import { extractWikilinkTargets } from "./vault-markdown.js";
 import { buildSlugToVaultPath, listVaultMarkdownRelPaths } from "./memory-slug-index.js";
+import {
+  blobToFloat32Array,
+  embedTexts,
+  float32ArrayToBlob,
+  resolveEmbeddingConfig,
+  type ChunkWithEmbedding,
+} from "./memory-embedding.js";
 
 const SCHEMA_VERSION = 1;
 
@@ -183,6 +191,39 @@ function envInt(key: string, def: number): number {
  * Upsert indexed rows for the given vault Markdown snapshots (single transaction + one disk flush).
  * Callers should hold the vault write lock when writes must serialize with `memory_ingest`.
  */
+type OldChunkEmb = { blob: Uint8Array; model: string | null };
+
+async function loadExistingChunkEmbeddings(
+  db: Database,
+  paths: string[]
+): Promise<Map<string, Map<string, OldChunkEmb>>> {
+  const out = new Map<string, Map<string, OldChunkEmb>>();
+  const sel = db.prepare(
+    "SELECT chunk_id, embedding, embedding_model FROM vault_chunk WHERE document_path = ?"
+  );
+  for (const path of paths) {
+    const m = new Map<string, OldChunkEmb>();
+    sel.bind([path]);
+    while (sel.step()) {
+      const row = sel.getAsObject() as {
+        chunk_id: string;
+        embedding: Uint8Array | null;
+        embedding_model: string | null;
+      };
+      if (row.embedding && row.embedding.byteLength > 0) {
+        m.set(row.chunk_id, {
+          blob: new Uint8Array(row.embedding),
+          model: row.embedding_model,
+        });
+      }
+    }
+    sel.reset();
+    out.set(path, m);
+  }
+  sel.free();
+  return out;
+}
+
 export async function syncMemoryDbFromDocuments(
   vaultRoot: string,
   documents: { path: string; text: string; mtimeMs: number }[]
@@ -194,6 +235,104 @@ export async function syncMemoryDbFromDocuments(
   try {
     db.exec("PRAGMA foreign_keys = ON;");
     migrate(db);
+
+    const normPaths = documents.map((d) => d.path.replace(/\\/g, "/"));
+    const oldEmbByPath = await loadExistingChunkEmbeddings(db, normPaths);
+    const embedConfig = resolveEmbeddingConfig();
+
+    type PlannedChunk = {
+      id: string;
+      ordinal: number;
+      charStart: number;
+      charEnd: number;
+      text: string;
+      contentSha256: string;
+      embedding: Uint8Array | null;
+      embeddingModel: string | null;
+    };
+
+    const planned: {
+      doc: (typeof documents)[0];
+      path: string;
+      plan: ReturnType<typeof planVaultMarkdownChunks>;
+      chunks: PlannedChunk[];
+    }[] = [];
+
+    const toEmbedTexts: string[] = [];
+    const toEmbedRef: { pi: number; ci: number }[] = [];
+
+    for (let pi = 0; pi < documents.length; pi++) {
+      const doc = documents[pi]!;
+      const path = doc.path.replace(/\\/g, "/");
+      const plan = planVaultMarkdownChunks(doc.text);
+      const oldMap = oldEmbByPath.get(path) ?? new Map<string, OldChunkEmb>();
+      const chunks: PlannedChunk[] = [];
+
+      for (const c of plan.chunks) {
+        const id = vaultChunkId(path, CHUNK_STRATEGY_PARAGRAPH_V1, c.ordinal, c.contentSha256);
+
+        if (embedConfig) {
+          const prev = oldMap.get(id);
+          if (prev && prev.model === embedConfig.model) {
+            chunks.push({
+              id,
+              ordinal: c.ordinal,
+              charStart: c.charStart,
+              charEnd: c.charEnd,
+              text: c.text,
+              contentSha256: c.contentSha256,
+              embedding: prev.blob,
+              embeddingModel: embedConfig.model,
+            });
+            continue;
+          }
+          toEmbedTexts.push(c.text);
+          toEmbedRef.push({ pi: planned.length, ci: chunks.length });
+          chunks.push({
+            id,
+            ordinal: c.ordinal,
+            charStart: c.charStart,
+            charEnd: c.charEnd,
+            text: c.text,
+            contentSha256: c.contentSha256,
+            embedding: null,
+            embeddingModel: null,
+          });
+          continue;
+        }
+
+        chunks.push({
+          id,
+          ordinal: c.ordinal,
+          charStart: c.charStart,
+          charEnd: c.charEnd,
+          text: c.text,
+          contentSha256: c.contentSha256,
+          embedding: null,
+          embeddingModel: null,
+        });
+      }
+
+      planned.push({ doc, path, plan, chunks });
+    }
+
+    if (embedConfig && toEmbedTexts.length > 0) {
+      try {
+        const { vectors, model } = await embedTexts(toEmbedTexts, embedConfig);
+        for (let i = 0; i < toEmbedRef.length; i++) {
+          const ref = toEmbedRef[i]!;
+          const vec = vectors[i];
+          if (!vec) continue;
+          const row = planned[ref.pi]!.chunks[ref.ci]!;
+          row.embedding = float32ArrayToBlob(vec);
+          row.embeddingModel = model;
+        }
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        console.error(`[clawql-mcp] memory.db embedding sync failed: ${msg}`);
+      }
+    }
+
     const slugMap = buildSlugToVaultPath(documents);
     const indexedAt = isoNow();
 
@@ -206,7 +345,7 @@ export async function syncMemoryDbFromDocuments(
     const insChunk = db.prepare(
       `INSERT INTO vault_chunk (
         chunk_id, document_path, ordinal, char_start, char_end, text, content_sha256, chunk_strategy, embedding_model, embedding
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL)`
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     );
     const delEdges = db.prepare("DELETE FROM wikilink_edge WHERE from_path = ?");
     const insEdge = db.prepare(
@@ -215,12 +354,10 @@ export async function syncMemoryDbFromDocuments(
 
     db.run("BEGIN");
     try {
-      for (const doc of documents) {
-        const path = doc.path.replace(/\\/g, "/");
+      for (const { doc, path, plan, chunks } of planned) {
         const bodySha = sha256Utf8(doc.text);
         const byteLen = Buffer.byteLength(doc.text, "utf8");
         const title = extractTitle(doc.text);
-        const plan = planVaultMarkdownChunks(doc.text);
 
         delEdges.run([path]);
         delDoc.run([path]);
@@ -236,10 +373,9 @@ export async function syncMemoryDbFromDocuments(
           indexedAt,
         ]);
 
-        for (const c of plan.chunks) {
-          const id = vaultChunkId(path, CHUNK_STRATEGY_PARAGRAPH_V1, c.ordinal, c.contentSha256);
+        for (const c of chunks) {
           insChunk.run([
-            id,
+            c.id,
             path,
             c.ordinal,
             c.charStart,
@@ -247,6 +383,8 @@ export async function syncMemoryDbFromDocuments(
             c.text,
             c.contentSha256,
             plan.strategy,
+            c.embeddingModel,
+            c.embedding,
           ]);
         }
 
@@ -296,6 +434,51 @@ export async function syncMemoryDbForVaultScanRoot(vaultRoot: string): Promise<v
     }
   }
   await syncMemoryDbFromDocuments(vaultRoot, documents);
+}
+
+/** Load chunk rows with non-null embeddings for `memory_recall` vector KNN. */
+export async function loadChunkEmbeddingsForDocuments(
+  vaultRoot: string,
+  documentPaths: string[]
+): Promise<ChunkWithEmbedding[]> {
+  if (!memoryDbSyncEnabled() || documentPaths.length === 0) return [];
+  const absDb = resolveMemoryDatabasePath(vaultRoot);
+  const db = await openOrCreateDb(absDb);
+  try {
+    db.exec("PRAGMA foreign_keys = ON;");
+    migrate(db);
+    const out: ChunkWithEmbedding[] = [];
+    const batch = 400;
+    for (let i = 0; i < documentPaths.length; i += batch) {
+      const slice = documentPaths.slice(i, i + batch);
+      if (slice.length === 0) continue;
+      const placeholders = slice.map(() => "?").join(",");
+      const stmt = db.prepare(
+        `SELECT document_path, chunk_id, text, embedding FROM vault_chunk WHERE embedding IS NOT NULL AND document_path IN (${placeholders})`
+      );
+      stmt.bind(slice);
+      while (stmt.step()) {
+        const row = stmt.getAsObject() as {
+          document_path: string;
+          chunk_id: string;
+          text: string;
+          embedding: Uint8Array;
+        };
+        const emb = blobToFloat32Array(new Uint8Array(row.embedding));
+        if (emb.length === 0) continue;
+        out.push({
+          documentPath: row.document_path,
+          chunkId: row.chunk_id,
+          text: row.text,
+          embedding: emb,
+        });
+      }
+      stmt.free();
+    }
+    return out;
+  } finally {
+    db.close();
+  }
 }
 
 /** Load stored wikilink rows for graph merge (paths normalized with `/`). */

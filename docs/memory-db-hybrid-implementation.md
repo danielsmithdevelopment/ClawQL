@@ -102,7 +102,8 @@ Implemented as **`vaultChunkId()`** so re-ingest replaces the same logical chunk
 | **`src/memory-slug-index.ts`** | **`listVaultMarkdownRelPaths`**: directory walk honoring `CLAWQL_MEMORY_RECALL_MAX_FILES`, skipping dot dirs. **`buildSlugToVaultPath`**: slug index from `{ path, text }[]`. |
 | **`src/memory-chunk.ts`** | **`planVaultMarkdownChunks`**, **`vaultChunkId`**, strategy constant **`CHUNK_STRATEGY_PARAGRAPH_V1`**. |
 | **`src/memory-db.ts`** | sql.js init (`require.resolve("sql.js")` → `sql-wasm.wasm` next to `dist/sql-wasm.js` — works with package **exports**), path resolution, **`migrate`**, **`syncMemoryDbFromDocuments`**, **`syncMemoryDbForVaultScanRoot`**, **`loadWikilinkEdgesFromDatabase`**, **`recallSyncDbEnabled`**, **`memoryDbSyncEnabled`**. |
-| **`src/memory-recall.ts`** | Uses slug index + vault markdown helpers; optional **`syncMemoryDbFromDocuments`** when **`CLAWQL_MEMORY_DB_SYNC_ON_RECALL=1`**; merges DB edges when DB enabled. Re-exports **`extractWikilinkTargets`** for compatibility. |
+| **`src/memory-recall.ts`** | Uses slug index + vault markdown helpers; optional **`syncMemoryDbFromDocuments`** when **`CLAWQL_MEMORY_DB_SYNC_ON_RECALL=1`**; merges DB edges when DB enabled; optional vector KNN via **`memory-embedding`** when **`CLAWQL_VECTOR_BACKEND=sqlite`**. Re-exports **`extractWikilinkTargets`** for compatibility. |
+| **`src/memory-embedding.ts`** | OpenAI-compatible **`/embeddings`**, float32 BLOB helpers, cosine KNN ranking (**#26**). |
 | **`src/memory-ingest.ts`** | After vault lock completes successfully, **`await import("./memory-db.js")`** then **`syncMemoryDbForVaultScanRoot`** — **dynamic import** avoids a static circular dependency (`memory-db` imports `slugifyTitle` from `memory-ingest`). |
 | **`src/memory-db.test.ts`**, **`src/memory-chunk.test.ts`** | Contract + persistence tests. |
 | **`src/memory-ingest.test.ts`** | Asserts **`memory.db`** exists after ingest. |

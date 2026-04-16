@@ -48,8 +48,8 @@ Embeddable segments for semantic search (text populated today; vector columns re
 | `text` | TEXT | Chunk plain text used for embeddings / lexical snippets. |
 | `content_sha256` | TEXT | SHA-256 of `text`. |
 | `chunk_strategy` | TEXT | Same as parent contract (`paragraph_v1`). |
-| `embedding_model` | TEXT NULL | Reserved. |
-| `embedding` | BLOB NULL | Reserved for sqlite-vec / float32 payload. |
+| `embedding_model` | TEXT NULL | Set when **`CLAWQL_VECTOR_BACKEND=sqlite`** sync fills vectors (e.g. `text-embedding-3-small`). |
+| `embedding` | BLOB NULL | Float32 vector payload (little-endian); **KNN runs in-process** (sql.js cannot load the sqlite-vec extension). |
 
 ### `wikilink_edge`
 
@@ -75,7 +75,7 @@ Implemented in **`src/memory-chunk.ts`**:
 ## Runtime
 
 - **Engine:** [sql.js](https://github.com/sql-js/sql.js/) (WASM). No native `node-gyp` modules; compatible with `npm ci --ignore-scripts` and the Distroless image build.
-- **Recall:** When the DB is enabled, `memory_recall` **merges** stored `wikilink_edge` rows whose `to_resolved_path` is still present in the current scan into the in-memory graph (helps when the DB was populated from a wider scan than the current `CLAWQL_MEMORY_RECALL_SCAN_ROOT`). Optional **`CLAWQL_MEMORY_DB_SYNC_ON_RECALL=1`** rewrites the DB from the files touched in that recall (heavier).
+- **Recall:** When the DB is enabled, `memory_recall` **merges** stored `wikilink_edge` rows whose `to_resolved_path` is still present in the current scan into the in-memory graph (helps when the DB was populated from a wider scan than the current `CLAWQL_MEMORY_RECALL_SCAN_ROOT`). Optional **`CLAWQL_MEMORY_DB_SYNC_ON_RECALL=1`** rewrites the DB from the files touched in that recall (heavier). With **`CLAWQL_VECTOR_BACKEND=sqlite`** and embeddings configured, recall also runs **cosine KNN** over `vault_chunk` rows for the current scan (see issue [#26](https://github.com/danielsmithdevelopment/ClawQL/issues/26)).
 
 ## See also
 
