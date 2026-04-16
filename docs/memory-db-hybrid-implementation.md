@@ -105,7 +105,7 @@ Implemented as **`vaultChunkId()`** so re-ingest replaces the same logical chunk
 | **`src/memory-chunk.ts`** | **`planVaultMarkdownChunks`**, **`vaultChunkId`**, strategy constant **`CHUNK_STRATEGY_PARAGRAPH_V1`**. |
 | **`src/memory-db.ts`** | sql.js init (`require.resolve("sql.js")` → `sql-wasm.wasm` next to `dist/sql-wasm.js` — works with package **exports**), path resolution, **`migrate`**, **`syncMemoryDbFromDocuments`**, **`syncMemoryDbForVaultScanRoot`**, **`loadWikilinkEdgesFromDatabase`**, **`recallSyncDbEnabled`**, **`memoryDbSyncEnabled`**. |
 | **`src/memory-recall.ts`** | Uses slug index + vault markdown helpers; optional **`syncMemoryDbFromDocuments`** when **`CLAWQL_MEMORY_DB_SYNC_ON_RECALL=1`**; merges DB edges when DB enabled; optional vector KNN via **`memory-embedding`** when **`CLAWQL_VECTOR_BACKEND=sqlite`**. Re-exports **`extractWikilinkTargets`** for compatibility. |
-| **`src/memory-embedding.ts`** | OpenAI-compatible **`/embeddings`**, float32 BLOB helpers, shared ranking (**#26**). |
+| **`src/memory-embedding.ts`** | OpenAI-compatible **`/embeddings`**, **`vectorBackend()`** vs **`effectiveVectorBackend()`** (postgres without URL → sqlite vectors), float32 BLOB helpers, shared ranking (**#26**). |
 | **`src/vector-store/pgvector.ts`** | **Postgres + pgvector**: pool, shutdown hooks, upsert after sync, `<=>` KNN for **`memory_recall`**. |
 | **`src/memory-backends/postgres-migrations.ts`** | Versioned DDL (`clawql_pg_schema_migrations`); migration **1** = chunk vector table. |
 | **`src/memory-backends/types.ts`** | Extension-point types (vectors today; Cuckoo / Merkle placeholders). |

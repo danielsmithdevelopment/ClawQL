@@ -17,7 +17,7 @@ import {
   embedQuery,
   rankDocumentsByChunkSimilarity,
   resolveEmbeddingConfig,
-  vectorBackend,
+  effectiveVectorBackend,
 } from "./memory-embedding.js";
 import { queryPostgresVectorKnn } from "./vector-store/pgvector.js";
 import { listVaultMarkdownRelPaths, buildSlugToVaultPath } from "./memory-slug-index.js";
@@ -231,7 +231,7 @@ export async function runMemoryRecall(input: MemoryRecallInput): Promise<MemoryR
       if (qEmb.length > 0) {
         const topChunks = envInt("CLAWQL_MEMORY_VECTOR_TOP_CHUNKS", 80);
         const maxDocs = envInt("CLAWQL_MEMORY_VECTOR_MAX_DOCS", 12);
-        const vb = vectorBackend();
+        const vb = effectiveVectorBackend();
         const rankFromMemoryDbBlobs = async () => {
           const chunks = await loadChunkEmbeddingsForDocuments(vault, mdFiles);
           if (chunks.length === 0) return [];

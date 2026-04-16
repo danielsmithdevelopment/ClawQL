@@ -26,6 +26,29 @@ export function vectorBackend(): VectorBackend {
   return "off";
 }
 
+let warnedPostgresFallbackToSqlite = false;
+
+/**
+ * **Runtime** vector store: same as {@link vectorBackend} except when env requests **postgres**
+ * but **`CLAWQL_VECTOR_DATABASE_URL`** is unset — then we use **sqlite** vectors in **`memory.db`**
+ * (dual-write BLOBs, in-process recall). Prefer setting the URL or **`CLAWQL_VECTOR_BACKEND=sqlite`**
+ * explicitly to avoid ambiguity.
+ */
+export function effectiveVectorBackend(): VectorBackend {
+  const b = vectorBackend();
+  if (b === "off") return "off";
+  if (b === "postgres" && !process.env.CLAWQL_VECTOR_DATABASE_URL?.trim()) {
+    if (!warnedPostgresFallbackToSqlite) {
+      warnedPostgresFallbackToSqlite = true;
+      console.warn(
+        "[clawql-mcp] CLAWQL_VECTOR_BACKEND=postgres but CLAWQL_VECTOR_DATABASE_URL is unset; using SQLite (memory.db) for vectors. Set the URL for pgvector."
+      );
+    }
+    return "sqlite";
+  }
+  return b;
+}
+
 /**
  * True when embeddings API + vector backend are configured (sqlite or postgres).
  */
@@ -43,7 +66,6 @@ export function resolveEmbeddingConfig(): EmbeddingConfig | null {
   if (b === "off") return null;
   if (process.env.CLAWQL_MEMORY_DB === "0") return null;
   if (getObsidianVaultPath() === null) return null;
-  if (b === "postgres" && !process.env.CLAWQL_VECTOR_DATABASE_URL?.trim()) return null;
 
   const apiKey =
     process.env.CLAWQL_EMBEDDING_API_KEY?.trim() ||
@@ -64,12 +86,12 @@ export function embeddingVectorDimension(): number {
 }
 
 /**
- * When **`CLAWQL_VECTOR_BACKEND=postgres`**, set **`CLAWQL_MEMORY_VECTOR_DUAL_WRITE=0`** to skip storing
- * float32 vectors in **`vault_chunk.embedding`** (vectors only in Postgres). Default: dual-write **on**
- * for parity / offline fallback. Ignored for **`sqlite`** backend (vectors always live in `memory.db`).
+ * When the **effective** backend is **postgres** (URL provided), set **`CLAWQL_MEMORY_VECTOR_DUAL_WRITE=0`**
+ * to skip float32 vectors in **`vault_chunk.embedding`** (vectors only in Postgres). Default **on** (dual-write).
+ * When effective backend is **sqlite** (including postgres env without URL), vectors always go to **`memory.db`**.
  */
 export function vectorDualWriteToMemoryDb(): boolean {
-  if (vectorBackend() !== "postgres") return true;
+  if (effectiveVectorBackend() !== "postgres") return true;
   return process.env.CLAWQL_MEMORY_VECTOR_DUAL_WRITE !== "0";
 }
 

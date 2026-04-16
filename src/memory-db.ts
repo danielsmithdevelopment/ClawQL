@@ -27,7 +27,7 @@ import {
   embedTexts,
   float32ArrayToBlob,
   resolveEmbeddingConfig,
-  vectorBackend,
+  effectiveVectorBackend,
   vectorDualWriteToMemoryDb,
   type ChunkWithEmbedding,
 } from "./memory-embedding.js";
@@ -241,7 +241,7 @@ export async function syncMemoryDbFromDocuments(
     migrate(db);
 
     const normPaths = documents.map((d) => d.path.replace(/\\/g, "/"));
-    const vb = vectorBackend();
+    const vb = effectiveVectorBackend();
     const oldEmbByPath =
       vb === "sqlite"
         ? await loadExistingChunkEmbeddings(db, normPaths)
