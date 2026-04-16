@@ -63,6 +63,16 @@ export function embeddingVectorDimension(): number {
   return Number.isFinite(n) && n > 0 ? n : 1536;
 }
 
+/**
+ * When **`CLAWQL_VECTOR_BACKEND=postgres`**, set **`CLAWQL_MEMORY_VECTOR_DUAL_WRITE=0`** to skip storing
+ * float32 vectors in **`vault_chunk.embedding`** (vectors only in Postgres). Default: dual-write **on**
+ * for parity / offline fallback. Ignored for **`sqlite`** backend (vectors always live in `memory.db`).
+ */
+export function vectorDualWriteToMemoryDb(): boolean {
+  if (vectorBackend() !== "postgres") return true;
+  return process.env.CLAWQL_MEMORY_VECTOR_DUAL_WRITE !== "0";
+}
+
 export function float32ArrayToBlob(vec: Float32Array): Uint8Array {
   return new Uint8Array(vec.buffer, vec.byteOffset, vec.byteLength);
 }

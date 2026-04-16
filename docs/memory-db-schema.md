@@ -48,8 +48,8 @@ Embeddable segments for semantic search (text populated today; vector columns re
 | `text` | TEXT | Chunk plain text used for embeddings / lexical snippets. |
 | `content_sha256` | TEXT | SHA-256 of `text`. |
 | `chunk_strategy` | TEXT | Same as parent contract (`paragraph_v1`). |
-| `embedding_model` | TEXT NULL | Set when any vector backend sync fills embeddings (e.g. `text-embedding-3-small`). **Dual-write:** vectors are stored here for **`postgres`** too (same BLOBs as sqlite-only mode). |
-| `embedding` | BLOB NULL | Float32 vector payload (little-endian). Used for **in-process KNN** when **`CLAWQL_VECTOR_BACKEND=sqlite`**, and as the **portable / fallback** copy when **`postgres`** is selected (recall prefers pgvector in SQL, then falls back to these rows). |
+| `embedding_model` | TEXT NULL | Set when embeddings are written into this row ( **`sqlite`** backend, or **`postgres`** with **`CLAWQL_MEMORY_VECTOR_DUAL_WRITE`** not **`0`**). |
+| `embedding` | BLOB NULL | Float32 vector payload. **`postgres`** + **`CLAWQL_MEMORY_VECTOR_DUAL_WRITE=0`**: left **NULL** (vectors only in Postgres). |
 
 ### `wikilink_edge`
 

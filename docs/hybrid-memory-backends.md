@@ -5,7 +5,11 @@ ClawQL treats **vault Markdown** as the **source of truth**. Derived state can l
 1. **`memory.db` (SQLite via sql.js)** — **default**, colocated with the vault (same folder or `CLAWQL_MEMORY_DB_PATH`). No extra service, ideal for laptops and single-node agents.
 2. **Postgres** — **optional**, for operators who want HA, concurrent writers, pgvector indexes, backups, and room for **Cuckoo filters** and **Merkle-style integrity** artifacts without stuffing everything into one SQLite file.
 
-**Feature parity:** whichever vector backend you choose, you get the same hybrid **`memory_recall`** (lexical + vector seeds + wikilinks) and the same embedding pipeline. **`memory.db`** always receives **`vault_chunk.embedding`** BLOBs when embeddings succeed (**dual-write**), so the SQLite file stays a complete portable index beside the vault. With **`CLAWQL_VECTOR_BACKEND=postgres`**, the same vectors are **also** upserted into **`clawql_memory_chunk_vector`** for **pgvector** ANN queries; recall uses Postgres first and **falls back** to in-process cosine over `memory.db` if the PG query fails or returns no rows.
+**No SQLite unless you opt in:** if **`CLAWQL_OBSIDIAN_VAULT_PATH`** is unset or **`CLAWQL_MEMORY_DB=0`**, ClawQL does **not** create or use **`memory.db`** — same as before vectors existed.
+
+**When hybrid memory is on** (vault configured and **`memory.db` enabled): the relational index (documents, chunks, wikilinks) lives in **`memory.db`** — that is the default local index beside your Markdown.
+
+**Vector storage choice (postgres backend only):** by default, embeddings are **dual-written** to **`vault_chunk.embedding`** and to Postgres (**parity + fallback**). Set **`CLAWQL_MEMORY_VECTOR_DUAL_WRITE=0`** to store vectors **only in Postgres** (no vector BLOBs in SQLite; smaller `memory.db`, no sqlite fallback for the vector leg). **`sqlite`** backend always keeps vectors in **`memory.db`** only.
 
 ---
 

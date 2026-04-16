@@ -28,6 +28,7 @@ import {
   float32ArrayToBlob,
   resolveEmbeddingConfig,
   vectorBackend,
+  vectorDualWriteToMemoryDb,
   type ChunkWithEmbedding,
 } from "./memory-embedding.js";
 import { loadPostgresChunkVectorsByPaths, upsertPostgresChunkVectors } from "./vector-store/pgvector.js";
@@ -399,10 +400,12 @@ export async function syncMemoryDbFromDocuments(
           indexedAt,
         ]);
 
-        /* Dual-write: always persist vectors into memory.db when present so sqlite and postgres backends share the same on-disk artifact (portability + recall fallback). */
+        const dualVecToSqlite = vectorDualWriteToMemoryDb();
         for (const c of chunks) {
-          const embBlob = c.floatVec ? float32ArrayToBlob(c.floatVec) : null;
-          const embModel = c.floatVec ? c.embeddingModel : null;
+          const embBlob =
+            dualVecToSqlite && c.floatVec ? float32ArrayToBlob(c.floatVec) : null;
+          const embModel =
+            dualVecToSqlite && c.floatVec ? c.embeddingModel : null;
           insChunk.run([
             c.id,
             path,
