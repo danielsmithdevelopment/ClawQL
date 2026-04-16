@@ -365,7 +365,8 @@ If Stage 1 does **not** apply, one document is loaded in this order:
 | `CLAWQL_MEMORY_VECTOR_MIN_SIM` | Min cosine similarity (0–1) to seed **`memory_recall`** from vectors (`0.28`). |
 | `CLAWQL_MEMORY_VECTOR_SCORE_BOOST` | Scale vector similarity into lexical score space for ranking (`50`). |
 | `CLAWQL_MEMORY_VECTOR_TOP_CHUNKS` / `CLAWQL_MEMORY_VECTOR_MAX_DOCS` | Caps for vector KNN candidate chunks / distinct notes (`80` / `12`). |
-| `CLAWQL_MCP_LOG_TOOLS` | Set to **`1`** to log **non-sensitive** parameter shapes for **`memory_ingest`** / **`memory_recall`** to **stderr** (lengths and flags only). Default: off. |
+| `CLAWQL_MCP_LOG_TOOLS` | Set to **`1`** to log **non-sensitive** parameter shapes for **`memory_ingest`** / **`memory_recall`** / **`ingest_external_knowledge`** to **stderr** (lengths and flags only). Default: off. |
+| `CLAWQL_EXTERNAL_INGEST` | Set to **`1`** to enable **stub** JSON from **`ingest_external_knowledge`** (still no network import). See [`docs/external-ingest.md`](docs/external-ingest.md) ([#40](https://github.com/danielsmithdevelopment/ClawQL/issues/40)). |
 | `CLAWQL_GITHUB_TOKEN` | GitHub PAT / fine-grained token for **`execute`** when the operation is from the **github** spec (or `CLAWQL_PROVIDER=github`). Also accepts **`GITHUB_TOKEN`** / **`GH_TOKEN`**. |
 | `CLAWQL_CLOUDFLARE_API_TOKEN` | Cloudflare API token for **`execute`** when the operation is from the **cloudflare** spec (or `CLAWQL_PROVIDER=cloudflare`). Also accepts **`CLOUDFLARE_API_TOKEN`**. |
 | `CLAWQL_GOOGLE_ACCESS_TOKEN` | OAuth access token for **Google Cloud** APIs (`compute-v1`, … top50 slugs, or `CLAWQL_PROVIDER=google` / `google-top50`). Also accepts **`GOOGLE_ACCESS_TOKEN`**. |
@@ -430,14 +431,15 @@ Agent
         ├─▶ search tool  ──▶ In-memory spec search  (zero latency, zero tokens)
         ├─▶ execute tool  ──▶ GraphQL Client ──▶ GraphQL Proxy (localhost:4000) ──▶ REST API
         ├─▶ sandbox_exec  ──▶ HTTPS ──▶ Cloudflare Sandbox bridge Worker (optional)
-        └─▶ memory_ingest / memory_recall  ──▶ Obsidian vault on disk (optional)
+        └─▶ memory_ingest / memory_recall / ingest_external_knowledge  ──▶ Obsidian vault on disk (optional)
 ```
-An agent connects to ClawQL over MCP and registers **up to five tools** (see [`docs/mcp-tools.md`](docs/mcp-tools.md)):
+An agent connects to ClawQL over MCP and registers **up to six tools** (see [`docs/mcp-tools.md`](docs/mcp-tools.md)):
 
 - **`search`** — in-memory operation index from the loaded spec(s); no upstream HTTP.
 - **`execute`** — GraphQL proxy (single-spec) or REST (multi-spec) for lean responses.
 - **`sandbox_exec`** — run snippet in remote Cloudflare Sandbox via **`CLAWQL_SANDBOX_BRIDGE_URL`** (not local execution).
 - **`memory_ingest`** / **`memory_recall`** — require **`CLAWQL_OBSIDIAN_VAULT_PATH`**.
+- **`ingest_external_knowledge`** — stub roadmap for bulk import into the vault; set **`CLAWQL_EXTERNAL_INGEST=1`** for preview JSON (see [`docs/external-ingest.md`](docs/external-ingest.md)).
 
 Core API workflow remains **`search` → `execute`**. Optional tools do not replace the GraphQL proxy for REST APIs.
 
