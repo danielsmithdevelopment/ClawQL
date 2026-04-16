@@ -150,7 +150,7 @@ export async function runMemoryIngest(input: MemoryIngestInput): Promise<MemoryI
   const hash = hashIngestSection(input);
   const when = new Date().toISOString();
 
-  return withVaultWriteLock(vault, async () => {
+  const result = await withVaultWriteLock(vault, async () => {
     let existing = "";
     try {
       existing = await readVaultTextFile(vault, rel);
@@ -204,6 +204,18 @@ export async function runMemoryIngest(input: MemoryIngestInput): Promise<MemoryI
     await writeVaultTextFileAtomic(vault, rel, next);
     return { ok: true, path: rel };
   });
+
+  if (result.ok && !result.skipped) {
+    try {
+      const { syncMemoryDbForVaultScanRoot } = await import("./memory-db.js");
+      await syncMemoryDbForVaultScanRoot(vault);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error(`[clawql-mcp] memory.db sync after ingest failed: ${msg}`);
+    }
+  }
+
+  return result;
 }
 
 export async function handleMemoryIngestToolInput(

@@ -362,6 +362,10 @@ If Stage 1 does **not** apply, one document is loaded in this order:
 | `CLAWQL_MEMORY_RECALL_MIN_SCORE` | Minimum keyword score to seed a note (`1`). |
 | `CLAWQL_MEMORY_RECALL_MAX_FILES` | Safety cap on Markdown files scanned (`2000`). |
 | `CLAWQL_MEMORY_RECALL_SNIPPET_CHARS` | Snippet length in characters (`520`). |
+| `CLAWQL_MEMORY_DB` | Set to **`0`** to disable the **`memory.db`** sidecar (no sync after ingest, no wikilink merge in recall). |
+| `CLAWQL_MEMORY_DB_PATH` | SQLite file path: default **`.clawql/memory.db`** under the vault; may be an **absolute** path. See [`docs/memory-db-schema.md`](docs/memory-db-schema.md). |
+| `CLAWQL_MEMORY_DB_SYNC_ON_RECALL` | Set to **`1`** to rewrite **`memory.db`** from every **`memory_recall`** scan (optional; heavier than ingest-only sync). |
+| `CLAWQL_MEMORY_CHUNK_MAX_CHARS` | `paragraph_v1` chunker max window size before hard-split (`2000`). |
 | `CLAWQL_GITHUB_TOKEN` | GitHub PAT / fine-grained token for **`execute`** when the operation is from the **github** spec (or `CLAWQL_PROVIDER=github`). Also accepts **`GITHUB_TOKEN`** / **`GH_TOKEN`**. |
 | `CLAWQL_CLOUDFLARE_API_TOKEN` | Cloudflare API token for **`execute`** when the operation is from the **cloudflare** spec (or `CLAWQL_PROVIDER=cloudflare`). Also accepts **`CLOUDFLARE_API_TOKEN`**. |
 | `CLAWQL_GOOGLE_ACCESS_TOKEN` | OAuth access token for **Google Cloud** APIs (`compute-v1`, … top50 slugs, or `CLAWQL_PROVIDER=google` / `google-top50`). Also accepts **`GOOGLE_ACCESS_TOKEN`**. |

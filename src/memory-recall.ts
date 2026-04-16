@@ -3,11 +3,20 @@
  * Lightweight (no embeddings); suitable for agent loops.
  */
 
-import { readdir } from "node:fs/promises";
-import { basename, extname, join } from "node:path";
 import { getObsidianVaultPath } from "./vault-config.js";
 import { readVaultTextFile } from "./vault-utils.js";
 import { slugifyTitle } from "./memory-ingest.js";
+import {
+  loadWikilinkEdgesFromDatabase,
+  memoryDbSyncEnabled,
+  recallSyncDbEnabled,
+  syncMemoryDbFromDocuments,
+} from "./memory-db.js";
+import { listVaultMarkdownRelPaths, buildSlugToVaultPath } from "./memory-slug-index.js";
+import { extractWikilinkTargets, stripVaultFrontmatter } from "./vault-markdown.js";
+
+/** Re-export for tests and callers that imported from this module. */
+export { extractWikilinkTargets } from "./vault-markdown.js";
 
 export type MemoryRecallInput = {
   query: string;
@@ -75,28 +84,8 @@ export function keywordScore(query: string, text: string): number {
   return s;
 }
 
-function stripFrontmatter(s: string): string {
-  if (s.startsWith("---\n")) {
-    const end = s.indexOf("\n---\n", 4);
-    if (end !== -1) return s.slice(end + 5).trim();
-  }
-  return s;
-}
-
-/** Exported for tests. Obsidian `[[note|alias]]` uses the left side as target. */
-export function extractWikilinkTargets(markdown: string): string[] {
-  const out: string[] = [];
-  const re = /\[\[([^\]]+)\]\]/g;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(markdown)) !== null) {
-    const raw = m[1].split("|")[0]?.trim();
-    if (raw) out.push(raw);
-  }
-  return out;
-}
-
 function buildSnippet(text: string, query: string, maxLen: number): string {
-  const body = stripFrontmatter(text);
+  const body = stripVaultFrontmatter(text);
   const terms = tokenize(query);
   const lower = body.toLowerCase();
   let pos = 0;
@@ -109,31 +98,6 @@ function buildSnippet(text: string, query: string, maxLen: number): string {
   }
   const slice = body.slice(pos, pos + maxLen).trim();
   return slice.length < body.length ? `${slice}…` : slice;
-}
-
-async function listMarkdownFiles(
-  vaultAbs: string,
-  subRel: string,
-  maxFiles: number
-): Promise<string[]> {
-  const out: string[] = [];
-  async function walk(rel: string): Promise<void> {
-    if (out.length >= maxFiles) return;
-    const abs = join(vaultAbs, rel);
-    const entries = await readdir(abs, { withFileTypes: true });
-    for (const e of entries) {
-      if (out.length >= maxFiles) return;
-      if (e.name.startsWith(".")) continue;
-      const nextRel = rel ? `${rel}/${e.name}` : e.name;
-      if (e.isDirectory()) {
-        await walk(nextRel);
-      } else if (e.isFile() && extname(e.name).toLowerCase() === ".md") {
-        out.push(nextRel.replace(/\\/g, "/"));
-      }
-    }
-  }
-  await walk(subRel.replace(/\\/g, "/").replace(/^\/+/, ""));
-  return out;
 }
 
 function defaultScanRoot(): string {
@@ -169,7 +133,7 @@ export async function runMemoryRecall(input: MemoryRecallInput): Promise<MemoryR
 
   let mdFiles: string[];
   try {
-    mdFiles = await listMarkdownFiles(vault, scanRoot, maxFiles);
+    mdFiles = await listVaultMarkdownRelPaths(vault, scanRoot, maxFiles);
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
     return { ok: false, error: `Cannot scan vault: ${msg}` };
@@ -189,17 +153,20 @@ export async function runMemoryRecall(input: MemoryRecallInput): Promise<MemoryR
     }
   }
 
-  const slugToPath = new Map<string, string>();
-  for (const f of files) {
-    const s = slugifyTitle(basename(f.rel, ".md"));
-    if (!slugToPath.has(s)) slugToPath.set(s, f.rel);
-    const h = stripFrontmatter(f.text);
-    const hm = h.match(/^#\s+(.+)$/m);
-    if (hm) {
-      const hs = slugifyTitle(hm[1].trim());
-      if (!slugToPath.has(hs)) slugToPath.set(hs, f.rel);
+  const now = Date.now();
+  if (recallSyncDbEnabled()) {
+    try {
+      await syncMemoryDbFromDocuments(
+        vault,
+        files.map((f) => ({ path: f.rel, text: f.text, mtimeMs: now }))
+      );
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error(`[clawql-mcp] memory.db sync on recall failed: ${msg}`);
     }
   }
+
+  const slugToPath = buildSlugToVaultPath(files.map((f) => ({ path: f.rel, text: f.text })));
 
   const forward = new Map<string, Set<string>>();
   const back = new Map<string, Set<string>>();
@@ -219,6 +186,22 @@ export async function runMemoryRecall(input: MemoryRecallInput): Promise<MemoryR
     }
   }
 
+  const textByRel = new Map(files.map((f) => [f.rel, f.text]));
+  if (memoryDbSyncEnabled() && files.length > 0) {
+    try {
+      const extra = await loadWikilinkEdgesFromDatabase(
+        vault,
+        files.map((f) => f.rel)
+      );
+      for (const e of extra) {
+        if (textByRel.has(e.toPath)) addEdge(e.fromPath, e.toPath);
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error(`[clawql-mcp] memory.db wikilink merge failed: ${msg}`);
+    }
+  }
+
   function neighbors(p: string): string[] {
     const a = [...(forward.get(p) ?? [])];
     const b = [...(back.get(p) ?? [])];
@@ -230,7 +213,6 @@ export async function runMemoryRecall(input: MemoryRecallInput): Promise<MemoryR
     .sort((a, b) => b.score - a.score)
     .map((f) => f.rel);
 
-  const textByRel = new Map(files.map((f) => [f.rel, f.text]));
   const scoreByRel = new Map(files.map((f) => [f.rel, f.score]));
 
   type Q = { rel: string; depth: number; reason: "keyword" | "link"; from?: string };
