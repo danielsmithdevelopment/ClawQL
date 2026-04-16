@@ -2,6 +2,8 @@
 
 This document explains **what was built**, **why**, **how the pieces fit together**, and **how to operate** the SQLite sidecar beside the Obsidian vault. It complements the schema reference **[memory-db-schema.md](memory-db-schema.md)** with implementation detail and file-level navigation.
 
+**Optional Postgres (vectors + future Cuckoo / Merkle):** see **[hybrid-memory-backends.md](hybrid-memory-backends.md)** for the dual-backend story and migration conventions.
+
 ---
 
 ## 1. Context and goals
@@ -104,7 +106,9 @@ Implemented as **`vaultChunkId()`** so re-ingest replaces the same logical chunk
 | **`src/memory-db.ts`** | sql.js init (`require.resolve("sql.js")` → `sql-wasm.wasm` next to `dist/sql-wasm.js` — works with package **exports**), path resolution, **`migrate`**, **`syncMemoryDbFromDocuments`**, **`syncMemoryDbForVaultScanRoot`**, **`loadWikilinkEdgesFromDatabase`**, **`recallSyncDbEnabled`**, **`memoryDbSyncEnabled`**. |
 | **`src/memory-recall.ts`** | Uses slug index + vault markdown helpers; optional **`syncMemoryDbFromDocuments`** when **`CLAWQL_MEMORY_DB_SYNC_ON_RECALL=1`**; merges DB edges when DB enabled; optional vector KNN via **`memory-embedding`** when **`CLAWQL_VECTOR_BACKEND=sqlite`**. Re-exports **`extractWikilinkTargets`** for compatibility. |
 | **`src/memory-embedding.ts`** | OpenAI-compatible **`/embeddings`**, float32 BLOB helpers, shared ranking (**#26**). |
-| **`src/vector-store/pgvector.ts`** | **Postgres + pgvector**: schema bootstrap, upsert after sync, `<=>` KNN for **`memory_recall`**. |
+| **`src/vector-store/pgvector.ts`** | **Postgres + pgvector**: pool, shutdown hooks, upsert after sync, `<=>` KNN for **`memory_recall`**. |
+| **`src/memory-backends/postgres-migrations.ts`** | Versioned DDL (`clawql_pg_schema_migrations`); migration **1** = chunk vector table. |
+| **`src/memory-backends/types.ts`** | Extension-point types (vectors today; Cuckoo / Merkle placeholders). |
 | **`src/memory-ingest.ts`** | After vault lock completes successfully, **`await import("./memory-db.js")`** then **`syncMemoryDbForVaultScanRoot`** — **dynamic import** avoids a static circular dependency (`memory-db` imports `slugifyTitle` from `memory-ingest`). |
 | **`src/memory-db.test.ts`**, **`src/memory-chunk.test.ts`** | Contract + persistence tests. |
 | **`src/memory-ingest.test.ts`** | Asserts **`memory.db`** exists after ingest. |

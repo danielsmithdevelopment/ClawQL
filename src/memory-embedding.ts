@@ -55,6 +55,14 @@ export function resolveEmbeddingConfig(): EmbeddingConfig | null {
   return { baseUrl, model, apiKey };
 }
 
+/** Vector width for pgvector `vector(dim)` and API validation (default OpenAI `text-embedding-3-small`). */
+export function embeddingVectorDimension(): number {
+  const v = process.env.CLAWQL_EMBEDDING_DIMENSION?.trim();
+  if (!v) return 1536;
+  const n = Number.parseInt(v, 10);
+  return Number.isFinite(n) && n > 0 ? n : 1536;
+}
+
 export function float32ArrayToBlob(vec: Float32Array): Uint8Array {
   return new Uint8Array(vec.buffer, vec.byteOffset, vec.byteLength);
 }

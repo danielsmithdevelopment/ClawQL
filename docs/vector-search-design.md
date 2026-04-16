@@ -84,6 +84,7 @@ Same embedding provider and chunking code; only **connection + SQL** differ.
 
 ## Related docs
 
+- [`hybrid-memory-backends.md`](hybrid-memory-backends.md) — **SQLite (default) vs Postgres (optional)** for vectors and future hybrid artifacts.
 - [`memory-obsidian.md`](memory-obsidian.md) — vault semantics for ingest/recall today.
 - [`memory-db-schema.md`](memory-db-schema.md) — **`memory.db`** layout (chunks + wikilinks today; vector columns reserved).
 - [`mcp-tools.md`](mcp-tools.md) — current MCP tools (no vector fields until shipped).

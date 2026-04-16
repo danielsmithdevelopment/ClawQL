@@ -4,12 +4,14 @@
  */
 
 import pg from "pg";
+import { runPostgresHybridMemoryMigrations } from "../memory-backends/postgres-migrations.js";
 import {
   aggregateScoresToDocumentBest,
   type VectorRankedRow,
 } from "../memory-embedding.js";
 
 let pool: pg.Pool | null = null;
+let shutdownHooksRegistered = false;
 
 export function getPostgresVectorPool(): pg.Pool | null {
   const url = process.env.CLAWQL_VECTOR_DATABASE_URL?.trim();
@@ -20,12 +22,26 @@ export function getPostgresVectorPool(): pg.Pool | null {
   return pool;
 }
 
-export function embeddingVectorDimension(): number {
-  const v = process.env.CLAWQL_EMBEDDING_DIMENSION?.trim();
-  if (!v) return 1536;
-  const n = Number.parseInt(v, 10);
-  return Number.isFinite(n) && n > 0 ? n : 1536;
+/** Idempotent graceful shutdown for long-running MCP processes (HTTP or workers). */
+export async function closePostgresVectorPool(): Promise<void> {
+  if (pool) {
+    await pool.end();
+    pool = null;
+  }
 }
+
+/** Register once — closes the pg pool on SIGINT/SIGTERM so serverless/containers drain cleanly. */
+export function registerPostgresPoolShutdownHooks(): void {
+  if (shutdownHooksRegistered) return;
+  shutdownHooksRegistered = true;
+  const onSignal = (): void => {
+    void closePostgresVectorPool().catch(() => {});
+  };
+  process.once("SIGINT", onSignal);
+  process.once("SIGTERM", onSignal);
+}
+
+export { embeddingVectorDimension } from "../memory-embedding.js";
 
 function parseVectorText(s: string): Float32Array {
   const t = s.trim();
@@ -43,22 +59,7 @@ function parseVectorText(s: string): Float32Array {
 }
 
 export async function ensurePgVectorSchema(client: pg.PoolClient): Promise<void> {
-  const dim = embeddingVectorDimension();
-  await client.query("CREATE EXTENSION IF NOT EXISTS vector");
-  await client.query(`
-    CREATE TABLE IF NOT EXISTS clawql_memory_chunk_vector (
-      chunk_id TEXT PRIMARY KEY,
-      document_path TEXT NOT NULL,
-      text TEXT NOT NULL,
-      embedding vector(${dim}),
-      embedding_model TEXT NOT NULL,
-      embedding_dim INTEGER NOT NULL,
-      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )
-  `);
-  await client.query(`
-    CREATE INDEX IF NOT EXISTS idx_clawql_vec_doc ON clawql_memory_chunk_vector(document_path)
-  `);
+  await runPostgresHybridMemoryMigrations(client);
 }
 
 export async function loadPostgresChunkVectorsByPaths(

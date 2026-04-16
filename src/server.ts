@@ -14,6 +14,9 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { loadSpec } from "./spec-loader.js";
 import { preloadSchemaFieldCacheFromDisk, registerTools } from "./tools.js";
 import { validateObsidianVaultAtStartup } from "./vault-config.js";
+import { registerPostgresPoolShutdownHooks } from "./vector-store/pgvector.js";
+
+registerPostgresPoolShutdownHooks();
 
 async function main() {
   // Pre-warm the spec cache on startup so the first search call is fast

@@ -355,7 +355,7 @@ If Stage 1 does **not** apply, one document is loaded in this order:
 | `CLAWQL_MEMORY_CHUNK_MAX_CHARS` | `paragraph_v1` chunker max window size before hard-split (`2000`). |
 | `CLAWQL_VECTOR_BACKEND` | **`sqlite`** — vectors in **`memory.db`** as float32 BLOBs (sql.js; in-process KNN). **`postgres`** — vectors in **Postgres + pgvector** (see **`CLAWQL_VECTOR_DATABASE_URL`**); **`memory.db`** still holds documents / wikilinks. Requires **`memory.db`** enabled (not **`CLAWQL_MEMORY_DB=0`**) + embedding API key. Default: off. |
 | `CLAWQL_VECTOR_DATABASE_URL` | Postgres connection string when **`CLAWQL_VECTOR_BACKEND=postgres`** (database must have **`CREATE EXTENSION vector`** — the server runs **`CREATE EXTENSION IF NOT EXISTS vector`** on first use). |
-| `CLAWQL_EMBEDDING_DIMENSION` | Vector width for the pgvector column and API validation (default **`1536`**, e.g. `text-embedding-3-small`). |
+| `CLAWQL_EMBEDDING_DIMENSION` | Vector width for the pgvector column and API validation (default **`1536`**, e.g. `text-embedding-3-small`). See **[`docs/hybrid-memory-backends.md`](docs/hybrid-memory-backends.md)** for SQLite vs Postgres roles. |
 | `CLAWQL_EMBEDDING_BASE_URL` | OpenAI-compatible API base (default `https://api.openai.com/v1`). |
 | `CLAWQL_EMBEDDING_MODEL` | Embedding model id (default `text-embedding-3-small`). |
 | `CLAWQL_EMBEDDING_API_KEY` | API key for embeddings (falls back to **`OPENAI_API_KEY`**). |
