@@ -28,9 +28,9 @@ describe("memory-recall vault", () => {
   beforeEach(async () => {
     dir = await mkdtemp(join(tmpdir(), "clawql-vault-"));
     process.env.CLAWQL_OBSIDIAN_VAULT_PATH = dir;
-    await mkdir(join(dir, "ClawQL", "Memory"), { recursive: true });
+    await mkdir(join(dir, "Memory"), { recursive: true });
     await writeFile(
-      join(dir, "ClawQL/Memory/alpha.md"),
+      join(dir, "Memory/alpha.md"),
       [
         "---",
         'title: "Alpha"',
@@ -46,7 +46,7 @@ describe("memory-recall vault", () => {
       "utf8"
     );
     await writeFile(
-      join(dir, "ClawQL/Memory/beta-page.md"),
+      join(dir, "Memory/beta-page.md"),
       ["---", 'title: "Beta"', "---", "", "# Beta Page", "", "Secondary note body.", ""].join(
         "\n"
       ),

@@ -7,7 +7,7 @@ ClawQL exposes **five** tools over MCP (stdio or Streamable HTTP). The **core** 
 | `search` | Loaded spec | Rank operations by natural-language intent |
 | `execute` | GraphQL proxy (`GRAPHQL_URL`) for single-spec; REST in multi-spec | Run one operation with lean responses |
 | `sandbox_exec` | `CLAWQL_SANDBOX_BRIDGE_URL` + token | Run a snippet in a remote Cloudflare Sandbox via Worker bridge (not local execution) |
-| `memory_ingest` | `CLAWQL_OBSIDIAN_VAULT_PATH` | Write Obsidian Markdown under `ClawQL/Memory/`; refreshes **`memory.db`** (see **[memory-db-schema.md](memory-db-schema.md)**) when enabled |
+| `memory_ingest` | `CLAWQL_OBSIDIAN_VAULT_PATH` | Write Obsidian Markdown under `Memory/`; refreshes **`memory.db`** (see **[memory-db-schema.md](memory-db-schema.md)**) when enabled |
 | `memory_recall` | `CLAWQL_OBSIDIAN_VAULT_PATH` | Keyword search + `[[wikilink]]` hops; optionally merges edges from **`memory.db`** and can resync the DB when **`CLAWQL_MEMORY_DB_SYNC_ON_RECALL=1`** |
 
 See also: **[memory-obsidian.md](memory-obsidian.md)** (vault concepts), **[memory-db-schema.md](memory-db-schema.md)** (SQLite sidecar), **[README](../README.md)** (install, env tables), **[cloudflare/sandbox-bridge/README.md](../cloudflare/sandbox-bridge/README.md)** (Worker deploy).
@@ -88,7 +88,7 @@ Runs a snippet in an isolated **Cloudflare Sandbox** through a **Worker** you de
 }
 ```
 
-Writes **`ClawQL/Memory/<slug>.md`** with YAML frontmatter and optional `[[wikilinks]]`. Duplicate payloads (same content hash) are skipped when appending.
+Writes **`Memory/<slug>.md`** with YAML frontmatter and optional `[[wikilinks]]`. Duplicate payloads (same content hash) are skipped when appending.
 
 ---
 

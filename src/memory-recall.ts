@@ -102,7 +102,7 @@ function buildSnippet(text: string, query: string, maxLen: number): string {
 
 function defaultScanRoot(): string {
   const v = process.env.CLAWQL_MEMORY_RECALL_SCAN_ROOT;
-  if (v === undefined) return "ClawQL/Memory";
+  if (v === undefined) return "Memory";
   const t = v.trim();
   return t === "" ? "" : t;
 }

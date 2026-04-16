@@ -44,7 +44,7 @@ flowchart LR
   MR --> MD
 ```
 
-- **`memory_ingest`** writes or appends Markdown under `ClawQL/Memory/` (unchanged contract). After a **successful, non-skipped** write, it triggers a **full rescan** of the same subtree `memory_recall` uses and **rebuilds** rows in `memory.db` for every Markdown file in that scan.
+- **`memory_ingest`** writes or appends Markdown under `Memory/` (unchanged contract). After a **successful, non-skipped** write, it triggers a **full rescan** of the same subtree `memory_recall` uses and **rebuilds** rows in `memory.db` for every Markdown file in that scan.
 - **`memory_recall`** still scores keywords and walks wikilinks **from parsed file contents**. Additionally, when the DB feature is enabled, it **merges** edges read from **`wikilink_edge`** into the adjacency structure so recall can benefit from **persisted** link rows (e.g. after ingest) even before vectors exist.
 
 ---
@@ -105,7 +105,7 @@ Implemented as **`vaultChunkId()`** so re-ingest replaces the same logical chunk
 | **`src/memory-recall.ts`** | Uses slug index + vault markdown helpers; optional **`syncMemoryDbFromDocuments`** when **`CLAWQL_MEMORY_DB_SYNC_ON_RECALL=1`**; merges DB edges when DB enabled. Re-exports **`extractWikilinkTargets`** for compatibility. |
 | **`src/memory-ingest.ts`** | After vault lock completes successfully, **`await import("./memory-db.js")`** then **`syncMemoryDbForVaultScanRoot`** — **dynamic import** avoids a static circular dependency (`memory-db` imports `slugifyTitle` from `memory-ingest`). |
 | **`src/memory-db.test.ts`**, **`src/memory-chunk.test.ts`** | Contract + persistence tests. |
-| **`src/memory-ingest.test.ts`** | Asserts **`.clawql/memory.db`** exists after ingest. |
+| **`src/memory-ingest.test.ts`** | Asserts **`memory.db`** exists after ingest. |
 
 ---
 
@@ -115,7 +115,7 @@ Implemented as **`vaultChunkId()`** so re-ingest replaces the same logical chunk
 |----------|---------------------|
 | **`CLAWQL_OBSIDIAN_VAULT_PATH`** | Required for any vault or DB behavior (unchanged). |
 | **`CLAWQL_MEMORY_DB`** | Set **`0`** to disable DB sync on ingest, DB merge on recall, and DB refresh on recall. |
-| **`CLAWQL_MEMORY_DB_PATH`** | Relative path is resolved **under the vault** via `resolveVaultPath` (no `..`). Default **`.clawql/memory.db`**. Absolute paths allowed for custom mount layouts. |
+| **`CLAWQL_MEMORY_DB_PATH`** | Relative path is resolved **under the vault** via `resolveVaultPath` (no `..`). Default **`memory.db`**. Absolute paths allowed for custom mount layouts. |
 | **`CLAWQL_MEMORY_DB_SYNC_ON_RECALL`** | Set **`1`** to run **`syncMemoryDbFromDocuments`** with the same file set recall just read (full sql.js **export** each time — heavier). Default **unset / off**. |
 | **`CLAWQL_MEMORY_CHUNK_MAX_CHARS`** | Paragraph window size before hard-split (`2000`). |
 | **`CLAWQL_MEMORY_RECALL_SCAN_ROOT`**, **`CLAWQL_MEMORY_RECALL_MAX_FILES`** | Define which files participate in both recall and **ingest-triggered full rescan**. |

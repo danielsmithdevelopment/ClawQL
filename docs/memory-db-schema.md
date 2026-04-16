@@ -1,6 +1,6 @@
 # `memory.db` schema (hybrid memory, issue #27)
 
-ClawQL stores a **file-backed SQLite** database beside the Obsidian vault (default **`.clawql/memory.db`**) to back the hybrid memory track: **structured rows** today (documents, paragraph chunks, wikilink edges), and **vector columns** reserved for sqlite-vec / embeddings in later issues.
+ClawQL stores a **file-backed SQLite** database beside the Obsidian vault (default **`memory.db`**) to back the hybrid memory track: **structured rows** today (documents, paragraph chunks, wikilink edges), and **vector columns** reserved for sqlite-vec / embeddings in later issues.
 
 **Implementation narrative (modules, flows, migrations, tests):** **[memory-db-hybrid-implementation.md](memory-db-hybrid-implementation.md)**.
 
@@ -11,7 +11,7 @@ The vault Markdown files remain the **source of truth**; the DB is a **derived i
 | Env | Meaning |
 |-----|---------|
 | `CLAWQL_OBSIDIAN_VAULT_PATH` | Required for any memory DB work (same as `memory_*` tools). |
-| `CLAWQL_MEMORY_DB_PATH` | Optional. **Unset:** `.clawql/memory.db` under the vault. **Absolute path:** use that file instead. |
+| `CLAWQL_MEMORY_DB_PATH` | Optional. **Unset:** `memory.db` under the vault. **Absolute path:** use that file instead. |
 | `CLAWQL_MEMORY_DB=0` | Disable all DB open / sync / merge (lexical recall only). |
 
 ## Migrations
@@ -26,7 +26,7 @@ One row per indexed Markdown path (vault-relative, `/` separators).
 
 | Column | Type | Description |
 |--------|------|-------------|
-| `path` | TEXT PK | Vault-relative path, e.g. `ClawQL/Memory/foo.md`. |
+| `path` | TEXT PK | Vault-relative path, e.g. `Memory/foo.md`. |
 | `title` | TEXT | Display title from frontmatter / first `#` heading / filename slug. |
 | `body_sha256` | TEXT | SHA-256 of the **full file** UTF-8 bytes. |
 | `byte_length` | INTEGER | `Buffer.byteLength` of the file. |

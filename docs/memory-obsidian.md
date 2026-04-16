@@ -21,7 +21,7 @@ ClawQL does not require Obsidian; any editor works. Obsidian is the usual refere
 ## How ClawQL fits in
 
 - **`CLAWQL_OBSIDIAN_VAULT_PATH`** points the MCP server at a vault directory (validated at startup when set).
-- **`memory_ingest`** writes structured notes under **`ClawQL/Memory/`** (see `src/memory-ingest.ts`), with YAML frontmatter and optional **`[[wikilinks]]`** to other pages.
+- **`memory_ingest`** writes structured notes under **`Memory/`** (see `src/memory-ingest.ts`), with YAML frontmatter and optional **`[[wikilinks]]`** to other pages.
 - **`memory_recall`** (`src/memory-recall.ts`) does **keyword scoring** over Markdown (plus headings / filenames) and **walks the wikilink graph** (forward + backward) up to a configurable depth. It does **not** load embedding models—tuned for low latency in agent loops. Tune defaults with **`CLAWQL_MEMORY_RECALL_*`** env vars (see README).
 
 The design stays **lightweight**: the vault remains the source of truth; retrieval is “good enough” lexical + graph context rather than semantic vectors in-process.
