@@ -17,6 +17,27 @@ cd "$ROOT"
 
 OVERLAY="${ROOT}/docker/kustomize/overlays/local"
 
+# Mount a host Obsidian vault at the same path as docker-compose (CLAWQL_VAULT_HOST_PATH → /vault).
+# Base deployment uses emptyDir — without this patch, memory_ingest only persists in the pod.
+VAULT_HOST_PATH="${CLAWQL_LOCAL_VAULT_HOST_PATH:-$HOME/.ClawQL}"
+PATCH_FILE="${OVERLAY}/patch-mcp-vault-hostpath.yaml"
+cat > "${PATCH_FILE}" <<EOF
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clawql-mcp-http
+spec:
+  template:
+    spec:
+      volumes:
+        - name: obsidian-vault
+          hostPath:
+            path: ${VAULT_HOST_PATH}
+            type: DirectoryOrCreate
+EOF
+echo "==> Obsidian vault hostPath (clawql-mcp-http): ${VAULT_HOST_PATH}"
+echo "    (override with CLAWQL_LOCAL_VAULT_HOST_PATH=/absolute/path/to/vault)"
+
 if ! command -v kubectl >/dev/null 2>&1; then
   echo "ERROR: kubectl not found. Enable Kubernetes in Docker Desktop and ensure kubectl is on PATH."
   exit 1

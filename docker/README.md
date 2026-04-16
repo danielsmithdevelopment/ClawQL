@@ -59,6 +59,8 @@ Future Compose / Kubernetes / Helm manifests can live under `docker/` (or split 
 
 ## Docker Compose (local)
 
+**Conflict with Kubernetes:** If you use **`make local-k8s-up`** (ClawQL in the **`clawql`** namespace), **do not** run Compose on the same machine. Both stacks bind **`localhost:8080`** (MCP) and **`localhost:4000`** (GraphQL). Stop Compose first: `docker compose -f docker/docker-compose.yml down`. Prefer **one** local runtime: either Compose **or** K8s (recommended when Langfuse or other workloads already run in-cluster).
+
 Run both services together (containers use **`restart: unless-stopped`** so they come back after Docker Desktop or host reboot):
 
 ```bash
@@ -95,6 +97,7 @@ This tags **`clawql-mcp:latest`** (same daemon as Docker Desktop; no registry pu
 - **Restart behavior:** Deployments keep **`replicas: 1`** and Kubernetes **restarts failed containers** automatically (Pod `restartPolicy` is `Always`).
 - **MCP URL:** `http://localhost:8080/mcp` once `kubectl -n clawql get svc clawql-mcp-http` shows an external address (often `localhost` on Docker Desktop).
 - **Cold start:** The MCP container loads every bundled spec before `listen()`; hitting `:8080` too early can produce `fetch failed` / “other side closed” in Node. Wait until `curl http://localhost:8080/healthz` returns `{"status":"ok"…}` or the pod is **Ready** (the MCP Deployment includes `/healthz` startup/readiness probes). The `workflow:complex-release-stack:mcp` script polls `/healthz` when `CLAWQL_MCP_URL` is set.
+- **Obsidian vault (`memory_ingest` / `memory_recall`):** The **`local`** overlay replaces the base **`emptyDir`** volume with a **`hostPath`** mount so notes persist on the Docker Desktop host. **`scripts/local-k8s-docker-desktop.sh`** writes `patch-mcp-vault-hostpath.yaml` (gitignored) before **`kubectl apply -k`**, defaulting to **`$HOME/.ClawQL`** — same default as Compose’s **`CLAWQL_VAULT_HOST_PATH`**. Override with **`CLAWQL_LOCAL_VAULT_HOST_PATH=/absolute/path/to/vault`** when applying. **Do not** run raw **`kubectl apply -k docker/kustomize/overlays/local`** without generating that patch first (use **`make local-k8s-up`**). On Docker Desktop, shared filesystem paths such as **`/Users/...`** on macOS are visible to **`hostPath`** pods.
 - **Teardown:** `kubectl delete namespace clawql` (or `kubectl --context docker-desktop delete namespace clawql`)
 
 ### GitHub + Cloudflare + Google API auth on Docker Desktop K8s
@@ -144,7 +147,7 @@ Included resources:
 - Namespace: `clawql`
 - Deployments: `clawql-mcp-http`, `clawql-graphql`
 - Services: internal `clawql-graphql` + external `clawql-mcp-http` (`LoadBalancer`)
-- MCP pod: **`CLAWQL_OBSIDIAN_VAULT_PATH=/vault`** with an **`emptyDir`** volume at `/vault` (aligned with `docker/kustomize/base/deployment-mcp-http.yaml`) so **`memory_ingest`** / **`memory_recall`** can run. Replace `emptyDir` with a PVC or hostPath when you need a persistent Obsidian folder. **`sandbox_exec`** still requires **`CLAWQL_SANDBOX_BRIDGE_URL`** + token env (see [`.env.example`](../.env.example) and [`docs/mcp-tools.md`](../docs/mcp-tools.md)).
+- MCP pod: **`CLAWQL_OBSIDIAN_VAULT_PATH=/vault`** with an **`emptyDir`** volume at `/vault` in the starter and Kustomize **base** (`docker/kustomize/base/deployment-mcp-http.yaml`) so **`memory_ingest`** / **`memory_recall`** can run. For a **persistent** host vault (e.g. **`~/.ClawQL`**), use the **`local`** overlay via **`make local-k8s-up`**, which generates a **`hostPath`** patch — or replace **`emptyDir`** with a PVC or **`hostPath`** yourself. **`sandbox_exec`** still requires **`CLAWQL_SANDBOX_BRIDGE_URL`** + token env (see [`.env.example`](../.env.example) and [`docs/mcp-tools.md`](../docs/mcp-tools.md)).
 
 After the external IP is ready, use:
 - `http://<external-ip>/mcp`
