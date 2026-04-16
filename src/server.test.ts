@@ -82,6 +82,7 @@ describe("server (stdio)", () => {
         expect(names.has("sandbox_exec")).toBe(true);
         expect(names.has("memory_ingest")).toBe(true);
         expect(names.has("memory_recall")).toBe(true);
+        expect(names.has("ingest_external_knowledge")).toBe(true);
       } finally {
         await client.close();
       }

@@ -1,6 +1,6 @@
 # MCP tools reference
 
-ClawQL exposes **five** tools over MCP (stdio or Streamable HTTP). The **core** pair is **`search`** + **`execute`** for OpenAPI/Discovery APIs. The other three are **optional** and depend on configuration (vault path, Cloudflare Sandbox bridge).
+ClawQL exposes **six** tools over MCP (stdio or Streamable HTTP). The **core** pair is **`search`** + **`execute`** for OpenAPI/Discovery APIs. The other four are **optional** and depend on configuration (vault path, Cloudflare Sandbox bridge, external ingest flag).
 
 | Tool | Requires | Purpose |
 |------|----------|---------|
@@ -9,8 +9,9 @@ ClawQL exposes **five** tools over MCP (stdio or Streamable HTTP). The **core** 
 | `sandbox_exec` | `CLAWQL_SANDBOX_BRIDGE_URL` + token | Run a snippet in a remote Cloudflare Sandbox via Worker bridge (not local execution) |
 | `memory_ingest` | `CLAWQL_OBSIDIAN_VAULT_PATH` | Write Obsidian Markdown under `Memory/`; refreshes **`memory.db`** when enabled; optional **`_INDEX_*.md`** hub page ([#38](https://github.com/danielsmithdevelopment/ClawQL/issues/38)) |
 | `memory_recall` | `CLAWQL_OBSIDIAN_VAULT_PATH` | Keyword search + `[[wikilink]]` hops; optionally merges edges from **`memory.db`**, optional **vector KNN** when **`CLAWQL_VECTOR_BACKEND`** is **`sqlite`** (BLOBs in **`memory.db`**) or **`postgres`** (**pgvector** + **`CLAWQL_VECTOR_DATABASE_URL`**) with **`CLAWQL_EMBEDDING_*`**; can resync the DB when **`CLAWQL_MEMORY_DB_SYNC_ON_RECALL=1`** |
+| `ingest_external_knowledge` | Optional vault for future writes | **Stub:** roadmap for bulk import (Notion, Confluence, …) into the vault; set **`CLAWQL_EXTERNAL_INGEST=1`** for preview JSON ([#40](https://github.com/danielsmithdevelopment/ClawQL/issues/40)) |
 
-See also: **[memory-obsidian.md](memory-obsidian.md)** (vault concepts), **[memory-db-schema.md](memory-db-schema.md)** (SQLite sidecar), **[README](../README.md)** (install, env tables), **[cloudflare/sandbox-bridge/README.md](../cloudflare/sandbox-bridge/README.md)** (Worker deploy).
+See also: **[memory-obsidian.md](memory-obsidian.md)** (vault concepts), **[memory-db-schema.md](memory-db-schema.md)** (SQLite sidecar), **[external-ingest.md](external-ingest.md)** (bulk ingest stub), **[README](../README.md)** (install, env tables), **[cloudflare/sandbox-bridge/README.md](../cloudflare/sandbox-bridge/README.md)** (Worker deploy).
 
 ---
 
@@ -108,3 +109,21 @@ Writes **`Memory/<slug>.md`** with YAML frontmatter and optional `[[wikilinks]]`
 ```
 
 Returns JSON with **`results[]`**: `path`, `score`, `depth`, `reason` (`keyword` | `link` | `vector`), `snippet`, optional `linkFrom`. Lexical match + graph expansion via wikilinks; **optional vectors** when **`CLAWQL_VECTOR_BACKEND`** is set (**`sqlite`** or **`postgres`**) and an embedding API key is set — see README (`CLAWQL_EMBEDDING_*`, `CLAWQL_VECTOR_DATABASE_URL`, `CLAWQL_MEMORY_VECTOR_*`). **`sqlite`:** in-process cosine KNN over **`memory.db`** BLOBs. **`postgres`:** pgvector first; optional **dual-write** BLOBs in **`memory.db`** (default on; disable with **`CLAWQL_MEMORY_VECTOR_DUAL_WRITE=0`**). See [hybrid-memory-backends.md](hybrid-memory-backends.md), [vector-search-design.md](vector-search-design.md), [#16](https://github.com/danielsmithdevelopment/ClawQL/issues/16).
+
+---
+
+## `ingest_external_knowledge`
+
+**Env:** **`CLAWQL_EXTERNAL_INGEST=1`** enables **stub** responses (still **no** HTTP or file writes). Optional **`CLAWQL_MCP_LOG_TOOLS=1`**: shape-only logging.
+
+**Input (conceptual):**
+
+```json
+{
+  "source": "notion",
+  "dryRun": true,
+  "scope": "workspace-or-repo-id"
+}
+```
+
+Returns JSON: when disabled, **`ok: false`** with **`hint`**; when enabled, **`ok: true`**, **`stub: true`**, **`roadmap[]`**, **`relatedIssues`**. Future imports would land under the vault like **`memory_ingest`** so **`memory_recall`** can find them. See **[external-ingest.md](external-ingest.md)** ([#40](https://github.com/danielsmithdevelopment/ClawQL/issues/40)).

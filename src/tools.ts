@@ -4,6 +4,7 @@
  * Core tools: search (spec discovery) and execute (GraphQL-backed REST call).
  * Optional: sandbox_exec — remote execution via cloudflare/sandbox-bridge Worker.
  * Optional: memory_ingest / memory_recall — Obsidian vault notes (ingest + recall).
+ * Optional: ingest_external_knowledge — bulk external import stub (GitHub #40).
  * Single-spec `execute` runs OpenAPI→GraphQL in-process; field resolution uses `graphql-execute-helpers`.
  */
 
@@ -27,6 +28,7 @@ import { loadSpec, resolveApiBaseUrl } from "./spec-loader.js";
 import { searchOperations, formatSearchResults } from "./spec-search.js";
 import { executeRestOperation } from "./rest-operation.js";
 import { handleClawqlCodeToolInput } from "./sandbox-bridge-client.js";
+import { handleIngestExternalKnowledgeToolInput } from "./external-ingest.js";
 import { handleMemoryIngestToolInput } from "./memory-ingest.js";
 import { handleMemoryRecallToolInput } from "./memory-recall.js";
 import type { OpenAPIDoc, Operation } from "./spec-loader.js";
@@ -353,6 +355,29 @@ export function registerTools(server: McpServer) {
         ),
     },
     handleMemoryRecallToolInput
+  );
+
+  server.tool(
+    "ingest_external_knowledge",
+    {
+      source: z
+        .string()
+        .optional()
+        .describe(
+          "Future: external system id (e.g. notion, confluence, github). Stub only until providers ship."
+        ),
+      dryRun: z
+        .boolean()
+        .optional()
+        .describe("Default true. When providers exist, avoids writes until explicitly false."),
+      scope: z
+        .string()
+        .optional()
+        .describe(
+          "Future: provider scope (workspace id, repo full name, space key). Not used in the stub."
+        ),
+    },
+    handleIngestExternalKnowledgeToolInput
   );
 }
 
