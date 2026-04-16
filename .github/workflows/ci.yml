@@ -1,5 +1,6 @@
-# Regression gate: TypeScript build + Vitest on Node 20+ LTS/current,
+# Regression gate: ESLint + Prettier, TypeScript build + Vitest (coverage) on Node 20+,
 # ShellCheck on bash deploy scripts, actionlint on workflow YAML.
+# Actions pinned to commit SHAs; Dependabot updates github-actions weekly.
 
 name: CI
 
@@ -17,6 +18,29 @@ permissions:
   contents: read
 
 jobs:
+  lint:
+    name: Lint & format
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      # actions/checkout@v4.2.2
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      # actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: ESLint
+        run: npm run lint
+
+      - name: Prettier
+        run: npm run format:check
+
   test:
     name: Test (Node ${{ matrix.node-version }})
     runs-on: ubuntu-latest
@@ -26,9 +50,9 @@ jobs:
       matrix:
         node-version: [20, 22, 24]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
@@ -39,15 +63,15 @@ jobs:
       - name: Typecheck & build
         run: npm run build
 
-      - name: Unit tests
-        run: npx vitest run
+      - name: Unit tests + coverage
+        run: npx vitest run --coverage
 
   shellcheck:
     name: ShellCheck
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
       - name: Install ShellCheck
         run: |
@@ -62,7 +86,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
-      # Pinned release: floating @v1 is not published on this action repo.
-      - uses: rhysd/actionlint@v1.7.12
+      # rhysd/actionlint@v1.7.12
+      - uses: rhysd/actionlint@914e7df21a07ef503a81201c76d2b11c789d3fca

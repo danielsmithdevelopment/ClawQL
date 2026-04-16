@@ -8,11 +8,11 @@ The vault Markdown files remain the **source of truth**; the DB is a **derived i
 
 ## Location
 
-| Env | Meaning |
-|-----|---------|
-| `CLAWQL_OBSIDIAN_VAULT_PATH` | Required for any memory DB work (same as `memory_*` tools). |
-| `CLAWQL_MEMORY_DB_PATH` | Optional. **Unset:** `memory.db` under the vault. **Absolute path:** use that file instead. |
-| `CLAWQL_MEMORY_DB=0` | Disable all DB open / sync / merge (lexical recall only). |
+| Env                          | Meaning                                                                                     |
+| ---------------------------- | ------------------------------------------------------------------------------------------- |
+| `CLAWQL_OBSIDIAN_VAULT_PATH` | Required for any memory DB work (same as `memory_*` tools).                                 |
+| `CLAWQL_MEMORY_DB_PATH`      | Optional. **Unset:** `memory.db` under the vault. **Absolute path:** use that file instead. |
+| `CLAWQL_MEMORY_DB=0`         | Disable all DB open / sync / merge (lexical recall only).                                   |
 
 ## Migrations
 
@@ -24,43 +24,43 @@ Table **`schema_migrations`** records applied DDL versions. The in-code constant
 
 One row per indexed Markdown path (vault-relative, `/` separators).
 
-| Column | Type | Description |
-|--------|------|-------------|
-| `path` | TEXT PK | Vault-relative path, e.g. `Memory/foo.md`. |
-| `title` | TEXT | Display title from frontmatter / first `#` heading / filename slug. |
-| `body_sha256` | TEXT | SHA-256 of the **full file** UTF-8 bytes. |
-| `byte_length` | INTEGER | `Buffer.byteLength` of the file. |
-| `mtime_ms` | INTEGER | Writer-supplied timestamp (ingest/recall use `Date.now()` today). |
-| `index_body_sha256` | TEXT | SHA-256 of the **indexable body** (Markdown after YAML frontmatter strip). |
-| `chunk_strategy` | TEXT | Chunker id, e.g. `paragraph_v1`. |
-| `indexed_at` | TEXT | ISO-8601 UTC when the row was written. |
+| Column              | Type    | Description                                                                |
+| ------------------- | ------- | -------------------------------------------------------------------------- |
+| `path`              | TEXT PK | Vault-relative path, e.g. `Memory/foo.md`.                                 |
+| `title`             | TEXT    | Display title from frontmatter / first `#` heading / filename slug.        |
+| `body_sha256`       | TEXT    | SHA-256 of the **full file** UTF-8 bytes.                                  |
+| `byte_length`       | INTEGER | `Buffer.byteLength` of the file.                                           |
+| `mtime_ms`          | INTEGER | Writer-supplied timestamp (ingest/recall use `Date.now()` today).          |
+| `index_body_sha256` | TEXT    | SHA-256 of the **indexable body** (Markdown after YAML frontmatter strip). |
+| `chunk_strategy`    | TEXT    | Chunker id, e.g. `paragraph_v1`.                                           |
+| `indexed_at`        | TEXT    | ISO-8601 UTC when the row was written.                                     |
 
 ### `vault_chunk`
 
 Embeddable segments for semantic search (text always; **`embedding`** / **`embedding_model`** populated when the embedding pipeline is enabled).
 
-| Column | Type | Description |
-|--------|------|-------------|
-| `chunk_id` | TEXT PK | `sha256("vault\|{path}\|{strategy}\|{ordinal}\|{content_sha256}")` — stable across re-index. |
-| `document_path` | TEXT FK | → `vault_document.path` (`ON DELETE CASCADE`). |
-| `ordinal` | INTEGER | Order within the document (0-based). |
-| `char_start`, `char_end` | INTEGER | Offsets into the **indexable body** string (UTF-16 indices, matching JavaScript `String` slicing). |
-| `text` | TEXT | Chunk plain text used for embeddings / lexical snippets. |
-| `content_sha256` | TEXT | SHA-256 of `text`. |
-| `chunk_strategy` | TEXT | Same as parent contract (`paragraph_v1`). |
-| `embedding_model` | TEXT NULL | Set when embeddings are written into this row ( **`sqlite`** backend, or **`postgres`** with **`CLAWQL_MEMORY_VECTOR_DUAL_WRITE`** not **`0`**). |
-| `embedding` | BLOB NULL | Float32 vector payload. **`postgres`** + **`CLAWQL_MEMORY_VECTOR_DUAL_WRITE=0`**: left **NULL** (vectors only in Postgres). |
+| Column                   | Type      | Description                                                                                                                                      |
+| ------------------------ | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `chunk_id`               | TEXT PK   | `sha256("vault\|{path}\|{strategy}\|{ordinal}\|{content_sha256}")` — stable across re-index.                                                     |
+| `document_path`          | TEXT FK   | → `vault_document.path` (`ON DELETE CASCADE`).                                                                                                   |
+| `ordinal`                | INTEGER   | Order within the document (0-based).                                                                                                             |
+| `char_start`, `char_end` | INTEGER   | Offsets into the **indexable body** string (UTF-16 indices, matching JavaScript `String` slicing).                                               |
+| `text`                   | TEXT      | Chunk plain text used for embeddings / lexical snippets.                                                                                         |
+| `content_sha256`         | TEXT      | SHA-256 of `text`.                                                                                                                               |
+| `chunk_strategy`         | TEXT      | Same as parent contract (`paragraph_v1`).                                                                                                        |
+| `embedding_model`        | TEXT NULL | Set when embeddings are written into this row ( **`sqlite`** backend, or **`postgres`** with **`CLAWQL_MEMORY_VECTOR_DUAL_WRITE`** not **`0`**). |
+| `embedding`              | BLOB NULL | Float32 vector payload. **`postgres`** + **`CLAWQL_MEMORY_VECTOR_DUAL_WRITE=0`**: left **NULL** (vectors only in Postgres).                      |
 
 ### `wikilink_edge`
 
 Directed edges mirroring Obsidian `[[wikilinks]]` in each source file.
 
-| Column | Type | Description |
-|--------|------|-------------|
-| `id` | INTEGER PK | Autoincrement. |
-| `from_path` | TEXT | Source Markdown path. |
-| `to_target` | TEXT | Raw link target (left side of `\|`). |
-| `to_resolved_path` | TEXT NULL | Vault-relative destination when the slug maps to a scanned file; otherwise `NULL`. |
+| Column             | Type       | Description                                                                        |
+| ------------------ | ---------- | ---------------------------------------------------------------------------------- |
+| `id`               | INTEGER PK | Autoincrement.                                                                     |
+| `from_path`        | TEXT       | Source Markdown path.                                                              |
+| `to_target`        | TEXT       | Raw link target (left side of `\|`).                                               |
+| `to_resolved_path` | TEXT NULL  | Vault-relative destination when the slug maps to a scanned file; otherwise `NULL`. |
 
 Unique on `(from_path, to_target)` — re-ingest uses `INSERT OR REPLACE` semantics per edge row.
 

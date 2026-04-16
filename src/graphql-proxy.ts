@@ -82,9 +82,7 @@ export async function createGraphqlProxyApp(
   return { app, port };
 }
 
-export async function startGraphqlProxy(
-  options: CreateGraphqlProxyAppOptions = {}
-): Promise<void> {
+export async function startGraphqlProxy(options: CreateGraphqlProxyAppOptions = {}): Promise<void> {
   const { app, port } = await createGraphqlProxyApp(options);
   app.listen(port, () => {
     console.error(`[graphql-proxy] Running at http://localhost:${port}/graphql`);

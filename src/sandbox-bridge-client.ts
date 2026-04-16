@@ -106,10 +106,7 @@ export async function callSandboxBridge(
         stderr: typeof data.stderr === "string" ? data.stderr : "",
         exitCode: -1,
         success: false,
-        error:
-          typeof data.error === "string"
-            ? data.error
-            : `HTTP ${res.status}`,
+        error: typeof data.error === "string" ? data.error : `HTTP ${res.status}`,
       };
     }
     return {

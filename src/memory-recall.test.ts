@@ -2,11 +2,7 @@ import { mkdir, mkdtemp, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import {
-  extractWikilinkTargets,
-  keywordScore,
-  runMemoryRecall,
-} from "./memory-recall.js";
+import { extractWikilinkTargets, keywordScore, runMemoryRecall } from "./memory-recall.js";
 
 describe("memory-recall helpers", () => {
   it("keywordScore sums token matches", () => {
@@ -14,10 +10,7 @@ describe("memory-recall helpers", () => {
   });
 
   it("extractWikilinkTargets parses Obsidian links", () => {
-    expect(extractWikilinkTargets("See [[Foo Bar]] and [[x|alias]]")).toEqual([
-      "Foo Bar",
-      "x",
-    ]);
+    expect(extractWikilinkTargets("See [[Foo Bar]] and [[x|alias]]")).toEqual(["Foo Bar", "x"]);
   });
 });
 
@@ -47,9 +40,7 @@ describe("memory-recall vault", () => {
     );
     await writeFile(
       join(dir, "Memory/beta-page.md"),
-      ["---", 'title: "Beta"', "---", "", "# Beta Page", "", "Secondary note body.", ""].join(
-        "\n"
-      ),
+      ["---", 'title: "Beta"', "---", "", "# Beta Page", "", "Secondary note body.", ""].join("\n"),
       "utf8"
     );
   });

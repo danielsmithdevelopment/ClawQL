@@ -34,9 +34,7 @@ export function mergedAuthHeaders(specLabel?: string): Record<string, string> {
     try {
       Object.assign(out, JSON.parse(raw) as Record<string, string>);
     } catch {
-      console.error(
-        "[auth-headers] Invalid CLAWQL_HTTP_HEADERS (expected JSON object)"
-      );
+      console.error("[auth-headers] Invalid CLAWQL_HTTP_HEADERS (expected JSON object)");
     }
   }
   if (out.Authorization || out.authorization) {
@@ -68,11 +66,7 @@ export function mergedAuthHeaders(specLabel?: string): Record<string, string> {
     effective === "google" ||
     effective === "google-top50"
   ) {
-    bearer = trimEnv(
-      "CLAWQL_GOOGLE_ACCESS_TOKEN",
-      "GOOGLE_ACCESS_TOKEN",
-      "CLAWQL_BEARER_TOKEN"
-    );
+    bearer = trimEnv("CLAWQL_GOOGLE_ACCESS_TOKEN", "GOOGLE_ACCESS_TOKEN", "CLAWQL_BEARER_TOKEN");
   } else {
     bearer = trimEnv("CLAWQL_BEARER_TOKEN", "GOOGLE_ACCESS_TOKEN");
   }

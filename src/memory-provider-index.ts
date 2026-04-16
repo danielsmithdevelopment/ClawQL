@@ -60,7 +60,10 @@ function fingerprintFromExisting(markdown: string): string | null {
 
 function indexFileRel(scanRoot: string, providerLabel: string): string {
   const t = providerLabel.trim() || "ClawQL";
-  const safe = t.replace(/[^a-zA-Z0-9_-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 64);
+  const safe = t
+    .replace(/[^a-zA-Z0-9_-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 64);
   const name = `_INDEX_${safe || "ClawQL"}.md`;
   const root = scanRoot.replace(/\\/g, "/").replace(/^\/+/, "");
   return root ? `${root}/${name}` : name;
@@ -86,9 +89,7 @@ export async function updateProviderIndexPage(vaultRoot: string): Promise<void> 
   }
 
   const indexRel = indexFileRel(scanRoot, providerLabel);
-  const notePaths = paths
-    .filter((p) => !isIndexPagePath(p))
-    .filter((p) => p !== indexRel);
+  const notePaths = paths.filter((p) => !isIndexPagePath(p)).filter((p) => p !== indexRel);
 
   type Row = { rel: string; title: string };
   const rows: Row[] = [];

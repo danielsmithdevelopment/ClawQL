@@ -36,9 +36,9 @@ describe("provider-registry", () => {
     expect(items).toBeDefined();
     expect(items!.length).toBeGreaterThan(10);
     expect(items!.some((x) => x.label === "compute-v1")).toBe(true);
-    expect(items!.some((x) => x.abs.endsWith("/providers/google/apis/compute-v1/discovery.json"))).toBe(
-      true
-    );
+    expect(
+      items!.some((x) => x.abs.endsWith("/providers/google/apis/compute-v1/discovery.json"))
+    ).toBe(true);
   });
 
   it("returns undefined for unknown group", async () => {
@@ -56,4 +56,3 @@ describe("provider-registry", () => {
     expect(items!.every((x) => x.abs.includes("/providers/"))).toBe(true);
   });
 });
-

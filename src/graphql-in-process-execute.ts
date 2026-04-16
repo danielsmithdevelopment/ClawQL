@@ -13,9 +13,7 @@ import {
   resolveGraphQLFieldFromSchema,
 } from "./graphql-execute-helpers.js";
 
-export type InProcessGraphQLResult =
-  | { ok: true; data: unknown }
-  | { ok: false; error: string };
+export type InProcessGraphQLResult = { ok: true; data: unknown } | { ok: false; error: string };
 
 /**
  * Execute the GraphQL field that maps to `op`, with the same document shape as MCP `execute`.
@@ -39,11 +37,7 @@ export async function executeOperationGraphQL(
   let fieldName: string;
   let fieldArgs: string[];
   try {
-    ({ fieldName, fieldArgs } = resolveGraphQLFieldFromSchema(
-      schema,
-      op,
-      gqlOpType
-    ));
+    ({ fieldName, fieldArgs } = resolveGraphQLFieldFromSchema(schema, op, gqlOpType));
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : String(e) };
   }
@@ -52,11 +46,8 @@ export async function executeOperationGraphQL(
   const varDecls = buildVarDeclarations(op, normalizedArgs);
   const varArgs = buildVarArgs(normalizedArgs);
   const header =
-    varDecls.trim().length > 0
-      ? `${gqlOpType} Execute(${varDecls})`
-      : `${gqlOpType} Execute`;
-  const fieldCall =
-    varArgs.trim().length > 0 ? `${fieldName}(${varArgs})` : fieldName;
+    varDecls.trim().length > 0 ? `${gqlOpType} Execute(${varDecls})` : `${gqlOpType} Execute`;
+  const fieldCall = varArgs.trim().length > 0 ? `${fieldName}(${varArgs})` : fieldName;
 
   const gqlDocument = `
     ${header} {

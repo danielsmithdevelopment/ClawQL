@@ -28,18 +28,18 @@ Top 5 operations returned:
 
 Top-1 per step from the same run:
 
-| Step | Top operationId | specLabel |
-|------|------------------|-----------|
-| 0. Service Usage — enable APIs | `serviceusage.services.batchEnable` | `serviceusage-v1` |
-| 1. Resource Manager — project IAM | `cloudresourcemanager.projects.setIamPolicy` | `cloudresourcemanager-v3` |
-| 2. Networking & firewall | `compute.regionNetworkFirewallPolicies.insert` | `compute-v1` |
-| 3. GKE cluster | `container.projects.zones.clusters.locations` | `container-v1` |
-| 4. Logging | `logging.sinks.create` | `logging-v2` |
-| 5. Monitoring | `monitoring.folders.timeSeries.list` | `monitoring-v3` |
-| 6. Load balancing (Compute) | `compute.backendServices.getHealth` | `compute-v1` |
-| 7. Cloud DNS | `dns.resourceRecordSets.create` | `dns-v1` |
-| 8. Cloud Storage | `storage.buckets.getIamPolicy` | `storage-v1` |
-| 9. BigQuery | `bigquery.tabledata.insertAll` | `bigquery-v2` |
+| Step                              | Top operationId                                | specLabel                 |
+| --------------------------------- | ---------------------------------------------- | ------------------------- |
+| 0. Service Usage — enable APIs    | `serviceusage.services.batchEnable`            | `serviceusage-v1`         |
+| 1. Resource Manager — project IAM | `cloudresourcemanager.projects.setIamPolicy`   | `cloudresourcemanager-v3` |
+| 2. Networking & firewall          | `compute.regionNetworkFirewallPolicies.insert` | `compute-v1`              |
+| 3. GKE cluster                    | `container.projects.zones.clusters.locations`  | `container-v1`            |
+| 4. Logging                        | `logging.sinks.create`                         | `logging-v2`              |
+| 5. Monitoring                     | `monitoring.folders.timeSeries.list`           | `monitoring-v3`           |
+| 6. Load balancing (Compute)       | `compute.backendServices.getHealth`            | `compute-v1`              |
+| 7. Cloud DNS                      | `dns.resourceRecordSets.create`                | `dns-v1`                  |
+| 8. Cloud Storage                  | `storage.buckets.getIamPolicy`                 | `storage-v1`              |
+| 9. BigQuery                       | `bigquery.tabledata.insertAll`                 | `bigquery-v2`             |
 
 Distinct `specLabel`s represented in step top-1s: **9**.
 
@@ -47,11 +47,11 @@ Distinct `specLabel`s represented in step top-1s: **9**.
 
 From `docs/experiment-gcp-multi-mcp-stats.json`:
 
-| Metric | Value |
-|--------|-------|
-| Raw Discovery payload (20 files total) | `11,157,299` bytes (~`2,789,325` tokens*) |
-| Sum of 11 `search` response text payloads | `120,780` bytes (~`30,195` tokens*) |
-| Relative size reduction | **~92.4x smaller** |
+| Metric                                    | Value                                      |
+| ----------------------------------------- | ------------------------------------------ |
+| Raw Discovery payload (20 files total)    | `11,157,299` bytes (~`2,789,325` tokens\*) |
+| Sum of 11 `search` response text payloads | `120,780` bytes (~`30,195` tokens\*)       |
+| Relative size reduction                   | **~92.4x smaller**                         |
 
 \* Token estimate uses `ceil(bytes / 4)` and is intentionally approximate.
 

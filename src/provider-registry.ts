@@ -38,8 +38,7 @@ export const BUNDLED_PROVIDERS: Record<string, BundledProvider> = {
     id: "jira",
     bundledSpecPath: "providers/atlassian/jira/openapi.yaml",
     format: "openapi",
-    fallbackUrl:
-      "https://raw.githubusercontent.com/magmax/atlassian-openapi/master/spec/jira.yaml",
+    fallbackUrl: "https://raw.githubusercontent.com/magmax/atlassian-openapi/master/spec/jira.yaml",
     bundledIntrospectionPath: "providers/atlassian/jira/introspection.json",
     bundledSchemaSdlPath: "providers/atlassian/jira/schema.graphql",
   },
@@ -144,9 +143,7 @@ async function resolveDefaultMultiProviderItems(): Promise<ProviderGroupItem[]> 
  * In a merged load, `specLabel` is each Google top50 API slug (e.g. `container-v1`) or
  * one of these vendor ids — every bundled provider except the single-file `google` discovery.
  */
-export const BUNDLED_MERGED_VENDOR_LABELS: readonly string[] = Object.keys(
-  BUNDLED_PROVIDERS
-)
+export const BUNDLED_MERGED_VENDOR_LABELS: readonly string[] = Object.keys(BUNDLED_PROVIDERS)
   .filter((id) => id !== "google")
   .sort();
 
@@ -172,9 +169,7 @@ export const BUNDLED_PROVIDER_GROUPS: Record<string, BundledProviderGroup> = {
   "all-providers": { resolve: resolveAllBundledProvidersItems },
 };
 
-export function resolveBundledProvider(
-  raw: string | undefined
-): BundledProvider | undefined {
+export function resolveBundledProvider(raw: string | undefined): BundledProvider | undefined {
   if (!raw?.trim()) return undefined;
   return BUNDLED_PROVIDERS[raw.trim().toLowerCase()];
 }

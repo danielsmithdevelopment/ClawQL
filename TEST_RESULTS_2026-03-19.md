@@ -27,7 +27,7 @@ curl -sS http://localhost:4000/health
 Result:
 
 ```json
-{"status":"ok","endpoint":"http://localhost:4000/graphql"}
+{ "status": "ok", "endpoint": "http://localhost:4000/graphql" }
 ```
 
 ## 2) Parsed spec lookup (Cloud Run docs search)

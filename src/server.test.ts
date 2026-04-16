@@ -42,54 +42,47 @@ describe("server (stdio)", () => {
     resetSchemaFieldCache();
   });
 
-  it(
-    "starts, handshakes, and exposes search + execute tools",
-    async () => {
-      const childEnv = { ...process.env };
-      childEnv.CLAWQL_SPEC_PATH = minimalSpec;
-      childEnv.CLAWQL_OBSIDIAN_VAULT_PATH = mkdtempSync(join(tmpdir(), "clawql-vault-"));
-      delete childEnv.CLAWQL_PROVIDER;
-      delete childEnv.CLAWQL_SPEC_PATHS;
-      delete childEnv.CLAWQL_API_BASE_URL;
-      delete childEnv.API_BASE_URL;
+  it("starts, handshakes, and exposes search + execute tools", async () => {
+    const childEnv = { ...process.env };
+    childEnv.CLAWQL_SPEC_PATH = minimalSpec;
+    childEnv.CLAWQL_OBSIDIAN_VAULT_PATH = mkdtempSync(join(tmpdir(), "clawql-vault-"));
+    delete childEnv.CLAWQL_PROVIDER;
+    delete childEnv.CLAWQL_SPEC_PATHS;
+    delete childEnv.CLAWQL_API_BASE_URL;
+    delete childEnv.API_BASE_URL;
 
-      const serverLogs: string[] = [];
-      const transport = new StdioClientTransport({
-        command: process.execPath,
-        args: [serverJs],
-        cwd: root,
-        env: childEnv,
-        stderr: "pipe",
+    const serverLogs: string[] = [];
+    const transport = new StdioClientTransport({
+      command: process.execPath,
+      args: [serverJs],
+      cwd: root,
+      env: childEnv,
+      stderr: "pipe",
+    });
+
+    if (transport.stderr) {
+      transport.stderr.on("data", (chunk) => {
+        serverLogs.push(chunk.toString());
       });
+    }
 
-      if (transport.stderr) {
-        transport.stderr.on("data", (chunk) => {
-          serverLogs.push(chunk.toString());
-        });
-      }
+    const client = new Client({ name: "clawql-stdio-smoke", version: "1.0.0" }, {});
 
-      const client = new Client(
-        { name: "clawql-stdio-smoke", version: "1.0.0" },
-        {}
-      );
+    try {
+      await client.connect(transport);
+      const { tools } = await client.listTools();
+      const names = new Set(tools.map((t) => t.name));
+      expect(names.has("search")).toBe(true);
+      expect(names.has("execute")).toBe(true);
+      expect(names.has("sandbox_exec")).toBe(true);
+      expect(names.has("memory_ingest")).toBe(true);
+      expect(names.has("memory_recall")).toBe(true);
+      expect(names.has("ingest_external_knowledge")).toBe(true);
+    } finally {
+      await client.close();
+    }
 
-      try {
-        await client.connect(transport);
-        const { tools } = await client.listTools();
-        const names = new Set(tools.map((t) => t.name));
-        expect(names.has("search")).toBe(true);
-        expect(names.has("execute")).toBe(true);
-        expect(names.has("sandbox_exec")).toBe(true);
-        expect(names.has("memory_ingest")).toBe(true);
-        expect(names.has("memory_recall")).toBe(true);
-        expect(names.has("ingest_external_knowledge")).toBe(true);
-      } finally {
-        await client.close();
-      }
-
-      const stderr = serverLogs.join("");
-      expect(stderr).toContain("Server running on stdio");
-    },
-    20_000
-  );
+    const stderr = serverLogs.join("");
+    expect(stderr).toContain("Server running on stdio");
+  }, 20_000);
 });

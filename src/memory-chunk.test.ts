@@ -1,11 +1,24 @@
 import { describe, expect, it } from "vitest";
-import { planVaultMarkdownChunks, vaultChunkId, CHUNK_STRATEGY_PARAGRAPH_V1 } from "./memory-chunk.js";
+import {
+  planVaultMarkdownChunks,
+  vaultChunkId,
+  CHUNK_STRATEGY_PARAGRAPH_V1,
+} from "./memory-chunk.js";
 
 describe("memory-chunk", () => {
   it("planVaultMarkdownChunks strips frontmatter and splits paragraphs", () => {
-    const md = ["---", 'title: "T"', "---", "", "# Hello", "", "First para.", "", "Second para.", ""].join(
-      "\n"
-    );
+    const md = [
+      "---",
+      'title: "T"',
+      "---",
+      "",
+      "# Hello",
+      "",
+      "First para.",
+      "",
+      "Second para.",
+      "",
+    ].join("\n");
     const plan = planVaultMarkdownChunks(md, { maxChunkChars: 2000 });
     expect(plan.indexBody).toContain("# Hello");
     expect(plan.indexBody).not.toContain("title:");

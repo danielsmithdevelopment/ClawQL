@@ -42,9 +42,7 @@ export function searchOperations(
     }
   }
 
-  return results
-    .sort((a, b) => b.score - a.score)
-    .slice(0, limit);
+  return results.sort((a, b) => b.score - a.score).slice(0, limit);
 }
 
 // ─────────────────────────────────────────────
@@ -52,19 +50,16 @@ export function searchOperations(
 // ─────────────────────────────────────────────
 
 const WEIGHTS = {
-  operationIdSegment: 6,  // e.g. "services", "create", "list"
+  operationIdSegment: 6, // e.g. "services", "create", "list"
   resourceName: 5,
-  descriptionExact: 4,    // exact word in description
+  descriptionExact: 4, // exact word in description
   path: 3,
-  httpMethod: 3,          // "get", "post", "delete"…
+  httpMethod: 3, // "get", "post", "delete"…
   parameterName: 2,
   descriptionPartial: 1,
 };
 
-function scoreOperation(
-  op: Operation,
-  terms: string[]
-): { score: number; matchedOn: string[] } {
+function scoreOperation(op: Operation, terms: string[]): { score: number; matchedOn: string[] } {
   let score = 0;
   const matchedOn: string[] = [];
 
@@ -130,13 +125,15 @@ function scoreOperation(
 // ─────────────────────────────────────────────
 
 function tokenize(text: string): string[] {
-  return text
-    .toLowerCase()
-    // Split camelCase and PascalCase words
-    .replace(/([a-z])([A-Z])/g, "$1 $2")
-    // Split on anything non-alphanumeric
-    .split(/[^a-z0-9]+/)
-    .filter((t) => t.length > 1); // drop single-char noise
+  return (
+    text
+      .toLowerCase()
+      // Split camelCase and PascalCase words
+      .replace(/([a-z])([A-Z])/g, "$1 $2")
+      // Split on anything non-alphanumeric
+      .split(/[^a-z0-9]+/)
+      .filter((t) => t.length > 1)
+  ); // drop single-char noise
 }
 
 // ─────────────────────────────────────────────
@@ -156,15 +153,13 @@ export function formatSearchResults(results: SearchResult[]): string {
         path: r.operation.flatPath,
         description: r.operation.description,
         resource: r.operation.resource,
-        parameters: Object.entries(r.operation.parameters).map(
-          ([name, p]) => ({
-            name,
-            location: p.location,
-            required: p.required,
-            type: p.type,
-            description: p.description,
-          })
-        ),
+        parameters: Object.entries(r.operation.parameters).map(([name, p]) => ({
+          name,
+          location: p.location,
+          required: p.required,
+          type: p.type,
+          description: p.description,
+        })),
         requestBody: r.operation.requestBody ?? null,
         responseSchema: r.operation.responseBody ?? null,
         score: r.score,

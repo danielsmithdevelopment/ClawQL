@@ -254,7 +254,9 @@ export async function runMemoryRecall(input: MemoryRecallInput): Promise<MemoryR
             ranked = await queryPostgresVectorKnn(qEmb, mdFiles, { topChunks, maxDocs });
           } catch (pgErr: unknown) {
             const msg = pgErr instanceof Error ? pgErr.message : String(pgErr);
-            console.error(`[clawql-mcp] memory_recall pgvector query failed, trying memory.db: ${msg}`);
+            console.error(
+              `[clawql-mcp] memory_recall pgvector query failed, trying memory.db: ${msg}`
+            );
             ranked = [];
           }
           if (ranked.length === 0) {
@@ -292,9 +294,7 @@ export async function runMemoryRecall(input: MemoryRecallInput): Promise<MemoryR
   for (const [p, sim] of vectorByRel) {
     if (sim >= minVectorSim) seedSet.add(p);
   }
-  const seeds = [...seedSet].sort(
-    (a, b) => (scoreByRel.get(b) ?? 0) - (scoreByRel.get(a) ?? 0)
-  );
+  const seeds = [...seedSet].sort((a, b) => (scoreByRel.get(b) ?? 0) - (scoreByRel.get(a) ?? 0));
 
   type Q = { rel: string; depth: number; reason: "keyword" | "link" | "vector"; from?: string };
   const queue: Q[] = [];

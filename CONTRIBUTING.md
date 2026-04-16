@@ -24,5 +24,5 @@ where to report issues (GraphQL Mesh / Omnigraph monorepo) and how to reproduce.
 ## Code style
 
 - TypeScript in `src/`; after `npm install` from a **git checkout**, run **`npm run build`** once (the published npm package ships `dist/`; only clones need a local compile).
-- Run `npm test` (Vitest) before submitting.
+- Before submitting: **`npm run lint`**, **`npm run format:check`** (or **`npm run format`** to apply Prettier), and **`npm test`** (Vitest). CI runs the same checks plus coverage (**`npx vitest run --coverage`**), ShellCheck, actionlint, and CodeQL (see **`.github/workflows/`**).
 - **Bun** is only needed for maintainer scripts such as `pregenerate-graphql` / `pregenerate-google-top50-graphql` — not for `npm run build`, `npm test`, or normal local runs.

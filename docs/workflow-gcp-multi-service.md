@@ -17,12 +17,12 @@ For a faster in-process ranking check only (no MCP), use `npm run workflow:gcp-m
 
 Replace placeholders:
 
-| Placeholder | Meaning |
-|-------------|---------|
-| `PROJECT_ID` | GCP project ID |
-| `REGION` | e.g. `us-central1` |
-| `ZONE` | e.g. `us-central1-a` |
-| `CLUSTER_ID` | GKE cluster name |
+| Placeholder  | Meaning              |
+| ------------ | -------------------- |
+| `PROJECT_ID` | GCP project ID       |
+| `REGION`     | e.g. `us-central1`   |
+| `ZONE`       | e.g. `us-central1-a` |
+| `CLUSTER_ID` | GKE cluster name     |
 
 ---
 
@@ -30,10 +30,10 @@ Replace placeholders:
 
 **Spec:** `providers/google/apis/serviceusage-v1/discovery.json`
 
-| # | operationId | Purpose |
-|---|-------------|---------|
-| 0a | `serviceusage.services.batchEnable` | Enable many APIs in one call |
-| 0b | `serviceusage.services.enable` | Enable a single service |
+| #   | operationId                         | Purpose                      |
+| --- | ----------------------------------- | ---------------------------- |
+| 0a  | `serviceusage.services.batchEnable` | Enable many APIs in one call |
+| 0b  | `serviceusage.services.enable`      | Enable a single service      |
 
 **Typical `batchEnable` parent:** `projects/PROJECT_ID`  
 **Body:** list of service names, e.g. `container.googleapis.com`, `compute.googleapis.com`, `dns.googleapis.com`, `logging.googleapis.com`, `monitoring.googleapis.com`, `storage.googleapis.com`, `bigquery.googleapis.com`, `iam.googleapis.com`, `cloudresourcemanager.googleapis.com`.
@@ -46,10 +46,10 @@ Use `search` then `execute` with the JSON body the Discovery doc describes (`Bat
 
 **Spec:** `providers/google/apis/cloudresourcemanager-v3/discovery.json`
 
-| # | operationId | Purpose |
-|---|-------------|---------|
-| 1a | `cloudresourcemanager.projects.getIamPolicy` | Read current policy |
-| 1b | `cloudresourcemanager.projects.setIamPolicy` | Add/remove members & roles |
+| #   | operationId                                  | Purpose                    |
+| --- | -------------------------------------------- | -------------------------- |
+| 1a  | `cloudresourcemanager.projects.getIamPolicy` | Read current policy        |
+| 1b  | `cloudresourcemanager.projects.setIamPolicy` | Add/remove members & roles |
 
 **Resource:** `projects/PROJECT_ID` (path parameter `resource` per Discovery).
 
@@ -65,14 +65,15 @@ Use `search` then `execute` with the JSON body the Discovery doc describes (`Bat
 
 GKE can start on the **default VPC**; production often uses a custom VPC and subnets first.
 
-| # | operationId | Purpose |
-|---|-------------|---------|
-| 2a | `compute.networks.insert` | Create VPC (optional if using default) |
-| 2b | `compute.subnetworks.insert` | Subnet in `REGION` (optional) |
-| 2c | `compute.firewalls.insert` | Allow/deny rules (e.g. SSH, internal, health checks) |
+| #   | operationId                  | Purpose                                              |
+| --- | ---------------------------- | ---------------------------------------------------- |
+| 2a  | `compute.networks.insert`    | Create VPC (optional if using default)               |
+| 2b  | `compute.subnetworks.insert` | Subnet in `REGION` (optional)                        |
+| 2c  | `compute.firewalls.insert`   | Allow/deny rules (e.g. SSH, internal, health checks) |
 
-**`compute.firewalls.insert`:**  
-- Path params: `project`, usually `name` (firewall name).  
+**`compute.firewalls.insert`:**
+
+- Path params: `project`, usually `name` (firewall name).
 - **Body:** `Firewall` — `network`, `allowed`/`denied`, `sourceRanges` or `sourceTags`, `targetTags`, etc.
 
 ---
@@ -81,12 +82,13 @@ GKE can start on the **default VPC**; production often uses a custom VPC and sub
 
 **Spec:** `providers/google/apis/container-v1/discovery.json`
 
-| # | operationId | Purpose |
-|---|-------------|---------|
-| 3a | `container.projects.locations.clusters.create` | Create cluster |
-| 3b | `container.projects.locations.operations.get` | Poll long-running `Operation` |
+| #   | operationId                                    | Purpose                       |
+| --- | ---------------------------------------------- | ----------------------------- |
+| 3a  | `container.projects.locations.clusters.create` | Create cluster                |
+| 3b  | `container.projects.locations.operations.get`  | Poll long-running `Operation` |
 
-**`create` path parameter:**  
+**`create` path parameter:**
+
 - `parent` = `projects/PROJECT_ID/locations/REGION` (regional cluster) **or** use **zonal** APIs with `container.projects.zones.clusters.create` if you use a zone.
 
 **Body:** `CreateClusterRequest` with `cluster` (`name`, `initialNodeCount`, `nodeConfig`, `network`, `subnetwork`, `ipAllocationPolicy`, **workload identity** config, etc.).
@@ -99,9 +101,9 @@ After `create`, poll **`operations.get`** with the operation `name` until `done:
 
 **Spec:** `providers/google/apis/logging-v2/discovery.json`
 
-| # | operationId | Purpose |
-|---|-------------|---------|
-| 4a | `logging.projects.sinks.create` | Export logs to BigQuery, Pub/Sub, or storage bucket |
+| #   | operationId                     | Purpose                                             |
+| --- | ------------------------------- | --------------------------------------------------- |
+| 4a  | `logging.projects.sinks.create` | Export logs to BigQuery, Pub/Sub, or storage bucket |
 
 **Parent-style params:** `projects/PROJECT_ID` as sink parent (see Discovery for exact `projectsId` / body `LogSink`).
 
@@ -113,10 +115,10 @@ After `create`, poll **`operations.get`** with the operation `name` until `done:
 
 **Spec:** `providers/google/apis/monitoring-v3/discovery.json`
 
-| # | operationId | Purpose |
-|---|-------------|---------|
-| 5a | `monitoring.projects.notificationChannels.create` | Email, Slack, PagerDuty, etc. |
-| 5b | `monitoring.projects.alertPolicies.create` | Conditions + notification channels |
+| #   | operationId                                       | Purpose                            |
+| --- | ------------------------------------------------- | ---------------------------------- |
+| 5a  | `monitoring.projects.notificationChannels.create` | Email, Slack, PagerDuty, etc.      |
+| 5b  | `monitoring.projects.alertPolicies.create`        | Conditions + notification channels |
 
 **Name prefix:** `projects/PROJECT_ID`  
 **Bodies:** `NotificationChannel`, `AlertPolicy` (see Discovery `$ref` schemas).
@@ -131,13 +133,13 @@ After `create`, poll **`operations.get`** with the operation `name` until `done:
 
 External HTTP(S) load balancing uses **global** resources and a **chain** of objects. Typical **creation order**:
 
-| # | operationId | Purpose |
-|---|-------------|---------|
-| 6a | `compute.healthChecks.insert` | Health check for backends |
-| 6b | `compute.backendServices.insert` | Backend service (attach health check, backends) |
-| 6c | `compute.urlMaps.insert` | URL routing to backend service |
-| 6d | `compute.targetHttpProxies.insert` or `compute.targetHttpsProxies.insert` | HTTP(S) proxy |
-| 6e | `compute.globalForwardingRules.insert` | Front IP / forwarding rule |
+| #   | operationId                                                               | Purpose                                         |
+| --- | ------------------------------------------------------------------------- | ----------------------------------------------- |
+| 6a  | `compute.healthChecks.insert`                                             | Health check for backends                       |
+| 6b  | `compute.backendServices.insert`                                          | Backend service (attach health check, backends) |
+| 6c  | `compute.urlMaps.insert`                                                  | URL routing to backend service                  |
+| 6d  | `compute.targetHttpProxies.insert` or `compute.targetHttpsProxies.insert` | HTTP(S) proxy                                   |
+| 6e  | `compute.globalForwardingRules.insert`                                    | Front IP / forwarding rule                      |
 
 **Zonal/internal** LBs use regional forwarding rules and different resource mixes — adjust using the same Compute API.
 
@@ -147,10 +149,10 @@ External HTTP(S) load balancing uses **global** resources and a **chain** of obj
 
 **Spec:** `providers/google/apis/dns-v1/discovery.json`
 
-| # | operationId | Purpose |
-|---|-------------|---------|
-| 7a | `dns.managedZones.create` | Hosted zone for a domain |
-| 7b | `dns.resourceRecordSets.create` | Add A/AAAA/CNAME records |
+| #   | operationId                     | Purpose                  |
+| --- | ------------------------------- | ------------------------ |
+| 7a  | `dns.managedZones.create`       | Hosted zone for a domain |
+| 7b  | `dns.resourceRecordSets.create` | Add A/AAAA/CNAME records |
 
 **Project scope:** `project` query param = `PROJECT_ID` (see Discovery).  
 **Bodies:** `ManagedZone`; for RRs use `ResourceRecordSet` per `resourceRecordSets.create` (managed zone name + record name/type/rrdatas).
@@ -161,11 +163,11 @@ External HTTP(S) load balancing uses **global** resources and a **chain** of obj
 
 **Spec:** `providers/google/apis/storage-v1/discovery.json`
 
-| # | operationId | Purpose |
-|---|-------------|---------|
-| 8a | `storage.buckets.insert` | Create bucket |
-| 8b | `storage.buckets.setIamPolicy` | Bucket-level IAM |
-| 8c | `storage.objects.insert` | Upload object (multipart / resumable per client) |
+| #   | operationId                    | Purpose                                          |
+| --- | ------------------------------ | ------------------------------------------------ |
+| 8a  | `storage.buckets.insert`       | Create bucket                                    |
+| 8b  | `storage.buckets.setIamPolicy` | Bucket-level IAM                                 |
+| 8c  | `storage.objects.insert`       | Upload object (multipart / resumable per client) |
 
 **`buckets.insert`:** query `project` and body `Bucket` with `name`, `location`, `uniformBucketLevelAccess`, etc.
 
@@ -175,11 +177,11 @@ External HTTP(S) load balancing uses **global** resources and a **chain** of obj
 
 **Spec:** `providers/google/apis/bigquery-v2/discovery.json`
 
-| # | operationId | Purpose |
-|---|-------------|---------|
-| 9a | `bigquery.datasets.insert` | Dataset in project |
-| 9b | `bigquery.tables.insert` | Table schema |
-| 9c | `bigquery.jobs.insert` | Load job from GCS or query job |
+| #   | operationId                | Purpose                        |
+| --- | -------------------------- | ------------------------------ |
+| 9a  | `bigquery.datasets.insert` | Dataset in project             |
+| 9b  | `bigquery.tables.insert`   | Table schema                   |
+| 9c  | `bigquery.jobs.insert`     | Load job from GCS or query job |
 
 **Path/query:** `projectId` = `PROJECT_ID`; dataset/table IDs in body or path per method.
 
@@ -200,15 +202,15 @@ Repeat with `compute-v1`, `logging-v2`, etc., after switching `CLAWQL_SPEC_PATH`
 
 ## Suggested overall order (dependencies)
 
-1. **Service Usage** — enable APIs  
-2. **Resource Manager** — project IAM as needed  
-3. **Compute** — VPC/subnets/firewalls (if not using defaults)  
-4. **Container** — GKE cluster (+ poll operation)  
-5. **Logging** — sinks (destinations must exist or be creatable)  
-6. **Monitoring** — channels + alert policies  
-7. **Compute** — load balancer chain (if exposing services)  
-8. **DNS** — zones + records (often after you know LB IPs)  
-9. **Storage** — buckets + IAM  
+1. **Service Usage** — enable APIs
+2. **Resource Manager** — project IAM as needed
+3. **Compute** — VPC/subnets/firewalls (if not using defaults)
+4. **Container** — GKE cluster (+ poll operation)
+5. **Logging** — sinks (destinations must exist or be creatable)
+6. **Monitoring** — channels + alert policies
+7. **Compute** — load balancer chain (if exposing services)
+8. **DNS** — zones + records (often after you know LB IPs)
+9. **Storage** — buckets + IAM
 10. **BigQuery** — datasets/tables/jobs (often linked from Logging sinks)
 
 ---

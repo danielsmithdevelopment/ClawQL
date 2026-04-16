@@ -92,8 +92,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
     await validateObsidianVaultAtStartup();
   }
 
-  const mcpPath =
-    (options.mcpPath?.trim() || process.env.MCP_PATH?.trim() || DEFAULT_MCP_PATH);
+  const mcpPath = options.mcpPath?.trim() || process.env.MCP_PATH?.trim() || DEFAULT_MCP_PATH;
   const transports = new Map<string, StreamableHTTPServerTransport>();
 
   const app = createMcpExpressApp({
@@ -189,8 +188,7 @@ async function main() {
   registerPostgresPoolShutdownHooks();
   const app = await createMcpHttpApp();
   app.listen(PORT, () => {
-    const path =
-      process.env.MCP_PATH?.trim() || DEFAULT_MCP_PATH;
+    const path = process.env.MCP_PATH?.trim() || DEFAULT_MCP_PATH;
     console.error(
       `[clawql-mcp-http] Streamable HTTP MCP listening on http://0.0.0.0:${PORT}${path}`
     );

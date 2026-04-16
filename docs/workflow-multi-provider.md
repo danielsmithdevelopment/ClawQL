@@ -23,7 +23,7 @@ No API keys required.
 
 Jira live issue creation is temporarily undocumented while credential strategy is being finalized.
 
-## What this does *not* do
+## What this does _not_ do
 
 - It does **not** call Google Cloud or Cloudflare APIs automatically (no cluster creation, no DNS changes).
 - It **does** validate that ClawQL’s `search` pipeline returns sensible operations for each intent on each bundled spec.

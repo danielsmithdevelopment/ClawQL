@@ -104,10 +104,7 @@ describe("sanitizeOpenAPIObject", () => {
         items: { default: null, type: "string" },
       },
     }) as Record<string, unknown>;
-    const items = (out.schema as Record<string, unknown>).items as Record<
-      string,
-      unknown
-    >;
+    const items = (out.schema as Record<string, unknown>).items as Record<string, unknown>;
     expect(items.nullable).toBe(true);
     expect(items.default).toBeNull();
   });
@@ -116,10 +113,7 @@ describe("sanitizeOpenAPIObject", () => {
     const out = sanitizeOpenAPIObject({
       schema: { type: "array", items: "string" },
     }) as Record<string, unknown>;
-    const items = (out.schema as Record<string, unknown>).items as Record<
-      string,
-      unknown
-    >;
+    const items = (out.schema as Record<string, unknown>).items as Record<string, unknown>;
     expect(items.type).toBe("string");
   });
 });
@@ -155,15 +149,9 @@ describe("sanitizeSchemaNode", () => {
     };
 
     const out = sanitizeSchemaNode(input) as Record<string, unknown>;
-    expect((out.a as Record<string, unknown>).$ref).toBe(
-      "#/components/schemas/MySchema"
-    );
-    expect((out.b as Record<string, unknown>).$ref).toBe(
-      "#/components/schemas/OtherSchema"
-    );
-    expect((out.c as Record<string, unknown>).$ref).toBe(
-      "#/components/schemas/AlreadyValid"
-    );
+    expect((out.a as Record<string, unknown>).$ref).toBe("#/components/schemas/MySchema");
+    expect((out.b as Record<string, unknown>).$ref).toBe("#/components/schemas/OtherSchema");
+    expect((out.c as Record<string, unknown>).$ref).toBe("#/components/schemas/AlreadyValid");
   });
 
   it("recursively sanitizes nested structures and arrays", () => {
@@ -180,9 +168,7 @@ describe("sanitizeSchemaNode", () => {
     const first = (out.items as Array<Record<string, unknown>>)[0];
     expect(first.enumDescriptions).toBeUndefined();
     expect((first.nested as Record<string, unknown>).type).toBeUndefined();
-    expect((first.nested as Record<string, unknown>).$ref).toBe(
-      "#/components/schemas/NestedType"
-    );
+    expect((first.nested as Record<string, unknown>).$ref).toBe("#/components/schemas/NestedType");
   });
 });
 
@@ -241,9 +227,11 @@ describe("discoveryToOpenAPI", () => {
     const openapi = discoveryToOpenAPI(discoveryDoc as never, operations);
 
     // Path conversion and parameter hygiene.
-    const pathItem = (openapi.paths[
-      "/v2/projects/{projectsId}/locations/{locationsId}/services/{servicesId}"
-    ] as Record<string, unknown>).get as Record<string, unknown>;
+    const pathItem = (
+      openapi.paths[
+        "/v2/projects/{projectsId}/locations/{locationsId}/services/{servicesId}"
+      ] as Record<string, unknown>
+    ).get as Record<string, unknown>;
     const params = pathItem.parameters as Array<Record<string, unknown>>;
 
     expect(params.some((p) => p.name === "parent")).toBe(false);
@@ -253,18 +241,17 @@ describe("discoveryToOpenAPI", () => {
     expect(params.some((p) => p.name === "servicesId")).toBe(true);
 
     // Security scheme + per-op security.
-    const oauth2 = openapi.components.securitySchemes?.oauth2 as Record<
-      string,
-      unknown
-    >;
+    const oauth2 = openapi.components.securitySchemes?.oauth2 as Record<string, unknown>;
     expect(oauth2.type).toBe("oauth2");
     expect(pathItem.security).toEqual([
       { oauth2: ["https://www.googleapis.com/auth/cloud-platform.read-only"] },
     ]);
 
     // Schema sanitization is applied.
-    const serviceSchema = openapi.components.schemas
-      .GoogleCloudRunV2Service as Record<string, unknown>;
+    const serviceSchema = openapi.components.schemas.GoogleCloudRunV2Service as Record<
+      string,
+      unknown
+    >;
     expect(serviceSchema.id).toBeUndefined();
 
     const properties = serviceSchema.properties as Record<string, unknown>;
@@ -326,40 +313,41 @@ describe("discoveryToOpenAPI", () => {
     };
 
     const openapi = discoveryToOpenAPI(discoveryDoc as never, operations);
-    const post = (openapi.paths[
-      "/v2/projects/{projectsId}/locations/{locationsId}/services"
-    ] as Record<string, unknown>).post as Record<string, unknown>;
+    const post = (
+      openapi.paths["/v2/projects/{projectsId}/locations/{locationsId}/services"] as Record<
+        string,
+        unknown
+      >
+    ).post as Record<string, unknown>;
 
     expect(post.operationId).toBe("run_projects_locations_services_create");
 
     const requestBody = post.requestBody as Record<string, unknown>;
     const requestSchema = (
-      (requestBody.content as Record<string, unknown>)[
-        "application/json"
-      ] as Record<string, unknown>
-    ).schema as Record<string, unknown>;
-    expect(requestSchema.$ref).toBe(
-      "#/components/schemas/GoogleCloudRunV2CreateServiceRequest"
-    );
-
-    const responseSchema = (
-      (((post.responses as Record<string, unknown>)["200"] as Record<
-        string,
-        unknown
-      >).content as Record<string, unknown>)["application/json"] as Record<
+      (requestBody.content as Record<string, unknown>)["application/json"] as Record<
         string,
         unknown
       >
     ).schema as Record<string, unknown>;
-    expect(responseSchema.$ref).toBe(
-      "#/components/schemas/GoogleLongrunningOperation"
-    );
+    expect(requestSchema.$ref).toBe("#/components/schemas/GoogleCloudRunV2CreateServiceRequest");
+
+    const responseSchema = (
+      (
+        ((post.responses as Record<string, unknown>)["200"] as Record<string, unknown>)
+          .content as Record<string, unknown>
+      )["application/json"] as Record<string, unknown>
+    ).schema as Record<string, unknown>;
+    expect(responseSchema.$ref).toBe("#/components/schemas/GoogleLongrunningOperation");
 
     // Ensure sanitization still applies in this path.
-    const opSchema = openapi.components.schemas
-      .GoogleLongrunningOperation as Record<string, unknown>;
-    const metadata = (opSchema.properties as Record<string, unknown>)
-      .metadata as Record<string, unknown>;
+    const opSchema = openapi.components.schemas.GoogleLongrunningOperation as Record<
+      string,
+      unknown
+    >;
+    const metadata = (opSchema.properties as Record<string, unknown>).metadata as Record<
+      string,
+      unknown
+    >;
     expect(metadata.type).toBeUndefined();
 
     // Parent should be removed since it is not in the converted flatPath.

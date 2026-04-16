@@ -2,15 +2,15 @@
 
 ## Summary table
 
-| Provider | Complex query | Operation | Phase 1 (input) | Phase 2 (full REST JSON → GraphQL JSON) |
-|---|---|---|---|---|
-| `google` | "create gke kubernetes cluster with node pools, then fetch cluster details and endpoint" | `container.projects.locations.clusters.list` | 84436 → 2167 (**82269 saved**, 38.96x, 97.43%) | 421 → 76 (**345 saved**, 5.54x, 81.95%) |
-| `jira` | "create issue in project, assign owner, set highest priority, due date, labels, then update description" | `com.atlassian.jira.rest.v2.issue.IssueResource.getIssue_get` | 266579 → 901 (**265678 saved**, 295.87x, 99.66%) | 386 → 40 (**346 saved**, 9.65x, 89.64%) |
-| `cloudflare` | "create a DNS record with proxy enabled, set ttl and tags, then list and filter records by name and content" | `dns-records-for-a-zone-list-dns-records` | 2206098 → 2377 (**2203721 saved**, 928.1x, 99.89%) | 177 → 80 (**97 saved**, 2.21x, 54.8%) |
+| Provider     | Complex query                                                                                                | Operation                                                     | Phase 1 (input)                                    | Phase 2 (full REST JSON → GraphQL JSON) |
+| ------------ | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------- | -------------------------------------------------- | --------------------------------------- |
+| `google`     | "create gke kubernetes cluster with node pools, then fetch cluster details and endpoint"                     | `container.projects.locations.clusters.list`                  | 84436 → 2167 (**82269 saved**, 38.96x, 97.43%)     | 421 → 76 (**345 saved**, 5.54x, 81.95%) |
+| `jira`       | "create issue in project, assign owner, set highest priority, due date, labels, then update description"     | `com.atlassian.jira.rest.v2.issue.IssueResource.getIssue_get` | 266579 → 901 (**265678 saved**, 295.87x, 99.66%)   | 386 → 40 (**346 saved**, 9.65x, 89.64%) |
+| `cloudflare` | "create a DNS record with proxy enabled, set ttl and tags, then list and filter records by name and content" | `dns-records-for-a-zone-list-dns-records`                     | 2206098 → 2377 (**2203721 saved**, 928.1x, 99.89%) | 177 → 80 (**97 saved**, 2.21x, 54.8%)   |
 
 **Averages:** Phase 1 `852371 → 1815` (**~850556 saved**, ~99.79%); Phase 2 (REST body → GraphQL body) `328 → 65` (**~263 saved**, ~80.18%).
 
-*Phase 2 uses representative JSON in `docs/benchmarks/response-examples/` unless `BENCHMARK_LIVE=1` returns real responses. JSON also records doc-only schema vs field-string cost under `phase2Documentation`.*
+_Phase 2 uses representative JSON in `docs/benchmarks/response-examples/` unless `BENCHMARK_LIVE=1` returns real responses. JSON also records doc-only schema vs field-string cost under `phase2Documentation`._
 
 ## Side-by-side (Phase 2) — full REST response vs GraphQL response
 
@@ -18,7 +18,7 @@
 
 ### `google`
 
-*Source: **fixture (`docs/benchmarks/response-examples/`)***
+\*Source: **fixture (`docs/benchmarks/response-examples/`)\***
 
 <table><thead><tr><th>Before — full REST JSON (<code>1685</code> chars)</th><th>After — GraphQL JSON (<code>303</code> chars)</th></tr></thead><tbody><tr><td valign="top"><pre><code>{
   &quot;clusters&quot;: [
@@ -60,7 +60,7 @@
 
 ### `jira`
 
-*Source: **fixture (`docs/benchmarks/response-examples/`)***
+\*Source: **fixture (`docs/benchmarks/response-examples/`)\***
 
 <table><thead><tr><th>Before — full REST JSON (<code>1543</code> chars)</th><th>After — GraphQL JSON (<code>160</code> chars)</th></tr></thead><tbody><tr><td valign="top"><pre><code>{
   &quot;expand&quot;: &quot;renderedFields,names,schema&quot;,
@@ -113,7 +113,7 @@
 
 ### `cloudflare`
 
-*Source: **fixture (`docs/benchmarks/response-examples/`)***
+\*Source: **fixture (`docs/benchmarks/response-examples/`)\***
 
 <table><thead><tr><th>Before — full REST JSON (<code>707</code> chars)</th><th>After — GraphQL JSON (<code>318</code> chars)</th></tr></thead><tbody><tr><td valign="top"><pre><code>{
   &quot;result&quot;: [

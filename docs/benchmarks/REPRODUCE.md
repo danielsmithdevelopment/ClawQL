@@ -4,11 +4,11 @@ The **README → “Provider benchmark breakdown”** section points here.
 
 ## What it measures
 
-| Phase | What | In `latest.json` / summary table | Raw excerpts in `latest.md` |
-|-------|------|----------------------------------|-------------------------------|
-| **1** | Full `JSON.stringify(openapi)` vs **top-5** `search` payload | ✅ token counts + char totals | **No** — payloads are huge |
-| **2 — payloads** | **Full REST response JSON** vs **GraphQL response JSON** (same op + field selection) | ✅ token counts | ✅ **Side-by-side JSON** (fixtures by default) |
-| **2 — docs (secondary)** | OpenAPI response **schema** vs **field-selection string** | ✅ under `phase2Documentation` | No |
+| Phase                    | What                                                                                 | In `latest.json` / summary table | Raw excerpts in `latest.md`                    |
+| ------------------------ | ------------------------------------------------------------------------------------ | -------------------------------- | ---------------------------------------------- |
+| **1**                    | Full `JSON.stringify(openapi)` vs **top-5** `search` payload                         | ✅ token counts + char totals    | **No** — payloads are huge                     |
+| **2 — payloads**         | **Full REST response JSON** vs **GraphQL response JSON** (same op + field selection) | ✅ token counts                  | ✅ **Side-by-side JSON** (fixtures by default) |
+| **2 — docs (secondary)** | OpenAPI response **schema** vs **field-selection string**                            | ✅ under `phase2Documentation`   | No                                             |
 
 **Default (no credentials):** Phase 2 uses **representative** request/response pairs in
 [`response-examples/`](response-examples/) so you still see **real JSON shape** (full vs lean),

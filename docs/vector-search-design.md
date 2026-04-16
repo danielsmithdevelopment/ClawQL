@@ -30,14 +30,14 @@ A small internal interface (names illustrative):
 
 Something stable both backends must persist:
 
-| Field | Purpose |
-|-------|---------|
-| `id` | Stable UUID or hash-derived id |
-| `source_kind` | e.g. `vault`, `spec_operation` |
-| `source_id` | Vault-relative path, or `operationId` / composite key |
-| `text` | Chunk plain text used for embedding |
-| `embedding` | Float vector (fixed dimension per model) |
-| `metadata` | JSON: headings, mtime, provider label, etc. |
+| Field         | Purpose                                               |
+| ------------- | ----------------------------------------------------- |
+| `id`          | Stable UUID or hash-derived id                        |
+| `source_kind` | e.g. `vault`, `spec_operation`                        |
+| `source_id`   | Vault-relative path, or `operationId` / composite key |
+| `text`        | Chunk plain text used for embedding                   |
+| `embedding`   | Float vector (fixed dimension per model)              |
+| `metadata`    | JSON: headings, mtime, provider label, etc.           |
 
 ### 3. Vector store interface (backend-agnostic)
 
@@ -60,9 +60,9 @@ Selection:
 
 ### 4. SQLite vs Postgres — when to use which
 
-| Profile | Store | Typical use |
-|--------|--------|-------------|
-| **Lean / local** | SQLite | `npx`, laptop, single user; no extra container. |
+| Profile                  | Store    | Typical use                                                   |
+| ------------------------ | -------- | ------------------------------------------------------------- |
+| **Lean / local**         | SQLite   | `npx`, laptop, single user; no extra container.               |
 | **Compose / K8s / prod** | Postgres | Multiple replicas, HA, familiar ops, easier hybrid SQL later. |
 
 Same embedding provider and chunking code; only **connection + SQL** differ.
