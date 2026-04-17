@@ -9,7 +9,8 @@ When merging pull requests (GitHub / `gh pr merge`):
 
 - **Never** merge immediately after creating a PR or without verifying CI.
 - **Always** wait for required checks to finish and pass before merging.
-- Prefer: `gh pr merge <n> --merge --auto` (GitHub waits for branch protection + green checks).
-- Or: poll `gh pr checks <n>` until all required checks succeed (or stop on failure).
+- **`gh pr merge --auto` is not sufficient by itself:** if the repository does not require specific status checks in branch protection, GitHub may merge **immediately** when you use `--auto`, before workflows finish. **Do not rely on `--auto` alone.**
+- **Before merge, run:** `gh pr checks <n> --watch --fail-fast` and confirm it exits **0** (all checks finished and passed). Alternatively poll `gh pr checks <n> --json` until no check is pending and none failed.
+- **Only then** run `gh pr merge <n> --merge` (merge-after-green). Prefer this sequence over trusting `--auto` unless you have verified branch protection blocks merge until required checks pass.
 
 If branch protection blocks merge until green, do not bypass it. Do not assume checks are optional.

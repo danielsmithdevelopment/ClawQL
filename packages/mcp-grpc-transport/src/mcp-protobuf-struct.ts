@@ -49,7 +49,11 @@ export function defaultListTtlDuration(): { seconds: number; nanos: number } {
   return { seconds: 3600, nanos: 0 };
 }
 
-function pickValueField<T>(v: Record<string, unknown>, snake: string, camel: string): T | undefined {
+function pickValueField<T>(
+  v: Record<string, unknown>,
+  snake: string,
+  camel: string
+): T | undefined {
   const s = v[snake];
   if (s !== undefined) {
     return s as T;
@@ -78,7 +82,9 @@ export function valueToJson(v: Record<string, unknown> | undefined | null): unkn
   if (bool !== undefined) {
     return bool;
   }
-  const structVal = (v.struct_value ?? v.structValue) as { fields?: Record<string, unknown> } | undefined;
+  const structVal = (v.struct_value ?? v.structValue) as
+    | { fields?: Record<string, unknown> }
+    | undefined;
   if (structVal && typeof structVal === "object") {
     return structToJson(structVal);
   }
@@ -105,10 +111,7 @@ function structFieldEntries(
 
 /** Decode `google.protobuf.Struct` (proto-loader shape) to a plain object. */
 export function structToJson(
-  s:
-    | { fields?: Record<string, unknown> | Map<string, unknown> }
-    | undefined
-    | null
+  s: { fields?: Record<string, unknown> | Map<string, unknown> } | undefined | null
 ): Record<string, unknown> | undefined {
   if (s == null || typeof s !== "object") {
     return undefined;
@@ -118,7 +121,9 @@ export function structToJson(
     return undefined;
   }
   const out: Record<string, unknown> = {};
-  for (const [k, v] of structFieldEntries(fields as Record<string, unknown> | Map<string, unknown>)) {
+  for (const [k, v] of structFieldEntries(
+    fields as Record<string, unknown> | Map<string, unknown>
+  )) {
     out[k] = valueToJson(v as Record<string, unknown>);
   }
   return out;
