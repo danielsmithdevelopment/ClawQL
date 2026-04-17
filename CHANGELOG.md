@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### CI
 
+- **Docker publish** (`.github/workflows/docker-publish.yml`): **daily** at **06:00 UTC** and **`workflow_dispatch`** — builds `docker/Dockerfile`, pushes to **`ghcr.io/danielsmithdevelopment/clawql-mcp`** with tags **`latest`**, **`nightly`**, **`sha-*`**, and **`nightly-YYYYMMDD`** on scheduled runs; GHA BuildKit cache enabled.
+
 - **Prettier autofix** job on **same-repo pull requests**: when the **Lint & format** job fails, applies **`npm run format`** and pushes a single commit **`style: apply Prettier [prettier-autofix]`** if there are diffs. **Loop guards:** job runs only when `lint` failed; skips if the actor is **`github-actions[bot]`**; skips if **`[prettier-autofix]`** is already in **HEAD**; does not commit when Prettier makes no changes. **Fork PRs** are excluded (token cannot push to forks).
 
 ### Changed
