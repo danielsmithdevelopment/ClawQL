@@ -7,13 +7,14 @@
 
 import { randomUUID } from "node:crypto";
 import type { Express } from "express";
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { createMcpExpressApp } from "@modelcontextprotocol/sdk/server/express.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { attachGraphqlHttpToMcpApp } from "./graphql-http-attach.js";
+import { createRegisteredMcpServer } from "./mcp-server-factory.js";
 import { loadSpec } from "./spec-loader.js";
-import { preloadSchemaFieldCacheFromDisk, registerTools } from "./tools.js";
+import { preloadSchemaFieldCacheFromDisk } from "./tools.js";
+import { maybeStartGrpcMcpServer } from "mcp-grpc-transport";
 import { validateObsidianVaultAtStartup } from "./vault-config.js";
 import { registerPostgresPoolShutdownHooks } from "./vector-store/pgvector.js";
 
@@ -55,14 +56,6 @@ function applyCorsIfConfigured(
   next();
 }
 
-function buildServer(): McpServer {
-  const server = new McpServer({
-    name: "clawql-mcp",
-    version: "2.0.0",
-  });
-  registerTools(server);
-  return server;
-}
 
 function jsonRpcError(res: import("express").Response, message: string, code = -32000): void {
   res.status(400).json({
@@ -126,7 +119,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
           if (sid) transports.delete(sid);
         };
 
-        const server = buildServer();
+        const server = createRegisteredMcpServer();
         await server.connect(transport);
       } else {
         jsonRpcError(
@@ -187,12 +180,24 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
 async function main() {
   registerPostgresPoolShutdownHooks();
   const app = await createMcpHttpApp();
+  const grpcPromise = maybeStartGrpcMcpServer({
+    createMcpServer: () => createRegisteredMcpServer(),
+  });
+
   app.listen(PORT, () => {
     const path = process.env.MCP_PATH?.trim() || DEFAULT_MCP_PATH;
     console.error(
       `[clawql-mcp-http] Streamable HTTP MCP listening on http://0.0.0.0:${PORT}${path}`
     );
   });
+
+  const grpc = await grpcPromise;
+  if (grpc) {
+    const refl = grpc.reflectionEnabled ? " reflection=on" : "";
+    console.error(
+      `[clawql-mcp-http] gRPC listening on ${grpc.address} (mcp-grpc-transport ${grpc.version}; grpc.health.v1.Health, model_context_protocol.Mcp, mcp.transport.v1.Mcp.Session${refl})`
+    );
+  }
 }
 
 main().catch((err) => {

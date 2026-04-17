@@ -1,0 +1,60 @@
+{
+  "name": "mcp-grpc-transport",
+  "version": "0.1.0",
+  "description": "Pluggable gRPC transport for Model Context Protocol (MCP) servers using @modelcontextprotocol/sdk. Protobuf surface aligned with the community mcp-python-sdk-grpc-poc reference.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "proto",
+    "CHANGELOG.md"
+  ],
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "grpc",
+    "transport",
+    "clawql"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/danielsmithdevelopment/ClawQL.git",
+    "directory": "packages/mcp-grpc-transport"
+  },
+  "bugs": {
+    "url": "https://github.com/danielsmithdevelopment/ClawQL/issues"
+  },
+  "homepage": "https://github.com/danielsmithdevelopment/ClawQL/tree/main/packages/mcp-grpc-transport#readme",
+  "peerDependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.0"
+  },
+  "dependencies": {
+    "@grpc/grpc-js": "^1.14.3",
+    "@grpc/proto-loader": "^0.8.0",
+    "@grpc/reflection": "^1.0.4",
+    "google-proto-files": "^5.0.1"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "@types/node": "^22.0.0",
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.1"
+  },
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "npm run clean && tsc",
+    "test": "vitest run"
+  }
+}
