@@ -48,12 +48,12 @@ docker run -i --rm --entrypoint node clawql-mcp dist/server.js
 
 ## Layout
 
-| Path | Purpose |
-|------|---------|
-| `docker/Dockerfile` | Multi-stage build → distroless runtime |
-| `.dockerignore` | Keeps build context small (root; used by `docker build` from `.`) |
-| `docker/docker-compose.yml` | Local stack (`clawql-mcp-http` only) |
-| `docker/kubernetes-starter.yaml` | Starter K8s namespace + Deployments + Services |
+| Path                             | Purpose                                                           |
+| -------------------------------- | ----------------------------------------------------------------- |
+| `docker/Dockerfile`              | Multi-stage build → distroless runtime                            |
+| `.dockerignore`                  | Keeps build context small (root; used by `docker build` from `.`) |
+| `docker/docker-compose.yml`      | Local stack (`clawql-mcp-http` only)                              |
+| `docker/kubernetes-starter.yaml` | Starter K8s namespace + Deployments + Services                    |
 
 Future Compose / Kubernetes / Helm manifests can live under `docker/` (or split to `deploy/`) without changing this image.
 
@@ -74,6 +74,7 @@ make local-docker-up
 ```
 
 Endpoints:
+
 - MCP HTTP: `http://localhost:8080/mcp`
 - MCP health: `http://localhost:8080/healthz`
 - GraphQL proxy: `http://localhost:4000/graphql`
@@ -99,6 +100,33 @@ This tags **`clawql-mcp:latest`** (same daemon as Docker Desktop; no registry pu
 - **Cold start:** The MCP container loads every bundled spec before `listen()`; hitting `:8080` too early can produce `fetch failed` / “other side closed” in Node. Wait until `curl http://localhost:8080/healthz` returns `{"status":"ok"…}` or the pod is **Ready** (the MCP Deployment includes `/healthz` startup/readiness probes). The `workflow:complex-release-stack:mcp` script polls `/healthz` when `CLAWQL_MCP_URL` is set.
 - **Obsidian vault (`memory_ingest` / `memory_recall`):** The **`local`** overlay replaces the base **`emptyDir`** volume with a **`hostPath`** mount so notes persist on the Docker Desktop host. **`scripts/local-k8s-docker-desktop.sh`** writes **`patch-mcp-vault-hostpath.json`** (RFC 6902 JSON Patch replacing **`volumes[0]`**, gitignored) before **`kubectl apply -k`**, defaulting to **`$HOME/.ClawQL`** — same default as Compose’s **`CLAWQL_VAULT_HOST_PATH`**. Override with **`CLAWQL_LOCAL_VAULT_HOST_PATH=/absolute/path/to/vault`** when applying. **Do not** run raw **`kubectl apply -k docker/kustomize/overlays/local`** without generating that patch first (use **`make local-k8s-up`**). On Docker Desktop, shared filesystem paths such as **`/Users/...`** on macOS are visible to **`hostPath`** pods.
 - **Teardown:** `kubectl delete namespace clawql` (or `kubectl --context docker-desktop delete namespace clawql`)
+
+### Optional: gRPC on Docker Desktop K8s
+
+The Service exposes **8080** (HTTP MCP) and **50051** (gRPC) when you use the **local** overlay. Enable the listener on the workload:
+
+```bash
+kubectl -n clawql set env deployment/clawql-mcp-http ENABLE_GRPC=1
+# Optional: so grpcurl can list services without local .proto files
+kubectl -n clawql set env deployment/clawql-mcp-http ENABLE_GRPC_REFLECTION=1
+kubectl -n clawql rollout status deployment/clawql-mcp-http --timeout=180s
+```
+
+With **[grpcurl](https://github.com/fullstorydev/grpcurl)** installed (`brew install grpcurl`), either use **`localhost:50051`** once the LoadBalancer shows both ports, or:
+
+```bash
+kubectl -n clawql port-forward deployment/clawql-mcp-http 50051:50051
+```
+
+Smoke tests:
+
+```bash
+grpcurl -plaintext localhost:50051 list
+grpcurl -plaintext -d '{"service":""}' localhost:50051 grpc.health.v1.Health/Check
+grpcurl -plaintext -d '{"service":"model_context_protocol.Mcp"}' localhost:50051 grpc.health.v1.Health/Check
+```
+
+**Note:** Invoking protobuf MCP RPCs such as **`ListTools`** may fail from **`grpcurl`** with errors about **`google.protobuf.Value`** when using reflection alone; the server is still correct—use a client that loads **google well-known types**, or call **`mcp.transport.v1.Mcp.Session`** (JSON-RPC stream) from an MCP-aware client. For production gRPC probes without reflection, use the **`docker/kustomize/overlays/grpc-enabled`** overlay (native **`grpc`** readiness/liveness on **50051**).
 
 ### GitHub + Cloudflare + Google API auth on Docker Desktop K8s
 
@@ -132,6 +160,7 @@ Merged **`execute`** calls pick the bearer per **`specLabel`**: GitHub, Cloudfla
 For remote clusters, use `docker/kustomize/overlays/dev` or `prod` and `scripts/deploy-k8s.sh` with a pushed image.
 
 Cloud Run deployment guide/script:
+
 - [`docs/deploy-cloud-run.md`](../docs/deploy-cloud-run.md)
 - `scripts/deploy-cloud-run.sh`
 
@@ -144,12 +173,14 @@ kubectl apply -f docker/kubernetes-starter.yaml
 ```
 
 Included resources:
+
 - Namespace: `clawql`
 - Deployment: `clawql-mcp-http`
 - Service: `clawql-mcp-http` (`LoadBalancer`)
 - MCP pod: **`CLAWQL_OBSIDIAN_VAULT_PATH=/vault`** with an **`emptyDir`** volume at `/vault` in the starter and Kustomize **base** (`docker/kustomize/base/deployment-mcp-http.yaml`) so **`memory_ingest`** / **`memory_recall`** can run. For a **persistent** host vault (e.g. **`~/.ClawQL`**), use the **`local`** overlay via **`make local-k8s-up`**, which generates a **`hostPath`** patch — or replace **`emptyDir`** with a PVC or **`hostPath`** yourself. **`sandbox_exec`** still requires **`CLAWQL_SANDBOX_BRIDGE_URL`** + token env (see [`.env.example`](../.env.example) and [`docs/mcp-tools.md`](../docs/mcp-tools.md)).
 
 After the external IP is ready, use:
+
 - `http://<external-ip>/mcp`
 
 ## Kustomize overlay: gRPC + kubelet gRPC probes
@@ -165,6 +196,7 @@ The **base** overlay keeps **HTTP** probes only because gRPC is off by default (
 ## Kustomize overlays (dev/prod)
 
 Kustomize base + overlays are under:
+
 - `docker/kustomize/base`
 - `docker/kustomize/overlays/dev`
 - `docker/kustomize/overlays/prod`
@@ -184,6 +216,7 @@ kubectl apply -k docker/kustomize/overlays/dev \
 ```
 
 Or edit overlay `images` fields directly:
+
 - dev: `docker/kustomize/overlays/dev/kustomization.yaml`
 - prod: `docker/kustomize/overlays/prod/kustomization.yaml`
 
@@ -202,5 +235,6 @@ bash scripts/deploy-k8s.sh
 ```
 
 Defaults:
+
 - **dev**: lower resources, single replica, MCP service `ClusterIP`
 - **prod**: higher resources, multiple replicas, MCP service `LoadBalancer`

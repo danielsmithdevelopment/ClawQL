@@ -1,4 +1,5 @@
 # Docker Desktop maps LoadBalancer to localhost — use port 8080 for MCP (Cursor, curl).
+# When ENABLE_GRPC=1 on the pod, port 50051 is the gRPC listener (health + MCP protos).
 apiVersion: v1
 kind: Service
 metadata:
@@ -10,3 +11,6 @@ spec:
     - name: http
       port: 8080
       targetPort: 8080
+    - name: grpc
+      port: 50051
+      targetPort: grpc
