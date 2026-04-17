@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Build the ClawQL image and apply the Kustomize "local" overlay to Docker Desktop Kubernetes.
+# Apply the Kustomize "local" overlay to Docker Desktop Kubernetes using the prebuilt
+# GHCR image (default: ghcr.io/danielsmithdevelopment/clawql-mcp:latest).
+#
+# Optional: CLAWQL_LOCAL_K8S_BUILD_IMAGE=1 — docker build locally and patch the Deployment
+# to use image clawql-mcp:latest (IfNotPresent) instead of pulling from GHCR.
+#
 # Requires: Docker Desktop with Kubernetes enabled, kubectl, docker.
 #
 # Uses kubectl context `docker-desktop` when present (avoids accidentally targeting EKS/other clusters).
@@ -73,11 +78,24 @@ if ! kubectl "${KUBECTL_FLAG[@]}" cluster-info >/dev/null 2>&1; then
   exit 1
 fi
 
-echo "==> Building image clawql-mcp:latest"
-docker build -f docker/Dockerfile -t clawql-mcp:latest .
+if [[ "${CLAWQL_LOCAL_K8S_BUILD_IMAGE:-}" == "1" ]]; then
+  echo "==> Building local image clawql-mcp:latest (CLAWQL_LOCAL_K8S_BUILD_IMAGE=1)"
+  docker build -f docker/Dockerfile -t clawql-mcp:latest .
+else
+  echo "==> Using registry image (see docker/kustomize/overlays/local/kustomization.yaml)"
+  echo "    ghcr.io/danielsmithdevelopment/clawql-mcp:latest"
+fi
 
 echo "==> Applying ${OVERLAY}"
 kubectl "${KUBECTL_FLAG[@]}" apply -k "${OVERLAY}"
+
+if [[ "${CLAWQL_LOCAL_K8S_BUILD_IMAGE:-}" == "1" ]]; then
+  echo "==> Patching Deployment to use local image clawql-mcp:latest"
+  kubectl "${KUBECTL_FLAG[@]}" -n clawql patch deployment clawql-mcp-http --type=json -p='[
+    {"op":"replace","path":"/spec/template/spec/containers/0/image","value":"clawql-mcp:latest"},
+    {"op":"replace","path":"/spec/template/spec/containers/0/imagePullPolicy","value":"IfNotPresent"}
+  ]'
+fi
 
 echo "==> Waiting for rollouts (namespace clawql)"
 kubectl "${KUBECTL_FLAG[@]}" -n clawql rollout status deployment/clawql-mcp-http --timeout=300s

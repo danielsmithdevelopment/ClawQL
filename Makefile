@@ -1,4 +1,10 @@
-.PHONY: deploy-cloud-run deploy-k8s local-k8s-up local-docker-up
+.PHONY: deploy-cloud-run deploy-k8s local-k8s-up local-docker-up helm-lint
+
+# Validate charts/clawql-mcp (requires helm on PATH)
+helm-lint:
+	@helm lint charts/clawql-mcp
+	@helm template test charts/clawql-mcp --namespace clawql >/dev/null
+	@echo "helm-lint OK"
 
 # Docker Desktop Kubernetes: build image + kubectl apply -k docker/kustomize/overlays/local
 local-k8s-up:

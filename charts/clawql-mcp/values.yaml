@@ -1,0 +1,105 @@
+# Default resource names match Kustomize (`clawql-mcp-http`) so kubectl snippets in docs stay familiar.
+fullnameOverride: clawql-mcp-http
+nameOverride: ""
+
+replicaCount: 1
+
+image:
+  repository: ghcr.io/danielsmithdevelopment/clawql-mcp
+  tag: latest
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+serviceAccount:
+  create: false
+  automount: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+securityContext: {}
+
+service:
+  type: LoadBalancer
+  # Service port for HTTP (MCP + health + GraphQL). Base Kustomize uses 80 → container 8080.
+  http:
+    port: 80
+    targetPort: 8080
+  grpc:
+    port: 50051
+    targetPort: 50051
+
+# Mirrors docker/kustomize/base/deployment-mcp-http.yaml
+provider: google-top50
+bundledOffline: "1"
+obsidianVaultPath: /vault
+port: "8080"
+mcpPath: /mcp
+nodeOptions: "--max-old-space-size=1536"
+
+enableGrpc: false
+enableGrpcReflection: false
+
+# Extra env (e.g. tokens from literal — prefer existing secrets for production).
+extraEnv: []
+
+# Optional: load env vars from an existing Secret (keys become env var names).
+envFromSecret: ""
+
+resources:
+  requests:
+    cpu: 500m
+    memory: 1Gi
+  limits:
+    cpu: "2"
+    memory: 2Gi
+
+startupProbe:
+  httpGet:
+    path: /healthz
+    port: http
+  periodSeconds: 10
+  failureThreshold: 36
+  timeoutSeconds: 5
+
+readinessProbe:
+  httpGet:
+    path: /healthz
+    port: http
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: http
+  periodSeconds: 30
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+persistence:
+  enabled: false
+  storageClass: ""
+  accessModes:
+    - ReadWriteOnce
+  size: 10Gi
+  existingClaim: ""
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: clawql.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

@@ -2,7 +2,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 # Opt-in stack: HTTP + gRPC MCP with kubelet gRPC health checks (no in-image grpc_health_probe).
-# Build: docker build -f docker/Dockerfile -t clawql-mcp:latest .
+# Image: same as base (override with kustomize `images` or use ghcr.io/danielsmithdevelopment/clawql-mcp:latest).
 # Apply: kubectl apply -k docker/kustomize/overlays/grpc-enabled
 resources:
   - ../../base

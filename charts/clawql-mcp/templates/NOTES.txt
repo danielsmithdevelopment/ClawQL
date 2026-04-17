@@ -1,0 +1,17 @@
+1. Get the application URL (depends on Service type):
+
+{{- if contains "LoadBalancer" .Values.service.type }}
+  export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "clawql-mcp.fullname" . }} -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+  echo "MCP Streamable HTTP: http://${SERVICE_IP}:{{ .Values.service.http.port }}{{ .Values.mcpPath }}"
+  echo "Health:              http://${SERVICE_IP}:{{ .Values.service.http.port }}/healthz"
+{{- else if contains "ClusterIP" .Values.service.type }}
+  kubectl port-forward --namespace {{ .Release.Namespace }} svc/{{ include "clawql-mcp.fullname" . }} 8080:{{ .Values.service.http.port }}
+  echo "Then: http://localhost:8080{{ .Values.mcpPath }}"
+{{- end }}
+{{- if .Values.ingress.enabled }}
+  {{- range .Values.ingress.hosts }}
+  echo "Ingress host: http{{ if $.Values.ingress.tls }}s{{ end }}://{{ .host }}{{ $.Values.mcpPath }}"
+  {{- end }}
+{{- end }}
+
+2. Optional gRPC (set enableGrpc: true): port {{ .Values.service.grpc.port }} on the same Service.

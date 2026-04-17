@@ -9,6 +9,7 @@ spec:
     spec:
       containers:
         - name: clawql-mcp-http
+          imagePullPolicy: Always
           env:
             - name: NODE_OPTIONS
               value: "--max-old-space-size=768"

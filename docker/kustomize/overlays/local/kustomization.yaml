@@ -1,8 +1,8 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-# Docker Desktop Kubernetes: use local image `clawql-mcp:latest` and expose MCP on localhost:8080.
-# Build first: docker build -f docker/Dockerfile -t clawql-mcp:latest .
+# Docker Desktop Kubernetes: pull the prebuilt image from GHCR (default tag: latest).
+# Optional local build: CLAWQL_LOCAL_K8S_BUILD_IMAGE=1 with scripts/local-k8s-docker-desktop.sh
 resources:
   - ../../base
 
@@ -20,5 +20,5 @@ patches:
 
 images:
   - name: clawql-mcp
-    newName: clawql-mcp
+    newName: ghcr.io/danielsmithdevelopment/clawql-mcp
     newTag: latest
