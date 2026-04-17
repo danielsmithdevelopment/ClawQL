@@ -68,11 +68,11 @@ Naming variants are fine as long as the **discriminated union** is clear: e.g. *
 
 ### Frequency
 
-| `frequency.type` | Meaning |
-| ---------------- | ------- |
-| `cron` | Single cron expression, **UTC** (recommended for v1). |
-| `interval` | Fixed period in seconds (min/max enforced by env). |
-| `one_shot` | Run once at `run_at` (ISO 8601 UTC). |
+| `frequency.type` | Meaning                                               |
+| ---------------- | ----------------------------------------------------- |
+| `cron`           | Single cron expression, **UTC** (recommended for v1). |
+| `interval`       | Fixed period in seconds (min/max enforced by env).    |
+| `one_shot`       | Run once at `run_at` (ISO 8601 UTC).                  |
 
 Manual **`trigger`** (and optional **`dry_run`**) apply to synthetic jobs too, so you can re-run a check without waiting for the next tick.
 
@@ -80,12 +80,12 @@ Manual **`trigger`** (and optional **`dry_run`**) apply to synthetic jobs too, s
 
 ## `synthetic_test` object (normative intent)
 
-| Area | Purpose |
-| ---- | ------- |
-| **`name`** | Stable id for logs and UI; not a secret. |
-| **`request`** | HTTP method, URL, optional headers/body. |
-| **`limits`** | Timeouts, max body size, redirect cap. |
-| **`assert`** | Pass/fail: status codes, max latency, optional body substring or structured checks (exact JSONPath/stack is TBD in implementation). |
+| Area          | Purpose                                                                                                                             |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| **`name`**    | Stable id for logs and UI; not a secret.                                                                                            |
+| **`request`** | HTTP method, URL, optional headers/body.                                                                                            |
+| **`limits`**  | Timeouts, max body size, redirect cap.                                                                                              |
+| **`assert`**  | Pass/fail: status codes, max latency, optional body substring or structured checks (exact JSONPath/stack is TBD in implementation). |
 
 **History:** implementations should persist **last N runs** (pass/fail, latency, truncated error) in the same SQLite store as other scheduled jobs—no dependency on external APM for core behavior.
 

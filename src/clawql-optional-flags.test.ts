@@ -23,9 +23,9 @@ describe("getClawqlOptionalToolFlags", () => {
   });
 
   it("parses ENABLE_GRPC and ENABLE_GRPC_REFLECTION", () => {
-    expect(
-      getClawqlOptionalToolFlags({ ENABLE_GRPC: "1" } as NodeJS.ProcessEnv).enableGrpc
-    ).toBe(true);
+    expect(getClawqlOptionalToolFlags({ ENABLE_GRPC: "1" } as NodeJS.ProcessEnv).enableGrpc).toBe(
+      true
+    );
     expect(
       getClawqlOptionalToolFlags({ ENABLE_GRPC: "true" } as NodeJS.ProcessEnv).enableGrpc
     ).toBe(true);

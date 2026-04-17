@@ -62,7 +62,9 @@ function rawToFlags(raw: z.infer<typeof rawOptionalFlagsSchema>): ClawqlOptional
 /**
  * Parsed optional tool flags from the given env (default `process.env`).
  */
-export function getClawqlOptionalToolFlags(env: NodeJS.ProcessEnv = process.env): ClawqlOptionalToolFlags {
+export function getClawqlOptionalToolFlags(
+  env: NodeJS.ProcessEnv = process.env
+): ClawqlOptionalToolFlags {
   const raw = rawOptionalFlagsSchema.parse(env);
   return rawToFlags(raw);
 }

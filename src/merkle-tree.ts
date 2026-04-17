@@ -80,10 +80,7 @@ export function buildMerkleSnapshot(rows: MerkleDocumentRow[]): MerkleSnapshot {
 }
 
 /** Sibling digests from leaf to root (same pairing as `buildMerkleSnapshot`). */
-export function merkleProof(
-  snapshot: Pick<MerkleSnapshot, "leaves">,
-  leafIndex: number
-): Buffer[] {
+export function merkleProof(snapshot: Pick<MerkleSnapshot, "leaves">, leafIndex: number): Buffer[] {
   const leaves = snapshot.leaves;
   if (leafIndex < 0 || leafIndex >= leaves.length) {
     throw new Error("merkleProof: leafIndex out of range");

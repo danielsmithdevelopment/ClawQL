@@ -68,23 +68,23 @@ Unique on `(from_path, to_target)` — re-ingest uses `INSERT OR REPLACE` semant
 
 Single-row table when **`CLAWQL_CUCKOO_ENABLED=1`**. Holds a serialized Cuckoo filter over every **`vault_chunk.chunk_id`**.
 
-| Column        | Type    | Description                                 |
-| ------------- | ------- | ------------------------------------------- |
-| `id`          | INTEGER | Fixed **1** (`CHECK (id = 1)`).             |
-| `filter_blob` | BLOB  | `CuckooFilter.serialize()` payload.         |
-| `updated_at`  | TEXT    | ISO time when the filter was last rebuilt.  |
+| Column        | Type    | Description                                |
+| ------------- | ------- | ------------------------------------------ |
+| `id`          | INTEGER | Fixed **1** (`CHECK (id = 1)`).            |
+| `filter_blob` | BLOB    | `CuckooFilter.serialize()` payload.        |
+| `updated_at`  | TEXT    | ISO time when the filter was last rebuilt. |
 
 ### `vault_merkle_snapshot` (optional)
 
 Single-row table when **`CLAWQL_MERKLE_ENABLED=1`**. Merkle root over **`vault_document`** rows (sorted by `path`); leaf preimage uses `path` and **`body_sha256`** (see **`src/merkle-tree.ts`**).
 
-| Column         | Type    | Description                    |
-| -------------- | ------- | ------------------------------ |
-| `id`           | INTEGER | Fixed **1**.                   |
-| `root_hex`     | TEXT    | Hex SHA-256 root.              |
-| `leaf_count`   | INTEGER | Number of documents included.  |
-| `tree_height`  | INTEGER | Tree height (0 = single leaf). |
-| `built_at`     | TEXT    | ISO timestamp.                 |
+| Column        | Type    | Description                    |
+| ------------- | ------- | ------------------------------ |
+| `id`          | INTEGER | Fixed **1**.                   |
+| `root_hex`    | TEXT    | Hex SHA-256 root.              |
+| `leaf_count`  | INTEGER | Number of documents included.  |
+| `tree_height` | INTEGER | Tree height (0 = single leaf). |
+| `built_at`    | TEXT    | ISO timestamp.                 |
 
 ## Chunking contract: `paragraph_v1`
 

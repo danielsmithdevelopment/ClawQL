@@ -30,13 +30,13 @@ ClawQL treats **vault Markdown** as the **source of truth**. Derived state can l
 
 ## Defaults (best practice)
 
-| Concern                                         | Default                                              | Optional upgrade                                                                                         |
-| ----------------------------------------------- | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| Canonical notes                                 | Vault `.md`                                          | —                                                                                                        |
-| Structured index (documents, chunks, wikilinks) | **`memory.db`** (sql.js)                             | Same; Postgres is not a drop-in replacement for this file today                                          |
-| Chunk vectors                                   | **`sqlite`** — KNN in-process over `memory.db` BLOBs | **`postgres`** + URL — pgvector KNN; dual-write BLOBs by default; **no URL → sqlite vectors** (fallback) |
-| Cuckoo membership ([#25](https://github.com/danielsmithdevelopment/ClawQL/issues/25)) | **`CLAWQL_CUCKOO_ENABLED=1`** — blob in **`memory.db`**; optional **`clawql_cuckoo_chunk_membership`** in Postgres | Same mirror when **`CLAWQL_VECTOR_DATABASE_URL`** is set |
-| Merkle root ([#37](https://github.com/danielsmithdevelopment/ClawQL/issues/37)) | **`CLAWQL_MERKLE_ENABLED=1`** — **`vault_merkle_snapshot` / `clawql_vault_merkle`** | Proofs: **`merkleProof`** / **`verifyMerkleProof`** in **`src/merkle-tree.ts`** |
+| Concern                                                                               | Default                                                                                                            | Optional upgrade                                                                                         |
+| ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| Canonical notes                                                                       | Vault `.md`                                                                                                        | —                                                                                                        |
+| Structured index (documents, chunks, wikilinks)                                       | **`memory.db`** (sql.js)                                                                                           | Same; Postgres is not a drop-in replacement for this file today                                          |
+| Chunk vectors                                                                         | **`sqlite`** — KNN in-process over `memory.db` BLOBs                                                               | **`postgres`** + URL — pgvector KNN; dual-write BLOBs by default; **no URL → sqlite vectors** (fallback) |
+| Cuckoo membership ([#25](https://github.com/danielsmithdevelopment/ClawQL/issues/25)) | **`CLAWQL_CUCKOO_ENABLED=1`** — blob in **`memory.db`**; optional **`clawql_cuckoo_chunk_membership`** in Postgres | Same mirror when **`CLAWQL_VECTOR_DATABASE_URL`** is set                                                 |
+| Merkle root ([#37](https://github.com/danielsmithdevelopment/ClawQL/issues/37))       | **`CLAWQL_MERKLE_ENABLED=1`** — **`vault_merkle_snapshot` / `clawql_vault_merkle`**                                | Proofs: **`merkleProof`** / **`verifyMerkleProof`** in **`src/merkle-tree.ts`**                          |
 
 **Why SQLite stays default for vectors-on-disk:** it ships beside **`Memory/`** with zero ops. **Why Postgres exists:** pgvector ANN, connection pooling, and shared infrastructure for teams that already run Postgres.
 

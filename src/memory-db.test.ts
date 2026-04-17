@@ -159,7 +159,9 @@ describe("memory-db", () => {
     const wasmPath = join(dirname(sqlEntry), "sql-wasm.wasm");
     const SQL = await initSqlJs({ locateFile: () => wasmPath });
     const db = new SQL.Database(raw);
-    const c = db.exec("SELECT length(filter_blob) AS n FROM clawql_cuckoo_chunk_membership WHERE id = 1");
+    const c = db.exec(
+      "SELECT length(filter_blob) AS n FROM clawql_cuckoo_chunk_membership WHERE id = 1"
+    );
     expect(Number(c[0]!.values[0]![0])).toBeGreaterThan(24);
     const m = db.exec("SELECT root_hex, leaf_count FROM vault_merkle_snapshot WHERE id = 1");
     expect(Number(m[0]!.values[0]![1])).toBe(1);

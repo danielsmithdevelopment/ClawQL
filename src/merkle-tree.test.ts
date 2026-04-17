@@ -1,10 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  buildMerkleSnapshot,
-  leafHash,
-  merkleProof,
-  verifyMerkleProof,
-} from "./merkle-tree.js";
+import { buildMerkleSnapshot, leafHash, merkleProof, verifyMerkleProof } from "./merkle-tree.js";
 
 describe("merkle-tree", () => {
   it("empty snapshot uses deterministic empty root", () => {
@@ -23,9 +18,7 @@ describe("merkle-tree", () => {
     expect(snap.leafCount).toBe(2);
     for (let i = 0; i < snap.leaves.length; i++) {
       const proof = merkleProof(snap, i);
-      expect(
-        verifyMerkleProof(snap.leaves[i]!, i, snap.leafCount, proof, snap.rootHex)
-      ).toBe(true);
+      expect(verifyMerkleProof(snap.leaves[i]!, i, snap.leafCount, proof, snap.rootHex)).toBe(true);
     }
   });
 

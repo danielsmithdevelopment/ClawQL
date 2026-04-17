@@ -54,10 +54,10 @@ export function rebuildSqliteMemoryArtifacts(db: Database): MemoryArtifactPayloa
     const filter = CuckooFilter.fromKeys(ids, { fingerprintBits: envFingerprintBits() });
     cuckooBlob = filter.serialize();
     db.run(`DELETE FROM clawql_cuckoo_chunk_membership`);
-    db.run(`INSERT INTO clawql_cuckoo_chunk_membership (id, filter_blob, updated_at) VALUES (1, ?, ?)`, [
-      cuckooBlob,
-      now,
-    ]);
+    db.run(
+      `INSERT INTO clawql_cuckoo_chunk_membership (id, filter_blob, updated_at) VALUES (1, ?, ?)`,
+      [cuckooBlob, now]
+    );
   }
 
   if (merkleOn) {

@@ -6,15 +6,15 @@ This page maps [issue #67](https://github.com/danielsmithdevelopment/ClawQL/issu
 
 Optional gRPC runs **in the same process** as Streamable HTTP when **`ENABLE_GRPC=1`**. The transport lives in **[`packages/mcp-grpc-transport`](../packages/mcp-grpc-transport/)**; **`clawql-mcp-http`** calls **`maybeStartGrpcMcpServer`** with the same **`createRegisteredMcpServer`** factory as HTTP ([`src/server-http.ts`](../src/server-http.ts)).
 
-| Original acceptance item | Status | Where |
-| ------------------------ | ------ | ----- |
-| Protobuf MCP + health + session streaming | Done | [`packages/mcp-grpc-transport/proto/`](../packages/mcp-grpc-transport/proto/), [`server.ts`](../packages/mcp-grpc-transport/src/server.ts) |
-| Custom gRPC transport wired to `@modelcontextprotocol/sdk` | Done | `mcp-grpc-transport` (`McpProtobufBridge`, `GrpcMcpSessionTransport`, …) |
-| Registration when **`ENABLE_GRPC`** | Done | [`src/server-http.ts`](../src/server-http.ts) (`main` → `maybeStartGrpcMcpServer`) |
-| TLS / mTLS | Done (env-driven) | **`GRPC_TLS_CERT_PATH`**, **`GRPC_TLS_KEY_PATH`**, optional **`GRPC_TLS_CA_PATH`**, **`GRPC_TLS_REQUIRE_CLIENT_CERT`** — [package README — Environment](../packages/mcp-grpc-transport/README.md#environment) |
-| Basic e2e / grpcurl | Done | Package tests; [`src/grpc-memory-tools.test.ts`](../src/grpc-memory-tools.test.ts); [`scripts/grpc-memory-recall.mjs`](../scripts/grpc-memory-recall.mjs) |
-| README, Dockerfile, Kustomize | Done | Root [README](../README.md) (optional gRPC), [`docker/README.md`](../docker/README.md), [`docker/kustomize/`](../docker/kustomize/) (including [`overlays/grpc-enabled/`](../docker/kustomize/overlays/grpc-enabled/)) |
-| No breakage to stdio / HTTP | Done | gRPC is optional; default paths unchanged |
+| Original acceptance item                                   | Status            | Where                                                                                                                                                                                                                  |
+| ---------------------------------------------------------- | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Protobuf MCP + health + session streaming                  | Done              | [`packages/mcp-grpc-transport/proto/`](../packages/mcp-grpc-transport/proto/), [`server.ts`](../packages/mcp-grpc-transport/src/server.ts)                                                                             |
+| Custom gRPC transport wired to `@modelcontextprotocol/sdk` | Done              | `mcp-grpc-transport` (`McpProtobufBridge`, `GrpcMcpSessionTransport`, …)                                                                                                                                               |
+| Registration when **`ENABLE_GRPC`**                        | Done              | [`src/server-http.ts`](../src/server-http.ts) (`main` → `maybeStartGrpcMcpServer`)                                                                                                                                     |
+| TLS / mTLS                                                 | Done (env-driven) | **`GRPC_TLS_CERT_PATH`**, **`GRPC_TLS_KEY_PATH`**, optional **`GRPC_TLS_CA_PATH`**, **`GRPC_TLS_REQUIRE_CLIENT_CERT`** — [package README — Environment](../packages/mcp-grpc-transport/README.md#environment)          |
+| Basic e2e / grpcurl                                        | Done              | Package tests; [`src/grpc-memory-tools.test.ts`](../src/grpc-memory-tools.test.ts); [`scripts/grpc-memory-recall.mjs`](../scripts/grpc-memory-recall.mjs)                                                              |
+| README, Dockerfile, Kustomize                              | Done              | Root [README](../README.md) (optional gRPC), [`docker/README.md`](../docker/README.md), [`docker/kustomize/`](../docker/kustomize/) (including [`overlays/grpc-enabled/`](../docker/kustomize/overlays/grpc-enabled/)) |
+| No breakage to stdio / HTTP                                | Done              | gRPC is optional; default paths unchanged                                                                                                                                                                              |
 
 ## Service mesh and private networking
 

@@ -59,11 +59,7 @@ export const cacheToolSchema = {
     .describe(
       "set | get | delete | list | search — ephemeral in-process KV (LRU eviction when full); not vault memory (use memory_ingest / memory_recall to persist)."
     ),
-  key: z
-    .string()
-    .max(2048)
-    .optional()
-    .describe("Key for set, get, delete (UTF-8 string)."),
+  key: z.string().max(2048).optional().describe("Key for set, get, delete (UTF-8 string)."),
   value: z
     .string()
     .optional()
@@ -87,38 +83,36 @@ export const cacheToolSchema = {
     .describe("For list/search: max results (defaults: list 100, search 50)."),
 };
 
-const cacheToolInputSchema = z
-  .object(cacheToolSchema)
-  .superRefine((data, ctx) => {
-    switch (data.operation) {
-      case "set": {
-        if (!data.key || data.key.length < 1) {
-          ctx.addIssue({ code: "custom", message: "set requires non-empty key" });
-        }
-        if (data.value === undefined) {
-          ctx.addIssue({ code: "custom", message: "set requires value" });
-        }
-        break;
+const cacheToolInputSchema = z.object(cacheToolSchema).superRefine((data, ctx) => {
+  switch (data.operation) {
+    case "set": {
+      if (!data.key || data.key.length < 1) {
+        ctx.addIssue({ code: "custom", message: "set requires non-empty key" });
       }
-      case "get":
-      case "delete": {
-        if (!data.key || data.key.length < 1) {
-          ctx.addIssue({ code: "custom", message: `${data.operation} requires non-empty key` });
-        }
-        break;
+      if (data.value === undefined) {
+        ctx.addIssue({ code: "custom", message: "set requires value" });
       }
-      case "list":
-        break;
-      case "search": {
-        if (!data.query || data.query.length < 1) {
-          ctx.addIssue({ code: "custom", message: "search requires non-empty query" });
-        }
-        break;
-      }
-      default:
-        break;
+      break;
     }
-  });
+    case "get":
+    case "delete": {
+      if (!data.key || data.key.length < 1) {
+        ctx.addIssue({ code: "custom", message: `${data.operation} requires non-empty key` });
+      }
+      break;
+    }
+    case "list":
+      break;
+    case "search": {
+      if (!data.query || data.query.length < 1) {
+        ctx.addIssue({ code: "custom", message: "search requires non-empty query" });
+      }
+      break;
+    }
+    default:
+      break;
+  }
+});
 
 function jsonResponse(obj: unknown): { content: { type: "text"; text: string }[] } {
   return {

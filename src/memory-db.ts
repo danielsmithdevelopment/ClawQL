@@ -178,9 +178,10 @@ function migrate(db: Database): void {
         built_at TEXT NOT NULL
       );
     `);
-    db.run("INSERT INTO schema_migrations (version, name, applied_at) VALUES (2, 'cuckoo_merkle_v1', ?)", [
-      isoNow(),
-    ]);
+    db.run(
+      "INSERT INTO schema_migrations (version, name, applied_at) VALUES (2, 'cuckoo_merkle_v1', ?)",
+      [isoNow()]
+    );
   }
 }
 
