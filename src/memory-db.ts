@@ -630,6 +630,38 @@ export async function chunkIdMaybeInMemoryIndex(
   }
 }
 
+/**
+ * Loads the Cuckoo filter once for **`memory_recall`** vector consistency checks.
+ * Returns **`null`** when disabled, no blob, or DB off — otherwise **`(chunkId) => maybeContains`**.
+ */
+export async function loadCuckooMembershipPredicate(
+  vaultRoot: string
+): Promise<((chunkId: string) => boolean) | null> {
+  if (process.env.CLAWQL_CUCKOO_ENABLED !== "1") return null;
+  if (!memoryDbSyncEnabled()) return null;
+  const absDb = resolveMemoryDatabasePath(vaultRoot);
+  const db = await openOrCreateDb(absDb);
+  try {
+    db.exec("PRAGMA foreign_keys = ON;");
+    migrate(db);
+    const stmt = db.prepare(
+      "SELECT filter_blob FROM clawql_cuckoo_chunk_membership WHERE id = 1 LIMIT 1"
+    );
+    if (!stmt.step()) {
+      stmt.free();
+      return null;
+    }
+    const row = stmt.getAsObject() as { filter_blob?: Uint8Array };
+    stmt.free();
+    const blob = row.filter_blob;
+    if (!blob || blob.byteLength === 0) return null;
+    const filter = CuckooFilter.deserialize(new Uint8Array(blob));
+    return (chunkId: string) => filter.maybeContains(chunkId);
+  } finally {
+    db.close();
+  }
+}
+
 /** Latest Merkle snapshot row from `memory.db`, if present. */
 export async function loadVaultMerkleSnapshotFromDb(
   vaultRoot: string

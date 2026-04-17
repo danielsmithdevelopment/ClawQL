@@ -1,7 +1,8 @@
-import { mkdir, mkdtemp, writeFile, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { syncMemoryDbFromDocuments } from "./memory-db.js";
 import { extractWikilinkTargets, keywordScore, runMemoryRecall } from "./memory-recall.js";
 
 describe("memory-recall helpers", () => {
@@ -16,6 +17,7 @@ describe("memory-recall helpers", () => {
 
 describe("memory-recall vault", () => {
   const saved = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
+  const savedMerkle = process.env.CLAWQL_MERKLE_ENABLED;
   let dir: string;
 
   beforeEach(async () => {
@@ -48,6 +50,8 @@ describe("memory-recall vault", () => {
   afterEach(async () => {
     if (saved === undefined) delete process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
     else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = saved;
+    if (savedMerkle === undefined) delete process.env.CLAWQL_MERKLE_ENABLED;
+    else process.env.CLAWQL_MERKLE_ENABLED = savedMerkle;
     await rm(dir, { recursive: true, force: true });
   });
 
@@ -73,5 +77,21 @@ describe("memory-recall vault", () => {
     const r = await runMemoryRecall({ query: "x" });
     expect(r.ok).toBe(false);
     expect(r.error).toMatch(/CLAWQL_OBSIDIAN_VAULT_PATH/);
+  });
+
+  it("includes merkleSnapshot when CLAWQL_MERKLE_ENABLED and memory.db has a row", async () => {
+    process.env.CLAWQL_MERKLE_ENABLED = "1";
+    const alpha = await readFile(join(dir, "Memory/alpha.md"), "utf8");
+    const beta = await readFile(join(dir, "Memory/beta-page.md"), "utf8");
+    await syncMemoryDbFromDocuments(dir, [
+      { path: "Memory/alpha.md", text: alpha, mtimeMs: 1 },
+      { path: "Memory/beta-page.md", text: beta, mtimeMs: 2 },
+    ]);
+
+    const r = await runMemoryRecall({ query: "github" });
+    expect(r.ok).toBe(true);
+    expect(r.merkleSnapshot).toBeDefined();
+    expect(r.merkleSnapshot?.rootHex).toMatch(/^[0-9a-f]{64}$/);
+    expect(r.merkleSnapshot?.leafCount).toBe(2);
   });
 });
