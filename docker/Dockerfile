@@ -35,6 +35,8 @@ ENV CLAWQL_OBSIDIAN_VAULT_PATH=/vault
 # Optional at runtime (not baked in): CLAWQL_SANDBOX_BRIDGE_URL, CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN for sandbox_exec.
 
 COPY --from=builder --chown=nonroot:nonroot /app/node_modules ./node_modules
+# Workspace dep `mcp-grpc-transport` is symlinked from node_modules; copy the package tree too.
+COPY --from=builder --chown=nonroot:nonroot /app/packages/mcp-grpc-transport ./packages/mcp-grpc-transport
 COPY --from=builder --chown=nonroot:nonroot /app/dist ./dist
 COPY --from=builder --chown=nonroot:nonroot /app/bin ./bin
 COPY --from=builder --chown=nonroot:nonroot /app/providers ./providers
