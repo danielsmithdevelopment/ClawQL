@@ -22,12 +22,18 @@ function hostnameHint(urlStr: string): string {
   }
 }
 
+/** Official npm registry / site hosts only (avoid substring checks on hostname — CodeQL). */
+function isOfficialNpmHostname(hostname: string): boolean {
+  const h = hostname.toLowerCase();
+  return h === "registry.npmjs.org" || h === "www.npmjs.com" || h === "npmjs.com";
+}
+
 function titleFromJson(parsed: unknown, urlStr: string): string {
   if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
     const o = parsed as Record<string, unknown>;
     if (typeof o.name === "string" && o.name.trim()) {
       const host = hostnameHint(urlStr);
-      if (host.includes("npmjs.org") || host.includes("npmjs.com")) {
+      if (isOfficialNpmHostname(host)) {
         return `npm · ${o.name}`;
       }
       return `Import · ${o.name}`;

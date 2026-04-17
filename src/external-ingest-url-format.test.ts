@@ -15,6 +15,12 @@ describe("external-ingest-url-format", () => {
     expect(r.bodyMarkdown).toContain('"latest": "0.1.2"');
   });
 
+  it("does not treat misleading hostnames as npm (strict host match)", () => {
+    const raw = '{"name":"pkg"}';
+    const r = formatUrlResponseAsMarkdown(raw, "application/json", "https://npmjs.org.evil.com/x");
+    expect(r.title).toBe("Import · pkg");
+  });
+
   it("detects JSON without Content-Type when body looks like JSON", () => {
     const r = formatUrlResponseAsMarkdown('{"x":1}\n', null, "https://example.com/api");
     expect(r.kind).toBe("json");
