@@ -1,4 +1,4 @@
-# `memory.db` schema (hybrid memory, issue #27)
+# `memory.db` schema (hybrid memory)
 
 ClawQL stores a **file-backed SQLite** database beside the Obsidian vault (default **`memory.db`**) to back the hybrid memory track: **structured rows** (documents, paragraph chunks, wikilink edges), plus **optional float32 vectors** on **`vault_chunk`** when **`CLAWQL_VECTOR_BACKEND=sqlite`** or dual-write with **`postgres`** (see **[hybrid-memory-backends.md](hybrid-memory-backends.md)**).
 

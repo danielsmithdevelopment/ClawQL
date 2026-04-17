@@ -36,17 +36,17 @@ If Stage 1 does **not** apply, the first match wins:
 
 ## Environment variables
 
-| Variable | Meaning |
-| --- | --- |
-| `CLAWQL_SPEC_PATH` | Local OpenAPI JSON/YAML |
-| `CLAWQL_SPEC_PATHS` | Multiple paths → **merge** |
-| `CLAWQL_SPEC_URL` | Fetch OpenAPI from HTTPS |
-| `CLAWQL_DISCOVERY_URL` | Google Discovery JSON URL |
-| `CLAWQL_PROVIDER` | Merged preset (Stage 1) or single vendor (Stage 2) |
-| `CLAWQL_GOOGLE_TOP50_SPECS` | Enable top-50 Google merge shortcut |
-| `CLAWQL_INTROSPECTION_PATH` | Pregenerated GraphQL introspection JSON (optional) |
-| `CLAWQL_API_BASE_URL` | Override REST base URL |
-| `CLAWQL_BUNDLED_OFFLINE` | `1` / `true` — do not fetch missing bundled files from the network |
+| Variable                    | Meaning                                                            |
+| --------------------------- | ------------------------------------------------------------------ |
+| `CLAWQL_SPEC_PATH`          | Local OpenAPI JSON/YAML                                            |
+| `CLAWQL_SPEC_PATHS`         | Multiple paths → **merge**                                         |
+| `CLAWQL_SPEC_URL`           | Fetch OpenAPI from HTTPS                                           |
+| `CLAWQL_DISCOVERY_URL`      | Google Discovery JSON URL                                          |
+| `CLAWQL_PROVIDER`           | Merged preset (Stage 1) or single vendor (Stage 2)                 |
+| `CLAWQL_GOOGLE_TOP50_SPECS` | Enable top-50 Google merge shortcut                                |
+| `CLAWQL_INTROSPECTION_PATH` | Pregenerated GraphQL introspection JSON (optional)                 |
+| `CLAWQL_API_BASE_URL`       | Override REST base URL                                             |
+| `CLAWQL_BUNDLED_OFFLINE`    | `1` / `true` — do not fetch missing bundled files from the network |
 
 Full list: [`.env.example`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/.env.example) in the repo.
 

@@ -7,7 +7,7 @@ import { GridPattern } from '@/components/GridPattern'
 export function HeroPattern() {
   return (
     <div
-      className="pointer-events-none relative -z-10 mb-[calc(var(--spacing)*-20)] !mx-0 !max-w-none min-h-[min(22vh,11rem)] w-screen -translate-x-1/2 overflow-hidden left-1/2 lg:w-[calc(100vw-18rem)] xl:w-[calc(100vw-20rem)]"
+      className="pointer-events-none relative left-1/2 -z-10 !mx-0 mb-[calc(var(--spacing)*-20)] min-h-[min(22vh,11rem)] w-screen !max-w-none -translate-x-1/2 overflow-hidden lg:w-[calc(100vw-18rem)] xl:w-[calc(100vw-20rem)]"
       aria-hidden
     >
       <div className="absolute inset-0 bg-gradient-to-b from-claw-terra/10 via-claw-warm-white to-claw-warm-white dark:from-claw-terra/20 dark:via-claw-bg dark:to-claw-bg" />

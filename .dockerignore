@@ -10,7 +10,6 @@ dist
 .DS_Store
 docs
 scripts
-multi-provider-test.md
 coverage
 **/*.test.ts
 **/__tests__

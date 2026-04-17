@@ -119,7 +119,7 @@ Default endpoint when running locally as above: `http://localhost:8080/mcp` (hea
 
 **Kubernetes:** The **base** [`docker/kustomize/base`](docker/kustomize/base) manifest keeps **`httpGet` `/healthz`** probes because **`ENABLE_GRPC`** is off by default—nothing would answer on port **50051**. When you turn gRPC on, **native [`grpc` probes](https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/#grpc-probes)** are appropriate: the **kubelet** speaks **`grpc.health.v1`** itself, so you do **not** need the **`grpc_health_probe`** binary inside Distroless. Use the opt-in overlay **`docker/kustomize/overlays/grpc-enabled/`** (`kubectl apply -k …/grpc-enabled`), which sets **`ENABLE_GRPC=1`** and switches **readiness** / **liveness** to **`grpc` on port 50051** while leaving **startup** on **HTTP** so slow boots still work.
 
-**P0 gRPC checklist:** [docs/grpc-issue-67-acceptance.md](docs/grpc-issue-67-acceptance.md) maps [issue #67](https://github.com/danielsmithdevelopment/ClawQL/issues/67) acceptance criteria to what ships in-tree (TLS/mTLS env, tests, Kustomize; mesh and Langfuse scope called out).
+**gRPC tracking:** historical scope and acceptance discussion for protobuf MCP lives in [issue #67](https://github.com/danielsmithdevelopment/ClawQL/issues/67).
 
 The **`clawql-mcp-http`** Service in **base** and every **dev** / **local** / **prod** overlay publishes **gRPC port 50051** (name **`grpc`**) alongside HTTP, so you can reach **`model_context_protocol.Mcp`** at **`<service-ip>:50051`** without **`kubectl port-forward`** once **`ENABLE_GRPC=1`**. See [`docs/deploy-k8s.md`](docs/deploy-k8s.md#service-ports-http-and-grpc).
 
@@ -271,7 +271,7 @@ Assume the agent **never uses ClawQL** and instead keeps the **entire** provider
 | **A — Exclusive context per provider** | Clear context when switching vendor; each provider’s **full** spec is loaded **once** when that segment starts (no duplicate loads).                                                                                                 | **~10.2M** total spec tokens materialized (`5.13M + 4.77M + 0.31M`) — same as “paste each corpus once” across the run. |
 | **B — Full spec on every turn**        | Each of the **14** requests includes the **full** spec for the **current** provider (common if the API **re-sends** the whole prompt and there is **no** effective prompt cache). Spec-only; ignores extra history and user queries. | **~50.7M** (`5×5.13M + 5×4.77M + 4×0.31M`).                                                                            |
 
-**ClawQL comparison anchor:** the committed offline workflow capture is **~11.8k** tokens ([`multi-provider-test.md`](multi-provider-test.md) / stats JSON). That is **not** identical to 14 live MCP turns (which add tool envelopes and assistant text), but it is the same order of magnitude as **search-only** planning context.
+**ClawQL comparison anchor:** the committed offline workflow capture is **~11.8k** tokens (see [`docs/benchmarks/archive/multi-provider-workflow-run.md`](docs/benchmarks/archive/multi-provider-workflow-run.md) and the stats JSON). That is **not** identical to 14 live MCP turns (which add tool envelopes and assistant text), but it is the same order of magnitude as **search-only** planning context.
 
 **Order-of-magnitude savings vs variant B (spec-only vs ~12k artifact):** **~50.7M − ~12k ≈ ~50.7M** fewer tokens attributed to carrying full specs—**>99.97%** on that slice. Versus variant A, **~10.2M − ~12k ≈ ~10.2M** on the same slice. Real dashboards also charge **assistant output**, **tool metadata**, and **history**, so totals are higher on both sides; the table isolates the **spec** component the README highlight is about.
 
@@ -283,7 +283,6 @@ Assume the agent **never uses ClawQL** and instead keeps the **entire** provider
 
 ```bash
 npm install
-# or: bun install
 ```
 
 ### 2. Start the GraphQL proxy
@@ -293,7 +292,6 @@ Run it in a separate terminal or as a background process:
 
 ```bash
 npm run graphql
-# or: bun run graphql
 # GraphQL proxy running at http://localhost:4000/graphql
 ```
 
@@ -302,7 +300,6 @@ npm run graphql
 ```bash
 npm run dev          # development (tsx, no build step)
 npm run build && npm start  # production
-# or: bun run dev / bun run build && bun run start
 ```
 
 ### 4. Run tests

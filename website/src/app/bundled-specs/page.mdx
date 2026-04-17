@@ -10,14 +10,14 @@ The npm package ships **`providers/`**—optional on-disk API descriptions so co
 
 ## Presets and vendors
 
-| `CLAWQL_PROVIDER` | Notes |
-| --- | --- |
-| `google-top50` | Merged ~50 curated Google Discovery services |
-| `default-multi-provider` | Same as **no spec env**: Google top50 + Cloudflare + GitHub |
-| `all-providers` | Top50 **plus** every other bundled vendor (GitHub, Slack, Sentry, n8n, …) |
-| `atlassian` | Jira + Bitbucket merged |
-| `google` | Single Discovery example (GKE); use top50 for multi-service |
-| `cloudflare`, `github`, `slack`, `sentry`, `n8n`, `jira`, `bitbucket` | Single bundled OpenAPI/Discovery per vendor |
+| `CLAWQL_PROVIDER`                                                     | Notes                                                                     |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `google-top50`                                                        | Merged ~50 curated Google Discovery services                              |
+| `default-multi-provider`                                              | Same as **no spec env**: Google top50 + Cloudflare + GitHub               |
+| `all-providers`                                                       | Top50 **plus** every other bundled vendor (GitHub, Slack, Sentry, n8n, …) |
+| `atlassian`                                                           | Jira + Bitbucket merged                                                   |
+| `google`                                                              | Single Discovery example (GKE); use top50 for multi-service               |
+| `cloudflare`, `github`, `slack`, `sentry`, `n8n`, `jira`, `bitbucket` | Single bundled OpenAPI/Discovery per vendor                               |
 
 Aliases: **`jira`** / **`bitbucket`** map to their standalone bundles; **`atlassian`** merges both.
 

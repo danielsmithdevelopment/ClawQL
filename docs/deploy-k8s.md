@@ -82,7 +82,7 @@ Application-level TLS and optional client certificate verification on the gRPC l
 
 **Service meshes** (Istio, Linkerd, Cloudflare, …) are **not** configured inside this repo: route the **`grpc`** port to the workload and apply your mesh’s mTLS and policies. Mesh identity is **orthogonal** to application **`GRPC_TLS_*`** (you might use one or the other, or both, depending on architecture).
 
-**Observability:** ClawQL does **not** bundle Langfuse or a tracing backend. Use **`grpcServerOptions`** (e.g. **OpenTelemetry** interceptors) in **`maybeStartGrpcMcpServer`**, or trace at the agent ([ClawQL-Agent](https://github.com/danielsmithdevelopment/ClawQL-Agent)). See [`docs/grpc-issue-67-acceptance.md`](grpc-issue-67-acceptance.md) for the historical P0 checklist.
+**Observability:** ClawQL does **not** bundle Langfuse or a tracing backend. Use **`grpcServerOptions`** (e.g. **OpenTelemetry** interceptors) in **`maybeStartGrpcMcpServer`**, or trace at the agent ([ClawQL-Agent](https://github.com/danielsmithdevelopment/ClawQL-Agent)). For gRPC scope and shipped behavior, see [issue #67](https://github.com/danielsmithdevelopment/ClawQL/issues/67).
 
 ## Notes
 

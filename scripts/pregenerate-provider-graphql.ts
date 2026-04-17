@@ -5,6 +5,7 @@
  *
  * Run after build + fetch-provider-specs:
  *   npm run build && npm run fetch-provider-specs && npm run pregenerate-graphql
+ * (Uses `tsx` via npm script — same runtime as `npm run dev`.)
  *
  * Some large specs (e.g. Jira) may fail translation; the script logs and continues.
  */
