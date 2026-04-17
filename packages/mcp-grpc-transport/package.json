@@ -1,6 +1,6 @@
 {
   "name": "mcp-grpc-transport",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "Pluggable gRPC transport for Model Context Protocol (MCP) servers using @modelcontextprotocol/sdk. Protobuf surface aligned with the community mcp-python-sdk-grpc-poc reference.",
   "license": "Apache-2.0",
   "type": "module",
@@ -44,7 +44,8 @@
     "@grpc/grpc-js": "^1.14.3",
     "@grpc/proto-loader": "^0.8.0",
     "@grpc/reflection": "^1.0.4",
-    "google-proto-files": "^5.0.1"
+    "google-proto-files": "^5.0.1",
+    "protobufjs": "^7.2.5"
   },
   "devDependencies": {
     "@modelcontextprotocol/sdk": "^1.27.1",

@@ -4,16 +4,26 @@ import { type Metadata } from 'next'
 import { Providers } from '@/app/providers'
 import { Layout } from '@/components/Layout'
 import { type Section } from '@/components/SectionProvider'
+import { getSiteOrigin } from '@/lib/site-url'
 
 import '@/styles/tailwind.css'
 
 export const metadata: Metadata = {
+  metadataBase: getSiteOrigin(),
   title: {
     template: '%s - ClawQL',
     default: 'ClawQL',
   },
   description:
-    'MCP server: search and execute for APIs; optional sandbox_exec and memory tools; internal GraphQL projection and OpenAPI-driven discovery.',
+    'ClawQL is an MCP server for OpenAPI and Google APIs: search and execute tools, optional sandbox and Obsidian memory tools, internal GraphQL projection, stdio or Streamable HTTP or optional gRPC (mcp-grpc-transport), Docker and Kubernetes.',
+  openGraph: {
+    type: 'website',
+    siteName: 'ClawQL',
+    locale: 'en_US',
+  },
+  twitter: {
+    card: 'summary',
+  },
   icons: {
     icon: [{ url: '/ClawQL-logo.jpeg', type: 'image/jpeg' }],
     apple: [{ url: '/ClawQL-logo.jpeg', type: 'image/jpeg' }],

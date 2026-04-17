@@ -1,12 +1,12 @@
 export const metadata = {
   title: 'Tools',
   description:
-    'ClawQL MCP tools: search and execute for APIs; optional sandbox_exec and Obsidian memory tools.',
+    'ClawQL MCP tools: search and execute; optional sandbox_exec, memory_ingest, memory_recall, ingest_external_knowledge. Same tools over stdio, Streamable HTTP, or optional gRPC (mcp-grpc-transport).',
 }
 
 # Tools
 
-ClawQL exposes **six** tools when optional features are configured; the **data plane** for REST/Discovery APIs is **`search`** then **`execute`**. Agents call **`search`** to discover operations and parameters, then **`execute`** to run a chosen **`operationId`** with optional field selection. [Canonical reference with examples](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp-tools.md). {{ className: 'lead' }}
+ClawQL exposes **six** tools when optional features are configured (see table below); the **data plane** for REST/Discovery APIs is **`search`** then **`execute`**. Agents call **`search`** to discover operations and parameters, then **`execute`** to run a chosen **`operationId`** with optional field selection. [Canonical reference with examples](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp-tools.md). {{ className: 'lead' }}
 
 ## `search`
 
@@ -35,6 +35,7 @@ See [GraphQL layer](/graphql-proxy) for how **`execute`** uses OpenAPI→GraphQL
 | Tool | Needs |
 |------|--------|
 | `sandbox_exec` | Deployed [sandbox bridge](https://github.com/danielsmithdevelopment/ClawQL/tree/main/cloudflare/sandbox-bridge) Worker + `CLAWQL_SANDBOX_BRIDGE_URL` (remote sandbox; args include **`code`**) |
-| `memory_ingest`, `memory_recall` | `CLAWQL_OBSIDIAN_VAULT_PATH` (writable vault directory) |
+| `memory_ingest`, `memory_recall` | `CLAWQL_OBSIDIAN_VAULT_PATH` (writable vault directory); optional vector / hybrid DB — see [repo docs](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/memory-db-hybrid-implementation.md) |
+| `ingest_external_knowledge` | Opt-in stub: set **`CLAWQL_EXTERNAL_INGEST=1`** for roadmap JSON; future bulk import into the vault — [external-ingest.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/external-ingest.md) |
 
 They do not replace **`execute`** for calling upstream APIs.

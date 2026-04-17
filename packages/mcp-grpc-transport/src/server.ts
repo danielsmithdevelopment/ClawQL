@@ -25,6 +25,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { createMcpProtobufServiceImplementation } from "./mcp-protobuf-service.js";
 import { McpProtobufBridge } from "./mcp-protobuf-bridge.js";
 import { TaskCancellationRegistry } from "./mcp-protobuf-tasks.js";
+import { patchProtoLoaderPackageDefinitionForReflection } from "./proto-loader-reflection-patch.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
@@ -67,6 +68,12 @@ function loadAllProtos(): protoLoader.PackageDefinition {
       oneofs: true,
     }
   );
+}
+
+function loadProtosForGrpc(): protoLoader.PackageDefinition {
+  const def = loadAllProtos();
+  patchProtoLoaderPackageDefinitionForReflection(def);
+  return def;
 }
 
 function readTransportPackageVersion(): string {
@@ -373,7 +380,7 @@ export async function maybeStartGrpcMcpServer(
     return undefined;
   }
 
-  const packageDefinition = loadAllProtos();
+  const packageDefinition = loadProtosForGrpc();
   const loaded = grpc.loadPackageDefinition(packageDefinition) as unknown as LoadedGrpcPackage;
 
   const healthDef = loaded.grpc.health.v1.Health.service;

@@ -18,7 +18,7 @@ import {
   protoLogLevelToMcp,
 } from "./mcp-protobuf-fields.js";
 import { protobufRpcLogStorage } from "./mcp-protobuf-logging.js";
-import { defaultListTtlDuration, jsonToStruct } from "./mcp-protobuf-struct.js";
+import { defaultListTtlDuration, jsonToStruct, structToJson } from "./mcp-protobuf-struct.js";
 import type { McpProtobufBridge } from "./mcp-protobuf-bridge.js";
 import type { TaskCancellationRegistry } from "./mcp-protobuf-tasks.js";
 
@@ -26,6 +26,32 @@ const MCP_TOOL_NAME_KEY = "mcp-tool-name";
 const MCP_RESOURCE_URI_KEY = "mcp-resource-uri";
 /** Optional routing hint (aligns with proto comments for `GetPrompt`). */
 const MCP_PROMPT_NAME_KEY = "mcp_prompt";
+
+function toolArgumentsFromCallToolRequest(arguments_: unknown): Record<string, unknown> {
+  if (arguments_ == null || typeof arguments_ !== "object") {
+    return {};
+  }
+  const o = arguments_ as Record<string, unknown>;
+  if ("fields" in o && o.fields != null && typeof o.fields === "object") {
+    return structToJson({ fields: o.fields as Record<string, unknown> }) ?? {};
+  }
+  // Some gRPC / proto-loader paths surface `google.protobuf.Struct` as a plain
+  // object map (field names → values) without a top-level `fields` key.
+  if (!Array.isArray(o) && Object.keys(o).length > 0) {
+    const vals = Object.values(o);
+    const allScalar = vals.every(
+      (v) => v === null || ["string", "number", "boolean"].includes(typeof v)
+    );
+    if (allScalar) {
+      return { ...o };
+    }
+    const decoded = structToJson({ fields: o });
+    if (decoded && Object.keys(decoded).length > 0) {
+      return decoded;
+    }
+  }
+  return o as Record<string, unknown>;
+}
 
 function mapRole(aud: string | undefined): string {
   if (aud === "user") {
@@ -433,11 +459,14 @@ export function createMcpProtobufServiceImplementation(
           return;
         }
         sendMcpProtocolMetadata(call, check.version);
-        const req = call.request as {
+        const raw = call.request as Record<string, unknown>;
+        const req = raw as {
           request?: { name?: string; arguments?: Record<string, unknown> };
+          Request?: { name?: string; arguments?: Record<string, unknown> };
           common?: { progress?: { progress_token?: string } };
         };
-        if (!req.request?.name) {
+        const inner = req.request ?? req.Request;
+        if (!inner?.name) {
           call.emit(
             "error",
             grpcError(grpc.status.INVALID_ARGUMENT, "Initial request cannot be empty.")
@@ -445,12 +474,12 @@ export function createMcpProtobufServiceImplementation(
           return;
         }
         const toolHint = getMetadataValue(call.metadata, MCP_TOOL_NAME_KEY);
-        if (toolHint && toolHint !== req.request.name) {
+        if (toolHint && toolHint !== inner.name) {
           call.emit(
             "error",
             grpcError(
               grpc.status.INVALID_ARGUMENT,
-              `mcp-tool-name metadata mismatch for tool ${req.request.name}`
+              `mcp-tool-name metadata mismatch for tool ${inner.name}`
             )
           );
           return;
@@ -470,10 +499,11 @@ export function createMcpProtobufServiceImplementation(
             call.write({ common: initialCommon });
             await bridge.run(async (client) => {
               await applyRequestLogLevel(client, parsed.log_level);
+              const toolArgs = toolArgumentsFromCallToolRequest(inner.arguments);
               const result = (await client.callTool(
                 {
-                  name: req.request!.name!,
-                  arguments: (req.request!.arguments ?? {}) as Record<string, unknown>,
+                  name: inner.name!,
+                  arguments: toolArgs,
                 },
                 undefined,
                 {
@@ -519,7 +549,7 @@ export function createMcpProtobufServiceImplementation(
               toolResultToCallToolResponse(
                 {
                   content: [
-                    { type: "text", text: `Error executing tool ${req.request!.name}: ${msg}` },
+                    { type: "text", text: `Error executing tool ${inner.name}: ${msg}` },
                   ],
                   isError: true,
                 },
