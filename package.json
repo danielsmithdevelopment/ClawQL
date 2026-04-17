@@ -1,6 +1,6 @@
 {
     "name": "clawql-mcp",
-    "version": "3.2.1",
+    "version": "3.2.3",
     "description": "MCP server: search + execute any OpenAPI 3 API with an internal GraphQL optimization layer",
     "license": "Apache-2.0",
     "type": "module",
@@ -70,6 +70,7 @@
         "smoke:atlassian": "node scripts/smoke-atlassian.mjs",
         "smoke:cloudflare": "node scripts/smoke-cloudflare.mjs",
         "smoke:github-commits": "npm run build && node scripts/smoke-github-commits.mjs",
+        "grpc:memory-recall": "node scripts/grpc-memory-recall.mjs",
         "clawql:github-repo-description": "npm run build && node scripts/clawql-github-patch-repo-description.mjs",
         "benchmark:tokens": "npm run build && node scripts/benchmark-provider-tokens.mjs",
         "workflow:multi-provider": "npm run build && node scripts/workflow-gke-cloudflare-jira.mjs",
@@ -95,7 +96,7 @@
     "dependencies": {
         "@graphql-mesh/utils": "^0.104.35",
         "@modelcontextprotocol/sdk": "^1.27.1",
-        "mcp-grpc-transport": "^0.1.0",
+        "mcp-grpc-transport": "^0.1.2",
         "@omnigraph/openapi": "^0.109.41",
         "express": "^5.2.1",
         "graphql": "^16.8.1",

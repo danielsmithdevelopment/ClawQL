@@ -112,7 +112,9 @@ kubectl -n clawql set env deployment/clawql-mcp-http ENABLE_GRPC_REFLECTION=1
 kubectl -n clawql rollout status deployment/clawql-mcp-http --timeout=180s
 ```
 
-With **[grpcurl](https://github.com/fullstorydev/grpcurl)** installed (`brew install grpcurl`), either use **`localhost:50051`** once the LoadBalancer shows both ports, or:
+With **[grpcurl](https://github.com/fullstorydev/grpcurl)** installed (`brew install grpcurl`), use the Service’s **gRPC** port (**`50051`**) on the LoadBalancer / ClusterIP (see **`kubectl -n clawql get svc clawql-mcp-http`** — both **http** and **grpc** should appear). On Docker Desktop that is usually **`localhost:50051`** alongside **`localhost:8080`**.
+
+**`kubectl port-forward`** is only needed when you cannot reach the Service IP or port (e.g. private cluster without Ingress):
 
 ```bash
 kubectl -n clawql port-forward deployment/clawql-mcp-http 50051:50051

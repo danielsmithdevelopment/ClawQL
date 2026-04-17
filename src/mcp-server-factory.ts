@@ -4,7 +4,7 @@ import { registerTools } from "./tools.js";
 
 const DEFAULT_INFO: Implementation = {
   name: "clawql-mcp",
-  version: "3.2.1",
+  version: "3.2.2",
 };
 
 /**

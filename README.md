@@ -52,6 +52,8 @@ From there: custom spec via `CLAWQL_SPEC_PATH` / `CLAWQL_SPEC_URL`, or read [Con
 
 - **All MCP tools (API + vault + sandbox):** see **[`docs/mcp-tools.md`](docs/mcp-tools.md)** — examples for `sandbox_exec`, `memory_ingest`, `memory_recall`, env vars.
 
+- **Cursor IDE (rule + skill for vault memory):** see **[`docs/cursor-vault-memory.md`](docs/cursor-vault-memory.md)** — how `.cursor/rules/clawql-vault-memory.mdc` and `.cursor/skills/clawql-vault-memory/` relate to `memory_ingest` / `memory_recall`.
+
 - **Benchmarks & raw artifacts:** [Benchmarks and results](#benchmarks-and-results) — quick links to [all-providers stats](docs/benchmarks/all-providers-complex-workflow/experiment-all-providers-complex-workflow-stats.json), [default multi-provider stats](docs/benchmarks/multi-provider-complex-workflow/experiment-multi-provider-complex-workflow-stats.json), and workflow JSON outputs.
 
 ---
@@ -113,7 +115,11 @@ Default endpoint when running locally as above: `http://localhost:8080/mcp` (hea
 - **`mcp.transport.v1.Mcp.Session`** — optional bidirectional stream of JSON-RPC messages (same logical framing as stdio). Per-service health: `Check` with `service` = `mcp.transport.v1.Mcp` (see **`MCP_TRANSPORT_SESSION_SERVICE_FQN`** in [`mcp-grpc-transport`](packages/mcp-grpc-transport)).
 - **`ENABLE_GRPC_REFLECTION=1`** — registers [gRPC server reflection](https://github.com/grpc/grpc/blob/master/doc/server-reflection.md) for `grpcurl list` / `describe` (off by default).
 
+**Testing and invoking protobuf MCP (metadata, grpcurl, `@grpc/grpc-js`, grpcurl formatting caveats):** see **[`packages/mcp-grpc-transport/README.md` — Testing and invoking MCP over gRPC](packages/mcp-grpc-transport/README.md#testing-and-invoking-mcp-over-grpc)**.
+
 **Kubernetes:** The **base** [`docker/kustomize/base`](docker/kustomize/base) manifest keeps **`httpGet` `/healthz`** probes because **`ENABLE_GRPC`** is off by default—nothing would answer on port **50051**. When you turn gRPC on, **native [`grpc` probes](https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/#grpc-probes)** are appropriate: the **kubelet** speaks **`grpc.health.v1`** itself, so you do **not** need the **`grpc_health_probe`** binary inside Distroless. Use the opt-in overlay **`docker/kustomize/overlays/grpc-enabled/`** (`kubectl apply -k …/grpc-enabled`), which sets **`ENABLE_GRPC=1`** and switches **readiness** / **liveness** to **`grpc` on port 50051** while leaving **startup** on **HTTP** so slow boots still work.
+
+The **`clawql-mcp-http`** Service in **base** and every **dev** / **local** / **prod** overlay publishes **gRPC port 50051** (name **`grpc`**) alongside HTTP, so you can reach **`model_context_protocol.Mcp`** at **`<service-ip>:50051`** without **`kubectl port-forward`** once **`ENABLE_GRPC=1`**. See [`docs/deploy-k8s.md`](docs/deploy-k8s.md#service-ports-http-and-grpc).
 
 Point your MCP client at `clawql-mcp` on stdio as in [TL;DR](#tldr) (two terminals).
 

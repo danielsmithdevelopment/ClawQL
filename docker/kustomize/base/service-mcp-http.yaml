@@ -1,3 +1,5 @@
+# HTTP (Streamable MCP) and gRPC (protobuf MCP) are both published on the Service.
+# The gRPC listener exists only when ENABLE_GRPC=1 on the pod; the port remains defined for stable LB / DNS.
 apiVersion: v1
 kind: Service
 metadata:
@@ -12,7 +14,6 @@ spec:
     - name: http
       port: 80
       targetPort: 8080
-    # Optional when ENABLE_GRPC=1 on the pod.
     - name: grpc
       port: 50051
       targetPort: grpc

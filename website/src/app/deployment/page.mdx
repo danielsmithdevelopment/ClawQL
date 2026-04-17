@@ -1,7 +1,7 @@
 export const metadata = {
   title: 'Deployment',
   description:
-    'Run ClawQL with Docker, Streamable HTTP, Google Cloud Run, or Kubernetes (see Kubernetes guide for local MCP).',
+    'Deploy ClawQL: Docker Distroless image, Streamable HTTP /mcp, ENABLE_GRPC and GRPC_PORT, Google Cloud Run script, Kubernetes overlays and production notes.',
 }
 
 # Deployment
@@ -17,6 +17,10 @@ PORT=8080 npx -p clawql-mcp clawql-mcp-http
 ```
 
 Default local MCP endpoint: **`http://localhost:8080/mcp`**, health **`/healthz`**. Your real URL depends on port, ingress, or tunneling—configure the client with **`url`**, not **`command`**.
+
+## Optional gRPC (protobuf MCP)
+
+The same registered tools (including **`CallTool`**) can be exposed over **gRPC** in the **same process** as Streamable HTTP. Set **`ENABLE_GRPC=1`**; the server listens on **`GRPC_PORT`** (default **50051**) using the **[`mcp-grpc-transport`](https://www.npmjs.com/package/mcp-grpc-transport)** package (`model_context_protocol.Mcp`, `grpc.health.v1.Health`, optional reflection). Clients must send **`mcp-protocol-version`** metadata on protobuf RPCs. Invoking from the shell: **[`packages/mcp-grpc-transport` README — Testing and invoking MCP over gRPC](https://github.com/danielsmithdevelopment/ClawQL/blob/main/packages/mcp-grpc-transport/README.md#testing-and-invoking-mcp-over-grpc)**. On **Kubernetes**, the **`clawql-mcp-http`** Service publishes **HTTP** and **gRPC (50051)** so agents can reach **`localhost:50051`** (or the LoadBalancer IP) without port-forward when gRPC is enabled—see [Kubernetes](/kubernetes) and [`docs/deploy-k8s.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deploy-k8s.md#service-ports-http-and-grpc).
 
 ## Docker
 

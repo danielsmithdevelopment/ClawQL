@@ -1,0 +1,15 @@
+---
+description: Use ClawQL memory_ingest and memory_recall habitually; defer deep ingest patterns to the clawql-vault-memory skill.
+alwaysApply: true
+---
+
+# ClawQL vault memory
+
+When **ClawQL MCP** is available, use it deliberately:
+
+- **`memory_recall`**: At the start of non-trivial work, or when the user references past decisions, the vault, or missing context. Use a concrete `query`; keep `limit` reasonable; raise **`maxDepth`** when graph context matters.
+- **`memory_ingest`**: After important outcomes—decisions, debugging conclusions, env/setup notes, API contracts, user preferences, or links between topics. Prefer structured **`insights`**; put verbatim logs in **`toolOutputs`**; use **`wikilinks`** for the Obsidian graph; reuse **`title`** with **`append: true`** (default) to extend the same page.
+
+**Thorough ingests** (rich structure, tagging in prose, wikilink strategy, session threading, anti-patterns): read and apply the project skill [**clawql-vault-memory**](../skills/clawql-vault-memory/SKILL.md).
+
+Do not store secrets, credentials, or private keys. If vault tools fail (path unset), say so briefly and continue without blocking the task.

@@ -34,5 +34,6 @@ For the **structured sidecar** (`memory.db`: chunks, optional chunk vectors, wik
 
 ## See also
 
+- **[cursor-vault-memory.md](cursor-vault-memory.md)** — Cursor **rule** + **skill** in this repo for habitual `memory_ingest` / `memory_recall` in the agent.
 - **[ClawQL-Agent](https://github.com/danielsmithdevelopment/ClawQL-Agent)** — full stack that combines ClawQL MCP with orchestration and vault-backed memory.
 - **[Parity v1 #11](https://github.com/danielsmithdevelopment/ClawQL/issues/11)** — MCP surface aligned with the agent stack (complete). Optional vault vectors for **`memory_recall`** are implemented (**[#16](https://github.com/danielsmithdevelopment/ClawQL/issues/16)** — remaining scope may include spec **`search`** semantics); see **[hybrid-memory-backends.md](hybrid-memory-backends.md)** and **[vector-search-design.md](vector-search-design.md)**.

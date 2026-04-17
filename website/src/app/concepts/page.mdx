@@ -1,7 +1,7 @@
 export const metadata = {
   title: 'Concepts',
   description:
-    'ClawQL architecture: MCP, search index, GraphQL optimization, and how two phases save tokens.',
+    'ClawQL architecture: MCP over stdio, Streamable HTTP, or optional gRPC; in-memory search index, internal GraphQL, and token-efficient search-then-execute workflows.',
 }
 
 # Concepts
@@ -12,12 +12,14 @@ ClawQL connects **agents** to **REST-shaped APIs** through a thin MCP surface, w
 
 ```
 Agent
-  └─▶ MCP Server  (stdio or HTTP)
+  └─▶ MCP Server  (stdio, Streamable HTTP, or optional gRPC)
         ├─▶ search tool  ──▶ In-memory spec index
         └─▶ execute tool  ──▶ GraphQL client (single-spec)
                                     └─▶ GraphQL (in-process, single-spec)
                                           └─▶ Your REST API
 ```
+
+**Transports:** **stdio** and **Streamable HTTP** are the usual paths; **gRPC** (protobuf **`model_context_protocol.Mcp`**) is optional and uses the same tool registration via **[`mcp-grpc-transport`](https://www.npmjs.com/package/mcp-grpc-transport)**—see [Deployment](/deployment).
 
 In **multi-spec** mode, **`search`** uses one merged index while **`execute`** routes each operation to the correct spec (REST).
 

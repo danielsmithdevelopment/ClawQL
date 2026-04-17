@@ -1,3 +1,5 @@
+# ClusterIP: expose HTTP (8080) and gRPC (50051) on the Service so clients hit MCP without port-forward.
+# Requires ENABLE_GRPC=1 on the pod for anything to listen on targetPort grpc.
 apiVersion: v1
 kind: Service
 metadata:
@@ -5,6 +7,10 @@ metadata:
 spec:
   type: ClusterIP
   ports:
+    - $patch: replace
     - name: http
       port: 8080
       targetPort: 8080
+    - name: grpc
+      port: 50051
+      targetPort: grpc

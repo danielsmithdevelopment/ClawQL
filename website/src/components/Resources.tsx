@@ -13,6 +13,7 @@ import { Heading } from '@/components/Heading'
 import { BoltIcon } from '@/components/icons/BoltIcon'
 import { CogIcon } from '@/components/icons/CogIcon'
 import { ListIcon } from '@/components/icons/ListIcon'
+import { MapPinIcon } from '@/components/icons/MapPinIcon'
 import { PackageIcon } from '@/components/icons/PackageIcon'
 import { ShapesIcon } from '@/components/icons/ShapesIcon'
 
@@ -32,7 +33,7 @@ const resources: Array<Resource> = [
     href: '/tools',
     name: 'Tools',
     description:
-      'Core search and execute; optional sandbox_exec and Obsidian memory tools — discover, run APIs, and more.',
+      'Core search and execute; optional sandbox_exec, memory tools, and ingest_external_knowledge — six tools when configured.',
     icon: BoltIcon,
     pattern: {
       y: 16,
@@ -53,6 +54,20 @@ const resources: Array<Resource> = [
       squares: [
         [-1, 2],
         [1, 3],
+      ],
+    },
+  },
+  {
+    href: '/kubernetes',
+    name: 'gRPC and Kubernetes',
+    description:
+      'Optional protobuf MCP over gRPC (port 50051), Streamable HTTP on /mcp, ENABLE_GRPC, Docker Desktop and remote clusters.',
+    icon: MapPinIcon,
+    pattern: {
+      y: 12,
+      squares: [
+        [0, 0],
+        [2, 2],
       ],
     },
   },
