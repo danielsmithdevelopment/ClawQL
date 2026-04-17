@@ -5,10 +5,7 @@ import * as protoLoader from "@grpc/proto-loader";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import {
-  maybeStartGrpcMcpServer,
-  MCP_TRANSPORT_SESSION_SERVICE_FQN,
-} from "./server.js";
+import { maybeStartGrpcMcpServer, MCP_TRANSPORT_SESSION_SERVICE_FQN } from "./server.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const protoRoot = join(__dirname, "../proto");

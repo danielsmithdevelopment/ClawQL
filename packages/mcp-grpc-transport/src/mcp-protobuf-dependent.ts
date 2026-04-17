@@ -31,7 +31,10 @@ function protoRoleToMcp(role: unknown): "user" | "assistant" {
 }
 
 /** Convert protobuf `SamplingMessage` (loader object) → MCP sampling message content block. */
-export function protoSamplingMessageToMcp(msg: Record<string, unknown>): { role: "user" | "assistant"; content: Record<string, unknown> } {
+export function protoSamplingMessageToMcp(msg: Record<string, unknown>): {
+  role: "user" | "assistant";
+  content: Record<string, unknown>;
+} {
   const role = protoRoleToMcp(msg.role);
   const t = msg.text as { text?: string } | undefined;
   if (t?.text != null) {
@@ -65,7 +68,9 @@ export function protoSamplingMessageToMcp(msg: Record<string, unknown>): { role:
 }
 
 /** Map MCP `CreateMessageResult` shape (`role` + `content` at top level) → protobuf `SamplingMessage`. */
-function mcpCreateMessageResultToProtoSamplingMessage(res: Record<string, unknown>): Record<string, unknown> {
+function mcpCreateMessageResultToProtoSamplingMessage(
+  res: Record<string, unknown>
+): Record<string, unknown> {
   const role = res.role === "assistant" ? "ROLE_ASSISTANT" : "ROLE_USER";
   const c = res.content as Record<string, unknown> | undefined;
   if (!c?.type) {
@@ -155,7 +160,10 @@ function elicitResultMcpToProto(res: Record<string, unknown>): Record<string, un
   return {
     elicit_result: {
       type: protoType,
-      content: content != null && typeof content === "object" ? jsonToStruct(content as object) : { fields: {} },
+      content:
+        content != null && typeof content === "object"
+          ? jsonToStruct(content as object)
+          : { fields: {} },
     },
   };
 }
@@ -180,9 +188,13 @@ export async function fulfillDependentRequests(
   for (const [id, sir] of Object.entries(dependentRequests)) {
     if (sir.sampling_create_message != null) {
       if (!handlers.samplingCreateMessage) {
-        throw new Error(`dependent_requests[${id}]: sampling_create_message requires handlers.samplingCreateMessage`);
+        throw new Error(
+          `dependent_requests[${id}]: sampling_create_message requires handlers.samplingCreateMessage`
+        );
       }
-      const params = samplingRequestProtoToMcpParams(sir.sampling_create_message as Record<string, unknown>);
+      const params = samplingRequestProtoToMcpParams(
+        sir.sampling_create_message as Record<string, unknown>
+      );
       const mcpRes = await handlers.samplingCreateMessage(params);
       out[id] = samplingResultMcpToProto(mcpRes);
       continue;
@@ -235,21 +247,28 @@ export async function runUnaryWithDependents<T extends UnaryWithCommon>(
   let common: Record<string, unknown> = { ...initialCommon };
   for (let round = 0; round < maxRounds; round++) {
     const res = await invoke(common);
-    const dr = res.common?.dependent_requests as Record<string, Record<string, unknown>> | undefined;
+    const dr = res.common?.dependent_requests as
+      | Record<string, Record<string, unknown>>
+      | undefined;
     if (!dr || Object.keys(dr).length === 0) {
       return res;
     }
     const fulfilled = await fulfillDependentRequests(dr, handlers);
     common = {
       ...common,
-      dependent_responses: mergeDependentResponses(common.dependent_responses as Record<string, unknown> | undefined, fulfilled),
+      dependent_responses: mergeDependentResponses(
+        common.dependent_responses as Record<string, unknown> | undefined,
+        fulfilled
+      ),
     };
   }
   throw new Error("runUnaryWithDependents: maxRounds exceeded");
 }
 
 /** Parse `resume_data` Struct to a plain object (optional echo / continuation state). */
-export function parseResumeData(common: Record<string, unknown> | undefined): Record<string, unknown> | undefined {
+export function parseResumeData(
+  common: Record<string, unknown> | undefined
+): Record<string, unknown> | undefined {
   if (common?.resume_data == null) {
     return undefined;
   }
@@ -257,6 +276,8 @@ export function parseResumeData(common: Record<string, unknown> | undefined): Re
 }
 
 /** Encode resume data for the next request. */
-export function encodeResumeData(data: Record<string, unknown>): { resume_data: ReturnType<typeof jsonToStruct> } {
+export function encodeResumeData(data: Record<string, unknown>): {
+  resume_data: ReturnType<typeof jsonToStruct>;
+} {
   return { resume_data: jsonToStruct(data) };
 }

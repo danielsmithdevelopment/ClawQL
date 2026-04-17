@@ -27,7 +27,10 @@ export function getMetadataValue(metadata: grpc.Metadata, key: string): string |
  * gRPC metadata keys are normalized to lowercase ASCII (`@grpc/grpc-js`); this matches
  * case-insensitive lookup for this header.
  */
-export function getMetadataValueInsensitive(metadata: grpc.Metadata, key: string): string | undefined {
+export function getMetadataValueInsensitive(
+  metadata: grpc.Metadata,
+  key: string
+): string | undefined {
   return getMetadataValue(metadata, key.toLowerCase());
 }
 
@@ -54,7 +57,10 @@ export function checkMcpProtocolVersion(metadata: grpc.Metadata): ProtocolVersio
   return { ok: true, version: raw };
 }
 
-export function sendMcpProtocolMetadata(call: { sendMetadata: (m: grpc.Metadata) => void }, version: string): void {
+export function sendMcpProtocolMetadata(
+  call: { sendMetadata: (m: grpc.Metadata) => void },
+  version: string
+): void {
   const md = new grpc.Metadata();
   md.set(MCP_PROTOCOL_VERSION_METADATA_KEY, version);
   call.sendMetadata(md);
