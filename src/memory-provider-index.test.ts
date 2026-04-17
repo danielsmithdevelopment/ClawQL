@@ -40,8 +40,12 @@ describe("memory-provider-index", () => {
     await updateProviderIndexPage(dir);
     const idx = await readFile(join(dir, "Memory", "_INDEX_ClawQL.md"), "utf8");
     expect(idx).toContain("clawql_generated: provider_index");
+    expect(idx).toContain("## Summary");
+    expect(idx).toContain("## By folder");
+    expect(idx).toContain("## All notes (A–Z)");
     expect(idx).toContain("[[Alpha Note]]");
     expect(idx).toContain("[[Beta]]");
+    expect(idx).toContain("`Memory/`");
   });
 
   it("skips second write when content unchanged", async () => {
@@ -65,6 +69,21 @@ describe("memory-provider-index", () => {
     expect(r.ok).toBe(true);
     const idx = await readFile(join(dir, "Memory", "_INDEX_ClawQL.md"), "utf8");
     expect(idx).toContain("[[Hello]]");
+  });
+
+  it("groups notes by parent folder", async () => {
+    await mkdir(join(dir, "Memory", "team-a"), { recursive: true });
+    await writeFile(
+      join(dir, "Memory", "team-a", "note.md"),
+      ["# Team A Note", "", "x", ""].join("\n"),
+      "utf8"
+    );
+    await writeFile(join(dir, "Memory", "root.md"), ["# Root", "", "y", ""].join("\n"), "utf8");
+    await updateProviderIndexPage(dir);
+    const idx = await readFile(join(dir, "Memory", "_INDEX_ClawQL.md"), "utf8");
+    expect(idx).toContain("`Memory/team-a/`");
+    expect(idx).toContain("[[Team A Note]]");
+    expect(idx).toContain("`Memory/`");
   });
 
   it("uses CLAWQL_MEMORY_INDEX_PROVIDER in filename", async () => {

@@ -131,6 +131,43 @@ describe("server-http", () => {
     }
   });
 
+  it("GET /healthz includes cuckoo metrics when CLAWQL_HEALTHZ_MEMORY_ARTIFACTS and Cuckoo enabled", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "clawql-hz-"));
+    const savedVault = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
+    const savedCuckoo = process.env.CLAWQL_CUCKOO_ENABLED;
+    const savedHz = process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS;
+    process.env.CLAWQL_OBSIDIAN_VAULT_PATH = dir;
+    process.env.CLAWQL_CUCKOO_ENABLED = "1";
+    process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS = "1";
+    await mkdir(join(dir, "Memory"), { recursive: true });
+    await writeFile(join(dir, "Memory/a.md"), "# A\n", "utf8");
+    const { syncMemoryDbFromDocuments } = await import("./memory-db.js");
+    const text = await readFile(join(dir, "Memory/a.md"), "utf8");
+    await syncMemoryDbFromDocuments(dir, [{ path: "Memory/a.md", text, mtimeMs: 1 }]);
+    try {
+      await withHttpServer(async (base) => {
+        const res = await fetch(`${base}/healthz`);
+        expect(res.ok).toBe(true);
+        const body = (await res.json()) as {
+          cuckooMembershipArtifactsEnabled?: boolean;
+          cuckooMetrics?: { rebuildCount: number };
+          cuckooFilterPersistedAt?: string;
+        };
+        expect(body.cuckooMembershipArtifactsEnabled).toBe(true);
+        expect(body.cuckooMetrics?.rebuildCount).toBeGreaterThanOrEqual(1);
+        expect(body.cuckooFilterPersistedAt).toMatch(/\d{4}-\d{2}-\d{2}T/);
+      });
+    } finally {
+      if (savedVault === undefined) delete process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
+      else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = savedVault;
+      if (savedCuckoo === undefined) delete process.env.CLAWQL_CUCKOO_ENABLED;
+      else process.env.CLAWQL_CUCKOO_ENABLED = savedCuckoo;
+      if (savedHz === undefined) delete process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS;
+      else process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS = savedHz;
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
   it("POST /mcp initialize allocates mcp-session-id", async () => {
     await withHttpServer(async (base) => {
       const res = await fetch(`${base}/mcp`, {

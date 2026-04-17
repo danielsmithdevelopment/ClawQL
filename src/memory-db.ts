@@ -41,6 +41,7 @@ import {
   type MemoryArtifactPayload,
 } from "./memory-artifacts.js";
 import { CuckooFilter } from "./cuckoo-filter.js";
+import { cuckooMetricsEnabled, recordCuckooLookup } from "./memory-cuckoo-metrics.js";
 import {
   getCachedCuckooFilter,
   getCachedMerkleSnapshot,
@@ -721,7 +722,8 @@ export async function chunkIdMaybeInMemoryIndex(
   if (!memoryDbSyncEnabled()) return null;
   const absDb = resolveMemoryDatabasePath(vaultRoot);
   const sig = await memoryDbFileSignature(absDb);
-  if (sig) {
+  const metrics = cuckooMetricsEnabled();
+  if (!metrics && sig) {
     const hit = getCachedCuckooFilter(absDb, sig);
     if (hit !== undefined) {
       return hit.maybeContains(chunkId);
@@ -734,7 +736,39 @@ export async function chunkIdMaybeInMemoryIndex(
     const filter = readCuckooFilterFromOpenDb(db);
     if (!filter) return null;
     if (sig) setCachedCuckooFilter(absDb, sig, filter);
-    return filter.maybeContains(chunkId);
+    const maybe = filter.maybeContains(chunkId);
+    if (metrics) {
+      const stmt = db.prepare("SELECT 1 FROM vault_chunk WHERE chunk_id = ? LIMIT 1");
+      stmt.bind([chunkId]);
+      const presentInDb = stmt.step();
+      stmt.free();
+      recordCuckooLookup({ filterSaysMaybe: maybe, presentInDb });
+    }
+    return maybe;
+  } finally {
+    db.close();
+  }
+}
+
+/** Last persisted Cuckoo row timestamp (cross-process), for health checks. */
+export async function loadCuckooArtifactUpdatedAt(vaultRoot: string): Promise<string | null> {
+  if (process.env.CLAWQL_CUCKOO_ENABLED !== "1") return null;
+  if (!memoryDbSyncEnabled()) return null;
+  const absDb = resolveMemoryDatabasePath(vaultRoot);
+  const db = await openOrCreateDb(absDb);
+  try {
+    db.exec("PRAGMA foreign_keys = ON;");
+    migrate(db);
+    const stmt = db.prepare(
+      "SELECT updated_at FROM clawql_cuckoo_chunk_membership WHERE id = 1 LIMIT 1"
+    );
+    if (!stmt.step()) {
+      stmt.free();
+      return null;
+    }
+    const row = stmt.getAsObject() as { updated_at: string };
+    stmt.free();
+    return row.updated_at ?? null;
   } finally {
     db.close();
   }

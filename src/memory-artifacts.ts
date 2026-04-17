@@ -5,6 +5,7 @@
 import type { Database } from "sql.js";
 import { CuckooFilter } from "./cuckoo-filter.js";
 import { buildMerkleSnapshot, type MerkleDocumentRow } from "./merkle-tree.js";
+import { recordCuckooRebuild } from "./memory-cuckoo-metrics.js";
 import { ensurePgVectorSchema, getPostgresVectorPool } from "./vector-store/pgvector.js";
 
 export function cuckooMembershipArtifactsEnabled(): boolean {
@@ -51,8 +52,16 @@ export function rebuildSqliteMemoryArtifacts(db: Database): MemoryArtifactPayloa
       ids.push(row.chunk_id);
     }
     sel.free();
-    const filter = CuckooFilter.fromKeys(ids, { fingerprintBits: envFingerprintBits() });
+    const fpBits = envFingerprintBits();
+    const filter = CuckooFilter.fromKeys(ids, { fingerprintBits: fpBits });
     cuckooBlob = filter.serialize();
+    recordCuckooRebuild({
+      at: now,
+      chunkKeyCount: ids.length,
+      fingerprintBits: fpBits,
+      bucketCount: filter.bucketCount,
+      filterSlotOccupancy: filter.size,
+    });
     db.run(`DELETE FROM clawql_cuckoo_chunk_membership`);
     db.run(
       `INSERT INTO clawql_cuckoo_chunk_membership (id, filter_blob, updated_at) VALUES (1, ?, ?)`,

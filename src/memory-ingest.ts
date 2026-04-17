@@ -95,6 +95,7 @@ export function extractIngestHashes(markdown: string): Set<string> {
 }
 
 function buildSectionBody(input: MemoryIngestInput, when: string): string {
+  const hash = hashIngestSection(input);
   const lines: string[] = [];
   lines.push(`### Ingestion (${when})`);
   if (input.sessionId?.trim()) {
@@ -121,7 +122,14 @@ function buildSectionBody(input: MemoryIngestInput, when: string): string {
     lines.push("```");
     lines.push("");
   }
-  const hash = hashIngestSection(input);
+  lines.push("#### Provenance");
+  lines.push(
+    `- **Tool:** \`memory_ingest\` · **UTC:** \`${when}\`${input.sessionId?.trim() ? ` · **session:** \`${input.sessionId.trim().replace(/`/g, "'")}\`` : ""}`
+  );
+  lines.push(
+    `- **Section fingerprint:** SHA-256 \`${hash.slice(0, 16)}…\` (canonical hash in the HTML comment below).`
+  );
+  lines.push("");
   lines.push(`<!-- clawql-hash:${hash} -->`);
   return lines.join("\n");
 }
@@ -140,6 +148,7 @@ function buildFrontmatter(title: string): string {
     `date: ${iso}`,
     "tags: [clawql-ingest]",
     "clawql_ingest: true",
+    `clawql_ingest_created: ${JSON.stringify(iso)}`,
     "---",
     "",
   ].join("\n");

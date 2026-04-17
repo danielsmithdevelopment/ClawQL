@@ -50,6 +50,9 @@ describe("memory-ingest", () => {
     expect(r.path).toBe("Memory/test-note.md");
     const text = await readFile(join(dir, "Memory", "test-note.md"), "utf8");
     expect(text).toContain("clawql_ingest: true");
+    expect(text).toContain("clawql_ingest_created:");
+    expect(text).toContain("#### Provenance");
+    expect(text).toContain("memory_ingest");
     expect(text).toContain("# Test Note");
     expect(text).toContain("[[Other]]");
     expect(text).toContain("Learned something.");

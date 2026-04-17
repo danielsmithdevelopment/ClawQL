@@ -66,6 +66,11 @@ jobs:
   # (2) Skips if the PR head is already an autofix commit (`[prettier-autofix]`).
   # (3) Skips if the triggering actor is github-actions[bot] (pushes from this job).
   # (4) No commit when `npm run format` produces no diff (e.g. ESLint failed but Prettier was already clean).
+  #
+  # Pushes with the default GITHUB_TOKEN do not trigger new workflow runs (GitHub suppresses recursive CI).
+  # Optional repo secret PRETTIER_AUTOFIX_TOKEN: fine-grained PAT with Contents: Read and write on this
+  # repo — use it for checkout/push so the post-autofix commit runs CI. Without it, re-run jobs manually
+  # or push an empty commit on the PR branch.
   prettier-autofix:
     name: Prettier autofix (PR, same-repo)
     needs: lint
@@ -84,7 +89,7 @@ jobs:
         with:
           ref: ${{ github.head_ref }}
           repository: ${{ github.event.pull_request.head.repo.full_name }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PRETTIER_AUTOFIX_TOKEN != '' && secrets.PRETTIER_AUTOFIX_TOKEN || secrets.GITHUB_TOKEN }}
 
       - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
         with:

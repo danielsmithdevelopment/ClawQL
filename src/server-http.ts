@@ -105,14 +105,20 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
       try {
         const vault = getObsidianVaultPath();
         if (vault) {
-          const { loadVaultMerkleSnapshotFromDb, memoryDbSyncEnabled } =
-            await import("./memory-db.js");
+          const {
+            loadCuckooArtifactUpdatedAt,
+            loadVaultMerkleSnapshotFromDb,
+            memoryDbSyncEnabled,
+          } = await import("./memory-db.js");
           if (memoryDbSyncEnabled()) {
             if (process.env.CLAWQL_MERKLE_ENABLED === "1") {
               base.merkleSnapshot = await loadVaultMerkleSnapshotFromDb(vault);
             }
             if (process.env.CLAWQL_CUCKOO_ENABLED === "1") {
               base.cuckooMembershipArtifactsEnabled = true;
+              const { getCuckooMetricsSnapshot } = await import("./memory-cuckoo-metrics.js");
+              base.cuckooMetrics = getCuckooMetricsSnapshot();
+              base.cuckooFilterPersistedAt = await loadCuckooArtifactUpdatedAt(vault);
             }
           }
         }

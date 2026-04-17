@@ -4,6 +4,7 @@ import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import initSqlJs from "sql.js";
+import { getCuckooMetricsSnapshot } from "./memory-cuckoo-metrics.js";
 import {
   chunkIdMaybeInMemoryIndex,
   loadVaultMerkleSnapshotFromDb,
@@ -11,6 +12,7 @@ import {
   resolveMemoryDatabasePath,
   syncMemoryDbFromDocuments,
 } from "./memory-db.js";
+import { resetCuckooMetricsForTests } from "./memory-cuckoo-metrics.js";
 import { resetMemoryDbArtifactCachesForTests } from "./memory-db-artifact-cache.js";
 
 describe("memory-db", () => {
@@ -20,6 +22,7 @@ describe("memory-db", () => {
   const savedKey = process.env.CLAWQL_EMBEDDING_API_KEY;
   const savedCuckoo = process.env.CLAWQL_CUCKOO_ENABLED;
   const savedMerkle = process.env.CLAWQL_MERKLE_ENABLED;
+  const savedCuckooMetrics = process.env.CLAWQL_CUCKOO_METRICS;
   let dir: string;
 
   beforeEach(async () => {
@@ -30,6 +33,8 @@ describe("memory-db", () => {
     delete process.env.CLAWQL_EMBEDDING_API_KEY;
     delete process.env.CLAWQL_CUCKOO_ENABLED;
     delete process.env.CLAWQL_MERKLE_ENABLED;
+    delete process.env.CLAWQL_CUCKOO_METRICS;
+    resetCuckooMetricsForTests();
   });
 
   afterEach(async () => {
@@ -45,7 +50,10 @@ describe("memory-db", () => {
     else process.env.CLAWQL_CUCKOO_ENABLED = savedCuckoo;
     if (savedMerkle === undefined) delete process.env.CLAWQL_MERKLE_ENABLED;
     else process.env.CLAWQL_MERKLE_ENABLED = savedMerkle;
+    if (savedCuckooMetrics === undefined) delete process.env.CLAWQL_CUCKOO_METRICS;
+    else process.env.CLAWQL_CUCKOO_METRICS = savedCuckooMetrics;
     vi.unstubAllGlobals();
+    resetCuckooMetricsForTests();
     resetMemoryDbArtifactCachesForTests();
     await rm(dir, { recursive: true, force: true });
   });
@@ -173,5 +181,33 @@ describe("memory-db", () => {
 
     await expect(chunkIdMaybeInMemoryIndex(dir, cid)).resolves.toBe(true);
     await expect(loadVaultMerkleSnapshotFromDb(dir)).resolves.toMatchObject({ leafCount: 1 });
+    const snap = getCuckooMetricsSnapshot();
+    expect(snap.rebuildCount).toBe(1);
+    expect(snap.lastRebuild?.chunkKeyCount).toBeGreaterThanOrEqual(1);
+  });
+
+  it("CLAWQL_CUCKOO_METRICS verifies maybe lookups against vault_chunk", async () => {
+    process.env.CLAWQL_CUCKOO_ENABLED = "1";
+    process.env.CLAWQL_CUCKOO_METRICS = "1";
+    await writeFile(join(dir, "a.md"), "# A\n\nHello.", "utf8");
+    const text = await readFile(join(dir, "a.md"), "utf8");
+    await syncMemoryDbFromDocuments(dir, [{ path: "a.md", text, mtimeMs: 1 }]);
+    const dbPath = resolveMemoryDatabasePath(dir);
+    const raw = await readFile(dbPath);
+    const require = createRequire(import.meta.url);
+    const sqlEntry = require.resolve("sql.js");
+    const wasmPath = join(dirname(sqlEntry), "sql-wasm.wasm");
+    const SQL = await initSqlJs({ locateFile: () => wasmPath });
+    const db = new SQL.Database(raw);
+    const cid = String(db.exec("SELECT chunk_id FROM vault_chunk LIMIT 1")[0]!.values[0]![0]);
+    db.close();
+
+    resetCuckooMetricsForTests();
+    await expect(chunkIdMaybeInMemoryIndex(dir, cid)).resolves.toBe(true);
+    const m = getCuckooMetricsSnapshot();
+    expect(m.lookups).toBe(1);
+    expect(m.filterMaybe).toBe(1);
+    expect(m.verifiedInDb).toBe(1);
+    expect(m.falsePositives).toBe(0);
   });
 });
