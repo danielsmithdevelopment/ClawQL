@@ -3,7 +3,7 @@
  */
 
 import { createHash } from "node:crypto";
-import { basename } from "node:path";
+import { basename, dirname } from "node:path/posix";
 import { readVaultTextFile, writeVaultTextFileAtomic } from "./vault-utils.js";
 import { listVaultMarkdownRelPaths } from "./memory-slug-index.js";
 import { stripVaultFrontmatter } from "./vault-markdown.js";
@@ -32,6 +32,13 @@ function noteTitleFromMarkdown(rel: string, text: string): string {
   const hm = body.match(/^\s*#\s+(.+)$/m);
   if (hm) return hm[1].trim();
   return basename(rel, ".md").replace(/-/g, " ");
+}
+
+/** Parent path for grouping (POSIX, vault-relative). */
+function folderKeyForRel(rel: string): string {
+  const n = rel.replace(/\\/g, "/");
+  const d = dirname(n);
+  return d === "." ? "." : d;
 }
 
 /** Avoid `]]`, `|`, and nested `[` in Obsidian wikilink display text. */
@@ -104,6 +111,18 @@ export async function updateProviderIndexPage(vaultRoot: string): Promise<void> 
 
   rows.sort((a, b) => a.title.localeCompare(b.title, "en"));
 
+  const byFolder = new Map<string, Row[]>();
+  for (const r of rows) {
+    const k = folderKeyForRel(r.rel);
+    const list = byFolder.get(k);
+    if (list) list.push(r);
+    else byFolder.set(k, [r]);
+  }
+  const folderKeys = [...byFolder.keys()].sort((a, b) => a.localeCompare(b, "en"));
+  for (const k of folderKeys) {
+    byFolder.get(k)!.sort((a, b) => a.title.localeCompare(b.title, "en"));
+  }
+
   const fp = indexFingerprint(rows);
   try {
     const existing = await readVaultTextFile(vaultRoot, indexRel);
@@ -124,7 +143,28 @@ export async function updateProviderIndexPage(vaultRoot: string): Promise<void> 
     `Auto-generated list of Markdown notes under the recall subtree ${scanDisplay}. Updated after **successful \`memory_ingest\`** (when this feature is enabled). Disable with \`CLAWQL_MEMORY_INDEX_PAGE=0\`.`
   );
   lines.push("");
-  lines.push(`## Notes (${rows.length})`);
+  lines.push("## Summary");
+  lines.push("");
+  lines.push(`- **Notes:** ${rows.length}`);
+  lines.push(`- **Recall subtree:** ${scanDisplay}`);
+  lines.push("");
+  lines.push("## By folder");
+  lines.push("");
+  if (rows.length === 0) {
+    lines.push("_No notes yet in this subtree._");
+    lines.push("");
+  } else {
+    for (const fk of folderKeys) {
+      const label = fk === "." ? "`(paths with no directory segment)`" : `\`${fk}/\``;
+      lines.push(`### ${label}`);
+      lines.push("");
+      for (const r of byFolder.get(fk)!) {
+        lines.push(`- [[${safeWikilinkDisplay(r.title)}]] \`(${r.rel})\``);
+      }
+      lines.push("");
+    }
+  }
+  lines.push(`## All notes (A–Z) (${rows.length})`);
   lines.push("");
   if (rows.length === 0) {
     lines.push("_No notes yet in this subtree._");
