@@ -1,6 +1,6 @@
 # Knowledge lake: full repo & SaaS ingest (roadmap)
 
-This document describes the **product direction**: point ClawQL at a **GitHub repository** (and later **Notion**, **Confluence**, **Linear**, **Jira**) and build a **durable knowledge base** under the Obsidian vault — **Markdown on disk** + optional **`memory.db`** chunking, wikilinks, vectors, and **`memory_recall`** — so teams can **ask questions** against *everything* the connector imports (configs, docs, issues, vendor-specific records).
+This document describes the **product direction**: point ClawQL at a **GitHub repository** (and later **Notion**, **Confluence**, **Linear**, **Jira**) and build a **durable knowledge base** under the Obsidian vault — **Markdown on disk** + optional **`memory.db`** chunking, wikilinks, vectors, and **`memory_recall`** — so teams can **ask questions** against _everything_ the connector imports (configs, docs, issues, vendor-specific records).
 
 **Today:** [`ingest_external_knowledge`](external-ingest.md) supports **bulk Markdown** and **single-URL fetch** with formatting. **Full providers** are the next layer on top of the same pipeline.
 
@@ -8,12 +8,12 @@ This document describes the **product direction**: point ClawQL at a **GitHub re
 
 ## Goals
 
-| Goal | Meaning |
-| ---- | ------- |
-| **Completeness** | Ingest *authorized* content: source files, READMEs, docs trees, issue/PR bodies, labels, milestones — per provider capabilities. |
-| **Queryable** | Same retrieval story as the rest of ClawQL memory: keyword + graph + optional **embeddings** (`CLAWQL_VECTOR_BACKEND`). |
-| **Incremental** | Re-sync without rewriting the whole vault: cursors (`ETag`, `since`, `updated_at`), skip unchanged blobs. |
-| **Tenant-safe** | Tokens in env / secret manager; never log secrets; respect org/repo ACLs. |
+| Goal             | Meaning                                                                                                                          |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| **Completeness** | Ingest _authorized_ content: source files, READMEs, docs trees, issue/PR bodies, labels, milestones — per provider capabilities. |
+| **Queryable**    | Same retrieval story as the rest of ClawQL memory: keyword + graph + optional **embeddings** (`CLAWQL_VECTOR_BACKEND`).          |
+| **Incremental**  | Re-sync without rewriting the whole vault: cursors (`ETag`, `since`, `updated_at`), skip unchanged blobs.                        |
+| **Tenant-safe**  | Tokens in env / secret manager; never log secrets; respect org/repo ACLs.                                                        |
 
 ---
 
@@ -53,11 +53,11 @@ Each **provider** normalizes to **Markdown notes** (YAML frontmatter for stable 
 
 ### What to pull (phased)
 
-| Phase | Content | API surface (indicative) |
-| ----- | ------- | ------------------------- |
-| **G1 — Code & docs** | Default branch tree: `README*`, `docs/**`, `*.md`, selected configs (`package.json`, `Dockerfile`, `*.yaml`, …) | [Git Trees](https://docs.github.com/en/rest/git/trees), [Contents](https://docs.github.com/en/rest/repos/contents) |
-| **G2 — Issues & PRs** | Issues (open/closed per policy), bodies, comments, labels; PRs as optional | REST or [GraphQL](https://docs.github.com/en/graphql) |
-| **G3 — Richer** | Releases, wiki if enabled, Discussions (if API coverage fits) | REST / GraphQL |
+| Phase                 | Content                                                                                                         | API surface (indicative)                                                                                           |
+| --------------------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| **G1 — Code & docs**  | Default branch tree: `README*`, `docs/**`, `*.md`, selected configs (`package.json`, `Dockerfile`, `*.yaml`, …) | [Git Trees](https://docs.github.com/en/rest/git/trees), [Contents](https://docs.github.com/en/rest/repos/contents) |
+| **G2 — Issues & PRs** | Issues (open/closed per policy), bodies, comments, labels; PRs as optional                                      | REST or [GraphQL](https://docs.github.com/en/graphql)                                                              |
+| **G3 — Richer**       | Releases, wiki if enabled, Discussions (if API coverage fits)                                                   | REST / GraphQL                                                                                                     |
 
 ### Suggested vault layout
 
@@ -118,11 +118,11 @@ A bare **clone** gives files but not **issues/PR metadata** in one shot. **API-f
 
 ## Cross-cutting concerns
 
-| Topic | Approach |
-| ----- | -------- |
-| **Dedup / identity** | Stable ids in frontmatter; optional Cuckoo over `chunk_id` for membership checks at recall time (already in hybrid memory). |
-| **Merkle / integrity** | Optional snapshot over ingested doc set for “what did we index?” audits ([#37](https://github.com/danielsmithdevelopment/ClawQL/issues/37)). |
-| **Multi-tenant** | One MCP process per deployment; separate vault paths or env per customer; no cross-tenant vault paths. |
+| Topic                     | Approach                                                                                                                                       |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Dedup / identity**      | Stable ids in frontmatter; optional Cuckoo over `chunk_id` for membership checks at recall time (already in hybrid memory).                    |
+| **Merkle / integrity**    | Optional snapshot over ingested doc set for “what did we index?” audits ([#37](https://github.com/danielsmithdevelopment/ClawQL/issues/37)).   |
+| **Multi-tenant**          | One MCP process per deployment; separate vault paths or env per customer; no cross-tenant vault paths.                                         |
 | **Answers beyond recall** | Today: **`memory_recall`** + agent reasoning. Future: optional **RAG** tool that composes recall + LLM — out of scope for connector-only work. |
 
 ---

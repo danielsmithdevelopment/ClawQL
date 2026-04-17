@@ -234,7 +234,10 @@ export type RecallDbArtifacts = {
   merkleSnapshot: MerkleSnapshotRow | null;
 };
 
-function loadChunkEmbeddingsFromOpenDb(db: Database, documentPaths: string[]): ChunkWithEmbedding[] {
+function loadChunkEmbeddingsFromOpenDb(
+  db: Database,
+  documentPaths: string[]
+): ChunkWithEmbedding[] {
   const out: ChunkWithEmbedding[] = [];
   const batch = 400;
   for (let i = 0; i < documentPaths.length; i += batch) {

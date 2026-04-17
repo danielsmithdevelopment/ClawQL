@@ -387,16 +387,12 @@ export function registerTools(server: McpServer) {
         .string()
         .optional()
         .describe(
-          'Optional vault-relative .md path for url imports (default: Memory/external/<slug>.md).'
+          "Optional vault-relative .md path for url imports (default: Memory/external/<slug>.md)."
         ),
       documents: z
         .array(
           z.object({
-            path: z
-              .string()
-              .min(1)
-              .max(512)
-              .describe("Vault-relative path; must end with .md"),
+            path: z.string().min(1).max(512).describe("Vault-relative path; must end with .md"),
             markdown: z
               .string()
               .max(2_097_152)

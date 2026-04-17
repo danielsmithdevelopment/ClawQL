@@ -4,11 +4,11 @@
 
 ## Env
 
-| Variable | Role |
-| -------- | ---- |
-| **`CLAWQL_EXTERNAL_INGEST=1`** | Enables the tool (must be exactly `1`, same as optional-flags parser). |
-| **`CLAWQL_EXTERNAL_INGEST_FETCH=1`** | Allows **`url`** mode to perform **`fetch()`** (HTTPS; **`http`** only for **`localhost`** / **`127.0.0.1`**). |
-| **`CLAWQL_OBSIDIAN_VAULT_PATH`** | Required for any **write** or URL import. Without it, a **no-payload** call still returns roadmap JSON (`stub: true`). |
+| Variable                             | Role                                                                                                                   |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| **`CLAWQL_EXTERNAL_INGEST=1`**       | Enables the tool (must be exactly `1`, same as optional-flags parser).                                                 |
+| **`CLAWQL_EXTERNAL_INGEST_FETCH=1`** | Allows **`url`** mode to perform **`fetch()`** (HTTPS; **`http`** only for **`localhost`** / **`127.0.0.1`**).         |
+| **`CLAWQL_OBSIDIAN_VAULT_PATH`**     | Required for any **write** or URL import. Without it, a **no-payload** call still returns roadmap JSON (`stub: true`). |
 
 ## Modes
 
@@ -44,11 +44,11 @@ After successful writes (not dry-run): **`withVaultWriteLock`** → **`syncMemor
 
 After **`fetch`**, ClawQL turns the response into readable Markdown **locally** (no web-search API):
 
-| Response | What we store |
-| -------- | ------------- |
+| Response                                                                  | What we store                                                                                                                                              |
+| ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **JSON** (`Content-Type: application/json` or body starts with `{` / `[`) | Pretty-printed in a **`json`** fenced block; frontmatter **`title`** uses **`name`** when present (e.g. **`npm · <package>`** for **registry.npmjs.org**). |
-| **HTML** | Converted with **[node-html-markdown](https://www.npmjs.com/package/node-html-markdown)** (scripts/styles stripped). |
-| **Other** | Wrapped in a **`text`** fence under **## Raw text**. |
+| **HTML**                                                                  | Converted with **[node-html-markdown](https://www.npmjs.com/package/node-html-markdown)** (scripts/styles stripped).                                       |
+| **Other**                                                                 | Wrapped in a **`text`** fence under **## Raw text**.                                                                                                       |
 
 Frontmatter includes **`clawql_external_ingest_kind`**: **`json`** \| **`html`** \| **`text`**.
 

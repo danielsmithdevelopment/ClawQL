@@ -221,9 +221,7 @@ export async function runIngestExternalKnowledge(
   const src = (input.source ?? "").trim().toLowerCase();
 
   const hasImportPayload =
-    (documents !== undefined && documents.length > 0) ||
-    Boolean(urlRaw) ||
-    src === "url";
+    (documents !== undefined && documents.length > 0) || Boolean(urlRaw) || src === "url";
 
   if (hasImportPayload && (!vaultConfigured || !vault)) {
     return {
@@ -246,7 +244,7 @@ export async function runIngestExternalKnowledge(
         "Pass documents[] or url + source url (with CLAWQL_EXTERNAL_INGEST_FETCH=1).",
       roadmap: [
         "Markdown: pass documents[] with vault-relative .md paths (dryRun defaults true).",
-        "URL: set source to \"url\", pass url (https), scope as optional target path, and CLAWQL_EXTERNAL_INGEST_FETCH=1.",
+        'URL: set source to "url", pass url (https), scope as optional target path, and CLAWQL_EXTERNAL_INGEST_FETCH=1.',
         "Secrets: per-provider env vars for future Notion/Confluence/GitHub plugins; never logged.",
         "Orchestration: writes use the vault lock; syncMemoryDbForVaultScanRoot + _INDEX_ page after import.",
       ],
@@ -449,7 +447,7 @@ export async function runIngestExternalKnowledge(
       `Preview: source=${JSON.stringify(srcLabel)}, dryRun=${dryRun}.`,
     roadmap: [
       "Markdown: pass documents[] with vault-relative .md paths (dryRun defaults true).",
-      "URL: set source to \"url\", pass url (https), scope as optional target path, and CLAWQL_EXTERNAL_INGEST_FETCH=1.",
+      'URL: set source to "url", pass url (https), scope as optional target path, and CLAWQL_EXTERNAL_INGEST_FETCH=1.',
       "Secrets: per-provider env vars for future Notion/Confluence/GitHub plugins; never logged.",
       "Orchestration: writes use the vault lock; syncMemoryDbForVaultScanRoot + _INDEX_ page after import.",
     ],

@@ -4,7 +4,11 @@ import { buildUrlIngestNote, formatUrlResponseAsMarkdown } from "./external-inge
 describe("external-ingest-url-format", () => {
   it("pretty-prints JSON and titles npm registry docs", () => {
     const raw = '{"name":"mcp-grpc-transport","dist-tags":{"latest":"0.1.2"}}';
-    const r = formatUrlResponseAsMarkdown(raw, "application/json", "https://registry.npmjs.org/mcp-grpc-transport");
+    const r = formatUrlResponseAsMarkdown(
+      raw,
+      "application/json",
+      "https://registry.npmjs.org/mcp-grpc-transport"
+    );
     expect(r.kind).toBe("json");
     expect(r.title).toContain("mcp-grpc-transport");
     expect(r.bodyMarkdown).toContain("```json");
@@ -26,7 +30,11 @@ describe("external-ingest-url-format", () => {
   });
 
   it("wraps plain text when not HTML or JSON", () => {
-    const r = formatUrlResponseAsMarkdown("plain line\n", "text/plain", "https://example.com/a.txt");
+    const r = formatUrlResponseAsMarkdown(
+      "plain line\n",
+      "text/plain",
+      "https://example.com/a.txt"
+    );
     expect(r.kind).toBe("text");
     expect(r.bodyMarkdown).toContain("```text");
     expect(r.bodyMarkdown).toContain("plain line");
