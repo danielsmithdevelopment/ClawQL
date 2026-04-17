@@ -150,6 +150,14 @@ jobs:
 
       - uses: rhysd/actionlint@914e7df21a07ef503a81201c76d2b11c789d3fca
 
+      # azure/setup-helm@v4.3.0
+      - uses: azure/setup-helm@b9e51907a09c216f16ebe8536097933489208112
+        with:
+          version: v3.17.0
+
+      - name: Helm chart lint
+        run: make helm-lint
+
   # Wave 2 — only if fast gates pass (fail early: no matrix work when lint/scripts fail)
   test:
     name: Test (Node ${{ matrix.node-version }})

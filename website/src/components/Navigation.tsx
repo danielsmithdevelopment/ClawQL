@@ -244,6 +244,7 @@ export const navigation: Array<NavGroup> = [
       { title: 'Troubleshooting', href: '/troubleshooting' },
       { title: 'Deployment', href: '/deployment' },
       { title: 'Kubernetes', href: '/kubernetes' },
+      { title: 'Helm', href: '/helm' },
     ],
   },
   {

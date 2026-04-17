@@ -1,12 +1,12 @@
 export const metadata = {
   title: 'Kubernetes',
   description:
-    'ClawQL on Kubernetes: Kustomize overlays, Streamable HTTP localhost:8080/mcp, optional gRPC 50051, Docker Desktop LoadBalancer, dev and prod deploy.',
+    'ClawQL on Kubernetes: Kustomize overlays or Helm chart, Streamable HTTP localhost:8080/mcp, optional gRPC 50051, Docker Desktop LoadBalancer, dev and prod deploy.',
 }
 
 # Kubernetes
 
-ClawQL is usually deployed as **`clawql-mcp-http`**: **Streamable HTTP** MCP on **`/mcp`**, **GraphQL** on **`/graphql`**, and (when **`ENABLE_GRPC=1`**) **gRPC** protobuf MCP on port **50051**—all in one pod. The Kustomize **Service** exposes **both** HTTP and **gRPC** ports so clients can use **`localhost:50051`** (Docker Desktop) or **`<LoadBalancer-ip>:50051`** without **`kubectl port-forward`**. {{ className: 'lead' }}
+ClawQL is usually deployed as **`clawql-mcp-http`**: **Streamable HTTP** MCP on **`/mcp`**, **GraphQL** on **`/graphql`**, and (when **`ENABLE_GRPC=1`**) **gRPC** protobuf MCP on port **50051**—all in one pod. The **Service** exposes **both** HTTP and **gRPC** ports so clients can use **`localhost:50051`** (Docker Desktop) or **`<LoadBalancer-ip>:50051`** without **`kubectl port-forward`**. Use **Kustomize** (below) or the **[Helm](/helm)** chart at **`charts/clawql-mcp`**. {{ className: 'lead' }}
 
 ## Local MCP on Docker Desktop
 
@@ -32,7 +32,7 @@ Or:
 bash scripts/local-k8s-docker-desktop.sh
 ```
 
-This **builds** the image as **`clawql-mcp:latest`** in the same Docker daemon Kubernetes uses, **applies** the Kustomize overlay at **`docker/kustomize/overlays/local`**, and waits for rollouts.
+This **applies** the Kustomize overlay at **`docker/kustomize/overlays/local`**, which deploys **`ghcr.io/danielsmithdevelopment/clawql-mcp:latest`** (prebuilt on GHCR), and waits for rollouts. To **build locally** instead, run **`CLAWQL_LOCAL_K8S_BUILD_IMAGE=1 make local-k8s-up`** (or the same env with **`bash scripts/local-k8s-docker-desktop.sh`**).
 
 ### Endpoints and client config
 

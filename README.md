@@ -640,7 +640,7 @@ Run **MCP Streamable HTTP** in a local cluster so clients can use a fixed URL (t
    # or: bash scripts/local-k8s-docker-desktop.sh
    ```
 
-   This builds **`clawql-mcp:latest`**, applies **`docker/kustomize/overlays/local`**, and waits for rollouts. The script uses the **`docker-desktop`** kubectl context when present.
+   This applies **`docker/kustomize/overlays/local`**, pulls **`ghcr.io/danielsmithdevelopment/clawql-mcp:latest`**, and waits for rollouts. Use **`CLAWQL_LOCAL_K8S_BUILD_IMAGE=1`** with the same commands to build **`clawql-mcp:latest`** locally instead. The script uses the **`docker-desktop`** kubectl context when present.
 
 3. **Health:** `curl -s http://localhost:8080/healthz` should return `{"status":"ok",...}` before connecting the client.
 4. **GitHub + Cloudflare + Google auth:** `bash scripts/k8s-docker-desktop-set-github-token.sh` (optional `CLAWQL_CLOUDFLARE_API_TOKEN` and `GOOGLE_ACCESS_TOKEN` / `CLAWQL_GOOGLE_ACCESS_TOKEN` in the environment). See [`docker/README.md`](docker/README.md).
@@ -655,7 +655,7 @@ Longer-form docs for operators: [`website/src/app/kubernetes/page.mdx`](website/
 ENV=dev IMAGE=us-central1-docker.pkg.dev/<project>/<repo>/clawql-mcp TAG=<tag> make deploy-k8s
 ```
 
-See [`docs/deploy-k8s.md`](docs/deploy-k8s.md).
+See [`docs/deploy-k8s.md`](docs/deploy-k8s.md). **Helm:** [`docs/helm.md`](docs/helm.md) (`charts/clawql-mcp`).
 
 ---
 

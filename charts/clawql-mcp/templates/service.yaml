@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "clawql-mcp.fullname" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app: {{ include "clawql-mcp.fullname" . }}
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    {{- include "clawql-mcp.selectorLabels" . | nindent 4 }}
+    app: {{ include "clawql-mcp.fullname" . }}
+  ports:
+    - name: http
+      port: {{ .Values.service.http.port }}
+      targetPort: http
+      protocol: TCP
+    - name: grpc
+      port: {{ .Values.service.grpc.port }}
+      targetPort: grpc
+      protocol: TCP

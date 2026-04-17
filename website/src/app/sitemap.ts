@@ -12,6 +12,7 @@ const PATHS = [
   '/troubleshooting',
   '/deployment',
   '/kubernetes',
+  '/helm',
   '/tools',
   '/cache',
   '/graphql-proxy',

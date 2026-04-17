@@ -1,0 +1,42 @@
+export const metadata = {
+  title: 'Helm',
+  description:
+    'Install ClawQL on Kubernetes with the charts/clawql-mcp Helm chart: image, Service, optional Ingress and persistence.',
+}
+
+# Helm
+
+The repository includes a **Helm 3** chart at **`charts/clawql-mcp`** that deploys **`clawql-mcp-http`**: Streamable HTTP MCP on **`/mcp`**, health on **`/healthz`**, GraphQL on **`/graphql`**, and (optionally) gRPC on port **50051**—matching the [Kustomize](/kubernetes) layout.
+
+## Install
+
+From a **clone** of the repo (chart path is relative):
+
+```bash
+helm upgrade --install clawql ./charts/clawql-mcp \
+  --namespace clawql \
+  --create-namespace \
+  --wait
+```
+
+The default image is **`ghcr.io/danielsmithdevelopment/clawql-mcp:latest`**. Override **`image.tag`** or **`image.repository`** for your registry.
+
+## Docs and values
+
+- **Full guide** (examples: ClusterIP, gRPC, tokens, Ingress, persistence): **[`docs/helm.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/helm.md)** on GitHub
+- **Default values:** [`charts/clawql-mcp/values.yaml`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/charts/clawql-mcp/values.yaml)
+
+## Helm vs Kustomize
+
+|             | [Kubernetes / Kustomize](/kubernetes)                      | Helm (this page)          |
+| ----------- | ---------------------------------------------------------- | ------------------------- |
+| **Install** | `kubectl apply -k`, `make deploy-k8s`, `make local-k8s-up` | `helm upgrade --install`  |
+| **Config**  | Overlays under `docker/kustomize/overlays/`                | `values.yaml` and `--set` |
+
+Docker Desktop with a **host-mounted** vault is still easiest with **`make local-k8s-up`**; use Helm when you want chart-driven upgrades and values files on shared clusters.
+
+## Validate the chart locally
+
+```bash
+make helm-lint
+```

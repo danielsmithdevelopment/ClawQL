@@ -1,7 +1,7 @@
 export const metadata = {
   title: 'Deployment',
   description:
-    'Deploy ClawQL: Docker Distroless image, Streamable HTTP /mcp, ENABLE_GRPC and GRPC_PORT, Google Cloud Run script, Kubernetes overlays and production notes.',
+    'Deploy ClawQL: Docker Distroless image, Streamable HTTP /mcp, ENABLE_GRPC and GRPC_PORT, Google Cloud Run script, Kubernetes Kustomize or Helm chart, production notes.',
 }
 
 # Deployment
@@ -48,12 +48,14 @@ After deploy, agents use **`https://<mcp-service-url>/mcp`**. Full options: [`do
 
 ## Kubernetes
 
-**Local MCP on Docker Desktop** (build `clawql-mcp:latest`, namespace `clawql`, **`http://localhost:8080/mcp`**) is covered on the dedicated guide: **[Kubernetes](/kubernetes)**.
+**Local MCP on Docker Desktop** (namespace `clawql`, **`http://localhost:8080/mcp`**, GHCR image or optional local build) is covered on **[Kubernetes](/kubernetes)**.
 
-For **remote** clusters, overlays for `dev` / `prod` with image tag injection:
+For **remote** clusters, use Kustomize overlays with image tag injection:
 
 ```bash
 ENV=dev IMAGE=us-central1-docker.pkg.dev/<project>/<repo>/clawql-mcp TAG=<tag> make deploy-k8s
 ```
+
+Or install with **Helm** from **`charts/clawql-mcp`**: **[Helm](/helm)** and [`docs/helm.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/helm.md).
 
 Details: [`docs/deploy-k8s.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deploy-k8s.md). Extended container and manifest notes: [`docker/README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docker/README.md).

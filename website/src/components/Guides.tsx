@@ -32,6 +32,12 @@ const guides = [
     description:
       'Local MCP on Docker Desktop K8s (localhost:8080/mcp), auth, rebuilds, and remote overlays.',
   },
+  {
+    href: '/helm',
+    name: 'Helm',
+    description:
+      'Helm chart at charts/clawql-mcp: install, values, GHCR image, optional Ingress and PVC.',
+  },
 ]
 
 export function Guides() {

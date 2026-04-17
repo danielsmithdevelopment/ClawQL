@@ -1,8 +1,18 @@
-# Deploy ClawQL on Kubernetes (Kustomize)
+# Deploy ClawQL on Kubernetes (Kustomize or Helm)
 
 This deploy pattern runs ClawQL as **one** workload (**`clawql-mcp-http`**): MCP at **`/mcp`**, GraphQL at **`/graphql`** on the same service.
 
-## Prerequisites
+## Helm chart (alternative)
+
+For **`helm install` / `helm upgrade`**, use the maintained chart at **`charts/clawql-mcp`**. See **[`docs/helm.md`](helm.md)** for install examples, values, private registry pull secrets, Ingress, and persistence.
+
+Quick start from repo root:
+
+```bash
+helm upgrade --install clawql ./charts/clawql-mcp --namespace clawql --create-namespace --wait
+```
+
+## Prerequisites (Kustomize)
 
 - `kubectl` configured for your target cluster
 - image pushed to a registry your cluster can pull from

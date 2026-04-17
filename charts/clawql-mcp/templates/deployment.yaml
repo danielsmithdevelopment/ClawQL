@@ -1,0 +1,108 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "clawql-mcp.fullname" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app: {{ include "clawql-mcp.fullname" . }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "clawql-mcp.selectorLabels" . | nindent 6 }}
+      app: {{ include "clawql-mcp.fullname" . }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "clawql-mcp.selectorLabels" . | nindent 8 }}
+        app: {{ include "clawql-mcp.fullname" . }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "clawql-mcp.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ include "clawql-mcp.fullname" . }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.http.targetPort | int }}
+              protocol: TCP
+            - name: grpc
+              containerPort: {{ .Values.service.grpc.targetPort | int }}
+              protocol: TCP
+          env:
+            - name: CLAWQL_PROVIDER
+              value: {{ .Values.provider | quote }}
+            - name: CLAWQL_OBSIDIAN_VAULT_PATH
+              value: {{ .Values.obsidianVaultPath | quote }}
+            - name: PORT
+              value: {{ .Values.port | quote }}
+            - name: MCP_PATH
+              value: {{ .Values.mcpPath | quote }}
+            - name: CLAWQL_BUNDLED_OFFLINE
+              value: {{ .Values.bundledOffline | quote }}
+            - name: NODE_OPTIONS
+              value: {{ .Values.nodeOptions | quote }}
+            {{- if .Values.enableGrpc }}
+            - name: ENABLE_GRPC
+              value: "1"
+            {{- end }}
+            {{- if .Values.enableGrpcReflection }}
+            - name: ENABLE_GRPC_REFLECTION
+              value: "1"
+            {{- end }}
+            {{- with .Values.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- if .Values.envFromSecret }}
+          envFrom:
+            - secretRef:
+                name: {{ .Values.envFromSecret }}
+          {{- end }}
+          startupProbe:
+            {{- toYaml .Values.startupProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: obsidian-vault
+              mountPath: {{ .Values.obsidianVaultPath }}
+      volumes:
+        - name: obsidian-vault
+          {{- if .Values.persistence.enabled }}
+          {{- if .Values.persistence.existingClaim }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistence.existingClaim }}
+          {{- else }}
+          persistentVolumeClaim:
+            claimName: {{ include "clawql-mcp.fullname" . }}-vault
+          {{- end }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

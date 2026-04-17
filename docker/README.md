@@ -67,7 +67,7 @@ docker run -i --rm --entrypoint node clawql-mcp dist/server.js
 | `docker/docker-compose.yml`      | Local stack (`clawql-mcp-http` only)                              |
 | `docker/kubernetes-starter.yaml` | Starter K8s namespace + Deployments + Services                    |
 
-Future Compose / Kubernetes / Helm manifests can live under `docker/` (or split to `deploy/`) without changing this image.
+**Helm:** a maintained chart lives at **`charts/clawql-mcp`** — see **[`docs/helm.md`](../docs/helm.md)**. Kustomize overlays remain under **`docker/kustomize/`**.
 
 ## Docker Compose (local)
 
@@ -93,17 +93,19 @@ Endpoints:
 
 **Cursor MCP:** use a Streamable HTTP server whose URL points at your MCP endpoint (default for this compose/K8s setup: `http://localhost:8080/mcp`). Do not assume everyone uses the same URL — copy `.cursor/mcp.json.example` to `.cursor/mcp.json` (gitignored) and set `url` to localhost, a tunnel, or your cluster ingress. You can also set **`${env:VAR}`** in `url` via [Cursor config interpolation](https://cursor.com/docs/context/mcp) if you prefer env-based URLs.
 
-## Kubernetes on Docker Desktop (local image)
+## Kubernetes on Docker Desktop (GHCR image)
 
 1. Enable **Kubernetes** in Docker Desktop (Settings → Kubernetes → Enable cluster).
-2. Build the image and apply the **`local`** overlay (LoadBalancer on **8080** for MCP):
+2. Apply the **`local`** overlay (LoadBalancer on **8080** for MCP). The Deployment pulls **`ghcr.io/danielsmithdevelopment/clawql-mcp:latest`** (`imagePullPolicy: Always`).
 
 ```bash
 make local-k8s-up
 # or: bash scripts/local-k8s-docker-desktop.sh
 ```
 
-This tags **`clawql-mcp:latest`** (same daemon as Docker Desktop; no registry push). The overlay lives at `docker/kustomize/overlays/local`.
+The overlay lives at `docker/kustomize/overlays/local`. To **build the image locally** instead (same as before), run **`CLAWQL_LOCAL_K8S_BUILD_IMAGE=1 make local-k8s-up`** — the script builds `clawql-mcp:latest` and patches the Deployment to use it.
+
+If the GHCR package is **private**, add an **`imagePullSecret`** for `ghcr.io` on the Deployment or service account (same as any private registry).
 
 - **`CLAWQL_PROVIDER`:** The **local** overlay sets **`default-multi-provider`** (Google top50 + Cloudflare + GitHub, same as bare `npx clawql-mcp`). Edit `docker/kustomize/overlays/local/patch-local-provider-env.yaml` to **`all-providers`** when you need the full merge for multi-vendor MCP or **`workflow:complex-release-stack:mcp`** over HTTP. The **base** manifest defaults to **`google-top50`** when no overlay patch applies.
 - **`kubectl` context:** The script targets **`docker-desktop`** when that context exists (so your default context can stay on EKS or another cluster).
