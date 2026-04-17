@@ -11,6 +11,7 @@ import {
   resolveMemoryDatabasePath,
   syncMemoryDbFromDocuments,
 } from "./memory-db.js";
+import { resetMemoryDbArtifactCachesForTests } from "./memory-db-artifact-cache.js";
 
 describe("memory-db", () => {
   const savedVault = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
@@ -45,6 +46,7 @@ describe("memory-db", () => {
     if (savedMerkle === undefined) delete process.env.CLAWQL_MERKLE_ENABLED;
     else process.env.CLAWQL_MERKLE_ENABLED = savedMerkle;
     vi.unstubAllGlobals();
+    resetMemoryDbArtifactCachesForTests();
     await rm(dir, { recursive: true, force: true });
   });
 

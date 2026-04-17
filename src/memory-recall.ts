@@ -7,8 +7,7 @@ import { getObsidianVaultPath } from "./vault-config.js";
 import { readVaultTextFile } from "./vault-utils.js";
 import { slugifyTitle } from "./memory-ingest.js";
 import {
-  loadChunkEmbeddingsForDocuments,
-  loadCuckooMembershipPredicate,
+  loadRecallDbArtifacts,
   loadVaultMerkleSnapshotFromDb,
   loadWikilinkEdgesFromDatabase,
   memoryDbSyncEnabled,
@@ -241,19 +240,33 @@ export async function runMemoryRecall(input: MemoryRecallInput): Promise<MemoryR
     return [...new Set([...a, ...b])];
   }
 
-  const vectorByRel = new Map<string, number>();
   const embCfg = resolveEmbeddingConfig();
+  let recallArtifacts: Awaited<ReturnType<typeof loadRecallDbArtifacts>> | null = null;
+  if (memoryDbSyncEnabled()) {
+    const wantChunks = Boolean(embCfg);
+    const wantCuckoo = wantChunks && process.env.CLAWQL_CUCKOO_ENABLED === "1";
+    const wantMerkle = process.env.CLAWQL_MERKLE_ENABLED === "1";
+    if (wantChunks || wantMerkle) {
+      recallArtifacts = await loadRecallDbArtifacts(vault, mdFiles, {
+        loadChunks: wantChunks,
+        loadCuckoo: wantCuckoo,
+        loadMerkle: wantMerkle,
+      });
+    }
+  }
+
+  const vectorByRel = new Map<string, number>();
   let cuckooVectorChunksDropped: number | undefined;
   if (embCfg && memoryDbSyncEnabled()) {
     try {
-      const cuckooPred = await loadCuckooMembershipPredicate(vault);
+      const cuckooPred = recallArtifacts?.cuckooPred ?? null;
       const qEmb = await embedQuery(query, embCfg);
       if (qEmb.length > 0) {
         const topChunks = envInt("CLAWQL_MEMORY_VECTOR_TOP_CHUNKS", 80);
         const maxDocs = envInt("CLAWQL_MEMORY_VECTOR_MAX_DOCS", 12);
         const vb = effectiveVectorBackend();
         const rankFromMemoryDbBlobs = async () => {
-          const chunks = await loadChunkEmbeddingsForDocuments(vault, mdFiles);
+          const chunks = recallArtifacts?.chunks ?? [];
           if (chunks.length === 0) return [];
           return rankDocumentsByChunkSimilarity(qEmb, chunks, {
             topChunks,
@@ -379,7 +392,10 @@ export async function runMemoryRecall(input: MemoryRecallInput): Promise<MemoryR
   };
   if (process.env.CLAWQL_MERKLE_ENABLED === "1") {
     try {
-      result.merkleSnapshot = await loadVaultMerkleSnapshotFromDb(vault);
+      result.merkleSnapshot =
+        recallArtifacts != null
+          ? recallArtifacts.merkleSnapshot
+          : await loadVaultMerkleSnapshotFromDb(vault);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
       console.error(`[clawql-mcp] memory_recall merkle snapshot load failed: ${msg}`);

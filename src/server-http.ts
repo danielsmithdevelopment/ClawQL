@@ -15,7 +15,7 @@ import { createRegisteredMcpServer } from "./mcp-server-factory.js";
 import { loadSpec } from "./spec-loader.js";
 import { preloadSchemaFieldCacheFromDisk } from "./tools.js";
 import { maybeStartGrpcMcpServer } from "mcp-grpc-transport";
-import { validateObsidianVaultAtStartup } from "./vault-config.js";
+import { getObsidianVaultPath, validateObsidianVaultAtStartup } from "./vault-config.js";
 import { registerPostgresPoolShutdownHooks } from "./vector-store/pgvector.js";
 
 const PORT = Number.parseInt(process.env.PORT ?? process.env.MCP_PORT ?? "8080", 10);
@@ -95,8 +95,31 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
 
   await attachGraphqlHttpToMcpApp(app);
 
-  app.get("/healthz", (_req, res) => {
-    res.json({ status: "ok", transport: "streamable-http", endpoint: mcpPath });
+  app.get("/healthz", async (_req, res) => {
+    const base: Record<string, unknown> = {
+      status: "ok",
+      transport: "streamable-http",
+      endpoint: mcpPath,
+    };
+    if (process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS?.trim() === "1") {
+      try {
+        const vault = getObsidianVaultPath();
+        if (vault) {
+          const { loadVaultMerkleSnapshotFromDb, memoryDbSyncEnabled } = await import("./memory-db.js");
+          if (memoryDbSyncEnabled()) {
+            if (process.env.CLAWQL_MERKLE_ENABLED === "1") {
+              base.merkleSnapshot = await loadVaultMerkleSnapshotFromDb(vault);
+            }
+            if (process.env.CLAWQL_CUCKOO_ENABLED === "1") {
+              base.cuckooMembershipArtifactsEnabled = true;
+            }
+          }
+        }
+      } catch {
+        /* optional enrichment — ignore */
+      }
+    }
+    res.json(base);
   });
 
   app.post(mcpPath, async (req, res) => {
