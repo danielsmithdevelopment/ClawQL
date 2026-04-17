@@ -21,7 +21,9 @@ export function parseRequestCommon(req: Record<string, unknown>): ParsedRequestC
   if (!common) {
     return {};
   }
-  const metadata = common.metadata ? structToJson(common.metadata as { fields?: Record<string, unknown> }) : undefined;
+  const metadata = common.metadata
+    ? structToJson(common.metadata as { fields?: Record<string, unknown> })
+    : undefined;
   const rawLevel = common.log_level;
   let log_level: string | undefined;
   if (typeof rawLevel === "string" && rawLevel !== "") {
@@ -42,16 +44,21 @@ export function parseRequestCommon(req: Record<string, unknown>): ParsedRequestC
   const dep = common.dependent_responses;
   return {
     cursor: typeof common.cursor === "string" && common.cursor !== "" ? common.cursor : undefined,
-    task_id: typeof common.task_id === "string" && common.task_id !== "" ? common.task_id : undefined,
+    task_id:
+      typeof common.task_id === "string" && common.task_id !== "" ? common.task_id : undefined,
     log_level,
     metadata: metadata && Object.keys(metadata).length > 0 ? metadata : undefined,
     dependent_responses:
-      dep && typeof dep === "object" && !Array.isArray(dep) ? (dep as Record<string, unknown>) : undefined,
+      dep && typeof dep === "object" && !Array.isArray(dep)
+        ? (dep as Record<string, unknown>)
+        : undefined,
     resume_data: parseResumeData(common),
   };
 }
 
-export function listParamsFromCommon(parsed: ParsedRequestCommon): { cursor?: string; _meta?: Record<string, unknown> } | undefined {
+export function listParamsFromCommon(
+  parsed: ParsedRequestCommon
+): { cursor?: string; _meta?: Record<string, unknown> } | undefined {
   const p: { cursor?: string; _meta?: Record<string, unknown> } = {};
   if (parsed.cursor) {
     p.cursor = parsed.cursor;

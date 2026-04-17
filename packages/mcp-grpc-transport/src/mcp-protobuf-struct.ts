@@ -4,7 +4,9 @@
  */
 
 /** Build `google.protobuf.Struct` as a plain object (grpc/proto-loader friendly). */
-export function jsonToStruct(data: unknown): { fields: Record<string, ReturnType<typeof jsonToValue>> } {
+export function jsonToStruct(data: unknown): {
+  fields: Record<string, ReturnType<typeof jsonToValue>>;
+} {
   if (data === null || typeof data !== "object" || Array.isArray(data)) {
     return { fields: {} };
   }
@@ -78,7 +80,9 @@ export function valueToJson(v: Record<string, unknown> | undefined | null): unkn
 }
 
 /** Decode `google.protobuf.Struct` (proto-loader shape) to a plain object. */
-export function structToJson(s: { fields?: Record<string, unknown> } | undefined | null): Record<string, unknown> | undefined {
+export function structToJson(
+  s: { fields?: Record<string, unknown> } | undefined | null
+): Record<string, unknown> | undefined {
   if (s == null || typeof s !== "object") {
     return undefined;
   }

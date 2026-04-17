@@ -43,7 +43,9 @@ describe("mcp-protobuf-dependent", () => {
             },
           };
         }
-        expect((common as { dependent_responses?: Record<string, unknown> }).dependent_responses).toBeDefined();
+        expect(
+          (common as { dependent_responses?: Record<string, unknown> }).dependent_responses
+        ).toBeDefined();
         return { common: {}, tools: [{ name: "t" }] };
       },
       {

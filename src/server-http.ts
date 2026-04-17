@@ -56,7 +56,6 @@ function applyCorsIfConfigured(
   next();
 }
 
-
 function jsonRpcError(res: import("express").Response, message: string, code = -32000): void {
   res.status(400).json({
     jsonrpc: "2.0",

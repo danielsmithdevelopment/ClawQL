@@ -37,7 +37,9 @@ function mapRole(aud: string | undefined): string {
   return "ROLE_UNKNOWN";
 }
 
-function mapResourceAnnotations(a: { audience?: ("user" | "assistant")[]; priority?: number } | undefined) {
+function mapResourceAnnotations(
+  a: { audience?: ("user" | "assistant")[]; priority?: number } | undefined
+) {
   if (!a) {
     return undefined;
   }
@@ -255,7 +257,10 @@ export function createMcpProtobufServiceImplementation(
           const uriHint = getMetadataValue(call.metadata, MCP_RESOURCE_URI_KEY);
           if (uriHint && uriHint !== uri) {
             callback(
-              grpcError(grpc.status.INVALID_ARGUMENT, `mcp-resource-uri metadata mismatch for resource ${uri}`)
+              grpcError(
+                grpc.status.INVALID_ARGUMENT,
+                `mcp-resource-uri metadata mismatch for resource ${uri}`
+              )
             );
             return;
           }
@@ -343,13 +348,20 @@ export function createMcpProtobufServiceImplementation(
         }
         sendMcpProtocolMetadata(call, check.version);
         await protobufRpcLogStorage.run({ logs: [] }, async () => {
-          const req = call.request as { name?: string; arguments?: Record<string, unknown>; common?: unknown };
-            const nameHint = getMetadataValue(call.metadata, MCP_PROMPT_NAME_KEY);
+          const req = call.request as {
+            name?: string;
+            arguments?: Record<string, unknown>;
+            common?: unknown;
+          };
+          const nameHint = getMetadataValue(call.metadata, MCP_PROMPT_NAME_KEY);
           try {
             const parsed = parseRequestCommon(req as Record<string, unknown>);
             if (nameHint && nameHint !== String(req.name ?? "")) {
               callback(
-                grpcError(grpc.status.INVALID_ARGUMENT, `mcp_prompt metadata mismatch for prompt ${String(req.name ?? "")}`)
+                grpcError(
+                  grpc.status.INVALID_ARGUMENT,
+                  `mcp_prompt metadata mismatch for prompt ${String(req.name ?? "")}`
+                )
               );
               return;
             }
@@ -410,7 +422,9 @@ export function createMcpProtobufServiceImplementation(
       })();
     }) as UnaryHandler<Record<string, unknown>, Record<string, unknown>>,
 
-    CallTool: (call: grpc.ServerWritableStream<Record<string, unknown>, Record<string, unknown>>) => {
+    CallTool: (
+      call: grpc.ServerWritableStream<Record<string, unknown>, Record<string, unknown>>
+    ) => {
       void (async () => {
         const check = checkMcpProtocolVersion(call.metadata);
         if (!check.ok) {
@@ -424,20 +438,26 @@ export function createMcpProtobufServiceImplementation(
           common?: { progress?: { progress_token?: string } };
         };
         if (!req.request?.name) {
-          call.emit("error", grpcError(grpc.status.INVALID_ARGUMENT, "Initial request cannot be empty."));
+          call.emit(
+            "error",
+            grpcError(grpc.status.INVALID_ARGUMENT, "Initial request cannot be empty.")
+          );
           return;
         }
         const toolHint = getMetadataValue(call.metadata, MCP_TOOL_NAME_KEY);
         if (toolHint && toolHint !== req.request.name) {
           call.emit(
             "error",
-            grpcError(grpc.status.INVALID_ARGUMENT, `mcp-tool-name metadata mismatch for tool ${req.request.name}`)
+            grpcError(
+              grpc.status.INVALID_ARGUMENT,
+              `mcp-tool-name metadata mismatch for tool ${req.request.name}`
+            )
           );
           return;
         }
         const parsed = parseRequestCommon(req as Record<string, unknown>);
-        const progressToken = (req.common as { progress?: { progress_token?: string } } | undefined)?.progress
-          ?.progress_token;
+        const progressToken = (req.common as { progress?: { progress_token?: string } } | undefined)
+          ?.progress?.progress_token;
         await protobufRpcLogStorage.run({ logs: [] }, async () => {
           const taskId = randomUUID();
           const ac = new AbortController();
@@ -473,7 +493,10 @@ export function createMcpProtobufServiceImplementation(
                 }
               )) as Record<string, unknown>;
               call.write(
-                toolResultToCallToolResponse(result, buildResponseCommon(bridge, result as { _meta?: Record<string, unknown> }))
+                toolResultToCallToolResponse(
+                  result,
+                  buildResponseCommon(bridge, result as { _meta?: Record<string, unknown> })
+                )
               );
               call.end();
             });
@@ -495,7 +518,9 @@ export function createMcpProtobufServiceImplementation(
             call.write(
               toolResultToCallToolResponse(
                 {
-                  content: [{ type: "text", text: `Error executing tool ${req.request!.name}: ${msg}` }],
+                  content: [
+                    { type: "text", text: `Error executing tool ${req.request!.name}: ${msg}` },
+                  ],
                   isError: true,
                 },
                 buildResponseCommon(bridge, undefined)
@@ -560,7 +585,12 @@ export function createMcpProtobufServiceImplementation(
               });
               return;
             }
-            callback(grpcError(grpc.status.INVALID_ARGUMENT, "Complete request missing resource or prompt reference"));
+            callback(
+              grpcError(
+                grpc.status.INVALID_ARGUMENT,
+                "Complete request missing resource or prompt reference"
+              )
+            );
           } catch (e) {
             callback(mapGrpcError(e));
           }
@@ -579,12 +609,16 @@ export function createMcpProtobufServiceImplementation(
         sendMcpProtocolMetadata(call, check.version);
         const parsed = parseRequestCommon(call.request as Record<string, unknown>);
         if (!parsed.task_id) {
-          callback(grpcError(grpc.status.INVALID_ARGUMENT, "common.task_id is required for CancelTask"));
+          callback(
+            grpcError(grpc.status.INVALID_ARGUMENT, "common.task_id is required for CancelTask")
+          );
           return;
         }
         const ok = taskRegistry.cancel(parsed.task_id);
         if (!ok) {
-          callback(grpcError(grpc.status.NOT_FOUND, `No active task for task_id: ${parsed.task_id}`));
+          callback(
+            grpcError(grpc.status.NOT_FOUND, `No active task for task_id: ${parsed.task_id}`)
+          );
           return;
         }
         callback(null, { common: buildResponseCommon(bridge, undefined) });
@@ -593,4 +627,9 @@ export function createMcpProtobufServiceImplementation(
   };
 }
 
-export { MCP_PROMPT_NAME_KEY, MCP_RESOURCE_URI_KEY, MCP_TOOL_NAME_KEY, MCP_PROTOCOL_VERSION_METADATA_KEY };
+export {
+  MCP_PROMPT_NAME_KEY,
+  MCP_RESOURCE_URI_KEY,
+  MCP_TOOL_NAME_KEY,
+  MCP_PROTOCOL_VERSION_METADATA_KEY,
+};

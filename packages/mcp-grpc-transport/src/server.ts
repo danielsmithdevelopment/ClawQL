@@ -17,7 +17,10 @@ import type {
 } from "@modelcontextprotocol/sdk/types.js";
 import { JSONRPCMessageSchema } from "@modelcontextprotocol/sdk/types.js";
 import type { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
-import type { Transport, TransportSendOptions } from "@modelcontextprotocol/sdk/shared/transport.js";
+import type {
+  Transport,
+  TransportSendOptions,
+} from "@modelcontextprotocol/sdk/shared/transport.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { createMcpProtobufServiceImplementation } from "./mcp-protobuf-service.js";
 import { McpProtobufBridge } from "./mcp-protobuf-bridge.js";
@@ -297,7 +300,11 @@ function createHealthImplementation(): grpc.UntypedServiceImplementation {
       callback: grpc.sendUnaryData<{ status?: number }>
     ) => {
       const svc = call.request?.service ?? "";
-      if (svc === "" || svc === MCP_TRANSPORT_SESSION_SERVICE_FQN || svc === PROTOBUF_MCP_SERVICE_FQN) {
+      if (
+        svc === "" ||
+        svc === MCP_TRANSPORT_SESSION_SERVICE_FQN ||
+        svc === PROTOBUF_MCP_SERVICE_FQN
+      ) {
         callback(null, { status: SERVING });
       } else {
         callback(null, { status: SERVICE_UNKNOWN });
@@ -340,7 +347,11 @@ function createServerCredentials(): grpc.ServerCredentials {
   const rootCerts = caPath ? readFileSync(caPath) : null;
   const requireClientCert = process.env.GRPC_TLS_REQUIRE_CLIENT_CERT === "1";
 
-  return grpc.ServerCredentials.createSsl(rootCerts, [{ cert_chain: certChain, private_key: privateKey }], requireClientCert);
+  return grpc.ServerCredentials.createSsl(
+    rootCerts,
+    [{ cert_chain: certChain, private_key: privateKey }],
+    requireClientCert
+  );
 }
 
 /**
@@ -387,7 +398,10 @@ export async function maybeStartGrpcMcpServer(
 
   const server = new grpc.Server(options.grpcServerOptions);
   server.addService(healthDef, createHealthImplementation());
-  server.addService(protobufMcpServiceDef, createMcpProtobufServiceImplementation(protobufBridge, protobufTaskRegistry));
+  server.addService(
+    protobufMcpServiceDef,
+    createMcpProtobufServiceImplementation(protobufBridge, protobufTaskRegistry)
+  );
   server.addService(mcpDef, sessionImpl);
 
   let reflectionEnabled = false;
