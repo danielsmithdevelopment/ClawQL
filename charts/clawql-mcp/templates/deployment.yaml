@@ -62,6 +62,10 @@ spec:
             - name: ENABLE_GRPC_REFLECTION
               value: "1"
             {{- end }}
+            {{- if .Values.enableCache }}
+            - name: CLAWQL_ENABLE_CACHE
+              value: "1"
+            {{- end }}
             {{- with .Values.extraEnv }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
@@ -91,6 +95,10 @@ spec:
           persistentVolumeClaim:
             claimName: {{ include "clawql-mcp.fullname" . }}-vault
           {{- end }}
+          {{- else if .Values.vault.hostPath.enabled }}
+          hostPath:
+            path: {{ quote (required "vault.hostPath.path is required when vault.hostPath.enabled" .Values.vault.hostPath.path) }}
+            type: {{ .Values.vault.hostPath.type | default "DirectoryOrCreate" }}
           {{- else }}
           emptyDir: {}
           {{- end }}

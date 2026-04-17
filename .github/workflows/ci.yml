@@ -155,8 +155,8 @@ jobs:
         with:
           version: v3.17.0
 
-      - name: Helm chart lint
-        run: make helm-lint
+      - name: Helm chart + Kustomize local overlay lint
+        run: make lint-k8s-manifests
 
   # Wave 2 — only if fast gates pass (fail early: no matrix work when lint/scripts fail)
   test:

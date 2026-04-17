@@ -93,31 +93,36 @@ Endpoints:
 
 **Cursor MCP:** use a Streamable HTTP server whose URL points at your MCP endpoint (default for this compose/K8s setup: `http://localhost:8080/mcp`). Do not assume everyone uses the same URL — copy `.cursor/mcp.json.example` to `.cursor/mcp.json` (gitignored) and set `url` to localhost, a tunnel, or your cluster ingress. You can also set **`${env:VAR}`** in `url` via [Cursor config interpolation](https://cursor.com/docs/context/mcp) if you prefer env-based URLs.
 
-## Kubernetes on Docker Desktop (GHCR image)
+## Kubernetes on Docker Desktop (Helm default, Kustomize optional)
 
 1. Enable **Kubernetes** in Docker Desktop (Settings → Kubernetes → Enable cluster).
-2. Apply the **`local`** overlay (LoadBalancer on **8080** for MCP). The Deployment pulls **`ghcr.io/danielsmithdevelopment/clawql-mcp:latest`** (`imagePullPolicy: Always`).
+2. **Default:** install **[Helm 3](https://helm.sh/docs/intro/install/)** on your PATH.
+3. From the repo root, **`make local-k8s-up`** runs **`helm upgrade --install`** with **`charts/clawql-mcp/values-docker-desktop.yaml`**: LoadBalancer on **8080**, **`ghcr.io/danielsmithdevelopment/clawql-mcp:latest`** (`imagePullPolicy: Always`), **`default-multi-provider`**, and a **`hostPath`** vault at **`$HOME/.ClawQL`** (override **`CLAWQL_LOCAL_VAULT_HOST_PATH`**).
 
 ```bash
 make local-k8s-up
 # or: bash scripts/local-k8s-docker-desktop.sh
 ```
 
-The overlay lives at `docker/kustomize/overlays/local`. To **build the image locally** instead (same as before), run **`CLAWQL_LOCAL_K8S_BUILD_IMAGE=1 make local-k8s-up`** — the script builds `clawql-mcp:latest` and patches the Deployment to use it.
+If Helm errors with **invalid ownership** (MCP was previously installed with **`kubectl apply`** / Kustomize), remove the old workload and reinstall: **`make local-k8s-mcp-delete && make local-k8s-up`**.
 
-If the GHCR package is **private**, add an **`imagePullSecret`** for `ghcr.io` on the Deployment or service account (same as any private registry).
+**Kustomize instead of Helm** (no Helm required): **`CLAWQL_LOCAL_K8S_INSTALLER=kustomize make local-k8s-up`** applies **`docker/kustomize/overlays/local`** (same GHCR image and host vault patch as before).
 
-- **`CLAWQL_PROVIDER`:** The **local** overlay sets **`default-multi-provider`** (Google top50 + Cloudflare + GitHub, same as bare `npx clawql-mcp`). Edit `docker/kustomize/overlays/local/patch-local-provider-env.yaml` to **`all-providers`** when you need the full merge for multi-vendor MCP or **`workflow:complex-release-stack:mcp`** over HTTP. The **base** manifest defaults to **`google-top50`** when no overlay patch applies.
-- **`kubectl` context:** The script targets **`docker-desktop`** when that context exists (so your default context can stay on EKS or another cluster).
+To **build the image locally** instead of pulling GHCR, run **`CLAWQL_LOCAL_K8S_BUILD_IMAGE=1 make local-k8s-up`** — the script runs **`docker build`** and deploys **`clawql-mcp:latest`** (Helm **`--set`** or Kustomize **`kubectl patch`**).
+
+If the GHCR package is **private**, add **`imagePullSecrets`** via Helm values (same as any private registry).
+
+- **Customize provider or ports:** edit **`charts/clawql-mcp/values-docker-desktop.yaml`** or pass **`helm --set`**; see **[`docs/helm.md`](../docs/helm.md)**.
+- **`kubectl` / Helm context:** The script targets **`docker-desktop`** when that context exists (so your default context can stay on EKS or another cluster).
 - **Restart behavior:** Deployments keep **`replicas: 1`** and Kubernetes **restarts failed containers** automatically (Pod `restartPolicy` is `Always`).
 - **MCP URL:** `http://localhost:8080/mcp` once `kubectl -n clawql get svc clawql-mcp-http` shows an external address (often `localhost` on Docker Desktop).
 - **Cold start:** The MCP container loads every bundled spec before `listen()`; hitting `:8080` too early can produce `fetch failed` / “other side closed” in Node. Wait until `curl http://localhost:8080/healthz` returns `{"status":"ok"…}` or the pod is **Ready** (the MCP Deployment includes `/healthz` startup/readiness probes). The `workflow:complex-release-stack:mcp` script polls `/healthz` when `CLAWQL_MCP_URL` is set.
-- **Obsidian vault (`memory_ingest` / `memory_recall`):** The **`local`** overlay replaces the base **`emptyDir`** volume with a **`hostPath`** mount so notes persist on the Docker Desktop host. **`scripts/local-k8s-docker-desktop.sh`** writes **`patch-mcp-vault-hostpath.json`** (RFC 6902 JSON Patch replacing **`volumes[0]`**, gitignored) before **`kubectl apply -k`**, defaulting to **`$HOME/.ClawQL`** — same default as Compose’s **`CLAWQL_VAULT_HOST_PATH`**. Override with **`CLAWQL_LOCAL_VAULT_HOST_PATH=/absolute/path/to/vault`** when applying. **Do not** run raw **`kubectl apply -k docker/kustomize/overlays/local`** without generating that patch first (use **`make local-k8s-up`**). On Docker Desktop, shared filesystem paths such as **`/Users/...`** on macOS are visible to **`hostPath`** pods.
-- **Teardown:** `kubectl delete namespace clawql` (or `kubectl --context docker-desktop delete namespace clawql`)
+- **Obsidian vault (`memory_ingest` / `memory_recall`):** Helm sets **`vault.hostPath`** so **`$HOME/.ClawQL`** (or **`CLAWQL_LOCAL_VAULT_HOST_PATH`**) is mounted at **`/vault`** — same idea as Compose’s **`CLAWQL_VAULT_HOST_PATH`**. On Docker Desktop, paths such as **`/Users/...`** on macOS are visible to **`hostPath`** pods.
+- **Teardown:** `helm uninstall clawql -n clawql` or `kubectl delete namespace clawql` (also removes non-Helm resources in that namespace).
 
 ### Optional: gRPC on Docker Desktop K8s
 
-The Service exposes **8080** (HTTP MCP) and **50051** (gRPC) when you use the **local** overlay. Enable the listener on the workload:
+The Service exposes **8080** (HTTP MCP) and **50051** (gRPC). Enable the listener on the workload:
 
 ```bash
 kubectl -n clawql set env deployment/clawql-mcp-http ENABLE_GRPC=1
@@ -171,9 +176,9 @@ Merged **`execute`** calls pick the bearer per **`specLabel`**: GitHub, Cloudfla
    kubectl -n clawql rollout restart deployment/clawql-mcp-http
    ```
 
-**Note:** Re-applying the Kustomize overlay (`kubectl apply -k docker/kustomize/overlays/local`) resets the Deployment to the YAML on disk and **drops** env injected only via `kubectl set env`. Re-run the script after a full re-apply, or add a permanent `secretKeyRef` patch to your overlay.
+**Note:** **`helm upgrade --install`** reapplies chart values; env injected only via **`kubectl set env`** can be overwritten on the next upgrade. Prefer **`helm --set extraEnv`** or a **Secret** referenced from **`values.yaml`** for durable config.
 
-For remote clusters, use `docker/kustomize/overlays/dev` or `prod` and `scripts/deploy-k8s.sh` with a pushed image.
+For remote clusters, use `docker/kustomize/overlays/dev` or `prod` and `scripts/deploy-k8s.sh` with a pushed image, or install the Helm chart with your registry image.
 
 Cloud Run deployment guide/script:
 

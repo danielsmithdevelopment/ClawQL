@@ -30,7 +30,7 @@ const guides = [
     href: '/kubernetes',
     name: 'Kubernetes',
     description:
-      'Local MCP on Docker Desktop K8s (localhost:8080/mcp), auth, rebuilds, and remote overlays.',
+      'Docker Desktop via Helm (localhost:8080/mcp), auth, rebuilds, and Kustomize dev/prod deploy.',
   },
   {
     href: '/helm',

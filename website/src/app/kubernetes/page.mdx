@@ -1,12 +1,12 @@
 export const metadata = {
   title: 'Kubernetes',
   description:
-    'ClawQL on Kubernetes: Kustomize overlays or Helm chart, Streamable HTTP localhost:8080/mcp, optional gRPC 50051, Docker Desktop LoadBalancer, dev and prod deploy.',
+    'ClawQL on Kubernetes: Helm chart (Docker Desktop default) or Kustomize dev/prod, Streamable HTTP localhost:8080/mcp, optional gRPC 50051.',
 }
 
 # Kubernetes
 
-ClawQL is usually deployed as **`clawql-mcp-http`**: **Streamable HTTP** MCP on **`/mcp`**, **GraphQL** on **`/graphql`**, and (when **`ENABLE_GRPC=1`**) **gRPC** protobuf MCP on port **50051**—all in one pod. The **Service** exposes **both** HTTP and **gRPC** ports so clients can use **`localhost:50051`** (Docker Desktop) or **`<LoadBalancer-ip>:50051`** without **`kubectl port-forward`**. Use **Kustomize** (below) or the **[Helm](/helm)** chart at **`charts/clawql-mcp`**. {{ className: 'lead' }}
+ClawQL is usually deployed as **`clawql-mcp-http`**: **Streamable HTTP** MCP on **`/mcp`**, **GraphQL** on **`/graphql`**, and (when **`ENABLE_GRPC=1`**) **gRPC** protobuf MCP on port **50051**—all in one pod. The **Service** exposes **both** HTTP and **gRPC** ports so clients can use **`localhost:50051`** (Docker Desktop) or **`<LoadBalancer-ip>:50051`** without **`kubectl port-forward`**. **Docker Desktop** defaults to the **[Helm](/helm)** chart (**`charts/clawql-mcp`**, **`values-docker-desktop.yaml`**); remote clusters often use **Kustomize** **`dev`** / **`prod`** with **`scripts/deploy-k8s.sh`**. {{ className: 'lead' }}
 
 ## Local MCP on Docker Desktop
 
@@ -15,7 +15,7 @@ Use this when you want a **stable URL** (for example **`http://localhost:8080/mc
 ### Prerequisites
 
 - Docker Desktop with **Kubernetes** enabled (Settings → Kubernetes).
-- **`kubectl`** on your PATH (Docker Desktop installs it).
+- **`kubectl`** on your PATH. **Helm 3** is required for the **default** install path only.
 - Repo clone at the version you want to run.
 
 ### One-shot install
@@ -32,7 +32,9 @@ Or:
 bash scripts/local-k8s-docker-desktop.sh
 ```
 
-This **applies** the Kustomize overlay at **`docker/kustomize/overlays/local`**, which deploys **`ghcr.io/danielsmithdevelopment/clawql-mcp:latest`** (prebuilt on GHCR), and waits for rollouts. To **build locally** instead, run **`CLAWQL_LOCAL_K8S_BUILD_IMAGE=1 make local-k8s-up`** (or the same env with **`bash scripts/local-k8s-docker-desktop.sh`**).
+**Default:** **`helm upgrade --install`** with **`charts/clawql-mcp/values-docker-desktop.yaml`**: **`ghcr.io/danielsmithdevelopment/clawql-mcp:latest`**, LoadBalancer on **8080**, **`default-multi-provider`**, **`hostPath`** vault at **`$HOME/.ClawQL`** (override **`CLAWQL_LOCAL_VAULT_HOST_PATH`**).
+
+**Kustomize:** **`CLAWQL_LOCAL_K8S_INSTALLER=kustomize make local-k8s-up`** — **`kubectl apply -k docker/kustomize/overlays/local`** (no Helm). To **build locally** instead of GHCR, run **`CLAWQL_LOCAL_K8S_BUILD_IMAGE=1 make local-k8s-up`** (works with either installer).
 
 ### Endpoints and client config
 
@@ -55,13 +57,13 @@ Use your real host if you tunnel or expose the service elsewhere.
 
 ### Optional gRPC on the same deployment
 
-When **`ENABLE_GRPC=1`** (and optionally **`ENABLE_GRPC_REFLECTION=1`** for **`grpcurl list`**), the container listens on **50051** for **`grpc.health.v1`**, **`model_context_protocol.Mcp`**, and **`mcp.transport.v1.Mcp.Session`**. The **`clawql-mcp-http`** Service includes a **`grpc`** port (**50051**) alongside HTTP in **base**, **local**, **dev**, and **prod** overlays—verify with **`kubectl -n clawql get svc clawql-mcp-http`**. For native **`grpc`** readiness/liveness probes on kubelet 1.27+, use the opt-in overlay **`docker/kustomize/overlays/grpc-enabled/`** (see root [**README**](https://github.com/danielsmithdevelopment/ClawQL/blob/main/README.md) Kubernetes section). Full port matrix: [`docs/deploy-k8s.md` — Service ports](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deploy-k8s.md#service-ports-http-and-grpc).
+When **`ENABLE_GRPC=1`** (and optionally **`ENABLE_GRPC_REFLECTION=1`** for **`grpcurl list`**), the container listens on **50051** for **`grpc.health.v1`**, **`model_context_protocol.Mcp`**, and **`mcp.transport.v1.Mcp.Session`**. The **`clawql-mcp-http`** Service includes a **`grpc`** port (**50051**) alongside HTTP in the Helm chart and Kustomize **base** / **dev** / **prod**—verify with **`kubectl -n clawql get svc clawql-mcp-http`**. For native **`grpc`** readiness/liveness probes on kubelet 1.27+, use the opt-in overlay **`docker/kustomize/overlays/grpc-enabled/`** (see root [**README**](https://github.com/danielsmithdevelopment/ClawQL/blob/main/README.md) Kubernetes section). Full port matrix: [`docs/deploy-k8s.md` — Service ports](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deploy-k8s.md#service-ports-http-and-grpc).
 
-### What the local overlay sets
+### What the Helm install sets
 
 - **Namespace:** `clawql`
-- **`CLAWQL_PROVIDER`:** **`all-providers`** (bundled multi-spec preset). That matches broad stdio workflows but uses **more memory** than **`google-top50`** alone.
-- **`kubectl` context:** the script prefers **`docker-desktop`** when present so you do not accidentally apply to another cluster.
+- **`CLAWQL_PROVIDER`:** **`default-multi-provider`** (Google top50 + Cloudflare + GitHub, same as bare `npx clawql-mcp`). Override via **`values-docker-desktop.yaml`** or **`helm --set provider=...`**.
+- **Kube context:** the script prefers **`docker-desktop`** when present so you do not accidentally deploy to another cluster.
 
 Cold start can take a while while specs load. Wait until **`/healthz`** returns **`{"status":"ok",...}`** or the pod is **Ready** before the client connects.
 
@@ -75,11 +77,11 @@ bash scripts/k8s-docker-desktop-set-github-token.sh
 
 With **`gh`** logged in, or pipe a PAT: `gh auth token | bash scripts/k8s-docker-desktop-set-github-token.sh`.
 
-Re-applying the overlay **`kubectl apply -k docker/kustomize/overlays/local`** resets the Deployment YAML; **re-run** the script afterward if you only injected env with **`kubectl set env`**, or add a **`secretKeyRef`** patch to your overlay for a permanent setup.
+**`helm upgrade --install`** reapplies chart values; env injected only with **`kubectl set env`** can be overwritten on the next upgrade. Prefer **`helm --set extraEnv`** or a **Secret** wired through **`values.yaml`** for durable config.
 
 ### Rebuild after code changes
 
-The image tag stays **`clawql-mcp:latest`**. After you change the repo, rebuild and recycle pods:
+After you change the repo, either rebuild locally (**`CLAWQL_LOCAL_K8S_BUILD_IMAGE=1 make local-k8s-up`**) or pull a new GHCR tag and run **`helm upgrade`** with **`image.tag`**. Example recycle:
 
 ```bash
 make local-k8s-up
@@ -87,6 +89,12 @@ kubectl --context docker-desktop -n clawql rollout restart deployment/clawql-mcp
 ```
 
 ### Teardown
+
+```bash
+helm uninstall clawql -n clawql
+```
+
+Or delete the whole namespace:
 
 ```bash
 kubectl --context docker-desktop delete namespace clawql
@@ -100,7 +108,7 @@ For registries and image tags (not the local **`latest`** flow), use overlays an
 ENV=dev IMAGE=us-central1-docker.pkg.dev/<project>/<repo>/clawql-mcp TAG=<tag> make deploy-k8s
 ```
 
-Full checklist: [`docs/deploy-k8s.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deploy-k8s.md).
+Or install the **[Helm](/helm)** chart with your image registry. Full checklist: [`docs/deploy-k8s.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deploy-k8s.md).
 
 ## More detail in the repo
 

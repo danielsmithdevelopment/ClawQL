@@ -1,0 +1,39 @@
+# Used by scripts/local-k8s-docker-desktop.sh — Docker Desktop + LoadBalancer on :8080.
+# vault.hostPath.path is set by the script (--set-string). For manual helm install, pass
+#   --set-string vault.hostPath.path=/absolute/path/to/vault
+
+fullnameOverride: clawql-mcp-http
+
+provider: default-multi-provider
+
+image:
+  repository: ghcr.io/danielsmithdevelopment/clawql-mcp
+  tag: latest
+  pullPolicy: Always
+
+service:
+  type: LoadBalancer
+  http:
+    port: 8080
+    targetPort: 8080
+  grpc:
+    port: 50051
+    targetPort: 50051
+
+nodeOptions: "--max-old-space-size=768"
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 512Mi
+  limits:
+    cpu: "1"
+    memory: 1Gi
+
+vault:
+  hostPath:
+    enabled: true
+    # Set by script (default $HOME/.ClawQL), e.g.:
+    # path: /Users/you/.ClawQL
+    path: ""
+    type: DirectoryOrCreate

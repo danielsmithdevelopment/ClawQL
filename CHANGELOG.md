@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### CI
 
-- **Helm:** **`workflow-scripts`** installs Helm **v3.17.0** and runs **`make helm-lint`** (`helm lint` + `helm template` for **`charts/clawql-mcp`**).
+- **Helm / Kustomize:** **`workflow-scripts`** installs Helm **v3.17.0** and runs **`make lint-k8s-manifests`** (**`helm-lint`** + **`kustomize-local-lint`**).
 
 - **Docker publish** (`.github/workflows/docker-publish.yml`): **daily** at **06:00 UTC** and **`workflow_dispatch`** — builds `docker/Dockerfile`, pushes to **`ghcr.io/danielsmithdevelopment/clawql-mcp`** with tags **`latest`**, **`nightly`**, **`sha-*`**, and **`nightly-YYYYMMDD`** on scheduled runs; GHA BuildKit cache enabled; **multi-platform** **`linux/amd64`** + **`linux/arm64`** (Docker Desktop on Apple Silicon).
 
@@ -17,7 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Docker Desktop local Kustomize overlay** (`docker/kustomize/overlays/local`): default image is **`ghcr.io/danielsmithdevelopment/clawql-mcp:latest`** with **`imagePullPolicy: Always`**. **`scripts/local-k8s-docker-desktop.sh`** no longer builds by default; set **`CLAWQL_LOCAL_K8S_BUILD_IMAGE=1`** to build **`clawql-mcp:latest`** locally and patch the Deployment (previous behavior).
+- **Helm chart** **`charts/clawql-mcp`**: **`enableCache`** defaults to **`true`** (sets **`CLAWQL_ENABLE_CACHE=1`**) so the in-process **`cache`** tool is registered unless **`--set enableCache=false`**.
+
+- **`make local-k8s-mcp-delete`:** removes **`deployment/clawql-mcp-http`** and **`svc/clawql-mcp-http`** in **`clawql`** so **Helm** can install after a prior **`kubectl apply`** / Kustomize deploy; **`local-k8s-docker-desktop.sh`** prints this hint when **`helm upgrade`** fails.
+
+- **`make local-k8s-up`:** defaults to **Helm** (**`charts/clawql-mcp/values-docker-desktop.yaml`**). **`CLAWQL_LOCAL_K8S_INSTALLER=kustomize`** uses **`docker/kustomize/overlays/local`** (no Helm). **`vault.hostPath`** (Helm) / JSON patch (Kustomize) mount **`~/.ClawQL`**. **`CLAWQL_LOCAL_K8S_BUILD_IMAGE=1`** builds **`clawql-mcp:latest`** locally.
 - **`memory_recall`:** when **`CLAWQL_MERKLE_ENABLED=1`**, JSON includes **`merkleSnapshot`**; when **`CLAWQL_CUCKOO_ENABLED=1`** and embeddings run, vector-ranked chunks are filtered by the Cuckoo membership filter with **`cuckooVectorChunksDropped`** ([#81](https://github.com/danielsmithdevelopment/ClawQL/issues/81)).
 - **Developer tooling:** root **`npm run format`** / **`format:check`** now includes the docs site: **`npm run format --prefix website`** (Prettier on **`website/`** `mdx`/`ts`/`tsx`). **`.prettierignore`** no longer skips all of **`website/`**—only build artifacts (**`.next/`**, **`node_modules/`**, etc.). CI runs **`npm ci --prefix website`** before **`format:check`** so site Prettier plugins resolve.
 - **Codegen:** **`pregenerate-graphql`** and **`pregenerate-google-top50-graphql`** use **`tsx`** (not Bun). Added **`npm run graphql`** → **`tsx src/graphql-proxy.ts`** for the standalone GraphQL proxy documented in the README.
@@ -26,7 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Helm chart** **`charts/clawql-mcp`**: deploy **`clawql-mcp-http`** with configurable image (**GHCR** by default), Service (**LoadBalancer** / **ClusterIP**), optional **Ingress**, **`/vault`** PVC, gRPC env toggles; **`make helm-lint`**. Docs: **`docs/helm.md`**; site: **`/helm`**.
+- **Helm chart** **`charts/clawql-mcp`**: deploy **`clawql-mcp-http`** with configurable image (**GHCR** by default), Service (**LoadBalancer** / **ClusterIP**), optional **Ingress**, **`/vault`** via PVC or **`vault.hostPath`**, gRPC env toggles; **`values-docker-desktop.yaml`** for **`make local-k8s-up`**; **`make helm-lint`**. Docs: **`docs/helm.md`**; site: **`/helm`**.
 - **Cuckoo filter + Merkle snapshot** for hybrid `memory.db` ([#25](https://github.com/danielsmithdevelopment/ClawQL/issues/25), [#37](https://github.com/danielsmithdevelopment/ClawQL/issues/37)): enable with **`CLAWQL_CUCKOO_ENABLED=1`** and **`CLAWQL_MERKLE_ENABLED=1`**; modules **`src/cuckoo-filter.ts`**, **`src/merkle-tree.ts`**, **`src/memory-artifacts.ts`**; helpers **`chunkIdMaybeInMemoryIndex`**, **`loadVaultMerkleSnapshotFromDb`**. Postgres migration **2** adds **`clawql_cuckoo_chunk_membership`** and **`clawql_vault_merkle`** when using **`CLAWQL_VECTOR_DATABASE_URL`**.
 - **`cache` MCP tool** ([#75](https://github.com/danielsmithdevelopment/ClawQL/issues/75)): opt-in via **`CLAWQL_ENABLE_CACHE`**; operations **`set` / `get` / `delete` / `list` / `search`**; **in-process `Map` only** (not persisted — use **`memory_ingest`** / **`memory_recall`** for vault); **`CLAWQL_CACHE_MAX_VALUE_BYTES`** per value (default **1 MiB**). Implementation: [`src/clawql-cache.ts`](src/clawql-cache.ts).
 - **`src/clawql-optional-flags.ts`**: Zod-validated optional feature flags (`ENABLE_GRPC`, `CLAWQL_EXTERNAL_INGEST`, planned **`CLAWQL_ENABLE_*`** for cache/schedule/notify/vision); **`src/external-ingest.ts`** uses the shared parser for **`CLAWQL_EXTERNAL_INGEST`**. See [#79](https://github.com/danielsmithdevelopment/ClawQL/issues/79).

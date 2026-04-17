@@ -71,16 +71,20 @@ helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
 
 See **[`charts/clawql-mcp/values.yaml`](../charts/clawql-mcp/values.yaml)**. Common keys:
 
-| Key                                                 | Purpose                                        |
-| --------------------------------------------------- | ---------------------------------------------- |
-| `image.repository`, `image.tag`, `image.pullPolicy` | Container image                                |
-| `service.type`, `service.http.port`                 | `LoadBalancer` vs `ClusterIP`, front port      |
-| `provider`                                          | **`CLAWQL_PROVIDER`** (e.g. `google-top50`)    |
-| `enableGrpc` / `enableGrpcReflection`               | gRPC listener on **50051**                     |
-| `extraEnv`                                          | Additional container env entries               |
-| `envFromSecret`                                     | **`envFrom`** from an existing Secret          |
-| `persistence`                                       | PVC for **`/vault`** instead of **`emptyDir`** |
-| `ingress`                                           | Optional HTTP(S) Ingress                       |
+| Key                                                 | Purpose                                                                                          |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `image.repository`, `image.tag`, `image.pullPolicy` | Container image                                                                                  |
+| `service.type`, `service.http.port`                 | `LoadBalancer` vs `ClusterIP`, front port                                                        |
+| `provider`                                          | **`CLAWQL_PROVIDER`** (e.g. `google-top50`)                                                      |
+| `enableGrpc` / `enableGrpcReflection`               | gRPC listener on **50051**                                                                       |
+| `enableCache`                                       | **`CLAWQL_ENABLE_CACHE=1`** — in-process **`cache`** tool (default **true**)                     |
+| `extraEnv`                                          | Additional container env entries                                                                 |
+| `envFromSecret`                                     | **`envFrom`** from an existing Secret                                                            |
+| `persistence`                                       | PVC for **`/vault`** instead of **`emptyDir`**                                                   |
+| `vault.hostPath`                                    | Host directory bind for **`/vault`** (Docker Desktop; mutually exclusive with **`persistence`**) |
+| `ingress`                                           | Optional HTTP(S) Ingress                                                                         |
+
+**Docker Desktop:** **`make local-k8s-up`** defaults to **`helm upgrade --install`** with **`values-docker-desktop.yaml`** (LoadBalancer **8080**, **`default-multi-provider`**, **`vault.hostPath.path`** = **`$HOME/.ClawQL`**, override **`CLAWQL_LOCAL_VAULT_HOST_PATH`**). For **Kustomize** instead: **`CLAWQL_LOCAL_K8S_INSTALLER=kustomize`** (same script; **`docker/kustomize/overlays/local`**).
 
 ## Lint and template (CI / local)
 
@@ -105,13 +109,13 @@ If you used persistence with a chart-managed PVC, remove the PVC separately if y
 
 ## Relationship to Kustomize
 
-|                          | Kustomize (`docker/kustomize/`)                | Helm (`charts/clawql-mcp`)                                                            |
-| ------------------------ | ---------------------------------------------- | ------------------------------------------------------------------------------------- |
-| **Naming**               | Overlays **`dev`**, **`prod`**, **`local`**    | **`values.yaml`** + **`--set`**                                                       |
-| **Image**                | Rewritten by **`scripts/deploy-k8s.sh`**       | **`image.repository`** / **`image.tag`**                                              |
-| **Local Docker Desktop** | **`make local-k8s-up`** (hostPath vault patch) | Use Helm with overrides or stay on Kustomize **`local`** for the scripted vault patch |
+|                    | Kustomize (`docker/kustomize/`)            | Helm (`charts/clawql-mcp`)                                                 |
+| ------------------ | ------------------------------------------ | -------------------------------------------------------------------------- |
+| **Naming**         | Overlays **`dev`**, **`prod`**, **`base`** | **`values.yaml`** + **`--set`**                                            |
+| **Image**          | Rewritten by **`scripts/deploy-k8s.sh`**   | **`image.repository`** / **`image.tag`**                                   |
+| **Docker Desktop** | Optional **`overlays/local`**              | **Default** — **`values-docker-desktop.yaml`** via **`make local-k8s-up`** |
 
-For **Docker Desktop** with a **host bind** vault at **`~/.ClawQL`**, the **`local`** Kustomize flow (`scripts/local-k8s-docker-desktop.sh`) is still the most turnkey; Helm can do the same with a custom **`extraVolumes` / `extraVolumeMounts`** patch in a fork, or **`persistence`** with a suitable storage class.
+Remote **`dev` / `prod`** flows remain **Kustomize** + **`scripts/deploy-k8s.sh`**. For Docker Desktop, **Helm** is the default; use **`CLAWQL_LOCAL_K8S_INSTALLER=kustomize`** with **`scripts/local-k8s-docker-desktop.sh`** if you prefer **`kubectl apply -k`**.
 
 ## Chart version
 
