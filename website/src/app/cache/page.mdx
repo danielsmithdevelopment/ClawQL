@@ -1,0 +1,20 @@
+export const metadata = {
+  title: 'Session cache',
+  description:
+    'Optional MCP cache tool: in-process LRU key/value storage (CLAWQL_ENABLE_CACHE). Not the Obsidian vault — use memory_ingest and memory_recall for durable memory.',
+}
+
+# Session cache (`cache`)
+
+The optional **`cache`** MCP tool stores **temporary key/value data** in the ClawQL server process. It is **not** durable and **not** the Obsidian vault.
+
+- **Enable:** **`CLAWQL_ENABLE_CACHE=1`** (or `true` / `yes`).
+- **Storage:** A single **`Map` in this Node process** — no disk, no **`memory.db`**, no Markdown.
+- **Eviction:** **LRU** when **`CLAWQL_CACHE_MAX_ENTRIES`** is reached (default **10_000**). **`get`** and **`set`** refresh recency; **`set`** may return **`evicted`** when keys were dropped to make room.
+- **Per-value limit:** **`CLAWQL_CACHE_MAX_VALUE_BYTES`** (default **1 MiB**, max **16 MiB**).
+
+For anything that must **survive restarts** or be **shared across replicas**, use **`memory_ingest`** and **`memory_recall`** with a configured vault path — not **`cache`**.
+
+**Canonical reference (operations, semantics, multi-replica):** [cache-tool.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/cache-tool.md) · [mcp-tools.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp-tools.md) · issue [#75](https://github.com/danielsmithdevelopment/ClawQL/issues/75).
+
+See also [Tools](/tools) for how **`cache`** fits alongside other MCP tools.

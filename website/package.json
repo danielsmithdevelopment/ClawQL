@@ -6,7 +6,9 @@
     "dev": "next dev --webpack",
     "build": "next build --webpack",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "format": "prettier --write \"src/**/*.{mdx,ts,tsx}\" \"*.ts\" \"mdx-components.tsx\"",
+    "format:check": "prettier --check \"src/**/*.{mdx,ts,tsx}\" \"*.ts\" \"mdx-components.tsx\""
   },
   "browserslist": "defaults, not ie <= 11",
   "dependencies": {

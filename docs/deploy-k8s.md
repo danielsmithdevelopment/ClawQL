@@ -76,7 +76,16 @@ All Kustomize layers (**`base`**, **`dev`**, **`local`**, **`prod`**) define **`
 
 Nothing listens on **50051** until the Pod has **`ENABLE_GRPC=1`** (set in your overlay or `kubectl set env`). You do **not** need a separate port-forward for gRPC **if** the Service exposes **50051** and your network path can reach it.
 
+### TLS, mTLS, and service meshes
+
+Application-level TLS and optional client certificate verification on the gRPC listener use **`GRPC_TLS_CERT_PATH`**, **`GRPC_TLS_KEY_PATH`**, optional **`GRPC_TLS_CA_PATH`**, and **`GRPC_TLS_REQUIRE_CLIENT_CERT`** — see [`packages/mcp-grpc-transport/README.md`](../packages/mcp-grpc-transport/README.md#environment). You may instead terminate TLS on a load balancer or ingress; many teams forward **plain gRPC** to the pod on **50051** inside a trusted network.
+
+**Service meshes** (Istio, Linkerd, Cloudflare, …) are **not** configured inside this repo: route the **`grpc`** port to the workload and apply your mesh’s mTLS and policies. Mesh identity is **orthogonal** to application **`GRPC_TLS_*`** (you might use one or the other, or both, depending on architecture).
+
+**Observability:** ClawQL does **not** bundle Langfuse or a tracing backend. Use **`grpcServerOptions`** (e.g. **OpenTelemetry** interceptors) in **`maybeStartGrpcMcpServer`**, or trace at the agent ([ClawQL-Agent](https://github.com/danielsmithdevelopment/ClawQL-Agent)). For gRPC scope and shipped behavior, see [issue #67](https://github.com/danielsmithdevelopment/ClawQL/issues/67).
+
 ## Notes
 
 - If your cluster uses Ingress/Gateway, switch `clawql-mcp-http` service type from `LoadBalancer` to `ClusterIP` in prod and route externally via your ingress layer.
 - Keep `CLAWQL_PROVIDER` scoped to the smallest useful preset to reduce memory and startup time.
+- With **`CLAWQL_ENABLE_CACHE`**, the MCP **`cache`** tool is **per-pod**: each replica has its **own** empty in-process store (LRU). Durable cross-replica state belongs in the vault (**`memory_ingest`** / **`memory_recall`**) or your own backing service — see **[cache-tool.md](cache-tool.md)**.

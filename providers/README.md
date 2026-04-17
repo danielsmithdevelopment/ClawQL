@@ -66,9 +66,6 @@ npm run fetch-provider-specs
 npm run pregenerate-graphql
 ```
 
-**Requires [Bun](https://bun.sh)** for `pregenerate-graphql` (same script runs under Node
-if you prefer; Bun is what maintainers test with).
-
 Writes `introspection.json` and `schema.graphql` next to each bundled spec.
 Large or imperfect specs (e.g. **Jira**) may fail **`@omnigraph/openapi`**; **Google GKE**
 usually succeeds. The **full Cloudflare** OpenAPI from

@@ -33,7 +33,7 @@ const resources: Array<Resource> = [
     href: '/tools',
     name: 'Tools',
     description:
-      'Core search and execute; optional sandbox_exec, memory tools, and ingest_external_knowledge — six tools when configured.',
+      'Core search and execute; sandbox_exec, memory tools, ingest_external_knowledge; optional in-process cache (CLAWQL_ENABLE_CACHE).',
     icon: BoltIcon,
     pattern: {
       y: 16,

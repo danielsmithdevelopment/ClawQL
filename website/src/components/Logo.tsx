@@ -11,10 +11,7 @@ export function Logo({
 }: React.ComponentPropsWithoutRef<'div'>) {
   return (
     <div
-      className={clsx(
-        'flex shrink-0 items-center gap-2.5 sm:gap-3',
-        className,
-      )}
+      className={clsx('flex shrink-0 items-center gap-2.5 sm:gap-3', className)}
       {...rest}
     >
       <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-md ring-1 ring-black/10 sm:h-10 sm:w-10 dark:ring-white/15">

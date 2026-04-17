@@ -15,7 +15,7 @@
     "totalLoadedSpecApproxTokens": 10208896
   },
   "workflowOutput": {
-    "source": "multi-provider-test.md",
+    "source": "docs/benchmarks/archive/multi-provider-workflow-run.md",
     "bytes": 47374,
     "approxTokens": 11844,
     "searchStepCount": 5,
@@ -56,6 +56,6 @@
   },
   "meta": {
     "charsPerToken": 4,
-    "method": "Compare bytes/tokens for full loaded provider specs vs emitted multi-provider workflow output captured in multi-provider-test.md."
+    "method": "Compare bytes/tokens for full loaded provider specs vs emitted multi-provider workflow output (historical capture multi-provider-test.md; bytes preserved pre-archive trim)."
   }
 }

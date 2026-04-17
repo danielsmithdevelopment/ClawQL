@@ -4,6 +4,7 @@
  *
  * Run after build + fetch-google-top50:
  *   npm run build && npm run fetch-google-top50 && npm run pregenerate-google-top50-graphql
+ * (Uses `tsx` via npm script — same runtime as `npm run dev`.)
  */
 import { mkdir, writeFile, readdir } from "node:fs/promises";
 import { dirname, resolve as resolvePath } from "node:path";

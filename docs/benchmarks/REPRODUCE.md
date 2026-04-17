@@ -49,12 +49,12 @@ This benchmark captures **planning-context savings** for the cross-provider work
 (Google top50 + Cloudflare + Jira), comparing:
 
 - full loaded spec corpus size
-- emitted workflow output size (`multi-provider-test.md`)
+- emitted workflow output size (historical `multi-provider-test.md`; see [`archive/multi-provider-workflow-run.md`](archive/multi-provider-workflow-run.md))
 
 Run:
 
 ```bash
-npm run workflow:multi-provider > multi-provider-test.md 2>&1
+npm run workflow:multi-provider > docs/benchmarks/archive/multi-provider-workflow-capture.txt 2>&1
 ```
 
 Results:
