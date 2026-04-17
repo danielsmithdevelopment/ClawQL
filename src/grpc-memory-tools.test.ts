@@ -24,7 +24,10 @@ const protoRoot = join(root, "packages/mcp-grpc-transport/proto");
 
 const CALL_TOOL = "/model_context_protocol.Mcp/CallTool";
 
-type StructFields = Record<string, { stringValue?: string; numberValue?: number; boolValue?: boolean }>;
+type StructFields = Record<
+  string,
+  { stringValue?: string; numberValue?: number; boolValue?: boolean }
+>;
 
 function argsToStructFields(args: Record<string, unknown>): StructFields {
   const fields: StructFields = {};
@@ -65,9 +68,7 @@ function toObjectMessages(
 
 function lastNonEmptyToolText(messages: Record<string, unknown>[]): string {
   for (let i = messages.length - 1; i >= 0; i--) {
-    const content = messages[i]?.content as
-      | Array<{ text?: { text?: string } }>
-      | undefined;
+    const content = messages[i]?.content as Array<{ text?: { text?: string } }> | undefined;
     if (!content?.length) continue;
     const t = content[0]?.text?.text;
     if (typeof t === "string" && t.length > 0) return t;
@@ -102,13 +103,7 @@ async function callToolGrpc(
     Buffer.from(CallToolRequest.encode(CallToolRequest.create(req)).finish());
   const deserialize = (buf: Buffer) => CallToolResponse.decode(buf);
 
-  const stream = client.makeServerStreamRequest(
-    CALL_TOOL,
-    serialize,
-    deserialize,
-    payload,
-    md
-  );
+  const stream = client.makeServerStreamRequest(CALL_TOOL, serialize, deserialize, payload, md);
 
   const decoded: protobuf.Message[] = [];
   await new Promise<void>((resolve, reject) => {
@@ -142,59 +137,51 @@ describe("gRPC CallTool + memory_ingest / memory_recall", () => {
     resetSchemaFieldCache();
   });
 
-  it(
-    "memory_ingest succeeds with Struct args over CallTool",
-    async () => {
-      const started = await maybeStartGrpcMcpServer({
-        createMcpServer: createRegisteredMcpServer,
-        bindAddress: "127.0.0.1:0",
+  it("memory_ingest succeeds with Struct args over CallTool", async () => {
+    const started = await maybeStartGrpcMcpServer({
+      createMcpServer: createRegisteredMcpServer,
+      bindAddress: "127.0.0.1:0",
+    });
+    if (!started) throw new Error("expected gRPC server");
+
+    try {
+      const messages = await callToolGrpc(started.address, "memory_ingest", {
+        title: "Grpc Ingest Note",
+        insights: "grpc-memory-tools test body",
       });
-      if (!started) throw new Error("expected gRPC server");
+      const text = lastNonEmptyToolText(messages);
+      expect(text).toContain('"ok": true');
+      expect(text).toContain("Memory/");
+    } finally {
+      await started.shutdown();
+    }
+  }, 30_000);
 
-      try {
-        const messages = await callToolGrpc(started.address, "memory_ingest", {
-          title: "Grpc Ingest Note",
-          insights: "grpc-memory-tools test body",
-        });
-        const text = lastNonEmptyToolText(messages);
-        expect(text).toContain('"ok": true');
-        expect(text).toContain("Memory/");
-      } finally {
-        await started.shutdown();
-      }
-    },
-    30_000
-  );
+  it("memory_recall succeeds with Struct args over CallTool (after ingest)", async () => {
+    const token = `grpc-recall-${Date.now()}`;
+    const started = await maybeStartGrpcMcpServer({
+      createMcpServer: createRegisteredMcpServer,
+      bindAddress: "127.0.0.1:0",
+    });
+    if (!started) throw new Error("expected gRPC server");
 
-  it(
-    "memory_recall succeeds with Struct args over CallTool (after ingest)",
-    async () => {
-      const token = `grpc-recall-${Date.now()}`;
-      const started = await maybeStartGrpcMcpServer({
-        createMcpServer: createRegisteredMcpServer,
-        bindAddress: "127.0.0.1:0",
+    try {
+      const ingestMessages = await callToolGrpc(started.address, "memory_ingest", {
+        title: "Recall Seed",
+        insights: `unique ${token} content for recall`,
       });
-      if (!started) throw new Error("expected gRPC server");
+      const ingestText = lastNonEmptyToolText(ingestMessages);
+      expect(ingestText).toContain('"ok": true');
 
-      try {
-        const ingestMessages = await callToolGrpc(started.address, "memory_ingest", {
-          title: "Recall Seed",
-          insights: `unique ${token} content for recall`,
-        });
-        const ingestText = lastNonEmptyToolText(ingestMessages);
-        expect(ingestText).toContain('"ok": true');
-
-        const recallMessages = await callToolGrpc(started.address, "memory_recall", {
-          query: token,
-          limit: 10,
-        });
-        const recallText = lastNonEmptyToolText(recallMessages);
-        expect(recallText).toContain('"ok": true');
-        expect(recallText.toLowerCase()).toContain(token.toLowerCase());
-      } finally {
-        await started.shutdown();
-      }
-    },
-    30_000
-  );
+      const recallMessages = await callToolGrpc(started.address, "memory_recall", {
+        query: token,
+        limit: 10,
+      });
+      const recallText = lastNonEmptyToolText(recallMessages);
+      expect(recallText).toContain('"ok": true');
+      expect(recallText.toLowerCase()).toContain(token.toLowerCase());
+    } finally {
+      await started.shutdown();
+    }
+  }, 30_000);
 });

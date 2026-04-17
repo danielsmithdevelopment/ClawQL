@@ -548,9 +548,7 @@ export function createMcpProtobufServiceImplementation(
             call.write(
               toolResultToCallToolResponse(
                 {
-                  content: [
-                    { type: "text", text: `Error executing tool ${inner.name}: ${msg}` },
-                  ],
+                  content: [{ type: "text", text: `Error executing tool ${inner.name}: ${msg}` }],
                   isError: true,
                 },
                 buildResponseCommon(bridge, undefined)

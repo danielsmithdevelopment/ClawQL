@@ -6,10 +6,10 @@ This document explains how **ClawQL’s Obsidian vault tools** (`memory_ingest`,
 
 ## Prerequisites
 
-| Requirement | Role |
-| ----------- | ---- |
-| **ClawQL MCP** configured in Cursor | The agent can call MCP tools (stdio or HTTP, per your setup). |
-| **`CLAWQL_OBSIDIAN_VAULT_PATH`** | Points the server at a writable vault directory. Without it, vault tools return an error; see **[README.md](../README.md)** and **[memory-obsidian.md](memory-obsidian.md)**. |
+| Requirement                         | Role                                                                                                                                                                          |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **ClawQL MCP** configured in Cursor | The agent can call MCP tools (stdio or HTTP, per your setup).                                                                                                                 |
+| **`CLAWQL_OBSIDIAN_VAULT_PATH`**    | Points the server at a writable vault directory. Without it, vault tools return an error; see **[README.md](../README.md)** and **[memory-obsidian.md](memory-obsidian.md)**. |
 
 ---
 
@@ -24,21 +24,21 @@ These tools are **transport-agnostic**: any MCP client can call them. Cursor’s
 
 ### 2. Cursor rule (always on)
 
-| File | Purpose |
-| ---- | ------- |
+| File                                                                                    | Purpose                                                                                                                                                                      |
+| --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **[`.cursor/rules/clawql-vault-memory.mdc`](../.cursor/rules/clawql-vault-memory.mdc)** | **`alwaysApply: true`** — reminds the agent to use **`memory_recall`** early and **`memory_ingest`** after important outcomes, and points to the skill for **deep** ingests. |
 
 Rules live in the repo and apply to chats in this workspace (when Cursor loads project rules).
 
 ### 3. Cursor skill (deep playbook)
 
-| File | Purpose |
-| ---- | ------- |
+| File                                                                                                | Purpose                                                                                                                                                                               |
+| --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **[`.cursor/skills/clawql-vault-memory/SKILL.md`](../.cursor/skills/clawql-vault-memory/SKILL.md)** | Skill **`clawql-vault-memory`**: field-by-field tool usage, structured **`insights`** templates, wikilink strategy, **`sessionId`** / **`append`**, recall parameters, anti-patterns. |
 
-Cursor uses the skill’s YAML **`description`** to decide when to attach it; you can also say explicitly: *“use the clawql-vault-memory skill for this ingest.”*
+Cursor uses the skill’s YAML **`description`** to decide when to attach it; you can also say explicitly: _“use the clawql-vault-memory skill for this ingest.”_
 
-**Rule vs skill:** the **rule** establishes the *habit* (recall + ingest). The **skill** holds the *procedure* for thorough notes.
+**Rule vs skill:** the **rule** establishes the _habit_ (recall + ingest). The **skill** holds the _procedure_ for thorough notes.
 
 ---
 
@@ -58,19 +58,19 @@ Cursor uses the skill’s YAML **`description`** to decide when to attach it; yo
 
 ## Related documentation
 
-| Doc | Topic |
-| --- | ----- |
-| **[memory-obsidian.md](memory-obsidian.md)** | Why a vault, `Memory/`, wikilinks, index pages. |
-| **[mcp-tools.md](mcp-tools.md)** | All MCP tools, JSON-shaped examples. |
-| **[memory-db-hybrid-implementation.md](memory-db-hybrid-implementation.md)** | `memory.db`, recall implementation. |
+| Doc                                                                          | Topic                                           |
+| ---------------------------------------------------------------------------- | ----------------------------------------------- |
+| **[memory-obsidian.md](memory-obsidian.md)**                                 | Why a vault, `Memory/`, wikilinks, index pages. |
+| **[mcp-tools.md](mcp-tools.md)**                                             | All MCP tools, JSON-shaped examples.            |
+| **[memory-db-hybrid-implementation.md](memory-db-hybrid-implementation.md)** | `memory.db`, recall implementation.             |
 
 ---
 
 ## Repo file reference
 
-| Path | Type |
-| ---- | ---- |
-| `.cursor/rules/clawql-vault-memory.mdc` | Cursor rule (always apply) |
+| Path                                          | Type                                |
+| --------------------------------------------- | ----------------------------------- |
+| `.cursor/rules/clawql-vault-memory.mdc`       | Cursor rule (always apply)          |
 | `.cursor/skills/clawql-vault-memory/SKILL.md` | Cursor skill (deep ingest + recall) |
-| `src/memory-ingest.ts` | `memory_ingest` implementation |
-| `src/memory-recall.ts` | `memory_recall` implementation |
+| `src/memory-ingest.ts`                        | `memory_ingest` implementation      |
+| `src/memory-recall.ts`                        | `memory_recall` implementation      |
