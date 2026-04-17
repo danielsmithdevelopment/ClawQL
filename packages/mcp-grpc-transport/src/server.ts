@@ -45,8 +45,15 @@ function resolveProtoRoot(): string {
 
 function loadAllProtos(): protoLoader.PackageDefinition {
   const protoRoot = resolveProtoRoot();
+  // Load well-known types explicitly so @grpc/reflection indexes `google.protobuf.*`
+  // (e.g. `Value` in struct.proto). Relying only on `import` resolution can omit
+  // separate FileDescriptorProtos, which breaks grpcurl when resolving MCP messages.
+  const googleStruct = join(wellKnownProtoRoot, "google/protobuf/struct.proto");
+  const googleDuration = join(wellKnownProtoRoot, "google/protobuf/duration.proto");
   return protoLoader.loadSync(
     [
+      googleStruct,
+      googleDuration,
       join(protoRoot, "grpc/health/v1/health.proto"),
       join(protoRoot, "mcp/transport/v1/mcp.proto"),
       join(protoRoot, "model_context_protocol/mcp.proto"),
