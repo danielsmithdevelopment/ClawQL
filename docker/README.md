@@ -152,12 +152,23 @@ Included resources:
 After the external IP is ready, use:
 - `http://<external-ip>/mcp`
 
+## Kustomize overlay: gRPC + kubelet gRPC probes
+
+When you run **`ENABLE_GRPC=1`**, use **`docker/kustomize/overlays/grpc-enabled/`**: it sets that env and switches **readiness** / **liveness** to **native Kubernetes `grpc` probes** on port **50051**. The **kubelet** implements the [gRPC health protocol](https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/#grpc-probes); you do **not** need **`grpc_health_probe`** in the container. **Startup** stays **`httpGet` `/healthz`** so slow spec preload still passes.
+
+```bash
+kubectl apply -k docker/kustomize/overlays/grpc-enabled
+```
+
+The **base** overlay keeps **HTTP** probes only because gRPC is off by default (nothing listens on **50051**).
+
 ## Kustomize overlays (dev/prod)
 
 Kustomize base + overlays are under:
 - `docker/kustomize/base`
 - `docker/kustomize/overlays/dev`
 - `docker/kustomize/overlays/prod`
+- `docker/kustomize/overlays/grpc-enabled` (HTTP + gRPC + `grpc` probes; see above)
 
 Set image/tag at apply time:
 

@@ -12,3 +12,7 @@ spec:
     - name: http
       port: 80
       targetPort: 8080
+    # Optional when ENABLE_GRPC=1 on the pod.
+    - name: grpc
+      port: 50051
+      targetPort: grpc

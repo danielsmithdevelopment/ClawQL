@@ -1,6 +1,6 @@
 {
     "name": "clawql-mcp",
-    "version": "3.1.0",
+    "version": "3.2.0",
     "description": "MCP server: search + execute any OpenAPI 3 API with an internal GraphQL optimization layer",
     "license": "Apache-2.0",
     "type": "module",
@@ -18,6 +18,9 @@
     "engines": {
         "node": ">=20"
     },
+    "workspaces": [
+        "packages/*"
+    ],
     "repository": {
         "type": "git",
         "url": "git+https://github.com/danielsmithdevelopment/ClawQL.git"
@@ -50,8 +53,8 @@
         ".cursor/mcp.json.example"
     ],
     "scripts": {
-        "clean": "rm -rf dist",
-        "build": "npm run clean && tsc",
+        "clean": "rm -rf dist packages/mcp-grpc-transport/dist",
+        "build": "npm run clean && npm run build -w mcp-grpc-transport && tsc",
         "prepublishOnly": "npm run build",
         "start": "node dist/server.js",
         "start:http": "node dist/server-http.js",
@@ -80,10 +83,10 @@
         "pretest": "npm run build",
         "test": "vitest run",
         "test:coverage": "npm run build && vitest run --coverage",
-        "lint": "eslint \"src/**/*.ts\" \"vitest.config.ts\" --max-warnings 0 --cache --cache-location .eslintcache",
-        "lint:fix": "eslint \"src/**/*.ts\" \"vitest.config.ts\" --fix --cache --cache-location .eslintcache",
-        "format": "prettier --write \"src/**/*.{ts,tsx}\" \"docs/**/*.md\" \".github/**/*.yml\" \"*.md\" \"vitest.config.ts\" \"eslint.config.js\" \"tsconfig.json\" \".prettierrc.json\" --cache --cache-location .prettier-cache",
-        "format:check": "prettier --check \"src/**/*.{ts,tsx}\" \"docs/**/*.md\" \".github/**/*.yml\" \"*.md\" \"vitest.config.ts\" \"eslint.config.js\" \"tsconfig.json\" \".prettierrc.json\" --cache --cache-location .prettier-cache",
+        "lint": "eslint \"src/**/*.ts\" \"packages/mcp-grpc-transport/src/**/*.ts\" \"vitest.config.ts\" --max-warnings 0 --cache --cache-location .eslintcache",
+        "lint:fix": "eslint \"src/**/*.ts\" \"packages/mcp-grpc-transport/src/**/*.ts\" \"vitest.config.ts\" --fix --cache --cache-location .eslintcache",
+        "format": "prettier --write \"src/**/*.{ts,tsx}\" \"packages/mcp-grpc-transport/**/*.{ts,md,json}\" \"docs/**/*.md\" \".github/**/*.yml\" \"*.md\" \"vitest.config.ts\" \"eslint.config.js\" \"tsconfig.json\" \".prettierrc.json\" --cache --cache-location .prettier-cache",
+        "format:check": "prettier --check \"src/**/*.{ts,tsx}\" \"packages/mcp-grpc-transport/**/*.{ts,md,json}\" \"docs/**/*.md\" \".github/**/*.yml\" \"*.md\" \"vitest.config.ts\" \"eslint.config.js\" \"tsconfig.json\" \".prettierrc.json\" --cache --cache-location .prettier-cache",
         "release:git-tag": "bash scripts/git-release-tag.sh",
         "release:git-tag:push": "bash scripts/git-release-tag.sh --push",
         "release:git-backfill-tags": "bash scripts/git-backfill-npm-release-tags.sh",
@@ -92,6 +95,7 @@
     "dependencies": {
         "@graphql-mesh/utils": "^0.104.35",
         "@modelcontextprotocol/sdk": "^1.27.1",
+        "mcp-grpc-transport": "^0.1.0",
         "@omnigraph/openapi": "^0.109.41",
         "express": "^5.2.1",
         "graphql": "^16.8.1",

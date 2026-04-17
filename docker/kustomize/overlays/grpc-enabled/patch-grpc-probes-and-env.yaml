@@ -1,0 +1,31 @@
+# Opt-in: ENABLE_GRPC=1 + Kubernetes native gRPC probes (kubelet implements the client;
+# no grpc_health_probe binary in the Distroless image).
+# Requires Kubernetes 1.24+ (gRPC probes GA in 1.29).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clawql-mcp-http
+spec:
+  template:
+    spec:
+      containers:
+        - name: clawql-mcp-http
+          env:
+            - name: ENABLE_GRPC
+              value: "1"
+          # Replace HTTP readiness: verify grpc.health.v1.Health on the gRPC port.
+          readinessProbe:
+            $patch: replace
+            grpc:
+              port: 50051
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          # Liveness via gRPC so a dead listener on 50051 triggers restart when gRPC is required.
+          livenessProbe:
+            $patch: replace
+            grpc:
+              port: 50051
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3

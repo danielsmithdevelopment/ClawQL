@@ -9,10 +9,10 @@
  * Cloud Run discovery. See README and .env.example.
  */
 
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { loadSpec } from "./spec-loader.js";
-import { preloadSchemaFieldCacheFromDisk, registerTools } from "./tools.js";
+import { createRegisteredMcpServer } from "./mcp-server-factory.js";
+import { preloadSchemaFieldCacheFromDisk } from "./tools.js";
 import { validateObsidianVaultAtStartup } from "./vault-config.js";
 import { registerPostgresPoolShutdownHooks } from "./vector-store/pgvector.js";
 
@@ -24,12 +24,10 @@ async function main() {
   await preloadSchemaFieldCacheFromDisk();
   await validateObsidianVaultAtStartup();
 
-  const server = new McpServer({
+  const server = createRegisteredMcpServer({
     name: "cloudrun-mcp",
     version: "2.0.0",
   });
-
-  registerTools(server);
 
   const transport = new StdioServerTransport();
   await server.connect(transport);

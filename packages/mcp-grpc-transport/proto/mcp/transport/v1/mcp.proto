@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package mcp.transport.v1;
+
+// Vendor-neutral MCP over gRPC: one JSON-RPC 2.0 MCP message per frame (same logical payload as stdio NDJSON).
+// Aligns with ecosystem direction (e.g. SEP-1352, Google Cloud gRPC transport narrative) — not ClawQL-specific.
+
+message JsonRpcLine {
+  // Single UTF-8 JSON object (JSON-RPC 2.0). No trailing newline required.
+  string line = 1;
+  // Optional: associates outbound server frames with an inbound JSON-RPC request id
+  // (parity with TransportSendOptions.relatedRequestId on Streamable HTTP).
+  string related_request_id = 2;
+  // Optional: opaque resumption token (parity with TransportSendOptions.resumptionToken).
+  string resumption_token = 3;
+}
+
+service Mcp {
+  rpc Session(stream JsonRpcLine) returns (stream JsonRpcLine);
+}

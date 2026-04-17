@@ -21,6 +21,9 @@ spec:
           ports:
             - containerPort: 8080
               name: http
+            # Optional gRPC when ENABLE_GRPC=1 (grpc.health.v1.Health, model_context_protocol.Mcp, mcp.transport.v1.Mcp).
+            - containerPort: 50051
+              name: grpc
           env:
             - name: CLAWQL_PROVIDER
               value: google-top50

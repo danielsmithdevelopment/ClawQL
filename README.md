@@ -106,6 +106,15 @@ Default endpoint when running locally as above: `http://localhost:8080/mcp` (hea
 
 **From the npm package** (no clone): `PORT=8080 npx -p clawql-mcp clawql-mcp-http`. **From a repo checkout:** `npm run start:http` runs the same binary.
 
+**Optional gRPC** (same process as HTTP): set **`ENABLE_GRPC=1`**. Implementation uses the reusable **`mcp-grpc-transport`** package ([npm](https://www.npmjs.com/package/mcp-grpc-transport), [source](https://github.com/danielsmithdevelopment/ClawQL/tree/main/packages/mcp-grpc-transport), [why it exists — ClawQL + Python PoC](https://github.com/danielsmithdevelopment/ClawQL/blob/main/packages/mcp-grpc-transport/README.md#background-clawql-and-the-python-reference)) for pluggable MCP over gRPC in TypeScript. The server listens on **`GRPC_PORT`** (default **50051**) and exposes:
+
+- **`grpc.health.v1.Health`** — standard [gRPC health checking](https://github.com/grpc/grpc/blob/master/doc/health-checking.md) (`Check` / `Watch`) for probes and meshes. Example: `grpcurl -plaintext localhost:50051 grpc.health.v1.Health/Check`.
+- **`model_context_protocol.Mcp`** — protobuf unary/streaming RPCs aligned with the [reference MCP gRPC protobuf design](https://github.com/GoogleCloudPlatform/mcp-python-sdk-grpc-poc) (community spec); clients send **`mcp-protocol-version`** metadata on those RPCs. Per-service health: `Check` with `service` = `model_context_protocol.Mcp` (see **`PROTOBUF_MCP_SERVICE_FQN`** in [`mcp-grpc-transport`](packages/mcp-grpc-transport)).
+- **`mcp.transport.v1.Mcp.Session`** — optional bidirectional stream of JSON-RPC messages (same logical framing as stdio). Per-service health: `Check` with `service` = `mcp.transport.v1.Mcp` (see **`MCP_TRANSPORT_SESSION_SERVICE_FQN`** in [`mcp-grpc-transport`](packages/mcp-grpc-transport)).
+- **`ENABLE_GRPC_REFLECTION=1`** — registers [gRPC server reflection](https://github.com/grpc/grpc/blob/master/doc/server-reflection.md) for `grpcurl list` / `describe` (off by default).
+
+**Kubernetes:** The **base** [`docker/kustomize/base`](docker/kustomize/base) manifest keeps **`httpGet` `/healthz`** probes because **`ENABLE_GRPC`** is off by default—nothing would answer on port **50051**. When you turn gRPC on, **native [`grpc` probes](https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/#grpc-probes)** are appropriate: the **kubelet** speaks **`grpc.health.v1`** itself, so you do **not** need the **`grpc_health_probe`** binary inside Distroless. Use the opt-in overlay **`docker/kustomize/overlays/grpc-enabled/`** (`kubectl apply -k …/grpc-enabled`), which sets **`ENABLE_GRPC=1`** and switches **readiness** / **liveness** to **`grpc` on port 50051** while leaving **startup** on **HTTP** so slow boots still work.
+
 Point your MCP client at `clawql-mcp` on stdio as in [TL;DR](#tldr) (two terminals).
 
 ## Installing from GitHub source (instead of npm registry)

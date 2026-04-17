@@ -8,11 +8,13 @@ FROM node:22-bookworm-slim AS builder
 WORKDIR /app
 
 COPY package.json package-lock.json ./
+COPY packages/mcp-grpc-transport/package.json ./packages/mcp-grpc-transport/
 # `prepare` runs `tsc` before src/ exists — skip lifecycle scripts until deps are installed.
 RUN npm ci --ignore-scripts
 
 COPY tsconfig.json ./
 COPY src ./src
+COPY packages ./packages
 RUN npm run build && npm prune --omit=dev
 
 COPY providers ./providers
