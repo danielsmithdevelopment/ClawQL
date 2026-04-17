@@ -2,6 +2,18 @@
 
 Slim [Distroless](https://github.com/GoogleContainerTools/distroless) image with production dependencies, compiled `dist/`, `bin/`, and bundled `providers/` for offline spec lookup.
 
+## Prebuilt image (GHCR)
+
+A **daily** GitHub Actions workflow (`.github/workflows/docker-publish.yml`) builds `main` and pushes to **GitHub Container Registry**:
+
+`ghcr.io/danielsmithdevelopment/clawql-mcp`
+
+Tags include **`latest`**, **`nightly`**, **`sha-<short>`**, and on scheduled runs **`nightly-YYYYMMDD`**. Pull (public package — set visibility under **Packages** if needed):
+
+```bash
+docker pull ghcr.io/danielsmithdevelopment/clawql-mcp:latest
+```
+
 ## Build
 
 From the repository root:

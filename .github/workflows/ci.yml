@@ -61,6 +61,77 @@ jobs:
       - name: Prettier
         run: npm run format:check
 
+  # Same-repo PRs only: applies Prettier and pushes one commit when the lint job failed.
+  # Loop prevention: (1) runs only when `lint` failed; after a successful fix the next run passes lint.
+  # (2) Skips if the PR head is already an autofix commit (`[prettier-autofix]`).
+  # (3) Skips if the triggering actor is github-actions[bot] (pushes from this job).
+  # (4) No commit when `npm run format` produces no diff (e.g. ESLint failed but Prettier was already clean).
+  prettier-autofix:
+    name: Prettier autofix (PR, same-repo)
+    needs: lint
+    if: |
+      failure() &&
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          ref: ${{ github.head_ref }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
+        with:
+          node-version: "22"
+          cache: npm
+
+      - uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684
+        with:
+          path: .prettier-cache
+          key: prettier-${{ runner.os }}-${{ hashFiles('.prettierrc.json', 'package-lock.json') }}
+          restore-keys: |
+            prettier-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install website dependencies (Prettier plugins)
+        run: npm ci --prefix website
+
+      - name: Guard — stop if HEAD is already a Prettier autofix commit
+        id: guard
+        run: |
+          if git log -1 --format=%B | grep -qF '[prettier-autofix]'; then
+            echo "stop=1" >> "$GITHUB_OUTPUT"
+            echo "Skipping: HEAD already marked [prettier-autofix] (hard loop stop)."
+          fi
+
+      - name: Apply Prettier
+        if: steps.guard.outputs.stop != '1'
+        run: npm run format
+
+      - name: Commit and push if there are changes
+        if: steps.guard.outputs.stop != '1'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet && git diff --cached --quiet; then
+            echo "No formatting changes; exiting without commit."
+            exit 0
+          fi
+          git add -A
+          git commit -m "style: apply Prettier [prettier-autofix]"
+          git push origin "HEAD:${HEAD_REF}"
+
   workflow-scripts:
     name: ShellCheck & actionlint
     runs-on: ubuntu-latest

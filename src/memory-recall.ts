@@ -8,6 +8,8 @@ import { readVaultTextFile } from "./vault-utils.js";
 import { slugifyTitle } from "./memory-ingest.js";
 import {
   loadChunkEmbeddingsForDocuments,
+  loadCuckooMembershipPredicate,
+  loadVaultMerkleSnapshotFromDb,
   loadWikilinkEdgesFromDatabase,
   memoryDbSyncEnabled,
   recallSyncDbEnabled,
@@ -53,6 +55,15 @@ export type MemoryRecallResult = {
   truncated?: boolean;
   scannedFiles?: number;
   error?: string;
+  /** Present when **`CLAWQL_MERKLE_ENABLED=1`**: latest Merkle root metadata, or **`null`** if no snapshot row. */
+  merkleSnapshot?: {
+    rootHex: string;
+    leafCount: number;
+    treeHeight: number;
+    builtAt: string;
+  } | null;
+  /** When **`CLAWQL_CUCKOO_ENABLED=1`** and a filter is loaded: vector-ranked chunk ids that failed membership (stale/inconsistent). */
+  cuckooVectorChunksDropped?: number;
 };
 
 function envInt(key: string, def: number): number {
@@ -232,8 +243,10 @@ export async function runMemoryRecall(input: MemoryRecallInput): Promise<MemoryR
 
   const vectorByRel = new Map<string, number>();
   const embCfg = resolveEmbeddingConfig();
+  let cuckooVectorChunksDropped: number | undefined;
   if (embCfg && memoryDbSyncEnabled()) {
     try {
+      const cuckooPred = await loadCuckooMembershipPredicate(vault);
       const qEmb = await embedQuery(query, embCfg);
       if (qEmb.length > 0) {
         const topChunks = envInt("CLAWQL_MEMORY_VECTOR_TOP_CHUNKS", 80);
@@ -264,6 +277,16 @@ export async function runMemoryRecall(input: MemoryRecallInput): Promise<MemoryR
           }
         } else if (vb === "sqlite") {
           ranked = await rankFromMemoryDbBlobs();
+        }
+
+        if (cuckooPred) {
+          cuckooVectorChunksDropped = 0;
+          const next: typeof ranked = [];
+          for (const r of ranked) {
+            if (cuckooPred(r.chunkId)) next.push(r);
+            else cuckooVectorChunksDropped++;
+          }
+          ranked = next;
         }
 
         for (const r of ranked) {
@@ -347,13 +370,26 @@ export async function runMemoryRecall(input: MemoryRecallInput): Promise<MemoryR
     return b.score - a.score;
   });
 
-  return {
+  const result: MemoryRecallResult = {
     ok: true,
     query,
     results: hits.slice(0, limit),
     truncated,
     scannedFiles: files.length,
   };
+  if (process.env.CLAWQL_MERKLE_ENABLED === "1") {
+    try {
+      result.merkleSnapshot = await loadVaultMerkleSnapshotFromDb(vault);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error(`[clawql-mcp] memory_recall merkle snapshot load failed: ${msg}`);
+      result.merkleSnapshot = null;
+    }
+  }
+  if (cuckooVectorChunksDropped !== undefined) {
+    result.cuckooVectorChunksDropped = cuckooVectorChunksDropped;
+  }
+  return result;
 }
 
 export async function handleMemoryRecallToolInput(
