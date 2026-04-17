@@ -120,6 +120,7 @@ jobs:
         if: steps.guard.outputs.stop != '1'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEAD_REF: ${{ github.head_ref }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -129,7 +130,7 @@ jobs:
           fi
           git add -A
           git commit -m "style: apply Prettier [prettier-autofix]"
-          git push origin "HEAD:${{ github.head_ref }}"
+          git push origin "HEAD:${HEAD_REF}"
 
   workflow-scripts:
     name: ShellCheck & actionlint
