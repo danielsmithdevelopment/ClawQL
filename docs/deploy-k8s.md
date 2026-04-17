@@ -73,16 +73,16 @@ ENV=dev IMAGE=us-central1-docker.pkg.dev/<project>/<repo>/clawql-mcp TAG=abc123 
 
 ### Service ports (HTTP and gRPC)
 
-All Kustomize layers (**`base`**, **`dev`**, **`local`**, **`prod`**) define **`clawql-mcp-http`** with **two** ports:
+The Helm chart (**`charts/clawql-mcp`**, including **`values-docker-desktop.yaml`** for Docker Desktop) and all Kustomize layers (**`base`**, **`dev`**, **`prod`**) define **`clawql-mcp-http`** with **two** ports:
 
-| Name   | Service `port`                                      | `targetPort`                     | Purpose                                                                |
-| ------ | --------------------------------------------------- | -------------------------------- | ---------------------------------------------------------------------- |
-| `http` | **dev:** 8080 · **local:** 8080 · **base/prod:** 80 | 8080                             | Streamable HTTP MCP, **`/healthz`**                                    |
-| `grpc` | **50051**                                           | **`grpc`** (container **50051**) | **`ENABLE_GRPC=1`**: `grpc.health.v1`, `model_context_protocol.Mcp`, … |
+| Name   | Service `port`                                          | `targetPort`                     | Purpose                                                                |
+| ------ | ------------------------------------------------------- | -------------------------------- | ---------------------------------------------------------------------- |
+| `http` | **dev / Helm Docker Desktop:** 8080 · **base/prod:** 80 | 8080                             | Streamable HTTP MCP, **`/healthz`**                                    |
+| `grpc` | **50051**                                               | **`grpc`** (container **50051**) | **`ENABLE_GRPC=1`**: `grpc.health.v1`, `model_context_protocol.Mcp`, … |
 
 - **dev** (`ClusterIP`): from inside the cluster, e.g. `http://clawql-mcp-http.clawql.svc.cluster.local:8080/mcp` and **`clawql-mcp-http.clawql.svc.cluster.local:50051`** for gRPC. From your laptop, **`kubectl port-forward`** to either port or use Ingress / VPN, depending on how you expose the cluster.
 - **prod** (`LoadBalancer`): **`http://<external-ip>/mcp`** (port **80** maps to container **8080**). For gRPC, use **`<external-ip>:50051`** (plaintext or TLS per your LB / cloud—many L4 load balancers forward TCP **50051** alongside **80**).
-- **local** (Docker Desktop): often **`http://localhost:8080/mcp`** and **`localhost:50051`** for gRPC when the LoadBalancer maps both.
+- **Docker Desktop (Helm `values-docker-desktop.yaml`):** often **`http://localhost:8080/mcp`** and **`localhost:50051`** for gRPC when the LoadBalancer maps both.
 
 Nothing listens on **50051** until the Pod has **`ENABLE_GRPC=1`** (set in your overlay or `kubectl set env`). You do **not** need a separate port-forward for gRPC **if** the Service exposes **50051** and your network path can reach it.
 

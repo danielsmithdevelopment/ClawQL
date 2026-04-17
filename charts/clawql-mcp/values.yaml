@@ -43,6 +43,9 @@ nodeOptions: "--max-old-space-size=1536"
 enableGrpc: false
 enableGrpcReflection: false
 
+# In-process MCP cache tool (#75). Ephemeral per pod — not persisted; use memory_* for vault.
+enableCache: true
+
 # Extra env (e.g. tokens from literal — prefer existing secrets for production).
 extraEnv: []
 
@@ -88,6 +91,14 @@ persistence:
     - ReadWriteOnce
   size: 10Gi
   existingClaim: ""
+
+# Docker Desktop / single-node: bind a host directory into the pod for Obsidian vault persistence.
+# Mutually exclusive with persistence.enabled (PVC wins if both are set).
+vault:
+  hostPath:
+    enabled: false
+    path: ""
+    type: DirectoryOrCreate
 
 ingress:
   enabled: false

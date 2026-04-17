@@ -21,19 +21,22 @@ helm upgrade --install clawql ./charts/clawql-mcp \
 
 The default image is **`ghcr.io/danielsmithdevelopment/clawql-mcp:latest`**. Override **`image.tag`** or **`image.repository`** for your registry.
 
+**Docker Desktop:** **`make local-k8s-up`** runs Helm with **`values-docker-desktop.yaml`** (see [Kubernetes](/kubernetes)).
+
 ## Docs and values
 
 - **Full guide** (examples: ClusterIP, gRPC, tokens, Ingress, persistence): **[`docs/helm.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/helm.md)** on GitHub
 - **Default values:** [`charts/clawql-mcp/values.yaml`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/charts/clawql-mcp/values.yaml)
+- **Docker Desktop preset:** [`charts/clawql-mcp/values-docker-desktop.yaml`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/charts/clawql-mcp/values-docker-desktop.yaml)
 
 ## Helm vs Kustomize
 
-|             | [Kubernetes / Kustomize](/kubernetes)                      | Helm (this page)          |
-| ----------- | ---------------------------------------------------------- | ------------------------- |
-| **Install** | `kubectl apply -k`, `make deploy-k8s`, `make local-k8s-up` | `helm upgrade --install`  |
-| **Config**  | Overlays under `docker/kustomize/overlays/`                | `values.yaml` and `--set` |
+|             | [Kubernetes / Kustomize](/kubernetes)       | Helm (this page)                                                           |
+| ----------- | ------------------------------------------- | -------------------------------------------------------------------------- |
+| **Install** | `kubectl apply -k`, `make deploy-k8s`       | `helm upgrade --install`, **`make local-k8s-up`** (Docker Desktop default) |
+| **Config**  | Overlays under `docker/kustomize/overlays/` | `values.yaml`, **`values-docker-desktop.yaml`**, **`--set`**               |
 
-Docker Desktop with a **host-mounted** vault is still easiest with **`make local-k8s-up`**; use Helm when you want chart-driven upgrades and values files on shared clusters.
+**Docker Desktop:** **`make local-k8s-up`** defaults to Helm. For **`kubectl apply -k`** instead, use **`CLAWQL_LOCAL_K8S_INSTALLER=kustomize`** (see [Kubernetes](/kubernetes)). Remote **`dev` / `prod`** often use **`scripts/deploy-k8s.sh`**.
 
 ## Validate the chart locally
 
