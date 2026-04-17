@@ -13,6 +13,7 @@ const PATHS = [
   '/deployment',
   '/kubernetes',
   '/tools',
+  '/cache',
   '/graphql-proxy',
   '/bundled-specs',
   '/concepts',

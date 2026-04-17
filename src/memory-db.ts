@@ -35,8 +35,14 @@ import {
   loadPostgresChunkVectorsByPaths,
   upsertPostgresChunkVectors,
 } from "./vector-store/pgvector.js";
+import {
+  rebuildSqliteMemoryArtifacts,
+  syncMemoryArtifactsToPostgres,
+  type MemoryArtifactPayload,
+} from "./memory-artifacts.js";
+import { CuckooFilter } from "./cuckoo-filter.js";
 
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 
 let sqlJsPromise: ReturnType<typeof initSqlJs> | null = null;
 
@@ -153,6 +159,26 @@ function migrate(db: Database): void {
       CREATE INDEX idx_wikilink_to_resolved ON wikilink_edge(to_resolved_path);
     `);
     db.run("INSERT INTO schema_migrations (version, name, applied_at) VALUES (1, 'initial', ?)", [
+      isoNow(),
+    ]);
+  }
+
+  if (v < 2) {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS clawql_cuckoo_chunk_membership (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        filter_blob BLOB NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS vault_merkle_snapshot (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        root_hex TEXT NOT NULL,
+        leaf_count INTEGER NOT NULL,
+        tree_height INTEGER NOT NULL,
+        built_at TEXT NOT NULL
+      );
+    `);
+    db.run("INSERT INTO schema_migrations (version, name, applied_at) VALUES (2, 'cuckoo_merkle_v1', ?)", [
       isoNow(),
     ]);
   }
@@ -382,6 +408,7 @@ export async function syncMemoryDbFromDocuments(
       `INSERT OR REPLACE INTO wikilink_edge (from_path, to_target, to_resolved_path) VALUES (?, ?, ?)`
     );
 
+    let artifactPayload: MemoryArtifactPayload = { cuckooBlob: null, merkle: null };
     db.run("BEGIN");
     try {
       for (const { doc, path, plan, chunks } of planned) {
@@ -427,6 +454,7 @@ export async function syncMemoryDbFromDocuments(
           insEdge.run([path, target, resolved]);
         }
       }
+      artifactPayload = rebuildSqliteMemoryArtifacts(db);
       db.run("COMMIT");
     } catch (e) {
       db.run("ROLLBACK");
@@ -440,6 +468,8 @@ export async function syncMemoryDbFromDocuments(
     }
 
     await persistDb(db, absDb);
+
+    await syncMemoryArtifactsToPostgres(artifactPayload.cuckooBlob, artifactPayload.merkle);
 
     if (vb === "postgres" && embedConfig) {
       try {
@@ -561,6 +591,74 @@ export async function loadWikilinkEdgesFromDatabase(
       stmt.free();
     }
     return out;
+  } finally {
+    db.close();
+  }
+}
+
+/**
+ * When **`CLAWQL_CUCKOO_ENABLED=1`**, returns whether `chunk_id` might be in the indexed set
+ * (no false negatives for indexed ids; false positives possible). Otherwise **`null`**.
+ */
+export async function chunkIdMaybeInMemoryIndex(
+  vaultRoot: string,
+  chunkId: string
+): Promise<boolean | null> {
+  if (process.env.CLAWQL_CUCKOO_ENABLED !== "1") return null;
+  if (!memoryDbSyncEnabled()) return null;
+  const absDb = resolveMemoryDatabasePath(vaultRoot);
+  const db = await openOrCreateDb(absDb);
+  try {
+    db.exec("PRAGMA foreign_keys = ON;");
+    migrate(db);
+    const stmt = db.prepare(
+      "SELECT filter_blob FROM clawql_cuckoo_chunk_membership WHERE id = 1 LIMIT 1"
+    );
+    if (!stmt.step()) {
+      stmt.free();
+      return null;
+    }
+    const row = stmt.getAsObject() as { filter_blob?: Uint8Array };
+    stmt.free();
+    const blob = row.filter_blob;
+    if (!blob || blob.byteLength === 0) return null;
+    const filter = CuckooFilter.deserialize(new Uint8Array(blob));
+    return filter.maybeContains(chunkId);
+  } finally {
+    db.close();
+  }
+}
+
+/** Latest Merkle snapshot row from `memory.db`, if present. */
+export async function loadVaultMerkleSnapshotFromDb(
+  vaultRoot: string
+): Promise<{ rootHex: string; leafCount: number; treeHeight: number; builtAt: string } | null> {
+  if (!memoryDbSyncEnabled()) return null;
+  const absDb = resolveMemoryDatabasePath(vaultRoot);
+  const db = await openOrCreateDb(absDb);
+  try {
+    db.exec("PRAGMA foreign_keys = ON;");
+    migrate(db);
+    const stmt = db.prepare(
+      "SELECT root_hex, leaf_count, tree_height, built_at FROM vault_merkle_snapshot WHERE id = 1 LIMIT 1"
+    );
+    if (!stmt.step()) {
+      stmt.free();
+      return null;
+    }
+    const row = stmt.getAsObject() as {
+      root_hex: string;
+      leaf_count: number;
+      tree_height: number;
+      built_at: string;
+    };
+    stmt.free();
+    return {
+      rootHex: row.root_hex,
+      leafCount: Number(row.leaf_count),
+      treeHeight: Number(row.tree_height),
+      builtAt: row.built_at,
+    };
   } finally {
     db.close();
   }

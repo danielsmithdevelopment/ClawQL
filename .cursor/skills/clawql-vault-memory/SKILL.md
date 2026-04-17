@@ -25,15 +25,15 @@ If **ClawQL MCP** is not configured or **`CLAWQL_OBSIDIAN_VAULT_PATH`** is unset
 
 ### `memory_ingest`
 
-| Field | Use |
-| --- | --- |
-| **`title`** | Required. Drives the H1 and the filename slug under `Memory/<slug>.md`. Prefer stable, descriptive titles (e.g. `gRPC MCP ListTools metadata`) so updates append to the same page. |
-| **`insights`** | Primary prose. Markdown is fine. This is where **semantic tagging** and structure live (see below). |
-| **`conversation`** | Longer transcript or chat summary; stored in a fenced block under **Conversation**. |
-| **`toolOutputs`** | Verbatim logs: command output, errors, JSON snippets, diffs—each string becomes a block; multiple strings are separated for readability. |
-| **`wikilinks`** | List of **other vault note titles** (plain names; `[[brackets]]` optional). Rendered as **`## Related`** with `- [[Note Name]]` bullets—this is the **graph** for Obsidian. |
-| **`sessionId`** | Optional label for the section header (threads multi-step work). |
-| **`append`** | Default **true**: new section appended to an existing file with the same slug. Set **false** only to replace the file body (rare). |
+| Field              | Use                                                                                                                                                                                |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`title`**        | Required. Drives the H1 and the filename slug under `Memory/<slug>.md`. Prefer stable, descriptive titles (e.g. `gRPC MCP ListTools metadata`) so updates append to the same page. |
+| **`insights`**     | Primary prose. Markdown is fine. This is where **semantic tagging** and structure live (see below).                                                                                |
+| **`conversation`** | Longer transcript or chat summary; stored in a fenced block under **Conversation**.                                                                                                |
+| **`toolOutputs`**  | Verbatim logs: command output, errors, JSON snippets, diffs—each string becomes a block; multiple strings are separated for readability.                                           |
+| **`wikilinks`**    | List of **other vault note titles** (plain names; `[[brackets]]` optional). Rendered as **`## Related`** with `- [[Note Name]]` bullets—this is the **graph** for Obsidian.        |
+| **`sessionId`**    | Optional label for the section header (threads multi-step work).                                                                                                                   |
+| **`append`**       | Default **true**: new section appended to an existing file with the same slug. Set **false** only to replace the file body (rare).                                                 |
 
 **Dedup:** Identical payload hash → ingest is skipped (no duplicate sections).
 
@@ -41,14 +41,18 @@ If **ClawQL MCP** is not configured or **`CLAWQL_OBSIDIAN_VAULT_PATH`** is unset
 
 ### `memory_recall`
 
-| Field | Use |
-| --- | --- |
-| **`query`** | Keywords / phrase; tokenized for scoring across vault Markdown. |
-| **`limit`** | Max notes (default from env, often ~10). |
+| Field          | Use                                                                              |
+| -------------- | -------------------------------------------------------------------------------- |
+| **`query`**    | Keywords / phrase; tokenized for scoring across vault Markdown.                  |
+| **`limit`**    | Max notes (default from env, often ~10).                                         |
 | **`maxDepth`** | Wikilink hops from keyword hits (default from env). Higher = more graph context. |
-| **`minScore`** | Raise to filter weak keyword matches. |
+| **`minScore`** | Raise to filter weak keyword matches.                                            |
 
 Results include path, score, depth, reason (`keyword` | `link` | `vector`), and snippet. Use hits to ground answers or decide what to open next.
+
+### Optional `cache` (not vault)
+
+When **`CLAWQL_ENABLE_CACHE`** is set, the server exposes **`cache`**: **ephemeral** key/value in this process, **LRU**-bounded, **no** Markdown / **`memory.db`**. Use it for session scratch state only. For durable notes and graph recall, use **`memory_ingest`** / **`memory_recall`**. Repo reference: **[`docs/cache-tool.md`](../../../docs/cache-tool.md)** (relative from this skill file in the ClawQL repo).
 
 ---
 
@@ -58,24 +62,31 @@ Use **`insights`** as the main artifact. A solid long-form layout:
 
 ```markdown
 ## Summary
+
 One paragraph: what this note captures and why it matters.
 
 ## Tags / topics
-#grpc #mcp #clawql  (Obsidian-compatible hashtags; add domain tags freely)
+
+#grpc #mcp #clawql (Obsidian-compatible hashtags; add domain tags freely)
 
 ## Decisions
+
 - Bullet decisions with rationale.
 
 ## Commands / env
+
 - `VAR=value` …
 
 ## APIs & references
+
 - Paths, RPC names, links to repo files.
 
 ## Risks & caveats
+
 - What breaks, versioning, known grpcurl quirks.
 
 ## Follow-ups
+
 - [ ] Next steps
 ```
 

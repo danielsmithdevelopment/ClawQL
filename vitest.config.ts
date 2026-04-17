@@ -4,6 +4,8 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["src/**/*.test.ts", "packages/mcp-grpc-transport/src/**/*.test.ts"],
+    /** Avoid worker RPC teardown races when HTTP servers + fetch leave sockets pending. */
+    teardownTimeout: 20_000,
     pool: "forks",
     coverage: {
       provider: "v8",

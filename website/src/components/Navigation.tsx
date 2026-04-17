@@ -250,6 +250,7 @@ export const navigation: Array<NavGroup> = [
     title: 'Reference',
     links: [
       { title: 'Tools', href: '/tools' },
+      { title: 'Session cache', href: '/cache' },
       { title: 'GraphQL layer', href: '/graphql-proxy' },
       { title: 'Bundled specs', href: '/bundled-specs' },
       { title: 'Concepts', href: '/concepts' },

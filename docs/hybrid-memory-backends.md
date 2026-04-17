@@ -35,8 +35,8 @@ ClawQL treats **vault Markdown** as the **source of truth**. Derived state can l
 | Canonical notes                                 | Vault `.md`                                          | —                                                                                                        |
 | Structured index (documents, chunks, wikilinks) | **`memory.db`** (sql.js)                             | Same; Postgres is not a drop-in replacement for this file today                                          |
 | Chunk vectors                                   | **`sqlite`** — KNN in-process over `memory.db` BLOBs | **`postgres`** + URL — pgvector KNN; dual-write BLOBs by default; **no URL → sqlite vectors** (fallback) |
-| Future: Cuckoo membership (#25)                 | TBD (likely SQLite blobs or Postgres BYTEA)          | Same table layout in PG for scale-out                                                                    |
-| Future: Merkle / integrity (#37)                | TBD                                                  | Postgres-friendly for multi-replica                                                                      |
+| Cuckoo membership ([#25](https://github.com/danielsmithdevelopment/ClawQL/issues/25)) | **`CLAWQL_CUCKOO_ENABLED=1`** — blob in **`memory.db`**; optional **`clawql_cuckoo_chunk_membership`** in Postgres | Same mirror when **`CLAWQL_VECTOR_DATABASE_URL`** is set |
+| Merkle root ([#37](https://github.com/danielsmithdevelopment/ClawQL/issues/37)) | **`CLAWQL_MERKLE_ENABLED=1`** — **`vault_merkle_snapshot` / `clawql_vault_merkle`** | Proofs: **`merkleProof`** / **`verifyMerkleProof`** in **`src/merkle-tree.ts`** |
 
 **Why SQLite stays default for vectors-on-disk:** it ships beside **`Memory/`** with zero ops. **Why Postgres exists:** pgvector ANN, connection pooling, and shared infrastructure for teams that already run Postgres.
 
@@ -47,7 +47,7 @@ ClawQL treats **vault Markdown** as the **source of truth**. Derived state can l
 - **Prefix:** all ClawQL tables use **`clawql_`**.
 - **Migrations:** **`clawql_pg_schema_migrations`** (versioned DDL, same idea as `schema_migrations` in `memory.db`). See **`src/memory-backends/postgres-migrations.ts`** (invoked from **`src/vector-store/pgvector.ts`**).
 - **Extension:** **`CREATE EXTENSION IF NOT EXISTS vector`** (migration 1).
-- **Future tables:** e.g. **`clawql_cuckoo_filter`**, **`clawql_vault_merkle`** — add new migration versions; do not ad-hoc `CREATE TABLE` outside the migration runner.
+- **Artifact tables:** **`clawql_cuckoo_chunk_membership`**, **`clawql_vault_merkle`** (migration **2**) — mirrors the SQLite single-row snapshots when hybrid-memory sync runs against Postgres.
 
 Changing **`CLAWQL_EMBEDDING_DIMENSION`** after **`clawql_memory_chunk_vector`** exists may require a manual **`ALTER`** or rebuild; the dimension is fixed at first migration for `vector(dim)`.
 

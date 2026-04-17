@@ -38,3 +38,7 @@ In **multi-spec** mode, **`search`** uses one merged index while **`execute`** r
 | **Tradeoff** | — | Small extra input for the internal query + variables |
 
 Benchmarks in the repo compare **planning-context size** (merged specs on disk vs workflow/search artifacts) to illustrate scale—not a literal per-call “API bill” from a model provider. See [Benchmarks](/benchmarks).
+
+## Ephemeral `cache` vs vault memory
+
+The optional **`cache`** tool (**`CLAWQL_ENABLE_CACHE`**) holds **short-lived** key/value state in the MCP process (LRU, no disk). **`memory_ingest`** / **`memory_recall`** use your **Obsidian vault** (and optional **`memory.db`**) for **durable** notes and graph recall. Do not confuse them: use [Session cache](/cache) for scratch data; use the vault tools when the user expects persisted knowledge. See [cache-tool.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/cache-tool.md).

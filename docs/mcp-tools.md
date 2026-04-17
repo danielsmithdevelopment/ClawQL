@@ -1,6 +1,6 @@
 # MCP tools reference
 
-ClawQL exposes **six** tools over MCP (stdio or Streamable HTTP). The **core** pair is **`search`** + **`execute`** for OpenAPI/Discovery APIs. The other four are **optional** and depend on configuration (vault path, Cloudflare Sandbox bridge, external ingest flag).
+ClawQL exposes **six** core+optional tools over MCP by default (stdio or Streamable HTTP), and a **seventh** — **`cache`** — when **`CLAWQL_ENABLE_CACHE=1`**. The **core** pair is **`search`** + **`execute`** for OpenAPI/Discovery APIs. The other defaults are **optional** and depend on configuration (vault path, Cloudflare Sandbox bridge, external ingest flag).
 
 | Tool                        | Requires                                                  | Purpose                                                                                                                                                                                                                                                                                                                                                   |
 | --------------------------- | --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -10,8 +10,29 @@ ClawQL exposes **six** tools over MCP (stdio or Streamable HTTP). The **core** p
 | `memory_ingest`             | `CLAWQL_OBSIDIAN_VAULT_PATH`                              | Write Obsidian Markdown under `Memory/`; refreshes **`memory.db`** when enabled; optional **`_INDEX_*.md`** hub page ([#38](https://github.com/danielsmithdevelopment/ClawQL/issues/38))                                                                                                                                                                  |
 | `memory_recall`             | `CLAWQL_OBSIDIAN_VAULT_PATH`                              | Keyword search + `[[wikilink]]` hops; optionally merges edges from **`memory.db`**, optional **vector KNN** when **`CLAWQL_VECTOR_BACKEND`** is **`sqlite`** (BLOBs in **`memory.db`**) or **`postgres`** (**pgvector** + **`CLAWQL_VECTOR_DATABASE_URL`**) with **`CLAWQL_EMBEDDING_*`**; can resync the DB when **`CLAWQL_MEMORY_DB_SYNC_ON_RECALL=1`** |
 | `ingest_external_knowledge` | Optional vault for future writes                          | **Stub:** roadmap for bulk import (Notion, Confluence, …) into the vault; set **`CLAWQL_EXTERNAL_INGEST=1`** for preview JSON ([#40](https://github.com/danielsmithdevelopment/ClawQL/issues/40))                                                                                                                                                         |
+| `cache`                     | **`CLAWQL_ENABLE_CACHE=1`**                               | Ephemeral **in-process LRU** KV (set/get/delete/list/search); evicts LRU when full — **not** on disk; use **`memory_ingest`** / **`memory_recall`** for persisted vault memory ([#75](https://github.com/danielsmithdevelopment/ClawQL/issues/75))                                                                                                        |
 
-See also: **[memory-obsidian.md](memory-obsidian.md)** (vault concepts), **[cursor-vault-memory.md](cursor-vault-memory.md)** (Cursor rule + skill for vault tools), **[memory-db-schema.md](memory-db-schema.md)** (SQLite sidecar), **[external-ingest.md](external-ingest.md)** (bulk ingest stub), **[README](../README.md)** (install, env tables), **[deploy-k8s.md](deploy-k8s.md)** (Kubernetes Service ports **8080** + **50051** for HTTP MCP and gRPC), **[cloudflare/sandbox-bridge/README.md](../cloudflare/sandbox-bridge/README.md)** (Worker deploy).
+See also: **[memory-obsidian.md](memory-obsidian.md)** (vault concepts), **[cursor-vault-memory.md](cursor-vault-memory.md)** (Cursor rule + skill for vault tools), **[cache-tool.md](cache-tool.md)** (**`cache`** vs **`memory_*`**, LRU), **[memory-db-schema.md](memory-db-schema.md)** (SQLite sidecar), **[external-ingest.md](external-ingest.md)** (bulk ingest stub), **[README](../README.md)** (install, env tables), **[deploy-k8s.md](deploy-k8s.md)** (Kubernetes Service ports **8080** + **50051** for HTTP MCP and gRPC), **[cloudflare/sandbox-bridge/README.md](../cloudflare/sandbox-bridge/README.md)** (Worker deploy).
+
+---
+
+## `cache` (optional)
+
+**Full write-up:** **[cache-tool.md](cache-tool.md)** (vs vault memory, LRU semantics, multi-replica).
+
+**Env:** **`CLAWQL_ENABLE_CACHE=1`** (or `true` / `yes`). **`CLAWQL_CACHE_MAX_VALUE_BYTES`** — max UTF-8 size per value (default **1048576**, cap **16 MiB**). **`CLAWQL_CACHE_MAX_ENTRIES`** — max distinct keys (default **10000**); least-recently-used keys are evicted when full (`get` / `set` refresh recency).
+
+**Temporary session data only:** entries live in an **LRU `Map` in this process** — no disk, no vault. Restart or another replica has an empty cache. For **durable** notes and graph recall, use **`memory_ingest`** and **`memory_recall`**.
+
+**Input (discriminated by `operation`):**
+
+| `operation` | Fields                                                                          | Result                                                                |
+| ----------- | ------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `set`       | `key`, `value`                                                                  | `{ ok, key, evicted? }` (evicted = LRU keys dropped when at capacity) |
+| `get`       | `key`                                                                           | `{ hit, key, value? }`                                                |
+| `delete`    | `key`                                                                           | `{ deleted }`                                                         |
+| `list`      | optional `prefix`, `limit` (default 100)                                        | `{ keys[] }` sorted                                                   |
+| `search`    | `query` (substring, keys only, case-insensitive), optional `limit` (default 50) | `{ keys[] }`                                                          |
 
 ---
 
@@ -127,3 +148,29 @@ Returns JSON with **`results[]`**: `path`, `score`, `depth`, `reason` (`keyword`
 ```
 
 Returns JSON: when disabled, **`ok: false`** with **`hint`**; when enabled, **`ok: true`**, **`stub: true`**, **`roadmap[]`**, **`relatedIssues`**. Future imports would land under the vault like **`memory_ingest`** so **`memory_recall`** can find them. See **[external-ingest.md](external-ingest.md)** ([#40](https://github.com/danielsmithdevelopment/ClawQL/issues/40)).
+
+---
+
+## Optional tool flags (`CLAWQL_ENABLE_*` and related)
+
+Boolean flags are parsed in one place — **[`src/clawql-optional-flags.ts`](../src/clawql-optional-flags.ts)** ([GitHub #79](https://github.com/danielsmithdevelopment/ClawQL/issues/79)) — so env wiring stays consistent. **Truthy** means `1`, `true`, or `yes` (case-insensitive), except where noted.
+
+| Concern                | Env var(s)                                                         | Default | MCP tools / behavior                                                                                                                                             |
+| ---------------------- | ------------------------------------------------------------------ | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| gRPC MCP               | `ENABLE_GRPC`, `ENABLE_GRPC_REFLECTION`                            | off     | Same tools over gRPC (**`GRPC_PORT`**, optional reflection); see README and [`packages/mcp-grpc-transport/README.md`](../packages/mcp-grpc-transport/README.md). |
+| External ingest stub   | `CLAWQL_EXTERNAL_INGEST`                                           | off     | Must be exactly **`1`** for `ingest_external_knowledge` preview JSON (not Zod truthy — legacy).                                                                  |
+| Obsidian vault         | `CLAWQL_OBSIDIAN_VAULT_PATH`                                       | unset   | Required for **`memory_ingest`** / **`memory_recall`** to write/search; see [memory-obsidian.md](memory-obsidian.md).                                            |
+| Sandbox bridge         | `CLAWQL_SANDBOX_BRIDGE_URL`, `CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN` | unset   | **`sandbox_exec`** calls the Worker; missing URL/token returns a clear error from the handler.                                                                   |
+| Vector / hybrid memory | `CLAWQL_VECTOR_BACKEND`, embedding + DB vars                       | off     | Optional **`memory_recall`** KNN; see README and [hybrid-memory-backends.md](hybrid-memory-backends.md).                                                         |
+| **`cache` tool**       | `CLAWQL_ENABLE_CACHE`                                              | off     | [#75](https://github.com/danielsmithdevelopment/ClawQL/issues/75): in-process LRU; **`CLAWQL_CACHE_MAX_VALUE_BYTES`**, **`CLAWQL_CACHE_MAX_ENTRIES`**.           |
+| **Planned** schedule   | `CLAWQL_ENABLE_SCHEDULE`                                           | off     | [#76](https://github.com/danielsmithdevelopment/ClawQL/issues/76) — reserved.                                                                                    |
+| **Planned** notify     | `CLAWQL_ENABLE_NOTIFY`                                             | off     | [#77](https://github.com/danielsmithdevelopment/ClawQL/issues/77) — reserved.                                                                                    |
+| **Planned** vision     | `CLAWQL_ENABLE_VISION`                                             | off     | [#78](https://github.com/danielsmithdevelopment/ClawQL/issues/78) — reserved.                                                                                    |
+
+---
+
+## Planned: `schedule` (optional)
+
+**Env (planned):** `CLAWQL_ENABLE_SCHEDULE` + related caps/paths — see [#76](https://github.com/danielsmithdevelopment/ClawQL/issues/76), [#79](https://github.com/danielsmithdevelopment/ClawQL/issues/79).
+
+The **`schedule`** tool will support persisted jobs (cron / interval / one-shot) with **typed actions**. One action kind is **synthetic HTTP/API checks** (assertions + history) as a **subset** of scheduling—see **[schedule-synthetic-checks.md](schedule-synthetic-checks.md)**. Failure notifications are intended to pair with **`notify`** ([#77](https://github.com/danielsmithdevelopment/ClawQL/issues/77)). ClawQL does not bundle third-party observability vendors; scheduled probes are defined and stored **in-process** with the same safety constraints as the rest of the server.

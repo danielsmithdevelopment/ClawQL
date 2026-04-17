@@ -18,16 +18,16 @@ export interface VectorIndexBackend {
 }
 
 /**
- * Future: fast approximate membership / dedup (issue #25).
- * Likely keyed by stable chunk or document ids from `memory.db` contract.
+ * Approximate membership over stable `chunk_id` keys — implemented as a serialized Cuckoo filter
+ * in `memory.db` (`clawql_cuckoo_chunk_membership`) and mirrored to Postgres when configured (#25).
  */
 export interface MembershipFilterBackend {
   readonly backend: "sqlite" | "postgres";
 }
 
 /**
- * Future: integrity proofs / Merkle metadata (issue #37).
- * May store roots and proofs beside or instead of full-tree materialization in SQLite.
+ * Merkle root over vault documents (sorted path + `body_sha256`) — `vault_merkle_snapshot` in SQLite
+ * and `clawql_vault_merkle` in Postgres (#37). Proofs via `merkleProof` / `verifyMerkleProof` in `merkle-tree.ts`.
  */
 export interface IntegrityArtifactBackend {
   readonly backend: "sqlite" | "postgres";

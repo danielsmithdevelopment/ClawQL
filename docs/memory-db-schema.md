@@ -16,7 +16,7 @@ The vault Markdown files remain the **source of truth**; the DB is a **derived i
 
 ## Migrations
 
-Table **`schema_migrations`** records applied DDL versions. The in-code constant **`SCHEMA_VERSION`** is **1** in `src/memory-db.ts` (bump when adding migrations).
+Table **`schema_migrations`** records applied DDL versions. The in-code constant **`SCHEMA_VERSION`** is **2** in `src/memory-db.ts` (bump when adding migrations). Migration **2** adds optional Cuckoo / Merkle artifact tables.
 
 ## Tables
 
@@ -63,6 +63,28 @@ Directed edges mirroring Obsidian `[[wikilinks]]` in each source file.
 | `to_resolved_path` | TEXT NULL  | Vault-relative destination when the slug maps to a scanned file; otherwise `NULL`. |
 
 Unique on `(from_path, to_target)` — re-ingest uses `INSERT OR REPLACE` semantics per edge row.
+
+### `clawql_cuckoo_chunk_membership` (optional)
+
+Single-row table when **`CLAWQL_CUCKOO_ENABLED=1`**. Holds a serialized Cuckoo filter over every **`vault_chunk.chunk_id`**.
+
+| Column        | Type    | Description                                 |
+| ------------- | ------- | ------------------------------------------- |
+| `id`          | INTEGER | Fixed **1** (`CHECK (id = 1)`).             |
+| `filter_blob` | BLOB  | `CuckooFilter.serialize()` payload.         |
+| `updated_at`  | TEXT    | ISO time when the filter was last rebuilt.  |
+
+### `vault_merkle_snapshot` (optional)
+
+Single-row table when **`CLAWQL_MERKLE_ENABLED=1`**. Merkle root over **`vault_document`** rows (sorted by `path`); leaf preimage uses `path` and **`body_sha256`** (see **`src/merkle-tree.ts`**).
+
+| Column         | Type    | Description                    |
+| -------------- | ------- | ------------------------------ |
+| `id`           | INTEGER | Fixed **1**.                   |
+| `root_hex`     | TEXT    | Hex SHA-256 root.              |
+| `leaf_count`   | INTEGER | Number of documents included.  |
+| `tree_height`  | INTEGER | Tree height (0 = single leaf). |
+| `built_at`     | TEXT    | ISO timestamp.                 |
 
 ## Chunking contract: `paragraph_v1`
 

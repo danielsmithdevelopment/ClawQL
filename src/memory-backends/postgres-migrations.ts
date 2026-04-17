@@ -7,7 +7,7 @@ import type { PoolClient } from "pg";
 import { embeddingVectorDimension } from "../memory-embedding.js";
 
 /** Bump when adding a new migration step. */
-export const PG_HYBRID_MEMORY_SCHEMA_VERSION = 1;
+export const PG_HYBRID_MEMORY_SCHEMA_VERSION = 2;
 
 async function currentMigrationVersion(client: PoolClient): Promise<number> {
   const r = await client.query<{ m: string | null }>(
@@ -57,6 +57,30 @@ export async function runPostgresHybridMemoryMigrations(client: PoolClient): Pro
        ON CONFLICT (version) DO NOTHING`
     );
     v = 1;
+  }
+
+  if (v < 2) {
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS clawql_cuckoo_chunk_membership (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        filter_blob BYTEA NOT NULL,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS clawql_vault_merkle (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        root_hex TEXT NOT NULL,
+        leaf_count INTEGER NOT NULL,
+        tree_height INTEGER NOT NULL,
+        built_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    await client.query(
+      `INSERT INTO clawql_pg_schema_migrations (version, name) VALUES (2, 'cuckoo_merkle_v1')
+       ON CONFLICT (version) DO NOTHING`
+    );
+    v = 2;
   }
 
   if (v < PG_HYBRID_MEMORY_SCHEMA_VERSION) {

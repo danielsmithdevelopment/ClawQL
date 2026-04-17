@@ -3,6 +3,7 @@
  * Stub only: contract + roadmap; providers are future work.
  */
 
+import { getClawqlOptionalToolFlags } from "./clawql-optional-flags.js";
 import { getObsidianVaultPath } from "./vault-config.js";
 import { logMcpToolShape } from "./mcp-tool-log.js";
 
@@ -29,7 +30,7 @@ export type ExternalIngestResult = {
 
 /** Opt-in for stub/preview JSON; real providers will require this (or successor) flag. */
 export function externalIngestFeatureEnabled(): boolean {
-  return process.env.CLAWQL_EXTERNAL_INGEST?.trim() === "1";
+  return getClawqlOptionalToolFlags().externalIngestPreview;
 }
 
 export async function runIngestExternalKnowledge(

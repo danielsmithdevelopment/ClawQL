@@ -1,4 +1,4 @@
-import { createServer } from "node:http";
+import { createServer, type Server } from "node:http";
 import { once } from "node:events";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -6,6 +6,23 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createMcpHttpApp } from "./server-http.js";
 import { resetSpecCache } from "./spec-loader.js";
 import { resetSchemaFieldCache } from "./tools.js";
+
+/**
+ * Close the HTTP server without hanging the Vitest worker: undici/fetch can leave
+ * keep-alive sockets open; `close()` alone may wait indefinitely. Destroying
+ * connections first avoids EnvironmentTeardownError (RPC pending onUserConsoleLog).
+ */
+function closeHttpServer(server: Server): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (typeof server.closeAllConnections === "function") {
+      server.closeAllConnections();
+    }
+    server.close((err) => {
+      if (err) reject(err);
+      else resolve();
+    });
+  });
+}
 
 const here = dirname(fileURLToPath(import.meta.url));
 const minimalSpec = join(here, "test-utils/fixtures/minimal-petstore.json");
@@ -47,8 +64,7 @@ describe("server-http", () => {
     try {
       await run(baseUrl);
     } finally {
-      server.close();
-      await once(server, "close");
+      await closeHttpServer(server);
     }
   }
 

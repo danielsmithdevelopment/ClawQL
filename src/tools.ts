@@ -5,6 +5,7 @@
  * Optional: sandbox_exec — remote execution via cloudflare/sandbox-bridge Worker.
  * Optional: memory_ingest / memory_recall — Obsidian vault notes (ingest + recall).
  * Optional: ingest_external_knowledge — bulk external import stub (GitHub #40).
+ * Optional: cache — in-process ephemeral KV when CLAWQL_ENABLE_CACHE (GitHub #75); not persisted — use memory_* for vault.
  * Single-spec `execute` runs OpenAPI→GraphQL in-process; field resolution uses `graphql-execute-helpers`.
  */
 
@@ -31,6 +32,8 @@ import { handleClawqlCodeToolInput } from "./sandbox-bridge-client.js";
 import { handleIngestExternalKnowledgeToolInput } from "./external-ingest.js";
 import { handleMemoryIngestToolInput } from "./memory-ingest.js";
 import { handleMemoryRecallToolInput } from "./memory-recall.js";
+import { cacheToolSchema, handleCacheToolInput } from "./clawql-cache.js";
+import { getClawqlOptionalToolFlags } from "./clawql-optional-flags.js";
 import type { OpenAPIDoc } from "./spec-loader.js";
 
 type GraphQLFieldInfo = { name: string; args: string[] };
@@ -387,6 +390,10 @@ export function registerTools(server: McpServer) {
     },
     handleIngestExternalKnowledgeToolInput
   );
+
+  if (getClawqlOptionalToolFlags().enableCache) {
+    server.tool("cache", cacheToolSchema, handleCacheToolInput);
+  }
 }
 
 // ─────────────────────────────────────────────────────────────
