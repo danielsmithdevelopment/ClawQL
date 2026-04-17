@@ -50,8 +50,7 @@ export function recordCuckooLookup(args: {
 
 export function getCuckooMetricsSnapshot(): Record<string, unknown> {
   const fpDenom = falsePositives + verifiedInDb;
-  const estimatedFpr =
-    fpDenom > 0 ? falsePositives / fpDenom : lookups > 0 ? 0 : null;
+  const estimatedFpr = fpDenom > 0 ? falsePositives / fpDenom : lookups > 0 ? 0 : null;
   return {
     rebuildCount,
     lastRebuild,
