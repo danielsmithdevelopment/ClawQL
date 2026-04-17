@@ -222,7 +222,7 @@ export async function runMemoryIngest(input: MemoryIngestInput): Promise<MemoryI
   });
 
   if (result.ok && !result.skipped) {
-    let indexExtras: Pick<
+    const indexExtras: Pick<
       MemoryIngestResult,
       "merkleSnapshotBefore" | "merkleSnapshot" | "merkleRootChanged" | "cuckooMembershipReady"
     > = {};
