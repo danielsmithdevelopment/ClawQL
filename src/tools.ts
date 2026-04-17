@@ -4,7 +4,7 @@
  * Core tools: search (spec discovery) and execute (GraphQL-backed REST call).
  * Optional: sandbox_exec — remote execution via cloudflare/sandbox-bridge Worker.
  * Optional: memory_ingest / memory_recall — Obsidian vault notes (ingest + recall).
- * Optional: ingest_external_knowledge — bulk external import stub (GitHub #40).
+ * Optional: ingest_external_knowledge — bulk Markdown + optional URL fetch (GitHub #40).
  * Optional: cache — in-process ephemeral KV when CLAWQL_ENABLE_CACHE (GitHub #75); not persisted — use memory_* for vault.
  * Single-spec `execute` runs OpenAPI→GraphQL in-process; field resolution uses `graphql-execute-helpers`.
  */
@@ -375,17 +375,39 @@ export function registerTools(server: McpServer) {
         .string()
         .optional()
         .describe(
-          "Future: external system id (e.g. notion, confluence, github). Stub only until providers ship."
+          'Importer: "markdown" (default when documents[] is set) or "url" for HTTPS fetch (requires CLAWQL_EXTERNAL_INGEST_FETCH=1). Omit payload for roadmap preview.'
         ),
       dryRun: z
         .boolean()
         .optional()
-        .describe("Default true. When providers exist, avoids writes until explicitly false."),
+        .describe(
+          "Default true: validate only. Set false to write Markdown or (url mode) fetch and write."
+        ),
       scope: z
         .string()
         .optional()
         .describe(
-          "Future: provider scope (workspace id, repo full name, space key). Not used in the stub."
+          "Optional vault-relative .md path for url imports (default: Memory/external/<slug>.md)."
+        ),
+      documents: z
+        .array(
+          z.object({
+            path: z.string().min(1).max(512).describe("Vault-relative path; must end with .md"),
+            markdown: z
+              .string()
+              .max(2_097_152)
+              .describe("Markdown body UTF-8 (max ~2 MiB per file)."),
+          })
+        )
+        .max(50)
+        .optional()
+        .describe("Bulk Markdown files to import when CLAWQL_EXTERNAL_INGEST=1."),
+      url: z
+        .string()
+        .max(2048)
+        .optional()
+        .describe(
+          "HTTPS URL to fetch when source is url and CLAWQL_EXTERNAL_INGEST_FETCH=1 (opt-in network)."
         ),
     },
     handleIngestExternalKnowledgeToolInput

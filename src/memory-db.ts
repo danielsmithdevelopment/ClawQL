@@ -8,7 +8,7 @@
 
 import { createHash } from "node:crypto";
 import { createRequire } from "node:module";
-import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rename, stat, writeFile } from "node:fs/promises";
 import { basename, dirname, isAbsolute, join } from "node:path";
 import initSqlJs, { type Database } from "sql.js";
 import { getObsidianVaultPath } from "./vault-config.js";
@@ -41,6 +41,14 @@ import {
   type MemoryArtifactPayload,
 } from "./memory-artifacts.js";
 import { CuckooFilter } from "./cuckoo-filter.js";
+import {
+  getCachedCuckooFilter,
+  getCachedMerkleSnapshot,
+  invalidateMemoryDbArtifactCaches,
+  setCachedCuckooFilter,
+  setCachedMerkleSnapshot,
+  type MerkleSnapshotRow,
+} from "./memory-db-artifact-cache.js";
 
 const SCHEMA_VERSION = 2;
 
@@ -205,6 +213,138 @@ async function persistDb(db: Database, absDbPath: string): Promise<void> {
   const tmp = `${absDbPath}.${process.pid}.tmp`;
   await writeFile(tmp, Buffer.from(data));
   await rename(tmp, absDbPath);
+  invalidateMemoryDbArtifactCaches(absDbPath);
+}
+
+/** `mtimeMs` + `size` — invalidates when `persistDb` rewrites the file. */
+async function memoryDbFileSignature(absDbPath: string): Promise<string | null> {
+  try {
+    const st = await stat(absDbPath);
+    return `${st.mtimeMs}:${st.size}`;
+  } catch {
+    return null;
+  }
+}
+
+export type { MerkleSnapshotRow };
+
+export type RecallDbArtifacts = {
+  chunks: ChunkWithEmbedding[];
+  cuckooPred: ((chunkId: string) => boolean) | null;
+  merkleSnapshot: MerkleSnapshotRow | null;
+};
+
+function loadChunkEmbeddingsFromOpenDb(
+  db: Database,
+  documentPaths: string[]
+): ChunkWithEmbedding[] {
+  const out: ChunkWithEmbedding[] = [];
+  const batch = 400;
+  for (let i = 0; i < documentPaths.length; i += batch) {
+    const slice = documentPaths.slice(i, i + batch);
+    if (slice.length === 0) continue;
+    const placeholders = slice.map(() => "?").join(",");
+    const stmt = db.prepare(
+      `SELECT document_path, chunk_id, text, embedding FROM vault_chunk WHERE embedding IS NOT NULL AND document_path IN (${placeholders})`
+    );
+    stmt.bind(slice);
+    while (stmt.step()) {
+      const row = stmt.getAsObject() as {
+        document_path: string;
+        chunk_id: string;
+        text: string;
+        embedding: Uint8Array;
+      };
+      const emb = blobToFloat32Array(new Uint8Array(row.embedding));
+      if (emb.length === 0) continue;
+      out.push({
+        documentPath: row.document_path,
+        chunkId: row.chunk_id,
+        text: row.text,
+        embedding: emb,
+      });
+    }
+    stmt.free();
+  }
+  return out;
+}
+
+function readCuckooFilterFromOpenDb(db: Database): CuckooFilter | null {
+  if (process.env.CLAWQL_CUCKOO_ENABLED !== "1") return null;
+  const stmt = db.prepare(
+    "SELECT filter_blob FROM clawql_cuckoo_chunk_membership WHERE id = 1 LIMIT 1"
+  );
+  if (!stmt.step()) {
+    stmt.free();
+    return null;
+  }
+  const row = stmt.getAsObject() as { filter_blob?: Uint8Array };
+  stmt.free();
+  const blob = row.filter_blob;
+  if (!blob || blob.byteLength === 0) return null;
+  return CuckooFilter.deserialize(new Uint8Array(blob));
+}
+
+function loadCuckooPredicateFromOpenDb(db: Database): ((chunkId: string) => boolean) | null {
+  const filter = readCuckooFilterFromOpenDb(db);
+  if (!filter) return null;
+  return (chunkId: string) => filter.maybeContains(chunkId);
+}
+
+function loadMerkleSnapshotFromOpenDb(db: Database): MerkleSnapshotRow | null {
+  const stmt = db.prepare(
+    "SELECT root_hex, leaf_count, tree_height, built_at FROM vault_merkle_snapshot WHERE id = 1 LIMIT 1"
+  );
+  if (!stmt.step()) {
+    stmt.free();
+    return null;
+  }
+  const row = stmt.getAsObject() as {
+    root_hex: string;
+    leaf_count: number;
+    tree_height: number;
+    built_at: string;
+  };
+  stmt.free();
+  return {
+    rootHex: row.root_hex,
+    leafCount: Number(row.leaf_count),
+    treeHeight: Number(row.tree_height),
+    builtAt: row.built_at,
+  };
+}
+
+/**
+ * Single sql.js session for recall: chunk embeddings, optional Cuckoo predicate, optional Merkle row.
+ * Prefer this over separate loaders when multiple are needed (fewer WASM DB opens).
+ */
+export async function loadRecallDbArtifacts(
+  vaultRoot: string,
+  documentPaths: string[],
+  opts: { loadChunks: boolean; loadCuckoo: boolean; loadMerkle: boolean }
+): Promise<RecallDbArtifacts> {
+  const empty: RecallDbArtifacts = {
+    chunks: [],
+    cuckooPred: null,
+    merkleSnapshot: null,
+  };
+  if (!memoryDbSyncEnabled()) return empty;
+
+  const absDb = resolveMemoryDatabasePath(vaultRoot);
+  const db = await openOrCreateDb(absDb);
+  try {
+    db.exec("PRAGMA foreign_keys = ON;");
+    migrate(db);
+    const chunks =
+      opts.loadChunks && documentPaths.length > 0
+        ? loadChunkEmbeddingsFromOpenDb(db, documentPaths)
+        : [];
+    const cuckooPred = opts.loadCuckoo ? loadCuckooPredicateFromOpenDb(db) : null;
+    const merkleSnapshot = opts.loadMerkle ? loadMerkleSnapshotFromOpenDb(db) : null;
+    return { chunks, cuckooPred, merkleSnapshot };
+  } finally {
+    db.close();
+  }
 }
 
 function defaultScanRoot(): string {
@@ -530,35 +670,7 @@ export async function loadChunkEmbeddingsForDocuments(
   try {
     db.exec("PRAGMA foreign_keys = ON;");
     migrate(db);
-    const out: ChunkWithEmbedding[] = [];
-    const batch = 400;
-    for (let i = 0; i < documentPaths.length; i += batch) {
-      const slice = documentPaths.slice(i, i + batch);
-      if (slice.length === 0) continue;
-      const placeholders = slice.map(() => "?").join(",");
-      const stmt = db.prepare(
-        `SELECT document_path, chunk_id, text, embedding FROM vault_chunk WHERE embedding IS NOT NULL AND document_path IN (${placeholders})`
-      );
-      stmt.bind(slice);
-      while (stmt.step()) {
-        const row = stmt.getAsObject() as {
-          document_path: string;
-          chunk_id: string;
-          text: string;
-          embedding: Uint8Array;
-        };
-        const emb = blobToFloat32Array(new Uint8Array(row.embedding));
-        if (emb.length === 0) continue;
-        out.push({
-          documentPath: row.document_path,
-          chunkId: row.chunk_id,
-          text: row.text,
-          embedding: emb,
-        });
-      }
-      stmt.free();
-    }
-    return out;
+    return loadChunkEmbeddingsFromOpenDb(db, documentPaths);
   } finally {
     db.close();
   }
@@ -608,22 +720,20 @@ export async function chunkIdMaybeInMemoryIndex(
   if (process.env.CLAWQL_CUCKOO_ENABLED !== "1") return null;
   if (!memoryDbSyncEnabled()) return null;
   const absDb = resolveMemoryDatabasePath(vaultRoot);
+  const sig = await memoryDbFileSignature(absDb);
+  if (sig) {
+    const hit = getCachedCuckooFilter(absDb, sig);
+    if (hit !== undefined) {
+      return hit.maybeContains(chunkId);
+    }
+  }
   const db = await openOrCreateDb(absDb);
   try {
     db.exec("PRAGMA foreign_keys = ON;");
     migrate(db);
-    const stmt = db.prepare(
-      "SELECT filter_blob FROM clawql_cuckoo_chunk_membership WHERE id = 1 LIMIT 1"
-    );
-    if (!stmt.step()) {
-      stmt.free();
-      return null;
-    }
-    const row = stmt.getAsObject() as { filter_blob?: Uint8Array };
-    stmt.free();
-    const blob = row.filter_blob;
-    if (!blob || blob.byteLength === 0) return null;
-    const filter = CuckooFilter.deserialize(new Uint8Array(blob));
+    const filter = readCuckooFilterFromOpenDb(db);
+    if (!filter) return null;
+    if (sig) setCachedCuckooFilter(absDb, sig, filter);
     return filter.maybeContains(chunkId);
   } finally {
     db.close();
@@ -640,22 +750,20 @@ export async function loadCuckooMembershipPredicate(
   if (process.env.CLAWQL_CUCKOO_ENABLED !== "1") return null;
   if (!memoryDbSyncEnabled()) return null;
   const absDb = resolveMemoryDatabasePath(vaultRoot);
+  const sig = await memoryDbFileSignature(absDb);
+  if (sig) {
+    const hit = getCachedCuckooFilter(absDb, sig);
+    if (hit !== undefined) {
+      return (chunkId: string) => hit.maybeContains(chunkId);
+    }
+  }
   const db = await openOrCreateDb(absDb);
   try {
     db.exec("PRAGMA foreign_keys = ON;");
     migrate(db);
-    const stmt = db.prepare(
-      "SELECT filter_blob FROM clawql_cuckoo_chunk_membership WHERE id = 1 LIMIT 1"
-    );
-    if (!stmt.step()) {
-      stmt.free();
-      return null;
-    }
-    const row = stmt.getAsObject() as { filter_blob?: Uint8Array };
-    stmt.free();
-    const blob = row.filter_blob;
-    if (!blob || blob.byteLength === 0) return null;
-    const filter = CuckooFilter.deserialize(new Uint8Array(blob));
+    const filter = readCuckooFilterFromOpenDb(db);
+    if (!filter) return null;
+    if (sig) setCachedCuckooFilter(absDb, sig, filter);
     return (chunkId: string) => filter.maybeContains(chunkId);
   } finally {
     db.close();
@@ -665,33 +773,21 @@ export async function loadCuckooMembershipPredicate(
 /** Latest Merkle snapshot row from `memory.db`, if present. */
 export async function loadVaultMerkleSnapshotFromDb(
   vaultRoot: string
-): Promise<{ rootHex: string; leafCount: number; treeHeight: number; builtAt: string } | null> {
+): Promise<MerkleSnapshotRow | null> {
   if (!memoryDbSyncEnabled()) return null;
   const absDb = resolveMemoryDatabasePath(vaultRoot);
+  const sig = await memoryDbFileSignature(absDb);
+  if (sig) {
+    const hit = getCachedMerkleSnapshot(absDb, sig);
+    if (hit !== undefined) return hit;
+  }
   const db = await openOrCreateDb(absDb);
   try {
     db.exec("PRAGMA foreign_keys = ON;");
     migrate(db);
-    const stmt = db.prepare(
-      "SELECT root_hex, leaf_count, tree_height, built_at FROM vault_merkle_snapshot WHERE id = 1 LIMIT 1"
-    );
-    if (!stmt.step()) {
-      stmt.free();
-      return null;
-    }
-    const row = stmt.getAsObject() as {
-      root_hex: string;
-      leaf_count: number;
-      tree_height: number;
-      built_at: string;
-    };
-    stmt.free();
-    return {
-      rootHex: row.root_hex,
-      leafCount: Number(row.leaf_count),
-      treeHeight: Number(row.tree_height),
-      builtAt: row.built_at,
-    };
+    const row = loadMerkleSnapshotFromOpenDb(db);
+    if (sig) setCachedMerkleSnapshot(absDb, sig, row);
+    return row;
   } finally {
     db.close();
   }

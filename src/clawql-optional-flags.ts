@@ -27,7 +27,7 @@ export type ClawqlOptionalToolFlags = {
   enableGrpc: boolean;
   /** `ENABLE_GRPC_REFLECTION` — server reflection for grpcurl. */
   enableGrpcReflection: boolean;
-  /** `CLAWQL_EXTERNAL_INGEST=1` — stub/preview for `ingest_external_knowledge`. */
+  /** `CLAWQL_EXTERNAL_INGEST=1` — `ingest_external_knowledge` (Markdown import + optional URL fetch). */
   externalIngestPreview: boolean;
   /**
    * (#75): Ephemeral in-process **`cache`** tool (not persisted). Default false — not registered unless enabled.

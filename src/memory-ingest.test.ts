@@ -3,6 +3,7 @@ import { access, mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { resetMemoryDbArtifactCachesForTests } from "./memory-db-artifact-cache.js";
 import {
   extractIngestHashes,
   hashIngestSection,
@@ -12,16 +13,25 @@ import {
 
 describe("memory-ingest", () => {
   const saved = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
+  const savedMerkle = process.env.CLAWQL_MERKLE_ENABLED;
+  const savedCuckoo = process.env.CLAWQL_CUCKOO_ENABLED;
   let dir: string;
 
   beforeEach(async () => {
     dir = await mkdtemp(join(tmpdir(), "clawql-vault-"));
     process.env.CLAWQL_OBSIDIAN_VAULT_PATH = dir;
+    delete process.env.CLAWQL_MERKLE_ENABLED;
+    delete process.env.CLAWQL_CUCKOO_ENABLED;
   });
 
   afterEach(async () => {
     if (saved === undefined) delete process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
     else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = saved;
+    if (savedMerkle === undefined) delete process.env.CLAWQL_MERKLE_ENABLED;
+    else process.env.CLAWQL_MERKLE_ENABLED = savedMerkle;
+    if (savedCuckoo === undefined) delete process.env.CLAWQL_CUCKOO_ENABLED;
+    else process.env.CLAWQL_CUCKOO_ENABLED = savedCuckoo;
+    resetMemoryDbArtifactCachesForTests();
     await rm(dir, { recursive: true, force: true });
   });
 
@@ -77,5 +87,16 @@ describe("memory-ingest", () => {
     const r = await runMemoryIngest({ title: "Indexed", insights: "hello" });
     expect(r.ok).toBe(true);
     await access(join(dir, "memory.db"), constants.R_OK);
+  });
+
+  it("includes merkle and cuckoo index fields when env flags are on", async () => {
+    process.env.CLAWQL_MERKLE_ENABLED = "1";
+    process.env.CLAWQL_CUCKOO_ENABLED = "1";
+    const r = await runMemoryIngest({ title: "Artifacts", insights: "probe" });
+    expect(r.ok).toBe(true);
+    expect(r.merkleSnapshot?.rootHex).toMatch(/^[0-9a-f]{64}$/);
+    expect(r.merkleSnapshotBefore).toBeDefined();
+    expect(r.merkleRootChanged).toBe(true);
+    expect(r.cuckooMembershipReady).toBe(true);
   });
 });

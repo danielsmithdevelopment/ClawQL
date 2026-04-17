@@ -1,5 +1,7 @@
 import { createServer, type Server } from "node:http";
 import { once } from "node:events";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -96,6 +98,37 @@ describe("server-http", () => {
       expect(body.status).toBe("ok");
       expect(body.endpoint).toBe("/mcp");
     });
+  });
+
+  it("GET /healthz optional merkle when CLAWQL_HEALTHZ_MEMORY_ARTIFACTS=1", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "clawql-hz-"));
+    const savedVault = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
+    const savedMerkle = process.env.CLAWQL_MERKLE_ENABLED;
+    const savedHz = process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS;
+    process.env.CLAWQL_OBSIDIAN_VAULT_PATH = dir;
+    process.env.CLAWQL_MERKLE_ENABLED = "1";
+    process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS = "1";
+    await mkdir(join(dir, "Memory"), { recursive: true });
+    await writeFile(join(dir, "Memory/a.md"), "# A\n", "utf8");
+    const { syncMemoryDbFromDocuments } = await import("./memory-db.js");
+    const text = await readFile(join(dir, "Memory/a.md"), "utf8");
+    await syncMemoryDbFromDocuments(dir, [{ path: "Memory/a.md", text, mtimeMs: 1 }]);
+    try {
+      await withHttpServer(async (base) => {
+        const res = await fetch(`${base}/healthz`);
+        expect(res.ok).toBe(true);
+        const body = (await res.json()) as { merkleSnapshot?: { rootHex: string } };
+        expect(body.merkleSnapshot?.rootHex).toMatch(/^[0-9a-f]{64}$/);
+      });
+    } finally {
+      if (savedVault === undefined) delete process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
+      else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = savedVault;
+      if (savedMerkle === undefined) delete process.env.CLAWQL_MERKLE_ENABLED;
+      else process.env.CLAWQL_MERKLE_ENABLED = savedMerkle;
+      if (savedHz === undefined) delete process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS;
+      else process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS = savedHz;
+      await rm(dir, { recursive: true, force: true });
+    }
   });
 
   it("POST /mcp initialize allocates mcp-session-id", async () => {

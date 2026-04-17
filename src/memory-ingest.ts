@@ -20,12 +20,28 @@ export type MemoryIngestInput = {
   append?: boolean;
 };
 
+/** Same shape as `memory_recall` / `loadVaultMerkleSnapshotFromDb`. */
+export type MerkleSnapshotPayload = {
+  rootHex: string;
+  leafCount: number;
+  treeHeight: number;
+  builtAt: string;
+};
+
 export type MemoryIngestResult = {
   ok: boolean;
   path?: string;
   skipped?: boolean;
   reason?: string;
   error?: string;
+  /** When **`CLAWQL_MERKLE_ENABLED=1`**: Merkle row before this ingest’s `memory.db` sync (`null` if no row yet). */
+  merkleSnapshotBefore?: MerkleSnapshotPayload | null;
+  /** When **`CLAWQL_MERKLE_ENABLED=1`**: Merkle row after sync (vault index fingerprint). */
+  merkleSnapshot?: MerkleSnapshotPayload | null;
+  /** When Merkle is enabled and comparable: whether **`rootHex`** changed across sync. */
+  merkleRootChanged?: boolean;
+  /** When **`CLAWQL_CUCKOO_ENABLED=1`** and **`memory.db`** sync ran: membership filter was rebuilt for chunk ids. */
+  cuckooMembershipReady?: boolean;
 };
 
 export function slugifyTitle(title: string): string {
@@ -206,13 +222,62 @@ export async function runMemoryIngest(input: MemoryIngestInput): Promise<MemoryI
   });
 
   if (result.ok && !result.skipped) {
-    try {
-      const { syncMemoryDbForVaultScanRoot } = await import("./memory-db.js");
-      await syncMemoryDbForVaultScanRoot(vault);
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : String(e);
-      console.error(`[clawql-mcp] memory.db sync after ingest failed: ${msg}`);
+    const indexExtras: Pick<
+      MemoryIngestResult,
+      "merkleSnapshotBefore" | "merkleSnapshot" | "merkleRootChanged" | "cuckooMembershipReady"
+    > = {};
+
+    const { syncMemoryDbForVaultScanRoot, loadVaultMerkleSnapshotFromDb, memoryDbSyncEnabled } =
+      await import("./memory-db.js");
+
+    const merkleOn = process.env.CLAWQL_MERKLE_ENABLED === "1";
+    let merkleBefore: Awaited<ReturnType<typeof loadVaultMerkleSnapshotFromDb>> | undefined;
+    if (merkleOn && memoryDbSyncEnabled()) {
+      try {
+        merkleBefore = await loadVaultMerkleSnapshotFromDb(vault);
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        console.error(`[clawql-mcp] memory.db merkle snapshot (before ingest sync) failed: ${msg}`);
+        merkleBefore = null;
+      }
     }
+
+    let syncOk = false;
+    if (memoryDbSyncEnabled()) {
+      try {
+        await syncMemoryDbForVaultScanRoot(vault);
+        syncOk = true;
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        console.error(`[clawql-mcp] memory.db sync after ingest failed: ${msg}`);
+      }
+    }
+
+    if (syncOk) {
+      if (process.env.CLAWQL_CUCKOO_ENABLED === "1") {
+        indexExtras.cuckooMembershipReady = true;
+      }
+      if (merkleOn) {
+        try {
+          const merkleAfter = await loadVaultMerkleSnapshotFromDb(vault);
+          const merklePrior = merkleBefore ?? null;
+          indexExtras.merkleSnapshotBefore = merklePrior;
+          indexExtras.merkleSnapshot = merkleAfter;
+          indexExtras.merkleRootChanged =
+            merkleAfter === null
+              ? undefined
+              : merklePrior === null
+                ? true
+                : merklePrior.rootHex !== merkleAfter.rootHex;
+        } catch (e: unknown) {
+          const msg = e instanceof Error ? e.message : String(e);
+          console.error(
+            `[clawql-mcp] memory.db merkle snapshot (after ingest sync) failed: ${msg}`
+          );
+        }
+      }
+    }
+
     try {
       const { updateProviderIndexPage } = await import("./memory-provider-index.js");
       await updateProviderIndexPage(vault);
@@ -220,6 +285,7 @@ export async function runMemoryIngest(input: MemoryIngestInput): Promise<MemoryI
       const msg = e instanceof Error ? e.message : String(e);
       console.error(`[clawql-mcp] provider index update after ingest failed: ${msg}`);
     }
+    return { ...result, ...indexExtras };
   }
 
   return result;
@@ -228,6 +294,7 @@ export async function runMemoryIngest(input: MemoryIngestInput): Promise<MemoryI
 export async function handleMemoryIngestToolInput(
   params: MemoryIngestInput
 ): Promise<{ content: { type: "text"; text: string }[] }> {
+  const result = await runMemoryIngest(params);
   logMcpToolShape("memory_ingest", {
     titleChars: params.title?.length ?? 0,
     append: params.append,
@@ -240,8 +307,12 @@ export async function handleMemoryIngestToolInput(
     ),
     wikilinkCount: params.wikilinks?.length ?? 0,
     hasSessionId: Boolean(params.sessionId?.trim()),
+    ok: result.ok,
+    skipped: result.skipped,
+    merkleRootChanged: result.merkleRootChanged,
+    hasMerkleSnapshot: Boolean(result.merkleSnapshot),
+    cuckooMembershipReady: result.cuckooMembershipReady,
   });
-  const result = await runMemoryIngest(params);
   return {
     content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
   };
