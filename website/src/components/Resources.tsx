@@ -10,6 +10,7 @@ import Link from 'next/link'
 
 import { GridPattern } from '@/components/GridPattern'
 import { Heading } from '@/components/Heading'
+import { BookIcon } from '@/components/icons/BookIcon'
 import { BoltIcon } from '@/components/icons/BoltIcon'
 import { CogIcon } from '@/components/icons/CogIcon'
 import { ListIcon } from '@/components/icons/ListIcon'
@@ -33,7 +34,7 @@ const resources: Array<Resource> = [
     href: '/tools',
     name: 'Tools',
     description:
-      'Core search and execute; sandbox_exec, memory tools, ingest_external_knowledge (bulk Markdown + optional URL fetch); optional in-process cache (CLAWQL_ENABLE_CACHE).',
+      'Core search and execute; sandbox_exec, memory tools, ingest_external_knowledge (bulk Markdown + optional URL fetch); optional in-process cache (CLAWQL_ENABLE_CACHE) and optional audit ring buffer (CLAWQL_ENABLE_AUDIT).',
     icon: BoltIcon,
     pattern: {
       y: 16,
@@ -107,6 +108,34 @@ const resources: Array<Resource> = [
       squares: [
         [1, 2],
         [2, 0],
+      ],
+    },
+  },
+  {
+    href: '/case-studies/cloudflare-docs-mcp',
+    name: 'Case study: Cloudflare docs',
+    description:
+      'End-to-end MCP workflow: search, execute, memory_recall, memory_ingest — deploying docs.clawql.com and fixing Worker runtime issues.',
+    icon: BookIcon,
+    pattern: {
+      y: 18,
+      squares: [
+        [0, 0],
+        [1, 2],
+      ],
+    },
+  },
+  {
+    href: '/case-studies/vault-memory-github-session-2026-04',
+    name: 'Case study: Vault + GitHub session',
+    description:
+      'memory_ingest at scale, issue triage and new tracking issues, prioritization, and shipping the enterprise audit tool with full docs and Helm wiring.',
+    icon: BookIcon,
+    pattern: {
+      y: 12,
+      squares: [
+        [2, 1],
+        [0, 2],
       ],
     },
   },

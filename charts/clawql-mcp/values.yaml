@@ -46,6 +46,9 @@ enableGrpcReflection: false
 # In-process MCP cache tool (#75). Ephemeral per pod — not persisted; use memory_* for vault.
 enableCache: true
 
+# In-process MCP audit ring buffer (#89). Ephemeral per pod — not on disk; use memory_ingest for durable trails.
+enableAudit: false
+
 # Extra env (e.g. tokens from literal — prefer existing secrets for production).
 extraEnv: []
 

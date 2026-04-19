@@ -1,6 +1,6 @@
 # ClawQL
 
-MCP server: **core** tools **`search`** and **`execute`** (OpenAPI/Discovery), plus **`sandbox_exec`** ([Cloudflare Sandbox](https://developers.cloudflare.com/sandbox/) **bridge Worker**), **`memory_ingest`**, **`memory_recall`** (Obsidian vault), and **`ingest_external_knowledge`** (bulk Markdown + optional URL fetch when enabled). Optional **`cache`** (**`CLAWQL_ENABLE_CACHE`**) is **in-process LRU** scratch storage — not the vault; see **[`docs/cache-tool.md`](docs/cache-tool.md)**. An internal **GraphQL** layer keeps **`execute`** responses lean; **spec-driven discovery** means agents don’t load full OpenAPI definitions into context. Full tool reference: **[`docs/mcp-tools.md`](docs/mcp-tools.md)**.
+MCP server: **core** tools **`search`** and **`execute`** (OpenAPI/Discovery), plus **`sandbox_exec`** ([Cloudflare Sandbox](https://developers.cloudflare.com/sandbox/) **bridge Worker**), **`memory_ingest`**, **`memory_recall`** (Obsidian vault), and **`ingest_external_knowledge`** (bulk Markdown + optional URL fetch when enabled). Optional **`cache`** (**`CLAWQL_ENABLE_CACHE`**) is **in-process LRU** scratch storage — not the vault; see **[`docs/cache-tool.md`](docs/cache-tool.md)**. Optional **`audit`** (**`CLAWQL_ENABLE_AUDIT`**) is an **in-process** event ring buffer for operator trails — not durable; see **[`docs/enterprise-mcp-tools.md`](docs/enterprise-mcp-tools.md)** ([#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)). An internal **GraphQL** layer keeps **`execute`** responses lean; **spec-driven discovery** means agents don’t load full OpenAPI definitions into context. Full tool reference: **[`docs/mcp-tools.md`](docs/mcp-tools.md)**.
 
 **What is MCP?** [Model Context Protocol](https://modelcontextprotocol.io) is how
 clients such as [Cursor](https://cursor.com/docs/context/mcp) or Claude Desktop
@@ -50,11 +50,13 @@ From there: custom spec via `CLAWQL_SPEC_PATH` / `CLAWQL_SPEC_URL`, or read [Con
 
   **Google Discovery** (GCP APIs, etc.): use **`CLAWQL_DISCOVERY_URL`** instead of `CLAWQL_SPEC_URL`. Merge many specs or other presets: [Configure the API spec](#configure-the-api-spec).
 
-- **All MCP tools (API + vault + sandbox + optional cache):** see **[`docs/mcp-tools.md`](docs/mcp-tools.md)** — examples for `sandbox_exec`, `memory_ingest`, `memory_recall`, `cache` vs vault (**[`docs/cache-tool.md`](docs/cache-tool.md)**), env vars.
+- **All MCP tools (API + vault + sandbox + optional cache / audit):** see **[`docs/mcp-tools.md`](docs/mcp-tools.md)** — examples for `sandbox_exec`, `memory_ingest`, `memory_recall`, `cache` vs vault (**[`docs/cache-tool.md`](docs/cache-tool.md)**), optional **`audit`** (**[`docs/enterprise-mcp-tools.md`](docs/enterprise-mcp-tools.md)**), env vars.
 
 - **Cursor IDE (rule + skill for vault memory):** see **[`docs/cursor-vault-memory.md`](docs/cursor-vault-memory.md)** — how `.cursor/rules/clawql-vault-memory.mdc` and `.cursor/skills/clawql-vault-memory/` relate to `memory_ingest` / `memory_recall`.
 
 - **Benchmarks & raw artifacts:** [Benchmarks and results](#benchmarks-and-results) — quick links to [all-providers stats](docs/benchmarks/all-providers-complex-workflow/experiment-all-providers-complex-workflow-stats.json), [default multi-provider stats](docs/benchmarks/multi-provider-complex-workflow/experiment-multi-provider-complex-workflow-stats.json), and workflow JSON outputs.
+
+- **Case studies (MCP workflows):** [Case studies](#case-studies) — e.g. [deploying `docs.clawql.com` with `search` / `execute` / vault tools](docs/case_studies/cloudflare-docs-site-mcp-workflow.md); website copy at **`https://docs.clawql.com/case-studies/cloudflare-docs-mcp`**. **Caching:** [`docs/website-caching.md`](docs/website-caching.md).
 
 ---
 
@@ -146,6 +148,10 @@ These sections compare **planning-context size** (merged specs on disk vs. small
 | **Default multi-provider** (GKE + Cloudflare + Jira) | [`workflow-multi-provider-latest.json`](docs/workflow-multi-provider-latest.json)               | [`experiment-multi-provider-complex-workflow-stats.json`](docs/benchmarks/multi-provider-complex-workflow/experiment-multi-provider-complex-workflow-stats.json) | [`experiment-multi-provider-complex-workflow.md`](docs/benchmarks/multi-provider-complex-workflow/experiment-multi-provider-complex-workflow.md) |
 
 **More:** phase-1/phase-2 token repro ([`latest.json`](docs/benchmarks/latest.json), [`latest.md`](docs/benchmarks/latest.md)) via `npm run benchmark:tokens` — full steps in [`docs/benchmarks/REPRODUCE.md`](docs/benchmarks/REPRODUCE.md). See also [How the two phases save tokens](#how-the-two-phases-save-tokens) below.
+
+### Case studies
+
+Real agent workflows using **`search`**, **`execute`**, **`memory_recall`**, and **`memory_ingest`**: **[`docs/case_studies/README.md`](docs/case_studies/README.md)** — including **[deploying `docs.clawql.com` on Cloudflare with MCP](docs/case_studies/cloudflare-docs-site-mcp-workflow.md)** (Worker **`fs` limits**, token scopes, vault cadence). The same narrative lives on the docs site at **`https://docs.clawql.com/case-studies/cloudflare-docs-mcp`**.
 
 ### Highlight: All-providers complex release-stack (largest benchmark)
 
@@ -387,6 +393,7 @@ If Stage 1 does **not** apply, one document is loaded in this order:
 | `ENABLE_GRPC`                                                              | Optional MCP over **gRPC** on **`GRPC_PORT`** (`1` / `true` / `yes`). See [Optional gRPC](#optional-grpc) and [`docs/mcp-tools.md`](docs/mcp-tools.md#optional-tool-flags-clawql_enable_-and-related).                                                                                                                                                                         |
 | `ENABLE_GRPC_REFLECTION`                                                   | **`1`** — register gRPC reflection for **grpcurl** `list` / `describe`.                                                                                                                                                                                                                                                                                                        |
 | `CLAWQL_ENABLE_CACHE`                                                      | **`1`** — register MCP **`cache`** (in-process LRU KV, not persisted; [#75](https://github.com/danielsmithdevelopment/ClawQL/issues/75)). Optional **`CLAWQL_CACHE_MAX_VALUE_BYTES`**, **`CLAWQL_CACHE_MAX_ENTRIES`**. Use **`memory_ingest`** / **`memory_recall`** for durable vault memory.                                                                                 |
+| `CLAWQL_ENABLE_AUDIT`                                                      | **`1`** — register MCP **`audit`** (in-process ring buffer, not on disk; [#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)). Optional **`CLAWQL_AUDIT_MAX_ENTRIES`**. Use **`memory_ingest`** for durable trails.                                                                                                                                            |
 | `CLAWQL_ENABLE_SCHEDULE` / `CLAWQL_ENABLE_NOTIFY` / `CLAWQL_ENABLE_VISION` | Reserved defaults **off** until [#76](https://github.com/danielsmithdevelopment/ClawQL/issues/76)–[#78](https://github.com/danielsmithdevelopment/ClawQL/issues/78); parsed in [`src/clawql-optional-flags.ts`](src/clawql-optional-flags.ts) ([#79](https://github.com/danielsmithdevelopment/ClawQL/issues/79)).                                                             |
 
 **GCP multi-service:** use **`CLAWQL_GOOGLE_TOP50_SPECS=1`**, **`CLAWQL_PROVIDER=google-top50`**, or **`CLAWQL_SPEC_PATHS`** so `search` / `execute` see every merged API in one server; `execute` uses REST in that mode. For **every bundled vendor** (Google top50 + Jira, Bitbucket, Cloudflare, GitHub, Slack, Sentry, n8n), use **`CLAWQL_PROVIDER=all-providers`**. See [`docs/workflow-gcp-multi-service.md`](docs/workflow-gcp-multi-service.md).  
@@ -449,15 +456,18 @@ Agent
         ├─▶ execute tool  ──▶ GraphQL Client ──▶ GraphQL Proxy (localhost:4000) ──▶ REST API
         ├─▶ sandbox_exec  ──▶ HTTPS ──▶ Cloudflare Sandbox bridge Worker (optional)
         └─▶ memory_ingest / memory_recall / ingest_external_knowledge  ──▶ Obsidian vault on disk (optional)
+        └─▶ cache / audit (optional env flags) ──▶ in-process only — not the vault
 ```
 
-An agent connects to ClawQL over MCP and registers **up to six tools** by default (**seven** with **`CLAWQL_ENABLE_CACHE`**) — see [`docs/mcp-tools.md`](docs/mcp-tools.md):
+An agent connects to ClawQL over MCP and registers **up to six tools** in the usual configuration (**seven** with **`CLAWQL_ENABLE_CACHE`**, **eight** with **`CLAWQL_ENABLE_AUDIT`**) — see [`docs/mcp-tools.md`](docs/mcp-tools.md):
 
 - **`search`** — in-memory operation index from the loaded spec(s); no upstream HTTP.
 - **`execute`** — GraphQL proxy (single-spec) or REST (multi-spec) for lean responses.
 - **`sandbox_exec`** — run snippet in remote Cloudflare Sandbox via **`CLAWQL_SANDBOX_BRIDGE_URL`** (not local execution).
 - **`memory_ingest`** / **`memory_recall`** — require **`CLAWQL_OBSIDIAN_VAULT_PATH`**.
 - **`ingest_external_knowledge`** — bulk Markdown into the vault + optional URL fetch; set **`CLAWQL_EXTERNAL_INGEST=1`** (see [`docs/external-ingest.md`](docs/external-ingest.md)).
+- **`cache`** (optional) — **`CLAWQL_ENABLE_CACHE`**; ephemeral LRU — not the vault (**[`docs/cache-tool.md`](docs/cache-tool.md)**).
+- **`audit`** (optional) — **`CLAWQL_ENABLE_AUDIT`**; in-process event buffer — not durable (**[`docs/enterprise-mcp-tools.md`](docs/enterprise-mcp-tools.md)**).
 
 Core API workflow remains **`search` → `execute`**. Optional tools do not replace the GraphQL proxy for REST APIs.
 
@@ -643,7 +653,7 @@ Run **MCP Streamable HTTP** in a local cluster so clients can use a fixed URL (t
    **Default:** **`helm upgrade --install`** with **`charts/clawql-mcp/values-docker-desktop.yaml`** (GHCR image, **`hostPath`** vault at **`~/.ClawQL`**). **Kustomize instead:** **`CLAWQL_LOCAL_K8S_INSTALLER=kustomize make local-k8s-up`** (no Helm; uses **`docker/kustomize/overlays/local`**). Use **`CLAWQL_LOCAL_K8S_BUILD_IMAGE=1`** to build **`clawql-mcp:latest`** locally instead. The script uses the **`docker-desktop`** kube context when present.
 
 3. **Health:** `curl -s http://localhost:8080/healthz` should return `{"status":"ok",...}` before connecting the client.
-4. **GitHub + Cloudflare + Google auth:** `bash scripts/k8s-docker-desktop-set-github-token.sh` (optional `CLAWQL_CLOUDFLARE_API_TOKEN` and `GOOGLE_ACCESS_TOKEN` / `CLAWQL_GOOGLE_ACCESS_TOKEN` in the environment). See [`docker/README.md`](docker/README.md).
+4. **MCP upstream auth (GitHub + optional Cloudflare + Google):** `bash scripts/k8s-docker-desktop-set-mcp-auth.sh` — reads **`gh`** or **`CLAWQL_GITHUB_TOKEN`**, optional **`CLAWQL_CLOUDFLARE_API_TOKEN`** and **`GOOGLE_ACCESS_TOKEN`** / **`CLAWQL_GOOGLE_ACCESS_TOKEN`** (export or repo **`.env`**). See [`docker/README.md`](docker/README.md).
 
 **Teardown:** `kubectl --context docker-desktop delete namespace clawql`
 

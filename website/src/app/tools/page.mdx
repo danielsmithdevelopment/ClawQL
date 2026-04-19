@@ -1,14 +1,14 @@
 export const metadata = {
   title: 'Tools',
   description:
-    'ClawQL MCP tools: search and execute; sandbox_exec, memory_ingest, memory_recall, ingest_external_knowledge; optional cache (in-process LRU). Same tools over stdio, Streamable HTTP, or optional gRPC (mcp-grpc-transport).',
+    'ClawQL MCP tools: search and execute; sandbox_exec, memory_ingest, memory_recall, ingest_external_knowledge; optional cache (in-process LRU) and optional audit (CLAWQL_ENABLE_AUDIT). Same tools over stdio, Streamable HTTP, or optional gRPC (mcp-grpc-transport).',
 }
 
 # Tools
 
 ClawQL exposes **six** tools when optional features are configured (see table below); the **data plane** for REST/Discovery APIs is **`search`** then **`execute`**. Agents call **`search`** to discover operations and parameters, then **`execute`** to run a chosen **`operationId`** with optional field selection. [Canonical reference with examples](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp-tools.md). {{ className: 'lead' }}
 
-A **seventh** tool, **`cache`**, is available when **`CLAWQL_ENABLE_CACHE`** is set — ephemeral in-process LRU storage, not the vault. See [Session cache](/cache) and [cache-tool.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/cache-tool.md).
+A **seventh** tool, **`cache`**, is available when **`CLAWQL_ENABLE_CACHE`** is set — ephemeral in-process LRU storage, not the vault. See [Session cache](/cache) and [cache-tool.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/cache-tool.md). An **eighth** optional tool, **`audit`**, is available when **`CLAWQL_ENABLE_AUDIT`** is set — in-process ring buffer for structured events (not durable) — [enterprise-mcp-tools.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/enterprise-mcp-tools.md).
 
 ## `search`
 
@@ -40,5 +40,6 @@ See [GraphQL layer](/graphql-proxy) for how **`execute`** uses OpenAPI→GraphQL
 | `memory_ingest`, `memory_recall` | `CLAWQL_OBSIDIAN_VAULT_PATH` (writable vault directory); optional vector / hybrid DB — see [repo docs](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/memory-db-hybrid-implementation.md)                             |
 | `ingest_external_knowledge`      | Set **`CLAWQL_EXTERNAL_INGEST=1`**: bulk Markdown (`documents[]`) and optional URL fetch (`CLAWQL_EXTERNAL_INGEST_FETCH=1`) — [external-ingest.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/external-ingest.md) |
 | `cache` (optional)               | **`CLAWQL_ENABLE_CACHE=1`** — in-process LRU key/value only; not persisted — [cache-tool.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/cache-tool.md), [Session cache](/cache)                                   |
+| `audit` (optional)               | **`CLAWQL_ENABLE_AUDIT=1`** — in-process event ring buffer; not on disk — [enterprise-mcp-tools.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/enterprise-mcp-tools.md) ([#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)) |
 
 They do not replace **`execute`** for calling upstream APIs.

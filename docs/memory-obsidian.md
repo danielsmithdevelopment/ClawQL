@@ -2,7 +2,7 @@
 
 This note explains **why** ClawQL supports an Obsidian vault path and a **`memory_ingest`** tool, in terms readers may have seen described as **Karpathy-style** or **incremental wiki** memory. For all MCP tools (including **`memory_recall`**), see **[mcp-tools.md](mcp-tools.md)**.
 
-**Not the vault:** the optional **`cache`** tool is **ephemeral in-process LRU** storage for session scratch data — it does **not** write Markdown or **`memory.db`**. See **[cache-tool.md](cache-tool.md)** for **`cache`** vs **`memory_*`**.
+**Not the vault:** the optional **`cache`** tool is **ephemeral in-process LRU** storage for session scratch data — it does **not** write Markdown or **`memory.db`**. The optional **`audit`** tool (**`CLAWQL_ENABLE_AUDIT`**) is an **in-process** event ring buffer — **not** on disk; not a substitute for persisted compliance records. See **[cache-tool.md](cache-tool.md)** and **[enterprise-mcp-tools.md](enterprise-mcp-tools.md)**.
 
 ## Beyond one-shot RAG
 
@@ -37,6 +37,7 @@ For the **structured sidecar** (`memory.db`: chunks, optional chunk vectors, wik
 ## See also
 
 - **[cache-tool.md](cache-tool.md)** — optional MCP **`cache`** (ephemeral LRU) vs vault **`memory_*`**.
+- **[enterprise-mcp-tools.md](enterprise-mcp-tools.md)** — optional **`audit`** (ephemeral buffer) vs vault; metrics/governance roadmap ([#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)).
 - **[cursor-vault-memory.md](cursor-vault-memory.md)** — Cursor **rule** + **skill** in this repo for habitual `memory_ingest` / `memory_recall` in the agent.
 - **[ClawQL-Agent](https://github.com/danielsmithdevelopment/ClawQL-Agent)** — full stack that combines ClawQL MCP with orchestration and vault-backed memory.
 - **[Parity v1 #11](https://github.com/danielsmithdevelopment/ClawQL/issues/11)** — MCP surface aligned with the agent stack (complete). Optional vault vectors for **`memory_recall`** are implemented (**[#16](https://github.com/danielsmithdevelopment/ClawQL/issues/16)** — remaining scope may include spec **`search`** semantics); see **[hybrid-memory-backends.md](hybrid-memory-backends.md)** and **[vector-search-design.md](vector-search-design.md)**.

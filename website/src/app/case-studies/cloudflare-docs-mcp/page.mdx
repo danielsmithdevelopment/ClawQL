@@ -1,0 +1,95 @@
+import { caseStudyCloudflareDocsSections } from '@/lib/case-study-cloudflare-docs-sections'
+
+export const metadata = {
+  title: 'Case study: docs.clawql.com MCP workflow',
+  description:
+    'End-to-end narrative: deploying the ClawQL docs site to Cloudflare Workers using search, execute, memory_recall, and memory_ingest — failures, fixes, and lessons.',
+}
+
+export const sections = caseStudyCloudflareDocsSections
+
+<Note>
+  **Canonical write-up (full detail):** [`docs/case_studies/cloudflare-docs-site-mcp-workflow.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/case_studies/cloudflare-docs-site-mcp-workflow.md) — this page is the readable summary on **docs.clawql.com**.
+</Note>
+
+# Case study: `docs.clawql.com` with ClawQL MCP
+
+This is an **end-to-end** account of shipping the documentation site to **Cloudflare Workers** at **`https://docs.clawql.com`** while using the same MCP tools you use for APIs: **`search`**, **`execute`**, **`memory_recall`**, and **`memory_ingest`**. It includes **failures**, **fixes**, and **insights** for future work.
+
+**Tracking:** [GitHub issue #87](https://github.com/danielsmithdevelopment/ClawQL/issues/87).
+
+## Goals
+
+1. Authenticate to **Cloudflare** and wire tokens for **Kubernetes** MCP and **Cursor** (HTTP MCP).
+2. **Deploy** the docs app (`website/`) to a **custom domain** on the **free tier**.
+3. **Operate** Cloudflare (Workers, domains, routes) via **ClawQL** instead of ad-hoc `curl` where possible.
+4. **Persist** setup, mistakes, and lessons in the **Obsidian vault** so later sessions do not repeat the same failures.
+
+## Environment and stack
+
+| Piece | Role |
+| ----- | ---- |
+| **ClawQL MCP** | Bundled **Cloudflare** provider for **`search`** / **`execute`** against Cloudflare’s REST surface. |
+| **`CLAWQL_CLOUDFLARE_API_TOKEN`** | Bearer for **`execute`**; must be on the **MCP process** (stdio or HTTP), not only in a laptop `.env` used by the IDE. |
+| **`memory_recall` / `memory_ingest`** | Require **`CLAWQL_OBSIDIAN_VAULT_PATH`** (see [memory-obsidian.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/memory-obsidian.md)). |
+| **Website** | Next.js + **OpenNext** for Cloudflare, **Wrangler** Worker **`clawql-docs`**, route **`docs.clawql.com`**. |
+
+## How the four tools worked together
+
+### `search()`
+
+Used to **discover** operations and parameters without pasting large OpenAPI fragments into context: Workers, routes, custom domains — then narrow which **`execute`** call matches the intent.
+
+### `execute()`
+
+Used for **Cloudflare REST** after the operation id was known — e.g. **custom domains** (`workers.domains.update`). Path and body fields must match what ClawQL expects (`account_id` in path; hostname, service, zone fields in body as applicable). **`execute` is only as good as the token’s scopes** — Wrangler may work while a narrow API token still fails.
+
+### `memory_recall()`
+
+Used **at the start** of non-trivial work and when the user referenced **past decisions** or **vault** context — concrete **`query`**, reasonable **`limit`**, higher **`maxDepth`** when graph links mattered. If the vault path is unset, recall fails fast; **note briefly** and continue.
+
+### `memory_ingest()`
+
+Used **after meaningful outcomes**: decisions, debugging conclusions (Worker **1101** / **500**), user preferences (e.g. **`append: true`** to consolidate runbooks), **`wikilinks`** for the graph. **Never store secrets** — redact.
+
+## End-to-end workflow
+
+1. **Recall** prior notes (`memory_recall`) on Cloudflare + docs + MCP auth.
+2. Set **`CLAWQL_CLOUDFLARE_API_TOKEN`** on the **MCP server process** (k8s Secret or HTTP MCP env).
+3. **Search** Cloudflare operations; **execute** domain/Worker updates as needed.
+4. **Deploy** from `website/` with **`NEXT_PUBLIC_SITE_URL=https://docs.clawql.com`**.
+5. **Verify** the site and **`wrangler tail clawql-docs`** for runtime errors.
+6. **Fix** app code if the Worker throws (see below).
+7. **Ingest** the session (`memory_ingest`, stable title, **`append: true`**).
+
+## Failures and symptoms
+
+| Symptom | Likely cause | What helped |
+| ------- | ------------ | ----------- |
+| Missing / invalid Cloudflare auth | No **`Authorization`** on MCP | Set **`CLAWQL_CLOUDFLARE_API_TOKEN`** on the **server** running MCP. |
+| **403** / blocked | Token **IP allowlist** | Add egress IP (or widen policy) for the MCP environment. |
+| API errors despite Wrangler | Token **scope** too narrow | Align **Account** / **Workers** / **DNS** scopes with **REST** vs **Wrangler** needs. |
+| **500** / **1101** Worker | Worker exception | **`wrangler tail`** — e.g. **`fs.readdir is not implemented`** on Workers. |
+| Prerender crash on `/concepts` | **`React.Children.only`** in **`CodePanel`** | MDX + Shiki can yield multiple nodes under **`code`**. |
+
+## Fixes and verification
+
+**Root cause (500):** `layout.tsx` used **`fast-glob`** at request time → **`fs.readdir`**. **unenv** on Workers does not implement it. **Fix:** remove runtime globbing; use **static** section metadata (see **`website/src/lib/home-page-sections.ts`** — pattern for Worker-safe layouts).
+
+**Prerender:** **`CodePanel`** now normalizes **`children`** with **`Children.toArray`** and avoids **`Children.only`** when MDX emits multiple nodes.
+
+**Verify:** HTTP **200** on **`https://docs.clawql.com/`**; **`wrangler tail`** clean on normal loads.
+
+## Insights for future work
+
+1. **Workers ≠ Node:** Avoid unsupported **`fs`** on the request path; prefer **build-time** data or static maps.
+2. **Token parity:** **Wrangler** success ≠ **REST `execute`** success — validate scopes for automated operations.
+3. **Vault cadence:** **`memory_ingest`** after decisions and failures; **stable titles** + **`append: true`** for consolidated runbooks.
+4. **Case studies:** Link from the repo **[`docs/case_studies/README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/case_studies/README.md)** and **`memory_ingest`** the canonical doc so **recall** finds it later.
+
+## References
+
+- [`docs/mcp-tools.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp-tools.md)
+- [`docs/cursor-vault-memory.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/cursor-vault-memory.md)
+- [`docs/website-caching.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/website-caching.md) — edge caching for **`docs.clawql.com`**
+- [`docs/case_studies/README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/case_studies/README.md)

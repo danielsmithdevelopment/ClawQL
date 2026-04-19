@@ -1,0 +1,8 @@
+/_next/static/*
+  Cache-Control: public,max-age=31536000,immutable
+
+/.well-known/*
+  Cache-Control: public,max-age=0,s-maxage=300,stale-while-revalidate=60
+
+/ClawQL-logo.jpeg
+  Cache-Control: public,max-age=86400,s-maxage=604800,stale-while-revalidate=2592000

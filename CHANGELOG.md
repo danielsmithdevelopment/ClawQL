@@ -7,25 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### CI
-
-- **Prettier autofix:** optional repository secret **`PRETTIER_AUTOFIX_TOKEN`** (PAT with repo **Contents** write) used for checkout/push so the post-autofix commit triggers a full **CI** run (pushes with **`GITHUB_TOKEN`** do not re-run workflows).
-
-### Changed
-
-- **`ingest_external_knowledge` (URL mode):** responses are formatted for the vault — **JSON** pretty-printed, **HTML** converted to Markdown via **node-html-markdown**, plain text fenced; frontmatter gains **`clawql_external_ingest_kind`**.
-
-### Documentation
-
-- **[`docs/knowledge-lake-roadmap.md`](docs/knowledge-lake-roadmap.md)** — product/technical roadmap for **full GitHub repo** ingest (code, docs, issues, configs) and **Notion / Confluence / Linear / Jira** connectors on top of the vault + **`memory.db`** pipeline.
+## [3.4.0] - 2026-04-18
 
 ### Added
+
+- **Enterprise `audit` tool ([#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)):** optional MCP tool when **`CLAWQL_ENABLE_AUDIT=1`** — in-process ring buffer (`append` / `list` / `clear`); not on disk. Design: **[docs/enterprise-mcp-tools.md](docs/enterprise-mcp-tools.md)**. **Helm:** **`charts/clawql-mcp`** adds **`enableAudit`** (default **`false`**) → **`CLAWQL_ENABLE_AUDIT=1`**.
 
 - **Cuckoo observability ([#30](https://github.com/danielsmithdevelopment/ClawQL/issues/30)):** **`CLAWQL_CUCKOO_METRICS=1`** records rebuild stats and optional lookup verification vs **`vault_chunk`**; **`GET /healthz`** with **`CLAWQL_HEALTHZ_MEMORY_ARTIFACTS=1`** adds **`cuckooMetrics`** and **`cuckooFilterPersistedAt`** when Cuckoo is enabled.
 - **`memory_ingest` / `_INDEX_*`:** each ingest section includes a **Provenance** block; new notes get **`clawql_ingest_created`** in frontmatter; provider hub **`_INDEX_{Provider}.md`** adds **Summary**, **By folder** (paths + wikilinks), and **All notes (A–Z)** ([#68](https://github.com/danielsmithdevelopment/ClawQL/issues/68)).
 - **`memory_ingest`:** optional **`merkleSnapshotBefore`**, **`merkleSnapshot`**, **`merkleRootChanged`**, and **`cuckooMembershipReady`** in the JSON result when **`CLAWQL_MERKLE_ENABLED`** / **`CLAWQL_CUCKOO_ENABLED`** apply and **`memory.db`** sync succeeds after a non-skipped write.
 - **`ingest_external_knowledge`:** real imports — **`documents[]`** for bulk Markdown ( **`dryRun`** defaults **`true`**; max 50 files ) and optional **`source: "url"`** + **`url`** when **`CLAWQL_EXTERNAL_INGEST_FETCH=1`**; vault lock + **`memory.db`** sync + **`_INDEX_`** after writes ([#40](https://github.com/danielsmithdevelopment/ClawQL/issues/40)). No payload still returns roadmap **`stub`**; optional **`merkleSnapshot`** / **`cuckooMembershipReady`** when the sidecar is warm.
 - **HTTP `GET /healthz`:** when **`CLAWQL_HEALTHZ_MEMORY_ARTIFACTS=1`**, optional **`merkleSnapshot`**, **`cuckooMembershipArtifactsEnabled`**, and (with Cuckoo) **`cuckooMetrics`** / **`cuckooFilterPersistedAt`** (not enabled by default — keeps probes fast).
+
+### Changed
+
+- **Local k8s auth script:** **`scripts/k8s-docker-desktop-set-mcp-auth.sh`** replaces the misleading GitHub-only name; it syncs **GitHub + optional Cloudflare + Google** tokens into Secret **`clawql-github-auth`**. **`scripts/k8s-docker-desktop-set-github-token.sh`** remains as a thin wrapper. Docs: **`docker/README.md`**, **`README.md`**, **`website` `/kubernetes`**.
+
+- **`ingest_external_knowledge` (URL mode):** responses are formatted for the vault — **JSON** pretty-printed, **HTML** converted to Markdown via **node-html-markdown**, plain text fenced; frontmatter gains **`clawql_external_ingest_kind`**.
+
+### CI
+
+- **Prettier autofix:** optional repository secret **`PRETTIER_AUTOFIX_TOKEN`** (PAT with repo **Contents** write) used for checkout/push so the post-autofix commit triggers a full **CI** run (pushes with **`GITHUB_TOKEN`** do not re-run workflows).
+
+### Documentation
+
+- **[`docs/website-caching.md`](docs/website-caching.md)** — edge/browser caching for **`docs.clawql.com`**: **`next.config.mjs`** `Cache-Control` ( **`s-maxage`** / **`stale-while-revalidate`** ) and **`public/_headers`** for static assets.
+- **Case study:** **[`docs/case_studies/cloudflare-docs-site-mcp-workflow.md`](docs/case_studies/cloudflare-docs-site-mcp-workflow.md)** — end-to-end **`docs.clawql.com`** deploy using **`search`**, **`execute`**, **`memory_recall`**, **`memory_ingest`**; failures (Worker **`fs`**, token scopes), fixes, and insights. Website: **`/case-studies/cloudflare-docs-mcp`**.
+- **Case study:** **[`docs/case_studies/vault-memory-github-session-2026-04.md`](docs/case_studies/vault-memory-github-session-2026-04.md)** — vault **`memory_ingest`** batch, GitHub triage, prioritization, shipping **`audit`** ([#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)). Website: **`/case-studies/vault-memory-github-session-2026-04`**.
+- **[`docs/knowledge-lake-roadmap.md`](docs/knowledge-lake-roadmap.md)** — product/technical roadmap for **full GitHub repo** ingest (code, docs, issues, configs) and **Notion / Confluence / Linear / Jira** connectors on top of the vault + **`memory.db`** pipeline.
 
 ## [3.3.0] - 2026-04-17
 

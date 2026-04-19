@@ -142,9 +142,18 @@ function CodePanel({
   label?: string
   code?: string
 }) {
-  let child = Children.only(children)
+  // MDX/Shiki may pass multiple nodes; avoid `Children.only` (can throw during prerender).
+  const childNodes = Children.toArray(children)
+  let child: React.ReactElement | undefined =
+    childNodes.length === 1 && isValidElement(childNodes[0])
+      ? childNodes[0]
+      : childNodes.find(
+          (c): c is React.ReactElement =>
+            isValidElement(c) &&
+            (c.type === 'code' || c.type === Code),
+        )
 
-  if (isValidElement(child)) {
+  if (child && isValidElement(child)) {
     const props = child.props as { tag?: string; label?: string; code?: string }
     tag = props.tag ?? tag
     label = props.label ?? label

@@ -6,6 +6,7 @@
  * Optional: memory_ingest / memory_recall — Obsidian vault notes (ingest + recall).
  * Optional: ingest_external_knowledge — bulk Markdown + optional URL fetch (GitHub #40).
  * Optional: cache — in-process ephemeral KV when CLAWQL_ENABLE_CACHE (GitHub #75); not persisted — use memory_* for vault.
+ * Optional: audit — in-process ring buffer when CLAWQL_ENABLE_AUDIT (GitHub #89); not durable — use memory_ingest for compliance trails.
  * Single-spec `execute` runs OpenAPI→GraphQL in-process; field resolution uses `graphql-execute-helpers`.
  */
 
@@ -33,6 +34,7 @@ import { handleIngestExternalKnowledgeToolInput } from "./external-ingest.js";
 import { handleMemoryIngestToolInput } from "./memory-ingest.js";
 import { handleMemoryRecallToolInput } from "./memory-recall.js";
 import { cacheToolSchema, handleCacheToolInput } from "./clawql-cache.js";
+import { auditToolSchema, handleAuditToolInput } from "./clawql-audit.js";
 import { getClawqlOptionalToolFlags } from "./clawql-optional-flags.js";
 import type { OpenAPIDoc } from "./spec-loader.js";
 
@@ -415,6 +417,10 @@ export function registerTools(server: McpServer) {
 
   if (getClawqlOptionalToolFlags().enableCache) {
     server.tool("cache", cacheToolSchema, handleCacheToolInput);
+  }
+
+  if (getClawqlOptionalToolFlags().enableAudit) {
+    server.tool("audit", auditToolSchema, handleAuditToolInput);
   }
 }
 

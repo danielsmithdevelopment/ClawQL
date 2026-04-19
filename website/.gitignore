@@ -11,6 +11,7 @@
 # next.js
 /.next/
 /out/
+/.open-next/
 
 # production
 /build
@@ -33,3 +34,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# OpenNext
+.open-next
+
+# Wrangler local state and secrets (never commit)
+.wrangler/
+.dev.vars

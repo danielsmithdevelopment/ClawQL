@@ -78,6 +78,7 @@ See **[`charts/clawql-mcp/values.yaml`](../charts/clawql-mcp/values.yaml)**. Com
 | `provider`                                          | **`CLAWQL_PROVIDER`** (e.g. `google-top50`)                                                      |
 | `enableGrpc` / `enableGrpcReflection`               | gRPC listener on **50051**                                                                       |
 | `enableCache`                                       | **`CLAWQL_ENABLE_CACHE=1`** — in-process **`cache`** tool (default **true**)                     |
+| `enableAudit`                                       | **`CLAWQL_ENABLE_AUDIT=1`** — in-process **`audit`** tool (default **false**; [#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)) |
 | `extraEnv`                                          | Additional container env entries                                                                 |
 | `envFromSecret`                                     | **`envFrom`** from an existing Secret                                                            |
 | `persistence`                                       | PVC for **`/vault`** instead of **`emptyDir`**                                                   |
