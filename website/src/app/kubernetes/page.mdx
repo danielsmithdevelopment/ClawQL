@@ -67,15 +67,19 @@ When **`ENABLE_GRPC=1`** (and optionally **`ENABLE_GRPC_REFLECTION=1`** for **`g
 
 Cold start can take a while while specs load. Wait until **`/healthz`** returns **`{"status":"ok",...}`** or the pod is **Ready** before the client connects.
 
-### GitHub and other authenticated APIs
+### MCP auth tokens (GitHub, Cloudflare, Google)
 
-`execute` sends **`Authorization: Bearer …`** when **`CLAWQL_BEARER_TOKEN`** is set (see `.env.example`). For GitHub, inject a token into the MCP deployment:
+For **local Docker Desktop k8s**, `execute` needs bearer tokens in the **`clawql-mcp-http`** pod. Per-vendor env vars match **`src/auth-headers.ts`**: GitHub (**`CLAWQL_GITHUB_TOKEN`**), Cloudflare (**`CLAWQL_CLOUDFLARE_API_TOKEN`**), Google (**`GOOGLE_ACCESS_TOKEN`** / **`CLAWQL_GOOGLE_ACCESS_TOKEN`**). The same GitHub PAT is stored as **`CLAWQL_BEARER_TOKEN`** for merged-bundle fallback.
+
+**One-shot:** from the repo root, with **`gh`** logged in **or** values in **`.env`**:
 
 ```bash
-bash scripts/k8s-docker-desktop-set-github-token.sh
+bash scripts/k8s-docker-desktop-set-mcp-auth.sh
 ```
 
-With **`gh`** logged in, or pipe a PAT: `gh auth token | bash scripts/k8s-docker-desktop-set-github-token.sh`.
+Pipe a PAT: `gh auth token | bash scripts/k8s-docker-desktop-set-mcp-auth.sh`. Set **`CLAWQL_LOAD_DOTENV=0`** to skip sourcing **`.env`**.
+
+This creates/updates Secret **`clawql-github-auth`** (name kept for backward compatibility), attaches keys to **`deployment/clawql-mcp-http`**, and restarts. Full table and manual **`kubectl`** steps: **[`docker/README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docker/README.md)** (section _MCP auth_). The old script name **`k8s-docker-desktop-set-github-token.sh`** is a deprecated alias.
 
 **`helm upgrade --install`** reapplies chart values; env injected only with **`kubectl set env`** can be overwritten on the next upgrade. Prefer **`helm --set extraEnv`** or a **Secret** wired through **`values.yaml`** for durable config.
 

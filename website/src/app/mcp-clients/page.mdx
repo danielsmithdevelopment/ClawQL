@@ -6,7 +6,7 @@ export const metadata = {
 
 # MCP clients
 
-[Model Context Protocol](https://modelcontextprotocol.io) is how editors and assistants connect to ClawQL. Hosts register **`search`** and **`execute`** for API work, and (when env is set) optional **`sandbox_exec`**, **`memory_ingest`**, **`memory_recall`**, **`ingest_external_knowledge`**, and **`cache`** (**`CLAWQL_ENABLE_CACHE`** — ephemeral LRU, not the vault). [Cursor](https://cursor.com/docs/context/mcp) and Claude Desktop are common hosts. {{ className: 'lead' }}
+[Model Context Protocol](https://modelcontextprotocol.io) is how editors and assistants connect to ClawQL. Hosts register **`search`** and **`execute`** for API work, and (when env is set) optional **`sandbox_exec`**, **`memory_ingest`**, **`memory_recall`**, **`ingest_external_knowledge`**, **`cache`** (**`CLAWQL_ENABLE_CACHE`** — ephemeral LRU, not the vault), and **`audit`** (**`CLAWQL_ENABLE_AUDIT`** — in-process trails). [Cursor](https://cursor.com/docs/context/mcp) and Claude Desktop are common hosts. {{ className: 'lead' }}
 
 ## What is MCP?
 

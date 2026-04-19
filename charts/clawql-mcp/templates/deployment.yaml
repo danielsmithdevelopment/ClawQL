@@ -66,6 +66,10 @@ spec:
             - name: CLAWQL_ENABLE_CACHE
               value: "1"
             {{- end }}
+            {{- if .Values.enableAudit }}
+            - name: CLAWQL_ENABLE_AUDIT
+              value: "1"
+            {{- end }}
             {{- with .Values.extraEnv }}
             {{- toYaml . | nindent 12 }}
             {{- end }}

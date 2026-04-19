@@ -5,6 +5,7 @@
  * Exposes MCP on /mcp and health on /healthz.
  */
 
+import "./load-env.js";
 import { randomUUID } from "node:crypto";
 import type { Express } from "express";
 import { createMcpExpressApp } from "@modelcontextprotocol/sdk/server/express.js";

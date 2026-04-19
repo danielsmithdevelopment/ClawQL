@@ -9,6 +9,7 @@
  * Cloud Run discovery. See README and .env.example.
  */
 
+import "./load-env.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { loadSpec } from "./spec-loader.js";
 import { createRegisteredMcpServer } from "./mcp-server-factory.js";

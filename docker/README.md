@@ -149,19 +149,29 @@ grpcurl -plaintext -d '{"service":"model_context_protocol.Mcp"}' localhost:50051
 
 **Note:** Invoking protobuf MCP RPCs such as **`ListTools`** may fail from **`grpcurl`** with errors about **`google.protobuf.Value`** when using reflection alone; the server is still correct—use a client that loads **google well-known types**, or call **`mcp.transport.v1.Mcp.Session`** (JSON-RPC stream) from an MCP-aware client. For production gRPC probes without reflection, use the **`docker/kustomize/overlays/grpc-enabled`** overlay (native **`grpc`** readiness/liveness on **50051**).
 
-### GitHub + Cloudflare + Google API auth on Docker Desktop K8s
+### MCP auth (GitHub + optional Cloudflare + Google) on Docker Desktop K8s
 
-Merged **`execute`** calls pick the bearer per **`specLabel`**: GitHub, Cloudflare, and Google top50 API slugs (e.g. `compute-v1`) each use their own env vars (see `src/auth-headers.ts`). **`CLAWQL_BEARER_TOKEN`** remains a fallback for other vendors. For the default **Google top50 + Cloudflare + GitHub** bundle, set all three token types in the cluster when you need live calls to every provider.
+Merged **`execute`** calls pick the bearer per **`specLabel`**: GitHub, Cloudflare, and Google top50 API slugs (e.g. `compute-v1`) each use their own env vars (see `src/auth-headers.ts`). **`CLAWQL_BEARER_TOKEN`** remains a fallback for other vendors. For the default **Google top50 + Cloudflare + GitHub** bundle, set the tokens you need in the cluster.
 
-1. **One-shot (recommended):** from the ClawQL repo root, with `gh` logged in:
+| Variable | Required | Purpose |
+|----------|----------|---------|
+| **`CLAWQL_GITHUB_TOKEN`** (or stdin / `gh auth token`) | Yes for GitHub | PAT; duplicated as **`CLAWQL_BEARER_TOKEN`** for merged-bundle fallback |
+| **`CLAWQL_CLOUDFLARE_API_TOKEN`** | No | Cloudflare **`execute`** |
+| **`GOOGLE_ACCESS_TOKEN`** or **`CLAWQL_GOOGLE_ACCESS_TOKEN`** | No | Google Discovery **`execute`** |
+
+The helper script writes Secret **`clawql-github-auth`** (name unchanged for existing installs), injects the keys above into **`deployment/clawql-mcp-http`**, and restarts the rollout. It optionally **`source`s repo `.env`** when present (`CLAWQL_LOAD_DOTENV=0` to skip).
+
+1. **One-shot (recommended):** from the ClawQL repo root, with `gh` logged in **or** tokens in **`.env`**:
 
    ```bash
-   bash scripts/k8s-docker-desktop-set-github-token.sh
+   bash scripts/k8s-docker-desktop-set-mcp-auth.sh
    ```
 
-   Optional: `export CLAWQL_CLOUDFLARE_API_TOKEN=…` and/or **`GOOGLE_ACCESS_TOKEN`** / **`CLAWQL_GOOGLE_ACCESS_TOKEN`** in the same shell so the script stores those keys in Secret **`clawql-github-auth`** and attaches them to **`deployment/clawql-mcp-http`**, then **`rollout restart`**s it.
+   Optional: `export CLAWQL_CLOUDFLARE_API_TOKEN=…` and/or **`GOOGLE_ACCESS_TOKEN`** / **`CLAWQL_GOOGLE_ACCESS_TOKEN`** in the same shell (or add them to **`.env`**) so the script stores those keys in Secret **`clawql-github-auth`** and attaches them to **`deployment/clawql-mcp-http`**, then **`rollout restart`**s it.
 
-   You can also pipe a PAT: `gh auth token | bash scripts/k8s-docker-desktop-set-github-token.sh`, or `export CLAWQL_GITHUB_TOKEN=…` / `CLAWQL_BEARER_TOKEN=…` before the script.
+   You can also pipe a PAT: `gh auth token | bash scripts/k8s-docker-desktop-set-mcp-auth.sh`, or `export CLAWQL_GITHUB_TOKEN=…` / `CLAWQL_BEARER_TOKEN=…` before the script.
+
+   The old name **`scripts/k8s-docker-desktop-set-github-token.sh`** still runs the same script (deprecated alias).
 
 2. **Manual:**
 

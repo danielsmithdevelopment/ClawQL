@@ -20,6 +20,7 @@ const rawOptionalFlagsSchema = z.object({
   CLAWQL_ENABLE_SCHEDULE: z.string().optional(),
   CLAWQL_ENABLE_NOTIFY: z.string().optional(),
   CLAWQL_ENABLE_VISION: z.string().optional(),
+  CLAWQL_ENABLE_AUDIT: z.string().optional(),
 });
 
 export type ClawqlOptionalToolFlags = {
@@ -45,6 +46,10 @@ export type ClawqlOptionalToolFlags = {
    * Planned (#78): `vision` / `multimodal` tool. Default false until implemented.
    */
   enableVision: boolean;
+  /**
+   * (#89): `audit` tool — in-process ring buffer (not durable). Default false.
+   */
+  enableAudit: boolean;
 };
 
 function rawToFlags(raw: z.infer<typeof rawOptionalFlagsSchema>): ClawqlOptionalToolFlags {
@@ -56,6 +61,7 @@ function rawToFlags(raw: z.infer<typeof rawOptionalFlagsSchema>): ClawqlOptional
     enableSchedule: envTruthy(raw.CLAWQL_ENABLE_SCHEDULE),
     enableNotify: envTruthy(raw.CLAWQL_ENABLE_NOTIFY),
     enableVision: envTruthy(raw.CLAWQL_ENABLE_VISION),
+    enableAudit: envTruthy(raw.CLAWQL_ENABLE_AUDIT),
   };
 }
 

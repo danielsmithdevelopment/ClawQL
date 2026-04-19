@@ -1,6 +1,6 @@
 {
     "name": "clawql-mcp",
-    "version": "3.3.0",
+    "version": "3.4.0",
     "description": "MCP server: search + execute any OpenAPI 3 API with an internal GraphQL optimization layer",
     "license": "Apache-2.0",
     "type": "module",
@@ -102,6 +102,7 @@
         "graphql": "^16.8.1",
         "graphql-http": "^1.22.0",
         "mcp-grpc-transport": "^0.1.2",
+        "dotenv": "^16.6.1",
         "node-fetch": "^3.3.2",
         "node-html-markdown": "^2.0.0",
         "pg": "^8.20.0",

@@ -94,8 +94,13 @@ Application-level TLS and optional client certificate verification on the gRPC l
 
 **Observability:** ClawQL does **not** bundle Langfuse or a tracing backend. Use **`grpcServerOptions`** (e.g. **OpenTelemetry** interceptors) in **`maybeStartGrpcMcpServer`**, or trace at the agent ([ClawQL-Agent](https://github.com/danielsmithdevelopment/ClawQL-Agent)). For gRPC scope and shipped behavior, see [issue #67](https://github.com/danielsmithdevelopment/ClawQL/issues/67).
 
+## Docker Desktop: MCP auth (local cluster)
+
+For **`make local-k8s-up`** on Docker Desktop, inject **GitHub**, **Cloudflare**, and **Google** tokens into the MCP deployment with **`scripts/k8s-docker-desktop-set-mcp-auth.sh`** (optional repo **`.env`**). Secret name on the cluster remains **`clawql-github-auth`** for compatibility. See **[`docker/README.md`](../docker/README.md)** (_MCP auth_) and the site page **[`/kubernetes`](../website/src/app/kubernetes/page.mdx)**.
+
 ## Notes
 
 - If your cluster uses Ingress/Gateway, switch `clawql-mcp-http` service type from `LoadBalancer` to `ClusterIP` in prod and route externally via your ingress layer.
 - Keep `CLAWQL_PROVIDER` scoped to the smallest useful preset to reduce memory and startup time.
 - With **`CLAWQL_ENABLE_CACHE`**, the MCP **`cache`** tool is **per-pod**: each replica has its **own** empty in-process store (LRU). Durable cross-replica state belongs in the vault (**`memory_ingest`** / **`memory_recall`**) or your own backing service — see **[cache-tool.md](cache-tool.md)**.
+- With **`CLAWQL_ENABLE_AUDIT`**, the MCP **`audit`** tool is **per-pod**: each replica has its **own** in-process ring buffer — not on disk; use **`memory_ingest`** for durable trails — see **[enterprise-mcp-tools.md](enterprise-mcp-tools.md)** ([#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)).

@@ -3,12 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --webpack",
     "build": "next build --webpack",
+    "dev": "next dev --webpack",
     "start": "next start",
     "lint": "next lint",
     "format": "prettier --write \"src/**/*.{mdx,ts,tsx}\" \"*.ts\" \"mdx-components.tsx\"",
-    "format:check": "prettier --check \"src/**/*.{mdx,ts,tsx}\" \"*.ts\" \"mdx-components.tsx\""
+    "format:check": "prettier --check \"src/**/*.{mdx,ts,tsx}\" \"*.ts\" \"mdx-components.tsx\"",
+    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload",
+    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
   },
   "browserslist": "defaults, not ie <= 11",
   "dependencies": {
@@ -17,6 +21,7 @@
     "@mdx-js/loader": "^3.1.0",
     "@mdx-js/react": "^3.1.0",
     "@next/mdx": "16.1.6",
+    "@opennextjs/cloudflare": "^1.19.1",
     "@sindresorhus/slugify": "^2.2.1",
     "@tailwindcss/postcss": "^4.2.2",
     "@tailwindcss/typography": "^0.5.16",
@@ -54,7 +59,8 @@
     "eslint-config-next": "16.1.6",
     "prettier": "^3.6.2",
     "prettier-plugin-tailwindcss": "^0.7.2",
-    "sharp": "0.34.3"
+    "sharp": "0.34.3",
+    "wrangler": "^4.83.0"
   },
   "overrides": {
     "@types/react": "19.2.14",

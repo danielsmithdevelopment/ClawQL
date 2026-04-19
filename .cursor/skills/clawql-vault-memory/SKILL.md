@@ -54,6 +54,8 @@ Results include path, score, depth, reason (`keyword` | `link` | `vector`), and 
 
 When **`CLAWQL_ENABLE_CACHE`** is set, the server exposes **`cache`**: **ephemeral** key/value in this process, **LRU**-bounded, **no** Markdown / **`memory.db`**. Use it for session scratch state only. For durable notes and graph recall, use **`memory_ingest`** / **`memory_recall`**. Repo reference: **[`docs/cache-tool.md`](../../../docs/cache-tool.md)** (relative from this skill file in the ClawQL repo).
 
+When **`CLAWQL_ENABLE_AUDIT`** is set, the server exposes **`audit`**: **ephemeral** in-process event ring buffer — **not** the vault and **not** compliance-grade alone. Use **`memory_ingest`** for durable, human-inspectable trails. Repo reference: **[`docs/enterprise-mcp-tools.md`](../../../docs/enterprise-mcp-tools.md)** ([#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)).
+
 ---
 
 ## Thorough ingest pattern (recommended structure)

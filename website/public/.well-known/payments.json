@@ -1,0 +1,9 @@
+{
+  "version": "1-draft",
+  "server_name": "ClawQL MCP",
+  "documentation": "https://github.com/danielsmithdevelopment/ClawQL",
+  "payment_methods": [],
+  "default": null,
+  "note": "Placeholder for payment-rail discovery (x402, optional card rails). Implementation tracked in GitHub issue #88.",
+  "issue": "https://github.com/danielsmithdevelopment/ClawQL/issues/88"
+}

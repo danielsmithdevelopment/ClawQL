@@ -1,6 +1,7 @@
 import { Guides } from '@/components/Guides'
 import { Resources } from '@/components/Resources'
 import { HeroPattern } from '@/components/HeroPattern'
+import { homePageSections } from '@/lib/home-page-sections'
 
 export const metadata = {
   title: 'ClawQL documentation',
@@ -8,10 +9,7 @@ export const metadata = {
     'ClawQL documentation: MCP server for OpenAPI 3, Swagger 2, and Google Discovery—search and execute, optional sandbox and vault memory tools, internal GraphQL layer, stdio or HTTP or gRPC, Docker and Kubernetes deployment guides.',
 }
 
-export const sections = [
-  { title: 'Guides', id: 'guides' },
-  { title: 'Reference', id: 'reference' },
-]
+export const sections = homePageSections
 
 <HeroPattern />
 
@@ -19,7 +17,7 @@ export const sections = [
 
 **ClawQL** registers **core** tools **`search`** and **`execute`**, plus optional **`sandbox_exec`** (remote code in a Cloudflare Sandbox via bridge), **`memory_ingest`**, and **`memory_recall`** (Obsidian vault), and optional **`ingest_external_knowledge`** (bulk Markdown + optional URL fetch). An internal **GraphQL** projection layer keeps API responses lean for **OpenAPI 3**, **Swagger 2**, and **Google Discovery**. The same tool set is available over **stdio**, **Streamable HTTP**, and (when enabled) **gRPC** via the reusable **[`mcp-grpc-transport`](https://www.npmjs.com/package/mcp-grpc-transport)** package—see [Deployment](/deployment) and [Kubernetes](/kubernetes). [Full tool reference (repo)](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp-tools.md). {{ className: 'lead' }}
 
-Optional **`cache`** (**`CLAWQL_ENABLE_CACHE`**) is **in-process LRU** scratch storage, not the vault — [Session cache](/cache), [cache-tool.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/cache-tool.md).
+Optional **`cache`** (**`CLAWQL_ENABLE_CACHE`**) is **in-process LRU** scratch storage, not the vault — [Session cache](/cache), [cache-tool.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/cache-tool.md). Optional **`audit`** (**`CLAWQL_ENABLE_AUDIT`**) is an in-process event buffer for operator trails — **[enterprise-mcp-tools.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/enterprise-mcp-tools.md)** ([#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)).
 
 <div className="not-prose mt-6 mb-16 flex gap-3">
   <Button href="/quickstart" arrow="right">

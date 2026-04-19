@@ -1,0 +1,26 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "clawql-docs",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2025-04-18",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "observability": {
+    "enabled": true
+  },
+  "routes": [
+    {
+      "pattern": "docs.clawql.com",
+      "custom_domain": true
+    }
+  ],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "clawql-docs"
+    }
+  ]
+}

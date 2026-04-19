@@ -242,6 +242,14 @@ export const navigation: Array<NavGroup> = [
       { title: 'MCP clients', href: '/mcp-clients' },
       { title: 'Spec configuration', href: '/spec-configuration' },
       { title: 'Troubleshooting', href: '/troubleshooting' },
+      {
+        title: 'Case study: Cloudflare docs',
+        href: '/case-studies/cloudflare-docs-mcp',
+      },
+      {
+        title: 'Case study: Vault + GitHub session',
+        href: '/case-studies/vault-memory-github-session-2026-04',
+      },
       { title: 'Deployment', href: '/deployment' },
       { title: 'Kubernetes', href: '/kubernetes' },
       { title: 'Helm', href: '/helm' },
