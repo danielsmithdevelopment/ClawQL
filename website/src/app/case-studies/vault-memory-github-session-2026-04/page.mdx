@@ -3,7 +3,7 @@ import { caseStudyVaultMemorySessionSections } from '@/lib/case-study-vault-memo
 export const metadata = {
   title: 'Case study: vault memory, GitHub, and shipping audit',
   description:
-    'Session narrative: memory_ingest at scale, issue triage and new tracking issues, prioritization, and delivering the enterprise audit tool (#89) with full docs and Helm wiring.',
+    'Ingest at scale, issue triage, prioritization, enterprise audit vertical slice — vault vs cache vs audit, Helm and docs site wiring.',
 }
 
 export const sections = caseStudyVaultMemorySessionSections
@@ -11,67 +11,96 @@ export const sections = caseStudyVaultMemorySessionSections
 <Note>
   **Canonical write-up (full detail):**
   [`docs/case_studies/vault-memory-github-session-2026-04.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/case_studies/vault-memory-github-session-2026-04.md)
-  — this page is the readable summary on **docs.clawql.com**.
+  — deepest version lives in the repo; this page tracks the same sections.
 </Note>
 
 # Case study: vault memory, GitHub, and shipping `audit`
 
-This page summarizes a **multi-turn Cursor session**: **`memory_ingest`** / **`memory_recall`** into an **Obsidian vault**, **GitHub** triage and **new issues**, **backlog ordering**, and **implementation** of the first **enterprise** vertical slice — optional **`audit`** ([#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)) — plus **docs, Helm, and website** alignment.
+This page walks through a **multi-turn Cursor session**: **`memory_ingest`** / **`memory_recall`** into an **Obsidian vault**, **GitHub** triage and **new issues**, **backlog ordering**, and shipping the first **enterprise** vertical slice — optional **`audit`** ([#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)) — with **docs, Helm, website, and Cursor skill** alignment.
 
-## Context
+## Why this session mattered
 
-- **ClawQL MCP** exposes optional tools behind **`CLAWQL_ENABLE_*`** flags.
-- **Durable** context belongs in **`memory_ingest`** / **`memory_recall`**; **ephemeral** scratch belongs in **`cache()`** — not the vault.
-- The session combined **external threads** (analysis, vision docs, ecosystem posts), **live issue lists**, and **repo work** in one arc.
+Product and engineering context was scattered across **threads, tools, and documents**. The vault became the **durable narrative** (roadmaps, analyses, prioritization snapshots); **GitHub** became the **execution layer** (issues, epics, PRs). Without that split, you either **re-litigate** design in every chat or **lose** the reason a decision was made.
+
+**Three optional layers** matter for this story:
+
+- **`cache()`** — ephemeral scratch; gone when the process restarts.
+- **`audit()`** — in-process operator trail; **not** the Obsidian vault.
+- **`memory_ingest` / `memory_recall`** — Markdown + graph (+ optional **`memory.db`** hybrid stack).
+
+## Narrative timeline (April 2026)
+
+1. **Ingest wave** — External and generated content (e.g. release cross-checks, Agent vision, gRPC/Gallery, workflow tips) with **stable note titles** and often **`append: true`** so related updates **merge** instead of splintering.
+2. **Tracker sync** — Issue list hygiene: e.g. **`iac_inspect`** duplicate **#39** → canonical **#69**; new tracking **#88–#91** for gateway, enterprise epic, synthetics, Gallery fork work.
+3. **Prioritization** — Choose **#89** as a **bounded** delivery: one enterprise tool **end-to-end** (code + tests + ops + docs).
+4. **Ship** — **`audit`** until **`npm test`** green and surfaces list the tool consistently.
 
 ## Vault memory ingests
 
-Representative vault pages (stable titles, **`append: true`** where notes already existed):
+Structured **`insights`** and optional **`conversation`** / **`toolOutputs`** went to the vault under **repeatable** titles so **`memory_recall`** and Obsidian **`[[wikilinks]]`** stay coherent:
 
-| Theme                       | Examples                                                                                                                   |
-| --------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| **Repo / release analysis** | Grok cross-check vs **v3.2.3**, suggested issue titles, follow-on design (schedule, sandbox, synthetics, cache vs memory). |
-| **Product vision**          | ClawQL-Agent roadmap, enterprise (DORA/DACI), **x402** / public gateway, payment discovery, **clawql.com** gateway notes.  |
-| **Ecosystem**               | gRPC transport + Gallery / LinkedIn narrative; third-party model tweets (flagged for verification).                        |
-| **Workflow**                | **`cache` vs `memory_ingest`** — when to use which.                                                                        |
-| **Execution**               | Open-issues snapshot, **#39** → **#69** dedupe, **#88–#91** created.                                                       |
+| Theme                  | Examples                                                                                       |
+| ---------------------- | ---------------------------------------------------------------------------------------------- |
+| **Release / analysis** | Cross-check vs **v3.2.3**, suggested issues, follow-on design (schedule, sandbox, synthetics). |
+| **Vision**             | ClawQL-Agent roadmap, enterprise (DORA/DACI), **x402** / gateway, payments.                    |
+| **Ecosystem**          | gRPC transport, Gallery, LinkedIn drafts.                                                      |
+| **Workflow**           | **`cache` vs `memory_ingest`**.                                                                |
+| **Execution**          | Open-issues snapshot, **#39→#69**, **#88–#91**.                                                |
 
-**Rule of thumb:** ingest **decisions, debugging conclusions, and contracts**; avoid secrets in vault text.
+**Rule:** ingest **decisions and contracts**; **redact** secrets.
 
 ## Issues and housekeeping
 
-| Action               | Detail                                                                                                                                                                                                                                                                                                                                                                               |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Closed duplicate** | [#39](https://github.com/danielsmithdevelopment/ClawQL/issues/39) in favor of [#69](https://github.com/danielsmithdevelopment/ClawQL/issues/69) (`iac_inspect`).                                                                                                                                                                                                                     |
-| **New issues**       | [#88](https://github.com/danielsmithdevelopment/ClawQL/issues/88) gateway / x402 / discovery; [#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89) enterprise epic; [#90](https://github.com/danielsmithdevelopment/ClawQL/issues/90) synthetics + schedule; [#91](https://github.com/danielsmithdevelopment/ClawQL/issues/91) Gallery gRPC (upstream issues disabled). |
-| **Starter artifact** | `website/public/.well-known/payments.json` + `/.well-known/*` headers — supports **#88** / docs deploy **#87**.                                                                                                                                                                                                                                                                      |
+| Action               | Detail                                                                                                                                                                               |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Closed duplicate** | [#39](https://github.com/danielsmithdevelopment/ClawQL/issues/39) → [#69](https://github.com/danielsmithdevelopment/ClawQL/issues/69) (`iac_inspect`).                               |
+| **New issues**       | [#88](https://github.com/danielsmithdevelopment/ClawQL/issues/88)–[#91](https://github.com/danielsmithdevelopment/ClawQL/issues/91) (gateway, enterprise epic, synthetics, Gallery). |
+| **Starter artifact** | **`website/public/.well-known/payments.json`** + headers — **#88** / **#87**.                                                                                                        |
+
+**Gallery:** upstream fork issues disabled — **#91** tracks downstream PRs here.
 
 ## Prioritization snapshot
 
-Discussed ordering across **#76–#78**, **#68–#71**, **#87**, and the new **#88–#91**. **Chosen implementation target:** **[#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)** — design plus **one** shipped tool before broader `metrics` / `governance`.
+Open work spanned **#76–#78**, memory **#68**, docs/evals **#70–#71**, docs site **#87**, and **#88–#91**. The group picked **[#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)** so the first enterprise slice **forced** shared plumbing: **`CLAWQL_ENABLE_*`**, Helm values, website tables — reusable for later **`metrics`** / **`governance`**.
+
+## Why audit was the right vertical slice
+
+**`audit`** is **optional**, **bounded** (ring buffer + max entries), and **inspectable** (`list` / `clear`) — it exercises the same **docs + chart + env** path as future enterprise tools without pretending to be **durable** vault storage. See **[enterprise-mcp-tools.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/enterprise-mcp-tools.md)** for threat-model language.
 
 ## Work completed: enterprise audit (#89)
 
-1. **Design:** [`docs/enterprise-mcp-tools.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/enterprise-mcp-tools.md).
-2. **Code:** `clawql-audit` — `append` / `list` / `clear`; `CLAWQL_ENABLE_AUDIT`; wiring in `tools.ts`.
-3. **Tests:** dedicated audit tests + optional-flags + stdio listing when the flag is on.
-4. **Surface area:** `.env.example`, root **README**, **CHANGELOG**, **Helm** chart, **K8s** / **Helm** docs, **website** tool pages, **Cursor** vault skill.
+1. **Design** — [`docs/enterprise-mcp-tools.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/enterprise-mcp-tools.md).
+2. **Code** — [`src/clawql-audit.ts`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/src/clawql-audit.ts), flags in [`src/clawql-optional-flags.ts`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/src/clawql-optional-flags.ts), registration in [`src/tools.ts`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/src/tools.ts).
+3. **Tests** — [`src/clawql-audit.test.ts`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/src/clawql-audit.test.ts), server/stdio coverage.
+4. **Docs / env** — [`docs/mcp-tools.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp-tools.md), [`.env.example`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/.env.example), root README, CHANGELOG.
+5. **Ops** — Helm **`enableAudit`**, [`docs/deploy-k8s.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deploy-k8s.md), [`docs/helm.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/helm.md).
+6. **Website & Cursor** — tools MDX, [vault memory skill](https://github.com/danielsmithdevelopment/ClawQL/blob/main/.cursor/skills/clawql-vault-memory/SKILL.md).
 
-**Test bar:** `npm test` green after the change set.
+## Optional tools: audit vs cache vs vault
+
+| Tool                | Persists? | Use for                          |
+| ------------------- | --------- | -------------------------------- |
+| **`cache`**         | No        | Session scratch.                 |
+| **`audit`**         | No        | Operator event trail in-process. |
+| **`memory_ingest`** | Yes       | Durable narrative + recall.      |
+
+## Helm and website wiring
+
+Shipping **`audit`** required every **surface** that documents optional tools to stay in sync: **Helm** [`values.yaml`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/charts/clawql-mcp/values.yaml), deployment template, **K8s** docs, and **docs.clawql.com** so operators see what clusters actually expose.
 
 ## Outcomes and follow-ups
 
-| Outcome     | Notes                                                                                                      |
-| ----------- | ---------------------------------------------------------------------------------------------------------- |
-| **Vault**   | Searchable graph for roadmap, payments, gRPC — refresh stale cross-links when recalling.                   |
-| **Tracker** | **#89** remains an **epic** until additional enterprise tools land; **`audit`** satisfies the first slice. |
-| **Next**    | **#76–#78**, **#88** hardening, **#91** Gallery PRs, **#90** synthetics.                                   |
-| **Site**    | Confirm **`/.well-known/payments.json`** on **docs.clawql.com** after deploys.                             |
+| Outcome     | Notes                                                                                    |
+| ----------- | ---------------------------------------------------------------------------------------- |
+| **Vault**   | Searchable roadmap + prioritization — refresh stale issue links when recalling.          |
+| **Tracker** | **#89** epic continues until more enterprise tools ship; **`audit`** is the first slice. |
+| **Next**    | **#76–#78**, **#88**, **#91**, **#90**.                                                  |
+| **Site**    | Validate **`/.well-known/payments.json`** on **docs.clawql.com**.                        |
 
 ## References
 
-- [`docs/case_studies/vault-memory-github-session-2026-04.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/case_studies/vault-memory-github-session-2026-04.md) — **this case study (canonical)**
-- [`docs/case_studies/README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/case_studies/README.md)
-- [`docs/enterprise-mcp-tools.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/enterprise-mcp-tools.md)
+- [`docs/case_studies/vault-memory-github-session-2026-04.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/case_studies/vault-memory-github-session-2026-04.md) — canonical
 - [`docs/mcp-tools.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp-tools.md)
+- [`docs/enterprise-mcp-tools.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/enterprise-mcp-tools.md)
+- [`docs/cursor-vault-memory.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/cursor-vault-memory.md)
 - Issues [#88](https://github.com/danielsmithdevelopment/ClawQL/issues/88)–[#91](https://github.com/danielsmithdevelopment/ClawQL/issues/91), [#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)
