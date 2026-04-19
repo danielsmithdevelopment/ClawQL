@@ -1,8 +1,8 @@
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import { initOpenNextCloudflareForDev } from '@opennextjs/cloudflare'
 import nextMDX from '@next/mdx'
+import { initOpenNextCloudflareForDev } from '@opennextjs/cloudflare'
 
 import { recmaPlugins } from './src/mdx/recma.mjs'
 import { rehypePlugins } from './src/mdx/rehype.mjs'
@@ -24,6 +24,11 @@ const withMDX = nextMDX({
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
+/** Canonical origin for Link headers (build/deploy should set NEXT_PUBLIC_SITE_URL). */
+const docsSiteOrigin = (
+  process.env.NEXT_PUBLIC_SITE_URL || 'https://docs.clawql.com'
+).replace(/\/$/, '')
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Monorepo: lockfile at repo root caused Next to trace from parent; OpenNext/Workers needs app-root tracing.
@@ -39,6 +44,15 @@ const nextConfig = {
   async headers() {
     return [
       {
+        source: '/',
+        headers: [
+          {
+            key: 'Link',
+            value: `<${docsSiteOrigin}/sitemap.xml>; rel="sitemap"`,
+          },
+        ],
+      },
+      {
         source: '/:path*',
         headers: [
           {
@@ -53,8 +67,7 @@ const nextConfig = {
         headers: [
           {
             key: 'Cache-Control',
-            value:
-              'public, max-age=31536000, s-maxage=31536000, immutable',
+            value: 'public, max-age=31536000, s-maxage=31536000, immutable',
           },
         ],
       },
