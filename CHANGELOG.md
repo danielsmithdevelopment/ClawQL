@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.4.1] - 2026-04-19
+
+### Documentation
+
+- **Docs site (`docs.clawql.com`) agent discovery:** **`/.well-known/api-catalog`** (RFC 9727 Linkset; **`service-desc`**, **`service-doc`**, **`status`** → **`/api/health`**), **`/.well-known/openid-configuration`** and **`/.well-known/oauth-authorization-server`** (OAuth/OIDC; Google defaults + env overrides), **`/.well-known/oauth-protected-resource`** (RFC 9728), **`/.well-known/mcp/server-card.json`** (MCP Server Card), **`/.well-known/agent-skills/index.json`** (Agent Skills Discovery v0.2.0; build script + published **`SKILL.md`** artifacts). **WebMCP:** client registration via **`navigator.modelContext.registerTool`** (`WebMcpRegister` — navigate, page context, scroll to section).
+
 ## [3.4.0] - 2026-04-18
 
 ### Added

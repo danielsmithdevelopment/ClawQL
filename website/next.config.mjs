@@ -54,6 +54,7 @@ const nextConfig = {
               `</tools>; rel="service-doc"`,
               `</spec-configuration>; rel="service-doc"`,
               `<https://raw.githubusercontent.com/danielsmithdevelopment/ClawQL/main/providers/github/openapi.yaml>; rel="service-desc"`,
+              `</api/health>; rel="status"`,
               `<https://raw.githubusercontent.com/danielsmithdevelopment/ClawQL/main/docs/mcp-tools.md>; rel="describedby"`,
             ].join(', '),
           },

@@ -11,6 +11,12 @@ export function getApiCatalogLinkset(origin: string): {
     linkset: [
       {
         anchor: `${base}/`,
+        'service-desc': [
+          {
+            href: 'https://raw.githubusercontent.com/danielsmithdevelopment/ClawQL/main/providers/github/openapi.yaml',
+            type: 'application/yaml',
+          },
+        ],
         'service-doc': [
           {
             href: `${base}/tools`,
@@ -21,10 +27,10 @@ export function getApiCatalogLinkset(origin: string): {
             type: 'text/html',
           },
         ],
-        'service-desc': [
+        status: [
           {
-            href: 'https://raw.githubusercontent.com/danielsmithdevelopment/ClawQL/main/providers/github/openapi.yaml',
-            type: 'application/yaml',
+            href: `${base}/api/health`,
+            type: 'application/json',
           },
         ],
       },
