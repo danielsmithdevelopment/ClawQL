@@ -250,6 +250,10 @@ export const navigation: Array<NavGroup> = [
         title: 'Case study: Vault + GitHub session',
         href: '/case-studies/vault-memory-github-session-2026-04',
       },
+      {
+        title: 'Case study: Cross-thread vault recall',
+        href: '/case-studies/cross-thread-vault-recall',
+      },
       { title: 'Deployment', href: '/deployment' },
       { title: 'Kubernetes', href: '/kubernetes' },
       { title: 'Helm', href: '/helm' },

@@ -139,6 +139,20 @@ const resources: Array<Resource> = [
       ],
     },
   },
+  {
+    href: '/case-studies/cross-thread-vault-recall',
+    name: 'Case study: Cross-thread vault recall',
+    description:
+      'Before and after: repo-only search vs memory_recall — Obsidian graph, Cuckoo/hybrid memory roadmaps, wikilinks, and session resume workflows.',
+    icon: BookIcon,
+    pattern: {
+      y: 6,
+      squares: [
+        [1, 0],
+        [2, 2],
+      ],
+    },
+  },
 ]
 
 function ResourceIcon({ icon: Icon }: { icon: Resource['icon'] }) {
