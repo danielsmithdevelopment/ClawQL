@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-04-19
+
+- Docs deploy (OpenNext + Cloudflare Worker `clawql-docs`); site content aligned with **clawql-mcp v3.4.0** (case studies, tools, caching headers).
+
 ## 2025-07-29
 
 - Update to React 19 and Next.js 15.4
