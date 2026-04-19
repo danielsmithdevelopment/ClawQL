@@ -81,7 +81,7 @@ The enterprise epic needed a tool that is:
 - **Bounded** — ring buffer + max entries env (`CLAWQL_AUDIT_MAX_ENTRIES`); not a silent **unbounded** log file on disk by default.
 - **Documentable** — pairs naturally with [`docs/enterprise-mcp-tools.md`](../enterprise-mcp-tools.md) threat-model language.
 
-**Not** a replacement for **`memory_ingest`**:\*\* **`audit`** is for **runtime MCP events**; the vault is for **human-readable narrative**.
+**Not** a replacement for **`memory_ingest`**: **`audit`** is for **runtime MCP events**; the vault is for **human-readable narrative**.
 
 ---
 
@@ -129,7 +129,7 @@ Shipping **`audit`** “for real” meant every **surface** that lists optional 
 
 - **MCP tools:** [mcp-tools.md](../mcp-tools.md)
 - **Enterprise design:** [enterprise-mcp-tools.md](../enterprise-mcp-tools.md)
-- **Vault memory skill:** [cursor-vault-memory.md](../cursor-vault-memory.md)
+- **Vault memory skill:** [cursor-vault-memory.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/cursor-vault-memory.md)
 - **Issues:** [#88](https://github.com/danielsmithdevelopment/ClawQL/issues/88)–[#91](https://github.com/danielsmithdevelopment/ClawQL/issues/91), [#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)
 
 **Website (readable summary):** **`/case-studies/vault-memory-github-session-2026-04`** on [docs.clawql.com](https://docs.clawql.com).

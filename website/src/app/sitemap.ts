@@ -2,38 +2,56 @@ import { type MetadataRoute } from 'next'
 
 import { getSiteOrigin } from '@/lib/site-url'
 
-/** Static doc routes (app router MDX pages). */
-const PATHS = [
-  '/',
-  '/quickstart',
-  '/install',
-  '/mcp-clients',
-  '/spec-configuration',
-  '/troubleshooting',
-  '/deployment',
-  '/kubernetes',
-  '/helm',
-  '/tools',
-  '/cache',
-  '/graphql-proxy',
-  '/bundled-specs',
-  '/concepts',
-  '/benchmarks',
-  '/case-studies/cloudflare-docs-mcp',
-  '/case-studies/vault-memory-github-session-2026-04',
-  '/case-studies/cross-thread-vault-recall',
-] as const
+type Entry = {
+  path: '/' | `/${string}`
+  changeFrequency: MetadataRoute.Sitemap[number]['changeFrequency']
+  priority: number
+}
+
+/** Static doc routes (app router MDX pages). Priority: home and entry guides highest; reference pages next. */
+const ENTRIES: Array<Entry> = [
+  { path: '/', changeFrequency: 'weekly', priority: 1 },
+  { path: '/quickstart', changeFrequency: 'weekly', priority: 0.95 },
+  { path: '/install', changeFrequency: 'monthly', priority: 0.9 },
+  { path: '/mcp-clients', changeFrequency: 'monthly', priority: 0.88 },
+  { path: '/concepts', changeFrequency: 'monthly', priority: 0.88 },
+  { path: '/deployment', changeFrequency: 'monthly', priority: 0.88 },
+  { path: '/kubernetes', changeFrequency: 'monthly', priority: 0.88 },
+  { path: '/helm', changeFrequency: 'monthly', priority: 0.88 },
+  { path: '/tools', changeFrequency: 'weekly', priority: 0.9 },
+  { path: '/spec-configuration', changeFrequency: 'monthly', priority: 0.85 },
+  { path: '/troubleshooting', changeFrequency: 'monthly', priority: 0.82 },
+  { path: '/cache', changeFrequency: 'monthly', priority: 0.8 },
+  { path: '/graphql-proxy', changeFrequency: 'monthly', priority: 0.8 },
+  { path: '/bundled-specs', changeFrequency: 'monthly', priority: 0.8 },
+  { path: '/benchmarks', changeFrequency: 'monthly', priority: 0.75 },
+  {
+    path: '/case-studies/cloudflare-docs-mcp',
+    changeFrequency: 'monthly',
+    priority: 0.78,
+  },
+  {
+    path: '/case-studies/vault-memory-github-session-2026-04',
+    changeFrequency: 'monthly',
+    priority: 0.78,
+  },
+  {
+    path: '/case-studies/cross-thread-vault-recall',
+    changeFrequency: 'monthly',
+    priority: 0.78,
+  },
+]
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = getSiteOrigin().toString().replace(/\/$/, '')
 
-  return PATHS.map((path) => {
+  return ENTRIES.map(({ path, changeFrequency, priority }) => {
     const url = path === '/' ? `${base}/` : `${base}${path}`
     return {
       url,
       lastModified: new Date(),
-      changeFrequency: 'weekly' as const,
-      priority: path === '/' ? 1 : 0.85,
+      changeFrequency,
+      priority,
     }
   })
 }

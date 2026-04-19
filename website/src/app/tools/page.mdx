@@ -1,8 +1,11 @@
-export const metadata = {
+import { docsPageMetadata } from '@/lib/seo'
+
+export const metadata = docsPageMetadata({
   title: 'Tools',
   description:
     'ClawQL MCP tools: search and execute; sandbox_exec, memory_ingest, memory_recall, ingest_external_knowledge; optional cache (in-process LRU) and optional audit (CLAWQL_ENABLE_AUDIT). Same tools over stdio, Streamable HTTP, or optional gRPC (mcp-grpc-transport).',
-}
+  path: '/tools',
+})
 
 # Tools
 
