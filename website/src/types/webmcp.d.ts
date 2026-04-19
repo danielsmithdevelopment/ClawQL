@@ -35,5 +35,7 @@ interface ModelContextRegisterToolOptions {
 }
 
 interface ModelContextClient {
-  requestUserInteraction?: (callback: () => Promise<unknown>) => Promise<unknown>
+  requestUserInteraction?: (
+    callback: () => Promise<unknown>,
+  ) => Promise<unknown>
 }

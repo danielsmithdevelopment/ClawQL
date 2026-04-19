@@ -1,10 +1,10 @@
 import { type Metadata, type Viewport } from 'next'
 
 import { Providers } from '@/app/providers'
-import { WebMcpRegister } from '@/components/WebMcpRegister'
 import { Layout } from '@/components/Layout'
 import { type Section } from '@/components/SectionProvider'
 import { SiteStructuredData } from '@/components/SiteStructuredData'
+import { WebMcpRegister } from '@/components/WebMcpRegister'
 import { getSiteOrigin } from '@/lib/site-url'
 
 import { caseStudyCloudflareDocsSections } from '@/lib/case-study-cloudflare-docs-sections'

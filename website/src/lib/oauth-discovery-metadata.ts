@@ -33,7 +33,10 @@ const GOOGLE_OIDC_BASE: Record<string, unknown> = {
   subject_types_supported: ['public'],
   id_token_signing_alg_values_supported: ['RS256'],
   scopes_supported: ['openid', 'email', 'profile'],
-  token_endpoint_auth_methods_supported: ['client_secret_post', 'client_secret_basic'],
+  token_endpoint_auth_methods_supported: [
+    'client_secret_post',
+    'client_secret_basic',
+  ],
   claims_supported: [
     'aud',
     'email',
@@ -98,14 +101,13 @@ export function getOAuthAuthorizationServerMetadata(): Record<string, unknown> {
     scopes_supported: oidc.scopes_supported,
     response_types_supported: oidc.response_types_supported,
     grant_types_supported: oidc.grant_types_supported,
-    token_endpoint_auth_methods_supported: oidc.token_endpoint_auth_methods_supported,
+    token_endpoint_auth_methods_supported:
+      oidc.token_endpoint_auth_methods_supported,
     code_challenge_methods_supported: oidc.code_challenge_methods_supported,
   }
 }
 
-function authorizationServersForProtectedResource(
-  issuer: string,
-): string[] {
+function authorizationServersForProtectedResource(issuer: string): string[] {
   const list = envString('OAUTH_PR_AUTHORIZATION_SERVERS')
   if (list) {
     const parsed = list

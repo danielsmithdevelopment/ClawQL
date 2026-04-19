@@ -47,7 +47,10 @@ export function WebMcpRegister() {
           const raw = input as { path?: string }
           const path = String(raw.path ?? '')
           if (!path.startsWith('/') || path.startsWith('//')) {
-            return { ok: false, error: 'Path must be a same-origin path starting with /' }
+            return {
+              ok: false,
+              error: 'Path must be a same-origin path starting with /',
+            }
           }
           router.push(path)
           return { ok: true, path }
