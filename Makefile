@@ -1,4 +1,4 @@
-.PHONY: deploy-cloud-run deploy-k8s local-k8s-up local-k8s-mcp-delete local-docker-up helm-lint kustomize-local-lint lint-k8s-manifests
+.PHONY: deploy-cloud-run deploy-k8s deploy-docs local-k8s-up local-k8s-mcp-delete local-docker-up helm-lint kustomize-local-lint lint-k8s-manifests
 
 # Validate charts/clawql-mcp (requires helm on PATH)
 helm-lint:
@@ -41,3 +41,8 @@ deploy-cloud-run:
 deploy-k8s:
 	@if [ -z "$$IMAGE" ] || [ -z "$$TAG" ]; then echo "IMAGE and TAG are required"; echo "Example: ENV=dev IMAGE=us-central1-docker.pkg.dev/<project>/<repo>/clawql-mcp TAG=abc123 make deploy-k8s"; exit 1; fi
 	@ENV="$${ENV:-dev}" DRY_RUN="$${DRY_RUN:-false}" IMAGE="$$IMAGE" TAG="$$TAG" bash scripts/deploy-k8s.sh
+
+# Docs site (website/) → Cloudflare Worker clawql-docs, docs.clawql.com — requires jq and
+# CLAWQL_CLOUDFLARE_API_TOKEN or CLOUDFLARE_API_TOKEN. Loads ./.env when present (same pattern as local dev).
+deploy-docs:
+	@bash -c 'set -a; [ -f .env ] && . ./.env; set +a; exec bash scripts/deploy-docs-to-cloudflare.sh'

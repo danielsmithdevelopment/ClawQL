@@ -1,8 +1,11 @@
-export const metadata = {
+import { docsPageMetadata } from '@/lib/seo'
+
+export const metadata = docsPageMetadata({
   title: 'Concepts',
   description:
     'ClawQL architecture: MCP over stdio, Streamable HTTP, or optional gRPC; in-memory search index, internal GraphQL, and token-efficient search-then-execute workflows.',
-}
+  path: '/concepts',
+})
 
 # Concepts
 

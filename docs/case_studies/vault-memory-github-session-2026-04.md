@@ -6,21 +6,37 @@ This case study summarizes a **multi-turn working session** in Cursor: ingesting
 
 ---
 
-## 1. Context
+## 1. Why this session mattered
 
-- **ClawQL MCP** exposes optional tools behind **`CLAWQL_ENABLE_*`** flags; durable knowledge lives in **`memory_ingest`** / **`memory_recall`**; ephemeral scratch uses **`cache`** (and **`audit`** is an in-process ring buffer — not the vault).
-- The session mixed **user-provided threads** (Grok replies, LinkedIn drafts, product vision), **prioritization** against live **`gh issue list`**, and **implementation** in this repo.
+Long-horizon product work generates **more context than any single chat** can hold: vendor analyses, roadmap essays, ecosystem posts, and **cross-session** prioritization. Without a **durable** store, you re-argue the same design every week. This session used the vault as the **system of record** for that material, then used **GitHub** as the **system of execution** — issues, epics, and shipped code.
+
+**Three layers:**
+
+| Layer                 | Tooling                                          | Durability                                                                                                                |
+| --------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| **Scratch**           | **`cache()`** (optional, in-process LRU)         | Lost on process restart — good for ephemeral tool state.                                                                  |
+| **Operator trail**    | **`audit()`** (optional, in-process ring buffer) | Not the vault; not compliance-grade logging by itself — see [`docs/enterprise-mcp-tools.md`](../enterprise-mcp-tools.md). |
+| **Narrative + graph** | **`memory_ingest`** / **`memory_recall`**        | Markdown + **`[[wikilinks]]`** (+ optional **`memory.db`** hybrid features).                                              |
 
 ---
 
-## 2. What was ingested into the vault (`memory_ingest`)
+## 2. Narrative timeline (April 2026)
+
+1. **Ingest wave:** External threads (e.g. Grok cross-checks, Agent vision, gRPC/Gallery notes) landed in the vault with **stable titles** and often **`append: true`** so related updates consolidated instead of fragmenting.
+2. **Tracker sync:** Open issues were **listed, deduped, and extended** — e.g. **`iac_inspect`** duplicate closure (**#39** → **#69**), new epics **#88–#91** for gateway, enterprise tools, synthetics, Gallery downstream work.
+3. **Prioritization:** Among schedule/notify/vision (**#76–#78**), memory epics (**#68**), docs/evals (**#70–#71**), docs site (**#87**), and new items, the group picked **#89** for a **vertical slice** with clear acceptance: **one** enterprise tool shipped end-to-end.
+4. **Implementation:** **`audit`** — design doc, code, tests, Helm/K8s/env/docs/site/Cursor skill — until **`npm test`** green.
+
+---
+
+## 3. What was ingested into the vault (`memory_ingest`)
 
 Structured **`insights`** plus verbatim or summarized **`conversation`** blocks were stored under stable titles (append-friendly) so Obsidian **`[[wikilinks]]`** and **`memory_recall`** stay useful:
 
 | Theme                            | Vault note title (representative)                                                                                                                                              |
 | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Grok repo analysis vs **v3.2.3** | `ClawQL MCP v3.2.3 Grok repo analysis (Apr 17 2026)` — cross-check vs open issues, suggested issue titles, follow-on design (schedule + sandbox, synthetics, cache vs memory). |
-| **ClawQL-Agent** vision          | `ClawQL-Agent platform vision and roadmap (2026-04-17)` — plus Grok validations, enterprise (DORA/DACI), x402/Ramp payments, **clawql.com** gateway, payment discovery.        |
+| **ClawQL-Agent** vision          | `ClawQL-Agent platform vision and roadmap (2026-04-17)` — enterprise framing (DORA/DACI), **x402** / public gateway, payment discovery, **clawql.com** gateway notes.          |
 | **gRPC** + Gallery / LinkedIn    | `ClawQL gRPC MCP transport and Gemma Gallery skill (announcement 2026-04)`; LinkedIn ecosystem post note.                                                                      |
 | **SuperQwen** benchmark tweet    | `SuperQwen3.6-35B Song Jun tweet — ClawQL-Agent model note (2026-04)` — third-party claims flagged for verification.                                                           |
 | **Workflow tips**                | `ClawQL MCP cache vs memory_ingest — when to use which`.                                                                                                                       |
@@ -28,9 +44,11 @@ Structured **`insights`** plus verbatim or summarized **`conversation`** blocks 
 
 **Practice:** Prefer **`memory_ingest`** for durable decisions; use **`cache()`** only for session scratch the user asked not to persist forever.
 
+**Ingest hygiene:** use **`wikilinks`** to connect roadmap ↔ GitHub issue notes ↔ architecture sketches so **`memory_recall`** with **`maxDepth`** can pull **related** pages, not only keyword hits.
+
 ---
 
-## 3. GitHub: issues created and housekeeping
+## 4. GitHub: issues created and housekeeping
 
 | Action               | Detail                                                                                                                                                                                                                                                                                                                                                                                                       |
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -40,45 +58,78 @@ Structured **`insights`** plus verbatim or summarized **`conversation`** blocks 
 
 **Gallery:** Issues are disabled on the fork; **#91** in this repo tracks downstream PRs.
 
+**Why track duplicates explicitly:** reduces **split-brain** prioritization (“which issue is the real `iac_inspect`?”) and keeps **`search` / `execute`** automation aligned with a **single** canonical thread.
+
 ---
 
-## 4. Prioritization snapshot (session)
+## 5. Prioritization snapshot (session)
 
 - **Open** work included **#76–#78** (schedule, notify, vision), **#69** / memory epics, **#87** (docs site), **#88–#91** (new).
-- **Suggested order** discussed: dedupe **iac_inspect** (done), optional tools **#76 → #77 → #78**, memory under **#68**, docs **#70** / eval **#71**, public gateway when ready.
+- **Suggested order** discussed: dedupe **`iac_inspect`** (done), optional tools **#76 → #77 → #78**, memory under **#68**, docs **#70** / eval **#71**, public gateway when ready.
 - **Picked for implementation:** **[#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)** — design doc + first vertical slice.
+
+**Rationale:** **#89** was scoped to **ship something observable** in MCP + Helm + docs — a **forcing function** for optional-tool plumbing (`CLAWQL_ENABLE_*`, chart values, website tables) that future enterprise tools (**`metrics`**, **`governance`**) reuse.
 
 ---
 
-## 5. Work completed: enterprise `audit` (#89)
+## 6. Why `audit` was the right vertical slice
+
+The enterprise epic needed a tool that is:
+
+- **Optional** — off by default; no surprise behavior for existing deployments.
+- **Inspectable** — operators can **`list`** recent events without SSHing to grep logs.
+- **Bounded** — ring buffer + max entries env (`CLAWQL_AUDIT_MAX_ENTRIES`); not a silent **unbounded** log file on disk by default.
+- **Documentable** — pairs naturally with [`docs/enterprise-mcp-tools.md`](../enterprise-mcp-tools.md) threat-model language.
+
+**Not** a replacement for **`memory_ingest`**: **`audit`** is for **runtime MCP events**; the vault is for **human-readable narrative**.
+
+---
+
+## 7. Work completed: enterprise `audit` (#89)
 
 1. **Design:** [`docs/enterprise-mcp-tools.md`](../enterprise-mcp-tools.md) — flags, threat model, future `metrics` / `governance`.
 2. **Code:** [`src/clawql-audit.ts`](../../src/clawql-audit.ts) — `append` / `list` / `clear`; [`src/clawql-optional-flags.ts`](../../src/clawql-optional-flags.ts) — `CLAWQL_ENABLE_AUDIT`; registration in [`src/tools.ts`](../../src/tools.ts).
 3. **Tests:** [`src/clawql-audit.test.ts`](../../src/clawql-audit.test.ts), extended optional-flags + stdio smoke ([`src/server.test.ts`](../../src/server.test.ts)).
 4. **Docs / env:** [`docs/mcp-tools.md`](../mcp-tools.md), [`.env.example`](../../.env.example), [`README.md`](../../README.md), [`CHANGELOG.md`](../../CHANGELOG.md).
 5. **Ops:** **Helm** `enableAudit` in [`charts/clawql-mcp`](../../charts/clawql-mcp); [`docs/deploy-k8s.md`](../deploy-k8s.md), [`docs/helm.md`](../helm.md).
-6. **Website & Cursor:** site copy ([`website/src/app/tools/page.mdx`](../../website/src/app/tools/page.mdx), etc.), [`.cursor/skills/clawql-vault-memory/SKILL.md`](../../.cursor/skills/clawql-vault-memory/SKILL.md).
+6. **Website & Cursor:** site copy ([`website/src/app/tools/page.mdx`](../../website/src/app/tools/page.mdx), related MDX), [`.cursor/skills/clawql-vault-memory/SKILL.md`](../../.cursor/skills/clawql-vault-memory/SKILL.md) — clarifies **`audit`** vs vault.
 
 **Tests:** `npm test` green before merge.
 
 ---
 
-## 6. Outcomes and follow-ups
+## 8. Optional tools: `audit` vs `cache` vs vault
 
-| Outcome         | Notes                                                                                                                           |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| **Vault**       | Searchable narrative for roadmap, payments, gRPC, and GitHub state — refresh stale notes (e.g. **#67** closed) when re-calling. |
-| **Tracker**     | **#89** remains an **epic** until `metrics` / `governance` ship; **`audit`** v1 satisfies “one vertical slice.”                 |
-| **Next builds** | **#76–#78**, **#88** payment gateway hardening, **Gallery** gRPC via **#91**.                                                   |
-| **Deploy**      | Validate `/.well-known/payments.json` on **docs.clawql.com** after **#87**.                                                     |
+| Tool                | Env                            | Persists?           | Use for                                      |
+| ------------------- | ------------------------------ | ------------------- | -------------------------------------------- |
+| **`cache`**         | `CLAWQL_ENABLE_CACHE`          | No (in-process LRU) | Session scratch, tool handoff state.         |
+| **`audit`**         | `CLAWQL_ENABLE_AUDIT`          | No (ring buffer)    | Operator-visible MCP event trail in-session. |
+| **`memory_ingest`** | Vault path + DB sidecar config | Yes (Markdown + DB) | Decisions, runbooks, cross-session recall.   |
 
 ---
 
-## 7. References
+## 9. Helm and website wiring
+
+Shipping **`audit`** “for real” meant every **surface** that lists optional tools had to mention **`CLAWQL_ENABLE_AUDIT`** and Helm **`enableAudit`**: chart [`values.yaml`](../../charts/clawql-mcp/values.yaml), deployment template, Kubernetes docs, and the **public docs site** so **docs.clawql.com** matches what clusters run.
+
+---
+
+## 10. Outcomes and follow-ups
+
+| Outcome         | Notes                                                                                                                                |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| **Vault**       | Searchable narrative for roadmap, payments, gRPC, and GitHub state — refresh stale cross-links (e.g. closed issues) when re-calling. |
+| **Tracker**     | **#89** remains an **epic** until `metrics` / `governance` ship; **`audit`** v1 satisfies “one vertical slice.”                      |
+| **Next builds** | **#76–#78**, **#88** payment gateway hardening, **Gallery** gRPC via **#91**, **#90** synthetics.                                    |
+| **Deploy**      | Validate `/.well-known/payments.json` on **docs.clawql.com** after **#87**.                                                          |
+
+---
+
+## 11. References
 
 - **MCP tools:** [mcp-tools.md](../mcp-tools.md)
 - **Enterprise design:** [enterprise-mcp-tools.md](../enterprise-mcp-tools.md)
-- **Vault memory skill:** [cursor-vault-memory.md](../cursor-vault-memory.md)
+- **Vault memory skill:** [cursor-vault-memory.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/cursor-vault-memory.md)
 - **Issues:** [#88](https://github.com/danielsmithdevelopment/ClawQL/issues/88)–[#91](https://github.com/danielsmithdevelopment/ClawQL/issues/91), [#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)
 
 **Website (readable summary):** **`/case-studies/vault-memory-github-session-2026-04`** on [docs.clawql.com](https://docs.clawql.com).

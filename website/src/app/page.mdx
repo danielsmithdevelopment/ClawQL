@@ -2,12 +2,14 @@ import { Guides } from '@/components/Guides'
 import { Resources } from '@/components/Resources'
 import { HeroPattern } from '@/components/HeroPattern'
 import { homePageSections } from '@/lib/home-page-sections'
+import { docsPageMetadata } from '@/lib/seo'
 
-export const metadata = {
+export const metadata = docsPageMetadata({
   title: 'ClawQL documentation',
   description:
     'ClawQL documentation: MCP server for OpenAPI 3, Swagger 2, and Google Discovery—search and execute, optional sandbox and vault memory tools, internal GraphQL layer, stdio or HTTP or gRPC, Docker and Kubernetes deployment guides.',
-}
+  path: '/',
+})
 
 export const sections = homePageSections
 

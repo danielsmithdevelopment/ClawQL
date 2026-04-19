@@ -1,8 +1,11 @@
-export const metadata = {
+import { docsPageMetadata } from '@/lib/seo'
+
+export const metadata = docsPageMetadata({
   title: 'Troubleshooting',
   description:
     'ClawQL troubleshooting: MCP connection errors, GraphQL translation, search limits, large OpenAPI documents, Kubernetes port-forward and HTTP endpoints.',
-}
+  path: '/troubleshooting',
+})
 
 # Troubleshooting
 

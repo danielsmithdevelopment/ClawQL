@@ -1,8 +1,11 @@
-export const metadata = {
+import { docsPageMetadata } from '@/lib/seo'
+
+export const metadata = docsPageMetadata({
   title: 'Helm',
   description:
     'Install ClawQL on Kubernetes with the charts/clawql-mcp Helm chart: image, Service, optional Ingress and persistence.',
-}
+  path: '/helm',
+})
 
 # Helm
 

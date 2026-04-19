@@ -1,8 +1,11 @@
-export const metadata = {
+import { docsPageMetadata } from '@/lib/seo'
+
+export const metadata = docsPageMetadata({
   title: 'Session cache',
   description:
     'Optional MCP cache tool: in-process LRU key/value storage (CLAWQL_ENABLE_CACHE). Not the Obsidian vault — use memory_ingest and memory_recall for durable memory.',
-}
+  path: '/cache',
+})
 
 # Session cache (`cache`)
 

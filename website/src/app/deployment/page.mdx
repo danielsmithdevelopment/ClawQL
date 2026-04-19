@@ -1,8 +1,11 @@
-export const metadata = {
+import { docsPageMetadata } from '@/lib/seo'
+
+export const metadata = docsPageMetadata({
   title: 'Deployment',
   description:
     'Deploy ClawQL: Docker Distroless image, Streamable HTTP /mcp, ENABLE_GRPC and GRPC_PORT, Google Cloud Run script, Kubernetes Kustomize or Helm chart, production notes.',
-}
+  path: '/deployment',
+})
 
 # Deployment
 

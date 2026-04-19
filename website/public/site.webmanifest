@@ -1,0 +1,17 @@
+{
+  "name": "ClawQL documentation",
+  "short_name": "ClawQL",
+  "description": "ClawQL MCP server documentation — OpenAPI, Google APIs, search and execute, Kubernetes and Docker.",
+  "start_url": "/",
+  "display": "browser",
+  "background_color": "#faf8f5",
+  "theme_color": "#0e7490",
+  "icons": [
+    {
+      "src": "/ClawQL-logo.jpeg",
+      "type": "image/jpeg",
+      "sizes": "512x512",
+      "purpose": "any"
+    }
+  ]
+}
