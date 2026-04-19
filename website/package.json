@@ -1,8 +1,9 @@
 {
   "name": "clawql-docs-site",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "scripts": {
+    "prebuild": "node scripts/generate-agent-markdown.mjs && node scripts/generate-agent-skills-index.mjs",
     "build": "next build --webpack",
     "dev": "next dev --webpack",
     "start": "next start",

@@ -4,6 +4,7 @@ import { Providers } from '@/app/providers'
 import { Layout } from '@/components/Layout'
 import { type Section } from '@/components/SectionProvider'
 import { SiteStructuredData } from '@/components/SiteStructuredData'
+import { WebMcpRegister } from '@/components/WebMcpRegister'
 import { getSiteOrigin } from '@/lib/site-url'
 
 import { caseStudyCloudflareDocsSections } from '@/lib/case-study-cloudflare-docs-sections'
@@ -87,6 +88,7 @@ export default function RootLayout({
       <body className="flex min-h-full overflow-x-hidden bg-claw-warm-white antialiased dark:bg-claw-bg">
         <SiteStructuredData />
         <Providers>
+          <WebMcpRegister />
           <div className="w-full">
             <Layout allSections={allSections}>{children}</Layout>
           </div>

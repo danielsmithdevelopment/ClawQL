@@ -2,7 +2,8 @@
 
 ## 2026-04-19
 
-- Docs deploy (OpenNext + Cloudflare Worker `clawql-docs`); site content aligned with **clawql-mcp v3.4.0** (case studies, tools, caching headers).
+- Docs deploy (OpenNext + Cloudflare Worker `clawql-docs`); site content aligned with **clawql-mcp v3.4.1** (case studies, tools, caching headers).
+- **Agent readiness:** `/.well-known` discovery (API catalog, OAuth/OIDC, protected resource, MCP server card, agent skills index), `/api/health`, **WebMCP** (`registerTool`), `prebuild` agent-skills generator.
 
 ## 2025-07-29
 
