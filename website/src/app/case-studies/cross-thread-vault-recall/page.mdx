@@ -1,0 +1,96 @@
+import { caseStudyCrossThreadVaultRecallSections } from '@/lib/case-study-cross-thread-vault-recall-sections'
+
+export const metadata = {
+  title: 'Case study: cross-thread vault recall (Cuckoo / hybrid memory)',
+  description:
+    'Repo-only vs memory_recall for vault roadmaps; then search + execute on the GitHub API to create tracking issues from synthesized recall context.',
+}
+
+export const sections = caseStudyCrossThreadVaultRecallSections
+
+<Note>
+  **Canonical write-up (full detail):**
+  [`docs/case_studies/cross-thread-vault-recall-cuckoo-filters.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/case_studies/cross-thread-vault-recall-cuckoo-filters.md)
+  — figures and narrative also on **docs.clawql.com** below.
+</Note>
+
+# Case study: cross-thread recall — repo alone vs Obsidian vault
+
+Modern assistants **forget by default**: last week’s thread is out of scope, and **another product’s chat** is invisible unless you paste it. This study shows a **before / after** using **ClawQL**: first **only the git repo** is searched (accurate, but empty for in-flight design); then **`memory_recall()`** pulls **vault** notes about **Cuckoo filters**, **hybrid `memory.db`**, and **Merkle** semantics that were captured with **`memory_ingest`** — including plans **not yet** checked into `main`. The **immediate next step** in the same session was to use **`search()`** and **`execute()`** against the **bundled GitHub API** so the assistant could **create an epic and child issues** from that synthesized context — without copying the vault by hand into GitHub’s UI.
+
+## Problem: conversation context is ephemeral
+
+Sessions end. Context windows roll. If your **roadmap** lived in a long chat and never became a file, a new session **cannot** see it unless you **retrieve** it from somewhere **durable**. That limitation is expected; the fix is **persistent, structured memory** with **links**, not bigger paste buffers alone.
+
+## Negative control: repo-only search
+
+Ask: **“What are we doing with Cuckoo filters in this project?”** If the assistant searches **only** the repository, the honest answer may be: **no** `cuckoo` string in source, **no** dependency on a Cuckoo library, **no** checked-in design doc — and that is **correct for the repo**, even when your **vault** already contains a detailed hybrid-memory plan.
+
+![](/case-studies/cross-thread-vault-recall/before-repo-only-no-cuckoo-context.png)
+
+_**Figure 1 — Repo-only:** the assistant reports no Cuckoo-related implementation or docs in the tree (screenshot: Cursor, Apr 2026)._
+
+## Obsidian graph after a week of ingest
+
+If you **`memory_ingest`** summaries from **multiple** assistants into one **Obsidian** vault, **`[[wikilinks]]`** and indexes produce a **graph** you can navigate visually. After about **one week** of steady ingest, clusters appear around themes (hybrid memory, gRPC, benchmarks, case studies) — the graph is a **human-readable** view of the same structure **`memory_recall`** can traverse with **`maxDepth`**.
+
+![](/case-studies/cross-thread-vault-recall/obsidian-graph-week-of-ingest.png)
+
+_**Figure 2 — Obsidian graph:** `Memory` vault showing dense links between ingested notes (`\_INDEX_\*`, roadmaps, external corpus). Screenshot Apr 18, 2026.\_
+
+## Positive control: memory_recall
+
+With **ClawQL MCP** enabled, **`memory_recall`** searches **`CLAWQL_OBSIDIAN_VAULT_PATH`** and returns **ranked** notes; linked neighbors can participate when **`maxDepth`** is set above zero. For “Cuckoo” intent, recall surfaces roadmap files (e.g. hybrid **sqlite-vec** + membership filter wiring, Merkle semantics, env toggles like **`CLAWQL_CUCKOO_*`**) so the assistant **synthesizes** your **actual** plan language — including material that **does not** appear in a repo grep.
+
+![](/case-studies/cross-thread-vault-recall/after-memory-recall-cuckoo-plans.png)
+
+_**Figure 3 — With `memory_recall`:** vault notes on hybrid memory / Cuckoo surface in Cursor; the assistant can cite concrete filenames under `ClawQL/Memory/` (screenshot: Cursor, Apr 2026)._
+
+## Follow-up: search and execute to create tracking issues
+
+After recall **grounds** the model in your roadmap, you can ask ClawQL to do **the same thing you would do in the browser**: discover the right **GitHub REST** operations with **`search()`**, then **`execute()`** them. In this session the user asked to **create the missing issues** that capture the hybrid-memory work. The assistant ran **`search`** to find `issues/create` (and related) operations, then multiple **`execute`** calls: an **epic** first, then **child issues**, then an update to link the epic body to its children.
+
+Example outcome (this repository, Apr 2026): epic **[#68](https://github.com/danielsmithdevelopment/ClawQL/issues/68)** (_Hybrid ClawQL memory — sqlite-vec + Cuckoo beside the Markdown vault_) with linked work items **[#69](https://github.com/danielsmithdevelopment/ClawQL/issues/69)**–**[72](https://github.com/danielsmithdevelopment/ClawQL/issues/72)** (Cuckoo layer, sqlite-vec pipeline, `memory.db` schema, MCP env wiring). Issue numbers and titles may evolve; the pattern is **recall → synthesize → API execution**.
+
+![](/case-studies/cross-thread-vault-recall/after-recall-search-execute-github-issues.png)
+
+_**Figure 4 — After recall:** same ClawQL MCP session uses **`search`** / **`execute`** on the GitHub provider to file structured issues from the synthesized plan (screenshot: Cursor, Apr 2026)._
+
+## Vault graph: ingest, wikilinks, and recall
+
+| Piece                     | What it does                                                                                                                                                                  |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`memory_ingest`**       | Writes Markdown with **`insights`**, optional **`conversation`** / **`toolOutputs`**, and **`wikilinks`** so new notes **attach** to the graph.                               |
+| **Provenance**            | Sections can record where content came from so you trust **recall** results.                                                                                                  |
+| **`[[wikilinks]]`**       | Obsidian backlinks + ClawQL **graph depth** — recall is not limited to a **single** keyword hit.                                                                              |
+| **Optional hybrid stack** | With **`memory.db`**, vectors, and **Cuckoo** membership enabled, the server can **narrow** candidates before the model sees them — **relevant** chunks, not the whole vault. |
+| **`cache()`**             | **Ephemeral** scratch only; use **`memory_ingest`** for anything you want **`memory_recall`** to find **next month**.                                                         |
+
+## Session workflows: pause, summarize, resume
+
+1. **During work:** code and tests stay in **git** as usual.
+2. **Before you switch tasks:** **`memory_ingest`** with a **stable title** (often **`append: true`**) — decisions, links to issues, open questions.
+3. **When you return in a new thread:** **`memory_recall`** with a **specific query**; tune **`limit`** and **`maxDepth`**.
+4. **Compose:** the model merges **recalled** vault text with **current** repo state so answers stay consistent with **both**.
+5. **Ship the plan:** with **GitHub** auth on MCP, use **`search`** / **`execute`** to open or update issues so the recalled roadmap becomes **tracked work** — as in **Figure 4**.
+
+That is how you restore **cross-thread** intent without pasting entire old chats.
+
+## Token budget and relevance
+
+The goal is **not** to stuff the whole vault into context. **`memory_recall`** is built to return **topically relevant** notes (and graph context when configured), so you pay tokens for **signal**, not for every note ever written.
+
+## Reproduction checklist
+
+1. Set **`CLAWQL_OBSIDIAN_VAULT_PATH`** ([`memory-obsidian.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/memory-obsidian.md)).
+2. Ingest at least one note that exists **only** in the vault (not in git).
+3. In a **fresh** chat, ask a question only that note answers.
+4. Compare **repo search** vs **`memory_recall`** — you should reproduce this **before / after** pattern.
+5. Optionally set **`CLAWQL_GITHUB_TOKEN`** and ask for **`search`** / **`execute`** to create issues from the recalled plan.
+
+## References
+
+- [`docs/case_studies/cross-thread-vault-recall-cuckoo-filters.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/case_studies/cross-thread-vault-recall-cuckoo-filters.md) — **canonical case study**
+- [`docs/mcp-tools.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp-tools.md) — tools reference
+- [`docs/memory-obsidian.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/memory-obsidian.md) — vault + hybrid DB
+- [`docs/cursor-vault-memory.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/cursor-vault-memory.md) — Cursor workflow

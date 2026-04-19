@@ -6,6 +6,7 @@ import { type Section } from '@/components/SectionProvider'
 import { getSiteOrigin } from '@/lib/site-url'
 
 import { caseStudyCloudflareDocsSections } from '@/lib/case-study-cloudflare-docs-sections'
+import { caseStudyCrossThreadVaultRecallSections } from '@/lib/case-study-cross-thread-vault-recall-sections'
 import { caseStudyVaultMemorySessionSections } from '@/lib/case-study-vault-memory-session-sections'
 import { homePageSections } from '@/lib/home-page-sections'
 
@@ -17,6 +18,8 @@ const allSections: Record<string, Array<Section>> = {
   '/case-studies/cloudflare-docs-mcp': caseStudyCloudflareDocsSections,
   '/case-studies/vault-memory-github-session-2026-04':
     caseStudyVaultMemorySessionSections,
+  '/case-studies/cross-thread-vault-recall':
+    caseStudyCrossThreadVaultRecallSections,
 }
 
 export const metadata: Metadata = {

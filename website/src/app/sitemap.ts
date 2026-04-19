@@ -21,6 +21,7 @@ const PATHS = [
   '/benchmarks',
   '/case-studies/cloudflare-docs-mcp',
   '/case-studies/vault-memory-github-session-2026-04',
+  '/case-studies/cross-thread-vault-recall',
 ] as const
 
 export default function sitemap(): MetadataRoute.Sitemap {
