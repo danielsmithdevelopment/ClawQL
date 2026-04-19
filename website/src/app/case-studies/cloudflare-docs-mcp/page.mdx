@@ -9,7 +9,9 @@ export const metadata = {
 export const sections = caseStudyCloudflareDocsSections
 
 <Note>
-  **Canonical write-up (full detail):** [`docs/case_studies/cloudflare-docs-site-mcp-workflow.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/case_studies/cloudflare-docs-site-mcp-workflow.md) — this page is the readable summary on **docs.clawql.com**.
+  **Canonical write-up (full detail):**
+  [`docs/case_studies/cloudflare-docs-site-mcp-workflow.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/case_studies/cloudflare-docs-site-mcp-workflow.md)
+  — this page is the readable summary on **docs.clawql.com**.
 </Note>
 
 # Case study: `docs.clawql.com` with ClawQL MCP
@@ -27,12 +29,12 @@ This is an **end-to-end** account of shipping the documentation site to **Cloudf
 
 ## Environment and stack
 
-| Piece | Role |
-| ----- | ---- |
-| **ClawQL MCP** | Bundled **Cloudflare** provider for **`search`** / **`execute`** against Cloudflare’s REST surface. |
-| **`CLAWQL_CLOUDFLARE_API_TOKEN`** | Bearer for **`execute`**; must be on the **MCP process** (stdio or HTTP), not only in a laptop `.env` used by the IDE. |
+| Piece                                 | Role                                                                                                                                                     |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **ClawQL MCP**                        | Bundled **Cloudflare** provider for **`search`** / **`execute`** against Cloudflare’s REST surface.                                                      |
+| **`CLAWQL_CLOUDFLARE_API_TOKEN`**     | Bearer for **`execute`**; must be on the **MCP process** (stdio or HTTP), not only in a laptop `.env` used by the IDE.                                   |
 | **`memory_recall` / `memory_ingest`** | Require **`CLAWQL_OBSIDIAN_VAULT_PATH`** (see [memory-obsidian.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/memory-obsidian.md)). |
-| **Website** | Next.js + **OpenNext** for Cloudflare, **Wrangler** Worker **`clawql-docs`**, route **`docs.clawql.com`**. |
+| **Website**                           | Next.js + **OpenNext** for Cloudflare, **Wrangler** Worker **`clawql-docs`**, route **`docs.clawql.com`**.                                               |
 
 ## How the four tools worked together
 
@@ -64,13 +66,13 @@ Used **after meaningful outcomes**: decisions, debugging conclusions (Worker **1
 
 ## Failures and symptoms
 
-| Symptom | Likely cause | What helped |
-| ------- | ------------ | ----------- |
-| Missing / invalid Cloudflare auth | No **`Authorization`** on MCP | Set **`CLAWQL_CLOUDFLARE_API_TOKEN`** on the **server** running MCP. |
-| **403** / blocked | Token **IP allowlist** | Add egress IP (or widen policy) for the MCP environment. |
-| API errors despite Wrangler | Token **scope** too narrow | Align **Account** / **Workers** / **DNS** scopes with **REST** vs **Wrangler** needs. |
-| **500** / **1101** Worker | Worker exception | **`wrangler tail`** — e.g. **`fs.readdir is not implemented`** on Workers. |
-| Prerender crash on `/concepts` | **`React.Children.only`** in **`CodePanel`** | MDX + Shiki can yield multiple nodes under **`code`**. |
+| Symptom                           | Likely cause                                 | What helped                                                                           |
+| --------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Missing / invalid Cloudflare auth | No **`Authorization`** on MCP                | Set **`CLAWQL_CLOUDFLARE_API_TOKEN`** on the **server** running MCP.                  |
+| **403** / blocked                 | Token **IP allowlist**                       | Add egress IP (or widen policy) for the MCP environment.                              |
+| API errors despite Wrangler       | Token **scope** too narrow                   | Align **Account** / **Workers** / **DNS** scopes with **REST** vs **Wrangler** needs. |
+| **500** / **1101** Worker         | Worker exception                             | **`wrangler tail`** — e.g. **`fs.readdir is not implemented`** on Workers.            |
+| Prerender crash on `/concepts`    | **`React.Children.only`** in **`CodePanel`** | MDX + Shiki can yield multiple nodes under **`code`**.                                |
 
 ## Fixes and verification
 

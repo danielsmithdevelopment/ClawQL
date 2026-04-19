@@ -96,7 +96,7 @@ Application-level TLS and optional client certificate verification on the gRPC l
 
 ## Docker Desktop: MCP auth (local cluster)
 
-For **`make local-k8s-up`** on Docker Desktop, inject **GitHub**, **Cloudflare**, and **Google** tokens into the MCP deployment with **`scripts/k8s-docker-desktop-set-mcp-auth.sh`** (optional repo **`.env`**). Secret name on the cluster remains **`clawql-github-auth`** for compatibility. See **[`docker/README.md`](../docker/README.md)** (*MCP auth*) and the site page **[`/kubernetes`](../website/src/app/kubernetes/page.mdx)**.
+For **`make local-k8s-up`** on Docker Desktop, inject **GitHub**, **Cloudflare**, and **Google** tokens into the MCP deployment with **`scripts/k8s-docker-desktop-set-mcp-auth.sh`** (optional repo **`.env`**). Secret name on the cluster remains **`clawql-github-auth`** for compatibility. See **[`docker/README.md`](../docker/README.md)** (_MCP auth_) and the site page **[`/kubernetes`](../website/src/app/kubernetes/page.mdx)**.
 
 ## Notes
 

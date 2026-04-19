@@ -60,13 +60,13 @@ Cursor uses the skill’s YAML **`description`** to decide when to attach it; yo
 
 ## Related documentation
 
-| Doc                                                                          | Topic                                           |
-| ---------------------------------------------------------------------------- | ----------------------------------------------- |
-| **[memory-obsidian.md](memory-obsidian.md)**                                 | Why a vault, `Memory/`, wikilinks, index pages. |
-| **[mcp-tools.md](mcp-tools.md)**                                             | All MCP tools, JSON-shaped examples.            |
-| **[cache-tool.md](cache-tool.md)**                                           | **`cache`** vs vault memory, LRU, env.          |
+| Doc                                                                          | Topic                                              |
+| ---------------------------------------------------------------------------- | -------------------------------------------------- |
+| **[memory-obsidian.md](memory-obsidian.md)**                                 | Why a vault, `Memory/`, wikilinks, index pages.    |
+| **[mcp-tools.md](mcp-tools.md)**                                             | All MCP tools, JSON-shaped examples.               |
+| **[cache-tool.md](cache-tool.md)**                                           | **`cache`** vs vault memory, LRU, env.             |
 | **[enterprise-mcp-tools.md](enterprise-mcp-tools.md)**                       | Optional **`audit`** vs vault; enterprise roadmap. |
-| **[memory-db-hybrid-implementation.md](memory-db-hybrid-implementation.md)** | `memory.db`, recall implementation.             |
+| **[memory-db-hybrid-implementation.md](memory-db-hybrid-implementation.md)** | `memory.db`, recall implementation.                |
 
 ---
 

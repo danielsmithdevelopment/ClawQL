@@ -6,7 +6,10 @@ export const caseStudyVaultMemorySessionSections: Array<Section> = [
   { title: 'Vault memory ingests', id: 'vault-memory-ingests' },
   { title: 'Issues and housekeeping', id: 'issues-and-housekeeping' },
   { title: 'Prioritization snapshot', id: 'prioritization-snapshot' },
-  { title: 'Work completed: enterprise audit (#89)', id: 'work-completed-enterprise-audit-89' },
+  {
+    title: 'Work completed: enterprise audit (#89)',
+    id: 'work-completed-enterprise-audit-89',
+  },
   { title: 'Outcomes and follow-ups', id: 'outcomes-and-follow-ups' },
   { title: 'References', id: 'references' },
 ]

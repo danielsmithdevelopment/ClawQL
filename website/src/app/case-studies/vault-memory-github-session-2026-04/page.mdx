@@ -9,7 +9,9 @@ export const metadata = {
 export const sections = caseStudyVaultMemorySessionSections
 
 <Note>
-  **Canonical write-up (full detail):** [`docs/case_studies/vault-memory-github-session-2026-04.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/case_studies/vault-memory-github-session-2026-04.md) — this page is the readable summary on **docs.clawql.com**.
+  **Canonical write-up (full detail):**
+  [`docs/case_studies/vault-memory-github-session-2026-04.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/case_studies/vault-memory-github-session-2026-04.md)
+  — this page is the readable summary on **docs.clawql.com**.
 </Note>
 
 # Case study: vault memory, GitHub, and shipping `audit`
@@ -26,23 +28,23 @@ This page summarizes a **multi-turn Cursor session**: **`memory_ingest`** / **`m
 
 Representative vault pages (stable titles, **`append: true`** where notes already existed):
 
-| Theme | Examples |
-| ----- | -------- |
+| Theme                       | Examples                                                                                                                   |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
 | **Repo / release analysis** | Grok cross-check vs **v3.2.3**, suggested issue titles, follow-on design (schedule, sandbox, synthetics, cache vs memory). |
-| **Product vision** | ClawQL-Agent roadmap, enterprise (DORA/DACI), **x402** / public gateway, payment discovery, **clawql.com** gateway notes. |
-| **Ecosystem** | gRPC transport + Gallery / LinkedIn narrative; third-party model tweets (flagged for verification). |
-| **Workflow** | **`cache` vs `memory_ingest`** — when to use which. |
-| **Execution** | Open-issues snapshot, **#39** → **#69** dedupe, **#88–#91** created. |
+| **Product vision**          | ClawQL-Agent roadmap, enterprise (DORA/DACI), **x402** / public gateway, payment discovery, **clawql.com** gateway notes.  |
+| **Ecosystem**               | gRPC transport + Gallery / LinkedIn narrative; third-party model tweets (flagged for verification).                        |
+| **Workflow**                | **`cache` vs `memory_ingest`** — when to use which.                                                                        |
+| **Execution**               | Open-issues snapshot, **#39** → **#69** dedupe, **#88–#91** created.                                                       |
 
 **Rule of thumb:** ingest **decisions, debugging conclusions, and contracts**; avoid secrets in vault text.
 
 ## Issues and housekeeping
 
-| Action | Detail |
-| ------ | ------ |
-| **Closed duplicate** | [#39](https://github.com/danielsmithdevelopment/ClawQL/issues/39) in favor of [#69](https://github.com/danielsmithdevelopment/ClawQL/issues/69) (`iac_inspect`). |
-| **New issues** | [#88](https://github.com/danielsmithdevelopment/ClawQL/issues/88) gateway / x402 / discovery; [#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89) enterprise epic; [#90](https://github.com/danielsmithdevelopment/ClawQL/issues/90) synthetics + schedule; [#91](https://github.com/danielsmithdevelopment/ClawQL/issues/91) Gallery gRPC (upstream issues disabled). |
-| **Starter artifact** | `website/public/.well-known/payments.json` + `/.well-known/*` headers — supports **#88** / docs deploy **#87**. |
+| Action               | Detail                                                                                                                                                                                                                                                                                                                                                                               |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Closed duplicate** | [#39](https://github.com/danielsmithdevelopment/ClawQL/issues/39) in favor of [#69](https://github.com/danielsmithdevelopment/ClawQL/issues/69) (`iac_inspect`).                                                                                                                                                                                                                     |
+| **New issues**       | [#88](https://github.com/danielsmithdevelopment/ClawQL/issues/88) gateway / x402 / discovery; [#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89) enterprise epic; [#90](https://github.com/danielsmithdevelopment/ClawQL/issues/90) synthetics + schedule; [#91](https://github.com/danielsmithdevelopment/ClawQL/issues/91) Gallery gRPC (upstream issues disabled). |
+| **Starter artifact** | `website/public/.well-known/payments.json` + `/.well-known/*` headers — supports **#88** / docs deploy **#87**.                                                                                                                                                                                                                                                                      |
 
 ## Prioritization snapshot
 
@@ -59,12 +61,12 @@ Discussed ordering across **#76–#78**, **#68–#71**, **#87**, and the new **#
 
 ## Outcomes and follow-ups
 
-| Outcome | Notes |
-| ------- | ----- |
-| **Vault** | Searchable graph for roadmap, payments, gRPC — refresh stale cross-links when recalling. |
+| Outcome     | Notes                                                                                                      |
+| ----------- | ---------------------------------------------------------------------------------------------------------- |
+| **Vault**   | Searchable graph for roadmap, payments, gRPC — refresh stale cross-links when recalling.                   |
 | **Tracker** | **#89** remains an **epic** until additional enterprise tools land; **`audit`** satisfies the first slice. |
-| **Next** | **#76–#78**, **#88** hardening, **#91** Gallery PRs, **#90** synthetics. |
-| **Site** | Confirm **`/.well-known/payments.json`** on **docs.clawql.com** after deploys. |
+| **Next**    | **#76–#78**, **#88** hardening, **#91** Gallery PRs, **#90** synthetics.                                   |
+| **Site**    | Confirm **`/.well-known/payments.json`** on **docs.clawql.com** after deploys.                             |
 
 ## References
 

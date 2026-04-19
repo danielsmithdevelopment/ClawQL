@@ -11,7 +11,7 @@ ClawQL exposes **six** core+optional tools over MCP by default (stdio or Streama
 | `memory_recall`             | `CLAWQL_OBSIDIAN_VAULT_PATH`                               | Keyword search + `[[wikilink]]` hops; optionally merges edges from **`memory.db`**, optional **vector KNN** when **`CLAWQL_VECTOR_BACKEND`** is **`sqlite`** (BLOBs in **`memory.db`**) or **`postgres`** (**pgvector** + **`CLAWQL_VECTOR_DATABASE_URL`**) with **`CLAWQL_EMBEDDING_*`**; can resync the DB when **`CLAWQL_MEMORY_DB_SYNC_ON_RECALL=1`**; optional **`merkleSnapshot`** / **`cuckooVectorChunksDropped`** in JSON when **`CLAWQL_MERKLE_ENABLED`** / **`CLAWQL_CUCKOO_ENABLED`** ([#81](https://github.com/danielsmithdevelopment/ClawQL/issues/81)) |
 | `ingest_external_knowledge` | **`CLAWQL_EXTERNAL_INGEST=1`**, vault path, optional fetch | Bulk **Markdown** (`documents[]`) and optional **HTTPS** fetch (`source: url`, **`CLAWQL_EXTERNAL_INGEST_FETCH=1`**); runs vault lock + **`memory.db`** sync like **`memory_ingest`** ([#40](https://github.com/danielsmithdevelopment/ClawQL/issues/40)); no payload → roadmap preview                                                                                                                                                                                                                                                                               |
 | `cache`                     | **`CLAWQL_ENABLE_CACHE=1`**                                | Ephemeral **in-process LRU** KV (set/get/delete/list/search); evicts LRU when full — **not** on disk; use **`memory_ingest`** / **`memory_recall`** for persisted vault memory ([#75](https://github.com/danielsmithdevelopment/ClawQL/issues/75))                                                                                                                                                                                                                                                                                                                    |
-| `audit`                     | **`CLAWQL_ENABLE_AUDIT=1`**                                | In-process **ring buffer** of structured events (append/list/clear) — **not** on disk; not compliance-grade alone; use **`memory_ingest`** for durable trails ([#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89))                                                                                                                                                                                                                                                                                                                                  |
+| `audit`                     | **`CLAWQL_ENABLE_AUDIT=1`**                                | In-process **ring buffer** of structured events (append/list/clear) — **not** on disk; not compliance-grade alone; use **`memory_ingest`** for durable trails ([#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89))                                                                                                                                                                                                                                                                                                                                     |
 
 See also: **[memory-obsidian.md](memory-obsidian.md)** (vault concepts), **[cursor-vault-memory.md](cursor-vault-memory.md)** (Cursor rule + skill for vault tools), **[cache-tool.md](cache-tool.md)** (**`cache`** vs **`memory_*`**, LRU), **[enterprise-mcp-tools.md](enterprise-mcp-tools.md)** (audit / metrics / governance roadmap), **[memory-db-schema.md](memory-db-schema.md)** (SQLite sidecar), **[external-ingest.md](external-ingest.md)** (bulk ingest stub), **[README](../README.md)** (install, env tables), **[deploy-k8s.md](deploy-k8s.md)** (Kubernetes Service ports **8080** + **50051** for HTTP MCP and gRPC), **[cloudflare/sandbox-bridge/README.md](../cloudflare/sandbox-bridge/README.md)** (Worker deploy).
 
@@ -47,11 +47,11 @@ See also: **[memory-obsidian.md](memory-obsidian.md)** (vault concepts), **[curs
 
 **Input:**
 
-| `operation` | Fields | Result |
-| ----------- | ------ | ------ |
-| `append` | `category`, `action`, `summary` (required), optional `correlationId` | `{ ok, total, dropped }` |
-| `list` | optional `limit` (default 20, max 100) | `{ ok, total, maxEntries, entries[] }` |
-| `clear` | — | `{ ok, cleared }` |
+| `operation` | Fields                                                               | Result                                 |
+| ----------- | -------------------------------------------------------------------- | -------------------------------------- |
+| `append`    | `category`, `action`, `summary` (required), optional `correlationId` | `{ ok, total, dropped }`               |
+| `list`      | optional `limit` (default 20, max 100)                               | `{ ok, total, maxEntries, entries[] }` |
+| `clear`     | —                                                                    | `{ ok, cleared }`                      |
 
 ---
 

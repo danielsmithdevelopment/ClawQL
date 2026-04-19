@@ -10,21 +10,21 @@ Design for optional, **env-gated** MCP surfaces that stay **off** the default sc
 
 ## Feature flags (planned / partial)
 
-| Env | MCP tool | Status |
-| --- | --- | --- |
-| **`CLAWQL_ENABLE_AUDIT=1`** | **`audit`** | **Shipped (v1):** in-process ring buffer — not durable (see below). |
-| **`CLAWQL_ENABLE_METRICS=1`** | **`metrics`** | Planned — DORA/DevEx-style reporting; Obsidian artifacts. |
-| **`CLAWQL_ENABLE_GOVERNANCE=1`** | **`governance`** | Planned — PII/RBAC/HITL policy hooks. |
+| Env                              | MCP tool         | Status                                                              |
+| -------------------------------- | ---------------- | ------------------------------------------------------------------- |
+| **`CLAWQL_ENABLE_AUDIT=1`**      | **`audit`**      | **Shipped (v1):** in-process ring buffer — not durable (see below). |
+| **`CLAWQL_ENABLE_METRICS=1`**    | **`metrics`**    | Planned — DORA/DevEx-style reporting; Obsidian artifacts.           |
+| **`CLAWQL_ENABLE_GOVERNANCE=1`** | **`governance`** | Planned — PII/RBAC/HITL policy hooks.                               |
 
 Parsing for `CLAWQL_ENABLE_AUDIT` matches other `CLAWQL_ENABLE_*` booleans (`1` / `true` / `yes`).
 
 ## Threat model (summary)
 
-| Risk | Mitigation |
-| --- | --- |
+| Risk                                               | Mitigation                                                                                                                                                                                                                    |
+| -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Treat in-process audit as non-compliance-grade** | v1 **`audit`** is a **ring buffer in RAM** only — lost on restart, not replicated. For **immutable** or **regulated** trails, use **`memory_ingest`** (vault), export to SIEM, or a future disk-append / Merkle-backed store. |
-| **Prompt injection / exfil via summaries** | Length caps on strings; operators should not paste secrets into **`summary`**. Prefer correlation IDs and redacted descriptions. |
-| **Multi-tenant isolation** | Single-process buffer is **not** tenant-isolated; multi-tenant deployments should gate **`audit`** to trusted agents or add namespacing in a later revision. |
+| **Prompt injection / exfil via summaries**         | Length caps on strings; operators should not paste secrets into **`summary`**. Prefer correlation IDs and redacted descriptions.                                                                                              |
+| **Multi-tenant isolation**                         | Single-process buffer is **not** tenant-isolated; multi-tenant deployments should gate **`audit`** to trusted agents or add namespacing in a later revision.                                                                  |
 
 ## `audit` tool (v1)
 

@@ -41,11 +41,7 @@ export const auditToolSchema = {
     .max(64)
     .optional()
     .describe("For append: short category (e.g. tool_call, payment, policy)."),
-  action: z
-    .string()
-    .max(128)
-    .optional()
-    .describe("For append: action name or verb."),
+  action: z.string().max(128).optional().describe("For append: action name or verb."),
   summary: z
     .string()
     .max(512)

@@ -13,12 +13,12 @@ This document is an **end-to-end narrative** of shipping the ClawQL documentatio
 
 ## Environment and stack
 
-| Piece | Role |
-| ----- | ---- |
-| **ClawQL MCP** | Bundled **Cloudflare** provider (`CLAWQL_PROVIDER=cloudflare` or merged presets) for **`search`** / **`execute`** against Cloudflare’s REST surface. |
-| **`CLAWQL_CLOUDFLARE_API_TOKEN`** | Bearer for `execute` (and for humans, **Wrangler** deploy). Must be present on the **MCP process** (stdio or HTTP), not only in a laptop `.env` used by the IDE. |
-| **`memory_recall` / `memory_ingest`** | Require **`CLAWQL_OBSIDIAN_VAULT_PATH`** (see [`docs/memory-obsidian.md`](../memory-obsidian.md)). |
-| **Website** | Next.js App Router + **OpenNext** for Cloudflare (`@opennextjs/cloudflare`), **Wrangler** Worker **`clawql-docs`**, route **`docs.clawql.com`**. |
+| Piece                                 | Role                                                                                                                                                             |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **ClawQL MCP**                        | Bundled **Cloudflare** provider (`CLAWQL_PROVIDER=cloudflare` or merged presets) for **`search`** / **`execute`** against Cloudflare’s REST surface.             |
+| **`CLAWQL_CLOUDFLARE_API_TOKEN`**     | Bearer for `execute` (and for humans, **Wrangler** deploy). Must be present on the **MCP process** (stdio or HTTP), not only in a laptop `.env` used by the IDE. |
+| **`memory_recall` / `memory_ingest`** | Require **`CLAWQL_OBSIDIAN_VAULT_PATH`** (see [`docs/memory-obsidian.md`](../memory-obsidian.md)).                                                               |
+| **Website**                           | Next.js App Router + **OpenNext** for Cloudflare (`@opennextjs/cloudflare`), **Wrangler** Worker **`clawql-docs`**, route **`docs.clawql.com`**.                 |
 
 ## How the four tools worked together
 
@@ -70,13 +70,13 @@ Used **after meaningful outcomes**:
 
 ## Failures and symptoms
 
-| Symptom | Likely cause | What helped |
-| ------- | ------------ | ----------- |
-| **Missing / invalid auth** on Cloudflare calls | **No `Authorization`** on the MCP process | Set **`CLAWQL_CLOUDFLARE_API_TOKEN`** on the **server** running MCP, not only local `.env` for Cursor UI. |
-| **HTTP 403 / blocked** from Cloudflare API | Token **IP allowlist** | Add egress IP (or widen policy) for the environment where MCP runs. |
-| **API errors** despite Wrangler working | Token **scope** too narrow for **custom domains** / Workers | **Account** / **Workers** / **DNS**-style permissions; align token with **Wrangler** vs **REST** needs. |
-| Browser **500** / Cloudflare **1101** (“Worker threw exception”) | Worker runtime exception | **`wrangler tail <worker>`** — e.g. **`[unenv] fs.readdir is not implemented yet!`** when app code called **filesystem** APIs on Workers. |
-| **Prerender** crash on `/concepts` | **`React.Children.only`** in **`CodePanel`** | MDX + Shiki can yield multiple nodes under **`code`**; **`Children.only`** throws. |
+| Symptom                                                          | Likely cause                                                | What helped                                                                                                                               |
+| ---------------------------------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| **Missing / invalid auth** on Cloudflare calls                   | **No `Authorization`** on the MCP process                   | Set **`CLAWQL_CLOUDFLARE_API_TOKEN`** on the **server** running MCP, not only local `.env` for Cursor UI.                                 |
+| **HTTP 403 / blocked** from Cloudflare API                       | Token **IP allowlist**                                      | Add egress IP (or widen policy) for the environment where MCP runs.                                                                       |
+| **API errors** despite Wrangler working                          | Token **scope** too narrow for **custom domains** / Workers | **Account** / **Workers** / **DNS**-style permissions; align token with **Wrangler** vs **REST** needs.                                   |
+| Browser **500** / Cloudflare **1101** (“Worker threw exception”) | Worker runtime exception                                    | **`wrangler tail <worker>`** — e.g. **`[unenv] fs.readdir is not implemented yet!`** when app code called **filesystem** APIs on Workers. |
+| **Prerender** crash on `/concepts`                               | **`React.Children.only`** in **`CodePanel`**                | MDX + Shiki can yield multiple nodes under **`code`**; **`Children.only`** throws.                                                        |
 
 ## Fixes and verification
 

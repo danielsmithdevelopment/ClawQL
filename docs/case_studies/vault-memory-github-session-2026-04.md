@@ -17,14 +17,14 @@ This case study summarizes a **multi-turn working session** in Cursor: ingesting
 
 Structured **`insights`** plus verbatim or summarized **`conversation`** blocks were stored under stable titles (append-friendly) so Obsidian **`[[wikilinks]]`** and **`memory_recall`** stay useful:
 
-| Theme | Vault note title (representative) |
-| ----- | ----------------------------------- |
+| Theme                            | Vault note title (representative)                                                                                                                                              |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Grok repo analysis vs **v3.2.3** | `ClawQL MCP v3.2.3 Grok repo analysis (Apr 17 2026)` — cross-check vs open issues, suggested issue titles, follow-on design (schedule + sandbox, synthetics, cache vs memory). |
-| **ClawQL-Agent** vision | `ClawQL-Agent platform vision and roadmap (2026-04-17)` — plus Grok validations, enterprise (DORA/DACI), x402/Ramp payments, **clawql.com** gateway, payment discovery. |
-| **gRPC** + Gallery / LinkedIn | `ClawQL gRPC MCP transport and Gemma Gallery skill (announcement 2026-04)`; LinkedIn ecosystem post note. |
-| **SuperQwen** benchmark tweet | `SuperQwen3.6-35B Song Jun tweet — ClawQL-Agent model note (2026-04)` — third-party claims flagged for verification. |
-| **Workflow tips** | `ClawQL MCP cache vs memory_ingest — when to use which`. |
-| **GitHub prioritization** | `ClawQL open-issues prioritization (2026-04-17)` — open/closed snapshot, **#39** merged into **#69**, new issues **#88–#91**. |
+| **ClawQL-Agent** vision          | `ClawQL-Agent platform vision and roadmap (2026-04-17)` — plus Grok validations, enterprise (DORA/DACI), x402/Ramp payments, **clawql.com** gateway, payment discovery.        |
+| **gRPC** + Gallery / LinkedIn    | `ClawQL gRPC MCP transport and Gemma Gallery skill (announcement 2026-04)`; LinkedIn ecosystem post note.                                                                      |
+| **SuperQwen** benchmark tweet    | `SuperQwen3.6-35B Song Jun tweet — ClawQL-Agent model note (2026-04)` — third-party claims flagged for verification.                                                           |
+| **Workflow tips**                | `ClawQL MCP cache vs memory_ingest — when to use which`.                                                                                                                       |
+| **GitHub prioritization**        | `ClawQL open-issues prioritization (2026-04-17)` — open/closed snapshot, **#39** merged into **#69**, new issues **#88–#91**.                                                  |
 
 **Practice:** Prefer **`memory_ingest`** for durable decisions; use **`cache()`** only for session scratch the user asked not to persist forever.
 
@@ -32,11 +32,11 @@ Structured **`insights`** plus verbatim or summarized **`conversation`** blocks 
 
 ## 3. GitHub: issues created and housekeeping
 
-| Action | Detail |
-| ------ | ------ |
-| **Closed duplicate** | [#39](https://github.com/danielsmithdevelopment/ClawQL/issues/39) → canonical [#69](https://github.com/danielsmithdevelopment/ClawQL/issues/69) (`iac_inspect`). |
-| **New issues** | [#88](https://github.com/danielsmithdevelopment/ClawQL/issues/88) public gateway / x402 / discovery; [#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89) enterprise tools epic; [#90](https://github.com/danielsmithdevelopment/ClawQL/issues/90) synthetic checks + schedule; [#91](https://github.com/danielsmithdevelopment/ClawQL/issues/91) Gallery fork gRPC (upstream issues disabled). |
-| **Starter artifact** | `website/public/.well-known/payments.json` placeholder + `/.well-known/*` cache headers — ties to **#88** / **#87** (docs deploy). |
+| Action               | Detail                                                                                                                                                                                                                                                                                                                                                                                                       |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Closed duplicate** | [#39](https://github.com/danielsmithdevelopment/ClawQL/issues/39) → canonical [#69](https://github.com/danielsmithdevelopment/ClawQL/issues/69) (`iac_inspect`).                                                                                                                                                                                                                                             |
+| **New issues**       | [#88](https://github.com/danielsmithdevelopment/ClawQL/issues/88) public gateway / x402 / discovery; [#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89) enterprise tools epic; [#90](https://github.com/danielsmithdevelopment/ClawQL/issues/90) synthetic checks + schedule; [#91](https://github.com/danielsmithdevelopment/ClawQL/issues/91) Gallery fork gRPC (upstream issues disabled). |
+| **Starter artifact** | `website/public/.well-known/payments.json` placeholder + `/.well-known/*` cache headers — ties to **#88** / **#87** (docs deploy).                                                                                                                                                                                                                                                                           |
 
 **Gallery:** Issues are disabled on the fork; **#91** in this repo tracks downstream PRs.
 
@@ -65,12 +65,12 @@ Structured **`insights`** plus verbatim or summarized **`conversation`** blocks 
 
 ## 6. Outcomes and follow-ups
 
-| Outcome | Notes |
-| ------- | ----- |
-| **Vault** | Searchable narrative for roadmap, payments, gRPC, and GitHub state — refresh stale notes (e.g. **#67** closed) when re-calling. |
-| **Tracker** | **#89** remains an **epic** until `metrics` / `governance` ship; **`audit`** v1 satisfies “one vertical slice.” |
-| **Next builds** | **#76–#78**, **#88** payment gateway hardening, **Gallery** gRPC via **#91**. |
-| **Deploy** | Validate `/.well-known/payments.json` on **docs.clawql.com** after **#87**. |
+| Outcome         | Notes                                                                                                                           |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| **Vault**       | Searchable narrative for roadmap, payments, gRPC, and GitHub state — refresh stale notes (e.g. **#67** closed) when re-calling. |
+| **Tracker**     | **#89** remains an **epic** until `metrics` / `governance` ship; **`audit`** v1 satisfies “one vertical slice.”                 |
+| **Next builds** | **#76–#78**, **#88** payment gateway hardening, **Gallery** gRPC via **#91**.                                                   |
+| **Deploy**      | Validate `/.well-known/payments.json` on **docs.clawql.com** after **#87**.                                                     |
 
 ---
 

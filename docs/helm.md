@@ -71,19 +71,19 @@ helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
 
 See **[`charts/clawql-mcp/values.yaml`](../charts/clawql-mcp/values.yaml)**. Common keys:
 
-| Key                                                 | Purpose                                                                                          |
-| --------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `image.repository`, `image.tag`, `image.pullPolicy` | Container image                                                                                  |
-| `service.type`, `service.http.port`                 | `LoadBalancer` vs `ClusterIP`, front port                                                        |
-| `provider`                                          | **`CLAWQL_PROVIDER`** (e.g. `google-top50`)                                                      |
-| `enableGrpc` / `enableGrpcReflection`               | gRPC listener on **50051**                                                                       |
-| `enableCache`                                       | **`CLAWQL_ENABLE_CACHE=1`** — in-process **`cache`** tool (default **true**)                     |
+| Key                                                 | Purpose                                                                                                                                          |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `image.repository`, `image.tag`, `image.pullPolicy` | Container image                                                                                                                                  |
+| `service.type`, `service.http.port`                 | `LoadBalancer` vs `ClusterIP`, front port                                                                                                        |
+| `provider`                                          | **`CLAWQL_PROVIDER`** (e.g. `google-top50`)                                                                                                      |
+| `enableGrpc` / `enableGrpcReflection`               | gRPC listener on **50051**                                                                                                                       |
+| `enableCache`                                       | **`CLAWQL_ENABLE_CACHE=1`** — in-process **`cache`** tool (default **true**)                                                                     |
 | `enableAudit`                                       | **`CLAWQL_ENABLE_AUDIT=1`** — in-process **`audit`** tool (default **false**; [#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)) |
-| `extraEnv`                                          | Additional container env entries                                                                 |
-| `envFromSecret`                                     | **`envFrom`** from an existing Secret                                                            |
-| `persistence`                                       | PVC for **`/vault`** instead of **`emptyDir`**                                                   |
-| `vault.hostPath`                                    | Host directory bind for **`/vault`** (Docker Desktop; mutually exclusive with **`persistence`**) |
-| `ingress`                                           | Optional HTTP(S) Ingress                                                                         |
+| `extraEnv`                                          | Additional container env entries                                                                                                                 |
+| `envFromSecret`                                     | **`envFrom`** from an existing Secret                                                                                                            |
+| `persistence`                                       | PVC for **`/vault`** instead of **`emptyDir`**                                                                                                   |
+| `vault.hostPath`                                    | Host directory bind for **`/vault`** (Docker Desktop; mutually exclusive with **`persistence`**)                                                 |
+| `ingress`                                           | Optional HTTP(S) Ingress                                                                                                                         |
 
 **Docker Desktop:** **`make local-k8s-up`** defaults to **`helm upgrade --install`** with **`values-docker-desktop.yaml`** (LoadBalancer **8080**, **`default-multi-provider`**, **`vault.hostPath.path`** = **`$HOME/.ClawQL`**, override **`CLAWQL_LOCAL_VAULT_HOST_PATH`**). For **Kustomize** instead: **`CLAWQL_LOCAL_K8S_INSTALLER=kustomize`** (same script; **`docker/kustomize/overlays/local`**).
 

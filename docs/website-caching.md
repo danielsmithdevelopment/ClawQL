@@ -7,12 +7,12 @@ The docs site is a **Next.js** app on **Cloudflare Workers** (OpenNext). Caching
 
 ## Defaults (repo)
 
-| Pattern | Behavior |
-| ------- | ---------- |
-| **`/:path*`** (default) | `public, max-age=0, s-maxage=3600, stale-while-revalidate=86400` — edge may cache ~1h; serve stale up to 24h while revalidating. |
-| **`/_next/image`** | Long-lived cache (optimized images are content-addressed by URL). |
-| **`/_next/static/:path*`** | `immutable` + 1 year — matches hashed webpack chunks. |
-| **`/ClawQL-logo.jpeg`** (via `_headers`) | Shorter browser/edge TTL so a replaced file is picked up without renaming. |
+| Pattern                                  | Behavior                                                                                                                         |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| **`/:path*`** (default)                  | `public, max-age=0, s-maxage=3600, stale-while-revalidate=86400` — edge may cache ~1h; serve stale up to 24h while revalidating. |
+| **`/_next/image`**                       | Long-lived cache (optimized images are content-addressed by URL).                                                                |
+| **`/_next/static/:path*`**               | `immutable` + 1 year — matches hashed webpack chunks.                                                                            |
+| **`/ClawQL-logo.jpeg`** (via `_headers`) | Shorter browser/edge TTL so a replaced file is picked up without renaming.                                                       |
 
 Tune **`s-maxage`** / **`stale-while-revalidate`** in **`next.config.mjs`** if you need fresher HTML after every deploy (lower edge TTL) or more offload under load (higher TTL).
 

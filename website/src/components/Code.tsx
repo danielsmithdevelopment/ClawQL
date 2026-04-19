@@ -149,8 +149,7 @@ function CodePanel({
       ? childNodes[0]
       : childNodes.find(
           (c): c is React.ReactElement =>
-            isValidElement(c) &&
-            (c.type === 'code' || c.type === Code),
+            isValidElement(c) && (c.type === 'code' || c.type === Code),
         )
 
   if (child && isValidElement(child)) {

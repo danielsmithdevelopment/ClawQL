@@ -79,7 +79,7 @@ bash scripts/k8s-docker-desktop-set-mcp-auth.sh
 
 Pipe a PAT: `gh auth token | bash scripts/k8s-docker-desktop-set-mcp-auth.sh`. Set **`CLAWQL_LOAD_DOTENV=0`** to skip sourcing **`.env`**.
 
-This creates/updates Secret **`clawql-github-auth`** (name kept for backward compatibility), attaches keys to **`deployment/clawql-mcp-http`**, and restarts. Full table and manual **`kubectl`** steps: **[`docker/README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docker/README.md)** (section *MCP auth*). The old script name **`k8s-docker-desktop-set-github-token.sh`** is a deprecated alias.
+This creates/updates Secret **`clawql-github-auth`** (name kept for backward compatibility), attaches keys to **`deployment/clawql-mcp-http`**, and restarts. Full table and manual **`kubectl`** steps: **[`docker/README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docker/README.md)** (section _MCP auth_). The old script name **`k8s-docker-desktop-set-github-token.sh`** is a deprecated alias.
 
 **`helm upgrade --install`** reapplies chart values; env injected only with **`kubectl set env`** can be overwritten on the next upgrade. Prefer **`helm --set extraEnv`** or a **Secret** wired through **`values.yaml`** for durable config.
 
