@@ -48,7 +48,14 @@ const nextConfig = {
         headers: [
           {
             key: 'Link',
-            value: `<${docsSiteOrigin}/sitemap.xml>; rel="sitemap"`,
+            value: [
+              `<${docsSiteOrigin}/sitemap.xml>; rel="sitemap"`,
+              `</.well-known/api-catalog>; rel="api-catalog"`,
+              `</tools>; rel="service-doc"`,
+              `</spec-configuration>; rel="service-doc"`,
+              `<https://raw.githubusercontent.com/danielsmithdevelopment/ClawQL/main/providers/github/openapi.yaml>; rel="service-desc"`,
+              `<https://raw.githubusercontent.com/danielsmithdevelopment/ClawQL/main/docs/mcp-tools.md>; rel="describedby"`,
+            ].join(', '),
           },
         ],
       },
