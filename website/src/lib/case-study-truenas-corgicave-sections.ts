@@ -2,8 +2,14 @@ import type { Section } from '@/components/SectionProvider'
 
 /** In-page nav for `/case-studies/truenas-scale-corgicave-homelab` (h2 ids match @sindresorhus/slugify). */
 export const caseStudyTruenasCorgicaveSections: Array<Section> = [
-  { title: '1. Why this case study exists', id: '1-why-this-case-study-exists' },
-  { title: '2. System under test (inventory)', id: '2-system-under-test-inventory' },
+  {
+    title: '1. Why this case study exists',
+    id: '1-why-this-case-study-exists',
+  },
+  {
+    title: '2. System under test (inventory)',
+    id: '2-system-under-test-inventory',
+  },
   {
     title: '3. Initial symptoms and user actions (TrueNAS side)',
     id: '3-initial-symptoms-and-user-actions-true-nas-side',
@@ -36,12 +42,18 @@ export const caseStudyTruenasCorgicaveSections: Array<Section> = [
     title: '10. Phase G — SSH enablement (UI path) and first-login friction',
     id: '10-phase-g-ssh-enablement-ui-path-and-first-login-friction',
   },
-  { title: '11. Preventive runbook (condensed)', id: '11-preventive-runbook-condensed' },
+  {
+    title: '11. Preventive runbook (condensed)',
+    id: '11-preventive-runbook-condensed',
+  },
   {
     title: '12. memory_recall on this topic (what comes back)',
     id: '12-memory-recall-on-this-topic-what-comes-back',
   },
-  { title: '13. memory_ingest of this case study', id: '13-memory-ingest-of-this-case-study' },
+  {
+    title: '13. memory_ingest of this case study',
+    id: '13-memory-ingest-of-this-case-study',
+  },
   { title: '14. References (in-repo)', id: '14-references-in-repo' },
   {
     title: '15. Detailed chronological timeline (cross-thread)',
