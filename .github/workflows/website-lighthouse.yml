@@ -78,7 +78,9 @@ jobs:
             fi
           done
 
-          npx --yes lighthouse@12.8.2 "http://127.0.0.1:${PORT}/" \
+          # 12.8.x treats `Content-Signal:` in robots.txt as invalid (SEO ~0.85).
+          # Newer releases recognize the directive (see googlechrome/lighthouse#16767).
+          npx --yes lighthouse@13.1.0 "http://127.0.0.1:${PORT}/" \
             --preset=desktop \
             --only-categories=performance,accessibility,best-practices,seo \
             --chrome-flags="--headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage" \
