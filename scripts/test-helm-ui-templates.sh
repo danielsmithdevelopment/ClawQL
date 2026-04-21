@@ -14,19 +14,35 @@ helm template test charts/clawql-mcp --namespace clawql \
 
 helm template test charts/clawql-mcp --namespace clawql >"${TMP_DISABLED}"
 
-# UI enabled: assert Deployment + Service + Ingress render as expected.
-rg --quiet "^kind: Deployment$" "${TMP_ENABLED}"
-rg --quiet "^  name: clawql-mcp-http-ui$" "${TMP_ENABLED}"
-rg --quiet "^kind: Service$" "${TMP_ENABLED}"
-rg --quiet "^kind: Ingress$" "${TMP_ENABLED}"
-rg --quiet "^  ingressClassName: nginx$" "${TMP_ENABLED}"
-rg --quiet "host: \"clawql.localhost\"" "${TMP_ENABLED}"
-rg --quiet "service:\\n\\s+name: clawql-mcp-http-ui" "${TMP_ENABLED}" --multiline
+python3 - "${TMP_ENABLED}" "${TMP_DISABLED}" <<'PY'
+import re
+import sys
 
-# UI disabled by default: no UI resources should be rendered.
-if rg --quiet "clawql-mcp-http-ui" "${TMP_DISABLED}"; then
-  echo "ERROR: UI resources rendered unexpectedly when ui.enabled=false"
-  exit 1
-fi
+enabled_path, disabled_path = sys.argv[1], sys.argv[2]
+enabled = open(enabled_path, "r", encoding="utf-8").read()
+disabled = open(disabled_path, "r", encoding="utf-8").read()
+
+checks = [
+    (r"(?m)^kind: Deployment$", "expected Deployment when ui.enabled=true"),
+    (r"(?m)^  name: clawql-mcp-http-ui$", "expected UI resource name"),
+    (r"(?m)^kind: Service$", "expected Service when ui.enabled=true"),
+    (r"(?m)^kind: Ingress$", "expected Ingress when ui.ingress.enabled=true"),
+    (r"(?m)^  ingressClassName: nginx$", "expected ingress class nginx"),
+    (r'host: "clawql\.localhost"', "expected clawql.localhost ingress host"),
+    (
+        r"service:\n\s+name: clawql-mcp-http-ui",
+        "expected ingress backend to route to UI service",
+    ),
+]
+
+for pattern, message in checks:
+    if re.search(pattern, enabled, flags=re.MULTILINE) is None:
+        print(f"ERROR: {message}")
+        sys.exit(1)
+
+if "clawql-mcp-http-ui" in disabled:
+    print("ERROR: UI resources rendered unexpectedly when ui.enabled=false")
+    sys.exit(1)
+PY
 
 echo "helm-ui-template-tests OK"
