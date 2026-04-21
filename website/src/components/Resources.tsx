@@ -153,6 +153,20 @@ const resources: Array<Resource> = [
       ],
     },
   },
+  {
+    href: '/case-studies/truenas-scale-corgicave-homelab',
+    name: 'Case study: TrueNAS corgicave homelab',
+    description:
+      'TrueNAS SCALE on a switch island: Mac errno 49, Docker/K8s utun, memory_ingest/recall, Thunderbolt vs SSH — full triage ladder and resolution.',
+    icon: BookIcon,
+    pattern: {
+      y: 0,
+      squares: [
+        [0, 1],
+        [1, 1],
+      ],
+    },
+  },
 ]
 
 function ResourceIcon({ icon: Icon }: { icon: Resource['icon'] }) {
