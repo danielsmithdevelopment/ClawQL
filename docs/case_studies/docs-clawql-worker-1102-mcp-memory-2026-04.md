@@ -42,14 +42,14 @@ After restarting ClawQL MCP in Cursor, the tool descriptor showed the server ide
 
 **`execute`** (representative calls):
 
-| `operationId` | Purpose | Outcome |
-|---------------|---------|---------|
-| **`account-api-tokens-verify-token`** | Validate **account-owned** token | **200** — token **active** (use **`account_id`** path). |
-| **`user-api-tokens-verify-token`** | Mis-lead “user” verify | **401 Invalid API Token** — **expected** for the same secret when it is an **account** token. |
-| **`zones-get`** (`name=clawql.com`, `account.id=…`) | Confirm apex zone | **200** — zone id matches the id Wrangler used in the failing route call. |
-| **`audit-logs-v2-get-account-audit-logs`** (`raw_cf_ray_id`, narrow `since`/`before`) | Correlate **Ray ID** | **200** with **empty `result`** — edge Worker failures often **do not** appear as account audit rows; **not** a substitute for **Workers Observability**. |
-| **`worker-script-settings-get-settings`** (`script_name=clawql-docs`) | Logging / observability flags | **200** — **`observability.enabled`**, **`logs.invocation_logs`**, etc. |
-| **`worker-script-search-workers`** | Confirm Worker exists | **200** — **`clawql-docs`** present. |
+| `operationId`                                                                         | Purpose                          | Outcome                                                                                                                                                   |
+| ------------------------------------------------------------------------------------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`account-api-tokens-verify-token`**                                                 | Validate **account-owned** token | **200** — token **active** (use **`account_id`** path).                                                                                                   |
+| **`user-api-tokens-verify-token`**                                                    | Mis-lead “user” verify           | **401 Invalid API Token** — **expected** for the same secret when it is an **account** token.                                                             |
+| **`zones-get`** (`name=clawql.com`, `account.id=…`)                                   | Confirm apex zone                | **200** — zone id matches the id Wrangler used in the failing route call.                                                                                 |
+| **`audit-logs-v2-get-account-audit-logs`** (`raw_cf_ray_id`, narrow `since`/`before`) | Correlate **Ray ID**             | **200** with **empty `result`** — edge Worker failures often **do not** appear as account audit rows; **not** a substitute for **Workers Observability**. |
+| **`worker-script-settings-get-settings`** (`script_name=clawql-docs`)                 | Logging / observability flags    | **200** — **`observability.enabled`**, **`logs.invocation_logs`**, etc.                                                                                   |
+| **`worker-script-search-workers`**                                                    | Confirm Worker exists            | **200** — **`clawql-docs`** present.                                                                                                                      |
 
 **Limitation (called out in session):** **`telemetry.query`** requires a saved **`queryId`** + **`timeframe`** from the **Workers Observability** product; OpenAPI does not ship canned IDs—**dashboard** remains authoritative for per-request traces until a saved query exists.
 

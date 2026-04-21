@@ -101,17 +101,17 @@ Production deploy path: **[`scripts/deploy-docs-to-cloudflare.sh`](../scripts/de
 
 Pick up in issues or small PRs; not all are automated today.
 
-| Idea | Why it helps |
-| ---- | ------------- |
-| **Scheduled Lighthouse on production** (`https://docs.clawql.com/`) | Catches **TLS / HTTP / CDN** regressions lab CI misses; keep **assertions looser** than PR job to avoid noise. |
-| **Synthetic checks** for `/`, `/api/health`, and **one case-study URL** | Early warning when **1102** or **5xx** spikes; see [`schedule-synthetic-checks.md`](schedule-synthetic-checks.md). |
-| **Workers Logpush** or long-retention Observability | Correlates **Ray ID**, route, and **CPU** when users report failures. |
-| **`@next/bundle-analyzer`** (ad hoc) | Finds **client JS bloat** (large RSC/hydration payloads). |
-| **`eslint-plugin-jsx-a11y`** in `website/` | Catches **a11y** issues Lighthouse does not (e.g. some interactive patterns). |
-| **Route-level `dynamic` / caching hints** | If Next exposes stable static paths for some MDX, **reduce** Worker invocations (validate with OpenNext). |
-| **Image pipeline** | Prefer **`next/image`** with explicit **sizes** for hero assets; keep markdown bodies on **`loading="lazy"`** (already default in `mdx.tsx`). |
-| **Paid Workers / higher CPU** | Product decision when **case studies** are business-critical on **Free** limits. |
-| **Content splits** | Long case studies → **multiple pages** or shorter “summary + deep link to GitHub” lowers **per-request** HTML and MDX compile cost. |
+| Idea                                                                    | Why it helps                                                                                                                                  |
+| ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Scheduled Lighthouse on production** (`https://docs.clawql.com/`)     | Catches **TLS / HTTP / CDN** regressions lab CI misses; keep **assertions looser** than PR job to avoid noise.                                |
+| **Synthetic checks** for `/`, `/api/health`, and **one case-study URL** | Early warning when **1102** or **5xx** spikes; see [`schedule-synthetic-checks.md`](schedule-synthetic-checks.md).                            |
+| **Workers Logpush** or long-retention Observability                     | Correlates **Ray ID**, route, and **CPU** when users report failures.                                                                         |
+| **`@next/bundle-analyzer`** (ad hoc)                                    | Finds **client JS bloat** (large RSC/hydration payloads).                                                                                     |
+| **`eslint-plugin-jsx-a11y`** in `website/`                              | Catches **a11y** issues Lighthouse does not (e.g. some interactive patterns).                                                                 |
+| **Route-level `dynamic` / caching hints**                               | If Next exposes stable static paths for some MDX, **reduce** Worker invocations (validate with OpenNext).                                     |
+| **Image pipeline**                                                      | Prefer **`next/image`** with explicit **sizes** for hero assets; keep markdown bodies on **`loading="lazy"`** (already default in `mdx.tsx`). |
+| **Paid Workers / higher CPU**                                           | Product decision when **case studies** are business-critical on **Free** limits.                                                              |
+| **Content splits**                                                      | Long case studies → **multiple pages** or shorter “summary + deep link to GitHub” lowers **per-request** HTML and MDX compile cost.           |
 
 ---
 
