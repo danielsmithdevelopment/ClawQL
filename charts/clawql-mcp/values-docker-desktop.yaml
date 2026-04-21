@@ -37,3 +37,18 @@ vault:
     # path: /Users/you/.ClawQL
     path: ""
     type: DirectoryOrCreate
+
+ui:
+  enabled: true
+  image:
+    repository: clawql-website
+    tag: latest
+    pullPolicy: IfNotPresent
+  ingress:
+    enabled: true
+    className: nginx
+    hosts:
+      - host: clawql.localhost
+        paths:
+          - path: /
+            pathType: Prefix
