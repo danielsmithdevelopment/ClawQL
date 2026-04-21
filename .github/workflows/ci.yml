@@ -190,7 +190,7 @@ jobs:
       - name: Run website container
         run: |
           docker run -d --name clawql-website-smoke -p 4173:3000 clawql-website:ci-smoke
-          for i in $(seq 1 30); do
+          for _ in $(seq 1 30); do
             if curl -fsS http://127.0.0.1:4173/api/health >/dev/null; then
               exit 0
             fi
