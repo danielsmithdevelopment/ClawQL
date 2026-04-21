@@ -1,0 +1,367 @@
+import { CaseStudyStructuredData } from '@/components/CaseStudyStructuredData'
+import { caseStudyTruenasCorgicaveSections } from '@/lib/case-study-truenas-corgicave-sections'
+import { docsPageMetadata } from '@/lib/seo'
+
+export const metadata = docsPageMetadata({
+  title:
+    'Case study: TrueNAS Scale corgicave — homelab networking, errno 49, vault memory, SSH',
+  description:
+    'Full narrative: office switch island, Mac mini dual-homing and utun/Docker, memory_ingest/recall, Thunderbolt vs SSH, resolution and SSH hardening — same detail as docs/case_studies in the repo.',
+  path: '/case-studies/truenas-scale-corgicave-homelab',
+  ogType: 'article',
+})
+
+export const sections = caseStudyTruenasCorgicaveSections
+
+<CaseStudyStructuredData
+  headline="Case study: TrueNAS Scale (corgicave) — homelab networking, Mac errno 49, vault memory, and SSH"
+  path="/case-studies/truenas-scale-corgicave-homelab"
+  description="Office island on Netgear MS510TXUP; Minisforum N5 Pro + TrueNAS SCALE 25.10; Apple Silicon Mac mini 10G + USB 2.5G; ClawQL memory_ingest/recall; Docker Desktop/K8s and EADDRNOTAVAIL; SSH enablement."
+/>
+
+<Note>
+  **Source:** This page and
+  [`docs/case_studies/truenas-scale-corgicave-homelab-networking-ssh-case-study-2026-04.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/case_studies/truenas-scale-corgicave-homelab-networking-ssh-case-study-2026-04.md)
+  are kept in **sync**; edit both when the narrative changes.
+</Note>
+
+# Case study: TrueNAS Scale (`corgicave`) — homelab networking, Mac client `errno 49`, vault memory, and SSH hardening (April 2026)
+
+This document is a **full reconstruction** of a multi-session troubleshooting arc: **TrueNAS Scale** Web UI and LAN access on a **Minisforum N5 Pro**-class NAS, an **isolated office switch** segment, **Apple Silicon Mac mini** (10G + monitor 2.5G), **Thunderbolt console** access, **ClawQL `memory_ingest` / `memory_recall`** usage, and final **SSH** enablement to prevent **lock-out** when the UI or TB path fails.
+
+**Audience:** Homelab operators running **TrueNAS SCALE** on compact hardware, **macOS** clients with **Docker Desktop / Kubernetes**, and anyone who wants a **repeatable triage ladder** (L1 physical → L3 IP → L4 TCP → HTTP/TLS → services) plus **durable documentation** via vault memory.
+
+**Related vault note (ingest target):** `Memory/truenas-scale-ui-and-lan-connectivity-corgicave.md` (many dated sections; this case study is the **canonical narrative**).
+
+---
+
+## 1. Why this case study exists
+
+Homelab NAS outages are **expensive in time** because symptoms stack:
+
+- **“UI down”** might mean **no route**, **wrong IP**, **firewall**, **TLS only**, **browser policy**, **mDNS**, **service crash**, or **client-side socket failure** — all present differently.
+- **Single admin paths** (only Thunderbolt console, only one browser, only Wi‑Fi) **amplify risk**: one broken path becomes **total lock-out**.
+- **Cross-machine debugging** (Cursor agent host vs Mac mini vs NAS) **changes subnets and evidence** unless each hop is labeled.
+
+This session produced **durable** notes via **`memory_ingest`** under a **stable title**, so **`memory_recall`** can later answer: _“What did we learn about corgicave networking?”_ without re-deriving from chat scrollback.
+
+---
+
+## 2. System under test (inventory)
+
+| Component       | Role                                                            | Notes                                                                                                                                                                                                                                     |
+| --------------- | --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **NAS**         | TrueNAS **SCALE 25.10.x** (“Goldeye”), hostname **`corgicave`** | AMD **Ryzen AI 9 HX PRO 370** class platform; pools **HDD-Z2**, **NVME-Mirror**; primary UI NIC shown as **`eno1`**, **UP**, **`192.168.0.123`**.                                                                                         |
+| **Switch**      | **Netgear MS510TXUP**                                           | Office **island**: **not** cabled to home router during much of the incident → **no WAN** on that segment.                                                                                                                                |
+| **Mac mini**    | Admin client                                                    | **Built-in 10G Ethernet `en0`**, manual **`192.168.0.100/255.255.255.0`**; second path **USB 2.5G** through monitor (e.g. **`en14`**) historically **`192.168.0.222`**.                                                                   |
+| **MacBook Pro** | Secondary client                                                | Used in **reboot everything** phase; same class of **macOS** networking behavior.                                                                                                                                                         |
+| **Thunderbolt** | **Local console** to NAS                                        | **Not** “SSH from another machine” — TB to monitor/dock was the **terminal path** for `systemctl` / reboots until TB video dropped after **input switching**.                                                                             |
+| **DNS / names** | **`corgicave.local`**                                           | **mDNS** `.local` and/or **Mac `/etc/hosts`** mapping; **no internet required** for `.local` on the same L2.                                                                                                                              |
+| **ClawQL**      | **Vault memory**                                                | **`memory_ingest`** appended sections to one note; **`memory_recall`** initially failed in one MCP environment (`ENOENT` scanning **`/vault/Memory`**) while **ingest** wrote to project **`Memory/`** — **path mismatch** between tools. |
+
+---
+
+## 3. Initial symptoms and user actions (TrueNAS side)
+
+**Reported:**
+
+- Web UI not loading at **`http://192.168.0.123/`** or **`https://corgicave.local/ui/signin`**.
+- User restarted **`nginx`**, **`middlewared`**, and **rebooted the NAS** — **UI still broken**.
+
+**Inference at this layer:**
+
+- If **HTTP/S never completes**, blindly restarting app units can be **necessary but insufficient**: first separate **reachability** from **application**.
+- If **TCP to 80/443 times out** from some clients while **TCP 22 refuses quickly**, the picture is often **firewall/DROP on web ports** or **listeners not bound**, _not_ “NAS powered off.”
+
+---
+
+## 4. Phase A — Cursor agent host vs your LAN (first ping / curl)
+
+**Action:** From the **Cursor workspace host** (not necessarily the Mac mini on the office switch), **`ping 192.168.0.123`** and **`curl`/`nc`** probes.
+
+**Results:**
+
+- **Ping:** **100% loss** from that environment.
+- **Follow-up probes:** **Inconclusive** (background shell / incomplete capture).
+
+**Decision:** Treat **ICMP loss** as **weak** evidence; do not conclude NAS is down. **Do** run **TCP** probes from a host **known** to be on the **same segment** as the NAS.
+
+**Lesson:** **Agent location matters.** A laptop on **192.168.1.x** default-routed elsewhere can show **no path** to **`192.168.0.123`** even when the homelab island is fine.
+
+---
+
+## 5. Phase B — memory_recall then memory_ingest (durable trail)
+
+**Action:** Per ClawQL workspace rules, **`memory_recall`** with a TrueNAS-oriented query, then **`memory_ingest`** with structured **`insights`** and verbatim **`toolOutputs`**.
+
+**`memory_recall` outcome (one MCP session):**
+
+- **Failed:** `Cannot scan vault: ENOENT ... '/vault/Memory'`.
+
+**Decision:** **Do not block** on recall; continue triage. File mentally: **recall path** must match **ingest vault root** (`CLAWQL_OBSIDIAN_VAULT_PATH` or MCP config).
+
+**`memory_ingest` outcome:**
+
+- **Succeeded**, writing **`Memory/truenas-scale-ui-and-lan-connectivity-corgicave.md`**, then **many appends** (session IDs dated **2026-04-20**).
+
+**Reasoning:** Long homelab incidents **lose detail** across days. **Append** under one **stable `title`** preserves a **timeline** without fragmenting Obsidian **`[[wikilinks]]`**.
+
+---
+
+## 6. Phase C — Another Mac on a richer path (ARP + TCP semantics)
+
+**Context:** A different Mac (multi-homed: **`192.168.0.x` on `en0`**, **`192.168.1.x` on `en1`**, etc.) probed **`192.168.0.123`**.
+
+**Observations:**
+
+- **`netstat`:** **Host route** to **`.123`**, **ARP** **`38:5:25:32:5d:8f` on `en0`** — **L2 neighbor present**.
+- **`curl` to :80 / :443:** **Timeouts** (~8s), not immediate refusal.
+- **`nc` to :22:** **`Connection refused`** **quickly** — **TCP stack alive**, **SSH not listening** (or RST), **not** a silent black hole for all ports.
+
+**Inference:**
+
+- **Not** “wrong Wi‑Fi only” for that host’s **`en0`** path.
+- **Web ports** behavior differed from **:22** — consistent with **DROP/listener** patterns; **still** required validation from the **actual admin Mac mini** on the **office switch**.
+
+**Decision:** When multiple clients exist, **label which host** produced which capture.
+
+---
+
+## 7. Phase D — Thunderbolt console path (critical correction)
+
+**User correction:** **SSH was never enabled** during the worst period. **Thunderbolt** to a monitor / dock provided **local terminal** on the NAS for **`systemctl`**, reboots, and service checks.
+
+**Thunderbolt regression:** After **switching the monitor’s TB source** away and back, **TB display/console stopped**. **HDMI** also showed **no signal** at times.
+
+**Inference:** TB **link training / monitor mux** issues are **common**; **do not** equate “no TB picture” with “TrueNAS dead.” **Ethernet + IP** remain the **objective** path for UI when video is flaky.
+
+**Decision:** Once any shell exists, **enable SSH early** so TB/HDMI are not **single points of failure**.
+
+---
+
+## 8. Phase E — Homelab topology: “offline” island vs “no UI”
+
+**User description:**
+
+- **Mac mini** + **NAS** on **MS510TXUP**; **no cable to router** → **no internet** on that segment.
+- Planned **TP-Link EAP770** backhaul later.
+
+**Inference:**
+
+- **No WAN** does **not** imply **no LAN UI**: **RFC1918** + **static IPs** + **mDNS/hosts** suffice.
+- **No router DHCP table** on that island → **do not** rely on “check router lease” for discovery; use **static addressing** and **known IP**.
+
+**Decision:** Document **static IP plan** on paper: NAS **`.123`**, Mac **`.100`**, mask **`/24`**, **no gateway** unless intentionally routed.
+
+---
+
+## 9. Phase F — Mac mini curl openssl errno 49 EADDRNOTAVAIL
+
+**Symptoms (Mac mini → `192.168.0.123`):**
+
+- **`curl`:** **`Can't assign requested address`**, immediate failure in some runs.
+- **`openssl s_client`:** **`BIO_connect: Can't assign requested address`**, **`errno=49`**.
+- **Chrome:** **`ERR_ADDRESS_INVALID`** for **`https://192.168.0.123/...`**.
+- **Intermittent success:** **`nc` to :443 succeeded once**, while **`nc` to :80** and **`curl`** still failed in other runs — **inconsistent** surface.
+
+**Parallel checks:**
+
+- **`route -n get 192.168.0.123`** often showed **`en0`** (correct interface for the 10G island).
+- **`ifconfig en0`:** **`192.168.0.100`**, **10G**, **active** — **yet** **`connectx`** still failed in bad states.
+
+**Root cause family (client macOS):**
+
+1. **Dual IPv4 on the same `/24`** (**`192.168.0.100` on `en0`** + **`192.168.0.222` on USB LAN**) → **ambiguous source selection** / **`connectx`** pain.
+2. **Tunnel / Network Extension bloat:** **`netstat -rn`** showed **many** **`default` routes via `fe80::…%utun0`–`utun15`**. **Docker Desktop** + **Kubernetes** were **prime suspects** (user does **not** run a classic consumer VPN). **Omada Controller** alone is an unlikely source of **16** tunnels, but **any** filter/VPN-like extension fits the pattern.
+3. **External “Gemini narrative”** in `networknotes.txt` claimed **ping always succeeded** and **kernel deadlock** language — **overstated** vs measured evidence; **reboot** still a valid **hygiene** step.
+
+**Decisions:**
+
+- Collapse to **one IPv4** on **`192.168.0.0/24`** on the **NIC that is actually cabled to the switch** (`en0` / 10G).
+- **Quit Docker Desktop** (and keep **Kubernetes off**) while validating NAS reachability.
+- **Reboot** Mac mini (and later MacBook + NAS) when stuck in **`errno 49`** loops.
+
+**Outcome that confirmed the ladder:**
+
+- **`utun` count** dropped (e.g. **9** after reboot + no Docker in one capture).
+- **`ping`:** **0% loss**, **~1 ms RTT**.
+- **`/usr/bin/nc -4 -zv -G 8 192.168.0.123 443`:** **`Connection … succeeded!`**
+- **TrueNAS Web UI** reachable again; dashboard showed **`eno1` UP`**, **`192.168.0.123`**, pools **ONLINE**.
+
+**How each output informed the next:**
+
+| Output                                                    | Informed                                                                              |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| **`EADDRNOTAVAIL` on `curl` despite `route get` → `en0`** | Suspect **source address / policy / tunnels**, not “NAS dropped off Earth.”           |
+| **Dual `192.168.0.*` on two interfaces**                  | Fix **same-subnet dual-homing** first — classic macOS foot-gun.                       |
+| **`utun` spam + many IPv6 defaults**                      | Suspect **Network Extension / Docker / K8s**; **reboot + quit Docker** as experiment. |
+| **`nc` :443 success after hygiene**                       | Promote hypothesis to **“path restored”**; re-test **browser** and **TLS**.           |
+| **Dashboard UP**                                          | Close **client-stack** chapter; pivot to **SSH** redundancy.                          |
+
+---
+
+## 10. Phase G — SSH enablement (UI path) and first-login friction
+
+**Goal:** Avoid future **TB-only** or **UI-only** lock-out.
+
+**UI steps (TrueNAS SCALE 25.10):**
+
+1. **System → Services → SSH** — configure **Allow Password Authentication** / **Password Login Groups** as needed; **Save**; **Start automatically** **ON**; service **Running**.
+2. **Credentials → Users → `truenas_admin` → Edit** — **SSH password login enabled**; ensure **shell** + **home directory** per docs.
+
+**First SSH attempt:**
+
+```text
+Permission denied (publickey).
+```
+
+**Interpretation:** **sshd** is up but **password authentication** was not effectively enabled (service-level and/or user-level), so the client offered **publickey** only.
+
+**Successful login:**
+
+```bash
+ssh truenas_admin@corgicave.local
+```
+
+**Observation:** Client resolved **`corgicave.local`** to **IPv6 link-local** **`fe80::…%en0`** — valid on-LAN path; **`192.168.0.123`** remains a good **IPv4** target.
+
+**Decision:** Prefer **SSH keys** long-term on trusted admin machines; keep **password SSH** policy aligned with **2FA** settings (TrueNAS warns about **global 2FA** + password SSH).
+
+---
+
+## 11. Preventive runbook (condensed)
+
+| Risk                      | Mitigation                                                                                                                     |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| **UI down**               | **SSH on** + **user SSH password or keys** documented.                                                                         |
+| **TB/HDMI console lost**  | **Ethernet** admin path + **SSH**; **HDMI** to TV for BIOS/OS install emergencies.                                             |
+| **macOS `errno 49`**      | **One** **`192.168.0.*`** per machine on that island; **quit Docker/K8s** when debugging L2/L3 weirdness; **reboot** if stuck. |
+| **Docker subnet overlap** | Avoid Docker **internal bridges** overlapping **`192.168.0.0/24`** with the physical lab LAN.                                  |
+| **No DHCP on island**     | **Static IPs** on paper; **router lease table** not available.                                                                 |
+| **Knowledge loss**        | **`memory_ingest`** with **stable `title`**; fix **`memory_recall` path** to match vault root.                                 |
+
+---
+
+## 12. memory_recall on this topic (what comes back)
+
+Example query:
+
+```text
+TrueNAS Scale corgicave Minisforum N5 SSH nginx middlewared Mac mini errno49 utun MS510TXUP
+```
+
+**Top hit:** `Memory/truenas-scale-ui-and-lan-connectivity-corgicave.md` — **keyword** match on ingested sections (timeline, tool outputs, hypotheses).
+
+**Practice:** For graph recall, add **`wikilinks`** in vault notes to this case study file title once mirrored in vault (optional).
+
+---
+
+## 13. memory_ingest of this case study
+
+After publishing this markdown under **`docs/case_studies/`** and the website route **`/case-studies/truenas-scale-corgicave-homelab`**, run **`memory_ingest`** with:
+
+- **`title`:** stable, e.g. **`Case study: TrueNAS Scale corgicave homelab networking SSH 2026-04`** (or append to existing TrueNAS note with **`append: true`**).
+- **`insights`:** short abstract + pointer to **this file path** in repo / **website URL**.
+- **`wikilinks`:** e.g. **`["TrueNAS Scale UI and LAN connectivity (corgicave)"]`** to connect graph edges.
+
+---
+
+## 14. References (in-repo)
+
+- Case study index: [`docs/case_studies/README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/case_studies/README.md)
+- Vault skill: [`../.cursor/skills/clawql-vault-memory/SKILL.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/.cursor/skills/clawql-vault-memory/SKILL.md)
+- TrueNAS SSH tutorial (SCALE 25.10): [SSH service — iXsystems docs](https://www.truenas.com/docs/scale/25.10/scaletutorials/systemsettings/services/sshservicescale/)
+
+---
+
+## 15. Detailed chronological timeline (cross-thread)
+
+This table merges **Cursor + Gemini + user terminal** work. **“Gemini-only”** means steps recorded in `networknotes.txt` but **not** verified in the Cursor transcript.
+
+| #   | Actor / surface                     | Action                                                           | Result                                                                                | Inference → next step                                                                                |
+| --- | ----------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| 1   | User (NAS)                          | Web UI fails; restart **nginx**, **middlewared**; **NAS reboot** | UI still broken                                                                       | Do not assume UI stack only; verify **L3/L4** from a correct client.                                 |
+| 2   | Cursor agent host                   | **`ping 192.168.0.123`**                                         | **100% loss**                                                                         | ICMP weak; agent may be **off-island** — use **TCP** from homelab Mac.                               |
+| 3   | Cursor agent host                   | **`nc`/`curl`** (first batch)                                    | **Inconclusive** (background / no clean stdout)                                       | Use **short timeouts**, **full permissions** on the real admin host.                                 |
+| 4   | ClawQL MCP                          | **`memory_recall`**                                              | **`ENOENT` `/vault/Memory`**                                                          | Fix vault path for recall; **continue** with **`memory_ingest`**.                                    |
+| 5   | ClawQL MCP                          | **`memory_ingest`** (first)                                      | **OK** → `Memory/truenas-scale-ui-and-lan-connectivity-corgicave.md`                  | Establish **stable title** for appends.                                                              |
+| 6   | Mac mini (sandbox)                  | **`ifconfig`/`route` via script**                                | Partial (**`rg` missing**, empty iface grep)                                          | Re-run with **`all` perms** for trustworthy iface list.                                              |
+| 7   | Other Mac (`all`)                   | **`ifconfig`**, **`netstat -rn`**, **`ping`**, **`curl`**        | **ARP** for `.123` on **`en0`**; **ping loss**; **:80/:443 timeout**; **:22 refused** | NAS **not fully dead**; web path or **filter**; still need **Mac mini** truth.                       |
+| 8   | User                                | Clarify **TB console**; **SSH never enabled**                    | —                                                                                     | Stop assuming **SSH**; TB **input switch** correlates with **video loss**.                           |
+| 9   | User                                | Describe **office island** (no router uplink)                    | —                                                                                     | No **DHCP discovery** from router; **static IP** discipline.                                         |
+| 10  | Mac mini                            | **`NAS_IP=192.168.0.123`** `ping`/`curl`                         | **Ping loss**; **`curl` errno** / **`Can't assign requested address`**                | Suspect **Mac addressing** — dual **`192.168.0.*`** later confirmed.                                 |
+| 11  | Mac mini                            | **`networksetup` + `ifconfig en0`**                              | **Single `192.168.0.100` on `en0`**, 10G **active**                                   | **`route get`** → **`en0`** + **ARP** OK — yet **`curl`** could still fail → **tunnels / connectx**. |
+| 12  | Mac mini                            | **`sudo arp -d`**, **`ping`**, **`arp`**                         | **ARP repopulates** same MAC                                                          | Stale ARP not the story; focus **client connect path**.                                              |
+| 13  | Mac mini                            | **`curl --interface en0`**, **`nc` :443 / :80**                  | **:443 succeeded** once; **:80** **`EADDRNOTAVAIL`**; **`curl`** still bad            | **Not** pure “nginx down”; **client stack** + **port-specific** behavior.                            |
+| 14  | Mac mini                            | **`openssl s_client`**, **Chrome**                               | **`errno 49`**; **`ERR_ADDRESS_INVALID`**                                             | Same **local connect** failure class as **`curl`**.                                                  |
+| 15  | Mac mini                            | **`nc -4`/`-6` :443**, **`netstat` `utun` defaults**             | Both **`nc`** failed in bad state; **many `utun` defaults**                           | Hypothesis: **Docker/K8s / extensions**; **reboot + quit Docker**.                                   |
+| 16  | Gemini session (`networknotes.txt`) | **`route flush`**, **`ifconfig en0` down/up**, IP **`.101`**     | Narrative claims **still broken**                                                     | **Treat as auxiliary**; avoid overstating **“kernel deadlock”** without traces.                      |
+| 17  | User                                | **Reboot Mac mini, MacBook Pro, NAS**                            | **Still unreachable** (per user at that moment)                                       | Re-run **clean** L2/L3 script after reboots.                                                         |
+| 18  | Mac mini                            | **`utun` count ~9**, **`ping` 0% loss**, **`nc -4` :443**        | **Success**                                                                           | **Path restored** — open **UI**, then **SSH**.                                                       |
+| 19  | TrueNAS UI                          | **Services → SSH**                                               | **Running**, **start automatically ON**                                               | Service layer OK.                                                                                    |
+| 20  | Mac mini                            | **`ssh truenas_admin@192.168.0.123`**                            | **`Permission denied (publickey)`**                                                   | Enable **password SSH** at **service + user**.                                                       |
+| 21  | Mac mini                            | **`ssh truenas_admin@corgicave.local`**                          | **Login OK** (IPv6 **link-local** `%en0`)                                             | **Admin path diversified**; document **IPv4 vs `.local`**.                                           |
+
+---
+
+## 16. Appendix A — Command snippets (reference)
+
+**Mac mini — reachability block (after fixing dual-homing / Docker off):**
+
+```bash
+ifconfig | grep -c '^utun' || true
+ifconfig en0
+route -n get 192.168.0.123
+arp -n 192.168.0.123
+ping -c 4 192.168.0.123
+/usr/bin/nc -4 -zv -G 8 192.168.0.123 443
+```
+
+**Bracketed paste pitfall (zsh):** pasting from some terminals injects **`[200~`** / **`~]`** — causes **`zsh: bad pattern`**; **retype** or fix terminal paste mode.
+
+**SSH tests:**
+
+```bash
+ssh -o StrictHostKeyChecking=accept-new truenas_admin@192.168.0.123
+ssh truenas_admin@corgicave.local
+```
+
+---
+
+## 17. Appendix B — Vault memory_ingest session IDs (2026-04-20)
+
+Representative **`sessionId`** values appended to **`TrueNAS Scale UI and LAN connectivity (corgicave)`** (non-exhaustive):
+
+- `2026-04-20-truenas-ui` — initial triage + tool outputs.
+- `2026-04-20-full-session-trace` — full step trace + Gemini correction notes.
+- `2026-04-20-enable-ssh-from-console` — `midclt` / `cli` paths when UI down.
+- `2026-04-20-minisforum-n5-pro-no-video-console` — TB/HDMI local display.
+- `2026-04-20-console-path-clarification-tb-not-ssh` — TB vs SSH correction.
+- `2026-04-20-homelab-topology-office-island` — MS510TXUP island, no WAN.
+- `2026-04-20-mac-mini-dual-nic-same-subnet` — `.100` + `.222` same `/24`.
+- `2026-04-20-mac-route-en0-eaddrnotavail` — route vs **`curl`** mismatch phase.
+- `2026-04-20-mac-mini-nc443-ok-curl80-eaddrnotavail` — **`nc` :443** success vs **`curl`** failures.
+- `2026-04-20-mac-mini-utun-default-spam-eaddrnotavail` — **`netstat`** `utun` spam hypothesis.
+- `2026-04-20-post-reboot-still-unreachable` — state after reboot wave.
+- `2026-04-20-mac-mini-connectivity-restored-ping-nc443-ok` — proof of path.
+- `2026-04-20-resolution-ui-restored-dashboard` — UI/dashboard confirmation.
+- `2026-04-20-ssh-publickey-only-truenas_admin` — **`publickey`** denial.
+- `2026-04-20-ssh-working-truenas_admin` — successful **SSH** session.
+
+---
+
+## 18. Appendix C — Evidence hygiene (Gemini vs measured)
+
+| Claim (external summary)                                             | Verdict                                                                                                                                                                               |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| “**Ping always succeeded**” on Mac mini                              | **Not consistently true** in Cursor-captured logs; treat **ICMP** as **optional** signal.                                                                                             |
+| “**Kernel deadlock** / socket table **corrupted beyond `ifconfig`**” | **Overstated** without **kernel panics**, **`sysdiagnose`**, or Apple DTS-level evidence. Prefer: **“`connectx` failed with `EADDRNOTAVAIL` under tunnel-heavy routing.”**            |
+| “**Subnet belongs to utun**” (literal)                               | **Misleading** vs **`netstat`**: **`192.168.0/24` on `en0`** remained visible; issue was **client policy / extension / dual-homing interactions**, not a missing **`en0`** route row. |
+
+---
+
+## 19. Changelog
+
+| Date           | Event                                                                                            |
+| -------------- | ------------------------------------------------------------------------------------------------ |
+| **2026-04-20** | Incident, multi-client diagnostics, vault ingests, resolution, SSH enabled, case study authored. |

@@ -40,6 +40,11 @@ const ENTRIES: Array<Entry> = [
     changeFrequency: 'monthly',
     priority: 0.78,
   },
+  {
+    path: '/case-studies/truenas-scale-corgicave-homelab',
+    changeFrequency: 'monthly',
+    priority: 0.78,
+  },
 ]
 
 export default function sitemap(): MetadataRoute.Sitemap {

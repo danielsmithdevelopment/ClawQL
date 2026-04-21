@@ -9,6 +9,7 @@ import { getSiteOrigin } from '@/lib/site-url'
 
 import { caseStudyCloudflareDocsSections } from '@/lib/case-study-cloudflare-docs-sections'
 import { caseStudyCrossThreadVaultRecallSections } from '@/lib/case-study-cross-thread-vault-recall-sections'
+import { caseStudyTruenasCorgicaveSections } from '@/lib/case-study-truenas-corgicave-sections'
 import { caseStudyVaultMemorySessionSections } from '@/lib/case-study-vault-memory-session-sections'
 import { homePageSections } from '@/lib/home-page-sections'
 
@@ -22,6 +23,8 @@ const allSections: Record<string, Array<Section>> = {
     caseStudyVaultMemorySessionSections,
   '/case-studies/cross-thread-vault-recall':
     caseStudyCrossThreadVaultRecallSections,
+  '/case-studies/truenas-scale-corgicave-homelab':
+    caseStudyTruenasCorgicaveSections,
 }
 
 export const metadata: Metadata = {

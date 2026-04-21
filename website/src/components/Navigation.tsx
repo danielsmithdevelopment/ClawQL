@@ -254,6 +254,10 @@ export const navigation: Array<NavGroup> = [
         title: 'Case study: Cross-thread vault recall',
         href: '/case-studies/cross-thread-vault-recall',
       },
+      {
+        title: 'Case study: TrueNAS corgicave homelab',
+        href: '/case-studies/truenas-scale-corgicave-homelab',
+      },
       { title: 'Deployment', href: '/deployment' },
       { title: 'Kubernetes', href: '/kubernetes' },
       { title: 'Helm', href: '/helm' },
