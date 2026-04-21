@@ -37,7 +37,9 @@ export function Layout({
           </div>
         </motion.header>
         <div className="relative flex h-full flex-col px-4 pt-14 sm:px-6 lg:px-8">
-          <main className="flex-auto">{children}</main>
+          <main id="main-content" className="flex-auto" tabIndex={-1}>
+            {children}
+          </main>
           <Footer />
         </div>
       </div>

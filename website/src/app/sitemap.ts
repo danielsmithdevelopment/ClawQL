@@ -2,6 +2,9 @@ import { type MetadataRoute } from 'next'
 
 import { getSiteOrigin } from '@/lib/site-url'
 
+/** Sitemap is fully static URLs; avoid per-request `lastModified` churn for crawlers. */
+export const dynamic = 'force-static'
+
 type Entry = {
   path: '/' | `/${string}`
   changeFrequency: MetadataRoute.Sitemap[number]['changeFrequency']
@@ -45,6 +48,11 @@ const ENTRIES: Array<Entry> = [
     changeFrequency: 'monthly',
     priority: 0.78,
   },
+  {
+    path: '/case-studies/docs-clawql-worker-1102-mcp-memory-2026-04',
+    changeFrequency: 'monthly',
+    priority: 0.78,
+  },
 ]
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -54,7 +62,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     const url = path === '/' ? `${base}/` : `${base}${path}`
     return {
       url,
-      lastModified: new Date(),
       changeFrequency,
       priority,
     }

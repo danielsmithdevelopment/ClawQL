@@ -167,6 +167,20 @@ const resources: Array<Resource> = [
       ],
     },
   },
+  {
+    href: '/case-studies/docs-clawql-worker-1102-mcp-memory-2026-04',
+    name: 'Case study: Worker 1102 + MCP + memory',
+    description:
+      'docs.clawql.com incident: Error 1102 and waitUntil warnings; search/execute on Cloudflare APIs; memory_ingest postmortem; Lighthouse CI and prevention runbook.',
+    icon: BookIcon,
+    pattern: {
+      y: 24,
+      squares: [
+        [0, 0],
+        [2, 1],
+      ],
+    },
+  },
 ]
 
 function ResourceIcon({ icon: Icon }: { icon: Resource['icon'] }) {

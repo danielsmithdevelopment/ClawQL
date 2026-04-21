@@ -7,12 +7,6 @@
   "observability": {
     "enabled": true
   },
-  "routes": [
-    {
-      "pattern": "docs.clawql.com",
-      "custom_domain": true
-    }
-  ],
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
