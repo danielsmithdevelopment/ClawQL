@@ -44,11 +44,16 @@ jobs:
         run: npm ci --prefix website
 
       - name: Build docs site
+        env:
+          # Must match the URL Lighthouse uses below; otherwise canonical / OG
+          # metadata use localhost while the page is served on 127.0.0.1 and SEO drops.
+          NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3000
         run: npm run build --prefix website
 
       - name: Start server, run Lighthouse, assert scores
         env:
           PORT: "3000"
+          NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3000
         run: |
           set -euo pipefail
           cd website
