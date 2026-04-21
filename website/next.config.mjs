@@ -68,6 +68,14 @@ const nextConfig = {
             value:
               'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400',
           },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin',
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
         ],
       },
       {

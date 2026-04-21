@@ -1,0 +1,91 @@
+# Lab Lighthouse against a production `next build` + `next start` server (not Cloudflare Workers).
+# Catches client-side / HTML regressions, WCAG-ish accessibility, SEO metadata, and best-practices headers.
+# See docs/website-performance-workers-guardrails.md for what this does *not* cover (Worker CPU, waitUntil).
+
+name: Website Lighthouse
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "website/**"
+      - ".github/workflows/website-lighthouse.yml"
+      - "scripts/assert-lighthouse-scores.mjs"
+  push:
+    branches: [main]
+    paths:
+      - "website/**"
+      - ".github/workflows/website-lighthouse.yml"
+      - "scripts/assert-lighthouse-scores.mjs"
+  workflow_dispatch:
+
+concurrency:
+  group: website-lighthouse-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lighthouse:
+    name: Lighthouse (Next production server)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: website/package-lock.json
+
+      - name: Install website dependencies
+        run: npm ci --prefix website
+
+      - name: Build docs site
+        env:
+          # Must match the URL Lighthouse uses below; otherwise canonical / OG
+          # metadata use localhost while the page is served on 127.0.0.1 and SEO drops.
+          NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3000
+        run: npm run build --prefix website
+
+      - name: Start server, run Lighthouse, assert scores
+        env:
+          PORT: "3000"
+          NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3000
+        run: |
+          set -euo pipefail
+          cd website
+          ./node_modules/.bin/next start -p "${PORT}" &
+          PID=$!
+          cleanup() { kill "$PID" 2>/dev/null || true; }
+          trap cleanup EXIT
+
+          for i in $(seq 1 60); do
+            if curl -sf "http://127.0.0.1:${PORT}/api/health" >/dev/null; then
+              echo "Server ready."
+              break
+            fi
+            if ! kill -0 "$PID" 2>/dev/null; then
+              echo "next start exited early."
+              exit 1
+            fi
+            sleep 2
+            if [ "$i" -eq 60 ]; then
+              echo "Timeout waiting for /api/health"
+              exit 1
+            fi
+          done
+
+          # 12.8.x treats `Content-Signal:` in robots.txt as invalid (SEO ~0.85).
+          # Newer releases recognize the directive (see googlechrome/lighthouse#16767).
+          npx --yes lighthouse@13.1.0 "http://127.0.0.1:${PORT}/" \
+            --preset=desktop \
+            --only-categories=performance,accessibility,best-practices,seo \
+            --chrome-flags="--headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage" \
+            --output=json \
+            --output-path=lighthouse-ci.json \
+            --quiet
+
+          node ../scripts/assert-lighthouse-scores.mjs lighthouse-ci.json

@@ -13,7 +13,9 @@
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload",
-    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
+    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
+    "lh": "lighthouse",
+    "lh:docs": "lighthouse https://docs.clawql.com/ --preset=desktop --only-categories=performance,accessibility,best-practices,seo --output=html --output-path=./lighthouse-report.html --view"
   },
   "browserslist": "defaults, not ie <= 11",
   "dependencies": {
@@ -61,7 +63,8 @@
     "prettier": "^3.6.2",
     "prettier-plugin-tailwindcss": "^0.7.2",
     "sharp": "0.34.3",
-    "wrangler": "^4.83.0"
+    "wrangler": "^4.83.0",
+    "lighthouse": "^12.8.2"
   },
   "overrides": {
     "@types/react": "19.2.14",

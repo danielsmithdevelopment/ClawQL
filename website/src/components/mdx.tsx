@@ -9,6 +9,31 @@ export const a = Link
 export { Button } from '@/components/Button'
 export { Code as code, CodeGroup, Pre as pre } from '@/components/Code'
 
+/**
+ * Markdown `![]()` images: default lazy + async decode to reduce Worker CPU and
+ * speed first paint on long case-study pages. Prefer explicit alt text in MDX.
+ */
+export function img({
+  className,
+  alt,
+  loading,
+  decoding,
+  ...props
+}: React.ComponentPropsWithoutRef<'img'>) {
+  return (
+    <img
+      alt={alt ?? ''}
+      loading={loading ?? 'lazy'}
+      decoding={decoding ?? 'async'}
+      className={clsx(
+        'h-auto max-w-full rounded-lg ring-1 ring-zinc-900/10 dark:ring-white/10',
+        className,
+      )}
+      {...props}
+    />
+  )
+}
+
 export function wrapper({ children }: { children: React.ReactNode }) {
   return (
     <article className="flex h-full flex-col pt-10 pb-10">

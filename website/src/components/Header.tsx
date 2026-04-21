@@ -21,10 +21,12 @@ function TopLevelNavItem({
   href: string
   children: React.ReactNode
 }) {
+  const external = href.startsWith('http')
   return (
     <li>
       <Link
         href={href}
+        rel={external ? 'noopener noreferrer' : undefined}
         className="text-sm/5 text-zinc-600 transition hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
       >
         {children}
@@ -79,7 +81,7 @@ export const Header = forwardRef<
         </CloseButton>
       </div>
       <div className="flex items-center gap-5">
-        <nav className="hidden md:block">
+        <nav className="hidden md:block" aria-label="Site">
           <ul role="list" className="flex items-center gap-8">
             <TopLevelNavItem href="/">Home</TopLevelNavItem>
             <TopLevelNavItem href="/quickstart">Quickstart</TopLevelNavItem>

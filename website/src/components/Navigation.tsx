@@ -33,11 +33,13 @@ function TopLevelNavItem({
   href: string
   children: React.ReactNode
 }) {
+  const external = href.startsWith('http')
   return (
     <li className="md:hidden">
       <CloseButton
         as={Link}
         href={href}
+        rel={external ? 'noopener noreferrer' : undefined}
         className="block py-1 text-sm text-zinc-600 transition hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
       >
         {children}
@@ -59,10 +61,12 @@ function NavLink({
   active?: boolean
   isAnchorLink?: boolean
 }) {
+  const external = href.startsWith('http')
   return (
     <CloseButton
       as={Link}
       href={href}
+      rel={external ? 'noopener noreferrer' : undefined}
       aria-current={active ? 'page' : undefined}
       className={clsx(
         'flex justify-between gap-2 py-1 pr-3 text-sm transition',
@@ -258,6 +262,10 @@ export const navigation: Array<NavGroup> = [
         title: 'Case study: TrueNAS corgicave homelab',
         href: '/case-studies/truenas-scale-corgicave-homelab',
       },
+      {
+        title: 'Case study: Worker 1102, MCP debug, memory',
+        href: '/case-studies/docs-clawql-worker-1102-mcp-memory-2026-04',
+      },
       { title: 'Deployment', href: '/deployment' },
       { title: 'Kubernetes', href: '/kubernetes' },
       { title: 'Helm', href: '/helm' },
@@ -278,7 +286,7 @@ export const navigation: Array<NavGroup> = [
 
 export function Navigation(props: React.ComponentPropsWithoutRef<'nav'>) {
   return (
-    <nav {...props}>
+    <nav aria-label="Documentation" {...props}>
       <ul role="list">
         <TopLevelNavItem href="/">Home</TopLevelNavItem>
         <TopLevelNavItem href="/quickstart">Quickstart</TopLevelNavItem>

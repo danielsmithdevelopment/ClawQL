@@ -52,11 +52,13 @@ From there: custom spec via `CLAWQL_SPEC_PATH` / `CLAWQL_SPEC_URL`, or read [Con
 
 - **All MCP tools (API + vault + sandbox + optional cache / audit):** see **[`docs/mcp-tools.md`](docs/mcp-tools.md)** — examples for `sandbox_exec`, `memory_ingest`, `memory_recall`, `cache` vs vault (**[`docs/cache-tool.md`](docs/cache-tool.md)**), optional **`audit`** (**[`docs/enterprise-mcp-tools.md`](docs/enterprise-mcp-tools.md)**), env vars.
 
+- **Documentation map:** **[`docs/README.md`](docs/README.md)** — curated index of guides under `docs/`; **[`scripts/README.md`](scripts/README.md)** — deploy shells, workflow runners, fetchers, and smokes.
+
 - **Cursor IDE (rule + skill for vault memory):** see **[`docs/cursor-vault-memory.md`](docs/cursor-vault-memory.md)** — how `.cursor/rules/clawql-vault-memory.mdc` and `.cursor/skills/clawql-vault-memory/` relate to `memory_ingest` / `memory_recall`.
 
 - **Benchmarks & raw artifacts:** [Benchmarks and results](#benchmarks-and-results) — quick links to [all-providers stats](docs/benchmarks/all-providers-complex-workflow/experiment-all-providers-complex-workflow-stats.json), [default multi-provider stats](docs/benchmarks/multi-provider-complex-workflow/experiment-multi-provider-complex-workflow-stats.json), and workflow JSON outputs.
 
-- **Case studies (MCP workflows):** [Case studies](#case-studies) — e.g. [deploying `docs.clawql.com` with `search` / `execute` / vault tools](docs/case_studies/cloudflare-docs-site-mcp-workflow.md); website copy at **`https://docs.clawql.com/case-studies/cloudflare-docs-mcp`**. Also **[TrueNAS Scale homelab + `memory_ingest` / SSH](docs/case_studies/truenas-scale-corgicave-homelab-networking-ssh-case-study-2026-04.md)** (`https://docs.clawql.com/case-studies/truenas-scale-corgicave-homelab`). **Caching:** [`docs/website-caching.md`](docs/website-caching.md).
+- **Case studies (MCP workflows):** [Case studies](#case-studies) — e.g. [deploying `docs.clawql.com` with `search` / `execute` / vault tools](docs/case_studies/cloudflare-docs-site-mcp-workflow.md); website copy at **`https://docs.clawql.com/case-studies/cloudflare-docs-mcp`**. Also **[TrueNAS Scale homelab + `memory_ingest` / SSH](docs/case_studies/truenas-scale-corgicave-homelab-networking-ssh-case-study-2026-04.md)** (`https://docs.clawql.com/case-studies/truenas-scale-corgicave-homelab`). **[Worker 1102 / `waitUntil` incident + MCP debug + `memory_ingest` + Lighthouse CI](docs/case_studies/docs-clawql-worker-1102-mcp-memory-2026-04.md)** (`https://docs.clawql.com/case-studies/docs-clawql-worker-1102-mcp-memory-2026-04`). **Caching:** [`docs/website-caching.md`](docs/website-caching.md). **Performance / Workers guardrails (Lighthouse CI, WCAG, 1102 prevention):** [`docs/website-performance-workers-guardrails.md`](docs/website-performance-workers-guardrails.md).
 
 ---
 
@@ -151,7 +153,7 @@ These sections compare **planning-context size** (merged specs on disk vs. small
 
 ### Case studies
 
-Real agent workflows using **`search`**, **`execute`**, **`memory_recall`**, and **`memory_ingest`**: **[`docs/case_studies/README.md`](docs/case_studies/README.md)** — including **[deploying `docs.clawql.com` on Cloudflare with MCP](docs/case_studies/cloudflare-docs-site-mcp-workflow.md)** (Worker **`fs` limits**, token scopes, vault cadence). The same narrative lives on the docs site at **`https://docs.clawql.com/case-studies/cloudflare-docs-mcp`**. **[TrueNAS Scale `corgicave` homelab networking + SSH](docs/case_studies/truenas-scale-corgicave-homelab-networking-ssh-case-study-2026-04.md)** is on **`https://docs.clawql.com/case-studies/truenas-scale-corgicave-homelab`**.
+Real agent workflows using **`search`**, **`execute`**, **`memory_recall`**, and **`memory_ingest`**: **[`docs/case_studies/README.md`](docs/case_studies/README.md)** — including **[deploying `docs.clawql.com` on Cloudflare with MCP](docs/case_studies/cloudflare-docs-site-mcp-workflow.md)** (Worker **`fs` limits**, token scopes, vault cadence). The same narrative lives on the docs site at **`https://docs.clawql.com/case-studies/cloudflare-docs-mcp`**. **[TrueNAS Scale `corgicave` homelab networking + SSH](docs/case_studies/truenas-scale-corgicave-homelab-networking-ssh-case-study-2026-04.md)** is on **`https://docs.clawql.com/case-studies/truenas-scale-corgicave-homelab`**. **[Worker 1102 / `waitUntil`, MCP Cloudflare debugging, vault postmortem, Lighthouse CI](docs/case_studies/docs-clawql-worker-1102-mcp-memory-2026-04.md)** — **`https://docs.clawql.com/case-studies/docs-clawql-worker-1102-mcp-memory-2026-04`**.
 
 ### Highlight: All-providers complex release-stack (largest benchmark)
 
