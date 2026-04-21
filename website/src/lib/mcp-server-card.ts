@@ -2,7 +2,6 @@
  * MCP Server Card (SEP / PR #2127) for `/.well-known/mcp/server-card.json`.
  * @see https://github.com/modelcontextprotocol/modelcontextprotocol/pull/2127
  */
-import clawqlPkg from '../../../package.json'
 
 import { getSiteOrigin } from '@/lib/site-url'
 
@@ -27,9 +26,24 @@ function streamableHttpUrl(origin: string): string {
   )
 }
 
+function clawqlVersion(): string {
+  return (
+    envString('CLAWQL_PACKAGE_VERSION') ??
+    envString('NEXT_PUBLIC_CLAWQL_VERSION') ??
+    '0.0.0'
+  )
+}
+
+function clawqlDescription(): string {
+  return (
+    envString('CLAWQL_PACKAGE_DESCRIPTION') ??
+    'MCP server: search + execute any OpenAPI 3 API with an internal GraphQL optimization layer'
+  )
+}
+
 export function getMcpServerCard(): Record<string, unknown> {
   const origin = getSiteOrigin().origin.replace(/\/$/, '')
-  const version = String(clawqlPkg.version)
+  const version = clawqlVersion()
   const implName = 'clawql-mcp'
   const cardName =
     envString('MCP_SERVER_CARD_NAME') ??
@@ -39,7 +53,7 @@ export function getMcpServerCard(): Record<string, unknown> {
     $schema: SERVER_CARD_SCHEMA,
     name: cardName,
     version,
-    description: String(clawqlPkg.description ?? ''),
+    description: clawqlDescription(),
     title: envString('MCP_SERVER_CARD_TITLE') ?? 'ClawQL',
     websiteUrl: envString('MCP_SERVER_CARD_WEBSITE_URL') ?? origin,
     repository: {

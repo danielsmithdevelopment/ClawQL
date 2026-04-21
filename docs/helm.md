@@ -1,6 +1,6 @@
 # Helm chart (`charts/clawql-mcp`)
 
-The repository ships a **Helm 3** chart that deploys the same workload as Kustomize (**`clawql-mcp-http`**): Streamable HTTP MCP (and optional gRPC) behind a Kubernetes **Service**.
+The repository ships a **Helm 3** chart that deploys the same workload as Kustomize (**`clawql-mcp-http`**): Streamable HTTP MCP (and optional gRPC) behind a Kubernetes **Service**. The chart can also deploy a UI workload and expose it through a host-based Ingress.
 
 Use this when you prefer **`helm install` / `helm upgrade`** over **`kubectl apply -k`** (see also [`deploy-k8s.md`](deploy-k8s.md) for Kustomize).
 
@@ -67,6 +67,23 @@ helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
 
 **Ingress** (optional): set **`ingress.enabled=true`** and edit **`ingress.hosts`** / **`ingress.tls`** in a small values file; backend targets the HTTP **`service.http.port`**.
 
+**UI + Ingress** (optional): set **`ui.enabled=true`** and **`ui.ingress.enabled=true`** to deploy a separate UI Deployment/Service and route a host (default: **`clawql.localhost`**) to it.
+
+## Access bundled docs locally (Docker Desktop)
+
+When you use the local Helm flow (`make local-k8s-up`), the chart can deploy the `website` UI and expose it through ingress-nginx.
+
+- Docs UI: **`http://clawql.localhost`**
+- MCP endpoint: **`http://localhost:8080/mcp`**
+
+Quick verify:
+
+```bash
+curl -s http://clawql.localhost/api/health
+```
+
+Expected response includes **`{"status":"ok"}`**.
+
 ## Values
 
 See **[`charts/clawql-mcp/values.yaml`](../charts/clawql-mcp/values.yaml)**. Common keys:
@@ -84,8 +101,9 @@ See **[`charts/clawql-mcp/values.yaml`](../charts/clawql-mcp/values.yaml)**. Com
 | `persistence`                                       | PVC for **`/vault`** instead of **`emptyDir`**                                                                                                   |
 | `vault.hostPath`                                    | Host directory bind for **`/vault`** (Docker Desktop; mutually exclusive with **`persistence`**)                                                 |
 | `ingress`                                           | Optional HTTP(S) Ingress                                                                                                                         |
+| `ui`                                                | Optional UI Deployment/Service/Ingress (defaults for Docker Desktop use `clawql.localhost`)                                                      |
 
-**Docker Desktop:** **`make local-k8s-up`** defaults to **`helm upgrade --install`** with **`values-docker-desktop.yaml`** (LoadBalancer **8080**, **`default-multi-provider`**, **`vault.hostPath.path`** = **`$HOME/.ClawQL`**, override **`CLAWQL_LOCAL_VAULT_HOST_PATH`**). For **Kustomize** instead: **`CLAWQL_LOCAL_K8S_INSTALLER=kustomize`** (same script; **`docker/kustomize/overlays/local`**).
+**Docker Desktop:** **`make local-k8s-up`** defaults to **`helm upgrade --install`** with **`values-docker-desktop.yaml`** (LoadBalancer **8080**, **`default-multi-provider`**, **`vault.hostPath.path`** = **`$HOME/.ClawQL`**, UI Ingress host **`clawql.localhost`**). The script builds a local UI image from `website/` by default and installs ingress-nginx unless disabled (`CLAWQL_LOCAL_K8S_BUILD_UI_IMAGE=0` and/or `CLAWQL_LOCAL_K8S_INSTALL_INGRESS_NGINX=0`). For **Kustomize** instead: **`CLAWQL_LOCAL_K8S_INSTALLER=kustomize`** (same script; **`docker/kustomize/overlays/local`**).
 
 ## Lint and template (CI / local)
 

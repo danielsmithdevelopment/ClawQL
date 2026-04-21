@@ -1,4 +1,4 @@
-.PHONY: deploy-cloud-run deploy-k8s deploy-docs local-k8s-up local-k8s-mcp-delete local-docker-up helm-lint kustomize-local-lint lint-k8s-manifests
+.PHONY: deploy-cloud-run deploy-k8s deploy-docs local-k8s-up local-k8s-mcp-delete local-docker-up helm-lint helm-ui-template-tests kustomize-local-lint lint-k8s-manifests
 
 # Validate charts/clawql-mcp (requires helm on PATH)
 helm-lint:
@@ -18,7 +18,10 @@ kustomize-local-lint:
 	@rm -f docker/kustomize/overlays/local/patch-mcp-vault-hostpath.json
 	@echo "kustomize-local-lint OK"
 
-lint-k8s-manifests: helm-lint kustomize-local-lint
+helm-ui-template-tests:
+	@bash scripts/test-helm-ui-templates.sh
+
+lint-k8s-manifests: helm-lint helm-ui-template-tests kustomize-local-lint
 
 # Docker Desktop Kubernetes: default Helm; optional CLAWQL_LOCAL_K8S_INSTALLER=kustomize
 local-k8s-up:

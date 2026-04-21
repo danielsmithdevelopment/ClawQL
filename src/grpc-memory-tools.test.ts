@@ -45,7 +45,12 @@ async function loadCallToolTypes(): Promise<{
   CallToolResponse: protobuf.Type;
 }> {
   const require = createRequire(import.meta.url);
-  const wellKnown = dirname(require.resolve("google-proto-files/package.json"));
+  const grpcWorkspaceRoot = join(root, "packages/mcp-grpc-transport");
+  const wellKnown = dirname(
+    require.resolve("google-proto-files", {
+      paths: [grpcWorkspaceRoot],
+    })
+  );
   const pbRoot = new protobuf.Root();
   await pbRoot.load(join(protoRoot, "model_context_protocol/mcp.proto"), {
     keepCase: true,

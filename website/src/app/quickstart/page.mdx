@@ -56,6 +56,16 @@ CLAWQL_DISCOVERY_URL="https://compute.googleapis.com/\$discovery/rest?version=v1
 
 For **`clawql-mcp-http`**, MCP is at **`/mcp`** and GraphQL at **`/graphql`** on the same **`PORT`** (see [Install](/install)).
 
+## 5. Local bundled docs via Helm (Docker Desktop)
+
+If you deploy locally with Kubernetes + Helm:
+
+```bash
+make local-k8s-up
+```
+
+You can open the bundled docs UI at **`http://clawql.localhost`** and keep MCP clients pointed to **`http://localhost:8080/mcp`**.
+
 ## Next steps
 
 - [Install](/install) — binaries, Docker, HTTP transport

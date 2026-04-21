@@ -163,10 +163,76 @@ jobs:
       - name: Helm chart + Kustomize local overlay lint
         run: make lint-k8s-manifests
 
+  website-docker-smoke:
+    name: Website Docker smoke
+    needs: [lint, workflow-scripts]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      # actions/checkout@v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Read package metadata
+        id: pkg
+        run: |
+          echo "version=$(node -e 'console.log(require(\"./package.json\").version)')" >> "$GITHUB_OUTPUT"
+          echo "description=$(node -e 'console.log(require(\"./package.json\").description)')" >> "$GITHUB_OUTPUT"
+
+      - name: Build website image
+        run: |
+          docker build \
+            -f website/Dockerfile \
+            -t clawql-website:ci-smoke \
+            --build-arg "CLAWQL_PACKAGE_VERSION=${{ steps.pkg.outputs.version }}" \
+            --build-arg "CLAWQL_PACKAGE_DESCRIPTION=${{ steps.pkg.outputs.description }}" \
+            ./website
+
+      - name: Run website container
+        run: |
+          docker run -d --name clawql-website-smoke -p 4173:3000 clawql-website:ci-smoke
+          for _ in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4173/api/health >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Website health endpoint did not become ready in time"
+          docker logs clawql-website-smoke || true
+          exit 1
+
+      - name: Cleanup website container
+        if: always()
+        run: docker rm -f clawql-website-smoke || true
+
+  website-playwright-smoke:
+    name: Website Playwright smoke
+    needs: [lint, workflow-scripts]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      # actions/checkout@v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      # actions/setup-node@v6.3.0
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: website/package-lock.json
+
+      - name: Install website dependencies
+        run: npm ci --prefix website
+
+      - name: Install Playwright browser
+        run: npx --prefix website playwright install --with-deps chromium
+
+      - name: Run Playwright smoke tests
+        run: npm --prefix website run test:smoke
+
   # Wave 2 — only if fast gates pass (fail early: no matrix work when lint/scripts fail)
   test:
     name: Test (Node ${{ matrix.node-version }})
-    needs: [lint, workflow-scripts]
+    needs: [lint, workflow-scripts, website-docker-smoke, website-playwright-smoke]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
