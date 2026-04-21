@@ -101,7 +101,7 @@ See **[`charts/clawql-mcp/values.yaml`](../charts/clawql-mcp/values.yaml)**. Com
 | `persistence`                                       | PVC for **`/vault`** instead of **`emptyDir`**                                                                                                   |
 | `vault.hostPath`                                    | Host directory bind for **`/vault`** (Docker Desktop; mutually exclusive with **`persistence`**)                                                 |
 | `ingress`                                           | Optional HTTP(S) Ingress                                                                                                                         |
-| `ui`                                                | Optional UI Deployment/Service/Ingress (defaults for Docker Desktop use `clawql.localhost`)                                                    |
+| `ui`                                                | Optional UI Deployment/Service/Ingress (defaults for Docker Desktop use `clawql.localhost`)                                                      |
 
 **Docker Desktop:** **`make local-k8s-up`** defaults to **`helm upgrade --install`** with **`values-docker-desktop.yaml`** (LoadBalancer **8080**, **`default-multi-provider`**, **`vault.hostPath.path`** = **`$HOME/.ClawQL`**, UI Ingress host **`clawql.localhost`**). The script builds a local UI image from `website/` by default and installs ingress-nginx unless disabled (`CLAWQL_LOCAL_K8S_BUILD_UI_IMAGE=0` and/or `CLAWQL_LOCAL_K8S_INSTALL_INGRESS_NGINX=0`). For **Kustomize** instead: **`CLAWQL_LOCAL_K8S_INSTALLER=kustomize`** (same script; **`docker/kustomize/overlays/local`**).
 
