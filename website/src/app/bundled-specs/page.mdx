@@ -9,17 +9,17 @@ export const metadata = docsPageMetadata({
 
 # Bundled specs
 
-The npm package ships **`providers/`**—optional on-disk API descriptions so cold start avoids downloading multi‑MB specs. **`CLAWQL_PROVIDER`** selects a **single vendor**, a **merged preset**, or interacts with [Spec configuration](/spec-configuration) precedence. {{ className: 'lead' }}
+The npm package ships **`providers/`**—optional on-disk API descriptions so cold start avoids downloading multi‑MB specs. For **multi-spec**, the only unconfigured default is the full merge **`all-providers`**. Any other multi-spec load is **explicit**: set `CLAWQL_BUNDLED_PROVIDERS`, `CLAWQL_SPEC_PATHS`, or a merged `CLAWQL_PROVIDER` (for example `google`, `atlassian`, or `all-providers` set on purpose). See [Spec configuration](/spec-configuration). {{ className: 'lead' }}
 
 ## Presets and vendors
 
-| `CLAWQL_PROVIDER`                                                                                                   | Notes                                                                                                                   |
-| ------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `google`                                                                                                            | Merged **Google Cloud** APIs from the on-disk manifest (see repo `providers/google/`; manifest filename is historical)  |
-| `default-multi-provider`                                                                                            | Same as **no spec env**: Google Cloud (bundled) + Cloudflare + GitHub + Slack + Paperless + Stirling + Tika + Gotenberg |
-| `all-providers`                                                                                                     | Google Cloud (bundled) **plus** every other bundled vendor (Jira, Bitbucket, Sentry, n8n, …)                            |
-| `atlassian`                                                                                                         | Jira + Bitbucket merged                                                                                                 |
-| `cloudflare`, `github`, `slack`, `paperless`, `stirling`, `tika`, `gotenberg`, `sentry`, `n8n`, `jira`, `bitbucket` | Single bundled OpenAPI/Discovery per vendor                                                                             |
+| `CLAWQL_PROVIDER`                                                                                                   | Notes                                                                                                                                       |
+| ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `google`                                                                                                            | Merged **Google Cloud** APIs from the on-disk manifest (see repo `providers/google/`; manifest filename is historical)                      |
+| **`CLAWQL_BUNDLED_PROVIDERS=`** _a,b,…_                                                                             | Merged by id (see row below) plus optional **`google`** = full on-disk GCP manifest.                                                        |
+| `all-providers`                                                                                                     | **Unconfigured default**; explicit **preset**: Google Cloud (bundled) **plus** every other bundled vendor (Jira, Bitbucket, Sentry, n8n, …) |
+| `atlassian`                                                                                                         | Jira + Bitbucket merged                                                                                                                     |
+| `cloudflare`, `github`, `slack`, `paperless`, `stirling`, `tika`, `gotenberg`, `sentry`, `n8n`, `jira`, `bitbucket` | Single bundled OpenAPI/Discovery per vendor                                                                                                 |
 
 Aliases: **`jira`** / **`bitbucket`** map to their standalone bundles; **`atlassian`** merges both. Deprecated merged id: **`google-top50`** → **`google`**.
 
@@ -31,4 +31,4 @@ Maintainers refresh specs with **`npm run fetch-provider-specs`** (see [`provide
 
 ## Default first run
 
-With **no** spec-related environment variables, ClawQL loads **`default-multi-provider`** so cross-vendor **`search`** works immediately after install.
+With **no** spec-related environment variables, ClawQL loads **`all-providers`** so cross-vendor **`search`** works immediately after install.

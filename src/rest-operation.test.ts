@@ -209,6 +209,32 @@ describe("executeRestOperation", () => {
     );
   });
 
+  it("multipart encodes Buffer as a file part with optional *FileName", async () => {
+    await withFetchServer(
+      async (req) => {
+        const fd = await req.formData();
+        const f = fd.get("file");
+        expect(f).toBeInstanceOf(Blob);
+        const buf = Buffer.from(await (f as Blob).arrayBuffer());
+        expect(buf.toString("utf8")).toBe("hi");
+        expect(fd.get("fileFileName")).toBeNull();
+        return Response.json({ ok: true });
+      },
+      async (origin) => {
+        const out = await executeRestOperation(
+          makeOp({
+            method: "POST",
+            requestBody: INLINE_OPENAPI_REQUEST_BODY,
+            requestBodyContentType: "multipart/form-data",
+          }),
+          { file: Buffer.from("hi", "utf8"), fileFileName: "doc.txt" },
+          makeOpenApi(origin)
+        );
+        expect(out).toEqual({ ok: true, data: { ok: true } });
+      }
+    );
+  });
+
   it("sends application/octet-stream when args.body is a string", async () => {
     await withFetchServer(
       async (req) => {

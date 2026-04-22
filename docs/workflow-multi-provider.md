@@ -6,9 +6,9 @@ This repo includes an offline **search** workflow that walks the same scenario a
 2. **Cloudflare** — DNS records, proxy, cache rules, zone settings.
 3. **Jira** — create issue, assign, labels, due date, create metadata.
 
-**Default merged install** (no spec env) is **Google Cloud (bundled) + Cloudflare + GitHub + Slack + Paperless + Stirling + Tika + Gotenberg** — see [`providers/README.md`](../providers/README.md).
+**Default merged install** (no spec env) is **`all-providers`**. For a custom subset, set **`CLAWQL_BUNDLED_PROVIDERS=sentry,n8n,github`** (example) or **`CLAWQL_SPEC_PATHS=…`**.
 
-**Broader merge (all bundled vendors):** use **`CLAWQL_PROVIDER=all-providers`** and see [`workflow-complex-release-stack.md`](workflow-complex-release-stack.md) / `npm run workflow:complex-release-stack`.
+The broad multi-vendor **`search`** workflow: [`workflow-complex-release-stack.md`](workflow-complex-release-stack.md) / `npm run workflow:complex-release-stack`.
 
 ## Run (offline)
 

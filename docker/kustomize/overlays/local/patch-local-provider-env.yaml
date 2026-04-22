@@ -11,4 +11,4 @@ spec:
         - name: clawql-mcp-http
           env:
             - name: CLAWQL_PROVIDER
-              value: default-multi-provider
+              value: all-providers

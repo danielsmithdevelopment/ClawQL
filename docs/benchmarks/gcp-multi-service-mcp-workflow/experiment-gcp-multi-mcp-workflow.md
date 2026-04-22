@@ -18,11 +18,11 @@ Stats below match **`meta.generatedAt`:** `2026-03-23T05:22:54.608Z` — re-run 
 
 ## Environment (child process)
 
-| Variable                                                        | Value                                |
-| --------------------------------------------------------------- | ------------------------------------ |
-| `CLAWQL_GOOGLE_TOP50_SPECS`                                     | `1`                                  |
-| `CLAWQL_BUNDLED_OFFLINE`                                        | `1`                                  |
-| `CLAWQL_PROVIDER` / `CLAWQL_SPEC_PATH` / `CLAWQL_DISCOVERY_URL` | **unset** (so multi-spec merge wins) |
+| Variable                                                               | Value                                |
+| ---------------------------------------------------------------------- | ------------------------------------ |
+| `CLAWQL_PROVIDER` (e.g. `google`) or `CLAWQL_BUNDLED_PROVIDERS=google` | merged Google Cloud bundle only      |
+| `CLAWQL_BUNDLED_OFFLINE`                                               | `1`                                  |
+| `CLAWQL_PROVIDER` / `CLAWQL_SPEC_PATH` / `CLAWQL_DISCOVERY_URL`        | **unset** (so multi-spec merge wins) |
 
 Server startup (stderr) ends with:
 

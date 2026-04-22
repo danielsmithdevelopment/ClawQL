@@ -17,9 +17,9 @@ start avoids downloading multi‑MB specs.
 | `stirling` | `stirling/openapi.yaml` | Stirling-PDF (minimal stub; refresh from **`STIRLING_BASE_URL`** `/v3/api-docs`). Auth: **`STIRLING_API_KEY`** → `X-API-KEY`. |
 | `jira` | `atlassian/jira/openapi.yaml` | Jira Cloud REST (alias of single-spec mode; also part of `atlassian` / `all-providers`). |
 | `bitbucket` | `atlassian/bitbucket/openapi.yaml` | Bitbucket Cloud REST (alias; also part of `atlassian` / `all-providers`). |
-| `google` | *(merged preset)* | Bundled **Google Cloud** APIs from the on-disk manifest ([`google-top50-apis.json`](google/google-top50-apis.json); filename is historical). Same merge as **`CLAWQL_GOOGLE_CLOUD_SPECS=1`** / legacy **`CLAWQL_GOOGLE_TOP50_SPECS=1`**. Deprecated alias: **`google-top50`** → `google`. |
-| `default-multi-provider` | *(merged preset)* | Same as **no spec env**: Google Cloud (bundled) + Cloudflare + GitHub + Slack + Paperless + Stirling + Tika + Gotenberg. |
-| `all-providers` | *(merged preset)* | Google Cloud (bundled) + **every** other `BUNDLED_PROVIDERS` vendor (Jira, Bitbucket, Sentry, n8n, … in addition to the default merge). |
+| `google` | *(merged preset)* | Bundled **Google Cloud** APIs from the on-disk manifest ([`google-top50-apis.json`](google/google-top50-apis.json); filename is historical). For the same merge without this preset, use **`CLAWQL_BUNDLED_PROVIDERS=google`**. Deprecated alias: **`google-top50`** → `google`. |
+| `all-providers` | *(merged preset)* | Google Cloud (bundled) + **every** `BUNDLED_PROVIDERS` vendor. **Only built-in default** when no other merge is selected. |
+| **`CLAWQL_BUNDLED_PROVIDERS=`** *ids…* | *(ad hoc merge)* | Comma/semicolon/newline-separated `BUNDLED_PROVIDERS` keys and/or **`google`**. The custom alternative to `all-providers` — there is no other “partial” default. |
 
 Compatibility aliases for merged groups: `atlassian` = Jira + Bitbucket together; **`google-top50`** = **`google`** (deprecated).
 
@@ -27,11 +27,11 @@ Compatibility aliases for merged groups: `atlassian` = Jira + Bitbucket together
 
 **Google “top 50” offline bundle:** Pinned Discovery JSON (and optional `introspection.json` / `schema.graphql`) for common GCP services — under [`google/apis/`](google/apis/README.md). Manifest: `google/google-top50-apis.json`. Refresh: `npm run fetch-google-top50` then `npm run build && npm run pregenerate-google-top50-graphql`, or `npm run refresh-google-top50`.
 
-**Default no-config mode:** when no spec env vars are set, ClawQL loads **`default-multi-provider`** (**Google Cloud (bundled) + Cloudflare + GitHub + Slack + Paperless + Stirling + Tika + Gotenberg**). For live **`execute`** calls, set **`CLAWQL_PROVIDER_AUTH_JSON`** (one JSON object keyed by merged **`specLabel`**) and/or per-vendor env vars — see **`src/auth-headers.ts`** (e.g. **`CLAWQL_GOOGLE_ACCESS_TOKEN`**, **`CLAWQL_CLOUDFLARE_API_TOKEN`**, **`CLAWQL_GITHUB_TOKEN`**, **`PAPERLESS_API_TOKEN`**, **`STIRLING_API_KEY`**).
+**Default no-config mode:** when no spec env vars are set, ClawQL loads **`all-providers`**. For live **`execute`** calls, set **`CLAWQL_PROVIDER_AUTH_JSON`** (one JSON object keyed by merged **`specLabel`**) and/or per-vendor env vars — see **`src/auth-headers.ts`** (e.g. **`CLAWQL_GOOGLE_ACCESS_TOKEN`**, **`CLAWQL_CLOUDFLARE_API_TOKEN`**, **`CLAWQL_GITHUB_TOKEN`**, **`PAPERLESS_API_TOKEN`**, **`STIRLING_API_KEY`**).
 
-**All-providers merged preset:** set **`CLAWQL_PROVIDER=all-providers`** to load **Google Cloud (bundled) + every other bundled vendor** (Jira, Bitbucket, Cloudflare, GitHub, Slack, Sentry, n8n) in one merged operation index. This wins over **`CLAWQL_GOOGLE_CLOUD_SPECS` / `CLAWQL_GOOGLE_TOP50_SPECS`** when both are set. Adding a new entry under `BUNDLED_PROVIDERS` automatically includes it here.
+**All-providers** is the **sole** unconfigured default merge. **`CLAWQL_BUNDLED_PROVIDERS=…`** is the only way to pick a **named subset** without writing paths (or use **`CLAWQL_SPEC_PATHS`**) — there is no implicit “Google-only” or “default-multi” path anymore.
 
-**Precedence (multi-spec):** `CLAWQL_SPEC_PATHS` (explicit file list) → **`CLAWQL_PROVIDER`** when it names a **merged** preset (`google`, `default-multi-provider`, `all-providers`, `atlassian`) → **`CLAWQL_GOOGLE_CLOUD_SPECS=1`** or **`CLAWQL_GOOGLE_TOP50_SPECS=1`** (same as **`CLAWQL_PROVIDER=google`** when no other merged preset applies) → default bundle when nothing else is set.
+**Precedence (multi-spec):** `CLAWQL_SPEC_PATHS` (explicit file list) → **`CLAWQL_BUNDLED_PROVIDERS`** (id list) → **`CLAWQL_PROVIDER`** when it names a **merged** preset (`google`, `all-providers`, `atlassian`, …) → **`all-providers`** when nothing else is set.
 
 **Precedence (single-spec):** `CLAWQL_SPEC_PATH` / `CLAWQL_SPEC_URL` / `CLAWQL_DISCOVERY_URL` override **`CLAWQL_PROVIDER`** for a **single** bundled id (`cloudflare`, `jira`, …). For **one** Google API file only, use **`CLAWQL_SPEC_PATH`** (e.g. `providers/google/apis/container-v1/discovery.json`) or **`CLAWQL_DISCOVERY_URL`** — there is no standalone **`CLAWQL_PROVIDER`** for Google beyond merged **`google`**.
 

@@ -1,4 +1,4 @@
-ClawQL Deck — Full Text Transcript
+ClawQL — Full Text Transcript
 Slide 1 — ClawQL
 ClawQL
 AI-Orchestrated API, Document & Enterprise Knowledge Automation
@@ -484,7 +484,7 @@ Section 4
 
 Slide 26 — Bundled Providers: The Default Stack
 Bundled Providers: The Default Stack
-9 providers ship in providers/ — CLAWQL_PROVIDER=default-multi-provider loads all of them
+9 providers ship in providers/ — the built-in default (`all-providers` / no spec env) loads all of them
 GitHub
 providers/github.json | Auth: CLAWQL_GITHUB_TOKEN Issue tracking, PR management, repo operations. Used by ClawQL’s own tooling — the cross-thread recall case study files GitHub issues directly from recalled vault plans. Also targeted by Ouroboros when filing tracking issues from Onyx-retrieved discrepancy findings.
 Google Cloud
@@ -640,7 +640,7 @@ What’s being built — ordered by dependency, not priority
 Ouroboros TypeScript Port — IN PROGRESS
 Full Interview → Seed → Execute → Evaluate → Evolve loop embedded in ClawQL pod. In-process tool executor registry. Seeds and logs to shared Postgres. Onyx calls handled through the same executor registry as all other providers.
 Tika + Gotenberg Spec Bundling — IN PROGRESS
-Fetch/generate OpenAPI specs from running instances. Save as providers/tika.json and providers/gotenberg.json. Wire into default-multi-provider preset.
+Fetch/generate OpenAPI specs from running instances. Save as providers/tika.json and providers/gotenberg.json. Wire into the bundled `providers/` registry and merged `all-providers` load.
 Onyx Provider Bundling + knowledge_search_onyx Tool — NEXT
 Bundle or fetch Onyx’s MCP/REST spec as providers/onyx.json. Add ONYX_BASE_URL + ONYX_API_TOKEN runtime injection. Implement knowledge_search_onyx as a thin wrapper over search() + execute() against the Onyx spec. Enable via CLAWQL_ENABLE_ONYX=true.
 Flink Connector Pipeline Deployment — NEXT
@@ -649,8 +649,8 @@ notify() Tool Implementation — NEXT
 New MCP tool wrapping Slack chat.postMessage (+ ephemeral, file upload). Updated to include Onyx citation links and Paperless document links in standard workflow completion templates.
 Self-Hosted Spec Fetch Config — NEXT
 STIRLING_BASE_URL, PAPERLESS_BASE_URL, TIKA_BASE_URL, GOTENBERG_BASE_URL, ONYX_BASE_URL in fetch-provider-specs. Runtime base URL injection for all self-hosted providers.
-default-multi-provider Update — NEXT
-Redefine preset to include all 9 providers: GitHub + Google + Cloudflare + Paperless + Stirling + Slack + Tika + Gotenberg + Onyx. Remove n8n, Sentry, Jira, Bitbucket.
+Merged default updates — NEXT
+Unconfigured installs use the full `all-providers` merge. Custom merge: `CLAWQL_BUNDLED_PROVIDERS=…` (ids) or `CLAWQL_SPEC_PATHS=…` only — no other implicit default.
 Cuckoo Filter Integration — PLANNED
 In ingestion path, Ouroboros Execute phase, Tika/Gotenberg output checks, and Onyx knowledge retrieval cache. CLAWQLCUCKOO* env vars.
 Merkle Tree Integration — PLANNED

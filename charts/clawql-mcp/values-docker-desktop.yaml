@@ -4,7 +4,7 @@
 
 fullnameOverride: clawql-mcp-http
 
-provider: default-multi-provider
+provider: all-providers
 
 image:
   repository: ghcr.io/danielsmithdevelopment/clawql-mcp

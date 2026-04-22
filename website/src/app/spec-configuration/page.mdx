@@ -18,12 +18,14 @@ ClawQL builds an in-memory operation index from **OpenAPI 3** (JSON/YAML), **Swa
 
 ## Stage 1 — Multi-spec merge
 
-Used when any of these applies (order matters):
+**User-facing model:** for multi-spec there is no hidden “partial” default. Either you rely on the **one** built-in unconfigured merge (**`all-providers`**, step 4), or you **choose** a merge (local paths, bundled id list, or a merged `CLAWQL_PROVIDER` shortcut). `CLAWQL_GOOGLE_TOP50_SPECS` / `CLAWQL_GOOGLE_CLOUD_SPECS` do not select a merge on their own.
+
+Precedence (order matters) when a merge is selected or defaulted:
 
 1. **`CLAWQL_SPEC_PATHS`** — merge local files (comma, semicolon, or newline separated).
-2. **`CLAWQL_PROVIDER`** — merged preset (`google`, `default-multi-provider`, `all-providers`, `atlassian`, …).
-3. **`CLAWQL_GOOGLE_CLOUD_SPECS`** or **`CLAWQL_GOOGLE_TOP50_SPECS`** (`1` / `true` / `yes`) — bundled Google Cloud merge if not already merged above (`TOP50` is a legacy alias).
-4. **Built-in default** — only when no spec-related env vars are set: **Google Cloud (bundled) + Cloudflare + GitHub + Slack + Paperless + Stirling + Tika + Gotenberg** (`default-multi-provider`).
+2. **`CLAWQL_BUNDLED_PROVIDERS`** — comma/semicolon/newline-separated **bundled** provider ids and/or **`google`** (full GCP on-disk set).
+3. **`CLAWQL_PROVIDER`** — merged shortcut (`google`, `all-providers`, `atlassian`, …) when not building a list yourself.
+4. **Built-in default** — only when no merge was selected: **`all-providers`**.
 
 ## Stage 2 — Single spec
 
@@ -35,23 +37,23 @@ If Stage 1 does **not** apply, the first match wins:
 4. **`CLAWQL_PROVIDER`** — **single** bundled vendor (`cloudflare`, `github`, …), not a merged preset
 5. Rare fallback (`kind: "default"` in code)
 
-**Examples:** `CLAWQL_SPEC_PATH=./openapi.yaml` skips Stage 1. `CLAWQL_PROVIDER=cloudflare` alone loads Cloudflare as a **single** bundle. An empty environment triggers the **default multi-provider merge**, not an arbitrary single-spec default.
+**Examples:** `CLAWQL_SPEC_PATH=./openapi.yaml` skips Stage 1. `CLAWQL_PROVIDER=cloudflare` alone loads Cloudflare as a **single** bundle. An empty environment (nothing above) uses **`all-providers`**; for a custom subset, set **`CLAWQL_BUNDLED_PROVIDERS=…`**, not another implicit default.
 
 ## Environment variables
 
-| Variable                                                  | Meaning                                                                                 |
-| --------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| `CLAWQL_SPEC_PATH`                                        | Local OpenAPI JSON/YAML                                                                 |
-| `CLAWQL_SPEC_PATHS`                                       | Multiple paths → **merge**                                                              |
-| `CLAWQL_SPEC_URL`                                         | Fetch OpenAPI from HTTPS                                                                |
-| `CLAWQL_DISCOVERY_URL`                                    | Google Discovery JSON URL                                                               |
-| `CLAWQL_PROVIDER`                                         | Merged preset (Stage 1) or single vendor (Stage 2)                                      |
-| `CLAWQL_GOOGLE_CLOUD_SPECS` / `CLAWQL_GOOGLE_TOP50_SPECS` | Bundled Google Cloud merge shortcut (`TOP50` = legacy)                                  |
-| `CLAWQL_PROVIDER_AUTH_JSON`                               | One JSON object: **`specLabel`** → token string or headers (multi-vendor **`execute`**) |
-| `CLAWQL_HTTP_HEADERS`                                     | Global header JSON; with **`CLAWQL_PROVIDER_AUTH_JSON`**, omit **`Authorization`** here |
-| `CLAWQL_INTROSPECTION_PATH`                               | Pregenerated GraphQL introspection JSON (optional)                                      |
-| `CLAWQL_API_BASE_URL`                                     | Override REST base URL                                                                  |
-| `CLAWQL_BUNDLED_OFFLINE`                                  | `1` / `true` — do not fetch missing bundled files from the network                      |
+| Variable                    | Meaning                                                                                 |
+| --------------------------- | --------------------------------------------------------------------------------------- |
+| `CLAWQL_SPEC_PATH`          | Local OpenAPI JSON/YAML                                                                 |
+| `CLAWQL_SPEC_PATHS`         | Multiple paths → **merge**                                                              |
+| `CLAWQL_BUNDLED_PROVIDERS`  | Ids to merge: `BUNDLED_PROVIDERS` keys and/or `google`                                  |
+| `CLAWQL_SPEC_URL`           | Fetch OpenAPI from HTTPS                                                                |
+| `CLAWQL_DISCOVERY_URL`      | Google Discovery JSON URL                                                               |
+| `CLAWQL_PROVIDER`           | Merged preset (Stage 1) or single vendor (Stage 2)                                      |
+| `CLAWQL_PROVIDER_AUTH_JSON` | One JSON object: **`specLabel`** → token string or headers (multi-vendor **`execute`**) |
+| `CLAWQL_HTTP_HEADERS`       | Global header JSON; with **`CLAWQL_PROVIDER_AUTH_JSON`**, omit **`Authorization`** here |
+| `CLAWQL_INTROSPECTION_PATH` | Pregenerated GraphQL introspection JSON (optional)                                      |
+| `CLAWQL_API_BASE_URL`       | Override REST base URL                                                                  |
+| `CLAWQL_BUNDLED_OFFLINE`    | `1` / `true` — do not fetch missing bundled files from the network                      |
 
 Full list: [`.env.example`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/.env.example) in the repo.
 

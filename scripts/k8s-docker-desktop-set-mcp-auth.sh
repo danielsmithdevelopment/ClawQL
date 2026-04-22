@@ -2,7 +2,7 @@
 # Create/update Kubernetes Secret **clawql-github-auth** with MCP upstream tokens (GitHub PAT +
 # optional Cloudflare + Google), wire them into clawql-mcp-http, set CORS, and restart.
 #
-# Name: "mcp auth" — not GitHub-only; default bundle is default-multi-provider (Google top50 +
+# Name: "mcp auth" — not GitHub-only; local k8s default bundle is all-providers (Google top50 +
 # Cloudflare + GitHub + Slack + Paperless + Stirling + Tika + Gotenberg — see src/auth-headers.ts).
 #
 # Keys stored (when set):
@@ -88,7 +88,7 @@ CF_TOKEN="${CLAWQL_CLOUDFLARE_API_TOKEN:-}"
 GOOGLE_TOKEN="${CLAWQL_GOOGLE_ACCESS_TOKEN:-${GOOGLE_ACCESS_TOKEN:-}}"
 
 echo "==> Creating/updating secret $SECRET_NAME in namespace $NAMESPACE"
-# Same PAT as CLAWQL_BEARER_TOKEN so mergedAuthHeaders() fallback works under default-multi-provider.
+# Same PAT as CLAWQL_BEARER_TOKEN so mergedAuthHeaders() fallback works for github under merged loads.
 SECRET_ARGS=( -n "$NAMESPACE" create secret generic "$SECRET_NAME"
   --from-literal=CLAWQL_GITHUB_TOKEN="$TOKEN"
   --from-literal=CLAWQL_BEARER_TOKEN="$TOKEN" )

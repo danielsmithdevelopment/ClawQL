@@ -13,6 +13,9 @@ import type { Operation } from "./spec-loader.js";
 export { mergedAuthHeaders };
 
 /** Build JSON body: drop path/query args so `owner`/`repo` are not sent in PATCH/POST bodies. */
+/** Suffixes on execute args: `file` + `fileFileName` → filename for multipart, not a separate part. */
+const MULTIPART_FILE_META_SUFFIX = /(FileName|Filename)$/;
+
 export function buildRestRequestBodyFromArgs(
   op: Operation,
   args: Record<string, unknown>
@@ -32,6 +35,47 @@ export function buildRestRequestBodyFromArgs(
     out[k] = v;
   }
   return out;
+}
+
+function appendMultipartValue(
+  fd: FormData,
+  key: string,
+  v: unknown,
+  all: Record<string, unknown>
+): void {
+  if (v === undefined || v === null) return;
+
+  if (globalThis.Blob && v instanceof Blob) {
+    const fromFile = globalThis.File && v instanceof File;
+    if (fromFile) {
+      fd.append(key, v);
+      return;
+    }
+    const name =
+      (typeof all[`${key}FileName`] === "string" && (all[`${key}FileName`] as string).trim()) ||
+      (typeof all[`${key}Filename`] === "string" && (all[`${key}Filename`] as string).trim()) ||
+      `${key}.bin`;
+    fd.append(key, v, name);
+    return;
+  }
+
+  if (Buffer.isBuffer(v) || v instanceof Uint8Array) {
+    const buf = Buffer.isBuffer(v) ? v : Buffer.from(v);
+    const name =
+      (typeof all[`${key}FileName`] === "string" && (all[`${key}FileName`] as string).trim()) ||
+      (typeof all[`${key}Filename`] === "string" && (all[`${key}Filename`] as string).trim()) ||
+      `${key}.bin`;
+    // Copy into a fresh ArrayBuffer so `Blob` typing accepts the part (Node `Buffer` uses ArrayBufferLike).
+    const part: BlobPart = new Uint8Array(Uint8Array.from(buf));
+    fd.append(key, new Blob([part]), name);
+    return;
+  }
+
+  if (typeof v === "string" || typeof v === "number" || typeof v === "boolean") {
+    fd.append(key, String(v));
+  } else if (typeof v === "object") {
+    fd.append(key, JSON.stringify(v));
+  }
 }
 
 export function renderPath(template: string, args: Record<string, unknown>): string {
@@ -91,11 +135,8 @@ export async function executeRestOperation(
       const bodyObj = buildRestRequestBodyFromArgs(op, args);
       for (const [k, v] of Object.entries(bodyObj)) {
         if (v === undefined || v === null) continue;
-        if (typeof v === "string" || typeof v === "number" || typeof v === "boolean") {
-          fd.append(k, String(v));
-        } else if (typeof v === "object") {
-          fd.append(k, JSON.stringify(v));
-        }
+        if (MULTIPART_FILE_META_SUFFIX.test(k)) continue;
+        appendMultipartValue(fd, k, v, args);
       }
       init.body = fd as never;
     } else if (ct === "application/x-www-form-urlencoded") {

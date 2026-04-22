@@ -53,4 +53,4 @@ Display name in the ticket description defaults to **Daniel Smith**; override wi
 
 It does **not** provision infrastructure or call third-party APIs except optional Jira `POST /rest/api/3/issue`. It validates that ClawQL `search` returns plausible operations for each natural-language step against the **merged** spec set (REST `execute` in this mode routes per operation’s source spec).
 
-**See also:** [`providers/README.md`](../providers/README.md) (merged presets), [`README.md`](../README.md) (precedence for `CLAWQL_PROVIDER` vs `CLAWQL_GOOGLE_TOP50_SPECS`).
+**See also:** [`providers/README.md`](../providers/README.md) (merged presets), [`README.md`](../README.md) (precedence for `CLAWQL_SPEC_PATHS`, `CLAWQL_BUNDLED_PROVIDERS`, `CLAWQL_PROVIDER`, and the built-in `all-providers` default).

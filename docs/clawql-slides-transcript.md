@@ -1,12 +1,12 @@
 ---
-title: "ClawQL Deck — Full Text Transcript (April 2026)"
+title: "ClawQL — Full Text Transcript (April 2026)"
 date: 2026-04-22T03:07:02.209Z
 tags: [clawql-ingest]
 clawql_ingest: true
 clawql_ingest_created: "2026-04-22T03:07:02.209Z"
 ---
 
-# ClawQL Deck — Full Text Transcript (April 2026)
+# ClawQL — Full Text Transcript (April 2026)
 
 ## Related
 
@@ -17,19 +17,19 @@ clawql_ingest_created: "2026-04-22T03:07:02.209Z"
 
 ### Ingestion (2026-04-22T03:07:02.208Z)
 
-_Session:_ `2026-04-21-deck-fulltext`
+_Session:_ `2026-04-21-slides-fulltext`
 
 #### Insights
 
 ## Summary
 
-Full-text source capture of the **ClawQL** pitch deck (35 slides, April 2026): positioning, problem/solution, MCP core (`search`, `execute`, vault memory, optional `cache`/`audit`), transports, GraphQL projection, Obsidian + cross-thread recall narrative, document pipeline (Tika → Gotenberg → Stirling → Paperless), Ouroboros five-phase loop, Cuckoo filters, Merkle trees, Slack `notify()`, eight bundled providers, Helm ten-service map, privacy/local-first, roadmap, principles, competitive framing, closing links.
+Full-text source capture of the **ClawQL** slide presentation (35 slides, April 2026): positioning, problem/solution, MCP core (`search`, `execute`, vault memory, optional `cache`/`audit`), transports, GraphQL projection, Obsidian + cross-thread recall narrative, document pipeline (Tika → Gotenberg → Stirling → Paperless), Ouroboros five-phase loop, Cuckoo filters, Merkle trees, Slack `notify()`, eight bundled providers, Helm ten-service map, privacy/local-first, roadmap, principles, competitive framing, closing links.
 
 ## Tags / topics
 
-#clawql #deck #transcript #mcp #openapi #helm #k8s #obsidian #document-pipeline #ouroboros #roadmap #april-2026
+#clawql #slides #transcript #mcp #openapi #helm #k8s #obsidian #document-pipeline #ouroboros #roadmap #april-2026
 
-## Deck ↔ implementation caveat
+## Slides ↔ implementation caveat
 
 Slides mix **shipped** behavior with **roadmap** (Ouroboros depth, Cuckoo/Merkle wiring, hybrid sqlite-vec, `notify()` rollout). Cross-check `main`, issues **#68–#72**, and `docs/mcp-tools.md` before treating marketing copy as release truth.
 
@@ -39,7 +39,7 @@ The sections below (Tool outputs + appended ingestions) preserve slide copy **in
 
 #### Tool outputs
 
-# ClawQL Deck — Full Text Transcript
+# ClawQL — Full Text Transcript
 
 _Every word from all 35 slides_
 
@@ -204,7 +204,7 @@ _Three clean layers — AI interface, ClawQL core, and the API & service targets
 ````
 
 #### Provenance
-- **Tool:** `memory_ingest` · **UTC:** `2026-04-22T03:07:02.208Z` · **session:** `2026-04-21-deck-fulltext`
+- **Tool:** `memory_ingest` · **UTC:** `2026-04-22T03:07:02.208Z` · **session:** `2026-04-21-slides-fulltext`
 - **Section fingerprint:** SHA-256 `b8e3a22265c90494…` (canonical hash in the HTML comment below).
 
 <!-- clawql-hash:b8e3a22265c9049498f799a1a34c995989603a5051827d1b30442534a3874470 -->
@@ -212,7 +212,7 @@ _Three clean layers — AI interface, ClawQL core, and the API & service targets
 ---
 
 ### Ingestion (2026-04-22T03:07:26.198Z)
-_Session:_ `2026-04-21-deck-fulltext-p2`
+_Session:_ `2026-04-21-slides-fulltext-p2`
 
 #### Insights
 #### Verbatim continuation (slides 7–12)
@@ -378,7 +378,7 @@ Section 2
 
 #### Provenance
 
-- **Tool:** `memory_ingest` · **UTC:** `2026-04-22T03:07:26.198Z` · **session:** `2026-04-21-deck-fulltext-p2`
+- **Tool:** `memory_ingest` · **UTC:** `2026-04-22T03:07:26.198Z` · **session:** `2026-04-21-slides-fulltext-p2`
 - **Section fingerprint:** SHA-256 `55c3680a8214f1da…` (canonical hash in the HTML comment below).
 
 <!-- clawql-hash:55c3680a8214f1da8a706ff770ccd2bd4f33f1639137176ac526ec7fad1da8af -->
@@ -387,7 +387,7 @@ Section 2
 
 ### Ingestion (2026-04-22T03:07:59.524Z)
 
-_Session:_ `2026-04-21-deck-fulltext-p3`
+_Session:_ `2026-04-21-slides-fulltext-p3`
 
 #### Insights
 
@@ -612,7 +612,7 @@ Ouroboros auto-ingests a summary note: which files were processed, document ID, 
 
 #### Provenance
 
-- **Tool:** `memory_ingest` · **UTC:** `2026-04-22T03:07:59.524Z` · **session:** `2026-04-21-deck-fulltext-p3`
+- **Tool:** `memory_ingest` · **UTC:** `2026-04-22T03:07:59.524Z` · **session:** `2026-04-21-slides-fulltext-p3`
 - **Section fingerprint:** SHA-256 `3c6363e531099cf3…` (canonical hash in the HTML comment below).
 
 <!-- clawql-hash:3c6363e531099cf382606c53f6ee685a8069b3367e3692a0753b6c4e612621e1 -->
@@ -621,7 +621,7 @@ Ouroboros auto-ingests a summary note: which files were processed, document ID, 
 
 ### Ingestion (2026-04-22T03:08:35.109Z)
 
-_Session:_ `2026-04-21-deck-fulltext-p4`
+_Session:_ `2026-04-21-slides-fulltext-p4`
 
 #### Insights
 
@@ -786,7 +786,7 @@ The Slack spec is retained in providers/slack.json as one of the eight default b
 
 #### Provenance
 
-- **Tool:** `memory_ingest` · **UTC:** `2026-04-22T03:08:35.109Z` · **session:** `2026-04-21-deck-fulltext-p4`
+- **Tool:** `memory_ingest` · **UTC:** `2026-04-22T03:08:35.109Z` · **session:** `2026-04-21-slides-fulltext-p4`
 - **Section fingerprint:** SHA-256 `c329a742398fd0bf…` (canonical hash in the HTML comment below).
 
 <!-- clawql-hash:c329a742398fd0bfda82b76817391e4d27d773a821aa26de1848806f1c60edd8 -->
@@ -795,7 +795,7 @@ The Slack spec is retained in providers/slack.json as one of the eight default b
 
 ### Ingestion (2026-04-22T03:08:56.750Z)
 
-_Session:_ `2026-04-21-deck-fulltext-p5`
+_Session:_ `2026-04-21-slides-fulltext-p5`
 
 #### Insights
 
@@ -822,7 +822,7 @@ Section 4
 
 **Bundled Providers: The Default Stack**
 
-*Default install (`default-multi-provider`): Google top50 + Cloudflare + GitHub + Slack + Paperless + Stirling + Tika + Gotenberg — one merged search/execute index*
+*Default (no spec env) is `all-providers` — one merged index. For a custom subset, set `CLAWQL_BUNDLED_PROVIDERS=…` (ids) or `CLAWQL_SPEC_PATHS=…` (paths).*
 
 **GitHub**
 providers/github.json | Auth: CLAWQL_GITHUB_TOKEN
@@ -955,7 +955,7 @@ Section 5
 
 #### Provenance
 
-- **Tool:** `memory_ingest` · **UTC:** `2026-04-22T03:08:56.750Z` · **session:** `2026-04-21-deck-fulltext-p5`
+- **Tool:** `memory_ingest` · **UTC:** `2026-04-22T03:08:56.750Z` · **session:** `2026-04-21-slides-fulltext-p5`
 - **Section fingerprint:** SHA-256 `5be0e2bd6a736fdd…` (canonical hash in the HTML comment below).
 
 <!-- clawql-hash:5be0e2bd6a736fdd723b53c8bb14025bfb29f049224e891fe625eb68e03e193c -->
@@ -964,7 +964,7 @@ Section 5
 
 ### Ingestion (2026-04-22T03:09:21.580Z)
 
-_Session:_ `2026-04-21-deck-fulltext-p6`
+_Session:_ `2026-04-21-slides-fulltext-p6`
 
 #### Insights
 
@@ -1130,7 +1130,7 @@ April 2026
 ```
 
 #### Provenance
-- **Tool:** `memory_ingest` · **UTC:** `2026-04-22T03:09:21.580Z` · **session:** `2026-04-21-deck-fulltext-p6`
+- **Tool:** `memory_ingest` · **UTC:** `2026-04-22T03:09:21.580Z` · **session:** `2026-04-21-slides-fulltext-p6`
 - **Section fingerprint:** SHA-256 `5d207abcca7a3560…` (canonical hash in the HTML comment below).
 
 <!-- clawql-hash:5d207abcca7a3560eb2ba34be3c860a3403799f690d533949fe051e995d927ed -->

@@ -5,8 +5,9 @@
  * - Local file (JSON or YAML OpenAPI 3 / Swagger 2), or
  * - URL to fetch the same, or
  * - Google Discovery document URL, or
- * - Default: bundled multi-provider set (Google Cloud bundled APIs + Cloudflare + GitHub + Slack + Paperless + Stirling + Tika + Gotenberg).
- * - Optional merged presets: CLAWQL_PROVIDER=all-providers (Google Cloud bundle + all other bundled vendors), …
+ * - Default: **`all-providers`** — Google Cloud (bundled) + every other bundled spec.
+ * - Custom merge: **`CLAWQL_BUNDLED_PROVIDERS=a,b,…`** (bundled vendor ids and/or **`google`**) or **`CLAWQL_SPEC_PATHS=…`**.
+ * - Optional merged **`CLAWQL_PROVIDER`** presets: **`google`**, **`atlassian`**, **`all-providers`**.
  *
  * Produces a flattened Operation list for search + OpenAPI 3 for GraphQL.
  */
@@ -24,6 +25,7 @@ import {
   listBundledProviderIds,
   resolveBundledProvider,
   resolveBundledProviderGroup,
+  resolveItemsFromBundledProviderEnvList,
   type BundledProvider,
 } from "./provider-registry.js";
 
@@ -527,12 +529,6 @@ export async function loadOpenAPIFromAbsolutePath(absolutePath: string): Promise
 // Multi-spec (merged operation index, REST per operation)
 // ─────────────────────────────────────────────
 
-function isTruthyEnv(v: string | undefined): boolean {
-  if (!v?.trim()) return false;
-  const t = v.trim().toLowerCase();
-  return t === "1" || t === "true" || t === "yes";
-}
-
 /** Derive a short label from a spec path (e.g. .../compute-v1/discovery.json → compute-v1). */
 export function labelFromSpecPath(relOrAbs: string): string {
   const normalized = relOrAbs.replace(/\\/g, "/");
@@ -557,9 +553,7 @@ async function resolveMultiSpecItems(): Promise<{ abs: string; label: string }[]
   const discoveryUrl = process.env.CLAWQL_DISCOVERY_URL || process.env.GOOGLE_DISCOVERY_URL;
   const providerRaw = process.env.CLAWQL_PROVIDER?.trim().toLowerCase();
   const pathsEnv = process.env.CLAWQL_SPEC_PATHS?.trim();
-  const useGoogleCloudMerged =
-    isTruthyEnv(process.env.CLAWQL_GOOGLE_CLOUD_SPECS) ||
-    isTruthyEnv(process.env.CLAWQL_GOOGLE_TOP50_SPECS);
+  const bundledListEnv = process.env.CLAWQL_BUNDLED_PROVIDERS?.trim();
   if (pathsEnv) {
     const parts = pathsEnv
       .split(/[,;\n]/)
@@ -570,21 +564,19 @@ async function resolveMultiSpecItems(): Promise<{ abs: string; label: string }[]
       label: labelFromSpecPath(p),
     }));
   }
-  // Merged preset on CLAWQL_PROVIDER (wins over CLAWQL_GOOGLE_CLOUD_SPECS / CLAWQL_GOOGLE_TOP50_SPECS alone).
+  if (bundledListEnv) {
+    return await resolveItemsFromBundledProviderEnvList(bundledListEnv);
+  }
   if (providerRaw) {
     const grouped = await resolveBundledProviderGroup(providerRaw);
     if (grouped) return grouped;
   }
-  if (useGoogleCloudMerged) {
-    const grouped = await resolveBundledProviderGroup("google");
-    if (grouped) return grouped;
-  }
-  // No config: default merge — Google Cloud (bundled manifest) + Cloudflare + GitHub + Slack + Paperless + Stirling + Tika + Gotenberg.
-  if (!filePath && !specUrl && !discoveryUrl && !providerRaw && !useGoogleCloudMerged) {
+  // No config: only default — full bundled set (Google Cloud manifest + every `BUNDLED_PROVIDERS` entry).
+  if (!filePath && !specUrl && !discoveryUrl && !providerRaw) {
     console.error(
-      "[spec-loader] No spec env/provider set — using default multi-provider bundle: google + cloudflare + github + slack + paperless + stirling + tika + gotenberg"
+      "[spec-loader] No spec env/provider set — using all-providers (Google Cloud bundle + every bundled vendor)"
     );
-    const defaultGroup = await resolveBundledProviderGroup("default-multi-provider");
+    const defaultGroup = await resolveBundledProviderGroup("all-providers");
     if (defaultGroup) return defaultGroup;
   }
   return null;
