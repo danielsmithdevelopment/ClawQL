@@ -13,13 +13,14 @@ clawql_ingest_created: "2026-04-22T03:07:02.209Z"
 - [[ClawQL MCP tools]]
 - [[Obsidian vault memory]]
 
-
 ---
 
 ### Ingestion (2026-04-22T03:07:02.208Z)
+
 _Session:_ `2026-04-21-deck-fulltext`
 
 #### Insights
+
 ## Summary
 
 Full-text source capture of the **ClawQL** pitch deck (35 slides, April 2026): positioning, problem/solution, MCP core (`search`, `execute`, vault memory, optional `cache`/`audit`), transports, GraphQL projection, Obsidian + cross-thread recall narrative, document pipeline (Tika → Gotenberg → Stirling → Paperless), Ouroboros five-phase loop, Cuckoo filters, Merkle trees, Slack `notify()`, eight bundled providers, Helm ten-service map, privacy/local-first, roadmap, principles, competitive framing, closing links.
@@ -39,15 +40,16 @@ The sections below (Tool outputs + appended ingestions) preserve slide copy **in
 #### Tool outputs
 
 # ClawQL Deck — Full Text Transcript
-*Every word from all 35 slides*
 
------
+_Every word from all 35 slides_
+
+---
 
 ## Slide 1 — Title
 
 **ClawQL**
 
-*AI-Orchestrated API & Document Automation*
+_AI-Orchestrated API & Document Automation_
 
 Natural language. Any API. Any document. One platform.
 
@@ -68,13 +70,13 @@ An MCP server that lets AI assistants discover and call any REST operation acros
 
 April 2026 · danielsmithdevelopment/ClawQL · docs.clawql.com
 
------
+---
 
 ## Slide 2 — The Problem
 
 **The Problem**
 
-*Modern API integration and document automation are still unnecessarily hard*
+_Modern API integration and document automation are still unnecessarily hard_
 
 **API Accessibility — 01**
 **APIs Are Inaccessible to AI**
@@ -88,13 +90,13 @@ Every AI conversation starts completely blank. Architectural decisions, debuggin
 **Documents Live in Isolated Silos**
 PDFs, Word documents, spreadsheets, HTML, email, and more — each requiring different tools with no unified pipeline. OCR, extraction, archiving, tagging, and full-text search require manually integrating half a dozen separate products, with no consistent orchestration layer.
 
------
+---
 
 ## Slide 3 — What is ClawQL?
 
 **What is ClawQL?**
 
-*A TypeScript MCP server that makes AI assistants genuinely capable of operating any API and any document workflow*
+_A TypeScript MCP server that makes AI assistants genuinely capable of operating any API and any document workflow_
 
 ClawQL is an MCP (Model Context Protocol) server published as clawql-mcp on npm. It bridges AI assistants — like Cursor or Claude — to any API described by OpenAPI 3, Swagger 2, or Google Discovery format.
 
@@ -116,13 +118,13 @@ Embedded Ouroboros engine for invisible multi-step workflow automation with retr
 
 npm install -g clawql-mcp · github.com/danielsmithdevelopment/ClawQL
 
------
+---
 
 ## Slide 4 — Who ClawQL Is For
 
 **Who ClawQL Is For**
 
-*Three audiences — one platform that serves all of them from a single deployment*
+_Three audiences — one platform that serves all of them from a single deployment_
 
 **Developers & Power Users**
 
@@ -151,7 +153,7 @@ npm install -g clawql-mcp · github.com/danielsmithdevelopment/ClawQL
 - Local-first architecture resonates strongly with enterprise data governance requirements
 - One Helm chart deployment model makes adoption and scaling straightforward
 
------
+---
 
 ## Slide 5 — Section Divider: Core Platform
 
@@ -159,17 +161,17 @@ npm install -g clawql-mcp · github.com/danielsmithdevelopment/ClawQL
 
 **Core Platform**
 
-*The MCP server, tool surface, transport layers, GraphQL projection, and memory system that power everything*
+_The MCP server, tool surface, transport layers, GraphQL projection, and memory system that power everything_
 
 Section 1
 
------
+---
 
 ## Slide 6 — Architecture Overview
 
 **Architecture Overview**
 
-*Three clean layers — AI interface, ClawQL core, and the API & service targets*
+_Three clean layers — AI interface, ClawQL core, and the API & service targets_
 
 **AI CLIENTS (Layer 1)**
 
@@ -198,7 +200,8 @@ Section 1
 - Tika
 - Gotenberg
 - Slack
-```
+
+````
 
 #### Provenance
 - **Tool:** `memory_ingest` · **UTC:** `2026-04-22T03:07:02.208Z` · **session:** `2026-04-21-deck-fulltext`
@@ -371,9 +374,10 @@ With ClawQL’s GraphQL projection: execute() passes the response through an in-
 *Stirling-PDF · Paperless NGX · Apache Tika · Gotenberg — four services, one unified orchestration layer*
 
 Section 2
-```
+````
 
 #### Provenance
+
 - **Tool:** `memory_ingest` · **UTC:** `2026-04-22T03:07:26.198Z` · **session:** `2026-04-21-deck-fulltext-p2`
 - **Section fingerprint:** SHA-256 `55c3680a8214f1da…` (canonical hash in the HTML comment below).
 
@@ -382,12 +386,15 @@ Section 2
 ---
 
 ### Ingestion (2026-04-22T03:07:59.524Z)
+
 _Session:_ `2026-04-21-deck-fulltext-p3`
 
 #### Insights
+
 #### Verbatim continuation (slides 13–18)
 
 #### Tool outputs
+
 ```text
 -----
 
@@ -604,6 +611,7 @@ Ouroboros auto-ingests a summary note: which files were processed, document ID, 
 ```
 
 #### Provenance
+
 - **Tool:** `memory_ingest` · **UTC:** `2026-04-22T03:07:59.524Z` · **session:** `2026-04-21-deck-fulltext-p3`
 - **Section fingerprint:** SHA-256 `3c6363e531099cf3…` (canonical hash in the HTML comment below).
 
@@ -612,12 +620,15 @@ Ouroboros auto-ingests a summary note: which files were processed, document ID, 
 ---
 
 ### Ingestion (2026-04-22T03:08:35.109Z)
+
 _Session:_ `2026-04-21-deck-fulltext-p4`
 
 #### Insights
+
 #### Verbatim continuation (slides 19–24)
 
 #### Tool outputs
+
 ```text
 -----
 
@@ -774,6 +785,7 @@ The Slack spec is retained in providers/slack.json as one of the eight default b
 ```
 
 #### Provenance
+
 - **Tool:** `memory_ingest` · **UTC:** `2026-04-22T03:08:35.109Z` · **session:** `2026-04-21-deck-fulltext-p4`
 - **Section fingerprint:** SHA-256 `c329a742398fd0bf…` (canonical hash in the HTML comment below).
 
@@ -782,12 +794,15 @@ The Slack spec is retained in providers/slack.json as one of the eight default b
 ---
 
 ### Ingestion (2026-04-22T03:08:56.750Z)
+
 _Session:_ `2026-04-21-deck-fulltext-p5`
 
 #### Insights
+
 #### Verbatim continuation (slides 25–30)
 
 #### Tool outputs
+
 ```text
 -----
 
@@ -939,6 +954,7 @@ Section 5
 ```
 
 #### Provenance
+
 - **Tool:** `memory_ingest` · **UTC:** `2026-04-22T03:08:56.750Z` · **session:** `2026-04-21-deck-fulltext-p5`
 - **Section fingerprint:** SHA-256 `5be0e2bd6a736fdd…` (canonical hash in the HTML comment below).
 
@@ -947,20 +963,22 @@ Section 5
 ---
 
 ### Ingestion (2026-04-22T03:09:21.580Z)
+
 _Session:_ `2026-04-21-deck-fulltext-p6`
 
 #### Insights
+
 #### Verbatim continuation (slides 31–35)
 
 #### Tool outputs
 
------
+---
 
 ## Slide 31 — Real-World Demo: The Complete Workflow
 
 **Real-World Demo: The Complete Workflow**
 
-*One Cursor message. Everything else is automatic.*
+_One Cursor message. Everything else is automatic._
 
 You type in Cursor:
 “Take the Q1 invoices from my Paperless consume folder, extract text and metadata, convert any Office files to PDF, merge everything, run high-accuracy OCR, redact all SSNs and credit card numbers, import to Paperless tagged ‘Q1-2026-invoices’ with correspondent ‘IRS’, notify #finance on Slack when done.”
@@ -985,13 +1003,13 @@ You type in Cursor:
 
 What the user sees in Cursor: “Done. 14 files processed, merged, OCR’d, PII redacted, archived as doc #5102 in Paperless, and #finance has been notified on Slack.”
 
------
+---
 
 ## Slide 32 — Development Roadmap
 
 **Development Roadmap**
 
-*What’s being built — ordered by dependency, not priority*
+_What’s being built — ordered by dependency, not priority_
 
 **IN PROGRESS — Ouroboros TypeScript Port**
 Full Interview → Seed → Execute → Evaluate → Evolve loop embedded in ClawQL pod. In-process tool executor registry. Seeds and logs to shared Postgres.
@@ -1006,10 +1024,10 @@ New MCP tool wrapping Slack chat.postMessage (+ ephemeral, file upload). Uses in
 STIRLING_BASE_URL, PAPERLESS_BASE_URL, TIKA_BASE_URL, GOTENBERG_BASE_URL in fetch-provider-specs. Runtime base URL injection for self-hosted providers.
 
 **PLANNED — Cuckoo Filter Integration**
-In ingestion path (Stirling → Paperless) and Ouroboros Execute phase for Seed deduplication and conversion output checks. CLAWQL_CUCKOO_* env vars.
+In ingestion path (Stirling → Paperless) and Ouroboros Execute phase for Seed deduplication and conversion output checks. CLAWQL*CUCKOO*\* env vars.
 
 **PLANNED — Merkle Tree Integration**
-Per-step hashing in Ouroboros. Root stored in Postgres. Optional proofOfIntegrity GraphQL endpoint. CLAWQL_MERKLE_* env vars. Verification in Evaluate phase.
+Per-step hashing in Ouroboros. Root stored in Postgres. Optional proofOfIntegrity GraphQL endpoint. CLAWQL*MERKLE*\* env vars. Verification in Evaluate phase.
 
 **PLANNED — Hybrid memory.db (sqlite-vec)**
 SQLite + sqlite-vec vector sidecar alongside Obsidian vault. Vector-ranked chunk retrieval for precision recall. Tracked in GitHub issues #68–#72.
@@ -1026,13 +1044,13 @@ New docs.clawql.com case study for document pipeline. Updated bundled-specs page
 **FUTURE — Additional Providers**
 Gotenberg and Tika APIs already bundled. Future: Postal (email), n8n (if re-added for specific workflows), additional Google services, custom internal APIs via CLAWQL_SPEC_PATH.
 
------
+---
 
 ## Slide 33 — Design Principles
 
 **Design Principles**
 
-*Six principles that have guided every architectural decision in ClawQL*
+_Six principles that have guided every architectural decision in ClawQL_
 
 **01 — Conversational & Invisible**
 Users speak naturally in Cursor. They never know about Ouroboros, Seeds, Cuckoo filters, Merkle trees, MCP internals, or spec loading. ClawQL’s job is to make complex automation feel like a simple conversation — any visible complexity is a design failure.
@@ -1052,13 +1070,13 @@ Adding a new service is adding a new OpenAPI spec to providers/. Ouroboros and t
 **06 — Memory-Continuous**
 memory_ingest after every significant workflow means future sessions — in any thread, with any assistant — can memory_recall the full history of what was processed, decided, and why. Plans made with Grok on Monday are available in Cursor on Friday. No re-explaining, ever.
 
------
+---
 
 ## Slide 34 — Why ClawQL Wins
 
 **Why ClawQL Wins**
 
-*What ClawQL does that no other MCP server or document tool does today*
+_What ClawQL does that no other MCP server or document tool does today_
 
 The market has MCP servers that wrap specific APIs. The market has document tools that process specific formats. The market has AI memory products with specific UX. ClawQL is the first platform that unifies all three — API orchestration, document pipeline, and durable memory — under a single conversational interface.
 
@@ -1083,13 +1101,13 @@ The market has MCP servers that wrap specific APIs. The market has document tool
 - ClawQL’s graph-traversable wikilinks (Obsidian) give memory depth that flat vector databases lack
 - memory_ingest after every Ouroboros workflow means the memory layer grows automatically with every document job
 
------
+---
 
 ## Slide 35 — Closing
 
 **ClawQL**
 
-*The AI-Orchestrated API & Document Automation Platform*
+_The AI-Orchestrated API & Document Automation Platform_
 
 - Natural language drives the entire platform — from API calls to document workflows to Slack notifications
 - 8 bundled providers, 10 services, 1 Helm chart, 1 kubectl context
@@ -1108,6 +1126,7 @@ Case Studies — docs.clawql.com/case-studies
 
 Built with Cursor + ClawQL MCP
 April 2026
+
 ```
 
 #### Provenance
@@ -1115,3 +1134,4 @@ April 2026
 - **Section fingerprint:** SHA-256 `5d207abcca7a3560…` (canonical hash in the HTML comment below).
 
 <!-- clawql-hash:5d207abcca7a3560eb2ba34be3c860a3403799f690d533949fe051e995d927ed -->
+```

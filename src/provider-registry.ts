@@ -179,7 +179,8 @@ async function resolveDefaultMultiProviderItems(): Promise<ProviderGroupItem[]> 
  * In a merged load, `specLabel` is each Google Cloud API slug from the bundled manifest (e.g. `container-v1`) or
  * one of these non-Google bundled vendor ids (`BUNDLED_PROVIDERS` keys; Google Cloud uses the manifest, not a single file here).
  */
-export const BUNDLED_MERGED_VENDOR_LABELS: readonly string[] = Object.keys(BUNDLED_PROVIDERS).sort();
+export const BUNDLED_MERGED_VENDOR_LABELS: readonly string[] =
+  Object.keys(BUNDLED_PROVIDERS).sort();
 
 async function resolveAllBundledProvidersItems(): Promise<ProviderGroupItem[]> {
   const root = getPackageRoot();

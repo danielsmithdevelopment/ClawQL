@@ -1,4 +1,4 @@
-ClawQL Deck — Full Text Transcript 
+ClawQL Deck — Full Text Transcript
 Slide 1 — ClawQL
 ClawQL
 AI-Orchestrated API, Document & Enterprise Knowledge Automation
@@ -20,11 +20,11 @@ Cursor-First — Local & Private
 Slide 2 — The Problem
 The Problem
 Modern API integration, document automation, and enterprise knowledge retrieval are still unnecessarily hard
-API Accessibility — 01 APIs Are Inaccessible to AI 
+API Accessibility — 01 APIs Are Inaccessible to AI
 OpenAPI specs run to megabytes. Dumping them into an AI context window is expensive and noisy. Writing custom wrappers for every endpoint is tedious and brittle. Agents hallucinate operations that don’t exist because they have no structured way to discover what’s actually available.
-No Persistence — 02 Memory Dies With Every Session 
+No Persistence — 02 Memory Dies With Every Session
 Every AI conversation starts completely blank. Architectural decisions, debugging breakthroughs, workflow history, and hard-won institutional knowledge vanish the moment the chat ends. Teams repeat the same mistakes every single session — even with the same assistant.
-Document & Knowledge Silos — 03 Documents and Company Knowledge Live in Isolated Silos 
+Document & Knowledge Silos — 03 Documents and Company Knowledge Live in Isolated Silos
 PDFs, Word documents, spreadsheets, Slack threads, Confluence pages, Jira tickets, Drive docs — each in a different system with no unified retrieval or processing layer. Document automation tools don’t know about your company knowledge. Enterprise search tools can’t trigger document workflows. Nothing talks to each other without custom integration work.
 
 Slide 3 — What is ClawQL?
@@ -33,18 +33,17 @@ A TypeScript MCP server that makes AI assistants genuinely capable of operating 
 ClawQL is an MCP (Model Context Protocol) server published as clawql-mcp on npm. It bridges AI assistants — like Cursor or Claude — to any API described by OpenAPI 3, Swagger 2, or Google Discovery format.
 Instead of dumping multi-megabyte API specs into the AI context window, ClawQL exposes two elegant core tools — search and execute — that let the AI discover and call any operation on demand, keeping context lean and responses accurate.
 On top of the API layer sits a complete document processing pipeline (Stirling-PDF, Paperless NGX, Apache Tika, Gotenberg), an enterprise knowledge search layer (Onyx with 40+ connectors, kept fresh by Flink), an invisible workflow orchestration engine (Ouroboros), durable cross-session memory via an Obsidian vault, and a Slack notification integration — all deployed as one unified Helm chart in Kubernetes.
-API Bridge 
+API Bridge
 Discover & call any REST operation across 9 bundled providers via search + execute
-Memory Layer 
+Memory Layer
 Durable Obsidian vault memory with graph-traversable wikilinks, persistent across all sessions
-Document Pipeline 
+Document Pipeline
 PDF, text, archive, extraction, conversion — 1,000+ formats supported end-to-end
-Knowledge Layer (New) 
+Knowledge Layer (New)
 Onyx semantic search across 40+ enterprise connectors (Slack, Drive, Confluence, Jira, GitHub, and more) — permission-aware, citation-returning, Flink-synced in real time
-Orchestration Brain 
+Orchestration Brain
 Embedded Ouroboros engine for invisible multi-step workflow automation with retry logic
 npm install -g clawql-mcp · github.com/danielsmithdevelopment/ClawQL
-
 
 Slide 4 — Who ClawQL Is For
 Who ClawQL Is For
@@ -107,7 +106,6 @@ Gotenberg
 Slack
 Onyx (Enterprise Knowledge Search — 40+ connectors, Flink-synced)
 
-
 Slide 7 — MCP Tool Surface
 MCP Tool Surface
 Ten tools — two core, eight extended — covering API operations, memory, knowledge search, code execution, notifications, and audit
@@ -131,7 +129,6 @@ cache
 Optional In-process LRU scratch storage for session-scoped ephemeral state. Enabled via CLAWQL_ENABLE_CACHE. Stores transient tool results, intermediate computations, or tool-discovery caches during a session.
 audit
 Optional In-process event ring buffer for operator audit trails. Enabled via CLAWQL_ENABLE_AUDIT. Records all tool calls — including Onyx knowledge retrievals — execution results, and workflow events in a structured, queryable log for compliance purposes.
-
 
 Slide 8 — search + execute: How API Discovery Works
 search + execute: How API Discovery Works
@@ -176,20 +173,19 @@ Slide 10 — Cross-Thread Recall: The Killer Feature
 Cross-Thread Recall: The Killer Feature
 This is what separates ClawQL from every other MCP server
 REAL CASE STUDY — April 2026
-The Situation 
+The Situation
 A detailed Cuckoo filter + hybrid memory architecture was designed and discussed in a Grok session. The plan was never committed to GitHub. No code was written. The design only existed in that conversation.
-Without ClawQL: 
+Without ClawQL:
 A fresh Cursor session finds nothing in the repo. The answer is “no Cuckoo filter references found” — accurate but completely misleading. The plan is effectively lost.
-With ClawQL memory_recall: 
+With ClawQL memory_recall:
 The Grok summary was ingested into the vault. memory_recall(‘Cuckoo filter hybrid memory’) surfaces the full design, env vars, sqlite-vec wiring, and Merkle semantics — then search + execute files GitHub epic #68 and children #69–72 from that recalled context.
-With Onyx Added: 
+With Onyx Added:
 Onyx’s index includes the Slack thread where the team discussed filter implementation tradeoffs. knowledge_search_onyx(‘Cuckoo filter implementation’) retrieves those cited chunks, which are then ingested into the vault alongside the architectural decisions — so future sessions get both the design plan and the team discussion context in a single memory_recall call.
 THE WORKFLOW
 Session A (any tool) — Work on architecture + run knowledge_search_onyx for relevant company context. At end of session, memory_ingest() a stable summary note including Onyx citations and wikilinks.
 Session B (fresh — any tool) — Run memory_recall(‘topic’) at the start. Cursor gets ranked vault pages — including the ingested Onyx context — no pasting, no context reloading.
 Synthesize + Act — AI combines recalled vault context (including Onyx-derived company knowledge) with current repo state. No contradictions. No stale data.
 File the Work — search() + execute() on GitHub API converts recalled plans directly into issues — epic + children. Zero copy-paste.
-
 
 Slide 11 — Transport Layers & GraphQL Projection
 Transport Layers & GraphQL Projection
@@ -211,7 +207,6 @@ Document Pipeline
 Stirling-PDF · Paperless NGX · Apache Tika · Gotenberg · Onyx — four document services plus an enterprise knowledge layer
 Section 2
 
-
 Slide 13 — Document Pipeline Overview
 Document Pipeline Overview
 Five services forming a complete, knowledge-augmented, format-agnostic document processing and archival system
@@ -219,7 +214,7 @@ The Two-Layer Architecture
 Knowledge Layer (runs in parallel / on-demand via Ouroboros routing): Onyx (enterprise semantic search, 40+ connectors, Flink-synced) provides company-wide context before, during, and after any document workflow. Flink keeps the Onyx index continuously updated from all connected sources.
 Document Processing Layer (sequential): Apache Tika → Gotenberg → Stirling-PDF → Paperless NGX
 Both layers feed into the ClawQL Obsidian vault via memory_ingest, and results surface together in memory_recall.
-Apache Tika 
+Apache Tika
 DNS: tika:9998 | Ingress: internal only Universal text & metadata extraction from 1,000+ file formats. The document pipeline’s intake layer.
 PDF text extraction
 Office: Word/Excel/PPT
@@ -227,7 +222,7 @@ HTML, XML, email (.eml)
 OCR fallback via Tesseract
 Metadata: author, dates, lang
 1,000+ MIME types supported
-Gotenberg 
+Gotenberg
 DNS: gotenberg:3000 | Ingress: internal only High-fidelity document conversion to PDF using headless Chromium and LibreOffice.
 HTML → PDF (Chromium)
 Markdown → PDF
@@ -235,7 +230,7 @@ Office → PDF (LibreOffice)
 URL → PDF screenshot
 Merge + split in conversion
 Header/footer injection
-Stirling-PDF 
+Stirling-PDF
 DNS: stirling-pdf:8080 | Ingress: pdf.clawql.local Heavy PDF manipulation engine — the pipeline’s processing workhorse after conversion.
 Merge / split PDFs
 High-accuracy OCR
@@ -243,7 +238,7 @@ PII redaction (SSN, etc)
 Sign & certify
 Compress & optimize
 Batch processing
-Paperless NGX 
+Paperless NGX
 DNS: paperless:8000 | Ingress: paperless.clawql.local Long-term archive with Tika-powered OCR, auto-tagging, full-text search, and consumption inbox.
 Auto-tag by content
 Correspondent tracking
@@ -251,7 +246,7 @@ Full-text search index
 Consumption inbox folder
 Tika as parser backend
 Isolated Postgres + Redis
-Onyx 
+Onyx
 DNS: onyx:8080 | Ingress: onyx.clawql.local (optional) Enterprise semantic search across 40+ connectors — the knowledge backbone of the entire platform.
 Permission-aware semantic search
 40+ connectors (Slack, Drive, Confluence, Jira, GitHub, email, and more)
@@ -259,7 +254,6 @@ Citation-returning ranked results
 Real-time Flink sync
 MCP server + REST OpenAPI
 File upload + indexing API for newly archived Paperless documents
-
 
 Slide 14 — Stirling-PDF: The PDF Manipulation Engine
 Stirling-PDF: The PDF Manipulation Engine
@@ -296,7 +290,6 @@ After a successful Paperless import, Ouroboros can optionally call Onyx’s file
 Isolated Backends
 Paperless runs with its own dedicated Postgres (paperless-postgres:5432) and Redis (paperless-redis:6379) instances — isolated from ClawQL’s shared backends to prevent schema conflicts. Both are included in the unified Helm chart.
 OpenAPI spec fetched from /api/schema/ and bundled as providers/paperless.json. Runtime base URL injected via PAPERLESS_BASE_URL at spec refresh time.
-
 
 Slide 16 — Apache Tika: Universal Content Extraction
 Apache Tika: Universal Content Extraction
@@ -349,7 +342,6 @@ Gotenberg can merge multiple PDF files in a single conversion request — before
 Header & Footer Injection
 Inject custom HTML headers and footers into converted PDFs — company logos, page numbers, date stamps, document reference numbers, or confidentiality notices. Driven by Ouroboros workflow parameters so each document class can have its own footer template.
 
-
 Slide 18 — Onyx: Enterprise Knowledge Search
 Onyx: Enterprise Knowledge Search
 The knowledge backbone — semantic search across your entire company, permission-aware, real-time, citation-backed
@@ -369,7 +361,6 @@ Citation-Returning Results
 Every result from knowledge_search_onyx includes a source name, document title, relevant chunk text, and a citation URL back to the original source. These citations are automatically included when the result is ingested into the Obsidian vault — making company knowledge permanently attributable and auditable.
 Flink Real-Time Sync
 Flink pipelines keep Onyx’s index continuously updated from all connected sources. New Slack messages, updated Confluence pages, closed Jira tickets — all reflected in Onyx’s index within minutes. knowledge_search_onyx never returns stale results, even in fast-moving company environments.
-
 
 Slide 19 — Complete Pipeline: Step by Step
 Complete Pipeline: Step by Step
@@ -396,7 +387,6 @@ Slide 19 — Section Divider: Intelligence Layer
 Intelligence Layer
 Ouroboros · Onyx Knowledge Search · Cuckoo Filters · Merkle Trees · notify() — the invisible brain that makes workflows self-orchestrating
 Section 3
-
 
 Slide 20 — Ouroboros: The Invisible Orchestration Engine
 Ouroboros: The Invisible Orchestration Engine
@@ -427,11 +417,10 @@ Checks each result against the Seed’s acceptance criteria. Onyx result count a
 5 — Evolve
 If any criterion fails, Ouroboros automatically adjusts and retries. Onyx returned too few results? Retry with a broader query or different connector scope. OCR below threshold? Retry with higher accuracy settings. Paperless import timeout? Retry with backoff. After successful retry, re-evaluates from scratch. Retry history is logged to Postgres. If evolution exhausts retry budget, reports failure conversationally with exact reason.
 
-
 Slide 22 — Cuckoo Filters: O(1) Deduplication
 Cuckoo Filters: O(1) Deduplication
 Probabilistic membership testing with deletion support — keeping the pipeline fast at scale
-A Cuckoo filter answers “have I seen this before?” in O(1) time with very low false positive rates. Unlike Bloom filters, it supports deletions — meaning documents can be removed from the deduplicated set without rebuilding. Configured via CLAWQLCUCKOO* environment variables.
+A Cuckoo filter answers “have I seen this before?” in O(1) time with very low false positive rates. Unlike Bloom filters, it supports deletions — meaning documents can be removed from the deduplicated set without rebuilding. Configured via CLAWQLCUCKOO\* environment variables.
 Stirling → Paperless Ingestion
 WHEN: Before every Paperless import call Computes a hash of the processed PDF (post-OCR, post-redact). Checks the filter: has this exact document been imported before? If yes — skip. This prevents duplicate imports at scale without requiring a full database scan on every ingestion.
 Ouroboros Execute Phase
@@ -443,11 +432,10 @@ WHEN: Before repeated knowledge_search_onyx calls with identical queries If the 
 ClawQL MCP Layer
 WHEN: During tool-discovery caching Caches tool-discovery result patterns and detects duplicate tool-call sequences. If the AI makes the same search() call twice in a session, the second call returns from the cached result set rather than re-scanning all specs.
 
-
 Slide 23 — Merkle Trees: Cryptographic Audit Trails
 Merkle Trees: Cryptographic Audit Trails
 Tamper-evident, verifiable proof that every processing step produced the correct result — including knowledge retrieval
-A Merkle tree hashes each processing step’s output into a leaf node. The root hash proves the entire chain — if any step’s output was tampered with, the root changes. ClawQL stores the Merkle root in Postgres after every Ouroboros workflow. Configured via CLAWQLMERKLE* environment variables.
+A Merkle tree hashes each processing step’s output into a leaf node. The root hash proves the entire chain — if any step’s output was tampered with, the root changes. ClawQL stores the Merkle root in Postgres after every Ouroboros workflow. Configured via CLAWQLMERKLE\* environment variables.
 Merkle Tree Structure (Knowledge-Augmented Workflow)
 ROOT HASH (stored in Postgres)
 Hash(L1+L2)
@@ -494,7 +482,6 @@ Infrastructure
 9 bundled providers · Unified Helm chart · 11+ services · One deployment · Privacy-first
 Section 4
 
-
 Slide 26 — Bundled Providers: The Default Stack
 Bundled Providers: The Default Stack
 9 providers ship in providers/ — CLAWQL_PROVIDER=default-multi-provider loads all of them
@@ -533,8 +520,8 @@ Ingress: clawql.local, pdf.clawql.local, paperless.clawql.local, onyx.clawql.loc
 Paperless isolated Postgres and Redis included — no external DB dependency
 Flink included as a deployment for real-time connector sync into Onyx
 Rolling updates: rebuild ClawQL image, helm upgrade — zero-downtime in most cases
-Spec Refresh Command 
-npm run fetch-provider-specs 
+Spec Refresh Command
+npm run fetch-provider-specs
 Accepts environment variables:
 STIRLING_BASE_URL
 PAPERLESS_BASE_URL
@@ -596,8 +583,6 @@ paperless-redis:6379
 — (internal only)
 Paperless task queue only — Celery workers for background OCR and ingestion
 
-
-
 Slide 29 — Privacy, Security & Local-First Architecture
 Privacy, Security & Local-First Architecture
 Everything runs in your cluster — no cloud, no SaaS data exposure, no per-user limits
@@ -620,7 +605,6 @@ Slide 30 — Section Divider: Roadmap & Vision
 Roadmap & Vision
 What’s built, what’s being built, and where ClawQL is going
 Section 5
-
 
 Slide 31 — Real-World Demo: The Complete Workflow
 Real-World Demo: The Complete Workflow
@@ -650,13 +634,12 @@ notify():
 Posts to #finance: “✅ Q1 invoice batch complete. Doc #5102 archived. 3 pricing discrepancies → GitHub #201–203. Merkle: a3f9… | Onyx citations attached.”
 What the user sees in Cursor: “Done. 14 files processed, merged, OCR’d, PII redacted, cross-referenced against Q1 pricing policy — 3 discrepancies found and filed as GitHub issues — archived as doc #5102 in Paperless, and #finance has been notified on Slack.”
 
-
 Slide 32 — Development Roadmap
 Development Roadmap
 What’s being built — ordered by dependency, not priority
-Ouroboros TypeScript Port — IN PROGRESS 
+Ouroboros TypeScript Port — IN PROGRESS
 Full Interview → Seed → Execute → Evaluate → Evolve loop embedded in ClawQL pod. In-process tool executor registry. Seeds and logs to shared Postgres. Onyx calls handled through the same executor registry as all other providers.
-Tika + Gotenberg Spec Bundling — IN PROGRESS 
+Tika + Gotenberg Spec Bundling — IN PROGRESS
 Fetch/generate OpenAPI specs from running instances. Save as providers/tika.json and providers/gotenberg.json. Wire into default-multi-provider preset.
 Onyx Provider Bundling + knowledge_search_onyx Tool — NEXT
 Bundle or fetch Onyx’s MCP/REST spec as providers/onyx.json. Add ONYX_BASE_URL + ONYX_API_TOKEN runtime injection. Implement knowledge_search_onyx as a thin wrapper over search() + execute() against the Onyx spec. Enable via CLAWQL_ENABLE_ONYX=true.
@@ -731,15 +714,14 @@ Cryptographically verifiable audit trails on every workflow step, including know
 100% local, private, and yours — no cloud, no SaaS, no limits
 GET STARTED
 Documentation
-docs.clawql.com 
+docs.clawql.com
 GitHub
-danielsmithdevelopment/ClawQL 
+danielsmithdevelopment/ClawQL
 npm Package
-clawql-mcp 
+clawql-mcp
 Kubernetes
-docs.clawql.com/kubernetes 
+docs.clawql.com/kubernetes
 Helm Chart
-docs.clawql.com/helm 
+docs.clawql.com/helm
 Case Studies
 docs.clawql.com/case-studies
-

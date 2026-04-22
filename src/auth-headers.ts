@@ -133,7 +133,12 @@ function envResolvedAuthHeaders(specLabel?: string): Record<string, string> {
   }
 
   if (effective === "github") {
-    const bearer = trimEnv("CLAWQL_GITHUB_TOKEN", "GITHUB_TOKEN", "GH_TOKEN", "CLAWQL_BEARER_TOKEN");
+    const bearer = trimEnv(
+      "CLAWQL_GITHUB_TOKEN",
+      "GITHUB_TOKEN",
+      "GH_TOKEN",
+      "CLAWQL_BEARER_TOKEN"
+    );
     return bearer ? { Authorization: `Bearer ${bearer}` } : {};
   }
   if (effective === "cloudflare") {
@@ -149,10 +154,7 @@ function envResolvedAuthHeaders(specLabel?: string): Record<string, string> {
     return bearer ? { Authorization: `Bearer ${bearer}` } : {};
   }
 
-  if (
-    (label && isGoogleDiscoverySpecLabel(label)) ||
-    isGoogleDiscoverySpecLabel(effective)
-  ) {
+  if ((label && isGoogleDiscoverySpecLabel(label)) || isGoogleDiscoverySpecLabel(effective)) {
     const bearer = trimEnv("CLAWQL_GOOGLE_ACCESS_TOKEN", "GOOGLE_ACCESS_TOKEN");
     return bearer ? { Authorization: `Bearer ${bearer}` } : {};
   }
