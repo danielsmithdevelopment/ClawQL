@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **`default-multi-provider` merged preset removed** — use **`CLAWQL_BUNDLED_PROVIDERS=…`**, or **`CLAWQL_SPEC_PATHS=…`**, for a smaller merge. **`CLAWQL_PROVIDER=google`**, **`atlassian`**, **`all-providers`** remain.
 - **`CLAWQL_GOOGLE_CLOUD_SPECS`** and **`CLAWQL_GOOGLE_TOP50_SPECS`** no longer select a merged spec by themselves. Use **`CLAWQL_PROVIDER=google`**, **`CLAWQL_BUNDLED_PROVIDERS=google`**, or **`CLAWQL_SPEC_PATHS=…`**. (Workflows such as `npm run workflow:gcp-multi` set **`CLAWQL_PROVIDER=google`**.)
-- **Merged Google Cloud preset** is **`CLAWQL_PROVIDER=google`**. The old id **`google-top50`** is accepted as a **deprecated alias** in **`BUNDLED_PROVIDER` groups and **`CLAWQL_BUNDLED_PROVIDERS`\*\*.
+- **Merged Google Cloud preset** is **`CLAWQL_PROVIDER=google`**. The old id **`google-top50`** is accepted as a **deprecated alias** in bundled provider groups and in **`CLAWQL_BUNDLED_PROVIDERS`**.
 - **Standalone Google single-file `CLAWQL_PROVIDER`** is removed: use merged **`google`**, or **`CLAWQL_SPEC_PATH`** / **`CLAWQL_DISCOVERY_URL`** for a single Discovery doc.
 - **Helm / deploy defaults** that used **`google-top50`** use **`all-providers`**, **`google`**, or explicit list env as documented in **`values.yaml` / `values-docker-desktop.yaml`**.
 
