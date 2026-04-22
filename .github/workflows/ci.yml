@@ -1,6 +1,8 @@
 # Fast checks run first (parallel). Test matrix + coverage only after lint + workflow-scripts pass.
 # ESLint/Prettier caches speed repeat runs. Matrix fail-fast cancels other Node versions on first failure.
 # CodeQL stays in codeql.yml so scheduled scans do not run the full CI matrix.
+# Node 20 (EOL) is not tested. Defaults use the latest Current line available on nodejs.org (v25+ here); add v26
+# to the matrix and defaults when v26.0.0 is published to the dist index and `actions/setup-node` resolves it.
 
 name: CI
 
@@ -30,7 +32,7 @@ jobs:
       # actions/setup-node@v6.3.0
       - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
         with:
-          node-version: "22"
+          node-version: "25"
           cache: npm
 
       # actions/cache@v4.2.3
@@ -93,7 +95,7 @@ jobs:
 
       - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
         with:
-          node-version: "22"
+          node-version: "25"
           cache: npm
 
       - uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684
@@ -216,7 +218,7 @@ jobs:
       # actions/setup-node@v6.3.0
       - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
         with:
-          node-version: "22"
+          node-version: "25"
           cache: npm
           cache-dependency-path: website/package-lock.json
 
@@ -238,7 +240,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        node-version: [20, 22, 24]
+        node-version: [22, 24, 25]
     steps:
       # actions/checkout@v6.0.2
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd

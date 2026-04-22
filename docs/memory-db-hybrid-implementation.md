@@ -20,7 +20,7 @@ This document explains **what was built**, **why**, **how the pieces fit togethe
 
 - **Vault Markdown stays canonical.** Agents and humans keep editing `.md` files; the DB is a **derived index** for structure, future vectors, and fast membership gates (Cuckoo in #25).
 - **No native SQLite bindings** in this phase: the Docker image uses **`npm ci --ignore-scripts`**, and the runtime image is **Distroless**. A WASM-based SQLite (**[sql.js](https://github.com/sql-js/sql.js/)**) avoids `node-gyp` / prebuild fragility while remaining file-backed after explicit `export()` writes.
-- **Node 20+ CI** must pass: `better-sqlite3` was rejected for this reason; **sql.js** runs on the whole matrix in **`.github/workflows/ci.yml`**.
+- **Node 22+ CI** must pass: `better-sqlite3` was rejected for this reason; **sql.js** runs on the whole matrix in **`.github/workflows/ci.yml`**.
 
 ---
 

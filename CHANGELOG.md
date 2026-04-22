@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Node / CI:** `engines` **>=22**; workflows use **25** in `actions/setup-node` and test on **22 / 24 / 25** (Node 20 removed). **Docker** build: **`node:25-`** (`bookworm-slim` / `alpine`); **Distroless** image **`gcr.io/distroless/nodejs24-debian13`**. Bumped **docker/build-push-action**, **docker/metadata-action**, **docker/login-action**, and **docker/setup-buildx-action** to current majors so those steps no longer run on deprecated Node 20. (Node **26** is not published on `nodejs.org` dist or in distroless yet; adopt when available.)
+
 ## [4.0.0] - 2026-04-21
 
 ### Added

@@ -4,7 +4,7 @@
 # Build (repo root):  docker build -f docker/Dockerfile -t clawql-mcp .
 # Run (stdio):        docker run -i --rm clawql-mcp
 
-FROM node:22-bookworm-slim AS builder
+FROM node:25-bookworm-slim AS builder
 WORKDIR /app
 
 COPY package.json package-lock.json ./
@@ -24,7 +24,8 @@ COPY bin ./bin
 RUN mkdir -p /vault && chown 65532:65532 /vault
 
 # Distroless Node: no shell; only Node + minimal libc / CA bundle for HTTPS fetches.
-FROM gcr.io/distroless/nodejs22-debian12 AS runtime
+# Runtime uses Node 24 (LTS); no nodejs26 image yet. Build stage above may use a newer major.
+FROM gcr.io/distroless/nodejs24-debian13 AS runtime
 WORKDIR /app
 
 ENV NODE_ENV=production
