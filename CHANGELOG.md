@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.0.0] - 2026-04-21
+
 ### Added
 
 - **`CLAWQL_BUNDLED_PROVIDERS`:** merge only the requested bundled vendor ids and/or **`google`** (expands to the on-disk Google Cloud manifest). The explicit alternative to **`all-providers`**; no other “partial” default.

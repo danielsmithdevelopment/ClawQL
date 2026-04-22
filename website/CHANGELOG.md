@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-04-21
+
+- Site notes aligned with **clawql-mcp v4.0.0** (multi-spec defaults, bundled providers env, spec-configuration / bundled-specs copy).
+
 ## 2026-04-19
 
 - Docs deploy (OpenNext + Cloudflare Worker `clawql-docs`); site content aligned with **clawql-mcp v3.4.1** (case studies, tools, caching headers).
