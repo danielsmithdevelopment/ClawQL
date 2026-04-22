@@ -7,6 +7,7 @@ alwaysApply: true
 
 When **ClawQL MCP** is available, use it deliberately:
 
+- **`call_mcp_tool`**: Use server **`user-clawql`** if ClawQL is configured in **`~/.cursor/mcp.json`**, or **`workspace-clawql`** if it is only in **`.cursor/mcp.json`** in the repo. The `mcpServers` key remains **`clawql`** in JSON; Cursor prepends **`user-`** / **`workspace-`** for the agent API. Bare **`clawql`** is not accepted there.
 - **`memory_recall`**: At the start of non-trivial work, or when the user references past decisions, the vault, or missing context. Use a concrete `query`; keep `limit` reasonable; raise **`maxDepth`** when graph context matters.
 - **`memory_ingest`**: After important outcomes—decisions, debugging conclusions, env/setup notes, API contracts, user preferences, or links between topics. Prefer structured **`insights`**; put verbatim logs in **`toolOutputs`**; use **`wikilinks`** for the Obsidian graph; reuse **`title`** with **`append: true`** (default) to extend the same page.
 

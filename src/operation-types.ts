@@ -15,6 +15,8 @@ export interface Operation {
   parameters: Record<string, ParameterInfo>;
   scopes: string[];
   requestBody?: string;
+  /** Selected OpenAPI requestBody media type (e.g. multipart/form-data); drives REST `execute` body encoding. */
+  requestBodyContentType?: string;
   responseBody?: string;
   /**
    * When multiple specs are loaded, index into `LoadedSpec.openapis` for this operation.

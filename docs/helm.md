@@ -92,7 +92,7 @@ See **[`charts/clawql-mcp/values.yaml`](../charts/clawql-mcp/values.yaml)**. Com
 | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `image.repository`, `image.tag`, `image.pullPolicy` | Container image                                                                                                                                  |
 | `service.type`, `service.http.port`                 | `LoadBalancer` vs `ClusterIP`, front port                                                                                                        |
-| `provider`                                          | **`CLAWQL_PROVIDER`** (e.g. `google-top50`)                                                                                                      |
+| `provider`                                          | **`CLAWQL_PROVIDER`** (e.g. `google`, `default-multi-provider`, `all-providers`)                                                                                                      |
 | `enableGrpc` / `enableGrpcReflection`               | gRPC listener on **50051**                                                                                                                       |
 | `enableCache`                                       | **`CLAWQL_ENABLE_CACHE=1`** — in-process **`cache`** tool (default **true**)                                                                     |
 | `enableAudit`                                       | **`CLAWQL_ENABLE_AUDIT=1`** — in-process **`audit`** tool (default **false**; [#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)) |

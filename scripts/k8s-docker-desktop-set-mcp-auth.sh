@@ -2,8 +2,8 @@
 # Create/update Kubernetes Secret **clawql-github-auth** with MCP upstream tokens (GitHub PAT +
 # optional Cloudflare + Google), wire them into clawql-mcp-http, set CORS, and restart.
 #
-# Name: "mcp auth" — not GitHub-only; default bundle uses Google top50 + Cloudflare + GitHub
-# (see src/auth-headers.ts mergedAuthHeaders).
+# Name: "mcp auth" — not GitHub-only; default bundle is default-multi-provider (Google top50 +
+# Cloudflare + GitHub + Slack + Paperless + Stirling + Tika + Gotenberg — see src/auth-headers.ts).
 #
 # Keys stored (when set):
 #   CLAWQL_GITHUB_TOKEN, CLAWQL_BEARER_TOKEN  — required PAT (from gh, env, or stdin)

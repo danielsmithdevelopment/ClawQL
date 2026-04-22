@@ -1,0 +1,27 @@
+openapi: 3.0.3
+info:
+  title: Stirling-PDF
+  description: >
+    Minimal stub for ClawQL search/execute. For the full SpringDoc surface, run
+    `npm run fetch-provider-specs` with STIRLING_BASE_URL (e.g. http://stirling-pdf:8080).
+    When security is enabled, set STIRLING_API_KEY (sent as X-API-KEY).
+  version: "1"
+servers:
+  - url: http://stirling-pdf:8080
+paths:
+  /api/v1/info/status:
+    get:
+      operationId: stirling_api_v1_info_status_retrieve
+      summary: Server status / health-style info (path may vary by version)
+      responses:
+        "200":
+          description: OK
+  /api/v1/misc/version:
+    get:
+      operationId: stirling_api_v1_misc_version_retrieve
+      summary: Application version string (path may vary by version)
+      responses:
+        "200":
+          description: Version info
+components:
+  schemas: {}

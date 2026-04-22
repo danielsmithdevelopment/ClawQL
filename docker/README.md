@@ -151,7 +151,7 @@ grpcurl -plaintext -d '{"service":"model_context_protocol.Mcp"}' localhost:50051
 
 ### MCP auth (GitHub + optional Cloudflare + Google) on Docker Desktop K8s
 
-Merged **`execute`** calls pick the bearer per **`specLabel`**: GitHub, Cloudflare, and Google top50 API slugs (e.g. `compute-v1`) each use their own env vars (see `src/auth-headers.ts`). **`CLAWQL_BEARER_TOKEN`** remains a fallback for other vendors. For the default **Google top50 + Cloudflare + GitHub** bundle, set the tokens you need in the cluster.
+Merged **`execute`** calls pick auth per **`specLabel`**: GitHub, Cloudflare, and Google Discovery slugs (e.g. `compute-v1`) each use their own env vars; Slack, Sentry, and n8n use dedicated env vars (not **`CLAWQL_BEARER_TOKEN`**). Paperless, Stirling, Tika, and Gotenberg follow **`src/auth-headers.ts`**. For the **default** merge (**Google + Cloudflare + GitHub + Slack + Paperless + Stirling + Tika + Gotenberg**), set the tokens you need in the cluster.
 
 | Variable | Required | Purpose |
 |----------|----------|---------|

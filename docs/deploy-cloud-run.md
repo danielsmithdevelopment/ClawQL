@@ -29,7 +29,7 @@ Optional inputs:
 - `REPO` (default: `clawql`)
 - `IMAGE` (default: `clawql-mcp`)
 - `TAG` (default: current git short SHA, fallback `manual`)
-- `PROVIDER` (default: `google-top50`)
+- `PROVIDER` (default: `google`)
 - `MCP_SERVICE` (default: `clawql-mcp-http`)
 - `ALLOW_UNAUTH` (`true` or `false`, default: `true`)
 

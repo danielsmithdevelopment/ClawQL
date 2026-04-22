@@ -114,7 +114,8 @@ function plainToAdf(text) {
 
 async function runSearchWorkflow() {
   process.env.CLAWQL_BUNDLED_OFFLINE = process.env.CLAWQL_BUNDLED_OFFLINE ?? "1";
-  process.env.CLAWQL_GOOGLE_TOP50_SPECS = process.env.CLAWQL_GOOGLE_TOP50_SPECS ?? "1";
+  delete process.env.CLAWQL_GOOGLE_TOP50_SPECS;
+  delete process.env.CLAWQL_GOOGLE_CLOUD_SPECS;
 
   const { loadSpec, resetSpecCache } = await import(
     join(ROOT, "dist", "spec-loader.js")
@@ -130,7 +131,6 @@ async function runSearchWorkflow() {
   // True operation totals per provider spec (independent of top search hits shown).
   for (const provider of PROVIDERS) {
     process.env.CLAWQL_PROVIDER = provider;
-    process.env.CLAWQL_GOOGLE_TOP50_SPECS = provider === "google" ? "1" : "0";
     resetSpecCache();
     const { operations } = await loadSpec();
     providerOperationCounts[provider] = operations.length;
@@ -142,7 +142,6 @@ async function runSearchWorkflow() {
 
   for (const step of WORKFLOW) {
     process.env.CLAWQL_PROVIDER = step.provider;
-    process.env.CLAWQL_GOOGLE_TOP50_SPECS = step.provider === "google" ? "1" : "0";
     resetSpecCache();
     const { operations } = await loadSpec();
 

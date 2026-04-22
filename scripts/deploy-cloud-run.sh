@@ -12,7 +12,7 @@ PROJECT_ID="${PROJECT_ID:-}"
 REGION="${REGION:-us-central1}"
 REPO="${REPO:-clawql}"
 IMAGE="${IMAGE:-clawql-mcp}"
-PROVIDER="${PROVIDER:-google-top50}"
+PROVIDER="${PROVIDER:-google}"
 MCP_SERVICE="${MCP_SERVICE:-clawql-mcp-http}"
 ALLOW_UNAUTH="${ALLOW_UNAUTH:-true}"
 

@@ -26,7 +26,7 @@ export type BundledProviderGroupResolver = () => Promise<ProviderGroupItem[]>;
 /**
  * Named presets that compose multiple specs into one merged index.
  * - `providers`: references ids from BUNDLED_PROVIDERS
- * - `resolve`: custom resolver for manifest-backed groups (e.g. google-top50)
+ * - `resolve`: custom resolver for manifest-backed groups (e.g. merged Google Cloud APIs)
  */
 export interface BundledProviderGroup {
   providers?: string[];
@@ -50,14 +50,6 @@ export const BUNDLED_PROVIDERS: Record<string, BundledProvider> = {
       "https://raw.githubusercontent.com/magmax/atlassian-openapi/master/spec/bitbucket.yaml",
     bundledIntrospectionPath: "providers/atlassian/bitbucket/introspection.json",
     bundledSchemaSdlPath: "providers/atlassian/bitbucket/schema.graphql",
-  },
-  google: {
-    id: "google",
-    bundledSpecPath: "providers/google/discovery.json",
-    format: "discovery",
-    fallbackUrl: "https://container.googleapis.com/$discovery/rest?version=v1",
-    bundledIntrospectionPath: "providers/google/introspection.json",
-    bundledSchemaSdlPath: "providers/google/schema.graphql",
   },
   /** Full Cloudflare API OpenAPI (large). Prefer committed `providers/cloudflare/openapi.yaml`. */
   cloudflare: {
@@ -111,6 +103,38 @@ export const BUNDLED_PROVIDERS: Record<string, BundledProvider> = {
     bundledIntrospectionPath: "providers/n8n/introspection.json",
     bundledSchemaSdlPath: "providers/n8n/schema.graphql",
   },
+  /** Apache Tika server (JAX-RS). Base URL: TIKA_BASE_URL. */
+  tika: {
+    id: "tika",
+    bundledSpecPath: "providers/tika/openapi.yaml",
+    format: "openapi",
+    fallbackUrl:
+      "https://raw.githubusercontent.com/danielsmithdevelopment/ClawQL/main/providers/tika/openapi.yaml",
+  },
+  /** Gotenberg document conversion API. Base URL: GOTENBERG_BASE_URL. */
+  gotenberg: {
+    id: "gotenberg",
+    bundledSpecPath: "providers/gotenberg/openapi.yaml",
+    format: "openapi",
+    fallbackUrl:
+      "https://raw.githubusercontent.com/danielsmithdevelopment/ClawQL/main/providers/gotenberg/openapi.yaml",
+  },
+  /** Paperless-ngx REST (minimal bundled subset; refresh from /api/schema/). Base URL: PAPERLESS_BASE_URL. */
+  paperless: {
+    id: "paperless",
+    bundledSpecPath: "providers/paperless/openapi.yaml",
+    format: "openapi",
+    fallbackUrl:
+      "https://raw.githubusercontent.com/danielsmithdevelopment/ClawQL/main/providers/paperless/openapi.yaml",
+  },
+  /** Stirling-PDF (minimal stub; refresh from /v3/api-docs). Base URL: STIRLING_BASE_URL. */
+  stirling: {
+    id: "stirling",
+    bundledSpecPath: "providers/stirling/openapi.yaml",
+    format: "openapi",
+    fallbackUrl:
+      "https://raw.githubusercontent.com/danielsmithdevelopment/ClawQL/main/providers/stirling/openapi.yaml",
+  },
 };
 
 async function resolveGoogleTop50Items(): Promise<ProviderGroupItem[]> {
@@ -127,25 +151,35 @@ async function resolveGoogleTop50Items(): Promise<ProviderGroupItem[]> {
   }));
 }
 
+/**
+ * Default merged bundle (no spec env, and `CLAWQL_PROVIDER=default-multi-provider`):
+ * **Google** (bundled Google Cloud API set) + **Cloudflare** + **GitHub** + **Slack** + **Paperless** + **Stirling** + **Tika** + **Gotenberg**.
+ * For Jira, Bitbucket, Sentry, and n8n as well, use **`all-providers`**.
+ */
 async function resolveDefaultMultiProviderItems(): Promise<ProviderGroupItem[]> {
   const root = getPackageRoot();
   const google = await resolveGoogleTop50Items();
-  const cloudflare = BUNDLED_PROVIDERS.cloudflare;
-  const github = BUNDLED_PROVIDERS.github;
-  return [
-    ...google,
-    { abs: resolvePath(root, cloudflare.bundledSpecPath), label: cloudflare.id },
-    { abs: resolvePath(root, github.bundledSpecPath), label: github.id },
-  ];
+  const vendorIds = [
+    "cloudflare",
+    "github",
+    "slack",
+    "paperless",
+    "stirling",
+    "tika",
+    "gotenberg",
+  ] as const;
+  const rest = vendorIds.map((id) => {
+    const p = BUNDLED_PROVIDERS[id];
+    return { abs: resolvePath(root, p.bundledSpecPath), label: p.id };
+  });
+  return [...google, ...rest];
 }
 
 /**
- * In a merged load, `specLabel` is each Google top50 API slug (e.g. `container-v1`) or
- * one of these vendor ids — every bundled provider except the single-file `google` discovery.
+ * In a merged load, `specLabel` is each Google Cloud API slug from the bundled manifest (e.g. `container-v1`) or
+ * one of these non-Google bundled vendor ids (`BUNDLED_PROVIDERS` keys; Google Cloud uses the manifest, not a single file here).
  */
-export const BUNDLED_MERGED_VENDOR_LABELS: readonly string[] = Object.keys(BUNDLED_PROVIDERS)
-  .filter((id) => id !== "google")
-  .sort();
+export const BUNDLED_MERGED_VENDOR_LABELS: readonly string[] = Object.keys(BUNDLED_PROVIDERS).sort();
 
 async function resolveAllBundledProvidersItems(): Promise<ProviderGroupItem[]> {
   const root = getPackageRoot();
@@ -162,11 +196,17 @@ async function resolveAllBundledProvidersItems(): Promise<ProviderGroupItem[]> {
 
 export const BUNDLED_PROVIDER_GROUPS: Record<string, BundledProviderGroup> = {
   atlassian: { providers: ["jira", "bitbucket"] },
-  "google-top50": { resolve: resolveGoogleTop50Items },
-  /** Same as no spec env: Google top50 + Cloudflare + GitHub (see `resolveDefaultMultiProviderItems`). */
+  /** Merged bundled Google Cloud APIs from `providers/google/google-top50-apis.json` (see providers docs). */
+  google: { resolve: resolveGoogleTop50Items },
+  /** Same as no spec env: Google Cloud bundle + Cloudflare + GitHub + Slack + Paperless + Stirling + Tika + Gotenberg. */
   "default-multi-provider": { resolve: resolveDefaultMultiProviderItems },
-  /** Google top50 + every other bundled vendor (Jira, Bitbucket, Cloudflare, GitHub, Slack, Sentry, n8n). */
+  /** Google Cloud bundle + every other bundled vendor (Jira, Bitbucket, Cloudflare, GitHub, Slack, Sentry, n8n, …). */
   "all-providers": { resolve: resolveAllBundledProvidersItems },
+};
+
+/** Deprecated merged preset id — resolves the same as `google`. */
+const BUNDLED_PROVIDER_GROUP_ALIASES: Record<string, string> = {
+  "google-top50": "google",
 };
 
 export function resolveBundledProvider(raw: string | undefined): BundledProvider | undefined {
@@ -186,7 +226,9 @@ export async function resolveBundledProviderGroup(
   raw: string | undefined
 ): Promise<ProviderGroupItem[] | undefined> {
   if (!raw?.trim()) return undefined;
-  const group = BUNDLED_PROVIDER_GROUPS[raw.trim().toLowerCase()];
+  const key = raw.trim().toLowerCase();
+  const canonical = BUNDLED_PROVIDER_GROUP_ALIASES[key] ?? key;
+  const group = BUNDLED_PROVIDER_GROUPS[canonical];
   if (!group) return undefined;
   if (group.resolve) return group.resolve();
   const ids = group.providers ?? [];

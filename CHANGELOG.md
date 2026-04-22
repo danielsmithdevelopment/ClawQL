@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`CLAWQL_PROVIDER_AUTH_JSON`:** single JSON env mapping merged **`specLabel`** → credentials (string Bearer/Token or header object), with **`google`** as catch-all for Google Cloud Discovery slugs. When set, **`Authorization`** in **`CLAWQL_HTTP_HEADERS`** is ignored so each provider can authenticate independently; other keys from **`CLAWQL_HTTP_HEADERS`** still apply. See **`src/auth-headers.ts`**.
+
+### Changed
+
+- **Default bundled merge** (`default-multi-provider` / no spec env): **Google Cloud (bundled) + Cloudflare + GitHub + Slack + Paperless + Stirling + Tika + Gotenberg**. Use **`CLAWQL_PROVIDER=all-providers`** for Jira, Bitbucket, Sentry, n8n, and every other bundled vendor on top of the same Google catalog.
+
+### Breaking
+
+- **Merged Google Cloud preset** is now **`CLAWQL_PROVIDER=google`** (same Discovery set as before). The old id **`google-top50`** is accepted as a **deprecated alias** only.
+- **Standalone Google single-file `CLAWQL_PROVIDER`** is removed: use merged **`google`**, or **`CLAWQL_SPEC_PATH`** / **`CLAWQL_DISCOVERY_URL`** for a single Discovery doc (e.g. one file under `providers/google/apis/`).
+- **`CLAWQL_GOOGLE_CLOUD_SPECS`** is the preferred env flag for “merge bundled Google Cloud APIs without setting `CLAWQL_PROVIDER`”; **`CLAWQL_GOOGLE_TOP50_SPECS`** remains supported as an alias.
+- **Helm / deploy defaults** that used **`google-top50`** now use **`google`**.
+
 ## [3.4.1] - 2026-04-19
 
 ### Documentation
@@ -167,7 +182,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **MCP tools** **`sandbox_exec`** (Cloudflare Sandbox via optional bridge Worker), **`memory_ingest`**, and **`memory_recall`** when **`CLAWQL_OBSIDIAN_VAULT_PATH`** is set (Obsidian vault; validated at startup when configured).
 - **HTTP MCP**: CORS support for browser clients (`CLAWQL_CORS_ALLOW_ORIGIN`), Cloudflare Worker proxy notes, and related K8s/script alignment.
-- **Per-vendor auth** for merged calls: prefer **`CLAWQL_GOOGLE_ACCESS_TOKEN`**, **`CLAWQL_CLOUDFLARE_API_TOKEN`**, and **`CLAWQL_GITHUB_TOKEN`** where applicable; **`CLAWQL_BEARER_TOKEN`** / **`GOOGLE_ACCESS_TOKEN`** remain as fallbacks (see `.env.example`).
+- **Per-vendor auth** for merged calls: prefer **`CLAWQL_GOOGLE_ACCESS_TOKEN`**, **`CLAWQL_CLOUDFLARE_API_TOKEN`**, and **`CLAWQL_GITHUB_TOKEN`** where applicable; **`GOOGLE_ACCESS_TOKEN`** is for Google Discovery slugs only (not mixed with other providers). **`CLAWQL_BEARER_TOKEN`** is scoped to GitHub, Cloudflare, Atlassian/Jira, and optional Tika/Gotenberg — not Slack, Sentry, n8n, or GCP slugs (see `.env.example` and **`src/auth-headers.ts`**).
 - **ClawQL documentation site** under `website/` (branding, deployment notes).
 - **Design docs** for future vector search (SQLite / Postgres backends).
 

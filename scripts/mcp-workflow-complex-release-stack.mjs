@@ -6,7 +6,7 @@
  * Transports:
  *   - **stdio** (default): spawns `node dist/server.js` with CLAWQL_PROVIDER=all-providers
  *   - **Streamable HTTP**: set `CLAWQL_MCP_URL` (e.g. http://127.0.0.1:8080/mcp) — server must
- *     already run with the same merged preset (all-providers), not e.g. google-top50 only.
+ *     already run with the same merged preset (all-providers), not e.g. google-only.
  *
  * Usage (dry run — **`search` only**, no upstream HTTP):
  *   npm run build && npm run workflow:complex-release-stack:mcp

@@ -29,7 +29,7 @@ spec:
               name: http
           env:
             - name: CLAWQL_PROVIDER
-              value: google-top50
+              value: google
             - name: PORT
               value: "8080"
             - name: MCP_PATH

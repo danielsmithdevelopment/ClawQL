@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { executeRestOperation, mergedAuthHeaders, renderPath } from "./rest-operation.js";
 import type { OpenAPIDoc } from "./spec-loader.js";
 import type { Operation } from "./operation-types.js";
+import { INLINE_OPENAPI_REQUEST_BODY } from "./operation-types.js";
 import { withFetchServer } from "./test-utils/fetch-test-server.js";
 
 function makeOpenApi(serverUrl: string): OpenAPIDoc {
@@ -41,6 +42,7 @@ afterEach(() => {
   delete process.env.CLAWQL_CLOUDFLARE_API_TOKEN;
   delete process.env.CLOUDFLARE_API_TOKEN;
   delete process.env.CLAWQL_PROVIDER;
+  delete process.env.PAPERLESS_BASE_URL;
 });
 
 describe("rest-operation helpers", () => {
@@ -49,12 +51,13 @@ describe("rest-operation helpers", () => {
     expect(renderPath("v1/{name}", {})).toBe("v1/{name}");
   });
 
-  it("mergedAuthHeaders merges json headers and bearer fallback", () => {
+  it("mergedAuthHeaders merges json headers with bearer only for the active provider", () => {
     process.env.CLAWQL_HTTP_HEADERS = '{"X-Test":"1"}';
-    process.env.CLAWQL_BEARER_TOKEN = "abc";
+    process.env.CLAWQL_PROVIDER = "jira";
+    process.env.CLAWQL_BEARER_TOKEN = "atlassian_pat";
     expect(mergedAuthHeaders()).toEqual({
       "X-Test": "1",
-      Authorization: "Bearer abc",
+      Authorization: "Bearer atlassian_pat",
     });
   });
 
@@ -91,8 +94,8 @@ describe("rest-operation helpers", () => {
     });
   });
 
-  it("uses GOOGLE_ACCESS_TOKEN for Google top50 specLabel", () => {
-    process.env.CLAWQL_BEARER_TOKEN = "generic";
+  it("uses GOOGLE_ACCESS_TOKEN for Google Discovery specLabel", () => {
+    process.env.CLAWQL_BEARER_TOKEN = "must_not_be_used_for_gcp";
     process.env.GOOGLE_ACCESS_TOKEN = "ya29.gcp";
     expect(mergedAuthHeaders("container-v1")).toEqual({
       Authorization: "Bearer ya29.gcp",
@@ -179,5 +182,73 @@ describe("executeRestOperation", () => {
     if (!out.ok) {
       expect(out.error).toContain("OpenAPI spec has no servers[0].url");
     }
+  });
+
+  it("sends multipart/form-data when operation declares that content type", async () => {
+    await withFetchServer(
+      async (req) => {
+        expect(req.method).toBe("POST");
+        const ct = req.headers.get("content-type") ?? "";
+        expect(ct).toContain("multipart/form-data");
+        const fd = await req.formData();
+        expect(fd.get("url")).toBe("https://example.com/");
+        return Response.json({ ok: true });
+      },
+      async (origin) => {
+        const out = await executeRestOperation(
+          makeOp({
+            method: "POST",
+            requestBody: INLINE_OPENAPI_REQUEST_BODY,
+            requestBodyContentType: "multipart/form-data",
+          }),
+          { url: "https://example.com/" },
+          makeOpenApi(origin)
+        );
+        expect(out).toEqual({ ok: true, data: { ok: true } });
+      }
+    );
+  });
+
+  it("sends application/octet-stream when args.body is a string", async () => {
+    await withFetchServer(
+      async (req) => {
+        expect(req.method).toBe("PUT");
+        expect(req.headers.get("content-type")).toBe("application/octet-stream");
+        const buf = Buffer.from(await req.arrayBuffer());
+        expect(buf.toString("utf8")).toBe("hello");
+        return Response.json({ ok: true });
+      },
+      async (origin) => {
+        const out = await executeRestOperation(
+          makeOp({
+            method: "PUT",
+            requestBody: INLINE_OPENAPI_REQUEST_BODY,
+            requestBodyContentType: "application/octet-stream",
+          }),
+          { body: "hello" },
+          makeOpenApi(origin)
+        );
+        expect(out).toEqual({ ok: true, data: { ok: true } });
+      }
+    );
+  });
+
+  it("uses PAPERLESS_BASE_URL when specLabel is paperless", async () => {
+    await withFetchServer(
+      async (req) => {
+        const url = new URL(req.url);
+        expect(url.origin + url.pathname).toMatch(/\/v1\/items\/abc$/);
+        return Response.json({ ok: true });
+      },
+      async (origin) => {
+        process.env.PAPERLESS_BASE_URL = origin;
+        const out = await executeRestOperation(
+          makeOp({ specLabel: "paperless" }),
+          { itemId: "abc" },
+          makeOpenApi("http://ignored:9999")
+        );
+        expect(out).toEqual({ ok: true, data: { ok: true } });
+      }
+    );
   });
 });

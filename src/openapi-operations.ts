@@ -39,7 +39,7 @@ export function operationsFromOpenAPI(doc: OpenAPIDocLike): Operation[] {
           : `${method}_${slugPath(pathKey)}`;
 
       const parameters = mapOpenAPIParameters(operation.parameters);
-      const requestBody = extractRequestBodySchemaName(operation.requestBody);
+      const rb = extractRequestBodyMetadata(operation.requestBody);
       const responseBody = extractResponseSchemaName(operation.responses);
       const scopes = extractScopes(operation.security, doc);
 
@@ -55,7 +55,8 @@ export function operationsFromOpenAPI(doc: OpenAPIDocLike): Operation[] {
         resource: inferResource(pathKey),
         parameters,
         scopes,
-        requestBody,
+        requestBody: rb.schemaName,
+        requestBodyContentType: rb.contentType,
         responseBody,
       });
     }
@@ -114,25 +115,37 @@ function schemaRefToName(schema: unknown): string | undefined {
   return m ? m[1] : undefined;
 }
 
-function extractRequestBodySchemaName(requestBody: unknown): string | undefined {
-  if (!requestBody || typeof requestBody !== "object") return undefined;
+/**
+ * Pick request body schema + MIME. Prefers multipart / octet-stream before JSON so
+ * document APIs (Gotenberg, Tika) resolve correctly when multiple content entries exist.
+ */
+function extractRequestBodyMetadata(requestBody: unknown): {
+  schemaName?: string;
+  contentType?: string;
+} {
+  if (!requestBody || typeof requestBody !== "object") return {};
   const rb = requestBody as Record<string, unknown>;
   const content = rb.content as Record<string, unknown> | undefined;
-  if (!content) return undefined;
+  if (!content) return {};
 
-  for (const ct of [
+  const order = [
+    "multipart/form-data",
+    "application/octet-stream",
+    "application/x-www-form-urlencoded",
     "application/json",
     "application/hal+json",
-    "multipart/form-data",
-    "application/x-www-form-urlencoded",
-  ]) {
+  ] as const;
+
+  for (const ct of order) {
     const media = content[ct] as Record<string, unknown> | undefined;
     if (!media?.schema) continue;
     const name = schemaRefToName(media.schema);
-    if (name) return name;
-    return INLINE_OPENAPI_REQUEST_BODY;
+    return {
+      schemaName: name ?? INLINE_OPENAPI_REQUEST_BODY,
+      contentType: ct,
+    };
   }
-  return undefined;
+  return {};
 }
 
 function extractResponseSchemaName(responses: unknown): string | undefined {

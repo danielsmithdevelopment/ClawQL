@@ -5,8 +5,8 @@
  * - Local file (JSON or YAML OpenAPI 3 / Swagger 2), or
  * - URL to fetch the same, or
  * - Google Discovery document URL, or
- * - Default: bundled multi-provider set (Google top50 + Cloudflare + GitHub).
- * - Optional merged preset: CLAWQL_PROVIDER=all-providers (top50 + all other bundled vendors).
+ * - Default: bundled multi-provider set (Google Cloud bundled APIs + Cloudflare + GitHub + Slack + Paperless + Stirling + Tika + Gotenberg).
+ * - Optional merged presets: CLAWQL_PROVIDER=all-providers (Google Cloud bundle + all other bundled vendors), …
  *
  * Produces a flattened Operation list for search + OpenAPI 3 for GraphQL.
  */
@@ -557,7 +557,9 @@ async function resolveMultiSpecItems(): Promise<{ abs: string; label: string }[]
   const discoveryUrl = process.env.CLAWQL_DISCOVERY_URL || process.env.GOOGLE_DISCOVERY_URL;
   const providerRaw = process.env.CLAWQL_PROVIDER?.trim().toLowerCase();
   const pathsEnv = process.env.CLAWQL_SPEC_PATHS?.trim();
-  const useGoogleTop50 = isTruthyEnv(process.env.CLAWQL_GOOGLE_TOP50_SPECS);
+  const useGoogleCloudMerged =
+    isTruthyEnv(process.env.CLAWQL_GOOGLE_CLOUD_SPECS) ||
+    isTruthyEnv(process.env.CLAWQL_GOOGLE_TOP50_SPECS);
   if (pathsEnv) {
     const parts = pathsEnv
       .split(/[,;\n]/)
@@ -568,19 +570,19 @@ async function resolveMultiSpecItems(): Promise<{ abs: string; label: string }[]
       label: labelFromSpecPath(p),
     }));
   }
-  // Merged preset on CLAWQL_PROVIDER (wins over CLAWQL_GOOGLE_TOP50_SPECS alone).
+  // Merged preset on CLAWQL_PROVIDER (wins over CLAWQL_GOOGLE_CLOUD_SPECS / CLAWQL_GOOGLE_TOP50_SPECS alone).
   if (providerRaw) {
     const grouped = await resolveBundledProviderGroup(providerRaw);
     if (grouped) return grouped;
   }
-  if (useGoogleTop50) {
-    const grouped = await resolveBundledProviderGroup("google-top50");
+  if (useGoogleCloudMerged) {
+    const grouped = await resolveBundledProviderGroup("google");
     if (grouped) return grouped;
   }
-  // No config: default merge — Google top50 + Cloudflare + GitHub.
-  if (!filePath && !specUrl && !discoveryUrl && !providerRaw && !useGoogleTop50) {
+  // No config: default merge — Google Cloud (bundled manifest) + Cloudflare + GitHub + Slack + Paperless + Stirling + Tika + Gotenberg.
+  if (!filePath && !specUrl && !discoveryUrl && !providerRaw && !useGoogleCloudMerged) {
     console.error(
-      "[spec-loader] No spec env/provider set — using default multi-provider bundle: google-top50 + cloudflare + github"
+      "[spec-loader] No spec env/provider set — using default multi-provider bundle: google + cloudflare + github + slack + paperless + stirling + tika + gotenberg"
     );
     const defaultGroup = await resolveBundledProviderGroup("default-multi-provider");
     if (defaultGroup) return defaultGroup;
@@ -676,10 +678,46 @@ export async function loadSpec(): Promise<LoadedSpec> {
 }
 
 /**
- * Resolve REST base URL for the GraphQL proxy.
- * Override with CLAWQL_API_BASE_URL (or legacy API_BASE_URL) when needed.
+ * Self-hosted document / conversion APIs: base URL per merged `specLabel`
+ * (see GitHub #111). When unset, `servers[0].url` from the bundled spec is used.
  */
-export function resolveApiBaseUrl(openapi: OpenAPIDoc): string {
+export function resolveBundledSelfHostedBaseUrl(specLabel?: string): string | undefined {
+  const label = specLabel?.trim().toLowerCase();
+  if (!label) return undefined;
+  const envByLabel: Record<string, string> = {
+    paperless: "PAPERLESS_BASE_URL",
+    stirling: "STIRLING_BASE_URL",
+    tika: "TIKA_BASE_URL",
+    gotenberg: "GOTENBERG_BASE_URL",
+  };
+  const envKey = envByLabel[label];
+  if (!envKey) return undefined;
+  const v = process.env[envKey]?.trim();
+  return v ? v.replace(/\/$/, "") : undefined;
+}
+
+/**
+ * Resolve REST base URL for the GraphQL proxy.
+ * Per-provider self-hosted URLs (PAPERLESS_BASE_URL, …) win for merged `specLabel`.
+ * Then CLAWQL_API_BASE_URL (or legacy API_BASE_URL), then OpenAPI `servers[0]`.
+ */
+/**
+ * Base URL resolution for `execute`: uses the operation's merged `specLabel`, or
+ * **`CLAWQL_PROVIDER`** in single-spec mode (where `specLabel` is unset).
+ */
+export function resolveApiBaseUrlForOperation(
+  openapi: OpenAPIDoc,
+  op: { specLabel?: string }
+): string {
+  const label =
+    op.specLabel?.trim() || process.env.CLAWQL_PROVIDER?.trim().toLowerCase() || undefined;
+  return resolveApiBaseUrl(openapi, label);
+}
+
+export function resolveApiBaseUrl(openapi: OpenAPIDoc, specLabel?: string): string {
+  const selfHosted = resolveBundledSelfHostedBaseUrl(specLabel);
+  if (selfHosted) return selfHosted;
+
   const override = process.env.CLAWQL_API_BASE_URL || process.env.API_BASE_URL;
   if (override) return override.replace(/\/$/, "");
 
