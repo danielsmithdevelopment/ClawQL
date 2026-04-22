@@ -48,6 +48,12 @@ async function main() {
       console.warn(`[pregenerate] Skip ${entry.id}: missing ${specAbs} (run fetch-provider-specs)`);
       continue;
     }
+    if (!entry.bundledIntrospectionPath?.trim() || !entry.bundledSchemaSdlPath?.trim()) {
+      console.warn(
+        `[pregenerate] Skip ${entry.id}: no pregenerate targets (add bundledIntrospectionPath when GraphQL is supported)`
+      );
+      continue;
+    }
 
     let openapi;
     try {

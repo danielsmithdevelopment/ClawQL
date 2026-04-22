@@ -33,7 +33,7 @@ service:
     targetPort: 50051
 
 # Mirrors docker/kustomize/base/deployment-mcp-http.yaml
-provider: google-top50
+provider: google
 bundledOffline: "1"
 obsidianVaultPath: /vault
 port: "8080"

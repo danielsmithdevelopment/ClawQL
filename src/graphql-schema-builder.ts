@@ -3,8 +3,8 @@
  *
  * Builds a live GraphQL schema from OpenAPI 3 via **@omnigraph/openapi**
  * (the same stack as [GraphQL Mesh OpenAPI](https://the-guild.dev/graphql/mesh/docs/handlers/openapi)).
- * Resolvers proxy to the upstream REST API with headers from
- * CLAWQL_HTTP_HEADERS and bearer selection (see auth-headers.ts).
+ * Resolvers proxy to the upstream REST API with headers from **`mergedAuthHeaders()`**
+ * (`CLAWQL_PROVIDER_AUTH_JSON`, **`CLAWQL_HTTP_HEADERS`**, per-vendor env vars — see **`auth-headers.ts`**).
  */
 
 import loadGraphQLSchemaFromOpenAPI from "@omnigraph/openapi";

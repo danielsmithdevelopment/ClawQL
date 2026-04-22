@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  listBundledProviderGroupIds,
   listBundledProviderIds,
   resolveBundledProvider,
   resolveBundledProviderGroup,
@@ -8,17 +9,26 @@ import {
 describe("provider-registry", () => {
   it("lists bundled provider ids", () => {
     const ids = listBundledProviderIds();
-    expect(ids).toContain("google");
     expect(ids).toContain("jira");
     expect(ids).toContain("bitbucket");
     expect(ids).toContain("cloudflare");
+    expect(ids).toContain("tika");
+    expect(ids).toContain("gotenberg");
+    expect(ids).toContain("paperless");
+    expect(ids).toContain("stirling");
     expect(ids).not.toContain("atlassian"); // group, not concrete provider
   });
 
   it("resolves bundled provider case-insensitively", () => {
-    const p = resolveBundledProvider("GoOgLe");
-    expect(p?.id).toBe("google");
-    expect(p?.bundledSpecPath).toBe("providers/google/discovery.json");
+    const p = resolveBundledProvider("JiRa");
+    expect(p?.id).toBe("jira");
+    expect(p?.bundledSpecPath).toContain("atlassian/jira");
+  });
+
+  it("lists merged preset ids including google (not google-top50)", () => {
+    const groups = listBundledProviderGroupIds();
+    expect(groups).toContain("google");
+    expect(groups).not.toContain("google-top50");
   });
 
   it("returns undefined for unknown bundled provider", () => {
@@ -31,8 +41,8 @@ describe("provider-registry", () => {
     expect(items?.every((x) => x.abs.includes("/providers/atlassian/"))).toBe(true);
   });
 
-  it("resolves google-top50 group from manifest", async () => {
-    const items = await resolveBundledProviderGroup("google-top50");
+  it("resolves google merged group from manifest", async () => {
+    const items = await resolveBundledProviderGroup("google");
     expect(items).toBeDefined();
     expect(items!.length).toBeGreaterThan(10);
     expect(items!.some((x) => x.label === "compute-v1")).toBe(true);
@@ -41,8 +51,30 @@ describe("provider-registry", () => {
     ).toBe(true);
   });
 
+  it("accepts deprecated google-top50 alias for the google merged group", async () => {
+    const canonical = await resolveBundledProviderGroup("google");
+    const alias = await resolveBundledProviderGroup("google-top50");
+    expect(alias?.length).toBe(canonical?.length);
+  });
+
   it("returns undefined for unknown group", async () => {
     await expect(resolveBundledProviderGroup("unknown-group")).resolves.toBeUndefined();
+  });
+
+  it("resolves default-multi-provider to Google Cloud manifest plus seven other bundled vendors", async () => {
+    const items = await resolveBundledProviderGroup("default-multi-provider");
+    expect(items).toBeDefined();
+    const labels = new Set(items!.map((x) => x.label));
+    expect(labels.has("github")).toBe(true);
+    expect(labels.has("cloudflare")).toBe(true);
+    expect(labels.has("slack")).toBe(true);
+    expect(labels.has("paperless")).toBe(true);
+    expect(labels.has("stirling")).toBe(true);
+    expect(labels.has("tika")).toBe(true);
+    expect(labels.has("gotenberg")).toBe(true);
+    expect(labels.has("compute-v1")).toBe(true);
+    expect(labels.has("n8n")).toBe(false);
+    expect(labels.has("jira")).toBe(false);
   });
 
   it("resolves all-providers to many bundled vendors", async () => {
@@ -53,6 +85,8 @@ describe("provider-registry", () => {
     expect(labels.has("slack")).toBe(true);
     expect(labels.has("n8n")).toBe(true);
     expect(labels.has("github")).toBe(true);
+    expect(labels.has("paperless")).toBe(true);
+    expect(labels.has("tika")).toBe(true);
     expect(items!.every((x) => x.abs.includes("/providers/"))).toBe(true);
   });
 });

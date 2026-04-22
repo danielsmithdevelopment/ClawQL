@@ -1,6 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import {
   discoveryToOpenAPI,
+  resolveApiBaseUrl,
+  resolveApiBaseUrlForOperation,
+  resolveBundledSelfHostedBaseUrl,
   sanitizeOpenAPIObject,
   sanitizeOpenAPIDocument,
   sanitizeSchemaNode,
@@ -10,6 +13,32 @@ import {
 import { operationsFromOpenAPI } from "./openapi-operations.js";
 
 describe("operationsFromOpenAPI", () => {
+  it("prefers multipart/form-data over application/json when both are declared", () => {
+    const doc = {
+      openapi: "3.0.0",
+      info: { title: "t", version: "1" },
+      servers: [{ url: "http://x" }],
+      paths: {
+        "/x": {
+          post: {
+            operationId: "postX",
+            requestBody: {
+              content: {
+                "application/json": { schema: { type: "object" } },
+                "multipart/form-data": { schema: { type: "object" } },
+              },
+            },
+            responses: { "200": { description: "ok" } },
+          },
+        },
+      },
+      components: { schemas: {} },
+    };
+    const ops = operationsFromOpenAPI(doc);
+    expect(ops).toHaveLength(1);
+    expect(ops[0].requestBodyContentType).toBe("multipart/form-data");
+  });
+
   it("extracts operations from a minimal OpenAPI 3 doc", () => {
     const doc = {
       openapi: "3.0.0",
@@ -355,5 +384,45 @@ describe("discoveryToOpenAPI", () => {
     expect(params.some((p) => p.name === "parent")).toBe(false);
     expect(params.some((p) => p.name === "projectsId")).toBe(true);
     expect(params.some((p) => p.name === "locationsId")).toBe(true);
+  });
+});
+
+describe("resolveBundledSelfHostedBaseUrl / resolveApiBaseUrl", () => {
+  const minimal: OpenAPIDoc = {
+    openapi: "3.0.3",
+    info: { title: "x", version: "1" },
+    servers: [{ url: "http://from-spec:9999" }],
+    paths: {},
+    components: { schemas: {} },
+  };
+
+  afterEach(() => {
+    delete process.env.PAPERLESS_BASE_URL;
+    delete process.env.TIKA_BASE_URL;
+    delete process.env.CLAWQL_API_BASE_URL;
+    delete process.env.API_BASE_URL;
+    delete process.env.CLAWQL_PROVIDER;
+  });
+
+  it("returns per-label base URL from env", () => {
+    process.env.PAPERLESS_BASE_URL = "http://paperless.local:8000/";
+    expect(resolveBundledSelfHostedBaseUrl("paperless")).toBe("http://paperless.local:8000");
+    expect(resolveBundledSelfHostedBaseUrl("tika")).toBeUndefined();
+  });
+
+  it("resolveApiBaseUrl prefers self-hosted env over servers and global override", () => {
+    process.env.PAPERLESS_BASE_URL = "http://pl:8000";
+    process.env.CLAWQL_API_BASE_URL = "http://wrong";
+    expect(resolveApiBaseUrl(minimal, "paperless")).toBe("http://pl:8000");
+  });
+
+  it("resolveApiBaseUrl falls back to servers when no self-hosted env", () => {
+    expect(resolveApiBaseUrl(minimal, "github")).toBe("http://from-spec:9999");
+  });
+
+  it("resolveApiBaseUrlForOperation uses CLAWQL_PROVIDER when specLabel is unset", () => {
+    process.env.CLAWQL_PROVIDER = "paperless";
+    process.env.PAPERLESS_BASE_URL = "http://pl:8000";
+    expect(resolveApiBaseUrlForOperation(minimal, {})).toBe("http://pl:8000");
   });
 });

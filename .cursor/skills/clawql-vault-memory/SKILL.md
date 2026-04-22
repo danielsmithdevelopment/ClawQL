@@ -17,6 +17,17 @@ description: >-
 
 If **ClawQL MCP** is not configured or **`CLAWQL_OBSIDIAN_VAULT_PATH`** is unset, say so briefly and continue without blocking.
 
+### Cursor Agent: `call_mcp_tool` server parameter
+
+Your `mcp.json` key can stay **`clawql`** (that is what Settings / docs refer to). The **agent `call_mcp_tool` API** does **not** accept that bare string: Cursor registers the server under a **scoped id** derived from where the config lives:
+
+| Config file | Typical `call_mcp_tool` **`server`** value |
+|-------------|--------------------------------------------|
+| `~/.cursor/mcp.json` | **`user-clawql`** |
+| `${workspaceFolder}/.cursor/mcp.json` | **`workspace-clawql`** |
+
+There is **no** supported `mcp.json` field to rename this to bare `clawql` for `call_mcp_tool`—the prefix is host behavior to avoid collisions (e.g. the same key in user vs project config). If both files define `clawql`, two scoped servers can exist; use the one that matches where you configured ClawQL for this workspace.
+
 **Never store secrets:** tokens, API keys, passwords, private keys, or raw session cookies. Summarize redacted config instead.
 
 ---

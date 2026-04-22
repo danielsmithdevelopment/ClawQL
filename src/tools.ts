@@ -26,7 +26,7 @@ import {
   operationIdToRunStyleName,
 } from "./graphql-execute-helpers.js";
 import { executeOperationGraphQL } from "./graphql-in-process-execute.js";
-import { loadSpec, resolveApiBaseUrl } from "./spec-loader.js";
+import { loadSpec, resolveApiBaseUrlForOperation } from "./spec-loader.js";
 import { searchOperations, formatSearchResults } from "./spec-search.js";
 import { executeRestOperation } from "./rest-operation.js";
 import { handleClawqlCodeToolInput } from "./sandbox-bridge-client.js";
@@ -178,7 +178,7 @@ export async function handleClawqlExecuteToolInput(params: {
       ? outputFields.join("\n        ")
       : defaultFields(operationId);
 
-    const baseUrl = resolveApiBaseUrl(openapiForOp as OpenAPIDoc);
+    const baseUrl = resolveApiBaseUrlForOperation(openapiForOp as OpenAPIDoc, op);
     const inProc = await executeOperationGraphQL(
       openapiForOp as OpenAPIDoc,
       baseUrl,

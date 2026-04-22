@@ -5,32 +5,35 @@ start avoids downloading multi‑MB specs.
 
 | `CLAWQL_PROVIDER` | Spec file | Notes |
 |-------------------|-----------|--------|
-| `google` | `google/discovery.json` | Single Google Discovery spec (GKE). For multi-service Google, use `CLAWQL_GOOGLE_TOP50_SPECS=1` or `CLAWQL_SPEC_PATHS`. |
 | `atlassian` | `atlassian/jira/openapi.yaml` + `atlassian/bitbucket/openapi.yaml` | Loads both Atlassian specs in one merged operation index (multi-spec mode). |
 | `cloudflare` | `cloudflare/openapi.yaml` | Official [Cloudflare API schemas](https://github.com/cloudflare/api-schemas) OpenAPI (large; ~tens of MB). |
 | `github` | `github/openapi.yaml` | [github/rest-api-description](https://github.com/github/rest-api-description) `api.github.com` bundle (very large; thousands of operations). |
 | `slack` | `slack/openapi.json` | Official Web API spec from [api.slack.com/specs](https://api.slack.com/specs) (OpenAPI 2; loader upgrades). |
 | `sentry` | `sentry/openapi.json` | Dereferenced public API from [getsentry/sentry-api-schema](https://github.com/getsentry/sentry-api-schema) (`openapi-derefed.json`). |
 | `n8n` | `n8n/openapi.json` | n8n Public API (bundled JSON; refresh via `npm run fetch-n8n-openapi` against a running instance). |
+| `tika` | `tika/openapi.yaml` | Apache Tika Server (minimal bundled paths; optional refresh from `TIKA_BASE_URL` when `/openapi.json` exists). Set **`TIKA_BASE_URL`** for merged `execute` base URL. |
+| `gotenberg` | `gotenberg/openapi.yaml` | Gotenberg 8+ (minimal bundled paths; optional refresh from **`GOTENBERG_BASE_URL`**). Set **`GOTENBERG_BASE_URL`** for merged `execute` base URL. |
+| `paperless` | `paperless/openapi.yaml` | Paperless-ngx REST (minimal subset; refresh from live **`PAPERLESS_BASE_URL`** via `npm run fetch-provider-specs`). Auth: **`PAPERLESS_API_TOKEN`** → `Authorization: Token …`. |
+| `stirling` | `stirling/openapi.yaml` | Stirling-PDF (minimal stub; refresh from **`STIRLING_BASE_URL`** `/v3/api-docs`). Auth: **`STIRLING_API_KEY`** → `X-API-KEY`. |
 | `jira` | `atlassian/jira/openapi.yaml` | Jira Cloud REST (alias of single-spec mode; also part of `atlassian` / `all-providers`). |
 | `bitbucket` | `atlassian/bitbucket/openapi.yaml` | Bitbucket Cloud REST (alias; also part of `atlassian` / `all-providers`). |
-| `google-top50` | *(merged preset)* | Curated [`google-top50-apis.json`](google/google-top50-apis.json) only (~50 Discovery specs). |
-| `default-multi-provider` | *(merged preset)* | Same as **no spec env**: Google top50 + Cloudflare + GitHub. |
-| `all-providers` | *(merged preset)* | Top50 + **every** other `BUNDLED_PROVIDERS` vendor (adds Bitbucket, GitHub, Slack, Sentry, n8n, …). |
+| `google` | *(merged preset)* | Bundled **Google Cloud** APIs from the on-disk manifest ([`google-top50-apis.json`](google/google-top50-apis.json); filename is historical). Same merge as **`CLAWQL_GOOGLE_CLOUD_SPECS=1`** / legacy **`CLAWQL_GOOGLE_TOP50_SPECS=1`**. Deprecated alias: **`google-top50`** → `google`. |
+| `default-multi-provider` | *(merged preset)* | Same as **no spec env**: Google Cloud (bundled) + Cloudflare + GitHub + Slack + Paperless + Stirling + Tika + Gotenberg. |
+| `all-providers` | *(merged preset)* | Google Cloud (bundled) + **every** other `BUNDLED_PROVIDERS` vendor (Jira, Bitbucket, Sentry, n8n, … in addition to the default merge). |
 
-Compatibility aliases for merged groups: `atlassian` = Jira + Bitbucket together.
+Compatibility aliases for merged groups: `atlassian` = Jira + Bitbucket together; **`google-top50`** = **`google`** (deprecated).
 
 **Google API catalog (all services):** The repo includes a snapshot of Google’s public [Discovery directory](https://www.googleapis.com/discovery/v1/apis) as `google/discovery-directory.json` and a slim index `google/google-apis-lookup.json` (id → `discoveryRestUrl`, docs link, `preferred`). Refresh with `npm run fetch-google-discovery-directory` (also runs at the end of `npm run fetch-provider-specs`). Details: [`docs/google-apis-lookup.md`](../docs/google-apis-lookup.md).
 
 **Google “top 50” offline bundle:** Pinned Discovery JSON (and optional `introspection.json` / `schema.graphql`) for common GCP services — under [`google/apis/`](google/apis/README.md). Manifest: `google/google-top50-apis.json`. Refresh: `npm run fetch-google-top50` then `npm run build && npm run pregenerate-google-top50-graphql`, or `npm run refresh-google-top50`.
 
-**Default no-config mode:** when no spec env vars are set, ClawQL loads a bundled multi-provider set (**Google top50 + Cloudflare + GitHub**). Set **`CLAWQL_GOOGLE_ACCESS_TOKEN`** / **`GOOGLE_ACCESS_TOKEN`**, **`CLAWQL_CLOUDFLARE_API_TOKEN`**, and **`CLAWQL_GITHUB_TOKEN`** for live **`execute`** calls — see `src/auth-headers.ts`.
+**Default no-config mode:** when no spec env vars are set, ClawQL loads **`default-multi-provider`** (**Google Cloud (bundled) + Cloudflare + GitHub + Slack + Paperless + Stirling + Tika + Gotenberg**). For live **`execute`** calls, set **`CLAWQL_PROVIDER_AUTH_JSON`** (one JSON object keyed by merged **`specLabel`**) and/or per-vendor env vars — see **`src/auth-headers.ts`** (e.g. **`CLAWQL_GOOGLE_ACCESS_TOKEN`**, **`CLAWQL_CLOUDFLARE_API_TOKEN`**, **`CLAWQL_GITHUB_TOKEN`**, **`PAPERLESS_API_TOKEN`**, **`STIRLING_API_KEY`**).
 
-**All-providers merged preset:** set **`CLAWQL_PROVIDER=all-providers`** to load **Google top50 + every other bundled vendor** (Jira, Bitbucket, Cloudflare, GitHub, Slack, Sentry, n8n) in one merged operation index. This wins over **`CLAWQL_GOOGLE_TOP50_SPECS`** when both are set. Adding a new entry under `BUNDLED_PROVIDERS` automatically includes it here.
+**All-providers merged preset:** set **`CLAWQL_PROVIDER=all-providers`** to load **Google Cloud (bundled) + every other bundled vendor** (Jira, Bitbucket, Cloudflare, GitHub, Slack, Sentry, n8n) in one merged operation index. This wins over **`CLAWQL_GOOGLE_CLOUD_SPECS` / `CLAWQL_GOOGLE_TOP50_SPECS`** when both are set. Adding a new entry under `BUNDLED_PROVIDERS` automatically includes it here.
 
-**Precedence (multi-spec):** `CLAWQL_SPEC_PATHS` (explicit file list) → **`CLAWQL_PROVIDER`** when it names a **merged** preset (`google-top50`, `default-multi-provider`, `all-providers`, `atlassian`) → **`CLAWQL_GOOGLE_TOP50_SPECS=1`** (same as loading `google-top50` when provider is not a merged preset) → default bundle when nothing else is set.
+**Precedence (multi-spec):** `CLAWQL_SPEC_PATHS` (explicit file list) → **`CLAWQL_PROVIDER`** when it names a **merged** preset (`google`, `default-multi-provider`, `all-providers`, `atlassian`) → **`CLAWQL_GOOGLE_CLOUD_SPECS=1`** or **`CLAWQL_GOOGLE_TOP50_SPECS=1`** (same as **`CLAWQL_PROVIDER=google`** when no other merged preset applies) → default bundle when nothing else is set.
 
-**Precedence (single-spec):** `CLAWQL_SPEC_PATH` / `CLAWQL_SPEC_URL` / `CLAWQL_DISCOVERY_URL` override **`CLAWQL_PROVIDER`** for a **single** bundled id (`cloudflare`, `jira`, …).
+**Precedence (single-spec):** `CLAWQL_SPEC_PATH` / `CLAWQL_SPEC_URL` / `CLAWQL_DISCOVERY_URL` override **`CLAWQL_PROVIDER`** for a **single** bundled id (`cloudflare`, `jira`, …). For **one** Google API file only, use **`CLAWQL_SPEC_PATH`** (e.g. `providers/google/apis/container-v1/discovery.json`) or **`CLAWQL_DISCOVERY_URL`** — there is no standalone **`CLAWQL_PROVIDER`** for Google beyond merged **`google`**.
 
 **Local-first:** Bundled specs are read from disk first; the remote fallback URL is
 only used if the file is missing **and** `CLAWQL_BUNDLED_OFFLINE` is not set (`1` /
@@ -54,6 +57,12 @@ npm run fetch-provider-specs
 ```bash
 N8N_BASE_URL=http://127.0.0.1:5678 npm run fetch-n8n-openapi
 ```
+
+**Paperless, Stirling, Tika, Gotenberg:** `npm run fetch-provider-specs` also refreshes their specs **when** these env vars are set (see `.env.example`):
+
+- **`PAPERLESS_BASE_URL`** — fetches `/api/schema/` into `providers/paperless/openapi.yaml`
+- **`STIRLING_BASE_URL`** — fetches `/v3/api-docs` into `providers/stirling/openapi.yaml`
+- **`TIKA_BASE_URL`** / **`GOTENBERG_BASE_URL`** — tries `/openapi.json` (or yaml/swagger) when the server exposes one; otherwise keeps the committed minimal spec
 
 ## Pregenerate GraphQL artifacts
 

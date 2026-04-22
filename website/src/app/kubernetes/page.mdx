@@ -66,14 +66,14 @@ When **`ENABLE_GRPC=1`** (and optionally **`ENABLE_GRPC_REFLECTION=1`** for **`g
 ### What the Helm install sets
 
 - **Namespace:** `clawql`
-- **`CLAWQL_PROVIDER`:** **`default-multi-provider`** (Google top50 + Cloudflare + GitHub, same as bare `npx clawql-mcp`). Override via **`values-docker-desktop.yaml`** or **`helm --set provider=...`**.
+- **`CLAWQL_PROVIDER`:** **`default-multi-provider`** (Google Cloud bundled APIs + Cloudflare + GitHub + Slack + Paperless + Stirling + Tika + Gotenberg, same as bare `npx clawql-mcp`). Override via **`values-docker-desktop.yaml`** or **`helm --set provider=...`**.
 - **Kube context:** the script prefers **`docker-desktop`** when present so you do not accidentally deploy to another cluster.
 
 Cold start can take a while while specs load. Wait until **`/healthz`** returns **`{"status":"ok",...}`** or the pod is **Ready** before the client connects.
 
-### MCP auth tokens (GitHub, Cloudflare, Google)
+### MCP auth tokens (merged default bundle)
 
-For **local Docker Desktop k8s**, `execute` needs bearer tokens in the **`clawql-mcp-http`** pod. Per-vendor env vars match **`src/auth-headers.ts`**: GitHub (**`CLAWQL_GITHUB_TOKEN`**), Cloudflare (**`CLAWQL_CLOUDFLARE_API_TOKEN`**), Google (**`GOOGLE_ACCESS_TOKEN`** / **`CLAWQL_GOOGLE_ACCESS_TOKEN`**). The same GitHub PAT is stored as **`CLAWQL_BEARER_TOKEN`** for merged-bundle fallback.
+For **local Docker Desktop k8s**, `execute` needs tokens in the **`clawql-mcp-http`** pod. Per-vendor env vars match **`src/auth-headers.ts`**: GitHub (**`CLAWQL_GITHUB_TOKEN`**), Cloudflare (**`CLAWQL_CLOUDFLARE_API_TOKEN`**), Google (**`GOOGLE_ACCESS_TOKEN`** / **`CLAWQL_GOOGLE_ACCESS_TOKEN`**), Slack and other fallbacks (**`CLAWQL_BEARER_TOKEN`** / **`CLAWQL_HTTP_HEADERS`**), Paperless (**`PAPERLESS_API_TOKEN`**), Stirling (**`STIRLING_API_KEY`**), optional bearer for Tika/Gotenberg. The same GitHub PAT is often stored as **`CLAWQL_BEARER_TOKEN`** for merged-bundle fallback.
 
 **One-shot:** from the repo root, with **`gh`** logged in **or** values in **`.env`**:
 

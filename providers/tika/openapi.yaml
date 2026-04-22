@@ -1,0 +1,65 @@
+openapi: 3.0.3
+info:
+  title: Apache Tika Server
+  description: >
+    Minimal OpenAPI for Tika JAX-RS server (common paths). Refresh from a running
+    instance if your deployment differs. Base URL override: TIKA_BASE_URL.
+  version: "2.9"
+servers:
+  - url: http://tika:9998
+paths:
+  /version:
+    get:
+      operationId: tika_server_version
+      summary: Server version string
+      responses:
+        "200":
+          description: Plain-text version
+          content:
+            text/plain:
+              schema:
+                type: string
+  /tika:
+    put:
+      operationId: tika_parse_put
+      summary: Parse document body and return extracted text/metadata
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+      responses:
+        "200":
+          description: Extracted content (often text/plain or structured)
+  /meta:
+    put:
+      operationId: tika_meta_put
+      summary: Extract metadata only
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+      responses:
+        "200":
+          description: Metadata
+  /detect/stream:
+    put:
+      operationId: tika_detect_stream_put
+      summary: Detect MIME type from body stream
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+      responses:
+        "200":
+          description: Detected media type
+components:
+  schemas: {}

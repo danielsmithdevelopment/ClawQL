@@ -1,0 +1,65 @@
+openapi: 3.0.3
+info:
+  title: Gotenberg
+  description: >
+    Minimal OpenAPI (health + route index). Full conversion routes use multipart/form-data;
+    extend this file or refresh from your Gotenberg 8+ instance. Base URL override: GOTENBERG_BASE_URL.
+  version: "8"
+servers:
+  - url: http://gotenberg:3000
+paths:
+  /health:
+    get:
+      operationId: gotenberg_health
+      summary: Health check
+      responses:
+        "200":
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: string
+  /forms/chromium/convert/url:
+    post:
+      operationId: gotenberg_chromium_convert_url
+      summary: Convert a remote URL to PDF (multipart form field `url`)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - url
+              properties:
+                url:
+                  type: string
+                  format: uri
+      responses:
+        "200":
+          description: PDF bytes
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+  /forms/libreoffice/convert:
+    post:
+      operationId: gotenberg_libreoffice_convert
+      summary: Convert Office documents to PDF (multipart file uploads)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: PDF bytes
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+components:
+  schemas: {}

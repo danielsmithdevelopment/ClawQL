@@ -1,0 +1,71 @@
+openapi: 3.0.3
+info:
+  title: Paperless-ngx
+  description: >
+    Minimal REST subset for search/execute smoke tests. For the full surface, run
+    `npm run fetch-provider-specs` with PAPERLESS_BASE_URL pointing at your instance
+    (schema at /api/schema/). Auth: PAPERLESS_API_TOKEN (Token scheme).
+  version: "2"
+servers:
+  - url: http://paperless:8000
+security:
+  - tokenAuth: []
+paths:
+  /api/status/:
+    get:
+      operationId: paperless_api_status_retrieve
+      summary: Instance status
+      responses:
+        "200":
+          description: Status payload
+  /api/documents/:
+    get:
+      operationId: paperless_api_documents_list
+      summary: List documents
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Paginated document list
+  /api/documents/{id}/:
+    get:
+      operationId: paperless_api_documents_retrieve
+      summary: Retrieve document metadata
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Document detail
+  /api/tags/:
+    get:
+      operationId: paperless_api_tags_list
+      summary: List tags
+      responses:
+        "200":
+          description: Tag list
+  /api/correspondents/:
+    get:
+      operationId: paperless_api_correspondents_list
+      summary: List correspondents
+      responses:
+        "200":
+          description: Correspondent list
+components:
+  schemas: {}
+  securitySchemes:
+    tokenAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: "Use `Token <your-api-token>` (set PAPERLESS_API_TOKEN; ClawQL sends the header)."

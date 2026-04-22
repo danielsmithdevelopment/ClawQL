@@ -3,10 +3,11 @@
  * Exported for benchmarks comparing full REST response bodies vs GraphQL-shaped responses.
  */
 
+import { Buffer } from "node:buffer";
 import fetch from "node-fetch";
 import type { RequestInit as FetchRequestInit } from "node-fetch";
 import { mergedAuthHeaders } from "./auth-headers.js";
-import { resolveApiBaseUrl, type OpenAPIDoc } from "./spec-loader.js";
+import { resolveApiBaseUrlForOperation, type OpenAPIDoc } from "./spec-loader.js";
 import type { Operation } from "./spec-loader.js";
 
 export { mergedAuthHeaders };
@@ -51,7 +52,7 @@ export async function executeRestOperation(
 ): Promise<{ ok: true; data: unknown } | { ok: false; error: string }> {
   let baseUrl: string;
   try {
-    baseUrl = resolveApiBaseUrl(openapi);
+    baseUrl = resolveApiBaseUrlForOperation(openapi, op);
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : String(e) };
   }
@@ -73,14 +74,59 @@ export async function executeRestOperation(
   }
 
   const method = op.method.toUpperCase();
+  const wantsBinary =
+    op.requestBodyContentType === "multipart/form-data" ||
+    op.requestBodyContentType === "application/octet-stream" ||
+    op.requestBodyContentType === "application/pdf" ||
+    op.requestBodyContentType === "application/x-www-form-urlencoded";
   const headers: Record<string, string> = {
-    Accept: "application/json",
+    Accept: wantsBinary ? "*/*" : "application/json",
     ...mergedAuthHeaders(op.specLabel),
   };
   const init: FetchRequestInit = { method, headers };
   if (method !== "GET" && method !== "HEAD" && op.requestBody) {
-    headers["Content-Type"] = "application/json";
-    init.body = JSON.stringify(buildRestRequestBodyFromArgs(op, args));
+    const ct = op.requestBodyContentType?.toLowerCase();
+    if (ct === "multipart/form-data" && typeof FormData !== "undefined") {
+      const fd = new FormData();
+      const bodyObj = buildRestRequestBodyFromArgs(op, args);
+      for (const [k, v] of Object.entries(bodyObj)) {
+        if (v === undefined || v === null) continue;
+        if (typeof v === "string" || typeof v === "number" || typeof v === "boolean") {
+          fd.append(k, String(v));
+        } else if (typeof v === "object") {
+          fd.append(k, JSON.stringify(v));
+        }
+      }
+      init.body = fd as never;
+    } else if (ct === "application/x-www-form-urlencoded") {
+      const bodyObj = buildRestRequestBodyFromArgs(op, args);
+      const sp = new URLSearchParams();
+      for (const [k, v] of Object.entries(bodyObj)) {
+        if (v === undefined || v === null) continue;
+        sp.set(k, String(v));
+      }
+      headers["Content-Type"] = "application/x-www-form-urlencoded";
+      init.body = sp.toString();
+    } else if (ct === "application/octet-stream") {
+      const raw = args.body;
+      if (Buffer.isBuffer(raw)) {
+        init.body = raw as never;
+      } else if (raw instanceof Uint8Array) {
+        init.body = Buffer.from(raw) as never;
+      } else if (typeof raw === "string") {
+        init.body = Buffer.from(raw, "utf8") as never;
+      } else {
+        return {
+          ok: false,
+          error:
+            "application/octet-stream requires execute args.body as string, Buffer, or Uint8Array",
+        };
+      }
+      headers["Content-Type"] = "application/octet-stream";
+    } else {
+      headers["Content-Type"] = "application/json";
+      init.body = JSON.stringify(buildRestRequestBodyFromArgs(op, args));
+    }
   }
 
   try {

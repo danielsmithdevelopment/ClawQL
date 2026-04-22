@@ -214,7 +214,7 @@ async function runSearchWorkflow() {
   ].join("\n");
 
   const labels = [
-    "google-gke",
+    "google-cloud",
     "cloudflare",
     "sentry",
     "github-actions",
