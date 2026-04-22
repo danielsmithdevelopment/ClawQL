@@ -5,7 +5,7 @@ One-page reference for the latest real-stdio MCP integration run.
 - **Run command:** `npm run workflow:gcp-multi`
 - **Report generated at:** `2026-03-23T05:22:54.608Z`
 - **Transport:** MCP stdio (`node dist/server.js`)
-- **Spec mode:** `CLAWQL_GOOGLE_TOP50_SPECS=1` + `CLAWQL_BUNDLED_OFFLINE=1`
+- **Spec mode:** `CLAWQL_PROVIDER=google` (or `CLAWQL_BUNDLED_PROVIDERS=google`) + `CLAWQL_BUNDLED_OFFLINE=1`
 - **Merged index size:** `TBD` operations from `50` Google Discovery specs
 - **Search calls executed:** `11` (`1` cross-cutting + `10` workflow-step queries)
 - **Tool-call status:** all returned `isError: false`

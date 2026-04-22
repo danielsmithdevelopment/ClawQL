@@ -152,27 +152,47 @@ async function resolveGoogleTop50Items(): Promise<ProviderGroupItem[]> {
 }
 
 /**
- * Default merged bundle (no spec env, and `CLAWQL_PROVIDER=default-multi-provider`):
- * **Google** (bundled Google Cloud API set) + **Cloudflare** + **GitHub** + **Slack** + **Paperless** + **Stirling** + **Tika** + **Gotenberg**.
- * For Jira, Bitbucket, Sentry, and n8n as well, use **`all-providers`**.
+ * Build a merged load from a comma/semicolon/newline-separated list of **bundled** ids
+ * (keys of **`BUNDLED_PROVIDERS`**, case-insensitive) and/or **`google`** (full bundled Google Cloud Discovery set
+ * from `google-top50-apis.json`). Use **`CLAWQL_BUNDLED_PROVIDERS`** in `spec-loader`; there is no other default
+ * custom merge — only this list, path list, or **`all-providers`**. Deprecated id **`google-top50`** is accepted as
+ * an alias for **`google`**.
  */
-async function resolveDefaultMultiProviderItems(): Promise<ProviderGroupItem[]> {
-  const root = getPackageRoot();
-  const google = await resolveGoogleTop50Items();
-  const vendorIds = [
-    "cloudflare",
-    "github",
-    "slack",
-    "paperless",
-    "stirling",
-    "tika",
-    "gotenberg",
-  ] as const;
-  const rest = vendorIds.map((id) => {
+export async function resolveItemsFromBundledProviderEnvList(
+  raw: string
+): Promise<ProviderGroupItem[]> {
+  const parts = raw
+    .split(/[,\n;]/)
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+  if (parts.length === 0) {
+    throw new Error("CLAWQL_BUNDLED_PROVIDERS is set but contains no provider ids");
+  }
+  const seen = new Set<string>();
+  const out: ProviderGroupItem[] = [];
+  for (const part of parts) {
+    const id = part === "google-top50" ? "google" : part;
+    if (id === "google") {
+      for (const g of await resolveGoogleTop50Items()) {
+        if (seen.has(g.label)) continue;
+        seen.add(g.label);
+        out.push(g);
+      }
+      continue;
+    }
     const p = BUNDLED_PROVIDERS[id];
-    return { abs: resolvePath(root, p.bundledSpecPath), label: p.id };
-  });
-  return [...google, ...rest];
+    if (!p) {
+      const valid = [...Object.keys(BUNDLED_PROVIDERS), "google"].sort().join(", ");
+      throw new Error(`Unknown id "${part}" in CLAWQL_BUNDLED_PROVIDERS. Valid: ${valid}`);
+    }
+    if (seen.has(p.id)) continue;
+    seen.add(p.id);
+    out.push({
+      abs: resolvePath(getPackageRoot(), p.bundledSpecPath),
+      label: p.id,
+    });
+  }
+  return out;
 }
 
 /**
@@ -199,9 +219,7 @@ export const BUNDLED_PROVIDER_GROUPS: Record<string, BundledProviderGroup> = {
   atlassian: { providers: ["jira", "bitbucket"] },
   /** Merged bundled Google Cloud APIs from `providers/google/google-top50-apis.json` (see providers docs). */
   google: { resolve: resolveGoogleTop50Items },
-  /** Same as no spec env: Google Cloud bundle + Cloudflare + GitHub + Slack + Paperless + Stirling + Tika + Gotenberg. */
-  "default-multi-provider": { resolve: resolveDefaultMultiProviderItems },
-  /** Google Cloud bundle + every other bundled vendor (Jira, Bitbucket, Cloudflare, GitHub, Slack, Sentry, n8n, …). */
+  /** Google Cloud bundle + every other bundled vendor (Jira, Bitbucket, Cloudflare, GitHub, Slack, Sentry, n8n, …). Default when no spec env. */
   "all-providers": { resolve: resolveAllBundledProvidersItems },
 };
 
@@ -223,11 +241,19 @@ export function listBundledProviderGroupIds(): string[] {
   return Object.keys(BUNDLED_PROVIDER_GROUPS);
 }
 
+const REMOVED_BUNDLED_PROVIDER_GROUP_IDS: Readonly<Record<string, string>> = {
+  "default-multi-provider":
+    "The default-multi-provider merge was removed. Use CLAWQL_BUNDLED_PROVIDERS (comma-separated ids) or CLAWQL_SPEC_PATHS, or all-providers / CLAWQL_PROVIDER=google, atlassian, all-providers. See README.",
+};
+
 export async function resolveBundledProviderGroup(
   raw: string | undefined
 ): Promise<ProviderGroupItem[] | undefined> {
   if (!raw?.trim()) return undefined;
   const key = raw.trim().toLowerCase();
+  if (REMOVED_BUNDLED_PROVIDER_GROUP_IDS[key]) {
+    throw new Error(REMOVED_BUNDLED_PROVIDER_GROUP_IDS[key]);
+  }
   const canonical = BUNDLED_PROVIDER_GROUP_ALIASES[key] ?? key;
   const group = BUNDLED_PROVIDER_GROUPS[canonical];
   if (!group) return undefined;

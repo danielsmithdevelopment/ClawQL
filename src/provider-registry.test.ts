@@ -4,6 +4,7 @@ import {
   listBundledProviderIds,
   resolveBundledProvider,
   resolveBundledProviderGroup,
+  resolveItemsFromBundledProviderEnvList,
 } from "./provider-registry.js";
 
 describe("provider-registry", () => {
@@ -61,20 +62,10 @@ describe("provider-registry", () => {
     await expect(resolveBundledProviderGroup("unknown-group")).resolves.toBeUndefined();
   });
 
-  it("resolves default-multi-provider to Google Cloud manifest plus seven other bundled vendors", async () => {
-    const items = await resolveBundledProviderGroup("default-multi-provider");
-    expect(items).toBeDefined();
-    const labels = new Set(items!.map((x) => x.label));
-    expect(labels.has("github")).toBe(true);
-    expect(labels.has("cloudflare")).toBe(true);
-    expect(labels.has("slack")).toBe(true);
-    expect(labels.has("paperless")).toBe(true);
-    expect(labels.has("stirling")).toBe(true);
-    expect(labels.has("tika")).toBe(true);
-    expect(labels.has("gotenberg")).toBe(true);
-    expect(labels.has("compute-v1")).toBe(true);
-    expect(labels.has("n8n")).toBe(false);
-    expect(labels.has("jira")).toBe(false);
+  it("rejects removed default-multi-provider preset with a clear error", async () => {
+    await expect(resolveBundledProviderGroup("default-multi-provider")).rejects.toThrow(
+      /default-multi-provider merge was removed/
+    );
   });
 
   it("resolves all-providers to many bundled vendors", async () => {
@@ -88,5 +79,26 @@ describe("provider-registry", () => {
     expect(labels.has("paperless")).toBe(true);
     expect(labels.has("tika")).toBe(true);
     expect(items!.every((x) => x.abs.includes("/providers/"))).toBe(true);
+  });
+
+  it("resolveItemsFromBundledProviderEnvList merges listed vendors and google", async () => {
+    const items = await resolveItemsFromBundledProviderEnvList("github, n8n");
+    const labels = new Set(items.map((x) => x.label));
+    expect(labels.has("github")).toBe(true);
+    expect(labels.has("n8n")).toBe(true);
+    expect(labels.has("compute-v1")).toBe(false);
+  });
+
+  it("resolveItemsFromBundledProviderEnvList with google includes Discovery slugs", async () => {
+    const items = await resolveItemsFromBundledProviderEnvList("github,google");
+    const labels = new Set(items.map((x) => x.label));
+    expect(labels.has("github")).toBe(true);
+    expect(labels.has("compute-v1")).toBe(true);
+  });
+
+  it("resolveItemsFromBundledProviderEnvList rejects unknown id", async () => {
+    await expect(resolveItemsFromBundledProviderEnvList("not-a-vendor-x")).rejects.toThrow(
+      /Unknown id "not-a-vendor-x" in CLAWQL_BUNDLED_PROVIDERS/
+    );
   });
 });

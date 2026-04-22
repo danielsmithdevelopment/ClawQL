@@ -2,12 +2,11 @@
 
 This guide outlines a **logical order** of Google Cloud API calls to stand up **GKE**, **IAM**, **firewall**, **logging**, **monitoring**, **load balancing**, **DNS**, **Cloud Storage**, and **BigQuery**. It maps to **`operationId`** values from the bundled Discovery docs under [`providers/google/apis/`](../providers/google/apis/README.md).
 
-> **Multi-service in one MCP process**  
-> Set **`CLAWQL_GOOGLE_CLOUD_SPECS=1`** (preferred) or legacy **`CLAWQL_GOOGLE_TOP50_SPECS=1`** to merge the curated list in [`providers/google/google-top50-apis.json`](../providers/google/google-top50-apis.json) (each `providers/google/apis/<slug>/discovery.json`) into **one** operation list — **no** extra servers.
-> Or set **`CLAWQL_PROVIDER=google`** (same merge as the flags above, when no other merged preset applies). Deprecated: **`google-top50`** (alias of **`google`**).
-> Or set **`CLAWQL_PROVIDER=all-providers`** to merge **Google top50 + every other bundled vendor** (Cloudflare, Jira, GitHub, …) — see [`providers/README.md`](../providers/README.md).  
-> Or set **`CLAWQL_SPEC_PATHS`** to a comma/semicolon/newline-separated list of spec paths (any mix of local OpenAPI or Discovery JSON).  
-> **Precedence (multi-spec):** `CLAWQL_SPEC_PATHS` → **`CLAWQL_PROVIDER`** when it names a merged preset (`google`, `default-multi-provider`, `all-providers`, `atlassian`) → **`CLAWQL_GOOGLE_CLOUD_SPECS`** / **`CLAWQL_GOOGLE_TOP50_SPECS`** → default bundle. Explicit **`CLAWQL_SPEC_PATH`** / URL / discovery still win for **single-spec** mode when multi-spec resolution does not apply.  
+> **Multi-service in one MCP process (Google only)**  
+> Set **`CLAWQL_PROVIDER=google`**, or **`CLAWQL_BUNDLED_PROVIDERS=google`**, to merge the curated list in [`providers/google/google-top50-apis.json`](../providers/google/google-top50-apis.json) (each `providers/google/apis/<slug>/discovery.json`) into **one** operation list. **`CLAWQL_GOOGLE_TOP50_SPECS` / `CLAWQL_GOOGLE_CLOUD_SPECS` no longer select a merge** — use **`CLAWQL_PROVIDER=google`** (or **`CLAWQL_BUNDLED_PROVIDERS=google`**) instead. In **`CLAWQL_BUNDLED_PROVIDERS`**, **`google-top50`** is accepted as a deprecated alias for **`google`**.
+> Or set **`CLAWQL_PROVIDER=all-providers`** for **Google + every other bundled vendor** — see [`providers/README.md`](../providers/README.md).  
+> Or set **`CLAWQL_SPEC_PATHS`** to a comma/semicolon/newline-separated list of spec paths.  
+> **Precedence (multi-spec):** `CLAWQL_SPEC_PATHS` → **`CLAWQL_BUNDLED_PROVIDERS`** → **`CLAWQL_PROVIDER`** (merged) → **`all-providers`** (built-in default) when nothing else is set. Explicit **`CLAWQL_SPEC_PATH`** / URL / discovery still win for **single-spec** mode.  
 > **Execution:** merged mode uses **REST** for `execute` (correct source doc per operation). The optional GraphQL proxy, if started, builds its schema from the **first** API only — use MCP `search` + `execute` for cross-API GCP flows.
 
 **Try it offline (real MCP stdio):** `npm run workflow:gcp-multi` spawns the MCP server (`dist/server.js`), issues **`tools/call` → `search`** for each workflow query (same wire path as Cursor/Claude), and writes [`docs/workflow-gcp-multi-latest.json`](../workflow-gcp-multi-latest.json) including the full **`CallToolResult`** envelope + parsed JSON body.  

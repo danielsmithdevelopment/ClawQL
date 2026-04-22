@@ -26,7 +26,7 @@ spec:
               name: grpc
           env:
             - name: CLAWQL_PROVIDER
-              value: google
+              value: all-providers
             - name: CLAWQL_OBSIDIAN_VAULT_PATH
               value: /vault
             - name: PORT

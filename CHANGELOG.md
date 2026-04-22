@@ -9,18 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`CLAWQL_BUNDLED_PROVIDERS`:** merge only the requested bundled vendor ids and/or **`google`** (expands to the on-disk Google Cloud manifest). The explicit alternative to **`all-providers`**; no other “partial” default.
+- **`execute`** on **`multipart/form-data`** operations: **`Buffer`/`Uint8Array`/`Blob`/`File`**, optional **`{field}FileName`** for filenames ([#124](https://github.com/danielsmithdevelopment/ClawQL/issues/124)).
 - **`CLAWQL_PROVIDER_AUTH_JSON`:** single JSON env mapping merged **`specLabel`** → credentials (string Bearer/Token or header object), with **`google`** as catch-all for Google Cloud Discovery slugs. When set, **`Authorization`** in **`CLAWQL_HTTP_HEADERS`** is ignored so each provider can authenticate independently; other keys from **`CLAWQL_HTTP_HEADERS`** still apply. See **`src/auth-headers.ts`**.
 
 ### Changed
 
-- **Default bundled merge** (`default-multi-provider` / no spec env): **Google Cloud (bundled) + Cloudflare + GitHub + Slack + Paperless + Stirling + Tika + Gotenberg**. Use **`CLAWQL_PROVIDER=all-providers`** for Jira, Bitbucket, Sentry, n8n, and every other bundled vendor on top of the same Google catalog.
+- The **only** built-in default merge (no `CLAWQL_SPEC_PATHS` / `CLAWQL_BUNDLED_PROVIDERS` / `CLAWQL_PROVIDER` that selects a merge) is **`all-providers`**. Custom subset = **`CLAWQL_BUNDLED_PROVIDERS=…`** (ids) or **`CLAWQL_SPEC_PATHS=…`**.
 
 ### Breaking
 
-- **Merged Google Cloud preset** is now **`CLAWQL_PROVIDER=google`** (same Discovery set as before). The old id **`google-top50`** is accepted as a **deprecated alias** only.
-- **Standalone Google single-file `CLAWQL_PROVIDER`** is removed: use merged **`google`**, or **`CLAWQL_SPEC_PATH`** / **`CLAWQL_DISCOVERY_URL`** for a single Discovery doc (e.g. one file under `providers/google/apis/`).
-- **`CLAWQL_GOOGLE_CLOUD_SPECS`** is the preferred env flag for “merge bundled Google Cloud APIs without setting `CLAWQL_PROVIDER`”; **`CLAWQL_GOOGLE_TOP50_SPECS`** remains supported as an alias.
-- **Helm / deploy defaults** that used **`google-top50`** now use **`google`**.
+- **`default-multi-provider` merged preset removed** — use **`CLAWQL_BUNDLED_PROVIDERS=…`**, or **`CLAWQL_SPEC_PATHS=…`**, for a smaller merge. **`CLAWQL_PROVIDER=google`**, **`atlassian`**, **`all-providers`** remain.
+- **`CLAWQL_GOOGLE_CLOUD_SPECS`** and **`CLAWQL_GOOGLE_TOP50_SPECS`** no longer select a merged spec by themselves. Use **`CLAWQL_PROVIDER=google`**, **`CLAWQL_BUNDLED_PROVIDERS=google`**, or **`CLAWQL_SPEC_PATHS=…`**. (Workflows such as `npm run workflow:gcp-multi` set **`CLAWQL_PROVIDER=google`**.)
+- **Merged Google Cloud preset** is **`CLAWQL_PROVIDER=google`**. The old id **`google-top50`** is accepted as a **deprecated alias** in **`BUNDLED_PROVIDER` groups and **`CLAWQL_BUNDLED_PROVIDERS`\*\*.
+- **Standalone Google single-file `CLAWQL_PROVIDER`** is removed: use merged **`google`**, or **`CLAWQL_SPEC_PATH`** / **`CLAWQL_DISCOVERY_URL`** for a single Discovery doc.
+- **Helm / deploy defaults** that used **`google-top50`** use **`all-providers`**, **`google`**, or explicit list env as documented in **`values.yaml` / `values-docker-desktop.yaml`**.
 
 ## [3.4.1] - 2026-04-19
 

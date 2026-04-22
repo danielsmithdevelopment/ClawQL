@@ -97,7 +97,7 @@ Endpoints:
 
 1. Enable **Kubernetes** in Docker Desktop (Settings → Kubernetes → Enable cluster).
 2. **Default:** install **[Helm 3](https://helm.sh/docs/intro/install/)** on your PATH.
-3. From the repo root, **`make local-k8s-up`** runs **`helm upgrade --install`** with **`charts/clawql-mcp/values-docker-desktop.yaml`**: LoadBalancer on **8080**, **`ghcr.io/danielsmithdevelopment/clawql-mcp:latest`** (`imagePullPolicy: Always`), **`default-multi-provider`**, and a **`hostPath`** vault at **`$HOME/.ClawQL`** (override **`CLAWQL_LOCAL_VAULT_HOST_PATH`**).
+3. From the repo root, **`make local-k8s-up`** runs **`helm upgrade --install`** with **`charts/clawql-mcp/values-docker-desktop.yaml`**: LoadBalancer on **8080**, **`ghcr.io/danielsmithdevelopment/clawql-mcp:latest`** (`imagePullPolicy: Always`), **`all-providers`**, and a **`hostPath`** vault at **`$HOME/.ClawQL`** (override **`CLAWQL_LOCAL_VAULT_HOST_PATH`**).
 
 ```bash
 make local-k8s-up

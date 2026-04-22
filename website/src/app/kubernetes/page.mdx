@@ -35,7 +35,7 @@ Or:
 bash scripts/local-k8s-docker-desktop.sh
 ```
 
-**Default:** **`helm upgrade --install`** with **`charts/clawql-mcp/values-docker-desktop.yaml`**: **`ghcr.io/danielsmithdevelopment/clawql-mcp:latest`**, LoadBalancer on **8080**, **`default-multi-provider`**, **`hostPath`** vault at **`$HOME/.ClawQL`** (override **`CLAWQL_LOCAL_VAULT_HOST_PATH`**).
+**Default:** **`helm upgrade --install`** with **`charts/clawql-mcp/values-docker-desktop.yaml`**: **`ghcr.io/danielsmithdevelopment/clawql-mcp:latest`**, LoadBalancer on **8080**, **`all-providers`**, **`hostPath`** vault at **`$HOME/.ClawQL`** (override **`CLAWQL_LOCAL_VAULT_HOST_PATH`**).
 
 **Kustomize:** **`CLAWQL_LOCAL_K8S_INSTALLER=kustomize make local-k8s-up`** — **`kubectl apply -k docker/kustomize/overlays/local`** (no Helm). To **build locally** instead of GHCR, run **`CLAWQL_LOCAL_K8S_BUILD_IMAGE=1 make local-k8s-up`** (works with either installer).
 
@@ -66,7 +66,7 @@ When **`ENABLE_GRPC=1`** (and optionally **`ENABLE_GRPC_REFLECTION=1`** for **`g
 ### What the Helm install sets
 
 - **Namespace:** `clawql`
-- **`CLAWQL_PROVIDER`:** **`default-multi-provider`** (Google Cloud bundled APIs + Cloudflare + GitHub + Slack + Paperless + Stirling + Tika + Gotenberg, same as bare `npx clawql-mcp`). Override via **`values-docker-desktop.yaml`** or **`helm --set provider=...`**.
+- **`CLAWQL_PROVIDER`:** **`all-providers`** (Google Cloud bundled APIs + every other bundled vendor; same as bare `npx clawql-mcp` with no spec env). Override via **`values-docker-desktop.yaml`** or **`helm --set provider=...`**.
 - **Kube context:** the script prefers **`docker-desktop`** when present so you do not accidentally deploy to another cluster.
 
 Cold start can take a while while specs load. Wait until **`/healthz`** returns **`{"status":"ok",...}`** or the pod is **Ready** before the client connects.

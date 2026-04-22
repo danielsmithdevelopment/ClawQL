@@ -7,7 +7,7 @@
  *   npm run workflow:gcp-multi
  *
  * Env (inherited; defaults shown):
- *   CLAWQL_GOOGLE_TOP50_SPECS=1  CLAWQL_BUNDLED_OFFLINE=1
+ *   CLAWQL_PROVIDER=google  CLAWQL_BUNDLED_OFFLINE=1
  *
  * Output: docs/workflow-gcp-multi-latest.json
  */
@@ -107,9 +107,11 @@ function normalizeOperation(hit) {
 async function main() {
   const serverLogs = [];
   const childEnv = { ...process.env };
-  childEnv.CLAWQL_GOOGLE_TOP50_SPECS = process.env.CLAWQL_GOOGLE_TOP50_SPECS ?? "1";
   childEnv.CLAWQL_BUNDLED_OFFLINE = process.env.CLAWQL_BUNDLED_OFFLINE ?? "1";
-  delete childEnv.CLAWQL_PROVIDER;
+  childEnv.CLAWQL_PROVIDER = process.env.CLAWQL_PROVIDER ?? "google";
+  delete childEnv.CLAWQL_GOOGLE_TOP50_SPECS;
+  delete childEnv.CLAWQL_GOOGLE_CLOUD_SPECS;
+  delete childEnv.CLAWQL_BUNDLED_PROVIDERS;
   delete childEnv.CLAWQL_SPEC_PATH;
   delete childEnv.CLAWQL_DISCOVERY_URL;
 
@@ -183,7 +185,7 @@ async function main() {
       },
       clientInfo: { name: "clawql-gcp-multi-workflow", version: "1.0.0" },
       env: {
-        CLAWQL_GOOGLE_TOP50_SPECS: process.env.CLAWQL_GOOGLE_TOP50_SPECS ?? "1",
+        CLAWQL_PROVIDER: process.env.CLAWQL_PROVIDER ?? "google",
         CLAWQL_BUNDLED_OFFLINE: process.env.CLAWQL_BUNDLED_OFFLINE ?? "1",
       },
       mergedOperationCount,
