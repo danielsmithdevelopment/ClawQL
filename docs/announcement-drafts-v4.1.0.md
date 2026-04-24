@@ -1,3 +1,154 @@
+# ClawQL 4.2.0 — release announcement drafts (Medium, LinkedIn, HN/Reddit, X)
+
+**Links:** [GitHub release v4.2.0](https://github.com/danielsmithdevelopment/ClawQL/releases/tag/v4.2.0) · [npm: clawql-mcp](https://www.npmjs.com/package/clawql-mcp) · [Docs](https://docs.clawql.com) · [CHANGELOG](https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md)
+
+---
+
+## 1) Medium / long blog post (draft)
+
+**Title:** _ClawQL 4.2.0: Ouroboros integration, schedule tooling, and full-stack Helm for real deployments_
+
+**Subhead:** The MCP server now ships a deeper workflow layer, richer Kubernetes stack templates, and stronger docs/site coverage for running ClawQL end-to-end.
+
+**Body:**
+
+ClawQL has always focused on one idea: keep API automation spec-driven and composable, then add power without forcing every installation to carry every feature. **ClawQL 4.2.0** is a major operational release in that direction.
+
+It combines four threads that usually land as separate projects:
+
+- workflow primitives for iterative agent loops
+- scheduler support for timed operations
+- deployable Helm topology for multi-service document and event flows
+- docs and website updates that match what actually ships
+
+### What is new in 4.2.0
+
+**1. Ouroboros integration is now in the main server path**
+
+The `clawql-ouroboros` flow is integrated into `clawql-mcp` behind flags and server/tool wiring updates. This moves Ouroboros from "adjacent library story" to "usable runtime path inside the MCP process," with tests and docs aligned.
+
+**2. Postgres-backed event lineage support is in place**
+
+Event-store work for Ouroboros lineages is now part of the release path, giving operators a durable store story for workflow traces beyond in-memory execution context.
+
+**3. `schedule` MCP tooling landed**
+
+The schedule surface is now implemented with tests and parity coverage, making timed and recurring operations a first-class flow rather than an external orchestration workaround.
+
+**4. Helm support expanded to full-stack patterns**
+
+The chart now includes stack templates for:
+
+- NATS JetStream
+- Flink sync path
+- document pipeline services
+- Ouroboros Postgres deployment/service/secret wiring
+
+This is a meaningful shift from "single-service chart" to "practical multi-component topology."
+
+**5. Docs + website are aligned with shipped capabilities**
+
+Release docs, ADRs, Kubernetes/Helm docs, and docs-site pages now match the runtime state. New/updated website sections cover schedule, NATS JetStream, Flink-Onyx sync, and expanded Ouroboros/Helm references.
+
+### Why it matters
+
+For teams running production agent infrastructure, the gap is often not "can this tool call one API?" It is "can we operate this as a coherent system with workflows, schedule, state, and deployment primitives."
+
+**4.2.0** makes that production story far more concrete while preserving feature-flag boundaries and the existing MCP transport model.
+
+**CTA:** Install `clawql-mcp@4.2.0`, review the CHANGELOG and Helm docs, and test the stack on a branch before promoting to your production overlays.
+
+---
+
+## 2) LinkedIn (draft)
+
+**Post:**
+
+We shipped **clawql-mcp 4.2.0**.
+
+This release is less about one flashy endpoint and more about shipping the actual operating model:
+
+- **Ouroboros integrated** in the main server/tool path
+- **Postgres event-store lineage** support for Ouroboros flows
+- **`schedule` MCP tool** with test coverage
+- **Helm full-stack templates** for NATS JetStream, Flink sync, document pipeline, and Ouroboros Postgres
+- **Docs/site refresh** so what is documented matches what is deployable
+
+If you are building agent systems on top of MCP and need more than single-request demos, this is a strong release to pin.
+
+**Links:**  
+GitHub release: `https://github.com/danielsmithdevelopment/ClawQL/releases/tag/v4.2.0`  
+npm: `clawql-mcp@4.2.0`  
+Docs: `https://docs.clawql.com`
+
+#MCP #OpenAPI #Kubernetes #Helm #AIInfrastructure #ClawQL
+
+---
+
+## 3) Hacker News + Reddit (draft)
+
+**Hacker News title:**
+
+> ClawQL 4.2.0: Ouroboros + schedule MCP tools, full-stack Helm templates
+
+**Submission URL:**  
+`https://github.com/danielsmithdevelopment/ClawQL/releases/tag/v4.2.0`
+
+**First comment:**
+
+I maintain **ClawQL**, a TypeScript MCP server for spec-driven `search` / `execute` over merged OpenAPI + Discovery surfaces.
+
+**4.2.0** focuses on deployable workflow ops:
+
+- Ouroboros is integrated into the main server/tooling path (not just adjacent package docs).
+- Event lineage support now includes Postgres-backed paths.
+- `schedule` MCP tooling landed with tests.
+- Helm now includes stack templates for NATS JetStream, Flink sync, document pipeline components, and Ouroboros Postgres resources.
+- Docs + docs site were updated to match shipped behavior.
+
+Happy to answer questions on chart structure, feature flags, and migration from single-service installs.
+
+**Reddit title option (r/selfhosted):**  
+_ClawQL 4.2.0 released: MCP server with Ouroboros integration, schedule tooling, and full-stack Helm_
+
+---
+
+## 4) X (Twitter) thread (draft)
+
+**1/10**  
+ClawQL 4.2.0 is out. This release is about production shape: workflows, schedule, event lineage, and deployable stack templates.
+
+**2/10**  
+Ouroboros is now integrated in the main `clawql-mcp` runtime path (feature-flagged), with updated server/tool wiring and tests.
+
+**3/10**  
+Postgres-backed event lineage paths are now part of the Ouroboros story, so workflow traces can be durable.
+
+**4/10**  
+`schedule` MCP tooling landed + test coverage. Timed and recurring automation is now first-class in the tool surface.
+
+**5/10**  
+Helm expanded with stack templates for: NATS JetStream, Flink sync, document pipeline components, and Ouroboros Postgres resources.
+
+**6/10**  
+Docs/website now reflect shipped capability: schedule, NATS JetStream, Flink-Onyx sync, and broader Helm/K8s paths.
+
+**7/10**  
+If you are moving from API demos to operable agent systems, this is the practical release.
+
+**8/10**  
+`npm i clawql-mcp@4.2.0`
+
+**9/10**  
+Release: `https://github.com/danielsmithdevelopment/ClawQL/releases/tag/v4.2.0`
+
+**10/10**  
+Docs: `https://docs.clawql.com` · Changelog: `https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md`
+
+---
+
+_Note: This file keeps the old path name for continuity. Content is now drafted for **v4.2.0**._
+
 # ClawQL 4.1.0 — release announcement drafts (Medium, LinkedIn, HN/Reddit, X)
 
 **Links:** [GitHub release v4.1.0](https://github.com/danielsmithdevelopment/ClawQL/releases/tag/v4.1.0) · [npm: clawql-mcp](https://www.npmjs.com/package/clawql-mcp) · [Docs](https://docs.clawql.com) · [CHANGELOG](https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md)
