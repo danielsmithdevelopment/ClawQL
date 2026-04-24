@@ -16,8 +16,10 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
   '/case-studies/cloudflare-docs-mcp': caseStudyCloudflareDocsSections,
   '/case-studies/vault-memory-github-session-2026-04':
     caseStudyVaultMemorySessionSections,
-  '/case-studies/cross-thread-vault-recall': caseStudyCrossThreadVaultRecallSections,
-  '/case-studies/truenas-scale-corgicave-homelab': caseStudyTruenasCorgicaveSections,
+  '/case-studies/cross-thread-vault-recall':
+    caseStudyCrossThreadVaultRecallSections,
+  '/case-studies/truenas-scale-corgicave-homelab':
+    caseStudyTruenasCorgicaveSections,
   '/case-studies/docs-clawql-worker-1102-mcp-memory-2026-04':
     caseStudyWorker1102McpMemorySections,
 }

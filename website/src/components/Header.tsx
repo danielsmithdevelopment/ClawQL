@@ -30,7 +30,10 @@ const Search = dynamic(
 const MobileSearch = dynamic(
   () =>
     import('@/components/Search').then((m) => ({ default: m.MobileSearch })),
-  { ssr: false, loading: () => <div className="size-6 shrink-0 lg:hidden" aria-hidden /> },
+  {
+    ssr: false,
+    loading: () => <div className="size-6 shrink-0 lg:hidden" aria-hidden />,
+  },
 )
 
 function TopLevelNavItem({
