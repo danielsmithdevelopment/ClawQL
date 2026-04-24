@@ -13,6 +13,8 @@ describe("getClawqlOptionalToolFlags", () => {
       CLAWQL_ENABLE_NOTIFY: undefined,
       CLAWQL_ENABLE_VISION: undefined,
       CLAWQL_ENABLE_AUDIT: undefined,
+      CLAWQL_ENABLE_ONYX: undefined,
+      CLAWQL_ENABLE_OUROBOROS: undefined,
     });
     expect(f.enableGrpc).toBe(false);
     expect(f.enableGrpcReflection).toBe(false);
@@ -22,6 +24,8 @@ describe("getClawqlOptionalToolFlags", () => {
     expect(f.enableNotify).toBe(false);
     expect(f.enableVision).toBe(false);
     expect(f.enableAudit).toBe(false);
+    expect(f.enableOnyxKnowledge).toBe(false);
+    expect(f.enableOuroboros).toBe(false);
   });
 
   it("parses ENABLE_GRPC and ENABLE_GRPC_REFLECTION", () => {
@@ -55,11 +59,15 @@ describe("getClawqlOptionalToolFlags", () => {
       CLAWQL_ENABLE_NOTIFY: "TRUE",
       CLAWQL_ENABLE_VISION: "0",
       CLAWQL_ENABLE_AUDIT: "true",
+      CLAWQL_ENABLE_ONYX: "1",
+      CLAWQL_ENABLE_OUROBOROS: "yes",
     } as NodeJS.ProcessEnv);
     expect(f.enableCache).toBe(true);
     expect(f.enableSchedule).toBe(true);
     expect(f.enableNotify).toBe(true);
     expect(f.enableVision).toBe(false);
     expect(f.enableAudit).toBe(true);
+    expect(f.enableOnyxKnowledge).toBe(true);
+    expect(f.enableOuroboros).toBe(true);
   });
 });

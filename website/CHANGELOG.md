@@ -1,7 +1,13 @@
 # Changelog
 
+## 2026-04-24
+
+- **clawql-mcp v4.1.0** site alignment: **Home** and **Tools** copy now describe optional **`ouroboros_*`** tools when **`CLAWQL_ENABLE_OUROBOROS=1`** ([#141](https://github.com/danielsmithdevelopment/ClawQL/issues/141)); default merge blurb points to [spec configuration](/spec-configuration) instead of an outdated “top 50” list. Repo **CHANGELOG** and Helm chart **0.4.0** / **`appVersion` 4.1.0** match the release.
+
 ## 2026-04-23
 
+- **Onyx knowledge search** page at **`/onyx-knowledge`**: optional MCP **`knowledge_search_onyx`** (**`CLAWQL_ENABLE_ONYX`**), **`ONYX_BASE_URL`**, tokens, JSON examples, links to **[onyx-knowledge-tool.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/onyx-knowledge-tool.md)** ([#118](https://github.com/danielsmithdevelopment/ClawQL/issues/118)). **Navigation** → Reference; **Guides** grid; **sitemap**. **Tools**, **Bundled specs**, **Home**, **Concepts**, and **MCP clients** pages updated.
+- **Ouroboros library** page at **`/ouroboros`**: documents workspace package **`clawql-ouroboros`** (evolutionary loop, install, imports, links to **[clawql-ouroboros.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/clawql-ouroboros.md)** for full examples). **Navigation** → Reference. **Tools** and **Concepts** pages cross-link.
 - **Tools** page: **`memory_ingest`** row notes optional **`toolOutputsFile`** and **`CLAWQL_MEMORY_INGEST_FILE_*`**, linking to [mcp-tools memory_ingest](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp-tools.md#memory_ingest). **clawql-vault-memory** `SKILL.md` republished under **`/.well-known/agent-skills/`** from `.cursor/skills` (regenerated digest in **`agent-skills-index.json`**).
 
 ## 2026-04-21

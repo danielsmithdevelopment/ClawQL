@@ -135,6 +135,17 @@ export const BUNDLED_PROVIDERS: Record<string, BundledProvider> = {
     fallbackUrl:
       "https://raw.githubusercontent.com/danielsmithdevelopment/ClawQL/main/providers/stirling/openapi.yaml",
   },
+  /**
+   * Onyx enterprise search — minimal `POST /search/send-search-message` subset.
+   * Base URL: ONYX_BASE_URL (API root, often includes `/api`). Auth: ONYX_API_TOKEN (Bearer).
+   */
+  onyx: {
+    id: "onyx",
+    bundledSpecPath: "providers/onyx/openapi.yaml",
+    format: "openapi",
+    fallbackUrl:
+      "https://raw.githubusercontent.com/danielsmithdevelopment/ClawQL/main/providers/onyx/openapi.yaml",
+  },
 };
 
 async function resolveGoogleTop50Items(): Promise<ProviderGroupItem[]> {

@@ -15,10 +15,12 @@ import { loadSpec } from "./spec-loader.js";
 import { createRegisteredMcpServer } from "./mcp-server-factory.js";
 import { preloadSchemaFieldCacheFromDisk } from "./tools.js";
 import { validateObsidianVaultAtStartup } from "./vault-config.js";
+import { registerOuroborosPoolShutdownHooks } from "./ouroboros/postgres-pool.js";
 import { registerPostgresPoolShutdownHooks } from "./vector-store/pgvector.js";
 
 async function main() {
   registerPostgresPoolShutdownHooks();
+  registerOuroborosPoolShutdownHooks();
   // Pre-warm the spec cache on startup so the first search call is fast
   await loadSpec();
   // Prefer pregenerated introspection.json (bundled or CLAWQL_INTROSPECTION_PATH) over live proxy introspection

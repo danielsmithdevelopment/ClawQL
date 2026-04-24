@@ -20,6 +20,7 @@
  *
  * Self-hosted document APIs: **`paperless`** → `PAPERLESS_API_TOKEN` as `Authorization: Token …`;
  * **`stirling`** → `STIRLING_API_KEY` as `X-API-KEY`; **`tika`** / **`gotenberg`** → optional `CLAWQL_BEARER_TOKEN`.
+ * **`onyx`** → `ONYX_API_TOKEN` / `CLAWQL_ONYX_API_TOKEN` as `Authorization: Bearer …`.
  */
 
 function trimEnv(...keys: string[]): string | undefined {
@@ -151,6 +152,10 @@ function envResolvedAuthHeaders(specLabel?: string): Record<string, string> {
   }
   if (effective === "tika" || effective === "gotenberg") {
     const bearer = trimEnv("CLAWQL_BEARER_TOKEN");
+    return bearer ? { Authorization: `Bearer ${bearer}` } : {};
+  }
+  if (effective === "onyx") {
+    const bearer = trimEnv("ONYX_API_TOKEN", "CLAWQL_ONYX_API_TOKEN");
     return bearer ? { Authorization: `Bearer ${bearer}` } : {};
   }
 

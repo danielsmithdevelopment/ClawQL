@@ -1,0 +1,74 @@
+{
+  "name": "clawql-ouroboros",
+  "version": "0.1.0",
+  "description": "Embeddable TypeScript evolutionary loop: Zod Seeds, Wonder/Reflect, Executor/Evaluator, ontology convergence, optional MCP tool shapes — use with any agent backend or job worker (Node ≥22).",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./mcp-hooks": {
+      "types": "./dist/mcp-hooks.d.ts",
+      "import": "./dist/mcp-hooks.js",
+      "require": "./dist/mcp-hooks.cjs"
+    },
+    "./poller": {
+      "types": "./dist/poller.d.ts",
+      "import": "./dist/poller.js",
+      "require": "./dist/poller.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "npm run clean && tsup",
+    "prepublishOnly": "npm run build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "uuid": "^11.1.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsup": "^8.3.0",
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.1"
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "engines": {
+    "node": ">=22"
+  },
+  "keywords": [
+    "clawql",
+    "ouroboros",
+    "workflow",
+    "ai-agent",
+    "specification-first",
+    "mcp",
+    "evolutionary-algorithm",
+    "convergence",
+    "zod",
+    "seed",
+    "llm",
+    "agent-loop",
+    "typescript",
+    "nodejs"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/danielsmithdevelopment/ClawQL.git",
+    "directory": "packages/clawql-ouroboros"
+  },
+  "bugs": {
+    "url": "https://github.com/danielsmithdevelopment/ClawQL/issues"
+  },
+  "homepage": "https://docs.clawql.com/ouroboros"
+}

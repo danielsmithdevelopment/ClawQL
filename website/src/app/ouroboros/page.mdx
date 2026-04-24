@@ -1,0 +1,70 @@
+import { docsPageMetadata } from '@/lib/seo'
+
+export const metadata = docsPageMetadata({
+  title: 'Ouroboros library',
+  description:
+    'clawql-ouroboros: TypeScript evolutionary loop (Seed, Wonder/Reflect, Executor, Evaluator, convergence). Workspace package in ClawQL — embeddable library; not yet exposed as MCP tools on clawql-mcp.',
+  path: '/ouroboros',
+})
+
+# Ouroboros library (`clawql-ouroboros`)
+
+ClawQL ships a TypeScript workspace package **`clawql-ouroboros`** for **specification-first** multi-generation workflows: validated **Seeds**, **Wonder / Reflect** hooks, pluggable **Executor** and **Evaluator**, **ontology convergence** (similarity, stagnation, oscillation, regression gates), an **`EvolutionaryLoop`**, and helpers for **MCP-style tool registration** and a **background seed poller**. {{ className: 'lead' }}
+
+It is a **library** you `import` from Node ≥ 22 — it is **not** registered on the **`clawql-mcp`** MCP server yet. Slides and roadmap may describe “invisible Ouroboros” inside ClawQL; this package is the **current code artifact** toward that story.
+
+## How it relates to upstream “Ouroboros”
+
+The widely known Python project **[Q00/ouroboros](https://github.com/Q00/ouroboros)** is a full agentic stack (interview, CLI, MCP plugin, execution routing, persistence, and more). **`clawql-ouroboros`** is a **ClawQL-scoped subset**: overlapping concepts (seed, wonder/reflect, convergence), **not** API or feature parity. The npm name **`clawql-ouroboros`** avoids implying an official TypeScript port of Q00.
+
+## Install and build
+
+From the **ClawQL** monorepo, depend on the workspace:
+
+```json
+{ "dependencies": { "clawql-ouroboros": "workspace:*" } }
+```
+
+From **npm** (after you publish `clawql-ouroboros`):
+
+```bash
+npm install clawql-ouroboros
+```
+
+From a repo checkout, build the package:
+
+```bash
+npm run build -w clawql-ouroboros
+```
+
+## Imports
+
+| Path                         | Contents                                                                                           |
+| ---------------------------- | -------------------------------------------------------------------------------------------------- |
+| `clawql-ouroboros`           | `SeedSchema`, `EvolutionaryLoop`, `ConvergenceCriteria`, `InMemoryEventStore`, types               |
+| `clawql-ouroboros/mcp-hooks` | `ouroborosMcpTools` — schemas + handlers for crystallize / run / lineage (wire to your MCP server) |
+| `clawql-ouroboros/poller`    | `startSeedsPoller` — interval loop with your DB `fetchPending` / `markFailed`                      |
+
+## Minimal usage (conceptual)
+
+1. Implement or inject **WonderEngine**, **ReflectEngine**, **Executor**, **Evaluator** (or use stubs for tests).
+2. Choose an **EventStore** — **`InMemoryEventStore`** for dev/tests; **Postgres** (or similar) for production (**you implement** `append` / `getLineage`).
+3. Construct **`EvolutionaryLoop`**, then **`await loop.run(seed)`** or **`run(seed, { maxGenerations, convergenceThreshold })`** for per-run caps.
+
+## npm registry
+
+On **npm**, the package listing shows **`README.md`** from [`packages/clawql-ouroboros/README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/packages/clawql-ouroboros/README.md) — install, quick start, export table, and honest scope for **any** Node ≥22 project (not only ClawQL). The tarball includes **`LICENSE`** (Apache-2.0).
+
+## Full guide and copy-paste examples
+
+Canonical documentation with **examples** (minimal loop, convergence-only, MCP hooks, poller) lives in the repo:
+
+**[clawql-ouroboros.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/clawql-ouroboros.md)**
+
+Package README (short pointer): **[packages/clawql-ouroboros/README.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/packages/clawql-ouroboros/README.md)**.
+
+## See also
+
+- [Tools](/tools) — MCP tools on **`clawql-mcp`** (**`search`**, **`execute`**, vault, optional **`notify`**, etc.).
+- [Concepts](/concepts) — how ClawQL’s **token-efficient** `search` → `execute` path fits the broader agent story.
+- [mcp-tools.md — Workspace library section](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp-tools.md#workspace-library-clawql-ouroboros-not-an-mcp-tool-on-clawql-mcp-yet) — one-page pointer next to env flags.

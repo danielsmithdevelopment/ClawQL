@@ -70,6 +70,26 @@ spec:
             - name: CLAWQL_ENABLE_AUDIT
               value: "1"
             {{- end }}
+            {{- if .Values.enableNotify }}
+            - name: CLAWQL_ENABLE_NOTIFY
+              value: "1"
+            {{- end }}
+            {{- if .Values.enableOnyx }}
+            - name: CLAWQL_ENABLE_ONYX
+              value: "1"
+            {{- end }}
+            {{- if .Values.onyxBaseUrl }}
+            - name: ONYX_BASE_URL
+              value: {{ .Values.onyxBaseUrl | quote }}
+            {{- end }}
+            {{- if .Values.enableOuroboros }}
+            - name: CLAWQL_ENABLE_OUROBOROS
+              value: "1"
+            {{- end }}
+            {{- if .Values.ouroborosDatabaseUrl }}
+            - name: CLAWQL_OUROBOROS_DATABASE_URL
+              value: {{ .Values.ouroborosDatabaseUrl | quote }}
+            {{- end }}
             {{- with .Values.extraEnv }}
             {{- toYaml . | nindent 12 }}
             {{- end }}

@@ -3,6 +3,12 @@
  */
 
 import { createHash } from "node:crypto";
+import {
+  formatEnterpriseCitationsMarkdownBlock,
+  normalizeEnterpriseCitations,
+  stableEnterpriseCitationsPayload,
+  type EnterpriseCitation,
+} from "./enterprise-citations.js";
 import { getObsidianVaultPath } from "./vault-config.js";
 import { readToolOutputsFileForIngest } from "./memory-ingest-file.js";
 import { readVaultTextFile, withVaultWriteLock, writeVaultTextFileAtomic } from "./vault-utils.js";
@@ -14,6 +20,11 @@ export type MemoryIngestInput = {
   title: string;
   insights?: string;
   conversation?: string;
+  /**
+   * Short structured citations (e.g. from Onyx) stored in the vault section without full corpora (#130).
+   * Prefer passing a trimmed list; values are normalized and capped server-side.
+   */
+  enterpriseCitations?: EnterpriseCitation[];
   toolOutputs?: string | string[];
   /**
    * When set, the server reads UTF-8 from this path and uses it as `toolOutputs` (avoids huge MCP JSON). Path may be
@@ -80,9 +91,12 @@ function formatToolOutputs(toolOutputs: string | string[] | undefined): string {
 
 function sectionPayload(input: MemoryIngestInput): string {
   const toolText = formatToolOutputs(input.toolOutputs);
-  return [input.insights?.trim() ?? "", toolText, input.conversation?.trim() ?? ""].join(
-    "\n\u0000\n"
-  );
+  return [
+    input.insights?.trim() ?? "",
+    stableEnterpriseCitationsPayload(input.enterpriseCitations),
+    toolText,
+    input.conversation?.trim() ?? "",
+  ].join("\n\u0000\n");
 }
 
 export function hashIngestSection(input: MemoryIngestInput): string {
@@ -117,6 +131,9 @@ function buildSectionBody(
     lines.push("#### Insights");
     lines.push(input.insights.trim());
     lines.push("");
+  }
+  if (input.enterpriseCitations?.length) {
+    lines.push(formatEnterpriseCitationsMarkdownBlock(input.enterpriseCitations));
   }
   if (options?.toolOutputsReadFromFile?.trim()) {
     lines.push(
@@ -200,6 +217,11 @@ export async function runMemoryIngest(input: MemoryIngestInput): Promise<MemoryI
       toolOutputsFile: undefined,
     };
   }
+
+  effective = {
+    ...effective,
+    enterpriseCitations: normalizeEnterpriseCitations(effective.enterpriseCitations),
+  };
 
   const slug = slugifyTitle(title);
   const rel = `${MEMORY_DIR}/${slug}.md`;
@@ -342,6 +364,7 @@ export async function handleMemoryIngestToolInput(
     titleChars: params.title?.length ?? 0,
     append: params.append,
     hasInsights: Boolean(params.insights?.trim()),
+    enterpriseCitationCount: params.enterpriseCitations?.length ?? 0,
     hasConversation: Boolean(params.conversation?.trim()),
     hasToolOutputsFile: Boolean(params.toolOutputsFile?.trim()),
     hasToolOutputs: Boolean(

@@ -2,7 +2,7 @@
 
 This document describes **scheduled HTTP/API synthetic checks** as a **first-class subset** of the optional **`schedule`** MCP tool. It is the project’s intended pattern for **time-based probes** with **assertions** and **alerts**—**without** embedding any external observability vendor in ClawQL.
 
-**Tracking:** [#76](https://github.com/danielsmithdevelopment/ClawQL/issues/76) (`schedule`), [#77](https://github.com/danielsmithdevelopment/ClawQL/issues/77) (`notify`) for failure notifications, [#79](https://github.com/danielsmithdevelopment/ClawQL/issues/79) (optional-tool env matrix).
+**Tracking:** [#76](https://github.com/danielsmithdevelopment/ClawQL/issues/76) (`schedule`), [#77](https://github.com/danielsmithdevelopment/ClawQL/issues/77) (`notify`) for failure notifications — see **[notify-tool.md](notify-tool.md)** for how to enable and call **`notify`**, [#79](https://github.com/danielsmithdevelopment/ClawQL/issues/79) (optional-tool env matrix).
 
 ---
 

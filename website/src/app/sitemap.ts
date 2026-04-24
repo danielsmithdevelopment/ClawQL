@@ -25,6 +25,8 @@ const ENTRIES: Array<Entry> = [
   { path: '/spec-configuration', changeFrequency: 'monthly', priority: 0.85 },
   { path: '/troubleshooting', changeFrequency: 'monthly', priority: 0.82 },
   { path: '/cache', changeFrequency: 'monthly', priority: 0.8 },
+  { path: '/notify', changeFrequency: 'monthly', priority: 0.8 },
+  { path: '/onyx-knowledge', changeFrequency: 'monthly', priority: 0.8 },
   { path: '/graphql-proxy', changeFrequency: 'monthly', priority: 0.8 },
   { path: '/bundled-specs', changeFrequency: 'monthly', priority: 0.8 },
   { path: '/benchmarks', changeFrequency: 'monthly', priority: 0.75 },

@@ -10,11 +10,12 @@ Design for optional, **env-gated** MCP surfaces that stay **off** the default sc
 
 ## Feature flags (planned / partial)
 
-| Env                              | MCP tool         | Status                                                              |
-| -------------------------------- | ---------------- | ------------------------------------------------------------------- |
-| **`CLAWQL_ENABLE_AUDIT=1`**      | **`audit`**      | **Shipped (v1):** in-process ring buffer — not durable (see below). |
-| **`CLAWQL_ENABLE_METRICS=1`**    | **`metrics`**    | Planned — DORA/DevEx-style reporting; Obsidian artifacts.           |
-| **`CLAWQL_ENABLE_GOVERNANCE=1`** | **`governance`** | Planned — PII/RBAC/HITL policy hooks.                               |
+| Env                              | MCP tool         | Status                                                                                                                                                                                                                                      |
+| -------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`CLAWQL_ENABLE_AUDIT=1`**      | **`audit`**      | **Shipped (v1):** in-process ring buffer — not durable (see below).                                                                                                                                                                         |
+| **`CLAWQL_ENABLE_NOTIFY=1`**     | **`notify`**     | **Shipped:** Slack **`chat.postMessage`** when the Slack spec is loaded — **[notify-tool.md](notify-tool.md)** · [mcp-tools.md § notify](mcp-tools.md#notify-optional) ([#77](https://github.com/danielsmithdevelopment/ClawQL/issues/77)). |
+| **`CLAWQL_ENABLE_METRICS=1`**    | **`metrics`**    | Planned — DORA/DevEx-style reporting; Obsidian artifacts.                                                                                                                                                                                   |
+| **`CLAWQL_ENABLE_GOVERNANCE=1`** | **`governance`** | Planned — PII/RBAC/HITL policy hooks.                                                                                                                                                                                                       |
 
 Parsing for `CLAWQL_ENABLE_AUDIT` matches other `CLAWQL_ENABLE_*` booleans (`1` / `true` / `yes`).
 

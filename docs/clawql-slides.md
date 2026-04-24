@@ -177,13 +177,13 @@ Fuzzy-discovers operations and parameters from all loaded OpenAPI/Discovery spec
 Calls a discovered REST operation with proper auth headers and a fully typed request body. Handles all providers — GitHub, Cloudflare, Paperless, Stirling, Onyx, Slack, and more — through one consistent interface.
 
 **`memory_ingest` — Memory**
-Writes durable Markdown notes into an Obsidian vault on disk. Supports structured insights, optional conversation capture, tool outputs, wikilinks between notes, and frontmatter provenance metadata. Automatically enriched with Onyx-retrieved citations when called after knowledge search steps.
+Writes durable Markdown notes into an Obsidian vault on disk. Supports structured insights, optional conversation capture, tool outputs, optional **`enterpriseCitations`** (trimmed Onyx-style rows for vault-safe trails), wikilinks between notes, and frontmatter provenance metadata. Pair with **`knowledge_search_onyx`** and pass citations explicitly — no silent auto-append.
 
 **`memory_recall` — Memory**
 Retrieves topically relevant vault notes using keyword matching and optional graph-depth traversal (`maxDepth`). Returns ranked pages — not the whole vault — so context stays lean and precise.
 
 **`knowledge_search_onyx` — Knowledge**
-Thin wrapper that calls `search()` internally for Onyx’s MCP/REST tools, then `execute()`. Returns permission-aware, semantically ranked chunks with citations from your full enterprise index — Slack threads, Drive docs, Confluence pages, Jira tickets, GitHub issues, email, and more. GraphQL projection trims to only relevant fields + citations. Enabled via `CLAWQL_ENABLE_ONYX=true`.
+Optional MCP tool ( **`CLAWQL_ENABLE_ONYX=true`** ) over the bundled Onyx OpenAPI operation **`onyx_send_search_message`** → **`POST /search/send-search-message`** (merged id **`onyx::onyx_send_search_message`** when **`onyx`** is in the provider merge). Same auth as **`execute`** on **`onyx`** (`ONYX_BASE_URL`, Bearer token). Responses are JSON from your Onyx deployment; use **`execute`** **`fields`** or **`memory_ingest`** **`enterpriseCitations`** for small, durable slices. Where GraphQL mesh applies to a loaded spec, **`execute`** can still trim via the in-process GraphQL path; the bundled minimal Onyx surface is REST-first.
 
 **`sandbox_exec` — Execution**
 Executes remote code in a Cloudflare Sandbox via a bridge. Enables agents to run code, validate outputs, and test scripts without requiring local execution infrastructure on the client side.
@@ -226,7 +226,7 @@ _The two core tools that make any OpenAPI-described API instantly accessible wit
 1. GraphQL projection strips unused fields from the response
 1. Returns: issue number, URL, and status — exactly what the AI needs, nothing more
 
-**Key insight:** The AI never sees the full OpenAPI spec. `search()` returns only the relevant slice. `execute()` handles all auth and HTTP mechanics transparently. The same pattern applies to every provider — including Onyx’s `search_indexed_documents` operation.
+**Key insight:** The AI never sees the full OpenAPI spec. `search()` returns only the relevant slice. `execute()` handles all auth and HTTP mechanics transparently. The same pattern applies to every bundled provider — including Onyx’s **`onyx_send_search_message`** (document search) and optional **`onyx_ingest_document`** (ingestion API) in **`providers/onyx/openapi.yaml`**.
 
 ---
 
@@ -239,7 +239,7 @@ _Durable, graph-connected, cross-session memory that works with any assistant �
 **How the Memory System Works**
 
 **Ingest**
-`memory_ingest()` writes Markdown notes to an Obsidian vault on disk. Notes include structured insights, wikilinks to related pages, frontmatter provenance (when, what), and optional conversation capture. Use stable, append-friendly note titles so runbooks accumulate instead of fragment. When called after an Onyx knowledge retrieval step, the note automatically includes ranked citations from the enterprise index — making company knowledge permanently recallable without re-querying Onyx.
+`memory_ingest()` writes Markdown notes to an Obsidian vault on disk. Notes include structured insights, wikilinks to related pages, frontmatter provenance (when, what), and optional conversation capture. Use stable, append-friendly note titles so runbooks accumulate instead of fragment. After **`knowledge_search_onyx`**, pass a trimmed **`enterpriseCitations`** list (or redacted **`toolOutputs`**) so enterprise hits are recallable via **`memory_recall`** without pasting full Onyx payloads (#130).
 
 **Graph**
 `[[wikilinks]]` between notes build Obsidian’s graph. `memory_recall()` can traverse this graph via `maxDepth` — so a query for `'Q1 pricing policy'` surfaces not just the direct note, but linked Onyx citation pages, Paperless document IDs, GitHub issue references, and related workflow decisions across the entire graph.
@@ -255,7 +255,7 @@ In a fresh Cursor session (hours, days, or weeks later), `memory_recall()` retur
 - `memory_ingest` after any significant workflow builds a living runbook automatically
 - Cross-tool: ingest from Claude, recall in Cursor — vault is tool-agnostic
 - After recall, `search` + `execute` can file GitHub issues from the recalled plan — no copy-paste
-- After document workflows, Ouroboros auto-ingests summaries with Onyx citations, Merkle roots, and document IDs
+- After document workflows, Ouroboros can **`memory_ingest`** summaries (citations, Merkle roots, doc IDs) — automation tracked in #116 / #141
 - Hybrid `memory.db` sidecar (SQLite + sqlite-vec) planned for vector-ranked chunk retrieval
 
 ---
@@ -547,7 +547,7 @@ Inject custom HTML headers and footers into converted PDFs — company logos, pa
 _The knowledge backbone — semantic search across your entire company, permission-aware, real-time, citation-backed._
 
 **What Onyx Is**
-Onyx is an open-source enterprise knowledge search platform that indexes your entire company’s knowledge base across 40+ connectors. It exposes both a REST API and an official MCP server (`search_indexed_documents` and related tools), which means ClawQL integrates it exactly like Paperless or Stirling — via `providers/onyx.json` bundled into the ClawQL image, with runtime base URL injection (`ONYX_BASE_URL`) and `CLAWQL_ENABLE_ONYX=true`.
+Onyx is an open-source enterprise knowledge search platform that indexes your company’s knowledge base across many connectors. ClawQL ships a **minimal bundled OpenAPI** at **`providers/onyx/openapi.yaml`**: semantic search via **`POST /search/send-search-message`**, optional ingestion via **`POST /onyx-api/ingestion`** (#120). Set **`ONYX_BASE_URL`** (API root; include **`/api`** if mounted there), Bearer **`ONYX_API_TOKEN`**, and **`CLAWQL_ENABLE_ONYX=true`** to register **`knowledge_search_onyx`**. Full upstream OpenAPI can be refreshed with **`npm run fetch-provider-specs`** when **`ONYX_BASE_URL`** is set (#143).
 
 **40+ Connectors**
 
@@ -563,7 +563,7 @@ Onyx is an open-source enterprise knowledge search platform that indexes your en
 Onyx respects the permission model of each connected source. If a user doesn’t have access to a given Confluence space, that space doesn’t appear in their Onyx results — even when queried through ClawQL. Enterprise data governance is enforced at the retrieval layer, not at the application layer.
 
 **Citation-Returning Results**
-Every result from `knowledge_search_onyx` includes a source name, document title, relevant chunk text, and a citation URL back to the original source. These citations are automatically included when the result is ingested into the Obsidian vault — making company knowledge permanently attributable and auditable.
+Onyx returns permission-aware hits (shape varies by version). For durable vault trails, chain **`knowledge_search_onyx`** → **`memory_ingest`** with **`enterpriseCitations`** or redacted **`toolOutputs`** — small, attributable rows without dumping the full retrieval JSON (#130).
 
 **Flink Real-Time Sync**
 Flink pipelines keep Onyx’s index continuously updated from all connected sources. New Slack messages, updated Confluence pages, closed Jira tickets — all reflected in Onyx’s index within minutes. `knowledge_search_onyx` never returns stale results, even in fast-moving company environments.
@@ -579,7 +579,7 @@ _A real Cursor session — from natural language to archived, cross-referenced, 
 You type in Cursor: _“Process the new Q1 invoices from the consume folder, cross-reference them against our company pricing decisions from last quarter, redact PII, archive everything, and create follow-up GitHub issues if anything is missing.”_
 
 **1 — Onyx: Knowledge Retrieval**
-Ouroboros calls `knowledge_search_onyx('Q1 pricing decisions 2025' + 'invoice policy')`. Onyx queries its index across Slack, Confluence, Drive, and Jira — returns 7 ranked, permission-aware chunks with citations. GraphQL projection trims to only relevant fields. Results held in context for the cross-reference step.
+Ouroboros calls `knowledge_search_onyx('Q1 pricing decisions 2025' + 'invoice policy')`. Onyx queries its index across Slack, Confluence, Drive, and Jira — returns ranked, permission-aware chunks with citations. Use **`execute`** **`fields`** or post-process JSON to keep only what the agent needs. Results held in context for the cross-reference step.
 
 **2 — Tika: Extract & Detect**
 Tika analyzes each incoming file: PDFs pass through, Office files (Word/Excel) are flagged for conversion, damaged files are reported. Metadata extracted: author, creation date, language, MIME type — drives all downstream routing decisions.
@@ -814,8 +814,8 @@ Universal extraction API. 1,000+ format support. Fetched from self-hosted instan
 Document conversion API. HTML, Markdown, Office → PDF. Fetched from self-hosted instance. Triggered by Ouroboros when Tika detects non-PDF input files in a document workflow.
 
 **Onyx**
-`providers/onyx.json` | Auth: `ONYX_BASE_URL` (self-hosted) + `ONYX_API_TOKEN`
-Enterprise knowledge search. MCP server spec (`search_indexed_documents` + related tools) bundled or fetched at init time from self-hosted instance. Permission-aware semantic search across 40+ connectors. Enabled via `CLAWQL_ENABLE_ONYX=true`. Flink keeps the index fresh in real time.
+`providers/onyx/openapi.yaml` | Auth: `ONYX_BASE_URL` + `ONYX_API_TOKEN` (Bearer)
+Minimal bundled OpenAPI: **`onyx_send_search_message`** → **`POST /search/send-search-message`**, optional **`onyx_ingest_document`** → **`POST /onyx-api/ingestion`**. Optional MCP tool **`knowledge_search_onyx`** when **`CLAWQL_ENABLE_ONYX=true`**. Refresh from a live instance with **`npm run fetch-provider-specs`** when **`ONYX_BASE_URL`** is set. Flink connector jobs for index freshness are a separate deployment story (#119).
 
 ---
 
@@ -1116,8 +1116,8 @@ Full Interview → Seed → Execute → Evaluate → Evolve loop embedded in Cla
 **IN PROGRESS — Tika + Gotenberg Spec Bundling**
 Fetch/generate OpenAPI specs from running instances. Save as `providers/tika.json` and `providers/gotenberg.json`. Wire into the bundled `providers/` registry and merged `all-providers` load.
 
-**NEXT — Onyx Provider Bundling + knowledge_search_onyx Tool**
-Bundle or fetch Onyx’s MCP/REST spec as `providers/onyx.json`. Add `ONYX_BASE_URL` + `ONYX_API_TOKEN` runtime injection. Implement `knowledge_search_onyx` as a thin wrapper over `search()` + `execute()` against the Onyx spec. Enable via `CLAWQL_ENABLE_ONYX=true`.
+**SHIPPED — Onyx bundle + `knowledge_search_onyx` ([#118](https://github.com/danielsmithdevelopment/ClawQL/issues/118), [#144](https://github.com/danielsmithdevelopment/ClawQL/issues/144))**
+`providers/onyx/openapi.yaml`, optional **`knowledge_search_onyx`**, test stubs + stdio / Streamable HTTP / gRPC **`listTools`** parity. **`memory_ingest`** **`enterpriseCitations`** for vault-safe trails ([#130](https://github.com/danielsmithdevelopment/ClawQL/issues/130)). Ingestion op **`onyx_ingest_document`** ([#120](https://github.com/danielsmithdevelopment/ClawQL/issues/120)).
 
 **NEXT — Flink Connector Pipeline Deployment**
 Deploy Flink job manager and task manager into the `clawql` namespace. Configure connector jobs to keep Onyx index fresh from Slack, Confluence, Drive, Jira, GitHub, and other sources. Flink `jobmanager:8081` internal only.
@@ -1209,7 +1209,7 @@ The market has MCP servers that wrap specific APIs. The market has document tool
 - Glean, Guru, Notion AI: cloud-hosted, subscription-based, per-seat pricing. Onyx inside ClawQL is self-hosted and open source — zero per-query or per-seat cost
 - Enterprise search tools return answers. ClawQL returns answers AND acts on them — filing GitHub issues, processing documents, sending Slack notifications, all in the same automated workflow
 - No enterprise search platform feeds retrieval results into a document processing pipeline and archives the output in a single automated step
-- Onyx’s retrieved citations are automatically ingested into the Obsidian vault — making enterprise knowledge permanently recallable without re-querying the live index
+- Chain **`knowledge_search_onyx`** → **`memory_ingest`** with **`enterpriseCitations`** (or redacted **`toolOutputs`**) so enterprise hits stay recallable via **`memory_recall`** without silent auto-append or full JSON dumps
 
 ---
 

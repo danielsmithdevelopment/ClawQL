@@ -1,5 +1,6 @@
 import { createServer, type Server } from "node:http";
 import { once } from "node:events";
+import { mkdtempSync } from "node:fs";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -247,4 +248,114 @@ describe("server-http", () => {
       expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
     });
   });
+
+  it("streamable HTTP listTools includes notify when CLAWQL_ENABLE_NOTIFY=1 (#140)", async () => {
+    const vaultDir = mkdtempSync(join(tmpdir(), "clawql-http-notify-"));
+    const savedNotify = process.env.CLAWQL_ENABLE_NOTIFY;
+    const savedVault = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
+    process.env.CLAWQL_ENABLE_NOTIFY = "1";
+    process.env.CLAWQL_OBSIDIAN_VAULT_PATH = vaultDir;
+    await mkdir(join(vaultDir, "Memory"), { recursive: true });
+    resetSpecCache();
+    resetSchemaFieldCache();
+    try {
+      await withHttpServer(async (base) => {
+        const { StreamableHTTPClientTransport } =
+          await import("@modelcontextprotocol/sdk/client/streamableHttp.js");
+        const { Client } = await import("@modelcontextprotocol/sdk/client/index.js");
+        const transport = new StreamableHTTPClientTransport(new URL(`${base}/mcp`));
+        const client = new Client({ name: "vitest-http-notify", version: "1.0.0" }, {});
+        await client.connect(transport);
+        try {
+          const { tools } = await client.listTools();
+          const names = new Set(tools.map((t) => t.name));
+          expect(names.has("notify")).toBe(true);
+        } finally {
+          await client.close();
+        }
+      });
+    } finally {
+      await rm(vaultDir, { recursive: true, force: true }).catch(() => {});
+      if (savedNotify === undefined) delete process.env.CLAWQL_ENABLE_NOTIFY;
+      else process.env.CLAWQL_ENABLE_NOTIFY = savedNotify;
+      if (savedVault === undefined) delete process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
+      else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = savedVault;
+      resetSpecCache();
+      resetSchemaFieldCache();
+    }
+  }, 25_000);
+
+  it("streamable HTTP listTools includes knowledge_search_onyx when CLAWQL_ENABLE_ONYX=1 (#144)", async () => {
+    const vaultDir = mkdtempSync(join(tmpdir(), "clawql-http-onyx-"));
+    const savedOnyx = process.env.CLAWQL_ENABLE_ONYX;
+    const savedVault = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
+    process.env.CLAWQL_ENABLE_ONYX = "1";
+    process.env.CLAWQL_OBSIDIAN_VAULT_PATH = vaultDir;
+    await mkdir(join(vaultDir, "Memory"), { recursive: true });
+    resetSpecCache();
+    resetSchemaFieldCache();
+    try {
+      await withHttpServer(async (base) => {
+        const { StreamableHTTPClientTransport } =
+          await import("@modelcontextprotocol/sdk/client/streamableHttp.js");
+        const { Client } = await import("@modelcontextprotocol/sdk/client/index.js");
+        const transport = new StreamableHTTPClientTransport(new URL(`${base}/mcp`));
+        const client = new Client({ name: "vitest-http-onyx", version: "1.0.0" }, {});
+        await client.connect(transport);
+        try {
+          const { tools } = await client.listTools();
+          const names = new Set(tools.map((t) => t.name));
+          expect(names.has("knowledge_search_onyx")).toBe(true);
+        } finally {
+          await client.close();
+        }
+      });
+    } finally {
+      await rm(vaultDir, { recursive: true, force: true }).catch(() => {});
+      if (savedOnyx === undefined) delete process.env.CLAWQL_ENABLE_ONYX;
+      else process.env.CLAWQL_ENABLE_ONYX = savedOnyx;
+      if (savedVault === undefined) delete process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
+      else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = savedVault;
+      resetSpecCache();
+      resetSchemaFieldCache();
+    }
+  }, 25_000);
+
+  it("streamable HTTP listTools includes ouroboros_* when CLAWQL_ENABLE_OUROBOROS=1 (#141)", async () => {
+    const vaultDir = mkdtempSync(join(tmpdir(), "clawql-http-ouroboros-"));
+    const savedOuro = process.env.CLAWQL_ENABLE_OUROBOROS;
+    const savedVault = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
+    process.env.CLAWQL_ENABLE_OUROBOROS = "1";
+    process.env.CLAWQL_OBSIDIAN_VAULT_PATH = vaultDir;
+    await mkdir(join(vaultDir, "Memory"), { recursive: true });
+    resetSpecCache();
+    resetSchemaFieldCache();
+    try {
+      await withHttpServer(async (base) => {
+        const { StreamableHTTPClientTransport } =
+          await import("@modelcontextprotocol/sdk/client/streamableHttp.js");
+        const { Client } = await import("@modelcontextprotocol/sdk/client/index.js");
+        const transport = new StreamableHTTPClientTransport(new URL(`${base}/mcp`));
+        const client = new Client({ name: "vitest-http-ouroboros", version: "1.0.0" }, {});
+        await client.connect(transport);
+        try {
+          const { tools } = await client.listTools();
+          const names = new Set(tools.map((t) => t.name));
+          expect(names.has("ouroboros_create_seed_from_document")).toBe(true);
+          expect(names.has("ouroboros_run_evolutionary_loop")).toBe(true);
+          expect(names.has("ouroboros_get_lineage_status")).toBe(true);
+        } finally {
+          await client.close();
+        }
+      });
+    } finally {
+      await rm(vaultDir, { recursive: true, force: true }).catch(() => {});
+      if (savedOuro === undefined) delete process.env.CLAWQL_ENABLE_OUROBOROS;
+      else process.env.CLAWQL_ENABLE_OUROBOROS = savedOuro;
+      if (savedVault === undefined) delete process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
+      else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = savedVault;
+      resetSpecCache();
+      resetSchemaFieldCache();
+    }
+  }, 25_000);
 });

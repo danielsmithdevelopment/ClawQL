@@ -68,6 +68,8 @@ When **`CLAWQL_ENABLE_CACHE`** is set, the server exposes **`cache`**: **ephemer
 
 When **`CLAWQL_ENABLE_AUDIT`** is set, the server exposes **`audit`**: **ephemeral** in-process event ring buffer — **not** the vault and **not** compliance-grade alone. Use **`memory_ingest`** for durable, human-inspectable trails. Repo reference: **[`docs/enterprise-mcp-tools.md`](../../../docs/enterprise-mcp-tools.md)** ([#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)).
 
+When **`CLAWQL_ENABLE_NOTIFY`** is set, the server exposes **`notify`**: Slack **`chat.postMessage`** — **not** vault storage; use for completion signals alongside **`memory_ingest`** when you also want a durable note. Repo reference: **[`docs/notify-tool.md`](../../../docs/notify-tool.md)** ([#77](https://github.com/danielsmithdevelopment/ClawQL/issues/77)).
+
 ---
 
 ## Thorough ingest pattern (recommended structure)

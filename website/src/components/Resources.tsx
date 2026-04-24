@@ -34,7 +34,7 @@ const resources: Array<Resource> = [
     href: '/tools',
     name: 'Tools',
     description:
-      'Core search and execute; sandbox_exec, memory tools, ingest_external_knowledge (bulk Markdown + optional URL fetch); optional in-process cache (CLAWQL_ENABLE_CACHE) and optional audit ring buffer (CLAWQL_ENABLE_AUDIT).',
+      'Core search and execute; sandbox_exec, memory tools, ingest_external_knowledge (bulk Markdown + optional URL fetch); optional cache, audit, and Slack notify (CLAWQL_ENABLE_*).',
     icon: BoltIcon,
     pattern: {
       y: 16,

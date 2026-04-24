@@ -9,7 +9,7 @@ export const metadata = docsPageMetadata({
 
 # MCP clients
 
-[Model Context Protocol](https://modelcontextprotocol.io) is how editors and assistants connect to ClawQL. Hosts register **`search`** and **`execute`** for API work, and (when env is set) optional **`sandbox_exec`**, **`memory_ingest`**, **`memory_recall`**, **`ingest_external_knowledge`**, **`cache`** (**`CLAWQL_ENABLE_CACHE`** — ephemeral LRU, not the vault), and **`audit`** (**`CLAWQL_ENABLE_AUDIT`** — in-process trails). [Cursor](https://cursor.com/docs/context/mcp) and Claude Desktop are common hosts. {{ className: 'lead' }}
+[Model Context Protocol](https://modelcontextprotocol.io) is how editors and assistants connect to ClawQL. Hosts register **`search`** and **`execute`** for API work, and (when env is set) optional **`sandbox_exec`**, **`memory_ingest`**, **`memory_recall`**, **`ingest_external_knowledge`**, **`cache`** (**`CLAWQL_ENABLE_CACHE`** — ephemeral LRU, not the vault), **`audit`** (**`CLAWQL_ENABLE_AUDIT`** — in-process trails), **`notify`** (**`CLAWQL_ENABLE_NOTIFY`** — Slack **`chat.postMessage`** when the Slack spec is loaded; [Slack notify](/notify)), and **`knowledge_search_onyx`** (**`CLAWQL_ENABLE_ONYX`** — Onyx document search when **`onyx`** is in the merge; [Onyx knowledge search](/onyx-knowledge)). [Cursor](https://cursor.com/docs/context/mcp) and Claude Desktop are common hosts. {{ className: 'lead' }}
 
 ## What is MCP?
 
