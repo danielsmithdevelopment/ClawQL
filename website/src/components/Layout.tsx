@@ -1,6 +1,5 @@
 'use client'
 
-import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
@@ -8,24 +7,16 @@ import { Footer } from '@/components/Footer'
 import { Header } from '@/components/Header'
 import { Logo } from '@/components/Logo'
 import { Navigation } from '@/components/Navigation'
-import { SectionProvider, type Section } from '@/components/SectionProvider'
+import { SectionProvider } from '@/components/SectionProvider'
+import { DOC_LAYOUT_SECTIONS_BY_PATH } from '@/lib/doc-layout-sections'
 
-export function Layout({
-  children,
-  allSections,
-}: {
-  children: React.ReactNode
-  allSections: Record<string, Array<Section>>
-}) {
+export function Layout({ children }: { children: React.ReactNode }) {
   let pathname = usePathname()
 
   return (
-    <SectionProvider sections={allSections[pathname] ?? []}>
+    <SectionProvider sections={DOC_LAYOUT_SECTIONS_BY_PATH[pathname] ?? []}>
       <div className="h-full lg:ml-72 xl:ml-80">
-        <motion.header
-          layoutScroll
-          className="contents lg:pointer-events-none lg:fixed lg:inset-0 lg:z-40 lg:flex"
-        >
+        <header className="contents lg:pointer-events-none lg:fixed lg:inset-0 lg:z-40 lg:flex">
           <div className="contents lg:pointer-events-auto lg:block lg:w-72 lg:overflow-y-auto lg:border-r lg:border-zinc-900/10 lg:px-6 lg:pt-4 lg:pb-8 xl:w-80 lg:dark:border-claw-graph/40">
             <div className="hidden lg:flex">
               <Link href="/" aria-label="Home">
@@ -35,7 +26,7 @@ export function Layout({
             <Header />
             <Navigation className="hidden lg:mt-10 lg:block" />
           </div>
-        </motion.header>
+        </header>
         <div className="relative flex h-full flex-col px-4 pt-14 sm:px-6 lg:px-8">
           <main id="main-content" className="flex-auto" tabIndex={-1}>
             {children}

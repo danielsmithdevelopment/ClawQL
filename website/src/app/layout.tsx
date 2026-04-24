@@ -2,33 +2,11 @@ import { type Metadata, type Viewport } from 'next'
 
 import { Providers } from '@/app/providers'
 import { Layout } from '@/components/Layout'
-import { type Section } from '@/components/SectionProvider'
 import { SiteStructuredData } from '@/components/SiteStructuredData'
 import { WebMcpRegister } from '@/components/WebMcpRegister'
 import { getSiteOrigin } from '@/lib/site-url'
 
-import { caseStudyCloudflareDocsSections } from '@/lib/case-study-cloudflare-docs-sections'
-import { caseStudyCrossThreadVaultRecallSections } from '@/lib/case-study-cross-thread-vault-recall-sections'
-import { caseStudyTruenasCorgicaveSections } from '@/lib/case-study-truenas-corgicave-sections'
-import { caseStudyVaultMemorySessionSections } from '@/lib/case-study-vault-memory-session-sections'
-import { caseStudyWorker1102McpMemorySections } from '@/lib/case-study-worker-1102-mcp-memory-sections'
-import { homePageSections } from '@/lib/home-page-sections'
-
 import '@/styles/tailwind.css'
-
-/** No runtime filesystem reads — Cloudflare Workers does not implement `fs.readdir`. */
-const allSections: Record<string, Array<Section>> = {
-  '/': homePageSections,
-  '/case-studies/cloudflare-docs-mcp': caseStudyCloudflareDocsSections,
-  '/case-studies/vault-memory-github-session-2026-04':
-    caseStudyVaultMemorySessionSections,
-  '/case-studies/cross-thread-vault-recall':
-    caseStudyCrossThreadVaultRecallSections,
-  '/case-studies/truenas-scale-corgicave-homelab':
-    caseStudyTruenasCorgicaveSections,
-  '/case-studies/docs-clawql-worker-1102-mcp-memory-2026-04':
-    caseStudyWorker1102McpMemorySections,
-}
 
 export const metadata: Metadata = {
   metadataBase: getSiteOrigin(),
@@ -102,7 +80,7 @@ export default function RootLayout({
         <Providers>
           <WebMcpRegister />
           <div className="w-full">
-            <Layout allSections={allSections}>{children}</Layout>
+            <Layout>{children}</Layout>
           </div>
         </Providers>
       </body>

@@ -37,6 +37,14 @@ const nextConfig = {
   outputFileTracingIncludes: {
     '/**/*': ['./src/app/**/*.mdx'],
   },
+  // Tree-shake heavy barrel imports — smaller RSC + client bundle (helps Workers + hydration).
+  experimental: {
+    optimizePackageImports: [
+      'framer-motion',
+      '@headlessui/react',
+      '@algolia/autocomplete-core',
+    ],
+  },
   /**
    * Edge / browser caching for docs.clawql.com (Cloudflare CDN honors `s-maxage` / `stale-while-revalidate`).
    * Later rules override earlier ones for the same header (Next.js merge behavior).
@@ -65,8 +73,9 @@ const nextConfig = {
         headers: [
           {
             key: 'Cache-Control',
+            // Longer shared edge TTL → fewer fresh HTML generations on the Worker (10ms CPU budget on Free).
             value:
-              'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400',
+              'public, max-age=0, s-maxage=86400, stale-while-revalidate=604800',
           },
           {
             key: 'Referrer-Policy',
