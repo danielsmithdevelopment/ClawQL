@@ -40,6 +40,8 @@ npm run deploy
 **CI (automatic):** on push to `main` that changes **`website/**`**, **`.github/workflows/deploy-docs.yml` runs `npm run deploy`**. Configure repository **Secrets** (Settings → Secrets and variables → Actions):
 
 - **`CLOUDFLARE_API_TOKEN`** — **required**. Create a [Cloudflare API token](https://developers.cloudflare.com/fundamentals/api/get-started/create-token/) with **Account** / **Cloudflare Workers** (Edit) or equivalent to deploy the Worker. Wrangler will use it instead of a stored OAuth session.
-- **`CLOUDFLARE_ACCOUNT_ID`** — **optional**; set if deploy fails to pick the right account or your token is scoped to multiple accounts.
+- **`CLOUDFLARE_ACCOUNT_ID`** — **optional**; **`wrangler.jsonc` already sets** `account_id` for the docs Worker. You only need this **secret** if you override the account in CI. **Account-scoped** API tokens (e.g. the “Edit Cloudflare Workers” template) cannot call the user **/memberships** API, so wrangler must know the account (via **`account_id` in `wrangler.jsonc`** or this env) or deploy fails with error **9106** on `/memberships`.
+
+**Troubleshooting (CI):** if Wrangler reports **“Cannot use the access token from location” (API error 9109)**, the token is **IP-restricted**. GitHub-hosted runners use **dynamic** IPs, so the token used in Actions must **not** be limited to specific client IP addresses. Use an unrestricted token for this secret (or a self-hosted runner in an allowlisted range).
 
 **Manual run from GitHub:** Actions → “Deploy docs (Cloudflare)” → “Run workflow”.

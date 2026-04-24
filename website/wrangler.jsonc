@@ -1,6 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "clawql-docs",
+  "account_id": "c20d753fcd627d4636bcd3025a37239c",
   "main": ".open-next/worker.js",
   "compatibility_date": "2025-04-18",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
