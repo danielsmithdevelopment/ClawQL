@@ -1,5 +1,6 @@
 import clsx from 'clsx'
 import { motion, useScroll, useTransform } from 'framer-motion'
+import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { forwardRef } from 'react'
 
@@ -10,9 +11,27 @@ import {
   useIsInsideMobileNavigation,
   useMobileNavigationStore,
 } from '@/components/MobileNavigation'
-import { MobileSearch, Search } from '@/components/Search'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { CloseButton } from '@headlessui/react'
+
+const Search = dynamic(
+  () => import('@/components/Search').then((m) => ({ default: m.Search })),
+  {
+    ssr: false,
+    loading: () => (
+      <div
+        className="hidden h-8 w-full max-w-md lg:block lg:max-w-md lg:flex-auto"
+        aria-hidden
+      />
+    ),
+  },
+)
+
+const MobileSearch = dynamic(
+  () =>
+    import('@/components/Search').then((m) => ({ default: m.MobileSearch })),
+  { ssr: false, loading: () => <div className="size-6 shrink-0 lg:hidden" aria-hidden /> },
+)
 
 function TopLevelNavItem({
   href,
