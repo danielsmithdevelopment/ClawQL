@@ -113,7 +113,7 @@ Runs a snippet in an isolated **Cloudflare Sandbox** through a **Worker** you de
 
 ## `memory_ingest`
 
-**Env:** `CLAWQL_OBSIDIAN_VAULT_PATH` (directory must exist and be writable at startup). Optional **`CLAWQL_MCP_LOG_TOOLS=1`**: stderr logs **tool shape** only (e.g. title length), never note bodies.
+**Env:** `CLAWQL_OBSIDIAN_VAULT_PATH` (directory must exist and be writable at startup). Optional **`CLAWQL_MCP_LOG_TOOLS=1`**: stderr logs **tool shape** only (e.g. title length), never note bodies. For **large** tool bodies without sending megabytes in MCP tool JSON, see **`toolOutputsFile`** and **`CLAWQL_MEMORY_INGEST_FILE_*`** below.
 
 **Input:**
 
@@ -123,11 +123,16 @@ Runs a snippet in an isolated **Cloudflare Sandbox** through a **Worker** you de
   "insights": "Use ETag when polling GitHub APIs.",
   "conversation": "User: …\nAssistant: …",
   "toolOutputs": "{ \"status\": 200 }",
+  "toolOutputsFile": "docs/small-snippet.md",
   "wikilinks": ["GitHub API", "Rate limits"],
   "sessionId": "abc-123",
   "append": true
 }
 ```
+
+**`toolOutputs` vs `toolOutputsFile`:** Use **`toolOutputs`** (or an array) for text that fits comfortably in a single tool call. Use **`toolOutputsFile`** for **large** verbatim text: the ClawQL **server** reads UTF-8 from that path on its filesystem and treats it as **`toolOutputs`**. The MCP only carries a **short path string**—solving Cursor/agent payload limits for very large files. The path may be **absolute** or **relative to `process.cwd()`** (typically the ClawQL repo root in dev). If both **`toolOutputsFile`** and **`toolOutputs`** are set, the **file wins** (inline body is ignored). A short line in the new section’s **Insights** notes the server read.
+
+**Allowlist (security):** Reads are only allowed for files that resolve under **`CLAWQL_MEMORY_INGEST_FILE_ROOTS`** (comma- or newline-separated **absolute** directory prefixes, each resolved with **`realpath`**). If **unset**, the only allowed root is **realpath(`process.cwd()`)**. Set **`CLAWQL_MEMORY_INGEST_FILE=0`** (or `false` / `off` / `no`) to **disable** all `toolOutputsFile` reads. Max bytes: **`CLAWQL_MEMORY_INGEST_FILE_MAX_BYTES`** (default **10_000_000**). The target must be a **regular** file. See also **`.env.example`**.
 
 Writes **`Memory/<slug>.md`** with YAML frontmatter and optional `[[wikilinks]]`. Duplicate payloads (same content hash) are skipped when appending. When enabled (default), also maintains **`Memory/_INDEX_{Provider}.md`** (or under **`CLAWQL_MEMORY_RECALL_SCAN_ROOT`**) listing notes in that subtree — **`CLAWQL_MEMORY_INDEX_PAGE=0`** to disable; **`CLAWQL_MEMORY_INDEX_PROVIDER`** sets the label/filename (see **[memory-obsidian.md](memory-obsidian.md)**, [#38](https://github.com/danielsmithdevelopment/ClawQL/issues/38)).
 
@@ -177,6 +182,7 @@ Boolean flags are parsed in one place — **[`src/clawql-optional-flags.ts`](../
 | gRPC MCP               | `ENABLE_GRPC`, `ENABLE_GRPC_REFLECTION`                            | off     | Same tools over gRPC (**`GRPC_PORT`**, optional reflection); see README and [`packages/mcp-grpc-transport/README.md`](../packages/mcp-grpc-transport/README.md). |
 | External ingest        | `CLAWQL_EXTERNAL_INGEST`, optional `CLAWQL_EXTERNAL_INGEST_FETCH`  | off     | **`1`** enables `ingest_external_knowledge`; **`CLAWQL_EXTERNAL_INGEST_FETCH=1`** allows URL fetch mode.                                                         |
 | Obsidian vault         | `CLAWQL_OBSIDIAN_VAULT_PATH`                                       | unset   | Required for **`memory_ingest`** / **`memory_recall`** to write/search; see [memory-obsidian.md](memory-obsidian.md).                                            |
+| **`memory_ingest` file** | `CLAWQL_MEMORY_INGEST_FILE` (`0` disables), `CLAWQL_MEMORY_INGEST_FILE_ROOTS` (allowlist; default: cwd), `CLAWQL_MEMORY_INGEST_FILE_MAX_BYTES` | see § **`memory_ingest`** | Optional **server-side** read for **`toolOutputsFile`**; large bodies without large MCP tool JSON.                                                            |
 | Sandbox bridge         | `CLAWQL_SANDBOX_BRIDGE_URL`, `CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN` | unset   | **`sandbox_exec`** calls the Worker; missing URL/token returns a clear error from the handler.                                                                   |
 | Vector / hybrid memory | `CLAWQL_VECTOR_BACKEND`, embedding + DB vars                       | off     | Optional **`memory_recall`** KNN; see README and [hybrid-memory-backends.md](hybrid-memory-backends.md).                                                         |
 | **`cache` tool**       | `CLAWQL_ENABLE_CACHE`                                              | off     | [#75](https://github.com/danielsmithdevelopment/ClawQL/issues/75): in-process LRU; **`CLAWQL_CACHE_MAX_VALUE_BYTES`**, **`CLAWQL_CACHE_MAX_ENTRIES`**.           |

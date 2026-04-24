@@ -42,6 +42,7 @@ There is **no** supported `mcp.json` field to rename this to bare `clawql` for `
 | **`insights`**     | Primary prose. Markdown is fine. This is where **semantic tagging** and structure live (see below).                                                                                |
 | **`conversation`** | Longer transcript or chat summary; stored in a fenced block under **Conversation**.                                                                                                |
 | **`toolOutputs`**  | Verbatim logs: command output, errors, JSON snippets, diffs—each string becomes a block; multiple strings are separated for readability.                                           |
+| **`toolOutputsFile`** | **Server-side only:** a path (absolute or relative to the ClawQL process **`cwd`**) the **MCP server** reads as UTF-8 and uses as **`toolOutputs`**. Use for **large** bodies so the model only passes a **short path** in the tool call (not the file contents). Must fall under an allowlist (**`CLAWQL_MEMORY_INGEST_FILE_ROOTS`**, or default realpath of **`cwd`**). If both **`toolOutputsFile`** and **`toolOutputs`** are set, the **file wins**. Disable reads with **`CLAWQL_MEMORY_INGEST_FILE=0`**. |
 | **`wikilinks`**    | List of **other vault note titles** (plain names; `[[brackets]]` optional). Rendered as **`## Related`** with `- [[Note Name]]` bullets—this is the **graph** for Obsidian.        |
 | **`sessionId`**    | Optional label for the section header (threads multi-step work).                                                                                                                   |
 | **`append`**       | Default **true**: new section appended to an existing file with the same slug. Set **false** only to replace the file body (rare).                                                 |
@@ -89,6 +90,7 @@ One paragraph: what this note captures and why it matters.
 ## Commands / env
 
 - `VAR=value` …
+- `CLAWQL_MEMORY_INGEST_FILE_ROOTS=/abs/path/to/ClawQL` — optional comma-separated allowlist for **`toolOutputsFile`** (default: process **`cwd`** only). `CLAWQL_MEMORY_INGEST_FILE_MAX_BYTES` (default 10M). `CLAWQL_MEMORY_INGEST_FILE=0` disables path-based reads.
 
 ## APIs & references
 
@@ -103,7 +105,7 @@ One paragraph: what this note captures and why it matters.
 - [ ] Next steps
 ```
 
-Put **raw** command output, stack traces, or large JSON in **`toolOutputs`**, not inside **`insights`**, unless tiny.
+Put **raw** command output, stack traces, or large JSON in **`toolOutputs`** (or, when the text is too large to pass in MCP tool JSON, **`toolOutputsFile`** on the server), not inside **`insights`**, unless tiny.
 
 ### Wikilinking strategy
 
@@ -143,8 +145,10 @@ Put **raw** command output, stack traces, or large JSON in **`toolOutputs`**, no
 ## Minimal API reminder
 
 ```text
-memory_ingest: title (required), insights?, conversation?, toolOutputs? (string | string[]), wikilinks? (string[]), sessionId?, append? (boolean)
+memory_ingest: title (required), insights?, conversation?, toolOutputs? (string | string[]), toolOutputsFile? (path on server), wikilinks? (string[]), sessionId?, append? (boolean)
 memory_recall: query (required), limit?, maxDepth?, minScore?
 ```
+
+Repo details: **[`docs/mcp-tools.md`](../../../docs/mcp-tools.md)** (section **memory_ingest**).
 
 For implementation details (SQLite/pgvector, index), see `docs/memory-db-hybrid-implementation.md` in the repo when relevant.

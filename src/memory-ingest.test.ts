@@ -1,5 +1,5 @@
 import { constants } from "node:fs";
-import { access, mkdtemp, readFile, rm } from "node:fs/promises";
+import { access, mkdtemp, readFile, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -15,6 +15,8 @@ describe("memory-ingest", () => {
   const saved = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
   const savedMerkle = process.env.CLAWQL_MERKLE_ENABLED;
   const savedCuckoo = process.env.CLAWQL_CUCKOO_ENABLED;
+  const savedIngestFile = process.env.CLAWQL_MEMORY_INGEST_FILE;
+  const savedIngestRoots = process.env.CLAWQL_MEMORY_INGEST_FILE_ROOTS;
   let dir: string;
 
   beforeEach(async () => {
@@ -31,6 +33,10 @@ describe("memory-ingest", () => {
     else process.env.CLAWQL_MERKLE_ENABLED = savedMerkle;
     if (savedCuckoo === undefined) delete process.env.CLAWQL_CUCKOO_ENABLED;
     else process.env.CLAWQL_CUCKOO_ENABLED = savedCuckoo;
+    if (savedIngestFile === undefined) delete process.env.CLAWQL_MEMORY_INGEST_FILE;
+    else process.env.CLAWQL_MEMORY_INGEST_FILE = savedIngestFile;
+    if (savedIngestRoots === undefined) delete process.env.CLAWQL_MEMORY_INGEST_FILE_ROOTS;
+    else process.env.CLAWQL_MEMORY_INGEST_FILE_ROOTS = savedIngestRoots;
     resetMemoryDbArtifactCachesForTests();
     await rm(dir, { recursive: true, force: true });
   });
@@ -101,5 +107,49 @@ describe("memory-ingest", () => {
     expect(r.merkleSnapshotBefore).toBeDefined();
     expect(r.merkleRootChanged).toBe(true);
     expect(r.cuckooMembershipReady).toBe(true);
+  });
+
+  it("reads toolOutputsFile from an allowed root and writes body", async () => {
+    const srcDir = await mkdtemp(join(tmpdir(), "clawql-import-"));
+    const src = join(srcDir, "source.txt");
+    await writeFile(src, "payload from file\n", "utf8");
+    process.env.CLAWQL_MEMORY_INGEST_FILE_ROOTS = srcDir;
+    const r = await runMemoryIngest({
+      title: "From File",
+      insights: "note",
+      toolOutputsFile: src,
+    });
+    expect(r.ok).toBe(true);
+    const text = await readFile(join(dir, "Memory", "from-file.md"), "utf8");
+    expect(text).toContain("payload from file");
+    expect(text).toContain("read on the server");
+    expect(text).toContain("source.txt");
+    await rm(srcDir, { recursive: true, force: true });
+  });
+
+  it("fails when toolOutputsFile is outside allowlisted roots", async () => {
+    const srcDir = await mkdtemp(join(tmpdir(), "clawql-allow-"));
+    const otherDir = await mkdtemp(join(tmpdir(), "clawql-deny-"));
+    const outOfBounds = join(otherDir, "secret.txt");
+    await writeFile(outOfBounds, "nope", "utf8");
+    process.env.CLAWQL_MEMORY_INGEST_FILE_ROOTS = srcDir;
+    const r = await runMemoryIngest({
+      title: "OOB",
+      toolOutputsFile: outOfBounds,
+    });
+    expect(r.ok).toBe(false);
+    expect(r.error).toMatch(/outside allowed|allowed roots/);
+    await rm(srcDir, { recursive: true, force: true });
+    await rm(otherDir, { recursive: true, force: true });
+  });
+
+  it("fails when toolOutputsFile and CLAWQL_MEMORY_INGEST_FILE=0", async () => {
+    process.env.CLAWQL_MEMORY_INGEST_FILE = "0";
+    const r = await runMemoryIngest({
+      title: "X",
+      toolOutputsFile: "/dev/null", // not reached as path check after disabled? Actually it returns before read
+    });
+    expect(r.ok).toBe(false);
+    expect(r.error).toMatch(/CLAWQL_MEMORY_INGEST_FILE=0/);
   });
 });

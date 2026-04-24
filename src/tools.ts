@@ -317,6 +317,15 @@ export function registerTools(server: McpServer) {
         .union([z.string(), z.array(z.string())])
         .optional()
         .describe("Tool result body, or a list of results to record."),
+      toolOutputsFile: z
+        .string()
+        .optional()
+        .describe(
+          "If set, the ClawQL server reads UTF-8 from this file path and uses it as `toolOutputs` (small MCP payload; " +
+            "large content does not go through the tool round-trip). File must be under an allowed root " +
+            "(`CLAWQL_MEMORY_INGEST_FILE_ROOTS` or, by default, the process current working directory). " +
+            "Takes precedence over `toolOutputs` if both are set. Set `CLAWQL_MEMORY_INGEST_FILE=0` to reject."
+        ),
       wikilinks: z
         .array(z.string())
         .optional()

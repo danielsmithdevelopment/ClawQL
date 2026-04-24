@@ -4,6 +4,7 @@
 
 import { createHash } from "node:crypto";
 import { getObsidianVaultPath } from "./vault-config.js";
+import { readToolOutputsFileForIngest } from "./memory-ingest-file.js";
 import { readVaultTextFile, withVaultWriteLock, writeVaultTextFileAtomic } from "./vault-utils.js";
 import { logMcpToolShape } from "./mcp-tool-log.js";
 
@@ -14,6 +15,12 @@ export type MemoryIngestInput = {
   insights?: string;
   conversation?: string;
   toolOutputs?: string | string[];
+  /**
+   * When set, the server reads UTF-8 from this path and uses it as `toolOutputs` (avoids huge MCP JSON). Path may be
+   * absolute or relative to `process.cwd()`. Must fall under `CLAWQL_MEMORY_INGEST_FILE_ROOTS` (default: realpath of
+   * cwd). Disabled when `CLAWQL_MEMORY_INGEST_FILE=0`. If both this and `toolOutputs` are set, the file wins.
+   */
+  toolOutputsFile?: string;
   wikilinks?: string[];
   sessionId?: string;
   /** When true (default), append a new section to an existing page; duplicate payloads are skipped. */
@@ -94,7 +101,11 @@ export function extractIngestHashes(markdown: string): Set<string> {
   return set;
 }
 
-function buildSectionBody(input: MemoryIngestInput, when: string): string {
+function buildSectionBody(
+  input: MemoryIngestInput,
+  when: string,
+  options?: { toolOutputsReadFromFile?: string }
+): string {
   const hash = hashIngestSection(input);
   const lines: string[] = [];
   lines.push(`### Ingestion (${when})`);
@@ -105,6 +116,12 @@ function buildSectionBody(input: MemoryIngestInput, when: string): string {
   if (input.insights?.trim()) {
     lines.push("#### Insights");
     lines.push(input.insights.trim());
+    lines.push("");
+  }
+  if (options?.toolOutputsReadFromFile?.trim()) {
+    lines.push(
+      `*Tool outputs were read on the server from* \`${options.toolOutputsReadFromFile.trim().replace(/`/g, "'")}\`.`
+    );
     lines.push("");
   }
   const toolText = formatToolOutputs(input.toolOutputs);
@@ -169,10 +186,25 @@ export async function runMemoryIngest(input: MemoryIngestInput): Promise<MemoryI
     return { ok: false, error: "title is required" };
   }
 
+  let effective: MemoryIngestInput = { ...input };
+  let fileProvenance: string | undefined;
+  if (input.toolOutputsFile?.trim()) {
+    const r = await readToolOutputsFileForIngest(input.toolOutputsFile.trim());
+    if (!r.ok) {
+      return { ok: false, error: r.error };
+    }
+    fileProvenance = r.displayPath;
+    effective = {
+      ...input,
+      toolOutputs: r.text,
+      toolOutputsFile: undefined,
+    };
+  }
+
   const slug = slugifyTitle(title);
   const rel = `${MEMORY_DIR}/${slug}.md`;
-  const append = input.append !== false;
-  const hash = hashIngestSection(input);
+  const append = effective.append !== false;
+  const hash = hashIngestSection(effective);
   const when = new Date().toISOString();
 
   const result = await withVaultWriteLock(vault, async () => {
@@ -192,8 +224,10 @@ export async function runMemoryIngest(input: MemoryIngestInput): Promise<MemoryI
       };
     }
 
-    const section = buildSectionBody(input, when);
-    const related = buildRelatedLinks(input.wikilinks);
+    const section = buildSectionBody(effective, when, {
+      toolOutputsReadFromFile: fileProvenance,
+    });
+    const related = buildRelatedLinks(effective.wikilinks);
 
     if (!existing) {
       const body = [
@@ -309,6 +343,7 @@ export async function handleMemoryIngestToolInput(
     append: params.append,
     hasInsights: Boolean(params.insights?.trim()),
     hasConversation: Boolean(params.conversation?.trim()),
+    hasToolOutputsFile: Boolean(params.toolOutputsFile?.trim()),
     hasToolOutputs: Boolean(
       typeof params.toolOutputs === "string"
         ? params.toolOutputs.trim()
