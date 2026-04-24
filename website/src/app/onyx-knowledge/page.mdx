@@ -14,8 +14,15 @@ The optional **`knowledge_search_onyx`** MCP tool queries your **[Onyx](https://
 - **Enable:** **`CLAWQL_ENABLE_ONYX=1`** (or `true` / `yes`).
 - **Spec:** The loaded merge must include **`onyx`** (default **`all-providers`**, or add **`onyx`** to **`CLAWQL_BUNDLED_PROVIDERS`**, or **`CLAWQL_PROVIDER=onyx`** for Onyx-only).
 - **Connectivity:** **`ONYX_BASE_URL`** = HTTP API root (often ends with **`/api`**). **Auth:** **`ONYX_API_TOKEN`** or **`CLAWQL_ONYX_API_TOKEN`** as **Bearer**, or **`CLAWQL_PROVIDER_AUTH_JSON`** with an **`onyx`** key.
+- **Provider matrix:** default bundle positioning and auth fields live in one place: [Bundled specs](/bundled-specs).
 
 **Canonical guide (setup, wrapper vs `execute`, examples, errors, `memory_ingest` / `notify`):** [onyx-knowledge-tool.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/onyx-knowledge-tool.md) · [mcp-tools.md § knowledge_search_onyx](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp-tools.md#knowledge_search_onyx-optional) · issue [#118](https://github.com/danielsmithdevelopment/ClawQL/issues/118).
+
+## Topology and deployment pointers
+
+- **Flink connector sync into Onyx index:** tracked in [#119](https://github.com/danielsmithdevelopment/ClawQL/issues/119). For full architecture, security boundaries, Helm values, and operations runbook, see [Flink Onyx sync](/flink-onyx-sync).
+- **Full-stack deployment pointers:** the Helm chart can now co-deploy document pipeline + stores topology; see [Helm](/helm) and issue [#113](https://github.com/danielsmithdevelopment/ClawQL/issues/113).
+- **Optional case study context:** docs-site operational workflows and postmortems are under [Case studies](/case-studies/docs-clawql-worker-1102-mcp-memory-2026-04).
 
 ## Quick examples
 

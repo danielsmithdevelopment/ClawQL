@@ -122,3 +122,28 @@ Or install the **[Helm](/helm)** chart with your image registry. Full checklist:
 
 - Container build, Compose, and extended K8s notes: [`docker/README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docker/README.md)
 - Starter manifest: `docker/kubernetes-starter.yaml`
+
+## NATS JetStream quick checklist
+
+Use this when enabling in-cluster event streaming for Ouroboros/agent/edge coordination ([#127](https://github.com/danielsmithdevelopment/ClawQL/issues/127)):
+
+1. Enable NATS in Helm values (`nats.enabled=true`) and keep `nats.service.type=ClusterIP` unless external exposure is required.
+2. Enable persistence for durable streams (`nats.persistence.enabled=true`) and right-size `nats.jetStream.maxFileStore`.
+3. Confirm NATS service health (`/healthz` on monitor port 8222) before enabling dependent workloads.
+4. Use `nats.url` only when pointing ClawQL at an external/shared NATS cluster.
+5. Keep subject naming consistent across services (`clawql.workflow.*`, `clawql.agent.*`, `clawql.edge.*`).
+6. Validate `CLAWQL_NATS_URL` / `CLAWQL_NATS_JETSTREAM` env vars landed in `clawql-mcp-http` after `helm upgrade`.
+
+Full values reference and runbook: [NATS JetStream](/nats-jetstream). Helm context: [Helm](/helm).
+
+## Flink Onyx sync quick checklist
+
+Use this when enabling in-cluster Flink for real-time Onyx index freshness ([#119](https://github.com/danielsmithdevelopment/ClawQL/issues/119)):
+
+1. Enable Flink in Helm values (`flink.enabled=true`) and keep `flink.service.type=ClusterIP`.
+2. Put connector credentials in a dedicated Secret and wire it with `flink.connectorSecret`.
+3. Confirm JobManager + TaskManagers are ready in the same namespace as ClawQL.
+4. Validate connector throughput and Onyx ingestion latency before scaling task slots/replicas.
+5. Keep Flink UI private by default; use temporary `kubectl port-forward` for debugging.
+
+Full architecture, values reference, and runbook: [Flink Onyx sync](/flink-onyx-sync). Helm context: [Helm](/helm).

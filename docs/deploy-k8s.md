@@ -1,6 +1,6 @@
 # Deploy ClawQL on Kubernetes (Kustomize or Helm)
 
-This deploy pattern runs ClawQL as **one** workload (**`clawql-mcp-http`**): MCP at **`/mcp`**, GraphQL at **`/graphql`** on the same service.
+This deploy pattern runs ClawQL as **one** workload (**`clawql-mcp-http`**): MCP at **`/mcp`**, GraphQL at **`/graphql`** on the same service. For integrated deployments, Helm can optionally co-deploy Ouroboros Postgres, NATS JetStream event backbone, an Apache Flink cluster for Onyx sync, and a full document pipeline + stores topology in the same release (see [docs/helm.md](helm.md)).
 
 ## Helm chart (alternative)
 
@@ -107,3 +107,36 @@ For **`make local-k8s-up`** on Docker Desktop, inject **GitHub**, **Cloudflare**
 - With **`CLAWQL_ENABLE_CACHE`**, the MCP **`cache`** tool is **per-pod**: each replica has its **own** empty in-process store (LRU). Durable cross-replica state belongs in the vault (**`memory_ingest`** / **`memory_recall`**) or your own backing service — see **[cache-tool.md](cache-tool.md)**.
 - With **`CLAWQL_ENABLE_AUDIT`**, the MCP **`audit`** tool is **per-pod**: each replica has its **own** in-process ring buffer — not on disk; use **`memory_ingest`** for durable trails — see **[enterprise-mcp-tools.md](enterprise-mcp-tools.md)** ([#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)).
 - With **`CLAWQL_ENABLE_NOTIFY`**, the MCP **`notify`** tool posts to Slack from each pod that has a valid bot token and a loaded spec that includes **`slack`** — see **[notify-tool.md](notify-tool.md)** and **[mcp-tools.md](mcp-tools.md#notify-optional)** ([#77](https://github.com/danielsmithdevelopment/ClawQL/issues/77)).
+- With **`flink.enabled=true`** (Helm), Flink JobManager and TaskManagers deploy **inside the same namespace** for real-time Onyx connector sync ([#119](https://github.com/danielsmithdevelopment/ClawQL/issues/119)). Keep Flink service type **`ClusterIP`** unless you have a specific reason to expose the UI, and place connector credentials in **`flink.connectorSecret`** so they stay scoped to Flink pods instead of `clawql-mcp`.
+- With **`nats.enabled=true`** (Helm), NATS JetStream deploys in-cluster as a durable event backbone for Ouroboros, agents, and edge sync ([#127](https://github.com/danielsmithdevelopment/ClawQL/issues/127)). By default, ClawQL is wired to the internal NATS URL via `CLAWQL_NATS_URL`; set `nats.url` only when using an external/shared cluster.
+
+## NATS JetStream (Helm) deployment notes
+
+Use this section when moving from a simple stateless install to event-driven orchestration.
+
+### Enable
+
+```bash
+helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
+  --set nats.enabled=true \
+  --set nats.persistence.enabled=true \
+  --set nats.persistence.size=20Gi
+```
+
+### Verify
+
+```bash
+kubectl -n clawql get deploy,svc,pvc | rg nats
+kubectl -n clawql logs deploy/clawql-mcp-http-nats
+kubectl -n clawql port-forward svc/clawql-mcp-http-nats 8222:8222
+curl -s http://127.0.0.1:8222/healthz
+kubectl -n clawql get deploy clawql-mcp-http -o yaml | rg "CLAWQL_NATS_URL|CLAWQL_NATS_JETSTREAM" -n
+```
+
+### Production recommendations
+
+- Keep service type `ClusterIP` for private east-west traffic.
+- Always enable persistence if workflow replay/recovery matters.
+- Budget PV size and JetStream max file store together.
+- Add internal scrape for monitor endpoint (`8222`) and alert on health degradation.
+- Standardize subjects early (`clawql.workflow.*`, `clawql.agent.*`, `clawql.document.*`, `clawql.edge.*`) to avoid migration churn.

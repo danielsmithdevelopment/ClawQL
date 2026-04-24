@@ -19,6 +19,8 @@ import { maybeStartGrpcMcpServer } from "mcp-grpc-transport";
 import { getObsidianVaultPath, validateObsidianVaultAtStartup } from "./vault-config.js";
 import { registerOuroborosPoolShutdownHooks } from "./ouroboros/postgres-pool.js";
 import { registerPostgresPoolShutdownHooks } from "./vector-store/pgvector.js";
+import { getClawqlOptionalToolFlags } from "./clawql-optional-flags.js";
+import { registerScheduleWorkerShutdownHooks, startScheduleWorker } from "./clawql-schedule.js";
 
 const PORT = Number.parseInt(process.env.PORT ?? process.env.MCP_PORT ?? "8080", 10);
 const DEFAULT_MCP_PATH = "/mcp";
@@ -211,6 +213,10 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
 async function main() {
   registerPostgresPoolShutdownHooks();
   registerOuroborosPoolShutdownHooks();
+  if (getClawqlOptionalToolFlags().enableSchedule) {
+    registerScheduleWorkerShutdownHooks();
+    startScheduleWorker();
+  }
   const app = await createMcpHttpApp();
   const grpcPromise = maybeStartGrpcMcpServer({
     createMcpServer: () => createRegisteredMcpServer(),

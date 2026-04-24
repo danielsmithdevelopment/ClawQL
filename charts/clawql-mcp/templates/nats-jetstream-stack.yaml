@@ -1,0 +1,124 @@
+{{- if .Values.nats.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "clawql-mcp.natsConfigName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: nats
+data:
+  nats-server.conf: |
+    port: {{ .Values.nats.service.clientPort }}
+    http_port: {{ .Values.nats.service.monitorPort }}
+    server_name: {{ include "clawql-mcp.natsName" . }}
+    jetstream {
+      {{- if .Values.nats.jetStream.enabled }}
+      store_dir: /data/jetstream
+      max_memory_store: {{ .Values.nats.jetStream.maxMemoryStore }}
+      max_file_store: {{ .Values.nats.jetStream.maxFileStore }}
+      {{- else }}
+      # Explicitly disabled when nats.jetStream.enabled=false
+      disabled: true
+      {{- end }}
+    }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "clawql-mcp.natsName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: nats
+spec:
+  type: {{ .Values.nats.service.type }}
+  selector:
+    app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: nats
+  ports:
+    - name: client
+      port: {{ .Values.nats.service.clientPort | int }}
+      targetPort: client
+      protocol: TCP
+    - name: cluster
+      port: {{ .Values.nats.service.clusterPort | int }}
+      targetPort: cluster
+      protocol: TCP
+    - name: monitor
+      port: {{ .Values.nats.service.monitorPort | int }}
+      targetPort: monitor
+      protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "clawql-mcp.natsName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: nats
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: nats
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: nats
+    spec:
+      containers:
+        - name: nats
+          image: "{{ .Values.nats.image.repository }}:{{ .Values.nats.image.tag }}"
+          imagePullPolicy: {{ .Values.nats.image.pullPolicy }}
+          args:
+            - --config
+            - /etc/nats/nats-server.conf
+          ports:
+            - name: client
+              containerPort: {{ .Values.nats.service.clientPort | int }}
+              protocol: TCP
+            - name: cluster
+              containerPort: {{ .Values.nats.service.clusterPort | int }}
+              protocol: TCP
+            - name: monitor
+              containerPort: {{ .Values.nats.service.monitorPort | int }}
+              protocol: TCP
+          readinessProbe:
+            tcpSocket:
+              port: client
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: client
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            {{- toYaml .Values.nats.resources | nindent 12 }}
+          volumeMounts:
+            - name: nats-config
+              mountPath: /etc/nats/nats-server.conf
+              subPath: nats-server.conf
+            - name: nats-data
+              mountPath: /data
+      volumes:
+        - name: nats-config
+          configMap:
+            name: {{ include "clawql-mcp.natsConfigName" . }}
+        - name: nats-data
+          {{- if .Values.nats.persistence.enabled }}
+          {{- if .Values.nats.persistence.existingClaim }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.nats.persistence.existingClaim }}
+          {{- else }}
+          persistentVolumeClaim:
+            claimName: {{ include "clawql-mcp.natsName" . }}-data
+          {{- end }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+{{- end }}

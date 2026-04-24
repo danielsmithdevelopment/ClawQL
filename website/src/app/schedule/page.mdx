@@ -1,0 +1,268 @@
+import { docsPageMetadata } from '@/lib/seo'
+
+export const metadata = docsPageMetadata({
+  title: 'Schedule synthetic checks',
+  description:
+    'Optional MCP schedule tool: CLAWQL_ENABLE_SCHEDULE for persisted jobs, automatic cron/interval/one-shot execution, synthetic HTTP assertions, trigger dry_run, and run history examples.',
+  path: '/schedule',
+})
+
+# `schedule` (synthetic checks)
+
+The optional **`schedule`** MCP tool stores time-based jobs and run history in a local SQLite schedule store. In v1, the supported action kind is **synthetic HTTP checks** with assertion-based pass/fail.
+
+- **Enable:** **`CLAWQL_ENABLE_SCHEDULE=1`** (or `true` / `yes`).
+- **Storage:** default `.clawql/schedule.db` under the server working directory; override with **`CLAWQL_SCHEDULE_DB_PATH`**.
+- **Execution model:** background worker runs due jobs automatically (`cron`, `interval`, `one_shot`) and you can still run ad hoc checks with `trigger`.
+- **Operations:** `create`, `list`, `get`, `delete`, `trigger`.
+- **Frequency:** `cron`, `interval`, `one_shot`.
+- **Safety controls:** `CLAWQL_SCHEDULE_URL_ALLOWLIST_PREFIXES` and optional synthetic caps under `CLAWQL_SCHEDULE_SYNTHETIC_*`.
+- **Worker cadence:** optional `CLAWQL_SCHEDULE_POLL_MS` (default 5000 ms).
+
+Canonical design and repository reference:
+[schedule-synthetic-checks.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/schedule-synthetic-checks.md) ·
+[mcp-tools.md § schedule](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp-tools.md#schedule-optional) ·
+issue [#76](https://github.com/danielsmithdevelopment/ClawQL/issues/76).
+
+## Setup and usage guide
+
+### 1) Enable and configure
+
+Set at minimum:
+
+```bash
+CLAWQL_ENABLE_SCHEDULE=1
+```
+
+Common production env set:
+
+```bash
+CLAWQL_ENABLE_SCHEDULE=1
+CLAWQL_SCHEDULE_DB_PATH=/data/clawql/schedule.db
+CLAWQL_SCHEDULE_POLL_MS=5000
+CLAWQL_SCHEDULE_HISTORY_LIMIT=50
+CLAWQL_SCHEDULE_INTERVAL_MIN_SECONDS=60
+CLAWQL_SCHEDULE_INTERVAL_MAX_SECONDS=31536000
+CLAWQL_SCHEDULE_URL_ALLOWLIST_PREFIXES=https://api.example.com,https://status.example.com
+CLAWQL_SCHEDULE_SYNTHETIC_TIMEOUT_MS_DEFAULT=10000
+CLAWQL_SCHEDULE_SYNTHETIC_TIMEOUT_MS_MAX=60000
+CLAWQL_SCHEDULE_SYNTHETIC_MAX_RESPONSE_BYTES_DEFAULT=1048576
+CLAWQL_SCHEDULE_SYNTHETIC_MAX_REDIRECTS_DEFAULT=3
+```
+
+Optional notify bridge (best-effort):
+
+```bash
+CLAWQL_SCHEDULE_NOTIFY_CHANNEL=C0123456789
+CLAWQL_SCHEDULE_NOTIFY_ON_FAILURE=1
+CLAWQL_SCHEDULE_NOTIFY_ON_RECOVERY=1
+```
+
+### 2) Create checks
+
+#### Interval check (every 5 minutes)
+
+```json
+{
+  "operation": "create",
+  "schedule": {
+    "frequency": {
+      "type": "interval",
+      "seconds": 300
+    }
+  },
+  "action": {
+    "kind": "synthetic",
+    "synthetic_test": {
+      "name": "api-health",
+      "request": {
+        "method": "GET",
+        "url": "https://api.example.com/health",
+        "headers": {
+          "accept": "application/json"
+        },
+        "body": null
+      },
+      "limits": {
+        "timeout_ms": 10000,
+        "max_response_bytes": 1048576,
+        "max_redirects": 3
+      },
+      "assert": {
+        "status_in": [200],
+        "latency_ms_max": 2000,
+        "body_contains": "\"ok\":true"
+      }
+    }
+  }
+}
+```
+
+Expected create result shape:
+
+```json
+{
+  "ok": true,
+  "operation": "create",
+  "job": {
+    "id": "4cae2b9a-3ca2-4ed7-9618-4a1c52f6b147",
+    "schedule": {
+      "frequency": {
+        "type": "interval",
+        "seconds": 300
+      }
+    },
+    "action": {
+      "kind": "synthetic",
+      "synthetic_test": {
+        "name": "api-health"
+      }
+    },
+    "enabled": true,
+    "created_at": "2026-04-24T01:05:00.000Z",
+    "updated_at": "2026-04-24T01:05:00.000Z"
+  }
+}
+```
+
+#### Cron check (UTC)
+
+```json
+{
+  "operation": "create",
+  "schedule": {
+    "frequency": {
+      "type": "cron",
+      "expression": "*/5 * * * *"
+    }
+  },
+  "action": {
+    "kind": "synthetic",
+    "synthetic_test": {
+      "name": "api-health-cron",
+      "request": {
+        "method": "GET",
+        "url": "https://status.example.com/healthz"
+      },
+      "assert": {
+        "status_in": [200]
+      }
+    }
+  }
+}
+```
+
+#### One-shot check
+
+```json
+{
+  "operation": "create",
+  "schedule": {
+    "frequency": {
+      "type": "one_shot",
+      "run_at": "2026-04-25T12:00:00.000Z"
+    }
+  },
+  "action": {
+    "kind": "synthetic",
+    "synthetic_test": {
+      "name": "release-window-check",
+      "request": {
+        "method": "GET",
+        "url": "https://api.example.com/health"
+      },
+      "assert": {
+        "status_in": [200]
+      }
+    }
+  }
+}
+```
+
+### 3) Trigger now (manual ad hoc run)
+
+```json
+{
+  "operation": "trigger",
+  "job_id": "4cae2b9a-3ca2-4ed7-9618-4a1c52f6b147"
+}
+```
+
+Expected result shape:
+
+```json
+{
+  "ok": true,
+  "operation": "trigger",
+  "job_id": "4cae2b9a-3ca2-4ed7-9618-4a1c52f6b147",
+  "run": {
+    "id": "e4e18f32-4bf8-49f6-9dcf-8f0f0f8f6535",
+    "triggered_at": "2026-04-24T01:06:03.000Z",
+    "dry_run": false,
+    "status": "pass",
+    "latency_ms": 183,
+    "http_status": 200,
+    "error_text": null,
+    "response_excerpt": "{\"ok\":true}"
+  }
+}
+```
+
+### 4) Inspect runs and debug failures
+
+```json
+{
+  "operation": "get",
+  "job_id": "4cae2b9a-3ca2-4ed7-9618-4a1c52f6b147",
+  "include_runs": true,
+  "runs_limit": 10
+}
+```
+
+If you want a non-persisting validation probe, trigger with:
+
+```json
+{
+  "operation": "trigger",
+  "job_id": "4cae2b9a-3ca2-4ed7-9618-4a1c52f6b147",
+  "dry_run": true
+}
+```
+
+`dry_run: true` executes request + assertions but does not append to run history.
+
+List all jobs:
+
+```json
+{
+  "operation": "list",
+  "limit": 50
+}
+```
+
+Delete a job:
+
+```json
+{
+  "operation": "delete",
+  "job_id": "4cae2b9a-3ca2-4ed7-9618-4a1c52f6b147"
+}
+```
+
+### 5) Runtime behavior
+
+- The background worker polls every `CLAWQL_SCHEDULE_POLL_MS` and runs due jobs automatically.
+- `cron` jobs run at matching UTC minute boundaries.
+- `interval` jobs run when the last persisted run is older than `seconds`.
+- `one_shot` jobs run once after `run_at`.
+- Manual `trigger` uses the same execution/assertion path as worker ticks.
+
+## Pairing with notify
+
+`schedule` is designed to pair with optional **`notify`** for failure and recovery messages:
+
+- route failed runs to Slack with [Slack notify](/notify),
+- persist incident notes with `memory_ingest` for postmortems,
+- keep retrieval runbooks in Onyx where relevant via [Onyx knowledge search](/onyx-knowledge).
+
+See [Tools](/tools) for the full MCP tool matrix.

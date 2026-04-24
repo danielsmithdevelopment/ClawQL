@@ -1,0 +1,160 @@
+{{- if .Values.flink.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "clawql-mcp.flinkName" . }}-config
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: flink
+data:
+  flink-conf.yaml: |
+    jobmanager.rpc.address: {{ include "clawql-mcp.flinkJobManagerName" . }}
+    jobmanager.rpc.port: {{ .Values.flink.service.rpcPort }}
+    blob.server.port: {{ .Values.flink.service.blobPort }}
+    query.server.port: {{ .Values.flink.service.queryPort }}
+    taskmanager.numberOfTaskSlots: {{ .Values.flink.taskManager.taskSlots }}
+    rest.port: {{ .Values.flink.service.restPort }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "clawql-mcp.flinkJobManagerName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: flink-jobmanager
+spec:
+  type: {{ .Values.flink.service.type }}
+  selector:
+    {{- include "clawql-mcp.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: flink-jobmanager
+  ports:
+    - name: rest
+      port: {{ .Values.flink.service.restPort }}
+      targetPort: rest
+    - name: rpc
+      port: {{ .Values.flink.service.rpcPort }}
+      targetPort: rpc
+    - name: blob
+      port: {{ .Values.flink.service.blobPort }}
+      targetPort: blob
+    - name: query
+      port: {{ .Values.flink.service.queryPort }}
+      targetPort: query
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "clawql-mcp.flinkJobManagerName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: flink-jobmanager
+spec:
+  replicas: {{ .Values.flink.jobManager.replicas }}
+  selector:
+    matchLabels:
+      {{- include "clawql-mcp.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: flink-jobmanager
+  template:
+    metadata:
+      labels:
+        {{- include "clawql-mcp.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: flink-jobmanager
+    spec:
+      containers:
+        - name: jobmanager
+          image: "{{ .Values.flink.image.repository }}:{{ .Values.flink.image.tag }}"
+          imagePullPolicy: {{ .Values.flink.image.pullPolicy }}
+          args: ["jobmanager"]
+          ports:
+            - name: rest
+              containerPort: {{ .Values.flink.service.restPort }}
+              protocol: TCP
+            - name: rpc
+              containerPort: {{ .Values.flink.service.rpcPort }}
+              protocol: TCP
+            - name: blob
+              containerPort: {{ .Values.flink.service.blobPort }}
+              protocol: TCP
+            - name: query
+              containerPort: {{ .Values.flink.service.queryPort }}
+              protocol: TCP
+          env:
+            - name: FLINK_PROPERTIES
+              value: |
+                jobmanager.rpc.address: {{ include "clawql-mcp.flinkJobManagerName" . }}
+                jobmanager.rpc.port: {{ .Values.flink.service.rpcPort }}
+                blob.server.port: {{ .Values.flink.service.blobPort }}
+                query.server.port: {{ .Values.flink.service.queryPort }}
+                taskmanager.numberOfTaskSlots: {{ .Values.flink.taskManager.taskSlots }}
+                rest.port: {{ .Values.flink.service.restPort }}
+            {{- with .Values.flink.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- if .Values.flink.connectorSecret }}
+          envFrom:
+            - secretRef:
+                name: {{ include "clawql-mcp.flinkConnectorSecretName" . }}
+          {{- end }}
+          volumeMounts:
+            - name: flink-config
+              mountPath: /opt/flink/conf/flink-conf.yaml
+              subPath: flink-conf.yaml
+          resources:
+            {{- toYaml .Values.flink.jobManager.resources | nindent 12 }}
+      volumes:
+        - name: flink-config
+          configMap:
+            name: {{ include "clawql-mcp.flinkName" . }}-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "clawql-mcp.flinkTaskManagerName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: flink-taskmanager
+spec:
+  replicas: {{ .Values.flink.taskManager.replicas }}
+  selector:
+    matchLabels:
+      {{- include "clawql-mcp.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: flink-taskmanager
+  template:
+    metadata:
+      labels:
+        {{- include "clawql-mcp.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: flink-taskmanager
+    spec:
+      containers:
+        - name: taskmanager
+          image: "{{ .Values.flink.image.repository }}:{{ .Values.flink.image.tag }}"
+          imagePullPolicy: {{ .Values.flink.image.pullPolicy }}
+          args: ["taskmanager"]
+          env:
+            - name: FLINK_PROPERTIES
+              value: |
+                jobmanager.rpc.address: {{ include "clawql-mcp.flinkJobManagerName" . }}
+                jobmanager.rpc.port: {{ .Values.flink.service.rpcPort }}
+                blob.server.port: {{ .Values.flink.service.blobPort }}
+                query.server.port: {{ .Values.flink.service.queryPort }}
+                taskmanager.numberOfTaskSlots: {{ .Values.flink.taskManager.taskSlots }}
+                rest.port: {{ .Values.flink.service.restPort }}
+            {{- with .Values.flink.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- if .Values.flink.connectorSecret }}
+          envFrom:
+            - secretRef:
+                name: {{ include "clawql-mcp.flinkConnectorSecretName" . }}
+          {{- end }}
+          volumeMounts:
+            - name: flink-config
+              mountPath: /opt/flink/conf/flink-conf.yaml
+              subPath: flink-conf.yaml
+          resources:
+            {{- toYaml .Values.flink.taskManager.resources | nindent 12 }}
+      volumes:
+        - name: flink-config
+          configMap:
+            name: {{ include "clawql-mcp.flinkName" . }}-config
+{{- end }}

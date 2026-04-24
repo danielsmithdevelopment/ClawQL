@@ -1,6 +1,6 @@
 # MCP tools reference
 
-ClawQL exposes **six** core+optional tools over MCP by default (stdio or Streamable HTTP). Additional optional tools include **`cache`** when **`CLAWQL_ENABLE_CACHE=1`**, **`audit`** when **`CLAWQL_ENABLE_AUDIT=1`** ([#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)), **`notify`** when **`CLAWQL_ENABLE_NOTIFY=1`** ([#77](https://github.com/danielsmithdevelopment/ClawQL/issues/77)), **`knowledge_search_onyx`** when **`CLAWQL_ENABLE_ONYX=1`** ([#118](https://github.com/danielsmithdevelopment/ClawQL/issues/118)), and the three **`ouroboros_*`** tools when **`CLAWQL_ENABLE_OUROBOROS=1`** ([#141](https://github.com/danielsmithdevelopment/ClawQL/issues/141), [#142](https://github.com/danielsmithdevelopment/ClawQL/issues/142)). The **core** pair is **`search`** + **`execute`** for OpenAPI/Discovery APIs. The other defaults are **optional** and depend on configuration (vault path, Cloudflare Sandbox bridge, external ingest flag).
+ClawQL exposes **six** core+optional tools over MCP by default (stdio or Streamable HTTP). Additional optional tools include **`cache`** when **`CLAWQL_ENABLE_CACHE=1`**, **`audit`** when **`CLAWQL_ENABLE_AUDIT=1`** ([#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)), **`schedule`** when **`CLAWQL_ENABLE_SCHEDULE=1`** ([#76](https://github.com/danielsmithdevelopment/ClawQL/issues/76)), **`notify`** when **`CLAWQL_ENABLE_NOTIFY=1`** ([#77](https://github.com/danielsmithdevelopment/ClawQL/issues/77)), **`knowledge_search_onyx`** when **`CLAWQL_ENABLE_ONYX=1`** ([#118](https://github.com/danielsmithdevelopment/ClawQL/issues/118)), and the three **`ouroboros_*`** tools when **`CLAWQL_ENABLE_OUROBOROS=1`** ([#141](https://github.com/danielsmithdevelopment/ClawQL/issues/141), [#142](https://github.com/danielsmithdevelopment/ClawQL/issues/142)). The **core** pair is **`search`** + **`execute`** for OpenAPI/Discovery APIs. The other defaults are **optional** and depend on configuration (vault path, Cloudflare Sandbox bridge, external ingest flag).
 
 | Tool                                                                                                     | Requires                                                                                                 | Purpose                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | -------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -12,6 +12,7 @@ ClawQL exposes **six** core+optional tools over MCP by default (stdio or Streama
 | `ingest_external_knowledge`                                                                              | **`CLAWQL_EXTERNAL_INGEST=1`**, vault path, optional fetch                                               | Bulk **Markdown** (`documents[]`) and optional **HTTPS** fetch (`source: url`, **`CLAWQL_EXTERNAL_INGEST_FETCH=1`**); runs vault lock + **`memory.db`** sync like **`memory_ingest`** ([#40](https://github.com/danielsmithdevelopment/ClawQL/issues/40)); no payload → roadmap preview                                                                                                                                                                                                                                                                               |
 | `cache`                                                                                                  | **`CLAWQL_ENABLE_CACHE=1`**                                                                              | Ephemeral **in-process LRU** KV (set/get/delete/list/search); evicts LRU when full — **not** on disk; use **`memory_ingest`** / **`memory_recall`** for persisted vault memory ([#75](https://github.com/danielsmithdevelopment/ClawQL/issues/75))                                                                                                                                                                                                                                                                                                                    |
 | `audit`                                                                                                  | **`CLAWQL_ENABLE_AUDIT=1`**                                                                              | In-process **ring buffer** of structured events (append/list/clear) — **not** on disk; not compliance-grade alone; use **`memory_ingest`** for durable trails ([#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89))                                                                                                                                                                                                                                                                                                                                     |
+| `schedule`                                                                                               | **`CLAWQL_ENABLE_SCHEDULE=1`**                                                                           | Persisted schedule jobs (`create/list/get/delete/trigger`) with typed actions; v1 action kind is **synthetic HTTP checks** (`action.kind: "synthetic"`) with assertion-based pass/fail and run history ([#76](https://github.com/danielsmithdevelopment/ClawQL/issues/76), [schedule-synthetic-checks.md](schedule-synthetic-checks.md))                                                                                                                                                                              |
 | `notify`                                                                                                 | **`CLAWQL_ENABLE_NOTIFY=1`**, Slack spec in merge, bot token                                             | Slack **`chat.postMessage`** wrapper for workflow milestones and completion signals ([#77](https://github.com/danielsmithdevelopment/ClawQL/issues/77)); same auth as **`execute`** on **`slack`** (`CLAWQL_SLACK_TOKEN`, …)                                                                                                                                                                                                                                                                                                                                          |
 | `knowledge_search_onyx`                                                                                  | **`CLAWQL_ENABLE_ONYX=1`**, **`onyx`** in loaded merge, **`ONYX_BASE_URL`**, Bearer token                | Onyx **`POST /search/send-search-message`** wrapper for semantic document search ([#118](https://github.com/danielsmithdevelopment/ClawQL/issues/118)); same auth as **`execute`** on **`onyx`** (`ONYX_API_TOKEN`, …)                                                                                                                                                                                                                                                                                                                                                |
 | `ouroboros_create_seed_from_document`, `ouroboros_run_evolutionary_loop`, `ouroboros_get_lineage_status` | **`CLAWQL_ENABLE_OUROBOROS=1`**; optional **`CLAWQL_OUROBOROS_DATABASE_URL`** for Postgres-backed events | **clawql-ouroboros** MCP hooks ([#141](https://github.com/danielsmithdevelopment/ClawQL/issues/141)): seed-from-document, run evolutionary loop, read lineage. Without **`CLAWQL_OUROBOROS_DATABASE_URL`**, events stay in-memory ([#142](https://github.com/danielsmithdevelopment/ClawQL/issues/142)).                                                                                                                                                                                                                                                              |
@@ -272,10 +273,10 @@ Boolean flags are parsed in one place — **[`src/clawql-optional-flags.ts`](../
 | Vector / hybrid memory           | `CLAWQL_VECTOR_BACKEND`, embedding + DB vars                                                                                                   | off                       | Optional **`memory_recall`** KNN; see README and [hybrid-memory-backends.md](hybrid-memory-backends.md).                                                                                                                                                                                                                     |
 | **`cache` tool**                 | `CLAWQL_ENABLE_CACHE`                                                                                                                          | off                       | [#75](https://github.com/danielsmithdevelopment/ClawQL/issues/75): in-process LRU; **`CLAWQL_CACHE_MAX_VALUE_BYTES`**, **`CLAWQL_CACHE_MAX_ENTRIES`**.                                                                                                                                                                       |
 | **`audit` tool**                 | `CLAWQL_ENABLE_AUDIT`                                                                                                                          | off                       | [#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89): in-process ring buffer; **`CLAWQL_AUDIT_MAX_ENTRIES`**.                                                                                                                                                                                                   |
-| **Planned** schedule             | `CLAWQL_ENABLE_SCHEDULE`                                                                                                                       | off                       | [#76](https://github.com/danielsmithdevelopment/ClawQL/issues/76) — reserved.                                                                                                                                                                                                                                                |
+| **`schedule` tool**              | `CLAWQL_ENABLE_SCHEDULE`, optional `CLAWQL_SCHEDULE_*` caps/path                                                                              | off                       | [#76](https://github.com/danielsmithdevelopment/ClawQL/issues/76): persisted jobs + synthetic checks (`trigger` supports `dry_run`).                                                                                                                                                                                       |
 | **`notify` tool**                | `CLAWQL_ENABLE_NOTIFY`                                                                                                                         | off                       | [#77](https://github.com/danielsmithdevelopment/ClawQL/issues/77): Slack **`chat.postMessage`** when the Slack spec is loaded + bot token.                                                                                                                                                                                   |
 | **`knowledge_search_onyx` tool** | `CLAWQL_ENABLE_ONYX`, **`ONYX_BASE_URL`**, **`ONYX_API_TOKEN`** / **`CLAWQL_ONYX_API_TOKEN`** (or **`CLAWQL_PROVIDER_AUTH_JSON`** `onyx`)      | off                       | [#118](https://github.com/danielsmithdevelopment/ClawQL/issues/118): Onyx document search; **`onyx`** must appear in the loaded merge.                                                                                                                                                                                       |
-| **`ouroboros_*` tools**          | `CLAWQL_ENABLE_OUROBOROS`; optional `CLAWQL_OUROBOROS_DATABASE_URL`                                                                            | off                       | [#141](https://github.com/danielsmithdevelopment/ClawQL/issues/141) / [#142](https://github.com/danielsmithdevelopment/ClawQL/issues/142): **`ouroboros_create_seed_from_document`**, **`ouroboros_run_evolutionary_loop`**, **`ouroboros_get_lineage_status`**; Postgres URL enables durable **`clawql_ouroboros_events`**. |
+| **`ouroboros_*` tools**          | `CLAWQL_ENABLE_OUROBOROS`; optional `CLAWQL_OUROBOROS_DATABASE_URL` or split `CLAWQL_OUROBOROS_DB_*` vars                                      | off                       | [#141](https://github.com/danielsmithdevelopment/ClawQL/issues/141) / [#142](https://github.com/danielsmithdevelopment/ClawQL/issues/142): **`ouroboros_create_seed_from_document`**, **`ouroboros_run_evolutionary_loop`**, **`ouroboros_get_lineage_status`**; Postgres config enables durable **`clawql_ouroboros_events`**. |
 | **Planned** vision               | `CLAWQL_ENABLE_VISION`                                                                                                                         | off                       | [#78](https://github.com/danielsmithdevelopment/ClawQL/issues/78) — reserved.                                                                                                                                                                                                                                                |
 
 ---
@@ -284,14 +285,73 @@ Boolean flags are parsed in one place — **[`src/clawql-optional-flags.ts`](../
 
 When **`CLAWQL_ENABLE_OUROBOROS=1`** (same truthy parsing as other **`CLAWQL_ENABLE_*`** flags), **`clawql-mcp`** registers the three tools defined in **`clawql-ouroboros/mcp-hooks`**: **`ouroboros_create_seed_from_document`**, **`ouroboros_run_evolutionary_loop`**, **`ouroboros_get_lineage_status`**. Handlers return JSON as MCP **text** content. The server wires a default **Wonder / Reflect / Executor / Evaluator** (stubby, no external LLM) so the loop is runnable out of the box; replace with domain logic as needed.
 
-**Persistence:** set **`CLAWQL_OUROBOROS_DATABASE_URL`** to use Postgres for append + lineage rebuild (**`clawql_ouroboros_events`**). If unset, **`InMemoryEventStore`** is used (per-process only).
+**Persistence:** set **`CLAWQL_OUROBOROS_DATABASE_URL`** (or split **`CLAWQL_OUROBOROS_DB_HOST`**, **`CLAWQL_OUROBOROS_DB_PORT`**, **`CLAWQL_OUROBOROS_DB_USER`**, **`CLAWQL_OUROBOROS_DB_PASSWORD`**, **`CLAWQL_OUROBOROS_DB_NAME`**) to use Postgres for append + lineage rebuild (**`clawql_ouroboros_events`**). If unset, **`InMemoryEventStore`** is used (per-process only).
+
+### Route hints for default executor (practical usage)
+
+The default executor can route to real internal ClawQL operations without custom code when the input Seed carries a **route hint** inside **`brownfield_context.context_references`**.
+
+Use one of these hint objects:
+
+- **Execute path**
+  - `{ "clawql_execute": { "operationId": "listPets", "args": { ... }, "fields": ["..."] } }`
+- **Search path**
+  - `{ "clawql_search": { "query": "find pet operations", "limit": 5 } }`
+
+Why this shape: `SeedSchema` is strict for many fields; `context_references` is designed to carry arbitrary context objects safely, so hints survive schema validation and transport boundaries.
+
+### End-to-end example (`ouroboros_run_evolutionary_loop`)
+
+```json
+{
+  "seed": {
+    "goal": "List pets through internal execute",
+    "task_type": "analysis",
+    "brownfield_context": {
+      "project_type": "brownfield",
+      "context_references": [
+        {
+          "clawql_execute": {
+            "operationId": "listPets",
+            "args": {},
+            "fields": ["name"]
+          }
+        }
+      ],
+      "existing_patterns": [],
+      "existing_dependencies": []
+    },
+    "constraints": [],
+    "acceptance_criteria": ["Return non-empty output"],
+    "ontology_schema": {
+      "name": "PetOntology",
+      "description": "Pet listing ontology",
+      "fields": []
+    },
+    "evaluation_principles": [],
+    "exit_conditions": [],
+    "metadata": {
+      "seed_id": "seed-demo-1",
+      "version": "1.0.0",
+      "created_at": "2026-01-01T00:00:00.000Z",
+      "ambiguity_score": 0.1,
+      "interview_id": null,
+      "parent_seed_id": null
+    }
+  },
+  "maxGenerations": 2,
+  "convergenceThreshold": 0.8
+}
+```
+
+Then call **`ouroboros_get_lineage_status`** with `seedId` equal to the loop response `lineageId`; generation records include `execution_output` with route metadata (for example `"route":"execute"`).
 
 **Full library story (embed outside MCP, poller, Zod shapes):** **[`docs/clawql-ouroboros.md`](clawql-ouroboros.md)**. **Website:** [Ouroboros library](https://docs.clawql.com/ouroboros).
 
 ---
 
-## Planned: `schedule` (optional)
+## `schedule` (optional)
 
-**Env (planned):** `CLAWQL_ENABLE_SCHEDULE` + related caps/paths — see [#76](https://github.com/danielsmithdevelopment/ClawQL/issues/76), [#79](https://github.com/danielsmithdevelopment/ClawQL/issues/79).
+**Env:** `CLAWQL_ENABLE_SCHEDULE=1` to register the tool. Optional envs: `CLAWQL_SCHEDULE_DB_PATH`, `CLAWQL_SCHEDULE_HISTORY_LIMIT`, `CLAWQL_SCHEDULE_INTERVAL_MIN_SECONDS`, `CLAWQL_SCHEDULE_INTERVAL_MAX_SECONDS`, `CLAWQL_SCHEDULE_URL_ALLOWLIST_PREFIXES`, and synthetic request caps under `CLAWQL_SCHEDULE_SYNTHETIC_*`.
 
-The **`schedule`** tool will support persisted jobs (cron / interval / one-shot) with **typed actions**. One action kind is **synthetic HTTP/API checks** (assertions + history) as a **subset** of scheduling—see **[schedule-synthetic-checks.md](schedule-synthetic-checks.md)**. Failure notifications are intended to pair with **`notify`** ([#77](https://github.com/danielsmithdevelopment/ClawQL/issues/77)); retrieval-heavy runbooks can pair with **`knowledge_search_onyx`** ([#118](https://github.com/danielsmithdevelopment/ClawQL/issues/118)) when **`CLAWQL_ENABLE_ONYX`** is set. ClawQL does not bundle third-party observability vendors; scheduled probes are defined and stored **in-process** with the same safety constraints as the rest of the server.
+The **`schedule`** tool supports persisted jobs (cron / interval / one-shot) with **typed actions**. In v1, `action.kind` is **`synthetic`** and includes `synthetic_test` (HTTP request + assertions) as described in **[schedule-synthetic-checks.md](schedule-synthetic-checks.md)**. Supported operations are `create`, `list`, `get`, `delete`, and `trigger`; `trigger` can run with `dry_run: true` to validate and execute assertions without persisting a run row. When `CLAWQL_ENABLE_SCHEDULE=1`, the server also starts a background worker that evaluates due jobs and executes them automatically on a poll interval (`CLAWQL_SCHEDULE_POLL_MS`, default 5000 ms). Failure notifications are intended to pair with **`notify`** ([#77](https://github.com/danielsmithdevelopment/ClawQL/issues/77)); retrieval-heavy runbooks can pair with **`knowledge_search_onyx`** ([#118](https://github.com/danielsmithdevelopment/ClawQL/issues/118)) when **`CLAWQL_ENABLE_ONYX`** is set. ClawQL does not bundle third-party observability vendors; scheduled probes are defined and stored in a local SQLite schedule store.

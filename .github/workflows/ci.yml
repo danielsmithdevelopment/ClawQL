@@ -259,3 +259,41 @@ jobs:
 
       - name: Unit tests + coverage
         run: npx vitest run --coverage
+
+  ouroboros-postgres-optional:
+    name: Ouroboros Postgres integration (optional)
+    needs: [lint, workflow-scripts, website-docker-smoke, website-playwright-smoke]
+    if: vars.CLAWQL_ENABLE_OUROBOROS_POSTGRES_CI == '1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: clawql
+          POSTGRES_PASSWORD: clawql
+          POSTGRES_DB: clawql_ouroboros
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U clawql -d clawql_ouroboros"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      CLAWQL_OUROBOROS_DATABASE_URL: postgres://clawql:clawql@127.0.0.1:5432/clawql_ouroboros
+    steps:
+      # actions/checkout@v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      # actions/setup-node@v6.3.0
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
+        with:
+          node-version: "25"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Ouroboros Postgres integration tests
+        run: npx vitest run src/ouroboros/postgres-event-store.integration.test.ts

@@ -1,0 +1,162 @@
+import { docsPageMetadata } from '@/lib/seo'
+
+export const metadata = docsPageMetadata({
+  title: 'NATS JetStream',
+  description:
+    'In-cluster NATS JetStream event backbone for ClawQL Helm installs: values.yaml controls, persistence, and operational checks.',
+  path: '/nats-jetstream',
+})
+
+# NATS JetStream
+
+NATS JetStream is available as an optional in-cluster event backbone in the `charts/clawql-mcp` Helm chart. It is intended for Ouroboros workflow events, multi-agent coordination, and edge worker synchronization.
+
+## Why this exists
+
+For issue [#127](https://github.com/danielsmithdevelopment/ClawQL/issues/127), the goal is a durable, lightweight event bus that can sit beside the existing ClawQL stack without introducing Kafka-level operational complexity.
+
+JetStream provides:
+
+- Durable streams and replay for long-running workflows
+- Pull/push consumer patterns for mixed worker types
+- Low-latency request/reply for orchestration control planes
+- Small operational footprint for self-hosted clusters
+
+## Enable it in Helm
+
+```bash
+helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
+  --set nats.enabled=true \
+  --set nats.persistence.enabled=true \
+  --set nats.persistence.size=20Gi
+```
+
+When `nats.enabled=true`, the chart deploys:
+
+- A single NATS pod with JetStream configuration
+- An internal ClusterIP service
+- Optional PVC-backed JetStream storage
+
+ClawQL gets `CLAWQL_NATS_URL` automatically (`nats://<release>-nats:4222`) unless you set `nats.url` explicitly for an external NATS cluster.
+
+## Chart architecture
+
+When enabled, the chart renders:
+
+1. **ConfigMap** with `nats-server.conf` and JetStream settings
+2. **Service** exposing:
+   - client: `4222` (app connections)
+   - cluster: `6222` (future node clustering)
+   - monitor: `8222` (health + metrics endpoint)
+3. **Deployment** with one NATS server pod (single-node default)
+4. **PVC** (optional) for persistent stream data
+
+## Environment wiring into ClawQL
+
+The main `clawql-mcp-http` deployment receives:
+
+- `CLAWQL_NATS_URL` from:
+  - `nats.url` (if set; external/shared cluster), or
+  - in-cluster service DNS (if `nats.enabled=true`)
+- `CLAWQL_NATS_JETSTREAM=1` when `nats.jetStream.enabled=true`
+
+This makes the event backbone discoverable to application code without additional `extraEnv` wiring.
+
+## Key values
+
+- `nats.enabled` — toggle in-cluster NATS deployment
+- `nats.url` — external NATS URL override
+- `nats.jetStream.enabled` — toggle JetStream on/off
+- `nats.jetStream.maxMemoryStore`, `nats.jetStream.maxFileStore` — retention sizing
+- `nats.persistence.*` — PVC behavior (`enabled`, `size`, `existingClaim`, `storageClass`)
+- `nats.service.*` — client/cluster/monitor ports
+
+## Recommended values patterns
+
+### Minimal local testing
+
+```bash
+helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
+  --set nats.enabled=true
+```
+
+### Durable single-cluster production baseline
+
+```bash
+helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
+  --set nats.enabled=true \
+  --set nats.persistence.enabled=true \
+  --set nats.persistence.size=50Gi \
+  --set nats.jetStream.maxMemoryStore=512Mi \
+  --set nats.jetStream.maxFileStore=40Gi
+```
+
+### External/shared NATS cluster
+
+```bash
+helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
+  --set nats.enabled=false \
+  --set-string nats.url='nats://nats.shared.svc.cluster.local:4222'
+```
+
+## Subject taxonomy suggestion
+
+Use stable subjects so multiple components can interoperate:
+
+- `clawql.workflow.*` — workflow lifecycle and checkpoints
+- `clawql.agent.*` — agent state, assignment, and handoffs
+- `clawql.document.*` — document pipeline events
+- `clawql.edge.*` — edge worker join/leave/status/completion
+
+If you need tenant isolation, append namespace/tenant segments (for example `clawql.workflow.team-a.*`).
+
+## Verify after rollout
+
+```bash
+kubectl -n clawql get deploy,svc | rg nats
+kubectl -n clawql logs deploy/clawql-mcp-http-nats
+kubectl -n clawql port-forward svc/clawql-mcp-http-nats 8222:8222
+curl -s http://127.0.0.1:8222/healthz
+```
+
+Additional checks:
+
+```bash
+# Confirm ClawQL got NATS env vars
+kubectl -n clawql get deploy clawql-mcp-http -o yaml | rg "CLAWQL_NATS_URL|CLAWQL_NATS_JETSTREAM" -n
+
+# Show rendered chart resources before apply
+helm template test ./charts/clawql-mcp -n clawql --set nats.enabled=true | rg "nats|jetstream" -n
+```
+
+## Operations notes
+
+- Keep `nats.service.type=ClusterIP` unless you explicitly need external client access.
+- Enable persistence for any environment where replay/recovery matters.
+- Size `maxFileStore` below actual PV capacity to leave filesystem headroom.
+- Expose monitor port (`8222`) to internal Prometheus scrape only, not public ingress.
+- Back up PVC snapshots based on your RPO if streams are compliance-relevant.
+
+## Troubleshooting
+
+### NATS pods are up, but ClawQL is not publishing/consuming
+
+- Verify `CLAWQL_NATS_URL` in `clawql-mcp-http` env.
+- Confirm DNS/service reachability from pod:
+  - `kubectl -n clawql exec deploy/clawql-mcp-http -- sh -lc 'nc -vz clawql-mcp-http-nats 4222'`
+- Check network policies denying pod-to-service traffic.
+
+### JetStream appears disabled
+
+- Confirm `nats.jetStream.enabled=true`.
+- Check ConfigMap contents:
+  - `kubectl -n clawql get cm clawql-mcp-http-nats-config -o yaml`
+- Review NATS startup logs for config parse errors.
+
+### Stream storage fills too quickly
+
+- Increase PVC size and `nats.jetStream.maxFileStore`.
+- Tighten stream retention/consumer ACK policies at the app layer.
+- Add stream compaction/archival policy in your worker stack.
+
+If you use an external NATS cluster, keep `nats.enabled=false` and set only `nats.url`.

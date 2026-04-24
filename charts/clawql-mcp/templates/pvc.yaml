@@ -15,3 +15,41 @@ spec:
   storageClassName: {{ .Values.persistence.storageClass | quote }}
   {{- end }}
 {{- end }}
+{{- if and .Values.ouroborosPostgres.enabled .Values.ouroborosPostgres.persistence.enabled (not .Values.ouroborosPostgres.persistence.existingClaim) }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "clawql-mcp.ouroborosPostgresName" . }}-data
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ouroboros-postgres
+spec:
+  accessModes:
+    {{- toYaml .Values.ouroborosPostgres.persistence.accessModes | nindent 4 }}
+  resources:
+    requests:
+      storage: {{ .Values.ouroborosPostgres.persistence.size }}
+  {{- if .Values.ouroborosPostgres.persistence.storageClass }}
+  storageClassName: {{ .Values.ouroborosPostgres.persistence.storageClass | quote }}
+  {{- end }}
+{{- end }}
+{{- if and .Values.nats.enabled .Values.nats.persistence.enabled (not .Values.nats.persistence.existingClaim) }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "clawql-mcp.natsName" . }}-data
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: nats
+spec:
+  accessModes:
+    {{- toYaml .Values.nats.persistence.accessModes | nindent 4 }}
+  resources:
+    requests:
+      storage: {{ .Values.nats.persistence.size }}
+  {{- if .Values.nats.persistence.storageClass }}
+  storageClassName: {{ .Values.nats.persistence.storageClass | quote }}
+  {{- end }}
+{{- end }}

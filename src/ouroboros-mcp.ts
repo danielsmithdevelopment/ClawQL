@@ -29,7 +29,16 @@ function createEventStore(): EventStore {
 function getOuroborosContext(): OuroborosContext {
   if (!ctxCache) {
     const eventStore = createEventStore();
-    const engines = createDefaultOuroborosEngines();
+    const engines = createDefaultOuroborosEngines({
+      search: async (query, limit) => {
+        const { handleClawqlSearchToolInput } = await import("./tools.js");
+        return handleClawqlSearchToolInput({ query, limit });
+      },
+      execute: async (params) => {
+        const { handleClawqlExecuteToolInput } = await import("./tools.js");
+        return handleClawqlExecuteToolInput(params);
+      },
+    });
     const ouroborosLoop = new EvolutionaryLoop(
       eventStore,
       engines.wonder,

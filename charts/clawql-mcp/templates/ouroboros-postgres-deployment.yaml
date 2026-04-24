@@ -1,0 +1,59 @@
+{{- if .Values.ouroborosPostgres.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "clawql-mcp.ouroborosPostgresName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ouroboros-postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: ouroboros-postgres
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: ouroboros-postgres
+    spec:
+      containers:
+        - name: ouroboros-postgres
+          image: "{{ .Values.ouroborosPostgres.image.repository }}:{{ .Values.ouroborosPostgres.image.tag }}"
+          imagePullPolicy: {{ .Values.ouroborosPostgres.image.pullPolicy }}
+          ports:
+            - name: postgres
+              containerPort: {{ .Values.ouroborosPostgres.service.port | int }}
+              protocol: TCP
+          env:
+            - name: POSTGRES_DB
+              value: {{ .Values.ouroborosPostgres.auth.database | quote }}
+            - name: POSTGRES_USER
+              value: {{ .Values.ouroborosPostgres.auth.username | quote }}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "clawql-mcp.ouroborosPostgresSecretName" . }}
+                  key: password
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+          resources:
+            {{- toYaml .Values.ouroborosPostgres.resources | nindent 12 }}
+      volumes:
+        - name: data
+          {{- if .Values.ouroborosPostgres.persistence.enabled }}
+          {{- if .Values.ouroborosPostgres.persistence.existingClaim }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.ouroborosPostgres.persistence.existingClaim }}
+          {{- else }}
+          persistentVolumeClaim:
+            claimName: {{ include "clawql-mcp.ouroborosPostgresName" . }}-data
+          {{- end }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+{{- end }}

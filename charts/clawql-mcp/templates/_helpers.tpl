@@ -36,3 +36,85 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- define "clawql-mcp.uiName" -}}
 {{- printf "%s-ui" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
 {{- end }}
+
+{{- define "clawql-mcp.ouroborosPostgresName" -}}
+{{- printf "%s-ouroboros-postgres" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{- define "clawql-mcp.ouroborosPostgresSecretName" -}}
+{{- if .Values.ouroborosPostgres.auth.existingSecret -}}
+{{- .Values.ouroborosPostgres.auth.existingSecret | trunc 63 | trimSuffix "-" }}
+{{- else -}}
+{{- printf "%s-ouroboros-postgres-auth" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end -}}
+{{- end }}
+
+{{- define "clawql-mcp.tikaName" -}}
+{{- printf "%s-tika" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{- define "clawql-mcp.gotenbergName" -}}
+{{- printf "%s-gotenberg" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{- define "clawql-mcp.stirlingName" -}}
+{{- printf "%s-stirling" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{- define "clawql-mcp.paperlessName" -}}
+{{- printf "%s-paperless" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{- define "clawql-mcp.storesPostgresName" -}}
+{{- printf "%s-postgres" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{- define "clawql-mcp.storesRedisName" -}}
+{{- printf "%s-redis" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{- define "clawql-mcp.flinkName" -}}
+{{- printf "%s-flink" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{- define "clawql-mcp.flinkJobManagerName" -}}
+{{- printf "%s-jobmanager" (include "clawql-mcp.flinkName" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{- define "clawql-mcp.flinkTaskManagerName" -}}
+{{- printf "%s-taskmanager" (include "clawql-mcp.flinkName" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{- define "clawql-mcp.flinkConnectorSecretName" -}}
+{{- if .Values.flink.connectorSecret -}}
+{{- .Values.flink.connectorSecret | trunc 63 | trimSuffix "-" }}
+{{- else -}}
+{{- printf "%s-connectors" (include "clawql-mcp.flinkName" .) | trunc 63 | trimSuffix "-" }}
+{{- end -}}
+{{- end }}
+
+{{- define "clawql-mcp.natsName" -}}
+{{- printf "%s-nats" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{- define "clawql-mcp.natsConfigName" -}}
+{{- printf "%s-config" (include "clawql-mcp.natsName" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{- define "clawql-mcp.storesPostgresSecretName" -}}
+{{- if .Values.stores.postgres.auth.existingSecret -}}
+{{- .Values.stores.postgres.auth.existingSecret | trunc 63 | trimSuffix "-" }}
+{{- else -}}
+{{- printf "%s-postgres-auth" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end -}}
+{{- end }}
+
+{{- define "clawql-mcp.documentPipelineSecretName" -}}
+{{- if .Values.documentPipeline.paperless.auth.existingSecret -}}
+{{- .Values.documentPipeline.paperless.auth.existingSecret | trunc 63 | trimSuffix "-" }}
+{{- else if .Values.documentPipeline.stirling.auth.existingSecret -}}
+{{- .Values.documentPipeline.stirling.auth.existingSecret | trunc 63 | trimSuffix "-" }}
+{{- else -}}
+{{- printf "%s-doc-pipeline-auth" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end -}}
+{{- end }}

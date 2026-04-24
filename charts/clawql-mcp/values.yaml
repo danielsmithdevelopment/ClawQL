@@ -63,6 +63,192 @@ onyxBaseUrl: ""
 enableOuroboros: false
 # When set, injects CLAWQL_OUROBOROS_DATABASE_URL. Prefer envFromSecret / extraEnv if the URL contains credentials.
 ouroborosDatabaseUrl: ""
+# Optional in-cluster Postgres for Ouroboros event lineage (#142), deployed alongside clawql-mcp.
+# When enabled, the chart injects CLAWQL_OUROBOROS_DB_* env vars into clawql-mcp.
+ouroborosPostgres:
+  enabled: false
+  image:
+    repository: postgres
+    tag: "16-alpine"
+    pullPolicy: IfNotPresent
+  service:
+    port: 5432
+  auth:
+    database: clawql_ouroboros
+    username: clawql
+    # Used only when existingSecret is empty. Set via values file / --set-file / secret management, not plaintext in git.
+    password: ""
+    # Existing secret with key `password`.
+    existingSecret: ""
+  persistence:
+    enabled: false
+    storageClass: ""
+    accessModes:
+      - ReadWriteOnce
+    size: 10Gi
+    existingClaim: ""
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+
+# Optional full-stack document pipeline topology (#113).
+# When enabled, this chart can co-deploy intake/conversion/archive services
+# plus their minimal backing stores for integrated local/self-hosted workflows.
+documentPipeline:
+  enabled: true
+  tika:
+    image:
+      repository: apache/tika
+      tag: "2.9.2.1"
+      pullPolicy: IfNotPresent
+    service:
+      port: 9998
+  gotenberg:
+    image:
+      repository: gotenberg/gotenberg
+      tag: "8.8"
+      pullPolicy: IfNotPresent
+    service:
+      port: 3000
+  stirling:
+    image:
+      repository: frooodle/s-pdf
+      tag: "latest"
+      pullPolicy: IfNotPresent
+    service:
+      port: 8080
+    auth:
+      apiKey: ""
+      existingSecret: ""
+  paperless:
+    enabled: true
+    image:
+      repository: ghcr.io/paperless-ngx/paperless-ngx
+      tag: "2.8.1"
+      pullPolicy: IfNotPresent
+    service:
+      port: 8000
+    auth:
+      apiToken: ""
+      secretKey: ""
+      existingSecret: ""
+    persistence:
+      mediaSize: 20Gi
+      dataSize: 10Gi
+      consumeSize: 10Gi
+      storageClass: ""
+      existingMediaClaim: ""
+      existingDataClaim: ""
+      existingConsumeClaim: ""
+
+stores:
+  postgres:
+    enabled: true
+    image:
+      repository: postgres
+      tag: "16-alpine"
+      pullPolicy: IfNotPresent
+    service:
+      port: 5432
+    auth:
+      database: paperless
+      username: paperless
+      password: "change-me"
+      existingSecret: ""
+    persistence:
+      enabled: true
+      size: 10Gi
+      storageClass: ""
+      accessModes:
+        - ReadWriteOnce
+      existingClaim: ""
+  redis:
+    enabled: true
+    image:
+      repository: redis
+      tag: "7-alpine"
+      pullPolicy: IfNotPresent
+    service:
+      port: 6379
+
+# Optional Apache Flink cluster for in-cluster Onyx connector jobs (#119).
+# Default is internal-only networking (ClusterIP), no ingress.
+flink:
+  enabled: false
+  image:
+    repository: flink
+    tag: "1.19.1-scala_2.12-java17"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    restPort: 8081
+    rpcPort: 6123
+    blobPort: 6124
+    queryPort: 6125
+  jobManager:
+    replicas: 1
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: "1"
+        memory: 1Gi
+  taskManager:
+    replicas: 2
+    taskSlots: 2
+    resources:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+      limits:
+        cpu: "2"
+        memory: 2Gi
+  # Secret with connector credentials (e.g. Slack/Confluence/Jira/Drive tokens).
+  # Keys in this secret are injected only into Flink pods, not clawql-mcp.
+  connectorSecret: ""
+  # Additional env entries for both JobManager and TaskManager containers.
+  extraEnv: []
+
+# Optional NATS JetStream event backbone for Ouroboros/agents/edge sync (#127).
+# Deploys a lightweight single-node NATS with JetStream enabled in-cluster.
+nats:
+  enabled: false
+  # Optional external NATS URL override (for managed/shared clusters).
+  # When set, this URL is injected into clawql-mcp as CLAWQL_NATS_URL.
+  url: ""
+  image:
+    repository: nats
+    tag: "2.10.17-alpine"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    clientPort: 4222
+    clusterPort: 6222
+    monitorPort: 8222
+  jetStream:
+    enabled: true
+    # NATS size format, examples: 512Mi, 2Gi.
+    maxMemoryStore: 256Mi
+    maxFileStore: 10Gi
+  persistence:
+    enabled: false
+    storageClass: ""
+    accessModes:
+      - ReadWriteOnce
+    size: 20Gi
+    existingClaim: ""
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
 
 # Extra env (e.g. tokens from literal — prefer existing secrets for production).
 extraEnv: []

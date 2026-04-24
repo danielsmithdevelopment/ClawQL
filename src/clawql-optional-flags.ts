@@ -37,7 +37,7 @@ export type ClawqlOptionalToolFlags = {
    */
   enableCache: boolean;
   /**
-   * Planned (#76): `schedule` tool. Default false until implemented.
+   * (#76): `schedule` tool — persisted jobs + manual synthetic trigger. Default false.
    */
   enableSchedule: boolean;
   /**

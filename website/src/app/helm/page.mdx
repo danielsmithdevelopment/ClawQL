@@ -46,6 +46,25 @@ Expected response includes `{"status":"ok"}`.
 - **Full guide** (examples: ClusterIP, gRPC, tokens, Ingress, persistence): **[`docs/helm.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/helm.md)** on GitHub
 - **Default values:** [`charts/clawql-mcp/values.yaml`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/charts/clawql-mcp/values.yaml)
 - **Docker Desktop preset:** [`charts/clawql-mcp/values-docker-desktop.yaml`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/charts/clawql-mcp/values-docker-desktop.yaml)
+- **Detailed Flink guide for Onyx index sync:** [Flink Onyx sync](/flink-onyx-sync)
+- **Detailed NATS guide for event-driven sync:** [NATS JetStream](/nats-jetstream)
+
+## Optional event-driven topology (NATS)
+
+Enable in-cluster NATS JetStream when you need durable event streams for multi-step orchestration:
+
+```bash
+helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
+  --set nats.enabled=true \
+  --set nats.persistence.enabled=true
+```
+
+The chart auto-wires:
+
+- `CLAWQL_NATS_URL` (internal service URL unless `nats.url` is set)
+- `CLAWQL_NATS_JETSTREAM=1` (when `nats.jetStream.enabled=true`)
+
+For full architecture + operations details, use [NATS JetStream](/nats-jetstream).
 
 ## Helm vs Kustomize
 
