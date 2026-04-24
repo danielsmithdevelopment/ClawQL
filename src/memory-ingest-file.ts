@@ -33,7 +33,10 @@ export function getMemoryIngestFileMaxBytes(): number {
 export async function getMemoryIngestFileRootsReal(): Promise<string[]> {
   const raw = process.env.CLAWQL_MEMORY_INGEST_FILE_ROOTS?.trim();
   const parts = raw
-    ? raw.split(/[,\n]+/).map((s) => s.trim()).filter(Boolean)
+    ? raw
+        .split(/[,\n]+/)
+        .map((s) => s.trim())
+        .filter(Boolean)
     : [];
   if (parts.length > 0) {
     const out: string[] = [];
@@ -60,7 +63,8 @@ export async function getMemoryIngestFileRootsReal(): Promise<string[]> {
 export async function readToolOutputsFileForIngest(
   userPath: string
 ): Promise<
-  { ok: true; text: string; displayPath: string; absolutePath: string } | { ok: false; error: string }
+  | { ok: true; text: string; displayPath: string; absolutePath: string }
+  | { ok: false; error: string }
 > {
   if (!isMemoryIngestFileReadEnabled()) {
     return {
