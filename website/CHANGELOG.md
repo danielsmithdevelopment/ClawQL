@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-04-23
+
+- **Tools** page: **`memory_ingest`** row notes optional **`toolOutputsFile`** and **`CLAWQL_MEMORY_INGEST_FILE_*`**, linking to [mcp-tools memory_ingest](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp-tools.md#memory_ingest). **clawql-vault-memory** `SKILL.md` republished under **`/.well-known/agent-skills/`** from `.cursor/skills` (regenerated digest in **`agent-skills-index.json`**).
+
 ## 2026-04-21
 
 - Site notes aligned with **clawql-mcp v4.0.0** (multi-spec defaults, bundled providers env, spec-configuration / bundled-specs copy).
