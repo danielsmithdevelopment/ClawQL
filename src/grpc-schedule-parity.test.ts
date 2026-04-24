@@ -53,7 +53,10 @@ describe("gRPC ListTools schedule parity (#76)", () => {
     delete process.env.CLAWQL_SPEC_PATHS;
     process.env.CLAWQL_OBSIDIAN_VAULT_PATH = mkdtempSync(join(tmpdir(), "clawql-grpc-schedule-"));
     process.env.CLAWQL_ENABLE_SCHEDULE = "1";
-    process.env.CLAWQL_SCHEDULE_DB_PATH = join(process.env.CLAWQL_OBSIDIAN_VAULT_PATH, "schedule.db");
+    process.env.CLAWQL_SCHEDULE_DB_PATH = join(
+      process.env.CLAWQL_OBSIDIAN_VAULT_PATH,
+      "schedule.db"
+    );
     resetSpecCache();
     resetSchemaFieldCache();
   });

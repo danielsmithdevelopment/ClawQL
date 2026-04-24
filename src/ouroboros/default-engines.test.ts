@@ -54,7 +54,11 @@ describe("createDefaultOuroborosEngines", () => {
         fields: ["name"],
       })
     );
-    const parsed = JSON.parse(output) as { route: string; result: string | null; operationId: string };
+    const parsed = JSON.parse(output) as {
+      route: string;
+      result: string | null;
+      operationId: string;
+    };
 
     expect(parsed.route).toBe("execute");
     expect(parsed.operationId).toBe("pets/list");
@@ -80,7 +84,11 @@ describe("createDefaultOuroborosEngines", () => {
         searchLimit: 3,
       })
     );
-    const parsed = JSON.parse(output) as { route: string; result: string | null; searchQuery: string };
+    const parsed = JSON.parse(output) as {
+      route: string;
+      result: string | null;
+      searchQuery: string;
+    };
 
     expect(parsed.route).toBe("search");
     expect(parsed.searchQuery).toBe("find pet APIs");

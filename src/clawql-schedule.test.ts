@@ -72,7 +72,7 @@ describe("handleScheduleToolInput", () => {
             synthetic_test: {
               name: "dryrun",
               request: { method: "GET", url: `${origin}/healthz` },
-              assert: { status_in: [200], body_contains: "\"ok\":true" },
+              assert: { status_in: [200], body_contains: '"ok":true' },
             },
           },
         });

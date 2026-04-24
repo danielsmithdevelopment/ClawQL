@@ -63,7 +63,9 @@ function routeHintsFromSeed(seed: Seed): {
         return {
           searchQuery,
           searchLimit:
-            typeof search.limit === "number" && Number.isFinite(search.limit) ? search.limit : undefined,
+            typeof search.limit === "number" && Number.isFinite(search.limit)
+              ? search.limit
+              : undefined,
         };
       }
     }

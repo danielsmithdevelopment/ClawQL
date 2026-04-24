@@ -335,7 +335,9 @@ export const scheduleToolSchema = {
     .min(1)
     .max(200)
     .optional()
-    .describe("For get/list with include_runs: max runs per job (default CLAWQL_SCHEDULE_HISTORY_LIMIT)."),
+    .describe(
+      "For get/list with include_runs: max runs per job (default CLAWQL_SCHEDULE_HISTORY_LIMIT)."
+    ),
 };
 
 const scheduleInputSchema = z.object(scheduleToolSchema).superRefine((data, ctx) => {
@@ -388,7 +390,10 @@ function validateSyntheticTarget(urlRaw: string): { ok: true } | { ok: false; er
   }
   const host = u.hostname.trim().toLowerCase();
   if (host === "localhost" || host.endsWith(".localhost")) {
-    return { ok: false, error: "localhost synthetic targets are blocked (set allowlist to override)" };
+    return {
+      ok: false,
+      error: "localhost synthetic targets are blocked (set allowlist to override)",
+    };
   }
   if (
     /^(127\.)|^(10\.)|^(192\.168\.)|^(169\.254\.)|^(0\.)|^(::1)$|^(fc00:)|^(fd00:)|^(fe80:)/i.test(
@@ -486,13 +491,21 @@ async function runSyntheticCheck(synthetic: SyntheticTest): Promise<TriggerOutco
   }
 
   const timeoutMax = getSyntheticTimeoutMaxMs();
-  const timeout = clamp(synthetic.limits?.timeout_ms ?? getSyntheticTimeoutDefaultMs(), 500, timeoutMax);
+  const timeout = clamp(
+    synthetic.limits?.timeout_ms ?? getSyntheticTimeoutDefaultMs(),
+    500,
+    timeoutMax
+  );
   const maxResponseBytes = clamp(
     synthetic.limits?.max_response_bytes ?? getSyntheticMaxResponseBytesDefault(),
     1024,
     8 * 1024 * 1024
   );
-  const maxRedirects = clamp(synthetic.limits?.max_redirects ?? getSyntheticMaxRedirectsDefault(), 0, 10);
+  const maxRedirects = clamp(
+    synthetic.limits?.max_redirects ?? getSyntheticMaxRedirectsDefault(),
+    0,
+    10
+  );
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
@@ -585,7 +598,10 @@ function hasRunSince(db: Database, jobId: string, isoSince: string): boolean {
   return exists;
 }
 
-function latestRunForJob(db: Database, jobId: string): { triggered_at: string; status: string } | null {
+function latestRunForJob(
+  db: Database,
+  jobId: string
+): { triggered_at: string; status: string } | null {
   const stmt = db.prepare(
     `SELECT triggered_at, status
      FROM clawql_schedule_runs
@@ -685,7 +701,10 @@ function shouldRunJobNow(db: Database, job: ScheduleJobRow, now: Date): boolean 
   return false;
 }
 
-async function maybeSendScheduleNotification(job: ScheduleJobRow, run: ScheduleRunRow): Promise<void> {
+async function maybeSendScheduleNotification(
+  job: ScheduleJobRow,
+  run: ScheduleRunRow
+): Promise<void> {
   const channel = scheduleNotifyChannel();
   if (!channel) return;
   const shouldNotifyFailure = scheduleNotificationsEnabled() && run.status === "fail";
@@ -693,10 +712,7 @@ async function maybeSendScheduleNotification(job: ScheduleJobRow, run: ScheduleR
   if (!shouldNotifyFailure && !shouldNotifyRecovery) return;
   const lastTwo = await listRecentRunStatuses(job.id, 2);
   const recovered =
-    shouldNotifyRecovery &&
-    lastTwo.length >= 2 &&
-    lastTwo[0] === "pass" &&
-    lastTwo[1] === "fail";
+    shouldNotifyRecovery && lastTwo.length >= 2 && lastTwo[0] === "pass" && lastTwo[1] === "fail";
   if (shouldNotifyRecovery && !recovered) return;
 
   try {

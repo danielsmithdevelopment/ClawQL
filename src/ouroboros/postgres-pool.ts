@@ -43,7 +43,10 @@ export function getOuroborosPgPool(): pg.Pool | null {
   const config = resolveOuroborosPoolConfig();
   if (!config) return null;
   if (!pool) {
-    pool = typeof config === "string" ? new pg.Pool({ connectionString: config, max: 4 }) : new pg.Pool(config);
+    pool =
+      typeof config === "string"
+        ? new pg.Pool({ connectionString: config, max: 4 })
+        : new pg.Pool(config);
   }
   return pool;
 }

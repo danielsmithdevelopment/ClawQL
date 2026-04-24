@@ -38,22 +38,22 @@ Recommended deployment boundaries:
 
 The chart exposes these keys in `charts/clawql-mcp/values.yaml`:
 
-| Key | Purpose |
-| --- | --- |
-| `flink.enabled` | Enables all Flink resources in the release. |
-| `flink.image.repository`, `flink.image.tag`, `flink.image.pullPolicy` | Container image settings for JobManager and TaskManager pods. |
-| `flink.service.type` | Service type for JobManager endpoint (`ClusterIP` recommended for production default). |
-| `flink.service.restPort` | Flink REST/UI port (default `8081`). |
-| `flink.service.rpcPort` | RPC port used by Flink internals (default `6123`). |
-| `flink.service.blobPort` | Blob server port (default `6124`). |
-| `flink.service.queryPort` | Query service port (default `6125`). |
-| `flink.jobManager.replicas` | JobManager replica count (usually `1` unless running HA patterns externally). |
-| `flink.jobManager.resources` | CPU/memory requests and limits for JobManager. |
-| `flink.taskManager.replicas` | Number of TaskManager pods (horizontal worker scale). |
-| `flink.taskManager.taskSlots` | Slots per TaskManager process (parallelism capacity planning input). |
-| `flink.taskManager.resources` | CPU/memory requests and limits for TaskManagers. |
-| `flink.connectorSecret` | Existing Kubernetes Secret name loaded into Flink pods via `envFrom`. |
-| `flink.extraEnv` | Additional env entries for both JobManager and TaskManager containers. |
+| Key                                                                   | Purpose                                                                                |
+| --------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `flink.enabled`                                                       | Enables all Flink resources in the release.                                            |
+| `flink.image.repository`, `flink.image.tag`, `flink.image.pullPolicy` | Container image settings for JobManager and TaskManager pods.                          |
+| `flink.service.type`                                                  | Service type for JobManager endpoint (`ClusterIP` recommended for production default). |
+| `flink.service.restPort`                                              | Flink REST/UI port (default `8081`).                                                   |
+| `flink.service.rpcPort`                                               | RPC port used by Flink internals (default `6123`).                                     |
+| `flink.service.blobPort`                                              | Blob server port (default `6124`).                                                     |
+| `flink.service.queryPort`                                             | Query service port (default `6125`).                                                   |
+| `flink.jobManager.replicas`                                           | JobManager replica count (usually `1` unless running HA patterns externally).          |
+| `flink.jobManager.resources`                                          | CPU/memory requests and limits for JobManager.                                         |
+| `flink.taskManager.replicas`                                          | Number of TaskManager pods (horizontal worker scale).                                  |
+| `flink.taskManager.taskSlots`                                         | Slots per TaskManager process (parallelism capacity planning input).                   |
+| `flink.taskManager.resources`                                         | CPU/memory requests and limits for TaskManagers.                                       |
+| `flink.connectorSecret`                                               | Existing Kubernetes Secret name loaded into Flink pods via `envFrom`.                  |
+| `flink.extraEnv`                                                      | Additional env entries for both JobManager and TaskManager containers.                 |
 
 ## Quick start (minimal)
 
@@ -92,7 +92,7 @@ flink:
   enabled: true
   image:
     repository: flink
-    tag: "1.19.1-scala_2.12-java17"
+    tag: '1.19.1-scala_2.12-java17'
     pullPolicy: IfNotPresent
   service:
     type: ClusterIP
@@ -107,22 +107,22 @@ flink:
         cpu: 500m
         memory: 1Gi
       limits:
-        cpu: "2"
+        cpu: '2'
         memory: 2Gi
   taskManager:
     replicas: 4
     taskSlots: 4
     resources:
       requests:
-        cpu: "1"
+        cpu: '1'
         memory: 2Gi
       limits:
-        cpu: "4"
+        cpu: '4'
         memory: 4Gi
   connectorSecret: onyx-connector-env
   extraEnv:
     - name: ONYX_BASE_URL
-      value: "http://onyx-api.onyx.svc.cluster.local:8080/api"
+      value: 'http://onyx-api.onyx.svc.cluster.local:8080/api'
 ```
 
 Apply:
