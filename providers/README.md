@@ -15,6 +15,7 @@ start avoids downloading multi‑MB specs.
 | `gotenberg` | `gotenberg/openapi.yaml` | Gotenberg 8+ (minimal bundled paths; optional refresh from **`GOTENBERG_BASE_URL`**). Set **`GOTENBERG_BASE_URL`** for merged `execute` base URL. |
 | `paperless` | `paperless/openapi.yaml` | Paperless-ngx REST (minimal subset; refresh from live **`PAPERLESS_BASE_URL`** via `npm run fetch-provider-specs`). Auth: **`PAPERLESS_API_TOKEN`** → `Authorization: Token …`. |
 | `stirling` | `stirling/openapi.yaml` | Stirling-PDF (minimal stub; refresh from **`STIRLING_BASE_URL`** `/v3/api-docs`). Auth: **`STIRLING_API_KEY`** → `X-API-KEY`. |
+| `onyx` | `onyx/openapi.yaml` | Onyx — minimal **`POST /search/send-search-message`** plus **`POST /onyx-api/ingestion`** (ingestion API for post-Paperless indexing; [#120](https://github.com/danielsmithdevelopment/ClawQL/issues/120)). Set **`ONYX_BASE_URL`** (API root; include `/api` if mounted there). Auth: **`ONYX_API_TOKEN`** or **`CLAWQL_ONYX_API_TOKEN`** → `Authorization: Bearer …`. Optional MCP tool **`knowledge_search_onyx`** when **`CLAWQL_ENABLE_ONYX=1`**. See [Onyx API](https://docs.onyx.app/). |
 | `jira` | `atlassian/jira/openapi.yaml` | Jira Cloud REST (alias of single-spec mode; also part of `atlassian` / `all-providers`). |
 | `bitbucket` | `atlassian/bitbucket/openapi.yaml` | Bitbucket Cloud REST (alias; also part of `atlassian` / `all-providers`). |
 | `google` | *(merged preset)* | Bundled **Google Cloud** APIs from the on-disk manifest ([`google-top50-apis.json`](google/google-top50-apis.json); filename is historical). For the same merge without this preset, use **`CLAWQL_BUNDLED_PROVIDERS=google`**. Deprecated alias: **`google-top50`** → `google`. |
@@ -58,11 +59,12 @@ npm run fetch-provider-specs
 N8N_BASE_URL=http://127.0.0.1:5678 npm run fetch-n8n-openapi
 ```
 
-**Paperless, Stirling, Tika, Gotenberg:** `npm run fetch-provider-specs` also refreshes their specs **when** these env vars are set (see `.env.example`):
+**Paperless, Stirling, Tika, Gotenberg, Onyx:** `npm run fetch-provider-specs` also refreshes their specs **when** these env vars are set (see `.env.example`):
 
 - **`PAPERLESS_BASE_URL`** — fetches `/api/schema/` into `providers/paperless/openapi.yaml`
 - **`STIRLING_BASE_URL`** — fetches `/v3/api-docs` into `providers/stirling/openapi.yaml`
 - **`TIKA_BASE_URL`** / **`GOTENBERG_BASE_URL`** — tries `/openapi.json` (or yaml/swagger) when the server exposes one; otherwise keeps the committed minimal spec
+- **`ONYX_BASE_URL`** — tries `/openapi.json` then `/openapi.yaml` at the API root (optional **`ONYX_API_TOKEN`** / **`CLAWQL_ONYX_API_TOKEN`** as Bearer) into `providers/onyx/openapi.yaml`. Upstream specs can be **very large**; trim or replace with a minimal subset before committing if build/CI regresses.
 
 ## Pregenerate GraphQL artifacts
 

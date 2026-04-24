@@ -1,0 +1,64 @@
+import { docsPageMetadata } from '@/lib/seo'
+
+export const metadata = docsPageMetadata({
+  title: 'Onyx knowledge search',
+  description:
+    'Optional MCP knowledge_search_onyx tool: CLAWQL_ENABLE_ONYX, ONYX_BASE_URL, ONYX_API_TOKEN, bundled onyx provider, semantic document search examples, and memory_ingest pairing.',
+  path: '/onyx-knowledge',
+})
+
+# Onyx `knowledge_search_onyx`
+
+The optional **`knowledge_search_onyx`** MCP tool queries your **[Onyx](https://www.onyx.app/)** index via **`POST /search/send-search-message`**. It is a thin wrapper over the same **`execute`** path as operation **`onyx::onyx_send_search_message`** when the **`onyx`** bundled spec is in the merge — so you get **typed parameters** (`query`, `num_hits`, …) without hand-building the Onyx JSON each time.
+
+- **Enable:** **`CLAWQL_ENABLE_ONYX=1`** (or `true` / `yes`).
+- **Spec:** The loaded merge must include **`onyx`** (default **`all-providers`**, or add **`onyx`** to **`CLAWQL_BUNDLED_PROVIDERS`**, or **`CLAWQL_PROVIDER=onyx`** for Onyx-only).
+- **Connectivity:** **`ONYX_BASE_URL`** = HTTP API root (often ends with **`/api`**). **Auth:** **`ONYX_API_TOKEN`** or **`CLAWQL_ONYX_API_TOKEN`** as **Bearer**, or **`CLAWQL_PROVIDER_AUTH_JSON`** with an **`onyx`** key.
+
+**Canonical guide (setup, wrapper vs `execute`, examples, errors, `memory_ingest` / `notify`):** [onyx-knowledge-tool.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/onyx-knowledge-tool.md) · [mcp-tools.md § knowledge_search_onyx](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp-tools.md#knowledge_search_onyx-optional) · issue [#118](https://github.com/danielsmithdevelopment/ClawQL/issues/118).
+
+## Quick examples
+
+Minimal retrieval:
+
+```json
+{
+  "query": "What is our data retention policy for EU customers?"
+}
+```
+
+Limit hits and trim top-level JSON keys (adjust **`fields`** to match your Onyx response):
+
+```json
+{
+  "query": "runbook kubernetes cluster upgrade",
+  "num_hits": 8,
+  "include_content": true,
+  "fields": ["query", "documents"]
+}
+```
+
+Equivalent **`execute`** (merged **`onyx`** label):
+
+```json
+{
+  "operationId": "onyx::onyx_send_search_message",
+  "args": {
+    "search_query": "deployment runbook kubernetes",
+    "num_hits": 10,
+    "include_content": true,
+    "stream": false
+  }
+}
+```
+
+## Vault and Slack
+
+- After retrieval, use **`memory_ingest`** to persist a short summary and redacted hit list so **`memory_recall`** can surface it in later sessions — see [vault memory](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/memory-obsidian.md).
+- Use optional **`notify`** to post completion signals with links — [Slack notify](/notify).
+
+## Tests
+
+Repo tests: **`src/knowledge-search-onyx.test.ts`**, **`src/server.test.ts`** (tool registered when **`CLAWQL_ENABLE_ONYX=1`**).
+
+See [Tools](/tools) for how **`knowledge_search_onyx`** fits alongside **`search`**, **`execute`**, vault tools, **`cache`**, **`audit`**, and **`notify`**.

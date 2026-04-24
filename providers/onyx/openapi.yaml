@@ -1,0 +1,129 @@
+openapi: 3.0.3
+info:
+  title: Onyx Enterprise Search
+  description: >
+    Minimal bundled surface for semantic document search and lightweight ingestion (Onyx public HTTP API).
+    Full upstream OpenAPI is served at `{api_root}/openapi.json` (e.g. cloud.onyx.app).
+    Set **ONYX_BASE_URL** to your API root (include `/api` if your deployment mounts there).
+    Auth: **ONYX_API_TOKEN** (Bearer). Enable the **`knowledge_search_onyx`** MCP tool with **CLAWQL_ENABLE_ONYX=true**.
+  version: "1"
+servers:
+  - url: http://onyx:8080
+paths:
+  /search/send-search-message:
+    post:
+      operationId: onyx_send_search_message
+      summary: Semantic document search
+      description: >
+        Runs a retrieval query against the indexed corpus (permission-aware for the authenticated user).
+        Maps to Onyx `POST /search/send-search-message`. Use `include_content: true` for chunk text suitable for citations.
+      parameters:
+        - name: tenant_id
+          in: query
+          required: false
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - search_query
+              properties:
+                search_query:
+                  type: string
+                  description: Natural language or keyword query.
+                filters:
+                  type: object
+                  description: Optional Onyx index filters (source types, document sets, tags, etc.).
+                num_docs_fed_to_llm_selection:
+                  type: integer
+                run_query_expansion:
+                  type: boolean
+                  default: false
+                num_hits:
+                  type: integer
+                  default: 15
+                  description: Maximum number of hits to return.
+                hybrid_alpha:
+                  type: number
+                include_content:
+                  type: boolean
+                  default: true
+                  description: Include retrieved chunk/content in the response when supported.
+                stream:
+                  type: boolean
+                  default: false
+                  description: Must stay false for MCP; streaming responses are not handled here.
+      responses:
+        "200":
+          description: Search payload (shape varies by Onyx version).
+        "422":
+          description: Validation error
+  /onyx-api/ingestion:
+    post:
+      operationId: onyx_ingest_document
+      summary: Ingest a document via the ingestion API (async indexing)
+      description: >
+        Lightweight document upsert for immediate searchability (see Onyx "Index Files with the Ingestion API").
+        Typical post-Paperless bridge: build `document` from archived metadata + extracted text, then `execute`
+        on `onyx::onyx_ingest_document` (#120). Optional `cc_pair_id` ties documents to an admin connector pair.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - document
+              properties:
+                cc_pair_id:
+                  type: integer
+                  description: Optional connector credential pair id (Connectors UI).
+                document:
+                  type: object
+                  required:
+                    - id
+                    - sections
+                    - source
+                    - semantic_identifier
+                  properties:
+                    id:
+                      type: string
+                      description: Stable unique id for this document (e.g. paperless-123).
+                    title:
+                      type: string
+                    semantic_identifier:
+                      type: string
+                    source:
+                      type: string
+                      enum:
+                        - ingestion_api
+                    doc_updated_at:
+                      type: string
+                      format: date-time
+                    sections:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          text:
+                            type: string
+                          link:
+                            type: string
+      responses:
+        "200":
+          description: Accepted for processing; indexing may be asynchronous.
+        "422":
+          description: Validation error
+components:
+  schemas: {}
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: API key or PAT as Bearer token (ONYX_API_TOKEN).
+security:
+  - bearerAuth: []

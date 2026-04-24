@@ -398,6 +398,7 @@ describe("resolveBundledSelfHostedBaseUrl / resolveApiBaseUrl", () => {
 
   afterEach(() => {
     delete process.env.PAPERLESS_BASE_URL;
+    delete process.env.ONYX_BASE_URL;
     delete process.env.TIKA_BASE_URL;
     delete process.env.CLAWQL_API_BASE_URL;
     delete process.env.API_BASE_URL;
@@ -407,6 +408,8 @@ describe("resolveBundledSelfHostedBaseUrl / resolveApiBaseUrl", () => {
   it("returns per-label base URL from env", () => {
     process.env.PAPERLESS_BASE_URL = "http://paperless.local:8000/";
     expect(resolveBundledSelfHostedBaseUrl("paperless")).toBe("http://paperless.local:8000");
+    process.env.ONYX_BASE_URL = "http://onyx.local:8080/api/";
+    expect(resolveBundledSelfHostedBaseUrl("onyx")).toBe("http://onyx.local:8080/api");
     expect(resolveBundledSelfHostedBaseUrl("tika")).toBeUndefined();
   });
 

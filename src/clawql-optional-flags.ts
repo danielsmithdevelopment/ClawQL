@@ -21,6 +21,8 @@ const rawOptionalFlagsSchema = z.object({
   CLAWQL_ENABLE_NOTIFY: z.string().optional(),
   CLAWQL_ENABLE_VISION: z.string().optional(),
   CLAWQL_ENABLE_AUDIT: z.string().optional(),
+  CLAWQL_ENABLE_ONYX: z.string().optional(),
+  CLAWQL_ENABLE_OUROBOROS: z.string().optional(),
 });
 
 export type ClawqlOptionalToolFlags = {
@@ -39,7 +41,7 @@ export type ClawqlOptionalToolFlags = {
    */
   enableSchedule: boolean;
   /**
-   * Planned (#77): `notify` / `alert` tool. Default false until implemented.
+   * (#77): MCP `notify` tool (Slack `chat.postMessage`). Default false — register with `CLAWQL_ENABLE_NOTIFY=1`.
    */
   enableNotify: boolean;
   /**
@@ -50,6 +52,14 @@ export type ClawqlOptionalToolFlags = {
    * (#89): `audit` tool — in-process ring buffer (not durable). Default false.
    */
   enableAudit: boolean;
+  /**
+   * ([#118](https://github.com/danielsmithdevelopment/ClawQL/issues/118)): `knowledge_search_onyx` — wrapper over bundled Onyx search. Default false.
+   */
+  enableOnyxKnowledge: boolean;
+  /**
+   * ([#141](https://github.com/danielsmithdevelopment/ClawQL/issues/141)): Ouroboros MCP tools (`ouroboros_*`). Default false.
+   */
+  enableOuroboros: boolean;
 };
 
 function rawToFlags(raw: z.infer<typeof rawOptionalFlagsSchema>): ClawqlOptionalToolFlags {
@@ -62,6 +72,8 @@ function rawToFlags(raw: z.infer<typeof rawOptionalFlagsSchema>): ClawqlOptional
     enableNotify: envTruthy(raw.CLAWQL_ENABLE_NOTIFY),
     enableVision: envTruthy(raw.CLAWQL_ENABLE_VISION),
     enableAudit: envTruthy(raw.CLAWQL_ENABLE_AUDIT),
+    enableOnyxKnowledge: envTruthy(raw.CLAWQL_ENABLE_ONYX),
+    enableOuroboros: envTruthy(raw.CLAWQL_ENABLE_OUROBOROS),
   };
 }
 

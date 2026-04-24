@@ -17,6 +17,7 @@ describe("provider-registry", () => {
     expect(ids).toContain("gotenberg");
     expect(ids).toContain("paperless");
     expect(ids).toContain("stirling");
+    expect(ids).toContain("onyx");
     expect(ids).not.toContain("atlassian"); // group, not concrete provider
   });
 
@@ -78,6 +79,7 @@ describe("provider-registry", () => {
     expect(labels.has("github")).toBe(true);
     expect(labels.has("paperless")).toBe(true);
     expect(labels.has("tika")).toBe(true);
+    expect(labels.has("onyx")).toBe(true);
     expect(items!.every((x) => x.abs.includes("/providers/"))).toBe(true);
   });
 

@@ -681,6 +681,7 @@ export function resolveBundledSelfHostedBaseUrl(specLabel?: string): string | un
     stirling: "STIRLING_BASE_URL",
     tika: "TIKA_BASE_URL",
     gotenberg: "GOTENBERG_BASE_URL",
+    onyx: "ONYX_BASE_URL",
   };
   const envKey = envByLabel[label];
   if (!envKey) return undefined;

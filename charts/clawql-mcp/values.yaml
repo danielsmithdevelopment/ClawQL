@@ -51,6 +51,19 @@ enableCache: true
 # In-process MCP audit ring buffer (#89). Ephemeral per pod — not on disk; use memory_ingest for durable trails.
 enableAudit: false
 
+# MCP notify tool — Slack chat.postMessage (#77). Requires Slack in provider merge + CLAWQL_SLACK_TOKEN (via extraEnv / secret).
+enableNotify: false
+
+# MCP knowledge_search_onyx — Onyx POST /search/send-search-message (#118). Requires onyx in provider merge + ONYX_BASE_URL + Bearer token (extraEnv / secret).
+enableOnyx: false
+# When set, injects ONYX_BASE_URL (non-secret). Prefer extraEnv / envFromSecret for ONYX_API_TOKEN.
+onyxBaseUrl: ""
+
+# MCP ouroboros_* tools — clawql-ouroboros evolutionary loop (#141). Optional Postgres for durable events (#142).
+enableOuroboros: false
+# When set, injects CLAWQL_OUROBOROS_DATABASE_URL. Prefer envFromSecret / extraEnv if the URL contains credentials.
+ouroborosDatabaseUrl: ""
+
 # Extra env (e.g. tokens from literal — prefer existing secrets for production).
 extraEnv: []
 

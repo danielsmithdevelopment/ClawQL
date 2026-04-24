@@ -147,7 +147,7 @@ Builds POST body: { title: “…”, body: “…”, labels: […] }
 Sends to https://api.github.com/repos/{owner}/{repo}/issues
 GraphQL projection strips unused fields from the response
 Returns: issue number, URL, and status — exactly what AI needs, nothing more
-Key insight: The AI never sees the full OpenAPI spec. search() returns only the relevant slice. execute() handles all auth and HTTP mechanics transparently. The same pattern applies to every provider — including Onyx’s search_indexed_documents operation.
+Key insight: The AI never sees the full OpenAPI spec. search() returns only the relevant slice. execute() handles all auth and HTTP mechanics transparently. The same pattern applies to every bundled provider — including Onyx’s onyx_send_search_message (search) and optional onyx_ingest_document (ingestion) in providers/onyx/openapi.yaml.
 
 Slide 9 — Memory System: Obsidian Vault
 Memory System: Obsidian Vault
@@ -346,7 +346,7 @@ Slide 18 — Onyx: Enterprise Knowledge Search
 Onyx: Enterprise Knowledge Search
 The knowledge backbone — semantic search across your entire company, permission-aware, real-time, citation-backed
 What Onyx Is
-Onyx is an open-source enterprise knowledge search platform that indexes your entire company’s knowledge base across 40+ connectors. It exposes both a REST API and an official MCP server (search_indexed_documents and related tools), which means ClawQL integrates it exactly like Paperless or Stirling — via providers/onyx.json bundled into the ClawQL image, with runtime base URL injection (ONYX_BASE_URL) and CLAWQL_ENABLE_ONYX=true.
+Onyx is an open-source enterprise knowledge search platform. ClawQL bundles a minimal OpenAPI at providers/onyx/openapi.yaml (POST /search/send-search-message; optional POST /onyx-api/ingestion). Set ONYX_BASE_URL, ONYX_API_TOKEN, and CLAWQL_ENABLE_ONYX=true for the knowledge_search_onyx tool; use execute for the full upstream surface after fetch-provider-specs if needed.
 40+ Connectors
 Slack (threads, channels, DMs — indexed and searchable in near real time via Flink)
 Google Drive (Docs, Sheets, Slides, folders)
@@ -502,7 +502,7 @@ providers/tika.json | Auth: TIKA_BASE_URL (self-hosted) Universal extraction API
 Gotenberg
 providers/gotenberg.json | Auth: GOTENBERG_BASE_URL (self-hosted) Document conversion API. HTML, Markdown, Office → PDF. Fetched from self-hosted instance. Triggered by Ouroboros when Tika detects non-PDF input files in a document workflow.
 Onyx
-providers/onyx.json | Auth: ONYX_BASE_URL (self-hosted) + ONYX_API_TOKEN Enterprise knowledge search. MCP server spec (search_indexed_documents + related tools) bundled or fetched at init time from self-hosted instance. Permission-aware semantic search across 40+ connectors. Enabled via CLAWQL_ENABLE_ONYX=true. Flink keeps the index fresh in real time.
+providers/onyx/openapi.yaml | Auth: ONYX_BASE_URL + ONYX_API_TOKEN (Bearer). Optional knowledge_search_onyx when CLAWQL_ENABLE_ONYX=true. Permission-aware semantic search depends on your Onyx deployment and connectors. Flink sync is a separate deployment story (#119).
 
 Slide 27 — Unified Kubernetes Helm Chart
 Unified Kubernetes Helm Chart
@@ -642,7 +642,7 @@ Full Interview → Seed → Execute → Evaluate → Evolve loop embedded in Cla
 Tika + Gotenberg Spec Bundling — IN PROGRESS
 Fetch/generate OpenAPI specs from running instances. Save as providers/tika.json and providers/gotenberg.json. Wire into the bundled `providers/` registry and merged `all-providers` load.
 Onyx Provider Bundling + knowledge_search_onyx Tool — NEXT
-Bundle or fetch Onyx’s MCP/REST spec as providers/onyx.json. Add ONYX_BASE_URL + ONYX_API_TOKEN runtime injection. Implement knowledge_search_onyx as a thin wrapper over search() + execute() against the Onyx spec. Enable via CLAWQL_ENABLE_ONYX=true.
+Bundle Onyx OpenAPI at providers/onyx/openapi.yaml; refresh from a live instance via npm run fetch-provider-specs when ONYX_BASE_URL is set. knowledge_search_onyx is a thin execute wrapper for onyx_send_search_message. Enable via CLAWQL_ENABLE_ONYX=true. memory_ingest: use enterpriseCitations for durable Onyx hit rows (#130).
 Flink Connector Pipeline Deployment — NEXT
 Deploy Flink job manager and task manager into the clawql namespace. Configure connector jobs to keep Onyx index fresh from Slack, Confluence, Drive, Jira, GitHub, and other sources. Flink jobmanager:8081 internal only.
 notify() Tool Implementation — NEXT

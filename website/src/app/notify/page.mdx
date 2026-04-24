@@ -1,0 +1,56 @@
+import { docsPageMetadata } from '@/lib/seo'
+
+export const metadata = docsPageMetadata({
+  title: 'Slack notify',
+  description:
+    'Optional MCP notify tool: CLAWQL_ENABLE_NOTIFY posts to Slack via chat.postMessage. Setup, channel IDs, Cursor env, Helm, and JSON examples.',
+  path: '/notify',
+})
+
+# Slack `notify`
+
+The optional **`notify`** MCP tool sends messages to Slack with **`chat.postMessage`**. Use it for **workflow milestones**, **batch completions**, and **alerts** so agents do not need to call **`execute("chat_postMessage", …)`** for every post.
+
+- **Enable:** **`CLAWQL_ENABLE_NOTIFY=1`** (or `true` / `yes`).
+- **Spec:** The loaded OpenAPI merge must include **Slack** (operation id **`chat_postMessage`**), e.g. **`CLAWQL_PROVIDER=slack`**, **`CLAWQL_BUNDLED_PROVIDERS`** containing **`slack`**, or a default merge that already includes Slack.
+- **Auth:** **`CLAWQL_SLACK_TOKEN`** / **`SLACK_BOT_TOKEN`** / … — same rules as **`execute`** for the **`slack`** label. Minimum scope **`chat:write`**.
+
+**Canonical guide (setup, `notify` vs `execute`, thread replies, Block Kit, errors, Cursor JSON, Helm):** [notify-tool.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/notify-tool.md) · [mcp-tools.md § notify](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp-tools.md#notify-optional) · issue [#77](https://github.com/danielsmithdevelopment/ClawQL/issues/77).
+
+## Quick examples
+
+Minimal completion message:
+
+```json
+{
+  "channel": "C0123456789",
+  "text": "✅ Q1 invoice import finished — 14 files archived."
+}
+```
+
+Thread reply (use the parent message **`ts`** from Slack):
+
+```json
+{
+  "channel": "C0123456789",
+  "thread_ts": "1713898000.000100",
+  "text": "Step 3/3: import complete — doc id `5102`."
+}
+```
+
+Public channel by name (bot must be a member):
+
+```json
+{
+  "channel": "#releases",
+  "text": "*Deploy* succeeded for `v4.0.0`."
+}
+```
+
+Slack sometimes returns **`{"ok":false,"error":"not_in_channel"}`** with HTTP 200. The **`notify`** tool maps that to a tool result **`error`** string plus the parsed **`slack`** object so the model can retry or ask you to **`/invite`** the bot.
+
+## Testing
+
+Repo tests: **`src/clawql-notify.test.ts`**, **`src/server.test.ts`**. Follow-up issues: [#136](https://github.com/danielsmithdevelopment/ClawQL/issues/136)–[#140](https://github.com/danielsmithdevelopment/ClawQL/issues/140) — index **[notify-tool-test-backlog.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/notify-tool-test-backlog.md)**.
+
+See also [Tools](/tools) for how **`notify`** fits alongside **`search`**, **`execute`**, **`memory_*`**, **`cache`**, and **`audit`**.

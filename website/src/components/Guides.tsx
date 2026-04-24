@@ -38,6 +38,18 @@ const guides = [
     description:
       'Helm chart at charts/clawql-mcp: install, values, GHCR image, optional Ingress and PVC.',
   },
+  {
+    href: '/notify',
+    name: 'Slack notify',
+    description:
+      'Optional notify tool (CLAWQL_ENABLE_NOTIFY): chat.postMessage, tokens, channels, and JSON examples.',
+  },
+  {
+    href: '/onyx-knowledge',
+    name: 'Onyx knowledge search',
+    description:
+      'Optional knowledge_search_onyx (CLAWQL_ENABLE_ONYX): ONYX_BASE_URL, tokens, semantic search examples, vault pairing.',
+  },
 ]
 
 export function Guides() {

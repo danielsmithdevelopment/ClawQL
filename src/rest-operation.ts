@@ -4,13 +4,63 @@
  */
 
 import { Buffer } from "node:buffer";
-import fetch from "node-fetch";
-import type { RequestInit as FetchRequestInit } from "node-fetch";
+import baseFetch from "node-fetch";
+import type { RequestInit as FetchRequestInit, Response } from "node-fetch";
 import { mergedAuthHeaders } from "./auth-headers.js";
 import { resolveApiBaseUrlForOperation, type OpenAPIDoc } from "./spec-loader.js";
 import type { Operation } from "./spec-loader.js";
 
 export { mergedAuthHeaders };
+
+/**
+ * When **`CLAWQL_TEST_SLACK_FETCH_STUB=1`**, `executeRestOperation` does not open a real socket.
+ * Used by **`src/server.test.ts`** stdio `callTool("notify")` coverage (#136).
+ *
+ * **`CLAWQL_TEST_SLACK_FETCH_BODY`**: optional full JSON response text (default: minimal `ok:true` Slack shape).
+ * **`CLAWQL_TEST_SLACK_FETCH_HTTP_OK=0`**: return **`res.ok === false`** (HTTP error path).
+ */
+function createTestSlackFetch(): typeof baseFetch {
+  return (async (_url: string | URL, _init?: FetchRequestInit) => {
+    const raw = process.env.CLAWQL_TEST_SLACK_FETCH_BODY?.trim();
+    const text =
+      raw && raw.length > 0
+        ? raw
+        : '{"ok":true,"channel":"C_STUB","ts":"1.0","message":{"text":"stub"}}';
+    const httpOk = process.env.CLAWQL_TEST_SLACK_FETCH_HTTP_OK !== "0";
+    return {
+      ok: httpOk,
+      status: httpOk ? 200 : 500,
+      text: async () => text,
+    } as Response;
+  }) as typeof baseFetch;
+}
+
+/**
+ * When **`CLAWQL_TEST_ONYX_FETCH_STUB=1`**, `executeRestOperation` does not open a real socket.
+ * Used by **`src/server.test.ts`** stdio `callTool("knowledge_search_onyx")` coverage (#144).
+ *
+ * **`CLAWQL_TEST_ONYX_FETCH_BODY`**: optional full JSON response text (default: minimal search-shaped stub).
+ * **`CLAWQL_TEST_ONYX_FETCH_HTTP_OK=0`**: return **`res.ok === false`** (HTTP error path).
+ */
+function createTestOnyxFetch(): typeof baseFetch {
+  return (async (_url: string | URL, _init?: FetchRequestInit) => {
+    const raw = process.env.CLAWQL_TEST_ONYX_FETCH_BODY?.trim();
+    const text = raw && raw.length > 0 ? raw : '{"query":"stub","documents":[]}';
+    const httpOk = process.env.CLAWQL_TEST_ONYX_FETCH_HTTP_OK !== "0";
+    return {
+      ok: httpOk,
+      status: httpOk ? 200 : 500,
+      text: async () => text,
+    } as Response;
+  }) as typeof baseFetch;
+}
+
+/** Test stubs are resolved per request so Vitest `beforeEach` env wins over module-init order. */
+function getFetchImplForRest(): typeof baseFetch {
+  if (process.env.CLAWQL_TEST_SLACK_FETCH_STUB === "1") return createTestSlackFetch();
+  if (process.env.CLAWQL_TEST_ONYX_FETCH_STUB === "1") return createTestOnyxFetch();
+  return baseFetch;
+}
 
 /** Build JSON body: drop path/query args so `owner`/`repo` are not sent in PATCH/POST bodies. */
 /** Suffixes on execute args: `file` + `fileFileName` → filename for multipart, not a separate part. */
@@ -171,7 +221,7 @@ export async function executeRestOperation(
   }
 
   try {
-    const res = await fetch(url.toString(), init);
+    const res = await getFetchImplForRest()(url.toString(), init);
     const text = await res.text();
     let payload: unknown = text;
     try {

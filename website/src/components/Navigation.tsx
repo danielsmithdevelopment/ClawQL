@@ -275,7 +275,10 @@ export const navigation: Array<NavGroup> = [
     title: 'Reference',
     links: [
       { title: 'Tools', href: '/tools' },
+      { title: 'Ouroboros library', href: '/ouroboros' },
       { title: 'Session cache', href: '/cache' },
+      { title: 'Slack notify', href: '/notify' },
+      { title: 'Onyx knowledge search', href: '/onyx-knowledge' },
       { title: 'GraphQL layer', href: '/graphql-proxy' },
       { title: 'Bundled specs', href: '/bundled-specs' },
       { title: 'Concepts', href: '/concepts' },

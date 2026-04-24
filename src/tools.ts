@@ -7,6 +7,9 @@
  * Optional: ingest_external_knowledge — bulk Markdown + optional URL fetch (GitHub #40).
  * Optional: cache — in-process ephemeral KV when CLAWQL_ENABLE_CACHE (GitHub #75); not persisted — use memory_* for vault.
  * Optional: audit — in-process ring buffer when CLAWQL_ENABLE_AUDIT (GitHub #89); not durable — use memory_ingest for compliance trails.
+ * Optional: knowledge_search_onyx — Onyx enterprise document search when CLAWQL_ENABLE_ONYX (GitHub #118).
+ * Optional: notify — Slack chat.postMessage when CLAWQL_ENABLE_NOTIFY (GitHub #77); requires Slack in loaded spec + bot token.
+ * Optional: ouroboros_* — evolutionary loop tools when CLAWQL_ENABLE_OUROBOROS (GitHub #141); optional CLAWQL_OUROBOROS_DATABASE_URL for Postgres lineage (#142).
  * Single-spec `execute` runs OpenAPI→GraphQL in-process; field resolution uses `graphql-execute-helpers`.
  */
 
@@ -28,7 +31,7 @@ import {
 import { executeOperationGraphQL } from "./graphql-in-process-execute.js";
 import { loadSpec, resolveApiBaseUrlForOperation } from "./spec-loader.js";
 import { searchOperations, formatSearchResults } from "./spec-search.js";
-import { executeRestOperation } from "./rest-operation.js";
+import { executeRestOperation, mergedAuthHeaders } from "./rest-operation.js";
 import { handleClawqlCodeToolInput } from "./sandbox-bridge-client.js";
 import { handleIngestExternalKnowledgeToolInput } from "./external-ingest.js";
 import { handleMemoryIngestToolInput } from "./memory-ingest.js";
@@ -36,6 +39,8 @@ import { handleMemoryRecallToolInput } from "./memory-recall.js";
 import { cacheToolSchema, handleCacheToolInput } from "./clawql-cache.js";
 import { auditToolSchema, handleAuditToolInput } from "./clawql-audit.js";
 import { getClawqlOptionalToolFlags } from "./clawql-optional-flags.js";
+import { handleKnowledgeSearchOnyxToolInput } from "./knowledge-search-onyx.js";
+import { registerOuroborosTools } from "./ouroboros-mcp.js";
 import type { OpenAPIDoc } from "./spec-loader.js";
 
 type GraphQLFieldInfo = { name: string; args: string[] };
@@ -73,6 +78,9 @@ function defaultExecuteOutputFields(operationId: string): string[] | undefined {
     case "pulls/update":
     case "pulls/get":
       return ["html_url", "number", "title", "state", "url"];
+    case "chat_postMessage":
+      // Include `error` so Slack `ok:false` bodies survive projection before `notify` remaps them.
+      return ["ok", "error", "channel", "ts", "message", "warning"];
     default:
       return undefined;
   }
@@ -225,6 +233,123 @@ export async function handleClawqlExecuteToolInput(params: {
   }
 }
 
+/** Slack Web API `chat.postMessage` operation id in bundled `providers/slack/openapi.json`. */
+export const SLACK_NOTIFY_OPERATION_ID = "chat_postMessage";
+
+/**
+ * MCP `notify`: posts to Slack via the same path as `execute(chat_postMessage, …)`.
+ * Registered only when `CLAWQL_ENABLE_NOTIFY=1` ([#77]).
+ */
+export async function handleNotifyToolInput(params: {
+  channel: string;
+  text: string;
+  thread_ts?: string;
+  blocks?: string;
+  attachments?: string;
+  username?: string;
+  icon_emoji?: string;
+  icon_url?: string;
+  mrkdwn?: boolean;
+  unfurl_links?: boolean;
+  unfurl_media?: boolean;
+  reply_broadcast?: boolean;
+  parse?: string;
+  link_names?: boolean;
+  as_user?: boolean;
+  fields?: string[];
+}): Promise<{ content: { type: "text"; text: string }[] }> {
+  const auth = mergedAuthHeaders("slack");
+  if (!auth.Authorization) {
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify({
+            error:
+              "Slack bot token missing. Set CLAWQL_SLACK_TOKEN (or SLACK_BOT_TOKEN, SLACK_TOKEN, CLAWQL_SLACK_BOT_TOKEN), or a `slack` entry in CLAWQL_PROVIDER_AUTH_JSON.",
+          }),
+        },
+      ],
+    };
+  }
+
+  const channel = params.channel?.trim();
+  const text = params.text?.trim();
+  if (!channel || !text) {
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify({ error: "`channel` and `text` are required (non-empty strings)." }),
+        },
+      ],
+    };
+  }
+
+  const loaded = await loadSpec();
+  const op = loaded.operations.find((o) => o.id === SLACK_NOTIFY_OPERATION_ID);
+  if (!op) {
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify({
+            error: `Loaded spec has no Slack ${SLACK_NOTIFY_OPERATION_ID} (chat.postMessage). Include slack in CLAWQL_BUNDLED_PROVIDERS, set CLAWQL_PROVIDER=slack, or point CLAWQL_SPEC_PATH at the Slack Web API OpenAPI.`,
+          }),
+        },
+      ],
+    };
+  }
+
+  const args: Record<string, unknown> = { channel, text };
+  const passthrough: (keyof typeof params)[] = [
+    "thread_ts",
+    "blocks",
+    "attachments",
+    "username",
+    "icon_emoji",
+    "icon_url",
+    "parse",
+  ];
+  for (const k of passthrough) {
+    const v = params[k];
+    if (typeof v === "string" && v.trim()) args[k] = v.trim();
+  }
+  if (params.mrkdwn !== undefined) args.mrkdwn = params.mrkdwn;
+  if (params.unfurl_links !== undefined) args.unfurl_links = params.unfurl_links;
+  if (params.unfurl_media !== undefined) args.unfurl_media = params.unfurl_media;
+  if (params.reply_broadcast !== undefined) args.reply_broadcast = params.reply_broadcast;
+  if (params.link_names !== undefined) args.link_names = params.link_names;
+  if (params.as_user !== undefined) args.as_user = params.as_user;
+
+  const exec = await handleClawqlExecuteToolInput({
+    operationId: SLACK_NOTIFY_OPERATION_ID,
+    args,
+    fields: params.fields?.length ? params.fields : undefined,
+  });
+  const body = exec.content[0]?.text;
+  if (typeof body !== "string") return exec;
+  try {
+    const parsed = JSON.parse(body) as { ok?: boolean; error?: string };
+    if (parsed && typeof parsed === "object" && parsed.ok === false) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({
+              error: parsed.error ?? "Slack API returned ok:false",
+              slack: parsed,
+            }),
+          },
+        ],
+      };
+    }
+  } catch {
+    // non-JSON execute error — return as-is
+  }
+  return exec;
+}
+
 export function registerTools(server: McpServer) {
   server.tool(
     "search",
@@ -304,6 +429,14 @@ export function registerTools(server: McpServer) {
 
   server.tool("sandbox_exec", sandboxCodeSchema, handleClawqlCodeToolInput);
 
+  const memoryEnterpriseCitationSchema = z.object({
+    title: z.string().max(500).optional(),
+    url: z.string().max(2048).optional(),
+    document_id: z.string().max(200).optional(),
+    source: z.string().max(200).optional(),
+    snippet: z.string().max(400).optional(),
+  });
+
   server.tool(
     "memory_ingest",
     {
@@ -325,6 +458,14 @@ export function registerTools(server: McpServer) {
             "large content does not go through the tool round-trip). File must be under an allowed root " +
             "(`CLAWQL_MEMORY_INGEST_FILE_ROOTS` or, by default, the process current working directory). " +
             "Takes precedence over `toolOutputs` if both are set. Set `CLAWQL_MEMORY_INGEST_FILE=0` to reject."
+        ),
+      enterpriseCitations: z
+        .array(memoryEnterpriseCitationSchema)
+        .max(30)
+        .optional()
+        .describe(
+          "Optional short citation rows (e.g. trimmed from Onyx `knowledge_search_onyx` JSON). " +
+            "Stored as a small Markdown block in the vault — not full retrieval payloads (#130)."
         ),
       wikilinks: z
         .array(z.string())
@@ -430,6 +571,107 @@ export function registerTools(server: McpServer) {
 
   if (getClawqlOptionalToolFlags().enableAudit) {
     server.tool("audit", auditToolSchema, handleAuditToolInput);
+  }
+
+  if (getClawqlOptionalToolFlags().enableNotify) {
+    server.tool(
+      "notify",
+      {
+        channel: z
+          .string()
+          .min(1)
+          .describe(
+            "Channel ID (C…), private group, or DM — same as Slack chat.postMessage `channel`."
+          ),
+        text: z
+          .string()
+          .min(1)
+          .describe("Message text. Include Onyx/Paperless links inline for workflow summaries."),
+        thread_ts: z
+          .string()
+          .optional()
+          .describe("Optional parent message `ts` to post in a thread."),
+        blocks: z
+          .string()
+          .optional()
+          .describe("Optional JSON string of Block Kit blocks (Slack form field `blocks`)."),
+        attachments: z.string().optional().describe("Optional JSON string of legacy attachments."),
+        username: z
+          .string()
+          .optional()
+          .describe("Override bot display name (requires as_user false)."),
+        icon_emoji: z.string().optional().describe("Override bot icon emoji."),
+        icon_url: z.string().optional().describe("Override bot icon image URL."),
+        mrkdwn: z.boolean().optional().describe("Pass false to disable Slack mrkdwn parsing."),
+        unfurl_links: z.boolean().optional(),
+        unfurl_media: z.boolean().optional(),
+        reply_broadcast: z.boolean().optional(),
+        parse: z.string().optional().describe("Slack parse mode: full | none | …"),
+        link_names: z.boolean().optional(),
+        as_user: z.boolean().optional(),
+        fields: z
+          .array(z.string())
+          .optional()
+          .describe(
+            "Optional top-level response keys to return (same as execute `fields`). " +
+              "Omit for defaults: ok, channel, ts, message."
+          ),
+      },
+      handleNotifyToolInput
+    );
+  }
+
+  if (getClawqlOptionalToolFlags().enableOnyxKnowledge) {
+    server.tool(
+      "knowledge_search_onyx",
+      {
+        query: z
+          .string()
+          .min(1)
+          .describe(
+            "Natural language or keyword query against the Onyx index (maps to `search_query` on the Onyx API)."
+          ),
+        num_hits: z
+          .number()
+          .int()
+          .min(1)
+          .max(100)
+          .optional()
+          .describe("Max hits to return (default 15)."),
+        include_content: z
+          .boolean()
+          .optional()
+          .describe("Include chunk/content in results when supported (default true)."),
+        stream: z
+          .boolean()
+          .optional()
+          .describe("Must be false or omitted; streaming is not supported for this tool."),
+        run_query_expansion: z
+          .boolean()
+          .optional()
+          .describe("Whether to run query expansion on the Onyx side (default false)."),
+        hybrid_alpha: z
+          .number()
+          .optional()
+          .describe("Optional hybrid search alpha (Onyx-specific)."),
+        filters: z
+          .record(z.string(), z.unknown())
+          .optional()
+          .describe("Optional Onyx index filters object."),
+        tenant_id: z.string().optional().describe("Optional multi-tenant id (query parameter)."),
+        fields: z
+          .array(z.string())
+          .optional()
+          .describe(
+            "Optional top-level JSON keys to keep from the Onyx response (same as execute `fields`)."
+          ),
+      },
+      handleKnowledgeSearchOnyxToolInput
+    );
+  }
+
+  if (getClawqlOptionalToolFlags().enableOuroboros) {
+    registerOuroborosTools(server);
   }
 }
 

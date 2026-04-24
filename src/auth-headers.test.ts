@@ -17,6 +17,8 @@ afterEach(() => {
   delete process.env.CLAWQL_PAPERLESS_API_TOKEN;
   delete process.env.STIRLING_API_KEY;
   delete process.env.CLAWQL_STIRLING_API_KEY;
+  delete process.env.ONYX_API_TOKEN;
+  delete process.env.CLAWQL_ONYX_API_TOKEN;
   delete process.env.SLACK_BOT_TOKEN;
   delete process.env.N8N_API_KEY;
   delete process.env.SENTRY_AUTH_TOKEN;
@@ -145,6 +147,20 @@ describe("mergedAuthHeaders", () => {
     process.env.STIRLING_API_KEY = "k1";
     expect(mergedAuthHeaders("stirling")).toEqual({
       "X-API-KEY": "k1",
+    });
+  });
+
+  it("uses Bearer for specLabel onyx from ONYX_API_TOKEN", () => {
+    process.env.ONYX_API_TOKEN = "onyx_pat_1";
+    expect(mergedAuthHeaders("onyx")).toEqual({
+      Authorization: "Bearer onyx_pat_1",
+    });
+  });
+
+  it("uses CLAWQL_ONYX_API_TOKEN when ONYX_API_TOKEN unset", () => {
+    process.env.CLAWQL_ONYX_API_TOKEN = "fallback_tok";
+    expect(mergedAuthHeaders("onyx")).toEqual({
+      Authorization: "Bearer fallback_tok",
     });
   });
 

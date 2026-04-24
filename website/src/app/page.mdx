@@ -7,7 +7,7 @@ import { docsPageMetadata } from '@/lib/seo'
 export const metadata = docsPageMetadata({
   title: 'ClawQL documentation',
   description:
-    'ClawQL documentation: MCP server for OpenAPI 3, Swagger 2, and Google Discovery—search and execute, optional sandbox and vault memory tools, internal GraphQL layer, stdio or HTTP or gRPC, Docker and Kubernetes deployment guides.',
+    'ClawQL documentation: MCP server for OpenAPI 3, Swagger 2, and Google Discovery—search and execute, optional sandbox, vault memory, notify, Onyx knowledge_search_onyx, Ouroboros tools, internal GraphQL layer, stdio or HTTP or gRPC, Docker and Kubernetes deployment guides.',
   path: '/',
 })
 
@@ -19,7 +19,7 @@ export const sections = homePageSections
 
 **ClawQL** registers **core** tools **`search`** and **`execute`**, plus optional **`sandbox_exec`** (remote code in a Cloudflare Sandbox via bridge), **`memory_ingest`**, and **`memory_recall`** (Obsidian vault), and optional **`ingest_external_knowledge`** (bulk Markdown + optional URL fetch). An internal **GraphQL** projection layer keeps API responses lean for **OpenAPI 3**, **Swagger 2**, and **Google Discovery**. The same tool set is available over **stdio**, **Streamable HTTP**, and (when enabled) **gRPC** via the reusable **[`mcp-grpc-transport`](https://www.npmjs.com/package/mcp-grpc-transport)** package—see [Deployment](/deployment) and [Kubernetes](/kubernetes). [Full tool reference (repo)](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp-tools.md). {{ className: 'lead' }}
 
-Optional **`cache`** (**`CLAWQL_ENABLE_CACHE`**) is **in-process LRU** scratch storage, not the vault — [Session cache](/cache), [cache-tool.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/cache-tool.md). Optional **`audit`** (**`CLAWQL_ENABLE_AUDIT`**) is an in-process event buffer for operator trails — **[enterprise-mcp-tools.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/enterprise-mcp-tools.md)** ([#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)).
+Optional **`cache`** (**`CLAWQL_ENABLE_CACHE`**) is **in-process LRU** scratch storage, not the vault — [Session cache](/cache), [cache-tool.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/cache-tool.md). Optional **`audit`** (**`CLAWQL_ENABLE_AUDIT`**) is an in-process event buffer for operator trails — **[enterprise-mcp-tools.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/enterprise-mcp-tools.md)** ([#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)). Optional **`notify`** (**`CLAWQL_ENABLE_NOTIFY`**) posts to Slack — [Slack notify](/notify), [notify-tool.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/notify-tool.md) ([#77](https://github.com/danielsmithdevelopment/ClawQL/issues/77)). Optional **`knowledge_search_onyx`** (**`CLAWQL_ENABLE_ONYX`**) queries **[Onyx](https://www.onyx.app/)** document search — [Onyx knowledge search](/onyx-knowledge), [onyx-knowledge-tool.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/onyx-knowledge-tool.md) ([#118](https://github.com/danielsmithdevelopment/ClawQL/issues/118)). Optional **`ouroboros_*`** tools (**`CLAWQL_ENABLE_OUROBOROS`**) embed the **[Ouroboros library](/ouroboros)** evolutionary loop — [clawql-ouroboros.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/clawql-ouroboros.md) ([#141](https://github.com/danielsmithdevelopment/ClawQL/issues/141)).
 
 <div className="not-prose mt-6 mb-16 flex gap-3">
   <Button href="/quickstart" arrow="right">
@@ -32,7 +32,7 @@ Optional **`cache`** (**`CLAWQL_ENABLE_CACHE`**) is **in-process LRU** scratch s
 
 ## Getting started {{ anchor: false }}
 
-Install **`clawql-mcp`**, run it on stdio, then point your MCP client (e.g. Cursor or Claude Desktop) at the server. Optionally set **`CLAWQL_SPEC_PATH`**, **`CLAWQL_SPEC_URL`**, or **`CLAWQL_DISCOVERY_URL`**; if you set nothing, ClawQL loads a bundled **multi-provider** merge (**Google top 50 + Cloudflare + GitHub**). {{ className: 'lead' }}
+Install **`clawql-mcp`**, run it on stdio, then point your MCP client (e.g. Cursor or Claude Desktop) at the server. Optionally set **`CLAWQL_SPEC_PATH`**, **`CLAWQL_SPEC_URL`**, or **`CLAWQL_DISCOVERY_URL`**; if you set nothing, ClawQL loads a bundled **multi-provider** merge (see [spec configuration](/spec-configuration) — default **`all-providers`** includes Google Cloud, Cloudflare, GitHub, Slack, document APIs, Onyx, and more). {{ className: 'lead' }}
 
 <div className="not-prose">
   <Button href="/mcp-clients" variant="text" arrow="right">

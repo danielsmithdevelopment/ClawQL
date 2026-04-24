@@ -8,6 +8,7 @@
  *   STIRLING_BASE_URL   → providers/stirling/openapi.yaml (from /v3/api-docs)
  *   TIKA_BASE_URL       → providers/tika/openapi.yaml (from /openapi.json when available)
  *   GOTENBERG_BASE_URL  → providers/gotenberg/openapi.yaml (from /openapi.json when available)
+ *   ONYX_BASE_URL       → providers/onyx/openapi.yaml (from /openapi.json; optional Bearer via ONYX_API_TOKEN / CLAWQL_ONYX_API_TOKEN)
  */
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
@@ -188,6 +189,47 @@ async function fetchGotenbergOpenApiFromInstance() {
   );
 }
 
+async function fetchOnyxOpenApiFromInstance() {
+  const base = process.env.ONYX_BASE_URL?.trim();
+  if (!base) {
+    process.stderr.write("Skip onyx live OpenAPI: ONYX_BASE_URL unset (bundled minimal spec kept)\n");
+    return;
+  }
+  const token =
+    process.env.ONYX_API_TOKEN?.trim() || process.env.CLAWQL_ONYX_API_TOKEN?.trim() || "";
+  const headers = {
+    Accept: "application/json, application/yaml, application/vnd.oai.openapi+json, */*",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+  const candidates = ["/openapi.json", "/openapi.yaml"];
+  for (const path of candidates) {
+    const url = `${base.replace(/\/$/, "")}${path}`;
+    process.stderr.write(`Trying onyx OpenAPI ${url}\n`);
+    const res = await fetch(url, { headers });
+    if (res.ok) {
+      const text = await res.text();
+      const out = join(root, "providers/onyx/openapi.yaml");
+      await mkdir(dirname(out), { recursive: true });
+      const trimmed = text.trim();
+      if (path.endsWith(".json") || trimmed.startsWith("{")) {
+        const { default: YAML } = await import("yaml");
+        const obj = JSON.parse(text);
+        await writeFile(out, YAML.stringify(obj), "utf-8");
+      } else {
+        await writeFile(out, text, "utf-8");
+      }
+      process.stderr.write(`Wrote providers/onyx/openapi.yaml from ${url}\n`);
+      process.stderr.write(
+        "onyx: upstream OpenAPI can be very large — trim or replace with a minimal subset before committing if CI/build regress.\n"
+      );
+      return;
+    }
+  }
+  process.stderr.write(
+    "onyx: no /openapi.json or /openapi.yaml on this server — keeping bundled minimal spec\n"
+  );
+}
+
 async function main() {
   for (const t of TARGETS) {
     await fetchOne(t);
@@ -196,6 +238,7 @@ async function main() {
   await fetchStirlingFromInstance();
   await fetchTikaOpenApiFromInstance();
   await fetchGotenbergOpenApiFromInstance();
+  await fetchOnyxOpenApiFromInstance();
   process.stderr.write("Done.\n");
 }
 

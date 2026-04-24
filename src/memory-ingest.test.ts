@@ -64,6 +64,28 @@ describe("memory-ingest", () => {
     expect(text).toContain("Learned something.");
   });
 
+  it("persists enterpriseCitations block for Onyx chaining (#130)", async () => {
+    const r = await runMemoryIngest({
+      title: "Onyx session",
+      insights: "Decision recorded.",
+      enterpriseCitations: [
+        {
+          title: "Refund policy",
+          url: "https://corp.example/doc/1",
+          document_id: "onyx-doc-9",
+          snippet: "Enterprise refunds require VP approval.",
+        },
+      ],
+    });
+    expect(r.ok).toBe(true);
+    const text = await readFile(join(dir, "Memory", "onyx-session.md"), "utf8");
+    expect(text).toContain("#### Enterprise citations (Onyx)");
+    expect(text).toContain("Refund policy");
+    expect(text).toContain("https://corp.example/doc/1");
+    expect(text).toContain("onyx-doc-9");
+    expect(text).toContain("VP approval");
+  });
+
   it("skips duplicate payload (same hash)", async () => {
     const input = { title: "Dup", insights: "same" };
     const h = hashIngestSection(input);
