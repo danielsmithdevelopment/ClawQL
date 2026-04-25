@@ -10,12 +10,12 @@ This case study walks through a **Cursor** session that aligned the **ClawQL** p
 
 A consolidated slide deck is a **product contract**: it lists Web3, Fabric, The Graph, Chainlink, OSV-Scanner, Istio, defense-in-depth, and more. If that narrative runs ahead of **issues and code**, the story drifts. This session was **reconcile deck → open issues → new issues** while keeping a clear boundary:
 
-| Layer                 | Tooling | Role in this session |
-| --------------------- | ------- | -------------------- |
-| **Ephemeral scratch** | MCP **`cache`** (when `CLAWQL_ENABLE_CACHE=1`) | Stash **transient** keys (working notes, last-known issue list, “do not put in the vault” scratch) — **not** long-term memory. |
-| **Durable recall** | **`memory_recall`** (vault Markdown) | **Before** writing new issues, pull prior decisions and deck-related notes so filing is **informed**, not from chat memory alone. |
-| **Durable write** | **`memory_ingest`** | **After** the session, append a **summary** of what was created and how it links to the deck. |
-| **Execution** | **`gh`**, GitHub | The **system of record** for shippable work. |
+| Layer                 | Tooling                                        | Role in this session                                                                                                              |
+| --------------------- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| **Ephemeral scratch** | MCP **`cache`** (when `CLAWQL_ENABLE_CACHE=1`) | Stash **transient** keys (working notes, last-known issue list, “do not put in the vault” scratch) — **not** long-term memory.    |
+| **Durable recall**    | **`memory_recall`** (vault Markdown)           | **Before** writing new issues, pull prior decisions and deck-related notes so filing is **informed**, not from chat memory alone. |
+| **Durable write**     | **`memory_ingest`**                            | **After** the session, append a **summary** of what was created and how it links to the deck.                                     |
+| **Execution**         | **`gh`**, GitHub                               | The **system of record** for shippable work.                                                                                      |
 
 For when **`cache` is** vs is **not** the right tool, see **[`docs/cache-tool.md`](../cache-tool.md)**. **`cache`** is **in-process** and **LRU-bounded** — it is the right place for “temporary issue numbers and information we do **not** want to persist to long-term memory” for as long as the MCP server process (and the session) lasts.
 
@@ -73,20 +73,20 @@ During the gap pass, the assistant used the MCP **`cache`** tool to hold **trans
 
 Twelve new issues were opened to connect the **April 2026** deck to an explicit backlog (numbers shown as filed in that session):
 
-| # | Area |
-| --- | --- |
-| **#155** | Optional **Istio** + **Kiali**, mTLS east-west |
-| **#156** | **OSV-Scanner** + Golden Image / CI / optional **CronJob** / `search`+`execute` path |
-| **#157** | **Hyperledger Fabric** — Helm, `CLAWQL_ENABLE_FABRIC`, `providers/fabric` |
-| **#158** | **The Graph** — bundled OpenAPI / execute path |
-| **#159** | **Chainlink** — bundled provider surface |
-| **#160** | **Jaeger** / **OTLP** tracing |
-| **#161** | **HashiCorp Vault** or **OpenBao** (vs chart **Obsidian** `vault` hostPath naming) |
-| **#162** | **ClawQL-Web3** — AgentKit / **IPFS** / **CCIP** (extends beyond **#88**) |
+| #        | Area                                                                                                              |
+| -------- | ----------------------------------------------------------------------------------------------------------------- |
+| **#155** | Optional **Istio** + **Kiali**, mTLS east-west                                                                    |
+| **#156** | **OSV-Scanner** + Golden Image / CI / optional **CronJob** / `search`+`execute` path                              |
+| **#157** | **Hyperledger Fabric** — Helm, `CLAWQL_ENABLE_FABRIC`, `providers/fabric`                                         |
+| **#158** | **The Graph** — bundled OpenAPI / execute path                                                                    |
+| **#159** | **Chainlink** — bundled provider surface                                                                          |
+| **#160** | **Jaeger** / **OTLP** tracing                                                                                     |
+| **#161** | **HashiCorp Vault** or **OpenBao** (vs chart **Obsidian** `vault` hostPath naming)                                |
+| **#162** | **ClawQL-Web3** — AgentKit / **IPFS** / **CCIP** (extends beyond **#88**)                                         |
 | **#163** | **Transcript** parity: [`clawql-slides-transcript.md`](../clawql-slides-transcript.md) vs **80** slides + **§08** |
-| **#164** | **Defense-in-depth** doc → control / deliverable **matrix** |
-| **#165** | **Meta:** update obsolete **slide §** references in existing issue bodies |
-| **#166** | **Demos** — honest walkthroughs for high-stakes narrative slides (e.g. 50, 56) |
+| **#164** | **Defense-in-depth** doc → control / deliverable **matrix**                                                       |
+| **#165** | **Meta:** update obsolete **slide §** references in existing issue bodies                                         |
+| **#166** | **Demos** — honest walkthroughs for high-stakes narrative slides (e.g. 50, 56)                                    |
 
 Cross-links between issues (e.g. **#88**, **#132**, **#133**, **#128**, **#129**, **#131**) were added in the bodies so **P2/P3** dependencies stay navigable from GitHub, not only from the deck.
 
@@ -100,19 +100,19 @@ After creating issues and updating the mental model of “deck ↔ backlog,” t
 - A pointer to the **canonical** deck file and the **defense-in-depth** companion doc.
 - (Optional) **`wikilinks`** to related vault note titles, e.g. the consolidated deck ingest note, for **graph** recall in Obsidian.
 
-**Why not only `cache`?** The vault is the **durable** place to answer, next month: *“What did we file when the deck went to 80 slides?”* **`cache`** from that day is long gone. **`memory_ingest`** is the durable counterpart for **human+assistant** continuity.
+**Why not only `cache`?** The vault is the **durable** place to answer, next month: _“What did we file when the deck went to 80 slides?”_ **`cache`** from that day is long gone. **`memory_ingest`** is the durable counterpart for **human+assistant** continuity.
 
 ---
 
 ## 8. Scratch, trail, and durable memory (summary)
 
-| Store | When to use | This session |
-| ----- | ------------ | ------------ |
-| **`cache`** | Session handoff, scratch keys, **ephemeral** lists (same MCP process) | Stashed working **gap** labels and new-issue list **in-session**; **not** vault-persisted. |
-| **`audit`** | In-process **operator** trail of MCP tool calls (optional) | Not the focus; see [`docs/enterprise-mcp-tools.md`](../enterprise-mcp-tools.md) and [#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89). |
-| **`memory_recall`** | Find **existing** deck/roadmap/security notes before editing or filing | **Queried** the vault for slide-deck and prior security ingests **before** creating issues. |
-| **GitHub issues** | Shippable, linkable, assignable work | **12** new issues + cross-links to prior epics. |
-| **`memory_ingest`** | Durable **summary** of outcomes and **wikilinks** for the graph | **Appended** session outcome to the long-running “slide deck + security” note (or a sibling title). |
+| Store               | When to use                                                            | This session                                                                                                                                           |
+| ------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **`cache`**         | Session handoff, scratch keys, **ephemeral** lists (same MCP process)  | Stashed working **gap** labels and new-issue list **in-session**; **not** vault-persisted.                                                             |
+| **`audit`**         | In-process **operator** trail of MCP tool calls (optional)             | Not the focus; see [`docs/enterprise-mcp-tools.md`](../enterprise-mcp-tools.md) and [#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89). |
+| **`memory_recall`** | Find **existing** deck/roadmap/security notes before editing or filing | **Queried** the vault for slide-deck and prior security ingests **before** creating issues.                                                            |
+| **GitHub issues**   | Shippable, linkable, assignable work                                   | **12** new issues + cross-links to prior epics.                                                                                                        |
+| **`memory_ingest`** | Durable **summary** of outcomes and **wikilinks** for the graph        | **Appended** session outcome to the long-running “slide deck + security” note (or a sibling title).                                                    |
 
 ---
 
@@ -131,8 +131,8 @@ After creating issues and updating the mental model of “deck ↔ backlog,” t
 
 ## Case study metadata
 
-| Item | Value |
-| ---- | ----- |
-| **Session** | April 2026, Cursor + ClawQL MCP (scoped server id e.g. `project-0-ClawQL-clawql` in multi-config setups) |
-| **Outcomes** | 12 new GitHub issues, vault `memory_ingest` append, this case study + website mirror |
+| Item               | Value                                                                                                                                                                                                                      |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Session**        | April 2026, Cursor + ClawQL MCP (scoped server id e.g. `project-0-ClawQL-clawql` in multi-config setups)                                                                                                                   |
+| **Outcomes**       | 12 new GitHub issues, vault `memory_ingest` append, this case study + website mirror                                                                                                                                       |
 | **Primary lesson** | **`memory_recall`** for grounding → **`gh`** for ground truth on open work → **`cache`** only for **same-session** scratch that must **not** bloat the vault → **`memory_ingest`** for durable “what we decided and filed” |

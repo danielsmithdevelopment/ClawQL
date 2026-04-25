@@ -2,9 +2,9 @@ import type { Section } from '@/components/SectionProvider'
 
 import { caseStudyCloudflareDocsSections } from '@/lib/case-study-cloudflare-docs-sections'
 import { caseStudyCrossThreadVaultRecallSections } from '@/lib/case-study-cross-thread-vault-recall-sections'
+import { caseStudySlideDeckGithubParitySections } from '@/lib/case-study-slide-deck-github-parity-sections'
 import { caseStudyTruenasCorgicaveSections } from '@/lib/case-study-truenas-corgicave-sections'
 import { caseStudyVaultMemorySessionSections } from '@/lib/case-study-vault-memory-session-sections'
-import { caseStudySlideDeckGithubParitySections } from '@/lib/case-study-slide-deck-github-parity-sections'
 import { caseStudyWorker1102McpMemorySections } from '@/lib/case-study-worker-1102-mcp-memory-sections'
 import { homePageSections } from '@/lib/home-page-sections'
 
