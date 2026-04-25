@@ -6,7 +6,11 @@ TypeScript workspace package at [`packages/clawql-ouroboros`](../packages/clawql
 
 **This is not the full [Q00/ouroboros](https://github.com/Q00/ouroboros) Python product** (interview CLI, PAL routing, Double Diamond execution, LiteLLM, SQL event store, plugin, TUI, and so on). The ClawQL package is a **portable subset** aimed at embedding inside **ClawQL** and other Node runtimes. Conceptual overlap (seed, wonder/reflect, convergence) is intentional; API and feature parity are not.
 
-**Status:** The **`clawql-mcp`** server does **not** register Ouroboros MCP tools yet. You import the library from another app or future ClawQL integration. Published npm name: **`clawql-ouroboros`** (see `packages/clawql-ouroboros/package.json`).
+**Status:** The **`clawql-mcp`** server can register Ouroboros MCP tools when **`CLAWQL_ENABLE_OUROBOROS=1`**:
+**`ouroboros_create_seed_from_document`**, **`ouroboros_run_evolutionary_loop`**, and
+**`ouroboros_get_lineage_status`**. For durable lineage, configure Postgres with
+**`CLAWQL_OUROBOROS_DATABASE_URL`** or split **`CLAWQL_OUROBOROS_DB_*`** env vars. Published npm name:
+**`clawql-ouroboros`** (see `packages/clawql-ouroboros/package.json`).
 
 ---
 
@@ -211,7 +215,9 @@ stop();
 
 ## Production notes
 
-- **Persistence:** Implement **`EventStore`** against Postgres (or reuse patterns from ClawQL’s other persistence) so lineages survive restarts and `getLineage` stays consistent with **`generation_completed`** / **`ouroboros_finished`** events the loop appends.
+- **Persistence:** For **`clawql-mcp`**, Postgres persistence is built in behind **`CLAWQL_OUROBOROS_DATABASE_URL`** (or split **`CLAWQL_OUROBOROS_DB_*`**) and stores append-only events in
+  **`clawql_ouroboros_events`**. If you embed the package in another service, implement your own
+  **`EventStore`**.
 - **Executor / Evaluator:** Should call your real side effects (e.g. ClawQL **`search`/`execute`** graph, Paperless, GitHub, Slack, **Onyx**). Stubbed executors are fine for tests only.
 - **Naming:** Package is **`clawql-ouroboros`** to avoid implying a full TypeScript port of upstream **Q00/ouroboros**.
 
@@ -219,6 +225,7 @@ stop();
 
 ## See also
 
-- **[`docs/mcp-tools.md`](mcp-tools.md)** — ClawQL MCP tools (separate from this library until integrated).
+- **[`docs/adr/0001-ouroboros-workflow-engine.md`](adr/0001-ouroboros-workflow-engine.md)** — architecture decision record for in-process routing, seed contract, and persistence model ([#110](https://github.com/danielsmithdevelopment/ClawQL/issues/110)).
+- **[`docs/mcp-tools.md`](mcp-tools.md)** — ClawQL MCP tools, including optional **`ouroboros_*`** wiring.
 - **[`packages/mcp-grpc-transport/README.md`](../packages/mcp-grpc-transport/README.md)** — other publishable workspace package.
 - **Slides / roadmap copy:** [`docs/clawql-slides.md`](clawql-slides.md) (Ouroboros narrative; cross-check shipped vs roadmap).

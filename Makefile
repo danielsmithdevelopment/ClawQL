@@ -7,6 +7,11 @@ helm-lint:
 	@helm template test charts/clawql-mcp --namespace clawql \
 		-f charts/clawql-mcp/values-docker-desktop.yaml \
 		--set-string vault.hostPath.path=/tmp/clawql-helm-test >/dev/null
+	@helm template test charts/clawql-mcp --namespace clawql \
+		--set documentPipeline.enabled=true \
+		--set stores.postgres.enabled=true \
+		--set stores.redis.enabled=true \
+		--set stores.postgres.auth.password=devpass >/dev/null
 	@echo "helm-lint OK"
 
 # Validate docker/kustomize/overlays/local (requires kubectl; temporary patch for hostPath)

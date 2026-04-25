@@ -1,15 +1,19 @@
-import { dirname, resolve } from "node:path";
+import { createRequire } from "node:module";
+import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
 
-const repoRoot = dirname(fileURLToPath(import.meta.url));
+const configDir = dirname(fileURLToPath(import.meta.url));
+/** CJS `main` — same file `graphql-compose` resolves; avoids Vitest loading `index.mjs` alongside it (#138, #149). */
+const graphqlMain = createRequire(import.meta.url).resolve("graphql");
 
 export default defineConfig({
+  /** Keep globs and `node_modules` resolution anchored to the repo even if `cwd` differs (CI, tooling). */
+  root: configDir,
   resolve: {
     dedupe: ["graphql"],
     alias: {
-      /** Force one `graphql` instance: CJS `graphql-compose` uses `index.js`; ESM Omnigraph must match (#138). */
-      graphql: resolve(repoRoot, "node_modules/graphql/index.js"),
+      graphql: graphqlMain,
     },
   },
   test: {

@@ -34,7 +34,7 @@ const resources: Array<Resource> = [
     href: '/tools',
     name: 'Tools',
     description:
-      'Core search and execute; sandbox_exec, memory tools, ingest_external_knowledge (bulk Markdown + optional URL fetch); optional cache, audit, and Slack notify (CLAWQL_ENABLE_*).',
+      'Core search and execute; sandbox_exec, memory tools, ingest_external_knowledge (bulk Markdown + optional URL fetch); optional cache, audit, schedule synthetics, and Slack notify (CLAWQL_ENABLE_*).',
     icon: BoltIcon,
     pattern: {
       y: 16,
@@ -69,6 +69,34 @@ const resources: Array<Resource> = [
       squares: [
         [0, 0],
         [2, 2],
+      ],
+    },
+  },
+  {
+    href: '/flink-onyx-sync',
+    name: 'Flink Onyx sync',
+    description:
+      'In-cluster Apache Flink runbook for real-time Onyx index freshness: architecture, values.yaml controls, connector secrets isolation, rollout, and troubleshooting.',
+    icon: MapPinIcon,
+    pattern: {
+      y: 20,
+      squares: [
+        [0, 1],
+        [1, 2],
+      ],
+    },
+  },
+  {
+    href: '/nats-jetstream',
+    name: 'NATS JetStream',
+    description:
+      'Optional event-driven backbone for Ouroboros, agents, and edge sync: Helm values, JetStream retention controls, persistence, and health checks.',
+    icon: MapPinIcon,
+    pattern: {
+      y: 14,
+      squares: [
+        [0, 0],
+        [2, 1],
       ],
     },
   },
@@ -178,6 +206,20 @@ const resources: Array<Resource> = [
       squares: [
         [0, 0],
         [2, 1],
+      ],
+    },
+  },
+  {
+    href: '/case-studies/slide-deck-github-parity-cache-memory-recall-2026-04',
+    name: 'Case study: Slide deck vs GitHub (cache + recall)',
+    description:
+      'memory_recall before filing parity issues; cache() for ephemeral scratch; 12 new issues for deck themes; memory_ingest to close the loop — April 2026 session.',
+    icon: BookIcon,
+    pattern: {
+      y: 2,
+      squares: [
+        [1, 1],
+        [0, 2],
       ],
     },
   },

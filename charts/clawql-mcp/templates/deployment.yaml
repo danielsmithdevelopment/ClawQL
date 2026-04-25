@@ -90,6 +90,44 @@ spec:
             - name: CLAWQL_OUROBOROS_DATABASE_URL
               value: {{ .Values.ouroborosDatabaseUrl | quote }}
             {{- end }}
+            {{- if and .Values.ouroborosPostgres.enabled (not .Values.ouroborosDatabaseUrl) }}
+            - name: CLAWQL_OUROBOROS_DB_HOST
+              value: {{ include "clawql-mcp.ouroborosPostgresName" . | quote }}
+            - name: CLAWQL_OUROBOROS_DB_PORT
+              value: {{ .Values.ouroborosPostgres.service.port | quote }}
+            - name: CLAWQL_OUROBOROS_DB_USER
+              value: {{ .Values.ouroborosPostgres.auth.username | quote }}
+            - name: CLAWQL_OUROBOROS_DB_NAME
+              value: {{ .Values.ouroborosPostgres.auth.database | quote }}
+            - name: CLAWQL_OUROBOROS_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "clawql-mcp.ouroborosPostgresSecretName" . }}
+                  key: password
+            {{- end }}
+            {{- if .Values.nats.url }}
+            - name: CLAWQL_NATS_URL
+              value: {{ .Values.nats.url | quote }}
+            {{- else if .Values.nats.enabled }}
+            - name: CLAWQL_NATS_URL
+              value: "nats://{{ include "clawql-mcp.natsName" . }}:{{ .Values.nats.service.clientPort }}"
+            {{- end }}
+            {{- if and .Values.nats.enabled .Values.nats.jetStream.enabled }}
+            - name: CLAWQL_NATS_JETSTREAM
+              value: "1"
+            {{- end }}
+            {{- if .Values.documentPipeline.enabled }}
+            - name: TIKA_BASE_URL
+              value: "http://{{ include "clawql-mcp.tikaName" . }}:{{ .Values.documentPipeline.tika.service.port }}"
+            - name: GOTENBERG_BASE_URL
+              value: "http://{{ include "clawql-mcp.gotenbergName" . }}:{{ .Values.documentPipeline.gotenberg.service.port }}"
+            - name: STIRLING_BASE_URL
+              value: "http://{{ include "clawql-mcp.stirlingName" . }}:{{ .Values.documentPipeline.stirling.service.port }}"
+            {{- if .Values.documentPipeline.paperless.enabled }}
+            - name: PAPERLESS_BASE_URL
+              value: "http://{{ include "clawql-mcp.paperlessName" . }}:{{ .Values.documentPipeline.paperless.service.port }}"
+            {{- end }}
+            {{- end }}
             {{- with .Values.extraEnv }}
             {{- toYaml . | nindent 12 }}
             {{- end }}

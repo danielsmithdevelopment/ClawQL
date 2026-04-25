@@ -240,6 +240,90 @@ describe("server (stdio)", () => {
     }
   }, 20_000);
 
+  it("stdio ouroboros_run_evolutionary_loop routes through internal execute hint", async () => {
+    const childEnv = { ...process.env };
+    childEnv.CLAWQL_SPEC_PATH = minimalSpec;
+    childEnv.CLAWQL_OBSIDIAN_VAULT_PATH = mkdtempSync(join(tmpdir(), "clawql-vault-"));
+    childEnv.CLAWQL_ENABLE_OUROBOROS = "1";
+    delete childEnv.CLAWQL_PROVIDER;
+    delete childEnv.CLAWQL_SPEC_PATHS;
+    delete childEnv.CLAWQL_API_BASE_URL;
+    delete childEnv.API_BASE_URL;
+
+    const transport = new StdioClientTransport({
+      command: process.execPath,
+      args: [serverJs],
+      cwd: root,
+      env: childEnv,
+      stderr: "pipe",
+    });
+
+    const client = new Client({ name: "clawql-stdio-ouroboros-run", version: "1.0.0" }, {});
+    try {
+      await client.connect(transport);
+      const runResult = await client.callTool({
+        name: "ouroboros_run_evolutionary_loop",
+        arguments: {
+          seed: {
+            goal: "List pets through internal execute",
+            task_type: "analysis",
+            brownfield_context: {
+              project_type: "brownfield",
+              context_references: [
+                {
+                  clawql_execute: {
+                    operationId: "listPets",
+                    args: {},
+                  },
+                },
+              ],
+              existing_patterns: [],
+              existing_dependencies: [],
+            },
+            constraints: [],
+            acceptance_criteria: ["Return non-empty output"],
+            ontology_schema: {
+              name: "TestOntology",
+              description: "Test ontology",
+              fields: [],
+            },
+            evaluation_principles: [],
+            exit_conditions: [],
+            metadata: {
+              seed_id: "ouroboros-e2e-seed-1",
+              version: "1.0.0",
+              created_at: "2026-01-01T00:00:00.000Z",
+              ambiguity_score: 0.1,
+              interview_id: null,
+              parent_seed_id: null,
+            },
+          },
+          maxGenerations: 2,
+          convergenceThreshold: 0.8,
+        },
+      });
+      const runText = runResult.content?.find((b) => b.type === "text")?.text;
+      expect(runText).toBeDefined();
+      const runBody = JSON.parse(runText as string) as { lineageId: string };
+      expect(runBody.lineageId).toBe("ouroboros-e2e-seed-1");
+
+      const lineageResult = await client.callTool({
+        name: "ouroboros_get_lineage_status",
+        arguments: { seedId: runBody.lineageId },
+      });
+      const lineageText = lineageResult.content?.find((b) => b.type === "text")?.text;
+      expect(lineageText).toBeDefined();
+      const lineage = JSON.parse(lineageText as string) as {
+        generations: Array<{ execution_output?: string }>;
+      };
+      expect(lineage.generations.length).toBeGreaterThan(0);
+      expect(lineage.generations[0]?.execution_output).toContain('"route":"execute"');
+      expect(lineage.generations[0]?.execution_output).toContain('"operationId":"listPets"');
+    } finally {
+      await client.close();
+    }
+  }, 30_000);
+
   const slackOpenapi = join(root, "providers", "slack", "openapi.json");
   const petstoreFixture = join(root, "src", "test-utils", "fixtures", "minimal-petstore.json");
 

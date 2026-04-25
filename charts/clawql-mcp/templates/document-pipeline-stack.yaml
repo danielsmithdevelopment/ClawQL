@@ -1,0 +1,530 @@
+{{- if .Values.documentPipeline.enabled }}
+{{- $postgresEnabled := .Values.stores.postgres.enabled }}
+{{- $redisEnabled := .Values.stores.redis.enabled }}
+{{- $paperlessEnabled := .Values.documentPipeline.paperless.enabled }}
+{{- if and $paperlessEnabled (not $postgresEnabled) }}
+{{- fail "documentPipeline.paperless.enabled=true requires stores.postgres.enabled=true" }}
+{{- end }}
+{{- if and $paperlessEnabled (not $redisEnabled) }}
+{{- fail "documentPipeline.paperless.enabled=true requires stores.redis.enabled=true" }}
+{{- end }}
+{{- $paperlessSecretManaged := and $paperlessEnabled (not .Values.documentPipeline.paperless.auth.existingSecret) }}
+{{- $stirlingSecretManaged := and (not .Values.documentPipeline.stirling.auth.existingSecret) (ne .Values.documentPipeline.stirling.auth.apiKey "") }}
+{{- if or $paperlessSecretManaged $stirlingSecretManaged }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ include "clawql-mcp.documentPipelineSecretName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: document-pipeline
+type: Opaque
+data:
+  {{- if $paperlessSecretManaged }}
+  {{- if .Values.documentPipeline.paperless.auth.apiToken }}
+  paperless-api-token: {{ .Values.documentPipeline.paperless.auth.apiToken | b64enc | quote }}
+  {{- end }}
+  {{- if .Values.documentPipeline.paperless.auth.secretKey }}
+  paperless-secret-key: {{ .Values.documentPipeline.paperless.auth.secretKey | b64enc | quote }}
+  {{- end }}
+  {{- end }}
+  {{- if $stirlingSecretManaged }}
+  stirling-api-key: {{ .Values.documentPipeline.stirling.auth.apiKey | b64enc | quote }}
+  {{- end }}
+{{- end }}
+{{- if and $postgresEnabled (not .Values.stores.postgres.auth.existingSecret) }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ include "clawql-mcp.storesPostgresSecretName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: stores-postgres
+type: Opaque
+data:
+  password: {{ required "stores.postgres.auth.password is required when stores.postgres.enabled=true and stores.postgres.auth.existingSecret is empty" .Values.stores.postgres.auth.password | b64enc | quote }}
+{{- end }}
+{{- if and $postgresEnabled .Values.stores.postgres.persistence.enabled (not .Values.stores.postgres.persistence.existingClaim) }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "clawql-mcp.storesPostgresName" . }}-data
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: stores-postgres
+spec:
+  accessModes:
+    {{- toYaml .Values.stores.postgres.persistence.accessModes | nindent 4 }}
+  resources:
+    requests:
+      storage: {{ .Values.stores.postgres.persistence.size }}
+  {{- if .Values.stores.postgres.persistence.storageClass }}
+  storageClassName: {{ .Values.stores.postgres.persistence.storageClass | quote }}
+  {{- end }}
+{{- end }}
+{{- if and $paperlessEnabled (not .Values.documentPipeline.paperless.persistence.existingMediaClaim) }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "clawql-mcp.paperlessName" . }}-media
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: paperless
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.documentPipeline.paperless.persistence.mediaSize }}
+  {{- if .Values.documentPipeline.paperless.persistence.storageClass }}
+  storageClassName: {{ .Values.documentPipeline.paperless.persistence.storageClass | quote }}
+  {{- end }}
+{{- end }}
+{{- if and $paperlessEnabled (not .Values.documentPipeline.paperless.persistence.existingDataClaim) }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "clawql-mcp.paperlessName" . }}-data
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: paperless
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.documentPipeline.paperless.persistence.dataSize }}
+  {{- if .Values.documentPipeline.paperless.persistence.storageClass }}
+  storageClassName: {{ .Values.documentPipeline.paperless.persistence.storageClass | quote }}
+  {{- end }}
+{{- end }}
+{{- if and $paperlessEnabled (not .Values.documentPipeline.paperless.persistence.existingConsumeClaim) }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "clawql-mcp.paperlessName" . }}-consume
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: paperless
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.documentPipeline.paperless.persistence.consumeSize }}
+  {{- if .Values.documentPipeline.paperless.persistence.storageClass }}
+  storageClassName: {{ .Values.documentPipeline.paperless.persistence.storageClass | quote }}
+  {{- end }}
+{{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "clawql-mcp.tikaName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: tika
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: tika
+  ports:
+    - name: http
+      port: {{ .Values.documentPipeline.tika.service.port | int }}
+      targetPort: http
+      protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "clawql-mcp.tikaName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: tika
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: tika
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: tika
+    spec:
+      containers:
+        - name: tika
+          image: "{{ .Values.documentPipeline.tika.image.repository }}:{{ .Values.documentPipeline.tika.image.tag }}"
+          imagePullPolicy: {{ .Values.documentPipeline.tika.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.documentPipeline.tika.service.port | int }}
+              protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "clawql-mcp.gotenbergName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: gotenberg
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: gotenberg
+  ports:
+    - name: http
+      port: {{ .Values.documentPipeline.gotenberg.service.port | int }}
+      targetPort: http
+      protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "clawql-mcp.gotenbergName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: gotenberg
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: gotenberg
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: gotenberg
+    spec:
+      containers:
+        - name: gotenberg
+          image: "{{ .Values.documentPipeline.gotenberg.image.repository }}:{{ .Values.documentPipeline.gotenberg.image.tag }}"
+          imagePullPolicy: {{ .Values.documentPipeline.gotenberg.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.documentPipeline.gotenberg.service.port | int }}
+              protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "clawql-mcp.stirlingName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: stirling
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: stirling
+  ports:
+    - name: http
+      port: {{ .Values.documentPipeline.stirling.service.port | int }}
+      targetPort: http
+      protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "clawql-mcp.stirlingName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: stirling
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: stirling
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: stirling
+    spec:
+      containers:
+        - name: stirling
+          image: "{{ .Values.documentPipeline.stirling.image.repository }}:{{ .Values.documentPipeline.stirling.image.tag }}"
+          imagePullPolicy: {{ .Values.documentPipeline.stirling.image.pullPolicy }}
+          env:
+            - name: SECURITY_ENABLE_LOGIN
+              value: "false"
+            {{- if .Values.documentPipeline.stirling.auth.apiKey }}
+            - name: API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "clawql-mcp.documentPipelineSecretName" . }}
+                  key: stirling-api-key
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.documentPipeline.stirling.service.port | int }}
+              protocol: TCP
+{{- if $postgresEnabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "clawql-mcp.storesPostgresName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: stores-postgres
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: stores-postgres
+  ports:
+    - name: postgres
+      port: {{ .Values.stores.postgres.service.port | int }}
+      targetPort: postgres
+      protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "clawql-mcp.storesPostgresName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: stores-postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: stores-postgres
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: stores-postgres
+    spec:
+      containers:
+        - name: postgres
+          image: "{{ .Values.stores.postgres.image.repository }}:{{ .Values.stores.postgres.image.tag }}"
+          imagePullPolicy: {{ .Values.stores.postgres.image.pullPolicy }}
+          env:
+            - name: POSTGRES_DB
+              value: {{ .Values.stores.postgres.auth.database | quote }}
+            - name: POSTGRES_USER
+              value: {{ .Values.stores.postgres.auth.username | quote }}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "clawql-mcp.storesPostgresSecretName" . }}
+                  key: password
+          ports:
+            - name: postgres
+              containerPort: {{ .Values.stores.postgres.service.port | int }}
+              protocol: TCP
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: data
+          {{- if .Values.stores.postgres.persistence.enabled }}
+          {{- if .Values.stores.postgres.persistence.existingClaim }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.stores.postgres.persistence.existingClaim }}
+          {{- else }}
+          persistentVolumeClaim:
+            claimName: {{ include "clawql-mcp.storesPostgresName" . }}-data
+          {{- end }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+{{- end }}
+{{- if $redisEnabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "clawql-mcp.storesRedisName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: stores-redis
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: stores-redis
+  ports:
+    - name: redis
+      port: {{ .Values.stores.redis.service.port | int }}
+      targetPort: redis
+      protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "clawql-mcp.storesRedisName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: stores-redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: stores-redis
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: stores-redis
+    spec:
+      containers:
+        - name: redis
+          image: "{{ .Values.stores.redis.image.repository }}:{{ .Values.stores.redis.image.tag }}"
+          imagePullPolicy: {{ .Values.stores.redis.image.pullPolicy }}
+          ports:
+            - name: redis
+              containerPort: {{ .Values.stores.redis.service.port | int }}
+              protocol: TCP
+{{- end }}
+{{- if $paperlessEnabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "clawql-mcp.paperlessName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: paperless
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: paperless
+  ports:
+    - name: http
+      port: {{ .Values.documentPipeline.paperless.service.port | int }}
+      targetPort: http
+      protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "clawql-mcp.paperlessName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: paperless
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: paperless
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: paperless
+    spec:
+      containers:
+        - name: paperless
+          image: "{{ .Values.documentPipeline.paperless.image.repository }}:{{ .Values.documentPipeline.paperless.image.tag }}"
+          imagePullPolicy: {{ .Values.documentPipeline.paperless.image.pullPolicy }}
+          env:
+            - name: PAPERLESS_URL
+              value: "http://{{ include "clawql-mcp.paperlessName" . }}:{{ .Values.documentPipeline.paperless.service.port }}"
+            - name: PAPERLESS_TIKA_ENABLED
+              value: "1"
+            - name: PAPERLESS_TIKA_GOTENBERG_ENDPOINT
+              value: "http://{{ include "clawql-mcp.gotenbergName" . }}:{{ .Values.documentPipeline.gotenberg.service.port }}"
+            - name: PAPERLESS_TIKA_ENDPOINT
+              value: "http://{{ include "clawql-mcp.tikaName" . }}:{{ .Values.documentPipeline.tika.service.port }}"
+            - name: PAPERLESS_REDIS
+              value: "redis://{{ include "clawql-mcp.storesRedisName" . }}:{{ .Values.stores.redis.service.port }}"
+            - name: PAPERLESS_DBHOST
+              value: {{ include "clawql-mcp.storesPostgresName" . | quote }}
+            - name: PAPERLESS_DBPORT
+              value: {{ .Values.stores.postgres.service.port | quote }}
+            - name: PAPERLESS_DBNAME
+              value: {{ .Values.stores.postgres.auth.database | quote }}
+            - name: PAPERLESS_DBUSER
+              value: {{ .Values.stores.postgres.auth.username | quote }}
+            - name: PAPERLESS_DBPASS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "clawql-mcp.storesPostgresSecretName" . }}
+                  key: password
+            {{- if .Values.documentPipeline.paperless.auth.secretKey }}
+            - name: PAPERLESS_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "clawql-mcp.documentPipelineSecretName" . }}
+                  key: paperless-secret-key
+            {{- end }}
+            {{- if .Values.documentPipeline.paperless.auth.apiToken }}
+            - name: PAPERLESS_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "clawql-mcp.documentPipelineSecretName" . }}
+                  key: paperless-api-token
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.documentPipeline.paperless.service.port | int }}
+              protocol: TCP
+          volumeMounts:
+            - name: media
+              mountPath: /usr/src/paperless/media
+            - name: data
+              mountPath: /usr/src/paperless/data
+            - name: consume
+              mountPath: /usr/src/paperless/consume
+      volumes:
+        - name: media
+          {{- if .Values.documentPipeline.paperless.persistence.existingMediaClaim }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.documentPipeline.paperless.persistence.existingMediaClaim }}
+          {{- else }}
+          persistentVolumeClaim:
+            claimName: {{ include "clawql-mcp.paperlessName" . }}-media
+          {{- end }}
+        - name: data
+          {{- if .Values.documentPipeline.paperless.persistence.existingDataClaim }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.documentPipeline.paperless.persistence.existingDataClaim }}
+          {{- else }}
+          persistentVolumeClaim:
+            claimName: {{ include "clawql-mcp.paperlessName" . }}-data
+          {{- end }}
+        - name: consume
+          {{- if .Values.documentPipeline.paperless.persistence.existingConsumeClaim }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.documentPipeline.paperless.persistence.existingConsumeClaim }}
+          {{- else }}
+          persistentVolumeClaim:
+            claimName: {{ include "clawql-mcp.paperlessName" . }}-consume
+          {{- end }}
+{{- end }}
+{{- end }}

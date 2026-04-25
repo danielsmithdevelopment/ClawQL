@@ -8,6 +8,7 @@
  * Optional: cache — in-process ephemeral KV when CLAWQL_ENABLE_CACHE (GitHub #75); not persisted — use memory_* for vault.
  * Optional: audit — in-process ring buffer when CLAWQL_ENABLE_AUDIT (GitHub #89); not durable — use memory_ingest for compliance trails.
  * Optional: knowledge_search_onyx — Onyx enterprise document search when CLAWQL_ENABLE_ONYX (GitHub #118).
+ * Optional: schedule — persisted jobs + manual synthetic trigger when CLAWQL_ENABLE_SCHEDULE (GitHub #76).
  * Optional: notify — Slack chat.postMessage when CLAWQL_ENABLE_NOTIFY (GitHub #77); requires Slack in loaded spec + bot token.
  * Optional: ouroboros_* — evolutionary loop tools when CLAWQL_ENABLE_OUROBOROS (GitHub #141); optional CLAWQL_OUROBOROS_DATABASE_URL for Postgres lineage (#142).
  * Single-spec `execute` runs OpenAPI→GraphQL in-process; field resolution uses `graphql-execute-helpers`.
@@ -38,6 +39,7 @@ import { handleMemoryIngestToolInput } from "./memory-ingest.js";
 import { handleMemoryRecallToolInput } from "./memory-recall.js";
 import { cacheToolSchema, handleCacheToolInput } from "./clawql-cache.js";
 import { auditToolSchema, handleAuditToolInput } from "./clawql-audit.js";
+import { handleScheduleToolInput, scheduleToolSchema } from "./clawql-schedule.js";
 import { getClawqlOptionalToolFlags } from "./clawql-optional-flags.js";
 import { handleKnowledgeSearchOnyxToolInput } from "./knowledge-search-onyx.js";
 import { registerOuroborosTools } from "./ouroboros-mcp.js";
@@ -571,6 +573,10 @@ export function registerTools(server: McpServer) {
 
   if (getClawqlOptionalToolFlags().enableAudit) {
     server.tool("audit", auditToolSchema, handleAuditToolInput);
+  }
+
+  if (getClawqlOptionalToolFlags().enableSchedule) {
+    server.tool("schedule", scheduleToolSchema, handleScheduleToolInput);
   }
 
   if (getClawqlOptionalToolFlags().enableNotify) {

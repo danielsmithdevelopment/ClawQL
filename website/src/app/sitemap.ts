@@ -25,8 +25,11 @@ const ENTRIES: Array<Entry> = [
   { path: '/spec-configuration', changeFrequency: 'monthly', priority: 0.85 },
   { path: '/troubleshooting', changeFrequency: 'monthly', priority: 0.82 },
   { path: '/cache', changeFrequency: 'monthly', priority: 0.8 },
+  { path: '/schedule', changeFrequency: 'monthly', priority: 0.8 },
   { path: '/notify', changeFrequency: 'monthly', priority: 0.8 },
   { path: '/onyx-knowledge', changeFrequency: 'monthly', priority: 0.8 },
+  { path: '/flink-onyx-sync', changeFrequency: 'monthly', priority: 0.8 },
+  { path: '/nats-jetstream', changeFrequency: 'monthly', priority: 0.8 },
   { path: '/graphql-proxy', changeFrequency: 'monthly', priority: 0.8 },
   { path: '/bundled-specs', changeFrequency: 'monthly', priority: 0.8 },
   { path: '/benchmarks', changeFrequency: 'monthly', priority: 0.75 },
@@ -52,6 +55,11 @@ const ENTRIES: Array<Entry> = [
   },
   {
     path: '/case-studies/docs-clawql-worker-1102-mcp-memory-2026-04',
+    changeFrequency: 'monthly',
+    priority: 0.78,
+  },
+  {
+    path: '/case-studies/slide-deck-github-parity-cache-memory-recall-2026-04',
     changeFrequency: 'monthly',
     priority: 0.78,
   },

@@ -65,9 +65,133 @@ helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
   --set persistence.size=20Gi
 ```
 
+**Enable Ouroboros with in-cluster Postgres** (deployed alongside ClawQL):
+
+```bash
+helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
+  --set enableOuroboros=true \
+  --set ouroborosPostgres.enabled=true \
+  --set ouroborosPostgres.auth.password='replace-me'
+```
+
+**Disable document pipeline + backing stores** (if you want a minimal ClawQL-only install):
+
+```bash
+helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
+  --set documentPipeline.enabled=false \
+  --set stores.postgres.enabled=false \
+  --set stores.redis.enabled=false
+```
+
+**Enable in-cluster Flink for Onyx sync** (internal service, no public ingress by default):
+
+```bash
+kubectl -n clawql create secret generic onyx-connector-env \
+  --from-literal=ONYX_API_TOKEN='replace-me'
+
+helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
+  --set flink.enabled=true \
+  --set flink.connectorSecret=onyx-connector-env
+```
+
+**Enable in-cluster NATS JetStream event backbone** (Ouroboros + agent + edge sync):
+
+```bash
+helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
+  --set nats.enabled=true \
+  --set nats.persistence.enabled=true \
+  --set nats.persistence.size=20Gi
+```
+
+## NATS JetStream deep dive
+
+The chart-level NATS integration is intentionally conservative: one in-cluster NATS server with JetStream enabled, optional persistence, and automatic env injection into `clawql-mcp-http`.
+
+### What Helm deploys
+
+With `nats.enabled=true`, templates render:
+
+- `ConfigMap/<release>-nats-config` with `nats-server.conf`
+- `Service/<release>-nats` exposing client (`4222`), cluster (`6222`), monitor (`8222`)
+- `Deployment/<release>-nats` (single replica)
+- Optional `PersistentVolumeClaim/<release>-nats-data` when `nats.persistence.enabled=true`
+
+### App wiring behavior
+
+`clawql-mcp-http` receives:
+
+- `CLAWQL_NATS_URL` from:
+  - `nats.url` if provided (external cluster), otherwise
+  - in-cluster DNS (`nats://<release>-nats:<clientPort>`) when enabled
+- `CLAWQL_NATS_JETSTREAM=1` when `nats.jetStream.enabled=true`
+
+This means you can switch between in-cluster and external NATS by value changes alone, without editing deployment templates.
+
+### Recommended rollout profiles
+
+**Local/smoke profile:**
+
+```bash
+helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
+  --set nats.enabled=true
+```
+
+**Durable baseline profile:**
+
+```bash
+helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
+  --set nats.enabled=true \
+  --set nats.persistence.enabled=true \
+  --set nats.persistence.size=50Gi \
+  --set nats.jetStream.maxMemoryStore=512Mi \
+  --set nats.jetStream.maxFileStore=40Gi
+```
+
+**External managed NATS profile:**
+
+```bash
+helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
+  --set nats.enabled=false \
+  --set-string nats.url='nats://nats.shared.svc.cluster.local:4222'
+```
+
+### Operational guardrails
+
+- Keep `nats.service.type=ClusterIP` for internal-only traffic.
+- Treat `nats.persistence.enabled=false` as ephemeral mode only.
+- Set `nats.jetStream.maxFileStore` lower than PVC size (leave filesystem headroom).
+- Restrict monitor port (`8222`) to trusted internal networks.
+- Document stream retention/consumer ack policy in the app layer so storage growth is predictable.
+
+### Validate before/after deploy
+
+Template check:
+
+```bash
+helm template test charts/clawql-mcp -n clawql --set nats.enabled=true | rg "nats|jetstream"
+```
+
+Post-deploy checks:
+
+```bash
+kubectl -n clawql get deploy,svc,pvc | rg nats
+kubectl -n clawql logs deploy/clawql-mcp-http-nats
+kubectl -n clawql port-forward svc/clawql-mcp-http-nats 8222:8222
+curl -s http://127.0.0.1:8222/healthz
+kubectl -n clawql get deploy clawql-mcp-http -o yaml | rg "CLAWQL_NATS_URL|CLAWQL_NATS_JETSTREAM" -n
+```
+
 **Ingress** (optional): set **`ingress.enabled=true`** and edit **`ingress.hosts`** / **`ingress.tls`** in a small values file; backend targets the HTTP **`service.http.port`**.
 
 **UI + Ingress** (optional): set **`ui.enabled=true`** and **`ui.ingress.enabled=true`** to deploy a separate UI Deployment/Service and route a host (default: **`clawql.localhost`**) to it.
+
+## Production hardening (default full-stack install)
+
+The chart now enables document pipeline + stores by default, including in-cluster Postgres for Paperless. Before production use:
+
+- Replace the default **`stores.postgres.auth.password`** immediately.
+- Prefer **`stores.postgres.auth.existingSecret`** over inline values.
+- If you do not need in-cluster stores/pipeline, disable them explicitly (`documentPipeline.enabled=false`, `stores.postgres.enabled=false`, `stores.redis.enabled=false`).
 
 ## Access bundled docs locally (Docker Desktop)
 
@@ -99,6 +223,11 @@ See **[`charts/clawql-mcp/values.yaml`](../charts/clawql-mcp/values.yaml)**. Com
 | `enableNotify`                                      | **`CLAWQL_ENABLE_NOTIFY=1`** — MCP **`notify`** (Slack **`chat.postMessage`**; default **false**; [#77](https://github.com/danielsmithdevelopment/ClawQL/issues/77)); set **`CLAWQL_SLACK_TOKEN`** via **`extraEnv`** / Secret — **[notify-tool.md](notify-tool.md)**                                                                                                                                                 |
 | `enableOnyx` / `onyxBaseUrl`                        | **`CLAWQL_ENABLE_ONYX=1`** — MCP **`knowledge_search_onyx`** (default **false**; [#118](https://github.com/danielsmithdevelopment/ClawQL/issues/118)); **`onyxBaseUrl`** sets **`ONYX_BASE_URL`**. Supply **`ONYX_API_TOKEN`** (Bearer) via **`extraEnv`** / Secret — **[onyx-knowledge-tool.md](onyx-knowledge-tool.md)**                                                                                            |
 | `enableOuroboros` / `ouroborosDatabaseUrl`          | **`CLAWQL_ENABLE_OUROBOROS=1`** — MCP **`ouroboros_*`** (default **false**; [#141](https://github.com/danielsmithdevelopment/ClawQL/issues/141)); **`ouroborosDatabaseUrl`** sets **`CLAWQL_OUROBOROS_DATABASE_URL`** for Postgres-backed events ([#142](https://github.com/danielsmithdevelopment/ClawQL/issues/142)). Prefer Secret-backed env when the URL contains credentials — **[mcp-tools.md](mcp-tools.md)** |
+| `ouroborosPostgres.*`                               | Optional Postgres workload in the same release for durable Ouroboros events ([#142](https://github.com/danielsmithdevelopment/ClawQL/issues/142)). When enabled, chart wires **`CLAWQL_OUROBOROS_DB_*`** env vars from Service + Secret into `clawql-mcp` (no credential-in-URL required).                                                                                                                            |
+| `documentPipeline.*`                                | Full-stack document pipeline workloads (**Tika**, **Gotenberg**, **Stirling**, **Paperless**) with in-cluster base URLs injected into ClawQL for integrated deployments. Enabled by default; disable explicitly for minimal installs ([#113](https://github.com/danielsmithdevelopment/ClawQL/issues/113)).                                                                                                           |
+| `stores.*`                                          | In-cluster backing stores for full-stack topology (**Postgres**, **Redis**). Enabled by default; required when `documentPipeline.paperless.enabled=true`.                                                                                                                                                                                                                                                             |
+| `flink.*`                                           | Optional in-cluster Apache Flink topology for real-time Onyx connector sync ([#119](https://github.com/danielsmithdevelopment/ClawQL/issues/119)). Deploys JobManager + TaskManagers + internal Service (ClusterIP default). Use `flink.connectorSecret` to scope connector credentials to Flink pods only.                                                                                                           |
+| `nats.*`                                            | Optional in-cluster NATS JetStream deployment for durable event streaming across Ouroboros, agent orchestration, and edge worker sync ([#127](https://github.com/danielsmithdevelopment/ClawQL/issues/127)). Injects `CLAWQL_NATS_URL` into `clawql-mcp` when enabled (or from `nats.url` for external NATS).                                                                                                         |
 | `extraEnv`                                          | Additional container env entries                                                                                                                                                                                                                                                                                                                                                                                      |
 | `envFromSecret`                                     | **`envFrom`** from an existing Secret                                                                                                                                                                                                                                                                                                                                                                                 |
 | `persistence`                                       | PVC for **`/vault`** instead of **`emptyDir`**                                                                                                                                                                                                                                                                                                                                                                        |
