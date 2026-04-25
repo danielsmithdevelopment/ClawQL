@@ -4,6 +4,7 @@ import { caseStudyCloudflareDocsSections } from '@/lib/case-study-cloudflare-doc
 import { caseStudyCrossThreadVaultRecallSections } from '@/lib/case-study-cross-thread-vault-recall-sections'
 import { caseStudyTruenasCorgicaveSections } from '@/lib/case-study-truenas-corgicave-sections'
 import { caseStudyVaultMemorySessionSections } from '@/lib/case-study-vault-memory-session-sections'
+import { caseStudySlideDeckGithubParitySections } from '@/lib/case-study-slide-deck-github-parity-sections'
 import { caseStudyWorker1102McpMemorySections } from '@/lib/case-study-worker-1102-mcp-memory-sections'
 import { homePageSections } from '@/lib/home-page-sections'
 
@@ -22,4 +23,6 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
     caseStudyTruenasCorgicaveSections,
   '/case-studies/docs-clawql-worker-1102-mcp-memory-2026-04':
     caseStudyWorker1102McpMemorySections,
+  '/case-studies/slide-deck-github-parity-cache-memory-recall-2026-04':
+    caseStudySlideDeckGithubParitySections,
 }

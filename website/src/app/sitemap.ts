@@ -58,6 +58,11 @@ const ENTRIES: Array<Entry> = [
     changeFrequency: 'monthly',
     priority: 0.78,
   },
+  {
+    path: '/case-studies/slide-deck-github-parity-cache-memory-recall-2026-04',
+    changeFrequency: 'monthly',
+    priority: 0.78,
+  },
 ]
 
 export default function sitemap(): MetadataRoute.Sitemap {

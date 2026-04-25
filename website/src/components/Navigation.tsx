@@ -266,6 +266,10 @@ export const navigation: Array<NavGroup> = [
         title: 'Case study: Worker 1102, MCP debug, memory',
         href: '/case-studies/docs-clawql-worker-1102-mcp-memory-2026-04',
       },
+      {
+        title: 'Case study: Slide deck, cache, memory_recall, GitHub',
+        href: '/case-studies/slide-deck-github-parity-cache-memory-recall-2026-04',
+      },
       { title: 'Deployment', href: '/deployment' },
       { title: 'Kubernetes', href: '/kubernetes' },
       { title: 'Helm', href: '/helm' },

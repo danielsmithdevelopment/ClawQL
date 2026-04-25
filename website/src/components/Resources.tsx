@@ -209,6 +209,20 @@ const resources: Array<Resource> = [
       ],
     },
   },
+  {
+    href: '/case-studies/slide-deck-github-parity-cache-memory-recall-2026-04',
+    name: 'Case study: Slide deck vs GitHub (cache + recall)',
+    description:
+      'memory_recall before filing parity issues; cache() for ephemeral scratch; 12 new issues for deck themes; memory_ingest to close the loop — April 2026 session.',
+    icon: BookIcon,
+    pattern: {
+      y: 2,
+      squares: [
+        [1, 1],
+        [0, 2],
+      ],
+    },
+  },
 ]
 
 function ResourceIcon({ icon: Icon }: { icon: Resource['icon'] }) {
