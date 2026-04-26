@@ -9,7 +9,7 @@ This document explains how **ClawQL’s Obsidian vault tools** (`memory_ingest`,
 | Requirement                         | Role                                                                                                                                                                          |
 | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **ClawQL MCP** configured in Cursor | The agent can call MCP tools (stdio or HTTP, per your setup).                                                                                                                 |
-| **`CLAWQL_OBSIDIAN_VAULT_PATH`**    | Points the server at a writable vault directory. Without it, vault tools return an error; see **[README.md](../README.md)** and **[memory-obsidian.md](memory-obsidian.md)**. |
+| **`CLAWQL_OBSIDIAN_VAULT_PATH`**    | Points the server at a writable vault directory. Without it, vault tools return an error; see **[README.md](../../README.md)** and **[memory-obsidian.md](../memory-obsidian.md)**. |
 
 ---
 
@@ -17,10 +17,10 @@ This document explains how **ClawQL’s Obsidian vault tools** (`memory_ingest`,
 
 ### 1. MCP tools (ClawQL server)
 
-- **`memory_ingest`** — Writes structured Markdown under **`Memory/`** in the vault (YAML frontmatter, optional **`[[wikilinks]]`**, dedup by content hash). Optional **`toolOutputsFile`**: point at a small path string so the **server** reads a large file from disk (allowlisted via **`CLAWQL_MEMORY_INGEST_FILE_ROOTS`**)—avoids multi‑hundred‑KB tool JSON in Cursor. See **[mcp-tools.md](mcp-tools.md)** and implementation notes in **[memory-obsidian.md](memory-obsidian.md)**.
-- **`memory_recall`** — Keyword search, wikilink graph walks, optional vector leg when configured. See **[memory-db-hybrid-implementation.md](memory-db-hybrid-implementation.md)** for the **`memory.db`** sidecar.
-- **`cache`** (optional, **`CLAWQL_ENABLE_CACHE`**) — **Ephemeral LRU** key/value in this process only — **not** the vault. Use for temporary session state; use **`memory_ingest`** / **`memory_recall`** for anything that must persist. See **[cache-tool.md](cache-tool.md)**.
-- **`audit`** (optional, **`CLAWQL_ENABLE_AUDIT`**) — **Ephemeral** in-process event ring buffer — **not** the vault and **not** a compliance system by itself; use **`memory_ingest`** for durable trails. See **[enterprise-mcp-tools.md](enterprise-mcp-tools.md)** ([#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)).
+- **`memory_ingest`** — Writes structured Markdown under **`Memory/`** in the vault (YAML frontmatter, optional **`[[wikilinks]]`**, dedup by content hash). Optional **`toolOutputsFile`**: point at a small path string so the **server** reads a large file from disk (allowlisted via **`CLAWQL_MEMORY_INGEST_FILE_ROOTS`**)—avoids multi‑hundred‑KB tool JSON in Cursor. See **[mcp-tools.md](../mcp-tools.md)** and implementation notes in **[memory-obsidian.md](../memory-obsidian.md)**.
+- **`memory_recall`** — Keyword search, wikilink graph walks, optional vector leg when configured. See **[memory-db-hybrid-implementation.md](../memory-db-hybrid-implementation.md)** for the **`memory.db`** sidecar.
+- **`cache`** (optional, **`CLAWQL_ENABLE_CACHE`**) — **Ephemeral LRU** key/value in this process only — **not** the vault. Use for temporary session state; use **`memory_ingest`** / **`memory_recall`** for anything that must persist. See **[cache-tool.md](../cache-tool.md)**.
+- **`audit`** (optional, **`CLAWQL_ENABLE_AUDIT`**) — **Ephemeral** in-process event ring buffer — **not** the vault and **not** a compliance system by itself; use **`memory_ingest`** for durable trails. See **[enterprise-mcp-tools.md](../enterprise-mcp-tools.md)** ([#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)).
 
 These tools are **transport-agnostic**: any MCP client can call them. Cursor’s agent is one such client.
 
@@ -62,11 +62,11 @@ Cursor uses the skill’s YAML **`description`** to decide when to attach it; yo
 
 | Doc                                                                          | Topic                                              |
 | ---------------------------------------------------------------------------- | -------------------------------------------------- |
-| **[memory-obsidian.md](memory-obsidian.md)**                                 | Why a vault, `Memory/`, wikilinks, index pages.    |
-| **[mcp-tools.md](mcp-tools.md)**                                             | All MCP tools, JSON-shaped examples.               |
-| **[cache-tool.md](cache-tool.md)**                                           | **`cache`** vs vault memory, LRU, env.             |
-| **[enterprise-mcp-tools.md](enterprise-mcp-tools.md)**                       | Optional **`audit`** vs vault; enterprise roadmap. |
-| **[memory-db-hybrid-implementation.md](memory-db-hybrid-implementation.md)** | `memory.db`, recall implementation.                |
+| **[memory-obsidian.md](../memory-obsidian.md)**                              | Why a vault, `Memory/`, wikilinks, index pages.    |
+| **[mcp-tools.md](../mcp-tools.md)**                                          | All MCP tools, JSON-shaped examples.               |
+| **[cache-tool.md](../cache-tool.md)**                                        | **`cache`** vs vault memory, LRU, env.             |
+| **[enterprise-mcp-tools.md](../enterprise-mcp-tools.md)**                    | Optional **`audit`** vs vault; enterprise roadmap. |
+| **[memory-db-hybrid-implementation.md](../memory-db-hybrid-implementation.md)** | `memory.db`, recall implementation.                |
 
 ---
 

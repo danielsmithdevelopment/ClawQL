@@ -17,7 +17,7 @@ npm run workflow:multi-provider
 ```
 
 - Prints ranked `search` hits per step to stdout.
-- Writes `docs/workflow-multi-provider-latest.json` with structured results and a **Jira draft** (summary, ADF description, labels `kubernetes`, `google`, `cloudflare`, due date = next Friday).
+- Writes `docs/workflows/workflow-multi-provider-latest.json` with structured results and a **Jira draft** (summary, ADF description, labels `kubernetes`, `google`, `cloudflare`, due date = next Friday).
 
 No API keys required.
 

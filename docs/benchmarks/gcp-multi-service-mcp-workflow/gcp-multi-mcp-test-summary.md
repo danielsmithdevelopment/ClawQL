@@ -57,7 +57,7 @@ From `docs/experiment-gcp-multi-mcp-stats.json`:
 
 ## Reference Artifacts
 
-- **Full MCP call results (all raw `CallToolResult` content):** `docs/workflow-gcp-multi-latest.json`
+- **Full MCP call results (all raw `CallToolResult` content):** `docs/workflows/workflow-gcp-multi-latest.json`
 - **Detailed experiment write-up:** `docs/experiment-gcp-multi-mcp-workflow.md`
 - **Machine-readable stats:** `docs/experiment-gcp-multi-mcp-stats.json`
 - **Stats refresh command:** `npm run report:gcp-multi-experiment`

@@ -61,7 +61,7 @@ Use your real host if you tunnel or expose the service elsewhere.
 
 ### Optional gRPC on the same deployment
 
-When **`ENABLE_GRPC=1`** (and optionally **`ENABLE_GRPC_REFLECTION=1`** for **`grpcurl list`**), the container listens on **50051** for **`grpc.health.v1`**, **`model_context_protocol.Mcp`**, and **`mcp.transport.v1.Mcp.Session`**. The **`clawql-mcp-http`** Service includes a **`grpc`** port (**50051**) alongside HTTP in the Helm chart and Kustomize **base** / **dev** / **prod**—verify with **`kubectl -n clawql get svc clawql-mcp-http`**. For native **`grpc`** readiness/liveness probes on kubelet 1.27+, use the opt-in overlay **`docker/kustomize/overlays/grpc-enabled/`** (see root [**README**](https://github.com/danielsmithdevelopment/ClawQL/blob/main/README.md) Kubernetes section). Full port matrix: [`docs/deploy-k8s.md` — Service ports](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deploy-k8s.md#service-ports-http-and-grpc).
+When **`ENABLE_GRPC=1`** (and optionally **`ENABLE_GRPC_REFLECTION=1`** for **`grpcurl list`**), the container listens on **50051** for **`grpc.health.v1`**, **`model_context_protocol.Mcp`**, and **`mcp.transport.v1.Mcp.Session`**. The **`clawql-mcp-http`** Service includes a **`grpc`** port (**50051**) alongside HTTP in the Helm chart and Kustomize **base** / **dev** / **prod**—verify with **`kubectl -n clawql get svc clawql-mcp-http`**. For native **`grpc`** readiness/liveness probes on kubelet 1.27+, use the opt-in overlay **`docker/kustomize/overlays/grpc-enabled/`** (see root [**README**](https://github.com/danielsmithdevelopment/ClawQL/blob/main/README.md) Kubernetes section). Full port matrix: [`docs/deployment/deploy-k8s.md` — Service ports](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/deploy-k8s.md#service-ports-http-and-grpc).
 
 ### What the Helm install sets
 
@@ -116,7 +116,7 @@ For registries and image tags (not the local **`latest`** flow), use overlays an
 ENV=dev IMAGE=us-central1-docker.pkg.dev/<project>/<repo>/clawql-mcp TAG=<tag> make deploy-k8s
 ```
 
-Or install the **[Helm](/helm)** chart with your image registry. Full checklist: [`docs/deploy-k8s.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deploy-k8s.md).
+Or install the **[Helm](/helm)** chart with your image registry. Full checklist: [`docs/deployment/deploy-k8s.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/deploy-k8s.md).
 
 ## More detail in the repo
 

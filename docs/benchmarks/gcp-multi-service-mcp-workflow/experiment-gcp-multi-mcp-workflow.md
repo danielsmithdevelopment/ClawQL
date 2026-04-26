@@ -9,7 +9,7 @@ npm run workflow:gcp-multi
 ```
 
 - **Harness:** [`scripts/mcp-workflow-gcp-multi.mjs`](../scripts/mcp-workflow-gcp-multi.mjs) (`Client` + `StdioClientTransport` → `node dist/server.js`).
-- **Full captured run (tool results + stderr tail):** [`workflow-gcp-multi-latest.json`](workflow-gcp-multi-latest.json).
+- **Full captured run (tool results + stderr tail):** [`workflow-gcp-multi-latest.json`](../../workflows/workflow-gcp-multi-latest.json).
 - **Recompute size / “token” stats:** `node scripts/report-gcp-multi-experiment.mjs` (writes [`experiment-gcp-multi-mcp-stats.json`](experiment-gcp-multi-mcp-stats.json)).
 
 Stats below match **`meta.generatedAt`:** `2026-03-23T05:22:54.608Z` — re-run the commands above after regenerating the JSON to refresh numbers.
@@ -92,7 +92,7 @@ Manifest: [`providers/google/google-top50-apis.json`](../providers/google/google
 | `dns-v1`                  | `dns:v1`                  | Cloud DNS API                            |
 | `servicenetworking-v1`    | `servicenetworking:v1`    | Service Networking API                   |
 
-**Merged operations:** **1985** (from [`workflow-gcp-multi-latest.json`](workflow-gcp-multi-latest.json) `meta.mergedOperationCount`).
+**Merged operations:** **1985** (from [`workflow-gcp-multi-latest.json`](../../workflows/workflow-gcp-multi-latest.json) `meta.mergedOperationCount`).
 
 ---
 
@@ -223,7 +223,7 @@ Example: workflow step **0** (Service Usage).
 }
 ```
 
-Full **11** responses (full `text` bodies + stderr tail) are in [`workflow-gcp-multi-latest.json`](workflow-gcp-multi-latest.json).
+Full **11** responses (full `text` bodies + stderr tail) are in [`workflow-gcp-multi-latest.json`](../../workflows/workflow-gcp-multi-latest.json).
 
 ---
 

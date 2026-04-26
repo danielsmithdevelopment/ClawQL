@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Recompute planning-context stats for docs/benchmarks/all-providers-complex-workflow/
- * from on-disk specs (all-providers merge) + docs/workflow-complex-release-stack-latest.json.
+ * from on-disk specs (all-providers merge) + docs/workflows/workflow-complex-release-stack-latest.json.
  *
  *   npm run build && node scripts/report-all-providers-workflow-benchmark.mjs
  */
@@ -13,6 +13,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const WORKFLOW_JSON = join(
   ROOT,
   "docs",
+  "workflows",
   "workflow-complex-release-stack-latest.json"
 );
 const STATS_OUT = join(
@@ -72,7 +73,7 @@ async function main() {
   const byteRatio = totalLoadedSpecBytes / workflowOutputBytes;
 
   const stats = {
-    sourceReport: "docs/workflow-complex-release-stack-latest.json",
+    sourceReport: "docs/workflows/workflow-complex-release-stack-latest.json",
     generatedAt: new Date().toISOString(),
     clawqlProviderPreset: "all-providers",
     mergedOperationCount: meta.mergedOperationCount ?? null,
@@ -84,7 +85,7 @@ async function main() {
       totalLoadedSpecApproxTokens: approxTokensIfPastedAllSpecs,
     },
     workflowOutput: {
-      source: "docs/workflow-complex-release-stack-latest.json",
+      source: "docs/workflows/workflow-complex-release-stack-latest.json",
       bytes: workflowOutputBytes,
       approxTokens: approxTokensInWorkflowOutput,
       searchStepCount,
@@ -102,7 +103,7 @@ async function main() {
     meta: {
       charsPerToken: 4,
       method:
-        "Compare bytes/tokens for full on-disk specs in the all-providers merge vs workflow-complex-release-stack-latest.json.",
+        "Compare bytes/tokens for full on-disk specs in the all-providers merge vs workflows/workflow-complex-release-stack-latest.json.",
     },
   };
 

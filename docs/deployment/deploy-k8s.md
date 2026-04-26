@@ -1,10 +1,10 @@
 # Deploy ClawQL on Kubernetes (Kustomize or Helm)
 
-This deploy pattern runs ClawQL as **one** workload (**`clawql-mcp-http`**): MCP at **`/mcp`**, GraphQL at **`/graphql`** on the same service. For integrated deployments, Helm can optionally co-deploy Ouroboros Postgres, NATS JetStream event backbone, an Apache Flink cluster for Onyx sync, and a full document pipeline + stores topology in the same release (see [docs/helm.md](helm.md)).
+This deploy pattern runs ClawQL as **one** workload (**`clawql-mcp-http`**): MCP at **`/mcp`**, GraphQL at **`/graphql`** on the same service. For integrated deployments, Helm can optionally co-deploy Ouroboros Postgres, NATS JetStream event backbone, an Apache Flink cluster for Onyx sync, and a full document pipeline + stores topology in the same release (see [helm.md](helm.md)).
 
 ## Helm chart (alternative)
 
-For **`helm install` / `helm upgrade`**, use the maintained chart at **`charts/clawql-mcp`**. See **[`docs/helm.md`](helm.md)** for install examples, values, private registry pull secrets, Ingress, and persistence.
+For **`helm install` / `helm upgrade`**, use the maintained chart at **`charts/clawql-mcp`**. See **[`helm.md`](helm.md)** for install examples, values, private registry pull secrets, Ingress, and persistence.
 
 Quick start from repo root:
 

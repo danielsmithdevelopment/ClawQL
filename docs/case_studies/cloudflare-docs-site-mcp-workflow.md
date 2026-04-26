@@ -143,7 +143,7 @@ Used **after meaningful outcomes**:
 | **API errors** despite Wrangler working                          | Token **scope** too narrow for **custom domains** / Workers | **Account** / **Workers** / **DNS**-style permissions; align token with **Wrangler** vs **REST** needs.                                   |
 | Browser **500** / Cloudflare **1101** (“Worker threw exception”) | Worker runtime exception                                    | **`wrangler tail <worker>`** — e.g. **`[unenv] fs.readdir is not implemented yet!`** when app code called **filesystem** APIs on Workers. |
 | **Prerender** crash on `/concepts`                               | **`React.Children.only`** in **`CodePanel`**                | MDX + Shiki can yield multiple nodes under **`code`**; **`Children.only`** throws.                                                        |
-| **Stale content** at edge after deploy                           | CDN **s-maxage** / browser cache                            | See [`docs/website-caching.md`](../website-caching.md); purge if needed.                                                                  |
+| **Stale content** at edge after deploy                           | CDN **s-maxage** / browser cache                            | See [`docs/website/website-caching.md`](../website/website-caching.md); purge if needed.                                                 |
 
 ---
 
@@ -169,7 +169,7 @@ Used **after meaningful outcomes**:
 
 ## 11. Caching headers and purge
 
-Production behavior is documented in [`docs/website-caching.md`](../website-caching.md):
+Production behavior is documented in [`docs/website/website-caching.md`](../website/website-caching.md):
 
 - **`next.config.mjs`** sets **`Cache-Control`** for HTML vs static chunks.
 - **`public/_headers`** applies to assets served from the **ASSETS** binding.
@@ -190,7 +190,7 @@ After a deploy, if something still looks **stale** at the edge, use Cloudflare *
 ## 13. References
 
 - [`docs/mcp-tools.md`](../mcp-tools.md) — MCP tool surface.
-- [`docs/cursor-vault-memory.md`](../cursor-vault-memory.md) — Cursor rules + vault skill.
-- [`docs/website-caching.md`](../website-caching.md) — CDN / browser caching for **`docs.clawql.com`** (`next.config` + `public/_headers`).
+- [`docs/integrations/cursor-vault-memory.md`](../integrations/cursor-vault-memory.md) — Cursor rules + vault skill.
+- [`docs/website/website-caching.md`](../website/website-caching.md) — CDN / browser caching for **`docs.clawql.com`** (`next.config` + `public/_headers`).
 - [`docs/case_studies/README.md`](README.md) — index of case studies.
 - Website (this study): **`https://docs.clawql.com/case-studies/cloudflare-docs-mcp`**

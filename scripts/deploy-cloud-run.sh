@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Deploy ClawQL as a single Cloud Run service (MCP Streamable HTTP + in-process GraphQL on /graphql).
 #
-# Optional MCP env (export before running; see docs/deploy-cloud-run.md):
+# Optional MCP env (export before running; see docs/deployment/deploy-cloud-run.md):
 #   CLAWQL_OBSIDIAN_VAULT_PATH   — memory_ingest / memory_recall (default in image: /vault)
 #   CLAWQL_SANDBOX_BRIDGE_URL    — sandbox_exec (Cloudflare Worker origin)
 #   CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN — bridge shared secret (prefer Secret Manager in prod)
@@ -60,7 +60,7 @@ echo "==> Building image with Cloud Build..."
 gcloud builds submit --tag "${IMAGE_URI}" .
 
 # MCP env: base + optional vault / Cloudflare Sandbox bridge (memory_ingest / memory_recall / sandbox_exec).
-# Prefer Secret Manager for CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN in production (see docs/deploy-cloud-run.md).
+# Prefer Secret Manager for CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN in production (see docs/deployment/deploy-cloud-run.md).
 MCP_ENV_VARS="CLAWQL_PROVIDER=${PROVIDER},PORT=8080,MCP_PATH=/mcp,CLAWQL_BUNDLED_OFFLINE=1"
 if [[ -n "${CLAWQL_OBSIDIAN_VAULT_PATH:-}" ]]; then
   MCP_ENV_VARS="${MCP_ENV_VARS},CLAWQL_OBSIDIAN_VAULT_PATH=${CLAWQL_OBSIDIAN_VAULT_PATH}"

@@ -58,7 +58,7 @@ After restarting ClawQL MCP in Cursor, the tool descriptor showed the server ide
 ## 5. Observability, `waitUntil` cancellations, and Error 1102
 
 - **1102** and **`waitUntil`** warnings **reinforce** each other: the Worker is doing **too much** per invocation and/or **background** work is **cut off** after the response is returned.
-- **Lighthouse in CI** (added after this incident) improves **lab** accessibility/SEO/client metrics on **`next start`** but does **not** measure **Workers isolate CPU**—documented plainly in **`docs/website-performance-workers-guardrails.md`**.
+- **Lighthouse in CI** (added after this incident) improves **lab** accessibility/SEO/client metrics on **`next start`** but does **not** measure **Workers isolate CPU**—documented plainly in **`docs/website/website-performance-workers-guardrails.md`**.
 
 ---
 
@@ -77,7 +77,7 @@ Vault notes (titles / slugs under `Memory/`):
 
 ## 7. Guardrails: Lighthouse CI, WCAG, SEO, and headers
 
-Shipped in-repo (see **`docs/website-performance-workers-guardrails.md`**):
+Shipped in-repo (see **`docs/website/website-performance-workers-guardrails.md`**):
 
 - **GitHub Actions:** `.github/workflows/website-lighthouse.yml` — `npm run build` + `next start` + **Lighthouse** + **`scripts/assert-lighthouse-scores.mjs`** thresholds.
 - **WCAG-oriented:** skip link to **`#main-content`**, **`aria-label`** on primary nav blocks, **`focus-visible`** outlines on **`Button`**, default **`loading="lazy"`** / **`decoding="async"`** on MDX **`img`**, **`rel="noopener noreferrer"`** on external **`https://`** links.
@@ -106,7 +106,7 @@ Shipped in-repo (see **`docs/website-performance-workers-guardrails.md`**):
 
 ## 9. References
 
-- **Runbook:** [`docs/website-performance-workers-guardrails.md`](../website-performance-workers-guardrails.md)
+- **Runbook:** [`docs/website/website-performance-workers-guardrails.md`](../website/website-performance-workers-guardrails.md)
 - **Deploy script:** [`scripts/deploy-docs-to-cloudflare.sh`](../../scripts/deploy-docs-to-cloudflare.sh)
 - **Lighthouse assert:** [`scripts/assert-lighthouse-scores.mjs`](../../scripts/assert-lighthouse-scores.mjs)
 - **Workflow:** [`.github/workflows/website-lighthouse.yml`](../../.github/workflows/website-lighthouse.yml)

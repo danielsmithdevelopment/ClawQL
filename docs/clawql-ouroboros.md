@@ -228,4 +228,4 @@ stop();
 - **[`docs/adr/0001-ouroboros-workflow-engine.md`](adr/0001-ouroboros-workflow-engine.md)** — architecture decision record for in-process routing, seed contract, and persistence model ([#110](https://github.com/danielsmithdevelopment/ClawQL/issues/110)).
 - **[`docs/mcp-tools.md`](mcp-tools.md)** — ClawQL MCP tools, including optional **`ouroboros_*`** wiring.
 - **[`packages/mcp-grpc-transport/README.md`](../packages/mcp-grpc-transport/README.md)** — other publishable workspace package.
-- **Slides / roadmap copy:** [`docs/clawql-slides.md`](clawql-slides.md) (Ouroboros narrative; cross-check shipped vs roadmap).
+- **Slides / roadmap copy:** [`docs/presentations/clawql-slides.md`](presentations/clawql-slides.md) (Ouroboros narrative; cross-check shipped vs roadmap).

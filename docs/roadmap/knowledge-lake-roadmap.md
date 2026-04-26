@@ -2,7 +2,7 @@
 
 This document describes the **product direction**: point ClawQL at a **GitHub repository** (and later **Notion**, **Confluence**, **Linear**, **Jira**) and build a **durable knowledge base** under the Obsidian vault — **Markdown on disk** + optional **`memory.db`** chunking, wikilinks, vectors, and **`memory_recall`** — so teams can **ask questions** against _everything_ the connector imports (configs, docs, issues, vendor-specific records).
 
-**Today:** [`ingest_external_knowledge`](external-ingest.md) supports **bulk Markdown** and **single-URL fetch** with formatting. **Full providers** are the next layer on top of the same pipeline.
+**Today:** [`ingest_external_knowledge`](../external-ingest.md) supports **bulk Markdown** and **single-URL fetch** with formatting. **Full providers** are the next layer on top of the same pipeline.
 
 ---
 
@@ -136,6 +136,6 @@ A bare **clone** gives files but not **issues/PR metadata** in one shot. **API-f
 
 ## Related docs
 
-- **[external-ingest.md](external-ingest.md)** — current tool behavior and env.
-- **[memory-db-hybrid-implementation.md](memory-db-hybrid-implementation.md)** — `memory.db`, chunking, vectors.
-- **[hybrid-memory-backends.md](hybrid-memory-backends.md)** — Postgres / sqlite-vec.
+- **[external-ingest.md](../external-ingest.md)** — current tool behavior and env.
+- **[memory-db-hybrid-implementation.md](../memory-db-hybrid-implementation.md)** — `memory.db`, chunking, vectors.
+- **[hybrid-memory-backends.md](../hybrid-memory-backends.md)** — Postgres / sqlite-vec.

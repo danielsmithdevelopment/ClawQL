@@ -91,7 +91,7 @@ The enterprise epic needed a tool that is:
 2. **Code:** [`src/clawql-audit.ts`](../../src/clawql-audit.ts) — `append` / `list` / `clear`; [`src/clawql-optional-flags.ts`](../../src/clawql-optional-flags.ts) — `CLAWQL_ENABLE_AUDIT`; registration in [`src/tools.ts`](../../src/tools.ts).
 3. **Tests:** [`src/clawql-audit.test.ts`](../../src/clawql-audit.test.ts), extended optional-flags + stdio smoke ([`src/server.test.ts`](../../src/server.test.ts)).
 4. **Docs / env:** [`docs/mcp-tools.md`](../mcp-tools.md), [`.env.example`](../../.env.example), [`README.md`](../../README.md), [`CHANGELOG.md`](../../CHANGELOG.md).
-5. **Ops:** **Helm** `enableAudit` in [`charts/clawql-mcp`](../../charts/clawql-mcp); [`docs/deploy-k8s.md`](../deploy-k8s.md), [`docs/helm.md`](../helm.md).
+5. **Ops:** **Helm** `enableAudit` in [`charts/clawql-mcp`](../../charts/clawql-mcp); [`docs/deployment/deploy-k8s.md`](../deployment/deploy-k8s.md), [`docs/deployment/helm.md`](../deployment/helm.md).
 6. **Website & Cursor:** site copy ([`website/src/app/tools/page.mdx`](../../website/src/app/tools/page.mdx), related MDX), [`.cursor/skills/clawql-vault-memory/SKILL.md`](../../.cursor/skills/clawql-vault-memory/SKILL.md) — clarifies **`audit`** vs vault.
 
 **Tests:** `npm test` green before merge.
@@ -129,7 +129,7 @@ Shipping **`audit`** “for real” meant every **surface** that lists optional 
 
 - **MCP tools:** [mcp-tools.md](../mcp-tools.md)
 - **Enterprise design:** [enterprise-mcp-tools.md](../enterprise-mcp-tools.md)
-- **Vault memory skill:** [cursor-vault-memory.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/cursor-vault-memory.md)
+- **Vault memory skill:** [integrations/cursor-vault-memory.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/integrations/cursor-vault-memory.md)
 - **Issues:** [#88](https://github.com/danielsmithdevelopment/ClawQL/issues/88)–[#91](https://github.com/danielsmithdevelopment/ClawQL/issues/91), [#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)
 
 **Website (readable summary):** **`/case-studies/vault-memory-github-session-2026-04`** on [docs.clawql.com](https://docs.clawql.com).

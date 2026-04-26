@@ -1444,7 +1444,7 @@ _This is category-defining infrastructure for agentic capital formation._
 # 07 — Roadmap, Pilots & Vision (2026)
 
 _What’s built, what’s being built, Web3 + Fabric rollout, and where the ecosystem is going._  
-_(Core platform + intelligence: **§01–§04**; **§06** = ClawQL-Web3 / Fabric / Graph / Chainlink; **§07** = Roadmap; **§08** = Defense in depth & security operations — **slides 68–79** + `clawql-security-defense-in-depth.md`.)_
+_(Core platform + intelligence: **§01–§04**; **§06** = ClawQL-Web3 / Fabric / Graph / Chainlink; **§07** = Roadmap; **§08** = Defense in depth & security operations — **slides 68–79** + `../security/clawql-security-defense-in-depth.md`.)_
 
 ---
 
@@ -1981,7 +1981,7 @@ _ClawQL is the **operating system** for **sovereign lending and agentic capital 
 
 # 08 — Defense in Depth & Security Operations
 
-_Threat modeling, immutability, supply chain, zero trust, recovery, and how ClawQL maps to each layer. **Full** reference: [`docs/clawql-security-defense-in-depth.md`](clawql-security-defense-in-depth.md)._
+_Threat modeling, immutability, supply chain, zero trust, recovery, and how ClawQL maps to each layer. **Full** reference: [`docs/security/clawql-security-defense-in-depth.md`](../security/clawql-security-defense-in-depth.md)._
 
 ---
 
@@ -2132,7 +2132,7 @@ WORM or append-only log sinks for long-lived audit; **SIEM** correlation of **Fa
 ## Slide 79 — Security Ops, References, and the Full Document
 
 - **Ongoing** work: key rotation, **Falco** tuning, **Istio** upgrades, **quarterly** IR **tabletop** with a supply-chain or **kube**-credential **scenario** (see labs in the reference doc).
-- Pointers: **NIST** SP 800-207, **CISA** Zero Trust, **CIS** Kubernetes benchmark, **MITRE ATT&CK**, **SLSA**, **Sigstore**, **NIST** CSF 2.0 — all expanded in [`clawql-security-defense-in-depth.md`](clawql-security-defense-in-depth.md) with **discussion** **questions** and **hands-on** **lab** ideas.
+- Pointers: **NIST** SP 800-207, **CISA** Zero Trust, **CIS** Kubernetes benchmark, **MITRE ATT&CK**, **SLSA**, **Sigstore**, **NIST** CSF 2.0 — all expanded in [`../security/clawql-security-defense-in-depth.md`](../security/clawql-security-defense-in-depth.md) with **discussion** **questions** and **hands-on** **lab** ideas.
 - **ClawQL**-specific: `search`/`execute` to keep the **MCP** context lean; **Merkle** + **Seeds** + `audit`; optional **Fabric** for **consortium**-grade **receipts**; **Onyx** for **knowledge** governance at the **source** systems.
 
 ---
@@ -2141,7 +2141,7 @@ WORM or append-only log sinks for long-lived audit; **SIEM** correlation of **Fa
 
 # ClawQL Ecosystem
 
-**Ready for production pilots.** Public MCP + lending / RWA + **optional Fabric** on a **Q2 2026** track (see **slides 50–55**, **57**). **Security** **defense in depth** (slides **68–79** + [`clawql-security-defense-in-depth.md`](clawql-security-defense-in-depth.md)).
+**Ready for production pilots.** Public MCP + lending / RWA + **optional Fabric** on a **Q2 2026** track (see **slides 50–55**, **57**). **Security** **defense in depth** (slides **68–79** + [`../security/clawql-security-defense-in-depth.md`](../security/clawql-security-defense-in-depth.md)).
 
 ### The AI-Orchestrated API, Document & Enterprise Knowledge Automation + Web3 / Fabric
 
@@ -2156,7 +2156,7 @@ WORM or append-only log sinks for long-lived audit; **SIEM** correlation of **Fa
 | Resource                     | Link                                                                                            |
 | ---------------------------- | ----------------------------------------------------------------------------------------------- |
 | Documentation                | https://docs.clawql.com                                                                         |
-| Defense in depth (reference) | [`clawql-security-defense-in-depth.md`](clawql-security-defense-in-depth.md) (slides **68–79**) |
+| Defense in depth (reference) | [`../security/clawql-security-defense-in-depth.md`](../security/clawql-security-defense-in-depth.md) (slides **68–79**) |
 | GitHub                       | danielsmithdevelopment/ClawQL                                                                   |
 | npm (MCP)                    | `clawql-mcp`                                                                                    |
 | Kubernetes                   | https://docs.clawql.com/kubernetes                                                              |

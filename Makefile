@@ -41,7 +41,7 @@ local-docker-up:
 	@docker compose -f docker/docker-compose.yml up -d --build
 
 # Optional exports for MCP-only features (memory / sandbox): CLAWQL_OBSIDIAN_VAULT_PATH,
-# CLAWQL_SANDBOX_BRIDGE_URL, CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN — see docs/deploy-cloud-run.md
+# CLAWQL_SANDBOX_BRIDGE_URL, CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN — see docs/deployment/deploy-cloud-run.md
 deploy-cloud-run:
 	@if [ -z "$$PROJECT_ID" ]; then echo "PROJECT_ID is required"; echo "Example: PROJECT_ID=my-proj REGION=us-central1 make deploy-cloud-run"; exit 1; fi
 	@REGION="$${REGION:-us-central1}" bash scripts/deploy-cloud-run.sh

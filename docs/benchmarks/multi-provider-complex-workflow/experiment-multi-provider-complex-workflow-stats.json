@@ -1,5 +1,5 @@
 {
-  "sourceReport": "docs/workflow-multi-provider-latest.json",
+  "sourceReport": "docs/workflows/workflow-multi-provider-latest.json",
   "generatedAt": "2026-03-24T06:46:51.802Z",
   "mergedOperationCount": 7174,
   "providerOperationCounts": {

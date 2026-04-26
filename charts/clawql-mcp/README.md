@@ -4,8 +4,8 @@ Deploys **ClawQL** as **`clawql-mcp-http`**: Streamable HTTP MCP (`/mcp`), healt
 
 ## Documentation
 
-- **Full guide:** [`docs/helm.md`](../../docs/helm.md) in this repository
-- **Kustomize alternative:** [`docs/deploy-k8s.md`](../../docs/deploy-k8s.md)
+- **Full guide:** [`docs/deployment/helm.md`](../../docs/deployment/helm.md) in this repository
+- **Kustomize alternative:** [`docs/deployment/deploy-k8s.md`](../../docs/deployment/deploy-k8s.md)
 
 ## Quick install
 

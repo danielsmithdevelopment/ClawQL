@@ -58,7 +58,7 @@ npm run fetch-all-google-discovery-specs -- --limit=3 --dry-run
 
 ## Multi-service GCP workflow (example)
 
-For an ordered **route map** across GKE, IAM, Compute (firewall/LB), Logging, Monitoring, DNS, Storage, and BigQuery — with **`operationId`** names and arguments — see [`workflow-gcp-multi-service.md`](workflow-gcp-multi-service.md).
+For an ordered **route map** across GKE, IAM, Compute (firewall/LB), Logging, Monitoring, DNS, Storage, and BigQuery — with **`operationId`** names and arguments — see [`../workflows/workflow-gcp-multi-service.md`](../workflows/workflow-gcp-multi-service.md).
 
 ## Why not one giant merged spec?
 
