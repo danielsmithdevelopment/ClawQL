@@ -6,6 +6,7 @@
 import type { Evaluator, Executor, ReflectEngine, Seed, WonderEngine } from "clawql-ouroboros";
 
 type ToolTextResponse = { content?: Array<{ type?: string; text?: string }> };
+const KNOWN_PROVIDERS = ["github", "cloudflare", "slack", "jira", "gcp", "google"] as const;
 
 export type OuroborosToolBridge = {
   search?: (query: string, limit: number) => Promise<ToolTextResponse>;
@@ -32,13 +33,85 @@ function asStringArray(v: unknown): string[] | undefined {
   return out.length > 0 ? out : undefined;
 }
 
-function routeHintsFromSeed(seed: Seed): {
-  operationId?: string;
-  args?: Record<string, unknown>;
+function parseExecutionOutput(v: string): Record<string, unknown> | null {
+  try {
+    return asRecord(JSON.parse(v));
+  } catch {
+    return null;
+  }
+}
+
+function providersMentionedInAc(acceptanceCriteria: string[]): Set<string> {
+  const providers = new Set<string>();
+  for (const criterion of acceptanceCriteria) {
+    const lc = criterion.toLowerCase();
+    for (const provider of KNOWN_PROVIDERS) {
+      if (lc.includes(provider)) providers.add(provider);
+    }
+  }
+  return providers;
+}
+
+function providersCoveredByExecution(outputObj: Record<string, unknown> | null): Set<string> {
+  const providers = new Set<string>();
+  if (!outputObj) return providers;
+  const inferByOperationId = (operationIdRaw: unknown) => {
+    const operationId = typeof operationIdRaw === "string" ? operationIdRaw.toLowerCase() : "";
+    if (!operationId) return;
+    if (
+      operationId.startsWith("repos/") ||
+      operationId.startsWith("issues/") ||
+      operationId.startsWith("pulls/") ||
+      operationId.startsWith("gists/") ||
+      operationId.startsWith("actions/")
+    ) {
+      providers.add("github");
+    }
+    if (
+      operationId === "zones-get" ||
+      operationId.includes("dns-records") ||
+      operationId.includes("cloudflare")
+    ) {
+      providers.add("cloudflare");
+    }
+  };
+
+  const stepsRaw = Array.isArray(outputObj.steps) ? outputObj.steps : [];
+  const steps =
+    stepsRaw.length > 0
+      ? stepsRaw
+      : outputObj.operationId !== undefined
+        ? [outputObj]
+        : [];
+  for (const step of steps) {
+    const s = asRecord(step);
+    if (!s) continue;
+    inferByOperationId(s.operationId);
+  }
+  const haystack = JSON.stringify(outputObj).toLowerCase();
+  for (const provider of KNOWN_PROVIDERS) {
+    if (haystack.includes(provider)) providers.add(provider);
+  }
+  return providers;
+}
+
+type ExecuteRouteHint = {
+  route: "execute";
+  operationId: string;
+  args: Record<string, unknown>;
   fields?: string[];
-  searchQuery?: string;
+};
+
+type SearchRouteHint = {
+  route: "search";
+  searchQuery: string;
   searchLimit?: number;
-} {
+};
+
+type RouteHint = ExecuteRouteHint | SearchRouteHint;
+
+function routeHintsFromSeed(seed: Seed): RouteHint[] {
+  const hints: RouteHint[] = [];
   const refs = seed.brownfield_context?.context_references ?? [];
   for (const ref of refs) {
     const rec = asRecord(ref);
@@ -48,11 +121,12 @@ function routeHintsFromSeed(seed: Seed): {
     if (exec) {
       const operationId = exec.operationId;
       if (typeof operationId === "string" && operationId) {
-        return {
+        hints.push({
+          route: "execute",
           operationId,
           args: asRecord(exec.args) ?? {},
           fields: asStringArray(exec.fields),
-        };
+        });
       }
     }
 
@@ -60,28 +134,43 @@ function routeHintsFromSeed(seed: Seed): {
     if (search) {
       const searchQuery = search.query;
       if (typeof searchQuery === "string" && searchQuery) {
-        return {
+        hints.push({
+          route: "search",
           searchQuery,
           searchLimit:
             typeof search.limit === "number" && Number.isFinite(search.limit)
               ? search.limit
               : undefined,
-        };
+        });
       }
     }
   }
 
+  if (hints.length > 0) {
+    return hints;
+  }
+
   const metadata = asRecord(seed.metadata);
-  return {
-    operationId: typeof metadata?.operationId === "string" ? metadata.operationId : undefined,
-    args: asRecord(metadata?.args) ?? undefined,
-    fields: asStringArray(metadata?.fields),
-    searchQuery: typeof metadata?.searchQuery === "string" ? metadata.searchQuery : undefined,
-    searchLimit:
-      typeof metadata?.searchLimit === "number" && Number.isFinite(metadata.searchLimit)
-        ? metadata.searchLimit
-        : undefined,
-  };
+  const fallbackHints: RouteHint[] = [];
+  if (typeof metadata?.operationId === "string" && metadata.operationId) {
+    fallbackHints.push({
+      route: "execute",
+      operationId: metadata.operationId,
+      args: asRecord(metadata.args) ?? {},
+      fields: asStringArray(metadata.fields),
+    });
+  }
+  if (typeof metadata?.searchQuery === "string" && metadata.searchQuery) {
+    fallbackHints.push({
+      route: "search",
+      searchQuery: metadata.searchQuery,
+      searchLimit:
+        typeof metadata.searchLimit === "number" && Number.isFinite(metadata.searchLimit)
+          ? metadata.searchLimit
+          : undefined,
+    });
+  }
+  return fallbackHints;
 }
 
 export function createDefaultOuroborosEngines(): {
@@ -120,38 +209,56 @@ export function createDefaultOuroborosEngines(bridge?: OuroborosToolBridge): {
   const execute: Executor = {
     execute: async (seed: Seed) => {
       const hints = routeHintsFromSeed(seed);
-      const operationId = hints.operationId;
-      if (typeof operationId === "string" && operationId && bridge?.execute) {
-        const args = hints.args ?? {};
-        const fields = hints.fields;
-        const response = await bridge.execute({ operationId, args, fields });
-        return JSON.stringify({
-          kind: "clawql-ouroboros-default-execute",
-          route: "execute",
-          goal: seed.goal,
-          operationId,
-          args,
-          fields,
-          result: firstText(response),
-        });
-      }
+      if (hints.length > 0 && bridge) {
+        const steps: Array<Record<string, unknown>> = [];
+        for (const hint of hints) {
+          if (hint.route === "execute" && bridge.execute) {
+            const response = await bridge.execute({
+              operationId: hint.operationId,
+              args: hint.args,
+              fields: hint.fields,
+            });
+            steps.push({
+              route: "execute",
+              operationId: hint.operationId,
+              args: hint.args,
+              fields: hint.fields,
+              result: firstText(response),
+            });
+            continue;
+          }
+          if (hint.route === "search" && bridge.search) {
+            const searchLimitRaw = hint.searchLimit;
+            const searchLimit =
+              typeof searchLimitRaw === "number" && Number.isFinite(searchLimitRaw)
+                ? Math.min(Math.max(Math.floor(searchLimitRaw), 1), 50)
+                : 5;
+            const response = await bridge.search(hint.searchQuery, searchLimit);
+            steps.push({
+              route: "search",
+              searchQuery: hint.searchQuery,
+              searchLimit,
+              result: firstText(response),
+            });
+          }
+        }
 
-      const searchQuery = hints.searchQuery;
-      if (typeof searchQuery === "string" && searchQuery && bridge?.search) {
-        const searchLimitRaw = hints.searchLimit;
-        const searchLimit =
-          typeof searchLimitRaw === "number" && Number.isFinite(searchLimitRaw)
-            ? Math.min(Math.max(Math.floor(searchLimitRaw), 1), 50)
-            : 5;
-        const response = await bridge.search(searchQuery, searchLimit);
-        return JSON.stringify({
-          kind: "clawql-ouroboros-default-execute",
-          route: "search",
-          goal: seed.goal,
-          searchQuery,
-          searchLimit,
-          result: firstText(response),
-        });
+        if (steps.length === 1) {
+          return JSON.stringify({
+            kind: "clawql-ouroboros-default-execute",
+            goal: seed.goal,
+            ...steps[0],
+          });
+        }
+
+        if (steps.length > 1) {
+          return JSON.stringify({
+            kind: "clawql-ouroboros-default-execute",
+            route: "multi",
+            goal: seed.goal,
+            steps,
+          });
+        }
       }
 
       return JSON.stringify({
@@ -166,13 +273,23 @@ export function createDefaultOuroborosEngines(bridge?: OuroborosToolBridge): {
     evaluate: async (executionOutput: string, seed: Seed) => {
       const failed =
         /"kind"\s*:\s*"error"/i.test(executionOutput) || /\berror\b/i.test(executionOutput);
+      const coveredProviders = providersCoveredByExecution(parseExecutionOutput(executionOutput));
       const ac_results = seed.acceptance_criteria.map((c, i) => ({
+        ...(() => {
+          const requiredProviders = providersMentionedInAc([c]);
+          const missingProviders = [...requiredProviders].filter((p) => !coveredProviders.has(p));
+          const routeCoverageMissing = missingProviders.length > 0;
+          return {
+            passed: !failed && !routeCoverageMissing && executionOutput.length > 0,
+            evidence: failed
+              ? "default evaluator: error-like output"
+              : routeCoverageMissing
+                ? `default evaluator: missing provider evidence for [${missingProviders.join(", ")}]`
+                : "default evaluator: non-empty output",
+          };
+        })(),
         ac_index: i,
         ac_content: c,
-        passed: !failed && executionOutput.length > 0,
-        evidence: failed
-          ? "default evaluator: error-like output"
-          : "default evaluator: non-empty output",
       }));
       const allPass = ac_results.every((a) => a.passed);
       return {

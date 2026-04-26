@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Ouroboros convergence semantics:** `maxGenerations` no longer returns a converged-success signal. When convergence gates are not satisfied, runs now end as **exhausted** (`converged: false`) rather than reporting a false-positive converged state.
+- **Convergence gate consistency:** evaluation/approval checks now block all convergence exits (similarity, stagnation, oscillation). `final_approved: false` explicitly prevents convergence.
+- **Default Ouroboros executor routing:** route hints from `brownfield_context.context_references` are now executed as a sequence (multi-route), instead of only taking the first matching hint.
+- **Default evaluator provider evidence:** provider-aware acceptance criteria are evaluated per criterion, with improved provider inference for both multi-step and single-step execute outputs (for example, `repos/list-commits` correctly maps to GitHub).
+
+### Added
+
+- **Release-hardening test coverage for `clawql-ouroboros`:**
+  - new suites for `InMemoryEventStore`, `mcp-hooks`, and `startSeedsPoller`,
+  - expanded `ConvergenceCriteria` coverage for approval, stagnation-gate, and oscillation-gate scenarios,
+  - expanded default-engine coverage for mixed-route execution and provider-evidence edge cases.
+
 ## [4.1.0] - 2026-04-24
 
 ### Added
@@ -16,7 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`clawql-ouroboros`** workspace package (`packages/clawql-ouroboros`): TypeScript **Seed** (Zod), **Wonder / Reflect**, **EvolutionaryLoop**, **ConvergenceCriteria**, **InMemoryEventStore**, **`ouroborosMcpTools`** (`mcp-hooks` entry), **`startSeedsPoller`** (`poller` entry). Documented in **[`docs/clawql-ouroboros.md`](docs/clawql-ouroboros.md)** with examples. Docs site: **`/ouroboros`**. **npm:** expanded **[`packages/clawql-ouroboros/README.md`](packages/clawql-ouroboros/README.md)** (standalone use, install paths, export table, limitations), **`LICENSE`** (Apache-2.0) in package **`files`**, **`homepage`** → **`https://docs.clawql.com/ouroboros`**, richer **`keywords`** / **`description`**. **Published** **`clawql-ouroboros@0.1.0`** to **`https://www.npmjs.com/package/clawql-ouroboros`**.
 - **Optional Ouroboros MCP tools on `clawql-mcp`** ([#141](https://github.com/danielsmithdevelopment/ClawQL/issues/141), [#142](https://github.com/danielsmithdevelopment/ClawQL/issues/142)): **`CLAWQL_ENABLE_OUROBOROS=1`** registers **`ouroboros_create_seed_from_document`**, **`ouroboros_run_evolutionary_loop`**, **`ouroboros_get_lineage_status`** (from **`clawql-ouroboros/mcp-hooks`**). Workspace dependency **`clawql-ouroboros`**. Optional **`CLAWQL_OUROBOROS_DATABASE_URL`** → Postgres table **`clawql_ouroboros_events`**; otherwise in-memory **`EventStore`**. Documented in **[`docs/mcp-tools.md`](docs/mcp-tools.md)** and **`.env.example`**. Optional integration coverage: **`src/ouroboros/postgres-event-store.integration.test.ts`** (runs when **`CLAWQL_OUROBOROS_DATABASE_URL`** is set; otherwise **`describe.skipIf`**).
 - **Optional MCP `notify` tool** ([#77](https://github.com/danielsmithdevelopment/ClawQL/issues/77)): when **`CLAWQL_ENABLE_NOTIFY=1`**, registers **`notify`** — a typed wrapper around Slack **`chat.postMessage`** (same stack as **`execute`** on **`chat_postMessage`**). Requires the Slack OpenAPI in the loaded spec and a bot token (**`CLAWQL_SLACK_TOKEN`**, …). Surfaces Slack **`ok: false`** JSON as a tool error. Documented in **[`docs/notify-tool.md`](docs/notify-tool.md)** (guide + examples), **[`docs/mcp-tools.md`](docs/mcp-tools.md)**, docs site page **`/notify`** (`website/src/app/notify/page.mdx`), and **[`README.md`](README.md)**. Remaining **`alert()`** scope: **[#150](https://github.com/danielsmithdevelopment/ClawQL/issues/150)**.
-- **`memory_ingest` `toolOutputsFile`:** optional server-side read of a UTF-8 file path (allowlisted via **`CLAWQL_MEMORY_INGEST_FILE_ROOTS`**, default process **`cwd`**; **`CLAWQL_MEMORY_INGEST_FILE_MAX_BYTES`**, **`CLAWQL_MEMORY_INGEST_FILE=0`** to disable) so very large log or slide-deck text does not need to be embedded in MCP tool JSON. Documented in **[`docs/mcp-tools.md`](docs/mcp-tools.md)**, **[`docs/memory-obsidian.md`](docs/memory-obsidian.md)**, **[`docs/cursor-vault-memory.md`](docs/cursor-vault-memory.md)**, the **clawql-vault-memory** skill, and the **Tools** page on the docs site.
+- **`memory_ingest` `toolOutputsFile`:** optional server-side read of a UTF-8 file path (allowlisted via **`CLAWQL_MEMORY_INGEST_FILE_ROOTS`**, default process **`cwd`**; **`CLAWQL_MEMORY_INGEST_FILE_MAX_BYTES`**, **`CLAWQL_MEMORY_INGEST_FILE=0`** to disable) so very large log or slide-deck text does not need to be embedded in MCP tool JSON. Documented in **[`docs/mcp-tools.md`](docs/mcp-tools.md)**, **[`docs/memory-obsidian.md`](docs/memory-obsidian.md)**, **[`docs/integrations/cursor-vault-memory.md`](docs/integrations/cursor-vault-memory.md)**, the **clawql-vault-memory** skill, and the **Tools** page on the docs site.
 - **Test-only Onyx REST stub:** **`CLAWQL_TEST_ONYX_FETCH_STUB`**, optional **`CLAWQL_TEST_ONYX_FETCH_BODY`**, **`CLAWQL_TEST_ONYX_FETCH_HTTP_OK`** in **`src/rest-operation.ts`**; stdio **`callTool("knowledge_search_onyx")`** coverage in **`src/server.test.ts`** ([#144](https://github.com/danielsmithdevelopment/ClawQL/issues/144)). **Streamable HTTP** and **gRPC** **`listTools`** include **`knowledge_search_onyx`** when **`CLAWQL_ENABLE_ONYX=1`**: **`src/server-http.test.ts`**, **`src/grpc-onyx-parity.test.ts`**.
 - **`memory_ingest` + Onyx citations ([#130](https://github.com/danielsmithdevelopment/ClawQL/issues/130)):** optional **`enterpriseCitations`** array (capped) stored as a vault Markdown block; helpers in **`src/enterprise-citations.ts`** (`extractEnterpriseCitationsFromOnyxSearchJson`, **`enterpriseCitationsFromOnyxSearchToolText`**). Docs: **`docs/mcp-tools.md`**, **`docs/onyx-knowledge-tool.md`**, **`docs/memory-obsidian.md`**.
 - **Onyx ingestion API in bundle ([#120](https://github.com/danielsmithdevelopment/ClawQL/issues/120)):** **`POST /onyx-api/ingestion`** as **`onyx_ingest_document`** in **`providers/onyx/openapi.yaml`** for post-Paperless **`execute`** workflows; guide §5 in **`docs/onyx-knowledge-tool.md`**.
@@ -26,8 +40,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`vitest.config.ts`:** resolve **`graphql`** to **`index.js`** (not **`index.mjs`**) under Vitest so **`graphql-compose`** and **`@omnigraph/json-schema`** share one **`GraphQLDirective`** class — fixes **`server-http`** and other tests that build in-process GraphQL ([#138](https://github.com/danielsmithdevelopment/ClawQL/issues/138)).
 - **`src/notify-graphql-path.test.ts`:** use **`src/test-utils/fixtures/minimal-slack-chat-postmessage.json`** so the GraphQL path stays green on **Node 25** (full **`providers/slack/openapi.json`** still triggers **`@omnigraph/json-schema`** — see **[`docs/graphql-mesh-node-compatibility.md`](docs/graphql-mesh-node-compatibility.md)**). Full-Slack GraphQL tests tracked in **[#151](https://github.com/danielsmithdevelopment/ClawQL/issues/151)**.
 - **`npm run fetch-provider-specs`:** optional **`ONYX_BASE_URL`** (and **`ONYX_API_TOKEN`** / **`CLAWQL_ONYX_API_TOKEN`** for authenticated **`/openapi.json`**) refreshes **`providers/onyx/openapi.yaml`** ([#143](https://github.com/danielsmithdevelopment/ClawQL/issues/143)); upstream output can be large — trim before committing if CI regresses.
-- **`charts/clawql-mcp`:** **`enableOnyx`** / **`onyxBaseUrl`** ([#118](https://github.com/danielsmithdevelopment/ClawQL/issues/118)); **`enableOuroboros`** / **`ouroborosDatabaseUrl`** ([#141](https://github.com/danielsmithdevelopment/ClawQL/issues/141), [#142](https://github.com/danielsmithdevelopment/ClawQL/issues/142)). Chart **0.4.0** (**`appVersion` 4.1.0**). **`docs/helm.md`** and **`charts/clawql-mcp/README.md`** updated.
-- **`notify` / Slack `chat_postMessage` default `execute` fields** ([#77](https://github.com/danielsmithdevelopment/ClawQL/issues/77)): default projection now includes **`error`** and **`warning`** so Slack **`ok:false`** bodies are not dropped before **`notify`** surfaces **`error` + `slack`**. Expanded **`src/clawql-notify.test.ts`** (mocked **`node-fetch`** on multi-spec REST, **`thread_ts`** form body, empty **`channel`/`text`**). Future test work: **[`docs/notify-tool-test-backlog.md`](docs/notify-tool-test-backlog.md)**.
+- **`charts/clawql-mcp`:** **`enableOnyx`** / **`onyxBaseUrl`** ([#118](https://github.com/danielsmithdevelopment/ClawQL/issues/118)); **`enableOuroboros`** / **`ouroborosDatabaseUrl`** ([#141](https://github.com/danielsmithdevelopment/ClawQL/issues/141), [#142](https://github.com/danielsmithdevelopment/ClawQL/issues/142)). Chart **0.4.0** (**`appVersion` 4.1.0**). **`docs/deployment/helm.md`** and **`charts/clawql-mcp/README.md`** updated.
+- **`notify` / Slack `chat_postMessage` default `execute` fields** ([#77](https://github.com/danielsmithdevelopment/ClawQL/issues/77)): default projection now includes **`error`** and **`warning`** so Slack **`ok:false`** bodies are not dropped before **`notify`** surfaces **`error` + `slack`**. Expanded **`src/clawql-notify.test.ts`** (mocked **`node-fetch`** on multi-spec REST, **`thread_ts`** form body, empty **`channel`/`text`**). Future test work: **[`docs/backlog/notify-tool-test-backlog.md`](docs/backlog/notify-tool-test-backlog.md)**.
 
 - **Node / CI:** `engines` **>=22**; workflows use **25** in `actions/setup-node` and test on **22 / 24 / 25** (Node 20 removed). **Docker** build: **`node:25-`** (`bookworm-slim` / `alpine`); **Distroless** image **`gcr.io/distroless/nodejs24-debian13`**. Bumped **docker/build-push-action**, **docker/metadata-action**, **docker/login-action**, and **docker/setup-buildx-action** to current majors so those steps no longer run on deprecated Node 20. (Node **26** is not published on `nodejs.org` dist or in distroless yet; adopt when available.)
 
@@ -81,10 +95,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Documentation
 
-- **[`docs/website-caching.md`](docs/website-caching.md)** — edge/browser caching for **`docs.clawql.com`**: **`next.config.mjs`** `Cache-Control` ( **`s-maxage`** / **`stale-while-revalidate`** ) and **`public/_headers`** for static assets.
+- **[`docs/website/website-caching.md`](docs/website/website-caching.md)** — edge/browser caching for **`docs.clawql.com`**: **`next.config.mjs`** `Cache-Control` ( **`s-maxage`** / **`stale-while-revalidate`** ) and **`public/_headers`** for static assets.
 - **Case study:** **[`docs/case_studies/cloudflare-docs-site-mcp-workflow.md`](docs/case_studies/cloudflare-docs-site-mcp-workflow.md)** — end-to-end **`docs.clawql.com`** deploy using **`search`**, **`execute`**, **`memory_recall`**, **`memory_ingest`**; failures (Worker **`fs`**, token scopes), fixes, and insights. Website: **`/case-studies/cloudflare-docs-mcp`**.
 - **Case study:** **[`docs/case_studies/vault-memory-github-session-2026-04.md`](docs/case_studies/vault-memory-github-session-2026-04.md)** — vault **`memory_ingest`** batch, GitHub triage, prioritization, shipping **`audit`** ([#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)). Website: **`/case-studies/vault-memory-github-session-2026-04`**.
-- **[`docs/knowledge-lake-roadmap.md`](docs/knowledge-lake-roadmap.md)** — product/technical roadmap for **full GitHub repo** ingest (code, docs, issues, configs) and **Notion / Confluence / Linear / Jira** connectors on top of the vault + **`memory.db`** pipeline.
+- **[`docs/roadmap/knowledge-lake-roadmap.md`](docs/roadmap/knowledge-lake-roadmap.md)** — product/technical roadmap for **full GitHub repo** ingest (code, docs, issues, configs) and **Notion / Confluence / Linear / Jira** connectors on top of the vault + **`memory.db`** pipeline.
 
 ## [3.3.0] - 2026-04-17
 
@@ -111,17 +125,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Helm chart** **`charts/clawql-mcp`**: deploy **`clawql-mcp-http`** with configurable image (**GHCR** by default), Service (**LoadBalancer** / **ClusterIP**), optional **Ingress**, **`/vault`** via PVC or **`vault.hostPath`**, gRPC env toggles; **`values-docker-desktop.yaml`** for **`make local-k8s-up`**; **`make helm-lint`**. Docs: **`docs/helm.md`**; site: **`/helm`**.
+- **Helm chart** **`charts/clawql-mcp`**: deploy **`clawql-mcp-http`** with configurable image (**GHCR** by default), Service (**LoadBalancer** / **ClusterIP**), optional **Ingress**, **`/vault`** via PVC or **`vault.hostPath`**, gRPC env toggles; **`values-docker-desktop.yaml`** for **`make local-k8s-up`**; **`make helm-lint`**. Docs: **`docs/deployment/helm.md`**; site: **`/helm`**.
 - **Cuckoo filter + Merkle snapshot** for hybrid `memory.db` ([#25](https://github.com/danielsmithdevelopment/ClawQL/issues/25), [#37](https://github.com/danielsmithdevelopment/ClawQL/issues/37)): enable with **`CLAWQL_CUCKOO_ENABLED=1`** and **`CLAWQL_MERKLE_ENABLED=1`**; modules **`src/cuckoo-filter.ts`**, **`src/merkle-tree.ts`**, **`src/memory-artifacts.ts`**; helpers **`chunkIdMaybeInMemoryIndex`**, **`loadVaultMerkleSnapshotFromDb`**. Postgres migration **2** adds **`clawql_cuckoo_chunk_membership`** and **`clawql_vault_merkle`** when using **`CLAWQL_VECTOR_DATABASE_URL`**.
 - **`cache` MCP tool** ([#75](https://github.com/danielsmithdevelopment/ClawQL/issues/75)): opt-in via **`CLAWQL_ENABLE_CACHE`**; operations **`set` / `get` / `delete` / `list` / `search`**; **in-process `Map` only** (not persisted — use **`memory_ingest`** / **`memory_recall`** for vault); **`CLAWQL_CACHE_MAX_VALUE_BYTES`** per value (default **1 MiB**). Implementation: [`src/clawql-cache.ts`](src/clawql-cache.ts).
 - **`src/clawql-optional-flags.ts`**: Zod-validated optional feature flags (`ENABLE_GRPC`, `CLAWQL_EXTERNAL_INGEST`, planned **`CLAWQL_ENABLE_*`** for cache/schedule/notify/vision); **`src/external-ingest.ts`** uses the shared parser for **`CLAWQL_EXTERNAL_INGEST`**. See [#79](https://github.com/danielsmithdevelopment/ClawQL/issues/79).
 
 ### Documentation
 
-- **`docs/helm.md`**: Helm install, values table, relationship to Kustomize.
+- **`docs/deployment/helm.md`**: Helm install, values table, relationship to Kustomize.
 - **`docs/benchmarks/archive/`**: short summaries + script links for archived workflow runs (formerly root `gcp-multi-test.md`, `multi-provider-test.md`, `TEST_RESULTS_2026-03-19.md`, and **`docs/JIRA_WORKFLOW_TOKEN_RESULTS_2026-03-19.md`**); benchmark stats JSON **`workflowOutput.source`** now points at the archive note.
-- **`docs/cache-tool.md`**: canonical **`cache`** vs **`memory_*`**, LRU semantics, env vars, multi-replica; cross-links from **`docs/mcp-tools.md`**, **`docs/memory-obsidian.md`**, **`docs/cursor-vault-memory.md`**, **`docs/deploy-k8s.md`**; website routes **`/cache`** and **`/tools`** (`website/src/app/cache`, `website/src/app/tools`) and nav/sitemap updated.
-- **`docs/deploy-k8s.md`**: TLS/mTLS/mesh and observability notes for port **50051**; gRPC tracking remains on [#67](https://github.com/danielsmithdevelopment/ClawQL/issues/67).
+- **`docs/cache-tool.md`**: canonical **`cache`** vs **`memory_*`**, LRU semantics, env vars, multi-replica; cross-links from **`docs/mcp-tools.md`**, **`docs/memory-obsidian.md`**, **`docs/integrations/cursor-vault-memory.md`**, **`docs/deployment/deploy-k8s.md`**; website routes **`/cache`** and **`/tools`** (`website/src/app/cache`, `website/src/app/tools`) and nav/sitemap updated.
+- **`docs/deployment/deploy-k8s.md`**: TLS/mTLS/mesh and observability notes for port **50051**; gRPC tracking remains on [#67](https://github.com/danielsmithdevelopment/ClawQL/issues/67).
 - **`docs/mcp-tools.md`**: optional tool flags table + pointer to `clawql-optional-flags.ts`.
 
 ## [3.2.3] - 2026-04-16
@@ -145,8 +159,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Documentation
 
-- **`docs/deploy-k8s.md`**, **`docker/README.md`**, root **`README.md`**, **`packages/mcp-grpc-transport/README.md`**: document dual **http** + **grpc** Service ports and when port-forward is still useful.
-- **Cursor:** **`.cursor/rules/clawql-vault-memory.mdc`**, **`.cursor/skills/clawql-vault-memory/`**, and **`docs/cursor-vault-memory.md`** — project rule, skill, and guide for **`memory_ingest`** / **`memory_recall`** in Cursor.
+- **`docs/deployment/deploy-k8s.md`**, **`docker/README.md`**, root **`README.md`**, **`packages/mcp-grpc-transport/README.md`**: document dual **http** + **grpc** Service ports and when port-forward is still useful.
+- **Cursor:** **`.cursor/rules/clawql-vault-memory.mdc`**, **`.cursor/skills/clawql-vault-memory/`**, and **`docs/integrations/cursor-vault-memory.md`** — project rule, skill, and guide for **`memory_ingest`** / **`memory_recall`** in Cursor.
 
 ## [3.2.1] - 2026-04-17
 

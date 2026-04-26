@@ -125,8 +125,7 @@ describe("EvolutionaryLoop", () => {
 
     const result = await loop.run(fixtureSeed(), { maxGenerations: 3 });
     expect(result.generations.length).toBe(3);
-    // ConvergenceCriteria treats reaching maxGenerations as a terminal converged signal.
-    expect(result.converged).toBe(true);
-    expect(result.lineage.status).toBe("converged");
+    expect(result.converged).toBe(false);
+    expect(result.lineage.status).toBe("exhausted");
   });
 });

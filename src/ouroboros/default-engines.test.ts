@@ -96,4 +96,70 @@ describe("createDefaultOuroborosEngines", () => {
     expect(search).toHaveBeenCalledWith("find pet APIs", 3);
     expect(execute).not.toHaveBeenCalled();
   });
+
+  it("executes all context_references route hints in order", async () => {
+    const execute = vi.fn(async ({ operationId }: { operationId: string }) => ({
+      content: [{ type: "text", text: JSON.stringify({ provider: operationId.split("/")[0] }) }],
+    }));
+    const search = vi.fn(async () => ({
+      content: [{ type: "text", text: "search-result" }],
+    }));
+    const engines = createDefaultOuroborosEngines({ execute, search });
+    const seed = makeSeed({});
+    seed.brownfield_context.context_references = [
+      { clawql_execute: { operationId: "github/repos-list", args: { owner: "o" } } },
+      { clawql_search: { query: "cloudflare zones list", limit: 2 } },
+      { clawql_execute: { operationId: "cloudflare/zones-get", args: {} } },
+    ];
+
+    const output = await engines.execute.execute(seed);
+    const parsed = JSON.parse(output) as {
+      route: string;
+      steps: Array<{ route: string }>;
+    };
+
+    expect(parsed.route).toBe("multi");
+    expect(parsed.steps).toHaveLength(3);
+    expect(parsed.steps.map((s) => s.route)).toEqual(["execute", "search", "execute"]);
+    expect(execute).toHaveBeenCalledTimes(2);
+    expect(search).toHaveBeenCalledTimes(1);
+  });
+
+  it("fails provider-specific ACs when execution evidence misses a provider", async () => {
+    const execute = vi.fn(async () => ({
+      content: [{ type: "text", text: '{"ok":true,"provider":"github"}' }],
+    }));
+    const engines = createDefaultOuroborosEngines({ execute, search: vi.fn() });
+    const seed = makeSeed({
+      operationId: "github/repos-list",
+    });
+    seed.acceptance_criteria = [
+      "GitHub commits are returned",
+      "Cloudflare zone list call succeeds without auth errors",
+    ];
+
+    const output = await engines.execute.execute(seed);
+    const evaluation = await engines.evaluate.evaluate(output, seed);
+
+    expect(evaluation.final_approved).toBe(false);
+    expect(evaluation.ac_results[0].passed).toBe(true);
+    expect(evaluation.ac_results[1].passed).toBe(false);
+    expect(evaluation.ac_results[1].evidence).toContain("missing provider evidence");
+  });
+
+  it("recognizes GitHub provider from single-route operationId style", async () => {
+    const execute = vi.fn(async () => ({
+      content: [{ type: "text", text: '{"ok":true}' }],
+    }));
+    const engines = createDefaultOuroborosEngines({ execute, search: vi.fn() });
+    const seed = makeSeed({
+      operationId: "repos/list-commits",
+    });
+    seed.acceptance_criteria = ["GitHub commits are returned"];
+
+    const output = await engines.execute.execute(seed);
+    const evaluation = await engines.evaluate.evaluate(output, seed);
+    expect(evaluation.final_approved).toBe(true);
+    expect(evaluation.ac_results[0].passed).toBe(true);
+  });
 });

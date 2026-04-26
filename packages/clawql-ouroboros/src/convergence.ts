@@ -167,15 +167,7 @@ export class ConvergenceCriteria {
     const completed = lineage.generations.filter((g) => g.phase === "completed");
     const numCompleted = completed.length;
     const currentGen = lineage.current_generation;
-
-    if (numCompleted >= this.config.maxGenerations) {
-      return {
-        converged: true,
-        reason: `Max generations reached (${this.config.maxGenerations})`,
-        ontology_similarity: this._latestSimilarity(lineage),
-        generation: currentGen,
-      };
-    }
+    const evalGateFailure = this._evalGateFailure(latestEvaluation);
 
     if (numCompleted < this.config.minGenerations) {
       return {
@@ -189,31 +181,14 @@ export class ConvergenceCriteria {
     const latestSim = this._latestSimilarity(lineage);
 
     if (latestSim >= this.config.convergenceThreshold) {
-      if (this.config.evalGateEnabled && latestEvaluation?.score !== undefined) {
-        if (latestEvaluation.score < this.config.evalMinScore) {
-          return {
-            converged: false,
-            reason: `Eval gate: score ${latestEvaluation.score.toFixed(3)} < minimum ${this.config.evalMinScore}`,
-            ontology_similarity: latestSim,
-            generation: currentGen,
-          };
-        }
-      }
-
-      if (this.config.evalGateEnabled && latestEvaluation) {
-        const failedAcs = (latestEvaluation.ac_results ?? [])
-          .filter((ac) => !ac.passed)
-          .map((ac) => ac.ac_index);
-
-        if (failedAcs.length > 0) {
-          return {
-            converged: false,
-            reason: `AC gate: ${failedAcs.length} acceptance criteria failing`,
-            ontology_similarity: latestSim,
-            generation: currentGen,
-            failed_acs: failedAcs,
-          };
-        }
+      if (evalGateFailure) {
+        return {
+          converged: false,
+          reason: evalGateFailure.reason,
+          ontology_similarity: latestSim,
+          generation: currentGen,
+          failed_acs: evalGateFailure.failedAcs,
+        };
       }
 
       if (this.config.regressionGateEnabled) {
@@ -258,6 +233,15 @@ export class ConvergenceCriteria {
     }
 
     if (numCompleted >= this.config.stagnationWindow && this._checkStagnation(lineage)) {
+      if (evalGateFailure) {
+        return {
+          converged: false,
+          reason: `Stagnation blocked by ${evalGateFailure.reason}`,
+          ontology_similarity: latestSim,
+          generation: currentGen,
+          failed_acs: evalGateFailure.failedAcs,
+        };
+      }
       return {
         converged: true,
         reason: `Stagnation: ontology unchanged for ${this.config.stagnationWindow} consecutive generations`,
@@ -271,11 +255,30 @@ export class ConvergenceCriteria {
       numCompleted >= 3 &&
       this._checkOscillation(lineage)
     ) {
+      if (evalGateFailure) {
+        return {
+          converged: false,
+          reason: `Oscillation blocked by ${evalGateFailure.reason}`,
+          ontology_similarity: latestSim,
+          generation: currentGen,
+          failed_acs: evalGateFailure.failedAcs,
+        };
+      }
       return {
         converged: true,
         reason: "Oscillation: ontology cycling between two states (A→B→A)",
         ontology_similarity: latestSim,
         generation: currentGen,
+      };
+    }
+
+    if (numCompleted >= this.config.maxGenerations) {
+      return {
+        converged: false,
+        reason: `Exhausted at max generations (${this.config.maxGenerations})`,
+        ontology_similarity: latestSim,
+        generation: currentGen,
+        failed_acs: evalGateFailure?.failedAcs,
       };
     }
 
@@ -317,5 +320,37 @@ export class ConvergenceCriteria {
     const simBC = computeOntologySimilarity(genB, genC);
 
     return simAC >= 0.9 && simBC < 0.7;
+  }
+
+  private _evalGateFailure(
+    latestEvaluation?: { final_approved: boolean; score?: number; ac_results: ACResult[] },
+  ): { reason: string; failedAcs?: number[] } | null {
+    if (!this.config.evalGateEnabled || !latestEvaluation) {
+      return null;
+    }
+
+    if (latestEvaluation.score !== undefined && latestEvaluation.score < this.config.evalMinScore) {
+      return {
+        reason: `Eval gate: score ${latestEvaluation.score.toFixed(3)} < minimum ${this.config.evalMinScore}`,
+      };
+    }
+
+    const failedAcs = (latestEvaluation.ac_results ?? [])
+      .filter((ac) => !ac.passed)
+      .map((ac) => ac.ac_index);
+    if (failedAcs.length > 0) {
+      return {
+        reason: `AC gate: ${failedAcs.length} acceptance criteria failing`,
+        failedAcs,
+      };
+    }
+
+    if (latestEvaluation.final_approved === false) {
+      return {
+        reason: "Approval gate: final_approved is false",
+      };
+    }
+
+    return null;
   }
 }

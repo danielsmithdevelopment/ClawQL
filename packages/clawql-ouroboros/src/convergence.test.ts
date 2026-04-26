@@ -118,4 +118,69 @@ describe("ConvergenceCriteria", () => {
     expect(sig.converged).toBe(true);
     expect(sig.ontology_similarity).toBeGreaterThanOrEqual(0.9);
   });
+
+  it("does not converge when final approval is false", () => {
+    const fields = [
+      { name: "a", field_type: "string", description: "identical description text", required: true },
+    ];
+    const lin = lineageFromFieldsList("id", [fields, fields]);
+    const c = new ConvergenceCriteria({
+      minGenerations: 2,
+      maxGenerations: 2,
+      convergenceThreshold: 0.9,
+      evalGateEnabled: true,
+      evalMinScore: 0.5,
+    });
+    const latest = {
+      final_approved: false,
+      score: 0.95,
+      ac_results: [{ ac_index: 0, ac_content: "c", passed: true, evidence: "e" }],
+    };
+    const sig = c.evaluate(lin, { requires_evolution: false }, latest);
+    expect(sig.converged).toBe(false);
+    expect(sig.reason).toContain("Approval gate");
+  });
+
+  it("blocks stagnation convergence when AC gate fails", () => {
+    const f1 = [{ name: "a", field_type: "string", description: "alpha one", required: true }];
+    const f2 = [{ name: "a", field_type: "string", description: "bravo two", required: true }];
+    const f3 = [{ name: "a", field_type: "string", description: "charlie three", required: true }];
+    const lin = lineageFromFieldsList("id-stag", [f1, f2, f3]);
+    const c = new ConvergenceCriteria({
+      minGenerations: 2,
+      stagnationWindow: 3,
+      convergenceThreshold: 0.999, // avoid similarity branch
+      evalGateEnabled: true,
+      evalMinScore: 0.5,
+    });
+    const latest = {
+      final_approved: false,
+      score: 0.95,
+      ac_results: [{ ac_index: 0, ac_content: "must pass", passed: false, evidence: "missing" }],
+    };
+    const sig = c.evaluate(lin, { requires_evolution: false }, latest);
+    expect(sig.converged).toBe(false);
+    expect(sig.reason).toContain("Stagnation blocked by AC gate");
+  });
+
+  it("blocks oscillation convergence when evaluation score is below threshold", () => {
+    const fA = [{ name: "a", field_type: "string", description: "alpha", required: true }];
+    const fB = [{ name: "b", field_type: "string", description: "beta", required: true }];
+    const lin = lineageFromFieldsList("id-osc", [fA, fB, fA]);
+    const c = new ConvergenceCriteria({
+      minGenerations: 2,
+      convergenceThreshold: 0.999, // avoid similarity branch
+      enableOscillationDetection: true,
+      evalGateEnabled: true,
+      evalMinScore: 0.7,
+    });
+    const latest = {
+      final_approved: true,
+      score: 0.2,
+      ac_results: [{ ac_index: 0, ac_content: "must pass", passed: true, evidence: "n/a" }],
+    };
+    const sig = c.evaluate(lin, { requires_evolution: false }, latest);
+    expect(sig.converged).toBe(false);
+    expect(sig.reason).toContain("Oscillation blocked by Eval gate");
+  });
 });
