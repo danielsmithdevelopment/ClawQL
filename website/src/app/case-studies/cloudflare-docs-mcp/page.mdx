@@ -162,14 +162,14 @@ Used **after meaningful outcomes**:
 
 ## 9. Failures and symptoms
 
-| Symptom                                                          | Likely cause                                                | What helped                                                                                                                               |
-| ---------------------------------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| **Missing / invalid auth** on Cloudflare calls                   | **No `Authorization`** on the MCP process                   | Set **`CLAWQL_CLOUDFLARE_API_TOKEN`** on the **server** running MCP, not only local `.env` for Cursor UI.                                 |
-| **HTTP 403 / blocked**                                           | Token **IP allowlist**                                      | Add egress IP (or widen policy) for the environment where MCP runs.                                                                       |
-| **API errors** despite Wrangler working                          | Token **scope** too narrow for **custom domains** / Workers | **Account** / **Workers** / **DNS**-style permissions; align token with **Wrangler** vs **REST** needs.                                   |
-| Browser **500** / Cloudflare **1101** (“Worker threw exception”) | Worker runtime exception                                    | **`wrangler tail <worker>`** — e.g. **`[unenv] fs.readdir is not implemented yet!`** when app code called **filesystem** APIs on Workers. |
-| **Prerender** crash on `/concepts`                               | **`React.Children.only`** in **`CodePanel`**                | MDX + Shiki can yield multiple nodes under **`code`**; **`Children.only`** throws.                                                        |
-| **Stale content** at edge after deploy                           | CDN **s-maxage** / browser cache                            | See [`docs/website/website-caching.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/website/website-caching.md); purge if needed.     |
+| Symptom                                                          | Likely cause                                                | What helped                                                                                                                                           |
+| ---------------------------------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Missing / invalid auth** on Cloudflare calls                   | **No `Authorization`** on the MCP process                   | Set **`CLAWQL_CLOUDFLARE_API_TOKEN`** on the **server** running MCP, not only local `.env` for Cursor UI.                                             |
+| **HTTP 403 / blocked**                                           | Token **IP allowlist**                                      | Add egress IP (or widen policy) for the environment where MCP runs.                                                                                   |
+| **API errors** despite Wrangler working                          | Token **scope** too narrow for **custom domains** / Workers | **Account** / **Workers** / **DNS**-style permissions; align token with **Wrangler** vs **REST** needs.                                               |
+| Browser **500** / Cloudflare **1101** (“Worker threw exception”) | Worker runtime exception                                    | **`wrangler tail <worker>`** — e.g. **`[unenv] fs.readdir is not implemented yet!`** when app code called **filesystem** APIs on Workers.             |
+| **Prerender** crash on `/concepts`                               | **`React.Children.only`** in **`CodePanel`**                | MDX + Shiki can yield multiple nodes under **`code`**; **`Children.only`** throws.                                                                    |
+| **Stale content** at edge after deploy                           | CDN **s-maxage** / browser cache                            | See [`docs/website/website-caching.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/website/website-caching.md); purge if needed. |
 
 ---
 

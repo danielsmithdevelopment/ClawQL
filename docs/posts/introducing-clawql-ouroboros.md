@@ -29,13 +29,13 @@ The fundamental Ouroboros logic is faithfully ported to TypeScript. Both systems
 
 The TypeScript version is intentionally leaner and leaves out some platform-level capabilities of the Python original:
 
-| Feature | Python Version (Original) | TypeScript Version (`clawql-ouroboros`) |
-| --- | --- | --- |
-| Primary use case | Standalone CLI, TUI, and plugin workflows | Embedded library for Node.js / ClawQL engines |
-| Execution model | Double-diamond decomposition and sub-agent orchestration | Direct in-process execution or host tool delegation |
-| Routing (PAL) | Progressive LLM escalation strategy | Host-dependent model routing |
-| User interface | Built-in terminal UI (activity trees) | No native UI; returns data for host rendering |
-| AI backend | Built-in LiteLLM integration | MCP-oriented and host-runtime friendly |
+| Feature          | Python Version (Original)                                | TypeScript Version (`clawql-ouroboros`)             |
+| ---------------- | -------------------------------------------------------- | --------------------------------------------------- |
+| Primary use case | Standalone CLI, TUI, and plugin workflows                | Embedded library for Node.js / ClawQL engines       |
+| Execution model  | Double-diamond decomposition and sub-agent orchestration | Direct in-process execution or host tool delegation |
+| Routing (PAL)    | Progressive LLM escalation strategy                      | Host-dependent model routing                        |
+| User interface   | Built-in terminal UI (activity trees)                    | No native UI; returns data for host rendering       |
+| AI backend       | Built-in LiteLLM integration                             | MCP-oriented and host-runtime friendly              |
 
 This focused scope keeps the library lightweight, fast, and easy to integrate.
 
@@ -138,4 +138,4 @@ Ready to bring Ouroboros-style intelligence into your TypeScript projects? Insta
 
 ---
 
-*Daniel Smith & the ClawQL Team*
+_Daniel Smith & the ClawQL Team_

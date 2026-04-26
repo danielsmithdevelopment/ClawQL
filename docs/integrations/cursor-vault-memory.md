@@ -6,9 +6,9 @@ This document explains how **ClawQL’s Obsidian vault tools** (`memory_ingest`,
 
 ## Prerequisites
 
-| Requirement                         | Role                                                                                                                                                                          |
-| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **ClawQL MCP** configured in Cursor | The agent can call MCP tools (stdio or HTTP, per your setup).                                                                                                                 |
+| Requirement                         | Role                                                                                                                                                                                |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **ClawQL MCP** configured in Cursor | The agent can call MCP tools (stdio or HTTP, per your setup).                                                                                                                       |
 | **`CLAWQL_OBSIDIAN_VAULT_PATH`**    | Points the server at a writable vault directory. Without it, vault tools return an error; see **[README.md](../../README.md)** and **[memory-obsidian.md](../memory-obsidian.md)**. |
 
 ---
@@ -60,12 +60,12 @@ Cursor uses the skill’s YAML **`description`** to decide when to attach it; yo
 
 ## Related documentation
 
-| Doc                                                                          | Topic                                              |
-| ---------------------------------------------------------------------------- | -------------------------------------------------- |
-| **[memory-obsidian.md](../memory-obsidian.md)**                              | Why a vault, `Memory/`, wikilinks, index pages.    |
-| **[mcp-tools.md](../mcp-tools.md)**                                          | All MCP tools, JSON-shaped examples.               |
-| **[cache-tool.md](../cache-tool.md)**                                        | **`cache`** vs vault memory, LRU, env.             |
-| **[enterprise-mcp-tools.md](../enterprise-mcp-tools.md)**                    | Optional **`audit`** vs vault; enterprise roadmap. |
+| Doc                                                                             | Topic                                              |
+| ------------------------------------------------------------------------------- | -------------------------------------------------- |
+| **[memory-obsidian.md](../memory-obsidian.md)**                                 | Why a vault, `Memory/`, wikilinks, index pages.    |
+| **[mcp-tools.md](../mcp-tools.md)**                                             | All MCP tools, JSON-shaped examples.               |
+| **[cache-tool.md](../cache-tool.md)**                                           | **`cache`** vs vault memory, LRU, env.             |
+| **[enterprise-mcp-tools.md](../enterprise-mcp-tools.md)**                       | Optional **`audit`** vs vault; enterprise roadmap. |
 | **[memory-db-hybrid-implementation.md](../memory-db-hybrid-implementation.md)** | `memory.db`, recall implementation.                |
 
 ---

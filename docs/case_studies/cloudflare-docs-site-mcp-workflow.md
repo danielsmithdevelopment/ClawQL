@@ -143,7 +143,7 @@ Used **after meaningful outcomes**:
 | **API errors** despite Wrangler working                          | Token **scope** too narrow for **custom domains** / Workers | **Account** / **Workers** / **DNS**-style permissions; align token with **Wrangler** vs **REST** needs.                                   |
 | Browser **500** / Cloudflare **1101** (“Worker threw exception”) | Worker runtime exception                                    | **`wrangler tail <worker>`** — e.g. **`[unenv] fs.readdir is not implemented yet!`** when app code called **filesystem** APIs on Workers. |
 | **Prerender** crash on `/concepts`                               | **`React.Children.only`** in **`CodePanel`**                | MDX + Shiki can yield multiple nodes under **`code`**; **`Children.only`** throws.                                                        |
-| **Stale content** at edge after deploy                           | CDN **s-maxage** / browser cache                            | See [`docs/website/website-caching.md`](../website/website-caching.md); purge if needed.                                                 |
+| **Stale content** at edge after deploy                           | CDN **s-maxage** / browser cache                            | See [`docs/website/website-caching.md`](../website/website-caching.md); purge if needed.                                                  |
 
 ---
 
