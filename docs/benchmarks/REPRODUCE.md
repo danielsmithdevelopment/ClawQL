@@ -75,8 +75,8 @@ Offline **`search`** across **Google top50 + every other bundled vendor** (merge
 npm run workflow:complex-release-stack
 ```
 
-- Writes [`docs/workflow-complex-release-stack-latest.json`](../workflow-complex-release-stack-latest.json) (ranked hits, Jira draft, per-vendor operation counts).
-- Guide: [`docs/workflow-complex-release-stack.md`](../workflow-complex-release-stack.md).
+- Writes [`docs/workflows/workflow-complex-release-stack-latest.json`](../workflows/workflow-complex-release-stack-latest.json) (ranked hits, Jira draft, per-vendor operation counts).
+- Guide: [`docs/workflows/workflow-complex-release-stack.md`](../workflows/workflow-complex-release-stack.md).
 
 Optional Jira POST preview (same pattern as multi-provider):
 

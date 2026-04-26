@@ -67,7 +67,7 @@ docker run -i --rm --entrypoint node clawql-mcp dist/server.js
 | `docker/docker-compose.yml`      | Local stack (`clawql-mcp-http` only)                              |
 | `docker/kubernetes-starter.yaml` | Starter K8s namespace + Deployments + Services                    |
 
-**Helm:** a maintained chart lives at **`charts/clawql-mcp`** — see **[`docs/helm.md`](../docs/helm.md)**. Kustomize overlays remain under **`docker/kustomize/`**.
+**Helm:** a maintained chart lives at **`charts/clawql-mcp`** — see **[`docs/deployment/helm.md`](../docs/deployment/helm.md)**. Kustomize overlays remain under **`docker/kustomize/`**.
 
 ## Docker Compose (local)
 
@@ -112,7 +112,7 @@ To **build the image locally** instead of pulling GHCR, run **`CLAWQL_LOCAL_K8S_
 
 If the GHCR package is **private**, add **`imagePullSecrets`** via Helm values (same as any private registry).
 
-- **Customize provider or ports:** edit **`charts/clawql-mcp/values-docker-desktop.yaml`** or pass **`helm --set`**; see **[`docs/helm.md`](../docs/helm.md)**.
+- **Customize provider or ports:** edit **`charts/clawql-mcp/values-docker-desktop.yaml`** or pass **`helm --set`**; see **[`docs/deployment/helm.md`](../docs/deployment/helm.md)**.
 - **`kubectl` / Helm context:** The script targets **`docker-desktop`** when that context exists (so your default context can stay on EKS or another cluster).
 - **Restart behavior:** Deployments keep **`replicas: 1`** and Kubernetes **restarts failed containers** automatically (Pod `restartPolicy` is `Always`).
 - **MCP URL:** `http://localhost:8080/mcp` once `kubectl -n clawql get svc clawql-mcp-http` shows an external address (often `localhost` on Docker Desktop).
@@ -192,7 +192,7 @@ For remote clusters, use `docker/kustomize/overlays/dev` or `prod` and `scripts/
 
 Cloud Run deployment guide/script:
 
-- [`docs/deploy-cloud-run.md`](../docs/deploy-cloud-run.md)
+- [`docs/deployment/deploy-cloud-run.md`](../docs/deployment/deploy-cloud-run.md)
 - `scripts/deploy-cloud-run.sh`
 
 ## Kubernetes starter manifest

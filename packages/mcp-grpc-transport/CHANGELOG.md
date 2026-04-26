@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Documentation
 
-- README **Kubernetes:** ClawQL **`clawql-mcp-http`** Service exposes **50051** in all Kustomize overlays; link to ClawQL **`docs/deploy-k8s.md`**.
+- README **Kubernetes:** ClawQL **`clawql-mcp-http`** Service exposes **50051** in all Kustomize overlays; link to ClawQL **`docs/deployment/deploy-k8s.md`**.
 
 ## [0.1.1] - 2026-04-18
 

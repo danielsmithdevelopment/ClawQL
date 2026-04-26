@@ -1,718 +1,78 @@
 # ClawQL
 
-MCP server: **core** tools **`search`** and **`execute`** (OpenAPI/Discovery), plus **`sandbox_exec`** ([Cloudflare Sandbox](https://developers.cloudflare.com/sandbox/) **bridge Worker**), **`memory_ingest`**, **`memory_recall`** (Obsidian vault), and **`ingest_external_knowledge`** (bulk Markdown + optional URL fetch when enabled). Optional **`cache`** (**`CLAWQL_ENABLE_CACHE`**) is **in-process LRU** scratch storage — not the vault; see **[`docs/cache-tool.md`](docs/cache-tool.md)**. Optional **`audit`** (**`CLAWQL_ENABLE_AUDIT`**) is an **in-process** event ring buffer for operator trails — not durable; see **[`docs/enterprise-mcp-tools.md`](docs/enterprise-mcp-tools.md)** ([#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)). Optional **`notify`** (**`CLAWQL_ENABLE_NOTIFY`**) posts to Slack via **`chat.postMessage`** when the Slack spec is loaded ([#77](https://github.com/danielsmithdevelopment/ClawQL/issues/77)); guide and examples: **[`docs/notify-tool.md`](docs/notify-tool.md)**. Optional **`knowledge_search_onyx`** (**`CLAWQL_ENABLE_ONYX`**) queries **[Onyx](https://www.onyx.app/)** document search when the **`onyx`** bundled spec is loaded ([#118](https://github.com/danielsmithdevelopment/ClawQL/issues/118)); guide and examples: **[`docs/onyx-knowledge-tool.md`](docs/onyx-knowledge-tool.md)**. An internal **GraphQL** layer keeps **`execute`** responses lean; **spec-driven discovery** means agents don’t load full OpenAPI definitions into context. Full tool reference: **[`docs/mcp-tools.md`](docs/mcp-tools.md)**.
+ClawQL is an MCP server for API discovery and execution with a token-efficient `search -> execute` workflow over OpenAPI and Google Discovery specs.
 
-**What is MCP?** [Model Context Protocol](https://modelcontextprotocol.io) is how
-clients such as [Cursor](https://cursor.com/docs/context/mcp) or Claude Desktop
-run this server over **stdio** or **HTTP** and expose **`search`**, **`execute`**, and (when configured) **`sandbox_exec`**, **`memory_ingest`**, **`memory_recall`** to the model.
+## What You Get
 
-**Architecture:** **`search`** and **`execute`** run in one MCP process. For single-spec APIs, **`execute`** uses an internal **OpenAPI→GraphQL** path so responses stay field-selected and small; **`clawql-mcp-http`** also exposes **`/graphql`** on the same port for debugging. Multi-spec **`execute`** uses REST only. **Node 25:** building GraphQL from the **full** bundled Slack OpenAPI can fail inside **`@omnigraph/json-schema`** (REST fallback still works); see **[`docs/graphql-mesh-node-compatibility.md`](docs/graphql-mesh-node-compatibility.md)**.
+- Core MCP tools: `search`, `execute`
+- Optional tools (env-gated): `sandbox_exec`, `memory_ingest`, `memory_recall`, `ingest_external_knowledge`, `cache`, `audit`, `notify`, `knowledge_search_onyx`, `schedule`, `ouroboros_*`
+- Stdio and HTTP MCP server modes
+- Bundled provider specs for offline lookup and multi-provider workflows
 
-**Bring your own OpenAPI 3** (JSON/YAML file or URL), or use **Swagger 2**
-(converted automatically), or a **Google Discovery** document URL. If no spec
-env is set, ClawQL defaults to a bundled **multi-provider** merge (**Google Cloud (bundled APIs) +
-Cloudflare + GitHub + Slack + Paperless + Stirling + Tika + Gotenberg + Onyx**). Single-provider **`cloudflare`** and other presets are
-available via **`CLAWQL_PROVIDER`** (see [`providers/README.md`](providers/README.md)).
+Primary package: `clawql-mcp`  
+Repo: https://github.com/danielsmithdevelopment/ClawQL
 
-**Public docs alignment:** the canonical bundled-provider matrix and auth overview now live on **[`docs.clawql.com/bundled-specs`](https://docs.clawql.com/bundled-specs)**. Onyx deployment cross-links (including Flink/full-stack issue pointers) live on **[`docs.clawql.com/onyx-knowledge`](https://docs.clawql.com/onyx-knowledge)**.
+## Quick Start
 
-**Repo vs npm:** GitHub **`ClawQL`** — published package **`clawql-mcp`**. Workspace libraries: **[`mcp-grpc-transport`](packages/mcp-grpc-transport)** (gRPC MCP transport, also on npm) and **[`clawql-ouroboros`](packages/clawql-ouroboros)** — specification-first evolutionary loop (**Seed**, Wonder/Reflect, convergence); full guide **[`docs/clawql-ouroboros.md`](docs/clawql-ouroboros.md)**. When **`CLAWQL_ENABLE_OUROBOROS=1`**, **`clawql-mcp`** registers optional **`ouroboros_*`** tools (see **[`docs/mcp-tools.md`](docs/mcp-tools.md)**); otherwise use **`clawql-ouroboros`** from your own process.
-
-**Enterprise agent stack:** **[ClawQL-Agent](https://github.com/danielsmithdevelopment/ClawQL-Agent)** is the local-first Docker platform (LangGraph, Obsidian knowledge graph, optional Cloudflare Sandboxes, Langfuse) that uses **this repo** as the MCP **API engine** — token-efficient **`search` / `execute`** over OpenAPI/Discovery. **ClawQL Parity v1** is complete: this server exposes the same unified MCP surface as the agent README (`sandbox_exec()`, `memory_ingest()`, `memory_recall()` alongside **`search`/`execute`**); see **[#11](https://github.com/danielsmithdevelopment/ClawQL/issues/11)**. **`memory_ingest`** and **`memory_recall`** run when **`CLAWQL_OBSIDIAN_VAULT_PATH`** is set (see [Obsidian vault](#obsidian-vault-optional) and [`docs/memory-obsidian.md`](docs/memory-obsidian.md)). Optional **`CLAWQL_OBSIDIAN_VAULT_PATH`** configures a shared Obsidian vault path (validated at startup when set; Docker/K8s default **`/vault`** — see [Obsidian vault](#obsidian-vault-optional)).
-
-## First 5 minutes
-
-1. Install: `npm install clawql-mcp` (or use `npx -p clawql-mcp` as below; expect **~90 MB** on disk, see [Install](#install-npm--yarn--bun)).
-2. Run **`npx -p clawql-mcp clawql-mcp`** (default bundled specs) **or** `CLAWQL_PROVIDER=all-providers npx -p clawql-mcp clawql-mcp`
-3. Point your MCP client at **`clawql-mcp`** on stdio — see [Claude Desktop / Cursor config](#claude-desktop--cursor-config).
-
-From there: custom spec via `CLAWQL_SPEC_PATH` / `CLAWQL_SPEC_URL`, or read [Configure the API spec](#configure-the-api-spec) for merged presets and precedence.
-
-## TL;DR
-
-- **Install:** `npm install clawql-mcp` — full [Install](#install-npm--yarn--bun) notes (binaries, `npx`, **~90 MB** on disk).
-- **Run** (no global install). **Pick one** spec source:
-  1. **Bundled specs** — nothing to download; uses pre-shipped `providers/` in the package (**`CLAWQL_PROVIDER=all-providers`** = every bundled vendor):
-
-     ```bash
-     CLAWQL_PROVIDER=all-providers npx clawql-mcp
-     ```
-
-  2. **Local OpenAPI** (JSON/YAML; Swagger 2 is converted) — path on disk:
-
-     ```bash
-     CLAWQL_SPEC_PATH=./openapi.yaml npx clawql-mcp
-     ```
-
-  3. **Remote spec** — HTTPS URL to OpenAPI (or YAML/JSON):
-
-     ```bash
-     CLAWQL_SPEC_URL=https://example.com/openapi.json npx clawql-mcp
-     ```
-
-  **Google Discovery** (GCP APIs, etc.): use **`CLAWQL_DISCOVERY_URL`** instead of `CLAWQL_SPEC_URL`. Merge many specs or other presets: [Configure the API spec](#configure-the-api-spec).
-
-- **All MCP tools (API + vault + sandbox + optional cache / audit / notify / Onyx):** see **[`docs/mcp-tools.md`](docs/mcp-tools.md)** — examples for `sandbox_exec`, `memory_ingest`, `memory_recall`, `cache` vs vault (**[`docs/cache-tool.md`](docs/cache-tool.md)**), optional **`audit`** (**[`docs/enterprise-mcp-tools.md`](docs/enterprise-mcp-tools.md)**), **`notify`** (**[`docs/notify-tool.md`](docs/notify-tool.md)**), **`knowledge_search_onyx`** (**[`docs/onyx-knowledge-tool.md`](docs/onyx-knowledge-tool.md)**), env vars.
-
-- **Ouroboros (evolutionary loop):** **[`docs/clawql-ouroboros.md`](docs/clawql-ouroboros.md)** — package **`clawql-ouroboros`** in **`packages/clawql-ouroboros`**; **`EvolutionaryLoop`**, **`InMemoryEventStore`**, **`ouroborosMcpTools`** / **`startSeedsPoller`**. Optional MCP tools on **`clawql-mcp`** when **`CLAWQL_ENABLE_OUROBOROS=1`** ([#141](https://github.com/danielsmithdevelopment/ClawQL/issues/141)). Docs site: **`https://docs.clawql.com/ouroboros`**.
-
-- **Documentation map:** **[`docs/README.md`](docs/README.md)** — curated index of guides under `docs/`; **[`scripts/README.md`](scripts/README.md)** — deploy shells, workflow runners, fetchers, and smokes.
-
-- **Cursor IDE (rule + skill for vault memory):** see **[`docs/cursor-vault-memory.md`](docs/cursor-vault-memory.md)** — how `.cursor/rules/clawql-vault-memory.mdc` and `.cursor/skills/clawql-vault-memory/` relate to `memory_ingest` / `memory_recall`.
-
-- **Benchmarks & raw artifacts:** [Benchmarks and results](#benchmarks-and-results) — quick links to [all-providers stats](docs/benchmarks/all-providers-complex-workflow/experiment-all-providers-complex-workflow-stats.json), [default multi-provider stats](docs/benchmarks/multi-provider-complex-workflow/experiment-multi-provider-complex-workflow-stats.json), and workflow JSON outputs.
-
-- **Case studies (MCP workflows):** [Case studies](#case-studies) — e.g. [deploying `docs.clawql.com` with `search` / `execute` / vault tools](docs/case_studies/cloudflare-docs-site-mcp-workflow.md); website copy at **`https://docs.clawql.com/case-studies/cloudflare-docs-mcp`**. Also **[TrueNAS Scale homelab + `memory_ingest` / SSH](docs/case_studies/truenas-scale-corgicave-homelab-networking-ssh-case-study-2026-04.md)** (`https://docs.clawql.com/case-studies/truenas-scale-corgicave-homelab`). **[Worker 1102 / `waitUntil` incident + MCP debug + `memory_ingest` + Lighthouse CI](docs/case_studies/docs-clawql-worker-1102-mcp-memory-2026-04.md)** (`https://docs.clawql.com/case-studies/docs-clawql-worker-1102-mcp-memory-2026-04`). **Caching:** [`docs/website-caching.md`](docs/website-caching.md). **Performance / Workers guardrails (Lighthouse CI, WCAG, 1102 prevention):** [`docs/website-performance-workers-guardrails.md`](docs/website-performance-workers-guardrails.md).
-
----
-
-## Install (npm / yarn / bun)
+Install:
 
 ```bash
 npm install clawql-mcp
-# yarn add clawql-mcp
-# bun add clawql-mcp
 ```
 
-**Registry size:** The published package is large (**~10 MB** compressed, **~90+ MB** installed) because it ships **`providers/`** — bundled OpenAPI/Discovery specs for **offline** lookup. That is intentional; expect longer installs and higher disk use than a typical small utility.
-
-Binaries (after install):
-
-| Command           | Purpose                                                           |
-| ----------------- | ----------------------------------------------------------------- |
-| `clawql-mcp`      | MCP server on stdio (what Cursor/Claude connect to)               |
-| `clawql-mcp-http` | MCP over Streamable HTTP (`PORT`, `/mcp`, `/healthz`, `/graphql`) |
-
-Supported **ESM subpaths** (see `package.json` → `exports`): `clawql-mcp` (stdio entry), `clawql-mcp/server-http`, `clawql-mcp/graphql-proxy` (programmatic OpenAPI→GraphQL app builder). Prefer the **binaries** above for normal use.
-
-Example (after `npm install -g clawql-mcp` or with local `node_modules/.bin` on `PATH`):
-
-```bash
-export CLAWQL_PROVIDER=all-providers
-clawql-mcp
-```
-
-Run a published package **without** a global install:
+Run with bundled providers:
 
 ```bash
 CLAWQL_PROVIDER=all-providers npx clawql-mcp
 ```
 
-Same pattern with a **local file** (`CLAWQL_SPEC_PATH=…`) or **URL** (`CLAWQL_SPEC_URL=…` / `CLAWQL_DISCOVERY_URL=…`) — see [TL;DR](#tldr).
+Then configure your MCP client (Cursor/Claude Desktop) to connect.
 
-### Docker
+## Documentation Map
 
-A multi-stage [Distroless](https://github.com/GoogleContainerTools/distroless) image bundles `dist/`, `bin/`, and `providers/` for local spec lookup. Build and run (stdio) are documented in [`docker/README.md`](docker/README.md). The image sets **`CLAWQL_OBSIDIAN_VAULT_PATH=/vault`** so **`memory_ingest`** / **`memory_recall`** can run when `/vault` is mounted; **`sandbox_exec`** still needs **`CLAWQL_SANDBOX_BRIDGE_URL`** and a deployed [sandbox bridge](cloudflare/sandbox-bridge/README.md) (not bundled in the image).
+Top-level docs index: `docs/README.md`
 
-### Remote MCP (HTTP)
+### Start here
 
-ClawQL can run as a networked MCP server using Streamable HTTP:
+- Getting started: `docs/readme/getting-started.md`
+- Configuration and env precedence: `docs/readme/configuration.md`
+- Deployment and client config: `docs/readme/deployment.md`
+- Benchmarks and case studies: `docs/readme/benchmarks.md`
+- Development notes: `docs/readme/development.md`
+- Tool workflow skills: `docs/skills/README.md`
 
-```bash
-PORT=8080 npm run start:http
-```
+### Core references
 
-Default endpoint when running locally as above: `http://localhost:8080/mcp` (health: `/healthz`). Optional **`CLAWQL_HEALTHZ_MEMORY_ARTIFACTS=1`** adds **`merkleSnapshot`** / **`cuckooMembershipArtifactsEnabled`** to **`GET /healthz`** JSON when the vault and Merkle/Cuckoo env flags are set (off by default for fast probes). **Your real URL may differ** (other port, Docker/K8s, tunnel, Cloud Run). For Cursor, use a remote server entry with `"url": "<your-endpoint>/mcp"` — see [`.cursor/mcp.json.example`](.cursor/mcp.json.example) (copy to gitignored `.cursor/mcp.json`) and [`docker/README.md`](docker/README.md).
+- MCP tools and examples: `docs/mcp-tools.md`
+- Workflow recipes: `docs/recipes/README.md`
+- Memory and vault workflows: `docs/memory-obsidian.md`
+- Cache tool: `docs/cache-tool.md`
+- Enterprise optional tools (`audit`, etc.): `docs/enterprise-mcp-tools.md`
+- Slack notify tool: `docs/notify-tool.md`
+- Onyx knowledge tool: `docs/onyx-knowledge-tool.md`
+- Ouroboros package and integration: `docs/clawql-ouroboros.md`
 
-**From the npm package** (no clone): `PORT=8080 npx -p clawql-mcp clawql-mcp-http`. **From a repo checkout:** `npm run start:http` runs the same binary.
+### Deployments
 
-**Optional gRPC** (same process as HTTP): set **`ENABLE_GRPC=1`**. Implementation uses the reusable **`mcp-grpc-transport`** package ([npm](https://www.npmjs.com/package/mcp-grpc-transport), [source](https://github.com/danielsmithdevelopment/ClawQL/tree/main/packages/mcp-grpc-transport), [why it exists — ClawQL + Python PoC](https://github.com/danielsmithdevelopment/ClawQL/blob/main/packages/mcp-grpc-transport/README.md#background-clawql-and-the-python-reference)) for pluggable MCP over gRPC in TypeScript. The server listens on **`GRPC_PORT`** (default **50051**) and exposes:
+- Docker: `docker/README.md`
+- Cloud Run: `docs/deployment/deploy-cloud-run.md`
+- Kubernetes: `docs/deployment/deploy-k8s.md`
+- Helm chart: `docs/deployment/helm.md`
 
-- **`grpc.health.v1.Health`** — standard [gRPC health checking](https://github.com/grpc/grpc/blob/master/doc/health-checking.md) (`Check` / `Watch`) for probes and meshes. Example: `grpcurl -plaintext localhost:50051 grpc.health.v1.Health/Check`.
-- **`model_context_protocol.Mcp`** — protobuf unary/streaming RPCs aligned with the [reference MCP gRPC protobuf design](https://github.com/GoogleCloudPlatform/mcp-python-sdk-grpc-poc) (community spec); clients send **`mcp-protocol-version`** metadata on those RPCs. Per-service health: `Check` with `service` = `model_context_protocol.Mcp` (see **`PROTOBUF_MCP_SERVICE_FQN`** in [`mcp-grpc-transport`](packages/mcp-grpc-transport)).
-- **`mcp.transport.v1.Mcp.Session`** — optional bidirectional stream of JSON-RPC messages (same logical framing as stdio). Per-service health: `Check` with `service` = `mcp.transport.v1.Mcp` (see **`MCP_TRANSPORT_SESSION_SERVICE_FQN`** in [`mcp-grpc-transport`](packages/mcp-grpc-transport)).
-- **`ENABLE_GRPC_REFLECTION=1`** — registers [gRPC server reflection](https://github.com/grpc/grpc/blob/master/doc/server-reflection.md) for `grpcurl list` / `describe` (off by default).
+### Providers and specs
 
-**Testing and invoking protobuf MCP (metadata, grpcurl, `@grpc/grpc-js`, grpcurl formatting caveats):** see **[`packages/mcp-grpc-transport/README.md` — Testing and invoking MCP over gRPC](packages/mcp-grpc-transport/README.md#testing-and-invoking-mcp-over-grpc)**.
+- Provider matrix and presets: `providers/README.md`
+- Google Discovery helpers: `docs/providers/google-apis-lookup.md`
 
-**Kubernetes:** The **base** [`docker/kustomize/base`](docker/kustomize/base) manifest keeps **`httpGet` `/healthz`** probes because **`ENABLE_GRPC`** is off by default—nothing would answer on port **50051**. When you turn gRPC on, **native [`grpc` probes](https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/#grpc-probes)** are appropriate: the **kubelet** speaks **`grpc.health.v1`** itself, so you do **not** need the **`grpc_health_probe`** binary inside Distroless. Use the opt-in overlay **`docker/kustomize/overlays/grpc-enabled/`** (`kubectl apply -k …/grpc-enabled`), which sets **`ENABLE_GRPC=1`** and switches **readiness** / **liveness** to **`grpc` on port 50051** while leaving **startup** on **HTTP** so slow boots still work.
+## Architecture (Short Version)
 
-**gRPC tracking:** historical scope and acceptance discussion for protobuf MCP lives in [issue #67](https://github.com/danielsmithdevelopment/ClawQL/issues/67).
+1. Agent calls `search` to discover relevant operations without loading entire specs into prompt context.
+2. Agent calls `execute` with operation details.
+3. In single-spec mode, ClawQL can use an internal OpenAPI-to-GraphQL path to keep responses lean.
+4. In multi-spec mode, ClawQL executes via REST per owning spec.
 
-The **`clawql-mcp-http`** Service in **base** and every **dev** / **local** / **prod** overlay publishes **gRPC port 50051** (name **`grpc`**) alongside HTTP, so you can reach **`model_context_protocol.Mcp`** at **`<service-ip>:50051`** without **`kubectl port-forward`** once **`ENABLE_GRPC=1`**. See [`docs/deploy-k8s.md`](docs/deploy-k8s.md#service-ports-http-and-grpc).
+## Notes
 
-Point your MCP client at `clawql-mcp` on stdio as in [TL;DR](#tldr) (two terminals).
-
-## Installing from GitHub source (instead of npm registry)
-
-If you install directly from git, run **`npm run build`** once so `dist/` exists (the **npm registry** tarball already includes `dist/`).
-
-```bash
-npm i github:danielsmithdevelopment/ClawQL
-npm run build
-```
-
-## Benchmarks and results
-
-These sections compare **planning-context size** (merged specs on disk vs. small `search` / workflow outputs), **not** a per-call API bill. See [Planning-context numbers vs your API bill](#planning-context-numbers-vs-your-api-bill) for caveats.
-
-**Jump to data:**
-
-| Scenario                                             | Workflow output (JSON)                                                                          | Stats JSON                                                                                                                                                       | Markdown write-up                                                                                                                                |
-| ---------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **All-providers** complex release-stack              | [`workflow-complex-release-stack-latest.json`](docs/workflow-complex-release-stack-latest.json) | [`experiment-all-providers-complex-workflow-stats.json`](docs/benchmarks/all-providers-complex-workflow/experiment-all-providers-complex-workflow-stats.json)    | [`experiment-all-providers-complex-workflow.md`](docs/benchmarks/all-providers-complex-workflow/experiment-all-providers-complex-workflow.md)    |
-| **Default multi-provider** (GKE + Cloudflare + Jira) | [`workflow-multi-provider-latest.json`](docs/workflow-multi-provider-latest.json)               | [`experiment-multi-provider-complex-workflow-stats.json`](docs/benchmarks/multi-provider-complex-workflow/experiment-multi-provider-complex-workflow-stats.json) | [`experiment-multi-provider-complex-workflow.md`](docs/benchmarks/multi-provider-complex-workflow/experiment-multi-provider-complex-workflow.md) |
-
-**More:** phase-1/phase-2 token repro ([`latest.json`](docs/benchmarks/latest.json), [`latest.md`](docs/benchmarks/latest.md)) via `npm run benchmark:tokens` — full steps in [`docs/benchmarks/REPRODUCE.md`](docs/benchmarks/REPRODUCE.md). See also [How the two phases save tokens](#how-the-two-phases-save-tokens) below.
-
-### Case studies
-
-Real agent workflows using **`search`**, **`execute`**, **`memory_recall`**, and **`memory_ingest`**: **[`docs/case_studies/README.md`](docs/case_studies/README.md)** — including **[deploying `docs.clawql.com` on Cloudflare with MCP](docs/case_studies/cloudflare-docs-site-mcp-workflow.md)** (Worker **`fs` limits**, token scopes, vault cadence). The same narrative lives on the docs site at **`https://docs.clawql.com/case-studies/cloudflare-docs-mcp`**. **[TrueNAS Scale `corgicave` homelab networking + SSH](docs/case_studies/truenas-scale-corgicave-homelab-networking-ssh-case-study-2026-04.md)** is on **`https://docs.clawql.com/case-studies/truenas-scale-corgicave-homelab`**. **[Worker 1102 / `waitUntil`, MCP Cloudflare debugging, vault postmortem, Lighthouse CI](docs/case_studies/docs-clawql-worker-1102-mcp-memory-2026-04.md)** — **`https://docs.clawql.com/case-studies/docs-clawql-worker-1102-mcp-memory-2026-04`**.
-
-### Highlight: All-providers complex release-stack (largest benchmark)
-
-> 🏆 **Best benchmark so far** by **absolute planning-context savings**: **~13.83M tokens** not pasted into context vs embedding the **full merged spec corpus** for **`CLAWQL_PROVIDER=all-providers`**.
-
-One end-to-end scenario across **Google top50 + Bitbucket + Cloudflare + GitHub + Jira + n8n + Sentry + Slack** (57 on-disk specs, **8,990** operations): GKE and networking, Cloudflare DNS/cache, Sentry, GitHub Actions, Slack and n8n automation, optional Bitbucket, and a Jira runbook draft.
-
-**Goal (abbreviated)**
-
-- GKE cluster, workload, Service exposure; GCP firewall patterns compatible with Cloudflare source IP ranges.
-- Cloudflare DNS (proxied) and caching toward the origin.
-- Sentry project/DSN/releases; GitHub Actions scheduled deploy; Slack notifications; n8n workflow toward GitHub releases; optional Bitbucket repos/Pipelines.
-- Jira issue draft: sections by vendor, labels, due +7 days, High priority.
-
-**Workflow query sequence (exact)** — `npm run workflow:complex-release-stack`
-
-- `create kubernetes cluster container.googleapis.com regional`
-- `node pool create autoscaling kubernetes engine`
-- `deploy workload deployment rolling update kubernetes`
-- `kubernetes service type load balancer external IP`
-- `compute firewall rule create allow tcp source range ingress`
-- `network endpoint group kubernetes ingress`
-- `dns record create zone A CNAME proxied`
-- `zone details get`
-- `cache rules configuration`
-- `zone settings cache level`
-- `tiered cache smart topology`
-- `create project organization`
-- `dsn key client key`
-- `release create deploy`
-- `create workflow dispatch repository`
-- `repository secrets actions`
-- `cron schedule workflow yaml`
-- `chat.postMessage channel`
-- `conversations.history channel`
-- `incoming webhook`
-- `create workflow`
-- `activate workflow`
-- `webhook trigger`
-- `repository create project`
-- `pipeline run commit`
-- `pull request create`
-- `create issue rest api`
-- `edit issue labels priority duedate`
-- `assign issue accountId`
-
-**Specs loaded for this run**
-
-- Google top50 Discovery bundle
-- Bitbucket, Cloudflare, GitHub, Jira, n8n, Sentry, Slack OpenAPI (bundled)
-
-**Measured savings (planning context)**
-
-- Full loaded specs: `55,475,059` bytes (~`13,868,765` tokens)
-- Workflow output: `144,764` bytes (~`36,191` tokens) — [`docs/workflow-complex-release-stack-latest.json`](docs/workflow-complex-release-stack-latest.json)
-- Savings: `13,832,574` tokens (**`99.74%`** reduction, **`383.21x`** smaller)
-
-The **compression ratio** is lower than the lighter three-provider benchmark below because this report is a richer JSON artifact—but the **on-disk spec surface is ~36% larger** and **~3.6M more tokens** are saved vs pasting every spec.
-
-Details and reproducible stats:
-
-- [`docs/benchmarks/all-providers-complex-workflow/experiment-all-providers-complex-workflow.md`](docs/benchmarks/all-providers-complex-workflow/experiment-all-providers-complex-workflow.md)
-- [`docs/benchmarks/all-providers-complex-workflow/experiment-all-providers-complex-workflow-stats.json`](docs/benchmarks/all-providers-complex-workflow/experiment-all-providers-complex-workflow-stats.json)
-
-### Strong benchmark: Default multi-provider (GKE + Cloudflare + Jira)
-
-> **99.88%** / **861.98x** on a **smaller** three-provider corpus—still an excellent result when you only merge the default install bundle.
-
-One realistic workflow spanning **Google Cloud + Cloudflare + Jira** with a single coherent objective (GKE → Cloudflare → Jira tracking).
-
-**Workflow query sequence (exact)** — `npm run workflow:multi-provider`
-
-- `create kubernetes cluster GKE regional zonal`
-- `deploy application workload container image kubernetes engine`
-- `kubernetes service load balancer external IP expose`
-- `compute firewall rule ingress allow tcp source ip range`
-- `container clusters get credentials kubectl`
-- `create dns record zone A CNAME proxy`
-- `list dns records filter name content`
-- `load balancer pool origin health check`
-- `cache rules cache reserve ttl bypass`
-- `zone settings cache always online`
-- `create issue project fields summary`
-- `assign issue accountId assignee`
-- `edit issue labels duedate priority`
-- `get create issue metadata createmeta`
-
-**Specs loaded for this run**
-
-- Google top50 Discovery bundle
-- Cloudflare full OpenAPI
-- Jira OpenAPI
-
-**Measured savings (planning context)**
-
-- Full loaded specs: `40,835,581` bytes (~`10,208,896` tokens)
-- Workflow output: `47,374` bytes (~`11,844` tokens)
-- Savings: `10,197,052` tokens (`99.88%` reduction, `861.98x` smaller)
-
-Details and reproducible stats:
-
-- [`docs/benchmarks/multi-provider-complex-workflow/experiment-multi-provider-complex-workflow.md`](docs/benchmarks/multi-provider-complex-workflow/experiment-multi-provider-complex-workflow.md)
-- [`docs/benchmarks/multi-provider-complex-workflow/experiment-multi-provider-complex-workflow-stats.json`](docs/benchmarks/multi-provider-complex-workflow/experiment-multi-provider-complex-workflow-stats.json)
-
-Quick context: token estimates use `~4 chars/token`; Phase 1 measures planning-context reduction (`full spec -> top-5 search`), and Phase 2 measures execution-payload reduction (`full REST JSON -> GraphQL JSON`).
-
-### Planning-context numbers vs your API bill
-
-The **~10M / ~14M token** figures in the highlights above are **not** “what one MCP call costs” or a forecast line item on a provider dashboard. They compare two **static blobs**: the byte size of **all merged spec files on disk** (as if you pasted that text into context once) vs the byte size of **one** offline workflow report JSON. It is a **thought experiment** about how big “give the model every operation definition” would be.
-
-**Normal ClawQL usage:** specs live **inside the MCP server**. The model never receives the full OpenAPI pile; it sends **`search` queries** and gets back **short ranked lists** (and later **`execute`** results). So you are **not** automatically charged ~10M input tokens per step from spec loading.
-
-**If you did paste full specs into a chat thread:** on most APIs, that text becomes part of **conversation history**, so **later turns** can still be billed on a **very large input** each request (unless the provider **prompt-caches** a stable prefix—then accounting differs). So yes—**huge pasted context tends to stick around and compound** across turns; that is exactly the failure mode these benchmarks contrast against.
-
-**After completing a full multi-step workflow** (e.g. the 14 `search` intents in the default multi-provider list): billable usage is the **sum over each model request** of (prompt + history + tool **outputs** that round + assistant text). There is no single repo-wide number: it depends on model, tool verbosity, and how large each **`execute`** response is. For a disciplined agent using only **`search`/`execute`** without pasting specs, expect **roughly tens of thousands to low hundreds of thousands** of tokens for such a run—not millions—**unless** responses or transcripts are huge.
-
-#### Hypothetical naive baseline (same 14-query multi-provider workflow)
-
-Assume the agent **never uses ClawQL** and instead keeps the **entire** provider spec in the model context whenever it works on that vendor. Query mix matches [`scripts/workflow-gke-cloudflare-jira.mjs`](scripts/workflow-gke-cloudflare-jira.mjs): **5** Google + **5** Cloudflare + **4** Jira = **14** model steps. Spec sizes match on-disk bundles ([`experiment-multi-provider-complex-workflow-stats.json`](docs/benchmarks/multi-provider-complex-workflow/experiment-multi-provider-complex-workflow-stats.json)): **~5.13M**, **~4.77M**, and **~0.31M** tokens respectively (`ceil(bytes / 4)` per corpus).
-
-| Variant                                | Assumption                                                                                                                                                                                                                           | Approx spec-related tokens (workflow)                                                                                  |
-| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
-| **A — Exclusive context per provider** | Clear context when switching vendor; each provider’s **full** spec is loaded **once** when that segment starts (no duplicate loads).                                                                                                 | **~10.2M** total spec tokens materialized (`5.13M + 4.77M + 0.31M`) — same as “paste each corpus once” across the run. |
-| **B — Full spec on every turn**        | Each of the **14** requests includes the **full** spec for the **current** provider (common if the API **re-sends** the whole prompt and there is **no** effective prompt cache). Spec-only; ignores extra history and user queries. | **~50.7M** (`5×5.13M + 5×4.77M + 4×0.31M`).                                                                            |
-
-**ClawQL comparison anchor:** the committed offline workflow capture is **~11.8k** tokens (see [`docs/benchmarks/archive/multi-provider-workflow-run.md`](docs/benchmarks/archive/multi-provider-workflow-run.md) and the stats JSON). That is **not** identical to 14 live MCP turns (which add tool envelopes and assistant text), but it is the same order of magnitude as **search-only** planning context.
-
-**Order-of-magnitude savings vs variant B (spec-only vs ~12k artifact):** **~50.7M − ~12k ≈ ~50.7M** fewer tokens attributed to carrying full specs—**>99.97%** on that slice. Versus variant A, **~10.2M − ~12k ≈ ~10.2M** on the same slice. Real dashboards also charge **assistant output**, **tool metadata**, and **history**, so totals are higher on both sides; the table isolates the **spec** component the README highlight is about.
-
----
-
-## Setup
-
-### 1. Install dependencies
-
-```bash
-npm install
-```
-
-### 2. Start the GraphQL proxy
-
-The GraphQL proxy must be running before the MCP server makes execution calls.
-Run it in a separate terminal or as a background process:
-
-```bash
-npm run graphql
-# GraphQL proxy running at http://localhost:4000/graphql
-```
-
-### 3. Start the MCP server
-
-```bash
-npm run dev          # development (tsx, no build step)
-npm run build && npm start  # production
-```
-
-### 4. Run tests
-
-Tests use [Vitest](https://vitest.dev/) (`npm test`; `pretest` compiles `dist/` for the stdio smoke test). Coverage (v8): `npm run test:coverage` runs **`build` first**, then Vitest with coverage (text summary + HTML under `coverage/`).
-
-```bash
-npm test
-npm run test:coverage
-```
-
----
-
-## Configure the API spec
-
-Selection is implemented in **two stages** in [`src/spec-loader.ts`](src/spec-loader.ts) (`resolveMultiSpecItems` → else single-spec). Use this as the single precedence story (see also `.env.example`).
-
-### Stage 1 — Multi-spec merge (merged operation index)
-
-Used when any of the following applies (checked in this order):
-
-1. **`CLAWQL_SPEC_PATHS`** — merge these local files (comma, semicolon, or newline separated).
-2. **`CLAWQL_BUNDLED_PROVIDERS`** — merge by **id**: comma/semicolon/newline-separated `BUNDLED_PROVIDERS` keys and/or **`google`** (expands to the full bundled Google Cloud manifest). No other “partial default” — only this list, the path list above, a merged **`CLAWQL_PROVIDER`** shortcut, or the built-in default in step 4.
-3. **`CLAWQL_PROVIDER`** — if it names a **merged preset** (`google`, `all-providers`, `atlassian`, …) for Stage 1, load that bundle. **Not** a default when unset (see step 4). Single-vendor `CLAWQL_PROVIDER=cloudflare` and similar are Stage 2.
-4. **Built-in default merge** — only if nothing above selected multi-spec and **`CLAWQL_SPEC_PATH`**, **`CLAWQL_SPEC_URL`**, and **`CLAWQL_DISCOVERY_URL`** are also unset: **`all-providers`**.
-
-If Stage 1 runs, you get one merged **search** index; **`execute`** uses **REST** per spec (see server logs: GraphQL is not used for multi-spec execute).
-
-### Stage 2 — Single spec (first match wins)
-
-If Stage 1 does **not** apply, one document is loaded in this order:
-
-1. **`CLAWQL_SPEC_PATH`** (or `OPENAPI_SPEC_PATH` / `OPENAPI_FILE`)
-2. **`CLAWQL_SPEC_URL`** (or `OPENAPI_SPEC_URL`)
-3. **`CLAWQL_DISCOVERY_URL`** (or `GOOGLE_DISCOVERY_URL`)
-4. **`CLAWQL_PROVIDER`** — **single** bundled vendor (`cloudflare`, `github`, …), not a merged preset
-5. Rare fallback if nothing above matches (see code path `kind: "default"`)
-
-**Examples:** `CLAWQL_SPEC_PATH=./openapi.yaml` skips Stage 1 and loads that file. `CLAWQL_PROVIDER=cloudflare` alone is a **single** bundle (Stage 2). Empty env triggers Stage 1’s **default merge**, not a single-spec default.
-
-| Variable                                                            | Meaning                                                                                                                                                                                                                                                                                                                                                                                                               |
-| ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `CLAWQL_SPEC_PATH`                                                  | Path to local OpenAPI JSON/YAML (or `OPENAPI_SPEC_PATH`)                                                                                                                                                                                                                                                                                                                                                              |
-| `CLAWQL_SPEC_PATHS`                                                 | Comma/semicolon/newline-separated paths — **merge** many specs in **one** process (overrides single-spec vars when set)                                                                                                                                                                                                                                                                                               |
-| `CLAWQL_BUNDLED_PROVIDERS`                                          | Comma/semicolon/newline-separated **bundled** provider ids (see `BUNDLED_PROVIDERS` in the repo) plus optional **`google`** = full on-disk Google Cloud manifest. Custom merge; no implicit subset.                                                                                                                                                                                                                   |
-| `CLAWQL_SPEC_URL`                                                   | URL to fetch OpenAPI JSON/YAML                                                                                                                                                                                                                                                                                                                                                                                        |
-| `CLAWQL_DISCOVERY_URL`                                              | Google Discovery JSON URL (e.g. other GCP APIs)                                                                                                                                                                                                                                                                                                                                                                       |
-| `CLAWQL_PROVIDER`                                                   | **Merged** preset in Stage 1, or **single** bundled vendor in Stage 2 — see [Configure the API spec](#configure-the-api-spec) (not both at once)                                                                                                                                                                                                                                                                      |
-| `CLAWQL_INTROSPECTION_PATH`                                         | Pregenerated GraphQL introspection JSON (optional; speeds MCP `execute` field matching)                                                                                                                                                                                                                                                                                                                               |
-| `CLAWQL_API_BASE_URL`                                               | Override REST base URL (if spec has no `servers` or you need a different host)                                                                                                                                                                                                                                                                                                                                        |
-| `CLAWQL_OBSIDIAN_VAULT_PATH`                                        | Absolute path to an Obsidian Markdown vault (shared volume/NFS). When set, the server **checks** the path exists and is readable/writable at startup. Omit locally to skip the check; container images default to **`/vault`** (see [Docker](docker/README.md)). Used with **[ClawQL-Agent](https://github.com/danielsmithdevelopment/ClawQL-Agent)** and future memory tools.                                        |
-| `CLAWQL_SANDBOX_BRIDGE_URL`                                         | Origin of the [sandbox bridge Worker](cloudflare/sandbox-bridge/README.md) (e.g. `https://….workers.dev`). Required for **`sandbox_exec`**.                                                                                                                                                                                                                                                                           |
-| `CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN`                               | Bearer token for **`POST /exec`**; must match the Worker `BRIDGE_SECRET`.                                                                                                                                                                                                                                                                                                                                             |
-| `CLAWQL_CLOUDFLARE_ACCOUNT_ID`                                      | Optional; sent as `CF-Account-ID` on bridge requests.                                                                                                                                                                                                                                                                                                                                                                 |
-| `CLAWQL_SANDBOX_PERSISTENCE_MODE`                                   | Default `session` / `ephemeral` / `persistent` for sandbox tool calls (overridable per call).                                                                                                                                                                                                                                                                                                                         |
-| `CLAWQL_SANDBOX_TIMEOUT_MS`                                         | Max wait for each bridge request (default `120000`).                                                                                                                                                                                                                                                                                                                                                                  |
-| `CLAWQL_MEMORY_RECALL_SCAN_ROOT`                                    | Subfolder under the vault to scan (default `Memory`). Set to empty to scan the whole vault.                                                                                                                                                                                                                                                                                                                           |
-| `CLAWQL_MEMORY_RECALL_LIMIT`                                        | Default max notes returned by **`memory_recall`** (`10`).                                                                                                                                                                                                                                                                                                                                                             |
-| `CLAWQL_MEMORY_RECALL_MAX_DEPTH`                                    | Default wikilink hops from a keyword hit (`2`).                                                                                                                                                                                                                                                                                                                                                                       |
-| `CLAWQL_MEMORY_RECALL_MIN_SCORE`                                    | Minimum keyword score to seed a note (`1`).                                                                                                                                                                                                                                                                                                                                                                           |
-| `CLAWQL_MEMORY_RECALL_MAX_FILES`                                    | Safety cap on Markdown files scanned (`2000`).                                                                                                                                                                                                                                                                                                                                                                        |
-| `CLAWQL_MEMORY_RECALL_SNIPPET_CHARS`                                | Snippet length in characters (`520`).                                                                                                                                                                                                                                                                                                                                                                                 |
-| `CLAWQL_MEMORY_DB`                                                  | Set to **`0`** to disable the **`memory.db`** sidecar (no sync after ingest, no wikilink merge in recall).                                                                                                                                                                                                                                                                                                            |
-| `CLAWQL_MEMORY_DB_PATH`                                             | SQLite file path: default **`memory.db`** under the vault; may be an **absolute** path. See [`docs/memory-db-schema.md`](docs/memory-db-schema.md).                                                                                                                                                                                                                                                                   |
-| `CLAWQL_MEMORY_DB_SYNC_ON_RECALL`                                   | Set to **`1`** to rewrite **`memory.db`** from every **`memory_recall`** scan (optional; heavier than ingest-only sync).                                                                                                                                                                                                                                                                                              |
-| `CLAWQL_MEMORY_CHUNK_MAX_CHARS`                                     | `paragraph_v1` chunker max window size before hard-split (`2000`).                                                                                                                                                                                                                                                                                                                                                    |
-| `CLAWQL_MEMORY_INDEX_PAGE`                                          | Set to **`0`** to skip auto **`_INDEX_*.md`** pages after **`memory_ingest`**. Default: enabled (vault tools).                                                                                                                                                                                                                                                                                                        |
-| `CLAWQL_MEMORY_INDEX_PROVIDER`                                      | Label for **`_INDEX_{Provider}.md`** (filename sanitized). Default **`ClawQL`**. See **[`docs/memory-obsidian.md`](docs/memory-obsidian.md)** ([#38](https://github.com/danielsmithdevelopment/ClawQL/issues/38)).                                                                                                                                                                                                    |
-| `CLAWQL_VECTOR_BACKEND`                                             | **`sqlite`** — vectors + KNN in **`memory.db`**. **`postgres`** — pgvector when **`CLAWQL_VECTOR_DATABASE_URL`** is set; **if unset**, vectors use **`memory.db`** only (fallback). Default: off. Tradeoffs: **[`docs/hybrid-memory-backends.md`](docs/hybrid-memory-backends.md)**.                                                                                                                                  |
-| `CLAWQL_VECTOR_DATABASE_URL`                                        | Postgres URL for pgvector when backend is **`postgres`**. Optional at first deploy: without it, ClawQL uses SQLite vectors and logs a warning. Requires **`CREATE EXTENSION vector`** (server runs **`CREATE EXTENSION IF NOT EXISTS vector`** on first use).                                                                                                                                                         |
-| `CLAWQL_MEMORY_VECTOR_DUAL_WRITE`                                   | When **Postgres is actually used** (URL set), default **`1`**: also store vector BLOBs in **`memory.db`**. **`0`** = Postgres-only vectors. Ignored when the effective backend is **`sqlite`**.                                                                                                                                                                                                                       |
-| `CLAWQL_EMBEDDING_DIMENSION`                                        | Vector width for the pgvector column and API validation (default **`1536`**, e.g. `text-embedding-3-small`). See **[`docs/hybrid-memory-backends.md`](docs/hybrid-memory-backends.md)** for SQLite vs Postgres roles.                                                                                                                                                                                                 |
-| `CLAWQL_EMBEDDING_BASE_URL`                                         | OpenAI-compatible API base (default `https://api.openai.com/v1`).                                                                                                                                                                                                                                                                                                                                                     |
-| `CLAWQL_EMBEDDING_MODEL`                                            | Embedding model id (default `text-embedding-3-small`).                                                                                                                                                                                                                                                                                                                                                                |
-| `CLAWQL_EMBEDDING_API_KEY`                                          | API key for embeddings (falls back to **`OPENAI_API_KEY`**).                                                                                                                                                                                                                                                                                                                                                          |
-| `CLAWQL_MEMORY_VECTOR_MIN_SIM`                                      | Min cosine similarity (0–1) to seed **`memory_recall`** from vectors (`0.28`).                                                                                                                                                                                                                                                                                                                                        |
-| `CLAWQL_MEMORY_VECTOR_SCORE_BOOST`                                  | Scale vector similarity into lexical score space for ranking (`50`).                                                                                                                                                                                                                                                                                                                                                  |
-| `CLAWQL_MEMORY_VECTOR_TOP_CHUNKS` / `CLAWQL_MEMORY_VECTOR_MAX_DOCS` | Caps for vector KNN candidate chunks / distinct notes (`80` / `12`).                                                                                                                                                                                                                                                                                                                                                  |
-| `CLAWQL_MCP_LOG_TOOLS`                                              | Set to **`1`** to log **non-sensitive** parameter shapes for **`memory_ingest`** / **`memory_recall`** / **`ingest_external_knowledge`** to **stderr** (lengths and flags only). Default: off.                                                                                                                                                                                                                        |
-| `CLAWQL_EXTERNAL_INGEST`                                            | Set to **`1`** to enable **`ingest_external_knowledge`** (Markdown **`documents[]`**; **`dryRun`** defaults **`true`**). Optional **`CLAWQL_EXTERNAL_INGEST_FETCH=1`** for **`url`** mode (`fetch`). See [`docs/external-ingest.md`](docs/external-ingest.md) ([#40](https://github.com/danielsmithdevelopment/ClawQL/issues/40)).                                                                                    |
-| `CLAWQL_GITHUB_TOKEN`                                               | GitHub PAT / fine-grained token for **`execute`** when the operation is from the **github** spec (or `CLAWQL_PROVIDER=github`). Also accepts **`GITHUB_TOKEN`** / **`GH_TOKEN`**.                                                                                                                                                                                                                                     |
-| `CLAWQL_CLOUDFLARE_API_TOKEN`                                       | Cloudflare API token for **`execute`** when the operation is from the **cloudflare** spec (or `CLAWQL_PROVIDER=cloudflare`). Also accepts **`CLOUDFLARE_API_TOKEN`**.                                                                                                                                                                                                                                                 |
-| `CLAWQL_GOOGLE_ACCESS_TOKEN`                                        | OAuth access token for **Google Cloud** APIs (`compute-v1`, … manifest slugs, or merged preset **`google`**). Also accepts **`GOOGLE_ACCESS_TOKEN`**.                                                                                                                                                                                                                                                                 |
-| `CLAWQL_BEARER_TOKEN`                                               | Scoped bearer: GitHub, Cloudflare, Jira/Bitbucket/Atlassian, and optional Tika/Gotenberg only — **not** sent to Slack, Sentry, n8n, or Google Discovery slugs (use those vendors’ env vars or **`CLAWQL_PROVIDER_AUTH_JSON`**).                                                                                                                                                                                       |
-| `CLAWQL_PROVIDER_AUTH_JSON`                                         | **Multi-provider auth bundle:** JSON object keyed by merged **`specLabel`** (`github`, `cloudflare`, `slack`, `compute-v1`, …). Each value is a **Bearer/Token/Basic string** or a **headers object**. Key **`google`** applies to all Google Cloud Discovery slugs unless a slug-specific entry overrides. Overrides per-label env tokens when set. See **`src/auth-headers.ts`**.                                   |
-| `ENABLE_GRPC`                                                       | Optional MCP over **gRPC** on **`GRPC_PORT`** (`1` / `true` / `yes`). See [Optional gRPC](#optional-grpc) and [`docs/mcp-tools.md`](docs/mcp-tools.md#optional-tool-flags-clawql_enable_-and-related).                                                                                                                                                                                                                |
-| `ENABLE_GRPC_REFLECTION`                                            | **`1`** — register gRPC reflection for **grpcurl** `list` / `describe`.                                                                                                                                                                                                                                                                                                                                               |
-| `CLAWQL_ENABLE_CACHE`                                               | **`1`** — register MCP **`cache`** (in-process LRU KV, not persisted; [#75](https://github.com/danielsmithdevelopment/ClawQL/issues/75)). Optional **`CLAWQL_CACHE_MAX_VALUE_BYTES`**, **`CLAWQL_CACHE_MAX_ENTRIES`**. Use **`memory_ingest`** / **`memory_recall`** for durable vault memory.                                                                                                                        |
-| `CLAWQL_ENABLE_AUDIT`                                               | **`1`** — register MCP **`audit`** (in-process ring buffer, not on disk; [#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)). Optional **`CLAWQL_AUDIT_MAX_ENTRIES`**. Use **`memory_ingest`** for durable trails.                                                                                                                                                                                     |
-| `CLAWQL_ENABLE_NOTIFY`                                              | **`1`** — register MCP **`notify`** (Slack **`chat.postMessage`**; [#77](https://github.com/danielsmithdevelopment/ClawQL/issues/77)). Requires **Slack in the loaded spec** (e.g. **`CLAWQL_PROVIDER=slack`** or merged **`slack`**) and a bot token (**`CLAWQL_SLACK_TOKEN`** / **`SLACK_BOT_TOKEN`** / … — see [`src/auth-headers.ts`](src/auth-headers.ts)). Guide: [`docs/notify-tool.md`](docs/notify-tool.md). |
-| `CLAWQL_ENABLE_ONYX`                                                | **`1`** — register MCP **`knowledge_search_onyx`** (Onyx **`POST /search/send-search-message`**; [#118](https://github.com/danielsmithdevelopment/ClawQL/issues/118)). Requires **`onyx`** in the loaded merge (default **`all-providers`**) and **`ONYX_BASE_URL`** + **`ONYX_API_TOKEN`** / **`CLAWQL_ONYX_API_TOKEN`** (Bearer). Guide: [`docs/onyx-knowledge-tool.md`](docs/onyx-knowledge-tool.md).              |
-| `CLAWQL_ENABLE_SCHEDULE`                                            | **`1`** — register MCP **`schedule`** (persisted jobs + synthetic checks; [#76](https://github.com/danielsmithdevelopment/ClawQL/issues/76)). Optional `CLAWQL_SCHEDULE_DB_PATH`, history/interval caps, and `CLAWQL_SCHEDULE_URL_ALLOWLIST_PREFIXES` / `CLAWQL_SCHEDULE_SYNTHETIC_*` safety caps. See [`docs/schedule-synthetic-checks.md`](docs/schedule-synthetic-checks.md).                                      |
-| `CLAWQL_ENABLE_VISION`                                              | Reserved default **off** until [#78](https://github.com/danielsmithdevelopment/ClawQL/issues/78); parsed in [`src/clawql-optional-flags.ts`](src/clawql-optional-flags.ts) ([#79](https://github.com/danielsmithdevelopment/ClawQL/issues/79)).                                                                                                                                                                       |
-
-**GCP multi-service (Google-only merge):** set **`CLAWQL_PROVIDER=google`**, or **`CLAWQL_BUNDLED_PROVIDERS=google`**, or list Discovery paths in **`CLAWQL_SPEC_PATHS`**. `execute` uses REST. With **no** spec / env that selects a merge, the only default is **`all-providers`**. See [`docs/workflow-gcp-multi-service.md`](docs/workflow-gcp-multi-service.md).  
-**Integration check:** `npm run workflow:gcp-multi` runs **`tools/call` → `search`** over real MCP stdio and writes `docs/workflow-gcp-multi-latest.json` (full `CallToolResult` + parsed body). `npm run workflow:gcp-multi:direct` is a faster in-process-only variant for debugging rankers. One-page results summary: [`docs/gcp-multi-mcp-test-summary.md`](docs/gcp-multi-mcp-test-summary.md). Detailed experiment write-up (queries, APIs, token heuristic, MCP samples): [`docs/experiment-gcp-multi-mcp-workflow.md`](docs/experiment-gcp-multi-mcp-workflow.md); `npm run report:gcp-multi-experiment` refreshes [`docs/experiment-gcp-multi-mcp-stats.json`](docs/experiment-gcp-multi-mcp-stats.json).
-
-The default **first-run** bundle is **Stage 1 step 4** above — the full **`all-providers`** merge (Google Cloud (bundled) + every other bundled vendor). For a **subset** of providers, set **`CLAWQL_BUNDLED_PROVIDERS`** (e.g. `github,cloudflare,slack` or add **`google`** for the GCP catalog). For **one JSON blob** covering auth for merged vendors, set **`CLAWQL_PROVIDER_AUTH_JSON`** (keys = `specLabel` values from **`search`** / **`execute`**). Otherwise set per-vendor env vars (**`CLAWQL_GOOGLE_ACCESS_TOKEN`**, **`CLAWQL_CLOUDFLARE_API_TOKEN`**, **`CLAWQL_GITHUB_TOKEN`**, **`SLACK_BOT_TOKEN`**, **`SENTRY_AUTH_TOKEN`**, **`N8N_API_KEY`**, **`CLAWQL_BEARER_TOKEN`** (scoped), **`PAPERLESS_API_TOKEN`**, **`STIRLING_API_KEY`**, **`ONYX_API_TOKEN`**, …) — see **`src/auth-headers.ts`**. To use another bundled spec or merged preset, set **`CLAWQL_PROVIDER`** — merged **`google`** or **`atlassian`**, or single vendors like
-**`cloudflare`**, **`github`**, **`slack`**, **`sentry`**, **`n8n`**, or **`onyx`**
-(see `providers/README.md`; **`all-providers`** = Google Cloud bundle + all other bundled vendors).  
-Compatibility aliases currently also exist for **`jira`** and **`bitbucket`**.  
-If a bundled file is missing, the provider registry **fallback URL** is fetched
-unless `CLAWQL_BUNDLED_OFFLINE=1`.
-
-Maintainers: `npm run fetch-provider-specs` downloads specs; `npm run pregenerate-graphql`
-(after `npm run build`) writes `introspection.json` / `schema.graphql` for each
-provider where **`@omnigraph/openapi`** succeeds (**use Bun** — see `providers/README.md`).
-
-**Multi-provider workflow (offline):** `npm run workflow:multi-provider` runs a
-multi-step **`search`** scenario across **Google (GKE)**, **Cloudflare**, and **Jira**
-(GKE deploy → Cloudflare DNS/caching → Jira tracking), and writes
-[`docs/workflow-multi-provider-latest.json`](docs/workflow-multi-provider-latest.json).
-Live Jira issue-create instructions are currently omitted — see [`docs/workflow-multi-provider.md`](docs/workflow-multi-provider.md).
-
-**Complex release-stack (offline):** `npm run workflow:complex-release-stack` runs a broader **`search`** path across **Google (top50)** and **every other bundled vendor** using **`CLAWQL_PROVIDER=all-providers`**. Output: [`docs/workflow-complex-release-stack-latest.json`](docs/workflow-complex-release-stack-latest.json). Details: [`docs/workflow-complex-release-stack.md`](docs/workflow-complex-release-stack.md).
-
-**Same scenario via real MCP (`search`, dry run by default):** `npm run workflow:complex-release-stack:mcp` runs **`search`** only (no **`execute`** → no upstream REST). Spawns the stdio server, or set **`CLAWQL_MCP_URL`** (e.g. `http://127.0.0.1:8080/mcp`) for an HTTP server that must use **`all-providers`**. For optional **`execute`** smoke tests with placeholder args: **`WORKFLOW_MCP_EXECUTE=1`** or **`npm run workflow:complex-release-stack:mcp:live`**. Writes [`docs/workflow-complex-release-stack-mcp-latest.json`](docs/workflow-complex-release-stack-mcp-latest.json).
-
-See `.env.example` for a full list.
-
-### Obsidian vault (optional)
-
-Set **`CLAWQL_OBSIDIAN_VAULT_PATH`** when you mount a directory for **Obsidian**-compatible Markdown (e.g. alongside **[ClawQL-Agent](https://github.com/danielsmithdevelopment/ClawQL-Agent)** or **`memory_ingest` / `memory_recall`**). If unset or empty, no vault check runs. If set, startup fails fast when the path is missing, not a directory, or not readable/writable. Implementation helpers live in **`src/vault-config.ts`** and **`src/vault-utils.ts`** (safe paths + cooperative write lock under the vault root).
-
-**Concepts (why a vault):** Long-running agents often avoid _only_ stuffing context with retrieved chunks. A complementary pattern—sometimes called **Karpathy-style** or an **“LLM wiki”**—is to **compile** durable notes as Markdown on disk and **link** them with **`[[wikilinks]]`**, so memory **compounds** across sessions. **Obsidian** is a common viewer (plain files, graph + backlinks); the agent writes; humans browse and edit. That pattern is sketched in [Karpathy’s `llm-wiki` gist](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f). ClawQL’s **`memory_ingest`** writes under **`Memory/`** when the vault path is set. See **[`docs/memory-obsidian.md`](docs/memory-obsidian.md)** for a fuller background.
-
-**Large / vendor OpenAPI docs:** The design goal is **the full spec** — token
-efficiency comes from **search + selective `execute`**, not from trimming the
-document. ClawQL therefore applies **normalization** (e.g. shorthand `items`,
-`default: null` + `nullable`, refs, empty servers) so huge specs load reliably.
-The GraphQL layer uses **`@omnigraph/openapi`** (same engine as [GraphQL Mesh OpenAPI](https://the-guild.dev/graphql/mesh/docs/handlers/openapi));
-some mega-specs may still hit **translation** edge cases. When GraphQL
-fails, **`execute` falls back to REST** using the same OpenAPI operation map.
-Improving resilience means extending sanitization and/or the translator — not
-shipping a smaller spec.
-
-Want to **fix translation upstream** (GraphQL Mesh / Omnigraph)? See
-**[`docs/OPENAPI_TO_GRAPHQL_UPSTREAM.md`](docs/OPENAPI_TO_GRAPHQL_UPSTREAM.md)** and
-**[`CONTRIBUTING.md`](CONTRIBUTING.md)**.
-
-**MVP note:** Search is lightweight keyword scoring over operation metadata.
-Very large specs may need a different retrieval strategy later.
-
----
-
-## Architecture
-
-```
-Agent
-  └─▶ MCP Server  (stdio / HTTP)
-        ├─▶ search tool  ──▶ In-memory spec search  (zero latency, zero tokens)
-        ├─▶ execute tool  ──▶ GraphQL Client ──▶ GraphQL Proxy (localhost:4000) ──▶ REST API
-        ├─▶ sandbox_exec  ──▶ HTTPS ──▶ Cloudflare Sandbox bridge Worker (optional)
-        └─▶ memory_ingest / memory_recall / ingest_external_knowledge  ──▶ Obsidian vault on disk (optional)
-        └─▶ cache / audit / notify / knowledge_search_onyx (optional env flags) — LRU + ring buffer in-process; **`notify`** → Slack **`chat.postMessage`**; **`knowledge_search_onyx`** → Onyx document search
-```
-
-An agent connects to ClawQL over MCP and registers **up to six tools** in the usual configuration (**seven** with **`CLAWQL_ENABLE_CACHE`**, **eight** with **`CLAWQL_ENABLE_AUDIT`**, **nine** with **`CLAWQL_ENABLE_NOTIFY`**, **ten** with **`CLAWQL_ENABLE_ONYX`**) — see [`docs/mcp-tools.md`](docs/mcp-tools.md):
-
-- **`search`** — in-memory operation index from the loaded spec(s); no upstream HTTP.
-- **`execute`** — GraphQL proxy (single-spec) or REST (multi-spec) for lean responses.
-- **`sandbox_exec`** — run snippet in remote Cloudflare Sandbox via **`CLAWQL_SANDBOX_BRIDGE_URL`** (not local execution).
-- **`memory_ingest`** / **`memory_recall`** — require **`CLAWQL_OBSIDIAN_VAULT_PATH`**.
-- **`ingest_external_knowledge`** — bulk Markdown into the vault + optional URL fetch; set **`CLAWQL_EXTERNAL_INGEST=1`** (see [`docs/external-ingest.md`](docs/external-ingest.md)).
-- **`cache`** (optional) — **`CLAWQL_ENABLE_CACHE`**; ephemeral LRU — not the vault (**[`docs/cache-tool.md`](docs/cache-tool.md)**).
-- **`audit`** (optional) — **`CLAWQL_ENABLE_AUDIT`**; in-process event buffer — not durable (**[`docs/enterprise-mcp-tools.md`](docs/enterprise-mcp-tools.md)**).
-- **`notify`** (optional) — **`CLAWQL_ENABLE_NOTIFY`**; Slack **`chat.postMessage`** when the Slack spec is loaded — **[`docs/notify-tool.md`](docs/notify-tool.md)** · [**`docs/mcp-tools.md`**](docs/mcp-tools.md#notify-optional).
-- **`knowledge_search_onyx`** (optional) — **`CLAWQL_ENABLE_ONYX`**; Onyx **`POST /search/send-search-message`** when the **`onyx`** spec is loaded — **[`docs/onyx-knowledge-tool.md`](docs/onyx-knowledge-tool.md)** · [**`docs/mcp-tools.md`**](docs/mcp-tools.md#knowledge_search_onyx-optional).
-
-Core API workflow remains **`search` → `execute`**. Optional tools do not replace the GraphQL proxy for REST APIs (except **`notify`** and **`knowledge_search_onyx`**, which wrap single upstream operations for convenience).
-
-In multi-spec mode, ClawQL keeps one merged operation index for discovery and executes each operation against its owning spec.
-
-**Key design principles:**
-
-1. **`search` first, `execute` second.** The agent calls `search("…")` to discover
-   which operation to run and what parameters it takes — without loading the full
-   spec into context upfront.
-
-2. **GraphQL is a private optimization layer.** Agents never see or write
-   GraphQL. `execute` constructs a precise internal query that
-   fetches only the fields needed, keeping responses lean before they land in
-   the agent's context window.
-
-3. **Single source of truth.** The search index and GraphQL schema are derived
-   from the same loaded spec (OpenAPI 3, or Discovery → OpenAPI for Google APIs).
-
----
-
-## How the two phases save tokens
-
-|                 | **Phase 1 — planning**                                                                                                                                     | **Phase 2 — execution**                                                                                                                          |
-| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Mechanism**   | Two MCP tools (`search`, `execute`) + in-memory index — agents don’t load the full OpenAPI into context.                                                   | Internal GraphQL projects only the fields `execute` asks for; lean JSON vs a full REST body.                                                     |
-| **Typical win** | **Input** tokens: full spec → small `search` hits (see table above). On the default **Cloud Run** spec alone: ~66k → ~2k tokens per lookup (~97% smaller). | **Output** tokens: fat REST JSON → smaller GraphQL-shaped JSON (see table above; side-by-side JSON in [`latest.md`](docs/benchmarks/latest.md)). |
-| **Tradeoff**    | —                                                                                                                                                          | Small **input** cost for the GraphQL query + variables.                                                                                          |
-
-**Why smaller planning context matters:** Long prompts can hurt accuracy even when retrieval is correct — e.g. [Du et al., EMNLP 2025](https://aclanthology.org/2025.findings-emnlp.1264/), [Liu et al., TACL 2024](https://aclanthology.org/2024.tacl-1.9/).
-
-**Pricing:** Many models bill **output** higher than **input**; Phase 2 targets execution payload size.
-
-**Reproduce / refresh numbers:** `npm run benchmark:tokens` (writes [`docs/benchmarks/latest.json`](docs/benchmarks/latest.json) + [`latest.md`](docs/benchmarks/latest.md)). Full steps (fixtures vs live, golden file): [`docs/benchmarks/REPRODUCE.md`](docs/benchmarks/REPRODUCE.md). `latest.json` also stores `phase2Documentation` (schema vs field-string doc cost) separately.
-
----
-
-## Tools
-
-**Core tools:** **`search`** and **`execute`** (see [Architecture](#architecture)). **`sandbox_exec`** runs snippets in **Cloudflare Sandboxes** through the HTTP bridge in [`cloudflare/sandbox-bridge/`](cloudflare/sandbox-bridge/README.md) (set **`CLAWQL_SANDBOX_BRIDGE_URL`** and **`CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN`** — see `.env.example`). The tool name avoids confusion with “coding locally”; arguments still use a **`code`** field for the source string. **`memory_ingest`** / **`memory_recall`** need a configured vault (see [Obsidian vault](#obsidian-vault-optional)). Orchestration-specific features live in **[ClawQL-Agent](https://github.com/danielsmithdevelopment/ClawQL-Agent)**; deeper MCP ideas may be tracked in new issues (e.g. semantic search in **[#16](https://github.com/danielsmithdevelopment/ClawQL/issues/16)**).
-
-| Tool            | Description                                                                                                                                                                                        |
-| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `search`        | Search the active OpenAPI/Discovery spec by natural language intent                                                                                                                                |
-| `execute`       | Run a discovered operation by `operationId`, with optional GraphQL field selection                                                                                                                 |
-| `sandbox_exec`  | Remote sandbox: pass **`code`** (source) + **`language`**; not your local shell                                                                                                                    |
-| `memory_ingest` | Compile insights / tool output / conversation into Obsidian notes (`Memory/…`) when the vault path is set — see [`docs/memory-obsidian.md`](docs/memory-obsidian.md)                               |
-| `memory_recall` | Keyword search over vault Markdown plus `[[wikilinks]]` hops; optional vector KNN when **`CLAWQL_VECTOR_BACKEND`** is **`sqlite`** or **`postgres`** and embeddings are configured (see env table) |
-
-### Agent workflow example
-
-```
-1. Agent: search("delete a service")
-   → Returns: run.projects.locations.services.delete
-              method: DELETE
-              path: v2/projects/{projectsId}/locations/{locationsId}/services/{servicesId}
-              parameters: name (path, required), validateOnly (query), etag (query)
-
-2. Agent: (uses the information to call execute, or asks the user for the service name)
-
-3. Agent: execute("run.projects.locations.services.list", {
-       parent: "projects/my-proj/locations/us-central1",
-       pageSize: 10
-     })
-   → GraphQL internally maps args + resolves the real field name; returns lean JSON
-```
-
-### Optional tools (quick examples)
-
-**`sandbox_exec`** (**deploy [cloudflare/sandbox-bridge](cloudflare/sandbox-bridge/README.md) first**). The **`code`** key is the snippet body sent to the remote sandbox:
-
-```json
-{ "code": "print('ok')", "language": "python", "sessionId": "s1" }
-```
-
-Vault (**set `CLAWQL_OBSIDIAN_VAULT_PATH`**):
-
-```json
-{ "title": "Runbook", "insights": "Remember to rotate tokens.", "wikilinks": ["Security"] }
-```
-
-```json
-{ "query": "rotate token kubernetes", "limit": 5, "maxDepth": 2 }
-```
-
-More parameters and env defaults: **[`docs/mcp-tools.md`](docs/mcp-tools.md)**.
-
----
-
-## Claude Desktop / Cursor config
-
-**Streamable HTTP** (e.g. `npm run start:http`, Docker, or Kubernetes): in Cursor, add an MCP server with a **`url`** (not `command`). Copy [`.cursor/mcp.json.example`](.cursor/mcp.json.example) to **`.cursor/mcp.json`** (ignored by git) and set `url` to your MCP base (defaults in the example match local compose/K8s); or use **`~/.cursor/mcp.json`** for all workspaces. See [`docker/README.md`](docker/README.md) for deployment URLs and [Cursor’s MCP docs](https://cursor.com/docs/context/mcp) for `${env:…}` interpolation.
-
-**stdio** — **Installed from npm** (recommended): use `npx` with `-p clawql-mcp` and the
-binary name:
-
-```json
-{
-  "mcpServers": {
-    "clawql": {
-      "command": "npx",
-      "args": ["-p", "clawql-mcp", "clawql-mcp"],
-      "env": {
-        "CLAWQL_SPEC_PATH": "/absolute/path/to/openapi.yaml"
-      }
-    }
-  }
-}
-```
-
-**From a git checkout** (development):
-
-```json
-{
-  "mcpServers": {
-    "clawql": {
-      "command": "node",
-      "args": ["/absolute/path/to/ClawQL/dist/server.js"],
-      "env": {
-        "CLAWQL_SPEC_PATH": "/absolute/path/to/openapi.yaml"
-      }
-    }
-  }
-}
-```
-
-Or with `tsx`:
-
-```json
-{
-  "mcpServers": {
-    "clawql": {
-      "command": "npx",
-      "args": ["tsx", "/absolute/path/to/ClawQL/src/server.ts"],
-      "env": {
-        "CLAWQL_SPEC_PATH": "/absolute/path/to/openapi.yaml"
-      }
-    }
-  }
-}
-```
-
----
-
-## Cloud Run deployment (remote MCP)
-
-Run ClawQL in Cloud Run as one service (**`clawql-mcp-http`**: MCP at **`/mcp`**, GraphQL at **`/graphql`** on the same URL).
-
-Use the one-shot deployment script:
-
-```bash
-PROJECT_ID="your-project-id" \
-REGION="us-central1" \
-bash scripts/deploy-cloud-run.sh
-```
-
-Or via `make`:
-
-```bash
-PROJECT_ID="your-project-id" REGION="us-central1" make deploy-cloud-run
-```
-
-After deploy, point agents at:
-
-- `https://<mcp-service-url>/mcp`
-
-Full guide + options are in [`docs/deploy-cloud-run.md`](docs/deploy-cloud-run.md).
-
----
-
-## Kubernetes (local MCP on Docker Desktop)
-
-Run **MCP Streamable HTTP** in a local cluster so clients can use a fixed URL (typically **`http://localhost:8080/mcp`**) instead of stdio. **`/graphql`** is on the same service.
-
-1. Enable **Kubernetes** in Docker Desktop.
-2. From the repo root:
-
-   ```bash
-   make local-k8s-up
-   # or: bash scripts/local-k8s-docker-desktop.sh
-   ```
-
-   **Default:** **`helm upgrade --install`** with **`charts/clawql-mcp/values-docker-desktop.yaml`** (GHCR image, **`hostPath`** vault at **`~/.ClawQL`**). **Kustomize instead:** **`CLAWQL_LOCAL_K8S_INSTALLER=kustomize make local-k8s-up`** (no Helm; uses **`docker/kustomize/overlays/local`**). Use **`CLAWQL_LOCAL_K8S_BUILD_IMAGE=1`** to build **`clawql-mcp:latest`** locally instead. The script uses the **`docker-desktop`** kube context when present.
-
-3. **Health:** `curl -s http://localhost:8080/healthz` should return `{"status":"ok",...}` before connecting the client.
-4. **MCP upstream auth (GitHub + optional Cloudflare + Google):** `bash scripts/k8s-docker-desktop-set-mcp-auth.sh` — reads **`gh`** or **`CLAWQL_GITHUB_TOKEN`**, optional **`CLAWQL_CLOUDFLARE_API_TOKEN`** and **`GOOGLE_ACCESS_TOKEN`** / **`CLAWQL_GOOGLE_ACCESS_TOKEN`** (export or repo **`.env`**). See [`docker/README.md`](docker/README.md).
-
-**Teardown:** `kubectl --context docker-desktop delete namespace clawql`
-
-Longer-form docs for operators: [`website/src/app/kubernetes/page.mdx`](website/src/app/kubernetes/page.mdx) (served at **`/kubernetes`** when you run the Next.js site in **`website/`**).
-
-**Remote clusters** (`dev` / `prod` overlays, registry image + tag):
-
-```bash
-ENV=dev IMAGE=us-central1-docker.pkg.dev/<project>/<repo>/clawql-mcp TAG=<tag> make deploy-k8s
-```
-
-See [`docs/deploy-k8s.md`](docs/deploy-k8s.md). **Helm:** [`docs/helm.md`](docs/helm.md) (`charts/clawql-mcp`).
-
----
-
-## Extending the server
-
-The default API surface is **`search`** and **`execute`**; **`sandbox_exec`** calls **`src/sandbox-bridge-client.ts`**; **`memory_ingest`** / **`memory_recall`** use **`src/memory-ingest.ts`**, **`src/memory-recall.ts`**, and **`src/vault-config.ts`** / **`src/vault-utils.ts`**. To add more tools
-(see **[ClawQL-Agent](https://github.com/danielsmithdevelopment/ClawQL-Agent)** for product-level extensions), register them in `src/tools.ts` the same way (`server.tool(...)`).
-
-GraphQL field names are **auto-resolved** in `execute` via schema introspection
-(candidates include run-style names, legacy path-derived names, and response-type
-names). See `src/tools.ts` for details. You can also introspect the
-proxy at `http://localhost:4000/graphql` while it is running.
-
----
-
-## Other GCP APIs (Discovery)
-
-Google lists **every** public Discovery API at [`https://www.googleapis.com/discovery/v1/apis`](https://www.googleapis.com/discovery/v1/apis). The repo vendors a snapshot as [`providers/google/google-apis-lookup.json`](providers/google/google-apis-lookup.json) (search by `id` / `title`, copy `discoveryRestUrl`). See [`docs/google-apis-lookup.md`](docs/google-apis-lookup.md) to refresh it.
-
-**Offline Google Cloud bundle:** curated Google APIs are pre-downloaded under [`providers/google/apis/`](providers/google/apis/README.md) with optional GraphQL artifacts — manifest on disk is still named [`providers/google/google-top50-apis.json`](providers/google/google-top50-apis.json) (maintainer tooling only; not a `CLAWQL_PROVIDER` id).
-
-Point ClawQL at any one Discovery document:
-
-```bash
-export CLAWQL_DISCOVERY_URL="https://compute.googleapis.com/\$discovery/rest?version=v1"
-```
-
----
-
-## Maintainer notes (publishing)
-
-1. Confirm `repository.url` in `package.json` matches your GitHub repo.
-2. Run `npm test` (runs `pretest` → `build`, then Vitest).
-3. `@modelcontextprotocol/sdk` is pinned with a **1.27.x–compatible** semver range (`^1.27.1`); bump intentionally when upgrading the SDK.
-4. Never commit secrets: use `.env` locally (ignored); see `.env.example` for
-   documented variables.
-5. `dist/` and `node_modules/` are gitignored — build before release or let CI
-   produce `dist/` for consumers who install from npm.
+- Optional tools are disabled by default and activated via `CLAWQL_ENABLE_*` flags.
+- Vault memory tools require `CLAWQL_OBSIDIAN_VAULT_PATH`.
+- For full environment variable details, see `.env.example` and `docs/mcp-tools.md`.

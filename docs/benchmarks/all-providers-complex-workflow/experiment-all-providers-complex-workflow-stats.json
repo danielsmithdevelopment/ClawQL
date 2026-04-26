@@ -1,5 +1,5 @@
 {
-  "sourceReport": "docs/workflow-complex-release-stack-latest.json",
+  "sourceReport": "docs/workflows/workflow-complex-release-stack-latest.json",
   "generatedAt": "2026-03-24T23:32:21.515Z",
   "clawqlProviderPreset": "all-providers",
   "mergedOperationCount": 8990,
@@ -20,7 +20,7 @@
     "totalLoadedSpecApproxTokens": 13868765
   },
   "workflowOutput": {
-    "source": "docs/workflow-complex-release-stack-latest.json",
+    "source": "docs/workflows/workflow-complex-release-stack-latest.json",
     "bytes": 144764,
     "approxTokens": 36191,
     "searchStepCount": 10,
@@ -37,6 +37,6 @@
   },
   "meta": {
     "charsPerToken": 4,
-    "method": "Compare bytes/tokens for full on-disk specs in the all-providers merge vs workflow-complex-release-stack-latest.json."
+    "method": "Compare bytes/tokens for full on-disk specs in the all-providers merge vs workflows/workflow-complex-release-stack-latest.json."
   }
 }

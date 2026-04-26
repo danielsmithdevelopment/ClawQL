@@ -9,7 +9,7 @@ This guide outlines a **logical order** of Google Cloud API calls to stand up **
 > **Precedence (multi-spec):** `CLAWQL_SPEC_PATHS` → **`CLAWQL_BUNDLED_PROVIDERS`** → **`CLAWQL_PROVIDER`** (merged) → **`all-providers`** (built-in default) when nothing else is set. Explicit **`CLAWQL_SPEC_PATH`** / URL / discovery still win for **single-spec** mode.  
 > **Execution:** merged mode uses **REST** for `execute` (correct source doc per operation). The optional GraphQL proxy, if started, builds its schema from the **first** API only — use MCP `search` + `execute` for cross-API GCP flows.
 
-**Try it offline (real MCP stdio):** `npm run workflow:gcp-multi` spawns the MCP server (`dist/server.js`), issues **`tools/call` → `search`** for each workflow query (same wire path as Cursor/Claude), and writes [`docs/workflow-gcp-multi-latest.json`](../workflow-gcp-multi-latest.json) including the full **`CallToolResult`** envelope + parsed JSON body.  
+**Try it offline (real MCP stdio):** `npm run workflow:gcp-multi` spawns the MCP server (`dist/server.js`), issues **`tools/call` → `search`** for each workflow query (same wire path as Cursor/Claude), and writes [`docs/workflows/workflow-gcp-multi-latest.json`](workflow-gcp-multi-latest.json) including the full **`CallToolResult`** envelope + parsed JSON body.  
 For a faster in-process ranking check only (no MCP), use `npm run workflow:gcp-multi:direct` → `docs/workflow-gcp-multi-direct-latest.json`.
 
 **Write-up:** queries, services, size/token comparison, and illustrative MCP request/response shapes — [`experiment-gcp-multi-mcp-workflow.md`](experiment-gcp-multi-mcp-workflow.md). Refresh stats: `npm run report:gcp-multi-experiment`.
@@ -216,7 +216,7 @@ Repeat with `compute-v1`, `logging-v2`, etc., after switching `CLAWQL_SPEC_PATH`
 
 ## Related docs
 
-- [Google APIs lookup (full index + top 50 bundle)](google-apis-lookup.md)
+- [Google APIs lookup (full index + top 50 bundle)](../providers/google-apis-lookup.md)
 - [Bundled `providers/google/apis/` README](../providers/google/apis/README.md)
 
 This document is a **route map** for API ordering and **operationId** discovery — not a substitute for security review, quotas, org policies, or production Terraform/IaC.

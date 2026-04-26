@@ -448,7 +448,7 @@ async function main() {
       steps: stepsOut,
     };
 
-    const dest = join(ROOT, "docs", "workflow-complex-release-stack-mcp-latest.json");
+    const dest = join(ROOT, "docs", "workflows", "workflow-complex-release-stack-mcp-latest.json");
     await writeFile(dest, JSON.stringify(out, null, 2), "utf-8");
 
     printConsoleSummary(out, dest);

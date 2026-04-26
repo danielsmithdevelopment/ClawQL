@@ -361,7 +361,7 @@ async function main() {
     console.log("");
   }
 
-  const outPath = join(ROOT, "docs", "workflow-multi-provider-latest.json");
+  const outPath = join(ROOT, "docs", "workflows", "workflow-multi-provider-latest.json");
   await writeFile(outPath, JSON.stringify(report, null, 2), "utf-8");
   console.error(`Wrote structured report: ${outPath}\n`);
 

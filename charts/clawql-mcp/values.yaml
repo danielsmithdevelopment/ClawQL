@@ -211,6 +211,9 @@ flink:
   # Secret with connector credentials (e.g. Slack/Confluence/Jira/Drive tokens).
   # Keys in this secret are injected only into Flink pods, not clawql-mcp.
   connectorSecret: ""
+  # Optional explicit Flink process memory sizing (required by some Flink images).
+  jobManagerMemoryProcessSize: ""
+  taskManagerMemoryProcessSize: ""
   # Additional env entries for both JobManager and TaskManager containers.
   extraEnv: []
 

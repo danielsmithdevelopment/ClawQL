@@ -3,13 +3,13 @@
 This benchmark compares:
 
 - **Before:** embedding **all** loaded provider specs for the **`CLAWQL_PROVIDER=all-providers`** merge (Google top50 Discovery + Bitbucket, Cloudflare, GitHub, Jira, n8n, Sentry, Slack OpenAPI on disk)
-- **After:** the committed structured report [`docs/workflow-complex-release-stack-latest.json`](../../workflow-complex-release-stack-latest.json) from `npm run workflow:complex-release-stack`
+- **After:** the committed structured report [`docs/workflows/workflow-complex-release-stack-latest.json`](../../workflows/workflow-complex-release-stack-latest.json) from `npm run workflow:complex-release-stack`
 
 It uses the same heuristic as the multi-provider experiment: **`approxTokens = ceil(bytes / 4)`**.
 
 ## Run context
 
-- Source report: `docs/workflow-complex-release-stack-latest.json`
+- Source report: `docs/workflows/workflow-complex-release-stack-latest.json`
 - Stats: [`experiment-all-providers-complex-workflow-stats.json`](experiment-all-providers-complex-workflow-stats.json) (refresh with `npm run report:all-providers-benchmark`)
 - Generated at: `2026-03-24T23:32:21.515Z`
 - Merged operation count: `8990`

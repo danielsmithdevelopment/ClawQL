@@ -1,5 +1,5 @@
 /**
- * One-shot: load docs/clawql-slides.md and call runMemoryIngest.
+ * One-shot: load docs/presentations/clawql-slides.md and call runMemoryIngest.
  * Usage: CLAWQL_OBSIDIAN_VAULT_PATH=/path/to/vault node scripts/ingest-slide-deck-vault.mjs
  */
 import { readFileSync } from "node:fs";
@@ -9,11 +9,11 @@ import { runMemoryIngest } from "../dist/memory-ingest.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
-const deck = readFileSync(join(root, "docs", "clawql-slides.md"), "utf8");
+const deck = readFileSync(join(root, "docs", "presentations", "clawql-slides.md"), "utf8");
 
 const insights = `## Summary
 
-Durable copy of the **April 2026** consolidated ClawQL slide deck (48 slides) for Obsidian + \`memory_recall\`. Full verbatim deck is in the **Tool outputs** block below. Canonical repo path: \`docs/clawql-slides.md\`.
+Durable copy of the **April 2026** consolidated ClawQL slide deck (48 slides) for Obsidian + \`memory_recall\`. Full verbatim deck is in the **Tool outputs** block below. Canonical repo path: \`docs/presentations/clawql-slides.md\`.
 
 ## Tags / topics
 
@@ -29,7 +29,7 @@ Durable copy of the **April 2026** consolidated ClawQL slide deck (48 slides) fo
 
 ## Follow-ups
 
-- [ ] When changing the public deck, refresh \`docs/clawql-slides.md\` and re-run this script or \`memory_ingest\` with the same stable title.`;
+- [ ] When changing the public deck, refresh \`docs/presentations/clawql-slides.md\` and re-run this script or \`memory_ingest\` with the same stable title.`;
 
 const r = await runMemoryIngest({
   title: "ClawQL complete consolidated slide deck (April 2026)",

@@ -263,7 +263,7 @@ Set **`GRPC_HOST`** / **`GRPC_PORT`** to match the running process. The script a
 
 Use native [`grpc` probes](https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/#grpc-probes) on port **50051** when gRPC is enabled. Example overlay: [ClawQL `docker/kustomize/overlays/grpc-enabled`](https://github.com/danielsmithdevelopment/ClawQL/tree/main/docker/kustomize/overlays/grpc-enabled).
 
-The ClawQL **`clawql-mcp-http`** Service publishes **port 50051** (name **`grpc`**) in **base** and **dev** / **local** / **prod** overlays, so clients can call **`model_context_protocol.Mcp`** at the Service IP without **`kubectl port-forward`**, once **`ENABLE_GRPC=1`** on the Pod. See [ClawQL `docs/deploy-k8s.md` — Service ports](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deploy-k8s.md#service-ports-http-and-grpc).
+The ClawQL **`clawql-mcp-http`** Service publishes **port 50051** (name **`grpc`**) in **base** and **dev** / **local** / **prod** overlays, so clients can call **`model_context_protocol.Mcp`** at the Service IP without **`kubectl port-forward`**, once **`ENABLE_GRPC=1`** on the Pod. See [ClawQL `docs/deployment/deploy-k8s.md` — Service ports](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/deploy-k8s.md#service-ports-http-and-grpc).
 
 ## Publishing (maintainers)
 

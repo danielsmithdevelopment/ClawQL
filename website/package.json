@@ -7,7 +7,7 @@
     "build": "next build --webpack",
     "dev": "next dev --webpack",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint \"src/**/*.{js,jsx,ts,tsx}\" \"*.{js,mjs,ts}\" --max-warnings 0",
     "format": "prettier --write \"src/**/*.{mdx,ts,tsx}\" \"*.ts\" \"mdx-components.tsx\"",
     "format:check": "prettier --check \"src/**/*.{mdx,ts,tsx}\" \"*.ts\" \"mdx-components.tsx\"",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
@@ -60,13 +60,13 @@
     "@types/node": "^24.1.0",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
-    "eslint": "^9.32.0",
+    "eslint": "^9.39.0",
     "eslint-config-next": "16.1.7",
+    "lighthouse": "^12.8.2",
     "prettier": "^3.6.2",
     "prettier-plugin-tailwindcss": "^0.7.2",
     "sharp": "0.34.3",
-    "wrangler": "^4.83.0",
-    "lighthouse": "^12.8.2"
+    "wrangler": "^4.83.0"
   },
   "overrides": {
     "@types/react": "19.2.14",

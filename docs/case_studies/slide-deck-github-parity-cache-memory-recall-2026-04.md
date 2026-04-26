@@ -1,6 +1,6 @@
 # Case study: Slide deck vs GitHub — `memory_recall`, `cache`, and filing parity issues (April 2026)
 
-This case study walks through a **Cursor** session that aligned the **ClawQL** pitch deck in [`docs/clawql-slides.md`](../clawql-slides.md) with the **GitHub** backlog. The goal was to **close narrative gaps** by creating tracking issues for themes that appeared in the **80-slide** deck (including **§08** security) but had **no** or **incomplete** issue coverage.
+This case study walks through a **Cursor** session that aligned the **ClawQL** pitch deck in [`docs/presentations/clawql-slides.md`](../presentations/clawql-slides.md) with the **GitHub** backlog. The goal was to **close narrative gaps** by creating tracking issues for themes that appeared in the **80-slide** deck (including **§08** security) but had **no** or **incomplete** issue coverage.
 
 **Audience:** Teams using **ClawQL MCP** who want a repeatable split between **durable** context (**`memory_ingest` / `memory_recall` / Obsidian**), **ephemeral** session state (**`cache`**, optional, in-process), and **GitHub** for execution.
 
@@ -23,8 +23,8 @@ For when **`cache` is** vs is **not** the right tool, see **[`docs/cache-tool.md
 
 ## 2. The slide deck as product contract
 
-- **Source:** [`docs/clawql-slides.md`](../clawql-slides.md) — **80** slides, sections **§01–§08** (Core through Defense in Depth), plus a closing slide.
-- **Paired long-form security reference:** [`docs/clawql-security-defense-in-depth.md`](../clawql-security-defense-in-depth.md) (aligns with **§08**).
+- **Source:** [`docs/presentations/clawql-slides.md`](../presentations/clawql-slides.md) — **80** slides, sections **§01–§08** (Core through Defense in Depth), plus a closing slide.
+- **Paired long-form security reference:** [`docs/security/clawql-security-defense-in-depth.md`](../security/clawql-security-defense-in-depth.md) (aligns with **§08**).
 - **Not used as a second source of truth:** the deck is **aspirational** in places; the gap pass explicitly preferred **“file an issue and label scope”** over silently assuming the repo already matched every slide bullet.
 
 The assistant enumerated **all open issues** in **`danielsmithdevelopment/ClawQL`**, then compared that set to the deck’s major **themes** (Istio, OSV, Fabric, The Graph, Chainlink, Jaeger, Vault, Web3, transcript parity, etc.).
@@ -73,20 +73,20 @@ During the gap pass, the assistant used the MCP **`cache`** tool to hold **trans
 
 Twelve new issues were opened to connect the **April 2026** deck to an explicit backlog (numbers shown as filed in that session):
 
-| #        | Area                                                                                                              |
-| -------- | ----------------------------------------------------------------------------------------------------------------- |
-| **#155** | Optional **Istio** + **Kiali**, mTLS east-west                                                                    |
-| **#156** | **OSV-Scanner** + Golden Image / CI / optional **CronJob** / `search`+`execute` path                              |
-| **#157** | **Hyperledger Fabric** — Helm, `CLAWQL_ENABLE_FABRIC`, `providers/fabric`                                         |
-| **#158** | **The Graph** — bundled OpenAPI / execute path                                                                    |
-| **#159** | **Chainlink** — bundled provider surface                                                                          |
-| **#160** | **Jaeger** / **OTLP** tracing                                                                                     |
-| **#161** | **HashiCorp Vault** or **OpenBao** (vs chart **Obsidian** `vault` hostPath naming)                                |
-| **#162** | **ClawQL-Web3** — AgentKit / **IPFS** / **CCIP** (extends beyond **#88**)                                         |
-| **#163** | **Transcript** parity: [`clawql-slides-transcript.md`](../clawql-slides-transcript.md) vs **80** slides + **§08** |
-| **#164** | **Defense-in-depth** doc → control / deliverable **matrix**                                                       |
-| **#165** | **Meta:** update obsolete **slide §** references in existing issue bodies                                         |
-| **#166** | **Demos** — honest walkthroughs for high-stakes narrative slides (e.g. 50, 56)                                    |
+| #        | Area                                                                                                                            |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| **#155** | Optional **Istio** + **Kiali**, mTLS east-west                                                                                  |
+| **#156** | **OSV-Scanner** + Golden Image / CI / optional **CronJob** / `search`+`execute` path                                            |
+| **#157** | **Hyperledger Fabric** — Helm, `CLAWQL_ENABLE_FABRIC`, `providers/fabric`                                                       |
+| **#158** | **The Graph** — bundled OpenAPI / execute path                                                                                  |
+| **#159** | **Chainlink** — bundled provider surface                                                                                        |
+| **#160** | **Jaeger** / **OTLP** tracing                                                                                                   |
+| **#161** | **HashiCorp Vault** or **OpenBao** (vs chart **Obsidian** `vault` hostPath naming)                                              |
+| **#162** | **ClawQL-Web3** — AgentKit / **IPFS** / **CCIP** (extends beyond **#88**)                                                       |
+| **#163** | **Transcript** parity: [`clawql-slides-transcript.md`](../presentations/clawql-slides-transcript.md) vs **80** slides + **§08** |
+| **#164** | **Defense-in-depth** doc → control / deliverable **matrix**                                                                     |
+| **#165** | **Meta:** update obsolete **slide §** references in existing issue bodies                                                       |
+| **#166** | **Demos** — honest walkthroughs for high-stakes narrative slides (e.g. 50, 56)                                                  |
 
 Cross-links between issues (e.g. **#88**, **#132**, **#133**, **#128**, **#129**, **#131**) were added in the bodies so **P2/P3** dependencies stay navigable from GitHub, not only from the deck.
 
@@ -118,8 +118,8 @@ After creating issues and updating the mental model of “deck ↔ backlog,” t
 
 ## 9. References
 
-- [`docs/clawql-slides.md`](../clawql-slides.md) — canonical deck
-- [`docs/clawql-security-defense-in-depth.md`](../clawql-security-defense-in-depth.md) — **§08** long-form
+- [`docs/presentations/clawql-slides.md`](../presentations/clawql-slides.md) — canonical deck
+- [`docs/security/clawql-security-defense-in-depth.md`](../security/clawql-security-defense-in-depth.md) — **§08** long-form
 - [`docs/cache-tool.md`](../cache-tool.md) — **cache** tool semantics
 - [`docs/mcp-tools.md`](../mcp-tools.md) — **memory_ingest**, **memory_recall**
 - GitHub: issues **#155**–**#166** in **danielsmithdevelopment/ClawQL** (April 2026)

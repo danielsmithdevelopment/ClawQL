@@ -174,7 +174,7 @@ After retrieval + any local processing, post a short Slack update that reference
 
 - **Unit / handler tests:** [`src/knowledge-search-onyx.test.ts`](../src/knowledge-search-onyx.test.ts), [`src/server.test.ts`](../src/server.test.ts) (tool appears when **`CLAWQL_ENABLE_ONYX=1`**).
 - **Bundled spec:** minimal subset in **`providers/onyx/openapi.yaml`**. For the **full** Onyx OpenAPI from a running instance, set **`ONYX_BASE_URL`** (and optional Bearer token) and run **`npm run fetch-provider-specs`** — writes **`providers/onyx/openapi.yaml`** from **`/openapi.json`** or **`/openapi.yaml`** (may be very large; trim before committing if needed). See **`providers/README.md`**.
-- **Deeper tests:** see **[onyx-knowledge-tool-test-backlog.md](onyx-knowledge-tool-test-backlog.md)** / **[#144](https://github.com/danielsmithdevelopment/ClawQL/issues/144)** (stdio **`callTool`** + fetch stub covered in **`src/server.test.ts`**).
+- **Deeper tests:** see **[backlog/onyx-knowledge-tool-test-backlog.md](backlog/onyx-knowledge-tool-test-backlog.md)** / **[#144](https://github.com/danielsmithdevelopment/ClawQL/issues/144)** (stdio **`callTool`** + fetch stub covered in **`src/server.test.ts`**).
 
 ---
 

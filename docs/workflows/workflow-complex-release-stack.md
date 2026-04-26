@@ -26,7 +26,7 @@ The script sets **`CLAWQL_PROVIDER=all-providers`** internally (one merged load:
 export CLAWQL_PROVIDER=all-providers
 ```
 
-Writes `docs/workflow-complex-release-stack-latest.json` (full steps, ranked hits, Jira draft).
+Writes `docs/workflows/workflow-complex-release-stack-latest.json` (full steps, ranked hits, Jira draft).
 
 ## Jira preview or create
 

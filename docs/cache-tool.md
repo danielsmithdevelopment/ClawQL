@@ -64,5 +64,5 @@ Successful **`set`** responses may include **`evicted`**: the number of keys dro
 ## Related
 
 - **[memory-obsidian.md](memory-obsidian.md)** — vault pattern and **`memory_*`** tools
-- **[cursor-vault-memory.md](cursor-vault-memory.md)** — Cursor rule/skill for vault memory
-- **[deploy-k8s.md](deploy-k8s.md)** — running ClawQL in Kubernetes (each replica’s **`cache`** is isolated)
+- **[integrations/cursor-vault-memory.md](integrations/cursor-vault-memory.md)** — Cursor rule/skill for vault memory
+- **[deployment/deploy-k8s.md](deployment/deploy-k8s.md)** — running ClawQL in Kubernetes (each replica’s **`cache`** is isolated)

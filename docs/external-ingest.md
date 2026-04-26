@@ -1,6 +1,6 @@
 # External bulk ingest (`ingest_external_knowledge`)
 
-**Status:** Implemented for **Markdown bulk import** and **opt-in URL fetch** ([#40](https://github.com/danielsmithdevelopment/ClawQL/issues/40)). **Full-repo GitHub** and **Notion / Confluence / Linear / Jira** connectors are specified in **[knowledge-lake-roadmap.md](knowledge-lake-roadmap.md)** (phased implementation).
+**Status:** Implemented for **Markdown bulk import** and **opt-in URL fetch** ([#40](https://github.com/danielsmithdevelopment/ClawQL/issues/40)). **Full-repo GitHub** and **Notion / Confluence / Linear / Jira** connectors are specified in **[roadmap/knowledge-lake-roadmap.md](roadmap/knowledge-lake-roadmap.md)** (phased implementation).
 
 ## Env
 
@@ -60,5 +60,5 @@ Many public sites (including **`https://www.npmjs.com/package/...`**) sit behind
 
 ## Related
 
-- **[knowledge-lake-roadmap.md](knowledge-lake-roadmap.md)** — GitHub whole-repo + SaaS knowledge lake (issues, docs, configs; then Notion, Confluence, Linear, Jira).
+- **[roadmap/knowledge-lake-roadmap.md](roadmap/knowledge-lake-roadmap.md)** — GitHub whole-repo + SaaS knowledge lake (issues, docs, configs; then Notion, Confluence, Linear, Jira).
 - Epic: [#24](https://github.com/danielsmithdevelopment/ClawQL/issues/24) — hybrid memory beside the vault.

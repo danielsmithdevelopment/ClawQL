@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Recompute byte/token stats for docs/experiment-gcp-multi-mcp-workflow.md
- * from docs/workflow-gcp-multi-latest.json + providers/google/google-top50-apis.json.
+ * from docs/workflows/workflow-gcp-multi-latest.json + providers/google/google-top50-apis.json.
  *
  *   node scripts/report-gcp-multi-experiment.mjs
  *   node scripts/report-gcp-multi-experiment.mjs --json   # machine-readable only
@@ -13,7 +13,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-const REPORT_PATH = join(ROOT, "docs", "workflow-gcp-multi-latest.json");
+const REPORT_PATH = join(ROOT, "docs", "workflows", "workflow-gcp-multi-latest.json");
 const MANIFEST_PATH = join(ROOT, "providers", "google", "google-top50-apis.json");
 const STATS_OUT = join(ROOT, "docs", "experiment-gcp-multi-mcp-stats.json");
 
@@ -54,7 +54,7 @@ for (const s of report.workflowSteps) {
 }
 const totalSearchOut = cross + stepsTotal;
 const stats = {
-  sourceReport: "docs/workflow-gcp-multi-latest.json",
+  sourceReport: "docs/workflows/workflow-gcp-multi-latest.json",
   generatedAt: report.meta?.generatedAt ?? null,
   mergedOperationCount: report.meta?.mergedOperationCount ?? null,
   discoveryJsonTotalBytes: discoveryBytes,

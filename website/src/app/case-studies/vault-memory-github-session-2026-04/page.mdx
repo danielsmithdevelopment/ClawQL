@@ -118,7 +118,7 @@ The enterprise epic needed a tool that is:
 2. **Code:** [`src/clawql-audit.ts`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/src/clawql-audit.ts) — `append` / `list` / `clear`; [`src/clawql-optional-flags.ts`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/src/clawql-optional-flags.ts) — `CLAWQL_ENABLE_AUDIT`; registration in [`src/tools.ts`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/src/tools.ts).
 3. **Tests:** [`src/clawql-audit.test.ts`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/src/clawql-audit.test.ts), extended optional-flags + stdio smoke ([`src/server.test.ts`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/src/server.test.ts)).
 4. **Docs / env:** [`docs/mcp-tools.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp-tools.md), [`.env.example`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/.env.example), [`README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/README.md), [`CHANGELOG.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md).
-5. **Ops:** **Helm** `enableAudit` in [`charts/clawql-mcp`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/charts/clawql-mcp); [`docs/deploy-k8s.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deploy-k8s.md), [`docs/helm.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/helm.md).
+5. **Ops:** **Helm** `enableAudit` in [`charts/clawql-mcp`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/charts/clawql-mcp); [`docs/deployment/deploy-k8s.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/deploy-k8s.md), [`docs/deployment/helm.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/helm.md).
 6. **Website & Cursor:** site copy ([`website/src/app/tools/page.mdx`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/website/src/app/tools/page.mdx), related MDX), [`.cursor/skills/clawql-vault-memory/SKILL.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/.cursor/skills/clawql-vault-memory/SKILL.md) — clarifies **`audit`** vs vault.
 
 **Tests:** `npm test` green before merge.
@@ -156,7 +156,7 @@ Shipping **`audit`** “for real” meant every **surface** that lists optional 
 
 - **MCP tools:** [mcp-tools.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp-tools.md)
 - **Enterprise design:** [enterprise-mcp-tools.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/enterprise-mcp-tools.md)
-- **Vault memory skill:** [cursor-vault-memory.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/cursor-vault-memory.md)
+- **Vault memory skill:** [integrations/cursor-vault-memory.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/integrations/cursor-vault-memory.md)
 - **Issues:** [#88](https://github.com/danielsmithdevelopment/ClawQL/issues/88)–[#91](https://github.com/danielsmithdevelopment/ClawQL/issues/91), [#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)
 
 **Website (readable summary):** **`/case-studies/vault-memory-github-session-2026-04`** on [docs.clawql.com](https://docs.clawql.com).

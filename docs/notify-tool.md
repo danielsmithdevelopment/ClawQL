@@ -189,7 +189,7 @@ If you use a **minimal spec** without Slack, either add **`CLAWQL_PROVIDER=slack
 
 ## Kubernetes (Helm)
 
-The chart exposes **`enableNotify`** → **`CLAWQL_ENABLE_NOTIFY=1`**. Set the token via **`extraEnv`** or **`envFromSecret`** (do not commit tokens to git). See **[helm.md](helm.md)** and **`charts/clawql-mcp/values.yaml`**.
+The chart exposes **`enableNotify`** → **`CLAWQL_ENABLE_NOTIFY=1`**. Set the token via **`extraEnv`** or **`envFromSecret`** (do not commit tokens to git). See **[deployment/helm.md](deployment/helm.md)** and **`charts/clawql-mcp/values.yaml`**.
 
 ---
 
@@ -198,7 +198,7 @@ The chart exposes **`enableNotify`** → **`CLAWQL_ENABLE_NOTIFY=1`**. Set the t
 **Node 25 + full Slack OpenAPI:** building GraphQL from the **bundled** **`providers/slack/openapi.json`** can throw inside **`@omnigraph/json-schema`** (`Cannot set property input … only a getter`); **`execute` / `notify`** then use **REST** fallback. **`src/notify-graphql-path.test.ts`** uses a **minimal** Slack fixture so the GraphQL path stays testable on all supported Node versions. Upstream report template: **[`graphql-mesh-node-compatibility.md`](graphql-mesh-node-compatibility.md)**.
 
 - **Automated:** **`src/clawql-notify.test.ts`** (handler guards, multi-spec REST path with mocked **`node-fetch`**, Slack **`ok:true` / `ok:false`**, **`thread_ts`** in form body) and **`src/server.test.ts`** (**`notify`** appears in **`listTools`** when **`CLAWQL_ENABLE_NOTIFY=1`**).
-- **Follow-ups (GitHub):** [#136](https://github.com/danielsmithdevelopment/ClawQL/issues/136)–[#140](https://github.com/danielsmithdevelopment/ClawQL/issues/140) — see **[notify-tool-test-backlog.md](notify-tool-test-backlog.md)** for titles and bodies.
+- **Follow-ups (GitHub):** [#136](https://github.com/danielsmithdevelopment/ClawQL/issues/136)–[#140](https://github.com/danielsmithdevelopment/ClawQL/issues/140) — see **[backlog/notify-tool-test-backlog.md](backlog/notify-tool-test-backlog.md)** for titles and bodies.
 
 ---
 
@@ -207,5 +207,5 @@ The chart exposes **`enableNotify`** → **`CLAWQL_ENABLE_NOTIFY=1`**. Set the t
 - **[graphql-mesh-node-compatibility.md](graphql-mesh-node-compatibility.md)** — Node **25** vs full Slack OpenAPI / **`@omnigraph/json-schema`**, upstream issue template (**ardatan/graphql-mesh**).
 - **[mcp-tools.md](mcp-tools.md)** — all MCP tools and the **`CLAWQL_ENABLE_*`** matrix.
 - **[schedule-synthetic-checks.md](schedule-synthetic-checks.md)** — planned **`schedule`** actions pairing with **`notify`** on failures ([#76](https://github.com/danielsmithdevelopment/ClawQL/issues/76)).
-- **[deploy-k8s.md](deploy-k8s.md)** — multi-replica notes; **`notify`** calls Slack from whichever pod handles the tool call.
+- **[deployment/deploy-k8s.md](deployment/deploy-k8s.md)** — multi-replica notes; **`notify`** calls Slack from whichever pod handles the tool call.
 - **[README.md](../README.md)** — install and environment variable tables.

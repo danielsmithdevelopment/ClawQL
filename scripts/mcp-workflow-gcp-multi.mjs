@@ -9,7 +9,7 @@
  * Env (inherited; defaults shown):
  *   CLAWQL_PROVIDER=google  CLAWQL_BUNDLED_OFFLINE=1
  *
- * Output: docs/workflow-gcp-multi-latest.json
+ * Output: docs/workflows/workflow-gcp-multi-latest.json
  */
 
 import { writeFile } from "node:fs/promises";
@@ -20,7 +20,7 @@ import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
-/** Ordered intents aligned with docs/workflow-gcp-multi-service.md sections. */
+/** Ordered intents aligned with docs/workflows/workflow-gcp-multi-service.md sections. */
 const WORKFLOW_QUERIES = [
   {
     section: "0. Service Usage — enable APIs",
@@ -248,7 +248,7 @@ async function main() {
     uniqueOperations: [...uniqueOperations.values()],
   };
 
-  const dest = join(ROOT, "docs", "workflow-gcp-multi-latest.json");
+  const dest = join(ROOT, "docs", "workflows", "workflow-gcp-multi-latest.json");
   await writeFile(dest, JSON.stringify(out, null, 2), "utf-8");
 
   const crossResults = parseSearchResultsFromMcpCall(out.crossCutting.mcpCallToolResult);

@@ -9,4 +9,4 @@
 - GraphQL proxy: **`npm run graphql`** (port **4000** in that run; historical note)
 - MCP server: `node --import tsx src/server.ts`
 
-**Current entrypoints:** see [`README.md`](../../../README.md) (**Setup** / GraphQL) and [`docs/deploy-cloud-run.md`](../../deploy-cloud-run.md) for production-style serving.
+**Current entrypoints:** see [`README.md`](../../../README.md) (**Setup** / GraphQL) and [`docs/deployment/deploy-cloud-run.md`](../../deployment/deploy-cloud-run.md) for production-style serving.

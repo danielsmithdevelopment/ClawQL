@@ -9,7 +9,7 @@ It mirrors the existing benchmark heuristic of **`approxTokens = ceil(bytes / 4)
 
 ## Run context
 
-- Source report: `docs/workflow-multi-provider-latest.json`
+- Source report: `docs/workflows/workflow-multi-provider-latest.json`
 - Captured output (historical): `multi-provider-test.md` → see [`../archive/multi-provider-workflow-run.md`](../archive/multi-provider-workflow-run.md)
 - Generated at: `2026-03-24T06:46:51.802Z`
 - Merged operation count: `7174`

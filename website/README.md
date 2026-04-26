@@ -20,7 +20,7 @@ npm start
 
 ## Performance, accessibility (WCAG-oriented), and SEO
 
-- **Runbook (incident prevention, Lighthouse CI, Workers):** [`../docs/website-performance-workers-guardrails.md`](../docs/website-performance-workers-guardrails.md)
+- **Runbook (incident prevention, Lighthouse CI, Workers):** [`../docs/website/website-performance-workers-guardrails.md`](../docs/website/website-performance-workers-guardrails.md)
 - **Local Lighthouse (needs local Chrome):** `npm run lh:docs` (writes `lighthouse-report.html`, gitignored)
 
 GitHub Actions runs Lighthouse on **`next build` + `next start`** for PRs that touch **`website/`** — see **`.github/workflows/website-lighthouse.yml`** at the repo root.

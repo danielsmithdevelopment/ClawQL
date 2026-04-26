@@ -78,11 +78,7 @@ function providersCoveredByExecution(outputObj: Record<string, unknown> | null):
 
   const stepsRaw = Array.isArray(outputObj.steps) ? outputObj.steps : [];
   const steps =
-    stepsRaw.length > 0
-      ? stepsRaw
-      : outputObj.operationId !== undefined
-        ? [outputObj]
-        : [];
+    stepsRaw.length > 0 ? stepsRaw : outputObj.operationId !== undefined ? [outputObj] : [];
   for (const step of steps) {
     const s = asRecord(step);
     if (!s) continue;

@@ -1,6 +1,6 @@
 # Lab Lighthouse against a production `next build` + `next start` server (not Cloudflare Workers).
 # Catches client-side / HTML regressions, WCAG-ish accessibility, SEO metadata, and best-practices headers.
-# See docs/website-performance-workers-guardrails.md for what this does *not* cover (Worker CPU, waitUntil).
+# See docs/website/website-performance-workers-guardrails.md for what this does *not* cover (Worker CPU, waitUntil).
 
 name: Website Lighthouse
 

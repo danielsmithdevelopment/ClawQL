@@ -23,7 +23,7 @@ Default local MCP endpoint: **`http://localhost:8080/mcp`**, health **`/healthz`
 
 ## Optional gRPC (protobuf MCP)
 
-The same registered tools (including **`CallTool`**) can be exposed over **gRPC** in the **same process** as Streamable HTTP. Set **`ENABLE_GRPC=1`**; the server listens on **`GRPC_PORT`** (default **50051**) using the **[`mcp-grpc-transport`](https://www.npmjs.com/package/mcp-grpc-transport)** package (`model_context_protocol.Mcp`, `grpc.health.v1.Health`, optional reflection). Clients must send **`mcp-protocol-version`** metadata on protobuf RPCs. Invoking from the shell: **[`packages/mcp-grpc-transport` README — Testing and invoking MCP over gRPC](https://github.com/danielsmithdevelopment/ClawQL/blob/main/packages/mcp-grpc-transport/README.md#testing-and-invoking-mcp-over-grpc)**. On **Kubernetes**, the **`clawql-mcp-http`** Service publishes **HTTP** and **gRPC (50051)** so agents can reach **`localhost:50051`** (or the LoadBalancer IP) without port-forward when gRPC is enabled—see [Kubernetes](/kubernetes) and [`docs/deploy-k8s.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deploy-k8s.md#service-ports-http-and-grpc).
+The same registered tools (including **`CallTool`**) can be exposed over **gRPC** in the **same process** as Streamable HTTP. Set **`ENABLE_GRPC=1`**; the server listens on **`GRPC_PORT`** (default **50051**) using the **[`mcp-grpc-transport`](https://www.npmjs.com/package/mcp-grpc-transport)** package (`model_context_protocol.Mcp`, `grpc.health.v1.Health`, optional reflection). Clients must send **`mcp-protocol-version`** metadata on protobuf RPCs. Invoking from the shell: **[`packages/mcp-grpc-transport` README — Testing and invoking MCP over gRPC](https://github.com/danielsmithdevelopment/ClawQL/blob/main/packages/mcp-grpc-transport/README.md#testing-and-invoking-mcp-over-grpc)**. On **Kubernetes**, the **`clawql-mcp-http`** Service publishes **HTTP** and **gRPC (50051)** so agents can reach **`localhost:50051`** (or the LoadBalancer IP) without port-forward when gRPC is enabled—see [Kubernetes](/kubernetes) and [`docs/deployment/deploy-k8s.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/deploy-k8s.md#service-ports-http-and-grpc).
 
 ## Docker
 
@@ -47,7 +47,7 @@ Or with Make:
 PROJECT_ID="your-project-id" REGION="us-central1" make deploy-cloud-run
 ```
 
-After deploy, agents use **`https://<mcp-service-url>/mcp`**. Full options: [`docs/deploy-cloud-run.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deploy-cloud-run.md).
+After deploy, agents use **`https://<mcp-service-url>/mcp`**. Full options: [`docs/deployment/deploy-cloud-run.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/deploy-cloud-run.md).
 
 ## Kubernetes
 
@@ -59,6 +59,6 @@ For **remote** clusters, use Kustomize overlays with image tag injection:
 ENV=dev IMAGE=us-central1-docker.pkg.dev/<project>/<repo>/clawql-mcp TAG=<tag> make deploy-k8s
 ```
 
-Or install with **Helm** from **`charts/clawql-mcp`**: **[Helm](/helm)** and [`docs/helm.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/helm.md).
+Or install with **Helm** from **`charts/clawql-mcp`**: **[Helm](/helm)** and [`docs/deployment/helm.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/helm.md).
 
-Details: [`docs/deploy-k8s.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deploy-k8s.md). Extended container and manifest notes: [`docker/README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docker/README.md).
+Details: [`docs/deployment/deploy-k8s.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/deploy-k8s.md). Extended container and manifest notes: [`docker/README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docker/README.md).

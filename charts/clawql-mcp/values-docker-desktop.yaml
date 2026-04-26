@@ -22,6 +22,31 @@ service:
 
 nodeOptions: "--max-old-space-size=768"
 
+# Enable all MCP/local feature flags for Docker Desktop local-k8s-up.
+enableGrpc: true
+enableGrpcReflection: true
+enableCache: true
+enableAudit: true
+enableNotify: true
+enableOnyx: true
+enableOuroboros: true
+
+# Local defaults; override via env/secret for real integrations.
+onyxBaseUrl: "http://host.docker.internal:3000"
+
+ouroborosPostgres:
+  enabled: true
+  auth:
+    password: "change-me"
+
+nats:
+  enabled: true
+
+flink:
+  enabled: true
+  jobManagerMemoryProcessSize: "1024m"
+  taskManagerMemoryProcessSize: "2048m"
+
 resources:
   requests:
     cpu: 250m

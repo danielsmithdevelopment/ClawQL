@@ -1,5 +1,5 @@
 {
-  "sourceReport": "docs/workflow-gcp-multi-latest.json",
+  "sourceReport": "docs/workflows/workflow-gcp-multi-latest.json",
   "generatedAt": "2026-03-23T05:22:54.608Z",
   "mergedOperationCount": 1985,
   "discoveryJsonTotalBytes": 11157299,

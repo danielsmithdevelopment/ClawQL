@@ -127,7 +127,7 @@ For rough sizing, the repo’s benchmark notes often use **`ceil(bytes / 4)`** t
 
 - [`docs/mcp-tools.md`](../mcp-tools.md) — **`memory_ingest`**, **`memory_recall`**, **`cache`**
 - [`docs/memory-obsidian.md`](../memory-obsidian.md) — vault layout, hybrid DB
-- [`docs/cursor-vault-memory.md`](../cursor-vault-memory.md) — Cursor + vault workflow
+- [`docs/integrations/cursor-vault-memory.md`](../integrations/cursor-vault-memory.md) — Cursor + vault workflow
 - [`docs/case_studies/README.md`](README.md) — other case studies
 
 **Website (readable layout with figures):** **`/case-studies/cross-thread-vault-recall`** on [docs.clawql.com](https://docs.clawql.com).
