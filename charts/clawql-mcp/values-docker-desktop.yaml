@@ -44,6 +44,8 @@ nats:
 
 flink:
   enabled: true
+  jobManagerMemoryProcessSize: "1024m"
+  taskManagerMemoryProcessSize: "2048m"
 
 resources:
   requests:

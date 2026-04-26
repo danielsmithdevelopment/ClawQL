@@ -14,6 +14,12 @@ data:
     query.server.port: {{ .Values.flink.service.queryPort }}
     taskmanager.numberOfTaskSlots: {{ .Values.flink.taskManager.taskSlots }}
     rest.port: {{ .Values.flink.service.restPort }}
+    {{- if .Values.flink.jobManagerMemoryProcessSize }}
+    jobmanager.memory.process.size: {{ .Values.flink.jobManagerMemoryProcessSize }}
+    {{- end }}
+    {{- if .Values.flink.taskManagerMemoryProcessSize }}
+    taskmanager.memory.process.size: {{ .Values.flink.taskManagerMemoryProcessSize }}
+    {{- end }}
 ---
 apiVersion: v1
 kind: Service
@@ -87,6 +93,12 @@ spec:
                 query.server.port: {{ .Values.flink.service.queryPort }}
                 taskmanager.numberOfTaskSlots: {{ .Values.flink.taskManager.taskSlots }}
                 rest.port: {{ .Values.flink.service.restPort }}
+                {{- if .Values.flink.jobManagerMemoryProcessSize }}
+                jobmanager.memory.process.size: {{ .Values.flink.jobManagerMemoryProcessSize }}
+                {{- end }}
+                {{- if .Values.flink.taskManagerMemoryProcessSize }}
+                taskmanager.memory.process.size: {{ .Values.flink.taskManagerMemoryProcessSize }}
+                {{- end }}
             {{- with .Values.flink.extraEnv }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
@@ -139,6 +151,12 @@ spec:
                 query.server.port: {{ .Values.flink.service.queryPort }}
                 taskmanager.numberOfTaskSlots: {{ .Values.flink.taskManager.taskSlots }}
                 rest.port: {{ .Values.flink.service.restPort }}
+                {{- if .Values.flink.jobManagerMemoryProcessSize }}
+                jobmanager.memory.process.size: {{ .Values.flink.jobManagerMemoryProcessSize }}
+                {{- end }}
+                {{- if .Values.flink.taskManagerMemoryProcessSize }}
+                taskmanager.memory.process.size: {{ .Values.flink.taskManagerMemoryProcessSize }}
+                {{- end }}
             {{- with .Values.flink.extraEnv }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
