@@ -4,8 +4,11 @@ ClawQL is an MCP server for API discovery and execution with a token-efficient `
 
 ## What You Get
 
-- Core MCP tools: `search`, `execute`
-- Optional tools (env-gated): `sandbox_exec`, `memory_ingest`, `memory_recall`, `ingest_external_knowledge`, `cache`, `audit`, `notify`, `knowledge_search_onyx`, `schedule`, `ouroboros_*`
+Feature tiers (aligned with the architecture diagram — details in [`docs/readme/configuration.md`](docs/readme/configuration.md#feature-tiers-architecture-diagram)):
+
+- **ClawQL Core (always on — no opt-out):** `search`, `execute`, `audit`, `cache` — same band in the diagram; ring-buffer semantics for `audit` and LRU semantics for `cache` in [`docs/enterprise-mcp-tools.md`](docs/enterprise-mcp-tools.md) and [`docs/cache-tool.md`](docs/cache-tool.md).
+- **Default on — opt out:** `memory_ingest` / `memory_recall`, and the **document** stack (`ingest_external_knowledge`, plus `knowledge_search_onyx` when `CLAWQL_ENABLE_ONYX=1`). Use `CLAWQL_ENABLE_MEMORY=0` or `CLAWQL_ENABLE_DOCUMENTS=0` to hide; vault path still required for real disk I/O on memory / ingest.
+- **Default off — opt in:** `schedule`, `notify`, `knowledge_search_onyx` (needs `CLAWQL_ENABLE_ONYX=1` and documents on), `ouroboros_*` — see `docs/mcp-tools.md`. **`sandbox_exec`** is always registered; it only runs code when **`CLAWQL_SANDBOX_BRIDGE_URL`** (and token) are set.
 - Stdio and HTTP MCP server modes
 - Bundled provider specs for offline lookup and multi-provider workflows
 
@@ -47,7 +50,7 @@ Top-level docs index: `docs/README.md`
 - Workflow recipes: `docs/recipes/README.md`
 - Memory and vault workflows: `docs/memory-obsidian.md`
 - Cache tool: `docs/cache-tool.md`
-- Enterprise optional tools (`audit`, etc.): `docs/enterprise-mcp-tools.md`
+- Enterprise MCP notes (`audit` threat model, future metrics/governance): `docs/enterprise-mcp-tools.md`
 - Slack notify tool: `docs/notify-tool.md`
 - Onyx knowledge tool: `docs/onyx-knowledge-tool.md`
 - Ouroboros package and integration: `docs/clawql-ouroboros.md`
@@ -73,6 +76,6 @@ Top-level docs index: `docs/README.md`
 
 ## Notes
 
-- Optional tools are disabled by default and activated via `CLAWQL_ENABLE_*` flags.
-- Vault memory tools require `CLAWQL_OBSIDIAN_VAULT_PATH`.
+- **Core** (`search`, `execute`, `audit`, `cache`) has **no opt-out** — no **`CLAWQL_ENABLE_*`** gate for those tools.
+- A writable `CLAWQL_OBSIDIAN_VAULT_PATH` is required to read/write the vault for **`memory_*`** and bulk **`ingest_external_knowledge`**.
 - For full environment variable details, see `.env.example` and `docs/mcp-tools.md`.

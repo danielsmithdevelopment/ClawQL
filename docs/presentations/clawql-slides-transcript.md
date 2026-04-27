@@ -249,10 +249,10 @@ Bulk-ingests Markdown content and optionally fetches and stores external URLs. U
 First-class Slack notification tool. Sends structured messages to configured channels using the bundled Slack spec and CLAWQL_SLACK_TOKEN. Called by Ouroboros at workflow milestones, completions, retries, and audit events.
 
 **cache** — Optional
-In-process LRU scratch storage for session-scoped ephemeral state. Enabled via CLAWQL_ENABLE_CACHE. Stores transient tool results, intermediate computations, or tool-discovery caches during a session.
+In-process LRU scratch storage for session-scoped ephemeral state. Always on. Vault memory tools: CLAWQL_ENABLE_MEMORY=1. Stores transient tool results, intermediate computations, or tool-discovery caches during a session.
 
 **audit** — Optional
-In-process event ring buffer for operator audit trails. Enabled via CLAWQL_ENABLE_AUDIT. Records all tool calls, execution results, and workflow events in a structured, queryable log for compliance purposes.
+In-process event ring buffer for operator audit trails — always registered. Records all tool calls, execution results, and workflow events in a structured, queryable log for compliance purposes.
 
 -----
 

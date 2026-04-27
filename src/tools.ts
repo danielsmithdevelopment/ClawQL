@@ -1,13 +1,11 @@
 /**
  * tools.ts
  *
- * Core tools: search (spec discovery) and execute (GraphQL-backed REST call).
+ * Core tools: search (spec discovery), execute (GraphQL-backed REST call), audit (in-process ring buffer; GitHub #89 — not durable; use memory_ingest for compliance trails), cache (in-process LRU KV; GitHub #75 — not persisted; use memory_* for vault).
  * Optional: sandbox_exec — remote execution via cloudflare/sandbox-bridge Worker.
- * Optional: memory_ingest / memory_recall — Obsidian vault notes (ingest + recall).
- * Optional: ingest_external_knowledge — bulk Markdown + optional URL fetch (GitHub #40).
- * Optional: cache — in-process ephemeral KV when CLAWQL_ENABLE_CACHE (GitHub #75); not persisted — use memory_* for vault.
- * Optional: audit — in-process ring buffer when CLAWQL_ENABLE_AUDIT (GitHub #89); not durable — use memory_ingest for compliance trails.
- * Optional: knowledge_search_onyx — Onyx enterprise document search when CLAWQL_ENABLE_ONYX (GitHub #118).
+ * memory_ingest / memory_recall — Obsidian vault notes (default on; set CLAWQL_ENABLE_MEMORY=0 to hide; writable vault).
+ * Optional: ingest_external_knowledge — bulk Markdown + optional URL fetch (GitHub #40); default on; **`CLAWQL_ENABLE_DOCUMENTS=0`** to hide.
+ * Optional: knowledge_search_onyx — Onyx when CLAWQL_ENABLE_ONYX and documents enabled; **`CLAWQL_ENABLE_DOCUMENTS=0`** hides (GitHub #118).
  * Optional: schedule — persisted jobs + manual synthetic trigger when CLAWQL_ENABLE_SCHEDULE (GitHub #76).
  * Optional: notify — Slack chat.postMessage when CLAWQL_ENABLE_NOTIFY (GitHub #77); requires Slack in loaded spec + bot token.
  * Optional: ouroboros_* — evolutionary loop tools when CLAWQL_ENABLE_OUROBOROS (GitHub #141); optional CLAWQL_OUROBOROS_DATABASE_URL for Postgres lineage (#142).
@@ -439,141 +437,141 @@ export function registerTools(server: McpServer) {
     snippet: z.string().max(400).optional(),
   });
 
-  server.tool(
-    "memory_ingest",
-    {
-      title: z
-        .string()
-        .min(1)
-        .describe("Suggested Obsidian page title (used for the file name and heading)."),
-      insights: z.string().optional().describe("Key insights to persist."),
-      conversation: z.string().optional().describe("Conversation transcript or summary text."),
-      toolOutputs: z
-        .union([z.string(), z.array(z.string())])
-        .optional()
-        .describe("Tool result body, or a list of results to record."),
-      toolOutputsFile: z
-        .string()
-        .optional()
-        .describe(
-          "If set, the ClawQL server reads UTF-8 from this file path and uses it as `toolOutputs` (small MCP payload; " +
-            "large content does not go through the tool round-trip). File must be under an allowed root " +
-            "(`CLAWQL_MEMORY_INGEST_FILE_ROOTS` or, by default, the process current working directory). " +
-            "Takes precedence over `toolOutputs` if both are set. Set `CLAWQL_MEMORY_INGEST_FILE=0` to reject."
-        ),
-      enterpriseCitations: z
-        .array(memoryEnterpriseCitationSchema)
-        .max(30)
-        .optional()
-        .describe(
-          "Optional short citation rows (e.g. trimmed from Onyx `knowledge_search_onyx` JSON). " +
-            "Stored as a small Markdown block in the vault — not full retrieval payloads (#130)."
-        ),
-      wikilinks: z
-        .array(z.string())
-        .optional()
-        .describe(
-          "Other vault page names to link with Obsidian [[wikilinks]] (plain names; brackets optional)."
-        ),
-      sessionId: z.string().optional().describe("Optional session label (shown in the note)."),
-      append: z
-        .boolean()
-        .optional()
-        .describe(
-          "When the page already exists, append a new section (default true). Set false to replace the file."
-        ),
-    },
-    handleMemoryIngestToolInput
-  );
+  if (getClawqlOptionalToolFlags().enableMemory) {
+    server.tool(
+      "memory_ingest",
+      {
+        title: z
+          .string()
+          .min(1)
+          .describe("Suggested Obsidian page title (used for the file name and heading)."),
+        insights: z.string().optional().describe("Key insights to persist."),
+        conversation: z.string().optional().describe("Conversation transcript or summary text."),
+        toolOutputs: z
+          .union([z.string(), z.array(z.string())])
+          .optional()
+          .describe("Tool result body, or a list of results to record."),
+        toolOutputsFile: z
+          .string()
+          .optional()
+          .describe(
+            "If set, the ClawQL server reads UTF-8 from this file path and uses it as `toolOutputs` (small MCP payload; " +
+              "large content does not go through the tool round-trip). File must be under an allowed root " +
+              "(`CLAWQL_MEMORY_INGEST_FILE_ROOTS` or, by default, the process current working directory). " +
+              "Takes precedence over `toolOutputs` if both are set. Set `CLAWQL_MEMORY_INGEST_FILE=0` to reject."
+          ),
+        enterpriseCitations: z
+          .array(memoryEnterpriseCitationSchema)
+          .max(30)
+          .optional()
+          .describe(
+            "Optional short citation rows (e.g. trimmed from Onyx `knowledge_search_onyx` JSON). " +
+              "Stored as a small Markdown block in the vault — not full retrieval payloads (#130)."
+          ),
+        wikilinks: z
+          .array(z.string())
+          .optional()
+          .describe(
+            "Other vault page names to link with Obsidian [[wikilinks]] (plain names; brackets optional)."
+          ),
+        sessionId: z.string().optional().describe("Optional session label (shown in the note)."),
+        append: z
+          .boolean()
+          .optional()
+          .describe(
+            "When the page already exists, append a new section (default true). Set false to replace the file."
+          ),
+      },
+      handleMemoryIngestToolInput
+    );
 
-  server.tool(
-    "memory_recall",
-    {
-      query: z
-        .string()
-        .min(1)
-        .describe(
-          "Natural language or keywords to find in vault Markdown (filename + body + headings)."
-        ),
-      limit: z
-        .number()
-        .int()
-        .min(1)
-        .max(50)
-        .optional()
-        .describe("Max notes to return (default: CLAWQL_MEMORY_RECALL_LIMIT or 10)."),
-      maxDepth: z
-        .number()
-        .int()
-        .min(0)
-        .max(10)
-        .optional()
-        .describe(
-          "How many wikilink hops to follow from keyword hits (default: CLAWQL_MEMORY_RECALL_MAX_DEPTH or 2)."
-        ),
-      minScore: z
-        .number()
-        .min(0)
-        .optional()
-        .describe(
-          "Minimum keyword match score to seed a note (default: CLAWQL_MEMORY_RECALL_MIN_SCORE or 1)."
-        ),
-    },
-    handleMemoryRecallToolInput
-  );
-
-  server.tool(
-    "ingest_external_knowledge",
-    {
-      source: z
-        .string()
-        .optional()
-        .describe(
-          'Importer: "markdown" (default when documents[] is set) or "url" for HTTPS fetch (requires CLAWQL_EXTERNAL_INGEST_FETCH=1). Omit payload for roadmap preview.'
-        ),
-      dryRun: z
-        .boolean()
-        .optional()
-        .describe(
-          "Default true: validate only. Set false to write Markdown or (url mode) fetch and write."
-        ),
-      scope: z
-        .string()
-        .optional()
-        .describe(
-          "Optional vault-relative .md path for url imports (default: Memory/external/<slug>.md)."
-        ),
-      documents: z
-        .array(
-          z.object({
-            path: z.string().min(1).max(512).describe("Vault-relative path; must end with .md"),
-            markdown: z
-              .string()
-              .max(2_097_152)
-              .describe("Markdown body UTF-8 (max ~2 MiB per file)."),
-          })
-        )
-        .max(50)
-        .optional()
-        .describe("Bulk Markdown files to import when CLAWQL_EXTERNAL_INGEST=1."),
-      url: z
-        .string()
-        .max(2048)
-        .optional()
-        .describe(
-          "HTTPS URL to fetch when source is url and CLAWQL_EXTERNAL_INGEST_FETCH=1 (opt-in network)."
-        ),
-    },
-    handleIngestExternalKnowledgeToolInput
-  );
-
-  if (getClawqlOptionalToolFlags().enableCache) {
-    server.tool("cache", cacheToolSchema, handleCacheToolInput);
+    server.tool(
+      "memory_recall",
+      {
+        query: z
+          .string()
+          .min(1)
+          .describe(
+            "Natural language or keywords to find in vault Markdown (filename + body + headings)."
+          ),
+        limit: z
+          .number()
+          .int()
+          .min(1)
+          .max(50)
+          .optional()
+          .describe("Max notes to return (default: CLAWQL_MEMORY_RECALL_LIMIT or 10)."),
+        maxDepth: z
+          .number()
+          .int()
+          .min(0)
+          .max(10)
+          .optional()
+          .describe(
+            "How many wikilink hops to follow from keyword hits (default: CLAWQL_MEMORY_RECALL_MAX_DEPTH or 2)."
+          ),
+        minScore: z
+          .number()
+          .min(0)
+          .optional()
+          .describe(
+            "Minimum keyword match score to seed a note (default: CLAWQL_MEMORY_RECALL_MIN_SCORE or 1)."
+          ),
+      },
+      handleMemoryRecallToolInput
+    );
   }
 
-  if (getClawqlOptionalToolFlags().enableAudit) {
-    server.tool("audit", auditToolSchema, handleAuditToolInput);
+  if (getClawqlOptionalToolFlags().enableDocuments) {
+    server.tool(
+      "ingest_external_knowledge",
+      {
+        source: z
+          .string()
+          .optional()
+          .describe(
+            'Importer: "markdown" (default when documents[] is set) or "url" for HTTPS fetch (requires CLAWQL_EXTERNAL_INGEST_FETCH=1). Omit payload for roadmap preview.'
+          ),
+        dryRun: z
+          .boolean()
+          .optional()
+          .describe(
+            "Default true: validate only. Set false to write Markdown or (url mode) fetch and write."
+          ),
+        scope: z
+          .string()
+          .optional()
+          .describe(
+            "Optional vault-relative .md path for url imports (default: Memory/external/<slug>.md)."
+          ),
+        documents: z
+          .array(
+            z.object({
+              path: z.string().min(1).max(512).describe("Vault-relative path; must end with .md"),
+              markdown: z
+                .string()
+                .max(2_097_152)
+                .describe("Markdown body UTF-8 (max ~2 MiB per file)."),
+            })
+          )
+          .max(50)
+          .optional()
+          .describe("Bulk Markdown files to import when CLAWQL_EXTERNAL_INGEST=1."),
+        url: z
+          .string()
+          .max(2048)
+          .optional()
+          .describe(
+            "HTTPS URL to fetch when source is url and CLAWQL_EXTERNAL_INGEST_FETCH=1 (opt-in network)."
+          ),
+      },
+      handleIngestExternalKnowledgeToolInput
+    );
   }
+
+  server.tool("cache", cacheToolSchema, handleCacheToolInput);
+
+  server.tool("audit", auditToolSchema, handleAuditToolInput);
 
   if (getClawqlOptionalToolFlags().enableSchedule) {
     server.tool("schedule", scheduleToolSchema, handleScheduleToolInput);
@@ -627,7 +625,7 @@ export function registerTools(server: McpServer) {
     );
   }
 
-  if (getClawqlOptionalToolFlags().enableOnyxKnowledge) {
+  if (getClawqlOptionalToolFlags().enableOnyxKnowledge && getClawqlOptionalToolFlags().enableDocuments) {
     server.tool(
       "knowledge_search_onyx",
       {

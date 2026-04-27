@@ -5,6 +5,7 @@
 
 import { readFile } from "node:fs/promises";
 import { resolve as resolvePath } from "node:path";
+import { getClawqlOptionalToolFlags } from "./clawql-optional-flags.js";
 import { getPackageRoot } from "./package-root.js";
 
 export interface BundledProvider {
@@ -213,11 +214,29 @@ export async function resolveItemsFromBundledProviderEnvList(
 export const BUNDLED_MERGED_VENDOR_LABELS: readonly string[] =
   Object.keys(BUNDLED_PROVIDERS).sort();
 
+/**
+ * Local document / conversion / archive / enterprise search stack. Omitted from the default **`all-providers`**
+ * merge when **`CLAWQL_ENABLE_DOCUMENTS=0`**. **`CLAWQL_BUNDLED_PROVIDERS=…`** can still list these ids explicitly.
+ */
+export const BUNDLED_DOCUMENT_VENDOR_IDS: readonly string[] = [
+  "gotenberg",
+  "onyx",
+  "paperless",
+  "stirling",
+  "tika",
+];
+
+const BUNDLED_DOCUMENT_VENDOR_SET = new Set(BUNDLED_DOCUMENT_VENDOR_IDS);
+
 async function resolveAllBundledProvidersItems(): Promise<ProviderGroupItem[]> {
   const root = getPackageRoot();
   const google = await resolveGoogleTop50Items();
-  const rest = BUNDLED_MERGED_VENDOR_LABELS.map((id) => {
-    const p = BUNDLED_PROVIDERS[id];
+  const allowDocuments = getClawqlOptionalToolFlags().enableDocuments;
+  const labels = BUNDLED_MERGED_VENDOR_LABELS.filter(
+    (id) => allowDocuments || !BUNDLED_DOCUMENT_VENDOR_SET.has(id)
+  );
+  const rest = labels.map((id) => {
+    const p = BUNDLED_PROVIDERS[id]!;
     return {
       abs: resolvePath(root, p.bundledSpecPath),
       label: p.id,
@@ -230,7 +249,10 @@ export const BUNDLED_PROVIDER_GROUPS: Record<string, BundledProviderGroup> = {
   atlassian: { providers: ["jira", "bitbucket"] },
   /** Merged bundled Google Cloud APIs from `providers/google/google-top50-apis.json` (see providers docs). */
   google: { resolve: resolveGoogleTop50Items },
-  /** Google Cloud bundle + every other bundled vendor (Jira, Bitbucket, Cloudflare, GitHub, Slack, Sentry, n8n, …). Default when no spec env. */
+  /**
+   * Google Cloud bundle + every other bundled vendor (Jira, Bitbucket, Cloudflare, GitHub, …).
+   * The document stack (**tika**, **gotenberg**, **paperless**, **stirling**, **onyx**) is included unless **`CLAWQL_ENABLE_DOCUMENTS=0`**. Default when no spec env.
+   */
   "all-providers": { resolve: resolveAllBundledProvidersItems },
 };
 

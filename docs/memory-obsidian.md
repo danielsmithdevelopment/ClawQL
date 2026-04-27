@@ -2,7 +2,7 @@
 
 This note explains **why** ClawQL supports an Obsidian vault path and a **`memory_ingest`** tool, in terms readers may have seen described as **Karpathy-style** or **incremental wiki** memory. For all MCP tools (including **`memory_recall`**), see **[mcp-tools.md](mcp-tools.md)**.
 
-**Not the vault:** the optional **`cache`** tool is **ephemeral in-process LRU** storage for session scratch data — it does **not** write Markdown or **`memory.db`**. The optional **`audit`** tool (**`CLAWQL_ENABLE_AUDIT`**) is an **in-process** event ring buffer — **not** on disk; not a substitute for persisted compliance records. The optional **`notify`** tool (**`CLAWQL_ENABLE_NOTIFY`**) sends **Slack** messages — outbound notifications, not vault pages. See **[cache-tool.md](cache-tool.md)**, **[enterprise-mcp-tools.md](enterprise-mcp-tools.md)**, and **[notify-tool.md](notify-tool.md)**.
+**Not the vault:** the **`cache`** tool (**ClawQL Core**, always registered) is **ephemeral in-process LRU** storage for session scratch data — it does **not** write Markdown or **`memory.db`**. **`memory_ingest`** / **`memory_recall`** are on by default; set **`CLAWQL_ENABLE_MEMORY=0`** to hide. The **`audit`** tool (**always registered**) is an **in-process** event ring buffer — **not** on disk; not a substitute for persisted compliance records. The optional **`notify`** tool (**`CLAWQL_ENABLE_NOTIFY`**) sends **Slack** messages — outbound notifications, not vault pages. See **[cache-tool.md](cache-tool.md)**, **[enterprise-mcp-tools.md](enterprise-mcp-tools.md)**, and **[notify-tool.md](notify-tool.md)**.
 
 ## Beyond one-shot RAG
 

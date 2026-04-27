@@ -2,6 +2,8 @@
 
 The optional **`knowledge_search_onyx`** tool runs **semantic document search** against a self-hosted or cloud **[Onyx](https://www.onyx.app/)** (formerly Danswer) instance. It wraps the bundled OpenAPI operation **`onyx_send_search_message`** (`POST /search/send-search-message`) so agents do not hand-assemble **`execute("onyx::onyx_send_search_message", …)`** for every retrieval.
 
+**Layer:** Part of **ClawQL Documents** in the architecture diagram — **default on** with **`CLAWQL_ENABLE_DOCUMENTS=0`** to opt out (which also removes **`onyx`** from the default **`all-providers`** merge). On top of that, **`CLAWQL_ENABLE_ONYX=1`** registers this wrapper tool (see below).
+
 **Tracking:** Onyx epic [#118](https://github.com/danielsmithdevelopment/ClawQL/issues/118) (closed) · **Post-Paperless index push (workflow + `execute`):** [#120](https://github.com/danielsmithdevelopment/ClawQL/issues/120) — bundled **`onyx_ingest_document`** landed; optional Ouroboros hook remains · **Vault citation handoff:** [#130](https://github.com/danielsmithdevelopment/ClawQL/issues/130) (closed: **`enterpriseCitations`** + helpers) · **Further tests (live/VCR, transport parity):** [#144](https://github.com/danielsmithdevelopment/ClawQL/issues/144) · **Deck / slides accuracy:** [#145](https://github.com/danielsmithdevelopment/ClawQL/issues/145) · Implementation: [`src/knowledge-search-onyx.ts`](../src/knowledge-search-onyx.ts), [`providers/onyx/openapi.yaml`](../providers/onyx/openapi.yaml) · Full MCP matrix: **[mcp-tools.md](mcp-tools.md)**.
 
 ---

@@ -7,12 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Breaking
+
+- **`audit` MCP tool:** **`CLAWQL_ENABLE_AUDIT`** and Helm **`enableAudit`** removed — **`audit`** is always registered ([#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)). Delete obsolete env / chart keys; **`listTools`** always includes **`audit`**.
+- **`cache` MCP tool:** **`CLAWQL_ENABLE_CACHE`** and Helm **`enableCache`** removed — **`cache`** is always registered ([#75](https://github.com/danielsmithdevelopment/ClawQL/issues/75)). Delete obsolete env / chart keys; **`listTools`** always includes **`cache`**.
+- **`charts/clawql-mcp`:** value keys **`enableAudit`** and **`enableCache`** removed (Core tools are not configurable via Helm); chart **`Chart.version`** / **`appVersion`** bump with **`clawql-mcp`** major at release.
+- **`clawql-ouroboros` / MCP `ouroboros_*` tools:**
+  - **`maxGenerations`** no longer produces a converged-success outcome when convergence gates are unsatisfied — runs end **exhausted** (`converged: false`) instead of a false-positive converged state.
+  - **Convergence gates:** evaluation / approval checks block **all** convergence exits (similarity, stagnation, oscillation); **`final_approved: false`** prevents convergence.
+  - **Executor routing:** route hints from **`brownfield_context.context_references`** execute as a **sequence** (multi-route), not only the first match.
+  - **Evaluator:** provider-aware acceptance criteria are evaluated **per criterion**, with improved provider inference (for example, **`repos/list-commits`** maps to GitHub).
+
 ### Changed
 
-- **Ouroboros convergence semantics:** `maxGenerations` no longer returns a converged-success signal. When convergence gates are not satisfied, runs now end as **exhausted** (`converged: false`) rather than reporting a false-positive converged state.
-- **Convergence gate consistency:** evaluation/approval checks now block all convergence exits (similarity, stagnation, oscillation). `final_approved: false` explicitly prevents convergence.
-- **Default Ouroboros executor routing:** route hints from `brownfield_context.context_references` are now executed as a sequence (multi-route), instead of only taking the first matching hint.
-- **Default evaluator provider evidence:** provider-aware acceptance criteria are evaluated per criterion, with improved provider inference for both multi-step and single-step execute outputs (for example, `repos/list-commits` correctly maps to GitHub).
+- **Docs:** **Feature tiers** aligned with the architecture diagram — **ClawQL Core** (`search`, `execute`, `audit`, `cache`, no opt-out), **default on — opt out** (vault memory, Documents stack), **default off — opt in** (schedule, notify, Onyx wrapper, Ouroboros; Sandbox bridge–gated `sandbox_exec`) — in **`docs/readme/configuration.md`**, plus cross-links from **`README.md`**, **`docs/mcp-tools.md`**, **`docs/README.md`**, **`.env.example`**, **`docs/onyx-knowledge-tool.md`**, and the website **Concepts** / **Tools** pages.
+- **`memory_ingest` / `memory_recall`:** register by default; set **`CLAWQL_ENABLE_MEMORY=0`** to opt out. **Helm:** **`enableMemory: true`** (default); when **`false`**, the chart injects **`CLAWQL_ENABLE_MEMORY=0`**. Docs: **[`docs/mcp-tools.md`](docs/mcp-tools.md)**, **[`docs/cache-tool.md`](docs/cache-tool.md)**, **[`README.md`](README.md)**, **`.env.example`**, **[`charts/clawql-mcp/README.md`](charts/clawql-mcp/README.md)**.
+- **Document stack opt-out:** **`CLAWQL_ENABLE_DOCUMENTS=0`** (default on when unset) omits bundled **tika**, **gotenberg**, **paperless**, **stirling**, and **onyx** from the default **`all-providers`** merge; unregisters **`ingest_external_knowledge`**; **`knowledge_search_onyx`** requires both **`CLAWQL_ENABLE_ONYX=1`** and documents enabled. **`CLAWQL_BUNDLED_PROVIDERS=…`** can still list document vendors explicitly. **Helm:** **`enableDocuments: true`** by default; set **`false`** to inject **`CLAWQL_ENABLE_DOCUMENTS=0`**. See **[`docs/mcp-tools.md`](docs/mcp-tools.md)**, **[`src/provider-registry.ts`](src/provider-registry.ts)** (`BUNDLED_DOCUMENT_VENDOR_IDS`).
+- **`charts/clawql-mcp`:** **`docs/deployment/helm.md`** and **`charts/clawql-mcp/README.md`** aligned with Core tools and optional flags.
 
 ### Added
 

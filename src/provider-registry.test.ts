@@ -1,5 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
+  BUNDLED_DOCUMENT_VENDOR_IDS,
   listBundledProviderGroupIds,
   listBundledProviderIds,
   resolveBundledProvider,
@@ -83,6 +84,21 @@ describe("provider-registry", () => {
     expect(items!.every((x) => x.abs.includes("/providers/"))).toBe(true);
   });
 
+  it("omits document-stack vendors from all-providers when CLAWQL_ENABLE_DOCUMENTS=0", async () => {
+    vi.stubEnv("CLAWQL_ENABLE_DOCUMENTS", "0");
+    try {
+      const items = await resolveBundledProviderGroup("all-providers");
+      expect(items).toBeDefined();
+      const labels = new Set(items!.map((x) => x.label));
+      for (const id of BUNDLED_DOCUMENT_VENDOR_IDS) {
+        expect(labels.has(id)).toBe(false);
+      }
+      expect(labels.has("github")).toBe(true);
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
   it("resolveItemsFromBundledProviderEnvList merges listed vendors and google", async () => {
     const items = await resolveItemsFromBundledProviderEnvList("github, n8n");
     const labels = new Set(items.map((x) => x.label));
@@ -96,6 +112,18 @@ describe("provider-registry", () => {
     const labels = new Set(items.map((x) => x.label));
     expect(labels.has("github")).toBe(true);
     expect(labels.has("compute-v1")).toBe(true);
+  });
+
+  it("CLAWQL_BUNDLED_PROVIDERS still includes paperless when CLAWQL_ENABLE_DOCUMENTS=0 (explicit list)", async () => {
+    vi.stubEnv("CLAWQL_ENABLE_DOCUMENTS", "0");
+    try {
+      const items = await resolveItemsFromBundledProviderEnvList("paperless,github");
+      const labels = new Set(items.map((x) => x.label));
+      expect(labels.has("paperless")).toBe(true);
+      expect(labels.has("github")).toBe(true);
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 
   it("resolveItemsFromBundledProviderEnvList rejects unknown id", async () => {

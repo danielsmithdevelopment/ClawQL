@@ -3,15 +3,14 @@ import { docsPageMetadata } from '@/lib/seo'
 export const metadata = docsPageMetadata({
   title: 'Session cache',
   description:
-    'Optional MCP cache tool: in-process LRU key/value storage (CLAWQL_ENABLE_CACHE). Not the Obsidian vault — use memory_ingest and memory_recall for durable memory.',
+    'MCP cache tool: ClawQL Core (always on). In-process LRU. Not the vault — use memory_ingest and memory_recall for durable memory (CLAWQL_ENABLE_MEMORY=0 to hide vault tools).',
   path: '/cache',
 })
 
 # Session cache (`cache`)
 
-The optional **`cache`** MCP tool stores **temporary key/value data** in the ClawQL server process. It is **not** durable and **not** the Obsidian vault.
+The **`cache`** MCP tool is **ClawQL Core** — **always registered** (no opt-out). It stores **temporary key/value data** in the ClawQL server process. It is **not** durable and **not** the Obsidian vault.
 
-- **Enable:** **`CLAWQL_ENABLE_CACHE=1`** (or `true` / `yes`).
 - **Storage:** A single **`Map` in this Node process** — no disk, no **`memory.db`**, no Markdown.
 - **Eviction:** **LRU** when **`CLAWQL_CACHE_MAX_ENTRIES`** is reached (default **10_000**). **`get`** and **`set`** refresh recency; **`set`** may return **`evicted`** when keys were dropped to make room.
 - **Per-value limit:** **`CLAWQL_CACHE_MAX_VALUE_BYTES`** (default **1 MiB**, max **16 MiB**).

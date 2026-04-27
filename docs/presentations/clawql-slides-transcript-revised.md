@@ -126,9 +126,9 @@ Knowledge Bulk-ingests Markdown content and optionally fetches and stores extern
 notify
 New First-class Slack notification tool. Sends structured messages to configured channels using the bundled Slack spec and CLAWQL_SLACK_TOKEN. Called by Ouroboros at workflow milestones, completions, retries, and audit events. Can include Onyx citation links and Paperless document links in notifications.
 cache
-Optional In-process LRU scratch storage for session-scoped ephemeral state. Enabled via CLAWQL_ENABLE_CACHE. Stores transient tool results, intermediate computations, or tool-discovery caches during a session.
+In-process LRU scratch storage (always on). Optional vault: memory_ingest / memory_recall when CLAWQL_ENABLE_MEMORY=1. Stores transient tool results, intermediate computations, or tool-discovery caches during a session.
 audit
-Optional In-process event ring buffer for operator audit trails. Enabled via CLAWQL_ENABLE_AUDIT. Records all tool calls — including Onyx knowledge retrievals — execution results, and workflow events in a structured, queryable log for compliance purposes.
+In-process event ring buffer for operator audit trails — always registered. Records all tool calls — including Onyx knowledge retrievals — execution results, and workflow events in a structured, queryable log for compliance purposes.
 
 Slide 8 — search + execute: How API Discovery Works
 search + execute: How API Discovery Works

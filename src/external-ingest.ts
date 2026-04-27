@@ -198,6 +198,18 @@ export async function runIngestExternalKnowledge(
   input: ExternalIngestInput
 ): Promise<ExternalIngestResult> {
   const vaultConfigured = getObsidianVaultPath() !== null;
+  if (!getClawqlOptionalToolFlags().enableDocuments) {
+    return {
+      ok: false,
+      stub: true,
+      enabled: false,
+      vaultConfigured,
+      hint: "Set CLAWQL_ENABLE_DOCUMENTS=1 (or unset) for document tools. See docs/mcp-tools.md.",
+      message: "Document tools are disabled (CLAWQL_ENABLE_DOCUMENTS=0).",
+      roadmap: [],
+      relatedIssues: [40],
+    };
+  }
   const enabled = externalIngestFeatureEnabled();
   const dryRun = input.dryRun !== false;
   const vault = getObsidianVaultPath();

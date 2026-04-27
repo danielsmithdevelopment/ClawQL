@@ -39,7 +39,7 @@ A consolidated slide deck is a **product contract**: it lists Web3, Fabric, The 
 
 | Layer                 | Tooling                                        | Role in this session                                                                                                              |
 | --------------------- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| **Ephemeral scratch** | MCP **`cache`** (when `CLAWQL_ENABLE_CACHE=1`) | Stash **transient** keys (working notes, last-known issue list, “do not put in the vault” scratch) — **not** long-term memory.    |
+| **Ephemeral scratch** | MCP **`cache`** (always on) | Stash **transient** keys (working notes, last-known issue list, “do not put in the vault” scratch) — **not** long-term memory.    |
 | **Durable recall**    | **`memory_recall`** (vault Markdown)           | **Before** writing new issues, pull prior decisions and deck-related notes so filing is **informed**, not from chat memory alone. |
 | **Durable write**     | **`memory_ingest`**                            | **After** the session, append a **summary** of what was created and how it links to the deck.                                     |
 | **Execution**         | **`gh`**, GitHub                               | The **system of record** for shippable work.                                                                                      |

@@ -217,10 +217,10 @@ Bulk-ingests Markdown content and optionally fetches and stores external URLs. U
 First-class Slack notification tool. Sends structured messages to configured channels using the bundled Slack spec and `CLAWQL_SLACK_TOKEN`. Called by Ouroboros at workflow milestones, completions, retries, and audit events. Can include Onyx citation links and Paperless document links in notifications.
 
 **`cache`**
-In-process LRU scratch storage for session-scoped ephemeral state. Enabled via `CLAWQL_ENABLE_CACHE`. Stores transient tool results, intermediate computations, or tool-discovery caches during a session.
+In-process LRU scratch storage for session-scoped ephemeral state. `cache` is ClawQL Core (always on); vault memory defaults on — set `CLAWQL_ENABLE_MEMORY=0` to opt out. Stores transient tool results, intermediate computations, or tool-discovery caches during a session.
 
 **`audit`**
-In-process event ring buffer for operator audit trails. Enabled via `CLAWQL_ENABLE_AUDIT`. Records all tool calls — including Onyx knowledge retrievals, **`execute`**’d **OSV-Scanner** / Trivy summary callbacks (if your integration emits them to the bus), and workflow events — in a structured, queryable log for compliance purposes. Pair with `memory_ingest` to persist trimmed **vuln summary + Merkle** next to a workflow’s knowledge citations.
+In-process event ring buffer for operator audit trails — always registered. Records all tool calls — including Onyx knowledge retrievals, **`execute`**’d **OSV-Scanner** / Trivy summary callbacks (if your integration emits them to the bus), and workflow events — in a structured, queryable log for compliance purposes. Pair with `memory_ingest` to persist trimmed **vuln summary + Merkle** next to a workflow’s knowledge citations.
 
 **Security extension — same `search` + `execute` model**
 

@@ -5,7 +5,6 @@ import {
   handleCacheToolInput,
   resetClawqlCacheForTests,
 } from "./clawql-cache.js";
-import { getClawqlOptionalToolFlags } from "./clawql-optional-flags.js";
 
 describe("handleCacheToolInput", () => {
   const saved: Record<string, string | undefined> = {};
@@ -112,11 +111,5 @@ describe("handleCacheToolInput", () => {
       vi.unstubAllEnvs();
       resetClawqlCacheForTests();
     }
-  });
-});
-
-describe("getClawqlOptionalToolFlags enableCache", () => {
-  it("is false by default", () => {
-    expect(getClawqlOptionalToolFlags({} as NodeJS.ProcessEnv).enableCache).toBe(false);
   });
 });

@@ -64,9 +64,9 @@ Results include path, score, depth, reason (`keyword` | `link` | `vector`), and 
 
 ### Optional `cache` (not vault)
 
-When **`CLAWQL_ENABLE_CACHE`** is set, the server exposes **`cache`**: **ephemeral** key/value in this process, **LRU**-bounded, **no** Markdown / **`memory.db`**. Use it for session scratch state only. For durable notes and graph recall, use **`memory_ingest`** / **`memory_recall`**. Repo reference: **[`docs/cache-tool.md`](../../../docs/cache-tool.md)** (relative from this skill file in the ClawQL repo).
+**`cache`** (**ClawQL Core**, always registered) is **ephemeral** key/value in this process, **LRU**-bounded, **no** Markdown / **`memory.db`**. **`memory_ingest`** / **`memory_recall`** are on by default; set **`CLAWQL_ENABLE_MEMORY=0`** to hide, and use a configured vault to persist. Repo reference: **[`docs/cache-tool.md`](../../../docs/cache-tool.md)**.
 
-When **`CLAWQL_ENABLE_AUDIT`** is set, the server exposes **`audit`**: **ephemeral** in-process event ring buffer — **not** the vault and **not** compliance-grade alone. Use **`memory_ingest`** for durable, human-inspectable trails. Repo reference: **[`docs/enterprise-mcp-tools.md`](../../../docs/enterprise-mcp-tools.md)** ([#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)).
+The server always exposes **`audit`**: **ephemeral** in-process event ring buffer — **not** the vault and **not** compliance-grade alone. Use **`memory_ingest`** for durable, human-inspectable trails. Repo reference: **[`docs/enterprise-mcp-tools.md`](../../../docs/enterprise-mcp-tools.md)** ([#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)).
 
 When **`CLAWQL_ENABLE_NOTIFY`** is set, the server exposes **`notify`**: Slack **`chat.postMessage`** — **not** vault storage; use for completion signals alongside **`memory_ingest`** when you also want a durable note. Repo reference: **[`docs/notify-tool.md`](../../../docs/notify-tool.md)** ([#77](https://github.com/danielsmithdevelopment/ClawQL/issues/77)).
 

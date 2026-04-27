@@ -88,10 +88,10 @@ The enterprise epic needed a tool that is:
 ## 7. Work completed: enterprise `audit` (#89)
 
 1. **Design:** [`docs/enterprise-mcp-tools.md`](../enterprise-mcp-tools.md) — flags, threat model, future `metrics` / `governance`.
-2. **Code:** [`src/clawql-audit.ts`](../../src/clawql-audit.ts) — `append` / `list` / `clear`; [`src/clawql-optional-flags.ts`](../../src/clawql-optional-flags.ts) — `CLAWQL_ENABLE_AUDIT`; registration in [`src/tools.ts`](../../src/tools.ts).
+2. **Code:** [`src/clawql-audit.ts`](../../src/clawql-audit.ts) — `append` / `list` / `clear`; unconditional registration in [`src/tools.ts`](../../src/tools.ts) (no `CLAWQL_ENABLE_AUDIT`; optional flags live in [`src/clawql-optional-flags.ts`](../../src/clawql-optional-flags.ts) for other tools).
 3. **Tests:** [`src/clawql-audit.test.ts`](../../src/clawql-audit.test.ts), extended optional-flags + stdio smoke ([`src/server.test.ts`](../../src/server.test.ts)).
 4. **Docs / env:** [`docs/mcp-tools.md`](../mcp-tools.md), [`.env.example`](../../.env.example), [`README.md`](../../README.md), [`CHANGELOG.md`](../../CHANGELOG.md).
-5. **Ops:** **Helm** `enableAudit` in [`charts/clawql-mcp`](../../charts/clawql-mcp); [`docs/deployment/deploy-k8s.md`](../deployment/deploy-k8s.md), [`docs/deployment/helm.md`](../deployment/helm.md).
+5. **Ops:** [`docs/deployment/deploy-k8s.md`](../deployment/deploy-k8s.md), [`docs/deployment/helm.md`](../deployment/helm.md) — **`audit`** is **ClawQL Core** (no Helm/env toggle).
 6. **Website & Cursor:** site copy ([`website/src/app/tools/page.mdx`](../../website/src/app/tools/page.mdx), related MDX), [`.cursor/skills/clawql-vault-memory/SKILL.md`](../../.cursor/skills/clawql-vault-memory/SKILL.md) — clarifies **`audit`** vs vault.
 
 **Tests:** `npm test` green before merge.
@@ -102,15 +102,15 @@ The enterprise epic needed a tool that is:
 
 | Tool                | Env                            | Persists?           | Use for                                      |
 | ------------------- | ------------------------------ | ------------------- | -------------------------------------------- |
-| **`cache`**         | `CLAWQL_ENABLE_CACHE`          | No (in-process LRU) | Session scratch, tool handoff state.         |
-| **`audit`**         | `CLAWQL_ENABLE_AUDIT`          | No (ring buffer)    | Operator-visible MCP event trail in-session. |
+| **`cache`**         | ClawQL Core (always on)                   | No (in-process LRU) | Session scratch, tool handoff state.         |
+| **`audit`**         | always on (no env gate)        | No (ring buffer)    | Operator-visible MCP event trail in-session. |
 | **`memory_ingest`** | Vault path + DB sidecar config | Yes (Markdown + DB) | Decisions, runbooks, cross-session recall.   |
 
 ---
 
 ## 9. Helm and website wiring
 
-Shipping **`audit`** “for real” meant every **surface** that lists optional tools had to mention **`CLAWQL_ENABLE_AUDIT`** and Helm **`enableAudit`**: chart [`values.yaml`](../../charts/clawql-mcp/values.yaml), deployment template, Kubernetes docs, and the **public docs site** so **docs.clawql.com** matches what clusters run.
+Docs and Helm describe **`audit`** as **ClawQL Core** (with **`search`** / **`execute`**, always on, no opt-out) so **docs.clawql.com** matches the diagram and the server’s tool list.
 
 ---
 
