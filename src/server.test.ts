@@ -42,10 +42,11 @@ describe("server (stdio)", () => {
     resetSchemaFieldCache();
   });
 
-  it("starts, handshakes, and exposes search + execute tools", async () => {
+  it("starts, handshakes, and exposes search, execute, cache, memory, and audit by default (no vault path)", async () => {
     const childEnv = { ...process.env };
     childEnv.CLAWQL_SPEC_PATH = minimalSpec;
-    childEnv.CLAWQL_OBSIDIAN_VAULT_PATH = mkdtempSync(join(tmpdir(), "clawql-vault-"));
+    delete childEnv.CLAWQL_OBSIDIAN_VAULT_PATH;
+    delete childEnv.CLAWQL_ENABLE_MEMORY;
     delete childEnv.CLAWQL_PROVIDER;
     delete childEnv.CLAWQL_SPEC_PATHS;
     delete childEnv.CLAWQL_API_BASE_URL;
@@ -78,8 +79,8 @@ describe("server (stdio)", () => {
       expect(names.has("memory_ingest")).toBe(true);
       expect(names.has("memory_recall")).toBe(true);
       expect(names.has("ingest_external_knowledge")).toBe(true);
-      expect(names.has("cache")).toBe(false);
-      expect(names.has("audit")).toBe(false);
+      expect(names.has("cache")).toBe(true);
+      expect(names.has("audit")).toBe(true);
       expect(names.has("notify")).toBe(false);
       expect(names.has("knowledge_search_onyx")).toBe(false);
       expect(names.has("ouroboros_create_seed_from_document")).toBe(false);
@@ -93,11 +94,11 @@ describe("server (stdio)", () => {
     expect(stderr).toContain("Server running on stdio");
   }, 20_000);
 
-  it("exposes cache when CLAWQL_ENABLE_CACHE=1", async () => {
+  it("hides memory_ingest and memory_recall when CLAWQL_ENABLE_MEMORY=0", async () => {
     const childEnv = { ...process.env };
     childEnv.CLAWQL_SPEC_PATH = minimalSpec;
     childEnv.CLAWQL_OBSIDIAN_VAULT_PATH = mkdtempSync(join(tmpdir(), "clawql-vault-"));
-    childEnv.CLAWQL_ENABLE_CACHE = "1";
+    childEnv.CLAWQL_ENABLE_MEMORY = "0";
     delete childEnv.CLAWQL_PROVIDER;
     delete childEnv.CLAWQL_SPEC_PATHS;
     delete childEnv.CLAWQL_API_BASE_URL;
@@ -111,12 +112,45 @@ describe("server (stdio)", () => {
       stderr: "pipe",
     });
 
-    const client = new Client({ name: "clawql-stdio-cache", version: "1.0.0" }, {});
+    const client = new Client({ name: "clawql-stdio-memory-off", version: "1.0.0" }, {});
     try {
       await client.connect(transport);
       const { tools } = await client.listTools();
       const names = new Set(tools.map((t) => t.name));
+      expect(names.has("memory_ingest")).toBe(false);
+      expect(names.has("memory_recall")).toBe(false);
       expect(names.has("cache")).toBe(true);
+    } finally {
+      await client.close();
+    }
+  }, 20_000);
+
+  it("hides ingest_external_knowledge and knowledge_search_onyx when CLAWQL_ENABLE_DOCUMENTS=0", async () => {
+    const childEnv = { ...process.env };
+    childEnv.CLAWQL_SPEC_PATH = minimalSpec;
+    childEnv.CLAWQL_OBSIDIAN_VAULT_PATH = mkdtempSync(join(tmpdir(), "clawql-vault-"));
+    childEnv.CLAWQL_ENABLE_DOCUMENTS = "0";
+    childEnv.CLAWQL_ENABLE_ONYX = "1";
+    delete childEnv.CLAWQL_PROVIDER;
+    delete childEnv.CLAWQL_SPEC_PATHS;
+    delete childEnv.CLAWQL_API_BASE_URL;
+    delete childEnv.API_BASE_URL;
+
+    const transport = new StdioClientTransport({
+      command: process.execPath,
+      args: [serverJs],
+      cwd: root,
+      env: childEnv,
+      stderr: "pipe",
+    });
+
+    const client = new Client({ name: "clawql-stdio-documents-off", version: "1.0.0" }, {});
+    try {
+      await client.connect(transport);
+      const { tools } = await client.listTools();
+      const names = new Set(tools.map((t) => t.name));
+      expect(names.has("ingest_external_knowledge")).toBe(false);
+      expect(names.has("knowledge_search_onyx")).toBe(false);
     } finally {
       await client.close();
     }
@@ -146,35 +180,6 @@ describe("server (stdio)", () => {
       const { tools } = await client.listTools();
       const names = new Set(tools.map((t) => t.name));
       expect(names.has("notify")).toBe(true);
-    } finally {
-      await client.close();
-    }
-  }, 20_000);
-
-  it("exposes audit when CLAWQL_ENABLE_AUDIT=1", async () => {
-    const childEnv = { ...process.env };
-    childEnv.CLAWQL_SPEC_PATH = minimalSpec;
-    childEnv.CLAWQL_OBSIDIAN_VAULT_PATH = mkdtempSync(join(tmpdir(), "clawql-vault-"));
-    childEnv.CLAWQL_ENABLE_AUDIT = "1";
-    delete childEnv.CLAWQL_PROVIDER;
-    delete childEnv.CLAWQL_SPEC_PATHS;
-    delete childEnv.CLAWQL_API_BASE_URL;
-    delete childEnv.API_BASE_URL;
-
-    const transport = new StdioClientTransport({
-      command: process.execPath,
-      args: [serverJs],
-      cwd: root,
-      env: childEnv,
-      stderr: "pipe",
-    });
-
-    const client = new Client({ name: "clawql-stdio-audit", version: "1.0.0" }, {});
-    try {
-      await client.connect(transport);
-      const { tools } = await client.listTools();
-      const names = new Set(tools.map((t) => t.name));
-      expect(names.has("audit")).toBe(true);
     } finally {
       await client.close();
     }

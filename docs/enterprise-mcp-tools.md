@@ -1,23 +1,21 @@
 # Enterprise MCP tools (audit, metrics, governance)
 
-Design for optional, **env-gated** MCP surfaces that stay **off** the default schema unless explicitly enabled — see [GitHub #89](https://github.com/danielsmithdevelopment/ClawQL/issues/89).
+Design for optional **env-gated** MCP surfaces (notably **`notify`**, future **`metrics`** / **`governance`**). The **`audit`** ring buffer is **ClawQL Core** — always registered alongside **`search`** and **`execute`** (see [GitHub #89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)); there is **no** opt-out of Core.
 
 ## Goals
 
-- **Zero context bloat** for minimal deployments: tools are **not registered** when flags are off.
+- **Optional tools stay off** until enabled: **`notify`**, **`schedule`**, **`ouroboros_*`**, etc. **`audit`** is **not** optional — it is part of **Core** with **`search`** / **`execute`**.
 - **Lean schemas**: single-tool + small `operation` enums where possible; long-form outputs belong in **Obsidian** via **`memory_ingest`**, not in giant MCP return bodies.
 - **No secrets in logs**: handlers use shape-only logging ([`CLAWQL_MCP_LOG_TOOLS`](mcp-tools.md)); never log raw tokens, PANs, or session cookies.
 
 ## Feature flags (planned / partial)
 
-| Env                              | MCP tool         | Status                                                                                                                                                                                                                                      |
-| -------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **`CLAWQL_ENABLE_AUDIT=1`**      | **`audit`**      | **Shipped (v1):** in-process ring buffer — not durable (see below).                                                                                                                                                                         |
-| **`CLAWQL_ENABLE_NOTIFY=1`**     | **`notify`**     | **Shipped:** Slack **`chat.postMessage`** when the Slack spec is loaded — **[notify-tool.md](notify-tool.md)** · [mcp-tools.md § notify](mcp-tools.md#notify-optional) ([#77](https://github.com/danielsmithdevelopment/ClawQL/issues/77)). |
-| **`CLAWQL_ENABLE_METRICS=1`**    | **`metrics`**    | Planned — DORA/DevEx-style reporting; Obsidian artifacts.                                                                                                                                                                                   |
-| **`CLAWQL_ENABLE_GOVERNANCE=1`** | **`governance`** | Planned — PII/RBAC/HITL policy hooks.                                                                                                                                                                                                       |
-
-Parsing for `CLAWQL_ENABLE_AUDIT` matches other `CLAWQL_ENABLE_*` booleans (`1` / `true` / `yes`).
+| Env                                 | MCP tool         | Status                                                                                                                                                                                                                                      |
+| ----------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| _(ClawQL Core — always registered)_ | **`audit`**      | **Shipped (v1):** in-process ring buffer — not durable (see below). No **`CLAWQL_ENABLE_*`** flag; **no opt-out of Core**.                                                                                                                  |
+| **`CLAWQL_ENABLE_NOTIFY=1`**        | **`notify`**     | **Shipped:** Slack **`chat.postMessage`** when the Slack spec is loaded — **[notify-tool.md](notify-tool.md)** · [mcp-tools.md § notify](mcp-tools.md#notify-optional) ([#77](https://github.com/danielsmithdevelopment/ClawQL/issues/77)). |
+| **`CLAWQL_ENABLE_METRICS=1`**       | **`metrics`**    | Planned — DORA/DevEx-style reporting; Obsidian artifacts.                                                                                                                                                                                   |
+| **`CLAWQL_ENABLE_GOVERNANCE=1`**    | **`governance`** | Planned — PII/RBAC/HITL policy hooks.                                                                                                                                                                                                       |
 
 ## Threat model (summary)
 
@@ -37,5 +35,5 @@ Parsing for `CLAWQL_ENABLE_AUDIT` matches other `CLAWQL_ENABLE_*` booleans (`1` 
 
 ## References
 
-- Optional flags matrix: [`src/clawql-optional-flags.ts`](../src/clawql-optional-flags.ts) ([#79](https://github.com/danielsmithdevelopment/ClawQL/issues/79)).
+- Optional flags (`cache`, `memory_*`, documents, …): [`src/clawql-optional-flags.ts`](../src/clawql-optional-flags.ts) ([#79](https://github.com/danielsmithdevelopment/ClawQL/issues/79)).
 - [`docs/mcp-tools.md`](mcp-tools.md) — full tool reference.

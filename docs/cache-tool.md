@@ -20,9 +20,9 @@ Do **not** use **`cache`** as a substitute for **`memory_ingest`** when the user
 
 ---
 
-## Enabling the tool
+## Registration
 
-Set **`CLAWQL_ENABLE_CACHE=1`** (or `true` / `yes`). Parsed with other flags in [`src/clawql-optional-flags.ts`](../src/clawql-optional-flags.ts) ([#79](https://github.com/danielsmithdevelopment/ClawQL/issues/79)).
+The **`cache`** tool is **ClawQL Core** — always registered (no **`CLAWQL_ENABLE_*`** toggle). Tune size limits with the variables below.
 
 ---
 
@@ -43,7 +43,6 @@ Successful **`set`** responses may include **`evicted`**: the number of keys dro
 
 | Variable                           | Purpose                                                        |
 | ---------------------------------- | -------------------------------------------------------------- |
-| **`CLAWQL_ENABLE_CACHE`**          | Register the **`cache`** tool (`1` / `true` / `yes`).          |
 | **`CLAWQL_CACHE_MAX_ENTRIES`**     | Max distinct keys (default **10000**, min **1**, max **10M**). |
 | **`CLAWQL_CACHE_MAX_VALUE_BYTES`** | Max UTF-8 size per value (default **1 MiB**, max **16 MiB**).  |
 

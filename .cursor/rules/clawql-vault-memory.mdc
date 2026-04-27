@@ -13,4 +13,4 @@ When **ClawQL MCP** is available, use it deliberately:
 
 **Thorough ingests** (rich structure, tagging in prose, wikilink strategy, session threading, anti-patterns): read and apply the project skill [**clawql-vault-memory**](../skills/clawql-vault-memory/SKILL.md).
 
-Do not store secrets, credentials, or private keys. If vault tools fail (path unset), say so briefly and continue without blocking the task.
+Do not store secrets, credentials, or private keys. **`memory_ingest`** / **`memory_recall`** are registered by default; **`CLAWQL_ENABLE_MEMORY=0`** hides them. A writable vault path is required for real I/O. If vault tools are missing or fail, say so briefly and continue without blocking the task.

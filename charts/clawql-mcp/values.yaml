@@ -45,11 +45,10 @@ nodeOptions: "--max-old-space-size=1536"
 enableGrpc: false
 enableGrpcReflection: false
 
-# In-process MCP cache tool (#75). Ephemeral per pod — not persisted; use memory_* for vault.
-enableCache: true
-
-# In-process MCP audit ring buffer (#89). Ephemeral per pod — not on disk; use memory_ingest for durable trails.
-enableAudit: false
+# memory_ingest / memory_recall (default on). Set false to inject CLAWQL_ENABLE_MEMORY=0.
+enableMemory: true
+# Document stack: tika, gotenberg, paperless, stirling, onyx in all-providers merge + ingest_external_knowledge + (with enableOnyx) knowledge_search_onyx. Set false to inject CLAWQL_ENABLE_DOCUMENTS=0.
+enableDocuments: true
 
 # MCP notify tool — Slack chat.postMessage (#77). Requires Slack in provider merge + CLAWQL_SLACK_TOKEN (via extraEnv / secret).
 enableNotify: false

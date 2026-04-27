@@ -62,13 +62,13 @@ spec:
             - name: ENABLE_GRPC_REFLECTION
               value: "1"
             {{- end }}
-            {{- if .Values.enableCache }}
-            - name: CLAWQL_ENABLE_CACHE
-              value: "1"
+            {{- if not .Values.enableMemory }}
+            - name: CLAWQL_ENABLE_MEMORY
+              value: "0"
             {{- end }}
-            {{- if .Values.enableAudit }}
-            - name: CLAWQL_ENABLE_AUDIT
-              value: "1"
+            {{- if not .Values.enableDocuments }}
+            - name: CLAWQL_ENABLE_DOCUMENTS
+              value: "0"
             {{- end }}
             {{- if .Values.enableNotify }}
             - name: CLAWQL_ENABLE_NOTIFY

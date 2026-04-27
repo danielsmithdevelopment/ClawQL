@@ -5,7 +5,8 @@
  * - Local file (JSON or YAML OpenAPI 3 / Swagger 2), or
  * - URL to fetch the same, or
  * - Google Discovery document URL, or
- * - Default: **`all-providers`** — Google Cloud (bundled) + every other bundled spec.
+ * - Default: **`all-providers`** — Google Cloud (bundled) + every other bundled spec (document stack
+ *   tika / gotenberg / paperless / stirling / onyx omitted when **`CLAWQL_ENABLE_DOCUMENTS=0`**).
  * - Custom merge: **`CLAWQL_BUNDLED_PROVIDERS=a,b,…`** (bundled vendor ids and/or **`google`**) or **`CLAWQL_SPEC_PATHS=…`**.
  * - Optional merged **`CLAWQL_PROVIDER`** presets: **`google`**, **`atlassian`**, **`all-providers`**.
  *

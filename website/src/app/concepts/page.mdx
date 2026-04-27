@@ -26,15 +26,25 @@ Agent
 
 In **multi-spec** mode, **`search`** uses one merged index while **`execute`** routes each operation to the correct spec (REST).
 
+## Feature tiers (what is on by default)
+
+Aligned with the **layer diagram** and **[configuration § Feature tiers](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/readme/configuration.md#feature-tiers-architecture-diagram)**:
+
+1. **ClawQL Core (always on — no opt-out)** — **`search`**, **`execute`**, **`audit`**, **`cache`** (same band as in the diagram; no env gate).
+2. **Default on — opt out** — **`memory_ingest`** / **`memory_recall`**, **Documents** (**`ingest_external_knowledge`**, **`knowledge_search_onyx`** when **`CLAWQL_ENABLE_ONYX`** is set). Use **`CLAWQL_ENABLE_MEMORY`** or **`CLAWQL_ENABLE_DOCUMENTS`** set to **`0`** to hide.
+3. **Default off — opt in** — **`schedule`**, **`notify`**, **`ouroboros_*`**, and the **`knowledge_search_onyx`** wrapper (**`CLAWQL_ENABLE_ONYX`**, with Documents still enabled). **`sandbox_exec`** is registered by default but only runs code when **[sandbox bridge](https://github.com/danielsmithdevelopment/ClawQL/tree/main/cloudflare/sandbox-bridge)** env is set.
+
+**Core** is **`search`**, **`execute`**, **`audit`**, **`cache`** — **no opt-out**.
+
 ## Design principles
 
 1. **`search` first, `execute` second** — discover `operationId` and parameters without loading the entire spec into context.
 2. **GraphQL is internal** — agents never write GraphQL; the server builds precise selections to keep tool outputs small.
 3. **Single source of truth** — the index and execution map derive from the same loaded OpenAPI/Discovery documents.
 
-## Ouroboros (library, roadmap)
+## Ouroboros (library + optional MCP tools)
 
-For **multi-step** workflows that **iterate** on a structured spec (acceptance criteria, ontology fields) until convergence, ClawQL’s repo includes the TypeScript **`clawql-ouroboros`** package — see **[Ouroboros library](/ouroboros)** and **[clawql-ouroboros.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/clawql-ouroboros.md)**. It complements the **`search` → `execute`** pattern: executors inside the loop can still call the same APIs through your integration layer. The **`clawql-mcp`** server does not expose Ouroboros as MCP tools until wired in a future release.
+For **multi-step** workflows that **iterate** on a structured spec (acceptance criteria, ontology fields) until convergence, ClawQL’s repo includes the TypeScript **`clawql-ouroboros`** package — see **[Ouroboros library](/ouroboros)** and **[clawql-ouroboros.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/clawql-ouroboros.md)**. It complements the **`search` → `execute`** pattern: executors inside the loop can still call the same APIs through your integration layer. With **`CLAWQL_ENABLE_OUROBOROS=1`**, **`clawql-mcp`** registers three **`ouroboros_*`** MCP tools; without the flag, use the library from your own process.
 
 ## How the two phases save tokens
 
@@ -48,4 +58,4 @@ Benchmarks in the repo compare **planning-context size** (merged specs on disk v
 
 ## Ephemeral `cache` vs vault memory
 
-The optional **`cache`** tool (**`CLAWQL_ENABLE_CACHE`**) holds **short-lived** key/value state in the MCP process (LRU, no disk). The optional **`audit`** tool (**`CLAWQL_ENABLE_AUDIT`**) holds **short-lived** structured events in-process (ring buffer, no disk) — not compliance-grade alone; see [enterprise-mcp-tools.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/enterprise-mcp-tools.md). The optional **`notify`** tool (**`CLAWQL_ENABLE_NOTIFY`**) sends **Slack** messages via **`chat.postMessage`** (outbound HTTP to Slack, not vault storage) — [Slack notify](/notify), [notify-tool.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/notify-tool.md). The optional **`knowledge_search_onyx`** tool (**`CLAWQL_ENABLE_ONYX`**) calls your **Onyx** HTTP API for **semantic document search** (enterprise index, not the vault) — [Onyx knowledge search](/onyx-knowledge), [onyx-knowledge-tool.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/onyx-knowledge-tool.md). **`memory_ingest`** / **`memory_recall`** use your **Obsidian vault** (and optional **`memory.db`**) for **durable** notes and graph recall. Do not confuse them: use [Session cache](/cache) for scratch data; use the vault tools when the user expects persisted knowledge. See [cache-tool.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/cache-tool.md).
+The **`cache`** tool (**ClawQL Core**, always registered) holds **short-lived** key/value state in the MCP process (LRU, no disk). The **`audit`** tool (always registered) holds **short-lived** structured events in-process (ring buffer, no disk) — not compliance-grade alone; see [enterprise-mcp-tools.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/enterprise-mcp-tools.md). The optional **`notify`** tool (**`CLAWQL_ENABLE_NOTIFY`**) sends **Slack** messages via **`chat.postMessage`** (outbound HTTP to Slack, not vault storage) — [Slack notify](/notify), [notify-tool.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/notify-tool.md). The optional **`knowledge_search_onyx`** tool (**`CLAWQL_ENABLE_ONYX`**) calls your **Onyx** HTTP API for **semantic document search** (enterprise index, not the vault) — [Onyx knowledge search](/onyx-knowledge), [onyx-knowledge-tool.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/onyx-knowledge-tool.md). **`memory_ingest`** / **`memory_recall`** use your **Obsidian vault** (and optional **`memory.db`**) for **durable** notes and graph recall. Do not confuse them: use [Session cache](/cache) for scratch data; use the vault tools when the user expects persisted knowledge. See [cache-tool.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/cache-tool.md).

@@ -12,15 +12,26 @@ function envTruthy(v: string | undefined): boolean {
   return t === "1" || t === "true" || t === "yes";
 }
 
+/** When `v` is unset, return `defaultWhenUnset`; otherwise same as `envTruthy`. */
+function envTruthyWithDefault(v: string | undefined, defaultWhenUnset: boolean): boolean {
+  if (v === undefined) return defaultWhenUnset;
+  return envTruthy(v);
+}
+
 const rawOptionalFlagsSchema = z.object({
   ENABLE_GRPC: z.string().optional(),
   ENABLE_GRPC_REFLECTION: z.string().optional(),
   CLAWQL_EXTERNAL_INGEST: z.string().optional(),
-  CLAWQL_ENABLE_CACHE: z.string().optional(),
+  /** Default on: `memory_ingest` / `memory_recall`. Set `0` / `false` / `no` to unregister. */
+  CLAWQL_ENABLE_MEMORY: z.string().optional(),
+  /**
+   * Default on: document pipeline — bundled tika / gotenberg / paperless / stirling / onyx in **`all-providers`**, plus
+   * **`ingest_external_knowledge`** and (with **`CLAWQL_ENABLE_ONYX`**) **`knowledge_search_onyx`**. Set `0` to opt out.
+   */
+  CLAWQL_ENABLE_DOCUMENTS: z.string().optional(),
   CLAWQL_ENABLE_SCHEDULE: z.string().optional(),
   CLAWQL_ENABLE_NOTIFY: z.string().optional(),
   CLAWQL_ENABLE_VISION: z.string().optional(),
-  CLAWQL_ENABLE_AUDIT: z.string().optional(),
   CLAWQL_ENABLE_ONYX: z.string().optional(),
   CLAWQL_ENABLE_OUROBOROS: z.string().optional(),
 });
@@ -33,9 +44,15 @@ export type ClawqlOptionalToolFlags = {
   /** `CLAWQL_EXTERNAL_INGEST=1` — `ingest_external_knowledge` (Markdown import + optional URL fetch). */
   externalIngestPreview: boolean;
   /**
-   * (#75): Ephemeral in-process **`cache`** tool (not persisted). Default false — not registered unless enabled.
+   * Durable **vault** tools **`memory_ingest`** / **`memory_recall`**. Default **true** (set **`CLAWQL_ENABLE_MEMORY=0`**
+   * to hide tools). Still requires a writable `CLAWQL_OBSIDIAN_VAULT_PATH` to persist or recall.
    */
-  enableCache: boolean;
+  enableMemory: boolean;
+  /**
+   * Document stack: default merge includes tika, gotenberg, paperless, stirling, onyx; registers **`ingest_external_knowledge`**;
+   * pairs with **`knowledge_search_onyx`** when **`CLAWQL_ENABLE_ONYX=1`**. Set **`CLAWQL_ENABLE_DOCUMENTS=0`** to opt out.
+   */
+  enableDocuments: boolean;
   /**
    * (#76): `schedule` tool — persisted jobs + manual synthetic trigger. Default false.
    */
@@ -48,10 +65,6 @@ export type ClawqlOptionalToolFlags = {
    * Planned (#78): `vision` / `multimodal` tool. Default false until implemented.
    */
   enableVision: boolean;
-  /**
-   * (#89): `audit` tool — in-process ring buffer (not durable). Default false.
-   */
-  enableAudit: boolean;
   /**
    * ([#118](https://github.com/danielsmithdevelopment/ClawQL/issues/118)): `knowledge_search_onyx` — wrapper over bundled Onyx search. Default false.
    */
@@ -67,11 +80,11 @@ function rawToFlags(raw: z.infer<typeof rawOptionalFlagsSchema>): ClawqlOptional
     enableGrpc: envTruthy(raw.ENABLE_GRPC),
     enableGrpcReflection: envTruthy(raw.ENABLE_GRPC_REFLECTION),
     externalIngestPreview: raw.CLAWQL_EXTERNAL_INGEST?.trim() === "1",
-    enableCache: envTruthy(raw.CLAWQL_ENABLE_CACHE),
+    enableMemory: envTruthyWithDefault(raw.CLAWQL_ENABLE_MEMORY, true),
+    enableDocuments: envTruthyWithDefault(raw.CLAWQL_ENABLE_DOCUMENTS, true),
     enableSchedule: envTruthy(raw.CLAWQL_ENABLE_SCHEDULE),
     enableNotify: envTruthy(raw.CLAWQL_ENABLE_NOTIFY),
     enableVision: envTruthy(raw.CLAWQL_ENABLE_VISION),
-    enableAudit: envTruthy(raw.CLAWQL_ENABLE_AUDIT),
     enableOnyxKnowledge: envTruthy(raw.CLAWQL_ENABLE_ONYX),
     enableOuroboros: envTruthy(raw.CLAWQL_ENABLE_OUROBOROS),
   };
