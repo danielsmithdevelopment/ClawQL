@@ -18,6 +18,9 @@ set -euo pipefail
 # Optional: CLAWQL_LOCAL_K8S_INSTALL_INGRESS_NGINX=1 — install/update ingress-nginx
 # once in namespace ingress-nginx (enabled by default).
 #
+# Optional: CLAWQL_HELM_TIMEOUT — helm --wait timeout (default 30m). Full Onyx
+# (Vespa, OpenSearch, model servers, image pulls) often needs more than 10m on first install.
+#
 # Requires: Docker Desktop with Kubernetes enabled, kubectl. Helm is required only
 # when using the default installer. Docker is only required when
 # CLAWQL_LOCAL_K8S_BUILD_IMAGE=1.
@@ -44,6 +47,7 @@ NAMESPACE="${HELM_NAMESPACE:-clawql}"
 BUILD_UI_IMAGE="${CLAWQL_LOCAL_K8S_BUILD_UI_IMAGE:-1}"
 INSTALL_INGRESS_NGINX="${CLAWQL_LOCAL_K8S_INSTALL_INGRESS_NGINX:-1}"
 UI_IMAGE_TAG="${CLAWQL_LOCAL_UI_IMAGE_TAG:-dev-$(date +%s)}"
+HELM_TIMEOUT="${CLAWQL_HELM_TIMEOUT:-30m}"
 
 # Mount a host Obsidian vault (same default as docker-compose: ~/.ClawQL).
 VAULT_HOST_PATH="${CLAWQL_LOCAL_VAULT_HOST_PATH:-$HOME/.ClawQL}"
@@ -169,7 +173,8 @@ if [[ "${INSTALLER}" == "helm" ]]; then
     )
   fi
 
-  echo "==> helm upgrade --install ${RELEASE_NAME} (${NAMESPACE})"
+  echo "==> helm upgrade --install ${RELEASE_NAME} (${NAMESPACE}) (wait timeout ${HELM_TIMEOUT})"
+  echo "    Note: first install with full Onyx can take a long time (image pulls + model servers)."
 
   HELM_CMD=(helm upgrade --install "${RELEASE_NAME}" "${CHART}")
   if [[ -n "${KUBE_CONTEXT}" ]]; then
@@ -181,7 +186,7 @@ if [[ "${INSTALLER}" == "helm" ]]; then
     -f "${VALUES_LOCAL}"
     --set-string "vault.hostPath.path=${VAULT_HOST_PATH}"
     --wait
-    --timeout 10m
+    --timeout "${HELM_TIMEOUT}"
   )
   if ((${#HELM_EXTRA[@]})); then
     HELM_CMD+=("${HELM_EXTRA[@]}")

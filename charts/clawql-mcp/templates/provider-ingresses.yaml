@@ -1,0 +1,303 @@
+{{- if .Values.providerIngress.enabled }}
+{{- $className := .Values.providerIngress.className }}
+{{- $annotations := .Values.providerIngress.annotations }}
+{{- $tls := .Values.providerIngress.tls }}
+{{- if and .Values.documentPipeline.enabled .Values.documentPipeline.paperless.enabled .Values.providerIngress.paperless.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "clawql-mcp.paperlessName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: paperless
+  {{- with $annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- with $className }}
+  ingressClassName: {{ . }}
+  {{- end }}
+  {{- if $tls }}
+  tls:
+    {{- range $tls }}
+    - hosts:
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ .secretName }}
+    {{- end }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.providerIngress.paperless.host | quote }}
+      http:
+        paths:
+          - path: {{ .Values.providerIngress.paperless.path }}
+            pathType: {{ .Values.providerIngress.paperless.pathType }}
+            backend:
+              service:
+                name: {{ include "clawql-mcp.paperlessName" . }}
+                port:
+                  number: {{ .Values.documentPipeline.paperless.service.port }}
+---
+{{- end }}
+{{- if and .Values.documentPipeline.enabled .Values.providerIngress.stirling.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "clawql-mcp.stirlingName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: stirling
+  {{- with $annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- with $className }}
+  ingressClassName: {{ . }}
+  {{- end }}
+  {{- if $tls }}
+  tls:
+    {{- range $tls }}
+    - hosts:
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ .secretName }}
+    {{- end }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.providerIngress.stirling.host | quote }}
+      http:
+        paths:
+          - path: {{ .Values.providerIngress.stirling.path }}
+            pathType: {{ .Values.providerIngress.stirling.pathType }}
+            backend:
+              service:
+                name: {{ include "clawql-mcp.stirlingName" . }}
+                port:
+                  number: {{ .Values.documentPipeline.stirling.service.port }}
+---
+{{- end }}
+{{- if and .Values.documentPipeline.enabled .Values.providerIngress.tika.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "clawql-mcp.tikaName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: tika
+  {{- with $annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- with $className }}
+  ingressClassName: {{ . }}
+  {{- end }}
+  {{- if $tls }}
+  tls:
+    {{- range $tls }}
+    - hosts:
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ .secretName }}
+    {{- end }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.providerIngress.tika.host | quote }}
+      http:
+        paths:
+          - path: {{ .Values.providerIngress.tika.path }}
+            pathType: {{ .Values.providerIngress.tika.pathType }}
+            backend:
+              service:
+                name: {{ include "clawql-mcp.tikaName" . }}
+                port:
+                  number: {{ .Values.documentPipeline.tika.service.port }}
+---
+{{- end }}
+{{- if and .Values.documentPipeline.enabled .Values.providerIngress.gotenberg.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "clawql-mcp.gotenbergName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: gotenberg
+  {{- with $annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- with $className }}
+  ingressClassName: {{ . }}
+  {{- end }}
+  {{- if $tls }}
+  tls:
+    {{- range $tls }}
+    - hosts:
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ .secretName }}
+    {{- end }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.providerIngress.gotenberg.host | quote }}
+      http:
+        paths:
+          - path: {{ .Values.providerIngress.gotenberg.path }}
+            pathType: {{ .Values.providerIngress.gotenberg.pathType }}
+            backend:
+              service:
+                name: {{ include "clawql-mcp.gotenbergName" . }}
+                port:
+                  number: {{ .Values.documentPipeline.gotenberg.service.port }}
+---
+{{- end }}
+{{- if and .Values.flink.enabled .Values.providerIngress.flink.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "clawql-mcp.flinkJobManagerName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: flink-jobmanager
+  {{- with $annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- with $className }}
+  ingressClassName: {{ . }}
+  {{- end }}
+  {{- if $tls }}
+  tls:
+    {{- range $tls }}
+    - hosts:
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ .secretName }}
+    {{- end }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.providerIngress.flink.host | quote }}
+      http:
+        paths:
+          - path: {{ .Values.providerIngress.flink.path }}
+            pathType: {{ .Values.providerIngress.flink.pathType }}
+            backend:
+              service:
+                name: {{ include "clawql-mcp.flinkJobManagerName" . }}
+                port:
+                  number: {{ .Values.flink.service.restPort }}
+---
+{{- end }}
+{{- if and .Values.nats.enabled .Values.providerIngress.natsMonitor.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "clawql-mcp.natsName" . }}-monitor
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: nats
+  {{- with $annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- with $className }}
+  ingressClassName: {{ . }}
+  {{- end }}
+  {{- if $tls }}
+  tls:
+    {{- range $tls }}
+    - hosts:
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ .secretName }}
+    {{- end }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.providerIngress.natsMonitor.host | quote }}
+      http:
+        paths:
+          - path: {{ .Values.providerIngress.natsMonitor.path }}
+            pathType: {{ .Values.providerIngress.natsMonitor.pathType }}
+            backend:
+              service:
+                name: {{ include "clawql-mcp.natsName" . }}
+                port:
+                  number: {{ .Values.nats.service.monitorPort }}
+---
+{{- end }}
+{{- if and .Values.onyx.enabled .Values.providerIngress.onyx.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "clawql-mcp.onyxName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: onyx-web
+  {{- with $annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- with $className }}
+  ingressClassName: {{ . }}
+  {{- end }}
+  {{- if $tls }}
+  tls:
+    {{- range $tls }}
+    - hosts:
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ .secretName }}
+    {{- end }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.providerIngress.onyx.host | quote }}
+      http:
+        paths:
+          - path: {{ .Values.providerIngress.onyx.path }}
+            pathType: {{ .Values.providerIngress.onyx.pathType }}
+            backend:
+              service:
+                name: {{ include "clawql-mcp.onyxName" . }}-web
+                port:
+                  number: {{ .Values.onyx.web.service.port }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "clawql-mcp.onyxName" . }}-api
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: onyx
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  {{- with $className }}
+  ingressClassName: {{ . }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.providerIngress.onyx.host | quote }}
+      http:
+        paths:
+          - path: /api(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: {{ include "clawql-mcp.onyxName" . }}
+                port:
+                  number: {{ .Values.onyx.service.port }}
+{{- end }}
+{{- end }}

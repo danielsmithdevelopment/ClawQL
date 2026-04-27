@@ -1,22 +1,22 @@
 {
   "meta": {
-    "generatedAt": "2026-03-25T23:15:04.074Z",
-    "transport": "streamable-http",
-    "mcpUrl": "http://127.0.0.1:8080/mcp",
+    "generatedAt": "2026-04-27T03:18:41.122Z",
+    "transport": "stdio",
+    "mcpUrl": null,
     "clientInfo": {
       "name": "clawql-complex-release-mcp-workflow",
       "version": "1.0.0"
     },
     "clawqlProviderPreset": "all-providers",
-    "dryRun": true,
-    "executeEnabled": false,
+    "dryRun": false,
+    "executeEnabled": true,
     "executeEachQuery": false,
     "searchLimitQuick": 10,
     "searchLimitWide": 35,
     "detectedMcpSearchLimitMax": null,
-    "mergedOperationCount": null,
-    "serverStderrTail": null,
-    "note": "Dry run: only search tools/call. No execute; no upstream REST. Each queries[].mcpSearch is the raw search response."
+    "mergedOperationCount": 9006,
+    "serverStderrTail": "[spec-loader] multi 1/62: iam-v2 → <CLAWQL_ROOT>/providers/google/apis/iam-v2/discovery.json\n[spec-loader] multi 2/62: cloudresourcemanager-v3 → <CLAWQL_ROOT>/providers/google/apis/cloudresourcemanager-v3/discovery.json\n[spec-loader] multi 3/62: serviceusage-v1 → <CLAWQL_ROOT>/providers/google/apis/serviceusage-v1/discovery.json\n[spec-loader] multi 4/62: servicecontrol-v1 → <CLAWQL_ROOT>/providers/google/apis/servicecontrol-v1/discovery.json\n[spec-loader] multi 5/62: servicemanagement-v1 → <CLAWQL_ROOT>/providers/google/apis/servicemanagement-v1/discovery.json\n[spec-loader] multi 6/62: compute-v1 → <CLAWQL_ROOT>/providers/google/apis/compute-v1/discovery.json\n[spec-loader] multi 7/62: dns-v1 → <CLAWQL_ROOT>/providers/google/apis/dns-v1/discovery.json\n[spec-loader] multi 8/62: servicenetworking-v1 → <CLAWQL_ROOT>/providers/google/apis/servicenetworking-v1/discovery.json\n[spec-loader] multi 9/62: networkconnectivity-v1 → <CLAWQL_ROOT>/providers/google/apis/networkconnectivity-v1/discovery.json\n[spec-loader] multi 10/62: networksecurity-v1beta1 → <CLAWQL_ROOT>/providers/google/apis/networksecurity-v1beta1/discovery.json\n[spec-loader] multi 11/62: networkmanagement-v1beta1 → <CLAWQL_ROOT>/providers/google/apis/networkmanagement-v1beta1/discovery.json\n[spec-loader] multi 12/62: container-v1 → <CLAWQL_ROOT>/providers/google/apis/container-v1/discovery.json\n[spec-loader] multi 13/62: gkehub-v2 → <CLAWQL_ROOT>/providers/google/apis/gkehub-v2/discovery.json\n[spec-loader] multi 14/62: run-v2 → <CLAWQL_ROOT>/providers/google/apis/run-v2/discovery.json\n[spec-loader] multi 15/62: cloudfunctions-v2 → <CLAWQL_ROOT>/providers/google/apis/cloudfunctions-v2/discovery.json\n[spec-loader] multi 16/62: artifactregistry-v1 → <CLAWQL_ROOT>/providers/google/apis/artifactregistry-v1/discovery.json\n[spec-loader] multi 17/62: cloudbuild-v2 → <CLAWQL_ROOT>/providers/google/apis/cloudbuild-v2/discovery.json\n[spec-loader] multi 18/62: clouddeploy-v1 → <CLAWQL_ROOT>/providers/google/apis/clouddeploy-v1/discovery.json\n[spec-loader] multi 19/62: binaryauthorization-v1 → <CLAWQL_ROOT>/providers/google/apis/binaryauthorization-v1/discovery.json\n[spec-loader] multi 20/62: pubsub-v1 → <CLAWQL_ROOT>/providers/google/apis/pubsub-v1/discovery.json\n[spec-loader] multi 21/62: eventarc-v1 → <CLAWQL_ROOT>/providers/google/apis/eventarc-v1/discovery.json\n[spec-loader] multi 22/62: workflows-v1 → <CLAWQL_ROOT>/providers/google/apis/workflows-v1/discovery.json\n[spec-loader] multi 23/62: secretmanager-v1 → <CLAWQL_ROOT>/providers/google/apis/secretmanager-v1/discovery.json\n[spec-loader] multi 24/62: cloudkms-v1 → <CLAWQL_ROOT>/providers/google/apis/cloudkms-v1/discovery.json\n[spec-loader] multi 25/62: storage-v1 → <CLAWQL_ROOT>/providers/google/apis/storage-v1/discovery.json\n[spec-loader] multi 26/62: file-v1 → <CLAWQL_ROOT>/providers/google/apis/file-v1/discovery.json\n[spec-loader] multi 27/62: sqladmin-v1 → <CLAWQL_ROOT>/providers/google/apis/sqladmin-v1/discovery.json\n[spec-loader] multi 28/62: redis-v1 → <CLAWQL_ROOT>/providers/google/apis/redis-v1/discovery.json\n[spec-loader] multi 29/62: spanner-v1 → <CLAWQL_ROOT>/providers/google/apis/spanner-v1/discovery.json\n[spec-loader] multi 30/62: bigtableadmin-v2 → <CLAWQL_ROOT>/providers/google/apis/bigtableadmin-v2/discovery.json\n[spec-loader] multi 31/62: bigquery-v2 → <CLAWQL_ROOT>/providers/google/apis/bigquery-v2/discovery.json\n[spec-loader] multi 32/62: dataflow-v1b3 → <CLAWQL_ROOT>/providers/google/apis/dataflow-v1b3/discovery.json\n[spec-loader] multi 33/62: dataproc-v1 → <CLAWQL_ROOT>/providers/google/apis/dataproc-v1/discovery.json\n[spec-loader] multi 34/62: composer-v1 → <CLAWQL_ROOT>/providers/google/apis/composer-v1/discovery.json\n[spec-loader] multi 35/62: aiplatform-v1 → <CLAWQL_ROOT>/providers/google/apis/aiplatform-v1/discovery.json\n[spec-loader] multi 36/62: notebooks-v1 → <CLAWQL_ROOT>/providers/google/apis/notebooks-v1/discovery.json\n[spec-loader] multi 37/62: logging-v2 → <CLAWQL_ROOT>/providers/google/apis/logging-v2/discovery.json\n[spec-loader] multi 38/62: monitoring-v3 → <CLAWQL_ROOT>/providers/google/apis/monitoring-v3/discovery.json\n[spec-loader] multi 39/62: cloudtrace-v2 → <CLAWQL_ROOT>/providers/google/apis/cloudtrace-v2/discovery.json\n[spec-loader] multi 40/62: clouderrorreporting-v1beta1 → <CLAWQL_ROOT>/providers/google/apis/clouderrorreporting-v1beta1/discovery.json\n[spec-loader] multi 41/62: cloudprofiler-v2 → <CLAWQL_ROOT>/providers/google/apis/cloudprofiler-v2/discovery.json\n[spec-loader] multi 42/62: cloudasset-v1 → <CLAWQL_ROOT>/providers/google/apis/cloudasset-v1/discovery.json\n[spec-loader] multi 43/62: cloudscheduler-v1 → <CLAWQL_ROOT>/providers/google/apis/cloudscheduler-v1/discovery.json\n[spec-loader] multi 44/62: cloudtasks-v2 → <CLAWQL_ROOT>/providers/google/apis/cloudtasks-v2/discovery.json\n[spec-loader] multi 45/62: iap-v1 → <CLAWQL_ROOT>/providers/google/apis/iap-v1/discovery.json\n[spec-loader] multi 46/62: identitytoolkit-v3 → <CLAWQL_ROOT>/providers/google/apis/identitytoolkit-v3/discovery.json\n[spec-loader] multi 47/62: recommender-v1 → <CLAWQL_ROOT>/providers/google/apis/recommender-v1/discovery.json\n[spec-loader] multi 48/62: billingbudgets-v1 → <CLAWQL_ROOT>/providers/google/apis/billingbudgets-v1/discovery.json\n[spec-loader] multi 49/62: cloudbilling-v1 → <CLAWQL_ROOT>/providers/google/apis/cloudbilling-v1/discovery.json\n[spec-loader] multi 50/62: osconfig-v1 → <CLAWQL_ROOT>/providers/google/apis/osconfig-v1/discovery.json\n[spec-loader] multi 51/62: bitbucket → <CLAWQL_ROOT>/providers/atlassian/bitbucket/openapi.yaml\n[spec-loader] multi 52/62: cloudflare → <CLAWQL_ROOT>/providers/cloudflare/openapi.yaml\n[spec-loader] multi 53/62: github → <CLAWQL_ROOT>/providers/github/openapi.yaml\n[spec-loader] multi 54/62: gotenberg → <CLAWQL_ROOT>/providers/gotenberg/openapi.yaml\n[spec-loader] multi 55/62: jira → <CLAWQL_ROOT>/providers/atlassian/jira/openapi.yaml\n[spec-loader] multi 56/62: n8n → <CLAWQL_ROOT>/providers/n8n/openapi.json\n[spec-loader] multi 57/62: onyx → <CLAWQL_ROOT>/providers/onyx/openapi.yaml\n[spec-loader] multi 58/62: paperless → <CLAWQL_ROOT>/providers/paperless/openapi.yaml\n[spec-loader] multi 59/62: sentry → <CLAWQL_ROOT>/providers/sentry/openapi.json\n[spec-loader] multi 60/62: slack → <CLAWQL_ROOT>/providers/slack/openapi.json\n[spec-loader] multi 61/62: stirling → <CLAWQL_ROOT>/providers/stirling/openapi.yaml\n[spec-loader] multi 62/62: tika → <CLAWQL_ROOT>/providers/tika/openapi.yaml\n[spec-loader] Multi-spec: 62 APIs merged → 9006 operations (REST execution; GraphQL not used for execute)\n[tools] Multi-spec mode: skipping GraphQL introspection cache (execute uses REST).\n[cloudrun-mcp] Server running on stdio. Ready for connections.\n",
+    "note": "execute calls use placeholder args — expect 401/404/etc. without real credentials. Each queries[].mcpSearch is the raw search response."
   },
   "steps": [
     {
@@ -48,7 +48,21 @@
             "score": 42,
             "specLabel": "container-v1"
           },
-          "execute": null
+          "execute": {
+            "isError": false,
+            "structuredContent": null,
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"error\":\"REST HTTP 404: <!DOCTYPE html>\\n<html lang=en>\\n  <meta charset=utf-8>\\n  <meta name=viewport content=\\\"initial-scale=1, minimum-scale=1, width=device-width\\\">\\n  <title>Error 404 (Not Found)!!1</title>\\n  <style>\\n    *{margin:0;padding:0}html,code{font:15px/22px arial,sans-serif}html{background:#fff;color:#222;padding:15px}body{margin:7% auto 0;max-width:390px;min-height:180px;padding:30px 0 15px}* > body{background:url(//www.google.com/images/errors/robot.png) 100% 5px no-repeat;padding-right:205px}p{margin:11px 0 22px;overflow:hidden}ins{color:#777;text-decoration:none}a img{border:0}@media screen and (max-width:772px){body{background:none;margin-top:0;max-width:none;padding-right:0}}#logo{background:url(//www.google.com/images/branding/googlelogo/1x/googlelogo_color_150x54dp.png) no-repeat;margin-left:-5px}@media only screen and (min-resolution:192dpi){#logo{background:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) no-repeat 0% 0%/100% 100%;-moz-border-image:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) 0}}@media only screen and (-webkit-min-device-pixel-ratio:2){#logo{background:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) no-repeat;-webkit-background-size:100% 100%}}#logo{display:inline-block;height:54px;width:150px}\\n  </style>\\n  <a href=//www.google.com/><span id=logo aria-label=Google></span></a>\\n  <p><b>404.</b> <ins>That’s an error.</ins>\\n  <p>The requested URL <code>/v1/clawql-benchmark-placeholder/clusters</code> was not found on this server.  <ins>That’s all we know.</ins>\\n\",\"specLabel\":\"container-v1\",\"hint\":\"Multi-spec mode uses REST only (no GraphQL). Check path/query/body args.\"}"
+              }
+            ]
+          },
+          "executeSummary": {
+            "ok": false,
+            "operationId": "container.projects.locations.clusters.create",
+            "error": "REST HTTP 404: <!DOCTYPE html>\n<html lang=en>\n  <meta charset=utf-8>\n  <meta name=viewport content=\"initial-scale=1, minimum-scale=1, width=device-width\">\n  <title>Error 404 (Not Found)!!1</title>\n  <style>\n    *{margin:0;padding:0}html,code{font:15px/22px arial,sans-serif}html{background:#fff;color:#222;padding:15px}body{margin:7% auto 0;max-width:390px;min-height:180px;padding:30px 0 15px}* > body{background:url(//www.google.com/images/errors/robot.png) 100% 5px no-repeat;padding-right:205px}p{margin:11px 0 22px;overflow:hidden}ins{color:#777;text-decoration:none}a img{border:0}@media screen and (max-width:772px){body{background:none;margin-top:0;max-width:none;padding-right:0}}#logo{background:url(//www.google.com/images/branding/googlelogo/1x/googlelogo_color_150x54dp.png) no-repeat;margin-left:-5px}@media only screen and (min-resolution:192dpi){#logo{background:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) no-repeat 0% 0%/100% 100%;-moz-border-image:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) 0}}@media only screen and (-webkit-min-device-pixel-ratio:2){#logo{background:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) no-repeat;-webkit-background-size:100% 100%}}#logo{display:inline-block;height:54px;width:150px}\n  </style>\n  <a href=//www.google.com/><span id=logo aria-label=Google></span></a>\n  <p><b>404.</b> <ins>That’s an error.</ins>\n  <p>The requested URL <code>/v1/clawql-benchmark-placeholder/clusters</code> was not found on this server.  <ins>That’s all we know.</ins>\n"
+          }
         },
         {
           "query": "node pool create autoscaling kubernetes engine",
@@ -135,7 +149,21 @@
             "score": 30,
             "specLabel": "aiplatform-v1"
           },
-          "execute": null
+          "execute": {
+            "isError": false,
+            "structuredContent": null,
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"error\":\"REST HTTP 404: <!DOCTYPE html>\\n<html lang=en>\\n  <meta charset=utf-8>\\n  <meta name=viewport content=\\\"initial-scale=1, minimum-scale=1, width=device-width\\\">\\n  <title>Error 404 (Not Found)!!1</title>\\n  <style>\\n    *{margin:0;padding:0}html,code{font:15px/22px arial,sans-serif}html{background:#fff;color:#222;padding:15px}body{margin:7% auto 0;max-width:390px;min-height:180px;padding:30px 0 15px}* > body{background:url(//www.google.com/images/errors/robot.png) 100% 5px no-repeat;padding-right:205px}p{margin:11px 0 22px;overflow:hidden}ins{color:#777;text-decoration:none}a img{border:0}@media screen and (max-width:772px){body{background:none;margin-top:0;max-width:none;padding-right:0}}#logo{background:url(//www.google.com/images/branding/googlelogo/1x/googlelogo_color_150x54dp.png) no-repeat;margin-left:-5px}@media only screen and (min-resolution:192dpi){#logo{background:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) no-repeat 0% 0%/100% 100%;-moz-border-image:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) 0}}@media only screen and (-webkit-min-device-pixel-ratio:2){#logo{background:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) no-repeat;-webkit-background-size:100% 100%}}#logo{display:inline-block;height:54px;width:150px}\\n  </style>\\n  <a href=//www.google.com/><span id=logo aria-label=Google></span></a>\\n  <p><b>404.</b> <ins>That’s an error.</ins>\\n  <p>The requested URL <code>/v1/clawql-benchmark-placeholder:readFeatureValues</code> was not found on this server.  <ins>That’s all we know.</ins>\\n\",\"specLabel\":\"aiplatform-v1\",\"hint\":\"Multi-spec mode uses REST only (no GraphQL). Check path/query/body args.\"}"
+              }
+            ]
+          },
+          "executeSummary": {
+            "ok": false,
+            "operationId": "aiplatform.projects.locations.featurestores.entityTypes.readFeatureValues",
+            "error": "REST HTTP 404: <!DOCTYPE html>\n<html lang=en>\n  <meta charset=utf-8>\n  <meta name=viewport content=\"initial-scale=1, minimum-scale=1, width=device-width\">\n  <title>Error 404 (Not Found)!!1</title>\n  <style>\n    *{margin:0;padding:0}html,code{font:15px/22px arial,sans-serif}html{background:#fff;color:#222;padding:15px}body{margin:7% auto 0;max-width:390px;min-height:180px;padding:30px 0 15px}* > body{background:url(//www.google.com/images/errors/robot.png) 100% 5px no-repeat;padding-right:205px}p{margin:11px 0 22px;overflow:hidden}ins{color:#777;text-decoration:none}a img{border:0}@media screen and (max-width:772px){body{background:none;margin-top:0;max-width:none;padding-right:0}}#logo{background:url(//www.google.com/images/branding/googlelogo/1x/googlelogo_color_150x54dp.png) no-repeat;margin-left:-5px}@media only screen and (min-resolution:192dpi){#logo{background:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) no-repeat 0% 0%/100% 100%;-moz-border-image:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) 0}}@media only screen and (-webkit-min-device-pixel-ratio:2){#logo{background:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) no-repeat;-webkit-background-size:100% 100%}}#logo{display:inline-block;height:54px;width:150px}\n  </style>\n  <a href=//www.google.com/><span id=logo aria-label=Google></span></a>\n  <p><b>404.</b> <ins>That’s an error.</ins>\n  <p>The requested URL <code>/v1/clawql-benchmark-placeholder:readFeatureValues</code> was not found on this server.  <ins>That’s all we know.</ins>\n"
+          }
         },
         {
           "query": "compute firewall rule create allow tcp source range ingress",
@@ -222,7 +250,21 @@
             "score": 57,
             "specLabel": "cloudflare"
           },
-          "execute": null
+          "execute": {
+            "isError": false,
+            "structuredContent": null,
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"error\":\"REST HTTP 404: {\\\"result\\\":null,\\\"success\\\":false,\\\"errors\\\":[{\\\"code\\\":7003,\\\"message\\\":\\\"Could not route to /client/v4/zones/clawql-benchmark-placeholder/dns_records, perhaps your object identifier is invalid?\\\"}],\\\"messages\\\":[]}\",\"specLabel\":\"cloudflare\",\"hint\":\"Multi-spec mode uses REST only (no GraphQL). Check path/query/body args.\"}"
+              }
+            ]
+          },
+          "executeSummary": {
+            "ok": false,
+            "operationId": "dns-records-for-a-zone-create-dns-record",
+            "error": "REST HTTP 404: {\"result\":null,\"success\":false,\"errors\":[{\"code\":7003,\"message\":\"Could not route to /client/v4/zones/clawql-benchmark-placeholder/dns_records, perhaps your object identifier is invalid?\"}],\"messages\":[]}"
+          }
         },
         {
           "query": "zone details get",
@@ -282,7 +324,21 @@
             "score": 20,
             "specLabel": "cloudflare"
           },
-          "execute": null
+          "execute": {
+            "isError": false,
+            "structuredContent": null,
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"error\":\"REST HTTP 404: {\\\"result\\\":null,\\\"success\\\":false,\\\"errors\\\":[{\\\"code\\\":7003,\\\"message\\\":\\\"Could not route to /client/v4/accounts/clawql-benchmark-placeholder/firewall/access_rules/rules, perhaps your object identifier is invalid?\\\"}],\\\"messages\\\":[]}\",\"specLabel\":\"cloudflare\",\"hint\":\"Multi-spec mode uses REST only (no GraphQL). Check path/query/body args.\"}"
+              }
+            ]
+          },
+          "executeSummary": {
+            "ok": false,
+            "operationId": "ip-access-rules-for-an-account-list-ip-access-rules",
+            "error": "REST HTTP 404: {\"result\":null,\"success\":false,\"errors\":[{\"code\":7003,\"message\":\"Could not route to /client/v4/accounts/clawql-benchmark-placeholder/firewall/access_rules/rules, perhaps your object identifier is invalid?\"}],\"messages\":[]}"
+          }
         },
         {
           "query": "zone settings cache level",
@@ -369,7 +425,21 @@
             "score": 37,
             "specLabel": "sentry"
           },
-          "execute": null
+          "execute": {
+            "isError": false,
+            "structuredContent": null,
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"error\":\"request to https://{region}.sentry.io/api/0/teams/clawql-benchmark-placeholder/clawql-benchmark-placeholder/projects/ failed, reason: Client network socket disconnected before secure TLS connection was established\",\"specLabel\":\"sentry\",\"hint\":\"Multi-spec mode uses REST only (no GraphQL). Check path/query/body args.\"}"
+              }
+            ]
+          },
+          "executeSummary": {
+            "ok": false,
+            "operationId": "Create a New Project",
+            "error": "request to https://{region}.sentry.io/api/0/teams/clawql-benchmark-placeholder/clawql-benchmark-placeholder/projects/ failed, reason: Client network socket disconnected before secure TLS connection was established"
+          }
         },
         {
           "query": "dsn key client key",
@@ -456,7 +526,21 @@
             "score": 41,
             "specLabel": "github"
           },
-          "execute": null
+          "execute": {
+            "isError": false,
+            "structuredContent": null,
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"error\":\"REST HTTP 401: {\\\"message\\\":\\\"Requires authentication\\\",\\\"documentation_url\\\":\\\"https://docs.github.com/rest\\\",\\\"status\\\":\\\"401\\\"}\",\"specLabel\":\"github\",\"hint\":\"Multi-spec mode uses REST only (no GraphQL). Check path/query/body args.\"}"
+              }
+            ]
+          },
+          "executeSummary": {
+            "ok": false,
+            "operationId": "actions/create-workflow-dispatch",
+            "error": "REST HTTP 401: {\"message\":\"Requires authentication\",\"documentation_url\":\"https://docs.github.com/rest\",\"status\":\"401\"}"
+          }
         },
         {
           "query": "repository secrets actions",
@@ -544,7 +628,21 @@
             "score": 32,
             "specLabel": "slack"
           },
-          "execute": null
+          "execute": {
+            "isError": false,
+            "structuredContent": null,
+            "content": [
+              {
+                "type": "text",
+                "text": "{\n  \"ok\": false,\n  \"error\": \"not_authed\"\n}"
+              }
+            ]
+          },
+          "executeSummary": {
+            "ok": false,
+            "operationId": "chat_postMessage",
+            "error": "not_authed"
+          }
         },
         {
           "query": "conversations.history channel",
@@ -587,7 +685,7 @@
             "content": [
               {
                 "type": "text",
-                "text": "{\n  \"results\": [\n    {\n      \"id\": \"chat_unfurl\",\n      \"method\": \"POST\",\n      \"path\": \"chat.unfurl\",\n      \"description\": \"Provide custom unfurl behavior for user-posted URLs\",\n      \"resource\": \"chat.unfurl\",\n      \"parameters\": [],\n      \"requestBody\": \"__clawql_inline_request_body__\",\n      \"responseSchema\": null,\n      \"score\": 21,\n      \"specLabel\": \"slack\"\n    },\n    {\n      \"id\": \"files_revokePublicURL\",\n      \"method\": \"POST\",\n      \"path\": \"files.revokePublicURL\",\n      \"description\": \"Revokes public/external sharing access for a file\",\n      \"resource\": \"files.revokePublicURL\",\n      \"parameters\": [],\n      \"requestBody\": \"__clawql_inline_request_body__\",\n      \"responseSchema\": null,\n      \"score\": 20,\n      \"specLabel\": \"slack\"\n    },\n    {\n      \"id\": \"files_sharedPublicURL\",\n      \"method\": \"POST\",\n      \"path\": \"files.sharedPublicURL\",\n      \"description\": \"Enables a file for public/external sharing.\",\n      \"resource\": \"files.sharedPublicURL\",\n      \"parameters\": [],\n      \"requestBody\": \"__clawql_inline_request_body__\",\n      \"responseSchema\": null,\n      \"score\": 20,\n      \"specLabel\": \"slack\"\n    },\n    {\n      \"id\": \"notification-webhooks-create-a-webhook\",\n      \"method\": \"POST\",\n      \"path\": \"accounts/{account_id}/alerting/v3/destinations/webhooks\",\n      \"description\": \"Create a webhook\",\n      \"resource\": \"webhooks\",\n      \"parameters\": [\n        {\n          \"name\": \"account_id\",\n          \"location\": \"path\",\n          \"required\": true,\n          \"type\": \"string\",\n          \"description\": \"\"\n        }\n      ],\n      \"requestBody\": \"__clawql_inline_request_body__\",\n      \"responseSchema\": \"aaa_id_response\",\n      \"score\": 18,\n      \"specLabel\": \"cloudflare\"\n    },\n    {\n      \"id\": \"addWebhook\",\n      \"method\": \"POST\",\n      \"path\": \"accounts/{account_id}/realtime/kit/{app_id}/webhooks\",\n      \"description\": \"Add a webhook\",\n      \"resource\": \"webhooks\",\n      \"parameters\": [\n        {\n          \"name\": \"account_id\",\n          \"location\": \"path\",\n          \"required\": true,\n          \"type\": \"string\",\n          \"description\": \"\"\n        },\n        {\n          \"name\": \"app_id\",\n          \"location\": \"path\",\n          \"required\": true,\n          \"type\": \"string\",\n          \"description\": \"\"\n        }\n      ],\n      \"requestBody\": \"realtimekit_WebhookRequest\",\n      \"responseSchema\": \"realtimekit_WebhookSuccessResponse\",\n      \"score\": 18,\n      \"specLabel\": \"cloudflare\"\n    },\n    {\n      \"id\": \"getUrlNormalization\",\n      \"method\": \"GET\",\n      \"path\": \"zones/{zone_id}/url_normalization\",\n      \"description\": \"Get URL Normalization settings\",\n      \"resource\": \"url_normalization\",\n      \"parameters\": [\n        {\n          \"name\": \"zone_id\",\n          \"location\": \"path\",\n          \"required\": true,\n          \"type\": \"string\",\n          \"description\": \"\"\n        }\n      ],\n      \"requestBody\": null,\n      \"responseSchema\": null,\n      \"score\": 18,\n      \"specLabel\": \"cloudflare\"\n    },\n    {\n      \"id\": \"updateUrlNormalization\",\n      \"method\": \"PUT\",\n      \"path\": \"zones/{zone_id}/url_normalization\",\n      \"description\": \"Update URL Normalization settings\",\n      \"resource\": \"url_normalization\",\n      \"parameters\": [\n        {\n          \"name\": \"zone_id\",\n          \"location\": \"path\",\n          \"required\": true,\n          \"type\": \"string\",\n          \"description\": \"\"\n        }\n      ],\n      \"requestBody\": null,\n      \"responseSchema\": null,\n      \"score\": 18,\n      \"specLabel\": \"cloudflare\"\n    },\n    {\n      \"id\": \"deleteUrlNormalization\",\n      \"method\": \"DELETE\",\n      \"path\": \"zones/{zone_id}/url_normalization\",\n      \"description\": \"Delete URL Normalization settings\",\n      \"resource\": \"url_normalization\",\n      \"parameters\": [\n        {\n          \"name\": \"zone_id\",\n          \"location\": \"path\",\n          \"required\": true,\n          \"type\": \"string\",\n          \"description\": \"\"\n        }\n      ],\n      \"requestBody\": null,\n      \"responseSchema\": null,\n      \"score\": 18,\n      \"specLabel\": \"cloudflare\"\n    },\n    {\n      \"id\": \"compute.urlMaps.get\",\n      \"method\": \"GET\",\n      \"path\": \"projects/{project}/global/urlMaps/{urlMap}\",\n      \"description\": \"Returns the specified UrlMap resource.\",\n      \"resource\": \"urlMaps\",\n      \"parameters\": [\n        {\n          \"name\": \"project\",\n          \"location\": \"path\",\n          \"required\": true,\n          \"type\": \"string\",\n          \"description\": \"Project ID for this request.\"\n        },\n        {\n          \"name\": \"urlMap\",\n          \"location\": \"path\",\n          \"required\": true,\n          \"type\": \"string\",\n          \"description\": \"Name of the UrlMap resource to return.\"\n        }\n      ],\n      \"requestBody\": null,\n      \"responseSchema\": \"UrlMap\",\n      \"score\": 17,\n      \"specLabel\": \"compute-v1\"\n    },\n    {\n      \"id\": \"compute.urlMaps.delete\",\n      \"method\": \"DELETE\",\n      \"path\": \"projects/{project}/global/urlMaps/{urlMap}\",\n      \"description\": \"Deletes the specified UrlMap resource.\",\n      \"resource\": \"urlMaps\",\n      \"parameters\": [\n        {\n          \"name\": \"project\",\n          \"location\": \"path\",\n          \"required\": true,\n          \"type\": \"string\",\n          \"description\": \"Project ID for this request.\"\n        },\n        {\n          \"name\": \"requestId\",\n          \"location\": \"query\",\n          \"required\": false,\n          \"type\": \"string\",\n          \"description\": \"An optional request ID to identify requests. Specify a unique request ID so\\nthat if you must retry your request, the server will know to ignore the\\nrequest if it has already been completed.\\n\\nFor example, consider a situation where you make an initial request and\\nthe request times out. If you make the request again with the same\\nrequest ID, the server can check if original operation with the same\\nrequest ID was received, and if so, will ignore the second request. This\\nprevents clients from accidentally creating duplicate commitments.\\n\\nThe request ID must be\\na valid UUID with the exception that zero UUID is not supported\\n(00000000-0000-0000-0000-000000000000).\"\n        },\n        {\n          \"name\": \"urlMap\",\n          \"location\": \"path\",\n          \"required\": true,\n          \"type\": \"string\",\n          \"description\": \"Name of the UrlMap resource to delete.\"\n        }\n      ],\n      \"requestBody\": null,\n      \"responseSchema\": \"Operation\",\n      \"score\": 17,\n      \"specLabel\": \"compute-v1\"\n    }\n  ]\n}"
+                "text": "{\n  \"results\": [\n    {\n      \"id\": \"chat_unfurl\",\n      \"method\": \"POST\",\n      \"path\": \"chat.unfurl\",\n      \"description\": \"Provide custom unfurl behavior for user-posted URLs\",\n      \"resource\": \"chat.unfurl\",\n      \"parameters\": [],\n      \"requestBody\": \"__clawql_inline_request_body__\",\n      \"responseSchema\": null,\n      \"score\": 21,\n      \"specLabel\": \"slack\"\n    },\n    {\n      \"id\": \"files_revokePublicURL\",\n      \"method\": \"POST\",\n      \"path\": \"files.revokePublicURL\",\n      \"description\": \"Revokes public/external sharing access for a file\",\n      \"resource\": \"files.revokePublicURL\",\n      \"parameters\": [],\n      \"requestBody\": \"__clawql_inline_request_body__\",\n      \"responseSchema\": null,\n      \"score\": 20,\n      \"specLabel\": \"slack\"\n    },\n    {\n      \"id\": \"files_sharedPublicURL\",\n      \"method\": \"POST\",\n      \"path\": \"files.sharedPublicURL\",\n      \"description\": \"Enables a file for public/external sharing.\",\n      \"resource\": \"files.sharedPublicURL\",\n      \"parameters\": [],\n      \"requestBody\": \"__clawql_inline_request_body__\",\n      \"responseSchema\": null,\n      \"score\": 20,\n      \"specLabel\": \"slack\"\n    },\n    {\n      \"id\": \"notification-webhooks-create-a-webhook\",\n      \"method\": \"POST\",\n      \"path\": \"accounts/{account_id}/alerting/v3/destinations/webhooks\",\n      \"description\": \"Create a webhook\",\n      \"resource\": \"webhooks\",\n      \"parameters\": [\n        {\n          \"name\": \"account_id\",\n          \"location\": \"path\",\n          \"required\": true,\n          \"type\": \"string\",\n          \"description\": \"\"\n        }\n      ],\n      \"requestBody\": \"__clawql_inline_request_body__\",\n      \"responseSchema\": \"aaa_id_response\",\n      \"score\": 18,\n      \"specLabel\": \"cloudflare\"\n    },\n    {\n      \"id\": \"addWebhook\",\n      \"method\": \"POST\",\n      \"path\": \"accounts/{account_id}/realtime/kit/{app_id}/webhooks\",\n      \"description\": \"Add a webhook\",\n      \"resource\": \"webhooks\",\n      \"parameters\": [\n        {\n          \"name\": \"account_id\",\n          \"location\": \"path\",\n          \"required\": true,\n          \"type\": \"string\",\n          \"description\": \"\"\n        },\n        {\n          \"name\": \"app_id\",\n          \"location\": \"path\",\n          \"required\": true,\n          \"type\": \"string\",\n          \"description\": \"\"\n        }\n      ],\n      \"requestBody\": \"realtimekit_WebhookRequest\",\n      \"responseSchema\": \"realtimekit_WebhookSuccessResponse\",\n      \"score\": 18,\n      \"specLabel\": \"cloudflare\"\n    },\n    {\n      \"id\": \"getUrlNormalization\",\n      \"method\": \"GET\",\n      \"path\": \"zones/{zone_id}/url_normalization\",\n      \"description\": \"Get URL Normalization settings\",\n      \"resource\": \"url_normalization\",\n      \"parameters\": [\n        {\n          \"name\": \"zone_id\",\n          \"location\": \"path\",\n          \"required\": true,\n          \"type\": \"string\",\n          \"description\": \"\"\n        }\n      ],\n      \"requestBody\": null,\n      \"responseSchema\": null,\n      \"score\": 18,\n      \"specLabel\": \"cloudflare\"\n    },\n    {\n      \"id\": \"updateUrlNormalization\",\n      \"method\": \"PUT\",\n      \"path\": \"zones/{zone_id}/url_normalization\",\n      \"description\": \"Update URL Normalization settings\",\n      \"resource\": \"url_normalization\",\n      \"parameters\": [\n        {\n          \"name\": \"zone_id\",\n          \"location\": \"path\",\n          \"required\": true,\n          \"type\": \"string\",\n          \"description\": \"\"\n        }\n      ],\n      \"requestBody\": null,\n      \"responseSchema\": null,\n      \"score\": 18,\n      \"specLabel\": \"cloudflare\"\n    },\n    {\n      \"id\": \"deleteUrlNormalization\",\n      \"method\": \"DELETE\",\n      \"path\": \"zones/{zone_id}/url_normalization\",\n      \"description\": \"Delete URL Normalization settings\",\n      \"resource\": \"url_normalization\",\n      \"parameters\": [\n        {\n          \"name\": \"zone_id\",\n          \"location\": \"path\",\n          \"required\": true,\n          \"type\": \"string\",\n          \"description\": \"\"\n        }\n      ],\n      \"requestBody\": null,\n      \"responseSchema\": null,\n      \"score\": 18,\n      \"specLabel\": \"cloudflare\"\n    },\n    {\n      \"id\": \"gotenberg_chromium_convert_url\",\n      \"method\": \"POST\",\n      \"path\": \"forms/chromium/convert/url\",\n      \"description\": \"Convert a remote URL to PDF (multipart form field `url`)\",\n      \"resource\": \"url\",\n      \"parameters\": [],\n      \"requestBody\": \"__clawql_inline_request_body__\",\n      \"responseSchema\": null,\n      \"score\": 18,\n      \"specLabel\": \"gotenberg\"\n    },\n    {\n      \"id\": \"compute.urlMaps.get\",\n      \"method\": \"GET\",\n      \"path\": \"projects/{project}/global/urlMaps/{urlMap}\",\n      \"description\": \"Returns the specified UrlMap resource.\",\n      \"resource\": \"urlMaps\",\n      \"parameters\": [\n        {\n          \"name\": \"project\",\n          \"location\": \"path\",\n          \"required\": true,\n          \"type\": \"string\",\n          \"description\": \"Project ID for this request.\"\n        },\n        {\n          \"name\": \"urlMap\",\n          \"location\": \"path\",\n          \"required\": true,\n          \"type\": \"string\",\n          \"description\": \"Name of the UrlMap resource to return.\"\n        }\n      ],\n      \"requestBody\": null,\n      \"responseSchema\": \"UrlMap\",\n      \"score\": 17,\n      \"specLabel\": \"compute-v1\"\n    }\n  ]\n}"
               }
             ]
           },
@@ -632,7 +730,21 @@
             "score": 22,
             "specLabel": "n8n"
           },
-          "execute": null
+          "execute": {
+            "isError": true,
+            "structuredContent": null,
+            "content": [
+              {
+                "type": "text",
+                "text": "Invalid URL"
+              }
+            ]
+          },
+          "executeSummary": {
+            "ok": false,
+            "operationId": "post_workflows",
+            "responsePreview": "Invalid URL"
+          }
         },
         {
           "query": "activate workflow",
@@ -719,7 +831,21 @@
             "score": 25,
             "specLabel": "bitbucket"
           },
-          "execute": null
+          "execute": {
+            "isError": false,
+            "structuredContent": null,
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"error\":\"REST HTTP 404: {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"message\\\":\\\"Resource not found\\\",\\\"detail\\\":\\\"There is no API hosted at this URL.\\\\n\\\\nFor information about our API's, please refer to the documentation at: https://developer.atlassian.com/bitbucket/api/2/reference/\\\"}}\",\"specLabel\":\"bitbucket\",\"hint\":\"Multi-spec mode uses REST only (no GraphQL). Check path/query/body args.\"}"
+              }
+            ]
+          },
+          "executeSummary": {
+            "ok": false,
+            "operationId": "create_teams_by_username_projects",
+            "error": "REST HTTP 404: {\"type\":\"error\",\"error\":{\"message\":\"Resource not found\",\"detail\":\"There is no API hosted at this URL.\\n\\nFor information about our API's, please refer to the documentation at: https://developer.atlassian.com/bitbucket/api/2/reference/\"}}"
+          }
         },
         {
           "query": "pipeline run commit",
@@ -806,7 +932,21 @@
             "score": 45,
             "specLabel": "jira"
           },
-          "execute": null
+          "execute": {
+            "isError": false,
+            "structuredContent": null,
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"error\":\"OpenAPI spec has no servers[0].url. Set CLAWQL_API_BASE_URL or add servers to your spec.\",\"specLabel\":\"jira\",\"hint\":\"Multi-spec mode uses REST only (no GraphQL). Check path/query/body args.\"}"
+              }
+            ]
+          },
+          "executeSummary": {
+            "ok": false,
+            "operationId": "com.atlassian.jira.rest.v2.issue.IssueResource.getCreateIssueMeta_get",
+            "error": "OpenAPI spec has no servers[0].url. Set CLAWQL_API_BASE_URL or add servers to your spec."
+          }
         },
         {
           "query": "edit issue labels priority duedate",

@@ -81,6 +81,9 @@ spec:
             {{- if .Values.onyxBaseUrl }}
             - name: ONYX_BASE_URL
               value: {{ .Values.onyxBaseUrl | quote }}
+            {{- else if .Values.onyx.enabled }}
+            - name: ONYX_BASE_URL
+              value: "http://{{ include "clawql-mcp.onyxName" . }}:{{ .Values.onyx.service.port }}"
             {{- end }}
             {{- if .Values.enableOuroboros }}
             - name: CLAWQL_ENABLE_OUROBOROS
