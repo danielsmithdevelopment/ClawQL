@@ -101,6 +101,66 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- printf "%s-config" (include "clawql-mcp.natsName" .) | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
+{{- define "clawql-mcp.onyxName" -}}
+{{- printf "%s-onyx" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{- define "clawql-mcp.onyxPostgresName" -}}
+{{- printf "%s-onyx-postgres" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{- define "clawql-mcp.onyxPostgresSecretName" -}}
+{{- if .Values.onyx.postgres.auth.existingSecret -}}
+{{- .Values.onyx.postgres.auth.existingSecret | trunc 63 | trimSuffix "-" }}
+{{- else -}}
+{{- printf "%s-onyx-postgres-auth" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end -}}
+{{- end }}
+
+{{- define "clawql-mcp.onyxRedisName" -}}
+{{- printf "%s-onyx-cache" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{- define "clawql-mcp.onyxOpenSearchName" -}}
+{{- printf "%s-onyx-opensearch" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{- define "clawql-mcp.onyxOpenSearchSecretName" -}}
+{{- if .Values.onyx.opensearch.auth.existingSecret -}}
+{{- .Values.onyx.opensearch.auth.existingSecret | trunc 63 | trimSuffix "-" }}
+{{- else -}}
+{{- printf "%s-onyx-opensearch-auth" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end -}}
+{{- end }}
+
+{{- define "clawql-mcp.onyxVespaName" -}}
+{{- printf "%s-onyx-vespa" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{- define "clawql-mcp.onyxMinioName" -}}
+{{- printf "%s-onyx-minio" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{- define "clawql-mcp.onyxMinioSecretName" -}}
+{{- if .Values.onyx.minio.auth.existingSecret -}}
+{{- .Values.onyx.minio.auth.existingSecret | trunc 63 | trimSuffix "-" }}
+{{- else -}}
+{{- printf "%s-onyx-minio-auth" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end -}}
+{{- end }}
+
+{{- define "clawql-mcp.onyxInferenceModelName" -}}
+{{- printf "%s-onyx-model-infer" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{- define "clawql-mcp.onyxIndexingModelName" -}}
+{{- printf "%s-onyx-model-index" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{- define "clawql-mcp.onyxBackgroundName" -}}
+{{- printf "%s-onyx-background" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
 {{- define "clawql-mcp.storesPostgresSecretName" -}}
 {{- if .Values.stores.postgres.auth.existingSecret -}}
 {{- .Values.stores.postgres.auth.existingSecret | trunc 63 | trimSuffix "-" }}

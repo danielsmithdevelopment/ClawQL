@@ -9,6 +9,12 @@
 #   CLAWQL_GITHUB_TOKEN, CLAWQL_BEARER_TOKEN  — required PAT (from gh, env, or stdin)
 #   CLAWQL_CLOUDFLARE_API_TOKEN               — optional; Cloudflare execute
 #   GOOGLE_ACCESS_TOKEN                       — optional; Google Discovery execute
+#   CLAWQL_SLACK_TOKEN                        — optional; notify + Slack execute
+#   ONYX_BASE_URL, ONYX_API_TOKEN             — optional; knowledge_search_onyx + Onyx execute
+#   CLAWQL_ONYX_API_TOKEN                     — optional fallback for Onyx auth
+#   PAPERLESS_API_TOKEN                       — optional; Paperless execute
+#   STIRLING_API_KEY                          — optional; Stirling execute
+#   CLAWQL_PROVIDER_AUTH_JSON                 — optional; unified per-provider auth map
 #
 # Secret name remains clawql-github-auth for backward compatibility with existing clusters.
 #
@@ -86,6 +92,13 @@ fi
 
 CF_TOKEN="${CLAWQL_CLOUDFLARE_API_TOKEN:-}"
 GOOGLE_TOKEN="${CLAWQL_GOOGLE_ACCESS_TOKEN:-${GOOGLE_ACCESS_TOKEN:-}}"
+SLACK_TOKEN="${CLAWQL_SLACK_TOKEN:-${SLACK_BOT_TOKEN:-${SLACK_TOKEN:-${CLAWQL_SLACK_BOT_TOKEN:-}}}}"
+ONYX_BASE_URL_VALUE="${ONYX_BASE_URL:-}"
+ONYX_TOKEN="${ONYX_API_TOKEN:-${CLAWQL_ONYX_API_TOKEN:-}}"
+ONYX_TOKEN_FALLBACK="${CLAWQL_ONYX_API_TOKEN:-}"
+PAPERLESS_TOKEN="${PAPERLESS_API_TOKEN:-}"
+STIRLING_KEY="${STIRLING_API_KEY:-}"
+PROVIDER_AUTH_JSON="${CLAWQL_PROVIDER_AUTH_JSON:-}"
 
 echo "==> Creating/updating secret $SECRET_NAME in namespace $NAMESPACE"
 # Same PAT as CLAWQL_BEARER_TOKEN so mergedAuthHeaders() fallback works for github under merged loads.
@@ -96,7 +109,28 @@ if [[ -n "${CF_TOKEN// }" ]]; then
   SECRET_ARGS+=( --from-literal=CLAWQL_CLOUDFLARE_API_TOKEN="$CF_TOKEN" )
 fi
 if [[ -n "${GOOGLE_TOKEN// }" ]]; then
-  SECRET_ARGS+=( --from-literal=GOOGLE_ACCESS_TOKEN="$GOOGLE_ACCESS_TOKEN" )
+  SECRET_ARGS+=( --from-literal=GOOGLE_ACCESS_TOKEN="$GOOGLE_TOKEN" )
+fi
+if [[ -n "${SLACK_TOKEN// }" ]]; then
+  SECRET_ARGS+=( --from-literal=CLAWQL_SLACK_TOKEN="$SLACK_TOKEN" )
+fi
+if [[ -n "${ONYX_BASE_URL_VALUE// }" ]]; then
+  SECRET_ARGS+=( --from-literal=ONYX_BASE_URL="$ONYX_BASE_URL_VALUE" )
+fi
+if [[ -n "${ONYX_TOKEN// }" ]]; then
+  SECRET_ARGS+=( --from-literal=ONYX_API_TOKEN="$ONYX_TOKEN" )
+fi
+if [[ -n "${ONYX_TOKEN_FALLBACK// }" ]]; then
+  SECRET_ARGS+=( --from-literal=CLAWQL_ONYX_API_TOKEN="$ONYX_TOKEN_FALLBACK" )
+fi
+if [[ -n "${PAPERLESS_TOKEN// }" ]]; then
+  SECRET_ARGS+=( --from-literal=PAPERLESS_API_TOKEN="$PAPERLESS_TOKEN" )
+fi
+if [[ -n "${STIRLING_KEY// }" ]]; then
+  SECRET_ARGS+=( --from-literal=STIRLING_API_KEY="$STIRLING_KEY" )
+fi
+if [[ -n "${PROVIDER_AUTH_JSON// }" ]]; then
+  SECRET_ARGS+=( --from-literal=CLAWQL_PROVIDER_AUTH_JSON="$PROVIDER_AUTH_JSON" )
 fi
 SECRET_ARGS+=( --dry-run=client -o yaml )
 kc "${SECRET_ARGS[@]}" | kc apply -f -
@@ -107,6 +141,27 @@ if [[ -n "${CF_TOKEN// }" ]]; then
 fi
 if [[ -n "${GOOGLE_TOKEN// }" ]]; then
   ENV_KEYS="${ENV_KEYS},GOOGLE_ACCESS_TOKEN"
+fi
+if [[ -n "${SLACK_TOKEN// }" ]]; then
+  ENV_KEYS="${ENV_KEYS},CLAWQL_SLACK_TOKEN"
+fi
+if [[ -n "${ONYX_BASE_URL_VALUE// }" ]]; then
+  ENV_KEYS="${ENV_KEYS},ONYX_BASE_URL"
+fi
+if [[ -n "${ONYX_TOKEN// }" ]]; then
+  ENV_KEYS="${ENV_KEYS},ONYX_API_TOKEN"
+fi
+if [[ -n "${ONYX_TOKEN_FALLBACK// }" ]]; then
+  ENV_KEYS="${ENV_KEYS},CLAWQL_ONYX_API_TOKEN"
+fi
+if [[ -n "${PAPERLESS_TOKEN// }" ]]; then
+  ENV_KEYS="${ENV_KEYS},PAPERLESS_API_TOKEN"
+fi
+if [[ -n "${STIRLING_KEY// }" ]]; then
+  ENV_KEYS="${ENV_KEYS},STIRLING_API_KEY"
+fi
+if [[ -n "${PROVIDER_AUTH_JSON// }" ]]; then
+  ENV_KEYS="${ENV_KEYS},CLAWQL_PROVIDER_AUTH_JSON"
 fi
 
 attach_secret_env() {

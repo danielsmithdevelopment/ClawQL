@@ -1,0 +1,991 @@
+{{- if .Values.onyx.enabled }}
+{{- if and (not .Values.onyx.postgres.auth.existingSecret) (not .Values.onyx.postgres.auth.password) }}
+{{- fail "onyx.postgres.auth.password is required when onyx.enabled=true and onyx.postgres.auth.existingSecret is empty" }}
+{{- end }}
+{{- if not .Values.onyx.userAuthSecret }}
+{{- fail "onyx.userAuthSecret is required when onyx.enabled=true" }}
+{{- end }}
+{{- if and .Values.onyx.fullVectorStack (not .Values.onyx.opensearch.auth.existingSecret) (not .Values.onyx.opensearch.auth.adminPassword) }}
+{{- fail "onyx.opensearch.auth.adminPassword is required when onyx.enabled=true, onyx.fullVectorStack=true, and onyx.opensearch.auth.existingSecret is empty" }}
+{{- end }}
+{{- if and .Values.onyx.fullVectorStack (not .Values.onyx.minio.auth.existingSecret) }}
+{{- if or (not .Values.onyx.minio.auth.rootUser) (not .Values.onyx.minio.auth.rootPassword) }}
+{{- fail "onyx.minio.auth.rootUser and rootPassword are required when onyx.fullVectorStack=true and onyx.minio.auth.existingSecret is empty" }}
+{{- end }}
+{{- end }}
+{{- if and (not .Values.onyx.postgres.auth.existingSecret) }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ include "clawql-mcp.onyxPostgresSecretName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: onyx-postgres
+type: Opaque
+data:
+  password: {{ .Values.onyx.postgres.auth.password | b64enc | quote }}
+---
+{{- end }}
+{{- if and .Values.onyx.fullVectorStack (not .Values.onyx.opensearch.auth.existingSecret) }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ include "clawql-mcp.onyxOpenSearchSecretName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: onyx-opensearch
+type: Opaque
+stringData:
+  {{- $osk := .Values.onyx.opensearch.auth.existingSecretPasswordKey }}
+  {{ $osk }}: {{ .Values.onyx.opensearch.auth.adminPassword | quote }}
+---
+{{- end }}
+{{- if and .Values.onyx.fullVectorStack (not .Values.onyx.minio.auth.existingSecret) }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ include "clawql-mcp.onyxMinioSecretName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: onyx-minio
+type: Opaque
+stringData:
+  {{- $muk := .Values.onyx.minio.auth.existingSecretUserKey }}
+  {{- $mpk := .Values.onyx.minio.auth.existingSecretPasswordKey }}
+  {{ $muk }}: {{ .Values.onyx.minio.auth.rootUser | quote }}
+  {{ $mpk }}: {{ .Values.onyx.minio.auth.rootPassword | quote }}
+---
+{{- end }}
+{{- if and .Values.onyx.postgres.persistence.enabled (not .Values.onyx.postgres.persistence.existingClaim) }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "clawql-mcp.onyxPostgresName" . }}-data
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: onyx-postgres
+spec:
+  accessModes:
+    {{- toYaml .Values.onyx.postgres.persistence.accessModes | nindent 4 }}
+  resources:
+    requests:
+      storage: {{ .Values.onyx.postgres.persistence.size }}
+  {{- if .Values.onyx.postgres.persistence.storageClass }}
+  storageClassName: {{ .Values.onyx.postgres.persistence.storageClass | quote }}
+  {{- end }}
+---
+{{- end }}
+{{- if and .Values.onyx.fullVectorStack .Values.onyx.opensearch.persistence.enabled (not .Values.onyx.opensearch.persistence.existingClaim) }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "clawql-mcp.onyxOpenSearchName" . }}-data
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: onyx-opensearch
+spec:
+  accessModes:
+    {{- toYaml .Values.onyx.opensearch.persistence.accessModes | nindent 4 }}
+  resources:
+    requests:
+      storage: {{ .Values.onyx.opensearch.persistence.size }}
+  {{- if .Values.onyx.opensearch.persistence.storageClass }}
+  storageClassName: {{ .Values.onyx.opensearch.persistence.storageClass | quote }}
+  {{- end }}
+---
+{{- end }}
+{{- if and .Values.onyx.fullVectorStack .Values.onyx.minio.persistence.enabled (not .Values.onyx.minio.persistence.existingClaim) }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "clawql-mcp.onyxMinioName" . }}-data
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: onyx-minio
+spec:
+  accessModes:
+    {{- toYaml .Values.onyx.minio.persistence.accessModes | nindent 4 }}
+  resources:
+    requests:
+      storage: {{ .Values.onyx.minio.persistence.size }}
+  {{- if .Values.onyx.minio.persistence.storageClass }}
+  storageClassName: {{ .Values.onyx.minio.persistence.storageClass | quote }}
+  {{- end }}
+---
+{{- end }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "clawql-mcp.onyxPostgresName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: onyx-postgres
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "clawql-mcp.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: onyx-postgres
+  ports:
+    - name: postgres
+      port: {{ .Values.onyx.postgres.service.port | int }}
+      targetPort: postgres
+      protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "clawql-mcp.onyxPostgresName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: onyx-postgres
+spec:
+  replicas: 1
+  {{- if .Values.onyx.postgres.persistence.enabled }}
+  strategy:
+    type: Recreate
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "clawql-mcp.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: onyx-postgres
+  template:
+    metadata:
+      labels:
+        {{- include "clawql-mcp.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: onyx-postgres
+    spec:
+      containers:
+        - name: postgres
+          image: "{{ .Values.onyx.postgres.image.repository }}:{{ .Values.onyx.postgres.image.tag }}"
+          imagePullPolicy: {{ .Values.onyx.postgres.image.pullPolicy }}
+          {{- if .Values.onyx.fullVectorStack }}
+          # Use args only — keep image ENTRYPOINT (docker-entrypoint.sh) so Postgres does not run as root.
+          args:
+            - postgres
+            - -c
+            - max_connections=250
+          {{- end }}
+          ports:
+            - name: postgres
+              containerPort: {{ .Values.onyx.postgres.service.port | int }}
+              protocol: TCP
+          env:
+            - name: POSTGRES_DB
+              value: {{ .Values.onyx.postgres.auth.database | quote }}
+            - name: POSTGRES_USER
+              value: {{ .Values.onyx.postgres.auth.username | quote }}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "clawql-mcp.onyxPostgresSecretName" . }}
+                  key: password
+          {{- if .Values.onyx.postgres.persistence.enabled }}
+          volumeMounts:
+            - name: onyx-postgres-data
+              mountPath: /var/lib/postgresql/data
+          {{- end }}
+          resources:
+            {{- toYaml .Values.onyx.postgres.resources | nindent 12 }}
+      {{- if .Values.onyx.postgres.persistence.enabled }}
+      volumes:
+        - name: onyx-postgres-data
+          {{- if .Values.onyx.postgres.persistence.existingClaim }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.onyx.postgres.persistence.existingClaim }}
+          {{- else }}
+          persistentVolumeClaim:
+            claimName: {{ include "clawql-mcp.onyxPostgresName" . }}-data
+          {{- end }}
+      {{- end }}
+---
+{{- if .Values.onyx.fullVectorStack }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "clawql-mcp.onyxRedisName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: onyx-redis
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "clawql-mcp.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: onyx-redis
+  ports:
+    - name: redis
+      port: {{ .Values.onyx.redis.service.port | int }}
+      targetPort: redis
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "clawql-mcp.onyxRedisName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: onyx-redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "clawql-mcp.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: onyx-redis
+  template:
+    metadata:
+      labels:
+        {{- include "clawql-mcp.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: onyx-redis
+    spec:
+      containers:
+        - name: redis
+          image: "{{ .Values.onyx.redis.image.repository }}:{{ .Values.onyx.redis.image.tag }}"
+          imagePullPolicy: {{ .Values.onyx.redis.image.pullPolicy }}
+          args: ["redis-server", "--save", "", "--appendonly", "no"]
+          ports:
+            - name: redis
+              containerPort: {{ .Values.onyx.redis.service.port | int }}
+          readinessProbe:
+            exec:
+              command: ["redis-cli", "ping"]
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          resources:
+            {{- toYaml .Values.onyx.redis.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "clawql-mcp.onyxOpenSearchName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: onyx-opensearch
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "clawql-mcp.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: onyx-opensearch
+  ports:
+    - name: http
+      port: {{ .Values.onyx.opensearch.service.port | int }}
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "clawql-mcp.onyxOpenSearchName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: onyx-opensearch
+spec:
+  replicas: 1
+  {{- if .Values.onyx.opensearch.persistence.enabled }}
+  strategy:
+    type: Recreate
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "clawql-mcp.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: onyx-opensearch
+  template:
+    metadata:
+      labels:
+        {{- include "clawql-mcp.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: onyx-opensearch
+    spec:
+      containers:
+        - name: opensearch
+          image: "{{ .Values.onyx.opensearch.image.repository }}:{{ .Values.onyx.opensearch.image.tag }}"
+          imagePullPolicy: {{ .Values.onyx.opensearch.image.pullPolicy }}
+          env:
+            - name: discovery.type
+              value: single-node
+            - name: OPENSEARCH_INITIAL_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "clawql-mcp.onyxOpenSearchSecretName" . }}
+                  key: {{ .Values.onyx.opensearch.auth.existingSecretPasswordKey }}
+            - name: OPENSEARCH_JAVA_OPTS
+              value: {{ .Values.onyx.opensearch.javaOpts | quote }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.onyx.opensearch.service.port | int }}
+          readinessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            failureThreshold: 30
+          startupProbe:
+            tcpSocket:
+              port: http
+            periodSeconds: 10
+            failureThreshold: 60
+          {{- if .Values.onyx.opensearch.persistence.enabled }}
+          volumeMounts:
+            - name: data
+              mountPath: /usr/share/opensearch/data
+          {{- end }}
+          resources:
+            {{- toYaml .Values.onyx.opensearch.resources | nindent 12 }}
+      {{- if .Values.onyx.opensearch.persistence.enabled }}
+      volumes:
+        - name: data
+          {{- if .Values.onyx.opensearch.persistence.existingClaim }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.onyx.opensearch.persistence.existingClaim }}
+          {{- else }}
+          persistentVolumeClaim:
+            claimName: {{ include "clawql-mcp.onyxOpenSearchName" . }}-data
+          {{- end }}
+      {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "clawql-mcp.onyxVespaName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: onyx-vespa
+spec:
+  type: ClusterIP
+  clusterIP: None
+  sessionAffinity: None
+  selector:
+    {{- include "clawql-mcp.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: onyx-vespa
+  ports:
+    - name: config
+      port: 19071
+      targetPort: 19071
+    - name: http
+      port: 8080
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "clawql-mcp.onyxVespaName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: onyx-vespa
+spec:
+  serviceName: {{ include "clawql-mcp.onyxVespaName" . }}
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "clawql-mcp.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: onyx-vespa
+  template:
+    metadata:
+      labels:
+        {{- include "clawql-mcp.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: onyx-vespa
+    spec:
+      containers:
+        - name: vespa
+          image: "{{ .Values.onyx.vespa.image.repository }}:{{ .Values.onyx.vespa.image.tag }}"
+          imagePullPolicy: {{ .Values.onyx.vespa.image.pullPolicy }}
+          env:
+            - name: VESPA_SKIP_UPGRADE_CHECK
+              value: {{ .Values.onyx.vespa.skipUpgradeCheck | quote }}
+          ports:
+            - name: config
+              containerPort: 19071
+            - name: http
+              containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /state/v1/health
+              port: config
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 30
+          startupProbe:
+            httpGet:
+              path: /state/v1/health
+              port: config
+            periodSeconds: 10
+            failureThreshold: 90
+          volumeMounts:
+            - name: vespa-data
+              mountPath: /opt/vespa/var
+          resources:
+            {{- toYaml .Values.onyx.vespa.resources | nindent 12 }}
+      {{- if not .Values.onyx.vespa.persistence.enabled }}
+      volumes:
+        - name: vespa-data
+          emptyDir: {}
+      {{- end }}
+  {{- if .Values.onyx.vespa.persistence.enabled }}
+  volumeClaimTemplates:
+    - metadata:
+        name: vespa-data
+      spec:
+        accessModes:
+          {{- toYaml .Values.onyx.vespa.persistence.accessModes | nindent 10 }}
+        resources:
+          requests:
+            storage: {{ .Values.onyx.vespa.persistence.size }}
+        {{- if .Values.onyx.vespa.persistence.storageClass }}
+        storageClassName: {{ .Values.onyx.vespa.persistence.storageClass | quote }}
+        {{- end }}
+  {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "clawql-mcp.onyxMinioName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: onyx-minio
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "clawql-mcp.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: onyx-minio
+  ports:
+    - name: api
+      port: {{ .Values.onyx.minio.service.apiPort | int }}
+      targetPort: api
+    - name: console
+      port: {{ .Values.onyx.minio.service.consolePort | int }}
+      targetPort: console
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "clawql-mcp.onyxMinioName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: onyx-minio
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "clawql-mcp.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: onyx-minio
+  template:
+    metadata:
+      labels:
+        {{- include "clawql-mcp.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: onyx-minio
+    spec:
+      containers:
+        - name: minio
+          image: "{{ .Values.onyx.minio.image.repository }}:{{ .Values.onyx.minio.image.tag }}"
+          imagePullPolicy: {{ .Values.onyx.minio.image.pullPolicy }}
+          args:
+            - server
+            - /data
+            - --console-address
+            - :{{ .Values.onyx.minio.service.consolePort | int }}
+          env:
+            - name: MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "clawql-mcp.onyxMinioSecretName" . }}
+                  key: {{ .Values.onyx.minio.auth.existingSecretUserKey | quote }}
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "clawql-mcp.onyxMinioSecretName" . }}
+                  key: {{ .Values.onyx.minio.auth.existingSecretPasswordKey | quote }}
+            - name: MINIO_DEFAULT_BUCKETS
+              value: {{ .Values.onyx.s3.fileStoreBucketName | quote }}
+          ports:
+            - name: api
+              containerPort: {{ .Values.onyx.minio.service.apiPort | int }}
+            - name: console
+              containerPort: {{ .Values.onyx.minio.service.consolePort | int }}
+          readinessProbe:
+            httpGet:
+              path: /minio/health/live
+              port: api
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.onyx.minio.resources | nindent 12 }}
+          {{- if .Values.onyx.minio.persistence.enabled }}
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          {{- end }}
+      {{- if .Values.onyx.minio.persistence.enabled }}
+      volumes:
+        - name: data
+          {{- if .Values.onyx.minio.persistence.existingClaim }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.onyx.minio.persistence.existingClaim }}
+          {{- else }}
+          persistentVolumeClaim:
+            claimName: {{ include "clawql-mcp.onyxMinioName" . }}-data
+          {{- end }}
+      {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "clawql-mcp.onyxInferenceModelName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: onyx-model-infer
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "clawql-mcp.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: onyx-model-infer
+  ports:
+    - name: http
+      port: {{ .Values.onyx.modelServer.service.port | int }}
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "clawql-mcp.onyxInferenceModelName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: onyx-model-infer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "clawql-mcp.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: onyx-model-infer
+  template:
+    metadata:
+      labels:
+        {{- include "clawql-mcp.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: onyx-model-infer
+    spec:
+      containers:
+        - name: model-server
+          image: "{{ .Values.onyx.modelServer.image.repository }}:{{ .Values.onyx.modelServer.image.tag }}"
+          imagePullPolicy: {{ .Values.onyx.modelServer.image.pullPolicy }}
+          command: ["/bin/sh", "-c", "exec uvicorn model_server.main:app --host 0.0.0.0 --port {{ .Values.onyx.modelServer.service.port }}"]
+          ports:
+            - name: http
+              containerPort: {{ .Values.onyx.modelServer.service.port | int }}
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            failureThreshold: 40
+          startupProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            periodSeconds: 15
+            failureThreshold: 80
+          volumeMounts:
+            - name: hf-cache
+              mountPath: /app/.cache/huggingface
+          resources:
+            {{- toYaml .Values.onyx.modelServer.resources | nindent 12 }}
+      volumes:
+        - name: hf-cache
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "clawql-mcp.onyxIndexingModelName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: onyx-model-index
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "clawql-mcp.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: onyx-model-index
+  ports:
+    - name: http
+      port: {{ .Values.onyx.modelServer.service.port | int }}
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "clawql-mcp.onyxIndexingModelName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: onyx-model-index
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "clawql-mcp.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: onyx-model-index
+  template:
+    metadata:
+      labels:
+        {{- include "clawql-mcp.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: onyx-model-index
+    spec:
+      containers:
+        - name: model-server
+          image: "{{ .Values.onyx.modelServer.image.repository }}:{{ .Values.onyx.modelServer.image.tag }}"
+          imagePullPolicy: {{ .Values.onyx.modelServer.image.pullPolicy }}
+          command: ["/bin/sh", "-c", "exec uvicorn model_server.main:app --host 0.0.0.0 --port {{ .Values.onyx.modelServer.service.port }}"]
+          env:
+            - name: INDEXING_ONLY
+              value: "True"
+          ports:
+            - name: http
+              containerPort: {{ .Values.onyx.modelServer.service.port | int }}
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            failureThreshold: 40
+          startupProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            periodSeconds: 15
+            failureThreshold: 80
+          volumeMounts:
+            - name: hf-cache
+              mountPath: /app/.cache/huggingface
+          resources:
+            {{- toYaml .Values.onyx.modelServer.resources | nindent 12 }}
+      volumes:
+        - name: hf-cache
+          emptyDir: {}
+---
+{{- end }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "clawql-mcp.onyxName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: onyx
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "clawql-mcp.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: onyx
+  ports:
+    - name: http
+      port: {{ .Values.onyx.service.port | int }}
+      targetPort: http
+      protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "clawql-mcp.onyxName" . }}-web
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: onyx-web
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "clawql-mcp.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: onyx-web
+  ports:
+    - name: http
+      port: {{ .Values.onyx.web.service.port | int }}
+      targetPort: http
+      protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "clawql-mcp.onyxName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: onyx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "clawql-mcp.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: onyx
+  template:
+    metadata:
+      labels:
+        {{- include "clawql-mcp.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: onyx
+    spec:
+      {{- if .Values.onyx.fullVectorStack }}
+      initContainers:
+        - name: wait-postgres
+          image: busybox:1.36
+          command: ["sh", "-c", "until nc -z {{ include "clawql-mcp.onyxPostgresName" . }} {{ .Values.onyx.postgres.service.port }}; do sleep 2; done"]
+        - name: wait-redis
+          image: busybox:1.36
+          command: ["sh", "-c", "until nc -z {{ include "clawql-mcp.onyxRedisName" . }} {{ .Values.onyx.redis.service.port }}; do sleep 2; done"]
+        - name: wait-opensearch
+          image: busybox:1.36
+          command: ["sh", "-c", "until nc -z {{ include "clawql-mcp.onyxOpenSearchName" . }} {{ .Values.onyx.opensearch.service.port }}; do sleep 2; done"]
+        - name: wait-vespa
+          image: busybox:1.36
+          command: ["sh", "-c", "until nc -z {{ include "clawql-mcp.onyxVespaName" . }} 19071; do sleep 2; done"]
+        - name: wait-minio
+          image: busybox:1.36
+          command: ["sh", "-c", "until nc -z {{ include "clawql-mcp.onyxMinioName" . }} {{ .Values.onyx.minio.service.apiPort }}; do sleep 2; done"]
+        - name: wait-inference
+          image: busybox:1.36
+          command: ["sh", "-c", "until nc -z {{ include "clawql-mcp.onyxInferenceModelName" . }} {{ .Values.onyx.modelServer.service.port }}; do sleep 2; done"]
+        - name: wait-indexing
+          image: busybox:1.36
+          command: ["sh", "-c", "until nc -z {{ include "clawql-mcp.onyxIndexingModelName" . }} {{ .Values.onyx.modelServer.service.port }}; do sleep 2; done"]
+      {{- end }}
+      containers:
+        - name: onyx-api
+          image: "{{ .Values.onyx.api.image.repository }}:{{ .Values.onyx.api.image.tag }}"
+          imagePullPolicy: {{ .Values.onyx.api.image.pullPolicy }}
+          command:
+            - /bin/sh
+            - -c
+            - >
+              alembic upgrade head &&
+              echo "Starting Onyx Api Server" &&
+              uvicorn onyx.main:app --host 0.0.0.0 --port {{ .Values.onyx.service.port }}
+          env:
+            - name: AUTH_TYPE
+              value: {{ .Values.onyx.authType | quote }}
+            - name: USER_AUTH_SECRET
+              value: {{ .Values.onyx.userAuthSecret | quote }}
+            - name: POSTGRES_HOST
+              value: {{ include "clawql-mcp.onyxPostgresName" . | quote }}
+            - name: POSTGRES_USER
+              value: {{ .Values.onyx.postgres.auth.username | quote }}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "clawql-mcp.onyxPostgresSecretName" . }}
+                  key: password
+            - name: POSTGRES_DB
+              value: {{ .Values.onyx.postgres.auth.database | quote }}
+            {{- if .Values.onyx.fullVectorStack }}
+            - name: FILE_STORE_BACKEND
+              value: "s3"
+            - name: CACHE_BACKEND
+              value: "redis"
+            - name: AUTH_BACKEND
+              value: "redis"
+            - name: VESPA_HOST
+              value: {{ printf "%s-0.%s" (include "clawql-mcp.onyxVespaName" .) (include "clawql-mcp.onyxVespaName" .) | quote }}
+            - name: OPENSEARCH_HOST
+              value: {{ include "clawql-mcp.onyxOpenSearchName" . | quote }}
+            - name: OPENSEARCH_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "clawql-mcp.onyxOpenSearchSecretName" . }}
+                  key: {{ .Values.onyx.opensearch.auth.existingSecretPasswordKey | quote }}
+            - name: ENABLE_OPENSEARCH_INDEXING_FOR_ONYX
+              value: "true"
+            - name: REDIS_HOST
+              value: {{ include "clawql-mcp.onyxRedisName" . | quote }}
+            - name: MODEL_SERVER_HOST
+              value: {{ include "clawql-mcp.onyxInferenceModelName" . | quote }}
+            - name: INDEXING_MODEL_SERVER_HOST
+              value: {{ include "clawql-mcp.onyxIndexingModelName" . | quote }}
+            - name: S3_ENDPOINT_URL
+              value: {{ printf "http://%s:%d" (include "clawql-mcp.onyxMinioName" .) (.Values.onyx.minio.service.apiPort | int) | quote }}
+            - name: S3_AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "clawql-mcp.onyxMinioSecretName" . }}
+                  key: {{ .Values.onyx.minio.auth.existingSecretUserKey | quote }}
+            - name: S3_AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "clawql-mcp.onyxMinioSecretName" . }}
+                  key: {{ .Values.onyx.minio.auth.existingSecretPasswordKey | quote }}
+            - name: S3_FILE_STORE_BUCKET_NAME
+              value: {{ .Values.onyx.s3.fileStoreBucketName | quote }}
+            - name: ENABLE_CRAFT
+              value: "false"
+            {{- else }}
+            - name: DISABLE_VECTOR_DB
+              value: "true"
+            - name: FILE_STORE_BACKEND
+              value: "postgres"
+            - name: CACHE_BACKEND
+              value: "postgres"
+            - name: AUTH_BACKEND
+              value: "postgres"
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.onyx.service.port | int }}
+              protocol: TCP
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+            failureThreshold: 60
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            {{- toYaml .Values.onyx.resources | nindent 12 }}
+---
+{{- if and .Values.onyx.fullVectorStack .Values.onyx.background.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "clawql-mcp.onyxBackgroundName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: onyx-background
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "clawql-mcp.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: onyx-background
+  template:
+    metadata:
+      labels:
+        {{- include "clawql-mcp.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: onyx-background
+    spec:
+      initContainers:
+        - name: wait-postgres
+          image: busybox:1.36
+          command: ["sh", "-c", "until nc -z {{ include "clawql-mcp.onyxPostgresName" . }} {{ .Values.onyx.postgres.service.port }}; do sleep 2; done"]
+        - name: wait-redis
+          image: busybox:1.36
+          command: ["sh", "-c", "until nc -z {{ include "clawql-mcp.onyxRedisName" . }} {{ .Values.onyx.redis.service.port }}; do sleep 2; done"]
+        - name: wait-opensearch
+          image: busybox:1.36
+          command: ["sh", "-c", "until nc -z {{ include "clawql-mcp.onyxOpenSearchName" . }} {{ .Values.onyx.opensearch.service.port }}; do sleep 2; done"]
+        - name: wait-vespa
+          image: busybox:1.36
+          command: ["sh", "-c", "until nc -z {{ include "clawql-mcp.onyxVespaName" . }} 19071; do sleep 2; done"]
+        - name: wait-minio
+          image: busybox:1.36
+          command: ["sh", "-c", "until nc -z {{ include "clawql-mcp.onyxMinioName" . }} {{ .Values.onyx.minio.service.apiPort }}; do sleep 2; done"]
+        - name: wait-inference
+          image: busybox:1.36
+          command: ["sh", "-c", "until nc -z {{ include "clawql-mcp.onyxInferenceModelName" . }} {{ .Values.onyx.modelServer.service.port }}; do sleep 2; done"]
+        - name: wait-indexing
+          image: busybox:1.36
+          command: ["sh", "-c", "until nc -z {{ include "clawql-mcp.onyxIndexingModelName" . }} {{ .Values.onyx.modelServer.service.port }}; do sleep 2; done"]
+      containers:
+        - name: onyx-background
+          image: "{{ .Values.onyx.api.image.repository }}:{{ .Values.onyx.api.image.tag }}"
+          imagePullPolicy: {{ .Values.onyx.api.image.pullPolicy }}
+          command:
+            - /bin/sh
+            - -c
+            - |
+              if [ -f /app/scripts/setup_craft_templates.sh ]; then /app/scripts/setup_craft_templates.sh; fi
+              if [ -f /etc/ssl/certs/custom-ca.crt ]; then update-ca-certificates; fi
+              exec /app/scripts/supervisord_entrypoint.sh
+          env:
+            - name: AUTH_TYPE
+              value: {{ .Values.onyx.authType | quote }}
+            - name: USER_AUTH_SECRET
+              value: {{ .Values.onyx.userAuthSecret | quote }}
+            - name: FILE_STORE_BACKEND
+              value: "s3"
+            - name: CACHE_BACKEND
+              value: "redis"
+            - name: AUTH_BACKEND
+              value: "redis"
+            - name: POSTGRES_HOST
+              value: {{ include "clawql-mcp.onyxPostgresName" . | quote }}
+            - name: POSTGRES_USER
+              value: {{ .Values.onyx.postgres.auth.username | quote }}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "clawql-mcp.onyxPostgresSecretName" . }}
+                  key: password
+            - name: POSTGRES_DB
+              value: {{ .Values.onyx.postgres.auth.database | quote }}
+            - name: VESPA_HOST
+              value: {{ printf "%s-0.%s" (include "clawql-mcp.onyxVespaName" .) (include "clawql-mcp.onyxVespaName" .) | quote }}
+            - name: OPENSEARCH_HOST
+              value: {{ include "clawql-mcp.onyxOpenSearchName" . | quote }}
+            - name: OPENSEARCH_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "clawql-mcp.onyxOpenSearchSecretName" . }}
+                  key: {{ .Values.onyx.opensearch.auth.existingSecretPasswordKey | quote }}
+            - name: ENABLE_OPENSEARCH_INDEXING_FOR_ONYX
+              value: "true"
+            - name: REDIS_HOST
+              value: {{ include "clawql-mcp.onyxRedisName" . | quote }}
+            - name: MODEL_SERVER_HOST
+              value: {{ include "clawql-mcp.onyxInferenceModelName" . | quote }}
+            - name: INDEXING_MODEL_SERVER_HOST
+              value: {{ include "clawql-mcp.onyxIndexingModelName" . | quote }}
+            - name: S3_ENDPOINT_URL
+              value: {{ printf "http://%s:%d" (include "clawql-mcp.onyxMinioName" .) (.Values.onyx.minio.service.apiPort | int) | quote }}
+            - name: S3_AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "clawql-mcp.onyxMinioSecretName" . }}
+                  key: {{ .Values.onyx.minio.auth.existingSecretUserKey | quote }}
+            - name: S3_AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "clawql-mcp.onyxMinioSecretName" . }}
+                  key: {{ .Values.onyx.minio.auth.existingSecretPasswordKey | quote }}
+            - name: S3_FILE_STORE_BUCKET_NAME
+              value: {{ .Values.onyx.s3.fileStoreBucketName | quote }}
+            - name: API_SERVER_PROTOCOL
+              value: "http"
+            - name: API_SERVER_HOST
+              value: {{ include "clawql-mcp.onyxName" . | quote }}
+            - name: ENABLE_CRAFT
+              value: "false"
+          resources:
+            {{- toYaml .Values.onyx.background.resources | nindent 12 }}
+---
+{{- end }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "clawql-mcp.onyxName" . }}-web
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: onyx-web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "clawql-mcp.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: onyx-web
+  template:
+    metadata:
+      labels:
+        {{- include "clawql-mcp.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: onyx-web
+    spec:
+      containers:
+        - name: onyx-web
+          image: "{{ .Values.onyx.web.image.repository }}:{{ .Values.onyx.web.image.tag }}"
+          imagePullPolicy: {{ .Values.onyx.web.image.pullPolicy }}
+          env:
+            - name: INTERNAL_URL
+              value: {{ printf "http://%s:%d" (include "clawql-mcp.onyxName" .) (.Values.onyx.service.port | int) | quote }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.onyx.web.service.port | int }}
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.onyx.resources | nindent 12 }}
+{{- end }}

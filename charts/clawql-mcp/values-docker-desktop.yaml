@@ -32,7 +32,57 @@ enableOnyx: true
 enableOuroboros: true
 
 # Local defaults; override via env/secret for real integrations.
-onyxBaseUrl: "http://host.docker.internal:3000"
+# Full Onyx is heavy: give Docker Desktop Kubernetes enough RAM (e.g. 12–16 GiB in
+# Settings → Resources) or lower onyx.*.resources.requests below further.
+onyx:
+  enabled: true
+  fullVectorStack: true
+  authType: basic
+  userAuthSecret: "clawql-local-onyx-auth-secret"
+  postgres:
+    auth:
+      password: "change-me"
+    persistence:
+      enabled: true
+  opensearch:
+    javaOpts: "-Xms256m -Xmx256m"
+    persistence:
+      enabled: true
+    resources:
+      requests:
+        cpu: 100m
+        memory: 384Mi
+      limits:
+        cpu: "2"
+        memory: 1536Mi
+  vespa:
+    persistence:
+      enabled: true
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+      limits:
+        cpu: "2"
+        memory: 3Gi
+  minio:
+    persistence:
+      enabled: true
+  modelServer:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+      limits:
+        cpu: "2"
+        memory: 4Gi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      cpu: "2"
+      memory: 1536Mi
 
 ouroborosPostgres:
   enabled: true
@@ -77,3 +127,34 @@ ui:
         paths:
           - path: /
             pathType: Prefix
+
+providerIngress:
+  enabled: true
+  className: nginx
+  paperless:
+    host: paperless.localhost
+  stirling:
+    host: stirling.localhost
+  tika:
+    host: tika.localhost
+  gotenberg:
+    host: gotenberg.localhost
+  flink:
+    host: flink.localhost
+  natsMonitor:
+    host: nats.localhost
+  onyx:
+    host: onyx.localhost
+
+envFromSecret: clawql-github-auth
+
+documentPipeline:
+  stirling:
+    security:
+      enableLogin: true
+      disableAdditionalFeatures: false
+  paperless:
+    auth:
+      adminUser: admin
+      adminPassword: admin
+      adminMail: admin@localhost

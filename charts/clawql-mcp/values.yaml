@@ -58,6 +58,177 @@ enableNotify: false
 enableOnyx: false
 # When set, injects ONYX_BASE_URL (non-secret). Prefer extraEnv / envFromSecret for ONYX_API_TOKEN.
 onyxBaseUrl: ""
+onyx:
+  enabled: false
+  # When true (default), deploy Vespa + OpenSearch + Redis + MinIO + model servers + background worker
+  # (matches upstream docker-compose). When false, deploy a minimal postgres-backed API (vector search disabled).
+  fullVectorStack: true
+  api:
+    image:
+      repository: onyxdotapp/onyx-backend
+      tag: latest
+      pullPolicy: IfNotPresent
+  web:
+    image:
+      repository: onyxdotapp/onyx-web-server
+      tag: latest
+      pullPolicy: IfNotPresent
+    service:
+      port: 3000
+  service:
+    port: 8080
+  authType: basic
+  userAuthSecret: "change-me-onyx-user-auth-secret"
+  # S3 / MinIO object store (full stack).
+  s3:
+    fileStoreBucketName: onyx-file-store-bucket
+  redis:
+    image:
+      repository: redis
+      tag: 7.4-alpine
+      pullPolicy: IfNotPresent
+    service:
+      port: 6379
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: "1"
+        memory: 512Mi
+  opensearch:
+    image:
+      repository: opensearchproject/opensearch
+      tag: "3.4.0"
+      pullPolicy: IfNotPresent
+    service:
+      port: 9200
+    # JVM heap for OpenSearch (raise for production).
+    javaOpts: "-Xms512m -Xmx512m"
+    # Do not set DISABLE_INSTALL_DEMO_CONFIG=true with OPENSEARCH_INITIAL_ADMIN_PASSWORD:
+    # the security plugin then loads without demo TLS and fails ("No SSL configuration found").
+    auth:
+      adminPassword: "StrongPassword123!"
+      existingSecret: ""
+      existingSecretPasswordKey: password
+    persistence:
+      enabled: false
+      storageClass: ""
+      accessModes:
+        - ReadWriteOnce
+      size: 10Gi
+      existingClaim: ""
+    resources:
+      requests:
+        cpu: 250m
+        memory: 1536Mi
+      limits:
+        cpu: "2"
+        memory: 3Gi
+  vespa:
+    image:
+      repository: vespaengine/vespa
+      tag: "8.609.39"
+      pullPolicy: IfNotPresent
+    skipUpgradeCheck: "true"
+    persistence:
+      enabled: false
+      storageClass: ""
+      accessModes:
+        - ReadWriteOnce
+      size: 10Gi
+      existingClaim: ""
+    resources:
+      requests:
+        cpu: 500m
+        memory: 2Gi
+      limits:
+        cpu: "4"
+        memory: 6Gi
+  minio:
+    image:
+      repository: minio/minio
+      tag: RELEASE.2025-07-23T15-54-02Z-cpuv1
+      pullPolicy: IfNotPresent
+    service:
+      apiPort: 9000
+      consolePort: 9001
+    auth:
+      rootUser: minioadmin
+      rootPassword: minioadmin
+      existingSecret: ""
+      existingSecretUserKey: root-user
+      existingSecretPasswordKey: root-password
+    persistence:
+      enabled: false
+      storageClass: ""
+      accessModes:
+        - ReadWriteOnce
+      size: 20Gi
+      existingClaim: ""
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: "1"
+        memory: 1Gi
+  modelServer:
+    image:
+      repository: onyxdotapp/onyx-model-server
+      tag: latest
+      pullPolicy: IfNotPresent
+    service:
+      port: 9000
+    resources:
+      requests:
+        cpu: 250m
+        memory: 2Gi
+      limits:
+        cpu: "2"
+        memory: 8Gi
+  background:
+    enabled: true
+    resources:
+      requests:
+        cpu: 250m
+        memory: 1Gi
+      limits:
+        cpu: "2"
+        memory: 3Gi
+  postgres:
+    image:
+      repository: postgres
+      tag: "16-alpine"
+      pullPolicy: IfNotPresent
+    service:
+      port: 5432
+    auth:
+      database: onyx
+      username: onyx
+      password: "change-me"
+      existingSecret: ""
+    persistence:
+      enabled: false
+      storageClass: ""
+      accessModes:
+        - ReadWriteOnce
+      size: 10Gi
+      existingClaim: ""
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: "1"
+        memory: 1Gi
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: "2"
+      memory: 2Gi
 
 # MCP ouroboros_* tools — clawql-ouroboros evolutionary loop (#141). Optional Postgres for durable events (#142).
 enableOuroboros: false
@@ -124,6 +295,11 @@ documentPipeline:
     auth:
       apiKey: ""
       existingSecret: ""
+    security:
+      # Enables Stirling user auth/admin features.
+      enableLogin: false
+      # Keep extra enterprise/admin features available when login is enabled.
+      disableAdditionalFeatures: false
   paperless:
     enabled: true
     image:
@@ -135,6 +311,11 @@ documentPipeline:
     auth:
       apiToken: ""
       secretKey: ""
+      # Optional admin bootstrap for paperless-ngx. On startup, the container creates
+      # the admin user when it does not already exist.
+      adminUser: ""
+      adminPassword: ""
+      adminMail: ""
       existingSecret: ""
     persistence:
       mediaSize: 20Gi
@@ -366,6 +547,49 @@ ui:
           - path: /
             pathType: Prefix
     tls: []
+
+# Optional per-service ingresses for HTTP-capable provider stacks.
+# Useful for local Docker Desktop hostnames like *.localhost.
+providerIngress:
+  enabled: false
+  className: nginx
+  annotations: {}
+  tls: []
+  paperless:
+    enabled: true
+    host: paperless.localhost
+    path: /
+    pathType: Prefix
+  stirling:
+    enabled: true
+    host: stirling.localhost
+    path: /
+    pathType: Prefix
+  tika:
+    enabled: true
+    host: tika.localhost
+    path: /
+    pathType: Prefix
+  gotenberg:
+    enabled: true
+    host: gotenberg.localhost
+    path: /
+    pathType: Prefix
+  flink:
+    enabled: true
+    host: flink.localhost
+    path: /
+    pathType: Prefix
+  natsMonitor:
+    enabled: true
+    host: nats.localhost
+    path: /
+    pathType: Prefix
+  onyx:
+    enabled: true
+    host: onyx.localhost
+    path: /
+    pathType: Prefix
 
 nodeSelector: {}
 tolerations: []

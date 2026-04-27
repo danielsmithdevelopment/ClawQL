@@ -27,6 +27,15 @@ data:
   {{- if .Values.documentPipeline.paperless.auth.secretKey }}
   paperless-secret-key: {{ .Values.documentPipeline.paperless.auth.secretKey | b64enc | quote }}
   {{- end }}
+  {{- if .Values.documentPipeline.paperless.auth.adminUser }}
+  paperless-admin-user: {{ .Values.documentPipeline.paperless.auth.adminUser | b64enc | quote }}
+  {{- end }}
+  {{- if .Values.documentPipeline.paperless.auth.adminPassword }}
+  paperless-admin-password: {{ .Values.documentPipeline.paperless.auth.adminPassword | b64enc | quote }}
+  {{- end }}
+  {{- if .Values.documentPipeline.paperless.auth.adminMail }}
+  paperless-admin-mail: {{ .Values.documentPipeline.paperless.auth.adminMail | b64enc | quote }}
+  {{- end }}
   {{- end }}
   {{- if $stirlingSecretManaged }}
   stirling-api-key: {{ .Values.documentPipeline.stirling.auth.apiKey | b64enc | quote }}
@@ -265,8 +274,13 @@ spec:
           image: "{{ .Values.documentPipeline.stirling.image.repository }}:{{ .Values.documentPipeline.stirling.image.tag }}"
           imagePullPolicy: {{ .Values.documentPipeline.stirling.image.pullPolicy }}
           env:
+            # Keep both env keys for Stirling compatibility across image variants.
             - name: SECURITY_ENABLE_LOGIN
-              value: "false"
+              value: {{ ternary "true" "false" .Values.documentPipeline.stirling.security.enableLogin | quote }}
+            - name: SECURITY_ENABLELOGIN
+              value: {{ ternary "true" "false" .Values.documentPipeline.stirling.security.enableLogin | quote }}
+            - name: DISABLE_ADDITIONAL_FEATURES
+              value: {{ ternary "true" "false" .Values.documentPipeline.stirling.security.disableAdditionalFeatures | quote }}
             {{- if .Values.documentPipeline.stirling.auth.apiKey }}
             - name: API_KEY
               valueFrom:
@@ -489,6 +503,27 @@ spec:
                 secretKeyRef:
                   name: {{ include "clawql-mcp.documentPipelineSecretName" . }}
                   key: paperless-api-token
+            {{- end }}
+            {{- if .Values.documentPipeline.paperless.auth.adminUser }}
+            - name: PAPERLESS_ADMIN_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "clawql-mcp.documentPipelineSecretName" . }}
+                  key: paperless-admin-user
+            {{- end }}
+            {{- if .Values.documentPipeline.paperless.auth.adminPassword }}
+            - name: PAPERLESS_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "clawql-mcp.documentPipelineSecretName" . }}
+                  key: paperless-admin-password
+            {{- end }}
+            {{- if .Values.documentPipeline.paperless.auth.adminMail }}
+            - name: PAPERLESS_ADMIN_MAIL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "clawql-mcp.documentPipelineSecretName" . }}
+                  key: paperless-admin-mail
             {{- end }}
           ports:
             - name: http
