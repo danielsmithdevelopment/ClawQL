@@ -10,12 +10,12 @@ This case study walks through a **Cursor** session that aligned the **ClawQL** p
 
 A consolidated slide deck is a **product contract**: it lists Web3, Fabric, The Graph, Chainlink, OSV-Scanner, Istio, defense-in-depth, and more. If that narrative runs ahead of **issues and code**, the story drifts. This session was **reconcile deck → open issues → new issues** while keeping a clear boundary:
 
-| Layer                 | Tooling                                        | Role in this session                                                                                                              |
-| --------------------- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| **Ephemeral scratch** | MCP **`cache`** (always on) | Stash **transient** keys (working notes, last-known issue list, “do not put in the vault” scratch) — **not** long-term memory.    |
-| **Durable recall**    | **`memory_recall`** (vault Markdown)           | **Before** writing new issues, pull prior decisions and deck-related notes so filing is **informed**, not from chat memory alone. |
-| **Durable write**     | **`memory_ingest`**                            | **After** the session, append a **summary** of what was created and how it links to the deck.                                     |
-| **Execution**         | **`gh`**, GitHub                               | The **system of record** for shippable work.                                                                                      |
+| Layer                 | Tooling                              | Role in this session                                                                                                              |
+| --------------------- | ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| **Ephemeral scratch** | MCP **`cache`** (always on)          | Stash **transient** keys (working notes, last-known issue list, “do not put in the vault” scratch) — **not** long-term memory.    |
+| **Durable recall**    | **`memory_recall`** (vault Markdown) | **Before** writing new issues, pull prior decisions and deck-related notes so filing is **informed**, not from chat memory alone. |
+| **Durable write**     | **`memory_ingest`**                  | **After** the session, append a **summary** of what was created and how it links to the deck.                                     |
+| **Execution**         | **`gh`**, GitHub                     | The **system of record** for shippable work.                                                                                      |
 
 For when **`cache` is** vs is **not** the right tool, see **[`docs/cache-tool.md`](../cache-tool.md)**. **`cache`** is **in-process** and **LRU-bounded** — it is the right place for “temporary issue numbers and information we do **not** want to persist to long-term memory” for as long as the MCP server process (and the session) lasts.
 

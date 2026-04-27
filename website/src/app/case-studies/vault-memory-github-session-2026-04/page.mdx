@@ -127,11 +127,11 @@ The enterprise epic needed a tool that is:
 
 ## 8. Optional tools: `audit` vs `cache` vs vault
 
-| Tool                | Env                            | Persists?           | Use for                                      |
-| ------------------- | ------------------------------ | ------------------- | -------------------------------------------- |
-| **`cache`**         | ClawQL Core (always on)                   | No (in-process LRU) | Session scratch, tool handoff state.         |
-| **`audit`**         | always on (no env gate)        | No (ring buffer)    | Operator-visible MCP event trail in-session. |
-| **`memory_ingest`** | *on by default*; vault path + DB sidecar; **`CLAWQL_ENABLE_MEMORY=0`** to hide | Yes (Markdown + DB) | Decisions, runbooks, cross-session recall.   |
+| Tool                | Env                                                                            | Persists?           | Use for                                      |
+| ------------------- | ------------------------------------------------------------------------------ | ------------------- | -------------------------------------------- |
+| **`cache`**         | ClawQL Core (always on)                                                        | No (in-process LRU) | Session scratch, tool handoff state.         |
+| **`audit`**         | always on (no env gate)                                                        | No (ring buffer)    | Operator-visible MCP event trail in-session. |
+| **`memory_ingest`** | _on by default_; vault path + DB sidecar; **`CLAWQL_ENABLE_MEMORY=0`** to hide | Yes (Markdown + DB) | Decisions, runbooks, cross-session recall.   |
 
 ---
 

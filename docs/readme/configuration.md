@@ -18,20 +18,20 @@ ClawQL groups capabilities into three bands. This matches the **layer diagram** 
 
 Unset means **on**. Set **`0`**, **`false`**, or **`no`** to hide tools or shrink the default **`all-providers`** merge:
 
-| Band | MCP tools | Env to opt out |
-| --- | --- | --- |
-| **ClawQL Memory** | **`memory_ingest`**, **`memory_recall`** | **`CLAWQL_ENABLE_MEMORY=0`** |
+| Band                 | MCP tools                                                                                         | Env to opt out                                                                                                                                                                                                               |
+| -------------------- | ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **ClawQL Memory**    | **`memory_ingest`**, **`memory_recall`**                                                          | **`CLAWQL_ENABLE_MEMORY=0`**                                                                                                                                                                                                 |
 | **ClawQL Documents** | **`ingest_external_knowledge`**; **`knowledge_search_onyx`** when also **`CLAWQL_ENABLE_ONYX=1`** | **`CLAWQL_ENABLE_DOCUMENTS=0`** (drops **tika**, **gotenberg**, **paperless**, **stirling**, **onyx** from the default merge; hides document MCP tools). Explicit **`CLAWQL_BUNDLED_PROVIDERS=…`** can still list those ids. |
 
 ### Default off — opt in
 
 Set **`1`** / **`true`** / **`yes`** where noted:
 
-| Band | MCP tools | Flags / prerequisites |
-| --- | --- | --- |
-| **ClawQL Sandbox** | **`sandbox_exec`** | **Infrastructure-gated:** calls fail until **`CLAWQL_SANDBOX_BRIDGE_URL`** and token are set (Cloudflare Worker bridge). There is no separate `CLAWQL_ENABLE_SANDBOX`. |
-| **ClawQL Ouroboros** | **`ouroboros_*`** (three tools) | **`CLAWQL_ENABLE_OUROBOROS=1`** |
-| **ClawQL Automation** | **`schedule`**, **`notify`** | **`CLAWQL_ENABLE_SCHEDULE=1`**, **`CLAWQL_ENABLE_NOTIFY=1`** |
+| Band                  | MCP tools                       | Flags / prerequisites                                                                                                                                                  |
+| --------------------- | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **ClawQL Sandbox**    | **`sandbox_exec`**              | **Infrastructure-gated:** calls fail until **`CLAWQL_SANDBOX_BRIDGE_URL`** and token are set (Cloudflare Worker bridge). There is no separate `CLAWQL_ENABLE_SANDBOX`. |
+| **ClawQL Ouroboros**  | **`ouroboros_*`** (three tools) | **`CLAWQL_ENABLE_OUROBOROS=1`**                                                                                                                                        |
+| **ClawQL Automation** | **`schedule`**, **`notify`**    | **`CLAWQL_ENABLE_SCHEDULE=1`**, **`CLAWQL_ENABLE_NOTIFY=1`**                                                                                                           |
 
 **`knowledge_search_onyx`** — **`CLAWQL_ENABLE_ONYX=1`** plus **Documents** still enabled (documents off hides the tool regardless).
 

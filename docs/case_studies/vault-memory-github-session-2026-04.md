@@ -102,7 +102,7 @@ The enterprise epic needed a tool that is:
 
 | Tool                | Env                            | Persists?           | Use for                                      |
 | ------------------- | ------------------------------ | ------------------- | -------------------------------------------- |
-| **`cache`**         | ClawQL Core (always on)                   | No (in-process LRU) | Session scratch, tool handoff state.         |
+| **`cache`**         | ClawQL Core (always on)        | No (in-process LRU) | Session scratch, tool handoff state.         |
 | **`audit`**         | always on (no env gate)        | No (ring buffer)    | Operator-visible MCP event trail in-session. |
 | **`memory_ingest`** | Vault path + DB sidecar config | Yes (Markdown + DB) | Decisions, runbooks, cross-session recall.   |
 

@@ -625,7 +625,10 @@ export function registerTools(server: McpServer) {
     );
   }
 
-  if (getClawqlOptionalToolFlags().enableOnyxKnowledge && getClawqlOptionalToolFlags().enableDocuments) {
+  if (
+    getClawqlOptionalToolFlags().enableOnyxKnowledge &&
+    getClawqlOptionalToolFlags().enableDocuments
+  ) {
     server.tool(
       "knowledge_search_onyx",
       {
