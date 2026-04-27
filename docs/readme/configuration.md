@@ -4,7 +4,9 @@ This page summarizes how ClawQL selects specs, loads auth, and enables optional 
 
 ## Feature tiers (architecture diagram)
 
-ClawQL groups capabilities into three bands. This matches the **layer diagram** (**ClawQL Core** vs default-on opt-out vs default-off opt-in):
+![ClawQL Feature Tiers — Core, Memory/Documents (default-on, opt-out), Sandbox/Ouroboros/Automation (default-off, opt-in)](images/clawql-feature-tiers.png)
+
+ClawQL groups capabilities into three bands. This matches the **layer diagram** above (**ClawQL Core** vs default-on opt-out vs default-off opt-in). The diagram is revised when new modules ship (for example future **`clawql-web3`**); the sections below remain authoritative for env and registration behavior.
 
 ### ClawQL Core (always on — no opt-out)
 

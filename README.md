@@ -4,7 +4,7 @@ ClawQL is an MCP server for API discovery and execution with a token-efficient `
 
 ## What You Get
 
-Feature tiers (aligned with the architecture diagram — details in [`docs/readme/configuration.md`](docs/readme/configuration.md#feature-tiers-architecture-diagram)):
+Feature tiers (aligned with the [architecture diagram](docs/readme/images/clawql-feature-tiers.png) — details in [`docs/readme/configuration.md`](docs/readme/configuration.md#feature-tiers-architecture-diagram)):
 
 - **ClawQL Core (always on — no opt-out):** `search`, `execute`, `audit`, `cache` — same band in the diagram; ring-buffer semantics for `audit` and LRU semantics for `cache` in [`docs/enterprise-mcp-tools.md`](docs/enterprise-mcp-tools.md) and [`docs/cache-tool.md`](docs/cache-tool.md).
 - **Default on — opt out:** `memory_ingest` / `memory_recall`, and the **document** stack (`ingest_external_knowledge`, plus `knowledge_search_onyx` when `CLAWQL_ENABLE_ONYX=1`). Use `CLAWQL_ENABLE_MEMORY=0` or `CLAWQL_ENABLE_DOCUMENTS=0` to hide; vault path still required for real disk I/O on memory / ingest.

@@ -4,7 +4,7 @@ This directory is organized by purpose so operational guides, product docs, and 
 
 ## Core Product Docs
 
-- Feature tiers (always on / default-on opt-out / default-off opt-in): `readme/configuration.md` § **Feature tiers**
+- Feature tiers (always on / default-on opt-out / default-off opt-in): `readme/configuration.md` § **Feature tiers** — diagram: [`readme/images/clawql-feature-tiers.png`](readme/images/clawql-feature-tiers.png)
 - Tool reference: `mcp-tools.md`
 - External ingest: `external-ingest.md`
 - Memory and vault: `memory-obsidian.md`, `memory-db-schema.md`, `memory-db-hybrid-implementation.md`, `hybrid-memory-backends.md`
