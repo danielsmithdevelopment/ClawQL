@@ -196,9 +196,9 @@ jobs:
           docker run --rm -v "$PWD:/repo" -w /repo anchore/syft:v1.19.0 \
             scan . -o "cyclonedx-json=sbom-cyclonedx-repo.cdx.json"
 
-      # actions/upload-artifact@v4.6.2
+      # actions/upload-artifact@v4 (full commit pin flaky on some runners; tag resolves)
       - name: Upload repository SBOM
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92f46ad981cfe0d85
+        uses: actions/upload-artifact@v4
         with:
           name: sbom-cyclonedx-repository
           path: sbom-cyclonedx-repo.cdx.json

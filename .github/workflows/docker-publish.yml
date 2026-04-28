@@ -57,7 +57,7 @@ jobs:
             scan . -o "cyclonedx-json=sbom-cyclonedx-repo.cdx.json"
 
       - name: Upload repository SBOM
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92f46ad981cfe0d85
+        uses: actions/upload-artifact@v4
         with:
           name: sbom-cyclonedx-repository-docker-publish
           path: sbom-cyclonedx-repo.cdx.json
