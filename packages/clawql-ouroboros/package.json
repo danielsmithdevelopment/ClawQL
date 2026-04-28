@@ -33,7 +33,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "uuid": "^11.1.0",
+    "uuid": "^14.0.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
