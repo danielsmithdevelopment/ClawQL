@@ -9,7 +9,7 @@ export const metadata = docsPageMetadata({
 
 # Kubernetes
 
-ClawQL is usually deployed as **`clawql-mcp-http`**: **Streamable HTTP** MCP on **`/mcp`**, **GraphQL** on **`/graphql`**, and (when **`ENABLE_GRPC=1`**) **gRPC** protobuf MCP on port **50051**—all in one pod. The **Service** exposes **both** HTTP and **gRPC** ports so clients can use **`localhost:50051`** (Docker Desktop) or **`<LoadBalancer-ip>:50051`** without **`kubectl port-forward`**. **Docker Desktop** defaults to the **[Helm](/helm)** chart (**`charts/clawql-mcp`**, **`values-docker-desktop.yaml`**); remote clusters often use **Kustomize** **`dev`** / **`prod`** with **`scripts/deploy-k8s.sh`**. {{ className: 'lead' }}
+ClawQL is usually deployed as **`clawql-mcp-http`**: **Streamable HTTP** MCP on **`/mcp`**, **GraphQL** on **`/graphql`**, and (when **`ENABLE_GRPC=1`**) **gRPC** protobuf MCP on port **50051**—all in one pod. The **Service** exposes **both** HTTP and **gRPC** ports so clients can use **`localhost:50051`** (Docker Desktop) or **`<LoadBalancer-ip>:50051`** without **`kubectl port-forward`**. **Docker Desktop** defaults to the **[Helm](/helm)** chart (**`charts/clawql-mcp`**, **`values-docker-desktop.yaml`**); remote clusters often use **Kustomize** **`dev`** / **`prod`** with **`scripts/deploy/deploy-k8s.sh`**. {{ className: 'lead' }}
 
 ## Local MCP on Docker Desktop
 
@@ -32,7 +32,7 @@ make local-k8s-up
 Or:
 
 ```bash
-bash scripts/local-k8s-docker-desktop.sh
+bash scripts/kubernetes/local-k8s-docker-desktop.sh
 ```
 
 **Default:** **`helm upgrade --install`** with **`charts/clawql-mcp/values-docker-desktop.yaml`**: signed **`ghcr.io/danielsmithdevelopment/clawql-mcp:latest`** and **`ghcr.io/danielsmithdevelopment/clawql-website:latest`**, LoadBalancer on **8080**, **`all-providers`**, **`hostPath`** vault at **`$HOME/.ClawQL`** (override **`CLAWQL_LOCAL_VAULT_HOST_PATH`**). The script installs **Kyverno** and a **ClusterPolicy** so those images must pass **Cosign** verification in the **`clawql`** namespace (unsigned local **`docker build`** deploys are **not** supported).
@@ -80,10 +80,10 @@ For **local Docker Desktop k8s**, `execute` needs tokens in the **`clawql-mcp-ht
 **One-shot:** from the repo root, with **`gh`** logged in **or** values in **`.env`**:
 
 ```bash
-bash scripts/k8s-docker-desktop-set-mcp-auth.sh
+bash scripts/kubernetes/k8s-docker-desktop-set-mcp-auth.sh
 ```
 
-Pipe a PAT: `gh auth token | bash scripts/k8s-docker-desktop-set-mcp-auth.sh`. Set **`CLAWQL_LOAD_DOTENV=0`** to skip sourcing **`.env`**.
+Pipe a PAT: `gh auth token | bash scripts/kubernetes/k8s-docker-desktop-set-mcp-auth.sh`. Set **`CLAWQL_LOAD_DOTENV=0`** to skip sourcing **`.env`**.
 
 This creates/updates Secret **`clawql-github-auth`** (name kept for backward compatibility), attaches keys to **`deployment/clawql-mcp-http`**, and restarts. Full table and manual **`kubectl`** steps: **[`docker/README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docker/README.md)** (section _MCP auth_). The old script name **`k8s-docker-desktop-set-github-token.sh`** is a deprecated alias.
 

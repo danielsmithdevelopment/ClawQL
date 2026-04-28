@@ -8,9 +8,9 @@ This document records a **repeatable experiment**: run ClawQL as a **real MCP se
 npm run workflow:gcp-multi
 ```
 
-- **Harness:** [`scripts/mcp-workflow-gcp-multi.mjs`](../scripts/mcp-workflow-gcp-multi.mjs) (`Client` + `StdioClientTransport` → `node dist/server.js`).
+- **Harness:** [`scripts/workflows/mcp-workflow-gcp-multi.mjs`](../scripts/workflows/mcp-workflow-gcp-multi.mjs) (`Client` + `StdioClientTransport` → `node dist/server.js`).
 - **Full captured run (tool results + stderr tail):** [`workflow-gcp-multi-latest.json`](../../workflows/workflow-gcp-multi-latest.json).
-- **Recompute size / “token” stats:** `node scripts/report-gcp-multi-experiment.mjs` (writes [`experiment-gcp-multi-mcp-stats.json`](experiment-gcp-multi-mcp-stats.json)).
+- **Recompute size / “token” stats:** `node scripts/workflows/report-gcp-multi-experiment.mjs` (writes [`experiment-gcp-multi-mcp-stats.json`](experiment-gcp-multi-mcp-stats.json)).
 
 Stats below match **`meta.generatedAt`:** `2026-03-23T05:22:54.608Z` — re-run the commands above after regenerating the JSON to refresh numbers.
 
@@ -100,7 +100,7 @@ Manifest: [`providers/google/google-top50-apis.json`](../providers/google/google
 
 **Idea:** If a workflow **naïvely** stuffed **all** Discovery JSON into the model context, cost would track the **sum of file sizes**. ClawQL instead keeps specs **server-side** and returns only **`search` hits** (ranked slices with parameter metadata).
 
-**Caveat:** “Tokens” here are **not** from a real tokenizer. We use **`approxTokens = ceil(bytes_utf8 / 4)`** as a cheap scale (same order of magnitude as many English/JSON estimates). Use [`report-gcp-multi-experiment.mjs`](../scripts/report-gcp-multi-experiment.mjs) to refresh.
+**Caveat:** “Tokens” here are **not** from a real tokenizer. We use **`approxTokens = ceil(bytes_utf8 / 4)`** as a cheap scale (same order of magnitude as many English/JSON estimates). Use [`report-gcp-multi-experiment.mjs`](../scripts/workflows/report-gcp-multi-experiment.mjs) to refresh.
 
 | Metric                                                          | Value                                       |
 | --------------------------------------------------------------- | ------------------------------------------- |

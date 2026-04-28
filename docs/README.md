@@ -27,6 +27,7 @@ This directory is organized by purpose so operational guides, product docs, and 
 - `deployment/deploy-cloud-run.md`
 - `deployment/deploy-k8s.md`
 - `deployment/helm.md`
+- `deployment/headscale-tailnet.md` (self-hosted Headscale + MagicDNS **`*.clawql.local`**, tailnet-only MCP — [#206](https://github.com/danielsmithdevelopment/ClawQL/issues/206))
 - `providers/google-apis-lookup.md`
 
 ## Security

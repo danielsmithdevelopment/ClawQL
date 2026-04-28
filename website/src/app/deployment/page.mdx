@@ -19,7 +19,11 @@ From the published package:
 PORT=8080 npx -p clawql-mcp clawql-mcp-http
 ```
 
-Default local MCP endpoint: **`http://localhost:8080/mcp`**, health **`/healthz`**. Your real URL depends on port, ingress, or tunneling—configure the client with **`url`**, not **`command`**.
+Default local MCP endpoint: **`http://localhost:8080/mcp`**, health **`/healthz`**, Prometheus scrape **`GET /metrics`** (**`prom-client`** OpenMetrics). Your real URL depends on port, ingress, or tunneling—configure the client with **`url`**, not **`command`**.
+
+**Native GraphQL/gRPC metrics:** scrape **`GET /metrics`** for OpenMetrics counters/gauges per **`sourceLabel`**. Optionally set **`CLAWQL_HEALTHZ_NATIVE_PROTOCOL_METRICS=1`** so **`GET /healthz`** also includes the same snapshot as JSON (**`nativeProtocolMetrics`**). Disable the metrics route only if required: **`CLAWQL_DISABLE_HTTP_METRICS=1`**. Repo: **[`docs/readme/deployment.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/readme/deployment.md)** ([#191](https://github.com/danielsmithdevelopment/ClawQL/issues/191)).
+
+**Private tailnet:** use **managed Tailscale** HTTPS MagicDNS (for example **`https://your-machine.your-tailnet.ts.net/mcp`**) or **Serve**, **or** self-hosted **Headscale** with MagicDNS **`*.clawql.local`** — full runbook **[`docs/deployment/headscale-tailnet.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/headscale-tailnet.md)** ([#206](https://github.com/danielsmithdevelopment/ClawQL/issues/206)). Keep **`CLAWQL_MCP_URL`** in env and reference **`${env:CLAWQL_MCP_URL}`** in **`mcp.json`**; align self-hosted **`PAPERLESS_BASE_URL`**, **`ONYX_BASE_URL`**, **`CLAWQL_SANDBOX_BRIDGE_URL`**, and similar with the same network. Short form: **[`docs/readme/deployment.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/readme/deployment.md#private-tailnet-tailscale-magicdns)** ([#211](https://github.com/danielsmithdevelopment/ClawQL/issues/211)).
 
 ## Optional gRPC (protobuf MCP)
 
@@ -42,7 +46,7 @@ One-shot script (sets project/region via env):
 ```bash
 PROJECT_ID="your-project-id" \
 REGION="us-central1" \
-bash scripts/deploy-cloud-run.sh
+bash scripts/deploy/deploy-cloud-run.sh
 ```
 
 Or with Make:

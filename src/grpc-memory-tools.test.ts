@@ -1,6 +1,6 @@
 /**
  * gRPC `CallTool` integration: `memory_ingest` and `memory_recall` with
- * protobufjs-encoded `google.protobuf.Struct` (same wire path as `scripts/grpc-memory-recall.mjs`).
+ * protobufjs-encoded `google.protobuf.Struct` (same wire path as `scripts/dev/grpc-memory-recall.mjs`).
  */
 
 import { mkdtempSync } from "node:fs";

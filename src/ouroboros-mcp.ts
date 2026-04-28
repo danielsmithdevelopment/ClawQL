@@ -15,6 +15,7 @@ import {
 import { createDefaultOuroborosEngines } from "./ouroboros/default-engines.js";
 import { PostgresOuroborosEventStore } from "./ouroboros/postgres-event-store.js";
 import { getOuroborosPgPool } from "./ouroboros/postgres-pool.js";
+import { wrapMcpToolHandler } from "./otel-tracing.js";
 
 let ctxCache: OuroborosContext | null = null;
 
@@ -68,18 +69,30 @@ function textResult(obj: unknown): { content: { type: "text"; text: string }[] }
 export function registerOuroborosTools(server: McpServer): void {
   const t = ouroborosMcpTools;
 
-  server.tool(t.createSeedFromDocument.name, CreateSeedFromDocumentSchema.shape, async (args) => {
-    const r = await t.createSeedFromDocument.handler(args, getOuroborosContext());
-    return textResult(r);
-  });
+  server.tool(
+    t.createSeedFromDocument.name,
+    CreateSeedFromDocumentSchema.shape,
+    wrapMcpToolHandler(t.createSeedFromDocument.name, async (args) => {
+      const r = await t.createSeedFromDocument.handler(args, getOuroborosContext());
+      return textResult(r);
+    })
+  );
 
-  server.tool(t.runEvolutionaryLoop.name, RunOuroborosSchema.shape, async (args) => {
-    const r = await t.runEvolutionaryLoop.handler(args, getOuroborosContext());
-    return textResult(r);
-  });
+  server.tool(
+    t.runEvolutionaryLoop.name,
+    RunOuroborosSchema.shape,
+    wrapMcpToolHandler(t.runEvolutionaryLoop.name, async (args) => {
+      const r = await t.runEvolutionaryLoop.handler(args, getOuroborosContext());
+      return textResult(r);
+    })
+  );
 
-  server.tool(t.getLineageStatus.name, GetLineageStatusSchema.shape, async (args) => {
-    const r = await t.getLineageStatus.handler(args, getOuroborosContext());
-    return textResult(r);
-  });
+  server.tool(
+    t.getLineageStatus.name,
+    GetLineageStatusSchema.shape,
+    wrapMcpToolHandler(t.getLineageStatus.name, async (args) => {
+      const r = await t.getLineageStatus.handler(args, getOuroborosContext());
+      return textResult(r);
+    })
+  );
 }

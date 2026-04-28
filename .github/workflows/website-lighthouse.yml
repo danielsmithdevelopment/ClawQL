@@ -10,13 +10,13 @@ on:
     paths:
       - "website/**"
       - ".github/workflows/website-lighthouse.yml"
-      - "scripts/assert-lighthouse-scores.mjs"
+      - "scripts/dev/assert-lighthouse-scores.mjs"
   push:
     branches: [main]
     paths:
       - "website/**"
       - ".github/workflows/website-lighthouse.yml"
-      - "scripts/assert-lighthouse-scores.mjs"
+      - "scripts/dev/assert-lighthouse-scores.mjs"
   workflow_dispatch:
 
 concurrency:
@@ -88,4 +88,4 @@ jobs:
             --output-path=lighthouse-ci.json \
             --quiet
 
-          node ../scripts/assert-lighthouse-scores.mjs lighthouse-ci.json
+          node ../scripts/dev/assert-lighthouse-scores.mjs lighthouse-ci.json

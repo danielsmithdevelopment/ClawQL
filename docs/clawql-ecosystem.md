@@ -167,20 +167,20 @@ Self-hosted stacks force teams to bolt on scanning, mesh, and observability by h
 
 ClawQL registers **more than ten** tools; tiers and flags are summarized in [`mcp-tools.md`](mcp-tools.md) and [`readme/configuration.md`](readme/configuration.md). Core pair: **`search`** + **`execute`**.
 
-| Tool                        | Type              | Purpose                                                                                                                                                                  |
-| --------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `search`                    | Core              | Discovers operations and parameters from the loaded index (OpenAPI/Discovery; native GraphQL/gRPC when configured). Returns a relevant slice — not the full spec.        |
-| `execute`                   | Core              | Runs one discovered operation with auth from `auth-headers` / env; multi-spec REST or native protocols per config.                                                       |
-| `memory_recall`             | Memory            | Vault keyword scoring, optional vector KNN, wikilink hops — ranked Markdown paths/snippets ([`memory-recall.ts`](../src/memory-recall.ts)).                              |
-| `memory_ingest`             | Memory            | Writes durable Markdown under the vault; insights, receipts, `enterpriseCitations`, wikilinks ([`memory-obsidian.md`](memory-obsidian.md)).                              |
-| `knowledge_search_onyx`     | Knowledge         | Optional when **`CLAWQL_ENABLE_ONYX=1`** and documents stack is on — wraps Onyx `POST /search/send-search-message` ([`onyx-knowledge-tool.md`](onyx-knowledge-tool.md)). |
-| `sandbox_exec`              | Execution         | Remote Cloudflare Sandbox via bridge URL + token ([`cloudflare/sandbox-bridge/README.md`](../cloudflare/sandbox-bridge/README.md)).                                      |
-| `ingest_external_knowledge` | Knowledge         | Bulk Markdown ingest + optional URL fetch when enabled ([`external-ingest.md`](external-ingest.md)).                                                                     |
-| `schedule`                  | Automation        | Optional — **`CLAWQL_ENABLE_SCHEDULE=1`** — persisted synthetic checks ([`schedule-synthetic-checks.md`](schedule-synthetic-checks.md)).                                 |
-| `notify`                    | Notification      | Optional — **`CLAWQL_ENABLE_NOTIFY=1`** — Slack `chat.postMessage` wrapper ([`notify-tool.md`](notify-tool.md)).                                                         |
-| `ouroboros_*` (×3)          | Workflow          | Optional — **`CLAWQL_ENABLE_OUROBOROS=1`** — seed, evolutionary loop, lineage ([`clawql-ouroboros.md`](clawql-ouroboros.md)).                                            |
-| `cache`                     | Core / State      | Always on — in-process **LRU** session scratch ([`cache-tool.md`](cache-tool.md)); **no** `CLAWQL_ENABLE_CACHE`.                                                         |
-| `audit`                     | Core / Compliance | Always on — in-process **ring buffer** ([`enterprise-mcp-tools.md`](enterprise-mcp-tools.md)); **no** `CLAWQL_ENABLE_AUDIT`.                                             |
+| Tool                        | Type              | Purpose                                                                                                                                                                                                       |
+| --------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `search`                    | Core              | Discovers operations and parameters from the loaded index (OpenAPI/Discovery; native GraphQL/gRPC when configured). Returns a relevant slice — not the full spec.                                             |
+| `execute`                   | Core              | Runs one discovered operation with auth from `auth-headers` / env; multi-spec REST or native protocols per config.                                                                                            |
+| `memory_recall`             | Memory            | Vault keyword scoring, optional vector KNN, wikilink hops — ranked Markdown paths/snippets ([`memory-recall.ts`](../src/memory-recall.ts)).                                                                   |
+| `memory_ingest`             | Memory            | Writes durable Markdown under the vault; insights, receipts, `enterpriseCitations`, wikilinks ([`memory-obsidian.md`](memory-obsidian.md)).                                                                   |
+| `knowledge_search_onyx`     | Knowledge         | Optional when **`CLAWQL_ENABLE_ONYX=1`** and documents stack is on — wraps Onyx `POST /search/send-search-message` ([`onyx-knowledge-tool.md`](onyx-knowledge-tool.md)).                                      |
+| `sandbox_exec`              | Execution         | Optional — **`CLAWQL_ENABLE_SANDBOX=1`** — bridge / Seatbelt / Docker ([`mcp-tools.md`](mcp-tools.md) § **`sandbox_exec`**, [`cloudflare/sandbox-bridge/README.md`](../cloudflare/sandbox-bridge/README.md)). |
+| `ingest_external_knowledge` | Knowledge         | Bulk Markdown ingest + optional URL fetch when enabled ([`external-ingest.md`](external-ingest.md)).                                                                                                          |
+| `schedule`                  | Automation        | Optional — **`CLAWQL_ENABLE_SCHEDULE=1`** — persisted synthetic checks ([`schedule-synthetic-checks.md`](schedule-synthetic-checks.md)).                                                                      |
+| `notify`                    | Notification      | Optional — **`CLAWQL_ENABLE_NOTIFY=1`** — Slack `chat.postMessage` wrapper ([`notify-tool.md`](notify-tool.md)).                                                                                              |
+| `ouroboros_*` (×3)          | Workflow          | Optional — **`CLAWQL_ENABLE_OUROBOROS=1`** — seed, evolutionary loop, lineage ([`clawql-ouroboros.md`](clawql-ouroboros.md)).                                                                                 |
+| `cache`                     | Core / State      | Always on — in-process **LRU** session scratch ([`cache-tool.md`](cache-tool.md)); **no** `CLAWQL_ENABLE_CACHE`.                                                                                              |
+| `audit`                     | Core / Compliance | Always on — in-process **ring buffer** ([`enterprise-mcp-tools.md`](enterprise-mcp-tools.md)); **no** `CLAWQL_ENABLE_AUDIT`.                                                                                  |
 
 ---
 
@@ -531,6 +531,8 @@ helm install clawql charts/clawql-mcp --namespace clawql
 ---
 
 ### Complete Service Map
+
+**Headscale tailnet:** the **`*.clawql.local`** pattern also appears when MagicDNS is served to **enrolled Tailscale nodes**; those names resolve on the **mesh**, not via in-cluster DNS — see **[`docs/deployment/headscale-tailnet.md`](deployment/headscale-tailnet.md)** ([#206](https://github.com/danielsmithdevelopment/ClawQL/issues/206)).
 
 | Service                  | Internal DNS                                   | Ingress                  | Role                                                                                                  |
 | ------------------------ | ---------------------------------------------- | ------------------------ | ----------------------------------------------------------------------------------------------------- |

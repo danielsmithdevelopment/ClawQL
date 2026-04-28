@@ -94,26 +94,26 @@ Mesh vs **stitch** / **`buildUnifiedSchema`** ([#189](https://github.com/daniels
 
 ## Related implementation issues
 
-| Issue                                                               | Topic                                                     | 5.0.0   |
-| ------------------------------------------------------------------- | --------------------------------------------------------- | ------- |
-| [#178](https://github.com/danielsmithdevelopment/ClawQL/issues/178) | Epic tracker                                              | ✓ scope |
-| [#179](https://github.com/danielsmithdevelopment/ClawQL/issues/179) | Spike: Mesh v1 vs stitch                                  | Later   |
-| [#180](https://github.com/danielsmithdevelopment/ClawQL/issues/180) | Foundation types (`SpecKind`, `SpecSource`, `LoadedSpec`) | Partial |
-| [#181](https://github.com/danielsmithdevelopment/ClawQL/issues/181) | `normalizeOperationId` + search index                     | ✓       |
-| [#182](https://github.com/danielsmithdevelopment/ClawQL/issues/182) | Postgres source                                           | Later   |
-| [#183](https://github.com/danielsmithdevelopment/ClawQL/issues/183) | Redis source                                              | Later   |
-| [#184](https://github.com/danielsmithdevelopment/ClawQL/issues/184) | SQLite source                                             | Later   |
-| [#185](https://github.com/danielsmithdevelopment/ClawQL/issues/185) | NATS JetStream + transport guard                          | Later   |
-| [#186](https://github.com/danielsmithdevelopment/ClawQL/issues/186) | Generic gRPC source                                       | ✓       |
-| [#187](https://github.com/danielsmithdevelopment/ClawQL/issues/187) | Hyperledger Fabric                                        | Later   |
-| [#188](https://github.com/danielsmithdevelopment/ClawQL/issues/188) | GraphQL + The Graph (x402)                                | Partial |
-| [#189](https://github.com/danielsmithdevelopment/ClawQL/issues/189) | `buildUnifiedSchema` merge                                | Later   |
-| [#190](https://github.com/danielsmithdevelopment/ClawQL/issues/190) | Middleware (RLS, x402, subscription guard)                | Partial |
-| [#191](https://github.com/danielsmithdevelopment/ClawQL/issues/191) | Metrics (in-process / healthz)                            | Partial |
-| [#192](https://github.com/danielsmithdevelopment/ClawQL/issues/192) | Teardown (SIGTERM + `resetSpecCache`)                     | Partial |
-| [#193](https://github.com/danielsmithdevelopment/ClawQL/issues/193) | Security allowlists                                       | Later   |
-| [#194](https://github.com/danielsmithdevelopment/ClawQL/issues/194) | Ouroboros `SeedSource`                                    | Later   |
-| [#195](https://github.com/danielsmithdevelopment/ClawQL/issues/195) | Env + `load-env`                                          | ✓       |
-| [#196](https://github.com/danielsmithdevelopment/ClawQL/issues/196) | testcontainers tests                                      | Later   |
+| Issue                                                               | Topic                                                         | 5.0.0   |
+| ------------------------------------------------------------------- | ------------------------------------------------------------- | ------- |
+| [#178](https://github.com/danielsmithdevelopment/ClawQL/issues/178) | Epic tracker                                                  | ✓ scope |
+| [#179](https://github.com/danielsmithdevelopment/ClawQL/issues/179) | Spike: Mesh v1 vs stitch                                      | Later   |
+| [#180](https://github.com/danielsmithdevelopment/ClawQL/issues/180) | Foundation types (`SpecKind`, `SpecSource`, `LoadedSpec`)     | Partial |
+| [#181](https://github.com/danielsmithdevelopment/ClawQL/issues/181) | `normalizeOperationId` + search index                         | ✓       |
+| [#182](https://github.com/danielsmithdevelopment/ClawQL/issues/182) | Postgres source                                               | Later   |
+| [#183](https://github.com/danielsmithdevelopment/ClawQL/issues/183) | Redis source                                                  | Later   |
+| [#184](https://github.com/danielsmithdevelopment/ClawQL/issues/184) | SQLite source                                                 | Later   |
+| [#185](https://github.com/danielsmithdevelopment/ClawQL/issues/185) | NATS JetStream + transport guard                              | Later   |
+| [#186](https://github.com/danielsmithdevelopment/ClawQL/issues/186) | Generic gRPC source                                           | ✓       |
+| [#187](https://github.com/danielsmithdevelopment/ClawQL/issues/187) | Hyperledger Fabric                                            | Later   |
+| [#188](https://github.com/danielsmithdevelopment/ClawQL/issues/188) | GraphQL + The Graph (x402)                                    | Partial |
+| [#189](https://github.com/danielsmithdevelopment/ClawQL/issues/189) | `buildUnifiedSchema` merge                                    | Later   |
+| [#190](https://github.com/danielsmithdevelopment/ClawQL/issues/190) | Middleware (RLS, x402, subscription guard)                    | Partial |
+| [#191](https://github.com/danielsmithdevelopment/ClawQL/issues/191) | Metrics per **`sourceLabel`** (in-process **`GET /healthz`**) | ✓       |
+| [#192](https://github.com/danielsmithdevelopment/ClawQL/issues/192) | Teardown (SIGTERM + `resetSpecCache`)                         | Partial |
+| [#193](https://github.com/danielsmithdevelopment/ClawQL/issues/193) | Security allowlists                                           | Later   |
+| [#194](https://github.com/danielsmithdevelopment/ClawQL/issues/194) | Ouroboros `SeedSource`                                        | Later   |
+| [#195](https://github.com/danielsmithdevelopment/ClawQL/issues/195) | Env + `load-env`                                              | ✓       |
+| [#196](https://github.com/danielsmithdevelopment/ClawQL/issues/196) | testcontainers tests                                          | Later   |
 
 **[#188](https://github.com/danielsmithdevelopment/ClawQL/issues/188):** **5.0.0** covers **generic GraphQL** loading; **The Graph + x402** stays a follow-up unless explicitly pulled into the milestone later.

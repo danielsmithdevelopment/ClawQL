@@ -248,7 +248,7 @@ With **`ENABLE_GRPC=1`**, **`npm run start:http`** runs Streamable HTTP and gRPC
 Tools are invoked with **`model_context_protocol.Mcp/CallTool`** (server-streaming), not a separate RPC. The request carries tool arguments as **`google.protobuf.Struct`**. A **`@grpc/grpc-js`** client built only from **`@grpc/proto-loader`** can mis-serialize nested **`google.protobuf.Value`** fields inside **`Struct`**, so arguments may arrive empty on the server. For ClawQL’s vault **`memory_recall`** tool, use the repo script that encodes **`CallToolRequest`** with **protobufjs** (same **`mcp.proto`** + WKT import paths as the server):
 
 ```bash
-node scripts/grpc-memory-recall.mjs "your search" --limit 8
+node scripts/dev/grpc-memory-recall.mjs "your search" --limit 8
 ```
 
 Set **`GRPC_HOST`** / **`GRPC_PORT`** to match the running process. The script attaches **`mcp-protocol-version`** metadata and prints each **`CallToolResponse`** message as JSON (for example **`task_id`**, optional progress, then the tool result).

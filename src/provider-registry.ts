@@ -1,6 +1,6 @@
 /**
  * Built-in providers: bundled OpenAPI / Discovery on disk + optional
- * pregenerated GraphQL artifacts (see scripts/pregenerate-provider-graphql.ts), plus **GraphQL-only** vendors
+ * pregenerated GraphQL artifacts (see scripts/providers/pregenerate-provider-graphql.ts), plus **GraphQL-only** vendors
  * (SDL on disk — e.g. Linear).
  */
 
@@ -120,7 +120,7 @@ export const BUNDLED_PROVIDERS: Record<string, BundledProvider> = {
     bundledSchemaSdlPath: "providers/sentry/schema.graphql",
   },
   /**
-   * n8n Public API (bundled spec extracted from Swagger UI; see scripts/fetch-n8n-openapi.mjs).
+   * n8n Public API (bundled spec extracted from Swagger UI; see scripts/providers/fetch-n8n-openapi.mjs).
    * Fallback: same file on the default upstream repo (for clones without `providers/n8n/openapi.json`).
    */
   n8n: {

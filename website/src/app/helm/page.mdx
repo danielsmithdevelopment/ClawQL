@@ -75,7 +75,7 @@ For full architecture + operations details, use [NATS JetStream](/nats-jetstream
 | **Install** | `kubectl apply -k`, `make deploy-k8s`       | `helm upgrade --install`, **`make local-k8s-up`** (Docker Desktop default) |
 | **Config**  | Overlays under `docker/kustomize/overlays/` | `values.yaml`, **`values-docker-desktop.yaml`**, **`--set`**               |
 
-**Docker Desktop:** **`make local-k8s-up`** defaults to Helm. For **`kubectl apply -k`** instead, use **`CLAWQL_LOCAL_K8S_INSTALLER=kustomize`** (see [Kubernetes](/kubernetes)). Remote **`dev` / `prod`** often use **`scripts/deploy-k8s.sh`**.
+**Docker Desktop:** **`make local-k8s-up`** defaults to Helm. For **`kubectl apply -k`** instead, use **`CLAWQL_LOCAL_K8S_INSTALLER=kustomize`** (see [Kubernetes](/kubernetes)). Remote **`dev` / `prod`** often use **`scripts/deploy/deploy-k8s.sh`**.
 
 ## Validate the chart locally
 

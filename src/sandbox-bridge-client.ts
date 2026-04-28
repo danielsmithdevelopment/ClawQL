@@ -1,42 +1,27 @@
 /**
  * Calls a Cloudflare Worker that runs @cloudflare/sandbox (SDK is Workers-only).
  * Deploy: cloudflare/sandbox-bridge/
+ *
+ * **Unset `CLAWQL_SANDBOX_BACKEND`:** Cloudflare bridge only (legacy). **`CLAWQL_SANDBOX_BACKEND=auto`:** Seatbelt → Docker → bridge.
+ * Or pin **`bridge`**, **`macos-seatbelt`**, **`docker`**, etc.
  */
 
-export type SandboxLanguage = "python" | "javascript" | "shell";
-export type SandboxPersistenceMode = "ephemeral" | "session" | "persistent";
+import {
+  parseExplicitSandboxBackendEnv,
+  resolveSandboxBackendChoice,
+} from "./sandbox-backend-selection.js";
+import { callDockerSandbox } from "./sandbox-container.js";
+import { callMacosSeatbeltSandbox } from "./sandbox-macos-seatbelt.js";
+import { defaultPersistence, parseTimeoutMs } from "./sandbox-shared.js";
+import type { SandboxBridgeResponse, SandboxCodeToolInput } from "./sandbox-types.js";
 
-export type SandboxCodeToolInput = {
-  code: string;
-  language: SandboxLanguage;
-  sessionId?: string;
-  persistenceMode?: SandboxPersistenceMode;
-  timeoutMs?: number;
-};
-
-export type SandboxBridgeResponse = {
-  stdout: string;
-  stderr: string;
-  exitCode: number;
-  success: boolean;
-  sandboxId?: string;
-  error?: string;
-};
-
-function defaultPersistence(): SandboxPersistenceMode {
-  const v = process.env.CLAWQL_SANDBOX_PERSISTENCE_MODE?.trim().toLowerCase();
-  if (v === "ephemeral" || v === "session" || v === "persistent") return v;
-  return "session";
-}
-
-function parseTimeoutMs(requested?: number): number {
-  const maxRaw = Number.parseInt(process.env.CLAWQL_SANDBOX_TIMEOUT_MS_MAX ?? "300000", 10);
-  const max = Number.isFinite(maxRaw) && maxRaw >= 1000 ? maxRaw : 300000;
-  const defRaw = Number.parseInt(process.env.CLAWQL_SANDBOX_TIMEOUT_MS ?? "120000", 10);
-  const def = Number.isFinite(defRaw) && defRaw >= 1000 ? defRaw : 120000;
-  const t = requested ?? def;
-  return Math.min(Math.max(t, 1000), max);
-}
+export type {
+  SandboxBridgeResponse,
+  SandboxCodeToolInput,
+  SandboxLanguage,
+  SandboxPersistenceMode,
+  SandboxExecBackendKind,
+} from "./sandbox-types.js";
 
 export async function callSandboxBridge(
   input: SandboxCodeToolInput
@@ -134,7 +119,29 @@ export async function callSandboxBridge(
 export async function handleClawqlCodeToolInput(
   params: SandboxCodeToolInput
 ): Promise<{ content: { type: "text"; text: string }[] }> {
-  const result = await callSandboxBridge(params);
+  const explicit = parseExplicitSandboxBackendEnv();
+  const choice = await resolveSandboxBackendChoice(explicit);
+  if (!choice.ok) {
+    const err: SandboxBridgeResponse = {
+      stdout: "",
+      stderr: "",
+      exitCode: -1,
+      success: false,
+      error: choice.error,
+    };
+    return {
+      content: [{ type: "text", text: JSON.stringify(err, null, 2) }],
+    };
+  }
+
+  let result: SandboxBridgeResponse;
+  if (choice.backend === "macos-seatbelt") {
+    result = await callMacosSeatbeltSandbox(params);
+  } else if (choice.backend === "docker") {
+    result = await callDockerSandbox(params);
+  } else {
+    result = { ...(await callSandboxBridge(params)), backend: "bridge" };
+  }
   return {
     content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
   };

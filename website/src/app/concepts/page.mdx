@@ -30,7 +30,7 @@ Aligned with the **layer diagram** and **[configuration § Feature tiers](https:
 
 1. **ClawQL Core (always on — no opt-out)** — **`search`**, **`execute`**, **`audit`**, **`cache`** (same band as in the diagram; no env gate).
 2. **Default on — opt out** — **`memory_ingest`** / **`memory_recall`**, **Documents** (**`ingest_external_knowledge`**, **`knowledge_search_onyx`** when **`CLAWQL_ENABLE_ONYX`** is set). Use **`CLAWQL_ENABLE_MEMORY`** or **`CLAWQL_ENABLE_DOCUMENTS`** set to **`0`** to hide.
-3. **Default off — opt in** — **`schedule`**, **`notify`**, **`ouroboros_*`**, and the **`knowledge_search_onyx`** wrapper (**`CLAWQL_ENABLE_ONYX`**, with Documents still enabled). **`sandbox_exec`** is registered by default but only runs code when **[sandbox bridge](https://github.com/danielsmithdevelopment/ClawQL/tree/main/cloudflare/sandbox-bridge)** env is set.
+3. **Default off — opt in** — **`sandbox_exec`** (**`CLAWQL_ENABLE_SANDBOX=1`**), **`schedule`**, **`notify`**, **`ouroboros_*`**, and the **`knowledge_search_onyx`** wrapper (**`CLAWQL_ENABLE_ONYX`**, with Documents still enabled). **`sandbox_exec`** needs backend env ([sandbox bridge](https://github.com/danielsmithdevelopment/ClawQL/tree/main/cloudflare/sandbox-bridge), Seatbelt, or Docker) once registered.
 
 **Core** is **`search`**, **`execute`**, **`audit`**, **`cache`** — **no opt-out**.
 

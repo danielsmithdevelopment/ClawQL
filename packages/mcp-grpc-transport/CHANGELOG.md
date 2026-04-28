@@ -30,7 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Documentation
 
 - README: **Testing and invoking MCP over gRPC** — `mcp-protocol-version` metadata, package tests, **grpcurl** examples (health, reflection, `ListTools`), **grpcurl** + `google.protobuf.Value` formatting caveat, **`@grpc/grpc-js`** sample, ClawQL dual-port note.
-- README: **`memory_recall` over gRPC** — `CallTool` + **`google.protobuf.Struct`**; ClawQL **`scripts/grpc-memory-recall.mjs`** (protobufjs encoding) when proto-loader clients drop nested **`Value`** fields.
+- README: **`memory_recall` over gRPC** — `CallTool` + **`google.protobuf.Struct`**; ClawQL **`scripts/dev/grpc-memory-recall.mjs`** (protobufjs encoding) when proto-loader clients drop nested **`Value`** fields.
 
 ## [0.1.0] - 2026-04-16
 

@@ -4,7 +4,7 @@ The repository ships a **Helm 3** chart that deploys the same workload as Kustom
 
 Use this when you prefer **`helm install` / `helm upgrade`** over **`kubectl apply -k`** (see also [`deploy-k8s.md`](deploy-k8s.md) for Kustomize).
 
-**Feature tiers** (Core vs default-on opt-out vs opt-in): **[`docs/readme/configuration.md` § Feature tiers](../readme/configuration.md#feature-tiers-architecture-diagram)**. **ClawQL Core** (`search`, `execute`, `audit`, `cache`) has **no** chart toggles. Keys **`enableMemory`** and **`enableDocuments`** inject **`CLAWQL_ENABLE_MEMORY=0`** or **`CLAWQL_ENABLE_DOCUMENTS=0`** when **`false`**.
+**Feature tiers** (Core vs default-on opt-out vs opt-in): **[`docs/readme/configuration.md` § Feature tiers](../readme/configuration.md#feature-tiers-architecture-diagram)**. **ClawQL Core** (`search`, `execute`, `audit`, `cache`) has **no** chart toggles. Keys **`enableMemory`** and **`enableDocuments`** inject **`CLAWQL_ENABLE_MEMORY=0`** or **`CLAWQL_ENABLE_DOCUMENTS=0`** when **`false`**. **`enableSandbox`** (default **`false`**) injects **`CLAWQL_ENABLE_SANDBOX=1`** when **`true`** (MCP **`sandbox_exec`**); configure bridge URL + token and/or **`CLAWQL_SANDBOX_BACKEND`** via **`extraEnv`** / Secret.
 
 ## Prerequisites
 
@@ -274,13 +274,13 @@ If you used persistence with a chart-managed PVC, remove the PVC separately if y
 
 ## Relationship to Kustomize
 
-|                    | Kustomize (`docker/kustomize/`)            | Helm (`charts/clawql-mcp`)                                                 |
-| ------------------ | ------------------------------------------ | -------------------------------------------------------------------------- |
-| **Naming**         | Overlays **`dev`**, **`prod`**, **`base`** | **`values.yaml`** + **`--set`**                                            |
-| **Image**          | Rewritten by **`scripts/deploy-k8s.sh`**   | **`image.repository`** / **`image.tag`**                                   |
-| **Docker Desktop** | Optional **`overlays/local`**              | **Default** — **`values-docker-desktop.yaml`** via **`make local-k8s-up`** |
+|                    | Kustomize (`docker/kustomize/`)                 | Helm (`charts/clawql-mcp`)                                                 |
+| ------------------ | ----------------------------------------------- | -------------------------------------------------------------------------- |
+| **Naming**         | Overlays **`dev`**, **`prod`**, **`base`**      | **`values.yaml`** + **`--set`**                                            |
+| **Image**          | Rewritten by **`scripts/deploy/deploy-k8s.sh`** | **`image.repository`** / **`image.tag`**                                   |
+| **Docker Desktop** | Optional **`overlays/local`**                   | **Default** — **`values-docker-desktop.yaml`** via **`make local-k8s-up`** |
 
-Remote **`dev` / `prod`** flows remain **Kustomize** + **`scripts/deploy-k8s.sh`**. For Docker Desktop, **Helm** is the default; use **`CLAWQL_LOCAL_K8S_INSTALLER=kustomize`** with **`scripts/local-k8s-docker-desktop.sh`** if you prefer **`kubectl apply -k`**.
+Remote **`dev` / `prod`** flows remain **Kustomize** + **`scripts/deploy/deploy-k8s.sh`**. For Docker Desktop, **Helm** is the default; use **`CLAWQL_LOCAL_K8S_INSTALLER=kustomize`** with **`scripts/kubernetes/local-k8s-docker-desktop.sh`** if you prefer **`kubectl apply -k`**.
 
 ## Chart version
 

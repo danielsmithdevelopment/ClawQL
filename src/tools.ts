@@ -2,7 +2,7 @@
  * tools.ts
  *
  * Core tools: search (spec discovery), execute (GraphQL-backed REST call), audit (in-process ring buffer; GitHub #89 — not durable; use memory_ingest for compliance trails), cache (in-process LRU KV; GitHub #75 — not persisted; use memory_* for vault).
- * Optional: sandbox_exec — remote execution via cloudflare/sandbox-bridge Worker.
+ * Optional: **`sandbox_exec`** when **`CLAWQL_ENABLE_SANDBOX=1`** — bridge / Seatbelt / Docker (`CLAWQL_SANDBOX_BACKEND`).
  * memory_ingest / memory_recall — Obsidian vault notes (default on; set CLAWQL_ENABLE_MEMORY=0 to hide; writable vault).
  * Optional: ingest_external_knowledge — bulk Markdown + optional URL fetch (GitHub #40); default on; **`CLAWQL_ENABLE_DOCUMENTS=0`** to hide.
  * Optional: knowledge_search_onyx — Onyx when CLAWQL_ENABLE_ONYX and documents enabled; **`CLAWQL_ENABLE_DOCUMENTS=0`** hides (GitHub #118).
@@ -43,6 +43,7 @@ import { handleScheduleToolInput, scheduleToolSchema } from "./clawql-schedule.j
 import { getClawqlOptionalToolFlags } from "./clawql-optional-flags.js";
 import { handleKnowledgeSearchOnyxToolInput } from "./knowledge-search-onyx.js";
 import { registerOuroborosTools } from "./ouroboros-mcp.js";
+import { wrapMcpToolHandler } from "./otel-tracing.js";
 import type { OpenAPIDoc } from "./spec-loader.js";
 
 type GraphQLFieldInfo = { name: string; args: string[] };
@@ -429,7 +430,7 @@ export function registerTools(server: McpServer) {
         .default(5)
         .describe("Max number of matching operations to return."),
     },
-    handleClawqlSearchToolInput
+    wrapMcpToolHandler("search", handleClawqlSearchToolInput)
   );
 
   server.tool(
@@ -455,39 +456,45 @@ export function registerTools(server: McpServer) {
             "Omit to get a sensible default. E.g. ['name', 'uri', 'latestReadyRevision']"
         ),
     },
-    handleClawqlExecuteToolInput
+    wrapMcpToolHandler("execute", handleClawqlExecuteToolInput)
   );
 
-  const sandboxCodeSchema = {
-    code: z
-      .string()
-      .describe(
-        "Source code to run in an isolated Cloudflare Sandbox (via deployed bridge Worker)."
-      ),
-    language: z
-      .enum(["python", "javascript", "shell"])
-      .describe("python (python3), javascript (Node .mjs), or shell (posix sh script body)."),
-    sessionId: z
-      .string()
-      .optional()
-      .describe(
-        "When persistenceMode is session or persistent, reuse the same id to keep a stable sandbox filesystem (e.g. persist files across calls)."
-      ),
-    persistenceMode: z
-      .enum(["ephemeral", "session", "persistent"])
-      .optional()
-      .describe(
-        "Overrides CLAWQL_SANDBOX_PERSISTENCE_MODE. ephemeral = new sandbox each call; session = per sessionId; persistent = one shared sandbox."
-      ),
-    timeoutMs: z
-      .number()
-      .int()
-      .min(1000)
-      .optional()
-      .describe("Optional wall-clock limit in ms (capped by CLAWQL_SANDBOX_TIMEOUT_MS_MAX)."),
-  };
+  if (getClawqlOptionalToolFlags().enableSandbox) {
+    const sandboxCodeSchema = {
+      code: z
+        .string()
+        .describe(
+          "Source code to run isolated. CLAWQL_SANDBOX_BACKEND unset = Cloudflare bridge only; auto = Seatbelt then Docker then bridge; or pin bridge|macos-seatbelt|docker."
+        ),
+      language: z
+        .enum(["python", "javascript", "shell"])
+        .describe("python (python3), javascript (Node .mjs), or shell (posix sh script body)."),
+      sessionId: z
+        .string()
+        .optional()
+        .describe(
+          "When persistenceMode is session or persistent, reuse the same id to keep a stable sandbox filesystem (e.g. persist files across calls)."
+        ),
+      persistenceMode: z
+        .enum(["ephemeral", "session", "persistent"])
+        .optional()
+        .describe(
+          "Overrides CLAWQL_SANDBOX_PERSISTENCE_MODE. ephemeral = new sandbox each call; session = per sessionId; persistent = one shared sandbox."
+        ),
+      timeoutMs: z
+        .number()
+        .int()
+        .min(1000)
+        .optional()
+        .describe("Optional wall-clock limit in ms (capped by CLAWQL_SANDBOX_TIMEOUT_MS_MAX)."),
+    };
 
-  server.tool("sandbox_exec", sandboxCodeSchema, handleClawqlCodeToolInput);
+    server.tool(
+      "sandbox_exec",
+      sandboxCodeSchema,
+      wrapMcpToolHandler("sandbox_exec", handleClawqlCodeToolInput)
+    );
+  }
 
   const memoryEnterpriseCitationSchema = z.object({
     title: z.string().max(500).optional(),
@@ -542,7 +549,7 @@ export function registerTools(server: McpServer) {
             "When the page already exists, append a new section (default true). Set false to replace the file."
           ),
       },
-      handleMemoryIngestToolInput
+      wrapMcpToolHandler("memory_ingest", handleMemoryIngestToolInput)
     );
 
     server.tool(
@@ -578,7 +585,7 @@ export function registerTools(server: McpServer) {
             "Minimum keyword match score to seed a note (default: CLAWQL_MEMORY_RECALL_MIN_SCORE or 1)."
           ),
       },
-      handleMemoryRecallToolInput
+      wrapMcpToolHandler("memory_recall", handleMemoryRecallToolInput)
     );
   }
 
@@ -625,16 +632,20 @@ export function registerTools(server: McpServer) {
             "HTTPS URL to fetch when source is url and CLAWQL_EXTERNAL_INGEST_FETCH=1 (opt-in network)."
           ),
       },
-      handleIngestExternalKnowledgeToolInput
+      wrapMcpToolHandler("ingest_external_knowledge", handleIngestExternalKnowledgeToolInput)
     );
   }
 
-  server.tool("cache", cacheToolSchema, handleCacheToolInput);
+  server.tool("cache", cacheToolSchema, wrapMcpToolHandler("cache", handleCacheToolInput));
 
-  server.tool("audit", auditToolSchema, handleAuditToolInput);
+  server.tool("audit", auditToolSchema, wrapMcpToolHandler("audit", handleAuditToolInput));
 
   if (getClawqlOptionalToolFlags().enableSchedule) {
-    server.tool("schedule", scheduleToolSchema, handleScheduleToolInput);
+    server.tool(
+      "schedule",
+      scheduleToolSchema,
+      wrapMcpToolHandler("schedule", handleScheduleToolInput)
+    );
   }
 
   if (getClawqlOptionalToolFlags().enableNotify) {
@@ -681,7 +692,7 @@ export function registerTools(server: McpServer) {
               "Omit for defaults: ok, channel, ts, message."
           ),
       },
-      handleNotifyToolInput
+      wrapMcpToolHandler("notify", handleNotifyToolInput)
     );
   }
 
@@ -733,7 +744,7 @@ export function registerTools(server: McpServer) {
             "Optional top-level JSON keys to keep from the Onyx response (same as execute `fields`)."
           ),
       },
-      handleKnowledgeSearchOnyxToolInput
+      wrapMcpToolHandler("knowledge_search_onyx", handleKnowledgeSearchOnyxToolInput)
     );
   }
 

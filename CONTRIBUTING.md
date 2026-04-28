@@ -18,7 +18,7 @@ where to report issues (GraphQL Mesh / Omnigraph monorepo) and how to reproduce.
 
 ## Bundled API specs (`providers/`)
 
-- New **single** OpenAPI/Discovery providers: add under `providers/<vendor>/`, register in **`src/provider-registry.ts`** (`BUNDLED_PROVIDERS`), extend **`scripts/fetch-provider-specs.mjs`** if the spec is fetched from a URL, and document in **`providers/README.md`**.
+- New **single** OpenAPI/Discovery providers: add under `providers/<vendor>/`, register in **`src/provider-registry.ts`** (`BUNDLED_PROVIDERS`), extend **`scripts/providers/fetch-provider-specs.mjs`** if the spec is fetched from a URL, and document in **`providers/README.md`**.
 - The merged preset **`all-providers`** includes the **Google Cloud** bundled manifest plus every `BUNDLED_PROVIDERS` entry — no extra list to maintain when adding vendors (Google Cloud is manifest-driven, not a `BUNDLED_PROVIDERS` row).
 
 ## Code style

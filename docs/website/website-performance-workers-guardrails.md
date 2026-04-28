@@ -19,7 +19,7 @@ Root cause class: **too much work per invocation** on **Workers** (CPU / lifetim
 Workflow: **[`.github/workflows/website-lighthouse.yml`](../.github/workflows/website-lighthouse.yml)**
 
 - Builds **`website/`** with **`npm run build`**, serves **`next start`**, runs **Lighthouse** (desktop preset) against **`http://127.0.0.1:3000/`**.
-- Asserts minimum scores via **[`scripts/assert-lighthouse-scores.mjs`](../scripts/assert-lighthouse-scores.mjs)** (defaults: performance **0.55**, accessibility **0.92**, SEO **0.9**, best practices **0.85** — tune with `LH_MIN_*` env vars in the workflow if needed).
+- Asserts minimum scores via **[`scripts/dev/assert-lighthouse-scores.mjs`](../scripts/dev/assert-lighthouse-scores.mjs)** (defaults: performance **0.55**, accessibility **0.92**, SEO **0.9**, best practices **0.85** — tune with `LH_MIN_*` env vars in the workflow if needed).
 
 ### What Lighthouse CI **does** catch
 
@@ -93,7 +93,7 @@ npm run lh -- http://127.0.0.1:3000/case-studies/cloudflare-docs-mcp --preset=de
 
 ## Deploy reminder
 
-Production deploy path: **[`scripts/deploy-docs-to-cloudflare.sh`](../scripts/deploy-docs-to-cloudflare.sh)** (Worker + **Workers Domains** attach). After **performance-related** changes, redeploy and re-check **Observability** for 24h.
+Production deploy path: **[`scripts/deploy/deploy-docs-to-cloudflare.sh`](../scripts/deploy/deploy-docs-to-cloudflare.sh)** (Worker + **Workers Domains** attach). After **performance-related** changes, redeploy and re-check **Observability** for 24h.
 
 ---
 

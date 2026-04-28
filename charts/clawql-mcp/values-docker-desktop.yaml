@@ -1,4 +1,4 @@
-# Used by scripts/local-k8s-docker-desktop.sh — Docker Desktop + LoadBalancer on :8080.
+# Used by scripts/kubernetes/local-k8s-docker-desktop.sh — Docker Desktop + LoadBalancer on :8080.
 # vault.hostPath.path is set by the script (--set-string). For manual helm install, pass
 #   --set-string vault.hostPath.path=/absolute/path/to/vault
 

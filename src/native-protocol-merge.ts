@@ -4,7 +4,7 @@
 
 import { loadGraphqlNativeOperations } from "./graphql-native-loader.js";
 import { loadGrpcNativeOperations } from "./grpc-native-loader.js";
-import { recordNativeMergeCounts } from "./native-protocol-metrics.js";
+import { recordNativeMergeFromOperations } from "./native-protocol-metrics.js";
 import type { LoadedSpec } from "./spec-loader.js";
 import type { Operation } from "./operation-types.js";
 
@@ -22,7 +22,7 @@ export async function mergeNativeProtocolOperations(loaded: LoadedSpec): Promise
     console.error("[spec-loader] Native gRPC merge failed:", e);
   }
 
-  recordNativeMergeCounts(gql.length, grpc.length);
+  recordNativeMergeFromOperations(gql, grpc);
   const extra = gql.concat(grpc);
 
   if (extra.length === 0) return loaded;

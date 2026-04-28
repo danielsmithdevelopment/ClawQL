@@ -40,7 +40,7 @@ Use the provided script from repo root:
 ENV=dev \
 IMAGE=us-central1-docker.pkg.dev/<project>/<repo>/clawql-mcp \
 TAG=abc123 \
-bash scripts/deploy-k8s.sh
+bash scripts/deploy/deploy-k8s.sh
 ```
 
 Dry-run:
@@ -50,7 +50,7 @@ ENV=prod \
 IMAGE=us-central1-docker.pkg.dev/<project>/<repo>/clawql-mcp \
 TAG=v1.0.0 \
 DRY_RUN=true \
-bash scripts/deploy-k8s.sh
+bash scripts/deploy/deploy-k8s.sh
 ```
 
 ## Make target
@@ -98,7 +98,7 @@ Application-level TLS and optional client certificate verification on the gRPC l
 
 ## Docker Desktop: MCP auth (local cluster)
 
-For **`make local-k8s-up`** on Docker Desktop, inject **GitHub**, **Cloudflare**, and **Google** tokens into the MCP deployment with **`scripts/k8s-docker-desktop-set-mcp-auth.sh`** (optional repo **`.env`**). Secret name on the cluster remains **`clawql-github-auth`** for compatibility. See **[`docker/README.md`](../docker/README.md)** (_MCP auth_) and the site page **[`/kubernetes`](../website/src/app/kubernetes/page.mdx)**.
+For **`make local-k8s-up`** on Docker Desktop, inject **GitHub**, **Cloudflare**, and **Google** tokens into the MCP deployment with **`scripts/kubernetes/k8s-docker-desktop-set-mcp-auth.sh`** (optional repo **`.env`**). Secret name on the cluster remains **`clawql-github-auth`** for compatibility. See **[`docker/README.md`](../docker/README.md)** (_MCP auth_) and the site page **[`/kubernetes`](../website/src/app/kubernetes/page.mdx)**.
 
 ## Notes
 

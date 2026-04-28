@@ -25,6 +25,18 @@ Design for optional **env-gated** MCP surfaces (notably **`notify`**, future **`
 | **Prompt injection / exfil via summaries**         | Length caps on strings; operators should not paste secrets into **`summary`**. Prefer correlation IDs and redacted descriptions.                                                                                              |
 | **Multi-tenant isolation**                         | Single-process buffer is **not** tenant-isolated; multi-tenant deployments should gate **`audit`** to trusted agents or add namespacing in a later revision.                                                                  |
 
+## Regulated deployments
+
+This repository documents **technical controls and patterns** that support **SOC 2–style** and **HIPAA-oriented** readiness narratives. It does **not** replace organizational policies, a **risk analysis**, **Business Associate Agreements** (BAAs) with subprocessors, or an assessor’s opinion. Packaging and Helm hardening are tracked in **[#133](https://github.com/danielsmithdevelopment/ClawQL/issues/133)** and **[`docs/security/clawql-security-defense-deliverables.md`](security/clawql-security-defense-deliverables.md)** ([#164](https://github.com/danielsmithdevelopment/ClawQL/issues/164)).
+
+**Observability (native GraphQL/gRPC metrics):**
+
+- **Network:** Do not expose enriched **`GET /healthz`** or **`GET /metrics`** on a public ingress. Restrict scrapes and operator probes to **private networks**, **mesh-internal** addresses, or a **metrics-only** Service with **NetworkPolicies** / security groups so only Prometheus (or an approved agent) can reach them.
+- **Transport:** Terminate **TLS** at the ingress or use **mTLS** inside the mesh for scrape targets. Align with your **encryption in transit** control.
+- **Data minimization:** Metric **labels** must not contain **PHI**, end-user identifiers, or free-form request text. Treat native GraphQL/gRPC **`sourceLabel`** values as **operator-defined config names** (e.g. `linear-prod`), not patient or account IDs. If a label could become an identifier at scale, aggregate, drop, or relabel in your **Prometheus** / **Agent** config.
+- **Separation of concerns:** Use **`GET /metrics`** (**`prom-client`** OpenMetrics text) with standard **ServiceMonitor** / **PodMonitor** scrapes for production Prometheus. Optional JSON on **`/healthz`** (**`CLAWQL_HEALTHZ_NATIVE_PROTOCOL_METRICS=1`**) remains for human probes; disabling the HTTP **`/metrics`** route is **`CLAWQL_DISABLE_HTTP_METRICS=1`** (uncommon).
+- **Retention and access:** Route **centralized logging** and **audit** evidence to systems with **role-based access**, **retention policies**, and (where required) **immutability**. The **`audit`** MCP tool is **in-process only** ([`audit` tool (v1)](#audit-tool-v1)); pair with **`memory_ingest`**, vault/Obsidian workflows, or **SIEM** export for durable records.
+
 ## `audit` tool (v1)
 
 **Operations:** `append` (record an event), `list` (recent events), `clear` (empty buffer — mainly for tests/operators).
@@ -37,3 +49,4 @@ Design for optional **env-gated** MCP surfaces (notably **`notify`**, future **`
 
 - Optional flags (`cache`, `memory_*`, documents, …): [`src/clawql-optional-flags.ts`](../src/clawql-optional-flags.ts) ([#79](https://github.com/danielsmithdevelopment/ClawQL/issues/79)).
 - [`docs/mcp-tools.md`](mcp-tools.md) — full tool reference.
+- **[`docs/readme/deployment.md`](readme/deployment.md)** — HTTP endpoints; use with **Regulated deployments** above for ingress and telemetry placement.

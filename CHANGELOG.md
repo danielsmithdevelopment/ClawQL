@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Breaking
+
+- **`sandbox_exec`:** the MCP tool is registered only when **`CLAWQL_ENABLE_SANDBOX=1`** (same **default off — opt in** band as **`schedule`**, **`notify`**, **`ouroboros_*`** in the [feature tiers diagram](docs/readme/images/clawql-feature-tiers.png)). Previously **`sandbox_exec`** was always listed; restore visibility by setting the flag (still configure **`CLAWQL_SANDBOX_BACKEND`**, bridge URL + token, Docker, or Seatbelt as before) ([#207](https://github.com/danielsmithdevelopment/ClawQL/issues/207)).
+
+### Documentation
+
+- **Headscale tailnet runbook:** **`docs/deployment/headscale-tailnet.md`** (topology, firewall, MagicDNS **`*.clawql.local`**, enrollment outline, **`CLAWQL_MCP_URL`** / **`BASE_URL`** alignment, validation checklist, public MCP URL deprecation after cutover), index link in **`docs/README.md`**, cross-links from **`docs/readme/deployment.md`**, **`docs/clawql-ecosystem.md`** (service map vs tailnet DNS), **`.env.example`**, **`website/src/app/deployment/page.mdx`** ([#206](https://github.com/danielsmithdevelopment/ClawQL/issues/206)); ACL hardening tracked in **[#213](https://github.com/danielsmithdevelopment/ClawQL/issues/213)**.
+- **Tailnet MCP URLs + env hygiene:** **`docs/readme/deployment.md`** (private Tailscale MagicDNS **`url`**, **`CLAWQL_MCP_URL`** for workflows only, aligning **`*_BASE_URL`** with tailnet hosts), **`docs/readme/configuration.md`** (dotenv load order, **`CLAWQL_*`** vs legacy aliases), **`.env.example`** cross-links ([#195](https://github.com/danielsmithdevelopment/ClawQL/issues/195), [#211](https://github.com/danielsmithdevelopment/ClawQL/issues/211)).
+- **Observability:** **`docs/readme/deployment.md`**, **`docs/mcp-tools.md`** (See also), **`docs/enterprise-mcp-tools.md`** (regulated deployments), **`.env.example`**, **`docs/adr/0002-multi-protocol-supergraph.md`** (#191 row), **`website/src/app/deployment/page.mdx`** — **`GET /metrics`** (**`prom-client`**) plus optional **`GET /healthz`** **`nativeProtocolMetrics`** ([#191](https://github.com/danielsmithdevelopment/ClawQL/issues/191)).
+
+### Added
+
+- **Prometheus (`GET /metrics`, core):** **`prom-client`** OpenMetrics exposition for native GraphQL/gRPC merge gauges and execute counters per **`sourceLabel`**; same signals as optional JSON on **`GET /healthz`**. Disable the HTTP route with **`CLAWQL_DISABLE_HTTP_METRICS=1`** only when necessary ([#191](https://github.com/danielsmithdevelopment/ClawQL/issues/191)).
+
+- **Optional OTLP traces (Jaeger-ready):** **`CLAWQL_ENABLE_OTEL_TRACING=1`** with **`OTEL_EXPORTER_OTLP_ENDPOINT`** or **`OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`** registers OTLP HTTP export and **`mcp.tool.<name>`** spans for MCP handlers (including **`ouroboros_*`**); OpenTelemetry packages load only when the flag is set ([#160](https://github.com/danielsmithdevelopment/ClawQL/issues/160)).
+
+- **Native protocol metrics per source:** when **`CLAWQL_HEALTHZ_NATIVE_PROTOCOL_METRICS=1`**, **`GET /healthz`** **`nativeProtocolMetrics`** includes **`graphqlBySource`** and **`grpcBySource`** (merge gauges and cumulative execute counters per GraphQL/gRPC **`sourceLabel`**), alongside existing aggregate fields ([#191](https://github.com/danielsmithdevelopment/ClawQL/issues/191)).
+
+- **`sandbox_exec`:** **`CLAWQL_ENABLE_SANDBOX=1`** registers the tool; **`CLAWQL_SANDBOX_BACKEND=auto`** enables **Seatbelt** → **Docker** → **bridge**; **unset** **`CLAWQL_SANDBOX_BACKEND`** = bridge path when executing. Responses include **`backend`** ([#207](https://github.com/danielsmithdevelopment/ClawQL/issues/207)).
+
 ## [5.0.0] - 2026-04-27
 
 Major release: **ADR 0002** native **GraphQL** + **gRPC** on the merged **`search` / `execute`** surface; **Core** MCP tools (**`audit`**, **`cache`**) always registered; golden-image **CI** + **Kyverno** defaults (**Helm 0.5.x**); supply-chain and security docs. Bugfixes: [#167](https://github.com/danielsmithdevelopment/ClawQL/issues/167), [#168](https://github.com/danielsmithdevelopment/ClawQL/issues/168).
@@ -29,7 +49,7 @@ Major release: **ADR 0002** native **GraphQL** + **gRPC** on the merged **`searc
 
 - **`charts/clawql-mcp` (0.5.3):** **`kyverno.imageSignaturePolicy.enabled`** defaults to **`true`** — the chart renders a **`ClusterPolicy`** unless disabled. Install **[Kyverno](https://kyverno.io/)** before **`helm upgrade`**, or pass **`--set kyverno.imageSignaturePolicy.enabled=false`** on clusters that do not use Kyverno yet.
 
-- **`make local-k8s-up` / `scripts/local-k8s-docker-desktop.sh`:** installs **Kyverno** and **enforces Cosign** for **`ghcr.io/danielsmithdevelopment/clawql-mcp*`** and **`clawql-website*`** in the **`clawql`** release namespace (**`values-docker-desktop.yaml`**). **`CLAWQL_LOCAL_K8S_BUILD_IMAGE=1`** and **`CLAWQL_LOCAL_K8S_BUILD_UI_IMAGE=1`** are **rejected**. **Helm 3** is **required** for every install path (including **`CLAWQL_LOCAL_K8S_INSTALLER=kustomize`**). Default UI image is **GHCR** (not a local **`docker build`**).
+- **`make local-k8s-up` / `scripts/kubernetes/local-k8s-docker-desktop.sh`:** installs **Kyverno** and **enforces Cosign** for **`ghcr.io/danielsmithdevelopment/clawql-mcp*`** and **`clawql-website*`** in the **`clawql`** release namespace (**`values-docker-desktop.yaml`**). **`CLAWQL_LOCAL_K8S_BUILD_IMAGE=1`** and **`CLAWQL_LOCAL_K8S_BUILD_UI_IMAGE=1`** are **rejected**. **Helm 3** is **required** for every install path (including **`CLAWQL_LOCAL_K8S_INSTALLER=kustomize`**). Default UI image is **GHCR** (not a local **`docker build`**).
 
 ### Changed
 
@@ -61,7 +81,7 @@ Major release: **ADR 0002** native **GraphQL** + **gRPC** on the merged **`searc
   - expanded `ConvergenceCriteria` coverage for approval, stagnation-gate, and oscillation-gate scenarios,
   - expanded default-engine coverage for mixed-route execution and provider-evidence edge cases.
 
-- **`charts/clawql-mcp` (0.5.2–0.5.3):** Kyverno **`ClusterPolicy`** (**`templates/kyverno-clusterpolicy-cosign.yaml`**); **`enabled`** default **true** as of **0.5.3**; **`matchReleaseNamespaceOnly`** for Docker Desktop (**`values-docker-desktop.yaml`**). **`scripts/local-k8s-docker-desktop.sh`** installs **Kyverno** (Helm chart pin **`CLAWQL_KYVERNO_CHART_VERSION`**, default **3.7.2**), rejects unsigned local image env vars, pulls signed **`ghcr.io/.../clawql-website`**, and applies the policy on the Kustomize path via **`helm template --show-only`**. **`make helm-lint`** templates with policy on and off.
+- **`charts/clawql-mcp` (0.5.2–0.5.3):** Kyverno **`ClusterPolicy`** (**`templates/kyverno-clusterpolicy-cosign.yaml`**); **`enabled`** default **true** as of **0.5.3**; **`matchReleaseNamespaceOnly`** for Docker Desktop (**`values-docker-desktop.yaml`**). **`scripts/kubernetes/local-k8s-docker-desktop.sh`** installs **Kyverno** (Helm chart pin **`CLAWQL_KYVERNO_CHART_VERSION`**, default **3.7.2**), rejects unsigned local image env vars, pulls signed **`ghcr.io/.../clawql-website`**, and applies the policy on the Kustomize path via **`helm template --show-only`**. **`make helm-lint`** templates with policy on and off.
 
 - **Golden image / supply chain (GitHub Actions):** [`.github/workflows/docker-publish.yml`](.github/workflows/docker-publish.yml) runs **`repo-supply-chain`** (**OSV-Scanner**, **Trivy** fs, **Syft** CycloneDX artifact — aligned with CI **`supply-chain`**), then **one BuildKit** OCI layout export (`tar=false`) + **Trivy** (**HIGH** / **CRITICAL**, pinned **`ghcr.io/aquasecurity/trivy:0.59.1`**) **before any GHCR write**; **`skopeo copy`** pushes **that same OCI layout** (no second build), then **Cosign** and **`docker buildx imagetools create`** for **`latest`** / **`nightly`** / **`nightly-YYYYMMDD`** (**`id-token: write`** for OIDC). **npm** publish guidance: **[`docs/security/npm-supply-chain.md`](docs/security/npm-supply-chain.md)** ([#156](https://github.com/danielsmithdevelopment/ClawQL/issues/156)). [`.github/workflows/ci.yml`](.github/workflows/ci.yml) **`supply-chain`** uploads a **Syft** **CycloneDX JSON** artifact (**`sbom-cyclonedx-repository`**, image **`anchore/syft:v1.19.0`**). Operator notes: **`docker/README.md`** (verify / artifacts); matrix rows **5**, **8–10** in **[`docs/security/clawql-security-defense-deliverables.md`](docs/security/clawql-security-defense-deliverables.md)**.
 - **CI:** **`supply-chain`** job runs **[OSV-Scanner](https://google.github.io/osv-scanner/)** (`ghcr.io/google/osv-scanner`, **`osv-scanner.toml`**) on the repo (recursive lockfile / manifest scan) and **[Trivy](https://github.com/aquasecurity/trivy)** filesystem **`vuln`** scan (**HIGH** / **CRITICAL**, **`.trivyignore`**); both gate **`test`** (and optional Ouroboros Postgres) on green.
@@ -131,7 +151,7 @@ Major release: **ADR 0002** native **GraphQL** + **gRPC** on the merged **`searc
 
 ### Changed
 
-- **Local k8s auth script:** **`scripts/k8s-docker-desktop-set-mcp-auth.sh`** replaces the misleading GitHub-only name; it syncs **GitHub + optional Cloudflare + Google** tokens into Secret **`clawql-github-auth`**. **`scripts/k8s-docker-desktop-set-github-token.sh`** remains as a thin wrapper. Docs: **`docker/README.md`**, **`README.md`**, **`website` `/kubernetes`**.
+- **Local k8s auth script:** **`scripts/kubernetes/k8s-docker-desktop-set-mcp-auth.sh`** replaces the misleading GitHub-only name; it syncs **GitHub + optional Cloudflare + Google** tokens into Secret **`clawql-github-auth`**. **`scripts/kubernetes/k8s-docker-desktop-set-github-token.sh`** remains as a thin wrapper. Docs: **`docker/README.md`**, **`README.md`**, **`website` `/kubernetes`**.
 
 - **`ingest_external_knowledge` (URL mode):** responses are formatted for the vault — **JSON** pretty-printed, **HTML** converted to Markdown via **node-html-markdown**, plain text fenced; frontmatter gains **`clawql_external_ingest_kind`**.
 
@@ -194,7 +214,7 @@ Major release: **ADR 0002** native **GraphQL** + **gRPC** on the merged **`searc
 
 ### Added
 
-- **`scripts/grpc-memory-recall.mjs`:** call **`memory_recall`** via **`model_context_protocol.Mcp/CallTool`** with **protobufjs**-encoded **`google.protobuf.Struct`** tool arguments (avoids losing nested **`Value`** fields when using **`@grpc/proto-loader`** serialization alone).
+- **`scripts/dev/grpc-memory-recall.mjs`:** call **`memory_recall`** via **`model_context_protocol.Mcp/CallTool`** with **protobufjs**-encoded **`google.protobuf.Struct`** tool arguments (avoids losing nested **`Value`** fields when using **`@grpc/proto-loader`** serialization alone).
 - **Tests:** **`src/grpc-memory-tools.test.ts`** exercises **`memory_ingest`** and **`memory_recall`** over gRPC **`CallTool`** (protobufjs request encoding, temp vault + minimal OpenAPI spec).
 - **`packages/mcp-grpc-transport`:** **`proto-loader-reflection-patch`** module and tests (**`proto-loader-reflection-patch.test.ts`**, **`mcp-protobuf-struct.test.ts`**).
 - **Documentation site (`website/`):** **`sitemap.xml`**, **`robots.txt`**, canonical site URL helper (**`NEXT_PUBLIC_SITE_URL`** / **`VERCEL_URL`**), richer page metadata for SEO, **gRPC and Kubernetes** reference card.

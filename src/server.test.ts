@@ -47,6 +47,7 @@ describe("server (stdio)", () => {
     childEnv.CLAWQL_SPEC_PATH = minimalSpec;
     delete childEnv.CLAWQL_OBSIDIAN_VAULT_PATH;
     delete childEnv.CLAWQL_ENABLE_MEMORY;
+    delete childEnv.CLAWQL_ENABLE_SANDBOX;
     delete childEnv.CLAWQL_PROVIDER;
     delete childEnv.CLAWQL_SPEC_PATHS;
     delete childEnv.CLAWQL_API_BASE_URL;
@@ -75,7 +76,7 @@ describe("server (stdio)", () => {
       const names = new Set(tools.map((t) => t.name));
       expect(names.has("search")).toBe(true);
       expect(names.has("execute")).toBe(true);
-      expect(names.has("sandbox_exec")).toBe(true);
+      expect(names.has("sandbox_exec")).toBe(false);
       expect(names.has("memory_ingest")).toBe(true);
       expect(names.has("memory_recall")).toBe(true);
       expect(names.has("ingest_external_knowledge")).toBe(true);
@@ -94,11 +95,41 @@ describe("server (stdio)", () => {
     expect(stderr).toContain("Server running on stdio");
   }, 20_000);
 
+  it("registers sandbox_exec when CLAWQL_ENABLE_SANDBOX=1", async () => {
+    const childEnv = { ...process.env };
+    childEnv.CLAWQL_SPEC_PATH = minimalSpec;
+    childEnv.CLAWQL_ENABLE_SANDBOX = "1";
+    delete childEnv.CLAWQL_OBSIDIAN_VAULT_PATH;
+    delete childEnv.CLAWQL_PROVIDER;
+    delete childEnv.CLAWQL_SPEC_PATHS;
+    delete childEnv.CLAWQL_API_BASE_URL;
+    delete childEnv.API_BASE_URL;
+
+    const transport = new StdioClientTransport({
+      command: process.execPath,
+      args: [serverJs],
+      cwd: root,
+      env: childEnv,
+      stderr: "pipe",
+    });
+
+    const client = new Client({ name: "clawql-stdio-sandbox-on", version: "1.0.0" }, {});
+    try {
+      await client.connect(transport);
+      const { tools } = await client.listTools();
+      const names = new Set(tools.map((t) => t.name));
+      expect(names.has("sandbox_exec")).toBe(true);
+    } finally {
+      await client.close();
+    }
+  }, 20_000);
+
   it("hides memory_ingest and memory_recall when CLAWQL_ENABLE_MEMORY=0", async () => {
     const childEnv = { ...process.env };
     childEnv.CLAWQL_SPEC_PATH = minimalSpec;
     childEnv.CLAWQL_OBSIDIAN_VAULT_PATH = mkdtempSync(join(tmpdir(), "clawql-vault-"));
     childEnv.CLAWQL_ENABLE_MEMORY = "0";
+    delete childEnv.CLAWQL_ENABLE_SANDBOX;
     delete childEnv.CLAWQL_PROVIDER;
     delete childEnv.CLAWQL_SPEC_PATHS;
     delete childEnv.CLAWQL_API_BASE_URL;
@@ -131,6 +162,7 @@ describe("server (stdio)", () => {
     childEnv.CLAWQL_OBSIDIAN_VAULT_PATH = mkdtempSync(join(tmpdir(), "clawql-vault-"));
     childEnv.CLAWQL_ENABLE_DOCUMENTS = "0";
     childEnv.CLAWQL_ENABLE_ONYX = "1";
+    delete childEnv.CLAWQL_ENABLE_SANDBOX;
     delete childEnv.CLAWQL_PROVIDER;
     delete childEnv.CLAWQL_SPEC_PATHS;
     delete childEnv.CLAWQL_API_BASE_URL;
@@ -161,6 +193,7 @@ describe("server (stdio)", () => {
     childEnv.CLAWQL_SPEC_PATH = minimalSpec;
     childEnv.CLAWQL_OBSIDIAN_VAULT_PATH = mkdtempSync(join(tmpdir(), "clawql-vault-"));
     childEnv.CLAWQL_ENABLE_NOTIFY = "1";
+    delete childEnv.CLAWQL_ENABLE_SANDBOX;
     delete childEnv.CLAWQL_PROVIDER;
     delete childEnv.CLAWQL_SPEC_PATHS;
     delete childEnv.CLAWQL_API_BASE_URL;
@@ -190,6 +223,7 @@ describe("server (stdio)", () => {
     childEnv.CLAWQL_SPEC_PATH = minimalSpec;
     childEnv.CLAWQL_OBSIDIAN_VAULT_PATH = mkdtempSync(join(tmpdir(), "clawql-vault-"));
     childEnv.CLAWQL_ENABLE_ONYX = "1";
+    delete childEnv.CLAWQL_ENABLE_SANDBOX;
     delete childEnv.CLAWQL_PROVIDER;
     delete childEnv.CLAWQL_SPEC_PATHS;
     delete childEnv.CLAWQL_API_BASE_URL;
@@ -219,6 +253,7 @@ describe("server (stdio)", () => {
     childEnv.CLAWQL_SPEC_PATH = minimalSpec;
     childEnv.CLAWQL_OBSIDIAN_VAULT_PATH = mkdtempSync(join(tmpdir(), "clawql-vault-"));
     childEnv.CLAWQL_ENABLE_OUROBOROS = "1";
+    delete childEnv.CLAWQL_ENABLE_SANDBOX;
     delete childEnv.CLAWQL_PROVIDER;
     delete childEnv.CLAWQL_SPEC_PATHS;
     delete childEnv.CLAWQL_API_BASE_URL;
@@ -250,6 +285,7 @@ describe("server (stdio)", () => {
     childEnv.CLAWQL_SPEC_PATH = minimalSpec;
     childEnv.CLAWQL_OBSIDIAN_VAULT_PATH = mkdtempSync(join(tmpdir(), "clawql-vault-"));
     childEnv.CLAWQL_ENABLE_OUROBOROS = "1";
+    delete childEnv.CLAWQL_ENABLE_SANDBOX;
     delete childEnv.CLAWQL_PROVIDER;
     delete childEnv.CLAWQL_SPEC_PATHS;
     delete childEnv.CLAWQL_API_BASE_URL;
@@ -349,6 +385,7 @@ describe("server (stdio)", () => {
       ts: "1700000000.000100",
       message: { text: "from stub" },
     });
+    delete childEnv.CLAWQL_ENABLE_SANDBOX;
     delete childEnv.CLAWQL_API_BASE_URL;
     delete childEnv.API_BASE_URL;
 
@@ -397,6 +434,7 @@ describe("server (stdio)", () => {
       ok: false,
       error: "not_in_channel",
     });
+    delete childEnv.CLAWQL_ENABLE_SANDBOX;
     delete childEnv.CLAWQL_API_BASE_URL;
     delete childEnv.API_BASE_URL;
 
@@ -445,6 +483,7 @@ describe("server (stdio)", () => {
       documents: [{ document_id: "doc-1", semantic_identifier: "stub-hit" }],
     });
     delete childEnv.CLAWQL_TEST_SLACK_FETCH_STUB;
+    delete childEnv.CLAWQL_ENABLE_SANDBOX;
     delete childEnv.CLAWQL_API_BASE_URL;
     delete childEnv.API_BASE_URL;
 

@@ -1,6 +1,6 @@
 # GCP multi-spec workflow (archived run note)
 
-**Script:** [`scripts/mcp-workflow-gcp-multi.mjs`](../../../scripts/mcp-workflow-gcp-multi.mjs)
+**Script:** [`scripts/workflows/mcp-workflow-gcp-multi.mjs`](../../../scripts/workflows/mcp-workflow-gcp-multi.mjs)
 
 **Run:**
 
