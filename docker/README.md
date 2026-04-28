@@ -131,15 +131,49 @@ If Helm errors with **invalid ownership** (MCP was previously installed with **`
 
 **Unsigned local images are not supported** on this path: **`CLAWQL_LOCAL_K8S_BUILD_IMAGE=1`** and **`CLAWQL_LOCAL_K8S_BUILD_UI_IMAGE=1`** are rejected (Kyverno would block unsigned **`clawql-mcp`** / **`clawql-website`**). For local iteration from source without cluster admission, use **`make local-docker-up`** (Compose) or push a branch build to GHCR and point **`image.tag`** at that digest or tag.
 
+### Optional: Istio + observability stack (Docker Desktop, local mesh)
+
+**Long-form beginner guide (each tool explained):** **[`docs/deployment/docker-desktop-istio-observability.md`](../docs/deployment/docker-desktop-istio-observability.md)**. This README keeps install commands, env toggles, and port-forward shortcuts.
+
+For **east-west mesh identity and mTLS** between workloads in the **`clawql`** namespace (issue [#155](https://github.com/danielsmithdevelopment/ClawQL/issues/155)), set **`CLAWQL_LOCAL_K8S_ISTIO=ambient`** or **`CLAWQL_LOCAL_K8S_ISTIO=sidecar`** before **`make local-k8s-up`**. Prefer **`ambient`** on resource-constrained Docker Desktop (**`sidecar`** adds an envoy container to every pod in **`clawql`**, including the full Onyx / Flink stack). The script runs **`scripts/kubernetes/install-istio-docker-desktop.sh`** after **ingress-nginx** and before the ClawQL install: **Helm** charts **`istio/base`**, **`istiod`**, and (ambient only) **`istio-cni`** + **`ztunnel`** in **`istio-system`**, then **`istio/gateway`** (release **`clawql-mcp-ingress`**) in **`istio-ingress`** plus **Istio `Gateway`** + **`VirtualService`** for MCP, then upstream **Prometheus**, **Kiali**, **Grafana**, and **Jaeger** (Istio **`samples/addons`**) plus an in-repo **OpenTelemetry Collector** that forwards app OTLP to Jaeger. The release namespace is labeled for the dataplane (**`istio.io/dataplane-mode=ambient`** or **`istio-injection=enabled`**).
+
+```bash
+CLAWQL_LOCAL_K8S_ISTIO=ambient make local-k8s-up
+# Chart / addon version (default 1.29.2): CLAWQL_ISTIO_VERSION=1.29.2
+# Skip all sample addons (Prometheus, Kiali, …): CLAWQL_ISTIO_INSTALL_KIALI=0
+# Skip Grafana + Jaeger + OTel collector only (keep Prometheus + Kiali): CLAWQL_ISTIO_INSTALL_HEAVY_OBSERVABILITY_ADDONS=0
+# Opt out of forced mTLS: CLAWQL_ISTIO_APPLY_STRICT_MTLS=0
+# No ingress-nginx (e.g. CLAWQL_LOCAL_K8S_INSTALL_INGRESS_NGINX=0): CLAWQL_ISTIO_MESH_INGRESS_NGINX=0
+# Skip Istio Gateway + VirtualService (not recommended with STRICT): CLAWQL_ISTIO_INSTALL_INGRESS_GATEWAY=0
+# Keep chart LoadBalancer on :8080 (skip ClusterIP patch): CLAWQL_ISTIO_MCP_HTTP_SERVICE_CLUSTERIP=0
+```
+
+**mTLS:** By default the install applies **`PeerAuthentication` `STRICT`** in **`clawql`** so **pod traffic must use mesh mTLS**. **`ingress-nginx`** is enrolled in the same dataplane (**`CLAWQL_ISTIO_MESH_INGRESS_NGINX=1`**, default) and the controller is **rollout-restarted** so **Ingress → ClawQL** (for example **`http://clawql.localhost`**) stays on an authenticated mesh path. **East-west** between workloads in **`clawql`** is STRICT as well.
+
+**MCP from the host (recommended with Istio):** use **`kubectl -n istio-ingress get svc clawql-mcp-ingress`**: **`http://localhost/mcp`** and **`http://localhost/healthz`** on **port 80**, and **gRPC** on **`localhost:50051`**. That path uses **`Gateway`** + **`VirtualService`** to **`clawql-mcp-http`**, so traffic into **`clawql`** is **meshed** under **STRICT**. After **`make local-k8s-up`** with the gateway on, **`local-k8s-docker-desktop.sh`** patches **`svc/clawql-mcp-http`** to **`ClusterIP`** by default (no second public **LoadBalancer** on **:8080**). Opt out: **`CLAWQL_ISTIO_MCP_HTTP_SERVICE_CLUSTERIP=0`**. Validate gRPC through the gateway: **`bash scripts/kubernetes/smoke-grpcurl-istio-gateway-mcp.sh`** (requires **`grpcurl`**).
+
+**UIs (namespace `istio-system`):**
+
+| Tool           | Port-forward                                                    | URL                          |
+| -------------- | --------------------------------------------------------------- | ---------------------------- |
+| **Kiali**      | `kubectl port-forward svc/kiali 20001:20001 -n istio-system`    | http://localhost:20001/kiali |
+| **Grafana**    | `kubectl port-forward svc/grafana 3000:3000 -n istio-system`    | http://localhost:3000        |
+| **Prometheus** | `kubectl port-forward svc/prometheus 9090:9090 -n istio-system` | http://localhost:9090        |
+| **Jaeger**     | `kubectl port-forward svc/tracing 16686:80 -n istio-system`     | http://localhost:16686       |
+
+**ClawQL MCP → OTLP (optional):** set **`CLAWQL_ENABLE_OTEL_TRACING=1`** and **`OTEL_EXPORTER_OTLP_ENDPOINT=http://clawql-otel-collector.istio-system.svc:4318/v1/traces`** on **`deployment/clawql-mcp-http`** (or add the same under **`extraEnv`** in **`values-docker-desktop.yaml`**) so spans land in **Jaeger** via the collector. You can instead send OTLP straight to **`http://jaeger-collector.istio-system.svc:4318`** (Jaeger v2 all-in-one exposes OTLP on that Service).
+
+**STRICT mTLS reference:** **`docker/istio/docker-desktop/peerauthentication-clawql-strict.yaml`**.
+
 If the GHCR package is **private**, add **`imagePullSecrets`** via Helm values (same as any private registry).
 
 - **Customize provider or ports:** edit **`charts/clawql-mcp/values-docker-desktop.yaml`** or pass **`helm --set`**; see **[`docs/deployment/helm.md`](../docs/deployment/helm.md)**.
 - **`kubectl` / Helm context:** The script targets **`docker-desktop`** when that context exists (so your default context can stay on EKS or another cluster).
 - **Restart behavior:** Deployments keep **`replicas: 1`** and Kubernetes **restarts failed containers** automatically (Pod `restartPolicy` is `Always`).
-- **MCP URL:** `http://localhost:8080/mcp` once `kubectl -n clawql get svc clawql-mcp-http` shows an external address (often `localhost` on Docker Desktop).
-- **Cold start:** The MCP container loads every bundled spec before `listen()`; hitting `:8080` too early can produce `fetch failed` / “other side closed” in Node. Wait until `curl http://localhost:8080/healthz` returns `{"status":"ok"…}` or the pod is **Ready** (the MCP Deployment includes `/healthz` startup/readiness probes). The `workflow:complex-release-stack:mcp` script polls `/healthz` when `CLAWQL_MCP_URL` is set.
+- **MCP URL:** without Istio, **`http://localhost:8080/mcp`** once **`kubectl -n clawql get svc clawql-mcp-http`** shows an address (often **`localhost`** on Docker Desktop). With **`CLAWQL_LOCAL_K8S_ISTIO`**, prefer **`http://localhost/mcp`** on **`kubectl -n istio-ingress get svc clawql-mcp-ingress`** port **80** (see _Optional: Istio + observability stack_ above).
+- **Cold start:** The MCP container loads every bundled spec before `listen()`; hitting the MCP URL too early can produce `fetch failed` / “other side closed” in Node. Wait until **`curl -s http://localhost/healthz`** (Istio gateway) or **`curl -s http://localhost:8080/healthz`** (direct LB) returns `{"status":"ok"…}` or the pod is **Ready** (the MCP Deployment includes `/healthz` startup/readiness probes). The `workflow:complex-release-stack:mcp` script polls `/healthz` when `CLAWQL_MCP_URL` is set.
 - **Obsidian vault (`memory_ingest` / `memory_recall`):** Helm sets **`vault.hostPath`** so **`$HOME/.ClawQL`** (or **`CLAWQL_LOCAL_VAULT_HOST_PATH`**) is mounted at **`/vault`** — same idea as Compose’s **`CLAWQL_VAULT_HOST_PATH`**. On Docker Desktop, paths such as **`/Users/...`** on macOS are visible to **`hostPath`** pods.
-- **Teardown:** `helm uninstall clawql -n clawql` or `kubectl delete namespace clawql` (also removes non-Helm resources in that namespace).
+- **Teardown:** `helm uninstall clawql -n clawql` or `kubectl delete namespace clawql` (also removes non-Helm resources in that namespace). If you used **`CLAWQL_LOCAL_K8S_ISTIO`**, also **`helm uninstall clawql-mcp-ingress -n istio-ingress`** (and consider **`kubectl delete ns istio-ingress`**) when tearing down the mesh gateway.
 
 ### Optional: gRPC on Docker Desktop K8s
 
@@ -174,11 +208,11 @@ grpcurl -plaintext -d '{"service":"model_context_protocol.Mcp"}' localhost:50051
 
 Merged **`execute`** calls pick auth per **`specLabel`**: GitHub, Cloudflare, and Google Discovery slugs (e.g. `compute-v1`) each use their own env vars; Slack, Sentry, and n8n use dedicated env vars (not **`CLAWQL_BEARER_TOKEN`**). Paperless, Stirling, Tika, and Gotenberg follow **`src/auth-headers.ts`**. For the **default** merge (**Google + Cloudflare + GitHub + Slack + Paperless + Stirling + Tika + Gotenberg**), set the tokens you need in the cluster.
 
-| Variable | Required | Purpose |
-|----------|----------|---------|
-| **`CLAWQL_GITHUB_TOKEN`** (or stdin / `gh auth token`) | Yes for GitHub | PAT; duplicated as **`CLAWQL_BEARER_TOKEN`** for merged-bundle fallback |
-| **`CLAWQL_CLOUDFLARE_API_TOKEN`** | No | Cloudflare **`execute`** |
-| **`GOOGLE_ACCESS_TOKEN`** or **`CLAWQL_GOOGLE_ACCESS_TOKEN`** | No | Google Discovery **`execute`** |
+| Variable                                                      | Required       | Purpose                                                                 |
+| ------------------------------------------------------------- | -------------- | ----------------------------------------------------------------------- |
+| **`CLAWQL_GITHUB_TOKEN`** (or stdin / `gh auth token`)        | Yes for GitHub | PAT; duplicated as **`CLAWQL_BEARER_TOKEN`** for merged-bundle fallback |
+| **`CLAWQL_CLOUDFLARE_API_TOKEN`**                             | No             | Cloudflare **`execute`**                                                |
+| **`GOOGLE_ACCESS_TOKEN`** or **`CLAWQL_GOOGLE_ACCESS_TOKEN`** | No             | Google Discovery **`execute`**                                          |
 
 The helper script writes Secret **`clawql-github-auth`** (name unchanged for existing installs), injects the keys above into **`deployment/clawql-mcp-http`**, and restarts the rollout. It optionally **`source`s repo `.env`** when present (`CLAWQL_LOAD_DOTENV=0` to skip).
 

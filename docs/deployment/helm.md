@@ -222,6 +222,14 @@ curl -s http://clawql.localhost/api/health
 
 Expected response includes **`{"status":"ok"}`**.
 
+## Optional Istio and observability (Docker Desktop)
+
+**Not part of the Helm chart:** when you set **`CLAWQL_LOCAL_K8S_ISTIO=ambient`** or **`sidecar`** for **`make local-k8s-up`**, a separate script installs **Istio**, optional **ingress gateway** manifests, and **sample addons** in **`istio-system`** (Prometheus, Kiali, Grafana, Jaeger, plus ClawQL’s **OpenTelemetry Collector** manifest). Use this for **local mesh mTLS** and a **full observability lab** on one machine.
+
+- **Beginner-oriented guide** (what each tool is, first session, port-forwards, OTLP env for MCP): **[`docker-desktop-istio-observability.md`](docker-desktop-istio-observability.md)**
+- **Env toggles and MCP URLs:** [`docker/README.md`](../../docker/README.md)
+- **OTLP from `clawql-mcp-http`:** set **`extraEnv`** (see commented example in **`charts/clawql-mcp/values-docker-desktop.yaml`**) for **`CLAWQL_ENABLE_OTEL_TRACING`** and **`OTEL_EXPORTER_OTLP_ENDPOINT`**.
+
 ## Values
 
 See **[`charts/clawql-mcp/values.yaml`](../charts/clawql-mcp/values.yaml)**. Common keys:

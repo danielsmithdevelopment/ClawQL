@@ -1,0 +1,13 @@
+# Same policy the install script applies by default (CLAWQL_ISTIO_APPLY_STRICT_MTLS=1).
+# For a non-clawql namespace, copy and edit metadata.namespace or use the script with
+# CLAWQL_TARGET_NAMESPACE set.
+# Enforces mTLS for all workloads in the namespace. Clients outside the mesh (e.g. plain
+# ingress-nginx → pod) may fail until those clients are enrolled or use mesh gateways.
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: namespace-east-west-mtls-strict
+  namespace: clawql
+spec:
+  mtls:
+    mode: STRICT

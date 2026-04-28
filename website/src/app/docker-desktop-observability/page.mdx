@@ -1,0 +1,105 @@
+import { docsPageMetadata } from '@/lib/seo'
+
+export const metadata = docsPageMetadata({
+  title: 'Docker Desktop: Istio & observability',
+  description:
+    'Prometheus, Grafana, Jaeger, Kiali, and OpenTelemetry Collector on Docker Desktop with ClawQL—what each tool is and a beginner getting-started for each.',
+  path: '/docker-desktop-observability',
+})
+
+# Docker Desktop: Istio and the observability stack
+
+When you install ClawQL on **Docker Desktop Kubernetes** with **`CLAWQL_LOCAL_K8S_ISTIO=ambient`** or **`sidecar`**, the repo also brings up a **local observability lab** in the **`istio-system`** namespace: **Prometheus**, **Grafana**, **Jaeger**, **Kiali**, and a small **OpenTelemetry Collector** that forwards app traces to Jaeger. {{ className: 'lead' }}
+
+**Canonical doc** (same content, PR-friendly, deeper detail): **[`docs/deployment/docker-desktop-istio-observability.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/docker-desktop-istio-observability.md)**. **Install commands and env toggles:** **[`docker/README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docker/README.md)**. **Kubernetes overview:** [Kubernetes](/kubernetes).
+
+## One command (recap)
+
+```bash
+CLAWQL_LOCAL_K8S_ISTIO=ambient make local-k8s-up
+```
+
+- Skip **all** Istio sample addons: **`CLAWQL_ISTIO_INSTALL_KIALI=0`**
+- Keep **Prometheus + Kiali** but skip **Grafana**, **Jaeger**, and the **OTel collector** (lighter RAM): **`CLAWQL_ISTIO_INSTALL_HEAVY_OBSERVABILITY_ADDONS=0`**
+
+## Where everything lives
+
+| Tool                        | Namespace      | Reach it                                                                                              |
+| --------------------------- | -------------- | ----------------------------------------------------------------------------------------------------- |
+| **Prometheus**              | `istio-system` | `kubectl port-forward -n istio-system svc/prometheus 9090:9090` → http://localhost:9090               |
+| **Grafana**                 | `istio-system` | `kubectl port-forward -n istio-system svc/grafana 3000:3000` → http://localhost:3000                  |
+| **Jaeger**                  | `istio-system` | `kubectl port-forward -n istio-system svc/tracing 16686:80` → http://localhost:16686                  |
+| **Kiali**                   | `istio-system` | `kubectl port-forward -n istio-system svc/kiali 20001:20001` → http://localhost:20001/kiali           |
+| **OTel Collector** (ClawQL) | `istio-system` | In-cluster DNS **`clawql-otel-collector.istio-system.svc`** ports **4317** / **4318** (no browser UI) |
+| **ClawQL MCP metrics**      | `clawql`       | **`GET /metrics`** on the MCP HTTP port (OpenMetrics), separate from mesh Prometheus                  |
+
+Use **`kubectl --context docker-desktop`** if your default context is not Docker Desktop.
+
+---
+
+## Prometheus — getting started (new users)
+
+**Idea:** a **time-series database** plus a query UI. You write **PromQL** to ask questions like “how many requests per second?”
+
+1. Run the port-forward from the table above.
+2. Open **http://localhost:9090**.
+3. Run the query **`up`** — confirms scrape targets are reachable.
+4. Try **`istio_requests_total`** after you generate traffic to the mesh (for example MCP or the docs UI).
+
+---
+
+## Grafana — getting started (new users)
+
+**Idea:** **dashboards** on top of metrics. Grafana reads **Prometheus** (and other sources) and draws charts.
+
+1. Port-forward **3000** (see table).
+2. Open **http://localhost:3000**.
+3. Log in with the **Istio sample defaults**: **`admin`** / **`admin`** (change this outside a throwaway lab).
+4. Open **Dashboards** and pick an **Istio** dashboard folder, then generate traffic and watch panels update.
+
+---
+
+## Jaeger — getting started (new users)
+
+**Idea:** **distributed tracing** — one request, many services, one **trace** made of **spans** with timings.
+
+1. Port-forward **16686:80** to **`svc/tracing`** (see table).
+2. Open **http://localhost:16686**.
+3. Use **Search** → pick a **Service** → **Find Traces**.
+4. Open a trace to see the **waterfall** (span timeline).
+
+**ClawQL MCP spans:** set **`CLAWQL_ENABLE_OTEL_TRACING=1`** and **`OTEL_EXPORTER_OTLP_ENDPOINT=http://clawql-otel-collector.istio-system.svc:4318/v1/traces`** on **`clawql-mcp-http`** (Helm **`extraEnv`** or equivalent). See commented block in **`charts/clawql-mcp/values-docker-desktop.yaml`**.
+
+---
+
+## Kiali — getting started (new users)
+
+**Idea:** **Istio console** — who talks to whom, traffic rates, and config health.
+
+1. Port-forward **20001** (see table).
+2. Open **http://localhost:20001/kiali**.
+3. Go to **Graph**, namespace **`clawql`**, and explore the service graph.
+4. Click a service for details and links to related signals.
+
+---
+
+## OpenTelemetry Collector — getting started (new users)
+
+**Idea:** a small **relay**: apps send **OTLP**; the collector forwards to **Jaeger** over OTLP gRPC. You usually **do not** open a browser for it.
+
+1. Confirm it exists: **`kubectl -n istio-system get deploy,svc clawql-otel-collector`**.
+2. Point the MCP pod at **`http://clawql-otel-collector.istio-system.svc:4318/v1/traces`** (HTTP OTLP) as above.
+3. Confirm traces in **Jaeger** after calling MCP tools.
+
+---
+
+## ClawQL metrics vs mesh metrics
+
+- **`GET /metrics`** on **`clawql-mcp-http`** = **application** OpenMetrics (native protocol gauges/counters, etc.) — see [Deployment](/deployment).
+- **Prometheus in `istio-system`** = **mesh and platform** scrapes (Istio sample config). Different scrape targets, same **Prometheus** query language.
+
+## See also
+
+- [Helm](/helm) — **`extraEnv`**, **`values-docker-desktop.yaml`**
+- [Security](/security) — treat **`/healthz`** and **`/metrics`** as internal-only in regulated environments
+- Istio install script: [`install-istio-docker-desktop.sh`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/scripts/kubernetes/install-istio-docker-desktop.sh)

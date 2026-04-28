@@ -67,3 +67,4 @@ See `docs/mcp-tools.md` for the complete tool catalog and examples.
 - Spec selection and precedence: `docs/readme/configuration.md`
 - Cursor / Claude config examples: `docs/readme/deployment.md`
 - Cloud Run / Kubernetes deployment: `docs/readme/deployment.md`
+- Private tailnets (Tailscale / Headscale, MagicDNS, `CLAWQL_MCP_URL`): `docs/deployment/tailscale-and-headscale-for-clawql.md` (project website **`/tailscale`**)

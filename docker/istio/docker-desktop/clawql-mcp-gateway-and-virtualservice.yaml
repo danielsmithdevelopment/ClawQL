@@ -1,0 +1,51 @@
+# Placeholder __TARGET_NAMESPACE__ is replaced by install-istio-docker-desktop.sh (ClawQL release ns).
+# Gateway lives in istio-ingress; Helm release name must be clawql-mcp-ingress.
+---
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: clawql-mcp-gateway
+  namespace: istio-ingress
+spec:
+  selector:
+    istio: clawql-mcp-ingress
+    app: clawql-mcp-ingress
+  servers:
+    - port:
+        number: 80
+        name: http-mcp
+        protocol: HTTP
+      hosts:
+        - "*"
+    - port:
+        number: 50051
+        name: tcp-mcp-grpc
+        protocol: TCP
+      hosts:
+        - "*"
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: clawql-mcp-http-via-istio-ingress
+  namespace: __TARGET_NAMESPACE__
+spec:
+  hosts:
+    - "*"
+  gateways:
+    - istio-ingress/clawql-mcp-gateway
+  http:
+    - name: mcp-http-all
+      route:
+        - destination:
+            host: clawql-mcp-http
+            port:
+              number: 8080
+  tcp:
+    - match:
+        - port: 50051
+      route:
+        - destination:
+            host: clawql-mcp-http
+            port:
+              number: 50051

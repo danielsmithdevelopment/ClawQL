@@ -76,7 +76,7 @@
       "type": "skill-md",
       "description": "Run isolated code snippets via sandbox_exec with safe persistence/session patterns.",
       "url": "/.well-known/agent-skills/clawql-sandbox-exec/SKILL.md",
-      "digest": "sha256:a6cfbc05875ab428b80080492dca3087dd8d6307c812947ed1930ab30046ebdf"
+      "digest": "sha256:cc3cb1fc2832444544936a6feed9642ebc83c13384e6cb18a7d3e4e0d3a25a71"
     },
     {
       "name": "clawql-schedule-workflows",

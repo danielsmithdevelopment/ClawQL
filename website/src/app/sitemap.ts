@@ -19,7 +19,13 @@ const ENTRIES: Array<Entry> = [
   { path: '/mcp-clients', changeFrequency: 'monthly', priority: 0.88 },
   { path: '/concepts', changeFrequency: 'monthly', priority: 0.88 },
   { path: '/deployment', changeFrequency: 'monthly', priority: 0.88 },
+  { path: '/tailscale', changeFrequency: 'monthly', priority: 0.87 },
   { path: '/kubernetes', changeFrequency: 'monthly', priority: 0.88 },
+  {
+    path: '/docker-desktop-observability',
+    changeFrequency: 'monthly',
+    priority: 0.86,
+  },
   { path: '/helm', changeFrequency: 'monthly', priority: 0.88 },
   { path: '/tools', changeFrequency: 'weekly', priority: 0.9 },
   { path: '/spec-configuration', changeFrequency: 'monthly', priority: 0.85 },

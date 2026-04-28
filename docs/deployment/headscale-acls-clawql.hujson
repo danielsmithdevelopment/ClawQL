@@ -1,0 +1,87 @@
+{
+  // Least-privilege starter ACL for a ClawQL-oriented Headscale tailnet (#213).
+  //
+  // Hardening model: human operators (alice, bob) are separate Headscale users from service accounts
+  // (svc-mcp, svc-llm) used only when enrolling servers with --advertise-tags. That avoids laptop↔server
+  // "same user" mesh that a single broad self rule would allow.
+  //
+  // 1) headscale users create alice bob svc-mcp svc-llm   (names must match below)
+  // 2) Enroll MCP host as svc-mcp with --advertise-tags=tag:clawql-mcp
+  // 3) Enroll Ollama host as svc-llm with --advertise-tags=tag:clawql-llm
+  // 4) Set policy.path in config.yaml to this file (or a copy outside the git clone on the server).
+  // See: https://docs.headscale.org/ref/acls/  https://tailscale.com/kb/1018/acls/
+
+  "groups": {
+    "group:clawql-admins": ["alice"],
+    "group:clawql-operators": ["alice", "bob"]
+  },
+
+  "tagOwners": {
+    "tag:clawql-mcp": ["group:clawql-admins", "svc-mcp"],
+    "tag:clawql-llm": ["group:clawql-admins", "svc-llm"],
+    "tag:clawql-bridge": ["group:clawql-admins", "svc-mcp"],
+    "tag:clawql-internal-http": ["group:clawql-admins", "svc-mcp"]
+  },
+
+  "acls": [
+    // Operator laptops → ClawQL MCP (HTTP MCP + healthz) and optional native gRPC on the same host.
+    {
+      "action": "accept",
+      "src": ["group:clawql-operators"],
+      "proto": "tcp",
+      "dst": ["tag:clawql-mcp:8080,50051"]
+    },
+
+    // Operators → Ollama. Remove 50051 from the MCP rule above if you do not expose gRPC.
+    {
+      "action": "accept",
+      "src": ["group:clawql-operators"],
+      "proto": "tcp",
+      "dst": ["tag:clawql-llm:11434"]
+    },
+
+    // Tailnet-hosted provider stacks (Paperless, Onyx, Tika, …). Split into per-service tags + ports to tighten further.
+    {
+      "action": "accept",
+      "src": ["group:clawql-operators"],
+      "proto": "tcp",
+      "dst": ["tag:clawql-internal-http:80,443,8080"]
+    },
+
+    // MCP workload → LLM + internal HTTP APIs used by execute / native tools.
+    {
+      "action": "accept",
+      "src": ["tag:clawql-mcp"],
+      "proto": "tcp",
+      "dst": ["tag:clawql-llm:11434", "tag:clawql-internal-http:80,443,8080"]
+    },
+
+    // Only if a sandbox bridge listens on the tailnet (not Cloudflare Workers–only). Otherwise delete both rules.
+    {
+      "action": "accept",
+      "src": ["group:clawql-operators"],
+      "proto": "tcp",
+      "dst": ["tag:clawql-bridge:8080,8443"]
+    },
+    {
+      "action": "accept",
+      "src": ["tag:clawql-mcp"],
+      "proto": "tcp",
+      "dst": ["tag:clawql-bridge:8080,8443"]
+    },
+
+    // Optional ICMP for ping between operators and tagged servers (drop if you want no ICMP).
+    {
+      "action": "accept",
+      "src": ["group:clawql-operators"],
+      "proto": "icmp",
+      "dst": ["tag:clawql-mcp:*", "tag:clawql-llm:*", "tag:clawql-internal-http:*"]
+    },
+
+    // Self: each Headscale user can reach its own devices (one machine per svc-* keeps this narrow).
+    { "action": "accept", "src": ["alice"], "dst": ["alice:*"] },
+    { "action": "accept", "src": ["bob"], "dst": ["bob:*"] },
+    { "action": "accept", "src": ["svc-mcp"], "dst": ["svc-mcp:*"] },
+    { "action": "accept", "src": ["svc-llm"], "dst": ["svc-llm:*"] }
+  ]
+}

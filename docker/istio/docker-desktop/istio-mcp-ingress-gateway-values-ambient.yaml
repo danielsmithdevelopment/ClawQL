@@ -1,0 +1,31 @@
+# istio/gateway chart — ambient dataplane (no sidecar; ztunnel handles HBONE).
+# Release name must stay clawql-mcp-ingress (Gateway selector istio+app match release).
+autoscaling:
+  enabled: false
+labels:
+  istio.io/dataplane-mode: ambient
+podAnnotations:
+  prometheus.io/port: "15020"
+  prometheus.io/scrape: "true"
+  prometheus.io/path: "/stats/prometheus"
+  inject.istio.io/templates: "gateway"
+  sidecar.istio.io/inject: "false"
+service:
+  type: LoadBalancer
+  ports:
+    - name: status-port
+      port: 15021
+      protocol: TCP
+      targetPort: 15021
+    - name: http2
+      port: 80
+      protocol: TCP
+      targetPort: 80
+    - name: https
+      port: 443
+      protocol: TCP
+      targetPort: 443
+    - name: tcp-grpc-mcp
+      port: 50051
+      protocol: TCP
+      targetPort: 50051

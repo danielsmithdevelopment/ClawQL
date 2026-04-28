@@ -1,0 +1,97 @@
+import { docsPageMetadata } from '@/lib/seo'
+
+export const metadata = docsPageMetadata({
+  title: 'Tailscale & Headscale',
+  description:
+    'Beginner guide: private tailnets for ClawQL MCP and execute—MagicDNS, Serve, Headscale, ACLs—plus how the pattern supports HIPAA, SOC 2, GDPR, and CCPA-style control themes (not legal advice).',
+  path: '/tailscale',
+})
+
+# Tailscale and Headscale for ClawQL
+
+**Private tailnet** = WireGuard mesh + DNS so **`clawql-mcp-http`** at **`/mcp`** and your **`execute`** targets (Ollama, Paperless, Onyx, …) stay **off the public internet**. This page is the **on-site** walkthrough; the **canonical** copy (for PRs and deep links) is **[`docs/deployment/tailscale-and-headscale-for-clawql.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/tailscale-and-headscale-for-clawql.md)**. {{ className: 'lead' }}
+
+## Why bother?
+
+- MCP clients need a real **`url`** (not only **`localhost`** if the IDE runs elsewhere).
+- **`execute`** follows **`BASE_URL`** / spec **`servers`**. Wrong URLs send traffic **out** to the public internet.
+- A **tailnet** gives stable **100.x** addresses and **MagicDNS** names for **members only**.
+
+## Concepts (quick)
+
+| Term                 | Meaning                                                                                                                   |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| **Tailscale client** | Software on each device; registers with the **control plane**.                                                            |
+| **Tailnet**          | Your private mesh of machines + policy.                                                                                   |
+| **Control plane**    | **Tailscale Inc.** (managed) or **Headscale** (you self-host).                                                            |
+| **MagicDNS**         | Names like **`*.ts.net`** or **`*.clawql.local`** → tailnet IP.                                                           |
+| **ACL**              | Who may reach which ports; tighten after bootstrap ([#213](https://github.com/danielsmithdevelopment/ClawQL/issues/213)). |
+
+Primers: [What is Tailscale?](https://tailscale.com/kb/1151/what-is-tailscale/) · [MagicDNS](https://tailscale.com/kb/1081/magicdns/) · [ACLs](https://tailscale.com/kb/1018/acls/).
+
+## Managed Tailscale vs Headscale
+
+|               | **Managed Tailscale**    | **Headscale (self-hosted)**                                  |
+| ------------- | ------------------------ | ------------------------------------------------------------ |
+| **Operator**  | Tailscale admin console  | Your **`headscale`** server + CLI                            |
+| **Names**     | **`*.ts.net`**           | You pick **MagicDNS** base (repo pattern **`clawql.local`**) |
+| **Pick when** | Fastest path, less infra | Control plane ownership / residency                          |
+
+## Part A — Managed Tailscale (recommended first)
+
+Issue context: [#211](https://github.com/danielsmithdevelopment/ClawQL/issues/211). Shorter env notes: **[`docs/readme/deployment.md` — Private tailnet](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/readme/deployment.md#private-tailnet-tailscale-magicdns)**.
+
+1. **Install** [Tailscale](https://tailscale.com/kb/1019/install/) on the **MCP host** and every **operator laptop**.
+2. **Sign in** so all machines join the **same tailnet** (admin console → **Machines**).
+3. **Enable MagicDNS** so each host gets a stable **`*.ts.net`** (or your tailnet’s) name — [MagicDNS KB](https://tailscale.com/kb/1081/magicdns/).
+4. **Expose MCP with HTTPS** — e.g. **[Tailscale Serve](https://tailscale.com/kb/1312/serve)** proxying to **`http://127.0.0.1:8080`** so clients use **`https://…/mcp`**.
+5. **Cursor / MCP:** set **`CLAWQL_MCP_URL`** and use **`${env:CLAWQL_MCP_URL}`** in **`mcp.json`** ([Cursor env interpolation](https://cursor.com/docs/context/mcp)).
+6. **Workflows:** **`CLAWQL_MCP_URL`** is for scripts like **`workflow:complex-release-stack:mcp`** (polls **`/healthz`**); the MCP process itself does not read it.
+7. **Provider URLs:** align **`PAPERLESS_BASE_URL`**, **`ONYX_BASE_URL`**, **`TIKA_BASE_URL`**, **`CLAWQL_SANDBOX_BRIDGE_URL`**, **`CLAWQL_API_BASE_URL`**, **`CLAWQL_GRAPHQL_*`**, etc., to tailnet hostnames — see **`.env.example`**.
+
+**Smoke test:** from another tailnet device, **`curl`** your **`/healthz`**, then confirm **`listTools`** / a safe **`execute`** in the client.
+
+## Part B — Headscale (self-hosted control plane)
+
+Full ops runbook: **[`docs/deployment/headscale-tailnet.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/headscale-tailnet.md)** ([#206](https://github.com/danielsmithdevelopment/ClawQL/issues/206)).
+
+1. Run **Headscale** on a small always-on host; configure **`server_url`**, TLS, persistence, backups.
+2. Enable **MagicDNS** with **`base_domain`** **`clawql.local`** (or your choice).
+3. Enroll nodes with **`tailscale up --login-server https://…`** ([Headscale docs](https://docs.headscale.org/)).
+4. After the mesh works, replace permissive ACLs — starter **[`headscale-acls-clawql.hujson`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/headscale-acls-clawql.hujson)** ([#213](https://github.com/danielsmithdevelopment/ClawQL/issues/213)) and **[ACL section](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/headscale-tailnet.md#acl-hardening-least-privilege)**.
+
+Example URLs: **`http://mac-mini.clawql.local:8080/mcp`**, **`/healthz`** — same **`CLAWQL_MCP_URL`** / **`mcp.json`** hygiene as Part A.
+
+## Kubernetes **`*.clawql.local`** ≠ Headscale MagicDNS (same suffix)
+
+**Helm / Ingress** examples use **`something.clawql.local`** resolved by **cluster DNS** (or hosts → cluster IP). **Headscale** **`*.clawql.local`** resolves on **enrolled Tailscale nodes** only when Headscale MagicDNS is set up. Same string, **different resolvers** — see **[`docs/clawql-ecosystem.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/clawql-ecosystem.md)**.
+
+## Security checklist
+
+- Never commit **live** pre-auth keys, MCP bearer tokens, or bridge secrets.
+- Prefer **HTTPS** for MCP where clients expect TLS; restrict **host firewalls** to **100.64.0.0/10** or ACL tags when binding **`0.0.0.0`**.
+- Treat **public MCP** as a separate product decision — **[`docs/enterprise-mcp-tools.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/enterprise-mcp-tools.md)**.
+
+## HIPAA, SOC 2, GDPR / CCPA (how this pattern helps)
+
+**Not legal or compliance advice.** Frameworks need **your** BAAs, DPAs, SCCs, policies, logging, DPIAs, and attestation—a tailnet is one **technical** layer.
+
+- **Segmentation & least privilege:** MCP and **`execute`** targets stay on **private** mesh paths with **ACLs**, instead of a default-public listener—supports access-control narratives for **SOC 2** (e.g. CC6) and **reasonable security** expectations (**CCPA / CPRA**).
+- **Encryption in transit:** **WireGuard** between nodes; add **HTTPS** (Serve / proxy) for app-layer TLS where required—relevant to **HIPAA Security Rule** transmission safeguards and **GDPR Art. 32** when documented as part of TOMs.
+- **Vendors & residency:** **Managed Tailscale** is a **subprocessor** (metadata, control plane)—put it in your **DPA** / transfer analysis (**GDPR Ch. V**). **Headscale** can support **in-region** control-plane ownership if **you** run it securely.
+- **HIPAA:** supports **technical** safeguards only alongside **administrative/physical** controls, **BAA**s, minimum necessary, and breach processes—especially if tools can reach **ePHI** systems.
+- **Evidence:** document data flows (agent → MCP → each **`BASE_URL`**), ACL owners, and what logs retain—pair with app **`audit`** / SIEM as in **[`enterprise-mcp-tools.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/enterprise-mcp-tools.md)**.
+
+Full tables, auditor checklist, and disclaimers: **[`tailscale-and-headscale-for-clawql.md` § Regulatory and compliance](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/tailscale-and-headscale-for-clawql.md#regulatory-and-compliance-context-how-tailnets-help)**.
+
+## Troubleshooting
+
+- **No DNS** → MagicDNS off, wrong domain, or client not using tailnet DNS.
+- **Timeout** → ACL too tight, UDP mesh blocked, or wrong port.
+- **Only server can use MCP** → laptops still pointed at **`localhost`** — switch to MagicDNS / Serve URL.
+- **`execute` still public** → **`BASE_URL`** not repointed to tailnet hostnames.
+
+## Next steps
+
+- [Deployment](/deployment) — ports, **`/metrics`**, Cloud Run, Kubernetes.
+- Repo guide (full tables + issue index): **[`tailscale-and-headscale-for-clawql.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/tailscale-and-headscale-for-clawql.md)**.

@@ -1,4 +1,4 @@
-.PHONY: deploy-cloud-run deploy-k8s deploy-docs local-k8s-up local-k8s-mcp-delete local-docker-up helm-lint helm-ui-template-tests kustomize-local-lint lint-k8s-manifests
+.PHONY: deploy-cloud-run deploy-k8s deploy-docs local-k8s-up local-k8s-mcp-delete local-docker-up helm-lint helm-ui-template-tests kustomize-local-lint lint-k8s-manifests smoke-grpcurl-istio-gateway-mcp
 
 # Validate charts/clawql-mcp (requires helm on PATH)
 helm-lint:
@@ -33,6 +33,10 @@ lint-k8s-manifests: helm-lint helm-ui-template-tests kustomize-local-lint
 # Docker Desktop Kubernetes: default Helm; optional CLAWQL_LOCAL_K8S_INSTALLER=kustomize
 local-k8s-up:
 	@bash scripts/kubernetes/local-k8s-docker-desktop.sh
+
+# After local-k8s-up with Istio + gateway: grpcurl grpc.health.v1.Health/Check on localhost:50051
+smoke-grpcurl-istio-gateway-mcp:
+	@bash scripts/kubernetes/smoke-grpcurl-istio-gateway-mcp.sh
 
 # Remove MCP deployment+Service (e.g. before Helm after kubectl apply / Kustomize)
 local-k8s-mcp-delete:

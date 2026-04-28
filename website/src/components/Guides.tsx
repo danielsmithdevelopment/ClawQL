@@ -39,6 +39,12 @@ const guides = [
       'Docker Desktop via Helm (localhost:8080/mcp), auth, rebuilds, and Kustomize dev/prod deploy.',
   },
   {
+    href: '/docker-desktop-observability',
+    name: 'Istio & observability',
+    description:
+      'Prometheus, Grafana, Jaeger, Kiali, OTel Collector with optional Istio on Docker Desktop—beginner getting-started for each tool.',
+  },
+  {
     href: '/helm',
     name: 'Helm',
     description:
