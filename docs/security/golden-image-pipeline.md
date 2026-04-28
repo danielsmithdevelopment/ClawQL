@@ -45,11 +45,11 @@ Both **`build-push-mcp`** and **`build-push-website`** **`need: repo-supply-chai
 
 Workflow: [`.github/workflows/docker-publish.yml`](../../.github/workflows/docker-publish.yml) job **`repo-supply-chain`**.
 
-| Step | What runs | Failure effect |
-|------|-----------|----------------|
-| OSV-Scanner | `ghcr.io/google/osv-scanner` with [`osv-scanner.toml`](../../osv-scanner.toml) | Job fails → **no** MCP or website build jobs |
-| Trivy filesystem | `aquasecurity/trivy-action`, **HIGH** / **CRITICAL**, [`.trivyignore`](../../.trivyignore) | Job fails → **no** image builds |
-| Syft SBOM | `anchore/syft:v1.19.0` → CycloneDX JSON uploaded as artifact | Artifact missing → job fails |
+| Step             | What runs                                                                                  | Failure effect                               |
+| ---------------- | ------------------------------------------------------------------------------------------ | -------------------------------------------- |
+| OSV-Scanner      | `ghcr.io/google/osv-scanner` with [`osv-scanner.toml`](../../osv-scanner.toml)             | Job fails → **no** MCP or website build jobs |
+| Trivy filesystem | `aquasecurity/trivy-action`, **HIGH** / **CRITICAL**, [`.trivyignore`](../../.trivyignore) | Job fails → **no** image builds              |
+| Syft SBOM        | `anchore/syft:v1.19.0` → CycloneDX JSON uploaded as artifact                               | Artifact missing → job fails                 |
 
 The main **[`ci.yml`](../../.github/workflows/ci.yml)** workflow also runs a **`supply-chain`** job (OSV + Trivy fs + repository SBOM upload) on pushes/PRs so **merge queue** can block bad dependency states before they reach **`main`**.
 
@@ -122,11 +122,11 @@ Signing in CI **does not** stop a malicious or mistaken **`kubectl apply`** of a
 
 ### What this does / does not cover
 
-| Covered | Not automatically covered |
-|--------|---------------------------|
-| **Pods** whose container images match the **`clawql-mcp`** / **`clawql-website`** GHCR globs must verify with the configured **Sigstore** identity | Other images in the same namespace (Postgres, Onyx, ingress, etc.)—different images, different risk |
-| **Keyless** signatures matching **GitHub Actions** issuer + **this repo** subject pattern | Forks must **override** regexes and image references in values |
-| **Tag-based** refs still resolve to a digest for verification | **`verifyDigest: true`** in values is optional and requires manifests to use digests—see [`image-signature-enforcement.md`](image-signature-enforcement.md) |
+| Covered                                                                                                                                            | Not automatically covered                                                                                                                                   |
+| -------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Pods** whose container images match the **`clawql-mcp`** / **`clawql-website`** GHCR globs must verify with the configured **Sigstore** identity | Other images in the same namespace (Postgres, Onyx, ingress, etc.)—different images, different risk                                                         |
+| **Keyless** signatures matching **GitHub Actions** issuer + **this repo** subject pattern                                                          | Forks must **override** regexes and image references in values                                                                                              |
+| **Tag-based** refs still resolve to a digest for verification                                                                                      | **`verifyDigest: true`** in values is optional and requires manifests to use digests—see [`image-signature-enforcement.md`](image-signature-enforcement.md) |
 
 Operator verification without applying a workload: **`cosign verify`** as documented in [`docker/README.md`](../../docker/README.md).
 
@@ -134,19 +134,19 @@ Operator verification without applying a workload: **`cosign verify`** as docume
 
 ## Quick reference table
 
-| Layer | Mechanism | Artifact / outcome |
-|-------|-----------|---------------------|
-| Merge / CI | **`ci.yml`** `supply-chain` | OSV + Trivy fs + SBOM artifact; gates **`test`** |
-| Publish | **`docker-publish.yml`** `repo-supply-chain` | Same repo gates + SBOM artifact for the publish run |
-| Image integrity | Single **OCI layout** + **Trivy** + **`skopeo copy`** | No second build; scanned bytes = pushed bytes |
-| Identity | **Cosign keyless** on digest | Signature in **Rekor** / Sigstore ecosystem |
-| Mutability | **`imagetools`** promotion | **`latest`** / **`nightly`** only after success |
-| Cluster | **Kyverno `verifyImages`** (Helm default) + optional **digest pins** | Unsigned / wrong-identity **ClawQL** images blocked at admit |
+| Layer           | Mechanism                                                            | Artifact / outcome                                           |
+| --------------- | -------------------------------------------------------------------- | ------------------------------------------------------------ |
+| Merge / CI      | **`ci.yml`** `supply-chain`                                          | OSV + Trivy fs + SBOM artifact; gates **`test`**             |
+| Publish         | **`docker-publish.yml`** `repo-supply-chain`                         | Same repo gates + SBOM artifact for the publish run          |
+| Image integrity | Single **OCI layout** + **Trivy** + **`skopeo copy`**                | No second build; scanned bytes = pushed bytes                |
+| Identity        | **Cosign keyless** on digest                                         | Signature in **Rekor** / Sigstore ecosystem                  |
+| Mutability      | **`imagetools`** promotion                                           | **`latest`** / **`nightly`** only after success              |
+| Cluster         | **Kyverno `verifyImages`** (Helm default) + optional **digest pins** | Unsigned / wrong-identity **ClawQL** images blocked at admit |
 
 ---
 
 ## Issues and tracking
 
-- [#156](https://github.com/danielsmithdevelopment/ClawQL/issues/156) — **CI + publish pipeline + security docs** (narrowed); follow-ups [#202](https://github.com/danielsmithdevelopment/ClawQL/issues/202) (MCP OSV), [#203](https://github.com/danielsmithdevelopment/ClawQL/issues/203) (Helm rescan), [#204](https://github.com/danielsmithdevelopment/ClawQL/issues/204) (audit / memory hooks)  
-- [#132](https://github.com/danielsmithdevelopment/ClawQL/issues/132) — digest-first deploys and admission follow-ups  
-- [#164](https://github.com/danielsmithdevelopment/ClawQL/issues/164) — deliverables matrix maintenance  
+- [#156](https://github.com/danielsmithdevelopment/ClawQL/issues/156) — **CI + publish pipeline + security docs** (narrowed); follow-ups [#202](https://github.com/danielsmithdevelopment/ClawQL/issues/202) (MCP OSV), [#203](https://github.com/danielsmithdevelopment/ClawQL/issues/203) (Helm rescan), [#204](https://github.com/danielsmithdevelopment/ClawQL/issues/204) (audit / memory hooks)
+- [#132](https://github.com/danielsmithdevelopment/ClawQL/issues/132) — digest-first deploys and admission follow-ups
+- [#164](https://github.com/danielsmithdevelopment/ClawQL/issues/164) — deliverables matrix maintenance

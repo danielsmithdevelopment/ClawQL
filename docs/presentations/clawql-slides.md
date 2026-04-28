@@ -2155,17 +2155,17 @@ WORM or append-only log sinks for long-lived audit; **SIEM** correlation of **Fa
 
 **GET STARTED**
 
-| Resource                     | Link                                                                                                                    |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| Documentation                | https://docs.clawql.com                                                                                                 |
-| Defense in depth (reference) | [`../security/clawql-security-defense-in-depth.md`](../security/clawql-security-defense-in-depth.md) (slides **68–79**) |
+| Resource                                | Link                                                                                                                                                                               |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Documentation                           | https://docs.clawql.com                                                                                                                                                            |
+| Defense in depth (reference)            | [`../security/clawql-security-defense-in-depth.md`](../security/clawql-security-defense-in-depth.md) (slides **68–79**)                                                            |
 | Defense in depth (deliverables / audit) | [`../security/clawql-security-defense-deliverables.md`](../security/clawql-security-defense-deliverables.md) ([#164](https://github.com/danielsmithdevelopment/ClawQL/issues/164)) |
-| GitHub                       | danielsmithdevelopment/ClawQL                                                                                           |
-| npm (MCP)                    | `clawql-mcp`                                                                                                            |
-| Kubernetes                   | https://docs.clawql.com/kubernetes                                                                                      |
-| Helm Chart                   | https://docs.clawql.com/helm                                                                                            |
-| Case Studies                 | https://docs.clawql.com/case-studies                                                                                    |
-| Contact                      | **Daniel Smith** — danielsmithdevelopment@gmail.com                                                                     |
+| GitHub                                  | danielsmithdevelopment/ClawQL                                                                                                                                                      |
+| npm (MCP)                               | `clawql-mcp`                                                                                                                                                                       |
+| Kubernetes                              | https://docs.clawql.com/kubernetes                                                                                                                                                 |
+| Helm Chart                              | https://docs.clawql.com/helm                                                                                                                                                       |
+| Case Studies                            | https://docs.clawql.com/case-studies                                                                                                                                               |
+| Contact                                 | **Daniel Smith** — danielsmithdevelopment@gmail.com                                                                                                                                |
 
 _Local. Private. Powerful. Production-ready. **Knowledge-augmented.** **Security-hardened** (Trivy, OSV-Scanner, optional Istio; **Golden Image** + **SBOM** + **Cosign** in the full-stack story — see [deliverables matrix](../security/clawql-security-defense-deliverables.md) for **shipped vs roadmap**). On-chain where you choose. **Enterprise- and agent-trusted**._
 

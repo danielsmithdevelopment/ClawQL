@@ -150,10 +150,7 @@ describe("createDefaultOuroborosEngines", () => {
   it("does not treat goal text as provider execution evidence (no greenwash on substring)", async () => {
     const engines = createDefaultOuroborosEngines({ execute: vi.fn(), search: vi.fn() });
     const seed = makeSeed({});
-    seed.acceptance_criteria = [
-      "GitHub repos are listed",
-      "Cloudflare zones-get succeeds",
-    ];
+    seed.acceptance_criteria = ["GitHub repos are listed", "Cloudflare zones-get succeeds"];
     const output = JSON.stringify({
       kind: "clawql-ouroboros-default-execute",
       goal: "Exercise github and cloudflare in one run",

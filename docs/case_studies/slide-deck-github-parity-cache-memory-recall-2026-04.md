@@ -73,20 +73,20 @@ During the gap pass, the assistant used the MCP **`cache`** tool to hold **trans
 
 Twelve new issues were opened to connect the **April 2026** deck to an explicit backlog (numbers shown as filed in that session):
 
-| #        | Area                                                                                                                            |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| **#155** | Optional **Istio** + **Kiali**, mTLS east-west                                                                                  |
+| #        | Area                                                                                                                              |
+| -------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| **#155** | Optional **Istio** + **Kiali**, mTLS east-west                                                                                    |
 | **#156** | **OSV-Scanner** + Golden Image — **CI + publish + docs** (narrowed); **#202**–**#204** = MCP OSV, Helm rescan, audit/memory hooks |
-| **#157** | **Hyperledger Fabric** — Helm, `CLAWQL_ENABLE_FABRIC`, `providers/fabric`                                                       |
-| **#158** | **The Graph** — bundled OpenAPI / execute path                                                                                  |
-| **#159** | **Chainlink** — bundled provider surface                                                                                        |
-| **#160** | **Jaeger** / **OTLP** tracing                                                                                                   |
-| **#161** | **HashiCorp Vault** or **OpenBao** (vs chart **Obsidian** `vault` hostPath naming)                                              |
-| **#162** | **ClawQL-Web3** — AgentKit / **IPFS** / **CCIP** (extends beyond **#88**)                                                       |
-| **#163** | **Transcript** parity: [`clawql-slides-transcript.md`](../presentations/clawql-slides-transcript.md) vs **80** slides + **§08** |
-| **#164** | **Defense-in-depth** doc → control / deliverable **matrix**                                                                     |
-| **#165** | **Meta:** update obsolete **slide §** references in existing issue bodies                                                       |
-| **#166** | **Demos** — honest walkthroughs for high-stakes narrative slides (e.g. 50, 56)                                                  |
+| **#157** | **Hyperledger Fabric** — Helm, `CLAWQL_ENABLE_FABRIC`, `providers/fabric`                                                         |
+| **#158** | **The Graph** — bundled OpenAPI / execute path                                                                                    |
+| **#159** | **Chainlink** — bundled provider surface                                                                                          |
+| **#160** | **Jaeger** / **OTLP** tracing                                                                                                     |
+| **#161** | **HashiCorp Vault** or **OpenBao** (vs chart **Obsidian** `vault` hostPath naming)                                                |
+| **#162** | **ClawQL-Web3** — AgentKit / **IPFS** / **CCIP** (extends beyond **#88**)                                                         |
+| **#163** | **Transcript** parity: [`clawql-slides-transcript.md`](../presentations/clawql-slides-transcript.md) vs **80** slides + **§08**   |
+| **#164** | **Defense-in-depth** doc → control / deliverable **matrix**                                                                       |
+| **#165** | **Meta:** update obsolete **slide §** references in existing issue bodies                                                         |
+| **#166** | **Demos** — honest walkthroughs for high-stakes narrative slides (e.g. 50, 56)                                                    |
 
 Cross-links between issues (e.g. **#88**, **#132**, **#133**, **#128**, **#129**, **#131**) were added in the bodies so **P2/P3** dependencies stay navigable from GitHub, not only from the deck.
 
