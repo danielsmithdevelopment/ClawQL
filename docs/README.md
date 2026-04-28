@@ -29,6 +29,15 @@ This directory is organized by purpose so operational guides, product docs, and 
 - `deployment/helm.md`
 - `providers/google-apis-lookup.md`
 
+## Security
+
+- Security index and quick links: `security/README.md`
+- **Golden image pipeline** (CI → scan → push → sign → deploy enforcement): `security/golden-image-pipeline.md`
+- Defense-in-depth reference guide: `security/clawql-security-defense-in-depth.md`
+- Deliverables matrix (shipped vs partial vs planned): `security/clawql-security-defense-deliverables.md`
+- npm publish hardening: `security/npm-supply-chain.md`
+- Image signature enforcement at deploy (Kyverno / policy): `security/image-signature-enforcement.md`
+
 ## Benchmarks and Case Studies
 
 - Benchmarks: `benchmarks/`
@@ -45,7 +54,7 @@ This directory is organized by purpose so operational guides, product docs, and 
 - Recipes: `recipes/`
 - Presentations: `presentations/`
 - Announcements: `announcements/`
-- Security references: `security/`
+- Security references: `security/` — reference [`security/clawql-security-defense-in-depth.md`](security/clawql-security-defense-in-depth.md) and engineering matrix [`security/clawql-security-defense-deliverables.md`](security/clawql-security-defense-deliverables.md) ([#164](https://github.com/danielsmithdevelopment/ClawQL/issues/164))
 - Roadmaps: `roadmap/`
 - Integrations: `integrations/`
 - Backlog notes: `backlog/`

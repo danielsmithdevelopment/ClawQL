@@ -54,15 +54,17 @@ onyx:
         cpu: "2"
         memory: 1536Mi
   vespa:
+    # Docker Desktop reports lower available memory to container guardrails; allow Vespa startup.
+    ignoreNotEnoughMemory: true
     persistence:
       enabled: true
     resources:
       requests:
         cpu: 100m
-        memory: 512Mi
+        memory: 384Mi
       limits:
-        cpu: "2"
-        memory: 3Gi
+        cpu: "1"
+        memory: 1536Mi
   minio:
     persistence:
       enabled: true
@@ -70,17 +72,17 @@ onyx:
     resources:
       requests:
         cpu: 100m
-        memory: 512Mi
+        memory: 384Mi
       limits:
-        cpu: "2"
-        memory: 4Gi
+        cpu: "1"
+        memory: 2Gi
   resources:
     requests:
       cpu: 100m
-      memory: 512Mi
+      memory: 384Mi
     limits:
-      cpu: "2"
-      memory: 1536Mi
+      cpu: "1"
+      memory: 1Gi
 
 ouroborosPostgres:
   enabled: true
@@ -93,7 +95,23 @@ nats:
 flink:
   enabled: true
   jobManagerMemoryProcessSize: "1024m"
-  taskManagerMemoryProcessSize: "2048m"
+  taskManagerMemoryProcessSize: "1024m"
+  jobManager:
+    resources:
+      requests:
+        cpu: 200m
+        memory: 384Mi
+      limits:
+        cpu: "1"
+        memory: 768Mi
+  taskManager:
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: "1"
+        memory: 1Gi
 
 resources:
   requests:
@@ -114,9 +132,9 @@ vault:
 ui:
   enabled: true
   image:
-    repository: clawql-website
+    repository: ghcr.io/danielsmithdevelopment/clawql-website
     tag: latest
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
   ingress:
     enabled: true
     className: nginx
@@ -147,12 +165,66 @@ providerIngress:
 envFromSecret: clawql-github-auth
 
 documentPipeline:
+  tika:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 300m
+        memory: 512Mi
+  gotenberg:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 192Mi
+      limits:
+        cpu: 500m
+        memory: 768Mi
   stirling:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 1Gi
     security:
       enableLogin: true
       disableAdditionalFeatures: false
   paperless:
+    resources:
+      requests:
+        cpu: 200m
+        memory: 384Mi
+      limits:
+        cpu: "1"
+        memory: 1Gi
     auth:
       adminUser: admin
       adminPassword: admin
       adminMail: admin@localhost
+
+stores:
+  postgres:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 768Mi
+  redis:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 300m
+        memory: 384Mi
+
+# local-k8s-up: Kyverno verifies Cosign (keyless) signatures for ClawQL GHCR images in this release namespace only.
+kyverno:
+  imageSignaturePolicy:
+    enabled: true
+    matchReleaseNamespaceOnly: true

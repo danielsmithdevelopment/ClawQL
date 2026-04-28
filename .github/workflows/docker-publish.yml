@@ -1,5 +1,10 @@
 # Build and push the Distroless MCP image to GitHub Container Registry (GHCR).
 # Daily schedule keeps `latest` / `nightly` fresh; manual runs via workflow_dispatch.
+#
+# Golden-image pipeline (this workflow): same **repo** supply-chain gates as CI (**OSV-Scanner**, **Trivy** fs,
+# **Syft** SBOM artifact); **one BuildKit build** exports a **local OCI image layout** → **Trivy** scans it → **skopeo copy**
+# pushes **that same layout** to GHCR (**no second build / no drift**); **Cosign** + **`imagetools`** promotion of
+# **`latest`** / **`nightly`** / **`nightly-YYYYMMDD`** only after the registry digest exists.
 name: Docker publish
 
 on:
@@ -14,17 +19,55 @@ concurrency:
 permissions:
   contents: read
   packages: write
+  id-token: write # Cosign keyless (OIDC → Sigstore)
 
 env:
   # GHCR requires lowercase; package name matches npm `clawql-mcp`.
   IMAGE_NAME: ghcr.io/danielsmithdevelopment/clawql-mcp
   WEBSITE_IMAGE_NAME: ghcr.io/danielsmithdevelopment/clawql-website
+  # Pin scanner image (public GHCR; avoids Docker Hub rate limits in CI).
+  TRIVY_SCAN_IMAGE: ghcr.io/aquasecurity/trivy:0.59.1
 
 jobs:
+  # Mirrors `.github/workflows/ci.yml` **`supply-chain`**: repo lockfiles + manifests + SBOM before any push/sign.
+  repo-supply-chain:
+    name: Repo supply chain (OSV + Trivy fs + Syft SBOM)
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: OSV-Scanner (lockfiles + manifests)
+        run: docker run --rm -v "$PWD:/repo" -w /repo ghcr.io/google/osv-scanner:latest scan --recursive --config osv-scanner.toml .
+
+      - name: Trivy filesystem (HIGH / CRITICAL)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+        with:
+          scan-type: fs
+          scan-ref: "."
+          scanners: vuln
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+          trivyignores: .trivyignore
+          skip-dirs: node_modules,website/node_modules,dist,packages/mcp-grpc-transport/dist,packages/clawql-ouroboros/dist,.git
+
+      - name: CycloneDX SBOM (Syft)
+        run: |
+          docker run --rm -v "$PWD:/repo" -w /repo anchore/syft:v1.19.0 \
+            scan . -o "cyclonedx-json=sbom-cyclonedx-repo.cdx.json"
+
+      - name: Upload repository SBOM
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92f46ad981cfe0d85
+        with:
+          name: sbom-cyclonedx-repository-docker-publish
+          path: sbom-cyclonedx-repo.cdx.json
+          if-no-files-found: error
+
   build-push-mcp:
     name: Build and push
+    needs: [repo-supply-chain]
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       # actions/checkout@v6.0.2
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
@@ -39,39 +82,96 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # docker/metadata-action@v6.0.0
+      # docker/metadata-action@v6.0.0 — only **immutable** tags on registry push; `latest` / `nightly` promoted after gates.
       - name: Docker metadata
         id: meta
         uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf
         with:
           images: ${{ env.IMAGE_NAME }}
           tags: |
-            type=raw,value=latest
-            type=raw,value=nightly
             type=sha,prefix=sha-,format=short
-            type=schedule,pattern=nightly-{{date 'YYYYMMDD'}}
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
 
-      # docker/build-push-action@v7.1.0
-      - name: Build and push
-        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f
-        with:
-          context: .
-          file: docker/Dockerfile
-          push: true
-          # Apple Silicon Docker Desktop (linux/arm64) + typical Linux nodes (amd64)
-          platforms: linux/amd64,linux/arm64
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+      - name: Install skopeo
+        run: sudo apt-get update && sudo apt-get install -y skopeo
+
+      - name: Build OCI layout (single artifact — scanned and pushed)
+        run: |
+          set -euo pipefail
+          # `tar=false` directory layout — Trivy supports OCI layout dirs; BuildKit OCI *tarballs* often fail Trivy (#5136).
+          DEST="${RUNNER_TEMP}/clawql-mcp-oci"
+          rm -rf "${DEST}"
+          mkdir -p "${DEST}"
+          docker buildx build \
+            --file docker/Dockerfile \
+            --platform linux/amd64,linux/arm64 \
+            --output "type=oci,tar=false,dest=${DEST}" \
+            --cache-from type=gha,scope=docker-publish-mcp \
+            --cache-to type=gha,mode=max,scope=docker-publish-mcp \
+            --provenance=mode=max \
+            --sbom=true \
+            .
+
+      - name: Trivy scan OCI layout (HIGH / CRITICAL — before registry push)
+        run: |
+          set -euo pipefail
+          docker run --rm \
+            -v "${GITHUB_WORKSPACE}:/repo:ro" \
+            -v "${RUNNER_TEMP}/clawql-mcp-oci:/work/oci:ro" \
+            "${{ env.TRIVY_SCAN_IMAGE }}" \
+            image \
+            --scanners vuln \
+            --severity HIGH,CRITICAL \
+            --exit-code 1 \
+            --ignorefile /repo/.trivyignore \
+            --input /work/oci
+
+      - name: Push OCI layout to GHCR (skopeo — same bytes Trivy scanned)
+        id: oci_push
+        env:
+          IMAGE_TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          set -euo pipefail
+          AUTH=(--authfile "${DOCKER_CONFIG:-$HOME/.docker}/config.json")
+          SRC="oci:${RUNNER_TEMP}/clawql-mcp-oci"
+          if [ -z "${IMAGE_TAGS//[$'\t\r\n ']}" ]; then
+            echo "No image tags from metadata-action" >&2
+            exit 1
+          fi
+          while IFS= read -r dest; do
+            [ -z "${dest// }" ] && continue
+            skopeo copy "${AUTH[@]}" --all "${SRC}" "docker://${dest}"
+          done <<< "${IMAGE_TAGS}"
+          FIRST="$(printf '%s\n' "${IMAGE_TAGS}" | sed '/^[[:space:]]*$/d' | head -n1)"
+          DIGEST="$(skopeo inspect "${AUTH[@]}" "docker://${FIRST}" --format '{{.Digest}}')"
+          echo "digest=${DIGEST}" >> "$GITHUB_OUTPUT"
+
+      # sigstore/cosign-installer — HEAD @ 2026-04 (pin updates via release tags when you bump).
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@b5e753ae2d39589c7b38850b463739151fc67f07
+
+      - name: Cosign sign (keyless)
+        if: ${{ steps.oci_push.outputs.digest != '' }}
+        run: cosign sign --yes "${{ env.IMAGE_NAME }}@${{ steps.oci_push.outputs.digest }}"
+
+      - name: Promote rolling tags (latest / nightly / nightly-YYYYMMDD)
+        if: ${{ steps.oci_push.outputs.digest != '' }}
+        run: |
+          set -euo pipefail
+          SRC="${{ env.IMAGE_NAME }}@${{ steps.oci_push.outputs.digest }}"
+          TAGS=(--tag "${{ env.IMAGE_NAME }}:latest" --tag "${{ env.IMAGE_NAME }}:nightly")
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            TAGS+=(--tag "${{ env.IMAGE_NAME }}:nightly-$(date -u +%Y%m%d)")
+          fi
+          docker buildx imagetools create "${TAGS[@]}" "$SRC"
 
   build-push-website:
     name: Build and push website
+    needs: [repo-supply-chain]
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       # actions/checkout@v6.0.2
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
@@ -92,34 +192,87 @@ jobs:
           echo "version=$(node -e 'console.log(require(\"./package.json\").version)')" >> "$GITHUB_OUTPUT"
           echo "description=$(node -e 'console.log(require(\"./package.json\").description)')" >> "$GITHUB_OUTPUT"
 
-      # docker/metadata-action@v6.0.0
+      # docker/metadata-action@v6.0.0 — immutable **`sha-*`** only until promotion (same as MCP image).
       - name: Docker metadata
         id: meta
         uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf
         with:
           images: ${{ env.WEBSITE_IMAGE_NAME }}
           tags: |
-            type=raw,value=latest
-            type=raw,value=nightly
             type=sha,prefix=sha-,format=short
-            type=schedule,pattern=nightly-{{date 'YYYYMMDD'}}
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
 
-      # docker/build-push-action@v7.1.0
-      - name: Build and push website
-        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f
-        with:
-          context: ./website
-          file: website/Dockerfile
-          push: true
-          # Apple Silicon Docker Desktop (linux/arm64) + typical Linux nodes (amd64)
-          platforms: linux/amd64,linux/arm64
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          build-args: |
-            CLAWQL_PACKAGE_VERSION=${{ steps.pkg.outputs.version }}
-            CLAWQL_PACKAGE_DESCRIPTION=${{ steps.pkg.outputs.description }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+      - name: Install skopeo
+        run: sudo apt-get update && sudo apt-get install -y skopeo
+
+      - name: Build OCI layout (single artifact — scanned and pushed)
+        run: |
+          set -euo pipefail
+          DEST="${RUNNER_TEMP}/clawql-website-oci"
+          rm -rf "${DEST}"
+          mkdir -p "${DEST}"
+          docker buildx build \
+            --file website/Dockerfile \
+            --platform linux/amd64,linux/arm64 \
+            --output "type=oci,tar=false,dest=${DEST}" \
+            --cache-from type=gha,scope=docker-publish-website \
+            --cache-to type=gha,mode=max,scope=docker-publish-website \
+            --provenance=mode=max \
+            --sbom=true \
+            --build-arg "CLAWQL_PACKAGE_VERSION=${{ steps.pkg.outputs.version }}" \
+            --build-arg "CLAWQL_PACKAGE_DESCRIPTION=${{ steps.pkg.outputs.description }}" \
+            ./website
+
+      - name: Trivy scan OCI layout (HIGH / CRITICAL — before registry push)
+        run: |
+          set -euo pipefail
+          docker run --rm \
+            -v "${GITHUB_WORKSPACE}:/repo:ro" \
+            -v "${RUNNER_TEMP}/clawql-website-oci:/work/oci:ro" \
+            "${{ env.TRIVY_SCAN_IMAGE }}" \
+            image \
+            --scanners vuln \
+            --severity HIGH,CRITICAL \
+            --exit-code 1 \
+            --ignorefile /repo/.trivyignore \
+            --input /work/oci
+
+      - name: Push OCI layout to GHCR (skopeo — same bytes Trivy scanned)
+        id: oci_push
+        env:
+          IMAGE_TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          set -euo pipefail
+          AUTH=(--authfile "${DOCKER_CONFIG:-$HOME/.docker}/config.json")
+          SRC="oci:${RUNNER_TEMP}/clawql-website-oci"
+          if [ -z "${IMAGE_TAGS//[$'\t\r\n ']}" ]; then
+            echo "No image tags from metadata-action" >&2
+            exit 1
+          fi
+          while IFS= read -r dest; do
+            [ -z "${dest// }" ] && continue
+            skopeo copy "${AUTH[@]}" --all "${SRC}" "docker://${dest}"
+          done <<< "${IMAGE_TAGS}"
+          FIRST="$(printf '%s\n' "${IMAGE_TAGS}" | sed '/^[[:space:]]*$/d' | head -n1)"
+          DIGEST="$(skopeo inspect "${AUTH[@]}" "docker://${FIRST}" --format '{{.Digest}}')"
+          echo "digest=${DIGEST}" >> "$GITHUB_OUTPUT"
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@b5e753ae2d39589c7b38850b463739151fc67f07
+
+      - name: Cosign sign (keyless)
+        if: ${{ steps.oci_push.outputs.digest != '' }}
+        run: cosign sign --yes "${{ env.WEBSITE_IMAGE_NAME }}@${{ steps.oci_push.outputs.digest }}"
+
+      - name: Promote rolling tags (latest / nightly / nightly-YYYYMMDD)
+        if: ${{ steps.oci_push.outputs.digest != '' }}
+        run: |
+          set -euo pipefail
+          SRC="${{ env.WEBSITE_IMAGE_NAME }}@${{ steps.oci_push.outputs.digest }}"
+          TAGS=(--tag "${{ env.WEBSITE_IMAGE_NAME }}:latest" --tag "${{ env.WEBSITE_IMAGE_NAME }}:nightly")
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            TAGS+=(--tag "${{ env.WEBSITE_IMAGE_NAME }}:nightly-$(date -u +%Y%m%d)")
+          fi
+          docker buildx imagetools create "${TAGS[@]}" "$SRC"

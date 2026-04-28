@@ -76,7 +76,7 @@ Twelve new issues were opened to connect the **April 2026** deck to an explicit 
 | #        | Area                                                                                                                            |
 | -------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | **#155** | Optional **Istio** + **Kiali**, mTLS east-west                                                                                  |
-| **#156** | **OSV-Scanner** + Golden Image / CI / optional **CronJob** / `search`+`execute` path                                            |
+| **#156** | **OSV-Scanner** + Golden Image — **CI + publish + docs** (narrowed); **#202**–**#204** = MCP OSV, Helm rescan, audit/memory hooks |
 | **#157** | **Hyperledger Fabric** — Helm, `CLAWQL_ENABLE_FABRIC`, `providers/fabric`                                                       |
 | **#158** | **The Graph** — bundled OpenAPI / execute path                                                                                  |
 | **#159** | **Chainlink** — bundled provider surface                                                                                        |

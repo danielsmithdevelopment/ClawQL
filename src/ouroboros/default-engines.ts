@@ -4,6 +4,7 @@
  */
 
 import type { Evaluator, Executor, ReflectEngine, Seed, WonderEngine } from "clawql-ouroboros";
+import { isGoogleDiscoverySpecLabel } from "../auth-headers.js";
 
 type ToolTextResponse = { content?: Array<{ type?: string; text?: string }> };
 const KNOWN_PROVIDERS = ["github", "cloudflare", "slack", "jira", "gcp", "google"] as const;
@@ -52,27 +53,70 @@ function providersMentionedInAc(acceptanceCriteria: string[]): Set<string> {
   return providers;
 }
 
+function mergedSpecPrefix(operationId: string): string | undefined {
+  const m = operationId.match(/^([a-z0-9-]+)::/i);
+  return m ? m[1].toLowerCase() : undefined;
+}
+
+function canonicalOperationId(operationId: string): string {
+  const idx = operationId.indexOf("::");
+  return (idx >= 0 ? operationId.slice(idx + 2) : operationId).toLowerCase();
+}
+
+function addProvidersFromMergedPrefix(operationId: string, providers: Set<string>): void {
+  const prefix = mergedSpecPrefix(operationId);
+  if (!prefix) return;
+  if (prefix === "github") providers.add("github");
+  if (prefix === "cloudflare") providers.add("cloudflare");
+  if (prefix === "slack") providers.add("slack");
+  if (prefix === "jira" || prefix === "bitbucket") providers.add("jira");
+  if (isGoogleDiscoverySpecLabel(prefix)) {
+    providers.add("google");
+    providers.add("gcp");
+  }
+}
+
 function providersCoveredByExecution(outputObj: Record<string, unknown> | null): Set<string> {
   const providers = new Set<string>();
   if (!outputObj) return providers;
   const inferByOperationId = (operationIdRaw: unknown) => {
-    const operationId = typeof operationIdRaw === "string" ? operationIdRaw.toLowerCase() : "";
-    if (!operationId) return;
+    const raw = typeof operationIdRaw === "string" ? operationIdRaw : "";
+    if (!raw) return;
+    addProvidersFromMergedPrefix(raw, providers);
+    const canon = canonicalOperationId(raw);
+    const firstSeg = canon.split("/").filter(Boolean)[0] ?? "";
+    if (firstSeg === "github") providers.add("github");
+    if (firstSeg === "cloudflare") providers.add("cloudflare");
     if (
-      operationId.startsWith("repos/") ||
-      operationId.startsWith("issues/") ||
-      operationId.startsWith("pulls/") ||
-      operationId.startsWith("gists/") ||
-      operationId.startsWith("actions/")
+      canon.startsWith("repos/") ||
+      canon.includes("/repos/") ||
+      /(^|\/)(repos|issues|pulls|gists|actions)(\/|-|$)/.test(canon)
     ) {
       providers.add("github");
     }
     if (
-      operationId === "zones-get" ||
-      operationId.includes("dns-records") ||
-      operationId.includes("cloudflare")
+      canon === "zones-get" ||
+      canon.endsWith("/zones-get") ||
+      canon.includes("dns-records") ||
+      canon.includes("cloudflare")
     ) {
       providers.add("cloudflare");
+    }
+    // Google Cloud Discovery-style ids (e.g. run.projects.locations.services.list)
+    if (/^[a-z][a-z0-9.]*\.[a-z0-9.]+$/i.test(canon)) {
+      const dots = (canon.match(/\./g) ?? []).length;
+      if (dots >= 2) {
+        providers.add("google");
+        providers.add("gcp");
+      }
+    }
+    // Slack Web API (underscore ids; bundled ops rarely collide with other vendors)
+    if (
+      /^slack::/i.test(raw) ||
+      (canon.startsWith("chat_") && !canon.includes("/") && !canon.includes(".")) ||
+      (canon.startsWith("conversations_") && !canon.includes("/") && !canon.includes("."))
+    ) {
+      providers.add("slack");
     }
   };
 
@@ -83,10 +127,6 @@ function providersCoveredByExecution(outputObj: Record<string, unknown> | null):
     const s = asRecord(step);
     if (!s) continue;
     inferByOperationId(s.operationId);
-  }
-  const haystack = JSON.stringify(outputObj).toLowerCase();
-  for (const provider of KNOWN_PROVIDERS) {
-    if (haystack.includes(provider)) providers.add(provider);
   }
   return providers;
 }

@@ -1,0 +1,3 @@
+# Align with osv-scanner.toml — Next.js DoS in React Server Components (fixed >=16.2.3).
+# Docs site remains on Next 16.1.x until MDX `metadata` export works with Next 16.2+ pipeline.
+GHSA-q4gf-8mx6-v5v3

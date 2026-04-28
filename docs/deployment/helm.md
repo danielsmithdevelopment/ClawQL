@@ -10,9 +10,21 @@ Use this when you prefer **`helm install` / `helm upgrade`** over **`kubectl app
 
 - Kubernetes 1.24+ (typical for `networking.k8s.io/v1` Ingress)
 - [Helm 3](https://helm.sh/)
+- **[Kyverno](https://kyverno.io/)** installed in the cluster (CRDs + controller) if you use the chart default **`kyverno.imageSignaturePolicy.enabled: true`** — otherwise **`helm install`** applies a **`ClusterPolicy`** the API server cannot store until Kyverno is present. Clusters without Kyverno: **`--set kyverno.imageSignaturePolicy.enabled=false`**. Context: **[`docs/security/golden-image-pipeline.md`](../security/golden-image-pipeline.md)** and **[`docs/security/image-signature-enforcement.md`](../security/image-signature-enforcement.md)**.
 - An image your cluster can pull (default: **`ghcr.io/danielsmithdevelopment/clawql-mcp`**, multi-arch **amd64** / **arm64** when published from CI)
 
 Private GHCR: create a pull secret and set **`imagePullSecrets`** (see [values](../charts/clawql-mcp/values.yaml)).
+
+### Kyverno image signatures (default on)
+
+The chart **renders a `ClusterPolicy`** (**`verifyImages`**, Cosign keyless) for default **`ghcr.io/.../clawql-mcp*`** and **`clawql-website*`** when **`kyverno.imageSignaturePolicy.enabled`** is **`true`** (the **default** in [`values.yaml`](../charts/clawql-mcp/values.yaml)). Install **Kyverno** before upgrading ClawQL, or opt out:
+
+```bash
+helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
+  --set kyverno.imageSignaturePolicy.enabled=false
+```
+
+Forks and custom registries: override **`kyverno.imageSignaturePolicy.imageReferences`** and **`kyverno.imageSignaturePolicy.cosign`** regexes in values or an overlay. **`make local-k8s-up`** installs Kyverno for Docker Desktop. **CI → admission story:** **[`docs/security/golden-image-pipeline.md`](../security/golden-image-pipeline.md)**; policy fields and caveats: **[`docs/security/image-signature-enforcement.md`](../security/image-signature-enforcement.md)**.
 
 ## Install from a repo clone
 
@@ -237,7 +249,7 @@ See **[`charts/clawql-mcp/values.yaml`](../charts/clawql-mcp/values.yaml)**. Com
 | `ingress`                                           | Optional HTTP(S) Ingress                                                                                                                                                                                                                                                                                                                                                                                              |
 | `ui`                                                | Optional UI Deployment/Service/Ingress (defaults for Docker Desktop use `clawql.localhost`)                                                                                                                                                                                                                                                                                                                           |
 
-**Docker Desktop:** **`make local-k8s-up`** defaults to **`helm upgrade --install`** with **`values-docker-desktop.yaml`** (LoadBalancer **8080**, **`all-providers`**, **`vault.hostPath.path`** = **`$HOME/.ClawQL`**, UI Ingress host **`clawql.localhost`**). The script builds a local UI image from `website/` by default and installs ingress-nginx unless disabled (`CLAWQL_LOCAL_K8S_BUILD_UI_IMAGE=0` and/or `CLAWQL_LOCAL_K8S_INSTALL_INGRESS_NGINX=0`). For **Kustomize** instead: **`CLAWQL_LOCAL_K8S_INSTALLER=kustomize`** (same script; **`docker/kustomize/overlays/local`**).
+**Docker Desktop:** **`make local-k8s-up`** installs **Kyverno**, then **`helm upgrade --install`** with **`values-docker-desktop.yaml`** (LoadBalancer **8080**, **`all-providers`**, **`vault.hostPath.path`** = **`$HOME/.ClawQL`**, UI Ingress **`clawql.localhost`**, signed **`ghcr.io/.../clawql-mcp`** and **`clawql-website`**, **`kyverno.imageSignaturePolicy`** enabled with **`matchReleaseNamespaceOnly: true`**). **ingress-nginx** installs unless **`CLAWQL_LOCAL_K8S_INSTALL_INGRESS_NGINX=0`**. **Kustomize** for the MCP manifest: **`CLAWQL_LOCAL_K8S_INSTALLER=kustomize`** — Helm is still required for Kyverno and for templating the **ClusterPolicy**. Unsigned local image build env vars are **not** supported (script exits).
 
 ## Lint and template (CI / local)
 

@@ -3,7 +3,7 @@ import { docsPageMetadata } from '@/lib/seo'
 export const metadata = docsPageMetadata({
   title: 'Kubernetes',
   description:
-    'ClawQL on Kubernetes: Helm chart (Docker Desktop default) or Kustomize dev/prod, Streamable HTTP localhost:8080/mcp, optional gRPC 50051.',
+    'Helm or Kustomize, Kyverno and signed GHCR images on Docker Desktop, Streamable HTTP localhost:8080/mcp, optional gRPC 50051.',
   path: '/kubernetes',
 })
 
@@ -18,7 +18,7 @@ Use this when you want a **stable URL** (for example **`http://localhost:8080/mc
 ### Prerequisites
 
 - Docker Desktop with **Kubernetes** enabled (Settings → Kubernetes).
-- **`kubectl`** on your PATH. **Helm 3** is required for the **default** install path only.
+- **`kubectl`** and **Helm 3** on your PATH (**Helm** is required for **Kyverno** on every `local-k8s-up` path, including Kustomize).
 - Repo clone at the version you want to run.
 
 ### One-shot install
@@ -35,9 +35,11 @@ Or:
 bash scripts/local-k8s-docker-desktop.sh
 ```
 
-**Default:** **`helm upgrade --install`** with **`charts/clawql-mcp/values-docker-desktop.yaml`**: **`ghcr.io/danielsmithdevelopment/clawql-mcp:latest`**, LoadBalancer on **8080**, **`all-providers`**, **`hostPath`** vault at **`$HOME/.ClawQL`** (override **`CLAWQL_LOCAL_VAULT_HOST_PATH`**).
+**Default:** **`helm upgrade --install`** with **`charts/clawql-mcp/values-docker-desktop.yaml`**: signed **`ghcr.io/danielsmithdevelopment/clawql-mcp:latest`** and **`ghcr.io/danielsmithdevelopment/clawql-website:latest`**, LoadBalancer on **8080**, **`all-providers`**, **`hostPath`** vault at **`$HOME/.ClawQL`** (override **`CLAWQL_LOCAL_VAULT_HOST_PATH`**). The script installs **Kyverno** and a **ClusterPolicy** so those images must pass **Cosign** verification in the **`clawql`** namespace (unsigned local **`docker build`** deploys are **not** supported).
 
-**Kustomize:** **`CLAWQL_LOCAL_K8S_INSTALLER=kustomize make local-k8s-up`** — **`kubectl apply -k docker/kustomize/overlays/local`** (no Helm). To **build locally** instead of GHCR, run **`CLAWQL_LOCAL_K8S_BUILD_IMAGE=1 make local-k8s-up`** (works with either installer).
+**Kustomize:** **`CLAWQL_LOCAL_K8S_INSTALLER=kustomize make local-k8s-up`** — **`kubectl apply -k docker/kustomize/overlays/local`** for the MCP workload; **Helm** still installs **Kyverno** and applies the **ClusterPolicy** template from the chart.
+
+**How this ties to CI:** full **golden image** and admission story — **[golden-image-pipeline.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/golden-image-pipeline.md)** and [Security](/security).
 
 ### Endpoints and client config
 
@@ -89,7 +91,7 @@ This creates/updates Secret **`clawql-github-auth`** (name kept for backward com
 
 ### Rebuild after code changes
 
-After you change the repo, either rebuild locally (**`CLAWQL_LOCAL_K8S_BUILD_IMAGE=1 make local-k8s-up`**) or pull a new GHCR tag and run **`helm upgrade`** with **`image.tag`**. Example recycle:
+Kubernetes on Docker Desktop expects **signed** images from **GHCR**. After upstream publishes a new tag, run **`make local-k8s-up`** again (or **`helm upgrade`** with **`image.tag`** / digest). For rapid local edits without admission, use **`make local-docker-up`**. Example recycle:
 
 ```bash
 make local-k8s-up

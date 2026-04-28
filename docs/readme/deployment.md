@@ -68,6 +68,8 @@ Local Docker Desktop:
 make local-k8s-up
 ```
 
+This path installs **Kyverno**, uses **signed GHCR** images for ClawQL MCP/UI, and applies the chart’s **`verifyImages`** policy in the **`clawql`** namespace. Unsigned local image overrides are not supported. **End-to-end** supply chain and admission narrative: **`docs/security/golden-image-pipeline.md`**.
+
 Remote clusters:
 
 ```bash
@@ -78,6 +80,7 @@ References:
 
 - `docs/deployment/deploy-k8s.md`
 - `docs/deployment/helm.md`
+- `docs/security/golden-image-pipeline.md`
 - `docker/README.md`
 
 ## Optional gRPC Transport

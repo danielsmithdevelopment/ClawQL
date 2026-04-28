@@ -147,6 +147,29 @@ describe("createDefaultOuroborosEngines", () => {
     expect(evaluation.ac_results[1].evidence).toContain("missing provider evidence");
   });
 
+  it("does not treat goal text as provider execution evidence (no greenwash on substring)", async () => {
+    const engines = createDefaultOuroborosEngines({ execute: vi.fn(), search: vi.fn() });
+    const seed = makeSeed({});
+    seed.acceptance_criteria = [
+      "GitHub repos are listed",
+      "Cloudflare zones-get succeeds",
+    ];
+    const output = JSON.stringify({
+      kind: "clawql-ouroboros-default-execute",
+      goal: "Exercise github and cloudflare in one run",
+      route: "execute",
+      operationId: "repos/list-public",
+      args: {},
+      result: '{"data":[]}',
+    });
+
+    const evaluation = await engines.evaluate.evaluate(output, seed);
+    expect(evaluation.final_approved).toBe(false);
+    expect(evaluation.ac_results[0].passed).toBe(true);
+    expect(evaluation.ac_results[1].passed).toBe(false);
+    expect(evaluation.ac_results[1].evidence).toContain("missing provider evidence");
+  });
+
   it("recognizes GitHub provider from single-route operationId style", async () => {
     const execute = vi.fn(async () => ({
       content: [{ type: "text", text: '{"ok":true}' }],

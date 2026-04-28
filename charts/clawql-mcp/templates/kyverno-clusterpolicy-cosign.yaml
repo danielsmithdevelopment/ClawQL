@@ -1,0 +1,57 @@
+{{- if .Values.kyverno.imageSignaturePolicy.enabled }}
+{{- $defaultName := printf "%s-ghcr-cosign-keyless" .Release.Name }}
+{{- $policyName := .Values.kyverno.imageSignaturePolicy.policyName | default $defaultName | trunc 63 | trimSuffix "-" }}
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: {{ $policyName }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+  annotations:
+    policies.kyverno.io/title: {{ .Values.kyverno.imageSignaturePolicy.policyTitle | quote }}
+spec:
+  validationFailureAction: {{ .Values.kyverno.imageSignaturePolicy.validationFailureAction }}
+  background: {{ .Values.kyverno.imageSignaturePolicy.background }}
+  failurePolicy: {{ .Values.kyverno.imageSignaturePolicy.failurePolicy }}
+  webhookTimeoutSeconds: {{ .Values.kyverno.imageSignaturePolicy.webhookTimeoutSeconds }}
+  rules:
+    - name: verify-clawql-images
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              {{- if .Values.kyverno.imageSignaturePolicy.matchReleaseNamespaceOnly }}
+              namespaces:
+                - {{ .Release.Namespace | quote }}
+              {{- end }}
+      {{- with .Values.kyverno.imageSignaturePolicy.excludeNamespaces }}
+      {{- if gt (len .) 0 }}
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                {{- range . }}
+                - {{ . | quote }}
+                {{- end }}
+      {{- end }}
+      {{- end }}
+      verifyImages:
+        - imageReferences:
+            {{- range .Values.kyverno.imageSignaturePolicy.imageReferences }}
+            - {{ . | quote }}
+            {{- end }}
+          {{- if .Values.kyverno.imageSignaturePolicy.verifyDigest }}
+          verifyDigest: true
+          {{- end }}
+          {{- if .Values.kyverno.imageSignaturePolicy.mutateDigest }}
+          mutateDigest: true
+          {{- end }}
+          attestors:
+            - entries:
+                - keyless:
+                    subjectRegExp: {{ .Values.kyverno.imageSignaturePolicy.cosign.subjectRegExp | quote }}
+                    issuerRegExp: {{ .Values.kyverno.imageSignaturePolicy.cosign.issuerRegExp | quote }}
+                    rekor:
+                      url: {{ .Values.kyverno.imageSignaturePolicy.cosign.rekorUrl | quote }}
+{{- end }}

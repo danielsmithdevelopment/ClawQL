@@ -14,6 +14,27 @@ Tags include **`latest`**, **`nightly`**, **`sha-<short>`**, and on scheduled ru
 docker pull ghcr.io/danielsmithdevelopment/clawql-mcp:latest
 ```
 
+## Supply chain (SBOM, provenance, scan, sign)
+
+**Narrative (end to end + cluster enforcement):** **[`docs/security/golden-image-pipeline.md`](../docs/security/golden-image-pipeline.md)**.
+
+The [Docker publish workflow](../.github/workflows/docker-publish.yml) first runs the same **repository** gates as CI (**OSV-Scanner**, **Trivy** filesystem, **Syft** CycloneDX SBOM artifact). Only after those pass, **one `docker buildx build`** writes each image to a **local OCI image layout** (`type=oci,tar=false` — no registry write) with **BuildKit SBOM + provenance attestations**; **Trivy** scans that layout (**HIGH** / **CRITICAL**, [`.trivyignore`](../.trivyignore)) and the workflow **fails before any GHCR write** if the scan fails. The **same layout** is then published with **`skopeo copy`** (**no second build**), **immutable `sha-*`** tags first, then **Cosign** keyless signing (GitHub Actions OIDC) and promotion of **`latest`** / **`nightly`** / **`nightly-YYYYMMDD`** via `docker buildx imagetools create`. Rolling tags never advance on a failed gate. (Scanner coverage is still bounded by Trivy/OSV data and configured severities; it is not a proof of zero defects.) For **npm** packages, see **[`docs/security/npm-supply-chain.md`](../docs/security/npm-supply-chain.md)**.
+
+**Verify a signature** (install [Cosign](https://docs.sigstore.dev/cosign/installation/); use the digest from GHCR or the workflow log):
+
+```bash
+IMAGE="ghcr.io/danielsmithdevelopment/clawql-mcp@sha256:<digest>"
+cosign verify "$IMAGE" \
+  --certificate-identity-regexp 'https://github\.com/danielsmithdevelopment/ClawQL/.*' \
+  --certificate-oidc-issuer-regexp 'https://token\.actions\.githubusercontent\.com.*'
+```
+
+Use the same pattern for **`ghcr.io/danielsmithdevelopment/clawql-website@sha256:…`**. If you fork the repo, adjust the **`certificate-identity-regexp`** to match your GitHub org/repo.
+
+**Cluster enforcement:** CI signing does not, by itself, stop someone from applying an unsigned image. For **admission-time** enforcement (e.g. Kyverno **`verifyImages`** + digest pins), see **[`docs/security/image-signature-enforcement.md`](../docs/security/image-signature-enforcement.md)**.
+
+**Repository SBOM (lockfiles + sources Syft detects):** the [CI `supply-chain` job](../.github/workflows/ci.yml) uploads a **CycloneDX JSON** artifact (**`sbom-cyclonedx-repository`**) from **Syft** — download it from the workflow run’s **Artifacts** tab on GitHub Actions.
+
 ## Build
 
 From the repository root:
@@ -96,8 +117,8 @@ Endpoints:
 ## Kubernetes on Docker Desktop (Helm default, Kustomize optional)
 
 1. Enable **Kubernetes** in Docker Desktop (Settings → Kubernetes → Enable cluster).
-2. **Default:** install **[Helm 3](https://helm.sh/docs/intro/install/)** on your PATH.
-3. From the repo root, **`make local-k8s-up`** runs **`helm upgrade --install`** with **`charts/clawql-mcp/values-docker-desktop.yaml`**: LoadBalancer on **8080**, **`ghcr.io/danielsmithdevelopment/clawql-mcp:latest`** (`imagePullPolicy: Always`), **`all-providers`**, and a **`hostPath`** vault at **`$HOME/.ClawQL`** (override **`CLAWQL_LOCAL_VAULT_HOST_PATH`**).
+2. Install **[Helm 3](https://helm.sh/docs/intro/install/)** on your PATH (**required** for every `local-k8s-up` path — the script installs **Kyverno** via Helm).
+3. From the repo root, **`make local-k8s-up`** installs **Kyverno** (namespace **`kyverno`**) and applies a **ClusterPolicy** that **enforces Cosign (keyless)** signatures for **`ghcr.io/danielsmithdevelopment/clawql-mcp*`** and **`clawql-website*`** in the **`clawql`** release namespace only. It then runs **`helm upgrade --install`** with **`charts/clawql-mcp/values-docker-desktop.yaml`**: LoadBalancer on **8080**, signed **`ghcr.io/.../clawql-mcp:latest`** and **`ghcr.io/.../clawql-website:latest`** (`pullPolicy: Always`), **`all-providers`**, and a **`hostPath`** vault at **`$HOME/.ClawQL`** (override **`CLAWQL_LOCAL_VAULT_HOST_PATH`**). The cluster must reach **Rekor** / Sigstore for verification.
 
 ```bash
 make local-k8s-up
@@ -106,9 +127,9 @@ make local-k8s-up
 
 If Helm errors with **invalid ownership** (MCP was previously installed with **`kubectl apply`** / Kustomize), remove the old workload and reinstall: **`make local-k8s-mcp-delete && make local-k8s-up`**.
 
-**Kustomize instead of Helm** (no Helm required): **`CLAWQL_LOCAL_K8S_INSTALLER=kustomize make local-k8s-up`** applies **`docker/kustomize/overlays/local`** (same GHCR image and host vault patch as before).
+**Kustomize instead of Helm for ClawQL manifests:** **`CLAWQL_LOCAL_K8S_INSTALLER=kustomize make local-k8s-up`** still uses **Helm** for **Kyverno**, then **`kubectl apply -k docker/kustomize/overlays/local`** and applies the same **ClusterPolicy** via **`helm template … --show-only`**.
 
-To **build the image locally** instead of pulling GHCR, run **`CLAWQL_LOCAL_K8S_BUILD_IMAGE=1 make local-k8s-up`** — the script runs **`docker build`** and deploys **`clawql-mcp:latest`** (Helm **`--set`** or Kustomize **`kubectl patch`**).
+**Unsigned local images are not supported** on this path: **`CLAWQL_LOCAL_K8S_BUILD_IMAGE=1`** and **`CLAWQL_LOCAL_K8S_BUILD_UI_IMAGE=1`** are rejected (Kyverno would block unsigned **`clawql-mcp`** / **`clawql-website`**). For local iteration from source without cluster admission, use **`make local-docker-up`** (Compose) or push a branch build to GHCR and point **`image.tag`** at that digest or tag.
 
 If the GHCR package is **private**, add **`imagePullSecrets`** via Helm values (same as any private registry).
 

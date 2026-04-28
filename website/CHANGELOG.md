@@ -2,7 +2,7 @@
 
 ## 2026-04-27
 
-- **clawql-mcp v5.0.0** alignment: native **`CLAWQL_GRAPHQL_*`** / **`CLAWQL_GRPC_SOURCES`** (incl. offline SDL / introspection paths), bundled **`linear`** GraphQL SDL, OpenAPI→GraphQL vs REST vs native **`execute`** routing on **Home**, **Concepts**, **Tools**, **GraphQL layer**, **Spec configuration**, **Bundled specs**, **Quickstart**; repo **CHANGELOG** **[5.0.0]** and Helm **`0.5.0`** / **`appVersion` `5.0.0`**.
+- **`clawql-mcp` v5.0.0** published to **npm** — site alignment for native **`CLAWQL_GRAPHQL_*`** / **`CLAWQL_GRPC_SOURCES`** (incl. offline SDL / introspection paths), bundled **`linear`** GraphQL SDL, OpenAPI→GraphQL vs REST vs native **`execute`** routing on **Home**, **Concepts**, **Tools**, **GraphQL layer**, **Spec configuration**, **Bundled specs**, **Quickstart**; repo root **CHANGELOG** **[5.0.0]** and Helm **`appVersion` `5.0.0`** / chart **`0.5.x`**. GitHub release **`v5.0.0`**; announcement drafts: **[`docs/announcements/announcement-drafts-v5.0.0.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/announcements/announcement-drafts-v5.0.0.md)**.
 
 ## 2026-04-24
 

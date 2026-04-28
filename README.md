@@ -62,6 +62,16 @@ Top-level docs index: `docs/README.md`
 - Kubernetes: `docs/deployment/deploy-k8s.md`
 - Helm chart: `docs/deployment/helm.md`
 
+### Security and supply chain
+
+- Security overview and shipped controls: `docs/security/README.md`
+- **Golden image pipeline** (CI → scan → push → sign → Kyverno enforcement): `docs/security/golden-image-pipeline.md`
+- Defense in depth reference: `docs/security/clawql-security-defense-in-depth.md`
+- Engineering deliverables matrix (shipped/partial/planned): `docs/security/clawql-security-defense-deliverables.md`
+- Docker SBOM/sign/scan operator notes: `docker/README.md`
+- npm publish hardening (pack → scan → publish, provenance): `docs/security/npm-supply-chain.md`
+- Deploy-time image signature enforcement (admission / Kyverno): `docs/security/image-signature-enforcement.md`
+
 ### Providers and specs
 
 - Provider matrix and presets: `providers/README.md`

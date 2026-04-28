@@ -9,16 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [5.0.0] - 2026-04-27
 
+Major release: **ADR 0002** native **GraphQL** + **gRPC** on the merged **`search` / `execute`** surface; **Core** MCP tools (**`audit`**, **`cache`**) always registered; golden-image **CI** + **Kyverno** defaults (**Helm 0.5.x**); supply-chain and security docs. Bugfixes: [#167](https://github.com/danielsmithdevelopment/ClawQL/issues/167), [#168](https://github.com/danielsmithdevelopment/ClawQL/issues/168).
+
+### Fixed
+
+- **Cloudflare `execute` auth:** **`mergedAuthHeaders("cloudflare")`** supports **Global API Key** pairs (**`X-Auth-Email`** + **`X-Auth-Key`**) via **`CLOUDFLARE_EMAIL`** / **`CLAWQL_CLOUDFLARE_EMAIL`** and **`CLOUDFLARE_API_KEY`** / **`CLAWQL_CLOUDFLARE_GLOBAL_API_KEY`** / **`CLOUDFLARE_GLOBAL_API_KEY`**; explicit **`CLOUDFLARE_API_TOKEN`** / **`CLAWQL_CLOUDFLARE_API_TOKEN`** still take precedence over **`CLAWQL_BEARER_TOKEN`** ([#168](https://github.com/danielsmithdevelopment/ClawQL/issues/168)).
+- **Ouroboros default engines evaluator:** provider evidence for acceptance criteria no longer uses a whole-payload substring match (so text like **`goal`** cannot “cover” Cloudflare); inference uses **`operationId`**, merged **`label::`** prefixes, and path-style heuristics ([#167](https://github.com/danielsmithdevelopment/ClawQL/issues/167)).
+
 ### Breaking
 
 - **`audit` MCP tool:** **`CLAWQL_ENABLE_AUDIT`** and Helm **`enableAudit`** removed — **`audit`** is always registered ([#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)). Delete obsolete env / chart keys; **`listTools`** always includes **`audit`**.
 - **`cache` MCP tool:** **`CLAWQL_ENABLE_CACHE`** and Helm **`enableCache`** removed — **`cache`** is always registered ([#75](https://github.com/danielsmithdevelopment/ClawQL/issues/75)). Delete obsolete env / chart keys; **`listTools`** always includes **`cache`**.
-- **`charts/clawql-mcp`:** value keys **`enableAudit`** and **`enableCache`** removed (Core tools are not configurable via Helm); chart **`Chart.version`** **`0.5.0`**, **`appVersion`** **`5.0.0`** with **`clawql-mcp`** major.
+- **`charts/clawql-mcp`:** value keys **`enableAudit`** and **`enableCache`** removed (Core tools are not configurable via Helm); **`appVersion`** **`5.0.0`** with **`clawql-mcp`** major (Helm **`Chart.version`** **0.5.x**—see **`charts/clawql-mcp/Chart.yaml`**).
 - **`clawql-ouroboros` / MCP `ouroboros_*` tools:**
   - **`maxGenerations`** no longer produces a converged-success outcome when convergence gates are unsatisfied — runs end **exhausted** (`converged: false`) instead of a false-positive converged state.
   - **Convergence gates:** evaluation / approval checks block **all** convergence exits (similarity, stagnation, oscillation); **`final_approved: false`** prevents convergence.
   - **Executor routing:** route hints from **`brownfield_context.context_references`** execute as a **sequence** (multi-route), not only the first match.
   - **Evaluator:** provider-aware acceptance criteria are evaluated **per criterion**, with improved provider inference (for example, **`repos/list-commits`** maps to GitHub).
+
+- **`charts/clawql-mcp` (0.5.3):** **`kyverno.imageSignaturePolicy.enabled`** defaults to **`true`** — the chart renders a **`ClusterPolicy`** unless disabled. Install **[Kyverno](https://kyverno.io/)** before **`helm upgrade`**, or pass **`--set kyverno.imageSignaturePolicy.enabled=false`** on clusters that do not use Kyverno yet.
+
+- **`make local-k8s-up` / `scripts/local-k8s-docker-desktop.sh`:** installs **Kyverno** and **enforces Cosign** for **`ghcr.io/danielsmithdevelopment/clawql-mcp*`** and **`clawql-website*`** in the **`clawql`** release namespace (**`values-docker-desktop.yaml`**). **`CLAWQL_LOCAL_K8S_BUILD_IMAGE=1`** and **`CLAWQL_LOCAL_K8S_BUILD_UI_IMAGE=1`** are **rejected**. **Helm 3** is **required** for every install path (including **`CLAWQL_LOCAL_K8S_INSTALLER=kustomize`**). Default UI image is **GHCR** (not a local **`docker build`**).
 
 ### Changed
 
@@ -27,6 +38,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Document stack opt-out:** **`CLAWQL_ENABLE_DOCUMENTS=0`** (default on when unset) omits bundled **tika**, **gotenberg**, **paperless**, **stirling**, and **onyx** from the default **`all-providers`** merge; unregisters **`ingest_external_knowledge`**; **`knowledge_search_onyx`** requires both **`CLAWQL_ENABLE_ONYX=1`** and documents enabled. **`CLAWQL_BUNDLED_PROVIDERS=…`** can still list document vendors explicitly. **Helm:** **`enableDocuments: true`** by default; set **`false`** to inject **`CLAWQL_ENABLE_DOCUMENTS=0`**. See **[`docs/mcp-tools.md`](docs/mcp-tools.md)**, **[`src/provider-registry.ts`](src/provider-registry.ts)** (`BUNDLED_DOCUMENT_VENDOR_IDS`).
 - **`charts/clawql-mcp`:** **`docs/deployment/helm.md`** and **`charts/clawql-mcp/README.md`** aligned with Core tools and optional flags.
 - **MCP `Implementation.version`:** reads **`clawql-mcp`** **`package.json`** at runtime (**`src/npm-version.ts`**) for stdio / HTTP / gRPC transports.
+
+### Documentation
+
+- **Golden image pipeline (E2E + enforcement):** new **[`docs/security/golden-image-pipeline.md`](docs/security/golden-image-pipeline.md)** — **`repo-supply-chain`** → single **OCI** build (**MCP** + **website**) → **Trivy** → **`skopeo copy`** → **Cosign** → **`imagetools`** promotion; **Kyverno + Helm** default admission; limits table. Linked from **`docs/security/README.md`**, **`docs/README.md`**, **`README.md`**, **`docs/readme/deployment.md`**, **`docker/README.md`**, **`docs/deployment/helm.md`**, **`docs/security/image-signature-enforcement.md`**, and the website **Security**, **Deployment**, and **Helm** pages.
+
+- **Image signature enforcement at deploy:** **[`docs/security/image-signature-enforcement.md`](docs/security/image-signature-enforcement.md)** explains why **Cosign in CI** is not enough by itself, and documents **Kyverno `verifyImages`** (keyless / GitHub Actions issuer + subject regex) plus digest-first Helm guidance. **Helm:** **`ClusterPolicy`** is **on by default** (chart **0.5.3**); **`make local-k8s-up`** installs **Kyverno** on Docker Desktop (**#132** / matrix row **19**).
+
+- **Defense in depth — deliverables matrix:** **[`docs/security/clawql-security-defense-deliverables.md`](docs/security/clawql-security-defense-deliverables.md)** maps **`clawql-security-defense-in-depth.md`** controls to **shipped / partial / planned / customer** status, **GitHub issues**, and **Helm / CI / docs** artifacts ([#164](https://github.com/danielsmithdevelopment/ClawQL/issues/164)). Linked from the reference guide header/footer, **`docs/README.md`**, slides **79–80** (resource table + explicit “shipped vs roadmap” pointer). Slide **vision** (Golden Image, **SBOM**, **Cosign**, full stack) is **unchanged**; the matrix **adds** an auditable backlog beside the narrative.
 
 ### Added
 
@@ -41,6 +60,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - new suites for `InMemoryEventStore`, `mcp-hooks`, and `startSeedsPoller`,
   - expanded `ConvergenceCriteria` coverage for approval, stagnation-gate, and oscillation-gate scenarios,
   - expanded default-engine coverage for mixed-route execution and provider-evidence edge cases.
+
+- **`charts/clawql-mcp` (0.5.2–0.5.3):** Kyverno **`ClusterPolicy`** (**`templates/kyverno-clusterpolicy-cosign.yaml`**); **`enabled`** default **true** as of **0.5.3**; **`matchReleaseNamespaceOnly`** for Docker Desktop (**`values-docker-desktop.yaml`**). **`scripts/local-k8s-docker-desktop.sh`** installs **Kyverno** (Helm chart pin **`CLAWQL_KYVERNO_CHART_VERSION`**, default **3.7.2**), rejects unsigned local image env vars, pulls signed **`ghcr.io/.../clawql-website`**, and applies the policy on the Kustomize path via **`helm template --show-only`**. **`make helm-lint`** templates with policy on and off.
+
+- **Golden image / supply chain (GitHub Actions):** [`.github/workflows/docker-publish.yml`](.github/workflows/docker-publish.yml) runs **`repo-supply-chain`** (**OSV-Scanner**, **Trivy** fs, **Syft** CycloneDX artifact — aligned with CI **`supply-chain`**), then **one BuildKit** OCI layout export (`tar=false`) + **Trivy** (**HIGH** / **CRITICAL**, pinned **`ghcr.io/aquasecurity/trivy:0.59.1`**) **before any GHCR write**; **`skopeo copy`** pushes **that same OCI layout** (no second build), then **Cosign** and **`docker buildx imagetools create`** for **`latest`** / **`nightly`** / **`nightly-YYYYMMDD`** (**`id-token: write`** for OIDC). **npm** publish guidance: **[`docs/security/npm-supply-chain.md`](docs/security/npm-supply-chain.md)** ([#156](https://github.com/danielsmithdevelopment/ClawQL/issues/156)). [`.github/workflows/ci.yml`](.github/workflows/ci.yml) **`supply-chain`** uploads a **Syft** **CycloneDX JSON** artifact (**`sbom-cyclonedx-repository`**, image **`anchore/syft:v1.19.0`**). Operator notes: **`docker/README.md`** (verify / artifacts); matrix rows **5**, **8–10** in **[`docs/security/clawql-security-defense-deliverables.md`](docs/security/clawql-security-defense-deliverables.md)**.
+- **CI:** **`supply-chain`** job runs **[OSV-Scanner](https://google.github.io/osv-scanner/)** (`ghcr.io/google/osv-scanner`, **`osv-scanner.toml`**) on the repo (recursive lockfile / manifest scan) and **[Trivy](https://github.com/aquasecurity/trivy)** filesystem **`vuln`** scan (**HIGH** / **CRITICAL**, **`.trivyignore`**); both gate **`test`** (and optional Ouroboros Postgres) on green.
+- **Supply-chain hygiene:** npm **`overrides`** for transitive **`hono`** / **`vite`** / **`postcss`** / **`path-to-regexp`** (from MCP SDK + Vitest), **`clawql-ouroboros`** **`uuid@14`**, website **`postcss`** / **`fast-xml-parser`** overrides; **`bun.lock`** pinned **`yaml@1.10.3`** for swagger/oas stacks. **`GHSA-q4gf-8mx6-v5v3`** (Next.js ≥16.2.3) is documented in **`osv-scanner.toml`** / **`.trivyignore`** — docs site stays on **Next 16.1.7** + **`@opennextjs/cloudflare@1.18.x`** until MDX **`metadata`** exports work with Next **16.2+**.
 
 ## [4.1.0] - 2026-04-24
 
