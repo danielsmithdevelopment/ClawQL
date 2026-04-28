@@ -12,7 +12,7 @@ ClawQL groups capabilities into three bands. This matches the **layer diagram** 
 
 **There is no env or Helm toggle for Core.** The diagram places **`search`**, **`execute`**, **`audit`**, and **`cache`** in this band together:
 
-- **`search`**, **`execute`** — OpenAPI / Discovery discovery and execution.
+- **`search`**, **`execute`** — OpenAPI / Discovery discovery and execution; optional **native GraphQL** / **gRPC** merged into the same index from env (**`CLAWQL_GRAPHQL_*`**, **`CLAWQL_GRPC_SOURCES`**) and/or the **bundled GraphQL-only** provider **`linear`** ([ADR 0002](../adr/0002-multi-protocol-supergraph.md), **`providers/README.md`**).
 - **`audit`** — in-process event ring buffer ([#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)); tune **`CLAWQL_AUDIT_MAX_ENTRIES`** only. Not durable — use **`memory_ingest`** for persisted trails.
 - **`cache`** — in-process LRU key/value ([#75](https://github.com/danielsmithdevelopment/ClawQL/issues/75)); tune **`CLAWQL_CACHE_MAX_*`** only. Not persisted — use **`memory_ingest`** / **`memory_recall`** for vault-backed state.
 
@@ -58,14 +58,14 @@ ClawQL resolves specs in two stages:
 When Stage 1 is active:
 
 - `search` uses one merged operation index
-- `execute` runs REST per owning spec
+- `execute` runs **REST** per **OpenAPI/Discovery** operation on the owning spec; **native** GraphQL / gRPC operations (from **`CLAWQL_GRAPHQL_*`** / **`CLAWQL_GRPC_SOURCES`**, or from a bundled GraphQL provider such as **`linear`** in the merge) **execute** over HTTP GraphQL or gRPC unary
 
 ### Stage 2: Single-spec (first match wins)
 
 1. `CLAWQL_SPEC_PATH`
 2. `CLAWQL_SPEC_URL`
 3. `CLAWQL_DISCOVERY_URL`
-4. `CLAWQL_PROVIDER` (single vendor, e.g. `cloudflare`)
+4. `CLAWQL_PROVIDER` (single vendor, e.g. `cloudflare`, or bundled GraphQL-only **`linear`**)
 
 ## High-Value Environment Variables
 
@@ -77,6 +77,9 @@ When Stage 1 is active:
 - `CLAWQL_DISCOVERY_URL`
 - `CLAWQL_PROVIDER`
 - `CLAWQL_BUNDLED_PROVIDERS`
+- **`CLAWQL_GRAPHQL_URL`** — single GraphQL HTTP endpoint (like **`CLAWQL_SPEC_URL`** for OpenAPI). Optional **`CLAWQL_GRAPHQL_NAME`**, **`CLAWQL_GRAPHQL_HEADERS`**, **`CLAWQL_GRAPHQL_SCHEMA_PATH`** / **`CLAWQL_GRAPHQL_INTROSPECTION_PATH`** when upstream introspection is blocked. When set **without** any OpenAPI/Discovery selection env (**`CLAWQL_SPEC_*`**, **`CLAWQL_PROVIDER`**, **`CLAWQL_BUNDLED_PROVIDERS`**, etc.), ClawQL skips bundled REST defaults and loads **only** native GraphQL (plus **`CLAWQL_GRPC_SOURCES`** if set).
+- **`CLAWQL_GRAPHQL_SOURCES`** — JSON array of `{ name, endpoint, headers?, schemaPath?, introspectionPath? }` merged into **`search`** / **`execute`** (HTTP introspection by default; disk SDL / introspection JSON when set). Combined with **`CLAWQL_GRAPHQL_URL`** when both are set. See `.env.example` and **`docs/mcp-tools.md`** (native GraphQL section).
+- **`CLAWQL_GRPC_SOURCES`** — JSON array of `{ name, endpoint, protoPath, insecure? }` for unary gRPC. See `.env.example` and **`docs/adr/0002-multi-protocol-supergraph.md`**.
 
 ### Auth
 
@@ -84,6 +87,7 @@ When Stage 1 is active:
 - `CLAWQL_GITHUB_TOKEN`
 - `CLAWQL_CLOUDFLARE_API_TOKEN`
 - `CLAWQL_GOOGLE_ACCESS_TOKEN`
+- `LINEAR_API_KEY` / `CLAWQL_LINEAR_API_KEY` (merged **`specLabel`** **`linear`** — raw key in **`Authorization`**, not **`Bearer`**)
 - `CLAWQL_BEARER_TOKEN` (scoped fallback)
 
 ### Vault memory

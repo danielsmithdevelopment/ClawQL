@@ -43,7 +43,9 @@ async function main() {
 
   let vendorOpenApiBytes = 0;
   for (const id of BUNDLED_MERGED_VENDOR_LABELS) {
-    const rel = BUNDLED_PROVIDERS[id].bundledSpecPath;
+    const entry = BUNDLED_PROVIDERS[id];
+    const rel =
+      entry.format === "graphql" ? entry.bundledSchemaSdlPath : entry.bundledSpecPath;
     vendorOpenApiBytes += readFileSync(join(ROOT, rel)).length;
   }
 

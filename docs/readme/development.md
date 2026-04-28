@@ -47,8 +47,9 @@ Related modules:
 
 ## GraphQL Notes
 
-Single-spec `execute` can use an internal OpenAPI-to-GraphQL path for response minimization.
-In multi-spec mode, `execute` uses REST against the owning spec.
+Single-spec `execute` can use an internal OpenAPI-to-GraphQL path for response minimization for **OpenAPI/Discovery** operations.
+In multi-spec mode, `execute` uses REST against the owning spec for those operations.
+Native GraphQL / gRPC ops (see `src/native-protocol-merge.ts`, `src/tools.ts`) route to HTTP GraphQL or grpc-js instead.
 
 Compatibility caveats:
 

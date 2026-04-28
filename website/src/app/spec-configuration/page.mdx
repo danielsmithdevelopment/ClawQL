@@ -3,18 +3,18 @@ import { docsPageMetadata } from '@/lib/seo'
 export const metadata = docsPageMetadata({
   title: 'Spec configuration',
   description:
-    'ClawQL spec configuration: CLAWQL_SPEC_PATH, CLAWQL_SPEC_URL, CLAWQL_DISCOVERY_URL, OpenAPI 3, Swagger 2, Google Discovery, and merged provider bundles.',
+    'ClawQL spec configuration: CLAWQL_SPEC_PATH, merged bundles, OpenAPI and Discovery, bundled linear GraphQL SDL, optional CLAWQL_GRAPHQL_* and CLAWQL_GRPC_SOURCES for native protocols.',
   path: '/spec-configuration',
 })
 
 # Spec configuration
 
-ClawQL builds an in-memory operation index from **OpenAPI 3** (JSON/YAML), **Swagger 2** (auto-upgraded), **Google Discovery** documents, or **bundled presets** under `providers/`. Selection follows a **two-stage** precedence implemented in `src/spec-loader.ts`. {{ className: 'lead' }}
+ClawQL builds an in-memory operation index from **OpenAPI 3** (JSON/YAML), **Swagger 2** (auto-upgraded), **Google Discovery** documents, or **bundled presets** under `providers/`, optionally extended with **native GraphQL** and **gRPC** sources via env. Selection follows a **two-stage** precedence implemented in `src/spec-loader.ts`. {{ className: 'lead' }}
 
 ## Overview
 
-- **Multi-spec mode:** one merged **search** index; **`execute`** uses **REST** per owning spec (see [GraphQL proxy](/graphql-proxy)).
-- **Single-spec mode:** one document; **`execute`** can use the internal GraphQL layer when translation succeeds, with **REST fallback** on failure.
+- **Multi-spec mode:** one merged **search** index. **`execute`** uses **REST** per **OpenAPI/Discovery** operation on the owning spec, and **native GraphQL** / **gRPC** for bundled **`linear`** or env-configured sources (**`CLAWQL_GRAPHQL_*`**, **`CLAWQL_GRPC_SOURCES`**) in the same index; native ops use HTTP GraphQL or gRPC unary ([GraphQL layer](/graphql-proxy)).
+- **Single-spec mode:** one OpenAPI/Discovery document; **`execute`** can use the internal OpenAPI→GraphQL layer when translation succeeds, with **REST fallback** on failure. Native protocol ops behave the same when configured.
 
 ## Stage 1 — Multi-spec merge
 
@@ -34,26 +34,29 @@ If Stage 1 does **not** apply, the first match wins:
 1. **`CLAWQL_SPEC_PATH`** (aliases: `OPENAPI_SPEC_PATH`, `OPENAPI_FILE`)
 2. **`CLAWQL_SPEC_URL`** (alias: `OPENAPI_SPEC_URL`)
 3. **`CLAWQL_DISCOVERY_URL`** (alias: `GOOGLE_DISCOVERY_URL`)
-4. **`CLAWQL_PROVIDER`** — **single** bundled vendor (`cloudflare`, `github`, …), not a merged preset
+4. **`CLAWQL_PROVIDER`** — **single** bundled vendor (`cloudflare`, `github`, **`linear`**, …), not a merged preset
 5. Rare fallback (`kind: "default"` in code)
 
 **Examples:** `CLAWQL_SPEC_PATH=./openapi.yaml` skips Stage 1. `CLAWQL_PROVIDER=cloudflare` alone loads Cloudflare as a **single** bundle. An empty environment (nothing above) uses **`all-providers`**; for a custom subset, set **`CLAWQL_BUNDLED_PROVIDERS=…`**, not another implicit default.
 
 ## Environment variables
 
-| Variable                    | Meaning                                                                                 |
-| --------------------------- | --------------------------------------------------------------------------------------- |
-| `CLAWQL_SPEC_PATH`          | Local OpenAPI JSON/YAML                                                                 |
-| `CLAWQL_SPEC_PATHS`         | Multiple paths → **merge**                                                              |
-| `CLAWQL_BUNDLED_PROVIDERS`  | Ids to merge: `BUNDLED_PROVIDERS` keys and/or `google`                                  |
-| `CLAWQL_SPEC_URL`           | Fetch OpenAPI from HTTPS                                                                |
-| `CLAWQL_DISCOVERY_URL`      | Google Discovery JSON URL                                                               |
-| `CLAWQL_PROVIDER`           | Merged preset (Stage 1) or single vendor (Stage 2)                                      |
-| `CLAWQL_PROVIDER_AUTH_JSON` | One JSON object: **`specLabel`** → token string or headers (multi-vendor **`execute`**) |
-| `CLAWQL_HTTP_HEADERS`       | Global header JSON; with **`CLAWQL_PROVIDER_AUTH_JSON`**, omit **`Authorization`** here |
-| `CLAWQL_INTROSPECTION_PATH` | Pregenerated GraphQL introspection JSON (optional)                                      |
-| `CLAWQL_API_BASE_URL`       | Override REST base URL                                                                  |
-| `CLAWQL_BUNDLED_OFFLINE`    | `1` / `true` — do not fetch missing bundled files from the network                      |
+| Variable                                                                | Meaning                                                                                                                                                 |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CLAWQL_SPEC_PATH`                                                      | Local OpenAPI JSON/YAML                                                                                                                                 |
+| `CLAWQL_SPEC_PATHS`                                                     | Multiple paths → **merge**                                                                                                                              |
+| `CLAWQL_BUNDLED_PROVIDERS`                                              | Ids to merge: `BUNDLED_PROVIDERS` keys and/or `google`                                                                                                  |
+| `CLAWQL_SPEC_URL`                                                       | Fetch OpenAPI from HTTPS                                                                                                                                |
+| `CLAWQL_DISCOVERY_URL`                                                  | Google Discovery JSON URL                                                                                                                               |
+| `CLAWQL_PROVIDER`                                                       | Merged preset (Stage 1) or single vendor (Stage 2)                                                                                                      |
+| `CLAWQL_PROVIDER_AUTH_JSON`                                             | One JSON object: **`specLabel`** → token string or headers (multi-vendor **`execute`**)                                                                 |
+| `CLAWQL_HTTP_HEADERS`                                                   | Global header JSON; with **`CLAWQL_PROVIDER_AUTH_JSON`**, omit **`Authorization`** here                                                                 |
+| `CLAWQL_INTROSPECTION_PATH`                                             | Pregenerated GraphQL introspection JSON for OpenAPI→GraphQL field hints (optional)                                                                      |
+| `CLAWQL_GRAPHQL_URL` / `CLAWQL_GRAPHQL_NAME` / `CLAWQL_GRAPHQL_HEADERS` | Single native GraphQL endpoint; optional **`CLAWQL_GRAPHQL_SCHEMA_PATH`** / **`CLAWQL_GRAPHQL_INTROSPECTION_PATH`** if introspection is blocked         |
+| `CLAWQL_GRAPHQL_SOURCES`                                                | JSON array — merge **native** GraphQL HTTP endpoints into **`search`** / **`execute`** (optional per-source **`schemaPath`** / **`introspectionPath`**) |
+| `CLAWQL_GRPC_SOURCES`                                                   | JSON array — merge unary **gRPC** RPCs from `.proto` paths                                                                                              |
+| `CLAWQL_API_BASE_URL`                                                   | Override REST base URL                                                                                                                                  |
+| `CLAWQL_BUNDLED_OFFLINE`                                                | `1` / `true` — do not fetch missing bundled files from the network                                                                                      |
 
 Full list: [`.env.example`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/.env.example) in the repo.
 

@@ -1,6 +1,7 @@
 /**
  * Built-in providers: bundled OpenAPI / Discovery on disk + optional
- * pregenerated GraphQL artifacts (see scripts/pregenerate-provider-graphql.ts).
+ * pregenerated GraphQL artifacts (see scripts/pregenerate-provider-graphql.ts), plus **GraphQL-only** vendors
+ * (SDL on disk — e.g. Linear).
  */
 
 import { readFile } from "node:fs/promises";
@@ -8,20 +9,47 @@ import { resolve as resolvePath } from "node:path";
 import { getClawqlOptionalToolFlags } from "./clawql-optional-flags.js";
 import { getPackageRoot } from "./package-root.js";
 
-export interface BundledProvider {
+/** REST / Discovery bundled spec under `providers/`. */
+export interface BundledOpenApiProvider {
   id: string;
+  format: "openapi" | "discovery";
   /** Relative to package root */
   bundledSpecPath: string;
-  format: "openapi" | "discovery";
   /** Used when the bundled file is missing (e.g. before `npm run fetch-provider-specs`) */
   fallbackUrl: string;
-  /** Pregenerated introspection JSON (graphql introspectionFromSchema output) */
   bundledIntrospectionPath?: string;
-  /** Pregenerated SDL (printSchema), for docs / tooling */
   bundledSchemaSdlPath?: string;
 }
 
-export type ProviderGroupItem = { abs: string; label: string };
+/**
+ * GraphQL-only vendor: no OpenAPI file — operation index from vendored SDL (`bundledSchemaSdlPath`).
+ * **`execute`** POSTs to **`graphqlEndpoint`**.
+ */
+export interface BundledGraphqlProvider {
+  id: string;
+  format: "graphql";
+  graphqlEndpoint: string;
+  /** SDL relative to package root */
+  bundledSchemaSdlPath: string;
+  /** e.g. raw GitHub URL to refresh `bundledSchemaSdlPath` when missing locally */
+  fallbackUrl: string;
+}
+
+export type BundledProvider = BundledOpenApiProvider | BundledGraphqlProvider;
+
+export function isBundledGraphqlProvider(p: BundledProvider): p is BundledGraphqlProvider {
+  return p.format === "graphql";
+}
+
+export type ProviderGroupOpenApiItem = { kind: "openapi"; abs: string; label: string };
+export type ProviderGroupGraphqlItem = {
+  kind: "graphql";
+  label: string;
+  endpoint: string;
+  schemaAbs: string;
+  fallbackUrl: string;
+};
+export type ProviderGroupItem = ProviderGroupOpenApiItem | ProviderGroupGraphqlItem;
 export type BundledProviderGroupResolver = () => Promise<ProviderGroupItem[]>;
 
 /**
@@ -147,6 +175,19 @@ export const BUNDLED_PROVIDERS: Record<string, BundledProvider> = {
     fallbackUrl:
       "https://raw.githubusercontent.com/danielsmithdevelopment/ClawQL/main/providers/onyx/openapi.yaml",
   },
+  /**
+   * Linear — public GraphQL API only (no REST OpenAPI).
+   * SDL is vendored from Linear's MIT-licensed SDK (`packages/sdk/src/schema.graphql`).
+   * Auth: **`LINEAR_API_KEY`** / **`CLAWQL_LINEAR_API_KEY`** → `Authorization` (raw key; not `Bearer`).
+   */
+  linear: {
+    id: "linear",
+    format: "graphql",
+    graphqlEndpoint: "https://api.linear.app/graphql",
+    bundledSchemaSdlPath: "providers/linear/schema.graphql",
+    fallbackUrl:
+      "https://raw.githubusercontent.com/linear/linear/master/packages/sdk/src/schema.graphql",
+  },
 };
 
 async function resolveGoogleTop50Items(): Promise<ProviderGroupItem[]> {
@@ -158,6 +199,7 @@ async function resolveGoogleTop50Items(): Promise<ProviderGroupItem[]> {
     throw new Error("google-top50-apis.json: expected apis[]");
   }
   return data.apis.map((a) => ({
+    kind: "openapi" as const,
     abs: resolvePath(root, "providers/google/apis", a.slug, "discovery.json"),
     label: a.slug,
   }));
@@ -199,7 +241,18 @@ export async function resolveItemsFromBundledProviderEnvList(
     }
     if (seen.has(p.id)) continue;
     seen.add(p.id);
+    if (isBundledGraphqlProvider(p)) {
+      out.push({
+        kind: "graphql",
+        label: p.id,
+        endpoint: p.graphqlEndpoint,
+        schemaAbs: resolvePath(getPackageRoot(), p.bundledSchemaSdlPath),
+        fallbackUrl: p.fallbackUrl,
+      });
+      continue;
+    }
     out.push({
+      kind: "openapi",
       abs: resolvePath(getPackageRoot(), p.bundledSpecPath),
       label: p.id,
     });
@@ -235,13 +288,25 @@ async function resolveAllBundledProvidersItems(): Promise<ProviderGroupItem[]> {
   const labels = BUNDLED_MERGED_VENDOR_LABELS.filter(
     (id) => allowDocuments || !BUNDLED_DOCUMENT_VENDOR_SET.has(id)
   );
-  const rest = labels.map((id) => {
+  const rest: ProviderGroupItem[] = [];
+  for (const id of labels) {
     const p = BUNDLED_PROVIDERS[id]!;
-    return {
-      abs: resolvePath(root, p.bundledSpecPath),
-      label: p.id,
-    };
-  });
+    if (isBundledGraphqlProvider(p)) {
+      rest.push({
+        kind: "graphql",
+        label: p.id,
+        endpoint: p.graphqlEndpoint,
+        schemaAbs: resolvePath(root, p.bundledSchemaSdlPath),
+        fallbackUrl: p.fallbackUrl,
+      });
+    } else {
+      rest.push({
+        kind: "openapi",
+        abs: resolvePath(root, p.bundledSpecPath),
+        label: p.id,
+      });
+    }
+  }
   return [...google, ...rest];
 }
 
@@ -299,7 +364,17 @@ export async function resolveBundledProviderGroup(
         `Bundled provider group "${raw.trim()}" references unknown provider "${id}".`
       );
     }
+    if (isBundledGraphqlProvider(p)) {
+      return {
+        kind: "graphql" as const,
+        label: p.id,
+        endpoint: p.graphqlEndpoint,
+        schemaAbs: resolvePath(getPackageRoot(), p.bundledSchemaSdlPath),
+        fallbackUrl: p.fallbackUrl,
+      };
+    }
     return {
+      kind: "openapi" as const,
       abs: resolvePath(getPackageRoot(), p.bundledSpecPath),
       label: p.id,
     };

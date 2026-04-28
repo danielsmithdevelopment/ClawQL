@@ -43,6 +43,10 @@ async function main() {
   }
 
   for (const entry of entries) {
+    if (entry.format === "graphql") {
+      console.warn(`[pregenerate] Skip ${entry.id}: GraphQL-only bundled provider (no OpenAPI→GraphQL)`);
+      continue;
+    }
     const specAbs = resolvePath(root, entry.bundledSpecPath);
     if (!existsSync(specAbs)) {
       console.warn(`[pregenerate] Skip ${entry.id}: missing ${specAbs} (run fetch-provider-specs)`);

@@ -13,7 +13,7 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { attachGraphqlHttpToMcpApp } from "./graphql-http-attach.js";
 import { createRegisteredMcpServer } from "./mcp-server-factory.js";
-import { loadSpec } from "./spec-loader.js";
+import { loadSpec, registerSpecCacheShutdownHooks } from "./spec-loader.js";
 import { preloadSchemaFieldCacheFromDisk } from "./tools.js";
 import { maybeStartGrpcMcpServer } from "mcp-grpc-transport";
 import { getObsidianVaultPath, validateObsidianVaultAtStartup } from "./vault-config.js";
@@ -21,6 +21,10 @@ import { registerOuroborosPoolShutdownHooks } from "./ouroboros/postgres-pool.js
 import { registerPostgresPoolShutdownHooks } from "./vector-store/pgvector.js";
 import { getClawqlOptionalToolFlags } from "./clawql-optional-flags.js";
 import { registerScheduleWorkerShutdownHooks, startScheduleWorker } from "./clawql-schedule.js";
+import {
+  getNativeProtocolMetricsSnapshot,
+  nativeProtocolMetricsEnabled,
+} from "./native-protocol-metrics.js";
 
 const PORT = Number.parseInt(process.env.PORT ?? process.env.MCP_PORT ?? "8080", 10);
 const DEFAULT_MCP_PATH = "/mcp";
@@ -105,6 +109,9 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
       transport: "streamable-http",
       endpoint: mcpPath,
     };
+    if (nativeProtocolMetricsEnabled()) {
+      base.nativeProtocolMetrics = getNativeProtocolMetricsSnapshot();
+    }
     if (process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS?.trim() === "1") {
       try {
         const vault = getObsidianVaultPath();
@@ -211,6 +218,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
 }
 
 async function main() {
+  registerSpecCacheShutdownHooks();
   registerPostgresPoolShutdownHooks();
   registerOuroborosPoolShutdownHooks();
   if (getClawqlOptionalToolFlags().enableSchedule) {

@@ -1,6 +1,6 @@
 # `clawql-mcp` Helm chart
 
-Deploys **ClawQL** as **`clawql-mcp-http`**: Streamable HTTP MCP (`/mcp`), health (`/healthz`), GraphQL (`/graphql`), optional gRPC on **50051**. Optionally deploys a UI workload from the `website` image with host-based Ingress (for example, `http://clawql.localhost`).
+Deploys **ClawQL** as **`clawql-mcp-http`**: Streamable HTTP MCP (`/mcp`), health (`/healthz`), **`/graphql`** (OpenAPI-derived introspection for debugging), optional **MCP** transport on **50051** (**`mcp-grpc-transport`** — not application gRPC backends; those use **`CLAWQL_GRPC_SOURCES`** in env). Set **`CLAWQL_GRAPHQL_SOURCES`** / **`CLAWQL_GRPC_SOURCES`** (and optional **`CLAWQL_GRAPHQL_SCHEMA_PATH`** / **`CLAWQL_GRAPHQL_INTROSPECTION_PATH`** / **`CLAWQL_GRAPHQL_URL`**) via **`extraEnv`** / Secrets for native protocols; bundled GraphQL-only **`linear`** uses on-image **`providers/linear/schema.graphql`** — set **`LINEAR_API_KEY`** / **`CLAWQL_LINEAR_API_KEY`** for **`execute`**. Optionally deploys a UI workload from the `website` image with host-based Ingress (for example, `http://clawql.localhost`).
 
 ## Documentation
 

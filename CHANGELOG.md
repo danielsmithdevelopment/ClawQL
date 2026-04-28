@@ -7,11 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.0.0] - 2026-04-27
+
 ### Breaking
 
 - **`audit` MCP tool:** **`CLAWQL_ENABLE_AUDIT`** and Helm **`enableAudit`** removed — **`audit`** is always registered ([#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)). Delete obsolete env / chart keys; **`listTools`** always includes **`audit`**.
 - **`cache` MCP tool:** **`CLAWQL_ENABLE_CACHE`** and Helm **`enableCache`** removed — **`cache`** is always registered ([#75](https://github.com/danielsmithdevelopment/ClawQL/issues/75)). Delete obsolete env / chart keys; **`listTools`** always includes **`cache`**.
-- **`charts/clawql-mcp`:** value keys **`enableAudit`** and **`enableCache`** removed (Core tools are not configurable via Helm); chart **`Chart.version`** / **`appVersion`** bump with **`clawql-mcp`** major at release.
+- **`charts/clawql-mcp`:** value keys **`enableAudit`** and **`enableCache`** removed (Core tools are not configurable via Helm); chart **`Chart.version`** **`0.5.0`**, **`appVersion`** **`5.0.0`** with **`clawql-mcp`** major.
 - **`clawql-ouroboros` / MCP `ouroboros_*` tools:**
   - **`maxGenerations`** no longer produces a converged-success outcome when convergence gates are unsatisfied — runs end **exhausted** (`converged: false`) instead of a false-positive converged state.
   - **Convergence gates:** evaluation / approval checks block **all** convergence exits (similarity, stagnation, oscillation); **`final_approved: false`** prevents convergence.
@@ -24,9 +26,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`memory_ingest` / `memory_recall`:** register by default; set **`CLAWQL_ENABLE_MEMORY=0`** to opt out. **Helm:** **`enableMemory: true`** (default); when **`false`**, the chart injects **`CLAWQL_ENABLE_MEMORY=0`**. Docs: **[`docs/mcp-tools.md`](docs/mcp-tools.md)**, **[`docs/cache-tool.md`](docs/cache-tool.md)**, **[`README.md`](README.md)**, **`.env.example`**, **[`charts/clawql-mcp/README.md`](charts/clawql-mcp/README.md)**.
 - **Document stack opt-out:** **`CLAWQL_ENABLE_DOCUMENTS=0`** (default on when unset) omits bundled **tika**, **gotenberg**, **paperless**, **stirling**, and **onyx** from the default **`all-providers`** merge; unregisters **`ingest_external_knowledge`**; **`knowledge_search_onyx`** requires both **`CLAWQL_ENABLE_ONYX=1`** and documents enabled. **`CLAWQL_BUNDLED_PROVIDERS=…`** can still list document vendors explicitly. **Helm:** **`enableDocuments: true`** by default; set **`false`** to inject **`CLAWQL_ENABLE_DOCUMENTS=0`**. See **[`docs/mcp-tools.md`](docs/mcp-tools.md)**, **[`src/provider-registry.ts`](src/provider-registry.ts)** (`BUNDLED_DOCUMENT_VENDOR_IDS`).
 - **`charts/clawql-mcp`:** **`docs/deployment/helm.md`** and **`charts/clawql-mcp/README.md`** aligned with Core tools and optional flags.
+- **MCP `Implementation.version`:** reads **`clawql-mcp`** **`package.json`** at runtime (**`src/npm-version.ts`**) for stdio / HTTP / gRPC transports.
 
 ### Added
 
+- **ADR 0002 — Multi-protocol supergraph:** **[`docs/adr/0002-multi-protocol-supergraph.md`](docs/adr/0002-multi-protocol-supergraph.md)** — **clawql-mcp 5.0.0** targets first-class **GraphQL** + **gRPC** only; Postgres / Redis / SQLite / NATS / Fabric / The Graph / x402 remain backlog under epic **[#178](https://github.com/danielsmithdevelopment/ClawQL/issues/178)** (label **`supergraph`**).
+- **`src/spec-kind.ts`:** **`SpecKind`** union and **`normalizeOperationId`** / **`sanitizeOperationSegment`** (`kind__provider__operation`) — foundation for [#181](https://github.com/danielsmithdevelopment/ClawQL/issues/181).
+- **Native GraphQL + gRPC:** **`CLAWQL_GRAPHQL_SOURCES`** (JSON array: HTTP introspection → merged operations; **`execute`** POSTs to each endpoint), **`CLAWQL_GRAPHQL_URL`** / **`CLAWQL_GRAPHQL_NAME`** / **`CLAWQL_GRAPHQL_HEADERS`** (single-endpoint shortcut for GraphQL-only APIs such as Linear—no OpenAPI spec env), and **`CLAWQL_GRPC_SOURCES`** (JSON array: **`@grpc/proto-loader`** + unary **`@grpc/grpc-js`** clients). **`shouldLoadNativeProtocolsOnlyMode()`** skips bundled REST defaults when only native sources are configured. **`Operation.protocolKind`** / **`nativeGraphQL`** / **`nativeGrpc`**; merged in **`loadSpec`** alongside OpenAPI/Discovery (or stub shell); **`execute`** dispatches before REST / OpenAPI→GraphQL.
+- **GraphQL index without live introspection:** per-source **`schemaPath`** / **`introspectionPath`**, or **`CLAWQL_GRAPHQL_SCHEMA_PATH`** / **`CLAWQL_GRAPHQL_INTROSPECTION_PATH`** with **`CLAWQL_GRAPHQL_URL`**, load SDL or saved introspection JSON when HTTP introspection is blocked; **`endpoint`** remains the **`execute`** POST target.
+- **Bundled GraphQL-only provider Linear:** **`linear`** in **`BUNDLED_PROVIDERS`** — vendored SDL from Linear’s MIT-licensed SDK (**`providers/linear/schema.graphql`**), **`CLAWQL_PROVIDER=linear`** or **`CLAWQL_BUNDLED_PROVIDERS=…,linear`** / **`all-providers`**; auth **`LINEAR_API_KEY`** / **`CLAWQL_LINEAR_API_KEY`**; refresh SDL via **`npm run fetch-linear-schema`**.
+- **`registerSpecCacheShutdownHooks`** — **`SIGINT`** / **`SIGTERM`** invoke **`resetSpecCache`** (closes native gRPC channels).
+- **`CLAWQL_HEALTHZ_NATIVE_PROTOCOL_METRICS=1`** — optional **`nativeProtocolMetrics`** object on **`GET /healthz`** (merge counts + execute ok/err counters).
 - **Release-hardening test coverage for `clawql-ouroboros`:**
   - new suites for `InMemoryEventStore`, `mcp-hooks`, and `startSeedsPoller`,
   - expanded `ConvergenceCriteria` coverage for approval, stagnation-gate, and oscillation-gate scenarios,

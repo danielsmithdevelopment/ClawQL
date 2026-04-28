@@ -19,13 +19,21 @@ describe("provider-registry", () => {
     expect(ids).toContain("paperless");
     expect(ids).toContain("stirling");
     expect(ids).toContain("onyx");
+    expect(ids).toContain("linear");
     expect(ids).not.toContain("atlassian"); // group, not concrete provider
   });
 
   it("resolves bundled provider case-insensitively", () => {
     const p = resolveBundledProvider("JiRa");
     expect(p?.id).toBe("jira");
-    expect(p?.bundledSpecPath).toContain("atlassian/jira");
+    expect(p && "bundledSpecPath" in p ? p.bundledSpecPath : "").toContain("atlassian/jira");
+  });
+
+  it("resolves linear as GraphQL-only bundled provider", () => {
+    const p = resolveBundledProvider("linear");
+    expect(p?.id).toBe("linear");
+    expect(p?.format).toBe("graphql");
+    expect(p && "graphqlEndpoint" in p ? p.graphqlEndpoint : "").toContain("api.linear.app");
   });
 
   it("lists merged preset ids including google (not google-top50)", () => {
@@ -81,7 +89,12 @@ describe("provider-registry", () => {
     expect(labels.has("paperless")).toBe(true);
     expect(labels.has("tika")).toBe(true);
     expect(labels.has("onyx")).toBe(true);
-    expect(items!.every((x) => x.abs.includes("/providers/"))).toBe(true);
+    expect(labels.has("linear")).toBe(true);
+    expect(
+      items!.every((x) =>
+        x.kind === "graphql" ? x.schemaAbs.includes("/providers/") : x.abs.includes("/providers/")
+      )
+    ).toBe(true);
   });
 
   it("omits document-stack vendors from all-providers when CLAWQL_ENABLE_DOCUMENTS=0", async () => {
@@ -130,5 +143,15 @@ describe("provider-registry", () => {
     await expect(resolveItemsFromBundledProviderEnvList("not-a-vendor-x")).rejects.toThrow(
       /Unknown id "not-a-vendor-x" in CLAWQL_BUNDLED_PROVIDERS/
     );
+  });
+
+  it("resolveItemsFromBundledProviderEnvList includes linear as graphql item", async () => {
+    const items = await resolveItemsFromBundledProviderEnvList("linear");
+    expect(items).toHaveLength(1);
+    expect(items[0]?.kind).toBe("graphql");
+    if (items[0]?.kind === "graphql") {
+      expect(items[0].label).toBe("linear");
+      expect(items[0].endpoint).toContain("linear.app");
+    }
   });
 });

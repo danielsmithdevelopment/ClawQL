@@ -1,7 +1,7 @@
 # Bundled providers
 
 ClawQL ships **optional** on-disk copies of popular API descriptions so cold
-start avoids downloading multi‑MB specs.
+start avoids downloading multi‑MB specs. **Native GraphQL / gRPC** upstreams are usually configured with **`CLAWQL_GRAPHQL_SOURCES`** / **`CLAWQL_GRPC_SOURCES`** (see **`.env.example`** and **`docs/adr/0002-multi-protocol-supergraph.md`**). **Linear** is the exception: it is a **bundled GraphQL-only** provider (**`linear`** — SDL under **`providers/linear/`**, same merged presets as OpenAPI vendors).
 
 | `CLAWQL_PROVIDER` | Spec file | Notes |
 |-------------------|-----------|--------|
@@ -11,6 +11,7 @@ start avoids downloading multi‑MB specs.
 | `slack` | `slack/openapi.json` | Official Web API spec from [api.slack.com/specs](https://api.slack.com/specs) (OpenAPI 2; loader upgrades). |
 | `sentry` | `sentry/openapi.json` | Dereferenced public API from [getsentry/sentry-api-schema](https://github.com/getsentry/sentry-api-schema) (`openapi-derefed.json`). |
 | `n8n` | `n8n/openapi.json` | n8n Public API (bundled JSON; refresh via `npm run fetch-n8n-openapi` against a running instance). |
+| `linear` | `linear/schema.graphql` | **GraphQL only** (no REST OpenAPI). SDL from Linear’s MIT-licensed SDK repo; refresh via **`npm run fetch-linear-schema`**. Endpoint **`https://api.linear.app/graphql`**. Auth: **`LINEAR_API_KEY`** / **`CLAWQL_LINEAR_API_KEY`** → `Authorization` (raw key). See [`linear/README.md`](linear/README.md). |
 | `tika` | `tika/openapi.yaml` | Apache Tika Server (minimal bundled paths; optional refresh from `TIKA_BASE_URL` when `/openapi.json` exists). Set **`TIKA_BASE_URL`** for merged `execute` base URL. |
 | `gotenberg` | `gotenberg/openapi.yaml` | Gotenberg 8+ (minimal bundled paths; optional refresh from **`GOTENBERG_BASE_URL`**). Set **`GOTENBERG_BASE_URL`** for merged `execute` base URL. |
 | `paperless` | `paperless/openapi.yaml` | Paperless-ngx REST (minimal subset; refresh from live **`PAPERLESS_BASE_URL`** via `npm run fetch-provider-specs`). Auth: **`PAPERLESS_API_TOKEN`** → `Authorization: Token …`. Onboarding: [`docs/providers/paperless-onboarding.md`](../docs/providers/paperless-onboarding.md). |

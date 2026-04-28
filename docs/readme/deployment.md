@@ -23,7 +23,7 @@ PORT=8080 npm run start:http
 Endpoints:
 
 - MCP: `http://localhost:8080/mcp`
-- Health: `http://localhost:8080/healthz`
+- Health: `http://localhost:8080/healthz` — set **`CLAWQL_HEALTHZ_NATIVE_PROTOCOL_METRICS=1`** to include **`nativeProtocolMetrics`** (native GraphQL/gRPC merge and execute counters) in the JSON body.
 - GraphQL debug endpoint: `http://localhost:8080/graphql`
 
 ## Cursor / Claude Configuration

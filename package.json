@@ -1,7 +1,7 @@
 {
     "name": "clawql-mcp",
-    "version": "4.1.0",
-    "description": "MCP server: search + execute any OpenAPI 3 API with an internal GraphQL optimization layer",
+    "version": "5.0.0",
+    "description": "MCP server: search + execute OpenAPI/Discovery APIs (internal GraphQL projection), optional native GraphQL HTTP and gRPC unary sources",
     "license": "Apache-2.0",
     "type": "module",
     "main": "./dist/server.js",
@@ -62,6 +62,7 @@
         "graphql": "tsx src/graphql-proxy.ts",
         "fetch-provider-specs": "node scripts/fetch-provider-specs.mjs && node scripts/fetch-google-discovery-directory.mjs",
         "fetch-n8n-openapi": "node scripts/fetch-n8n-openapi.mjs",
+        "fetch-linear-schema": "node scripts/fetch-linear-schema.mjs",
         "fetch-google-discovery-directory": "node scripts/fetch-google-discovery-directory.mjs",
         "fetch-all-google-discovery-specs": "node scripts/fetch-all-google-discovery-specs.mjs",
         "fetch-google-top50": "node scripts/fetch-google-top50.mjs",
@@ -96,6 +97,8 @@
     },
     "dependencies": {
         "@graphql-mesh/utils": "^0.104.35",
+        "@grpc/grpc-js": "^1.14.3",
+        "@grpc/proto-loader": "^0.8.0",
         "@modelcontextprotocol/sdk": "^1.27.1",
         "@omnigraph/openapi": "^0.109.41",
         "clawql-ouroboros": "workspace:*",

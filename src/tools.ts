@@ -28,6 +28,8 @@ import {
   operationIdToRunStyleName,
 } from "./graphql-execute-helpers.js";
 import { executeOperationGraphQL } from "./graphql-in-process-execute.js";
+import { executeNativeGraphQL } from "./execute-native-graphql.js";
+import { executeNativeGrpc } from "./execute-native-grpc.js";
 import { loadSpec, resolveApiBaseUrlForOperation } from "./spec-loader.js";
 import { searchOperations, formatSearchResults } from "./spec-search.js";
 import { executeRestOperation, mergedAuthHeaders } from "./rest-operation.js";
@@ -103,7 +105,7 @@ export async function preloadSchemaFieldCacheFromDisk(): Promise<boolean> {
   const spec = await loadSpec();
   if (spec.multi) {
     console.error(
-      "[tools] Multi-spec mode: skipping GraphQL introspection cache (execute uses REST)."
+      "[tools] Multi-spec mode: skipping GraphQL introspection cache (OpenAPI execute uses REST when CLAWQL_GRAPHQL_SOURCES is unset)."
     );
     return false;
   }
@@ -155,6 +157,64 @@ export async function handleClawqlExecuteToolInput(params: {
 
   const outputFields = executeOutputFields(operationId, fields);
 
+  if (op.protocolKind === "graphql" && op.nativeGraphQL) {
+    const selectedFields = outputFields?.length ? outputFields.join("\n        ") : "__typename";
+    const exec = await executeNativeGraphQL(op, args, selectedFields);
+    if (!exec.ok) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({
+              error: exec.error,
+              specLabel: op.specLabel ?? null,
+              hint: "Native GraphQL execute failed (check endpoint, auth, and arguments).",
+            }),
+          },
+        ],
+      };
+    }
+    const root = exec.data as Record<string, unknown> | null | undefined;
+    const inner =
+      root && typeof root === "object" && op.nativeGraphQL.fieldName in root
+        ? root[op.nativeGraphQL.fieldName]
+        : exec.data;
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(projectRestByFields(inner, outputFields), null, 2),
+        },
+      ],
+    };
+  }
+
+  if (op.protocolKind === "grpc" && op.nativeGrpc) {
+    const exec = await executeNativeGrpc(op, args);
+    if (!exec.ok) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({
+              error: exec.error,
+              specLabel: op.specLabel ?? null,
+              hint: "Native gRPC execute failed (check endpoint, TLS/insecure, proto, and arguments).",
+            }),
+          },
+        ],
+      };
+    }
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(projectRestByFields(exec.data, outputFields), null, 2),
+        },
+      ],
+    };
+  }
+
   if (multi) {
     const fallback = await executeRestOperation(op, args, openapiForOp);
     if (!fallback.ok) {
@@ -165,7 +225,7 @@ export async function handleClawqlExecuteToolInput(params: {
             text: JSON.stringify({
               error: fallback.error,
               specLabel: op.specLabel ?? null,
-              hint: "Multi-spec mode uses REST only (no GraphQL). Check path/query/body args.",
+              hint: "Multi-spec OpenAPI operations use REST only. Native GraphQL/gRPC ops use protocol execute.",
             }),
           },
         ],
@@ -694,7 +754,7 @@ function resolveIntrospectionFilePath(): string | null {
   const prov = process.env.CLAWQL_PROVIDER?.trim();
   if (prov) {
     const p = resolveBundledProvider(prov);
-    if (p?.bundledIntrospectionPath) {
+    if (p && "bundledIntrospectionPath" in p && p.bundledIntrospectionPath) {
       return resolvePath(getPackageRoot(), p.bundledIntrospectionPath);
     }
   }
