@@ -101,6 +101,17 @@ describe("server-http", () => {
     });
   });
 
+  it("GET /metrics returns Prometheus native-protocol metrics", async () => {
+    await withHttpServer(async (base) => {
+      const res = await fetch(`${base}/metrics`);
+      expect(res.ok).toBe(true);
+      expect(res.headers.get("content-type")).toMatch(/text\/plain/);
+      const text = await res.text();
+      expect(text).toContain("# HELP clawql_native_protocol_graphql_merge_operations");
+      expect(text).toContain("# HELP clawql_native_protocol_grpc_execute_total");
+    });
+  });
+
   it("GET /healthz optional merkle when CLAWQL_HEALTHZ_MEMORY_ARTIFACTS=1", async () => {
     const dir = await mkdtemp(join(tmpdir(), "clawql-hz-"));
     const savedVault = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;

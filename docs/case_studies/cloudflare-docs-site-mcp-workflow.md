@@ -2,7 +2,7 @@
 
 This document is an **end-to-end narrative** of shipping the ClawQL documentation site to **Cloudflare Workers** (`https://docs.clawql.com`) while using the **same MCP server** that powers day-to-day API work: **`search`**, **`execute`**, **`memory_recall`**, and **`memory_ingest`**. It records **failures**, **fixes**, **mental models**, and **insights** for future agents and humans.
 
-**Related:** GitHub tracking issue ([#87](https://github.com/danielsmithdevelopment/ClawQL/issues/87)), repo [`website/`](../../website/) (Next.js + OpenNext + Wrangler), deploy script [`scripts/deploy-docs-to-cloudflare.sh`](../../scripts/deploy-docs-to-cloudflare.sh).
+**Related:** GitHub tracking issue ([#87](https://github.com/danielsmithdevelopment/ClawQL/issues/87)), repo [`website/`](../../website/) (Next.js + OpenNext + Wrangler), deploy script [`scripts/deploy/deploy-docs-to-cloudflare.sh`](../../scripts/deploy/deploy-docs-to-cloudflare.sh).
 
 ---
 
@@ -68,7 +68,7 @@ The case study’s worst confusion was **“I can deploy, but `execute` says 403
 
 ## 6. Deploy script and custom domain
 
-[`scripts/deploy-docs-to-cloudflare.sh`](../../scripts/deploy-docs-to-cloudflare.sh) encodes the happy path:
+[`scripts/deploy/deploy-docs-to-cloudflare.sh`](../../scripts/deploy/deploy-docs-to-cloudflare.sh) encodes the happy path:
 
 1. Resolve **`account_id`** (or use **`CLAWQL_CLOUDFLARE_ACCOUNT_ID`**).
 2. Resolve **`zone_id`** for **`CLAWQL_DOCS_APEX_DOMAIN`** (default **`clawql.com`**).

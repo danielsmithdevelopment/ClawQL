@@ -50,6 +50,9 @@ enableMemory: true
 # Document stack: tika, gotenberg, paperless, stirling, onyx in all-providers merge + ingest_external_knowledge + (with enableOnyx) knowledge_search_onyx. Set false to inject CLAWQL_ENABLE_DOCUMENTS=0.
 enableDocuments: true
 
+# MCP sandbox_exec — isolated snippets (bridge / Seatbelt / Docker; #207). Default off; set true + bridge URL/token (or CLAWQL_SANDBOX_BACKEND) via extraEnv.
+enableSandbox: false
+
 # MCP notify tool — Slack chat.postMessage (#77). Requires Slack in provider merge + CLAWQL_SLACK_TOKEN (via extraEnv / secret).
 enableNotify: false
 

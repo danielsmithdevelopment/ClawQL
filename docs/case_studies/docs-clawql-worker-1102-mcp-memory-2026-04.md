@@ -28,7 +28,7 @@ Chronology (compressed):
 
 1. **Wrangler / OAuth:** browser authorization for `wrangler login` failed (“unexpected error” / network)—common when VPN, extensions, or blocked auth endpoints interfere. **Mitigation:** use **`CLOUDFLARE_API_TOKEN`** + **`CLOUDFLARE_ACCOUNT_ID`** for deploy automation.
 2. **Early API auth (9106 on `/memberships`):** resolved by supplying **account context** so Wrangler does not depend on endpoints the token cannot use.
-3. **Deploy progressed, then failed on `/zones/.../workers/routes` (10000)** even with broad token permissions: **Account-owned tokens** and **zone route attachment** are a known friction surface. **Mitigation:** remove **`routes`** with **`custom_domain`** from `website/wrangler.jsonc` and attach **`docs.<apex>`** via **`PUT /accounts/{account_id}/workers/domains`** in **`scripts/deploy-docs-to-cloudflare.sh`** (already in repo). **Result:** Worker upload + **custom hostname** succeeded.
+3. **Deploy progressed, then failed on `/zones/.../workers/routes` (10000)** even with broad token permissions: **Account-owned tokens** and **zone route attachment** are a known friction surface. **Mitigation:** remove **`routes`** with **`custom_domain`** from `website/wrangler.jsonc` and attach **`docs.<apex>`** via **`PUT /accounts/{account_id}/workers/domains`** in **`scripts/deploy/deploy-docs-to-cloudflare.sh`** (already in repo). **Result:** Worker upload + **custom hostname** succeeded.
 
 ---
 
@@ -79,7 +79,7 @@ Vault notes (titles / slugs under `Memory/`):
 
 Shipped in-repo (see **`docs/website/website-performance-workers-guardrails.md`**):
 
-- **GitHub Actions:** `.github/workflows/website-lighthouse.yml` — `npm run build` + `next start` + **Lighthouse** + **`scripts/assert-lighthouse-scores.mjs`** thresholds.
+- **GitHub Actions:** `.github/workflows/website-lighthouse.yml` — `npm run build` + `next start` + **Lighthouse** + **`scripts/dev/assert-lighthouse-scores.mjs`** thresholds.
 - **WCAG-oriented:** skip link to **`#main-content`**, **`aria-label`** on primary nav blocks, **`focus-visible`** outlines on **`Button`**, default **`loading="lazy"`** / **`decoding="async"`** on MDX **`img`**, **`rel="noopener noreferrer"`** on external **`https://`** links.
 - **SEO:** sitemap **`force-static`**, removed misleading **`lastModified: new Date()`** on every URL.
 - **Best practices headers:** **`Referrer-Policy`**, **`X-Content-Type-Options`** on `/:path*` via **`website/next.config.mjs`**.
@@ -98,7 +98,7 @@ Shipped in-repo (see **`docs/website/website-performance-workers-guardrails.md`*
 **Prevention checklist (condensed):**
 
 - [ ] Watch **Observability** after **large MDX** or **OpenNext/Next** upgrades.
-- [ ] Keep **deploy path** documented: `bash scripts/deploy-docs-to-cloudflare.sh`.
+- [ ] Keep **deploy path** documented: `bash scripts/deploy/deploy-docs-to-cloudflare.sh`.
 - [ ] Treat **CI Lighthouse** as **necessary but insufficient** for **1102**—pair with **dashboard** and **content sizing**.
 - [ ] When debugging with MCP, record **`operationId`**, **account id**, and **zone id** in vault notes (**redact tokens**).
 
@@ -107,8 +107,8 @@ Shipped in-repo (see **`docs/website/website-performance-workers-guardrails.md`*
 ## 9. References
 
 - **Runbook:** [`docs/website/website-performance-workers-guardrails.md`](../website/website-performance-workers-guardrails.md)
-- **Deploy script:** [`scripts/deploy-docs-to-cloudflare.sh`](../../scripts/deploy-docs-to-cloudflare.sh)
-- **Lighthouse assert:** [`scripts/assert-lighthouse-scores.mjs`](../../scripts/assert-lighthouse-scores.mjs)
+- **Deploy script:** [`scripts/deploy/deploy-docs-to-cloudflare.sh`](../../scripts/deploy/deploy-docs-to-cloudflare.sh)
+- **Lighthouse assert:** [`scripts/dev/assert-lighthouse-scores.mjs`](../../scripts/dev/assert-lighthouse-scores.mjs)
 - **Workflow:** [`.github/workflows/website-lighthouse.yml`](../../.github/workflows/website-lighthouse.yml)
 - **Prior docs-site case study (build/deploy narrative):** [`cloudflare-docs-site-mcp-workflow.md`](cloudflare-docs-site-mcp-workflow.md)
 - **Cloudflare:** Workers **Errors** / **Observability** docs; **`waitUntil`** lifetime.

@@ -3,7 +3,7 @@
  *
  * Entry point. Boots the MCP server over stdio (Claude Desktop, Cursor, etc.).
  *
- *   Agent → MCP (this file) → search / execute / sandbox_exec / memory_* → in-process GraphQL (single-spec) → REST API
+ *   Agent → MCP (this file) → search / execute / optional sandbox_exec / memory_* → in-process GraphQL (single-spec) → REST API
  *
  * Spec source: CLAWQL_SPEC_PATH, CLAWQL_SPEC_URL, CLAWQL_DISCOVERY_URL, or default
  * Cloud Run discovery. See README and .env.example.
@@ -20,8 +20,10 @@ import { registerOuroborosPoolShutdownHooks } from "./ouroboros/postgres-pool.js
 import { registerPostgresPoolShutdownHooks } from "./vector-store/pgvector.js";
 import { getClawqlOptionalToolFlags } from "./clawql-optional-flags.js";
 import { registerScheduleWorkerShutdownHooks, startScheduleWorker } from "./clawql-schedule.js";
+import { maybeInitOtelTracing } from "./otel-tracing.js";
 
 async function main() {
+  await maybeInitOtelTracing();
   registerSpecCacheShutdownHooks();
   registerPostgresPoolShutdownHooks();
   registerOuroborosPoolShutdownHooks();

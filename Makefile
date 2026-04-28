@@ -26,17 +26,17 @@ kustomize-local-lint:
 	@echo "kustomize-local-lint OK"
 
 helm-ui-template-tests:
-	@bash scripts/test-helm-ui-templates.sh
+	@bash scripts/kubernetes/test-helm-ui-templates.sh
 
 lint-k8s-manifests: helm-lint helm-ui-template-tests kustomize-local-lint
 
 # Docker Desktop Kubernetes: default Helm; optional CLAWQL_LOCAL_K8S_INSTALLER=kustomize
 local-k8s-up:
-	@bash scripts/local-k8s-docker-desktop.sh
+	@bash scripts/kubernetes/local-k8s-docker-desktop.sh
 
 # Remove MCP deployment+Service (e.g. before Helm after kubectl apply / Kustomize)
 local-k8s-mcp-delete:
-	@bash scripts/local-k8s-mcp-delete.sh
+	@bash scripts/kubernetes/local-k8s-mcp-delete.sh
 
 # Docker Compose: MCP :8080 + GraphQL :4000, restart unless-stopped
 local-docker-up:
@@ -46,13 +46,13 @@ local-docker-up:
 # CLAWQL_SANDBOX_BRIDGE_URL, CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN — see docs/deployment/deploy-cloud-run.md
 deploy-cloud-run:
 	@if [ -z "$$PROJECT_ID" ]; then echo "PROJECT_ID is required"; echo "Example: PROJECT_ID=my-proj REGION=us-central1 make deploy-cloud-run"; exit 1; fi
-	@REGION="$${REGION:-us-central1}" bash scripts/deploy-cloud-run.sh
+	@REGION="$${REGION:-us-central1}" bash scripts/deploy/deploy-cloud-run.sh
 
 deploy-k8s:
 	@if [ -z "$$IMAGE" ] || [ -z "$$TAG" ]; then echo "IMAGE and TAG are required"; echo "Example: ENV=dev IMAGE=us-central1-docker.pkg.dev/<project>/<repo>/clawql-mcp TAG=abc123 make deploy-k8s"; exit 1; fi
-	@ENV="$${ENV:-dev}" DRY_RUN="$${DRY_RUN:-false}" IMAGE="$$IMAGE" TAG="$$TAG" bash scripts/deploy-k8s.sh
+	@ENV="$${ENV:-dev}" DRY_RUN="$${DRY_RUN:-false}" IMAGE="$$IMAGE" TAG="$$TAG" bash scripts/deploy/deploy-k8s.sh
 
 # Docs site (website/) → Cloudflare Worker clawql-docs, docs.clawql.com — requires jq and
 # CLAWQL_CLOUDFLARE_API_TOKEN or CLOUDFLARE_API_TOKEN. Loads ./.env when present (same pattern as local dev).
 deploy-docs:
-	@bash -c 'set -a; [ -f .env ] && . ./.env; set +a; exec bash scripts/deploy-docs-to-cloudflare.sh'
+	@bash -c 'set -a; [ -f .env ] && . ./.env; set +a; exec bash scripts/deploy/deploy-docs-to-cloudflare.sh'

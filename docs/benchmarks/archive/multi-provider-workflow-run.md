@@ -1,6 +1,6 @@
 # Multi-provider workflow (archived run note)
 
-**Script:** [`scripts/workflow-gke-cloudflare-jira.mjs`](../../../scripts/workflow-gke-cloudflare-jira.mjs)
+**Script:** [`scripts/workflows/workflow-gke-cloudflare-jira.mjs`](../../../scripts/workflows/workflow-gke-cloudflare-jira.mjs)
 
 **Run:**
 

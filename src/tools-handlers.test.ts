@@ -217,6 +217,7 @@ describe("optional tool handlers (MCP content shape)", () => {
       saved.CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN = process.env.CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN;
       delete process.env.CLAWQL_SANDBOX_BRIDGE_URL;
       delete process.env.CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN;
+      delete process.env.CLAWQL_SANDBOX_BACKEND;
     });
 
     afterEach(() => {

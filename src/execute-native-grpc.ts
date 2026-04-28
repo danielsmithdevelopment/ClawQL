@@ -21,7 +21,7 @@ export async function executeNativeGrpc(
   const client = getGrpcClient(meta.clientKey);
   if (!client) {
     const r = { ok: false as const, error: `Unknown gRPC client: ${meta.clientKey}` };
-    recordNativeGrpcExecute(false);
+    recordNativeGrpcExecute(false, meta.sourceLabel);
     return r;
   }
 
@@ -39,17 +39,17 @@ export async function executeNativeGrpc(
   const fn = (client as unknown as Record<string, UnaryCall | unknown>)[meta.rpcName];
   if (typeof fn !== "function") {
     const r = { ok: false as const, error: `gRPC client has no method ${meta.rpcName}` };
-    recordNativeGrpcExecute(false);
+    recordNativeGrpcExecute(false, meta.sourceLabel);
     return r;
   }
 
   return new Promise((resolve) => {
     fn.call(client, args, metadata, (err: grpc.ServiceError | null, response: unknown) => {
       if (err) {
-        recordNativeGrpcExecute(false);
+        recordNativeGrpcExecute(false, meta.sourceLabel);
         resolve({ ok: false, error: err.message });
       } else {
-        recordNativeGrpcExecute(true);
+        recordNativeGrpcExecute(true, meta.sourceLabel);
         resolve({ ok: true, data: response });
       }
     });

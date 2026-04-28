@@ -9,7 +9,7 @@ export const metadata = docsPageMetadata({
 
 # MCP clients
 
-[Model Context Protocol](https://modelcontextprotocol.io) is how editors and assistants connect to ClawQL. **ClawQL Core** — **`search`**, **`execute`**, **`audit`**, **`cache`** — has **no opt-out**. Hosts also register **`sandbox_exec`**, **`ingest_external_knowledge`**, and **`memory_ingest`** / **`memory_recall`** by default (set **`CLAWQL_ENABLE_MEMORY=0`** to hide vault memory tools). Optional tools include **`notify`** (**`CLAWQL_ENABLE_NOTIFY`**, Slack **`chat.postMessage`**; [Slack notify](/notify)) and **`knowledge_search_onyx`** (**`CLAWQL_ENABLE_ONYX`**, Onyx when **`onyx`** is in the merge; [Onyx knowledge search](/onyx-knowledge)). [Cursor](https://cursor.com/docs/context/mcp) and Claude Desktop are common hosts. {{ className: 'lead' }}
+[Model Context Protocol](https://modelcontextprotocol.io) is how editors and assistants connect to ClawQL. **ClawQL Core** — **`search`**, **`execute`**, **`audit`**, **`cache`** — has **no opt-out**. Hosts register **`ingest_external_knowledge`** and **`memory_ingest`** / **`memory_recall`** by default (set **`CLAWQL_ENABLE_MEMORY=0`** to hide vault memory tools). Optional tools include **`sandbox_exec`** (**`CLAWQL_ENABLE_SANDBOX=1`**), **`notify`** (**`CLAWQL_ENABLE_NOTIFY`**, Slack **`chat.postMessage`**; [Slack notify](/notify)) and **`knowledge_search_onyx`** (**`CLAWQL_ENABLE_ONYX`**, Onyx when **`onyx`** is in the merge; [Onyx knowledge search](/onyx-knowledge)). [Cursor](https://cursor.com/docs/context/mcp) and Claude Desktop are common hosts. {{ className: 'lead' }}
 
 ## What is MCP?
 

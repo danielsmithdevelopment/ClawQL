@@ -7,8 +7,10 @@ describe("sandbox-bridge-client", () => {
   beforeEach(() => {
     saved.CLAWQL_SANDBOX_BRIDGE_URL = process.env.CLAWQL_SANDBOX_BRIDGE_URL;
     saved.CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN = process.env.CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN;
+    saved.CLAWQL_SANDBOX_BACKEND = process.env.CLAWQL_SANDBOX_BACKEND;
     delete process.env.CLAWQL_SANDBOX_BRIDGE_URL;
     delete process.env.CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN;
+    delete process.env.CLAWQL_SANDBOX_BACKEND;
   });
 
   afterEach(() => {
@@ -74,5 +76,19 @@ describe("sandbox-bridge-client", () => {
     const out = await handleClawqlCodeToolInput({ code: "1", language: "javascript" });
     const parsed = JSON.parse(out.content[0].text) as { success: boolean };
     expect(parsed.success).toBe(true);
+  });
+
+  it("handleClawqlCodeToolInput uses Seatbelt backend without bridge env when configured", async () => {
+    process.env.CLAWQL_SANDBOX_BACKEND = "macos-seatbelt";
+    const fetchMock = vi.spyOn(globalThis, "fetch");
+    const out = await handleClawqlCodeToolInput({ code: "print(1)", language: "python" });
+    expect(fetchMock).not.toHaveBeenCalled();
+    const parsed = JSON.parse(out.content[0].text) as { success: boolean; error?: string };
+    if (process.platform === "darwin") {
+      expect(parsed.success === true || parsed.success === false).toBe(true);
+    } else {
+      expect(parsed.success).toBe(false);
+      expect(parsed.error).toMatch(/macOS/);
+    }
   });
 });

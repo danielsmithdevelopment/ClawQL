@@ -29,11 +29,11 @@ Unset means **on**. Set **`0`**, **`false`**, or **`no`** to hide tools or shrin
 
 Set **`1`** / **`true`** / **`yes`** where noted:
 
-| Band                  | MCP tools                       | Flags / prerequisites                                                                                                                                                  |
-| --------------------- | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **ClawQL Sandbox**    | **`sandbox_exec`**              | **Infrastructure-gated:** calls fail until **`CLAWQL_SANDBOX_BRIDGE_URL`** and token are set (Cloudflare Worker bridge). There is no separate `CLAWQL_ENABLE_SANDBOX`. |
-| **ClawQL Ouroboros**  | **`ouroboros_*`** (three tools) | **`CLAWQL_ENABLE_OUROBOROS=1`**                                                                                                                                        |
-| **ClawQL Automation** | **`schedule`**, **`notify`**    | **`CLAWQL_ENABLE_SCHEDULE=1`**, **`CLAWQL_ENABLE_NOTIFY=1`**                                                                                                           |
+| Band                  | MCP tools                       | Flags / prerequisites                                                                                                                                                                                                                                                           |
+| --------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **ClawQL Sandbox**    | **`sandbox_exec`**              | **`CLAWQL_ENABLE_SANDBOX=1`** registers the tool. Then **`CLAWQL_SANDBOX_BACKEND`**: omit = bridge; **`auto`** = Seatbelt → Docker → bridge; or pin **`bridge`** \| **`macos-seatbelt`** \| **`docker`** ([#207](https://github.com/danielsmithdevelopment/ClawQL/issues/207)). |
+| **ClawQL Ouroboros**  | **`ouroboros_*`** (three tools) | **`CLAWQL_ENABLE_OUROBOROS=1`**                                                                                                                                                                                                                                                 |
+| **ClawQL Automation** | **`schedule`**, **`notify`**    | **`CLAWQL_ENABLE_SCHEDULE=1`**, **`CLAWQL_ENABLE_NOTIFY=1`**                                                                                                                                                                                                                    |
 
 **`knowledge_search_onyx`** — **`CLAWQL_ENABLE_ONYX=1`** plus **Documents** still enabled (documents off hides the tool regardless).
 
@@ -104,6 +104,17 @@ See **[Feature tiers](#feature-tiers-architecture-diagram)** first. Quick list:
 
 - **Default on, opt out:** `CLAWQL_ENABLE_MEMORY`, `CLAWQL_ENABLE_DOCUMENTS` — set `0` / `false` / `no` to hide tools or trim default **`all-providers`** (documents).
 - **Default off, opt in:** `CLAWQL_ENABLE_SCHEDULE`, `CLAWQL_ENABLE_NOTIFY`, `CLAWQL_ENABLE_ONYX`, `CLAWQL_ENABLE_OUROBOROS`.
+
+## `.env` loading and canonical `CLAWQL_*` names
+
+On startup, **`clawql-mcp`** / **`clawql-mcp-http`** import **`src/load-env.ts`**, which loads **dotenv** from:
+
+1. **`<packageRoot>/.env`** — next to the installed package’s `dist/` (the npm package root),
+2. **`process.cwd()/.env`** — with **`override: true`** so values from the current working directory win when both files define the same key.
+
+That lets you keep **`CLAWQL_*`** (and tokens) in a repo or project **`.env`** for local runs and Cursor MCP **without** pasting secrets into **`mcp.json`**. Only variables consumed by the server process apply here; the MCP client’s **`url`** for HTTP mode is configured separately (see **`docs/readme/deployment.md`**).
+
+**Prefer `CLAWQL_*`** for new configuration. A few legacy names remain as aliases where noted in **`.env.example`** — for example **`CLAWQL_SPEC_URL`** or **`OPENAPI_SPEC_URL`** (same meaning; prefer **`CLAWQL_SPEC_URL`**), and **`CLAWQL_DISCOVERY_URL`** or **`GOOGLE_DISCOVERY_URL`**. Resolution checks **`CLAWQL_*` first**, then the legacy variable.
 
 ## Full References
 

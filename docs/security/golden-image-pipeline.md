@@ -2,7 +2,7 @@
 
 This document describes the **full path** from repository change to **signed images on GHCR**, how **CI blocks** promotion when anything fails, and how **Kubernetes admission** ties the published artifact to what is allowed to run—so operators can reason about **build → scan → push → sign → deploy** in one place.
 
-Related: [`image-signature-enforcement.md`](image-signature-enforcement.md) (Kyverno policy details and forks), [`npm-supply-chain.md`](npm-supply-chain.md) (npm packages, not container images), [`docker/README.md`](../../docker/README.md) (operator `cosign verify` commands), [`.github/workflows/docker-publish.yml`](../../.github/workflows/docker-publish.yml), [`charts/clawql-mcp/values.yaml`](../../charts/clawql-mcp/values.yaml), [`scripts/local-k8s-docker-desktop.sh`](../../scripts/local-k8s-docker-desktop.sh).
+Related: [`image-signature-enforcement.md`](image-signature-enforcement.md) (Kyverno policy details and forks), [`npm-supply-chain.md`](npm-supply-chain.md) (npm packages, not container images), [`docker/README.md`](../../docker/README.md) (operator `cosign verify` commands), [`.github/workflows/docker-publish.yml`](../../.github/workflows/docker-publish.yml), [`charts/clawql-mcp/values.yaml`](../../charts/clawql-mcp/values.yaml), [`scripts/kubernetes/local-k8s-docker-desktop.sh`](../../scripts/kubernetes/local-k8s-docker-desktop.sh).
 
 ## Goals (what “golden” means here)
 
@@ -118,7 +118,7 @@ Signing in CI **does not** stop a malicious or mistaken **`kubectl apply`** of a
 
 **Docker Desktop (`make local-k8s-up`):**
 
-- [`scripts/local-k8s-docker-desktop.sh`](../../scripts/local-k8s-docker-desktop.sh) installs the **Kyverno Helm chart** (pin via **`CLAWQL_KYVERNO_CHART_VERSION`**, default **3.7.2**), uses [`values-docker-desktop.yaml`](../../charts/clawql-mcp/values-docker-desktop.yaml) with **`matchReleaseNamespaceOnly: true`** so the policy applies to the **`clawql`** release namespace, pulls **signed GHCR** images for MCP and UI, and **rejects** unsigned local **`docker build`** env overrides.
+- [`scripts/kubernetes/local-k8s-docker-desktop.sh`](../../scripts/kubernetes/local-k8s-docker-desktop.sh) installs the **Kyverno Helm chart** (pin via **`CLAWQL_KYVERNO_CHART_VERSION`**, default **3.7.2**), uses [`values-docker-desktop.yaml`](../../charts/clawql-mcp/values-docker-desktop.yaml) with **`matchReleaseNamespaceOnly: true`** so the policy applies to the **`clawql`** release namespace, pulls **signed GHCR** images for MCP and UI, and **rejects** unsigned local **`docker build`** env overrides.
 
 ### What this does / does not cover
 

@@ -22,7 +22,7 @@ export async function executeNativeGraphQL(
   const src = getGraphQLSource(meta.sourceLabel);
   if (!src) {
     const r = { ok: false as const, error: `Unknown GraphQL source: ${meta.sourceLabel}` };
-    recordNativeGraphqlExecute(false);
+    recordNativeGraphqlExecute(false, meta.sourceLabel);
     return r;
   }
 
@@ -38,7 +38,7 @@ export async function executeNativeGraphQL(
   for (const [name, info] of paramEntries) {
     if (info.required && args[name] === undefined) {
       const r = { ok: false as const, error: `Missing required GraphQL argument: ${name}` };
-      recordNativeGraphqlExecute(false);
+      recordNativeGraphqlExecute(false, meta.sourceLabel);
       return r;
     }
   }
@@ -77,7 +77,7 @@ export async function executeNativeGraphQL(
       ok: false as const,
       error: `GraphQL HTTP ${res.status}: ${JSON.stringify(json)}`,
     };
-    recordNativeGraphqlExecute(false);
+    recordNativeGraphqlExecute(false, meta.sourceLabel);
     return r;
   }
   if (json.errors?.length) {
@@ -85,10 +85,10 @@ export async function executeNativeGraphQL(
       ok: false as const,
       error: json.errors.map((e) => e.message ?? JSON.stringify(e)).join("; "),
     };
-    recordNativeGraphqlExecute(false);
+    recordNativeGraphqlExecute(false, meta.sourceLabel);
     return r;
   }
 
-  recordNativeGraphqlExecute(true);
+  recordNativeGraphqlExecute(true, meta.sourceLabel);
   return { ok: true, data: json.data };
 }

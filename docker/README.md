@@ -67,7 +67,7 @@ Single-spec `execute` uses in-process OpenAPI→GraphQL. **`clawql-mcp-http`** s
 
 **Obsidian vault:** The image sets **`CLAWQL_OBSIDIAN_VAULT_PATH=/vault`** and includes a writable **`/vault`** directory for **`memory_ingest`** / **`memory_recall`** and **[ClawQL-Agent](https://github.com/danielsmithdevelopment/ClawQL-Agent)**. **`docker-compose.yml`** bind-mounts **`${CLAWQL_VAULT_HOST_PATH:-${HOME}/.ClawQL}`** → **`/vault`** so notes persist on the host (override **`CLAWQL_VAULT_HOST_PATH`** for a different folder). See the main [README](../README.md#obsidian-vault-optional).
 
-**Sandbox (`sandbox_exec`):** Not bundled. Set **`CLAWQL_SANDBOX_BRIDGE_URL`** and **`CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN`** to a deployed [sandbox bridge](../cloudflare/sandbox-bridge/README.md) Worker; the container only calls it over HTTPS.
+**Sandbox (`sandbox_exec`):** Not bundled. Set **`CLAWQL_ENABLE_SANDBOX=1`** to register the tool, then **`CLAWQL_SANDBOX_BRIDGE_URL`** + **`CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN`** (and/or **`CLAWQL_SANDBOX_BACKEND`**) for a deployed [sandbox bridge](../cloudflare/sandbox-bridge/README.md) Worker or local backends; the container only calls the bridge over HTTPS when that path is used.
 
 Full MCP tool list and JSON examples: **[`docs/mcp-tools.md`](../docs/mcp-tools.md)**.
 
@@ -122,7 +122,7 @@ Endpoints:
 
 ```bash
 make local-k8s-up
-# or: bash scripts/local-k8s-docker-desktop.sh
+# or: bash scripts/kubernetes/local-k8s-docker-desktop.sh
 ```
 
 If Helm errors with **invalid ownership** (MCP was previously installed with **`kubectl apply`** / Kustomize), remove the old workload and reinstall: **`make local-k8s-mcp-delete && make local-k8s-up`**.
@@ -185,14 +185,14 @@ The helper script writes Secret **`clawql-github-auth`** (name unchanged for exi
 1. **One-shot (recommended):** from the ClawQL repo root, with `gh` logged in **or** tokens in **`.env`**:
 
    ```bash
-   bash scripts/k8s-docker-desktop-set-mcp-auth.sh
+   bash scripts/kubernetes/k8s-docker-desktop-set-mcp-auth.sh
    ```
 
    Optional: `export CLAWQL_CLOUDFLARE_API_TOKEN=…` and/or **`GOOGLE_ACCESS_TOKEN`** / **`CLAWQL_GOOGLE_ACCESS_TOKEN`** in the same shell (or add them to **`.env`**) so the script stores those keys in Secret **`clawql-github-auth`** and attaches them to **`deployment/clawql-mcp-http`**, then **`rollout restart`**s it.
 
-   You can also pipe a PAT: `gh auth token | bash scripts/k8s-docker-desktop-set-mcp-auth.sh`, or `export CLAWQL_GITHUB_TOKEN=…` / `CLAWQL_BEARER_TOKEN=…` before the script.
+   You can also pipe a PAT: `gh auth token | bash scripts/kubernetes/k8s-docker-desktop-set-mcp-auth.sh`, or `export CLAWQL_GITHUB_TOKEN=…` / `CLAWQL_BEARER_TOKEN=…` before the script.
 
-   The old name **`scripts/k8s-docker-desktop-set-github-token.sh`** still runs the same script (deprecated alias).
+   The old name **`scripts/kubernetes/k8s-docker-desktop-set-github-token.sh`** still runs the same script (deprecated alias).
 
 2. **Manual:**
 
@@ -209,12 +209,12 @@ The helper script writes Secret **`clawql-github-auth`** (name unchanged for exi
 
 **Note:** **`helm upgrade --install`** reapplies chart values; env injected only via **`kubectl set env`** can be overwritten on the next upgrade. Prefer **`helm --set extraEnv`** or a **Secret** referenced from **`values.yaml`** for durable config.
 
-For remote clusters, use `docker/kustomize/overlays/dev` or `prod` and `scripts/deploy-k8s.sh` with a pushed image, or install the Helm chart with your registry image.
+For remote clusters, use `docker/kustomize/overlays/dev` or `prod` and `scripts/deploy/deploy-k8s.sh` with a pushed image, or install the Helm chart with your registry image.
 
 Cloud Run deployment guide/script:
 
 - [`docs/deployment/deploy-cloud-run.md`](../docs/deployment/deploy-cloud-run.md)
-- `scripts/deploy-cloud-run.sh`
+- `scripts/deploy/deploy-cloud-run.sh`
 
 ## Kubernetes starter manifest
 
@@ -276,14 +276,14 @@ Helper script (image/tag injection + apply):
 
 ```bash
 ENV=dev IMAGE=us-central1-docker.pkg.dev/<project>/<repo>/clawql-mcp TAG=<tag> \
-bash scripts/deploy-k8s.sh
+bash scripts/deploy/deploy-k8s.sh
 ```
 
 Dry run:
 
 ```bash
 ENV=prod IMAGE=us-central1-docker.pkg.dev/<project>/<repo>/clawql-mcp TAG=<tag> DRY_RUN=true \
-bash scripts/deploy-k8s.sh
+bash scripts/deploy/deploy-k8s.sh
 ```
 
 Defaults:

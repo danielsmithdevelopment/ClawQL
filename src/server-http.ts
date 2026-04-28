@@ -2,7 +2,7 @@
  * server-http.ts — ClawQL MCP Server over Streamable HTTP
  *
  * Remote MCP entrypoint for agents that connect via URL.
- * Exposes MCP on /mcp and health on /healthz.
+ * Exposes MCP on /mcp, health on /healthz, and Prometheus metrics on /metrics (unless disabled).
  */
 
 import "./load-env.js";
@@ -25,6 +25,11 @@ import {
   getNativeProtocolMetricsSnapshot,
   nativeProtocolMetricsEnabled,
 } from "./native-protocol-metrics.js";
+import {
+  prometheusDisabledForHttp,
+  renderPrometheusMetrics,
+} from "./native-protocol-prometheus.js";
+import { maybeInitOtelTracing } from "./otel-tracing.js";
 
 const PORT = Number.parseInt(process.env.PORT ?? process.env.MCP_PORT ?? "8080", 10);
 const DEFAULT_MCP_PATH = "/mcp";
@@ -82,7 +87,7 @@ export type CreateMcpHttpAppOptions = {
 };
 
 /**
- * Build Express app with `/healthz` and Streamable HTTP MCP on `mcpPath`.
+ * Build Express app with `/healthz`, **`/metrics`** (Prometheus unless **`CLAWQL_DISABLE_HTTP_METRICS=1`**), and Streamable HTTP MCP on `mcpPath`.
  * Each call uses a fresh session transport map (safe for parallel tests).
  */
 export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): Promise<Express> {
@@ -102,6 +107,24 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   app.use(applyCorsIfConfigured);
 
   await attachGraphqlHttpToMcpApp(app);
+
+  if (!prometheusDisabledForHttp()) {
+    app.get("/metrics", async (_req, res) => {
+      try {
+        const { body, contentType } = await renderPrometheusMetrics();
+        res.setHeader("Content-Type", contentType);
+        res.status(200).send(body);
+      } catch (err: unknown) {
+        console.error("[clawql-mcp-http] GET /metrics error:", err);
+        if (!res.headersSent) {
+          res
+            .status(500)
+            .type("text/plain")
+            .send(err instanceof Error ? err.message : String(err));
+        }
+      }
+    });
+  }
 
   app.get("/healthz", async (_req, res) => {
     const base: Record<string, unknown> = {
@@ -218,6 +241,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
 }
 
 async function main() {
+  await maybeInitOtelTracing();
   registerSpecCacheShutdownHooks();
   registerPostgresPoolShutdownHooks();
   registerOuroborosPoolShutdownHooks();

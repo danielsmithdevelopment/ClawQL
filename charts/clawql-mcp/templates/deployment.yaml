@@ -70,6 +70,10 @@ spec:
             - name: CLAWQL_ENABLE_DOCUMENTS
               value: "0"
             {{- end }}
+            {{- if .Values.enableSandbox }}
+            - name: CLAWQL_ENABLE_SANDBOX
+              value: "1"
+            {{- end }}
             {{- if .Values.enableNotify }}
             - name: CLAWQL_ENABLE_NOTIFY
               value: "1"

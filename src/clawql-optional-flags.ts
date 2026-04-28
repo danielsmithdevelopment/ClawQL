@@ -34,6 +34,7 @@ const rawOptionalFlagsSchema = z.object({
   CLAWQL_ENABLE_VISION: z.string().optional(),
   CLAWQL_ENABLE_ONYX: z.string().optional(),
   CLAWQL_ENABLE_OUROBOROS: z.string().optional(),
+  CLAWQL_ENABLE_SANDBOX: z.string().optional(),
 });
 
 export type ClawqlOptionalToolFlags = {
@@ -73,6 +74,10 @@ export type ClawqlOptionalToolFlags = {
    * ([#141](https://github.com/danielsmithdevelopment/ClawQL/issues/141)): Ouroboros MCP tools (`ouroboros_*`). Default false.
    */
   enableOuroboros: boolean;
+  /**
+   * ([#207](https://github.com/danielsmithdevelopment/ClawQL/issues/207)): MCP **`sandbox_exec`** (bridge / Seatbelt / Docker). Default false — register with **`CLAWQL_ENABLE_SANDBOX=1`**.
+   */
+  enableSandbox: boolean;
 };
 
 function rawToFlags(raw: z.infer<typeof rawOptionalFlagsSchema>): ClawqlOptionalToolFlags {
@@ -87,6 +92,7 @@ function rawToFlags(raw: z.infer<typeof rawOptionalFlagsSchema>): ClawqlOptional
     enableVision: envTruthy(raw.CLAWQL_ENABLE_VISION),
     enableOnyxKnowledge: envTruthy(raw.CLAWQL_ENABLE_ONYX),
     enableOuroboros: envTruthy(raw.CLAWQL_ENABLE_OUROBOROS),
+    enableSandbox: envTruthy(raw.CLAWQL_ENABLE_SANDBOX),
   };
 }
 

@@ -1,16 +1,16 @@
 # Skill: `sandbox_exec`
 
-Run isolated code in Cloudflare Sandbox via the bridge worker.
+**`CLAWQL_ENABLE_SANDBOX=1`** registers the MCP tool (diagram **default off — opt in**). Then: **unset** **`CLAWQL_SANDBOX_BACKEND`** = **bridge**; **`auto`** = **Seatbelt** → **Docker** → **bridge**; or pin **`bridge`**, **`macos-seatbelt`**, **`docker`** ([#207](https://github.com/danielsmithdevelopment/ClawQL/issues/207)).
 
 ## When to Use
 
-- You need quick computation or script checks without local execution.
+- You need local isolation without Cloudflare: **Seatbelt** on macOS or **`docker`** / **`podman`** on Linux/Mac (OrbStack, Docker Desktop).
 - You want safer ephemeral execution for generated snippets.
 - You need session-based state across related sandbox calls.
 
 ## Common Workflow
 
-1. Confirm bridge env is configured.
+1. Confirm backend: omit for bridge, **`auto`** for cascade, or pin **`CLAWQL_SANDBOX_BACKEND`**; configure URL + token / Docker / **`sandbox-exec`** as needed.
 2. Choose `language` (`python`, `javascript`, `shell`).
 3. Send small, focused `code`.
 4. Reuse `sessionId` for multi-step runs.
@@ -38,4 +38,4 @@ Run isolated code in Cloudflare Sandbox via the bridge worker.
 - Keep snippets minimal; avoid long-running tasks.
 - Treat output as untrusted until validated.
 - Pair with `memory_ingest` if results should be durable.
-- `sandbox_exec` runs remotely via the bridge worker, not on your local host shell.
+- **`bridge`** runs remotely via the Worker. **`macos-seatbelt`** / **`docker`** run locally under Seatbelt or container isolation — still not an unconstrained host shell.

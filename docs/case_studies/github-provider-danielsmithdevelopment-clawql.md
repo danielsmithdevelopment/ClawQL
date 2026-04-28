@@ -44,10 +44,10 @@ Both were driven through the MCP server (`dist/server.js`) — not through ad-ho
 
 ## 4. What we ran (reproducible)
 
-| Action                 | Mechanism                        | Script / notes                                                                                                                                          |
-| ---------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| List commits on `main` | `execute` → `repos/list-commits` | [`scripts/smoke-github-commits.mjs`](../../scripts/smoke-github-commits.mjs) — `npm run smoke:github-commits`                                           |
-| Patch description      | `execute` → `repos/update`       | [`scripts/clawql-github-patch-repo-description.mjs`](../../scripts/clawql-github-patch-repo-description.mjs) — `npm run clawql:github-repo-description` |
+| Action                 | Mechanism                        | Script / notes                                                                                                                                                  |
+| ---------------------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| List commits on `main` | `execute` → `repos/list-commits` | [`scripts/workflows/smoke-github-commits.mjs`](../../scripts/workflows/smoke-github-commits.mjs) — `npm run smoke:github-commits`                               |
+| Patch description      | `execute` → `repos/update`       | [`scripts/dev/clawql-github-patch-repo-description.mjs`](../../scripts/dev/clawql-github-patch-repo-description.mjs) — `npm run clawql:github-repo-description` |
 
 Example environment:
 
