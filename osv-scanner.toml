@@ -1,0 +1,10 @@
+# OSV-Scanner policy (https://google.github.io/osv-scanner/configuration/)
+#
+# The docs site uses Next.js 16.1.x with @opennextjs/cloudflare@1.18.x because Next 16.2.3+
+# fixes GHSA-q4gf but breaks App Router MDX pages that `export const metadata` alongside
+# mdx-annotations (compiler treats MDX as client). OpenNext 1.19+ peers next>=16.2.3 — incompatible
+# until the MDX/metadata story is resolved or metadata moves out of MDX entry files.
+
+[[IgnoredVulns]]
+id = "GHSA-q4gf-8mx6-v5v3"
+reason = "Documented dependency posture for docs.clawql.com — upgrade blocked on MDX metadata vs Next 16.2 (see comment above)."

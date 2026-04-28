@@ -25,7 +25,7 @@
     "@mdx-js/loader": "^3.1.0",
     "@mdx-js/react": "^3.1.0",
     "@next/mdx": "16.1.7",
-    "@opennextjs/cloudflare": "^1.19.1",
+    "@opennextjs/cloudflare": "1.18.0",
     "@sindresorhus/slugify": "^2.2.1",
     "@tailwindcss/postcss": "^4.2.2",
     "@tailwindcss/typography": "^0.5.16",
@@ -70,6 +70,8 @@
   },
   "overrides": {
     "@types/react": "19.2.14",
-    "@types/react-dom": "19.2.3"
+    "@types/react-dom": "19.2.3",
+    "fast-xml-parser": "5.7.0",
+    "postcss": "8.5.10"
   }
 }

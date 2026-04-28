@@ -4,8 +4,9 @@
  * **Isolation:** each upstream call only receives credentials chosen for **that** merged **`specLabel`** (or
  * **`CLAWQL_PROVIDER`** when no label). There is **no** cross-vendor reuse of `GOOGLE_ACCESS_TOKEN` on GitHub/Cloudflare,
  * and **`CLAWQL_BEARER_TOKEN`** is **not** sent to Slack, Sentry, n8n, or Google Cloud slugs (use vendor env vars or
- * **`CLAWQL_PROVIDER_AUTH_JSON`**). **`CLAWQL_BEARER_TOKEN`** remains available for **GitHub**, **Cloudflare**,
- * **Jira/Bitbucket/Atlassian**, and optional **Tika/Gotenberg** self-hosted auth.
+ * **`CLAWQL_PROVIDER_AUTH_JSON`**). **`CLAWQL_BEARER_TOKEN`** remains available for **GitHub**, **Cloudflare** (Bearer
+ * fallback after **`CLAWQL_CLOUDFLARE_API_TOKEN`** / **`CLOUDFLARE_API_TOKEN`** or **`CLOUDFLARE_EMAIL`** +
+ * **`CLOUDFLARE_API_KEY`** Global Key pair), **Jira/Bitbucket/Atlassian**, and optional **Tika/Gotenberg** self-hosted auth.
  *
  * **One-shot multi-provider credentials:** set **`CLAWQL_PROVIDER_AUTH_JSON`** to a JSON object whose keys are
  * merged **`specLabel`** values (`github`, `cloudflare`, `slack`, `compute-v1`, …). Each value is either a **string**
@@ -143,12 +144,21 @@ function envResolvedAuthHeaders(specLabel?: string): Record<string, string> {
     return bearer ? { Authorization: `Bearer ${bearer}` } : {};
   }
   if (effective === "cloudflare") {
-    const bearer = trimEnv(
-      "CLAWQL_CLOUDFLARE_API_TOKEN",
-      "CLOUDFLARE_API_TOKEN",
-      "CLAWQL_BEARER_TOKEN"
+    const explicitToken = trimEnv("CLAWQL_CLOUDFLARE_API_TOKEN", "CLOUDFLARE_API_TOKEN");
+    if (explicitToken) {
+      return { Authorization: `Bearer ${explicitToken}` };
+    }
+    const email = trimEnv("CLAWQL_CLOUDFLARE_EMAIL", "CLOUDFLARE_EMAIL");
+    const globalKey = trimEnv(
+      "CLAWQL_CLOUDFLARE_GLOBAL_API_KEY",
+      "CLOUDFLARE_GLOBAL_API_KEY",
+      "CLOUDFLARE_API_KEY"
     );
-    return bearer ? { Authorization: `Bearer ${bearer}` } : {};
+    if (email && globalKey) {
+      return { "X-Auth-Email": email, "X-Auth-Key": globalKey };
+    }
+    const bearerFallback = trimEnv("CLAWQL_BEARER_TOKEN");
+    return bearerFallback ? { Authorization: `Bearer ${bearerFallback}` } : {};
   }
   if (effective === "tika" || effective === "gotenberg") {
     const bearer = trimEnv("CLAWQL_BEARER_TOKEN");

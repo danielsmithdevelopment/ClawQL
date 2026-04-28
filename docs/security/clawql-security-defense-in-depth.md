@@ -6,6 +6,8 @@
 
 **April 2026** — Comprehensive reference (aligns with **ClawQL** security slides **§08** in `../presentations/clawql-slides.md`).
 
+**Auditable engineering matrix:** **[`clawql-security-defense-deliverables.md`](clawql-security-defense-deliverables.md)** — maps each control area to **status** (shipped / partial / planned / customer), **GitHub issues**, and **Helm / CI / docs** artifacts. Tracked as **[#164](https://github.com/danielsmithdevelopment/ClawQL/issues/164)**.
+
 ---
 
 ## Learning Objectives
@@ -128,7 +130,7 @@ Transform stealthy, persistent access into **loud, short-lived, observable event
 - Reboot or reschedule restores the verified baseline.
 - Configuration changes require **building and signing a new** image and rolling via **IaC**.
 
-**ClawQL:** **Trivy** + **OSV-Scanner** + **SBOM** in CI; **OPA Gatekeeper** / **Kyverno** at admission; chart pins **image digest**.
+**ClawQL:** **Trivy** + **OSV-Scanner** + **SBOM** in CI; **Cosign** on the digest that passed scan; **Kyverno `verifyImages`** from the Helm chart by default; digest-first values when you pin **`image@sha256`**. End-to-end pipeline and admission: **[`golden-image-pipeline.md`](golden-image-pipeline.md)**; policy details: **[`image-signature-enforcement.md`](image-signature-enforcement.md)**.
 
 ---
 
@@ -296,7 +298,7 @@ Transform stealthy, persistent access into **loud, short-lived, observable event
 | **Medium**   | 4.0–6.9        | **30 days**             | Track; schedule                          |
 | **Low**      | 0.0–3.9        | **Quarterly**           | Document accepted risk                   |
 
-_Tune SLAs to your org. ClawQL CI should fail **Critical/High** per `policy.yaml`._
+_Tune SLAs to your org. ClawQL **CI** enforces **HIGH/CRITICAL** for configured scanners (see **`.github/workflows/ci.yml`** **`supply-chain`**, **`.trivyignore`**, **`osv-scanner.toml`**) — not a separate `policy.yaml` file._
 
 ---
 
@@ -387,6 +389,10 @@ The **chicken-and-egg** of first trust: **HSM** / **air-gapped** **ceremony** fo
 - **No** single **control** is **enough**; **layers** **reinforce** each other.
 - **Threat** **modeling** **first**; **IaC** **always**; **immutability** **+** **detect** **+** **recover** **+** **learn**.
 - **ClawQL** gives you a **MCP**-centric, **Merkle**-audited, **mesh**-ready, **scanned** **Helm** platform—**your** **IdP**, **HSM**, **EDR**, and **SIEM** still **own** the **perimeter** **around** it.
+
+---
+
+**Deliverables checklist:** [`clawql-security-defense-deliverables.md`](clawql-security-defense-deliverables.md) · **Issue:** [#164](https://github.com/danielsmithdevelopment/ClawQL/issues/164)
 
 ---
 

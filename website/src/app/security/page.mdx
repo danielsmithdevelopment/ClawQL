@@ -1,0 +1,56 @@
+import { docsPageMetadata } from '@/lib/seo'
+
+export const metadata = docsPageMetadata({
+  title: 'Security',
+  description:
+    'Golden image pipeline: OSV and Trivy gates, one OCI build, Cosign signing, Kyverno verifyImages by default, and links to full supply-chain docs.',
+  path: '/security',
+})
+
+# Security
+
+This page summarizes how ClawQL **builds**, **proves**, and **enforces** container images from CI through Kubernetes admission. For every detail, use the repo docs linked below. {{ className: 'lead' }}
+
+## Golden image pipeline (end to end)
+
+**Canonical write-up:** **[golden-image-pipeline.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/golden-image-pipeline.md)** — single narrative for operators and security reviewers.
+
+At a glance:
+
+1. **Repository gates** — Workflow **`repo-supply-chain`** in [`.github/workflows/docker-publish.yml`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/.github/workflows/docker-publish.yml): **OSV-Scanner** (with [`osv-scanner.toml`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/osv-scanner.toml)), **Trivy** filesystem (**HIGH** / **CRITICAL**, [`.trivyignore`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/.trivyignore)), **Syft** CycloneDX SBOM artifact. If this job fails, **neither** the **MCP** nor **website** image jobs run.
+2. **One BuildKit build per image** — **`docker buildx build`** writes a **local OCI layout** (`type=oci`, `tar=false`): **`clawql-mcp`** ([`docker/Dockerfile`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docker/Dockerfile)) and **`clawql-website`** ([`website/Dockerfile`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/website/Dockerfile)), multi-arch, with BuildKit **provenance** and **SBOM** attestations. **No GHCR write** yet.
+3. **Trivy on that layout** — Same bytes that will be pushed are scanned (**HIGH** / **CRITICAL**). Failure **blocks** registry upload for that image.
+4. **`skopeo copy`** — Pushes **exactly** the scanned OCI layout to **GHCR** (immutable **`sha-*`** tags first). **No second build** — avoids drift between “scanned” and “released” artifacts.
+5. **Cosign keyless** — **`cosign sign`** on the digest using **GitHub Actions OIDC** (Fulcio / Rekor).
+6. **Tag promotion** — **`docker buildx imagetools create`** advances **`latest`**, **`nightly`**, and scheduled **`nightly-YYYYMMDD`** only after the above succeed.
+
+**Main branch CI** ([`ci.yml`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/.github/workflows/ci.yml)) runs a similar **`supply-chain`** job (OSV + Trivy fs + repository SBOM) so merges are gated before **`docker-publish`** runs on schedule or **`workflow_dispatch`**.
+
+## How we enforce it (build vs cluster)
+
+| Where               | What happens                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **GitHub Actions**  | Failed OSV/Trivy/SBOM steps or failed image scan → **no push**, **no sign**, **no tag promotion** for that run.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| **GHCR + Sigstore** | Signatures bind to the **digest** that passed the pipeline; **`cosign verify`** (see [`docker/README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docker/README.md)) proves identity out-of-band.                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| **Kubernetes**      | The **Helm chart** defaults **`kyverno.imageSignaturePolicy.enabled: true`**, rendering a **`ClusterPolicy`** with Kyverno **`verifyImages`** for **`ghcr.io/danielsmithdevelopment/clawql-mcp*`** and **`clawql-website*`** (Cosign keyless issuer/subject regexes). **Install [Kyverno](https://kyverno.io/)** before `helm upgrade`, or opt out with **`--set kyverno.imageSignaturePolicy.enabled=false`** until your cluster has it. Policy fields, digest-only options, and forks: **[image-signature-enforcement.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/image-signature-enforcement.md)**. |
+| **Docker Desktop**  | **`make local-k8s-up`** installs Kyverno, uses signed GHCR images for MCP/UI, scopes policy to the release namespace, and rejects unsigned local image env overrides — see [Kubernetes](/kubernetes) and [`scripts/local-k8s-docker-desktop.sh`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/scripts/local-k8s-docker-desktop.sh).                                                                                                                                                                                                                                                                                       |
+
+**Important limits:** the Kyverno rule matches **ClawQL’s two GHCR image patterns** only; other containers in the same namespace (databases, Onyx stack, etc.) are **not** covered by that policy. CI signing does not stop arbitrary **`kubectl`** if someone bypasses admission—**Kyverno** (or equivalent) is what ties **deployed** ClawQL images to the **signed** digests from this pipeline.
+
+## npm and other artifacts
+
+Container images are not npm packages. **npm** publish hardening (pack → scan → publish, OIDC provenance): **[npm-supply-chain.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/npm-supply-chain.md)** ([#156](https://github.com/danielsmithdevelopment/ClawQL/issues/156)).
+
+## Security references (repo)
+
+- [Security docs index](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/README.md)
+- [Golden image pipeline (full E2E + enforcement)](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/golden-image-pipeline.md)
+- [Defense in depth guide](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/clawql-security-defense-in-depth.md)
+- [Deliverables matrix (shipped / partial / planned)](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/clawql-security-defense-deliverables.md)
+- [Image signature enforcement (Kyverno details)](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/image-signature-enforcement.md)
+
+## Issues and tracking
+
+- [#156](https://github.com/danielsmithdevelopment/ClawQL/issues/156) — supply-chain hardening scope
+- [#132](https://github.com/danielsmithdevelopment/ClawQL/issues/132) — digest pin / admission verify follow-through
+- [#164](https://github.com/danielsmithdevelopment/ClawQL/issues/164) — matrix maintenance

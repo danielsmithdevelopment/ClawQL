@@ -246,6 +246,7 @@ export const navigation: Array<NavGroup> = [
       { title: 'MCP clients', href: '/mcp-clients' },
       { title: 'Spec configuration', href: '/spec-configuration' },
       { title: 'Troubleshooting', href: '/troubleshooting' },
+      { title: 'Security', href: '/security' },
       {
         title: 'Case study: Cloudflare docs',
         href: '/case-studies/cloudflare-docs-mcp',

@@ -27,6 +27,12 @@ const guides = [
       'Docker, Streamable HTTP, Cloud Run, and links to Kubernetes and remote deploy.',
   },
   {
+    href: '/security',
+    name: 'Security',
+    description:
+      'Golden image pipeline end-to-end, Kyverno admission by default, Cosign keyless, Trivy/OSV gates, and defense-in-depth references.',
+  },
+  {
     href: '/kubernetes',
     name: 'Kubernetes',
     description:

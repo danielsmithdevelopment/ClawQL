@@ -165,6 +165,45 @@ jobs:
       - name: Helm chart + Kustomize local overlay lint
         run: make lint-k8s-manifests
 
+  supply-chain:
+    name: Supply chain (OSV + Trivy + SBOM)
+    needs: [lint, workflow-scripts]
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      # actions/checkout@v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      # Pin image digest moves with upstream; OSV DB is live at scan time.
+      - name: OSV-Scanner (lockfiles + manifests)
+        run: docker run --rm -v "$PWD:/repo" -w /repo ghcr.io/google/osv-scanner:latest scan --recursive --config osv-scanner.toml .
+
+      # aquasecurity/trivy-action@v0.36.0 — vuln-only; filesystem mode skips vendored trees.
+      - name: Trivy filesystem (HIGH / CRITICAL)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+        with:
+          scan-type: fs
+          scan-ref: "."
+          scanners: vuln
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+          trivyignores: .trivyignore
+          skip-dirs: node_modules,website/node_modules,dist,packages/mcp-grpc-transport/dist,packages/clawql-ouroboros/dist,.git
+
+      # CycloneDX JSON for the repository (lockfiles + vendored sources Syft detects). Artifact for audits / #156.
+      - name: CycloneDX SBOM (Syft)
+        run: |
+          docker run --rm -v "$PWD:/repo" -w /repo anchore/syft:v1.19.0 \
+            scan . -o "cyclonedx-json=sbom-cyclonedx-repo.cdx.json"
+
+      # actions/upload-artifact@v4 (full commit pin flaky on some runners; tag resolves)
+      - name: Upload repository SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-cyclonedx-repository
+          path: sbom-cyclonedx-repo.cdx.json
+          if-no-files-found: error
+
   website-docker-smoke:
     name: Website Docker smoke
     needs: [lint, workflow-scripts]
@@ -234,7 +273,7 @@ jobs:
   # Wave 2 — only if fast gates pass (fail early: no matrix work when lint/scripts fail)
   test:
     name: Test (Node ${{ matrix.node-version }})
-    needs: [lint, workflow-scripts, website-docker-smoke, website-playwright-smoke]
+    needs: [lint, workflow-scripts, website-docker-smoke, website-playwright-smoke, supply-chain]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
@@ -262,7 +301,7 @@ jobs:
 
   ouroboros-postgres-optional:
     name: Ouroboros Postgres integration (optional)
-    needs: [lint, workflow-scripts, website-docker-smoke, website-playwright-smoke]
+    needs: [lint, workflow-scripts, website-docker-smoke, website-playwright-smoke, supply-chain]
     if: vars.CLAWQL_ENABLE_OUROBOROS_POSTGRES_CI == '1'
     runs-on: ubuntu-latest
     timeout-minutes: 15

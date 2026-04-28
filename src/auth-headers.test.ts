@@ -12,6 +12,11 @@ afterEach(() => {
   delete process.env.GH_TOKEN;
   delete process.env.CLAWQL_CLOUDFLARE_API_TOKEN;
   delete process.env.CLOUDFLARE_API_TOKEN;
+  delete process.env.CLAWQL_CLOUDFLARE_EMAIL;
+  delete process.env.CLOUDFLARE_EMAIL;
+  delete process.env.CLAWQL_CLOUDFLARE_GLOBAL_API_KEY;
+  delete process.env.CLOUDFLARE_GLOBAL_API_KEY;
+  delete process.env.CLOUDFLARE_API_KEY;
   delete process.env.CLAWQL_PROVIDER;
   delete process.env.PAPERLESS_API_TOKEN;
   delete process.env.CLAWQL_PAPERLESS_API_TOKEN;
@@ -89,6 +94,24 @@ describe("mergedAuthHeaders", () => {
     process.env.CLOUDFLARE_API_TOKEN = "cf_tok";
     expect(mergedAuthHeaders("cloudflare")).toEqual({
       Authorization: "Bearer cf_tok",
+    });
+  });
+
+  it("uses X-Auth-Email and X-Auth-Key when Cloudflare Global API Key envs are set", () => {
+    process.env.CLOUDFLARE_EMAIL = "ops@example.com";
+    process.env.CLOUDFLARE_API_KEY = "cf_global_secret";
+    expect(mergedAuthHeaders("cloudflare")).toEqual({
+      "X-Auth-Email": "ops@example.com",
+      "X-Auth-Key": "cf_global_secret",
+    });
+  });
+
+  it("prefers explicit Cloudflare API token over Global API Key pair", () => {
+    process.env.CLOUDFLARE_API_TOKEN = "api_token_wins";
+    process.env.CLOUDFLARE_EMAIL = "ops@example.com";
+    process.env.CLOUDFLARE_API_KEY = "global_ignored";
+    expect(mergedAuthHeaders("cloudflare")).toEqual({
+      Authorization: "Bearer api_token_wins",
     });
   });
 

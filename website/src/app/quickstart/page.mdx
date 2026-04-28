@@ -64,7 +64,7 @@ If you deploy locally with Kubernetes + Helm:
 make local-k8s-up
 ```
 
-You can open the bundled docs UI at **`http://clawql.localhost`** and keep MCP clients pointed to **`http://localhost:8080/mcp`**.
+You can open the bundled docs UI at **`http://clawql.localhost`** and keep MCP clients pointed to **`http://localhost:8080/mcp`**. The script installs **Kyverno** and only admits **Cosign-signed** ClawQL images from **GHCR** — see [Security](/security) and the repo doc **[golden-image-pipeline.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/golden-image-pipeline.md)**.
 
 ## Next steps
 

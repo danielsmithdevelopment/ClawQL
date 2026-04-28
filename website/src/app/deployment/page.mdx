@@ -3,7 +3,7 @@ import { docsPageMetadata } from '@/lib/seo'
 export const metadata = docsPageMetadata({
   title: 'Deployment',
   description:
-    'Deploy ClawQL: Docker Distroless image, Streamable HTTP /mcp, ENABLE_GRPC and GRPC_PORT, Google Cloud Run script, Kubernetes Kustomize or Helm chart, production notes.',
+    'Deploy ClawQL: Docker Distroless image, Streamable HTTP /mcp, ENABLE_GRPC, Cloud Run, Kubernetes Helm/Kustomize, golden image pipeline and Kyverno enforcement.',
   path: '/deployment',
 })
 
@@ -31,6 +31,10 @@ The repo ships a multi-stage **Distroless** image (`docker/README.md`) with `dis
 
 [`github.com/danielsmithdevelopment/ClawQL/blob/main/docker/README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docker/README.md)
 
+## Security and supply chain
+
+**Golden image (containers):** end-to-end narrative—repo gates → **single** BuildKit OCI export per image → **Trivy** on that layout → **`skopeo copy`** (same bytes) → **Cosign keyless** → **`imagetools`** promotion of **`latest`** / **`nightly`** — is in **[`docs/security/golden-image-pipeline.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/golden-image-pipeline.md)**. **Kubernetes:** the **Helm** chart defaults **Kyverno `verifyImages`** for the two GHCR ClawQL images ([Security](/security), **[`image-signature-enforcement.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/image-signature-enforcement.md)**). **npm** packages use a separate flow: **[`npm-supply-chain.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/npm-supply-chain.md)**. Operator **`cosign verify`** commands: [`docker/README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docker/README.md).
+
 ## Cloud Run
 
 One-shot script (sets project/region via env):
@@ -51,7 +55,7 @@ After deploy, agents use **`https://<mcp-service-url>/mcp`**. Full options: [`do
 
 ## Kubernetes
 
-**Local MCP on Docker Desktop** (namespace `clawql`, **`http://localhost:8080/mcp`**, GHCR image or optional local build) is covered on **[Kubernetes](/kubernetes)**.
+**Local MCP on Docker Desktop** (namespace **`clawql`**, **`http://localhost:8080/mcp`**, **signed GHCR** images, **Kyverno** installed by **`make local-k8s-up`**) is covered on **[Kubernetes](/kubernetes)**.
 
 For **remote** clusters, use Kustomize overlays with image tag injection:
 

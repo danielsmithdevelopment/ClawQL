@@ -126,6 +126,20 @@ const resources: Array<Resource> = [
     },
   },
   {
+    href: '/security',
+    name: 'Security',
+    description:
+      'SBOM/provenance attestations, keyless Cosign signing, Trivy and OSV gates, and defense-in-depth deliverables.',
+    icon: ShapesIcon,
+    pattern: {
+      y: 10,
+      squares: [
+        [0, 1],
+        [2, 2],
+      ],
+    },
+  },
+  {
     href: '/benchmarks',
     name: 'Benchmarks',
     description:

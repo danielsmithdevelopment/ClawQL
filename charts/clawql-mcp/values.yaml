@@ -130,6 +130,8 @@ onyx:
       tag: "8.609.39"
       pullPolicy: IfNotPresent
     skipUpgradeCheck: "true"
+    # Vespa container startup guard; keep false by default for safety.
+    ignoreNotEnoughMemory: false
     persistence:
       enabled: false
       storageClass: ""
@@ -277,6 +279,13 @@ documentPipeline:
       pullPolicy: IfNotPresent
     service:
       port: 9998
+    resources:
+      requests:
+        cpu: 50m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 1Gi
   gotenberg:
     image:
       repository: gotenberg/gotenberg
@@ -284,6 +293,13 @@ documentPipeline:
       pullPolicy: IfNotPresent
     service:
       port: 3000
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: "1"
+        memory: 1Gi
   stirling:
     image:
       repository: frooodle/s-pdf
@@ -291,6 +307,13 @@ documentPipeline:
       pullPolicy: IfNotPresent
     service:
       port: 8080
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: "1"
+        memory: 1Gi
     auth:
       apiKey: ""
       existingSecret: ""
@@ -307,6 +330,13 @@ documentPipeline:
       pullPolicy: IfNotPresent
     service:
       port: 8000
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        cpu: "2"
+        memory: 2Gi
     auth:
       apiToken: ""
       secretKey: ""
@@ -334,6 +364,13 @@ stores:
       pullPolicy: IfNotPresent
     service:
       port: 5432
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: "1"
+        memory: 1Gi
     auth:
       database: paperless
       username: paperless
@@ -354,6 +391,13 @@ stores:
       pullPolicy: IfNotPresent
     service:
       port: 6379
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
 
 # Optional Apache Flink cluster for in-cluster Onyx connector jobs (#119).
 # Default is internal-only networking (ClusterIP), no ingress.
@@ -589,6 +633,34 @@ providerIngress:
     host: onyx.localhost
     path: /
     pathType: Prefix
+
+# Kyverno ClusterPolicy: require Cosign (keyless / GitHub Actions) for ClawQL GHCR images (default on).
+# Prerequisite: Kyverno installed in the cluster (CRD kyverno.io/v1 ClusterPolicy). For clusters without
+# Kyverno, set kyverno.imageSignaturePolicy.enabled=false before install, or install Kyverno first.
+kyverno:
+  imageSignaturePolicy:
+    enabled: true
+    # When true, only Pods in the Helm release namespace are matched (useful on shared dev clusters).
+    matchReleaseNamespaceOnly: false
+    policyName: ""
+    policyTitle: "ClawQL GHCR — require Cosign (keyless / GitHub Actions)"
+    validationFailureAction: Enforce
+    background: false
+    failurePolicy: Fail
+    webhookTimeoutSeconds: 30
+    verifyDigest: false
+    mutateDigest: false
+    excludeNamespaces:
+      - kube-system
+      - kyverno
+      - kube-public
+    imageReferences:
+      - "ghcr.io/danielsmithdevelopment/clawql-mcp*"
+      - "ghcr.io/danielsmithdevelopment/clawql-website*"
+    cosign:
+      subjectRegExp: "^https://github\\.com/danielsmithdevelopment/ClawQL/.*"
+      issuerRegExp: "^https://token\\.actions\\.githubusercontent\\.com.*"
+      rekorUrl: "https://rekor.sigstore.dev"
 
 nodeSelector: {}
 tolerations: []

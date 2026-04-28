@@ -179,6 +179,8 @@ spec:
             - name: http
               containerPort: {{ .Values.documentPipeline.tika.service.port | int }}
               protocol: TCP
+          resources:
+            {{- toYaml .Values.documentPipeline.tika.resources | nindent 12 }}
 ---
 apiVersion: v1
 kind: Service
@@ -228,6 +230,8 @@ spec:
             - name: http
               containerPort: {{ .Values.documentPipeline.gotenberg.service.port | int }}
               protocol: TCP
+          resources:
+            {{- toYaml .Values.documentPipeline.gotenberg.resources | nindent 12 }}
 ---
 apiVersion: v1
 kind: Service
@@ -292,6 +296,8 @@ spec:
             - name: http
               containerPort: {{ .Values.documentPipeline.stirling.service.port | int }}
               protocol: TCP
+          resources:
+            {{- toYaml .Values.documentPipeline.stirling.resources | nindent 12 }}
 {{- if $postgresEnabled }}
 ---
 apiVersion: v1
@@ -355,6 +361,8 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /var/lib/postgresql/data
+          resources:
+            {{- toYaml .Values.stores.postgres.resources | nindent 12 }}
       volumes:
         - name: data
           {{- if .Values.stores.postgres.persistence.enabled }}
@@ -419,6 +427,8 @@ spec:
             - name: redis
               containerPort: {{ .Values.stores.redis.service.port | int }}
               protocol: TCP
+          resources:
+            {{- toYaml .Values.stores.redis.resources | nindent 12 }}
 {{- end }}
 {{- if $paperlessEnabled }}
 ---
@@ -536,6 +546,8 @@ spec:
               mountPath: /usr/src/paperless/data
             - name: consume
               mountPath: /usr/src/paperless/consume
+          resources:
+            {{- toYaml .Values.documentPipeline.paperless.resources | nindent 12 }}
       volumes:
         - name: media
           {{- if .Values.documentPipeline.paperless.persistence.existingMediaClaim }}

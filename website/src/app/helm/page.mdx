@@ -3,7 +3,7 @@ import { docsPageMetadata } from '@/lib/seo'
 export const metadata = docsPageMetadata({
   title: 'Helm',
   description:
-    'Install ClawQL on Kubernetes with the charts/clawql-mcp Helm chart: image, Service, optional Ingress and persistence.',
+    'charts/clawql-mcp Helm chart: install, values, default Kyverno verifyImages for signed GHCR images, Ingress and persistence.',
   path: '/helm',
 })
 
@@ -24,7 +24,9 @@ helm upgrade --install clawql ./charts/clawql-mcp \
 
 The default image is **`ghcr.io/danielsmithdevelopment/clawql-mcp:latest`**. Override **`image.tag`** or **`image.repository`** for your registry.
 
-**Docker Desktop:** **`make local-k8s-up`** runs Helm with **`values-docker-desktop.yaml`** (see [Kubernetes](/kubernetes)).
+**Kyverno:** the chart **defaults** **`kyverno.imageSignaturePolicy.enabled: true`**, which installs a **`ClusterPolicy`** that **`verifyImages`** for the default ClawQL GHCR images—**install [Kyverno](https://kyverno.io/)** in the cluster first, or use **`--set kyverno.imageSignaturePolicy.enabled=false`** until you do. How this connects to CI signing: **[golden-image-pipeline.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/golden-image-pipeline.md)**; policy tuning: **[image-signature-enforcement.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/image-signature-enforcement.md)**.
+
+**Docker Desktop:** **`make local-k8s-up`** runs Helm with **`values-docker-desktop.yaml`** and installs Kyverno for you (see [Kubernetes](/kubernetes)).
 
 ## Access bundled docs locally
 

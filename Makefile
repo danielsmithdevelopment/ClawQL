@@ -12,6 +12,8 @@ helm-lint:
 		--set stores.postgres.enabled=true \
 		--set stores.redis.enabled=true \
 		--set stores.postgres.auth.password=devpass >/dev/null
+	@helm template test charts/clawql-mcp --namespace clawql \
+		--set kyverno.imageSignaturePolicy.enabled=false >/dev/null
 	@echo "helm-lint OK"
 
 # Validate docker/kustomize/overlays/local (requires kubectl; temporary patch for hostPath)

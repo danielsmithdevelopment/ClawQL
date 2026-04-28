@@ -387,6 +387,15 @@ spec:
           env:
             - name: VESPA_SKIP_UPGRADE_CHECK
               value: {{ .Values.onyx.vespa.skipUpgradeCheck | quote }}
+            {{- if .Values.onyx.vespa.ignoreNotEnoughMemory }}
+            - name: VESPA_IGNORE_NOT_ENOUGH_MEMORY
+              value: "true"
+            {{- end }}
+            # Force stable short hostname; vespa wrapper crashes when it resolves only FQDN here.
+            - name: VESPA_HOSTNAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
           ports:
             - name: config
               containerPort: 19071
@@ -783,9 +792,9 @@ spec:
             - name: REDIS_HOST
               value: {{ include "clawql-mcp.onyxRedisName" . | quote }}
             - name: MODEL_SERVER_HOST
-              value: {{ include "clawql-mcp.onyxInferenceModelName" . | quote }}
+              value: {{ printf "http://%s" (include "clawql-mcp.onyxInferenceModelName" .) | quote }}
             - name: INDEXING_MODEL_SERVER_HOST
-              value: {{ include "clawql-mcp.onyxIndexingModelName" . | quote }}
+              value: {{ printf "http://%s" (include "clawql-mcp.onyxIndexingModelName" .) | quote }}
             - name: S3_ENDPOINT_URL
               value: {{ printf "http://%s:%d" (include "clawql-mcp.onyxMinioName" .) (.Values.onyx.minio.service.apiPort | int) | quote }}
             - name: S3_AWS_ACCESS_KEY_ID
@@ -929,9 +938,9 @@ spec:
             - name: REDIS_HOST
               value: {{ include "clawql-mcp.onyxRedisName" . | quote }}
             - name: MODEL_SERVER_HOST
-              value: {{ include "clawql-mcp.onyxInferenceModelName" . | quote }}
+              value: {{ printf "http://%s" (include "clawql-mcp.onyxInferenceModelName" .) | quote }}
             - name: INDEXING_MODEL_SERVER_HOST
-              value: {{ include "clawql-mcp.onyxIndexingModelName" . | quote }}
+              value: {{ printf "http://%s" (include "clawql-mcp.onyxIndexingModelName" .) | quote }}
             - name: S3_ENDPOINT_URL
               value: {{ printf "http://%s:%d" (include "clawql-mcp.onyxMinioName" .) (.Values.onyx.minio.service.apiPort | int) | quote }}
             - name: S3_AWS_ACCESS_KEY_ID
