@@ -1,10 +1,11 @@
 import type { Implementation } from "@modelcontextprotocol/sdk/types.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { NPM_PACKAGE_VERSION } from "./npm-version.js";
 import { registerTools } from "./tools.js";
 
 const DEFAULT_INFO: Implementation = {
   name: "clawql-mcp",
-  version: "4.0.0",
+  version: NPM_PACKAGE_VERSION,
 };
 
 /**

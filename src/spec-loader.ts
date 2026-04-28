@@ -19,15 +19,22 @@ import fetch from "node-fetch";
 import { parse as parseYaml } from "yaml";
 import { convertObj } from "swagger2openapi";
 import type { Operation, ParameterInfo } from "./operation-types.js";
+import { loadGraphqlNativeOperationsFromConfigs } from "./graphql-native-loader.js";
+import { mergeNativeProtocolOperations } from "./native-protocol-merge.js";
+import { shouldLoadNativeProtocolsOnlyMode } from "./native-protocol-env.js";
+import { resetNativeProtocolRegistry } from "./native-protocol-registry.js";
 import { operationsFromOpenAPI } from "./openapi-operations.js";
 import { getPackageRoot } from "./package-root.js";
 import {
   listBundledProviderGroupIds,
   listBundledProviderIds,
+  isBundledGraphqlProvider,
   resolveBundledProvider,
   resolveBundledProviderGroup,
   resolveItemsFromBundledProviderEnvList,
-  type BundledProvider,
+  type BundledGraphqlProvider,
+  type BundledOpenApiProvider,
+  type ProviderGroupItem,
 } from "./provider-registry.js";
 
 export type { Operation, ParameterInfo } from "./operation-types.js";
@@ -322,7 +329,8 @@ type SpecSource =
   | { kind: "file"; path: string }
   | { kind: "url"; url: string }
   | { kind: "discovery"; url: string }
-  | { kind: "bundled"; entry: BundledProvider }
+  | { kind: "bundled"; entry: BundledOpenApiProvider }
+  | { kind: "bundled-graphql"; entry: BundledGraphqlProvider }
   | { kind: "default" };
 
 function resolveSpecSource(): SpecSource {
@@ -337,7 +345,10 @@ function resolveSpecSource(): SpecSource {
   if (discoveryUrl) return { kind: "discovery", url: discoveryUrl };
 
   const bundled = resolveBundledProvider(providerRaw);
-  if (bundled) return { kind: "bundled", entry: bundled };
+  if (bundled) {
+    if (isBundledGraphqlProvider(bundled)) return { kind: "bundled-graphql", entry: bundled };
+    return { kind: "bundled", entry: bundled };
+  }
   if (providerRaw?.trim()) {
     throw new Error(
       `Unknown CLAWQL_PROVIDER="${providerRaw.trim()}". ` +
@@ -417,9 +428,9 @@ async function loadRawDocument(source: SpecSource): Promise<unknown> {
     }
     case "default": {
       const entry = resolveBundledProvider(DEFAULT_PROVIDER_ID);
-      if (!entry) {
+      if (!entry || isBundledGraphqlProvider(entry)) {
         throw new Error(
-          `[spec-loader] Default provider "${DEFAULT_PROVIDER_ID}" is not registered.`
+          `[spec-loader] Default provider "${DEFAULT_PROVIDER_ID}" is missing or not an OpenAPI bundled provider.`
         );
       }
       console.error(
@@ -530,6 +541,63 @@ export async function loadOpenAPIFromAbsolutePath(absolutePath: string): Promise
 // Multi-spec (merged operation index, REST per operation)
 // ─────────────────────────────────────────────
 
+/** Load native GraphQL ops from a vendored SDL path, or fetch **`fallbackUrl`** when the file is missing. */
+async function loadBundledGraphqlOperationsFromDiskOrFallback(opts: {
+  label: string;
+  endpoint: string;
+  schemaAbs: string;
+  fallbackUrl: string;
+}): Promise<Operation[]> {
+  try {
+    await readFile(opts.schemaAbs, "utf-8");
+    return loadGraphqlNativeOperationsFromConfigs([
+      { name: opts.label, endpoint: opts.endpoint, schemaPath: opts.schemaAbs },
+    ]);
+  } catch (e: unknown) {
+    const err = e as NodeJS.ErrnoException;
+    if (err?.code !== "ENOENT") throw e;
+    if (bundledOfflineNoRemoteFetch()) {
+      throw new Error(
+        `Bundled GraphQL schema missing: ${opts.schemaAbs}. ` +
+          `Run \`npm run fetch-linear-schema\` or clear CLAWQL_BUNDLED_OFFLINE.`,
+        { cause: e }
+      );
+    }
+    console.error(`[spec-loader] Bundled GraphQL schema missing; fetching: ${opts.fallbackUrl}`);
+    const res = await fetch(opts.fallbackUrl);
+    const text = await res.text();
+    if (!res.ok) {
+      throw new Error(`Failed to fetch GraphQL schema fallback (${opts.label}): ${res.status}`, {
+        cause: e,
+      });
+    }
+    return loadGraphqlNativeOperationsFromConfigs([
+      { name: opts.label, endpoint: opts.endpoint, schemaContent: text },
+    ]);
+  }
+}
+
+async function loadBundledGraphqlShellSpec(entry: BundledGraphqlProvider): Promise<LoadedSpec> {
+  const root = getPackageRoot();
+  const schemaAbs = resolvePath(root, entry.bundledSchemaSdlPath);
+  const ops = await loadBundledGraphqlOperationsFromDiskOrFallback({
+    label: entry.id,
+    endpoint: entry.graphqlEndpoint,
+    schemaAbs,
+    fallbackUrl: entry.fallbackUrl,
+  });
+  const stub = buildStubLoadedSpec();
+  return {
+    ...stub,
+    operations: ops,
+    rawSource: {
+      ...stub.rawSource,
+      bundledGraphqlProvider: entry.id,
+      graphqlEndpoint: entry.graphqlEndpoint,
+    } as Record<string, unknown>,
+  };
+}
+
 /** Derive a short label from a spec path (e.g. .../compute-v1/discovery.json → compute-v1). */
 export function labelFromSpecPath(relOrAbs: string): string {
   const normalized = relOrAbs.replace(/\\/g, "/");
@@ -547,7 +615,7 @@ export function labelFromSpecPath(relOrAbs: string): string {
   return last.replace(/\.(yaml|yml|json)$/i, "");
 }
 
-async function resolveMultiSpecItems(): Promise<{ abs: string; label: string }[] | null> {
+async function resolveMultiSpecItems(): Promise<ProviderGroupItem[] | null> {
   const filePath =
     process.env.CLAWQL_SPEC_PATH || process.env.OPENAPI_SPEC_PATH || process.env.OPENAPI_FILE;
   const specUrl = process.env.CLAWQL_SPEC_URL || process.env.OPENAPI_SPEC_URL;
@@ -561,6 +629,7 @@ async function resolveMultiSpecItems(): Promise<{ abs: string; label: string }[]
       .map((s) => s.trim())
       .filter(Boolean);
     return parts.map((p) => ({
+      kind: "openapi" as const,
       abs: resolvePath(process.cwd(), p),
       label: labelFromSpecPath(p),
     }));
@@ -583,9 +652,7 @@ async function resolveMultiSpecItems(): Promise<{ abs: string; label: string }[]
   return null;
 }
 
-async function loadMultiSpecFromItems(
-  items: { abs: string; label: string }[]
-): Promise<LoadedSpec> {
+async function loadMultiSpecFromItems(items: ProviderGroupItem[]): Promise<LoadedSpec> {
   if (items.length === 0) {
     throw new Error("Multi-spec: no spec paths resolved.");
   }
@@ -595,8 +662,48 @@ async function loadMultiSpecFromItems(
   const seenIds = new Set<string>();
   const sources: unknown[] = [];
 
+  const emptyOpenApiShell = (title: string): OpenAPIDoc => ({
+    openapi: "3.0.0",
+    info: { title, version: "0" },
+    paths: {},
+    components: { schemas: {} },
+  });
+
   for (let i = 0; i < items.length; i++) {
-    const { abs, label } = items[i];
+    const item = items[i];
+    if (item.kind === "graphql") {
+      console.error(
+        `[spec-loader] multi ${i + 1}/${items.length}: ${item.label} → GraphQL ${item.endpoint} (schema ${item.schemaAbs})`
+      );
+      const gqlOps = await loadBundledGraphqlOperationsFromDiskOrFallback({
+        label: item.label,
+        endpoint: item.endpoint,
+        schemaAbs: item.schemaAbs,
+        fallbackUrl: item.fallbackUrl,
+      });
+      openapis.push(emptyOpenApiShell(`GraphQL: ${item.label}`));
+      sources.push({
+        graphql: item.label,
+        endpoint: item.endpoint,
+        schemaPath: item.schemaAbs,
+      });
+      for (const op of gqlOps) {
+        let id = op.id;
+        if (seenIds.has(id)) {
+          id = `${item.label}::${op.id}`;
+        }
+        seenIds.add(id);
+        allOps.push({
+          ...op,
+          id,
+          specIndex: i,
+          specLabel: item.label,
+        });
+      }
+      continue;
+    }
+
+    const { abs, label } = item;
     console.error(`[spec-loader] multi ${i + 1}/${items.length}: ${label} → ${abs}`);
     const text = await readFile(abs, "utf-8");
     const raw = parseSpecText(text);
@@ -633,6 +740,21 @@ async function loadMultiSpecFromItems(
   };
 }
 
+/** Minimal OpenAPI-shaped shell when only **`CLAWQL_GRAPHQL_*`** / **`CLAWQL_GRPC_SOURCES`** are set (no REST spec env). */
+function buildStubLoadedSpec(): LoadedSpec {
+  const openapi: OpenAPIDoc = {
+    openapi: "3.0.0",
+    info: { title: "ClawQL native protocols only", version: "0" },
+    paths: {},
+    components: { schemas: {} },
+  };
+  return {
+    operations: [],
+    rawSource: { stub: true, kind: "native-protocols-only" },
+    openapi,
+  };
+}
+
 // ─────────────────────────────────────────────
 // Fetch + cache
 // ─────────────────────────────────────────────
@@ -641,31 +763,68 @@ let cachedSpec: LoadedSpec | null = null;
 
 export function resetSpecCache(): void {
   cachedSpec = null;
+  resetNativeProtocolRegistry();
+}
+
+let specCacheShutdownHooksRegistered = false;
+
+/** Close native gRPC clients and drop cached spec when the process exits (containers / SIGTERM). */
+export function registerSpecCacheShutdownHooks(): void {
+  if (specCacheShutdownHooksRegistered) return;
+  specCacheShutdownHooksRegistered = true;
+  const flush = (): void => {
+    resetSpecCache();
+  };
+  process.once("SIGINT", flush);
+  process.once("SIGTERM", flush);
 }
 
 export async function loadSpec(): Promise<LoadedSpec> {
   if (cachedSpec) return cachedSpec;
 
+  if (shouldLoadNativeProtocolsOnlyMode()) {
+    const stub = buildStubLoadedSpec();
+    cachedSpec = await mergeNativeProtocolOperations(stub);
+    if (cachedSpec.operations.length === 0) {
+      throw new Error(
+        "[spec-loader] Native-protocol-only mode: set CLAWQL_GRAPHQL_URL and/or CLAWQL_GRAPHQL_SOURCES / CLAWQL_GRPC_SOURCES so introspection or proto load yields at least one operation."
+      );
+    }
+    console.error(
+      `[spec-loader] Native-protocol-only mode (no OpenAPI/Discovery spec env): ${cachedSpec.operations.length} operations`
+    );
+    return cachedSpec;
+  }
+
   const multiItems = await resolveMultiSpecItems();
   if (multiItems) {
     const loaded = await loadMultiSpecFromItems(multiItems);
-    cachedSpec = loaded;
+    cachedSpec = await mergeNativeProtocolOperations(loaded);
     console.error(
-      `[spec-loader] Multi-spec: ${multiItems.length} APIs merged → ${loaded.operations.length} operations (REST execution; GraphQL not used for execute)`
+      `[spec-loader] Multi-spec: ${multiItems.length} APIs merged → ${cachedSpec.operations.length} operations (REST for OpenAPI; native GraphQL/gRPC when configured)`
     );
     return cachedSpec;
   }
 
   const source = resolveSpecSource();
+  if (source.kind === "bundled-graphql") {
+    const loaded = await loadBundledGraphqlShellSpec(source.entry);
+    cachedSpec = await mergeNativeProtocolOperations(loaded);
+    console.error(
+      `[spec-loader] Bundled GraphQL provider "${source.entry.id}": ${cachedSpec.operations.length} operations → ${source.entry.graphqlEndpoint}`
+    );
+    return cachedSpec;
+  }
+
   const raw = await loadRawDocument(source);
   const loaded = await buildLoadedSpec(raw);
   if (source.kind === "url" && !hasApiBaseUrlOverride()) {
     absolutizeRelativeOpenApiServers(loaded.openapi, source.url);
   }
 
-  cachedSpec = loaded;
+  cachedSpec = await mergeNativeProtocolOperations(loaded);
   console.error(
-    `[spec-loader] Loaded ${loaded.operations.length} operations (${loaded.openapi.info?.title ?? "API"})`
+    `[spec-loader] Loaded ${cachedSpec.operations.length} operations (${loaded.openapi.info?.title ?? "API"})`
   );
   return cachedSpec;
 }

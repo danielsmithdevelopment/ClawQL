@@ -58,6 +58,8 @@ CLAWQL_DISCOVERY_URL="https://compute.googleapis.com/$discovery/rest?version=v1"
 
 Optional tools are enabled by environment flags (memory, sandbox, cache, audit, notify, Onyx, schedule, Ouroboros).
 
+**Native APIs:** set **`CLAWQL_GRAPHQL_SOURCES`** and/or **`CLAWQL_GRPC_SOURCES`** (JSON arrays) to merge GraphQL HTTP endpoints and gRPC unary RPCs into the same **`search`** / **`execute`** index as OpenAPI — see **`docs/readme/configuration.md`** and **`docs/mcp-tools.md`**.
+
 See `docs/mcp-tools.md` for the complete tool catalog and examples.
 
 ## Next Steps

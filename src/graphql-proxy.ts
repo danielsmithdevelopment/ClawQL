@@ -54,7 +54,7 @@ export async function createGraphqlProxyApp(
 
   const prov = process.env.CLAWQL_PROVIDER?.trim();
   const bundled = prov ? resolveBundledProvider(prov) : undefined;
-  if (bundled?.bundledIntrospectionPath) {
+  if (bundled && "bundledIntrospectionPath" in bundled && bundled.bundledIntrospectionPath) {
     const intro = resolvePath(getPackageRoot(), bundled.bundledIntrospectionPath);
     console.error(
       `[graphql-proxy] MCP may use pregenerated introspection at ${intro} (this server still builds executable resolvers from OpenAPI).`

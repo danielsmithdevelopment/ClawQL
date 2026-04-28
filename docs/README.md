@@ -4,6 +4,7 @@ This directory is organized by purpose so operational guides, product docs, and 
 
 ## Core Product Docs
 
+- ClawQL ecosystem (vision deck — core loop, hybrid memory, pipeline, Onyx, Ouroboros, infra, roadmap): [`clawql-ecosystem.md`](clawql-ecosystem.md)
 - Feature tiers (always on / default-on opt-out / default-off opt-in): `readme/configuration.md` § **Feature tiers** — diagram: [`readme/images/clawql-feature-tiers.png`](readme/images/clawql-feature-tiers.png)
 - Tool reference: `mcp-tools.md`
 - External ingest: `external-ingest.md`
@@ -35,7 +36,7 @@ This directory is organized by purpose so operational guides, product docs, and 
 
 ## Architecture / ADR / Design
 
-- ADRs: `adr/`
+- ADRs: `adr/` — includes [**0002 Multi-protocol supergraph**](adr/0002-multi-protocol-supergraph.md) (native GraphQL + gRPC merged via **`CLAWQL_GRAPHQL_SOURCES`** / **`CLAWQL_GRPC_SOURCES`**; epic [#178](https://github.com/danielsmithdevelopment/ClawQL/issues/178))
 - Design docs: `vector-search-design.md`, `OPENAPI_TO_GRAPHQL_UPSTREAM.md`, `graphql-mesh-node-compatibility.md`
 
 ## Content Collections

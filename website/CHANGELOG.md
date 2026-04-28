@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-04-27
+
+- **clawql-mcp v5.0.0** alignment: native **`CLAWQL_GRAPHQL_*`** / **`CLAWQL_GRPC_SOURCES`** (incl. offline SDL / introspection paths), bundled **`linear`** GraphQL SDL, OpenAPI→GraphQL vs REST vs native **`execute`** routing on **Home**, **Concepts**, **Tools**, **GraphQL layer**, **Spec configuration**, **Bundled specs**, **Quickstart**; repo **CHANGELOG** **[5.0.0]** and Helm **`0.5.0`** / **`appVersion` `5.0.0`**.
+
 ## 2026-04-24
 
 - **clawql-mcp v4.1.0** site alignment: **Home** and **Tools** copy now describe optional **`ouroboros_*`** tools when **`CLAWQL_ENABLE_OUROBOROS=1`** ([#141](https://github.com/danielsmithdevelopment/ClawQL/issues/141)); default merge blurb points to [spec configuration](/spec-configuration) instead of an outdated “top 50” list. Repo **CHANGELOG** and Helm chart **0.4.0** / **`appVersion` 4.1.0** match the release.

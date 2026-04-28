@@ -1,6 +1,6 @@
 # ClawQL
 
-ClawQL is an MCP server for API discovery and execution with a token-efficient `search -> execute` workflow over OpenAPI and Google Discovery specs.
+ClawQL is an MCP server for API discovery and execution with a token-efficient `search -> execute` workflow over **OpenAPI**, **Google Discovery**, and optional **native GraphQL** and **gRPC** sources (see **`CLAWQL_GRAPHQL_URL`** / **`CLAWQL_GRAPHQL_SOURCES`** / **`CLAWQL_GRPC_SOURCES`** in `.env.example` and [ADR 0002](docs/adr/0002-multi-protocol-supergraph.md)). GraphQL-only vendors (e.g. Linear) need no OpenAPI spec: use **`CLAWQL_PROVIDER=linear`** (bundled SDL under **`providers/linear/`** + **`LINEAR_API_KEY`**), or point **`CLAWQL_GRAPHQL_URL`** at their HTTP endpoint and auth headers, or load **`search`** from **`CLAWQL_GRAPHQL_SCHEMA_PATH`** / **`CLAWQL_GRAPHQL_INTROSPECTION_PATH`** (or per-source **`schemaPath`** / **`introspectionPath`**) when upstream introspection is disabled — without **`CLAWQL_SPEC_*`** / **`CLAWQL_PROVIDER`**, the default bundled REST specs are not loaded.
 
 ## What You Get
 
@@ -71,8 +71,8 @@ Top-level docs index: `docs/README.md`
 
 1. Agent calls `search` to discover relevant operations without loading entire specs into prompt context.
 2. Agent calls `execute` with operation details.
-3. In single-spec mode, ClawQL can use an internal OpenAPI-to-GraphQL path to keep responses lean.
-4. In multi-spec mode, ClawQL executes via REST per owning spec.
+3. For **OpenAPI/Discovery** operations: in **single-spec** mode, ClawQL prefers an internal OpenAPI-to-GraphQL path (REST fallback on failure); in **multi-spec** mode, **`execute`** uses **REST** per owning spec.
+4. For **native** operations (when configured): **`execute`** calls **HTTP GraphQL** or **gRPC** unary directly — same **`search`** index, routed by operation metadata — see [ADR 0002](docs/adr/0002-multi-protocol-supergraph.md).
 
 ## Notes
 

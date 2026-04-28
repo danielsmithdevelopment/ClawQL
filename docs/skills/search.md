@@ -37,6 +37,7 @@ Use `search` to discover the right API operation before calling `execute`.
 
 - Use specific verbs: `list`, `create`, `update`, `delete`, `get`.
 - Include provider/domain nouns: `jira`, `cloudflare`, `github`, `gke`.
+- If **`CLAWQL_GRAPHQL_SOURCES`** / **`CLAWQL_GRPC_SOURCES`** are set, the same index can include native **`graphql__…`** / **`grpc__…`** operation ids alongside OpenAPI hits — refine queries with those prefixes when targeting subgraphs or protos.
 - If results are broad, refine query rather than guessing operationId.
 
 ## Composed Workflow

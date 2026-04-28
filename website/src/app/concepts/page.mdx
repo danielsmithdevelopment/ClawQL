@@ -3,28 +3,26 @@ import { docsPageMetadata } from '@/lib/seo'
 export const metadata = docsPageMetadata({
   title: 'Concepts',
   description:
-    'ClawQL architecture: MCP over stdio, Streamable HTTP, or optional gRPC; in-memory search index, internal GraphQL, and token-efficient search-then-execute workflows.',
+    'ClawQL architecture: MCP over stdio, Streamable HTTP, or optional MCP gRPC; in-memory search index, OpenAPI→GraphQL and optional native GraphQL/gRPC execute paths.',
   path: '/concepts',
 })
 
 # Concepts
 
-ClawQL connects **agents** to **REST-shaped APIs** through a thin MCP surface, without asking models to ingest full OpenAPI documents up front. {{ className: 'lead' }}
+ClawQL connects **agents** to **HTTP and gRPC APIs** (OpenAPI/Discovery by default, optional native GraphQL and gRPC) through a thin MCP surface, without asking models to ingest full OpenAPI documents up front. {{ className: 'lead' }}
 
 ## Architecture
 
 ```
 Agent
-  └─▶ MCP Server  (stdio, Streamable HTTP, or optional gRPC)
-        ├─▶ search tool  ──▶ In-memory spec index
-        └─▶ execute tool  ──▶ GraphQL client (single-spec)
-                                    └─▶ GraphQL (in-process, single-spec)
-                                          └─▶ Your REST API
+  └─▶ MCP Server  (stdio, Streamable HTTP, or optional MCP gRPC)
+        ├─▶ search tool  ──▶ In-memory operation index
+        └─▶ execute tool  ──▶ OpenAPI→GraphQL (single-spec) / REST (multi) / native HTTP GraphQL / gRPC
 ```
 
-**Transports:** **stdio** and **Streamable HTTP** are the usual paths; **gRPC** (protobuf **`model_context_protocol.Mcp`**) is optional and uses the same tool registration via **[`mcp-grpc-transport`](https://www.npmjs.com/package/mcp-grpc-transport)**—see [Deployment](/deployment).
+**Transports:** **stdio** and **Streamable HTTP** are the usual paths; **MCP over gRPC** (protobuf **`model_context_protocol.Mcp`**) is optional and uses the same tool registration via **[`mcp-grpc-transport`](https://www.npmjs.com/package/mcp-grpc-transport)**—see [Deployment](/deployment). (This is the **MCP wire protocol**, distinct from **native gRPC API** sources in **`CLAWQL_GRPC_SOURCES`**.)
 
-In **multi-spec** mode, **`search`** uses one merged index while **`execute`** routes each operation to the correct spec (REST).
+In **multi-spec** mode, **`search`** uses one merged index while **`execute`** routes **OpenAPI/Discovery** operations to the correct spec (**REST**). **Native** GraphQL/gRPC operations use their own clients when configured.
 
 ## Feature tiers (what is on by default)
 
@@ -39,8 +37,8 @@ Aligned with the **layer diagram** and **[configuration § Feature tiers](https:
 ## Design principles
 
 1. **`search` first, `execute` second** — discover `operationId` and parameters without loading the entire spec into context.
-2. **GraphQL is internal** — agents never write GraphQL; the server builds precise selections to keep tool outputs small.
-3. **Single source of truth** — the index and execution map derive from the same loaded OpenAPI/Discovery documents.
+2. **OpenAPI→GraphQL is internal** — for REST-backed operations, agents do not hand-author GraphQL; the server builds precise selections. **Native** GraphQL endpoints still use GraphQL over HTTP, but **`execute`** builds the document from introspection-shaped metadata.
+3. **Single index** — OpenAPI/Discovery plus optional native sources contribute to one **`search`** result set ([spec configuration](/spec-configuration)).
 
 ## Ouroboros (library + optional MCP tools)
 

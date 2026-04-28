@@ -3,17 +3,17 @@ import { docsPageMetadata } from '@/lib/seo'
 export const metadata = docsPageMetadata({
   title: 'Bundled specs',
   description:
-    'ClawQL bundled specs: CLAWQL_PROVIDER presets (google, all-providers, Cloudflare, GitHub, Onyx), offline OpenAPI and Google Discovery in the package.',
+    'ClawQL bundled specs: CLAWQL_PROVIDER presets (google, all-providers, Cloudflare, GitHub, Onyx, linear), offline OpenAPI, Google Discovery, and vendored Linear GraphQL SDL in the package.',
   path: '/bundled-specs',
 })
 
 # Bundled specs
 
-The npm package ships **`providers/`**—optional on-disk API descriptions so cold start avoids downloading multi‑MB specs. For **multi-spec**, the only unconfigured default is the full merge **`all-providers`**. Any other multi-spec load is **explicit**: set `CLAWQL_BUNDLED_PROVIDERS`, `CLAWQL_SPEC_PATHS`, or a merged `CLAWQL_PROVIDER` (for example `google`, `atlassian`, or `all-providers` set on purpose). See [Spec configuration](/spec-configuration). {{ className: 'lead' }}
+The npm package ships **`providers/`**—optional on-disk API descriptions so cold start avoids downloading multi‑MB specs. Most **native GraphQL / gRPC** upstreams are configured only via **`CLAWQL_GRAPHQL_SOURCES`** / **`CLAWQL_GRPC_SOURCES`** ([Spec configuration](/spec-configuration)). **Exception:** **Linear** is a **bundled GraphQL-only** vendor (`providers/linear/schema.graphql`); use **`CLAWQL_PROVIDER=linear`** or include **`linear`** in **`CLAWQL_BUNDLED_PROVIDERS`** / **`all-providers`**. For **multi-spec**, the only unconfigured default is the full merge **`all-providers`**. Any other multi-spec load is **explicit**: set `CLAWQL_BUNDLED_PROVIDERS`, `CLAWQL_SPEC_PATHS`, or a merged `CLAWQL_PROVIDER` (for example `google`, `atlassian`, or `all-providers` set on purpose). See [Spec configuration](/spec-configuration). {{ className: 'lead' }}
 
-## Canonical 9-provider matrix
+## Canonical REST-forward matrix (9 vendors)
 
-Use this as the single default-bundle reference for docs pages and README copy. It reflects the nine-provider default docs story used across public ClawQL docs.
+Use this as the default-bundle reference for **REST / OpenAPI–heavy** workflows. It matches the historical “nine vendor” docs story; **`google`** is a merged Discovery preset, not a single file.
 
 | Provider id (`CLAWQL_PROVIDER` / `CLAWQL_BUNDLED_PROVIDERS`) | Primary auth env(s)                                  | Typical use in workflows                                                                                      |
 | ------------------------------------------------------------ | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
@@ -27,14 +27,20 @@ Use this as the single default-bundle reference for docs pages and README copy. 
 | `onyx`                                                       | `ONYX_API_TOKEN` (+ `ONYX_BASE_URL`)                 | Enterprise knowledge search via optional `knowledge_search_onyx`; optional ingestion via `execute`            |
 | `google`                                                     | `CLAWQL_GOOGLE_ACCESS_TOKEN` / `GOOGLE_ACCESS_TOKEN` | Bundled Google Cloud Discovery merge (multiple APIs); part of default cross-provider search and execute flows |
 
+## Bundled GraphQL-only: `linear`
+
+| Provider id | Primary auth env(s)                        | Notes                                                                                                                                                                |
+| ----------- | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `linear`    | `LINEAR_API_KEY` / `CLAWQL_LINEAR_API_KEY` | GraphQL at `https://api.linear.app/graphql`. SDL vendored from Linear’s open-source SDK (`providers/linear/schema.graphql`). Refresh: `npm run fetch-linear-schema`. |
+
 ## Presets and additional bundled ids
 
-| Selection                               | Notes                                                            |
-| --------------------------------------- | ---------------------------------------------------------------- |
-| **`CLAWQL_BUNDLED_PROVIDERS=`** _a,b,…_ | Explicit custom merge by id (including optional `google`)        |
-| `all-providers`                         | **Unconfigured default** merged preset: Google + bundled vendors |
-| `atlassian`                             | Merged Jira + Bitbucket                                          |
-| `sentry`, `n8n`, `jira`, `bitbucket`    | Additional single bundled provider ids                           |
+| Selection                                      | Notes                                                                        |
+| ---------------------------------------------- | ---------------------------------------------------------------------------- |
+| **`CLAWQL_BUNDLED_PROVIDERS=`** _a,b,…_        | Explicit custom merge by id (including optional `google`)                    |
+| `all-providers`                                | **Unconfigured default** merged preset: Google + bundled vendors             |
+| `atlassian`                                    | Merged Jira + Bitbucket                                                      |
+| `sentry`, `n8n`, `jira`, `bitbucket`, `linear` | Additional single bundled provider ids (`linear` is GraphQL-only; see above) |
 
 Aliases: **`jira`** / **`bitbucket`** map to their standalone bundles; **`atlassian`** merges both. Deprecated merged id: **`google-top50`** -> **`google`**.
 

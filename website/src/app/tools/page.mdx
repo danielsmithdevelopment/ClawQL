@@ -11,17 +11,17 @@ export const metadata = docsPageMetadata({
 
 **Tiers** (same as the architecture diagram — full table in [configuration § Feature tiers](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/readme/configuration.md#feature-tiers-architecture-diagram)): **ClawQL Core (no opt-out)** — **`search`**, **`execute`**, **`audit`**, **`cache`**; **default on, opt out** — **`memory_*`**, **Documents** (**`ingest_external_knowledge`**, **`knowledge_search_onyx`** when **`CLAWQL_ENABLE_ONYX`**); **default off, opt in** — **`schedule`**, **`notify`**, **`ouroboros_*`**. **`sandbox_exec`** is listed by default; it needs the [sandbox bridge](https://github.com/danielsmithdevelopment/ClawQL/tree/main/cloudflare/sandbox-bridge) URL + token to run code.
 
-ClawQL exposes **`search`**, **`execute`**, **`sandbox_exec`**, **`ingest_external_knowledge`**, in-process **`audit`** and **`cache`**, and vault **`memory_ingest`** / **`memory_recall`** by default. Set **`CLAWQL_ENABLE_MEMORY=0`** and/or **`CLAWQL_ENABLE_DOCUMENTS=0`** to hide memory tools or the document stack. Other tools appear when optional features are enabled (see table). The **data plane** for REST/Discovery APIs is **`search`** then **`execute`**. [Canonical reference with examples](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp-tools.md). {{ className: 'lead' }}
+ClawQL exposes **`search`**, **`execute`**, **`sandbox_exec`**, **`ingest_external_knowledge`**, in-process **`audit`** and **`cache`**, and vault **`memory_ingest`** / **`memory_recall`** by default. Set **`CLAWQL_ENABLE_MEMORY=0`** and/or **`CLAWQL_ENABLE_DOCUMENTS=0`** to hide memory tools or the document stack. Other tools appear when optional features are enabled (see table). The **data plane** for upstream APIs is **`search`** then **`execute`** (OpenAPI/Discovery plus optional **native GraphQL** / **gRPC** when configured). [Canonical reference with examples](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp-tools.md). {{ className: 'lead' }}
 
 **`audit`** and **`cache`** are **ClawQL Core** (no opt-out). Vault memory is default-on (opt out with env). See [enterprise-mcp-tools.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/enterprise-mcp-tools.md), [Session cache](/cache), [cache-tool.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/cache-tool.md). Optional **`schedule`** is available when **`CLAWQL_ENABLE_SCHEDULE`** is set — persisted jobs with typed actions; v1 action kind is synthetic HTTP checks ([#76](https://github.com/danielsmithdevelopment/ClawQL/issues/76)) — [Schedule synthetic checks](/schedule) (detailed example), [schedule-synthetic-checks.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/schedule-synthetic-checks.md), [mcp-tools.md § schedule](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp-tools.md#schedule-optional). Optional **`notify`** is available when **`CLAWQL_ENABLE_NOTIFY`** is set — Slack **`chat.postMessage`** when the Slack spec is loaded ([#77](https://github.com/danielsmithdevelopment/ClawQL/issues/77)) — [Slack notify](/notify) (quick examples), [notify-tool.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/notify-tool.md) (full guide), [mcp-tools.md § notify](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp-tools.md#notify-optional). Optional **`knowledge_search_onyx`** is available when **`CLAWQL_ENABLE_ONYX`** is set and **documents** are enabled — Onyx semantic document search when the **`onyx`** bundled provider is in the merge ([#118](https://github.com/danielsmithdevelopment/ClawQL/issues/118)) — [Onyx knowledge search](/onyx-knowledge) (quick examples), [onyx-knowledge-tool.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/onyx-knowledge-tool.md) (full guide), [mcp-tools.md § knowledge_search_onyx](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp-tools.md#knowledge_search_onyx-optional).
 
 ## `search`
 
-Searches the active OpenAPI/Discovery corpus by **natural language intent** and returns a **short ranked list** of matching operations (paths, methods, parameters, summaries). Work happens against an **in-memory index** inside the MCP process—full specs are not pasted into the model context.
+Searches the active operation index (OpenAPI/Discovery by default, plus **native** GraphQL/gRPC entries when **`CLAWQL_GRAPHQL_SOURCES`** / **`CLAWQL_GRPC_SOURCES`** are set) by **natural language intent** and returns a **short ranked list** of hits. Work happens against an **in-memory index** inside the MCP process—full specs are not pasted into the model context.
 
 ## `execute`
 
-Runs a discovered operation by **`operationId`** with arguments shaped from the spec. Internally, single-spec mode prefers the **GraphQL proxy** so only requested fields flow back; **multi-spec** and some translation failures use **REST** directly. Agents do **not** author GraphQL; the server builds the internal query.
+Runs a discovered operation by **`operationId`**. For **OpenAPI/Discovery** ops, single-spec mode prefers the **in-process OpenAPI→GraphQL** path so only requested fields flow back; **multi-spec** and some translation failures use **REST** directly. **Native** GraphQL and gRPC ops use HTTP GraphQL or grpc-js unary instead. Agents do **not** hand-write GraphQL for OpenAPI-backed calls; the server builds the internal document.
 
 ## Typical workflow
 
@@ -35,7 +35,7 @@ Runs a discovered operation by **`operationId`** with arguments shaped from the 
    → lean JSON (GraphQL-shaped or REST fallback)
 ```
 
-See [GraphQL layer](/graphql-proxy) for how **`execute`** uses OpenAPI→GraphQL in-process vs REST in multi-spec mode.
+See [GraphQL layer](/graphql-proxy) for OpenAPI→GraphQL vs native GraphQL vs REST routing.
 
 ## Optional tools
 

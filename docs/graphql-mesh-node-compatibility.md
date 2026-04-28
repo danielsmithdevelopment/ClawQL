@@ -29,7 +29,7 @@ Here **`subSchemaAndTypeComposers`** is a **`JSONSchemaObject`**-shaped value th
 
 ### Runtime impact when the full Slack spec is loaded
 
-If the process loads **`providers/slack/openapi.json`** (for example merged **`all-providers`** or **`CLAWQL_PROVIDER=slack`**) on **Node 25**, in-process schema construction can fail at startup or first use; **`handleClawqlExecuteToolInput`** then **falls back to REST** for single-spec **`execute`** (and **`notify`**, which delegates to **`execute`**). Multi-spec **`execute`** already uses REST only.
+If the process loads **`providers/slack/openapi.json`** (for example merged **`all-providers`** or **`CLAWQL_PROVIDER=slack`**) on **Node 25**, in-process schema construction can fail at startup or first use; **`handleClawqlExecuteToolInput`** then **falls back to REST** for single-spec **`execute`** on **OpenAPI-derived** operations (and **`notify`**, which delegates to **`execute`**). Multi-spec **`execute`** uses REST for OpenAPI/Discovery ops; **native** GraphQL/gRPC **`execute`** paths are unaffected.
 
 ---
 

@@ -2,11 +2,102 @@
   "$schema": "https://schemas.agentskills.io/discovery/0.2.0/schema.json",
   "skills": [
     {
+      "name": "clawql-audit-workflows",
+      "type": "skill-md",
+      "description": "Use the optional audit ring buffer for live operator breadcrumbs during workflows.",
+      "url": "/.well-known/agent-skills/clawql-audit-workflows/SKILL.md",
+      "digest": "sha256:a0203e516e3d9b50f261438f996727280b38d7d6e686d9c464a0fbeccee6c07b"
+    },
+    {
+      "name": "clawql-cache-workflows",
+      "type": "skill-md",
+      "description": "Use the optional cache tool as ephemeral scratch state during active sessions.",
+      "url": "/.well-known/agent-skills/clawql-cache-workflows/SKILL.md",
+      "digest": "sha256:4ee9231dd1073bf1e2d4c27f94b66b779f53e112a9055b5985165647e69313f4"
+    },
+    {
+      "name": "clawql-composed-mcp-workflows",
+      "type": "skill-md",
+      "description": "Apply proven end-to-end recipes combining search/execute, memory, notify, schedule, and optional tools.",
+      "url": "/.well-known/agent-skills/clawql-composed-mcp-workflows/SKILL.md",
+      "digest": "sha256:d40196943b1feb167d73b9b891a69489d0f4751668e75c1a2d30d8e6cbf5f1b6"
+    },
+    {
+      "name": "clawql-execute-workflows",
+      "type": "skill-md",
+      "description": "Execute discovered API operations safely with argument validation and post-change verification.",
+      "url": "/.well-known/agent-skills/clawql-execute-workflows/SKILL.md",
+      "digest": "sha256:1d936479ff843b841984ef1ac51a529b14bd4522f8e901fb57c03a08fe2c5728"
+    },
+    {
+      "name": "clawql-external-ingest",
+      "type": "skill-md",
+      "description": "Import external markdown or URL content using ingest_external_knowledge with dry-run-first validation.",
+      "url": "/.well-known/agent-skills/clawql-external-ingest/SKILL.md",
+      "digest": "sha256:4659e5799c101cf5901fc69447cd7f4f06477d0bf13098653a804ad41b10f164"
+    },
+    {
+      "name": "clawql-memory-ingest",
+      "type": "skill-md",
+      "description": "Persist durable session outcomes with memory_ingest using stable titles, append threading, and wikilinks.",
+      "url": "/.well-known/agent-skills/clawql-memory-ingest/SKILL.md",
+      "digest": "sha256:91c4efc207b66b62d86e18515df9d07a6b0478a6b3399c39f894d9bc966dd5ad"
+    },
+    {
+      "name": "clawql-memory-recall",
+      "type": "skill-md",
+      "description": "Recall relevant vault context before deep work using focused queries and graph depth controls.",
+      "url": "/.well-known/agent-skills/clawql-memory-recall/SKILL.md",
+      "digest": "sha256:f65fe4e59ca070538d4d3ad52393ca93067870902a07c21d243ebe5e1692034c"
+    },
+    {
+      "name": "clawql-notify-workflows",
+      "type": "skill-md",
+      "description": "Send actionable Slack milestones and failure notifications with the optional notify tool.",
+      "url": "/.well-known/agent-skills/clawql-notify-workflows/SKILL.md",
+      "digest": "sha256:28108c86a25bee071de492ec2bca411b1fce1b2b0eb6ac136d9d277676bf4cb7"
+    },
+    {
+      "name": "clawql-onyx-knowledge-workflows",
+      "type": "skill-md",
+      "description": "Use knowledge_search_onyx to ground workflows in enterprise evidence before execution.",
+      "url": "/.well-known/agent-skills/clawql-onyx-knowledge-workflows/SKILL.md",
+      "digest": "sha256:d51bba88319c102d323e9bc672e4e784a5593cd86860cd154583a5f5dd675ac7"
+    },
+    {
+      "name": "clawql-ouroboros-workflows",
+      "type": "skill-md",
+      "description": "Run iterative specification-first workflows with ouroboros_* tools, lineage checks, and clear boundaries vs raw infra (kubectl/Helm).",
+      "url": "/.well-known/agent-skills/clawql-ouroboros-workflows/SKILL.md",
+      "digest": "sha256:6ad68ccbfe46750d048e191da0ce2a6f6083db63cc80d5982c880c1dd6c4ada9"
+    },
+    {
+      "name": "clawql-sandbox-exec",
+      "type": "skill-md",
+      "description": "Run isolated code snippets via sandbox_exec with safe persistence/session patterns.",
+      "url": "/.well-known/agent-skills/clawql-sandbox-exec/SKILL.md",
+      "digest": "sha256:a6cfbc05875ab428b80080492dca3087dd8d6307c812947ed1930ab30046ebdf"
+    },
+    {
+      "name": "clawql-schedule-workflows",
+      "type": "skill-md",
+      "description": "Build recurring synthetic checks with schedule, validate via dry_run, and pair with notify.",
+      "url": "/.well-known/agent-skills/clawql-schedule-workflows/SKILL.md",
+      "digest": "sha256:5202fadab723b272fe2f431a6d215ade757fbfa64d1ce493085ef14043e3133a"
+    },
+    {
+      "name": "clawql-search-workflows",
+      "type": "skill-md",
+      "description": "Use ClawQL search to discover correct operationIds before execute calls, especially in multi-provider workflows.",
+      "url": "/.well-known/agent-skills/clawql-search-workflows/SKILL.md",
+      "digest": "sha256:460cccb90f3aea8df0b56375d7416d8ef88ca89254f9ca42714d1ddbe9448af0"
+    },
+    {
       "name": "clawql-vault-memory",
       "type": "skill-md",
       "description": "Deep ClawQL Obsidian vault workflows using memory_ingest and memory_recall MCP tools—structured insights, wikilink graphs, session threading, verbatim captures, and recall queries. Use when persisting important context, building a knowledge graph, starting tasks that may depend on prior vault notes, or when the user mentions Obsidian, the vault, memory, or long-running project context.",
       "url": "/.well-known/agent-skills/clawql-vault-memory/SKILL.md",
-      "digest": "sha256:32a2de5b91174452cedbc93582ed4f7ff7b13070517677a5af13f69601e99bd5"
+      "digest": "sha256:8c2585218dbddf46f938f22bc156da059e57d309378505e0fc4bfa624d65477c"
     }
   ]
 }

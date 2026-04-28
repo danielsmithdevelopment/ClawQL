@@ -11,7 +11,8 @@
 
 import "./load-env.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { loadSpec } from "./spec-loader.js";
+import { NPM_PACKAGE_VERSION } from "./npm-version.js";
+import { loadSpec, registerSpecCacheShutdownHooks } from "./spec-loader.js";
 import { createRegisteredMcpServer } from "./mcp-server-factory.js";
 import { preloadSchemaFieldCacheFromDisk } from "./tools.js";
 import { validateObsidianVaultAtStartup } from "./vault-config.js";
@@ -21,6 +22,7 @@ import { getClawqlOptionalToolFlags } from "./clawql-optional-flags.js";
 import { registerScheduleWorkerShutdownHooks, startScheduleWorker } from "./clawql-schedule.js";
 
 async function main() {
+  registerSpecCacheShutdownHooks();
   registerPostgresPoolShutdownHooks();
   registerOuroborosPoolShutdownHooks();
   // Pre-warm the spec cache on startup so the first search call is fast
@@ -35,7 +37,7 @@ async function main() {
 
   const server = createRegisteredMcpServer({
     name: "cloudrun-mcp",
-    version: "2.0.0",
+    version: NPM_PACKAGE_VERSION,
   });
 
   const transport = new StdioServerTransport();

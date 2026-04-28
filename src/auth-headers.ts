@@ -201,6 +201,12 @@ function envResolvedAuthHeaders(specLabel?: string): Record<string, string> {
     return key ? { "X-N8N-API-KEY": key } : {};
   }
 
+  /** Linear GraphQL — API key in `Authorization` without a `Bearer` prefix (see Linear API docs). */
+  if (effective === "linear") {
+    const key = trimEnv("LINEAR_API_KEY", "CLAWQL_LINEAR_API_KEY");
+    return key ? { Authorization: key.trim() } : {};
+  }
+
   return {};
 }
 
