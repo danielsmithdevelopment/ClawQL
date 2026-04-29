@@ -179,6 +179,29 @@ helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
 - Restrict monitor port (`8222`) to trusted internal networks.
 - Document stream retention/consumer ack policy in the app layer so storage growth is predictable.
 
+### Subject naming (deck-aligned)
+
+Issue [#127](https://github.com/danielsmithdevelopment/ClawQL/issues/127) tracks Helm + docs for this convention.
+
+Helm deploys **only** the NATS server. **JetStream streams and consumers** are created by workers (Ouroboros, agents, edge jobs), not by chart templates — standardize **subject roots** early:
+
+| Root                | Use                                                                                                                            |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `clawql.workflow.>` | Ouroboros phases, workflow checkpoints, structured loops ([#110](https://github.com/danielsmithdevelopment/ClawQL/issues/110)) |
+| `clawql.agent.>`    | Agent coordination, LangGraph-related handoff ([ClawQL-Agent](https://github.com/danielsmithdevelopment/ClawQL-Agent))         |
+| `clawql.document.>` | Document pipeline hops (Tika → Gotenberg → Stirling → Paperless), provenance                                                   |
+| `clawql.edge.>`     | Edge worker join/leave/status ([#129](https://github.com/danielsmithdevelopment/ClawQL/issues/129))                            |
+
+Defaults live in chart **`values.yaml`** as **`nats.subjectConvention`** (`workflow` / `agent` / `document` / `edge` keys) for operators and downstream charts.
+
+**Related in-repo tracks:** Cuckoo/Merkle and audit publications ([#114](https://github.com/danielsmithdevelopment/ClawQL/issues/114), [#115](https://github.com/danielsmithdevelopment/ClawQL/issues/115), [#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)); full-stack service map ([#113](https://github.com/danielsmithdevelopment/ClawQL/issues/113)).
+
+**Retention / consumers:** choose per stream — for example **limits** retention with **`max_age`** for workflow telemetry vs **interest** for task queues. Set **ACK** policies explicitly on pull consumers so replay behavior matches compliance expectations. Configure streams in application init or GitOps — not in the NATS `ConfigMap` here.
+
+**Prometheus / Grafana:** the broker monitor port exposes **JSON** (`/healthz`, `/jsz`, `/varz`), not OpenMetrics. Use **[NATS Prometheus exporter](https://github.com/nats-io/prometheus-nats-exporter)** sidecar or HTTP probes for uptime; wire dashboards separately from ClawQL’s **`GET /metrics`** ([#210](https://github.com/danielsmithdevelopment/ClawQL/issues/210)).
+
+**Out of scope for v1:** multi-cluster NATS federation (deck “FUTURE”) — track when single-cluster JetStream is stable.
+
 ### Validate before/after deploy
 
 Template check:
@@ -194,6 +217,7 @@ kubectl -n clawql get deploy,svc,pvc | rg nats
 kubectl -n clawql logs deploy/clawql-mcp-http-nats
 kubectl -n clawql port-forward svc/clawql-mcp-http-nats 8222:8222
 curl -s http://127.0.0.1:8222/healthz
+curl -s http://127.0.0.1:8222/jsz | head -c 800
 kubectl -n clawql get deploy clawql-mcp-http -o yaml | rg "CLAWQL_NATS_URL|CLAWQL_NATS_JETSTREAM" -n
 ```
 

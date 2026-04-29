@@ -29,6 +29,13 @@ Endpoints:
 
 In **regulated** environments (HIPAA / SOC 2–style controls), treat **`/healthz`** and **`/metrics`** as **internal-only**: restrict routes with network policy, TLS, and mesh placement; never put identifiable patient data in **`sourceLabel`** or metric dimensions. See **[`docs/enterprise-mcp-tools.md` § Regulated deployments](../enterprise-mcp-tools.md#regulated-deployments)** ([#133](https://github.com/danielsmithdevelopment/ClawQL/issues/133)).
 
+## OpenClaw (MCP registration)
+
+OpenClaw acts as an MCP client toward ClawQL.
+
+- **Phase 0 — bootstrap:** **[`docs/openclaw/clawql-bootstrap.md`](../openclaw/clawql-bootstrap.md)** ([#226](https://github.com/danielsmithdevelopment/ClawQL/issues/226); umbrella [#128](https://github.com/danielsmithdevelopment/ClawQL/issues/128)) — registration, env matrix, **`npm run smoke:openclaw-bootstrap`**.
+- **IDP skill profile — default agent/operator contract:** **[`docs/openclaw/openclaw-idp-skill-profile.md`](../openclaw/openclaw-idp-skill-profile.md)** ([#227](https://github.com/danielsmithdevelopment/ClawQL/issues/227)) — document toolchain matrix, **`search`/`execute`** vs wrappers, reference ingest→index workflow.
+
 ## Cursor / Claude Configuration
 
 Use:

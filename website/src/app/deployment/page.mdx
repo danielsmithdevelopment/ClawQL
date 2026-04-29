@@ -71,4 +71,8 @@ ENV=dev IMAGE=us-central1-docker.pkg.dev/<project>/<repo>/clawql-mcp TAG=<tag> m
 
 Or install with **Helm** from **`charts/clawql-mcp`**: **[Helm](/helm)** and [`docs/deployment/helm.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/helm.md).
 
+Optional **NATS JetStream** (event backbone for agents / Ouroboros / edge sync): **[NATS JetStream](/nats-jetstream)** ([#127](https://github.com/danielsmithdevelopment/ClawQL/issues/127)).
+
+**OpenClaw (MCP client to ClawQL):** bootstrap runbook [`docs/openclaw/clawql-bootstrap.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/openclaw/clawql-bootstrap.md) ([#226](https://github.com/danielsmithdevelopment/ClawQL/issues/226)); IDP skill profile [`docs/openclaw/openclaw-idp-skill-profile.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/openclaw/openclaw-idp-skill-profile.md) ([#227](https://github.com/danielsmithdevelopment/ClawQL/issues/227)); umbrella [#128](https://github.com/danielsmithdevelopment/ClawQL/issues/128).
+
 Details: [`docs/deployment/deploy-k8s.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/deploy-k8s.md). Extended container and manifest notes: [`docker/README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docker/README.md).
