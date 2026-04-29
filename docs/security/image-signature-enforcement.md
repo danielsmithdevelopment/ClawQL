@@ -52,7 +52,7 @@ spec:
 
 **Caveats**
 
-- **Cosign bundle format vs Kyverno:** CI must emit signatures Kyverno’s **`verifyImages`** can consume (this repo pins **Cosign v2** and **`--new-bundle-format=false`** in [`.github/workflows/docker-publish.yml`](../../.github/workflows/docker-publish.yml); **Cosign v3** “new bundle” artifacts often fail verification until policy/stack upgrades). See **[`golden-image-pipeline.md`](golden-image-pipeline.md)** Step 5.
+- **Cosign bundle format vs Kyverno:** CI must emit signatures Kyverno’s **`verifyImages`** can consume (this repo pins **Cosign v2** in [`.github/workflows/docker-publish.yml`](../../.github/workflows/docker-publish.yml); **v2** defaults to legacy bundles; **`--new-bundle-format`** is **v3** only). **Cosign v3** “new bundle” artifacts often fail verification until policy/stack upgrades. See **[`golden-image-pipeline.md`](golden-image-pipeline.md)** Step 5.
 - **Kyverno version** skew: field names moved across releases (`failureAction` vs nested fields). Validate against your installed Kyverno docs.
 - **Private GHCR**: the admission controller needs **registry pull** access to fetch signatures/manifests (imagePullSecrets, workload identity, or Kyverno `imageRegistryCredentials`).
 - **Escape hatches** break the guarantee: policies that **exclude** namespaces, `kube-system`, or `failurePolicy: Ignore` on the webhook, or workloads that **bypass** the API server (static manifests applied with elevated rights) are all ways enforcement can be weakened.

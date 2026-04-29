@@ -7,9 +7,9 @@
 # **`latest`** / **`nightly`** / **`nightly-YYYYMMDD`** only after the registry digest exists.
 #
 # Cosign pin (**v2.x** via **`cosign-release`**): Kyverno **`verifyImages`** on typical installs expects **legacy Sigstore bundle**
-# payloads (**`--new-bundle-format=false`**). Cosign **v3** defaults / **`--new-bundle-format=true`** emit **bundle v0.3**
-# artifacts that fail verification in-cluster; Cosign **v3** also errors when **`false`** is passed without satisfying its
-# newer signing-config rules — so we **pin Cosign v2** here and keep **`false`** for admission compatibility.
+# payloads; **Cosign v2** emits those by default (**no** **`--new-bundle-format`** flag — that exists only in **v3**).
+# Cosign **v3** defaults / **`--new-bundle-format=true`** emit **bundle v0.3** artifacts that often fail verification in-cluster,
+# and mixing **v3** CLI with **`--new-bundle-format=false`** tripped signing-config checks — so we **pin Cosign v2** and sign with **`cosign sign --recursive`** only.
 name: Docker publish
 
 on:
@@ -159,9 +159,9 @@ jobs:
         with:
           cosign-release: v2.4.3
 
-      - name: Cosign sign (keyless, recursive — Kyverno-compatible bundle format)
+      - name: Cosign sign (keyless, recursive — Kyverno-compatible legacy bundles)
         if: ${{ steps.oci_push.outputs.digest != '' }}
-        run: cosign sign --yes --recursive --new-bundle-format=false "${{ env.IMAGE_NAME }}@${{ steps.oci_push.outputs.digest }}"
+        run: cosign sign --yes --recursive "${{ env.IMAGE_NAME }}@${{ steps.oci_push.outputs.digest }}"
 
       - name: Promote rolling tags (latest / nightly / nightly-YYYYMMDD)
         if: ${{ steps.oci_push.outputs.digest != '' }}
@@ -272,9 +272,9 @@ jobs:
         with:
           cosign-release: v2.4.3
 
-      - name: Cosign sign (keyless, recursive — Kyverno-compatible bundle format)
+      - name: Cosign sign (keyless, recursive — Kyverno-compatible legacy bundles)
         if: ${{ steps.oci_push.outputs.digest != '' }}
-        run: cosign sign --yes --recursive --new-bundle-format=false "${{ env.WEBSITE_IMAGE_NAME }}@${{ steps.oci_push.outputs.digest }}"
+        run: cosign sign --yes --recursive "${{ env.WEBSITE_IMAGE_NAME }}@${{ steps.oci_push.outputs.digest }}"
 
       - name: Promote rolling tags (latest / nightly / nightly-YYYYMMDD)
         if: ${{ steps.oci_push.outputs.digest != '' }}

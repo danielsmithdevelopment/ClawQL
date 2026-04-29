@@ -94,7 +94,7 @@ Immutable tags come from **`docker/metadata-action`** (**`type=sha,prefix=sha-,f
 
 **`cosign sign --yes <image>@<digest>`** uses **GitHub Actions OIDC** (`permissions: id-token: write`) → **Fulcio** / **Rekor** (keyless). The signature is bound to the **digest** that was pushed—same artifact as scanned.
 
-**Kyverno note:** [`docker-publish.yml`](../../.github/workflows/docker-publish.yml) pins **Cosign v2** and passes **`--new-bundle-format=false`** so signatures remain in the **legacy Sigstore bundle** form that **Kyverno `verifyImages`** accepts on typical clusters. **Cosign v3** with **`--new-bundle-format=true`** produces **bundle v0.3** signature artifacts that commonly fail in-cluster verification until Kyverno/Sigstore stacks catch up; **Cosign v3** with **`false`** can error depending on CLI/signing-config defaults—so the workflow intentionally stays on **v2** for admission compatibility.
+**Kyverno note:** [`docker-publish.yml`](../../.github/workflows/docker-publish.yml) pins **Cosign v2**, whose default signatures use the **legacy Sigstore bundle** form that **Kyverno `verifyImages`** accepts on typical clusters (**v2 has no** **`--new-bundle-format`** flag — that is **v3** only). **Cosign v3** with **`--new-bundle-format=true`** produces **bundle v0.3** signature artifacts that commonly fail in-cluster verification until Kyverno/Sigstore stacks catch up; **Cosign v3** signing paths also diverged — so the workflow intentionally stays on **v2** for admission compatibility.
 
 ---
 
