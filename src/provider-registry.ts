@@ -139,6 +139,8 @@ export const BUNDLED_PROVIDERS: Record<string, BundledProvider> = {
     format: "openapi",
     fallbackUrl:
       "https://raw.githubusercontent.com/danielsmithdevelopment/ClawQL/main/providers/tika/openapi.yaml",
+    bundledIntrospectionPath: "providers/tika/introspection.json",
+    bundledSchemaSdlPath: "providers/tika/schema.graphql",
   },
   /** Gotenberg document conversion API. Base URL: GOTENBERG_BASE_URL. */
   gotenberg: {
@@ -147,6 +149,8 @@ export const BUNDLED_PROVIDERS: Record<string, BundledProvider> = {
     format: "openapi",
     fallbackUrl:
       "https://raw.githubusercontent.com/danielsmithdevelopment/ClawQL/main/providers/gotenberg/openapi.yaml",
+    bundledIntrospectionPath: "providers/gotenberg/introspection.json",
+    bundledSchemaSdlPath: "providers/gotenberg/schema.graphql",
   },
   /** Paperless-ngx REST (minimal bundled subset; refresh from /api/schema/). Base URL: PAPERLESS_BASE_URL. */
   paperless: {
@@ -155,6 +159,8 @@ export const BUNDLED_PROVIDERS: Record<string, BundledProvider> = {
     format: "openapi",
     fallbackUrl:
       "https://raw.githubusercontent.com/danielsmithdevelopment/ClawQL/main/providers/paperless/openapi.yaml",
+    bundledIntrospectionPath: "providers/paperless/introspection.json",
+    bundledSchemaSdlPath: "providers/paperless/schema.graphql",
   },
   /** Stirling-PDF (minimal stub; refresh from /v3/api-docs). Base URL: STIRLING_BASE_URL. */
   stirling: {
@@ -163,6 +169,8 @@ export const BUNDLED_PROVIDERS: Record<string, BundledProvider> = {
     format: "openapi",
     fallbackUrl:
       "https://raw.githubusercontent.com/danielsmithdevelopment/ClawQL/main/providers/stirling/openapi.yaml",
+    bundledIntrospectionPath: "providers/stirling/introspection.json",
+    bundledSchemaSdlPath: "providers/stirling/schema.graphql",
   },
   /**
    * Onyx enterprise search — minimal `POST /search/send-search-message` subset.

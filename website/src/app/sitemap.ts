@@ -33,6 +33,11 @@ const ENTRIES: Array<Entry> = [
   { path: '/cache', changeFrequency: 'monthly', priority: 0.8 },
   { path: '/schedule', changeFrequency: 'monthly', priority: 0.8 },
   { path: '/notify', changeFrequency: 'monthly', priority: 0.8 },
+  {
+    path: '/hitl-label-studio',
+    changeFrequency: 'monthly',
+    priority: 0.8,
+  },
   { path: '/onyx-knowledge', changeFrequency: 'monthly', priority: 0.8 },
   { path: '/flink-onyx-sync', changeFrequency: 'monthly', priority: 0.8 },
   { path: '/nats-jetstream', changeFrequency: 'monthly', priority: 0.8 },

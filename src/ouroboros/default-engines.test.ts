@@ -167,6 +167,57 @@ describe("createDefaultOuroborosEngines", () => {
     expect(evaluation.ac_results[1].evidence).toContain("missing provider evidence");
   });
 
+  it("appends Onyx ingest after Paperless when env and seed metadata opt in", async () => {
+    const prev = process.env.CLAWQL_OUROBOROS_ONYX_AFTER_PAPERLESS;
+    process.env.CLAWQL_OUROBOROS_ONYX_AFTER_PAPERLESS = "1";
+    const execute = vi.fn(
+      async ({ operationId }: { operationId: string; args: Record<string, unknown> }) => {
+        if (operationId.includes("paperless")) {
+          return {
+            content: [{ type: "text", text: JSON.stringify({ id: 7, title: "Memo" }) }],
+          };
+        }
+        if (operationId === "onyx::onyx_ingest_document") {
+          return { content: [{ type: "text", text: '{"indexed":true}' }] };
+        }
+        return { content: [{ type: "text", text: "{}" }] };
+      }
+    );
+    const engines = createDefaultOuroborosEngines({ execute, search: vi.fn() });
+    const seed = makeSeed({
+      operationId: "paperless::paperless_api_documents_retrieve",
+      args: { id: 7 },
+      onyx_ingest_after_paperless: true,
+    });
+
+    try {
+      const output = await engines.execute.execute(seed);
+      const parsed = JSON.parse(output) as {
+        route: string;
+        steps: Array<{ operationId: string; bridge_step?: string }>;
+      };
+
+      expect(parsed.route).toBe("multi");
+      expect(parsed.steps.map((s) => s.operationId)).toEqual([
+        "paperless::paperless_api_documents_retrieve",
+        "onyx::onyx_ingest_document",
+      ]);
+      expect(parsed.steps[1]?.bridge_step).toBe("onyx_after_paperless");
+      expect(execute).toHaveBeenCalledTimes(2);
+      expect(execute.mock.calls[1]?.[0]).toMatchObject({
+        operationId: "onyx::onyx_ingest_document",
+      });
+      const onyxArgs = execute.mock.calls[1]?.[0]?.args as {
+        document?: { id?: string; source?: string };
+      };
+      expect(onyxArgs.document?.id).toBe("paperless-7");
+      expect(onyxArgs.document?.source).toBe("ingestion_api");
+    } finally {
+      if (prev === undefined) delete process.env.CLAWQL_OUROBOROS_ONYX_AFTER_PAPERLESS;
+      else process.env.CLAWQL_OUROBOROS_ONYX_AFTER_PAPERLESS = prev;
+    }
+  });
+
   it("recognizes GitHub provider from single-route operationId style", async () => {
     const execute = vi.fn(async () => ({
       content: [{ type: "text", text: '{"ok":true}' }],

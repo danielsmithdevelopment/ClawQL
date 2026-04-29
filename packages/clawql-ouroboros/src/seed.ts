@@ -40,6 +40,17 @@ export const SeedMetadataSchema = z.object({
   ambiguity_score: z.number().min(0).max(1).default(0.15),
   interview_id: z.string().nullable().default(null),
   parent_seed_id: z.string().nullable().default(null),
+  /** Default Ouroboros executor when no `context_references` hints (#141). */
+  operationId: z.string().optional(),
+  args: z.record(z.string(), z.unknown()).optional(),
+  fields: z.array(z.string()).optional(),
+  searchQuery: z.string().optional(),
+  searchLimit: z.number().optional(),
+  /**
+   * With **`CLAWQL_OUROBOROS_ONYX_AFTER_PAPERLESS`**, append **`onyx::onyx_ingest_document`** after a successful
+   * Paperless execute step whose JSON result includes a document id ([#120](https://github.com/danielsmithdevelopment/ClawQL/issues/120)).
+   */
+  onyx_ingest_after_paperless: z.boolean().optional(),
 });
 
 export const SeedSchema = z

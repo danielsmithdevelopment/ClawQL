@@ -78,6 +78,10 @@ spec:
             - name: CLAWQL_ENABLE_NOTIFY
               value: "1"
             {{- end }}
+            {{- if .Values.enableHitlLabelStudio }}
+            - name: CLAWQL_ENABLE_HITL_LABEL_STUDIO
+              value: "1"
+            {{- end }}
             {{- if .Values.enableOnyx }}
             - name: CLAWQL_ENABLE_ONYX
               value: "1"

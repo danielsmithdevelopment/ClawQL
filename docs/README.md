@@ -10,7 +10,7 @@ This directory is organized by purpose so operational guides, product docs, and 
 - External ingest: `external-ingest.md`
 - Memory and vault: `memory-obsidian.md`, `memory-db-schema.md`, `memory-db-hybrid-implementation.md`, `hybrid-memory-backends.md`
 - Core in-process tools: `cache-tool.md` (LRU session cache), `enterprise-mcp-tools.md` (`audit` ring buffer)
-- Optional tools: `notify-tool.md`, `onyx-knowledge-tool.md`, `schedule-synthetic-checks.md`
+- Optional tools: `notify-tool.md`, `hitl-label-studio.md` (website **`/hitl-label-studio`**), `onyx-knowledge-tool.md`, `schedule-synthetic-checks.md`
 - Ouroboros: `clawql-ouroboros.md`
 
 ## Getting Started and README Splits

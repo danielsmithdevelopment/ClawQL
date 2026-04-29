@@ -289,6 +289,7 @@ export const navigation: Array<NavGroup> = [
       { title: 'Session cache', href: '/cache' },
       { title: 'Schedule synthetic checks', href: '/schedule' },
       { title: 'Slack notify', href: '/notify' },
+      { title: 'HITL — Label Studio', href: '/hitl-label-studio' },
       { title: 'Onyx knowledge search', href: '/onyx-knowledge' },
       { title: 'Flink Onyx sync', href: '/flink-onyx-sync' },
       { title: 'NATS JetStream', href: '/nats-jetstream' },

@@ -2,7 +2,14 @@
 
 The **`cache`** tool provides **ephemeral, in-process key/value storage** in the ClawQL MCP server. It is **orthogonal** to the Obsidian vault and **`memory_ingest`** / **`memory_recall`**: use **`cache`** for temporary session state; use **vault memory** for durable notes and graph recall.
 
-**Tracking:** [#75](https://github.com/danielsmithdevelopment/ClawQL/issues/75) · Implementation: [`src/clawql-cache.ts`](../src/clawql-cache.ts) · Full MCP reference: **[mcp-tools.md](mcp-tools.md)**.
+**Implementation:** [`src/clawql-cache.ts`](../src/clawql-cache.ts) · Full MCP reference: **[mcp-tools.md](mcp-tools.md)**.
+
+### Issue status
+
+| Issue                                                             | Status                  | Scope                                                                                                                                                                   |
+| ----------------------------------------------------------------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [#75](https://github.com/danielsmithdevelopment/ClawQL/issues/75) | **Closed** (2026-04-17) | MCP **`cache`** tool: shipped as **ClawQL Core** — always registered (**no** **`CLAWQL_ENABLE_CACHE`**). See [CHANGELOG](../CHANGELOG.md) (**[5.0.0]** breaking notes). |
+| [#29](https://github.com/danielsmithdevelopment/ClawQL/issues/29) | **Open**                | **Different feature:** optional approximate **negative cache** for the merged **OpenAPI operation index** (`search`), not the MCP **`cache`** KV tool.                  |
 
 ---
 
@@ -62,6 +69,7 @@ Successful **`set`** responses may include **`evicted`**: the number of keys dro
 
 ## Related
 
+- **[GitHub #29](https://github.com/danielsmithdevelopment/ClawQL/issues/29)** (open) — separate **index** negative-cache idea; not the MCP **`cache`** tool.
 - **[memory-obsidian.md](memory-obsidian.md)** — vault pattern and **`memory_*`** tools
 - **[integrations/cursor-vault-memory.md](integrations/cursor-vault-memory.md)** — Cursor rule/skill for vault memory
 - **[deployment/deploy-k8s.md](deployment/deploy-k8s.md)** — running ClawQL in Kubernetes (each replica’s **`cache`** is isolated)

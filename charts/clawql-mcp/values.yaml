@@ -77,6 +77,9 @@ enableSandbox: false
 # MCP notify tool — Slack chat.postMessage (#77). Requires Slack in provider merge + CLAWQL_SLACK_TOKEN (via extraEnv / secret).
 enableNotify: false
 
+# MCP hitl_enqueue_label_studio — Label Studio HITL bridge (#228). Requires CLAWQL_LABEL_STUDIO_* via extraEnv / secret.
+enableHitlLabelStudio: false
+
 # MCP knowledge_search_onyx — Onyx POST /search/send-search-message (#118). Requires onyx in provider merge + ONYX_BASE_URL + Bearer token (extraEnv / secret).
 enableOnyx: false
 # When set, injects ONYX_BASE_URL (non-secret). Prefer extraEnv / envFromSecret for ONYX_API_TOKEN.

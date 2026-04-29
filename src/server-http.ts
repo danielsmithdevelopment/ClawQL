@@ -34,6 +34,7 @@ import {
   renderPrometheusMetrics,
 } from "./native-protocol-prometheus.js";
 import { maybeInitOtelTracing } from "./otel-tracing.js";
+import { handleLabelStudioWebhookRequest } from "./hitl-label-studio.js";
 
 const PORT = Number.parseInt(process.env.PORT ?? process.env.MCP_PORT ?? "8080", 10);
 const DEFAULT_MCP_PATH = "/mcp";
@@ -167,6 +168,22 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
     }
     res.json(base);
   });
+
+  if (getClawqlOptionalToolFlags().enableHitlLabelStudio) {
+    app.post("/hitl/label-studio/webhook", async (req, res) => {
+      try {
+        await handleLabelStudioWebhookRequest(req, res);
+      } catch (err: unknown) {
+        console.error("[clawql-mcp-http] POST /hitl/label-studio/webhook error:", err);
+        if (!res.headersSent) {
+          res.status(500).json({
+            ok: false,
+            error: err instanceof Error ? err.message : String(err),
+          });
+        }
+      }
+    });
+  }
 
   app.post(mcpPath, async (req, res) => {
     const sessionId = req.header("mcp-session-id");

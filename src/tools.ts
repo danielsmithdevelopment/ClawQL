@@ -8,6 +8,7 @@
  * Optional: knowledge_search_onyx — Onyx when CLAWQL_ENABLE_ONYX and documents enabled; **`CLAWQL_ENABLE_DOCUMENTS=0`** hides (GitHub #118).
  * Optional: schedule — persisted jobs + manual synthetic trigger when CLAWQL_ENABLE_SCHEDULE (GitHub #76).
  * Optional: notify — Slack chat.postMessage when CLAWQL_ENABLE_NOTIFY (GitHub #77); requires Slack in loaded spec + bot token.
+ * Optional: hitl_enqueue_label_studio — Label Studio review queue when CLAWQL_ENABLE_HITL_LABEL_STUDIO (GitHub #228).
  * Optional: ouroboros_* — evolutionary loop tools when CLAWQL_ENABLE_OUROBOROS (GitHub #141); optional CLAWQL_OUROBOROS_DATABASE_URL for Postgres lineage (#142).
  * Single-spec `execute` runs OpenAPI→GraphQL in-process; field resolution uses `graphql-execute-helpers`.
  */
@@ -43,6 +44,7 @@ import { handleScheduleToolInput, scheduleToolSchema } from "./clawql-schedule.j
 import { getClawqlOptionalToolFlags } from "./clawql-optional-flags.js";
 import { handleKnowledgeSearchOnyxToolInput } from "./knowledge-search-onyx.js";
 import { registerOuroborosTools } from "./ouroboros-mcp.js";
+import { handleHitlEnqueueLabelStudioToolInput } from "./hitl-label-studio.js";
 import { wrapMcpToolHandler } from "./otel-tracing.js";
 import type { OpenAPIDoc } from "./spec-loader.js";
 
@@ -693,6 +695,51 @@ export function registerTools(server: McpServer) {
           ),
       },
       wrapMcpToolHandler("notify", handleNotifyToolInput)
+    );
+  }
+
+  if (getClawqlOptionalToolFlags().enableHitlLabelStudio) {
+    server.tool(
+      "hitl_enqueue_label_studio",
+      {
+        project_id: z
+          .number()
+          .int()
+          .min(1)
+          .describe("Label Studio project id (integer pk in /api/projects/{id}/import)."),
+        tasks: z
+          .array(
+            z.object({
+              data: z
+                .record(z.string(), z.unknown())
+                .describe("Task fields shown to annotators (maps to Label Studio task.data)."),
+              meta: z
+                .record(z.string(), z.unknown())
+                .optional()
+                .describe("Optional extra JSON merged into task.data.meta."),
+            })
+          )
+          .min(1)
+          .max(100)
+          .describe("Tasks to import in one batch."),
+        confidence: z
+          .number()
+          .min(0)
+          .max(1)
+          .optional()
+          .describe("Optional model confidence stored under data.clawql_hitl.confidence."),
+        correlation_id: z
+          .string()
+          .max(512)
+          .optional()
+          .describe("Optional id for OpenClaw / logs / webhook correlation."),
+        seed_id: z.string().max(256).optional().describe("Optional Ouroboros or workflow seed id."),
+        provenance: z
+          .record(z.string(), z.unknown())
+          .optional()
+          .describe("Optional provenance object stored under data.clawql_hitl.provenance."),
+      },
+      wrapMcpToolHandler("hitl_enqueue_label_studio", handleHitlEnqueueLabelStudioToolInput)
     );
   }
 

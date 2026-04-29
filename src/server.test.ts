@@ -83,6 +83,7 @@ describe("server (stdio)", () => {
       expect(names.has("cache")).toBe(true);
       expect(names.has("audit")).toBe(true);
       expect(names.has("notify")).toBe(false);
+      expect(names.has("hitl_enqueue_label_studio")).toBe(false);
       expect(names.has("knowledge_search_onyx")).toBe(false);
       expect(names.has("ouroboros_create_seed_from_document")).toBe(false);
       expect(names.has("ouroboros_run_evolutionary_loop")).toBe(false);

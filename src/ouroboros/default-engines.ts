@@ -69,6 +69,7 @@ function addProvidersFromMergedPrefix(operationId: string, providers: Set<string
   if (prefix === "github") providers.add("github");
   if (prefix === "cloudflare") providers.add("cloudflare");
   if (prefix === "slack") providers.add("slack");
+  if (prefix === "onyx") providers.add("onyx");
   if (prefix === "jira" || prefix === "bitbucket") providers.add("jira");
   if (isGoogleDiscoverySpecLabel(prefix)) {
     providers.add("google");
@@ -117,6 +118,9 @@ function providersCoveredByExecution(outputObj: Record<string, unknown> | null):
       (canon.startsWith("conversations_") && !canon.includes("/") && !canon.includes("."))
     ) {
       providers.add("slack");
+    }
+    if (/^onyx::/i.test(raw) || mergedSpecPrefix(raw) === "onyx") {
+      providers.add("onyx");
     }
   };
 
@@ -186,17 +190,17 @@ function routeHintsFromSeed(seed: Seed): RouteHint[] {
     return hints;
   }
 
-  const metadata = asRecord(seed.metadata);
+  const metadata = seed.metadata;
   const fallbackHints: RouteHint[] = [];
-  if (typeof metadata?.operationId === "string" && metadata.operationId) {
+  if (typeof metadata.operationId === "string" && metadata.operationId) {
     fallbackHints.push({
       route: "execute",
       operationId: metadata.operationId,
-      args: asRecord(metadata.args) ?? {},
-      fields: asStringArray(metadata.fields),
+      args: (metadata.args as Record<string, unknown> | undefined) ?? {},
+      fields: metadata.fields,
     });
   }
-  if (typeof metadata?.searchQuery === "string" && metadata.searchQuery) {
+  if (typeof metadata.searchQuery === "string" && metadata.searchQuery) {
     fallbackHints.push({
       route: "search",
       searchQuery: metadata.searchQuery,
@@ -207,6 +211,124 @@ function routeHintsFromSeed(seed: Seed): RouteHint[] {
     });
   }
   return fallbackHints;
+}
+
+function envTruthyOnyxAfterPaperless(): boolean {
+  const v = process.env.CLAWQL_OUROBOROS_ONYX_AFTER_PAPERLESS?.trim().toLowerCase();
+  return v === "1" || v === "true" || v === "yes";
+}
+
+function parseLooseJsonObject(text: string | null): Record<string, unknown> | null {
+  if (!text || !text.trim()) return null;
+  try {
+    const v = JSON.parse(text) as unknown;
+    if (!v || typeof v !== "object" || Array.isArray(v)) return null;
+    return v as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
+function extractPaperlessDocumentId(obj: Record<string, unknown>): string | number | null {
+  if (typeof obj.id === "number" && Number.isFinite(obj.id)) return obj.id;
+  if (typeof obj.id === "string" && obj.id.trim()) return obj.id.trim();
+  const nested = obj.document;
+  if (nested && typeof nested === "object" && !Array.isArray(nested)) {
+    const d = nested as Record<string, unknown>;
+    if (typeof d.id === "number" && Number.isFinite(d.id)) return d.id;
+    if (typeof d.id === "string" && d.id.trim()) return d.id.trim();
+  }
+  return null;
+}
+
+function isPaperlessExecuteOperationId(operationId: string): boolean {
+  const prefix = mergedSpecPrefix(operationId);
+  if (prefix === "paperless") return true;
+  const canon = canonicalOperationId(operationId);
+  return /paperless/i.test(canon);
+}
+
+function stablePaperlessDocKey(docId: string | number): string {
+  return typeof docId === "number" ? String(docId) : docId.trim() || String(docId);
+}
+
+function buildOnyxIngestArgsFromPaperlessResult(
+  docId: string | number,
+  paperlessPayload: Record<string, unknown>
+): Record<string, unknown> {
+  const key = stablePaperlessDocKey(docId);
+  const syntheticId = `paperless-${key}`;
+  const title = typeof paperlessPayload.title === "string" ? paperlessPayload.title : undefined;
+  const text =
+    typeof paperlessPayload.content === "string"
+      ? paperlessPayload.content
+      : typeof paperlessPayload.title === "string"
+        ? paperlessPayload.title
+        : `Indexed from Paperless document ${key}`;
+  return {
+    document: {
+      id: syntheticId,
+      ...(title ? { title } : {}),
+      semantic_identifier: syntheticId,
+      source: "ingestion_api",
+      sections: [{ text }],
+    },
+  };
+}
+
+async function appendOnyxIngestAfterPaperlessIfConfigured(
+  seed: Seed,
+  steps: Array<Record<string, unknown>>,
+  bridge: OuroborosToolBridge | undefined
+): Promise<void> {
+  if (!bridge?.execute) return;
+  if (!envTruthyOnyxAfterPaperless()) return;
+  if (!seed.metadata.onyx_ingest_after_paperless) return;
+
+  for (let i = steps.length - 1; i >= 0; i--) {
+    const step = steps[i];
+    if (!step || step.route !== "execute") continue;
+    const operationId = typeof step.operationId === "string" ? step.operationId : "";
+    if (!isPaperlessExecuteOperationId(operationId)) continue;
+
+    const payload = parseLooseJsonObject(typeof step.result === "string" ? step.result : null);
+    if (!payload) continue;
+    const docId = extractPaperlessDocumentId(payload);
+    if (docId === null) continue;
+
+    const args = buildOnyxIngestArgsFromPaperlessResult(docId, payload);
+    const ccRaw = process.env.CLAWQL_ONYX_CC_PAIR_ID?.trim();
+    if (ccRaw && /^\d+$/.test(ccRaw)) {
+      (args as { cc_pair_id?: number }).cc_pair_id = Number.parseInt(ccRaw, 10);
+    }
+
+    try {
+      const response = await bridge.execute({
+        operationId: "onyx::onyx_ingest_document",
+        args,
+      });
+      steps.push({
+        route: "execute",
+        operationId: "onyx::onyx_ingest_document",
+        args,
+        result: firstText(response),
+        bridge_step: "onyx_after_paperless",
+      });
+    } catch (err) {
+      steps.push({
+        route: "execute",
+        operationId: "onyx::onyx_ingest_document",
+        args,
+        result: JSON.stringify({
+          kind: "partial_failure",
+          phase: "onyx_after_paperless",
+          detail: err instanceof Error ? err.message : String(err),
+        }),
+        bridge_step: "onyx_after_paperless_failed",
+      });
+    }
+    return;
+  }
 }
 
 export function createDefaultOuroborosEngines(): {
@@ -278,6 +400,8 @@ export function createDefaultOuroborosEngines(bridge?: OuroborosToolBridge): {
             });
           }
         }
+
+        await appendOnyxIngestAfterPaperlessIfConfigured(seed, steps, bridge);
 
         if (steps.length === 1) {
           return JSON.stringify({
