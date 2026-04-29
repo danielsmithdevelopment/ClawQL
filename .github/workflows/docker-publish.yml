@@ -5,6 +5,11 @@
 # **Syft** SBOM artifact); **one BuildKit build** exports a **local OCI image layout** → **Trivy** scans it → **skopeo copy**
 # pushes **that same layout** to GHCR (**no second build / no drift**); **Cosign** (**`--recursive`** for multi-arch index + per-arch manifests) + **`imagetools`** promotion of
 # **`latest`** / **`nightly`** / **`nightly-YYYYMMDD`** only after the registry digest exists.
+#
+# Cosign pin (**v2.x** via **`cosign-release`**): Kyverno **`verifyImages`** on typical installs expects **legacy Sigstore bundle**
+# payloads (**`--new-bundle-format=false`**). Cosign **v3** defaults / **`--new-bundle-format=true`** emit **bundle v0.3**
+# artifacts that fail verification in-cluster; Cosign **v3** also errors when **`false`** is passed without satisfying its
+# newer signing-config rules — so we **pin Cosign v2** here and keep **`false`** for admission compatibility.
 name: Docker publish
 
 on:
@@ -148,11 +153,13 @@ jobs:
           DIGEST="$(skopeo inspect "${AUTH[@]}" "docker://${FIRST}" --format '{{.Digest}}')"
           echo "digest=${DIGEST}" >> "$GITHUB_OUTPUT"
 
-      # sigstore/cosign-installer — HEAD @ 2026-04 (pin updates via release tags when you bump).
+      # Pin Cosign v2 — see workflow header (Kyverno verifyImages + legacy bundle format).
       - name: Install Cosign
         uses: sigstore/cosign-installer@b5e753ae2d39589c7b38850b463739151fc67f07
+        with:
+          cosign-release: v2.4.3
 
-      - name: Cosign sign (keyless, recursive, Kyverno-compatible bundle format)
+      - name: Cosign sign (keyless, recursive — Kyverno-compatible bundle format)
         if: ${{ steps.oci_push.outputs.digest != '' }}
         run: cosign sign --yes --recursive --new-bundle-format=false "${{ env.IMAGE_NAME }}@${{ steps.oci_push.outputs.digest }}"
 
@@ -259,10 +266,13 @@ jobs:
           DIGEST="$(skopeo inspect "${AUTH[@]}" "docker://${FIRST}" --format '{{.Digest}}')"
           echo "digest=${DIGEST}" >> "$GITHUB_OUTPUT"
 
+      # Pin Cosign v2 — see workflow header (Kyverno verifyImages + legacy bundle format).
       - name: Install Cosign
         uses: sigstore/cosign-installer@b5e753ae2d39589c7b38850b463739151fc67f07
+        with:
+          cosign-release: v2.4.3
 
-      - name: Cosign sign (keyless, recursive, Kyverno-compatible bundle format)
+      - name: Cosign sign (keyless, recursive — Kyverno-compatible bundle format)
         if: ${{ steps.oci_push.outputs.digest != '' }}
         run: cosign sign --yes --recursive --new-bundle-format=false "${{ env.WEBSITE_IMAGE_NAME }}@${{ steps.oci_push.outputs.digest }}"
 
