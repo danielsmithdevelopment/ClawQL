@@ -1,0 +1,19 @@
+---
+description: Never push directly to main/master without explicit same-message user request
+alwaysApply: true
+---
+
+# Git Safety: No Direct Main Push
+
+- Never run `git push` to `main` or `master` unless the user explicitly asks for it in the current message.
+- If the user asks to "commit", "create PR", or "push" without naming a branch, do not push to `main`/`master`; ask which branch/PR flow they want.
+- Before any push command, print the exact target (`remote`, `branch`) in the chat and require explicit confirmation when target is `main`/`master`.
+- Prefer branch + PR flow for all agent-authored changes.
+
+## Required guard
+
+Before executing a push:
+
+1. Run `git rev-parse --abbrev-ref HEAD`.
+2. If branch is `main` or `master` and there is no explicit same-message user instruction to push main/master, stop and ask.
+3. Never infer consent from prior messages.
