@@ -6,6 +6,10 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import {
+  recordNativeGraphqlExecute,
+  resetNativeProtocolMetricsForTests,
+} from "./native-protocol-metrics.js";
 import { createMcpHttpApp } from "./server-http.js";
 import { resetSpecCache } from "./spec-loader.js";
 import { resetSchemaFieldCache } from "./tools.js";
@@ -110,6 +114,77 @@ describe("server-http", () => {
       expect(text).toContain("# HELP clawql_native_protocol_graphql_merge_operations");
       expect(text).toContain("# HELP clawql_native_protocol_grpc_execute_total");
     });
+  });
+
+  it("GET /metrics is not mounted when CLAWQL_DISABLE_HTTP_METRICS=1", async () => {
+    const saved = process.env.CLAWQL_DISABLE_HTTP_METRICS;
+    process.env.CLAWQL_DISABLE_HTTP_METRICS = "1";
+    try {
+      await withHttpServer(async (base) => {
+        const res = await fetch(`${base}/metrics`);
+        expect(res.status).toBe(404);
+      });
+    } finally {
+      if (saved === undefined) delete process.env.CLAWQL_DISABLE_HTTP_METRICS;
+      else process.env.CLAWQL_DISABLE_HTTP_METRICS = saved;
+    }
+  });
+
+  it("GET /healthz includes nativeProtocolMetrics when CLAWQL_HEALTHZ_NATIVE_PROTOCOL_METRICS=1", async () => {
+    const saved = process.env.CLAWQL_HEALTHZ_NATIVE_PROTOCOL_METRICS;
+    process.env.CLAWQL_HEALTHZ_NATIVE_PROTOCOL_METRICS = "1";
+    resetNativeProtocolMetricsForTests();
+    try {
+      await withHttpServer(async (base) => {
+        const res = await fetch(`${base}/healthz`);
+        expect(res.ok).toBe(true);
+        const body = (await res.json()) as {
+          status?: string;
+          nativeProtocolMetrics?: Record<string, unknown>;
+        };
+        expect(body.status).toBe("ok");
+        expect(body.nativeProtocolMetrics).toEqual({
+          graphqlMergedOperations: 0,
+          grpcMergedOperations: 0,
+          graphqlExecuteOk: 0,
+          graphqlExecuteErr: 0,
+          grpcExecuteOk: 0,
+          grpcExecuteErr: 0,
+          graphqlBySource: {},
+          grpcBySource: {},
+        });
+      });
+    } finally {
+      if (saved === undefined) delete process.env.CLAWQL_HEALTHZ_NATIVE_PROTOCOL_METRICS;
+      else process.env.CLAWQL_HEALTHZ_NATIVE_PROTOCOL_METRICS = saved;
+    }
+  });
+
+  it("GET /healthz nativeProtocolMetrics reflects in-process counters after recordNativeGraphqlExecute", async () => {
+    const saved = process.env.CLAWQL_HEALTHZ_NATIVE_PROTOCOL_METRICS;
+    process.env.CLAWQL_HEALTHZ_NATIVE_PROTOCOL_METRICS = "1";
+    resetNativeProtocolMetricsForTests();
+    try {
+      await withHttpServer(async (base) => {
+        recordNativeGraphqlExecute(true, "vitest-gql-source");
+        const res = await fetch(`${base}/healthz`);
+        expect(res.ok).toBe(true);
+        const body = (await res.json()) as {
+          nativeProtocolMetrics?: {
+            graphqlExecuteOk?: number;
+            graphqlBySource?: Record<string, { executeOk: number }>;
+          };
+        };
+        expect(body.nativeProtocolMetrics?.graphqlExecuteOk).toBe(1);
+        expect(body.nativeProtocolMetrics?.graphqlBySource?.["vitest-gql-source"]?.executeOk).toBe(
+          1
+        );
+      });
+    } finally {
+      if (saved === undefined) delete process.env.CLAWQL_HEALTHZ_NATIVE_PROTOCOL_METRICS;
+      else process.env.CLAWQL_HEALTHZ_NATIVE_PROTOCOL_METRICS = saved;
+      resetNativeProtocolMetricsForTests();
+    }
   });
 
   it("GET /healthz optional merkle when CLAWQL_HEALTHZ_MEMORY_ARTIFACTS=1", async () => {
@@ -259,6 +334,42 @@ describe("server-http", () => {
       expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
     });
   });
+
+  it("streamable HTTP listTools includes sandbox_exec when CLAWQL_ENABLE_SANDBOX=1", async () => {
+    const vaultDir = mkdtempSync(join(tmpdir(), "clawql-http-sandbox-"));
+    const savedSandbox = process.env.CLAWQL_ENABLE_SANDBOX;
+    const savedVault = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
+    process.env.CLAWQL_ENABLE_SANDBOX = "1";
+    process.env.CLAWQL_OBSIDIAN_VAULT_PATH = vaultDir;
+    await mkdir(join(vaultDir, "Memory"), { recursive: true });
+    resetSpecCache();
+    resetSchemaFieldCache();
+    try {
+      await withHttpServer(async (base) => {
+        const { StreamableHTTPClientTransport } =
+          await import("@modelcontextprotocol/sdk/client/streamableHttp.js");
+        const { Client } = await import("@modelcontextprotocol/sdk/client/index.js");
+        const transport = new StreamableHTTPClientTransport(new URL(`${base}/mcp`));
+        const client = new Client({ name: "vitest-http-sandbox", version: "1.0.0" }, {});
+        await client.connect(transport);
+        try {
+          const { tools } = await client.listTools();
+          const names = new Set(tools.map((t) => t.name));
+          expect(names.has("sandbox_exec")).toBe(true);
+        } finally {
+          await client.close();
+        }
+      });
+    } finally {
+      await rm(vaultDir, { recursive: true, force: true }).catch(() => {});
+      if (savedSandbox === undefined) delete process.env.CLAWQL_ENABLE_SANDBOX;
+      else process.env.CLAWQL_ENABLE_SANDBOX = savedSandbox;
+      if (savedVault === undefined) delete process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
+      else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = savedVault;
+      resetSpecCache();
+      resetSchemaFieldCache();
+    }
+  }, 25_000);
 
   it("streamable HTTP listTools includes notify when CLAWQL_ENABLE_NOTIFY=1 (#140)", async () => {
     const vaultDir = mkdtempSync(join(tmpdir(), "clawql-http-notify-"));

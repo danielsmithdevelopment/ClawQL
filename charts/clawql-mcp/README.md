@@ -24,6 +24,14 @@ Configure via **`values.yaml`** or **`--set`**. Defaults pull **`ghcr.io/daniels
 The script installs **Kyverno** and upgrades **ingress-nginx** unless disabled.
 **Kustomize:** **`CLAWQL_LOCAL_K8S_INSTALLER=kustomize`** uses **`docker/kustomize/overlays/local`** (no Helm).
 
+## Prometheus: scrape `GET /metrics`
+
+ClawQL exposes **OpenMetrics** on **`GET /metrics`** (native GraphQL/gRPC counters/gauges; see **`docs/readme/deployment.md`**).
+
+- **Istio sample Prometheus** (`istio-system`, from **`samples/addons/prometheus.yaml`**): discovers annotated **Services** via the **`kubernetes-service-endpoints`** scrape job. This chart defaults **`metrics.prometheusScrapeAnnotations.enabled: true`**, which sets **`prometheus.io/scrape`**, **`prometheus.io/path`**, and **`prometheus.io/port`** on **`svc/<fullname>`** (port defaults to **`service.http.targetPort`** — the HTTP container listen port). After **`helm upgrade`**, Istio’s Prometheus should list a **`clawql`** target without editing its ConfigMap. Set **`metrics.prometheusScrapeAnnotations.enabled: false`** to disable. If **`CLAWQL_DISABLE_HTTP_METRICS=1`**, `/metrics` is omitted — turn off scrape annotations or fix env before relying on this path.
+- **Prometheus Operator:** set **`metrics.serviceMonitor.enabled: true`** to render a **`ServiceMonitor`** (**`monitoring.coreos.com/v1`**) on **`port: http`**, path **`metrics.prometheusScrapeAnnotations.path`**. Tune **`metrics.serviceMonitor.labels`** so your **`Prometheus`** CR selects this object. Requires the **ServiceMonitor** CRD in the cluster.
+- **Grafana:** import **`docs/grafana/clawql-core-observability.json`** — see **`docs/grafana/README.md`** ([#210](https://github.com/danielsmithdevelopment/ClawQL/issues/210)).
+
 ## NATS JetStream quick ops
 
 Issue [#127](https://github.com/danielsmithdevelopment/ClawQL/issues/127) adds optional in-cluster NATS JetStream as an event backbone for Ouroboros, agent orchestration, and edge synchronization.

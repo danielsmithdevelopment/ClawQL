@@ -31,6 +31,27 @@ service:
   grpc:
     port: 50051
     targetPort: 50051
+  # Extra annotations on the MCP Service (merged after prometheus scrape annotations when enabled).
+  annotations: {}
+
+# GET /metrics (OpenMetrics). Prometheus scrape integration — see charts/clawql-mcp/README.md.
+metrics:
+  # When true, annotate the MCP Service with prometheus.io/* so Prometheus deployments that honor
+  # Service annotations pick up ClawQL (notably Istio samples/addons/prometheus.yaml — job
+  # kubernetes-service-endpoints). Port must match the HTTP container listen port (service.http.targetPort).
+  prometheusScrapeAnnotations:
+    enabled: true
+    path: /metrics
+    port: ""
+  # monitoring.coreos.com/v1 ServiceMonitor for Prometheus Operator (kube-prometheus-stack, etc.).
+  # Requires the ServiceMonitor CRD; rendered only when enabled and API is available.
+  serviceMonitor:
+    enabled: false
+    # If empty, ServiceMonitor is created in the release namespace.
+    namespace: ""
+    labels: {}
+    interval: 30s
+    scrapeTimeout: 10s
 
 # Mirrors docker/kustomize/base/deployment-mcp-http.yaml
 # Merged `CLAWQL_PROVIDER`: `all-providers` (default) or e.g. `google`. For a custom id list, set extraEnv / patchDeployment with

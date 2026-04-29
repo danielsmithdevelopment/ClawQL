@@ -111,6 +111,7 @@ Expect **Running** pods for Prometheus, Grafana, Jaeger, Kiali (when not skipped
 3. Log in with the **default credentials from the Istio sample** (as of common Istio releases): user **`admin`**, password **`admin`**. **Change or disable this in anything beyond a disposable laptop lab.**
 4. Open **Connections → Data sources** (or **Configuration → Data sources** in older layouts) and confirm **Prometheus** points at the in-cluster Prometheus service.
 5. Open **Dashboards** and browse folders such as **Istio** (names vary by version). Pick any dashboard and watch panels while you send traffic to ClawQL.
+6. **ClawQL application metrics:** with the default **Helm** release (**`metrics.prometheusScrapeAnnotations.enabled: true`**) or **Kustomize** base Service, **Istio’s** Prometheus should already scrape **`/metrics`** on **`clawql-mcp-http`** (check **Status → Targets** in the Prometheus UI). Import the bundled dashboard **[`docs/grafana/clawql-core-observability.json`](../grafana/clawql-core-observability.json)** — see **[`docs/grafana/README.md`](../grafana/README.md)** and **`charts/clawql-mcp/README.md`** ([#210](https://github.com/danielsmithdevelopment/ClawQL/issues/210)).
 
 **Mental model:** Grafana answers **“show me a curated picture of metrics.”** Dig into raw series in **Prometheus** if a panel looks wrong.
 

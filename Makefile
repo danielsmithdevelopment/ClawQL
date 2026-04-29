@@ -3,6 +3,8 @@
 # Validate charts/clawql-mcp (requires helm on PATH)
 helm-lint:
 	@helm lint charts/clawql-mcp
+	@helm lint charts/clawql-falco
+	@helm template test charts/clawql-falco --namespace monitoring >/dev/null
 	@helm template test charts/clawql-mcp --namespace clawql >/dev/null
 	@helm template test charts/clawql-mcp --namespace clawql \
 		-f charts/clawql-mcp/values-docker-desktop.yaml \

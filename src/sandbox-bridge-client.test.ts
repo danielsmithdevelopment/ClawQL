@@ -74,8 +74,9 @@ describe("sandbox-bridge-client", () => {
       })
     );
     const out = await handleClawqlCodeToolInput({ code: "1", language: "javascript" });
-    const parsed = JSON.parse(out.content[0].text) as { success: boolean };
+    const parsed = JSON.parse(out.content[0].text) as { success: boolean; backend?: string };
     expect(parsed.success).toBe(true);
+    expect(parsed.backend).toBe("bridge");
   });
 
   it("handleClawqlCodeToolInput uses Seatbelt backend without bridge env when configured", async () => {

@@ -6,6 +6,11 @@ metadata:
   name: clawql-mcp-http
   labels:
     app: clawql-mcp-http
+  annotations:
+    # Istio sample Prometheus (istio-system) — job kubernetes-service-endpoints.
+    prometheus.io/scrape: "true"
+    prometheus.io/path: /metrics
+    prometheus.io/port: "8080"
 spec:
   type: LoadBalancer
   selector:

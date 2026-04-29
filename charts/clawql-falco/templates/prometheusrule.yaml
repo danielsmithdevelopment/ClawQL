@@ -1,0 +1,75 @@
+{{- if .Values.prometheusRules.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "clawql-falco.fullname" . }}-runtime
+  labels:
+    {{- include "clawql-falco.labels" . | nindent 4 }}
+    clawql.io/prometheus-rule-group: clawql-falco-sandbox-merkle
+    {{- range $k, $v := .Values.prometheusRules.additionalRuleLabels }}
+    {{ $k }}: {{ quote $v }}
+    {{- end }}
+spec:
+  groups:
+    - name: clawql.falco.runtime
+      interval: 30s
+      rules:
+        {{- if .Values.prometheusRules.defaultAlerts.outputQueueDrops.enabled }}
+        - alert: ClawQLFalcoOutputQueueDrops
+          expr: sum by (namespace, pod) (increase(falcosecurity_falco_outputs_queue_num_drops_total[10m])) > 0
+          for: {{ .Values.prometheusRules.defaultAlerts.outputQueueDrops.for | quote }}
+          labels:
+            severity: warning
+            clawql.io/alert-family: falco
+          annotations:
+            summary: Falco output queue drops detected
+            description: >-
+              Falco reported non-zero output queue drops on {{ "{{ $labels.namespace }}" }}/{{ "{{ $labels.pod }}" }}.
+              Outputs may be truncated; verify sidekick / sinks and Falco resource limits.
+            runbook_url: https://github.com/danielsmithdevelopment/ClawQL/blob/main/charts/clawql-falco/README.md#runbook--triage
+        {{- end }}
+        {{- if .Values.prometheusRules.defaultAlerts.highSeverityMatches.enabled }}
+        - alert: ClawQLFalcoHighSeverityRuleMatches
+          expr: sum(rate(falcosecurity_falco_rules_matches_total{priority=~"1|2|3"}[5m])) > {{ .Values.prometheusRules.defaultAlerts.highSeverityMatches.minRatePerSecond }}
+          for: {{ .Values.prometheusRules.defaultAlerts.highSeverityMatches.for | quote }}
+          labels:
+            severity: critical
+            clawql.io/alert-family: falco
+          annotations:
+            summary: Elevated high-severity Falco rule match rate
+            description: >-
+              Aggregate rate of Falco rule matches with priority Alert/Critical/Error exceeds
+              {{ .Values.prometheusRules.defaultAlerts.highSeverityMatches.minRatePerSecond }} matches/s.
+              Triage recent pods (especially MCP / sandbox workloads) and cross-check audit logs.
+            runbook_url: https://github.com/danielsmithdevelopment/ClawQL/blob/main/charts/clawql-falco/README.md#runbook--triage
+        {{- end }}
+        {{- if .Values.prometheusRules.defaultAlerts.suspiciousExecSpike.enabled }}
+        - alert: ClawQLFalcoSuspiciousContainerExecutionSpike
+          expr: sum(rate(falcosecurity_falco_rules_matches_total{rule_name=~"Terminal shell in container|Run shell untrusted|Drop and execute new binary in container|Netcat Remote Code Execution in Container"}[5m])) > {{ .Values.prometheusRules.defaultAlerts.suspiciousExecSpike.minRatePerSecond }}
+          for: {{ .Values.prometheusRules.defaultAlerts.suspiciousExecSpike.for | quote }}
+          labels:
+            severity: warning
+            clawql.io/alert-family: falco-sandbox-correlate
+          annotations:
+            summary: Spike in Falco container execution / shell-style rules
+            description: >-
+              Match rate for common execution-oriented Falco defaults exceeded
+              {{ .Values.prometheusRules.defaultAlerts.suspiciousExecSpike.minRatePerSecond }} matches/s.
+              Correlate with ClawQL sandbox_exec usage and Seatbelt / bridge denials; may be benign CI churn.
+            runbook_url: https://github.com/danielsmithdevelopment/ClawQL/blob/main/charts/clawql-falco/README.md#runbook--triage
+        {{- end }}
+        {{- if .Values.prometheusRules.defaultAlerts.totalMatchNoiseStorm.enabled }}
+        - alert: ClawQLFalcoTotalRuleMatchNoiseStorm
+          expr: sum(rate(falcosecurity_falco_rules_matches_total[5m])) > {{ .Values.prometheusRules.defaultAlerts.totalMatchNoiseStorm.minRatePerSecond }}
+          for: {{ .Values.prometheusRules.defaultAlerts.totalMatchNoiseStorm.for | quote }}
+          labels:
+            severity: info
+            clawql.io/alert-family: falco-noise
+          annotations:
+            summary: Very high aggregate Falco rule match rate (noise storm)
+            description: >-
+              Total Falco rule match rate exceeds {{ .Values.prometheusRules.defaultAlerts.totalMatchNoiseStorm.minRatePerSecond }} matches/s.
+              Often false-positive storms or mis-tuned rules; silencing without investigation is discouraged.
+            runbook_url: https://github.com/danielsmithdevelopment/ClawQL/blob/main/charts/clawql-falco/README.md#runbook--triage
+        {{- end }}
+{{- end }}
