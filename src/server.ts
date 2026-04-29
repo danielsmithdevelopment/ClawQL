@@ -15,7 +15,7 @@ import { NPM_PACKAGE_VERSION } from "./npm-version.js";
 import { loadSpec, registerSpecCacheShutdownHooks } from "./spec-loader.js";
 import { createRegisteredMcpServer } from "./mcp-server-factory.js";
 import { preloadSchemaFieldCacheFromDisk } from "./tools.js";
-import { validateObsidianVaultAtStartup } from "./vault-config.js";
+import { validateOrDegradeObsidianVaultAtStartup } from "./vault-config.js";
 import { registerOuroborosPoolShutdownHooks } from "./ouroboros/postgres-pool.js";
 import { registerPostgresPoolShutdownHooks } from "./vector-store/pgvector.js";
 import { getClawqlOptionalToolFlags } from "./clawql-optional-flags.js";
@@ -31,7 +31,7 @@ async function main() {
   await loadSpec();
   // Prefer pregenerated introspection.json (bundled or CLAWQL_INTROSPECTION_PATH) over live proxy introspection
   await preloadSchemaFieldCacheFromDisk();
-  await validateObsidianVaultAtStartup();
+  await validateOrDegradeObsidianVaultAtStartup();
   if (getClawqlOptionalToolFlags().enableSchedule) {
     registerScheduleWorkerShutdownHooks();
     startScheduleWorker();

@@ -9,6 +9,11 @@ metadata:
     {{- include "clawql-mcp.labels" . | nindent 4 }}
   annotations:
     policies.kyverno.io/title: {{ .Values.kyverno.imageSignaturePolicy.policyTitle | quote }}
+    # Install before Deployments so verifyImages (mutateDigest) is current for the same release.
+    # hook-delete-policy must NOT include hook-succeeded or Helm removes the policy after the hook runs.
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "-5"
+    helm.sh/hook-delete-policy: before-hook-creation
 spec:
   validationFailureAction: {{ .Values.kyverno.imageSignaturePolicy.validationFailureAction }}
   background: {{ .Values.kyverno.imageSignaturePolicy.background }}
@@ -41,12 +46,9 @@ spec:
             {{- range .Values.kyverno.imageSignaturePolicy.imageReferences }}
             - {{ . | quote }}
             {{- end }}
-          {{- if .Values.kyverno.imageSignaturePolicy.verifyDigest }}
-          verifyDigest: true
-          {{- end }}
-          {{- if .Values.kyverno.imageSignaturePolicy.mutateDigest }}
-          mutateDigest: true
-          {{- end }}
+          {{- /* Kyverno defaults mutateDigest to true when omitted; emit booleans so chart values are honored. */}}
+          verifyDigest: {{ .Values.kyverno.imageSignaturePolicy.verifyDigest }}
+          mutateDigest: {{ .Values.kyverno.imageSignaturePolicy.mutateDigest }}
           attestors:
             - entries:
                 - keyless:

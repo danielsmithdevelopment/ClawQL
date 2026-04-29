@@ -16,7 +16,11 @@ import { createRegisteredMcpServer } from "./mcp-server-factory.js";
 import { loadSpec, registerSpecCacheShutdownHooks } from "./spec-loader.js";
 import { preloadSchemaFieldCacheFromDisk } from "./tools.js";
 import { maybeStartGrpcMcpServer } from "mcp-grpc-transport";
-import { getObsidianVaultPath, validateObsidianVaultAtStartup } from "./vault-config.js";
+import {
+  getObsidianVaultPath,
+  getVaultStartupStatus,
+  validateOrDegradeObsidianVaultAtStartup,
+} from "./vault-config.js";
 import { registerOuroborosPoolShutdownHooks } from "./ouroboros/postgres-pool.js";
 import { registerPostgresPoolShutdownHooks } from "./vector-store/pgvector.js";
 import { getClawqlOptionalToolFlags } from "./clawql-optional-flags.js";
@@ -94,7 +98,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   if (!options.skipSpecPreload) {
     await loadSpec();
     await preloadSchemaFieldCacheFromDisk();
-    await validateObsidianVaultAtStartup();
+    await validateOrDegradeObsidianVaultAtStartup();
   }
 
   const mcpPath = options.mcpPath?.trim() || process.env.MCP_PATH?.trim() || DEFAULT_MCP_PATH;
@@ -131,6 +135,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
       status: "ok",
       transport: "streamable-http",
       endpoint: mcpPath,
+      vault: getVaultStartupStatus(),
     };
     if (nativeProtocolMetricsEnabled()) {
       base.nativeProtocolMetrics = getNativeProtocolMetricsSnapshot();

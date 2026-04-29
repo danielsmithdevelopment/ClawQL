@@ -26,6 +26,15 @@ set -euo pipefail
 #
 # Optional: CLAWQL_KYVERNO_CHART_VERSION — Kyverno Helm chart version (default 3.7.2).
 #
+# Optional: CLAWQL_LOCAL_K8S_KYVERNO_CRDS_MIGRATION=1 — keep Kyverno chart default crds.migration
+# (post-upgrade Job pulls reg.kyverno.io/kyverno/kyverno-cli). Default off for Docker Desktop
+# because that Job often hits ErrImagePull on restricted networks; greenfield local clusters do not
+# need CRD migration. Turn on if you upgrade Kyverno across major versions and rely on upstream migration.
+#
+# Optional: CLAWQL_LOCAL_K8S_VAULT_BACKEND=hostPath|pvc (default hostPath).
+# - hostPath: mount $HOME/.ClawQL into the pod at /vault (easy local inspection).
+# - pvc:      keep vault data in-cluster via chart PVC (no host FS permission friction).
+#
 # Requires: Docker Desktop with Kubernetes enabled, kubectl, Helm 3. Docker is not required
 # unless you use other tooling that needs it.
 #
@@ -54,13 +63,23 @@ INSTALL_ISTIO="${CLAWQL_LOCAL_K8S_ISTIO:-}"
 ISTIO_HEAVY_OBS="${CLAWQL_ISTIO_INSTALL_HEAVY_OBSERVABILITY_ADDONS:-1}"
 HELM_TIMEOUT="${CLAWQL_HELM_TIMEOUT:-30m}"
 KYVERNO_CHART_VERSION="${CLAWQL_KYVERNO_CHART_VERSION:-3.7.2}"
+KYVERNO_CRDS_MIGRATION="${CLAWQL_LOCAL_K8S_KYVERNO_CRDS_MIGRATION:-0}"
+VAULT_BACKEND="${CLAWQL_LOCAL_K8S_VAULT_BACKEND:-hostPath}"
 
 # Mount a host Obsidian vault (same default as docker-compose: ~/.ClawQL).
 VAULT_HOST_PATH="${CLAWQL_LOCAL_VAULT_HOST_PATH:-$HOME/.ClawQL}"
 
 echo "==> Installer: ${INSTALLER} (set CLAWQL_LOCAL_K8S_INSTALLER=kustomize for Kustomize)"
-echo "==> Obsidian vault hostPath (clawql-mcp-http): ${VAULT_HOST_PATH}"
-echo "    (override with CLAWQL_LOCAL_VAULT_HOST_PATH=/absolute/path/to/vault)"
+if [[ "${VAULT_BACKEND}" == "hostPath" ]]; then
+  echo "==> Obsidian vault hostPath (clawql-mcp-http): ${VAULT_HOST_PATH}"
+  echo "    (override with CLAWQL_LOCAL_VAULT_HOST_PATH=/absolute/path/to/vault)"
+elif [[ "${VAULT_BACKEND}" == "pvc" ]]; then
+  echo "==> Obsidian vault backend: pvc (in-cluster storage)"
+  echo "    (set CLAWQL_LOCAL_K8S_VAULT_BACKEND=hostPath to use $HOME/.ClawQL mount)"
+else
+  echo "ERROR: CLAWQL_LOCAL_K8S_VAULT_BACKEND must be hostPath or pvc (got: ${VAULT_BACKEND})"
+  exit 1
+fi
 
 if ! command -v kubectl >/dev/null 2>&1; then
   echo "ERROR: kubectl not found. Enable Kubernetes in Docker Desktop and ensure kubectl is on PATH."
@@ -135,12 +154,21 @@ if ! kubectl_ctx cluster-info >/dev/null 2>&1; then
 fi
 
 echo "==> Installing/upgrading Kyverno (chart ${KYVERNO_CHART_VERSION}; override with CLAWQL_KYVERNO_CHART_VERSION)"
+echo "    Helm --wait blocks until Kyverno pods are Ready (timeout 10m). First install or cold"
+echo "    Docker Desktop often spends several minutes pulling controller images — not stuck."
+KYVERNO_HELM_EXTRA=()
+if [[ "${KYVERNO_CRDS_MIGRATION}" != "1" ]]; then
+  KYVERNO_HELM_EXTRA+=(--set crds.migration.enabled=false)
+  echo "    Disabling Kyverno crds.migration hook (avoids kyverno-migrate-resources / reg.kyverno.io ErrImagePull on many networks)."
+  echo "    Re-enable upstream migration Job: CLAWQL_LOCAL_K8S_KYVERNO_CRDS_MIGRATION=1 make local-k8s-up"
+fi
 helm repo add kyverno https://kyverno.github.io/kyverno/ >/dev/null 2>&1 || true
 helm repo update >/dev/null
 helm_ctx upgrade --install kyverno kyverno/kyverno \
   --version "${KYVERNO_CHART_VERSION}" \
   --namespace kyverno \
   --create-namespace \
+  "${KYVERNO_HELM_EXTRA[@]}" \
   --wait \
   --timeout 10m
 
@@ -171,13 +199,22 @@ if [[ "${INSTALLER}" == "helm" ]]; then
   echo "==> helm upgrade --install ${RELEASE_NAME} (${NAMESPACE}) (wait timeout ${HELM_TIMEOUT})"
   echo "    Note: first install with full Onyx can take a long time (image pulls + model servers)."
   echo "    Kyverno admits only Cosign-signed ghcr.io/danielsmithdevelopment/clawql-{mcp,website} in ${NAMESPACE}."
+  HELM_VAULT_ARGS=()
+  if [[ "${VAULT_BACKEND}" == "hostPath" ]]; then
+    HELM_VAULT_ARGS+=(--set-string "vault.hostPath.path=${VAULT_HOST_PATH}")
+    HELM_VAULT_ARGS+=(--set "vault.hostPath.enabled=true")
+    HELM_VAULT_ARGS+=(--set "persistence.enabled=false")
+  else
+    HELM_VAULT_ARGS+=(--set "vault.hostPath.enabled=false")
+    HELM_VAULT_ARGS+=(--set "persistence.enabled=true")
+  fi
 
   set +e
   helm_ctx upgrade --install "${RELEASE_NAME}" "${CHART}" \
     --namespace "${NAMESPACE}" \
     --create-namespace \
     -f "${VALUES_LOCAL}" \
-    --set-string "vault.hostPath.path=${VAULT_HOST_PATH}" \
+    "${HELM_VAULT_ARGS[@]}" \
     --wait \
     --timeout "${HELM_TIMEOUT}"
   HELM_EXIT=$?
@@ -187,10 +224,21 @@ if [[ "${INSTALLER}" == "helm" ]]; then
     echo "Helm failed. If the error mentions existing resources / invalid ownership (e.g. after"
     echo "kubectl apply or Kustomize), delete the old MCP objects and retry:"
     echo "  make local-k8s-mcp-delete && make local-k8s-up"
+    echo ""
+    echo "Kyverno / ClusterPolicy: chart uses a Helm pre-upgrade hook for the policy (same field manager as Helm)."
+    echo "If you see apply conflicts on clawql-ghcr-cosign-keyless after kubectl apply, delete it once:"
+    echo "  kubectl delete clusterpolicy clawql-ghcr-cosign-keyless"
+    echo "One-shot bypass: helm upgrade --install ${RELEASE_NAME} ${CHART} -n ${NAMESPACE} -f ${VALUES_LOCAL}"
+    echo "  --set-string vault.hostPath.path=... --set kyverno.imageSignaturePolicy.enabled=false"
     exit "${HELM_EXIT}"
   fi
 
 else
+  if [[ "${VAULT_BACKEND}" != "hostPath" ]]; then
+    echo "ERROR: CLAWQL_LOCAL_K8S_VAULT_BACKEND=pvc is supported with Helm installer only."
+    echo "       Use default Helm installer or set CLAWQL_LOCAL_K8S_INSTALLER=helm."
+    exit 1
+  fi
   # Kustomize: JSON patch for hostPath vault (same as before Helm was default).
   PATCH_FILE="${KUSTOMIZE_OVERLAY}/patch-mcp-vault-hostpath.json"
   export VAULT_HOST_PATH

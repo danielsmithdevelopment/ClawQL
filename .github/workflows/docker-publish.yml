@@ -3,7 +3,7 @@
 #
 # Golden-image pipeline (this workflow): same **repo** supply-chain gates as CI (**OSV-Scanner**, **Trivy** fs,
 # **Syft** SBOM artifact); **one BuildKit build** exports a **local OCI image layout** → **Trivy** scans it → **skopeo copy**
-# pushes **that same layout** to GHCR (**no second build / no drift**); **Cosign** + **`imagetools`** promotion of
+# pushes **that same layout** to GHCR (**no second build / no drift**); **Cosign** (**`--recursive`** for multi-arch index + per-arch manifests) + **`imagetools`** promotion of
 # **`latest`** / **`nightly`** / **`nightly-YYYYMMDD`** only after the registry digest exists.
 name: Docker publish
 
@@ -152,9 +152,9 @@ jobs:
       - name: Install Cosign
         uses: sigstore/cosign-installer@b5e753ae2d39589c7b38850b463739151fc67f07
 
-      - name: Cosign sign (keyless)
+      - name: Cosign sign (keyless, recursive, Kyverno-compatible bundle format)
         if: ${{ steps.oci_push.outputs.digest != '' }}
-        run: cosign sign --yes "${{ env.IMAGE_NAME }}@${{ steps.oci_push.outputs.digest }}"
+        run: cosign sign --yes --recursive --new-bundle-format=false "${{ env.IMAGE_NAME }}@${{ steps.oci_push.outputs.digest }}"
 
       - name: Promote rolling tags (latest / nightly / nightly-YYYYMMDD)
         if: ${{ steps.oci_push.outputs.digest != '' }}
@@ -262,9 +262,9 @@ jobs:
       - name: Install Cosign
         uses: sigstore/cosign-installer@b5e753ae2d39589c7b38850b463739151fc67f07
 
-      - name: Cosign sign (keyless)
+      - name: Cosign sign (keyless, recursive, Kyverno-compatible bundle format)
         if: ${{ steps.oci_push.outputs.digest != '' }}
-        run: cosign sign --yes "${{ env.WEBSITE_IMAGE_NAME }}@${{ steps.oci_push.outputs.digest }}"
+        run: cosign sign --yes --recursive --new-bundle-format=false "${{ env.WEBSITE_IMAGE_NAME }}@${{ steps.oci_push.outputs.digest }}"
 
       - name: Promote rolling tags (latest / nightly / nightly-YYYYMMDD)
         if: ${{ steps.oci_push.outputs.digest != '' }}

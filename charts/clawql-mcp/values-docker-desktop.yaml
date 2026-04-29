@@ -121,6 +121,11 @@ resources:
     cpu: "1"
     memory: 1Gi
 
+# Distroless image runs as nonroot GID 65532 (USER nonroot). HostPath hides the image's /vault chown;
+# fsGroup lets kubelet adjust mount permissions so /vault (~/.ClawQL on the Mac) is writable.
+podSecurityContext:
+  fsGroup: 65532
+
 vault:
   hostPath:
     enabled: true
