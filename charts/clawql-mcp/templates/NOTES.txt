@@ -15,7 +15,15 @@
 {{- end }}
 
 2. Optional gRPC (set enableGrpc: true): port {{ .Values.service.grpc.port }} on the same Service.
+{{- if .Values.nats.enabled }}
+
+3. NATS JetStream (optional backbone; GitHub issue #127):
+   kubectl port-forward -n {{ .Release.Namespace }} svc/{{ include "clawql-mcp.natsName" . }} 8222:{{ .Values.nats.service.monitorPort }}
+   curl -s http://127.0.0.1:8222/healthz && curl -s http://127.0.0.1:8222/jsz | head -c 400
+   Subject roots (see values `nats.subjectConvention`): {{ .Values.nats.subjectConvention.workflow }}, {{ .Values.nats.subjectConvention.agent }}, {{ .Values.nats.subjectConvention.document }}, {{ .Values.nats.subjectConvention.edge }}
+
+{{- end }}
 {{- if .Values.kyverno.imageSignaturePolicy.enabled }}
 
-3. Kyverno image signature policy is enabled: verify Kyverno is installed and `kubectl get clusterpolicy` shows the ClawQL GHCR Cosign policy. See `docs/security/image-signature-enforcement.md`.
+{{ if .Values.nats.enabled }}4{{ else }}3{{ end }}. Kyverno image signature policy is enabled: verify Kyverno is installed and `kubectl get clusterpolicy` shows the ClawQL GHCR Cosign policy. See `docs/security/image-signature-enforcement.md`.
 {{- end }}

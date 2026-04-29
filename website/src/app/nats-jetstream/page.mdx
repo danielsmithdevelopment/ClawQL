@@ -101,7 +101,7 @@ helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
 
 ## Subject taxonomy suggestion
 
-Use stable subjects so multiple components can interoperate:
+Use stable subjects so multiple components can interoperate (mirrors **`nats.subjectConvention`** in **`charts/clawql-mcp/values.yaml`**):
 
 - `clawql.workflow.*` — workflow lifecycle and checkpoints
 - `clawql.agent.*` — agent state, assignment, and handoffs
@@ -110,13 +110,24 @@ Use stable subjects so multiple components can interoperate:
 
 If you need tenant isolation, append namespace/tenant segments (for example `clawql.workflow.team-a.*`).
 
+**Observability:** monitor **`8222`** JSON (`/jsz`, `/varz`) is not OpenMetrics — pair with the upstream **[NATS Prometheus exporter](https://github.com/nats-io/prometheus-nats-exporter)** or blackbox checks on **`/healthz`**; ClawQL app metrics remain on MCP **`GET /metrics`** ([#210](https://github.com/danielsmithdevelopment/ClawQL/issues/210)).
+
+**Scope:** single-cluster JetStream only here; global NATS federation stays future work (deck).
+
+## Integration points (in-repo)
+
+Ouroboros and workflow events ([#110](https://github.com/danielsmithdevelopment/ClawQL/issues/110)), Cuckoo/Merkle / audit ([#114](https://github.com/danielsmithdevelopment/ClawQL/issues/114), [#115](https://github.com/danielsmithdevelopment/ClawQL/issues/115), [#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)), and full-stack topology ([#113](https://github.com/danielsmithdevelopment/ClawQL/issues/113)). Chart **`values.yaml`** exposes **`nats.subjectConvention`** (`workflow`, `agent`, `document`, `edge`) for operators.
+
 ## Verify after rollout
+
+Default Helm **`fullnameOverride`** is **`clawql-mcp-http`** — NATS resources are named **`clawql-mcp-http-nats`**.
 
 ```bash
 kubectl -n clawql get deploy,svc | rg nats
 kubectl -n clawql logs deploy/clawql-mcp-http-nats
 kubectl -n clawql port-forward svc/clawql-mcp-http-nats 8222:8222
 curl -s http://127.0.0.1:8222/healthz
+curl -s http://127.0.0.1:8222/jsz | head -c 600
 ```
 
 Additional checks:

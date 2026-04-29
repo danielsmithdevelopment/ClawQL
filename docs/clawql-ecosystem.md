@@ -892,7 +892,7 @@ The body of this doc describes a **target experience**. The bullets below are **
 
 **Separate products / repos**
 
-- **OpenClaw** — governance UI, audit explorer, “digital employee” console: **not** shipped inside this repository; track integration via [#128](https://github.com/danielsmithdevelopment/ClawQL/issues/128).
+- **OpenClaw** — governance UI, audit explorer, “digital employee” console: **not** shipped inside this repository; track integration via [#128](https://github.com/danielsmithdevelopment/ClawQL/issues/128). Phase 0 MCP wiring and smokes: [`docs/openclaw/clawql-bootstrap.md`](openclaw/clawql-bootstrap.md) ([#226](https://github.com/danielsmithdevelopment/ClawQL/issues/226)). Default IDP skill profile (tools + matrix): [`docs/openclaw/openclaw-idp-skill-profile.md`](openclaw/openclaw-idp-skill-profile.md) ([#227](https://github.com/danielsmithdevelopment/ClawQL/issues/227)).
 - **ClawQL-Agent** — LangGraph runtime, long-lived employees, LangFuse-heavy ops: **private / separate** from core MCP; same epic [#128](https://github.com/danielsmithdevelopment/ClawQL/issues/128).
 - **Edge Worker mode** — laptops as pooled workers: narrative only until [#129](https://github.com/danielsmithdevelopment/ClawQL/issues/129) (and related work) lands end-to-end.
 

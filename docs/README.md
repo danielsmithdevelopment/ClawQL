@@ -24,6 +24,9 @@ This directory is organized by purpose so operational guides, product docs, and 
 
 ## Deployment and Platform Operations
 
+- `openclaw/clawql-bootstrap.md` — register ClawQL in OpenClaw, env matrix, smoke checklist ([#226](https://github.com/danielsmithdevelopment/ClawQL/issues/226))
+- `openclaw/openclaw-idp-skill-profile.md` — **OpenClaw IDP** canonical tools, provider matrix, workflow contract ([#227](https://github.com/danielsmithdevelopment/ClawQL/issues/227))
+- `deployment/helm.md` § **NATS JetStream deep dive** — optional in-cluster event backbone, subject conventions, ops ([#127](https://github.com/danielsmithdevelopment/ClawQL/issues/127)); website **`/nats-jetstream`**
 - `deployment/deploy-cloud-run.md`
 - `deployment/deploy-k8s.md`
 - `deployment/helm.md`

@@ -36,6 +36,15 @@ ClawQL exposes **OpenMetrics** on **`GET /metrics`** (native GraphQL/gRPC counte
 
 Issue [#127](https://github.com/danielsmithdevelopment/ClawQL/issues/127) adds optional in-cluster NATS JetStream as an event backbone for Ouroboros, agent orchestration, and edge synchronization.
 
+**Subject roots** (streams are app-owned; defaults in **`values.yaml`** → **`nats.subjectConvention`**):
+
+- `clawql.workflow` — workflow / Ouroboros checkpoints
+- `clawql.agent` — agent coordination
+- `clawql.document` — document pipeline events
+- `clawql.edge` — edge worker sync
+
+Deep dive (retention guidance, Prometheus notes, integration links): **[`docs/deployment/helm.md`](../../docs/deployment/helm.md#nats-jetstream-deep-dive)** (**Subject naming** → [`#subject-naming-deck-aligned`](../../docs/deployment/helm.md#subject-naming-deck-aligned)). Public site mirror: **`/nats-jetstream`** on [clawql.io](https://clawql.com).
+
 Enable:
 
 ```bash
@@ -45,10 +54,13 @@ helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
   --set nats.persistence.size=20Gi
 ```
 
-Verify:
+Verify (resource names assume default **`fullnameOverride: clawql-mcp-http`**):
 
 ```bash
 kubectl -n clawql get deploy,svc,pvc | rg nats
 kubectl -n clawql logs deploy/clawql-mcp-http-nats
+kubectl -n clawql port-forward svc/clawql-mcp-http-nats 8222:8222
+curl -s http://127.0.0.1:8222/healthz
+curl -s http://127.0.0.1:8222/jsz | head -c 500
 kubectl -n clawql get deploy clawql-mcp-http -o yaml | rg "CLAWQL_NATS_URL|CLAWQL_NATS_JETSTREAM" -n
 ```

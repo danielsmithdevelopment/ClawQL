@@ -500,6 +500,13 @@ nats:
     limits:
       cpu: "1"
       memory: 1Gi
+  # Deck-aligned subject roots for JetStream publishers/consumers ([#127](https://github.com/danielsmithdevelopment/ClawQL/issues/127)).
+  # Helm deploys NATS only — streams/consumers are created by application workers (Ouroboros, agents, edge), not by templates.
+  subjectConvention:
+    workflow: clawql.workflow
+    agent: clawql.agent
+    document: clawql.document
+    edge: clawql.edge
 
 # Extra env (e.g. tokens from literal — prefer existing secrets for production).
 extraEnv: []

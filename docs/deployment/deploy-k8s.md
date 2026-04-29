@@ -130,6 +130,7 @@ kubectl -n clawql get deploy,svc,pvc | rg nats
 kubectl -n clawql logs deploy/clawql-mcp-http-nats
 kubectl -n clawql port-forward svc/clawql-mcp-http-nats 8222:8222
 curl -s http://127.0.0.1:8222/healthz
+curl -s http://127.0.0.1:8222/jsz | head -c 800
 kubectl -n clawql get deploy clawql-mcp-http -o yaml | rg "CLAWQL_NATS_URL|CLAWQL_NATS_JETSTREAM" -n
 ```
 
@@ -138,5 +139,5 @@ kubectl -n clawql get deploy clawql-mcp-http -o yaml | rg "CLAWQL_NATS_URL|CLAWQ
 - Keep service type `ClusterIP` for private east-west traffic.
 - Always enable persistence if workflow replay/recovery matters.
 - Budget PV size and JetStream max file store together.
-- Add internal scrape for monitor endpoint (`8222`) and alert on health degradation.
-- Standardize subjects early (`clawql.workflow.*`, `clawql.agent.*`, `clawql.document.*`, `clawql.edge.*`) to avoid migration churn.
+- Add internal scrape for monitor endpoint (`8222`) and alert on health degradation (broker JSON — use NATS Prometheus exporter or probe **`/healthz`**; see [helm.md § NATS JetStream deep dive](helm.md#nats-jetstream-deep-dive)).
+- Standardize subjects early — **`nats.subjectConvention`** in **`charts/clawql-mcp/values.yaml`** (`clawql.workflow`, `clawql.agent`, `clawql.document`, `clawql.edge`) — to avoid migration churn ([#127](https://github.com/danielsmithdevelopment/ClawQL/issues/127)).

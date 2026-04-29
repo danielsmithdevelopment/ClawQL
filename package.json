@@ -72,6 +72,7 @@
         "smoke:atlassian": "node scripts/workflows/smoke-atlassian.mjs",
         "smoke:cloudflare": "node scripts/workflows/smoke-cloudflare.mjs",
         "smoke:github-commits": "npm run build && node scripts/workflows/smoke-github-commits.mjs",
+        "smoke:openclaw-bootstrap": "npm run build && node scripts/workflows/smoke-openclaw-bootstrap.mjs",
         "grpc:memory-recall": "node scripts/dev/grpc-memory-recall.mjs",
         "clawql:github-repo-description": "npm run build && node scripts/dev/clawql-github-patch-repo-description.mjs",
         "benchmark:tokens": "npm run build && node scripts/workflows/benchmark-provider-tokens.mjs",
