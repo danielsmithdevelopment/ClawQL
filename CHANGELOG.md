@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Bundled document providers — pregenerated GraphQL:** **`tika`**, **`gotenberg`**, **`paperless`**, and **`stirling`** declare **`bundledIntrospectionPath`** / **`bundledSchemaSdlPath`** with committed **`introspection.json`** and **`schema.graphql`** where **`npm run pregenerate-graphql`** succeeds ([#125](https://github.com/danielsmithdevelopment/ClawQL/issues/125)).
+- **Bundled OpenAPI providers — pregenerated GraphQL:** committed **`introspection.json`** and **`schema.graphql`** where **`npm run pregenerate-graphql`** succeeds for **`tika`**, **`gotenberg`**, **`paperless`**, **`stirling`**, **`jira`**, **`github`**, **`n8n`**, and **`sentry`** ([#125](https://github.com/danielsmithdevelopment/ClawQL/issues/125)).
 
 - **Ouroboros default executor — optional Onyx ingest after Paperless:** With **`CLAWQL_OUROBOROS_ONYX_AFTER_PAPERLESS`** and seed **`metadata.onyx_ingest_after_paperless`**, append **`execute`** on **`onyx::onyx_ingest_document`** after a successful Paperless step whose JSON **`result`** includes a document **`id`**; optional **`CLAWQL_ONYX_CC_PAIR_ID`** ([#120](https://github.com/danielsmithdevelopment/ClawQL/issues/120)).
 

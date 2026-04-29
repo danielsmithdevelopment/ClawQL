@@ -78,7 +78,7 @@ npm run fetch-provider-specs
 npm run pregenerate-graphql
 ```
 
-Writes `introspection.json` and `schema.graphql` next to each bundled spec.
+Writes `introspection.json` and `schema.graphql` next to each bundled spec. This repo commits those outputs when the script succeeds for **`jira`**, **`github`**, **`n8n`**, **`sentry`**, **`tika`**, **`gotenberg`**, **`paperless`**, and **`stirling`** ([#125](https://github.com/danielsmithdevelopment/ClawQL/issues/125)).
 Large or imperfect specs (e.g. **Jira**) may fail **`@omnigraph/openapi`**; **Google GKE**
 usually succeeds. The **full Cloudflare** OpenAPI from
 [api-schemas](https://github.com/cloudflare/api-schemas) is very large and may
