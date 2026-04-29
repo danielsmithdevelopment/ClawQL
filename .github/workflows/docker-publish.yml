@@ -152,9 +152,9 @@ jobs:
       - name: Install Cosign
         uses: sigstore/cosign-installer@b5e753ae2d39589c7b38850b463739151fc67f07
 
-      - name: Cosign sign (keyless, recursive, Kyverno-compatible bundle format)
+      - name: Cosign sign (keyless, recursive — Sigstore bundle format)
         if: ${{ steps.oci_push.outputs.digest != '' }}
-        run: cosign sign --yes --recursive --new-bundle-format=false "${{ env.IMAGE_NAME }}@${{ steps.oci_push.outputs.digest }}"
+        run: cosign sign --yes --recursive --new-bundle-format=true "${{ env.IMAGE_NAME }}@${{ steps.oci_push.outputs.digest }}"
 
       - name: Promote rolling tags (latest / nightly / nightly-YYYYMMDD)
         if: ${{ steps.oci_push.outputs.digest != '' }}
@@ -262,9 +262,9 @@ jobs:
       - name: Install Cosign
         uses: sigstore/cosign-installer@b5e753ae2d39589c7b38850b463739151fc67f07
 
-      - name: Cosign sign (keyless, recursive, Kyverno-compatible bundle format)
+      - name: Cosign sign (keyless, recursive — Sigstore bundle format)
         if: ${{ steps.oci_push.outputs.digest != '' }}
-        run: cosign sign --yes --recursive --new-bundle-format=false "${{ env.WEBSITE_IMAGE_NAME }}@${{ steps.oci_push.outputs.digest }}"
+        run: cosign sign --yes --recursive --new-bundle-format=true "${{ env.WEBSITE_IMAGE_NAME }}@${{ steps.oci_push.outputs.digest }}"
 
       - name: Promote rolling tags (latest / nightly / nightly-YYYYMMDD)
         if: ${{ steps.oci_push.outputs.digest != '' }}
