@@ -28,7 +28,7 @@ export function WebMcpRegister() {
         name: 'clawql.docs.navigate',
         title: 'Navigate ClawQL docs',
         description:
-          'Navigate to a page on this documentation site. Use paths like /tools, /install, /deployment, or /spec-configuration. Only same-origin relative paths are allowed.',
+          'Navigate to a page on this documentation site. Use paths like /tools, /install, /deployment, /kubernetes, /docker-desktop-observability, or /spec-configuration. Only same-origin relative paths are allowed.',
         inputSchema: {
           $schema: 'https://json-schema.org/draft/2020-12/schema',
           type: 'object',

@@ -5,6 +5,18 @@ metadata:
   labels:
     {{- include "clawql-mcp.labels" . | nindent 4 }}
     app: {{ include "clawql-mcp.fullname" . }}
+  {{- $prom := .Values.metrics.prometheusScrapeAnnotations }}
+  {{- if or $prom.enabled .Values.service.annotations }}
+  annotations:
+    {{- if $prom.enabled }}
+    prometheus.io/scrape: "true"
+    prometheus.io/path: {{ $prom.path | default "/metrics" | quote }}
+    prometheus.io/port: {{ ($prom.port | default .Values.service.http.targetPort) | toString | quote }}
+    {{- end }}
+    {{- with .Values.service.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- end }}
 spec:
   type: {{ .Values.service.type }}
   selector:

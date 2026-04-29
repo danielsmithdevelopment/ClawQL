@@ -27,7 +27,10 @@ This directory is organized by purpose so operational guides, product docs, and 
 - `deployment/deploy-cloud-run.md`
 - `deployment/deploy-k8s.md`
 - `deployment/helm.md`
-- `deployment/headscale-tailnet.md` (self-hosted Headscale + MagicDNS **`*.clawql.local`**, tailnet-only MCP — [#206](https://github.com/danielsmithdevelopment/ClawQL/issues/206))
+- `deployment/docker-desktop-istio-observability.md` (Istio on Docker Desktop: Prometheus, Grafana, Jaeger, Kiali, OTel Collector — beginner guide per tool)
+- `grafana/README.md` + `grafana/clawql-core-observability.json` — bundled Grafana dashboard for ClawQL **`/metrics`**; OpenClaw notes → [#128](https://github.com/danielsmithdevelopment/ClawQL/issues/128) ([#210](https://github.com/danielsmithdevelopment/ClawQL/issues/210))
+- `deployment/tailscale-and-headscale-for-clawql.md` (beginner guide: managed Tailscale + self-hosted Headscale, MagicDNS, ClawQL env — [#206](https://github.com/danielsmithdevelopment/ClawQL/issues/206), [#211](https://github.com/danielsmithdevelopment/ClawQL/issues/211), [#213](https://github.com/danielsmithdevelopment/ClawQL/issues/213); website **`/tailscale`**)
+- `deployment/headscale-tailnet.md` + `deployment/headscale-acls-clawql.hujson` (Headscale runbook + least-privilege ACL starter — [#206](https://github.com/danielsmithdevelopment/ClawQL/issues/206), [#213](https://github.com/danielsmithdevelopment/ClawQL/issues/213))
 - `providers/google-apis-lookup.md`
 
 ## Security

@@ -39,6 +39,8 @@ bash scripts/kubernetes/local-k8s-docker-desktop.sh
 
 **Kustomize:** **`CLAWQL_LOCAL_K8S_INSTALLER=kustomize make local-k8s-up`** — **`kubectl apply -k docker/kustomize/overlays/local`** for the MCP workload; **Helm** still installs **Kyverno** and applies the **ClusterPolicy** template from the chart.
 
+**Optional Istio (Docker Desktop):** **`CLAWQL_LOCAL_K8S_ISTIO=ambient`** or **`sidecar`** runs **`scripts/kubernetes/install-istio-docker-desktop.sh`** before ClawQL (Helm **Istio** + **`istio/gateway`** **`clawql-mcp-ingress`**, **Istio `Gateway` + `VirtualService`** for MCP on **:80** / **:50051**, **`PeerAuthentication` `STRICT`**, meshed **`ingress-nginx`**). Prefer **`http://localhost/mcp`** when the gateway is installed. The same path installs **Prometheus**, **Kiali**, **Grafana**, **Jaeger**, and a **ClawQL OpenTelemetry Collector** in **`istio-system`** (unless you opt out — see **[Docker Desktop: Istio & observability](/docker-desktop-observability)** and **[`docker/README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docker/README.md)**).
+
 **How this ties to CI:** full **golden image** and admission story — **[golden-image-pipeline.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/golden-image-pipeline.md)** and [Security](/security).
 
 ### Endpoints and client config

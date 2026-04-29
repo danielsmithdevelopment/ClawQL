@@ -532,7 +532,7 @@ helm install clawql charts/clawql-mcp --namespace clawql
 
 ### Complete Service Map
 
-**Headscale tailnet:** the **`*.clawql.local`** pattern also appears when MagicDNS is served to **enrolled Tailscale nodes**; those names resolve on the **mesh**, not via in-cluster DNS — see **[`docs/deployment/headscale-tailnet.md`](deployment/headscale-tailnet.md)** ([#206](https://github.com/danielsmithdevelopment/ClawQL/issues/206)).
+**Headscale tailnet:** the **`*.clawql.local`** pattern also appears when MagicDNS is served to **enrolled Tailscale nodes**; those names resolve on the **mesh**, not via in-cluster DNS — beginner overview **[`docs/deployment/tailscale-and-headscale-for-clawql.md`](deployment/tailscale-and-headscale-for-clawql.md)**; Headscale runbook **[`docs/deployment/headscale-tailnet.md`](deployment/headscale-tailnet.md)** ([#206](https://github.com/danielsmithdevelopment/ClawQL/issues/206)); least-privilege starter ACL **[`docs/deployment/headscale-acls-clawql.hujson`](deployment/headscale-acls-clawql.hujson)** ([#213](https://github.com/danielsmithdevelopment/ClawQL/issues/213)).
 
 | Service                  | Internal DNS                                   | Ingress                  | Role                                                                                                  |
 | ------------------------ | ---------------------------------------------- | ------------------------ | ----------------------------------------------------------------------------------------------------- |

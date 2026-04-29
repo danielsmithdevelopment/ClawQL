@@ -272,7 +272,12 @@ export const navigation: Array<NavGroup> = [
         href: '/case-studies/slide-deck-github-parity-cache-memory-recall-2026-04',
       },
       { title: 'Deployment', href: '/deployment' },
+      { title: 'Tailscale & Headscale', href: '/tailscale' },
       { title: 'Kubernetes', href: '/kubernetes' },
+      {
+        title: 'Docker Desktop: Istio & observability',
+        href: '/docker-desktop-observability',
+      },
       { title: 'Helm', href: '/helm' },
     ],
   },

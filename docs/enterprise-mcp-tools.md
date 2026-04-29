@@ -29,6 +29,8 @@ Design for optional **env-gated** MCP surfaces (notably **`notify`**, future **`
 
 This repository documents **technical controls and patterns** that support **SOC 2–style** and **HIPAA-oriented** readiness narratives. It does **not** replace organizational policies, a **risk analysis**, **Business Associate Agreements** (BAAs) with subprocessors, or an assessor’s opinion. Packaging and Helm hardening are tracked in **[#133](https://github.com/danielsmithdevelopment/ClawQL/issues/133)** and **[`docs/security/clawql-security-defense-deliverables.md`](security/clawql-security-defense-deliverables.md)** ([#164](https://github.com/danielsmithdevelopment/ClawQL/issues/164)).
 
+**Private tailnets (Tailscale / Headscale):** keeping MCP and **`execute`** targets on a **mesh-only** path (with **ACLs** and aligned **`BASE_URL`**s) supports **segmentation**, **encryption in transit**, and **reduced public exposure** themes that show up in **HIPAA**, **SOC 2**, **GDPR Art. 32**, and **CCPA/CPRA “reasonable security”** discussions—**not** as a substitute for BAAs, DPAs/SCCs, DPIAs, or legal review. See **[`docs/deployment/tailscale-and-headscale-for-clawql.md` § Regulatory and compliance](deployment/tailscale-and-headscale-for-clawql.md#regulatory-and-compliance-context-how-tailnets-help)** (and website **`/tailscale`**).
+
 **Observability (native GraphQL/gRPC metrics):**
 
 - **Network:** Do not expose enriched **`GET /healthz`** or **`GET /metrics`** on a public ingress. Restrict scrapes and operator probes to **private networks**, **mesh-internal** addresses, or a **metrics-only** Service with **NetworkPolicies** / security groups so only Prometheus (or an approved agent) can reach them.

@@ -1,0 +1,32 @@
+# Example values for the upstream falcosecurity/falco chart (Helm 3).
+# Reference: https://github.com/falcosecurity/charts/tree/master/charts/falco
+#
+#   helm repo add falcosecurity https://falcosecurity.github.io/charts
+#   helm upgrade --install falco falcosecurity/falco -n falco --create-namespace \
+#     --version 8.0.2 -f charts/clawql-falco/falco-upstream-values.example.yaml
+#
+# ClawQL PrometheusRules in charts/clawql-falco expect Prometheus scrape of Falco’s
+# OpenMetrics (`falcosecurity_*` counters/gauges). Set a short metrics interval so
+# `rate(...[5m])` in alerts is meaningful (defaults like 1h only suit SLO-style checks).
+
+driver:
+  enabled: true
+  kind: modern_ebpf
+
+metrics:
+  enabled: true
+  interval: 1m
+  outputRule: true
+  rulesCountersEnabled: true
+  resourceUtilizationEnabled: true
+
+serviceMonitor:
+  create: true
+  labels:
+    # kube-prometheus-stack default — align with your prometheus.prometheusSpec.serviceMonitorSelector
+    release: kube-prometheus-stack
+
+falco:
+  webserver:
+    enabled: true
+    prometheus_metrics_enabled: true

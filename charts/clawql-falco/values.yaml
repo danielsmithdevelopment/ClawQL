@@ -1,0 +1,29 @@
+nameOverride: ""
+fullnameOverride: ""
+
+# See README.md and falco-upstream-values.example.yaml for installing falcosecurity/falco first.
+
+prometheusRules:
+  enabled: true
+  # Merged onto PrometheusRule metadata.labels — must match your Prometheus operator ruleSelector (if any).
+  additionalRuleLabels: {}
+  defaultAlerts:
+    outputQueueDrops:
+      enabled: true
+      # Falco is dropping outputs; risk of missed detections.
+      for: 5m
+    highSeverityMatches:
+      enabled: true
+      for: 10m
+      # Sum of match rates for Falco priorities Alert(1), Critical(2), Error(3). Tune per cluster.
+      minRatePerSecond: 0.02
+    suspiciousExecSpike:
+      enabled: true
+      for: 15m
+      # Correlates with shell / drop-and-exec style default rules (tune or disable if noisy).
+      minRatePerSecond: 0.5
+    totalMatchNoiseStorm:
+      enabled: true
+      for: 20m
+      # Very high aggregate rule match rate — often tuning / false positives vs incident.
+      minRatePerSecond: 80

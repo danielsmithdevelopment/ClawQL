@@ -39,7 +39,7 @@ Top-level docs index: `docs/README.md`
 
 - Getting started: `docs/readme/getting-started.md`
 - Configuration and env precedence: `docs/readme/configuration.md`
-- Deployment and client config: `docs/readme/deployment.md`
+- Deployment and client config: `docs/readme/deployment.md` (Kubernetes list links **`docs/deployment/docker-desktop-istio-observability.md`** for Istio + Prometheus/Grafana/Jaeger/Kiali/OTel on Docker Desktop)
 - Benchmarks and case studies: `docs/readme/benchmarks.md`
 - Development notes: `docs/readme/development.md`
 - Tool workflow skills: `docs/skills/README.md`
@@ -61,6 +61,8 @@ Top-level docs index: `docs/README.md`
 - Cloud Run: `docs/deployment/deploy-cloud-run.md`
 - Kubernetes: `docs/deployment/deploy-k8s.md`
 - Helm chart: `docs/deployment/helm.md`
+- Tailscale / Headscale (beginner guide): `docs/deployment/tailscale-and-headscale-for-clawql.md` (website **`/tailscale`**)
+- Headscale runbook + ACL starter: `docs/deployment/headscale-tailnet.md`, `docs/deployment/headscale-acls-clawql.hujson`
 
 ### Security and supply chain
 

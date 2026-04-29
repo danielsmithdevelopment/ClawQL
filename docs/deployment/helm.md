@@ -2,6 +2,8 @@
 
 The repository ships a **Helm 3** chart that deploys the same workload as Kustomize (**`clawql-mcp-http`**): Streamable HTTP MCP (and optional gRPC) behind a Kubernetes **Service**. The chart can also deploy a UI workload and expose it through a host-based Ingress.
 
+**Optional Falco alerting:** a separate chart **[`charts/clawql-falco`](../../charts/clawql-falco)** ships **`PrometheusRule`** resources (**`ClawQLFalco*`** names) for upstream **`falcosecurity/falco`** metrics; install Falco first, then the rules chart — see **[`charts/clawql-falco/README.md`](../../charts/clawql-falco/README.md)** ([#209](https://github.com/danielsmithdevelopment/ClawQL/issues/209)).
+
 Use this when you prefer **`helm install` / `helm upgrade`** over **`kubectl apply -k`** (see also [`deploy-k8s.md`](deploy-k8s.md) for Kustomize).
 
 **Feature tiers** (Core vs default-on opt-out vs opt-in): **[`docs/readme/configuration.md` § Feature tiers](../readme/configuration.md#feature-tiers-architecture-diagram)**. **ClawQL Core** (`search`, `execute`, `audit`, `cache`) has **no** chart toggles. Keys **`enableMemory`** and **`enableDocuments`** inject **`CLAWQL_ENABLE_MEMORY=0`** or **`CLAWQL_ENABLE_DOCUMENTS=0`** when **`false`**. **`enableSandbox`** (default **`false`**) injects **`CLAWQL_ENABLE_SANDBOX=1`** when **`true`** (MCP **`sandbox_exec`**); configure bridge URL + token and/or **`CLAWQL_SANDBOX_BACKEND`** via **`extraEnv`** / Secret.
@@ -222,6 +224,15 @@ curl -s http://clawql.localhost/api/health
 
 Expected response includes **`{"status":"ok"}`**.
 
+## Optional Istio and observability (Docker Desktop)
+
+**Not part of the Helm chart:** when you set **`CLAWQL_LOCAL_K8S_ISTIO=ambient`** or **`sidecar`** for **`make local-k8s-up`**, a separate script installs **Istio**, optional **ingress gateway** manifests, and **sample addons** in **`istio-system`** (Prometheus, Kiali, Grafana, Jaeger, plus ClawQL’s **OpenTelemetry Collector** manifest). Use this for **local mesh mTLS** and a **full observability lab** on one machine.
+
+- **Beginner-oriented guide** (what each tool is, first session, port-forwards, OTLP env for MCP): **[`docker-desktop-istio-observability.md`](docker-desktop-istio-observability.md)**
+- **Env toggles and MCP URLs:** [`docker/README.md`](../../docker/README.md)
+- **OTLP from `clawql-mcp-http`:** set **`extraEnv`** (see commented example in **`charts/clawql-mcp/values-docker-desktop.yaml`**) for **`CLAWQL_ENABLE_OTEL_TRACING`** and **`OTEL_EXPORTER_OTLP_ENDPOINT`**.
+- **MCP `/metrics` in Istio’s Prometheus:** the chart defaults **`metrics.prometheusScrapeAnnotations.enabled: true`**, which annotates **`svc/clawql-mcp-http`** so **Istio sample addons** (job **`kubernetes-service-endpoints`**) scrape **`GET /metrics`** automatically. Set **`metrics.prometheusScrapeAnnotations.enabled: false`** to opt out. For **Prometheus Operator**, set **`metrics.serviceMonitor.enabled: true`** (requires **`monitoring.coreos.com/v1`** **ServiceMonitor** CRD) — see **[`charts/clawql-mcp/README.md`](../../charts/clawql-mcp/README.md)** ([#210](https://github.com/danielsmithdevelopment/ClawQL/issues/210)).
+
 ## Values
 
 See **[`charts/clawql-mcp/values.yaml`](../charts/clawql-mcp/values.yaml)**. Common keys:
@@ -248,6 +259,8 @@ See **[`charts/clawql-mcp/values.yaml`](../charts/clawql-mcp/values.yaml)**. Com
 | `vault.hostPath`                                    | Host directory bind for **`/vault`** (Docker Desktop; mutually exclusive with **`persistence`**)                                                                                                                                                                                                                                                                                                                      |
 | `ingress`                                           | Optional HTTP(S) Ingress                                                                                                                                                                                                                                                                                                                                                                                              |
 | `ui`                                                | Optional UI Deployment/Service/Ingress (defaults for Docker Desktop use `clawql.localhost`)                                                                                                                                                                                                                                                                                                                           |
+| `metrics.prometheusScrapeAnnotations`               | When **`enabled: true`** (default), adds **`prometheus.io/*`** on the MCP **Service** for Prometheus stacks that honor Service annotations (including **Istio** sample Prometheus). Set **`path`** / **`port`** if your HTTP listen port differs from **`service.http.targetPort`**.                                                                                                                                  |
+| `metrics.serviceMonitor`                            | When **`enabled: true`**, renders a **`ServiceMonitor`** (**`monitoring.coreos.com/v1`**) scraping **`/metrics`** on **`port: http`**. Default **`false`**. Optional **`namespace`**, **`labels`**, **`interval`**, **`scrapeTimeout`**.                                                                                                                                                                              |
 
 **Docker Desktop:** **`make local-k8s-up`** installs **Kyverno**, then **`helm upgrade --install`** with **`values-docker-desktop.yaml`** (LoadBalancer **8080**, **`all-providers`**, **`vault.hostPath.path`** = **`$HOME/.ClawQL`**, UI Ingress **`clawql.localhost`**, signed **`ghcr.io/.../clawql-mcp`** and **`clawql-website`**, **`kyverno.imageSignaturePolicy`** enabled with **`matchReleaseNamespaceOnly: true`**). **ingress-nginx** installs unless **`CLAWQL_LOCAL_K8S_INSTALL_INGRESS_NGINX=0`**. **Kustomize** for the MCP manifest: **`CLAWQL_LOCAL_K8S_INSTALLER=kustomize`** — Helm is still required for Kyverno and for templating the **ClusterPolicy**. Unsigned local image build env vars are **not** supported (script exits).
 

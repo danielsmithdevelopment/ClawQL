@@ -53,7 +53,7 @@ For development you can run `tsx` against `src/server.ts` instead; ensure the re
 
 ## Streamable HTTP
 
-For `clawql-mcp-http`, Docker, Kubernetes, or Cloud Run, configure your client with a **`url`** (not `command`). Copy [`.cursor/mcp.json.example`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/.cursor/mcp.json.example) to **`.cursor/mcp.json`** and set the base URL your deployment exposes. See [Deployment](/deployment). GraphQL debugging is available at **`/graphql`** on the same origin.
+For `clawql-mcp-http`, Docker, Kubernetes, or Cloud Run, configure your client with a **`url`** (not `command`). Copy [`.cursor/mcp.json.example`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/.cursor/mcp.json.example) to **`.cursor/mcp.json`** and set the base URL your deployment exposes. See [Deployment](/deployment). For **managed Tailscale** or **Headscale** MagicDNS, **`CLAWQL_MCP_URL`**, and **`${env:…}`** in **`mcp.json`**, see [Tailscale & Headscale](/tailscale). GraphQL debugging is available at **`/graphql`** on the same origin.
 
 <Note>
   **`search`** and **`execute`** run in one process. **`clawql-mcp-http`**

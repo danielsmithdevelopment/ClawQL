@@ -73,6 +73,34 @@ const resources: Array<Resource> = [
     },
   },
   {
+    href: '/docker-desktop-observability',
+    name: 'Istio & observability',
+    description:
+      'Docker Desktop: Prometheus, Grafana, Jaeger, Kiali, OTel Collector—what each tool is and first steps if you are new to them.',
+    icon: BookIcon,
+    pattern: {
+      y: 8,
+      squares: [
+        [0, 2],
+        [2, 0],
+      ],
+    },
+  },
+  {
+    href: '/tailscale',
+    name: 'Tailscale & Headscale',
+    description:
+      'Beginner guide: private tailnets for MCP and execute—MagicDNS, Serve, CLAWQL_MCP_URL, Headscale, ACLs, Kubernetes vs mesh DNS.',
+    icon: MapPinIcon,
+    pattern: {
+      y: 4,
+      squares: [
+        [1, 1],
+        [2, 0],
+      ],
+    },
+  },
+  {
     href: '/flink-onyx-sync',
     name: 'Flink Onyx sync',
     description:

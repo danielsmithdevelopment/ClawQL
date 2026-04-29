@@ -250,9 +250,14 @@ describe("optional tool handlers (MCP content shape)", () => {
       });
       expect(out.content).toHaveLength(1);
       expect(out.content[0].type).toBe("text");
-      const parsed = JSON.parse(out.content[0].text) as { success: boolean; stdout: string };
+      const parsed = JSON.parse(out.content[0].text) as {
+        success: boolean;
+        stdout: string;
+        backend?: string;
+      };
       expect(parsed.success).toBe(true);
       expect(parsed.stdout).toBe("hi\n");
+      expect(parsed.backend).toBe("bridge");
     });
 
     it("returns JSON error when bridge URL is not configured", async () => {

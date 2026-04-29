@@ -1,0 +1,6 @@
+apiVersion: v2
+name: clawql-falco
+description: PrometheusRule alerts for Falco metrics (ClawQL sandbox / runtime); pairs with upstream falcosecurity/falco install
+type: application
+version: 0.1.0
+appVersion: "0.43.1"
