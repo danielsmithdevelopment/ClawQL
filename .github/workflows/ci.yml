@@ -36,7 +36,7 @@ jobs:
           cache: npm
 
       # actions/cache@v4.2.3
-      - uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684
+      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae
         with:
           path: .eslintcache
           key: eslint-${{ runner.os }}-${{ hashFiles('eslint.config.js', 'package-lock.json') }}
@@ -44,7 +44,7 @@ jobs:
             eslint-${{ runner.os }}-
 
       # actions/cache@v4.2.3
-      - uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684
+      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae
         with:
           path: .prettier-cache
           key: prettier-${{ runner.os }}-${{ hashFiles('.prettierrc.json', 'package-lock.json') }}
@@ -98,7 +98,7 @@ jobs:
           node-version: "25"
           cache: npm
 
-      - uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684
+      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae
         with:
           path: .prettier-cache
           key: prettier-${{ runner.os }}-${{ hashFiles('.prettierrc.json', 'package-lock.json') }}
