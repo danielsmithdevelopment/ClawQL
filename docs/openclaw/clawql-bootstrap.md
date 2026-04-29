@@ -16,10 +16,10 @@ This runbook supports **[#226](https://github.com/danielsmithdevelopment/ClawQL/
 
 Follow **your OpenClaw version’s** MCP docs for `mcp set` / UI equivalent. The ClawQL side mirrors **[`docs/readme/deployment.md`](../readme/deployment.md)**:
 
-| Mode | What you register |
-|------|-------------------|
+| Mode      | What you register                                                                                                                                                                           |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Stdio** | Command: `npx` (or `node` to `dist/server.js` after `npm run build`), args: `-y`, `clawql-mcp` — plus env vars below. Working directory: optional; use repo root if developing from source. |
-| **HTTP** | URL ending in **`/mcp`** (e.g. `http://localhost:8080/mcp`). Run **`npm run start:http`** or your Helm/K8s Service URL. |
+| **HTTP**  | URL ending in **`/mcp`** (e.g. `http://localhost:8080/mcp`). Run **`npm run start:http`** or your Helm/K8s Service URL.                                                                     |
 
 Cursor template: **`.cursor/mcp.json.example`** at repo root.
 
@@ -41,15 +41,15 @@ openclaw mcp set clawql-url --url 'http://localhost:8080/mcp'
 
 Unset typically means **on** for memory and documents; see **[`docs/readme/configuration.md`](../readme/configuration.md)**.
 
-| Goal | Variables (examples) |
-|------|----------------------|
-| Core **`search` / `execute`** | Default; optional **`CLAWQL_PROVIDER=all-providers`** |
-| Document pipeline tools (**`ingest_external_knowledge`**, bundled Tika/Gotenberg/Stirling/Paperless in index) | **`CLAWQL_ENABLE_DOCUMENTS=1`** (default). To hide: **`CLAWQL_ENABLE_DOCUMENTS=0`**. |
-| Onyx **`knowledge_search_onyx`** | **`CLAWQL_ENABLE_ONYX=1`** and documents still enabled; set **`ONYX_BASE_URL`** + auth per **[`docs/onyx-knowledge-tool.md`](../onyx-knowledge-tool.md)** |
-| Ouroboros **`ouroboros_*`** | **`CLAWQL_ENABLE_OUROBOROS=1`** |
-| Vault memory **`memory_*`** | Writable **`CLAWQL_OBSIDIAN_VAULT_PATH`** for real I/O |
-| External ingest (non-stub imports) | **`CLAWQL_EXTERNAL_INGEST=1`**; optional **`CLAWQL_EXTERNAL_INGEST_FETCH=1`** for URL fetch |
-| Privacy filter (deployment-specific) | If **your** stack defines **`CLAWQL_ENABLE_PRIVACY_FILTER=1`** (or equivalent), document it **beside** ClawQL — not in core **`.env.example`** today. |
+| Goal                                                                                                          | Variables (examples)                                                                                                                                      |
+| ------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Core **`search` / `execute`**                                                                                 | Default; optional **`CLAWQL_PROVIDER=all-providers`**                                                                                                     |
+| Document pipeline tools (**`ingest_external_knowledge`**, bundled Tika/Gotenberg/Stirling/Paperless in index) | **`CLAWQL_ENABLE_DOCUMENTS=1`** (default). To hide: **`CLAWQL_ENABLE_DOCUMENTS=0`**.                                                                      |
+| Onyx **`knowledge_search_onyx`**                                                                              | **`CLAWQL_ENABLE_ONYX=1`** and documents still enabled; set **`ONYX_BASE_URL`** + auth per **[`docs/onyx-knowledge-tool.md`](../onyx-knowledge-tool.md)** |
+| Ouroboros **`ouroboros_*`**                                                                                   | **`CLAWQL_ENABLE_OUROBOROS=1`**                                                                                                                           |
+| Vault memory **`memory_*`**                                                                                   | Writable **`CLAWQL_OBSIDIAN_VAULT_PATH`** for real I/O                                                                                                    |
+| External ingest (non-stub imports)                                                                            | **`CLAWQL_EXTERNAL_INGEST=1`**; optional **`CLAWQL_EXTERNAL_INGEST_FETCH=1`** for URL fetch                                                               |
+| Privacy filter (deployment-specific)                                                                          | If **your** stack defines **`CLAWQL_ENABLE_PRIVACY_FILTER=1`** (or equivalent), document it **beside** ClawQL — not in core **`.env.example`** today.     |
 
 **Privacy / redaction:** Enterprise deployments may inject redaction or policy in front of the document stack (Helm values, sidecars). There is **no single** core-repo **`CLAWQL_ENABLE_*`** toggle for all “privacy filter” stories; validate against **your** chart and **[`docs/enterprise-mcp-tools.md`](../enterprise-mcp-tools.md#regulated-deployments)** for regulated environments.
 
@@ -81,21 +81,21 @@ CLAWQL_OPENCLAW_BOOTSTRAP_TOOLS_ONLY=1 npm run smoke:openclaw-bootstrap
 
 Use this when validating through the OpenClaw UI (mirrors what the script proves against stdio).
 
-| Step | Action | Pass |
-|------|--------|------|
-| 1 | In OpenClaw, send a prompt that triggers **`search`** for a GitHub operation (e.g. list commits) and then **`execute`** with lean **`fields`**. | JSON result; no MCP transport error. |
-| 2 | **Document path:** call **`ingest_external_knowledge`** per **[`docs/external-ingest.md`](../external-ingest.md)** (vault path + **`CLAWQL_EXTERNAL_INGEST=1`** as needed). | Success payload or documented preview when dry-run. |
-| 3 | **Privacy:** confirm your deployment’s redaction/policy behavior (if any) on a sample doc — align with ops runbooks. | Matches expected policy. |
-| 4 | **Transform (optional):** **`execute`** a Stirling/Gotenberg **`operationId`** only when those bases are up. | PDF/transform response as expected. |
+| Step | Action                                                                                                                                                                      | Pass                                                |
+| ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| 1    | In OpenClaw, send a prompt that triggers **`search`** for a GitHub operation (e.g. list commits) and then **`execute`** with lean **`fields`**.                             | JSON result; no MCP transport error.                |
+| 2    | **Document path:** call **`ingest_external_knowledge`** per **[`docs/external-ingest.md`](../external-ingest.md)** (vault path + **`CLAWQL_EXTERNAL_INGEST=1`** as needed). | Success payload or documented preview when dry-run. |
+| 3    | **Privacy:** confirm your deployment’s redaction/policy behavior (if any) on a sample doc — align with ops runbooks.                                                        | Matches expected policy.                            |
+| 4    | **Transform (optional):** **`execute`** a Stirling/Gotenberg **`operationId`** only when those bases are up.                                                                | PDF/transform response as expected.                 |
 
 ## Troubleshooting
 
-| Symptom | Check |
-|---------|--------|
-| OpenClaw cannot connect to MCP | Stdio: command on `PATH`, **`npx`** can resolve **`clawql-mcp`**. HTTP: firewall, **`PORT`**, URL includes **`/mcp`**. |
-| **`listTools`** missing document tools | **`CLAWQL_ENABLE_DOCUMENTS=0`** not set; rebuild/restart server. |
-| **`execute`** 401 from GitHub | **`CLAWQL_BEARER_TOKEN`** / **`gh auth token`** for private repos. |
-| gRPC native protocols | **[`ENABLE_GRPC=1`](../readme/deployment.md#optional-grpc-transport)** — separate from OpenClaw MCP bridge over HTTP/stdio. |
+| Symptom                                | Check                                                                                                                       |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| OpenClaw cannot connect to MCP         | Stdio: command on `PATH`, **`npx`** can resolve **`clawql-mcp`**. HTTP: firewall, **`PORT`**, URL includes **`/mcp`**.      |
+| **`listTools`** missing document tools | **`CLAWQL_ENABLE_DOCUMENTS=0`** not set; rebuild/restart server.                                                            |
+| **`execute`** 401 from GitHub          | **`CLAWQL_BEARER_TOKEN`** / **`gh auth token`** for private repos.                                                          |
+| gRPC native protocols                  | **[`ENABLE_GRPC=1`](../readme/deployment.md#optional-grpc-transport)** — separate from OpenClaw MCP bridge over HTTP/stdio. |
 
 ## Related issues
 

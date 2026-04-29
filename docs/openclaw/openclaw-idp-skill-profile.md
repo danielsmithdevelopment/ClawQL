@@ -4,12 +4,12 @@ This is the **canonical** operator + agent contract for **OpenClaw-triggered int
 
 ## Profile summary
 
-| Field | Value |
-|-------|--------|
-| **Profile id** | `clawql-openclaw-idp` |
-| **MCP server** | `clawql-mcp` (stdio or Streamable HTTP `…/mcp`) |
-| **Default provider merge** | `all-providers` (or explicit **`CLAWQL_BUNDLED_PROVIDERS`** listing document vendors) |
-| **Primary tools** | **`search`** → **`execute`** on bundled REST/OpenAPI providers; **`ingest_external_knowledge`**; optional **`knowledge_search_onyx`**; vault **`memory_ingest`** / **`memory_recall`** |
+| Field                      | Value                                                                                                                                                                                  |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Profile id**             | `clawql-openclaw-idp`                                                                                                                                                                  |
+| **MCP server**             | `clawql-mcp` (stdio or Streamable HTTP `…/mcp`)                                                                                                                                        |
+| **Default provider merge** | `all-providers` (or explicit **`CLAWQL_BUNDLED_PROVIDERS`** listing document vendors)                                                                                                  |
+| **Primary tools**          | **`search`** → **`execute`** on bundled REST/OpenAPI providers; **`ingest_external_knowledge`**; optional **`knowledge_search_onyx`**; vault **`memory_ingest`** / **`memory_recall`** |
 
 Agents should **always** prefer **`search`** with a tight natural-language **`query`**, then **`execute`** with **`operationId`** + minimal **`fields`**. First-class wrappers (**`knowledge_search_onyx`**, **`ingest_external_knowledge`**) exist where documented — use them instead of re-discovering the same paths via raw **`execute`** when the workflow matches.
 
@@ -17,18 +17,18 @@ Agents should **always** prefer **`search`** with a tight natural-language **`qu
 
 Legend: **Ready** = shipped in this repo with bundled or refreshed OpenAPI; **Partial** = env-dependent or roadmap; **Not MCP** = outside MCP tool surface today.
 
-| Layer | Mechanism | Required env / base URLs | Status | Notes |
-|-------|-----------|---------------------------|--------|--------|
-| **Extract / parse** | **`execute`** on **`tika`** spec (`TIKA_BASE_URL`) | **`TIKA_BASE_URL`** | Ready | Discover ops with **`search`** (e.g. Tika put/post resources). |
-| **HTML → PDF / renders** | **`execute`** on **`gotenberg`** | **`GOTENBERG_BASE_URL`** | Ready | Chromium/Chromium routes per bundled spec. |
-| **PDF transforms / sign** | **`execute`** on **`stirling`** | **`STIRLING_BASE_URL`**, optional **`STIRLING_API_KEY`** | Ready | Minimal bundled spec; refresh from live `/v3/api-docs` when possible ([#125](https://github.com/danielsmithdevelopment/ClawQL/issues/125)). |
-| **Archive / metadata** | **`execute`** on **`paperless`** | **`PAPERLESS_BASE_URL`**, **`PAPERLESS_API_TOKEN`** | Ready | See **[`docs/providers/paperless-onboarding.md`](../providers/paperless-onboarding.md)**. |
-| **Enterprise search** | **`knowledge_search_onyx`** or **`execute`** on **`onyx`** | **`CLAWQL_ENABLE_ONYX=1`**, **`ONYX_BASE_URL`**, token | Ready | Wrapper vs raw **`execute`**: **[`docs/onyx-knowledge-tool.md`](../onyx-knowledge-tool.md)** ([#118](https://github.com/danielsmithdevelopment/ClawQL/issues/118)). |
-| **Post-Paperless → Onyx index** | **`execute`** (Onyx ingestion API) | Same as Onyx | Partial | Tracked as product glue ([#120](https://github.com/danielsmithdevelopment/ClawQL/issues/120)). |
-| **Bulk ingest + vault** | **`ingest_external_knowledge`** | **`CLAWQL_EXTERNAL_INGEST=1`**, vault path, optional fetch | Ready | **[`docs/external-ingest.md`](../external-ingest.md)**. |
-| **Privacy / redaction** | Policy **outside** a single MCP flag | Helm / sidecar / gateway | Partial | No **`CLAWQL_ENABLE_PRIVACY_FILTER`** in core **`.env.example`** — align with **[`docs/enterprise-mcp-tools.md`](../enterprise-mcp-tools.md#regulated-deployments)** and your deployment’s controls. |
-| **Structured workflows** | **`ouroboros_*`** MCP tools | **`CLAWQL_ENABLE_OUROBOROS=1`** | Ready | **[`docs/clawql-ouroboros.md`](../clawql-ouroboros.md)** — optional overlay on linear IDP chains. |
-| **LangExtract / Docling** | N/A in MCP catalog | — | Not MCP | Use **`execute`** only if you merge a **custom OpenAPI** for those services; not bundled as first-class providers today. |
+| Layer                           | Mechanism                                                  | Required env / base URLs                                   | Status  | Notes                                                                                                                                                                                                |
+| ------------------------------- | ---------------------------------------------------------- | ---------------------------------------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Extract / parse**             | **`execute`** on **`tika`** spec (`TIKA_BASE_URL`)         | **`TIKA_BASE_URL`**                                        | Ready   | Discover ops with **`search`** (e.g. Tika put/post resources).                                                                                                                                       |
+| **HTML → PDF / renders**        | **`execute`** on **`gotenberg`**                           | **`GOTENBERG_BASE_URL`**                                   | Ready   | Chromium/Chromium routes per bundled spec.                                                                                                                                                           |
+| **PDF transforms / sign**       | **`execute`** on **`stirling`**                            | **`STIRLING_BASE_URL`**, optional **`STIRLING_API_KEY`**   | Ready   | Minimal bundled spec; refresh from live `/v3/api-docs` when possible ([#125](https://github.com/danielsmithdevelopment/ClawQL/issues/125)).                                                          |
+| **Archive / metadata**          | **`execute`** on **`paperless`**                           | **`PAPERLESS_BASE_URL`**, **`PAPERLESS_API_TOKEN`**        | Ready   | See **[`docs/providers/paperless-onboarding.md`](../providers/paperless-onboarding.md)**.                                                                                                            |
+| **Enterprise search**           | **`knowledge_search_onyx`** or **`execute`** on **`onyx`** | **`CLAWQL_ENABLE_ONYX=1`**, **`ONYX_BASE_URL`**, token     | Ready   | Wrapper vs raw **`execute`**: **[`docs/onyx-knowledge-tool.md`](../onyx-knowledge-tool.md)** ([#118](https://github.com/danielsmithdevelopment/ClawQL/issues/118)).                                  |
+| **Post-Paperless → Onyx index** | **`execute`** (Onyx ingestion API)                         | Same as Onyx                                               | Partial | Tracked as product glue ([#120](https://github.com/danielsmithdevelopment/ClawQL/issues/120)).                                                                                                       |
+| **Bulk ingest + vault**         | **`ingest_external_knowledge`**                            | **`CLAWQL_EXTERNAL_INGEST=1`**, vault path, optional fetch | Ready   | **[`docs/external-ingest.md`](../external-ingest.md)**.                                                                                                                                              |
+| **Privacy / redaction**         | Policy **outside** a single MCP flag                       | Helm / sidecar / gateway                                   | Partial | No **`CLAWQL_ENABLE_PRIVACY_FILTER`** in core **`.env.example`** — align with **[`docs/enterprise-mcp-tools.md`](../enterprise-mcp-tools.md#regulated-deployments)** and your deployment’s controls. |
+| **Structured workflows**        | **`ouroboros_*`** MCP tools                                | **`CLAWQL_ENABLE_OUROBOROS=1`**                            | Ready   | **[`docs/clawql-ouroboros.md`](../clawql-ouroboros.md)** — optional overlay on linear IDP chains.                                                                                                    |
+| **LangExtract / Docling**       | N/A in MCP catalog                                         | —                                                          | Not MCP | Use **`execute`** only if you merge a **custom OpenAPI** for those services; not bundled as first-class providers today.                                                                             |
 
 ## Reference workflow contract (chat-shaped)
 
@@ -45,11 +45,11 @@ Pair durable operator trails with **`memory_ingest`** / **`memory_recall`** when
 
 ## Missing / follow-up (explicit)
 
-| Gap | Track |
-|-----|--------|
+| Gap                                                   | Track                                                               |
+| ----------------------------------------------------- | ------------------------------------------------------------------- |
 | Pregenerated introspection for all document providers | [#125](https://github.com/danielsmithdevelopment/ClawQL/issues/125) |
-| Post-Paperless push to Onyx automation | [#120](https://github.com/danielsmithdevelopment/ClawQL/issues/120) |
-| Bundled LangExtract / Docling as providers | Not filed as default — merge custom specs if needed |
+| Post-Paperless push to Onyx automation                | [#120](https://github.com/danielsmithdevelopment/ClawQL/issues/120) |
+| Bundled LangExtract / Docling as providers            | Not filed as default — merge custom specs if needed                 |
 
 ## Where operators start
 

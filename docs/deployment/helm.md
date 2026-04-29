@@ -185,12 +185,12 @@ Issue [#127](https://github.com/danielsmithdevelopment/ClawQL/issues/127) tracks
 
 Helm deploys **only** the NATS server. **JetStream streams and consumers** are created by workers (Ouroboros, agents, edge jobs), not by chart templates — standardize **subject roots** early:
 
-| Root | Use |
-|------|-----|
+| Root                | Use                                                                                                                            |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | `clawql.workflow.>` | Ouroboros phases, workflow checkpoints, structured loops ([#110](https://github.com/danielsmithdevelopment/ClawQL/issues/110)) |
-| `clawql.agent.>` | Agent coordination, LangGraph-related handoff ([ClawQL-Agent](https://github.com/danielsmithdevelopment/ClawQL-Agent)) |
-| `clawql.document.>` | Document pipeline hops (Tika → Gotenberg → Stirling → Paperless), provenance |
-| `clawql.edge.>` | Edge worker join/leave/status ([#129](https://github.com/danielsmithdevelopment/ClawQL/issues/129)) |
+| `clawql.agent.>`    | Agent coordination, LangGraph-related handoff ([ClawQL-Agent](https://github.com/danielsmithdevelopment/ClawQL-Agent))         |
+| `clawql.document.>` | Document pipeline hops (Tika → Gotenberg → Stirling → Paperless), provenance                                                   |
+| `clawql.edge.>`     | Edge worker join/leave/status ([#129](https://github.com/danielsmithdevelopment/ClawQL/issues/129))                            |
 
 Defaults live in chart **`values.yaml`** as **`nats.subjectConvention`** (`workflow` / `agent` / `document` / `edge` keys) for operators and downstream charts.
 
