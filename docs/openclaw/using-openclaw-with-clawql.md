@@ -13,12 +13,12 @@ This guide describes **end-to-end** how to run **OpenClaw** (the **CLI / gateway
 
 ## 1. Concepts
 
-| Term | What it is |
-| ---- | ---------- |
-| **ClawQL** | **MCP server** in this repo: **`search`**, **`execute`**, **`audit`**, **`cache`**, vault **`memory_*`**, Documents, optional tools — exposed over **stdio** or **Streamable HTTP** (`…/mcp`). |
-| **OpenClaw** | **Separate product** — npm package **`openclaw`** ([registry](https://www.npmjs.com/package/openclaw)): multi-channel AI gateway, **`openclaw mcp`** commands, agents, TUI, etc. Not built from this repo. |
-| **`clawql-mcp`** (npm) | The **ClawQL** package/binary (`clawql-mcp` stdio, `clawql-mcp-http` HTTP). |
-| **`openclaw-mcp`** (npm) | **Different package** — MCP server that bridges **other hosts** (e.g. Claude Desktop) **to** an OpenClaw **gateway**. Use **`clawql-mcp`** when you want APIs via ClawQL; do not confuse the two names. |
+| Term                     | What it is                                                                                                                                                                                                 |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **ClawQL**               | **MCP server** in this repo: **`search`**, **`execute`**, **`audit`**, **`cache`**, vault **`memory_*`**, Documents, optional tools — exposed over **stdio** or **Streamable HTTP** (`…/mcp`).             |
+| **OpenClaw**             | **Separate product** — npm package **`openclaw`** ([registry](https://www.npmjs.com/package/openclaw)): multi-channel AI gateway, **`openclaw mcp`** commands, agents, TUI, etc. Not built from this repo. |
+| **`clawql-mcp`** (npm)   | The **ClawQL** package/binary (`clawql-mcp` stdio, `clawql-mcp-http` HTTP).                                                                                                                                |
+| **`openclaw-mcp`** (npm) | **Different package** — MCP server that bridges **other hosts** (e.g. Claude Desktop) **to** an OpenClaw **gateway**. Use **`clawql-mcp`** when you want APIs via ClawQL; do not confuse the two names.    |
 
 OpenClaw **consumes** MCP servers you configure (including ClawQL). You do **not** need the **`openclaw-mcp`** npm package to register **ClawQL** in OpenClaw.
 
@@ -157,7 +157,7 @@ npm run smoke:openclaw-bootstrap
 
 ## 7. Validate through OpenClaw
 
-Use the **manual checklist** in **`clawql-bootstrap.md`** (section *Manual checklist (OpenClaw → ClawQL)*). Minimal meaningful test:
+Use the **manual checklist** in **`clawql-bootstrap.md`** (section _Manual checklist (OpenClaw → ClawQL)_). Minimal meaningful test:
 
 1. Ensure ClawQL HTTP is up (or stdio server reachable).
 2. Confirm **`openclaw mcp show clawql`** matches what you expect.
@@ -188,23 +188,23 @@ ClawQL exposes **`GET /metrics`** on **`clawql-mcp-http`**. Grafana import and P
 
 ## 11. Troubleshooting
 
-| Symptom | What to check |
-| ------- | ------------- |
-| **`openclaw: command not found`** | **`npm install -g openclaw`**; ensure global npm **`bin`** is on **`PATH`**. |
-| **Connection refused** to HTTP MCP | ClawQL process running; **`PORT`**; firewall. |
-| **404 / wrong path** | URL must end with **`/mcp`** (Streamable HTTP). |
-| **Tools missing** | **`CLAWQL_ENABLE_*`** hides optional tools; rebuild/restart ClawQL. |
-| **GitHub 401 on execute** | **`CLAWQL_BEARER_TOKEN`** / **`gh auth token`**. |
+| Symptom                                         | What to check                                                                                                                                   |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`openclaw: command not found`**               | **`npm install -g openclaw`**; ensure global npm **`bin`** is on **`PATH`**.                                                                    |
+| **Connection refused** to HTTP MCP              | ClawQL process running; **`PORT`**; firewall.                                                                                                   |
+| **404 / wrong path**                            | URL must end with **`/mcp`** (Streamable HTTP).                                                                                                 |
+| **Tools missing**                               | **`CLAWQL_ENABLE_*`** hides optional tools; rebuild/restart ClawQL.                                                                             |
+| **GitHub 401 on execute**                       | **`CLAWQL_BEARER_TOKEN`** / **`gh auth token`**.                                                                                                |
 | **`listTools` OK in smoke but not in OpenClaw** | OpenClaw config not loaded for that profile; try **`openclaw mcp list`**; check **`--profile`** / **`OPENCLAW_CONFIG_PATH`** per OpenClaw docs. |
 
 ---
 
 ## 12. Related documentation
 
-| Doc | Topic |
-| --- | ----- |
-| [`clawql-bootstrap.md`](clawql-bootstrap.md) | Smoke script, condensed checklist |
-| [`openclaw-idp-skill-profile.md`](openclaw-idp-skill-profile.md) | IDP provider matrix |
-| [`docs/mcp-tools.md`](../mcp-tools.md) | MCP tool catalog |
-| [`docs/readme/configuration.md`](../readme/configuration.md) | **`CLAWQL_*`** reference |
-| [`docs/readme/deployment.md`](../readme/deployment.md) | HTTP / gRPC deployment |
+| Doc                                                              | Topic                             |
+| ---------------------------------------------------------------- | --------------------------------- |
+| [`clawql-bootstrap.md`](clawql-bootstrap.md)                     | Smoke script, condensed checklist |
+| [`openclaw-idp-skill-profile.md`](openclaw-idp-skill-profile.md) | IDP provider matrix               |
+| [`docs/mcp-tools.md`](../mcp-tools.md)                           | MCP tool catalog                  |
+| [`docs/readme/configuration.md`](../readme/configuration.md)     | **`CLAWQL_*`** reference          |
+| [`docs/readme/deployment.md`](../readme/deployment.md)           | HTTP / gRPC deployment            |
