@@ -1,5 +1,7 @@
 # OpenClaw + ClawQL MCP — bootstrap and smoke tests
 
+**Full guide (install OpenClaw, HTTP vs stdio, `openclaw mcp set`, remote access, troubleshooting):** **[`using-openclaw-with-clawql.md`](using-openclaw-with-clawql.md)** — website **`/openclaw`**.
+
 This runbook supports **[#226](https://github.com/danielsmithdevelopment/ClawQL/issues/226)** (Phase 0 wiring). OpenClaw itself is **not** built in this repo; track the umbrella narrative in **[#128](https://github.com/danielsmithdevelopment/ClawQL/issues/128)**.
 
 **After this path is green:** comment on **[#128](https://github.com/danielsmithdevelopment/ClawQL/issues/128)** with a pointer here + PR link so Phase 0 stays traceable.
@@ -12,6 +14,52 @@ This runbook supports **[#226](https://github.com/danielsmithdevelopment/ClawQL/
 2. OpenClaw (or any MCP client) registers that server using the **same** command/URL shape as Cursor’s `mcp.json`.
 3. You complete the **smoke checklist** below (or run the repo script) with clear pass/fail.
 
+## Hands-on sequence (ClawQL repo → OpenClaw)
+
+Use this when you want OpenClaw to call ClawQL for the first time. OpenClaw itself is installed and updated **outside** this repo.
+
+### 1. Prove ClawQL in this repo
+
+```bash
+cd /path/to/ClawQL
+npm ci   # or npm install
+npm run build
+CLAWQL_OPENCLAW_BOOTSTRAP_TOOLS_ONLY=1 npm run smoke:openclaw-bootstrap
+```
+
+You should see **`OK (tools-only)`** at the end. That uses the same **stdio** MCP wiring OpenClaw would use for a **local** server (`dist/server.js` + MCP SDK transport).
+
+**Optional — full `search` → `execute` (GitHub list commits):** needs **network** access and **`gh auth login`** or **`CLAWQL_BEARER_TOKEN`** / **`GITHUB_TOKEN`** for the live GitHub API:
+
+```bash
+npm run smoke:openclaw-bootstrap
+```
+
+### 2. Start Streamable HTTP (often easiest for OpenClaw)
+
+After **`npm run build`**, in a **dedicated terminal** leave this running:
+
+```bash
+PORT=8080 npm run start:http
+```
+
+- Health: **`GET http://127.0.0.1:8080/healthz`**
+- MCP endpoint for OpenClaw: **`http://127.0.0.1:8080/mcp`** (path must be **`/mcp`**)
+
+Published package equivalent: **`npx -p clawql-mcp clawql-mcp-http`** with the same **`PORT`** (see **[`docs/readme/deployment.md`](../readme/deployment.md)**).
+
+### 3. Register that URL in OpenClaw
+
+In OpenClaw’s MCP settings (or CLI — syntax varies by release), add a server whose **base URL** is **`http://localhost:8080/mcp`** or **`http://127.0.0.1:8080/mcp`**. Match **[Register ClawQL in OpenClaw](#register-clawql-in-openclaw)** below.
+
+### 4. Try one prompt in OpenClaw
+
+Ask for a flow that uses **`search`** then **`execute`** (for example GitHub commits), aligned with the **[manual checklist](#manual-checklist-openclaw--clawql)** row 1. If tools fail, confirm the HTTP server from step 2 is still running and the URL includes **`/mcp`**.
+
+### Stdio instead of HTTP
+
+Point OpenClaw at **`npx -y clawql-mcp`** (or **`node /path/to/ClawQL/dist/server.js`** after build), with optional env from **`~/.config/clawql/idp.env`** or your shell — same idea as the illustrative **`openclaw mcp set`** block below.
+
 ## Register ClawQL in OpenClaw
 
 Follow **your OpenClaw version’s** MCP docs for `mcp set` / UI equivalent. The ClawQL side mirrors **[`docs/readme/deployment.md`](../readme/deployment.md)**:
@@ -23,17 +71,21 @@ Follow **your OpenClaw version’s** MCP docs for `mcp set` / UI equivalent. The
 
 Cursor template: **`.cursor/mcp.json.example`** at repo root.
 
-**OpenClaw CLI-shaped registration (illustrative — align with your OpenClaw version):**
+**Install OpenClaw CLI** (Node **20+**): **`npm install -g openclaw`**. Verify: **`openclaw --version`**. Docs use **`openclaw mcp`** — run **`openclaw mcp --help`** / **`openclaw mcp set --help`** for your installed version.
+
+**Register ClawQL** — OpenClaw **2026.x** expects **`openclaw mcp set <name> '<json>'`** (not shell-wrapped commands):
 
 ```bash
-# Stdio from published package (adjust env file path)
-openclaw mcp set clawql -- \
-  env -i HOME="$HOME" PATH="$PATH" \
-  bash -lc 'set -a; [ -f ~/.config/clawql/idp.env ] && . ~/.config/clawql/idp.env; exec npx -y clawql-mcp'
+# Streamable HTTP — ClawQL listening on PORT (e.g. start:http → http://127.0.0.1:8080/mcp)
+openclaw mcp set clawql '{"url":"http://127.0.0.1:8080/mcp"}'
 
-# HTTP MCP already listening on port 8080
-openclaw mcp set clawql-url --url 'http://localhost:8080/mcp'
+# Stdio — published package (same as Cursor-style npx clawql-mcp)
+openclaw mcp set clawql '{"command":"npx","args":["-y","clawql-mcp"]}'
 ```
+
+Add **`env`** keys inside the JSON if you need **`CLAWQL_*`** variables (same shape as Cursor **`mcp.json`**). **`openclaw mcp list`** / **`openclaw mcp show clawql`** to confirm; **`openclaw mcp unset clawql`** to remove.
+
+**Note:** **`openclaw-mcp`** on npm is a **different** package (MCP bridge toward an OpenClaw gateway for hosts like Claude Desktop). For **`openclaw mcp set`** pointing at ClawQL, use **`clawql-mcp`** / **`node …/dist/server.js`** / **`url`** as above — see **`npm view openclaw-mcp`** vs **`npm view clawql-mcp`**.
 
 **Private tailnets:** use MagicDNS or Tailscale Serve HTTPS URLs for **`/mcp`**, aligned with **`docs/deployment/tailscale-and-headscale-for-clawql.md`**.
 
@@ -82,12 +134,21 @@ CLAWQL_OPENCLAW_BOOTSTRAP_TOOLS_ONLY=1 npm run smoke:openclaw-bootstrap
 
 Use this when validating through the OpenClaw UI (mirrors what the script proves against stdio).
 
-| Step | Action                                                                                                                                                                      | Pass                                                |
-| ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
-| 1    | In OpenClaw, send a prompt that triggers **`search`** for a GitHub operation (e.g. list commits) and then **`execute`** with lean **`fields`**.                             | JSON result; no MCP transport error.                |
-| 2    | **Document path:** call **`ingest_external_knowledge`** per **[`docs/external-ingest.md`](../external-ingest.md)** (vault path + **`CLAWQL_EXTERNAL_INGEST=1`** as needed). | Success payload or documented preview when dry-run. |
-| 3    | **Privacy:** confirm your deployment’s redaction/policy behavior (if any) on a sample doc — align with ops runbooks.                                                        | Matches expected policy.                            |
-| 4    | **Transform (optional):** **`execute`** a Stirling/Gotenberg **`operationId`** only when those bases are up.                                                                | PDF/transform response as expected.                 |
+| Step | Action                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Pass                                                  |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| 1    | In OpenClaw, send a prompt that triggers **`search`** for a GitHub operation (e.g. list commits) and then **`execute`** with lean **`fields`**.                                                                                                                                                                                                                                                                                                                                                                                                               | JSON result; no MCP transport error.                  |
+| 2    | **Document path:** call **`ingest_external_knowledge`** per **[`docs/external-ingest.md`](../external-ingest.md)** (vault path + **`CLAWQL_EXTERNAL_INGEST=1`** as needed).                                                                                                                                                                                                                                                                                                                                                                                   | Success payload or documented preview when dry-run.   |
+| 3    | **Privacy:** confirm your deployment’s redaction/policy behavior (if any) on a sample doc — align with ops runbooks.                                                                                                                                                                                                                                                                                                                                                                                                                                          | Matches expected policy.                              |
+| 4    | **Transform (optional):** **`execute`** a Stirling/Gotenberg **`operationId`** only when those bases are up.                                                                                                                                                                                                                                                                                                                                                                                                                                                  | PDF/transform response as expected.                   |
+| 5    | **Observability (optional):** confirm **`GET /metrics`** is scraped by Prometheus and import **[`docs/grafana/clawql-core-observability.json`](../grafana/clawql-core-observability.json)** per **[`docs/grafana/README.md`](../grafana/README.md)** (Helm **`metrics.prometheusScrapeAnnotations`** defaults help Istio sample Prometheus). Deep-link Grafana from your ops hub; OpenClaw UI embedding is **[#225](https://github.com/danielsmithdevelopment/ClawQL/issues/225)** / **[#128](https://github.com/danielsmithdevelopment/ClawQL/issues/128)**. | Panels show native-protocol series; links documented. |
+
+## Observability (Grafana / Prometheus)
+
+After MCP is healthy, operators typically want **metrics** and a **dashboard**:
+
+1. **Scrape** **`clawql-mcp-http`** **`GET /metrics`** (OpenMetrics). With **Helm**, default **`metrics.prometheusScrapeAnnotations.enabled: true`** annotates the Service for common Prometheus setups; see **[`charts/clawql-mcp/README.md`](../../charts/clawql-mcp/README.md)** and **[`docs/deployment/helm.md`](../deployment/helm.md)**.
+2. **Import** **`docs/grafana/clawql-core-observability.json`** into Grafana — full steps and Istio dashboard IDs in **[`docs/grafana/README.md`](../grafana/README.md)**.
+3. **OpenClaw:** embedding Grafana or curated deep links in the OpenClaw UI is **not** implemented here; track **[#225](https://github.com/danielsmithdevelopment/ClawQL/issues/225)** (follow-ups) and **[#128](https://github.com/danielsmithdevelopment/ClawQL/issues/128)** (ecosystem). Phase 0 bootstrap ([#226](https://github.com/danielsmithdevelopment/ClawQL/issues/226)) does **not** require Grafana.
 
 ## Troubleshooting
 
@@ -103,3 +164,4 @@ Use this when validating through the OpenClaw UI (mirrors what the script proves
 - **[#226](https://github.com/danielsmithdevelopment/ClawQL/issues/226)** — bootstrap acceptance (this doc + **`npm run smoke:openclaw-bootstrap`**).
 - **[#227](https://github.com/danielsmithdevelopment/ClawQL/issues/227)** — **[IDP skill profile](openclaw-idp-skill-profile.md)** (canonical matrix + workflow).
 - **[#128](https://github.com/danielsmithdevelopment/ClawQL/issues/128)** — ecosystem / OpenClaw + Agent umbrella (**cross-link Phase 0 here when closing #226**).
+- **[#225](https://github.com/danielsmithdevelopment/ClawQL/issues/225)** — Grafana follow-ups (OpenClaw exposure + extra `/metrics` panels); umbrella **[#210](https://github.com/danielsmithdevelopment/ClawQL/issues/210)** closed.

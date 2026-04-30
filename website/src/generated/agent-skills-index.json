@@ -11,9 +11,9 @@
     {
       "name": "clawql-cache-workflows",
       "type": "skill-md",
-      "description": "Use the optional cache tool as ephemeral scratch state during active sessions.",
+      "description": "Use the cache MCP tool (ClawQL Core, always on) as ephemeral scratch state during active sessions.",
       "url": "/.well-known/agent-skills/clawql-cache-workflows/SKILL.md",
-      "digest": "sha256:4ee9231dd1073bf1e2d4c27f94b66b779f53e112a9055b5985165647e69313f4"
+      "digest": "sha256:31ae4b3609c190c0b3e0e11c0b4c83abff39e10adae4a5de22c2639ded997634"
     },
     {
       "name": "clawql-composed-mcp-workflows",

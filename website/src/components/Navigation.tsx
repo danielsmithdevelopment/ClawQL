@@ -244,6 +244,7 @@ export const navigation: Array<NavGroup> = [
       { title: 'Quickstart', href: '/quickstart' },
       { title: 'Install', href: '/install' },
       { title: 'MCP clients', href: '/mcp-clients' },
+      { title: 'OpenClaw + ClawQL', href: '/openclaw' },
       { title: 'Spec configuration', href: '/spec-configuration' },
       { title: 'Troubleshooting', href: '/troubleshooting' },
       { title: 'Security', href: '/security' },

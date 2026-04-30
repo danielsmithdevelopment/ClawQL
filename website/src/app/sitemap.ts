@@ -17,6 +17,7 @@ const ENTRIES: Array<Entry> = [
   { path: '/quickstart', changeFrequency: 'weekly', priority: 0.95 },
   { path: '/install', changeFrequency: 'monthly', priority: 0.9 },
   { path: '/mcp-clients', changeFrequency: 'monthly', priority: 0.88 },
+  { path: '/openclaw', changeFrequency: 'monthly', priority: 0.87 },
   { path: '/concepts', changeFrequency: 'monthly', priority: 0.88 },
   { path: '/deployment', changeFrequency: 'monthly', priority: 0.88 },
   { path: '/tailscale', changeFrequency: 'monthly', priority: 0.87 },
