@@ -1,0 +1,1762 @@
+directive @resolveRootField(subgraph: String, field: String) on FIELD_DEFINITION | ARGUMENT_DEFINITION | INPUT_FIELD_DEFINITION
+
+directive @enum(subgraph: String, value: String) on ENUM_VALUE
+
+directive @resolveRoot(subgraph: String) on FIELD_DEFINITION
+
+directive @length(subgraph: String, min: Int, max: Int) on SCALAR
+
+directive @typescript(subgraph: String, type: String) on SCALAR | ENUM
+
+directive @example(subgraph: String, value: ObjMap) repeatable on FIELD_DEFINITION | OBJECT | INPUT_OBJECT | ENUM | SCALAR
+
+directive @httpOperation(subgraph: String, path: String, operationSpecificHeaders: [[String]], httpMethod: HTTPMethod, isBinary: Boolean, requestBaseBody: ObjMap, queryParamArgMap: ObjMap, queryStringOptionsByParam: ObjMap, jsonApiFields: Boolean, queryStringOptions: ObjMap) on FIELD_DEFINITION
+
+directive @transport(subgraph: String, kind: String, location: String, headers: [[String]], queryStringOptions: ObjMap, queryParams: [[String]]) repeatable on SCHEMA
+
+type Query {
+  """
+  Retrieve all credentials from your instance. Only available for the instance owner and admin. Credential data (secrets) is not included.
+  """
+  getCredentials(
+    """The maximum number of items to return."""
+    limit: Float = 100
+
+    """
+    Paginate by setting the cursor parameter to the nextCursor attribute returned by the previous request's response. Default value fetches the first "page" of the collection. See pagination for more detail.
+    """
+    cursor: String
+  ): credentialList
+
+  """Show credential data schema"""
+  credentials_schema_by_credentialTypeName(
+    """The credential type name that you want to get the schema for"""
+    credentialTypeName: String!
+  ): JSON
+
+  """Retrieve all executions from your instance."""
+  executions(
+    """Whether or not to include the execution's detailed data."""
+    includeData: Boolean
+    status: queryInput_executions_status
+
+    """Workflow to filter the executions by."""
+    workflowId: String
+    projectId: String
+
+    """The maximum number of items to return."""
+    limit: Float = 100
+
+    """
+    Paginate by setting the cursor parameter to the nextCursor attribute returned by the previous request's response. Default value fetches the first "page" of the collection. See pagination for more detail.
+    """
+    cursor: String
+  ): executionList
+
+  """Retrieve an execution from your instance."""
+  executions_by_id(
+    """The ID of the execution."""
+    id: Float!
+
+    """Whether or not to include the execution's detailed data."""
+    includeData: Boolean
+  ): execution
+
+  """Get annotation tags for an execution."""
+  executions_by_id_tags(
+    """The ID of the execution."""
+    id: Float!
+  ): [tag]
+
+  """Retrieve all tags from your instance."""
+  tags(
+    """The maximum number of items to return."""
+    limit: Float = 100
+
+    """
+    Paginate by setting the cursor parameter to the nextCursor attribute returned by the previous request's response. Default value fetches the first "page" of the collection. See pagination for more detail.
+    """
+    cursor: String
+  ): tagList
+
+  """Retrieves a tag."""
+  tags_by_id(
+    """The ID of the tag."""
+    id: String!
+  ): tag
+
+  """Retrieve all workflows from your instance."""
+  workflows(
+    active: Boolean
+    tags: String
+    name: String
+    projectId: String
+
+    """Set this to avoid retrieving pinned data"""
+    excludePinnedData: Boolean
+
+    """The maximum number of items to return."""
+    limit: Float = 100
+
+    """
+    Paginate by setting the cursor parameter to the nextCursor attribute returned by the previous request's response. Default value fetches the first "page" of the collection. See pagination for more detail.
+    """
+    cursor: String
+  ): workflowList
+
+  """Retrieve a workflow."""
+  workflows_by_id(
+    """The ID of the workflow."""
+    id: String!
+
+    """Set this to avoid retrieving pinned data"""
+    excludePinnedData: Boolean
+  ): workflow
+
+  """Retrieves a specific version of a workflow from workflow history."""
+  workflows_by_id_by_versionId(
+    """The ID of the workflow."""
+    id: String!
+
+    """The version ID to retrieve"""
+    versionId: String!
+  ): workflowVersion
+
+  """Get workflow tags."""
+  workflows_by_id_tags(
+    """The ID of the workflow."""
+    id: String!
+  ): [tag]
+
+  """
+  Retrieve all users from your instance. Only available for the instance owner.
+  """
+  users(
+    """The maximum number of items to return."""
+    limit: Float = 100
+
+    """
+    Paginate by setting the cursor parameter to the nextCursor attribute returned by the previous request's response. Default value fetches the first "page" of the collection. See pagination for more detail.
+    """
+    cursor: String
+
+    """Whether to include the user's role or not."""
+    includeRole: Boolean
+    projectId: String
+  ): userList
+
+  """
+  Retrieve a user from your instance. Only available for the instance owner.
+  """
+  users_by_id(
+    """The ID or email of the user."""
+    id: String!
+
+    """Whether to include the user's role or not."""
+    includeRole: Boolean
+  ): user
+
+  """Retrieve variables from your instance."""
+  variables(
+    """The maximum number of items to return."""
+    limit: Float = 100
+
+    """
+    Paginate by setting the cursor parameter to the nextCursor attribute returned by the previous request's response. Default value fetches the first "page" of the collection. See pagination for more detail.
+    """
+    cursor: String
+    projectId: String
+    state: empty_const
+  ): variableList
+
+  """
+  Retrieve a list of all data tables with optional filtering, sorting, and pagination.
+  """
+  list_data_tables(
+    """The maximum number of items to return."""
+    limit: Float = 100
+
+    """
+    Paginate by setting the cursor parameter to the nextCursor attribute returned by the previous request's response. Default value fetches the first "page" of the collection. See pagination for more detail.
+    """
+    cursor: String
+
+    """JSON string of filter conditions"""
+    filter: String
+
+    """Sort format: field:asc or field:desc"""
+    sortBy: String
+  ): dataTableList
+
+  """Retrieve a specific data table by ID."""
+  get_data_table(
+    """The ID of the data table"""
+    dataTableId: String!
+  ): dataTable
+
+  """
+  Query and retrieve rows from a data table with optional filtering, sorting, and pagination.
+  """
+  get_data_table_rows(
+    """The ID of the data table"""
+    dataTableId: String!
+
+    """The maximum number of items to return."""
+    limit: Float = 100
+
+    """
+    Paginate by setting the cursor parameter to the nextCursor attribute returned by the previous request's response. Default value fetches the first "page" of the collection. See pagination for more detail.
+    """
+    cursor: String
+
+    """JSON string of filter conditions"""
+    filter: String
+
+    """Sort format: columnName:asc or columnName:desc"""
+    sortBy: String
+
+    """Search text across all string columns"""
+    search: String
+  ): dataTableRowList
+
+  """Retrieve projects from your instance."""
+  projects(
+    """The maximum number of items to return."""
+    limit: Float = 100
+
+    """
+    Paginate by setting the cursor parameter to the nextCursor attribute returned by the previous request's response. Default value fetches the first "page" of the collection. See pagination for more detail.
+    """
+    cursor: String
+  ): projectList
+
+  """
+  Returns a list of all members of a project including their role. Requires user:list scope.
+  """
+  projects_by_projectId_users(
+    """The ID of the project."""
+    projectId: String!
+
+    """The maximum number of items to return."""
+    limit: Float = 100
+
+    """
+    Paginate by setting the cursor parameter to the nextCursor attribute returned by the previous request's response. Default value fetches the first "page" of the collection. See pagination for more detail.
+    """
+    cursor: String
+  ): projectMemberList
+}
+
+type credentialList {
+  data: [credentialListItem]
+
+  """
+  Paginate through credentials by setting the cursor parameter to a nextCursor attribute returned by a previous request. Default value fetches the first "page" of the collection.
+  """
+  nextCursor: String
+}
+
+type credentialListItem {
+  id: String!
+  name: String!
+  type: String!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+
+  """
+  Shared entries (project id, name, role, createdAt, updatedAt) from the credential's shared relation
+  """
+  shared: [credentialSharedItem]!
+}
+
+"""
+A date-time string at UTC, such as 2007-12-03T10:15:30Z, compliant with the `date-time` format outlined in section 5.6 of the RFC 3339 profile of the ISO 8601 standard for representation of dates and times using the Gregorian calendar.
+"""
+scalar DateTime
+
+type credentialSharedItem {
+  """Project ID"""
+  id: String!
+
+  """Project name"""
+  name: String!
+
+  """Role of the credential in this project (e.g. credential:owner)"""
+  role: String!
+
+  """When the credential was shared with this project"""
+  createdAt: DateTime!
+
+  """When the sharing was last updated"""
+  updatedAt: DateTime!
+}
+
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSON @specifiedBy(url: "http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf")
+
+type executionList {
+  data: [execution]
+
+  """
+  Paginate through executions by setting the cursor parameter to a nextCursor attribute returned by a previous request. Default value fetches the first "page" of the collection.
+  """
+  nextCursor: String
+}
+
+type execution {
+  id: Float
+  data: JSON
+  finished: Boolean
+  mode: mutation_delete_executions_by_id_mode
+  retryOf: Float
+  retrySuccessId: Float
+  startedAt: DateTime
+
+  """
+  The time at which the execution stopped. Will only be null for executions that still have the status 'running'.
+  """
+  stoppedAt: DateTime
+  workflowId: Float
+  waitTill: DateTime
+  customData: JSON
+  status: mutation_delete_executions_by_id_status
+}
+
+enum mutation_delete_executions_by_id_mode {
+  cli
+  error
+  integrated
+  internal
+  manual
+  retry
+  trigger
+  webhook
+  evaluation
+  chat
+}
+
+enum mutation_delete_executions_by_id_status {
+  canceled
+  crashed
+  error
+  new
+  running
+  success
+  unknown
+  waiting
+}
+
+"""Status to filter the executions by."""
+enum queryInput_executions_status {
+  canceled
+  crashed
+  error
+  new
+  running
+  success
+  unknown
+  waiting
+}
+
+type tag {
+  id: String
+  name: String!
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+type tagList {
+  data: [tag]
+
+  """
+  Paginate through tags by setting the cursor parameter to a nextCursor attribute returned by a previous request. Default value fetches the first "page" of the collection.
+  """
+  nextCursor: String
+}
+
+type workflowList {
+  data: [workflow]
+
+  """
+  Paginate through workflows by setting the cursor parameter to a nextCursor attribute returned by a previous request. Default value fetches the first "page" of the collection.
+  """
+  nextCursor: String
+}
+
+type workflow {
+  id: String
+  name: String!
+  active: Boolean
+  createdAt: DateTime
+  updatedAt: DateTime
+  nodes: [node]!
+  connections: mutation_post_workflows_connections!
+  settings: workflowSettings!
+  staticData: mutation_post_workflows_staticData
+  tags: [tag]
+  shared: [sharedWorkflow]
+  activeVersion: activeVersion
+}
+
+type node {
+  id: String
+  name: String
+  webhookId: String
+  disabled: Boolean
+  notesInFlow: Boolean
+  notes: String
+  type: String
+  typeVersion: Float
+  executeOnce: Boolean
+  alwaysOutputData: Boolean
+  retryOnFail: Boolean
+  maxTries: Float
+  waitBetweenTries: Float
+
+  """use onError instead"""
+  continueOnFail: Boolean @deprecated(reason: "deprecated")
+  onError: String
+  position: [Float]
+  parameters: JSON
+  credentials: mutation_post_workflows_nodes_items_credentials
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+type mutation_post_workflows_nodes_items_credentials {
+  jiraSoftwareCloudApi: mutation_post_workflows_nodes_items_credentials_jiraSoftwareCloudApi
+}
+
+type mutation_post_workflows_nodes_items_credentials_jiraSoftwareCloudApi {
+  name: String
+}
+
+type mutation_post_workflows_connections {
+  Jira: mutation_post_workflows_connections_Jira
+}
+
+type mutation_post_workflows_connections_Jira {
+  main: [[mutation_post_workflows_connections_Jira_main_items_items]]
+}
+
+type mutation_post_workflows_connections_Jira_main_items_items {
+  node: String
+  type: String
+  index: Int
+}
+
+type workflowSettings {
+  saveExecutionProgress: Boolean
+  saveManualExecutions: Boolean
+  saveDataErrorExecution: mutation_post_workflows_settings_saveDataErrorExecution
+  saveDataSuccessExecution: mutation_post_workflows_settings_saveDataSuccessExecution
+  executionTimeout: Float
+
+  """The ID of the workflow that contains the error trigger node."""
+  errorWorkflow: String
+  timezone: String
+  executionOrder: String
+  callerPolicy: mutation_post_workflows_settings_callerPolicy
+
+  """
+  Comma-separated list of workflow IDs allowed to call this workflow (only used with workflowsFromAList policy)
+  """
+  callerIds: String
+
+  """Estimated time saved per execution in minutes"""
+  timeSavedPerExecution: Float
+
+  """
+  Controls whether this workflow is accessible via the Model Context Protocol (MCP).
+  
+  When enabled, this workflow can be called by MCP clients (AI assistants and other tools
+  that support MCP). This allows external AI tools to discover and execute this workflow
+  as part of their capabilities.
+  
+  Requirements for enabling MCP access:
+  - The workflow must be active (not deactivated)
+  - The workflow must contain at least one active Webhook node
+  - Only webhook-triggered workflows can be exposed via MCP
+  
+  Security note: When a workflow is available in MCP, it can be discovered and executed
+  by any MCP client that has the appropriate API credentials for your n8n instance.
+  """
+  availableInMCP: Boolean
+}
+
+enum mutation_post_workflows_settings_saveDataErrorExecution {
+  all
+  none
+}
+
+enum mutation_post_workflows_settings_saveDataSuccessExecution {
+  all
+  none
+}
+
+"""
+Controls which workflows are allowed to call this workflow using the Execute Workflow node.
+
+Available options:
+- `any`: Any workflow can call this workflow (no restrictions)
+- `none`: No other workflows can call this workflow (completely blocked)
+- `workflowsFromSameOwner` (default): Only workflows owned by the same project can call this workflow
+  * For personal projects: Only workflows created by the same user
+  * For team projects: Only workflows within the same team project
+- `workflowsFromAList`: Only specific workflows listed in the `callerIds` field can call this workflow
+  * Requires the `callerIds` field to specify which workflow IDs are allowed
+  * See `callerIds` field documentation for usage
+"""
+enum mutation_post_workflows_settings_callerPolicy {
+  any
+  none
+  workflowsFromAList
+  workflowsFromSameOwner
+}
+
+type mutation_post_workflows_staticData {
+  String: String
+  JSON: JSON
+}
+
+type sharedWorkflow {
+  role: URL
+  workflowId: String
+  projectId: String
+  project: mutation_post_workflows_shared_items_project
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+"""
+A field whose value conforms to the standard URL format as specified in RFC3986: https://www.ietf.org/rfc/rfc3986.txt.
+"""
+scalar URL
+
+type mutation_post_workflows_shared_items_project {
+  id: String
+  name: String
+  type: String
+}
+
+type activeVersion {
+  """Unique identifier for this workflow version"""
+  versionId: String
+
+  """The workflow this version belongs to"""
+  workflowId: String
+  nodes: [node]
+  connections: mutation_post_workflows_activeVersion_connections
+
+  """Comma-separated list of author IDs who contributed to this version"""
+  authors: String
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+type mutation_post_workflows_activeVersion_connections {
+  Jira: mutation_post_workflows_activeVersion_connections_Jira
+}
+
+type mutation_post_workflows_activeVersion_connections_Jira {
+  main: [[mutation_post_workflows_activeVersion_connections_Jira_main_items_items]]
+}
+
+type mutation_post_workflows_activeVersion_connections_Jira_main_items_items {
+  node: String
+  type: String
+  index: Int
+}
+
+type workflowVersion {
+  """The version ID of this workflow snapshot"""
+  versionId: String!
+
+  """The workflow ID this version belongs to"""
+  workflowId: String!
+
+  """Nodes as they were in this version"""
+  nodes: [node]!
+  connections: query_workflows_by_id_by_versionId_connections!
+
+  """Authors who created this version"""
+  authors: String!
+
+  """Workflow name at this version"""
+  name: String
+
+  """Workflow description at this version"""
+  description: String
+
+  """When this version was created"""
+  createdAt: DateTime
+
+  """When this version was last updated"""
+  updatedAt: DateTime
+}
+
+"""Connections as they were in this version"""
+type query_workflows_by_id_by_versionId_connections {
+  Jira: query_workflows_by_id_by_versionId_connections_Jira
+}
+
+type query_workflows_by_id_by_versionId_connections_Jira {
+  main: [[query_workflows_by_id_by_versionId_connections_Jira_main_items_items]]
+}
+
+type query_workflows_by_id_by_versionId_connections_Jira_main_items_items {
+  node: String
+  type: String
+  index: Int
+}
+
+type userList {
+  data: [user]
+
+  """
+  Paginate through users by setting the cursor parameter to a nextCursor attribute returned by a previous request. Default value fetches the first "page" of the collection.
+  """
+  nextCursor: String
+}
+
+type user {
+  id: String
+  email: EmailAddress!
+
+  """User's first name"""
+  firstName: query_users_data_items_firstName
+
+  """User's last name"""
+  lastName: query_users_data_items_lastName
+
+  """
+  Whether the user finished setting up their account in response to the invitation (true) or not (false).
+  """
+  isPending: Boolean
+
+  """Time the user was created."""
+  createdAt: DateTime
+
+  """Last time the user was updated."""
+  updatedAt: DateTime
+  role: URL
+}
+
+"""
+A field whose value conforms to the standard internet email address format as specified in HTML Spec: https://html.spec.whatwg.org/multipage/input.html#valid-e-mail-address.
+"""
+scalar EmailAddress @specifiedBy(url: "https://html.spec.whatwg.org/multipage/input.html#valid-e-mail-address")
+
+"""User's first name"""
+scalar query_users_data_items_firstName
+
+"""User's last name"""
+scalar query_users_data_items_lastName
+
+type variableList {
+  data: [variable]
+
+  """
+  Paginate through variables by setting the cursor parameter to a nextCursor attribute returned by a previous request. Default value fetches the first "page" of the collection.
+  """
+  nextCursor: String
+}
+
+type variable {
+  id: String
+  key: String!
+  value: String!
+  type: String
+  project: project
+}
+
+type project {
+  id: String
+  name: String!
+  type: String
+}
+
+enum empty_const {
+  empty
+}
+
+type dataTableList {
+  data: [dataTable]
+
+  """
+  Paginate through data tables by setting the cursor parameter to a nextCursor attribute returned by a previous request. Default value fetches the first "page" of the collection.
+  """
+  nextCursor: String
+}
+
+type dataTable {
+  """Unique identifier for the data table"""
+  id: String!
+
+  """Name of the data table"""
+  name: String!
+
+  """Column definitions"""
+  columns: [mutation_create_data_table_columns_items]!
+
+  """ID of the project this table belongs to"""
+  projectId: String!
+
+  """Timestamp when the table was created"""
+  createdAt: DateTime!
+
+  """Timestamp when the table was last updated"""
+  updatedAt: DateTime!
+}
+
+type mutation_create_data_table_columns_items {
+  """Column ID"""
+  id: String
+
+  """Column name"""
+  name: String
+  type: mutation_create_data_table_columns_items_type
+
+  """Column position"""
+  index: Int
+}
+
+"""Column data type"""
+enum mutation_create_data_table_columns_items_type {
+  string
+  number
+  boolean
+  date
+}
+
+type dataTableRowList {
+  data: [dataTableRow]
+
+  """
+  Paginate through rows by setting the cursor parameter to a nextCursor attribute returned by a previous request. Default value fetches the first "page" of the collection.
+  """
+  nextCursor: String
+}
+
+"""
+A data table row with system columns (id, createdAt, updatedAt) and user-defined columns
+"""
+type dataTableRow {
+  """The row ID (auto-generated)"""
+  id: Int
+
+  """The date and time the row was created"""
+  createdAt: DateTime
+
+  """The date and time the row was last updated"""
+  updatedAt: DateTime
+  additionalProperties: JSON
+}
+
+type projectList {
+  data: [project]
+
+  """
+  Paginate through projects by setting the cursor parameter to a nextCursor attribute returned by a previous request. Default value fetches the first "page" of the collection.
+  """
+  nextCursor: String
+}
+
+type projectMemberList {
+  data: [projectMember]
+
+  """
+  Paginate through project members by setting the cursor parameter to the nextCursor attribute returned by a previous request. Default value fetches the first page of the collection.
+  """
+  nextCursor: String
+}
+
+"""A project member (user with their role in the project)."""
+type projectMember {
+  """The user's unique identifier."""
+  id: String
+
+  """The user's email address."""
+  email: EmailAddress
+
+  """The user's first name."""
+  firstName: query_projects_by_projectId_users_data_items_firstName
+
+  """The user's last name."""
+  lastName: query_projects_by_projectId_users_data_items_lastName
+
+  """When the user was created."""
+  createdAt: DateTime
+
+  """When the user was last updated."""
+  updatedAt: DateTime
+
+  """The user's role in the project (e.g. project:admin, project:viewer)."""
+  role: URL
+}
+
+"""The user's first name."""
+scalar query_projects_by_projectId_users_data_items_firstName
+
+"""The user's last name."""
+scalar query_projects_by_projectId_users_data_items_lastName
+
+type Mutation {
+  """Generate a security audit for your n8n instance."""
+  post_audit(input: post_audit_request_Input): audit
+
+  """Creates a credential that can be used by nodes of the specified type."""
+  createCredential(input: credential_Input): create_credential_response
+
+  """
+  Updates an existing credential. You must be the owner of the credential.
+  """
+  updateCredential(
+    """The credential ID that needs to be updated"""
+    id: String!
+    input: update_credential_request_Input
+  ): create_credential_response
+
+  """
+  Deletes a credential from your instance. You must be the owner of the credentials
+  """
+  deleteCredential(
+    """The credential ID that needs to be deleted"""
+    id: String!
+  ): credential
+
+  """Transfer a credential to another project."""
+  put_credentials_by_id_transfer(
+    """The ID of the credential."""
+    id: String!
+    input: put_credentials_by_id_transfer_request_Input
+  ): JSON
+
+  """Deletes an execution from your instance."""
+  delete_executions_by_id(
+    """The ID of the execution."""
+    id: Float!
+  ): execution
+
+  """Retry an execution from your instance."""
+  post_executions_by_id_retry(
+    """The ID of the execution."""
+    id: Float!
+    input: post_executions_by_id_retry_request_Input
+  ): execution
+
+  """Stop an execution by id."""
+  post_executions_by_id_stop(
+    """The ID of the execution."""
+    id: Float!
+  ): execution
+
+  """Stop multiple executions from your instance based on filter criteria."""
+  post_executions_stop(input: post_executions_stop_request_Input): post_executions_stop_200_response
+
+  """Update annotation tags of an execution."""
+  put_executions_by_id_tags(
+    """The ID of the execution."""
+    id: Float!
+    input: [mutationInput_put_executions_by_id_tags_input_items_Input]
+  ): [tag]
+
+  """Create a tag in your instance."""
+  post_tags(input: tag_Input): tag
+
+  """Deletes a tag."""
+  delete_tags_by_id(
+    """The ID of the tag."""
+    id: String!
+  ): tag
+
+  """Update a tag."""
+  put_tags_by_id(
+    """The ID of the tag."""
+    id: String!
+    input: tag_Input
+  ): tag
+
+  """Create a workflow in your instance."""
+  post_workflows(input: workflow_Input): workflow
+
+  """Delete a workflow."""
+  delete_workflows_by_id(
+    """The ID of the workflow."""
+    id: String!
+  ): workflow
+
+  """
+  Update a workflow. If the workflow is published, the updated version will be automatically re-published.
+  """
+  put_workflows_by_id(
+    """The ID of the workflow."""
+    id: String!
+    input: workflow_Input
+  ): workflow
+
+  """
+  Publish a workflow. In n8n v1, this action was termed activating a workflow.
+  """
+  post_workflows_by_id_activate(
+    """The ID of the workflow."""
+    id: String!
+    input: post_workflows_by_id_activate_request_Input
+  ): workflow
+
+  """Deactivate a workflow."""
+  post_workflows_by_id_deactivate(
+    """The ID of the workflow."""
+    id: String!
+  ): workflow
+
+  """Transfer a workflow to another project"""
+  put_workflows_by_id_transfer(
+    """The ID of the workflow."""
+    id: String!
+    input: put_workflows_by_id_transfer_request_Input
+  ): JSON
+
+  """Update tags of a workflow."""
+  put_workflows_by_id_tags(
+    """The ID of the workflow."""
+    id: String!
+    input: [mutationInput_put_executions_by_id_tags_input_items_Input]
+  ): [tag]
+
+  """Create one or more users."""
+  post_users(input: [mutationInput_post_users_input_items_Input]): post_users_200_response
+
+  """Delete a user from your instance."""
+  delete_users_by_id(
+    """The ID or email of the user."""
+    id: String!
+  ): Void
+
+  """Change a user's global role"""
+  patch_users_by_id_role(
+    """The ID or email of the user."""
+    id: String!
+    input: patch_users_by_id_role_request_Input
+  ): JSON
+
+  """
+  Requires the Source Control feature to be licensed and connected to a repository.
+  """
+  post_source_control_pull(input: pull_Input): importResult
+
+  """Create a variable in your instance."""
+  post_variables(input: variable_create_Input): JSON
+
+  """Delete a variable from your instance."""
+  delete_variables_by_id(
+    """The ID of the variable."""
+    id: String!
+  ): Void
+
+  """Update a variable from your instance."""
+  put_variables_by_id(
+    """The ID of the variable."""
+    id: String!
+    input: variable_create_Input
+  ): Void
+
+  """Create a new data table in your workspace."""
+  create_data_table(input: createDataTableRequest_Input): dataTable
+
+  """Update a data table's name."""
+  update_data_table(
+    """The ID of the data table"""
+    dataTableId: String!
+    input: updateDataTableRequest_Input
+  ): dataTable
+
+  """Delete a data table. This will also delete all rows in the table."""
+  delete_data_table(
+    """The ID of the data table"""
+    dataTableId: String!
+  ): Void
+
+  """Insert one or more rows into a data table."""
+  insert_data_table_rows(
+    """The ID of the data table"""
+    dataTableId: String!
+    input: insertRowsRequest_Input
+  ): [insert_data_table_rows_200_response]
+
+  """Update rows matching filter conditions in a data table."""
+  update_data_table_rows(
+    """The ID of the data table"""
+    dataTableId: String!
+    input: updateRowsRequest_Input
+  ): [update_data_table_rows_200_response]
+
+  """
+  Update an existing row or insert a new one if no row matches the filter conditions.
+  """
+  upsert_data_table_row(
+    """The ID of the data table"""
+    dataTableId: String!
+    input: upsertRowRequest_Input
+  ): upsert_data_table_row_200_response
+
+  """
+  Delete rows matching filter conditions from a data table. Filter is required to prevent accidental deletion of all data.
+  """
+  delete_data_table_rows(
+    """The ID of the data table"""
+    dataTableId: String!
+
+    """
+    JSON string of filter conditions. Required to prevent accidental deletion of all data.
+    """
+    filter: String!
+
+    """If true, return the deleted rows; if false, return true on success"""
+    returnData: Boolean
+
+    """
+    If true, preview which rows would be deleted without actually deleting them
+    """
+    dryRun: Boolean
+  ): [delete_data_table_rows_200_response]
+
+  """Create a project on your instance."""
+  post_projects(input: project_Input): JSON
+
+  """Delete a project from your instance."""
+  delete_projects_by_projectId(
+    """The ID of the project."""
+    projectId: String!
+  ): Void
+
+  """Update a project on your instance."""
+  put_projects_by_projectId(
+    """The ID of the project."""
+    projectId: String!
+    input: project_Input
+  ): Void
+
+  """Add one or more users to a project on your instance."""
+  post_projects_by_projectId_users(
+    """The ID of the project."""
+    projectId: String!
+    input: post_projects_by_projectId_users_request_Input
+  ): JSON
+
+  """Delete a user from a project on your instance."""
+  delete_projects_by_projectId_users_by_userId(
+    """The ID of the project."""
+    projectId: String!
+
+    """The ID of the user."""
+    userId: String!
+  ): Void
+
+  """Change a user's role in a project."""
+  patch_projects_by_projectId_users_by_userId(
+    """The ID of the project."""
+    projectId: String!
+
+    """The ID of the user."""
+    userId: String!
+    input: patch_projects_by_projectId_users_by_userId_request_Input
+  ): Void
+}
+
+type audit {
+  Credentials_Risk_Report: mutation_post_audit_Credentials_Risk_Report
+  Database_Risk_Report: mutation_post_audit_Database_Risk_Report
+  Filesystem_Risk_Report: mutation_post_audit_Filesystem_Risk_Report
+  Nodes_Risk_Report: mutation_post_audit_Nodes_Risk_Report
+  Instance_Risk_Report: mutation_post_audit_Instance_Risk_Report
+}
+
+type mutation_post_audit_Credentials_Risk_Report {
+  risk: String
+  sections: [mutation_post_audit_Credentials_Risk_Report_sections_items]
+}
+
+type mutation_post_audit_Credentials_Risk_Report_sections_items {
+  title: String
+  description: String
+  recommendation: String
+  location: [mutation_post_audit_Credentials_Risk_Report_sections_items_location_items]
+}
+
+type mutation_post_audit_Credentials_Risk_Report_sections_items_location_items {
+  kind: String
+  name: String
+}
+
+type mutation_post_audit_Database_Risk_Report {
+  risk: String
+  sections: [mutation_post_audit_Database_Risk_Report_sections_items]
+}
+
+type mutation_post_audit_Database_Risk_Report_sections_items {
+  title: String
+  description: String
+  recommendation: String
+  or_validating_the_input_of_the_expression_in_the__QUOTATION_MARK_Query_QUOTATION_MARK__field_: Void
+  location: [mutation_post_audit_Database_Risk_Report_sections_items_location_items]
+}
+
+"""Represents empty values"""
+scalar Void
+
+type mutation_post_audit_Database_Risk_Report_sections_items_location_items {
+  kind: String
+  workflowId: String
+  workflowName: String
+  nodeId: String
+  nodeName: String
+  nodeType: String
+}
+
+type mutation_post_audit_Filesystem_Risk_Report {
+  risk: String
+  sections: [mutation_post_audit_Filesystem_Risk_Report_sections_items]
+}
+
+type mutation_post_audit_Filesystem_Risk_Report_sections_items {
+  title: String
+  description: String
+  recommendation: String
+  or_refactoring_the_workflow_so_that_it_does_not_require_host_filesystem_interaction_: Void
+  location: [mutation_post_audit_Filesystem_Risk_Report_sections_items_location_items]
+}
+
+type mutation_post_audit_Filesystem_Risk_Report_sections_items_location_items {
+  kind: String
+  workflowId: String
+  workflowName: String
+  nodeId: String
+  nodeName: String
+  nodeType: String
+}
+
+type mutation_post_audit_Nodes_Risk_Report {
+  risk: String
+  sections: [mutation_post_audit_Nodes_Risk_Report_sections_items]
+}
+
+type mutation_post_audit_Nodes_Risk_Report_sections_items {
+  title: String
+  description: String
+  recommendation: String
+  and_uninstalling_any_community_nodes_no_longer_used_: Void
+  location: [mutation_post_audit_Nodes_Risk_Report_sections_items_location_items]
+}
+
+type mutation_post_audit_Nodes_Risk_Report_sections_items_location_items {
+  kind: String
+  nodeType: String
+  packageUrl: URL
+}
+
+type mutation_post_audit_Instance_Risk_Report {
+  risk: String
+  sections: [mutation_post_audit_Instance_Risk_Report_sections_items]
+}
+
+type mutation_post_audit_Instance_Risk_Report_sections_items {
+  title: String
+  description: String
+  recommendation: String
+  or_validating_the_payload_with_one_of_the_following_nodes_: Void
+  location: [mutation_post_audit_Instance_Risk_Report_sections_items_location_items]
+}
+
+type mutation_post_audit_Instance_Risk_Report_sections_items_location_items {
+  kind: String
+  nodeType: String
+  packageUrl: URL
+}
+
+input post_audit_request_Input {
+  additionalOptions: mutationInput_post_audit_input_additionalOptions_Input
+}
+
+input mutationInput_post_audit_input_additionalOptions_Input {
+  """Days for a workflow to be considered abandoned if not executed"""
+  daysAbandonedWorkflow: Int
+  categories: [mutationInput_post_audit_input_additionalOptions_categories_items]
+}
+
+enum mutationInput_post_audit_input_additionalOptions_categories_items {
+  credentials
+  database
+  nodes
+  filesystem
+  instance
+}
+
+type create_credential_response {
+  id: String!
+  name: String!
+  type: String!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+input credential_Input {
+  id: String
+  name: String!
+  type: String!
+  data: mutation_deleteCredential_data_Input!
+
+  """Whether this credential has resolvable fields"""
+  isResolvable: Boolean
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+input mutation_deleteCredential_data_Input {
+  accessToken: String
+}
+
+input update_credential_request_Input {
+  """The name of the credential"""
+  name: String
+
+  """The credential type. If changing type, data must also be provided."""
+  type: String
+  data: mutationInput_updateCredential_input_data_Input
+
+  """Whether this credential is available globally"""
+  isGlobal: Boolean
+
+  """Whether this credential has resolvable fields"""
+  isResolvable: Boolean
+
+  """
+  If true, unredacts and merges existing credential data with the provided data. If false, replaces the entire data object.
+  """
+  isPartialData: Boolean
+}
+
+"""The credential data. Required when changing credential type."""
+input mutationInput_updateCredential_input_data_Input {
+  accessToken: String
+}
+
+type credential {
+  id: String
+  name: String!
+  type: String!
+  data: mutation_deleteCredential_data!
+
+  """Whether this credential has resolvable fields"""
+  isResolvable: Boolean
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+type mutation_deleteCredential_data {
+  accessToken: String
+}
+
+input put_credentials_by_id_transfer_request_Input {
+  """The ID of the project to transfer the credential to."""
+  destinationProjectId: String!
+}
+
+input post_executions_by_id_retry_request_Input {
+  """
+  Whether to load the currently saved workflow to execute instead of the one saved at the time of the execution. If set to true, it will retry with the latest version of the workflow.
+  """
+  loadWorkflow: Boolean
+}
+
+type post_executions_stop_200_response {
+  """The number of executions that were successfully stopped."""
+  stopped: Float
+}
+
+input post_executions_stop_request_Input {
+  """Array of execution statuses to stop. Must include at least one status."""
+  status: [mutationInput_post_executions_stop_input_status_items]!
+
+  """
+  Optional workflow ID to filter executions. If not provided, will stop executions across all accessible workflows.
+  """
+  workflowId: String
+
+  """Only stop executions that started after this time."""
+  startedAfter: DateTime
+
+  """Only stop executions that started before this time."""
+  startedBefore: DateTime
+}
+
+enum mutationInput_post_executions_stop_input_status_items {
+  queued
+  running
+  waiting
+}
+
+input mutationInput_put_executions_by_id_tags_input_items_Input {
+  id: String!
+}
+
+input tag_Input {
+  id: String
+  name: String!
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+input workflow_Input {
+  id: String
+  name: String!
+  active: Boolean
+  createdAt: DateTime
+  updatedAt: DateTime
+  nodes: [node_Input]!
+  connections: mutation_post_workflows_connections_Input!
+  settings: workflowSettings_Input!
+  staticData: JSON
+  tags: [tag_Input]
+  shared: [sharedWorkflow_Input]
+  activeVersion: activeVersion_Input
+}
+
+input node_Input {
+  id: String
+  name: String
+  webhookId: String
+  disabled: Boolean
+  notesInFlow: Boolean
+  notes: String
+  type: String
+  typeVersion: Float
+  executeOnce: Boolean
+  alwaysOutputData: Boolean
+  retryOnFail: Boolean
+  maxTries: Float
+  waitBetweenTries: Float
+
+  """use onError instead"""
+  continueOnFail: Boolean
+  onError: String
+  position: [Float]
+  parameters: JSON
+  credentials: mutation_post_workflows_nodes_items_credentials_Input
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+input mutation_post_workflows_nodes_items_credentials_Input {
+  jiraSoftwareCloudApi: mutation_post_workflows_nodes_items_credentials_jiraSoftwareCloudApi_Input
+}
+
+input mutation_post_workflows_nodes_items_credentials_jiraSoftwareCloudApi_Input {
+  name: String
+}
+
+input mutation_post_workflows_connections_Input {
+  Jira: mutation_post_workflows_connections_Jira_Input
+}
+
+input mutation_post_workflows_connections_Jira_Input {
+  main: [[mutation_post_workflows_connections_Jira_main_items_items_Input]]
+}
+
+input mutation_post_workflows_connections_Jira_main_items_items_Input {
+  node: String
+  type: String
+  index: Int
+}
+
+input workflowSettings_Input {
+  saveExecutionProgress: Boolean
+  saveManualExecutions: Boolean
+  saveDataErrorExecution: mutation_post_workflows_settings_saveDataErrorExecution
+  saveDataSuccessExecution: mutation_post_workflows_settings_saveDataSuccessExecution
+  executionTimeout: Float
+
+  """The ID of the workflow that contains the error trigger node."""
+  errorWorkflow: String
+  timezone: String
+  executionOrder: String
+  callerPolicy: mutation_post_workflows_settings_callerPolicy = workflowsFromSameOwner
+
+  """
+  Comma-separated list of workflow IDs allowed to call this workflow (only used with workflowsFromAList policy)
+  """
+  callerIds: String
+
+  """Estimated time saved per execution in minutes"""
+  timeSavedPerExecution: Float
+
+  """
+  Controls whether this workflow is accessible via the Model Context Protocol (MCP).
+  
+  When enabled, this workflow can be called by MCP clients (AI assistants and other tools
+  that support MCP). This allows external AI tools to discover and execute this workflow
+  as part of their capabilities.
+  
+  Requirements for enabling MCP access:
+  - The workflow must be active (not deactivated)
+  - The workflow must contain at least one active Webhook node
+  - Only webhook-triggered workflows can be exposed via MCP
+  
+  Security note: When a workflow is available in MCP, it can be discovered and executed
+  by any MCP client that has the appropriate API credentials for your n8n instance.
+  """
+  availableInMCP: Boolean
+}
+
+input sharedWorkflow_Input {
+  role: URL
+  workflowId: String
+  projectId: String
+  project: mutation_post_workflows_shared_items_project_Input
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+input mutation_post_workflows_shared_items_project_Input {
+  id: String
+  name: String
+  type: String
+}
+
+input activeVersion_Input {
+  """Unique identifier for this workflow version"""
+  versionId: String
+
+  """The workflow this version belongs to"""
+  workflowId: String
+  nodes: [node_Input]
+  connections: mutation_post_workflows_activeVersion_connections_Input
+
+  """Comma-separated list of author IDs who contributed to this version"""
+  authors: String
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+input mutation_post_workflows_activeVersion_connections_Input {
+  Jira: mutation_post_workflows_activeVersion_connections_Jira_Input
+}
+
+input mutation_post_workflows_activeVersion_connections_Jira_Input {
+  main: [[mutation_post_workflows_activeVersion_connections_Jira_main_items_items_Input]]
+}
+
+input mutation_post_workflows_activeVersion_connections_Jira_main_items_items_Input {
+  node: String
+  type: String
+  index: Int
+}
+
+input post_workflows_by_id_activate_request_Input {
+  """
+  The specific version ID to activate or publish. If not provided, the latest version is used.
+  """
+  versionId: String
+
+  """Optional name for the workflow version during activation."""
+  name: String
+
+  """Optional description for the workflow version during activation."""
+  description: String
+}
+
+input put_workflows_by_id_transfer_request_Input {
+  """The ID of the project to transfer the workflow to."""
+  destinationProjectId: String!
+}
+
+type post_users_200_response {
+  user: mutation_post_users_user
+  error: String
+}
+
+type mutation_post_users_user {
+  id: String
+  email: String
+  inviteAcceptUrl: String
+  emailSent: Boolean
+}
+
+input mutationInput_post_users_input_items_Input {
+  email: EmailAddress!
+  role: URL
+}
+
+input patch_users_by_id_role_request_Input {
+  newRoleName: URL!
+}
+
+type importResult {
+  variables: mutation_post_source_control_pull_variables
+  credentials: [mutation_post_source_control_pull_credentials_items]
+  workflows: [mutation_post_source_control_pull_workflows_items]
+  tags: mutation_post_source_control_pull_tags
+  additionalProperties: JSON
+}
+
+type mutation_post_source_control_pull_variables {
+  added: [String]
+  changed: [String]
+}
+
+type mutation_post_source_control_pull_credentials_items {
+  id: String
+  name: String
+  type: String
+}
+
+type mutation_post_source_control_pull_workflows_items {
+  id: String
+  name: String
+}
+
+type mutation_post_source_control_pull_tags {
+  tags: [mutation_post_source_control_pull_tags_tags_items]
+  mappings: [mutation_post_source_control_pull_tags_mappings_items]
+}
+
+type mutation_post_source_control_pull_tags_tags_items {
+  id: String
+  name: String
+}
+
+type mutation_post_source_control_pull_tags_mappings_items {
+  workflowId: String
+  tagId: String
+}
+
+input pull_Input {
+  force: Boolean
+  autoPublish: mutationInput_post_source_control_pull_input_autoPublish = none
+  variables: mutationInput_post_source_control_pull_input_variables_Input
+}
+
+"""
+Controls automatic workflow publishing after import:
+- `none`: Keep workflows in their local published state (default)
+- `all`: Publish all imported workflows
+- `published`: Publish only workflows that were published locally before import
+"""
+enum mutationInput_post_source_control_pull_input_autoPublish {
+  none
+  all
+  published
+}
+
+input mutationInput_post_source_control_pull_input_variables_Input {
+  foo: String
+}
+
+input variable_create_Input {
+  id: String
+  key: String!
+  value: String!
+  type: String
+  projectId: String
+}
+
+input createDataTableRequest_Input {
+  """Name of the data table"""
+  name: mutationInput_create_data_table_input_name!
+
+  """Column definitions for the table"""
+  columns: [mutationInput_create_data_table_input_columns_items_Input]!
+}
+
+"""Name of the data table"""
+scalar mutationInput_create_data_table_input_name
+
+input mutationInput_create_data_table_input_columns_items_Input {
+  """Column name"""
+  name: NonEmptyString!
+  type: mutationInput_create_data_table_input_columns_items_type!
+}
+
+"""A string that cannot be passed as an empty value"""
+scalar NonEmptyString
+
+"""Column data type"""
+enum mutationInput_create_data_table_input_columns_items_type {
+  string
+  number
+  boolean
+  date
+  json
+}
+
+input updateDataTableRequest_Input {
+  """New name for the data table"""
+  name: mutationInput_update_data_table_input_name!
+}
+
+"""New name for the data table"""
+scalar mutationInput_update_data_table_input_name
+
+union insert_data_table_rows_200_response = mutation_insert_data_table_rows_oneOf_0 | Int_container | dataTableRow
+
+"""Number of rows inserted (when returnType is 'count')"""
+type mutation_insert_data_table_rows_oneOf_0 {
+  count: Int
+}
+
+type Int_container {
+  Int: Int
+}
+
+input insertRowsRequest_Input {
+  """
+  Array of rows to insert. Each row is an object with column names as keys.
+  """
+  data: [JSON]!
+  returnType: mutationInput_insert_data_table_rows_input_returnType = count
+}
+
+"""
+- count: Return only the number of rows inserted
+- id: Return an array of inserted row IDs
+- all: Return the full row data for all inserted rows
+"""
+enum mutationInput_insert_data_table_rows_input_returnType {
+  count
+  id
+  all
+}
+
+union update_data_table_rows_200_response = Boolean_container | dataTableRow
+
+type Boolean_container {
+  Boolean: Boolean
+}
+
+input updateRowsRequest_Input {
+  filter: mutationInput_update_data_table_rows_input_filter_Input!
+
+  """Column values to update"""
+  data: JSON!
+
+  """If true, return the updated rows; if false, return true on success"""
+  returnData: Boolean
+
+  """If true, preview changes without persisting them"""
+  dryRun: Boolean
+}
+
+"""Filter conditions to match rows for update"""
+input mutationInput_update_data_table_rows_input_filter_Input {
+  type: mutationInput_update_data_table_rows_input_filter_type = and
+  filters: [mutationInput_update_data_table_rows_input_filter_filters_items_Input]!
+}
+
+enum mutationInput_update_data_table_rows_input_filter_type {
+  and
+  or
+}
+
+input mutationInput_update_data_table_rows_input_filter_filters_items_Input {
+  columnName: String!
+  condition: mutationInput_update_data_table_rows_input_filter_filters_items_condition!
+  value: JSON!
+}
+
+enum mutationInput_update_data_table_rows_input_filter_filters_items_condition {
+  eq
+  neq
+  like
+  ilike
+  gt
+  gte
+  lt
+  lte
+}
+
+union upsert_data_table_row_200_response = Boolean_container | dataTableRow
+
+input upsertRowRequest_Input {
+  filter: mutationInput_upsert_data_table_row_input_filter_Input!
+
+  """Column values for the row"""
+  data: JSON!
+
+  """If true, return the upserted row; if false, return true on success"""
+  returnData: Boolean
+
+  """If true, preview changes without persisting them"""
+  dryRun: Boolean
+}
+
+"""
+Filter conditions to match existing row. If no row matches, a new row is inserted.
+"""
+input mutationInput_upsert_data_table_row_input_filter_Input {
+  type: mutationInput_upsert_data_table_row_input_filter_type = and
+  filters: [mutationInput_upsert_data_table_row_input_filter_filters_items_Input]!
+}
+
+enum mutationInput_upsert_data_table_row_input_filter_type {
+  and
+  or
+}
+
+input mutationInput_upsert_data_table_row_input_filter_filters_items_Input {
+  columnName: String!
+  condition: mutationInput_upsert_data_table_row_input_filter_filters_items_condition!
+  value: JSON!
+}
+
+enum mutationInput_upsert_data_table_row_input_filter_filters_items_condition {
+  eq
+  neq
+  like
+  ilike
+  gt
+  gte
+  lt
+  lte
+}
+
+union delete_data_table_rows_200_response = Boolean_container | dataTableRow
+
+input project_Input {
+  id: String
+  name: String!
+  type: String
+}
+
+input post_projects_by_projectId_users_request_Input {
+  """A list of userIds and roles to add to the project."""
+  relations: [mutationInput_post_projects_by_projectId_users_input_relations_items_Input]!
+}
+
+input mutationInput_post_projects_by_projectId_users_input_relations_items_Input {
+  """The unique identifier of the user."""
+  userId: String!
+
+  """The role assigned to the user in the project."""
+  role: URL!
+}
+
+input patch_projects_by_projectId_users_by_userId_request_Input {
+  """The role assigned to the user in the project."""
+  role: URL!
+}
+
+scalar ObjMap
+
+enum HTTPMethod {
+  GET
+  HEAD
+  POST
+  PUT
+  DELETE
+  CONNECT
+  OPTIONS
+  TRACE
+  PATCH
+}

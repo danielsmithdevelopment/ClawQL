@@ -1,9 +1,11 @@
 ---
 name: clawql-cache-workflows
-description: Use the optional cache tool as ephemeral scratch state during active sessions.
+description: Use the cache MCP tool (ClawQL Core, always on) as ephemeral scratch state during active sessions.
 ---
 
 # ClawQL cache workflows
+
+The **`cache`** tool is **ClawQL Core** — always registered ([#75](https://github.com/danielsmithdevelopment/ClawQL/issues/75), **closed**). It is not optional; do not confuse with vault **`memory_*`**.
 
 ## When to apply
 

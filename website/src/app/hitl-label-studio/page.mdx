@@ -1,0 +1,107 @@
+import { docsPageMetadata } from '@/lib/seo'
+
+export const metadata = docsPageMetadata({
+  title: 'HITL — Label Studio',
+  description:
+    'Optional hitl_enqueue_label_studio MCP tool and POST /hitl/label-studio/webhook: CLAWQL_ENABLE_HITL_LABEL_STUDIO, Label Studio API import, webhooks, vault memory_ingest vs audit, Helm, OpenClaw confidence routing.',
+  path: '/hitl-label-studio',
+})
+
+# HITL — Label Studio bridge
+
+ClawQL can enqueue **human review tasks** into **[Label Studio](https://labelstud.io/)** (your deployment) and receive **webhooks** when annotators finish work. This is **optional** and **off by default**. Enable it when you want agents or pipelines to route low-confidence outputs into a labeling UI and persist outcomes back into ClawQL (**`memory_ingest`** when vault memory is configured, else **`audit`**).
+
+**Canonical runbook (architecture, env matrix, Label Studio setup, security, troubleshooting, Helm, tests):** [hitl-label-studio.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/hitl-label-studio.md) · [mcp-tools.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp-tools.md) · issue [#228](https://github.com/danielsmithdevelopment/ClawQL/issues/228).
+
+---
+
+## What gets enabled
+
+| Surface                                    | When                                                                      |
+| ------------------------------------------ | ------------------------------------------------------------------------- |
+| MCP **`hitl_enqueue_label_studio`**        | **`CLAWQL_ENABLE_HITL_LABEL_STUDIO=1`**                                   |
+| HTTP **`POST /hitl/label-studio/webhook`** | Same flag on **`clawql-mcp-http`** (path is **not** under **`MCP_PATH`**) |
+
+Both require Streamable HTTP (or any deployment where **`clawql-mcp-http`** runs). Pure **stdio** MCP without HTTP does not expose the webhook until you add a reachable HTTP listener.
+
+---
+
+## Environment variables (quick reference)
+
+| Variable                                | Role                                                                                                                                                                                  |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`CLAWQL_ENABLE_HITL_LABEL_STUDIO=1`** | Registers the tool and webhook route.                                                                                                                                                 |
+| **`CLAWQL_LABEL_STUDIO_URL`**           | Label Studio base URL (no trailing slash), e.g. `https://label-studio.example.com`.                                                                                                   |
+| **`CLAWQL_LABEL_STUDIO_API_TOKEN`**     | User token for **`Authorization: Token …`** on **`POST /api/projects/{id}/import`**.                                                                                                  |
+| **`CLAWQL_HITL_WEBHOOK_TOKEN`**         | Shared secret for inbound webhooks (**`Authorization: Bearer`** or **`X-Clawql-Hitl-Token`**). **Required in production** (**`NODE_ENV=production`**) or the handler returns **503**. |
+
+Vault outcomes: if **`memory_ingest`** is available (memory not disabled + writable **`CLAWQL_OBSIDIAN_VAULT_PATH`**), webhooks append to note **`HITL Label Studio review`**. Otherwise **`audit`** only (ephemeral ring buffer).
+
+Full tables and behavior: [hitl-label-studio.md § Configuration](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/hitl-label-studio.md#4-clawql-configuration-reference).
+
+---
+
+## Label Studio operator steps (outline)
+
+1. **Deploy** Label Studio per [their install guide](https://labelstud.io/guide/install.html) (pip, Docker, or managed).
+2. **Create a project**, note **project id**, and align **labeling config** with the **`task.data`** fields your workflows send (e.g. `text`, `context`).
+3. **Issue an API token** that can **import tasks** — same value as **`CLAWQL_LABEL_STUDIO_API_TOKEN`**.
+4. **Configure a webhook** from Label Studio to **`https://<your-clawql-host>/hitl/label-studio/webhook`** with **`CLAWQL_HITL_WEBHOOK_TOKEN`** in headers; subscribe to annotation events you care about.
+5. **Network:** Label Studio must reach ClawQL’s HTTPS URL (Ingress, LoadBalancer, tailnet — see [Deployment](/deployment), [Tailscale](/tailscale)).
+
+---
+
+## MCP tool parameters
+
+**`hitl_enqueue_label_studio`** accepts:
+
+- **`project_id`** (required) — Label Studio project primary key.
+- **`tasks`** (required) — Array of `{ data?, meta? }`; shown as **`task.data`** / merged **`meta`** in the UI.
+- **`confidence`** (optional) — Stored under **`data.clawql_hitl.confidence`** **[0, 1]** for reviewer context.
+- **`correlation_id`** — **`data.clawql_hitl.correlation_id`**; flows to webhook **`memory_ingest`** **`sessionId`** when vault storage is used.
+- **`seed_id`**, **`provenance`** — Extra **`clawql_hitl`** metadata (avoid secrets in **`provenance`**).
+
+Example payload:
+
+```json
+{
+  "project_id": 3,
+  "tasks": [
+    {
+      "data": {
+        "text": "Classifier output to verify",
+        "ticket": "INC-9912"
+      }
+    }
+  ],
+  "confidence": 0.41,
+  "correlation_id": "openclaw-run-2026-04-28"
+}
+```
+
+Errors from Label Studio (401, 404, body) surface as tool **`error`** / **`detail`**.
+
+---
+
+## Pairing with Slack and OpenClaw
+
+- **Slack:** Use optional **`notify`** ([Slack notify](/notify)) for alerts when enqueue fails or when you want a channel ping alongside HITL — same optional tier as **`CLAWQL_ENABLE_NOTIFY`**.
+- **OpenClaw / IDP:** Orchestration chooses confidence thresholds; ClawQL only stores **`confidence`** on the task and records webhook results. Bootstrap: [openclaw/clawql-bootstrap.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/openclaw/clawql-bootstrap.md) ([#226](https://github.com/danielsmithdevelopment/ClawQL/issues/226)); umbrella [#128](https://github.com/danielsmithdevelopment/ClawQL/issues/128).
+
+---
+
+## Kubernetes / Helm
+
+Set **`enableHitlLabelStudio: true`** in **`charts/clawql-mcp`** and inject URL, API token, and webhook token via **`extraEnv`** or **`envFromSecret`**. Ensure **Ingress** exposes **`/hitl/label-studio/webhook`** on the same host you register in Label Studio.
+
+Details: [deployment/helm.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/helm.md) · [Helm](/helm).
+
+---
+
+## Testing and repo references
+
+- **`src/hitl-label-studio.test.ts`** — import path construction and webhook handling.
+- **`src/server-http.test.ts`** — route registration when the flag is on.
+- **`src/grpc-hitl-parity.test.ts`** — gRPC parity where applicable.
+
+See [Tools](/tools) for how **`hitl_enqueue_label_studio`** fits alongside **`search`**, **`execute`**, **`memory_*`**, **`notify`**, **`audit`**, and **`cache`**.

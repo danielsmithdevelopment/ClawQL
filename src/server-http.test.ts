@@ -480,4 +480,114 @@ describe("server-http", () => {
       resetSchemaFieldCache();
     }
   }, 25_000);
+
+  it("streamable HTTP listTools includes hitl_enqueue_label_studio when CLAWQL_ENABLE_HITL_LABEL_STUDIO=1 (#228)", async () => {
+    const vaultDir = mkdtempSync(join(tmpdir(), "clawql-http-hitl-"));
+    const savedHitl = process.env.CLAWQL_ENABLE_HITL_LABEL_STUDIO;
+    const savedVault = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
+    process.env.CLAWQL_ENABLE_HITL_LABEL_STUDIO = "1";
+    process.env.CLAWQL_OBSIDIAN_VAULT_PATH = vaultDir;
+    await mkdir(join(vaultDir, "Memory"), { recursive: true });
+    resetSpecCache();
+    resetSchemaFieldCache();
+    try {
+      await withHttpServer(async (base) => {
+        const { StreamableHTTPClientTransport } =
+          await import("@modelcontextprotocol/sdk/client/streamableHttp.js");
+        const { Client } = await import("@modelcontextprotocol/sdk/client/index.js");
+        const transport = new StreamableHTTPClientTransport(new URL(`${base}/mcp`));
+        const client = new Client({ name: "vitest-http-hitl", version: "1.0.0" }, {});
+        await client.connect(transport);
+        try {
+          const { tools } = await client.listTools();
+          const names = new Set(tools.map((t) => t.name));
+          expect(names.has("hitl_enqueue_label_studio")).toBe(true);
+        } finally {
+          await client.close();
+        }
+      });
+    } finally {
+      await rm(vaultDir, { recursive: true, force: true }).catch(() => {});
+      if (savedHitl === undefined) delete process.env.CLAWQL_ENABLE_HITL_LABEL_STUDIO;
+      else process.env.CLAWQL_ENABLE_HITL_LABEL_STUDIO = savedHitl;
+      if (savedVault === undefined) delete process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
+      else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = savedVault;
+      resetSpecCache();
+      resetSchemaFieldCache();
+    }
+  }, 25_000);
+
+  it("POST /hitl/label-studio/webhook returns 401 when token mismatch (#228)", async () => {
+    const vaultDir = mkdtempSync(join(tmpdir(), "clawql-http-hitl-wh-"));
+    const savedHitl = process.env.CLAWQL_ENABLE_HITL_LABEL_STUDIO;
+    const savedVault = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
+    const savedTok = process.env.CLAWQL_HITL_WEBHOOK_TOKEN;
+    process.env.CLAWQL_ENABLE_HITL_LABEL_STUDIO = "1";
+    process.env.CLAWQL_OBSIDIAN_VAULT_PATH = vaultDir;
+    await mkdir(join(vaultDir, "Memory"), { recursive: true });
+    process.env.CLAWQL_HITL_WEBHOOK_TOKEN = "expected-secret";
+    delete process.env.NODE_ENV;
+    resetSpecCache();
+    resetSchemaFieldCache();
+    try {
+      await withHttpServer(async (base) => {
+        const res = await fetch(`${base}/hitl/label-studio/webhook`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer wrong",
+          },
+          body: JSON.stringify({ task: { id: 1, data: {} } }),
+        });
+        expect(res.status).toBe(401);
+      });
+    } finally {
+      await rm(vaultDir, { recursive: true, force: true }).catch(() => {});
+      if (savedHitl === undefined) delete process.env.CLAWQL_ENABLE_HITL_LABEL_STUDIO;
+      else process.env.CLAWQL_ENABLE_HITL_LABEL_STUDIO = savedHitl;
+      if (savedVault === undefined) delete process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
+      else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = savedVault;
+      if (savedTok === undefined) delete process.env.CLAWQL_HITL_WEBHOOK_TOKEN;
+      else process.env.CLAWQL_HITL_WEBHOOK_TOKEN = savedTok;
+      resetSpecCache();
+      resetSchemaFieldCache();
+    }
+  }, 25_000);
+
+  it("POST /hitl/label-studio/webhook returns 503 in production without webhook token (#228)", async () => {
+    const vaultDir = mkdtempSync(join(tmpdir(), "clawql-http-hitl-prod-"));
+    const savedHitl = process.env.CLAWQL_ENABLE_HITL_LABEL_STUDIO;
+    const savedVault = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
+    const savedTok = process.env.CLAWQL_HITL_WEBHOOK_TOKEN;
+    const savedNodeEnv = process.env.NODE_ENV;
+    process.env.CLAWQL_ENABLE_HITL_LABEL_STUDIO = "1";
+    process.env.CLAWQL_OBSIDIAN_VAULT_PATH = vaultDir;
+    await mkdir(join(vaultDir, "Memory"), { recursive: true });
+    delete process.env.CLAWQL_HITL_WEBHOOK_TOKEN;
+    process.env.NODE_ENV = "production";
+    resetSpecCache();
+    resetSchemaFieldCache();
+    try {
+      await withHttpServer(async (base) => {
+        const res = await fetch(`${base}/hitl/label-studio/webhook`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({}),
+        });
+        expect(res.status).toBe(503);
+      });
+    } finally {
+      await rm(vaultDir, { recursive: true, force: true }).catch(() => {});
+      if (savedHitl === undefined) delete process.env.CLAWQL_ENABLE_HITL_LABEL_STUDIO;
+      else process.env.CLAWQL_ENABLE_HITL_LABEL_STUDIO = savedHitl;
+      if (savedVault === undefined) delete process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
+      else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = savedVault;
+      if (savedTok === undefined) delete process.env.CLAWQL_HITL_WEBHOOK_TOKEN;
+      else process.env.CLAWQL_HITL_WEBHOOK_TOKEN = savedTok;
+      if (savedNodeEnv === undefined) delete process.env.NODE_ENV;
+      else process.env.NODE_ENV = savedNodeEnv;
+      resetSpecCache();
+      resetSchemaFieldCache();
+    }
+  }, 25_000);
 });

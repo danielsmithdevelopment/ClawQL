@@ -1,6 +1,6 @@
 # ClawQL Grafana dashboards
 
-Tracking: [GitHub #210](https://github.com/danielsmithdevelopment/ClawQL/issues/210) (in-repo slice). Follow-ups (OpenClaw exposure, extra metrics panels, optional GitOps dashboards): [#225](https://github.com/danielsmithdevelopment/ClawQL/issues/225).
+**Shipped in-repo:** dashboard JSON + Prometheus scrape path ([#210](https://github.com/danielsmithdevelopment/ClawQL/issues/210) — closed). **Active follow-up:** [#225](https://github.com/danielsmithdevelopment/ClawQL/issues/225) (OpenClaw exposure, extra `/metrics` panels when series land, optional GitOps dashboard wiring).
 
 ## Bundled dashboard
 
@@ -18,22 +18,32 @@ For the Docker Desktop + Istio lab, see **[`docs/deployment/docker-desktop-istio
 
 ### Upstream Istio dashboards (mesh)
 
-Issue [#210](https://github.com/danielsmithdevelopment/ClawQL/issues/210) suggests importing community Istio dashboards when mesh metrics matter, for example Grafana.com IDs **7645**, **7639**, **11829** (verify against your Istio version; IDs can drift).
+[#225](https://github.com/danielsmithdevelopment/ClawQL/issues/225) references importing community Istio dashboards when mesh metrics matter; typical Grafana.com IDs **7645**, **7639**, **11829** (verify against your Istio version; IDs can drift).
 
-## OpenClaw exposure
+## Follow-up ([#225](https://github.com/danielsmithdevelopment/ClawQL/issues/225)) — OpenClaw + metrics backlog
 
-**OpenClaw** is **not** built in this repository. Human-facing embedding (iframes to Grafana, deep links, SSO alignment) is tracked with the Agent / OpenClaw stack in **[#128](https://github.com/danielsmithdevelopment/ClawQL/issues/128)**.
+**OpenClaw** is **not** built in this repository. Governed **iframe or deep-link** entry points from OpenClaw to Grafana (SSO, **`frame-ancestors`**, CSP) are tracked under **[#128](https://github.com/danielsmithdevelopment/ClawQL/issues/128)**; implementation usually lands in **Agent / OpenClaw** repos. This issue stays the **ClawQL-side umbrella** so acceptance does not get dropped.
 
-Recommended patterns for operators:
+**Suggested deliverables (cross-repo):**
 
-- **Deep link** from OpenClaw to this dashboard:  
+| Deliverable                                            | Owner            | Notes                                                                                                  |
+| ------------------------------------------------------ | ---------------- | ------------------------------------------------------------------------------------------------------ |
+| Short design note (URL patterns, auth, framing policy) | OpenClaw / Agent | Link PRs back to **#225** / **#128**.                                                                  |
+| Stable deep links or embedded panels                   | OpenClaw / Agent | After URLs exist, add PR links in a comment on **#225**.                                               |
+| Cross-links from this repo                             | ClawQL           | This section + [`docs/openclaw/clawql-bootstrap.md`](../openclaw/clawql-bootstrap.md) § Observability. |
+
+**Operators today (no OpenClaw required):**
+
+- **Deep link** to this dashboard after import:  
   `https://<your-grafana>/d/clawql-core-observability/clawql-core-observability`  
-  (path may include a slug; copy from Grafana UI after import.)
-- **Iframe** only when Grafana allows framing and **OIDC/session** policies match your OpenClaw IdP story (see [`docs/security/clawql-security-defense-in-depth.md`](../security/clawql-security-defense-in-depth.md) § central IdP).
+  (slug may differ; copy **Share → Link** from Grafana.)
+- **Iframe** only when Grafana allows framing and **OIDC/session** policies match your IdP story (see [`docs/security/clawql-security-defense-in-depth.md`](../security/clawql-security-defense-in-depth.md) § central IdP).
+
+**Optional GitOps:** provisioning dashboards from cluster config (ConfigMap sidecar, Grafana Helm dependency) is nice-to-have under **#225** — not required for single-cluster manual import.
 
 ## Roadmap metrics (not in `/metrics` yet)
 
-The following PromQL from [#210](https://github.com/danielsmithdevelopment/ClawQL/issues/210) planning is **not** wired to Prometheus today; they are documented on the dashboard as markdown until implemented:
+The following PromQL from [#210](https://github.com/danielsmithdevelopment/ClawQL/issues/210) / [#225](https://github.com/danielsmithdevelopment/ClawQL/issues/225) planning is **not** wired to Prometheus today; they are documented on the dashboard as markdown until implemented:
 
 - `clawql_mcp_tool_calls_total` …
 - `clawql_ouroboros_phase_duration_seconds_bucket` …

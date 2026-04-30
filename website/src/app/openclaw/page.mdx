@@ -1,0 +1,51 @@
+import { docsPageMetadata } from '@/lib/seo'
+
+export const metadata = docsPageMetadata({
+  title: 'OpenClaw + ClawQL',
+  description:
+    'Full guide: install openclaw CLI, run clawql-mcp-http or stdio, openclaw mcp set JSON for url vs command, CLAWQL_* env, smoke tests, Tailscale and Helm, IDP skill profile link.',
+  path: '/openclaw',
+})
+
+# OpenClaw + ClawQL
+
+**OpenClaw** (npm **`openclaw`**) is a separate gateway/agent product. **ClawQL** (npm **`clawql-mcp`**, this repo) is an MCP server that exposes **`search`**, **`execute`**, and optional tools over **stdio** or **Streamable HTTP** (`…/mcp`). You register ClawQL inside OpenClaw so agents can call APIs through ClawQL’s merged OpenAPI surface.
+
+**Canonical full guide (install, transports, `openclaw mcp set`, env, validation, remote URLs, troubleshooting):** [using-openclaw-with-clawql.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/openclaw/using-openclaw-with-clawql.md).
+
+**Short bootstrap + smoke checklist:** [clawql-bootstrap.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/openclaw/clawql-bootstrap.md) ([#226](https://github.com/danielsmithdevelopment/ClawQL/issues/226)).
+
+**OpenClaw IDP skill profile** (document pipeline contract): [openclaw-idp-skill-profile.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/openclaw/openclaw-idp-skill-profile.md) ([#227](https://github.com/danielsmithdevelopment/ClawQL/issues/227)).
+
+---
+
+## Quick start
+
+1. **`npm install -g openclaw`** — verify **`openclaw --version`**.
+2. Run ClawQL HTTP: **`PORT=8080 npm run start:http`** (from a built clone) or **`npx -p clawql-mcp clawql-mcp-http`**.
+3. Register MCP:
+
+```bash
+openclaw mcp set clawql '{"url":"http://127.0.0.1:8080/mcp"}'
+```
+
+4. **`openclaw mcp list`** / **`openclaw mcp show clawql`** — then exercise **`search` → `execute`** from OpenClaw.
+
+Stdio alternative: **`openclaw mcp set clawql '{"command":"npx","args":["-y","clawql-mcp"]}'`**.
+
+---
+
+## npm name gotcha
+
+- **`clawql-mcp`** — this project’s MCP server (what you register for API **`search`/`execute`**).
+- **`openclaw-mcp`** — different package (bridge toward an OpenClaw gateway for clients like Claude Desktop). Not required to wire **ClawQL** into **`openclaw mcp set`**.
+
+---
+
+## Also see
+
+- [MCP clients](/mcp-clients) — Cursor / Claude-style **`mcp.json`** shapes (same JSON fields OpenClaw expects).
+- [Deployment](/deployment) — Streamable HTTP, **`/mcp`**, Tailscale.
+- [Tools](/tools) — ClawQL tool tiers.
+
+Ecosystem umbrella: [#128](https://github.com/danielsmithdevelopment/ClawQL/issues/128).

@@ -31,8 +31,9 @@ In **regulated** environments (HIPAA / SOC 2–style controls), treat **`/health
 
 ## OpenClaw (MCP registration)
 
-OpenClaw acts as an MCP client toward ClawQL.
+OpenClaw acts as an MCP host / gateway toward ClawQL.
 
+- **Full guide:** **[`docs/openclaw/using-openclaw-with-clawql.md`](../openclaw/using-openclaw-with-clawql.md)** — install **`openclaw`**, run **`clawql-mcp-http`** or stdio, **`openclaw mcp set`**, remote URLs; website **`/openclaw`** on docs site.
 - **Phase 0 — bootstrap:** **[`docs/openclaw/clawql-bootstrap.md`](../openclaw/clawql-bootstrap.md)** ([#226](https://github.com/danielsmithdevelopment/ClawQL/issues/226); umbrella [#128](https://github.com/danielsmithdevelopment/ClawQL/issues/128)) — registration, env matrix, **`npm run smoke:openclaw-bootstrap`**.
 - **IDP skill profile — default agent/operator contract:** **[`docs/openclaw/openclaw-idp-skill-profile.md`](../openclaw/openclaw-idp-skill-profile.md)** ([#227](https://github.com/danielsmithdevelopment/ClawQL/issues/227)) — document toolchain matrix, **`search`/`execute`** vs wrappers, reference ingest→index workflow.
 

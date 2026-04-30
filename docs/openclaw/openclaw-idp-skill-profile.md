@@ -1,6 +1,6 @@
 # OpenClaw IDP skill profile (ClawQL document pipeline)
 
-This is the **canonical** operator + agent contract for **OpenClaw-triggered intelligent document processing (IDP)** on ClawQL MCP. It satisfies **[#227](https://github.com/danielsmithdevelopment/ClawQL/issues/227)**. Bootstrap wiring and smokes: **[`clawql-bootstrap.md`](clawql-bootstrap.md)** ([#226](https://github.com/danielsmithdevelopment/ClawQL/issues/226)). Umbrella tracking: **[#128](https://github.com/danielsmithdevelopment/ClawQL/issues/128)**.
+This is the **canonical** operator + agent contract for **OpenClaw-triggered intelligent document processing (IDP)** on ClawQL MCP. It satisfies **[#227](https://github.com/danielsmithdevelopment/ClawQL/issues/227)**. End-to-end OpenClaw install + MCP registration: **[`using-openclaw-with-clawql.md`](using-openclaw-with-clawql.md)**. Bootstrap wiring and smokes: **[`clawql-bootstrap.md`](clawql-bootstrap.md)** ([#226](https://github.com/danielsmithdevelopment/ClawQL/issues/226)). Umbrella tracking: **[#128](https://github.com/danielsmithdevelopment/ClawQL/issues/128)**.
 
 ## Profile summary
 
@@ -53,7 +53,8 @@ Pair durable operator trails with **`memory_ingest`** / **`memory_recall`** when
 
 ## Where operators start
 
-1. **[`clawql-bootstrap.md`](clawql-bootstrap.md)** — MCP registration + **`npm run smoke:openclaw-bootstrap`**.
-2. This page — **IDP** defaults and matrix.
-3. **[`docs/mcp-tools.md`](../mcp-tools.md)** — authoritative tool catalog.
-4. **[`providers/README.md`](../providers/README.md)** — bundled **`operationId`** sources.
+1. **[`using-openclaw-with-clawql.md`](using-openclaw-with-clawql.md)** — full OpenClaw + ClawQL guide (install, **`openclaw mcp set`**, validation).
+2. **[`clawql-bootstrap.md`](clawql-bootstrap.md)** — MCP registration + **`npm run smoke:openclaw-bootstrap`**.
+3. This page — **IDP** defaults and matrix.
+4. **[`docs/mcp-tools.md`](../mcp-tools.md)** — authoritative tool catalog.
+5. **[`providers/README.md`](../providers/README.md)** — bundled **`operationId`** sources.

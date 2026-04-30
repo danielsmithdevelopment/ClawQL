@@ -35,6 +35,8 @@ const rawOptionalFlagsSchema = z.object({
   CLAWQL_ENABLE_ONYX: z.string().optional(),
   CLAWQL_ENABLE_OUROBOROS: z.string().optional(),
   CLAWQL_ENABLE_SANDBOX: z.string().optional(),
+  /** ([#228](https://github.com/danielsmithdevelopment/ClawQL/issues/228)): HITL Label Studio enqueue + webhook path. Default false. */
+  CLAWQL_ENABLE_HITL_LABEL_STUDIO: z.string().optional(),
 });
 
 export type ClawqlOptionalToolFlags = {
@@ -78,6 +80,10 @@ export type ClawqlOptionalToolFlags = {
    * ([#207](https://github.com/danielsmithdevelopment/ClawQL/issues/207)): MCP **`sandbox_exec`** (bridge / Seatbelt / Docker). Default false — register with **`CLAWQL_ENABLE_SANDBOX=1`**.
    */
   enableSandbox: boolean;
+  /**
+   * ([#228](https://github.com/danielsmithdevelopment/ClawQL/issues/228)): **`hitl_enqueue_label_studio`** + **`POST /hitl/label-studio/webhook`**. Default false.
+   */
+  enableHitlLabelStudio: boolean;
 };
 
 function rawToFlags(raw: z.infer<typeof rawOptionalFlagsSchema>): ClawqlOptionalToolFlags {
@@ -93,6 +99,7 @@ function rawToFlags(raw: z.infer<typeof rawOptionalFlagsSchema>): ClawqlOptional
     enableOnyxKnowledge: envTruthy(raw.CLAWQL_ENABLE_ONYX),
     enableOuroboros: envTruthy(raw.CLAWQL_ENABLE_OUROBOROS),
     enableSandbox: envTruthy(raw.CLAWQL_ENABLE_SANDBOX),
+    enableHitlLabelStudio: envTruthy(raw.CLAWQL_ENABLE_HITL_LABEL_STUDIO),
   };
 }
 

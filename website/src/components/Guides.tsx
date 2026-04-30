@@ -57,6 +57,12 @@ const guides = [
       'Optional notify tool (CLAWQL_ENABLE_NOTIFY): chat.postMessage, tokens, channels, and JSON examples.',
   },
   {
+    href: '/hitl-label-studio',
+    name: 'HITL — Label Studio',
+    description:
+      'Optional hitl_enqueue_label_studio (CLAWQL_ENABLE_HITL_LABEL_STUDIO): Label Studio import API, webhook to memory_ingest or audit, Helm and OpenClaw notes.',
+  },
+  {
     href: '/onyx-knowledge',
     name: 'Onyx knowledge search',
     description:
