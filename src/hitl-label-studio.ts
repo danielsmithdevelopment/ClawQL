@@ -86,7 +86,7 @@ export async function labelStudioImportTasks(
   }
 
   const text = await httpResponse.text();
-  let parsed: unknown = text;
+  let parsed: unknown;
   try {
     parsed = text ? JSON.parse(text) : null;
   } catch {
@@ -282,7 +282,7 @@ export async function handleLabelStudioWebhookRequest(req: Request, res: Respons
       toolOutputs: [`## Webhook payload\n\n\`\`\`json\n${truncated}\n\`\`\``],
     });
     const text = mem.content[0]?.text ?? "{}";
-    let parsed: unknown = text;
+    let parsed: unknown;
     try {
       parsed = JSON.parse(text);
     } catch {
