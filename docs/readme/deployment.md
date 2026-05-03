@@ -27,7 +27,7 @@ Endpoints:
 - **Prometheus:** `http://localhost:8080/metrics` — OpenMetrics text for native-protocol gauges/counters (**`prom-client`**); scrape this target from Prometheus rather than parsing **`/healthz`**. Set **`CLAWQL_DISABLE_HTTP_METRICS=1`** only if the route must be omitted (rare). Optional Grafana dashboard: **[`docs/grafana/clawql-core-observability.json`](../grafana/clawql-core-observability.json)** + **[`docs/grafana/README.md`](../grafana/README.md)** ([#210](https://github.com/danielsmithdevelopment/ClawQL/issues/210)).
 - GraphQL debug endpoint: `http://localhost:8080/graphql`
 
-In **regulated** environments (HIPAA / SOC 2–style controls), treat **`/healthz`** and **`/metrics`** as **internal-only**: restrict routes with network policy, TLS, and mesh placement; never put identifiable patient data in **`sourceLabel`** or metric dimensions. See **[`docs/enterprise-mcp-tools.md` § Regulated deployments](../enterprise-mcp-tools.md#regulated-deployments)** ([#133](https://github.com/danielsmithdevelopment/ClawQL/issues/133)).
+In **regulated** environments (HIPAA / SOC 2–style controls), treat **`/healthz`** and **`/metrics`** as **internal-only**: restrict routes with network policy, TLS, and mesh placement; never put identifiable patient data in **`sourceLabel`** or metric dimensions. See **[`docs/mcp/enterprise-mcp-tools.md` § Regulated deployments](../mcp/enterprise-mcp-tools.md#regulated-deployments)** ([#133](https://github.com/danielsmithdevelopment/ClawQL/issues/133)).
 
 ## OpenClaw (MCP registration)
 

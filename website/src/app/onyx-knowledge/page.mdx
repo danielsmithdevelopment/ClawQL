@@ -16,7 +16,7 @@ The optional **`knowledge_search_onyx`** MCP tool queries your **[Onyx](https://
 - **Connectivity:** **`ONYX_BASE_URL`** = HTTP API root (often ends with **`/api`**). **Auth:** **`ONYX_API_TOKEN`** or **`CLAWQL_ONYX_API_TOKEN`** as **Bearer**, or **`CLAWQL_PROVIDER_AUTH_JSON`** with an **`onyx`** key.
 - **Provider matrix:** default bundle positioning and auth fields live in one place: [Bundled specs](/bundled-specs).
 
-**Canonical guide (setup, wrapper vs `execute`, examples, errors, `memory_ingest` / `notify`):** [onyx-knowledge-tool.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/onyx-knowledge-tool.md) · [mcp-tools.md § knowledge_search_onyx](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp-tools.md#knowledge_search_onyx-optional) · issue [#118](https://github.com/danielsmithdevelopment/ClawQL/issues/118).
+**Canonical guide (setup, wrapper vs `execute`, examples, errors, `memory_ingest` / `notify`):** [onyx-knowledge-tool.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/onyx-knowledge-tool.md) · [mcp-tools.md § knowledge_search_onyx](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md#knowledge_search_onyx-optional) · issue [#118](https://github.com/danielsmithdevelopment/ClawQL/issues/118).
 
 ## Topology and deployment pointers
 
@@ -61,7 +61,7 @@ Equivalent **`execute`** (merged **`onyx`** label):
 
 ## Vault and Slack
 
-- After retrieval, use **`memory_ingest`** to persist a short summary and redacted hit list so **`memory_recall`** can surface it in later sessions — see [vault memory](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/memory-obsidian.md).
+- After retrieval, use **`memory_ingest`** to persist a short summary and redacted hit list so **`memory_recall`** can surface it in later sessions — see [vault memory](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/memory/memory-obsidian.md).
 - Use optional **`notify`** to post completion signals with links — [Slack notify](/notify).
 
 ## Tests

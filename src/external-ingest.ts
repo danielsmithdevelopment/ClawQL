@@ -204,7 +204,7 @@ export async function runIngestExternalKnowledge(
       stub: true,
       enabled: false,
       vaultConfigured,
-      hint: "Set CLAWQL_ENABLE_DOCUMENTS=1 (or unset) for document tools. See docs/mcp-tools.md.",
+      hint: "Set CLAWQL_ENABLE_DOCUMENTS=1 (or unset) for document tools. See docs/mcp/mcp-tools.md.",
       message: "Document tools are disabled (CLAWQL_ENABLE_DOCUMENTS=0).",
       roadmap: [],
       relatedIssues: [40],
@@ -220,7 +220,7 @@ export async function runIngestExternalKnowledge(
       stub: true,
       enabled: false,
       vaultConfigured,
-      hint: "External bulk ingest is not enabled. Set CLAWQL_EXTERNAL_INGEST=1. See docs/external-ingest.md.",
+      hint: "External bulk ingest is not enabled. Set CLAWQL_EXTERNAL_INGEST=1. See docs/mcp/external-ingest.md.",
       message:
         "Feature disabled. Set CLAWQL_EXTERNAL_INGEST=1 to import Markdown or (with CLAWQL_EXTERNAL_INGEST_FETCH=1) fetch a URL.",
       roadmap: [],

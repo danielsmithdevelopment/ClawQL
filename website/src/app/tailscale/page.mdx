@@ -70,7 +70,7 @@ Example URLs: **`http://mac-mini.clawql.local:8080/mcp`**, **`/healthz`** — sa
 
 - Never commit **live** pre-auth keys, MCP bearer tokens, or bridge secrets.
 - Prefer **HTTPS** for MCP where clients expect TLS; restrict **host firewalls** to **100.64.0.0/10** or ACL tags when binding **`0.0.0.0`**.
-- Treat **public MCP** as a separate product decision — **[`docs/enterprise-mcp-tools.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/enterprise-mcp-tools.md)**.
+- Treat **public MCP** as a separate product decision — **[`docs/mcp/enterprise-mcp-tools.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/enterprise-mcp-tools.md)**.
 
 ## HIPAA, SOC 2, GDPR / CCPA (how this pattern helps)
 
@@ -80,7 +80,7 @@ Example URLs: **`http://mac-mini.clawql.local:8080/mcp`**, **`/healthz`** — sa
 - **Encryption in transit:** **WireGuard** between nodes; add **HTTPS** (Serve / proxy) for app-layer TLS where required—relevant to **HIPAA Security Rule** transmission safeguards and **GDPR Art. 32** when documented as part of TOMs.
 - **Vendors & residency:** **Managed Tailscale** is a **subprocessor** (metadata, control plane)—put it in your **DPA** / transfer analysis (**GDPR Ch. V**). **Headscale** can support **in-region** control-plane ownership if **you** run it securely.
 - **HIPAA:** supports **technical** safeguards only alongside **administrative/physical** controls, **BAA**s, minimum necessary, and breach processes—especially if tools can reach **ePHI** systems.
-- **Evidence:** document data flows (agent → MCP → each **`BASE_URL`**), ACL owners, and what logs retain—pair with app **`audit`** / SIEM as in **[`enterprise-mcp-tools.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/enterprise-mcp-tools.md)**.
+- **Evidence:** document data flows (agent → MCP → each **`BASE_URL`**), ACL owners, and what logs retain—pair with app **`audit`** / SIEM as in **[`enterprise-mcp-tools.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/enterprise-mcp-tools.md)**.
 
 Full tables, auditor checklist, and disclaimers: **[`tailscale-and-headscale-for-clawql.md` § Regulatory and compliance](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/tailscale-and-headscale-for-clawql.md#regulatory-and-compliance-context-how-tailnets-help)**.
 

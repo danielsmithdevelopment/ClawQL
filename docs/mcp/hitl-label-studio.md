@@ -218,11 +218,11 @@ Full keys table: [`docs/deployment/helm.md`](deployment/helm.md).
 
 | Doc                                                                 | Topic                                                                                  |
 | ------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| [`docs/mcp-tools.md`](mcp-tools.md)                                 | **`hitl_enqueue_label_studio`** in tools matrix                                        |
-| [`docs/notify-tool.md`](notify-tool.md)                             | Slack **`notify`** ([#77](https://github.com/danielsmithdevelopment/ClawQL/issues/77)) |
+| [`docs/mcp/mcp-tools.md`](mcp-tools.md)                             | **`hitl_enqueue_label_studio`** in tools matrix                                        |
+| [`docs/mcp/notify-tool.md`](notify-tool.md)                         | Slack **`notify`** ([#77](https://github.com/danielsmithdevelopment/ClawQL/issues/77)) |
 | [`docs/openclaw/clawql-bootstrap.md`](openclaw/clawql-bootstrap.md) | OpenClaw MCP registration                                                              |
 | [`docs/deployment/helm.md`](deployment/helm.md)                     | **`enableHitlLabelStudio`**                                                            |
-| [`docs/enterprise-mcp-tools.md`](enterprise-mcp-tools.md)           | Feature-flag table                                                                     |
+| [`docs/mcp/enterprise-mcp-tools.md`](enterprise-mcp-tools.md)       | Feature-flag table                                                                     |
 | [Label Studio docs](https://labelstud.io/guide/)                    | Import API, webhooks, projects                                                         |
 
 ---

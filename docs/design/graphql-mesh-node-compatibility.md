@@ -66,7 +66,7 @@ If the process loads **`providers/slack/openapi.json`** (for example merged **`a
 >
 > **Downstream**
 >
-> - [ClawQL](https://github.com/danielsmithdevelopment/ClawQL) — in-process OpenAPI→GraphQL for `execute` / `notify`; we document behavior and use a minimal Slack fixture in Vitest for the GraphQL path. Doc: [`docs/graphql-mesh-node-compatibility.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/graphql-mesh-node-compatibility.md).
+> - [ClawQL](https://github.com/danielsmithdevelopment/ClawQL) — in-process OpenAPI→GraphQL for `execute` / `notify`; we document behavior and use a minimal Slack fixture in Vitest for the GraphQL path. Doc: [`docs/design/graphql-mesh-node-compatibility.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/graphql-mesh-node-compatibility.md).
 
 ## Upstream tracking
 

@@ -103,7 +103,7 @@ export function planVaultMarkdownChunks(
   return { strategy: CHUNK_STRATEGY_PARAGRAPH_V1, indexBody, indexBodySha256, chunks };
 }
 
-/** Stable chunk id for upserts and embedding dedupe (see docs/memory-db-schema.md). */
+/** Stable chunk id for upserts and embedding dedupe (see docs/memory/memory-db-schema.md). */
 export function vaultChunkId(
   vaultRelativePath: string,
   strategy: ChunkStrategyId,

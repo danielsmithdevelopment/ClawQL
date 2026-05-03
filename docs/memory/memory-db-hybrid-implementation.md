@@ -206,4 +206,4 @@ Each **`loadWikilinkEdgesFromDatabase`** call: open/read or empty, migrate, sele
 - **[memory-db-schema.md](memory-db-schema.md)** — DDL-oriented reference.
 - **[memory-obsidian.md](memory-obsidian.md)** — why the vault exists; link to sidecar.
 - **[vector-search-design.md](vector-search-design.md)** — vector/embeddings design; **`memory_recall`** hybrid behavior is implemented; spec **`search`** vectors remain directional.
-- **[mcp-tools.md](mcp-tools.md)** — MCP tool table updated for ingest/recall + DB behavior.
+- **[mcp-tools.md](../mcp/mcp-tools.md)** — MCP tool table updated for ingest/recall + DB behavior.

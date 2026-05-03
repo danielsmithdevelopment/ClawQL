@@ -64,11 +64,11 @@ Results include path, score, depth, reason (`keyword` | `link` | `vector`), and 
 
 ### Optional `cache` (not vault)
 
-**`cache`** (**ClawQL Core**, always registered) is **ephemeral** key/value in this process, **LRU**-bounded, **no** Markdown / **`memory.db`**. **`memory_ingest`** / **`memory_recall`** are on by default; set **`CLAWQL_ENABLE_MEMORY=0`** to hide, and use a configured vault to persist. Repo reference: **[`docs/cache-tool.md`](../../../docs/cache-tool.md)**.
+**`cache`** (**ClawQL Core**, always registered) is **ephemeral** key/value in this process, **LRU**-bounded, **no** Markdown / **`memory.db`**. **`memory_ingest`** / **`memory_recall`** are on by default; set **`CLAWQL_ENABLE_MEMORY=0`** to hide, and use a configured vault to persist. Repo reference: **[`docs/mcp/cache-tool.md`](../../../docs/mcp/cache-tool.md)**.
 
-The server always exposes **`audit`**: **ephemeral** in-process event ring buffer — **not** the vault and **not** compliance-grade alone. Use **`memory_ingest`** for durable, human-inspectable trails. Repo reference: **[`docs/enterprise-mcp-tools.md`](../../../docs/enterprise-mcp-tools.md)** ([#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)).
+The server always exposes **`audit`**: **ephemeral** in-process event ring buffer — **not** the vault and **not** compliance-grade alone. Use **`memory_ingest`** for durable, human-inspectable trails. Repo reference: **[`docs/mcp/enterprise-mcp-tools.md`](../../../docs/mcp/enterprise-mcp-tools.md)** ([#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)).
 
-When **`CLAWQL_ENABLE_NOTIFY`** is set, the server exposes **`notify`**: Slack **`chat.postMessage`** — **not** vault storage; use for completion signals alongside **`memory_ingest`** when you also want a durable note. Repo reference: **[`docs/notify-tool.md`](../../../docs/notify-tool.md)** ([#77](https://github.com/danielsmithdevelopment/ClawQL/issues/77)).
+When **`CLAWQL_ENABLE_NOTIFY`** is set, the server exposes **`notify`**: Slack **`chat.postMessage`** — **not** vault storage; use for completion signals alongside **`memory_ingest`** when you also want a durable note. Repo reference: **[`docs/mcp/notify-tool.md`](../../../docs/mcp/notify-tool.md)** ([#77](https://github.com/danielsmithdevelopment/ClawQL/issues/77)).
 
 ---
 
@@ -151,6 +151,6 @@ memory_ingest: title (required), insights?, conversation?, toolOutputs? (string 
 memory_recall: query (required), limit?, maxDepth?, minScore?
 ```
 
-Repo details: **[`docs/mcp-tools.md`](../../../docs/mcp-tools.md)** (section **memory_ingest**).
+Repo details: **[`docs/mcp/mcp-tools.md`](../../../docs/mcp/mcp-tools.md)** (section **memory_ingest**).
 
-For implementation details (SQLite/pgvector, index), see `docs/memory-db-hybrid-implementation.md` in the repo when relevant.
+For implementation details (SQLite/pgvector, index), see `docs/memory/memory-db-hybrid-implementation.md` in the repo when relevant.

@@ -2,7 +2,7 @@
  * Extension points for hybrid memory persistence (SQLite default, Postgres optional).
  *
  * Implementations live in `src/memory-db.ts`, `src/vector-store/pgvector.ts`, and future
- * modules. See docs/hybrid-memory-backends.md.
+ * modules. See docs/memory/hybrid-memory-backends.md.
  */
 
 /** Where chunk embeddings are indexed for `memory_recall` (see CLAWQL_VECTOR_BACKEND). */

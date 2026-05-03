@@ -6,12 +6,9 @@ This directory is organized by purpose so operational guides, product docs, and 
 
 - ClawQL ecosystem (vision deck — core loop, hybrid memory, pipeline, Onyx, Ouroboros, infra, roadmap): [`clawql-ecosystem.md`](clawql-ecosystem.md)
 - Feature tiers (always on / default-on opt-out / default-off opt-in): `readme/configuration.md` § **Feature tiers** — diagram: [`readme/images/clawql-feature-tiers.png`](readme/images/clawql-feature-tiers.png)
-- Tool reference: `mcp-tools.md`
-- External ingest: `external-ingest.md`
-- Memory and vault: `memory-obsidian.md`, `memory-db-schema.md`, `memory-db-hybrid-implementation.md`, `hybrid-memory-backends.md`
-- Core in-process tools: `cache-tool.md` (LRU session cache), `enterprise-mcp-tools.md` (`audit` ring buffer)
-- Optional tools: `notify-tool.md`, `hitl-label-studio.md` (website **`/hitl-label-studio`**), `onyx-knowledge-tool.md`, `schedule-synthetic-checks.md`
-- Ouroboros: `clawql-ouroboros.md`
+- MCP tools and operator guides: [`mcp/mcp-tools.md`](mcp/mcp-tools.md), [`mcp/external-ingest.md`](mcp/external-ingest.md), [`mcp/cache-tool.md`](mcp/cache-tool.md), [`mcp/enterprise-mcp-tools.md`](mcp/enterprise-mcp-tools.md), [`mcp/notify-tool.md`](mcp/notify-tool.md), [`mcp/hitl-label-studio.md`](mcp/hitl-label-studio.md), [`mcp/onyx-knowledge-tool.md`](mcp/onyx-knowledge-tool.md), [`mcp/schedule-synthetic-checks.md`](mcp/schedule-synthetic-checks.md)
+- Memory and vault: [`memory/memory-obsidian.md`](memory/memory-obsidian.md), [`memory/memory-db-schema.md`](memory/memory-db-schema.md), [`memory/memory-db-hybrid-implementation.md`](memory/memory-db-hybrid-implementation.md), [`memory/hybrid-memory-backends.md`](memory/hybrid-memory-backends.md), [`memory/vector-search-design.md`](memory/vector-search-design.md)
+- Ouroboros library: [`ouroboros/clawql-ouroboros.md`](ouroboros/clawql-ouroboros.md)
 
 ## Getting Started and README Splits
 
@@ -54,7 +51,7 @@ This directory is organized by purpose so operational guides, product docs, and 
 ## Architecture / ADR / Design
 
 - ADRs: `adr/` — includes [**0002 Multi-protocol supergraph**](adr/0002-multi-protocol-supergraph.md) (native GraphQL + gRPC merged via **`CLAWQL_GRAPHQL_SOURCES`** / **`CLAWQL_GRPC_SOURCES`**; epic [#178](https://github.com/danielsmithdevelopment/ClawQL/issues/178))
-- Design docs: `vector-search-design.md`, `OPENAPI_TO_GRAPHQL_UPSTREAM.md`, `graphql-mesh-node-compatibility.md`
+- Design docs: [`design/OPENAPI_TO_GRAPHQL_UPSTREAM.md`](design/OPENAPI_TO_GRAPHQL_UPSTREAM.md), [`design/graphql-mesh-node-compatibility.md`](design/graphql-mesh-node-compatibility.md); vector / recall design notes live under **`memory/`** (e.g. [`memory/vector-search-design.md`](memory/vector-search-design.md))
 
 ## Content Collections
 

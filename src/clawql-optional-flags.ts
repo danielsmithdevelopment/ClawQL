@@ -1,6 +1,6 @@
 /**
  * Single place to interpret optional feature flags (env → typed booleans).
- * See docs/mcp-tools.md and GitHub #79.
+ * See docs/mcp/mcp-tools.md and GitHub #79.
  */
 
 import { z } from "zod";

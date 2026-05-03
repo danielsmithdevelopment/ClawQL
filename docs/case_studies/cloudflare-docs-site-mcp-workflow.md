@@ -48,7 +48,7 @@ When **`execute`** fails, the fix is often **not** “change Next.js” — it i
 | **ClawQL MCP**                        | Bundled **Cloudflare** provider (`CLAWQL_PROVIDER=cloudflare` or merged presets) for **`search`** / **`execute`** against Cloudflare’s REST surface.                                       |
 | **`CLAWQL_CLOUDFLARE_API_TOKEN`**     | Bearer for **`execute`**. Same variable name as in [`src/auth-headers.ts`](../../src/auth-headers.ts). Must be on the **MCP process** (stdio or HTTP), **not** only in an IDE-only `.env`. |
 | **`CLOUDFLARE_API_TOKEN`**            | Alias accepted by the deploy script and many tools — normalize on one token to avoid “works in Wrangler, missing in MCP.”                                                                  |
-| **`memory_recall` / `memory_ingest`** | Require **`CLAWQL_OBSIDIAN_VAULT_PATH`** (see [`docs/memory-obsidian.md`](../memory-obsidian.md)).                                                                                         |
+| **`memory_recall` / `memory_ingest`** | Require **`CLAWQL_OBSIDIAN_VAULT_PATH`** (see [`docs/memory/memory-obsidian.md`](../memory/memory-obsidian.md)).                                                                           |
 | **Website**                           | Next.js App Router + **OpenNext** for Cloudflare (`@opennextjs/cloudflare`), **Wrangler** Worker **`clawql-docs`**, route **`docs.clawql.com`**.                                           |
 | **`NEXT_PUBLIC_SITE_URL`**            | Should be **`https://docs.clawql.com`** at build time so canonical URLs, OG metadata, and sitemap bases match production.                                                                  |
 
@@ -189,7 +189,7 @@ After a deploy, if something still looks **stale** at the edge, use Cloudflare *
 
 ## 13. References
 
-- [`docs/mcp-tools.md`](../mcp-tools.md) — MCP tool surface.
+- [`docs/mcp/mcp-tools.md`](../mcp/mcp-tools.md) — MCP tool surface.
 - [`docs/integrations/cursor-vault-memory.md`](../integrations/cursor-vault-memory.md) — Cursor rules + vault skill.
 - [`docs/website/website-caching.md`](../website/website-caching.md) — CDN / browser caching for **`docs.clawql.com`** (`next.config` + `public/_headers`).
 - [`docs/case_studies/README.md`](README.md) — index of case studies.
