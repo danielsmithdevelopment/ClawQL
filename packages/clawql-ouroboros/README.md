@@ -6,7 +6,7 @@
 
 | Resource | Link |
 | -------- | ---- |
-| **Long-form guide + copy-paste examples** | [docs/clawql-ouroboros.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/clawql-ouroboros.md) |
+| **Long-form guide + copy-paste examples** | [docs/ouroboros/clawql-ouroboros.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/ouroboros/clawql-ouroboros.md) |
 | **Human-friendly overview (ClawQL docs site)** | [docs.clawql.com/ouroboros](https://docs.clawql.com/ouroboros) |
 | **Source** | [packages/clawql-ouroboros](https://github.com/danielsmithdevelopment/ClawQL/tree/main/packages/clawql-ouroboros) |
 | **Issues / discussions** | [ClawQL issues](https://github.com/danielsmithdevelopment/ClawQL/issues) |
@@ -124,7 +124,7 @@ const result = await loop.run(seed);
 await loop.run(seed, { maxGenerations: 5, convergenceThreshold: 0.92 });
 ```
 
-More examples (convergence-only, MCP hooks, poller) are in the **[full guide](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/clawql-ouroboros.md)**.
+More examples (convergence-only, MCP hooks, poller) are in the **[full guide](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/ouroboros/clawql-ouroboros.md)**.
 
 ## What you implement
 

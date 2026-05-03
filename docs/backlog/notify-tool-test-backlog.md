@@ -30,7 +30,7 @@ Shipped coverage lives in **`src/clawql-notify.test.ts`**, **`src/server.test.ts
 
 - Add an **opt-in** script (e.g. **`npm run test:notify:live`**) gated on **`CLAWQL_SLACK_TEST_CHANNEL`** + **`CLAWQL_SLACK_TOKEN`** (or a dedicated test workspace token).
 - Alternatively: record **`nock`** / **MSW** cassettes for **`chat.postMessage`** request shape (form body, `Authorization: Bearer`, path) and commit **sanitized** fixtures.
-- Document in **`docs/notify-tool.md`** under CI: default **`npm test`** stays offline.
+- Document in **`docs/mcp/notify-tool.md`** under CI: default **`npm test`** stays offline.
 
 **Why:** Catches Slack API drift and regressions in URL/body construction that mocks might not reflect.
 
@@ -63,7 +63,7 @@ Shipped coverage lives in **`src/clawql-notify.test.ts`**, **`src/server.test.ts
 **Body:**
 
 - When **`packages/clawql-ouroboros`** (or **`schedule`**, [#76](https://github.com/danielsmithdevelopment/ClawQL/issues/76)) wires completion / failure hooks, add integration tests that stub Slack and assert **`notify`** is invoked with expected **`channel`** / **`text`**.
-- Cross-link **`docs/schedule-synthetic-checks.md`**.
+- Cross-link **`docs/mcp/schedule-synthetic-checks.md`**.
 
 **Why:** Product path is “done signals” from workflows, not only direct MCP calls from Cursor.
 

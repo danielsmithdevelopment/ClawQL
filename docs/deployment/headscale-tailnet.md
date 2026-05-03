@@ -108,7 +108,7 @@ When tailnet MCP is **validated** and clients have migrated:
 
 1. **Document the cutover date** in your internal runbook (and optionally in team **`mcp.json`** comments).
 2. **Stop advertising** the old **public** MCP **`https://`** base URL to operators and agents; rotate any **bearer tokens** that were ever sent over that path if exposure is a concern.
-3. **Remove or firewall** the public listener if it existed only for convenience — regulated deployments should treat a public MCP surface as a **separate product decision** (see **`docs/enterprise-mcp-tools.md`**, roadmap **[#88](https://github.com/danielsmithdevelopment/ClawQL/issues/88)** for public gateway work).
+3. **Remove or firewall** the public listener if it existed only for convenience — regulated deployments should treat a public MCP surface as a **separate product decision** (see **`docs/mcp/enterprise-mcp-tools.md`**, roadmap **[#88](https://github.com/danielsmithdevelopment/ClawQL/issues/88)** for public gateway work).
 
 This repository’s examples default to **`localhost`** or placeholders until you set final hostnames ([#206](https://github.com/danielsmithdevelopment/ClawQL/issues/206)).
 

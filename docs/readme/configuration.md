@@ -78,7 +78,7 @@ When Stage 1 is active:
 - `CLAWQL_PROVIDER`
 - `CLAWQL_BUNDLED_PROVIDERS`
 - **`CLAWQL_GRAPHQL_URL`** — single GraphQL HTTP endpoint (like **`CLAWQL_SPEC_URL`** for OpenAPI). Optional **`CLAWQL_GRAPHQL_NAME`**, **`CLAWQL_GRAPHQL_HEADERS`**, **`CLAWQL_GRAPHQL_SCHEMA_PATH`** / **`CLAWQL_GRAPHQL_INTROSPECTION_PATH`** when upstream introspection is blocked. When set **without** any OpenAPI/Discovery selection env (**`CLAWQL_SPEC_*`**, **`CLAWQL_PROVIDER`**, **`CLAWQL_BUNDLED_PROVIDERS`**, etc.), ClawQL skips bundled REST defaults and loads **only** native GraphQL (plus **`CLAWQL_GRPC_SOURCES`** if set).
-- **`CLAWQL_GRAPHQL_SOURCES`** — JSON array of `{ name, endpoint, headers?, schemaPath?, introspectionPath? }` merged into **`search`** / **`execute`** (HTTP introspection by default; disk SDL / introspection JSON when set). Combined with **`CLAWQL_GRAPHQL_URL`** when both are set. See `.env.example` and **`docs/mcp-tools.md`** (native GraphQL section).
+- **`CLAWQL_GRAPHQL_SOURCES`** — JSON array of `{ name, endpoint, headers?, schemaPath?, introspectionPath? }` merged into **`search`** / **`execute`** (HTTP introspection by default; disk SDL / introspection JSON when set). Combined with **`CLAWQL_GRAPHQL_URL`** when both are set. See `.env.example` and **`docs/mcp/mcp-tools.md`** (native GraphQL section).
 - **`CLAWQL_GRPC_SOURCES`** — JSON array of `{ name, endpoint, protoPath, insecure? }` for unary gRPC. See `.env.example` and **`docs/adr/0002-multi-protocol-supergraph.md`**.
 
 ### Auth
@@ -118,8 +118,8 @@ That lets you keep **`CLAWQL_*`** (and tokens) in a repo or project **`.env`** f
 
 ## Full References
 
-- Full MCP tool reference and env details: `docs/mcp-tools.md`
-- Memory and vault details: `docs/memory-obsidian.md`
-- Hybrid memory backends: `docs/hybrid-memory-backends.md`
+- Full MCP tool reference and env details: `docs/mcp/mcp-tools.md`
+- Memory and vault details: `docs/memory/memory-obsidian.md`
+- Hybrid memory backends: `docs/memory/hybrid-memory-backends.md`
 - Provider matrix and bundled specs: `providers/README.md`
 - Complete environment sample: `.env.example`

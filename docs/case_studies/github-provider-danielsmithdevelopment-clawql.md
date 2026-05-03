@@ -203,6 +203,6 @@ Assume the assistant must have the **entire** GitHub v3 bundle in the conversati
 
 ## 12. References
 
-- [`docs/mcp-tools.md`](../mcp-tools.md) — **`search`**, **`execute`**, provider selection.
+- [`docs/mcp/mcp-tools.md`](../mcp/mcp-tools.md) — **`search`**, **`execute`**, provider selection.
 - [`README.md`](../../README.md) — planning-context token discussion.
 - Bundled spec: [`providers/github/openapi.yaml`](../../providers/github/openapi.yaml)

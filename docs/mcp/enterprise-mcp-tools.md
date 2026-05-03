@@ -51,5 +51,5 @@ This repository documents **technical controls and patterns** that support **SOC
 ## References
 
 - Optional flags (`cache`, `memory_*`, documents, …): [`src/clawql-optional-flags.ts`](../src/clawql-optional-flags.ts) ([#79](https://github.com/danielsmithdevelopment/ClawQL/issues/79)).
-- [`docs/mcp-tools.md`](mcp-tools.md) — full tool reference.
+- [`docs/mcp/mcp-tools.md`](mcp-tools.md) — full tool reference.
 - **[`docs/readme/deployment.md`](readme/deployment.md)** — HTTP endpoints; use with **Regulated deployments** above for ingress and telemetry placement.

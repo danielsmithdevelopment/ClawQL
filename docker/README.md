@@ -69,7 +69,7 @@ Single-spec `execute` uses in-process OpenAPI→GraphQL. **`clawql-mcp-http`** s
 
 **Sandbox (`sandbox_exec`):** Not bundled. Set **`CLAWQL_ENABLE_SANDBOX=1`** to register the tool, then **`CLAWQL_SANDBOX_BRIDGE_URL`** + **`CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN`** (and/or **`CLAWQL_SANDBOX_BACKEND`**) for a deployed [sandbox bridge](../cloudflare/sandbox-bridge/README.md) Worker or local backends; the container only calls the bridge over HTTPS when that path is used.
 
-Full MCP tool list and JSON examples: **[`docs/mcp-tools.md`](../docs/mcp-tools.md)**.
+Full MCP tool list and JSON examples: **[`docs/mcp/mcp-tools.md`](../docs/mcp/mcp-tools.md)**.
 
 ## Run (stdio, optional)
 
@@ -266,7 +266,7 @@ Included resources:
 - Namespace: `clawql`
 - Deployment: `clawql-mcp-http`
 - Service: `clawql-mcp-http` (`LoadBalancer`)
-- MCP pod: **`CLAWQL_OBSIDIAN_VAULT_PATH=/vault`** with an **`emptyDir`** volume at `/vault` in the starter and Kustomize **base** (`docker/kustomize/base/deployment-mcp-http.yaml`) so **`memory_ingest`** / **`memory_recall`** can run. For a **persistent** host vault (e.g. **`~/.ClawQL`**), use the **`local`** overlay via **`make local-k8s-up`**, which generates a **`hostPath`** patch — or replace **`emptyDir`** with a PVC or **`hostPath`** yourself. **`sandbox_exec`** still requires **`CLAWQL_SANDBOX_BRIDGE_URL`** + token env (see [`.env.example`](../.env.example) and [`docs/mcp-tools.md`](../docs/mcp-tools.md)).
+- MCP pod: **`CLAWQL_OBSIDIAN_VAULT_PATH=/vault`** with an **`emptyDir`** volume at `/vault` in the starter and Kustomize **base** (`docker/kustomize/base/deployment-mcp-http.yaml`) so **`memory_ingest`** / **`memory_recall`** can run. For a **persistent** host vault (e.g. **`~/.ClawQL`**), use the **`local`** overlay via **`make local-k8s-up`**, which generates a **`hostPath`** patch — or replace **`emptyDir`** with a PVC or **`hostPath`** yourself. **`sandbox_exec`** still requires **`CLAWQL_SANDBOX_BRIDGE_URL`** + token env (see [`.env.example`](../.env.example) and [`docs/mcp/mcp-tools.md`](../docs/mcp/mcp-tools.md)).
 
 After the external IP is ready, use:
 

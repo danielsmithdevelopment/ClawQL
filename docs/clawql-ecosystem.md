@@ -8,7 +8,7 @@
 
 _April 2026 · Self-Hosted, Local-First, Production-Hardened Kubernetes Stack_
 
-_Authoritative mechanics (tool tiers, env flags, bundled spec paths): [`mcp-tools.md`](mcp-tools.md), [`readme/configuration.md`](readme/configuration.md), [`providers/README.md`](../providers/README.md)._
+_Authoritative mechanics (tool tiers, env flags, bundled spec paths): [`mcp-tools.md`](mcp/mcp-tools.md), [`readme/configuration.md`](readme/configuration.md), [`providers/README.md`](../providers/README.md)._
 
 _Sections below mix **north-star narrative** with shipped behavior; aspirational items are collected in [**Appendix: Fiction and roadmap**](#appendix-fiction-and-roadmap)._
 
@@ -140,11 +140,11 @@ Self-hosted stacks force teams to bolt on scanning, mesh, and observability by h
 **Layer 2 — ClawQL Core**
 
 - `search` / `execute` — discovery and execution across loaded specs (OpenAPI/Discovery; native GraphQL/gRPC when configured)
-- `memory_recall` — keyword + optional vector KNN + wikilink traversal over the vault (see [`mcp-tools.md`](mcp-tools.md))
+- `memory_recall` — keyword + optional vector KNN + wikilink traversal over the vault (see [`mcp-tools.md`](mcp/mcp-tools.md))
 - `memory_ingest` — structured vault writes with typed receipts and wikilinks
 - `knowledge_search_onyx` — live Onyx search (requires documents + `CLAWQL_ENABLE_ONYX`; not inside `memory_recall`)
 - GraphQL projection — trims verbose JSON responses where applicable
-- **Ouroboros** — evolutionary-loop library; optional MCP tools `ouroboros_*` when `CLAWQL_ENABLE_OUROBOROS=1` ([`clawql-ouroboros.md`](clawql-ouroboros.md))
+- **Ouroboros** — evolutionary-loop library; optional MCP tools `ouroboros_*` when `CLAWQL_ENABLE_OUROBOROS=1` ([`clawql-ouroboros.md`](ouroboros/clawql-ouroboros.md))
 - `notify` (optional), **`cache`** + **`audit`** (core, always on — LRU / ring buffer)
 
 **Layer 3 — API & Data-Plane Targets**
@@ -165,22 +165,22 @@ Self-hosted stacks force teams to bolt on scanning, mesh, and observability by h
 
 ## MCP Tool Surface
 
-ClawQL registers **more than ten** tools; tiers and flags are summarized in [`mcp-tools.md`](mcp-tools.md) and [`readme/configuration.md`](readme/configuration.md). Core pair: **`search`** + **`execute`**.
+ClawQL registers **more than ten** tools; tiers and flags are summarized in [`mcp-tools.md`](mcp/mcp-tools.md) and [`readme/configuration.md`](readme/configuration.md). Core pair: **`search`** + **`execute`**.
 
-| Tool                        | Type              | Purpose                                                                                                                                                                                                       |
-| --------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `search`                    | Core              | Discovers operations and parameters from the loaded index (OpenAPI/Discovery; native GraphQL/gRPC when configured). Returns a relevant slice — not the full spec.                                             |
-| `execute`                   | Core              | Runs one discovered operation with auth from `auth-headers` / env; multi-spec REST or native protocols per config.                                                                                            |
-| `memory_recall`             | Memory            | Vault keyword scoring, optional vector KNN, wikilink hops — ranked Markdown paths/snippets ([`memory-recall.ts`](../src/memory-recall.ts)).                                                                   |
-| `memory_ingest`             | Memory            | Writes durable Markdown under the vault; insights, receipts, `enterpriseCitations`, wikilinks ([`memory-obsidian.md`](memory-obsidian.md)).                                                                   |
-| `knowledge_search_onyx`     | Knowledge         | Optional when **`CLAWQL_ENABLE_ONYX=1`** and documents stack is on — wraps Onyx `POST /search/send-search-message` ([`onyx-knowledge-tool.md`](onyx-knowledge-tool.md)).                                      |
-| `sandbox_exec`              | Execution         | Optional — **`CLAWQL_ENABLE_SANDBOX=1`** — bridge / Seatbelt / Docker ([`mcp-tools.md`](mcp-tools.md) § **`sandbox_exec`**, [`cloudflare/sandbox-bridge/README.md`](../cloudflare/sandbox-bridge/README.md)). |
-| `ingest_external_knowledge` | Knowledge         | Bulk Markdown ingest + optional URL fetch when enabled ([`external-ingest.md`](external-ingest.md)).                                                                                                          |
-| `schedule`                  | Automation        | Optional — **`CLAWQL_ENABLE_SCHEDULE=1`** — persisted synthetic checks ([`schedule-synthetic-checks.md`](schedule-synthetic-checks.md)).                                                                      |
-| `notify`                    | Notification      | Optional — **`CLAWQL_ENABLE_NOTIFY=1`** — Slack `chat.postMessage` wrapper ([`notify-tool.md`](notify-tool.md)).                                                                                              |
-| `ouroboros_*` (×3)          | Workflow          | Optional — **`CLAWQL_ENABLE_OUROBOROS=1`** — seed, evolutionary loop, lineage ([`clawql-ouroboros.md`](clawql-ouroboros.md)).                                                                                 |
-| `cache`                     | Core / State      | Always on — in-process **LRU** session scratch ([`cache-tool.md`](cache-tool.md)); **no** `CLAWQL_ENABLE_CACHE`.                                                                                              |
-| `audit`                     | Core / Compliance | Always on — in-process **ring buffer** ([`enterprise-mcp-tools.md`](enterprise-mcp-tools.md)); **no** `CLAWQL_ENABLE_AUDIT`.                                                                                  |
+| Tool                        | Type              | Purpose                                                                                                                                                                                                           |
+| --------------------------- | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `search`                    | Core              | Discovers operations and parameters from the loaded index (OpenAPI/Discovery; native GraphQL/gRPC when configured). Returns a relevant slice — not the full spec.                                                 |
+| `execute`                   | Core              | Runs one discovered operation with auth from `auth-headers` / env; multi-spec REST or native protocols per config.                                                                                                |
+| `memory_recall`             | Memory            | Vault keyword scoring, optional vector KNN, wikilink hops — ranked Markdown paths/snippets ([`memory-recall.ts`](../src/memory-recall.ts)).                                                                       |
+| `memory_ingest`             | Memory            | Writes durable Markdown under the vault; insights, receipts, `enterpriseCitations`, wikilinks ([`memory-obsidian.md`](memory/memory-obsidian.md)).                                                                |
+| `knowledge_search_onyx`     | Knowledge         | Optional when **`CLAWQL_ENABLE_ONYX=1`** and documents stack is on — wraps Onyx `POST /search/send-search-message` ([`onyx-knowledge-tool.md`](mcp/onyx-knowledge-tool.md)).                                      |
+| `sandbox_exec`              | Execution         | Optional — **`CLAWQL_ENABLE_SANDBOX=1`** — bridge / Seatbelt / Docker ([`mcp-tools.md`](mcp/mcp-tools.md) § **`sandbox_exec`**, [`cloudflare/sandbox-bridge/README.md`](../cloudflare/sandbox-bridge/README.md)). |
+| `ingest_external_knowledge` | Knowledge         | Bulk Markdown ingest + optional URL fetch when enabled ([`external-ingest.md`](mcp/external-ingest.md)).                                                                                                          |
+| `schedule`                  | Automation        | Optional — **`CLAWQL_ENABLE_SCHEDULE=1`** — persisted synthetic checks ([`schedule-synthetic-checks.md`](mcp/schedule-synthetic-checks.md)).                                                                      |
+| `notify`                    | Notification      | Optional — **`CLAWQL_ENABLE_NOTIFY=1`** — Slack `chat.postMessage` wrapper ([`notify-tool.md`](mcp/notify-tool.md)).                                                                                              |
+| `ouroboros_*` (×3)          | Workflow          | Optional — **`CLAWQL_ENABLE_OUROBOROS=1`** — seed, evolutionary loop, lineage ([`clawql-ouroboros.md`](ouroboros/clawql-ouroboros.md)).                                                                           |
+| `cache`                     | Core / State      | Always on — in-process **LRU** session scratch ([`cache-tool.md`](mcp/cache-tool.md)); **no** `CLAWQL_ENABLE_CACHE`.                                                                                              |
+| `audit`                     | Core / Compliance | Always on — in-process **ring buffer** ([`enterprise-mcp-tools.md`](mcp/enterprise-mcp-tools.md)); **no** `CLAWQL_ENABLE_AUDIT`.                                                                                  |
 
 ---
 
@@ -208,7 +208,7 @@ ClawQL registers **more than ten** tools; tiers and flags are summarized in [`mc
 
 ### Memory-Aware Execution
 
-Agents combine **`memory_recall`** / **`memory_ingest`** with **`search`/`execute`** so prior vault notes (including typed execute receipts you choose to write) inform the next call. The MCP server does not silently inject vault history into **`search`** — composition is explicit. **`memory_ingest`** can record provider, `operationId`, params summary, and outcomes for durable trails ([`memory-obsidian.md`](memory-obsidian.md)).
+Agents combine **`memory_recall`** / **`memory_ingest`** with **`search`/`execute`** so prior vault notes (including typed execute receipts you choose to write) inform the next call. The MCP server does not silently inject vault history into **`search`** — composition is explicit. **`memory_ingest`** can record provider, `operationId`, params summary, and outcomes for durable trails ([`memory-obsidian.md`](memory/memory-obsidian.md)).
 
 ---
 
@@ -357,7 +357,7 @@ Long-term document archive with full-text search, auto-tagging, and consumption 
 
 Onyx is an open-source enterprise knowledge search platform that indexes your company’s knowledge base across 40+ connectors. It is the live enterprise knowledge surface inside ClawQL — parallel to but distinct from the Obsidian vault (which covers session-level runbooks and decisions). Together they are complementary: vault for durable workflow memory, Onyx for live enterprise index queries.
 
-**Configuration:** Keep **`CLAWQL_ENABLE_DOCUMENTS`** on (default); set **`CLAWQL_ENABLE_ONYX=1`**, **`ONYX_BASE_URL`**, and Bearer **`ONYX_API_TOKEN`** / **`CLAWQL_ONYX_API_TOKEN`** so **`knowledge_search_onyx`** registers ([`mcp-tools.md`](mcp-tools.md)). The bundled minimal OpenAPI at `providers/onyx/openapi.yaml` covers `POST /search/send-search-message` and optional `POST /onyx-api/ingestion`. Refresh upstream specs with `npm run fetch-provider-specs` when `ONYX_BASE_URL` is set.
+**Configuration:** Keep **`CLAWQL_ENABLE_DOCUMENTS`** on (default); set **`CLAWQL_ENABLE_ONYX=1`**, **`ONYX_BASE_URL`**, and Bearer **`ONYX_API_TOKEN`** / **`CLAWQL_ONYX_API_TOKEN`** so **`knowledge_search_onyx`** registers ([`mcp-tools.md`](mcp/mcp-tools.md)). The bundled minimal OpenAPI at `providers/onyx/openapi.yaml` covers `POST /search/send-search-message` and optional `POST /onyx-api/ingestion`. Refresh upstream specs with `npm run fetch-provider-specs` when `ONYX_BASE_URL` is set.
 
 **40+ Connectors:**
 Slack (threads, channels, DMs), Google Drive (Docs, Sheets, Slides), Confluence (pages, spaces, comments), Jira (tickets, epics, sprint history), GitHub (issues, PRs, code, wikis), Gmail/Outlook, Notion, Linear, Zendesk, Salesforce, and more.
@@ -374,7 +374,7 @@ Slack (threads, channels, DMs), Google Drive (Docs, Sheets, Slides), Confluence 
 
 ### Ouroboros: Structured Workflow Engine
 
-**clawql-ouroboros** ([`clawql-ouroboros.md`](clawql-ouroboros.md)) supplies evolutionary-loop primitives; the MCP server exposes **optional** tools when **`CLAWQL_ENABLE_OUROBOROS=1`**: `ouroboros_create_seed_from_document`, `ouroboros_run_evolutionary_loop`, `ouroboros_get_lineage_status`. Optional **`CLAWQL_OUROBOROS_DATABASE_URL`** persists events to Postgres instead of in-memory.
+**clawql-ouroboros** ([`clawql-ouroboros.md`](ouroboros/clawql-ouroboros.md)) supplies evolutionary-loop primitives; the MCP server exposes **optional** tools when **`CLAWQL_ENABLE_OUROBOROS=1`**: `ouroboros_create_seed_from_document`, `ouroboros_run_evolutionary_loop`, `ouroboros_get_lineage_status`. Optional **`CLAWQL_OUROBOROS_DATABASE_URL`** persists events to Postgres instead of in-memory.
 
 Natural-language routing (“fast path” vs full loop) is a **product vision** — today assistants compose **`search`/`execute`**, **`memory_*`**, **`knowledge_search_onyx`**, document providers, etc., explicitly or via prompts. Complex pipelines (Tika → Gotenberg → Stirling → Paperless → Onyx) are orchestrated through **those tools** and Helm-deployed services — not a hidden automatic router described here.
 
@@ -388,7 +388,7 @@ Seeds / lineage storage match the library + MCP wiring in-repo; full **Interview
 Analyzes the request for ambiguity. If fully specified, this phase is skipped. If key details are missing, ClawQL replies with one natural clarifying question. No jargon.
 
 **2 — Seed**
-Creates an immutable workflow specification — the “Seed” — with measurable acceptance criteria; persisted to **Postgres when `CLAWQL_OUROBOROS_DATABASE_URL` is set**, otherwise **in-memory** ([`clawql-ouroboros.md`](clawql-ouroboros.md)). Example criteria: “Onyx returns ≥ 3 relevant results with citations, OCR confidence > 0.95, redaction verified, Paperless import confirmed, GitHub issues filed for all flagged items.”
+Creates an immutable workflow specification — the “Seed” — with measurable acceptance criteria; persisted to **Postgres when `CLAWQL_OUROBOROS_DATABASE_URL` is set**, otherwise **in-memory** ([`clawql-ouroboros.md`](ouroboros/clawql-ouroboros.md)). Example criteria: “Onyx returns ≥ 3 relevant results with citations, OCR confidence > 0.95, redaction verified, Paperless import confirmed, GitHub issues filed for all flagged items.”
 
 **3 — Execute**
 Decomposes the Seed into an ordered sequence of tool calls. Typical knowledge-augmented path: `knowledge_search_onyx` → Tika → Gotenberg → Stirling → Cuckoo check → Paperless → Onyx index push → `memory_ingest` → GitHub issues → optional **`notify`**. Supply-chain gates (**Trivy/OSV-Scanner**) belong in **CI**, not as an MCP **`execute`** step unless you add a custom spec.
@@ -403,7 +403,7 @@ If any criterion fails, the loop adjusts and retries (behavior depends on orches
 
 ### Cuckoo Filters: O(1) Deduplication
 
-Cuckoo predicates can be loaded from **`memory.db`** when **`CLAWQL_CUCKOO_*`** / sync paths are enabled ([`memory-db-schema.md`](memory-db-schema.md)).
+Cuckoo predicates can be loaded from **`memory.db`** when **`CLAWQL_CUCKOO_*`** / sync paths are enabled ([`memory-db-schema.md`](memory/memory-db-schema.md)).
 
 **Implemented / wired in MCP paths:** optional **vector chunk dedup** during **`memory_recall`** when a Cuckoo predicate is present — see [`memory-recall.ts`](../src/memory-recall.ts).
 
@@ -413,7 +413,7 @@ Cuckoo predicates can be loaded from **`memory.db`** when **`CLAWQL_CUCKOO_*`** 
 
 ### Merkle Trees: Cryptographic Audit Trails
 
-**Shipped today:** with **`CLAWQL_MERKLE_ENABLED=1`** and a synced **`memory.db`**, Merkle snapshots fingerprint **vault Markdown index state** and surface on **`memory_ingest`** / **`memory_recall`** / health paths ([`mcp-tools.md`](mcp-tools.md), [`memory-db-schema.md`](memory-db-schema.md)). Roots live in the **SQLite sidecar**, not implicitly in Postgres unless you add separate orchestration.
+**Shipped today:** with **`CLAWQL_MERKLE_ENABLED=1`** and a synced **`memory.db`**, Merkle snapshots fingerprint **vault Markdown index state** and surface on **`memory_ingest`** / **`memory_recall`** / health paths ([`mcp-tools.md`](mcp/mcp-tools.md), [`memory-db-schema.md`](memory/memory-db-schema.md)). Roots live in the **SQLite sidecar**, not implicitly in Postgres unless you add separate orchestration.
 
 **Target / roadmap (multi-step pipelines):** hashing each pipeline step (Onyx → Tika → Stirling → Paperless → GitHub) into a chain — plus optional **`proofOfIntegrity`** GraphQL — remains **design** until wired end-to-end.
 
@@ -431,13 +431,13 @@ ROOT HASH (conceptual — per-step anchoring TBD)
 **Where Merkle fits:**
 
 - **Today:** vault index integrity via **`memory.db`** when Merkle sync is enabled.
-- **Roadmap:** per-step document pipeline leaves, Ouroboros phase outputs, Onyx citation attestations — see Merkle/Cuckoo issues and **[`memory-db-hybrid-implementation.md`](memory-db-hybrid-implementation.md)**.
+- **Roadmap:** per-step document pipeline leaves, Ouroboros phase outputs, Onyx citation attestations — see Merkle/Cuckoo issues and **[`memory-db-hybrid-implementation.md`](memory/memory-db-hybrid-implementation.md)**.
 
 ---
 
 ### notify() + Slack Integration
 
-When **`CLAWQL_ENABLE_NOTIFY=1`**, **`notify`** wraps Slack **`chat.postMessage`** by delegating to **`execute`** on the bundled Slack spec ([`notify-tool.md`](notify-tool.md)). Authenticates like **`execute`** on **`slack`** (`CLAWQL_SLACK_TOKEN`, …; **`chat:write`** minimum).
+When **`CLAWQL_ENABLE_NOTIFY=1`**, **`notify`** wraps Slack **`chat.postMessage`** by delegating to **`execute`** on the bundled Slack spec ([`notify-tool.md`](mcp/notify-tool.md)). Authenticates like **`execute`** on **`slack`** (`CLAWQL_SLACK_TOKEN`, …; **`chat:write`** minimum).
 
 **When Ouroboros calls `notify()`:**
 
@@ -519,7 +519,7 @@ helm install clawql charts/clawql-mcp --namespace clawql
 
 - **`charts/clawql-mcp`** — see [`charts/clawql-mcp/README.md`](../charts/clawql-mcp/README.md) and `values.yaml` for optional document pipeline, Onyx, Flink, NATS, UI ingress, etc.
 - `CLAWQL_BUNDLED_OFFLINE=1` — typical production stance so MCP does not fetch specs at runtime (see README / deployment docs)
-- **Onyx stack** — gated by chart values (`onyx.enabled` pattern); MCP **`CLAWQL_ENABLE_ONYX`** aligns with [`onyx-knowledge-tool.md`](onyx-knowledge-tool.md)
+- **Onyx stack** — gated by chart values (`onyx.enabled` pattern); MCP **`CLAWQL_ENABLE_ONYX`** aligns with [`onyx-knowledge-tool.md`](mcp/onyx-knowledge-tool.md)
 - **Fabric** — not present as a sub-chart here; see **Roadmap** / [#187](https://github.com/danielsmithdevelopment/ClawQL/issues/187)
 - Namespace: `clawql` — typical co-location for internal DNS
 - Paperless isolated Postgres and Redis included — no external DB dependency
@@ -805,7 +805,7 @@ ClawQL + ClawQL-Agent + OpenClaw creates persistent digital employees that go be
 ## Why ClawQL Wins
 
 **vs. Other MCP Servers**
-Most MCP servers wrap one API. ClawQL’s default **`all-providers`** merge loads **many** bundled specs (REST + GraphQL **Linear** + Google Discovery bundle) and still accepts additional OpenAPI paths. Differentiators include vault **`memory_*`** with optional vectors, optional **Onyx** via **`knowledge_search_onyx`**, optional **Ouroboros** MCP hooks, and optional **Merkle/Cuckoo** hooks via `memory.db` — see [`mcp-tools.md`](mcp-tools.md).
+Most MCP servers wrap one API. ClawQL’s default **`all-providers`** merge loads **many** bundled specs (REST + GraphQL **Linear** + Google Discovery bundle) and still accepts additional OpenAPI paths. Differentiators include vault **`memory_*`** with optional vectors, optional **Onyx** via **`knowledge_search_onyx`**, optional **Ouroboros** MCP hooks, and optional **Merkle/Cuckoo** hooks via `memory.db` — see [`mcp-tools.md`](mcp/mcp-tools.md).
 
 **vs. Document Automation Tools (n8n, Zapier, Make)**
 Visual workflow builders require explicit node configuration. ClawQL is natural language. No document tool has a cryptographic Merkle audit trail per processing step. No document tool can cross-reference processed content against live enterprise knowledge during the same workflow. ClawQL’s pipeline is entirely self-hosted — no SaaS data exposure.
@@ -862,7 +862,7 @@ Merkle trees, typed **`memory_ingest`** receipts, optional Postgres-backed Ourob
 ### Next
 
 - **Flink connector pipeline deployment:** Flink job manager and task manager in the `clawql` namespace; connector jobs for Slack, Confluence, Drive, Jira, GitHub, and other Onyx sources
-- **`notify` templates:** richer default messages with Onyx citation links and Paperless document links (baseline **`notify`** exists behind **`CLAWQL_ENABLE_NOTIFY`** — [`notify-tool.md`](notify-tool.md))
+- **`notify` templates:** richer default messages with Onyx citation links and Paperless document links (baseline **`notify`** exists behind **`CLAWQL_ENABLE_NOTIFY`** — [`notify-tool.md`](mcp/notify-tool.md))
 - **Self-hosted spec fetch config:** `STIRLING_BASE_URL`, `PAPERLESS_BASE_URL`, `TIKA_BASE_URL`, `GOTENBERG_BASE_URL`, `ONYX_BASE_URL` in `fetch-provider-specs`; runtime base URL injection for all self-hosted providers
 - **Merged default updates:** Unconfigured installs use full all-providers merge; custom merge via `CLAWQL_BUNDLED_PROVIDERS` or `CLAWQL_SPEC_PATHS`
 - **Digital employee templates:** Finance, DevOps, Compliance starter roles; stronger LangGraph reflection nodes
@@ -888,7 +888,7 @@ Merkle trees, typed **`memory_ingest`** receipts, optional Postgres-backed Ourob
 
 ## Appendix: Fiction and roadmap
 
-The body of this doc describes a **target experience**. The bullets below are **not** guaranteed by the open-source **`clawql-mcp`** repo alone — they are **aspirational**, **cross-repo**, or **partially implemented**. Use [`mcp-tools.md`](mcp-tools.md) and linked issues for ground truth.
+The body of this doc describes a **target experience**. The bullets below are **not** guaranteed by the open-source **`clawql-mcp`** repo alone — they are **aspirational**, **cross-repo**, or **partially implemented**. Use [`mcp-tools.md`](mcp/mcp-tools.md) and linked issues for ground truth.
 
 **Separate products / repos**
 

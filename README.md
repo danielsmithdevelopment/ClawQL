@@ -6,9 +6,9 @@ ClawQL is an MCP server for API discovery and execution with a token-efficient `
 
 Feature tiers (aligned with the [architecture diagram](docs/readme/images/clawql-feature-tiers.png) — details in [`docs/readme/configuration.md`](docs/readme/configuration.md#feature-tiers-architecture-diagram)):
 
-- **ClawQL Core (always on — no opt-out):** `search`, `execute`, `audit`, `cache` — same band in the diagram; ring-buffer semantics for `audit` and LRU semantics for `cache` in [`docs/enterprise-mcp-tools.md`](docs/enterprise-mcp-tools.md) and [`docs/cache-tool.md`](docs/cache-tool.md).
+- **ClawQL Core (always on — no opt-out):** `search`, `execute`, `audit`, `cache` — same band in the diagram; ring-buffer semantics for `audit` and LRU semantics for `cache` in [`docs/mcp/enterprise-mcp-tools.md`](docs/mcp/enterprise-mcp-tools.md) and [`docs/mcp/cache-tool.md`](docs/mcp/cache-tool.md).
 - **Default on — opt out:** `memory_ingest` / `memory_recall`, and the **document** stack (`ingest_external_knowledge`, plus `knowledge_search_onyx` when `CLAWQL_ENABLE_ONYX=1`). Use `CLAWQL_ENABLE_MEMORY=0` or `CLAWQL_ENABLE_DOCUMENTS=0` to hide; vault path still required for real disk I/O on memory / ingest.
-- **Default off — opt in:** `sandbox_exec` (**`CLAWQL_ENABLE_SANDBOX=1`**), `schedule`, `notify`, `knowledge_search_onyx` (needs `CLAWQL_ENABLE_ONYX=1` and documents on), `ouroboros_*` — see [`docs/mcp-tools.md`](docs/mcp-tools.md). When enabled, **`CLAWQL_SANDBOX_BACKEND`**: omit = bridge; **`auto`** = Seatbelt → Docker → bridge.
+- **Default off — opt in:** `sandbox_exec` (**`CLAWQL_ENABLE_SANDBOX=1`**), `schedule`, `notify`, `knowledge_search_onyx` (needs `CLAWQL_ENABLE_ONYX=1` and documents on), `ouroboros_*` — see [`docs/mcp/mcp-tools.md`](docs/mcp/mcp-tools.md). When enabled, **`CLAWQL_SANDBOX_BACKEND`**: omit = bridge; **`auto`** = Seatbelt → Docker → bridge.
 - Stdio and HTTP MCP server modes
 - Bundled provider specs for offline lookup and multi-provider workflows
 
@@ -46,14 +46,14 @@ Top-level docs index: `docs/README.md`
 
 ### Core references
 
-- MCP tools and examples: `docs/mcp-tools.md`
+- MCP tools and examples: `docs/mcp/mcp-tools.md`
 - Workflow recipes: `docs/recipes/README.md`
-- Memory and vault workflows: `docs/memory-obsidian.md`
-- Cache tool: `docs/cache-tool.md`
-- Enterprise MCP notes (`audit` threat model, future metrics/governance): `docs/enterprise-mcp-tools.md`
-- Slack notify tool: `docs/notify-tool.md`
-- Onyx knowledge tool: `docs/onyx-knowledge-tool.md`
-- Ouroboros package and integration: `docs/clawql-ouroboros.md`
+- Memory and vault workflows: `docs/memory/memory-obsidian.md`
+- Cache tool: `docs/mcp/cache-tool.md`
+- Enterprise MCP notes (`audit` threat model, future metrics/governance): `docs/mcp/enterprise-mcp-tools.md`
+- Slack notify tool: `docs/mcp/notify-tool.md`
+- Onyx knowledge tool: `docs/mcp/onyx-knowledge-tool.md`
+- Ouroboros package and integration: `docs/ouroboros/clawql-ouroboros.md`
 
 ### Deployments
 
@@ -90,4 +90,4 @@ Top-level docs index: `docs/README.md`
 
 - **Core** (`search`, `execute`, `audit`, `cache`) has **no opt-out** — no **`CLAWQL_ENABLE_*`** gate for those tools.
 - A writable `CLAWQL_OBSIDIAN_VAULT_PATH` is required to read/write the vault for **`memory_*`** and bulk **`ingest_external_knowledge`**.
-- For full environment variable details, see `.env.example` and `docs/mcp-tools.md`.
+- For full environment variable details, see `.env.example` and `docs/mcp/mcp-tools.md`.

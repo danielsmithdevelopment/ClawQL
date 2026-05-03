@@ -1,7 +1,7 @@
 /**
  * Colocated SQLite `memory.db` — schema + migrations + vault document / chunk / wikilink sync (#27).
  * Optional chunk embeddings for hybrid recall (#26) — float32 BLOBs on `vault_chunk` for every backend
- * (dual-write when postgres is selected; pgvector is additional — see docs/hybrid-memory-backends.md).
+ * (dual-write when postgres is selected; pgvector is additional — see docs/memory/hybrid-memory-backends.md).
  *
  * Uses sql.js (WASM) so installs work with `npm ci --ignore-scripts` and Node 20+ CI.
  */

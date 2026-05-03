@@ -91,7 +91,7 @@ Shipped in-repo (see **`docs/website/website-performance-workers-guardrails.md`*
 **Suggested GitHub issues (titles only—open and track explicitly):**
 
 - **Scheduled Lighthouse against production** `https://docs.clawql.com/` (looser thresholds; weekly cron).
-- **Synthetic uptime** for `/`, `/api/health`, and **one case-study path** (ties to `docs/schedule-synthetic-checks.md`).
+- **Synthetic uptime** for `/`, `/api/health`, and **one case-study path** (ties to `docs/mcp/schedule-synthetic-checks.md`).
 - **`eslint-plugin-jsx-a11y`** on `website/` with incremental cleanup.
 - **Workers Logpush** or extended retention for **`clawql-docs`** if incidents recur (Ray + path correlation).
 

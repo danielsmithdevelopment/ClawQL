@@ -4,7 +4,7 @@
  *
  * Uses **`minimal-slack-chat-postmessage.json`** (not the full **`providers/slack/openapi.json`**):
  * the full Slack spec fails **`@omnigraph/json-schema`** on Node 25 (`getUnionTypeComposers` —
- * see **`docs/graphql-mesh-node-compatibility.md`**).
+ * see **`docs/design/graphql-mesh-node-compatibility.md`**).
  */
 
 import { createServer, type Server } from "node:http";

@@ -13,7 +13,7 @@ Some **large OpenAPI** documents fail inside **`@omnigraph/openapi`** (same stac
 as [GraphQL Mesh OpenAPI](https://the-guild.dev/graphql/mesh/docs/handlers/openapi)).
 ClawQL uses **REST fallback** when that happens, but we want **upstream fixes**.
 
-See **[`docs/OPENAPI_TO_GRAPHQL_UPSTREAM.md`](docs/OPENAPI_TO_GRAPHQL_UPSTREAM.md)** for
+See **[`docs/design/OPENAPI_TO_GRAPHQL_UPSTREAM.md`](docs/design/OPENAPI_TO_GRAPHQL_UPSTREAM.md)** for
 where to report issues (GraphQL Mesh / Omnigraph monorepo) and how to reproduce.
 
 ## Bundled API specs (`providers/`)

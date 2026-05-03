@@ -53,8 +53,8 @@ Native GraphQL / gRPC ops (see `src/native-protocol-merge.ts`, `src/tools.ts`) r
 
 Compatibility caveats:
 
-- `docs/graphql-mesh-node-compatibility.md`
-- `docs/OPENAPI_TO_GRAPHQL_UPSTREAM.md`
+- `docs/design/graphql-mesh-node-compatibility.md`
+- `docs/design/OPENAPI_TO_GRAPHQL_UPSTREAM.md`
 
 ## Provider Maintenance
 

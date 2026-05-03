@@ -133,7 +133,7 @@ On a **Headscale** tailnet, **`*.clawql.local`** resolves for **Tailscale-enroll
 - **No live pre-auth keys, API tokens, or MCP bearer secrets in git or public issues** — placeholders only in docs.
 - **`mcp.json`**: prefer **`${env:…}`** for URLs and headers; keep secrets in env or a secrets manager.
 - **ACLs**: assume **implicit deny** outside what you allow; separate **human** Headscale users from **service** users for tagged servers when using the starter ACL ([#213](https://github.com/danielsmithdevelopment/ClawQL/issues/213)).
-- **Firewalls**: MCP and provider UIs should not be **public** unless you deliberately threat-model that surface (see **`docs/enterprise-mcp-tools.md`**).
+- **Firewalls**: MCP and provider UIs should not be **public** unless you deliberately threat-model that surface (see **`docs/mcp/enterprise-mcp-tools.md`**).
 
 ---
 
@@ -150,7 +150,7 @@ On a **Headscale** tailnet, **`*.clawql.local`** resolves for **Tailscale-enroll
 | **Strong identity for access**              | Joining the tailnet is tied to **login** and device enrollment; **ACLs** (and **`tagOwners`**) limit which principals can reach which **ports** and tags. That aligns with **logical access** and **need-to-know** storylines—**if** you configure ACLs tightly (see [#213](https://github.com/danielsmithdevelopment/ClawQL/issues/213)).                                                                                                          |
 | **Reduced attack surface**                  | Deprecating a **public** MCP or admin URL after cutover shrinks opportunistic exposure—often cited under **SOC 2** CC (e.g. logical/physical access, change management) and **“reasonable security”** style obligations (**CCPA/CPRA**).                                                                                                                                                                                                            |
 | **Vendor / subprocessors**                  | **Managed Tailscale** introduces a **vendor** that participates in coordination (and may see metadata relevant to your program). Your **DPA**, **SCCs**, and **subprocessor** list should reflect that. **Headscale** shifts more control-plane responsibility **to you** (patching, backups, access to the Headscale host)—which can help **data residency** or “no third-party control plane” positions **if** operated in-region and documented. |
-| **Logging and monitoring**                  | A tailnet does not replace **audit logs** on MCP, proxies, or backends. Pair network controls with application logging, **`audit`** / vault trails where you use them, and your SIEM story. See **`docs/enterprise-mcp-tools.md`**.                                                                                                                                                                                                                 |
+| **Logging and monitoring**                  | A tailnet does not replace **audit logs** on MCP, proxies, or backends. Pair network controls with application logging, **`audit`** / vault trails where you use them, and your SIEM story. See **`docs/mcp/enterprise-mcp-tools.md`**.                                                                                                                                                                                                             |
 
 ### HIPAA (United States — health data)
 
@@ -196,7 +196,7 @@ Regulators and plaintiffs’ counsel often look for **reasonable security** proc
 - **[`headscale-tailnet.md`](headscale-tailnet.md)** — Headscale topology, firewall, MagicDNS, validation, deprecation of public MCP URLs
 - **[`headscale-acls-clawql.hujson`](headscale-acls-clawql.hujson)** — least-privilege ACL starter
 - **[`clawql-ecosystem.md`](../clawql-ecosystem.md)** — in-cluster vs tailnet naming
-- **[`../enterprise-mcp-tools.md`](../enterprise-mcp-tools.md)** — regulated deployments, **`audit`**, public MCP considerations
+- **[`../mcp/enterprise-mcp-tools.md`](../mcp/enterprise-mcp-tools.md)** — regulated deployments, **`audit`**, public MCP considerations
 
 ---
 

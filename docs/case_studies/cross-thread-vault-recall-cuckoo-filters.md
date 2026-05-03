@@ -115,7 +115,7 @@ For rough sizing, the repo’s benchmark notes often use **`ceil(bytes / 4)`** t
 
 ## 9. Reproduction checklist
 
-1. Install ClawQL MCP and set **`CLAWQL_OBSIDIAN_VAULT_PATH`** to an Obsidian vault (see [`memory-obsidian.md`](../memory-obsidian.md)).
+1. Install ClawQL MCP and set **`CLAWQL_OBSIDIAN_VAULT_PATH`** to an Obsidian vault (see [`memory-obsidian.md`](../memory/memory-obsidian.md)).
 2. Ingest at least one roadmap note (via chat or automation) that **only** exists in the vault — e.g. a design not yet in git.
 3. In a **fresh** chat with **no** pasted history, ask a question that **only** that note answers.
 4. Compare **repo-only** search vs **`memory_recall`** — you should see the same pattern as this case study.
@@ -125,8 +125,8 @@ For rough sizing, the repo’s benchmark notes often use **`ceil(bytes / 4)`** t
 
 ## 10. References
 
-- [`docs/mcp-tools.md`](../mcp-tools.md) — **`memory_ingest`**, **`memory_recall`**, **`cache`**
-- [`docs/memory-obsidian.md`](../memory-obsidian.md) — vault layout, hybrid DB
+- [`docs/mcp/mcp-tools.md`](../mcp/mcp-tools.md) — **`memory_ingest`**, **`memory_recall`**, **`cache`**
+- [`docs/memory/memory-obsidian.md`](../memory/memory-obsidian.md) — vault layout, hybrid DB
 - [`docs/integrations/cursor-vault-memory.md`](../integrations/cursor-vault-memory.md) — Cursor + vault workflow
 - [`docs/case_studies/README.md`](README.md) — other case studies
 

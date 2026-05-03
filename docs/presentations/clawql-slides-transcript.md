@@ -31,7 +31,7 @@ Full-text source capture of the **ClawQL** slide presentation (35 slides, April 
 
 ## Slides ↔ implementation caveat
 
-Slides mix **shipped** behavior with **roadmap** (Ouroboros depth, Cuckoo/Merkle wiring, hybrid sqlite-vec, `notify()` rollout). Cross-check `main`, issues **#68–#72**, and `docs/mcp-tools.md` before treating marketing copy as release truth.
+Slides mix **shipped** behavior with **roadmap** (Ouroboros depth, Cuckoo/Merkle wiring, hybrid sqlite-vec, `notify()` rollout). Cross-check `main`, issues **#68–#72**, and `docs/mcp/mcp-tools.md` before treating marketing copy as release truth.
 
 ## Verbatim transcript
 

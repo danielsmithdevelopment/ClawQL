@@ -181,7 +181,7 @@ If you are wiring AI assistants to real systems, the hard part is rarely “call
 
 ClawQL is not “yet another API wrapper.” It is a spec-first MCP process where optional capabilities stay opt-in, the GraphQL layer keeps answers lean, and the vault and tools you already run (Obsidian, Slack, document APIs) stay composable. Version **4.1.0** is a step toward the unified narrative in our public deck: APIs, documents, memory, and knowledge in one operable surface — without giving up self-hosting or clear boundaries between features.
 
-**CTA:** Install `clawql-mcp@4.1.0`, read [`docs/mcp-tools.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp-tools.md), and open an issue if you need a follow-up (we already split a future `alert` tool to a dedicated ticket so `notify` can stand on its own).
+**CTA:** Install `clawql-mcp@4.1.0`, read [`docs/mcp/mcp-tools.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md), and open an issue if you need a follow-up (we already split a future `alert` tool to a dedicated ticket so `notify` can stand on its own).
 
 **Footnote (honesty):** Some optional test depth (live Slack contract, Ouroboros + notify integration) and full OpenAPI GraphQL coverage for the giant Slack spec remain on the roadmap; see the project issues for the exact numbers. Production REST paths are unchanged.
 
@@ -280,7 +280,7 @@ Apache-2.0. Roadmap: optional `alert` tool split to #150; full Slack OpenAPI Gra
 If you want “APIs + docs + memory + search” in one self-hosted process, this release is a good one to read the CHANGELOG and try a merge preset.
 
 **12/12**  
-Thread links: [CHANGELOG](https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md) · [mcp-tools](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp-tools.md) · [docs.clawql.com](https://docs.clawql.com) — DMs open for production feedback.
+Thread links: [CHANGELOG](https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md) · [mcp-tools](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md) · [docs.clawql.com](https://docs.clawql.com) — DMs open for production feedback.
 
 ---
 

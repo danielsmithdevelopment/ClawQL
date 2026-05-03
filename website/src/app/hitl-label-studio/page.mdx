@@ -11,7 +11,7 @@ export const metadata = docsPageMetadata({
 
 ClawQL can enqueue **human review tasks** into **[Label Studio](https://labelstud.io/)** (your deployment) and receive **webhooks** when annotators finish work. This is **optional** and **off by default**. Enable it when you want agents or pipelines to route low-confidence outputs into a labeling UI and persist outcomes back into ClawQL (**`memory_ingest`** when vault memory is configured, else **`audit`**).
 
-**Canonical runbook (architecture, env matrix, Label Studio setup, security, troubleshooting, Helm, tests):** [hitl-label-studio.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/hitl-label-studio.md) · [mcp-tools.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp-tools.md) · issue [#228](https://github.com/danielsmithdevelopment/ClawQL/issues/228).
+**Canonical runbook (architecture, env matrix, Label Studio setup, security, troubleshooting, Helm, tests):** [hitl-label-studio.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/hitl-label-studio.md) · [mcp-tools.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md) · issue [#228](https://github.com/danielsmithdevelopment/ClawQL/issues/228).
 
 ---
 
@@ -37,7 +37,7 @@ Both require Streamable HTTP (or any deployment where **`clawql-mcp-http`** runs
 
 Vault outcomes: if **`memory_ingest`** is available (memory not disabled + writable **`CLAWQL_OBSIDIAN_VAULT_PATH`**), webhooks append to note **`HITL Label Studio review`**. Otherwise **`audit`** only (ephemeral ring buffer).
 
-Full tables and behavior: [hitl-label-studio.md § Configuration](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/hitl-label-studio.md#4-clawql-configuration-reference).
+Full tables and behavior: [hitl-label-studio.md § Configuration](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/hitl-label-studio.md#4-clawql-configuration-reference).
 
 ---
 
