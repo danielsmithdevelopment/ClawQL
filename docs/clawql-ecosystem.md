@@ -904,6 +904,7 @@ The body of this doc describes a **target experience**. The bullets below are **
 
 **Orchestration & autonomy**
 
+- **Argo Workflows + Argo CD (optional providers)** — agents drive **DAG pipelines** (Workflows) and optionally **GitOps sync** (CD) on Kubernetes; **proposed** post-**6.0.0**, default-off RBAC — see [**ADR 0004**](adr/0004-argo-cd-workflows-clawql-pipelines.md), roadmap [`argo-workflows-cd-provider.md`](roadmap/argo-workflows-cd-provider.md), [#239](https://github.com/danielsmithdevelopment/ClawQL/issues/239).
 - **Invisible natural-language router** that chooses fast-path vs full Ouroboros without user intent — **product vision**, not core MCP routing.
 - **Level‑4 autonomy**, **community template marketplace**, **Fabric consortium** flows beyond Merkle/`memory.db` — roadmap ([#134](https://github.com/danielsmithdevelopment/ClawQL/issues/134), [#187](https://github.com/danielsmithdevelopment/ClawQL/issues/187)).
 - **End-to-end illustrative workflows** (e.g. Q1 invoice story) — **walkthrough fiction** unless you wire tools and infrastructure yourself.
