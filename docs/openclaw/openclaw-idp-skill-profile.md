@@ -1,6 +1,6 @@
 # OpenClaw IDP skill profile (ClawQL document pipeline)
 
-This is the **canonical** operator + agent contract for **OpenClaw-triggered intelligent document processing (IDP)** on ClawQL MCP. It satisfies **[#227](https://github.com/danielsmithdevelopment/ClawQL/issues/227)**. End-to-end OpenClaw install + MCP registration: **[`using-openclaw-with-clawql.md`](using-openclaw-with-clawql.md)**. Bootstrap wiring and smokes: **[`clawql-bootstrap.md`](clawql-bootstrap.md)** ([#226](https://github.com/danielsmithdevelopment/ClawQL/issues/226)). Umbrella tracking: **[#128](https://github.com/danielsmithdevelopment/ClawQL/issues/128)**.
+This is the **canonical** operator + agent contract for **OpenClaw-triggered intelligent document processing (IDP)** on ClawQL MCP. It satisfies **[#227](https://github.com/danielsmithdevelopment/ClawQL/issues/227)**. End-to-end OpenClaw install + MCP registration: **[`using-openclaw-with-clawql.md`](using-openclaw-with-clawql.md)**. Bootstrap wiring and smokes: **[`clawql-bootstrap.md`](clawql-bootstrap.md)** ([#226](https://github.com/danielsmithdevelopment/ClawQL/issues/226)). Umbrella tracking: **[#128](https://github.com/danielsmithdevelopment/ClawQL/issues/128)**. **Epic checklist (IDP + platform #241–#258):** [#259](https://github.com/danielsmithdevelopment/ClawQL/issues/259).
 
 ## Profile summary
 
@@ -26,9 +26,9 @@ Legend: **Ready** = shipped in this repo with bundled or refreshed OpenAPI; **Pa
 | **Enterprise search**           | **`knowledge_search_onyx`** or **`execute`** on **`onyx`** | **`CLAWQL_ENABLE_ONYX=1`**, **`ONYX_BASE_URL`**, token     | Ready   | Wrapper vs raw **`execute`**: **[`docs/mcp/onyx-knowledge-tool.md`](../mcp/onyx-knowledge-tool.md)** ([#118](https://github.com/danielsmithdevelopment/ClawQL/issues/118)).                                  |
 | **Post-Paperless → Onyx index** | **`execute`** (Onyx ingestion API)                         | Same as Onyx                                               | Partial | Tracked as product glue ([#120](https://github.com/danielsmithdevelopment/ClawQL/issues/120)).                                                                                                               |
 | **Bulk ingest + vault**         | **`ingest_external_knowledge`**                            | **`CLAWQL_EXTERNAL_INGEST=1`**, vault path, optional fetch | Ready   | **[`docs/mcp/external-ingest.md`](../mcp/external-ingest.md)**.                                                                                                                                              |
-| **Privacy / redaction**         | Policy **outside** a single MCP flag                       | Helm / sidecar / gateway                                   | Partial | No **`CLAWQL_ENABLE_PRIVACY_FILTER`** in core **`.env.example`** — align with **[`docs/mcp/enterprise-mcp-tools.md`](../mcp/enterprise-mcp-tools.md#regulated-deployments)** and your deployment’s controls. |
+| **Privacy / redaction**         | Local MoE mask pipeline (planned) + policy controls          | Helm / sidecar / gateway                                   | Partial | Tracked: [#245](https://github.com/danielsmithdevelopment/ClawQL/issues/245). Until shipped, align with **[`docs/mcp/enterprise-mcp-tools.md`](../mcp/enterprise-mcp-tools.md#regulated-deployments)** and deployment controls. |
 | **Structured workflows**        | **`ouroboros_*`** MCP tools                                | **`CLAWQL_ENABLE_OUROBOROS=1`**                            | Ready   | **[`docs/ouroboros/clawql-ouroboros.md`](../ouroboros/clawql-ouroboros.md)** — optional overlay on linear IDP chains.                                                                                        |
-| **LangExtract / Docling**       | N/A in MCP catalog                                         | —                                                          | Not MCP | Use **`execute`** only if you merge a **custom OpenAPI** for those services; not bundled as first-class providers today.                                                                                     |
+| **LangExtract / Docling**       | N/A in MCP catalog (today)                                 | —                                                          | Partial | LangExtract: [#246](https://github.com/danielsmithdevelopment/ClawQL/issues/246). Docling + classifier: [#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248). Matrix: [IDP master requirements](../roadmap/idp-master-requirements-matrix.md). Until shipped, **`execute`** on merged custom OpenAPI remains valid. |
 
 ## Reference workflow contract (chat-shaped)
 
@@ -49,7 +49,8 @@ Pair durable operator trails with **`memory_ingest`** / **`memory_recall`** when
 | ----------------------------------------------------- | ------------------------------------------------------------------- |
 | Pregenerated introspection for all document providers | [#125](https://github.com/danielsmithdevelopment/ClawQL/issues/125) |
 | Post-Paperless push to Onyx automation                | [#120](https://github.com/danielsmithdevelopment/ClawQL/issues/120) |
-| Bundled LangExtract / Docling as providers            | Not filed as default — merge custom specs if needed                 |
+| Bundled LangExtract / Docling as providers            | [#246](https://github.com/danielsmithdevelopment/ClawQL/issues/246), [#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248); full stack map: [IDP master requirements matrix](../roadmap/idp-master-requirements-matrix.md) |
+| IDP observability + Slack runbooks + Argo/HITL glue   | [#252](https://github.com/danielsmithdevelopment/ClawQL/issues/252)–[#258](https://github.com/danielsmithdevelopment/ClawQL/issues/258) (see matrix) |
 
 ## Where operators start
 
