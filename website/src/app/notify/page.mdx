@@ -15,6 +15,8 @@ The optional **`notify`** MCP tool sends messages to Slack with **`chat.postMess
 - **Spec:** The loaded OpenAPI merge must include **Slack** (operation id **`chat_postMessage`**), e.g. **`CLAWQL_PROVIDER=slack`**, **`CLAWQL_BUNDLED_PROVIDERS`** containing **`slack`**, or a default merge that already includes Slack.
 - **Auth:** **`CLAWQL_SLACK_TOKEN`** / **`SLACK_BOT_TOKEN`** / … — same rules as **`execute`** for the **`slack`** label. Minimum scope **`chat:write`**.
 
+**Learn walkthrough** (with **`schedule`**, synthetics, HITL): [Schedule & notify workflows](/learn/schedule-notify-workflows).
+
 **Canonical guide (setup, `notify` vs `execute`, thread replies, Block Kit, errors, Cursor JSON, Helm):** [notify-tool.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/notify-tool.md) · [mcp-tools.md § notify](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md#notify-optional) · issue [#77](https://github.com/danielsmithdevelopment/ClawQL/issues/77).
 
 ## Quick examples

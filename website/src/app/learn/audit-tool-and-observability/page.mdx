@@ -1,0 +1,136 @@
+import { docsPageMetadata } from '@/lib/seo'
+
+export const metadata = docsPageMetadata({
+  title: 'Audit tool and observability (Prometheus, Grafana, Loki, Tempo)',
+  description:
+    'ClawQL Core audit MCP tool: append/list/clear ring buffer; Prometheus aggregates on GET /metrics; optional CLAWQL_LOKI_PUSH_URL per-append Loki export; Grafana for metrics, logs, and (with OTLP) traces in Tempo.',
+  path: '/learn/audit-tool-and-observability',
+})
+
+# Audit tool and observability (Prometheus, Grafana, Loki, Tempo)
+
+The **`audit`** MCP tool is **ClawQL Core** — **always registered** (no env toggle). It records **structured breadcrumbs** (`category`, `action`, `summary`, optional **`correlationId`**) into an **in-process ring buffer**. You **recall** them with **`list`** while the process is alive; they are **not** written to disk by default. {{ className: 'lead' }}
+
+The server also exposes **Prometheus aggregate counters** for **`audit`** on the same **`GET /metrics`** registry as native-protocol metrics (**`clawql_audit_*`** — no per-event labels). Optionally set **`CLAWQL_LOKI_PUSH_URL`** so each **`append`** **POST**s one JSON line to **Loki** (fire-and-forget).
+
+This page explains **`audit`** operations, **recall**, **Prometheus + Grafana** dashboards, **Loki** (built-in push plus alternative bridges), and where **Tempo** fits for **optional MCP OTLP traces** (orthogonal to **`audit`** text, same Grafana lab).
+
+**Canonical references:** [enterprise-mcp-tools.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/enterprise-mcp-tools.md) · [mcp-tools.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md) § **`audit`** · [`src/clawql-audit.ts`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/src/clawql-audit.ts) · [`src/clawql-audit-loki.ts`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/src/clawql-audit-loki.ts).
+
+## What the audit tool is (and is not)
+
+|                 | **`audit`**                                                 | **`cache`**                           | **`memory_ingest`**                |
+| --------------- | ----------------------------------------------------------- | ------------------------------------- | ---------------------------------- |
+| **Shape**       | Append-only **events** (category / action / summary)        | Arbitrary **key → string value**      | **Markdown** pages under the vault |
+| **Recall**      | **`list`** (recent slice)                                   | **`get`** / **`list`** / **`search`** | **`memory_recall`**                |
+| **Durability**  | **RAM only** — gone on restart                              | **RAM only**                          | **Disk** (vault)                   |
+| **Typical use** | Operator breadcrumbs, multi-step **`correlationId`** trails | Scratch KV handoff                    | Long-lived notes                   |
+
+Treat **`audit`** as **live flight recorder**: excellent **during** a session or incident on **one pod**, **not** a compliance archive by itself.
+
+## Operations: append, list, clear
+
+**`append`** — requires **`category`**, **`action`**, **`summary`** (non-empty after trim); optional **`correlationId`**. The server stamps **`ts`** in ISO 8601. Response includes **`total`** (buffer length after append) and **`dropped`** when older rows were removed to stay under the cap.
+
+```json
+{
+  "operation": "append",
+  "category": "workflow",
+  "action": "execute_complete",
+  "summary": "slack chat.postMessage ok channel C0123",
+  "correlationId": "inv-2026-05-02-a7f3"
+}
+```
+
+**`list`** — optional **`limit`** (default **20**, **max 100**). Returns the **`total`** rows currently buffered, **`maxEntries`** from env, and **`entries`**: the **most recent** `limit` events (oldest of that slice first, newest last).
+
+```json
+{
+  "operation": "list",
+  "limit": 50
+}
+```
+
+**`clear`** — empties the buffer (operators/tests). Response includes **`cleared`** count.
+
+## Tune retention
+
+**`CLAWQL_AUDIT_MAX_ENTRIES`** (default **500**, min **1**, max **50_000**) caps how many events are kept. When full, **oldest** entries are dropped as new **`append`** calls arrive (`dropped` in the response tells you how many were removed in that call).
+
+Raise the cap on busy servers if you need a longer in-memory window before an exporter runs—at the cost of RSS.
+
+## Recall events in practice
+
+1. **During a chat** — ask the agent to **`audit` `list`** with a **`limit`** that fits your context window; scan **`correlationId`** to thread a run.
+2. **After many appends** — remember **`list` max is 100** per call; if you need more history than the buffer holds, you already lost the oldest rows—design **export** below.
+3. **Across restarts** — buffer is empty; use **`memory_ingest`** for a durable narrative, or enable **Loki push** (below) so lines land in Loki even after the pod restarts.
+
+For habits (append milestones, then vault summary), see the repo skill pattern in [.cursor/skills/clawql-audit-workflows/SKILL.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/.cursor/skills/clawql-audit-workflows/SKILL.md).
+
+## Prometheus and Grafana (metrics)
+
+**`clawql-mcp-http`** exposes **`GET /metrics`** in **OpenMetrics** text (unless **`CLAWQL_DISABLE_HTTP_METRICS=1`**).
+
+**Included series:**
+
+- **Native protocol / runtime** — GraphQL/gRPC execution counters, merge gauges, etc.
+- **`audit` aggregates** — **`clawql_audit_append_total`**, **`clawql_audit_ring_entries_dropped_total`**, **`clawql_audit_clear_total`**, **`clawql_audit_buffer_entries`** (gauge). These update on **every** ClawQL Node process (including **stdio**); you only **scrape** them when HTTP **`/metrics`** is mounted.
+
+**Prometheus:** scrape the ClawQL HTTP Service on **`/metrics`** (TLS/mTLS per your platform). On Docker Desktop + Istio lab, see [Docker Desktop: Istio & observability](/docker-desktop-observability) — ClawQL metrics are called out as separate from mesh Prometheus.
+
+**Grafana:** add Prometheus as a data source — panels for **`rate(clawql_audit_append_total[5m])`**, **`clawql_audit_buffer_entries`**, and **`clawql_audit_ring_entries_dropped_total`** show append volume, backlog pressure, and ring churn. That complements **event text** in Loki (below).
+
+## Loki: durable audit-shaped logs
+
+**Loki** ingests **labels + log lines** (usually JSON).
+
+### Built-in push (recommended)
+
+When **`CLAWQL_LOKI_PUSH_URL`** is set to your push endpoint (typically **`https://<loki-host>/loki/api/v1/push`**), each **`audit.append`** sends **one** JSON **line** with **`ts`**, **`category`**, **`action`**, **`summary`**, and optional **`correlationId`**. Stream labels are **only** **`job`** (default **`clawql-audit`**, override **`CLAWQL_LOKI_JOB`**) and **`service="clawql-mcp"`** — **`summary`** stays in the line body for cardinality safety.
+
+Optional **`CLAWQL_LOKI_BEARER_TOKEN`**, **`CLAWQL_LOKI_TENANT_ID`** (**`X-Scope-OrgID`**), **`CLAWQL_LOKI_PUSH_TIMEOUT_MS`** (default **5000**). Push failures log to **stderr** and **do not** fail the MCP tool.
+
+See **`.env.example`** in the repo for commented variables.
+
+### Other patterns
+
+| Approach              | Idea                                                                                                                           |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| **CronJob exporter**  | Periodically **`audit` `list`** over MCP, push lines yourself — useful if you cannot egress from the MCP pod or want batching. |
+| **Structured stdout** | Duplicate fields to **stdout** JSON; **Promtail** / **Alloy** ship to Loki.                                                    |
+| **Vault mirror**      | **`memory_ingest`** for human-readable trails in Obsidian.                                                                     |
+
+Example **log line** (same shape as built-in push):
+
+```json
+{
+  "ts": "2026-05-02T12:00:00.000Z",
+  "category": "workflow",
+  "action": "execute_complete",
+  "summary": "slack chat.postMessage ok",
+  "correlationId": "inv-2026-05-02-a7f3"
+}
+```
+
+For manual pipelines, prefer **Alloy** / **Promtail** / client libraries for auth and retries.
+
+## End-to-end operator pattern
+
+A workable **metrics + logs** layout:
+
+1. **Prometheus → Grafana** — scrape **`/metrics`** from every **`clawql-mcp-http`** replica; dashboard **`clawql_audit_*`** plus native-protocol series.
+2. **Loki → Grafana** — set **`CLAWQL_LOKI_PUSH_URL`** on the deployment (or use a bridge); explore with **`{job="clawql-audit"}`** unless you changed **`CLAWQL_LOKI_JOB`**.
+3. **Tracing** — optional **OpenTelemetry** to **Grafana Tempo** via **`clawql-otel-collector`** (see [Docker Desktop: Istio & observability](/docker-desktop-observability)); no Jaeger in that path — explore traces in **Grafana → Explore → Tempo**. MCP spans are **orthogonal** to **`audit`** ring text.
+4. **Loki + Tempo on Docker Desktop + Istio** — with **heavy** observability addons (default), **`scripts/kubernetes/install-istio-docker-desktop.sh`** Helm-installs **`clawql-tempo`** for traces. **`clawql-loki`** installs when **`CLAWQL_ISTIO_INSTALL_LOKI_TEMPO`** is not **`0`** (set **`0`** to skip **Loki** only — Tempo stays). In-cluster push example: **`CLAWQL_LOKI_PUSH_URL=http://clawql-loki.istio-system.svc.cluster.local:3100/loki/api/v1/push`**. Elsewhere use **`grafana/loki`**, Grafana Cloud, or **Alloy**; same Grafana can mount **Prometheus, Loki, and Tempo** data sources.
+
+Correlate incident time across stacks: **`correlationId`** in Loki logs ↔ trace ids ↔ Prometheus spike windows.
+
+## Limits and compliance
+
+- **`audit`** v1 is **not compliance-grade** alone — RAM-only, single-process, no multi-tenant isolation ([enterprise-mcp-tools.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/enterprise-mcp-tools.md)).
+- For **immutable** or regulated trails, use **`memory_ingest`**, enterprise logging, or SIEM export — **`audit`** plus **Loki** helps **operations**, not necessarily **legal hold**.
+- **Redact** secrets in **`summary`**; treat exported logs like production data.
+
+---
+
+**See also:** [Tools](/tools) · [Vault memory between chats](/learn/vault-memory-between-chats) · [Cache handoff between chats](/learn/cache-handoff-between-chats) · [ClawQL Learn overview](/learn)

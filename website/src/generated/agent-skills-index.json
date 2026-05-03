@@ -97,7 +97,7 @@
       "type": "skill-md",
       "description": "Deep ClawQL Obsidian vault workflows using memory_ingest and memory_recall MCP tools—structured insights, wikilink graphs, session threading, verbatim captures, and recall queries. Use when persisting important context, building a knowledge graph, starting tasks that may depend on prior vault notes, or when the user mentions Obsidian, the vault, memory, or long-running project context.",
       "url": "/.well-known/agent-skills/clawql-vault-memory/SKILL.md",
-      "digest": "sha256:8c2585218dbddf46f938f22bc156da059e57d309378505e0fc4bfa624d65477c"
+      "digest": "sha256:8baa5eb23d0a900ccd4823344d3d1b824dce1f04396aae483a022e10952e3484"
     }
   ]
 }

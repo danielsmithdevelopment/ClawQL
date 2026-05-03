@@ -4,12 +4,17 @@ import {
   handleAuditToolInput,
   resetClawqlAuditBufferForTests,
 } from "./clawql-audit.js";
+import {
+  renderPrometheusMetrics,
+  resetNativeProtocolPrometheusForTests,
+} from "./native-protocol-prometheus.js";
 
 describe("clawql-audit", () => {
   const saved = process.env.CLAWQL_AUDIT_MAX_ENTRIES;
 
   afterEach(() => {
     resetClawqlAuditBufferForTests();
+    resetNativeProtocolPrometheusForTests();
     if (saved === undefined) delete process.env.CLAWQL_AUDIT_MAX_ENTRIES;
     else process.env.CLAWQL_AUDIT_MAX_ENTRIES = saved;
   });
@@ -89,5 +94,47 @@ describe("clawql-audit", () => {
         summary: "   ",
       })
     ).rejects.toThrow();
+  });
+
+  it("updates Prometheus aggregates on append and clear", async () => {
+    await handleAuditToolInput({
+      operation: "append",
+      category: "tool",
+      action: "execute",
+      summary: "test",
+    });
+    let { body } = await renderPrometheusMetrics();
+    expect(body).toContain("clawql_audit_append_total 1");
+    expect(body).toContain("clawql_audit_buffer_entries 1");
+
+    await handleAuditToolInput({ operation: "clear" });
+    ({ body } = await renderPrometheusMetrics());
+    expect(body).toContain("clawql_audit_clear_total 1");
+    expect(body).toContain("clawql_audit_buffer_entries 0");
+  });
+
+  it("increments clawql_audit_ring_entries_dropped_total when ring evicts", async () => {
+    process.env.CLAWQL_AUDIT_MAX_ENTRIES = "2";
+    await handleAuditToolInput({
+      operation: "append",
+      category: "a",
+      action: "1",
+      summary: "first",
+    });
+    await handleAuditToolInput({
+      operation: "append",
+      category: "a",
+      action: "2",
+      summary: "second",
+    });
+    await handleAuditToolInput({
+      operation: "append",
+      category: "a",
+      action: "3",
+      summary: "third",
+    });
+    const { body } = await renderPrometheusMetrics();
+    expect(body).toContain("clawql_audit_ring_entries_dropped_total 1");
+    expect(body).toContain("clawql_audit_append_total 3");
   });
 });

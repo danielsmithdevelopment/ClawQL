@@ -61,7 +61,7 @@ After deploy, agents use **`https://<mcp-service-url>/mcp`**. Full options: [`do
 
 **Local MCP on Docker Desktop** (namespace **`clawql`**, **`http://localhost:8080/mcp`**, **signed GHCR** images, **Kyverno** installed by **`make local-k8s-up`**) is covered on **[Kubernetes](/kubernetes)**.
 
-**Optional Istio + observability lab** (Prometheus, Grafana, Jaeger, Kiali, OpenTelemetry Collector): beginner-oriented walkthrough on **[Docker Desktop: Istio & observability](/docker-desktop-observability)**; canonical copy in **[`docs/deployment/docker-desktop-istio-observability.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/docker-desktop-istio-observability.md)**.
+**Optional Istio + observability lab** (Prometheus, Grafana, Grafana Tempo, Kiali, OpenTelemetry Collector): beginner-oriented walkthrough on **[Docker Desktop: Istio & observability](/docker-desktop-observability)**; canonical copy in **[`docs/deployment/docker-desktop-istio-observability.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/docker-desktop-istio-observability.md)**.
 
 For **remote** clusters, use Kustomize overlays with image tag injection:
 

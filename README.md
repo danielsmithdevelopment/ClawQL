@@ -39,7 +39,7 @@ Top-level docs index: `docs/README.md`
 
 - Getting started: `docs/readme/getting-started.md`
 - Configuration and env precedence: `docs/readme/configuration.md`
-- Deployment and client config: `docs/readme/deployment.md` (Kubernetes list links **`docs/deployment/docker-desktop-istio-observability.md`** for Istio + Prometheus/Grafana/Jaeger/Kiali/OTel on Docker Desktop)
+- Deployment and client config: `docs/readme/deployment.md` (Kubernetes list links **`docs/deployment/docker-desktop-istio-observability.md`** for Istio + Prometheus/Grafana/Tempo/Kiali/OTel on Docker Desktop)
 - Benchmarks and case studies: `docs/readme/benchmarks.md`
 - Development notes: `docs/readme/development.md`
 - Tool workflow skills: `docs/skills/README.md`

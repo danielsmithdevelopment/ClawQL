@@ -16,6 +16,8 @@
 
 For the Docker Desktop + Istio lab, see **[`docs/deployment/docker-desktop-istio-observability.md`](../deployment/docker-desktop-istio-observability.md)** (port-forward Grafana, then import here).
 
+**Loki / Tempo (Docker Desktop + Istio, default heavy addons):** after **`helm install`** **`clawql-loki`** / **`clawql-tempo`**, add Grafana data sources — **Loki** URL **`http://clawql-loki:3100`**, **Tempo** URL **`http://clawql-tempo:3200`** (in-cluster DNS from the Grafana pod). Use Loki for **`audit`** push logs (**`CLAWQL_LOKI_PUSH_URL`**) and Tempo for traces (**Grafana Explore**).
+
 ### Upstream Istio dashboards (mesh)
 
 [#225](https://github.com/danielsmithdevelopment/ClawQL/issues/225) references importing community Istio dashboards when mesh metrics matter; typical Grafana.com IDs **7645**, **7639**, **11829** (verify against your Istio version; IDs can drift).

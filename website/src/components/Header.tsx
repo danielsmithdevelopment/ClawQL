@@ -107,6 +107,7 @@ export const Header = forwardRef<
           <ul role="list" className="flex items-center gap-8">
             <TopLevelNavItem href="/">Home</TopLevelNavItem>
             <TopLevelNavItem href="/quickstart">Quickstart</TopLevelNavItem>
+            <TopLevelNavItem href="/learn">Learn</TopLevelNavItem>
             <TopLevelNavItem href="https://github.com/danielsmithdevelopment/ClawQL">
               GitHub
             </TopLevelNavItem>

@@ -2,8 +2,8 @@
 set -euo pipefail
 
 # Install Istio (ambient or sidecar) on Docker Desktop Kubernetes via Helm, optional
-# observability addons (upstream Istio samples: Prometheus, Kiali, Grafana, Jaeger) plus a
-# minimal in-repo OpenTelemetry Collector forwarding app OTLP to Jaeger, then label the
+# observability addons (upstream Istio samples: Prometheus, Kiali, Grafana) plus Helm Grafana Tempo
+# and a minimal in-repo OpenTelemetry Collector forwarding app OTLP to Tempo, then label the
 # ClawQL namespace for the mesh.
 #
 # Intended caller: scripts/kubernetes/local-k8s-docker-desktop.sh, or manual:
@@ -14,8 +14,12 @@ set -euo pipefail
 #   CLAWQL_ISTIO_VERSION — Helm chart version (default 1.29.2)
 #   CLAWQL_TARGET_NAMESPACE — namespace to enroll + optional STRICT policy (default clawql)
 #   CLAWQL_ISTIO_INSTALL_KIALI — 1 installs samples/addons prometheus + kiali (default 1)
-#   CLAWQL_ISTIO_INSTALL_HEAVY_OBSERVABILITY_ADDONS — when 1 (default), also grafana + jaeger
+#   CLAWQL_ISTIO_INSTALL_HEAVY_OBSERVABILITY_ADDONS — when 1 (default), also grafana + Helm tempo
 #     + docker/istio/docker-desktop/otel-collector.yaml (set 0 on tight Docker Desktop RAM)
+#   CLAWQL_ISTIO_INSTALL_LOKI_TEMPO — when 1 (default), also Helm grafana/loki in istio-system
+#     (single-binary lab sizing; set 0 to skip Loki only — Tempo stays). Requires HEAVY_OBSERVABILITY_ADDONS=1.
+#   CLAWQL_LOKI_CHART_VERSION — Helm chart version for grafana/loki (default 6.55.0)
+#   CLAWQL_TEMPO_CHART_VERSION — Helm chart version for grafana/tempo (default 1.24.4)
 #   CLAWQL_ISTIO_APPLY_STRICT_MTLS — 1 applies PeerAuthentication STRICT in target NS (default 1)
 #   CLAWQL_ISTIO_MESH_INGRESS_NGINX — 1 enrolls namespace ingress-nginx in the mesh + restarts the
 #     controller so Ingress → clawql uses mesh mTLS under STRICT (default 1; set 0 if ingress ns missing)
@@ -33,8 +37,11 @@ MODE="${CLAWQL_LOCAL_K8S_ISTIO_MODE:-}"
 VER="${CLAWQL_ISTIO_VERSION:-1.29.2}"
 TARGET_NS="${CLAWQL_TARGET_NAMESPACE:-clawql}"
 INSTALL_KIALI="${CLAWQL_ISTIO_INSTALL_KIALI:-1}"
-# Prometheus + Kiali are relatively light; Grafana + Jaeger + OTel collector are heavier on RAM/CPU.
+# Prometheus + Kiali are relatively light; Grafana + Tempo + OTel collector are heavier on RAM/CPU.
 HEAVY_OBS="${CLAWQL_ISTIO_INSTALL_HEAVY_OBSERVABILITY_ADDONS:-1}"
+LOKI_TEMPO="${CLAWQL_ISTIO_INSTALL_LOKI_TEMPO:-1}"
+LOKI_CHART_VER="${CLAWQL_LOKI_CHART_VERSION:-6.55.0}"
+TEMPO_CHART_VER="${CLAWQL_TEMPO_CHART_VERSION:-1.24.4}"
 STRICT="${CLAWQL_ISTIO_APPLY_STRICT_MTLS:-1}"
 MESH_INGRESS="${CLAWQL_ISTIO_MESH_INGRESS_NGINX:-1}"
 GATEWAY_API="${CLAWQL_ISTIO_INSTALL_GATEWAY_API_CRDS:-1}"
@@ -172,23 +179,48 @@ if [[ "${INSTALL_KIALI}" == "1" ]]; then
   kubectl_ctx apply -n "${ISTIO_NS}" -f "${ADDON_BASE}/prometheus.yaml"
   kubectl_ctx apply -n "${ISTIO_NS}" -f "${ADDON_BASE}/kiali.yaml"
   if [[ "${HEAVY_OBS}" == "1" ]]; then
-    echo "==> Addons: Grafana + Jaeger (same upstream samples; set CLAWQL_ISTIO_INSTALL_HEAVY_OBSERVABILITY_ADDONS=0 to skip)"
+    echo "==> Addons: Grafana (Istio sample; set CLAWQL_ISTIO_INSTALL_HEAVY_OBSERVABILITY_ADDONS=0 to skip)"
     kubectl_ctx apply -n "${ISTIO_NS}" -f "${ADDON_BASE}/grafana.yaml"
-    kubectl_ctx apply -n "${ISTIO_NS}" -f "${ADDON_BASE}/jaeger.yaml"
-    echo "==> ClawQL OTel Collector → Jaeger (in-cluster OTLP for MCP / workloads)"
+    echo "==> Helm repo: grafana (Tempo chart; Loki when CLAWQL_ISTIO_INSTALL_LOKI_TEMPO=1)"
+    helm repo add grafana https://grafana.github.io/helm-charts >/dev/null 2>&1 || true
+    helm repo update grafana >/dev/null
+    echo "==> Helm: Grafana Tempo (single binary; chart ${TEMPO_CHART_VER})"
+    helm_ctx upgrade --install clawql-tempo grafana/tempo \
+      --namespace "${ISTIO_NS}" \
+      --version "${TEMPO_CHART_VER}" \
+      -f "${ROOT}/docker/istio/docker-desktop/tempo-values-docker-desktop.yaml" \
+      --wait \
+      --timeout "${HELM_WAIT_TIMEOUT}"
+    if [[ "${LOKI_TEMPO}" == "1" ]]; then
+      echo "==> Helm: Grafana Loki (single binary; chart ${LOKI_CHART_VER})"
+      helm_ctx upgrade --install clawql-loki grafana/loki \
+        --namespace "${ISTIO_NS}" \
+        --version "${LOKI_CHART_VER}" \
+        -f "${ROOT}/docker/istio/docker-desktop/loki-values-docker-desktop.yaml" \
+        --wait \
+        --timeout "${HELM_WAIT_TIMEOUT}"
+    else
+      echo "==> Skipping Grafana Loki (CLAWQL_ISTIO_INSTALL_LOKI_TEMPO=0)"
+    fi
+    echo "==> ClawQL OTel Collector → Tempo (OTLP)"
     kubectl_ctx apply -f "${ROOT}/docker/istio/docker-desktop/otel-collector.yaml"
+    kubectl_ctx rollout restart deployment/clawql-otel-collector -n "${ISTIO_NS}" >/dev/null 2>&1 || true
   else
-    echo "==> Skipping Grafana, Jaeger, OTel collector (CLAWQL_ISTIO_INSTALL_HEAVY_OBSERVABILITY_ADDONS=0)"
+    echo "==> Skipping Grafana, Tempo, Loki, OTel collector (CLAWQL_ISTIO_INSTALL_HEAVY_OBSERVABILITY_ADDONS=0)"
   fi
   echo "    Port-forwards (istio-system):"
   echo "      Kiali:      kubectl port-forward svc/kiali 20001:20001 -n ${ISTIO_NS}"
   echo "      Prometheus: kubectl port-forward svc/prometheus 9090:9090 -n ${ISTIO_NS}"
   if [[ "${HEAVY_OBS}" == "1" ]]; then
     echo "      Grafana:    kubectl port-forward svc/grafana 3000:3000 -n ${ISTIO_NS}"
-    echo "      Jaeger UI:  kubectl port-forward svc/tracing 16686:80 -n ${ISTIO_NS}"
+    echo "      Tempo HTTP: kubectl port-forward svc/clawql-tempo 3200:3200 -n ${ISTIO_NS}  (Grafana Explore traces)"
     echo "      MCP OTLP:   OTEL_EXPORTER_OTLP_ENDPOINT=http://clawql-otel-collector.${ISTIO_NS}.svc:4318/v1/traces"
+    if [[ "${LOKI_TEMPO}" == "1" ]]; then
+      echo "      Loki API:   kubectl port-forward svc/clawql-loki 3100:3100 -n ${ISTIO_NS}  (push: /loki/api/v1/push)"
+      echo "      ClawQL→Loki: CLAWQL_LOKI_PUSH_URL=http://clawql-loki.${ISTIO_NS}.svc.cluster.local:3100/loki/api/v1/push"
+    fi
   else
-    echo "      (Grafana / Jaeger / OTel collector not installed — enable HEAVY_OBSERVABILITY_ADDONS or apply jaeger.yaml manually)"
+    echo "      (Grafana / Tempo / OTel collector not installed — enable HEAVY_OBSERVABILITY_ADDONS)"
   fi
 fi
 

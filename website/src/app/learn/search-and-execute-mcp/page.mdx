@@ -1,0 +1,116 @@
+import { docsPageMetadata } from '@/lib/seo'
+
+export const metadata = docsPageMetadata({
+  title: 'Using search and execute (ClawQL Core MCP)',
+  description:
+    'How to use the Core search and execute MCP tools: discover operationId with search, run one call with execute, args, fields, auth, and native GraphQL/gRPC—plus case studies for real workflows.',
+  path: '/learn/search-and-execute-mcp',
+})
+
+# Using `search` and `execute` (ClawQL Core MCP)
+
+**`search`** and **`execute`** are **ClawQL Core** — they are **always registered** (no feature flag). Together they are the main way an agent talks to **OpenAPI/Discovery** APIs (and optional **native GraphQL** / **gRPC** sources) without pasting entire specs into the model. {{ className: 'lead' }}
+
+**Mental model:** **`search`** returns a **small ranked list** of operations (ids, summaries, parameter hints). **`execute`** runs **exactly one** operation by **`operationId`** with a JSON **`args`** object shaped like the upstream API expects.
+
+**Canonical reference:** [mcp-tools.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md) § **`search`** / **`execute`**. Architecture overview: [Concepts](/concepts). Spec loading and env: [Spec configuration](/spec-configuration). Full tool table: [Tools](/tools).
+
+## Why search then execute
+
+ClawQL merges loaded specs into a **single in-memory index**. **`search`** queries that index with a natural-language **`query`** string — it does **not** call the provider over the network for ranking.
+
+That keeps **planning context** small: the model sees **top matches** (controlled by **`limit`**) instead of megabytes of OpenAPI. **`execute`** is the only tool that performs the **real HTTP or gRPC** call (with auth resolved from env and headers). The same split is why benchmarks compare “merged specs on disk” vs “search/execute artifacts” — see [Benchmarks](/benchmarks).
+
+## Before you start
+
+1. **Confirm the tools exist** — they are Core; if your MCP client hides them, fix client config, not ClawQL flags.
+2. **Know what is loaded** — which **`CLAWQL_PROVIDER`**, **`CLAWQL_SPEC_PATHS`**, **`CLAWQL_BUNDLED_PROVIDERS`**, **`CLAWQL_GRAPHQL_SOURCES`**, or **`CLAWQL_GRPC_SOURCES`** your server process actually started with ([Spec configuration](/spec-configuration)). **`search`** only sees **loaded** operations.
+3. **Have auth ready** — tokens and base URLs live in **env** (and optional static headers). Wrong or missing auth shows up on **`execute`**, not **`search`**.
+4. **Prefer Streamable HTTP or gRPC MCP** for long sessions — stdio is fine, but a **stable server URL** is easier for editors that restart subprocesses often ([Install](/install), [MCP clients](/mcp-clients)).
+
+## The search tool
+
+**Purpose:** rank **`operationId`** candidates for a task.
+
+**Typical input:**
+
+```json
+{
+  "query": "list Cloudflare zone DNS records",
+  "limit": 8
+}
+```
+
+- **`query`** (required) — what you want to do, in plain language.
+- **`limit`** (optional) — cap the number of hits (use a small number first; widen if nothing fits).
+
+**Typical output shape:** each hit includes **`operationId`**, human-readable **summary**, and **parameter** metadata so you can choose the right row before calling **`execute`**.
+
+**Practical habit:** run **`search`**, pick **one** **`operationId`**, then **`execute`** — avoid parallel **`execute`** calls until you know the id and required args.
+
+## The execute tool
+
+**Purpose:** run **one** indexed operation.
+
+**Typical input:**
+
+```json
+{
+  "operationId": "zones.dns_records.list",
+  "args": {
+    "zone_id": "023e105f4ecef8ad7ca31c7a1450cf"
+  },
+  "fields": ["result", "success", "errors"]
+}
+```
+
+- **`operationId`** (required) — must match the index (copy from **`search`** results or your spec).
+- **`args`** (required) — object whose keys are **parameter names** the OpenAPI operation expects (path, query, header, body — ClawQL maps them per operation). Omit keys only when they are truly optional.
+- **`fields`** (optional) — array of **top-level** JSON keys to keep in the response body; use it to shrink large payloads ([Trim responses with fields](#trim-responses-with-fields)).
+
+**Multi-spec REST:** ClawQL routes **`execute`** to the owning OpenAPI spec automatically. **Native** GraphQL and gRPC operations use different client paths internally; you still pass **`operationId`** and **`args`** in the same tool shape ([REST index plus optional native APIs](#rest-index-plus-optional-native-apis)).
+
+## Authentication and parameters
+
+- **Env-first:** most providers expect **`CLAWQL_*`** or legacy aliases documented in [`.env.example`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/.env.example) and **[configuration](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/readme/configuration.md)**.
+- **Per-request headers:** when an API needs ad hoc headers, use the patterns described in **`auth-headers`** / enterprise docs — see [enterprise-mcp-tools.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/enterprise-mcp-tools.md) for regulated setups.
+- **Args discipline:** under-specifying **`args`** yields **4xx** from the provider; over-specifying rarely helps. Start from **`search`** parameter hints and the upstream OpenAPI **required** fields.
+
+## Trim responses with fields
+
+Many APIs return large envelopes (`data`, `result`, nested arrays). **`fields`** keeps **only listed top-level keys** in the JSON returned to the model — it is not a JSONPath filter, but it is enough to drop noise when you only need **`result`** or **`data`**.
+
+Example: after **`zones.dns_records.list`**, you might keep **`["result","success"]`** and iterate **`result`** in the next reasoning step instead of echoing the full wire format.
+
+## REST index plus optional native APIs
+
+By default, ClawQL loads **OpenAPI/Discovery** specs into one **`search`** index. When you configure **`CLAWQL_GRAPHQL_SOURCES`** and/or **`CLAWQL_GRPC_SOURCES`**, **native** operations merge into the **same** index; **`execute`** dispatches by internal protocol metadata ([ADR 0002](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/adr/0002-multi-protocol-supergraph.md)).
+
+If you run **GraphQL-only** (no REST specs selected), **`search`** can still list native operations — but then **`CLAWQL_GRAPHQL_URL`** / sources must be set correctly or the index will be empty. When in doubt, confirm with [Spec configuration](/spec-configuration) and a tight **`search`** probe.
+
+## Case studies for background
+
+These narratives show **`search` → `execute`** in real projects (failures, retries, and tooling around the same MCP server):
+
+| Case study                                                                                                     | Why read it                                                                                                                                           |
+| -------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Deploying docs.clawql.com with ClawQL MCP](/case-studies/cloudflare-docs-mcp)                                 | **Workers + OpenNext** control plane: **`search`/`execute`** against Cloudflare APIs, caching, and runtime surprises on edge.                         |
+| [Vault + GitHub session (April 2026)](/case-studies/vault-memory-github-session-2026-04)                       | Long session: GitHub + vault workflows; how **`search`** and **`execute`** pair with vault tools such as **`memory_recall`** and **`memory_ingest`**. |
+| [Cross-thread vault recall](/case-studies/cross-thread-vault-recall)                                           | Multi-turn recall patterns; good context for when **`execute`** is not enough and vault tools carry state.                                            |
+| [Slide deck: cache, memory, GitHub parity](/case-studies/slide-deck-github-parity-cache-memory-recall-2026-04) | Planning-context size and **multi-provider** **`search`** scenarios (benchmarks mindset).                                                             |
+| [ClawQL Worker + MCP memory (1102)](/case-studies/docs-clawql-worker-1102-mcp-memory-2026-04)                  | Edge Worker + MCP: constraints that affect how often you can **`execute`** and how you cache results.                                                 |
+| [TrueNAS Scale homelab](/case-studies/truenas-scale-corgicave-homelab)                                         | Self-hosted stack and operator habits around the same tool surface.                                                                                   |
+
+None of these replace **`mcp-tools.md`** for field-level truth tables — use them as **story + patterns**.
+
+## Limits and common errors
+
+- **Empty `search` results** — wrong **`query`**, **`limit`** too tight, or spec not loaded for that provider; fix env and restart if you changed **`CLAWQL_SPEC_PATHS`**.
+- **`execute` 4xx / schema errors** — wrong **`operationId`** or **`args`** shape; re-run **`search`** and compare **required** parameters.
+- **Rate limits** — backoff and smaller pages; **`fields`** to reduce parse cost in the model.
+- **Huge bodies** — trim with **`fields`**; for vault or audit trails, use **`memory_ingest`** / **`audit`** patterns instead of giant **`execute`** payloads in chat.
+- **Native vs REST** — if an operation is **gRPC** or **GraphQL**, env for that source must be valid; errors often look like connection or reflection failures — see [Troubleshooting](/troubleshooting).
+
+---
+
+**See also:** [ClawQL Learn overview](/learn) · [Quickstart](/quickstart) · [Ouroboros](/ouroboros) (multi-step workflows that can still call APIs through your integration layer)

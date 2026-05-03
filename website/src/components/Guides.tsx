@@ -42,7 +42,7 @@ const guides = [
     href: '/docker-desktop-observability',
     name: 'Istio & observability',
     description:
-      'Prometheus, Grafana, Jaeger, Kiali, OTel Collector with optional Istio on Docker Desktop—beginner getting-started for each tool.',
+      'Prometheus, Grafana, Tempo, Kiali, OTel Collector with optional Istio on Docker Desktop—beginner getting-started for each tool.',
   },
   {
     href: '/helm',

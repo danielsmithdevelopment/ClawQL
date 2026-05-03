@@ -342,7 +342,7 @@ The **chicken-and-egg** of first trust: **HSM** / **air-gapped** **ceremony** fo
 
 ## End-to-end secure lifecycle (integrating the stack)
 
-**Signed commit (optional YubiKey)** → **signed build** (CI: **Trivy**, **OSV**, **SBOM**) → **Cosign** → **verified** **registry** → **immutable** **Helm** **deploy** (**Istio** mTLS, **NetPol**) → **runtime** **Vault** **tokens** → **continuous** **monitoring** (Prometheus, **Falco**, **Jaeger**) → **Detect** → **Isolate** → **Redeploy** → **improve**
+**Signed commit (optional YubiKey)** → **signed build** (CI: **Trivy**, **OSV**, **SBOM**) → **Cosign** → **verified** **registry** → **immutable** **Helm** **deploy** (**Istio** mTLS, **NetPol**) → **runtime** **Vault** **tokens** → **continuous** **monitoring** (Prometheus, **Falco**, trace backends such as **Tempo**) → **Detect** → **Isolate** → **Redeploy** → **improve**
 
 **ClawQL-specific:** **`CLAWQL_BUNDLED_OFFLINE`**, **MCP** `audit` + **Merkle**, **optional** **Fabric** for **consortium** **provenance**, **Ouroboros** **Seeds** for **reproducible** **workflows**.
 

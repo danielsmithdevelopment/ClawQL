@@ -69,8 +69,8 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- printf "%s-postgres" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
-{{- define "clawql-mcp.storesRedisName" -}}
-{{- printf "%s-redis" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- define "clawql-mcp.storesDragonflyName" -}}
+{{- printf "%s-dragonfly" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{- define "clawql-mcp.flinkName" -}}
@@ -117,8 +117,8 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
 {{- end }}
 
-{{- define "clawql-mcp.onyxRedisName" -}}
-{{- printf "%s-onyx-cache" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- define "clawql-mcp.onyxDragonflyName" -}}
+{{- printf "%s-onyx-dragonfly" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{- define "clawql-mcp.onyxOpenSearchName" -}}

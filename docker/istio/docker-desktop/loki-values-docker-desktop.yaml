@@ -1,0 +1,56 @@
+# Minimal Grafana Loki for Docker Desktop Kubernetes (single binary, filesystem storage).
+# Used by scripts/kubernetes/install-istio-docker-desktop.sh when Loki/Tempo addons are enabled.
+#
+# Docs: https://grafana.com/docs/loki/latest/setup/install/helm/
+
+deploymentMode: SingleBinary
+
+singleBinary:
+  replicas: 1
+  persistence:
+    enabled: true
+    size: 2Gi
+  resources:
+    requests:
+      cpu: 50m
+      memory: 256Mi
+    limits:
+      memory: 512Mi
+
+loki:
+  # Local lab only — avoids hand-maintained schemaConfig; use explicit schema in production.
+  useTestSchema: true
+  storage:
+    type: filesystem
+  commonConfig:
+    replication_factor: 1
+  limits_config:
+    ingestion_rate_mb: 8
+    ingestion_burst_size_mb: 16
+    max_streams_per_user: 10000
+
+# Disable microservices from default SimpleScalable chart defaults (not used in SingleBinary).
+write:
+  replicas: 0
+read:
+  replicas: 0
+backend:
+  replicas: 0
+
+chunksCache:
+  enabled: false
+resultsCache:
+  enabled: false
+
+gateway:
+  enabled: false
+
+monitoring:
+  selfMonitoring:
+    enabled: false
+
+test:
+  enabled: false
+
+lokiCanary:
+  enabled: false

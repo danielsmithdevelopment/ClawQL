@@ -1,0 +1,136 @@
+import { docsPageMetadata } from '@/lib/seo'
+
+export const metadata = docsPageMetadata({
+  title: 'Hand off context between chats with cache',
+  description:
+    'Use the ClawQL Core cache MCP tool to checkpoint goals and context in one conversation and reload them in another—when both chats share the same running ClawQL server process.',
+  path: '/learn/cache-handoff-between-chats',
+})
+
+# Hand off context between chats with `cache`
+
+You can treat the default **`cache`** tool as a **scratchpad shared by every agent turn that talks to the same ClawQL MCP server**. Store a compact “state of the world” when you wrap up one chat, then **`get`** it at the start of a **new thread** so you do not have to re-explain goals, constraints, or links—**as long as that server process is still running** and both conversations use it. {{ className: 'lead' }}
+
+This guide is about **session handoff**, not the Obsidian vault. For durable notes across restarts and replicas, see [Session cache](/cache) (overview) and **`memory_ingest`** / **`memory_recall`** when the vault is configured.
+
+## Why this works (and when it does not)
+
+The **`cache`** tool keeps values in an **in-memory `Map` inside the Node process** that hosts **`clawql-mcp`** ([session cache](/cache)). Any client that connects to **that same process** sees the **same** keys—whether the requests come from chat thread A or thread B.
+
+It **does not** work like cloud-synced chat history:
+
+- **Process restart** (upgrade, crash, pod reschedule, `npx` exiting) → cache is **empty**.
+- **Another replica** in Kubernetes → **its own** empty cache ([cache vs multi-replica](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/cache-tool.md)).
+- **Stdio MCP** → cross-thread handoff only if your editor keeps **one long-lived** ClawQL process for every composer/agent session that should share state. If each thread starts a **fresh** subprocess, you get a **fresh** cache.
+
+**Practical takeaway:** for predictable handoff across threads, run ClawQL as **one shared Streamable HTTP** (or gRPC) server—see [Install](/install) and [Deployment](/deployment)—and point every MCP client at **that** endpoint. Then **`cache`** is a reliable bridge between conversations until the server restarts.
+
+## Before you start
+
+1. Confirm **`cache`** is available (ClawQL Core — always on; no env toggle).
+2. Pick a **stable key** you can reuse (see [Key naming and discovery](#key-naming-and-discovery)).
+3. Keep the payload **structured text** (Markdown or JSON). Respect **`CLAWQL_CACHE_MAX_VALUE_BYTES`** (default **1 MiB**).
+4. Do **not** store long-lived secrets in **`cache`**; it is ephemeral and shared within the process.
+
+## Pattern: checkpoint at the end of a chat
+
+Ask the model (or use the tool yourself) to **`set`** a single key that captures everything the **next** thread needs.
+
+Recommended payload shape:
+
+- **Goal** — one or two sentences.
+- **Done so far** — bullet list.
+- **Next steps** — ordered list.
+- **Constraints** — env names, branches, “do not touch” areas.
+- **Pointers** — issue URLs, doc paths, operation ids you rely on.
+
+**`cache` tool — `set`**
+
+```json
+{
+  "operation": "set",
+  "key": "handoff:acme-api-hardening",
+  "value": "## Goal\nLock down the Acme public API review workflow.\n\n## Done\n- Confirmed OpenAPI merge uses CLAWQL_SPEC_PATH + bundled slack\n\n## Next\n1. execute slack::conversations_list with limit 10\n2. Post summary to #review-bot\n\n## Constraints\n- Branch: feat/api-review\n- No production executes\n\n## Links\n- https://github.com/org/repo/issues/42"
+}
+```
+
+You should see JSON like `{ "ok": true, "operation": "set", "key": "handoff:…" }`. If the server was at entry capacity, the response may include **`evicted`** (LRU drops); see [Session cache](/cache).
+
+## Pattern: hydrate a new chat
+
+In the **new** thread, open with an instruction plus a **`get`** on the same key (or ask the agent to load it before planning).
+
+**`cache` tool — `get`**
+
+```json
+{
+  "operation": "get",
+  "key": "handoff:acme-api-hardening"
+}
+```
+
+On success with data:
+
+```json
+{
+  "ok": true,
+  "hit": true,
+  "key": "handoff:acme-api-hardening",
+  "value": "…"
+}
+```
+
+If you see **`"hit": false`**, the key is missing: wrong key, different server process, eviction, or the server restarted—recover from chat history or vault memory if you use it.
+
+## Key naming and discovery
+
+Use a namespace prefix so you can **`list`** or **`search`** without colliding with other workflows:
+
+| Pattern                   | Example                  | Use                                     |
+| ------------------------- | ------------------------ | --------------------------------------- |
+| `handoff:<topic>`         | `handoff:q2-migration`   | Single active checkpoint per initiative |
+| `<user>:<project>:<date>` | `alex:clawql:2026-05-02` | Personal or multi-operator servers      |
+
+**`list`** with prefix:
+
+```json
+{
+  "operation": "list",
+  "prefix": "handoff:",
+  "limit": 50
+}
+```
+
+**`search`** on key substring (case-insensitive):
+
+```json
+{
+  "operation": "search",
+  "query": "acme",
+  "limit": 20
+}
+```
+
+When the handoff is obsolete, **`delete`** the key to avoid confusing a future session.
+
+## Limits and pitfalls
+
+- **LRU eviction** — heavy **`cache`** use elsewhere can evict your handoff key if you approach **`CLAWQL_CACHE_MAX_ENTRIES`**. Re-saving refreshes recency; critical runbooks belong in the vault, not only in **`cache`**.
+- **Size** — one handoff should stay small; split huge artifacts across **`memory_ingest`** or repo files.
+- **Concurrency** — last writer wins on **`set`** for the same key.
+- **Operations reference:** [cache-tool.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/cache-tool.md) · [mcp-tools.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md).
+
+## When to use vault memory instead
+
+Use **`memory_ingest`** / **`memory_recall`** when you need:
+
+- State **after restarts** or across **Kubernetes replicas** with a shared vault volume
+- **Searchable** long-term notes, wikilinks, or operator trails
+
+Step-by-step pattern (writable vault dir or PVC): [Vault memory between chats](/learn/vault-memory-between-chats).
+
+Use **`cache`** when you want **fast, lightweight continuity** between chats on **one live server**—exactly the “don’t make me paste five paragraphs of context again” workflow, without committing to vault semantics.
+
+---
+
+**See also:** [Session cache](/cache) · [Tools](/tools) · [ClawQL Learn overview](/learn)

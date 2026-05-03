@@ -1,0 +1,120 @@
+import { docsPageMetadata } from '@/lib/seo'
+
+export const metadata = docsPageMetadata({
+  title: 'Using sandbox_exec (Seatbelt, Docker, Cloudflare)',
+  description:
+    'Optional sandbox_exec MCP tool: macOS Seatbelt, Docker/Podman, and Cloudflare Workers bridge—how they differ, env wiring, auto-selection, and safe session patterns.',
+  path: '/learn/sandbox-exec',
+})
+
+# Using `sandbox_exec`
+
+Agents often need to **run short code** (evaluate an expression, transform JSON, probe a library) without opening an **unrestricted shell** on the machine that hosts **ClawQL MCP**. **`sandbox_exec`** is an **optional** tool (**`CLAWQL_ENABLE_SANDBOX=1`**) that runs **Python**, **JavaScript**, or **shell** snippets in one of **three backends**: **macOS Seatbelt**, **Docker / Podman**, or a **Cloudflare Workers** sandbox **bridge**. Successful responses include a **`backend`** field so you can audit **where** code actually ran. {{ className: 'lead' }}
+
+**Canonical reference:** [mcp-tools.md § sandbox_exec](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md#sandbox_exec) · issue [#207](https://github.com/danielsmithdevelopment/ClawQL/issues/207). Agent skill: [clawql-sandbox-exec](https://docs.clawql.com/.well-known/agent-skills/clawql-sandbox-exec/SKILL.md). Bridge deploy: [cloudflare/sandbox-bridge README](https://github.com/danielsmithdevelopment/ClawQL/blob/main/cloudflare/sandbox-bridge/README.md).
+
+## What sandbox_exec is for
+
+- **Small, untrusted snippets** — safe evaluation paths instead of **`execute`** on arbitrary automation or pasting into a real operator shell.
+- **Reproducible environments** — especially **Docker**, where language runtimes come from a **pinned image** rather than whatever is installed on the laptop running Cursor.
+- **Separation of concerns** — keep the MCP process as a **control plane**; push execution to **Seatbelt** (local, no extra infra), **Docker** (local engine), or **Cloudflare** (remote **Worker** + [Sandbox SDK](https://developers.cloudflare.com/sandbox/) container).
+
+**Not a replacement** for full CI, Kubernetes jobs, or browser automation — it is a **tight** execution lane with timeouts and persistence modes (see [Tool input sessions and timeouts](#tool-input-sessions-and-timeouts)).
+
+## Enable the tool and pick a backend
+
+1. Set **`CLAWQL_ENABLE_SANDBOX=1`** (`1` / `true` / `yes`) on the **MCP server** and restart so **`listTools`** includes **`sandbox_exec`**.
+2. Set **`CLAWQL_SANDBOX_BACKEND`** according to the table below (from [mcp-tools.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md#sandbox_exec) and [`src/sandbox-backend-selection.ts`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/src/sandbox-backend-selection.ts)).
+
+| **`CLAWQL_SANDBOX_BACKEND`**                                   | Behavior                                                                                                                                                                                                                                              |
+| -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Unset or empty**                                             | **Cloudflare bridge only** (backward-compatible default). You need **`CLAWQL_SANDBOX_BRIDGE_URL`** + **`CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN`** when you actually run snippets.                                                                        |
+| **`auto`**                                                     | Pick the **first** backend that is **available**: **Seatbelt** (macOS + **`/usr/bin/sandbox-exec`**) → **Docker/Podman** (**`docker version`**-style check) → **bridge** (URL + token). If none qualify, you get one error listing all three options. |
+| **`macos-seatbelt`** / **`seatbelt`**                          | Force Seatbelt only.                                                                                                                                                                                                                                  |
+| **`docker`** / **`container`** / **`orbstack`** / **`podman`** | Force the OCI backend only.                                                                                                                                                                                                                           |
+| **`bridge`** / **`cloudflare`**                                | Force the Worker bridge only.                                                                                                                                                                                                                         |
+| **Unknown value**                                              | Treated as **`bridge`**.                                                                                                                                                                                                                              |
+
+**Important:** If you want **local** Seatbelt or Docker on a Mac where you **also** have bridge credentials set, use **`CLAWQL_SANDBOX_BACKEND=auto`** (or pin **`macos-seatbelt`** / **`docker`**). **Unset** does **not** walk the auto chain — it stays on **bridge**.
+
+## macOS Seatbelt local isolation
+
+**What it is:** Apple’s **`sandbox-exec`** with an embedded **Seatbelt** profile. ClawQL uses a profile that **denies outbound network** (**`(deny network*)`**) while allowing default filesystem rules needed for the snippet workspace ([#23](https://github.com/danielsmithdevelopment/ClawQL/issues/23), [#207](https://github.com/danielsmithdevelopment/ClawQL/issues/207)).
+
+**Where code runs:** On the **same Mac** as the MCP server, under **`/usr/bin/sandbox-exec`**, with workspaces under **`$TMPDIR/clawql-seatbelt-workspaces/`**. Interpreters are the host’s **`python3`**, **`node`**, and **`/bin/sh`** — isolated from the **network**, not from all local resources.
+
+**When it shines:** **Fast** iteration on a developer Mac **without** Docker Desktop; **no** Cloudflare account or bridge deploy; **no** container image pulls.
+
+**Limits:** **macOS only**; isolation is **Seatbelt-shaped** (not a full VM); profiles can evolve — treat as **defense in depth**, not a formal compliance boundary by itself.
+
+## Docker and Podman containers
+
+**What it is:** **`docker run`** (or **`podman`**) with a fresh container per run, default **`--network none`**, and a bind-mounted workspace under **`$TMPDIR/clawql-docker-workspaces/`**. Default images are **`python:3.12-alpine`**, **`node:22-alpine`**, and **`alpine:3.21`** for **shell** — override with **`CLAWQL_SANDBOX_DOCKER_IMAGE_*`** env vars ([mcp-tools.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md#sandbox_exec)).
+
+**Where code runs:** Inside the **container** on whatever host runs the Docker engine (**Docker Desktop**, **OrbStack**, **Colima**, **Linux** engine, **podman-docker** shim, …).
+
+**When it shines:** **Linux** servers and **CI** agents; **reproducible** runtimes independent of host Python/Node versions; strong **network isolation** by default (**`CLAWQL_SANDBOX_DOCKER_NETWORK`**, default **`none`**).
+
+**Env knobs:** **`CLAWQL_SANDBOX_DOCKER_BIN`**, **`CLAWQL_SANDBOX_DOCKER_RUN_EXTRA`**, image overrides — see **`.env.example`** and [mcp-tools.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md#sandbox_exec).
+
+## Cloudflare Workers bridge
+
+**What it is:** The Node MCP process **cannot** load **`@cloudflare/sandbox`** directly, so ClawQL calls a small **Worker** you deploy from **`cloudflare/sandbox-bridge`**. The Worker exposes **`POST /exec`**; the MCP sends **`code`**, **`language`**, **`sessionId`**, **`persistenceMode`**, etc., with **`Authorization: Bearer`** matching the Worker’s **`BRIDGE_SECRET`** (same value as **`CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN`** on the MCP host).
+
+**Where code runs:** In **Cloudflare’s** sandboxed container bound to the Worker — **not** on your laptop or cluster nodes (except for the lightweight HTTP client in MCP).
+
+**When it shines:** **Laptops without Docker**; **uniform** execution policy for a team; keeping **heavy or risky** execution off regulated desktops; pairing with [Cloud Run–style deploys](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/deploy-cloud-run.md) that already inject bridge URL + token.
+
+**Setup:** [cloudflare/sandbox-bridge README](https://github.com/danielsmithdevelopment/ClawQL/blob/main/cloudflare/sandbox-bridge/README.md) (`wrangler secret put BRIDGE_SECRET`, deploy, copy **`*.workers.dev`** origin).
+
+## How to choose a backend
+
+| Dimension           | **Seatbelt**                                       | **Docker / Podman**                                 | **Cloudflare bridge**                                                  |
+| ------------------- | -------------------------------------------------- | --------------------------------------------------- | ---------------------------------------------------------------------- |
+| **Host OS**         | **macOS** only                                     | Anywhere a engine runs                              | Anywhere MCP runs (**HTTPS out**)                                      |
+| **Isolation style** | macOS kernel **sandbox profile** (no outbound net) | **OCI** container, default **no** container network | **Worker + Sandbox SDK** (remote)                                      |
+| **Runtime source**  | Host **`python3` / `node`**                        | **Pulled images** (Alpine defaults)                 | Worker `/workspace` (**python3`, **node**, **sh\*\* per bridge README) |
+| **Ops overhead**    | Lowest (binary present)                            | Docker daemon + images                              | Deploy + rotate **BRIDGE_SECRET**                                      |
+| **Blast radius**    | Same machine, no egress                            | Same machine as engine; no default egress           | Offload to Cloudflare                                                  |
+
+**Practical defaults:** **Developers on macOS** → try **`auto`** (Seatbelt first, then Docker if installed, else bridge if configured). **Linux CI / servers** → **`docker`** or **`auto`**. **Bridge-first org policy** → leave backend unset and require URL + token.
+
+## Tool input sessions and timeouts
+
+Typical MCP payload ([mcp-tools.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md#sandbox_exec)):
+
+```json
+{
+  "code": "print(2 + 2)",
+  "language": "python",
+  "sessionId": "thread-1",
+  "persistenceMode": "session",
+  "timeoutMs": 120000
+}
+```
+
+- **`language`:** **`python`** \| **`javascript`** \| **`shell`**.
+- **`sessionId` + `persistenceMode`:** use **`session`** for multi-step scratch work; **`ephemeral`** for one-off probes (see **clawql-sandbox-exec** skill). Bridge and local backends share the same **timeout** / **persistence** env family (**`CLAWQL_SANDBOX_TIMEOUT_MS`**, **`CLAWQL_SANDBOX_PERSISTENCE_MODE`**, …).
+
+## Benefits and security limits
+
+**Benefits**
+
+- **Smaller blast radius** than `run_terminal_cmd` on the MCP host — snippets do not get a **generic user shell**.
+- **Backend transparency** — JSON results tell you **`backend`**: **`macos-seatbelt`**, **`docker`**, or **`bridge`** for audits and runbooks.
+- **Fits agent workflows** — quick **calculate / validate / transform** steps before calling **`execute`** on real APIs or writing to the vault with **`memory_ingest`**.
+
+**Limits (read carefully)**
+
+- **Not “arbitrary code anywhere”** — each backend is still a **controlled** pipeline; misuse can still burn CPU, fill disk under **`$TMPDIR`**, or stress remote quotas — keep **`timeoutMs`** tight.
+- **Bridge = network trust** — you extend trust to **HTTPS** + **Bearer** secret management; rotate tokens and prefer Secret Manager in production ([deploy-cloud-run.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/deploy-cloud-run.md)).
+- **Seatbelt ≠ Docker images** — host interpreters can **drift**; use **Docker** when reproducibility matters more than cold-start speed.
+
+Persist **decisions and outputs** you care about later with **`memory_ingest`** — the sandbox filesystems are for **execution**, not long-term storage.
+
+## Related guides and references
+
+- [Tools](/tools) — full MCP matrix (**`sandbox_exec`** is **default off — opt in** in the feature-tier diagram).
+- [Using search and execute](/learn/search-and-execute-mcp) — calling real APIs after sandbox checks.
+- [Schedule synthetic checks](/schedule) — v1 schedule actions are HTTP checks; heavier patterns may combine with **`sandbox_exec`** under separate review ([schedule-synthetic-checks.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/schedule-synthetic-checks.md)).
+- [docs/skills/sandbox_exec.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/skills/sandbox_exec.md) — short operator skill text in-repo.

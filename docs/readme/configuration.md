@@ -13,7 +13,7 @@ ClawQL groups capabilities into three bands. This matches the **layer diagram** 
 **There is no env or Helm toggle for Core.** The diagram places **`search`**, **`execute`**, **`audit`**, and **`cache`** in this band together:
 
 - **`search`**, **`execute`** — OpenAPI / Discovery discovery and execution; optional **native GraphQL** / **gRPC** merged into the same index from env (**`CLAWQL_GRAPHQL_*`**, **`CLAWQL_GRPC_SOURCES`**) and/or the **bundled GraphQL-only** provider **`linear`** ([ADR 0002](../adr/0002-multi-protocol-supergraph.md), **`providers/README.md`**).
-- **`audit`** — in-process event ring buffer ([#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)); tune **`CLAWQL_AUDIT_MAX_ENTRIES`** only. Not durable — use **`memory_ingest`** for persisted trails.
+- **`audit`** — in-process event ring buffer ([#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)); tune **`CLAWQL_AUDIT_MAX_ENTRIES`** only. **Prometheus:** **`clawql_audit_*`** aggregates on **`GET /metrics`**. **Loki:** optional **`CLAWQL_LOKI_PUSH_URL`** (+ **`CLAWQL_LOKI_BEARER_TOKEN`** / **`CLAWQL_LOKI_TENANT_ID`**) pushes each **`append`** as JSON. Not durable — use **`memory_ingest`** for persisted trails.
 - **`cache`** — in-process LRU key/value ([#75](https://github.com/danielsmithdevelopment/ClawQL/issues/75)); tune **`CLAWQL_CACHE_MAX_*`** only. Not persisted — use **`memory_ingest`** / **`memory_recall`** for vault-backed state.
 
 ### Default on — opt out

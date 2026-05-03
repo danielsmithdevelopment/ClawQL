@@ -15,6 +15,62 @@ type Entry = {
 const ENTRIES: Array<Entry> = [
   { path: '/', changeFrequency: 'weekly', priority: 1 },
   { path: '/quickstart', changeFrequency: 'weekly', priority: 0.95 },
+  { path: '/learn', changeFrequency: 'weekly', priority: 0.93 },
+  {
+    path: '/learn/search-and-execute-mcp',
+    changeFrequency: 'monthly',
+    priority: 0.89,
+  },
+  {
+    path: '/learn/external-ingest-knowledge',
+    changeFrequency: 'monthly',
+    priority: 0.89,
+  },
+  {
+    path: '/learn/knowledge-search-onyx',
+    changeFrequency: 'monthly',
+    priority: 0.89,
+  },
+  {
+    path: '/learn/document-pipeline',
+    changeFrequency: 'monthly',
+    priority: 0.89,
+  },
+  {
+    path: '/learn/sandbox-exec',
+    changeFrequency: 'monthly',
+    priority: 0.89,
+  },
+  {
+    path: '/learn/ouroboros-tools',
+    changeFrequency: 'monthly',
+    priority: 0.89,
+  },
+  {
+    path: '/learn/openclaw-and-clawql',
+    changeFrequency: 'monthly',
+    priority: 0.89,
+  },
+  {
+    path: '/learn/schedule-notify-workflows',
+    changeFrequency: 'monthly',
+    priority: 0.89,
+  },
+  {
+    path: '/learn/cache-handoff-between-chats',
+    changeFrequency: 'monthly',
+    priority: 0.88,
+  },
+  {
+    path: '/learn/vault-memory-between-chats',
+    changeFrequency: 'monthly',
+    priority: 0.88,
+  },
+  {
+    path: '/learn/audit-tool-and-observability',
+    changeFrequency: 'monthly',
+    priority: 0.87,
+  },
   { path: '/install', changeFrequency: 'monthly', priority: 0.9 },
   { path: '/mcp-clients', changeFrequency: 'monthly', priority: 0.88 },
   { path: '/openclaw', changeFrequency: 'monthly', priority: 0.87 },

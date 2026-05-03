@@ -96,7 +96,7 @@ helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
 helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
   --set documentPipeline.enabled=false \
   --set stores.postgres.enabled=false \
-  --set stores.redis.enabled=false
+  --set stores.dragonfly.enabled=false
 ```
 
 **Enable in-cluster Flink for Onyx sync** (internal service, no public ingress by default):
@@ -231,7 +231,7 @@ The chart now enables document pipeline + stores by default, including in-cluste
 
 - Replace the default **`stores.postgres.auth.password`** immediately.
 - Prefer **`stores.postgres.auth.existingSecret`** over inline values.
-- If you do not need in-cluster stores/pipeline, disable them explicitly (`documentPipeline.enabled=false`, `stores.postgres.enabled=false`, `stores.redis.enabled=false`).
+- If you do not need in-cluster stores/pipeline, disable them explicitly (`documentPipeline.enabled=false`, `stores.postgres.enabled=false`, `stores.dragonfly.enabled=false`).
 
 ## Access bundled docs locally (Docker Desktop)
 
@@ -250,7 +250,7 @@ Expected response includes **`{"status":"ok"}`**.
 
 ## Optional Istio and observability (Docker Desktop)
 
-**Not part of the Helm chart:** when you set **`CLAWQL_LOCAL_K8S_ISTIO=ambient`** or **`sidecar`** for **`make local-k8s-up`**, a separate script installs **Istio**, optional **ingress gateway** manifests, and **sample addons** in **`istio-system`** (Prometheus, Kiali, Grafana, Jaeger, plus ClawQL’s **OpenTelemetry Collector** manifest). Use this for **local mesh mTLS** and a **full observability lab** on one machine.
+**Not part of the Helm chart:** when you set **`CLAWQL_LOCAL_K8S_ISTIO=ambient`** or **`sidecar`** for **`make local-k8s-up`**, a separate script installs **Istio**, optional **ingress gateway** manifests, and **sample addons** in **`istio-system`** (Prometheus, Kiali, Grafana), plus **Helm Grafana Tempo**, optional **Helm Loki**, and ClawQL’s **OpenTelemetry Collector** manifest. Use this for **local mesh mTLS** and a **full observability lab** on one machine.
 
 - **Beginner-oriented guide** (what each tool is, first session, port-forwards, OTLP env for MCP): **[`docker-desktop-istio-observability.md`](docker-desktop-istio-observability.md)**
 - **Env toggles and MCP URLs:** [`docker/README.md`](../../docker/README.md)
@@ -275,7 +275,7 @@ See **[`charts/clawql-mcp/values.yaml`](../charts/clawql-mcp/values.yaml)**. Com
 | `enableOuroboros` / `ouroborosDatabaseUrl`          | **`CLAWQL_ENABLE_OUROBOROS=1`** — MCP **`ouroboros_*`** (default **false**; [#141](https://github.com/danielsmithdevelopment/ClawQL/issues/141)); **`ouroborosDatabaseUrl`** sets **`CLAWQL_OUROBOROS_DATABASE_URL`** for Postgres-backed events ([#142](https://github.com/danielsmithdevelopment/ClawQL/issues/142)). Prefer Secret-backed env when the URL contains credentials — **[mcp-tools.md](../mcp/mcp-tools.md)** |
 | `ouroborosPostgres.*`                               | Optional Postgres workload in the same release for durable Ouroboros events ([#142](https://github.com/danielsmithdevelopment/ClawQL/issues/142)). When enabled, chart wires **`CLAWQL_OUROBOROS_DB_*`** env vars from Service + Secret into `clawql-mcp` (no credential-in-URL required).                                                                                                                                   |
 | `documentPipeline.*`                                | Full-stack document pipeline workloads (**Tika**, **Gotenberg**, **Stirling**, **Paperless**) with in-cluster base URLs injected into ClawQL for integrated deployments. Enabled by default; disable explicitly for minimal installs ([#113](https://github.com/danielsmithdevelopment/ClawQL/issues/113)).                                                                                                                  |
-| `stores.*`                                          | In-cluster backing stores for full-stack topology (**Postgres**, **Redis**). Enabled by default; required when `documentPipeline.paperless.enabled=true`.                                                                                                                                                                                                                                                                    |
+| `stores.*`                                          | In-cluster backing stores for full-stack topology (**Postgres**, **Dragonfly** for Celery / queues — RESP via **`redis://`** URLs only; Redis OSS is not deployed). Enabled by default; required when `documentPipeline.paperless.enabled=true`. Tune **`stores.dragonfly.image`** / **`stores.dragonfly.args`**.                                                                                                            |
 | `flink.*`                                           | Optional in-cluster Apache Flink topology for real-time Onyx connector sync ([#119](https://github.com/danielsmithdevelopment/ClawQL/issues/119)). Deploys JobManager + TaskManagers + internal Service (ClusterIP default). Use `flink.connectorSecret` to scope connector credentials to Flink pods only.                                                                                                                  |
 | `nats.*`                                            | Optional in-cluster NATS JetStream deployment for durable event streaming across Ouroboros, agent orchestration, and edge worker sync ([#127](https://github.com/danielsmithdevelopment/ClawQL/issues/127)). Injects `CLAWQL_NATS_URL` into `clawql-mcp` when enabled (or from `nats.url` for external NATS).                                                                                                                |
 | `extraEnv`                                          | Additional container env entries                                                                                                                                                                                                                                                                                                                                                                                             |

@@ -202,54 +202,57 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "clawql-mcp.onyxRedisName" . }}
+  name: {{ include "clawql-mcp.onyxDragonflyName" . }}
   labels:
     {{- include "clawql-mcp.labels" . | nindent 4 }}
-    app.kubernetes.io/component: onyx-redis
+    app.kubernetes.io/component: onyx-dragonfly
 spec:
   type: ClusterIP
   selector:
     {{- include "clawql-mcp.selectorLabels" . | nindent 4 }}
-    app.kubernetes.io/component: onyx-redis
+    app.kubernetes.io/component: onyx-dragonfly
   ports:
-    - name: redis
-      port: {{ .Values.onyx.redis.service.port | int }}
-      targetPort: redis
+    - name: dragonfly
+      port: {{ .Values.onyx.dragonfly.service.port | int }}
+      targetPort: dragonfly
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "clawql-mcp.onyxRedisName" . }}
+  name: {{ include "clawql-mcp.onyxDragonflyName" . }}
   labels:
     {{- include "clawql-mcp.labels" . | nindent 4 }}
-    app.kubernetes.io/component: onyx-redis
+    app.kubernetes.io/component: onyx-dragonfly
 spec:
   replicas: 1
   selector:
     matchLabels:
       {{- include "clawql-mcp.selectorLabels" . | nindent 6 }}
-      app.kubernetes.io/component: onyx-redis
+      app.kubernetes.io/component: onyx-dragonfly
   template:
     metadata:
       labels:
         {{- include "clawql-mcp.selectorLabels" . | nindent 8 }}
-        app.kubernetes.io/component: onyx-redis
+        app.kubernetes.io/component: onyx-dragonfly
     spec:
       containers:
-        - name: redis
-          image: "{{ .Values.onyx.redis.image.repository }}:{{ .Values.onyx.redis.image.tag }}"
-          imagePullPolicy: {{ .Values.onyx.redis.image.pullPolicy }}
-          args: ["redis-server", "--save", "", "--appendonly", "no"]
+        - name: dragonfly
+          image: "{{ .Values.onyx.dragonfly.image.repository }}:{{ .Values.onyx.dragonfly.image.tag }}"
+          imagePullPolicy: {{ .Values.onyx.dragonfly.image.pullPolicy }}
+          {{- with .Values.onyx.dragonfly.args }}
+          args:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           ports:
-            - name: redis
-              containerPort: {{ .Values.onyx.redis.service.port | int }}
+            - name: dragonfly
+              containerPort: {{ .Values.onyx.dragonfly.service.port | int }}
           readinessProbe:
-            exec:
-              command: ["redis-cli", "ping"]
+            tcpSocket:
+              port: dragonfly
             initialDelaySeconds: 2
             periodSeconds: 5
           resources:
-            {{- toYaml .Values.onyx.redis.resources | nindent 12 }}
+            {{- toYaml .Values.onyx.dragonfly.resources | nindent 12 }}
 ---
 apiVersion: v1
 kind: Service
@@ -725,9 +728,9 @@ spec:
         - name: wait-postgres
           image: busybox:1.36
           command: ["sh", "-c", "until nc -z {{ include "clawql-mcp.onyxPostgresName" . }} {{ .Values.onyx.postgres.service.port }}; do sleep 2; done"]
-        - name: wait-redis
+        - name: wait-dragonfly
           image: busybox:1.36
-          command: ["sh", "-c", "until nc -z {{ include "clawql-mcp.onyxRedisName" . }} {{ .Values.onyx.redis.service.port }}; do sleep 2; done"]
+          command: ["sh", "-c", "until nc -z {{ include "clawql-mcp.onyxDragonflyName" . }} {{ .Values.onyx.dragonfly.service.port }}; do sleep 2; done"]
         - name: wait-opensearch
           image: busybox:1.36
           command: ["sh", "-c", "until nc -z {{ include "clawql-mcp.onyxOpenSearchName" . }} {{ .Values.onyx.opensearch.service.port }}; do sleep 2; done"]
@@ -790,7 +793,7 @@ spec:
             - name: ENABLE_OPENSEARCH_INDEXING_FOR_ONYX
               value: "true"
             - name: REDIS_HOST
-              value: {{ include "clawql-mcp.onyxRedisName" . | quote }}
+              value: {{ include "clawql-mcp.onyxDragonflyName" . | quote }}
             - name: MODEL_SERVER_HOST
               value: {{ printf "http://%s" (include "clawql-mcp.onyxInferenceModelName" .) | quote }}
             - name: INDEXING_MODEL_SERVER_HOST
@@ -873,9 +876,9 @@ spec:
         - name: wait-postgres
           image: busybox:1.36
           command: ["sh", "-c", "until nc -z {{ include "clawql-mcp.onyxPostgresName" . }} {{ .Values.onyx.postgres.service.port }}; do sleep 2; done"]
-        - name: wait-redis
+        - name: wait-dragonfly
           image: busybox:1.36
-          command: ["sh", "-c", "until nc -z {{ include "clawql-mcp.onyxRedisName" . }} {{ .Values.onyx.redis.service.port }}; do sleep 2; done"]
+          command: ["sh", "-c", "until nc -z {{ include "clawql-mcp.onyxDragonflyName" . }} {{ .Values.onyx.dragonfly.service.port }}; do sleep 2; done"]
         - name: wait-opensearch
           image: busybox:1.36
           command: ["sh", "-c", "until nc -z {{ include "clawql-mcp.onyxOpenSearchName" . }} {{ .Values.onyx.opensearch.service.port }}; do sleep 2; done"]
@@ -936,7 +939,7 @@ spec:
             - name: ENABLE_OPENSEARCH_INDEXING_FOR_ONYX
               value: "true"
             - name: REDIS_HOST
-              value: {{ include "clawql-mcp.onyxRedisName" . | quote }}
+              value: {{ include "clawql-mcp.onyxDragonflyName" . | quote }}
             - name: MODEL_SERVER_HOST
               value: {{ printf "http://%s" (include "clawql-mcp.onyxInferenceModelName" .) | quote }}
             - name: INDEXING_MODEL_SERVER_HOST

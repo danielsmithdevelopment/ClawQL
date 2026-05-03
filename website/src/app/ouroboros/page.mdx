@@ -13,6 +13,8 @@ ClawQL ships a TypeScript workspace package **`clawql-ouroboros`** for **specifi
 
 It is a **library** you `import` from Node ≥ 22. In **`clawql-mcp`**, set **`CLAWQL_ENABLE_OUROBOROS=1`** to register the three optional **`ouroboros_*`** MCP tools backed by this package. For durable lineages, configure Postgres with **`CLAWQL_OUROBOROS_DATABASE_URL`** (or split **`CLAWQL_OUROBOROS_DB_*`** env vars).
 
+**Learn walkthrough** (three tools together, benefits, full MCP example): [Ouroboros tools (seed, loop, lineage)](/learn/ouroboros-tools).
+
 ## How it relates to upstream “Ouroboros”
 
 The widely known Python project **[Q00/ouroboros](https://github.com/Q00/ouroboros)** is a full agentic stack (interview, CLI, MCP plugin, execution routing, persistence, and more). **`clawql-ouroboros`** is a **ClawQL-scoped subset**: overlapping concepts (seed, wonder/reflect, convergence), **not** API or feature parity. The npm name **`clawql-ouroboros`** avoids implying an official TypeScript port of Q00.
