@@ -1,8 +1,9 @@
-import { Guides } from '@/components/Guides'
-import { Resources } from '@/components/Resources'
 import { HeroPattern } from '@/components/HeroPattern'
+import { HomeMarketingSections } from '@/components/HomeMarketingSections'
 import { homePageSections } from '@/lib/home-page-sections'
 import { docsPageMetadata } from '@/lib/seo'
+
+export const dynamic = 'force-static'
 
 export const metadata = docsPageMetadata({
   title: 'ClawQL documentation',
@@ -43,6 +44,4 @@ Install **`clawql-mcp`**, run it on stdio, then point your MCP client (e.g. Curs
   </Button>
 </div>
 
-<Guides />
-
-<Resources />
+<HomeMarketingSections />

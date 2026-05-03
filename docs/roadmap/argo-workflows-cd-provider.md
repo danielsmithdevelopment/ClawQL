@@ -4,7 +4,7 @@
 
 ## Summary
 
-Add **optional** integration so ClawQL can **`search` / `execute`** against **Argo Workflows** (and later **Argo CD**) APIs, enabling agents to **submit and monitor pipelines** on Kubernetes with explicit opt-in and tight RBAC.
+Add **optional** integration so agents use a dedicated MCP **`workflow`** tool (see [ADR 0004](../adr/0004-argo-cd-workflows-clawql-pipelines.md)) implemented **in `clawql-mcp`**, backed by **Argo Workflows** for durable DAG runs; optional later **Argo CD** exposure (Phase B). This supersedes the earlier sketch of relying only on **`search` / `execute`** against Argo CRD OpenAPI for Phase A.
 
 ## Motivation
 
@@ -19,14 +19,13 @@ Add **optional** integration so ClawQL can **`search` / `execute`** against **Ar
 
 ## Proposed phases
 
-1. **Workflows (Phase A)** — CRUD-ish operations for **`Workflow`** (+ list/get templates) in **allowlisted namespaces**; env flag **`CLAWQL_ENABLE_ARGO_WORKFLOWS`** (exact name TBD); reference RBAC Role.
+1. **Workflows (Phase A)** — MCP **`workflow`** tool; **`CLAWQL_ENABLE_WORKFLOW=1`** (proposed; see ADR); Argo **`Workflow`** / templates in **allowlisted namespaces**; reference RBAC Role.
 2. **CD (Phase B)** — optional **`Application`** sync / status; separate flag; only after Phase A security model is proven.
 
 ## Acceptance criteria (Phase A sketch)
 
-- [ ] Opt-in flag off → no Argo types registered; no new attack surface.
-- [ ] With flag on + valid SA: **`search`** returns stable **`operationId`**s (or documented K8s mapping).
-- [ ] **`execute`** can submit a minimal **`Workflow`** and read status in the allowlisted namespace.
+- [ ] Opt-in flag off → **`workflow`** not registered; no new attack surface.
+- [ ] With flag on + valid SA: **`workflow`** can submit a minimal **`Workflow`** and read status in the allowlisted namespace.
 - [ ] Docs: [`mcp-tools.md`](../mcp/mcp-tools.md), [`readme/configuration.md`](../readme/configuration.md), Helm README (if chart injects env).
 - [ ] ADR 0004 moved to **Accepted** when merged.
 

@@ -298,6 +298,19 @@ export const navigation: Array<NavGroup> = [
       { title: 'Spec configuration', href: '/spec-configuration' },
       { title: 'Troubleshooting', href: '/troubleshooting' },
       { title: 'Security', href: '/security' },
+      { title: 'Deployment', href: '/deployment' },
+      { title: 'Tailscale & Headscale', href: '/tailscale' },
+      { title: 'Kubernetes', href: '/kubernetes' },
+      {
+        title: 'Docker Desktop: Istio & observability',
+        href: '/docker-desktop-observability',
+      },
+      { title: 'Helm', href: '/helm' },
+    ],
+  },
+  {
+    title: 'Case studies',
+    links: [
       {
         title: 'Case study: Cloudflare docs',
         href: '/case-studies/cloudflare-docs-mcp',
@@ -322,14 +335,6 @@ export const navigation: Array<NavGroup> = [
         title: 'Case study: Slide deck, cache, memory_recall, GitHub',
         href: '/case-studies/slide-deck-github-parity-cache-memory-recall-2026-04',
       },
-      { title: 'Deployment', href: '/deployment' },
-      { title: 'Tailscale & Headscale', href: '/tailscale' },
-      { title: 'Kubernetes', href: '/kubernetes' },
-      {
-        title: 'Docker Desktop: Istio & observability',
-        href: '/docker-desktop-observability',
-      },
-      { title: 'Helm', href: '/helm' },
     ],
   },
   {

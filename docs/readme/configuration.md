@@ -35,6 +35,8 @@ Set **`1`** / **`true`** / **`yes`** where noted:
 | **ClawQL Ouroboros**  | **`ouroboros_*`** (three tools) | **`CLAWQL_ENABLE_OUROBOROS=1`**                                                                                                                                                                                                                                                 |
 | **ClawQL Automation** | **`schedule`**, **`notify`**    | **`CLAWQL_ENABLE_SCHEDULE=1`**, **`CLAWQL_ENABLE_NOTIFY=1`**                                                                                                                                                                                                                    |
 
+**Planned (ADR 0004, not shipped until implemented):** optional **`workflow`** tool (**`CLAWQL_ENABLE_WORKFLOW=1`**, name TBD) — durable **Argo Workflows**–backed pipelines, implemented in **`clawql-mcp`** like **`schedule`** / **`notify`**. See [`docs/adr/0004-argo-cd-workflows-clawql-pipelines.md`](../adr/0004-argo-cd-workflows-clawql-pipelines.md).
+
 **`knowledge_search_onyx`** — **`CLAWQL_ENABLE_ONYX=1`** plus **Documents** still enabled (documents off hides the tool regardless).
 
 ### Diagram vs. this build
@@ -103,7 +105,7 @@ When Stage 1 is active:
 See **[Feature tiers](#feature-tiers-architecture-diagram)** first. Quick list:
 
 - **Default on, opt out:** `CLAWQL_ENABLE_MEMORY`, `CLAWQL_ENABLE_DOCUMENTS` — set `0` / `false` / `no` to hide tools or trim default **`all-providers`** (documents).
-- **Default off, opt in:** `CLAWQL_ENABLE_SCHEDULE`, `CLAWQL_ENABLE_NOTIFY`, `CLAWQL_ENABLE_ONYX`, `CLAWQL_ENABLE_OUROBOROS`.
+- **Default off, opt in:** `CLAWQL_ENABLE_SCHEDULE`, `CLAWQL_ENABLE_NOTIFY`, `CLAWQL_ENABLE_ONYX`, `CLAWQL_ENABLE_OUROBOROS`. **Planned:** `CLAWQL_ENABLE_WORKFLOW` for the **`workflow`** tool (ADR 0004).
 
 ## `.env` loading and canonical `CLAWQL_*` names
 

@@ -25,6 +25,7 @@ This directory is organized by purpose so operational guides, product docs, and 
 - `openclaw/clawql-bootstrap.md` — register ClawQL in OpenClaw, env matrix, smoke checklist ([#226](https://github.com/danielsmithdevelopment/ClawQL/issues/226))
 - `openclaw/openclaw-idp-skill-profile.md` — **OpenClaw IDP** canonical tools, provider matrix, workflow contract ([#227](https://github.com/danielsmithdevelopment/ClawQL/issues/227))
 - `deployment/helm.md` § **NATS JetStream deep dive** — optional in-cluster event backbone, subject conventions, ops ([#127](https://github.com/danielsmithdevelopment/ClawQL/issues/127)); website **`/nats-jetstream`**
+- **Roadmap tracking (GitHub):** [epic #259](https://github.com/danielsmithdevelopment/ClawQL/issues/259) (checklist **#241–#258**); in-repo plans: [`roadmap/gap-closure-plan-prioritized-2026.md`](roadmap/gap-closure-plan-prioritized-2026.md), [`roadmap/idp-master-requirements-matrix.md`](roadmap/idp-master-requirements-matrix.md); Argo / **`workflow`** [ADR 0004](adr/0004-argo-cd-workflows-clawql-pipelines.md), [#239](https://github.com/danielsmithdevelopment/ClawQL/issues/239)
 - `deployment/deploy-cloud-run.md`
 - `deployment/deploy-k8s.md`
 - `deployment/helm.md`
@@ -37,6 +38,9 @@ This directory is organized by purpose so operational guides, product docs, and 
 ## Security
 
 - Security index and quick links: `security/README.md`
+- **Privacy filter (planned):** local ~1.5B sparse MoE masking before extraction — [#245](https://github.com/danielsmithdevelopment/ClawQL/issues/245)
+- **LangExtract extraction (planned):** schema-enforced, character-grounded extraction + HTML viz — [#246](https://github.com/danielsmithdevelopment/ClawQL/issues/246)
+- **HITL Label Studio extensions (planned):** pre-annotations + vertical config packs — [#247](https://github.com/danielsmithdevelopment/ClawQL/issues/247) (extends shipped [#228](https://github.com/danielsmithdevelopment/ClawQL/issues/228))
 - **Golden image pipeline** (CI → scan → push → sign → deploy enforcement): `security/golden-image-pipeline.md`
 - Defense-in-depth reference guide: `security/clawql-security-defense-in-depth.md`
 - Deliverables matrix (shipped vs partial vs planned): `security/clawql-security-defense-deliverables.md`
@@ -60,7 +64,7 @@ This directory is organized by purpose so operational guides, product docs, and 
 - Presentations: `presentations/`
 - Announcements: `announcements/`
 - Security references: `security/` — reference [`security/clawql-security-defense-in-depth.md`](security/clawql-security-defense-in-depth.md) and engineering matrix [`security/clawql-security-defense-deliverables.md`](security/clawql-security-defense-deliverables.md) ([#164](https://github.com/danielsmithdevelopment/ClawQL/issues/164))
-- Roadmaps: `roadmap/`
+- Roadmaps: `roadmap/` — prioritized gap closure: [`roadmap/gap-closure-plan-prioritized-2026.md`](roadmap/gap-closure-plan-prioritized-2026.md) ([#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248)–[#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251)); **IDP master requirements matrix**: [`roadmap/idp-master-requirements-matrix.md`](roadmap/idp-master-requirements-matrix.md); **epic checklist** [#241](https://github.com/danielsmithdevelopment/ClawQL/issues/241)–[#258](https://github.com/danielsmithdevelopment/ClawQL/issues/258) → [#259](https://github.com/danielsmithdevelopment/ClawQL/issues/259)
 - Integrations: `integrations/`
 - Backlog notes: `backlog/`
 - Workflows: `workflows/`

@@ -1,3 +1,4 @@
+import { LearnCardSections } from '@/components/LearnCardSections'
 import { docsPageMetadata } from '@/lib/seo'
 
 export const metadata = docsPageMetadata({
@@ -13,7 +14,7 @@ export const metadata = docsPageMetadata({
 
 <Note>
   New lesson-style modules will appear here first; deeper reference pages stay
-  under **Guides** and **Reference** in the sidebar.
+  under **Guides**, **Case studies**, and **Reference** in the sidebar.
 </Note>
 
 ## Start here
@@ -28,32 +29,7 @@ If you are new to ClawQL, follow this sequence:
 6. [Tools](/tools) — full tool surface and behavior
 7. [OpenClaw with ClawQL](/learn/openclaw-and-clawql) — gateway + **`openclaw mcp set`** + smoke path
 
-## How-to guides
-
-These pages are the main “how do I…?” answers today. They remain linked from **Guides** in the sidebar; this section is the curated index.
-
-| Goal                                                                         | Page                                                                                       |
-| ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| Use **`search`** and **`execute`** against loaded specs                      | [Using search and execute](/learn/search-and-execute-mcp)                                  |
-| Import Markdown or a single URL into the vault (`ingest_external_knowledge`) | [External ingest & knowledge lake](/learn/external-ingest-knowledge)                       |
-| Search the enterprise Onyx index (`knowledge_search_onyx`)                   | [Onyx enterprise search (`knowledge_search_onyx`)](/learn/knowledge-search-onyx)           |
-| Five-vendor document pipeline (Tika → … → Onyx)                              | [Document pipeline (Tika, Gotenberg, Stirling, Paperless, Onyx)](/learn/document-pipeline) |
-| Run isolated code (`sandbox_exec`: Seatbelt, Docker, Cloudflare)             | [Sandbox exec (Seatbelt, Docker, Cloudflare)](/learn/sandbox-exec)                         |
-| Evolutionary workflows (`ouroboros_*`: seed, loop, lineage)                  | [Ouroboros tools (seed, loop, lineage)](/learn/ouroboros-tools)                            |
-| Synthetics + Slack + HITL (`schedule`, `notify`, Label Studio)               | [Schedule & notify workflows](/learn/schedule-notify-workflows)                            |
-| OpenClaw gateway + ClawQL MCP                                                | [OpenClaw with ClawQL](/learn/openclaw-and-clawql)                                         |
-| Carry context into a new chat with `cache`                                   | [Cache handoff between chats](/learn/cache-handoff-between-chats)                          |
-| Durable context across MCP restarts (`memory_*`)                             | [Vault memory between chats](/learn/vault-memory-between-chats)                            |
-| Audit breadcrumbs + Prometheus / Grafana / Loki                              | [Audit tool & observability](/learn/audit-tool-and-observability)                          |
-| Configure specs and env                                                      | [Spec configuration](/spec-configuration)                                                  |
-| Run behind HTTP / TLS / proxies                                              | [Deployment](/deployment)                                                                  |
-| Private networking                                                           | [Tailscale & Headscale](/tailscale)                                                        |
-| Kubernetes install                                                           | [Kubernetes](/kubernetes)                                                                  |
-| Helm charts                                                                  | [Helm](/helm)                                                                              |
-| Local observability stack                                                    | [Docker Desktop: Istio & observability](/docker-desktop-observability)                     |
-| OpenClaw integration                                                         | [OpenClaw + ClawQL](/openclaw), [OpenClaw with ClawQL (learn)](/learn/openclaw-and-clawql) |
-| Hardening and supply chain                                                   | [Security](/security)                                                                      |
-| When something breaks                                                        | [Troubleshooting](/troubleshooting)                                                        |
+<LearnCardSections />
 
 ## Browse by stack topic
 
