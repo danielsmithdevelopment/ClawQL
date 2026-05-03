@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.0.0] - 2026-05-03
+
+Major release: **Helm** broker paths migrate to **Dragonfly** only (**breaking** values + object names); **`sandbox_exec`** is **opt-in**; Docker Desktop **Istio** lab uses **Grafana Tempo** (optional **Loki**); **`audit`** exposes **Prometheus** metrics and optional **Loki** push; **Learn** docs on **docs.clawql.com**; optional **Label Studio HITL**; **`GET /metrics`**, **OTLP** traces, and Prometheus scrape wiring. Release notes: **[`RELEASE_NOTES_v6.0.0.md`](RELEASE_NOTES_v6.0.0.md)**; upgrade guide for brokers: [**ADR 0003**](docs/adr/0003-tempo-dragonfly-local-operations.md). **`charts/clawql-mcp`** **Chart.version** **0.6.x** with **`appVersion` `6.0.0`**.
+
 ### Changed
 
 - **Docker Desktop Istio observability:** removed the Istio sample **Jaeger** addon; **Grafana Tempo** is the sole trace backend when **`CLAWQL_ISTIO_INSTALL_HEAVY_OBSERVABILITY_ADDONS=1`**. **`CLAWQL_ISTIO_INSTALL_LOKI_TEMPO=0`** skips **Helm Loki** only (Tempo and the OTel collector remain). Deleted **`docker/istio/docker-desktop/otel-collector-jaeger-only.yaml`**.
@@ -27,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Headscale tailnet runbook:** **`docs/deployment/headscale-tailnet.md`** (topology, firewall, MagicDNS **`*.clawql.local`**, enrollment outline, **`CLAWQL_MCP_URL`** / **`BASE_URL`** alignment, validation checklist, public MCP URL deprecation after cutover), least-privilege starter ACL **`docs/deployment/headscale-acls-clawql.hujson`**, index link in **`docs/README.md`**, cross-links from **`docs/readme/deployment.md`**, **`docs/clawql-ecosystem.md`** (service map vs tailnet DNS), **`.env.example`**, **`README.md`** (deployments map), **`website/src/app/deployment/page.mdx`** ([#206](https://github.com/danielsmithdevelopment/ClawQL/issues/206), [#213](https://github.com/danielsmithdevelopment/ClawQL/issues/213)).
 - **Tailnet MCP URLs + env hygiene:** **`docs/readme/deployment.md`** (private Tailscale MagicDNS **`url`**, **`CLAWQL_MCP_URL`** for workflows only, aligning **`*_BASE_URL`** with tailnet hosts), **`docs/readme/configuration.md`** (dotenv load order, **`CLAWQL_*`** vs legacy aliases), **`.env.example`** cross-links ([#195](https://github.com/danielsmithdevelopment/ClawQL/issues/195), [#211](https://github.com/danielsmithdevelopment/ClawQL/issues/211)).
 - **Observability:** **`docs/readme/deployment.md`**, **`docs/mcp/mcp-tools.md`** (See also), **`docs/mcp/enterprise-mcp-tools.md`** (regulated deployments), **`.env.example`**, **`docs/adr/0002-multi-protocol-supergraph.md`** (#191 row), **`website/src/app/deployment/page.mdx`** — **`GET /metrics`** (**`prom-client`**) plus optional **`GET /healthz`** **`nativeProtocolMetrics`** ([#191](https://github.com/danielsmithdevelopment/ClawQL/issues/191)).
+- **ClawQL Learn (docs site):** **`/learn`** how-to guides (including **OpenClaw with ClawQL** at **`/learn/openclaw-and-clawql`**), per-page TOC, sitemap, Navigation, WebMCP path hints ([#238](https://github.com/danielsmithdevelopment/ClawQL/issues/238)).
 
 ### Added
 

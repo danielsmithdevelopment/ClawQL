@@ -2,7 +2,7 @@
 
 ## 2026-05-03
 
-- **`clawql-mcp` v6.0.0** (planned) — repo root **CHANGELOG** **[6.0.0]** (Helm Dragonfly migration, opt-in **`sandbox_exec`**, Tempo/Loki lab, **`audit`** metrics + optional Loki push, HITL Label Studio, metrics/OTLP, **Learn** hub + OpenClaw guide); GitHub release **`v6.0.0`**; release notes + announcement drafts: **[`RELEASE_NOTES_v6.0.0.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/RELEASE_NOTES_v6.0.0.md)**, **[`docs/announcements/announcement-drafts-v6.0.0.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/announcements/announcement-drafts-v6.0.0.md)**.
+- **`clawql-mcp` v6.0.0** — repo root **CHANGELOG** **[6.0.0]** (Helm Dragonfly migration, opt-in **`sandbox_exec`**, Tempo/Loki lab, **`audit`** metrics + optional Loki push, HITL Label Studio, metrics/OTLP, **Learn** hub + OpenClaw guide); GitHub release **`v6.0.0`**; release notes + announcement drafts: **[`RELEASE_NOTES_v6.0.0.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/RELEASE_NOTES_v6.0.0.md)**, **[`docs/announcements/announcement-drafts-v6.0.0.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/announcements/announcement-drafts-v6.0.0.md)**.
 
 ## 2026-04-27
 

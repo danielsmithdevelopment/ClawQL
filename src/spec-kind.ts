@@ -1,7 +1,7 @@
 /**
  * Multi-protocol operation kinds (ADR 0002). Used for stable `operationId` prefixes and future loaders.
  *
- * **clawql-mcp 5.0.0** implements first-class **`graphql`** and **`grpc`** only; other union members are reserved for post-5.0.0 backlog.
+ * **clawql-mcp 6.0.0** implements first-class **`graphql`** and **`grpc`** only; other union members are reserved for post-6.0.0 backlog.
  *
  * @see docs/adr/0002-multi-protocol-supergraph.md
  */
