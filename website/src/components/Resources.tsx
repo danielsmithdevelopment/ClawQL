@@ -2,7 +2,10 @@
 
 import { Heading } from '@/components/Heading'
 import { ReferenceResourceCard } from '@/components/ReferenceResourceCard'
-import { caseStudySiteCards, referenceSiteCards } from '@/lib/docs-site-card-data'
+import {
+  caseStudySiteCards,
+  referenceSiteCards,
+} from '@/lib/docs-site-card-data'
 
 export function Resources() {
   return (

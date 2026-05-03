@@ -1,6 +1,5 @@
 'use client'
 
-import type { ComponentType } from 'react'
 import {
   motion,
   useMotionTemplate,
@@ -8,6 +7,7 @@ import {
   type MotionValue,
 } from 'framer-motion'
 import Link from 'next/link'
+import type { ComponentType } from 'react'
 
 import { GridPattern } from '@/components/GridPattern'
 
@@ -76,7 +76,11 @@ function ReferenceResourcePattern({
   )
 }
 
-export function ReferenceResourceCard({ resource }: { resource: ReferenceCard }) {
+export function ReferenceResourceCard({
+  resource,
+}: {
+  resource: ReferenceCard
+}) {
   let mouseX = useMotionValue(0)
   let mouseY = useMotionValue(0)
 

@@ -19,9 +19,10 @@ export function LearnCardSections() {
           Learn modules
         </Heading>
         <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-          Curated walkthroughs under <strong className="font-semibold">/learn</strong>
-          — the same links as <strong className="font-semibold">ClawQL Learn</strong> in
-          the sidebar.
+          Curated walkthroughs under{' '}
+          <strong className="font-semibold">/learn</strong>— the same links as{' '}
+          <strong className="font-semibold">ClawQL Learn</strong> in the
+          sidebar.
         </p>
         <div className={cardGridClass}>
           {learnModuleSiteCards.map((card) => (
@@ -36,8 +37,8 @@ export function LearnCardSections() {
         </Heading>
         <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
           Install, specs, deployment, networking, and operations pages outside{' '}
-          <strong className="font-semibold">/learn</strong> that pair with the modules
-          above.
+          <strong className="font-semibold">/learn</strong> that pair with the
+          modules above.
         </p>
         <div className={cardGridClass}>
           {learnRelatedGuideSiteCards.map((card) => (
@@ -51,8 +52,8 @@ export function LearnCardSections() {
           Case studies
         </Heading>
         <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-          Long-form narratives: incidents, sessions, and homelab deep dives — same
-          cards as the home page Case studies section.
+          Long-form narratives: incidents, sessions, and homelab deep dives —
+          same cards as the home page Case studies section.
         </p>
         <div className={cardGridClass}>
           {caseStudySiteCards.map((card) => (
