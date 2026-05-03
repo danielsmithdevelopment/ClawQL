@@ -130,7 +130,7 @@ More examples (convergence-only, MCP hooks, poller) are in the **[full guide](ht
 
 | Interface | Responsibility |
 | --------- | --------------- |
-| **`EventStore`** | Append events; **`getLineage(rootSeedId)`** returns a full **`OntologyLineage`**. Use **`InMemoryEventStore`** for tests; use Postgres/Redis/etc. for production. |
+| **`EventStore`** | Append events; **`getLineage(rootSeedId)`** returns a full **`OntologyLineage`**. Use **`InMemoryEventStore`** for tests; use Postgres / Redis-compatible caches / etc. for production. |
 | **`WonderEngine`** | Optional refinement signals after each generation (often LLM). |
 | **`ReflectEngine`** | Produces **`Partial<Seed>`** updates for the next generation (often LLM). |
 | **`Executor`** | Runs the task for the current seed — **your** API calls, sandboxes, or agent tool loop. |

@@ -4,7 +4,12 @@
  */
 
 import { z } from "zod";
+import { maybePushAuditEntryToLoki } from "./clawql-audit-loki.js";
 import { logMcpToolShape } from "./mcp-tool-log.js";
+import {
+  prometheusRecordAuditAppend,
+  prometheusRecordAuditClear,
+} from "./native-protocol-prometheus.js";
 
 export type ClawqlAuditEntry = {
   ts: string;
@@ -115,6 +120,8 @@ export async function handleAuditToolInput(
         buffer.shift();
         dropped++;
       }
+      prometheusRecordAuditAppend(buffer.length, dropped);
+      maybePushAuditEntryToLoki(entry);
       return jsonResponse({ ok: true, total: buffer.length, dropped });
     }
     case "list": {
@@ -130,6 +137,7 @@ export async function handleAuditToolInput(
     case "clear": {
       const n = buffer.length;
       buffer.length = 0;
+      prometheusRecordAuditClear();
       return jsonResponse({ ok: true, cleared: n });
     }
     default:

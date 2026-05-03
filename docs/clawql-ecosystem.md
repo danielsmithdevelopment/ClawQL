@@ -152,14 +152,14 @@ Self-hosted stacks force teams to bolt on scanning, mesh, and observability by h
 - GitHub, Google Cloud, Cloudflare, Paperless NGX, Stirling-PDF, Tika, Gotenberg, Slack, Sentry, n8n, Jira/Bitbucket (Atlassian), **Linear** (GraphQL-only), …
 - Onyx (40+ connectors, Flink-synced) + custom specs via `providers/` or `CLAWQL_SPEC_PATHS`
 - **Hyperledger Fabric (roadmap)** — consortium provenance; not shipped as a bundled provider or Helm sub-chart in this repository yet ([issue #187](https://github.com/danielsmithdevelopment/ClawQL/issues/187), [`adr/0002-multi-protocol-supergraph.md`](adr/0002-multi-protocol-supergraph.md))
-- MinIO / object storage, Postgres, Redis for app state, optional Ouroboros/event data — **vault Merkle snapshots default to `memory.db`**, not Postgres
+- MinIO / object storage, Postgres, Dragonfly (Redis-compatible) for app state, optional Ouroboros/event data — **vault Merkle snapshots default to `memory.db`**, not Postgres
 
 **Layer 4 — Security, Supply Chain, and Service Mesh**
 
 - Golden Image Pipeline — Trivy + OSV-Scanner + SBOM; Cosign signing; OPA Gatekeeper / Kyverno; Vault-backed attestation
 - Istio (optional) — mTLS, L7 AuthorizationPolicy, retries, circuit breakers, canary-friendly traffic
 - Kiali — service graph, health, config validation
-- Jaeger / OTel — end-to-end traces across Ouroboros spans, Onyx, document services, mesh hops
+- Grafana Tempo / OTel — end-to-end traces across Ouroboros spans, Onyx, document services, mesh hops (OTLP; other backends optional)
 
 ---
 
@@ -347,7 +347,7 @@ Long-term document archive with full-text search, auto-tagging, and consumption 
 
 **Onyx Bridge:** After a successful Paperless import, Ouroboros optionally calls Onyx’s file upload + indexing API to make the newly archived document immediately queryable via `knowledge_search_onyx` in the same workflow.
 
-**Isolated Backends:** Paperless runs with its own dedicated Postgres (`paperless-postgres:5432`) and Redis (`paperless-redis:6379`) — isolated from ClawQL’s shared backends to prevent schema conflicts. Both included in the unified Helm chart.
+**Isolated Backends:** Paperless runs with its own dedicated Postgres (`paperless-postgres:5432`) and uses the chart’s shared **Dragonfly** / Redis-protocol store (**`redis://…:6379`**) for Celery — isolated Postgres schema from ClawQL’s shared Postgres. Included in the unified Helm chart.
 
 ---
 
@@ -522,7 +522,7 @@ helm install clawql charts/clawql-mcp --namespace clawql
 - **Onyx stack** — gated by chart values (`onyx.enabled` pattern); MCP **`CLAWQL_ENABLE_ONYX`** aligns with [`onyx-knowledge-tool.md`](mcp/onyx-knowledge-tool.md)
 - **Fabric** — not present as a sub-chart here; see **Roadmap** / [#187](https://github.com/danielsmithdevelopment/ClawQL/issues/187)
 - Namespace: `clawql` — typical co-location for internal DNS
-- Paperless isolated Postgres and Redis included — no external DB dependency
+- Paperless isolated Postgres and in-cluster Dragonfly (Redis-protocol) included — no external DB dependency
 - Flink included for real-time Onyx connector sync
 - Optional Istio — istiod, ingress/egress gateways, Kiali; Ambient profile preferred for new installs; mTLS STRICT by default in hardened overlays
 - OSV-Scanner — CronJob and/or in-cluster scan Deployment wired to the same namespace
@@ -534,27 +534,27 @@ helm install clawql charts/clawql-mcp --namespace clawql
 
 **Headscale tailnet:** the **`*.clawql.local`** pattern also appears when MagicDNS is served to **enrolled Tailscale nodes**; those names resolve on the **mesh**, not via in-cluster DNS — beginner overview **[`docs/deployment/tailscale-and-headscale-for-clawql.md`](deployment/tailscale-and-headscale-for-clawql.md)**; Headscale runbook **[`docs/deployment/headscale-tailnet.md`](deployment/headscale-tailnet.md)** ([#206](https://github.com/danielsmithdevelopment/ClawQL/issues/206)); least-privilege starter ACL **[`docs/deployment/headscale-acls-clawql.hujson`](deployment/headscale-acls-clawql.hujson)** ([#213](https://github.com/danielsmithdevelopment/ClawQL/issues/213)).
 
-| Service                  | Internal DNS                                   | Ingress                  | Role                                                                                                  |
-| ------------------------ | ---------------------------------------------- | ------------------------ | ----------------------------------------------------------------------------------------------------- |
-| ClawQL MCP               | `clawql:8080` (container; see chart `service`) | `clawql.local` (example) | HTTP MCP + health + GraphQL — see [`charts/clawql-mcp/values.yaml`](../charts/clawql-mcp/values.yaml) |
-| Stirling-PDF             | `stirling-pdf:8080`                            | `pdf.clawql.local`       | PDF merge/OCR/redact                                                                                  |
-| Paperless NGX            | `paperless:8000`                               | `paperless.clawql.local` | Archive, consume, API                                                                                 |
-| Apache Tika              | `tika:9998`                                    | internal                 | Extraction, MIME detection, routing                                                                   |
-| Gotenberg                | `gotenberg:3000`                               | internal                 | Document conversion to PDF                                                                            |
-| Onyx                     | `onyx:8080`                                    | `onyx.clawql.local`      | Enterprise knowledge, 40+ connectors                                                                  |
-| Flink (JM/TM)            | `flink-jobmanager:8081`                        | internal                 | Onyx index sync                                                                                       |
-| OSV-Scanner              | CronJob / Job                                  | internal                 | Vuln + SBOM scans on image refs / lockfiles                                                           |
-| Istio control plane      | `istiod:15012`                                 | internal                 | mTLS, xDS to Envoys / ztunnel                                                                         |
-| Istio ingress/egw        | `istio-ingressgateway`                         | `*.clawql.local`         | North-south, VirtualService + Gateway                                                                 |
-| Kiali                    | `kiali:20001`                                  | `kiali.clawql.local`     | Mesh graph, health, config validation                                                                 |
-| Vault / OpenBao          | `vault:8200`                                   | internal (mesh-only)     | Secrets, injectors, dynamic creds                                                                     |
-| Redis (shared)           | `redis:6379`                                   | internal                 | Queues, session state                                                                                 |
-| Postgres (shared)        | `postgres:5432`                                | internal                 | App/Ouroboros data when deployed — not the primary Merkle store (see `memory.db`)                     |
-| Paperless Postgres/Redis | isolated                                       | internal                 | Isolated from shared DB                                                                               |
-| MinIO (optional)         | —                                              | internal                 | S3 API for big artifacts, SBOM storage                                                                |
-| Uptime Kuma              | `uptime-kuma:3001`                             | `status.clawql.local`    | Synthetic monitoring, status pages                                                                    |
-| Grafana                  | —                                              | `grafana.clawql.local`   | Unified dashboards, OTel traces, Prometheus                                                           |
-| NATS JetStream           | —                                              | internal                 | Event bus, agent coordination, checkpointing                                                          |
+| Service                               | Internal DNS                                   | Ingress                  | Role                                                                                                  |
+| ------------------------------------- | ---------------------------------------------- | ------------------------ | ----------------------------------------------------------------------------------------------------- |
+| ClawQL MCP                            | `clawql:8080` (container; see chart `service`) | `clawql.local` (example) | HTTP MCP + health + GraphQL — see [`charts/clawql-mcp/values.yaml`](../charts/clawql-mcp/values.yaml) |
+| Stirling-PDF                          | `stirling-pdf:8080`                            | `pdf.clawql.local`       | PDF merge/OCR/redact                                                                                  |
+| Paperless NGX                         | `paperless:8000`                               | `paperless.clawql.local` | Archive, consume, API                                                                                 |
+| Apache Tika                           | `tika:9998`                                    | internal                 | Extraction, MIME detection, routing                                                                   |
+| Gotenberg                             | `gotenberg:3000`                               | internal                 | Document conversion to PDF                                                                            |
+| Onyx                                  | `onyx:8080`                                    | `onyx.clawql.local`      | Enterprise knowledge, 40+ connectors                                                                  |
+| Flink (JM/TM)                         | `flink-jobmanager:8081`                        | internal                 | Onyx index sync                                                                                       |
+| OSV-Scanner                           | CronJob / Job                                  | internal                 | Vuln + SBOM scans on image refs / lockfiles                                                           |
+| Istio control plane                   | `istiod:15012`                                 | internal                 | mTLS, xDS to Envoys / ztunnel                                                                         |
+| Istio ingress/egw                     | `istio-ingressgateway`                         | `*.clawql.local`         | North-south, VirtualService + Gateway                                                                 |
+| Kiali                                 | `kiali:20001`                                  | `kiali.clawql.local`     | Mesh graph, health, config validation                                                                 |
+| Vault / OpenBao                       | `vault:8200`                                   | internal (mesh-only)     | Secrets, injectors, dynamic creds                                                                     |
+| Dragonfly (shared, RESP / `redis://`) | in-cluster `*-dragonfly:6379`                  | internal                 | Paperless / queues — **DragonflyDB** only in Helm                                                     |
+| Postgres (shared)                     | `postgres:5432`                                | internal                 | App/Ouroboros data when deployed — not the primary Merkle store (see `memory.db`)                     |
+| Paperless Postgres                    | isolated                                       | internal                 | Isolated Postgres; broker uses shared Dragonfly (`redis://…`)                                         |
+| MinIO (optional)                      | —                                              | internal                 | S3 API for big artifacts, SBOM storage                                                                |
+| Uptime Kuma                           | `uptime-kuma:3001`                             | `status.clawql.local`    | Synthetic monitoring, status pages                                                                    |
+| Grafana                               | —                                              | `grafana.clawql.local`   | Unified dashboards, OTel traces, Prometheus                                                           |
+| NATS JetStream                        | —                                              | internal                 | Event bus, agent coordination, checkpointing                                                          |
 
 ---
 
@@ -572,7 +572,7 @@ helm install clawql charts/clawql-mcp --namespace clawql
 
 ### 100% Local Execution
 
-Every service — ClawQL, Stirling-PDF, Paperless, Tika, Gotenberg, Onyx, Flink, Redis, Postgres — runs inside your Kubernetes cluster. Documents and company knowledge never leave your machine. Onyx’s enterprise index is built and served entirely locally.
+Every service — ClawQL, Stirling-PDF, Paperless, Tika, Gotenberg, Onyx, Flink, Dragonfly (Redis-protocol), Postgres — runs inside your Kubernetes cluster. Documents and company knowledge never leave your machine. Onyx’s enterprise index is built and served entirely locally.
 
 ### No SaaS Limits or Subscriptions
 
@@ -695,11 +695,11 @@ Pre-built dashboards included in the Helm chart:
 - OTel Collector receives traces and logs from every component
 - Automatic instrumentation for MCP tools, Ouroboros 5-phase loop, document pipeline (with Merkle correlation), Onyx searches, and OSV-Scanner job completions
 
-### Istio + Kiali + Jaeger/Tempo — Mesh-Native View
+### Istio + Kiali + Tempo — Mesh-Native View
 
 - Istio service metrics (request rate, 5xx, mTLS handshake failures) to Prometheus
 - Kiali (`kiali.clawql.local`) — topology, health, VirtualService and DestinationRule validation
-- Jaeger or Grafana Tempo — end-to-end traces: MCP → ClawQL → mesh hop → Onyx → Flink — W3C and B3 context propagated from Istio and app sidecars
+- Grafana Tempo — end-to-end traces: MCP → ClawQL → mesh hop → Onyx → Flink — W3C and B3 context propagated from Istio and app sidecars (other OTLP backends optional)
 
 **Single pane of glass:** `grafana.clawql.local` — unified view with embedded Uptime Kuma status pages, Prometheus dashboards, and OTel traces.
 
@@ -723,7 +723,7 @@ Pre-built dashboards included in the Helm chart:
 
 The production-grade agent runtime built on LangGraph that turns ClawQL’s MCP tools into persistent digital employees.
 
-- **LangGraph backbone:** Persistent checkpointing backed by Postgres, Redis, and NATS JetStream — agents survive restarts, failures, and long-running executions across days or weeks
+- **LangGraph backbone:** Persistent checkpointing backed by Postgres, Redis-compatible caches (e.g. Dragonfly), and NATS JetStream — agents survive restarts, failures, and long-running executions across days or weeks
 - **ClawQL tool integration:** Automatic registration of all MCP tools and any OpenAPI provider as LangGraph tools with structured schemas, error recovery, and retry logic
 - **Ouroboros hybrid engine:** LangGraph nodes delegate complex structured workflows to full Ouroboros 5-phase loops while LangGraph handles dynamic planning, branching, and multi-agent coordination
 - **LangFuse observability:** Complete tracing, evaluation datasets, prompt versioning, cost tracking, and performance analytics — self-hosted instance included in the Helm chart
@@ -850,7 +850,7 @@ Merkle trees, typed **`memory_ingest`** receipts, optional Postgres-backed Ourob
 
 ### In Progress
 
-- **Supply-chain hardening:** Trivy + OSV-Scanner on every merge; CycloneDX/SPDX SBOM; Cosign sign; Kyverno/OPA admit; Istio (Ambient) + Kiali + Jaeger/Tempo in values overlays for staging
+- **Supply-chain hardening:** Trivy + OSV-Scanner on every merge; CycloneDX/SPDX SBOM; Cosign sign; Kyverno/OPA admit; Istio (Ambient) + Kiali + Tempo (OTLP) in values overlays for staging
 - **Ouroboros:** deepen **Interview → Seed → Execute → Evaluate → Evolve** automation beyond today’s **`ouroboros_*`** MCP tools + optional Postgres lineage ([#141](https://github.com/danielsmithdevelopment/ClawQL/issues/141), [#142](https://github.com/danielsmithdevelopment/ClawQL/issues/142))
 - **Tika + Gotenberg spec bundling:** Fetch/generate OpenAPI specs from running instances; wire into bundled providers registry
 - **NATS, ClawQL-Agent (LangGraph + LangFuse), OpenClaw (approvals, dashboards), Edge Worker**

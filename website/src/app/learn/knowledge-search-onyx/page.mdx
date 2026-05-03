@@ -1,0 +1,123 @@
+import { docsPageMetadata } from '@/lib/seo'
+
+export const metadata = docsPageMetadata({
+  title: 'Using knowledge_search_onyx (Onyx enterprise index)',
+  description:
+    'What Onyx is, how ClawQL’s optional knowledge_search_onyx tool calls your index, env and merge prerequisites, query tips, connector coverage and ACLs, pairing with memory_ingest and Slack notify.',
+  path: '/learn/knowledge-search-onyx',
+})
+
+# Using `knowledge_search_onyx`
+
+**[Onyx](https://www.onyx.app/)** (formerly Danswer) is an **open-source enterprise knowledge** platform: it **indexes** content from the systems your company already uses—think **Slack**, **Google Drive**, **Confluence**, **Jira**, **GitHub**, email, and other **connectors** you enable—into a **unified search index**. **`knowledge_search_onyx`** is ClawQL’s **optional MCP tool** that runs **semantic document search** against that index via Onyx’s **`POST /search/send-search-message`**, so agents can **ground** plans and answers in **permission-aware, cited chunks** instead of guessing from chat context alone. {{ className: 'lead' }}
+
+**Canonical reference:** [onyx-knowledge-tool.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/onyx-knowledge-tool.md) · [Onyx knowledge search](/onyx-knowledge) (setup matrix) · [mcp-tools.md § knowledge_search_onyx](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md#knowledge_search_onyx-optional). Agent skill: [clawql-onyx-knowledge-workflows](https://docs.clawql.com/.well-known/agent-skills/clawql-onyx-knowledge-workflows/SKILL.md).
+
+## What Onyx is
+
+At a high level, Onyx is **not** “another chat model.” It is **infrastructure** that:
+
+- **Ingests** documents and messages from **connected sources** on a schedule or via APIs.
+- **Chunks and indexes** them for **hybrid / semantic retrieval** (exact details depend on your Onyx version and backing engines).
+- Exposes a **search HTTP API** so clients (including ClawQL) send a **natural-language question** and receive **ranked segments** with **metadata** (titles, source types, links) you can show to users or an LLM as **evidence**.
+
+ClawQL does **not** replace Onyx admin or connector setup—you operate an Onyx deployment (self-hosted or cloud), connect sources there, then point the MCP server at **`ONYX_BASE_URL`** with a **Bearer** token. ClawQL only **calls** the search API the same way **`execute`** would.
+
+## How the tool reaches your Onyx index
+
+The repo ships a **minimal bundled OpenAPI** for Onyx at **`providers/onyx/openapi.yaml`**, including **`onyx_send_search_message`** → **`POST /search/send-search-message`**. When the **`onyx`** provider is part of the **merged** spec index, ClawQL can resolve operation **`onyx::onyx_send_search_message`**.
+
+**`knowledge_search_onyx`** is a **thin wrapper** around that same **`execute`** path ([`src/knowledge-search-onyx.ts`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/src/knowledge-search-onyx.ts)): it maps a friendly **`query`** string to Onyx’s **`search_query`**, applies defaults (**`num_hits`**, **`include_content`**, **`stream: false`**, …), optionally applies **`fields`** to trim the JSON response, and returns the same payload shape **`execute`** would. No second network stack—just **one HTTP call** to your Onyx API root.
+
+## Enable the tool in your environment
+
+All of the following must be true for **`listTools`** to expose **`knowledge_search_onyx`** and for calls to succeed:
+
+1. **Documents stack on** — the tool is part of the **Documents** tier. **`CLAWQL_ENABLE_DOCUMENTS=0`** hides **`knowledge_search_onyx`** regardless of other flags ([Concepts](/concepts), [configuration](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/readme/configuration.md)).
+2. **Onyx flag on** — set **`CLAWQL_ENABLE_ONYX=1`** (or **`true`** / **`yes`**) on the **MCP server** process and restart.
+3. **Provider in the merge** — default **`all-providers`** includes **`onyx`**, or add **`onyx`** to **`CLAWQL_BUNDLED_PROVIDERS`**, or use **`CLAWQL_PROVIDER=onyx`** for Onyx-only mode ([Bundled specs](/bundled-specs)).
+4. **Connectivity** — **`ONYX_BASE_URL`** = API root **without** a trailing slash; include **`/api`** if your deployment mounts the API there (see [Onyx API reference](https://docs.onyx.app/developers/api_reference/search/document_search)).
+5. **Auth** — **`ONYX_API_TOKEN`** or **`CLAWQL_ONYX_API_TOKEN`** as **Bearer**, or a **`onyx`** entry in **`CLAWQL_PROVIDER_AUTH_JSON`**.
+
+If **`onyx`** is missing from the loaded index (for example a Petstore-only **`CLAWQL_SPEC_PATH`** with no bundled merge), the tool returns a JSON **`error`** explaining that **`onyx`** must be included—see [Spec configuration](/spec-configuration).
+
+## Query parameters and good prompts
+
+| Parameter                                                                     | Role                                                                                |
+| ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| **`query`** (required)                                                        | Natural language or keywords; forwarded as **`search_query`**.                      |
+| **`num_hits`**                                                                | Cap **1–100** (default **15**). Start smaller in interactive agents.                |
+| **`include_content`**                                                         | Ask for chunk text when supported (default **true**).                               |
+| **`run_query_expansion`**, **`hybrid_alpha`**, **`filters`**, **`tenant_id`** | Optional tuning; **`filters`** shape follows your Onyx version.                     |
+| **`fields`**                                                                  | Same as **`execute`**: keep only listed **top-level** JSON keys to shrink payloads. |
+
+**Prompting tips:** ask **full questions** (“What did we decide about EU data retention for enterprise deals?”) rather than single keywords when you want semantic ranking; add **product or team names**, **time ranges**, and **doc types** (“runbook”, “policy”, “postmortem”) when the index is large. After one live response, inspect keys and set **`fields`** (for example **`["query","documents"]`**)—response shapes **vary by Onyx version**.
+
+**Minimal example:**
+
+```json
+{
+  "query": "What is our refund policy for enterprise customers?"
+}
+```
+
+**Tighter budget + projection:**
+
+```json
+{
+  "query": "SOC2 audit evidence collection 2025",
+  "num_hits": 8,
+  "include_content": true,
+  "fields": ["query", "documents"]
+}
+```
+
+**Streaming** is **not** supported: omit **`stream`** or keep **`stream: false`**.
+
+## Connectors coverage and permissions
+
+**Breadth of “company resources”** is defined by **what your Onyx deployment has connected and indexed**—not by ClawQL. Typical enterprise deployments aggregate **many** sources into **one** query surface; new Slack threads or updated Confluence pages appear after Onyx’s **connectors and indexing pipeline** run (often minutes—your ops team sets SLAs).
+
+**Access control:** Onyx is expected to enforce **source ACLs** for the **identity behind the API token** (user or service account). ClawQL does not bypass that: if the token cannot read a Confluence space in Onyx, **`knowledge_search_onyx`** should not return hits from it. Treat every chunk as **evidence to verify**, not absolute truth ([Onyx docs](https://www.onyx.app/), your internal governance).
+
+For **keeping the index fresh** at platform scale (Flink → Onyx), see [Flink Onyx sync](/flink-onyx-sync) and issue [#119](https://github.com/danielsmithdevelopment/ClawQL/issues/119).
+
+## Wrapper vs raw execute
+
+|                     | **`knowledge_search_onyx`**                 | **`execute("onyx::onyx_send_search_message", …)`** |
+| ------------------- | ------------------------------------------- | -------------------------------------------------- |
+| **When registered** | Only if **`CLAWQL_ENABLE_ONYX=1`**          | Whenever **`onyx`** is in the merge                |
+| **Ergonomics**      | **`query`** → **`search_query`** + defaults | You pass raw Onyx body fields yourself             |
+| **Wire behavior**   | Same REST call and auth                     | Identical                                          |
+
+Use the **wrapper** for routine **“ask the company index”** turns. Use **`execute`** for **other Onyx paths** from an expanded spec (for example **`onyx::onyx_ingest_document`** after **`npm run fetch-provider-specs`**) or when you need **full** control over the JSON body—see [onyx-knowledge-tool.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/onyx-knowledge-tool.md).
+
+## After search vault memory and Slack
+
+Follow the **clawql-onyx-knowledge-workflows** pattern: **retrieve → summarize evidence → act → persist → notify** when appropriate.
+
+1. **`knowledge_search_onyx`** for **live** enterprise evidence.
+2. **`memory_ingest`** with **`insights`** and, when you want durable citations, **`enterpriseCitations`** (small rows: title, url, snippet, …)—or derive rows from the search JSON with **`enterpriseCitationsFromOnyxSearchToolText`** ([#130](https://github.com/danielsmithdevelopment/ClawQL/issues/130), [memory-obsidian.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/memory/memory-obsidian.md)). That makes the same material **recallable** via **`memory_recall`** without hammering Onyx every session.
+3. Optional **`notify`** to post short Slack updates with **stable links** users can open ([Slack notify](/notify)).
+
+This pairs well with [External ingest & knowledge lake](/learn/external-ingest-knowledge) (vault files) and [Vault memory between chats](/learn/vault-memory-between-chats): **Onyx** answers “what does the **index** say?” while the **vault** holds **curated** narratives and decisions.
+
+## Troubleshooting checklist
+
+| Symptom                                                    | Check                                                                                |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Tool missing from **`listTools`**                          | **`CLAWQL_ENABLE_ONYX`**, **`CLAWQL_ENABLE_DOCUMENTS`**, server restart.             |
+| **`Onyx search operation is not in the loaded API index`** | Include bundled **`onyx`** in the merge; avoid spec-only configs that drop it.       |
+| **`stream=true` is not supported**                         | Use non-streaming mode only.                                                         |
+| **401 / 403**                                              | Token, Onyx user permissions, **`ONYX_BASE_URL`** (missing **`/api`**).              |
+| **404** on search path                                     | Onyx version or reverse-proxy path; compare with **`{ONYX_BASE_URL}/openapi.json`**. |
+| Odd / empty JSON                                           | Upgrade drift—inspect one raw response, then **`fields`**.                           |
+
+Full table: [onyx-knowledge-tool.md § Errors](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/onyx-knowledge-tool.md#errors-and-troubleshooting). Tests: **`src/knowledge-search-onyx.test.ts`**, **`src/server.test.ts`**.
+
+## Related guides and references
+
+- [Using search and execute](/learn/search-and-execute-mcp) — other APIs via OpenAPI.
+- [External ingest & knowledge lake](/learn/external-ingest-knowledge) — bulk / URL vault ingest vs live index search.
+- [Tools](/tools) — full MCP matrix.
+- [Helm](/helm) / [#113](https://github.com/danielsmithdevelopment/ClawQL/issues/113) — co-deploying document + search topology.

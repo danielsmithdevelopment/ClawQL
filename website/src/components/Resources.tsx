@@ -76,7 +76,7 @@ const resources: Array<Resource> = [
     href: '/docker-desktop-observability',
     name: 'Istio & observability',
     description:
-      'Docker Desktop: Prometheus, Grafana, Jaeger, Kiali, OTel Collector—what each tool is and first steps if you are new to them.',
+      'Docker Desktop: Prometheus, Grafana, Tempo, Kiali, OTel Collector—what each tool is and first steps if you are new to them.',
     icon: BookIcon,
     pattern: {
       y: 8,

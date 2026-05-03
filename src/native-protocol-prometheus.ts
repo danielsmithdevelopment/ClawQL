@@ -35,6 +35,33 @@ const grpcExecuteCounter = new Counter({
   registers: [registry],
 });
 
+/** MCP `audit` tool ring buffer — aggregates only (no per-event labels). */
+const auditAppendCounter = new Counter({
+  name: "clawql_audit_append_total",
+  help: "Total MCP audit append calls.",
+  registers: [registry],
+});
+
+const auditRingDroppedCounter = new Counter({
+  name: "clawql_audit_ring_entries_dropped_total",
+  help: "Audit entries evicted from the ring buffer due to CLAWQL_AUDIT_MAX_ENTRIES (sum of per-append dropped counts).",
+  registers: [registry],
+});
+
+const auditClearCounter = new Counter({
+  name: "clawql_audit_clear_total",
+  help: "Total MCP audit clear calls.",
+  registers: [registry],
+});
+
+const auditBufferGauge = new Gauge({
+  name: "clawql_audit_buffer_entries",
+  help: "Current audit ring buffer entry count.",
+  registers: [registry],
+});
+
+auditBufferGauge.set(0);
+
 let prevGqlMergeSources = new Set<string>();
 let prevGrpcMergeSources = new Set<string>();
 
@@ -77,6 +104,20 @@ export function prometheusIncGrpcExecute(sourceLabel: string, ok: boolean): void
   grpcExecuteCounter.inc({ source: sourceLabel, outcome: ok ? "ok" : "error" });
 }
 
+/** Record audit MCP mutations for GET /metrics (stdio and HTTP processes). */
+export function prometheusRecordAuditAppend(bufferSizeAfter: number, dropped: number): void {
+  auditAppendCounter.inc();
+  if (dropped > 0) {
+    auditRingDroppedCounter.inc(dropped);
+  }
+  auditBufferGauge.set(bufferSizeAfter);
+}
+
+export function prometheusRecordAuditClear(): void {
+  auditClearCounter.inc();
+  auditBufferGauge.set(0);
+}
+
 export function prometheusDisabledForHttp(): boolean {
   return process.env.CLAWQL_DISABLE_HTTP_METRICS?.trim() === "1";
 }
@@ -91,4 +132,5 @@ export function resetNativeProtocolPrometheusForTests(): void {
   registry.resetMetrics();
   prevGqlMergeSources.clear();
   prevGrpcMergeSources.clear();
+  auditBufferGauge.set(0);
 }

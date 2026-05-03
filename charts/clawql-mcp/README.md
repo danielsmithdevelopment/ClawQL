@@ -20,6 +20,8 @@ Configure via **`values.yaml`** or **`--set`**. Defaults pull **`ghcr.io/daniels
 
 **Kyverno (default on):** the chart renders a **`ClusterPolicy`** (**`verifyImages`**) for **`ghcr.io/.../clawql-mcp*`** and **`clawql-website*`** by default (**`kyverno.imageSignaturePolicy.enabled: true`** in [values](values.yaml)). Install **Kyverno** in the cluster first, or set **`kyverno.imageSignaturePolicy.enabled=false`**. **`make local-k8s-up`** installs Kyverno on Docker Desktop. See **[`docs/security/image-signature-enforcement.md`](../../docs/security/image-signature-enforcement.md)**.
 
+**Backing stores:** **DragonflyDB** only for in-cluster Celery brokers (**Paperless** **`PAPERLESS_REDIS`**, **Onyx** **`REDIS_*`**). URLs stay **`redis://…`** (**RESP** — Celery/Kombu naming is fine); the chart does **not** ship a **Redis OSS** server image. **Dragonfly** is **Apache 2.0**, targets **full protocol compatibility** for these broker call paths, and is **more performant** than Redis OSS for typical queue workloads. Tune **`stores.dragonfly`** / **`onyx.dragonfly`** in **`values.yaml`**. Rationale: [**ADR 0003**](../../docs/adr/0003-tempo-dragonfly-local-operations.md).
+
 **Docker Desktop:** from the repo root, **`make local-k8s-up`** uses **`values-docker-desktop.yaml`** (LoadBalancer **8080**, **`hostPath`** vault, UI Ingress on **`clawql.localhost`**, signed **`ghcr.io/.../clawql-website`**, **Kyverno** + **`verifyImages`** enforcement in the release namespace).
 The script installs **Kyverno** and upgrades **ingress-nginx** unless disabled.
 **Kustomize:** **`CLAWQL_LOCAL_K8S_INSTALLER=kustomize`** uses **`docker/kustomize/overlays/local`** (no Helm).

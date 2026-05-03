@@ -113,6 +113,8 @@ describe("server-http", () => {
       const text = await res.text();
       expect(text).toContain("# HELP clawql_native_protocol_graphql_merge_operations");
       expect(text).toContain("# HELP clawql_native_protocol_grpc_execute_total");
+      expect(text).toContain("# HELP clawql_audit_append_total");
+      expect(text).toContain("# HELP clawql_audit_buffer_entries");
     });
   });
 

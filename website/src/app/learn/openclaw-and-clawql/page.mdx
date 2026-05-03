@@ -1,0 +1,146 @@
+import { docsPageMetadata } from '@/lib/seo'
+
+export const metadata = docsPageMetadata({
+  title: 'OpenClaw with ClawQL — gateway plus MCP APIs',
+  description:
+    'What OpenClaw is vs ClawQL MCP, why to combine them, install openclaw CLI, run clawql-mcp-http or stdio, openclaw mcp set, smoke tests, env and Tailscale, IDP skill profile.',
+  path: '/learn/openclaw-and-clawql',
+})
+
+# OpenClaw with **ClawQL**
+
+**OpenClaw** is a **separate** npm product (**`openclaw`**) — a multi-channel AI **gateway** with its own CLI, agents, and **`openclaw mcp`** commands. **ClawQL** (this repo, npm **`clawql-mcp`**) is an **MCP server** that exposes **`search`**, **`execute`**, **`audit`**, **`cache`**, vault memory, the document stack, and other optional tools over **stdio** or **Streamable HTTP** (`…/mcp`). You **register ClawQL inside OpenClaw** so agents running behind OpenClaw can call real APIs through ClawQL’s merged OpenAPI surface — without pasting huge specs into every prompt. {{ className: 'lead' }}
+
+**Canonical deep dive:** [using-openclaw-with-clawql.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/openclaw/using-openclaw-with-clawql.md). **Bootstrap + smoke:** [clawql-bootstrap.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/openclaw/clawql-bootstrap.md) ([#226](https://github.com/danielsmithdevelopment/ClawQL/issues/226)). **IDP skill profile:** [openclaw-idp-skill-profile.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/openclaw/openclaw-idp-skill-profile.md) ([#227](https://github.com/danielsmithdevelopment/ClawQL/issues/227)). **Site hub:** [OpenClaw + ClawQL](/openclaw). Umbrella: [#128](https://github.com/danielsmithdevelopment/ClawQL/issues/128).
+
+## What OpenClaw is vs ClawQL MCP
+
+|                  | **OpenClaw**                                                            | **ClawQL (`clawql-mcp`)**                            |
+| ---------------- | ----------------------------------------------------------------------- | ---------------------------------------------------- |
+| **Shipped as**   | npm **`openclaw`** ([registry](https://www.npmjs.com/package/openclaw)) | npm **`clawql-mcp`** (this repository)               |
+| **Role**         | Gateway / orchestration UI / **`openclaw mcp`** config                  | MCP **tool server** for API discovery and execution  |
+| **Relationship** | **Consumes** MCP servers you configure                                  | **One** of those servers — not built inside OpenClaw |
+
+**Name trap:** **`openclaw-mcp`** on npm is a **different** package (bridge for hosts like Claude Desktop toward an OpenClaw gateway). To attach **ClawQL** to OpenClaw, use **`clawql-mcp`**, **`node …/dist/server.js`**, or an **HTTP `url`** — not **`openclaw-mcp`** ([using-openclaw-with-clawql.md § 1](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/openclaw/using-openclaw-with-clawql.md)).
+
+## Why run OpenClaw with ClawQL
+
+- **Token-efficient API access** — agents **`search`** then **`execute`** with small payloads ([Using search and execute](/learn/search-and-execute-mcp)).
+- **Same merge as Cursor** — OpenClaw’s MCP JSON mirrors **`.cursor/mcp.json.example`** field shapes ([MCP clients](/mcp-clients)).
+- **Optional stack** — vault **`memory_*`**, **`ingest_external_knowledge`**, **`knowledge_search_onyx`**, **`notify`**, **`schedule`**, **`ouroboros_*`** — all configurable via **`CLAWQL_*`** ([Tools](/tools), [Concepts](/concepts)).
+
+## Prerequisites
+
+- **Node.js 20+** (repo development targets **22+**).
+- **ClawQL** installed or built (`npm install clawql-mcp`, **`npx -y clawql-mcp`**, or git clone + **`npm run build`**).
+- **OpenClaw CLI:** **`npm install -g openclaw`**, then **`openclaw --version`**.
+- Optional: **`gh auth login`** or **`CLAWQL_BEARER_TOKEN`** / **`GITHUB_TOKEN`** for live GitHub **`execute`** smokes.
+
+## Install the OpenClaw CLI
+
+```bash
+npm install -g openclaw@latest
+openclaw --version
+openclaw mcp --help
+```
+
+Gateway onboarding (**`openclaw configure`**, channels, upstream product docs) lives **outside** this repo — follow your installed **`openclaw`** version. **Registering ClawQL** below is enough for MCP-backed agents to reach APIs.
+
+## Run ClawQL MCP pick HTTP or stdio
+
+**Streamable HTTP (often easiest for OpenClaw):**
+
+```bash
+PORT=8080 npm run start:http
+```
+
+From a published package:
+
+```bash
+PORT=8080 npx -p clawql-mcp clawql-mcp-http
+```
+
+- Health: **`GET http://127.0.0.1:8080/healthz`**
+- MCP endpoint: **`http://127.0.0.1:8080/mcp`** — path **must** be **`/mcp`**.
+
+**Stdio:**
+
+```bash
+npx -y clawql-mcp
+```
+
+See [Deployment](/deployment) for **`PORT`**, **`MCP_PATH`**, TLS, and reverse proxies.
+
+## Register ClawQL in OpenClaw
+
+OpenClaw **2026.x** stores config under **`~/.openclaw/openclaw.json`**. Use:
+
+```text
+openclaw mcp set <server-name> '<json>'
+```
+
+**HTTP (ClawQL on localhost):**
+
+```bash
+openclaw mcp set clawql '{"url":"http://127.0.0.1:8080/mcp"}'
+openclaw mcp show clawql
+openclaw mcp list
+```
+
+**Stdio (published package):**
+
+```bash
+openclaw mcp set clawql '{"command":"npx","args":["-y","clawql-mcp"]}'
+```
+
+**Stdio (dev build from clone):**
+
+```bash
+openclaw mcp set clawql-dev "{\"command\":\"node\",\"args\":[\"/absolute/path/to/ClawQL/dist/server.js\"]}"
+```
+
+Remove with **`openclaw mcp unset clawql`**.
+
+## Validate with smoke tests
+
+From the **ClawQL** repo (after **`npm run build`**):
+
+```bash
+CLAWQL_OPENCLAW_BOOTSTRAP_TOOLS_ONLY=1 npm run smoke:openclaw-bootstrap
+```
+
+Expect **`OK (tools-only)`**. Full **`search` → `execute`** (GitHub list commits) needs network + token:
+
+```bash
+npm run smoke:openclaw-bootstrap
+```
+
+Then in **OpenClaw**: confirm **`openclaw mcp show clawql`**, drive a prompt that **`search`**es then **`execute`**s (e.g. GitHub commits) with tight **`fields`**. If tools are missing, verify **`listTools`** on ClawQL alone before debugging OpenClaw routing ([clawql-bootstrap.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/openclaw/clawql-bootstrap.md)).
+
+## Environment variables and remote MCP
+
+- **Stdio:** add an **`env`** object inside the same JSON as **`command`** / **`args`** — same pattern as Cursor **`mcp.json`** ([using-openclaw-with-clawql.md § 5.4](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/openclaw/using-openclaw-with-clawql.md)).
+- **HTTP:** set **`CLAWQL_*`** in the shell (or process manager) that starts **`clawql-mcp-http`**, not inside OpenClaw’s URL JSON.
+- **Remote:** point **`url`** at **`https://clawql.example.com/mcp`** (Ingress), or a **Tailscale** HTTPS URL — [Tailscale & Headscale](/tailscale), [Helm](/helm).
+
+## Next steps document IDP workflows
+
+After **`search` / `execute`** is green, use **[openclaw-idp-skill-profile.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/openclaw/openclaw-idp-skill-profile.md)** for **ingest → transform → archive** patterns: **`ingest_external_knowledge`**, Paperless, Onyx, vault **`memory_*`**, optional **`notify`**. For the five-vendor document stack, see [Document pipeline](/learn/document-pipeline).
+
+## Troubleshooting and related links
+
+| Symptom                           | Check                                                             |
+| --------------------------------- | ----------------------------------------------------------------- |
+| **`openclaw: command not found`** | Global npm **`bin`** on **`PATH`**; reinstall **`openclaw`**.     |
+| **Connection refused**            | ClawQL running; **`PORT`**; firewall.                             |
+| **404**                           | URL must end with **`/mcp`**.                                     |
+| **Tools missing**                 | **`CLAWQL_ENABLE_*`** flags; restart ClawQL.                      |
+| **GitHub 401**                    | **`CLAWQL_BEARER_TOKEN`** / **`gh auth token`**.                  |
+| **Works in smoke, not OpenClaw**  | **`openclaw mcp list`**, profile / config path per OpenClaw docs. |
+
+| Doc                                                                                                         | Topic                         |
+| ----------------------------------------------------------------------------------------------------------- | ----------------------------- |
+| [Spec configuration](/spec-configuration)                                                                   | **`CLAWQL_PROVIDER`**, merges |
+| [Install](/install)                                                                                         | Binaries, Docker, HTTP        |
+| [mcp-tools.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md)            | Full tool catalog             |
+| [configuration.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/readme/configuration.md) | **`CLAWQL_*`** matrix         |

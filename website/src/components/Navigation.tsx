@@ -238,6 +238,56 @@ function NavigationGroup({
 
 export const navigation: Array<NavGroup> = [
   {
+    title: 'ClawQL Learn',
+    links: [
+      { title: 'Overview', href: '/learn' },
+      {
+        title: 'Using search & execute',
+        href: '/learn/search-and-execute-mcp',
+      },
+      {
+        title: 'External ingest & knowledge lake',
+        href: '/learn/external-ingest-knowledge',
+      },
+      {
+        title: 'Onyx enterprise search',
+        href: '/learn/knowledge-search-onyx',
+      },
+      {
+        title: 'Document pipeline (5 vendors)',
+        href: '/learn/document-pipeline',
+      },
+      {
+        title: 'Sandbox exec (Seatbelt / Docker / CF)',
+        href: '/learn/sandbox-exec',
+      },
+      {
+        title: 'Ouroboros tools (seed / loop / lineage)',
+        href: '/learn/ouroboros-tools',
+      },
+      {
+        title: 'OpenClaw with ClawQL',
+        href: '/learn/openclaw-and-clawql',
+      },
+      {
+        title: 'Schedule & notify workflows',
+        href: '/learn/schedule-notify-workflows',
+      },
+      {
+        title: 'Cache handoff between chats',
+        href: '/learn/cache-handoff-between-chats',
+      },
+      {
+        title: 'Vault memory between chats',
+        href: '/learn/vault-memory-between-chats',
+      },
+      {
+        title: 'Audit tool & observability',
+        href: '/learn/audit-tool-and-observability',
+      },
+    ],
+  },
+  {
     title: 'Guides',
     links: [
       { title: 'Introduction', href: '/' },
@@ -308,6 +358,7 @@ export function Navigation(props: React.ComponentPropsWithoutRef<'nav'>) {
       <ul role="list">
         <TopLevelNavItem href="/">Home</TopLevelNavItem>
         <TopLevelNavItem href="/quickstart">Quickstart</TopLevelNavItem>
+        <TopLevelNavItem href="/learn">Learn</TopLevelNavItem>
         <TopLevelNavItem href="https://github.com/danielsmithdevelopment/ClawQL">
           GitHub
         </TopLevelNavItem>

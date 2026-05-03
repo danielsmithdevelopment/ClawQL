@@ -15,7 +15,7 @@ set -euo pipefail
 # Optional: CLAWQL_LOCAL_K8S_ISTIO=ambient|sidecar — install Istio (Helm), enroll clawql +
 # ingress-nginx + istio-ingress in the mesh, istio/gateway + Istio Gateway + VirtualService for MCP,
 # PeerAuthentication STRICT in the release namespace by default, and Prometheus + Kiali + Grafana +
-# Jaeger + ClawQL OTel Collector in istio-system (local only; heavy). See
+# Grafana Tempo + ClawQL OTel Collector in istio-system (local only; heavy). See
 # scripts/kubernetes/install-istio-docker-desktop.sh and docker/README.md.
 #
 # When Istio + ingress gateway are on, local-k8s-up patches svc/clawql-mcp-http to ClusterIP by default
@@ -319,7 +319,7 @@ if [[ -n "${INSTALL_ISTIO}" ]]; then
   echo "  Prometheus: kubectl port-forward svc/prometheus 9090:9090 -n istio-system"
   if [[ "${ISTIO_HEAVY_OBS}" == "1" ]]; then
     echo "  Grafana:    kubectl port-forward svc/grafana 3000:3000 -n istio-system"
-    echo "  Jaeger UI:  kubectl port-forward svc/tracing 16686:80 -n istio-system"
+    echo "  Tempo:      kubectl port-forward svc/clawql-tempo 3200:3200 -n istio-system  (Grafana datasource)"
     echo "  MCP OTLP:   OTEL_EXPORTER_OTLP_ENDPOINT=http://clawql-otel-collector.istio-system.svc:4318/v1/traces (set CLAWQL_ENABLE_OTEL_TRACING=1)"
   fi
 fi

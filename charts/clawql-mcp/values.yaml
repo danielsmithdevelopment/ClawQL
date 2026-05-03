@@ -86,7 +86,7 @@ enableOnyx: false
 onyxBaseUrl: ""
 onyx:
   enabled: false
-  # When true (default), deploy Vespa + OpenSearch + Redis + MinIO + model servers + background worker
+  # When true (default), deploy Vespa + OpenSearch + Dragonfly + MinIO + model servers + background worker
   # (matches upstream docker-compose). When false, deploy a minimal postgres-backed API (vector search disabled).
   fullVectorStack: true
   api:
@@ -108,11 +108,15 @@ onyx:
   # S3 / MinIO object store (full stack).
   s3:
     fileStoreBucketName: onyx-file-store-bucket
-  redis:
+  dragonfly:
+    # DragonflyDB only (Redis OSS is not a supported in-chart broker). Celery/Paperless still use redis:// URLs (wire protocol).
     image:
-      repository: redis
-      tag: 7.4-alpine
+      repository: docker.dragonflydb.io/dragonflydb/dragonfly
+      tag: v1.37.2
       pullPolicy: IfNotPresent
+    # Passed to the dragonfly binary; empty uses image defaults (--port defaults to 6379).
+    args:
+      - --logtostderr
     service:
       port: 6379
     resources:
@@ -410,12 +414,14 @@ stores:
       accessModes:
         - ReadWriteOnce
       existingClaim: ""
-  redis:
+  dragonfly:
     enabled: true
     image:
-      repository: redis
-      tag: "7-alpine"
+      repository: docker.dragonflydb.io/dragonflydb/dragonfly
+      tag: v1.37.2
       pullPolicy: IfNotPresent
+    args:
+      - --logtostderr
     service:
       port: 6379
     resources:

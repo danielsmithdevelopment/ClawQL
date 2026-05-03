@@ -2,7 +2,7 @@
  * Optional OTLP trace export for MCP tool spans (GitHub #160).
  *
  * Enable with **`CLAWQL_ENABLE_OTEL_TRACING=1`** and set **`OTEL_EXPORTER_OTLP_ENDPOINT`** or
- * **`OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`** (Jaeger OTLP ingest or collector). Uses dynamic imports so
+ * **`OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`** (OTLP ingest URL — e.g. collector → Tempo). Uses dynamic imports so
  * OpenTelemetry packages load only when enabled.
  */
 

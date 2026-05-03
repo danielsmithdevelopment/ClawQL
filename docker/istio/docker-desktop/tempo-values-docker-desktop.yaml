@@ -1,0 +1,11 @@
+# Minimal Grafana Tempo for Docker Desktop Kubernetes (single binary, ephemeral storage by default).
+# Used by scripts/kubernetes/install-istio-docker-desktop.sh when Loki/Tempo addons are enabled.
+
+tempo:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 256Mi
+    limits:
+      memory: 512Mi
+  reportingEnabled: false

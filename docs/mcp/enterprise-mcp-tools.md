@@ -46,6 +46,10 @@ This repository documents **technical controls and patterns** that support **SOC
 
 **Env:** **`CLAWQL_AUDIT_MAX_ENTRIES`** (default **500**, min 1, max 50_000) — oldest entries drop when over capacity.
 
+**Prometheus:** aggregate counters/gauge registered with the HTTP **`/metrics`** exporter (**`clawql_audit_*`** — append total, ring drops, clears, current buffer size).
+
+**Loki:** optional **`CLAWQL_LOKI_PUSH_URL`** (+ bearer / tenant headers) — fire-and-forget push per **`append`**; see **`docs/mcp/mcp-tools.md`** and **`.env.example`**.
+
 **Not** a substitute for vault-backed compliance records: use **`memory_ingest`** when the note must survive process restarts and human review in Obsidian.
 
 ## References

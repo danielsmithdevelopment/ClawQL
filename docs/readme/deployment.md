@@ -93,7 +93,7 @@ make local-k8s-up
 
 This path installs **Kyverno**, uses **signed GHCR** images for ClawQL MCP/UI, and applies the chart’s **`verifyImages`** policy in the **`clawql`** namespace. Unsigned local image overrides are not supported. **End-to-end** supply chain and admission narrative: **`docs/security/golden-image-pipeline.md`**.
 
-**Optional Istio + observability stack** (Prometheus, Grafana, Jaeger, Kiali, OpenTelemetry Collector): set **`CLAWQL_LOCAL_K8S_ISTIO=ambient`** or **`sidecar`** (see **`docker/README.md`**). If you are **new to those tools**, use the step-by-step guide **`docs/deployment/docker-desktop-istio-observability.md`** (what each component is, first browser session, port-forwards, and MCP OTLP wiring).
+**Optional Istio + observability stack** (Prometheus, Grafana, Grafana Tempo, Kiali, OpenTelemetry Collector): set **`CLAWQL_LOCAL_K8S_ISTIO=ambient`** or **`sidecar`** (see **`docker/README.md`**). If you are **new to those tools**, use the step-by-step guide **`docs/deployment/docker-desktop-istio-observability.md`** (what each component is, first browser session, port-forwards, and MCP OTLP wiring).
 
 Remote clusters:
 
@@ -105,7 +105,7 @@ References:
 
 - `docs/deployment/deploy-k8s.md`
 - `docs/deployment/helm.md`
-- `docs/deployment/docker-desktop-istio-observability.md` — **Istio** on Docker Desktop: **Prometheus**, **Grafana**, **Jaeger**, **Kiali**, **OTel Collector**, beginner getting-started for each tool
+- `docs/deployment/docker-desktop-istio-observability.md` — **Istio** on Docker Desktop: **Prometheus**, **Grafana**, **Tempo**, **Kiali**, **OTel Collector**, beginner getting-started for each tool
 - `docs/deployment/tailscale-and-headscale-for-clawql.md`
 - `docs/deployment/headscale-tailnet.md`
 - `docs/deployment/headscale-acls-clawql.hujson`

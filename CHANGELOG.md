@@ -7,7 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Docker Desktop Istio observability:** removed the Istio sample **Jaeger** addon; **Grafana Tempo** is the sole trace backend when **`CLAWQL_ISTIO_INSTALL_HEAVY_OBSERVABILITY_ADDONS=1`**. **`CLAWQL_ISTIO_INSTALL_LOKI_TEMPO=0`** skips **Helm Loki** only (Tempo and the OTel collector remain). Deleted **`docker/istio/docker-desktop/otel-collector-jaeger-only.yaml`**.
+
 ### Breaking
+
+- **Helm `clawql-mcp` — Dragonfly only, values rename:** **`stores.redis`** → **`stores.dragonfly`** and **`onyx.redis`** → **`onyx.dragonfly`**. Kubernetes names change (**`*-redis`** → **`*-dragonfly`** for shared store; **`onyx-cache`** → **`onyx-dragonfly`** for Onyx). Redis OSS is **not** an in-chart option (**AGPL/RSAL** posture + prefer **Dragonfly** **Apache 2.0** and throughput for broker workloads). **`redis://…`** env URLs remain (**RESP** / Celery naming). See [**ADR 0003**](docs/adr/0003-tempo-dragonfly-local-operations.md). Migrate custom **`values`** / **`--set`** accordingly; expect a one-time replacement of those Deployments/Services on **`helm upgrade`**.
 
 - **`sandbox_exec`:** the MCP tool is registered only when **`CLAWQL_ENABLE_SANDBOX=1`** (same **default off — opt in** band as **`schedule`**, **`notify`**, **`ouroboros_*`** in the [feature tiers diagram](docs/readme/images/clawql-feature-tiers.png)). Previously **`sandbox_exec`** was always listed; restore visibility by setting the flag (still configure **`CLAWQL_SANDBOX_BACKEND`**, bridge URL + token, Docker, or Seatbelt as before) ([#207](https://github.com/danielsmithdevelopment/ClawQL/issues/207)).
 
@@ -24,6 +30,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Docker Desktop Istio lab — Loki + Tempo:** **`scripts/kubernetes/install-istio-docker-desktop.sh`** installs **Grafana Tempo** (Helm **`clawql-tempo`**) whenever heavy observability addons are on, and **Grafana Loki** when **`CLAWQL_ISTIO_INSTALL_LOKI_TEMPO`** is not **`0`**. **`docker/istio/docker-desktop/otel-collector.yaml`** forwards OTLP traces to **Tempo** only (no Istio sample **Jaeger**). Values: **`docker/istio/docker-desktop/loki-values-docker-desktop.yaml`**, **`tempo-values-docker-desktop.yaml`**. Docs: **`docs/deployment/docker-desktop-istio-observability.md`**, **`docker/README.md`**, **`docs/grafana/README.md`**, website **`/docker-desktop-observability`**.
+
+- **`audit` observability:** Prometheus aggregates **`clawql_audit_append_total`**, **`clawql_audit_ring_entries_dropped_total`**, **`clawql_audit_clear_total`**, **`clawql_audit_buffer_entries`** on **`GET /metrics`**; optional **`CLAWQL_LOKI_PUSH_URL`** (+ bearer / tenant / job / timeout) fires a non-blocking Loki **`/loki/api/v1/push`** per **`audit.append`**. Docs: **`docs/mcp/mcp-tools.md`**, **`docs/mcp/enterprise-mcp-tools.md`**, **`docs/readme/configuration.md`**, **`.env.example`**, website **`/learn/audit-tool-and-observability`**.
+
 - **Bundled OpenAPI providers — pregenerated GraphQL:** committed **`introspection.json`** and **`schema.graphql`** where **`npm run pregenerate-graphql`** succeeds for **`tika`**, **`gotenberg`**, **`paperless`**, **`stirling`**, **`jira`**, **`github`**, **`n8n`**, and **`sentry`** ([#125](https://github.com/danielsmithdevelopment/ClawQL/issues/125)).
 
 - **Ouroboros default executor — optional Onyx ingest after Paperless:** With **`CLAWQL_OUROBOROS_ONYX_AFTER_PAPERLESS`** and seed **`metadata.onyx_ingest_after_paperless`**, append **`execute`** on **`onyx::onyx_ingest_document`** after a successful Paperless step whose JSON **`result`** includes a document **`id`**; optional **`CLAWQL_ONYX_CC_PAIR_ID`** ([#120](https://github.com/danielsmithdevelopment/ClawQL/issues/120)).
@@ -36,7 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Prometheus (`GET /metrics`, core):** **`prom-client`** OpenMetrics exposition for native GraphQL/gRPC merge gauges and execute counters per **`sourceLabel`**; same signals as optional JSON on **`GET /healthz`**. Disable the HTTP route with **`CLAWQL_DISABLE_HTTP_METRICS=1`** only when necessary ([#191](https://github.com/danielsmithdevelopment/ClawQL/issues/191)).
 
-- **Optional OTLP traces (Jaeger-ready):** **`CLAWQL_ENABLE_OTEL_TRACING=1`** with **`OTEL_EXPORTER_OTLP_ENDPOINT`** or **`OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`** registers OTLP HTTP export and **`mcp.tool.<name>`** spans for MCP handlers (including **`ouroboros_*`**); OpenTelemetry packages load only when the flag is set ([#160](https://github.com/danielsmithdevelopment/ClawQL/issues/160)).
+- **Optional OTLP traces (Tempo / OTLP backends):** **`CLAWQL_ENABLE_OTEL_TRACING=1`** with **`OTEL_EXPORTER_OTLP_ENDPOINT`** or **`OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`** registers OTLP HTTP export and **`mcp.tool.<name>`** spans for MCP handlers (including **`ouroboros_*`**); OpenTelemetry packages load only when the flag is set ([#160](https://github.com/danielsmithdevelopment/ClawQL/issues/160)).
 
 - **Native protocol metrics per source:** when **`CLAWQL_HEALTHZ_NATIVE_PROTOCOL_METRICS=1`**, **`GET /healthz`** **`nativeProtocolMetrics`** includes **`graphqlBySource`** and **`grpcBySource`** (merge gauges and cumulative execute counters per GraphQL/gRPC **`sourceLabel`**), alongside existing aggregate fields ([#191](https://github.com/danielsmithdevelopment/ClawQL/issues/191)).
 

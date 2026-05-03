@@ -1,0 +1,90 @@
+import { docsPageMetadata } from '@/lib/seo'
+
+export const metadata = docsPageMetadata({
+  title: 'Using ingest_external_knowledge (vault bulk + URL)',
+  description:
+    'How to use ingest_external_knowledge: Markdown bulk import, optional HTTPS URL fetch, dry-run workflow, env flags—and the knowledge lake roadmap for full GitHub repos, Notion, Confluence, Slack workspaces, and more.',
+  path: '/learn/external-ingest-knowledge',
+})
+
+# Using `ingest_external_knowledge`
+
+**`ingest_external_knowledge`** imports **external knowledge** into your **Obsidian vault** so it participates in the same **`memory.db`** sync, **`_INDEX_`**, and **`memory_recall`** story as **`memory_ingest`**. **Today** it supports **bulk Markdown** (`documents[]`) and an optional **single-URL fetch** (`source: "url"`). **Automatic whole-repo and SaaS workspace pulls** are **roadmap** work on top of the same pipeline — see [Knowledge lake roadmap and what is next](#knowledge-lake-roadmap-and-what-is-next). {{ className: 'lead' }}
+
+**Canonical reference:** [external-ingest.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/external-ingest.md). Tool table: [Tools](/tools) · [mcp-tools.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md). Agent skill (dry-run first): [clawql-external-ingest](https://docs.clawql.com/.well-known/agent-skills/clawql-external-ingest/SKILL.md).
+
+## What the tool does today
+
+| Mode                            | What it does                                                                                                                                                                    |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`documents[]`**               | Write up to **50** vault-relative **`.md`** files in one call (~**2 MiB** UTF-8 per body).                                                                                      |
+| **`source: "url"`** + **`url`** | **`fetch()`** one HTTPS URL (or **`http://localhost`** / **`127.0.0.1`** for tests), normalize body to Markdown, write one note. Requires **`CLAWQL_EXTERNAL_INGEST_FETCH=1`**. |
+| **No payload**                  | Returns **`stub: true`** roadmap JSON (**`roadmap[]`**, **`relatedIssues`**) — useful to probe behavior without a vault.                                                        |
+
+**Not** the same as web search: URL mode archives **raw bytes** from **one** URL into the vault ([external-ingest.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/external-ingest.md) compares this to search snippets).
+
+## Before you start
+
+1. **Documents tools enabled** — **`ingest_external_knowledge`** is registered with the **document** stack by default. **`CLAWQL_ENABLE_DOCUMENTS=0`** removes it (and related document vendors from the default merge). See [Concepts](/concepts) and [configuration](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/readme/configuration.md).
+2. **External ingest flag** — set **`CLAWQL_EXTERNAL_INGEST=1`** (exactly **`1`**) for **non-stub** writes on bulk / URL paths.
+3. **Writable vault** — set **`CLAWQL_OBSIDIAN_VAULT_PATH`** to a real vault for imports; without it, no-payload calls still return roadmap JSON.
+4. **URL fetch** — opt in with **`CLAWQL_EXTERNAL_INGEST_FETCH=1`** when you need **`source: "url"`**.
+5. **Dry-run discipline** — **`dryRun`** defaults **`true`** for **`documents[]`**; validate with **`dryRun: true`**, then set **`dryRun: false`** to write (matches the **clawql-external-ingest** skill).
+
+## Bulk Markdown documents mode
+
+**Shape:** `documents: [{ "path": "Memory/imports/note.md", "markdown": "…" }, …]`
+
+- Paths are **vault-relative**, must end with **`.md`**, no **`..`** (same rules as **`memory_ingest`**).
+- Up to **50** files per call; invalid entries surface in **`documentErrors`**; valid paths can still import.
+- Start with **`dryRun: true`** to validate paths and size before committing.
+
+## URL fetch mode
+
+**Shape:** `source: "url"`, **`url`**: `https://…` (or allowed localhost **`http`**), optional **`scope`** for the target **`.md`** path (default under **`Memory/external/`**).
+
+- **JSON** responses are pretty-printed in a fenced **`json`** block; **HTML** is converted with **node-html-markdown**; other bodies go under **## Raw text**.
+- Response size is **capped** (**2 MiB**); **60s** timeout. Many public HTML pages return **403** interstitials (for example heavy bot protection) — use a stable **API** URL when you can (see limitations in [external-ingest.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/external-ingest.md)).
+
+## Roadmap preview calls
+
+Call the tool **without** **`documents`** and **without** **`url`**: you get **`stub: true`**, **`roadmap[]`**, and **`relatedIssues`** — no vault required. With a vault and **`memory.db`**, responses may also include optional **`merkleSnapshot`** / **`cuckooMembershipReady`** when the sidecar is warm. Use this to confirm the tool is registered and to read the **issue-linked** roadmap pointers before enabling real ingest.
+
+## Pipeline memory sync and recall
+
+After a **successful** write (not dry-run): **vault write lock** → **`syncMemoryDbForVaultScanRoot`** → **`updateProviderIndexPage`** — the same path as **`memory_ingest`** ([external-ingest.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/external-ingest.md)).
+
+Then use **`memory_recall`** (and graph depth / hybrid options as needed) to query what you imported. For handoff patterns between chats, see [Vault memory between chats](/learn/vault-memory-between-chats).
+
+## Security and limits
+
+- **No secrets in chat** — keep tokens in **env** / your secret manager; the ingest module avoids logging full URLs when tool logging is enabled.
+- **Fetch is off by default** — only **`CLAWQL_EXTERNAL_INGEST_FETCH=1`** enables network **`fetch`**.
+- **Tenant safety** — one MCP process, one vault root; separate deployments per customer for isolation (same theme as the roadmap).
+
+## Knowledge lake roadmap and what is next
+
+The checked-in **[knowledge-lake-roadmap.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/roadmap/knowledge-lake-roadmap.md)** is the **product direction** for turning **`ingest_external_knowledge`** into **first-class connectors** that normalize SaaS and repo data into **Markdown notes** + **`memory.db`** (and optional vectors), with **incremental sync** and stable **frontmatter** ids.
+
+**Planned sources (summary):**
+
+| Source                  | Direction                                                                                                                                                                                                                                                                                                                                       |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **GitHub repositories** | **First priority** — phased: **G1** default-branch **code & docs** (`README*`, `docs/**`, `*.md`, selected configs via Trees/Contents API); **G2** issues & PRs; **G3** richer surfaces (releases, wiki, discussions where APIs fit). **API-first** (optionally clone + API for issues) so metadata and **incremental cursors** stay tractable. |
+| **Notion**              | Pages, databases, blocks → Markdown-like notes; integration token + shared content.                                                                                                                                                                                                                                                             |
+| **Confluence**          | Spaces and pages → Markdown (HTML or storage format through existing HTML→MD paths); Atlassian auth.                                                                                                                                                                                                                                            |
+| **Slack workspaces**    | Conversations, files, and export-friendly surfaces → Markdown under a predictable **`External/slack/…`** layout; least-privilege tokens; distinct from **outbound** [Slack notify](/notify).                                                                                                                                                    |
+| **Linear / Jira**       | Issues as Markdown notes with JQL / GraphQL-driven scope (see roadmap for paths).                                                                                                                                                                                                                                                               |
+
+**Cross-cutting goals** from the same doc: **completeness** (authorized content only), **queryable** recall (keywords + graph + optional **`CLAWQL_VECTOR_BACKEND`**), **incremental** sync (ETag / since / `updated_at`), and **tenant-safe** tokens.
+
+**Tracking:** umbrella [#40](https://github.com/danielsmithdevelopment/ClawQL/issues/40), hybrid memory epic [#24](https://github.com/danielsmithdevelopment/ClawQL/issues/24). **Next concrete step** in the roadmap: **`source: "github"`** (or a dedicated **`ingest_github_repo`**) behind the external-ingest flag family, implementing **G1** with **`dryRun`** and documented **`GITHUB_TOKEN`**.
+
+Until those connectors ship, use **today’s** modes: bulk Markdown from your own extractors, or **URL** fetch for stable API endpoints — then **`memory_recall`** over the vault.
+
+## Related guides and references
+
+- [Using search and execute](/learn/search-and-execute-mcp) — reach provider APIs when ingest is not the right primitive.
+- [Onyx knowledge search](/onyx-knowledge) — enterprise **search** over an existing Onyx corpus (complementary to vault file ingest).
+- [OpenClaw + ClawQL](/openclaw) — bootstrap flows that mention **`ingest_external_knowledge`**.
+- Repo recipes: [memory-and-knowledge-recipes.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/recipes/memory-and-knowledge-recipes.md).

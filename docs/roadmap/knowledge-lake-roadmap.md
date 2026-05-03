@@ -1,6 +1,6 @@
 # Knowledge lake: full repo & SaaS ingest (roadmap)
 
-This document describes the **product direction**: point ClawQL at a **GitHub repository** (and later **Notion**, **Confluence**, **Linear**, **Jira**) and build a **durable knowledge base** under the Obsidian vault — **Markdown on disk** + optional **`memory.db`** chunking, wikilinks, vectors, and **`memory_recall`** — so teams can **ask questions** against _everything_ the connector imports (configs, docs, issues, vendor-specific records).
+This document describes the **product direction**: point ClawQL at a **GitHub repository** (and later **Notion**, **Confluence**, **Slack workspaces**, **Linear**, **Jira**) and build a **durable knowledge base** under the Obsidian vault — **Markdown on disk** + optional **`memory.db`** chunking, wikilinks, vectors, and **`memory_recall`** — so teams can **ask questions** against _everything_ the connector imports (configs, docs, issues, vendor-specific records).
 
 **Today:** [`ingest_external_knowledge`](../mcp/external-ingest.md) supports **bulk Markdown** and **single-URL fetch** with formatting. **Full providers** are the next layer on top of the same pipeline.
 
@@ -25,6 +25,7 @@ flowchart LR
     GH["GitHub API"]
     N["Notion API"]
     CF["Confluence API"]
+    SL["Slack Web API"]
     L["Linear API"]
     J["Jira API"]
   end
@@ -37,6 +38,7 @@ flowchart LR
   GH --> P
   N --> P
   CF --> P
+  SL --> P
   L --> P
   J --> P
   P --> V
@@ -102,14 +104,24 @@ A bare **clone** gives files but not **issues/PR metadata** in one shot. **API-f
 
 ---
 
-## 4. Linear
+## 4. Slack workspaces
+
+- **API:** [Slack Web API](https://api.slack.com/) — conversations, files, pinned items, and (where available) canvases or export-friendly surfaces.
+- **Ingest:** Threads and channel history → Markdown notes under a predictable prefix (for example `External/slack/<workspace>/<channel>/…`); optional file metadata and links to source messages. Respect **retention**, **workspace ACLs**, and org policy (some enterprises prefer **export** jobs over live API crawl).
+- **Auth:** Bot or user token with least-privilege OAuth scopes; tokens in env / secret manager only.
+
+**Note:** Today’s **[`notify`](../mcp/enterprise-mcp-tools.md)** path covers **outbound** Slack messages (`chat.postMessage`). **Workspace ingest** is the **inbound** mirror: durable vault notes from Slack content, same pipeline as other providers.
+
+---
+
+## 5. Linear
 
 - **API:** [Linear GraphQL API](https://developers.linear.app/docs/graphql/working-with-the-graphql-api) — issues, projects, teams, comments.
 - **Ingest:** Issues as `External/linear/<team>/<issue-id>.md` with frontmatter for state, priority, links.
 
 ---
 
-## 5. Jira
+## 6. Jira
 
 - **API:** [Jira Cloud REST](https://developer.atlassian.com/cloud/jira/platform/rest/v3/) — issues, fields, comments, attachments metadata.
 - **Ingest:** Issues as Markdown notes; JQL-driven “what to pull” (project, updated since, …).

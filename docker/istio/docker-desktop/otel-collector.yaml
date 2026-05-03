@@ -1,7 +1,6 @@
-# Local Docker Desktop: OTLP ingress for app traces → Jaeger (Istio samples/addons/jaeger.yaml).
-# Applied by scripts/kubernetes/install-istio-docker-desktop.sh after jaeger.yaml.
-# ClawQL MCP: CLAWQL_ENABLE_OTEL_TRACING=1 and
-#   OTEL_EXPORTER_OTLP_ENDPOINT=http://clawql-otel-collector.istio-system.svc:4318/v1/traces
+# Local Docker Desktop: OTLP ingress → Grafana Tempo (trace backend).
+# Applied when CLAWQL_ISTIO_INSTALL_HEAVY_OBSERVABILITY_ADDONS=1 (requires Helm release clawql-tempo).
+# ClawQL MCP: OTEL_EXPORTER_OTLP_ENDPOINT=http://clawql-otel-collector.istio-system.svc:4318/v1/traces
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -21,8 +20,8 @@ data:
     processors:
       batch: {}
     exporters:
-      otlp:
-        endpoint: jaeger-collector.istio-system.svc.cluster.local:4317
+      otlp/tempo:
+        endpoint: clawql-tempo.istio-system.svc.cluster.local:4317
         tls:
           insecure: true
     service:
@@ -30,7 +29,7 @@ data:
         traces:
           receivers: [otlp]
           processors: [batch]
-          exporters: [otlp]
+          exporters: [otlp/tempo]
 ---
 apiVersion: apps/v1
 kind: Deployment

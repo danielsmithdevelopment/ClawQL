@@ -1,12 +1,12 @@
 {{- if .Values.documentPipeline.enabled }}
 {{- $postgresEnabled := .Values.stores.postgres.enabled }}
-{{- $redisEnabled := .Values.stores.redis.enabled }}
+{{- $dragonflyEnabled := .Values.stores.dragonfly.enabled }}
 {{- $paperlessEnabled := .Values.documentPipeline.paperless.enabled }}
 {{- if and $paperlessEnabled (not $postgresEnabled) }}
 {{- fail "documentPipeline.paperless.enabled=true requires stores.postgres.enabled=true" }}
 {{- end }}
-{{- if and $paperlessEnabled (not $redisEnabled) }}
-{{- fail "documentPipeline.paperless.enabled=true requires stores.redis.enabled=true" }}
+{{- if and $paperlessEnabled (not $dragonflyEnabled) }}
+{{- fail "documentPipeline.paperless.enabled=true requires stores.dragonfly.enabled=true" }}
 {{- end }}
 {{- $paperlessSecretManaged := and $paperlessEnabled (not .Values.documentPipeline.paperless.auth.existingSecret) }}
 {{- $stirlingSecretManaged := and (not .Values.documentPipeline.stirling.auth.existingSecret) (ne .Values.documentPipeline.stirling.auth.apiKey "") }}
@@ -377,58 +377,67 @@ spec:
           emptyDir: {}
           {{- end }}
 {{- end }}
-{{- if $redisEnabled }}
+{{- if $dragonflyEnabled }}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "clawql-mcp.storesRedisName" . }}
+  name: {{ include "clawql-mcp.storesDragonflyName" . }}
   labels:
     {{- include "clawql-mcp.labels" . | nindent 4 }}
-    app.kubernetes.io/component: stores-redis
+    app.kubernetes.io/component: stores-dragonfly
 spec:
   type: ClusterIP
   selector:
     app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
     app.kubernetes.io/instance: {{ .Release.Name }}
-    app.kubernetes.io/component: stores-redis
+    app.kubernetes.io/component: stores-dragonfly
   ports:
-    - name: redis
-      port: {{ .Values.stores.redis.service.port | int }}
-      targetPort: redis
+    - name: dragonfly
+      port: {{ .Values.stores.dragonfly.service.port | int }}
+      targetPort: dragonfly
       protocol: TCP
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "clawql-mcp.storesRedisName" . }}
+  name: {{ include "clawql-mcp.storesDragonflyName" . }}
   labels:
     {{- include "clawql-mcp.labels" . | nindent 4 }}
-    app.kubernetes.io/component: stores-redis
+    app.kubernetes.io/component: stores-dragonfly
 spec:
   replicas: 1
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
       app.kubernetes.io/instance: {{ .Release.Name }}
-      app.kubernetes.io/component: stores-redis
+      app.kubernetes.io/component: stores-dragonfly
   template:
     metadata:
       labels:
         app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
         app.kubernetes.io/instance: {{ .Release.Name }}
-        app.kubernetes.io/component: stores-redis
+        app.kubernetes.io/component: stores-dragonfly
     spec:
       containers:
-        - name: redis
-          image: "{{ .Values.stores.redis.image.repository }}:{{ .Values.stores.redis.image.tag }}"
-          imagePullPolicy: {{ .Values.stores.redis.image.pullPolicy }}
+        - name: dragonfly
+          image: "{{ .Values.stores.dragonfly.image.repository }}:{{ .Values.stores.dragonfly.image.tag }}"
+          imagePullPolicy: {{ .Values.stores.dragonfly.image.pullPolicy }}
+          {{- with .Values.stores.dragonfly.args }}
+          args:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           ports:
-            - name: redis
-              containerPort: {{ .Values.stores.redis.service.port | int }}
+            - name: dragonfly
+              containerPort: {{ .Values.stores.dragonfly.service.port | int }}
               protocol: TCP
+          readinessProbe:
+            tcpSocket:
+              port: dragonfly
+            initialDelaySeconds: 2
+            periodSeconds: 5
           resources:
-            {{- toYaml .Values.stores.redis.resources | nindent 12 }}
+            {{- toYaml .Values.stores.dragonfly.resources | nindent 12 }}
 {{- end }}
 {{- if $paperlessEnabled }}
 ---
@@ -485,8 +494,9 @@ spec:
               value: "http://{{ include "clawql-mcp.gotenbergName" . }}:{{ .Values.documentPipeline.gotenberg.service.port }}"
             - name: PAPERLESS_TIKA_ENDPOINT
               value: "http://{{ include "clawql-mcp.tikaName" . }}:{{ .Values.documentPipeline.tika.service.port }}"
+            # Celery broker URL scheme is still redis:// (RESP); server is Dragonfly.
             - name: PAPERLESS_REDIS
-              value: "redis://{{ include "clawql-mcp.storesRedisName" . }}:{{ .Values.stores.redis.service.port }}"
+              value: "redis://{{ include "clawql-mcp.storesDragonflyName" . }}:{{ .Values.stores.dragonfly.service.port }}"
             - name: PAPERLESS_DBHOST
               value: {{ include "clawql-mcp.storesPostgresName" . | quote }}
             - name: PAPERLESS_DBPORT
