@@ -4,12 +4,12 @@ This document describes optional **Kata** and **gVisor** **`RuntimeClass`** cont
 
 ## Kata vs gVisor (when to use which)
 
-| | **Kata Containers** | **gVisor** |
-| --- | --- | --- |
-| **Boundary** | Lightweight VM per pod (hardware-backed isolation via hypervisor) | User-space kernel (`runsc`) intercepting syscalls |
-| **Threat model** | Strong default for **arbitrary code / shell / filesystem** exposure (MCP tools, `sandbox_exec`) | Reasonable for **lower-risk** workloads where VM overhead is hard to justify |
-| **Cost** | Higher per-pod overhead (memory, boot, IO) | Lower overhead; different syscall compatibility surface |
-| **Fit for ClawQL** | **Preferred default** for namespaces dedicated to MCP + sandbox execution | Optional tier for supporting services that never execute untrusted code |
+|                    | **Kata Containers**                                                                             | **gVisor**                                                                   |
+| ------------------ | ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| **Boundary**       | Lightweight VM per pod (hardware-backed isolation via hypervisor)                               | User-space kernel (`runsc`) intercepting syscalls                            |
+| **Threat model**   | Strong default for **arbitrary code / shell / filesystem** exposure (MCP tools, `sandbox_exec`) | Reasonable for **lower-risk** workloads where VM overhead is hard to justify |
+| **Cost**           | Higher per-pod overhead (memory, boot, IO)                                                      | Lower overhead; different syscall compatibility surface                      |
+| **Fit for ClawQL** | **Preferred default** for namespaces dedicated to MCP + sandbox execution                       | Optional tier for supporting services that never execute untrusted code      |
 
 They are **not** drop-in substitutes: pick **Kata** where a compromised container must not reach the host kernel; use **gVisor** only where you accept userspace-kernel semantics and have validated syscall coverage for your images.
 
