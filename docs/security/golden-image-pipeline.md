@@ -150,13 +150,13 @@ Many enterprises front GHCR (or any upstream) with **[Harbor](https://goharbor.i
 
 | Layer           | Mechanism                                                            | Artifact / outcome                                           |
 | --------------- | -------------------------------------------------------------------- | ------------------------------------------------------------ |
-| Merge / CI      | **`ci.yml`** `supply-chain` + **`secret-scan`** (Gitleaks)          | OSV + Trivy fs + SBOM + secret scan; gates **`test`**        |
+| Merge / CI      | **`ci.yml`** `supply-chain` + **`secret-scan`** (Gitleaks)           | OSV + Trivy fs + SBOM + secret scan; gates **`test`**        |
 | Publish         | **`docker-publish.yml`** `repo-supply-chain`                         | Same repo gates + SBOM artifact for the publish run          |
 | Image integrity | Single **OCI layout** + **Trivy** + **`skopeo copy`**                | No second build; scanned bytes = pushed bytes                |
 | Identity        | **Cosign keyless** on digest                                         | Signature in **Rekor** / Sigstore ecosystem                  |
 | Mutability      | **`imagetools`** promotion                                           | **`latest`** / **`nightly`** only after success              |
 | Cluster         | **Kyverno `verifyImages`** (Helm default) + optional **digest pins** | Unsigned / wrong-identity **ClawQL** images blocked at admit |
-| Scheduled audit | **`trufflehog-scheduled.yml`**                                      | TruffleHog git history; **`providers/`** excluded            |
+| Scheduled audit | **`trufflehog-scheduled.yml`**                                       | TruffleHog git history; **`providers/`** excluded            |
 
 ---
 
