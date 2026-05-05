@@ -4,6 +4,13 @@
   export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "clawql-mcp.fullname" . }} -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
   echo "MCP Streamable HTTP: http://${SERVICE_IP}:{{ .Values.service.http.port }}{{ .Values.mcpPath }}"
   echo "Health:              http://${SERVICE_IP}:{{ .Values.service.http.port }}/healthz"
+{{- else if contains "NodePort" .Values.service.type }}
+  {{- if and (hasKey .Values.service.http "nodePort") .Values.service.http.nodePort }}
+  echo "MCP Streamable HTTP: http://127.0.0.1:{{ .Values.service.http.nodePort }}{{ .Values.mcpPath }}"
+  echo "Health:              curl -s http://127.0.0.1:{{ .Values.service.http.nodePort }}/healthz"
+  {{- else }}
+  echo "MCP: NodePort — kubectl get svc -n {{ .Release.Namespace }} (see NODE PORT for http)"
+  {{- end }}
 {{- else if contains "ClusterIP" .Values.service.type }}
   kubectl port-forward --namespace {{ .Release.Namespace }} svc/{{ include "clawql-mcp.fullname" . }} 8080:{{ .Values.service.http.port }}
   echo "Then: http://localhost:8080{{ .Values.mcpPath }}"

@@ -19,7 +19,7 @@ From the published package:
 PORT=8080 npx -p clawql-mcp clawql-mcp-http
 ```
 
-Default local MCP endpoint: **`http://localhost:8080/mcp`**, health **`/healthz`**, Prometheus scrape **`GET /metrics`** (**`prom-client`** OpenMetrics). Your real URL depends on port, ingress, or tunneling—configure the client with **`url`**, not **`command`**.
+Default local MCP endpoint (**`make local-k8s-up`** + **`values-docker-desktop.yaml`**): **`http://clawql-mcp.localhost/mcp`** (**Ingress** — prod parity), health **`/healthz`**, Prometheus scrape **`GET /metrics`** (**`prom-client`** OpenMetrics). **Compose** / **`npx`** still often use **`http://localhost:8080/mcp`**. Configure the client with **`url`**, not **`command`**.
 
 **Native GraphQL/gRPC metrics:** scrape **`GET /metrics`** for OpenMetrics counters/gauges per **`sourceLabel`**. Optionally set **`CLAWQL_HEALTHZ_NATIVE_PROTOCOL_METRICS=1`** so **`GET /healthz`** also includes the same snapshot as JSON (**`nativeProtocolMetrics`**). Disable the metrics route only if required: **`CLAWQL_DISABLE_HTTP_METRICS=1`**. Repo: **[`docs/readme/deployment.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/readme/deployment.md)** ([#191](https://github.com/danielsmithdevelopment/ClawQL/issues/191)).
 
@@ -59,7 +59,7 @@ After deploy, agents use **`https://<mcp-service-url>/mcp`**. Full options: [`do
 
 ## Kubernetes
 
-**Local MCP on Docker Desktop** (namespace **`clawql`**, **`http://localhost:8080/mcp`**, **signed GHCR** images, **Kyverno** installed by **`make local-k8s-up`**) is covered on **[Kubernetes](/kubernetes)**.
+**Local MCP on Kubernetes** (namespace **`clawql`**, **Ingress** **`http://clawql-mcp.localhost/mcp`**, **signed GHCR** images, **Kyverno** installed by **`make local-k8s-up`**) is covered on **[Kubernetes](/kubernetes)**.
 
 **Optional Istio + observability lab** (Prometheus, Grafana, Grafana Tempo, Kiali, OpenTelemetry Collector): beginner-oriented walkthrough on **[Docker Desktop: Istio & observability](/docker-desktop-observability)**; canonical copy in **[`docs/deployment/docker-desktop-istio-observability.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/docker-desktop-istio-observability.md)**.
 

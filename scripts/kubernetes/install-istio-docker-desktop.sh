@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Install Istio (ambient or sidecar) on Docker Desktop Kubernetes via Helm, optional
+# Install Istio (ambient or sidecar) on local desktop Kubernetes (Docker Desktop or Rancher Desktop) via Helm, optional
 # observability addons (upstream Istio samples: Prometheus, Kiali, Grafana) plus Helm Grafana Tempo
 # and a minimal in-repo OpenTelemetry Collector forwarding app OTLP to Tempo, then label the
 # ClawQL namespace for the mesh.
@@ -27,8 +27,16 @@ set -euo pipefail
 #   CLAWQL_ISTIO_INSTALL_INGRESS_GATEWAY — 1 installs istio/gateway (clawql-mcp-ingress) + Istio Gateway +
 #     VirtualService so MCP uses mesh north-south on :80 / :50051 (default 1)
 #   CLAWQL_ISTIO_MCP_HTTP_SERVICE_CLUSTERIP — applied by local-k8s-docker-desktop.sh after Helm (not this
-#     script): when 1 with gateway on, patches svc/clawql-mcp-http to ClusterIP (default 1)
-#   KUBE_CONTEXT — optional; docker-desktop selected automatically when present
+#     script): when 1 with gateway on, patches svc/clawql-mcp-http to ClusterIP (default 0 in local-k8s-up)
+#   CLAWQL_LOCAL_K8S_CONTEXT — optional; force kubectl context (see scripts/kubernetes/lib/select-local-k8s-context.sh)
+#   CLAWQL_SKIP_WAIT_FOR_KYVERNO_ENDPOINTS — set to 1 to skip wait/restart gate (Kyverno webhook errors mid-upgrade otherwise)
+#   CLAWQL_SKIP_RANCHER_LIMA_MOUNT_RSHARED — set to 1 to skip automatic rdctl mount --make-rshared / before istio-cni (Rancher only)
+#   CLAWQL_ISTIO_LOCAL_COMPACT_RESOURCES — when 1 (default), lowers istiod / istio-cni / ztunnel CPU requests so
+#     ambient + ClawQL often fits a single ~4 CPU node (Rancher / Docker Desktop). Set 0 for upstream chart defaults.
+#     Also sets istiod rollingUpdate maxSurge=0 / maxUnavailable=1 so upgrades never need two pilot pods at once.
+#   CLAWQL_ISTIOD_CPU_REQUEST / CLAWQL_ISTIOD_MEMORY_REQUEST — override compact istiod (pilot) requests
+#     (default memory 512Mi when compact; pilot idle RSS is lower but XDS spikes need headroom — override if OOM)
+#   CLAWQL_ISTIO_CNI_CPU_REQUEST / CLAWQL_ZTUNNEL_CPU_REQUEST / CLAWQL_ZTUNNEL_MEMORY_REQUEST — override compact ambient dataplane
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT"
@@ -50,6 +58,26 @@ INGRESS_GW_NS=istio-ingress
 INGRESS_GW_RELEASE=clawql-mcp-ingress
 ISTIO_NS=istio-system
 HELM_WAIT_TIMEOUT="${CLAWQL_ISTIO_HELM_TIMEOUT:-15m}"
+ISTIO_COMPACT="${CLAWQL_ISTIO_LOCAL_COMPACT_RESOURCES:-1}"
+
+# Optional extra Helm --set flags (local single-node: default compact requests so istiod schedules).
+istiod_helm_extra=()
+if [[ "${ISTIO_COMPACT}" == "1" ]]; then
+  PC="${CLAWQL_ISTIOD_CPU_REQUEST:-25m}"
+  PM="${CLAWQL_ISTIOD_MEMORY_REQUEST:-512Mi}"
+  istiod_helm_extra+=(--set "pilot.resources.requests.cpu=${PC}" --set "pilot.resources.requests.memory=${PM}")
+  # Default chart uses maxSurge 100% → two istiod pods briefly during helm upgrade; tight single-node CPU cannot schedule the second.
+  istiod_helm_extra+=(--set rollingMaxSurge=0 --set rollingMaxUnavailable=1)
+fi
+cni_helm_extra=()
+ztunnel_helm_extra=()
+if [[ "${MODE}" == "ambient" && "${ISTIO_COMPACT}" == "1" ]]; then
+  CC="${CLAWQL_ISTIO_CNI_CPU_REQUEST:-50m}"
+  ZC="${CLAWQL_ZTUNNEL_CPU_REQUEST:-100m}"
+  ZM="${CLAWQL_ZTUNNEL_MEMORY_REQUEST:-256Mi}"
+  cni_helm_extra+=(--set "resources.requests.cpu=${CC}")
+  ztunnel_helm_extra+=(--set "resources.requests.cpu=${ZC}" --set "resources.requests.memory=${ZM}")
+fi
 
 if [[ "${MODE}" != "ambient" && "${MODE}" != "sidecar" ]]; then
   echo "ERROR: Set CLAWQL_LOCAL_K8S_ISTIO_MODE=ambient or CLAWQL_LOCAL_K8S_ISTIO_MODE=sidecar (got: ${MODE})"
@@ -66,14 +94,9 @@ if ! command -v helm >/dev/null 2>&1; then
   exit 1
 fi
 
-KUBE_CONTEXT="${KUBE_CONTEXT:-}"
-if kubectl config get-contexts -o name 2>/dev/null | grep -qx 'docker-desktop'; then
-  KUBE_CONTEXT="docker-desktop"
-  echo "==> kube context: docker-desktop"
-elif kubectl config get-contexts -o name 2>/dev/null | grep -qx 'docker-for-desktop'; then
-  KUBE_CONTEXT="docker-for-desktop"
-  echo "==> kube context: docker-for-desktop"
-fi
+# shellcheck disable=SC1091
+source "${ROOT}/scripts/kubernetes/lib/select-local-k8s-context.sh"
+clawql_select_local_k8s_context
 
 kubectl_ctx() {
   if [[ -n "${KUBE_CONTEXT}" ]]; then
@@ -109,44 +132,83 @@ if [[ "${MODE}" == "ambient" ]] && [[ "${GATEWAY_API}" == "1" ]]; then
   fi
 fi
 
+# Mutating webhooks post to kyverno-svc; if Endpoints are empty (controllers down after restart), istiod Helm fails:
+# "no endpoints available for service kyverno-svc".
+wait_for_kyverno_svc_endpoints_if_installed() {
+  if [[ "${CLAWQL_SKIP_WAIT_FOR_KYVERNO_ENDPOINTS:-0}" == "1" ]]; then
+    echo "WARN: skipping Kyverno endpoints gate (CLAWQL_SKIP_WAIT_FOR_KYVERNO_ENDPOINTS=1)"
+    return 0
+  fi
+  local ns=kyverno
+  local svc=kyverno-svc
+  if ! kubectl_ctx get svc -n "${ns}" "${svc}" &>/dev/null; then
+    return 0
+  fi
+  echo "==> Ensuring Kyverno (${ns}/${svc}) has Endpoints before Istio Helm (mutate webhook)"
+  local ip
+  ip="$(kubectl_ctx get endpoints -n "${ns}" "${svc}" -o jsonpath='{.subsets[0].addresses[0].ip}' 2>/dev/null || true)"
+  if [[ -z "${ip}" ]]; then
+    echo "    No endpoints yet — restarting kyverno Deployments once, then waiting…"
+    kubectl_ctx rollout restart deployment -n "${ns}" 2>/dev/null || true
+  fi
+  local deadline=$((SECONDS + 300))
+  while [[ "${SECONDS}" -lt "${deadline}" ]]; do
+    ip="$(kubectl_ctx get endpoints -n "${ns}" "${svc}" -o jsonpath='{.subsets[0].addresses[0].ip}' 2>/dev/null || true)"
+    if [[ -n "${ip}" ]]; then
+      echo "    Kyverno endpoints OK."
+      return 0
+    fi
+    sleep 3
+  done
+  echo "ERROR: Kyverno ${ns}/${svc} still has no Endpoints after 300s."
+  echo "       kubectl_ctx get pods -n ${ns}"
+  echo "       kubectl_ctx describe endpoints -n ${ns} ${svc}"
+  exit 1
+}
+
+wait_for_kyverno_svc_endpoints_if_installed
+
 echo "==> Helm: istio/base"
-helm_ctx upgrade --install istio-base istio/base \
-  --namespace "${ISTIO_NS}" \
-  --create-namespace \
-  --version "${VER}" \
-  --wait \
-  --timeout "${HELM_WAIT_TIMEOUT}"
+helm_ctx upgrade --install istio-base istio/base --namespace "${ISTIO_NS}" --create-namespace --version "${VER}" --wait --timeout "${HELM_WAIT_TIMEOUT}"
 
 if [[ "${MODE}" == "ambient" ]]; then
   echo "==> Helm: istiod (profile=ambient)"
-  helm_ctx upgrade --install istiod istio/istiod \
-    --namespace "${ISTIO_NS}" \
-    --version "${VER}" \
-    --set profile=ambient \
-    --wait \
-    --timeout "${HELM_WAIT_TIMEOUT}"
+  if [[ "${ISTIO_COMPACT}" == "1" ]]; then
+    echo "    (compact CPU/memory requests: CLAWQL_ISTIO_LOCAL_COMPACT_RESOURCES=0 for chart defaults)"
+  fi
+  # Single line: avoid line-continuation bugs where a missing '\' makes `--wait` run as a separate command (exit 127).
+  helm_ctx upgrade --install istiod istio/istiod --namespace "${ISTIO_NS}" --version "${VER}" --set profile=ambient "${istiod_helm_extra[@]}" --wait --timeout "${HELM_WAIT_TIMEOUT}"
+
+  if [[ "${KUBE_CONTEXT:-}" == "rancher-desktop" ]] && [[ "${CLAWQL_SKIP_RANCHER_LIMA_MOUNT_RSHARED:-0}" != "1" ]]; then
+    # shellcheck disable=SC1091
+    source "${ROOT}/scripts/kubernetes/lib/rancher-rdctl.sh"
+    if clawql_rancher_lima_mount_make_rshared; then
+      echo "    Restarting istio-cni-node Pods so install-cni retries after mount fix…"
+      kubectl_ctx delete pod -n "${ISTIO_NS}" -l k8s-app=istio-cni-node --ignore-not-found >/dev/null 2>&1 || true
+    else
+      echo "ERROR: Could not run Rancher Lima fix (mount --make-rshared /). istio-cni will fail until this succeeds."
+      echo "       Install/find rdctl — it's bundled with Rancher Desktop, often:"
+      echo "         export PATH=\"/Applications/Rancher Desktop.app/Contents/Resources/resources/darwin/bin:\$PATH\""
+      echo "       Or: export RDCTL_PATH=/absolute/path/to/rdctl"
+      echo "       Manual: rdctl shell -- sh -c 'sudo mount --make-rshared /'"
+      echo "       Skip (broken ambient): CLAWQL_SKIP_RANCHER_LIMA_MOUNT_RSHARED=1 CLAWQL_LOCAL_K8S_ISTIO=sidecar …"
+      exit 1
+    fi
+  elif [[ "${KUBE_CONTEXT:-}" == "rancher-desktop" ]]; then
+    echo "WARN: CLAWQL_SKIP_RANCHER_LIMA_MOUNT_RSHARED=1 — if istio-cni fails with netns/rshared, fix Lima mount manually."
+  fi
 
   echo "==> Helm: istio-cni (profile=ambient, namespace ${ISTIO_NS})"
-  helm_ctx upgrade --install istio-cni istio/cni \
-    --namespace "${ISTIO_NS}" \
-    --version "${VER}" \
-    --set profile=ambient \
-    --wait \
-    --timeout "${HELM_WAIT_TIMEOUT}"
+  helm_ctx upgrade --install istio-cni istio/cni --namespace "${ISTIO_NS}" --version "${VER}" --set profile=ambient "${cni_helm_extra[@]}" --wait --timeout "${HELM_WAIT_TIMEOUT}"
 
   echo "==> Helm: ztunnel"
-  helm_ctx upgrade --install ztunnel istio/ztunnel \
-    --namespace "${ISTIO_NS}" \
-    --version "${VER}" \
-    --wait \
-    --timeout "${HELM_WAIT_TIMEOUT}"
+  helm_ctx upgrade --install ztunnel istio/ztunnel --namespace "${ISTIO_NS}" --version "${VER}" "${ztunnel_helm_extra[@]}" --wait --timeout "${HELM_WAIT_TIMEOUT}"
 else
   echo "==> Helm: istiod (default / sidecar dataplane)"
-  helm_ctx upgrade --install istiod istio/istiod \
-    --namespace "${ISTIO_NS}" \
-    --version "${VER}" \
-    --wait \
-    --timeout "${HELM_WAIT_TIMEOUT}"
+  if [[ "${ISTIO_COMPACT}" == "1" ]]; then
+    echo "    (compact pilot requests: CLAWQL_ISTIO_LOCAL_COMPACT_RESOURCES=0 for chart defaults)"
+  fi
+  helm_ctx upgrade --install istiod istio/istiod --namespace "${ISTIO_NS}" --version "${VER}" "${istiod_helm_extra[@]}" --wait --timeout "${HELM_WAIT_TIMEOUT}"
 fi
 
 if [[ "${INGRESS_GW_INSTALL}" == "1" ]]; then
@@ -161,16 +223,12 @@ if [[ "${INGRESS_GW_INSTALL}" == "1" ]]; then
     kubectl_ctx label namespace "${INGRESS_GW_NS}" istio.io/dataplane-mode- 2>/dev/null || true
   fi
   GATEWAY_VALUES="${ROOT}/docker/istio/docker-desktop/istio-mcp-ingress-gateway-values-${MODE}.yaml"
-  helm_ctx upgrade --install "${INGRESS_GW_RELEASE}" istio/gateway \
-    --namespace "${INGRESS_GW_NS}" \
-    --version "${VER}" \
-    -f "${GATEWAY_VALUES}" \
-    --wait \
-    --timeout "${HELM_WAIT_TIMEOUT}"
+  helm_ctx upgrade --install "${INGRESS_GW_RELEASE}" istio/gateway --namespace "${INGRESS_GW_NS}" --version "${VER}" -f "${GATEWAY_VALUES}" --wait --timeout "${HELM_WAIT_TIMEOUT}"
   kubectl_ctx -n "${INGRESS_GW_NS}" rollout status "deployment/${INGRESS_GW_RELEASE}" --timeout=300s
   sed "s/__TARGET_NAMESPACE__/${TARGET_NS}/g" "${ROOT}/docker/istio/docker-desktop/clawql-mcp-gateway-and-virtualservice.yaml" | kubectl_ctx apply -f -
-  echo "    MCP (Istio Gateway, mesh mTLS to pod): http://localhost/mcp  — svc/${INGRESS_GW_RELEASE} HTTP :80"
-  echo "    gRPC:                                   localhost:50051     — same Service TCP :50051"
+  echo "    MCP (Istio Gateway + VirtualService): http://127.0.0.1:31488/mcp — gateway Service nodePort (:80→31488; works when LB never binds host :80)"
+  echo "    MCP (same path, when LoadBalancer exposes :80): http://localhost/mcp"
+  echo "    gRPC: localhost:50051 (or gateway nodePort when set) — svc/${INGRESS_GW_RELEASE}"
 fi
 
 if [[ "${INSTALL_KIALI}" == "1" ]]; then
@@ -185,20 +243,10 @@ if [[ "${INSTALL_KIALI}" == "1" ]]; then
     helm repo add grafana https://grafana.github.io/helm-charts >/dev/null 2>&1 || true
     helm repo update grafana >/dev/null
     echo "==> Helm: Grafana Tempo (single binary; chart ${TEMPO_CHART_VER})"
-    helm_ctx upgrade --install clawql-tempo grafana/tempo \
-      --namespace "${ISTIO_NS}" \
-      --version "${TEMPO_CHART_VER}" \
-      -f "${ROOT}/docker/istio/docker-desktop/tempo-values-docker-desktop.yaml" \
-      --wait \
-      --timeout "${HELM_WAIT_TIMEOUT}"
+    helm_ctx upgrade --install clawql-tempo grafana/tempo --namespace "${ISTIO_NS}" --version "${TEMPO_CHART_VER}" -f "${ROOT}/docker/istio/docker-desktop/tempo-values-docker-desktop.yaml" --wait --timeout "${HELM_WAIT_TIMEOUT}"
     if [[ "${LOKI_TEMPO}" == "1" ]]; then
       echo "==> Helm: Grafana Loki (single binary; chart ${LOKI_CHART_VER})"
-      helm_ctx upgrade --install clawql-loki grafana/loki \
-        --namespace "${ISTIO_NS}" \
-        --version "${LOKI_CHART_VER}" \
-        -f "${ROOT}/docker/istio/docker-desktop/loki-values-docker-desktop.yaml" \
-        --wait \
-        --timeout "${HELM_WAIT_TIMEOUT}"
+      helm_ctx upgrade --install clawql-loki grafana/loki --namespace "${ISTIO_NS}" --version "${LOKI_CHART_VER}" -f "${ROOT}/docker/istio/docker-desktop/loki-values-docker-desktop.yaml" --wait --timeout "${HELM_WAIT_TIMEOUT}"
     else
       echo "==> Skipping Grafana Loki (CLAWQL_ISTIO_INSTALL_LOKI_TEMPO=0)"
     fi
@@ -272,6 +320,9 @@ else
 fi
 
 echo "==> Istio install finished (${MODE})."
+if [[ "${MODE}" == "ambient" ]]; then
+  echo "    Ambient: workloads in ${TARGET_NS} use ztunnel (istio.io/dataplane-mode=ambient); no Envoy sidecars on ClawQL MCP."
+fi
 kubectl_ctx get pods -n "${ISTIO_NS}" -o wide
 
 if [[ "${STRICT}" == "1" ]]; then

@@ -36,7 +36,7 @@ const guides = [
     href: '/kubernetes',
     name: 'Kubernetes',
     description:
-      'Docker Desktop via Helm (localhost:8080/mcp), auth, rebuilds, and Kustomize dev/prod deploy.',
+      'Docker Desktop / Rancher via Helm (Ingress clawql-mcp.localhost — prod parity), auth, rebuilds, and Kustomize dev/prod deploy.',
   },
   {
     href: '/docker-desktop-observability',

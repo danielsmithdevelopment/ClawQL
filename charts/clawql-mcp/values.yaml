@@ -4,6 +4,9 @@ nameOverride: ""
 
 replicaCount: 1
 
+# Optional Deployment strategy (e.g. `{ type: Recreate }` on single-node clusters to avoid two pods during rollout).
+deploymentStrategy: {}
+
 image:
   repository: ghcr.io/danielsmithdevelopment/clawql-mcp
   tag: latest
@@ -18,6 +21,9 @@ serviceAccount:
   name: ""
 
 podAnnotations: {}
+
+# Extra labels on the MCP pod template (e.g. Istio: sidecar.istio.io/inject).
+podLabels: {}
 
 podSecurityContext: {}
 securityContext: {}
@@ -74,6 +80,17 @@ enableDocuments: true
 # MCP sandbox_exec — isolated snippets (bridge / Seatbelt / Docker; #207). Default off; set true + bridge URL/token (or CLAWQL_SANDBOX_BACKEND) via extraEnv.
 enableSandbox: false
 
+# sandbox_exec **docker** backend on Kubernetes: mount host Docker socket + static `docker` CLI (initContainer).
+# Requires enableSandbox: true. Local single-node clusters only (Docker Desktop / Rancher Desktop). See charts/clawql-mcp/README.md.
+sandboxDocker:
+  enabled: false
+  hostSocketPath: /var/run/docker.sock
+  # https://download.docker.com/linux/static/stable/<arch>/docker-<version>.tgz
+  staticCliVersion: "27.4.1"
+  initImage: curlimages/curl:8.11.1
+  # Host sockets are often root:docker 660; run MCP container as root so docker CLI can connect (local dev only).
+  runAsRootForDockerSocket: false
+
 # MCP notify tool — Slack chat.postMessage (#77). Requires Slack in provider merge + CLAWQL_SLACK_TOKEN (via extraEnv / secret).
 enableNotify: false
 
@@ -89,11 +106,15 @@ onyx:
   # When true (default), deploy Vespa + OpenSearch + Dragonfly + MinIO + model servers + background worker
   # (matches upstream docker-compose). When false, deploy a minimal postgres-backed API (vector search disabled).
   fullVectorStack: true
+  # Merged into every Onyx stack Pod template (Deployments + Vespa StatefulSet), e.g. sidecar.istio.io/inject=false for Istio ambient.
+  podAnnotations: {}
   api:
     image:
       repository: onyxdotapp/onyx-backend
       tag: latest
       pullPolicy: IfNotPresent
+    # Extra env for onyx-api (Deployment). Example: NUM_RETRIES_ON_STARTUP for slow Vespa/OpenSearch on cold local clusters.
+    extraEnv: []
   web:
     image:
       repository: onyxdotapp/onyx-web-server

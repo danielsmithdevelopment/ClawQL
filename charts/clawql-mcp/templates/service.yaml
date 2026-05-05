@@ -27,7 +27,13 @@ spec:
       port: {{ .Values.service.http.port }}
       targetPort: http
       protocol: TCP
+      {{- if and (hasKey .Values.service.http "nodePort") .Values.service.http.nodePort }}
+      nodePort: {{ .Values.service.http.nodePort }}
+      {{- end }}
     - name: grpc
       port: {{ .Values.service.grpc.port }}
       targetPort: grpc
       protocol: TCP
+      {{- if and (hasKey .Values.service.grpc "nodePort") .Values.service.grpc.nodePort }}
+      nodePort: {{ .Values.service.grpc.nodePort }}
+      {{- end }}

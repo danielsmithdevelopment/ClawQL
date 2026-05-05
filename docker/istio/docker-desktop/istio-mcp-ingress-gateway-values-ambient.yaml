@@ -10,6 +10,13 @@ podAnnotations:
   prometheus.io/path: "/stats/prometheus"
   inject.istio.io/templates: "gateway"
   sidecar.istio.io/inject: "false"
+resources:
+  requests:
+    cpu: 25m
+    memory: 256Mi
+  limits:
+    cpu: 2000m
+    memory: 1024Mi
 service:
   type: LoadBalancer
   ports:
@@ -17,10 +24,13 @@ service:
       port: 15021
       protocol: TCP
       targetPort: 15021
+    # Fixed NodePort: Docker Desktop / Rancher often leave LB EXTERNAL-IP pending → nothing on host :80.
+    # MCP still enters via this Service → same Istio Gateway + VirtualService (not direct pod forward).
     - name: http2
       port: 80
       protocol: TCP
       targetPort: 80
+      nodePort: 31488
     - name: https
       port: 443
       protocol: TCP

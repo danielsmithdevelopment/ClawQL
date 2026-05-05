@@ -193,11 +193,16 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
       if (sessionId && transports.has(sessionId)) {
         transport = transports.get(sessionId);
       } else if (!sessionId && isInitializeRequest(req.body)) {
+        const streamableJson = ["1", "true", "yes"].includes(
+          (process.env.CLAWQL_STREAMABLE_HTTP_JSON_RESPONSE ?? "").trim().toLowerCase()
+        );
         transport = new StreamableHTTPServerTransport({
           sessionIdGenerator: () => randomUUID(),
           onsessioninitialized: (sid) => {
             transports.set(sid, transport!);
           },
+          // JSON bodies instead of SSE for each POST — helps some MCP clients / proxies (e.g. Cursor + tight buffering).
+          enableJsonResponse: streamableJson,
         });
         transport.onclose = () => {
           const sid = transport!.sessionId;

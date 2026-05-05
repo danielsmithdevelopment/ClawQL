@@ -5,13 +5,15 @@
  *
  * Transports:
  *   - **stdio** (default): spawns `node dist/server.js` with CLAWQL_PROVIDER=all-providers
- *   - **Streamable HTTP**: set `CLAWQL_MCP_URL` (e.g. http://127.0.0.1:8080/mcp) — server must
+ *   - **Streamable HTTP**: set `CLAWQL_MCP_URL` (e.g. http://127.0.0.1:8080/mcp for compose / start:http,
+ *     or http://clawql-mcp.localhost/mcp for `make local-k8s-up` + values-docker-desktop Ingress) — server must
  *     already run with the same merged preset (all-providers), not e.g. google-only.
  *
  * Usage (dry run — **`search` only**, no upstream HTTP):
  *   npm run build && npm run workflow:complex-release-stack:mcp
  *
- *   CLAWQL_MCP_URL=http://127.0.0.1:8080/mcp npm run workflow:complex-release-stack:mcp
+ *   CLAWQL_MCP_URL=http://clawql-mcp.localhost/mcp npm run workflow:complex-release-stack:mcp
+ *   CLAWQL_MCP_URL=http://127.0.0.1:8080/mcp npm run workflow:complex-release-stack:mcp   # compose / start:http
  *
  * Live `execute` smoke (placeholder args → expect 401/404 without real auth — opt-in):
  *   WORKFLOW_MCP_EXECUTE=1 npm run workflow:complex-release-stack:mcp

@@ -1,8 +1,15 @@
-# Used by scripts/kubernetes/local-k8s-docker-desktop.sh — Docker Desktop + LoadBalancer on :8080.
-# vault.hostPath.path is set by the script (--set-string). For manual helm install, pass
-#   --set-string vault.hostPath.path=/absolute/path/to/vault
+# Used by scripts/kubernetes/local-k8s-docker-desktop.sh — Docker Desktop + Rancher / k3s.
+# Default Istio is ambient: MCP HTTP north-south is **http://localhost/mcp** (Gateway+VirtualService in-repo;
+# script may patch this Service to ClusterIP). Ingress option: **http://clawql-mcp.localhost/mcp** (nginx :80).
+# vault.hostPath.path is set by the script (--set-string).
 
 fullnameOverride: clawql-mcp-http
+
+# Single-node: never run two MCP pods during upgrade (avoids Insufficient memory while RollingUpdate overlaps).
+# If upgrading from a cluster that already had this Deployment with RollingUpdate, delete the Deployment once
+# so Helm does not three-way-merge stale rollingUpdate with type Recreate (invalid).
+deploymentStrategy:
+  type: Recreate
 
 provider: all-providers
 
@@ -20,11 +27,35 @@ service:
     port: 50051
     targetPort: 50051
 
+# Ingress-nginx → clawql-mcp-http (same hostname + /mcp pattern as prod behind Ingress / Gateway).
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+    nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
+    nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+  hosts:
+    - host: clawql-mcp.localhost
+      paths:
+        - path: /
+          pathType: Prefix
+
+# Heap vs cgroup request: all-providers loads 60+ discovery specs; 512Mi heap reliably OOMs during startup.
+# If the pod stays Pending, raise Rancher VM RAM or scale flink taskmanager to 0 temporarily.
 nodeOptions: "--max-old-space-size=768"
+
+# Istio ambient (namespace istio.io/dataplane-mode=ambient): keep legacy Envoy sidecars off the MCP pod so
+# ztunnel owns mesh traffic and kubelet probes hit the app container directly.
+podAnnotations:
+  sidecar.istio.io/inject: "false"
 
 # Enable all MCP/local feature flags for Docker Desktop local-k8s-up.
 enableGrpc: true
 enableGrpcReflection: true
+enableSandbox: true
 enableNotify: true
 enableOnyx: true
 enableOuroboros: true
@@ -32,23 +63,42 @@ enableOuroboros: true
 # Local defaults; override via env/secret for real integrations.
 # Full Onyx is heavy: give Docker Desktop Kubernetes enough RAM (e.g. 12–16 GiB in
 # Settings → Resources) or lower onyx.*.resources.requests below further.
+#
+# Right-sizing: requests track minimum stable scheduling (Flink JVM vs cgroup, Node heap vs
+# pod memory). Limits stay higher for burst. CPU requests stay modest; raise if you see
+# throttling (kubectl describe pod → CPUThrottling).
 onyx:
   enabled: true
   fullVectorStack: true
+  # Same as root podAnnotations: some clusters still run the sidecar injector for third-party images unless opted out.
+  podAnnotations:
+    sidecar.istio.io/inject: "false"
   authType: basic
   userAuthSecret: "clawql-local-onyx-auth-secret"
+  # Onyx setup_onyx() retries document index (Vespa/OpenSearch); default 10 is tight on cold single-node clusters.
+  api:
+    extraEnv:
+      - name: NUM_RETRIES_ON_STARTUP
+        value: "120"
   postgres:
     auth:
       password: "change-me"
     persistence:
       enabled: true
+    resources:
+      requests:
+        cpu: 25m
+        memory: 256Mi
+      limits:
+        cpu: "1"
+        memory: 1Gi
   opensearch:
     javaOpts: "-Xms256m -Xmx256m"
     persistence:
       enabled: true
     resources:
       requests:
-        cpu: 100m
+        cpu: 50m
         memory: 384Mi
       limits:
         cpu: "2"
@@ -61,24 +111,40 @@ onyx:
     resources:
       requests:
         cpu: 100m
-        memory: 384Mi
+        memory: 512Mi
       limits:
         cpu: "1"
         memory: 1536Mi
   minio:
     persistence:
       enabled: true
+    resources:
+      requests:
+        cpu: 25m
+        memory: 256Mi
+      limits:
+        cpu: "1"
+        memory: 1Gi
+  dragonfly:
+    resources:
+      requests:
+        cpu: 15m
+        memory: 128Mi
+      limits:
+        cpu: "1"
+        memory: 512Mi
   modelServer:
     resources:
       requests:
-        cpu: 100m
-        memory: 384Mi
+        cpu: 50m
+        memory: 512Mi
       limits:
         cpu: "1"
         memory: 2Gi
+  # background.requests.cpu: omit here — chart default 250m; workload often uses more (burst via limits).
   resources:
     requests:
-      cpu: 100m
+      cpu: 15m
       memory: 384Mi
     limits:
       cpu: "1"
@@ -88,38 +154,61 @@ ouroborosPostgres:
   enabled: true
   auth:
     password: "change-me"
+  resources:
+    requests:
+      cpu: 25m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
 
 nats:
   enabled: true
+  resources:
+    requests:
+      cpu: 25m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
 
 flink:
   enabled: true
+  # Flink 1.19+ enforces minimum JVM/network fractions; 768m TM process violates them (IllegalConfigurationException).
+  # Config only via FLINK_PROPERTIES (no read-only flink-conf.yaml mount — entrypoint must rewrite conf).
   jobManagerMemoryProcessSize: "1024m"
-  taskManagerMemoryProcessSize: "1024m"
+  # Keep below TM cgroup request after trimming for single-node scheduling headroom.
+  taskManagerMemoryProcessSize: "1536m"
   jobManager:
     resources:
       requests:
-        cpu: 200m
-        memory: 384Mi
+        cpu: 100m
+        memory: 1280Mi
       limits:
         cpu: "1"
-        memory: 768Mi
+        memory: 2Gi
   taskManager:
+    # Single TM cuts scheduler RAM on 4c/16Gi local nodes; slots still allow modest parallelism.
+    replicas: 1
+    taskSlots: 2
     resources:
       requests:
-        cpu: 250m
-        memory: 512Mi
+        cpu: 100m
+        # Free ~800Mi allocatable on tight single-node (Rancher) so MCP+Istio can schedule.
+        memory: 1792Mi
       limits:
-        cpu: "1"
-        memory: 1Gi
+        cpu: "2"
+        memory: 3Gi
 
 resources:
+  # With Istio sidecar, total pod request must fit ~free allocatable on a 16GiB single-node (full stack).
+  # Heap 768Mi needs matching cgroup headroom (512Mi heap OOMs loading all-providers discovery specs).
   requests:
-    cpu: 250m
-    memory: 512Mi
+    cpu: 50m
+    memory: 768Mi
   limits:
     cpu: "1"
-    memory: 1Gi
+    memory: 1792Mi
 
 # Distroless image runs as nonroot GID 65532 (USER nonroot). HostPath hides the image's /vault chown;
 # fsGroup lets kubelet adjust mount permissions so /vault (~/.ClawQL on the Mac) is writable.
@@ -140,6 +229,13 @@ ui:
     repository: ghcr.io/danielsmithdevelopment/clawql-website
     tag: latest
     pullPolicy: Always
+  resources:
+    requests:
+      cpu: 25m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
   ingress:
     enabled: true
     className: nginx
@@ -167,13 +263,20 @@ providerIngress:
   onyx:
     host: onyx.localhost
 
-envFromSecret: clawql-github-auth
+# Optional GitHub/CF/Google tokens: run scripts/kubernetes/k8s-docker-desktop-set-mcp-auth.sh then:
+#   helm upgrade ... --set envFromSecret=clawql-github-auth
+envFromSecret: ""
+
+# sandbox_exec via host Docker daemon (docker run …). InitContainer installs static docker CLI into distroless MCP image.
+sandboxDocker:
+  enabled: true
+  runAsRootForDockerSocket: true
 
 documentPipeline:
   tika:
     resources:
       requests:
-        cpu: 50m
+        cpu: 15m
         memory: 128Mi
       limits:
         cpu: 300m
@@ -181,7 +284,7 @@ documentPipeline:
   gotenberg:
     resources:
       requests:
-        cpu: 100m
+        cpu: 15m
         memory: 192Mi
       limits:
         cpu: 500m
@@ -189,7 +292,7 @@ documentPipeline:
   stirling:
     resources:
       requests:
-        cpu: 100m
+        cpu: 25m
         memory: 256Mi
       limits:
         cpu: 500m
@@ -200,7 +303,7 @@ documentPipeline:
   paperless:
     resources:
       requests:
-        cpu: 200m
+        cpu: 50m
         memory: 384Mi
       limits:
         cpu: "1"
@@ -214,7 +317,7 @@ stores:
   postgres:
     resources:
       requests:
-        cpu: 100m
+        cpu: 25m
         memory: 256Mi
       limits:
         cpu: 500m
@@ -222,11 +325,16 @@ stores:
   dragonfly:
     resources:
       requests:
-        cpu: 50m
+        cpu: 15m
         memory: 128Mi
       limits:
         cpu: 300m
         memory: 384Mi
+
+# Cursor and some ingress setups mishandle per-request SSE; JSON POST responses are spec-supported by the MCP SDK client.
+extraEnv:
+  - name: CLAWQL_STREAMABLE_HTTP_JSON_RESPONSE
+    value: "1"
 
 # local-k8s-up: Kyverno verifies Cosign (keyless) signatures for ClawQL GHCR images in this release namespace only.
 kyverno:

@@ -3,16 +3,21 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
+      target: runtime-with-docker-cli
     image: clawql-mcp:local
     container_name: clawql-mcp-http
     restart: unless-stopped
     environment:
       CLAWQL_PROVIDER: github
       CLAWQL_OBSIDIAN_VAULT_PATH: /vault
+      CLAWQL_ENABLE_SANDBOX: "1"
+      CLAWQL_SANDBOX_BACKEND: "docker"
       PORT: 8080
     volumes:
       # Host Obsidian vault (memory_ingest / memory_recall). Override with CLAWQL_VAULT_HOST_PATH.
       - ${CLAWQL_VAULT_HOST_PATH:-${HOME}/.ClawQL}:/vault
+      # sandbox_exec docker backend: uses host Docker (image target runtime-with-docker-cli).
+      - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - "8080:8080"
 

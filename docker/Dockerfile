@@ -52,3 +52,29 @@ USER nonroot:nonroot
 # Default container mode: remote MCP over Streamable HTTP (/mcp).
 # Use `dist/server.js` if you specifically need stdio transport.
 CMD ["dist/server-http.js"]
+
+# --- Local dev: same app + static Docker CLI (mount host /var/run/docker.sock; CLAWQL_SANDBOX_BACKEND=docker).
+# Build: docker build -f docker/Dockerfile --target runtime-with-docker-cli -t clawql-mcp:local .
+FROM node:25-bookworm-slim AS runtime-with-docker-cli
+ARG DOCKER_STATIC_VERSION=27.4.1
+WORKDIR /app
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl \
+  && rm -rf /var/lib/apt/lists/* \
+  && ARCH="$(dpkg --print-architecture)" \
+  && case "$ARCH" in amd64) DARCH=x86_64 ;; arm64) DARCH=aarch64 ;; *) echo "unsupported arch: $ARCH" >&2; exit 1 ;; esac \
+  && curl -fsSL "https://download.docker.com/linux/static/stable/${DARCH}/docker-${DOCKER_STATIC_VERSION}.tgz" \
+    | tar xz --strip-components=1 -C /usr/local/bin docker/docker \
+  && chmod +x /usr/local/bin/docker
+ENV NODE_ENV=production
+ENV CLAWQL_BUNDLED_OFFLINE=1
+ENV CLAWQL_OBSIDIAN_VAULT_PATH=/vault
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/packages/mcp-grpc-transport ./packages/mcp-grpc-transport
+COPY --from=builder /app/packages/clawql-ouroboros ./packages/clawql-ouroboros
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/bin ./bin
+COPY --from=builder /app/providers ./providers
+COPY --from=builder /app/package.json ./package.json
+RUN mkdir -p /vault && chmod 1777 /vault
+USER root
+CMD ["dist/server-http.js"]

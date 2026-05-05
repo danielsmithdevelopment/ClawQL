@@ -32,7 +32,7 @@ helm-ui-template-tests:
 
 lint-k8s-manifests: helm-lint helm-ui-template-tests kustomize-local-lint
 
-# Docker Desktop Kubernetes: default Helm; optional CLAWQL_LOCAL_K8S_INSTALLER=kustomize
+# Local desktop k8s: default Helm + Istio ambient + Gateway/VS + heavy observability; CLAWQL_LOCAL_K8S_ISTIO=0 skips mesh
 local-k8s-up:
 	@bash scripts/kubernetes/local-k8s-docker-desktop.sh
 

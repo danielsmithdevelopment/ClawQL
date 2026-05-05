@@ -1,10 +1,10 @@
 # Docker Desktop: Istio and the observability stack
 
-This guide explains what ClawQL’s **optional Istio path** installs on **Docker Desktop Kubernetes**, how the pieces fit together, and how to **get started with each tool** if you have never used it before.
+This guide explains what ClawQL’s **optional Istio path** installs on **local desktop Kubernetes** (Docker Desktop or Rancher Desktop), how the pieces fit together, and how to **get started with each tool** if you have never used it before.
 
 **Canonical scripts:** [`scripts/kubernetes/local-k8s-docker-desktop.sh`](../../scripts/kubernetes/local-k8s-docker-desktop.sh) (orchestration) and [`scripts/kubernetes/install-istio-docker-desktop.sh`](../../scripts/kubernetes/install-istio-docker-desktop.sh) (Istio + addons). **Operator README:** [`docker/README.md`](../../docker/README.md) (Istio section, port-forwards, env toggles).
 
-**Scope:** **Local** clusters only (Docker Desktop). The same upstream **Istio sample YAML** is used by many tutorials; ClawQL adds a small **OpenTelemetry Collector** manifest so application OTLP has a stable in-cluster target.
+**Scope:** **Local** clusters only (Docker Desktop / Rancher). The same upstream **Istio sample YAML** is used by many tutorials; ClawQL adds a small **OpenTelemetry Collector** manifest so application OTLP has a stable in-cluster target.
 
 ---
 
