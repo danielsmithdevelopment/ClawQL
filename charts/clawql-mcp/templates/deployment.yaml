@@ -33,6 +33,9 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       serviceAccountName: {{ include "clawql-mcp.serviceAccountName" . }}
+      {{- if .Values.security.kata.enabled }}
+      runtimeClassName: {{ .Values.security.kata.runtimeClassName | quote }}
+      {{- end }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       {{- if and .Values.enableSandbox .Values.sandboxDocker.enabled }}

@@ -28,6 +28,15 @@ helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
 
 Forks and custom registries: override **`kyverno.imageSignaturePolicy.imageReferences`** and **`kyverno.imageSignaturePolicy.cosign`** regexes in values or an overlay. **`make local-k8s-up`** installs Kyverno for Docker Desktop. **CI → admission story:** **[`docs/security/golden-image-pipeline.md`](../security/golden-image-pipeline.md)**; policy fields and caveats: **[`docs/security/image-signature-enforcement.md`](../security/image-signature-enforcement.md)**.
 
+### Kyverno RuntimeClass + MCP pod Kata (opt-in, issue [#274](https://github.com/danielsmithdevelopment/ClawQL/issues/274))
+
+For **VM-level containment** of MCP / sandbox namespaces, use:
+
+- **`security.kata.*`** — sets **`spec.runtimeClassName`** on the chart’s MCP **`Deployment`** when enabled.
+- **`kyverno.runtimeClassPolicy.*`** — optional **`ClusterPolicy`** that requires a specific **`runtimeClassName`** per namespace list (separate **Kata** vs **gVisor** tiers).
+
+Both default **off**. Enabling them without installing matching [**`RuntimeClass`**](https://kubernetes.io/docs/concepts/containers/runtime-class/) objects (and Kata/gVisor runtimes on nodes) will **break scheduling or admission**. Tradeoffs, namespace layout, and examples: **[`docs/security/runtime-class-containment.md`](../security/runtime-class-containment.md)**.
+
 ## Install from a repo clone
 
 From the **repository root**:

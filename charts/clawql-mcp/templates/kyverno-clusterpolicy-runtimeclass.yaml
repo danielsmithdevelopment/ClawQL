@@ -1,0 +1,74 @@
+{{- $rcp := .Values.kyverno.runtimeClassPolicy }}
+{{- if and $rcp.enabled (or (gt (len $rcp.kataNamespaces) 0) (gt (len $rcp.gvisorNamespaces) 0)) }}
+{{- $defaultName := printf "%s-runtime-class" .Release.Name }}
+{{- $policyName := $rcp.policyName | default $defaultName | trunc 63 | trimSuffix "-" }}
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: {{ $policyName }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+  annotations:
+    policies.kyverno.io/title: {{ $rcp.policyTitle | quote }}
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "-4"
+    helm.sh/hook-delete-policy: before-hook-creation
+spec:
+  validationFailureAction: {{ $rcp.validationFailureAction }}
+  background: {{ $rcp.background }}
+  failurePolicy: {{ $rcp.failurePolicy }}
+  webhookTimeoutSeconds: {{ $rcp.webhookTimeoutSeconds }}
+  rules:
+    {{- if gt (len $rcp.kataNamespaces) 0 }}
+    - name: require-kata-runtimeclass
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              namespaces:
+                {{- range $rcp.kataNamespaces }}
+                - {{ . | quote }}
+                {{- end }}
+      {{- if $rcp.exemptPodLabelKey }}
+      exclude:
+        any:
+          - resources:
+              selector:
+                matchLabels:
+                  {{ $rcp.exemptPodLabelKey }}: {{ $rcp.exemptPodLabelValue | quote }}
+      {{- end }}
+      validate:
+        message: >-
+          Pods in Kata-governed namespaces must set spec.runtimeClassName to {{ $rcp.kataRuntimeClassName }} (issue #274).
+        pattern:
+          spec:
+            runtimeClassName: {{ $rcp.kataRuntimeClassName | quote }}
+    {{- end }}
+    {{- if gt (len $rcp.gvisorNamespaces) 0 }}
+    - name: require-gvisor-runtimeclass
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              namespaces:
+                {{- range $rcp.gvisorNamespaces }}
+                - {{ . | quote }}
+                {{- end }}
+      {{- if $rcp.exemptPodLabelKey }}
+      exclude:
+        any:
+          - resources:
+              selector:
+                matchLabels:
+                  {{ $rcp.exemptPodLabelKey }}: {{ $rcp.exemptPodLabelValue | quote }}
+      {{- end }}
+      validate:
+        message: >-
+          Pods in gVisor-governed namespaces must set spec.runtimeClassName to {{ $rcp.gvisorRuntimeClassName }} (issue #274).
+        pattern:
+          spec:
+            runtimeClassName: {{ $rcp.gvisorRuntimeClassName | quote }}
+    {{- end }}
+{{- end }}

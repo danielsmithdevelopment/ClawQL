@@ -28,6 +28,14 @@ podLabels: {}
 podSecurityContext: {}
 securityContext: {}
 
+# VM-level containment for MCP + sandbox workloads (#274). When enabled, the MCP Deployment pod sets
+# spec.runtimeClassName — you must install a matching cluster RuntimeClass (e.g. kata-deploy → kata-qemu).
+# Kyverno admission is separate: kyverno.runtimeClassPolicy (namespace-scoped). Independent of MCP proxy / JWT.
+security:
+  kata:
+    enabled: false
+    runtimeClassName: kata-qemu
+
 service:
   type: LoadBalancer
   # Service port for HTTP (MCP + health + GraphQL). Base Kustomize uses 80 → container 8080.
@@ -722,6 +730,26 @@ kyverno:
       subjectRegExp: "^https://github\\.com/danielsmithdevelopment/ClawQL/.*"
       issuerRegExp: "^https://token\\.actions\\.githubusercontent\\.com.*"
       rekorUrl: "https://rekor.sigstore.dev"
+  # Optional ClusterPolicy: require spec.runtimeClassName per namespace lists (Kata vs gVisor tiers).
+  # Prerequisite: Kyverno + matching RuntimeClass CRs on nodes. Default off — enabling without Kata/gVisor breaks scheduling.
+  # Keep kataNamespaces and gvisorNamespaces disjoint. See docs/security/runtime-class-containment.md.
+  runtimeClassPolicy:
+    enabled: false
+    policyName: ""
+    policyTitle: "ClawQL — require RuntimeClass (Kata / gVisor namespaces)"
+    validationFailureAction: Enforce
+    background: false
+    failurePolicy: Fail
+    webhookTimeoutSeconds: 30
+    # Pods in these namespaces must set spec.runtimeClassName to kataRuntimeClassName.
+    kataNamespaces: []
+    kataRuntimeClassName: kata-qemu
+    # Pods in these namespaces must set spec.runtimeClassName to gvisorRuntimeClassName (lighter isolation tier).
+    gvisorNamespaces: []
+    gvisorRuntimeClassName: gvisor
+    # When non-empty, Pods with this label (any namespace matched above) are excluded from validation.
+    exemptPodLabelKey: ""
+    exemptPodLabelValue: exempt
 
 nodeSelector: {}
 tolerations: []
