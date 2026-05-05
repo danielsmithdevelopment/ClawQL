@@ -1,0 +1,16 @@
+# CI / helm-lint only: renders mcpProxy.mode=custom (placeholder image + sleep — not runnable MCP).
+mcpProxy:
+  enabled: true
+  mode: custom
+  replicaCount: 1
+  custom:
+    image:
+      repository: ghcr.io/panguard-ai/panguard-mcp-gateway
+      tag: placeholder-not-published
+    command: ["/bin/sh", "-c"]
+    args: ["sleep infinity"]
+    extraEnv:
+      - name: CLAWQL_MCP_UPSTREAM_HTTP_EXAMPLE
+        value: "http://clawql-mcp-http.clawql.svc.cluster.local:8080/mcp"
+      - name: CLAWQL_MCP_UPSTREAM_GRPC_EXAMPLE
+        value: "clawql-mcp-http.clawql.svc.cluster.local:50051"

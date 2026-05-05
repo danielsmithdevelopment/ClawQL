@@ -1,0 +1,32 @@
+{
+  "name": "panguard-mcp-bridge",
+  "version": "0.1.0",
+  "description": "Streamable HTTP MCP gateway + stdio shim: mesh/clients → Panguard (@panguard-ai/panguard-mcp-proxy) → remote clawql-mcp-http",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/gateway-main.js",
+  "bin": {
+    "clawql-panguard-bridge-gateway": "./dist/gateway-main.js",
+    "clawql-panguard-bridge-shim": "./dist/shim-main.js"
+  },
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "npm run clean && tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "express": "^5.2.1",
+    "mcp-grpc-transport": "^0.1.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/danielsmithdevelopment/ClawQL.git",
+    "directory": "packages/panguard-mcp-bridge"
+  },
+  "keywords": ["clawql", "mcp", "panguard", "kubernetes"],
+  "files": ["dist", "README.md"]
+}

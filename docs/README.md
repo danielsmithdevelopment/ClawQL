@@ -65,7 +65,7 @@ This directory is organized by purpose so operational guides, product docs, and 
 - Announcements: `announcements/`
 - Security references: `security/` — reference [`security/clawql-security-defense-in-depth.md`](security/clawql-security-defense-in-depth.md) and engineering matrix [`security/clawql-security-defense-deliverables.md`](security/clawql-security-defense-deliverables.md) ([#164](https://github.com/danielsmithdevelopment/ClawQL/issues/164))
 - Roadmaps: `roadmap/` — prioritized gap closure: [`roadmap/gap-closure-plan-prioritized-2026.md`](roadmap/gap-closure-plan-prioritized-2026.md) ([#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248)–[#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251)); **IDP master requirements matrix**: [`roadmap/idp-master-requirements-matrix.md`](roadmap/idp-master-requirements-matrix.md); **epic checklist** [#241](https://github.com/danielsmithdevelopment/ClawQL/issues/241)–[#258](https://github.com/danielsmithdevelopment/ClawQL/issues/258) → [#259](https://github.com/danielsmithdevelopment/ClawQL/issues/259)
-- Integrations: `integrations/`
+- Integrations: `integrations/` — MCP chokepoint / Panguard + Helm **`mcpProxy`**: [`integrations/panguard-kubernetes.md`](integrations/panguard-kubernetes.md), [`integrations/panguard-http-grpc-bridge.md`](integrations/panguard-http-grpc-bridge.md); JWT ATR binding: [`security/mcp-proxy-jwt-atr.md`](security/mcp-proxy-jwt-atr.md) ([#272](https://github.com/danielsmithdevelopment/ClawQL/issues/272))
 - Backlog notes: `backlog/`
 - Workflows: `workflows/`
 - Website operations notes: `website/`

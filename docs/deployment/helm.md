@@ -19,7 +19,7 @@ Private GHCR: create a pull secret and set **`imagePullSecrets`** (see [values](
 
 ### Kyverno image signatures (default on)
 
-The chart **renders a `ClusterPolicy`** (**`verifyImages`**, Cosign keyless) for default **`ghcr.io/.../clawql-mcp*`** and **`clawql-website*`** when **`kyverno.imageSignaturePolicy.enabled`** is **`true`** (the **default** in [`values.yaml`](../charts/clawql-mcp/values.yaml)). Install **Kyverno** before upgrading ClawQL, or opt out:
+The chart **renders a `ClusterPolicy`** (**`verifyImages`**, Cosign keyless) for default **`ghcr.io/.../clawql-mcp*`**, **`clawql-panguard-mcp-bridge*`**, and **`clawql-website*`** when **`kyverno.imageSignaturePolicy.enabled`** is **`true`** (the **default** in [`values.yaml`](../charts/clawql-mcp/values.yaml)). Install **Kyverno** before upgrading ClawQL, or opt out:
 
 ```bash
 helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \

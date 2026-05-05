@@ -184,6 +184,11 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
 {{- end }}
 
+{{/* Optional MCP proxy / chokepoint (nginx or custom gateway) in front of the main MCP Service. */}}
+{{- define "clawql-mcp.mcpProxyName" -}}
+{{- printf "%s-proxy" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
 {{/* Optional annotations under each Onyx stack Pod template.metadata (e.g. Istio ambient: disable legacy sidecar injection). */}}
 {{- define "clawql-mcp.onyxPodTemplateAnnotations" -}}
 {{- with .Values.onyx.podAnnotations }}

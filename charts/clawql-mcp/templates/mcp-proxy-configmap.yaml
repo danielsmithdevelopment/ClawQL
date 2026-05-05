@@ -1,0 +1,49 @@
+{{- if and .Values.mcpProxy.enabled (eq .Values.mcpProxy.mode "nginx") }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "clawql-mcp.mcpProxyName" . }}-config
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: mcp-proxy
+data:
+  nginx.conf: |
+    user nginx;
+    worker_processes auto;
+    error_log /var/log/nginx/error.log warn;
+    pid /tmp/nginx.pid;
+    events {
+      worker_connections 1024;
+    }
+    http {
+      include /etc/nginx/mime.types;
+      default_type application/octet-stream;
+      access_log /var/log/nginx/access.log;
+      sendfile on;
+      upstream mcp_http_upstream {
+        server {{ include "clawql-mcp.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.http.targetPort }};
+      }
+      server {
+        listen 8080;
+        location / {
+          proxy_http_version 1.1;
+          proxy_set_header Host $host;
+          proxy_set_header X-Real-IP $remote_addr;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          proxy_set_header X-Forwarded-Proto $scheme;
+          proxy_pass http://mcp_http_upstream;
+        }
+      }
+    }
+    stream {
+      upstream mcp_grpc_upstream {
+        server {{ include "clawql-mcp.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.grpc.targetPort }};
+      }
+      server {
+        listen 50051;
+        proxy_pass mcp_grpc_upstream;
+        proxy_connect_timeout 2s;
+        proxy_timeout 3600s;
+      }
+    }
+{{- end }}

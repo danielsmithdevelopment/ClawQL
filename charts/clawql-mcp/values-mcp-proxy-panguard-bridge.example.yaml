@@ -1,0 +1,43 @@
+# Example: Helm **`mcpProxy.mode: custom`** with the repo **`clawql-panguard-mcp-bridge`** image (Panguard stdio chain → remote **`clawql-mcp-http`**).
+#
+# Build: `docker build -f docker/panguard-mcp-bridge/Dockerfile -t ghcr.io/.../clawql-panguard-mcp-bridge:local .`
+# Install: `helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
+#   -f charts/clawql-mcp/values-mcp-proxy-panguard-bridge.example.yaml`
+#
+# Requires **Kyverno** verifyImages to allow this GHCR name (see **`kyverno.imageSignaturePolicy.imageReferences`** in **`values.yaml`**) or Cosign-signed tags from **`docker-publish`**.
+#
+# Istio: set **`CLAWQL_ISTIO_MCP_HTTP_BACKEND_HOST=clawql-mcp-http-proxy`** before **`scripts/kubernetes/install-istio-docker-desktop.sh`** (see **`docs/security/mcp-proxy-jwt-atr.md`**).
+
+mcpProxy:
+  enabled: true
+  mode: custom
+  replicaCount: 2
+  custom:
+    image:
+      repository: ghcr.io/danielsmithdevelopment/clawql-panguard-mcp-bridge
+      tag: nightly
+      pullPolicy: IfNotPresent
+    extraEnv:
+      - name: CLAWQL_BRIDGE_UPSTREAM_URL
+        value: "http://clawql-mcp-http.clawql.svc.cluster.local:8080/mcp"
+      - name: CLAWQL_BRIDGE_SHIM_PATH
+        value: "/app/packages/panguard-mcp-bridge/dist/shim-main.js"
+      - name: MCP_PATH
+        value: "/mcp"
+      - name: ENABLE_GRPC
+        value: "1"
+      - name: GRPC_PORT
+        value: "50051"
+      # Optional: `ENABLE_GRPC_REFLECTION=1` for grpcurl discovery (narrow blast radius in prod).
+    readinessProbe:
+      httpGet:
+        path: /healthz
+        port: http
+      initialDelaySeconds: 3
+      periodSeconds: 5
+    livenessProbe:
+      httpGet:
+        path: /healthz
+        port: http
+      initialDelaySeconds: 15
+      periodSeconds: 20

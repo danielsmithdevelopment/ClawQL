@@ -29,6 +29,7 @@ permissions:
 env:
   # GHCR requires lowercase; package name matches npm `clawql-mcp`.
   IMAGE_NAME: ghcr.io/danielsmithdevelopment/clawql-mcp
+  PANGUARD_BRIDGE_IMAGE_NAME: ghcr.io/danielsmithdevelopment/clawql-panguard-mcp-bridge
   WEBSITE_IMAGE_NAME: ghcr.io/danielsmithdevelopment/clawql-website
   # Pin scanner image (public GHCR; avoids Docker Hub rate limits in CI).
   TRIVY_SCAN_IMAGE: ghcr.io/aquasecurity/trivy:0.59.1
@@ -54,7 +55,7 @@ jobs:
           severity: HIGH,CRITICAL
           exit-code: "1"
           trivyignores: .trivyignore
-          skip-dirs: node_modules,website/node_modules,dist,packages/mcp-grpc-transport/dist,packages/clawql-ouroboros/dist,.git
+          skip-dirs: node_modules,website/node_modules,dist,packages/mcp-grpc-transport/dist,packages/clawql-ouroboros/dist,packages/panguard-mcp-bridge/dist,.git
 
       - name: CycloneDX SBOM (Syft)
         run: |
@@ -171,6 +172,106 @@ jobs:
           TAGS=(--tag "${{ env.IMAGE_NAME }}:latest" --tag "${{ env.IMAGE_NAME }}:nightly")
           if [ "${{ github.event_name }}" = "schedule" ]; then
             TAGS+=(--tag "${{ env.IMAGE_NAME }}:nightly-$(date -u +%Y%m%d)")
+          fi
+          docker buildx imagetools create "${TAGS[@]}" "$SRC"
+
+  build-push-panguard-bridge:
+    name: Build and push Panguard MCP bridge
+    needs: [repo-supply-chain]
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd
+
+      - uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf
+        with:
+          images: ${{ env.PANGUARD_BRIDGE_IMAGE_NAME }}
+          tags: |
+            type=sha,prefix=sha-,format=short
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+
+      - name: Install skopeo
+        run: sudo apt-get update && sudo apt-get install -y skopeo
+
+      - name: Build OCI layout (single artifact — scanned and pushed)
+        run: |
+          set -euo pipefail
+          DEST="${RUNNER_TEMP}/clawql-panguard-bridge-oci"
+          rm -rf "${DEST}"
+          mkdir -p "${DEST}"
+          docker buildx build \
+            --file docker/panguard-mcp-bridge/Dockerfile \
+            --platform linux/amd64,linux/arm64 \
+            --output "type=oci,tar=false,dest=${DEST}" \
+            --cache-from type=gha,scope=docker-publish-panguard-bridge \
+            --cache-to type=gha,mode=max,scope=docker-publish-panguard-bridge \
+            --provenance=mode=max \
+            --sbom=true \
+            .
+
+      - name: Trivy scan OCI layout (HIGH / CRITICAL — before registry push)
+        run: |
+          set -euo pipefail
+          docker run --rm \
+            -v "${GITHUB_WORKSPACE}:/repo:ro" \
+            -v "${RUNNER_TEMP}/clawql-panguard-bridge-oci:/work/oci:ro" \
+            "${{ env.TRIVY_SCAN_IMAGE }}" \
+            image \
+            --scanners vuln \
+            --severity HIGH,CRITICAL \
+            --exit-code 1 \
+            --ignorefile /repo/.trivyignore \
+            --input /work/oci
+
+      - name: Push OCI layout to GHCR (skopeo — same bytes Trivy scanned)
+        id: oci_push
+        env:
+          IMAGE_TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          set -euo pipefail
+          AUTH=(--authfile "${DOCKER_CONFIG:-$HOME/.docker}/config.json")
+          SRC="oci:${RUNNER_TEMP}/clawql-panguard-bridge-oci"
+          if [ -z "${IMAGE_TAGS//[$'\t\r\n ']}" ]; then
+            echo "No image tags from metadata-action" >&2
+            exit 1
+          fi
+          while IFS= read -r dest; do
+            [ -z "${dest// }" ] && continue
+            skopeo copy "${AUTH[@]}" --all "${SRC}" "docker://${dest}"
+          done <<< "${IMAGE_TAGS}"
+          FIRST="$(printf '%s\n' "${IMAGE_TAGS}" | sed '/^[[:space:]]*$/d' | head -n1)"
+          DIGEST="$(skopeo inspect "${AUTH[@]}" "docker://${FIRST}" --format '{{.Digest}}')"
+          echo "digest=${DIGEST}" >> "$GITHUB_OUTPUT"
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@b5e753ae2d39589c7b38850b463739151fc67f07
+        with:
+          cosign-release: v2.4.3
+
+      - name: Cosign sign (keyless, recursive — Kyverno-compatible legacy bundles)
+        if: ${{ steps.oci_push.outputs.digest != '' }}
+        run: cosign sign --yes --recursive "${{ env.PANGUARD_BRIDGE_IMAGE_NAME }}@${{ steps.oci_push.outputs.digest }}"
+
+      - name: Promote rolling tags (latest / nightly / nightly-YYYYMMDD)
+        if: ${{ steps.oci_push.outputs.digest != '' }}
+        run: |
+          set -euo pipefail
+          SRC="${{ env.PANGUARD_BRIDGE_IMAGE_NAME }}@${{ steps.oci_push.outputs.digest }}"
+          TAGS=(--tag "${{ env.PANGUARD_BRIDGE_IMAGE_NAME }}:latest" --tag "${{ env.PANGUARD_BRIDGE_IMAGE_NAME }}:nightly")
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            TAGS+=(--tag "${{ env.PANGUARD_BRIDGE_IMAGE_NAME }}:nightly-$(date -u +%Y%m%d)")
           fi
           docker buildx imagetools create "${TAGS[@]}" "$SRC"
 

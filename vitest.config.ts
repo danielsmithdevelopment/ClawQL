@@ -22,6 +22,7 @@ export default defineConfig({
       "src/**/*.test.ts",
       "packages/mcp-grpc-transport/src/**/*.test.ts",
       "packages/clawql-ouroboros/src/**/*.test.ts",
+      "packages/panguard-mcp-bridge/src/**/*.test.ts",
     ],
     /** Avoid worker RPC teardown races when HTTP servers + fetch leave sockets pending. */
     teardownTimeout: 20_000,
@@ -33,11 +34,13 @@ export default defineConfig({
         "src/**/*.ts",
         "packages/mcp-grpc-transport/src/**/*.ts",
         "packages/clawql-ouroboros/src/**/*.ts",
+        "packages/panguard-mcp-bridge/src/**/*.ts",
       ],
       exclude: [
         "src/**/*.test.ts",
         "packages/mcp-grpc-transport/src/**/*.test.ts",
         "packages/clawql-ouroboros/src/**/*.test.ts",
+        "packages/panguard-mcp-bridge/src/**/*.test.ts",
         "src/test-utils/**",
         "src/swagger2openapi.d.ts",
       ],

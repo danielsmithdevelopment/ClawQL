@@ -16,7 +16,7 @@ This section tracks ClawQL security architecture, shipped controls, and roadmap 
 
 ## Supply-chain pipeline (summary)
 
-- `docker-publish` runs **repo** gates (**OSV-Scanner**, **Trivy** fs, **Syft** SBOM) like CI, then **one BuildKit build** per image (**MCP** + **website**) to a **local OCI layout** → **Trivy** on that layout → **`skopeo copy`** to GHCR (**same artifact**, no second build) → **Cosign** → promotion of **`latest`** / **`nightly`** / **`nightly-YYYYMMDD`**. Full narrative: [`golden-image-pipeline.md`](golden-image-pipeline.md).
+- `docker-publish` runs **repo** gates (**OSV-Scanner**, **Trivy** fs, **Syft** SBOM) like CI, then **one BuildKit build** per image (**MCP**, **Panguard MCP bridge**, **website**) to a **local OCI layout** → **Trivy** on that layout → **`skopeo copy`** to GHCR (**same artifact**, no second build) → **Cosign** → promotion of **`latest`** / **`nightly`** / **`nightly-YYYYMMDD`**. Full narrative: [`golden-image-pipeline.md`](golden-image-pipeline.md).
 - `ci` uploads a repository CycloneDX SBOM artifact with **Syft** (`sbom-cyclonedx-repository`) and runs OSV/Trivy checks.
 - Operator verification commands and workflow references live in `docker/README.md`.
 
