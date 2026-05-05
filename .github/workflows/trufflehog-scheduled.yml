@@ -1,0 +1,29 @@
+# Historical secret scan — weekly + manual; complements mandatory Gitleaks in CI (#283).
+# Excludes bundled upstream specs under providers/ (vendor examples / placeholders).
+name: TruffleHog
+
+on:
+  schedule:
+    - cron: "15 8 * * 3"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  trufflehog:
+    name: TruffleHog (git history)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      # actions/checkout@v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          fetch-depth: 0
+
+      # trufflesecurity/trufflehog@v3.88.4 (tag → commit pin for supply chain)
+      - name: TruffleHog OSS
+        uses: trufflesecurity/trufflehog@853e1e8d249fd1e29d0fcc7280d29b03df3d643d
+        with:
+          path: ./
+          extra_args: --exclude-paths=^providers/

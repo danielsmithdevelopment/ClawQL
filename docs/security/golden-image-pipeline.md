@@ -134,21 +134,35 @@ Operator verification without applying a workload: **`cosign verify`** as docume
 
 ---
 
+## Private registry mirror (Harbor)
+
+Many enterprises front GHCR (or any upstream) with **[Harbor](https://goharbor.io/)** for replication, pull-through cache, vulnerability scanning, and retention policies. ClawQL still **builds and signs on GHCR** in this repo; Harbor is an **organizational consumption pattern**, not a second source of truth.
+
+**Recommended practices:**
+
+1. **Replication / proxy:** mirror **`ghcr.io/danielsmithdevelopment/clawql-*`** images into a Harbor project (immutable tags or digest pins only).
+2. **Admission allowlists:** point Kyverno **`verifyImages`** (Helm values) and cluster egress allowlists at your **Harbor hostname + project path** (for example `harbor.example.com/clawql/clawql-mcp@sha256:…`) when workloads must not pull GHCR directly — adjust **`issuerRegExp` / `subjectRegExp`** if you re-sign in Harbor or use a different identity; see [`image-signature-enforcement.md`](image-signature-enforcement.md).
+3. **SBOM next to the image:** attach the **CycloneDX** artifact produced in **`ci.yml`** / **`docker-publish.yml`** (Syft) as an **OCI reference** or Harbor-supported SBOM attachment so audits tie **digest to SBOM** without relying on GitHub Actions artifacts alone.
+
+---
+
 ## Quick reference table
 
 | Layer           | Mechanism                                                            | Artifact / outcome                                           |
 | --------------- | -------------------------------------------------------------------- | ------------------------------------------------------------ |
-| Merge / CI      | **`ci.yml`** `supply-chain`                                          | OSV + Trivy fs + SBOM artifact; gates **`test`**             |
+| Merge / CI      | **`ci.yml`** `supply-chain` + **`secret-scan`** (Gitleaks)          | OSV + Trivy fs + SBOM + secret scan; gates **`test`**        |
 | Publish         | **`docker-publish.yml`** `repo-supply-chain`                         | Same repo gates + SBOM artifact for the publish run          |
 | Image integrity | Single **OCI layout** + **Trivy** + **`skopeo copy`**                | No second build; scanned bytes = pushed bytes                |
 | Identity        | **Cosign keyless** on digest                                         | Signature in **Rekor** / Sigstore ecosystem                  |
 | Mutability      | **`imagetools`** promotion                                           | **`latest`** / **`nightly`** only after success              |
 | Cluster         | **Kyverno `verifyImages`** (Helm default) + optional **digest pins** | Unsigned / wrong-identity **ClawQL** images blocked at admit |
+| Scheduled audit | **`trufflehog-scheduled.yml`**                                      | TruffleHog git history; **`providers/`** excluded            |
 
 ---
 
 ## Issues and tracking
 
 - [#156](https://github.com/danielsmithdevelopment/ClawQL/issues/156) — **CI + publish pipeline + security docs** (narrowed); follow-ups [#202](https://github.com/danielsmithdevelopment/ClawQL/issues/202) (MCP OSV), [#203](https://github.com/danielsmithdevelopment/ClawQL/issues/203) (Helm rescan), [#204](https://github.com/danielsmithdevelopment/ClawQL/issues/204) (audit / memory hooks)
+- [#283](https://github.com/danielsmithdevelopment/ClawQL/issues/283) — **Gitleaks** (pre-commit + CI) + **TruffleHog** (scheduled) + **Harbor** consumption docs
 - [#132](https://github.com/danielsmithdevelopment/ClawQL/issues/132) — digest-first deploys and admission follow-ups
 - [#164](https://github.com/danielsmithdevelopment/ClawQL/issues/164) — deliverables matrix maintenance

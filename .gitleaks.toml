@@ -1,0 +1,23 @@
+# Gitleaks configuration for ClawQL.
+# Bundled OpenAPI / Discovery specs under providers/ contain vendor examples,
+# JWT samples, and placeholder keys — not repository secrets.
+
+title = "ClawQL"
+
+[extend]
+useDefault = true
+
+# `paths` are regexes matched against the file path in each finding (see gitleaks README).
+[allowlist]
+description = "Upstream provider specs are vendor artifacts; build outputs and dependencies are not committed."
+paths = [
+  '''(^|/)providers/''',
+  '''(^|/)node_modules/''',
+  '''\.open-next/''',
+  '''(^|/)website/\.next/''',
+  '''(^|/)dist/''',
+  '''(^|/)packages/[^/]+/dist/''',
+  '''(^|/)coverage/''',
+  '''(^|/)packages/mcp-grpc-transport/test-fixtures/''',
+  '''\.test\.ts$''',
+]

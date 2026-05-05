@@ -165,6 +165,21 @@ jobs:
       - name: Helm chart + Kustomize local overlay lint
         run: make lint-k8s-manifests
 
+  # OSS Gitleaks CLI (Docker) — avoids org licensing on gitleaks-action. No npm install / node_modules on disk.
+  secret-scan:
+    name: Secret scan (Gitleaks)
+    needs: [lint, workflow-scripts]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      # actions/checkout@v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Gitleaks (working tree)
+        run: |
+          docker run --rm -v "$PWD:/repo" -w /repo zricethezav/gitleaks:v8.24.2 \
+            detect --source /repo --no-git --verbose --no-banner --redact
+
   supply-chain:
     name: Supply chain (OSV + Trivy + SBOM)
     needs: [lint, workflow-scripts]
@@ -292,6 +307,7 @@ jobs:
         panguard-bridge-docker-smoke,
         website-playwright-smoke,
         supply-chain,
+        secret-scan,
       ]
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -328,6 +344,7 @@ jobs:
         panguard-bridge-docker-smoke,
         website-playwright-smoke,
         supply-chain,
+        secret-scan,
       ]
     if: vars.CLAWQL_ENABLE_OUROBOROS_POSTGRES_CI == '1'
     runs-on: ubuntu-latest
