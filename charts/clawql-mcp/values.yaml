@@ -80,6 +80,57 @@ nodeOptions: "--max-old-space-size=1536"
 enableGrpc: false
 enableGrpcReflection: false
 
+# Optional MCP chokepoint (**Deployment** + **Service**) in front of **`clawql-mcp-http`** — Istio ordering,
+# JWT/ATR gateway, or **nginx** TCP/HTTP passthrough. Defaults **off**.
+# See **docs/security/mcp-proxy-jwt-atr.md** and **docs/integrations/panguard-kubernetes.md**.
+mcpProxy:
+  enabled: false
+  mode: nginx
+  replicaCount: 2
+  image:
+    repository: nginx
+    tag: "1.27-alpine"
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: "1"
+      memory: 256Mi
+  securityContext: {}
+  podAnnotations: {}
+  podLabels: {}
+  podSecurityContext: {}
+  custom:
+    image:
+      repository: ""
+      tag: latest
+      pullPolicy: IfNotPresent
+    command: []
+    args: []
+    extraEnv: []
+    resources: {}
+    securityContext: {}
+    readinessProbe: {}
+    livenessProbe: {}
+  service:
+    type: ClusterIP
+    annotations: {}
+    http:
+      port: 80
+      targetPort: 8080
+    grpc:
+      port: 50051
+      targetPort: 50051
+  slo:
+    prometheusRule:
+      enabled: false
+      httpP99LatencyThresholdMs: 50
+      forDuration: 15m
+      labels: {}
+      annotations: {}
+
 # memory_ingest / memory_recall (default on). Set false to inject CLAWQL_ENABLE_MEMORY=0.
 enableMemory: true
 # Document stack: tika, gotenberg, paperless, stirling, onyx in all-providers merge + ingest_external_knowledge + (with enableOnyx) knowledge_search_onyx. Set false to inject CLAWQL_ENABLE_DOCUMENTS=0.
@@ -738,6 +789,7 @@ kyverno:
       - kube-public
     imageReferences:
       - "ghcr.io/danielsmithdevelopment/clawql-mcp*"
+      - "ghcr.io/danielsmithdevelopment/clawql-panguard-mcp-bridge*"
       - "ghcr.io/danielsmithdevelopment/clawql-website*"
     cosign:
       subjectRegExp: "^https://github\\.com/danielsmithdevelopment/ClawQL/.*"

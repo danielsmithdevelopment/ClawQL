@@ -1,0 +1,125 @@
+{{- if .Values.mcpProxy.enabled }}
+{{- $mode := .Values.mcpProxy.mode | default "nginx" }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "clawql-mcp.mcpProxyName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: mcp-proxy
+spec:
+  replicas: {{ .Values.mcpProxy.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "clawql-mcp.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: mcp-proxy
+  template:
+    metadata:
+      {{- with .Values.mcpProxy.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "clawql-mcp.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: mcp-proxy
+        service.istio.io/canonical-name: {{ include "clawql-mcp.mcpProxyName" . | quote }}
+        {{- with .Values.mcpProxy.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.mcpProxy.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: mcp-proxy
+          {{- if eq $mode "nginx" }}
+          image: "{{ .Values.mcpProxy.image.repository }}:{{ .Values.mcpProxy.image.tag }}"
+          imagePullPolicy: {{ .Values.mcpProxy.image.pullPolicy }}
+          {{- else }}
+          image: "{{ required "mcpProxy.custom.image.repository is required when mcpProxy.mode is custom" .Values.mcpProxy.custom.image.repository }}:{{ .Values.mcpProxy.custom.image.tag | default "latest" }}"
+          imagePullPolicy: {{ .Values.mcpProxy.custom.image.pullPolicy }}
+          {{- with .Values.mcpProxy.custom.command }}
+          command:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.mcpProxy.custom.args }}
+          args:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.mcpProxy.custom.extraEnv }}
+          env:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- end }}
+          {{- if eq $mode "nginx" }}
+          {{- with .Values.mcpProxy.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- else }}
+          {{- with .Values.mcpProxy.custom.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.mcpProxy.service.http.targetPort }}
+            - name: grpc
+              containerPort: {{ .Values.mcpProxy.service.grpc.targetPort }}
+          {{- if eq $mode "nginx" }}
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+              readOnly: true
+          readinessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          livenessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 20
+          {{- else }}
+          {{- if .Values.mcpProxy.custom.readinessProbe }}
+          readinessProbe:
+            {{- toYaml .Values.mcpProxy.custom.readinessProbe | nindent 12 }}
+          {{- else }}
+          readinessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          {{- end }}
+          {{- if .Values.mcpProxy.custom.livenessProbe }}
+          livenessProbe:
+            {{- toYaml .Values.mcpProxy.custom.livenessProbe | nindent 12 }}
+          {{- else }}
+          livenessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          {{- end }}
+          {{- end }}
+          resources:
+            {{- if eq $mode "nginx" }}
+            {{- toYaml .Values.mcpProxy.resources | nindent 12 }}
+            {{- else }}
+            {{- toYaml (.Values.mcpProxy.custom.resources | default .Values.mcpProxy.resources) | nindent 12 }}
+            {{- end }}
+      {{- if eq $mode "nginx" }}
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: {{ include "clawql-mcp.mcpProxyName" . }}-config
+      {{- end }}
+{{- end }}

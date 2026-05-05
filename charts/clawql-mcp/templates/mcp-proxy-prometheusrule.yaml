@@ -1,0 +1,40 @@
+{{- if and .Values.mcpProxy.enabled .Values.mcpProxy.slo.prometheusRule.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "clawql-mcp.mcpProxyName" . }}-slo
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: mcp-proxy-slo
+    {{- with .Values.mcpProxy.slo.prometheusRule.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  groups:
+    - name: clawql-mcp-proxy-latency
+      rules:
+        - alert: ClawQLMcpProxyHttpP99LatencyHigh
+          expr: |
+            histogram_quantile(
+              0.99,
+              sum(
+                rate(
+                  istio_request_duration_milliseconds_bucket{
+                    reporter="source",
+                    destination_service_namespace="{{ .Release.Namespace }}",
+                    destination_service_name=~".*{{ include "clawql-mcp.mcpProxyName" . }}.*"
+                  }[5m]
+                )
+              ) by (le)
+            ) > {{ .Values.mcpProxy.slo.prometheusRule.httpP99LatencyThresholdMs }}
+          for: {{ .Values.mcpProxy.slo.prometheusRule.forDuration | quote }}
+          labels:
+            severity: warning
+          {{- $ann := dict
+              "summary" (printf "ClawQL MCP proxy HTTP p99 latency exceeds %vms (Istio telemetry)" .Values.mcpProxy.slo.prometheusRule.httpP99LatencyThresholdMs)
+              "description" (printf "Destination_service_name matches substring %q — tune if mesh labels differ. See docs/security/mcp-proxy-jwt-atr.md (#272)." (include "clawql-mcp.mcpProxyName" .))
+          }}
+          annotations:
+            {{- mergeOverwrite $ann .Values.mcpProxy.slo.prometheusRule.annotations | toYaml | nindent 12 }}
+{{- end }}

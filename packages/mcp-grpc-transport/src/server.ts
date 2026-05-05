@@ -21,7 +21,7 @@ import type {
   Transport,
   TransportSendOptions,
 } from "@modelcontextprotocol/sdk/shared/transport.js";
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { createMcpProtobufServiceImplementation } from "./mcp-protobuf-service.js";
 import { McpProtobufBridge } from "./mcp-protobuf-bridge.js";
 import { TaskCancellationRegistry } from "./mcp-protobuf-tasks.js";
@@ -90,6 +90,11 @@ function readTransportPackageVersion(): string {
 export type GrpcMcpServerOptions = {
   /** New MCP server instance per gRPC session (same lifecycle as Streamable HTTP). */
   createMcpServer: () => McpServer;
+  /**
+   * When set, **`mcp.transport.v1.Mcp` Session** uses this factory (e.g. async stdio child spawn).
+   * Unary protobuf **`model_context_protocol.Mcp`** still uses one shared instance from {@link createMcpServer}.
+   */
+  createSessionMcpServer?: () => Promise<McpServer>;
   /** Bind address host:port (default `process.env.GRPC_BIND` or `0.0.0.0:${GRPC_PORT}`). */
   bindAddress?: string;
   /**
@@ -388,6 +393,7 @@ export async function maybeStartGrpcMcpServer(
   const protobufMcpServiceDef = loaded.model_context_protocol.Mcp.service;
 
   const createMcp = options.createMcpServer;
+  const createSessionMcp = options.createSessionMcpServer;
   const version = readTransportPackageVersion();
 
   const sharedMcpForProtobufRpc = createMcp();
@@ -397,16 +403,24 @@ export async function maybeStartGrpcMcpServer(
   const sessionImpl: grpc.UntypedServiceImplementation = {
     session: (call: grpc.ServerDuplexStream<JsonRpcLineMsg, JsonRpcLineMsg>) => {
       const transport = new GrpcMcpSessionTransport(call);
-      const server = createMcp();
-      void server.connect(transport).catch((err: unknown) => {
-        const e = err instanceof Error ? err : new Error(String(err));
-        transport.onerror?.(e);
-        void transport.close();
-      });
-
+      let mcpServer: McpServer | undefined;
       call.on("end", () => {
-        void server.close().catch(() => {});
+        void mcpServer?.close().catch(() => {});
       });
+      const started: Promise<McpServer> = createSessionMcp
+        ? createSessionMcp()
+        : Promise.resolve(createMcp());
+      void started
+        .then((server) => {
+          mcpServer = server;
+          return server.connect(transport);
+        })
+        .catch((err: unknown) => {
+          const e = err instanceof Error ? err : new Error(String(err));
+          transport.onerror?.(e);
+          void mcpServer?.close().catch(() => {});
+          void transport.close();
+        });
     },
   };
 

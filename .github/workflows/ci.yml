@@ -188,7 +188,7 @@ jobs:
           severity: HIGH,CRITICAL
           exit-code: "1"
           trivyignores: .trivyignore
-          skip-dirs: node_modules,website/node_modules,dist,packages/mcp-grpc-transport/dist,packages/clawql-ouroboros/dist,.git
+          skip-dirs: node_modules,website/node_modules,dist,packages/mcp-grpc-transport/dist,packages/clawql-ouroboros/dist,packages/panguard-mcp-bridge/dist,.git
 
       # CycloneDX JSON for the repository (lockfiles + vendored sources Syft detects). Artifact for audits / #156.
       - name: CycloneDX SBOM (Syft)
@@ -245,6 +245,17 @@ jobs:
         if: always()
         run: docker rm -f clawql-website-smoke || true
 
+  panguard-bridge-docker-smoke:
+    name: Panguard MCP bridge Docker smoke
+    needs: [lint, workflow-scripts]
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Docker build (Panguard bridge image)
+        run: docker build -f docker/panguard-mcp-bridge/Dockerfile -t clawql-panguard-bridge:ci .
+
   website-playwright-smoke:
     name: Website Playwright smoke
     needs: [lint, workflow-scripts]
@@ -273,7 +284,15 @@ jobs:
   # Wave 2 — only if fast gates pass (fail early: no matrix work when lint/scripts fail)
   test:
     name: Test (Node ${{ matrix.node-version }})
-    needs: [lint, workflow-scripts, website-docker-smoke, website-playwright-smoke, supply-chain]
+    needs:
+      [
+        lint,
+        workflow-scripts,
+        website-docker-smoke,
+        panguard-bridge-docker-smoke,
+        website-playwright-smoke,
+        supply-chain,
+      ]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
@@ -301,7 +320,15 @@ jobs:
 
   ouroboros-postgres-optional:
     name: Ouroboros Postgres integration (optional)
-    needs: [lint, workflow-scripts, website-docker-smoke, website-playwright-smoke, supply-chain]
+    needs:
+      [
+        lint,
+        workflow-scripts,
+        website-docker-smoke,
+        panguard-bridge-docker-smoke,
+        website-playwright-smoke,
+        supply-chain,
+      ]
     if: vars.CLAWQL_ENABLE_OUROBOROS_POSTGRES_CI == '1'
     runs-on: ubuntu-latest
     timeout-minutes: 15

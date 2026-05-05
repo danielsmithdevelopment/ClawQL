@@ -112,7 +112,7 @@ Signing in CI **does not** stop a malicious or mistaken **`kubectl apply`** of a
 
 ### Helm chart (default on)
 
-[`charts/clawql-mcp/values.yaml`](../../charts/clawql-mcp/values.yaml) defaults **`kyverno.imageSignaturePolicy.enabled: true`**, which renders a **`ClusterPolicy`** ([`templates/kyverno-clusterpolicy-cosign.yaml`](../../charts/clawql-mcp/templates/kyverno-clusterpolicy-cosign.yaml)) using **`verifyImages`** with **Cosign keyless** **`subjectRegExp`** / **`issuerRegExp`** matching this repo’s **GitHub Actions** identity and **`ghcr.io/danielsmithdevelopment/clawql-mcp*`** / **`clawql-website*`** image patterns.
+[`charts/clawql-mcp/values.yaml`](../../charts/clawql-mcp/values.yaml) defaults **`kyverno.imageSignaturePolicy.enabled: true`**, which renders a **`ClusterPolicy`** ([`templates/kyverno-clusterpolicy-cosign.yaml`](../../charts/clawql-mcp/templates/kyverno-clusterpolicy-cosign.yaml)) using **`verifyImages`** with **Cosign keyless** **`subjectRegExp`** / **`issuerRegExp`** matching this repo’s **GitHub Actions** identity and **`ghcr.io/danielsmithdevelopment/clawql-mcp*`** / **`clawql-panguard-mcp-bridge*`** / **`clawql-website*`** image patterns.
 
 **Requirements:**
 

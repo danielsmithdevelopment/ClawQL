@@ -38,6 +38,7 @@ spec:
       verifyImages:
         - imageReferences:
             - "ghcr.io/danielsmithdevelopment/clawql-mcp*"
+            - "ghcr.io/danielsmithdevelopment/clawql-panguard-mcp-bridge*"
             - "ghcr.io/danielsmithdevelopment/clawql-website*"
           # When every manifest uses `image@sha256:…`, add `verifyDigest: true` (and/or `mutateDigest: true`)
           # per Kyverno docs) so only digest pulls are admitted.

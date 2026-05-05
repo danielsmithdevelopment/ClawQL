@@ -1,0 +1,25 @@
+{{- if .Values.mcpProxy.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "clawql-mcp.mcpProxyName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: mcp-proxy
+  {{- with .Values.mcpProxy.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.mcpProxy.service.type }}
+  selector:
+    {{- include "clawql-mcp.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: mcp-proxy
+  ports:
+    - name: http
+      port: {{ .Values.mcpProxy.service.http.port }}
+      targetPort: http
+    - name: grpc
+      port: {{ .Values.mcpProxy.service.grpc.port }}
+      targetPort: grpc
+{{- end }}

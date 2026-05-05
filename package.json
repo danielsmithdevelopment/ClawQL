@@ -53,8 +53,8 @@
         ".cursor/mcp.json.example"
     ],
     "scripts": {
-        "clean": "rm -rf dist packages/mcp-grpc-transport/dist packages/clawql-ouroboros/dist",
-        "build": "npm run clean && npm run build -w mcp-grpc-transport && npm run build -w clawql-ouroboros && tsc",
+        "clean": "rm -rf dist packages/mcp-grpc-transport/dist packages/clawql-ouroboros/dist packages/panguard-mcp-bridge/dist",
+        "build": "npm run clean && npm run build -w mcp-grpc-transport && npm run build -w clawql-ouroboros && npm run build -w panguard-mcp-bridge && tsc",
         "prepublishOnly": "npm run build",
         "start": "node dist/server.js",
         "start:http": "node dist/server-http.js",
@@ -87,8 +87,8 @@
         "pretest": "npm run build",
         "test": "vitest run",
         "test:coverage": "npm run build && vitest run --coverage",
-        "lint": "eslint \"src/**/*.ts\" \"packages/mcp-grpc-transport/src/**/*.ts\" \"packages/clawql-ouroboros/src/**/*.ts\" \"vitest.config.ts\" --max-warnings 0 --cache --cache-location .eslintcache",
-        "lint:fix": "eslint \"src/**/*.ts\" \"packages/mcp-grpc-transport/src/**/*.ts\" \"packages/clawql-ouroboros/src/**/*.ts\" \"vitest.config.ts\" --fix --cache --cache-location .eslintcache",
+        "lint": "eslint \"src/**/*.ts\" \"packages/mcp-grpc-transport/src/**/*.ts\" \"packages/clawql-ouroboros/src/**/*.ts\" \"packages/panguard-mcp-bridge/src/**/*.ts\" \"vitest.config.ts\" --max-warnings 0 --cache --cache-location .eslintcache",
+        "lint:fix": "eslint \"src/**/*.ts\" \"packages/mcp-grpc-transport/src/**/*.ts\" \"packages/clawql-ouroboros/src/**/*.ts\" \"packages/panguard-mcp-bridge/src/**/*.ts\" \"vitest.config.ts\" --fix --cache --cache-location .eslintcache",
         "format": "prettier --write \"src/**/*.{ts,tsx}\" \"packages/mcp-grpc-transport/**/*.{ts,md,json}\" \"docs/**/*.md\" \".github/**/*.yml\" \"*.md\" \"vitest.config.ts\" \"eslint.config.js\" \"tsconfig.json\" \".prettierrc.json\" --cache --cache-location .prettier-cache && npm run format --prefix website",
         "format:check": "prettier --check \"src/**/*.{ts,tsx}\" \"packages/mcp-grpc-transport/**/*.{ts,md,json}\" \"docs/**/*.md\" \".github/**/*.yml\" \"*.md\" \"vitest.config.ts\" \"eslint.config.js\" \"tsconfig.json\" \".prettierrc.json\" --cache --cache-location .prettier-cache && npm run format:check --prefix website",
         "release:git-tag": "bash scripts/release/git-release-tag.sh",

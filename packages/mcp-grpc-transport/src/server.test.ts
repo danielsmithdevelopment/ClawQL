@@ -245,6 +245,81 @@ describe("maybeStartGrpcMcpServer", () => {
     }
   });
 
+  it("createSessionMcpServer async factory still serves Session initialize", async () => {
+    process.env.ENABLE_GRPC = "1";
+    process.env.ENABLE_GRPC_REFLECTION = "0";
+
+    let sessionFactories = 0;
+    const started = await maybeStartGrpcMcpServer({
+      createMcpServer: minimalMcpServer,
+      createSessionMcpServer: async () => {
+        sessionFactories++;
+        await new Promise<void>((r) => queueMicrotask(r));
+        return minimalMcpServer();
+      },
+      bindAddress: "127.0.0.1:0",
+    });
+    if (!started) throw new Error("expected server");
+
+    const def = protoLoader.loadSync([join(protoRoot, "mcp/transport/v1/mcp.proto")], {
+      includeDirs: [protoRoot],
+      keepCase: true,
+      longs: String,
+      enums: String,
+      defaults: true,
+      oneofs: true,
+    });
+    const pkg = grpc.loadPackageDefinition(def) as {
+      mcp: { transport: { v1: { Mcp: grpc.ServiceClientConstructor } } };
+    };
+    const Client = pkg.mcp.transport.v1.Mcp;
+    const mcpClient = new Client(started.address, grpc.credentials.createInsecure());
+    const call = mcpClient.session();
+
+    const initLine = JSON.stringify({
+      jsonrpc: "2.0",
+      id: 1,
+      method: "initialize",
+      params: {
+        protocolVersion: "2024-11-05",
+        capabilities: {},
+        clientInfo: { name: "session-factory-test", version: "0.0.0" },
+      },
+    });
+
+    try {
+      const first = await new Promise<{ result?: unknown; id?: number }>((resolve, reject) => {
+        const t = setTimeout(() => reject(new Error("timeout")), 10_000);
+        call.on("data", (msg: { line?: string }) => {
+          try {
+            const line = msg?.line;
+            if (!line) return;
+            const j = JSON.parse(line) as { result?: unknown; id?: number; error?: unknown };
+            if (j.id === 1) {
+              clearTimeout(t);
+              resolve(j);
+            }
+          } catch (e) {
+            clearTimeout(t);
+            reject(e);
+          }
+        });
+        call.on("error", (e) => {
+          clearTimeout(t);
+          reject(e);
+        });
+        call.write({ line: initLine });
+      });
+      expect(sessionFactories).toBe(1);
+      expect(first.error).toBeUndefined();
+      expect(first.result).toBeDefined();
+    } finally {
+      call.end();
+      mcpClient.close();
+      await started.shutdown();
+    }
+  });
+
   it("registers reflection when ENABLE_GRPC_REFLECTION=1", async () => {
     process.env.ENABLE_GRPC = "1";
     process.env.ENABLE_GRPC_REFLECTION = "1";
