@@ -207,7 +207,7 @@ function envResolvedAuthHeaders(specLabel?: string): Record<string, string> {
     return bearer ? { Authorization: `Bearer ${bearer}` } : {};
   }
   if (effective === "n8n") {
-    const key = trimEnv("N8N_API_KEY", "CLAWQL_N8N_API_KEY");
+    const key = trimEnv("N8N_API_KEY", "CLAWQL_N8N_API_KEY"); // gitleaks:allow — env var names, not secret values
     return key ? { "X-N8N-API-KEY": key } : {};
   }
 
