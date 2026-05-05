@@ -178,3 +178,11 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- printf "%s-doc-pipeline-auth" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
 {{- end -}}
 {{- end }}
+
+{{/* Optional annotations under each Onyx stack Pod template.metadata (e.g. Istio ambient: disable legacy sidecar injection). */}}
+{{- define "clawql-mcp.onyxPodTemplateAnnotations" -}}
+{{- with .Values.onyx.podAnnotations }}
+annotations:
+{{- toYaml . | nindent 2 }}
+{{- end }}
+{{- end }}

@@ -107,16 +107,8 @@ spec:
             - secretRef:
                 name: {{ include "clawql-mcp.flinkConnectorSecretName" . }}
           {{- end }}
-          volumeMounts:
-            - name: flink-config
-              mountPath: /opt/flink/conf/flink-conf.yaml
-              subPath: flink-conf.yaml
           resources:
             {{- toYaml .Values.flink.jobManager.resources | nindent 12 }}
-      volumes:
-        - name: flink-config
-          configMap:
-            name: {{ include "clawql-mcp.flinkName" . }}-config
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -165,14 +157,6 @@ spec:
             - secretRef:
                 name: {{ include "clawql-mcp.flinkConnectorSecretName" . }}
           {{- end }}
-          volumeMounts:
-            - name: flink-config
-              mountPath: /opt/flink/conf/flink-conf.yaml
-              subPath: flink-conf.yaml
           resources:
             {{- toYaml .Values.flink.taskManager.resources | nindent 12 }}
-      volumes:
-        - name: flink-config
-          configMap:
-            name: {{ include "clawql-mcp.flinkName" . }}-config
 {{- end }}

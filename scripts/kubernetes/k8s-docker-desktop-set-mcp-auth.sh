@@ -10,7 +10,7 @@
 #   CLAWQL_CLOUDFLARE_API_TOKEN               — optional; Cloudflare execute
 #   GOOGLE_ACCESS_TOKEN                       — optional; Google Discovery execute
 #   CLAWQL_SLACK_TOKEN                        — optional; notify + Slack execute
-#   ONYX_BASE_URL, ONYX_API_TOKEN             — optional; knowledge_search_onyx + Onyx execute
+#   ONYX_API_TOKEN, CLAWQL_ONYX_API_TOKEN     — optional; knowledge_search_onyx + Onyx execute (ONYX_BASE_URL is chart-managed in-cluster)
 #   CLAWQL_ONYX_API_TOKEN                     — optional fallback for Onyx auth
 #   PAPERLESS_API_TOKEN                       — optional; Paperless execute
 #   STIRLING_API_KEY                          — optional; Stirling execute
@@ -19,7 +19,7 @@
 # Secret name remains clawql-github-auth for backward compatibility with existing clusters.
 #
 # Prerequisites:
-#   - Docker Desktop Kubernetes; context docker-desktop (or docker-for-desktop)
+#   - Local desktop Kubernetes (Rancher Desktop or Docker Desktop); context auto-selected
 #   - Namespace clawql (e.g. make local-k8s-up)
 #   - GitHub: gh auth login, or CLAWQL_GITHUB_TOKEN, or pipe a PAT to stdin
 #
@@ -55,11 +55,12 @@ NAMESPACE="${NAMESPACE:-clawql}"
 # Backward compat: DEPLOY was the MCP deployment name only.
 DEPLOY_MCP="${DEPLOY_MCP:-${DEPLOY:-clawql-mcp-http}}"
 
+# shellcheck disable=SC1091
+source "${ROOT}/scripts/kubernetes/lib/select-local-k8s-context.sh"
+clawql_select_local_k8s_context
 KUBECTL_FLAG=()
-if kubectl config get-contexts -o name 2>/dev/null | grep -qx 'docker-desktop'; then
-  KUBECTL_FLAG=(--context docker-desktop)
-elif kubectl config get-contexts -o name 2>/dev/null | grep -qx 'docker-for-desktop'; then
-  KUBECTL_FLAG=(--context docker-for-desktop)
+if [[ -n "${KUBE_CONTEXT:-}" ]]; then
+  KUBECTL_FLAG=(--context "${KUBE_CONTEXT}")
 fi
 
 kc() {
@@ -93,7 +94,6 @@ fi
 CF_TOKEN="${CLAWQL_CLOUDFLARE_API_TOKEN:-}"
 GOOGLE_TOKEN="${CLAWQL_GOOGLE_ACCESS_TOKEN:-${GOOGLE_ACCESS_TOKEN:-}}"
 SLACK_TOKEN="${CLAWQL_SLACK_TOKEN:-${SLACK_BOT_TOKEN:-${SLACK_TOKEN:-${CLAWQL_SLACK_BOT_TOKEN:-}}}}"
-ONYX_BASE_URL_VALUE="${ONYX_BASE_URL:-}"
 ONYX_TOKEN="${ONYX_API_TOKEN:-${CLAWQL_ONYX_API_TOKEN:-}}"
 ONYX_TOKEN_FALLBACK="${CLAWQL_ONYX_API_TOKEN:-}"
 PAPERLESS_TOKEN="${PAPERLESS_API_TOKEN:-}"
@@ -114,9 +114,6 @@ fi
 if [[ -n "${SLACK_TOKEN// }" ]]; then
   SECRET_ARGS+=( --from-literal=CLAWQL_SLACK_TOKEN="$SLACK_TOKEN" )
 fi
-if [[ -n "${ONYX_BASE_URL_VALUE// }" ]]; then
-  SECRET_ARGS+=( --from-literal=ONYX_BASE_URL="$ONYX_BASE_URL_VALUE" )
-fi
 if [[ -n "${ONYX_TOKEN// }" ]]; then
   SECRET_ARGS+=( --from-literal=ONYX_API_TOKEN="$ONYX_TOKEN" )
 fi
@@ -135,6 +132,15 @@ fi
 SECRET_ARGS+=( --dry-run=client -o yaml )
 kc "${SECRET_ARGS[@]}" | kc apply -f -
 
+# Helm sets ONYX_BASE_URL literally on deployment/clawql-mcp-http. A legacy ONYX_BASE_URL key in this
+# Secret + kubectl set env --keys=ONYX_BASE_URL merged valueFrom with that literal and broke admission
+# ("valueFrom ... may not be specified when value is not empty"). Tokens stay in the Secret; base URL does not.
+if kc -n "$NAMESPACE" get secret "$SECRET_NAME" -o jsonpath='{.data.ONYX_BASE_URL}' 2>/dev/null | grep -q .; then
+  echo "==> Removing legacy ONYX_BASE_URL from secret/$SECRET_NAME (chart sets in-cluster ONYX_BASE_URL)"
+  kc -n "$NAMESPACE" patch secret "$SECRET_NAME" --type=json \
+    -p='[{"op":"remove","path":"/data/ONYX_BASE_URL"}]' 2>/dev/null || true
+fi
+
 ENV_KEYS="CLAWQL_GITHUB_TOKEN,CLAWQL_BEARER_TOKEN"
 if [[ -n "${CF_TOKEN// }" ]]; then
   ENV_KEYS="${ENV_KEYS},CLAWQL_CLOUDFLARE_API_TOKEN"
@@ -144,9 +150,6 @@ if [[ -n "${GOOGLE_TOKEN// }" ]]; then
 fi
 if [[ -n "${SLACK_TOKEN// }" ]]; then
   ENV_KEYS="${ENV_KEYS},CLAWQL_SLACK_TOKEN"
-fi
-if [[ -n "${ONYX_BASE_URL_VALUE// }" ]]; then
-  ENV_KEYS="${ENV_KEYS},ONYX_BASE_URL"
 fi
 if [[ -n "${ONYX_TOKEN// }" ]]; then
   ENV_KEYS="${ENV_KEYS},ONYX_API_TOKEN"
@@ -199,6 +202,6 @@ if kc -n "$NAMESPACE" get "deployment/$DEPLOY_MCP" >/dev/null 2>&1; then
 fi
 
 echo ""
-echo "Done. MCP: http://localhost:8080/mcp"
+echo "Done. MCP (prod parity): http://clawql-mcp.localhost/mcp"
 echo "Health:  curl -s http://localhost:8080/healthz"
 echo "GraphQL: same pod — http://localhost:8080/graphql (in-process with MCP)."

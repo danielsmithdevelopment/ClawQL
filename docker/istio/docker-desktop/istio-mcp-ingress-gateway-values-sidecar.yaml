@@ -2,6 +2,14 @@
 # Release name must stay clawql-mcp-ingress.
 autoscaling:
   enabled: false
+# Chart default requests.cpu=100m; lower for single-node local scheduling (limits keep burst room).
+resources:
+  requests:
+    cpu: 25m
+    memory: 256Mi
+  limits:
+    cpu: 2000m
+    memory: 1024Mi
 service:
   type: LoadBalancer
   ports:
@@ -13,6 +21,7 @@ service:
       port: 80
       protocol: TCP
       targetPort: 80
+      nodePort: 31488
     - name: https
       port: 443
       protocol: TCP

@@ -7,12 +7,10 @@ set -euo pipefail
 #
 # Does not delete the namespace or other workloads (e.g. graphql, Langfuse) in clawql.
 
-KUBE_CONTEXT=""
-if kubectl config get-contexts -o name 2>/dev/null | grep -qx 'docker-desktop'; then
-  KUBE_CONTEXT="docker-desktop"
-elif kubectl config get-contexts -o name 2>/dev/null | grep -qx 'docker-for-desktop'; then
-  KUBE_CONTEXT="docker-for-desktop"
-fi
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck disable=SC1091
+source "${SCRIPT_DIR}/lib/select-local-k8s-context.sh"
+clawql_select_local_k8s_context
 
 kubectl_ctx() {
   if [[ -n "${KUBE_CONTEXT}" ]]; then

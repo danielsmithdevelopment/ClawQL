@@ -3,17 +3,17 @@ import { docsPageMetadata } from '@/lib/seo'
 export const metadata = docsPageMetadata({
   title: 'Kubernetes',
   description:
-    'Helm or Kustomize, Kyverno and signed GHCR images on Docker Desktop, Streamable HTTP localhost:8080/mcp, optional gRPC 50051.',
+    'Helm or Kustomize, Kyverno and signed GHCR images, Streamable HTTP Ingress clawql-mcp.localhost (prod parity), optional gRPC.',
   path: '/kubernetes',
 })
 
 # Kubernetes
 
-ClawQL is usually deployed as **`clawql-mcp-http`**: **Streamable HTTP** MCP on **`/mcp`**, **GraphQL** on **`/graphql`**, and (when **`ENABLE_GRPC=1`**) **gRPC** protobuf MCP on port **50051**—all in one pod. The **Service** exposes **both** HTTP and **gRPC** ports so clients can use **`localhost:50051`** (Docker Desktop) or **`<LoadBalancer-ip>:50051`** without **`kubectl port-forward`**. **Docker Desktop** defaults to the **[Helm](/helm)** chart (**`charts/clawql-mcp`**, **`values-docker-desktop.yaml`**); remote clusters often use **Kustomize** **`dev`** / **`prod`** with **`scripts/deploy/deploy-k8s.sh`**. {{ className: 'lead' }}
+ClawQL is usually deployed as **`clawql-mcp-http`**: **Streamable HTTP** MCP on **`/mcp`**, **GraphQL** on **`/graphql`**, and (when **`ENABLE_GRPC=1`**) **gRPC** protobuf MCP on port **50051**—all in one pod. **`values-docker-desktop.yaml`** matches production: **Ingress-nginx** on **`http://clawql-mcp.localhost/mcp`**, while **`svc/clawql-mcp-http`** stays **LoadBalancer** for **gRPC** and diagnostics (**`kubectl get svc`** for **`EXTERNAL-IP`**). **Optional Istio** still exposes **`localhost:50051`** on **`clawql-mcp-ingress`**. Remote clusters often use **Kustomize** **`dev`** / **`prod`** with **`scripts/deploy/deploy-k8s.sh`**. {{ className: 'lead' }}
 
 ## Local MCP on Docker Desktop
 
-Use this when you want a **stable URL** (for example **`http://localhost:8080/mcp`**) for Cursor or other MCP clients, without running `npx` in a terminal.
+Use this when you want the **same north-south pattern as production** — **Ingress + hostname** (**`http://clawql-mcp.localhost/mcp`**) for Cursor or other MCP clients, without running `npx` in a terminal.
 
 ### Prerequisites
 
@@ -35,7 +35,7 @@ Or:
 bash scripts/kubernetes/local-k8s-docker-desktop.sh
 ```
 
-**Default:** **`helm upgrade --install`** with **`charts/clawql-mcp/values-docker-desktop.yaml`**: signed **`ghcr.io/danielsmithdevelopment/clawql-mcp:latest`** and **`ghcr.io/danielsmithdevelopment/clawql-website:latest`**, LoadBalancer on **8080**, **`all-providers`**, **`hostPath`** vault at **`$HOME/.ClawQL`** (override **`CLAWQL_LOCAL_VAULT_HOST_PATH`**). The script installs **Kyverno** and a **ClusterPolicy** so those images must pass **Cosign** verification in the **`clawql`** namespace (unsigned local **`docker build`** deploys are **not** supported).
+**Default:** **`helm upgrade --install`** with **`charts/clawql-mcp/values-docker-desktop.yaml`**: signed **`ghcr.io/danielsmithdevelopment/clawql-mcp:latest`** and **`ghcr.io/danielsmithdevelopment/clawql-website:latest`**, **Ingress** **`clawql-mcp.localhost`** → MCP, **LoadBalancer** **`svc/clawql-mcp-http`** for **gRPC**, **`all-providers`**, **`hostPath`** vault at **`$HOME/.ClawQL`** (override **`CLAWQL_LOCAL_VAULT_HOST_PATH`**). The script installs **Kyverno** and a **ClusterPolicy** so those images must pass **Cosign** verification in the **`clawql`** namespace (unsigned local **`docker build`** deploys are **not** supported).
 
 **Kustomize:** **`CLAWQL_LOCAL_K8S_INSTALLER=kustomize make local-k8s-up`** — **`kubectl apply -k docker/kustomize/overlays/local`** for the MCP workload; **Helm** still installs **Kyverno** and applies the **ClusterPolicy** template from the chart.
 
@@ -45,8 +45,8 @@ bash scripts/kubernetes/local-k8s-docker-desktop.sh
 
 ### Endpoints and client config
 
-- **MCP (Streamable HTTP):** `http://localhost:8080/mcp`
-- **Health:** `curl -s http://localhost:8080/healthz`
+- **MCP (Streamable HTTP):** **`http://clawql-mcp.localhost/mcp`**
+- **Health:** `curl -s http://clawql-mcp.localhost/healthz`
 - **Bundled docs UI (Helm + UI ingress):** `http://clawql.localhost`
 
 Point your MCP client at **`url`** (not stdio **`command`**). Example shape:
@@ -55,13 +55,13 @@ Point your MCP client at **`url`** (not stdio **`command`**). Example shape:
 {
   "mcpServers": {
     "clawql": {
-      "url": "http://localhost:8080/mcp"
+      "url": "http://clawql-mcp.localhost/mcp"
     }
   }
 }
 ```
 
-Use your real host if you tunnel or expose the service elsewhere.
+Same **`url`** shape as production (**`https://mcp.example.com/mcp`**); only **scheme** and **host** differ locally.
 
 ### Optional gRPC on the same deployment
 

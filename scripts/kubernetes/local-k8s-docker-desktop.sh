@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Install ClawQL on Docker Desktop Kubernetes.
+# Install ClawQL on local desktop Kubernetes (Docker Desktop or Rancher Desktop / k3s).
 #
 # Default: Helm (charts/clawql-mcp + values-docker-desktop.yaml).
 # Optional: Kustomize — set CLAWQL_LOCAL_K8S_INSTALLER=kustomize (Helm is still required for Kyverno).
@@ -12,17 +12,20 @@ set -euo pipefail
 # Optional: CLAWQL_LOCAL_K8S_INSTALL_INGRESS_NGINX=1 — install/update ingress-nginx
 # once in namespace ingress-nginx (enabled by default).
 #
-# Optional: CLAWQL_LOCAL_K8S_ISTIO=ambient|sidecar — install Istio (Helm), enroll clawql +
-# ingress-nginx + istio-ingress in the mesh, istio/gateway + Istio Gateway + VirtualService for MCP,
-# PeerAuthentication STRICT in the release namespace by default, and Prometheus + Kiali + Grafana +
-# Grafana Tempo + ClawQL OTel Collector in istio-system (local only; heavy). See
-# scripts/kubernetes/install-istio-docker-desktop.sh and docker/README.md.
+# Istio (default on): CLAWQL_LOCAL_K8S_ISTIO unset → ambient mesh everywhere (Docker Desktop + Rancher).
+# Workloads use ztunnel (no Envoy sidecars). North-south MCP: Istio Gateway + VirtualService → clawql-mcp-http:8080
+# (see install-istio-docker-desktop.sh). If istio-cni fails on Rancher/Lima, fix VM mounts (e.g. --make-rshared /)
+# or set CLAWQL_LOCAL_K8S_ISTIO=0 to skip mesh.
+# Set CLAWQL_LOCAL_K8S_ISTIO=sidecar only for legacy debugging; disable mesh: CLAWQL_LOCAL_K8S_ISTIO=0 (or off|false|none).
+# Tune addons: CLAWQL_ISTIO_INSTALL_HEAVY_OBSERVABILITY_ADDONS, CLAWQL_ISTIO_INSTALL_LOKI_TEMPO (see docker/README.md).
 #
-# When Istio + ingress gateway are on, local-k8s-up patches svc/clawql-mcp-http to ClusterIP by default
-# (canonical MCP north-south is the gateway). Opt out: CLAWQL_ISTIO_MCP_HTTP_SERVICE_CLUSTERIP=0
+# When Istio ambient + ingress gateway are on, CLUSTERIP defaults to 1: patch svc/clawql-mcp-http to ClusterIP so
+# MCP HTTP from the host uses the gateway only (http://localhost/mcp). Set CLAWQL_ISTIO_MCP_HTTP_SERVICE_CLUSTERIP=0
+# to keep a direct LoadBalancer :8080 on clawql-mcp-http (diagnostics / gRPC without going through the gateway).
+# Ingress (nginx) remains optional for **http://clawql-mcp.localhost/mcp** (prod-shaped hostname on :80).
 #
-# Optional: CLAWQL_HELM_TIMEOUT — helm --wait timeout (default 30m). Full Onyx
-# (Vespa, OpenSearch, model servers, image pulls) often needs more than 10m on first install.
+# Optional: CLAWQL_HELM_TIMEOUT — helm --wait timeout (defaults: 45m full stack, 8m quick stack).
+# Optional: CLAWQL_LOCAL_K8S_FULL_STACK=0 — quick MCP+UI only (skips Onyx/Flink/pipeline/NATS; short helm --wait).
 #
 # Optional: CLAWQL_KYVERNO_CHART_VERSION — Kyverno Helm chart version (default 3.7.2).
 #
@@ -35,19 +38,24 @@ set -euo pipefail
 # - hostPath: mount $HOME/.ClawQL into the pod at /vault (easy local inspection).
 # - pvc:      keep vault data in-cluster via chart PVC (no host FS permission friction).
 #
-# Requires: Docker Desktop with Kubernetes enabled, kubectl, Helm 3. Docker is not required
-# unless you use other tooling that needs it.
+# Optional: CLAWQL_LOCAL_K8S_TRIM_KUBE_SYSTEM_CPU_REQUESTS=1 (default) — lowers coredns + metrics-server
+# CPU requests (100m → 25m) on tight single-node clusters. Set 0 to leave kube-system untouched.
 #
-# Uses kube context `docker-desktop` when present (avoids targeting EKS/other clusters).
+# Requires: kubectl, Helm 3. A local cluster from Docker Desktop (context docker-desktop) or
+# Rancher Desktop (rancher-desktop). The script picks the first *reachable* of:
+#   rancher-desktop, docker-desktop, docker-for-desktop
+# so a stale docker-desktop entry does not block Rancher Desktop (override with CLAWQL_LOCAL_K8S_CONTEXT).
+#
+# Docker / nerdctl is not required unless other tooling needs it.
 #
 # Usage:
 #   bash scripts/kubernetes/local-k8s-docker-desktop.sh
 #   CLAWQL_LOCAL_K8S_INSTALLER=kustomize bash scripts/kubernetes/local-k8s-docker-desktop.sh
 #
-# MCP: without Istio — http://localhost:8080/mcp once LB is ready. With CLAWQL_LOCAL_K8S_ISTIO=ambient|sidecar
-# and default gateway + ClusterIP patch — http://localhost/mcp (Istio ingress); see script footer.
+# MCP: with default ambient Istio — **http://localhost/mcp** via Gateway+VirtualService (copy URL to ~/.cursor/mcp.json).
+# Or Ingress **http://clawql-mcp.localhost/mcp** when :80 reaches ingress-nginx (.cursor/mcp.json.example).
 # UI (Ingress): http://clawql.localhost
-# Health: curl gateway http://localhost/healthz (Istio) or http://localhost:8080/healthz (no Istio / LB kept)
+# Health (Ingress): curl -s http://clawql-mcp.localhost/healthz
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT"
@@ -59,9 +67,48 @@ KUSTOMIZE_OVERLAY="${ROOT}/docker/kustomize/overlays/local"
 RELEASE_NAME="${HELM_RELEASE_NAME:-clawql}"
 NAMESPACE="${HELM_NAMESPACE:-clawql}"
 INSTALL_INGRESS_NGINX="${CLAWQL_LOCAL_K8S_INSTALL_INGRESS_NGINX:-1}"
-INSTALL_ISTIO="${CLAWQL_LOCAL_K8S_ISTIO:-}"
+# Default Istio mode: ambient (set after kube context is selected).
+# Opt out with CLAWQL_LOCAL_K8S_ISTIO=0|off|false|none.
+# Portable unset test (macOS ships Bash 3.2 — do not use [[ -v ]]).
+if [[ -z "${CLAWQL_LOCAL_K8S_ISTIO+x}" ]]; then
+  INSTALL_ISTIO="ambient"
+else
+  case "${CLAWQL_LOCAL_K8S_ISTIO}" in
+    ""|0|off|OFF|false|FALSE|no|NO|skip|SKIP|none|NONE)
+      INSTALL_ISTIO=""
+      ;;
+    ambient|Ambient|AMBIENT)
+      INSTALL_ISTIO="ambient"
+      ;;
+    sidecar|Sidecar|SIDECAR)
+      INSTALL_ISTIO="sidecar"
+      ;;
+    *)
+      echo "ERROR: CLAWQL_LOCAL_K8S_ISTIO must be ambient, sidecar, or 0/off/false/none (got: ${CLAWQL_LOCAL_K8S_ISTIO})"
+      exit 1
+      ;;
+  esac
+fi
+# Default FULL stack (values-docker-desktop.yaml as written: Onyx + Flink + pipeline + NATS).
+# Fast MCP+UI only (not default): CLAWQL_LOCAL_K8S_FULL_STACK=0 make local-k8s-up  (short helm --wait).
+CLAWQL_LOCAL_K8S_FULL_STACK="${CLAWQL_LOCAL_K8S_FULL_STACK:-1}"
+HELM_QUICK_SET_ARGS=()
+if [[ "${CLAWQL_LOCAL_K8S_FULL_STACK}" == "0" ]]; then
+  _helm_timeout_default="8m"
+  HELM_QUICK_SET_ARGS=(
+    --set onyx.enabled=false
+    --set flink.enabled=false
+    --set documentPipeline.enabled=false
+    --set enableOnyx=false
+    --set enableOuroboros=false
+    --set nats.enabled=false
+    --set providerIngress.enabled=false
+  )
+else
+  _helm_timeout_default="45m"
+fi
+HELM_TIMEOUT="${CLAWQL_HELM_TIMEOUT:-${_helm_timeout_default}}"
 ISTIO_HEAVY_OBS="${CLAWQL_ISTIO_INSTALL_HEAVY_OBSERVABILITY_ADDONS:-1}"
-HELM_TIMEOUT="${CLAWQL_HELM_TIMEOUT:-30m}"
 KYVERNO_CHART_VERSION="${CLAWQL_KYVERNO_CHART_VERSION:-3.7.2}"
 KYVERNO_CRDS_MIGRATION="${CLAWQL_LOCAL_K8S_KYVERNO_CRDS_MIGRATION:-0}"
 VAULT_BACKEND="${CLAWQL_LOCAL_K8S_VAULT_BACKEND:-hostPath}"
@@ -70,6 +117,13 @@ VAULT_BACKEND="${CLAWQL_LOCAL_K8S_VAULT_BACKEND:-hostPath}"
 VAULT_HOST_PATH="${CLAWQL_LOCAL_VAULT_HOST_PATH:-$HOME/.ClawQL}"
 
 echo "==> Installer: ${INSTALLER} (set CLAWQL_LOCAL_K8S_INSTALLER=kustomize for Kustomize)"
+if [[ "${CLAWQL_LOCAL_K8S_FULL_STACK}" == "0" ]]; then
+  echo "==> Helm workload scope: QUICK (MCP + UI only; Onyx/Flink/pipeline/NATS off). Full default: unset CLAWQL_LOCAL_K8S_FULL_STACK or set =1"
+  echo "==> Helm --wait timeout: ${HELM_TIMEOUT} (override CLAWQL_HELM_TIMEOUT)"
+else
+  echo "==> Helm workload scope: FULL (values-docker-desktop.yaml — Onyx, Flink, document pipeline, NATS)"
+  echo "==> Helm --wait timeout: ${HELM_TIMEOUT} (override CLAWQL_HELM_TIMEOUT for cold pulls / slow nodes)"
+fi
 if [[ "${VAULT_BACKEND}" == "hostPath" ]]; then
   echo "==> Obsidian vault hostPath (clawql-mcp-http): ${VAULT_HOST_PATH}"
   echo "    (override with CLAWQL_LOCAL_VAULT_HOST_PATH=/absolute/path/to/vault)"
@@ -82,7 +136,7 @@ else
 fi
 
 if ! command -v kubectl >/dev/null 2>&1; then
-  echo "ERROR: kubectl not found. Enable Kubernetes in Docker Desktop and ensure kubectl is on PATH."
+  echo "ERROR: kubectl not found. Enable Kubernetes in Rancher Desktop or Docker Desktop; ensure kubectl is on PATH."
   exit 1
 fi
 
@@ -109,18 +163,9 @@ if [[ "${CLAWQL_LOCAL_K8S_BUILD_UI_IMAGE:-0}" == "1" ]]; then
   exit 1
 fi
 
-KUBE_CONTEXT=""
-if kubectl config get-contexts -o name 2>/dev/null | grep -qx 'docker-desktop'; then
-  KUBE_CONTEXT="docker-desktop"
-  echo "==> kube context: docker-desktop"
-elif kubectl config get-contexts -o name 2>/dev/null | grep -qx 'docker-for-desktop'; then
-  KUBE_CONTEXT="docker-for-desktop"
-  echo "==> kube context: docker-for-desktop"
-else
-  CUR="$(kubectl config current-context 2>/dev/null || true)"
-  echo "WARN: No docker-desktop context in kubeconfig; using current context: ${CUR:-none}"
-  echo "      If this fails, run: kubectl config use-context docker-desktop"
-fi
+# shellcheck disable=SC1091
+source "${ROOT}/scripts/kubernetes/lib/select-local-k8s-context.sh"
+clawql_select_local_k8s_context
 
 kubectl_ctx() {
   # kubectl uses --context (Helm uses --kube-context — do not mix them up).
@@ -143,14 +188,25 @@ if ! kubectl_ctx cluster-info >/dev/null 2>&1; then
   echo "ERROR: kubectl cannot reach the cluster with the selected context."
   echo ""
   echo "Checklist:"
-  echo "  1. Docker Desktop is running (whale icon in the menu bar)."
-  echo "  2. Settings → Kubernetes → Enable Kubernetes → Apply & Restart; wait until"
-  echo "     the status shows Kubernetes running (green) in the Docker Desktop footer."
-  echo "  3. Then: kubectl config use-context docker-desktop"
+  echo "  Rancher Desktop:"
+  echo "    1. Rancher Desktop is running; Preferences → Kubernetes → Enable Kubernetes is on."
+  echo "    2. Wait until the cluster is ready, then: kubectl config use-context rancher-desktop"
+  echo "  Docker Desktop:"
+  echo "    1. Docker Desktop is running; Settings → Kubernetes → Enable Kubernetes → Apply & Restart."
+  echo "    2. Then: kubectl config use-context docker-desktop"
+  echo ""
+  echo "If you switched products and see TLS / unknown authority errors, delete the stale context"
+  echo "from ${HOME}/.kube/config or force the live one: CLAWQL_LOCAL_K8S_CONTEXT=rancher-desktop make local-k8s-up"
   echo ""
   echo "kubectl said:"
   kubectl_ctx cluster-info 2>&1 || true
   exit 1
+fi
+
+if [[ "${CLAWQL_LOCAL_K8S_TRIM_KUBE_SYSTEM_CPU_REQUESTS:-1}" == "1" ]]; then
+  echo "==> kube-system: trim coredns + metrics-server CPU requests (100m → 25m; CLAWQL_LOCAL_K8S_TRIM_KUBE_SYSTEM_CPU_REQUESTS=0 to skip)"
+  kubectl_ctx set resources deployment coredns -n kube-system -c coredns --requests=cpu=25m 2>/dev/null || true
+  kubectl_ctx set resources deployment metrics-server -n kube-system -c metrics-server --requests=cpu=25m 2>/dev/null || true
 fi
 
 echo "==> Installing/upgrading Kyverno (chart ${KYVERNO_CHART_VERSION}; override with CLAWQL_KYVERNO_CHART_VERSION)"
@@ -162,42 +218,42 @@ if [[ "${KYVERNO_CRDS_MIGRATION}" != "1" ]]; then
   echo "    Disabling Kyverno crds.migration hook (avoids kyverno-migrate-resources / reg.kyverno.io ErrImagePull on many networks)."
   echo "    Re-enable upstream migration Job: CLAWQL_LOCAL_K8S_KYVERNO_CRDS_MIGRATION=1 make local-k8s-up"
 fi
+# Single-node local: chart defaults 100m per Kyverno controller; quarter for scheduling headroom.
+KYVERNO_HELM_EXTRA+=(
+  --set-string admissionController.container.resources.requests.cpu=25m
+  --set-string backgroundController.resources.requests.cpu=25m
+  --set-string cleanupController.resources.requests.cpu=25m
+  --set-string reportsController.resources.requests.cpu=25m
+)
 helm repo add kyverno https://kyverno.github.io/kyverno/ >/dev/null 2>&1 || true
 helm repo update >/dev/null
-helm_ctx upgrade --install kyverno kyverno/kyverno \
-  --version "${KYVERNO_CHART_VERSION}" \
-  --namespace kyverno \
-  --create-namespace \
-  "${KYVERNO_HELM_EXTRA[@]}" \
-  --wait \
-  --timeout 10m
+# Single line: avoid `\` continuation bugs that surface as `--wait: command not found` (exit 127).
+helm_ctx upgrade --install kyverno kyverno/kyverno --version "${KYVERNO_CHART_VERSION}" --namespace kyverno --create-namespace "${KYVERNO_HELM_EXTRA[@]}" --wait --timeout 10m
 
 if [[ "${INSTALL_INGRESS_NGINX}" == "1" ]]; then
   echo "==> Installing/upgrading ingress-nginx controller"
   helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx >/dev/null 2>&1 || true
   helm repo update >/dev/null
-  helm_ctx upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
-    --namespace ingress-nginx \
-    --create-namespace \
-    --set controller.publishService.enabled=true \
-    --wait \
-    --timeout 10m
+  helm_ctx upgrade --install ingress-nginx ingress-nginx/ingress-nginx --namespace ingress-nginx --create-namespace --set controller.publishService.enabled=true --set-string controller.resources.requests.cpu=25m --set-string controller.resources.requests.memory=128Mi --wait --timeout 10m
 fi
 
 if [[ -n "${INSTALL_ISTIO}" ]]; then
-  if [[ "${INSTALL_ISTIO}" != "ambient" && "${INSTALL_ISTIO}" != "sidecar" ]]; then
-    echo "ERROR: CLAWQL_LOCAL_K8S_ISTIO must be ambient, sidecar, or empty (got: ${INSTALL_ISTIO})"
-    exit 1
-  fi
-  echo "==> Optional Istio (${INSTALL_ISTIO}) for Docker Desktop (see install-istio-docker-desktop.sh)"
+  ISTIO_HEAVY_OBS="${CLAWQL_ISTIO_INSTALL_HEAVY_OBSERVABILITY_ADDONS:-1}"
+  echo "==> Istio (${INSTALL_ISTIO}) + observability stack (see install-istio-docker-desktop.sh)"
   CLAWQL_LOCAL_K8S_ISTIO_MODE="${INSTALL_ISTIO}" \
     CLAWQL_TARGET_NAMESPACE="${NAMESPACE}" \
+    CLAWQL_LOCAL_K8S_CONTEXT="${KUBE_CONTEXT}" \
     bash "${ROOT}/scripts/kubernetes/install-istio-docker-desktop.sh"
 fi
 
 if [[ "${INSTALLER}" == "helm" ]]; then
   echo "==> helm upgrade --install ${RELEASE_NAME} (${NAMESPACE}) (wait timeout ${HELM_TIMEOUT})"
-  echo "    Note: first install with full Onyx can take a long time (image pulls + model servers)."
+  if [[ "${CLAWQL_LOCAL_K8S_FULL_STACK}" == "0" ]]; then
+    echo "    Helm --wait blocks until MCP + UI are Ready (quick stack; heavy subcharts disabled via --set)."
+  else
+    echo "    Helm --wait blocks until every workload in the chart is Ready (full stack)."
+  fi
+  echo "    If this stalls: kubectl --context \${KUBE_CONTEXT:-} get pods -n ${NAMESPACE}  (CrashLoop / Error pods block --wait)."
   echo "    Kyverno admits only Cosign-signed ghcr.io/danielsmithdevelopment/clawql-{mcp,website} in ${NAMESPACE}."
   HELM_VAULT_ARGS=()
   if [[ "${VAULT_BACKEND}" == "hostPath" ]]; then
@@ -210,13 +266,9 @@ if [[ "${INSTALLER}" == "helm" ]]; then
   fi
 
   set +e
-  helm_ctx upgrade --install "${RELEASE_NAME}" "${CHART}" \
-    --namespace "${NAMESPACE}" \
-    --create-namespace \
-    -f "${VALUES_LOCAL}" \
-    "${HELM_VAULT_ARGS[@]}" \
-    --wait \
-    --timeout "${HELM_TIMEOUT}"
+  # set -u: empty-array expansion can trip nounset in some Bash builds; use ${arr[@]+"${arr[@]}"} guards.
+  # Single line: avoid `\` continuation bugs that surface as `--wait: command not found` (exit 127).
+  helm_ctx upgrade --install "${RELEASE_NAME}" "${CHART}" --namespace "${NAMESPACE}" --create-namespace -f "${VALUES_LOCAL}" "${HELM_VAULT_ARGS[@]+"${HELM_VAULT_ARGS[@]}"}" "${HELM_QUICK_SET_ARGS[@]+"${HELM_QUICK_SET_ARGS[@]}"}" --wait --timeout "${HELM_TIMEOUT}"
   HELM_EXIT=$?
   set -e
   if [[ "${HELM_EXIT}" -ne 0 ]]; then
@@ -224,6 +276,8 @@ if [[ "${INSTALLER}" == "helm" ]]; then
     echo "Helm failed. If the error mentions existing resources / invalid ownership (e.g. after"
     echo "kubectl apply or Kustomize), delete the old MCP objects and retry:"
     echo "  make local-k8s-mcp-delete && make local-k8s-up"
+    echo "If admission says env value + valueFrom conflict (e.g. ONYX_BASE_URL after set-mcp-auth):"
+    echo "  kubectl -n ${NAMESPACE} delete deployment/clawql-mcp-http --ignore-not-found && make local-k8s-up"
     echo ""
     echo "Kyverno / ClusterPolicy: chart uses a Helm pre-upgrade hook for the policy (same field manager as Helm)."
     echo "If you see apply conflicts on clawql-ghcr-cosign-keyless after kubectl apply, delete it once:"
@@ -270,7 +324,12 @@ PY
     --show-only templates/kyverno-clusterpolicy-cosign.yaml | kubectl_ctx apply -f -
 fi
 
-# Istio ingress gateway is the recommended MCP path — drop the duplicate LoadBalancer on clawql-mcp-http.
+# Ambient + gateway: MCP HTTP from the Mac should use Istio Gateway :80 (ztunnel mesh to MCP), not raw Service LB.
+if [[ -n "${INSTALL_ISTIO}" && "${INSTALL_ISTIO}" == "ambient" ]]; then
+  : "${CLAWQL_ISTIO_MCP_HTTP_SERVICE_CLUSTERIP:=1}"
+fi
+
+# Istio ingress gateway can be the only north-south MCP path — patch svc/clawql-mcp-http to ClusterIP when opted in.
 maybe_clusterip_clawql_mcp_http_for_istio_gateway() {
   local patch_ns="${NAMESPACE}"
   local svc_name="clawql-mcp-http"
@@ -278,7 +337,8 @@ maybe_clusterip_clawql_mcp_http_for_istio_gateway() {
     return 0
   fi
   local igw="${CLAWQL_ISTIO_INSTALL_INGRESS_GATEWAY:-1}"
-  local want="${CLAWQL_ISTIO_MCP_HTTP_SERVICE_CLUSTERIP:-1}"
+  # Default 0: keep host MCP on LoadBalancer :8080 without forcing Cursor through Istio :80.
+  local want="${CLAWQL_ISTIO_MCP_HTTP_SERVICE_CLUSTERIP:-0}"
   if [[ "${want}" != "1" || "${igw}" != "1" ]]; then
     return 0
   fi
@@ -290,7 +350,33 @@ maybe_clusterip_clawql_mcp_http_for_istio_gateway() {
   kubectl_ctx -n "${patch_ns}" patch svc "${svc_name}" -p '{"spec":{"type":"ClusterIP"}}' --type=merge
 }
 
+# If we previously ran with CLUSTERIP=1, the Service stayed ClusterIP; switching to CLUSTERIP=0 needs LB again.
+maybe_restore_lb_clawql_mcp_http() {
+  local patch_ns="${NAMESPACE}"
+  local svc_name="clawql-mcp-http"
+  if [[ -z "${INSTALL_ISTIO}" ]]; then
+    return 0
+  fi
+  if [[ "${CLAWQL_ISTIO_INSTALL_INGRESS_GATEWAY:-1}" != "1" ]]; then
+    return 0
+  fi
+  local want="${CLAWQL_ISTIO_MCP_HTTP_SERVICE_CLUSTERIP:-0}"
+  if [[ "${want}" == "1" ]]; then
+    return 0
+  fi
+  if ! kubectl_ctx get svc -n "${patch_ns}" "${svc_name}" >/dev/null 2>&1; then
+    return 0
+  fi
+  local ty
+  ty="$(kubectl_ctx get svc -n "${patch_ns}" "${svc_name}" -o jsonpath='{.spec.type}')"
+  if [[ "${ty}" == "ClusterIP" ]]; then
+    echo "==> Restoring svc/${svc_name} to LoadBalancer (CLAWQL_ISTIO_MCP_HTTP_SERVICE_CLUSTERIP=0)"
+    kubectl_ctx -n "${patch_ns}" patch svc "${svc_name}" -p '{"spec":{"type":"LoadBalancer"}}' --type=merge
+  fi
+}
+
 maybe_clusterip_clawql_mcp_http_for_istio_gateway
+maybe_restore_lb_clawql_mcp_http
 
 echo "==> Rollout status"
 kubectl_ctx -n "${NAMESPACE}" rollout status deployment/clawql-mcp-http --timeout=300s
@@ -300,18 +386,47 @@ echo "==> Services"
 kubectl_ctx -n "${NAMESPACE}" get svc
 
 echo ""
-if [[ -n "${INSTALL_ISTIO}" && "${CLAWQL_ISTIO_INSTALL_INGRESS_GATEWAY:-1}" == "1" && "${CLAWQL_ISTIO_MCP_HTTP_SERVICE_CLUSTERIP:-1}" == "1" ]]; then
-  echo "Direct LoadBalancer :8080 on clawql-mcp-http was patched to ClusterIP (use Istio gateway URLs below)."
+if [[ -n "${INSTALL_ISTIO}" && "${CLAWQL_ISTIO_INSTALL_INGRESS_GATEWAY:-1}" == "1" && "${CLAWQL_ISTIO_MCP_HTTP_SERVICE_CLUSTERIP:-0}" == "1" ]]; then
+  echo "svc/clawql-mcp-http → ClusterIP (canonical MCP HTTP: Istio Gateway + VirtualService → :8080; use http://localhost/mcp when :80 reaches clawql-mcp-ingress)."
 else
-  echo "MCP HTTP endpoint: http://localhost:8080/mcp"
-  echo "Health check:       curl -s http://localhost:8080/healthz"
+  echo "MCP HTTP (prod parity — Ingress + hostname, or direct Service LB :8080):"
+  echo "  http://clawql-mcp.localhost/mcp"
+  echo "  Health: curl -s http://clawql-mcp.localhost/healthz"
+  echo "  (Requires ingress-nginx on :80, same as http://clawql.localhost for the bundled UI.)"
+  echo ""
+  _mcp_lb_ip="$(kubectl_ctx get svc -n "${NAMESPACE}" clawql-mcp-http -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)"
+  if [[ -n "${_mcp_lb_ip}" ]]; then
+    echo "Cursor / MCP clients — direct Service (no Ingress :80 / Host header needed):"
+    echo "  http://${_mcp_lb_ip}:8080/mcp"
+    echo "  (Use this when clawql-mcp.localhost shows connected but no tools — common on Rancher Desktop + Traefik on :80.)"
+    echo ""
+  fi
+  echo "Optional — gRPC / direct HTTP to the Service (not Cursor): kubectl -n ${NAMESPACE} get svc clawql-mcp-http -o wide"
 fi
 echo "UI endpoint:        http://clawql.localhost"
 if [[ -n "${INSTALL_ISTIO}" ]]; then
   echo ""
-  echo "Istio (${INSTALL_ISTIO}) MCP via Gateway (mesh): http://localhost/mcp  (svc clawql-mcp-ingress :80 in istio-ingress)"
+  echo "Istio (${INSTALL_ISTIO}) MCP via Gateway + VirtualService: http://localhost/mcp  (svc clawql-mcp-ingress :80 — if :80 is not the gateway, use printed LB IP or port-forward)"
   echo "Health (gateway):   curl -s http://localhost/healthz"
   echo "gRPC (gateway):     localhost:50051  (same Service)"
+  if [[ "${CLAWQL_ISTIO_INSTALL_INGRESS_GATEWAY:-1}" == "1" ]] && kubectl_ctx get svc -n istio-ingress clawql-mcp-ingress &>/dev/null; then
+    _gw_lb_ip="$(kubectl_ctx get svc -n istio-ingress clawql-mcp-ingress -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)"
+    _gw_http_np="$(
+      kubectl_ctx get svc -n istio-ingress clawql-mcp-ingress -o json 2>/dev/null \
+        | python3 -c "import json,sys;d=json.load(sys.stdin);print(next((str(p['nodePort']) for p in d.get('spec',{}).get('ports',[]) if p.get('port')==80),''))" 2>/dev/null || true
+    )"
+    echo ""
+    echo "Cursor / MCP (Istio gateway → mesh mTLS → clawql-mcp-http:8080):"
+    if [[ -n "${_gw_lb_ip}" ]]; then
+      echo "  http://${_gw_lb_ip}/mcp   (gateway LoadBalancer :80)"
+    else
+      echo "  (gateway LoadBalancer EXTERNAL-IP still pending — use NodePort on the host below)"
+    fi
+    if [[ -n "${_gw_http_np}" ]]; then
+      echo "  NodePort (gateway :80 → ${_gw_http_np}): may NOT listen on 127.0.0.1 from macOS (Rancher VM); if curl fails, use port-forward or gateway LB IP above."
+      echo "  Port-forward example: kubectl port-forward -n istio-ingress svc/clawql-mcp-ingress 8765:80  then  http://127.0.0.1:8765/mcp"
+    fi
+  fi
   echo "gRPC smoke:         bash scripts/kubernetes/smoke-grpcurl-istio-gateway-mcp.sh"
   echo "Control plane:     kubectl get pods -n istio-system"
   echo "Observability (port-forward as needed):"
@@ -324,8 +439,9 @@ if [[ -n "${INSTALL_ISTIO}" ]]; then
   fi
 fi
 echo ""
-if [[ -n "${INSTALL_ISTIO}" && "${CLAWQL_ISTIO_INSTALL_INGRESS_GATEWAY:-1}" == "1" && "${CLAWQL_ISTIO_MCP_HTTP_SERVICE_CLUSTERIP:-1}" == "1" ]]; then
-  echo "If you need the old direct LB on :8080, re-run with CLAWQL_ISTIO_MCP_HTTP_SERVICE_CLUSTERIP=0 or kubectl -n ${NAMESPACE} edit svc clawql-mcp-http"
+if [[ -n "${INSTALL_ISTIO}" && "${CLAWQL_ISTIO_INSTALL_INGRESS_GATEWAY:-1}" == "1" && "${CLAWQL_ISTIO_MCP_HTTP_SERVICE_CLUSTERIP:-0}" == "1" ]]; then
+  echo "${HOME}/.cursor/mcp.json: set \"url\" to the Istio gateway MCP URL printed above (mesh north-south). svc/clawql-mcp-http is ClusterIP — do not use the old direct :8080 LoadBalancer URL."
+  echo "To expose direct MCP LoadBalancer :8080 again (bypass gateway): CLAWQL_ISTIO_MCP_HTTP_SERVICE_CLUSTERIP=0 make local-k8s-up"
 else
-  echo "If EXTERNAL-IP stays <pending>, wait a few seconds and run: kubectl -n ${NAMESPACE} get svc"
+  echo "${HOME}/.cursor/mcp.json: \"url\": \"http://clawql-mcp.localhost/mcp\" (Ingress), or direct LB :8080 / Istio gateway URL when CLUSTERIP=0 (see messages above)."
 fi

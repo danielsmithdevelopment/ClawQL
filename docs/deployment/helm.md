@@ -238,7 +238,7 @@ The chart now enables document pipeline + stores by default, including in-cluste
 When you use the local Helm flow (`make local-k8s-up`), the chart can deploy the `website` UI and expose it through ingress-nginx.
 
 - Docs UI: **`http://clawql.localhost`**
-- MCP endpoint: **`http://localhost:8080/mcp`**
+- MCP endpoint (local Helm + **`values-docker-desktop.yaml`**): **`http://clawql-mcp.localhost/mcp`** (**Ingress**); for **Service LoadBalancer** URLs use **`kubectl get svc`**; **Compose** / **`npm run start:http`**: **`http://localhost:8080/mcp`**
 
 Quick verify:
 

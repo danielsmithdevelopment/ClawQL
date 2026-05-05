@@ -153,6 +153,7 @@ spec:
       labels:
         {{- include "clawql-mcp.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: onyx-postgres
+{{- include "clawql-mcp.onyxPodTemplateAnnotations" . | nindent 6 }}
     spec:
       containers:
         - name: postgres
@@ -234,6 +235,7 @@ spec:
       labels:
         {{- include "clawql-mcp.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: onyx-dragonfly
+{{- include "clawql-mcp.onyxPodTemplateAnnotations" . | nindent 6 }}
     spec:
       containers:
         - name: dragonfly
@@ -293,6 +295,7 @@ spec:
       labels:
         {{- include "clawql-mcp.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: onyx-opensearch
+{{- include "clawql-mcp.onyxPodTemplateAnnotations" . | nindent 6 }}
     spec:
       containers:
         - name: opensearch
@@ -382,6 +385,7 @@ spec:
       labels:
         {{- include "clawql-mcp.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: onyx-vespa
+{{- include "clawql-mcp.onyxPodTemplateAnnotations" . | nindent 6 }}
     spec:
       containers:
         - name: vespa
@@ -480,6 +484,7 @@ spec:
       labels:
         {{- include "clawql-mcp.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: onyx-minio
+{{- include "clawql-mcp.onyxPodTemplateAnnotations" . | nindent 6 }}
     spec:
       containers:
         - name: minio
@@ -633,6 +638,7 @@ spec:
       labels:
         {{- include "clawql-mcp.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: onyx-model-index
+{{- include "clawql-mcp.onyxPodTemplateAnnotations" . | nindent 6 }}
     spec:
       containers:
         - name: model-server
@@ -722,6 +728,7 @@ spec:
       labels:
         {{- include "clawql-mcp.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: onyx
+{{- include "clawql-mcp.onyxPodTemplateAnnotations" . | nindent 6 }}
     spec:
       {{- if .Values.onyx.fullVectorStack }}
       initContainers:
@@ -824,6 +831,9 @@ spec:
             - name: AUTH_BACKEND
               value: "postgres"
             {{- end }}
+            {{- if .Values.onyx.api.extraEnv }}
+            {{- toYaml .Values.onyx.api.extraEnv | nindent 12 }}
+            {{- end }}
           ports:
             - name: http
               containerPort: {{ .Values.onyx.service.port | int }}
@@ -871,6 +881,7 @@ spec:
       labels:
         {{- include "clawql-mcp.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: onyx-background
+{{- include "clawql-mcp.onyxPodTemplateAnnotations" . | nindent 6 }}
     spec:
       initContainers:
         - name: wait-postgres
@@ -986,6 +997,7 @@ spec:
       labels:
         {{- include "clawql-mcp.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: onyx-web
+{{- include "clawql-mcp.onyxPodTemplateAnnotations" . | nindent 6 }}
     spec:
       containers:
         - name: onyx-web

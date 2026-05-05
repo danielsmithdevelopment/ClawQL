@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **`make local-k8s-up` install time:** default **`CLAWQL_LOCAL_K8S_FULL_STACK=1`** keeps the full **`values-docker-desktop.yaml`** stack; **`helm --wait`** defaults to **45m** (override **`CLAWQL_HELM_TIMEOUT`**). Opt-in quick path: **`CLAWQL_LOCAL_K8S_FULL_STACK=0`** passes Helm **`--set`** to turn off **Onyx, Flink, document pipeline, NATS, and provider Ingress** and shortens the default **`helm --wait`** to **8m**.
+- **Local Kubernetes (`make local-k8s-up`) — prod parity:** **`values-docker-desktop.yaml`** enables **Ingress** for MCP at **`http://clawql-mcp.localhost/mcp`** (same **hostname + `/mcp`** pattern as production behind **Ingress / Gateway**; **TLS** only in prod). **`svc/clawql-mcp-http`** stays **LoadBalancer** for **gRPC** / diagnostics (**`kubectl get svc`** for **`EXTERNAL-IP`**). **`.cursor/mcp.json.example`** uses the Ingress URL. **`CLAWQL_ISTIO_MCP_HTTP_SERVICE_CLUSTERIP`** defaults to **0**; set **`=1`** for optional **Istio** gateway MCP on **`http://localhost/mcp`**. **Compose** still uses **`http://localhost:8080/mcp`**.
+- **Helm `--wait` reliability (full stack unchanged):** Flink **TaskManager** no longer mounts read-only **`flink-conf.yaml`** (conflicts with Flink 1.19 entrypoint); TM/JM memory **process** sizes raised to satisfy Flink’s minimum fractions; Onyx API gets **`NUM_RETRIES_ON_STARTUP=120`** for slow Vespa/OpenSearch on cold single-node clusters (avoids **`Could not connect to a document index`** during **`setup_onyx`**).
+
 ## [6.0.0] - 2026-05-03
 
 Major release: **Helm** broker paths migrate to **Dragonfly** only (**breaking** values + object names); **`sandbox_exec`** is **opt-in**; Docker Desktop **Istio** lab uses **Grafana Tempo** (optional **Loki**); **`audit`** exposes **Prometheus** metrics and optional **Loki** push; **Learn** docs on **docs.clawql.com**; optional **Label Studio HITL**; **`GET /metrics`**, **OTLP** traces, and Prometheus scrape wiring. Release notes: **[`RELEASE_NOTES_v6.0.0.md`](RELEASE_NOTES_v6.0.0.md)**; upgrade guide for brokers: [**ADR 0003**](docs/adr/0003-tempo-dragonfly-local-operations.md). **`charts/clawql-mcp`** **Chart.version** **0.6.x** with **`appVersion` `6.0.0`**.

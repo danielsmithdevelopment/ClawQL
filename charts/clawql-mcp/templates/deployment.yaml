@@ -7,6 +7,10 @@ metadata:
     app: {{ include "clawql-mcp.fullname" . }}
 spec:
   replicas: {{ .Values.replicaCount }}
+  {{- with .Values.deploymentStrategy }}
+  strategy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   selector:
     matchLabels:
       {{- include "clawql-mcp.selectorLabels" . | nindent 6 }}
@@ -20,6 +24,9 @@ spec:
       labels:
         {{- include "clawql-mcp.selectorLabels" . | nindent 8 }}
         app: {{ include "clawql-mcp.fullname" . }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -28,10 +35,57 @@ spec:
       serviceAccountName: {{ include "clawql-mcp.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- if and .Values.enableSandbox .Values.sandboxDocker.enabled }}
+      initContainers:
+        - name: clawql-docker-static-cli
+          image: {{ .Values.sandboxDocker.initImage | quote }}
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65534
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              cpu: "1"
+              memory: 256Mi
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -eu
+              ARCH=$(uname -m)
+              case "$ARCH" in
+                aarch64|arm64) DARCH=aarch64 ;;
+                x86_64|amd64) DARCH=x86_64 ;;
+                *) echo "clawql sandbox init: unsupported arch: $ARCH" >&2; exit 1 ;;
+              esac
+              VER="{{ .Values.sandboxDocker.staticCliVersion }}"
+              URL="https://download.docker.com/linux/static/stable/${DARCH}/docker-${VER}.tgz"
+              echo "clawql sandbox init: fetching ${URL}"
+              # Use /export (emptyDir) only — readOnlyRootFilesystem leaves /tmp unusable on some runtimes.
+              mkdir -p /export/stage
+              curl -fsSL "$URL" | tar xz -C /export/stage docker/docker
+              mv /export/stage/docker/docker /export/docker
+              rm -rf /export/stage
+              chmod 0555 /export/docker
+              # Do not run `docker version` here — init has no docker.sock; it would fail under set -e.
+              /export/docker --version
+          volumeMounts:
+            - name: clawql-docker-cli-static
+              mountPath: /export
+      {{- end }}
       containers:
         - name: {{ include "clawql-mcp.fullname" . }}
           securityContext:
+            {{- if and .Values.enableSandbox .Values.sandboxDocker.enabled .Values.sandboxDocker.runAsRootForDockerSocket }}
+            runAsUser: 0
+            runAsNonRoot: false
+            {{- else }}
             {{- toYaml .Values.securityContext | nindent 12 }}
+            {{- end }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
@@ -73,6 +127,12 @@ spec:
             {{- if .Values.enableSandbox }}
             - name: CLAWQL_ENABLE_SANDBOX
               value: "1"
+            {{- end }}
+            {{- if and .Values.enableSandbox .Values.sandboxDocker.enabled }}
+            - name: CLAWQL_SANDBOX_BACKEND
+              value: "docker"
+            - name: CLAWQL_SANDBOX_DOCKER_BIN
+              value: "/opt/clawql-docker/docker"
             {{- end }}
             {{- if .Values.enableNotify }}
             - name: CLAWQL_ENABLE_NOTIFY
@@ -158,7 +218,22 @@ spec:
           volumeMounts:
             - name: obsidian-vault
               mountPath: {{ .Values.obsidianVaultPath }}
+            {{- if and .Values.enableSandbox .Values.sandboxDocker.enabled }}
+            - name: clawql-docker-cli-static
+              mountPath: /opt/clawql-docker
+              readOnly: true
+            - name: docker-sock
+              mountPath: /var/run/docker.sock
+            {{- end }}
       volumes:
+        {{- if and .Values.enableSandbox .Values.sandboxDocker.enabled }}
+        - name: clawql-docker-cli-static
+          emptyDir: {}
+        - name: docker-sock
+          hostPath:
+            path: {{ .Values.sandboxDocker.hostSocketPath | quote }}
+            type: Socket
+        {{- end }}
         - name: obsidian-vault
           {{- if .Values.persistence.enabled }}
           {{- if .Values.persistence.existingClaim }}

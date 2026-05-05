@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-# Smoke-test MCP gRPC through the Istio ingress gateway (Docker Desktop: localhost:50051).
+# Smoke-test MCP gRPC through the Istio ingress gateway (local desktop k8s: localhost:50051).
 #
 # Prerequisites:
 #   - grpcurl on PATH (https://github.com/fullstorydev/grpcurl — e.g. brew install grpcurl)
@@ -9,7 +9,7 @@ set -euo pipefail
 # Optional env:
 #   CLAWQL_GRPC_GATEWAY_HOST (default localhost)
 #   CLAWQL_GRPC_GATEWAY_PORT (default 50051)
-#   kubectl context: same as local-k8s-docker-desktop.sh (docker-desktop when present)
+#   kubectl context: same as local-k8s-docker-desktop.sh (rancher-desktop / docker-desktop probe)
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT"
@@ -23,12 +23,9 @@ HOST="${CLAWQL_GRPC_GATEWAY_HOST:-localhost}"
 PORT="${CLAWQL_GRPC_GATEWAY_PORT:-50051}"
 TARGET="${HOST}:${PORT}"
 
-KUBE_CONTEXT=""
-if kubectl config get-contexts -o name 2>/dev/null | grep -qx 'docker-desktop'; then
-  KUBE_CONTEXT="docker-desktop"
-elif kubectl config get-contexts -o name 2>/dev/null | grep -qx 'docker-for-desktop'; then
-  KUBE_CONTEXT="docker-for-desktop"
-fi
+# shellcheck disable=SC1091
+source "${ROOT}/scripts/kubernetes/lib/select-local-k8s-context.sh"
+clawql_select_local_k8s_context
 
 kubectl_ctx() {
   if [[ -n "${KUBE_CONTEXT}" ]]; then
