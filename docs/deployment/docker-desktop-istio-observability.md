@@ -55,6 +55,7 @@ When **`CLAWQL_LOCAL_K8S_ISTIO`** is set, the install script runs **before** the
 - **`CLAWQL_ISTIO_INSTALL_LOKI_TEMPO=0`** — when heavy addons are **on**, skip **Helm** **`clawql-loki`** only (**Tempo** and the OTel collector remain).
 - **`CLAWQL_LOKI_CHART_VERSION`** / **`CLAWQL_TEMPO_CHART_VERSION`** — pin **Grafana** Helm charts (defaults **6.55.0** / **1.24.4** in the install script).
 - **`CLAWQL_ISTIO_VERSION`** — pin the Istio chart and raw addon YAML version (must match for sample URLs).
+- **`CLAWQL_ISTIO_INSTALL_EGRESS_ALLOWLIST=1`** — installs **`istio-egressgateway`** with values matching **`CLAWQL_LOCAL_K8S_ISTIO_MODE`** (**sidecar** or **ambient**) and applies **`docker/istio/docker-desktop/clawql-mcp-egress-allowlist.yaml`**. **`CLAWQL_ISTIO_EGRESS_ALLOWLIST_MODE=serviceentries`** applies **`clawql-mcp-egress-serviceentries-only.yaml`** instead (no gateway). See **[`docs/deployment/helm.md`](helm.md)** ([#275](https://github.com/danielsmithdevelopment/ClawQL/issues/275)).
 
 ---
 

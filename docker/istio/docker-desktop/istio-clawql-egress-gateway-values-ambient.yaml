@@ -1,0 +1,33 @@
+# istio/gateway chart — MCP provider egress in **ambient** mesh (ztunnel + gateway dataplane).
+# Release name **istio-egressgateway** — matches install-istio-docker-desktop.sh (#275).
+# Selector **istio: egressgateway** must match **Gateway** CR in clawql-mcp-egress-allowlist.yaml.
+autoscaling:
+  enabled: false
+labels:
+  app: istio-egressgateway
+  istio: egressgateway
+  istio.io/dataplane-mode: ambient
+podAnnotations:
+  prometheus.io/port: "15020"
+  prometheus.io/scrape: "true"
+  prometheus.io/path: "/stats/prometheus"
+  inject.istio.io/templates: "gateway"
+  sidecar.istio.io/inject: "false"
+resources:
+  requests:
+    cpu: 25m
+    memory: 128Mi
+  limits:
+    cpu: 2000m
+    memory: 1024Mi
+service:
+  type: ClusterIP
+  ports:
+    - name: status-port
+      port: 15021
+      protocol: TCP
+      targetPort: 15021
+    - name: tls
+      port: 443
+      protocol: TCP
+      targetPort: 443

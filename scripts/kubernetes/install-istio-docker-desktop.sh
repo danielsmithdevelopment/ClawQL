@@ -26,6 +26,12 @@ set -euo pipefail
 #   CLAWQL_ISTIO_INSTALL_GATEWAY_API_CRDS — for ambient, install Gateway API experimental CRDs if missing (default 1)
 #   CLAWQL_ISTIO_INSTALL_INGRESS_GATEWAY — 1 installs istio/gateway (clawql-mcp-ingress) + Istio Gateway +
 #     VirtualService so MCP uses mesh north-south on :80 / :50051 (default 1)
+#   CLAWQL_ISTIO_INSTALL_EGRESS_ALLOWLIST — 1 applies MCP provider egress policy (#275): default installs
+#     istio/gateway (**istio-egressgateway**) + full TLS passthrough allowlist for sidecar or ambient (values
+#     match CLAWQL_LOCAL_K8S_ISTIO_MODE).
+#   CLAWQL_ISTIO_EGRESS_ALLOWLIST_MODE — full (default) | serviceentries — **serviceentries** skips the egress
+#     gateway Helm release and applies clawql-mcp-egress-serviceentries-only.yaml only (REGISTRY_ONLY baseline).
+#   CLAWQL_ISTIO_EGRESS_GATEWAY_NAMESPACE — namespace for istio-egressgateway (default istio-system)
 #   CLAWQL_ISTIO_MCP_HTTP_SERVICE_CLUSTERIP — applied by local-k8s-docker-desktop.sh after Helm (not this
 #     script): when 1 with gateway on, patches svc/clawql-mcp-http to ClusterIP (default 0 in local-k8s-up)
 #   CLAWQL_LOCAL_K8S_CONTEXT — optional; force kubectl context (see scripts/kubernetes/lib/select-local-k8s-context.sh)
@@ -54,6 +60,9 @@ STRICT="${CLAWQL_ISTIO_APPLY_STRICT_MTLS:-1}"
 MESH_INGRESS="${CLAWQL_ISTIO_MESH_INGRESS_NGINX:-1}"
 GATEWAY_API="${CLAWQL_ISTIO_INSTALL_GATEWAY_API_CRDS:-1}"
 INGRESS_GW_INSTALL="${CLAWQL_ISTIO_INSTALL_INGRESS_GATEWAY:-1}"
+EGRESS_ALLOWLIST="${CLAWQL_ISTIO_INSTALL_EGRESS_ALLOWLIST:-0}"
+EGRESS_ALLOWLIST_MODE="${CLAWQL_ISTIO_EGRESS_ALLOWLIST_MODE:-full}"
+EGRESS_GW_NS="${CLAWQL_ISTIO_EGRESS_GATEWAY_NAMESPACE:-istio-system}"
 INGRESS_GW_NS=istio-ingress
 INGRESS_GW_RELEASE=clawql-mcp-ingress
 ISTIO_NS=istio-system
@@ -229,6 +238,28 @@ if [[ "${INGRESS_GW_INSTALL}" == "1" ]]; then
   echo "    MCP (Istio Gateway + VirtualService): http://127.0.0.1:31488/mcp — gateway Service nodePort (:80→31488; works when LB never binds host :80)"
   echo "    MCP (same path, when LoadBalancer exposes :80): http://localhost/mcp"
   echo "    gRPC: localhost:50051 (or gateway nodePort when set) — svc/${INGRESS_GW_RELEASE}"
+fi
+
+if [[ "${EGRESS_ALLOWLIST}" == "1" ]]; then
+  kubectl_ctx create namespace "${TARGET_NS}" --dry-run=client -o yaml | kubectl_ctx apply -f -
+  if [[ "${EGRESS_ALLOWLIST_MODE}" == "serviceentries" ]]; then
+    echo "==> MCP provider egress: ServiceEntry-only allowlist (#275, CLAWQL_ISTIO_EGRESS_ALLOWLIST_MODE=serviceentries)"
+    sed \
+      -e "s/__TARGET_NAMESPACE__/${TARGET_NS}/g" \
+      "${ROOT}/docker/istio/docker-desktop/clawql-mcp-egress-serviceentries-only.yaml" | kubectl_ctx apply -f -
+    echo "    ServiceEntry allowlist applied — set istiod REGISTRY_ONLY to fail closed; add istio-egressgateway + full YAML for centralized egress (see docs/deployment/helm.md)."
+  else
+    EGRESS_GW_VALUES="${ROOT}/docker/istio/docker-desktop/istio-clawql-egress-gateway-values-${MODE}.yaml"
+    echo "==> Helm: istio/gateway (istio-egressgateway in ${EGRESS_GW_NS}, mode=${MODE}) + MCP provider egress allowlist (#275)"
+    kubectl_ctx create namespace "${EGRESS_GW_NS}" --dry-run=client -o yaml | kubectl_ctx apply -f -
+    helm_ctx upgrade --install istio-egressgateway istio/gateway --namespace "${EGRESS_GW_NS}" --version "${VER}" -f "${EGRESS_GW_VALUES}" --wait --timeout "${HELM_WAIT_TIMEOUT}"
+    kubectl_ctx -n "${EGRESS_GW_NS}" rollout status "deployment/istio-egressgateway" --timeout=300s
+    sed \
+      -e "s/__TARGET_NAMESPACE__/${TARGET_NS}/g" \
+      -e "s/__EGRESS_GATEWAY_NAMESPACE__/${EGRESS_GW_NS}/g" \
+      "${ROOT}/docker/istio/docker-desktop/clawql-mcp-egress-allowlist.yaml" | kubectl_ctx apply -f -
+    echo "    Egress allowlist applied — trim hosts to providers you use; optional istiod REGISTRY_ONLY — docs/deployment/helm.md (#275)."
+  fi
 fi
 
 if [[ "${INSTALL_KIALI}" == "1" ]]; then

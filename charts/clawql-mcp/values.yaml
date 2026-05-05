@@ -703,6 +703,19 @@ providerIngress:
     path: /
     pathType: Prefix
 
+# Optional Istio ServiceEntry / EgressGateway allowlist for bundled SaaS provider HTTPS (#275).
+# Requires cluster Istio CRDs. Install **istio-egressgateway** (chart **istio/gateway**) with selector
+# **istio: egressgateway** when **throughEgressGateway** is true. See **docs/deployment/helm.md**.
+istio:
+  egressAllowlist:
+    enabled: false
+    # Gateway + mesh/egress VirtualServices (TLS passthrough). If false, only **ServiceEntry** resources
+    # are created in the release namespace (REGISTRY_ONLY baseline; works with ambient without a gateway).
+    throughEgressGateway: true
+    egressGatewayNamespace: istio-system
+    egressGatewayServiceName: istio-egressgateway
+    gatewayName: clawql-provider-egress-gateway
+
 # Kyverno ClusterPolicy: require Cosign (keyless / GitHub Actions) for ClawQL GHCR images (default on).
 # Prerequisite: Kyverno installed in the cluster (CRD kyverno.io/v1 ClusterPolicy). For clusters without
 # Kyverno, set kyverno.imageSignaturePolicy.enabled=false before install, or install Kyverno first.

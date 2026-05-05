@@ -1,0 +1,409 @@
+{{- if .Values.istio.egressAllowlist.enabled }}
+{{- $relNs := .Release.Namespace }}
+{{- $egressNs := .Values.istio.egressAllowlist.egressGatewayNamespace }}
+{{- $gwName := .Values.istio.egressAllowlist.gatewayName }}
+{{- $egressFqdn := include "clawql-mcp.istioEgressGatewayFqdn" . }}
+{{- $throughGw := .Values.istio.egressAllowlist.throughEgressGateway }}
+---
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: clawql-se-github
+  namespace: {{ $relNs }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: istio-egress-allowlist
+spec:
+  hosts:
+    - api.github.com
+  location: MESH_EXTERNAL
+  ports:
+    - number: 443
+      name: tls
+      protocol: TLS
+  resolution: DNS
+---
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: clawql-se-linear
+  namespace: {{ $relNs }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: istio-egress-allowlist
+spec:
+  hosts:
+    - api.linear.app
+  location: MESH_EXTERNAL
+  ports:
+    - number: 443
+      name: tls
+      protocol: TLS
+  resolution: DNS
+---
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: clawql-se-slack
+  namespace: {{ $relNs }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: istio-egress-allowlist
+spec:
+  hosts:
+    - api.slack.com
+    - slack.com
+    - files.slack.com
+  location: MESH_EXTERNAL
+  ports:
+    - number: 443
+      name: tls
+      protocol: TLS
+  resolution: DNS
+---
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: clawql-se-cloudflare
+  namespace: {{ $relNs }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: istio-egress-allowlist
+spec:
+  hosts:
+    - api.cloudflare.com
+  location: MESH_EXTERNAL
+  ports:
+    - number: 443
+      name: tls
+      protocol: TLS
+  resolution: DNS
+---
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: clawql-se-googleapis-wildcard
+  namespace: {{ $relNs }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: istio-egress-allowlist
+spec:
+  hosts:
+    - "*.googleapis.com"
+  location: MESH_EXTERNAL
+  ports:
+    - number: 443
+      name: tls
+      protocol: TLS
+  resolution: NONE
+---
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: clawql-se-atlassian-api
+  namespace: {{ $relNs }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: istio-egress-allowlist
+spec:
+  hosts:
+    - api.atlassian.com
+  location: MESH_EXTERNAL
+  ports:
+    - number: 443
+      name: tls
+      protocol: TLS
+  resolution: DNS
+---
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: clawql-se-atlassian-cloud-wildcard
+  namespace: {{ $relNs }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: istio-egress-allowlist
+spec:
+  hosts:
+    - "*.atlassian.net"
+  location: MESH_EXTERNAL
+  ports:
+    - number: 443
+      name: tls
+      protocol: TLS
+  resolution: NONE
+---
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: clawql-se-sentry
+  namespace: {{ $relNs }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: istio-egress-allowlist
+spec:
+  hosts:
+    - sentry.io
+    - "*.ingest.sentry.io"
+  location: MESH_EXTERNAL
+  ports:
+    - number: 443
+      name: tls
+      protocol: TLS
+  resolution: NONE
+{{- if $throughGw }}
+---
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: {{ $gwName }}
+  namespace: {{ $egressNs }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: istio-egress-allowlist
+spec:
+  selector:
+    istio: egressgateway
+  servers:
+    - port:
+        number: 443
+        name: tls-providers-passthrough
+        protocol: TLS
+      hosts:
+        - api.github.com
+        - api.linear.app
+        - api.slack.com
+        - slack.com
+        - files.slack.com
+        - api.cloudflare.com
+        - "*.googleapis.com"
+        - api.atlassian.com
+        - "*.atlassian.net"
+        - sentry.io
+        - "*.ingest.sentry.io"
+      tls:
+        mode: PASSTHROUGH
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: clawql-providers-tls-to-egress-gateway
+  namespace: {{ $relNs }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: istio-egress-allowlist
+spec:
+  hosts:
+    - api.github.com
+    - api.linear.app
+    - api.slack.com
+    - slack.com
+    - files.slack.com
+    - api.cloudflare.com
+    - "*.googleapis.com"
+    - api.atlassian.com
+    - "*.atlassian.net"
+    - sentry.io
+    - "*.ingest.sentry.io"
+  gateways:
+    - mesh
+  tls:
+    - match:
+        - gateways:
+            - mesh
+          port: 443
+          sniHosts:
+            - api.github.com
+            - api.linear.app
+            - api.slack.com
+            - slack.com
+            - files.slack.com
+            - api.cloudflare.com
+            - api.atlassian.com
+            - sentry.io
+      route:
+        - destination:
+            host: {{ $egressFqdn }}
+            port:
+              number: 443
+    - match:
+        - gateways:
+            - mesh
+          port: 443
+          sniHosts:
+            - "*.googleapis.com"
+      route:
+        - destination:
+            host: {{ $egressFqdn }}
+            port:
+              number: 443
+    - match:
+        - gateways:
+            - mesh
+          port: 443
+          sniHosts:
+            - "*.atlassian.net"
+      route:
+        - destination:
+            host: {{ $egressFqdn }}
+            port:
+              number: 443
+    - match:
+        - gateways:
+            - mesh
+          port: 443
+          sniHosts:
+            - "*.ingest.sentry.io"
+      route:
+        - destination:
+            host: {{ $egressFqdn }}
+            port:
+              number: 443
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: clawql-providers-tls-from-egress-gateway
+  namespace: {{ $egressNs }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: istio-egress-allowlist
+spec:
+  hosts:
+    - api.github.com
+    - api.linear.app
+    - api.slack.com
+    - slack.com
+    - files.slack.com
+    - api.cloudflare.com
+    - "*.googleapis.com"
+    - api.atlassian.com
+    - "*.atlassian.net"
+    - sentry.io
+    - "*.ingest.sentry.io"
+  gateways:
+    - {{ $gwName }}
+  tls:
+    - match:
+        - gateways:
+            - {{ $gwName }}
+          port: 443
+          sniHosts:
+            - api.github.com
+      route:
+        - destination:
+            host: api.github.com
+            port:
+              number: 443
+    - match:
+        - gateways:
+            - {{ $gwName }}
+          port: 443
+          sniHosts:
+            - api.linear.app
+      route:
+        - destination:
+            host: api.linear.app
+            port:
+              number: 443
+    - match:
+        - gateways:
+            - {{ $gwName }}
+          port: 443
+          sniHosts:
+            - api.slack.com
+      route:
+        - destination:
+            host: api.slack.com
+            port:
+              number: 443
+    - match:
+        - gateways:
+            - {{ $gwName }}
+          port: 443
+          sniHosts:
+            - slack.com
+      route:
+        - destination:
+            host: slack.com
+            port:
+              number: 443
+    - match:
+        - gateways:
+            - {{ $gwName }}
+          port: 443
+          sniHosts:
+            - files.slack.com
+      route:
+        - destination:
+            host: files.slack.com
+            port:
+              number: 443
+    - match:
+        - gateways:
+            - {{ $gwName }}
+          port: 443
+          sniHosts:
+            - api.cloudflare.com
+      route:
+        - destination:
+            host: api.cloudflare.com
+            port:
+              number: 443
+    - match:
+        - gateways:
+            - {{ $gwName }}
+          port: 443
+          sniHosts:
+            - api.atlassian.com
+      route:
+        - destination:
+            host: api.atlassian.com
+            port:
+              number: 443
+    - match:
+        - gateways:
+            - {{ $gwName }}
+          port: 443
+          sniHosts:
+            - sentry.io
+      route:
+        - destination:
+            host: sentry.io
+            port:
+              number: 443
+    - match:
+        - gateways:
+            - {{ $gwName }}
+          port: 443
+          sniHosts:
+            - "*.googleapis.com"
+      route:
+        - destination:
+            host: "*.googleapis.com"
+            port:
+              number: 443
+    - match:
+        - gateways:
+            - {{ $gwName }}
+          port: 443
+          sniHosts:
+            - "*.atlassian.net"
+      route:
+        - destination:
+            host: "*.atlassian.net"
+            port:
+              number: 443
+    - match:
+        - gateways:
+            - {{ $gwName }}
+          port: 443
+          sniHosts:
+            - "*.ingest.sentry.io"
+      route:
+        - destination:
+            host: "*.ingest.sentry.io"
+            port:
+              number: 443
+{{- end }}
+{{- end }}

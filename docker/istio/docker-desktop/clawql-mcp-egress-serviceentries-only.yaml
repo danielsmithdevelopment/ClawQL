@@ -1,0 +1,134 @@
+# ClawQL MCP — ServiceEntry-only egress allowlist (ambient-friendly baseline for #275).
+#
+# Use when you want **REGISTRY_ONLY**-style FQDN registration without routing through **istio-egressgateway**
+# (typical first step for **ambient** mesh, or when the gateway passthrough path is not installed).
+#
+# Placeholder: __TARGET_NAMESPACE__ (default: clawql) — expanded by install-istio-docker-desktop.sh.
+#
+# Pair with **istiod** **meshConfig.outboundTrafficPolicy.mode=REGISTRY_ONLY** so unlisted external hosts fail closed.
+# Trim **hosts** to match enabled providers. For centralized egress + TLS passthrough, use
+# **clawql-mcp-egress-allowlist.yaml** after installing **istio-egressgateway**.
+#
+---
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: clawql-se-github
+  namespace: __TARGET_NAMESPACE__
+spec:
+  hosts:
+    - api.github.com
+  location: MESH_EXTERNAL
+  ports:
+    - number: 443
+      name: tls
+      protocol: TLS
+  resolution: DNS
+---
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: clawql-se-linear
+  namespace: __TARGET_NAMESPACE__
+spec:
+  hosts:
+    - api.linear.app
+  location: MESH_EXTERNAL
+  ports:
+    - number: 443
+      name: tls
+      protocol: TLS
+  resolution: DNS
+---
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: clawql-se-slack
+  namespace: __TARGET_NAMESPACE__
+spec:
+  hosts:
+    - api.slack.com
+    - slack.com
+    - files.slack.com
+  location: MESH_EXTERNAL
+  ports:
+    - number: 443
+      name: tls
+      protocol: TLS
+  resolution: DNS
+---
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: clawql-se-cloudflare
+  namespace: __TARGET_NAMESPACE__
+spec:
+  hosts:
+    - api.cloudflare.com
+  location: MESH_EXTERNAL
+  ports:
+    - number: 443
+      name: tls
+      protocol: TLS
+  resolution: DNS
+---
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: clawql-se-googleapis-wildcard
+  namespace: __TARGET_NAMESPACE__
+spec:
+  hosts:
+    - "*.googleapis.com"
+  location: MESH_EXTERNAL
+  ports:
+    - number: 443
+      name: tls
+      protocol: TLS
+  resolution: NONE
+---
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: clawql-se-atlassian-api
+  namespace: __TARGET_NAMESPACE__
+spec:
+  hosts:
+    - api.atlassian.com
+  location: MESH_EXTERNAL
+  ports:
+    - number: 443
+      name: tls
+      protocol: TLS
+  resolution: DNS
+---
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: clawql-se-atlassian-cloud-wildcard
+  namespace: __TARGET_NAMESPACE__
+spec:
+  hosts:
+    - "*.atlassian.net"
+  location: MESH_EXTERNAL
+  ports:
+    - number: 443
+      name: tls
+      protocol: TLS
+  resolution: NONE
+---
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: clawql-se-sentry
+  namespace: __TARGET_NAMESPACE__
+spec:
+  hosts:
+    - sentry.io
+    - "*.ingest.sentry.io"
+  location: MESH_EXTERNAL
+  ports:
+    - number: 443
+      name: tls
+      protocol: TLS
+  resolution: NONE
