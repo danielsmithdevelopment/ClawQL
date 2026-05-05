@@ -196,7 +196,7 @@ if ! kubectl_ctx cluster-info >/dev/null 2>&1; then
   echo "    2. Then: kubectl config use-context docker-desktop"
   echo ""
   echo "If you switched products and see TLS / unknown authority errors, delete the stale context"
-  echo "from ~/.kube/config or force the live one: CLAWQL_LOCAL_K8S_CONTEXT=rancher-desktop make local-k8s-up"
+  echo "from ${HOME}/.kube/config or force the live one: CLAWQL_LOCAL_K8S_CONTEXT=rancher-desktop make local-k8s-up"
   echo ""
   echo "kubectl said:"
   kubectl_ctx cluster-info 2>&1 || true
@@ -440,8 +440,8 @@ if [[ -n "${INSTALL_ISTIO}" ]]; then
 fi
 echo ""
 if [[ -n "${INSTALL_ISTIO}" && "${CLAWQL_ISTIO_INSTALL_INGRESS_GATEWAY:-1}" == "1" && "${CLAWQL_ISTIO_MCP_HTTP_SERVICE_CLUSTERIP:-0}" == "1" ]]; then
-  echo "~/.cursor/mcp.json: set \"url\" to the Istio gateway MCP URL printed above (mesh north-south). svc/clawql-mcp-http is ClusterIP — do not use the old direct :8080 LoadBalancer URL."
+  echo "${HOME}/.cursor/mcp.json: set \"url\" to the Istio gateway MCP URL printed above (mesh north-south). svc/clawql-mcp-http is ClusterIP — do not use the old direct :8080 LoadBalancer URL."
   echo "To expose direct MCP LoadBalancer :8080 again (bypass gateway): CLAWQL_ISTIO_MCP_HTTP_SERVICE_CLUSTERIP=0 make local-k8s-up"
 else
-  echo "~/.cursor/mcp.json: \"url\": \"http://clawql-mcp.localhost/mcp\" (Ingress), or direct LB :8080 / Istio gateway URL when CLUSTERIP=0 (see messages above)."
+  echo "${HOME}/.cursor/mcp.json: \"url\": \"http://clawql-mcp.localhost/mcp\" (Ingress), or direct LB :8080 / Istio gateway URL when CLUSTERIP=0 (see messages above)."
 fi
