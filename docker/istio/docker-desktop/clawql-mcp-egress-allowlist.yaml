@@ -1,0 +1,388 @@
+# ClawQL MCP — Istio ServiceEntry allowlist + TLS passthrough via egress gateway (#275).
+#
+# Placeholders (expanded by install-istio-docker-desktop.sh or manually):
+#   __TARGET_NAMESPACE__          — ClawQL workload namespace (default: clawql)
+#   __EGRESS_GATEWAY_NAMESPACE__ — Where istio-egressgateway is installed (default: istio-system)
+#
+# Prerequisites:
+#   - Helm release **istio-egressgateway** from chart **istio/gateway** with labels **istio: egressgateway**
+#     Values files: **istio-clawql-egress-gateway-values-sidecar.yaml** or **istio-clawql-egress-gateway-values-ambient.yaml**
+#     (**install-istio-docker-desktop.sh** picks by CLAWQL_LOCAL_K8S_ISTIO_MODE).
+#   - ServiceEntry-only baseline (no gateway): **clawql-mcp-egress-serviceentries-only.yaml** or Helm
+#     **istio.egressAllowlist.throughEgressGateway=false** — pair with **REGISTRY_ONLY** (#275).
+#   - Optional hardening: set **meshConfig.outboundTrafficPolicy.mode=REGISTRY_ONLY** on **istiod** so only
+#     registered ServiceEntries are reachable. Trim **hosts** below to providers you actually enable
+#     (**CLAWQL_PROVIDER**, **CLAWQL_GRAPHQL_SOURCES**, **CLAWQL_SPEC_URL**, self-hosted *_BASE_URL*, …).
+#
+# Quarterly review: align **ServiceEntry** hosts with STRIDE + GraphQL/OpenAPI surface — see
+# docs/security/clawql-comprehensive-defense-in-depth-mcp-k3s-may-2026.md (STRIDE + ServiceEntry).
+#
+---
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: clawql-se-github
+  namespace: __TARGET_NAMESPACE__
+spec:
+  hosts:
+    - api.github.com
+  location: MESH_EXTERNAL
+  ports:
+    - number: 443
+      name: tls
+      protocol: TLS
+  resolution: DNS
+---
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: clawql-se-linear
+  namespace: __TARGET_NAMESPACE__
+spec:
+  hosts:
+    - api.linear.app
+  location: MESH_EXTERNAL
+  ports:
+    - number: 443
+      name: tls
+      protocol: TLS
+  resolution: DNS
+---
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: clawql-se-slack
+  namespace: __TARGET_NAMESPACE__
+spec:
+  hosts:
+    - api.slack.com
+    - slack.com
+    - files.slack.com
+  location: MESH_EXTERNAL
+  ports:
+    - number: 443
+      name: tls
+      protocol: TLS
+  resolution: DNS
+---
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: clawql-se-cloudflare
+  namespace: __TARGET_NAMESPACE__
+spec:
+  hosts:
+    - api.cloudflare.com
+  location: MESH_EXTERNAL
+  ports:
+    - number: 443
+      name: tls
+      protocol: TLS
+  resolution: DNS
+---
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: clawql-se-googleapis-wildcard
+  namespace: __TARGET_NAMESPACE__
+spec:
+  hosts:
+    - "*.googleapis.com"
+  location: MESH_EXTERNAL
+  ports:
+    - number: 443
+      name: tls
+      protocol: TLS
+  resolution: NONE
+---
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: clawql-se-atlassian-api
+  namespace: __TARGET_NAMESPACE__
+spec:
+  hosts:
+    - api.atlassian.com
+  location: MESH_EXTERNAL
+  ports:
+    - number: 443
+      name: tls
+      protocol: TLS
+  resolution: DNS
+---
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: clawql-se-atlassian-cloud-wildcard
+  namespace: __TARGET_NAMESPACE__
+spec:
+  hosts:
+    - "*.atlassian.net"
+  location: MESH_EXTERNAL
+  ports:
+    - number: 443
+      name: tls
+      protocol: TLS
+  resolution: NONE
+---
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: clawql-se-sentry
+  namespace: __TARGET_NAMESPACE__
+spec:
+  hosts:
+    - sentry.io
+    - "*.ingest.sentry.io"
+  location: MESH_EXTERNAL
+  ports:
+    - number: 443
+      name: tls
+      protocol: TLS
+  resolution: NONE
+---
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: clawql-provider-egress-gateway
+  namespace: __EGRESS_GATEWAY_NAMESPACE__
+spec:
+  selector:
+    istio: egressgateway
+  servers:
+    - port:
+        number: 443
+        name: tls-providers-passthrough
+        protocol: TLS
+      hosts:
+        - api.github.com
+        - api.linear.app
+        - api.slack.com
+        - slack.com
+        - files.slack.com
+        - api.cloudflare.com
+        - "*.googleapis.com"
+        - api.atlassian.com
+        - "*.atlassian.net"
+        - sentry.io
+        - "*.ingest.sentry.io"
+      tls:
+        mode: PASSTHROUGH
+---
+# Route mesh TLS (SNI) to the egress gateway pod Service.
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: clawql-providers-tls-to-egress-gateway
+  namespace: __TARGET_NAMESPACE__
+spec:
+  hosts:
+    - api.github.com
+    - api.linear.app
+    - api.slack.com
+    - slack.com
+    - files.slack.com
+    - api.cloudflare.com
+    - "*.googleapis.com"
+    - api.atlassian.com
+    - "*.atlassian.net"
+    - sentry.io
+    - "*.ingest.sentry.io"
+  gateways:
+    - mesh
+  tls:
+    - match:
+        - gateways:
+            - mesh
+          port: 443
+          sniHosts:
+            - api.github.com
+            - api.linear.app
+            - api.slack.com
+            - slack.com
+            - files.slack.com
+            - api.cloudflare.com
+            - api.atlassian.com
+            - sentry.io
+      route:
+        - destination:
+            host: istio-egressgateway.__EGRESS_GATEWAY_NAMESPACE__.svc.cluster.local
+            port:
+              number: 443
+    - match:
+        - gateways:
+            - mesh
+          port: 443
+          sniHosts:
+            - "*.googleapis.com"
+      route:
+        - destination:
+            host: istio-egressgateway.__EGRESS_GATEWAY_NAMESPACE__.svc.cluster.local
+            port:
+              number: 443
+    - match:
+        - gateways:
+            - mesh
+          port: 443
+          sniHosts:
+            - "*.atlassian.net"
+      route:
+        - destination:
+            host: istio-egressgateway.__EGRESS_GATEWAY_NAMESPACE__.svc.cluster.local
+            port:
+              number: 443
+    - match:
+        - gateways:
+            - mesh
+          port: 443
+          sniHosts:
+            - "*.ingest.sentry.io"
+      route:
+        - destination:
+            host: istio-egressgateway.__EGRESS_GATEWAY_NAMESPACE__.svc.cluster.local
+            port:
+              number: 443
+---
+# On the egress gateway, forward the same SNI to the real upstream (still encrypted).
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: clawql-providers-tls-from-egress-gateway
+  namespace: __EGRESS_GATEWAY_NAMESPACE__
+spec:
+  hosts:
+    - api.github.com
+    - api.linear.app
+    - api.slack.com
+    - slack.com
+    - files.slack.com
+    - api.cloudflare.com
+    - "*.googleapis.com"
+    - api.atlassian.com
+    - "*.atlassian.net"
+    - sentry.io
+    - "*.ingest.sentry.io"
+  gateways:
+    - clawql-provider-egress-gateway
+  tls:
+    - match:
+        - gateways:
+            - clawql-provider-egress-gateway
+          port: 443
+          sniHosts:
+            - api.github.com
+      route:
+        - destination:
+            host: api.github.com
+            port:
+              number: 443
+    - match:
+        - gateways:
+            - clawql-provider-egress-gateway
+          port: 443
+          sniHosts:
+            - api.linear.app
+      route:
+        - destination:
+            host: api.linear.app
+            port:
+              number: 443
+    - match:
+        - gateways:
+            - clawql-provider-egress-gateway
+          port: 443
+          sniHosts:
+            - api.slack.com
+      route:
+        - destination:
+            host: api.slack.com
+            port:
+              number: 443
+    - match:
+        - gateways:
+            - clawql-provider-egress-gateway
+          port: 443
+          sniHosts:
+            - slack.com
+      route:
+        - destination:
+            host: slack.com
+            port:
+              number: 443
+    - match:
+        - gateways:
+            - clawql-provider-egress-gateway
+          port: 443
+          sniHosts:
+            - files.slack.com
+      route:
+        - destination:
+            host: files.slack.com
+            port:
+              number: 443
+    - match:
+        - gateways:
+            - clawql-provider-egress-gateway
+          port: 443
+          sniHosts:
+            - api.cloudflare.com
+      route:
+        - destination:
+            host: api.cloudflare.com
+            port:
+              number: 443
+    - match:
+        - gateways:
+            - clawql-provider-egress-gateway
+          port: 443
+          sniHosts:
+            - api.atlassian.com
+      route:
+        - destination:
+            host: api.atlassian.com
+            port:
+              number: 443
+    - match:
+        - gateways:
+            - clawql-provider-egress-gateway
+          port: 443
+          sniHosts:
+            - sentry.io
+      route:
+        - destination:
+            host: sentry.io
+            port:
+              number: 443
+    - match:
+        - gateways:
+            - clawql-provider-egress-gateway
+          port: 443
+          sniHosts:
+            - "*.googleapis.com"
+      route:
+        - destination:
+            host: "*.googleapis.com"
+            port:
+              number: 443
+    - match:
+        - gateways:
+            - clawql-provider-egress-gateway
+          port: 443
+          sniHosts:
+            - "*.atlassian.net"
+      route:
+        - destination:
+            host: "*.atlassian.net"
+            port:
+              number: 443
+    - match:
+        - gateways:
+            - clawql-provider-egress-gateway
+          port: 443
+          sniHosts:
+            - "*.ingest.sentry.io"
+      route:
+        - destination:
+            host: "*.ingest.sentry.io"
+            port:
+              number: 443

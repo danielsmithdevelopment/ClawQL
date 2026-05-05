@@ -37,6 +37,41 @@ For **VM-level containment** of MCP / sandbox namespaces, use:
 
 Both default **off**. Enabling them without installing matching [**`RuntimeClass`**](https://kubernetes.io/docs/concepts/containers/runtime-class/) objects (and Kata/gVisor runtimes on nodes) will **break scheduling or admission**. Tradeoffs, namespace layout, and examples: **[`docs/security/runtime-class-containment.md`](../security/runtime-class-containment.md)**.
 
+### Istio egress gateway + ServiceEntry allowlist ([#275](https://github.com/danielsmithdevelopment/ClawQL/issues/275))
+
+When Istio is on the cluster ([#155](https://github.com/danielsmithdevelopment/ClawQL/issues/155)), you can force **HTTPS provider** traffic through **`istio-egressgateway`** and lock destinations with **`ServiceEntry`** resources aligned to the APIs you enable (GraphQL/OpenAPI/Discovery hosts — same idea as **`.env.example`** / bundled vendors).
+
+**Helm chart (`charts/clawql-mcp`):**
+
+- **`istio.egressAllowlist.enabled: true`** — renders the same allowlist **ServiceEntry** objects into the **release namespace**.
+- **`istio.egressAllowlist.throughEgressGateway: true`** (default when enabled) — also renders **Gateway** + **VirtualService** objects (TLS passthrough) in **`istio.egressAllowlist.egressGatewayNamespace`** (default **`istio-system`**). Install **`istio/gateway`** as **`istio-egressgateway`** with selector **`istio: egressgateway`** first (see **`docker/istio/docker-desktop/istio-clawql-egress-gateway-values-*.yaml`**).
+- **`istio.egressAllowlist.throughEgressGateway: false`** — **ServiceEntry** only (good **REGISTRY_ONLY** baseline with **ambient** mesh when you are not routing via a gateway).
+
+```bash
+helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
+  --set istio.egressAllowlist.enabled=true \
+  --set istio.egressAllowlist.throughEgressGateway=true
+```
+
+**Raw manifests (`docker/istio/docker-desktop/`):**
+
+- **`clawql-mcp-egress-allowlist.yaml`** — **ServiceEntry** + **Gateway** + **VirtualService** chain (TLS passthrough).
+- **`clawql-mcp-egress-serviceentries-only.yaml`** — **ServiceEntry** only (pair with **`meshConfig.outboundTrafficPolicy.mode=REGISTRY_ONLY`**).
+- **`istio-clawql-egress-gateway-values-sidecar.yaml`** / **`istio-clawql-egress-gateway-values-ambient.yaml`** — **`istio/gateway`** values for **`istio-egressgateway`** by dataplane mode.
+
+**Local install:** **`CLAWQL_ISTIO_INSTALL_EGRESS_ALLOWLIST=1`** with **`scripts/kubernetes/install-istio-docker-desktop.sh`** installs **`istio-egressgateway`** using values that match **`CLAWQL_LOCAL_K8S_ISTIO_MODE`** (**sidecar** or **ambient**) and applies **`clawql-mcp-egress-allowlist.yaml`**. Use **`CLAWQL_ISTIO_EGRESS_ALLOWLIST_MODE=serviceentries`** to apply **`clawql-mcp-egress-serviceentries-only.yaml`** instead (no egress gateway Helm release).
+
+**Optional hardening:** configure **istiod** with **`meshConfig.outboundTrafficPolicy.mode=REGISTRY_ONLY`** so workloads cannot reach arbitrary external hosts—only those registered via **ServiceEntry** (then gaps fail closed instead of open).
+
+**Quarterly STRIDE + ServiceEntry review** (control narrative: **[`docs/security/clawql-security-defense-in-depth.md`](../security/clawql-security-defense-in-depth.md)**):
+
+- Diff **ServiceEntry** / **Gateway** `hosts` against the **merged provider set** you run (Helm **`provider`** / **`CLAWQL_BUNDLED_PROVIDERS`** / GraphQL sources).
+- Remove unused FQDNs; add entries **before** enabling a new integration in production.
+- Reconcile with **Kiali** / mesh telemetry for unexpected egress.
+- Record the review with your STRIDE artifact (same cadence as the defense-in-depth doc).
+
+**Mesh operator guide:** **[`docs/deployment/docker-desktop-istio-observability.md`](docker-desktop-istio-observability.md)** (Istio install context); **`docker/README.md`** lists **`CLAWQL_ISTIO_INSTALL_EGRESS_ALLOWLIST`** and **`CLAWQL_ISTIO_EGRESS_ALLOWLIST_MODE`**.
+
 ## Install from a repo clone
 
 From the **repository root**:

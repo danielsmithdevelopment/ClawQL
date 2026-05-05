@@ -73,6 +73,11 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- printf "%s-dragonfly" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
+{{/* Istio egress DNS name for MCP provider allowlist (#275). */}}
+{{- define "clawql-mcp.istioEgressGatewayFqdn" -}}
+{{- printf "%s.%s.svc.cluster.local" .Values.istio.egressAllowlist.egressGatewayServiceName .Values.istio.egressAllowlist.egressGatewayNamespace }}
+{{- end }}
+
 {{- define "clawql-mcp.flinkName" -}}
 {{- printf "%s-flink" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
 {{- end }}

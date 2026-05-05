@@ -1,0 +1,27 @@
+# istio/gateway chart — MCP provider egress (TLS passthrough to HTTPS upstreams).
+# Install with release name **istio-egressgateway** (see install-istio-docker-desktop.sh).
+# Selector **istio: egressgateway** must match **Gateway** CR **spec.selector** in clawql-mcp-egress-allowlist.yaml.
+autoscaling:
+  enabled: false
+labels:
+  app: istio-egressgateway
+  istio: egressgateway
+  istio.io/dataplane-mode: none
+resources:
+  requests:
+    cpu: 25m
+    memory: 128Mi
+  limits:
+    cpu: 2000m
+    memory: 1024Mi
+service:
+  type: ClusterIP
+  ports:
+    - name: status-port
+      port: 15021
+      protocol: TCP
+      targetPort: 15021
+    - name: tls
+      port: 443
+      protocol: TCP
+      targetPort: 443

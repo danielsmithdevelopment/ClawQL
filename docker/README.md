@@ -151,6 +151,8 @@ make local-k8s-up
 # Opt out of forced mTLS: CLAWQL_ISTIO_APPLY_STRICT_MTLS=0
 # No ingress-nginx (e.g. CLAWQL_LOCAL_K8S_INSTALL_INGRESS_NGINX=0): CLAWQL_ISTIO_MESH_INGRESS_NGINX=0
 # Skip Istio Gateway + VirtualService (not recommended with STRICT): CLAWQL_ISTIO_INSTALL_INGRESS_GATEWAY=0
+# Egress allowlist (#275): CLAWQL_ISTIO_INSTALL_EGRESS_ALLOWLIST=1 (sidecar or ambient — gateway values match CLAWQL_LOCAL_K8S_ISTIO_MODE)
+# ServiceEntry-only (no istio-egressgateway): CLAWQL_ISTIO_EGRESS_ALLOWLIST_MODE=serviceentries
 # Keep direct MCP LoadBalancer :8080 (bypass gateway): CLAWQL_ISTIO_MCP_HTTP_SERVICE_CLUSTERIP=0 make local-k8s-up
 ```
 
@@ -182,7 +184,7 @@ If the GHCR package is **private**, add **`imagePullSecrets`** via Helm values (
 - **MCP URL:** default **`make local-k8s-up`** uses **Ingress** — **`http://clawql-mcp.localhost/mcp`**. With **`CLAWQL_ISTIO_MCP_HTTP_SERVICE_CLUSTERIP=1`**, optional **`http://localhost/mcp`** via the Istio gateway when **:80** reaches **`clawql-mcp-ingress`**. **Compose** remains **`http://localhost:8080/mcp`**.
 - **Cold start:** The MCP container loads every bundled spec before `listen()`; hitting the MCP URL too early can produce `fetch failed` / “other side closed” in Node. Wait until **`curl -s http://clawql-mcp.localhost/healthz`** returns `{"status":"ok"…}` (or **`curl -s http://localhost/healthz`** when using the Istio gateway on **:80**) or the pod is **Ready**. The `workflow:complex-release-stack:mcp` script polls **`/healthz`** when **`CLAWQL_MCP_URL`** is set.
 - **Obsidian vault (`memory_ingest` / `memory_recall`):** Helm defaults to **`vault.hostPath`** so **`$HOME/.ClawQL`** (or **`CLAWQL_LOCAL_VAULT_HOST_PATH`**) is mounted at **`/vault`** — same idea as Compose’s **`CLAWQL_VAULT_HOST_PATH`**. On Docker Desktop, paths such as **`/Users/...`** on macOS are visible to **`hostPath`** pods. If the path is not writable by the pod, MCP now starts in degraded mode (memory tools disabled) and logs a permission-fix command; you can also avoid host permissions entirely with **`CLAWQL_LOCAL_K8S_VAULT_BACKEND=pvc`**.
-- **Teardown:** `helm uninstall clawql -n clawql` or `kubectl delete namespace clawql` (also removes non-Helm resources in that namespace). If you used **`CLAWQL_LOCAL_K8S_ISTIO`**, also **`helm uninstall clawql-mcp-ingress -n istio-ingress`** (and consider **`kubectl delete ns istio-ingress`**) when tearing down the mesh gateway. If you installed Loki/Tempo: **`helm uninstall clawql-loki clawql-tempo -n istio-system`** before removing **`istio-system`**.
+- **Teardown:** `helm uninstall clawql -n clawql` or `kubectl delete namespace clawql` (also removes non-Helm resources in that namespace). If you used **`CLAWQL_LOCAL_K8S_ISTIO`**, also **`helm uninstall clawql-mcp-ingress -n istio-ingress`** (and consider **`kubectl delete ns istio-ingress`**) when tearing down the mesh gateway. If you installed egress allowlist (**#275**): **`helm uninstall istio-egressgateway -n istio-system`** (or your **`CLAWQL_ISTIO_EGRESS_GATEWAY_NAMESPACE`**). If you installed Loki/Tempo: **`helm uninstall clawql-loki clawql-tempo -n istio-system`** before removing **`istio-system`**.
 
 ### Optional: gRPC on Docker Desktop K8s
 
