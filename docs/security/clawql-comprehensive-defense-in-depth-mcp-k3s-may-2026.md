@@ -320,12 +320,12 @@ The init container image itself must be Cosign-signed and digest-pinned. An unve
 apiVersion: v1
 kind: ResourceQuota
 metadata:
- name: openclaw-gpu-quota
- namespace: openclaw
+  name: openclaw-gpu-quota
+  namespace: openclaw
 spec:
- hard:
-  requests.nvidia.com/gpu: "4" # Set to actual intended max concurrency, not "1"
-  limits.nvidia.com/gpu: "4"
+  hard:
+    requests.nvidia.com/gpu: "4" # Set to actual intended max concurrency, not "1"
+    limits.nvidia.com/gpu: "4"
 ```
 
 Set the quota to your actual intended maximum agent concurrency — not 1. The purpose is a ceiling against runaway consumption, not a restriction on legitimate parallelism. Pair with `LimitRange` to enforce per-pod GPU limits so no single pod can claim the entire quota.
@@ -384,22 +384,22 @@ helm upgrade --install clawql-full-stack ./clawql-full-stack \
 
 ## Summary: What Each Layer Stops
 
-| Attack vector        | Primary control           | Secondary control      |
+| Attack vector                | Primary control                      | Secondary control           |
 | ---------------------------- | ------------------------------------ | --------------------------- |
-| Compromised container image | Cosign + Kyverno verifyImages    | Harbor allowlist      |
-| Dependency confusion     | Harbor allowlist-only resolution   | Trivy scanning       |
-| Secret in git        | Gitleaks pre-commit         | TruffleHog CI scan     |
-| Poisoned model weights    | Init-container SHA-256 + Cosign blob | Harbor manifest signing   |
-| Agent privilege escalation  | JWT ATR claims + Panguard      | MS Governance Toolkit    |
-| Prompt injection / jailbreak | MCP tool scoping + ATR rules     | Panguard ATR enforcement  |
-| Lateral movement (container) | Kata VM isolation          | NetworkPolicy default-deny |
-| Lateral movement (network)  | Istio mTLS + AuthorizationPolicy   | East-West baselining alerts |
-| Rogue egress         | Istio EgressGateway + ServiceEntries | DNS hardening        |
-| Supply chain (Helm chart)  | YubiKey Git signing         | Cosign + Kyverno      |
-| Vault credential leak    | Short TTL + auto-revocation     | Lease monitoring      |
-| PII in logs         | Presidio pre-Loki redaction     | Data classification policy |
-| GPU denial-of-service    | ResourceQuota + LimitRange      | Node isolation       |
-| Silent log tampering     | WORM + Merkle roots         | Git-backed signed commits  |
-| Incident without forensics  | WORM prompt/response logs      | Wazuh SIEM correlation   |
-| Compromised primary infra  | Out-of-band comms (Matrix)      | PICERL runbooks       |
-| Untested recovery      | Quarterly restore tests       | Written test records    |
+| Compromised container image  | Cosign + Kyverno verifyImages        | Harbor allowlist            |
+| Dependency confusion         | Harbor allowlist-only resolution     | Trivy scanning              |
+| Secret in git                | Gitleaks pre-commit                  | TruffleHog CI scan          |
+| Poisoned model weights       | Init-container SHA-256 + Cosign blob | Harbor manifest signing     |
+| Agent privilege escalation   | JWT ATR claims + Panguard            | MS Governance Toolkit       |
+| Prompt injection / jailbreak | MCP tool scoping + ATR rules         | Panguard ATR enforcement    |
+| Lateral movement (container) | Kata VM isolation                    | NetworkPolicy default-deny  |
+| Lateral movement (network)   | Istio mTLS + AuthorizationPolicy     | East-West baselining alerts |
+| Rogue egress                 | Istio EgressGateway + ServiceEntries | DNS hardening               |
+| Supply chain (Helm chart)    | YubiKey Git signing                  | Cosign + Kyverno            |
+| Vault credential leak        | Short TTL + auto-revocation          | Lease monitoring            |
+| PII in logs                  | Presidio pre-Loki redaction          | Data classification policy  |
+| GPU denial-of-service        | ResourceQuota + LimitRange           | Node isolation              |
+| Silent log tampering         | WORM + Merkle roots                  | Git-backed signed commits   |
+| Incident without forensics   | WORM prompt/response logs            | Wazuh SIEM correlation      |
+| Compromised primary infra    | Out-of-band comms (Matrix)           | PICERL runbooks             |
+| Untested recovery            | Quarterly restore tests              | Written test records        |

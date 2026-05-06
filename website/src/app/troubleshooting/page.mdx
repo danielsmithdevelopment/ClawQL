@@ -33,33 +33,33 @@ If startup or pregenerate steps OOM or fail, see maintainer notes in [`providers
 
 Use this when `http://clawql.localhost` is failing, dashboard sync appears stuck, or Vault updates are not reflected in `clawql-mcp-http`.
 
-1) Check dashboard HTTP health:
+1. Check dashboard HTTP health:
 
 ```bash
 curl -sS http://clawql.localhost/api/k8s/health
 ```
 
-2) Check dashboard workload objects:
+2. Check dashboard workload objects:
 
 ```bash
 kubectl -n clawql get deploy,svc,ingress | rg dashboard
 kubectl -n clawql get pods -l app.kubernetes.io/component=dashboard
 ```
 
-3) Verify dashboard container env wiring (Vault + rollout target):
+3. Verify dashboard container env wiring (Vault + rollout target):
 
 ```bash
 kubectl -n clawql get deploy clawql-mcp-http-dashboard -o yaml | rg "CLAWQL_DASHBOARD_(VAULT|K8S)_" -n
 ```
 
-4) Verify rollout target exists and is healthy:
+4. Verify rollout target exists and is healthy:
 
 ```bash
 kubectl -n clawql get deploy clawql-mcp-http
 kubectl -n clawql rollout status deploy/clawql-mcp-http --timeout=180s
 ```
 
-5) Verify Vault value directly from Vault pod:
+5. Verify Vault value directly from Vault pod:
 
 ```bash
 kubectl -n clawql exec clawql-vault-0 -- sh -lc 'VAULT_ADDR=http://127.0.0.1:8200 VAULT_TOKEN="${VAULT_DEV_ROOT_TOKEN_ID:-root}" vault kv get -field=ONYX_BASE_URL secret/provider/env'

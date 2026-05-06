@@ -453,33 +453,33 @@ Operational notes:
 
 Use this when `http://clawql.localhost` is failing, dashboard sync appears stuck, or Vault updates do not land in `clawql-mcp-http`.
 
-1) Dashboard health:
+1. Dashboard health:
 
 ```bash
 curl -sS http://clawql.localhost/api/k8s/health
 ```
 
-2) Dashboard workload objects:
+2. Dashboard workload objects:
 
 ```bash
 kubectl -n clawql get deploy,svc,ingress | rg dashboard
 kubectl -n clawql get pods -l app.kubernetes.io/component=dashboard
 ```
 
-3) Dashboard env wiring (Vault + rollout target):
+3. Dashboard env wiring (Vault + rollout target):
 
 ```bash
 kubectl -n clawql get deploy clawql-mcp-http-dashboard -o yaml | rg "CLAWQL_DASHBOARD_(VAULT|K8S)_" -n
 ```
 
-4) Rollout target health:
+4. Rollout target health:
 
 ```bash
 kubectl -n clawql get deploy clawql-mcp-http
 kubectl -n clawql rollout status deploy/clawql-mcp-http --timeout=180s
 ```
 
-5) Vault read-back verification:
+5. Vault read-back verification:
 
 ```bash
 kubectl -n clawql exec clawql-vault-0 -- sh -lc 'VAULT_ADDR=http://127.0.0.1:8200 VAULT_TOKEN="${VAULT_DEV_ROOT_TOKEN_ID:-root}" vault kv get -field=ONYX_BASE_URL secret/provider/env'
@@ -550,13 +550,13 @@ See **[`charts/clawql-mcp/values.yaml`](../charts/clawql-mcp/values.yaml)**. Com
 | `extraEnv`                                          | Additional container env entries                                                                                                                                                                                                                                                                                                                                                                                             |
 | `envFromSecret`                                     | **`envFrom`** from one existing Secret                                                                                                                                                                                                                                                                                                                                                                                       |
 | `envFromSecrets`                                    | **`envFrom`** from multiple existing Secrets (ordered list; useful for Vault-synced secret sets)                                                                                                                                                                                                                                                                                                                             |
-| `secretSourcing.requireVaultBackedSecrets`          | **`true`** (required). **`false`** is rejected; Helm must supply **`envFromSecret`** / **`envFromSecrets`**.                                                                                                                                                                                                                                                                                                                                                                                 |
-| `hashicorpvault`                                    | Bundled **`hashicorp/vault`** subchart is **always** installed. **`enabled: false`** is **unsupported** (render fails).                                                                                                                                                                                                                                                                                                                                                                       |
+| `secretSourcing.requireVaultBackedSecrets`          | **`true`** (required). **`false`** is rejected; Helm must supply **`envFromSecret`** / **`envFromSecrets`**.                                                                                                                                                                                                                                                                                                                 |
+| `hashicorpvault`                                    | Bundled **`hashicorp/vault`** subchart is **always** installed. **`enabled: false`** is **unsupported** (render fails).                                                                                                                                                                                                                                                                                                      |
 | `persistence`                                       | PVC for **Obsidian memory** at **`/vault`** instead of **`emptyDir`** — not HashiCorp Vault ([#161](https://github.com/danielsmithdevelopment/ClawQL/issues/161))                                                                                                                                                                                                                                                            |
 | `vault.hostPath`                                    | Host bind for **Obsidian memory** at **`/vault`** (e.g. Docker Desktop; mutually exclusive with **`persistence`**) — same naming caveat ([#161](https://github.com/danielsmithdevelopment/ClawQL/issues/161))                                                                                                                                                                                                                |
 | `ingress`                                           | Optional HTTP(S) Ingress                                                                                                                                                                                                                                                                                                                                                                                                     |
-| `ui`                                                | Optional docs UI (`website`) Deployment/Service/Ingress (defaults for Docker Desktop use `docs.localhost`)                                                                                                                                                                                                                                                                                                                     |
-| `dashboard`                                         | Optional Vault-first dashboard Deployment/Service/Ingress (`clawql-dashboard` image; defaults for Docker Desktop use `clawql.localhost`)                                                                                                                                                                                                                                                                                      |
+| `ui`                                                | Optional docs UI (`website`) Deployment/Service/Ingress (defaults for Docker Desktop use `docs.localhost`)                                                                                                                                                                                                                                                                                                                   |
+| `dashboard`                                         | Optional Vault-first dashboard Deployment/Service/Ingress (`clawql-dashboard` image; defaults for Docker Desktop use `clawql.localhost`)                                                                                                                                                                                                                                                                                     |
 | `metrics.prometheusScrapeAnnotations`               | When **`enabled: true`** (default), adds **`prometheus.io/*`** on the MCP **Service** for Prometheus stacks that honor Service annotations (including **Istio** sample Prometheus). Set **`path`** / **`port`** if your HTTP listen port differs from **`service.http.targetPort`**.                                                                                                                                         |
 | `metrics.serviceMonitor`                            | When **`enabled: true`**, renders a **`ServiceMonitor`** (**`monitoring.coreos.com/v1`**) scraping **`/metrics`** on **`port: http`**. Default **`false`**. Optional **`namespace`**, **`labels`**, **`interval`**, **`scrapeTimeout`**.                                                                                                                                                                                     |
 
