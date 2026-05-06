@@ -45,11 +45,11 @@ All **`build-push-*`** image jobs (**`build-push-mcp`**, **`build-push-panguard-
 
 Workflow: [`.github/workflows/docker-publish.yml`](../../.github/workflows/docker-publish.yml) job **`repo-supply-chain`**.
 
-| Step             | What runs                                                                                  | Failure effect                               |
-| ---------------- | ------------------------------------------------------------------------------------------ | -------------------------------------------- |
+| Step             | What runs                                                                                  | Failure effect                                       |
+| ---------------- | ------------------------------------------------------------------------------------------ | ---------------------------------------------------- |
 | OSV-Scanner      | `ghcr.io/google/osv-scanner` with [`osv-scanner.toml`](../../osv-scanner.toml)             | Job fails → **no** **`docker-publish`** image builds |
-| Trivy filesystem | `aquasecurity/trivy-action`, **HIGH** / **CRITICAL**, [`.trivyignore`](../../.trivyignore) | Job fails → **no** image builds              |
-| Syft SBOM        | `anchore/syft:v1.19.0` → CycloneDX JSON uploaded as artifact                               | Artifact missing → job fails                 |
+| Trivy filesystem | `aquasecurity/trivy-action`, **HIGH** / **CRITICAL**, [`.trivyignore`](../../.trivyignore) | Job fails → **no** image builds                      |
+| Syft SBOM        | `anchore/syft:v1.19.0` → CycloneDX JSON uploaded as artifact                               | Artifact missing → job fails                         |
 
 The main **[`ci.yml`](../../.github/workflows/ci.yml)** workflow also runs a **`supply-chain`** job (OSV + Trivy fs + repository SBOM upload) on pushes/PRs so **merge queue** can block bad dependency states before they reach **`main`**.
 
@@ -126,11 +126,11 @@ Signing in CI **does not** stop a malicious or mistaken **`kubectl apply`** of a
 
 ### What this does / does not cover
 
-| Covered                                                                                                                                            | Not automatically covered                                                                                                                                   |
-| -------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Covered                                                                                                                                                                                                        | Not automatically covered                                                                                                                                   |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Pods** whose container images match the **`clawql-mcp`** / **`clawql-panguard-mcp-bridge`** / **`clawql-website`** / **`clawql-dashboard`** GHCR globs must verify with the configured **Sigstore** identity | Other images in the same namespace (Postgres, Onyx, ingress, etc.)—different images, different risk                                                         |
-| **Keyless** signatures matching **GitHub Actions** issuer + **this repo** subject pattern                                                          | Forks must **override** regexes and image references in values                                                                                              |
-| **Tag-based** refs still resolve to a digest for verification                                                                                      | **`verifyDigest: true`** in values is optional and requires manifests to use digests—see [`image-signature-enforcement.md`](image-signature-enforcement.md) |
+| **Keyless** signatures matching **GitHub Actions** issuer + **this repo** subject pattern                                                                                                                      | Forks must **override** regexes and image references in values                                                                                              |
+| **Tag-based** refs still resolve to a digest for verification                                                                                                                                                  | **`verifyDigest: true`** in values is optional and requires manifests to use digests—see [`image-signature-enforcement.md`](image-signature-enforcement.md) |
 
 Operator verification without applying a workload: **`cosign verify`** as documented in [`docker/README.md`](../../docker/README.md).
 

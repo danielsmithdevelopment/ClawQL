@@ -18,7 +18,7 @@ This document is a **target modularization and platform architecture** for ClawQ
 
 **Mesh and multi-protocol scope:** Treat **GraphQL Mesh (or equivalent) as the integration spine** in this doc as **architecture direction**. Each first-class `SpecKind` (Postgres with RLS, Fabric gateway + mTLS, NATS subscriptions, x402-gated subgraphs, etc.) is **substantial engineering** beyond a single config block; sequence them using the phases below rather than assuming parallel delivery.
 
-**Week labels in §10:** “Week *n*” means **recommended phase order and dependency structure** for a well-staffed program — **not** a promise of calendar wall-clock unless resourced and scoped accordingly. Slip a phase before inventing new parallel workstreams.
+**Week labels in §10:** “Week _n_” means **recommended phase order and dependency structure** for a well-staffed program — **not** a promise of calendar wall-clock unless resourced and scoped accordingly. Slip a phase before inventing new parallel workstreams.
 
 ---
 
@@ -43,15 +43,12 @@ ClawQL is a modular, production-grade, self-healing, multi-tenant AI memory + ag
 
 ### 2.1 Always-Enabled
 
-
 | Package       | Status  | Responsibilities                                                                                                                                                                                                                              |
 | ------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `clawql-core` | To ship | Types, ATR primitives, audit ring buffer, Merkle utils, Cuckoo filter, error factories, cache helpers, ID generation                                                                                                                          |
 | `clawql-api`  | To ship | **The universal agentic API layer.** Unified `search()` + `execute()`, all protocol adapters (REST/gRPC/OpenAPI/GraphQL Mesh/MCP), plugin system, permission hook, rate limiting, response formatting, GraphQL projection, multi-spec merging |
 
-
 ### 2.2 Default-Enabled
-
 
 | Package            | Status  | Responsibilities                                                                                                                                           |
 | ------------------ | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -60,9 +57,7 @@ ClawQL is a modular, production-grade, self-healing, multi-tenant AI memory + ag
 | `clawql-memory`    | To ship | Memory 2.0 hybrid: Obsidian Vault + Adjacency-list Graph + PageIndex + Onyx (optional)                                                                     |
 | `clawql-pageindex` | To ship | Standalone npm package (MIT) — vectorless hierarchical tree building and traversal                                                                         |
 
-
 ### 2.3 Default-Disabled (Opt-In)
-
 
 | Package                | Status  | Responsibilities                                                                                         |
 | ---------------------- | ------- | -------------------------------------------------------------------------------------------------------- |
@@ -80,26 +75,21 @@ ClawQL is a modular, production-grade, self-healing, multi-tenant AI memory + ag
 | `clawql-education`     | To ship | LMS connectors (Canvas/Moodle/Blackboard), content generation, adaptive learning                         |
 | `clawql-engineering`   | To ship | MATLAB MCP Core + Simulink Agentic Toolkit (**requires licensed MATLAB on host**)                        |
 
-
 ### 2.4 Shipped
 
-
-| Package              | Status                                                                               |
-| -------------------- | ------------------------------------------------------------------------------------ |
+| Package              | Status                                                                                |
+| -------------------- | ------------------------------------------------------------------------------------- |
 | `clawql-mcp`         | ✅ MCP server, stdio/HTTP/gRPC transports, tool registration                          |
 | `clawql-ouroboros`   | ✅ Evolutionary loops, Seed, EvolutionaryLoop, InMemoryEventStore, PostgresEventStore |
 | `mcp-grpc-transport` | ✅ First TypeScript gRPC transport for MCP                                            |
 
-
 ### 2.5 Internal (Monorepo, Not Published Standalone)
-
 
 | Package          | Responsibilities                                           |
 | ---------------- | ---------------------------------------------------------- |
 | `@clawql/merkle` | SHA-256 Merkle tree computation and root verification      |
 | `@clawql/cuckoo` | Cuckoo filter for O(1) probabilistic deduplication         |
 | `@clawql/utils`  | Hashing, ID generation, date utils, `normalizeOperationId` |
-
 
 ---
 
@@ -162,44 +152,72 @@ Zero runtime dependencies outside Node built-ins. Must remain this way permanent
 ```ts
 // Types (from Memory 2.0 Cursor-ready guide — these are the canonical types)
 export type {
-  EntityType, EntityNode, Edge, EntityMetadata, EntitySourceType,
-  PageIndexNode, PageIndexTree, PageIndexBranch, PageIndexBuildMethod,
-  BFSLayer, BFSResult, VaultMatch,
-  RecallMode, RecallOptions, RecallResult,
-  MemoryIngestInput, MemoryIngestResult,
-  LLMExtractionResult, LLMExtractionEntity, LLMExtractionRelation,
-  PruningPolicy, PruneResult, MemoryATRClaims, LendingVertical,
+  EntityType,
+  EntityNode,
+  Edge,
+  EntityMetadata,
+  EntitySourceType,
+  PageIndexNode,
+  PageIndexTree,
+  PageIndexBranch,
+  PageIndexBuildMethod,
+  BFSLayer,
+  BFSResult,
+  VaultMatch,
+  RecallMode,
+  RecallOptions,
+  RecallResult,
+  MemoryIngestInput,
+  MemoryIngestResult,
+  LLMExtractionResult,
+  LLMExtractionEntity,
+  LLMExtractionRelation,
+  PruningPolicy,
+  PruneResult,
+  MemoryATRClaims,
+  LendingVertical,
   ProvenanceRecord,
-} from './types/memory';
+} from './types/memory'
 
 export type {
-  SpecKind, SpecSource, LoadedSpec,  // from multi-protocol guide
-} from './types/specs';
+  SpecKind,
+  SpecSource,
+  LoadedSpec, // from multi-protocol guide
+} from './types/specs'
 
 export type {
-  ATRClaims, AuditEvent, CacheEntry, ErrorCode, Plugin, MCPTool,
-} from './types/core';
+  ATRClaims,
+  AuditEvent,
+  CacheEntry,
+  ErrorCode,
+  Plugin,
+  MCPTool,
+} from './types/core'
 
 // Utilities
-export { computeMerkleRoot, verifyMerkleRoot } from './merkle';
-export { CuckooFilter } from './cuckoo';
-export { createAuditRingBuffer } from './audit';
-export { createCache } from './cache';
-export { ClawQLError, ErrorCodes } from './errors';
-export { generateId, hashContent, normalizeOperationId } from './utils';
+export { computeMerkleRoot, verifyMerkleRoot } from './merkle'
+export { CuckooFilter } from './cuckoo'
+export { createAuditRingBuffer } from './audit'
+export { createCache } from './cache'
+export { ClawQLError, ErrorCodes } from './errors'
+export { generateId, hashContent, normalizeOperationId } from './utils'
 ```
 
-`**normalizeOperationId` — double-underscore separator (colons break MCP clients):**
+`**normalizeOperationId` — double-underscore separator (colons break MCP clients):\*\*
 
 ```ts
 // kind__provider__operation
 // postgres__loans__select
 // fabric__autoLendingConsortium__IssueLoan
 // graph__aaveLending__loans
-export function normalizeOperationId(kind: string, provider: string, operation: string): string {
+export function normalizeOperationId(
+  kind: string,
+  provider: string,
+  operation: string,
+): string {
   return [kind, provider, operation]
-    .map(s => s.replace(/[^a-zA-Z0-9]/g, '_'))
-    .join('__');
+    .map((s) => s.replace(/[^a-zA-Z0-9]/g, '_'))
+    .join('__')
 }
 ```
 
@@ -210,7 +228,7 @@ export function normalizeOperationId(kind: string, provider: string, operation: 
 This is the product. Its scope is intentionally broad: the entire point is that an agent can discover and invoke any operation across any API, data store, or protocol through one unified surface. Breadth is the feature.
 
 ```ts
-import { createApi } from 'clawql-api';
+import { createApi } from 'clawql-api'
 
 const api = createApi({
   core: coreInstance,
@@ -218,30 +236,34 @@ const api = createApi({
   // Specs: any mix of OpenAPI, gRPC, GraphQL, Postgres, Redis, SQLite,
   //        NATS JetStream, Hyperledger Fabric, The Graph — all first-class
   specs: [
-    { kind: 'openapi',        id: 'github',      url: '...' },
-    { kind: 'openapi',        id: 'paperless',   url: '...' },
-    { kind: 'grpc',           id: 'internal-svc',endpoint: 'localhost:50051' },
-    { kind: 'graphql',        id: 'onyx',        endpoint: 'http://onyx:8080/graphql' },
-    { kind: 'postgres',       id: 'loans-db',    uri: process.env.CLAWQL_POSTGRES_URI },
-    { kind: 'redis',          id: 'cache',       url: process.env.CLAWQL_REDIS_URL },
-    { kind: 'nats-jetstream', id: 'events',      servers: ['nats://localhost:4222'] },
-    { kind: 'fabric',         id: 'consortium',  gatewayEndpoint: '...' },
-    { kind: 'the-graph',      id: 'aave',        subgraphId: 'Qm...', apiKey: '...' },
+    { kind: 'openapi', id: 'github', url: '...' },
+    { kind: 'openapi', id: 'paperless', url: '...' },
+    { kind: 'grpc', id: 'internal-svc', endpoint: 'localhost:50051' },
+    { kind: 'graphql', id: 'onyx', endpoint: 'http://onyx:8080/graphql' },
+    { kind: 'postgres', id: 'loans-db', uri: process.env.CLAWQL_POSTGRES_URI },
+    { kind: 'redis', id: 'cache', url: process.env.CLAWQL_REDIS_URL },
+    {
+      kind: 'nats-jetstream',
+      id: 'events',
+      servers: ['nats://localhost:4222'],
+    },
+    { kind: 'fabric', id: 'consortium', gatewayEndpoint: '...' },
+    { kind: 'the-graph', id: 'aave', subgraphId: 'Qm...', apiKey: '...' },
   ],
 
-  auth: authInstance,           // optional — if absent, noAuth defaults applied
+  auth: authInstance, // optional — if absent, noAuth defaults applied
   plugins: [
-    lendingPlugin(),            // from clawql-lending
-    blockchainPlugin(),         // from clawql-blockchain
+    lendingPlugin(), // from clawql-lending
+    blockchainPlugin(), // from clawql-blockchain
   ],
   telemetry: telemetryInstance, // optional
-});
+})
 
 // External surface — unchanged for all consumers including Cursor and Claude Desktop
-await api.search("create a GitHub issue");
-await api.execute("github__issues__create", { title: "...", body: "..." });
-await api.execute("postgres__loans__select", { where: { status: "pending" } });
-await api.execute("fabric__consortium__IssueLoan", { amount: 42000 });
+await api.search('create a GitHub issue')
+await api.execute('github__issues__create', { title: '...', body: '...' })
+await api.execute('postgres__loans__select', { where: { status: 'pending' } })
+await api.execute('fabric__consortium__IssueLoan', { amount: 42000 })
 ```
 
 **Internal architecture of `clawql-api`:**
@@ -277,11 +299,11 @@ Response formatter + audit log
 
 ```ts
 export interface Plugin {
-  name: string;
-  version: string;
-  tools: MCPTool[];
-  onRegister?(api: ClawQLApi): void | Promise<void>;
-  onTeardown?(): void | Promise<void>;
+  name: string
+  version: string
+  tools: MCPTool[]
+  onRegister?(api: ClawQLApi): void | Promise<void>
+  onTeardown?(): void | Promise<void>
 }
 ```
 
@@ -291,14 +313,14 @@ export interface Plugin {
 type SpecKind =
   | 'openapi'
   | 'graphql'
-  | 'the-graph'       // The Graph Protocol (x402-gated)
+  | 'the-graph' // The Graph Protocol (x402-gated)
   | 'grpc'
-  | 'fabric'          // Hyperledger Fabric (distinct from generic gRPC)
+  | 'fabric' // Hyperledger Fabric (distinct from generic gRPC)
   | 'postgres'
   | 'sqlite'
   | 'redis'
   | 'nats-jetstream'
-  | 'bundled';
+  | 'bundled'
 ```
 
 **Subscription transport constraint:**
@@ -325,21 +347,21 @@ GitHub, Google Cloud (~50 services), Cloudflare, Paperless NGX, Stirling-PDF, Sl
 **Supported modes:**
 
 ```ts
-type AuthMode = 'noAuth' | 'apiKey' | 'oidc' | 'saml' | 'oauth2' | 'ldap';
+type AuthMode = 'noAuth' | 'apiKey' | 'oidc' | 'saml' | 'oauth2' | 'ldap'
 ```
 
 ```ts
-import { createClawQLAuth } from 'clawql-auth';
+import { createClawQLAuth } from 'clawql-auth'
 
 // Solo developer / local (no IdP — still generates ATR claims structurally)
-const auth = createClawQLAuth({ mode: 'noAuth' });
+const auth = createClawQLAuth({ mode: 'noAuth' })
 
 // API key (CI/CD, programmatic access)
 const auth = createClawQLAuth({
   mode: 'apiKey',
   keys: process.env.CLAWQL_API_KEYS?.split(',') ?? [],
   defaultClaims: { role: 'service', scope: ['*'] },
-});
+})
 
 // Enterprise OIDC
 const auth = createClawQLAuth({
@@ -350,10 +372,14 @@ const auth = createClawQLAuth({
   abac: {
     policies: [
       // "mortgage underwriters can only access mortgage vertical"
-      { role: 'underwriter', vertical: 'mortgage', scope: ['vertical:mortgage'] },
+      {
+        role: 'underwriter',
+        vertical: 'mortgage',
+        scope: ['vertical:mortgage'],
+      },
     ],
   },
-});
+})
 ```
 
 **Natural language management via Agent Chat:**
@@ -371,18 +397,18 @@ const auth = createClawQLAuth({
 Orchestrates the 4-service document pipeline. The services (Tika, Gotenberg, Stirling-PDF, Paperless NGX) are infrastructure configured via env vars or Helm. This package is the TypeScript orchestration layer.
 
 ```ts
-import { processDocument } from 'clawql-documents';
+import { processDocument } from 'clawql-documents'
 
 const result = await processDocument({
   input: { type: 'file', path: '/uploads/loan-package.pdf' },
   options: {
     ocr: true,
-    redact: true,           // Presidio redaction (requires CLAWQL_PRESIDIO_ENDPOINT)
-    archive: true,          // Paperless NGX import
+    redact: true, // Presidio redaction (requires CLAWQL_PRESIDIO_ENDPOINT)
+    archive: true, // Paperless NGX import
     extractHierarchy: true, // feeds clawql-pageindex tree build
     tags: ['mortgage', 'borrower-8831'],
   },
-});
+})
 
 // result.extractedText    — post-Tika, post-Presidio (redacted)
 // result.structuredFields — { income, employer, ssn_redacted: true, ... }
@@ -413,18 +439,26 @@ Memory 2.0 hybrid layer. **The complete type system, SQLite schema, BFS algorith
 
 ```ts
 // Primary MCP tools
-export { memory_ingest } from './ingest';
-export { memory_recall }  from './recall';
+export { memory_ingest } from './ingest'
+export { memory_recall } from './recall'
 
 // PageIndex MCP tools (delegated to clawql-pageindex)
-export { pageindex_build_tree, pageindex_traverse, pageindex_get_content } from './pageindex-tools';
+export {
+  pageindex_build_tree,
+  pageindex_traverse,
+  pageindex_get_content,
+} from './pageindex-tools'
 
 // Ouroboros + Fabric hooks
-export { recallBrownfieldForSeed, ingestSeedCompletion, ingestFabricEvent } from './ouroboros-hooks';
+export {
+  recallBrownfieldForSeed,
+  ingestSeedCompletion,
+  ingestFabricEvent,
+} from './ouroboros-hooks'
 
 // Storage
-export { createGraphStore } from './graph-store';
-export type { GraphStore }  from './graph-store';
+export { createGraphStore } from './graph-store'
+export type { GraphStore } from './graph-store'
 ```
 
 **Recall modes:** `vault` | `onyx` | `graph` | `pageindex` | `hybrid` (default) | `fabric` | `cross_vertical`
@@ -435,7 +469,7 @@ export type { GraphStore }  from './graph-store';
 
 ### 4.6 `clawql-pageindex`
 
-Standalone npm package (MIT). No dependency on any other `clawql-`* package — fully self-contained.
+Standalone npm package (MIT). No dependency on any other `clawql-`\* package — fully self-contained.
 
 **Three entrypoints** (following `clawql-ouroboros` pattern):
 
@@ -453,31 +487,31 @@ Powers SeeTheGreens LOS. Five vertical modules share the same document pipeline,
 
 ```ts
 // Five vertical modules
-export { MortgagePlugin }  from './verticals/mortgage';
+export { MortgagePlugin } from './verticals/mortgage'
 // Tools: gse_validate, condition_clear, pii_redact, loan_archive, notify_underwriting
 // Onyx: Fannie/Freddie guidelines, CFPB updates, state regs
 // Paperless: auto-archive with tags [mortgage, condition-cleared, borrower-{id}]
 
-export { AutoPlugin }      from './verticals/auto';
+export { AutoPlugin } from './verticals/auto'
 // Tools: title_check, credit_check, volume_intake, collateral_verify
 // High-volume: Cuckoo dedup prevents reprocessing same doc batch
 
-export { BNPLPlugin }      from './verticals/bnpl';
+export { BNPLPlugin } from './verticals/bnpl'
 // Tools: bnpl_decision, fraud_check, regulatory_check
 // Sub-second Ouroboros loops, Cuckoo dedup, real-time guardrails
 
-export { PaydayPlugin }    from './verticals/payday';
+export { PaydayPlugin } from './verticals/payday'
 // Tools: state_reg_check, compliance_validate, rate_cap_verify
 // Onyx + Flink: state reg updates applied to templates within minutes
 
-export { CommercialPlugin } from './verticals/commercial';
+export { CommercialPlugin } from './verticals/commercial'
 // Tools: credit_memo_generate, syndication_setup, multi_doc_package
 // Fabric: consortium syndication via clawql-blockchain (optional peer dep)
 
 // Shared across all verticals
-export { UnderwritingPlugin } from './shared/underwriting';
-export { CompliancePlugin }   from './shared/compliance';   // Reg Z, ECOA, Fair Lending
-export { DiGiFiPlugin }       from './shared/digifi';       // DiGiFi-pattern decisioning
+export { UnderwritingPlugin } from './shared/underwriting'
+export { CompliancePlugin } from './shared/compliance' // Reg Z, ECOA, Fair Lending
+export { DiGiFiPlugin } from './shared/digifi' // DiGiFi-pattern decisioning
 ```
 
 **Fabric peer dependency:**
@@ -500,26 +534,26 @@ When absent: all 5 verticals work fully — Fabric MCP tools simply not register
 Full on/off-chain agentic interaction. Three-tier architecture (private / oracle / public).
 
 ```ts
-export { FabricPlugin }    from './fabric';
+export { FabricPlugin } from './fabric'
 // MCP tools: fabric_invoke_chaincode, fabric_query_ledger, fabric_create_channel,
 //            fabric_manage_pdc, fabric_token_transfer, fabric_rwa_issue,
 //            fabric_event_listen, fabric_anchor_merkle
 // Auth: mTLS (tlsCertPath, clientCertPath, clientKeyPath, mspId)
 // Storage: optional Helm service (peer/orderer/CA nodes), air-gapped mode
 
-export { ChainlinkPlugin } from './chainlink';
+export { ChainlinkPlugin } from './chainlink'
 // MCP tools: chainlink_price_feed, chainlink_functions_call, chainlink_ccip_transfer,
 //            chainlink_proof_of_reserve, chainlink_vrf_request
 // x402-native: agent pays oracle fees autonomously in USDC via x402
 
-export { TheGraphPlugin }  from './the-graph';
+export { TheGraphPlugin } from './the-graph'
 // MCP tools: graph_query_subgraph, graph_discover_protocols, graph_portfolio_analytics,
 //            graph_historical_risk
 // x402-gated: GraphQL queries paid per-call in stablecoins
 
-export { AgentWallet }    from './wallet';    // Coinbase AgentKit + ERC-4337
-export { x402Middleware } from './x402';      // autonomous micropayment gating
-export { MPPAdapter }     from './mpp';       // Machine Payment Protocol streaming
+export { AgentWallet } from './wallet' // Coinbase AgentKit + ERC-4337
+export { x402Middleware } from './x402' // autonomous micropayment gating
+export { MPPAdapter } from './mpp' // Machine Payment Protocol streaming
 ```
 
 **Ouroboros routing integration:**
@@ -537,11 +571,11 @@ Ouroboros automatically routes based on task sensitivity:
 > ⚠️ **License Requirement:** Requires a valid MATLAB license installed on the host machine. MATLAB is proprietary software (MathWorks). This package provides MCP wrappers that invoke MATLAB’s Engine API or Compiler SDK — it cannot function without a licensed MATLAB executable at `CLAWQL_MATLAB_EXECUTABLE`. The package degrades gracefully: warns at startup, returns a descriptive error on tool call if MATLAB is unavailable.
 
 ```ts
-export { MATLABPlugin }   from './matlab';    // script execution, Live Scripts, workspace vars
-export { SimulinkPlugin } from './simulink';  // model open/edit/sim/test
-export { ControlsPlugin } from './controls';  // transfer functions, Bode, step response
-export { SignalPlugin }   from './signal';    // FFT, filtering, spectral analysis
-export { ImagingPlugin }  from './imaging';   // image processing, feature detection
+export { MATLABPlugin } from './matlab' // script execution, Live Scripts, workspace vars
+export { SimulinkPlugin } from './simulink' // model open/edit/sim/test
+export { ControlsPlugin } from './controls' // transfer functions, Bode, step response
+export { SignalPlugin } from './signal' // FFT, filtering, spectral analysis
+export { ImagingPlugin } from './imaging' // image processing, feature detection
 ```
 
 ---
@@ -634,7 +668,6 @@ metadata:
   name: clawql-production
   namespace: clawql
 spec:
-
   # ── Core API (always on) ───────────────────────────────────────────────────
   api:
     enabled: true
@@ -645,7 +678,7 @@ spec:
     mcp:
       stdio: true
       http: true
-      grpc: false          # set true to enable NATS subscriptions + Fabric streams
+      grpc: false # set true to enable NATS subscriptions + Fabric streams
     bundledProviders:
       - github
       - google-cloud
@@ -654,7 +687,7 @@ spec:
       - paperless
       - onyx
       - pagerduty
-    specs:                 # additional user-provided specs
+    specs: # additional user-provided specs
       - kind: postgres
         id: loans-db
         secretRef: postgres-uri-secret
@@ -671,10 +704,10 @@ spec:
   # ── Auth ──────────────────────────────────────────────────────────────────
   auth:
     enabled: true
-    mode: oidc             # noAuth | apiKey | oidc | saml | oauth2 | ldap
+    mode: oidc # noAuth | apiKey | oidc | saml | oauth2 | ldap
     oidc:
-      issuer: ""
-      clientId: ""
+      issuer: ''
+      clientId: ''
       clientSecretRef:
         name: clawql-oidc-secret
         key: clientSecret
@@ -743,7 +776,7 @@ spec:
       wormAuditTable: true
     pruning:
       enabled: true
-      schedule: "0 2 * * *"
+      schedule: '0 2 * * *'
       maxGraphNodes: 100000
       maxEdgeAgeDays: 365
       orphanNodeTTLDays: 30
@@ -762,12 +795,12 @@ spec:
       enabled: true
     openTelemetry:
       enabled: false
-      endpoint: ""
+      endpoint: ''
 
   # ── Sandbox ───────────────────────────────────────────────────────────────
   sandbox:
     enabled: false
-    runtimeClass: kata     # kata | gvisor
+    runtimeClass: kata # kata | gvisor
 
   # ── Automation ────────────────────────────────────────────────────────────
   automation:
@@ -779,7 +812,7 @@ spec:
       enabled: true
       servers: [nats://nats:4222]
     hitl:
-      enabled: true        # human-in-the-loop approval gates via OpenClaw
+      enabled: true # human-in-the-loop approval gates via OpenClaw
 
   # ── Vertical Packages ─────────────────────────────────────────────────────
   lending:
@@ -793,7 +826,7 @@ spec:
     digifi:
       enabled: true
     fabric:
-      enabled: false       # true if clawql-blockchain.enabled=true
+      enabled: false # true if clawql-blockchain.enabled=true
 
   blockchain:
     enabled: false
@@ -828,7 +861,7 @@ spec:
 
   engineering:
     enabled: false
-    matlabExecutable: ""   # must point to licensed MATLAB installation
+    matlabExecutable: '' # must point to licensed MATLAB installation
 ```
 
 ### 5.2 Operator Responsibilities
@@ -878,22 +911,21 @@ Natural-language flows in examples below assume **approved automation** wired to
 
 ## 7. Security (Defense-in-Depth — Fully Integrated)
 
-
-| Layer                   | Package                         | Mechanism                                                                    |
-| ----------------------- | ------------------------------- | ---------------------------------------------------------------------------- |
-| Base ATR claims         | `clawql-core`                   | Claim types, ATR primitives                                                  |
+| Layer                   | Package                         | Mechanism                                                                                                                                                                                    |
+| ----------------------- | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Base ATR claims         | `clawql-core`                   | Claim types, ATR primitives                                                                                                                                                                  |
 | Claim enrichment        | `clawql-auth`                   | OIDC/SAML/LDAP → JWT → ATR; optional HashiCorp Vault dynamic secrets (**not** the Helm `vault` key for Obsidian paths — [#161](https://github.com/danielsmithdevelopment/ClawQL/issues/161)) |
-| Per-request enforcement | `clawql-api`                    | Auth middleware on every search/execute; bind JWT ATR at the MCP gateway in production stacks ([`mcp-proxy-jwt-atr.md`](../security/mcp-proxy-jwt-atr.md), comprehensive guide §3 / §5) |
-| Vertical RLS            | `clawql-auth` + `clawql-memory` | BFS filter at node expansion time                                            |
-| Document redaction      | `clawql-documents`              | Presidio on all pipeline write paths                                         |
-| Memory redaction        | `clawql-memory`                 | Presidio on vault, graph metadata, pageindex summaries, Onyx chunks          |
-| Tamper evidence         | `@clawql/merkle`                | Merkle root on every artifact (entity, edge, tree, document, Fabric tx)      |
-| Deduplication           | `@clawql/cuckoo`                | Cuckoo filter at ingest — no reprocessing; if the same mechanism is reused on a **security/monitoring** path, tune false positives separately (comprehensive guide §2, §8) |
-| Audit trail             | `clawql-core`                   | WORM `memory_audit` table (SQLite trigger / Postgres RLS — no UPDATE/DELETE) |
-| Code execution          | `clawql-sandbox`                | Kata RuntimeClass for LLM extraction jobs + sandbox_exec                     |
-| Container security      | Helm chart                      | Distroless images, Trivy scan, Cosign signing, **Kyverno** (`verifyImages`, admission / `RuntimeClass` policies) |
-| Network                 | Kubernetes + mesh               | Zero-trust, mTLS (Istio), **ServiceEntry** / chart egress allowlists, Secrets for tokens (comprehensive guide §4) |
-| Blockchain              | `clawql-blockchain`             | mTLS for Fabric, key isolation for wallets, tx audit via Merkle              |
+| Per-request enforcement | `clawql-api`                    | Auth middleware on every search/execute; bind JWT ATR at the MCP gateway in production stacks ([`mcp-proxy-jwt-atr.md`](../security/mcp-proxy-jwt-atr.md), comprehensive guide §3 / §5)      |
+| Vertical RLS            | `clawql-auth` + `clawql-memory` | BFS filter at node expansion time                                                                                                                                                            |
+| Document redaction      | `clawql-documents`              | Presidio on all pipeline write paths                                                                                                                                                         |
+| Memory redaction        | `clawql-memory`                 | Presidio on vault, graph metadata, pageindex summaries, Onyx chunks                                                                                                                          |
+| Tamper evidence         | `@clawql/merkle`                | Merkle root on every artifact (entity, edge, tree, document, Fabric tx)                                                                                                                      |
+| Deduplication           | `@clawql/cuckoo`                | Cuckoo filter at ingest — no reprocessing; if the same mechanism is reused on a **security/monitoring** path, tune false positives separately (comprehensive guide §2, §8)                   |
+| Audit trail             | `clawql-core`                   | WORM `memory_audit` table (SQLite trigger / Postgres RLS — no UPDATE/DELETE)                                                                                                                 |
+| Code execution          | `clawql-sandbox`                | Kata RuntimeClass for LLM extraction jobs + sandbox_exec                                                                                                                                     |
+| Container security      | Helm chart                      | Distroless images, Trivy scan, Cosign signing, **Kyverno** (`verifyImages`, admission / `RuntimeClass` policies)                                                                             |
+| Network                 | Kubernetes + mesh               | Zero-trust, mTLS (Istio), **ServiceEntry** / chart egress allowlists, Secrets for tokens (comprehensive guide §4)                                                                            |
+| Blockchain              | `clawql-blockchain`             | mTLS for Fabric, key isolation for wallets, tx audit via Merkle                                                                                                                              |
 
 **Beyond npm packages:** Panguard (MCP proxy), Microsoft Agent Governance Toolkit sidecar, Falco + Talon, Wazuh, Loki/Tempo, model-weight init verification, GPU `ResourceQuota`, and **Presidio in the log pipeline** (e.g. Fluent Bit before Loki) are **cluster and process** concerns. They are specified in the [comprehensive k3s security guide](../security/clawql-comprehensive-defense-in-depth-mcp-k3s-may-2026.md) and the [deliverables matrix](../security/clawql-security-defense-deliverables.md); §7 above stays aligned with **which ClawQL modules own which semantics**, not every DaemonSet in the reference architecture.
 
@@ -1063,4 +1095,4 @@ Phases below are **dependency-ordered workstreams**. Week ranges are **illustrat
 
 ---
 
-*ClawQL Modularization · document v1.9 · May 2026*
+_ClawQL Modularization · document v1.9 · May 2026_
