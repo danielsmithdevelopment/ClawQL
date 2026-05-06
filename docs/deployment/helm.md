@@ -12,9 +12,9 @@ Use this when you prefer **`helm install` / `helm upgrade`** over **`kubectl app
 
 The chart key **`vault`** (and **`vault.hostPath`**) mounts **Obsidian** Markdown for **`memory_ingest`** / **`memory_recall`** at **`obsidianVaultPath`** (default **`/vault`**). It is **not** [HashiCorp Vault](https://www.vaultproject.io/) and does not install a secrets manager.
 
-## HashiCorp Vault is bundled (mandatory dependency)
+## HashiCorp Vault is bundled and default-on
 
-`charts/clawql-mcp/Chart.yaml` always includes the official **`hashicorp/vault`** chart (alias **`hashicorpvault`**). There is **no** Helm dependency **`condition`** to skip it under defense-in-depth. Setting **`hashicorpvault.enabled: false`** in values is **unsupported** — render fails (**`templates/zzz-defense-in-depth-secrets-policies.yaml`**).
+`charts/clawql-mcp/Chart.yaml` now includes the official **`hashicorp/vault`** chart as a dependency (alias: **`hashicorpVault`**) and keeps it **enabled by default** (`hashicorpVault.enabled: true`).
 
 For **cluster secrets** (tokens for Slack, Onyx, GitHub, cloud APIs, and so on), use the same paths ClawQL already supports: Kubernetes **`Secret`** objects referenced from **`envFromSecret`** or **`extraEnv`**, optionally populated by **External Secrets Operator**, **Vault Agent Injector**, **Secrets Store CSI**, or GitOps-sealed patterns. A future chart **major** version may rename **`vault`** to avoid operator confusion — tracked in [#161](https://github.com/danielsmithdevelopment/ClawQL/issues/161).
 
@@ -52,11 +52,11 @@ This keeps provider API keys out of `.env` files and avoids ad hoc "script -> ku
 
 Do **not** manage production provider secrets via repo-local `.env` files plus one-off scripts. This chart defaults to **Vault-backed secret sourcing** via:
 
-- bundled HashiCorp Vault dependency (`hashicorpvault.*`)
+- bundled HashiCorp Vault dependency (`hashicorpVault.*`)
 - `envFromSecret` / `envFromSecrets` references to synced Kubernetes Secrets
 - `secretSourcing.requireVaultBackedSecrets: true` (default), which fails render when no Secret refs are set
 
-Current UX: the bundled ClawQL dashboard (`dashboard.*` values) can read/write Vault keys from a form UI and trigger a rollout restart of `clawql-mcp-http` so updated secrets are picked up consistently.
+Planned UX direction: a ClawQL dashboard flow will populate Vault keys from a form UI, then trigger a rollout restart of `clawql-mcp-http` so updated secrets are picked up consistently.
 
 ## Prerequisites
 
@@ -70,7 +70,7 @@ Private GHCR: create a pull secret and set **`imagePullSecrets`** (see [values](
 
 ### Kyverno image signatures (default on)
 
-The chart **renders a `ClusterPolicy`** (**`verifyImages`**, Cosign keyless) for default **`ghcr.io/.../clawql-mcp*`**, **`clawql-panguard-mcp-bridge*`**, **`clawql-website*`**, and **`clawql-dashboard*`** when **`kyverno.imageSignaturePolicy.enabled`** is **`true`** (the **default** in [`values.yaml`](../charts/clawql-mcp/values.yaml)). Install **Kyverno** before upgrading ClawQL, or opt out:
+The chart **renders a `ClusterPolicy`** (**`verifyImages`**, Cosign keyless) for default **`ghcr.io/.../clawql-mcp*`**, **`clawql-panguard-mcp-bridge*`**, and **`clawql-website*`** when **`kyverno.imageSignaturePolicy.enabled`** is **`true`** (the **default** in [`values.yaml`](../charts/clawql-mcp/values.yaml)). Install **Kyverno** before upgrading ClawQL, or opt out:
 
 ```bash
 helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
@@ -137,7 +137,7 @@ helm upgrade --install clawql ./charts/clawql-mcp \
 
 Defaults use **`fullnameOverride: clawql-mcp-http`** so resource names match the Kustomize docs (**`kubectl -n clawql get deploy clawql-mcp-http`**).
 
-**Default posture:** **`secretSourcing.requireVaultBackedSecrets`** is **`true`** in **`values.yaml`**. Setting it to **`false`** is **unsupported** (render fails). Helm must receive **`envFromSecret`** / **`envFromSecrets`** referencing _existing_ Kubernetes Secrets (normally synced from Vault — see **`external-secrets-operator-install.md`**). Create or sync **`clawql-provider-env`** **before** the first **`helm upgrade`**, or apply a minimal placeholder **`Secret`** with the expected name so the Deployment can schedule while ESO/Vault wiring finishes.
+**Default posture:** **`secretSourcing.requireVaultBackedSecrets`** is **`true`** in **`values.yaml`**, so Helm must receive **`envFromSecret`** / **`envFromSecrets`** referencing _existing_ synced Secrets unless you deliberately opt out. Create or sync **`clawql-provider-env`** **before** the first **`helm upgrade`** (see **`external-secrets-operator-install.md`**) or pass **`--set secretSourcing.requireVaultBackedSecrets=false`** only during bootstrap.
 
 ### Examples
 
@@ -229,7 +229,7 @@ kubectl -n clawql get authorizationpolicy vault-allow-clawql-and-secret-sync -o 
 If using ambient `targetRefs`, verify service attachment:
 
 ```bash
-kubectl -n clawql get authorizationpolicy vault-allow-clawql-and-secret-sync-ambient -o yaml | rg "targetRefs|clawql-hashicorpvault"
+kubectl -n clawql get authorizationpolicy vault-allow-clawql-and-secret-sync-ambient -o yaml | rg "targetRefs|clawql-hashicorpVault"
 ```
 
 Mesh-level sanity check (if `istioctl` is available):
@@ -401,96 +401,7 @@ kubectl -n clawql get deploy clawql-mcp-http -o yaml | rg "CLAWQL_NATS_URL|CLAWQ
 
 **Ingress** (optional): set **`ingress.enabled=true`** and edit **`ingress.hosts`** / **`ingress.tls`** in a small values file; backend targets the HTTP **`service.http.port`**.
 
-**Docs UI + Ingress** (optional): set **`ui.enabled=true`** and **`ui.ingress.enabled=true`** to deploy the docs UI (`website`) Deployment/Service and route a host (default: **`docs.localhost`**) to it.
-
-**Dashboard + Ingress** (optional): set **`dashboard.enabled=true`** and **`dashboard.ingress.enabled=true`** to deploy the Vault-first dashboard Deployment/Service and route a host (default: **`clawql.localhost`**) to it.
-
-### Bundled dashboard quick config
-
-Minimal enablement (generic cluster):
-
-```yaml
-dashboard:
-  enabled: true
-  ingress:
-    enabled: true
-    className: nginx
-    hosts:
-      - host: clawql.localhost
-        paths:
-          - path: /
-            pathType: Prefix
-```
-
-Common tuning knobs:
-
-```yaml
-dashboard:
-  image:
-    repository: ghcr.io/danielsmithdevelopment/clawql-dashboard
-    tag: latest
-    pullPolicy: IfNotPresent
-  allowSync: true
-  k8s:
-    namespace: clawql
-    secretName: clawql-provider-env
-    deploymentName: clawql-mcp-http
-  vault:
-    namespace: clawql
-    pod: clawql-vault-0
-    addr: http://127.0.0.1:8200
-    mount: secret
-    path: provider/env
-```
-
-Operational notes:
-
-- `dashboard.vault.*` should target your Vault pod/mount/path for the environment data model used by ClawQL.
-- `dashboard.k8s.deploymentName` is the rollout target after Vault updates (defaults to `clawql-mcp-http`).
-- For Docker Desktop, these are already preconfigured in `values-docker-desktop.yaml` with host `clawql.localhost`.
-
-### Dashboard incident runbook (quick checks)
-
-Use this when `http://clawql.localhost` is failing, dashboard sync appears stuck, or Vault updates do not land in `clawql-mcp-http`.
-
-1. Dashboard health:
-
-```bash
-curl -sS http://clawql.localhost/api/k8s/health
-```
-
-2. Dashboard workload objects:
-
-```bash
-kubectl -n clawql get deploy,svc,ingress | rg dashboard
-kubectl -n clawql get pods -l app.kubernetes.io/component=dashboard
-```
-
-3. Dashboard env wiring (Vault + rollout target):
-
-```bash
-kubectl -n clawql get deploy clawql-mcp-http-dashboard -o yaml | rg "CLAWQL_DASHBOARD_(VAULT|K8S)_" -n
-```
-
-4. Rollout target health:
-
-```bash
-kubectl -n clawql get deploy clawql-mcp-http
-kubectl -n clawql rollout status deploy/clawql-mcp-http --timeout=180s
-```
-
-5. Vault read-back verification:
-
-```bash
-kubectl -n clawql exec clawql-vault-0 -- sh -lc 'VAULT_ADDR=http://127.0.0.1:8200 VAULT_TOKEN="${VAULT_DEV_ROOT_TOKEN_ID:-root}" vault kv get -field=ONYX_BASE_URL secret/provider/env'
-```
-
-If checks pass but UI is stale, restart dashboard and retry one save:
-
-```bash
-kubectl -n clawql rollout restart deploy/clawql-mcp-http-dashboard
-kubectl -n clawql rollout status deploy/clawql-mcp-http-dashboard --timeout=180s
-```
+**UI + Ingress** (optional): set **`ui.enabled=true`** and **`ui.ingress.enabled=true`** to deploy a separate UI Deployment/Service and route a host (default: **`clawql.localhost`**) to it.
 
 ## Production hardening (default full-stack install)
 
@@ -502,20 +413,18 @@ The chart now enables document pipeline + stores by default, including in-cluste
 
 ## Access bundled docs locally (Docker Desktop)
 
-When you use the local Helm flow (`make local-k8s-up`), the chart deploys both the `website` docs UI and `dashboard` UI and exposes them through ingress-nginx (or Istio Gateway+VirtualService when enabled).
+When you use the local Helm flow (`make local-k8s-up`), the chart can deploy the `website` UI and expose it through ingress-nginx.
 
-- Dashboard UI: **`http://clawql.localhost`**
-- Docs UI: **`http://docs.localhost`**
+- Docs UI: **`http://clawql.localhost`**
 - MCP endpoint (local Helm + **`values-docker-desktop.yaml`**): **`http://clawql-mcp.localhost/mcp`** (**Ingress**); for **Service LoadBalancer** URLs use **`kubectl get svc`**; **Compose** / **`npm run start:http`**: **`http://localhost:8080/mcp`**
 
 Quick verify:
 
 ```bash
-curl -s http://clawql.localhost/api/k8s/health
-curl -s http://docs.localhost/api/health
+curl -s http://clawql.localhost/api/health
 ```
 
-Expected responses include **`{"status":"ok"}`**.
+Expected response includes **`{"status":"ok"}`**.
 
 ## Optional Istio and observability (Docker Desktop)
 
@@ -550,17 +459,16 @@ See **[`charts/clawql-mcp/values.yaml`](../charts/clawql-mcp/values.yaml)**. Com
 | `extraEnv`                                          | Additional container env entries                                                                                                                                                                                                                                                                                                                                                                                             |
 | `envFromSecret`                                     | **`envFrom`** from one existing Secret                                                                                                                                                                                                                                                                                                                                                                                       |
 | `envFromSecrets`                                    | **`envFrom`** from multiple existing Secrets (ordered list; useful for Vault-synced secret sets)                                                                                                                                                                                                                                                                                                                             |
-| `secretSourcing.requireVaultBackedSecrets`          | **`true`** (required). **`false`** is rejected; Helm must supply **`envFromSecret`** / **`envFromSecrets`**.                                                                                                                                                                                                                                                                                                                 |
-| `hashicorpvault`                                    | Bundled **`hashicorp/vault`** subchart is **always** installed. **`enabled: false`** is **unsupported** (render fails).                                                                                                                                                                                                                                                                                                      |
+| `secretSourcing.requireVaultBackedSecrets`          | Default **`true`**. Requires at least one secret ref (`envFromSecret` or `envFromSecrets`) so installs do not rely on ad hoc `.env` injection                                                                                                                                                                                                                                                                                |
+| `hashicorpVault.enabled`                            | Default **`true`**. Bundles official HashiCorp Vault chart dependency in this Helm release                                                                                                                                                                                                                                                                                                                                   |
 | `persistence`                                       | PVC for **Obsidian memory** at **`/vault`** instead of **`emptyDir`** — not HashiCorp Vault ([#161](https://github.com/danielsmithdevelopment/ClawQL/issues/161))                                                                                                                                                                                                                                                            |
 | `vault.hostPath`                                    | Host bind for **Obsidian memory** at **`/vault`** (e.g. Docker Desktop; mutually exclusive with **`persistence`**) — same naming caveat ([#161](https://github.com/danielsmithdevelopment/ClawQL/issues/161))                                                                                                                                                                                                                |
 | `ingress`                                           | Optional HTTP(S) Ingress                                                                                                                                                                                                                                                                                                                                                                                                     |
-| `ui`                                                | Optional docs UI (`website`) Deployment/Service/Ingress (defaults for Docker Desktop use `docs.localhost`)                                                                                                                                                                                                                                                                                                                   |
-| `dashboard`                                         | Optional Vault-first dashboard Deployment/Service/Ingress (`clawql-dashboard` image; defaults for Docker Desktop use `clawql.localhost`)                                                                                                                                                                                                                                                                                     |
+| `ui`                                                | Optional UI Deployment/Service/Ingress (defaults for Docker Desktop use `clawql.localhost`)                                                                                                                                                                                                                                                                                                                                  |
 | `metrics.prometheusScrapeAnnotations`               | When **`enabled: true`** (default), adds **`prometheus.io/*`** on the MCP **Service** for Prometheus stacks that honor Service annotations (including **Istio** sample Prometheus). Set **`path`** / **`port`** if your HTTP listen port differs from **`service.http.targetPort`**.                                                                                                                                         |
 | `metrics.serviceMonitor`                            | When **`enabled: true`**, renders a **`ServiceMonitor`** (**`monitoring.coreos.com/v1`**) scraping **`/metrics`** on **`port: http`**. Default **`false`**. Optional **`namespace`**, **`labels`**, **`interval`**, **`scrapeTimeout`**.                                                                                                                                                                                     |
 
-**Docker Desktop:** **`make local-k8s-up`** installs **Kyverno**, **bundled HashiCorp Vault** (lighter **`hashicorpvault.server.resources`** in the overlay), and **`helm upgrade --install`** with **`values-docker-desktop.yaml`** (LoadBalancer **8080**, **`all-providers`**, **`vault.hostPath.enabled=true`** and **`vault.hostPath.path=$HOME/.ClawQL`** for **Obsidian** memory via script **`--set`** — not HC Vault naming; **`secretSourcing.requireVaultBackedSecrets: true`** + **`envFromSecret: clawql-provider-env`**; dashboard ingress **`clawql.localhost`** and docs ingress **`docs.localhost`**; signed **`ghcr.io/.../clawql-mcp`**, **`clawql-website`**, and **`clawql-dashboard`**, **`kyverno.imageSignaturePolicy`** enabled with **`matchReleaseNamespaceOnly: true`**). **ingress-nginx** installs unless **`CLAWQL_LOCAL_K8S_INSTALL_INGRESS_NGINX=0`**. **Kustomize** for the MCP manifest: **`CLAWQL_LOCAL_K8S_INSTALLER=kustomize`** — Helm is still required for Kyverno and for templating the **ClusterPolicy**. Unsigned local image build env vars are **not** supported (script exits).
+**Docker Desktop:** **`make local-k8s-up`** installs **Kyverno**, then **`helm upgrade --install`** with **`values-docker-desktop.yaml`** (LoadBalancer **8080**, **`all-providers`**, **`vault.hostPath.path`** = **`$HOME/.ClawQL`** for **Obsidian** memory — not HashiCorp Vault, **`hashicorpVault.enabled: false`** + **`secretSourcing.requireVaultBackedSecrets: false`** to keep desktop clusters light, UI Ingress **`clawql.localhost`**, signed **`ghcr.io/.../clawql-mcp`** and **`clawql-website`**, **`kyverno.imageSignaturePolicy`** enabled with **`matchReleaseNamespaceOnly: true`**). **ingress-nginx** installs unless **`CLAWQL_LOCAL_K8S_INSTALL_INGRESS_NGINX=0`**. **Kustomize** for the MCP manifest: **`CLAWQL_LOCAL_K8S_INSTALLER=kustomize`** — Helm is still required for Kyverno and for templating the **ClusterPolicy**. Unsigned local image build env vars are **not** supported (script exits).
 
 ## Lint and template (CI / local)
 

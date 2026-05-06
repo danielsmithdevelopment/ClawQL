@@ -59,7 +59,7 @@ set -euo pipefail
 # MCP: with default ambient Istio — **http://127.0.0.1/mcp** (Cursor on Docker Desktop macOS; avoids localhost→::1),
 # **http://localhost/mcp**, **http://clawql-mcp.localhost/mcp** via Gateway+VirtualService (.cursor/mcp.json.example).
 # Or Ingress **http://clawql-mcp.localhost/mcp** when :80 reaches ingress-nginx.
-# UI (Ingress): http://docs.localhost
+# UI (Ingress): http://clawql.localhost
 # Health (Ingress): curl -s http://clawql-mcp.localhost/healthz
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -366,7 +366,6 @@ if [[ "${INSTALLER}" == "helm" ]]; then
   if [[ "${INSTALL_INGRESS_NGINX}" == "0" ]] && [[ -n "${INSTALL_ISTIO}" ]] && [[ "${CLAWQL_ISTIO_INSTALL_INGRESS_GATEWAY:-1}" == "1" ]]; then
     echo "==> Istio VirtualServices for *.localhost (nginx Ingress objects disabled in Helm)"
     sed "s/__TARGET_NAMESPACE__/${NAMESPACE}/g" "${ROOT}/docker/istio/docker-desktop/clawql-localhost-vs-core.yaml" | kubectl_ctx apply -f -
-    sed "s/__TARGET_NAMESPACE__/${NAMESPACE}/g" "${ROOT}/docker/istio/docker-desktop/clawql-localhost-vs-dashboard.yaml" | kubectl_ctx apply -f -
     if [[ "${CLAWQL_LOCAL_K8S_FULL_STACK}" == "1" ]]; then
       sed "s/__TARGET_NAMESPACE__/${NAMESPACE}/g" "${ROOT}/docker/istio/docker-desktop/clawql-localhost-vs-providers.yaml" | kubectl_ctx apply -f -
     fi
@@ -430,7 +429,7 @@ else
     echo ""
   fi
 fi
-echo "Bundled dashboard + docs + provider UIs: http://clawql.localhost  http://docs.localhost  http://onyx.localhost  … — same clawql-mcp-ingress Envoy :80 when Istio gateway + VirtualServices apply (ingress-nginx auto-skipped)."
+echo "Bundled docs UI + provider UIs: http://clawql.localhost  http://onyx.localhost  … — same clawql-mcp-ingress Envoy :80 when Istio gateway + VirtualServices apply (ingress-nginx auto-skipped)."
 if [[ -n "${INSTALL_ISTIO}" ]] && [[ "${INSTALL_ISTIO}" == "ambient" ]]; then
   echo ""
   echo "Ambient tip: rollout workloads once if Envoy sidecars linger after upgrades (Ingress/502): kubectl rollout restart deployment -n ${NAMESPACE}"

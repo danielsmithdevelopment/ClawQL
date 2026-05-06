@@ -1,4 +1,4 @@
-.PHONY: deploy-cloud-run deploy-k8s deploy-docs local-k8s-up bootstrap-vault-eso local-k8s-mcp-delete local-docker-up helm-lint helm-ui-template-tests kustomize-local-lint lint-k8s-manifests smoke-grpcurl-istio-gateway-mcp smoke-mcp-http-istio-gateway smoke-localhost-uis verify-vault-policy
+.PHONY: deploy-cloud-run deploy-k8s deploy-docs local-k8s-up local-k8s-mcp-delete local-docker-up helm-lint helm-ui-template-tests kustomize-local-lint lint-k8s-manifests smoke-grpcurl-istio-gateway-mcp smoke-mcp-http-istio-gateway verify-vault-policy
 
 # Validate charts/clawql-mcp (requires helm on PATH)
 helm-lint:
@@ -8,6 +8,7 @@ helm-lint:
 	@helm template test charts/clawql-mcp --namespace clawql --set envFromSecret=clawql-lint-provider-env >/dev/null
 	@helm template test charts/clawql-mcp --namespace clawql \
 		-f charts/clawql-mcp/values-docker-desktop.yaml \
+		--set-string vault.hostPath.path=/tmp/clawql-helm-test \
 		--set envFromSecret=clawql-lint-provider-env >/dev/null
 	@helm template test charts/clawql-mcp --namespace clawql \
 		--set documentPipeline.enabled=true \
@@ -50,10 +51,6 @@ lint-k8s-manifests: helm-lint helm-ui-template-tests kustomize-local-lint
 local-k8s-up:
 	@bash scripts/kubernetes/local-k8s-docker-desktop.sh
 
-# After local-k8s-up: install External Secrets (if needed), bootstrap dev Vault policy/auth/KV, apply ESO manifests
-bootstrap-vault-eso:
-	@bash scripts/kubernetes/bootstrap-local-vault-and-eso.sh
-
 # After local-k8s-up with Istio + gateway: grpcurl grpc.health.v1.Health/Check on localhost:50051
 smoke-grpcurl-istio-gateway-mcp:
 	@bash scripts/kubernetes/smoke-grpcurl-istio-gateway-mcp.sh
@@ -61,10 +58,6 @@ smoke-grpcurl-istio-gateway-mcp:
 # Streamable HTTP POST /mcp initialize via Istio :80 (matches Cursor; default URL 127.0.0.1)
 smoke-mcp-http-istio-gateway:
 	@bash scripts/kubernetes/smoke-mcp-http-istio-gateway.sh
-
-# Localhost ingress UI smoke checks (docs, mcp, flink, onyx, paperless, tika, gotenberg, nats)
-smoke-localhost-uis:
-	@bash scripts/kubernetes/smoke-localhost-uis.sh
 
 # Remove MCP deployment+Service (e.g. before Helm after kubectl apply / Kustomize)
 local-k8s-mcp-delete:

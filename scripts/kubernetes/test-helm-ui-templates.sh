@@ -14,9 +14,7 @@ _LINT_SECRET=(--set envFromSecret=clawql-lint-provider-env)
 helm template test charts/clawql-mcp --namespace clawql \
   "${_LINT_SECRET[@]}" \
   --set ui.enabled=true \
-  --set ui.ingress.enabled=true \
-  --set dashboard.enabled=true \
-  --set dashboard.ingress.enabled=true >"${TMP_ENABLED}"
+  --set ui.ingress.enabled=true >"${TMP_ENABLED}"
 
 helm template test charts/clawql-mcp --namespace clawql \
   "${_LINT_SECRET[@]}" >"${TMP_DISABLED}"
@@ -35,16 +33,10 @@ checks = [
     (r"(?m)^kind: Service$", "expected Service when ui.enabled=true"),
     (r"(?m)^kind: Ingress$", "expected Ingress when ui.ingress.enabled=true"),
     (r"(?m)^  ingressClassName: nginx$", "expected ingress class nginx"),
-    (r'host: "docs\.localhost"', "expected docs.localhost ingress host"),
+    (r'host: "clawql\.localhost"', "expected clawql.localhost ingress host"),
     (
         r"service:\n\s+name: clawql-mcp-http-ui",
         "expected ingress backend to route to UI service",
-    ),
-    (r"(?m)^  name: clawql-mcp-http-dashboard$", "expected dashboard resource name"),
-    (r'host: "clawql\.localhost"', "expected clawql.localhost dashboard ingress host"),
-    (
-        r"service:\n\s+name: clawql-mcp-http-dashboard",
-        "expected ingress backend to route to dashboard service",
     ),
 ]
 
@@ -55,9 +47,6 @@ for pattern, message in checks:
 
 if "clawql-mcp-http-ui" in disabled:
     print("ERROR: UI resources rendered unexpectedly when ui.enabled=false")
-    sys.exit(1)
-if "clawql-mcp-http-dashboard" in disabled:
-    print("ERROR: dashboard resources rendered unexpectedly when dashboard.enabled=false")
     sys.exit(1)
 PY
 

@@ -78,7 +78,6 @@ const ENTRIES: Array<Entry> = [
   { path: '/deployment', changeFrequency: 'monthly', priority: 0.88 },
   { path: '/tailscale', changeFrequency: 'monthly', priority: 0.87 },
   { path: '/kubernetes', changeFrequency: 'monthly', priority: 0.88 },
-  { path: '/dashboard-kubernetes', changeFrequency: 'monthly', priority: 0.87 },
   {
     path: '/docker-desktop-observability',
     changeFrequency: 'monthly',

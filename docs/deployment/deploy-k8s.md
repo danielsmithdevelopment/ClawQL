@@ -12,7 +12,7 @@ Quick start from repo root:
 helm upgrade --install clawql ./charts/clawql-mcp --namespace clawql --create-namespace --wait
 ```
 
-For Docker Desktop Helm installs, open bundled UIs at **`http://clawql.localhost`** (dashboard) and **`http://docs.localhost`** (docs UI).
+For Docker Desktop Helm installs that enable the bundled website UI (`ui.enabled=true`, `ui.ingress.enabled=true`), open local docs at **`http://clawql.localhost`**.
 
 ## Prerequisites (Kustomize)
 

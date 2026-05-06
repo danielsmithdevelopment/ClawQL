@@ -37,10 +37,6 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- printf "%s-ui" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
-{{- define "clawql-mcp.dashboardName" -}}
-{{- printf "%s-dashboard" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
-{{- end }}
-
 {{- define "clawql-mcp.ouroborosPostgresName" -}}
 {{- printf "%s-ouroboros-postgres" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
 {{- end }}

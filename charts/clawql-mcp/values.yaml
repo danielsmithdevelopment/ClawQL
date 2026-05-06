@@ -2,7 +2,7 @@
 #
 # Naming — Helm key **`vault`** vs **HashiCorp Vault** ([#161](https://github.com/danielsmithdevelopment/ClawQL/issues/161)):
 # the **`vault`** block under this file configures Obsidian *memory* storage (Markdown on disk). It does not
-# deploy HashiCorp Vault. Use **`hashicorpvault`** for the bundled Vault chart and **`envFromSecret`** /
+# deploy HashiCorp Vault. Use **`hashicorpVault`** for the bundled Vault chart and **`envFromSecret`** /
 # **`envFromSecrets`** (or External Secrets) for provider tokens.
 fullnameOverride: clawql-mcp-http
 nameOverride: ""
@@ -426,10 +426,10 @@ documentPipeline:
     resources:
       requests:
         cpu: 100m
-        memory: 512Mi
+        memory: 256Mi
       limits:
         cpu: "1"
-        memory: 2Gi
+        memory: 1Gi
     auth:
       apiKey: ""
       existingSecret: ""
@@ -615,9 +615,9 @@ envFromSecrets: []
 secretSourcing:
   requireVaultBackedSecrets: true
 
-# Bundled HashiCorp Vault Helm chart (**always** installed — see **Chart.yaml** dependencies). Do not set
-# **`hashicorpvault.enabled`** to **`false`**; template validation fails (`templates/zzz-defense-in-depth-secrets-policies.yaml`).
-hashicorpvault:
+# Bundled HashiCorp Vault Helm chart (dependency **`hashicorpVault`**). Desktop overlay turns this off.
+hashicorpVault:
+  enabled: true
   injector:
     enabled: true
   server:
@@ -727,66 +727,6 @@ ui:
     className: nginx
     annotations: {}
     hosts:
-      - host: docs.localhost
-        paths:
-          - path: /
-            pathType: Prefix
-    tls: []
-
-dashboard:
-  enabled: false
-  replicaCount: 1
-  allowSync: true
-  image:
-    repository: ghcr.io/danielsmithdevelopment/clawql-dashboard
-    tag: latest
-    pullPolicy: IfNotPresent
-  service:
-    port: 3040
-    targetPort: 3040
-  k8s:
-    namespace: clawql
-    secretName: clawql-provider-env
-    deploymentName: clawql-mcp-http
-  vault:
-    namespace: clawql
-    pod: clawql-vault-0
-    addr: http://127.0.0.1:8200
-    mount: secret
-    path: provider/env
-  resources:
-    requests:
-      cpu: 100m
-      memory: 256Mi
-    limits:
-      cpu: 500m
-      memory: 768Mi
-  startupProbe:
-    httpGet:
-      path: /api/k8s/health
-      port: http
-    periodSeconds: 10
-    failureThreshold: 30
-    timeoutSeconds: 5
-  readinessProbe:
-    httpGet:
-      path: /api/k8s/health
-      port: http
-    periodSeconds: 5
-    timeoutSeconds: 3
-    failureThreshold: 3
-  livenessProbe:
-    httpGet:
-      path: /api/k8s/health
-      port: http
-    periodSeconds: 30
-    timeoutSeconds: 5
-    failureThreshold: 3
-  ingress:
-    enabled: false
-    className: nginx
-    annotations: {}
-    hosts:
       - host: clawql.localhost
         paths:
           - path: /
@@ -873,7 +813,6 @@ kyverno:
       - "ghcr.io/danielsmithdevelopment/clawql-mcp*"
       - "ghcr.io/danielsmithdevelopment/clawql-panguard-mcp-bridge*"
       - "ghcr.io/danielsmithdevelopment/clawql-website*"
-      - "ghcr.io/danielsmithdevelopment/clawql-dashboard*"
     cosign:
       subjectRegExp: "^https://github\\.com/danielsmithdevelopment/ClawQL/.*"
       issuerRegExp: "^https://token\\.actions\\.githubusercontent\\.com.*"
