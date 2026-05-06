@@ -56,8 +56,9 @@ set -euo pipefail
 #   bash scripts/kubernetes/local-k8s-docker-desktop.sh
 #   CLAWQL_LOCAL_K8S_INSTALLER=kustomize bash scripts/kubernetes/local-k8s-docker-desktop.sh
 #
-# MCP: with default ambient Istio — **http://localhost/mcp** via Gateway+VirtualService (copy URL to ~/.cursor/mcp.json).
-# Or Ingress **http://clawql-mcp.localhost/mcp** when :80 reaches ingress-nginx (.cursor/mcp.json.example).
+# MCP: with default ambient Istio — **http://127.0.0.1/mcp** (Cursor on Docker Desktop macOS; avoids localhost→::1),
+# **http://localhost/mcp**, **http://clawql-mcp.localhost/mcp** via Gateway+VirtualService (.cursor/mcp.json.example).
+# Or Ingress **http://clawql-mcp.localhost/mcp** when :80 reaches ingress-nginx.
 # UI (Ingress): http://clawql.localhost
 # Health (Ingress): curl -s http://clawql-mcp.localhost/healthz
 
@@ -436,9 +437,10 @@ fi
 if [[ -n "${INSTALL_ISTIO}" ]]; then
   echo ""
   echo "Istio (${INSTALL_ISTIO}) north-south (defaults): Gateway + Envoy on :80 / :50051 (LoadBalancer localhost on docker/rancher kube contexts; hostNetwork elsewhere unless overridden)"
-  echo "  MCP URLs: http://localhost/mcp   http://clawql-mcp.localhost/mcp"
+  echo "  MCP URLs: http://127.0.0.1/mcp (Cursor default in .cursor/mcp.json.example)   http://localhost/mcp   http://clawql-mcp.localhost/mcp"
   echo "Health: curl -s http://localhost/healthz"
   echo "  gRPC: localhost:50051"
+  echo "Streamable HTTP smoke: bash scripts/kubernetes/smoke-mcp-http-istio-gateway.sh"
   echo "gRPC smoke:         bash scripts/kubernetes/smoke-grpcurl-istio-gateway-mcp.sh"
   echo "Control plane:     kubectl get pods -n istio-system"
   echo "Observability (port-forward as needed):"
@@ -452,7 +454,7 @@ if [[ -n "${INSTALL_ISTIO}" ]]; then
 fi
 echo ""
 if [[ -n "${INSTALL_ISTIO}" && "${CLAWQL_ISTIO_INSTALL_INGRESS_GATEWAY:-1}" == "1" && "${CLAWQL_ISTIO_MCP_HTTP_SERVICE_CLUSTERIP:-0}" == "1" ]]; then
-  echo "${HOME}/.cursor/mcp.json: prefer \"url\": \"http://localhost/mcp\" or \"http://clawql-mcp.localhost/mcp\" (.cursor/mcp.json.example). svc/clawql-mcp-http is ClusterIP — do not rely on a raw :8080 LoadBalancer URL."
+  echo "${HOME}/.cursor/mcp.json: prefer \"url\": \"http://127.0.0.1/mcp\" (Docker Desktop macOS) or \"http://localhost/mcp\" / \"http://clawql-mcp.localhost/mcp\" — see repo .cursor/mcp.json.example. svc/clawql-mcp-http is ClusterIP — do not rely on a raw :8080 LoadBalancer URL."
   echo "To expose direct MCP LoadBalancer :8080 again (bypass gateway): CLAWQL_ISTIO_MCP_HTTP_SERVICE_CLUSTERIP=0 make local-k8s-up"
 else
   echo "${HOME}/.cursor/mcp.json: \"url\": \"http://clawql-mcp.localhost/mcp\" (Ingress), or direct LB :8080 / Istio gateway URL when CLUSTERIP=0 (see messages above)."

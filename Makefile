@@ -1,4 +1,4 @@
-.PHONY: deploy-cloud-run deploy-k8s deploy-docs local-k8s-up local-k8s-mcp-delete local-docker-up helm-lint helm-ui-template-tests kustomize-local-lint lint-k8s-manifests smoke-grpcurl-istio-gateway-mcp verify-vault-policy
+.PHONY: deploy-cloud-run deploy-k8s deploy-docs local-k8s-up local-k8s-mcp-delete local-docker-up helm-lint helm-ui-template-tests kustomize-local-lint lint-k8s-manifests smoke-grpcurl-istio-gateway-mcp smoke-mcp-http-istio-gateway verify-vault-policy
 
 # Validate charts/clawql-mcp (requires helm on PATH)
 helm-lint:
@@ -54,6 +54,10 @@ local-k8s-up:
 # After local-k8s-up with Istio + gateway: grpcurl grpc.health.v1.Health/Check on localhost:50051
 smoke-grpcurl-istio-gateway-mcp:
 	@bash scripts/kubernetes/smoke-grpcurl-istio-gateway-mcp.sh
+
+# Streamable HTTP POST /mcp initialize via Istio :80 (matches Cursor; default URL 127.0.0.1)
+smoke-mcp-http-istio-gateway:
+	@bash scripts/kubernetes/smoke-mcp-http-istio-gateway.sh
 
 # Remove MCP deployment+Service (e.g. before Helm after kubectl apply / Kustomize)
 local-k8s-mcp-delete:
