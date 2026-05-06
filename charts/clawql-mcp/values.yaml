@@ -1,4 +1,9 @@
 # Default resource names match Kustomize (`clawql-mcp-http`) so kubectl snippets in docs stay familiar.
+#
+# Naming — Helm key **`vault`** vs **HashiCorp Vault** ([#161](https://github.com/danielsmithdevelopment/ClawQL/issues/161)):
+# the **`vault`** block under this file configures Obsidian *memory* storage (Markdown on disk). It does not
+# deploy HashiCorp Vault. Use **`hashicorpVault`** for the bundled Vault chart and **`envFromSecret`** /
+# **`envFromSecrets`** (or External Secrets) for provider tokens.
 fullnameOverride: clawql-mcp-http
 nameOverride: ""
 
@@ -603,6 +608,23 @@ extraEnv: []
 # Optional: load env vars from an existing Secret (keys become env var names).
 envFromSecret: ""
 
+# Optional: multiple Secrets merged into envFrom (listed order). Use with External Secrets / VSO → Kubernetes Secrets.
+envFromSecrets: []
+
+# When true, chart rendering fails unless envFromSecret or envFromSecrets is set (production posture).
+secretSourcing:
+  requireVaultBackedSecrets: true
+
+# Bundled HashiCorp Vault Helm chart (dependency **`hashicorpVault`**). Desktop overlay turns this off.
+hashicorpVault:
+  enabled: true
+  injector:
+    enabled: true
+  server:
+    enabled: true
+    dev:
+      enabled: false
+
 resources:
   requests:
     cpu: 500m
@@ -643,7 +665,7 @@ persistence:
   size: 10Gi
   existingClaim: ""
 
-# Docker Desktop / single-node: bind a host directory into the pod for Obsidian vault persistence.
+# Obsidian memory Markdown on disk (`memory_ingest` / `memory_recall`). Not HashiCorp Vault — #161.
 # Mutually exclusive with persistence.enabled (PVC wins if both are set).
 vault:
   hostPath:

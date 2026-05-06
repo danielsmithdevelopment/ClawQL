@@ -38,7 +38,7 @@ An MCP (Model Context Protocol) server (`clawql-mcp` on npm) that lets AI assist
 - **OSV-Scanner (Google):** layer-aware **container + dependency** vulnerability detection and **SBOM** support, wired into the **Golden Image Pipeline** (with **Trivy**); scannable on demand via the same `search` / `execute` surface when the OSV spec is loaded
 - **Istio (optional):** **mTLS**, authz policy, traffic management, **Kiali** topology — **Ambient** or sidecar; zero-trust east-west between ClawQL, Paperless, Onyx, document services, and data planes
 - Unified **Helm** chart (**12+** services with Onyx, Flink, optional OSV job/cron, **Fabric** sub-chart, optional **Istio** + ingress stack)
-- ClawQL-Agent + OpenClaw + NATS JetStream + Edge Worker mode; Slack `notify()`; local-first by design; **HashiCorp Vault** or **OpenBao** for static secrets (see Infrastructure)
+- ClawQL-Agent + OpenClaw + NATS JetStream + Edge Worker mode; Slack `notify()`; local-first by design; **HashiCorp Vault** or for cluster static secrets (distinct from Helm **`vault`**, which mounts **Obsidian** memory — [#161](https://github.com/danielsmithdevelopment/ClawQL/issues/161); see Infrastructure)
 
 _April 2026 · danielsmithdevelopment/ClawQL · docs.clawql.com_
 
@@ -91,7 +91,7 @@ The regulated fork (**SeeTheGreens / ClawQL-MCP**) and the public fork (**ClawQL
 - **Knowledge:** Onyx + Flink
 - **Orchestration:** Ouroboros 5-phase loop
 - **On-chain + provenance (when enabled):** Web3 pay-per-call surfaces; Graph/Chainlink; Fabric for tamper-evident, channel-isolated history
-- **Security & resilience (all deployments):** **OSV-Scanner** (CVE + SBOM) integrated with the **Golden Image Pipeline**; **Trivy** in CI; optional **Istio** for **mTLS**, L7 policy, and **Kiali**-visible service graph; **Vault**/**OpenBao**-backed secrets with injector sidecars; audit ring buffer can record **OSV** summary hashes alongside Onyx and tool calls
+- **Security & resilience (all deployments):** **OSV-Scanner** (CVE + SBOM) integrated with the **Golden Image Pipeline**; **Trivy** in CI; optional **Istio** for **mTLS**, L7 policy, and **Kiali**-visible service graph; **Vault**/-backed secrets with injector sidecars; audit ring buffer can record **OSV** summary hashes alongside Onyx and tool calls
 
 `npm install -g clawql-mcp` · `github.com/danielsmithdevelopment/ClawQL`
 
@@ -125,7 +125,7 @@ _Three audiences — one platform that serves all of them from a single deployme
 - Slack `notify()` integration delivers workflow results to the right channel automatically, including Onyx citations and Paperless links
 - Audit trails via Merkle trees prove every processing step — including knowledge retrieval — valuable for compliance
 - Cuckoo filter deduplication prevents duplicate document imports at scale
-- **One Helm chart** manages MCP, documents, Onyx, Flink, **OSV-Scanner** jobs, optional **Istio** + ingress, **Kiali**, **Vault** integration — not a patchwork of install guides
+- **One Helm chart** manages MCP, documents, Onyx, Flink, **OSV-Scanner** jobs, optional **Istio** + ingress, **Kiali**, and optional **HashiCorp Vault**/ secrets (not the chart **`vault`** key — that mounts **Obsidian** memory only [#161](https://github.com/danielsmithdevelopment/ClawQL/issues/161)) — not a patchwork of install guides
 - **Istio mTLS** on Paperless, Onyx, and internal APIs where policy demands encryption in transit; **Kiali** for who-talks-to-whom during audits
 - Extensible with any OpenAPI spec
 
@@ -549,7 +549,7 @@ Apache Tika is the document pipeline’s intake layer — the universal translat
 - iCal / vCard
 - Source code (30+ languages)
 
-_1,000+ MIME types supported. Tika drives metadata-informed routing decisions in Ouroboros — e.g. detecting Office files and routing to Gotenberg before Stirling._  
+_1,000+ MIME types supported. Tika drives metadata-informed routing decisions in Ouroboros — e.g. detecting Office files and routing to Gotenberg before Stirling._ 
 **OSV-Scanner** validates **Tika** (and other) **images** in the **Golden Image** build; Tika’s **JARs** and native deps are in the **SBOM** for continuous monitoring.
 
 ---
@@ -763,13 +763,13 @@ A Merkle tree hashes each processing step’s output into a leaf node. The root 
 ```
 ROOT HASH (stored in Postgres)
 ├── Hash(L1+L2)
-│   ├── L1: Onyx retrieval result set + citations
-│   └── L2: Tika extract + metadata
+│  ├── L1: Onyx retrieval result set + citations
+│  └── L2: Tika extract + metadata
 └── Hash(L3+L4+L5)
-    ├── L3: Stirling OCR + redact
-    ├── L3b: OSV-Scanner summary (trimmed)
-    ├── L4: Paperless import confirmation
-    └── L5: GitHub issues filed
+  ├── L3: Stirling OCR + redact
+  ├── L3b: OSV-Scanner summary (trimmed)
+  ├── L4: Paperless import confirmation
+  └── L5: GitHub issues filed
 ```
 
 _Root stored in Postgres. Optional `proofOfIntegrity` GraphQL endpoint for external audit._ **Istio policy** decisions (e.g. denied egress) can be **logged** and **hashed** if your compliance pack requires “network control evidence.”
@@ -829,7 +829,7 @@ The Slack spec is retained in `providers/slack.json` as one of the nine default 
 
 # 04 — Infrastructure
 
-_9+ bundled providers (incl. **OSV-Scanner** surface) · **12+** runtime services in one **Helm** release · **optional Istio** + **Kiali** · **Trivy** + **OSV-Scanner** in **Golden Image** · **Vault**/**OpenBao** · Privacy- and **zero-trust**-first._
+_9+ bundled providers (incl. **OSV-Scanner** surface) · **12+** runtime services in one **Helm** release · **optional Istio** + **Kiali** · **Trivy** + **OSV-Scanner** in **Golden Image** · **Vault**/ · Privacy- and **zero-trust**-first._
 
 ---
 
@@ -884,7 +884,7 @@ Bundled or CI-generated **OpenAPI** (or a thin `providers/osv-*.json`) that wrap
 
 ### Unified Kubernetes Helm Chart
 
-_One `helm install` command deploys the entire platform — **all 12+** services (MCP, documents, Onyx, Flink, **OSV** jobs, **Vault**, optional **Istio** control plane, **Kiali**), all secrets, all ingress rules._
+_One `helm install` command deploys the entire platform — **all 12+** services (MCP, documents, Onyx, Flink, **OSV** jobs, optional **HashiCorp Vault**/ for secrets — not Helm **`vault`** = Obsidian memory [#161](https://github.com/danielsmithdevelopment/ClawQL/issues/161), optional **Istio** control plane, **Kiali**), all secrets wiring, all ingress rules._
 
 ```bash
 helm install clawql charts/clawql-full-stack --namespace clawql
@@ -902,17 +902,19 @@ helm install clawql charts/clawql-full-stack --namespace clawql
 - Flink included as a deployment for real-time connector sync into Onyx
 - **Optional Istio** — `istiod`, ingress/egress gateways, **Kiali**; **Ambient** profile preferred for new clusters; mTLS **STRICT** by default in hardened `values` overlays
 - **OSV-Scanner** — `CronJob` and/or in-cluster **scan** `Deployment` with read-only `docker.sock` or **Kaniko**/**Cosign** outputs — wired to the same **namespace**
-- **Vault** (or **OpenBao**) — subchart or external URL; **Vault Agent Injector** for **ClawQL**, **Flink** job secrets, and **Istio**-compatible TLS material where you do not use **Istio** SDS alone
+- **HashiCorp Vault** — your subchart or in-cluster **`vault:8200`** **Service**; **Vault Agent Injector** (or equivalent) populates **`Secret`** objects for **ClawQL**, **Flink**, and TLS where you do not rely on **Istio** SDS alone — **orthogonal** to Helm **`vault.*`**, which only mounts Obsidian Markdown at **`obsidianVaultPath`** ([#161](https://github.com/danielsmithdevelopment/ClawQL/issues/161))
 - Rolling updates: rebuild ClawQL image, `helm upgrade` — zero-downtime in most cases
 
-### Secrets management (HashiCorp Vault · OpenBao)
+### Secrets management (HashiCorp Vault)
 
 **Role:** Central **static** and **dynamic** secrets; **Istio** **mTLS** protects traffic to Vault from sidecars/ambient nodes.
+
+**Operator disambiguation:** Helm **`values.yaml`** key **`vault`** is **only** for **Obsidian** memory files on disk. Wire **cluster** API tokens and similar via **`envFromSecret`** / **`extraEnv`** (or injector → **`Secret`**) as today ([#161](https://github.com/danielsmithdevelopment/ClawQL/issues/161)).
 
 - **KV v2** paths per environment (`secret/clawql/…`, `onyx/…`, `github/…`); **Vault Agent** sidecar templates → files or env for **ClawQL** and workers.
 - **Per-user** or per-workflow paths where your org model requires isolation; **Istio** `AuthorizationPolicy` can restrict which **ServiceAccount** may reach Vault’s K8s **Service**.
 - **No** Vault UI on the public internet — **ClusterIP** + mesh-only or **port-forward**; `root` and `unseal` keys in **HSM** / break-glass per policy.
-- **OpenBao** — **API-compatible** subset for air-gapped teams who want Vault semantics without HashiCorp commercial agreement (verify license and feature parity for your use case).
+- — **API-compatible** subset for air-gapped teams who want Vault semantics without HashiCorp commercial agreement (verify license and feature parity for your use case).
 - **Integration with scans:** **SBOM** and **OSV** attestation bundles can be **written** to Vault and **referenced** from `memory_ingest` (digest + path), matching **Merkle** leaves.
 
 **Spec Refresh Command**
@@ -935,23 +937,23 @@ Self-hosted provider specs contain `servers:` entries pointing at internal Kuber
 
 _All **12+** workload types in the **`clawql`** namespace (exact pods depend on `values`) — one Helm story, one **kubectl** context._
 
-| Service / component                   | Internal DNS (illustrative)   | Ingress / exposure               | Role                                                          |
+| Service / component          | Internal DNS (illustrative)  | Ingress / exposure        | Role                             |
 | ------------------------------------- | ----------------------------- | -------------------------------- | ------------------------------------------------------------- |
-| ClawQL MCP + Ouroboros                | `clawql:3000`                 | `clawql.local`                   | **Brain** — `search` / `execute`, Ouroboros, GraphQL, tools   |
-| Stirling-PDF                          | `stirling-pdf:8080`           | `pdf.clawql.local`               | PDF merge/OCR/redact/…                                        |
-| Paperless NGX                         | `paperless:8000`              | `paperless.clawql.local`         | Archive, consume, API                                         |
-| Apache Tika                           | `tika:9998`                   | internal                         | Extraction, MIME                                              |
-| Gotenberg                             | `gotenberg:3000`              | internal                         | Conversion to PDF                                             |
-| Onyx                                  | `onyx:8080`                   | `onyx.clawql.local`              | Enterprise search, 40+ connectors                             |
-| Flink (JM/TM)                         | `flink-jobmanager:8081`       | internal                         | Onyx index sync                                               |
-| **OSV-Scanner** (CronJob / **Job**)   | e.g. `osv-scanner`            | internal / **none**              | **Vuln** + **SBOM** scans on image refs / lockfiles           |
-| **Istio control plane**               | `istiod:15012`                | internal                         | mTLS, **Wasm** plugins, xDS to Envoys / **ztunnel** (Ambient) |
-| **Istio ingress/egw**                 | `istio-ingressgateway`        | `clawql.local`, `*.clawql.local` | North-south, **VirtualService** + **Gateway**                 |
-| **Kiali** (optional)                  | `kiali:20001`                 | `kiali.clawql.local`             | Mesh **graph**, health, config                                |
-| **Vault** / **OpenBao**               | `vault:8200`                  | internal (mesh-only)             | **Secrets**, injectors, dynamic creds when configured         |
-| Dragonfly (shared, RESP / `redis://`) | in-cluster `*-dragonfly:6379` | internal                         | Paperless / queues — DragonflyDB only in Helm                 |
-| Postgres (shared)                     | `postgres:5432`               | internal                         | Seeds, Merkle, Ouroboros log                                  |
-| Paperless Postgres                    | isolated                      | internal                         | Isolated Postgres; broker → shared Dragonfly                  |
+| ClawQL MCP + Ouroboros        | `clawql:3000`         | `clawql.local`          | **Brain** — `search` / `execute`, Ouroboros, GraphQL, tools  |
+| Stirling-PDF             | `stirling-pdf:8080`      | `pdf.clawql.local`        | PDF merge/OCR/redact/…                    |
+| Paperless NGX             | `paperless:8000`       | `paperless.clawql.local`     | Archive, consume, API                     |
+| Apache Tika              | `tika:9998`          | internal             | Extraction, MIME                       |
+| Gotenberg               | `gotenberg:3000`       | internal             | Conversion to PDF                       |
+| Onyx                 | `onyx:8080`          | `onyx.clawql.local`       | Enterprise search, 40+ connectors               |
+| Flink (JM/TM)             | `flink-jobmanager:8081`    | internal             | Onyx index sync                        |
+| **OSV-Scanner** (CronJob / **Job**)  | e.g. `osv-scanner`      | internal / **none**       | **Vuln** + **SBOM** scans on image refs / lockfiles      |
+| **Istio control plane**        | `istiod:15012`        | internal             | mTLS, **Wasm** plugins, xDS to Envoys / **ztunnel** (Ambient) |
+| **Istio ingress/egw**         | `istio-ingressgateway`    | `clawql.local`, `*.clawql.local` | North-south, **VirtualService** + **Gateway**         |
+| **Kiali** (optional)         | `kiali:20001`         | `kiali.clawql.local`       | Mesh **graph**, health, config                |
+| **Vault** /        | `vault:8200`         | internal (mesh-only)       | **Secrets**, injectors, dynamic creds when configured     |
+| Dragonfly (shared, RESP / `redis://`) | in-cluster `*-dragonfly:6379` | internal             | Paperless / queues — DragonflyDB only in Helm         |
+| Postgres (shared)           | `postgres:5432`        | internal             | Seeds, Merkle, Ouroboros log                 |
+| Paperless Postgres          | isolated           | internal             | Isolated Postgres; broker → shared Dragonfly         |
 
 **MinIO** (optional) — S3 API for big artifacts, SBOM storage, and paper artifacts. **Grafana Tempo** / **OTel** collectors — co-locate or `values` to your observability namespace; **Istio** can export **telemetry** to **Grafana** stacks.
 
@@ -974,8 +976,8 @@ Stirling-PDF runs with `DOCKER_ENABLE_SECURITY=false` — removing the 5-user Sa
 **Token Isolation**
 Each provider token (`CLAWQL_GITHUB_TOKEN`, `CLAWQL_CLOUDFLARE_API_TOKEN`, `CLAWQL_SLACK_TOKEN`, `ONYX_API_TOKEN`, etc.) is isolated in Kubernetes Secrets and injected only into the ClawQL process. Tokens never appear in logs, never leave the cluster, and are never shared between provider contexts.
 
-**Vault Memory Privacy**
-The Obsidian vault lives on your local filesystem at `CLAWQL_OBSIDIAN_VAULT_PATH`. Memory notes — including ingested Onyx citations — never leave your machine. `memory_ingest` explicitly prohibits storing secrets. The hybrid `memory.db` sidecar is also local.
+**Obsidian memory vault privacy**
+Markdown memory lives on your filesystem at `CLAWQL_OBSIDIAN_VAULT_PATH` (in Kubernetes this is commonly the chart-mounted path under **`vault.hostPath`** or a PVC — **not** a HashiCorp Vault server). Notes — including ingested Onyx citations — never leave your machine when you deploy that way. `memory_ingest` explicitly prohibits storing secrets. The hybrid `memory.db` sidecar is also local ([#161](https://github.com/danielsmithdevelopment/ClawQL/issues/161)).
 
 **Cryptographic Integrity**
 Every Ouroboros workflow step — including Onyx knowledge retrieval steps — is hashed into a Merkle tree. The root is stored in Postgres. Any tampering with processed documents, retrieved knowledge, or workflow records is immediately detectable. Compliance-grade audit trails covering both document processing and AI knowledge retrieval decisions.
@@ -1004,7 +1006,7 @@ In production, `CLAWQL_BUNDLED_OFFLINE=1` is enforced in the Helm chart. This pr
 **Golden Image Pipeline (expanded)**
 **Hardened bases** (distroless / **Chainguard**-style) → **Trivy** + **OSV-Scanner** + **SBOM** (CycloneDX/SPDX) → **Cosign** sign + **Kyverno** or **OPA** policies on admit → **optional** Merkle root of the **attestation** into **Postgres** / **Vault** for audit.
 
-**HashiCorp Vault / OpenBao**
+**HashiCorp Vault**
 **Static** and **short-lived** creds; **Istio** protects **injection** paths. See **slide 28** (Helm) for the **### Secrets management** block.
 
 ---
@@ -1061,10 +1063,10 @@ _Full metrics, dashboards, distributed tracing, logs, and synthetic monitoring �
 
 - Prometheus scrapes all ClawQL services, Ouroboros, document pipeline, Onyx, and Flink.
 - Pre-built Grafana dashboards included in the Helm chart:
-  - MCP tool usage, latency, and error rates
-  - Document pipeline throughput and OCR quality
-  - Onyx index freshness and query performance
-  - Golden Image + OPA Gatekeeper health
+ - MCP tool usage, latency, and error rates
+ - Document pipeline throughput and OCR quality
+ - Onyx index freshness and query performance
+ - Golden Image + OPA Gatekeeper health
 
 **OpenTelemetry (OTel) — Distributed Tracing & Logs**
 
@@ -1103,13 +1105,13 @@ _PagerDuty integration — automatic, context-rich escalation from the full obse
 
 **Automated Incident Triggers**
 
-| Source                           | Trigger Condition                | Incident Includes                                               |
+| Source              | Trigger Condition        | Incident Includes                        |
 | -------------------------------- | -------------------------------- | --------------------------------------------------------------- |
-| Uptime Kuma                      | Monitor down > 30s               | Status page link, check history, graph                          |
-| Prometheus Alertmanager          | Any firing alert                 | Grafana link, runbook, labels                                   |
-| OpenTelemetry                    | High error/latency spans         | Trace ID, correlated Merkle root                                |
-| Ouroboros                        | Retry budget exhausted           | Seed ID, failed phase, evaluation log                           |
-| ClawQL Audit                     | Security or integrity events     | OPA violations, Merkle mismatches                               |
+| Uptime Kuma           | Monitor down > 30s        | Status page link, check history, graph             |
+| Prometheus Alertmanager     | Any firing alert         | Grafana link, runbook, labels                  |
+| OpenTelemetry          | High error/latency spans     | Trace ID, correlated Merkle root                |
+| Ouroboros            | Retry budget exhausted      | Seed ID, failed phase, evaluation log              |
+| ClawQL Audit           | Security or integrity events   | OPA violations, Merkle mismatches                |
 | **OSV-Scanner** / **Trivy** (CI) | New **Critical** on `main` image | **Digest**, **SBOM** link, **Grafana** annotation, **`notify`** |
 
 **Natural Language & Ouroboros Control**
@@ -1136,11 +1138,11 @@ _Realistic sizing for running the complete ClawQL stack on one machine._
 
 **Recommended Configurations**
 
-| Scenario                     | Host Machine Specs      | Docker Desktop Allocation              | Idle RAM | Peak RAM (OCR / Onyx) | Notes                     |
+| Scenario           | Host Machine Specs   | Docker Desktop Allocation       | Idle RAM | Peak RAM (OCR / Onyx) | Notes           |
 | ---------------------------- | ----------------------- | -------------------------------------- | -------- | --------------------- | ------------------------- |
-| **Minimum** (dev, Onyx off)  | 16 GB RAM, 6+ cores     | 8–12 GB RAM, 4–6 CPUs, 100 GB disk     | 4–7 GB   | 10–12 GB              | Basic testing             |
-| **Recommended** (full stack) | **32 GB RAM, 8+ cores** | **16–24 GB RAM, 8 CPUs**, 200+ GB disk | 10–14 GB | 20–28 GB              | Daily production-like use |
-| **Future-Proof**             | 64 GB RAM, 12+ cores    | 32 GB RAM, 10–12 CPUs                  | 14–18 GB | 30+ GB                | Large archives            |
+| **Minimum** (dev, Onyx off) | 16 GB RAM, 6+ cores   | 8–12 GB RAM, 4–6 CPUs, 100 GB disk   | 4–7 GB  | 10–12 GB       | Basic testing       |
+| **Recommended** (full stack) | **32 GB RAM, 8+ cores** | **16–24 GB RAM, 8 CPUs**, 200+ GB disk | 10–14 GB | 20–28 GB       | Daily production-like use |
+| **Future-Proof**       | 64 GB RAM, 12+ cores  | 32 GB RAM, 10–12 CPUs         | 14–18 GB | 30+ GB        | Large archives      |
 
 **Key Resource Consumers**
 
@@ -1306,22 +1308,22 @@ GraphQL projection keeps responses small for `memory_ingest` and token efficienc
 
 ### Use cases — how Fabric + ClawQL fit together (matrix)
 
-| Use case                      | **Fabric** adds…                                                                                                 | ClawQL uses…                                                                               |
+| Use case           | **Fabric** adds…                                                 | ClawQL uses…                                        |
 | ----------------------------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| **Document provenance**       | Immutable log of **PDF/artifact** hashes, **version**, **redaction** event **refs**                              | Stirling / Paperless, **Merkle**, `fabric_submit_provenance` / `logDocumentHash`           |
-| **Compliance & AI audit**     | **Tamper-proof** record of **AI** decisions + **Onyx** citations (hashed)                                        | Ouroboros, **Merkle**, `knowledge_search_onyx`, `memory_ingest`, `fabric_query_provenance` |
-| **Multi-org & supply chain**  | **Private** **channels** for partners; **shared** for syndication                                                | Channels + **Onyx** **permission** model; **Flink** freshness                              |
-| **Smart contract automation** | **Chaincode** enforces “**if** **Evaluate** + **Merkle** + **policy** then **status** = accepted”                | Ouroboros **Execute** / **Evolve** + `fabric_chaincode_invoke`                             |
-| **Assets & credentials**      | **Signed** document or **credential** **id** on-ledger                                                           | Gotenberg, Paperless, **OpenClaw** **approval** hooks, `fabric_rwa_register` (where RWA)   |
-| **Agentic digital employees** | **Persistent** **workload** **id** and **key** **milestones** attested; optional **NATS** → chaincode **events** | **Clawql-Agent** **checkpoints**, **Obsidian** runbooks, **NATS** (see roadmap)            |
+| **Document provenance**    | Immutable log of **PDF/artifact** hashes, **version**, **redaction** event **refs**               | Stirling / Paperless, **Merkle**, `fabric_submit_provenance` / `logDocumentHash`      |
+| **Compliance & AI audit**   | **Tamper-proof** record of **AI** decisions + **Onyx** citations (hashed)                    | Ouroboros, **Merkle**, `knowledge_search_onyx`, `memory_ingest`, `fabric_query_provenance` |
+| **Multi-org & supply chain** | **Private** **channels** for partners; **shared** for syndication                        | Channels + **Onyx** **permission** model; **Flink** freshness               |
+| **Smart contract automation** | **Chaincode** enforces “**if** **Evaluate** + **Merkle** + **policy** then **status** = accepted”        | Ouroboros **Execute** / **Evolve** + `fabric_chaincode_invoke`               |
+| **Assets & credentials**   | **Signed** document or **credential** **id** on-ledger                              | Gotenberg, Paperless, **OpenClaw** **approval** hooks, `fabric_rwa_register` (where RWA)  |
+| **Agentic digital employees** | **Persistent** **workload** **id** and **key** **milestones** attested; optional **NATS** → chaincode **events** | **Clawql-Agent** **checkpoints**, **Obsidian** runbooks, **NATS** (see roadmap)      |
 
 ### Phased roadmap (suggested)
 
-| Phase        | **Goal**                                                | **Concrete**                                                                                                                                                                                                                                                      |
+| Phase    | **Goal**                        | **Concrete**                                                                                                                           |
 | ------------ | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **MVP**      | **Trust** in **Merkle** + **read-back** from **ledger** | **Helm** test net; **REST** **gateway** + **OpenAPI**; `fabric_submit_provenance` for **Merkle** + **Seeds**; `memory_ingest` with **txid**; `notify` **includes** “anchored to **ch X** at **T**”                                                                |
-| **Medium**   | **Deeper** **Ouroboros** ↔ **chaincode**                | `Evaluate` **queries** **prior** **on-ledger** **outcome**; optional **Onyx** **citation** **attestation**; **exportable** **cryptographic** **proof** in **Vault** and **recall**                                                                                |
-| **Advanced** | **Data** **plane** + **orchestration** **reactions**    | **PDCs** (private data collections) for **sensitive** **Onyx** **excerpts**; **chaincode** **events** → **NATS** **JetStream** → **start** or **continue** a **Clawql** **workflow**; full **Clawql-Agent** **action** attestation on **regulatory** **channels** |
+| **MVP**   | **Trust** in **Merkle** + **read-back** from **ledger** | **Helm** test net; **REST** **gateway** + **OpenAPI**; `fabric_submit_provenance` for **Merkle** + **Seeds**; `memory_ingest` with **txid**; `notify` **includes** “anchored to **ch X** at **T**”                                |
+| **Medium**  | **Deeper** **Ouroboros** ↔ **chaincode**        | `Evaluate` **queries** **prior** **on-ledger** **outcome**; optional **Onyx** **citation** **attestation**; **exportable** **cryptographic** **proof** in **Vault** and **recall**                                        |
+| **Advanced** | **Data** **plane** + **orchestration** **reactions**  | **PDCs** (private data collections) for **sensitive** **Onyx** **excerpts**; **chaincode** **events** → **NATS** **JetStream** → **start** or **continue** a **Clawql** **workflow**; full **Clawql-Agent** **action** attestation on **regulatory** **channels** |
 
 _“Would you like sample **chaincode**, **Helm** **snippets**, or a **diagram**?”—those belong in **docs** and **separate** design notes; the **deck** **stays** the **narrative** **spine**._
 
@@ -1443,7 +1445,7 @@ _This is category-defining infrastructure for agentic capital formation._
 
 # 07 — Roadmap, Pilots & Vision (2026)
 
-_What’s built, what’s being built, Web3 + Fabric rollout, and where the ecosystem is going._  
+_What’s built, what’s being built, Web3 + Fabric rollout, and where the ecosystem is going._ 
 _(Core platform + intelligence: **§01–§04**; **§06** = ClawQL-Web3 / Fabric / Graph / Chainlink; **§07** = Roadmap; **§08** = Defense in depth & security operations — **slides 68–79** + `../security/clawql-security-defense-in-depth.md`.)_
 
 ---
@@ -1478,33 +1480,33 @@ Same **Interview → Seed → Execute → Evaluate → Evolve** spine as the inv
 ```yaml
 # Excerpt — not exhaustive; see chart README for your release.
 clawql:
-  web3:
-    x402:
-      enabled: true
-  fabric:
-    enabled: true
-    # CLAWQL_ENABLE_FABRIC — Wire env from chart:
-    channel: "clawql-provenance"
-  agentWallets:
-    policy:
-      maxSpendPerLoan: "50000" # USD or stablecoin units — your enum
-      erc4337: true
+ web3:
+  x402:
+   enabled: true
+ fabric:
+  enabled: true
+  # CLAWQL_ENABLE_FABRIC — Wire env from chart:
+  channel: "clawql-provenance"
+ agentWallets:
+  policy:
+   maxSpendPerLoan: "50000" # USD or stablecoin units — your enum
+   erc4337: true
 security:
-  osvScanner:
-    enabled: true
-    # CronJob schedule + target image ref / lockfile path
-  goldenImage:
-    trivy: { blockOn: ["CRITICAL", "HIGH"] }
-    osv: { blockOn: ["CRITICAL"] }
-  vault:
-    injector: true
-    addr: "https://vault:8200"
+ osvScanner:
+  enabled: true
+  # CronJob schedule + target image ref / lockfile path
+ goldenImage:
+  trivy: { blockOn: ["CRITICAL", "HIGH"] }
+  osv: { blockOn: ["CRITICAL"] }
+ vault:
+  injector: true
+  addr: "https://vault:8200"
 istio:
-  enabled: true
-  profile: "ambient" # or "default" (sidecar)
-  mtls: "STRICT"
+ enabled: true
+ profile: "ambient" # or "default" (sidecar)
+ mtls: "STRICT"
 kiali:
-  enabled: true
+ enabled: true
 ```
 
 - Toggle Fabric via **`CLAWQL_ENABLE_FABRIC` / chart `fabric.enabled`**; image pulls, CA, peer, orderer, and CouchDB come from the **Fabric sub-chart**.
@@ -1533,13 +1535,13 @@ kiali:
 
 ### Comparison — **ClawQL-Web3 (public)** vs. **SeeTheGreens / ClawQL-MCP (regulated)**
 
-| Dimension               | ClawQL-Web3 (public)         | Regulated fork                           |
+| Dimension        | ClawQL-Web3 (public)     | Regulated fork              |
 | ----------------------- | ---------------------------- | ---------------------------------------- |
-| **Fabric**              | Lightweight / anchoring      | Multi-org, private channels              |
-| **Exposure**            | Proofs, tx ids, Merkle, IPFS | Full servicing + compliance workflows    |
-| **Payments**            | x402 / MPP per tool call     | Invoicing, channels, internal settlement |
-| **Agent wallets**       | ERC-4337 + policy limits     | Often human-gated; policy via OpenClaw   |
-| **The Graph/Chainlink** | Primary price / history path | Plus internal-only feeds where allowed   |
+| **Fabric**       | Lightweight / anchoring   | Multi-org, private channels       |
+| **Exposure**      | Proofs, tx ids, Merkle, IPFS | Full servicing + compliance workflows  |
+| **Payments**      | x402 / MPP per tool call   | Invoicing, channels, internal settlement |
+| **Agent wallets**    | ERC-4337 + policy limits   | Often human-gated; policy via OpenClaw  |
+| **The Graph/Chainlink** | Primary price / history path | Plus internal-only feeds where allowed  |
 
 Same `search` + `execute` and same Helm chart; differences are **config and channel policy**, not a second codebase.
 
@@ -1556,7 +1558,7 @@ Same `search` + `execute` and same Helm chart; differences are **config and chan
 - [ ] Onyx + document pipeline in loop with Merkle and audit export for stakeholders.
 - [ ] **Trivy** + **OSV-Scanner** + **SBOM** in **Golden Image** CI; **no Critical** on `main` **digest**; **`execute`** smoke scan from MCP in staging.
 - [ ] **Istio** **mTLS** **STRICT** between **Clawql** / **Onyx** / **Paperless** / **Tika** / **Stirling**; **Kiali** shows **no** plaintext service pairs in prod namespaces.
-- [ ] **Vault** (or **OpenBao**) injector tested for at least one rotating secret; **Istio** `AuthorizationPolicy` for Vault **Service** only from **Clawql** and **CI** SAs.
+- [ ] **Vault** injector tested for at least one rotating secret; **Istio** `AuthorizationPolicy` for Vault **Service** only from **Clawql** and **CI** SAs.
 - [ ] **Tempo** trace from **MCP** tool call through **Istio** to **Onyx** with sub-**500ms** p99 mesh overhead budget (tune in staging).
 - [ ] OpenClaw or equivalent approval gate for any production spend.
 
@@ -1566,12 +1568,12 @@ Same `search` + `execute` and same Helm chart; differences are **config and chan
 
 ### Ecosystem & references (both forks)
 
-| Resource      | Link / path                                         |
+| Resource   | Link / path                     |
 | ------------- | --------------------------------------------------- |
-| **Docs**      | https://docs.clawql.com                             |
-| **Core repo** | `danielsmithdevelopment/ClawQL` on GitHub           |
-| **npm (MCP)** | `clawql-mcp`                                        |
-| **Contact**   | **Daniel Smith** — danielsmithdevelopment@gmail.com |
+| **Docs**   | https://docs.clawql.com               |
+| **Core repo** | `danielsmithdevelopment/ClawQL` on GitHub      |
+| **npm (MCP)** | `clawql-mcp`                    |
+| **Contact**  | **Daniel Smith** — danielsmithdevelopment@gmail.com |
 
 - **ClawQL-Web3** and **ClawQL-MCP / SeeTheGreens** are positioning labels on the same core — confirm landing URLs and public MCP endpoint hostnames in your go-live checklist.
 
@@ -1966,7 +1968,7 @@ For **Fabric, x402, RWA, supply-chain gates, mesh rollout, Q2 2026 pilots** — 
 
 ### Vision: private workforce + public capital OS
 
-**ClawQL Ecosystem = Private Autonomous Workforce (regulated) + Public Agent-Native Capital OS (Web3).**  
+**ClawQL Ecosystem = Private Autonomous Workforce (regulated) + Public Agent-Native Capital OS (Web3).** 
 Agents can originate, fund, service, and **prove** tokenized RWAs with **enterprise knowledge**, **on-chain** data and execution, and **optional Fabric** provenance — all under **durable memory** and **x402**-style pay-per-call economics where enabled.
 
 - **ClawQL + ClawQL-Agent + OpenClaw** — natural language, persistent digital employees, governed execution, 24/7 event-driven work (NATS, Edge).
@@ -1991,7 +1993,7 @@ _Threat modeling, immutability, supply chain, zero trust, recovery, and how Claw
 
 Attackers chain application bugs, supply-chain compromise, and misconfiguration, then install persistence: backdoors, miners, and data exfiltration. Mutable infrastructure drifts; footholds are easy to miss; industry reporting often shows **long dwell time** (on the order of **hundreds of days** before discovery).
 
-**ClawQL** runs the same risks as any rich **Kubernetes** stack. Defense is **layered**, not a single product: **IaC**, **signed** images, **Istio** mTLS, admission **policy** (Kyverno/OPA), **Trivy** + **OSV-Scanner** + **SBOM**, **HashiCorp Vault** (or OpenBao), **Falco**-class runtime signals, and **Merkle** + **`audit`** for workload-level **evidence** in the app plane.
+**ClawQL** runs the same risks as any rich **Kubernetes** stack. Defense is **layered**, not a single product: **IaC**, **signed** images, **Istio** mTLS, admission **policy** (Kyverno/OPA), **Trivy** + **OSV-Scanner** + **SBOM**, **HashiCorp Vault**, **Falco**-class runtime signals, and **Merkle** + **`audit`** for workload-level **evidence** in the app plane.
 
 ### Our goal (defense in depth)
 
@@ -2008,14 +2010,14 @@ Model **threats and mitigations** before you lock architecture—then re-run the
 
 **STRIDE (examples in the `clawql` namespace)**
 
-| Code | Class                  | ClawQL-oriented example                                                                             |
+| Code | Class         | ClawQL-oriented example                                       |
 | ---- | ---------------------- | --------------------------------------------------------------------------------------------------- |
-| S    | Spoofing               | Stolen `kube` credentials; unauthenticated use of the HTTP **MCP** transport                        |
-| T    | Tampering              | Mutating a running **pod** filesystem; forged **Merkle** or **Onyx** citation chain                 |
-| R    | Repudiation            | “No one signed off on that **Seed**” — counter with **Postgres** + **Merkle** + optional **Fabric** |
-| I    | Information disclosure | PII in logs; **Onyx** used without **permission** enforcement                                       |
-| D    | Denial of service      | **Flink**/**Tika** overload; retry storms through the mesh                                          |
-| E    | Elevation of privilege | **privileged** `values.yaml`; **Clawql** **container** running as root                              |
+| S  | Spoofing        | Stolen `kube` credentials; unauthenticated use of the HTTP **MCP** transport            |
+| T  | Tampering       | Mutating a running **pod** filesystem; forged **Merkle** or **Onyx** citation chain         |
+| R  | Repudiation      | “No one signed off on that **Seed**” — counter with **Postgres** + **Merkle** + optional **Fabric** |
+| I  | Information disclosure | PII in logs; **Onyx** used without **permission** enforcement                    |
+| D  | Denial of service   | **Flink**/**Tika** overload; retry storms through the mesh                     |
+| E  | Elevation of privilege | **privileged** `values.yaml`; **Clawql** **container** running as root               |
 
 **Six steps:** (1) scope & assets, (2) enumerate STRIDE + **MITRE ATT&CK** where useful, (3) likelihood × impact, (4) mitigations, (5) test in staging, (6) repeat on each major **change ticket**.
 
@@ -2069,7 +2071,7 @@ Model **threats and mitigations** before you lock architecture—then re-run the
 
 ## Slide 74 — Vault, mTLS, Network, and DNS (Cluster Controls)
 
-- **HashiCorp Vault** / **OpenBao** — static and dynamic secrets, optional **Istio**-protected data paths, per-team namespaces — see **slide 28** (Helm).
+- **HashiCorp Vault** / — cluster secrets manager (static/dynamic secrets), optional **Istio**-protected data paths, per-team namespaces — see **slide 28** (Helm). Distinct from Helm **`vault.*`** (Obsidian Markdown mount only [#161](https://github.com/danielsmithdevelopment/ClawQL/issues/161)).
 - **Istio** mTLS end-to-end; **Kiali** validates that peer **authentication** is enforced; **Envoy** access logs to **Loki** or your log stack.
 - **NetworkPolicy** (and optionally **Cilium** for eBPF): default **deny**, explicit allow; optionally restrict **egress** from the **OSV-Scanner** / build jobs to known CVE-DB and registry hosts.
 - **DNS** (often under-scoped in threat models): monitor for **tunneling** and odd **TXT**/lookup patterns; use **Istio** `ServiceEntry` to limit **outbound** destinations from **`execute`**.
@@ -2088,11 +2090,11 @@ Model **threats and mitigations** before you lock architecture—then re-run the
 
 ## Slide 76 — Vulnerability Tiers, Supply Chain, and Logging
 
-| Severity           | Response (typical)                     | In ClawQL + CI                                                        |
+| Severity      | Response (typical)           | In ClawQL + CI                            |
 | ------------------ | -------------------------------------- | --------------------------------------------------------------------- |
-| Critical (≈9.0–10) | P1; block deploy to prod               | Trivy/OSV gate; fail pipeline; annotate **Grafana** for `main@digest` |
-| High (≈7.0–8.9)    | Patch in days; owner waiver in writing | Same gates or staging-only override per policy; **`notify` →** ticket |
-| Medium / Low       | Backlog, SLAs                          | Tracked; scheduled upgrades                                           |
+| Critical (≈9.0–10) | P1; block deploy to prod        | Trivy/OSV gate; fail pipeline; annotate **Grafana** for `main@digest` |
+| High (≈7.0–8.9)  | Patch in days; owner waiver in writing | Same gates or staging-only override per policy; **`notify` →** ticket |
+| Medium / Low    | Backlog, SLAs             | Tracked; scheduled upgrades                      |
 
 WORM or append-only log sinks for long-lived audit; **SIEM** correlation of **Falco**, **Istio**, **K8s** audit, and **ClawQL**’s **`audit`** and **Merkle**-linked **Ouroboros** events when you wire them.
 
@@ -2104,13 +2106,13 @@ WORM or append-only log sinks for long-lived audit; **SIEM** correlation of **Fa
 
 **Key ceremony** for **unseal** (Shamir), **Cosign** / **HSM** roots, and any **M-of-N** org policy—rehearse **annually** with a **tabletop** cold start.
 
-| PICERL                      | In practice (ClawQL-aware)                                                                  |
+| PICERL           | In practice (ClawQL-aware)                                 |
 | --------------------------- | ------------------------------------------------------------------------------------------- |
-| **P**reparation             | Runbooks, Uptime Kuma, **PagerDuty** provider, on-call rota                                 |
-| **I**dentify                | Kiali + SIEM + Falco + `audit` with **Merkle**/Seed id                                      |
-| **C**ontain                 | Revoke **Vault** leases, tighten **NetPol**, take suspect workload out of the mesh          |
+| **P**reparation       | Runbooks, Uptime Kuma, **PagerDuty** provider, on-call rota                 |
+| **I**dentify        | Kiali + SIEM + Falco + `audit` with **Merkle**/Seed id                   |
+| **C**ontain         | Revoke **Vault** leases, tighten **NetPol**, take suspect workload out of the mesh     |
 | **E**radicate / **R**ecover | **Redeploy** from **signed** digest via **IaC**; restore data from tested backups if needed |
-| **L**essons                 | Blameless postmortem (e.g. **within 72h** for SEV-1)                                        |
+| **L**essons         | Blameless postmortem (e.g. **within 72h** for SEV-1)                    |
 
 **ClawQL** advantage in IR: tie incidents to **Ouroboros** **Seeds** and **Onyx** **citation** trails so you know **which** **workflows** were in flight.
 
@@ -2120,12 +2122,12 @@ WORM or append-only log sinks for long-lived audit; **SIEM** correlation of **Fa
 
 **Lifecycle (Clawql inside the full stack):** (optional) signed **git** → **CI** (Trivy, **OSV-Scanner**, **SBOM**, **Cosign**) → **signed** **image@digest** → **Helm**/GitOps deploy with **Istio** + **NetworkPolicy** → **Vault**-issued **runtime** secrets to **Clawql** → **MCP** + **Ouroboros** + **Merkle** + **Falco** + **Grafana** → on incident: **isolate**, **redeploy** from **IaC** only.
 
-| Phase               | Without defense in depth        | With the stack (incl. ClawQL)                                                                                             |
+| Phase        | Without defense in depth    | With the stack (incl. ClawQL)                                               |
 | ------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| Supply chain        | Compromised dependency in image | **SBOM** + scan **gates**; admission rejects unsigned                                                                     |
-| Run in K8s          | RCE, shell in container         | **Falco**+**Istio mTLS**; no **privileged** by default                                                                    |
-| Lateral movement    | Stolen long-lived **secrets**   | **Vault** leases, **Istio** L7+egress policy                                                                              |
-| Persistence on node | Backdoor survives **reboot**    | **Replace** **node** / rescheduled **pods** from **IaC**; **Merkle**+**Clawql** = detect **app**-level **workflow** drift |
+| Supply chain    | Compromised dependency in image | **SBOM** + scan **gates**; admission rejects unsigned                                   |
+| Run in K8s     | RCE, shell in container     | **Falco**+**Istio mTLS**; no **privileged** by default                                  |
+| Lateral movement  | Stolen long-lived **secrets**  | **Vault** leases, **Istio** L7+egress policy                                       |
+| Persistence on node | Backdoor survives **reboot**  | **Replace** **node** / rescheduled **pods** from **IaC**; **Merkle**+**Clawql** = detect **app**-level **workflow** drift |
 
 ---
 
@@ -2155,17 +2157,17 @@ WORM or append-only log sinks for long-lived audit; **SIEM** correlation of **Fa
 
 **GET STARTED**
 
-| Resource                                | Link                                                                                                                                                                               |
+| Resource                | Link                                                                                        |
 | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Documentation                           | https://docs.clawql.com                                                                                                                                                            |
-| Defense in depth (reference)            | [`../security/clawql-security-defense-in-depth.md`](../security/clawql-security-defense-in-depth.md) (slides **68–79**)                                                            |
+| Documentation              | https://docs.clawql.com                                                                              |
+| Defense in depth (reference)      | [`../security/clawql-security-defense-in-depth.md`](../security/clawql-security-defense-in-depth.md) (slides **68–79**)                              |
 | Defense in depth (deliverables / audit) | [`../security/clawql-security-defense-deliverables.md`](../security/clawql-security-defense-deliverables.md) ([#164](https://github.com/danielsmithdevelopment/ClawQL/issues/164)) |
-| GitHub                                  | danielsmithdevelopment/ClawQL                                                                                                                                                      |
-| npm (MCP)                               | `clawql-mcp`                                                                                                                                                                       |
-| Kubernetes                              | https://docs.clawql.com/kubernetes                                                                                                                                                 |
-| Helm Chart                              | https://docs.clawql.com/helm                                                                                                                                                       |
-| Case Studies                            | https://docs.clawql.com/case-studies                                                                                                                                               |
-| Contact                                 | **Daniel Smith** — danielsmithdevelopment@gmail.com                                                                                                                                |
+| GitHub                 | danielsmithdevelopment/ClawQL                                                                           |
+| npm (MCP)                | `clawql-mcp`                                                                                    |
+| Kubernetes               | https://docs.clawql.com/kubernetes                                                                         |
+| Helm Chart               | https://docs.clawql.com/helm                                                                            |
+| Case Studies              | https://docs.clawql.com/case-studies                                                                        |
+| Contact                 | **Daniel Smith** — danielsmithdevelopment@gmail.com                                                                |
 
 _Local. Private. Powerful. Production-ready. **Knowledge-augmented.** **Security-hardened** (Trivy, OSV-Scanner, optional Istio; **Golden Image** + **SBOM** + **Cosign** in the full-stack story — see [deliverables matrix](../security/clawql-security-defense-deliverables.md) for **shipped vs roadmap**). On-chain where you choose. **Enterprise- and agent-trusted**._
 

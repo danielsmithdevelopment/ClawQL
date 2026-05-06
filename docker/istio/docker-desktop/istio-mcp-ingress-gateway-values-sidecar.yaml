@@ -1,5 +1,6 @@
 # istio/gateway chart — classic sidecar injection (namespace istio-injection=enabled).
 # Release name must stay clawql-mcp-ingress.
+# Service is ClusterIP: pod hostNetwork exposes :80/:50051 on the node without LoadBalancer/port-forward.
 autoscaling:
   enabled: false
 # Chart default requests.cpu=100m; lower for single-node local scheduling (limits keep burst room).
@@ -11,7 +12,7 @@ resources:
     cpu: 2000m
     memory: 1024Mi
 service:
-  type: LoadBalancer
+  type: ClusterIP
   ports:
     - name: status-port
       port: 15021
@@ -21,7 +22,6 @@ service:
       port: 80
       protocol: TCP
       targetPort: 80
-      nodePort: 31488
     - name: https
       port: 443
       protocol: TCP

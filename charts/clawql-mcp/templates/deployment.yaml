@@ -205,10 +205,19 @@ spec:
             {{- with .Values.extraEnv }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
-          {{- if .Values.envFromSecret }}
+          {{- if and .Values.secretSourcing.requireVaultBackedSecrets (not .Values.envFromSecret) (eq (len .Values.envFromSecrets) 0) }}
+          {{- fail "secretSourcing.requireVaultBackedSecrets=true requires envFromSecret or envFromSecrets (Vault-synced Kubernetes Secret names)." }}
+          {{- end }}
+          {{- if or .Values.envFromSecret (gt (len .Values.envFromSecrets) 0) }}
           envFrom:
+            {{- if .Values.envFromSecret }}
             - secretRef:
                 name: {{ .Values.envFromSecret }}
+            {{- end }}
+            {{- range .Values.envFromSecrets }}
+            - secretRef:
+                name: {{ . | quote }}
+            {{- end }}
           {{- end }}
           startupProbe:
             {{- toYaml .Values.startupProbe | nindent 12 }}
@@ -237,6 +246,7 @@ spec:
             path: {{ .Values.sandboxDocker.hostSocketPath | quote }}
             type: Socket
         {{- end }}
+        {{- /* Volume "obsidian-vault": Obsidian Markdown memory (.Values.vault / persistence), not HashiCorp Vault — #161 */}}
         - name: obsidian-vault
           {{- if .Values.persistence.enabled }}
           {{- if .Values.persistence.existingClaim }}

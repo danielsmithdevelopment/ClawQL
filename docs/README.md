@@ -29,6 +29,7 @@ This directory is organized by purpose so operational guides, product docs, and 
 - `deployment/deploy-cloud-run.md`
 - `deployment/deploy-k8s.md`
 - `deployment/helm.md`
+- `deployment/external-secrets-operator-install.md` — **External Secrets Operator** (pinned **2.4.1**) + Vault KV → Kubernetes `Secret` sync for MCP provider env
 - `deployment/docker-desktop-istio-observability.md` (Istio on Docker Desktop: Prometheus, Grafana, Tempo, Kiali, OTel Collector — beginner guide per tool)
 - `grafana/README.md` + `grafana/clawql-core-observability.json` — bundled Grafana dashboard for ClawQL **`/metrics`**; OpenClaw / embed follow-ups → [#225](https://github.com/danielsmithdevelopment/ClawQL/issues/225), ecosystem [#128](https://github.com/danielsmithdevelopment/ClawQL/issues/128) (shipped slice [#210](https://github.com/danielsmithdevelopment/ClawQL/issues/210))
 - `deployment/tailscale-and-headscale-for-clawql.md` (beginner guide: managed Tailscale + self-hosted Headscale, MagicDNS, ClawQL env — [#206](https://github.com/danielsmithdevelopment/ClawQL/issues/206), [#211](https://github.com/danielsmithdevelopment/ClawQL/issues/211), [#213](https://github.com/danielsmithdevelopment/ClawQL/issues/213); website **`/tailscale`**)

@@ -5,3 +5,9 @@ type: application
 version: 0.6.0
 # Align with npm package when cutting chart releases; image tag is separate (values.image.tag).
 appVersion: "6.0.0"
+dependencies:
+  - name: vault
+    alias: hashicorpVault
+    version: 0.32.0
+    repository: https://helm.releases.hashicorp.com
+    condition: hashicorpVault.enabled
