@@ -27,9 +27,25 @@ Client / Istio  ──HTTP /mcp──►  gateway-main  ──stdio──►  pa
 | **`CLAWQL_BRIDGE_STREAMABLE_HTTP_JSON_RESPONSE`** | `0` | Set `1` / `true` for JSON MCP responses (Cursor-friendly) |
 | **`CLAWQL_BRIDGE_SHIM_PATH`** | next to `gateway-main.js` | Absolute path to **`shim-main.js`** inside the container/image |
 | **`CLAWQL_BRIDGE_PANGUARD_COMMAND`** | `npx` | Executable used to launch Panguard (image installs **`@panguard-ai/panguard-mcp-proxy`** globally; **`npx`** is enough) |
+| **`CLAWQL_BRIDGE_DIRECT_SHIM`** | `0` | Set **`1`** to skip Panguard and spawn **`shim-main`** only (CI / tests; not a production substitute for policy) |
 
 Spawn shape (fixed args after command):  
 `<CLAWQL_BRIDGE_PANGUARD_COMMAND> -y @panguard-ai/panguard-mcp-proxy -- <node> <shim-path>`.
+
+## Optional JWT + ATR-shaped claim (gateway)
+
+**Default: off.** Enables signature verification and requires a named claim (default **`atr`**) to be a JSON object or array — a minimal ATR-shaped hook; tune claim name to your IdP. See [**`docs/security/mcp-proxy-jwt-atr.md`**](../../docs/security/mcp-proxy-jwt-atr.md) (bridge section).
+
+| Variable | Purpose |
+| -------- | ------- |
+| **`CLAWQL_MCP_JWT_ENABLED`** | **`1`** / **`true`** enables HTTP (MCP routes only) + gRPC checks |
+| **`CLAWQL_MCP_JWT_JWKS_URL`** | OIDC JWKS URL (RS256) |
+| **`CLAWQL_MCP_JWT_PUBLIC_KEY_PEM_PATH`** | Path to PEM public key (RS256) |
+| **`CLAWQL_MCP_JWT_HS256_SECRET`** | HS256 secret — **dev/tests only** |
+| **`CLAWQL_MCP_JWT_ISSUER`** / **`CLAWQL_MCP_JWT_AUDIENCE`** | Optional `iss` / `aud` |
+| **`CLAWQL_MCP_JWT_ATR_CLAIM`** | Required claim name (default **`atr`**) |
+
+**HTTP:** Bearer in **`Authorization`**. **gRPC:** metadata key **`authorization`** (Bearer token). Failures: HTTP **401** (JSON-RPC **`-32001`**), gRPC **`UNAUTHENTICATED`**.
 
 ## Env (shim)
 
@@ -50,7 +66,7 @@ docker build -f docker/panguard-mcp-bridge/Dockerfile -t clawql-panguard-mcp-bri
 
 ## gRPC
 
-Set **`ENABLE_GRPC=1`** (and optional **`ENABLE_GRPC_REFLECTION`**, **`GRPC_PORT`**, **`GRPC_BIND`**) to listen with **`mcp-grpc-transport`**. Each **`mcp.transport.v1.Mcp` Session** stream spawns the same Panguard → shim chain as HTTP **initialize**. Unary protobuf **`model_context_protocol.Mcp`** uses an empty shared server—prefer **Session** or **HTTP** for delegated tools. See [`docs/integrations/panguard-http-grpc-bridge.md`](../../docs/integrations/panguard-http-grpc-bridge.md).
+Set **`ENABLE_GRPC=1`** (and optional **`ENABLE_GRPC_REFLECTION`**, **`GRPC_PORT`**, **`GRPC_BIND`**) to listen with **`mcp-grpc-transport`**. **`mcp.transport.v1.Mcp` Session** streams spawn the same Panguard → shim chain as HTTP **initialize** (one inner client per session). Unary protobuf **`model_context_protocol.Mcp`** shares one long-lived inner client on the same Panguard → shim path so **`ListTools`** / **`CallTool`** (and peers) delegate to **`clawql-mcp-http`**. Prefer **Session** or **HTTP** when you need lifecycle isolation per caller. See [`docs/integrations/panguard-http-grpc-bridge.md`](../../docs/integrations/panguard-http-grpc-bridge.md).
 
 ## Helm
 

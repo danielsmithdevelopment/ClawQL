@@ -49,7 +49,7 @@ Run **`panguard-mcp-proxy -- npx clawql-mcp`** **inside the same container** as 
 
 ClawQL’s gRPC MCP implementation is **`mcp-grpc-transport`** (see [`src/server-http.ts`](../../src/server-http.ts) **`maybeStartGrpcMcpServer`**).
 
-The repo **`clawql-panguard-mcp-bridge`** image (**[`packages/panguard-mcp-bridge`](../../packages/panguard-mcp-bridge)**) starts the same listener when **`ENABLE_GRPC=1`**: each **`mcp.transport.v1.Mcp` Session** stream **async-spawns** the Panguard stdio chain (same as HTTP **initialize**), then **`wireDelegationHandlers`** on the session **`McpServer`**. Unary protobuf **`model_context_protocol.Mcp`** RPCs share a **minimal empty** in-process server — use **Session** or **HTTP** for delegated tools.
+The repo **`clawql-panguard-mcp-bridge`** image (**[`packages/panguard-mcp-bridge`](../../packages/panguard-mcp-bridge)**) starts the same listener when **`ENABLE_GRPC=1`**: each **`mcp.transport.v1.Mcp` Session** stream **async-spawns** the Panguard stdio chain (same as HTTP **initialize**), then **`wireDelegationHandlers`** on the session **`McpServer`**. Unary protobuf **`model_context_protocol.Mcp`** RPCs use one **shared** long-lived inner client on the same chain so **`ListTools`** / **`CallTool`** delegate to **`clawql-mcp-http`** (session HTTP still provides per-caller isolation).
 
 Helm: **`charts/clawql-mcp/values-mcp-proxy-panguard-bridge.example.yaml`** sets **`ENABLE_GRPC`** and **`GRPC_PORT`** alongside **`CLAWQL_BRIDGE_*`**.
 
