@@ -2,12 +2,13 @@ apiVersion: v2
 name: clawql-mcp
 description: ClawQL MCP server (Streamable HTTP, optional gRPC) for Kubernetes
 type: application
-version: 0.6.0
+version: 0.6.2
 # Align with npm package when cutting chart releases; image tag is separate (values.image.tag).
 appVersion: "6.0.0"
 dependencies:
   - name: vault
-    alias: hashicorpVault
+    # Lowercase RFC 1123-safe alias (Kubernetes resource names derive from Helm release prefix + alias).
+    alias: hashicorpvault
     version: 0.32.0
     repository: https://helm.releases.hashicorp.com
-    condition: hashicorpVault.enabled
+    # Vault is mandatory for defense-in-depth; there is no opt-out dependency flag.

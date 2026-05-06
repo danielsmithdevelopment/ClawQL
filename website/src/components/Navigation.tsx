@@ -301,6 +301,7 @@ export const navigation: Array<NavGroup> = [
       { title: 'Deployment', href: '/deployment' },
       { title: 'Tailscale & Headscale', href: '/tailscale' },
       { title: 'Kubernetes', href: '/kubernetes' },
+      { title: 'Dashboard on Kubernetes', href: '/dashboard-kubernetes' },
       {
         title: 'Docker Desktop: Istio & observability',
         href: '/docker-desktop-observability',
