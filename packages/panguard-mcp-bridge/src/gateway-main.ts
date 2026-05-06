@@ -7,15 +7,20 @@ import { randomUUID } from "node:crypto";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { getDefaultEnvironment, StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { createMcpExpressApp } from "@modelcontextprotocol/sdk/server/express.js";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import type { Express } from "express";
+import * as grpc from "@grpc/grpc-js";
 import { maybeStartGrpcMcpServer } from "mcp-grpc-transport";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { wireDelegationHandlers } from "./delegate-handlers.js";
+import {
+  createBridgeJwtExpressMiddleware,
+  createBridgeJwtGrpcInterceptor,
+} from "./jwt-gate.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -43,15 +48,70 @@ function streamableJsonEnabled(): boolean {
   );
 }
 
+/**
+ * CI / integration tests only: skip `panguard-mcp-proxy` and connect the gateway stdio client
+ * directly to **`shim-main`** (still reaches upstream HTTP MCP). **Do not use in production** unless
+ * another policy layer replaces Panguard.
+ */
+function directShimToUpstream(): boolean {
+  return ["1", "true", "yes"].includes(
+    (process.env.CLAWQL_BRIDGE_DIRECT_SHIM ?? "").trim().toLowerCase()
+  );
+}
+
+/**
+ * Env for stdio children. Uses the MCP SDK defaults (safe subset) plus an allowlisted merge from the parent
+ * — avoids Vitest/`NODE_OPTIONS` loaders and other runner noise that can hang plain `node` subprocesses.
+ */
+function envForStdioChild(upstreamUrl: string): Record<string, string> {
+  const out: Record<string, string> = { ...getDefaultEnvironment() };
+  if (process.env.PATH) {
+    out.PATH = process.env.PATH;
+  }
+  const passthrough = [
+    "HOME",
+    "USER",
+    "USERNAME",
+    "LOGNAME",
+    "SHELL",
+    "LANG",
+    "LC_ALL",
+    "TZ",
+    "NODE_ENV",
+    "TEMP",
+    "TMPDIR",
+    "HTTP_PROXY",
+    "HTTPS_PROXY",
+    "NO_PROXY",
+    "ALL_PROXY",
+    "SSL_CERT_FILE",
+    "NODE_EXTRA_CA_CERTS",
+    "GRPC_DEFAULT_SSL_ROOTS_FILE_PATH",
+  ] as const;
+  for (const k of passthrough) {
+    const v = process.env[k];
+    if (v !== undefined && v !== "") {
+      out[k] = v;
+    }
+  }
+  out.CLAWQL_BRIDGE_UPSTREAM_URL = upstreamUrl;
+  return out;
+}
+
 function buildPanguardStdioTransport(upstreamUrl: string, shimPath: string): StdioClientTransport {
+  if (directShimToUpstream()) {
+    return new StdioClientTransport({
+      command: process.execPath,
+      args: [shimPath],
+      stderr: "inherit",
+      env: envForStdioChild(upstreamUrl),
+    });
+  }
   return new StdioClientTransport({
     command: process.env.CLAWQL_BRIDGE_PANGUARD_COMMAND?.trim() || "npx",
     args: ["-y", "@panguard-ai/panguard-mcp-proxy", "--", process.execPath, shimPath],
     stderr: "inherit",
-    env: {
-      ...process.env,
-      CLAWQL_BRIDGE_UPSTREAM_URL: upstreamUrl,
-    },
+    env: envForStdioChild(upstreamUrl),
   });
 }
 
@@ -111,6 +171,11 @@ export async function createPanguardBridgeApp(options?: {
   app.get("/healthz", (_req, res) => {
     res.status(200).type("text/plain").send("ok");
   });
+
+  const jwtMw = createBridgeJwtExpressMiddleware();
+  if (jwtMw) {
+    app.use(mcpPath, jwtMw);
+  }
 
   app.post(mcpPath, async (req, res) => {
     const sessionId = req.header("mcp-session-id");
@@ -214,6 +279,11 @@ export async function createPanguardBridgeApp(options?: {
   return app;
 }
 
+function grpcEnabledFromEnv(): boolean {
+  const v = process.env.ENABLE_GRPC?.trim().toLowerCase();
+  return v === "1" || v === "true";
+}
+
 async function main(): Promise<void> {
   const port = Number.parseInt(process.env.PORT ?? process.env.MCP_PORT ?? "8080", 10);
   const upstreamUrl = resolveUpstreamUrl();
@@ -226,20 +296,44 @@ async function main(): Promise<void> {
     );
   });
 
+  const grpcInterceptors: grpc.ServerInterceptor[] = [];
+  const jwtIc = createBridgeJwtGrpcInterceptor();
+  if (jwtIc) {
+    grpcInterceptors.push(jwtIc);
+  }
+
+  let unaryGrpcInner: Client | undefined;
+  if (grpcEnabledFromEnv()) {
+    unaryGrpcInner = await connectPanguardInnerClient(upstreamUrl, shimPath);
+  }
+
   const grpcStarted = await maybeStartGrpcMcpServer({
-    createMcpServer: () =>
-      new McpServer({ name: "clawql-panguard-bridge-grpc-protobuf", version: "0.1.0" }, {}),
+    createMcpServer: () => {
+      const mcp = new McpServer({ name: "clawql-panguard-bridge-grpc-protobuf", version: "0.1.0" }, {});
+      if (unaryGrpcInner) {
+        wireDelegationHandlers(mcp.server, unaryGrpcInner);
+      }
+      return mcp;
+    },
     createSessionMcpServer: async () => {
       const innerClient = await connectPanguardInnerClient(upstreamUrl, shimPath);
       const mcp = new McpServer({ name: "clawql-panguard-bridge-grpc-session", version: "0.1.0" }, {});
       wireDelegationHandlers(mcp.server, innerClient);
       return wrapMcpServerCloseWithInnerClient(mcp, innerClient);
     },
+    grpcServerOptions: grpcInterceptors.length ? { interceptors: grpcInterceptors } : undefined,
   });
+  if (grpcStarted && unaryGrpcInner) {
+    const origShutdown = grpcStarted.shutdown.bind(grpcStarted);
+    grpcStarted.shutdown = async () => {
+      await unaryGrpcInner.close().catch(() => {});
+      await origShutdown();
+    };
+  }
   if (grpcStarted) {
     const refl = grpcStarted.reflectionEnabled ? " reflection=on" : "";
     console.error(
-      `[clawql-panguard-bridge-gateway] gRPC MCP ${grpcStarted.address} (mcp-grpc-transport ${grpcStarted.version}; session→Panguard→shim→HTTP upstream; protobuf unary uses empty shared surface — prefer Session stream or HTTP)${refl}`
+      `[clawql-panguard-bridge-gateway] gRPC MCP ${grpcStarted.address} (mcp-grpc-transport ${grpcStarted.version}; session + protobuf unary→Panguard→shim→HTTP upstream)${refl}`
     );
   }
 }
