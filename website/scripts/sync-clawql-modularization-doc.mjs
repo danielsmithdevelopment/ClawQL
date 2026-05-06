@@ -5,6 +5,7 @@
  *
  * Run from website/: node scripts/sync-clawql-modularization-doc.mjs
  */
+import { execSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -21,3 +22,8 @@ if (!fs.existsSync(src)) {
   process.exit(1)
 }
 fs.copyFileSync(src, dst)
+const websiteRoot = path.join(__dirname, '..')
+execSync('npx prettier --write src/generated/clawql-modularization-body.mdx', {
+  cwd: websiteRoot,
+  stdio: 'inherit',
+})
