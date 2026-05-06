@@ -1,7 +1,7 @@
 # Defense-in-Depth Security Stack for Self-Hosted Infrastructure
 
-**Advanced Infrastructure Security — Reference Guide** 
-**Zero Trust · Immutability · Cryptographic Controls · Incident Response** 
+**Advanced Infrastructure Security — Reference Guide**
+**Zero Trust · Immutability · Cryptographic Controls · Incident Response**
 **Making Unauthorized Persistence Structurally Difficult**
 
 **April 2026** — Comprehensive reference (aligns with **ClawQL** security slides **§08** in `../presentations/clawql-slides.md`).
@@ -67,14 +67,14 @@ Transform stealthy, persistent access into **loud, short-lived, observable event
 
 ### STRIDE threat categories
 
-| Category          | Description            |
+| Category                   | Description                       |
 | -------------------------- | --------------------------------- |
-| **S**poofing        | Impersonating a user or system  |
-| **T**ampering       | Unauthorized modification of data |
-| **R**epudiation      | Denying actions were performed  |
-| **I**nformation disclosure | Exposing data to wrong parties  |
-| **D**enial of service   | Disrupting availability      |
-| **E**levation of privilege | Gaining unauthorized privilege  |
+| **S**poofing               | Impersonating a user or system    |
+| **T**ampering              | Unauthorized modification of data |
+| **R**epudiation            | Denying actions were performed    |
+| **I**nformation disclosure | Exposing data to wrong parties    |
+| **D**enial of service      | Disrupting availability           |
+| **E**levation of privilege | Gaining unauthorized privilege    |
 
 ### Six-step threat modeling process
 
@@ -293,12 +293,12 @@ Transform stealthy, persistent access into **loud, short-lived, observable event
 
 ## Vulnerability management (tiered response)
 
-| Severity   | CVSS (typical) | Response time (example) | Actions                 |
+| Severity     | CVSS (typical) | Response time (example) | Actions                                  |
 | ------------ | -------------- | ----------------------- | ---------------------------------------- |
-| **Critical** | 9.0–10.0    | **24 hours**      | Block deploy; escalate; emergency patch |
-| **High**   | 7.0–8.9    | **72 hours**      | Block or waiver with owner; patch window |
-| **Medium**  | 4.0–6.9    | **30 days**       | Track; schedule             |
-| **Low**   | 0.0–3.9    | **Quarterly**      | Document accepted risk          |
+| **Critical** | 9.0–10.0       | **24 hours**            | Block deploy; escalate; emergency patch  |
+| **High**     | 7.0–8.9        | **72 hours**            | Block or waiver with owner; patch window |
+| **Medium**   | 4.0–6.9        | **30 days**             | Track; schedule                          |
+| **Low**      | 0.0–3.9        | **Quarterly**           | Document accepted risk                   |
 
 _Tune SLAs to your org. ClawQL **CI** enforces **HIGH/CRITICAL** for configured scanners (see **`.github/workflows/ci.yml`** **`supply-chain`**, **`.trivyignore`**, **`osv-scanner.toml`**) — not a separate `policy.yaml` file._
 
@@ -331,14 +331,14 @@ The **chicken-and-egg** of first trust: **HSM** / **air-gapped** **ceremony** fo
 
 ## Incident response: PICERL (example)
 
-| Phase       | Actions                             |
+| Phase              | Actions                                                          |
 | ------------------ | ---------------------------------------------------------------- |
-| **P**reparation  | Runbooks, **on-call**, **backup** test, **tabletop**       |
-| **I**dentification | Triage, **scope**, **Istio** / **Falco** / **SIEM**       |
-| **C**ontainment  | Isolate, **revoke** creds, **block** at **egress**        |
-| **E**radication  | **Remove** **malware** by **redeploy** from **signed** **image** |
-| **R**ecovery    | **Restore** from **clean** **backup** if needed; **monitor**   |
-| **L**essons    | Blameless **post-mortem** (e.g. **within 72h**)         |
+| **P**reparation    | Runbooks, **on-call**, **backup** test, **tabletop**             |
+| **I**dentification | Triage, **scope**, **Istio** / **Falco** / **SIEM**              |
+| **C**ontainment    | Isolate, **revoke** creds, **block** at **egress**               |
+| **E**radication    | **Remove** **malware** by **redeploy** from **signed** **image** |
+| **R**ecovery       | **Restore** from **clean** **backup** if needed; **monitor**     |
+| **L**essons        | Blameless **post-mortem** (e.g. **within 72h**)                  |
 
 ---
 
@@ -352,12 +352,12 @@ The **chicken-and-egg** of first trust: **HSM** / **air-gapped** **ceremony** fo
 
 ## End-to-end attack scenario (supply chain — npm)
 
-| Phase      | Without stack                  | With full stack                              |
+| Phase            | Without stack                                   | With full stack                                                            |
 | ---------------- | ----------------------------------------------- | -------------------------------------------------------------------------- |
-| **Supply chain** | Malicious package in build           | **SBOM** + **verify**; **SLSA**/policy **fails** **build**         |
-| **Execution**  | **Backdoor** in **container**          | **Read-only** / **verified** **image**; **Falco** **alerts**        |
-| **Lateral**   | Stolen **kube** **creds**            | **mTLS** + **netpol** + **short-lived** **Vault** **tokens**        |
-| **Persistence** | **Survives** **reboot** on **mutable** **node** | **Replace** **node** / **pod** from **signed** **image**; **IaC** **only** |
+| **Supply chain** | Malicious package in build                      | **SBOM** + **verify**; **SLSA**/policy **fails** **build**                 |
+| **Execution**    | **Backdoor** in **container**                   | **Read-only** / **verified** **image**; **Falco** **alerts**               |
+| **Lateral**      | Stolen **kube** **creds**                       | **mTLS** + **netpol** + **short-lived** **Vault** **tokens**               |
+| **Persistence**  | **Survives** **reboot** on **mutable** **node** | **Replace** **node** / **pod** from **signed** **image**; **IaC** **only** |
 
 ---
 

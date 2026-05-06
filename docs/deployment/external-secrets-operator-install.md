@@ -191,7 +191,7 @@ jq -r .auth.client_token </tmp/vault-login.json | head -c 18 && echo "…"; rm /
 unset JWT
 ```
 
-Cross-check with [External Secrets Vault provider **`audiences` note](https://external-secrets.io/latest/provider/hashicorp-vault/).
+Cross-check with [External Secrets Vault provider \*\*`audiences` note](https://external-secrets.io/latest/provider/hashicorp-vault/).
 
 ---
 
