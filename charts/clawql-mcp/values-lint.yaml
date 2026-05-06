@@ -1,0 +1,3 @@
+# Used by `make helm-lint` so `helm lint` can render with secret-sourcing guard enabled.
+# Not for production — satisfies `secretSourcing.requireVaultBackedSecrets` during validation only.
+envFromSecret: clawql-lint-provider-env

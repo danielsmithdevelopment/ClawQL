@@ -1,0 +1,144 @@
+# Placeholder __TARGET_NAMESPACE__ — full desktop stack only (aligned with charts/clawql-mcp values-docker-desktop when all subcharts enabled).
+# Service names assume Helm fullnameOverride: clawql-mcp-http (charts/clawql-mcp defaults for local-k8s-up).
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: clawql-paperless-localhost
+  namespace: __TARGET_NAMESPACE__
+spec:
+  hosts:
+    - paperless.localhost
+  gateways:
+    - istio-ingress/clawql-mcp-gateway
+  http:
+    - route:
+        - destination:
+            host: clawql-mcp-http-paperless
+            port:
+              number: 8000
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: clawql-stirling-localhost
+  namespace: __TARGET_NAMESPACE__
+spec:
+  hosts:
+    - stirling.localhost
+  gateways:
+    - istio-ingress/clawql-mcp-gateway
+  http:
+    - route:
+        - destination:
+            host: clawql-mcp-http-stirling
+            port:
+              number: 8080
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: clawql-tika-localhost
+  namespace: __TARGET_NAMESPACE__
+spec:
+  hosts:
+    - tika.localhost
+  gateways:
+    - istio-ingress/clawql-mcp-gateway
+  http:
+    - route:
+        - destination:
+            host: clawql-mcp-http-tika
+            port:
+              number: 9998
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: clawql-gotenberg-localhost
+  namespace: __TARGET_NAMESPACE__
+spec:
+  hosts:
+    - gotenberg.localhost
+  gateways:
+    - istio-ingress/clawql-mcp-gateway
+  http:
+    - route:
+        - destination:
+            host: clawql-mcp-http-gotenberg
+            port:
+              number: 3000
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: clawql-flink-localhost
+  namespace: __TARGET_NAMESPACE__
+spec:
+  hosts:
+    - flink.localhost
+  gateways:
+    - istio-ingress/clawql-mcp-gateway
+  http:
+    - route:
+        - destination:
+            host: clawql-mcp-http-flink-jobmanager
+            port:
+              number: 8081
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: clawql-nats-monitor-localhost
+  namespace: __TARGET_NAMESPACE__
+spec:
+  hosts:
+    - nats.localhost
+  gateways:
+    - istio-ingress/clawql-mcp-gateway
+  http:
+    - route:
+        - destination:
+            host: clawql-mcp-http-nats
+            port:
+              number: 8222
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: clawql-onyx-localhost
+  namespace: __TARGET_NAMESPACE__
+spec:
+  hosts:
+    - onyx.localhost
+  gateways:
+    - istio-ingress/clawql-mcp-gateway
+  http:
+    # Mirror nginx Ingress for onyx (/api stripped for backend paths).
+    - match:
+        - uri:
+            prefix: /api/
+      rewrite:
+        uriRegexRewrite:
+          match: "^/api/(.*)"
+          rewrite: "/\\1"
+      route:
+        - destination:
+            host: clawql-mcp-http-onyx
+            port:
+              number: 8080
+    - match:
+        - uri:
+            exact: /api
+      rewrite:
+        uri: /
+      route:
+        - destination:
+            host: clawql-mcp-http-onyx
+            port:
+              number: 8080
+    - route:
+        - destination:
+            host: clawql-mcp-http-onyx-web
+            port:
+              number: 3000

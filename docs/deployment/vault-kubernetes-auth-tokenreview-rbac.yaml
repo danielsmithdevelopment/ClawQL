@@ -1,0 +1,17 @@
+# Allows the Vault SERVER ServiceAccount to call the Kubernetes TokenReview API.
+# Substitute Vault SA name + namespace from your Helm release if they differ:
+#   kubectl get sa -n clawql | rg Vault|vault
+# Default for release `clawql` + bundled hashicorpVault subchart: SA name is typically `clawql-hashicorpVault`.
+#
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: clawql-vault-tokenreview-auth-delegator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:auth-delegator
+subjects:
+  - kind: ServiceAccount
+    name: clawql-hashicorpVault
+    namespace: clawql

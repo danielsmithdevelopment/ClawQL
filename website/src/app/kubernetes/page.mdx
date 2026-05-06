@@ -9,7 +9,7 @@ export const metadata = docsPageMetadata({
 
 # Kubernetes
 
-ClawQL is usually deployed as **`clawql-mcp-http`**: **Streamable HTTP** MCP on **`/mcp`**, **GraphQL** on **`/graphql`**, and (when **`ENABLE_GRPC=1`**) **gRPC** protobuf MCP on port **50051**—all in one pod. **`values-docker-desktop.yaml`** matches production: **Ingress-nginx** on **`http://clawql-mcp.localhost/mcp`**, while **`svc/clawql-mcp-http`** stays **LoadBalancer** for **gRPC** and diagnostics (**`kubectl get svc`** for **`EXTERNAL-IP`**). **Optional Istio** still exposes **`localhost:50051`** on **`clawql-mcp-ingress`**. Remote clusters often use **Kustomize** **`dev`** / **`prod`** with **`scripts/deploy/deploy-k8s.sh`**. {{ className: 'lead' }}
+ClawQL is usually deployed as **`clawql-mcp-http`**: **Streamable HTTP** MCP on **`/mcp`**, **GraphQL** on **`/graphql`**, and (when **`ENABLE_GRPC=1`**) **gRPC** protobuf MCP on port **50051**—all in one pod. **`values-docker-desktop.yaml`** matches production patterns: with **ingress-nginx**, **`http://clawql-mcp.localhost/mcp`**; with **default Istio** (`make local-k8s-up`), **`ingress-nginx` is skipped** and **`svc/clawql-mcp-ingress`** is a **LoadBalancer → localhost** on **Docker Desktop / Rancher Desktop** (pod **`hostNetwork`** would bind inside the Kubernetes VM only—see **`docker/README.md`**). **`svc/clawql-mcp-http`** is often **ClusterIP** under ambient Istio; MCP HTTP is **`http://localhost/mcp`** or **`http://clawql-mcp.localhost/mcp`** via **Gateway + VirtualService**. **gRPC** uses **`localhost:50051`** through the same ingress Service when enabled. Remote clusters often use **Kustomize** **`dev`** / **`prod`** with **`scripts/deploy/deploy-k8s.sh`**. {{ className: 'lead' }}
 
 ## Local MCP on Docker Desktop
 
@@ -35,19 +35,19 @@ Or:
 bash scripts/kubernetes/local-k8s-docker-desktop.sh
 ```
 
-**Default:** **`helm upgrade --install`** with **`charts/clawql-mcp/values-docker-desktop.yaml`**: signed **`ghcr.io/danielsmithdevelopment/clawql-mcp:latest`** and **`ghcr.io/danielsmithdevelopment/clawql-website:latest`**, **Ingress** **`clawql-mcp.localhost`** → MCP, **LoadBalancer** **`svc/clawql-mcp-http`** for **gRPC**, **`all-providers`**, **`hostPath`** vault at **`$HOME/.ClawQL`** (override **`CLAWQL_LOCAL_VAULT_HOST_PATH`**). The script installs **Kyverno** and a **ClusterPolicy** so those images must pass **Cosign** verification in the **`clawql`** namespace (unsigned local **`docker build`** deploys are **not** supported).
+**Default:** **`helm upgrade --install`** with **`charts/clawql-mcp/values-docker-desktop.yaml`**: signed **`ghcr.io/danielsmithdevelopment/clawql-mcp:latest`** and **`ghcr.io/danielsmithdevelopment/clawql-website:latest`**, **`all-providers`**, Obsidian memory **`vault.hostPath`** at **`$HOME/.ClawQL`** (Helm key **`vault`** — not HashiCorp Vault; override **`CLAWQL_LOCAL_VAULT_HOST_PATH`**). With **default Istio**, chart **Ingress** objects are off and **`svc/clawql-mcp-http`** is **ClusterIP**; north-south **HTTP** is **`clawql-mcp-ingress`** (**LoadBalancer** on docker/rancher kube contexts). With **`CLAWQL_LOCAL_K8S_ISTIO=0`**, **Ingress** serves **`clawql-mcp.localhost`** and **`svc/clawql-mcp-http`** stays **LoadBalancer** for **gRPC** / diagnostics. The script installs **Kyverno** and a **ClusterPolicy** so those images must pass **Cosign** verification in the **`clawql`** namespace (unsigned local **`docker build`** deploys are **not** supported).
 
 **Kustomize:** **`CLAWQL_LOCAL_K8S_INSTALLER=kustomize make local-k8s-up`** — **`kubectl apply -k docker/kustomize/overlays/local`** for the MCP workload; **Helm** still installs **Kyverno** and applies the **ClusterPolicy** template from the chart.
 
-**Optional Istio (Docker Desktop):** **`CLAWQL_LOCAL_K8S_ISTIO=ambient`** or **`sidecar`** runs **`scripts/kubernetes/install-istio-docker-desktop.sh`** before ClawQL (Helm **Istio** + **`istio/gateway`** **`clawql-mcp-ingress`**, **Istio `Gateway` + `VirtualService`** for MCP on **:80** / **:50051**, **`PeerAuthentication` `STRICT`**, meshed **`ingress-nginx`**). Prefer **`http://localhost/mcp`** when the gateway is installed. The same path installs **Prometheus**, **Kiali**, **Grafana**, **Grafana Tempo**, optional **Grafana Loki**, and a **ClawQL OpenTelemetry Collector** in **`istio-system`** (unless you opt out — see **[Docker Desktop: Istio & observability](/docker-desktop-observability)** and **[`docker/README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docker/README.md)**).
+**Optional Istio (Docker Desktop — default on):** **`CLAWQL_LOCAL_K8S_ISTIO=ambient`** or **`sidecar`** runs **`scripts/kubernetes/install-istio-docker-desktop.sh`** before ClawQL (Helm **Istio** + **`istio/gateway`** **`clawql-mcp-ingress`**, **Istio `Gateway` + `VirtualService`** for MCP on **:80** / **:50051**, **`PeerAuthentication` `STRICT`**). **`ingress-nginx`** is omitted unless you force it; **`clawql-mcp-ingress`** uses **LoadBalancer → localhost** on **docker-desktop** / **rancher-desktop** contexts. Prefer **`http://localhost/mcp`** when the gateway is installed. The same path installs **Prometheus**, **Kiali**, **Grafana**, **Grafana Tempo**, optional **Grafana Loki**, and a **ClawQL OpenTelemetry Collector** in **`istio-system`** (unless you opt out — see **[Docker Desktop: Istio & observability](/docker-desktop-observability)** and **[`docker/README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docker/README.md)**).
 
 **How this ties to CI:** full **golden image** and admission story — **[golden-image-pipeline.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/golden-image-pipeline.md)** and [Security](/security).
 
 ### Endpoints and client config
 
-- **MCP (Streamable HTTP):** **`http://clawql-mcp.localhost/mcp`**
-- **Health:** `curl -s http://clawql-mcp.localhost/healthz`
-- **Bundled docs UI (Helm + UI ingress):** `http://clawql.localhost`
+- **MCP (Streamable HTTP):** **`http://localhost/mcp`** or **`http://clawql-mcp.localhost/mcp`** (default Istio vs ingress-nginx — same **`/mcp`** shape as prod)
+- **Health:** `curl -s http://localhost/healthz` or **`http://clawql-mcp.localhost/healthz`**
+- **Bundled docs UI:** **`http://clawql.localhost`** (Istio **VirtualService** when gateway is on; **Ingress** when Istio is off)
 
 Point your MCP client at **`url`** (not stdio **`command`**). Example shape:
 
@@ -55,7 +55,7 @@ Point your MCP client at **`url`** (not stdio **`command`**). Example shape:
 {
   "mcpServers": {
     "clawql": {
-      "url": "http://clawql-mcp.localhost/mcp"
+      "url": "http://localhost/mcp"
     }
   }
 }

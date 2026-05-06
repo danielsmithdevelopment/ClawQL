@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-05-05
+
+- **[Kubernetes](/kubernetes)** page: default **Istio** path (**LoadBalancer → localhost** for **`clawql-mcp-ingress`** on Docker Desktop / Rancher Desktop; **`hostNetwork`** auto-skipped there), **`ingress-nginx`** optional, **`svc/clawql-mcp-http`** **ClusterIP** under ambient Istio, Obsidian **`vault.hostPath`** vs HashiCorp Vault naming ([#161](https://github.com/danielsmithdevelopment/ClawQL/issues/161)); MCP example **`url`** prefers **`http://localhost/mcp`**.
+
 ## 2026-05-03
 
 - **`clawql-mcp` v6.0.0** — repo root **CHANGELOG** **[6.0.0]** (Helm Dragonfly migration, opt-in **`sandbox_exec`**, Tempo/Loki lab, **`audit`** metrics + optional Loki push, HITL Label Studio, metrics/OTLP, **Learn** hub + OpenClaw guide); GitHub release **`v6.0.0`**; release notes + announcement drafts: **[`RELEASE_NOTES_v6.0.0.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/RELEASE_NOTES_v6.0.0.md)**, **[`docs/announcements/announcement-drafts-v6.0.0.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/announcements/announcement-drafts-v6.0.0.md)**.

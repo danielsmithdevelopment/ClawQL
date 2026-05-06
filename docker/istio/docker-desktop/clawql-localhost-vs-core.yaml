@@ -1,0 +1,47 @@
+# Placeholder __TARGET_NAMESPACE__ is replaced by scripts/kubernetes/local-k8s-docker-desktop.sh
+# Applies when Istio clawql-mcp-ingress exposes north-south :80 (LoadBalancer or hostNetwork).
+#
+# Host **clawql.localhost** serves the bundled docs site (**clawql-mcp-http-ui**). MCP Streamable HTTP
+# lives on the same hostname in **cursor/mcp.json** mistakes — without path splits, **GET /mcp** (SSE)
+# hits Next.js and returns **404**. Route **/mcp** and **/graphql** to **clawql-mcp-http:8080** first.
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: clawql-docs-ui-localhost
+  namespace: __TARGET_NAMESPACE__
+spec:
+  hosts:
+    - clawql.localhost
+  gateways:
+    - istio-ingress/clawql-mcp-gateway
+  http:
+    - match:
+        - uri:
+            prefix: /mcp
+      route:
+        - destination:
+            host: clawql-mcp-http
+            port:
+              number: 8080
+    - match:
+        - uri:
+            prefix: /graphql
+      route:
+        - destination:
+            host: clawql-mcp-http
+            port:
+              number: 8080
+    - match:
+        - uri:
+            prefix: /healthz
+      route:
+        - destination:
+            host: clawql-mcp-http
+            port:
+              number: 8080
+    - route:
+        - destination:
+            host: clawql-mcp-http-ui
+            port:
+              number: 3000

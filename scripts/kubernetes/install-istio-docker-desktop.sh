@@ -21,6 +21,10 @@ set -euo pipefail
 #   CLAWQL_LOKI_CHART_VERSION — Helm chart version for grafana/loki (default 6.55.0)
 #   CLAWQL_TEMPO_CHART_VERSION — Helm chart version for grafana/tempo (default 1.24.4)
 #   CLAWQL_ISTIO_APPLY_STRICT_MTLS — 1 applies PeerAuthentication STRICT in target NS (default 1)
+#   CLAWQL_ISTIO_GATEWAY_HOST_NETWORK — empty/unset = auto: **0** on kube contexts **docker-desktop** /
+#     **docker-for-desktop** / **rancher-desktop** (VM-based node: hostNetwork binds inside the VM, so host browsers
+#     see connection refused on 127.0.0.1:80 — use **Service LoadBalancer → localhost** like ingress-nginx); **1** on
+#     other contexts (real node: hostNetwork + ClusterIP). Set **0** or **1** explicitly to override auto.
 #   CLAWQL_ISTIO_MESH_INGRESS_NGINX — 1 enrolls namespace ingress-nginx in the mesh + restarts the
 #     controller so Ingress → clawql uses mesh mTLS under STRICT (default 1; set 0 if ingress ns missing)
 #   CLAWQL_ISTIO_INSTALL_GATEWAY_API_CRDS — for ambient, install Gateway API experimental CRDs if missing (default 1)
@@ -123,6 +127,18 @@ helm_ctx() {
   fi
 }
 
+# Docker Desktop / Rancher Desktop: Kubernetes "node" is a Linux VM — pod hostNetwork does not publish :80 to macOS/Win localhost.
+clawql_kube_context_is_desktop_vm() {
+  local ctx="${KUBE_CONTEXT:-}"
+  if [[ -z "${ctx}" ]]; then
+    ctx="$(kubectl config current-context 2>/dev/null || true)"
+  fi
+  case "${ctx}" in
+    rancher-desktop | docker-desktop | docker-for-desktop) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
 if ! kubectl_ctx cluster-info >/dev/null 2>&1; then
   echo "ERROR: kubectl cannot reach the cluster."
   exit 1
@@ -221,6 +237,20 @@ else
 fi
 
 if [[ "${INGRESS_GW_INSTALL}" == "1" ]]; then
+  EFFECTIVE_GATEWAY_HOST_NETWORK="${CLAWQL_ISTIO_GATEWAY_HOST_NETWORK:-}"
+  if [[ -z "${EFFECTIVE_GATEWAY_HOST_NETWORK}" ]]; then
+    if clawql_kube_context_is_desktop_vm; then
+      EFFECTIVE_GATEWAY_HOST_NETWORK=0
+      echo "==> Istio ingress gateway: desktop Kubernetes VM (${KUBE_CONTEXT:-$(kubectl config current-context 2>/dev/null || echo '?')}) — Service type LoadBalancer (hostNetwork does not reach the host's 127.0.0.1). Override: CLAWQL_ISTIO_GATEWAY_HOST_NETWORK=1"
+    else
+      EFFECTIVE_GATEWAY_HOST_NETWORK=1
+    fi
+  fi
+  GW_HELM_SERVICE_EXTRA=()
+  if [[ "${EFFECTIVE_GATEWAY_HOST_NETWORK}" != "1" ]]; then
+    GW_HELM_SERVICE_EXTRA=(--set service.type=LoadBalancer)
+  fi
+
   echo "==> Helm: istio/gateway (${INGRESS_GW_RELEASE} in ${INGRESS_GW_NS}) + Istio Gateway + VirtualService"
   kubectl_ctx create namespace "${TARGET_NS}" --dry-run=client -o yaml | kubectl_ctx apply -f -
   kubectl_ctx create namespace "${INGRESS_GW_NS}" --dry-run=client -o yaml | kubectl_ctx apply -f -
@@ -232,12 +262,25 @@ if [[ "${INGRESS_GW_INSTALL}" == "1" ]]; then
     kubectl_ctx label namespace "${INGRESS_GW_NS}" istio.io/dataplane-mode- 2>/dev/null || true
   fi
   GATEWAY_VALUES="${ROOT}/docker/istio/docker-desktop/istio-mcp-ingress-gateway-values-${MODE}.yaml"
-  helm_ctx upgrade --install "${INGRESS_GW_RELEASE}" istio/gateway --namespace "${INGRESS_GW_NS}" --version "${VER}" -f "${GATEWAY_VALUES}" --wait --timeout "${HELM_WAIT_TIMEOUT}"
+  helm_ctx upgrade --install "${INGRESS_GW_RELEASE}" istio/gateway --namespace "${INGRESS_GW_NS}" --version "${VER}" -f "${GATEWAY_VALUES}" "${GW_HELM_SERVICE_EXTRA[@]}" --wait --timeout "${HELM_WAIT_TIMEOUT}"
   kubectl_ctx -n "${INGRESS_GW_NS}" rollout status "deployment/${INGRESS_GW_RELEASE}" --timeout=300s
+  if [[ "${EFFECTIVE_GATEWAY_HOST_NETWORK}" == "1" ]]; then
+    echo "==> Patch deployment/${INGRESS_GW_RELEASE} (hostNetwork) so Envoy listens on the node stack for TCP :80 and :50051 (no kubectl port-forward / NodePort)."
+    kubectl_ctx patch deployment "${INGRESS_GW_RELEASE}" -n "${INGRESS_GW_NS}" -p '{"spec":{"template":{"spec":{"hostNetwork":true,"dnsPolicy":"ClusterFirstWithHostNet"}}}}' --type=merge || {
+      echo "WARN: hostNetwork merge patch failed — check permissions or conflicting listeners on node :80 (Rancher Traefik?)."
+    }
+    kubectl_ctx -n "${INGRESS_GW_NS}" rollout status "deployment/${INGRESS_GW_RELEASE}" --timeout=300s
+  else
+    echo "    SKIPPED hostNetwork (using LoadBalancer Service — Docker Desktop / Rancher map localhost:80 to this Service)."
+  fi
   sed "s/__TARGET_NAMESPACE__/${TARGET_NS}/g" "${ROOT}/docker/istio/docker-desktop/clawql-mcp-gateway-and-virtualservice.yaml" | kubectl_ctx apply -f -
-  echo "    MCP (Istio Gateway + VirtualService): http://127.0.0.1:31488/mcp — gateway Service nodePort (:80→31488; works when LB never binds host :80)"
-  echo "    MCP (same path, when LoadBalancer exposes :80): http://localhost/mcp"
-  echo "    gRPC: localhost:50051 (or gateway nodePort when set) — svc/${INGRESS_GW_RELEASE}"
+  if [[ "${EFFECTIVE_GATEWAY_HOST_NETWORK}" == "1" ]]; then
+    echo "    North-south: hostNetwork :80 / :50051 on the node + ClusterIP Service (no port-forward)."
+  else
+    echo "    North-south: Service LoadBalancer (not hostNetwork). On Docker/Rancher Desktop the EXTERNAL-IP is usually localhost — kubectl -n ${INGRESS_GW_NS} get svc ${INGRESS_GW_RELEASE}"
+  fi
+  echo "    Host MCP (Ingress-shaped hostname): http://clawql-mcp.localhost/mcp"
+  echo "    gRPC (plaintext to gateway workload port): localhost:50051 · svc/${INGRESS_GW_RELEASE} (cluster east-west via Service)"
 fi
 
 if [[ "${EGRESS_ALLOWLIST}" == "1" ]]; then
@@ -352,7 +395,9 @@ fi
 
 echo "==> Istio install finished (${MODE})."
 if [[ "${MODE}" == "ambient" ]]; then
-  echo "    Ambient: workloads in ${TARGET_NS} use ztunnel (istio.io/dataplane-mode=ambient); no Envoy sidecars on ClawQL MCP."
+  echo "    Ambient: workloads in ${TARGET_NS} use ztunnel when pods are recreated without sidecars."
+  echo "           If Ingress returns 502 to *.localhost backends, rollout deployments once:"
+  echo "             kubectl rollout restart deployment -n ${TARGET_NS}"
 fi
 kubectl_ctx get pods -n "${ISTIO_NS}" -o wide
 

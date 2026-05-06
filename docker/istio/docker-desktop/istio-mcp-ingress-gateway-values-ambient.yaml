@@ -1,5 +1,6 @@
 # istio/gateway chart — ambient dataplane (no sidecar; ztunnel handles HBONE).
 # Release name must stay clawql-mcp-ingress (Gateway selector istio+app match release).
+# Service is ClusterIP: north-south HTTP/gRPC binds via pod hostNetwork (see install-istio-docker-desktop.sh).
 autoscaling:
   enabled: false
 labels:
@@ -18,19 +19,16 @@ resources:
     cpu: 2000m
     memory: 1024Mi
 service:
-  type: LoadBalancer
+  type: ClusterIP
   ports:
     - name: status-port
       port: 15021
       protocol: TCP
       targetPort: 15021
-    # Fixed NodePort: Docker Desktop / Rancher often leave LB EXTERNAL-IP pending → nothing on host :80.
-    # MCP still enters via this Service → same Istio Gateway + VirtualService (not direct pod forward).
     - name: http2
       port: 80
       protocol: TCP
       targetPort: 80
-      nodePort: 31488
     - name: https
       port: 443
       protocol: TCP

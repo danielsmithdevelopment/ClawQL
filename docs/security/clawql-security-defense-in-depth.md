@@ -1,7 +1,7 @@
 # Defense-in-Depth Security Stack for Self-Hosted Infrastructure
 
-**Advanced Infrastructure Security — Reference Guide**  
-**Zero Trust · Immutability · Cryptographic Controls · Incident Response**  
+**Advanced Infrastructure Security — Reference Guide**
+**Zero Trust · Immutability · Cryptographic Controls · Incident Response**
 **Making Unauthorized Persistence Structurally Difficult**
 
 **April 2026** — Comprehensive reference (aligns with **ClawQL** security slides **§08** in `../presentations/clawql-slides.md`).
@@ -23,6 +23,8 @@ By the end of this module, you should be able to:
 - Discuss operational realities of implementing and maintaining such a stack.
 
 **ClawQL note:** The platform’s **MCP server**, **Helm** stack, **Istio**, **Trivy/OSV-Scanner**, **Vault**, **Merkle** audit, and **optional Fabric** are designed to **plug into** this model—not replace organizational controls such as **SSO**, **YubiKey** policy, or **SIEM**.
+
+**Helm naming ([#161](https://github.com/danielsmithdevelopment/ClawQL/issues/161)):** In **`charts/clawql-mcp`**, the values key **`vault`** configures **Obsidian memory** storage (host path or PVC for Markdown), not **HashiCorp Vault**. Cluster secrets still land in Kubernetes **`Secret`** objects (for example via **`envFromSecret`** in the chart) or upstream tooling that writes those objects.
 
 ---
 
@@ -200,11 +202,11 @@ Transform stealthy, persistent access into **loud, short-lived, observable event
 
 ---
 
-## HashiCorp Vault (or OpenBao) with ephemeral / short-lived credentials
+## HashiCorp Vault with ephemeral / short-lived credentials
 
 - Dynamic credentials where supported; static secrets in **KV** with rotation policy.
 - **Audit** log of secret access; **Istio**-protected path from workloads to **Vault** in hardened setups.
-- **ClawQL** Helm: **Vault Agent** injector or equivalent pattern — see `clawql-slides` Infrastructure section.
+- **ClawQL** Helm: **Vault Agent** injector or equivalent pattern — see `clawql-slides` Infrastructure section. This is **orthogonal** to the chart’s **`vault`** values key, which only mounts **Obsidian** memory files ([#161](https://github.com/danielsmithdevelopment/ClawQL/issues/161)).
 
 ---
 

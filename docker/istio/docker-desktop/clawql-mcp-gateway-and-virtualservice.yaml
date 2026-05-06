@@ -1,5 +1,8 @@
 # Placeholder __TARGET_NAMESPACE__ is replaced by install-istio-docker-desktop.sh (ClawQL release ns).
 # Gateway lives in istio-ingress; Helm release name must be clawql-mcp-ingress.
+#
+# MCP VirtualService matches ONLY these hosts so other *.localhost UIs route via clawql-localhost-vs-*.yaml
+# (ambient + Ingress-nginx LB pending on some desktop clusters pushed all traffic here when hosts was '*'.)
 ---
 apiVersion: networking.istio.io/v1beta1
 kind: Gateway
@@ -31,12 +34,13 @@ metadata:
   namespace: __TARGET_NAMESPACE__
 spec:
   hosts:
-    - "*"
+    - localhost
+    - 127.0.0.1
+    - clawql-mcp.localhost
   gateways:
     - istio-ingress/clawql-mcp-gateway
   http:
-    - name: mcp-http-all
-      route:
+    - route:
         - destination:
             host: clawql-mcp-http
             port:

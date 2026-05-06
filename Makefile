@@ -1,28 +1,37 @@
-.PHONY: deploy-cloud-run deploy-k8s deploy-docs local-k8s-up local-k8s-mcp-delete local-docker-up helm-lint helm-ui-template-tests kustomize-local-lint lint-k8s-manifests smoke-grpcurl-istio-gateway-mcp
+.PHONY: deploy-cloud-run deploy-k8s deploy-docs local-k8s-up local-k8s-mcp-delete local-docker-up helm-lint helm-ui-template-tests kustomize-local-lint lint-k8s-manifests smoke-grpcurl-istio-gateway-mcp smoke-mcp-http-istio-gateway verify-vault-policy
 
 # Validate charts/clawql-mcp (requires helm on PATH)
 helm-lint:
-	@helm lint charts/clawql-mcp
+	@helm lint charts/clawql-mcp -f charts/clawql-mcp/values-lint.yaml
 	@helm lint charts/clawql-falco
 	@helm template test charts/clawql-falco --namespace monitoring >/dev/null
-	@helm template test charts/clawql-mcp --namespace clawql >/dev/null
+	@helm template test charts/clawql-mcp --namespace clawql --set envFromSecret=clawql-lint-provider-env >/dev/null
 	@helm template test charts/clawql-mcp --namespace clawql \
 		-f charts/clawql-mcp/values-docker-desktop.yaml \
-		--set-string vault.hostPath.path=/tmp/clawql-helm-test >/dev/null
+		--set-string vault.hostPath.path=/tmp/clawql-helm-test \
+		--set envFromSecret=clawql-lint-provider-env >/dev/null
 	@helm template test charts/clawql-mcp --namespace clawql \
 		--set documentPipeline.enabled=true \
 		--set stores.postgres.enabled=true \
 		--set stores.dragonfly.enabled=true \
-		--set stores.postgres.auth.password=devpass >/dev/null
+		--set stores.postgres.auth.password=devpass \
+		--set envFromSecret=clawql-lint-provider-env >/dev/null
 	@helm template test charts/clawql-mcp --namespace clawql \
-		--set kyverno.imageSignaturePolicy.enabled=false >/dev/null
+		--set kyverno.imageSignaturePolicy.enabled=false \
+		--set envFromSecret=clawql-lint-provider-env >/dev/null
 	@helm template test charts/clawql-mcp --namespace clawql \
 		-f charts/clawql-mcp/values-mcp-proxy-panguard-bridge.example.yaml \
-		--set kyverno.imageSignaturePolicy.enabled=false >/dev/null
+		--set kyverno.imageSignaturePolicy.enabled=false \
+		--set envFromSecret=clawql-lint-provider-env >/dev/null
 	@helm template test charts/clawql-mcp --namespace clawql \
 		-f charts/clawql-mcp/test-values-mcp-proxy-custom.yaml \
-		--set kyverno.imageSignaturePolicy.enabled=false >/dev/null
+		--set kyverno.imageSignaturePolicy.enabled=false \
+		--set envFromSecret=clawql-lint-provider-env >/dev/null
 	@echo "helm-lint OK"
+
+# After applying docs/deployment/vault-istio-authorizationpolicy*.yaml to a live cluster
+verify-vault-policy:
+	@bash scripts/kubernetes/verify-vault-policy.sh
 
 # Validate docker/kustomize/overlays/local (requires kubectl; temporary patch for hostPath)
 kustomize-local-lint:
@@ -45,6 +54,10 @@ local-k8s-up:
 # After local-k8s-up with Istio + gateway: grpcurl grpc.health.v1.Health/Check on localhost:50051
 smoke-grpcurl-istio-gateway-mcp:
 	@bash scripts/kubernetes/smoke-grpcurl-istio-gateway-mcp.sh
+
+# Streamable HTTP POST /mcp initialize via Istio :80 (matches Cursor; default URL 127.0.0.1)
+smoke-mcp-http-istio-gateway:
+	@bash scripts/kubernetes/smoke-mcp-http-istio-gateway.sh
 
 # Remove MCP deployment+Service (e.g. before Helm after kubectl apply / Kustomize)
 local-k8s-mcp-delete:

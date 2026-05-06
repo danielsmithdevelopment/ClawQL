@@ -1,6 +1,8 @@
 # Used by scripts/kubernetes/local-k8s-docker-desktop.sh — Docker Desktop + Rancher / k3s.
-# Default Istio is ambient: MCP HTTP north-south is **http://localhost/mcp** (Gateway+VirtualService in-repo;
-# script may patch this Service to ClusterIP). Ingress option: **http://clawql-mcp.localhost/mcp** (nginx :80).
+# Default Istio is ambient: north-south is **deployment/clawql-mcp-ingress** (LoadBalancer→localhost on docker/rancher kube contexts; hostNetwork on other locals) + Gateway/Vs
+# (**http://localhost/mcp**, **http://clawql.localhost/**, …). When Istio gateway is enabled, install-istio + local-k8s
+# skip ingress-nginx and disable chart Ingress manifests (see docker/README.md).
+# Ingress-only (`CLAWQL_LOCAL_K8S_ISTIO=0`): nginx serves **http://clawql-mcp.localhost/mcp** matching prod patterns.
 # vault.hostPath.path is set by the script (--set-string).
 
 fullnameOverride: clawql-mcp-http
@@ -215,6 +217,7 @@ resources:
 podSecurityContext:
   fsGroup: 65532
 
+# Obsidian memory Markdown on disk (`memory_ingest` / `memory_recall`). Chart key `vault` is not HC Vault — #161.
 vault:
   hostPath:
     enabled: true
@@ -266,6 +269,14 @@ providerIngress:
 # Optional GitHub/CF/Google tokens: run scripts/kubernetes/k8s-docker-desktop-set-mcp-auth.sh then:
 #   helm upgrade ... --set envFromSecret=clawql-github-auth
 envFromSecret: ""
+
+# Desktop lab: ship without in-cluster Vault (single-node RAM/ops) and do not block install on synced Secrets.
+# Production defaults (`values.yaml`): HashiCorp Vault dependency on + secret-sourcing guard enforced.
+secretSourcing:
+  requireVaultBackedSecrets: false
+
+hashicorpVault:
+  enabled: false
 
 # sandbox_exec via host Docker daemon (docker run …). InitContainer installs static docker CLI into distroless MCP image.
 sandboxDocker:

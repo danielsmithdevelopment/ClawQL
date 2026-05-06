@@ -1,0 +1,23 @@
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: vault-allow-clawql-and-secret-sync
+  namespace: clawql
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vault
+      app.kubernetes.io/instance: clawql
+  action: ALLOW
+  rules:
+    # External Secrets Operator controller (runs in external-secrets namespace by default).
+    # Adjust principal if Helm release/service account naming differs (`kubectl get sa -n external-secrets`).
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/external-secrets/sa/external-secrets
+    # ClawQL MCP workload ( Vault Agent injector or direct Vault reads if enabled later ).
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/clawql/sa/clawql-mcp-http

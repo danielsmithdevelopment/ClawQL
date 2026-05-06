@@ -1,0 +1,24 @@
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: vault-allow-clawql-and-secret-sync-ambient
+  namespace: clawql
+spec:
+  # Ambient mode: attach policy to the Vault Service via targetRefs.
+  # Adjust service name for your Helm release if it differs.
+  targetRefs:
+    - group: ""
+      kind: Service
+      name: clawql-hashicorpVault
+  action: ALLOW
+  rules:
+    # External Secrets Operator controller (runs in external-secrets namespace by default).
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/external-secrets/sa/external-secrets
+    # ClawQL MCP workload ServiceAccount (optional depending on Vault access pattern).
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/clawql/sa/clawql-mcp-http
