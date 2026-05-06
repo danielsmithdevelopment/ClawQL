@@ -8,16 +8,20 @@ Pinned chart (2026‑05‑05 upstream): **`external-secrets/external-secrets` ch
 
 ---
 
-## Local Docker Desktop / Rancher (bundled dev Vault)
+## Local Docker Desktop / Rancher (bundled Vault + PVC)
 
-When you used **`values-docker-desktop.yaml`**, the chart runs Vault in **`server.dev`** mode (ephemeral; default root token **`root`** — see comments in that file). After **`make local-k8s-up`** (or an equivalent **`helm upgrade`** with the same values), run:
+When you use **`values-docker-desktop.yaml`**, the chart runs Vault as **standalone** with **file storage on a PVC** so KV data survives pod restarts (unlike **`server.dev`**, which was in-memory). The first successful **`make bootstrap-vault-eso`** run initializes Vault (if needed), **unseals** it using a single key, stores **`root-token`** and **`unseal-key`** in **`Secret/clawql-vault-local-bootstrap`** in the release namespace (local dev only — do not copy this pattern to production).
+
+After **`make local-k8s-up`** (or an equivalent **`helm upgrade`** with the same values), run:
 
 ```bash
 make bootstrap-vault-eso
 # or: bash scripts/kubernetes/bootstrap-local-vault-and-eso.sh
 ```
 
-That installs External Secrets Operator if missing, applies Vault policy + Kubernetes auth + seeds **`secret/clawql/providers`**, then applies **`ClusterSecretStore`** + **`ExternalSecret`** so **`Secret/clawql-provider-env`** exists for **`envFromSecret`** and the dashboard prefill.
+That installs External Secrets Operator if missing, ensures Vault is initialized/unsealed, applies Vault policy + Kubernetes auth + seeds **`secret/clawql/providers`**, then applies **`ClusterSecretStore`** + **`ExternalSecret`** so **`Secret/clawql-provider-env`** exists for **`envFromSecret`** and the dashboard prefill.
+
+If Vault is **sealed** after a cold start (uncommon when the bootstrap Secret exists), run the same bootstrap script again — it will unseal using **`clawql-vault-local-bootstrap`**. If you deleted that Secret but kept the PVC, restore the unseal material or delete the Vault PVC and re-bootstrap (KV will be recreated empty).
 
 ---
 

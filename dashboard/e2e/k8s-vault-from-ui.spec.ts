@@ -25,6 +25,7 @@ test('dashboard form syncs Secret: updates changed keys, removes cleared keys, r
   try {
     await page.goto('/')
 
+    await page.getByTestId('nav-configuration').click()
     await expect(page.getByRole('heading', { name: 'Cluster targets' })).toBeVisible()
 
     await page.getByLabel('Namespace', { exact: true }).fill(NS)
@@ -45,7 +46,7 @@ test('dashboard form syncs Secret: updates changed keys, removes cleared keys, r
         r.request().method() === 'GET' &&
         r.status() === 200,
     )
-    await page.getByRole('button', { name: /Save to Secret/ }).click()
+    await page.getByRole('button', { name: /Save to Vault & restart rollout/ }).click()
 
     await expect(page.getByRole('status')).toContainText('Vault updated and rollout restarted', {
       timeout: 180_000,
@@ -67,7 +68,7 @@ test('dashboard form syncs Secret: updates changed keys, removes cleared keys, r
         r.request().method() === 'GET' &&
         r.status() === 200,
     )
-    await page.getByRole('button', { name: /Save to Secret/ }).click()
+    await page.getByRole('button', { name: /Save to Vault & restart rollout/ }).click()
 
     await expect(page.getByRole('status')).toContainText('Vault updated and rollout restarted', {
       timeout: 180_000,
@@ -93,6 +94,7 @@ test('pasting .env text into one field hydrates matching dashboard keys', async 
   test.skip(process.env.CLAWQL_DASHBOARD_E2E !== '1', 'Set CLAWQL_DASHBOARD_E2E=1 (see dashboard/README.md).')
 
   await page.goto('/')
+  await page.getByTestId('nav-configuration').click()
   await expect(page.getByRole('heading', { name: 'Cluster targets' })).toBeVisible()
   await expect(page.locator('form[data-vault-hydrated="true"]')).toBeVisible({ timeout: 120_000 })
 

@@ -40,6 +40,7 @@ spec:
             - "ghcr.io/danielsmithdevelopment/clawql-mcp*"
             - "ghcr.io/danielsmithdevelopment/clawql-panguard-mcp-bridge*"
             - "ghcr.io/danielsmithdevelopment/clawql-website*"
+            - "ghcr.io/danielsmithdevelopment/clawql-dashboard*"
           # When every manifest uses `image@sha256:…`, add `verifyDigest: true` (and/or `mutateDigest: true`)
           # per Kyverno docs) so only digest pulls are admitted.
           attestors:
@@ -55,7 +56,7 @@ spec:
 
 - **Cosign bundle format vs Kyverno:** CI must emit signatures Kyverno’s **`verifyImages`** can consume (this repo pins **Cosign v2** in [`.github/workflows/docker-publish.yml`](../../.github/workflows/docker-publish.yml); **v2** defaults to legacy bundles; **`--new-bundle-format`** is **v3** only). **Cosign v3** “new bundle” artifacts often fail verification until policy/stack upgrades. See **[`golden-image-pipeline.md`](golden-image-pipeline.md)** Step 5.
 - **Kyverno version** skew: field names moved across releases (`failureAction` vs nested fields). Validate against your installed Kyverno docs.
-- **Private GHCR**: the admission controller needs **registry pull** access to fetch signatures/manifests (imagePullSecrets, workload identity, or Kyverno `imageRegistryCredentials`).
+- **Private GHCR**: the admission controller needs **registry pull** access to fetch signatures/manifests (imagePullSecrets, workload identity, or Kyverno `imageRegistryCredentials`). ClawQL’s **`docker-publish`** workflow signs **`clawql-dashboard`** like other images and attempts to **`PATCH`** the package to **public** so Kyverno’s anonymous **`verifyImages`** calls succeed; if that API call fails (missing admin scope), set **Packages → clawql-dashboard → Package settings → Public** once or add repository secret **`GH_PACKAGES_VISIBILITY_TOKEN`** with permission to change package visibility.
 - **Escape hatches** break the guarantee: policies that **exclude** namespaces, `kube-system`, or `failurePolicy: Ignore` on the webhook, or workloads that **bypass** the API server (static manifests applied with elevated rights) are all ways enforcement can be weakened.
 - **Third-party images** in the same chart (document services, etc.) each need their **own** policy or an explicit **allowlist** if they are unsigned.
 
@@ -69,7 +70,7 @@ spec:
 
 Pin **`image: …@sha256:…`** in [`charts/clawql-mcp/values.yaml`](../../charts/clawql-mcp/values.yaml) (or overlays) so deploys are **immutable** and policies can key off digests. **Without** admission, a mistaken edit can still apply an unsigned digest — Git review + CI helps, but **only admission makes “impossible” cluster-local**.
 
-**`make local-k8s-up`** (Docker Desktop) installs **Kyverno** and enables the chart policy in **`values-docker-desktop.yaml`** (**`kyverno.imageSignaturePolicy`** and **`matchReleaseNamespaceOnly`**) so ClawQL MCP/UI images in that namespace must be **Cosign-signed** on GHCR; unsigned **`docker build`** deploy paths are rejected by the script.
+**`make local-k8s-up`** (Docker Desktop) installs **Kyverno** and enables the chart policy in **`values-docker-desktop.yaml`** (**`kyverno.imageSignaturePolicy`** and **`matchReleaseNamespaceOnly`**) so ClawQL MCP, docs website, and **dashboard** images in that namespace must be **Cosign-signed** on GHCR (see **`docker-publish`** jobs **`build-push-*`**); unsigned **`docker build`** deploy paths are rejected by admission.
 
 ## Verify manually (debug / break-glass)
 

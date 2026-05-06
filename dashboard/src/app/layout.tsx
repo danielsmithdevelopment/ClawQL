@@ -4,9 +4,9 @@ import type { ReactNode } from 'react'
 import '@/styles/tailwind.css'
 
 export const metadata: Metadata = {
-  title: 'ClawQL — Kubernetes env dashboard',
+  title: 'ClawQL — Dashboard',
   description:
-    'Edit ClawQL MCP environment variables from .env.example and sync them to a Kubernetes Secret.',
+    'Agent chat, fleet status, and Vault-backed cluster configuration for ClawQL MCP.',
 }
 
 export const viewport: Viewport = {
@@ -25,7 +25,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark h-full">
-      <body className="min-h-full bg-claw-warm-white antialiased dark:bg-claw-bg dark:text-zinc-100">
+      <body className="min-h-dvh overflow-hidden bg-zinc-950 antialiased text-zinc-100">
         {children}
       </body>
     </html>

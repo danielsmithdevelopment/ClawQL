@@ -2,8 +2,8 @@
 # Idempotent bootstrap: External Secrets Operator + Vault KV/policy + Kubernetes auth + ClusterSecretStore
 # + ExternalSecret for Secret/clawql-provider-env.
 #
-# Intended for local clusters (Docker Desktop / Rancher) using values-docker-desktop.yaml with
-# hashicorpvault.server.dev.enabled — default root token is "root" (never use in production).
+# Intended for local clusters (Docker Desktop / Rancher) using values-docker-desktop.yaml (standalone Vault + PVC).
+# Legacy dev Vault (in-memory): keep VAULT_DEV_ROOT_TOKEN=root. Standalone: bootstrap Secret supplies the token.
 #
 # Usage (from repo root):
 #   bash scripts/kubernetes/bootstrap-local-vault-and-eso.sh
@@ -12,7 +12,8 @@
 #   HELM_RELEASE_NAME   default clawql
 #   HELM_NAMESPACE      default clawql
 #   KUBE_CONTEXT        optional kubectl --context
-#   VAULT_DEV_ROOT_TOKEN  default root (must match hashicorpvault.server.dev.devRootToken)
+#   VAULT_DEV_ROOT_TOKEN  default root — used only when Vault runs in server.dev mode (legacy)
+#   VAULT_LOCAL_BOOTSTRAP_SECRET  default clawql-vault-local-bootstrap — holds root-token + unseal-key for standalone PVC (Docker Desktop)
 #   SKIP_ESO_INSTALL    set to 1 if external-secrets is already installed
 #   SKIP_VAULT_SEED     set to 1 to skip KV placeholder write (policy/auth still applied)
 
@@ -80,6 +81,54 @@ vault_pod="${VAULT_STS}-0"
 vault_exec() {
   kubectl_ctx exec -n "${NS}" "${vault_pod}" -c vault -- "$@"
 }
+
+BOOTSTRAP_SECRET="${VAULT_LOCAL_BOOTSTRAP_SECRET:-clawql-vault-local-bootstrap}"
+
+echo "==> Ensure Vault is initialized and unsealed (standalone + PVC or legacy dev mode)"
+STATUS_JSON=""
+for _ in $(seq 1 45); do
+  # vault status exits 2 when sealed — still prints JSON; do not gate capture on exit code.
+  STATUS_JSON="$(vault_exec sh -ec "export VAULT_ADDR=http://127.0.0.1:8200; vault status -format=json 2>/dev/null" || true)"
+  if [[ -n "${STATUS_JSON}" ]] && echo "${STATUS_JSON}" | python3 -c "import json,sys; json.load(sys.stdin)" >/dev/null 2>&1; then
+    break
+  fi
+  STATUS_JSON=""
+  sleep 2
+done
+
+if [[ -z "${STATUS_JSON}" ]]; then
+  echo "ERROR: Could not read valid vault status JSON from ${NS}/${vault_pod} — is Vault running?"
+  exit 1
+fi
+
+initialized="$(echo "${STATUS_JSON}" | python3 -c "import json,sys; print(json.load(sys.stdin).get('initialized', False))")"
+sealed="$(echo "${STATUS_JSON}" | python3 -c "import json,sys; print(json.load(sys.stdin).get('sealed', True))")"
+
+if [[ "${initialized}" == "False" ]]; then
+  echo "    Initializing Vault (1 unseal key) and recording bootstrap Secret/${NS}/${BOOTSTRAP_SECRET}"
+  INIT_JSON="$(vault_exec sh -ec "export VAULT_ADDR=http://127.0.0.1:8200; vault operator init -key-shares=1 -key-threshold=1 -format=json")"
+  ROOT="$(echo "${INIT_JSON}" | python3 -c "import json,sys; print(json.load(sys.stdin)['root_token'])")"
+  UNSEAL_HEX="$(echo "${INIT_JSON}" | python3 -c "import json,sys; print(json.load(sys.stdin)['unseal_keys_hex'][0])")"
+  kubectl_ctx create secret generic "${BOOTSTRAP_SECRET}" -n "${NS}" \
+    --from-literal=root-token="${ROOT}" \
+    --from-literal=unseal-key="${UNSEAL_HEX}" \
+    --dry-run=client -o yaml | kubectl_ctx apply -f -
+  vault_exec env VAULT_ADDR=http://127.0.0.1:8200 vault operator unseal "${UNSEAL_HEX}"
+  TOKEN="${ROOT}"
+elif [[ "${sealed}" == "True" ]]; then
+  echo "    Unsealing Vault using Secret/${NS}/${BOOTSTRAP_SECRET}"
+  if ! kubectl_ctx get secret "${BOOTSTRAP_SECRET}" -n "${NS}" >/dev/null 2>&1; then
+    echo "ERROR: Vault is sealed but bootstrap Secret is missing. Restore the unseal key or delete the Vault PVC and re-run this script."
+    exit 1
+  fi
+  UNSEAL_HEX="$(kubectl_ctx get secret "${BOOTSTRAP_SECRET}" -n "${NS}" -o jsonpath='{.data.unseal-key}' | base64 -d)"
+  vault_exec env VAULT_ADDR=http://127.0.0.1:8200 vault operator unseal "${UNSEAL_HEX}"
+  TOKEN="$(kubectl_ctx get secret "${BOOTSTRAP_SECRET}" -n "${NS}" -o jsonpath='{.data.root-token}' | base64 -d)"
+else
+  if kubectl_ctx get secret "${BOOTSTRAP_SECRET}" -n "${NS}" >/dev/null 2>&1; then
+    TOKEN="$(kubectl_ctx get secret "${BOOTSTRAP_SECRET}" -n "${NS}" -o jsonpath='{.data.root-token}' | base64 -d)"
+  fi
+fi
 
 echo "==> Configure Vault (KV v2, policy, kubernetes auth, role, seed KV)"
 kubectl_ctx cp "${POLICY_FILE}" "${NS}/${vault_pod}:/tmp/clawql-eso-read.hcl" -c vault

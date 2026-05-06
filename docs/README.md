@@ -4,6 +4,7 @@ This directory is organized by purpose so operational guides, product docs, and 
 
 ## Core Product Docs
 
+- **ClawQL Modularization** (v1.9 — vision, planned / in-flight packages, operator CRD, roadmap; GitHub package epic [#306](https://github.com/danielsmithdevelopment/ClawQL/issues/306); links to shipped-vs-planned evidence + k3s security guide): [`vision/clawql-modularization.md`](vision/clawql-modularization.md) — published on **docs.clawql.com** as [`/vision/modularization`](https://docs.clawql.com/vision/modularization)
 - ClawQL ecosystem (vision deck — core loop, hybrid memory, pipeline, Onyx, Ouroboros, infra, roadmap): [`clawql-ecosystem.md`](clawql-ecosystem.md)
 - Feature tiers (always on / default-on opt-out / default-off opt-in): `readme/configuration.md` § **Feature tiers** — diagram: [`readme/images/clawql-feature-tiers.png`](readme/images/clawql-feature-tiers.png)
 - MCP tools and operator guides: [`mcp/mcp-tools.md`](mcp/mcp-tools.md), [`mcp/external-ingest.md`](mcp/external-ingest.md), [`mcp/cache-tool.md`](mcp/cache-tool.md), [`mcp/enterprise-mcp-tools.md`](mcp/enterprise-mcp-tools.md), [`mcp/notify-tool.md`](mcp/notify-tool.md), [`mcp/hitl-label-studio.md`](mcp/hitl-label-studio.md), [`mcp/onyx-knowledge-tool.md`](mcp/onyx-knowledge-tool.md), [`mcp/schedule-synthetic-checks.md`](mcp/schedule-synthetic-checks.md)

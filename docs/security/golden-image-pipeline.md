@@ -8,7 +8,7 @@ Related: [`image-signature-enforcement.md`](image-signature-enforcement.md) (Kyv
 
 1. **No silent promotion:** rolling tags (**`latest`**, **`nightly`**, date-stamped **`nightly-YYYYMMDD`**) only move after **repo gates**, **image build**, **vulnerability scan on the exact bytes pushed**, **registry push**, and **Cosign** signing.
 2. **No second-build drift:** the **same OCI layout** Trivy scans is what **`skopeo copy`** uploads—there is **not** a separate “release build” that could differ.
-3. **Deploy-time linkage:** clusters that install the **Helm chart defaults** get a **Kyverno `ClusterPolicy`** that **verifies Cosign signatures** for the published **ClawQL MCP** and **website** images (see [Enforcement at deploy](#enforcement-at-deploy)).
+3. **Deploy-time linkage:** clusters that install the **Helm chart defaults** get a **Kyverno `ClusterPolicy`** that **verifies Cosign signatures** for the published **ClawQL MCP**, **website**, and **dashboard** images (see [Enforcement at deploy](#enforcement-at-deploy)).
 
 Scanner data, severity choices, and `.trivyignore` / `osv-scanner.toml` mean this is **not** a proof of zero defects— it is a **gated, reproducible pipeline** with **cryptographic identity** on the digest that passed the gates.
 
@@ -23,7 +23,7 @@ flowchart TB
     TrivyFS[Trivy filesystem HIGH/CRITICAL]
     Syft[Syft CycloneDX SBOM artifact]
   end
-  subgraph perImage["Per image: clawql-mcp + clawql-website (parallel jobs)"]
+  subgraph perImage["Per image: mcp, bridge, website, dashboard (parallel jobs)"]
     Build[One buildx build to local OCI layout tar=false]
     TrivyOCI[Trivy image scan on OCI layout]
     Skopeo[skopeo copy to GHCR same layout]
@@ -37,7 +37,7 @@ flowchart TB
   Cosign --> Promote
 ```
 
-Both **`build-push-mcp`** and **`build-push-website`** **`need: repo-supply-chain`**—if repository gates fail, **no image job runs**.
+All **`build-push-*`** image jobs (**`build-push-mcp`**, **`build-push-panguard-bridge`**, **`build-push-website`**, **`build-push-dashboard`**) **`need: repo-supply-chain`**—if repository gates fail, **no image job runs**.
 
 ---
 
@@ -47,7 +47,7 @@ Workflow: [`.github/workflows/docker-publish.yml`](../../.github/workflows/docke
 
 | Step             | What runs                                                                                  | Failure effect                               |
 | ---------------- | ------------------------------------------------------------------------------------------ | -------------------------------------------- |
-| OSV-Scanner      | `ghcr.io/google/osv-scanner` with [`osv-scanner.toml`](../../osv-scanner.toml)             | Job fails → **no** MCP or website build jobs |
+| OSV-Scanner      | `ghcr.io/google/osv-scanner` with [`osv-scanner.toml`](../../osv-scanner.toml)             | Job fails → **no** **`docker-publish`** image builds |
 | Trivy filesystem | `aquasecurity/trivy-action`, **HIGH** / **CRITICAL**, [`.trivyignore`](../../.trivyignore) | Job fails → **no** image builds              |
 | Syft SBOM        | `anchore/syft:v1.19.0` → CycloneDX JSON uploaded as artifact                               | Artifact missing → job fails                 |
 
@@ -57,10 +57,12 @@ The main **[`ci.yml`](../../.github/workflows/ci.yml)** workflow also runs a **`
 
 ## Step 2 — Single BuildKit export (per image)
 
-After **`repo-supply-chain`** succeeds, two jobs can run in parallel:
+After **`repo-supply-chain`** succeeds, four image jobs can run in parallel:
 
 - **`build-push-mcp`**: `docker buildx build` with [`docker/Dockerfile`](../../docker/Dockerfile), multi-arch **`linux/amd64`**, **`linux/arm64`**.
-- **`build-push-website`**: `docker buildx build` with [`website/Dockerfile`](../../website/Dockerfile), same platform pattern.
+- **`build-push-panguard-bridge`**: [`docker/panguard-mcp-bridge/Dockerfile`](../../docker/panguard-mcp-bridge/Dockerfile).
+- **`build-push-website`**: [`website/Dockerfile`](../../website/Dockerfile).
+- **`build-push-dashboard`**: [`dashboard/Dockerfile`](../../dashboard/Dockerfile).
 
 Output is a **local OCI image layout**:
 
@@ -112,7 +114,7 @@ Signing in CI **does not** stop a malicious or mistaken **`kubectl apply`** of a
 
 ### Helm chart (default on)
 
-[`charts/clawql-mcp/values.yaml`](../../charts/clawql-mcp/values.yaml) defaults **`kyverno.imageSignaturePolicy.enabled: true`**, which renders a **`ClusterPolicy`** ([`templates/kyverno-clusterpolicy-cosign.yaml`](../../charts/clawql-mcp/templates/kyverno-clusterpolicy-cosign.yaml)) using **`verifyImages`** with **Cosign keyless** **`subjectRegExp`** / **`issuerRegExp`** matching this repo’s **GitHub Actions** identity and **`ghcr.io/danielsmithdevelopment/clawql-mcp*`** / **`clawql-panguard-mcp-bridge*`** / **`clawql-website*`** image patterns.
+[`charts/clawql-mcp/values.yaml`](../../charts/clawql-mcp/values.yaml) defaults **`kyverno.imageSignaturePolicy.enabled: true`**, which renders a **`ClusterPolicy`** ([`templates/kyverno-clusterpolicy-cosign.yaml`](../../charts/clawql-mcp/templates/kyverno-clusterpolicy-cosign.yaml)) using **`verifyImages`** with **Cosign keyless** **`subjectRegExp`** / **`issuerRegExp`** matching this repo’s **GitHub Actions** identity and **`ghcr.io/danielsmithdevelopment/clawql-mcp*`** / **`clawql-panguard-mcp-bridge*`** / **`clawql-website*`** / **`clawql-dashboard*`** image patterns.
 
 **Requirements:**
 
@@ -120,13 +122,13 @@ Signing in CI **does not** stop a malicious or mistaken **`kubectl apply`** of a
 
 **Docker Desktop (`make local-k8s-up`):**
 
-- [`scripts/kubernetes/local-k8s-docker-desktop.sh`](../../scripts/kubernetes/local-k8s-docker-desktop.sh) installs the **Kyverno Helm chart** (pin via **`CLAWQL_KYVERNO_CHART_VERSION`**, default **3.7.2**), uses [`values-docker-desktop.yaml`](../../charts/clawql-mcp/values-docker-desktop.yaml) with **`matchReleaseNamespaceOnly: true`** so the policy applies to the **`clawql`** release namespace, pulls **signed GHCR** images for MCP and UI, and **rejects** unsigned local **`docker build`** env overrides.
+- [`scripts/kubernetes/local-k8s-docker-desktop.sh`](../../scripts/kubernetes/local-k8s-docker-desktop.sh) installs the **Kyverno Helm chart** (pin via **`CLAWQL_KYVERNO_CHART_VERSION`**, default **3.7.2**), uses [`values-docker-desktop.yaml`](../../charts/clawql-mcp/values-docker-desktop.yaml) with **`matchReleaseNamespaceOnly: true`** so the policy applies to the **`clawql`** release namespace, pulls **signed GHCR** images for MCP, docs UI, and dashboard, and **rejects** unsigned local **`docker build`** env overrides.
 
 ### What this does / does not cover
 
 | Covered                                                                                                                                            | Not automatically covered                                                                                                                                   |
 | -------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Pods** whose container images match the **`clawql-mcp`** / **`clawql-website`** GHCR globs must verify with the configured **Sigstore** identity | Other images in the same namespace (Postgres, Onyx, ingress, etc.)—different images, different risk                                                         |
+| **Pods** whose container images match the **`clawql-mcp`** / **`clawql-panguard-mcp-bridge`** / **`clawql-website`** / **`clawql-dashboard`** GHCR globs must verify with the configured **Sigstore** identity | Other images in the same namespace (Postgres, Onyx, ingress, etc.)—different images, different risk                                                         |
 | **Keyless** signatures matching **GitHub Actions** issuer + **this repo** subject pattern                                                          | Forks must **override** regexes and image references in values                                                                                              |
 | **Tag-based** refs still resolve to a digest for verification                                                                                      | **`verifyDigest: true`** in values is optional and requires manifests to use digests—see [`image-signature-enforcement.md`](image-signature-enforcement.md) |
 

@@ -624,6 +624,10 @@ hashicorpvault:
     enabled: true
     dev:
       enabled: false
+    # Persist Vault data on a PVC (file backend). Required for KV to survive pod reschedules.
+    dataStorage:
+      enabled: true
+      size: 10Gi
 
 resources:
   requests:

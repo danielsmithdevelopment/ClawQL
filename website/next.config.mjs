@@ -45,6 +45,15 @@ const nextConfig = {
       '@algolia/autocomplete-core',
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: '/vision/technical-enablement',
+        destination: '/vision/modularization',
+        permanent: true,
+      },
+    ]
+  },
   /**
    * Edge / browser caching for docs.clawql.com (Cloudflare CDN honors `s-maxage` / `stale-while-revalidate`).
    * Later rules override earlier ones for the same header (Next.js merge behavior).
