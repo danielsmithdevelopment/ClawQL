@@ -8,6 +8,19 @@ Pinned chart (2026‑05‑05 upstream): **`external-secrets/external-secrets` ch
 
 ---
 
+## Local Docker Desktop / Rancher (bundled dev Vault)
+
+When you used **`values-docker-desktop.yaml`**, the chart runs Vault in **`server.dev`** mode (ephemeral; default root token **`root`** — see comments in that file). After **`make local-k8s-up`** (or an equivalent **`helm upgrade`** with the same values), run:
+
+```bash
+make bootstrap-vault-eso
+# or: bash scripts/kubernetes/bootstrap-local-vault-and-eso.sh
+```
+
+That installs External Secrets Operator if missing, applies Vault policy + Kubernetes auth + seeds **`secret/clawql/providers`**, then applies **`ClusterSecretStore`** + **`ExternalSecret`** so **`Secret/clawql-provider-env`** exists for **`envFromSecret`** and the dashboard prefill.
+
+---
+
 ## Prerequisites
 
 A running cluster with:
@@ -71,7 +84,7 @@ Run these **against a Vault that is initialized and unsealed** (`VAULT_TOKEN` Ro
 ### 1 — Talk to Vault (example: port-forward)
 
 ```bash
-kubectl -n clawql port-forward svc/clawql-hashicorpVault 8200:8200
+kubectl -n clawql port-forward svc/clawql-hashicorpvault 8200:8200
 export VAULT_ADDR=http://127.0.0.1:8200
 vault login   # Root or break-glass / automation token — never persist in-repo
 ```
@@ -109,6 +122,15 @@ vault kv put secret/clawql/providers \
   onyxApiToken="REPLACE_ME_ONYX_TOKEN"
 ```
 
+From the repo, load a local **`.env`** into **`secret/clawql/providers`**:
+
+- **`IMPORT_MODE=providers VAULT_TOKEN=… bash scripts/kubernetes/import-dotenv-to-vault.sh`** (runs **`kubectl exec`** into **`clawql-hashicorpvault-0`** by default), or **`npm run import-dotenv-to-vault -- --mode providers --kubectl-exec`**
+- **`IMPORT_USE_HTTP=1`** with **`VAULT_ADDR`** (no **`vault`** CLI needed): **`IMPORT_MODE=providers IMPORT_USE_HTTP=1 VAULT_ADDR=http://127.0.0.1:8200 VAULT_TOKEN=… bash scripts/kubernetes/import-dotenv-to-vault.sh`** (typical after **`kubectl port-forward -n clawql sts/clawql-hashicorpvault 8200:8200`**), or **`npm run import-dotenv-to-vault:http -- --mode providers`**
+
+To store the **whole** `.env` at **`secret/clawql/dotenv`** instead, omit **`IMPORT_MODE`** and use **`--mode full`** (default).
+
+See **`scripts/kubernetes/import-dotenv-to-vault.ts`** (**`--http`**, **`--kubectl-exec`**, **`VAULT_*`**).
+
 Re-run **`vault kv put`** any time secrets change — ESO will refresh **`Secret/clawql-provider-env`** according to **`refreshInterval`**, then **roll out restart** MCP (see lower section).
 
 ### 5 — TokenReview delegation for Vault’s own ServiceAccount
@@ -116,7 +138,7 @@ Re-run **`vault kv put`** any time secrets change — ESO will refresh **`Secret
 Vault must be allowed to validate projected ServiceAccount JWTs against the Kubernetes API.
 
 1. Resolve the **Vault server** ServiceAccount (`kubectl get sa -n clawql`).
-2. Edit **`docs/deployment/vault-kubernetes-auth-tokenreview-rbac.yaml`** subjects if yours is not **`clawql-hashicorpVault`**, then apply:
+2. Edit **`docs/deployment/vault-kubernetes-auth-tokenreview-rbac.yaml`** subjects if yours is not **`clawql-hashicorpvault`**, then apply:
 
 ```bash
 kubectl apply -f docs/deployment/vault-kubernetes-auth-tokenreview-rbac.yaml
@@ -132,10 +154,10 @@ vault auth enable kubernetes 2>/dev/null || echo "already enabled"
 
 **Option A — Recommended when Vault runs as a workload in the same Kubernetes cluster (Vault ≥ 1.9.3):** configure `auth/kubernetes/config` **from inside the Vault pod** so Vault can read the reviewer JWT + CA automatically from **`/var/run/secrets/kubernetes.io/serviceaccount`** and refresh short-lived projection tokens ([HashiCorp — “Use local service account token as the reviewer JWT”](https://developer.hashicorp.com/vault/docs/auth/kubernetes#use-local-service-account-token-as-the-reviewer-jwt)).
 
-The bundled **`hashicorp/vault`** subchart runs the server as a **StatefulSet**, not a Deployment: **`sts/<helm-release>-hashicorpVault`** (example release **`clawql`**: **`sts/clawql-hashicorpVault`**).
+The bundled **`hashicorp/vault`** subchart runs the server as a **StatefulSet**, not a Deployment: **`sts/<helm-release>-hashicorpvault`** (example release **`clawql`**: **`sts/clawql-hashicorpvault`**).
 
 ```bash
-kubectl exec -n clawql sts/clawql-hashicorpVault -- \
+kubectl exec -n clawql sts/clawql-hashicorpvault -- \
   vault write auth/kubernetes/config \
     kubernetes_host="https://kubernetes.default.svc.cluster.local:443"
 ```
@@ -143,7 +165,7 @@ kubectl exec -n clawql sts/clawql-hashicorpVault -- \
 Depending on Kubernetes / Vault pairing you may once need **`disable_iss_validation=true`** per [Kubernetes 1.21 notes](https://developer.hashicorp.com/vault/docs/auth/kubernetes#kubernetes-1-21):
 
 ```bash
-kubectl exec -n clawql sts/clawql-hashicorpVault -- \
+kubectl exec -n clawql sts/clawql-hashicorpvault -- \
   vault read auth/kubernetes/config
 ```
 
@@ -152,7 +174,7 @@ kubectl exec -n clawql sts/clawql-hashicorpVault -- \
 ```bash
 kubectl -n clawql get configmap kube-root-ca.crt -o jsonpath="{.data['ca\.crt']}" > /tmp/clawql-kube-ca.crt
 
-REVIEWER_JWT="$(kubectl -n clawql create token clawql-hashicorpVault --duration=48h)"
+REVIEWER_JWT="$(kubectl -n clawql create token clawql-hashicorpvault --duration=48h)"
 
 vault write auth/kubernetes/config \
   kubernetes_host="https://kubernetes.default.svc.cluster.local:443" \
@@ -225,7 +247,7 @@ helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
   --wait
 ```
 
-Bootstrap note: Helm defaults **`secretSourcing.requireVaultBackedSecrets=true`** and requires **some** Kubernetes `Secret` name to be set. Until ESO succeeds the first reconcile, optionally create an empty/minimal **`Secret`** with the expected name (`kubectl apply` empty data, or bootstrap with **`--set secretSourcing.requireVaultBackedSecrets=false`** until ESO is green).
+Bootstrap note: Helm **`secretSourcing.requireVaultBackedSecrets`** must stay **`true`** (opt-out renders fail). You still need **`envFromSecret`** / **`envFromSecrets`** pointing at a **`Secret`** that exists before pods start. Until ESO succeeds the first reconcile, create an empty/minimal **`Secret`** with the expected name (for example **`clawql-provider-env`**) so the Deployment schedules; External Secrets replaces it once Vault paths and policies are wired.
 
 ---
 

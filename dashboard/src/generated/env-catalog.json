@@ -1,0 +1,547 @@
+{
+  "sections": [
+    {
+      "title": "API spec selection",
+      "keys": [
+        {
+          "key": "CLAWQL_SPEC_PATHS",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_BUNDLED_PROVIDERS",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_SPEC_PATH",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_SPEC_URL",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_DISCOVERY_URL",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_PROVIDER",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_BUNDLED_OFFLINE",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_API_BASE_URL",
+          "sensitive": false
+        }
+      ]
+    },
+    {
+      "title": "Native GraphQL / gRPC (merged into search + execute; ADR 0002)",
+      "keys": [
+        {
+          "key": "CLAWQL_GRAPHQL_URL",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_GRAPHQL_NAME",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_GRAPHQL_HEADERS",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_GRAPHQL_SCHEMA_PATH",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_GRAPHQL_INTROSPECTION_PATH",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_GRAPHQL_SOURCES",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_GRPC_SOURCES",
+          "sensitive": false
+        }
+      ]
+    },
+    {
+      "title": "Upstream API auth (execute / GraphQL proxy)",
+      "keys": [
+        {
+          "key": "CLAWQL_PROVIDER_AUTH_JSON",
+          "sensitive": true
+        },
+        {
+          "key": "CLAWQL_GOOGLE_ACCESS_TOKEN",
+          "sensitive": true
+        },
+        {
+          "key": "CLAWQL_CLOUDFLARE_API_TOKEN",
+          "sensitive": true
+        },
+        {
+          "key": "CLOUDFLARE_EMAIL",
+          "sensitive": false
+        },
+        {
+          "key": "CLOUDFLARE_API_KEY",
+          "sensitive": true
+        },
+        {
+          "key": "CLAWQL_GITHUB_TOKEN",
+          "sensitive": true
+        },
+        {
+          "key": "LINEAR_API_KEY",
+          "sensitive": true
+        },
+        {
+          "key": "CLAWQL_BEARER_TOKEN",
+          "sensitive": true
+        },
+        {
+          "key": "CLAWQL_HTTP_HEADERS",
+          "sensitive": false
+        },
+        {
+          "key": "PAPERLESS_BASE_URL",
+          "sensitive": false
+        },
+        {
+          "key": "PAPERLESS_API_TOKEN",
+          "sensitive": true
+        },
+        {
+          "key": "STIRLING_BASE_URL",
+          "sensitive": false
+        },
+        {
+          "key": "STIRLING_API_KEY",
+          "sensitive": true
+        },
+        {
+          "key": "TIKA_BASE_URL",
+          "sensitive": false
+        },
+        {
+          "key": "GOTENBERG_BASE_URL",
+          "sensitive": false
+        },
+        {
+          "key": "ONYX_BASE_URL",
+          "sensitive": false
+        },
+        {
+          "key": "ONYX_API_TOKEN",
+          "sensitive": true
+        }
+      ]
+    },
+    {
+      "title": "MCP transport (remote/server deployment)",
+      "keys": [
+        {
+          "key": "PORT",
+          "sensitive": false
+        },
+        {
+          "key": "MCP_PORT",
+          "sensitive": false
+        },
+        {
+          "key": "MCP_PATH",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_HEALTHZ_MEMORY_ARTIFACTS",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_HEALTHZ_NATIVE_PROTOCOL_METRICS",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_DISABLE_HTTP_METRICS",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_ENABLE_OTEL_TRACING",
+          "sensitive": false
+        },
+        {
+          "key": "OTEL_EXPORTER_OTLP_ENDPOINT",
+          "sensitive": false
+        },
+        {
+          "key": "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT",
+          "sensitive": false
+        },
+        {
+          "key": "OTEL_SERVICE_NAME",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_CORS_ALLOW_ORIGIN",
+          "sensitive": false
+        },
+        {
+          "key": "ENABLE_GRPC",
+          "sensitive": false
+        },
+        {
+          "key": "GRPC_PORT",
+          "sensitive": false
+        },
+        {
+          "key": "GRPC_BIND",
+          "sensitive": false
+        },
+        {
+          "key": "GRPC_TLS_CERT_PATH",
+          "sensitive": false
+        },
+        {
+          "key": "GRPC_TLS_KEY_PATH",
+          "sensitive": false
+        },
+        {
+          "key": "GRPC_TLS_CA_PATH",
+          "sensitive": false
+        },
+        {
+          "key": "ENABLE_GRPC_REFLECTION",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_INTROSPECTION_PATH",
+          "sensitive": false
+        }
+      ]
+    },
+    {
+      "title": "Obsidian vault (memory tools)",
+      "keys": [
+        {
+          "key": "CLAWQL_OBSIDIAN_VAULT_PATH",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_ENABLE_MEMORY",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_MEMORY_INGEST_FILE",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_MEMORY_INGEST_FILE_ROOTS",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_MEMORY_INGEST_FILE_MAX_BYTES",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_ENABLE_DOCUMENTS",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_EXTERNAL_INGEST",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_EXTERNAL_INGEST_FETCH",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_CACHE_MAX_VALUE_BYTES",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_CACHE_MAX_ENTRIES",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_AUDIT_MAX_ENTRIES",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_LOKI_PUSH_URL",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_LOKI_BEARER_TOKEN",
+          "sensitive": true
+        },
+        {
+          "key": "CLAWQL_LOKI_TENANT_ID",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_LOKI_JOB",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_LOKI_PUSH_TIMEOUT_MS",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_ENABLE_NOTIFY",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_TEST_SLACK_FETCH_STUB",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_TEST_SLACK_FETCH_BODY",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_TEST_SLACK_FETCH_HTTP_OK",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_ENABLE_HITL_LABEL_STUDIO",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_LABEL_STUDIO_URL",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_LABEL_STUDIO_API_TOKEN",
+          "sensitive": true
+        },
+        {
+          "key": "CLAWQL_HITL_WEBHOOK_TOKEN",
+          "sensitive": true
+        },
+        {
+          "key": "CLAWQL_ENABLE_ONYX",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_TEST_ONYX_FETCH_STUB",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_ENABLE_OUROBOROS",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_OUROBOROS_DATABASE_URL",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_OUROBOROS_DB_HOST",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_OUROBOROS_DB_PORT",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_OUROBOROS_DB_USER",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_OUROBOROS_DB_PASSWORD",
+          "sensitive": true
+        },
+        {
+          "key": "CLAWQL_OUROBOROS_DB_NAME",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_OUROBOROS_ONYX_AFTER_PAPERLESS",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_ONYX_CC_PAIR_ID",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_MEMORY_RECALL_SCAN_ROOT",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_MEMORY_RECALL_LIMIT",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_MEMORY_RECALL_MAX_DEPTH",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_MEMORY_RECALL_MIN_SCORE",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_MEMORY_RECALL_MAX_FILES",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_MEMORY_RECALL_SNIPPET_CHARS",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_MEMORY_INDEX_PAGE",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_MEMORY_INDEX_PROVIDER",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_MEMORY_DB",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_MEMORY_DB_PATH",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_MEMORY_DB_SYNC_ON_RECALL",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_MEMORY_CHUNK_MAX_CHARS",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_VECTOR_BACKEND",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_VECTOR_DATABASE_URL",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_MEMORY_VECTOR_DUAL_WRITE",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_EMBEDDING_DIMENSION",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_EMBEDDING_BASE_URL",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_EMBEDDING_MODEL",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_EMBEDDING_API_KEY",
+          "sensitive": true
+        },
+        {
+          "key": "CLAWQL_MEMORY_VECTOR_MIN_SIM",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_MEMORY_VECTOR_SCORE_BOOST",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_MCP_LOG_TOOLS",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_CUCKOO_ENABLED",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_CUCKOO_FINGERPRINT_BITS",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_CUCKOO_METRICS",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_MERKLE_ENABLED",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_ENABLE_SANDBOX",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_SANDBOX_BACKEND",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_SANDBOX_BRIDGE_URL",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN",
+          "sensitive": true
+        },
+        {
+          "key": "CLAWQL_CLOUDFLARE_ACCOUNT_ID",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_SANDBOX_PERSISTENCE_MODE",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_SANDBOX_TIMEOUT_MS",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_SANDBOX_TIMEOUT_MS_MAX",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_SANDBOX_DOCKER_BIN",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_SANDBOX_DOCKER_NETWORK",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_SANDBOX_DOCKER_IMAGE_PYTHON",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_SANDBOX_DOCKER_IMAGE_NODE",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_SANDBOX_DOCKER_IMAGE_SHELL",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_SANDBOX_DOCKER_RUN_EXTRA",
+          "sensitive": false
+        }
+      ]
+    },
+    {
+      "title": "Workflow test toggles",
+      "keys": [
+        {
+          "key": "WORKFLOW_PREVIEW_JIRA_REQUEST",
+          "sensitive": false
+        },
+        {
+          "key": "WORKFLOW_CREATE_JIRA_ISSUE",
+          "sensitive": false
+        }
+      ]
+    }
+  ],
+  "source": ".env.example"
+}

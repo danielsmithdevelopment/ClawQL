@@ -54,7 +54,7 @@ fi
 if kubectl -n "${NS}" get authorizationpolicy "${POLICY_AMBIENT}" >/dev/null 2>&1; then
   log "${POLICY_AMBIENT}: OK (exists)"
   ya=$(kubectl -n "${NS}" get authorizationpolicy "${POLICY_AMBIENT}" -o yaml)
-  for needle in targetRefs clawql-hashicorpVault; do
+  for needle in targetRefs clawql-hashicorpvault; do
     if _yaml_has "${ya}" "${needle}"; then
       log "${POLICY_AMBIENT}: contains ${needle}"
     else

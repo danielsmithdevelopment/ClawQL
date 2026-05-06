@@ -1,0 +1,93 @@
+import { docsPageMetadata } from '@/lib/seo'
+
+export const metadata = docsPageMetadata({
+  title: 'Dashboard on Kubernetes',
+  description:
+    'Bundle the ClawQL dashboard with Helm, wire Vault + rollout sync, expose clawql.localhost, and enforce signed images with Kyverno.',
+  path: '/dashboard-kubernetes',
+})
+
+# Dashboard on Kubernetes
+
+Use this guide to run the ClawQL dashboard as a Helm-managed service (not a local dev server), expose it at **`http://clawql.localhost`**, and keep signature enforcement aligned with the rest of the stack. {{ className: 'lead' }}
+
+## What gets deployed
+
+When **`dashboard.enabled=true`**, the chart creates:
+
+- `Deployment` (`*-dashboard`)
+- `Service` on port `3040`
+- optional `Ingress` (`dashboard.ingress.enabled=true`)
+
+The dashboard is Vault-first and can update Vault keys, then restart **`clawql-mcp-http`** so provider env changes are applied consistently.
+
+## Quick start (Docker Desktop)
+
+```bash
+make local-k8s-up
+```
+
+Defaults in `values-docker-desktop.yaml` already enable:
+
+- `dashboard.enabled: true`
+- `dashboard.ingress.enabled: true`
+- host `clawql.localhost`
+
+Verify:
+
+```bash
+curl -s http://clawql.localhost/api/k8s/health
+```
+
+## Enable on any cluster
+
+Use a values overlay:
+
+```yaml
+dashboard:
+  enabled: true
+  ingress:
+    enabled: true
+    className: nginx
+    hosts:
+      - host: clawql.localhost
+        paths:
+          - path: /
+            pathType: Prefix
+```
+
+Apply:
+
+```bash
+helm upgrade --install clawql ./charts/clawql-mcp \
+  -n clawql --create-namespace \
+  -f my-dashboard-values.yaml
+```
+
+## Vault and restart wiring
+
+These values control where dashboard sync reads/writes:
+
+- `dashboard.vault.namespace`
+- `dashboard.vault.pod`
+- `dashboard.vault.mount`
+- `dashboard.vault.path`
+- `dashboard.k8s.deploymentName`
+
+Default rollout target is `clawql-mcp-http`.
+
+## Signed image enforcement
+
+Kyverno verifyImages includes dashboard by default via:
+
+- `ghcr.io/danielsmithdevelopment/clawql-dashboard*`
+
+If `kyverno.imageSignaturePolicy.enabled=true` (default), unsigned dashboard images are denied at admission like MCP/website images.
+
+## Related docs
+
+- [Helm](/helm)
+- [Kubernetes](/kubernetes)
+- [Troubleshooting](/troubleshooting)
+- [Security](/security)
+- [Docker Desktop: Istio & observability](/docker-desktop-observability)
