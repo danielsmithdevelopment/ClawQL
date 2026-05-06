@@ -24,12 +24,11 @@ ARG CLAWQL_PACKAGE_VERSION=0.0.0
 ARG CLAWQL_PACKAGE_DESCRIPTION="ClawQL MCP server"
 ENV CLAWQL_PACKAGE_VERSION=${CLAWQL_PACKAGE_VERSION}
 ENV CLAWQL_PACKAGE_DESCRIPTION=${CLAWQL_PACKAGE_DESCRIPTION}
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/.next ./.next
+
+# `output: 'standalone'` — traced production deps only (not full npm ci tree).
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/src/generated ./src/generated
-COPY --from=builder /app/src/mdx ./src/mdx
-COPY --from=builder /app/next.config.mjs ./next.config.mjs
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+
 EXPOSE 3000
-CMD ["npm", "run", "start", "--", "-p", "3000", "-H", "0.0.0.0"]
+CMD ["node", "server.js"]

@@ -6,9 +6,9 @@ Related: [`image-signature-enforcement.md`](image-signature-enforcement.md) (Kyv
 
 ## Goals (what “golden” means here)
 
-1. **No silent promotion:** rolling tags (**`latest`**, **`nightly`**, date-stamped **`nightly-YYYYMMDD`**) only move after **repo gates**, **image build**, **vulnerability scan on the exact bytes pushed**, **registry push**, and **Cosign** signing.
+1. **No silent promotion:** rolling tags (**`latest`**, **`nightly`**, date-stamped **`nightly-YYYYMMDD`**) only move after **repo gates**, **image build**, **vulnerability scan on the exact bytes pushed**, **registry push**, **Cosign** signing, and **`cosign verify`** on the pushed digest (same identity / issuer policy as Kyverno **`verifyImages`**).
 2. **No second-build drift:** the **same OCI layout** Trivy scans is what **`skopeo copy`** uploads—there is **not** a separate “release build” that could differ.
-3. **Deploy-time linkage:** clusters that install the **Helm chart defaults** get a **Kyverno `ClusterPolicy`** that **verifies Cosign signatures** for the published **ClawQL MCP**, **website**, and **dashboard** images (see [Enforcement at deploy](#enforcement-at-deploy)).
+3. **Deploy-time linkage:** clusters that install the **Helm chart defaults** get a **Kyverno `ClusterPolicy`** that **verifies Cosign signatures** for the published **ClawQL MCP**, **Panguard MCP bridge**, **website**, and **dashboard** images (see [Enforcement at deploy](#enforcement-at-deploy)).
 
 Scanner data, severity choices, and `.trivyignore` / `osv-scanner.toml` mean this is **not** a proof of zero defects— it is a **gated, reproducible pipeline** with **cryptographic identity** on the digest that passed the gates.
 
@@ -28,13 +28,15 @@ flowchart TB
     TrivyOCI[Trivy image scan on OCI layout]
     Skopeo[skopeo copy to GHCR same layout]
     Cosign[cosign sign keyless on digest]
+    CosignVerify[cosign verify recursive gate]
     Promote[buildx imagetools create latest nightly]
   end
   repo --> Build
   Build --> TrivyOCI
   TrivyOCI --> Skopeo
   Skopeo --> Cosign
-  Cosign --> Promote
+  Cosign --> CosignVerify
+  CosignVerify --> Promote
 ```
 
 All **`build-push-*`** image jobs (**`build-push-mcp`**, **`build-push-panguard-bridge`**, **`build-push-website`**, **`build-push-dashboard`**) **`need: repo-supply-chain`**—if repository gates fail, **no image job runs**.
@@ -63,6 +65,8 @@ After **`repo-supply-chain`** succeeds, four image jobs can run in parallel:
 - **`build-push-panguard-bridge`**: [`docker/panguard-mcp-bridge/Dockerfile`](../../docker/panguard-mcp-bridge/Dockerfile).
 - **`build-push-website`**: [`website/Dockerfile`](../../website/Dockerfile).
 - **`build-push-dashboard`**: [`dashboard/Dockerfile`](../../dashboard/Dockerfile).
+
+The docs site runtime image uses Next **`output: 'standalone'`** and copies only **`.next/standalone`**, **`.next/static`**, and **`public`** into the runner stage — not the full **`npm ci`** tree — so the GHCR image stays much smaller than copying all **`node_modules`**.
 
 Output is a **local OCI image layout**:
 
@@ -98,13 +102,17 @@ Immutable tags come from **`docker/metadata-action`** (**`type=sha,prefix=sha-,f
 
 **Kyverno note:** [`docker-publish.yml`](../../.github/workflows/docker-publish.yml) pins **Cosign v2**, whose default signatures use the **legacy Sigstore bundle** form that **Kyverno `verifyImages`** accepts on typical clusters (**v2 has no** **`--new-bundle-format`** flag — that is **v3** only). **Cosign v3** with **`--new-bundle-format=true`** produces **bundle v0.3** signature artifacts that commonly fail in-cluster verification until Kyverno/Sigstore stacks catch up; **Cosign v3** signing paths also diverged — so the workflow intentionally stays on **v2** for admission compatibility.
 
+Before promotion, each image job runs **`cosign verify --recursive`** on **`<image>@<digest>`** with **`--certificate-identity-regexp`** / **`--certificate-oidc-issuer-regexp`** matching this repository’s **GitHub Actions** workflow identity (the workflow regex uses the **`github.repository`** context so forks verify against their own path). If verification fails, **`latest` / `nightly`** do not move.
+
 ---
 
 ## Step 6 — Promote rolling tags (`imagetools create`)
 
-**`docker buildx imagetools create`** points **`latest`**, **`nightly`**, and (on schedule) **`nightly-YYYYMMDD`** at the **signed digest**. Promotion runs **only** after push and sign steps succeed for that digest.
+**`docker buildx imagetools create`** points **`latest`**, **`nightly`**, and (on schedule) **`nightly-YYYYMMDD`** at the **signed digest**. Promotion runs **only** after push, sign, and **`cosign verify`** succeed for that digest.
 
-So: **rolling tags do not advance** on failed gates or failed signing.
+Each job then attempts to set the corresponding **GHCR container package** to **public** so **Kyverno** can resolve manifests anonymously (`verifyImages`); if **`GITHUB_TOKEN`** cannot **`PATCH`** visibility, optional repository secret **`GH_PACKAGES_VISIBILITY_TOKEN`** (or manual package settings) applies—same pattern as **`clawql-dashboard`**.
+
+So: **rolling tags do not advance** on failed gates, failed signing, or failed verification.
 
 ---
 

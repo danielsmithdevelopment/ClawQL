@@ -2,15 +2,16 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import nextMDX from '@next/mdx'
-import { initOpenNextCloudflareForDev } from '@opennextjs/cloudflare'
 
 import { recmaPlugins } from './src/mdx/recma.mjs'
 import { rehypePlugins } from './src/mdx/rehype.mjs'
 import { remarkPlugins } from './src/mdx/remark.mjs'
 import withSearch from './src/mdx/search.mjs'
 
-// Dev-only: avoids starting Miniflare/workerd during `next build` / OpenNext deploy (SQLite readonly errors).
-if (process.env.NODE_ENV === 'development') {
+// Dev-only: dynamic import keeps `@opennextjs/cloudflare` out of the Docker/standalone runtime trace.
+async function initOpenNextCloudflareDevIfNeeded() {
+  if (process.env.NODE_ENV !== 'development') return
+  const { initOpenNextCloudflareForDev } = await import('@opennextjs/cloudflare')
   initOpenNextCloudflareForDev()
 }
 
@@ -31,6 +32,8 @@ const docsSiteOrigin = (
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Node Docker image: traced minimal server + node_modules (see website/Dockerfile runner stage).
+  output: 'standalone',
   // Monorepo: lockfile at repo root caused Next to trace from parent; OpenNext/Workers needs app-root tracing.
   outputFileTracingRoot: __dirname,
   pageExtensions: ['js', 'jsx', 'ts', 'tsx', 'mdx'],
@@ -118,4 +121,7 @@ const nextConfig = {
   },
 }
 
-export default withSearch(withMDX(nextConfig))
+export default async function createNextConfig() {
+  await initOpenNextCloudflareDevIfNeeded()
+  return withSearch(withMDX(nextConfig))
+}
