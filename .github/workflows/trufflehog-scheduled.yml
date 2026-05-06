@@ -1,5 +1,6 @@
 # Historical secret scan — weekly + manual; complements mandatory Gitleaks in CI (#283).
 # Excludes bundled upstream specs under providers/ (vendor examples / placeholders).
+# TruffleHog --exclude-paths expects a file of newline-separated regexes, not an inline pattern.
 name: TruffleHog
 
 on:
@@ -26,4 +27,4 @@ jobs:
         uses: trufflesecurity/trufflehog@853e1e8d249fd1e29d0fcc7280d29b03df3d643d
         with:
           path: ./
-          extra_args: --exclude-paths=^providers/
+          extra_args: --exclude-paths=.github/trufflehog-exclude-paths.txt
