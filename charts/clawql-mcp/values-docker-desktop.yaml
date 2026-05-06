@@ -218,11 +218,11 @@ podSecurityContext:
   fsGroup: 65532
 
 # Obsidian memory Markdown on disk (`memory_ingest` / `memory_recall`). Chart key `vault` is not HC Vault — #161.
+# `local-k8s-docker-desktop.sh` enables hostPath and sets path (default $HOME/.ClawQL). Disabled here so
+# `helm template` / lint can run without --set; install uses emptyDir until the script applies overrides.
 vault:
   hostPath:
-    enabled: true
-    # Set by script (default $HOME/.ClawQL), e.g.:
-    # path: /Users/you/.ClawQL
+    enabled: false
     path: ""
     type: DirectoryOrCreate
 
@@ -239,6 +239,39 @@ ui:
     limits:
       cpu: 500m
       memory: 512Mi
+  ingress:
+    enabled: true
+    className: nginx
+    hosts:
+      - host: docs.localhost
+        paths:
+          - path: /
+            pathType: Prefix
+
+dashboard:
+  enabled: true
+  image:
+    repository: ghcr.io/danielsmithdevelopment/clawql-dashboard
+    tag: latest
+    pullPolicy: Always
+  allowSync: true
+  k8s:
+    namespace: clawql
+    secretName: clawql-provider-env
+    deploymentName: clawql-mcp-http
+  vault:
+    namespace: clawql
+    pod: clawql-vault-0
+    addr: http://127.0.0.1:8200
+    mount: secret
+    path: provider/env
+  resources:
+    requests:
+      cpu: 25m
+      memory: 192Mi
+    limits:
+      cpu: 500m
+      memory: 768Mi
   ingress:
     enabled: true
     className: nginx
@@ -266,17 +299,32 @@ providerIngress:
   onyx:
     host: onyx.localhost
 
-# Optional GitHub/CF/Google tokens: run scripts/kubernetes/k8s-docker-desktop-set-mcp-auth.sh then:
-#   helm upgrade ... --set envFromSecret=clawql-github-auth
-envFromSecret: ""
+# MCP provider tokens — Kubernetes Secret synced from Vault (External Secrets Operator). Bootstrap:
+# docs/deployment/external-secrets-operator-install.md (ClusterSecretStore + ExternalSecret **`clawql-provider-env`**).
+envFromSecret: clawql-provider-env
 
-# Desktop lab: ship without in-cluster Vault (single-node RAM/ops) and do not block install on synced Secrets.
-# Production defaults (`values.yaml`): HashiCorp Vault dependency on + secret-sourcing guard enforced.
+# Same production posture as **values.yaml**: Vault-backed **`envFromSecret`** is mandatory (`requireVaultBackedSecrets`).
 secretSourcing:
-  requireVaultBackedSecrets: false
+  requireVaultBackedSecrets: true
 
-hashicorpVault:
-  enabled: false
+# Bundled HashiCorp Vault (same dependency as CI/prod — not optional). Desktop uses **server.dev** so the
+# Helm release comes up **initialized** with a predictable root token for local KV + External Secrets bootstrap
+# (**`scripts/kubernetes/bootstrap-local-vault-and-eso.sh`**). Data is ephemeral on pod reschedule — never use dev
+# Vault for real secrets / production parity.
+hashicorpvault:
+  injector:
+    enabled: false
+  server:
+    dev:
+      enabled: true
+      devRootToken: "root"
+    resources:
+      requests:
+        cpu: 50m
+        memory: 256Mi
+      limits:
+        cpu: "1"
+        memory: 768Mi
 
 # sandbox_exec via host Docker daemon (docker run …). InitContainer installs static docker CLI into distroless MCP image.
 sandboxDocker:
@@ -303,11 +351,11 @@ documentPipeline:
   stirling:
     resources:
       requests:
-        cpu: 25m
-        memory: 256Mi
+        cpu: 100m
+        memory: 512Mi
       limits:
-        cpu: 500m
-        memory: 1Gi
+        cpu: "1"
+        memory: 2Gi
     security:
       enableLogin: true
       disableAdditionalFeatures: false

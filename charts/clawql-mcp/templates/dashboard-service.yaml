@@ -1,0 +1,21 @@
+{{- if .Values.dashboard.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "clawql-mcp.dashboardName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app: {{ include "clawql-mcp.dashboardName" . }}
+    app.kubernetes.io/component: dashboard
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "clawql-mcp.selectorLabels" . | nindent 4 }}
+    app: {{ include "clawql-mcp.dashboardName" . }}
+    app.kubernetes.io/component: dashboard
+  ports:
+    - name: http
+      port: {{ .Values.dashboard.service.port }}
+      targetPort: http
+      protocol: TCP
+{{- end }}
