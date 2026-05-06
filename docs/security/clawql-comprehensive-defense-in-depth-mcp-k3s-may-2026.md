@@ -1,0 +1,405 @@
+# ClawQL Comprehensive Defense-in-Depth Security Guide
+
+### Production-Grade Security for Agentic AI + MCP Systems on Self-Hosted k3s
+
+**Consolidated — May 2026**
+
+---
+
+> This guide documents the complete ClawQL security architecture. It covers every layer from supply chain to runtime, with implementation detail, rationale, and operational requirements. All components are 100% OSS and self-hosted.
+
+**Companion docs:** [Defense-in-Depth reference (April 2026)](clawql-security-defense-in-depth.md) · [Security deliverables matrix](clawql-security-defense-deliverables.md)
+
+---
+
+## Architecture Philosophy
+
+This is not a “check-the-box” security posture. It is a **Defense-in-Depth** architecture built specifically around the threat model of agentic AI systems with MCP-based tool access — where the attack surface includes not just infrastructure, but the agent’s reasoning, its tool calls, the model weights it runs, and the logs it generates.
+
+Three principles govern every layer:
+
+**Secure the capabilities, not the language.** Prompt injection defenses based on regex are trivially bypassed. ATR scoping and MCP tool constraints limit what an agent _can do_, regardless of what it is told.
+
+**Every trust assumption is explicit and verified.** Containers, model weights, sessions, secrets, and logs all have cryptographic provenance. Nothing is trusted implicitly.
+
+**Containment over prevention.** Assume breach. Kata isolation, auto-quarantine, WORM logs, and signed audit trails limit blast radius and preserve forensic integrity.
+
+---
+
+## 1. Supply Chain & Build
+
+**Goal**: Ensure every artifact that enters the cluster — image, chart, dependency, model — is verified, signed, and tamper-evident.
+
+### Tools
+
+- **Trivy + OSV-Scanner** — vulnerability scanning at build time and on schedule
+- **Syft** — SBOM generation for all images
+- **Cosign (keyless)** — container image signing via Sigstore
+- **Kyverno `verifyImages`** — admission policy that rejects unsigned or unverified images at deploy time
+- **Gitleaks** (pre-commit hook + CI gate) — prevents secrets from entering the repo
+- **TruffleHog** — full historical repo scans for credential leakage
+- **Harbor** — private registry with allowlist-only dependency resolution
+
+### Key implementation details
+
+**Harbor as the single trust root for all artifacts.** All images and model weight manifests flow through Harbor. Allowlist-only resolution prevents dependency confusion attacks where a public registry package shadows an internal one.
+
+**Cosign keyless signing** uses Sigstore’s transparency log — no long-lived signing keys to rotate or compromise. Extend this to model weight manifests (see Section 7).
+
+**Kyverno `verifyImages`** runs as an admission webhook. Any pod spec referencing an unverified image is rejected before scheduling. Policy is cluster-wide with namespace exemptions only for explicitly approved cases.
+
+**Gitleaks as pre-commit hook** catches secrets before they are ever pushed. CI gate catches anything that slips through locally. Both are required — pre-commit is bypassed by `--no-verify`; CI is not.
+
+**SBOM retention**: Store Syft SBOMs alongside each build artifact in Harbor. Required for incident response and compliance — you need to know exactly what was in a container six months ago.
+
+---
+
+## 2. Immutability & IaC
+
+**Goal**: Ensure the deployed state is the declared state, and that no component can be silently modified at runtime.
+
+### Tools & patterns
+
+- **Golden distroless images** — minimal attack surface, no shell, no package manager
+- **Read-only root filesystem** on all pods (`securityContext.readOnlyRootFilesystem: true`)
+- **Umbrella Helm chart** (`clawql-full-stack`) — single source of truth for all deployments
+- **Merkle trees** — integrity provenance for vault contents, documents, and workflow definitions
+- **Cuckoo filters** — high-speed deduplication in the monitoring pipeline
+
+### Key implementation details
+
+**Read-only FS + distroless** means an attacker who achieves code execution inside a container cannot install tools, write payloads, or persist across restarts. Combined with Kata isolation (Section 4), this significantly raises the cost of lateral movement.
+
+**Merkle trees for vault/documents/workflows**: Each write to a protected store generates a new Merkle root. Roots are stored in a WORM volume and in a Git-backed store with Cosign-signed commits. Verification on read detects silent tampering with agent instructions, document contents, or workflow definitions. The “source of truth” itself must be tamper-evident — a Merkle tree stored on a writable volume proves nothing.
+
+**Cuckoo filter tuning**: False-positive rate must be configured conservatively for the security monitoring pipeline. A false positive in a dedup filter that drops a Falco alert is a silent security event. Tune for the monitoring path separately from the document dedup path.
+
+---
+
+## 3. Identity & Zero-Trust
+
+**Goal**: Every identity — human, service, or agent — is authenticated, has minimal scope, and cannot escalate its own privileges.
+
+### Tools
+
+- **Kubernetes RBAC + ServiceAccounts** — per-workload identity with least-privilege roles
+- **HashiCorp Vault** — dynamic secrets with short TTL + auto-revocation (the ClawQL Helm key `vault` is Obsidian memory storage, not this service — [#161](https://github.com/danielsmithdevelopment/ClawQL/issues/161))
+- **Istio mTLS + AuthorizationPolicy** — mutual authentication on every pod-to-pod connection
+- **SSO/OIDC** — centralized human identity
+- **YubiKey FIDO2** — hardware-backed authentication for human operators
+- **YubiKey Git signing** — hardware-backed commit signing; required for any change to `clawql-full-stack` Helm chart
+- **Microsoft Agent Governance Toolkit** — sidecar governance policies + MCP scanner
+
+### Key implementation details
+
+**Vault dynamic secrets with short TTL**: Secrets are issued per-workload, expire automatically, and are revoked immediately on pod termination. Orphaned credentials from crashed pods are the common failure mode — configure Vault Agent with `exit-after-auth: false` and monitor lease counts in Prometheus. Lease TTL strategy and revocation runbook must be in PICERL.
+
+**JWT ATR session tokens for Panguard scope binding**: At SSO login, the gateway issues a JWT containing ATR (Access-Task-Resource) claims specific to that session. Panguard validates the JWT signature on every MCP request. An agent cannot craft or modify its own scope claims — it is physically limited to what the identity provider signed. Token expiry must match or be shorter than Vault TTL. JWT signing key rotation schedule must be in PICERL — this is where the pattern most commonly fails operationally.
+
+**YubiKey requirement for Helm chart changes**: Any modification to the `clawql-full-stack` chart requires a hardware-backed Git signature. This closes the supply-chain loop — a compromised developer workstation cannot push an unsigned chart change.
+
+**Microsoft Agent Governance Toolkit**: Runs as a sidecar governance overlay alongside Panguard. Provides deterministic policy enforcement — rule-based, not probabilistic. The two layers have different failure modes, which is the point.
+
+---
+
+## 4. Network & Containment
+
+**Goal**: Minimize blast radius. An agent or container that is compromised cannot reach anything it is not explicitly permitted to reach.
+
+### Tools
+
+- **Istio EgressGateway** — all outbound traffic exits through a controlled gateway
+- **NetworkPolicy default-deny** — no pod-to-pod or pod-to-external traffic without an explicit allow rule
+- **DNS hardening** — recursive resolver restricted; no external DNS leakage
+- **Kata Containers** — hardware VM-level isolation for all MCP workloads (default)
+- **gVisor** — optional for general workloads where Kata overhead is not warranted
+- **Kiali + Prometheus** — East-West traffic baselining and anomaly alerting
+- **Istio ServiceEntries** — schema-locked to specific FQDN endpoints (replaces need for separate FQDN WAF)
+
+### Key implementation details
+
+**Kata Containers as default for MCP workloads**: When an LLM agent has access to a filesystem or shell, container namespaces are insufficient isolation. Kata provides a hardware VM boundary — a compromised sandbox cannot escape to the host kernel. Enforce via Kyverno `RuntimeClass` policy: pods in the `openclaw` namespace must use Kata runtime unless explicitly exempted. **Helm:** [`security.kata`](../../charts/clawql-mcp/values.yaml) (MCP pod `runtimeClassName`) and [`kyverno.runtimeClassPolicy`](../../charts/clawql-mcp/values.yaml) — see **[`docs/security/runtime-class-containment.md`](runtime-class-containment.md)** ([#274](https://github.com/danielsmithdevelopment/ClawQL/issues/274)).
+
+**Kata vs gVisor**: These are not interchangeable defaults. Kata = full VM per pod, stronger isolation, higher overhead. gVisor = userspace kernel emulation, lower overhead, some syscall gaps. Kata is correct for MCP/sandbox workloads. gVisor is acceptable for non-execution workloads. The Kyverno policy should be explicit about which namespaces get which runtime.
+
+**East-West traffic baselining**: Istio gives you the telemetry; Kiali visualizes it; Prometheus alerts on it. Define a baseline of expected service-to-service flows and alert on any new connection pattern. Lateral movement in an agentic system often looks like an agent calling a service it has never called before.
+
+**ServiceEntries as FQDN egress control**: Lock each ServiceEntry to the specific endpoints defined in the ClawQL GraphQL schema. This achieves FQDN egress filtering without a separate WAF layer. Review ServiceEntries alongside STRIDE on the quarterly cadence.
+
+**Concrete manifests & Helm**: Example **ServiceEntry** allowlists and optional **EgressGateway** TLS passthrough routing ship as **`docker/istio/docker-desktop/clawql-mcp-egress-allowlist.yaml`** (full chain) and **`docker/istio/docker-desktop/clawql-mcp-egress-serviceentries-only.yaml`** (registry baseline); the **`clawql-mcp`** Helm chart exposes the same policy via **`istio.egressAllowlist`** in **[`charts/clawql-mcp/values.yaml`](../../charts/clawql-mcp/values.yaml)** ([#275](https://github.com/danielsmithdevelopment/ClawQL/issues/275)). Deploy guide: **[`docs/deployment/helm.md`](../../docs/deployment/helm.md)**.
+
+---
+
+## 5. AI Agent / MCP Runtime Protection
+
+**Goal**: The MCP interface is the highest-risk attack surface in the stack. Every tool call is authenticated, scoped, audited, and interceptable.
+
+### Tools
+
+- **Panguard AI** — primary MCP proxy: real-time intercept/block (<50ms), 100+ ATR rules, Ollama integration, OWASP Agentic Top 10 coverage
+- **Microsoft Agent Governance Toolkit** — deterministic governance overlay (see Section 3)
+- **Explicit MCP tool scoping** — per-user and per-task scope boundaries
+- **Full execute auditing** — every tool call logged with caller identity, parameters, and result
+- **Prompt/response logging** — full agent session logs with retention policy, access controls, and data classification
+
+### Key implementation details
+
+**Panguard as the chokepoint**: Because ClawQL uses a GraphQL proxy to reduce token overhead, Panguard sits on the single path through which all agent tool calls flow. This is architecturally efficient but means Panguard’s availability and integrity are critical. Run it with HA replicas and monitor its own latency separately.
+
+**ATR scope binding via JWT** (see Section 3): Panguard validates JWT ATR claims on every request. The agent cannot upgrade its own scope through the GraphQL interface. This is the primary defense against privilege escalation within the agent runtime.
+
+**Do not rely on prompt injection WAFs**: Regex-based detection of “ignore previous instructions” is trivially bypassed by rephrasing. ATR scoping and MCP tool constraints are the correct defense — they limit _capabilities_, not _language_. Panguard’s ATR rules and explicit MCP scoping implement this pattern.
+
+**Compound latency under load**: Panguard + Microsoft Toolkit creates two sequential intercept layers on the MCP path. Panguard’s <50ms claim is per-call; compound latency under burst has not been characterized. Load test this path before scaling agent concurrency. Set a latency SLO and alert on breach.
+
+**Prompt/response log retention policy**
+
+- Logs are retained for **[your defined period]**.
+- Access is restricted to named roles (not team-wide).
+- Logs are classified per your data classification policy (see Section 6).
+- PII is redacted before write (see Section 6).
+- Logs are stored in WORM-compatible storage.
+
+---
+
+## 6. Data Classification & PII Redaction
+
+**Goal**: Sensitive data that passes through agent sessions — PII, credentials, financial data — is classified, redacted before persistence, and never lands in queryable log stores in raw form.
+
+### Tools
+
+- **Data classification policy** — documented taxonomy of sensitivity tiers
+- **Microsoft Presidio** — PII detection and redaction in the logging pipeline
+- **Fluent Bit** — log pipeline stage where Presidio redaction runs
+
+### Key implementation details
+
+**Classification vs redaction are different controls**: Classification tells you what is sensitive. Redaction ensures it never reaches persistent storage. Both are required. A classification policy without redaction leaves sensitive data in Loki. Redaction without classification leaves you unable to reason about what data you hold.
+
+**Presidio in Fluent Bit, not as a pod sidecar**: Running Presidio as a pipeline stage in Fluent Bit means one redaction layer processes all log sources. _N_ pod sidecars means _N_ surfaces to maintain, _N_ failure modes, and uneven coverage. Pipeline-stage redaction is architecturally cleaner and operationally simpler.
+
+**WORM log compliance**: Redact before write. Never delete after write. This keeps WORM logs compliant without needing record deletion, which defeats the purpose of WORM. The redaction step is the compliance mechanism.
+
+**Logs as forensic artifacts**: Prompt/response logs are your primary forensic artifact if an agent misbehaves. Redaction must preserve enough context for investigation while removing raw PII. Design the redaction rules with incident response in mind — full entity removal may make logs forensically useless.
+
+**Future fine-tuning / RAG grounding**: If agent logs are ever used for model fine-tuning or RAG corpus grounding, redaction at write time ensures the training data pipeline inherits clean data by default.
+
+---
+
+## 7. Model Integrity
+
+**Goal**: The model weights the agent runs are the weights you authorized. A “model-in-the-middle” attack — swapping weights for a poisoned version — is detected before inference begins.
+
+### Tools
+
+- **SHA-256 weight verification** — hash checked at runtime against a signed manifest
+- **Cosign blob signing** — model weight manifests signed and stored in Harbor
+- **Kubernetes init container** — verification runs before the inference container starts
+
+### Key implementation details
+
+**The gap that container scanning misses**: `verifyImages` covers container images. Model weights (fetched via `ollama pull` or equivalent) are large binary blobs that bypass standard container scanning entirely. They are the largest unverified artifact in most AI stacks.
+
+**Init-container verification pattern**:
+
+```yaml
+initContainers:
+ - name: verify-weights
+  image: harbor.example.com/clawql/weight-verifier:latest # cosign-signed, digest-pinned
+  command:
+   - /bin/sh
+   - -c
+   - |
+    cosign verify-blob \
+     --key /etc/signing-keys/cosign.pub \
+     --signature /weights/manifest.sig \
+     /weights/manifest.json
+    sha256sum -c /weights/manifest.json
+  volumeMounts:
+   - name: model-weights
+    mountPath: /weights
+   - name: signing-keys
+    mountPath: /etc/signing-keys
+    readOnly: true
+```
+
+The init container image itself must be Cosign-signed and digest-pinned. An unverified verifier moves the trust problem one layer up without solving it.
+
+**Harbor as the manifest store**: Store signed weight manifests in Harbor alongside container images. One registry, one signing key infrastructure, one Kyverno verification policy extended to cover model artifacts. A separate Git-backed manifest store creates a second trust root and split-brain risk if they diverge.
+
+**Verification on every start, not just first pull**: Weights can be swapped on the volume between container restarts. The init container runs on every pod start, not only on initial weight download.
+
+---
+
+## 8. Runtime Monitoring
+
+**Goal**: Full visibility into system behavior — syscalls, Kubernetes audit events, service mesh telemetry, and application logs — with correlation across sources.
+
+### Tools
+
+- **Falco eBPF** — syscall-level monitoring + Kubernetes audit log integration
+- **Prometheus** — metrics collection and alerting
+- **Loki** — log aggregation (receives pre-redacted logs from Fluent Bit)
+- **Tempo** — distributed tracing
+- **Wazuh** — OSS SIEM: log correlation, rule-based alerting, compliance reporting
+- **Kiali** — Istio service mesh topology and East-West traffic visualization
+- **Merkle root metrics** — integrity verification events exposed to Prometheus
+- **Cuckoo filter metrics** — dedup pipeline health and false-positive rate
+
+### Key implementation details
+
+**Wazuh alert tuning is a process requirement, not a one-time setup**: Wazuh generates high volume out of the box. Without tuned correlation rules and a triage rotation, it becomes noise within weeks and gets ignored — monitoring theater, not monitoring. Assign a named owner to alert tuning. Define a triage cadence. This is a staffing and process commitment.
+
+**Node pinning for the observability stack**: On heterogeneous hardware (GPU inference nodes + storage nodes + compute nodes), pin Wazuh/Loki/Prometheus/Tempo to dedicated non-GPU nodes. This preserves GPU VRAM for inference and prevents observability workloads from introducing latency jitter on inference paths. Use node selectors or taints.
+
+**Cuckoo false-positive rate on the security path**: A false positive in the dedup filter that causes a Falco alert to be silently dropped is a security event with no trace. Tune the false-positive rate for the monitoring pipeline independently from document dedup. Consider separate filter instances for security-critical vs non-critical paths.
+
+---
+
+## 9. Automated Response & Blocking
+
+**Goal**: Detection without automated response is incomplete. High-confidence alerts trigger automated containment. Humans are notified and retain override authority.
+
+### Tools
+
+- **Falco + Talon** — automated pod isolation/quarantine on Falco alert
+- **Panguard AI** — real-time blocking of malicious MCP requests
+- **Kyverno** — admission-time policy enforcement (blocks non-compliant workloads before they run)
+
+### Key implementation details
+
+**Falco + Talon quarantine flow**: On a high-confidence Falco rule match (e.g., unexpected shell spawned in an `openclaw` pod, unexpected outbound connection), Talon automatically isolates the pod — removes it from service endpoints, applies a restrictive NetworkPolicy, and triggers a Wazuh alert. The pod is preserved for forensic inspection, not terminated. Human review is required before returning to service.
+
+**Confidence thresholds matter**: Not all Falco rules should trigger automated quarantine. Tier your response: low-confidence → alert only; medium → alert + Slack notification to on-call; high-confidence → automated quarantine + page. Define the tier mapping during STRIDE review.
+
+**Panguard blocking is synchronous**: Blocked MCP requests return an error to the agent immediately. The agent should handle this gracefully — define error handling behavior in [`AGENTS.md`](../../AGENTS.md) (repo root) so the agent surfaces the block to the user rather than silently retrying or hallucinating a response. Architecture ordering for the MCP chokepoint is stubbed in [`mcp-proxy-jwt-atr.md`](mcp-proxy-jwt-atr.md).
+
+---
+
+## 10. Audit, Recovery & Process
+
+**Goal**: When something goes wrong, you have complete forensic records, a tested recovery path, and a defined response process. These are not theoretical — they are tested and owned.
+
+### Tools & practices
+
+- **WORM logs** — tamper-evident audit trail for all security-relevant events
+- **3-2-1+ backup strategy** — with quarterly restore tests
+- **Versioned STRIDE threat model** — linked to controls, reviewed quarterly, gated on Helm chart changes
+- **PICERL runbooks** — Prepare, Identify, Contain, Eradicate, Recover, Lessons Learned
+- **Secure out-of-band comms** — Matrix or Mattermost, self-hosted, independent of primary infra
+- **Wazuh alert tuning + named triage rotation**
+
+### Key implementation details
+
+**Backup restore tests are not optional**: Untested backups are not backups. Quarterly restore tests must produce a written result — what was restored, how long it took, what failed. The result is stored in the STRIDE artifact store with a timestamp. “We have backups” without test records is a compliance statement, not a security control.
+
+**STRIDE must gate deployments, not just exist**: A versioned STRIDE threat model that sits in a document and is never reviewed is a checkbox. The model should be reviewed on a quarterly cadence, linked explicitly to the controls in this document, and any new component (tool, integration, data source) must have a STRIDE entry before it reaches production. Assign a named owner.
+
+**PICERL runbooks must include**
+
+- Vault lease TTL expiry and emergency revocation procedure
+- JWT signing key rotation procedure
+- Panguard outage fallback (what happens to agent traffic if the proxy is unavailable)
+- Talon quarantine review and pod release procedure
+- Wazuh alert escalation path
+- Out-of-band comms activation trigger
+
+**Out-of-band comms is for when your primary infra is the incident**: If Slack is down, or Kubernetes is compromised, or your primary SIEM is the thing being attacked, you need a communication channel that is independent of all of that. Matrix or Mattermost on separate hardware. Activation criteria and access list must be defined in advance — not during the incident.
+
+**STRIDE + ServiceEntry quarterly review**: Review Istio ServiceEntries alongside STRIDE. As ClawQL integrates new tools and data sources, the egress surface changes. ServiceEntries must reflect actual intended traffic, not historical accumulation. Cross-check live manifests against **[`docker/istio/docker-desktop/clawql-mcp-egress-serviceentries-only.yaml`](../../docker/istio/docker-desktop/clawql-mcp-egress-serviceentries-only.yaml)** / **[`clawql-mcp-egress-allowlist.yaml`](../../docker/istio/docker-desktop/clawql-mcp-egress-allowlist.yaml)** or chart **`istio.egressAllowlist`** ([#275](https://github.com/danielsmithdevelopment/ClawQL/issues/275)); **[`docs/deployment/helm.md`](../../docs/deployment/helm.md)** lists the operational checklist.
+
+---
+
+## 11. Compute Quotas (GPU Protection)
+
+**Goal**: A rogue agent or runaway loop cannot monopolize GPU VRAM, causing denial of service against inference capacity.
+
+### Implementation
+
+```yaml
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: openclaw-gpu-quota
+  namespace: openclaw
+spec:
+  hard:
+    requests.nvidia.com/gpu: "4" # Set to actual intended max concurrency, not "1"
+    limits.nvidia.com/gpu: "4"
+```
+
+Set the quota to your actual intended maximum agent concurrency — not 1. The purpose is a ceiling against runaway consumption, not a restriction on legitimate parallelism. Pair with `LimitRange` to enforce per-pod GPU limits so no single pod can claim the entire quota.
+
+Pin inference workloads to GPU nodes and observability workloads away from them using node selectors and taints. These are separate concerns from the quota but compound to protect inference latency.
+
+---
+
+## 12. Workstation / Local Dev
+
+**Goal**: The same security posture applies to local development. The local environment is not a trusted exception.
+
+### Tools
+
+- **Same Helm chart on Docker Desktop** — `clawql-full-stack` with `security.fullBundle: true`
+- **Panguard CLI** (`pga up`) — local MCP proxy with the same ATR rules
+- **Aegis EDR** — local process, filesystem, and network monitoring
+- **Wazuh agents** — local events forwarded to central SIEM
+
+### Key implementation details
+
+The local dev environment is often where supply chain attacks begin — a compromised dev machine, a malicious package, a leaked credential. Wazuh agents on developer workstations mean local events are correlated with cluster events in the same SIEM. Aegis provides process-level visibility that Wazuh alone misses on macOS.
+
+Gitleaks pre-commit hooks are installed as part of developer onboarding, not optional. YubiKey requirement for Helm chart commits applies on the local machine, not just in CI.
+
+---
+
+## 13. Deployment
+
+```bash
+helm upgrade --install clawql-full-stack ./clawql-full-stack \
+ --namespace clawql \
+ --create-namespace \
+ --set security.fullBundle=true \
+ --set security.kata.enabled=true \
+ --set security.panguard.enabled=true \
+ --set security.wazuh.enabled=true \
+ --set security.presidio.enabled=true \
+ --set security.weightVerification.enabled=true \
+ --set gpu.quota.max=4
+```
+
+**Deploy order for a fresh cluster**
+
+1. Harbor (registry — everything else depends on it)
+2. Vault (secrets — needed before workloads)
+3. Istio ambient profile
+4. Headscale (node mesh)
+5. NATS JetStream
+6. Falco + Talon
+7. Wazuh
+8. Panguard
+9. `clawql-full-stack` umbrella chart
+
+---
+
+## Summary: What Each Layer Stops
+
+| Attack vector                | Primary control                      | Secondary control           |
+| ---------------------------- | ------------------------------------ | --------------------------- |
+| Compromised container image  | Cosign + Kyverno verifyImages        | Harbor allowlist            |
+| Dependency confusion         | Harbor allowlist-only resolution     | Trivy scanning              |
+| Secret in git                | Gitleaks pre-commit                  | TruffleHog CI scan          |
+| Poisoned model weights       | Init-container SHA-256 + Cosign blob | Harbor manifest signing     |
+| Agent privilege escalation   | JWT ATR claims + Panguard            | MS Governance Toolkit       |
+| Prompt injection / jailbreak | MCP tool scoping + ATR rules         | Panguard ATR enforcement    |
+| Lateral movement (container) | Kata VM isolation                    | NetworkPolicy default-deny  |
+| Lateral movement (network)   | Istio mTLS + AuthorizationPolicy     | East-West baselining alerts |
+| Rogue egress                 | Istio EgressGateway + ServiceEntries | DNS hardening               |
+| Supply chain (Helm chart)    | YubiKey Git signing                  | Cosign + Kyverno            |
+| Vault credential leak        | Short TTL + auto-revocation          | Lease monitoring            |
+| PII in logs                  | Presidio pre-Loki redaction          | Data classification policy  |
+| GPU denial-of-service        | ResourceQuota + LimitRange           | Node isolation              |
+| Silent log tampering         | WORM + Merkle roots                  | Git-backed signed commits   |
+| Incident without forensics   | WORM prompt/response logs            | Wazuh SIEM correlation      |
+| Compromised primary infra    | Out-of-band comms (Matrix)           | PICERL runbooks             |
+| Untested recovery            | Quarterly restore tests              | Written test records        |

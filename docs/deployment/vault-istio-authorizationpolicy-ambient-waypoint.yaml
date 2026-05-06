@@ -9,7 +9,7 @@ spec:
   targetRefs:
     - group: ""
       kind: Service
-      name: clawql-hashicorpVault
+      name: clawql-hashicorpvault
   action: ALLOW
   rules:
     # External Secrets Operator controller (runs in external-secrets namespace by default).

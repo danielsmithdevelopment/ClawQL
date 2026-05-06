@@ -24,32 +24,36 @@ helm upgrade --install clawql ./charts/clawql-mcp \
 
 The default image is **`ghcr.io/danielsmithdevelopment/clawql-mcp:latest`**. Override **`image.tag`** or **`image.repository`** for your registry.
 
-**Kyverno:** the chart **defaults** **`kyverno.imageSignaturePolicy.enabled: true`**, which installs a **`ClusterPolicy`** that **`verifyImages`** for the default ClawQL GHCR images—**install [Kyverno](https://kyverno.io/)** in the cluster first, or use **`--set kyverno.imageSignaturePolicy.enabled=false`** until you do. How this connects to CI signing: **[golden-image-pipeline.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/golden-image-pipeline.md)**; policy tuning: **[image-signature-enforcement.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/image-signature-enforcement.md)**.
+**Kyverno:** the chart **defaults** **`kyverno.imageSignaturePolicy.enabled: true`**, which installs a **`ClusterPolicy`** that **`verifyImages`** for the default ClawQL GHCR images (MCP, website, dashboard, and bridge)—**install [Kyverno](https://kyverno.io/)** in the cluster first, or use **`--set kyverno.imageSignaturePolicy.enabled=false`** until you do. How this connects to CI signing: **[golden-image-pipeline.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/golden-image-pipeline.md)**; policy tuning: **[image-signature-enforcement.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/image-signature-enforcement.md)**.
 
 **Docker Desktop:** **`make local-k8s-up`** runs Helm with **`values-docker-desktop.yaml`** and installs Kyverno for you (see [Kubernetes](/kubernetes)).
 
-## Access bundled docs locally
+## Access bundled UIs locally
 
-With Docker Desktop defaults, the Helm install can deploy this docs UI (`website`) and expose it with ingress-nginx.
+With Docker Desktop defaults, the Helm install deploys both UIs and exposes them with ingress-nginx.
 
-- **Docs UI:** `http://clawql.localhost`
+- **Dashboard UI:** `http://clawql.localhost`
+- **Docs UI:** `http://docs.localhost`
 - **MCP URL (local `values-docker-desktop.yaml`):** **`http://clawql-mcp.localhost/mcp`** (**Ingress**)
 
 Quick check:
 
 ```bash
-curl -s http://clawql.localhost/api/health
+curl -s http://clawql.localhost/api/k8s/health
+curl -s http://docs.localhost/api/health
 ```
 
-Expected response includes `{"status":"ok"}`.
+Expected responses include `{"status":"ok"}`.
 
 ## Docs and values
 
 - **Full guide** (examples: ClusterIP, gRPC, tokens, Ingress, persistence): **[`docs/deployment/helm.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/helm.md)** on GitHub
 - **Default values:** [`charts/clawql-mcp/values.yaml`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/charts/clawql-mcp/values.yaml)
 - **Docker Desktop preset:** [`charts/clawql-mcp/values-docker-desktop.yaml`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/charts/clawql-mcp/values-docker-desktop.yaml)
+- **Dashboard image build:** [`dashboard/Dockerfile`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/dashboard/Dockerfile)
 - **Detailed Flink guide for Onyx index sync:** [Flink Onyx sync](/flink-onyx-sync)
 - **Detailed NATS guide for event-driven sync:** [NATS JetStream](/nats-jetstream)
+- **Dashboard guide:** [Dashboard on Kubernetes](/dashboard-kubernetes)
 
 ## Optional event-driven topology (NATS)
 

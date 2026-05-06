@@ -1,0 +1,38 @@
+{
+  "name": "clawql-dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "predev": "node scripts/generate-env-catalog.mjs",
+    "prebuild": "node scripts/generate-env-catalog.mjs",
+    "dev": "next dev --port 3040 --webpack",
+    "build": "next build --webpack",
+    "start": "next start --port 3040",
+    "lint": "eslint \"src/**/*.{ts,tsx}\" \"e2e/**/*.ts\" \"playwright.config.mjs\" --max-warnings 0",
+    "catalog": "node scripts/generate-env-catalog.mjs",
+    "test:e2e": "playwright test",
+    "test:e2e:k8s": "CLAWQL_DASHBOARD_E2E=1 playwright test"
+  },
+  "dependencies": {
+    "@tailwindcss/postcss": "^4.2.2",
+    "clsx": "^2.1.1",
+    "next": "16.2.4",
+    "postcss": "^8.5.14",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "tailwindcss": "^4.2.2",
+    "typescript": "^5.8.3"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "@types/node": "^24.1.0",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "eslint": "^9.39.0",
+    "eslint-config-next": "16.1.7"
+  },
+  "overrides": {
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3"
+  }
+}
