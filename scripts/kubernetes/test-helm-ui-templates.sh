@@ -8,11 +8,16 @@ TMP_ENABLED="$(mktemp)"
 TMP_DISABLED="$(mktemp)"
 trap 'rm -f "${TMP_ENABLED}" "${TMP_DISABLED}"' EXIT
 
+# satisfy secretSourcing.requireVaultBackedSecrets (same lint stub name as Makefile helm-lint)
+_LINT_SECRET=(--set envFromSecret=clawql-lint-provider-env)
+
 helm template test charts/clawql-mcp --namespace clawql \
+  "${_LINT_SECRET[@]}" \
   --set ui.enabled=true \
   --set ui.ingress.enabled=true >"${TMP_ENABLED}"
 
-helm template test charts/clawql-mcp --namespace clawql >"${TMP_DISABLED}"
+helm template test charts/clawql-mcp --namespace clawql \
+  "${_LINT_SECRET[@]}" >"${TMP_DISABLED}"
 
 python3 - "${TMP_ENABLED}" "${TMP_DISABLED}" <<'PY'
 import re
