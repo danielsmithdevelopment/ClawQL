@@ -12,6 +12,40 @@ npm run dev
 
 Open [http://localhost:3040](http://localhost:3040).
 
+### Agent Chat + OpenClaw (local)
+
+The **Agent Chat** panel calls `POST /api/agent/chat`, which proxies to **`CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL`** when set. OpenClaw itself is the **`openclaw` CLI** (WebSocket gateway + `openclaw agent`); it does **not** ship an HTTP `POST /v1/chat` endpoint, so this repo includes a tiny bridge.
+
+1. **Install and configure OpenClaw** (model/API keys): see [`docs/openclaw/using-openclaw-with-clawql.md`](../docs/openclaw/using-openclaw-with-clawql.md). Default agent id is usually **`main`** (`openclaw agents list`).
+2. **Start the bridge** (terminal 1):
+
+   ```bash
+   cd dashboard
+   npm run openclaw:chat-bridge
+   ```
+
+   Default URL printed: **`http://127.0.0.1:8787/v1/chat`**. Override port with **`OPENCLAW_CHAT_BRIDGE_PORT`**. Override agent with **`CLAWQL_OPENCLAW_AGENT_ID`** (default **`main`**).
+
+3. **Run the dashboard with the env var** (terminal 2):
+
+   ```bash
+   cd dashboard
+   CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL=http://127.0.0.1:8787/v1/chat npm run dev
+   ```
+
+4. Open **Agent Chat** in the UI; messages go to `openclaw agent --local` per request.
+
+| Variable | Purpose |
+| -------- | ------- |
+| `CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL` | Full URL to POST chat JSON (use bridge URL above for local dev). |
+| `OPENCLAW_CHAT_BRIDGE_PORT` | Bridge listen port (default **8787**). |
+| `CLAWQL_OPENCLAW_AGENT_ID` | `openclaw agent --agent` id (default **main**). |
+| `OPENCLAW_AGENT_TIMEOUT_SEC` | Per-message CLI timeout in seconds (default **120**). |
+
+**OpenRouter:** add **`OPENROUTER_API_KEY`** to repo **`.env`** (the bridge loads repo-root `.env` for unset keys) **or** run **`openclaw models auth paste-token --provider openrouter`**. Then set a default OpenRouter-backed model (**`openclaw models list --all --provider openrouter`** then **`openclaw models set …`**) so inference is not still pinned to **`openai/*`** (see **`docs/openclaw/using-openclaw-with-clawql.md`** §5.6).
+
+**Kubernetes / Rancher:** do not rely on `.env` in the image — set **`dashboard.openclawChatUrl`** in Helm so the Deployment gets **`CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL`**. Start from **`charts/clawql-mcp/values-rancher.example.yaml`** and **`docs/deployment/helm.md`**.
+
 Dev and production builds use **webpack** (`--webpack`) so file tracing stays predictable inside the ClawQL monorepo; `next.config.mjs` sets `outputFileTracingRoot` to the repo root when multiple lockfiles are present.
 
 Regenerate the catalog from `.env.example` anytime:

@@ -30,6 +30,10 @@ spec:
           image: "{{ .Values.dashboard.image.repository }}:{{ .Values.dashboard.image.tag }}"
           imagePullPolicy: {{ .Values.dashboard.image.pullPolicy }}
           env:
+            {{- if .Values.dashboard.openclawChatUrl }}
+            - name: CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL
+              value: {{ .Values.dashboard.openclawChatUrl | quote }}
+            {{- end }}
             - name: CLAWQL_DASHBOARD_ALLOW_K8S_SYNC
               value: {{ ternary "1" "0" .Values.dashboard.allowSync | quote }}
             - name: CLAWQL_DASHBOARD_K8S_NAMESPACE

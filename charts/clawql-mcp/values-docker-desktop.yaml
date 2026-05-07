@@ -250,6 +250,9 @@ ui:
 
 dashboard:
   enabled: true
+  # Set when an OpenClaw service is running in-cluster and exposes POST /v1/chat -> { reply }.
+  # Use full service DNS for portability across Rancher/RKE2 and namespace-scoped resolution.
+  openclawChatUrl: http://openclaw.clawql.svc.cluster.local:8787/v1/chat
   image:
     repository: ghcr.io/danielsmithdevelopment/clawql-dashboard
     tag: latest

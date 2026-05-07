@@ -136,6 +136,34 @@ For HTTP, env vars normally apply to the **ClawQL process** (your **`start:http`
 openclaw mcp unset clawql
 ```
 
+### 5.6 OpenRouter as the LLM provider (Agent Chat / `openclaw agent`)
+
+OpenClaw ships the **`openrouter`** provider ([plugin](https://docs.openclaw.ai/cli/models)). Use it when you do not want the default **`openai/*`** model.
+
+1. **API key** (pick one):
+   - **Env:** set **`OPENROUTER_API_KEY`** (e.g. in shell or repo **`.env`** — the ClawQL dashboard **`openclaw-chat-bridge`** merges repo-root **`.env`** into the child process when keys are unset in the environment).
+   - **Store:** `openclaw models auth paste-token --provider openrouter` (persists to the agent auth store; use **`--agent main`** if you target a non-default agent).
+
+2. **Point the default model at OpenRouter** (model refs use `provider/model`; OpenRouter model ids can contain `/`, so keep the **`openrouter/`** prefix — see [OpenClaw models CLI](https://docs.openclaw.ai/cli/models)):
+
+   ```bash
+   openclaw models status --agent main
+   openclaw models list --all --provider openrouter
+   openclaw models set openrouter/<vendor>/<model>
+   ```
+
+   Example — **DeepSeek V4 Flash** on OpenRouter:
+
+   ```bash
+   openclaw models set openrouter/deepseek/deepseek-v4-flash
+   ```
+
+   If the id differs in the catalog, confirm with **`openclaw models list --all --provider openrouter | grep -i deepseek`**.
+
+3. **Probe:** `openclaw models status --agent main --probe` (optional; may consume tokens).
+
+Free-tier discovery without a key is metadata-only: **`openclaw models scan --no-probe`** (see upstream docs). Live calls still need **`OPENROUTER_API_KEY`** or a stored profile.
+
 ---
 
 ## 6. Validate without OpenClaw UI
@@ -196,6 +224,7 @@ ClawQL exposes **`GET /metrics`** on **`clawql-mcp-http`**. Grafana import and P
 | **Tools missing**                               | **`CLAWQL_ENABLE_*`** hides optional tools; rebuild/restart ClawQL.                                                                             |
 | **GitHub 401 on execute**                       | **`CLAWQL_BEARER_TOKEN`** / **`gh auth token`**.                                                                                                |
 | **`listTools` OK in smoke but not in OpenClaw** | OpenClaw config not loaded for that profile; try **`openclaw mcp list`**; check **`--profile`** / **`OPENCLAW_CONFIG_PATH`** per OpenClaw docs. |
+| **No API key for provider `openai`** | Default model is still **`openai/…`**. Set **`OPENROUTER_API_KEY`** and **`openclaw models set openrouter/…`**, or add OpenAI auth — see **§5.6 OpenRouter**. |
 
 ---
 

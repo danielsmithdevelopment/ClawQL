@@ -16,7 +16,8 @@ helm template test charts/clawql-mcp --namespace clawql \
   --set ui.enabled=true \
   --set ui.ingress.enabled=true \
   --set dashboard.enabled=true \
-  --set dashboard.ingress.enabled=true >"${TMP_ENABLED}"
+  --set dashboard.ingress.enabled=true \
+  --set dashboard.openclawChatUrl=http://openclaw.clawql.svc.cluster.local:8787/v1/chat >"${TMP_ENABLED}"
 
 helm template test charts/clawql-mcp --namespace clawql \
   "${_LINT_SECRET[@]}" >"${TMP_DISABLED}"
@@ -46,6 +47,10 @@ checks = [
         r"service:\n\s+name: clawql-mcp-http-dashboard",
         "expected ingress backend to route to dashboard service",
     ),
+    (
+        r"name: CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL\n\s+value: \"http://openclaw\.clawql\.svc\.cluster\.local:8787/v1/chat\"",
+        "expected dashboard deployment to include CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL when set",
+    ),
 ]
 
 for pattern, message in checks:
@@ -58,6 +63,9 @@ if "clawql-mcp-http-ui" in disabled:
     sys.exit(1)
 if "clawql-mcp-http-dashboard" in disabled:
     print("ERROR: dashboard resources rendered unexpectedly when dashboard.enabled=false")
+    sys.exit(1)
+if "CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL" in disabled:
+    print("ERROR: CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL rendered unexpectedly in default template")
     sys.exit(1)
 PY
 

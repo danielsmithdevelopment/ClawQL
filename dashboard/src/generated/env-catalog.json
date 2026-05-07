@@ -539,6 +539,30 @@
         {
           "key": "WORKFLOW_CREATE_JIRA_ISSUE",
           "sensitive": false
+        },
+        {
+          "key": "CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL",
+          "sensitive": false
+        },
+        {
+          "key": "OPENCLAW_CHAT_BRIDGE_PORT",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_OPENCLAW_AGENT_ID",
+          "sensitive": false
+        },
+        {
+          "key": "OPENCLAW_AGENT_TIMEOUT_SEC",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_OPENCLAW_BIN",
+          "sensitive": false
+        },
+        {
+          "key": "OPENROUTER_API_KEY",
+          "sensitive": true
         }
       ]
     }

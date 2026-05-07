@@ -11,7 +11,8 @@
     "lint": "eslint \"src/**/*.{ts,tsx}\" \"e2e/**/*.ts\" \"playwright.config.mjs\" --max-warnings 0",
     "catalog": "node scripts/generate-env-catalog.mjs",
     "test:e2e": "playwright test",
-    "test:e2e:k8s": "CLAWQL_DASHBOARD_E2E=1 playwright test"
+    "test:e2e:k8s": "CLAWQL_DASHBOARD_E2E=1 playwright test",
+    "openclaw:chat-bridge": "node scripts/openclaw-chat-bridge.mjs"
   },
   "dependencies": {
     "@radix-ui/react-progress": "^1.1.7",
