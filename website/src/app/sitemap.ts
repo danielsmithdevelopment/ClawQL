@@ -14,6 +14,11 @@ type Entry = {
 /** Static doc routes (app router MDX pages). Priority: home and entry guides highest; reference pages next. */
 const ENTRIES: Array<Entry> = [
   { path: '/', changeFrequency: 'weekly', priority: 1 },
+  {
+    path: '/vision/modularization',
+    changeFrequency: 'monthly',
+    priority: 0.9,
+  },
   { path: '/quickstart', changeFrequency: 'weekly', priority: 0.95 },
   { path: '/learn', changeFrequency: 'weekly', priority: 0.93 },
   {

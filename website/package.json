@@ -3,9 +3,9 @@
   "version": "0.1.2",
   "private": true,
   "scripts": {
-    "prebuild": "node scripts/generate-agent-markdown.mjs && node scripts/generate-agent-skills-index.mjs",
+    "prebuild": "node scripts/generate-agent-markdown.mjs && node scripts/generate-agent-skills-index.mjs && node scripts/sync-clawql-modularization-doc.mjs",
     "build": "next build --webpack",
-    "dev": "next dev --webpack",
+    "dev": "node scripts/sync-clawql-modularization-doc.mjs && next dev --webpack",
     "start": "next start",
     "lint": "eslint \"src/**/*.{js,jsx,ts,tsx}\" \"*.{js,mjs,ts}\" --max-warnings 0",
     "format": "prettier --write \"src/**/*.{mdx,ts,tsx}\" \"*.ts\" \"mdx-components.tsx\"",
@@ -25,7 +25,6 @@
     "@mdx-js/loader": "^3.1.0",
     "@mdx-js/react": "^3.1.0",
     "@next/mdx": "16.1.7",
-    "@opennextjs/cloudflare": "1.18.0",
     "@sindresorhus/slugify": "^2.2.1",
     "@tailwindcss/postcss": "^4.2.2",
     "@tailwindcss/typography": "^0.5.16",
@@ -47,6 +46,7 @@
     "remark": "^15.0.1",
     "remark-gfm": "^4.0.1",
     "remark-mdx": "^3.1.0",
+    "sharp": "0.34.3",
     "shiki": "^0.14.7",
     "simple-functional-loader": "^1.2.1",
     "tailwindcss": "^4.2.2",
@@ -56,6 +56,7 @@
     "zustand": "^5.0.6"
   },
   "devDependencies": {
+    "@opennextjs/cloudflare": "1.18.0",
     "@playwright/test": "^1.55.0",
     "@types/node": "^24.1.0",
     "@types/react": "19.2.14",
@@ -65,10 +66,10 @@
     "lighthouse": "^12.8.2",
     "prettier": "^3.6.2",
     "prettier-plugin-tailwindcss": "^0.7.2",
-    "sharp": "0.34.3",
     "wrangler": "^4.83.0"
   },
   "overrides": {
+    "basic-ftp": "5.3.1",
     "ip-address": "10.1.1",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",

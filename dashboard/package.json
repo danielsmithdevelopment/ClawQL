@@ -14,12 +14,17 @@
     "test:e2e:k8s": "CLAWQL_DASHBOARD_E2E=1 playwright test"
   },
   "dependencies": {
+    "@radix-ui/react-progress": "^1.1.7",
     "@tailwindcss/postcss": "^4.2.2",
+    "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "lucide-react": "^0.562.0",
     "next": "16.2.4",
     "postcss": "^8.5.14",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "react-resizable-panels": "^4.0.14",
+    "tailwind-merge": "^3.4.0",
     "tailwindcss": "^4.2.2",
     "typescript": "^5.8.3"
   },

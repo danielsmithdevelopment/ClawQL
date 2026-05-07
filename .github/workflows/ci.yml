@@ -203,7 +203,7 @@ jobs:
           severity: HIGH,CRITICAL
           exit-code: "1"
           trivyignores: .trivyignore
-          skip-dirs: node_modules,website/node_modules,dist,packages/mcp-grpc-transport/dist,packages/clawql-ouroboros/dist,packages/panguard-mcp-bridge/dist,.git
+          skip-dirs: node_modules,website/node_modules,dashboard/node_modules,dist,packages/mcp-grpc-transport/dist,packages/clawql-ouroboros/dist,packages/panguard-mcp-bridge/dist,.git
 
       # CycloneDX JSON for the repository (lockfiles + vendored sources Syft detects). Artifact for audits / #156.
       - name: CycloneDX SBOM (Syft)
@@ -231,8 +231,8 @@ jobs:
       - name: Read package metadata
         id: pkg
         run: |
-          echo "version=$(node -e 'console.log(require(\"./package.json\").version)')" >> "$GITHUB_OUTPUT"
-          echo "description=$(node -e 'console.log(require(\"./package.json\").description)')" >> "$GITHUB_OUTPUT"
+          echo "version=$(node -e 'console.log(require(\"./website/package.json\").version)')" >> "$GITHUB_OUTPUT"
+          echo "description=$(node -e 'console.log(require(\"./website/package.json\").description)')" >> "$GITHUB_OUTPUT"
 
       - name: Build website image
         run: |

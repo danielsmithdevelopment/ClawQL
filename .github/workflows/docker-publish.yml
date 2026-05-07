@@ -1,10 +1,10 @@
-# Build and push the Distroless MCP image to GitHub Container Registry (GHCR).
+# Build and push ClawQL container images (MCP, website, dashboard, Panguard bridge) to GitHub Container Registry (GHCR).
 # Daily schedule keeps `latest` / `nightly` fresh; manual runs via workflow_dispatch.
 #
 # Golden-image pipeline (this workflow): same **repo** supply-chain gates as CI (**OSV-Scanner**, **Trivy** fs,
 # **Syft** SBOM artifact); **one BuildKit build** exports a **local OCI image layout** → **Trivy** scans it → **skopeo copy**
 # pushes **that same layout** to GHCR (**no second build / no drift**); **Cosign** (**`--recursive`** for multi-arch index + per-arch manifests) + **`imagetools`** promotion of
-# **`latest`** / **`nightly`** / **`nightly-YYYYMMDD`** only after the registry digest exists.
+# **`latest`** / **`nightly`** / **`nightly-YYYYMMDD`** only after **`cosign verify`** succeeds on the pushed digest (same identity / issuer policy as Kyverno **`verifyImages`**). Images: **clawql-mcp**, **clawql-panguard-mcp-bridge**, **clawql-website**, **clawql-dashboard** (parallel jobs after **`repo-supply-chain`**).
 #
 # Cosign pin (**v2.x** via **`cosign-release`**): Kyverno **`verifyImages`** on typical installs expects **legacy Sigstore bundle**
 # payloads; **Cosign v2** emits those by default (**no** **`--new-bundle-format`** flag — that exists only in **v3**).
@@ -31,8 +31,12 @@ env:
   IMAGE_NAME: ghcr.io/danielsmithdevelopment/clawql-mcp
   PANGUARD_BRIDGE_IMAGE_NAME: ghcr.io/danielsmithdevelopment/clawql-panguard-mcp-bridge
   WEBSITE_IMAGE_NAME: ghcr.io/danielsmithdevelopment/clawql-website
+  DASHBOARD_IMAGE_NAME: ghcr.io/danielsmithdevelopment/clawql-dashboard
   # Pin scanner image (public GHCR; avoids Docker Hub rate limits in CI).
   TRIVY_SCAN_IMAGE: ghcr.io/aquasecurity/trivy:0.59.1
+  # Cosign verify gate — align with Kyverno verifyImages (fork-friendly repo path).
+  COSIGN_VERIFY_CERT_IDENTITY_REGEXP: "^https://github.com/${{ github.repository }}/.*"
+  COSIGN_VERIFY_CERT_OIDC_ISSUER_REGEXP: "^https://token\\.actions\\.githubusercontent\\.com.*"
 
 jobs:
   # Mirrors `.github/workflows/ci.yml` **`supply-chain`**: repo lockfiles + manifests + SBOM before any push/sign.
@@ -55,7 +59,7 @@ jobs:
           severity: HIGH,CRITICAL
           exit-code: "1"
           trivyignores: .trivyignore
-          skip-dirs: node_modules,website/node_modules,dist,packages/mcp-grpc-transport/dist,packages/clawql-ouroboros/dist,packages/panguard-mcp-bridge/dist,.git
+          skip-dirs: node_modules,website/node_modules,dashboard/node_modules,dist,packages/mcp-grpc-transport/dist,packages/clawql-ouroboros/dist,packages/panguard-mcp-bridge/dist,.git
 
       - name: CycloneDX SBOM (Syft)
         run: |
@@ -164,6 +168,13 @@ jobs:
         if: ${{ steps.oci_push.outputs.digest != '' }}
         run: cosign sign --yes --recursive "${{ env.IMAGE_NAME }}@${{ steps.oci_push.outputs.digest }}"
 
+      - name: Cosign verify (publish gate — before tag promotion)
+        if: ${{ steps.oci_push.outputs.digest != '' }}
+        run: |
+          cosign verify --recursive "${{ env.IMAGE_NAME }}@${{ steps.oci_push.outputs.digest }}" \
+            --certificate-identity-regexp "${COSIGN_VERIFY_CERT_IDENTITY_REGEXP}" \
+            --certificate-oidc-issuer-regexp "${COSIGN_VERIFY_CERT_OIDC_ISSUER_REGEXP}"
+
       - name: Promote rolling tags (latest / nightly / nightly-YYYYMMDD)
         if: ${{ steps.oci_push.outputs.digest != '' }}
         run: |
@@ -174,6 +185,151 @@ jobs:
             TAGS+=(--tag "${{ env.IMAGE_NAME }}:nightly-$(date -u +%Y%m%d)")
           fi
           docker buildx imagetools create "${TAGS[@]}" "$SRC"
+
+      # Kyverno verifyImages hits ghcr.io anonymously — private packages return DENIED on the token endpoint.
+      # Default GITHUB_TOKEN often cannot PATCH visibility (needs packages admin); optional GH_PACKAGES_VISIBILITY_TOKEN (classic PAT with write:packages + admin on container packages, or fine-grained equivalent) automates making the package public.
+      - name: Set GHCR clawql-mcp package visibility to public
+        if: ${{ steps.oci_push.outputs.digest != '' }}
+        env:
+          GH_TOKEN: ${{ secrets.GH_PACKAGES_VISIBILITY_TOKEN != '' && secrets.GH_PACKAGES_VISIBILITY_TOKEN || github.token }}
+        run: |
+          set -euo pipefail
+          OWNER="${{ github.repository_owner }}"
+          PKG="clawql-mcp"
+          for endpoint in "/orgs/${OWNER}/packages/container/${PKG}" "/user/packages/container/${PKG}"; do
+            if gh api --method PATCH "${endpoint}" -f visibility=public 2>/dev/null; then
+              echo "OK: ${PKG} visibility is public (${endpoint})."
+              exit 0
+            fi
+          done
+          echo "::warning::Could not set GHCR package ${PKG} to public via API. Kyverno needs anonymous manifest reads. Options: (1) Packages → ${PKG} → Package settings → Public, or (2) repository secret GH_PACKAGES_VISIBILITY_TOKEN with permission to change container package visibility."
+          exit 0
+
+  build-push-dashboard:
+    name: Build and push dashboard
+    needs: [repo-supply-chain]
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd
+
+      - uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf
+        with:
+          images: ${{ env.DASHBOARD_IMAGE_NAME }}
+          tags: |
+            type=sha,prefix=sha-,format=short
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+
+      - name: Install skopeo
+        run: sudo apt-get update && sudo apt-get install -y skopeo
+
+      - name: Build OCI layout (single artifact — scanned and pushed)
+        run: |
+          set -euo pipefail
+          DEST="${RUNNER_TEMP}/clawql-dashboard-oci"
+          rm -rf "${DEST}"
+          mkdir -p "${DEST}"
+          docker buildx build \
+            --file dashboard/Dockerfile \
+            --platform linux/amd64,linux/arm64 \
+            --output "type=oci,tar=false,dest=${DEST}" \
+            --cache-from type=gha,scope=docker-publish-dashboard \
+            --cache-to type=gha,mode=max,scope=docker-publish-dashboard \
+            --provenance=mode=max \
+            --sbom=true \
+            ./dashboard
+
+      - name: Trivy scan OCI layout (HIGH / CRITICAL — before registry push)
+        run: |
+          set -euo pipefail
+          docker run --rm \
+            -v "${GITHUB_WORKSPACE}:/repo:ro" \
+            -v "${RUNNER_TEMP}/clawql-dashboard-oci:/work/oci:ro" \
+            "${{ env.TRIVY_SCAN_IMAGE }}" \
+            image \
+            --scanners vuln \
+            --severity HIGH,CRITICAL \
+            --exit-code 1 \
+            --ignorefile /repo/.trivyignore \
+            --input /work/oci
+
+      - name: Push OCI layout to GHCR (skopeo — same bytes Trivy scanned)
+        id: oci_push
+        env:
+          IMAGE_TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          set -euo pipefail
+          AUTH=(--authfile "${DOCKER_CONFIG:-$HOME/.docker}/config.json")
+          SRC="oci:${RUNNER_TEMP}/clawql-dashboard-oci"
+          if [ -z "${IMAGE_TAGS//[$'\t\r\n ']}" ]; then
+            echo "No image tags from metadata-action" >&2
+            exit 1
+          fi
+          while IFS= read -r dest; do
+            [ -z "${dest// }" ] && continue
+            skopeo copy "${AUTH[@]}" --all "${SRC}" "docker://${dest}"
+          done <<< "${IMAGE_TAGS}"
+          FIRST="$(printf '%s\n' "${IMAGE_TAGS}" | sed '/^[[:space:]]*$/d' | head -n1)"
+          DIGEST="$(skopeo inspect "${AUTH[@]}" "docker://${FIRST}" --format '{{.Digest}}')"
+          echo "digest=${DIGEST}" >> "$GITHUB_OUTPUT"
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@b5e753ae2d39589c7b38850b463739151fc67f07
+        with:
+          cosign-release: v2.4.3
+
+      - name: Cosign sign (keyless, recursive — Kyverno-compatible legacy bundles)
+        if: ${{ steps.oci_push.outputs.digest != '' }}
+        run: cosign sign --yes --recursive "${{ env.DASHBOARD_IMAGE_NAME }}@${{ steps.oci_push.outputs.digest }}"
+
+      - name: Cosign verify (publish gate — before tag promotion)
+        if: ${{ steps.oci_push.outputs.digest != '' }}
+        run: |
+          cosign verify --recursive "${{ env.DASHBOARD_IMAGE_NAME }}@${{ steps.oci_push.outputs.digest }}" \
+            --certificate-identity-regexp "${COSIGN_VERIFY_CERT_IDENTITY_REGEXP}" \
+            --certificate-oidc-issuer-regexp "${COSIGN_VERIFY_CERT_OIDC_ISSUER_REGEXP}"
+
+      - name: Promote rolling tags (latest / nightly / nightly-YYYYMMDD)
+        if: ${{ steps.oci_push.outputs.digest != '' }}
+        run: |
+          set -euo pipefail
+          SRC="${{ env.DASHBOARD_IMAGE_NAME }}@${{ steps.oci_push.outputs.digest }}"
+          TAGS=(--tag "${{ env.DASHBOARD_IMAGE_NAME }}:latest" --tag "${{ env.DASHBOARD_IMAGE_NAME }}:nightly")
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            TAGS+=(--tag "${{ env.DASHBOARD_IMAGE_NAME }}:nightly-$(date -u +%Y%m%d)")
+          fi
+          docker buildx imagetools create "${TAGS[@]}" "$SRC"
+
+      # Kyverno verifyImages hits ghcr.io anonymously — private packages return DENIED on the token endpoint.
+      # Default GITHUB_TOKEN often cannot PATCH visibility (needs packages admin); optional GH_PACKAGES_VISIBILITY_TOKEN (classic PAT with write:packages + admin on container packages, or fine-grained equivalent) automates making the package public.
+      - name: Set GHCR clawql-dashboard package visibility to public
+        if: ${{ steps.oci_push.outputs.digest != '' }}
+        env:
+          GH_TOKEN: ${{ secrets.GH_PACKAGES_VISIBILITY_TOKEN != '' && secrets.GH_PACKAGES_VISIBILITY_TOKEN || github.token }}
+        run: |
+          set -euo pipefail
+          OWNER="${{ github.repository_owner }}"
+          PKG="clawql-dashboard"
+          for endpoint in "/orgs/${OWNER}/packages/container/${PKG}" "/user/packages/container/${PKG}"; do
+            if gh api --method PATCH "${endpoint}" -f visibility=public 2>/dev/null; then
+              echo "OK: ${PKG} visibility is public (${endpoint})."
+              exit 0
+            fi
+          done
+          echo "::warning::Could not set GHCR package ${PKG} to public via API. Kyverno needs anonymous manifest reads. Options: (1) Packages → ${PKG} → Package settings → Public, or (2) repository secret GH_PACKAGES_VISIBILITY_TOKEN with permission to change container package visibility."
+          exit 0
 
   build-push-panguard-bridge:
     name: Build and push Panguard MCP bridge
@@ -264,6 +420,13 @@ jobs:
         if: ${{ steps.oci_push.outputs.digest != '' }}
         run: cosign sign --yes --recursive "${{ env.PANGUARD_BRIDGE_IMAGE_NAME }}@${{ steps.oci_push.outputs.digest }}"
 
+      - name: Cosign verify (publish gate — before tag promotion)
+        if: ${{ steps.oci_push.outputs.digest != '' }}
+        run: |
+          cosign verify --recursive "${{ env.PANGUARD_BRIDGE_IMAGE_NAME }}@${{ steps.oci_push.outputs.digest }}" \
+            --certificate-identity-regexp "${COSIGN_VERIFY_CERT_IDENTITY_REGEXP}" \
+            --certificate-oidc-issuer-regexp "${COSIGN_VERIFY_CERT_OIDC_ISSUER_REGEXP}"
+
       - name: Promote rolling tags (latest / nightly / nightly-YYYYMMDD)
         if: ${{ steps.oci_push.outputs.digest != '' }}
         run: |
@@ -274,6 +437,25 @@ jobs:
             TAGS+=(--tag "${{ env.PANGUARD_BRIDGE_IMAGE_NAME }}:nightly-$(date -u +%Y%m%d)")
           fi
           docker buildx imagetools create "${TAGS[@]}" "$SRC"
+
+      # Kyverno verifyImages hits ghcr.io anonymously — private packages return DENIED on the token endpoint.
+      # Default GITHUB_TOKEN often cannot PATCH visibility (needs packages admin); optional GH_PACKAGES_VISIBILITY_TOKEN (classic PAT with write:packages + admin on container packages, or fine-grained equivalent) automates making the package public.
+      - name: Set GHCR clawql-panguard-mcp-bridge package visibility to public
+        if: ${{ steps.oci_push.outputs.digest != '' }}
+        env:
+          GH_TOKEN: ${{ secrets.GH_PACKAGES_VISIBILITY_TOKEN != '' && secrets.GH_PACKAGES_VISIBILITY_TOKEN || github.token }}
+        run: |
+          set -euo pipefail
+          OWNER="${{ github.repository_owner }}"
+          PKG="clawql-panguard-mcp-bridge"
+          for endpoint in "/orgs/${OWNER}/packages/container/${PKG}" "/user/packages/container/${PKG}"; do
+            if gh api --method PATCH "${endpoint}" -f visibility=public 2>/dev/null; then
+              echo "OK: ${PKG} visibility is public (${endpoint})."
+              exit 0
+            fi
+          done
+          echo "::warning::Could not set GHCR package ${PKG} to public via API. Kyverno needs anonymous manifest reads. Options: (1) Packages → ${PKG} → Package settings → Public, or (2) repository secret GH_PACKAGES_VISIBILITY_TOKEN with permission to change container package visibility."
+          exit 0
 
   build-push-website:
     name: Build and push website
@@ -297,8 +479,8 @@ jobs:
       - name: Read package metadata
         id: pkg
         run: |
-          echo "version=$(node -e 'console.log(require(\"./package.json\").version)')" >> "$GITHUB_OUTPUT"
-          echo "description=$(node -e 'console.log(require(\"./package.json\").description)')" >> "$GITHUB_OUTPUT"
+          echo "version=$(node -e 'console.log(require(\"./website/package.json\").version)')" >> "$GITHUB_OUTPUT"
+          echo "description=$(node -e 'console.log(require(\"./website/package.json\").description)')" >> "$GITHUB_OUTPUT"
 
       # docker/metadata-action@v6.0.0 — immutable **`sha-*`** only until promotion (same as MCP image).
       - name: Docker metadata
@@ -377,6 +559,13 @@ jobs:
         if: ${{ steps.oci_push.outputs.digest != '' }}
         run: cosign sign --yes --recursive "${{ env.WEBSITE_IMAGE_NAME }}@${{ steps.oci_push.outputs.digest }}"
 
+      - name: Cosign verify (publish gate — before tag promotion)
+        if: ${{ steps.oci_push.outputs.digest != '' }}
+        run: |
+          cosign verify --recursive "${{ env.WEBSITE_IMAGE_NAME }}@${{ steps.oci_push.outputs.digest }}" \
+            --certificate-identity-regexp "${COSIGN_VERIFY_CERT_IDENTITY_REGEXP}" \
+            --certificate-oidc-issuer-regexp "${COSIGN_VERIFY_CERT_OIDC_ISSUER_REGEXP}"
+
       - name: Promote rolling tags (latest / nightly / nightly-YYYYMMDD)
         if: ${{ steps.oci_push.outputs.digest != '' }}
         run: |
@@ -387,3 +576,22 @@ jobs:
             TAGS+=(--tag "${{ env.WEBSITE_IMAGE_NAME }}:nightly-$(date -u +%Y%m%d)")
           fi
           docker buildx imagetools create "${TAGS[@]}" "$SRC"
+
+      # Kyverno verifyImages hits ghcr.io anonymously — private packages return DENIED on the token endpoint.
+      # Default GITHUB_TOKEN often cannot PATCH visibility (needs packages admin); optional GH_PACKAGES_VISIBILITY_TOKEN (classic PAT with write:packages + admin on container packages, or fine-grained equivalent) automates making the package public.
+      - name: Set GHCR clawql-website package visibility to public
+        if: ${{ steps.oci_push.outputs.digest != '' }}
+        env:
+          GH_TOKEN: ${{ secrets.GH_PACKAGES_VISIBILITY_TOKEN != '' && secrets.GH_PACKAGES_VISIBILITY_TOKEN || github.token }}
+        run: |
+          set -euo pipefail
+          OWNER="${{ github.repository_owner }}"
+          PKG="clawql-website"
+          for endpoint in "/orgs/${OWNER}/packages/container/${PKG}" "/user/packages/container/${PKG}"; do
+            if gh api --method PATCH "${endpoint}" -f visibility=public 2>/dev/null; then
+              echo "OK: ${PKG} visibility is public (${endpoint})."
+              exit 0
+            fi
+          done
+          echo "::warning::Could not set GHCR package ${PKG} to public via API. Kyverno needs anonymous manifest reads. Options: (1) Packages → ${PKG} → Package settings → Public, or (2) repository secret GH_PACKAGES_VISIBILITY_TOKEN with permission to change container package visibility."
+          exit 0

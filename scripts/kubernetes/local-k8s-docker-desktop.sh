@@ -195,7 +195,7 @@ fi
 
 if [[ "${CLAWQL_LOCAL_K8S_BUILD_UI_IMAGE:-0}" == "1" ]]; then
   echo "ERROR: CLAWQL_LOCAL_K8S_BUILD_UI_IMAGE=1 is not supported."
-  echo "       local-k8s-up pulls signed ghcr.io/danielsmithdevelopment/clawql-website (see values-docker-desktop.yaml)."
+  echo "       local-k8s-up pulls signed ghcr.io/danielsmithdevelopment/clawql-{mcp,website,dashboard} (see values-docker-desktop.yaml + docker-publish workflow)."
   exit 1
 fi
 
@@ -328,7 +328,7 @@ if [[ "${INSTALLER}" == "helm" ]]; then
     echo "    Helm --wait blocks until every workload in the chart is Ready (full stack)."
   fi
   echo "    If this stalls: kubectl --context \${KUBE_CONTEXT:-} get pods -n ${NAMESPACE}  (CrashLoop / Error pods block --wait)."
-  echo "    Kyverno admits only Cosign-signed ghcr.io/danielsmithdevelopment/clawql-{mcp,website} in ${NAMESPACE}."
+  echo "    Kyverno admits Cosign-signed ghcr.io/danielsmithdevelopment/clawql-{mcp,panguard-mcp-bridge,website,dashboard} in ${NAMESPACE}."
   HELM_VAULT_ARGS=()
   if [[ "${VAULT_BACKEND}" == "hostPath" ]]; then
     HELM_VAULT_ARGS+=(--set-string "vault.hostPath.path=${VAULT_HOST_PATH}")

@@ -307,17 +307,21 @@ envFromSecret: clawql-provider-env
 secretSourcing:
   requireVaultBackedSecrets: true
 
-# Bundled HashiCorp Vault (same dependency as CI/prod — not optional). Desktop uses **server.dev** so the
-# Helm release comes up **initialized** with a predictable root token for local KV + External Secrets bootstrap
-# (**`scripts/kubernetes/bootstrap-local-vault-and-eso.sh`**). Data is ephemeral on pod reschedule — never use dev
-# Vault for real secrets / production parity.
+# Bundled HashiCorp Vault (same dependency as CI/prod — not optional). Desktop uses **standalone + file storage +
+# PVC** so KV survives pod restarts (dev mode is in-memory). First **`make bootstrap-vault-eso`** initializes Vault,
+# unseals with a single key, and stores **root-token** + **unseal-key** in **Secret/clawql-vault-local-bootstrap**
+# (local dev only — rotate/delete for anything beyond single-user Docker Desktop).
 hashicorpvault:
   injector:
     enabled: false
   server:
     dev:
+      enabled: false
+    standalone:
       enabled: true
-      devRootToken: "root"
+    dataStorage:
+      enabled: true
+      size: 10Gi
     resources:
       requests:
         cpu: 50m
@@ -395,7 +399,8 @@ extraEnv:
   - name: CLAWQL_STREAMABLE_HTTP_JSON_RESPONSE
     value: "1"
 
-# local-k8s-up: Kyverno verifies Cosign (keyless) signatures for ClawQL GHCR images in this release namespace only.
+# local-k8s-up: Kyverno verifies Cosign (keyless) for ClawQL GHCR images (mcp, bridge, website, dashboard) in this namespace.
+# Images must be signed in docker-publish.yml and the GHCR packages must allow anonymous manifest reads (public packages).
 kyverno:
   imageSignaturePolicy:
     enabled: true

@@ -1,0 +1,38 @@
+import { docsPageMetadata } from '@/lib/seo'
+
+import { Note } from '@/components/mdx'
+import { Tag } from '@/components/Tag'
+
+import ClawQLModularizationBody from '@/generated/clawql-modularization-body.mdx'
+
+export const metadata = docsPageMetadata({
+  title: 'ClawQL Modularization',
+  description:
+    'ClawQL Modularization v1.9: package ecosystem (core, api, auth, documents, memory, verticals), operator CRD, defense-in-depth, and phased roadmap — vision with planned and in-progress work vs shipped code.',
+  path: '/vision/modularization',
+  ogType: 'article',
+})
+
+<div className="not-prose mb-6 flex flex-wrap items-center gap-2">
+  <Tag color="claw" variant="medium">
+    Vision
+  </Tag>
+  <Tag color="amber" variant="medium">
+    In progress
+  </Tag>
+  <Tag color="zinc" variant="medium">
+    Planned
+  </Tag>
+</div>
+
+Version **1.9** (May 2026). This page mirrors the canonical Markdown in the ClawQL repository. {{ className: 'lead' }}
+
+<Note>
+
+**How to read this:** Product and engineering **north star** — many packages and operator behaviors here are **not yet shipped** as a single product surface. Pair with **[Concepts](/concepts)** for today’s MCP architecture and with **[Security deliverables](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/clawql-security-defense-deliverables.md)** for shipped vs planned controls.
+
+**Canonical Markdown:** [`docs/vision/clawql-modularization.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/vision/clawql-modularization.md) on `main`. Builds copy it into `src/generated/clawql-modularization-body.mdx` via `website/scripts/sync-clawql-modularization-doc.mjs` (runs with `prebuild` and `dev`).
+
+</Note>
+
+<ClawQLModularizationBody />

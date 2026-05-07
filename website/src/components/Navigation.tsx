@@ -238,6 +238,15 @@ function NavigationGroup({
 
 export const navigation: Array<NavGroup> = [
   {
+    title: 'Vision & roadmap',
+    links: [
+      {
+        title: 'ClawQL Modularization',
+        href: '/vision/modularization',
+      },
+    ],
+  },
+  {
     title: 'ClawQL Learn',
     links: [
       { title: 'Overview', href: '/learn' },
@@ -365,6 +374,7 @@ export function Navigation(props: React.ComponentPropsWithoutRef<'nav'>) {
         <TopLevelNavItem href="/">Home</TopLevelNavItem>
         <TopLevelNavItem href="/quickstart">Quickstart</TopLevelNavItem>
         <TopLevelNavItem href="/learn">Learn</TopLevelNavItem>
+        <TopLevelNavItem href="/vision/modularization">Vision</TopLevelNavItem>
         <TopLevelNavItem href="https://github.com/danielsmithdevelopment/ClawQL">
           GitHub
         </TopLevelNavItem>
