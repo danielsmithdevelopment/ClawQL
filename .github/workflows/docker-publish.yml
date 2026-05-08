@@ -235,6 +235,10 @@ jobs:
       - name: Install skopeo
         run: sudo apt-get update && sudo apt-get install -y skopeo
 
+      # `dashboard/Dockerfile` copies `.env.example` into the image for `prebuild` (env catalog). Build context is `./dashboard` only, so stage the repo-root catalog source first.
+      - name: Stage repo .env.example for dashboard Docker context
+        run: cp "${GITHUB_WORKSPACE}/.env.example" "${GITHUB_WORKSPACE}/dashboard/.env.example"
+
       - name: Build OCI layout (single artifact — scanned and pushed)
         run: |
           set -euo pipefail
