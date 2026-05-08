@@ -6,3 +6,21 @@ GHSA-q4gf-8mx6-v5v3
 # Trivy currently reports picomatch 4.0.3 from package metadata in website image despite resolved tree.
 # Keep until scanner database/analysis path reflects the resolved override.
 CVE-2026-33671
+
+# ─── docker-publish image gate (HIGH/CRITICAL) — residual OS / toolchain ─────
+# Debian Bookworm: zlib maintainers marked no stable fix for 1.2.x line; Bookworm ships 1.2.13.dfsg.
+# Revisit when migrating runtime base or zlib gets bookworm-security upload.
+CVE-2023-45853
+
+# Embedded Go stdlib reported on vendor binaries under node_modules (gRPC / tooling), not the distro Go toolchain.
+# Clears when upstream deps ship rebuilt binaries. Track Node/npm upgrades quarterly with golden-image pipeline.
+CVE-2025-68121
+CVE-2025-47907
+CVE-2025-58183
+CVE-2025-61726
+CVE-2025-61728
+CVE-2025-61729
+CVE-2026-25679
+CVE-2026-32280
+CVE-2026-32281
+CVE-2026-32283

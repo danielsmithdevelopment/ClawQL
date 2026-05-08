@@ -6,6 +6,10 @@
 
 FROM node:25-bookworm-slim AS builder
 WORKDIR /app
+# Pull Bookworm security updates before npm ci (golden-image Trivy gate).
+RUN apt-get update \
+  && DEBIAN_FRONTEND=noninteractive apt-get upgrade -y --no-install-recommends \
+  && rm -rf /var/lib/apt/lists/*
 
 COPY package.json package-lock.json ./
 COPY packages/mcp-grpc-transport/package.json ./packages/mcp-grpc-transport/
@@ -27,7 +31,8 @@ RUN mkdir -p /vault && chown 65532:65532 /vault
 
 # Distroless Node: no shell; only Node + minimal libc / CA bundle for HTTPS fetches.
 # Runtime uses Node 24 (LTS); no nodejs26 image yet. Build stage above may use a newer major.
-FROM gcr.io/distroless/nodejs24-debian13 AS runtime
+# Pin digest — bump when rebuilding images (Trivy gate + Debian base refreshes).
+FROM gcr.io/distroless/nodejs24-debian13@sha256:482fabdb0f0353417ab878532bb3bf45df925e3741c285a68038fb138b714cba AS runtime
 WORKDIR /app
 
 ENV NODE_ENV=production
@@ -58,7 +63,9 @@ CMD ["dist/server-http.js"]
 FROM node:25-bookworm-slim AS runtime-with-docker-cli
 ARG DOCKER_STATIC_VERSION=27.4.1
 WORKDIR /app
-RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl \
+RUN apt-get update \
+  && DEBIAN_FRONTEND=noninteractive apt-get upgrade -y --no-install-recommends \
+  && apt-get install -y --no-install-recommends ca-certificates curl \
   && rm -rf /var/lib/apt/lists/* \
   && ARCH="$(dpkg --print-architecture)" \
   && case "$ARCH" in amd64) DARCH=x86_64 ;; arm64) DARCH=aarch64 ;; *) echo "unsupported arch: $ARCH" >&2; exit 1 ;; esac \
