@@ -8,6 +8,9 @@
 
 FROM node:25-bookworm-slim AS builder
 WORKDIR /app
+RUN apt-get update \
+  && DEBIAN_FRONTEND=noninteractive apt-get upgrade -y --no-install-recommends \
+  && rm -rf /var/lib/apt/lists/*
 
 COPY package.json package-lock.json ./
 COPY packages/clawql-ouroboros/package.json ./packages/clawql-ouroboros/package.json
@@ -23,7 +26,9 @@ FROM node:25-bookworm-slim
 WORKDIR /app
 ENV NODE_ENV=production
 
-RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates \
+RUN apt-get update \
+  && DEBIAN_FRONTEND=noninteractive apt-get upgrade -y --no-install-recommends \
+  && apt-get install -y --no-install-recommends ca-certificates \
   && rm -rf /var/lib/apt/lists/* \
   && npm install -g @panguard-ai/panguard-mcp-proxy@0.1.2 \
   && npm cache clean --force
