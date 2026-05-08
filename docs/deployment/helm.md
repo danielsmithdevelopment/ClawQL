@@ -449,6 +449,25 @@ Operational notes:
 - `dashboard.k8s.deploymentName` is the rollout target after Vault updates (defaults to `clawql-mcp-http`).
 - For Docker Desktop, these are already preconfigured in `values-docker-desktop.yaml` with host `clawql.localhost`.
 
+### Rancher / in-cluster OpenClaw (Agent Chat)
+
+For **SUSE Rancher**, **RKE2**, or other Helm-driven clusters, use the checked-in overlay **[`values-rancher.example.yaml`](../../charts/clawql-mcp/values-rancher.example.yaml)**: **`dashboard.enabled`**, **`dashboard.openclawChatUrl`**, **`dashboard.ingress`** (editable host + TLS stubs), **`imagePullSecrets`** notes, and a commented **`envFromSecret`** line for **`secretSourcing.requireVaultBackedSecrets`**.
+
+Install:
+
+```bash
+helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace --wait \
+  -f charts/clawql-mcp/values-rancher.example.yaml
+```
+
+Point **`openclawChatUrl`** at the workload that exposes **`POST /v1/chat`** (`{ reply }` JSON). See **`docs/openclaw/using-openclaw-with-clawql.md`** for OpenClaw + model/auth context.
+
+Verify the dashboard pod received the proxy URL:
+
+```bash
+kubectl -n clawql get deploy clawql-mcp-http-dashboard -o yaml | rg "CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL" -n
+```
+
 ### Dashboard incident runbook (quick checks)
 
 Use this when `http://clawql.localhost` is failing, dashboard sync appears stuck, or Vault updates do not land in `clawql-mcp-http`.
@@ -469,7 +488,7 @@ kubectl -n clawql get pods -l app.kubernetes.io/component=dashboard
 3. Dashboard env wiring (Vault + rollout target):
 
 ```bash
-kubectl -n clawql get deploy clawql-mcp-http-dashboard -o yaml | rg "CLAWQL_DASHBOARD_(VAULT|K8S)_" -n
+kubectl -n clawql get deploy clawql-mcp-http-dashboard -o yaml | rg "CLAWQL_DASHBOARD_(VAULT|K8S|OPENCLAW)_" -n
 ```
 
 4. Rollout target health:
@@ -557,6 +576,7 @@ See **[`charts/clawql-mcp/values.yaml`](../charts/clawql-mcp/values.yaml)**. Com
 | `ingress`                                           | Optional HTTP(S) Ingress                                                                                                                                                                                                                                                                                                                                                                                                     |
 | `ui`                                                | Optional docs UI (`website`) Deployment/Service/Ingress (defaults for Docker Desktop use `docs.localhost`)                                                                                                                                                                                                                                                                                                                   |
 | `dashboard`                                         | Optional Vault-first dashboard Deployment/Service/Ingress (`clawql-dashboard` image; defaults for Docker Desktop use `clawql.localhost`)                                                                                                                                                                                                                                                                                     |
+| `dashboard.openclawChatUrl`                         | When non-empty, injects **`CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL`** (Agent Chat → in-cluster **`POST /v1/chat`**). Rancher-focused overlay with ingress: **[`charts/clawql-mcp/values-rancher.example.yaml`](../charts/clawql-mcp/values-rancher.example.yaml)**.                                                                                                                                                               |
 | `metrics.prometheusScrapeAnnotations`               | When **`enabled: true`** (default), adds **`prometheus.io/*`** on the MCP **Service** for Prometheus stacks that honor Service annotations (including **Istio** sample Prometheus). Set **`path`** / **`port`** if your HTTP listen port differs from **`service.http.targetPort`**.                                                                                                                                         |
 | `metrics.serviceMonitor`                            | When **`enabled: true`**, renders a **`ServiceMonitor`** (**`monitoring.coreos.com/v1`**) scraping **`/metrics`** on **`port: http`**. Default **`false`**. Optional **`namespace`**, **`labels`**, **`interval`**, **`scrapeTimeout`**.                                                                                                                                                                                     |
 

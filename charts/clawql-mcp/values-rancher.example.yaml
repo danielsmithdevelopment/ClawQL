@@ -1,0 +1,53 @@
+# Rancher / RKE2 example overlay — dashboard + in-cluster OpenClaw Agent Chat
+#
+# Use from the repo root (or point Rancher "Helm install" at this file as additional values):
+#
+#   helm upgrade --install clawql ./charts/clawql-mcp \
+#     --namespace clawql \
+#     --create-namespace \
+#     --wait \
+#     -f charts/clawql-mcp/values-rancher.example.yaml
+#
+# You still need chart-required Secret refs (defaults: `secretSourcing.requireVaultBackedSecrets=true`).
+# Typical path: Vault → External Secrets → `envFromSecret: clawql-provider-env`.
+#
+# Chart baseline still needs a Vault-synced Secret name for MCP env (default guard: `secretSourcing.requireVaultBackedSecrets=true`).
+# Uncomment when that Secret exists in the release namespace (name must match your ESO reconcile target):
+#
+# envFromSecret: clawql-provider-env
+#
+# Prerequisites:
+# - Kyverno running before install, or add `--set kyverno.imageSignaturePolicy.enabled=false` temporarily.
+# - A workload that exposes Agent Chat HTTP at **`POST /v1/chat`** returning JSON **`{ reply }`** (often your OpenClaw
+#   deployment). Adjust **`dashboard.openclawChatUrl`** to match **Service DNS + port**.
+#
+# Replace **`clawql`** below if OpenClaw lives in another namespace — use **`http://<svc>.<ns>.svc.cluster.local:<port>/v1/chat`**.
+
+dashboard:
+  enabled: true
+  # Injects **`CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL`** on the dashboard pod (see **`templates/dashboard-deployment.yaml`**).
+  openclawChatUrl: http://openclaw.clawql.svc.cluster.local:8787/v1/chat
+  allowSync: true
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      # Optional Rancher / cert-manager annotations (examples — delete if unused):
+      # cert-manager.io/cluster-issuer: letsencrypt-prod
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "120"
+      nginx.ingress.kubernetes.io/proxy-send-timeout: "120"
+    hosts:
+      - host: clawql-dashboard.example.com
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
+    # Append TLS entries instead of [] when cert-manager / Rancher issued a certificate:
+    # tls:
+    #   - secretName: clawql-dashboard-tls
+    #     hosts:
+    #       - clawql-dashboard.example.com
+
+# Optional: private GHCR (create `kubectl create secret docker-registry …` then reference its name).
+# imagePullSecrets:
+#   - name: ghcr-pull-secret

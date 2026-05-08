@@ -35,6 +35,18 @@ Configure via **`values.yaml`** or **`--set`**. Defaults pull **`ghcr.io/daniels
 The script installs **Kyverno** and upgrades **ingress-nginx** unless disabled.
 **Kustomize:** **`CLAWQL_LOCAL_K8S_INSTALLER=kustomize`** uses **`docker/kustomize/overlays/local`** (no Helm).
 
+**Dashboard Agent Chat → OpenClaw (in-cluster):** set **`dashboard.openclawChatUrl`** so the dashboard pod injects **`CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL`**. Full Rancher-ready overlay (**ingress + placeholders + commented `envFromSecret`**): **[`values-rancher.example.yaml`](values-rancher.example.yaml)** — install with **`-f charts/clawql-mcp/values-rancher.example.yaml`**.
+
+Minimal inline example:
+
+```yaml
+dashboard:
+  enabled: true
+  openclawChatUrl: http://openclaw:8787/v1/chat
+```
+
+Use the **Service DNS** that matches your namespace (e.g. **`http://openclaw.<ns>.svc.cluster.local:8787/v1/chat`**).
+
 ## Prometheus: scrape `GET /metrics`
 
 ClawQL exposes **OpenMetrics** on **`GET /metrics`** (native GraphQL/gRPC counters/gauges; see **`docs/readme/deployment.md`**).

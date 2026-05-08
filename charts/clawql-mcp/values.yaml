@@ -741,6 +741,10 @@ dashboard:
   enabled: false
   replicaCount: 1
   allowSync: true
+  # Optional in-cluster OpenClaw chat HTTP endpoint for Agent Chat.
+  # Example (same namespace): http://openclaw:8787/v1/chat
+  # Example (cross-namespace): http://openclaw.<ns>.svc.cluster.local:8787/v1/chat
+  openclawChatUrl: ""
   image:
     repository: ghcr.io/danielsmithdevelopment/clawql-dashboard
     tag: latest

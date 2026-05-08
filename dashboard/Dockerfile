@@ -8,6 +8,8 @@ WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+# generate-env-catalog.mjs resolves ../../.env.example from dashboard/scripts in monorepo layout
+COPY .env.example /.env.example
 RUN npm run build
 
 FROM node:25-alpine AS runner
