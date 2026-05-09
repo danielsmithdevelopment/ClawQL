@@ -30,6 +30,7 @@ set -euo pipefail
 #
 # Optional: CLAWQL_HELM_TIMEOUT — helm --wait timeout (defaults: 45m full stack, 8m quick stack).
 # Optional: CLAWQL_ISTIO_HELM_TIMEOUT / CLAWQL_ISTIO_ZTUNNEL_HELM_TIMEOUT — Istio sub-chart --wait (see install-istio-docker-desktop.sh; ztunnel often needs the extra margin).
+# Optional: CLAWQL_SKIP_DOCKER_DESKTOP_MOUNT_RSHARED=1 — skip automatic Docker Desktop VM mount --make-rshared (breaks ambient istio-cni on many setups).
 # Optional: CLAWQL_LOCAL_K8S_FULL_STACK=0 — quick MCP+UI only (skips Onyx/Flink/pipeline/NATS; short helm --wait).
 #
 # Optional: CLAWQL_KYVERNO_CHART_VERSION — Kyverno Helm chart version (default 3.7.2).

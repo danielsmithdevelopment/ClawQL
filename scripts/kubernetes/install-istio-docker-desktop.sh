@@ -44,6 +44,7 @@ set -euo pipefail
 #   CLAWQL_LOCAL_K8S_CONTEXT — optional; force kubectl context (see scripts/kubernetes/lib/select-local-k8s-context.sh)
 #   CLAWQL_SKIP_WAIT_FOR_KYVERNO_ENDPOINTS — set to 1 to skip wait/restart gate (Kyverno webhook errors mid-upgrade otherwise)
 #   CLAWQL_SKIP_RANCHER_LIMA_MOUNT_RSHARED — set to 1 to skip automatic rdctl mount --make-rshared / before istio-cni (Rancher only)
+#   CLAWQL_SKIP_DOCKER_DESKTOP_MOUNT_RSHARED — set to 1 to skip automatic docker-run nsenter mount --make-rshared before istio-cni (Docker Desktop only)
 #   CLAWQL_ISTIO_LOCAL_COMPACT_RESOURCES — when 1 (default), lowers istiod / istio-cni / ztunnel CPU requests so
 #     ambient + ClawQL often fits a single ~4 CPU node (Rancher / Docker Desktop). Set 0 for upstream chart defaults.
 #     Also sets istiod rollingUpdate maxSurge=0 / maxUnavailable=1 so upgrades never need two pilot pods at once.
@@ -209,7 +210,12 @@ if [[ "${MODE}" == "ambient" ]]; then
   # Single line: avoid line-continuation bugs where a missing '\' makes `--wait` run as a separate command (exit 127).
   helm_ctx upgrade --install istiod istio/istiod --namespace "${ISTIO_NS}" --version "${VER}" --set profile=ambient "${istiod_helm_extra[@]}" --wait --timeout "${HELM_WAIT_TIMEOUT}"
 
-  if [[ "${KUBE_CONTEXT:-}" == "rancher-desktop" ]] && [[ "${CLAWQL_SKIP_RANCHER_LIMA_MOUNT_RSHARED:-0}" != "1" ]]; then
+  eff_ctx="${KUBE_CONTEXT:-}"
+  if [[ -z "${eff_ctx}" ]]; then
+    eff_ctx="$(kubectl config current-context 2>/dev/null || true)"
+  fi
+
+  if [[ "${eff_ctx}" == "rancher-desktop" ]] && [[ "${CLAWQL_SKIP_RANCHER_LIMA_MOUNT_RSHARED:-0}" != "1" ]]; then
     # shellcheck disable=SC1091
     source "${ROOT}/scripts/kubernetes/lib/rancher-rdctl.sh"
     if clawql_rancher_lima_mount_make_rshared; then
@@ -224,8 +230,22 @@ if [[ "${MODE}" == "ambient" ]]; then
       echo "       Skip (broken ambient): CLAWQL_SKIP_RANCHER_LIMA_MOUNT_RSHARED=1 CLAWQL_LOCAL_K8S_ISTIO=sidecar …"
       exit 1
     fi
-  elif [[ "${KUBE_CONTEXT:-}" == "rancher-desktop" ]]; then
+  elif [[ "${eff_ctx}" == "rancher-desktop" ]]; then
     echo "WARN: CLAWQL_SKIP_RANCHER_LIMA_MOUNT_RSHARED=1 — if istio-cni fails with netns/rshared, fix Lima mount manually."
+  elif [[ "${eff_ctx}" == "docker-desktop" || "${eff_ctx}" == "docker-for-desktop" ]] && [[ "${CLAWQL_SKIP_DOCKER_DESKTOP_MOUNT_RSHARED:-0}" != "1" ]]; then
+    # shellcheck disable=SC1091
+    source "${ROOT}/scripts/kubernetes/lib/docker-desktop-vm-rshared.sh"
+    if clawql_docker_desktop_mount_make_rshared; then
+      echo "    Restarting istio-cni-node Pods (if any) so install-cni retries after mount fix…"
+      kubectl_ctx delete pod -n "${ISTIO_NS}" -l k8s-app=istio-cni-node --ignore-not-found >/dev/null 2>&1 || true
+    else
+      echo "ERROR: Docker Desktop VM mount fix failed. Ambient istio-cni needs /run mount propagation (see istio/istio#54865)."
+      echo "       Ensure Docker Desktop is running and docker CLI works: docker info"
+      echo "       Skip (will likely break ambient CNI): CLAWQL_SKIP_DOCKER_DESKTOP_MOUNT_RSHARED=1"
+      exit 1
+    fi
+  elif [[ "${eff_ctx}" == "docker-desktop" || "${eff_ctx}" == "docker-for-desktop" ]]; then
+    echo "WARN: CLAWQL_SKIP_DOCKER_DESKTOP_MOUNT_RSHARED=1 — istio-cni may fail: /var/run/netns is not a shared or slave mount."
   fi
 
   echo "==> Helm: istio-cni (profile=ambient, namespace ${ISTIO_NS})"
@@ -235,7 +255,9 @@ if [[ "${MODE}" == "ambient" ]]; then
   if ! helm_ctx upgrade --install ztunnel istio/ztunnel --namespace "${ISTIO_NS}" --version "${VER}" "${ztunnel_helm_extra[@]}" --wait --timeout "${ZTUNNEL_HELM_WAIT_TIMEOUT}"; then
     echo ""
     echo "ERROR: ztunnel Helm install failed (--wait timeout or chart error)."
-    echo "       Typical on Docker Desktop: pulling the ztunnel image while istiod/CNI already claimed CPU/RAM."
+    echo "       If istio-cni is crashing, ztunnel stays NotReady (no ztunnel.sock). Check:"
+    echo "         kubectl --context \"${KUBE_CONTEXT:-}\" get pods -n ${ISTIO_NS} -l k8s-app=istio-cni-node"
+    echo "       Docker Desktop: ensure the VM rshared fix ran (mount --make-rshared /run) before istio-cni."
     echo "       Retry: make local-k8s-up"
     echo "       Or allow longer wait: CLAWQL_ISTIO_ZTUNNEL_HELM_TIMEOUT=45m make local-k8s-up"
     echo "       Inspect:"
