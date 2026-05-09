@@ -68,6 +68,50 @@ describe("operationsFromOpenAPI", () => {
     expect(ops[0].method).toBe("GET");
     expect(ops[0].parameters.limit?.location).toBe("query");
   });
+
+  it("resolves requestBody $ref into components/requestBodies for schema metadata", () => {
+    const doc = {
+      openapi: "3.0.0",
+      info: { title: "t", version: "1" },
+      servers: [{ url: "http://x" }],
+      paths: {
+        "/zones/{zone_id}/rulesets": {
+          post: {
+            operationId: "createZoneRuleset",
+            parameters: [
+              {
+                name: "zone_id",
+                in: "path",
+                required: true,
+                schema: { type: "string" },
+              },
+            ],
+            requestBody: { $ref: "#/components/requestBodies/rulesets_CreateRuleset" },
+            responses: { "200": { description: "ok" } },
+          },
+        },
+      },
+      components: {
+        schemas: {},
+        requestBodies: {
+          rulesets_CreateRuleset: {
+            content: {
+              "application/json": {
+                schema: {
+                  allOf: [{ $ref: "#/components/schemas/rulesets_Ruleset" }],
+                },
+              },
+            },
+            required: true,
+          },
+        },
+      },
+    };
+    const ops = operationsFromOpenAPI(doc);
+    expect(ops).toHaveLength(1);
+    expect(ops[0].requestBody).toBe("__clawql_inline_request_body__");
+    expect(ops[0].requestBodyContentType).toBe("application/json");
+  });
 });
 
 describe("sanitizeOpenAPIDocument", () => {

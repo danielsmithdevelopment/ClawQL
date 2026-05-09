@@ -11,6 +11,8 @@ export interface OpenAPIDocLike {
   components?: {
     schemas?: Record<string, unknown>;
     securitySchemes?: Record<string, unknown>;
+    /** Used to resolve `operation.requestBody.$ref` → `#/components/requestBodies/…`. */
+    requestBodies?: Record<string, unknown>;
   };
   servers?: { url: string }[];
   security?: unknown[];
@@ -39,7 +41,8 @@ export function operationsFromOpenAPI(doc: OpenAPIDocLike): Operation[] {
           : `${method}_${slugPath(pathKey)}`;
 
       const parameters = mapOpenAPIParameters(operation.parameters);
-      const rb = extractRequestBodyMetadata(operation.requestBody);
+      const rbRaw = resolveRequestBodyRef(operation.requestBody, doc);
+      const rb = extractRequestBodyMetadata(rbRaw);
       const responseBody = extractResponseSchemaName(operation.responses);
       const scopes = extractScopes(operation.security, doc);
 
@@ -113,6 +116,20 @@ function schemaRefToName(schema: unknown): string | undefined {
   if (typeof s.$ref !== "string") return undefined;
   const m = s.$ref.match(/#\/components\/schemas\/(.+)$/);
   return m ? m[1] : undefined;
+}
+
+/** Inline `#/components/requestBodies/<name>` so MIME + schema can be read (e.g. Cloudflare rulesets). */
+function resolveRequestBodyRef(requestBody: unknown, doc: OpenAPIDocLike): unknown {
+  if (!requestBody || typeof requestBody !== "object") return requestBody;
+  const rb = requestBody as Record<string, unknown>;
+  const ref = rb.$ref;
+  if (typeof ref !== "string") return requestBody;
+  const m = ref.match(/^#\/components\/requestBodies\/([^/]+)$/);
+  if (!m) return requestBody;
+  const bodies = doc.components?.requestBodies;
+  if (!bodies || typeof bodies !== "object") return requestBody;
+  const resolved = bodies[m[1]];
+  return resolved !== undefined && typeof resolved === "object" ? resolved : requestBody;
 }
 
 /**
