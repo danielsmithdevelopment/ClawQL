@@ -45,6 +45,8 @@ set -euo pipefail
 #   CLAWQL_SKIP_WAIT_FOR_KYVERNO_ENDPOINTS — set to 1 to skip wait/restart gate (Kyverno webhook errors mid-upgrade otherwise)
 #   CLAWQL_SKIP_RANCHER_LIMA_MOUNT_RSHARED — set to 1 to skip automatic rdctl mount --make-rshared / before istio-cni (Rancher only)
 #   CLAWQL_SKIP_DOCKER_DESKTOP_MOUNT_RSHARED — set to 1 to skip automatic docker-run nsenter mount --make-rshared before istio-cni (Docker Desktop only)
+#   CLAWQL_SKIP_DOCKER_DESKTOP_CNI_HOST_NETWORK — set to 1 to skip istio-cni ambient.shareHostNetworkNamespace=true (Docker Desktop)
+#   CLAWQL_SKIP_ISTIO_ZTUNNEL_HOST_NETWORK_PATCH — set to 1 to skip post-Helm ztunnel DaemonSet hostNetwork patch (Docker Desktop)
 #   CLAWQL_ISTIO_LOCAL_COMPACT_RESOURCES — when 1 (default), lowers istiod / istio-cni / ztunnel CPU requests so
 #     ambient + ClawQL often fits a single ~4 CPU node (Rancher / Docker Desktop). Set 0 for upstream chart defaults.
 #     Also sets istiod rollingUpdate maxSurge=0 / maxUnavailable=1 so upgrades never need two pilot pods at once.
@@ -248,6 +250,11 @@ if [[ "${MODE}" == "ambient" ]]; then
     echo "WARN: CLAWQL_SKIP_DOCKER_DESKTOP_MOUNT_RSHARED=1 — istio-cni may fail: /var/run/netns is not a shared or slave mount."
   fi
 
+  if [[ "${eff_ctx}" == "docker-desktop" || "${eff_ctx}" == "docker-for-desktop" ]] && [[ "${CLAWQL_SKIP_DOCKER_DESKTOP_CNI_HOST_NETWORK:-0}" != "1" ]]; then
+    cni_helm_extra+=(--set "ambient.shareHostNetworkNamespace=true")
+    echo "    (Docker Desktop: istio-cni ambient.shareHostNetworkNamespace=true — stable CNI agent + registry client)"
+  fi
+
   echo "==> Helm: istio-cni (profile=ambient, namespace ${ISTIO_NS})"
   helm_ctx upgrade --install istio-cni istio/cni --namespace "${ISTIO_NS}" --version "${VER}" --set profile=ambient "${cni_helm_extra[@]}" --wait --timeout "${HELM_WAIT_TIMEOUT}"
 
@@ -264,6 +271,12 @@ if [[ "${MODE}" == "ambient" ]]; then
     echo "         kubectl --context \"${KUBE_CONTEXT:-}\" get pods -n ${ISTIO_NS} -o wide | grep ztunnel || true"
     echo "         kubectl --context \"${KUBE_CONTEXT:-}\" describe daemonset -n ${ISTIO_NS} ztunnel 2>/dev/null || true"
     exit 1
+  fi
+
+  if [[ "${eff_ctx}" == "docker-desktop" || "${eff_ctx}" == "docker-for-desktop" ]] && [[ "${CLAWQL_SKIP_ISTIO_ZTUNNEL_HOST_NETWORK_PATCH:-0}" != "1" ]]; then
+    echo "==> Docker Desktop: ztunnel DaemonSet → hostNetwork + ClusterFirstWithHostNet (cluster DNS before pod sandbox IP is ready)"
+    kubectl_ctx patch daemonset ztunnel -n "${ISTIO_NS}" --type=merge -p '{"spec":{"template":{"spec":{"hostNetwork":true,"dnsPolicy":"ClusterFirstWithHostNet"}}}}' >/dev/null 2>&1 || true
+    kubectl_ctx rollout status daemonset/ztunnel -n "${ISTIO_NS}" --timeout=300s >/dev/null 2>&1 || true
   fi
 else
   echo "==> Helm: istiod (default / sidecar dataplane)"

@@ -882,6 +882,11 @@ kyverno:
       - "ghcr.io/danielsmithdevelopment/clawql-panguard-mcp-bridge*"
       - "ghcr.io/danielsmithdevelopment/clawql-website*"
       - "ghcr.io/danielsmithdevelopment/clawql-dashboard*"
+    # Names of docker-registry Secrets in namespace **kyverno** used as `imageRegistryCredentials` for verifyImages
+    # (GHCR manifest/signature fetch). `make local-k8s-up` creates **clawql-kyverno-ghcr-pull** when
+    # `CLAWQL_KYVERNO_GHCR_PULL_TOKEN` or `GITHUB_TOKEN` / `GH_TOKEN` / `CLAWQL_GITHUB_TOKEN` is set; set
+    # `CLAWQL_GHCR_PULL_USERNAME` if not using `GITHUB_ACTOR`. Otherwise keep packages public per docs/security.
+    imageRegistrySecretNames: []
     cosign:
       subjectRegExp: "^https://github\\.com/danielsmithdevelopment/ClawQL/.*"
       issuerRegExp: "^https://token\\.actions\\.githubusercontent\\.com.*"

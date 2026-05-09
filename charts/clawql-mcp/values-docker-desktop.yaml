@@ -403,7 +403,9 @@ extraEnv:
     value: "1"
 
 # local-k8s-up: Kyverno verifies Cosign (keyless) for ClawQL GHCR images (mcp, bridge, website, dashboard) in this namespace.
-# Images must be signed in docker-publish.yml and the GHCR packages must allow anonymous manifest reads (public packages).
+# Images must be signed in docker-publish.yml. For private GHCR packages (or DENIED token responses), export a PAT
+# (GITHUB_TOKEN or CLAWQL_KYVERNO_GHCR_PULL_TOKEN) before `make local-k8s-up` so a kyverno/docker-registry secret is
+# created and **imageRegistrySecretNames** is set on the policy (see values.yaml). Alternatively make packages public.
 kyverno:
   imageSignaturePolicy:
     enabled: true

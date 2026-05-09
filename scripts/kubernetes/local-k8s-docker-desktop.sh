@@ -300,6 +300,17 @@ helm repo update >/dev/null
 # Single line: avoid `\` continuation bugs that surface as `--wait: command not found` (exit 127).
 helm_ctx upgrade --install kyverno kyverno/kyverno --version "${KYVERNO_CHART_VERSION}" --namespace kyverno --create-namespace "${KYVERNO_HELM_EXTRA[@]}" --wait --timeout 10m
 
+# Optional GHCR pull secret in **kyverno** so Cosign verifyImages can fetch manifests/signatures for private
+# packages (or when anonymous GHCR returns DENIED). Token: CLAWQL_KYVERNO_GHCR_PULL_TOKEN or GITHUB_TOKEN / GH_TOKEN / CLAWQL_GITHUB_TOKEN.
+HELM_KYVERNO_GHCR_ARGS=()
+# shellcheck disable=SC1091
+source "${ROOT}/scripts/kubernetes/lib/kyverno-ghcr-pull-secret.sh"
+if clawql_ensure_kyverno_ghcr_pull_secret; then
+  _ghcr_sec="${CLAWQL_KYVERNO_GHCR_SECRET_NAME:-clawql-kyverno-ghcr-pull}"
+  HELM_KYVERNO_GHCR_ARGS=(--set-json "kyverno.imageSignaturePolicy.imageRegistrySecretNames=[\"${_ghcr_sec}\"]")
+  echo "    Kyverno verifyImages will use registry secret: ${_ghcr_sec} (namespace kyverno)"
+fi
+
 if [[ "${INSTALL_INGRESS_NGINX}" == "1" ]]; then
   echo "==> Installing/upgrading ingress-nginx controller"
   helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx >/dev/null 2>&1 || true
@@ -344,7 +355,7 @@ if [[ "${INSTALLER}" == "helm" ]]; then
   set +e
   # set -u: empty-array expansion can trip nounset in some Bash builds; use ${arr[@]+"${arr[@]}"} guards.
   # Single line: avoid `\` continuation bugs that surface as `--wait: command not found` (exit 127).
-  helm_ctx upgrade --install "${RELEASE_NAME}" "${CHART}" --namespace "${NAMESPACE}" --create-namespace -f "${VALUES_LOCAL}" "${HELM_VAULT_ARGS[@]+"${HELM_VAULT_ARGS[@]}"}" "${HELM_QUICK_SET_ARGS[@]+"${HELM_QUICK_SET_ARGS[@]}"}" "${HELM_OFFLOAD_LOCALHOST_INGRESS_ARGS[@]+"${HELM_OFFLOAD_LOCALHOST_INGRESS_ARGS[@]}"}" "${HELM_MCP_SVC_TYPE_ARGS[@]+"${HELM_MCP_SVC_TYPE_ARGS[@]}"}" --wait --timeout "${HELM_TIMEOUT}"
+  helm_ctx upgrade --install "${RELEASE_NAME}" "${CHART}" --namespace "${NAMESPACE}" --create-namespace -f "${VALUES_LOCAL}" "${HELM_VAULT_ARGS[@]+"${HELM_VAULT_ARGS[@]}"}" "${HELM_QUICK_SET_ARGS[@]+"${HELM_QUICK_SET_ARGS[@]}"}" "${HELM_OFFLOAD_LOCALHOST_INGRESS_ARGS[@]+"${HELM_OFFLOAD_LOCALHOST_INGRESS_ARGS[@]}"}" "${HELM_MCP_SVC_TYPE_ARGS[@]+"${HELM_MCP_SVC_TYPE_ARGS[@]}"}" "${HELM_KYVERNO_GHCR_ARGS[@]+"${HELM_KYVERNO_GHCR_ARGS[@]}"}" --wait --timeout "${HELM_TIMEOUT}"
   HELM_EXIT=$?
   set -e
   if [[ "${HELM_EXIT}" -ne 0 ]]; then
@@ -360,6 +371,7 @@ if [[ "${INSTALLER}" == "helm" ]]; then
     echo "  kubectl delete clusterpolicy clawql-ghcr-cosign-keyless"
     echo "If conflict is svc/clawql-mcp-http .spec.type (kubectl-patch vs Helm): delete Service once, rerun:"
     echo "  kubectl -n ${NAMESPACE} delete svc clawql-mcp-http --ignore-not-found && make local-k8s-up"
+    echo "Kyverno denied GHCR (verifyImages): set a PAT in env (GITHUB_TOKEN or CLAWQL_KYVERNO_GHCR_PULL_TOKEN) and rerun so a kyverno/docker-registry secret is created, or make GHCR packages public (docs/security/image-signature-enforcement.md)."
     echo "One-shot bypass: helm upgrade --install ${RELEASE_NAME} ${CHART} -n ${NAMESPACE} -f ${VALUES_LOCAL}"
     echo "  --set-string vault.hostPath.path=... --set kyverno.imageSignaturePolicy.enabled=false"
     exit "${HELM_EXIT}"
