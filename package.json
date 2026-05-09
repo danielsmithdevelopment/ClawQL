@@ -142,6 +142,7 @@
     "overrides": {
         "@hono/node-server": "1.19.13",
         "brace-expansion": "5.0.5",
+        "fast-uri": "3.1.2",
         "ip-address": "10.1.1",
         "esbuild": "0.28.0",
         "hono": "4.12.16",
