@@ -11,6 +11,9 @@ set -euo pipefail
 #
 # Env:
 #   CLAWQL_LOCAL_K8S_ISTIO_MODE — required: ambient | sidecar
+#   CLAWQL_ISTIO_HELM_TIMEOUT — Helm --wait for Istio charts (base/istiod/cni/gateway/addons; default 25m).
+#     Cold Docker Desktop pulls often need >15m; ztunnel DaemonSet is the usual straggler.
+#   CLAWQL_ISTIO_ZTUNNEL_HELM_TIMEOUT — optional override for ztunnel only (defaults to CLAWQL_ISTIO_HELM_TIMEOUT).
 #   CLAWQL_ISTIO_VERSION — Helm chart version (default 1.29.2)
 #   CLAWQL_TARGET_NAMESPACE — namespace to enroll + optional STRICT policy (default clawql)
 #   CLAWQL_ISTIO_INSTALL_KIALI — 1 installs samples/addons prometheus + kiali (default 1)
@@ -70,7 +73,9 @@ EGRESS_GW_NS="${CLAWQL_ISTIO_EGRESS_GATEWAY_NAMESPACE:-istio-system}"
 INGRESS_GW_NS=istio-ingress
 INGRESS_GW_RELEASE=clawql-mcp-ingress
 ISTIO_NS=istio-system
-HELM_WAIT_TIMEOUT="${CLAWQL_ISTIO_HELM_TIMEOUT:-15m}"
+# 25m default: ztunnel + istio-cni DaemonSets often exceed 15m on first image pull (single-node Desktop).
+HELM_WAIT_TIMEOUT="${CLAWQL_ISTIO_HELM_TIMEOUT:-25m}"
+ZTUNNEL_HELM_WAIT_TIMEOUT="${CLAWQL_ISTIO_ZTUNNEL_HELM_TIMEOUT:-$HELM_WAIT_TIMEOUT}"
 ISTIO_COMPACT="${CLAWQL_ISTIO_LOCAL_COMPACT_RESOURCES:-1}"
 
 # Optional extra Helm --set flags (local single-node: default compact requests so istiod schedules).
@@ -226,8 +231,18 @@ if [[ "${MODE}" == "ambient" ]]; then
   echo "==> Helm: istio-cni (profile=ambient, namespace ${ISTIO_NS})"
   helm_ctx upgrade --install istio-cni istio/cni --namespace "${ISTIO_NS}" --version "${VER}" --set profile=ambient "${cni_helm_extra[@]}" --wait --timeout "${HELM_WAIT_TIMEOUT}"
 
-  echo "==> Helm: ztunnel"
-  helm_ctx upgrade --install ztunnel istio/ztunnel --namespace "${ISTIO_NS}" --version "${VER}" "${ztunnel_helm_extra[@]}" --wait --timeout "${HELM_WAIT_TIMEOUT}"
+  echo "==> Helm: ztunnel (DaemonSet — first image pull can be slow; timeout ${ZTUNNEL_HELM_WAIT_TIMEOUT}; extend CLAWQL_ISTIO_HELM_TIMEOUT or CLAWQL_ISTIO_ZTUNNEL_HELM_TIMEOUT)"
+  if ! helm_ctx upgrade --install ztunnel istio/ztunnel --namespace "${ISTIO_NS}" --version "${VER}" "${ztunnel_helm_extra[@]}" --wait --timeout "${ZTUNNEL_HELM_WAIT_TIMEOUT}"; then
+    echo ""
+    echo "ERROR: ztunnel Helm install failed (--wait timeout or chart error)."
+    echo "       Typical on Docker Desktop: pulling the ztunnel image while istiod/CNI already claimed CPU/RAM."
+    echo "       Retry: make local-k8s-up"
+    echo "       Or allow longer wait: CLAWQL_ISTIO_ZTUNNEL_HELM_TIMEOUT=45m make local-k8s-up"
+    echo "       Inspect:"
+    echo "         kubectl --context \"${KUBE_CONTEXT:-}\" get pods -n ${ISTIO_NS} -o wide | grep ztunnel || true"
+    echo "         kubectl --context \"${KUBE_CONTEXT:-}\" describe daemonset -n ${ISTIO_NS} ztunnel 2>/dev/null || true"
+    exit 1
+  fi
 else
   echo "==> Helm: istiod (default / sidecar dataplane)"
   if [[ "${ISTIO_COMPACT}" == "1" ]]; then

@@ -29,6 +29,7 @@ set -euo pipefail
 # VirtualServices in docker/istio/docker-desktop/clawql-localhost-vs-*.yaml route *.localhost when nginx is skipped.
 #
 # Optional: CLAWQL_HELM_TIMEOUT — helm --wait timeout (defaults: 45m full stack, 8m quick stack).
+# Optional: CLAWQL_ISTIO_HELM_TIMEOUT / CLAWQL_ISTIO_ZTUNNEL_HELM_TIMEOUT — Istio sub-chart --wait (see install-istio-docker-desktop.sh; ztunnel often needs the extra margin).
 # Optional: CLAWQL_LOCAL_K8S_FULL_STACK=0 — quick MCP+UI only (skips Onyx/Flink/pipeline/NATS; short helm --wait).
 #
 # Optional: CLAWQL_KYVERNO_CHART_VERSION — Kyverno Helm chart version (default 3.7.2).
