@@ -6,6 +6,10 @@
 # Fix: enter the VM pid namespace and run mount --make-rshared on / and /run.
 # Upstream context: https://github.com/istio/istio/issues/54865
 #
+# Some Desktop images ship /etc/cni/net.d/99-loopback.conf without a top-level "name"
+# field; kubelet then fails pod sandboxes with: plugin type="loopback" … missing network name.
+# We rewrite that file when "name" is absent.
+#
 # Usage: source this file, then clawql_docker_desktop_mount_make_rshared
 # Opt out: CLAWQL_SKIP_DOCKER_DESKTOP_MOUNT_RSHARED=1
 
@@ -25,22 +29,26 @@ clawql_docker_desktop_mount_make_rshared() {
     return 1
   fi
 
-  echo "==> Docker Desktop Linux VM: mount --make-rshared / and /run (istio-cni /var/run/netns propagation)"
+  echo "==> Docker Desktop Linux VM: mount --make-rshared / and /run + validate loopback CNI (istio-cni / pod sandboxes)"
 
   _clawql_dd_nsenter_mount() {
     docker run --rm --privileged --pid=host "$@"
   }
 
-  if _clawql_dd_nsenter_mount busybox:1.36 nsenter -t 1 -m -u -n -i sh -c 'mount --make-rshared / && mount --make-rshared /run'; then
+  # One line so every nsenter fallback can pass the same -c string reliably.
+  # shellcheck disable=SC2016
+  _clawql_dd_vm_inner='mount --make-rshared / && mount --make-rshared /run && LB=/etc/cni/net.d/99-loopback.conf && if [ -f "$LB" ] && ! grep -q "\"name\"" "$LB" 2>/dev/null; then printf "%s\n" "{\"cniVersion\":\"0.3.1\",\"name\":\"loopback\",\"type\":\"loopback\"}" >"$LB" && echo "    repaired $LB (loopback CNI requires a top-level name field)"; fi'
+
+  if _clawql_dd_nsenter_mount busybox:1.36 nsenter -t 1 -m -u -n -i sh -c "${_clawql_dd_vm_inner}"; then
     return 0
   fi
   echo "    busybox nsenter failed; retrying with alpine util-linux…"
   if docker run --rm --privileged --pid=host alpine:3.19 sh -c \
-    'apk add --no-cache util-linux >/dev/null && nsenter -t 1 -m -u -n -i sh -c "mount --make-rshared / && mount --make-rshared /run"'; then
+    "apk add --no-cache util-linux >/dev/null && nsenter -t 1 -m -u -n -i sh -c $(printf '%q' "${_clawql_dd_vm_inner}")"; then
     return 0
   fi
   echo "    alpine nsenter failed; retrying with justincormack/nsenter1…"
-  if docker run --rm --privileged --pid=host justincormack/nsenter1 sh -c 'mount --make-rshared / && mount --make-rshared /run'; then
+  if docker run --rm --privileged --pid=host justincormack/nsenter1 sh -c "${_clawql_dd_vm_inner}"; then
     return 0
   fi
 
