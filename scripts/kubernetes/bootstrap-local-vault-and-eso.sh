@@ -49,10 +49,24 @@ helm_ctx() {
   fi
 }
 
-echo "==> Wait for Vault StatefulSet / pod (${NS}/${VAULT_STS})"
-if ! kubectl_ctx rollout status "statefulset/${VAULT_STS}" -n "${NS}" --timeout=300s; then
-  echo "    rollout status unavailable for this strategy; waiting on pod readiness instead"
-  kubectl_ctx wait --for=condition=Ready "pod/${VAULT_STS}-0" -n "${NS}" --timeout=300s
+echo "==> Wait for Vault pod (${NS}/${VAULT_STS}-0)"
+if kubectl_ctx rollout status "statefulset/${VAULT_STS}" -n "${NS}" --timeout=300s 2>/dev/null; then
+  :
+else
+  echo "    rollout status unavailable for this strategy; waiting for pod phase Running (not Ready — Vault may be sealed)"
+  vault_phase=""
+  for _ in $(seq 1 60); do
+    vault_phase="$(kubectl_ctx get pod "${VAULT_STS}-0" -n "${NS}" -o jsonpath='{.status.phase}' 2>/dev/null || true)"
+    if [[ "${vault_phase}" == "Running" ]]; then
+      echo "    Vault pod is Running (may still be sealed — continuing to init/unseal)."
+      break
+    fi
+    sleep 5
+  done
+  if [[ "${vault_phase}" != "Running" ]]; then
+    echo "ERROR: Vault pod ${VAULT_STS}-0 did not reach Running in time (last phase: '${vault_phase:-unknown}')"
+    exit 1
+  fi
 fi
 
 if [[ "${SKIP_ESO_INSTALL:-0}" != "1" ]]; then
@@ -107,14 +121,14 @@ sealed="$(echo "${STATUS_JSON}" | python3 -c "import json,sys; print(json.load(s
 if [[ "${initialized}" == "False" ]]; then
   echo "    Initializing Vault (1 unseal key) and recording bootstrap Secret/${NS}/${BOOTSTRAP_SECRET}"
   INIT_JSON="$(vault_exec sh -ec "export VAULT_ADDR=http://127.0.0.1:8200; vault operator init -key-shares=1 -key-threshold=1 -format=json")"
-  ROOT="$(echo "${INIT_JSON}" | python3 -c "import json,sys; print(json.load(sys.stdin)['root_token'])")"
+  VAULT_INIT_ROOT_TOKEN="$(echo "${INIT_JSON}" | python3 -c "import json,sys; print(json.load(sys.stdin)['root_token'])")"
   UNSEAL_HEX="$(echo "${INIT_JSON}" | python3 -c "import json,sys; print(json.load(sys.stdin)['unseal_keys_hex'][0])")"
   kubectl_ctx create secret generic "${BOOTSTRAP_SECRET}" -n "${NS}" \
-    --from-literal=root-token="${ROOT}" \
+    --from-literal=root-token="${VAULT_INIT_ROOT_TOKEN}" \
     --from-literal=unseal-key="${UNSEAL_HEX}" \
     --dry-run=client -o yaml | kubectl_ctx apply -f -
   vault_exec env VAULT_ADDR=http://127.0.0.1:8200 vault operator unseal "${UNSEAL_HEX}"
-  TOKEN="${ROOT}"
+  TOKEN="${VAULT_INIT_ROOT_TOKEN}"
 elif [[ "${sealed}" == "True" ]]; then
   echo "    Unsealing Vault using Secret/${NS}/${BOOTSTRAP_SECRET}"
   if ! kubectl_ctx get secret "${BOOTSTRAP_SECRET}" -n "${NS}" >/dev/null 2>&1; then
