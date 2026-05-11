@@ -39,7 +39,11 @@ const nextConfig = {
   outputFileTracingRoot: __dirname,
   pageExtensions: ['js', 'jsx', 'ts', 'tsx', 'mdx'],
   outputFileTracingIncludes: {
-    '/**/*': ['./src/app/**/*.mdx'],
+    '/**/*': [
+      './src/app/**/*.mdx',
+      './src/generated/security-training/**/*.mdx',
+      './src/generated/security-training/sitemap-paths.json',
+    ],
   },
   // Tree-shake heavy barrel imports — smaller RSC + client bundle (helps Workers + hydration).
   experimental: {

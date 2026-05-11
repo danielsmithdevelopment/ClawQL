@@ -1,26 +1,3 @@
----
-title: "Sandboxing Options and Trade-offs: Kata, gVisor, Seatbelt, Docker, and Cloudflare Workers"
-series: "Agentic AI Security Curriculum"
-course_type: "instructor-ready / self-study"
-audience: "Security architects, platform engineers, and teams adopting AI agents"
-estimated_minutes: 35
-level: intermediate
-tags:
-  - sandboxing
-  - containers
-  - runtime
-  - kata-containers
-  - gvisor
-part: 8
-total_parts: 20
-date: "May 2026"
-slug: "sandboxing-kata-gvisor-tradeoffs"
-canonical_path: "/security/best-practices/sandboxing-kata-gvisor-tradeoffs"
-prev: "rbac-mtls-istio-service-mesh"
-next: "mcp-runtime-protection-panguard-atr"
-description: "Compare isolation technologies (VM-backed runtimes, user-space kernels, OS sandboxes)."
----
-
 # Sandboxing Options and Trade-offs: Kata, gVisor, Seatbelt, Docker, and Cloudflare Workers
 
 _Module 8 of 20 · Agentic AI Security Curriculum · May 2026_
@@ -86,13 +63,13 @@ spec:
     - name: require-kata
       match:
         resources:
-          kinds: ["Pod"]
-          namespaces: ["openclaw", "clawql"]
+          kinds: ['Pod']
+          namespaces: ['openclaw', 'clawql']
       validate:
-        message: "MCP and sandbox workloads must use Kata runtime"
+        message: 'MCP and sandbox workloads must use Kata runtime'
         pattern:
           spec:
-            runtimeClassName: "kata"
+            runtimeClassName: 'kata'
 ```
 
 ### When to Use Lighter Options

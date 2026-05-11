@@ -57,6 +57,13 @@ export default function Search(nextConfig = {}) {
             this.addContextDependency(appDir)
 
             let files = glob.sync('**/*.mdx', { cwd: appDir })
+            let trainingDir = path.resolve(
+              './src/generated/security-training/bodies',
+            )
+            if (fs.existsSync(trainingDir)) {
+              this.addContextDependency(trainingDir)
+            }
+
             let data = files.map((file) => {
               let url = '/' + file.replace(/(^|\/)page\.mdx$/, '')
               let mdx = fs.readFileSync(path.join(appDir, file), 'utf8')
@@ -73,6 +80,25 @@ export default function Search(nextConfig = {}) {
 
               return { url, sections }
             })
+
+            if (fs.existsSync(trainingDir)) {
+              let trainingFiles = glob.sync('*.mdx', { cwd: trainingDir })
+              for (let tf of trainingFiles) {
+                let slug = tf.replace(/\.mdx$/, '')
+                let cacheKey = 'training:' + tf
+                let mdx = fs.readFileSync(path.join(trainingDir, tf), 'utf8')
+                let url = '/security/best-practices/' + slug
+                let sections = []
+                if (cache.get(cacheKey)?.[0] === mdx) {
+                  sections = cache.get(cacheKey)[1]
+                } else {
+                  let vfile = { value: mdx, sections }
+                  processor.runSync(processor.parse(vfile), vfile)
+                  cache.set(cacheKey, [mdx, sections])
+                }
+                data.push({ url, sections })
+              }
+            }
 
             // When this file is imported within the application
             // the following module is loaded:

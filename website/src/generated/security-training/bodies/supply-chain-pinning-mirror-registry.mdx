@@ -1,25 +1,3 @@
----
-title: "Supply Chain Security: Why Pinning Versions and Running Your Own Mirror Registry Matters"
-series: "Agentic AI Security Curriculum"
-course_type: "instructor-ready / self-study"
-audience: "Security architects, platform engineers, and teams adopting AI agents"
-estimated_minutes: 35
-level: foundational
-tags:
-  - supply-chain
-  - containers
-  - cicd
-  - sbom
-  - signing
-part: 1
-total_parts: 20
-date: "May 2026"
-slug: "supply-chain-pinning-mirror-registry"
-canonical_path: "/security/best-practices/supply-chain-pinning-mirror-registry"
-next: "golden-images-distroless-pipelines"
-description: "Explain why the software supply chain is a primary risk for agentic AI and tool-calling platforms."
----
-
 # Supply Chain Security: Why Pinning Versions and Running Your Own Mirror Registry Matters
 
 _Module 1 of 20 · Agentic AI Security Curriculum · May 2026_
@@ -89,7 +67,7 @@ Helm umbrella charts, GitOps, or an in-cluster operator often enforce equivalent
 ```yaml
 security:
   supplyChain:
-    registryMirror: "registry.internal.example"
+    registryMirror: 'registry.internal.example'
     allowlistOnly: true
     requireDigest: true
     requireCosign: true

@@ -1,25 +1,3 @@
----
-title: "GPU and Resource Protection: Preventing Rogue Agent Denial-of-Service"
-series: "Agentic AI Security Curriculum"
-course_type: "instructor-ready / self-study"
-audience: "Security architects, platform engineers, and teams adopting AI agents"
-estimated_minutes: 25
-level: intermediate
-tags:
-  - kubernetes
-  - gpu
-  - resource-guards
-  - denial-of-service
-part: 15
-total_parts: 20
-date: "May 2026"
-slug: "gpu-resource-protection"
-canonical_path: "/security/best-practices/gpu-resource-protection"
-prev: "incident-response-recovery-picerl"
-next: "workstation-local-development-security"
-description: "Apply quotas, limits, and scheduling policies to protect shared GPU pools."
----
-
 # GPU and Resource Protection: Preventing Rogue Agent Denial-of-Service
 
 _Module 15 of 20 · Agentic AI Security Curriculum · May 2026_
@@ -60,8 +38,8 @@ metadata:
   namespace: openclaw
 spec:
   hard:
-    requests.nvidia.com/gpu: "4" # Set to your actual maximum intended concurrency
-    limits.nvidia.com/gpu: "4"
+    requests.nvidia.com/gpu: '4' # Set to your actual maximum intended concurrency
+    limits.nvidia.com/gpu: '4'
 ```
 
 **Best Practice**: Set the quota to your real maximum agent concurrency (not 1). The goal is a safety ceiling, not artificial restriction. Pair this with a LimitRange to enforce per-pod limits:
