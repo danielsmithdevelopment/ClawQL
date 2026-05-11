@@ -149,6 +149,9 @@ enableSandbox: false
 sandboxDocker:
   enabled: false
   hostSocketPath: /var/run/docker.sock
+  # When true, docker-sock hostPath uses type: Socket (kubelet rejects if the path is not a socket). Docker Desktop
+  # Kubernetes sometimes fails this check even with a valid socket — set false in values-docker-desktop.yaml.
+  enforceHostPathSocketType: true
   # https://download.docker.com/linux/static/stable/<arch>/docker-<version>.tgz
   staticCliVersion: "27.4.1"
   initImage: curlimages/curl:8.11.1

@@ -244,7 +244,14 @@ spec:
         - name: docker-sock
           hostPath:
             path: {{ .Values.sandboxDocker.hostSocketPath | quote }}
+            {{- /* Sprig `default` treats false as "empty" — use hasKey so explicit false omits type (Docker Desktop). */}}
+            {{- $enforceSocketType := true }}
+            {{- if hasKey .Values.sandboxDocker "enforceHostPathSocketType" }}
+            {{- $enforceSocketType = .Values.sandboxDocker.enforceHostPathSocketType }}
+            {{- end }}
+            {{- if $enforceSocketType }}
             type: Socket
+            {{- end }}
         {{- end }}
         {{- /* Volume "obsidian-vault": Obsidian Markdown memory (.Values.vault / persistence), not HashiCorp Vault — #161 */}}
         - name: obsidian-vault

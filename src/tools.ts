@@ -1,7 +1,7 @@
 /**
  * tools.ts
  *
- * Core tools: search (spec discovery), execute (GraphQL-backed REST call), audit (in-process ring buffer; GitHub #89 — not durable; use memory_ingest for compliance trails), cache (in-process LRU KV; GitHub #75 — not persisted; use memory_* for vault).
+ * Core tools: search, execute, then immediately cache + audit (non-negotiable; must not follow optional branches that could throw). audit = in-process ring buffer (#89); cache = in-process LRU KV (#75).
  * Optional: **`sandbox_exec`** when **`CLAWQL_ENABLE_SANDBOX=1`** — bridge / Seatbelt / Docker (`CLAWQL_SANDBOX_BACKEND`).
  * memory_ingest / memory_recall — Obsidian vault notes (default on; set CLAWQL_ENABLE_MEMORY=0 to hide; writable vault).
  * Optional: ingest_external_knowledge — bulk Markdown + optional URL fetch (GitHub #40); default on; **`CLAWQL_ENABLE_DOCUMENTS=0`** to hide.
@@ -461,6 +461,11 @@ export function registerTools(server: McpServer) {
     wrapMcpToolHandler("execute", handleClawqlExecuteToolInput)
   );
 
+  // Non-negotiable Core tools: register immediately after search/execute so optional branches
+  // below cannot throw and skip cache/audit (#89 #75).
+  server.tool("cache", cacheToolSchema, wrapMcpToolHandler("cache", handleCacheToolInput));
+  server.tool("audit", auditToolSchema, wrapMcpToolHandler("audit", handleAuditToolInput));
+
   if (getClawqlOptionalToolFlags().enableSandbox) {
     const sandboxCodeSchema = {
       code: z
@@ -637,10 +642,6 @@ export function registerTools(server: McpServer) {
       wrapMcpToolHandler("ingest_external_knowledge", handleIngestExternalKnowledgeToolInput)
     );
   }
-
-  server.tool("cache", cacheToolSchema, wrapMcpToolHandler("cache", handleCacheToolInput));
-
-  server.tool("audit", auditToolSchema, wrapMcpToolHandler("audit", handleAuditToolInput));
 
   if (getClawqlOptionalToolFlags().enableSchedule) {
     server.tool(

@@ -16,6 +16,7 @@
 #   VAULT_LOCAL_BOOTSTRAP_SECRET  default clawql-vault-local-bootstrap — holds root-token + unseal-key for standalone PVC (Docker Desktop)
 #   SKIP_ESO_INSTALL    set to 1 if external-secrets is already installed
 #   SKIP_VAULT_SEED     set to 1 to skip KV placeholder write (policy/auth still applied)
+#   SKIP_ESO_AMBIENT_ENFORCE  set to 1 to skip labeling ESO namespace for Istio ambient when HELM_NAMESPACE uses ambient dataplane
 
 set -euo pipefail
 
@@ -31,6 +32,7 @@ NS="${HELM_NAMESPACE:-clawql}"
 ESO_NS="${EXTERNAL_SECRETS_NAMESPACE:-external-secrets}"
 TOKEN="${VAULT_DEV_ROOT_TOKEN:-root}"
 VAULT_STS="${REL}-hashicorpvault"
+vault_pod="${VAULT_STS}-0"
 POLICY_FILE="${ROOT}/docs/deployment/vault-policy-clawql-eso-read.hcl"
 
 kubectl_ctx() {
@@ -49,10 +51,28 @@ helm_ctx() {
   fi
 }
 
-echo "==> Wait for Vault StatefulSet / pod (${NS}/${VAULT_STS})"
-if ! kubectl_ctx rollout status "statefulset/${VAULT_STS}" -n "${NS}" --timeout=300s; then
-  echo "    rollout status unavailable for this strategy; waiting on pod readiness instead"
-  kubectl_ctx wait --for=condition=Ready "pod/${VAULT_STS}-0" -n "${NS}" --timeout=300s
+echo "==> Wait for Vault pod (${NS}/${vault_pod})"
+# Vault Helm StatefulSet often uses updateStrategy.type=OnDelete — `kubectl rollout status` is not supported.
+# Do not wait for condition=Ready: readiness stays false while Vault is sealed; this script unseals next.
+_deadline=$((SECONDS + 300))
+_vault_phase=""
+while [[ "${SECONDS}" -lt "${_deadline}" ]]; do
+  _vault_phase="$(kubectl_ctx get pod "${vault_pod}" -n "${NS}" -o jsonpath='{.status.phase}' 2>/dev/null || true)"
+  if [[ "${_vault_phase}" == "Running" ]]; then
+    echo "    Vault pod is Running (may still be sealed — continuing to init/unseal)."
+    break
+  fi
+  if [[ "${_vault_phase}" == "Failed" ]]; then
+    echo "ERROR: Vault pod ${vault_pod} is Failed"
+    kubectl_ctx describe pod "${vault_pod}" -n "${NS}" | tail -40 || true
+    exit 1
+  fi
+  sleep 2
+done
+if [[ "${_vault_phase}" != "Running" ]]; then
+  echo "ERROR: Vault pod ${vault_pod} did not reach Running within 300s (last phase: ${_vault_phase:-missing})"
+  kubectl_ctx get pods -n "${NS}" -l "app.kubernetes.io/name=vault" -o wide 2>/dev/null || kubectl_ctx get pod -n "${NS}" "${vault_pod}" -o wide 2>/dev/null || true
+  exit 1
 fi
 
 if [[ "${SKIP_ESO_INSTALL:-0}" != "1" ]]; then
@@ -73,10 +93,26 @@ else
   echo "==> SKIP_ESO_INSTALL=1 — assume External Secrets is installed"
 fi
 
+# Istio ambient: if Vault's namespace is in the mesh but ESO's namespace is not, ztunnel resets plain TCP to Vault
+# (ClusterSecretStore stays InvalidProviderConfig / connection reset; ExternalSecret never syncs).
+if [[ "${SKIP_ESO_AMBIENT_ENFORCE:-0}" != "1" ]]; then
+  ns_dataplane_mode() {
+    kubectl_ctx get namespace "$1" -o json 2>/dev/null | python3 -c "import json,sys; d=json.load(sys.stdin).get('metadata',{}).get('labels') or {}; print(d.get('istio.io/dataplane-mode',''))" || true
+  }
+  clawql_dp="$(ns_dataplane_mode "${NS}")"
+  eso_dp="$(ns_dataplane_mode "${ESO_NS}")"
+  if [[ "${clawql_dp}" == "ambient" && "${eso_dp}" != "ambient" ]]; then
+    echo "==> Istio ambient on ${NS}: label namespace ${ESO_NS} with istio.io/dataplane-mode=ambient (ESO → Vault)"
+    kubectl_ctx label namespace "${ESO_NS}" istio.io/dataplane-mode=ambient --overwrite
+    if kubectl_ctx get deploy external-secrets -n "${ESO_NS}" >/dev/null 2>&1; then
+      kubectl_ctx rollout restart deployment/external-secrets -n "${ESO_NS}" || true
+      kubectl_ctx rollout status deployment/external-secrets -n "${ESO_NS}" --timeout=180s || true
+    fi
+  fi
+fi
+
 echo "==> TokenReview RBAC for Vault server ServiceAccount"
 kubectl_ctx apply -f "${ROOT}/docs/deployment/vault-kubernetes-auth-tokenreview-rbac.yaml"
-
-vault_pod="${VAULT_STS}-0"
 
 vault_exec() {
   kubectl_ctx exec -n "${NS}" "${vault_pod}" -c vault -- "$@"
@@ -107,14 +143,15 @@ sealed="$(echo "${STATUS_JSON}" | python3 -c "import json,sys; print(json.load(s
 if [[ "${initialized}" == "False" ]]; then
   echo "    Initializing Vault (1 unseal key) and recording bootstrap Secret/${NS}/${BOOTSTRAP_SECRET}"
   INIT_JSON="$(vault_exec sh -ec "export VAULT_ADDR=http://127.0.0.1:8200; vault operator init -key-shares=1 -key-threshold=1 -format=json")"
-  ROOT="$(echo "${INIT_JSON}" | python3 -c "import json,sys; print(json.load(sys.stdin)['root_token'])")"
+  # Never assign Vault's root token to ROOT — ROOT is the repo path for kubectl apply -f "${ROOT}/docs/..." below.
+  VAULT_INIT_ROOT_TOKEN="$(echo "${INIT_JSON}" | python3 -c "import json,sys; print(json.load(sys.stdin)['root_token'])")"
   UNSEAL_HEX="$(echo "${INIT_JSON}" | python3 -c "import json,sys; print(json.load(sys.stdin)['unseal_keys_hex'][0])")"
   kubectl_ctx create secret generic "${BOOTSTRAP_SECRET}" -n "${NS}" \
-    --from-literal=root-token="${ROOT}" \
+    --from-literal=root-token="${VAULT_INIT_ROOT_TOKEN}" \
     --from-literal=unseal-key="${UNSEAL_HEX}" \
     --dry-run=client -o yaml | kubectl_ctx apply -f -
   vault_exec env VAULT_ADDR=http://127.0.0.1:8200 vault operator unseal "${UNSEAL_HEX}"
-  TOKEN="${ROOT}"
+  TOKEN="${VAULT_INIT_ROOT_TOKEN}"
 elif [[ "${sealed}" == "True" ]]; then
   echo "    Unsealing Vault using Secret/${NS}/${BOOTSTRAP_SECRET}"
   if ! kubectl_ctx get secret "${BOOTSTRAP_SECRET}" -n "${NS}" >/dev/null 2>&1; then
