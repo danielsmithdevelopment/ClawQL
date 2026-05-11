@@ -16,6 +16,7 @@
 #   VAULT_LOCAL_BOOTSTRAP_SECRET  default clawql-vault-local-bootstrap — holds root-token + unseal-key for standalone PVC (Docker Desktop)
 #   SKIP_ESO_INSTALL    set to 1 if external-secrets is already installed
 #   SKIP_VAULT_SEED     set to 1 to skip KV placeholder write (policy/auth still applied)
+#   SKIP_ESO_AMBIENT_ENFORCE  set to 1 to skip labeling ESO namespace for Istio ambient when HELM_NAMESPACE uses ambient dataplane
 
 set -euo pipefail
 
@@ -85,6 +86,24 @@ if [[ "${SKIP_ESO_INSTALL:-0}" != "1" ]]; then
   fi
 else
   echo "==> SKIP_ESO_INSTALL=1 — assume External Secrets is installed"
+fi
+
+# Istio ambient: if Vault's namespace is in the mesh but ESO's namespace is not, ztunnel resets plain TCP to Vault
+# (ClusterSecretStore stays InvalidProviderConfig / connection reset; ExternalSecret never syncs).
+if [[ "${SKIP_ESO_AMBIENT_ENFORCE:-0}" != "1" ]]; then
+  ns_dataplane_mode() {
+    kubectl_ctx get namespace "$1" -o json 2>/dev/null | python3 -c "import json,sys; d=json.load(sys.stdin).get('metadata',{}).get('labels') or {}; print(d.get('istio.io/dataplane-mode',''))" || true
+  }
+  clawql_dp="$(ns_dataplane_mode "${NS}")"
+  eso_dp="$(ns_dataplane_mode "${ESO_NS}")"
+  if [[ "${clawql_dp}" == "ambient" && "${eso_dp}" != "ambient" ]]; then
+    echo "==> Istio ambient on ${NS}: label namespace ${ESO_NS} with istio.io/dataplane-mode=ambient (ESO → Vault)"
+    kubectl_ctx label namespace "${ESO_NS}" istio.io/dataplane-mode=ambient --overwrite
+    if kubectl_ctx get deploy external-secrets -n "${ESO_NS}" >/dev/null 2>&1; then
+      kubectl_ctx rollout restart deployment/external-secrets -n "${ESO_NS}" || true
+      kubectl_ctx rollout status deployment/external-secrets -n "${ESO_NS}" --timeout=180s || true
+    fi
+  fi
 fi
 
 echo "==> TokenReview RBAC for Vault server ServiceAccount"
