@@ -113,10 +113,10 @@ onyx:
     resources:
       requests:
         cpu: 100m
-        memory: 512Mi
+        memory: 768Mi
       limits:
-        cpu: "1"
-        memory: 1536Mi
+        cpu: "2"
+        memory: 3Gi
   minio:
     persistence:
       enabled: true
@@ -128,6 +128,10 @@ onyx:
         cpu: "1"
         memory: 1Gi
   dragonfly:
+    image:
+      repository: ghcr.io/dragonflydb/dragonfly
+      tag: v1.37.2
+      pullPolicy: IfNotPresent
     resources:
       requests:
         cpu: 15m
@@ -166,6 +170,11 @@ ouroborosPostgres:
 
 nats:
   enabled: true
+  image:
+    # Google mirror of Docker Hub — fewer "short read" EOF pulls on Docker Desktop than registry-1.docker.io.
+    repository: mirror.gcr.io/library/nats
+    tag: "2.10.17-alpine"
+    pullPolicy: IfNotPresent
   resources:
     requests:
       cpu: 25m
@@ -176,6 +185,10 @@ nats:
 
 flink:
   enabled: true
+  image:
+    repository: mirror.gcr.io/library/flink
+    tag: "1.19.1-scala_2.12-java17"
+    pullPolicy: IfNotPresent
   # Flink 1.19+ enforces minimum JVM/network fractions; 768m TM process violates them (IllegalConfigurationException).
   # Config only via FLINK_PROPERTIES (no read-only flink-conf.yaml mount — entrypoint must rewrite conf).
   jobManagerMemoryProcessSize: "1024m"
@@ -337,6 +350,8 @@ hashicorpvault:
 sandboxDocker:
   enabled: true
   runAsRootForDockerSocket: true
+  # Docker Desktop kubelet often fails hostPath type: Socket on /var/run/docker.sock (false negative).
+  enforceHostPathSocketType: false
 
 documentPipeline:
   tika:
@@ -389,6 +404,10 @@ stores:
         cpu: 500m
         memory: 768Mi
   dragonfly:
+    image:
+      repository: ghcr.io/dragonflydb/dragonfly
+      tag: v1.37.2
+      pullPolicy: IfNotPresent
     resources:
       requests:
         cpu: 15m

@@ -1,5 +1,7 @@
 # Build context for `docker build -f docker/Dockerfile .`
 node_modules
+# Workspace installs under packages/* conflict with `COPY packages ./packages` in the Dockerfile.
+packages/**/node_modules
 dist
 .git
 .github

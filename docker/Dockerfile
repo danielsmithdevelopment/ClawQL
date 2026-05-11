@@ -21,7 +21,10 @@ RUN npm ci --ignore-scripts
 COPY tsconfig.json ./
 COPY src ./src
 COPY packages ./packages
-RUN npm run build && npm prune --omit=dev
+RUN npm run build \
+  && grep -qF 'server.tool("cache"' dist/tools.js \
+  && grep -qF 'server.tool("audit"' dist/tools.js \
+  && npm prune --omit=dev
 
 COPY providers ./providers
 COPY bin ./bin
