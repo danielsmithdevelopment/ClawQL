@@ -221,31 +221,24 @@ export type {
   MemoryATRClaims,
   LendingVertical,
   ProvenanceRecord,
-} from './types/memory'
+} from "./types/memory";
 
 export type {
   SpecKind,
   SpecSource,
   LoadedSpec, // from multi-protocol guide
   ProxyPluginMetadata, // NEW in v2.0 for MCP wrapper
-} from './types/specs'
+} from "./types/specs";
 
-export type {
-  ATRClaims,
-  AuditEvent,
-  CacheEntry,
-  ErrorCode,
-  Plugin,
-  MCPTool,
-} from './types/core'
+export type { ATRClaims, AuditEvent, CacheEntry, ErrorCode, Plugin, MCPTool } from "./types/core";
 
 // Utilities
-export { computeMerkleRoot, verifyMerkleRoot } from './merkle'
-export { CuckooFilter } from './cuckoo'
-export { createAuditRingBuffer } from './audit'
-export { createCache } from './cache'
-export { ClawQLError, ErrorCodes } from './errors'
-export { generateId, hashContent, normalizeOperationId } from './utils'
+export { computeMerkleRoot, verifyMerkleRoot } from "./merkle";
+export { CuckooFilter } from "./cuckoo";
+export { createAuditRingBuffer } from "./audit";
+export { createCache } from "./cache";
+export { ClawQLError, ErrorCodes } from "./errors";
+export { generateId, hashContent, normalizeOperationId } from "./utils";
 ```
 
 **`normalizeOperationId` — double-underscore separator (colons break MCP clients):**
@@ -256,14 +249,8 @@ export { generateId, hashContent, normalizeOperationId } from './utils'
 // fabric__autoLendingConsortium__IssueLoan
 // graph__aaveLending__loans
 // mcp-proxy__goose__execute
-export function normalizeOperationId(
-  kind: string,
-  provider: string,
-  operation: string,
-): string {
-  return [kind, provider, operation]
-    .map((s) => s.replace(/[^a-zA-Z0-9]/g, '_'))
-    .join('__')
+export function normalizeOperationId(kind: string, provider: string, operation: string): string {
+  return [kind, provider, operation].map((s) => s.replace(/[^a-zA-Z0-9]/g, "_")).join("__");
 }
 ```
 
@@ -728,17 +715,17 @@ Each vertical implements the Plugin interface from clawql-core and registers dom
 
 ```ts
 // packages/clawql-lending/src/index.ts
-import { registerPlugin } from 'clawql-api'
+import { registerPlugin } from "clawql-api";
 
 registerPlugin({
-  provider: 'lending',
-  kind: 'native-vertical',
+  provider: "lending",
+  kind: "native-vertical",
   operations: {
     /* underwriting, document analysis, etc. */
   },
-  capabilities: ['loan-underwriting', 'kyc', 'collateral-analysis'],
+  capabilities: ["loan-underwriting", "kyc", "collateral-analysis"],
   priority: 90,
-})
+});
 ```
 
 All verticals share the same document pipeline, memory layer, and Ouroboros decisioning loop. Fabric integration is an optional peer dependency.
@@ -800,11 +787,11 @@ Use cases: Faculty productivity, adaptive learning, course content
 > **License Requirement:** Requires a valid MATLAB license installed on the host machine. MATLAB is proprietary software (MathWorks). This package provides MCP wrappers that invoke MATLAB’s Engine API or Compiler SDK — it cannot function without a licensed MATLAB executable at `CLAWQL_MATLAB_EXECUTABLE`. The package degrades gracefully: warns at startup, returns a descriptive error on tool call if MATLAB is unavailable.
 
 ```ts
-export { MATLABPlugin } from './matlab' // script execution, Live Scripts, workspace vars
-export { SimulinkPlugin } from './simulink' // model open/edit/sim/test
-export { ControlsPlugin } from './controls' // transfer functions, Bode, step response
-export { SignalPlugin } from './signal' // FFT, filtering, spectral analysis
-export { ImagingPlugin } from './imaging' // image processing, feature detection
+export { MATLABPlugin } from "./matlab"; // script execution, Live Scripts, workspace vars
+export { SimulinkPlugin } from "./simulink"; // model open/edit/sim/test
+export { ControlsPlugin } from "./controls"; // transfer functions, Bode, step response
+export { SignalPlugin } from "./signal"; // FFT, filtering, spectral analysis
+export { ImagingPlugin } from "./imaging"; // image processing, feature detection
 ```
 
 ## 8. Kubernetes Operator & ClawQLInstance CRD
@@ -835,10 +822,10 @@ spec:
     proxyBackends: # NEW v2.0
       - name: goose
         endpoint: http://goose.default.svc.cluster.local:8080
-        auth: { type: 'in-cluster' }
+        auth: { type: "in-cluster" }
       - name: internal-tools
         endpoint: http://tools.company.internal:3000
-        auth: { type: 'vault' }
+        auth: { type: "vault" }
     bundledProviders:
       - github
       - google-cloud
@@ -853,8 +840,8 @@ spec:
     enabled: true
     mode: oidc
     oidc:
-      issuer: ''
-      clientId: ''
+      issuer: ""
+      clientId: ""
       clientSecretRef:
         name: clawql-oidc-secret
         key: clientSecret

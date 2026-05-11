@@ -11,6 +11,10 @@ export const metadata = docsPageMetadata({
 
 This page summarizes how ClawQL **builds**, **proves**, and **enforces** container images from CI through Kubernetes admission. For every detail, use the repo docs linked below. {{ className: 'lead' }}
 
+## Comprehensive defense in depth (full architecture)
+
+**Read the full approach on this site:** [Defense in depth — MCP & k3s (May 2026)](/security/defense-in-depth) — consolidated guide (supply chain through audit), same Markdown as [`clawql-comprehensive-defense-in-depth-mcp-k3s-may-2026.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/clawql-comprehensive-defense-in-depth-mcp-k3s-may-2026.md) on `main`; body is **lazy-loaded** as its own chunk for performance.
+
 ## Golden image pipeline (end to end)
 
 **Canonical write-up:** **[golden-image-pipeline.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/golden-image-pipeline.md)** — single narrative for operators and security reviewers.
@@ -43,6 +47,7 @@ Container images are not npm packages. **npm** publish hardening (pack → scan 
 
 ## Security references (repo)
 
+- [Defense in depth — full MCP + k3s guide (this site)](/security/defense-in-depth)
 - [Security docs index](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/README.md)
 - [Golden image pipeline (full E2E + enforcement)](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/golden-image-pipeline.md)
 - [Defense in depth guide](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/clawql-security-defense-in-depth.md)

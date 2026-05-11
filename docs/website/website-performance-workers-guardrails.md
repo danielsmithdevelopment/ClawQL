@@ -61,7 +61,7 @@ npm run lh -- http://127.0.0.1:3000/case-studies/cloudflare-docs-mcp --preset=de
 ### Product / runtime
 
 - [ ] **Watch Observability** for **`waitUntil()`** warnings and **1102** spikes after every **large MDX** or **OpenNext** upgrade.
-- [ ] **Cache strategy:** keep **`Cache-Control`** sensible (`website/next.config.mjs` + `public/_headers`); avoid unnecessary **purge-all** after deploy.
+- [ ] **Cache strategy:** keep **`Cache-Control`** sensible (`website/next.config.mjs` + `public/_headers`); **`/case-studies/*`** uses a **longer `s-maxage`** than the default `/:path*` to cut **1102** on heavy MDX — avoid unnecessary **purge-all** after deploy (purge only when you need immediate HTML consistency).
 - [ ] **Plan limits:** confirm whether **Free vs Paid** Workers CPU limits are acceptable for **worst-case** case-study pages.
 - [ ] **Upstream:** track **`@opennextjs/cloudflare`** and **Next.js** releases for Worker **`waitUntil` / `after()`** fixes.
 

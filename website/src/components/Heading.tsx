@@ -1,12 +1,34 @@
 'use client'
 
-import { useInView } from 'framer-motion'
 import Link from 'next/link'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { useSectionStore } from '@/components/SectionProvider'
 import { Tag } from '@/components/Tag'
 import { remToPx } from '@/lib/remToPx'
+
+/** Parity with framer-motion `useInView(..., { amount: 'all' })` without pulling motion into MDX headings. */
+function useFullyInView(
+  ref: React.RefObject<HTMLElement | null>,
+  rootMargin: string,
+): boolean {
+  const [inView, setInView] = useState(false)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const obs = new IntersectionObserver(
+      (entries) => {
+        const e = entries[0]
+        if (!e) return
+        setInView(e.intersectionRatio >= 1)
+      },
+      { root: null, rootMargin, threshold: [0, 1] },
+    )
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [ref, rootMargin])
+  return inView
+}
 
 function AnchorIcon(props: React.ComponentPropsWithoutRef<'svg'>) {
   return (
@@ -85,10 +107,8 @@ export function Heading<Level extends 2 | 3>({
   let ref = useRef<HTMLHeadingElement>(null)
   let registerHeading = useSectionStore((s) => s.registerHeading)
 
-  let inView = useInView(ref, {
-    margin: `${remToPx(-3.5)}px 0px 0px 0px`,
-    amount: 'all',
-  })
+  const rootMargin = `${remToPx(-3.5)}px 0px 0px 0px`
+  let inView = useFullyInView(ref, rootMargin)
 
   useEffect(() => {
     if (level === 2) {

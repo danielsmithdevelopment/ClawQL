@@ -7,12 +7,17 @@ The docs site is a **Next.js** app on **Cloudflare Workers** (OpenNext). Caching
 
 ## Defaults (repo)
 
-| Pattern                                  | Behavior                                                                                                                         |
-| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| **`/:path*`** (default)                  | `public, max-age=0, s-maxage=3600, stale-while-revalidate=86400` — edge may cache ~1h; serve stale up to 24h while revalidating. |
-| **`/_next/image`**                       | Long-lived cache (optimized images are content-addressed by URL).                                                                |
-| **`/_next/static/:path*`**               | `immutable` + 1 year — matches hashed webpack chunks.                                                                            |
-| **`/ClawQL-logo.jpeg`** (via `_headers`) | Shorter browser/edge TTL so a replaced file is picked up without renaming.                                                       |
+| Pattern                                  | Behavior                                                                                                                                                                                                 |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`/:path*`** (default)                  | `public, max-age=0, s-maxage=86400, stale-while-revalidate=604800` — shared edge may cache HTML ~24h; serve stale up to 7d while revalidating (see **`website/next.config.mjs`**).                      |
+| **`/case-studies/:path*`**               | Longer edge reuse: `s-maxage=604800` (7d), `stale-while-revalidate=2592000` (~30d) — case studies are large MDX and the most **Worker CPU**–sensitive routes on Cloudflare Free; purge after urgent edits. |
+| **`/vision/slide-deck`**                 | Same long edge TTL as case studies — full ~80-slide deck MDX (async chunk); purge after urgent edits.                                                                                                  |
+| **`/security/defense-in-depth`**         | Same pattern — comprehensive defense-in-depth MDX (async chunk); purge after urgent edits.                                                                                                              |
+| **`/_next/image`**                       | Long-lived cache (optimized images are content-addressed by URL).                                                                                                                                        |
+| **`/_next/static/:path*`**               | `immutable` + 1 year — matches hashed webpack chunks.                                                                                                                                                  |
+| **`/ClawQL-logo.jpeg`** (via `_headers`) | Shorter browser/edge TTL so a replaced file is picked up without renaming.                                                                                                                             |
+
+`public/_headers` mirrors **`/_next/static/*`**, **`.well-known/*`**, **`/case-studies/*`**, and the logo for responses served from the **ASSETS** binding.
 
 Tune **`s-maxage`** / **`stale-while-revalidate`** in **`next.config.mjs`** if you need fresher HTML after every deploy (lower edge TTL) or more offload under load (higher TTL).
 

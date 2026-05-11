@@ -3,9 +3,9 @@
   "version": "0.1.2",
   "private": true,
   "scripts": {
-    "prebuild": "node scripts/generate-agent-markdown.mjs && node scripts/generate-agent-skills-index.mjs && node scripts/sync-clawql-modularization-doc.mjs",
+    "prebuild": "node scripts/generate-agent-markdown.mjs && node scripts/generate-agent-skills-index.mjs && node scripts/sync-clawql-modularization-doc.mjs && node scripts/sync-clawql-slides-doc.mjs && node scripts/sync-clawql-defense-in-depth-doc.mjs",
     "build": "next build --webpack",
-    "dev": "node scripts/sync-clawql-modularization-doc.mjs && next dev --webpack",
+    "dev": "node scripts/sync-clawql-modularization-doc.mjs && node scripts/sync-clawql-slides-doc.mjs && node scripts/sync-clawql-defense-in-depth-doc.mjs && next dev --webpack",
     "start": "next start",
     "lint": "eslint \"src/**/*.{js,jsx,ts,tsx}\" \"*.{js,mjs,ts}\" --max-warnings 0",
     "format": "prettier --write \"src/**/*.{mdx,ts,tsx}\" \"*.ts\" \"mdx-components.tsx\"",
