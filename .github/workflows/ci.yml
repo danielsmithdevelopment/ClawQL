@@ -331,6 +331,9 @@ jobs:
       - name: Typecheck & build
         run: npm run build
 
+      - name: Assert dist registers cache + audit (non-negotiable MCP)
+        run: bash scripts/ci/assert-dist-mcp-nonnegotiable-tools.sh
+
       - name: Unit tests + coverage
         run: npx vitest run --coverage
 

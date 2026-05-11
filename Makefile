@@ -1,4 +1,4 @@
-.PHONY: deploy-cloud-run deploy-k8s deploy-docs local-k8s-up bootstrap-vault-eso local-k8s-mcp-delete local-docker-up helm-lint helm-ui-template-tests kustomize-local-lint lint-k8s-manifests smoke-grpcurl-istio-gateway-mcp smoke-mcp-http-istio-gateway smoke-localhost-uis verify-vault-policy
+.PHONY: deploy-cloud-run deploy-k8s deploy-docs local-k8s-up bootstrap-vault-eso local-k8s-mcp-delete local-docker-up helm-lint helm-ui-template-tests kustomize-local-lint lint-k8s-manifests smoke-grpcurl-istio-gateway-mcp smoke-mcp-http-istio-gateway smoke-localhost-uis verify-vault-policy verify-mcp-core-tools-local
 
 # Validate charts/clawql-mcp (requires helm on PATH)
 helm-lint:
@@ -65,6 +65,10 @@ smoke-grpcurl-istio-gateway-mcp:
 # Streamable HTTP POST /mcp initialize via Istio :80 (matches Cursor; default URL 127.0.0.1)
 smoke-mcp-http-istio-gateway:
 	@bash scripts/kubernetes/smoke-mcp-http-istio-gateway.sh
+
+# After local-k8s-up: assert tools/list includes ClawQL Core audit+cache (catches stale :latest digest — rollout restart MCP)
+verify-mcp-core-tools-local:
+	@npx tsx scripts/dev/verify-mcp-streamable-core-tools.ts
 
 # Localhost ingress UI smoke checks (docs, mcp, flink, onyx, paperless, tika, gotenberg, nats)
 smoke-localhost-uis:

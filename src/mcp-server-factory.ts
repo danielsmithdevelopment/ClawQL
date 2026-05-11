@@ -1,5 +1,6 @@
 import type { Implementation } from "@modelcontextprotocol/sdk/types.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { assertNonnegotiableMcpToolsRegistered } from "./mcp-nonnegotiable-tools.js";
 import { NPM_PACKAGE_VERSION } from "./npm-version.js";
 import { registerTools } from "./tools.js";
 
@@ -14,5 +15,6 @@ const DEFAULT_INFO: Implementation = {
 export function createRegisteredMcpServer(serverInfo: Implementation = DEFAULT_INFO): McpServer {
   const server = new McpServer(serverInfo);
   registerTools(server);
+  assertNonnegotiableMcpToolsRegistered(server);
   return server;
 }
