@@ -19,6 +19,11 @@ const ENTRIES: Array<Entry> = [
     changeFrequency: 'monthly',
     priority: 0.9,
   },
+  {
+    path: '/vision/slide-deck',
+    changeFrequency: 'monthly',
+    priority: 0.88,
+  },
   { path: '/quickstart', changeFrequency: 'weekly', priority: 0.95 },
   { path: '/learn', changeFrequency: 'weekly', priority: 0.93 },
   {
@@ -93,6 +98,12 @@ const ENTRIES: Array<Entry> = [
   { path: '/tools', changeFrequency: 'weekly', priority: 0.9 },
   { path: '/spec-configuration', changeFrequency: 'monthly', priority: 0.85 },
   { path: '/troubleshooting', changeFrequency: 'monthly', priority: 0.82 },
+  { path: '/security', changeFrequency: 'monthly', priority: 0.9 },
+  {
+    path: '/security/defense-in-depth',
+    changeFrequency: 'monthly',
+    priority: 0.89,
+  },
   { path: '/cache', changeFrequency: 'monthly', priority: 0.8 },
   { path: '/schedule', changeFrequency: 'monthly', priority: 0.8 },
   { path: '/notify', changeFrequency: 'monthly', priority: 0.8 },

@@ -8,7 +8,7 @@
 
 > This guide documents the complete ClawQL security architecture. It covers every layer from supply chain to runtime, with implementation detail, rationale, and operational requirements. All components are 100% OSS and self-hosted.
 
-**Companion docs:** [Defense-in-Depth reference (April 2026)](clawql-security-defense-in-depth.md) · [Security deliverables matrix](clawql-security-defense-deliverables.md)
+**Companion docs:** [Defense-in-Depth reference (April 2026)](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/clawql-security-defense-in-depth.md) · [Security deliverables matrix](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/clawql-security-defense-deliverables.md)
 
 ---
 
@@ -118,7 +118,7 @@ Three principles govern every layer:
 
 ### Key implementation details
 
-**Kata Containers as default for MCP workloads**: When an LLM agent has access to a filesystem or shell, container namespaces are insufficient isolation. Kata provides a hardware VM boundary — a compromised sandbox cannot escape to the host kernel. Enforce via Kyverno `RuntimeClass` policy: pods in the `openclaw` namespace must use Kata runtime unless explicitly exempted. **Helm:** [`security.kata`](../../charts/clawql-mcp/values.yaml) (MCP pod `runtimeClassName`) and [`kyverno.runtimeClassPolicy`](../../charts/clawql-mcp/values.yaml) — see **[`docs/security/runtime-class-containment.md`](runtime-class-containment.md)** ([#274](https://github.com/danielsmithdevelopment/ClawQL/issues/274)).
+**Kata Containers as default for MCP workloads**: When an LLM agent has access to a filesystem or shell, container namespaces are insufficient isolation. Kata provides a hardware VM boundary — a compromised sandbox cannot escape to the host kernel. Enforce via Kyverno `RuntimeClass` policy: pods in the `openclaw` namespace must use Kata runtime unless explicitly exempted. **Helm:** [`security.kata`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/charts/clawql-mcp/values.yaml) (MCP pod `runtimeClassName`) and [`kyverno.runtimeClassPolicy`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/charts/clawql-mcp/values.yaml) — see **[`docs/security/runtime-class-containment.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/runtime-class-containment.md)** ([#274](https://github.com/danielsmithdevelopment/ClawQL/issues/274)).
 
 **Kata vs gVisor**: These are not interchangeable defaults. Kata = full VM per pod, stronger isolation, higher overhead. gVisor = userspace kernel emulation, lower overhead, some syscall gaps. Kata is correct for MCP/sandbox workloads. gVisor is acceptable for non-execution workloads. The Kyverno policy should be explicit about which namespaces get which runtime.
 
@@ -126,7 +126,7 @@ Three principles govern every layer:
 
 **ServiceEntries as FQDN egress control**: Lock each ServiceEntry to the specific endpoints defined in the ClawQL GraphQL schema. This achieves FQDN egress filtering without a separate WAF layer. Review ServiceEntries alongside STRIDE on the quarterly cadence.
 
-**Concrete manifests & Helm**: Example **ServiceEntry** allowlists and optional **EgressGateway** TLS passthrough routing ship as **`docker/istio/docker-desktop/clawql-mcp-egress-allowlist.yaml`** (full chain) and **`docker/istio/docker-desktop/clawql-mcp-egress-serviceentries-only.yaml`** (registry baseline); the **`clawql-mcp`** Helm chart exposes the same policy via **`istio.egressAllowlist`** in **[`charts/clawql-mcp/values.yaml`](../../charts/clawql-mcp/values.yaml)** ([#275](https://github.com/danielsmithdevelopment/ClawQL/issues/275)). Deploy guide: **[`docs/deployment/helm.md`](../../docs/deployment/helm.md)**.
+**Concrete manifests & Helm**: Example **ServiceEntry** allowlists and optional **EgressGateway** TLS passthrough routing ship as **`docker/istio/docker-desktop/clawql-mcp-egress-allowlist.yaml`** (full chain) and **`docker/istio/docker-desktop/clawql-mcp-egress-serviceentries-only.yaml`** (registry baseline); the **`clawql-mcp`** Helm chart exposes the same policy via **`istio.egressAllowlist`** in **[`charts/clawql-mcp/values.yaml`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/charts/clawql-mcp/values.yaml)** ([#275](https://github.com/danielsmithdevelopment/ClawQL/issues/275)). Deploy guide: **[`docs/deployment/helm.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/helm.md)**.
 
 ---
 
@@ -272,7 +272,7 @@ The init container image itself must be Cosign-signed and digest-pinned. An unve
 
 **Confidence thresholds matter**: Not all Falco rules should trigger automated quarantine. Tier your response: low-confidence → alert only; medium → alert + Slack notification to on-call; high-confidence → automated quarantine + page. Define the tier mapping during STRIDE review.
 
-**Panguard blocking is synchronous**: Blocked MCP requests return an error to the agent immediately. The agent should handle this gracefully — define error handling behavior in [`AGENTS.md`](../../AGENTS.md) (repo root) so the agent surfaces the block to the user rather than silently retrying or hallucinating a response. Architecture ordering for the MCP chokepoint is stubbed in [`mcp-proxy-jwt-atr.md`](mcp-proxy-jwt-atr.md).
+**Panguard blocking is synchronous**: Blocked MCP requests return an error to the agent immediately. The agent should handle this gracefully — define error handling behavior in [`AGENTS.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/AGENTS.md) (repo root) so the agent surfaces the block to the user rather than silently retrying or hallucinating a response. Architecture ordering for the MCP chokepoint is stubbed in [`mcp-proxy-jwt-atr.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/mcp-proxy-jwt-atr.md).
 
 ---
 
@@ -306,7 +306,7 @@ The init container image itself must be Cosign-signed and digest-pinned. An unve
 
 **Out-of-band comms is for when your primary infra is the incident**: If Slack is down, or Kubernetes is compromised, or your primary SIEM is the thing being attacked, you need a communication channel that is independent of all of that. Matrix or Mattermost on separate hardware. Activation criteria and access list must be defined in advance — not during the incident.
 
-**STRIDE + ServiceEntry quarterly review**: Review Istio ServiceEntries alongside STRIDE. As ClawQL integrates new tools and data sources, the egress surface changes. ServiceEntries must reflect actual intended traffic, not historical accumulation. Cross-check live manifests against **[`docker/istio/docker-desktop/clawql-mcp-egress-serviceentries-only.yaml`](../../docker/istio/docker-desktop/clawql-mcp-egress-serviceentries-only.yaml)** / **[`clawql-mcp-egress-allowlist.yaml`](../../docker/istio/docker-desktop/clawql-mcp-egress-allowlist.yaml)** or chart **`istio.egressAllowlist`** ([#275](https://github.com/danielsmithdevelopment/ClawQL/issues/275)); **[`docs/deployment/helm.md`](../../docs/deployment/helm.md)** lists the operational checklist.
+**STRIDE + ServiceEntry quarterly review**: Review Istio ServiceEntries alongside STRIDE. As ClawQL integrates new tools and data sources, the egress surface changes. ServiceEntries must reflect actual intended traffic, not historical accumulation. Cross-check live manifests against **[`docker/istio/docker-desktop/clawql-mcp-egress-serviceentries-only.yaml`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docker/istio/docker-desktop/clawql-mcp-egress-serviceentries-only.yaml)** / **[`clawql-mcp-egress-allowlist.yaml`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docker/istio/docker-desktop/clawql-mcp-egress-allowlist.yaml)** or chart **`istio.egressAllowlist`** ([#275](https://github.com/danielsmithdevelopment/ClawQL/issues/275)); **[`docs/deployment/helm.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/helm.md)** lists the operational checklist.
 
 ---
 
@@ -324,8 +324,8 @@ metadata:
   namespace: openclaw
 spec:
   hard:
-    requests.nvidia.com/gpu: "4" # Set to actual intended max concurrency, not "1"
-    limits.nvidia.com/gpu: "4"
+    requests.nvidia.com/gpu: '4' # Set to actual intended max concurrency, not "1"
+    limits.nvidia.com/gpu: '4'
 ```
 
 Set the quota to your actual intended maximum agent concurrency — not 1. The purpose is a ceiling against runaway consumption, not a restriction on legitimate parallelism. Pair with `LimitRange` to enforce per-pod GPU limits so no single pod can claim the entire quota.

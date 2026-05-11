@@ -99,6 +99,63 @@ const nextConfig = {
           },
         ],
       },
+      // Case studies: largest MDX + most 1102-prone — maximize edge HTML reuse (purge dashboard after urgent edits).
+      {
+        source: '/case-studies/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value:
+              'public, max-age=0, s-maxage=604800, stale-while-revalidate=2592000',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin',
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+        ],
+      },
+      // Full slide deck: very large MDX body (async chunk); long edge TTL like case studies.
+      {
+        source: '/vision/slide-deck',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value:
+              'public, max-age=0, s-maxage=604800, stale-while-revalidate=2592000',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin',
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+        ],
+      },
+      // Comprehensive security guide (large MDX, async chunk).
+      {
+        source: '/security/defense-in-depth',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value:
+              'public, max-age=0, s-maxage=604800, stale-while-revalidate=2592000',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin',
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+        ],
+      },
       {
         source: '/_next/image',
         headers: [

@@ -244,6 +244,10 @@ export const navigation: Array<NavGroup> = [
         title: 'ClawQL Modularization',
         href: '/vision/modularization',
       },
+      {
+        title: 'Consolidated slide deck (~80 slides)',
+        href: '/vision/slide-deck',
+      },
     ],
   },
   {
@@ -307,6 +311,10 @@ export const navigation: Array<NavGroup> = [
       { title: 'Spec configuration', href: '/spec-configuration' },
       { title: 'Troubleshooting', href: '/troubleshooting' },
       { title: 'Security', href: '/security' },
+      {
+        title: 'Defense in depth (full guide)',
+        href: '/security/defense-in-depth',
+      },
       { title: 'Deployment', href: '/deployment' },
       { title: 'Tailscale & Headscale', href: '/tailscale' },
       { title: 'Kubernetes', href: '/kubernetes' },

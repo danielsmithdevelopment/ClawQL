@@ -8,7 +8,7 @@ import ClawQLModularizationBody from '@/generated/clawql-modularization-body.mdx
 export const metadata = docsPageMetadata({
   title: 'ClawQL Modularization',
   description:
-    'ClawQL Modularization v1.9: package ecosystem (core, api, auth, documents, memory, verticals), operator CRD, defense-in-depth, and phased roadmap — vision with planned and in-progress work vs shipped code.',
+    'ClawQL Modularization v2.0: intelligent MCP gateway, package ecosystem, operator CRD, defense-in-depth, and phased roadmap — vision with planned and in-progress work vs shipped code.',
   path: '/vision/modularization',
   ogType: 'article',
 })
@@ -25,13 +25,17 @@ export const metadata = docsPageMetadata({
   </Tag>
 </div>
 
-Version **1.9** (May 2026). This page mirrors the canonical Markdown in the ClawQL repository. {{ className: 'lead' }}
+Version **2.0** (May 2026). This page mirrors the canonical Markdown in the ClawQL repository. {{ className: 'lead' }}
 
 <Note>
 
 **How to read this:** Product and engineering **north star** — many packages and operator behaviors here are **not yet shipped** as a single product surface. Pair with **[Concepts](/concepts)** for today’s MCP architecture and with **[Security deliverables](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/clawql-security-defense-deliverables.md)** for shipped vs planned controls.
 
-**Canonical Markdown:** [`docs/vision/clawql-modularization.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/vision/clawql-modularization.md) on `main`. Builds copy it into `src/generated/clawql-modularization-body.mdx` via `website/scripts/sync-clawql-modularization-doc.mjs` (runs with `prebuild` and `dev`).
+**Companion (v1.9 package matrix):** [`docs/vision/clawql-modularization.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/vision/clawql-modularization.md) on `main` (same URL on this site now shows v2.0 below; use GitHub for the v1.9 file).
+
+**Canonical Markdown (this page):** [`docs/vision/clawql-modularization-v2.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/vision/clawql-modularization-v2.md) on `main`. Builds copy it into `src/generated/clawql-modularization-body.mdx` via `website/scripts/sync-clawql-modularization-doc.mjs` (runs with `prebuild` and `dev`).
+
+**Full pitch deck (~80 slides, §01–§08):** [read on this site](/vision/slide-deck) (lazy-loaded chunk; canonical Markdown: [`docs/presentations/clawql-slides.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/presentations/clawql-slides.md) on `main`) — also under **Vision & roadmap** in the sidebar. Session narrative: [case study: slide deck vs GitHub](/case-studies/slide-deck-github-parity-cache-memory-recall-2026-04).
 
 </Note>
 
