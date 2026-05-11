@@ -18,7 +18,7 @@ Root cause class: **too much work per invocation** on **Workers** (CPU / lifetim
 
 Workflow: **[`.github/workflows/website-lighthouse.yml`](../.github/workflows/website-lighthouse.yml)**
 
-- Builds **`website/`** with **`npm run build`**, serves **`next start`**, runs **Lighthouse** **desktop** then **mobile** preset against **`http://127.0.0.1:3000/`**.
+- Builds **`website/`** with **`npm run build`**, serves **`next start`**, runs **Lighthouse** **desktop** preset then a **mobile form-factor** run (`--form-factor=mobile --screenEmulation.mobile` in Lighthouse **13+**; there is no `--preset=mobile`) against **`http://127.0.0.1:3000/`**.
 - Asserts minimum scores via **[`scripts/dev/assert-lighthouse-scores.mjs`](../scripts/dev/assert-lighthouse-scores.mjs)** (defaults: performance **0.70**, accessibility **1.0** (WCAG-oriented lab gate), SEO **0.9**, best practices **0.85** — override with `LH_MIN_*` env vars in CI or locally if needed). The **mobile** run uses **`LH_MIN_PERF=0.52`** inline (other floors unchanged) so CPU throttling does not fail every PR.
 
 ### What Lighthouse CI **does** catch
