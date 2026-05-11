@@ -56,7 +56,8 @@
     --shiki-color-text: var(--color-white);
     --shiki-token-constant: var(--color-claw-cyan);
     --shiki-token-string: var(--color-claw-cyan-bright);
-    --shiki-token-comment: var(--color-zinc-500);
+    /* zinc-500 on code block bg fails WCAG AA for small type; zinc-400 passes axe/LH contrast */
+    --shiki-token-comment: var(--color-zinc-400);
     --shiki-token-keyword: var(--color-sky-300);
     --shiki-token-parameter: var(--color-pink-300);
     --shiki-token-function: var(--color-violet-300);

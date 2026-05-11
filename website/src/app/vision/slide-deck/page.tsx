@@ -1,8 +1,7 @@
-import { Suspense, type ReactNode } from 'react'
-
 import { Note } from '@/components/mdx'
 import { Prose } from '@/components/Prose'
 import { Tag } from '@/components/Tag'
+import SlidesBody from '@/generated/clawql-slides-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
 
 export const metadata = docsPageMetadata({
@@ -13,24 +12,8 @@ export const metadata = docsPageMetadata({
   ogType: 'article',
 })
 
-/** Route-level code split: this module is not pulled into other pages’ bundles. */
+/** Full MDX is bundled into this route at build time so HTML includes deck text for crawlers and link previews. */
 export const dynamic = 'force-static'
-
-async function SlidesMdx(): Promise<ReactNode> {
-  const { default: Body } = await import('@/generated/clawql-slides-body.mdx')
-  return <Body />
-}
-
-function SlideDeckLoading() {
-  return (
-    <div
-      className="mx-auto max-w-2xl py-16 text-sm text-zinc-500 lg:max-w-5xl dark:text-zinc-400"
-      role="status"
-    >
-      Loading slide deck…
-    </div>
-  )
-}
 
 export default function VisionSlideDeckPage() {
   return (
@@ -61,8 +44,11 @@ export default function VisionSlideDeckPage() {
           from <code className="font-mono text-xs">website/</code> (also runs on{' '}
           <code className="font-mono text-xs">prebuild</code> /{' '}
           <code className="font-mono text-xs">dev</code>). The deck body is
-          loaded as a <strong>separate async chunk</strong> so other routes do
-          not include this file in their graph. Related case study:{' '}
+          included in the{' '}
+          <strong>static HTML for this URL at build time</strong> (no
+          Suspense/streaming shell) so search engines and link-preview bots can
+          read the content without executing client JavaScript. Related case
+          study:{' '}
           <a
             href="/case-studies/slide-deck-github-parity-cache-memory-recall-2026-04"
             className="font-medium text-inherit underline underline-offset-2"
@@ -74,9 +60,7 @@ export default function VisionSlideDeckPage() {
       </div>
 
       <Prose className="flex-auto">
-        <Suspense fallback={<SlideDeckLoading />}>
-          <SlidesMdx />
-        </Suspense>
+        <SlidesBody />
       </Prose>
     </article>
   )

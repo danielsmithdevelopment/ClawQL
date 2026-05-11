@@ -3,6 +3,13 @@ import type { Metadata } from 'next'
 /** Default social preview image (served from /public). */
 export const DEFAULT_OG_IMAGE_PATH = '/ClawQL-logo.jpeg'
 
+/** Pixel size of `ClawQL-logo.jpeg` (used in Open Graph metadata for crawlers). */
+export const DEFAULT_OG_IMAGE_WIDTH = 871
+export const DEFAULT_OG_IMAGE_HEIGHT = 890
+
+export const DEFAULT_OG_IMAGE_ALT =
+  'ClawQL — MCP server for OpenAPI, Swagger, and Google Discovery APIs'
+
 export type DocsPageMetadataInput = {
   /** Page `<title>` segment; root layout template appends ` - ClawQL`. */
   title: string
@@ -56,7 +63,9 @@ export function docsPageMetadata({
       images: [
         {
           url: DEFAULT_OG_IMAGE_PATH,
-          alt: 'ClawQL — MCP server for OpenAPI, Swagger, and Google Discovery APIs',
+          width: DEFAULT_OG_IMAGE_WIDTH,
+          height: DEFAULT_OG_IMAGE_HEIGHT,
+          alt: DEFAULT_OG_IMAGE_ALT,
         },
       ],
     },

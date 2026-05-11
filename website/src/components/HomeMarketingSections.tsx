@@ -1,12 +1,13 @@
 'use client'
 
-// Deferred client islands reduce Worker SSR cost on the docs site (OpenNext + CF).
+// Dynamic import keeps a separate chunk; default `ssr: true` ships real HTML for guides/cards
+// (better LCP and Lighthouse). If `/` Worker 1102 or cold HTML cost rises on OpenNext + CF, see
+// docs/website/website-performance-workers-guardrails.md (tradeoff vs `ssr: false`).
 import dynamic from 'next/dynamic'
 
 const HomeMarketingSectionsInner = dynamic(
   () => import('./HomeMarketingSectionsInner'),
   {
-    ssr: false,
     loading: HomeMarketingSectionsSkeleton,
   },
 )
@@ -14,7 +15,11 @@ const HomeMarketingSectionsInner = dynamic(
 /** Keeps `#guides` / `#case-studies` / `#reference` valid before client islands hydrate. */
 function HomeMarketingSectionsSkeleton() {
   return (
-    <div className="my-16 space-y-16 xl:max-w-none" aria-busy="true">
+    <div
+      className="my-16 space-y-16 xl:max-w-none"
+      aria-busy="true"
+      aria-live="polite"
+    >
       <div>
         <h2
           id="guides"

@@ -4,18 +4,27 @@ import { Providers } from '@/app/providers'
 import { Layout } from '@/components/Layout'
 import { SiteStructuredData } from '@/components/SiteStructuredData'
 import { WebMcpRegister } from '@/components/WebMcpRegister'
+import {
+  DEFAULT_OG_IMAGE_ALT,
+  DEFAULT_OG_IMAGE_HEIGHT,
+  DEFAULT_OG_IMAGE_PATH,
+  DEFAULT_OG_IMAGE_WIDTH,
+} from '@/lib/seo'
 import { getSiteOrigin } from '@/lib/site-url'
 
 import '@/styles/tailwind.css'
+
+const siteDefaultTitle = 'ClawQL documentation'
+const siteDefaultDescription =
+  'ClawQL is an MCP server for OpenAPI and Google APIs: search and execute tools, optional sandbox and Obsidian memory tools, internal GraphQL projection, stdio or Streamable HTTP or optional gRPC (mcp-grpc-transport), Docker and Kubernetes.'
 
 export const metadata: Metadata = {
   metadataBase: getSiteOrigin(),
   title: {
     template: '%s - ClawQL',
-    default: 'ClawQL documentation',
+    default: siteDefaultTitle,
   },
-  description:
-    'ClawQL is an MCP server for OpenAPI and Google APIs: search and execute tools, optional sandbox and Obsidian memory tools, internal GraphQL projection, stdio or Streamable HTTP or optional gRPC (mcp-grpc-transport), Docker and Kubernetes.',
+  description: siteDefaultDescription,
   applicationName: 'ClawQL',
   authors: [
     { name: 'ClawQL', url: 'https://github.com/danielsmithdevelopment/ClawQL' },
@@ -37,15 +46,22 @@ export const metadata: Metadata = {
     type: 'website',
     siteName: 'ClawQL',
     locale: 'en_US',
+    title: siteDefaultTitle,
+    description: siteDefaultDescription,
     images: [
       {
-        url: '/ClawQL-logo.jpeg',
-        alt: 'ClawQL — MCP server for OpenAPI, Swagger, and Google Discovery APIs',
+        url: DEFAULT_OG_IMAGE_PATH,
+        width: DEFAULT_OG_IMAGE_WIDTH,
+        height: DEFAULT_OG_IMAGE_HEIGHT,
+        alt: DEFAULT_OG_IMAGE_ALT,
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
+    title: siteDefaultTitle,
+    description: siteDefaultDescription,
+    images: [DEFAULT_OG_IMAGE_PATH],
   },
   icons: {
     icon: [{ url: '/ClawQL-logo.jpeg', type: 'image/jpeg' }],

@@ -7,8 +7,12 @@
 
 # testing
 /coverage
+/test-results/
 /lighthouse-report.html
 /lighthouse-report.json
+/lighthouse-ci.json
+/lighthouse-ci-local.json
+/lighthouse-ci-mobile.json
 
 # next.js
 /.next/
