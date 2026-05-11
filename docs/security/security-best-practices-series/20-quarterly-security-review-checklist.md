@@ -1,0 +1,134 @@
+---
+title: "Quarterly Security Review Checklist: Keeping Defense-in-Depth Alive"
+series: "Agentic AI Security Curriculum"
+course_type: "instructor-ready / self-study"
+audience: "Security architects, platform engineers, and teams adopting AI agents"
+estimated_minutes: 40
+level: advanced
+tags:
+  - governance
+  - compliance
+  - audit
+  - security-operations
+part: 20
+total_parts: 20
+date: "May 2026"
+slug: "quarterly-security-review-checklist"
+canonical_path: "/security/best-practices/quarterly-security-review-checklist"
+prev: "owasp-agentic-top-10-mitigations"
+description: "Run a periodic defense-in-depth review across supply chain, runtime, and data."
+---
+
+# Quarterly Security Review Checklist: Keeping Defense-in-Depth Alive
+
+_Module 20 of 20 · Agentic AI Security Curriculum · May 2026_
+
+## How to use this module
+
+Use it as **self-paced** study or as **instructor-led** training. YAML, commands, and policy excerpts are **illustrative**; map them to your cloud, mesh, identity provider, and agent runtime—substitute your own names, namespaces, and tools while preserving the **control intent**.
+
+**Estimated time:** ~40 minutes reading; add time for linked standards and team discussion.
+
+## Learning objectives
+
+By the end of this module, you should be able to:
+
+1. Run a periodic defense-in-depth review across supply chain, runtime, and data.
+2. Assign accountable owners per control domain.
+3. Capture evidence suitable for audits and customer security questionnaires.
+
+## Prerequisites
+
+- Prior module: [OWASP Agentic Top 10: Mapping Risks to Architectural Controls](19-owasp-agentic-top-10-mitigations.md)
+
+---
+
+Defense-in-depth is not a set-it-and-forget-it architecture. It requires continuous validation and maintenance. This final capstone guide provides the operational checklist that must be executed quarterly to keep the entire security posture effective over time.
+
+### Quarterly Review Cadence
+
+Perform this full review every three months, or after any major change (new vertical, new proxy backend, Helm upgrade, or Kubernetes version bump). Assign a named security owner responsible for completion and documentation.
+
+### 1. Supply Chain & Image Verification
+
+Verify all running images are pulled from Harbor with valid Cosign signatures.
+Confirm allowlist-only resolution is enforced and no external registries are in use.
+Review Trivy/OSV-Scanner results for new critical vulnerabilities.
+Validate SBOMs exist for all production images and model weights.
+
+### 2. Admission Control & Runtime Policies
+
+Check Kyverno policies are active and in “Enforce” mode.
+Confirm all MCP and sandbox pods use Kata runtime.
+Verify model weight verification init containers are functioning on inference pods.
+Review and approve any temporary namespace exemptions.
+
+### 3. Identity & Zero Trust Controls
+
+Audit Vault dynamic secret leases and revoke any orphaned credentials.
+Rotate JWT signing keys if due.
+Verify ATR claim enforcement is working on a sample of MCP tool calls.
+Confirm YubiKey signing requirement is enforced on all Helm chart changes.
+
+### 4. Network & Containment
+
+Review Istio ServiceEntries and egress allowlists against current needs.
+Validate default-deny NetworkPolicy is blocking unauthorized traffic.
+Check Kiali for unexpected east-west connections.
+Confirm mTLS is in strict mode everywhere.
+
+### 5. Monitoring & Observability
+
+Review Wazuh and Falco alert tuning — reduce noise, improve signal.
+Check Prometheus metrics for Merkle root verification and Cuckoo filter health.
+Confirm observability workloads are pinned away from GPU nodes.
+Test Talon quarantine and release process on a non-production pod.
+
+### 6. Data Protection & Logging
+
+Verify Presidio redaction is active in the Fluent Bit pipeline.
+Sample WORM logs to ensure no raw PII is present.
+Confirm Merkle roots are being recorded for all critical workflows.
+
+### 7. Backup & Recovery Testing
+
+Perform a full restore test of a primary application instance (including memory, documents, and audit trails).
+Document restore time, success rate, and any issues.
+Verify 3-2-1+ backup strategy is functioning.
+
+### 8. STRIDE & OWASP Review
+
+Update the living STRIDE threat model with any new components.
+Re-map OWASP Agentic Top 10 risks to current controls.
+Document any new threats and required mitigations.
+
+### 9. Documentation & Runbooks
+
+Confirm all PICERL runbooks are current.
+Verify out-of-band communication (Matrix/Mattermost) is tested and ready.
+Ensure this quarterly checklist itself is up to date.
+
+### Key Takeaways
+
+Security is a continuous process, not a destination.
+Quarterly reviews with a named owner and documented results prevent drift and degradation.
+Every layer — supply chain, admission, network, runtime, monitoring, and recovery — must be actively validated.
+Treat the full defense-in-depth stack as a living system that requires ongoing care.
+
+Completing this checklist keeps your organization’s security posture strong, auditable, and ready for both current and future threats.
+
+**End of curriculum**
+
+## Further reading (vendor-neutral)
+
+These resources are independent of any single product; use them to deepen the topic for audits, architecture reviews, or procurement discussions.
+
+- [NIST CSF 2.0](https://www.nist.gov/cyberframework)
+- [CIS Controls](https://www.cisecurity.org/controls)
+- [ISO/IEC 27001 (ISMS overview)](https://www.iso.org/standard/27001)
+
+## Commercial training use
+
+You may reuse this curriculum internally or in **paid consulting / training** engagements. Keep examples aligned to the customer’s actual stack; substitute your own runbooks, tool names, and compliance frameworks (SOC 2, ISO 27001, sector regulators) where cited examples use a reference architecture only.
+
+---

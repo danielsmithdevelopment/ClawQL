@@ -10,3 +10,11 @@ reason = "docs.clawql.com stays on Next 16.1.x until App Router MDX + webpack re
 [[IgnoredVulns]]
 id = "GHSA-qx2v-qp2m-jg93"
 reason = "Next.js currently vendors postcss@8.4.31 under next/node_modules; dashboard uses top-level patched postcss and npm audit reports clean while waiting for upstream next bundle refresh."
+
+# Pinned website app (docs.clawql.com) — same rationale as GHSA-q4gf ignore above.
+[[PackageOverrides]]
+name = "next"
+ecosystem = "npm"
+version = "16.1.7"
+vulnerability.ignore = true
+reason = "Website stays on Next 16.1.x until App Router MDX + webpack metadata regression is resolved (vercel/next.js#91735); bump website/package.json when unblocked."
