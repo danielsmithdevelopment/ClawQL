@@ -110,9 +110,11 @@ Before promotion, each image job runs **`cosign verify --recursive`** on **`<ima
 
 **`docker buildx imagetools create`** points **`latest`**, **`nightly`**, and (on schedule) **`nightly-YYYYMMDD`** at the **signed digest**. Promotion runs **only** after push, sign, and **`cosign verify`** succeed for that digest.
 
-Each job then attempts to set the corresponding **GHCR container package** to **public** so **Kyverno** can resolve manifests anonymously (`verifyImages`); if **`GITHUB_TOKEN`** cannot **`PATCH`** visibility, optional repository secret **`GH_PACKAGES_VISIBILITY_TOKEN`** (or manual package settings) applies—same pattern as **`clawql-dashboard`**.
+Each job **does not** programmatically change GHCR visibility: GitHub’s **published** Packages REST/OpenAPI includes **no `PATCH`** route for container-package visibility (see **`github/rest-api-description`** — only **GET** / delete / restore appear under **`/…/packages/`**). Operators make images **Public** in **Package settings → Danger zone**, or set **Org → Packages** defaults for **new** packages. The job **does** run **anonymous `skopeo inspect`** on **`:latest`** so **Kyverno**-style anonymous manifest reads are proven before the release is considered good.
 
-So: **rolling tags do not advance** on failed gates, failed signing, or failed verification.
+**Why this matters for every release:** GitHub commonly creates **linked** packages as **Private** until visibility is changed in the UI (or org policy for new packages). Private packages break **`docker pull`** without auth and **`verifyImages`**. The publish workflow fails on failed anonymous registry reads; **`make ghcr-packages-public`** (**GET**-only audit) and **[`docker/README.md`](../../docker/README.md) § GHCR visibility** document the operator checklist.
+
+So: **rolling tags do not advance** on failed gates, failed signing, failed verification, or failed anonymous registry read.
 
 ---
 

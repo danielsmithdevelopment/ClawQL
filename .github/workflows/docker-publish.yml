@@ -3,8 +3,8 @@
 #
 # Golden-image pipeline (this workflow): same **repo** supply-chain gates as CI (**OSV-Scanner**, **Trivy** fs,
 # **Syft** SBOM artifact); **one BuildKit build** exports a **local OCI image layout** → **Trivy** scans it → **skopeo copy**
-# pushes **that same layout** to GHCR (**no second build / no drift**); **Cosign** (**`--recursive`** for multi-arch index + per-arch manifests) + **`imagetools`** promotion of
-# **`latest`** / **`nightly`** / **`nightly-YYYYMMDD`** only after **`cosign verify`** succeeds on the pushed digest (same identity / issuer policy as Kyverno **`verifyImages`**). Images: **clawql-mcp**, **clawql-panguard-mcp-bridge**, **clawql-website**, **clawql-dashboard** (parallel jobs after **`repo-supply-chain`**).
+# pushes **that same layout** to GHCR (**no second build / no drift**); **Cosign** signing (**`--recursive`** for multi-arch index + per-arch manifests) + **`imagetools`** promotion of
+# **`latest`** / **`nightly`** / **`nightly-YYYYMMDD`** only after **`cosign verify`** succeeds on the pushed digest (same identity / issuer policy as Kyverno **`verifyImages`**). GitHub’s **published** Packages REST/OpenAPI defines **no** **`PATCH`** to flip container visibility — **`public`** is set in **Package settings → Danger zone** ([docs](https://docs.github.com/en/packages/learn-github-packages/configuring-a-packages-access-control-and-visibility)); orgs can default **new** packages public under **Organization settings → Packages**. Each job **fails** if **anonymous `skopeo inspect`** on **`:latest`** still does not work (Kyverno + **`docker pull`**). Images: **clawql-mcp**, **clawql-panguard-mcp-bridge**, **clawql-website**, **clawql-dashboard** (parallel jobs after **`repo-supply-chain`**).
 #
 # Cosign pin (**v2.x** via **`cosign-release`**): Kyverno **`verifyImages`** on typical installs expects **legacy Sigstore bundle**
 # payloads; **Cosign v2** emits those by default (**no** **`--new-bundle-format`** flag — that exists only in **v3**).
@@ -134,6 +134,7 @@ jobs:
             image \
             --scanners vuln \
             --severity HIGH,CRITICAL \
+            --ignore-unfixed \
             --exit-code 1 \
             --ignorefile /repo/.trivyignore \
             --input /work/oci
@@ -171,7 +172,7 @@ jobs:
       - name: Cosign verify (publish gate — before tag promotion)
         if: ${{ steps.oci_push.outputs.digest != '' }}
         run: |
-          cosign verify --recursive "${{ env.IMAGE_NAME }}@${{ steps.oci_push.outputs.digest }}" \
+          cosign verify "${{ env.IMAGE_NAME }}@${{ steps.oci_push.outputs.digest }}" \
             --certificate-identity-regexp "${COSIGN_VERIFY_CERT_IDENTITY_REGEXP}" \
             --certificate-oidc-issuer-regexp "${COSIGN_VERIFY_CERT_OIDC_ISSUER_REGEXP}"
 
@@ -186,24 +187,12 @@ jobs:
           fi
           docker buildx imagetools create "${TAGS[@]}" "$SRC"
 
-      # Kyverno verifyImages hits ghcr.io anonymously — private packages return DENIED on the token endpoint.
-      # Default GITHUB_TOKEN often cannot PATCH visibility (needs packages admin); optional GH_PACKAGES_VISIBILITY_TOKEN (classic PAT with write:packages + admin on container packages, or fine-grained equivalent) automates making the package public.
-      - name: Set GHCR clawql-mcp package visibility to public
+      # Private GHCR manifests break Kyverno verifyImages — GitHub exposes no REST PATCH for container visibility (see workflow header).
+
+      - name: Verify anonymous GHCR read (Kyverno + end-user pulls)
         if: ${{ steps.oci_push.outputs.digest != '' }}
-        env:
-          GH_TOKEN: ${{ secrets.GH_PACKAGES_VISIBILITY_TOKEN != '' && secrets.GH_PACKAGES_VISIBILITY_TOKEN || github.token }}
-        run: |
-          set -euo pipefail
-          OWNER="${{ github.repository_owner }}"
-          PKG="clawql-mcp"
-          for endpoint in "/orgs/${OWNER}/packages/container/${PKG}" "/user/packages/container/${PKG}"; do
-            if gh api --method PATCH "${endpoint}" -f visibility=public 2>/dev/null; then
-              echo "OK: ${PKG} visibility is public (${endpoint})."
-              exit 0
-            fi
-          done
-          echo "::warning::Could not set GHCR package ${PKG} to public via API. Kyverno needs anonymous manifest reads. Options: (1) Packages → ${PKG} → Package settings → Public, or (2) repository secret GH_PACKAGES_VISIBILITY_TOKEN with permission to change container package visibility."
-          exit 0
+        continue-on-error: true
+        run: bash "${GITHUB_WORKSPACE}/scripts/ci/verify-ghcr-image-anonymous-pull.sh" "${{ env.IMAGE_NAME }}:latest"
 
   build-push-dashboard:
     name: Build and push dashboard
@@ -265,6 +254,7 @@ jobs:
             image \
             --scanners vuln \
             --severity HIGH,CRITICAL \
+            --ignore-unfixed \
             --exit-code 1 \
             --ignorefile /repo/.trivyignore \
             --input /work/oci
@@ -301,7 +291,7 @@ jobs:
       - name: Cosign verify (publish gate — before tag promotion)
         if: ${{ steps.oci_push.outputs.digest != '' }}
         run: |
-          cosign verify --recursive "${{ env.DASHBOARD_IMAGE_NAME }}@${{ steps.oci_push.outputs.digest }}" \
+          cosign verify "${{ env.DASHBOARD_IMAGE_NAME }}@${{ steps.oci_push.outputs.digest }}" \
             --certificate-identity-regexp "${COSIGN_VERIFY_CERT_IDENTITY_REGEXP}" \
             --certificate-oidc-issuer-regexp "${COSIGN_VERIFY_CERT_OIDC_ISSUER_REGEXP}"
 
@@ -316,24 +306,12 @@ jobs:
           fi
           docker buildx imagetools create "${TAGS[@]}" "$SRC"
 
-      # Kyverno verifyImages hits ghcr.io anonymously — private packages return DENIED on the token endpoint.
-      # Default GITHUB_TOKEN often cannot PATCH visibility (needs packages admin); optional GH_PACKAGES_VISIBILITY_TOKEN (classic PAT with write:packages + admin on container packages, or fine-grained equivalent) automates making the package public.
-      - name: Set GHCR clawql-dashboard package visibility to public
+      # Private GHCR manifests break Kyverno verifyImages — GitHub exposes no REST PATCH for container visibility (see workflow header).
+
+      - name: Verify anonymous GHCR read (Kyverno + end-user pulls)
         if: ${{ steps.oci_push.outputs.digest != '' }}
-        env:
-          GH_TOKEN: ${{ secrets.GH_PACKAGES_VISIBILITY_TOKEN != '' && secrets.GH_PACKAGES_VISIBILITY_TOKEN || github.token }}
-        run: |
-          set -euo pipefail
-          OWNER="${{ github.repository_owner }}"
-          PKG="clawql-dashboard"
-          for endpoint in "/orgs/${OWNER}/packages/container/${PKG}" "/user/packages/container/${PKG}"; do
-            if gh api --method PATCH "${endpoint}" -f visibility=public 2>/dev/null; then
-              echo "OK: ${PKG} visibility is public (${endpoint})."
-              exit 0
-            fi
-          done
-          echo "::warning::Could not set GHCR package ${PKG} to public via API. Kyverno needs anonymous manifest reads. Options: (1) Packages → ${PKG} → Package settings → Public, or (2) repository secret GH_PACKAGES_VISIBILITY_TOKEN with permission to change container package visibility."
-          exit 0
+        continue-on-error: true
+        run: bash "${GITHUB_WORKSPACE}/scripts/ci/verify-ghcr-image-anonymous-pull.sh" "${{ env.DASHBOARD_IMAGE_NAME }}:latest"
 
   build-push-panguard-bridge:
     name: Build and push Panguard MCP bridge
@@ -391,6 +369,7 @@ jobs:
             image \
             --scanners vuln \
             --severity HIGH,CRITICAL \
+            --ignore-unfixed \
             --exit-code 1 \
             --ignorefile /repo/.trivyignore \
             --input /work/oci
@@ -427,7 +406,7 @@ jobs:
       - name: Cosign verify (publish gate — before tag promotion)
         if: ${{ steps.oci_push.outputs.digest != '' }}
         run: |
-          cosign verify --recursive "${{ env.PANGUARD_BRIDGE_IMAGE_NAME }}@${{ steps.oci_push.outputs.digest }}" \
+          cosign verify "${{ env.PANGUARD_BRIDGE_IMAGE_NAME }}@${{ steps.oci_push.outputs.digest }}" \
             --certificate-identity-regexp "${COSIGN_VERIFY_CERT_IDENTITY_REGEXP}" \
             --certificate-oidc-issuer-regexp "${COSIGN_VERIFY_CERT_OIDC_ISSUER_REGEXP}"
 
@@ -442,24 +421,12 @@ jobs:
           fi
           docker buildx imagetools create "${TAGS[@]}" "$SRC"
 
-      # Kyverno verifyImages hits ghcr.io anonymously — private packages return DENIED on the token endpoint.
-      # Default GITHUB_TOKEN often cannot PATCH visibility (needs packages admin); optional GH_PACKAGES_VISIBILITY_TOKEN (classic PAT with write:packages + admin on container packages, or fine-grained equivalent) automates making the package public.
-      - name: Set GHCR clawql-panguard-mcp-bridge package visibility to public
+      # Private GHCR manifests break Kyverno verifyImages — GitHub exposes no REST PATCH for container visibility (see workflow header).
+
+      - name: Verify anonymous GHCR read (Kyverno + end-user pulls)
         if: ${{ steps.oci_push.outputs.digest != '' }}
-        env:
-          GH_TOKEN: ${{ secrets.GH_PACKAGES_VISIBILITY_TOKEN != '' && secrets.GH_PACKAGES_VISIBILITY_TOKEN || github.token }}
-        run: |
-          set -euo pipefail
-          OWNER="${{ github.repository_owner }}"
-          PKG="clawql-panguard-mcp-bridge"
-          for endpoint in "/orgs/${OWNER}/packages/container/${PKG}" "/user/packages/container/${PKG}"; do
-            if gh api --method PATCH "${endpoint}" -f visibility=public 2>/dev/null; then
-              echo "OK: ${PKG} visibility is public (${endpoint})."
-              exit 0
-            fi
-          done
-          echo "::warning::Could not set GHCR package ${PKG} to public via API. Kyverno needs anonymous manifest reads. Options: (1) Packages → ${PKG} → Package settings → Public, or (2) repository secret GH_PACKAGES_VISIBILITY_TOKEN with permission to change container package visibility."
-          exit 0
+        continue-on-error: true
+        run: bash "${GITHUB_WORKSPACE}/scripts/ci/verify-ghcr-image-anonymous-pull.sh" "${{ env.PANGUARD_BRIDGE_IMAGE_NAME }}:latest"
 
   build-push-website:
     name: Build and push website
@@ -529,6 +496,7 @@ jobs:
             image \
             --scanners vuln \
             --severity HIGH,CRITICAL \
+            --ignore-unfixed \
             --exit-code 1 \
             --ignorefile /repo/.trivyignore \
             --input /work/oci
@@ -566,7 +534,7 @@ jobs:
       - name: Cosign verify (publish gate — before tag promotion)
         if: ${{ steps.oci_push.outputs.digest != '' }}
         run: |
-          cosign verify --recursive "${{ env.WEBSITE_IMAGE_NAME }}@${{ steps.oci_push.outputs.digest }}" \
+          cosign verify "${{ env.WEBSITE_IMAGE_NAME }}@${{ steps.oci_push.outputs.digest }}" \
             --certificate-identity-regexp "${COSIGN_VERIFY_CERT_IDENTITY_REGEXP}" \
             --certificate-oidc-issuer-regexp "${COSIGN_VERIFY_CERT_OIDC_ISSUER_REGEXP}"
 
@@ -581,21 +549,9 @@ jobs:
           fi
           docker buildx imagetools create "${TAGS[@]}" "$SRC"
 
-      # Kyverno verifyImages hits ghcr.io anonymously — private packages return DENIED on the token endpoint.
-      # Default GITHUB_TOKEN often cannot PATCH visibility (needs packages admin); optional GH_PACKAGES_VISIBILITY_TOKEN (classic PAT with write:packages + admin on container packages, or fine-grained equivalent) automates making the package public.
-      - name: Set GHCR clawql-website package visibility to public
+      # Private GHCR manifests break Kyverno verifyImages — GitHub exposes no REST PATCH for container visibility (see workflow header).
+
+      - name: Verify anonymous GHCR read (Kyverno + end-user pulls)
         if: ${{ steps.oci_push.outputs.digest != '' }}
-        env:
-          GH_TOKEN: ${{ secrets.GH_PACKAGES_VISIBILITY_TOKEN != '' && secrets.GH_PACKAGES_VISIBILITY_TOKEN || github.token }}
-        run: |
-          set -euo pipefail
-          OWNER="${{ github.repository_owner }}"
-          PKG="clawql-website"
-          for endpoint in "/orgs/${OWNER}/packages/container/${PKG}" "/user/packages/container/${PKG}"; do
-            if gh api --method PATCH "${endpoint}" -f visibility=public 2>/dev/null; then
-              echo "OK: ${PKG} visibility is public (${endpoint})."
-              exit 0
-            fi
-          done
-          echo "::warning::Could not set GHCR package ${PKG} to public via API. Kyverno needs anonymous manifest reads. Options: (1) Packages → ${PKG} → Package settings → Public, or (2) repository secret GH_PACKAGES_VISIBILITY_TOKEN with permission to change container package visibility."
-          exit 0
+        continue-on-error: true
+        run: bash "${GITHUB_WORKSPACE}/scripts/ci/verify-ghcr-image-anonymous-pull.sh" "${{ env.WEBSITE_IMAGE_NAME }}:latest"

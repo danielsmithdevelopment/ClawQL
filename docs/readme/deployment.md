@@ -67,6 +67,10 @@ See:
 
 The image supports mounting a vault at `/vault` and running `clawql-mcp-http` or stdio mode.
 
+### GHCR — public pulls
+
+Helm and Docker instructions assume **`ghcr.io/danielsmithdevelopment/clawql-*`** images are **Public** packages. If **`docker pull ghcr.io/danielsmithdevelopment/clawql-dashboard:latest`** (or any **`clawql-*`**) fails with **denied**, fix registry visibility — do not assume a fault in the chart. Full table, Kyverno note, and maintainer commands: **[`docker/README.md`](../../docker/README.md) § GHCR visibility**.
+
 ## Cloud Run
 
 Quick deploy:

@@ -46,6 +46,15 @@ spec:
             {{- range .Values.kyverno.imageSignaturePolicy.imageReferences }}
             - {{ . | quote }}
             {{- end }}
+          {{- with .Values.kyverno.imageSignaturePolicy.imageRegistrySecretNames }}
+          {{- if gt (len .) 0 }}
+          imageRegistryCredentials:
+            secrets:
+              {{- range . }}
+              - {{ . | quote }}
+              {{- end }}
+          {{- end }}
+          {{- end }}
           {{- /* Kyverno defaults mutateDigest to true when omitted; emit booleans so chart values are honored. */}}
           verifyDigest: {{ .Values.kyverno.imageSignaturePolicy.verifyDigest }}
           mutateDigest: {{ .Values.kyverno.imageSignaturePolicy.mutateDigest }}

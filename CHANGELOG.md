@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Documentation
+
+- **GHCR — public image pulls:** **`docker/README.md` § GHCR visibility** now states GitHub’s published Packages API has **no container-visibility `PATCH`** (HTTP **404**); **Public** is set in Package settings / org defaults. Cross-links in **`docs/security/golden-image-pipeline.md`**, **`docs/security/image-signature-enforcement.md`**, **`README.md`**, **`docs/readme/deployment.md`**, **`docs/README.md`** index; **`make ghcr-packages-public`** documented as **GET**-only audit.
+
+### Fixed
+
+- **GHCR automation was a no-op:** GitHub’s **`github/rest-api-description`** OpenAPI lists **zero** **`PATCH`** routes under **`…/packages/`** for container packages — the old **`gh api --method PATCH … -f visibility=public`** steps always returned **HTTP 404**. Removed those steps from **[`.github/workflows/docker-publish.yml`](.github/workflows/docker-publish.yml)**; kept anonymous **`skopeo inspect`** gates. Repurposed **`scripts/github/set-clawql-ghcr-packages-public.sh`** to **GET** visibility and exit **1** unless every **`clawql-*`** container is **`public`**; dropped misleading **`GH_PACKAGES_VISIBILITY_TOKEN`** **`PATCH`** narrative from docs and CI hints.
+
 ## [6.1.0] - 2026-05-06
 
 Minor release: defense-in-depth **Helm** (**HashiCorp Vault** subchart, **`secretSourcing`** guards, optional **env dashboard** + **Kyverno** image verification), **Panguard MCP bridge** at the edge (**optional JWT**, unary **gRPC** delegation), **Istio** desktop ingress **LoadBalancer** + **MCP** path routing, **egress** ServiceEntry allowlists, **Kata** / **gVisor** runtime class + **Kyverno** policy, **Gitleaks** + **TruffleHog** history scanning, optional **`CLAWQL_STREAMABLE_HTTP_JSON_RESPONSE`** for Streamable HTTP (`src/server-http.ts`), and npm **11** / **Node 25** lockfile alignment for **`npm ci`**. **`charts/clawql-mcp`** **Chart.version** **0.6.3** with **`appVersion` `6.1.0`**. Release notes: **[`RELEASE_NOTES_v6.1.0.md`](RELEASE_NOTES_v6.1.0.md)**.

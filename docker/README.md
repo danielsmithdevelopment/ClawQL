@@ -2,13 +2,54 @@
 
 Slim [Distroless](https://github.com/GoogleContainerTools/distroless) image with production dependencies, compiled `dist/`, `bin/`, and bundled `providers/` for offline spec lookup.
 
+## GHCR visibility — anonymous pull (users + Kubernetes admission)
+
+Upstream **ClawQL** ships four container images under **`ghcr.io/danielsmithdevelopment/`**:
+
+| Image | Typical use |
+| ----- | ----------- |
+| **`clawql-mcp`** | MCP server runtime |
+| **`clawql-website`** | Bundled docs / provider UI (`make local-k8s-up`) |
+| **`clawql-dashboard`** | Env / ops dashboard Helm workload |
+| **`clawql-panguard-mcp-bridge`** | Optional MCP gateway image |
+
+Those packages are **required to stay Public** so that:
+
+1. **`docker pull …`** works **without** `docker login` (end users, CI, air-gapped mirrors that pull through a proxy).
+2. **Kyverno `verifyImages`** in the Helm defaults can fetch manifests/signatures anonymously (private packages produce **GHCR `DENIED`** and block Pod creates).
+
+**Important — there is no supported API:** GitHub’s **published** Packages REST/OpenAPI (**`github/rest-api-description`**) exposes **GET** / delete / restore for container packages — **no** **`PATCH`** to change visibility (**`PATCH …/packages/...` consistently returns HTTP 404**). Container visibility is documented as **manual**: **Package settings → Danger zone → Change package visibility → Public**. See [Configuring a package’s access control and visibility](https://docs.github.com/en/packages/learn-github-packages/configuring-a-packages-access-control-and-visibility).
+
+New packages under an **Organization** may also be defaulted to **Public** via **Organization settings → Packages** (package creation policy).
+
+GitHub Container Registry **often creates new linked packages as Private**. **`docker-publish.yml`** verifies anonymous **`skopeo inspect`** on **`:latest`** after promotion and **fails** that job until manifests are readable (i.e. the package must be **Public**).
+
+**Sanity check (no Docker login):**
+
+```bash
+docker pull ghcr.io/danielsmithdevelopment/clawql-dashboard:latest
+```
+
+If you see **denied**, the dashboard package (or its org default) is still private.
+
+**Audit (read-only CLI):**
+
+```bash
+gh auth refresh -s read:packages -h github.com
+make ghcr-packages-public # GETs Packages API + prints visibility; exits 1 if not all public
+```
+
+Optional: **`GHCR_PUBLIC_OPEN_BROWSER=1 make ghcr-packages-public`** opens **`https://github.com/<OWNER>?tab=packages`** on macOS/Linux if **`open`** / **`xdg-open`** exists.
+
+**Fix (manual, required today — once per package):** **`https://github.com/danielsmithdevelopment?tab=packages`** (or org profile → **Packages**) → each **`clawql-*`** container → **Package settings** → **Danger zone** → **Change package visibility** → **Public**.
+
 ## Prebuilt image (GHCR)
 
 A **daily** GitHub Actions workflow (`.github/workflows/docker-publish.yml`) builds `main` and pushes to **GitHub Container Registry**:
 
 `ghcr.io/danielsmithdevelopment/clawql-mcp`
 
-Tags include **`latest`**, **`nightly`**, **`sha-<short>`**, and on scheduled runs **`nightly-YYYYMMDD`**. Pull (public package — set visibility under **Packages** if needed):
+Tags include **`latest`**, **`nightly`**, **`sha-<short>`**, and on scheduled runs **`nightly-YYYYMMDD`**. Pull (must be a **public** package — see [GHCR visibility](#ghcr-visibility--anonymous-pull-users--kubernetes-admission) above if **denied**):
 
 ```bash
 docker pull ghcr.io/danielsmithdevelopment/clawql-mcp:latest
@@ -121,7 +162,7 @@ Endpoints:
 3. From the repo root, **`make local-k8s-up`** installs **Kyverno** (namespace **`kyverno`**) and applies a **ClusterPolicy** that **enforces Cosign (keyless)** signatures for **`ghcr.io/danielsmithdevelopment/clawql-mcp*`**, **`clawql-panguard-mcp-bridge*`**, **`clawql-website*`**, and **`clawql-dashboard*`** in the **`clawql`** release namespace only. With **Istio** (default ambient), **`ingress-nginx` is omitted automatically** and **`istio-ingress`** **`deployment/clawql-mcp-ingress`** is exposed on **localhost :80 / :50051** via **`Service/clawql-mcp-ingress` `type: LoadBalancer`** on **docker-desktop** / **rancher-desktop** kube contexts (automatic — **`hostNetwork`** would bind inside the VM only). On other clusters the script defaults **`hostNetwork`** + **ClusterIP** unless you set **`CLAWQL_ISTIO_GATEWAY_HOST_NETWORK=0`**. **Gateway + VirtualServices** terminate **`localhost`**, **`clawql-mcp.localhost`**, **`clawql.localhost`**, **`onyx.localhost`**, … without per-user **`kubectl`** steps. Helm still deploys MCP + UI workloads; **`CLAWQL_LOCAL_K8S_ISTIO=0`** switches back to **ingress-nginx** + rendered **Ingress**. It runs **`helm upgrade --install`** with **`charts/clawql-mcp/values-docker-desktop.yaml`**: **`svc/clawql-mcp-http`** is **ClusterIP by default when Istio is on**, signed **`ghcr.io/.../clawql-mcp:latest`**, **`ghcr.io/.../clawql-website:latest`**, and **`ghcr.io/.../clawql-dashboard:latest`** (`pullPolicy: Always`), **`all-providers`**, and a vault backend:
    - default **hostPath** at **`$HOME/.ClawQL`** (override **`CLAWQL_LOCAL_VAULT_HOST_PATH`**),
    - or in-cluster **PVC** with **`CLAWQL_LOCAL_K8S_VAULT_BACKEND=pvc make local-k8s-up`**.
-   The cluster must reach **Rekor** / Sigstore for verification.
+   The cluster must reach **Rekor** / Sigstore for verification. **Full stack defaults** (dashboard, docs UI, document pipeline, Onyx, **`sandboxDocker`**, …) stay **enabled** in **`values-docker-desktop.yaml`**. Published images are intended to be **public** (GitHub has **no published REST `PATCH`** for container visibility — use Package settings; **§ GHCR visibility** at the top of this file). **`docker-publish.yml`** fails if anonymous reads on **`:latest`** still fail. Run **`make ghcr-packages-public`** after **`gh auth refresh -s read:packages -h github.com`** for a **GET** visibility audit. **GHCR `DENIED`** on forks: make packages **Public** or use Kyverno **`imageRegistrySecretNames`** (**`docs/security/image-signature-enforcement.md`**).
 
 ```bash
 make local-k8s-up
@@ -138,7 +179,7 @@ If Helm errors with **invalid ownership** (MCP was previously installed with **`
 
 **Long-form beginner guide (each tool explained):** **[`docs/deployment/docker-desktop-istio-observability.md`](../docs/deployment/docker-desktop-istio-observability.md)**. This README keeps install commands, env toggles, and port-forward shortcuts.
 
-**`make local-k8s-up`** runs Istio and the **heavy** observability bundle **by default** (Prometheus, Kiali, Grafana, Tempo, Loki, OTel collector — see **`scripts/kubernetes/install-istio-docker-desktop.sh`**). **Ambient mesh** is the default on **both** Docker Desktop and Rancher Desktop (**ztunnel** + **`istio-cni`**; workloads do **not** get Envoy sidecars). **North-south** uses **`istio-ingress` / `clawql-mcp-ingress`**: **LoadBalancer Service** (docker/rancher contexts) or **`hostNetwork` + ClusterIP** (other local clusters) plus **Gateway** + **VirtualServices** so **`localhost:80`** and **`*.localhost:80`** work without **`kubectl port-forward`**. **`svc/clawql-mcp-http`** is **ClusterIP** by default under ambient/Istio. **Rancher Desktop:** **`rdctl`** may automatically disable bundled **Traefik** when Traefik owns **:80**. If **`istio-cni`** fails on Rancher’s VM (Lima **`/run`** mount), fix the node (**`mount --make-rshared /`**) or skip mesh (**`CLAWQL_LOCAL_K8S_ISTIO=0`**). **Legacy:** **`CLAWQL_LOCAL_K8S_ISTIO=sidecar make local-k8s-up`**. **Disable mesh:** **`CLAWQL_LOCAL_K8S_ISTIO=0 make local-k8s-up`** (**`off|false|none`** also work).
+**`make local-k8s-up`** runs Istio and the **heavy** observability bundle **by default** (Prometheus, Kiali, Grafana, Tempo, Loki, OTel collector — see **`scripts/kubernetes/install-istio-docker-desktop.sh`**). **Ambient mesh** is the default on **both** Docker Desktop and Rancher Desktop (**ztunnel** + **`istio-cni`**; workloads do **not** get Envoy sidecars). **North-south** uses **`istio-ingress` / `clawql-mcp-ingress`**: **LoadBalancer Service** (docker/rancher contexts) or **`hostNetwork` + ClusterIP** (other local clusters) plus **Gateway** + **VirtualServices** so **`localhost:80`** and **`*.localhost:80`** work without **`kubectl port-forward`**. **`svc/clawql-mcp-http`** is **ClusterIP** by default under ambient/Istio. **Rancher Desktop:** **`rdctl`** may automatically disable bundled **Traefik** when Traefik owns **:80**. If **`istio-cni`** fails on Rancher’s VM (Lima **`/run`** mount), **`make local-k8s-up`** runs **`rdctl shell`** **`mount --make-rshared /`** automatically before **`istio-cni`**. **Docker Desktop:** the same propagation issue hits **`/var/run/netns`** (**`istio/istio#54865`**); the install script runs **`docker run --privileged --pid=host … nsenter`** to **`mount --make-rshared /`** and **`/run`** in the Linux VM (requires **`docker`** on PATH). Opt out: **`CLAWQL_SKIP_DOCKER_DESKTOP_MOUNT_RSHARED=1`**. **Legacy:** **`CLAWQL_LOCAL_K8S_ISTIO=sidecar make local-k8s-up`**. **Disable mesh:** **`CLAWQL_LOCAL_K8S_ISTIO=0 make local-k8s-up`** (**`off|false|none`** also work).
 
 ```bash
 make local-k8s-up

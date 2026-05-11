@@ -50,6 +50,10 @@ lint-k8s-manifests: helm-lint helm-ui-template-tests kustomize-local-lint
 local-k8s-up:
 	@bash scripts/kubernetes/local-k8s-docker-desktop.sh
 
+# Verify ClawQL GHCR container packages are **public** via **GET** (read:packages; GitHub exposes no visibility PATCH API)
+ghcr-packages-public:
+	@bash scripts/github/set-clawql-ghcr-packages-public.sh
+
 # After local-k8s-up: install External Secrets (if needed), bootstrap dev Vault policy/auth/KV, apply ESO manifests
 bootstrap-vault-eso:
 	@bash scripts/kubernetes/bootstrap-local-vault-and-eso.sh
