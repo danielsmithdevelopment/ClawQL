@@ -1,8 +1,8 @@
 import { Note } from '@/components/mdx'
 import { Prose } from '@/components/Prose'
 import { Tag } from '@/components/Tag'
-import { docsPageMetadata } from '@/lib/seo'
 import SlidesBody from '@/generated/clawql-slides-body.mdx'
+import { docsPageMetadata } from '@/lib/seo'
 
 export const metadata = docsPageMetadata({
   title: 'ClawQL consolidated slide deck',
@@ -44,9 +44,10 @@ export default function VisionSlideDeckPage() {
           from <code className="font-mono text-xs">website/</code> (also runs on{' '}
           <code className="font-mono text-xs">prebuild</code> /{' '}
           <code className="font-mono text-xs">dev</code>). The deck body is
-          included in the <strong>static HTML for this URL at build time</strong>{' '}
-          (no Suspense/streaming shell) so search engines and link-preview bots
-          can read the content without executing client JavaScript. Related case
+          included in the{' '}
+          <strong>static HTML for this URL at build time</strong> (no
+          Suspense/streaming shell) so search engines and link-preview bots can
+          read the content without executing client JavaScript. Related case
           study:{' '}
           <a
             href="/case-studies/slide-deck-github-parity-cache-memory-recall-2026-04"

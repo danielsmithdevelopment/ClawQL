@@ -277,7 +277,7 @@ const SearchInput = forwardRef<
         ref={inputRef}
         data-autofocus
         className={clsx(
-          'flex-auto appearance-none bg-transparent pl-10 text-zinc-900 outline-none ring-transparent transition placeholder:text-zinc-600 focus:w-full focus:flex-none focus-visible:ring-2 focus-visible:ring-claw-cyan focus-visible:ring-offset-2 focus-visible:ring-offset-white sm:text-sm dark:text-white dark:placeholder:text-zinc-400 dark:focus-visible:ring-claw-cyan-bright dark:focus-visible:ring-offset-claw-panel [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden [&::-webkit-search-results-button]:hidden [&::-webkit-search-results-decoration]:hidden',
+          'flex-auto appearance-none bg-transparent pl-10 text-zinc-900 ring-transparent transition outline-none placeholder:text-zinc-600 focus:w-full focus:flex-none focus-visible:ring-2 focus-visible:ring-claw-cyan focus-visible:ring-offset-2 focus-visible:ring-offset-white sm:text-sm dark:text-white dark:placeholder:text-zinc-400 dark:focus-visible:ring-claw-cyan-bright dark:focus-visible:ring-offset-claw-panel [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden [&::-webkit-search-results-button]:hidden [&::-webkit-search-results-decoration]:hidden',
           autocompleteState.status === 'stalled' ? 'pr-11' : 'pr-4',
         )}
         {...inputProps}

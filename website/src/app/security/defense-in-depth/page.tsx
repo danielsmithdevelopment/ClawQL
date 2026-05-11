@@ -1,8 +1,8 @@
 import { Note } from '@/components/mdx'
 import { Prose } from '@/components/Prose'
 import { Tag } from '@/components/Tag'
-import { docsPageMetadata } from '@/lib/seo'
 import DefenseInDepthBody from '@/generated/clawql-defense-in-depth-body.mdx'
+import { docsPageMetadata } from '@/lib/seo'
 
 export const metadata = docsPageMetadata({
   title: 'Defense in depth — MCP & k3s security',
