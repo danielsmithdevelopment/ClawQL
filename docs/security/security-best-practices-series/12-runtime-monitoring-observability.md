@@ -1,0 +1,103 @@
+---
+title: "Runtime Monitoring and Observability: Falco, Wazuh, Prometheus, and Merkle Metrics"
+series: "Agentic AI Security Curriculum"
+course_type: "instructor-ready / self-study"
+audience: "Security architects, platform engineers, and teams adopting AI agents"
+estimated_minutes: 35
+level: intermediate
+tags:
+  - observability
+  - monitoring
+  - siem
+  - metrics
+part: 12
+total_parts: 20
+date: "May 2026"
+slug: "runtime-monitoring-observability"
+canonical_path: "/security/best-practices/runtime-monitoring-observability"
+prev: "model-integrity-verifying-weights"
+next: "automated-response-containment"
+description: "Layer host-level detection, SIEM correlation, metrics, and tracing for AI platforms."
+---
+# Runtime Monitoring and Observability: Falco, Wazuh, Prometheus, and Merkle Metrics
+
+
+*Module 12 of 20 · Agentic AI Security Curriculum · May 2026*
+## How to use this module
+
+Use it as **self-paced** study or as **instructor-led** training. YAML, commands, and policy excerpts are **illustrative**; map them to your cloud, mesh, identity provider, and agent runtime—substitute your own names, namespaces, and tools while preserving the **control intent**.
+
+**Estimated time:** ~35 minutes reading; add time for linked standards and team discussion.
+
+## Learning objectives
+
+By the end of this module, you should be able to:
+
+1. Layer host-level detection, SIEM correlation, metrics, and tracing for AI platforms.
+2. Plan alert ownership, tuning, and separation of observability from GPU inference paths.
+3. Interpret integrity-oriented metrics (e.g. audit completeness) as security signals.
+
+## Prerequisites
+
+- Prior module: [Model Integrity: Verifying Weights Before Inference](11-model-integrity-verifying-weights.md)
+
+
+**Suggested discussion / lab:** Pick one diagram in your environment (build, deploy, runtime) and mark where this module’s controls apply; note gaps versus the checklist in the body.
+
+---
+
+Strong prevention and containment are incomplete without comprehensive visibility. This module covers the runtime monitoring stack, which provides deep observability into system behavior, detects anomalies, and correlates events across layers.
+
+### The Observability Stack
+
+Reference architectures often deploy a full observability suite:**Falco** (eBPF) — syscall-level monitoring and Kubernetes audit log integration. Detects suspicious activity such as unexpected shells, file modifications, or network connections inside containers.
+**Wazuh** — OSS SIEM for log correlation, rule-based alerting, vulnerability detection, and compliance reporting.
+**Prometheus** — metrics collection with custom exporters for Merkle root verification and Cuckoo filter health.
+**Loki** — log aggregation (receives only redacted logs from the Presidio pipeline).
+**Tempo** — distributed tracing for request flows through the intelligent MCP gateway.
+**Kiali** — Istio service mesh topology and traffic visualization.
+
+### Alert Tuning and Ownership
+
+Wazuh and Falco generate high volumes of events by default. Runbooks should require:Named owner responsible for alert tuning.
+Tiered response (low-confidence → alert only; high-confidence → auto-quarantine via Talon).
+Regular tuning sessions to reduce noise while preserving signal.
+
+### Node Pinning Strategy
+
+Observability workloads are pinned to dedicated non-GPU nodes using node selectors and taints. This prevents monitoring overhead from affecting inference latency or consuming GPU VRAM needed for agents.
+
+### Merkle and Cuckoo Metrics
+
+Custom Prometheus metrics expose:Merkle root verification success/failure rates.
+Cuckoo filter false-positive rates (critical for security paths).
+Audit trail completeness.
+
+These metrics ensure cryptographic integrity is actively monitored, not assumed.
+
+### Key Takeaways
+
+Runtime monitoring turns the platform into a sensor that detects compromise early.
+Layered tools (Falco for low-level, Wazuh for correlation, Prometheus for metrics) provide comprehensive coverage with different strengths.
+Alert tuning and node pinning are operational requirements, not optional.
+Merkle and Cuckoo metrics bring cryptographic controls into day-to-day observability.
+
+Effective monitoring enables the automated response and containment covered in the next module.
+
+**Next module:** Automated Response and Containment – Falco + Talon Quarantine, Panguard Blocking.
+
+## Further reading (vendor-neutral)
+
+These resources are independent of any single product; use them to deepen the topic for audits, architecture reviews, or procurement discussions.
+
+- [Falco](https://falco.org/docs/)
+- [OpenTelemetry](https://opentelemetry.io/docs/)
+- [Prometheus docs](https://prometheus.io/docs/introduction/overview/)
+- [Wazuh](https://documentation.wazuh.com/current/)
+
+## Commercial training use
+
+You may reuse this curriculum internally or in **paid consulting / training** engagements. Keep examples aligned to the customer’s actual stack; substitute your own runbooks, tool names, and compliance frameworks (SOC 2, ISO 27001, sector regulators) where cited examples use a reference architecture only.
+
+---
+
