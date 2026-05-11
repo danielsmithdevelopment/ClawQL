@@ -21,9 +21,10 @@ npm start
 ## Performance, accessibility (WCAG-oriented), and SEO
 
 - **Runbook (incident prevention, Lighthouse CI, Workers):** [`../docs/website/website-performance-workers-guardrails.md`](../docs/website/website-performance-workers-guardrails.md)
-- **Local Lighthouse (needs local Chrome):** `npm run lh:docs` (writes `lighthouse-report.html`, gitignored)
+- **Crawlers & link previews:** Long-form generated MDX (e.g. `/vision/slide-deck`, `/security/defense-in-depth`) uses **synchronous** imports so the **full article body is in the HTML response** at build time. Avoid wrapping that MDX in `Suspense` + `import()` unless you accept that many bots and “paste URL” tools only read the first HTML chunk (often a loading placeholder).
+- **Local Lighthouse** needs a **Chromium-based** binary. Lighthouse looks for **Google Chrome** by default; if you only have **Brave** (or another Chromium), set **`CHROME_PATH`** to the executable (macOS Brave: `/Applications/Brave Browser.app/Contents/MacOS/Brave Browser`). Example against a local **`next start`**: `CHROME_PATH="…/Brave Browser" npx lighthouse@13.1.0 http://127.0.0.1:3000/ --preset=desktop --only-categories=performance,accessibility,best-practices,seo --view`. **`npm run lh:docs`** hits production and writes `lighthouse-report.html` (gitignored).
 
-GitHub Actions runs Lighthouse on **`next build` + `next start`** for PRs that touch **`website/`** — see **`.github/workflows/website-lighthouse.yml`** at the repo root.
+GitHub Actions runs Lighthouse on **`next build` + `next start`** for PRs that touch **`website/`** — see **`.github/workflows/website-lighthouse.yml`** at the repo root: **desktop** then **mobile** preset (mobile uses a lower performance floor). CI sets **`LH_MIN_A11Y=1`** so the **accessibility category must score 100** in the lab (not a substitute for a full WCAG conformance audit, but it blocks common regressions), and **`LH_MIN_PERF=0.70`** for **desktop** performance (defaults in **`scripts/dev/assert-lighthouse-scores.mjs`**; override with env vars if a run is flaky). Root **`ci.yml`** also runs **`npm run test:smoke`** in **`website/`**, which includes **Playwright + axe** checks in **`tests/a11y-axe.spec.ts`**.
 
 ## Production deploy (docs.clawql.com)
 

@@ -1,9 +1,8 @@
-import { Suspense, type ReactNode } from 'react'
-
 import { Note } from '@/components/mdx'
 import { Prose } from '@/components/Prose'
 import { Tag } from '@/components/Tag'
 import { docsPageMetadata } from '@/lib/seo'
+import DefenseInDepthBody from '@/generated/clawql-defense-in-depth-body.mdx'
 
 export const metadata = docsPageMetadata({
   title: 'Defense in depth — MCP & k3s security',
@@ -13,25 +12,8 @@ export const metadata = docsPageMetadata({
   ogType: 'article',
 })
 
+/** Full MDX is bundled into this route at build time so HTML includes guide text for crawlers and link previews. */
 export const dynamic = 'force-static'
-
-async function DefenseInDepthMdx(): Promise<ReactNode> {
-  const { default: Body } = await import(
-    '@/generated/clawql-defense-in-depth-body.mdx'
-  )
-  return <Body />
-}
-
-function DefenseInDepthLoading() {
-  return (
-    <div
-      className="mx-auto max-w-2xl py-16 text-sm text-zinc-500 lg:max-w-5xl dark:text-zinc-400"
-      role="status"
-    >
-      Loading defense-in-depth guide…
-    </div>
-  )
-}
 
 export default function SecurityDefenseInDepthPage() {
   return (
@@ -63,7 +45,9 @@ export default function SecurityDefenseInDepthPage() {
           <code className="font-mono text-xs">prebuild</code> /{' '}
           <code className="font-mono text-xs">dev</code>
           ). Relative repo links are rewritten to GitHub in the generated file.
-          The body loads as a <strong>separate async chunk</strong>. Summary:{' '}
+          The guide body is included in the{' '}
+          <strong>static HTML for this URL at build time</strong> (no
+          Suspense/streaming shell) for crawlers and link previews. Summary:{' '}
           <a
             href="/security"
             className="font-medium text-inherit underline underline-offset-2"
@@ -75,9 +59,7 @@ export default function SecurityDefenseInDepthPage() {
       </div>
 
       <Prose className="flex-auto">
-        <Suspense fallback={<DefenseInDepthLoading />}>
-          <DefenseInDepthMdx />
-        </Suspense>
+        <DefenseInDepthBody />
       </Prose>
     </article>
   )

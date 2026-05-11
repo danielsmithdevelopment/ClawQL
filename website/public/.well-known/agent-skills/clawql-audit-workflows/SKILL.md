@@ -1,13 +1,16 @@
 ---
 name: clawql-audit-workflows
-description: Use the optional audit ring buffer for live operator breadcrumbs during workflows.
+description: >-
+  Workflow recipes for the ClawQL MCP audit tool. The audit tool is ClawQL Core
+  (always registered — no CLAWQL_ENABLE_AUDIT); this skill is optional guidance for
+  append/list/clear patterns during multi-step runs.
 ---
 
 # ClawQL audit workflows
 
 ## When to apply
 
-- You need lightweight in-run event traces.
+- You want structured **`audit.append`** / **`audit.list`** breadcrumbs during a workflow (the tool is already available on every ClawQL MCP server).
 
 ## Workflow
 

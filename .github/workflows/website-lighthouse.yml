@@ -54,6 +54,9 @@ jobs:
         env:
           PORT: "3000"
           NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3000
+          # WCAG-oriented lab gate: accessibility must be perfect (1.0). Performance floor raised after home/header SSR (override locally with LH_MIN_*).
+          LH_MIN_A11Y: "1"
+          LH_MIN_PERF: "0.70"
         run: |
           set -euo pipefail
           cd website
@@ -89,3 +92,14 @@ jobs:
             --quiet
 
           node ../scripts/dev/assert-lighthouse-scores.mjs lighthouse-ci.json
+
+          # Mobile throttling: stricter performance floor; same a11y/SEO/BP gates as desktop.
+          npx --yes lighthouse@13.1.0 "http://127.0.0.1:${PORT}/" \
+            --preset=mobile \
+            --only-categories=performance,accessibility,best-practices,seo \
+            --chrome-flags="--headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage" \
+            --output=json \
+            --output-path=lighthouse-ci-mobile.json \
+            --quiet
+
+          LH_MIN_PERF=0.52 node ../scripts/dev/assert-lighthouse-scores.mjs lighthouse-ci-mobile.json

@@ -18,8 +18,8 @@ Root cause class: **too much work per invocation** on **Workers** (CPU / lifetim
 
 Workflow: **[`.github/workflows/website-lighthouse.yml`](../.github/workflows/website-lighthouse.yml)**
 
-- Builds **`website/`** with **`npm run build`**, serves **`next start`**, runs **Lighthouse** (desktop preset) against **`http://127.0.0.1:3000/`**.
-- Asserts minimum scores via **[`scripts/dev/assert-lighthouse-scores.mjs`](../scripts/dev/assert-lighthouse-scores.mjs)** (defaults: performance **0.55**, accessibility **0.92**, SEO **0.9**, best practices **0.85** — tune with `LH_MIN_*` env vars in the workflow if needed).
+- Builds **`website/`** with **`npm run build`**, serves **`next start`**, runs **Lighthouse** **desktop** then **mobile** preset against **`http://127.0.0.1:3000/`**.
+- Asserts minimum scores via **[`scripts/dev/assert-lighthouse-scores.mjs`](../scripts/dev/assert-lighthouse-scores.mjs)** (defaults: performance **0.70**, accessibility **1.0** (WCAG-oriented lab gate), SEO **0.9**, best practices **0.85** — override with `LH_MIN_*` env vars in CI or locally if needed). The **mobile** run uses **`LH_MIN_PERF=0.52`** inline (other floors unchanged) so CPU throttling does not fail every PR.
 
 ### What Lighthouse CI **does** catch
 
@@ -67,12 +67,14 @@ npm run lh -- http://127.0.0.1:3000/case-studies/cloudflare-docs-mcp --preset=de
 
 ### Content / front-end (reduces per-invocation cost)
 
+- [ ] **Home + header:** marketing sections and search use **dynamic imports with SSR** so Lighthouse/LCP see real HTML sooner; that adds a little **Worker HTML work** on cold `/` compared to `ssr: false`. If **1102** on `/` spikes after a change here, re-read this doc and consider the tradeoff.
 - [ ] Prefer **concise** case studies or **split** very long narratives; fewer **above-the-fold** images per page.
 - [ ] Ensure markdown images have **meaningful `alt`** (WCAG); default **`loading="lazy"`** is set in **`website/src/components/mdx.tsx`**.
 - [ ] After large content changes, run **`npm run lh:docs`** (or CI) and spot-check **LCP** on case study URLs.
 
 ### Accessibility (WCAG-oriented — lab + manual)
 
+- [ ] **Playwright + axe** (`website/tests/a11y-axe.spec.ts`, same job as **`npm run test:smoke`** in root CI): blocks **critical** and **serious** axe violations on **`/`**, **`/learn`**, **`/install`** (complements Lighthouse). Contrast: **Shiki** comment token in **`website/src/styles/tailwind.css`**, search shortcut **kbd** colors in **`website/src/components/Search.tsx`**.
 - [ ] **Skip link** and **`#main-content`** target (see `website/src/app/layout.tsx`, `Layout.tsx`).
 - [ ] **Landmarks / labels:** sidebar `aria-label="Documentation"`, header `aria-label="Site"`.
 - [ ] **Focus visible** on primary controls (`Button` focus-visible ring).

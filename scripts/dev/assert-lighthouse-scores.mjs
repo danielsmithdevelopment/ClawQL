@@ -6,7 +6,7 @@
  *   node scripts/dev/assert-lighthouse-scores.mjs website/lighthouse-ci.json
  *
  * Optional env (0–1 floats, defaults shown):
- *   LH_MIN_PERF=0.55 LH_MIN_A11Y=0.92 LH_MIN_SEO=0.9 LH_MIN_BP=0.85
+ *   LH_MIN_PERF=0.70 LH_MIN_A11Y=1 LH_MIN_SEO=0.9 LH_MIN_BP=0.85
  */
 import fs from "node:fs";
 
@@ -25,8 +25,8 @@ if (!c) {
 }
 
 const min = {
-  performance: Number(process.env.LH_MIN_PERF ?? "0.55"),
-  accessibility: Number(process.env.LH_MIN_A11Y ?? "0.92"),
+  performance: Number(process.env.LH_MIN_PERF ?? "0.70"),
+  accessibility: Number(process.env.LH_MIN_A11Y ?? "1"),
   seo: Number(process.env.LH_MIN_SEO ?? "0.9"),
   bestPractices: Number(process.env.LH_MIN_BP ?? "0.85"),
 };

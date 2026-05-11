@@ -32,6 +32,7 @@ const docsSiteOrigin = (
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  poweredByHeader: false,
   // Node Docker image: traced minimal server + node_modules (see website/Dockerfile runner stage).
   output: 'standalone',
   // Monorepo: lockfile at repo root caused Next to trace from parent; OpenNext/Workers needs app-root tracing.
@@ -118,7 +119,7 @@ const nextConfig = {
           },
         ],
       },
-      // Full slide deck: very large MDX body (async chunk); long edge TTL like case studies.
+      // Full slide deck: very large MDX body (static route bundle); long edge TTL like case studies.
       {
         source: '/vision/slide-deck',
         headers: [
@@ -137,7 +138,7 @@ const nextConfig = {
           },
         ],
       },
-      // Comprehensive security guide (large MDX, async chunk).
+      // Comprehensive security guide (large MDX, static route bundle).
       {
         source: '/security/defense-in-depth',
         headers: [

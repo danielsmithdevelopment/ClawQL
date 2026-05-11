@@ -175,6 +175,7 @@ function SearchResult({
   let hierarchy = [sectionTitle, result.pageTitle].filter(
     (x): x is string => typeof x === 'string',
   )
+  const itemAriaLabel = [result.title, ...hierarchy].filter(Boolean).join(', ')
 
   return (
     <li
@@ -182,7 +183,7 @@ function SearchResult({
         'group block cursor-default px-4 py-3 aria-selected:bg-zinc-50 dark:aria-selected:bg-zinc-800/50',
         resultIndex > 0 && 'border-t border-zinc-100 dark:border-zinc-800',
       )}
-      aria-labelledby={`${id}-hierarchy ${id}-title`}
+      aria-label={itemAriaLabel}
       {...autocomplete.getItemProps({
         item: result,
         source: collection.source,
@@ -190,7 +191,6 @@ function SearchResult({
     >
       <div
         id={`${id}-title`}
-        aria-hidden="true"
         className="text-sm font-medium text-zinc-900 group-aria-selected:text-[#0e7490] dark:text-white dark:group-aria-selected:text-claw-cyan"
       >
         <HighlightQuery text={result.title} query={query} />
@@ -198,8 +198,7 @@ function SearchResult({
       {hierarchy.length > 0 && (
         <div
           id={`${id}-hierarchy`}
-          aria-hidden="true"
-          className="mt-1 truncate text-2xs whitespace-nowrap text-zinc-500"
+          className="mt-1 truncate text-2xs whitespace-nowrap text-zinc-600 dark:text-zinc-400"
         >
           {hierarchy.map((item, itemIndex, items) => (
             <Fragment key={itemIndex}>
@@ -278,7 +277,7 @@ const SearchInput = forwardRef<
         ref={inputRef}
         data-autofocus
         className={clsx(
-          'flex-auto appearance-none bg-transparent pl-10 text-zinc-900 outline-hidden placeholder:text-zinc-500 focus:w-full focus:flex-none sm:text-sm dark:text-white [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden [&::-webkit-search-results-button]:hidden [&::-webkit-search-results-decoration]:hidden',
+          'flex-auto appearance-none bg-transparent pl-10 text-zinc-900 outline-none ring-transparent transition placeholder:text-zinc-600 focus:w-full focus:flex-none focus-visible:ring-2 focus-visible:ring-claw-cyan focus-visible:ring-offset-2 focus-visible:ring-offset-white sm:text-sm dark:text-white dark:placeholder:text-zinc-400 dark:focus-visible:ring-claw-cyan-bright dark:focus-visible:ring-offset-claw-panel [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden [&::-webkit-search-results-button]:hidden [&::-webkit-search-results-decoration]:hidden',
           autocompleteState.status === 'stalled' ? 'pr-11' : 'pr-4',
         )}
         {...inputProps}
@@ -313,11 +312,13 @@ function SearchDialog({
   open,
   setOpen,
   className,
+  panelId,
   onNavigate = () => {},
 }: {
   open: boolean
   setOpen: (open: boolean) => void
   className?: string
+  panelId: string
   onNavigate?: () => void
 }) {
   let formRef = useRef<React.ElementRef<'form'>>(null)
@@ -371,6 +372,7 @@ function SearchDialog({
 
       <div className="fixed inset-0 overflow-y-auto px-4 py-4 sm:px-6 sm:py-20 md:py-32 lg:px-8 lg:py-[15vh]">
         <DialogPanel
+          id={panelId}
           transition
           className="mx-auto transform-gpu overflow-hidden rounded-lg bg-zinc-50 shadow-xl ring-1 ring-zinc-900/7.5 data-closed:scale-95 data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in sm:max-w-xl dark:bg-claw-panel dark:ring-claw-graph/40"
         >
@@ -412,7 +414,19 @@ function useSearchProps() {
   let buttonRef = useRef<React.ElementRef<'button'>>(null)
   let [open, setOpen] = useState(false)
 
+  let setOpenGuarded = useCallback(
+    (next: boolean) => {
+      let { width = 0, height = 0 } =
+        buttonRef.current?.getBoundingClientRect() ?? {}
+      if (!next || (width !== 0 && height !== 0)) {
+        setOpen(next)
+      }
+    },
+    [setOpen],
+  )
+
   return {
+    open,
     buttonProps: {
       ref: buttonRef,
       onClick() {
@@ -421,23 +435,15 @@ function useSearchProps() {
     },
     dialogProps: {
       open,
-      setOpen: useCallback(
-        (open: boolean) => {
-          let { width = 0, height = 0 } =
-            buttonRef.current?.getBoundingClientRect() ?? {}
-          if (!open || (width !== 0 && height !== 0)) {
-            setOpen(open)
-          }
-        },
-        [setOpen],
-      ),
+      setOpen: setOpenGuarded,
     },
   }
 }
 
 export function Search() {
   let [modifierKey, setModifierKey] = useState<string>()
-  let { buttonProps, dialogProps } = useSearchProps()
+  let panelId = useId()
+  let { open, buttonProps, dialogProps } = useSearchProps()
 
   useEffect(() => {
     setModifierKey(
@@ -449,18 +455,25 @@ export function Search() {
     <div className="hidden lg:block lg:max-w-md lg:flex-auto">
       <button
         type="button"
-        className="hidden h-8 w-full items-center gap-2 rounded-full bg-white pr-3 pl-2 text-sm text-zinc-500 ring-1 ring-zinc-900/10 transition hover:ring-zinc-900/20 lg:flex dark:bg-white/5 dark:text-zinc-400 dark:ring-white/10 dark:ring-inset dark:hover:ring-white/20"
+        className="hidden h-8 w-full items-center gap-2 rounded-full bg-white pr-3 pl-2 text-sm text-zinc-600 ring-1 ring-zinc-900/10 transition hover:ring-zinc-900/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-claw-cyan lg:flex dark:bg-white/5 dark:text-zinc-300 dark:ring-white/10 dark:ring-inset dark:hover:ring-white/20 dark:focus-visible:outline-claw-cyan-bright"
+        aria-expanded={open}
+        aria-haspopup="dialog"
+        aria-controls={panelId}
         {...buttonProps}
       >
         <SearchIcon className="h-5 w-5 stroke-current" />
         Search documentation…
-        <kbd className="ml-auto text-2xs text-zinc-400 dark:text-zinc-500">
+        <kbd className="ml-auto text-2xs text-zinc-500 dark:text-zinc-300">
           <kbd className="font-sans">{modifierKey}</kbd>
           <kbd className="font-sans">K</kbd>
         </kbd>
       </button>
       <Suspense fallback={null}>
-        <SearchDialog className="hidden lg:block" {...dialogProps} />
+        <SearchDialog
+          className="hidden lg:block"
+          panelId={panelId}
+          {...dialogProps}
+        />
       </Suspense>
     </div>
   )
@@ -468,14 +481,18 @@ export function Search() {
 
 export function MobileSearch() {
   let { close } = useMobileNavigationStore()
-  let { buttonProps, dialogProps } = useSearchProps()
+  let panelId = useId()
+  let { open, buttonProps, dialogProps } = useSearchProps()
 
   return (
     <div className="contents lg:hidden">
       <button
         type="button"
-        className="relative flex size-6 items-center justify-center rounded-md transition hover:bg-zinc-900/5 lg:hidden dark:hover:bg-white/5"
+        className="relative flex size-6 items-center justify-center rounded-md transition hover:bg-zinc-900/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-claw-cyan lg:hidden dark:hover:bg-white/5 dark:focus-visible:outline-claw-cyan-bright"
         aria-label="Search documentation"
+        aria-expanded={open}
+        aria-haspopup="dialog"
+        aria-controls={panelId}
         {...buttonProps}
       >
         <span className="absolute size-12 pointer-fine:hidden" />
@@ -484,6 +501,7 @@ export function MobileSearch() {
       <Suspense fallback={null}>
         <SearchDialog
           className="lg:hidden"
+          panelId={panelId}
           onNavigate={close}
           {...dialogProps}
         />

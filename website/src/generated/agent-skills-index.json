@@ -4,9 +4,9 @@
     {
       "name": "clawql-audit-workflows",
       "type": "skill-md",
-      "description": "Use the optional audit ring buffer for live operator breadcrumbs during workflows.",
+      "description": "Workflow recipes for the ClawQL MCP audit tool. The audit tool is ClawQL Core (always registered — no CLAWQL_ENABLE_AUDIT); this skill is optional guidance for append/list/clear patterns during multi-step runs.",
       "url": "/.well-known/agent-skills/clawql-audit-workflows/SKILL.md",
-      "digest": "sha256:a0203e516e3d9b50f261438f996727280b38d7d6e686d9c464a0fbeccee6c07b"
+      "digest": "sha256:bf1f82cd308b536c04bef6ffa1a93a39165bbfcbfee197b5f39d68d27f384403"
     },
     {
       "name": "clawql-cache-workflows",
