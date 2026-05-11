@@ -18,10 +18,11 @@ canonical_path: "/security/best-practices/quarterly-security-review-checklist"
 prev: "owasp-agentic-top-10-mitigations"
 description: "Run a periodic defense-in-depth review across supply chain, runtime, and data."
 ---
+
 # Quarterly Security Review Checklist: Keeping Defense-in-Depth Alive
 
+_Module 20 of 20 · Agentic AI Security Curriculum · May 2026_
 
-*Module 20 of 20 · Agentic AI Security Curriculum · May 2026*
 ## How to use this module
 
 Use it as **self-paced** study or as **instructor-led** training. YAML, commands, and policy excerpts are **illustrative**; map them to your cloud, mesh, identity provider, and agent runtime—substitute your own names, namespaces, and tools while preserving the **control intent**.
@@ -39,7 +40,6 @@ By the end of this module, you should be able to:
 ## Prerequisites
 
 - Prior module: [OWASP Agentic Top 10: Mapping Risks to Architectural Controls](19-owasp-agentic-top-10-mitigations.md)
-
 
 ---
 
@@ -132,4 +132,3 @@ These resources are independent of any single product; use them to deepen the to
 You may reuse this curriculum internally or in **paid consulting / training** engagements. Keep examples aligned to the customer’s actual stack; substitute your own runbooks, tool names, and compliance frameworks (SOC 2, ISO 27001, sector regulators) where cited examples use a reference architecture only.
 
 ---
-

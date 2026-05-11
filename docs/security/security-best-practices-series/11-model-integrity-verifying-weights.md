@@ -18,10 +18,11 @@ prev: "data-classification-pii-redaction-logs"
 next: "runtime-monitoring-observability"
 description: "Explain why model artifacts need integrity checks beyond container image scanning."
 ---
+
 # Model Integrity: Verifying Weights Before Inference
 
+_Module 11 of 20 · Agentic AI Security Curriculum · May 2026_
 
-*Module 11 of 20 · Agentic AI Security Curriculum · May 2026*
 ## How to use this module
 
 Use it as **self-paced** study or as **instructor-led** training. YAML, commands, and policy excerpts are **illustrative**; map them to your cloud, mesh, identity provider, and agent runtime—substitute your own names, namespaces, and tools while preserving the **control intent**.
@@ -39,7 +40,6 @@ By the end of this module, you should be able to:
 ## Prerequisites
 
 - Prior module: [Data Classification and PII Redaction: Never Let Sensitive Data Hit Logs](10-data-classification-pii-redaction-logs.md)
-
 
 **Suggested discussion / lab:** Pick one diagram in your environment (build, deploy, runtime) and mark where this module’s controls apply; note gaps versus the checklist in the body.
 
@@ -66,23 +66,24 @@ Manifest stored in Harbor alongside the weights.
 yaml
 
 initContainers:
-  - name: verify-weights
-    image: registry.internal.example/clawql/weight-verifier:latest
-    command:
-      - /bin/sh
-      - -c
-      - |
-        cosign verify-blob \
-          --key /etc/signing-keys/cosign.pub \
-          --signature /weights/manifest.sig \
-          /weights/manifest.json
-        sha256sum -c /weights/manifest.json
+
+- name: verify-weights
+  image: registry.internal.example/clawql/weight-verifier:latest
+  command:
+  - /bin/sh
+  - -c
+  - |
+    cosign verify-blob \
+     --key /etc/signing-keys/cosign.pub \
+     --signature /weights/manifest.sig \
+     /weights/manifest.json
+    sha256sum -c /weights/manifest.json
     volumeMounts:
-      - name: model-weights
-        mountPath: /weights
-      - name: signing-keys
-        mountPath: /etc/signing-keys
-        readOnly: true
+  - name: model-weights
+    mountPath: /weights
+  - name: signing-keys
+    mountPath: /etc/signing-keys
+    readOnly: true
 
 The main inference container only starts if the init container succeeds.
 
@@ -116,4 +117,3 @@ These resources are independent of any single product; use them to deepen the to
 You may reuse this curriculum internally or in **paid consulting / training** engagements. Keep examples aligned to the customer’s actual stack; substitute your own runbooks, tool names, and compliance frameworks (SOC 2, ISO 27001, sector regulators) where cited examples use a reference architecture only.
 
 ---
-

@@ -19,10 +19,11 @@ prev: "golden-images-distroless-pipelines"
 next: "least-privilege-scoped-identities"
 description: "Describe the role of admission controllers in preventing mis-scoped workloads from running."
 ---
+
 # Cluster Admission Control: Enforcing Image Signing and Policy at Deploy Time
 
+_Module 3 of 20 · Agentic AI Security Curriculum · May 2026_
 
-*Module 3 of 20 · Agentic AI Security Curriculum · May 2026*
 ## How to use this module
 
 Use it as **self-paced** study or as **instructor-led** training. YAML, commands, and policy excerpts are **illustrative**; map them to your cloud, mesh, identity provider, and agent runtime—substitute your own names, namespaces, and tools while preserving the **control intent**.
@@ -40,7 +41,6 @@ By the end of this module, you should be able to:
 ## Prerequisites
 
 - Prior module: [Building Golden Images: Automated Scanning, Hardening, and Distroless Pipelines](02-golden-images-distroless-pipelines.md)
-
 
 **Suggested discussion / lab:** Pick one diagram in your environment (build, deploy, runtime) and mark where this module’s controls apply; note gaps versus the checklist in the body.
 
@@ -68,24 +68,21 @@ yaml
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
-  name: enforce-signed-images
+name: enforce-signed-images
 spec:
-  validationFailureAction: Enforce
-  background: false
-  rules:
-    - name: verify-cosign-signature
-      match:
-        resources:
-          kinds: ["Pod"]
-      validate:
-        message: "All containers must be signed with Cosign and pulled from Harbor"
-        imageVerify:
-          - imageReferences: ["registry.internal.example/**"]
-            verify:
-              - type: "cosign"
-                keyless:
-                  issuer: "https://token.actions.githubusercontent.com"
-                  subject: "https://github.com/clawql/*"
+validationFailureAction: Enforce
+background: false
+rules: - name: verify-cosign-signature
+match:
+resources:
+kinds: ["Pod"]
+validate:
+message: "All containers must be signed with Cosign and pulled from Harbor"
+imageVerify: - imageReferences: ["registry.internal.example/**"]
+verify: - type: "cosign"
+keyless:
+issuer: "https://token.actions.githubusercontent.com"
+subject: "https://github.com/clawql/*"
 
 This policy rejects any pod using unsigned images or images from external registries.
 
@@ -94,20 +91,22 @@ This policy rejects any pod using unsigned images or images from external regist
 Model weights are a common blind spot. This module extends admission control to verify them via init containers:yaml
 
 # Example init container pattern enforced by policy
+
 initContainers:
-  - name: verify-weights
-    image: registry.internal.example/clawql/weight-verifier:latest
-    command:
-      - cosign
-      - verify-blob
-      - --key
-      - /etc/signing-keys/cosign.pub
-      - --signature
-      - /weights/manifest.sig
-      - /weights/manifest.json
+
+- name: verify-weights
+  image: registry.internal.example/clawql/weight-verifier:latest
+  command:
+  - cosign
+  - verify-blob
+  - --key
+  - /etc/signing-keys/cosign.pub
+  - --signature
+  - /weights/manifest.sig
+  - /weights/manifest.json
     volumeMounts:
-      - name: model-weights
-        mountPath: /weights
+  - name: model-weights
+    mountPath: /weights
 
 A dedicated Kyverno policy ensures every inference pod includes this verification step.
 
@@ -152,4 +151,3 @@ These resources are independent of any single product; use them to deepen the to
 You may reuse this curriculum internally or in **paid consulting / training** engagements. Keep examples aligned to the customer’s actual stack; substitute your own runbooks, tool names, and compliance frameworks (SOC 2, ISO 27001, sector regulators) where cited examples use a reference architecture only.
 
 ---
-

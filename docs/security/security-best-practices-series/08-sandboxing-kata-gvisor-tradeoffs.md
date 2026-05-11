@@ -20,10 +20,11 @@ prev: "rbac-mtls-istio-service-mesh"
 next: "mcp-runtime-protection-panguard-atr"
 description: "Compare isolation technologies (VM-backed runtimes, user-space kernels, OS sandboxes)."
 ---
+
 # Sandboxing Options and Trade-offs: Kata, gVisor, Seatbelt, Docker, and Cloudflare Workers
 
+_Module 8 of 20 · Agentic AI Security Curriculum · May 2026_
 
-*Module 8 of 20 · Agentic AI Security Curriculum · May 2026*
 ## How to use this module
 
 Use it as **self-paced** study or as **instructor-led** training. YAML, commands, and policy excerpts are **illustrative**; map them to your cloud, mesh, identity provider, and agent runtime—substitute your own names, namespaces, and tools while preserving the **control intent**.
@@ -42,7 +43,6 @@ By the end of this module, you should be able to:
 
 - Prior module: [RBAC, mTLS, and Istio Service Mesh: Network-Level Zero Trust](07-rbac-mtls-istio-service-mesh.md)
 
-
 **Suggested discussion / lab:** Pick one diagram in your environment (build, deploy, runtime) and mark where this module’s controls apply; note gaps versus the checklist in the body.
 
 ---
@@ -55,13 +55,13 @@ Agentic systems routinely execute untrusted or dynamically generated code. Conta
 
 ### Isolation Technologies Compared
 
-|Technology        |Isolation Type           |Performance Overhead|Attack Surface Reduction |Typical high-trust agent usage |
-|------------------|-------------------------|--------------------|-------------------------|------------------------------|
-|Docker (default)  |Namespace + cgroups      |Low                 |Low                      |Never in production           |
-|gVisor            |Userspace kernel         |Medium              |High                     |Acceptable for non-MCP        |
-|Seatbelt          |macOS sandbox profiles   |Low                 |Medium                   |Local dev only                |
-|Kata Containers   |Lightweight VM (hardware)|Medium-High         |Very High                |Default for all MCP workloads |
-|Cloudflare Workers|V8 isolates / edge       |Very Low            |High (for edge functions)|Optional for lightweight tools|
+| Technology         | Isolation Type            | Performance Overhead | Attack Surface Reduction  | Typical high-trust agent usage |
+| ------------------ | ------------------------- | -------------------- | ------------------------- | ------------------------------ |
+| Docker (default)   | Namespace + cgroups       | Low                  | Low                       | Never in production            |
+| gVisor             | Userspace kernel          | Medium               | High                      | Acceptable for non-MCP         |
+| Seatbelt           | macOS sandbox profiles    | Low                  | Medium                    | Local dev only                 |
+| Kata Containers    | Lightweight VM (hardware) | Medium-High          | Very High                 | Default for all MCP workloads  |
+| Cloudflare Workers | V8 isolates / edge        | Very Low             | High (for edge functions) | Optional for lightweight tools |
 
 ### Kata Containers as default for high-risk MCP workloads
 
@@ -80,20 +80,19 @@ yaml
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
-  name: enforce-kata-for-mcp
+name: enforce-kata-for-mcp
 spec:
-  validationFailureAction: Enforce
-  rules:
-    - name: require-kata
-      match:
-        resources:
-          kinds: ["Pod"]
-          namespaces: ["openclaw", "clawql"]
-      validate:
-        message: "MCP and sandbox workloads must use Kata runtime"
-        pattern:
-          spec:
-            runtimeClassName: "kata"
+validationFailureAction: Enforce
+rules: - name: require-kata
+match:
+resources:
+kinds: ["Pod"]
+namespaces: ["openclaw", "clawql"]
+validate:
+message: "MCP and sandbox workloads must use Kata runtime"
+pattern:
+spec:
+runtimeClassName: "kata"
 
 ### When to Use Lighter Options
 
@@ -128,4 +127,3 @@ These resources are independent of any single product; use them to deepen the to
 You may reuse this curriculum internally or in **paid consulting / training** engagements. Keep examples aligned to the customer’s actual stack; substitute your own runbooks, tool names, and compliance frameworks (SOC 2, ISO 27001, sector regulators) where cited examples use a reference architecture only.
 
 ---
-

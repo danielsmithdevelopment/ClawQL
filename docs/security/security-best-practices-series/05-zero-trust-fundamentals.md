@@ -19,10 +19,11 @@ prev: "least-privilege-scoped-identities"
 next: "advanced-zero-trust-vault-hsm-provenance"
 description: "State Zero Trust principles in the context of autonomous agents and external tools."
 ---
+
 # Zero Trust Fundamentals: Assume Compromise and Verify Everything
 
+_Module 5 of 20 · Agentic AI Security Curriculum · May 2026_
 
-*Module 5 of 20 · Agentic AI Security Curriculum · May 2026*
 ## How to use this module
 
 Use it as **self-paced** study or as **instructor-led** training. YAML, commands, and policy excerpts are **illustrative**; map them to your cloud, mesh, identity provider, and agent runtime—substitute your own names, namespaces, and tools while preserving the **control intent**.
@@ -41,7 +42,6 @@ By the end of this module, you should be able to:
 
 - Prior module: [Principle of Least Privilege: Scoped Identities and Limiting Blast Radius](04-least-privilege-scoped-identities.md)
 
-
 **Suggested discussion / lab:** Pick one diagram in your environment (build, deploy, runtime) and mark where this module’s controls apply; note gaps versus the checklist in the body.
 
 ---
@@ -57,7 +57,7 @@ A Zero Trust model for agentic systems treats every request, every pod, every ag
 ### The Three Governing Principles
 
 This module is built on these explicit principles from the Defense-in-Depth guide:**Secure the capabilities, not the language**  
-Prompt injection and clever jailbreaks are inevitable. Instead of trying to filter natural language, effective platforms restrict what an agent can actually *do* through ATR-scoped MCP tools and Panguard enforcement.
+Prompt injection and clever jailbreaks are inevitable. Instead of trying to filter natural language, effective platforms restrict what an agent can actually _do_ through ATR-scoped MCP tools and Panguard enforcement.
 **Every trust assumption is explicit and verified**  
 No implicit trust in containers, model weights, sessions, secrets, or logs. Everything carries cryptographic provenance (Cosign signatures, Merkle roots, JWT ATR claims).
 **Containment over prevention**  
@@ -82,7 +82,7 @@ This mindset changes how you design, deploy, and operate the platform.
 ### Key Takeaways
 
 Zero Trust is not a tool — it is an operating philosophy: assume compromise and verify everything, every time.
-In agentic systems, securing *capabilities* through ATR scoping and MCP proxy enforcement is far more effective than trying to secure natural language.
+In agentic systems, securing _capabilities_ through ATR scoping and MCP proxy enforcement is far more effective than trying to secure natural language.
 Every layer (supply chain, admission, identity, network, runtime) must independently verify and contain.
 Prevention alone is insufficient; strong containment and forensic readiness are mandatory.
 
@@ -103,4 +103,3 @@ These resources are independent of any single product; use them to deepen the to
 You may reuse this curriculum internally or in **paid consulting / training** engagements. Keep examples aligned to the customer’s actual stack; substitute your own runbooks, tool names, and compliance frameworks (SOC 2, ISO 27001, sector regulators) where cited examples use a reference architecture only.
 
 ---
-

@@ -1,6 +1,6 @@
 > **Curriculum / website:** The same material is split into twenty **training modules** (vendor-neutral framing, learning objectives, **`level` / `tags`** for CMS search, **Further reading** links, `prev` / `next` slugs) under [`security-best-practices-series/`](security-best-practices-series/). See [`security-best-practices-series/README.md`](security-best-practices-series/README.md) for scope and [`security-best-practices-series/INSTRUCTOR.md`](security-best-practices-series/INSTRUCTOR.md) for agendas and assessment stubs.
 
-# **Supply Chain Security: Why Pinning Versions and Running Your Own Mirror Registry Matters****Part 1 of the ClawQL Security Best Practices Series****May 2026**
+# **Supply Chain Security: Why Pinning Versions and Running Your Own Mirror Registry Matters\*\***Part 1 of the ClawQL Security Best Practices Series\***\*May 2026**
 
 The software supply chain is the single largest and most dangerous attack surface in any production-grade agentic AI and MCP platform. A single compromised dependency, container image, or model weight can give an attacker persistent access to your cluster, your documents, your Memory 2.0 knowledge graph, and your users’ sensitive data.This guide explains why relying on public registries is unacceptable for ClawQL deployments and shows exactly how to build a secure, mirrored, and verifiable supply chain using Harbor, Cosign, Trivy, Syft, and strict pinning.### The Supply Chain Threat Landscape
 
@@ -28,11 +28,11 @@ Or use a pinned version combined with mandatory Cosign signature verification.
 The clawql-full-stack umbrella chart and Kubernetes Operator enforce these rules through configuration flags such as:yaml
 
 security:
-  supplyChain:
-    registryMirror: "harbor.clawql.internal"
-    allowlistOnly: true
-    requireDigest: true
-    requireCosign: true
+supplyChain:
+registryMirror: "harbor.clawql.internal"
+allowlistOnly: true
+requireDigest: true
+requireCosign: true
 
 ### Scanning, SBOM Generation, and Signing
 
@@ -69,15 +69,14 @@ Credential scanning prevents the most common initial compromise vector.
 
 This supply chain foundation is the prerequisite for every subsequent guide in the series.**Next in the series**: Building Golden Images – Automated Scanning, Hardening, and Distroless Pipelines.
 
------
+---
 
-*ClawQL Security Best Practices Series • Part 1 • May 2026*  
+_ClawQL Security Best Practices Series • Part 1 • May 2026_  
 Based on the official ClawQL Comprehensive Defense-in-Depth Security Guide.
 
------
+---
 
-
-# **Building Golden Images: Automated Scanning, Hardening, and Distroless Pipelines****Part 2 of the ClawQL Security Best Practices Series****May 2026**
+# **Building Golden Images: Automated Scanning, Hardening, and Distroless Pipelines\*\***Part 2 of the ClawQL Security Best Practices Series\***\*May 2026**
 
 Once you have secured your supply chain with a private mirror registry (Guide 1), the next critical layer is building **golden images** — minimal, hardened, immutable container images that form the foundation of every ClawQL workload. This guide explains how to create, scan, sign, and deploy golden distroless images with read-only root filesystems and full provenance.### Why Golden Distroless Images Matter
 
@@ -94,12 +93,14 @@ Set securityContext.readOnlyRootFilesystem: true on every pod. Combined with dis
 All ClawQL golden images use multi-stage Dockerfiles:dockerfile
 
 # Stage 1: Builder
+
 FROM golang:1.24-alpine AS builder
 WORKDIR /app
 COPY . .
 RUN go build -ldflags="-s -w" -o /clawql-api ./cmd/api
 
 # Stage 2: Golden Runtime
+
 FROM gcr.io/distroless/static-debian12
 COPY --from=builder /clawql-api /usr/local/bin/clawql-api
 USER 65532:65532
@@ -122,11 +123,11 @@ Every golden image goes through a mandatory pipeline before being promoted to Ha
 
 - name: Build Golden Image
   run: |
-    docker build -t $IMAGE:$TAG .
-    trivy image --exit-code 1 --severity CRITICAL,HIGH $IMAGE:$TAG
-    syft packages $IMAGE:$TAG -o spdx-json > sbom.spdx.json
-    cosign sign --keyless $IMAGE@${DIGEST}
-    docker push $IMAGE:$TAG
+  docker build -t $IMAGE:$TAG .
+  trivy image --exit-code 1 --severity CRITICAL,HIGH $IMAGE:$TAG
+  syft packages $IMAGE:$TAG -o spdx-json > sbom.spdx.json
+  cosign sign --keyless $IMAGE@${DIGEST}
+  docker push $IMAGE:$TAG
 
 ### ClawQL Golden Image Standards
 
@@ -143,22 +144,20 @@ A cluster-wide Kyverno policy enforces golden image standards at admission time:
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
-  name: require-golden-images
+name: require-golden-images
 spec:
-  validationFailureAction: Enforce
-  rules:
-    - name: check-distroless-and-readonly
-      match:
-        resources:
-          kinds: ["Pod"]
-      validate:
-        message: "All ClawQL pods must use golden distroless images with read-only root filesystem"
-        pattern:
-          spec:
-            securityContext:
-              readOnlyRootFilesystem: true
-            containers:
-              - image: "harbor.clawql.internal/**@sha256:*"
+validationFailureAction: Enforce
+rules: - name: check-distroless-and-readonly
+match:
+resources:
+kinds: ["Pod"]
+validate:
+message: "All ClawQL pods must use golden distroless images with read-only root filesystem"
+pattern:
+spec:
+securityContext:
+readOnlyRootFilesystem: true
+containers: - image: "harbor.clawql.internal/\*_@sha256:_"
 
 ### Key Takeaways
 
@@ -169,15 +168,14 @@ Never run images with shells or package managers in production MCP workloads.
 
 This guide builds directly on Guide 1 (Supply Chain) and is the prerequisite for Guide 3 (Cluster Admission Control).**Next in the series**: Cluster Admission Control – Enforcing Image Signing and Policy at Deploy Time.
 
------
+---
 
-*ClawQL Security Best Practices Series • Part 2 • May 2026*  
+_ClawQL Security Best Practices Series • Part 2 • May 2026_  
 Based on the official ClawQL Comprehensive Defense-in-Depth Security Guide.
 
------
+---
 
-
-# **Cluster Admission Control: Enforcing Image Signing and Policy at Deploy Time****Part 3 of the ClawQL Security Best Practices Series****May 2026**
+# **Cluster Admission Control: Enforcing Image Signing and Policy at Deploy Time\*\***Part 3 of the ClawQL Security Best Practices Series\***\*May 2026**
 
 With a secure supply chain and golden distroless images in place (Guides 1 and 2), the next layer is preventing non-compliant workloads from ever starting. Cluster admission controllers act as the final gatekeeper, rejecting unsigned, unverified, or insecure images before they are scheduled.This guide focuses on Kyverno as the admission controller and shows how ClawQL enforces image signing, golden image standards, and runtime policies at deploy time.### Why Admission Control Is Essential
 
@@ -193,44 +191,43 @@ Kyverno is the primary admission controller in ClawQL. It supports cryptographic
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
-  name: enforce-signed-images
+name: enforce-signed-images
 spec:
-  validationFailureAction: Enforce
-  background: false
-  rules:
-    - name: verify-cosign-signature
-      match:
-        resources:
-          kinds: ["Pod"]
-      validate:
-        message: "All containers must be signed with Cosign and pulled from Harbor"
-        imageVerify:
-          - imageReferences: ["harbor.clawql.internal/**"]
-            verify:
-              - type: "cosign"
-                keyless:
-                  issuer: "https://token.actions.githubusercontent.com"
-                  subject: "https://github.com/clawql/*"
+validationFailureAction: Enforce
+background: false
+rules: - name: verify-cosign-signature
+match:
+resources:
+kinds: ["Pod"]
+validate:
+message: "All containers must be signed with Cosign and pulled from Harbor"
+imageVerify: - imageReferences: ["harbor.clawql.internal/**"]
+verify: - type: "cosign"
+keyless:
+issuer: "https://token.actions.githubusercontent.com"
+subject: "https://github.com/clawql/*"
 
 This policy rejects any pod using unsigned images or images from external registries.### Extending Verification to Model Weights
 
 Model weights are a common blind spot. ClawQL extends admission control to verify them via init containers:yaml
 
 # Example init container pattern enforced by policy
+
 initContainers:
-  - name: verify-weights
-    image: harbor.clawql.internal/clawql/weight-verifier:latest
-    command:
-      - cosign
-      - verify-blob
-      - --key
-      - /etc/signing-keys/cosign.pub
-      - --signature
-      - /weights/manifest.sig
-      - /weights/manifest.json
+
+- name: verify-weights
+  image: harbor.clawql.internal/clawql/weight-verifier:latest
+  command:
+  - cosign
+  - verify-blob
+  - --key
+  - /etc/signing-keys/cosign.pub
+  - --signature
+  - /weights/manifest.sig
+  - /weights/manifest.json
     volumeMounts:
-      - name: model-weights
-        mountPath: /weights
+  - name: model-weights
+    mountPath: /weights
 
 A dedicated Kyverno policy ensures every inference pod includes this verification step.### Cluster-Wide vs Namespace Exemptions
 
@@ -253,15 +250,14 @@ Cluster-wide enforcement with minimal exemptions maintains a strong, auditable s
 
 This guide completes the build-time and deploy-time foundations. All later runtime protections (sandboxing, zero trust, MCP proxying) build on top of these admission guarantees.**Next in the series**: Principle of Least Privilege – Scoped Identities and Limiting Blast Radius.
 
------
+---
 
-*ClawQL Security Best Practices Series • Part 3 • May 2026*  
+_ClawQL Security Best Practices Series • Part 3 • May 2026_  
 Based on the official ClawQL Comprehensive Defense-in-Depth Security Guide.
 
------
+---
 
-
-# **Principle of Least Privilege: Scoped Identities and Limiting Blast Radius****Part 4 of the ClawQL Security Best Practices Series****May 2026**
+# **Principle of Least Privilege: Scoped Identities and Limiting Blast Radius\*\***Part 4 of the ClawQL Security Best Practices Series\***\*May 2026**
 
 Even with perfect supply chain security and admission control, a compromised workload or agent can still cause significant damage if it has excessive permissions. The Principle of Least Privilege (PoLP) ensures every identity — human, service, or agent — can do only what is strictly necessary, and nothing more.This guide shows how ClawQL implements least privilege across Kubernetes, MCP tools, and agent sessions to minimize blast radius.### Least Privilege in Theory and Practice
 
@@ -277,21 +273,23 @@ Every ClawQL component runs with its own dedicated ServiceAccount and tightly sc
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: clawql-api
-  namespace: clawql
+name: clawql-api
+namespace: clawql
 
 ---
+
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: clawql-api-role
+name: clawql-api-role
 rules:
-  - apiGroups: [""]
-    resources: ["configmaps", "secrets"]
-    verbs: ["get", "list", "watch"]   # no create/update/delete
-  - apiGroups: ["apps"]
-    resources: ["deployments"]
-    verbs: ["get", "list"]            # read-only for status
+
+- apiGroups: [""]
+  resources: ["configmaps", "secrets"]
+  verbs: ["get", "list", "watch"] # no create/update/delete
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["get", "list"] # read-only for status
 
 No ClawQL pod ever runs with cluster-admin or overly broad permissions. The Operator manages these bindings declaratively.### YubiKey Requirement for High-Impact Changes
 
@@ -317,22 +315,21 @@ Every identity and every tool must be explicitly authorized — implicit access 
 
 Strong least privilege is the bedrock of zero trust, which is covered next.**Next in the series**: Zero Trust Fundamentals – Assume Compromise and Verify Everything.
 
------
+---
 
-*ClawQL Security Best Practices Series • Part 4 • May 2026*  
+_ClawQL Security Best Practices Series • Part 4 • May 2026_  
 Based on the official ClawQL Comprehensive Defense-in-Depth Security Guide.
 
------
+---
 
-
-# **Zero Trust Fundamentals: Assume Compromise and Verify Everything****Part 5 of the ClawQL Security Best Practices Series****May 2026**
+# **Zero Trust Fundamentals: Assume Compromise and Verify Everything\*\***Part 5 of the ClawQL Security Best Practices Series\***\*May 2026**
 
 With supply chain security, golden images, admission control, and least privilege in place, ClawQL shifts to a full Zero Trust posture. This guide introduces the core philosophy that underpins the entire architecture: never trust, always verify, and assume breach at all times.### Zero Trust Defined for Agentic Systems
 
 Traditional perimeter security (firewalls, VPNs, “inside the cluster is safe”) fails in agentic MCP environments. Agents can call tools, process documents, and interact with external systems in unpredictable ways. Once any component is compromised, lateral movement can be rapid.ClawQL’s Zero Trust model treats every request, every pod, every agent session, and every tool call as potentially malicious until proven otherwise.### The Three Governing Principles
 
 ClawQL security is built on these explicit principles from the Defense-in-Depth guide:**Secure the capabilities, not the language**  
-Prompt injection and clever jailbreaks are inevitable. Instead of trying to filter natural language, ClawQL restricts what an agent can actually *do* through ATR-scoped MCP tools and Panguard enforcement.
+Prompt injection and clever jailbreaks are inevitable. Instead of trying to filter natural language, ClawQL restricts what an agent can actually _do_ through ATR-scoped MCP tools and Panguard enforcement.
 **Every trust assumption is explicit and verified**  
 No implicit trust in containers, model weights, sessions, secrets, or logs. Everything carries cryptographic provenance (Cosign signatures, Merkle roots, JWT ATR claims).
 **Containment over prevention**  
@@ -355,21 +352,20 @@ If logs are tampered → Merkle roots and WORM storage make it detectable.
 This mindset changes how you design, deploy, and operate the platform.### Key Takeaways
 
 Zero Trust is not a tool — it is an operating philosophy: assume compromise and verify everything, every time.
-In agentic systems, securing *capabilities* through ATR scoping and MCP proxy enforcement is far more effective than trying to secure natural language.
+In agentic systems, securing _capabilities_ through ATR scoping and MCP proxy enforcement is far more effective than trying to secure natural language.
 Every layer (supply chain, admission, identity, network, runtime) must independently verify and contain.
 Prevention alone is insufficient; strong containment and forensic readiness are mandatory.
 
 This fundamentals guide sets the stage for the advanced Zero Trust controls in the next guide.**Next in the series**: Advanced Zero Trust – Multi-Sig Vault, HSM, Tamper-Proof Logging, and Cryptographic Provenance.
 
------
+---
 
-*ClawQL Security Best Practices Series • Part 5 • May 2026*  
+_ClawQL Security Best Practices Series • Part 5 • May 2026_  
 Based on the official ClawQL Comprehensive Defense-in-Depth Security Guide.
 
------
+---
 
-
-# **Advanced Zero Trust: Multi-Sig Vault, HSM, Tamper-Proof Logging, and Cryptographic Provenance****Part 6 of the ClawQL Security Best Practices Series****May 2026**
+# **Advanced Zero Trust: Multi-Sig Vault, HSM, Tamper-Proof Logging, and Cryptographic Provenance\*\***Part 6 of the ClawQL Security Best Practices Series\***\*May 2026**
 
 Building on Zero Trust fundamentals (Guide 5), this guide covers the advanced cryptographic and secret-management controls that make trust assumptions explicit and verifiable across the entire platform.### Dynamic Secrets with Short TTL
 
@@ -407,15 +403,14 @@ Every trust assumption — from model weights to audit logs — is made explicit
 
 These advanced controls turn Zero Trust from a philosophy into enforceable, auditable reality across the platform.**Next in the series**: RBAC, mTLS, and Istio Service Mesh – Network-Level Zero Trust.
 
------
+---
 
-*ClawQL Security Best Practices Series • Part 6 • May 2026*  
+_ClawQL Security Best Practices Series • Part 6 • May 2026_  
 Based on the official ClawQL Comprehensive Defense-in-Depth Security Guide.
 
------
+---
 
-
-# **RBAC, mTLS, and Istio Service Mesh: Network-Level Zero Trust****Part 7 of the ClawQL Security Best Practices Series****May 2026**
+# **RBAC, mTLS, and Istio Service Mesh: Network-Level Zero Trust\*\***Part 7 of the ClawQL Security Best Practices Series\***\*May 2026**
 
 With identity-level least privilege and advanced cryptographic controls established (Guides 4–6), ClawQL extends Zero Trust to the network layer. This guide covers how RBAC, mutual TLS, and Istio Service Mesh work together to enforce micro-segmentation and default-deny networking across the cluster.### Istio mTLS and AuthorizationPolicy
 
@@ -438,11 +433,11 @@ Kiali visualizes the service mesh topology while Prometheus alerts on unexpected
 These controls are enabled by default when deploying with:yaml
 
 security:
-  fullBundle: true
-  istio:
-    enabled: true
-    mTLS: strict
-    egressAllowlist: true
+fullBundle: true
+istio:
+enabled: true
+mTLS: strict
+egressAllowlist: true
 
 ### Key Takeaways
 
@@ -453,27 +448,26 @@ Continuous baselining with Kiali turns the mesh into an active security sensor.
 
 This network foundation enables safe sandboxing and runtime protection in the following guides.**Next in the series**: Sandboxing Options and Trade-offs – Kata, gVisor, Seatbelt, Docker, and Cloudflare Workers.
 
------
+---
 
-*ClawQL Security Best Practices Series • Part 7 • May 2026*  
+_ClawQL Security Best Practices Series • Part 7 • May 2026_  
 Based on the official ClawQL Comprehensive Defense-in-Depth Security Guide.
 
------
+---
 
-
-# **Sandboxing Options and Trade-offs: Kata, gVisor, Seatbelt, Docker, and Cloudflare Workers****Part 8 of the ClawQL Security Best Practices Series****May 2026**
+# **Sandboxing Options and Trade-offs: Kata, gVisor, Seatbelt, Docker, and Cloudflare Workers\*\***Part 8 of the ClawQL Security Best Practices Series\***\*May 2026**
 
 With network-level Zero Trust established (Guide 7), the next critical layer is runtime isolation for the highest-risk workloads — especially MCP tool execution and agent code running. This guide compares sandboxing technologies and explains why ClawQL defaults to Kata Containers for MCP workloads.### Why Strong Sandboxing Is Non-Negotiable
 
 Agentic systems routinely execute untrusted or dynamically generated code. Container namespaces alone are insufficient when an agent has access to tools like sandbox_exec, document processing, or external API calls. A breakout must be extremely difficult and contained.### Isolation Technologies Compared
 
-|Technology        |Isolation Type           |Performance Overhead|Attack Surface Reduction |ClawQL Usage                  |
-|------------------|-------------------------|--------------------|-------------------------|------------------------------|
-|Docker (default)  |Namespace + cgroups      |Low                 |Low                      |Never in production           |
-|gVisor            |Userspace kernel         |Medium              |High                     |Acceptable for non-MCP        |
-|Seatbelt          |macOS sandbox profiles   |Low                 |Medium                   |Local dev only                |
-|Kata Containers   |Lightweight VM (hardware)|Medium-High         |Very High                |Default for all MCP workloads |
-|Cloudflare Workers|V8 isolates / edge       |Very Low            |High (for edge functions)|Optional for lightweight tools|
+| Technology         | Isolation Type            | Performance Overhead | Attack Surface Reduction  | ClawQL Usage                   |
+| ------------------ | ------------------------- | -------------------- | ------------------------- | ------------------------------ |
+| Docker (default)   | Namespace + cgroups       | Low                  | Low                       | Never in production            |
+| gVisor             | Userspace kernel          | Medium               | High                      | Acceptable for non-MCP         |
+| Seatbelt           | macOS sandbox profiles    | Low                  | Medium                    | Local dev only                 |
+| Kata Containers    | Lightweight VM (hardware) | Medium-High          | Very High                 | Default for all MCP workloads  |
+| Cloudflare Workers | V8 isolates / edge        | Very Low             | High (for edge functions) | Optional for lightweight tools |
 
 ### Kata Containers – ClawQL’s Default for MCP
 
@@ -486,20 +480,19 @@ Enforced via Kyverno RuntimeClass policy and Helm defaults.
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
-  name: enforce-kata-for-mcp
+name: enforce-kata-for-mcp
 spec:
-  validationFailureAction: Enforce
-  rules:
-    - name: require-kata
-      match:
-        resources:
-          kinds: ["Pod"]
-          namespaces: ["openclaw", "clawql"]
-      validate:
-        message: "MCP and sandbox workloads must use Kata runtime"
-        pattern:
-          spec:
-            runtimeClassName: "kata"
+validationFailureAction: Enforce
+rules: - name: require-kata
+match:
+resources:
+kinds: ["Pod"]
+namespaces: ["openclaw", "clawql"]
+validate:
+message: "MCP and sandbox workloads must use Kata runtime"
+pattern:
+spec:
+runtimeClassName: "kata"
 
 ### When to Use Lighter Options
 
@@ -517,15 +510,14 @@ Choose isolation strength based on workload risk — never default to convenienc
 
 Strong sandboxing completes the foundational runtime protection. The next guides focus on protecting the MCP interface itself.**Next in the series**: MCP Runtime Protection – Panguard, ATR Rules, and Agentic Threat Mitigation.
 
------
+---
 
-*ClawQL Security Best Practices Series • Part 8 • May 2026*  
+_ClawQL Security Best Practices Series • Part 8 • May 2026_  
 Based on the official ClawQL Comprehensive Defense-in-Depth Security Guide.
 
------
+---
 
-
-# **MCP Runtime Protection: Panguard, ATR Rules, and Agentic Threat Mitigation****Part 9 of the ClawQL Security Best Practices Series****May 2026**
+# **MCP Runtime Protection: Panguard, ATR Rules, and Agentic Threat Mitigation\*\***Part 9 of the ClawQL Security Best Practices Series\***\*May 2026**
 
 The MCP interface is the highest-risk attack surface in any agentic platform. Agents interact with tools, memory, documents, and external systems through natural language, making traditional prompt-based defenses insufficient. This guide details how ClawQL protects the MCP runtime using Panguard, ATR scoping, and layered governance.### Panguard AI as the Synchronous Chokepoint
 
@@ -559,20 +551,19 @@ Comprehensive auditing and redaction ensure forensic readiness without exposing 
 
 Strong MCP runtime protection builds directly on the sandboxing and network controls from previous guides and enables safe agentic operation at scale.**Next in the series**: Data Classification and PII Redaction – Never Let Sensitive Data Hit Logs.
 
------
+---
 
-*ClawQL Security Best Practices Series • Part 9 • May 2026*  
+_ClawQL Security Best Practices Series • Part 9 • May 2026_  
 Based on the official ClawQL Comprehensive Defense-in-Depth Security Guide.
 
------
+---
 
-
-# **Data Classification and PII Redaction: Never Let Sensitive Data Hit Logs****Part 10 of the ClawQL Security Best Practices Series****May 2026**
+# **Data Classification and PII Redaction: Never Let Sensitive Data Hit Logs\*\***Part 10 of the ClawQL Security Best Practices Series\***\*May 2026**
 
 Even with strong runtime protection and sandboxing (Guides 8–9), sensitive data inevitably flows through agent sessions, documents, and tool calls. This guide explains how ClawQL prevents PII, financial data, and other sensitive information from ever reaching persistent log stores.### Classification vs Redaction
 
-Data classification and redaction are distinct but complementary controls:**Classification** tells you *what* data is sensitive and how it should be handled.
-**Redaction** ensures sensitive data is removed or masked *before* it is written to any queryable or long-term storage.
+Data classification and redaction are distinct but complementary controls:**Classification** tells you _what_ data is sensitive and how it should be handled.
+**Redaction** ensures sensitive data is removed or masked _before_ it is written to any queryable or long-term storage.
 
 Both are required. Classification without redaction leaves raw PII in logs. Redaction without classification leaves you unable to reason about your data holdings.ClawQL maintains a formal data classification policy with tiers (Public, Internal, Confidential, Restricted) that maps to redaction rules.### Presidio in the Fluent Bit Pipeline
 
@@ -601,14 +592,14 @@ This approach ensures sensitive data never becomes a liability in logs, even dur
 
 Proper data handling completes the protection of information in motion and at rest, enabling safe monitoring and response in the following guides.**Next in the series**: Model Integrity – Verifying Weights Before Inference.
 
------
+---
 
-*ClawQL Security Best Practices Series • Part 10 • May 2026*  
+_ClawQL Security Best Practices Series • Part 10 • May 2026_  
 Based on the official ClawQL Comprehensive Defense-in-Depth Security Guide.
 
------
+---
 
-# **Model Integrity: Verifying Weights Before Inference****Part 11 of the ClawQL Security Best Practices Series****May 2026**
+# **Model Integrity: Verifying Weights Before Inference\*\***Part 11 of the ClawQL Security Best Practices Series\***\*May 2026**
 
 Model weights represent one of the largest and most overlooked attack surfaces in AI platforms. Traditional container scanning misses them entirely because they are large binary blobs fetched at runtime. This guide explains how ClawQL closes the “model-in-the-middle” attack vector with cryptographic verification before any inference begins.### The Model Weight Gap
 
@@ -621,23 +612,24 @@ Manifest stored in Harbor alongside the weights.
 **Example Init Container:**yaml
 
 initContainers:
-  - name: verify-weights
-    image: harbor.clawql.internal/clawql/weight-verifier:latest
-    command:
-      - /bin/sh
-      - -c
-      - |
-        cosign verify-blob \
-          --key /etc/signing-keys/cosign.pub \
-          --signature /weights/manifest.sig \
-          /weights/manifest.json
-        sha256sum -c /weights/manifest.json
+
+- name: verify-weights
+  image: harbor.clawql.internal/clawql/weight-verifier:latest
+  command:
+  - /bin/sh
+  - -c
+  - |
+    cosign verify-blob \
+     --key /etc/signing-keys/cosign.pub \
+     --signature /weights/manifest.sig \
+     /weights/manifest.json
+    sha256sum -c /weights/manifest.json
     volumeMounts:
-      - name: model-weights
-        mountPath: /weights
-      - name: signing-keys
-        mountPath: /etc/signing-keys
-        readOnly: true
+  - name: model-weights
+    mountPath: /weights
+  - name: signing-keys
+    mountPath: /etc/signing-keys
+    readOnly: true
 
 The main inference container only starts if the init container succeeds.### Harbor Manifest Storage
 
@@ -654,15 +646,14 @@ This control closes a critical gap that standard container security tools cannot
 
 Model integrity ensures the AI brains running your agents are exactly the ones you authorized and have not been tampered with.**Next in the series**: Runtime Monitoring and Observability – Falco, Wazuh, Prometheus, and Merkle Metrics.
 
------
+---
 
-*ClawQL Security Best Practices Series • Part 11 • May 2026*  
+_ClawQL Security Best Practices Series • Part 11 • May 2026_  
 Based on the official ClawQL Comprehensive Defense-in-Depth Security Guide.
 
------
+---
 
-
-# **Runtime Monitoring and Observability: Falco, Wazuh, Prometheus, and Merkle Metrics****Part 12 of the ClawQL Security Best Practices Series****May 2026**
+# **Runtime Monitoring and Observability: Falco, Wazuh, Prometheus, and Merkle Metrics\*\***Part 12 of the ClawQL Security Best Practices Series\***\*May 2026**
 
 Strong prevention and containment are incomplete without comprehensive visibility. This guide covers ClawQL’s runtime monitoring stack, which provides deep observability into system behavior, detects anomalies, and correlates events across layers.### The Observability Stack
 
@@ -696,15 +687,14 @@ Merkle and Cuckoo metrics bring cryptographic controls into day-to-day observabi
 
 Effective monitoring enables the automated response and containment covered in the next guide.**Next in the series**: Automated Response and Containment – Falco + Talon Quarantine, Panguard Blocking.
 
------
+---
 
-*ClawQL Security Best Practices Series • Part 12 • May 2026*  
+_ClawQL Security Best Practices Series • Part 12 • May 2026_  
 Based on the official ClawQL Comprehensive Defense-in-Depth Security Guide.
 
------
+---
 
-
-# **Automated Response and Containment: Falco + Talon Quarantine, Panguard Blocking****Part 13 of the ClawQL Security Best Practices Series****May 2026**
+# **Automated Response and Containment: Falco + Talon Quarantine, Panguard Blocking\*\***Part 13 of the ClawQL Security Best Practices Series\***\*May 2026**
 
 Detection without automated response leaves security teams overwhelmed. This guide covers ClawQL’s high-confidence automated containment mechanisms that limit damage while keeping humans in the loop.### Confidence Tier Mapping
 
@@ -740,15 +730,14 @@ Preservation for forensics is prioritized over immediate termination.
 
 This automated response layer works hand-in-hand with monitoring (Guide 12) and feeds directly into incident response processes.**Next in the series**: Incident Response and Recovery – PICERL, WORM Audits, and Tested Backups.
 
------
+---
 
-*ClawQL Security Best Practices Series • Part 13 • May 2026*  
+_ClawQL Security Best Practices Series • Part 13 • May 2026_  
 Based on the official ClawQL Comprehensive Defense-in-Depth Security Guide.
 
------
+---
 
-
-# **Incident Response and Recovery: PICERL, WORM Audits, and Tested Backups****Part 14 of the ClawQL Security Best Practices Series****May 2026**
+# **Incident Response and Recovery: PICERL, WORM Audits, and Tested Backups\*\***Part 14 of the ClawQL Security Best Practices Series\***\*May 2026**
 
 Even with layered prevention, containment, and monitoring, incidents will eventually occur. This guide details ClawQL’s structured incident response process, tamper-evident audit capabilities, and the requirement for regularly tested recovery paths.### PICERL Runbooks
 
@@ -785,15 +774,14 @@ Recovery testing closes the loop between prevention and actual operational readi
 
 This process guide ties together all previous controls into a complete security lifecycle.**Next in the series**: GPU and Resource Protection – Preventing Rogue Agent Denial-of-Service.
 
------
+---
 
-*ClawQL Security Best Practices Series • Part 14 • May 2026*  
+_ClawQL Security Best Practices Series • Part 14 • May 2026_  
 Based on the official ClawQL Comprehensive Defense-in-Depth Security Guide.
 
------
+---
 
-
-# **GPU and Resource Protection: Preventing Rogue Agent Denial-of-Service****Part 15 of the ClawQL Security Best Practices Series****May 2026**
+# **GPU and Resource Protection: Preventing Rogue Agent Denial-of-Service\*\***Part 15 of the ClawQL Security Best Practices Series\***\*May 2026**
 
 Agentic workloads can consume massive GPU resources through runaway loops, infinite tool calling, or maliciously crafted prompts. Without proper controls, a single rogue agent can starve the entire cluster of inference capacity. This guide details how ClawQL protects GPU resources using quotas, limits, and node isolation.### ResourceQuota and LimitRange Configuration
 
@@ -802,28 +790,27 @@ ClawQL enforces hard GPU limits at the namespace level:yaml
 apiVersion: v1
 kind: ResourceQuota
 metadata:
-  name: openclaw-gpu-quota
-  namespace: openclaw
+name: openclaw-gpu-quota
+namespace: openclaw
 spec:
-  hard:
-    requests.nvidia.com/gpu: "4"   # Set to your actual maximum intended concurrency
-    limits.nvidia.com/gpu: "4"
+hard:
+requests.nvidia.com/gpu: "4" # Set to your actual maximum intended concurrency
+limits.nvidia.com/gpu: "4"
 
 **Best Practice**: Set the quota to your real maximum agent concurrency (not 1). The goal is a safety ceiling, not artificial restriction.Pair this with a LimitRange to enforce per-pod limits:yaml
 
 apiVersion: v1
 kind: LimitRange
 metadata:
-  name: gpu-limit-range
+name: gpu-limit-range
 spec:
-  limits:
-    - type: Container
-      defaultRequest:
-        nvidia.com/gpu: 1
-      default:
-        nvidia.com/gpu: 1
-      max:
-        nvidia.com/gpu: 2
+limits: - type: Container
+defaultRequest:
+nvidia.com/gpu: 1
+default:
+nvidia.com/gpu: 1
+max:
+nvidia.com/gpu: 2
 
 ### Node Selectors and Taints
 
@@ -842,28 +829,27 @@ Resource protection must work together with MCP runtime controls and sandboxing 
 
 This specialized protection ensures the platform remains stable and available even under abnormal agent behavior.**Next in the series**: Workstation and Local Development Security – Same Posture Everywhere.
 
------
+---
 
-*ClawQL Security Best Practices Series • Part 15 • May 2026*  
+_ClawQL Security Best Practices Series • Part 15 • May 2026_  
 Based on the official ClawQL Comprehensive Defense-in-Depth Security Guide.
 
------
+---
 
-
-# **Workstation and Local Development Security: Same Posture Everywhere****Part 16 of the ClawQL Security Best Practices Series****May 2026**
+# **Workstation and Local Development Security: Same Posture Everywhere\*\***Part 16 of the ClawQL Security Best Practices Series\***\*May 2026**
 
 Security is not only a production concern. Developer workstations are often the weakest link and the most common entry point for supply chain attacks. ClawQL enforces the same high security standards in local development environments as in production.### Full Stack on Docker Desktop
 
 Developers run the complete clawql-full-stack Helm chart on Docker Desktop with the security bundle enabled:yaml
 
 security:
-  fullBundle: true
-  kata: 
-    enabled: true
-  panguard:
-    enabled: true
-  weightVerification:
-    enabled: true
+fullBundle: true
+kata:
+enabled: true
+panguard:
+enabled: true
+weightVerification:
+enabled: true
 
 This deploys the intelligent MCP gateway, Panguard, Kyverno policies, and golden images locally.### Panguard CLI for Local MCP Proxy
 
@@ -894,32 +880,31 @@ Consistent standards across dev and prod reduce the risk of supply chain comprom
 
 This local security layer ensures the entire development lifecycle aligns with the platform’s defense-in-depth model.**Next in the series**: Production Deployment – One-Command Secure Full Stack.
 
------
+---
 
-*ClawQL Security Best Practices Series • Part 16 • May 2026*  
+_ClawQL Security Best Practices Series • Part 16 • May 2026_  
 Based on the official ClawQL Comprehensive Defense-in-Depth Security Guide.
 
------
+---
 
-
-# **Production Deployment: One-Command Secure Full Stack****Part 17 of the ClawQL Security Best Practices Series****May 2026**
+# **Production Deployment: One-Command Secure Full Stack\*\***Part 17 of the ClawQL Security Best Practices Series\***\*May 2026**
 
 All previous security controls culminate in a single, repeatable, secure deployment process. This guide provides the exact command and checklist to deploy a fully hardened ClawQL instance with every defense-in-depth layer enabled.### Security-Enabled Helm Command
 
 Deploy the complete secure stack with one command:bash
 
 helm upgrade --install clawql-full-stack ./charts/clawql-full-stack \
-  --namespace clawql \
-  --create-namespace \
-  --set security.fullBundle=true \
-  --set security.kata.enabled=true \
-  --set security.panguard.enabled=true \
-  --set security.wazuh.enabled=true \
-  --set security.presidio.enabled=true \
-  --set security.weightVerification.enabled=true \
-  --set gpu.quota.max=4 \
-  --set istio.mTLS=strict \
-  --set supplyChain.allowlistOnly=true
+ --namespace clawql \
+ --create-namespace \
+ --set security.fullBundle=true \
+ --set security.kata.enabled=true \
+ --set security.panguard.enabled=true \
+ --set security.wazuh.enabled=true \
+ --set security.presidio.enabled=true \
+ --set security.weightVerification.enabled=true \
+ --set gpu.quota.max=4 \
+ --set istio.mTLS=strict \
+ --set supplyChain.allowlistOnly=true
 
 This enables:Golden distroless images with read-only root
 Kata Containers for all MCP workloads
@@ -958,14 +943,14 @@ Treat the full secure stack as the baseline; partial deployments are only for no
 
 This completes the operational deployment foundation of the series.**Next in the series**: Threat Modeling with STRIDE for Agentic AI Systems.
 
------
+---
 
-*ClawQL Security Best Practices Series • Part 17 • May 2026*  
+_ClawQL Security Best Practices Series • Part 17 • May 2026_  
 Based on the official ClawQL Comprehensive Defense-in-Depth Security Guide.
 
------
+---
 
-# **Threat Modeling with STRIDE for Agentic AI Systems****Part 18 of the ClawQL Security Best Practices Series****May 2026**
+# **Threat Modeling with STRIDE for Agentic AI Systems\*\***Part 18 of the ClawQL Security Best Practices Series\***\*May 2026**
 
 Threat modeling is not a one-time exercise. In agentic MCP platforms, where systems are dynamic and agents can chain tools unpredictably, STRIDE must be a living process that evolves with the platform. This capstone guide explains how ClawQL applies STRIDE specifically to agentic AI systems.### STRIDE for Agentic Systems
 
@@ -1010,15 +995,14 @@ A living STRIDE model turns security from reactive to proactive across the entir
 
 This strategic practice ties together all technical controls in the series and prepares the platform for long-term evolution.**Next in the series**: OWASP Agentic Top 10 and How ClawQL Mitigates Each One.
 
------
+---
 
-*ClawQL Security Best Practices Series • Part 18 • May 2026*  
+_ClawQL Security Best Practices Series • Part 18 • May 2026_  
 Based on the official ClawQL Comprehensive Defense-in-Depth Security Guide.
 
------
+---
 
-
-# **OWASP Agentic Top 10 and How ClawQL Mitigates Each One****Part 19 of the ClawQL Security Best Practices Series****May 2026**
+# **OWASP Agentic Top 10 and How ClawQL Mitigates Each One\*\***Part 19 of the ClawQL Security Best Practices Series\***\*May 2026**
 
 The OWASP Agentic Top 10 highlights the most critical risks in autonomous AI agent systems. ClawQL was designed from the ground up with these risks in mind. This guide maps each major risk to the specific controls and architecture patterns that mitigate it.### 1. Prompt Injection / Jailbreaking
 
@@ -1059,15 +1043,14 @@ This mapping is reviewed quarterly as part of the living STRIDE process (Guide 1
 
 The complete series equips you with both tactical implementation details and strategic understanding of agentic security.**Next (Final) in the series**: Quarterly Security Review Checklist – Keeping Defense-in-Depth Alive.
 
------
+---
 
-*ClawQL Security Best Practices Series • Part 19 • May 2026*  
+_ClawQL Security Best Practices Series • Part 19 • May 2026_  
 Based on the official ClawQL Comprehensive Defense-in-Depth Security Guide.
 
------
+---
 
-
-# **Quarterly Security Review Checklist: Keeping Defense-in-Depth Alive****Part 20 of the ClawQL Security Best Practices Series****May 2026**
+# **Quarterly Security Review Checklist: Keeping Defense-in-Depth Alive\*\***Part 20 of the ClawQL Security Best Practices Series\***\*May 2026**
 
 Defense-in-depth is not a set-it-and-forget-it architecture. It requires continuous validation and maintenance. This final capstone guide provides the operational checklist that must be executed quarterly to keep the entire security posture effective over time.### Quarterly Review Cadence
 
@@ -1139,13 +1122,9 @@ Treat the full defense-in-depth stack as a living system that requires ongoing c
 
 Completing this checklist keeps ClawQL’s security posture strong, auditable, and ready for both current and future threats.**End of Series**
 
------
+---
 
-*ClawQL Security Best Practices Series • Part 20 • May 2026*  
+_ClawQL Security Best Practices Series • Part 20 • May 2026_  
 Based on the official ClawQL Comprehensive Defense-in-Depth Security Guide.
 
------
-
-
-
-
+---

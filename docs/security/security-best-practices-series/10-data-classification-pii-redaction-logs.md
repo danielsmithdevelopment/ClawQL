@@ -19,10 +19,11 @@ prev: "mcp-runtime-protection-panguard-atr"
 next: "model-integrity-verifying-weights"
 description: "Distinguish data classification from redaction and logging policy."
 ---
+
 # Data Classification and PII Redaction: Never Let Sensitive Data Hit Logs
 
+_Module 10 of 20 · Agentic AI Security Curriculum · May 2026_
 
-*Module 10 of 20 · Agentic AI Security Curriculum · May 2026*
 ## How to use this module
 
 Use it as **self-paced** study or as **instructor-led** training. YAML, commands, and policy excerpts are **illustrative**; map them to your cloud, mesh, identity provider, and agent runtime—substitute your own names, namespaces, and tools while preserving the **control intent**.
@@ -41,7 +42,6 @@ By the end of this module, you should be able to:
 
 - Prior module: [MCP Runtime Protection: Panguard, ATR Rules, and Agentic Threat Mitigation](09-mcp-runtime-protection-panguard-atr.md)
 
-
 **Suggested discussion / lab:** Pick one diagram in your environment (build, deploy, runtime) and mark where this module’s controls apply; note gaps versus the checklist in the body.
 
 ---
@@ -50,8 +50,8 @@ Even with strong runtime protection and sandboxing (Modules 8–9), sensitive da
 
 ### Classification vs Redaction
 
-Data classification and redaction are distinct but complementary controls:**Classification** tells you *what* data is sensitive and how it should be handled.
-**Redaction** ensures sensitive data is removed or masked *before* it is written to any queryable or long-term storage.
+Data classification and redaction are distinct but complementary controls:**Classification** tells you _what_ data is sensitive and how it should be handled.
+**Redaction** ensures sensitive data is removed or masked _before_ it is written to any queryable or long-term storage.
 
 Both are required. Classification without redaction leaves raw PII in logs. Redaction without classification leaves you unable to reason about your data holdings.Organizations should maintain a formal data classification policy with tiers (Public, Internal, Confidential, Restricted) that maps to redaction rules.
 
@@ -103,4 +103,3 @@ These resources are independent of any single product; use them to deepen the to
 You may reuse this curriculum internally or in **paid consulting / training** engagements. Keep examples aligned to the customer’s actual stack; substitute your own runbooks, tool names, and compliance frameworks (SOC 2, ISO 27001, sector regulators) where cited examples use a reference architecture only.
 
 ---
-

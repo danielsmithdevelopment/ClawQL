@@ -18,10 +18,11 @@ prev: "gpu-resource-protection"
 next: "production-deployment-secure-full-stack"
 description: "Extend production security expectations to developer laptops and CI runners."
 ---
+
 # Workstation and Local Development Security: Same Posture Everywhere
 
+_Module 16 of 20 · Agentic AI Security Curriculum · May 2026_
 
-*Module 16 of 20 · Agentic AI Security Curriculum · May 2026*
 ## How to use this module
 
 Use it as **self-paced** study or as **instructor-led** training. YAML, commands, and policy excerpts are **illustrative**; map them to your cloud, mesh, identity provider, and agent runtime—substitute your own names, namespaces, and tools while preserving the **control intent**.
@@ -40,7 +41,6 @@ By the end of this module, you should be able to:
 
 - Prior module: [GPU and Resource Protection: Preventing Rogue Agent Denial-of-Service](15-gpu-resource-protection.md)
 
-
 **Suggested discussion / lab:** Pick one diagram in your environment (build, deploy, runtime) and mark where this module’s controls apply; note gaps versus the checklist in the body.
 
 ---
@@ -52,13 +52,13 @@ Security is not only a production concern. Developer workstations are often the 
 Developers run the complete clawql-full-stack Helm chart on Docker Desktop with the security bundle enabled:yaml
 
 security:
-  fullBundle: true
-  kata: 
-    enabled: true
-  panguard:
-    enabled: true
-  weightVerification:
-    enabled: true
+fullBundle: true
+kata:
+enabled: true
+panguard:
+enabled: true
+weightVerification:
+enabled: true
 
 This deploys the intelligent MCP gateway, Panguard, Kyverno policies, and golden images locally.
 
@@ -108,4 +108,3 @@ These resources are independent of any single product; use them to deepen the to
 You may reuse this curriculum internally or in **paid consulting / training** engagements. Keep examples aligned to the customer’s actual stack; substitute your own runbooks, tool names, and compliance frameworks (SOC 2, ISO 27001, sector regulators) where cited examples use a reference architecture only.
 
 ---
-

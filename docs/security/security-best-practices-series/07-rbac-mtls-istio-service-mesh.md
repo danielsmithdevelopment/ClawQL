@@ -20,10 +20,11 @@ prev: "advanced-zero-trust-vault-hsm-provenance"
 next: "sandboxing-kata-gvisor-tradeoffs"
 description: "Explain mutual TLS and service identity for east-west traffic in Kubernetes."
 ---
+
 # RBAC, mTLS, and Istio Service Mesh: Network-Level Zero Trust
 
+_Module 7 of 20 · Agentic AI Security Curriculum · May 2026_
 
-*Module 7 of 20 · Agentic AI Security Curriculum · May 2026*
 ## How to use this module
 
 Use it as **self-paced** study or as **instructor-led** training. YAML, commands, and policy excerpts are **illustrative**; map them to your cloud, mesh, identity provider, and agent runtime—substitute your own names, namespaces, and tools while preserving the **control intent**.
@@ -41,7 +42,6 @@ By the end of this module, you should be able to:
 ## Prerequisites
 
 - Prior module: [Advanced Zero Trust: Multi-Sig Vault, HSM, Tamper-Proof Logging, and Cryptographic Provenance](06-advanced-zero-trust-vault-hsm-provenance.md)
-
 
 **Suggested discussion / lab:** Pick one diagram in your environment (build, deploy, runtime) and mark where this module’s controls apply; note gaps versus the checklist in the body.
 
@@ -86,11 +86,11 @@ Kiali visualizes the service mesh topology while Prometheus alerts on unexpected
 These controls are enabled by default when deploying with:yaml
 
 security:
-  fullBundle: true
-  istio:
-    enabled: true
-    mTLS: strict
-    egressAllowlist: true
+fullBundle: true
+istio:
+enabled: true
+mTLS: strict
+egressAllowlist: true
 
 ### Key Takeaways
 
@@ -116,4 +116,3 @@ These resources are independent of any single product; use them to deepen the to
 You may reuse this curriculum internally or in **paid consulting / training** engagements. Keep examples aligned to the customer’s actual stack; substitute your own runbooks, tool names, and compliance frameworks (SOC 2, ISO 27001, sector regulators) where cited examples use a reference architecture only.
 
 ---
-

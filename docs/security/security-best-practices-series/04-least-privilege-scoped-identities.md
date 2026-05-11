@@ -20,10 +20,11 @@ prev: "cluster-admission-control-signing-policy"
 next: "zero-trust-fundamentals"
 description: "Apply least privilege to Kubernetes identities (ServiceAccounts, Roles, bindings)."
 ---
+
 # Principle of Least Privilege: Scoped Identities and Limiting Blast Radius
 
+_Module 4 of 20 · Agentic AI Security Curriculum · May 2026_
 
-*Module 4 of 20 · Agentic AI Security Curriculum · May 2026*
 ## How to use this module
 
 Use it as **self-paced** study or as **instructor-led** training. YAML, commands, and policy excerpts are **illustrative**; map them to your cloud, mesh, identity provider, and agent runtime—substitute your own names, namespaces, and tools while preserving the **control intent**.
@@ -41,7 +42,6 @@ By the end of this module, you should be able to:
 ## Prerequisites
 
 - Prior module: [Cluster Admission Control: Enforcing Image Signing and Policy at Deploy Time](03-cluster-admission-control-signing-policy.md)
-
 
 **Suggested discussion / lab:** Pick one diagram in your environment (build, deploy, runtime) and mark where this module’s controls apply; note gaps versus the checklist in the body.
 
@@ -69,21 +69,23 @@ yaml
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: clawql-api
-  namespace: clawql
+name: clawql-api
+namespace: clawql
 
 ---
+
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: clawql-api-role
+name: clawql-api-role
 rules:
-  - apiGroups: [""]
-    resources: ["configmaps", "secrets"]
-    verbs: ["get", "list", "watch"]   # no create/update/delete
-  - apiGroups: ["apps"]
-    resources: ["deployments"]
-    verbs: ["get", "list"]            # read-only for status
+
+- apiGroups: [""]
+  resources: ["configmaps", "secrets"]
+  verbs: ["get", "list", "watch"] # no create/update/delete
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["get", "list"] # read-only for status
 
 No production pod should run with cluster-admin or overly broad permissions. Your GitOps or operator pattern should manage these bindings declaratively.
 
@@ -134,4 +136,3 @@ These resources are independent of any single product; use them to deepen the to
 You may reuse this curriculum internally or in **paid consulting / training** engagements. Keep examples aligned to the customer’s actual stack; substitute your own runbooks, tool names, and compliance frameworks (SOC 2, ISO 27001, sector regulators) where cited examples use a reference architecture only.
 
 ---
-

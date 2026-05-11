@@ -19,10 +19,11 @@ prev: "incident-response-recovery-picerl"
 next: "workstation-local-development-security"
 description: "Apply quotas, limits, and scheduling policies to protect shared GPU pools."
 ---
+
 # GPU and Resource Protection: Preventing Rogue Agent Denial-of-Service
 
+_Module 15 of 20 · Agentic AI Security Curriculum · May 2026_
 
-*Module 15 of 20 · Agentic AI Security Curriculum · May 2026*
 ## How to use this module
 
 Use it as **self-paced** study or as **instructor-led** training. YAML, commands, and policy excerpts are **illustrative**; map them to your cloud, mesh, identity provider, and agent runtime—substitute your own names, namespaces, and tools while preserving the **control intent**.
@@ -41,7 +42,6 @@ By the end of this module, you should be able to:
 
 - Prior module: [Incident Response and Recovery: PICERL, WORM Audits, and Tested Backups](14-incident-response-recovery-picerl.md)
 
-
 **Suggested discussion / lab:** Pick one diagram in your environment (build, deploy, runtime) and mark where this module’s controls apply; note gaps versus the checklist in the body.
 
 ---
@@ -55,28 +55,27 @@ Use `ResourceQuota` and `LimitRange` to enforce hard GPU limits at the namespace
 apiVersion: v1
 kind: ResourceQuota
 metadata:
-  name: openclaw-gpu-quota
-  namespace: openclaw
+name: openclaw-gpu-quota
+namespace: openclaw
 spec:
-  hard:
-    requests.nvidia.com/gpu: "4"   # Set to your actual maximum intended concurrency
-    limits.nvidia.com/gpu: "4"
+hard:
+requests.nvidia.com/gpu: "4" # Set to your actual maximum intended concurrency
+limits.nvidia.com/gpu: "4"
 
 **Best Practice**: Set the quota to your real maximum agent concurrency (not 1). The goal is a safety ceiling, not artificial restriction.Pair this with a LimitRange to enforce per-pod limits:yaml
 
 apiVersion: v1
 kind: LimitRange
 metadata:
-  name: gpu-limit-range
+name: gpu-limit-range
 spec:
-  limits:
-    - type: Container
-      defaultRequest:
-        nvidia.com/gpu: 1
-      default:
-        nvidia.com/gpu: 1
-      max:
-        nvidia.com/gpu: 2
+limits: - type: Container
+defaultRequest:
+nvidia.com/gpu: 1
+default:
+nvidia.com/gpu: 1
+max:
+nvidia.com/gpu: 2
 
 ### Node Selectors and Taints
 
@@ -112,4 +111,3 @@ These resources are independent of any single product; use them to deepen the to
 You may reuse this curriculum internally or in **paid consulting / training** engagements. Keep examples aligned to the customer’s actual stack; substitute your own runbooks, tool names, and compliance frameworks (SOC 2, ISO 27001, sector regulators) where cited examples use a reference architecture only.
 
 ---
-

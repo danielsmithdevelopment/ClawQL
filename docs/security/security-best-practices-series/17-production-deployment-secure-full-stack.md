@@ -19,10 +19,11 @@ prev: "workstation-local-development-security"
 next: "threat-modeling-stride-agentic-ai"
 description: "Assemble a repeatable secure rollout checklist for complex stacks."
 ---
+
 # Production Deployment: One-Command Secure Full Stack
 
+_Module 17 of 20 · Agentic AI Security Curriculum · May 2026_
 
-*Module 17 of 20 · Agentic AI Security Curriculum · May 2026*
 ## How to use this module
 
 Use it as **self-paced** study or as **instructor-led** training. YAML, commands, and policy excerpts are **illustrative**; map them to your cloud, mesh, identity provider, and agent runtime—substitute your own names, namespaces, and tools while preserving the **control intent**.
@@ -41,7 +42,6 @@ By the end of this module, you should be able to:
 
 - Prior module: [Workstation and Local Development Security: Same Posture Everywhere](16-workstation-local-development-security.md)
 
-
 **Suggested discussion / lab:** Pick one diagram in your environment (build, deploy, runtime) and mark where this module’s controls apply; note gaps versus the checklist in the body.
 
 ---
@@ -53,17 +53,17 @@ All previous security controls culminate in a single, repeatable, secure deploym
 Deploy the complete secure stack with one command:bash
 
 helm upgrade --install clawql-full-stack ./charts/clawql-full-stack \
-  --namespace clawql \
-  --create-namespace \
-  --set security.fullBundle=true \
-  --set security.kata.enabled=true \
-  --set security.panguard.enabled=true \
-  --set security.wazuh.enabled=true \
-  --set security.presidio.enabled=true \
-  --set security.weightVerification.enabled=true \
-  --set gpu.quota.max=4 \
-  --set istio.mTLS=strict \
-  --set supplyChain.allowlistOnly=true
+ --namespace clawql \
+ --create-namespace \
+ --set security.fullBundle=true \
+ --set security.kata.enabled=true \
+ --set security.panguard.enabled=true \
+ --set security.wazuh.enabled=true \
+ --set security.presidio.enabled=true \
+ --set security.weightVerification.enabled=true \
+ --set gpu.quota.max=4 \
+ --set istio.mTLS=strict \
+ --set supplyChain.allowlistOnly=true
 
 This enables:Golden distroless images with read-only root
 Kata Containers for all MCP workloads
@@ -119,4 +119,3 @@ These resources are independent of any single product; use them to deepen the to
 You may reuse this curriculum internally or in **paid consulting / training** engagements. Keep examples aligned to the customer’s actual stack; substitute your own runbooks, tool names, and compliance frameworks (SOC 2, ISO 27001, sector regulators) where cited examples use a reference architecture only.
 
 ---
-

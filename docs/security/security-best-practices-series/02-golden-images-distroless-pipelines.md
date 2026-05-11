@@ -19,10 +19,11 @@ prev: "supply-chain-pinning-mirror-registry"
 next: "cluster-admission-control-signing-policy"
 description: "Explain why minimal (e.g. distroless) images and read-only root filesystems reduce container blast radius."
 ---
+
 # Building Golden Images: Automated Scanning, Hardening, and Distroless Pipelines
 
+_Module 2 of 20 · Agentic AI Security Curriculum · May 2026_
 
-*Module 2 of 20 · Agentic AI Security Curriculum · May 2026*
 ## How to use this module
 
 Use it as **self-paced** study or as **instructor-led** training. YAML, commands, and policy excerpts are **illustrative**; map them to your cloud, mesh, identity provider, and agent runtime—substitute your own names, namespaces, and tools while preserving the **control intent**.
@@ -40,7 +41,6 @@ By the end of this module, you should be able to:
 ## Prerequisites
 
 - Prior module: [Supply Chain Security: Why Pinning Versions and Running Your Own Mirror Registry Matters](01-supply-chain-pinning-mirror-registry.md)
-
 
 **Suggested discussion / lab:** Pick one diagram in your environment (build, deploy, runtime) and mark where this module’s controls apply; note gaps versus the checklist in the body.
 
@@ -67,12 +67,14 @@ Set securityContext.readOnlyRootFilesystem: true on every pod. Combined with dis
 Typical hardened pipelines use multi-stage Dockerfiles:dockerfile
 
 # Stage 1: Builder
+
 FROM golang:1.24-alpine AS builder
 WORKDIR /app
 COPY . .
 RUN go build -ldflags="-s -w" -o /clawql-api ./cmd/api
 
 # Stage 2: Golden Runtime
+
 FROM gcr.io/distroless/static-debian12
 COPY --from=builder /clawql-api /usr/local/bin/clawql-api
 USER 65532:65532
@@ -99,11 +101,11 @@ yaml
 
 - name: Build Golden Image
   run: |
-    docker build -t $IMAGE:$TAG .
-    trivy image --exit-code 1 --severity CRITICAL,HIGH $IMAGE:$TAG
-    syft packages $IMAGE:$TAG -o spdx-json > sbom.spdx.json
-    cosign sign --keyless $IMAGE@${DIGEST}
-    docker push $IMAGE:$TAG
+  docker build -t $IMAGE:$TAG .
+  trivy image --exit-code 1 --severity CRITICAL,HIGH $IMAGE:$TAG
+  syft packages $IMAGE:$TAG -o spdx-json > sbom.spdx.json
+  cosign sign --keyless $IMAGE@${DIGEST}
+  docker push $IMAGE:$TAG
 
 ### Golden image standards (checklist)
 
@@ -122,22 +124,20 @@ A cluster-wide Kyverno policy enforces golden image standards at admission time:
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
-  name: require-golden-images
+name: require-golden-images
 spec:
-  validationFailureAction: Enforce
-  rules:
-    - name: check-distroless-and-readonly
-      match:
-        resources:
-          kinds: ["Pod"]
-      validate:
-        message: "All pods in scope must use golden distroless images with read-only root filesystem"
-        pattern:
-          spec:
-            securityContext:
-              readOnlyRootFilesystem: true
-            containers:
-              - image: "registry.internal.example/**@sha256:*"
+validationFailureAction: Enforce
+rules: - name: check-distroless-and-readonly
+match:
+resources:
+kinds: ["Pod"]
+validate:
+message: "All pods in scope must use golden distroless images with read-only root filesystem"
+pattern:
+spec:
+securityContext:
+readOnlyRootFilesystem: true
+containers: - image: "registry.internal.example/\*_@sha256:_"
 
 ### Key Takeaways
 
@@ -165,4 +165,3 @@ These resources are independent of any single product; use them to deepen the to
 You may reuse this curriculum internally or in **paid consulting / training** engagements. Keep examples aligned to the customer’s actual stack; substitute your own runbooks, tool names, and compliance frameworks (SOC 2, ISO 27001, sector regulators) where cited examples use a reference architecture only.
 
 ---
-
