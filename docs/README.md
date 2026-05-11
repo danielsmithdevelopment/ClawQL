@@ -43,7 +43,7 @@ This directory is organized by purpose so operational guides, product docs, and 
 - **Privacy filter (planned):** local ~1.5B sparse MoE masking before extraction — [#245](https://github.com/danielsmithdevelopment/ClawQL/issues/245)
 - **LangExtract extraction (planned):** schema-enforced, character-grounded extraction + HTML viz — [#246](https://github.com/danielsmithdevelopment/ClawQL/issues/246)
 - **HITL Label Studio extensions (planned):** pre-annotations + vertical config packs — [#247](https://github.com/danielsmithdevelopment/ClawQL/issues/247) (extends shipped [#228](https://github.com/danielsmithdevelopment/ClawQL/issues/228))
-- **Golden image pipeline** (CI → scan → push → sign → deploy enforcement): `security/golden-image-pipeline.md`
+- **Golden image pipeline** (CI → scan → push → sign → deploy enforcement): `security/golden-image-pipeline.md` — plus **public GHCR packages** requirement for **`docker pull`** / Kyverno: top-level **`docker/README.md`** § **GHCR visibility**
 - Defense-in-depth reference guide: `security/clawql-security-defense-in-depth.md`
 - Deliverables matrix (shipped vs partial vs planned): `security/clawql-security-defense-deliverables.md`
 - npm publish hardening: `security/npm-supply-chain.md`

@@ -371,7 +371,7 @@ if [[ "${INSTALLER}" == "helm" ]]; then
     echo "  kubectl delete clusterpolicy clawql-ghcr-cosign-keyless"
     echo "If conflict is svc/clawql-mcp-http .spec.type (kubectl-patch vs Helm): delete Service once, rerun:"
     echo "  kubectl -n ${NAMESPACE} delete svc clawql-mcp-http --ignore-not-found && make local-k8s-up"
-    echo "Kyverno denied GHCR (verifyImages): set a PAT in env (GITHUB_TOKEN or CLAWQL_KYVERNO_GHCR_PULL_TOKEN) and rerun so a kyverno/docker-registry secret is created, or make GHCR packages public (docs/security/image-signature-enforcement.md)."
+    echo "Kyverno denied GHCR (verifyImages): ensure GHCR container packages are **public** (anonymous pull); see docker-publish CI. Private fork? export GITHUB_TOKEN or CLAWQL_KYVERNO_GHCR_PULL_TOKEN so a kyverno/docker-registry secret is created (docs/security/image-signature-enforcement.md)."
     echo "One-shot bypass: helm upgrade --install ${RELEASE_NAME} ${CHART} -n ${NAMESPACE} -f ${VALUES_LOCAL}"
     echo "  --set-string vault.hostPath.path=... --set kyverno.imageSignaturePolicy.enabled=false"
     exit "${HELM_EXIT}"

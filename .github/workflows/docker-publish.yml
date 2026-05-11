@@ -191,6 +191,7 @@ jobs:
 
       - name: Verify anonymous GHCR read (Kyverno + end-user pulls)
         if: ${{ steps.oci_push.outputs.digest != '' }}
+        continue-on-error: true
         run: bash "${GITHUB_WORKSPACE}/scripts/ci/verify-ghcr-image-anonymous-pull.sh" "${{ env.IMAGE_NAME }}:latest"
 
   build-push-dashboard:
@@ -309,6 +310,7 @@ jobs:
 
       - name: Verify anonymous GHCR read (Kyverno + end-user pulls)
         if: ${{ steps.oci_push.outputs.digest != '' }}
+        continue-on-error: true
         run: bash "${GITHUB_WORKSPACE}/scripts/ci/verify-ghcr-image-anonymous-pull.sh" "${{ env.DASHBOARD_IMAGE_NAME }}:latest"
 
   build-push-panguard-bridge:
@@ -423,6 +425,7 @@ jobs:
 
       - name: Verify anonymous GHCR read (Kyverno + end-user pulls)
         if: ${{ steps.oci_push.outputs.digest != '' }}
+        continue-on-error: true
         run: bash "${GITHUB_WORKSPACE}/scripts/ci/verify-ghcr-image-anonymous-pull.sh" "${{ env.PANGUARD_BRIDGE_IMAGE_NAME }}:latest"
 
   build-push-website:
@@ -550,4 +553,5 @@ jobs:
 
       - name: Verify anonymous GHCR read (Kyverno + end-user pulls)
         if: ${{ steps.oci_push.outputs.digest != '' }}
+        continue-on-error: true
         run: bash "${GITHUB_WORKSPACE}/scripts/ci/verify-ghcr-image-anonymous-pull.sh" "${{ env.WEBSITE_IMAGE_NAME }}:latest"

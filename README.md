@@ -15,6 +15,10 @@ Feature tiers (aligned with the [architecture diagram](docs/readme/images/clawql
 Primary package: `clawql-mcp`  
 Repo: https://github.com/danielsmithdevelopment/ClawQL
 
+### Container images on GHCR (Docker / Helm)
+
+Prebuilt images live on **GitHub Container Registry** under **`ghcr.io/danielsmithdevelopment/`** (**`clawql-mcp`**, **`clawql-website`**, **`clawql-dashboard`**, **`clawql-panguard-mcp-bridge`**). They are **supposed to be public** so anyone can **`docker pull`** without credentials and Kubernetes defaults (Kyverno) can verify signatures. If **`docker pull`** returns **denied**, the registry package is still private — see **[`docker/README.md`](docker/README.md) § GHCR visibility** (checklist + **`make ghcr-packages-public`** for maintainers).
+
 ## Quick Start
 
 Install:
