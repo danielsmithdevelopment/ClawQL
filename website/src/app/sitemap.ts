@@ -1,5 +1,6 @@
 import { type MetadataRoute } from 'next'
 
+import trainingPaths from '@/generated/security-training/sitemap-paths.json'
 import { getSiteOrigin } from '@/lib/site-url'
 
 /** Sitemap is fully static URLs; avoid per-request `lastModified` churn for crawlers. */
@@ -150,10 +151,20 @@ const ENTRIES: Array<Entry> = [
   },
 ]
 
+function trainingSitemapEntries(): Entry[] {
+  return (trainingPaths as string[]).map((p) => ({
+    path: p as Entry['path'],
+    changeFrequency: 'monthly' as const,
+    priority: p === '/security/best-practices' ? 0.9 : 0.86,
+  }))
+}
+
+const ALL_ENTRIES: Entry[] = [...ENTRIES, ...trainingSitemapEntries()]
+
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = getSiteOrigin().toString().replace(/\/$/, '')
 
-  return ENTRIES.map(({ path, changeFrequency, priority }) => {
+  return ALL_ENTRIES.map(({ path, changeFrequency, priority }) => {
     const url = path === '/' ? `${base}/` : `${base}${path}`
     return {
       url,

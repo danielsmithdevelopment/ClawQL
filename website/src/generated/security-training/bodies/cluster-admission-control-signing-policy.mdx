@@ -1,25 +1,3 @@
----
-title: "Cluster Admission Control: Enforcing Image Signing and Policy at Deploy Time"
-series: "Agentic AI Security Curriculum"
-course_type: "instructor-ready / self-study"
-audience: "Security architects, platform engineers, and teams adopting AI agents"
-estimated_minutes: 35
-level: foundational
-tags:
-  - kubernetes
-  - admission-control
-  - policy-as-code
-  - kyverno
-part: 3
-total_parts: 20
-date: "May 2026"
-slug: "cluster-admission-control-signing-policy"
-canonical_path: "/security/best-practices/cluster-admission-control-signing-policy"
-prev: "golden-images-distroless-pipelines"
-next: "least-privilege-scoped-identities"
-description: "Describe the role of admission controllers in preventing mis-scoped workloads from running."
----
-
 # Cluster Admission Control: Enforcing Image Signing and Policy at Deploy Time
 
 _Module 3 of 20 · Agentic AI Security Curriculum · May 2026_
@@ -75,16 +53,16 @@ spec:
     - name: verify-cosign-signature
       match:
         resources:
-          kinds: ["Pod"]
+          kinds: ['Pod']
       validate:
-        message: "All containers must be signed with Cosign and pulled from Harbor"
+        message: 'All containers must be signed with Cosign and pulled from Harbor'
       imageVerify:
-        - imageReferences: ["registry.internal.example/**"]
+        - imageReferences: ['registry.internal.example/**']
           verify:
-            - type: "cosign"
+            - type: 'cosign'
               keyless:
-                issuer: "https://token.actions.githubusercontent.com"
-                subject: "https://github.com/clawql/*"
+                issuer: 'https://token.actions.githubusercontent.com'
+                subject: 'https://github.com/clawql/*'
 ```
 
 This policy rejects any pod using unsigned images or images from external registries.

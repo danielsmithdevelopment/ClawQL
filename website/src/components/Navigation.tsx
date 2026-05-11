@@ -312,6 +312,10 @@ export const navigation: Array<NavGroup> = [
       { title: 'Troubleshooting', href: '/troubleshooting' },
       { title: 'Security', href: '/security' },
       {
+        title: 'Security training (20 modules)',
+        href: '/security/best-practices',
+      },
+      {
         title: 'Defense in depth (full guide)',
         href: '/security/defense-in-depth',
       },

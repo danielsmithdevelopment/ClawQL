@@ -1,25 +1,3 @@
----
-title: "Building Golden Images: Automated Scanning, Hardening, and Distroless Pipelines"
-series: "Agentic AI Security Curriculum"
-course_type: "instructor-ready / self-study"
-audience: "Security architects, platform engineers, and teams adopting AI agents"
-estimated_minutes: 35
-level: foundational
-tags:
-  - containers
-  - hardening
-  - distroless
-  - golden-images
-part: 2
-total_parts: 20
-date: "May 2026"
-slug: "golden-images-distroless-pipelines"
-canonical_path: "/security/best-practices/golden-images-distroless-pipelines"
-prev: "supply-chain-pinning-mirror-registry"
-next: "cluster-admission-control-signing-policy"
-description: "Explain why minimal (e.g. distroless) images and read-only root filesystems reduce container blast radius."
----
-
 # Building Golden Images: Automated Scanning, Hardening, and Distroless Pipelines
 
 _Module 2 of 20 · Agentic AI Security Curriculum · May 2026_
@@ -132,15 +110,15 @@ spec:
     - name: check-distroless-and-readonly
       match:
         resources:
-          kinds: ["Pod"]
+          kinds: ['Pod']
       validate:
-        message: "All pods in scope must use golden distroless images with read-only root filesystem"
+        message: 'All pods in scope must use golden distroless images with read-only root filesystem'
         pattern:
           spec:
             securityContext:
               readOnlyRootFilesystem: true
             containers:
-              - image: "registry.internal.example/*@sha256:*"
+              - image: 'registry.internal.example/*@sha256:*'
 ```
 
 ### Key Takeaways

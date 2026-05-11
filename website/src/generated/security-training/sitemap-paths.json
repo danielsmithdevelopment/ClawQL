@@ -1,0 +1,23 @@
+[
+  "/security/best-practices",
+  "/security/best-practices/supply-chain-pinning-mirror-registry",
+  "/security/best-practices/golden-images-distroless-pipelines",
+  "/security/best-practices/cluster-admission-control-signing-policy",
+  "/security/best-practices/least-privilege-scoped-identities",
+  "/security/best-practices/zero-trust-fundamentals",
+  "/security/best-practices/advanced-zero-trust-vault-hsm-provenance",
+  "/security/best-practices/rbac-mtls-istio-service-mesh",
+  "/security/best-practices/sandboxing-kata-gvisor-tradeoffs",
+  "/security/best-practices/mcp-runtime-protection-panguard-atr",
+  "/security/best-practices/data-classification-pii-redaction-logs",
+  "/security/best-practices/model-integrity-verifying-weights",
+  "/security/best-practices/runtime-monitoring-observability",
+  "/security/best-practices/automated-response-containment",
+  "/security/best-practices/incident-response-recovery-picerl",
+  "/security/best-practices/gpu-resource-protection",
+  "/security/best-practices/workstation-local-development-security",
+  "/security/best-practices/production-deployment-secure-full-stack",
+  "/security/best-practices/threat-modeling-stride-agentic-ai",
+  "/security/best-practices/owasp-agentic-top-10-mitigations",
+  "/security/best-practices/quarterly-security-review-checklist"
+]
