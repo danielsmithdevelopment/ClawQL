@@ -64,7 +64,10 @@ export default function SecurityTrainingHubPage() {
 
       <ol className="not-prose mt-10 space-y-3 border-t border-zinc-900/10 pt-10 dark:border-white/10">
         {trainingModules.map((m) => (
-          <li key={m.slug} className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <li
+            key={m.slug}
+            className="flex flex-wrap items-baseline gap-x-3 gap-y-1"
+          >
             <span className="w-8 shrink-0 font-mono text-sm text-zinc-500 dark:text-zinc-400">
               {m.part}.
             </span>
