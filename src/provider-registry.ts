@@ -162,7 +162,7 @@ export const BUNDLED_PROVIDERS: Record<string, BundledProvider> = {
     bundledIntrospectionPath: "providers/paperless/introspection.json",
     bundledSchemaSdlPath: "providers/paperless/schema.graphql",
   },
-  /** Stirling-PDF (minimal stub; refresh from /v3/api-docs). Base URL: STIRLING_BASE_URL. */
+  /** Stirling-PDF (refresh `providers/stirling/openapi.yaml` via `npm run fetch-provider-specs` + `STIRLING_BASE_URL` → `/v1/api-docs`). Base URL for execute: `STIRLING_BASE_URL`. */
   stirling: {
     id: "stirling",
     bundledSpecPath: "providers/stirling/openapi.yaml",

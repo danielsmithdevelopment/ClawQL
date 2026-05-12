@@ -518,13 +518,7 @@ spec:
                   name: {{ include "clawql-mcp.documentPipelineSecretName" . }}
                   key: paperless-secret-key
             {{- end }}
-            {{- if .Values.documentPipeline.paperless.auth.apiToken }}
-            - name: PAPERLESS_API_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "clawql-mcp.documentPipelineSecretName" . }}
-                  key: paperless-api-token
-            {{- end }}
+            {{- /* Upstream paperless-ngx does not read PAPERLESS_API_TOKEN; API tokens live in the DB (Profile / POST /api/token/). */ -}}
             {{- if .Values.documentPipeline.paperless.auth.adminUser }}
             - name: PAPERLESS_ADMIN_USER
               valueFrom:

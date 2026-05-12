@@ -83,7 +83,7 @@
       "name": "adexchangebuyer2",
       "version": "v2beta1",
       "title": "Ad Exchange Buyer API II",
-      "description": "Accesses the latest features for managing Authorized Buyers accounts, Real-Time Bidding configurations and auction metrics, and Marketplace programmatic deals.",
+      "description": "Access the latest features for managing Authorized Buyers accounts, Real-Time Bidding configurations and auction metrics, and Marketplace programmatic deals.",
       "discoveryRestUrl": "https://adexchangebuyer.googleapis.com/$discovery/rest?version=v2beta1",
       "icons": {
         "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
@@ -262,8 +262,8 @@
       "id": "aiplatform:v1beta1",
       "name": "aiplatform",
       "version": "v1beta1",
-      "title": "Vertex AI API",
-      "description": "Train high-quality custom machine learning models with minimal machine learning expertise and effort.",
+      "title": "Agent Platform API",
+      "description": "Build, scale, govern, and optimize sophisticated agents and models.",
       "discoveryRestUrl": "https://aiplatform.googleapis.com/$discovery/rest?version=v1beta1",
       "icons": {
         "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
@@ -277,8 +277,8 @@
       "id": "aiplatform:v1",
       "name": "aiplatform",
       "version": "v1",
-      "title": "Vertex AI API",
-      "description": "Train high-quality custom machine learning models with minimal machine learning expertise and effort.",
+      "title": "Agent Platform API",
+      "description": "Build, scale, govern, and optimize sophisticated agents and models.",
       "discoveryRestUrl": "https://aiplatform.googleapis.com/$discovery/rest?version=v1",
       "icons": {
         "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
@@ -1213,7 +1213,7 @@
         "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
         "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
       },
-      "documentationLink": "https://cloud.google.com/certificate-manager",
+      "documentationLink": "https://docs.cloud.google.com/certificate-manager/docs/overview",
       "preferred": true
     },
     {
@@ -1739,6 +1739,21 @@
         "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
       },
       "documentationLink": "https://cloud.google.com/location-finder/docs",
+      "preferred": true
+    },
+    {
+      "kind": "discovery#directoryItem",
+      "id": "cloudnumberregistry:v1alpha",
+      "name": "cloudnumberregistry",
+      "version": "v1alpha",
+      "title": "Cloud Number Registry API",
+      "description": "",
+      "discoveryRestUrl": "https://cloudnumberregistry.googleapis.com/$discovery/rest?version=v1alpha",
+      "icons": {
+        "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
+        "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
+      },
+      "documentationLink": "https://docs.cloud.google.com/number-registry/reference/rest",
       "preferred": true
     },
     {
@@ -2702,6 +2717,21 @@
         "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
       },
       "documentationLink": "https://developers.google.com/knowledge",
+      "preferred": false
+    },
+    {
+      "kind": "discovery#directoryItem",
+      "id": "developerknowledge:v1",
+      "name": "developerknowledge",
+      "version": "v1",
+      "title": "Developer Knowledge API",
+      "description": "The Developer Knowledge API provides access to Google's developer knowledge.",
+      "discoveryRestUrl": "https://developerknowledge.googleapis.com/$discovery/rest?version=v1",
+      "icons": {
+        "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
+        "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
+      },
+      "documentationLink": "https://developers.google.com/knowledge",
       "preferred": true
     },
     {
@@ -3402,7 +3432,7 @@
       "name": "firebasedataconnect",
       "version": "v1beta",
       "title": "Firebase Data Connect API",
-      "description": "Firebase Data Connect is a relational database service for mobile and web apps that lets you build and scale using a fully-managed PostgreSQL database powered by Cloud SQL. The REST API lets developers manage the connections to their database, change the schema of their database, and query the database.",
+      "description": "Firebase SQL Connect is a relational database service for mobile and web apps that lets you build and scale using a fully-managed PostgreSQL database powered by Cloud SQL. The REST API lets developers manage the connections to their database, change the schema of their database, and query the database.",
       "discoveryRestUrl": "https://firebasedataconnect.googleapis.com/$discovery/rest?version=v1beta",
       "icons": {
         "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
@@ -3417,7 +3447,7 @@
       "name": "firebasedataconnect",
       "version": "v1",
       "title": "Firebase Data Connect API",
-      "description": "Firebase Data Connect is a relational database service for mobile and web apps that lets you build and scale using a fully-managed PostgreSQL database powered by Cloud SQL. The REST API lets developers manage the connections to their database, change the schema of their database, and query the database.",
+      "description": "Firebase SQL Connect is a relational database service for mobile and web apps that lets you build and scale using a fully-managed PostgreSQL database powered by Cloud SQL. The REST API lets developers manage the connections to their database, change the schema of their database, and query the database.",
       "discoveryRestUrl": "https://firebasedataconnect.googleapis.com/$discovery/rest?version=v1",
       "icons": {
         "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
@@ -3889,6 +3919,21 @@
         "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
       },
       "documentationLink": "https://developers.google.com/admin-sdk/groups-settings",
+      "preferred": true
+    },
+    {
+      "kind": "discovery#directoryItem",
+      "id": "health:v4",
+      "name": "health",
+      "version": "v4",
+      "title": "Google Health API",
+      "description": "The Google Health API lets you view and manage health and fitness metrics and measurement data.",
+      "discoveryRestUrl": "https://health.googleapis.com/$discovery/rest?version=v4",
+      "icons": {
+        "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
+        "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
+      },
+      "documentationLink": "https://developers.google.com/health",
       "preferred": true
     },
     {
@@ -6222,7 +6267,7 @@
       "id": "saasservicemgmt:v1beta1",
       "name": "saasservicemgmt",
       "version": "v1beta1",
-      "title": "SaaS Runtime API",
+      "title": "App Lifecycle Manager API",
       "description": "Model, deploy, and operate your SaaS at scale.",
       "discoveryRestUrl": "https://saasservicemgmt.googleapis.com/$discovery/rest?version=v1beta1",
       "icons": {
@@ -6237,7 +6282,7 @@
       "id": "saasservicemgmt:v1",
       "name": "saasservicemgmt",
       "version": "v1",
-      "title": "SaaS Runtime API",
+      "title": "App Lifecycle Manager API",
       "description": "Model, deploy, and operate your SaaS at scale.",
       "discoveryRestUrl": "https://saasservicemgmt.googleapis.com/$discovery/rest?version=v1",
       "icons": {
@@ -6315,6 +6360,21 @@
       "title": "Search Ads 360 Reporting API",
       "description": "The Search Ads 360 API allows developers to automate downloading reports from Search Ads 360.",
       "discoveryRestUrl": "https://searchads360.googleapis.com/$discovery/rest?version=v0",
+      "icons": {
+        "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
+        "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
+      },
+      "documentationLink": "https://developers.google.com/search-ads/reporting",
+      "preferred": false
+    },
+    {
+      "kind": "discovery#directoryItem",
+      "id": "searchads360:v23",
+      "name": "searchads360",
+      "version": "v23",
+      "title": "Search Ads 360 Reporting API",
+      "description": "The Search Ads 360 API allows developers to automate downloading reports from Search Ads 360.",
+      "discoveryRestUrl": "https://searchads360.googleapis.com/$discovery/rest?version=v23",
       "icons": {
         "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
         "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"

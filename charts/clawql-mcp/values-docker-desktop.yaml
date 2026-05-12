@@ -299,22 +299,33 @@ dashboard:
           - path: /
             pathType: Prefix
 
+# Per-service *.localhost routes. When nginx is installed, Helm creates matching Ingress objects.
+# Default ambient Istio path skips nginx and disables chart Ingress (see local-k8s-docker-desktop.sh);
+# install-istio then applies VirtualServices in docker/istio/docker-desktop/clawql-localhost-vs-providers.yaml.
+# Keep every sub-service explicitly enabled so merges never drop flags from the base chart.
 providerIngress:
   enabled: true
   className: nginx
   paperless:
+    enabled: true
     host: paperless.localhost
   stirling:
+    enabled: true
     host: stirling.localhost
   tika:
+    enabled: true
     host: tika.localhost
   gotenberg:
+    enabled: true
     host: gotenberg.localhost
   flink:
+    enabled: true
     host: flink.localhost
   natsMonitor:
+    enabled: true
     host: nats.localhost
   onyx:
+    enabled: true
     host: onyx.localhost
 
 # MCP provider tokens — Kubernetes Secret synced from Vault (External Secrets Operator). Bootstrap:
@@ -384,7 +395,9 @@ documentPipeline:
         cpu: "1"
         memory: 2Gi
     security:
-      enableLogin: true
+      # Host-side `npm run fetch-provider-specs` hits `/v1/api-docs` (Stirling springdoc path) with X-API-KEY; SECURITY_ENABLE_LOGIN=true
+      # can still return 401 for SpringDoc on some Stirling builds (see upstream #5125 class issues). Keep login off for local.
+      enableLogin: false
       disableAdditionalFeatures: false
   paperless:
     resources:
@@ -395,6 +408,8 @@ documentPipeline:
         cpu: "1"
         memory: 1Gi
     auth:
+      # Stored as `paperless-api-token` in the doc-pipeline Secret for optional local `.env` / fetch fallback only (Paperless does not read this env; use Profile or POST /api/token/ for a real token).
+      apiToken: clawql-local-paperless-dev
       adminUser: admin
       adminPassword: admin
       adminMail: admin@localhost
