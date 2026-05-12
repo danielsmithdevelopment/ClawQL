@@ -1,9 +1,6 @@
 ---
 title: "Threat Modeling with STRIDE for Agentic AI Systems"
 series: "Agentic AI Security Curriculum"
-course_type: "instructor-ready / self-study"
-audience: "Security architects, platform engineers, and teams adopting AI agents"
-estimated_minutes: 35
 level: advanced
 tags:
   - threat-modeling
@@ -19,32 +16,7 @@ prev: "production-deployment-secure-full-stack"
 next: "owasp-agentic-top-10-mitigations"
 description: "Apply STRIDE categories to agent identity, tools, memory, and orchestration."
 ---
-
 # Threat Modeling with STRIDE for Agentic AI Systems
-
-_Module 18 of 20 · Agentic AI Security Curriculum · May 2026_
-
-## How to use this module
-
-Use it as **self-paced** study or as **instructor-led** training. YAML, commands, and policy excerpts are **illustrative**; map them to your cloud, mesh, identity provider, and agent runtime—substitute your own names, namespaces, and tools while preserving the **control intent**.
-
-**Estimated time:** ~35 minutes reading; add time for linked standards and team discussion.
-
-## Learning objectives
-
-By the end of this module, you should be able to:
-
-1. Apply STRIDE categories to agent identity, tools, memory, and orchestration.
-2. Operate a living threat model tied to architecture changes.
-3. Gate high-risk changes with documented threat–control mapping.
-
-## Prerequisites
-
-- Prior module: [Production Deployment: One-Command Secure Full Stack](17-production-deployment-secure-full-stack.md)
-
-**Suggested discussion / lab:** Pick one diagram in your environment (build, deploy, runtime) and mark where this module’s controls apply; note gaps versus the checklist in the body.
-
----
 
 Threat modeling is not a one-time exercise. In agentic MCP platforms, where systems are dynamic and agents can chain tools unpredictably, STRIDE must be a living process that evolves with the platform. This module explains how to apply STRIDE specifically to agentic AI systems.
 
@@ -98,9 +70,3 @@ These resources are independent of any single product; use them to deepen the to
 - [Microsoft STRIDE / threat modeling](https://learn.microsoft.com/en-us/azure/security/develop/threat-modeling-tool-threats)
 - [OWASP Threat Dragon](https://owasp.org/www-project-threat-dragon/)
 - [MITRE ATLAS (AI threats)](https://atlas.mitre.org/)
-
-## Commercial training use
-
-You may reuse this curriculum internally or in **paid consulting / training** engagements. Keep examples aligned to the customer’s actual stack; substitute your own runbooks, tool names, and compliance frameworks (SOC 2, ISO 27001, sector regulators) where cited examples use a reference architecture only.
-
----

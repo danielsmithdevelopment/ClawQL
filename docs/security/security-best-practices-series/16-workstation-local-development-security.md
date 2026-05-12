@@ -1,9 +1,6 @@
 ---
 title: "Workstation and Local Development Security: Same Posture Everywhere"
 series: "Agentic AI Security Curriculum"
-course_type: "instructor-ready / self-study"
-audience: "Security architects, platform engineers, and teams adopting AI agents"
-estimated_minutes: 30
 level: advanced
 tags:
   - devsecops
@@ -18,32 +15,7 @@ prev: "gpu-resource-protection"
 next: "production-deployment-secure-full-stack"
 description: "Extend production security expectations to developer laptops and CI runners."
 ---
-
 # Workstation and Local Development Security: Same Posture Everywhere
-
-_Module 16 of 20 · Agentic AI Security Curriculum · May 2026_
-
-## How to use this module
-
-Use it as **self-paced** study or as **instructor-led** training. YAML, commands, and policy excerpts are **illustrative**; map them to your cloud, mesh, identity provider, and agent runtime—substitute your own names, namespaces, and tools while preserving the **control intent**.
-
-**Estimated time:** ~30 minutes reading; add time for linked standards and team discussion.
-
-## Learning objectives
-
-By the end of this module, you should be able to:
-
-1. Extend production security expectations to developer laptops and CI runners.
-2. List minimum controls (disk encryption, MFA, signed commits) for high-impact repos.
-3. Reduce “works on my machine” gaps that become production incidents.
-
-## Prerequisites
-
-- Prior module: [GPU and Resource Protection: Preventing Rogue Agent Denial-of-Service](15-gpu-resource-protection.md)
-
-**Suggested discussion / lab:** Pick one diagram in your environment (build, deploy, runtime) and mark where this module’s controls apply; note gaps versus the checklist in the body.
-
----
 
 Security is not only a production concern. Developer workstations are often the weakest link and the most common entry point for supply chain attacks. Engineering policy should require the same high security standards in local development environments as in production.
 
@@ -104,9 +76,3 @@ These resources are independent of any single product; use them to deepen the to
 - [CIS Workbench (benchmarks for workstations)](https://www.cisecurity.org/cis-benchmarks)
 - [NIST SP 800-63 (digital identity)](https://pages.nist.gov/800-63-4/)
 - [Sigstore Git signing (keyless)](https://docs.sigstore.dev/signing/git-support/)
-
-## Commercial training use
-
-You may reuse this curriculum internally or in **paid consulting / training** engagements. Keep examples aligned to the customer’s actual stack; substitute your own runbooks, tool names, and compliance frameworks (SOC 2, ISO 27001, sector regulators) where cited examples use a reference architecture only.
-
----

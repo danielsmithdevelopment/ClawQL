@@ -1,24 +1,11 @@
-# Agentic AI Security Curriculum (training modules)
+# Agentic AI Security Curriculum (modules)
 
-Twenty **vendor-neutral training modules** for security architects, platform engineers, and teams shipping **LLM agents, tool calling, and MCP-style integrations**. Each file is standalone Markdown with YAML frontmatter for a static site, LMS, or internal wiki.
+Twenty **vendor-neutral** Markdown modules for security architects, platform engineers, and teams shipping **LLM agents, tool calling, and MCP-style integrations**. Each file is standalone with YAML frontmatter for a static site, internal wiki, or docs generator.
 
-## Instructor guide
+## How to use this material
 
-Workshop agendas, delivery modes, and **assessment quiz stubs** (one row per module) live in **[`INSTRUCTOR.md`](INSTRUCTOR.md)**.
-
-## How to use this curriculum
-
-- **Self-study:** Work through `01-` … `20-` in order, or jump to gaps (frontmatter includes `prev` / `next` slugs).
-- **Instructor-led / paid consulting:** Each module includes learning objectives, time guidance, a suggested discussion or lab (where applicable), **Further reading** links to NIST / OWASP / CNCF / OpenSSF and similar sources, and a short **Commercial training use** note so you can adapt examples to the customer’s stack and compliance regime.
-- **Examples:** Body text uses illustrative YAML, policies, and product names (Harbor, Kyverno, Istio, Kata, etc.). Treat them as **patterns**, not mandatory SKUs.
-
-## Time and scope
-
-| Metric                                                           | Value                                                                  |
-| ---------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| Modules                                                          | 20                                                                     |
-| Approx. reading time (sum of `estimated_minutes` in frontmatter) | ~10.5–11 hours                                                         |
-| With linked standards + discussion / labs                        | Plan **2–4 days** for a compact workshop, or **multi-week** self-paced |
+- Work through `01-` … `20-` in order, or jump to a topic using `part` / `prev` / `next` in frontmatter.
+- Body text uses illustrative YAML, policies, and product names (Harbor, Kyverno, Istio, Kata, and similar). Treat them as **patterns**, not mandatory SKUs.
 
 ## Module index
 
@@ -49,12 +36,9 @@ Workshop agendas, delivery modes, and **assessment quiz stubs** (one row per mod
 
 | Key                    | Purpose                                                                                                 |
 | ---------------------- | ------------------------------------------------------------------------------------------------------- |
-| `title`                | Page / lesson title                                                                                     |
-| `series`               | Always `Agentic AI Security Curriculum`                                                                 |
-| `course_type`          | `instructor-ready / self-study`                                                                         |
-| `audience`             | Short learner description                                                                               |
-| `estimated_minutes`    | Reading-time hint for scheduling                                                                        |
-| `level`                | `foundational` (modules 1–5), `intermediate` (6–14), or `advanced` (15–20) — tune for your LMS          |
+| `title`                | Page title                                                                                              |
+| `series`               | `Agentic AI Security Curriculum`                                                                        |
+| `level`                | `foundational`, `intermediate`, or `advanced` — tune for your taxonomy                                 |
 | `tags`                 | YAML list of lowercase tokens (e.g. `kubernetes`, `sbom`, `owasp`) for faceted search / related content |
 | `part` / `total_parts` | Position in curriculum                                                                                  |
 | `date`                 | Publication or review stamp                                                                             |
@@ -73,7 +57,7 @@ The full narrative is still available as one file: [`../security-guide-series.md
 
 | Script                                                                       | Role                                                                                                                                                                                                                                 |
 | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| [`_training_transform.py`](_training_transform.py)                           | Original training framing (objectives, further reading blocks). **Not idempotent** if re-run without guards — do not duplicate sections.                                                                                             |
+| [`_training_transform.py`](_training_transform.py)                           | Legacy bulk transform (neutralize ClawQL-specific phrasing, refresh descriptions, append **Further reading**). **Not idempotent** if re-run without guards — do not duplicate sections. Intended for rare bulk passes, not routine edits. |
 | [`_polish_headings_and_frontmatter.py`](_polish_headings_and_frontmatter.py) | Inserts `level` / `tags`, normalizes spacing before `###` headings and common glued prose patterns **outside** fenced code blocks. Strips prior `level`/`tags` before re-inserting so it can be re-run safely for formatting passes. |
 
 Prefer hand-editing module prose; use scripts when doing bulk layout updates.

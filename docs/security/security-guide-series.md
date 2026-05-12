@@ -1,4 +1,4 @@
-> **Curriculum / website:** The same material is split into twenty **training modules** (vendor-neutral framing, learning objectives, **`level` / `tags`** for CMS search, **Further reading** links, `prev` / `next` slugs) under [`security-best-practices-series/`](security-best-practices-series/). See [`security-best-practices-series/README.md`](security-best-practices-series/README.md) for scope and [`security-best-practices-series/INSTRUCTOR.md`](security-best-practices-series/INSTRUCTOR.md) for agendas and assessment stubs.
+> **Curriculum / website:** The same material is split into twenty **modules** (vendor-neutral framing, **`level` / `tags`** for CMS search, **Further reading** links, `prev` / `next` slugs) under [`security-best-practices-series/`](security-best-practices-series/). See [`security-best-practices-series/README.md`](security-best-practices-series/README.md) for scope and the module index.
 
 # **Supply Chain Security: Why Pinning Versions and Running Your Own Mirror Registry Matters\*\***Part 1 of the ClawQL Security Best Practices Series\***\*May 2026**
 

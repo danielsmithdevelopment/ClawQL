@@ -1,9 +1,6 @@
 ---
 title: "Advanced Zero Trust: Multi-Sig Vault, HSM, Tamper-Proof Logging, and Cryptographic Provenance"
 series: "Agentic AI Security Curriculum"
-course_type: "instructor-ready / self-study"
-audience: "Security architects, platform engineers, and teams adopting AI agents"
-estimated_minutes: 40
 level: intermediate
 tags:
   - zero-trust
@@ -19,32 +16,7 @@ prev: "zero-trust-fundamentals"
 next: "rbac-mtls-istio-service-mesh"
 description: "Compare static vs dynamic secrets and justify short TTLs for machine identities."
 ---
-
 # Advanced Zero Trust: Multi-Sig Vault, HSM, Tamper-Proof Logging, and Cryptographic Provenance
-
-_Module 6 of 20 · Agentic AI Security Curriculum · May 2026_
-
-## How to use this module
-
-Use it as **self-paced** study or as **instructor-led** training. YAML, commands, and policy excerpts are **illustrative**; map them to your cloud, mesh, identity provider, and agent runtime—substitute your own names, namespaces, and tools while preserving the **control intent**.
-
-**Estimated time:** ~40 minutes reading; add time for linked standards and team discussion.
-
-## Learning objectives
-
-By the end of this module, you should be able to:
-
-1. Compare static vs dynamic secrets and justify short TTLs for machine identities.
-2. Describe tamper-evident logging goals and cryptographic provenance at a high level.
-3. Relate signing and integrity checks to models and large binaries, not only container images.
-
-## Prerequisites
-
-- Prior module: [Zero Trust Fundamentals: Assume Compromise and Verify Everything](05-zero-trust-fundamentals.md)
-
-**Suggested discussion / lab:** Pick one diagram in your environment (build, deploy, runtime) and mark where this module’s controls apply; note gaps versus the checklist in the body.
-
----
 
 Building on Zero Trust fundamentals (Module 5), this module covers the advanced cryptographic and secret-management controls that make trust assumptions explicit and verifiable across the entire platform.
 
@@ -103,9 +75,3 @@ These resources are independent of any single product; use them to deepen the to
 - [HashiCorp Vault security model](https://developer.hashicorp.com/vault/docs/internals/security)
 - [NIST SP 800-57 (key management)](https://csrc.nist.gov/publications/detail/sp/800-57-part-1/rev-5/final)
 - [WORM / immutability (SNIA overview)](https://www.snia.org/education/what-is-worm-storage)
-
-## Commercial training use
-
-You may reuse this curriculum internally or in **paid consulting / training** engagements. Keep examples aligned to the customer’s actual stack; substitute your own runbooks, tool names, and compliance frameworks (SOC 2, ISO 27001, sector regulators) where cited examples use a reference architecture only.
-
----

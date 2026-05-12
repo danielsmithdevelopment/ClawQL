@@ -1,9 +1,6 @@
 ---
 title: "Incident Response and Recovery: PICERL, WORM Audits, and Tested Backups"
 series: "Agentic AI Security Curriculum"
-course_type: "instructor-ready / self-study"
-audience: "Security architects, platform engineers, and teams adopting AI agents"
-estimated_minutes: 35
 level: intermediate
 tags:
   - incident-response
@@ -19,32 +16,7 @@ prev: "automated-response-containment"
 next: "gpu-resource-protection"
 description: "Use a structured incident lifecycle (e.g. prepare → identify → contain → recover)."
 ---
-
 # Incident Response and Recovery: PICERL, WORM Audits, and Tested Backups
-
-_Module 14 of 20 · Agentic AI Security Curriculum · May 2026_
-
-## How to use this module
-
-Use it as **self-paced** study or as **instructor-led** training. YAML, commands, and policy excerpts are **illustrative**; map them to your cloud, mesh, identity provider, and agent runtime—substitute your own names, namespaces, and tools while preserving the **control intent**.
-
-**Estimated time:** ~35 minutes reading; add time for linked standards and team discussion.
-
-## Learning objectives
-
-By the end of this module, you should be able to:
-
-1. Use a structured incident lifecycle (e.g. prepare → identify → contain → recover).
-2. Plan immutable audit storage and tested restore for critical datasets.
-3. Align runbooks with AI-specific failure modes (model, tools, data pipelines).
-
-## Prerequisites
-
-- Prior module: [Automated Response and Containment: Falco + Talon Quarantine, Panguard Blocking](13-automated-response-containment.md)
-
-**Suggested discussion / lab:** Pick one diagram in your environment (build, deploy, runtime) and mark where this module’s controls apply; note gaps versus the checklist in the body.
-
----
 
 Even with layered prevention, containment, and monitoring, incidents will eventually occur. This module details the structured incident response process, tamper-evident audit capabilities, and the requirement for regularly tested recovery paths.
 
@@ -98,9 +70,3 @@ These resources are independent of any single product; use them to deepen the to
 - [NIST SP 800-61 Rev. 2 (Computer Security Incident Handling)](https://csrc.nist.gov/publications/detail/sp/800-61/rev-2/final)
 - [FIRST PICERL / CSIRT frameworks](https://www.first.org/)
 - [NIST SP 800-34 (contingency planning)](https://csrc.nist.gov/publications/detail/sp/800-34/rev-1/final)
-
-## Commercial training use
-
-You may reuse this curriculum internally or in **paid consulting / training** engagements. Keep examples aligned to the customer’s actual stack; substitute your own runbooks, tool names, and compliance frameworks (SOC 2, ISO 27001, sector regulators) where cited examples use a reference architecture only.
-
----

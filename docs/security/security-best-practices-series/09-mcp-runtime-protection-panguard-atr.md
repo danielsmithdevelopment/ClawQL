@@ -1,9 +1,6 @@
 ---
 title: "MCP Runtime Protection: Panguard, ATR Rules, and Agentic Threat Mitigation"
 series: "Agentic AI Security Curriculum"
-course_type: "instructor-ready / self-study"
-audience: "Security architects, platform engineers, and teams adopting AI agents"
-estimated_minutes: 35
 level: intermediate
 tags:
   - mcp
@@ -19,32 +16,7 @@ prev: "sandboxing-kata-gvisor-tradeoffs"
 next: "data-classification-pii-redaction-logs"
 description: "Explain synchronous policy enforcement for tool and API calls in agent architectures."
 ---
-
 # MCP Runtime Protection: Panguard, ATR Rules, and Agentic Threat Mitigation
-
-_Module 9 of 20 · Agentic AI Security Curriculum · May 2026_
-
-## How to use this module
-
-Use it as **self-paced** study or as **instructor-led** training. YAML, commands, and policy excerpts are **illustrative**; map them to your cloud, mesh, identity provider, and agent runtime—substitute your own names, namespaces, and tools while preserving the **control intent**.
-
-**Estimated time:** ~35 minutes reading; add time for linked standards and team discussion.
-
-## Learning objectives
-
-By the end of this module, you should be able to:
-
-1. Explain synchronous policy enforcement for tool and API calls in agent architectures.
-2. Relate session-scoped authorization to OAuth-style claims and API gateways.
-3. Identify abuse cases specific to multi-step agent workflows.
-
-## Prerequisites
-
-- Prior module: [Sandboxing Options and Trade-offs: Kata, gVisor, Seatbelt, Docker, and Cloudflare Workers](08-sandboxing-kata-gvisor-tradeoffs.md)
-
-**Suggested discussion / lab:** Pick one diagram in your environment (build, deploy, runtime) and mark where this module’s controls apply; note gaps versus the checklist in the body.
-
----
 
 The MCP interface is the highest-risk attack surface in any agentic platform. Agents interact with tools, memory, documents, and external systems through natural language, making traditional prompt-based defenses insufficient. This module details how to protect the MCP runtime using Panguard, ATR scoping, and layered governance.
 
@@ -101,9 +73,3 @@ These resources are independent of any single product; use them to deepen the to
 - [Model Context Protocol (MCP) specification](https://modelcontextprotocol.io/specification/draft)
 - [OWASP Top 10 for Agentic Applications (2026)](https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/)
 - [OWASP API Security Top 10](https://owasp.org/www-project-api-security/)
-
-## Commercial training use
-
-You may reuse this curriculum internally or in **paid consulting / training** engagements. Keep examples aligned to the customer’s actual stack; substitute your own runbooks, tool names, and compliance frameworks (SOC 2, ISO 27001, sector regulators) where cited examples use a reference architecture only.
-
----

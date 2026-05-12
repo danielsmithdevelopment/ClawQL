@@ -367,37 +367,11 @@ def neutralize_body(s: str) -> str:
     return s
 
 
-def build_header(part: int, prev_slug: str | None, next_slug: str | None, minutes: int) -> str:
-    prev_line = (
-        f"- Prior module: [{TITLES[part - 2]}]({part - 1:02d}-{prev_slug}.md)"
-        if part > 1 and prev_slug
-        else "- None (this is the first module)."
-    )
-    obj = OBJECTIVES[part - 1]
-    obj_txt = "\n".join(f"{i}. {t}" for i, t in enumerate(obj, start=1))
-    lab = ""
-    if part <= 19:
-        lab = "\n\n**Suggested discussion / lab:** Pick one diagram in your environment (build, deploy, runtime) and mark where this module’s controls apply; note gaps versus the checklist in the body."
-    return f"""## How to use this module
-
-Use it as **self-paced** study or as **instructor-led** training. YAML, commands, and policy excerpts are **illustrative**; map them to your cloud, mesh, identity provider, and agent runtime—substitute your own names, namespaces, and tools while preserving the **control intent**.
-
-**Estimated time:** ~{minutes} minutes reading; add time for linked standards and team discussion.
-
-## Learning objectives
-
-By the end of this module, you should be able to:
-
-{obj_txt}
-
-## Prerequisites
-
-{prev_line}
-{lab}
-
----
-
-"""
+def build_header(
+    part: int, prev_slug: str | None, next_slug: str | None, minutes: int
+) -> str:
+    """Legacy hook: training-style preambles were removed from published modules."""
+    return ""
 
 
 def build_reading(part: int) -> str:
@@ -409,12 +383,6 @@ def build_reading(part: int) -> str:
 These resources are independent of any single product; use them to deepen the topic for audits, architecture reviews, or procurement discussions.
 
 {rows}
-
-## Commercial training use
-
-You may reuse this curriculum internally or in **paid consulting / training** engagements. Keep examples aligned to the customer’s actual stack; substitute your own runbooks, tool names, and compliance frameworks (SOC 2, ISO 27001, sector regulators) where cited examples use a reference architecture only.
-
----
 """
 
 
@@ -434,6 +402,8 @@ def main() -> None:
 
         fm_lines = []
         for line in fm_raw.split("\n"):
+            if line.startswith(("course_type:", "audience:", "estimated_minutes:")):
+                continue
             if line.startswith("series:"):
                 fm_lines.append('series: "Agentic AI Security Curriculum"')
                 continue
@@ -449,17 +419,9 @@ def main() -> None:
                 # refreshed below
                 continue
             fm_lines.append(line)
-        # insert new keys after series
-        insertions = [
-            'course_type: "instructor-ready / self-study"',
-            'audience: "Security architects, platform engineers, and teams adopting AI agents"',
-            f'estimated_minutes: {MINUTES[part - 1]}',
-        ]
         out_fm: list[str] = []
         for line in fm_lines:
             out_fm.append(line)
-            if line.startswith('series: "Agentic AI Security Curriculum"'):
-                out_fm.extend(insertions)
         # description: first sentence neutral
         desc = (
             OBJECTIVES[part - 1][0][:220] + "…"
@@ -486,12 +448,11 @@ def main() -> None:
             )
 
         header = build_header(part, prev_slug, SLUGS[part] if part < 20 else None, MINUTES[part - 1])
-        # insert header after first line (# title)
-        m = re.match(r"^(#[^\n]+)(\n\n\*Module[^\n]+\*\n)", body, re.M)
+        m = re.match(r"^(#[^\n]+)(\n\n)", body)
         if not m:
             raise SystemExit(f"unexpected body start {path}: {body[:200]!r}")
         rest = body[m.end() :]
-        new_body = m.group(1) + "\n" + m.group(2) + header + rest.lstrip("\n")
+        new_body = m.group(1) + m.group(2) + header + rest.lstrip("\n")
 
         new_body = new_body.rstrip() + build_reading(part)
 
