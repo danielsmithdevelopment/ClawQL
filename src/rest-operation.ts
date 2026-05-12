@@ -123,7 +123,9 @@ function appendMultipartValue(
 
   if (typeof v === "string") {
     const enc =
-      typeof all[`${key}Encoding`] === "string" ? String(all[`${key}Encoding`]).trim().toLowerCase() : "";
+      typeof all[`${key}Encoding`] === "string"
+        ? String(all[`${key}Encoding`]).trim().toLowerCase()
+        : "";
     if (enc === "base64") {
       const buf = Buffer.from(v, "base64");
       const name =
