@@ -82,8 +82,12 @@ port: "8080"
 mcpPath: /mcp
 nodeOptions: "--max-old-space-size=1536"
 
-enableGrpc: false
+enableGrpc: true
 enableGrpcReflection: false
+
+# Max protobuf send/receive per frame for MCP gRPC (`GRPC_MAX_MESSAGE_LENGTH`). Large `execute` bodies
+# (e.g. base64 PDF → Tika) should use **`model_context_protocol.Mcp/CallTool`** on the gRPC port, not Streamable HTTP JSON.
+grpcMaxMessageLength: 67108864
 
 # Optional MCP chokepoint (**Deployment** + **Service**) in front of **`clawql-mcp-http`** — Istio ordering,
 # JWT/ATR gateway, or **nginx** TCP/HTTP passthrough. Defaults **off**.

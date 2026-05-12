@@ -20,7 +20,8 @@
  * its own token from the map or from the usual env vars (`CLAWQL_GITHUB_TOKEN`, …).
  *
  * Self-hosted document APIs: **`paperless`** → `PAPERLESS_API_TOKEN` as `Authorization: Token …`;
- * **`stirling`** → `STIRLING_API_KEY` as `X-API-KEY`; **`tika`** / **`gotenberg`** → optional `CLAWQL_BEARER_TOKEN`.
+ * **`stirling`** → `STIRLING_API_KEY` (or `CLAWQL_STIRLING_API_KEY`) as `X-API-KEY`.
+ * **`tika`** / **`gotenberg`** → optional `CLAWQL_BEARER_TOKEN`.
  * **`onyx`** → `ONYX_API_TOKEN` / `CLAWQL_ONYX_API_TOKEN` as `Authorization: Bearer …`.
  */
 

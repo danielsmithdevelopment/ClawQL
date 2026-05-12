@@ -1,12 +1,3 @@
-import { docsPageMetadata } from '@/lib/seo'
-
-export const metadata = docsPageMetadata({
-  title: 'Audit tool and observability (Prometheus, Grafana, Loki, Tempo)',
-  description:
-    'ClawQL Core audit MCP tool: append/list/clear ring buffer; Prometheus aggregates on GET /metrics; optional CLAWQL_LOKI_PUSH_URL per-append Loki export; Grafana for metrics, logs, and (with OTLP) traces in Tempo.',
-  path: '/learn/audit-tool-and-observability',
-})
-
 # Audit tool and observability (Prometheus, Grafana, Loki, Tempo)
 
 The **`audit`** MCP tool is **ClawQL Core** — **always registered** (no env toggle). It records **structured breadcrumbs** (`category`, `action`, `summary`, optional **`correlationId`**) into an **in-process ring buffer**. You **recall** them with **`list`** while the process is alive; they are **not** written to disk by default. {{ className: 'lead' }}

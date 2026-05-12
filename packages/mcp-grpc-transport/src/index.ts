@@ -7,10 +7,19 @@
 export {
   GrpcMcpSessionTransport,
   maybeStartGrpcMcpServer,
+  defaultGrpcServerMessageSizeBytes,
   PROTOBUF_MCP_SERVICE_FQN,
   MCP_TRANSPORT_SESSION_SERVICE_FQN,
 } from "./server.js";
 export type { GrpcMcpServerOptions, StartedGrpcServer } from "./server.js";
+export {
+  callToolServerStreamingGrpc,
+  lastNonEmptyCallToolText,
+  mcpArgumentsToCallToolStructFields,
+  resolveGrpcAddressFromEnv,
+  resolveGrpcMaxMessageLengthFromEnv,
+} from "./grpc-call-tool-client.js";
+export type { CallToolGrpcClientOptions } from "./grpc-call-tool-client.js";
 export {
   fulfillDependentRequests,
   runUnaryWithDependents,

@@ -92,6 +92,21 @@ describe("server-http", () => {
     });
   });
 
+  it("accepts JSON bodies over default Express ~100kb limit (large execute / GraphQL payloads)", async () => {
+    await withHttpServer(async (base) => {
+      const pad = "x".repeat(120_000);
+      const res = await fetch(`${base}/graphql`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          query: "{ __typename }",
+          variables: { pad },
+        }),
+      });
+      expect(res.status).not.toBe(413);
+    });
+  });
+
   it("GET /healthz returns ok and endpoint path", async () => {
     await withHttpServer(async (base) => {
       const res = await fetch(`${base}/healthz`);

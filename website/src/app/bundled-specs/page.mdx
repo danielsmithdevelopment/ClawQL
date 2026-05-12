@@ -1,12 +1,3 @@
-import { docsPageMetadata } from '@/lib/seo'
-
-export const metadata = docsPageMetadata({
-  title: 'Bundled specs',
-  description:
-    'ClawQL bundled specs: CLAWQL_PROVIDER presets (google, all-providers, Cloudflare, GitHub, Onyx, linear), offline OpenAPI, Google Discovery, and vendored Linear GraphQL SDL in the package.',
-  path: '/bundled-specs',
-})
-
 # Bundled specs
 
 The npm package ships **`providers/`**—optional on-disk API descriptions so cold start avoids downloading multi‑MB specs. Most **native GraphQL / gRPC** upstreams are configured only via **`CLAWQL_GRAPHQL_SOURCES`** / **`CLAWQL_GRPC_SOURCES`** ([Spec configuration](/spec-configuration)). **Exception:** **Linear** is a **bundled GraphQL-only** vendor (`providers/linear/schema.graphql`); use **`CLAWQL_PROVIDER=linear`** or include **`linear`** in **`CLAWQL_BUNDLED_PROVIDERS`** / **`all-providers`**. For **multi-spec**, the only unconfigured default is the full merge **`all-providers`**. Any other multi-spec load is **explicit**: set `CLAWQL_BUNDLED_PROVIDERS`, `CLAWQL_SPEC_PATHS`, or a merged `CLAWQL_PROVIDER` (for example `google`, `atlassian`, or `all-providers` set on purpose). See [Spec configuration](/spec-configuration). {{ className: 'lead' }}

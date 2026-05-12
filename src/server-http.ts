@@ -7,8 +7,11 @@
 
 import "./load-env.js";
 import { randomUUID } from "node:crypto";
-import type { Express } from "express";
-import { createMcpExpressApp } from "@modelcontextprotocol/sdk/server/express.js";
+import express, { type Express } from "express";
+import {
+  hostHeaderValidation,
+  localhostHostValidation,
+} from "@modelcontextprotocol/sdk/server/middleware/hostHeaderValidation.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { attachGraphqlHttpToMcpApp } from "./graphql-http-attach.js";
@@ -82,6 +85,36 @@ function jsonRpcError(res: import("express").Response, message: string, code = -
   });
 }
 
+/**
+ * Same defaults as {@link createMcpExpressApp} from the MCP SDK, but with a higher
+ * `express.json()` limit so `execute` can carry base64-encoded PDFs (SDK default is ~100kb).
+ */
+function createClawqlMcpExpressApp(
+  options: {
+    host?: string;
+    allowedHosts?: string[];
+  } = {}
+): Express {
+  const { host = "127.0.0.1", allowedHosts } = options;
+  const app = express();
+  const limit = process.env.CLAWQL_MCP_JSON_BODY_LIMIT?.trim() || "32mb";
+  app.use(express.json({ limit }));
+  if (allowedHosts) {
+    app.use(hostHeaderValidation(allowedHosts));
+  } else {
+    const localhostHosts = ["127.0.0.1", "localhost", "::1"];
+    if (localhostHosts.includes(host)) {
+      app.use(localhostHostValidation());
+    } else if (host === "0.0.0.0" || host === "::") {
+      console.warn(
+        `[clawql-mcp-http] Server is binding to ${host} without DNS rebinding protection. ` +
+          "Consider using allowedHosts to restrict hosts, or use authentication."
+      );
+    }
+  }
+  return app;
+}
+
 export type CreateMcpHttpAppOptions = {
   /** Override MCP route (default `process.env.MCP_PATH` or `/mcp`). */
   mcpPath?: string;
@@ -105,7 +138,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   const mcpPath = options.mcpPath?.trim() || process.env.MCP_PATH?.trim() || DEFAULT_MCP_PATH;
   const transports = new Map<string, StreamableHTTPServerTransport>();
 
-  const app = createMcpExpressApp({
+  const app = createClawqlMcpExpressApp({
     host: options.host || process.env.MCP_HOST || "0.0.0.0",
   });
 

@@ -1,12 +1,3 @@
-import { docsPageMetadata } from '@/lib/seo'
-
-export const metadata = docsPageMetadata({
-  title: 'Document pipeline: Tika, Gotenberg, Stirling, Paperless, Onyx',
-  description:
-    'How ClawQL’s five bundled document vendors work together: extraction, PDF conversion, PDF remediation, archival DMS, and enterprise search—plus search/execute orchestration and CLAWQL_ENABLE_DOCUMENTS.',
-  path: '/learn/document-pipeline',
-})
-
 # Document pipeline: **Tika → Gotenberg → Stirling → Paperless → Onyx**
 
 ClawQL does **not** run one hidden daemon that magically pipes bytes through all five services. Instead, it loads **bundled OpenAPI** specs for **[Apache Tika](https://tika.apache.org/)**, **[Gotenberg](https://gotenberg.dev/)**, **[Stirling-PDF](https://docs.stirlingpdf.com/)**, **[Paperless-ngx](https://docs.paperless-ngx.com/)**, and **[Onyx](https://www.onyx.app/)** into the same **`search` / `execute`** index as the rest of your providers. **You** (or an agent) choose **which** operations to call and **in what order**—that composition is the **document pipeline**. {{ className: 'lead' }}

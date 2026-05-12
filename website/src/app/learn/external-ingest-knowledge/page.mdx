@@ -1,12 +1,3 @@
-import { docsPageMetadata } from '@/lib/seo'
-
-export const metadata = docsPageMetadata({
-  title: 'Using ingest_external_knowledge (vault bulk + URL)',
-  description:
-    'How to use ingest_external_knowledge: Markdown bulk import, optional HTTPS URL fetch, dry-run workflow, env flags—and the knowledge lake roadmap for full GitHub repos, Notion, Confluence, Slack workspaces, and more.',
-  path: '/learn/external-ingest-knowledge',
-})
-
 # Using `ingest_external_knowledge`
 
 **`ingest_external_knowledge`** imports **external knowledge** into your **Obsidian vault** so it participates in the same **`memory.db`** sync, **`_INDEX_`**, and **`memory_recall`** story as **`memory_ingest`**. **Today** it supports **bulk Markdown** (`documents[]`) and an optional **single-URL fetch** (`source: "url"`). **Automatic whole-repo and SaaS workspace pulls** are **roadmap** work on top of the same pipeline — see [Knowledge lake roadmap and what is next](#knowledge-lake-roadmap-and-what-is-next). {{ className: 'lead' }}

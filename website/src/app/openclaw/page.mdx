@@ -1,12 +1,3 @@
-import { docsPageMetadata } from '@/lib/seo'
-
-export const metadata = docsPageMetadata({
-  title: 'OpenClaw + ClawQL',
-  description:
-    'Full guide: install openclaw CLI, run clawql-mcp-http or stdio, openclaw mcp set JSON for url vs command, CLAWQL_* env, smoke tests, Tailscale and Helm, IDP skill profile link.',
-  path: '/openclaw',
-})
-
 # OpenClaw + ClawQL
 
 **OpenClaw** (npm **`openclaw`**) is a separate gateway/agent product. **ClawQL** (npm **`clawql-mcp`**, this repo) is an MCP server that exposes **`search`**, **`execute`**, and optional tools over **stdio** or **Streamable HTTP** (`…/mcp`). You register ClawQL inside OpenClaw so agents can call APIs through ClawQL’s merged OpenAPI surface.

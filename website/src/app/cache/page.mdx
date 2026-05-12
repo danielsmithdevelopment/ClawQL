@@ -1,12 +1,3 @@
-import { docsPageMetadata } from '@/lib/seo'
-
-export const metadata = docsPageMetadata({
-  title: 'Session cache',
-  description:
-    'MCP cache tool: ClawQL Core (always on). In-process LRU. Not the vault — use memory_ingest and memory_recall for durable memory (CLAWQL_ENABLE_MEMORY=0 to hide vault tools).',
-  path: '/cache',
-})
-
 # Session cache (`cache`)
 
 The **`cache`** MCP tool is **ClawQL Core** — **always registered** (no opt-out). It stores **temporary key/value data** in the ClawQL server process. It is **not** durable and **not** the Obsidian vault.

@@ -1,12 +1,3 @@
-import { docsPageMetadata } from '@/lib/seo'
-
-export const metadata = docsPageMetadata({
-  title: 'Using knowledge_search_onyx (Onyx enterprise index)',
-  description:
-    'What Onyx is, how ClawQL’s optional knowledge_search_onyx tool calls your index, env and merge prerequisites, query tips, connector coverage and ACLs, pairing with memory_ingest and Slack notify.',
-  path: '/learn/knowledge-search-onyx',
-})
-
 # Using `knowledge_search_onyx`
 
 **[Onyx](https://www.onyx.app/)** (formerly Danswer) is an **open-source enterprise knowledge** platform: it **indexes** content from the systems your company already uses—think **Slack**, **Google Drive**, **Confluence**, **Jira**, **GitHub**, email, and other **connectors** you enable—into a **unified search index**. **`knowledge_search_onyx`** is ClawQL’s **optional MCP tool** that runs **semantic document search** against that index via Onyx’s **`POST /search/send-search-message`**, so agents can **ground** plans and answers in **permission-aware, cited chunks** instead of guessing from chat context alone. {{ className: 'lead' }}

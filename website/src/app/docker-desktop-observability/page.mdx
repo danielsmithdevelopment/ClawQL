@@ -1,12 +1,3 @@
-import { docsPageMetadata } from '@/lib/seo'
-
-export const metadata = docsPageMetadata({
-  title: 'Docker Desktop: Istio & observability',
-  description:
-    'Prometheus, Grafana, Grafana Loki, Grafana Tempo, Kiali, and OpenTelemetry Collector on Docker Desktop with ClawQL—what each tool is and beginner getting-started.',
-  path: '/docker-desktop-observability',
-})
-
 # Docker Desktop: Istio and the observability stack
 
 When you install ClawQL on **Docker Desktop Kubernetes** with **`CLAWQL_LOCAL_K8S_ISTIO=ambient`** or **`sidecar`**, the repo also brings up a **local observability lab** in **`istio-system`**: **Prometheus**, **Grafana**, **Grafana Loki** (optional), **Grafana Tempo**, **Kiali**, and a small **OpenTelemetry Collector** that forwards app OTLP to **Tempo**. {{ className: 'lead' }}

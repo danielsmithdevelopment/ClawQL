@@ -55,6 +55,8 @@ podAnnotations:
   sidecar.istio.io/inject: "false"
 
 # Enable all MCP/local feature flags for Docker Desktop local-k8s-up.
+enableMemory: true
+enableDocuments: true
 enableGrpc: true
 enableGrpcReflection: true
 enableSandbox: true
@@ -371,6 +373,9 @@ documentPipeline:
         cpu: 500m
         memory: 768Mi
   stirling:
+    # Same value as Stirling `API_KEY`; chart also stores `STIRLING_API_KEY` on the shared doc-pipeline Secret for MCP.
+    auth:
+      apiKey: clawql-local-stirling-dev
     resources:
       requests:
         cpu: 100m

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **MCP gRPC defaults for heavy `execute`:** Helm **`enableGrpc: true`** and **`grpcMaxMessageLength`** (injects **`GRPC_MAX_MESSAGE_LENGTH`**); **`mcp-grpc-transport`** merges default **64 MiB** send/receive limits in **`maybeStartGrpcMcpServer`**. New **`callToolServerStreamingGrpc`** (+ helpers) for protobuf **`CallTool`** clients; **`scripts/dev/run-tika-parse-resume-once.ts`** defaults to **`CLAWQL_MCP_TRANSPORT=grpc`**.
+
 ### Documentation
 
 - **GHCR — public image pulls:** **`docker/README.md` § GHCR visibility** now states GitHub’s published Packages API has **no container-visibility `PATCH`** (HTTP **404**); **Public** is set in Package settings / org defaults. Cross-links in **`docs/security/golden-image-pipeline.md`**, **`docs/security/image-signature-enforcement.md`**, **`README.md`**, **`docs/readme/deployment.md`**, **`docs/README.md`** index; **`make ghcr-packages-public`** documented as **GET**-only audit.

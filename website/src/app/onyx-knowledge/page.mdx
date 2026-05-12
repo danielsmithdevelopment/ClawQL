@@ -1,12 +1,3 @@
-import { docsPageMetadata } from '@/lib/seo'
-
-export const metadata = docsPageMetadata({
-  title: 'Onyx knowledge search',
-  description:
-    'Optional MCP knowledge_search_onyx tool: CLAWQL_ENABLE_ONYX, ONYX_BASE_URL, ONYX_API_TOKEN, bundled onyx provider, semantic document search examples, and memory_ingest pairing.',
-  path: '/onyx-knowledge',
-})
-
 # Onyx `knowledge_search_onyx`
 
 The optional **`knowledge_search_onyx`** MCP tool queries your **[Onyx](https://www.onyx.app/)** index via **`POST /search/send-search-message`**. It is a thin wrapper over the same **`execute`** path as operation **`onyx::onyx_send_search_message`** when the **`onyx`** bundled spec is in the merge — so you get **typed parameters** (`query`, `num_hits`, …) without hand-building the Onyx JSON each time.

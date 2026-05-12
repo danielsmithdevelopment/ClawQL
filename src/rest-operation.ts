@@ -164,6 +164,7 @@ export async function executeRestOperation(
     if (pathParamNames.has(k)) continue;
     const p = op.parameters[k];
     if (p?.location === "path") continue;
+    if (p?.location !== "query") continue;
     url.searchParams.append(k, String(v));
   }
 
@@ -173,8 +174,20 @@ export async function executeRestOperation(
     op.requestBodyContentType === "application/octet-stream" ||
     op.requestBodyContentType === "application/pdf" ||
     op.requestBodyContentType === "application/x-www-form-urlencoded";
+  const isTikaVersionGet =
+    method === "GET" &&
+    op.specLabel === "tika" &&
+    (op.path === "/version" || op.flatPath === "/version");
+  const isTikaPutParse =
+    op.specLabel === "tika" && method === "PUT" && (op.path === "/tika" || op.flatPath === "/tika");
   const headers: Record<string, string> = {
-    Accept: wantsBinary ? "*/*" : "application/json",
+    Accept: isTikaVersionGet
+      ? "text/plain"
+      : isTikaPutParse
+        ? "application/json"
+        : wantsBinary
+          ? "*/*"
+          : "application/json",
     ...mergedAuthHeaders(op.specLabel),
   };
   const init: FetchRequestInit = { method, headers };
@@ -200,20 +213,30 @@ export async function executeRestOperation(
       init.body = sp.toString();
     } else if (ct === "application/octet-stream") {
       const raw = args.body;
+      const enc =
+        typeof args.bodyEncoding === "string" ? String(args.bodyEncoding).trim().toLowerCase() : "";
       if (Buffer.isBuffer(raw)) {
         init.body = raw as never;
       } else if (raw instanceof Uint8Array) {
         init.body = Buffer.from(raw) as never;
       } else if (typeof raw === "string") {
-        init.body = Buffer.from(raw, "utf8") as never;
+        if (enc === "base64") {
+          init.body = Buffer.from(raw, "base64") as never;
+        } else {
+          init.body = Buffer.from(raw, "utf8") as never;
+        }
       } else {
         return {
           ok: false,
           error:
-            "application/octet-stream requires execute args.body as string, Buffer, or Uint8Array",
+            'application/octet-stream requires execute args.body as string, Buffer, or Uint8Array (optional args.bodyEncoding: "base64" for PDF/binary)',
         };
       }
-      headers["Content-Type"] = "application/octet-stream";
+      const bodyCt =
+        typeof args.bodyContentType === "string" && args.bodyContentType.trim()
+          ? String(args.bodyContentType).trim()
+          : "application/octet-stream";
+      headers["Content-Type"] = bodyCt;
     } else {
       headers["Content-Type"] = "application/json";
       init.body = JSON.stringify(buildRestRequestBodyFromArgs(op, args));

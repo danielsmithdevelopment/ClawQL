@@ -1,12 +1,3 @@
-import { docsPageMetadata } from '@/lib/seo'
-
-export const metadata = docsPageMetadata({
-  title: 'HITL — Label Studio',
-  description:
-    'Optional hitl_enqueue_label_studio MCP tool and POST /hitl/label-studio/webhook: CLAWQL_ENABLE_HITL_LABEL_STUDIO, Label Studio API import, webhooks, vault memory_ingest vs audit, Helm, OpenClaw confidence routing.',
-  path: '/hitl-label-studio',
-})
-
 # HITL — Label Studio bridge
 
 ClawQL can enqueue **human review tasks** into **[Label Studio](https://labelstud.io/)** (your deployment) and receive **webhooks** when annotators finish work. This is **optional** and **off by default**. Enable it when you want agents or pipelines to route low-confidence outputs into a labeling UI and persist outcomes back into ClawQL (**`memory_ingest`** when vault memory is configured, else **`audit`**).

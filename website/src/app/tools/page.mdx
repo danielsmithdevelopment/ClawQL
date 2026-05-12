@@ -1,12 +1,3 @@
-import { docsPageMetadata } from '@/lib/seo'
-
-export const metadata = docsPageMetadata({
-  title: 'Tools',
-  description:
-    'ClawQL MCP tools by tier: Core search/execute/audit/cache (no opt-out); default-on opt-out memory, documents; opt-in sandbox, schedule, notify, Onyx wrapper, Ouroboros. stdio, Streamable HTTP, gRPC.',
-  path: '/tools',
-})
-
 # Tools
 
 **Tiers** (same as the architecture diagram — full table in [configuration § Feature tiers](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/readme/configuration.md#feature-tiers-architecture-diagram)): **ClawQL Core (no opt-out)** — **`search`**, **`execute`**, **`audit`**, **`cache`**; **default on, opt out** — **`memory_*`**, **Documents** (**`ingest_external_knowledge`**, **`knowledge_search_onyx`** when **`CLAWQL_ENABLE_ONYX`**); **default off, opt in** — **`sandbox_exec`** (**`CLAWQL_ENABLE_SANDBOX=1`**), **`schedule`**, **`notify`**, **`hitl_enqueue_label_studio`** ([#228](https://github.com/danielsmithdevelopment/ClawQL/issues/228)), **`ouroboros_*`**. When enabled, **`sandbox_exec`** uses [sandbox bridge](https://github.com/danielsmithdevelopment/ClawQL/tree/main/cloudflare/sandbox-bridge), Seatbelt, or Docker per env ([mcp-tools.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md#sandbox_exec)).
