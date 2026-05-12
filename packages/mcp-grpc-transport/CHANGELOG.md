@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`callToolServerStreamingGrpc`**, **`lastNonEmptyCallToolText`**, **`mcpArgumentsToCallToolStructFields`**, **`resolveGrpcAddressFromEnv`**, **`resolveGrpcMaxMessageLengthFromEnv`** (`grpc-call-tool-client.ts`) for protobuf **`CallTool`** clients with nested Struct args.
+- **`defaultGrpcServerMessageSizeBytes`** and merged default **`grpc.max_receive_message_length` / `grpc.max_send_message_length`** (64 MiB; override via **`GRPC_MAX_MESSAGE_LENGTH`**) in **`maybeStartGrpcMcpServer`**.
+
 ## [0.1.2] - 2026-04-16
 
 ### Fixed

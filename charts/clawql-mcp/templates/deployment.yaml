@@ -114,6 +114,8 @@ spec:
             {{- if .Values.enableGrpc }}
             - name: ENABLE_GRPC
               value: "1"
+            - name: GRPC_MAX_MESSAGE_LENGTH
+              value: {{ (.Values.grpcMaxMessageLength | default 67108864) | int | quote }}
             {{- end }}
             {{- if .Values.enableGrpcReflection }}
             - name: ENABLE_GRPC_REFLECTION
@@ -123,10 +125,9 @@ spec:
             - name: CLAWQL_ENABLE_MEMORY
               value: "0"
             {{- end }}
-            {{- if not .Values.enableDocuments }}
+            # Always set so chart intent wins over duplicate keys from envFrom Secret (e.g. clawql-provider-env).
             - name: CLAWQL_ENABLE_DOCUMENTS
-              value: "0"
-            {{- end }}
+              value: {{ ternary "1" "0" .Values.enableDocuments | quote }}
             {{- if .Values.enableSandbox }}
             - name: CLAWQL_ENABLE_SANDBOX
               value: "1"
@@ -205,11 +206,19 @@ spec:
             {{- with .Values.extraEnv }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
-          {{- if and .Values.secretSourcing.requireVaultBackedSecrets (not .Values.envFromSecret) (eq (len .Values.envFromSecrets) 0) }}
+          {{- $dpEnabled := .Values.documentPipeline.enabled }}
+          {{- $paperlessSecretManaged := and $dpEnabled .Values.documentPipeline.paperless.enabled (not .Values.documentPipeline.paperless.auth.existingSecret) }}
+          {{- $stirlingSecretManaged := and $dpEnabled (not .Values.documentPipeline.stirling.auth.existingSecret) (ne .Values.documentPipeline.stirling.auth.apiKey "") }}
+          {{- $chartDocPipelineAuthSecret := or $paperlessSecretManaged $stirlingSecretManaged }}
+          {{- if and .Values.secretSourcing.requireVaultBackedSecrets (not .Values.envFromSecret) (eq (len .Values.envFromSecrets) 0) (not $chartDocPipelineAuthSecret) }}
           {{- fail "secretSourcing.requireVaultBackedSecrets=true requires envFromSecret or envFromSecrets (Vault-synced Kubernetes Secret names)." }}
           {{- end }}
-          {{- if or .Values.envFromSecret (gt (len .Values.envFromSecrets) 0) }}
+          {{- if or $chartDocPipelineAuthSecret .Values.envFromSecret (gt (len .Values.envFromSecrets) 0) }}
           envFrom:
+            {{- if $chartDocPipelineAuthSecret }}
+            - secretRef:
+                name: {{ include "clawql-mcp.documentPipelineSecretName" . }}
+            {{- end }}
             {{- if .Values.envFromSecret }}
             - secretRef:
                 name: {{ .Values.envFromSecret }}

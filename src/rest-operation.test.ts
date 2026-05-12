@@ -239,6 +239,7 @@ describe("executeRestOperation", () => {
     await withFetchServer(
       async (req) => {
         expect(req.method).toBe("PUT");
+        expect(new URL(req.url).search).toBe("");
         expect(req.headers.get("content-type")).toBe("application/octet-stream");
         const buf = Buffer.from(await req.arrayBuffer());
         expect(buf.toString("utf8")).toBe("hello");
@@ -255,6 +256,116 @@ describe("executeRestOperation", () => {
           makeOpenApi(origin)
         );
         expect(out).toEqual({ ok: true, data: { ok: true } });
+      }
+    );
+  });
+
+  it("decodes base64 application/octet-stream when args.bodyEncoding is base64", async () => {
+    await withFetchServer(
+      async (req) => {
+        expect(req.method).toBe("PUT");
+        const url = new URL(req.url);
+        expect(url.search).toBe("");
+        expect(req.headers.get("content-type")).toBe("application/octet-stream");
+        const buf = Buffer.from(await req.arrayBuffer());
+        expect(buf.equals(Buffer.from([0x00, 0xff, 0x0d, 0x0a]))).toBe(true);
+        return Response.json({ ok: true });
+      },
+      async (origin) => {
+        const out = await executeRestOperation(
+          makeOp({
+            method: "PUT",
+            requestBody: INLINE_OPENAPI_REQUEST_BODY,
+            requestBodyContentType: "application/octet-stream",
+          }),
+          { body: Buffer.from([0x00, 0xff, 0x0d, 0x0a]).toString("base64"), bodyEncoding: "base64" },
+          makeOpenApi(origin)
+        );
+        expect(out).toEqual({ ok: true, data: { ok: true } });
+      }
+    );
+  });
+
+  it("sends optional bodyContentType for octet-stream (e.g. application/pdf)", async () => {
+    await withFetchServer(
+      async (req) => {
+        expect(req.headers.get("content-type")).toBe("application/pdf");
+        return Response.json({ ok: true });
+      },
+      async (origin) => {
+        const out = await executeRestOperation(
+          makeOp({
+            method: "PUT",
+            requestBody: INLINE_OPENAPI_REQUEST_BODY,
+            requestBodyContentType: "application/octet-stream",
+          }),
+          { body: "%PDF-1.4", bodyContentType: "application/pdf" },
+          makeOpenApi(origin)
+        );
+        expect(out).toEqual({ ok: true, data: { ok: true } });
+      }
+    );
+  });
+
+  it("Tika GET /version sends Accept: text/plain (avoid 406)", async () => {
+    await withFetchServer(
+      async (req) => {
+        expect(req.method).toBe("GET");
+        expect(req.headers.get("accept")).toBe("text/plain");
+        const url = new URL(req.url);
+        expect(url.pathname).toBe("/version");
+        return new Response("Apache Tika 2.9.2", { status: 200 });
+      },
+      async (origin) => {
+        const out = await executeRestOperation(
+          makeOp({
+            id: "tika_server_version",
+            method: "GET",
+            path: "/version",
+            flatPath: "/version",
+            specLabel: "tika",
+            description: "",
+            resource: "version",
+            parameters: {},
+            scopes: [],
+          }),
+          {},
+          makeOpenApi(origin)
+        );
+        expect(out).toEqual({ ok: true, data: "Apache Tika 2.9.2" });
+      }
+    );
+  });
+
+  it("Tika PUT /tika sends Accept: application/json (structured parse metadata)", async () => {
+    await withFetchServer(
+      async (req) => {
+        expect(req.method).toBe("PUT");
+        expect(req.headers.get("accept")).toBe("application/json");
+        const url = new URL(req.url);
+        expect(url.pathname).toBe("/tika");
+        expect(url.search).toBe("");
+        return Response.json({ "X-TIKA:content": "<p>hi</p>" });
+      },
+      async (origin) => {
+        const out = await executeRestOperation(
+          makeOp({
+            id: "tika_parse_put",
+            method: "PUT",
+            path: "/tika",
+            flatPath: "/tika",
+            specLabel: "tika",
+            description: "",
+            resource: "tika",
+            parameters: {},
+            scopes: [],
+            requestBody: INLINE_OPENAPI_REQUEST_BODY,
+            requestBodyContentType: "application/octet-stream",
+          }),
+          { body: "hello" },
+          makeOpenApi(origin)
+        );
+        expect(out).toEqual({ ok: true, data: { "X-TIKA:content": "<p>hi</p>" } });
       }
     );
   });

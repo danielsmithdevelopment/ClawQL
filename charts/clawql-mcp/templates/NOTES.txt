@@ -21,7 +21,7 @@
   {{- end }}
 {{- end }}
 
-2. Optional gRPC (set enableGrpc: true): port {{ .Values.service.grpc.port }} on the same Service.
+2. gRPC MCP (default on when `enableGrpc: true`): port {{ .Values.service.grpc.port }} on the same Service — use **`model_context_protocol.Mcp/CallTool`** for large `execute` payloads (e.g. base64 PDFs). Tune **`grpcMaxMessageLength`** / **`GRPC_MAX_MESSAGE_LENGTH`** if needed.
 {{- if .Values.nats.enabled }}
 
 3. NATS JetStream (optional backbone; GitHub issue #127):

@@ -49,6 +49,12 @@ The [community MCP Python gRPC PoC](https://github.com/GoogleCloudPlatform/mcp-p
 
 The SDK’s **Streamable HTTP** tests live under **`node_modules/@modelcontextprotocol/sdk/dist/esm/examples/client/`** (e.g. `simpleStreamableHttp`); they exercise **OAuth**, **SSE**, and **session** semantics that **do not** map 1:1 to gRPC—use **HTTP** when you need those; use **gRPC** when you want **multiplexing**, **binary protobuf**, or **mesh-native** health ( **`grpc.health.v1`** ).
 
+### Heavy `execute` / large `CallTool` arguments
+
+For tools whose arguments are **large** (for example ClawQL **`execute`** with a base64-encoded PDF for **Tika**), **prefer `model_context_protocol.Mcp/CallTool` over Streamable HTTP JSON-RPC**: the gRPC stack uses configurable **max send/receive message** sizes (defaults applied in **`maybeStartGrpcMcpServer`**, override with **`GRPC_MAX_MESSAGE_LENGTH`**), while HTTP agents often sit behind smaller JSON body limits.
+
+This package exports **`callToolServerStreamingGrpc`**, **`mcpArgumentsToCallToolStructFields`**, and **`resolveGrpcAddressFromEnv`** so scripts and services can encode nested **`google.protobuf.Struct`** arguments with **protobufjs** (same pattern as **`scripts/dev/grpc-memory-recall.mjs`** in ClawQL).
+
 ### Generality (what “any MCP server” means here)
 
 - **Runtime:** Works with **any** [`McpServer`](https://github.com/modelcontextprotocol/typescript-sdk) you construct — pass your own `createMcpServer` (register tools, resources, prompts as usual). There is **no** dependency on ClawQL or OpenAPI.

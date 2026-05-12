@@ -39,6 +39,7 @@ data:
   {{- end }}
   {{- if $stirlingSecretManaged }}
   stirling-api-key: {{ .Values.documentPipeline.stirling.auth.apiKey | b64enc | quote }}
+  STIRLING_API_KEY: {{ .Values.documentPipeline.stirling.auth.apiKey | b64enc | quote }}
   {{- end }}
 {{- end }}
 {{- if and $postgresEnabled (not .Values.stores.postgres.auth.existingSecret) }}

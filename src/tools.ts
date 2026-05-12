@@ -244,6 +244,32 @@ export async function handleClawqlExecuteToolInput(params: {
     };
   }
 
+  if (op.requestBody && op.requestBodyContentType?.toLowerCase() === "application/octet-stream") {
+    const rest = await executeRestOperation(op, args, openapiForOp);
+    if (!rest.ok) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({
+              error: rest.error,
+              specLabel: op.specLabel ?? null,
+              hint: "application/octet-stream execute uses REST only; GraphQL projection is skipped.",
+            }),
+          },
+        ],
+      };
+    }
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(projectRestByFields(rest.data, outputFields), null, 2),
+        },
+      ],
+    };
+  }
+
   try {
     const selectedFields = outputFields?.length
       ? outputFields.join("\n        ")
@@ -442,13 +468,16 @@ export function registerTools(server: McpServer) {
         .string()
         .describe(
           "The operation ID from search() results. " +
-            "E.g. 'run.projects.locations.services.list'."
+            "E.g. 'run.projects.locations.services.list'. " +
+            "For large binary bodies (e.g. PDF → Tika `application/octet-stream`), prefer the MCP gRPC surface " +
+            "(`model_context_protocol.Mcp/CallTool` on the chart gRPC port, default 50051) instead of Streamable HTTP JSON."
         ),
       args: z
         .record(z.string(), z.unknown())
         .describe(
-          "Key/value map of parameters for the operation (path + query params). " +
-            "E.g. { parent: 'projects/my-proj/locations/us-central1', pageSize: 10 }"
+          "Key/value map of parameters for the operation (path + query + body). " +
+            "For `application/octet-stream`, pass `body` (+ optional `bodyEncoding: \"base64\"`, `bodyContentType`). " +
+            "Very large `body` strings should use gRPC CallTool (see operationId note), not HTTP MCP."
         ),
       fields: z
         .array(z.string())

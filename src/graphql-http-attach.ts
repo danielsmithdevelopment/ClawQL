@@ -19,7 +19,7 @@ export async function attachGraphqlHttpToMcpApp(app: Express): Promise<void> {
   const baseUrl = resolveApiBaseUrl(openapi);
   console.error("[clawql-mcp-http] Building in-process GraphQL for /graphql …");
   const { schema, contextValue } = await buildGraphQLSchema(openapi, baseUrl);
-  // Do not add express.json() here — createMcpExpressApp already parses JSON; a second
+  // Do not add express.json() here — the root MCP app already parses JSON; a second
   // parser on /graphql causes "stream is not readable".
   app.all(
     "/graphql",

@@ -373,6 +373,23 @@ function createServerCredentials(): grpc.ServerCredentials {
   );
 }
 
+/** Default max protobuf frame size for MCP unary + streams (64 MiB). Set `GRPC_MAX_MESSAGE_LENGTH` (bytes) to override. */
+export function defaultGrpcServerMessageSizeBytes(): number {
+  const raw = process.env.GRPC_MAX_MESSAGE_LENGTH?.trim();
+  if (!raw) return 64 * 1024 * 1024;
+  const n = Number.parseInt(raw, 10);
+  return Number.isFinite(n) && n > 0 ? n : 64 * 1024 * 1024;
+}
+
+function mergeGrpcServerOptions(user?: grpc.ServerOptions): grpc.ServerOptions {
+  const max = defaultGrpcServerMessageSizeBytes();
+  const defaults: grpc.ServerOptions = {
+    "grpc.max_receive_message_length": max,
+    "grpc.max_send_message_length": max,
+  };
+  return { ...defaults, ...user };
+}
+
 /**
  * Starts a gRPC server with `grpc.health.v1.Health` + MCP session when `ENABLE_GRPC` is `1` or `true`.
  * Returns `undefined` when disabled.
@@ -424,7 +441,7 @@ export async function maybeStartGrpcMcpServer(
     },
   };
 
-  const server = new grpc.Server(options.grpcServerOptions);
+  const server = new grpc.Server(mergeGrpcServerOptions(options.grpcServerOptions));
   server.addService(healthDef, createHealthImplementation());
   server.addService(
     protobufMcpServiceDef,
