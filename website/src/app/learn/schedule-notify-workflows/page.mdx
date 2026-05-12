@@ -1,12 +1,3 @@
-import { docsPageMetadata } from '@/lib/seo'
-
-export const metadata = docsPageMetadata({
-  title: 'Schedule and notify for synthetic checks and Slack HITL',
-  description:
-    'Learn guide: optional schedule and notify MCP tools—used alone, built-in failure/recovery Slack bridge, agent-orchestrated workflows, and Human-in-the-loop with Label Studio plus Slack.',
-  path: '/learn/schedule-notify-workflows',
-})
-
 # Schedule and **`notify`** for synthetics and Slack
 
 **`schedule`** persists **time-based jobs** (cron, interval, one-shot) whose v1 action is **`synthetic`** HTTP probes with **assertions** and run history in **SQLite**. **`notify`** posts **human-readable** updates to **Slack** via **`chat.postMessage`**. Used **separately**, each solves a different problem; used **together**, they form the project’s pattern for **“probe in the background, page humans when something breaks (or recovers)”** without bundling a third-party APM. For **Human-in-the-loop (HITL)** review queues, add **`hitl_enqueue_label_studio`** and webhooks, then use **`notify`** to **signal** reviewers in Slack. {{ className: 'lead' }}

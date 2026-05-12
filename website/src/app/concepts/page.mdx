@@ -1,12 +1,3 @@
-import { docsPageMetadata } from '@/lib/seo'
-
-export const metadata = docsPageMetadata({
-  title: 'Concepts',
-  description:
-    'ClawQL architecture: MCP over stdio, Streamable HTTP, or optional MCP gRPC; in-memory search index, OpenAPI→GraphQL and optional native GraphQL/gRPC execute paths.',
-  path: '/concepts',
-})
-
 # Concepts
 
 ClawQL connects **agents** to **HTTP and gRPC APIs** (OpenAPI/Discovery by default, optional native GraphQL and gRPC) through a thin MCP surface, without asking models to ingest full OpenAPI documents up front. {{ className: 'lead' }}

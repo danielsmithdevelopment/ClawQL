@@ -1,12 +1,3 @@
-import { docsPageMetadata } from '@/lib/seo'
-
-export const metadata = docsPageMetadata({
-  title: 'Deployment',
-  description:
-    'Deploy ClawQL: Docker Distroless image, Streamable HTTP /mcp, ENABLE_GRPC, Cloud Run, Kubernetes Helm/Kustomize, golden image pipeline and Kyverno enforcement.',
-  path: '/deployment',
-})
-
 # Deployment
 
 Production-style setups run **one** service: **`clawql-mcp-http`** exposes MCP at **`/mcp`** and GraphQL at **`/graphql`** on the same port. {{ className: 'lead' }}

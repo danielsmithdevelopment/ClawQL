@@ -1,12 +1,3 @@
-import { docsPageMetadata } from '@/lib/seo'
-
-export const metadata = docsPageMetadata({
-  title: 'Kubernetes',
-  description:
-    'Helm or Kustomize, Kyverno and signed GHCR images, Streamable HTTP Ingress clawql-mcp.localhost (prod parity), optional gRPC.',
-  path: '/kubernetes',
-})
-
 # Kubernetes
 
 ClawQL is usually deployed as **`clawql-mcp-http`**: **Streamable HTTP** MCP on **`/mcp`**, **GraphQL** on **`/graphql`**, and (when **`ENABLE_GRPC=1`**) **gRPC** protobuf MCP on port **50051**—all in one pod. **`values-docker-desktop.yaml`** matches production patterns: with **ingress-nginx**, **`http://clawql-mcp.localhost/mcp`**; with **default Istio** (`make local-k8s-up`), **`ingress-nginx` is skipped** and **`svc/clawql-mcp-ingress`** is a **LoadBalancer → localhost** on **Docker Desktop / Rancher Desktop** (pod **`hostNetwork`** would bind inside the Kubernetes VM only—see **`docker/README.md`**). **`svc/clawql-mcp-http`** is often **ClusterIP** under ambient Istio; MCP HTTP is **`http://localhost/mcp`** or **`http://clawql-mcp.localhost/mcp`** via **Gateway + VirtualService**. **gRPC** uses **`localhost:50051`** through the same ingress Service when enabled. Remote clusters often use **Kustomize** **`dev`** / **`prod`** with **`scripts/deploy/deploy-k8s.sh`**. {{ className: 'lead' }}

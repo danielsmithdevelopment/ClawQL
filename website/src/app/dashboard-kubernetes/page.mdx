@@ -1,12 +1,3 @@
-import { docsPageMetadata } from '@/lib/seo'
-
-export const metadata = docsPageMetadata({
-  title: 'Dashboard on Kubernetes',
-  description:
-    'Bundle the ClawQL dashboard with Helm, wire Vault + rollout sync, expose clawql.localhost, and enforce signed images with Kyverno.',
-  path: '/dashboard-kubernetes',
-})
-
 # Dashboard on Kubernetes
 
 Use this guide to run the ClawQL dashboard as a Helm-managed service (not a local dev server), expose it at **`http://clawql.localhost`**, and keep signature enforcement aligned with the rest of the stack. {{ className: 'lead' }}

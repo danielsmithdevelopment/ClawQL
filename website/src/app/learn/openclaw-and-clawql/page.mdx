@@ -1,12 +1,3 @@
-import { docsPageMetadata } from '@/lib/seo'
-
-export const metadata = docsPageMetadata({
-  title: 'OpenClaw with ClawQL — gateway plus MCP APIs',
-  description:
-    'What OpenClaw is vs ClawQL MCP, why to combine them, install openclaw CLI, run clawql-mcp-http or stdio, openclaw mcp set, smoke tests, env and Tailscale, IDP skill profile.',
-  path: '/learn/openclaw-and-clawql',
-})
-
 # OpenClaw with **ClawQL**
 
 **OpenClaw** is a **separate** npm product (**`openclaw`**) — a multi-channel AI **gateway** with its own CLI, agents, and **`openclaw mcp`** commands. **ClawQL** (this repo, npm **`clawql-mcp`**) is an **MCP server** that exposes **`search`**, **`execute`**, **`audit`**, **`cache`**, vault memory, the document stack, and other optional tools over **stdio** or **Streamable HTTP** (`…/mcp`). You **register ClawQL inside OpenClaw** so agents running behind OpenClaw can call real APIs through ClawQL’s merged OpenAPI surface — without pasting huge specs into every prompt. {{ className: 'lead' }}

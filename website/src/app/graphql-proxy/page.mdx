@@ -1,12 +1,3 @@
-import { docsPageMetadata } from '@/lib/seo'
-
-export const metadata = docsPageMetadata({
-  title: 'GraphQL layer',
-  description:
-    'ClawQL: OpenAPI-to-GraphQL in-process for lean execute; native GraphQL via CLAWQL_GRAPHQL_SOURCES; multi-spec OpenAPI uses REST.',
-  path: '/graphql-proxy',
-})
-
 # GraphQL layer
 
 Two related ideas: **OpenAPI→GraphQL** (in-process, for REST-backed APIs) and **native GraphQL** (HTTP to your endpoint). **`clawql-mcp`** / **`clawql-mcp-http`** implement both behind the same **`search`** → **`execute`** contract. Streamable HTTP exposes **`/graphql`** for the **loaded OpenAPI** debug schema on the MCP port. {{ className: 'lead' }}

@@ -1,12 +1,3 @@
-import { docsPageMetadata } from '@/lib/seo'
-
-export const metadata = docsPageMetadata({
-  title: 'Using sandbox_exec (Seatbelt, Docker, Cloudflare)',
-  description:
-    'Optional sandbox_exec MCP tool: macOS Seatbelt, Docker/Podman, and Cloudflare Workers bridge—how they differ, env wiring, auto-selection, and safe session patterns.',
-  path: '/learn/sandbox-exec',
-})
-
 # Using `sandbox_exec`
 
 Agents often need to **run short code** (evaluate an expression, transform JSON, probe a library) without opening an **unrestricted shell** on the machine that hosts **ClawQL MCP**. **`sandbox_exec`** is an **optional** tool (**`CLAWQL_ENABLE_SANDBOX=1`**) that runs **Python**, **JavaScript**, or **shell** snippets in one of **three backends**: **macOS Seatbelt**, **Docker / Podman**, or a **Cloudflare Workers** sandbox **bridge**. Successful responses include a **`backend`** field so you can audit **where** code actually ran. {{ className: 'lead' }}

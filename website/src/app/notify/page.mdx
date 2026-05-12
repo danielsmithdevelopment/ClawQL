@@ -1,12 +1,3 @@
-import { docsPageMetadata } from '@/lib/seo'
-
-export const metadata = docsPageMetadata({
-  title: 'Slack notify',
-  description:
-    'Optional MCP notify tool: CLAWQL_ENABLE_NOTIFY posts to Slack via chat.postMessage. Setup, channel IDs, Cursor env, Helm, and JSON examples.',
-  path: '/notify',
-})
-
 # Slack `notify`
 
 The optional **`notify`** MCP tool sends messages to Slack with **`chat.postMessage`**. Use it for **workflow milestones**, **batch completions**, and **alerts** so agents do not need to call **`execute("chat_postMessage", …)`** for every post.

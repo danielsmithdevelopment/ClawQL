@@ -1,12 +1,3 @@
-import { docsPageMetadata } from '@/lib/seo'
-
-export const metadata = docsPageMetadata({
-  title: 'Flink Onyx sync',
-  description:
-    'In-cluster Apache Flink topology for real-time Onyx index sync in ClawQL Helm deployments: architecture, values, secrets, rollout, operations, and troubleshooting.',
-  path: '/flink-onyx-sync',
-})
-
 # Flink in-cluster sync for Onyx
 
 This guide covers the **in-cluster Apache Flink** topology shipped in the ClawQL Helm chart for **real-time Onyx connector sync**. It is the deployment path tracked in [#119](https://github.com/danielsmithdevelopment/ClawQL/issues/119): deploy Flink next to ClawQL and Onyx, keep networking internal by default, and treat new data sources as **connector-job configuration** rather than ClawQL server code changes. {{ className: 'lead' }}

@@ -1,12 +1,3 @@
-import { docsPageMetadata } from '@/lib/seo'
-
-export const metadata = docsPageMetadata({
-  title: 'Tailscale & Headscale',
-  description:
-    'Beginner guide: private tailnets for ClawQL MCP and execute—MagicDNS, Serve, Headscale, ACLs—plus how the pattern supports HIPAA, SOC 2, GDPR, and CCPA-style control themes (not legal advice).',
-  path: '/tailscale',
-})
-
 # Tailscale and Headscale for ClawQL
 
 **Private tailnet** = WireGuard mesh + DNS so **`clawql-mcp-http`** at **`/mcp`** and your **`execute`** targets (Ollama, Paperless, Onyx, …) stay **off the public internet**. This page is the **on-site** walkthrough; the **canonical** copy (for PRs and deep links) is **[`docs/deployment/tailscale-and-headscale-for-clawql.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/tailscale-and-headscale-for-clawql.md)**. {{ className: 'lead' }}

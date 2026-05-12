@@ -1,12 +1,3 @@
-import { docsPageMetadata } from '@/lib/seo'
-
-export const metadata = docsPageMetadata({
-  title: 'Spec configuration',
-  description:
-    'ClawQL spec configuration: CLAWQL_SPEC_PATH, merged bundles, OpenAPI and Discovery, bundled linear GraphQL SDL, optional CLAWQL_GRAPHQL_* and CLAWQL_GRPC_SOURCES for native protocols.',
-  path: '/spec-configuration',
-})
-
 # Spec configuration
 
 ClawQL builds an in-memory operation index from **OpenAPI 3** (JSON/YAML), **Swagger 2** (auto-upgraded), **Google Discovery** documents, or **bundled presets** under `providers/`, optionally extended with **native GraphQL** and **gRPC** sources via env. Selection follows a **two-stage** precedence implemented in `src/spec-loader.ts`. {{ className: 'lead' }}

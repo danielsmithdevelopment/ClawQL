@@ -1,12 +1,3 @@
-import { docsPageMetadata } from '@/lib/seo'
-
-export const metadata = docsPageMetadata({
-  title: 'Helm',
-  description:
-    'charts/clawql-mcp Helm chart: install, values, default Kyverno verifyImages for signed GHCR images, Ingress and persistence.',
-  path: '/helm',
-})
-
 # Helm
 
 The repository includes a **Helm 3** chart at **`charts/clawql-mcp`** that deploys **`clawql-mcp-http`**: Streamable HTTP MCP on **`/mcp`**, health on **`/healthz`**, GraphQL on **`/graphql`**, and (optionally) gRPC on port **50051**—matching the [Kustomize](/kubernetes) layout.
