@@ -43,8 +43,11 @@ describe("grpc-call-tool-client", () => {
       args: { body: "QUJD", bodyEncoding: "base64", nested: { x: 1 } },
     });
     expect(fields.operationId).toEqual({ stringValue: "tika_parse_put" });
-    expect((fields.args as { structValue?: { fields?: Record<string, unknown> } }).structValue?.fields).toBeDefined();
-    const inner = (fields.args as { structValue: { fields: Record<string, unknown> } }).structValue.fields;
+    expect(
+      (fields.args as { structValue?: { fields?: Record<string, unknown> } }).structValue?.fields
+    ).toBeDefined();
+    const inner = (fields.args as { structValue: { fields: Record<string, unknown> } }).structValue
+      .fields;
     expect(inner.body).toEqual({ stringValue: "QUJD" });
     expect(inner.nested).toMatchObject({ structValue: expect.any(Object) });
   });

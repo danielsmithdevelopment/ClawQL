@@ -179,9 +179,7 @@ export async function executeRestOperation(
     op.specLabel === "tika" &&
     (op.path === "/version" || op.flatPath === "/version");
   const isTikaPutParse =
-    op.specLabel === "tika" &&
-    method === "PUT" &&
-    (op.path === "/tika" || op.flatPath === "/tika");
+    op.specLabel === "tika" && method === "PUT" && (op.path === "/tika" || op.flatPath === "/tika");
   const headers: Record<string, string> = {
     Accept: isTikaVersionGet
       ? "text/plain"
@@ -216,9 +214,7 @@ export async function executeRestOperation(
     } else if (ct === "application/octet-stream") {
       const raw = args.body;
       const enc =
-        typeof args.bodyEncoding === "string"
-          ? String(args.bodyEncoding).trim().toLowerCase()
-          : "";
+        typeof args.bodyEncoding === "string" ? String(args.bodyEncoding).trim().toLowerCase() : "";
       if (Buffer.isBuffer(raw)) {
         init.body = raw as never;
       } else if (raw instanceof Uint8Array) {
@@ -233,7 +229,7 @@ export async function executeRestOperation(
         return {
           ok: false,
           error:
-            "application/octet-stream requires execute args.body as string, Buffer, or Uint8Array (optional args.bodyEncoding: \"base64\" for PDF/binary)",
+            'application/octet-stream requires execute args.body as string, Buffer, or Uint8Array (optional args.bodyEncoding: "base64" for PDF/binary)',
         };
       }
       const bodyCt =

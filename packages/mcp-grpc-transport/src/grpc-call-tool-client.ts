@@ -165,13 +165,7 @@ export async function callToolServerStreamingGrpc(
 
   const decoded: protobuf.Message[] = [];
   await new Promise<void>((resolve, reject) => {
-    const stream = client.makeServerStreamRequest(
-      CALL_TOOL_METHOD,
-      serialize,
-      deserialize,
-      {},
-      md
-    );
+    const stream = client.makeServerStreamRequest(CALL_TOOL_METHOD, serialize, deserialize, {}, md);
     stream.on("data", (msg: protobuf.Message) => decoded.push(msg));
     stream.on("error", reject);
     stream.on("end", () => resolve());

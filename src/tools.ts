@@ -476,7 +476,7 @@ export function registerTools(server: McpServer) {
         .record(z.string(), z.unknown())
         .describe(
           "Key/value map of parameters for the operation (path + query + body). " +
-            "For `application/octet-stream`, pass `body` (+ optional `bodyEncoding: \"base64\"`, `bodyContentType`). " +
+            'For `application/octet-stream`, pass `body` (+ optional `bodyEncoding: "base64"`, `bodyContentType`). ' +
             "Very large `body` strings should use gRPC CallTool (see operationId note), not HTTP MCP."
         ),
       fields: z

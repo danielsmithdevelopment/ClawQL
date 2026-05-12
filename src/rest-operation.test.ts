@@ -278,7 +278,10 @@ describe("executeRestOperation", () => {
             requestBody: INLINE_OPENAPI_REQUEST_BODY,
             requestBodyContentType: "application/octet-stream",
           }),
-          { body: Buffer.from([0x00, 0xff, 0x0d, 0x0a]).toString("base64"), bodyEncoding: "base64" },
+          {
+            body: Buffer.from([0x00, 0xff, 0x0d, 0x0a]).toString("base64"),
+            bodyEncoding: "base64",
+          },
           makeOpenApi(origin)
         );
         expect(out).toEqual({ ok: true, data: { ok: true } });

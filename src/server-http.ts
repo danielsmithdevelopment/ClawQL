@@ -89,10 +89,12 @@ function jsonRpcError(res: import("express").Response, message: string, code = -
  * Same defaults as {@link createMcpExpressApp} from the MCP SDK, but with a higher
  * `express.json()` limit so `execute` can carry base64-encoded PDFs (SDK default is ~100kb).
  */
-function createClawqlMcpExpressApp(options: {
-  host?: string;
-  allowedHosts?: string[];
-} = {}): Express {
+function createClawqlMcpExpressApp(
+  options: {
+    host?: string;
+    allowedHosts?: string[];
+  } = {}
+): Express {
   const { host = "127.0.0.1", allowedHosts } = options;
   const app = express();
   const limit = process.env.CLAWQL_MCP_JSON_BODY_LIMIT?.trim() || "32mb";
