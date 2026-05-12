@@ -1,9 +1,6 @@
 ---
 title: "GPU and Resource Protection: Preventing Rogue Agent Denial-of-Service"
 series: "Agentic AI Security Curriculum"
-course_type: "instructor-ready / self-study"
-audience: "Security architects, platform engineers, and teams adopting AI agents"
-estimated_minutes: 25
 level: intermediate
 tags:
   - kubernetes
@@ -21,30 +18,6 @@ description: "Apply quotas, limits, and scheduling policies to protect shared GP
 ---
 
 # GPU and Resource Protection: Preventing Rogue Agent Denial-of-Service
-
-_Module 15 of 20 · Agentic AI Security Curriculum · May 2026_
-
-## How to use this module
-
-Use it as **self-paced** study or as **instructor-led** training. YAML, commands, and policy excerpts are **illustrative**; map them to your cloud, mesh, identity provider, and agent runtime—substitute your own names, namespaces, and tools while preserving the **control intent**.
-
-**Estimated time:** ~25 minutes reading; add time for linked standards and team discussion.
-
-## Learning objectives
-
-By the end of this module, you should be able to:
-
-1. Apply quotas, limits, and scheduling policies to protect shared GPU pools.
-2. Detect and mitigate resource exhaustion from runaway agents or jobs.
-3. Coordinate platform and ML owner responsibilities.
-
-## Prerequisites
-
-- Prior module: [Incident Response and Recovery: PICERL, WORM Audits, and Tested Backups](14-incident-response-recovery-picerl.md)
-
-**Suggested discussion / lab:** Pick one diagram in your environment (build, deploy, runtime) and mark where this module’s controls apply; note gaps versus the checklist in the body.
-
----
 
 Agentic workloads can consume massive GPU resources through runaway loops, infinite tool calling, or maliciously crafted prompts. Without proper controls, a single rogue agent can starve the entire cluster of inference capacity. This module details how to protect GPU resources using quotas, limits, and node isolation.
 
@@ -110,9 +83,3 @@ These resources are independent of any single product; use them to deepen the to
 - [Kubernetes ResourceQuota / LimitRange](https://kubernetes.io/docs/concepts/policy/resource-quotas/)
 - [NVIDIA GPU Operator / scheduling (vendor)](https://docs.nvidia.com/datacenter/cloud-native/)
 - [OWASP Top 10 for LLM (availability / DoS themes)](https://owasp.org/www-project-top-10-for-large-language-model-applications/)
-
-## Commercial training use
-
-You may reuse this curriculum internally or in **paid consulting / training** engagements. Keep examples aligned to the customer’s actual stack; substitute your own runbooks, tool names, and compliance frameworks (SOC 2, ISO 27001, sector regulators) where cited examples use a reference architecture only.
-
----

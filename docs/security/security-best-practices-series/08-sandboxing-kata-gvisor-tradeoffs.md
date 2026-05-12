@@ -1,9 +1,6 @@
 ---
 title: "Sandboxing Options and Trade-offs: Kata, gVisor, Seatbelt, Docker, and Cloudflare Workers"
 series: "Agentic AI Security Curriculum"
-course_type: "instructor-ready / self-study"
-audience: "Security architects, platform engineers, and teams adopting AI agents"
-estimated_minutes: 35
 level: intermediate
 tags:
   - sandboxing
@@ -22,30 +19,6 @@ description: "Compare isolation technologies (VM-backed runtimes, user-space ker
 ---
 
 # Sandboxing Options and Trade-offs: Kata, gVisor, Seatbelt, Docker, and Cloudflare Workers
-
-_Module 8 of 20 · Agentic AI Security Curriculum · May 2026_
-
-## How to use this module
-
-Use it as **self-paced** study or as **instructor-led** training. YAML, commands, and policy excerpts are **illustrative**; map them to your cloud, mesh, identity provider, and agent runtime—substitute your own names, namespaces, and tools while preserving the **control intent**.
-
-**Estimated time:** ~35 minutes reading; add time for linked standards and team discussion.
-
-## Learning objectives
-
-By the end of this module, you should be able to:
-
-1. Compare isolation technologies (VM-backed runtimes, user-space kernels, OS sandboxes).
-2. Choose sandbox tiers appropriate to risk (MCP/tool execution vs batch jobs).
-3. Discuss performance vs isolation trade-offs with stakeholders.
-
-## Prerequisites
-
-- Prior module: [RBAC, mTLS, and Istio Service Mesh: Network-Level Zero Trust](07-rbac-mtls-istio-service-mesh.md)
-
-**Suggested discussion / lab:** Pick one diagram in your environment (build, deploy, runtime) and mark where this module’s controls apply; note gaps versus the checklist in the body.
-
----
 
 With network-level Zero Trust established (Module 7), the next critical layer is runtime isolation for the highest-risk workloads — especially MCP tool execution and agent code running. This module compares sandboxing technologies and explains why many security-focused platforms default to Kata Containers for MCP workloads.
 
@@ -122,9 +95,3 @@ These resources are independent of any single product; use them to deepen the to
 - [Kata Containers](https://katacontainers.io/docs/)
 - [gVisor](https://gvisor.dev/docs/)
 - [NIST Application Container Security Guide](https://csrc.nist.gov/publications/detail/sp/800-190/final)
-
-## Commercial training use
-
-You may reuse this curriculum internally or in **paid consulting / training** engagements. Keep examples aligned to the customer’s actual stack; substitute your own runbooks, tool names, and compliance frameworks (SOC 2, ISO 27001, sector regulators) where cited examples use a reference architecture only.
-
----

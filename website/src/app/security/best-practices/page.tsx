@@ -5,9 +5,9 @@ import { trainingModules } from '@/generated/security-training/registry'
 import { docsPageMetadata } from '@/lib/seo'
 
 export const metadata = docsPageMetadata({
-  title: 'Agentic AI security training (20 modules)',
+  title: 'Agentic AI security best practices (20 modules)',
   description:
-    'Vendor-neutral security curriculum: supply chain, admission control, zero trust, MCP runtime, data classification, IR, and quarterly review — self-study or instructor-led.',
+    'Vendor-neutral security guides: supply chain, admission control, zero trust, MCP runtime, data classification, IR, and quarterly review.',
   path: '/security/best-practices',
 })
 
@@ -21,12 +21,12 @@ export default function SecurityTrainingHubPage() {
           Security
         </Tag>
         <Tag color="zinc" variant="medium">
-          Training curriculum
+          Module series
         </Tag>
       </div>
 
       <h1 className="text-4xl font-bold tracking-tight text-zinc-900 dark:text-white">
-        Agentic AI security training
+        Agentic AI security best practices
       </h1>
       <p className="mt-4 max-w-3xl text-lg text-zinc-600 dark:text-zinc-400">
         Twenty modules derived from the repo&apos;s{' '}

@@ -1,9 +1,6 @@
 ---
 title: "Principle of Least Privilege: Scoped Identities and Limiting Blast Radius"
 series: "Agentic AI Security Curriculum"
-course_type: "instructor-ready / self-study"
-audience: "Security architects, platform engineers, and teams adopting AI agents"
-estimated_minutes: 30
 level: foundational
 tags:
   - kubernetes
@@ -22,30 +19,6 @@ description: "Apply least privilege to Kubernetes identities (ServiceAccounts, R
 ---
 
 # Principle of Least Privilege: Scoped Identities and Limiting Blast Radius
-
-_Module 4 of 20 · Agentic AI Security Curriculum · May 2026_
-
-## How to use this module
-
-Use it as **self-paced** study or as **instructor-led** training. YAML, commands, and policy excerpts are **illustrative**; map them to your cloud, mesh, identity provider, and agent runtime—substitute your own names, namespaces, and tools while preserving the **control intent**.
-
-**Estimated time:** ~30 minutes reading; add time for linked standards and team discussion.
-
-## Learning objectives
-
-By the end of this module, you should be able to:
-
-1. Apply least privilege to Kubernetes identities (ServiceAccounts, Roles, bindings).
-2. Map tool-calling and agent sessions to scoped credentials and short-lived tokens.
-3. Explain blast-radius containment when a single workload or agent is compromised.
-
-## Prerequisites
-
-- Prior module: [Cluster Admission Control: Enforcing Image Signing and Policy at Deploy Time](03-cluster-admission-control-signing-policy.md)
-
-**Suggested discussion / lab:** Pick one diagram in your environment (build, deploy, runtime) and mark where this module’s controls apply; note gaps versus the checklist in the body.
-
----
 
 Even with perfect supply chain security and admission control, a compromised workload or agent can still cause significant damage if it has excessive permissions. The Principle of Least Privilege (PoLP) ensures every identity — human, service, or agent — can do only what is strictly necessary, and nothing more.
 
@@ -127,9 +100,3 @@ These resources are independent of any single product; use them to deepen the to
 - [Kubernetes RBAC good practices](https://kubernetes.io/docs/concepts/security/rbac-good-practices/)
 - [NIST SP 800-207 (Zero Trust)](https://csrc.nist.gov/publications/detail/sp/800-207/final)
 - [OWASP API Security Top 10](https://owasp.org/www-project-api-security/)
-
-## Commercial training use
-
-You may reuse this curriculum internally or in **paid consulting / training** engagements. Keep examples aligned to the customer’s actual stack; substitute your own runbooks, tool names, and compliance frameworks (SOC 2, ISO 27001, sector regulators) where cited examples use a reference architecture only.
-
----

@@ -1,9 +1,6 @@
 ---
 title: "Runtime Monitoring and Observability: Falco, Wazuh, Prometheus, and Merkle Metrics"
 series: "Agentic AI Security Curriculum"
-course_type: "instructor-ready / self-study"
-audience: "Security architects, platform engineers, and teams adopting AI agents"
-estimated_minutes: 35
 level: intermediate
 tags:
   - observability
@@ -21,30 +18,6 @@ description: "Layer host-level detection, SIEM correlation, metrics, and tracing
 ---
 
 # Runtime Monitoring and Observability: Falco, Wazuh, Prometheus, and Merkle Metrics
-
-_Module 12 of 20 · Agentic AI Security Curriculum · May 2026_
-
-## How to use this module
-
-Use it as **self-paced** study or as **instructor-led** training. YAML, commands, and policy excerpts are **illustrative**; map them to your cloud, mesh, identity provider, and agent runtime—substitute your own names, namespaces, and tools while preserving the **control intent**.
-
-**Estimated time:** ~35 minutes reading; add time for linked standards and team discussion.
-
-## Learning objectives
-
-By the end of this module, you should be able to:
-
-1. Layer host-level detection, SIEM correlation, metrics, and tracing for AI platforms.
-2. Plan alert ownership, tuning, and separation of observability from GPU inference paths.
-3. Interpret integrity-oriented metrics (e.g. audit completeness) as security signals.
-
-## Prerequisites
-
-- Prior module: [Model Integrity: Verifying Weights Before Inference](11-model-integrity-verifying-weights.md)
-
-**Suggested discussion / lab:** Pick one diagram in your environment (build, deploy, runtime) and mark where this module’s controls apply; note gaps versus the checklist in the body.
-
----
 
 Strong prevention and containment are incomplete without comprehensive visibility. This module covers the runtime monitoring stack, which provides deep observability into system behavior, detects anomalies, and correlates events across layers.
 
@@ -94,9 +67,3 @@ These resources are independent of any single product; use them to deepen the to
 - [OpenTelemetry](https://opentelemetry.io/docs/)
 - [Prometheus docs](https://prometheus.io/docs/introduction/overview/)
 - [Wazuh](https://documentation.wazuh.com/current/)
-
-## Commercial training use
-
-You may reuse this curriculum internally or in **paid consulting / training** engagements. Keep examples aligned to the customer’s actual stack; substitute your own runbooks, tool names, and compliance frameworks (SOC 2, ISO 27001, sector regulators) where cited examples use a reference architecture only.
-
----

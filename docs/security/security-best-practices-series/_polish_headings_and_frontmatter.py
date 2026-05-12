@@ -121,29 +121,15 @@ def insert_level_tags(fm_lines: list[str], part: int) -> list[str]:
     inserted = False
     for line in fm_lines:
         out.append(line)
-        if (
-            not inserted
-            and line.startswith("estimated_minutes:")
-            and not line.startswith("estimated_minutes: #")
-        ):
+        if not inserted and line.startswith('series: "Agentic AI Security Curriculum"'):
             out.append(f"level: {level}")
             out.append("tags:")
             for t in tags:
                 out.append(f"  - {t}")
             inserted = True
     if not inserted:
-        raise RuntimeError("estimated_minutes not found")
+        raise RuntimeError("series: line not found for level/tags insertion")
     return out
-
-
-HOWTO_BAD = re.compile(
-    r"Use it as \*\*self-paced\*\* study or as \*\*\s*\n\s*instructor-led\*\* training\. YAML, commands, and policy excerpts are \*\*\s*\n\s*illustrative\*\*; map them to your cloud, mesh, identity provider, and agent runtime—substitute your own names, namespaces, and tools while preserving the \*\*\s*\n\s*control intent\*\*\.",
-    re.S,
-)
-HOWTO_GOOD = (
-    "Use it as **self-paced** study or as **instructor-led** training. YAML, commands, and policy excerpts are **illustrative**; "
-    "map them to your cloud, mesh, identity provider, and agent runtime—substitute your own names, namespaces, and tools while preserving the **control intent**."
-)
 
 
 def small_copy_fixes(body: str) -> str:
@@ -191,7 +177,6 @@ def main() -> None:
         fm_new = insert_level_tags(fm_lines, part)
         body = small_copy_fixes(body)
         body = fix_body_headings(body)
-        body = HOWTO_BAD.sub(HOWTO_GOOD, body)
         out = "---\n" + "\n".join(fm_new) + "\n---\n" + body
         path.write_text(out, encoding="utf-8")
         print("polished", path.name)

@@ -1,9 +1,6 @@
 ---
 title: "Building Golden Images: Automated Scanning, Hardening, and Distroless Pipelines"
 series: "Agentic AI Security Curriculum"
-course_type: "instructor-ready / self-study"
-audience: "Security architects, platform engineers, and teams adopting AI agents"
-estimated_minutes: 35
 level: foundational
 tags:
   - containers
@@ -21,30 +18,6 @@ description: "Explain why minimal (e.g. distroless) images and read-only root fi
 ---
 
 # Building Golden Images: Automated Scanning, Hardening, and Distroless Pipelines
-
-_Module 2 of 20 · Agentic AI Security Curriculum · May 2026_
-
-## How to use this module
-
-Use it as **self-paced** study or as **instructor-led** training. YAML, commands, and policy excerpts are **illustrative**; map them to your cloud, mesh, identity provider, and agent runtime—substitute your own names, namespaces, and tools while preserving the **control intent**.
-
-**Estimated time:** ~35 minutes reading; add time for linked standards and team discussion.
-
-## Learning objectives
-
-By the end of this module, you should be able to:
-
-1. Explain why minimal (e.g. distroless) images and read-only root filesystems reduce container blast radius.
-2. Outline a typical build → scan → SBOM → sign → promote pipeline.
-3. Relate admission-time policies to image provenance and non-root execution.
-
-## Prerequisites
-
-- Prior module: [Supply Chain Security: Why Pinning Versions and Running Your Own Mirror Registry Matters](01-supply-chain-pinning-mirror-registry.md)
-
-**Suggested discussion / lab:** Pick one diagram in your environment (build, deploy, runtime) and mark where this module’s controls apply; note gaps versus the checklist in the body.
-
----
 
 Once you have secured your supply chain with a private mirror registry (Module 1), the next critical layer is building **golden images** — minimal, hardened, immutable container images that form the foundation of every production agent or platform workload. This module explains how to create, scan, sign, and deploy golden distroless images with read-only root filesystems and full provenance.
 
@@ -163,9 +136,3 @@ These resources are independent of any single product; use them to deepen the to
 - [NSA / CISA Kubernetes Hardening Guide](https://media.defense.gov/2022/Mar/23/2002965772/-1/-1/0/CTR_KUBERNETES_HARDENING_GUIDANCE_1.2_20220315.PDF)
 - [CIS Kubernetes Benchmark](https://www.cisecurity.org/benchmark/kubernetes)
 - [Kyverno policies](https://kyverno.io/docs/)
-
-## Commercial training use
-
-You may reuse this curriculum internally or in **paid consulting / training** engagements. Keep examples aligned to the customer’s actual stack; substitute your own runbooks, tool names, and compliance frameworks (SOC 2, ISO 27001, sector regulators) where cited examples use a reference architecture only.
-
----
