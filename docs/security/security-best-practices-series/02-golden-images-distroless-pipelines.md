@@ -16,6 +16,7 @@ prev: "supply-chain-pinning-mirror-registry"
 next: "cluster-admission-control-signing-policy"
 description: "Explain why minimal (e.g. distroless) images and read-only root filesystems reduce container blast radius."
 ---
+
 # Building Golden Images: Automated Scanning, Hardening, and Distroless Pipelines
 
 Once you have secured your supply chain with a private mirror registry (Module 1), the next critical layer is building **golden images** — minimal, hardened, immutable container images that form the foundation of every production agent or platform workload. This module explains how to create, scan, sign, and deploy golden distroless images with read-only root filesystems and full provenance.

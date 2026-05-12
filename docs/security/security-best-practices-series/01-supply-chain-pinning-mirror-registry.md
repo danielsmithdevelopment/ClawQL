@@ -16,6 +16,7 @@ canonical_path: "/security/best-practices/supply-chain-pinning-mirror-registry"
 next: "golden-images-distroless-pipelines"
 description: "Explain why the software supply chain is a primary risk for agentic AI and tool-calling platforms."
 ---
+
 # Supply Chain Security: Why Pinning Versions and Running Your Own Mirror Registry Matters
 
 The software supply chain is the single largest and most dangerous attack surface in any production-grade agentic AI and MCP platform. A single compromised dependency, container image, or model weight can give an attacker persistent access to your cluster, your documents, your Memory 2.0 knowledge graph, and your users’ sensitive data.

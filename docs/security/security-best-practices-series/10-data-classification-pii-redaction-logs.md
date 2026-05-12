@@ -16,6 +16,7 @@ prev: "mcp-runtime-protection-panguard-atr"
 next: "model-integrity-verifying-weights"
 description: "Distinguish data classification from redaction and logging policy."
 ---
+
 # Data Classification and PII Redaction: Never Let Sensitive Data Hit Logs
 
 Even with strong runtime protection and sandboxing (Modules 8–9), sensitive data inevitably flows through agent sessions, documents, and tool calls. This module explains how to prevent PII, financial data, and other sensitive information from ever reaching persistent log stores.

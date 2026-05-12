@@ -16,6 +16,7 @@ prev: "workstation-local-development-security"
 next: "threat-modeling-stride-agentic-ai"
 description: "Assemble a repeatable secure rollout checklist for complex stacks."
 ---
+
 # Production Deployment: One-Command Secure Full Stack
 
 All previous security controls culminate in a single, repeatable, secure deployment process. This module provides an example command and checklist to deploy a fully hardened reference deployment with every defense-in-depth layer enabled.

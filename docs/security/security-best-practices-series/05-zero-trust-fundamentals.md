@@ -16,6 +16,7 @@ prev: "least-privilege-scoped-identities"
 next: "advanced-zero-trust-vault-hsm-provenance"
 description: "State Zero Trust principles in the context of autonomous agents and external tools."
 ---
+
 # Zero Trust Fundamentals: Assume Compromise and Verify Everything
 
 With supply chain security, golden images, admission control, and least privilege in place, organizations typically shift to a full Zero Trust posture. This module introduces the core philosophy that underpins resilient architectures: never trust, always verify, and assume breach at all times.

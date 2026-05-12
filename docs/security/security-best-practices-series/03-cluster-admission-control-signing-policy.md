@@ -16,6 +16,7 @@ prev: "golden-images-distroless-pipelines"
 next: "least-privilege-scoped-identities"
 description: "Describe the role of admission controllers in preventing mis-scoped workloads from running."
 ---
+
 # Cluster Admission Control: Enforcing Image Signing and Policy at Deploy Time
 
 With a secure supply chain and golden distroless images in place (Modules 1 and 2), the next layer is preventing non-compliant workloads from ever starting. Cluster admission controllers act as the final gatekeeper, rejecting unsigned, unverified, or insecure images before they are scheduled.

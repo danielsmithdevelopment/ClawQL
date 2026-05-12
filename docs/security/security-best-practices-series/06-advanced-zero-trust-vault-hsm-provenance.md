@@ -16,6 +16,7 @@ prev: "zero-trust-fundamentals"
 next: "rbac-mtls-istio-service-mesh"
 description: "Compare static vs dynamic secrets and justify short TTLs for machine identities."
 ---
+
 # Advanced Zero Trust: Multi-Sig Vault, HSM, Tamper-Proof Logging, and Cryptographic Provenance
 
 Building on Zero Trust fundamentals (Module 5), this module covers the advanced cryptographic and secret-management controls that make trust assumptions explicit and verifiable across the entire platform.

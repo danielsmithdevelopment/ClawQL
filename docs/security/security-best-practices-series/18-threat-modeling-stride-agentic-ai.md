@@ -16,6 +16,7 @@ prev: "production-deployment-secure-full-stack"
 next: "owasp-agentic-top-10-mitigations"
 description: "Apply STRIDE categories to agent identity, tools, memory, and orchestration."
 ---
+
 # Threat Modeling with STRIDE for Agentic AI Systems
 
 Threat modeling is not a one-time exercise. In agentic MCP platforms, where systems are dynamic and agents can chain tools unpredictably, STRIDE must be a living process that evolves with the platform. This module explains how to apply STRIDE specifically to agentic AI systems.

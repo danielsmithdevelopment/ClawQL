@@ -15,6 +15,7 @@ prev: "data-classification-pii-redaction-logs"
 next: "runtime-monitoring-observability"
 description: "Explain why model artifacts need integrity checks beyond container image scanning."
 ---
+
 # Model Integrity: Verifying Weights Before Inference
 
 Model weights represent one of the largest and most overlooked attack surfaces in AI platforms. Traditional container scanning misses them entirely because they are large binary blobs fetched at runtime. This module explains how this pattern closes the “model-in-the-middle” attack vector with cryptographic verification before any inference begins.

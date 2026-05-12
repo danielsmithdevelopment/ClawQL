@@ -16,6 +16,7 @@ prev: "automated-response-containment"
 next: "gpu-resource-protection"
 description: "Use a structured incident lifecycle (e.g. prepare → identify → contain → recover)."
 ---
+
 # Incident Response and Recovery: PICERL, WORM Audits, and Tested Backups
 
 Even with layered prevention, containment, and monitoring, incidents will eventually occur. This module details the structured incident response process, tamper-evident audit capabilities, and the requirement for regularly tested recovery paths.

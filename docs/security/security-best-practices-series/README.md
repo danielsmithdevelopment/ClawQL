@@ -38,7 +38,7 @@ Twenty **vendor-neutral** Markdown modules for security architects, platform eng
 | ---------------------- | ------------------------------------------------------------------------------------------------------- |
 | `title`                | Page title                                                                                              |
 | `series`               | `Agentic AI Security Curriculum`                                                                        |
-| `level`                | `foundational`, `intermediate`, or `advanced` — tune for your taxonomy                                 |
+| `level`                | `foundational`, `intermediate`, or `advanced` — tune for your taxonomy                                  |
 | `tags`                 | YAML list of lowercase tokens (e.g. `kubernetes`, `sbom`, `owasp`) for faceted search / related content |
 | `part` / `total_parts` | Position in curriculum                                                                                  |
 | `date`                 | Publication or review stamp                                                                             |
@@ -55,9 +55,9 @@ The full narrative is still available as one file: [`../security-guide-series.md
 
 ## Maintenance scripts
 
-| Script                                                                       | Role                                                                                                                                                                                                                                 |
-| ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Script                                                                       | Role                                                                                                                                                                                                                                      |
+| ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [`_training_transform.py`](_training_transform.py)                           | Legacy bulk transform (neutralize ClawQL-specific phrasing, refresh descriptions, append **Further reading**). **Not idempotent** if re-run without guards — do not duplicate sections. Intended for rare bulk passes, not routine edits. |
-| [`_polish_headings_and_frontmatter.py`](_polish_headings_and_frontmatter.py) | Inserts `level` / `tags`, normalizes spacing before `###` headings and common glued prose patterns **outside** fenced code blocks. Strips prior `level`/`tags` before re-inserting so it can be re-run safely for formatting passes. |
+| [`_polish_headings_and_frontmatter.py`](_polish_headings_and_frontmatter.py) | Inserts `level` / `tags`, normalizes spacing before `###` headings and common glued prose patterns **outside** fenced code blocks. Strips prior `level`/`tags` before re-inserting so it can be re-run safely for formatting passes.      |
 
 Prefer hand-editing module prose; use scripts when doing bulk layout updates.

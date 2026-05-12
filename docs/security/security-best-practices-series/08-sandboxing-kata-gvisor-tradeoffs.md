@@ -17,6 +17,7 @@ prev: "rbac-mtls-istio-service-mesh"
 next: "mcp-runtime-protection-panguard-atr"
 description: "Compare isolation technologies (VM-backed runtimes, user-space kernels, OS sandboxes)."
 ---
+
 # Sandboxing Options and Trade-offs: Kata, gVisor, Seatbelt, Docker, and Cloudflare Workers
 
 With network-level Zero Trust established (Module 7), the next critical layer is runtime isolation for the highest-risk workloads — especially MCP tool execution and agent code running. This module compares sandboxing technologies and explains why many security-focused platforms default to Kata Containers for MCP workloads.

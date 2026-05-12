@@ -17,6 +17,7 @@ prev: "cluster-admission-control-signing-policy"
 next: "zero-trust-fundamentals"
 description: "Apply least privilege to Kubernetes identities (ServiceAccounts, Roles, bindings)."
 ---
+
 # Principle of Least Privilege: Scoped Identities and Limiting Blast Radius
 
 Even with perfect supply chain security and admission control, a compromised workload or agent can still cause significant damage if it has excessive permissions. The Principle of Least Privilege (PoLP) ensures every identity — human, service, or agent — can do only what is strictly necessary, and nothing more.

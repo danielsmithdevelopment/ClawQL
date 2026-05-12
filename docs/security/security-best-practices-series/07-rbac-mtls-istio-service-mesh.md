@@ -17,6 +17,7 @@ prev: "advanced-zero-trust-vault-hsm-provenance"
 next: "sandboxing-kata-gvisor-tradeoffs"
 description: "Explain mutual TLS and service identity for east-west traffic in Kubernetes."
 ---
+
 # RBAC, mTLS, and Istio Service Mesh: Network-Level Zero Trust
 
 With identity-level least privilege and advanced cryptographic controls established (Modules 4–6), this module extends Zero Trust to the network layer. It covers how RBAC, mutual TLS, and Istio Service Mesh work together to enforce micro-segmentation and default-deny networking across the cluster.

@@ -15,6 +15,7 @@ prev: "gpu-resource-protection"
 next: "production-deployment-secure-full-stack"
 description: "Extend production security expectations to developer laptops and CI runners."
 ---
+
 # Workstation and Local Development Security: Same Posture Everywhere
 
 Security is not only a production concern. Developer workstations are often the weakest link and the most common entry point for supply chain attacks. Engineering policy should require the same high security standards in local development environments as in production.

@@ -16,6 +16,7 @@ prev: "sandboxing-kata-gvisor-tradeoffs"
 next: "data-classification-pii-redaction-logs"
 description: "Explain synchronous policy enforcement for tool and API calls in agent architectures."
 ---
+
 # MCP Runtime Protection: Panguard, ATR Rules, and Agentic Threat Mitigation
 
 The MCP interface is the highest-risk attack surface in any agentic platform. Agents interact with tools, memory, documents, and external systems through natural language, making traditional prompt-based defenses insufficient. This module details how to protect the MCP runtime using Panguard, ATR scoping, and layered governance.

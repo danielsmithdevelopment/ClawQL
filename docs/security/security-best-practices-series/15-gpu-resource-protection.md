@@ -16,6 +16,7 @@ prev: "incident-response-recovery-picerl"
 next: "workstation-local-development-security"
 description: "Apply quotas, limits, and scheduling policies to protect shared GPU pools."
 ---
+
 # GPU and Resource Protection: Preventing Rogue Agent Denial-of-Service
 
 Agentic workloads can consume massive GPU resources through runaway loops, infinite tool calling, or maliciously crafted prompts. Without proper controls, a single rogue agent can starve the entire cluster of inference capacity. This module details how to protect GPU resources using quotas, limits, and node isolation.

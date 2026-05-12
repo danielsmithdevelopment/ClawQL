@@ -16,6 +16,7 @@ prev: "threat-modeling-stride-agentic-ai"
 next: "quarterly-security-review-checklist"
 description: "Navigate the OWASP Agentic risk list and map items to layered controls."
 ---
+
 # OWASP Agentic Top 10: Mapping Risks to Architectural Controls
 
 The OWASP Agentic Top 10 highlights the most critical risks in autonomous AI agent systems. These risks apply to any autonomous agent architecture. This module maps each major risk to the specific controls and architecture patterns that mitigate it.

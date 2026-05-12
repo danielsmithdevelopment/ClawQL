@@ -15,6 +15,7 @@ canonical_path: "/security/best-practices/quarterly-security-review-checklist"
 prev: "owasp-agentic-top-10-mitigations"
 description: "Run a periodic defense-in-depth review across supply chain, runtime, and data."
 ---
+
 # Quarterly Security Review Checklist: Keeping Defense-in-Depth Alive
 
 Defense-in-depth is not a set-it-and-forget-it architecture. It requires continuous validation and maintenance. This final capstone guide provides the operational checklist that must be executed quarterly to keep the entire security posture effective over time.

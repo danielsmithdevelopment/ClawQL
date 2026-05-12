@@ -16,6 +16,7 @@ prev: "runtime-monitoring-observability"
 next: "incident-response-recovery-picerl"
 description: "Map alert confidence to automated vs manual response actions."
 ---
+
 # Automated Response and Containment: Falco + Talon Quarantine, Panguard Blocking
 
 Detection without automated response leaves security teams overwhelmed. This module covers the high-confidence automated containment mechanisms that limit damage while keeping humans in the loop.

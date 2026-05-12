@@ -16,6 +16,7 @@ prev: "model-integrity-verifying-weights"
 next: "automated-response-containment"
 description: "Layer host-level detection, SIEM correlation, metrics, and tracing for AI platforms."
 ---
+
 # Runtime Monitoring and Observability: Falco, Wazuh, Prometheus, and Merkle Metrics
 
 Strong prevention and containment are incomplete without comprehensive visibility. This module covers the runtime monitoring stack, which provides deep observability into system behavior, detects anomalies, and correlates events across layers.
