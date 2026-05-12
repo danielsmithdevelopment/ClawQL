@@ -22,7 +22,7 @@
     "@grpc/grpc-js": "^1.14.3",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "express": "^5.2.1",
-    "jose": "^6.1.3",
+    "jose": "^6.2.3",
     "mcp-grpc-transport": "^0.2.0"
   },
   "repository": {
@@ -30,6 +30,14 @@
     "url": "git+https://github.com/danielsmithdevelopment/ClawQL.git",
     "directory": "packages/panguard-mcp-bridge"
   },
-  "keywords": ["clawql", "mcp", "panguard", "kubernetes"],
-  "files": ["dist", "README.md"]
+  "keywords": [
+    "clawql",
+    "mcp",
+    "panguard",
+    "kubernetes"
+  ],
+  "files": [
+    "dist",
+    "README.md"
+  ]
 }
