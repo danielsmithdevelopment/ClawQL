@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.2.0] - 2026-05-12
+
+Minor release: **MCP gRPC** defaults for large tool payloads (**`mcp-grpc-transport` `0.2.0`** — default **64 MiB** gRPC send/receive limits, **`callToolServerStreamingGrpc`** + helpers), **Helm** **`enableGrpc`** / **`grpcMaxMessageLength`**, REST **`execute`** query handling and HTTP body limits, and docs-site **Next.js 16.2.6** supply-chain alignment. **`charts/clawql-mcp`** **Chart.version** **0.6.4** with **`appVersion` `6.2.0`**. Release notes: **[`RELEASE_NOTES_v6.2.0.md`](RELEASE_NOTES_v6.2.0.md)**.
+
 ### Added
 
 - **MCP gRPC defaults for heavy `execute`:** Helm **`enableGrpc: true`** and **`grpcMaxMessageLength`** (injects **`GRPC_MAX_MESSAGE_LENGTH`**); **`mcp-grpc-transport`** merges default **64 MiB** send/receive limits in **`maybeStartGrpcMcpServer`**. New **`callToolServerStreamingGrpc`** (+ helpers) for protobuf **`CallTool`** clients; **`scripts/dev/run-tika-parse-resume-once.ts`** defaults to **`CLAWQL_MCP_TRANSPORT=grpc`**.
@@ -18,6 +22,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **GHCR automation was a no-op:** GitHub’s **`github/rest-api-description`** OpenAPI lists **zero** **`PATCH`** routes under **`…/packages/`** for container packages — the old **`gh api --method PATCH … -f visibility=public`** steps always returned **HTTP 404**. Removed those steps from **[`.github/workflows/docker-publish.yml`](.github/workflows/docker-publish.yml)**; kept anonymous **`skopeo inspect`** gates. Repurposed **`scripts/github/set-clawql-ghcr-packages-public.sh`** to **GET** visibility and exit **1** unless every **`clawql-*`** container is **`public`**; dropped misleading **`GH_PACKAGES_VISIBILITY_TOKEN`** **`PATCH`** narrative from docs and CI hints.
+- **REST `execute`:** only append **declared** OpenAPI query parameters (avoids oversized URLs / **414** on servers that reject undeclared query keys).
+- **Streamable HTTP:** configurable JSON body size via **`CLAWQL_MCP_JSON_BODY_LIMIT`** for large MCP payloads.
+
+### Changed
+
+- **Helm:** **`enableGrpc`** defaults to **`true`**; **`grpcMaxMessageLength`** injects **`GRPC_MAX_MESSAGE_LENGTH`** for large tool results over gRPC MCP.
+- **`execute` tooling:** REST-first for **`application/octet-stream`** upstreams; tool descriptions note gRPC where relevant.
+
+### Dependency
+
+- **`mcp-grpc-transport`** **`^0.2.0`** (streaming **`CallTool`** client helpers; default gRPC message size merge in **`maybeStartGrpcMcpServer`**).
 
 ## [6.1.0] - 2026-05-06
 

@@ -2,7 +2,7 @@
 
 **Pluggable [gRPC](https://grpc.io/) transport for the [Model Context Protocol](https://modelcontextprotocol.io)** (MCP), built on [`@modelcontextprotocol/sdk`](https://www.npmjs.com/package/@modelcontextprotocol/sdk).
 
-**Latest on npm: [`0.1.1`](https://www.npmjs.com/package/mcp-grpc-transport).** First published [`0.1.0`](https://www.npmjs.com/package/mcp-grpc-transport/v/0.1.0); see [`CHANGELOG.md`](CHANGELOG.md) in the package for history. For why the code exists (ClawQL, Python PoC), see [Background](#background-clawql-and-the-python-reference).
+**Latest on npm: [`0.2.0`](https://www.npmjs.com/package/mcp-grpc-transport).** See [`CHANGELOG.md`](CHANGELOG.md) in the package for history. For why the code exists (ClawQL, Python PoC), see [Background](#background-clawql-and-the-python-reference).
 
 It exposes:
 
