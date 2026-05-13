@@ -177,7 +177,7 @@ describe("createDefaultOuroborosEngines", () => {
             content: [{ type: "text", text: JSON.stringify({ id: 7, title: "Memo" }) }],
           };
         }
-        if (operationId === "onyx::onyx_ingest_document") {
+        if (operationId === "onyx::upsert_ingestion_doc") {
           return { content: [{ type: "text", text: '{"indexed":true}' }] };
         }
         return { content: [{ type: "text", text: "{}" }] };
@@ -200,12 +200,12 @@ describe("createDefaultOuroborosEngines", () => {
       expect(parsed.route).toBe("multi");
       expect(parsed.steps.map((s) => s.operationId)).toEqual([
         "paperless::paperless_api_documents_retrieve",
-        "onyx::onyx_ingest_document",
+        "onyx::upsert_ingestion_doc",
       ]);
       expect(parsed.steps[1]?.bridge_step).toBe("onyx_after_paperless");
       expect(execute).toHaveBeenCalledTimes(2);
       expect(execute.mock.calls[1]?.[0]).toMatchObject({
-        operationId: "onyx::onyx_ingest_document",
+        operationId: "onyx::upsert_ingestion_doc",
       });
       const onyxArgs = execute.mock.calls[1]?.[0]?.args as {
         document?: { id?: string; source?: string };

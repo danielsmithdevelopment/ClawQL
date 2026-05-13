@@ -23,7 +23,7 @@ Patch release: **`fetch-provider-specs`** hardening (Paperless `/api/schema/` va
 
 ### Changed
 
-- **Bundled OpenAPI:** **Tika** is a full JAX-RS surface spec for **2.9.x**; **Gotenberg** vendors upstream **v7.10.0** full OpenAPI (aligned with **v8** `/forms/*` routes). Refreshed **paperless**, **stirling**, **onyx**, **sentry**, **GitHub**, **Cloudflare**, and **Google discovery** artifacts from fetch scripts where applicable.
+- **Bundled OpenAPI:** **Tika** is a full JAX-RS surface spec for **2.9.x**; **Gotenberg** vendors upstream **v7.10.0** full OpenAPI (aligned with **v8** `/forms/*` routes). Refreshed **paperless**, **stirling**, **onyx**, **sentry**, **GitHub**, **Cloudflare**, and **Google discovery** artifacts from fetch scripts where applicable. **Onyx** upstream `operationId` values now drive **`knowledge_search_onyx`** (**`handle_send_search_message`**) and Ouroboros post-Paperless ingest (**`upsert_ingestion_doc`**); legacy **`onyx_send_search_message`** is still resolved when present in an older spec.
 - **`scripts/kubernetes/local-k8s-docker-desktop.sh`:** apply provider **`*.localhost`** VirtualServices whenever **Stirling** is present (partial document stack), with comment clarifying Helm **providerIngress** vs Istio routing.
 
 ## [6.2.0] - 2026-05-12

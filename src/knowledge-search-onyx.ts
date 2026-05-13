@@ -1,21 +1,25 @@
 /**
  * Optional MCP tool `knowledge_search_onyx` — thin wrapper over `execute` for the bundled Onyx
- * `onyx_send_search_message` operation (merged id `onyx::onyx_send_search_message`).
+ * **`handle_send_search_message`** operation (`POST /search/send-search-message`; merged id
+ * **`onyx::handle_send_search_message`**). Older pinned specs used **`onyx_send_search_message`**;
+ * {@link resolveOnyxSendSearchOperationId} still resolves that id when present.
  */
 
 import { loadSpec } from "./spec-loader.js";
 
-/** Bundled OpenAPI operationId before merged `specLabel::` prefix. */
-export const ONYX_SEND_SEARCH_OPERATION_ID = "onyx_send_search_message";
+/** Current upstream OpenAPI `operationId` for `POST /search/send-search-message`. */
+export const ONYX_SEND_SEARCH_OPERATION_ID = "handle_send_search_message";
+
+const ONYX_SEND_SEARCH_OPERATION_ID_LEGACY = "onyx_send_search_message";
 
 /**
  * Resolve merged or single-spec operation id for Onyx document search.
  */
 export function resolveOnyxSendSearchOperationId(operations: { id: string }[]): string | undefined {
-  const merged = `onyx::${ONYX_SEND_SEARCH_OPERATION_ID}`;
-  if (operations.some((o) => o.id === merged)) return merged;
-  if (operations.some((o) => o.id === ONYX_SEND_SEARCH_OPERATION_ID)) {
-    return ONYX_SEND_SEARCH_OPERATION_ID;
+  for (const id of [ONYX_SEND_SEARCH_OPERATION_ID, ONYX_SEND_SEARCH_OPERATION_ID_LEGACY]) {
+    const merged = `onyx::${id}`;
+    if (operations.some((o) => o.id === merged)) return merged;
+    if (operations.some((o) => o.id === id)) return id;
   }
   return undefined;
 }
