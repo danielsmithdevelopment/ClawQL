@@ -449,7 +449,8 @@ documentPipeline:
     enabled: true
     image:
       repository: ghcr.io/paperless-ngx/paperless-ngx
-      tag: "2.8.1"
+      # OpenAPI `/api/schema/` (drf-spectacular) exists from v2.15 onward; older tags return SPA login (302).
+      tag: "2.15.0"
       pullPolicy: IfNotPresent
     service:
       port: 8000

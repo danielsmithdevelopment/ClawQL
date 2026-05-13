@@ -304,12 +304,12 @@ async function appendOnyxIngestAfterPaperlessIfConfigured(
 
     try {
       const response = await bridge.execute({
-        operationId: "onyx::onyx_ingest_document",
+        operationId: "onyx::upsert_ingestion_doc",
         args,
       });
       steps.push({
         route: "execute",
-        operationId: "onyx::onyx_ingest_document",
+        operationId: "onyx::upsert_ingestion_doc",
         args,
         result: firstText(response),
         bridge_step: "onyx_after_paperless",
@@ -317,7 +317,7 @@ async function appendOnyxIngestAfterPaperlessIfConfigured(
     } catch (err) {
       steps.push({
         route: "execute",
-        operationId: "onyx::onyx_ingest_document",
+        operationId: "onyx::upsert_ingestion_doc",
         args,
         result: JSON.stringify({
           kind: "partial_failure",

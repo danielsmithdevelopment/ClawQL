@@ -25,6 +25,15 @@ describe("resolveOnyxSendSearchOperationId", () => {
     );
   });
 
+  it("resolves legacy onyx_send_search_message when present", () => {
+    expect(
+      resolveOnyxSendSearchOperationId([
+        { id: "github::x" },
+        { id: "onyx::onyx_send_search_message" },
+      ])
+    ).toBe("onyx::onyx_send_search_message");
+  });
+
   it("returns undefined when missing", () => {
     expect(resolveOnyxSendSearchOperationId([{ id: "other" }])).toBeUndefined();
   });

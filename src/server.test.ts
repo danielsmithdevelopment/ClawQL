@@ -470,7 +470,14 @@ describe("server (stdio)", () => {
   it("stdio callTool knowledge_search_onyx uses REST with Onyx fetch stub (#144)", async () => {
     const childEnv = { ...process.env };
     delete childEnv.CLAWQL_SPEC_PATH;
+    delete childEnv.OPENAPI_SPEC_PATH;
+    delete childEnv.OPENAPI_FILE;
     delete childEnv.CLAWQL_SPEC_PATHS;
+    delete childEnv.CLAWQL_BUNDLED_PROVIDERS;
+    delete childEnv.CLAWQL_SPEC_URL;
+    delete childEnv.OPENAPI_SPEC_URL;
+    delete childEnv.CLAWQL_DISCOVERY_URL;
+    delete childEnv.GOOGLE_DISCOVERY_URL;
     childEnv.CLAWQL_PROVIDER = "onyx";
     childEnv.CLAWQL_OBSIDIAN_VAULT_PATH = mkdtempSync(
       join(tmpdir(), "clawql-stdio-onyx-calltool-")

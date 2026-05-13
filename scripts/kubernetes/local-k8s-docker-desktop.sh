@@ -26,7 +26,8 @@ set -euo pipefail
 # When Istio ambient + ingress gateway are on, CLUSTERIP defaults to 1: Helm passes --set service.type=ClusterIP so
 # Helm owns svc/clawql-mcp-http (no kubectl patch — avoids SSA conflicts with manager kubectl-patch). Set
 # CLAWQL_ISTIO_MCP_HTTP_SERVICE_CLUSTERIP=0 to keep MCP Service LoadBalancer :8080 from values-docker-desktop.
-# VirtualServices in docker/istio/docker-desktop/clawql-localhost-vs-*.yaml route *.localhost when nginx is skipped.
+# VirtualServices in docker/istio/docker-desktop/clawql-localhost-vs-*.yaml route *.localhost when nginx is skipped
+# (Helm providerIngress is disabled to avoid duplicate routes; VS apply is gated on document stack — see script body).
 #
 # Optional: CLAWQL_HELM_TIMEOUT — helm --wait timeout (defaults: 45m full stack, 8m quick stack).
 # Optional: CLAWQL_ISTIO_HELM_TIMEOUT / CLAWQL_ISTIO_ZTUNNEL_HELM_TIMEOUT — Istio sub-chart --wait (see install-istio-docker-desktop.sh; ztunnel often needs the extra margin).
@@ -381,8 +382,14 @@ if [[ "${INSTALLER}" == "helm" ]]; then
     echo "==> Istio VirtualServices for *.localhost (nginx Ingress objects disabled in Helm)"
     sed "s/__TARGET_NAMESPACE__/${NAMESPACE}/g" "${ROOT}/docker/istio/docker-desktop/clawql-localhost-vs-core.yaml" | kubectl_ctx apply -f -
     sed "s/__TARGET_NAMESPACE__/${NAMESPACE}/g" "${ROOT}/docker/istio/docker-desktop/clawql-localhost-vs-dashboard.yaml" | kubectl_ctx apply -f -
-    if [[ "${CLAWQL_LOCAL_K8S_FULL_STACK}" == "1" ]]; then
+    # Provider *.localhost hosts (paperless, stirling, tika, …): Helm providerIngress is forced off when
+    # nginx is skipped — routing is these VirtualServices. Apply whenever the document stack shipped a
+    # Stirling Service (not gated on CLAWQL_LOCAL_K8S_FULL_STACK so partial upgrades still get routes).
+    if kubectl_ctx get svc -n "${NAMESPACE}" clawql-mcp-http-stirling >/dev/null 2>&1; then
+      echo "==> Istio VirtualServices for document pipeline + ops hosts (clawql-localhost-vs-providers.yaml)"
       sed "s/__TARGET_NAMESPACE__/${NAMESPACE}/g" "${ROOT}/docker/istio/docker-desktop/clawql-localhost-vs-providers.yaml" | kubectl_ctx apply -f -
+    else
+      echo "==> Skip provider *.localhost VirtualServices (no svc/clawql-mcp-http-stirling — quick stack or documentPipeline disabled)"
     fi
   fi
 

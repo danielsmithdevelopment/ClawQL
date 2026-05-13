@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.2.1] - 2026-05-12
+
+Patch release: **`fetch-provider-specs`** hardening (Paperless `/api/schema/` validation, **Paperless-ngx ≥ 2.15** guidance, in-cluster HTTP diagnostics, **Gotenberg** pinned upstream OpenAPI when `/openapi.json` is absent), **Helm** Paperless default image **2.15.0** and removal of ineffective **`PAPERLESS_API_TOKEN`** injection into the Paperless container, **full bundled** **Tika**/**Gotenberg** OpenAPI surfaces, refreshed pinned public and live-fetched provider specs, **Istio** `*.localhost` provider VirtualServices when Stirling exists (not gated on full stack), and **`execute`** multipart **`fileEncoding: base64`** support. **`charts/clawql-mcp`** **Chart.version** **0.6.5** with **`appVersion` `6.2.1`**. Release notes: **[`RELEASE_NOTES_v6.2.1.md`](RELEASE_NOTES_v6.2.1.md)**.
+
+### Fixed
+
+- **`npm run fetch-provider-specs` (Paperless):** validate OpenAPI bodies (strip YAML `---`, detect `openapi: 3`), clearer errors when the cluster returns **302** or **Paperless before v2.15** (no `/api/schema/`), in-cluster `curl` reports HTTP status and no longer uses `-f` on empty 302 bodies.
+- **Helm document pipeline:** default **Paperless** image tag **2.15.0** (first release exposing `/api/schema/`); stop injecting **`PAPERLESS_API_TOKEN`** into the Paperless pod (upstream does not consume that env var).
+- **`execute` (multipart):** honor **`fileEncoding: base64`** with **`fileFileName`** / **`fileFilename`** for binary parts (MCP JSON tool args).
+
+### Added
+
+- **Gotenberg spec pin:** when the live server has no `/openapi.json`, the fetch script downloads pinned **`docs/openapi.yaml`** (default Gotenberg **v7.10.0**; override **`GOTENBERG_OPENAPI_PIN_URL`**).
+
+### Changed
+
+- **Bundled OpenAPI:** **Tika** is a full JAX-RS surface spec for **2.9.x**; **Gotenberg** vendors upstream **v7.10.0** full OpenAPI (aligned with **v8** `/forms/*` routes). Refreshed **paperless**, **stirling**, **onyx**, **sentry**, **GitHub**, **Cloudflare**, and **Google discovery** artifacts from fetch scripts where applicable. **Onyx** upstream `operationId` values now drive **`knowledge_search_onyx`** (**`handle_send_search_message`**) and Ouroboros post-Paperless ingest (**`upsert_ingestion_doc`**); legacy **`onyx_send_search_message`** is still resolved when present in an older spec.
+- **`scripts/kubernetes/local-k8s-docker-desktop.sh`:** apply provider **`*.localhost`** VirtualServices whenever **Stirling** is present (partial document stack), with comment clarifying Helm **providerIngress** vs Istio routing.
+
 ## [6.2.0] - 2026-05-12
 
 Minor release: **MCP gRPC** defaults for large tool payloads (**`mcp-grpc-transport` `0.2.0`** — default **64 MiB** gRPC send/receive limits, **`callToolServerStreamingGrpc`** + helpers), **Helm** **`enableGrpc`** / **`grpcMaxMessageLength`**, REST **`execute`** query handling and HTTP body limits, and docs-site **Next.js 16.2.6** supply-chain alignment. **`charts/clawql-mcp`** **Chart.version** **0.6.4** with **`appVersion` `6.2.0`**. Release notes: **[`RELEASE_NOTES_v6.2.0.md`](RELEASE_NOTES_v6.2.0.md)**.

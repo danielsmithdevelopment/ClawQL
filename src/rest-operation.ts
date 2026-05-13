@@ -63,8 +63,8 @@ function getFetchImplForRest(): typeof baseFetch {
 }
 
 /** Build JSON body: drop path/query args so `owner`/`repo` are not sent in PATCH/POST bodies. */
-/** Suffixes on execute args: `file` + `fileFileName` → filename for multipart, not a separate part. */
-const MULTIPART_FILE_META_SUFFIX = /(FileName|Filename)$/;
+/** Suffixes on execute args: `file` + `fileFileName` / `fileEncoding` → metadata for multipart, not separate parts. */
+const MULTIPART_FILE_META_SUFFIX = /(FileName|Filename|Encoding)$/;
 
 export function buildRestRequestBodyFromArgs(
   op: Operation,
@@ -119,6 +119,23 @@ function appendMultipartValue(
     const part: BlobPart = new Uint8Array(Uint8Array.from(buf));
     fd.append(key, new Blob([part]), name);
     return;
+  }
+
+  if (typeof v === "string") {
+    const enc =
+      typeof all[`${key}Encoding`] === "string"
+        ? String(all[`${key}Encoding`]).trim().toLowerCase()
+        : "";
+    if (enc === "base64") {
+      const buf = Buffer.from(v, "base64");
+      const name =
+        (typeof all[`${key}FileName`] === "string" && (all[`${key}FileName`] as string).trim()) ||
+        (typeof all[`${key}Filename`] === "string" && (all[`${key}Filename`] as string).trim()) ||
+        `${key}.bin`;
+      const part: BlobPart = new Uint8Array(Uint8Array.from(buf));
+      fd.append(key, new Blob([part]), name);
+      return;
+    }
   }
 
   if (typeof v === "string" || typeof v === "number" || typeof v === "boolean") {

@@ -2,64 +2,395 @@ openapi: 3.0.3
 info:
   title: Apache Tika Server
   description: >
-    Minimal OpenAPI for Tika JAX-RS server (common paths). Refresh from a running
-    instance if your deployment differs. Base URL override: TIKA_BASE_URL.
-  version: "2.9"
+    OpenAPI description of the **Apache Tika JAX-RS Server** (CXF) REST API as
+    shipped in **Tika Server 2.9.x** (`tika-server-core` / `tika-server-standard`).
+    Upstream does not publish `/openapi.json`; this bundle is maintained from
+    `org.apache.tika.server.core.resource` and related classes. Base URL override:
+    **TIKA_BASE_URL**. See also
+    https://cwiki.apache.org/confluence/display/TIKA/TikaServer
+  version: "2.9.x"
 servers:
   - url: http://tika:9998
+    description: Default Tika Server port in ClawQL Helm / Docker Desktop stack
+
+components:
+  requestBodies:
+    BinaryStream:
+      required: true
+      description: Raw document bytes (set `Content-Type` / `Content-Disposition` filename when helpful).
+      content:
+        application/octet-stream:
+          schema:
+            type: string
+            format: binary
+        "*/*":
+          schema:
+            type: string
+            format: binary
+    MultipartFile:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            properties:
+              file:
+                type: string
+                format: binary
+            required:
+              - file
+
 paths:
+  /:
+    get:
+      operationId: tika_welcome_get
+      summary: Welcome page listing available endpoints
+      responses:
+        "200":
+          description: HTML index
+          content:
+            text/html:
+              schema:
+                type: string
+
   /version:
     get:
       operationId: tika_server_version
       summary: Server version string
       responses:
         "200":
-          description: Plain-text version
+          description: Plain-text Tika version
           content:
             text/plain:
               schema:
                 type: string
-  /tika:
-    put:
-      operationId: tika_parse_put
-      summary: Parse document body and return extracted text/metadata
-      requestBody:
-        required: true
-        content:
-          application/octet-stream:
-            schema:
-              type: string
-              format: binary
+
+  /status:
+    get:
+      operationId: tika_server_status
+      summary: Server / task status
       responses:
         "200":
-          description: Extracted content (often text/plain or structured)
-  /meta:
-    put:
-      operationId: tika_meta_put
-      summary: Extract metadata only
-      requestBody:
-        required: true
-        content:
-          application/octet-stream:
-            schema:
-              type: string
-              format: binary
-      responses:
-        "200":
-          description: Metadata
+          description: Status payload (format per server build)
+
   /detect/stream:
     put:
       operationId: tika_detect_stream_put
-      summary: Detect MIME type from body stream
+      summary: Detect MIME type from request body stream
+      requestBody:
+        $ref: "#/components/requestBodies/BinaryStream"
+      responses:
+        "200":
+          description: Detected media type string
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /language/stream:
+    put:
+      operationId: tika_language_stream_put
+      summary: Detect natural language from UTF-8 text stream
+      requestBody:
+        $ref: "#/components/requestBodies/BinaryStream"
+      responses:
+        "200":
+          description: ISO language tag
+          content:
+            text/plain:
+              schema:
+                type: string
+    post:
+      operationId: tika_language_stream_post
+      summary: Same as PUT /language/stream
+      requestBody:
+        $ref: "#/components/requestBodies/BinaryStream"
+      responses:
+        "200":
+          description: ISO language tag
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /language/string:
+    put:
+      operationId: tika_language_string_put
+      summary: Detect language from inline string body
       requestBody:
         required: true
         content:
-          application/octet-stream:
+          text/plain:
             schema:
               type: string
-              format: binary
+          "*/*":
+            schema:
+              type: string
       responses:
         "200":
-          description: Detected media type
-components:
-  schemas: {}
+          description: ISO language tag
+          content:
+            text/plain:
+              schema:
+                type: string
+    post:
+      operationId: tika_language_string_post
+      summary: Same as PUT /language/string
+      requestBody:
+        required: true
+        content:
+          text/plain:
+            schema:
+              type: string
+      responses:
+        "200":
+          description: ISO language tag
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /meta:
+    put:
+      operationId: tika_meta_put
+      summary: Extract metadata (CSV or JSON depending on Accept)
+      requestBody:
+        $ref: "#/components/requestBodies/BinaryStream"
+      responses:
+        "200":
+          description: Metadata table
+          content:
+            text/csv:
+              schema:
+                type: string
+            application/json:
+              schema:
+                type: object
+
+  /meta/form:
+    post:
+      operationId: tika_meta_form_post
+      summary: Extract metadata from multipart upload
+      requestBody:
+        $ref: "#/components/requestBodies/MultipartFile"
+      responses:
+        "200":
+          description: Metadata table
+          content:
+            text/csv:
+              schema:
+                type: string
+            application/json:
+              schema:
+                type: object
+
+  /meta/{field}:
+    put:
+      operationId: tika_meta_field_put
+      summary: Extract a single metadata field (e.g. XMP `dc:title`)
+      parameters:
+        - name: field
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        $ref: "#/components/requestBodies/BinaryStream"
+      responses:
+        "200":
+          description: Field value(s)
+        "404":
+          description: Field not found after successful parse
+
+  /tika:
+    put:
+      operationId: tika_parse_put
+      summary: Parse document — full structured output (handler via Accept / path suffix in full server)
+      requestBody:
+        $ref: "#/components/requestBodies/BinaryStream"
+      responses:
+        "200":
+          description: Parsed content / metadata (varies by Accept header)
+
+  /tika/form:
+    post:
+      operationId: tika_parse_form_post
+      summary: Parse document from multipart form
+      requestBody:
+        $ref: "#/components/requestBodies/MultipartFile"
+      responses:
+        "200":
+          description: Parsed output (varies)
+
+  /rmeta:
+    put:
+      operationId: tika_rmeta_put
+      summary: Recursive metadata list (JSON)
+      description: >
+        Server also serves `PUT /rmeta/{handler}` where `{handler}` is one of
+        `xml`, `text`, `html`, `ignore`, … (CXF optional path segment).
+      requestBody:
+        $ref: "#/components/requestBodies/BinaryStream"
+      responses:
+        "200":
+          description: Array of Metadata objects (serialized JSON)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+
+  /rmeta/form:
+    post:
+      operationId: tika_rmeta_form_post
+      summary: Recursive metadata from multipart (`handler` optional in path on real server)
+      requestBody:
+        $ref: "#/components/requestBodies/MultipartFile"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+
+  /unpack:
+    put:
+      operationId: tika_unpack_put
+      summary: Unpack embedded documents (returns `application/zip` or `application/x-tar` map serialization)
+      requestBody:
+        $ref: "#/components/requestBodies/BinaryStream"
+      responses:
+        "200":
+          description: Archive of extracted files
+        "204":
+          description: No embedded documents
+
+  /unpack/all:
+    put:
+      operationId: tika_unpack_all_put
+      summary: Unpack including rendered text + metadata CSV
+      requestBody:
+        $ref: "#/components/requestBodies/BinaryStream"
+      responses:
+        "200":
+          description: Archive including `__TEXT__` and `__METADATA__` entries
+
+  /mime-types:
+    get:
+      operationId: tika_mime_types_list_get
+      summary: List registered MIME types (HTML)
+      responses:
+        "200":
+          content:
+            text/html:
+              schema:
+                type: string
+
+  /mime-types/{type}/{subtype}:
+    get:
+      operationId: tika_mime_type_detail_get
+      summary: MIME type details (HTML or JSON depending on Accept)
+      parameters:
+        - name: type
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: subtype
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: MIME details
+
+  /detectors:
+    get:
+      operationId: tika_detectors_list_get
+      summary: List configured detectors (HTML)
+      responses:
+        "200":
+          content:
+            text/html:
+              schema:
+                type: string
+
+  /parsers:
+    get:
+      operationId: tika_parsers_list_get
+      summary: List parsers (HTML)
+      responses:
+        "200":
+          content:
+            text/html:
+              schema:
+                type: string
+
+  /parsers/details:
+    get:
+      operationId: tika_parsers_details_get
+      summary: Parser details with MIME coverage (HTML)
+      responses:
+        "200":
+          content:
+            text/html:
+              schema:
+                type: string
+
+  /translate/all/{translator}/{src}/{dest}:
+    put:
+      operationId: tika_translate_put
+      summary: Translate document stream between languages (when translate module is enabled)
+      parameters:
+        - name: translator
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: src
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: dest
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        $ref: "#/components/requestBodies/BinaryStream"
+      responses:
+        "200":
+          description: Translated bytes
+
+  /pipes:
+    post:
+      operationId: tika_pipes_post
+      summary: Run a single fetch/emit tuple through the pipes parser (when pipes module is enabled)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Status map (`application/json`)
+
+  /async:
+    post:
+      operationId: tika_async_post
+      summary: Queue async fetch/emit tuples (when async module is enabled)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Queue acknowledgement (`application/json`)

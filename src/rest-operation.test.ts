@@ -235,6 +235,36 @@ describe("executeRestOperation", () => {
     );
   });
 
+  it("multipart decodes base64 file part when *Encoding is base64", async () => {
+    await withFetchServer(
+      async (req) => {
+        const fd = await req.formData();
+        const f = fd.get("fileInput");
+        expect(f).toBeInstanceOf(Blob);
+        const buf = Buffer.from(await (f as Blob).arrayBuffer());
+        expect(buf.toString("utf8")).toBe("hi");
+        expect(fd.get("fileInputFileName")).toBeNull();
+        return Response.json({ ok: true });
+      },
+      async (origin) => {
+        const out = await executeRestOperation(
+          makeOp({
+            method: "POST",
+            requestBody: INLINE_OPENAPI_REQUEST_BODY,
+            requestBodyContentType: "multipart/form-data",
+          }),
+          {
+            fileInput: Buffer.from("hi", "utf8").toString("base64"),
+            fileInputEncoding: "base64",
+            fileInputFileName: "doc.txt",
+          },
+          makeOpenApi(origin)
+        );
+        expect(out).toEqual({ ok: true, data: { ok: true } });
+      }
+    );
+  });
+
   it("sends application/octet-stream when args.body is a string", async () => {
     await withFetchServer(
       async (req) => {
