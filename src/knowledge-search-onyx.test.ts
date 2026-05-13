@@ -27,7 +27,10 @@ describe("resolveOnyxSendSearchOperationId", () => {
 
   it("resolves legacy onyx_send_search_message when present", () => {
     expect(
-      resolveOnyxSendSearchOperationId([{ id: "github::x" }, { id: "onyx::onyx_send_search_message" }])
+      resolveOnyxSendSearchOperationId([
+        { id: "github::x" },
+        { id: "onyx::onyx_send_search_message" },
+      ])
     ).toBe("onyx::onyx_send_search_message");
   });
 
