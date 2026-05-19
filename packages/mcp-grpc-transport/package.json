@@ -42,10 +42,10 @@
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.14.3",
-    "@grpc/proto-loader": "^0.8.0",
+    "@grpc/proto-loader": "^0.8.1",
     "@grpc/reflection": "^1.0.4",
     "google-proto-files": "^4.2.0",
-    "protobufjs": "^8.0.3"
+    "protobufjs": "^8.4.0"
   },
   "devDependencies": {
     "@modelcontextprotocol/sdk": "^1.27.1",

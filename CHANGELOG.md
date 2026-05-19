@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Dependencies:** consolidated Dependabot bumps (pg, graphql, yaml, vitest, eslint, tsx, typescript-eslint, `@grpc/proto-loader`, protobufjs, jose, GitHub Actions pins for CodeQL / Cosign / TruffleHog). **OpenTelemetry** aligned on **2.7.x** SDK + **0.218** OTLP HTTP exporter (`resourceFromAttributes` / `defaultResource`). **@types/node** **25.x**. Zod held at **4.3.6** (MCP SDK tool schemas incompatible with **4.4.3** for now).
+
+### Fixed
+
+- **Supply chain (OSV):** bump **`brace-expansion`** override to **5.0.6** and **`ws`** to **8.20.1** (root + website/dashboard overrides).
+
 ## [6.2.1] - 2026-05-12
 
 Patch release: **`fetch-provider-specs`** hardening (Paperless `/api/schema/` validation, **Paperless-ngx ≥ 2.15** guidance, in-cluster HTTP diagnostics, **Gotenberg** pinned upstream OpenAPI when `/openapi.json` is absent), **Helm** Paperless default image **2.15.0** and removal of ineffective **`PAPERLESS_API_TOKEN`** injection into the Paperless container, **full bundled** **Tika**/**Gotenberg** OpenAPI surfaces, refreshed pinned public and live-fetched provider specs, **Istio** `*.localhost` provider VirtualServices when Stirling exists (not gated on full stack), and **`execute`** multipart **`fileEncoding: base64`** support. **`charts/clawql-mcp`** **Chart.version** **0.6.5** with **`appVersion` `6.2.1`**. Release notes: **[`RELEASE_NOTES_v6.2.1.md`](RELEASE_NOTES_v6.2.1.md)**.
