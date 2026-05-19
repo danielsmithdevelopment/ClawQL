@@ -45,7 +45,7 @@
     "@grpc/proto-loader": "^0.8.1",
     "@grpc/reflection": "^1.0.4",
     "google-proto-files": "^4.2.0",
-    "protobufjs": "^8.4.0"
+    "protobufjs": "^7.5.8"
   },
   "devDependencies": {
     "@modelcontextprotocol/sdk": "^1.27.1",
@@ -53,6 +53,11 @@
     "typescript": "^6.0.2",
     "vitest": "^4.1.1",
     "zod": "^3.24.0"
+  },
+  "overrides": {
+    "google-proto-files": {
+      "protobufjs": "7.6.0"
+    }
   },
   "scripts": {
     "clean": "rm -rf dist",

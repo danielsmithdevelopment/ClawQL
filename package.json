@@ -123,7 +123,7 @@
         "sql.js": "^1.14.1",
         "swagger2openapi": "^7.0.8",
         "yaml": "^2.9.0",
-        "zod": "^4.3.6"
+        "zod": "4.3.6"
     },
     "devDependencies": {
         "@eslint/js": "^10.0.1",
@@ -150,9 +150,13 @@
         "path-to-regexp": "8.4.0",
         "picomatch": "4.0.4",
         "postcss": "8.5.10",
+        "protobufjs": "7.6.0",
+        "google-proto-files": {
+            "protobufjs": "7.6.0"
+        },
         "mcp-grpc-transport": {
             "google-proto-files": {
-                "protobufjs": "8.4.0"
+                "protobufjs": "7.6.0"
             }
         },
         "ws": "8.20.1",

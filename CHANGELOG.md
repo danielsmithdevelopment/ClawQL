@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Dependencies:** consolidated Dependabot bumps (pg, graphql, yaml, vitest, eslint, tsx, typescript-eslint, `@grpc/proto-loader`, protobufjs, jose, GitHub Actions pins for CodeQL / Cosign / TruffleHog). **OpenTelemetry** aligned on **2.7.x** SDK + **0.218** OTLP HTTP exporter (`resourceFromAttributes` / `defaultResource`). **@types/node** **25.x**. Zod held at **4.3.6** (MCP SDK tool schemas incompatible with **4.4.3** for now).
+- **Dependencies:** consolidated Dependabot bumps (pg, graphql, yaml, vitest, eslint, tsx, typescript-eslint, `@grpc/proto-loader`, jose, GitHub Actions pins for CodeQL / Cosign / TruffleHog). **protobufjs** raised to **7.6.0** (override + lock patch for `google-proto-files` nested copy). **OpenTelemetry** aligned on **2.7.x** SDK + **0.218** OTLP HTTP exporter (`resourceFromAttributes` / `defaultResource`). **@types/node** **25.x**. Zod pinned at **4.3.6** (MCP SDK tool schemas incompatible with **4.4.x** for now).
 
 ### Fixed
 
