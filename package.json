@@ -123,7 +123,7 @@
         "sql.js": "^1.14.1",
         "swagger2openapi": "^7.0.8",
         "yaml": "^2.9.0",
-        "zod": "4.3.6"
+        "zod": "4.4.3"
     },
     "devDependencies": {
         "@eslint/js": "^10.0.1",
