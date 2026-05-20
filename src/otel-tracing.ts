@@ -44,7 +44,7 @@ export async function maybeInitOtelTracing(): Promise<OtelShutdownFn | undefined
   const { NodeTracerProvider } = await import("@opentelemetry/sdk-trace-node");
   const { BatchSpanProcessor } = await import("@opentelemetry/sdk-trace-base");
   const { OTLPTraceExporter } = await import("@opentelemetry/exporter-trace-otlp-http");
-  const { Resource } = await import("@opentelemetry/resources");
+  const { defaultResource, resourceFromAttributes } = await import("@opentelemetry/resources");
 
   const serviceName =
     process.env.OTEL_SERVICE_NAME?.trim() ||
@@ -53,8 +53,8 @@ export async function maybeInitOtelTracing(): Promise<OtelShutdownFn | undefined
 
   const exporter = new OTLPTraceExporter();
   const processor = new BatchSpanProcessor(exporter);
-  const resource = Resource.default().merge(
-    new Resource({
+  const resource = defaultResource().merge(
+    resourceFromAttributes({
       "service.name": serviceName,
     })
   );
