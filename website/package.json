@@ -71,6 +71,13 @@
   },
   "overrides": {
     "brace-expansion": "5.0.6",
+    "@node-minify/core": {
+      "glob": {
+        "minimatch": {
+          "brace-expansion": "2.0.3"
+        }
+      }
+    },
     "ws": "8.20.1",
     "basic-ftp": "5.3.1",
     "ip-address": "10.1.1",
