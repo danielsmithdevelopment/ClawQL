@@ -44,7 +44,7 @@ metadata:
 
 spec:
 
-  podSelector: {}
+  podSelector: \{\}
 
   policyTypes:
 
@@ -150,93 +150,3 @@ Key Takeaways (Memorize These!)
 - Audit log segregation encrypted with the tenant’s public key gives tenants evidence ownership without requiring platform operator access.
 
 You now have secure multi-tenancy that is architecturally enforced rather than policy-dependent. Cross-tenant leakage is structurally impossible, resource exhaustion is bounded, and audit logs remain clean and tenant-owned. This completes the foundation needed to run multiple tenants safely on the same platform.
-
-## **MODULE 28**
-
-### **Disaster Recovery and Business Continuity: RTO/RPO, Session Recovery, and Cross-Region Failover**
-
-Incident response assumes the infrastructure is intact and the question is recovery from an attack — disaster recovery assumes the infrastructure itself has failed and the question is restoration of service from a different location. Per-tier RTO and RPO targets (the audit trail, memory store, session state, and observability data all have different recovery requirements), active-passive cross-region failover with a Merkle continuity verification gate, and a defined session recovery decision tree together answer the question that only agentic platforms must answer: what do you do with an agent that was mid-task when everything stopped?
-
-**DR vs. incident response**
-
-- IR assumes infrastructure is intact and the threat is adversarial — contain, eradicate, recover from an attack
-
-- DR assumes infrastructure has failed — restore service from backup, in a different location, as fast as the RTO allows
-
-- Both plans must exist independently before they can be integrated for combined events (ransomware = both)
-
-- Each plan has a named owner, a tested runbook, a separate cadence
-
-**Data tier classification and RTO/RPO targets**
-
-- Tier 1 (audit trail + WORM): RPO = 0, RTO = 4 hours — no audit events may be lost; forensic integrity is non-negotiable
-
-- Tier 2 (memory store + Merkle roots): RPO = 15 minutes, RTO = 1 hour — agents can operate degraded without memory
-
-- Tier 3 (active session state): RPO = best effort (checkpoint interval), RTO = 30 minutes — uncheckpointed sessions restart
-
-- Tier 4 (observability data): RPO = 24 hours, RTO = 4 hours — useful for post-incident but not required for service restoration
-
-- Untested RTO targets are aspirations; only tested targets are commitments
-
-**Agent state serialization**
-
-- Serialization is the prerequisite for resumption — you cannot recover what you cannot describe as data
-
-- Checkpoint format: agent ID, session ID, pipeline position, ATR claims snapshot, memory store read pointer, pending HITL approvals, last completed tool call
-
-- Checkpoint signed by the agent’s private key; hash appended to the Merkle tree
-
-- Checkpoint interval: 5 minutes default (configurable); determines RPO for Tier 3
-
-- Invalid checkpoint signature: not used for recovery — clean restart performed instead
-
-**Backup architecture: 3-2-1+ per tier**
-
-- Tier 1: primary WORM bucket + synchronous cross-region replication + weekly cold storage export; Merkle root recorded externally in SIEM
-
-- Tier 2: primary bucket + asynchronous cross-region replication (≤15 minute lag) + daily cold storage
-
-- Vault: Raft standby in secondary region + hourly encrypted snapshot to cold storage; backup encryption key in HSM (not in Vault — avoids circular dependency)
-
-**Active/passive cross-region failover**
-
-- Active/passive preferred over active/active: avoids split-brain Merkle chain conflict
-
-- Passive region: full stack in warm-standby, continuous replication, no production traffic
-
-- Failover trigger: primary health check fails for 5 consecutive checks over 5 minutes; requires human confirmation before DNS cut
-
-- Failover sequence: promote Vault standby → verify Merkle root continuity (gate — cannot proceed if roots diverge) → promote memory store → cut DNS → run smoke test suite
-
-- If Merkle roots diverge: halt failover, escalate to security team, investigate before proceeding
-
-- Failback: treat return to primary as a fresh deployment; never re-promote without full validation
-
-**Session recovery decision tree**
-
-- Resume: valid verified checkpoint exists + failure was infrastructure (not security) → load checkpoint, re-issue JWT, continue
-
-- Restart: checkpoint unverifiable or absent → fresh session, reads memory from start of context window
-
-- Discard: failure was a security event → preserve checkpoint as forensic evidence, start clean session only after incident is contained; notify the owning user before discarding
-
-**DR testing programme**
-
-- Quarterly: memory store restore + Vault snapshot restore, both to isolated test environment; verify Merkle continuity; document timing
-
-- Semi-annual: full failover drill with canary tenant traffic; all steps including DNS cut; measure RTO per tier
-
-- Annual: chaos engineering exercise; simulate primary region failure; execute full failover + failback; document deviations
-
-**Key takeaways to cover**
-
-- DR and IR are different plans with different owners — conflating them produces a plan that does neither well
-
-- Per-tier RTO/RPO differentiation is the most important DR design decision — uniform targets produce either over-engineering or under-protection
-
-- Merkle root continuity verification is the gate that prevents promoting a diverged secondary — skip it and you may restore from a corrupted store
-
-- The session recovery decision tree must be documented and automated; human judgement under disaster conditions is inconsistent
-
----

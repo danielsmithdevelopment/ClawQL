@@ -56,7 +56,7 @@ Detected entity types include:
 
 Action on detection:
 
-- Replace the sensitive value with a structured placeholder: [REDACTED:{entity_type}] (preserves format for downstream processing).
+- Replace the sensitive value with a structured placeholder: [REDACTED:\{entity_type\}] (preserves format for downstream processing).
 
 - For secret-classified content or credential patterns: the entire write is blocked, not redacted.
 
@@ -121,83 +121,3 @@ Key Takeaways (Memorize These!)
 - Residency controls must be enforced at the infrastructure layer, not just documented in policy — Panguard + bucket policies are the enforcement mechanism.
 
 You now have data classification as a built-in platform property. Sensitive information is tagged once at ingestion, redacted automatically at every boundary, and only accessible to agents that are explicitly allowed to see it. Residency and anonymisation complete the picture, turning data handling from an accidental risk into a controlled, auditable, and regulation-friendly system.
-
-## **MODULE 16**
-
-### **Model Weight Integrity: Verifying Authenticity Before Every Load**
-
-A model weight file is executable code, and a weight file that can be silently replaced between training and inference means every security control downstream of the model is built on a compromised foundation. Cryptographic verification of weight hashes against HSM-backed signing keys, enforced before every load rather than only at deployment time, closes the window between when a weight was approved and when it runs. This module treats model weights with the same integrity controls applied to container images — because the threat model is identical.
-
-**Why model weights are executable code**
-
-- A model weight file determines what the model computes — altering weights changes behavior as surely as altering source code
-
-- Unlike source code, weight files are large binary blobs that are difficult to inspect visually
-
-- A weight file that can be silently replaced between training and inference gives an attacker control over model behavior without touching any application code
-
-- Threat model: supply chain attack on the weight hosting infrastructure, man-in-the-middle on the weight download, insider modification post-training
-
-**Cryptographic hash verification**
-
-- Every approved weight file has a SHA-256 (or SHA-3) hash recorded in a Vault-backed manifest
-
-- The hash is computed at training completion and signed by the training pipeline’s identity before being written to the manifest
-
-- At load time, the serving infrastructure recomputes the hash and compares it to the signed manifest value
-
-- Hash mismatch: load aborted, alert fired, the serving pod does not start
-
-- Verification runs on every load — not just at deployment time
-
-**HSM-backed signing keys**
-
-- The signing key for weight manifests is stored in the HSM (same HSM as Vault’s unseal key)
-
-- Training pipeline authenticates to the HSM via its OIDC workload identity before signing
-
-- Signing key cannot be extracted from the HSM — even a compromised training pipeline cannot forge a signature without HSM access
-
-- Key rotation: new signing key issued annually; transition period where both old and new keys are trusted during the rotation window
-
-**Weight storage and access control**
-
-- Approved weights stored in a locked S3 bucket (Object Lock, COMPLIANCE mode) with versioning enabled
-
-- IAM policy: only the signing principal can write new weight versions; serving infrastructure is read-only
-
-- Weight download over TLS with certificate pinning to the storage endpoint — MITM interception detected
-
-- No serving infrastructure stores weights locally beyond the current serving session — weights are loaded, verified, and released
-
-**Behavioral monitoring for compromised weights**
-
-- A weight that passes hash verification but has been adversarially modified pre-training (backdoor) requires behavioral monitoring
-
-- Establish behavioral baseline: distribution of model outputs for a fixed evaluation set at training completion
-
-- Monitor serving output distribution — deviation from baseline (drift in output token distribution, unexpected output categories) is a signal
-
-- Canary evaluation: run the fixed evaluation set against the serving model weekly; alert on benchmark score regression >5%
-
-**Multi-provider weight management**
-
-- When using weights from external providers (HuggingFace, model registries), apply the same verification pipeline
-
-- Verify the provider’s published hash against the downloaded file before adding to the approved manifest
-
-- Do not download weights directly to serving infrastructure — pull to a staging environment, verify, sign, then promote to the approved store
-
-- Provider-published hashes should be verified against a secondary source (the provider’s GPG-signed release notes, not just the download page)
-
-**Key takeaways to cover**
-
-- Weight files are executable code and must be treated with the same supply chain controls as container images
-
-- Hash verification at every load, not just deployment, closes the post-deployment modification window
-
-- HSM-backed signing keys prevent a compromised training pipeline from forging a weight approval
-
-- Behavioral monitoring catches backdoored weights that pass hash verification because the modification was made pre-training
-
----

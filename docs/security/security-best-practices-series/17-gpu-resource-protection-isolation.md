@@ -16,11 +16,12 @@ description: "MIG isolation, namespace GPU quotas, and monitoring for unexpected
 prev: "model-weight-integrity-verification"
 next: "memory-context-poisoning-prevention"
 ---
+
 # GPU and Resource Protection: Isolation, Quotas, and Side-Channel Defences
 
 Isolation, Quotas, and Side-Channel Defences
 
-Hello and welcome to Module 17! 
+Hello and welcome to Module 17!
 
 Modules 1–16 have secured our supply chain, runtime enforcement, data handling, and model weights. Now we protect the GPU layer — the hardware that actually runs inference for our agents.
 
@@ -28,11 +29,7 @@ GPU memory is not cleared between workloads by default. In a shared environment,
 
 In this module we extend least privilege all the way down to the hardware with MIG partitioning, namespace isolation, strict quotas, and side-channel defenses. By the end you will know exactly how to prevent both data leakage and resource-exhaustion attacks at the GPU level.
 
-
-
 ---
-
-
 
 The GPU Memory Residue Problem
 
@@ -40,20 +37,15 @@ NVIDIA GPUs (and most other accelerators) do not zero memory between context swi
 
 In a shared cluster this means:
 
-- A compromised or malicious agent can read fragments of previous inference results.  
+- A compromised or malicious agent can read fragments of previous inference results.
 
-- This leakage happens through normal hardware behavior — no kernel exploit required.  
+- This leakage happens through normal hardware behavior — no kernel exploit required.
 
-- The risk is especially high in agentic platforms where multiple agents or pipelines share GPU nodes.  
-
+- The risk is especially high in agentic platforms where multiple agents or pipelines share GPU nodes.
 
 We must treat the GPU as a shared resource that requires the same zero-trust isolation we apply everywhere else.
 
-
-
 ---
-
-
 
 MIG (Multi-Instance GPU) Partitioning
 
@@ -61,223 +53,93 @@ MIG is the strongest hardware-level isolation available on supported NVIDIA GPUs
 
 How MIG works:
 
-- A single physical GPU is divided into multiple isolated instances, each with its own dedicated compute engines, memory, and L2 cache.  
+- A single physical GPU is divided into multiple isolated instances, each with its own dedicated compute engines, memory, and L2 cache.
 
-- Memory between MIG instances is hardware-enforced and automatically zeroed on context switch.  
+- Memory between MIG instances is hardware-enforced and automatically zeroed on context switch.
 
-- Instance A cannot read or influence instance B under any circumstances.  
-
+- Instance A cannot read or influence instance B under any circumstances.
 
 Kubernetes integration:
 
-- MIG slices are exposed as schedulable resources: nvidia.com/mig-3g.20gb  
+- MIG slices are exposed as schedulable resources: nvidia.com/mig-3g.20gb
 
-- Different tenants or high-security agents are scheduled to different MIG instances via node selectors and taints.  
-
+- Different tenants or high-security agents are scheduled to different MIG instances via node selectors and taints.
 
 MIG gives us true hardware isolation at the GPU level — the gold standard for multi-tenant inference.
 
-
-
 ---
-
-
 
 GPU Namespace Isolation (Non-MIG GPUs)
 
 For GPU models that do not support MIG we use namespace-level separation:
 
-- One tenant per GPU node pool with dedicated node taints and tolerations.  
+- One tenant per GPU node pool with dedicated node taints and tolerations.
 
-- ResourceQuota limits the number of GPUs per namespace.  
+- ResourceQuota limits the number of GPUs per namespace.
 
-- Time-sliced GPU sharing is never used for security-sensitive workloads — it provides no memory isolation between tenants.  
-
+- Time-sliced GPU sharing is never used for security-sensitive workloads — it provides no memory isolation between tenants.
 
 This architectural separation ensures that even without MIG, tenants cannot share the same physical GPU hardware.
 
-
-
 ---
-
-
 
 Resource Quotas and Blast Radius Bounding
 
 We prevent both data leakage and denial-of-service with strict quotas:
 
-- ResourceQuota on requests.nvidia.com/gpu and limits.nvidia.com/gpu per tenant namespace.  
+- ResourceQuota on requests.nvidia.com/gpu and limits.nvidia.com/gpu per tenant namespace.
 
-- CPU and memory quotas prevent runaway agent loops from starving other tenants.  
+- CPU and memory quotas prevent runaway agent loops from starving other tenants.
 
-- NATS JetStream stream limits per tenant (max messages, max bytes, max consumers).  
+- NATS JetStream stream limits per tenant (max messages, max bytes, max consumers).
 
-- Panguard rate-limits tool calls that trigger GPU inference, scoped per tenantId.  
-
+- Panguard rate-limits tool calls that trigger GPU inference, scoped per tenantId.
 
 We also alert on sustained GPU utilization >90 % for >5 minutes from a single tenant — a strong signal of possible inference DoS.
 
-
-
 ---
-
-
 
 Side-Channel Attacks on Shared GPU
 
 Even with isolation, sophisticated attackers can attempt side-channel attacks:
 
-- Timing attacks: Measure GPU execution time to infer properties of another workload.  
+- Timing attacks: Measure GPU execution time to infer properties of another workload.
 
-- Power side-channels: GPU power draw varies with computation and can be observed from shared infrastructure.  
-
+- Power side-channels: GPU power draw varies with computation and can be observed from shared infrastructure.
 
 Mitigations:
 
-- Add random jitter to GPU response times for any external-facing inference endpoints.  
+- Add random jitter to GPU response times for any external-facing inference endpoints.
 
-- For the highest-security deployments, use dedicated GPU hardware per tenant.  
-
+- For the highest-security deployments, use dedicated GPU hardware per tenant.
 
 In practice, these side-channels require significant infrastructure access and are lower priority than MIG or namespace isolation for most deployments.
 
-
-
 ---
-
-
 
 GPU Monitoring and Anomaly Detection
 
 Visibility is critical. We monitor continuously:
 
-- Prometheus nvidia-smi exporter for utilization, memory usage, temperature, and power draw per GPU.  
+- Prometheus nvidia-smi exporter for utilization, memory usage, temperature, and power draw per GPU.
 
-- Alert on any pod not in the approved GPU workload list attempting to access a GPU.  
+- Alert on any pod not in the approved GPU workload list attempting to access a GPU.
 
 - Alert on unexpected memory usage spikes from workloads that normally use
-- Falco rule: alert on any process other than approved model-serving binaries accessing /dev/nvidia*.  
-
+- Falco rule: alert on any process other than approved model-serving binaries accessing /dev/nvidia\*.
 
 These signals turn the GPU layer into an observable part of our security posture.
 
-
-
 ---
-
-
 
 Key Takeaways (Memorize These!)
 
-- GPU memory residue is a hardware property, not a software bug — it requires hardware-level mitigation (MIG) or architectural separation (dedicated GPU per tenant).  
+- GPU memory residue is a hardware property, not a software bug — it requires hardware-level mitigation (MIG) or architectural separation (dedicated GPU per tenant).
 
-- MIG is the correct mitigation for multi-tenant GPU deployments on supported hardware — time-sliced sharing is not acceptable for security-sensitive workloads.  
+- MIG is the correct mitigation for multi-tenant GPU deployments on supported hardware — time-sliced sharing is not acceptable for security-sensitive workloads.
 
-- Resource quotas at the namespace level prevent GPU denial-of-service regardless of whether MIG is in use.  
+- Resource quotas at the namespace level prevent GPU denial-of-service regardless of whether MIG is in use.
 
-- GPU monitoring is a security control as much as an operational one — unexpected GPU consumers are a signal of workload escape or resource theft.  
-
+- GPU monitoring is a security control as much as an operational one — unexpected GPU consumers are a signal of workload escape or resource theft.
 
 You now have least privilege enforced at the GPU hardware level. Residual data leakage is prevented, resource exhaustion is bounded, and every GPU access is monitored. The compute layer that powers your agents is now as securely isolated as every other component in the platform.
-
-
-
-## **MODULE 18**
-
-### **Memory & Context Poisoning Prevention: Redaction at Source and Immutable Agent Memory**
-
-A poisoned memory entry does not cause immediate harm — it waits until the agent retrieves it days or weeks later and acts on it as trusted historical context, by which point the origin is difficult to trace and the damage is already done. Panguard redaction gates, per-subject encryption keys, Merkle-tree integrity over every entry, and WORM-backed storage make the entire memory lifecycle tamper-evident from write to recall. This module closes the attack surface that most agentic platforms leave entirely undefended.
-
-**Why long-term memory is the most underprotected surface**
-
-- A poisoned memory entry doesn’t cause immediate harm — it waits until the agent retrieves it in a future session and acts on it as trusted historical context  
-
-- By the time a poisoned entry causes harm, its origin is difficult to trace and its removal is uncertain  
-
-- Memory accumulates across sessions — the attack surface grows with every session the agent completes  
-
-- Four distinct poisoning vectors: direct write injection, retrieval poisoning via RAG, inter-agent message poisoning, temporal drift (post-write modification)  
-
-
-**Classification and redaction at write time**
-
-- Presidio redaction applied to every memory write before it is committed to the store  
-
-- secret-classified content: entire write rejected, not redacted — partial redaction of a secret is insufficient  
-
-- Credential pattern detection: rejected entirely on match  
-
-- Classification tag stored as metadata alongside every entry — enforced at recall by the gateway  
-
-
-**Per-subject encryption for GDPR compliance**
-
-- Each data subject’s memory entries encrypted with a per-subject key in Vault transit engine  
-
-- GDPR right to erasure: delete the per-subject key — ciphertext remains but is permanently irrecoverable  
-
-- Merkle integrity is preserved (encrypted bytes don’t change); data is irrecoverable (key is gone)  
-
-- Key deletion is irreversible — confirm GDPR erasure request before executing  
-
-
-**Merkle-tree integrity**
-
-- Every memory entry hash is chained: SHA-256(entry_content + entry_metadata + prev_root)  
-
-- New Merkle root computed and recorded in the audit trail and Prometheus on every write  
-
-- Any post-write modification to a stored entry changes its hash and invalidates all subsequent roots  
-
-- Scheduled integrity checks: every 15 minutes; on failure: block memory reads, alert, notify security team  
-
-- Blocking reads on integrity failure is intentional — a store whose integrity cannot be verified must not serve recall results  
-
-
-**Append-only semantics and WORM storage**
-
-- Memory entries are never updated in place — “updates” are new entries with a supersedes field referencing the prior entry’s hash  
-
-- The superseded entry remains in the store — complete modification history is preserved and verifiable  
-
-- WORM storage: S3 Object Lock in COMPLIANCE mode, 90-day minimum retention  
-
-- No API call, IAM policy, or root account action can delete a WORM-protected entry during retention  
-
-
-**Poisoning detection rules**
-
-- Panguard rule: block memory writes containing instruction-injection patterns (ignore previous instructions, your new goal is, system prompt:, override:)  
-
-- Rate limiting on memory writes per session: >50 writes in 60 seconds → throttle + warning  
-
-- Weekly memory audit: replay Merkle verification + scan all entries for blocked patterns + produce signed audit report  
-
-- Audit report stored in WORM and referenced in the quarterly review (Module 25)  
-
-
-**Inter-agent message encryption and mutual auth**
-
-- NATS JetStream bus: mTLS + message-level AES-256-GCM encryption  
-
-- Each agent has its own mTLS certificate — cannot impersonate another agent’s identity  
-
-- Subject-level ACLs: each agent publishes only to its own namespace and subscribes only to declared inputs  
-
-- Message-level encryption key fetched from Vault per conversation — even a compromised broker cannot read message content  
-
-
-**Key takeaways to cover**
-
-- Memory is a persistent attack surface that outlasts the session that created it — poisoning attacks are delayed-action  
-
-- The Merkle tree converts any post-write modification into a detectable event — tamper-evidence is a structural property, not a monitoring layer  
-
-- GDPR cryptographic erasure (key deletion, not data deletion) is the only solution to the erasure/WORM conflict that preserves both regulatory compliance and forensic integrity  
-
-- WORM storage is the final backstop — no administrative action can destroy the memory history during the retention period  
-
-
-
-
----

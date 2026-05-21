@@ -16,11 +16,25 @@ const manifest = JSON.parse(
 )
 
 const raw = fs.readFileSync(monolith, 'utf8')
-const re = /^Module (\d+):[^\n]*\n/gm
-const hits = [...raw.matchAll(re)]
+const moduleRe = /^Module (\d+):[^\n]*\n/gm
+const outlineRe = /^## \*\*MODULE (\d+)\*\*/gm
+const hits = [...raw.matchAll(moduleRe)]
 if (hits.length < 30) {
   console.error(`Expected 30 Module sections, found ${hits.length}`)
   process.exit(1)
+}
+
+/** End narrative before duplicated outline block for the next module. */
+function sectionEnd(startIndex, part) {
+  const nextModule = hits.find((h) => h.index > startIndex && Number(h[1]) > part)
+  const nextOutline = [...raw.matchAll(outlineRe)].find(
+    (h) => h.index > startIndex && Number(h[1]) > part,
+  )
+  const candidates = []
+  if (nextModule) candidates.push(nextModule.index)
+  if (nextOutline) candidates.push(nextOutline.index)
+  if (candidates.length === 0) return raw.length
+  return Math.min(...candidates)
 }
 
 function stripEmoji(s) {
@@ -45,7 +59,7 @@ function toBody(section, titleFromManifest) {
 for (let i = 0; i < hits.length; i++) {
   const part = Number(hits[i][1])
   const start = hits[i].index
-  const end = i + 1 < hits.length ? hits[i + 1].index : raw.length
+  const end = sectionEnd(start, part)
   const chunk = raw.slice(start, end)
   const m = manifest.find((x) => x.part === part)
   if (!m) {

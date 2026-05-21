@@ -72,7 +72,7 @@ Docker note: Docker manipulates iptables directly and can bypass ufw. For Docker
 
 Tailscale ACL example:
 
-{
+\{
 
   "acls": [
 
@@ -80,7 +80,7 @@ Tailscale ACL example:
 
   ]
 
-}
+\}
 
 Scope access to the specific Tailscale IP of the client machine — never \*:8080.
 
@@ -183,108 +183,3 @@ Key Takeaways (Memorize These!)
 - Every gateway configuration change must be followed by a port audit — silent drift is the operational risk.
 
 The gateway is now hardened end-to-end. It can only be reached in the exact ways we explicitly allow, and the most dangerous browser-based bypass is structurally impossible. This completes the perimeter around the single highest-value component in the entire platform.
-
-## **MODULE 6**
-
-### **Egress Filtering, DNS Controls, and Data Loss Prevention**
-
-Every ingress control in this series stops things from getting in — egress controls determine what happens to the data an attacker already has access to if something does get through. Istio ServiceEntry allowlists, allowlist-only DNS resolution, and payload-level DLP inspection on outbound tool call parameters together ensure that a successful injection or skill compromise remains a containment event rather than a data breach. This module builds the outbound control stack that makes exfiltration structurally difficult regardless of how an attacker gains initial access.
-
-**Why egress is the exfiltration surface**
-
-- Ingress defenses are well-understood; egress is where defenders consistently underinvest
-
-- A successful prompt injection without egress controls = complete data breach
-
-- Three distinct exfiltration channels: HTTPS to external APIs, DNS tunneling, side channels
-
-- Egress controls are the last line of defense when all upstream controls fail
-
-**Istio ServiceEntry allowlists and default-deny egress**
-
-- Default-deny Sidecar resource: no external traffic unless explicitly declared
-
-- ServiceEntry per permitted external host: hostname, port, TLS mode
-
-- Istio Sidecar resource scopes egress allowlist per namespace — tenant A cannot reach tenant B’s external services
-
-- Quarterly review: remove ServiceEntry declarations for deprecated integrations
-
-- Panguard second enforcement point: validates external hostname against skill manifest declaration at tool-call level
-
-**SSRF prevention for agent URL tools**
-
-- Any tool that accepts a URL parameter is an SSRF risk
-
-- Validate URL at parse time, before DNS resolution: block RFC 1918 ranges (10.x, 172.16.x, 192.168.x), loopback, link-local (169.254.x — cloud metadata)
-
-- Block non-HTTP/HTTPS schemes: file://, gopher://, dict://, ftp://
-
-- Disable redirect following by default — redirects can hop from allowed external host to internal IP
-
-- IMDSv2 requirement for cloud metadata: even if the URL is blocked at the application layer, enforce IMDSv2 at the cloud level as a second control
-
-- Pin to resolved IP after first DNS lookup — prevents TOCTOU rebinding at the tool call level
-
-**DNS-layer filtering**
-
-- Allowlist-only DNS resolution for agent pods: CoreDNS RPZ or Cloudflare Gateway
-
-- All agents use a custom dnsConfig pointing to the filtering resolver
-
-- RPZ zone: rpz-passthru for declared hostnames, NXDOMAIN for everything else
-
-- DNS tunneling heuristics on the filtering resolver:
-  - Label length > 40 characters → flag
-    - 100 unique queries per minute to same second-level domain → flag
-    - Shannon entropy of subdomain label > 4.0 bits/character → flag
-
-  - Falco rule: alert on DNS queries to non-allowlisted domains from agent pods
-
-**DLP inspection of outbound tool call payloads**
-
-- DLP at the tool-call parameter level — not just log line scanning
-
-- Presidio entity detection on all fields declared as content-bearing: body, text, content, message, data
-
-- Entities blocked from leaving via external tool calls: PII, credentials, classified data above declared egress level
-
-- Skill manifest declares maxClassificationLevel for outbound payloads — gateway enforces at call time
-
-- Structured data inspection: JSON field-level, not just full-string matching
-
-- Block on detection (not alert-only) — alert-only gives the attacker the detection-to-response window
-
-**Session-level egress volume detection**
-
-- Single session >50MB received from external endpoints → HIGH alert
-
-- 500 external calls in 60 minutes from one session → WARNING
-
-- Base64 or hex-encoded strings >100 characters in API parameters → block + HIGH alert
-
-- Establish behavioral baseline for each agent role before enabling blocking thresholds
-
-- Panguard tracks cumulative egress per session across all tool calls, not just per-call
-
-**Egress from sandboxed skill execution**
-
-- Skills default to networkEgress: deny inside Kata Container sandbox
-
-- Skills requiring external access must declare hosts in manifest egressRequirements
-
-- Panguard verifies runtime egress matches manifest declaration
-
-- Undeclared egress attempt from a sandboxed skill → block + quarantine + alert (critical signal of compromised skill)
-
-**Key takeaways to cover**
-
-- SSRF and DNS tunneling are distinct bypass paths that require distinct controls — Istio allowlists stop HTTPS exfiltration but not DNS tunneling
-
-- URL validation must happen at parse time before DNS resolution — post-resolution validation is vulnerable to TOCTOU rebinding
-
-- DLP at the tool-call parameter level is categorically different from log-line scanning — the former prevents exfiltration, the latter detects it after the fact
-
-- Baseline before enabling blocking thresholds — alert fatigue from miscalibrated egress volume alerts is itself a security risk
-
----

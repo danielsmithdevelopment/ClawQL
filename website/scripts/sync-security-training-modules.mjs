@@ -46,15 +46,35 @@ function escapeLessThanBeforeDigit(body) {
   return body.replace(/<(?=\d)/g, '&lt;')
 }
 
+/** Escape `{` / `}` outside fenced code blocks so JSON/YAML examples compile as MDX. */
+function escapeMdxCurlyOutsideFences(body) {
+  const lines = body.split('\n')
+  let inFence = false
+  return lines
+    .map((line) => {
+      const fence = line.match(/^(`{3,}|~{3,})(.*)$/)
+      if (fence) {
+        if (!inFence) inFence = true
+        else if (!fence[2].trim()) inFence = false
+        return line
+      }
+      if (inFence) return line
+      return line.replace(/\{/g, '\\{').replace(/\}/g, '\\}')
+    })
+    .join('\n')
+}
+
 /** Map relative Markdown links to absolute GitHub blob URLs (same spirit as defense-in-depth sync). */
 function rewriteLinksForSite(body) {
-  return escapeLessThanBeforeDigit(
+  return escapeMdxCurlyOutsideFences(
+    escapeLessThanBeforeDigit(
     body
       .replaceAll('](../../charts/', `](${GH_MAIN}/charts/`)
       .replaceAll('](../../docs/', `](${GH_MAIN}/docs/`)
       .replaceAll('](../../docker/', `](${GH_MAIN}/docker/`)
       .replaceAll('](../../AGENTS.md)', `](${GH_MAIN}/AGENTS.md)`)
       .replaceAll('](../', `](${GH_MAIN}/docs/security/`),
+    ),
   )
 }
 

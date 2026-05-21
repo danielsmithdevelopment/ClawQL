@@ -16,21 +16,18 @@ description: "Harden developer laptops and enforce secure-by-default production 
 prev: "automated-response-incident-recovery-picerl"
 next: "threat-modelling-stride-agentic-ai"
 ---
+
 # Development and Deployment Security: Workstation Hardening, Local Dev, and Secure Production Deployment
 
 Workstation Hardening, Local Dev, and Secure Production Deployment
 
-Hello and welcome to Module 21! 
+Hello and welcome to Module 21!
 
 Modules 1–20 have built a production-grade security stack that protects agents from supply chain to runtime to incident response. But every artifact that reaches production — every image, every skill, every configuration change — originates on a developer workstation. If that workstation is weak, the entire chain is weak.
 
 A long-lived credential in a shell profile or an unhardened local environment is one phishing email away from a production breach. Security that relies on manual steps at deploy time will eventually be skipped under pressure. In this module we harden both ends of the pipeline: the developer workstation (where everything begins) and the production deployment process (where everything lands). By the end you will have a secure-by-default development-to-production flow where the safe path is also the easiest path.
 
-
-
 ---
-
-
 
 The Development-to-Production Security Pipeline
 
@@ -38,221 +35,100 @@ The developer workstation is part of the production security perimeter. Its post
 
 Key principles:
 
-- A long-lived credential in ~/.zshrc or a shared state directory is one successful phishing attempt away from cluster compromise.  
+- A long-lived credential in ~/.zshrc or a shared state directory is one successful phishing attempt away from cluster compromise.
 
-- Any security control that requires manual configuration at deploy time will eventually be bypassed under deadline pressure — the default must be secure.  
+- Any security control that requires manual configuration at deploy time will eventually be bypassed under deadline pressure — the default must be secure.
 
-- Weakness on either end of the pipeline undermines the entire system. We harden the workstation structurally and the deployment process automatically.  
-
-
-
+- Weakness on either end of the pipeline undermines the entire system. We harden the workstation structurally and the deployment process automatically.
 
 ---
-
-
 
 Workstation Tooling Layer
 
 Every developer laptop runs a standardized, verified tooling stack as part of onboarding:
 
-- Endpoint Detection and Response (EDR): Aegis or equivalent — continuous monitoring for suspicious activity on the laptop.  
+- Endpoint Detection and Response (EDR): Aegis or equivalent — continuous monitoring for suspicious activity on the laptop.
 
-- Wazuh agent: Ships local security events (file changes, process execution, network activity) to the central SIEM for correlation with production events.  
+- Wazuh agent: Ships local security events (file changes, process execution, network activity) to the central SIEM for correlation with production events.
 
-- Panguard CLI: Local enforcement of ATR rules during ClawQL development — catches policy violations before code leaves the laptop.  
+- Panguard CLI: Local enforcement of ATR rules during ClawQL development — catches policy violations before code leaves the laptop.
 
-- Gitleaks pre-commit hooks: Automatically scans every commit for credential patterns before they enter git history.  
+- Gitleaks pre-commit hooks: Automatically scans every commit for credential patterns before they enter git history.
 
-- Hardware-backed commit signing: YubiKey or platform authenticator with git config gpg.format ssh — every commit is signed and verifiable.  
-
+- Hardware-backed commit signing: YubiKey or platform authenticator with git config gpg.format ssh — every commit is signed and verifiable.
 
 All tooling is installed, verified, and kept up-to-date as part of developer onboarding — it is never optional.
 
-
-
 ---
-
-
 
 Workstation Structural Layer
 
 Beyond tools, we enforce structural controls that limit blast radius even if tooling is bypassed:
 
-- State directory permissions: chmod 700 ~/.clawql and all subdirectories — no group or world access.  
+- State directory permissions: chmod 700 ~/.clawql and all subdirectories — no group or world access.
 
-- Non-root gateway execution: The startup script explicitly rejects running as UID 0.  
+- Non-root gateway execution: The startup script explicitly rejects running as UID 0.
 
-- Per-project workspace isolation: CLAWQL_STATE_DIR=$(pwd)/.clawql-workspace — each project has its own isolated state with no shared directories.  
+- Per-project workspace isolation: CLAWQL_STATE_DIR=$(pwd)/.clawql-workspace — each project has its own isolated state with no shared directories.
 
-- devcontainer pattern: Every project runs inside an isolated container with its own gateway socket and state directory.  
+- devcontainer pattern: Every project runs inside an isolated container with its own gateway socket and state directory.
 
-- Vault dev server: Started fresh for each session, in-memory, and non-persistent — no credentials survive session close.  
+- Vault dev server: Started fresh for each session, in-memory, and non-persistent — no credentials survive session close.
 
-- External API keys for development: Stored only in the Vault dev server with a 4-hour TTL — never in shell profiles or dotfiles.  
-
-
-
+- External API keys for development: Stored only in the Vault dev server with a 4-hour TTL — never in shell profiles or dotfiles.
 
 ---
-
-
 
 Preventing Credential Leakage into Git and Logs
 
 We actively block common leakage paths:
 
-- ClawQL-specific Gitleaks patterns (session JWT regex, API key prefixes) are added to .gitleaks.toml.  
+- ClawQL-specific Gitleaks patterns (session JWT regex, API key prefixes) are added to .gitleaks.toml.
 
-- Log-level discipline: CLAWQL_LOG_LEVEL=info is enforced in all shell profiles — debug is never used in persistent log destinations.  
+- Log-level discipline: CLAWQL_LOG_LEVEL=info is enforced in all shell profiles — debug is never used in persistent log destinations.
 
-- Weekly automated scan of the state directory: gitleaks detect --source ~/.clawql/ --no-git.  
+- Weekly automated scan of the state directory: gitleaks detect --source ~/.clawql/ --no-git.
 
-- Developer offboarding checklist: Immediately revoke the developer’s mTLS certificate and rotate any shared credentials they had access to.  
-
-
-
+- Developer offboarding checklist: Immediately revoke the developer’s mTLS certificate and rotate any shared credentials they had access to.
 
 ---
-
-
 
 Production Deployment: Secure-by-Default Architecture
 
 Production deployments are one-command and fully secure by default:
 
-- clawql deploy --env production applies every security control without any manual flags.  
+- clawql deploy --env production applies every security control without any manual flags.
 
-- All production configuration lives in git as Infrastructure-as-Code with signed commits and PR-based change management.  
+- All production configuration lives in git as Infrastructure-as-Code with signed commits and PR-based change management.
 
-- The deployment pipeline includes mandatory gates: supply-chain verification (Modules 1–3), security test suite (Module 24), and smoke tests (Module 26). Any failure blocks the deploy.  
+- The deployment pipeline includes mandatory gates: supply-chain verification (Modules 1–3), security test suite (Module 24), and smoke tests (Module 26). Any failure blocks the deploy.
 
-- Canary deployment: New gateway version serves 5 % of traffic; security metrics are compared to baseline for 30 minutes before full rollout.  
+- Canary deployment: New gateway version serves 5 % of traffic; security metrics are compared to baseline for 30 minutes before full rollout.
 
-- Rollback criteria are defined before every deploy: >20 % increase in Panguard block rate, any unhandled 500 error, or any Falco CRITICAL alert in the observation window.  
-
-
-
+- Rollback criteria are defined before every deploy: >20 % increase in Panguard block rate, any unhandled 500 error, or any Falco CRITICAL alert in the observation window.
 
 ---
-
-
 
 Environment Parity
 
 Staging must be an exact mirror of production security configuration — same Panguard rules, same ATR roles, same NetworkPolicy, same Vault policies.
 
-- The local developer environment uses the Vault dev server (in-memory, non-persistent) while all other controls remain identical to production.  
+- The local developer environment uses the Vault dev server (in-memory, non-persistent) while all other controls remain identical to production.
 
-- Monthly automated drift detection compares staging vs production security configuration and alerts on any divergence.  
-
+- Monthly automated drift detection compares staging vs production security configuration and alerts on any divergence.
 
 A staging environment that is more permissive than production is not a staging environment — it is a security gap.
 
-
-
 ---
-
-
 
 Key Takeaways (Memorize These!)
 
-- The workstation is part of the production security perimeter — treat its compromise with the same severity as a production server compromise.  
+- The workstation is part of the production security perimeter — treat its compromise with the same severity as a production server compromise.
 
-- 700 permissions on state directories and non-root execution are structural controls that limit blast radius without requiring additional tooling.  
+- 700 permissions on state directories and non-root execution are structural controls that limit blast radius without requiring additional tooling.
 
-- Secure-by-default deployment means the insecure configuration requires deliberate action to enable — not the other way around.  
+- Secure-by-default deployment means the insecure configuration requires deliberate action to enable — not the other way around.
 
-- Staging must enforce the same security controls as production; a staging environment that is more permissive is not a staging environment, it is a gap.  
-
+- Staging must enforce the same security controls as production; a staging environment that is more permissive is not a staging environment, it is a gap.
 
 You now have a development and deployment pipeline where security is the path of least resistance. The workstation is hardened, leakage is prevented, and production deployments are secure by default and fully automated. This closes the loop between developer intent and production reality — the entire platform is only as secure as the code and configuration that reaches it.
-
-
-
-## **MODULE 22**
-
-### **Threat Modelling for Agentic AI: STRIDE, Attack Trees, and Living Threat Models**
-
-A threat model completed at launch and never revisited is a historical document, not a security control — the agent pipeline, the skills it uses, and the data it touches all change, and the threat model must change with them. STRIDE applied to agentic AI surfaces attack paths that standard application threat modelling misses: model inversion, goal hijacking, inter-agent lateral movement, and memory poisoning are not categories that appear in traditional STRIDE templates. This module builds a living threat model with a defined update cadence that stays accurate as the platform evolves rather than becoming obsolete the week after it’s written.
-
-**Why agentic AI requires a distinct threat model**
-
-- Standard application threat models assume a request-response architecture with a human initiating each interaction  
-
-- Agentic AI systems act autonomously across many steps, access multiple systems, and maintain state — the threat surface is fundamentally different  
-
-- STRIDE categories that change meaning in agentic contexts: Spoofing (which principal?), Tampering (model weights? memory? tool definitions?), Repudiation (which action in a multi-step chain?), Information Disclosure (via memory recall? context window?), Denial of Service (resource exhaustion vs. goal hijacking), Elevation of Privilege (ATR scope drift)  
-
-- New threat categories not in standard STRIDE: goal hijacking, memory poisoning, inter-agent lateral movement, model inversion, indirect injection  
-
-
-**STRIDE applied to each component**
-
-- Model/inference layer: weight tampering (T), model inversion via repeated queries (I), adversarial examples (S)  
-
-- Memory store: poisoning via retrieval (T), unauthorized recall (I), Merkle chain manipulation (T, R)  
-
-- Tool call gateway: ATR bypass (E), injection via tool result (T), replay attack (S, E)  
-
-- ClawHub skills: malicious skill in trusted position (S, T, E), dependency confusion (T)  
-
-- Inter-agent communication: spoofed orchestrator instruction (S), fabricated subagent result (T, R)  
-
-- Operator plane: admin credential theft (S, E), insider threat (T, R), break-glass abuse (E)  
-
-
-**Attack trees**
-
-- Root node: “Agent executes unauthorized action” — decompose into all paths that lead there  
-
-- Branch 1: prompt injection (direct, indirect, multi-step)  
-
-- Branch 2: ATR bypass (forged JWT, delegation expansion, scope drift)  
-
-- Branch 3: memory poisoning (direct write injection, retrieval poisoning, post-write tamper)  
-
-- Branch 4: supply chain compromise (base image, skill, model weight, dependency)  
-
-- Branch 5: operator compromise (credential theft, insider, break-glass abuse)  
-
-- Each leaf node in the attack tree maps to one or more controls — gaps are leaves with no corresponding control  
-
-
-**The living threat model**
-
-- A threat model completed at launch and never updated is a historical document within weeks  
-
-- Update triggers: new agent pipeline deployed, new ClawHub skill category approved, new external API integration, post-incident review finding, new OWASP Agentic Top 10 guidance published  
-
-- Update process: review attack tree against the change, identify new branches, assign controls, update the model in git with a signed commit  
-
-- Quarterly review integration (Module 25): threat model review is a standing agenda item  
-
-- Red team exercises (Module 24) produce findings that must be incorporated into the model within 14 days  
-
-
-**Threat model documentation format**
-
-- Store in git alongside the infrastructure code — version-controlled and change-tracked  
-
-- YAML format: each threat has an ID, STRIDE category, affected component, attack path description, current controls, residual risk assessment, and last-reviewed date  
-
-- Residual risk: documented acceptance of risk that cannot be fully mitigated; must be reviewed quarterly  
-
-- Control gap: documented threat with no current control; must have a remediation plan with a timeline  
-
-
-**Key takeaways to cover**
-
-- Agentic AI introduces threat categories (goal hijacking, memory poisoning, inter-agent lateral movement) that don’t exist in standard STRIDE templates — the template must be extended  
-
-- The attack tree is the most useful artifact: it makes the mapping from threat to control explicit and makes gaps visible  
-
-- A living threat model with defined update triggers is a fundamentally different artifact from a point-in-time assessment  
-
-- Residual risk must be explicitly accepted and documented — undocumented residual risk is the same as unmitigated risk from a governance perspective  
-
-
-
-
----

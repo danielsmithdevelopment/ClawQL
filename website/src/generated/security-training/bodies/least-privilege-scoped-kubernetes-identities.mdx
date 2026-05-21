@@ -101,39 +101,39 @@ metadata:
 
 IAM role trust policy (minimum scope):
 
-{
+\{
 
   "Version": "2012-10-17",
 
   "Statement": [
 
-    {
+    \{
 
       "Effect": "Allow",
 
-      "Principal": {
+      "Principal": \{
 
         "Federated": "arn:aws:iam::123456789012:oidc-provider/[oidc.eks.us-east-1.amazonaws.com/id/ABC123](http://oidc.eks.us-east-1.amazonaws.com/id/ABC123)"
 
-      },
+      \},
 
       "Action": "sts:AssumeRoleWithWebIdentity",
 
-      "Condition": {
+      "Condition": \{
 
-        "StringEquals": {
+        "StringEquals": \{
 
           "[oidc.eks.us-east-1.amazonaws.com/id/ABC123:sub](http://oidc.eks.us-east-1.amazonaws.com/id/ABC123:sub)": "system:serviceaccount:agents:summarizer-sa"
 
-        }
+        \}
 
-      }
+      \}
 
-    }
+    \}
 
   ]
 
-}
+\}
 
 Scope the attached IAM policy to the exact S3 prefixes, DynamoDB tables, or Secrets Manager paths the workload actually needs.
 
@@ -195,97 +195,3 @@ Key Takeaways (Memorize These!)
 - RBAC is only as good as its ongoing auditing — permissions that were appropriate at launch accumulate over time.
 
 You now have the identity and permission model that ensures a compromised pod can only do the exact minimum it was designed to do. This is the foundation that makes every other control in the curriculum effective. Least privilege is no longer a checkbox — it is the default operating mode of your entire platform.
-
-## **MODULE 8**
-
-### **Secrets at Rest: Vault Integration, HSM Backing, and Tamper-Proof Audit Logging**
-
-A secret in a config file, an environment variable, or a Kubernetes Secret object is not a secret — it is a credential waiting to be discovered. Dynamic secrets with short TTLs, issued on demand from a Vault instance with HSM-backed unsealing, mean that there is no long-lived credential to steal and every access is recorded in a tamper-evident audit log. This module replaces static credentials with a secrets architecture that limits exposure to minutes rather than months.
-
-**Why static secrets are a systemic risk**
-
-- A secret in a config file, environment variable, or Kubernetes Secret is readable by anything with pod access
-
-- Kubernetes Secrets are base64-encoded, not encrypted — readable by anyone with etcd access or the right RBAC
-
-- Long-lived secrets accumulate: every developer who has ever had access retains it until the secret rotates
-
-- Breach windows are measured in months for static secrets; minutes for dynamic secrets
-
-**Vault architecture for ClawQL**
-
-- Vault is the single source of truth for all credentials the platform uses
-
-- Dynamic secrets: Vault generates a unique credential per request with a configured TTL
-
-- No static credential exists in any config file, environment variable, or Kubernetes Secret
-
-- Vault deployed in HA mode with Raft integrated storage — no external database dependency
-
-- Three replicas minimum in production; Raft requires a quorum of (n/2)+1
-
-**HSM-backed unsealing**
-
-- Vault’s master key encrypts the keyring — if master key is compromised, all secrets are compromised
-
-- HSM (Hardware Security Module) stores the master key in tamper-resistant hardware
-
-- Vault Auto Unseal with AWS KMS, GCP Cloud KMS, or Azure Key Vault as the HSM
-
-- HSM unseal means Vault can restart without human key share holders — critical for automated DR (Module 28)
-
-- Shamir secret sharing for break-glass scenarios: requires multiple key holders present simultaneously
-
-**Dynamic secrets for ClawQL components**
-
-- Database credentials: Vault generates a unique username/password per agent session; TTL = session duration
-
-- AWS/GCP credentials: Vault’s cloud secrets engine generates temporary IAM credentials on demand
-
-- PKI certificates: Vault’s PKI engine issues short-lived TLS certificates for mTLS (replaces cert-manager for internal certs)
-
-- Each dynamic secret is tied to a specific Vault lease; revocation is instant and complete
-
-**Token exchange at the gateway**
-
-- Agents do not hold Vault tokens directly — the gateway performs the token exchange
-
-- Agent presents session JWT → gateway exchanges for a Vault token scoped to that agent’s policy
-
-- Vault token TTL matches the session duration; automatically expires when the session ends
-
-- Vault token is never exposed to the agent, never logged, and never stored
-
-**Tamper-proof audit logging**
-
-- Vault audit device: structured JSON log of every API call — who requested what, when, from where
-
-- Audit log shipped via Fluent Bit to WORM storage (S3 Object Lock, COMPLIANCE mode)
-
-- Presidio redaction applied before shipping — secret values are never in the audit log, only their paths
-
-- Merkle root of the audit log computed and recorded in Prometheus every 60 seconds
-
-- Audit log is the ground truth for “did this agent access this secret” in any incident investigation
-
-**Vault policy structure**
-
-- One policy per agent role, scoped to the minimum paths required
-
-- Path patterns: secret/tenants//agents//\* — never wildcards across tenants
-
-- Deny list for sensitive paths: explicit deny rules that override any allow rule
-
-- Policy changes require the same 4-eyes approval as ATR rule changes (Module 30)
-
-**Key takeaways to cover**
-
-- Dynamic secrets with short TTLs are not just a best practice — they eliminate the long-lived credential as an attack category
-
-- HSM-backed unsealing removes the human key holder as a single point of failure for Vault availability
-
-- Vault audit log to WORM is the forensic foundation for every credential-related security investigation
-
-- The gateway-as-exchange-point pattern means agents never hold Vault tokens — a compromised agent cannot directly access Vault
-
----

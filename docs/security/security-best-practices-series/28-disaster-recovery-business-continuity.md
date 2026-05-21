@@ -17,302 +17,147 @@ description: "Per-tier RTO/RPO, agent checkpoints, active/passive failover, and 
 prev: "secure-multi-tenancy-isolation"
 next: "compliance-regulatory-mapping"
 ---
+
 # Disaster Recovery and Business Continuity: RTO/RPO, Session Recovery, and Cross-Region Failover
 
 RTO/RPO, Session Recovery, and Cross-Region Failover
 
-Hello and welcome to Module 28! 
+Hello and welcome to Module 28!
 
 Modules 1–27 have built a resilient, zero-trust, multi-tenant platform that prevents, detects, and contains threats. Now we prepare for the day the entire infrastructure itself fails — not because of an attacker, but because of a region outage, a cloud provider incident, or a natural disaster.
 
 Incident response (Module 20) assumes the infrastructure is intact and the question is “how do we contain and eradicate the threat?” Disaster recovery assumes the infrastructure itself is gone and the question is “how do we restore service from a different location as fast as our business can tolerate?” In this module we define per-tier RTO/RPO targets, agent state serialization, a 3-2-1+ backup architecture, active/passive cross-region failover with a Merkle continuity gate, and a clear session recovery decision tree. By the end you will have a tested, measurable DR plan that keeps agents operational even when entire regions disappear.
 
-
-
 ---
-
-
 
 DR vs Incident Response
 
 These are two separate plans with different owners, different triggers, and different goals.
 
-- Incident Response (IR): Infrastructure is intact. The threat is adversarial. Focus = contain, eradicate, recover evidence.  
+- Incident Response (IR): Infrastructure is intact. The threat is adversarial. Focus = contain, eradicate, recover evidence.
 
-- Disaster Recovery (DR): Infrastructure itself has failed (region outage, cloud incident, etc.). Focus = restore service from backups in a different location.  
+- Disaster Recovery (DR): Infrastructure itself has failed (region outage, cloud incident, etc.). Focus = restore service from backups in a different location.
 
-
-Both plans must exist independently. When ransomware hits (both an attack *and* infrastructure loss), the two plans integrate. Each has a named owner, a tested runbook, and its own testing cadence.
-
-
+Both plans must exist independently. When ransomware hits (both an attack _and_ infrastructure loss), the two plans integrate. Each has a named owner, a tested runbook, and its own testing cadence.
 
 ---
-
-
 
 Data Tier Classification and RTO/RPO Targets
 
 Not all data is equally critical. We classify data into four tiers with explicit Recovery Time Objective (RTO) and Recovery Point Objective (RPO) targets.
 
 - Tier 1: Audit trail + WORM  
- RPO = 0 (no audit events may be lost)  
- RTO = 4 hours  
- (Forensic integrity is non-negotiable.)  
+  RPO = 0 (no audit events may be lost)  
+  RTO = 4 hours  
+  (Forensic integrity is non-negotiable.)
 
 - Tier 2: Memory store + Merkle roots  
- RPO = 15 minutes  
- RTO = 1 hour  
- (Agents can operate in degraded mode without memory, but not forever.)  
+  RPO = 15 minutes  
+  RTO = 1 hour  
+  (Agents can operate in degraded mode without memory, but not forever.)
 
 - Tier 3: Active session state  
- RPO = best effort (checkpoint interval)  
- RTO = 30 minutes  
- (Uncheckpointed sessions restart cleanly.)  
+  RPO = best effort (checkpoint interval)  
+  RTO = 30 minutes  
+  (Uncheckpointed sessions restart cleanly.)
 
 - Tier 4: Observability data  
- RPO = 24 hours  
- RTO = 4 hours  
- (Useful for post-incident analysis but not required for service restoration.)  
-
+  RPO = 24 hours  
+  RTO = 4 hours  
+  (Useful for post-incident analysis but not required for service restoration.)
 
 Untested RTO/RPO targets are aspirations. Only tested targets are commitments.
 
-
-
 ---
-
-
 
 Agent State Serialization
 
 You cannot recover what you cannot describe as data. We serialize agent state into a checkpoint format:
 
-- Checkpoint contents: agent ID, session ID, pipeline position, ATR claims snapshot, memory store read pointer, pending HITL approvals, last completed tool call.  
+- Checkpoint contents: agent ID, session ID, pipeline position, ATR claims snapshot, memory store read pointer, pending HITL approvals, last completed tool call.
 
-- Each checkpoint is signed by the agent’s private key and its hash is appended to the Merkle tree.  
+- Each checkpoint is signed by the agent’s private key and its hash is appended to the Merkle tree.
 
-- Checkpoint interval: 5 minutes default (configurable per agent role). This directly determines Tier 3 RPO.  
-
+- Checkpoint interval: 5 minutes default (configurable per agent role). This directly determines Tier 3 RPO.
 
 Invalid checkpoint signature = clean restart (no recovery from corrupted state).
 
-
-
 ---
-
-
 
 Backup Architecture: 3-2-1+ per Tier
 
 We follow the 3-2-1+ rule with tier-specific implementation:
 
-- Tier 1 (WORM): Primary bucket + synchronous cross-region replication + weekly cold storage export. Merkle root recorded externally in SIEM.  
+- Tier 1 (WORM): Primary bucket + synchronous cross-region replication + weekly cold storage export. Merkle root recorded externally in SIEM.
 
-- Tier 2 (Memory store): Primary bucket + asynchronous cross-region replication (≤15 min lag) + daily cold storage.  
+- Tier 2 (Memory store): Primary bucket + asynchronous cross-region replication (≤15 min lag) + daily cold storage.
 
-- Vault: Raft standby in secondary region + hourly encrypted snapshot to cold storage. Backup encryption key lives in HSM (never in Vault itself — avoids circular dependency).  
-
+- Vault: Raft standby in secondary region + hourly encrypted snapshot to cold storage. Backup encryption key lives in HSM (never in Vault itself — avoids circular dependency).
 
 All backups are encrypted at rest and in transit.
 
-
-
 ---
-
-
 
 Active/Passive Cross-Region Failover
 
 We use active/passive failover to avoid split-brain Merkle chain conflicts.
 
-- Passive region runs the full stack in warm-standby with continuous replication.  
+- Passive region runs the full stack in warm-standby with continuous replication.
 
-- Failover trigger: primary health checks fail for 5 consecutive checks over 5 minutes, followed by human confirmation before DNS cutover.  
-
+- Failover trigger: primary health checks fail for 5 consecutive checks over 5 minutes, followed by human confirmation before DNS cutover.
 
 Failover sequence (fully scripted):
 
-1. Promote Vault standby to primary.  
+1. Promote Vault standby to primary.
 
-2. Verify Merkle root continuity (hard gate — failover aborts if roots diverge).  
+2. Verify Merkle root continuity (hard gate — failover aborts if roots diverge).
 
-3. Promote memory store.  
+3. Promote memory store.
 
-4. Cut DNS to passive region.  
+4. Cut DNS to passive region.
 
-5. Run full smoke test suite before accepting traffic.  
-
+5. Run full smoke test suite before accepting traffic.
 
 Failback treats the original primary as a fresh deployment — never re-promote without full validation.
 
-
-
 ---
-
-
 
 Session Recovery Decision Tree
 
 When a region fails mid-session, we follow this automated decision tree:
 
-- Resume: Valid, verified checkpoint exists + failure was infrastructure (not security) → load checkpoint, re-issue JWT, continue from last state.  
+- Resume: Valid, verified checkpoint exists + failure was infrastructure (not security) → load checkpoint, re-issue JWT, continue from last state.
 
-- Restart: Checkpoint unverifiable or absent → fresh session, reads memory from the start of the context window.  
+- Restart: Checkpoint unverifiable or absent → fresh session, reads memory from the start of the context window.
 
-- Discard: Failure was a security event → preserve checkpoint as forensic evidence, start clean session only after incident is contained. Notify the owning user before discarding.  
-
+- Discard: Failure was a security event → preserve checkpoint as forensic evidence, start clean session only after incident is contained. Notify the owning user before discarding.
 
 The decision is logged to WORM with the reason and checkpoint status.
 
-
-
 ---
-
-
 
 DR Testing Programme
 
 We test at increasing levels of realism:
 
-- Quarterly: Memory store restore + Vault snapshot restore to isolated test environment. Verify Merkle continuity. Document timing.  
+- Quarterly: Memory store restore + Vault snapshot restore to isolated test environment. Verify Merkle continuity. Document timing.
 
-- Semi-annual: Full failover drill with canary tenant traffic. All steps including DNS cutover. Measure actual RTO per tier.  
+- Semi-annual: Full failover drill with canary tenant traffic. All steps including DNS cutover. Measure actual RTO per tier.
 
-- Annual: Chaos engineering exercise. Simulate primary region failure. Execute full failover + failback. Document deviations and lessons learned.  
-
+- Annual: Chaos engineering exercise. Simulate primary region failure. Execute full failover + failback. Document deviations and lessons learned.
 
 Every test produces a signed report stored in WORM.
 
-
-
 ---
-
-
 
 Key Takeaways (Memorize These!)
 
-- DR and IR are different plans with different owners — conflating them produces a plan that does neither well.  
+- DR and IR are different plans with different owners — conflating them produces a plan that does neither well.
 
-- Per-tier RTO/RPO differentiation is the most important DR design decision — uniform targets produce either over-engineering or under-protection.  
+- Per-tier RTO/RPO differentiation is the most important DR design decision — uniform targets produce either over-engineering or under-protection.
 
-- Merkle root continuity verification is the gate that prevents promoting a diverged secondary — skip it and you may restore from a corrupted store.  
+- Merkle root continuity verification is the gate that prevents promoting a diverged secondary — skip it and you may restore from a corrupted store.
 
-- The session recovery decision tree must be documented and automated; human judgement under disaster conditions is inconsistent.  
-
+- The session recovery decision tree must be documented and automated; human judgement under disaster conditions is inconsistent.
 
 You now have a tested, measurable disaster recovery plan that keeps agents operational even when entire regions disappear. The platform can survive infrastructure failure with minimal data loss and minimal downtime. This completes the business continuity layer that makes the entire security stack production-ready for the real world.
-
-
-
-## **MODULE 29**
-
-### **Compliance and Regulatory Mapping: GDPR, HIPAA, SOC 2 Type II, and EU AI Act**
-
-Technical controls and regulatory compliance are not the same thing — a system can be genuinely secure and still fail an audit because the evidence of that security was never collected, retained, or packaged in the form an auditor can verify. This module maps every control in the series to its specific regulatory obligation under GDPR, HIPAA, SOC 2 Type II, and the EU AI Act, resolves the genuine architectural conflict between GDPR’s right to erasure and immutable WORM audit logs through cryptographic erasure, and shows how to generate audit evidence packages from the infrastructure already built. The goal is audit readiness as a continuous state rather than a last-minute scramble before an assessment.
-
-**Why compliance mapping is a distinct discipline**
-
-- Technical controls and regulatory compliance require different evidence: controls must exist AND continuously produce verifiable proof that they operate  
-
-- A system can be technically secure and fail an audit because the evidence was never collected or retained correctly  
-
-- Compliance mapping also surfaces genuine architectural conflicts (GDPR erasure vs. WORM) that pure security engineering misses  
-
-
-**GDPR: data subject rights vs. WORM integrity**
-
-- The conflict: Article 17 (right to erasure) vs. immutable append-only memory store with WORM-backed audit logs  
-
-- The resolution: cryptographic erasure — delete the per-subject encryption key, not the ciphertext  
-
-- Per-subject Vault transit key: each data subject’s memory entries encrypted with a unique key  
-
-- Erasure = vault delete transit/tenant-a/keys/subject-key-${DATA_SUBJECT_ID} — key is permanently gone, ciphertext is permanently opaque  
-
-- Merkle integrity preserved (encrypted bytes don’t change); data is irrecoverable (Recital 26: data that cannot be attributed to an identified person is no longer personal data)  
-
-- Article 30 (records of processing): generate from the audit trail — agent ID, session, data classification, entity types redacted, timestamp  
-
-- Cross-border transfers: document replication paths in the RoPA; SCC required for EU-to-non-EU DR replication (Module 28)  
-
-- Article 32 (technical measures): map to specific modules — pseudonymisation (15, 18), integrity (18, 26), availability (28), testing (24, 25)  
-
-
-**HIPAA: PHI-handling deployments**
-
-- Determine applicability: does the deployment process health condition, care provision, or payment data that identifies individuals?  
-
-- Additional controls beyond the standard stack:  
-
-  - Unique user identification (Module 10 — one identity per agent)  
-  
-    - Automatic logoff: inactivity timeout ≤15 minutes for gateway sessions  
-  
-    - Audit controls: 6-year WORM retention for PHI-handling tenants (HIPAA minimum)  
-  
-    - Integrity: Merkle tree (Module 18) satisfies the requirement that PHI cannot be improperly altered without detection  
-  
-    - Transmission security: mTLS (Module 4) + NATS message encryption (Module 18)  
-  
-  - BAA requirement: Business Associate Agreement required with every data-path component vendor — cloud provider, Vault hosting, external API providers  
-
-- Breach notification: the PICERL process produces the timeline; a Breach Risk Assessment (BRA) determines reportability under the four-factor test; 60-day notification deadline  
-
-
-**SOC 2 Type II: control mapping**
-
-- CC6 (Logical and Physical Access): Modules 4, 7, 9, 10, 12, 30 — RBAC, mTLS, scoped tokens, agent lifecycle, ATR enforcement, admin controls  
-
-- A1 (Availability): Modules 25 (quarterly review), 26 (patch cadence), 28 (DR/BCP)  
-
-- PI1 (Processing Integrity): Modules 12 (schema validation), 18 (Merkle integrity), 14 (signed subagent results)  
-
-- C1 (Confidentiality): Modules 15 (classification), 18 (cryptographic erasure), 27 (multi-tenant isolation)  
-
-- P (Privacy): Modules 15 (redaction), 29 (GDPR mapping), 18 (erasure)  
-
-- Type II evidence: controls must continuously produce evidence over the audit period — quarterly evidence packages from WORM + Merkle roots + Panguard logs form the body of evidence  
-
-- Common SOC 2 findings in agentic platforms and which module addresses each  
-
-
-**EU AI Act: high-risk classification and obligations**
-
-- High-risk determination: Annex III categories (employment, essential services, law enforcement, critical infrastructure)  
-
-- Article 9 (Risk Management System): STRIDE model (Module 22) + OWASP mapping (Module 23) + red team programme (Module 24) + quarterly review (Module 25)  
-
-- Article 10 (Data Governance): classification at ingestion (Module 15) + memory integrity (Module 18) + DLP (Module 6)  
-
-- Article 13 (Transparency): technical summary for deployers — intended purpose, capabilities, limitations, HITL mechanisms, performance characteristics  
-
-- Article 14 (Human Oversight): HITL controls (Module 12) — document which tools are gated, the review process, escalation path  
-
-- Article 15 (Accuracy and Cybersecurity): adversarial testing programme (Module 24) + full security stack  
-
-
-**Producing audit evidence from existing infrastructure**
-
-- WORM retention policy: set to the longest requirement across all applicable frameworks (7 years satisfies HIPAA 6-year + SOC 2 overlap)  
-
-- Chain of custody: WORM Object Lock metadata + Merkle root chain + signing key certificate chain  
-
-- Automated quarterly evidence package: signed, encrypted with compliance team’s public key, generated before the quarterly review  
-
-- Evidence package contents: Panguard decision logs, Merkle roots, quarterly review reports, red team reports, patch deployment records, access provisioning records  
-
-
-**Key takeaways to cover**
-
-- Cryptographic erasure (key deletion) is the only architecturally coherent solution to the GDPR erasure/WORM conflict  
-
-- HIPAA adds inactivity timeouts, 6-year retention, BAA requirements, and a documented BRA process — all of which must be explicitly verified, not assumed  
-
-- SOC 2 Type II evidence is produced continuously by the infrastructure already built; the compliance task is collecting and retaining it correctly  
-
-- Audit readiness as a continuous state (quarterly evidence packages, WORM retention, Merkle chain) is cheaper than audit preparation as a periodic scramble  
-
-
-
-
----

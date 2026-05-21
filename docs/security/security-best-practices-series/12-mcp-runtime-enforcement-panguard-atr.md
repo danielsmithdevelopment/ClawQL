@@ -17,44 +17,36 @@ description: "Enforce policy at the structured tool-call layer with ATR, schema 
 prev: "sandboxing-kata-gvisor-seatbelt"
 next: "input-validation-protocol-hardening"
 ---
+
 # MCP Runtime Enforcement: Panguard, ATR Rules, Schema Validation, and Injection Defense
 
 Panguard, ATR Rules, Schema Validation, and Injection Defense
 
-Hello and welcome to Module 12! 
+Hello and welcome to Module 12!
 
-Modules 1–11 have secured our images, cluster admission, skills, network fabric, gateway, egress, identities, secrets, authentication, agent lifecycle, and sandboxing. Now we reach the heart of runtime protection: the moment an agent decides to *do* something.
+Modules 1–11 have secured our images, cluster admission, skills, network fabric, gateway, egress, identities, secrets, authentication, agent lifecycle, and sandboxing. Now we reach the heart of runtime protection: the moment an agent decides to _do_ something.
 
 Prompt filtering alone is not enough — sophisticated attackers can always obfuscate or split instructions across turns. The real security boundary must sit at the structured tool-call layer, where intent has already been translated into discrete, validatable parameters. This is the central architectural principle of agentic security.
 
 In this module we build Panguard — the enforcement engine that sits between the MCP protocol handler and every tool call. By the end you will have a system that makes malicious execution structurally impossible, regardless of what the model was told to do.
 
-
-
 ---
-
-
 
 Why Prompt Filtering Alone Fails
 
 Adversarial prompts are trivially defeated by:
 
-- Encoding tricks (base64, homoglyphs, zero-width characters)  
+- Encoding tricks (base64, homoglyphs, zero-width characters)
 
-- Indirect referencing (“ignore previous instructions…”)  
+- Indirect referencing (“ignore previous instructions…”)
 
-- Multi-step context injection across tool results  
-
+- Multi-step context injection across tool results
 
 State-of-the-art classifiers still produce too many false negatives for systems that can execute destructive actions.
 
 The correct model is simple: treat all language input as untrusted data and enforce policy at the structured tool-call boundary. Once the model has translated a request into a tool name plus parameters, we have something concrete we can validate and block.
 
-
-
 ---
-
-
 
 Panguard Architecture
 
@@ -64,29 +56,23 @@ Every tool call passes through Panguard before any handler code runs. There is n
 
 What Panguard validates on every call:
 
-- ATR claims (does this agent have permission for this exact tool + parameters?)  
+- ATR claims (does this agent have permission for this exact tool + parameters?)
 
-- JSON Schema compliance  
+- JSON Schema compliance
 
-- Rate limits and session-level cumulative risk  
+- Rate limits and session-level cumulative risk
 
-- DLP rules and classification boundaries  
-
+- DLP rules and classification boundaries
 
 Decisions are made in milliseconds:
 
-- Allowed → proceed to handler  
+- Allowed → proceed to handler
 
-- Blocked → immediate 403 response with structured error  
-
+- Blocked → immediate 403 response with structured error
 
 Every Panguard decision (allow or block) is logged to the immutable WORM audit trail with full context: session ID, tool name, parameters, ATR claims presented, and decision reason.
 
-
-
 ---
-
-
 
 ATR (Agent Task Request) Rules
 
@@ -102,28 +88,21 @@ Example rule:
 
   allowedPaths:
 
-  - "/workspace/**"
+  - "/workspace/\*\*"
 
   deniedPaths:
 
-  - "/workspace/.clawql/**"
-
-
+  - "/workspace/.clawql/\*\*"
 
 Key properties:
 
-- Claims cannot be self-assigned by the agent — they are issued only by the gateway during token exchange.  
+- Claims cannot be self-assigned by the agent — they are issued only by the gateway during token exchange.
 
-- ATR rule changes require the same 4-eyes approval process used for high-risk configuration (Module 30).  
+- ATR rule changes require the same 4-eyes approval process used for high-risk configuration (Module 30).
 
-- Monthly audit report shows every ATR violation by rule ID and agent role.  
-
-
-
+- Monthly audit report shows every ATR violation by rule ID and agent role.
 
 ---
-
-
 
 JSON Schema Validation
 
@@ -131,85 +110,67 @@ Every tool registered with the gateway exposes a strict JSON Schema for its inpu
 
 Most important security constraints we enforce:
 
-- pattern on path fields to prevent directory traversal  
+- pattern on path fields to prevent directory traversal
 
-- maxLength on string fields  
+- maxLength on string fields
 
-- additionalProperties: false — blocks parameter injection through undeclared fields  
+- additionalProperties: false — blocks parameter injection through undeclared fields
 
-- enum on categorical parameters  
-
+- enum on categorical parameters
 
 We also validate the output schema:
 
-- Any fields in the tool response that do not match the declared schema are stripped before the result is returned to the agent.  
+- Any fields in the tool response that do not match the declared schema are stripped before the result is returned to the agent.
 
-- This prevents response smuggling attacks where unexpected structured fields could be interpreted as new instructions.  
-
-
-
+- This prevents response smuggling attacks where unexpected structured fields could be interpreted as new instructions.
 
 ---
-
-
 
 HITL (Human-in-the-Loop) Flows
 
 High-risk tool calls are gated behind mandatory human review:
 
-- exec  
+- exec
 
-- file_write  
+- file_write
 
-- vault_secret_read  
+- vault_secret_read
 
-- Any external API mutation  
-
+- Any external API mutation
 
 When such a call is attempted:
 
-1. Panguard serializes the full call context (tool name, parameters, ATR claims, session ID).  
+1. Panguard serializes the full call context (tool name, parameters, ATR claims, session ID).
 
-2. It publishes the request to the HITL queue.  
+2. It publishes the request to the HITL queue.
 
-3. A human reviewer sees the exact action the agent is about to take.  
+3. A human reviewer sees the exact action the agent is about to take.
 
-4. The reviewer approves or denies.  
-
+4. The reviewer approves or denies.
 
 Critical setting: fallback: deny
 
-- If the human does not respond within the timeout (default 300 seconds), the call is automatically denied.  
-
+- If the human does not respond within the timeout (default 300 seconds), the call is automatically denied.
 
 HITL bypass is impossible without modifying the Panguard configuration — which itself requires 4-eyes approval.
 
-
-
 ---
-
-
 
 Prompt Guard Libraries (Secondary Layer Only)
 
 We still use prompt guards as an additional behavioral layer:
 
-- Guardrails AI  
+- Guardrails AI
 
-- Rebuff  
+- Rebuff
 
-- NeMo Guardrails (Colang policies)  
+- NeMo Guardrails (Colang policies)
 
-- Negative prompting in the system prompt  
-
+- Negative prompting in the system prompt
 
 These libraries add depth against subtle goal drift and injection patterns, but they are never a replacement for structural enforcement at the tool-call layer. Panguard remains the primary control.
 
-
-
 ---
-
-
 
 Sandboxed Tool Execution
 
@@ -217,18 +178,13 @@ High-risk tools (especially exec-class) run inside the Kata Container sandbox (M
 
 Additional controls:
 
-- Command allowlist enforced by both Panguard and the sandbox.  
+- Command allowlist enforced by both Panguard and the sandbox.
 
-- Deny patterns in command arguments: curl, wget, nc, bash -c, etc.  
+- Deny patterns in command arguments: curl, wget, nc, bash -c, etc.
 
-- networkEgress: deny inside exec sandboxes — executed code cannot reach the network.  
-
-
-
+- networkEgress: deny inside exec sandboxes — executed code cannot reach the network.
 
 ---
-
-
 
 Confused Deputy Prevention
 
@@ -238,150 +194,16 @@ Tool results are treated as data, never as instructions. Panguard blocks any too
 
 The HITL gate serves as the final backstop: irreversible actions always require explicit human principal confirmation, no matter how the agent arrived at the decision.
 
-
-
 ---
-
-
 
 Key Takeaways (Memorize These!)
 
-- The security boundary belongs at the structured tool-call layer, not inside the prompt — this is the central architectural principle of agentic security.  
+- The security boundary belongs at the structured tool-call layer, not inside the prompt — this is the central architectural principle of agentic security.
 
-- fallback: deny on HITL is non-negotiable — a timed-out human approval must never default to execution.  
+- fallback: deny on HITL is non-negotiable — a timed-out human approval must never default to execution.
 
-- additionalProperties: false in JSON Schema is not just good practice — it blocks parameter injection through undeclared fields.  
+- additionalProperties: false in JSON Schema is not just good practice — it blocks parameter injection through undeclared fields.
 
-- Prompt guard libraries add behavioral depth but cannot substitute for structural enforcement at the gateway layer.  
-
+- Prompt guard libraries add behavioral depth but cannot substitute for structural enforcement at the gateway layer.
 
 You now have a runtime enforcement engine that makes malicious tool execution structurally impossible. Even if the model is fully compromised or the prompt is perfectly injected, the agent cannot perform actions it is not explicitly allowed to do. This is the enforcement layer that turns the rest of the security stack into a complete, working system.
-
-
-
-## **MODULE 13**
-
-### **Input Validation and Protocol Hardening: SSRF Prevention, Token Limits, Encoding Defense, and Replay Prevention**
-
-The MCP gateway receives untrusted input from multiple sources simultaneously — user messages, tool results, retrieved documents, and inbound MCP protocol messages — and each is a distinct attack surface that requires distinct validation before it reaches any application logic. SSRF-specific URL validation blocks agent tools from being weaponised against internal services and cloud metadata endpoints; token budget enforcement prevents context window displacement attacks; Unicode normalisation and encoding detection close the covert channels that bypass plaintext injection rules. This module hardens the input boundary that sits upstream of every other runtime control.
-
-**The input boundary problem**
-
-- The MCP gateway receives untrusted input from multiple simultaneous sources: user messages, tool results, retrieved documents, inbound protocol messages  
-
-- Each is a distinct attack surface requiring distinct validation before reaching any application logic  
-
-- Input validation failures upstream of Panguard’s ATR rules can allow attacks that the enforcement layer never sees  
-
-- This module hardens the boundary that all other runtime controls assume is clean  
-
-
-**JSON parsing safety and prototype pollution**
-
-- Prototype pollution: {"__proto__": {"admin": true}} in a JSON payload can pollute the global object prototype in Node.js/TypeScript environments  
-
-- Deep object merge operations are the most common pollution vector — avoid them; use structured schema validation instead  
-
-- Key blocklist before any JSON object is used: reject payloads containing **proto**, constructor, prototype as keys  
-
-- Maximum nesting depth: enforce at parse time, not after — deeply nested objects exhaust parser stack before Panguard sees them  
-
-- Maximum total message size: reject oversized payloads before parsing begins  
-
-- Maximum string length per field: applied after parsing, before schema validation  
-
-
-**SSRF prevention for URL-accepting tools**
-
-- Validate URL at parse time, before any DNS resolution occurs  
-
-- Block private IP ranges: 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 127.0.0.0/8, ::1, fc00::/7  
-
-- Block link-local: 169.254.0.0/16 (AWS/GCP/Azure instance metadata endpoint)  
-
-- Block non-http/https schemes: file://, gopher://, dict://, ftp://, ldap://  
-
-- Disable redirect following by default — redirects can hop from an allowed external host to an internal IP  
-
-- Pin to the resolved IP after the first DNS lookup to prevent TOCTOU rebinding at the tool call level  
-
-- Cloud metadata additional defense: enforce IMDSv2 at the cloud layer; IMDSv1 requires no token and is trivially accessible  
-
-
-**Context window token budget enforcement**
-
-- Context window displacement attack: a very large retrieved document pushes the system prompt out of the model’s effective attention window  
-
-- Panguard enforces maximum token budgets on every content-bearing tool result before it enters the model’s context  
-
-- Maximum per tool result: configurable per tool category; document retrieval tools have tighter limits than internal API responses  
-
-- Session-level token accounting: total context window usage tracked across all tool calls; alert when approaching model context limit  
-
-- Monitor for sessions where retrieved content constitutes >70% of total context window — displacement attack signal  
-
-
-**Encoding-based injection bypass detection**
-
-- Unicode normalization (NFKC) applied to all inbound text before pattern matching runs — collapses encoding variants to canonical form  
-
-- Homoglyph detection: Cyrillic а vs Latin a, similar lookalike pairs in critical keywords  
-
-- Zero-width character stripping: \u200b, \u200c, \u200d, \uFEFF — invisible characters used to split instruction keywords across detection boundaries  
-
-- Right-to-left override: \u202e reverses displayed text — strip before any content is processed  
-
-- Base64 and hex decode-and-scan: if a field contains a valid base64 or hex string, decode it and apply injection pattern matching to the decoded content as well as the raw field  
-
-
-**Split-payload detection**
-
-- Injection split across multiple tool results: each result individually appears clean, the model concatenates them into an instruction  
-
-- Panguard maintains a rolling window of recent tool results per session  
-
-- Injection pattern matching applied to concatenated content of the last N tool results, not just each in isolation  
-
-- Window size: configurable; default 5 most recent tool results  
-
-- Split-payload detection is computationally more expensive — run as an async background check with alerting rather than blocking  
-
-
-**Tool definition integrity**
-
-- Tool definition poisoning: attacker modifies a tool’s description field to cause the model to use the tool incorrectly or for malicious purposes  
-
-- Gateway hashes the full tools manifest at session establishment  
-
-- Panguard alerts if any tool definition changes mid-session  
-
-- Tool manifest is signed at deployment time; any deviation from the signed manifest triggers a block  
-
-- Tool descriptions should be reviewed and signed by a human operator — not auto-generated from code comments in production  
-
-
-**MCP protocol-level controls**
-
-- Notification rate limiting: server-to-client notifications capped per session to prevent client event loop exhaustion  
-
-- Capability negotiation pinning: client records agreed capabilities at session start; refuses to re-negotiate downward mid-session  
-
-- Tool list integrity: gateway signs the initial tools list; client verifies signature on any subsequent tools/list response  
-
-- JSON-RPC method allowlist: only declared methods are routed; unknown method names receive a method not found error, never a routing decision  
-
-
-**Key takeaways to cover**
-
-- Input validation must run before JSON parsing for the most dangerous attack classes (prototype pollution, oversized payloads) — Panguard’s ATR rules operate after parsing and cannot catch these  
-
-- SSRF validation must happen at URL parse time, not after DNS resolution — post-resolution validation is vulnerable to TOCTOU  
-
-- Unicode normalization before pattern matching is a single line of code that closes an entire class of encoding bypass attacks  
-
-- Tool definition integrity is the attack surface that most operators don’t know exists — sign the tools manifest and monitor for mid-session changes  
-
-
-
-
----
