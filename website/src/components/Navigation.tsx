@@ -241,6 +241,10 @@ export const navigation: Array<NavGroup> = [
     title: 'Vision & roadmap',
     links: [
       {
+        title: 'Master enablement guide',
+        href: '/vision/technical-enablement',
+      },
+      {
         title: 'ClawQL Modularization',
         href: '/vision/modularization',
       },

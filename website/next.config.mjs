@@ -56,8 +56,8 @@ const nextConfig = {
   async redirects() {
     return [
       {
-        source: '/vision/technical-enablement',
-        destination: '/vision/modularization',
+        source: '/vision/master-enablement',
+        destination: '/vision/technical-enablement',
         permanent: true,
       },
     ]
