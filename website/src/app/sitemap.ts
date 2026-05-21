@@ -16,6 +16,11 @@ type Entry = {
 const ENTRIES: Array<Entry> = [
   { path: '/', changeFrequency: 'weekly', priority: 1 },
   {
+    path: '/vision/technical-enablement',
+    changeFrequency: 'monthly',
+    priority: 0.9,
+  },
+  {
     path: '/vision/modularization',
     changeFrequency: 'monthly',
     priority: 0.9,
