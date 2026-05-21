@@ -1,0 +1,196 @@
+---
+title: "Agent Identity Lifecycle: Provisioning, Scope Governance, and Decommissioning"
+series: "Agentic AI Security Curriculum"
+level: intermediate
+tags:
+  - identity
+  - atr
+  - provisioning
+  - decommissioning
+part: 10
+total_parts: 30
+date: "May 2026"
+slug: "agent-identity-lifecycle-provisioning"
+canonical_path: "/security/best-practices/agent-identity-lifecycle-provisioning"
+description: "Joiner-mover-leaver for agents: approval workflows, scope trials, orphan detection, and forensic shutdown."
+prev: "authentication-session-management-scoped-tokens"
+next: "sandboxing-kata-gvisor-seatbelt"
+---
+
+# Agent Identity Lifecycle: Provisioning, Scope Governance, and Decommissioning
+
+Provisioning, Scope Governance, and Decommissioning
+
+Hello and welcome to Module 10!
+
+Modules 1–9 have given us trusted images, admission control, vetted skills, zero-trust networking, a hardened gateway, egress controls, scoped Kubernetes identities, dynamic secrets, and per-request authentication. Now we address the agent itself as a long-lived security principal.
+
+Unlike a short-lived web request, an agent persists across sessions. It accumulates memory, holds Vault leases, owns a NATS subject namespace, and may run for weeks or months. Without a formal lifecycle, we end up with orphaned identities, unchecked scope drift, and forensic blind spots.
+
+In this module we apply the same joiner-mover-leaver rigor we use for human employees — but to agents. By the end you will have a complete, auditable process for provisioning, governing scope changes, detecting orphans, and safely decommissioning agents — including the forensic-first rapid shutdown sequence under compromise.
+
+---
+
+The Agent as a Long-Lived Security Principal
+
+An agent is not just a pod — it is a persistent identity with real blast radius:
+
+- It carries ATR claims that evolve over time.
+
+- It holds Vault leases and dynamic credentials.
+
+- It owns a NATS subject namespace and queue subscriptions.
+
+- It maintains a memory store with a Merkle root chain.
+
+- It may participate in multi-agent pipelines.
+
+If we treat provisioning as “just create a Deployment,” we create dormant attack surface that accumulates silently. The full agent identity includes: certificate, ATR role, Vault policy, memory store path, NATS namespace, queue subscriptions, and registered pipelines. We manage all of it explicitly.
+
+---
+
+Provisioning: Approval, Certificate Issuance, ATR Bootstrap
+
+Provisioning is never ad-hoc. Every new agent begins with a formal request:
+
+- Submitted as a pull request to the infrastructure repository.
+
+- Required fields: requested-by, agent ID, ATR role, justification, proposed claims, expiry review date.
+
+- Automated policy check: the ATR role must already exist and be documented; exec or admin class claims require explicit justification.
+
+- No agent may be provisioned without an expiry review date — permanent unchecked agents are forbidden.
+
+On approval the automated provisioning pipeline executes:
+
+1. cert-manager issues the mTLS certificate.
+
+2. Vault policy is created (scoped to the exact paths the agent needs).
+
+3. NATS namespace is registered with ACLs.
+
+4. Memory store is initialized with an empty Merkle root.
+
+All provisioning actions are logged to the WORM audit trail with the approver’s identity.
+
+---
+
+ATR Scope Expansion Governance
+
+Scope expansion is a security event, never a simple config change.
+
+Process for any expansion:
+
+- Submitted as a PR with written justification, owning team approval, and security team sign-off.
+
+- Includes a red-team test case that exercises the new scope.
+
+- Trial period: time-bounded observation window (default 7 days) with Panguard in heightened logging mode.
+
+- After the trial, Panguard observation report is reviewed; unexpected behavior triggers immediate revert.
+
+Scope contraction is always safe and applied immediately — no approval required. This asymmetry ensures we only ever grow privileges under controlled conditions.
+
+---
+
+Agent Credential Inventory and Sprawl Detection
+
+We maintain a live inventory of every credential tied to an agent:
+
+- mTLS certificate
+
+- Vault policy and active leases
+
+- NATS credentials
+
+- External OAuth tokens (if any)
+
+Weekly automated scan checks for sprawl:
+
+- Credentials appearing in env vars, config files, agent memory, or git history outside declared locations.
+
+- Every credential has a named owning agent and a named human owner.
+
+Any sprawl finding is treated as critical: the agent is immediately stopped, the credential is revoked and rotated, and an investigation is opened.
+
+---
+
+Orphaned Identity Detection
+
+Even with careful provisioning, incomplete decommissioning creates orphans.
+
+Weekly reconciliation job compares:
+
+- Active Vault leases
+
+- NATS subscriptions
+
+- cert-manager Certificates
+
+- Running pods
+
+Any identity present in platform resources but absent from running pods is flagged as an orphan.
+
+Orphan handling:
+
+- Vault lease is suspended (not revoked — preserves forensic history).
+
+- NATS queue is drained.
+
+- Memory store is read-locked.
+
+- 7-day review deadline; unreviewed orphans proceed to automatic decommissioning.
+
+---
+
+Planned Decommissioning Checklist
+
+When an agent reaches end-of-life, follow this exact checklist (automated where possible):
+
+1. Drain all active sessions.
+
+2. Export and archive the memory store to WORM cold storage; record the final Merkle root.
+
+3. Deindex the memory store from active recall.
+
+4. Revoke all Vault leases and delete the Vault policy.
+
+5. Drain NATS queue, deregister the subject namespace, and remove ACL entries.
+
+6. Revoke the mTLS certificate and update the CRL.
+
+7. Delete all Kubernetes resources (Deployment, ServiceAccount, NetworkPolicy, RBAC bindings).
+
+8. Write a signed decommission record to WORM referencing the final Merkle root.
+
+---
+
+Rapid Decommission Under Compromise
+
+When an agent is suspected of compromise, speed matters — but evidence preservation matters more.
+
+Step-by-step rapid shutdown:
+
+1. Isolate: Panguard session quarantine + emergency deny-all NetworkPolicy.
+
+2. Preserve: Snapshot the memory store, Vault lease history, and NATS message log before any revocation.
+
+3. Revoke: Certificate, Vault leases, NATS subscriptions.
+
+4. Hand off: Deliver the forensic snapshot and isolation timestamp to the IR team (Module 20).
+
+Never delete the memory store or audit trail during an active investigation. The forensic snapshot goes to a separate, IR-team-only bucket.
+
+---
+
+Key Takeaways (Memorize These!)
+
+- Provisioning without a formal approval workflow is a supply-chain risk at the identity layer.
+
+- The trial period for scope expansion is the control that catches over-permissioning before it becomes permanent.
+
+- Orphan detection catches the incomplete decommissionings that accumulate silently — dormant attack surface.
+
+- Under compromise: forensic preservation before revocation, always — rushed cleanup that destroys evidence trades short-term containment for long-term blindness.
+
+You now have a complete lifecycle for agents that treats them with the same rigor we apply to human identities. Agents are created deliberately, governed tightly, observed continuously, and decommissioned safely — with evidence preserved when it matters most. This closes the beginning-to-end gap that every other module depends on.

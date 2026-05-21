@@ -1,0 +1,209 @@
+---
+title: "MCP Runtime Enforcement: Panguard, ATR Rules, Schema Validation, and Injection Defense"
+series: "Agentic AI Security Curriculum"
+level: advanced
+tags:
+  - panguard
+  - atr
+  - mcp
+  - hitl
+  - json-schema
+part: 12
+total_parts: 30
+date: "May 2026"
+slug: "mcp-runtime-enforcement-panguard-atr"
+canonical_path: "/security/best-practices/mcp-runtime-enforcement-panguard-atr"
+description: "Enforce policy at the structured tool-call layer with ATR, schema validation, and HITL deny-on-timeout."
+prev: "sandboxing-kata-gvisor-seatbelt"
+next: "input-validation-protocol-hardening"
+---
+
+# MCP Runtime Enforcement: Panguard, ATR Rules, Schema Validation, and Injection Defense
+
+Panguard, ATR Rules, Schema Validation, and Injection Defense
+
+Hello and welcome to Module 12!
+
+Modules 1–11 have secured our images, cluster admission, skills, network fabric, gateway, egress, identities, secrets, authentication, agent lifecycle, and sandboxing. Now we reach the heart of runtime protection: the moment an agent decides to _do_ something.
+
+Prompt filtering alone is not enough — sophisticated attackers can always obfuscate or split instructions across turns. The real security boundary must sit at the structured tool-call layer, where intent has already been translated into discrete, validatable parameters. This is the central architectural principle of agentic security.
+
+In this module we build Panguard — the enforcement engine that sits between the MCP protocol handler and every tool call. By the end you will have a system that makes malicious execution structurally impossible, regardless of what the model was told to do.
+
+---
+
+Why Prompt Filtering Alone Fails
+
+Adversarial prompts are trivially defeated by:
+
+- Encoding tricks (base64, homoglyphs, zero-width characters)
+
+- Indirect referencing (“ignore previous instructions…”)
+
+- Multi-step context injection across tool results
+
+State-of-the-art classifiers still produce too many false negatives for systems that can execute destructive actions.
+
+The correct model is simple: treat all language input as untrusted data and enforce policy at the structured tool-call boundary. Once the model has translated a request into a tool name plus parameters, we have something concrete we can validate and block.
+
+---
+
+Panguard Architecture
+
+Panguard is a synchronous gatekeeper that sits directly between the MCP protocol handler and the tool-call dispatcher.
+
+Every tool call passes through Panguard before any handler code runs. There is no bypass path.
+
+What Panguard validates on every call:
+
+- ATR claims (does this agent have permission for this exact tool + parameters?)
+
+- JSON Schema compliance
+
+- Rate limits and session-level cumulative risk
+
+- DLP rules and classification boundaries
+
+Decisions are made in milliseconds:
+
+- Allowed → proceed to handler
+
+- Blocked → immediate 403 response with structured error
+
+Every Panguard decision (allow or block) is logged to the immutable WORM audit trail with full context: session ID, tool name, parameters, ATR claims presented, and decision reason.
+
+---
+
+ATR (Agent Task Request) Rules
+
+ATR rules declare exactly what each agent role is permitted to do at a granular level.
+
+Claims live in the session JWT and are validated on every single tool call.
+
+Example rule:
+
+- claim: file:write:workspace
+
+  tool: file_write
+
+  allowedPaths:
+
+  - "/workspace/\*\*"
+
+  deniedPaths:
+
+  - "/workspace/.clawql/\*\*"
+
+Key properties:
+
+- Claims cannot be self-assigned by the agent — they are issued only by the gateway during token exchange.
+
+- ATR rule changes require the same 4-eyes approval process used for high-risk configuration (Module 30).
+
+- Monthly audit report shows every ATR violation by rule ID and agent role.
+
+---
+
+JSON Schema Validation
+
+Every tool registered with the gateway exposes a strict JSON Schema for its input parameters.
+
+Most important security constraints we enforce:
+
+- pattern on path fields to prevent directory traversal
+
+- maxLength on string fields
+
+- additionalProperties: false — blocks parameter injection through undeclared fields
+
+- enum on categorical parameters
+
+We also validate the output schema:
+
+- Any fields in the tool response that do not match the declared schema are stripped before the result is returned to the agent.
+
+- This prevents response smuggling attacks where unexpected structured fields could be interpreted as new instructions.
+
+---
+
+HITL (Human-in-the-Loop) Flows
+
+High-risk tool calls are gated behind mandatory human review:
+
+- exec
+
+- file_write
+
+- vault_secret_read
+
+- Any external API mutation
+
+When such a call is attempted:
+
+1. Panguard serializes the full call context (tool name, parameters, ATR claims, session ID).
+
+2. It publishes the request to the HITL queue.
+
+3. A human reviewer sees the exact action the agent is about to take.
+
+4. The reviewer approves or denies.
+
+Critical setting: fallback: deny
+
+- If the human does not respond within the timeout (default 300 seconds), the call is automatically denied.
+
+HITL bypass is impossible without modifying the Panguard configuration — which itself requires 4-eyes approval.
+
+---
+
+Prompt Guard Libraries (Secondary Layer Only)
+
+We still use prompt guards as an additional behavioral layer:
+
+- Guardrails AI
+
+- Rebuff
+
+- NeMo Guardrails (Colang policies)
+
+- Negative prompting in the system prompt
+
+These libraries add depth against subtle goal drift and injection patterns, but they are never a replacement for structural enforcement at the tool-call layer. Panguard remains the primary control.
+
+---
+
+Sandboxed Tool Execution
+
+High-risk tools (especially exec-class) run inside the Kata Container sandbox (Module 11).
+
+Additional controls:
+
+- Command allowlist enforced by both Panguard and the sandbox.
+
+- Deny patterns in command arguments: curl, wget, nc, bash -c, etc.
+
+- networkEgress: deny inside exec sandboxes — executed code cannot reach the network.
+
+---
+
+Confused Deputy Prevention
+
+We explicitly distinguish between user-originated instructions and tool-result-originated content.
+
+Tool results are treated as data, never as instructions. Panguard blocks any tool result that would trigger a high-risk tool call without an intervening user confirmation.
+
+The HITL gate serves as the final backstop: irreversible actions always require explicit human principal confirmation, no matter how the agent arrived at the decision.
+
+---
+
+Key Takeaways (Memorize These!)
+
+- The security boundary belongs at the structured tool-call layer, not inside the prompt — this is the central architectural principle of agentic security.
+
+- fallback: deny on HITL is non-negotiable — a timed-out human approval must never default to execution.
+
+- additionalProperties: false in JSON Schema is not just good practice — it blocks parameter injection through undeclared fields.
+
+- Prompt guard libraries add behavioral depth but cannot substitute for structural enforcement at the gateway layer.
+
+You now have a runtime enforcement engine that makes malicious tool execution structurally impossible. Even if the model is fully compromised or the prompt is perfectly injected, the agent cannot perform actions it is not explicitly allowed to do. This is the enforcement layer that turns the rest of the security stack into a complete, working system.

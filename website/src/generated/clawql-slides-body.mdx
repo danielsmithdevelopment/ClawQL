@@ -2136,6 +2136,7 @@ WORM or append-only log sinks for long-lived audit; **SIEM** correlation of **Fa
 - **Ongoing** work: key rotation, **Falco** tuning, **Istio** upgrades, **quarterly** IR **tabletop** with a supply-chain or **kube**-credential **scenario** (see labs in the reference doc).
 - Pointers: **NIST** SP 800-207, **CISA** Zero Trust, **CIS** Kubernetes benchmark, **MITRE ATT&CK**, **SLSA**, **Sigstore**, **NIST** CSF 2.0 — all expanded in [`../security/clawql-security-defense-in-depth.md`](../security/clawql-security-defense-in-depth.md) with **discussion** **questions** and **hands-on** **lab** ideas.
 - **Engineering audit trail:** [`../security/clawql-security-defense-deliverables.md`](../security/clawql-security-defense-deliverables.md) — control → **status** → **issue** → **Helm/CI/docs** artifact matrix ([#164](https://github.com/danielsmithdevelopment/ClawQL/issues/164)).
+- **Agentic AI security curriculum (30 modules):** [`../security/security-best-practices-series/README.md`](../security/security-best-practices-series/README.md) — supply chain through operator security; on-site at **/security/best-practices** (sections I–X).
 - **ClawQL**-specific: `search`/`execute` to keep the **MCP** context lean; **Merkle** + **Seeds** + `audit`; optional **Fabric** for **consortium**-grade **receipts**; **Onyx** for **knowledge** governance at the **source** systems.
 
 ---
@@ -2161,6 +2162,7 @@ WORM or append-only log sinks for long-lived audit; **SIEM** correlation of **Fa
 | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Documentation                           | https://docs.clawql.com                                                                                                                                                            |
 | Defense in depth (reference)            | [`../security/clawql-security-defense-in-depth.md`](../security/clawql-security-defense-in-depth.md) (slides **68–79**)                                                            |
+| Security curriculum (30 modules)        | [`../security/security-best-practices-series/README.md`](../security/security-best-practices-series/README.md)                                                                     |
 | Defense in depth (deliverables / audit) | [`../security/clawql-security-defense-deliverables.md`](../security/clawql-security-defense-deliverables.md) ([#164](https://github.com/danielsmithdevelopment/ClawQL/issues/164)) |
 | GitHub                                  | danielsmithdevelopment/ClawQL                                                                                                                                                      |
 | npm (MCP)                               | `clawql-mcp`                                                                                                                                                                       |

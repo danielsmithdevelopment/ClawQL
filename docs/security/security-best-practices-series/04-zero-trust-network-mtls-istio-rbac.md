@@ -1,0 +1,204 @@
+---
+title: "Zero Trust Network Architecture: mTLS, Istio, RBAC, and Workload Identity"
+series: "Agentic AI Security Curriculum"
+level: intermediate
+tags:
+  - zero-trust
+  - istio
+  - mtls
+  - networkpolicy
+  - spiffe
+part: 4
+total_parts: 30
+date: "May 2026"
+slug: "zero-trust-network-mtls-istio-rbac"
+canonical_path: "/security/best-practices/zero-trust-network-mtls-istio-rbac"
+description: "SPIFFE workload identity, STRICT mTLS, default-deny networking, and L7 AuthorizationPolicy."
+prev: "clawhub-skill-vetting-safe-installation"
+next: "agent-gateway-hardening-dns-rebinding"
+---
+
+# Zero Trust Network Architecture: mTLS, Istio, RBAC, and Workload Identity
+
+mTLS, Istio, RBAC, and Workload Identity
+
+Hello and welcome to Module 4!
+
+Modules 1–3 gave us trusted images, a cluster that refuses unsigned workloads, and a rigorous vetting process for skills. Now we secure how everything talks to everything else inside the cluster.
+
+Traditional “perimeter” security assumes everything inside the network is trustworthy. That assumption dies the moment you run autonomous agents that span namespaces, call external APIs, and form dynamic pipelines. A single compromised agent with free lateral movement can reach Vault, memory stores, other agents, and beyond.
+
+Zero trust replaces the old model with a simple rule: every connection is authenticated, every access is authorized, and every action is logged — no matter where it originates. In this module we build the complete zero-trust fabric using workload identity, mTLS, Istio, and tight RBAC so that even a fully compromised pod is isolated and observable.
+
+---
+
+Why Perimeter Security Fails for Agentic Platforms
+
+In a classic setup you draw a line around the cluster and trust everything inside it. Agentic platforms break that model completely:
+
+- Agents live in multiple namespaces and interact with pipelines, external tools, and each other.
+
+- There is no single “inside” anymore.
+
+- A compromised agent inside the cluster has free lateral movement unless we explicitly prevent it.
+
+Zero trust is the answer: assume breach, verify everything, and log everything. Every connection — pod-to-pod, agent-to-gateway, orchestrator-to-subagent — must prove who it is and what it is allowed to do.
+
+---
+
+SPIFFE/SPIRE Workload Identity — Cryptographic Identity for Every Pod
+
+Every workload receives its own cryptographic identity the moment it starts.
+
+SPIFFE (Secure Production Identity Framework for Everyone) and its control plane SPIRE give each pod a short-lived X.509 certificate called an SVID (SPIFFE Verifiable Identity Document).
+
+The identity looks like this:  
+ spiffe://cluster.local/ns/agents/sa/summarizer
+
+Key properties:
+
+- The SVID is automatically issued and rotated by SPIRE — no manual certificate management.
+
+- It is bound to the Kubernetes ServiceAccount and the pod’s attestation (node, service account, etc.).
+
+- An attacker who compromises a pod receives only that pod’s identity. They cannot impersonate any other workload.
+
+This identity becomes the foundation for every authorization decision that follows.
+
+---
+
+Istio Service Mesh — Mutual TLS Enforced by Sidecars
+
+Istio injects an Envoy sidecar proxy into every pod in managed namespaces. All traffic now flows through the sidecar — your application code never touches TLS directly.
+
+How mTLS works here:
+
+- Both sides of every connection authenticate using their SPIFFE SVID.
+
+- The PeerAuthentication policy is set to STRICT mode cluster-wide: any plaintext connection is rejected immediately.
+
+- Istio’s control plane (istiod) distributes certificates from SPIRE (or its own CA).
+
+Application code stays simple and secure — it talks HTTP or gRPC to [localhost](http://localhost) inside the pod, and Istio handles encryption, authentication, and authorization.
+
+---
+
+Default-Deny NetworkPolicy — The L3/L4 Foundation
+
+Kubernetes NetworkPolicy is the first layer of traffic control.
+
+We apply a default-deny policy to every namespace:
+
+apiVersion: networking.k8s.io/v1
+
+kind: NetworkPolicy
+
+metadata:
+
+  name: default-deny
+
+spec:
+
+  podSelector: {}
+
+  policyTypes:
+
+  - Ingress
+
+  - Egress
+
+Then we explicitly allow only the exact communication paths required (gateway ↔ agents, agents ↔ NATS, etc.).
+
+NetworkPolicy is enforced by your CNI (Calico or Cilium). Istio adds a second enforcement layer at L7. Both are required — they complement each other, they do not replace each other.
+
+---
+
+RBAC Scoping — Least Privilege for Kubernetes API Access
+
+Most ServiceAccounts are far too permissive. We enforce:
+
+- One ServiceAccount per workload (never share across services).
+
+- Prefer namespace-scoped Role over cluster-wide ClusterRole.
+
+- Remove all wildcards (\*) from production rules.
+
+Audit existing bindings with:
+
+- kubectl auth can-i --list --as system:serviceaccount:agents:summarizer
+
+We automate this check in CI: any ServiceAccount with cluster-admin or wildcard access fails the build.
+
+---
+
+AuthorizationPolicy (Istio) — Identity-Aware L7 Controls
+
+Istio’s AuthorizationPolicy applies fine-grained rules at the application layer using the workload’s SPIFFE identity.
+
+Example policy (only the gateway may call Panguard):
+
+apiVersion: security.istio.io/v1
+
+kind: AuthorizationPolicy
+
+metadata:
+
+  name: panguard-enforcement
+
+spec:
+
+  selector:
+
+    matchLabels:
+
+      app: panguard
+
+  action: ALLOW
+
+  rules:
+
+  - from:
+
+    - source:
+
+        principals:
+
+        - spiffe://cluster.local/ns/gateway/sa/gateway
+
+    to:
+
+    - operation:
+
+        methods: ["POST"]
+
+        paths: ["/enforce"]
+
+We combine this with JWT validation so Istio can extract claims and make decisions based on ATR roles.
+
+---
+
+Traffic Observability and Anomaly Detection
+
+Istio automatically generates rich telemetry for every connection:
+
+- Source and destination identity
+
+- Protocol, HTTP method, response code, latency
+
+We feed this into Prometheus and visualize it in Grafana (Module 19). Kiali gives a live service graph so anomalous paths jump out immediately.
+
+Any unexpected connection (a pod suddenly talking to a service it has never spoken to before) becomes a high-fidelity security signal.
+
+---
+
+Key Takeaways (Memorize These!)
+
+- Workload identity is the foundation — without it, authorization policies have nothing to authorize against.
+
+- STRICT mTLS mode is the only acceptable production posture; PERMISSIVE is for migration only.
+
+- NetworkPolicy and Istio AuthorizationPolicy are complementary, not redundant — NetworkPolicy operates at L3/L4, Istio at L7.
+
+- Zero trust is an ongoing operational posture, not a one-time configuration — every new service must be added to the trust fabric.
+
+You now have a network where compromise of one pod does not grant free movement across the cluster. Every hop is authenticated, authorized, and observed. This is the structural foundation that makes the rest of the security stack effective.

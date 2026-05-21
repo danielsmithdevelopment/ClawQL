@@ -116,6 +116,7 @@ jobs:
           mkdir -p "${DEST}"
           docker buildx build \
             --file docker/Dockerfile \
+            --target runtime \
             --platform linux/amd64,linux/arm64 \
             --output "type=oci,tar=false,dest=${DEST}" \
             --cache-from type=gha,scope=docker-publish-mcp \

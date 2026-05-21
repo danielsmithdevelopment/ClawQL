@@ -1,0 +1,145 @@
+---
+title: "GPU and Resource Protection: Isolation, Quotas, and Side-Channel Defences"
+series: "Agentic AI Security Curriculum"
+level: intermediate
+tags:
+  - gpu
+  - mig
+  - quotas
+  - multi-tenant
+part: 17
+total_parts: 30
+date: "May 2026"
+slug: "gpu-resource-protection-isolation"
+canonical_path: "/security/best-practices/gpu-resource-protection-isolation"
+description: "MIG isolation, namespace GPU quotas, and monitoring for unexpected GPU consumers."
+prev: "model-weight-integrity-verification"
+next: "memory-context-poisoning-prevention"
+---
+
+# GPU and Resource Protection: Isolation, Quotas, and Side-Channel Defences
+
+Isolation, Quotas, and Side-Channel Defences
+
+Hello and welcome to Module 17!
+
+Modules 1–16 have secured our supply chain, runtime enforcement, data handling, and model weights. Now we protect the GPU layer — the hardware that actually runs inference for our agents.
+
+GPU memory is not cleared between workloads by default. In a shared environment, one agent’s inference can leave residual data that the next workload can read through normal hardware behavior. This is not a software bug — it is how most NVIDIA GPUs work today. In multi-tenant or multi-agent platforms, this creates a silent data-leakage path that bypasses every software control we have built so far.
+
+In this module we extend least privilege all the way down to the hardware with MIG partitioning, namespace isolation, strict quotas, and side-channel defenses. By the end you will know exactly how to prevent both data leakage and resource-exhaustion attacks at the GPU level.
+
+---
+
+The GPU Memory Residue Problem
+
+NVIDIA GPUs (and most other accelerators) do not zero memory between context switches by default. When one workload finishes, its data remains in GPU memory until the next workload overwrites it.
+
+In a shared cluster this means:
+
+- A compromised or malicious agent can read fragments of previous inference results.
+
+- This leakage happens through normal hardware behavior — no kernel exploit required.
+
+- The risk is especially high in agentic platforms where multiple agents or pipelines share GPU nodes.
+
+We must treat the GPU as a shared resource that requires the same zero-trust isolation we apply everywhere else.
+
+---
+
+MIG (Multi-Instance GPU) Partitioning
+
+MIG is the strongest hardware-level isolation available on supported NVIDIA GPUs (A100, H100, and later).
+
+How MIG works:
+
+- A single physical GPU is divided into multiple isolated instances, each with its own dedicated compute engines, memory, and L2 cache.
+
+- Memory between MIG instances is hardware-enforced and automatically zeroed on context switch.
+
+- Instance A cannot read or influence instance B under any circumstances.
+
+Kubernetes integration:
+
+- MIG slices are exposed as schedulable resources: nvidia.com/mig-3g.20gb
+
+- Different tenants or high-security agents are scheduled to different MIG instances via node selectors and taints.
+
+MIG gives us true hardware isolation at the GPU level — the gold standard for multi-tenant inference.
+
+---
+
+GPU Namespace Isolation (Non-MIG GPUs)
+
+For GPU models that do not support MIG we use namespace-level separation:
+
+- One tenant per GPU node pool with dedicated node taints and tolerations.
+
+- ResourceQuota limits the number of GPUs per namespace.
+
+- Time-sliced GPU sharing is never used for security-sensitive workloads — it provides no memory isolation between tenants.
+
+This architectural separation ensures that even without MIG, tenants cannot share the same physical GPU hardware.
+
+---
+
+Resource Quotas and Blast Radius Bounding
+
+We prevent both data leakage and denial-of-service with strict quotas:
+
+- ResourceQuota on requests.nvidia.com/gpu and limits.nvidia.com/gpu per tenant namespace.
+
+- CPU and memory quotas prevent runaway agent loops from starving other tenants.
+
+- NATS JetStream stream limits per tenant (max messages, max bytes, max consumers).
+
+- Panguard rate-limits tool calls that trigger GPU inference, scoped per tenantId.
+
+We also alert on sustained GPU utilization >90 % for >5 minutes from a single tenant — a strong signal of possible inference DoS.
+
+---
+
+Side-Channel Attacks on Shared GPU
+
+Even with isolation, sophisticated attackers can attempt side-channel attacks:
+
+- Timing attacks: Measure GPU execution time to infer properties of another workload.
+
+- Power side-channels: GPU power draw varies with computation and can be observed from shared infrastructure.
+
+Mitigations:
+
+- Add random jitter to GPU response times for any external-facing inference endpoints.
+
+- For the highest-security deployments, use dedicated GPU hardware per tenant.
+
+In practice, these side-channels require significant infrastructure access and are lower priority than MIG or namespace isolation for most deployments.
+
+---
+
+GPU Monitoring and Anomaly Detection
+
+Visibility is critical. We monitor continuously:
+
+- Prometheus nvidia-smi exporter for utilization, memory usage, temperature, and power draw per GPU.
+
+- Alert on any pod not in the approved GPU workload list attempting to access a GPU.
+
+- Alert on unexpected memory usage spikes from workloads that normally use
+- Falco rule: alert on any process other than approved model-serving binaries accessing /dev/nvidia\*.
+
+These signals turn the GPU layer into an observable part of our security posture.
+
+---
+
+Key Takeaways (Memorize These!)
+
+- GPU memory residue is a hardware property, not a software bug — it requires hardware-level mitigation (MIG) or architectural separation (dedicated GPU per tenant).
+
+- MIG is the correct mitigation for multi-tenant GPU deployments on supported hardware — time-sliced sharing is not acceptable for security-sensitive workloads.
+
+- Resource quotas at the namespace level prevent GPU denial-of-service regardless of whether MIG is in use.
+
+- GPU monitoring is a security control as much as an operational one — unexpected GPU consumers are a signal of workload escape or resource theft.
+
+You now have least privilege enforced at the GPU hardware level. Residual data leakage is prevented, resource exhaustion is bounded, and every GPU access is monitored. The compute layer that powers your agents is now as securely isolated as every other component in the platform.

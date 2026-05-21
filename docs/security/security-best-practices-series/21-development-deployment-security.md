@@ -1,0 +1,134 @@
+---
+title: "Development and Deployment Security: Workstation Hardening, Local Dev, and Secure Production Deployment"
+series: "Agentic AI Security Curriculum"
+level: intermediate
+tags:
+  - workstation
+  - gitleaks
+  - deployment
+  - staging
+part: 21
+total_parts: 30
+date: "May 2026"
+slug: "development-deployment-security"
+canonical_path: "/security/best-practices/development-deployment-security"
+description: "Harden developer laptops and enforce secure-by-default production deploys with staging parity."
+prev: "automated-response-incident-recovery-picerl"
+next: "threat-modelling-stride-agentic-ai"
+---
+
+# Development and Deployment Security: Workstation Hardening, Local Dev, and Secure Production Deployment
+
+Workstation Hardening, Local Dev, and Secure Production Deployment
+
+Hello and welcome to Module 21!
+
+Modules 1–20 have built a production-grade security stack that protects agents from supply chain to runtime to incident response. But every artifact that reaches production — every image, every skill, every configuration change — originates on a developer workstation. If that workstation is weak, the entire chain is weak.
+
+A long-lived credential in a shell profile or an unhardened local environment is one phishing email away from a production breach. Security that relies on manual steps at deploy time will eventually be skipped under pressure. In this module we harden both ends of the pipeline: the developer workstation (where everything begins) and the production deployment process (where everything lands). By the end you will have a secure-by-default development-to-production flow where the safe path is also the easiest path.
+
+---
+
+The Development-to-Production Security Pipeline
+
+The developer workstation is part of the production security perimeter. Its posture directly affects what runs in production.
+
+Key principles:
+
+- A long-lived credential in ~/.zshrc or a shared state directory is one successful phishing attempt away from cluster compromise.
+
+- Any security control that requires manual configuration at deploy time will eventually be bypassed under deadline pressure — the default must be secure.
+
+- Weakness on either end of the pipeline undermines the entire system. We harden the workstation structurally and the deployment process automatically.
+
+---
+
+Workstation Tooling Layer
+
+Every developer laptop runs a standardized, verified tooling stack as part of onboarding:
+
+- Endpoint Detection and Response (EDR): Aegis or equivalent — continuous monitoring for suspicious activity on the laptop.
+
+- Wazuh agent: Ships local security events (file changes, process execution, network activity) to the central SIEM for correlation with production events.
+
+- Panguard CLI: Local enforcement of ATR rules during ClawQL development — catches policy violations before code leaves the laptop.
+
+- Gitleaks pre-commit hooks: Automatically scans every commit for credential patterns before they enter git history.
+
+- Hardware-backed commit signing: YubiKey or platform authenticator with git config gpg.format ssh — every commit is signed and verifiable.
+
+All tooling is installed, verified, and kept up-to-date as part of developer onboarding — it is never optional.
+
+---
+
+Workstation Structural Layer
+
+Beyond tools, we enforce structural controls that limit blast radius even if tooling is bypassed:
+
+- State directory permissions: chmod 700 ~/.clawql and all subdirectories — no group or world access.
+
+- Non-root gateway execution: The startup script explicitly rejects running as UID 0.
+
+- Per-project workspace isolation: CLAWQL_STATE_DIR=$(pwd)/.clawql-workspace — each project has its own isolated state with no shared directories.
+
+- devcontainer pattern: Every project runs inside an isolated container with its own gateway socket and state directory.
+
+- Vault dev server: Started fresh for each session, in-memory, and non-persistent — no credentials survive session close.
+
+- External API keys for development: Stored only in the Vault dev server with a 4-hour TTL — never in shell profiles or dotfiles.
+
+---
+
+Preventing Credential Leakage into Git and Logs
+
+We actively block common leakage paths:
+
+- ClawQL-specific Gitleaks patterns (session JWT regex, API key prefixes) are added to .gitleaks.toml.
+
+- Log-level discipline: CLAWQL_LOG_LEVEL=info is enforced in all shell profiles — debug is never used in persistent log destinations.
+
+- Weekly automated scan of the state directory: gitleaks detect --source ~/.clawql/ --no-git.
+
+- Developer offboarding checklist: Immediately revoke the developer’s mTLS certificate and rotate any shared credentials they had access to.
+
+---
+
+Production Deployment: Secure-by-Default Architecture
+
+Production deployments are one-command and fully secure by default:
+
+- clawql deploy --env production applies every security control without any manual flags.
+
+- All production configuration lives in git as Infrastructure-as-Code with signed commits and PR-based change management.
+
+- The deployment pipeline includes mandatory gates: supply-chain verification (Modules 1–3), security test suite (Module 24), and smoke tests (Module 26). Any failure blocks the deploy.
+
+- Canary deployment: New gateway version serves 5 % of traffic; security metrics are compared to baseline for 30 minutes before full rollout.
+
+- Rollback criteria are defined before every deploy: >20 % increase in Panguard block rate, any unhandled 500 error, or any Falco CRITICAL alert in the observation window.
+
+---
+
+Environment Parity
+
+Staging must be an exact mirror of production security configuration — same Panguard rules, same ATR roles, same NetworkPolicy, same Vault policies.
+
+- The local developer environment uses the Vault dev server (in-memory, non-persistent) while all other controls remain identical to production.
+
+- Monthly automated drift detection compares staging vs production security configuration and alerts on any divergence.
+
+A staging environment that is more permissive than production is not a staging environment — it is a security gap.
+
+---
+
+Key Takeaways (Memorize These!)
+
+- The workstation is part of the production security perimeter — treat its compromise with the same severity as a production server compromise.
+
+- 700 permissions on state directories and non-root execution are structural controls that limit blast radius without requiring additional tooling.
+
+- Secure-by-default deployment means the insecure configuration requires deliberate action to enable — not the other way around.
+
+- Staging must enforce the same security controls as production; a staging environment that is more permissive is not a staging environment, it is a gap.
+
+You now have a development and deployment pipeline where security is the path of least resistance. The workstation is hardened, leakage is prevented, and production deployments are secure by default and fully automated. This closes the loop between developer intent and production reality — the entire platform is only as secure as the code and configuration that reaches it.

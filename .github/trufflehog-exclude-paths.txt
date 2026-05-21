@@ -1,1 +1,10 @@
+# TruffleHog --exclude-paths: newline-separated regexes matched against file paths.
+# Mirror .gitleaks.toml allowlist — vendor specs, fixtures, and documented placeholders are not secrets.
+
 ^providers/
+^packages/mcp-grpc-transport/test-fixtures/
+\.env\.example$
+^docs/benchmarks/
+^website/src/lib/oauth-discovery-metadata\.ts$
+\.test\.ts$
+^\.github/workflows/ci\.yml$

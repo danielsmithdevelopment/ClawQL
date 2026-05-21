@@ -1,1130 +1,8084 @@
-> **Curriculum / website:** The same material is split into twenty **modules** (vendor-neutral framing, **`level` / `tags`** for CMS search, **Further reading** links, `prev` / `next` slugs) under [`security-best-practices-series/`](security-best-practices-series/). See [`security-best-practices-series/README.md`](security-best-practices-series/README.md) for scope and the module index.
+# 30-Module Security Best Practices Curriculum
 
-# **Supply Chain Security: Why Pinning Versions and Running Your Own Mirror Registry Matters\*\***Part 1 of the ClawQL Security Best Practices Series\***\*May 2026**
+> **Modular site / CMS:** Thirty standalone modules with frontmatter live under [`security-best-practices-series/`](security-best-practices-series/README.md). Regenerate from this monolith with `node tools/security-curriculum-v30/extract-bodies-from-monolith.mjs` then `node tools/security-curriculum-v30/build-modules.mjs`.
 
-The software supply chain is the single largest and most dangerous attack surface in any production-grade agentic AI and MCP platform. A single compromised dependency, container image, or model weight can give an attacker persistent access to your cluster, your documents, your Memory 2.0 knowledge graph, and your users’ sensitive data.This guide explains why relying on public registries is unacceptable for ClawQL deployments and shows exactly how to build a secure, mirrored, and verifiable supply chain using Harbor, Cosign, Trivy, Syft, and strict pinning.### The Supply Chain Threat Landscape
-
-Supply-chain attacks have become sophisticated and frequent:Dependency confusion attacks, where attackers publish malicious packages with the same name as your internal ones.
-Typosquatting and name collisions with popular packages.
-Compromised official base images on Docker Hub or GitHub Container Registry.
-Model weight poisoning through malicious Ollama or Hugging Face models containing hidden triggers.
-Living-off-the-land persistence once inside a container.
-
-In an MCP-based agentic system like ClawQL, the impact is amplified. A compromised tool can execute arbitrary code in the sandbox, access the full document pipeline (Tika → Presidio → Paperless), or exfiltrate data through the intelligent gateway.**Core conclusion**: You cannot outsource trust to the public internet. You must control every artifact from source to running pod.### Harbor as the Single Trust Root
-
-ClawQL designates Harbor as the single source of truth for all artifacts: container images, Helm charts, model weight manifests, SBOMs, and Cosign signatures.Harbor provides a private registry with replication, pull-through caching, built-in vulnerability scanning, and native support for SBOM storage. All ClawQL components are configured to pull exclusively from your internal Harbor instance.**Key Harbor configuration principles**:Allowlist-only resolution enabled.
-Replication rules to mirror only approved upstream artifacts.
-All images and manifests must be signed before being accepted.
-
-### Allowlist-Only Resolution and Version Pinning
-
-This is the foundational control.Never do this in production:Pulling directly from Docker Hub, npm, PyPI, or GitHub.
-Using floating tags such as :latest or :main.
-Allowing version ranges like ^1.2.0.
-
-Always do this:Use exact digest pinning (e.g., nginx@sha256:abc123…).
-Or use a pinned version combined with mandatory Cosign signature verification.
-
-The clawql-full-stack umbrella chart and Kubernetes Operator enforce these rules through configuration flags such as:yaml
-
-security:
-supplyChain:
-registryMirror: "harbor.clawql.internal"
-allowlistOnly: true
-requireDigest: true
-requireCosign: true
-
-### Scanning, SBOM Generation, and Signing
-
-Every artifact that enters Harbor must be scanned and accompanied by a Software Bill of Materials (SBOM).**Tools used in the ClawQL pipeline**:Trivy: OS and language vulnerability scanning.
-OSV-Scanner: Ecosystem-specific vulnerability checks.
-Syft: SBOM generation (SPDX and CycloneDX formats).
-Cosign: Keyless signing via Sigstore (no long-lived keys to manage or steal).
-
-**Typical CI pipeline step**:yaml
-
-trivy image --exit-code 1 --severity CRITICAL,HIGH $IMAGE:latest
-syft packages $IMAGE:latest -o spdx-json > sbom.spdx.json
-cosign sign --keyless $IMAGE@${DIGEST}
-
-All SBOMs are stored alongside their images in Harbor for long-term forensic and compliance needs.### Credential Leak Prevention
-
-Even the best registry is useless if secrets enter the repository.ClawQL uses a two-layer defense:Gitleaks as a mandatory pre-commit hook plus CI gate.
-TruffleHog for full historical repository scans on every push or pull request.
-
-These tools block AWS keys, Vault tokens, database credentials, and other secrets before they ever reach the main branch.### Practical ClawQL Implementation Summary
-
-Mirror only approved upstream artifacts into Harbor on a nightly schedule.
-Enforce allowlist-only resolution and digest pinning everywhere in Helm charts and the Operator.
-Require Cosign keyless signing on all images and manifests.
-Scan every build with Trivy + OSV-Scanner and block merges on critical findings.
-Store SBOMs with every release for full traceability months later.
-
-These controls are already built into the official ClawQL Helm charts and Kubernetes Operator.### Key Takeaways
-
-Public registries represent an unacceptable risk for production agentic platforms.
-A private mirror registry (Harbor) with allowlist-only resolution is the foundation of all other security layers.
-Strict pinning, SBOMs, and Cosign signing turn every artifact into a verifiable, tamper-evident unit.
-Credential scanning prevents the most common initial compromise vector.
-
-This supply chain foundation is the prerequisite for every subsequent guide in the series.**Next in the series**: Building Golden Images – Automated Scanning, Hardening, and Distroless Pipelines.
+## Table of contents
 
 ---
 
-_ClawQL Security Best Practices Series • Part 1 • May 2026_  
-Based on the official ClawQL Comprehensive Defense-in-Depth Security Guide.
+### **I. Supply Chain Security**
+
+**1. Container Image Security: Pinning, Distroless Pipelines, Mirror Registries, and Golden Images** 
+
+**2. Cluster Admission Control: Image Signing, Kyverno, and Blocking Unsigned Workloads** 
+
+**3. ClawHub Skill Vetting & Safe Installation: Signature Verification, Sandbox Testing, and Allowlisting** 
 
 ---
 
-# **Building Golden Images: Automated Scanning, Hardening, and Distroless Pipelines\*\***Part 2 of the ClawQL Security Best Practices Series\***\*May 2026**
+### **II. Network Security & Perimeter**
 
-Once you have secured your supply chain with a private mirror registry (Guide 1), the next critical layer is building **golden images** — minimal, hardened, immutable container images that form the foundation of every ClawQL workload. This guide explains how to create, scan, sign, and deploy golden distroless images with read-only root filesystems and full provenance.### Why Golden Distroless Images Matter
+**4. Zero Trust Network Architecture: mTLS, Istio, RBAC, and Workload Identity** 
 
-Most container images are far larger than necessary and contain unnecessary tools that increase the attack surface. A compromised package manager or shell in a running pod gives attackers easy persistence and lateral movement options.ClawQL’s philosophy is simple:Make images as small as possible.
-Remove everything that is not required at runtime.
-Make the root filesystem read-only.
-Verify every image before it ever runs.
+**5. Agent Gateway Hardening: Binding, Firewall Rules, DNS Rebinding Defense, and Safe Remote Access** 
 
-This approach dramatically reduces the blast radius if a container is compromised.### Core Hardening Principles
+**6. Egress Filtering, DNS Controls, and Data Loss Prevention** 
 
-**1. Distroless Base Images**  
-Use Google’s official distroless images or Chainguard distroless as the foundation. These contain only the bare runtime (e.g., glibc, ca-certificates, and your application binary) with no shell, no package manager, and no unnecessary utilities.**2. Read-Only Root Filesystem**  
-Set securityContext.readOnlyRootFilesystem: true on every pod. Combined with distroless, this prevents attackers from writing new binaries, installing tools, or modifying system files even if they achieve code execution.**3. Multi-Stage Builds**  
-All ClawQL golden images use multi-stage Dockerfiles:dockerfile
+---
 
-# Stage 1: Builder
+### **III. Identity, Secrets & Access Control**
 
-FROM golang:1.24-alpine AS builder
+**7. Least Privilege and Scoped Kubernetes Identities: ServiceAccounts, IRSA, and Workload Identity** 
+
+**8. Secrets at Rest: Vault Integration, HSM Backing, and Tamper-Proof Audit Logging** 
+
+**9. Authentication & Session Management: Per-Request Scoped Tokens, OAuth/OIDC, Rotation, and Replay Prevention** 
+
+**10. Agent Identity Lifecycle: Provisioning, Scope Governance, and Decommissioning** 
+
+---
+
+### **IV. Runtime Enforcement & Sandboxing**
+
+**11. Sandboxing Agent Workloads: Kata Containers, gVisor, and macOS Seatbelt** 
+
+**12. MCP Runtime Enforcement: Panguard, ATR Rules, Schema Validation, and Injection Defense** 
+
+**13. Input Validation and Protocol Hardening: SSRF Prevention, Token Limits, Encoding Defense, and Replay Prevention** 
+
+**14. Multi-Agent Trust Hierarchies and Orchestrator Security: Delegation, Result Integrity, and Blast Radius Isolation** 
+
+---
+
+### **V. Data & Model Protection**
+
+**15. Data Classification and PII Redaction: Tagging, Anonymisation, and Residency Controls** 
+
+**16. Model Weight Integrity: Verifying Authenticity Before Every Load** 
+
+**17. GPU and Resource Protection: Isolation, Quotas, and Side-Channel Defences** 
+
+**18. Memory & Context Poisoning Prevention: Redaction at Source and Immutable Agent Memory** 
+
+---
+
+### **VI. Detection, Monitoring & Incident Response**
+
+**19. Security Monitoring and Observability Architecture: Falco, Wazuh, SIEM Integration, and Telemetry Design** 
+
+**20. Automated Response and Incident Recovery: Talon, Quarantine, PICERL, and WORM Audits** 
+
+---
+
+### **VII. Development & Deployment Security**
+
+**21. Development and Deployment Security: Workstation Hardening, Local Dev, and Secure Production Deployment** 
+
+---
+
+### **VIII. Threat Modelling & Adversarial Testing**
+
+**22. Threat Modelling for Agentic AI: STRIDE, Attack Trees, and Living Threat Models** 
+
+**23. OWASP Agentic Top 10: Mitigations and Control Mapping** 
+
+**24. Red Teaming and Adversarial Testing Methodology: Proving the Controls Work** 
+
+---
+
+### **IX. Platform Operations & Resilience**
+
+**25. Quarterly Security Review Checklist: Metrics, Rotations, and Continuous Posture Verification** 
+
+**26. Vulnerability Management, Patch Cadence, and Cryptographic Agility** 
+
+**27. Secure Multi-Tenancy: Namespace Isolation, Per-Tenant Vault Paths, and Audit Segregation** 
+
+**28. Disaster Recovery and Business Continuity: RTO/RPO, Session Recovery, and Cross-Region Failover** 
+
+---
+
+### **X. Governance & Compliance**
+
+**29. Compliance and Regulatory Mapping: GDPR, HIPAA, SOC 2 Type II, and EU AI Act** 
+
+**30. Human Operator Security: Admin Controls, Separation of Duties, Break-Glass Access, and External API Hygiene** 
+
+---
+
+## **MODULE 1**
+
+### **Container Image Security: Pinning, Distroless Pipelines, Mirror Registries, and Golden Images**
+
+The most common supply chain attack doesn’t compromise your code — it compromises the base image you pulled last week without noticing. Digest pinning, distroless builds, and a private mirror registry together ensure the image that runs in production is byte-for-byte identical to the image your team reviewed and approved. This module builds the full pipeline from source to registry to running workload with no unsigned or unverified step in between.
+
+**The problem with unpinned images**
+
+- latest tag resolves to a different image every pull — no guarantee of what runs in production
+
+- Upstream publishers can push malicious updates to existing tags silently
+
+- Mutable tags make reproducible builds impossible and audit trails meaningless
+
+- Most supply chain attacks target the base image layer, not application code
+
+**Digest pinning**
+
+- Pin to SHA-256 digest, not tag: image@sha256:abc123...
+
+- Digest is cryptographically bound to exact image bytes — cannot be changed without changing the reference
+
+- Automate digest updates via Renovate/Dependabot rather than removing pins
+
+- Every digest change triggers the full CI pipeline, including security scanning
+
+**Private mirror registry with Harbor**
+
+- Never pull directly from Docker Hub or public registries in production
+
+- Harbor acts as pull-through cache and single source of truth for all approved images
+
+- All images scanned by Trivy and OSV-Scanner before entering Harbor allowlist
+
+- Images that fail scanning are quarantined — never promoted to production
+
+- Harbor replication policies sync approved images to regional replicas for latency and availability
+
+- Access control: only the CI system can push to Harbor; pods pull only, with pull secrets scoped per namespace
+
+**SBOM generation**
+
+- Generate Software Bill of Materials at build time with Syft or Docker BuildKit --sbom
+
+- SBOM records every package, version, and license in the image
+
+- Store SBOM alongside the image digest in Harbor as an attached artifact
+
+- SBOM enables rapid blast radius assessment when a new CVE drops: query which images contain the vulnerable package without re-scanning everything
+
+**Distroless base images**
+
+- Standard base images include a shell, package manager, and dozens of utilities — none needed at runtime
+
+- Distroless images contain only the runtime (Node, Python, JVM) and the application
+
+- No shell means no sh -c execution path for an attacker who achieves code execution
+
+- No package manager means no apt install pivot path
+
+- Use Google’s distroless images or build custom minimal bases with FROM scratch + explicit COPY
+
+- Multi-stage builds: build in a full image, copy only artifacts into the distroless final stage
+
+**Golden image pipeline**
+
+- Define a golden base image for each runtime (Node 22 distroless, Python 3.12 distroless)
+
+- Golden image is built weekly or on upstream CVE disclosure, scanned, signed, and promoted
+
+- All application images inherit FROM the golden base — no direct FROM upstream
+
+- Hardening applied at the golden layer: non-root user, read-only filesystem, dropped capabilities
+
+- Golden image digest is pinned in a central registry that all application Dockerfiles reference
+
+**Trivy and OSV-Scanner integration**
+
+- Run Trivy in CI on every PR that changes a Dockerfile or dependency lockfile
+
+- Fail the build on CRITICAL or HIGH severity CVEs with no fix available
+
+- OSV-Scanner checks Go modules, npm, pip, and Cargo against the Open Source Vulnerabilities database
+
+- Scan results uploaded as signed artifacts to the audit trail alongside the image digest
+
+- Scheduled weekly scans against all images in Harbor to catch newly disclosed CVEs
+
+**Key takeaways to cover**
+
+- Digest pinning is non-negotiable; tag pinning is not pinning
+
+- A private mirror registry is the single architectural decision with the highest supply chain ROI
+
+- Distroless images remove entire attack categories, not just individual vulnerabilities
+
+- SBOM is the prerequisite for meaningful vulnerability management at scale
+
+- The golden image pipeline means one hardened base, consistently applied, rather than per-application hardening decisions
+
+---
+
+Module 1: Container Image Security
+
+Pinning, Distroless Pipelines, Mirror Registries, and Golden Images
+
+Hello and welcome to Module 1! 🎉
+
+This is where we lay the absolute foundation of our entire security posture. Think of container images as the “DNA” of every workload that runs in your agentic platform. If that DNA is corrupted or untrusted, nothing else downstream—no admission controls, no runtime enforcement, no monitoring—can fully save you.
+
+In this module we’ll turn the most common supply-chain attack vector into something that is provably, repeatably, and automatically secure. By the end you’ll understand exactly why digest pinning is non-negotiable, why a private mirror registry gives you the highest ROI of any single architectural decision, and how a golden-image pipeline plus distroless bases removes entire categories of attacks before your agents even start.
+
+Let’s dive in.
+
+---
+
+The Problem with Unpinned Images
+
+Imagine you’re building the same agent every day. You write FROM node:22 (or python:3.12, etc.) in your Dockerfile and everything works perfectly… until one Tuesday morning when the upstream publisher silently updates the latest tag (or even a specific version tag) with a new layer that contains malware.
+
+That is exactly how most real-world supply-chain attacks happen.
+
+Here’s why unpinned images are catastrophic for agentic platforms:
+
+- The latest tag resolves to a different image every time you pull. There is literally no guarantee that what runs in production tomorrow is the same thing that passed your security scan yesterday.
+
+- Upstream maintainers can (and sometimes do) push updates to existing tags without changing the tag name. This breaks reproducibility and makes audit trails meaningless.
+
+- The majority of supply-chain attacks target the base image layer, not your application code, because it’s the easiest way to get code execution inside thousands of downstream deployments.
+
+- Mutable tags make it impossible to answer the simple question: “What exact bytes were running when this incident occurred?”
+
+Real-world consequence: A single malicious update to a popular base image can give an attacker shell access inside every agent that pulls it. We’ve seen this pattern in the wild far too many times.
+
+---
+
+Digest Pinning — The Cryptographic Fix
+
+The solution is simple in concept but powerful in practice: never reference an image by tag; always pin to its cryptographic digest.
+
+Instead of:
+
+FROM node:22
+
+You write:
+
+FROM node@sha256:abc123def456... (the full 64-character SHA-256 digest)
+
+Why this works so well:
+
+- A digest is cryptographically bound to the exact bytes of the image. Changing even a single bit changes the digest.
+
+- You cannot “silently update” a digest-pinned image — the reference itself would have to change.
+
+- Every time the digest changes, your CI pipeline runs the full security scan again (which is exactly what we want).
+
+Practical workflow:
+
+1. Your Dockerfile always uses a digest (never a tag).
+
+2. Use Renovate or Dependabot to automatically propose digest updates as PRs.
+
+3. Every PR that changes a digest triggers Trivy, OSV-Scanner, and your full test suite.
+
+4. Only after all gates pass does the new digest get merged and promoted.
+
+This turns “image updates” from a risky manual process into a safe, auditable, automated one.
+
+---
+
+Private Mirror Registry with Harbor — Your Single Source of Truth
+
+Never, ever pull directly from Docker Hub, Quay, or any public registry in production. That is the architectural decision with the highest supply-chain ROI in the entire curriculum.
+
+We use Harbor as our private mirror registry for three reasons:
+
+- Pull-through cache: It automatically caches approved images from upstream so you’re not hammering public registries.
+
+- Scanning & allowlisting gate: Every image must pass Trivy + OSV-Scanner before it is allowed into the production allowlist. Images that fail are quarantined.
+
+- Replication & access control: Harbor can replicate approved images to regional replicas for low latency and high availability. Only the CI system is allowed to push; all pods pull only, using pull secrets scoped per namespace.
+
+How the flow works in practice:
+
+1. CI pipeline builds or updates an image → scans it.
+
+2. If clean, it is pushed to Harbor under a project like approved/.
+
+3. Harbor’s replication policies sync it to other regions.
+
+4. All production workloads reference only harbor.yourcompany.com/approved/...@sha256:...
+
+This gives you a single, auditable source of truth and removes the public internet as a dependency for production workloads.
+
+---
+
+SBOM Generation — Know Exactly What’s Inside
+
+You can’t defend what you can’t see. That’s why we generate a Software Bill of Materials (SBOM) at build time.
+
+Tools we love:
+
+- Syft (from Anchore)
+
+- Docker BuildKit with --sbom flag
+
+Example in your CI:
+
+docker build --sbom=true -t myimage@sha256:... .
+
+The SBOM records every package, version, license, and source. We store the SBOM alongside the image digest in Harbor as an attached artifact (using OCI artifacts).
+
+Why this is gold for agentic platforms:
+
+- When a new CVE drops, you can instantly query “which of our 400 golden images and application images contain this package?” without re-scanning everything.
+
+- It powers rapid blast-radius assessment during incident response.
+
+---
+
+Distroless Base Images — Removing the Attacker’s Toolbox
+
+Standard base images ship with a shell, package manager, curl, wget, and dozens of other utilities. None of these are needed at runtime for most agents.
+
+Distroless images (from Google or built with FROM scratch) contain only:
+
+- The runtime (Node, Python, JVM, etc.)
+
+- Your application binary or code
+
+Benefits that are huge for security:
+
+- No shell → no sh -c "malicious command" execution path.
+
+- No package manager → no apt install or pip install pivot.
+
+- Dramatically smaller attack surface.
+
+Multi-stage build pattern (the gold standard):
+
+# Stage 1: Build
+
+FROM node:22 AS builder
+
 WORKDIR /app
+
 COPY . .
-RUN go build -ldflags="-s -w" -o /clawql-api ./cmd/api
 
-# Stage 2: Golden Runtime
+RUN npm ci && npm run build
 
-FROM gcr.io/distroless/static-debian12
-COPY --from=builder /clawql-api /usr/local/bin/clawql-api
-USER 65532:65532
-ENTRYPOINT ["/usr/local/bin/clawql-api"]
+# Stage 2: Distroless runtime
 
-**4. Minimal Attack Surface**No shell (sh, bash)
-No package managers (apt, apk, yum)
-No debug tools (curl, wget, strace)
-Static binaries where possible
+FROM gcr.io/distroless/nodejs22
 
-### Automated Scanning and Signing
+COPY --from=builder /app/dist /app
 
-Every golden image goes through a mandatory pipeline before being promoted to Harbor:**Build** → Multi-stage Dockerfile
-**Scan** → Trivy (critical/high vulnerabilities blocked) + OSV-Scanner
-**Generate SBOM** → Syft (stored alongside the image)
-**Sign** → Cosign keyless signing via Sigstore
-**Push** → Only to internal Harbor with allowlist enforcement
+CMD ["index.js"]
 
-**Example CI Pipeline Snippet**yaml
+---
 
-- name: Build Golden Image
-  run: |
-  docker build -t $IMAGE:$TAG .
-  trivy image --exit-code 1 --severity CRITICAL,HIGH $IMAGE:$TAG
-  syft packages $IMAGE:$TAG -o spdx-json > sbom.spdx.json
-  cosign sign --keyless $IMAGE@${DIGEST}
-  docker push $IMAGE:$TAG
+The Golden Image Pipeline — One Hardened Base to Rule Them All
 
-### ClawQL Golden Image Standards
+Instead of every team making their own hardening decisions, we define golden base images for each runtime:
 
-All official ClawQL components follow these rules:Base: gcr.io/distroless/static-debian12 or chainguard/static
-Non-root user (UID 65532)
-Read-only root filesystem enforced in Helm charts and Kyverno policies
-No writable layers except explicitly mounted volumes (e.g., /tmp if absolutely required, mounted as tmpfs)
-Full SBOM and Cosign signature required
+- golden/node:22-distroless
 
-The clawql-full-stack Helm chart includes these defaults under security.goldenImages.### Kyverno Policy Enforcement
+- golden/python:3.12-distroless
 
-A cluster-wide Kyverno policy enforces golden image standards at admission time:yaml
+- etc.
 
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
+How the pipeline works:
+
+1. Built weekly or on any upstream CVE disclosure.
+
+2. Scanned, signed with Cosign, and promoted to Harbor.
+
+3. Every application Dockerfile starts with FROM harbor.yourcompany.com/golden/node@sha256:...
+
+4. Hardening (non-root user, read-only filesystem, dropped capabilities) is applied once at the golden layer.
+
+This gives you consistent, auditable hardening across the entire fleet instead of per-application guesswork.
+
+---
+
+Trivy + OSV-Scanner Integration — Shift-Left Scanning
+
+We run two complementary scanners in CI on every PR that touches a Dockerfile or lockfile:
+
+- Trivy: Container image and filesystem scanner (catches OS packages, language libraries, secrets, misconfigurations).
+
+- OSV-Scanner: Checks Go modules, npm, pip, Cargo, etc. against the Open Source Vulnerabilities database.
+
+Policy:
+
+- Fail the build on CRITICAL or HIGH severity issues with no fix available.
+
+- Scan results are uploaded as signed artifacts alongside the image digest.
+
+- Weekly scheduled scans against all images in Harbor catch newly disclosed CVEs.
+
+---
+
+Key Takeaways (Memorize These!)
+
+- Digest pinning is non-negotiable — tag pinning is _not_ pinning.
+
+- A private mirror registry (Harbor) is the single highest-ROI architectural decision in the entire supply chain.
+
+- Distroless images remove entire attack categories, not just individual vulnerabilities.
+
+- SBOMs are the prerequisite for vulnerability management at scale.
+
+- The golden image pipeline means one hardened, reviewed base applied everywhere — far better than per-app decisions.
+
+---
+
+Next Steps & Hands-On Challenge
+
+1. Take any existing Dockerfile in your project and convert it to digest pinning + distroless.
+
+2. Stand up a local Harbor instance (or use the official Helm chart) and configure it as a pull-through cache.
+
+3. Add Trivy + OSV-Scanner to your CI and watch the first scan results come in.
+
+You’ve just taken the single biggest step toward supply-chain security for your agentic platform.
+
+## **MODULE 2**
+
+### **Cluster Admission Control: Image Signing, Kyverno, and Blocking Unsigned Workloads**
+
+A Kubernetes cluster that will run any image from any registry is one compromised CI job away from executing arbitrary code in production. Admission control moves the enforcement point to the cluster itself — no unsigned, unverified, or policy-violating workload can be scheduled regardless of how it arrived. This module builds the admission webhook architecture that makes the correct behaviour the only possible behaviour at deploy time.
+
+**Why the cluster is the last line of supply chain defense**
+
+- CI gates can be bypassed: direct kubectl apply, compromised deploy keys, manual hotfixes under pressure
+
+- Without admission control, any image can be scheduled regardless of CI outcome
+
+- Admission webhooks intercept every resource creation before it reaches the scheduler
+
+- The cluster saying no is the control that cannot be social-engineered
+
+**Cosign image signing**
+
+- Cosign attaches a cryptographic signature to the image manifest in the registry
+
+- Signature is verified against the publisher’s public key stored in the cluster as a ConfigMap or Sigstore TUF root
+
+- Keyless signing with Sigstore: signature is bound to the CI system’s OIDC identity, not a long-lived key
+
+- Verification checks: correct signer identity, correct image digest, signature not expired
+
+- Sign at the end of the CI pipeline after all scans pass; never before
+
+**Kyverno policy engine**
+
+- Kyverno runs as a validating and mutating admission webhook
+
+- No custom code required: policies are Kubernetes-native YAML
+
+- Key policies to implement:
+  - Deny any pod whose image reference is not a digest (tag-only references rejected)
+    - Deny any pod whose image digest does not have a valid Cosign signature
+    - Deny any pod running as root (UID 0)
+    - Deny any pod with privileged: true or allowPrivilegeEscalation: true
+    - Deny any pod that mounts the Docker socket
+    - Require specific label sets on all production pods (owner, team, version)
+    - Mutate: automatically add seccomp profile if not specified
+
+**OPA/Gatekeeper as an alternative**
+
+- OPA uses Rego policy language — more expressive but steeper learning curve
+
+- Gatekeeper is the Kubernetes integration for OPA
+
+- Use OPA when policy logic is complex enough that Kyverno’s YAML syntax becomes limiting
+
+- Both can run simultaneously for different policy categories
+
+**Admission webhook architecture**
+
+- ValidatingWebhookConfiguration: can reject resources, cannot modify them
+
+- MutatingWebhookConfiguration: can add/change fields before validation
+
+- Failure policy: Fail (reject if webhook is unreachable) vs Ignore (allow if unreachable)
+
+- Always use Fail for security-critical webhooks in production
+
+- Webhook availability is now a security dependency: include in DR/BCP planning (Module 28)
+
+**Blocking namespace escape and privileged workloads**
+
+- Deny hostPID, hostNetwork, hostIPC on all agent pods
+
+- Deny volume mounts of host paths except explicitly approved monitoring paths
+
+- Enforce pod security standards at namespace level: restricted profile for agent namespaces
+
+- Namespace labels enforce the policy level: [pod-security.kubernetes.io/enforce](http://pod-security.kubernetes.io/enforce): restricted
+
+**Audit mode before enforcement**
+
+- Run new policies in audit mode first: violations logged but not rejected
+
+- Review audit logs for 7 days to find legitimate workloads that would be blocked
+
+- Fix legitimate violations before switching to enforce mode
+
+- Never go straight to enforce mode in production without an audit period
+
+**Key takeaways to cover**
+
+- Admission control is the enforcement point that cannot be bypassed by compromised CI credentials
+
+- Fail policy on security webhooks is mandatory — Ignore silently disables enforcement on outage
+
+- Image signing and digest pinning at the cluster layer close the gap that registry controls alone cannot
+
+- Pod security standards at the namespace level are the baseline; Kyverno policies add specificity above it
+
+---
+
+Module 2: Cluster Admission Control
+
+Image Signing, Kyverno, and Blocking Unsigned Workloads
+
+Hello and welcome to Module 2! 🎉
+
+Module 1 gave us rock-solid images that we can trust leaving the registry. Now we make sure only those trusted images — and only workloads that meet every security policy — are allowed to run inside the cluster.
+
+This is the last line of supply-chain defense. Even if CI is bypassed, a deploy key is stolen, or someone runs a manual kubectl apply under pressure, the cluster itself will say “no” to anything that doesn’t meet the rules. Admission control turns the Kubernetes API into an unbreakable gatekeeper.
+
+Let’s build it together.
+
+---
+
+Why the Cluster Is the Last Line of Supply Chain Defense
+
+CI pipelines are excellent, but they are not infallible. A compromised deploy key, a hotfix under deadline pressure, or a direct kubectl command can still push malicious workloads into production.
+
+Without admission control, the scheduler will happily run any image you give it.
+
+Admission webhooks solve this problem by intercepting every resource creation (Pods, Deployments, Jobs, etc.) _before_ the scheduler ever sees them. The cluster itself becomes the enforcement point that cannot be social-engineered or bypassed by credential theft.
+
+This is the control that says: “No matter how the workload arrived, it must pass these checks or it does not run.”
+
+---
+
+Cosign Image Signing — Cryptographic Proof of Origin
+
+We attach a cryptographic signature to every approved image using Cosign.
+
+How it works:
+
+- After all scans and tests pass in CI, Cosign signs the image manifest in the registry.
+
+- The signature is verified against the publisher’s public key (stored in the cluster as a ConfigMap or via Sigstore’s TUF root).
+
+- We strongly prefer keyless signing with Sigstore: the signature is bound to the CI system’s OIDC identity (e.g., GitHub Actions or GitLab) instead of a long-lived private key.
+
+Verification checks performed by the cluster:
+
+- Correct signer identity
+
+- Correct image digest
+
+- Signature not expired
+
+Critical rule: Sign at the end of the CI pipeline, after every scan and test has passed — never before.
+
+---
+
+Kyverno Policy Engine — Kubernetes-Native Enforcement
+
+Kyverno runs as a validating and mutating admission webhook. No custom code is required — everything is written in plain Kubernetes YAML.
+
+Key policies we enforce on every workload:
+
+- Deny any pod whose image reference is not a digest — tag-only references are rejected.
+
+- Deny any pod whose image digest does not have a valid Cosign signature.
+
+- Deny any pod running as root (UID 0).
+
+- Deny any pod with privileged: true or allowPrivilegeEscalation: true.
+
+- Deny any pod that mounts the Docker socket.
+
+- Require specific label sets on all production pods (owner, team, version, environment).
+
+- Mutating policy: automatically add a secure seccomp profile if none is specified.
+
+These policies are simple, readable, and version-controlled alongside the rest of your infrastructure code.
+
+---
+
+OPA/Gatekeeper as an Alternative (or Companion)
+
+Kyverno is our default because its YAML-first approach is accessible to the entire team.
+
+When you need more complex logic, OPA (Open Policy Agent) with Gatekeeper is the perfect complement:
+
+- Uses the powerful Rego language.
+
+- Gatekeeper is the official Kubernetes integration for OPA.
+
+- Both engines can run simultaneously — Kyverno for simple policies, Gatekeeper for advanced ones.
+
+Choose whichever tool fits your team’s comfort level; the important part is that policy lives as code and is enforced at admission time.
+
+---
+
+Admission Webhook Architecture — The Technical Details
+
+There are two types of webhooks:
+
+- ValidatingWebhookConfiguration: can only reject a resource (the most common for security).
+
+- MutatingWebhookConfiguration: can add or change fields before validation runs (e.g., injecting seccomp profiles).
+
+Failure policy is critical:
+
+- Fail — reject the request if the webhook is unreachable (this is mandatory for security webhooks).
+
+- Ignore — silently allow the request if the webhook is down (never use this in production for security policies).
+
+Webhook availability is now a security dependency. Include admission controllers in your disaster-recovery and business-continuity planning (we’ll cover this in Module 28).
+
+---
+
+Blocking Namespace Escape and Privileged Workloads
+
+We go beyond images and also block common escape paths:
+
+- Deny hostPID, hostNetwork, and hostIPC on all agent pods.
+
+- Deny volume mounts of host paths except for explicitly approved monitoring paths.
+
+- Enforce Kubernetes Pod Security Standards at the namespace level using the restricted profile for all agent namespaces.
+
+Namespace labels enforce the policy:
+
+[pod-security.kubernetes.io/enforce](http://pod-security.kubernetes.io/enforce): restricted
+
+-
+
+This combination makes privilege escalation and namespace breakout structurally impossible.
+
+---
+
+Audit Mode Before Enforcement — Safe Rollout
+
+Never flip a new policy straight to enforce mode in production.
+
+Best practice:
+
+1. Deploy the policy in audit mode first (violations are logged but not blocked).
+
+2. Review audit logs for 7 days to identify any legitimate workloads that would be blocked.
+
+3. Fix or adjust those workloads.
+
+4. Switch the policy to enforce mode only after the audit period is clean.
+
+This approach prevents accidental outages while still giving you full visibility.
+
+---
+
+Key Takeaways (Memorize These!)
+
+- Admission control is the enforcement point that cannot be bypassed by compromised CI credentials.
+
+- The Fail policy on security webhooks is mandatory — Ignore silently disables enforcement during an outage.
+
+- Image signing and digest pinning at the cluster layer close the gap that registry controls alone cannot close.
+
+- Pod Security Standards at the namespace level are the baseline; Kyverno policies add the specific, agentic hardening on top.
+
+You now have a cluster that refuses to run anything untrusted or unsafe — no matter how it was submitted.
+
+This is defense-in-depth at its best: the registry gives us trusted images, and the cluster enforces that trust at the final gate.
+
+## **MODULE 3**
+
+### **ClawHub Skill Vetting & Safe Installation: Signature Verification, Sandbox Testing, and Allowlisting**
+
+A ClawHub skill that reaches exec or vault_secret_read can cause irreversible harm in a single invocation, and download count is not a security control. Every third-party skill requires cryptographic manifest verification, automated static analysis for dangerous patterns, and sandboxed execution observation before it is allowed anywhere near a production agent. This module defines the vetting pipeline that stands between a published skill and your running stack.
+
+**Why skills are a distinct supply chain problem**
+
+- Container images are verified at the cluster layer (Module 2) — skills execute inside a running agent
+
+- A skill has access to whatever ATR claims the agent session carries
+
+- Skills can be updated post-publish by a compromised maintainer account
+
+- Download count, star count, and publisher reputation are social signals, not security controls
+
+- Three supply chain vectors: manifest tampering, dependency confusion, post-publish update
+
+**Cryptographic manifest signing and verification**
+
+- Every ClawHub skill ships a skill.manifest.json and a detached Cosign signature
+
+- Verify signature before installation: cosign verify-blob --key --signature skill.manifest.json
+
+- Pin the verified manifest SHA-256 hash in the org allowlist — post-publish updates blocked until re-reviewed
+
+- Allowlist entry format: skill ID, manifest hash, approved-by, approved-at, expiry date
+
+- Hash mismatch at load time = gateway refuses to start
+
+**Automated static analysis with clawql skill lint --strict**
+
+- Dangerous pattern detection: os.system, subprocess, eval, exec, child_process
+
+- Outbound network calls to non-declared hostnames
+
+- Filesystem access outside /workspace
+
+- Environment variable reads not declared in requiredEnv
+
+- Credential pattern matching: AWS keys, GitHub tokens, JWT prefixes
+
+- Failed lint = written exception required before sandbox testing proceeds
+
+- Lint report stored as signed artifact alongside manifest hash
+
+**Dependency confusion attack surface**
+
+- Internal package names not registered on public npm can be hijacked via higher version numbers
+
+- All skill package resolution goes through a controlled private registry
+
+- Public npm fallback disabled for unscoped package names
+
+- Lockfile (package-lock.json) committed and integrity-verified as part of vetting
+
+- Namespace reservation for internal package prefixes
+
+**Sandboxed execution observation**
+
+- Install in Kata Container with Panguard in observation mode (not blocking)
+
+- Run representative workload for 30 minutes
+
+- Capture: syscalls, network connections, filesystem writes, environment reads
+
+- Any runtime behavior not declared in the manifest = automatic disqualification
+
+- networkEgress: deny during sandbox observation — no exfiltration possible even if malicious
+
+- Clean sandbox report is a prerequisite for production allowlisting
+
+**Per-agent allowlists and quarantine mode**
+
+- Org-level allowlist (security team approved) is necessary but not sufficient
+
+- Per-agent allowlist: each agent configuration explicitly names permitted skills
+
+- newSkillsBehavior: block — agent cannot auto-install even org-approved skills
+
+- Quarantine mode: 7-day trial with reduced ATR claims, full observation logging, no memory write
+
+- Skills not promoted after 7 days are automatically removed
+
+**Policy: never auto-install**
+
+- clawql-api --strict-skill-allowlist refuses to start if any loaded skill lacks a signed approval
+
+- CI gate: every PR adding or updating a skill reference runs the full vetting pipeline
+
+- Pipeline stages: Cosign verify → lint → sandbox observe → security team sign-off → hash pin update → merge
+
+- Urgency is not an exception to the pipeline
+
+**Key takeaways to cover**
+
+- Signing the manifest proves integrity, not intent — static analysis and sandbox observation provide the behavioral signal
+
+- Post-publish updates are the most dangerous vector; hash pinning is the only defense
+
+- Dependency confusion attacks target the skill’s dependencies, not the skill itself — lockfile verification and private registry enforcement are required
+
+- Quarantine mode provides in-production trial without granting full capability prematurely
+
+---
+
+Module 3: ClawHub Skill Vetting & Safe Installation
+
+Signature Verification, Sandbox Testing, and Allowlisting
+
+Hello and welcome to Module 3! 🎉
+
+Modules 1 and 2 locked down our container images and made the cluster itself refuse anything untrusted. Now we tackle a completely different supply-chain problem: skills.
+
+Skills are not container images. They execute _inside_ a running agent, with access to whatever ATR claims the current session carries. A single malicious or compromised skill can read secrets, execute commands, or exfiltrate data in one invocation. Download counts, star ratings, and “trusted publisher” badges are social signals — not security controls.
+
+In this module we build a rigorous, automated vetting pipeline that treats every ClawHub skill with the same zero-trust discipline we apply to container images. By the end you’ll know exactly how to verify, analyze, observe, and safely allowlist skills before they ever touch a production agent.
+
+---
+
+Why Skills Are a Distinct Supply Chain Problem
+
+Container images are verified once at the cluster admission layer (Module 2). Skills are different — they run live inside an already-running agent session.
+
+Key differences that make skills uniquely dangerous:
+
+- A skill inherits the full ATR claims of the agent session that loads it.
+
+- Skills can be updated after publication by a compromised maintainer account.
+
+- Three primary attack vectors exist: manifest tampering, dependency confusion, and post-publish updates.
+
+Download count and publisher reputation are not security controls. We need cryptographic proof, static analysis, and behavioral observation before any skill is trusted.
+
+---
+
+Cryptographic Manifest Signing and Verification
+
+Every ClawHub skill ships with two files:
+
+- skill.manifest.json — declares capabilities, required environment variables, egress hosts, and other constraints.
+
+- A detached Cosign signature for that manifest.
+
+Verification is mandatory and happens before any installation:
+
+cosign verify-blob \
+
+  --key \
+
+  --signature skill.manifest.sig \
+
+  skill.manifest.json
+
+Once verified, we pin the exact SHA-256 hash of the manifest in the organization-wide allowlist.
+
+Allowlist entry format (stored in a signed, version-controlled file):
+
+- skillId: summarizer-v2
+
+  manifestHash: sha256:7f8a3b9c...
+
+  approvedBy: security-team
+
+  approvedAt: 2026-05-18T14:22:00Z
+
+  expiryDate: 2026-11-18
+
+At agent startup, the gateway checks every loaded skill against this allowlist. Hash mismatch = gateway refuses to start. This single mechanism blocks post-publish updates until the security team explicitly re-reviews and re-pins the new manifest.
+
+---
+
+Automated Static Analysis with `clawql skill lint --strict`
+
+Before any sandbox testing, we run strict static analysis:
+
+clawql skill lint --strict path/to/skill/
+
+The linter flags dangerous patterns including:
+
+- os.system, subprocess, eval, exec, child_process (and equivalents in every supported language)
+
+- Outbound network calls to hostnames not declared in the manifest
+
+- Filesystem access outside the allowed /workspace directory
+
+- Environment variable reads not listed in requiredEnv
+
+- Credential patterns (AWS keys, GitHub tokens, JWT prefixes, etc.)
+
+A failed lint requires a written exception from the security team before the skill can proceed to sandbox testing. The full lint report is stored as a signed artifact alongside the manifest hash for audit purposes.
+
+---
+
+Dependency Confusion Attack Surface
+
+Skills often pull dependencies from public registries. We eliminate the classic dependency confusion vector with these controls:
+
+- All package resolution for skills routes through a controlled private registry.
+
+- Public npm fallback is disabled for any unscoped package name.
+
+- The package-lock.json (or equivalent) must be committed and its integrity hash verified as part of vetting.
+
+- Internal package name prefixes are reserved in the private registry.
+
+This ensures that even if an attacker publishes a higher-version package with the same name on the public registry, the skill cannot pull it.
+
+---
+
+Sandboxed Execution Observation
+
+Static analysis catches obvious issues, but runtime behavior is what matters. Every skill must pass observation in a real sandbox:
+
+- Installed inside a Kata Container (Module 11) with Panguard running in observation mode (not blocking).
+
+- A representative workload runs for 30 minutes.
+
+- We capture: syscalls, network connections, filesystem writes, environment reads, and memory access patterns.
+
+- networkEgress: deny is enforced during observation — no exfiltration is possible even if the skill is malicious.
+
+Any runtime behavior not explicitly declared in the manifest triggers automatic disqualification. A clean sandbox report is required before the skill can enter the production allowlist.
+
+---
+
+Per-Agent Allowlists and Quarantine Mode
+
+An organization-wide allowlist is necessary but not sufficient. We also enforce:
+
+- Per-agent allowlists: each agent’s configuration file explicitly names the exact skills it is permitted to load.
+
+- newSkillsBehavior: block — agents cannot auto-install even org-approved skills.
+
+Newly approved skills enter quarantine mode for a 7-day trial:
+
+- Reduced ATR claims (only the minimum needed for observation).
+
+- Full observation logging.
+
+- No memory-write capability.
+
+If the skill behaves cleanly for the full 7 days, it is promoted to full allowlist status. Otherwise it is automatically removed.
+
+---
+
+Policy: Never Auto-Install
+
+The gateway enforces this rule at the protocol level:
+
+clawql-api --strict-skill-allowlist
+
+It will refuse to start if any loaded skill lacks a signed approval.
+
+Every PR that adds or updates a skill reference triggers the full vetting pipeline in CI:
+
+1. Cosign signature verification
+
+2. Strict linting
+
+3. Sandbox observation
+
+4. Security team sign-off
+
+5. Manifest hash pin update
+
+6. Merge
+
+Urgency is never an exception to this pipeline.
+
+---
+
+Key Takeaways (Memorize These!)
+
+- Signing the manifest proves integrity, not intent — static analysis and sandbox observation supply the behavioral proof.
+
+- Post-publish updates are the most dangerous vector; hash pinning is the only reliable defense.
+
+- Dependency confusion attacks target the skill’s dependencies, not the skill itself — lockfile verification and private registry enforcement are required.
+
+- Quarantine mode gives a safe in-production trial without granting full capability prematurely.
+
+You now have a complete, repeatable process that turns third-party skills from an uncontrolled risk into a vetted, observable, and revocable capability. Skills are no longer a blind spot — they are a controlled, auditable part of your agentic platform.
+
+## **MODULE 4**
+
+### **Zero Trust Network Architecture: mTLS, Istio, RBAC, and Workload Identity**
+
+“Trust the network” is the design assumption that every major breach has eventually invalidated. Zero trust replaces it with a service mesh where every workload has a cryptographic identity, every connection is mutually authenticated, and a compromised pod cannot move laterally regardless of what credentials it holds. This module builds the Istio-based architecture that makes workload identity and default-deny networking the structural foundation of the entire platform.
+
+**Why perimeter security fails for agentic platforms**
+
+- Traditional model: trust everything inside the network boundary
+
+- Agentic platforms span namespaces, agents, pipelines, and external APIs — there is no single perimeter
+
+- A compromised agent inside the cluster has free lateral movement without zero trust controls
+
+- Zero trust principle: every connection is authenticated, every access is authorized, every action is logged — regardless of network location
+
+**SPIFFE/SPIRE workload identity**
+
+- Every workload gets a cryptographic identity: a SPIFFE Verifiable Identity Document (SVID)
+
+- SVID is an X.509 certificate with a SPIFFE URI in the SAN: spiffe://cluster.local/ns/agents/sa/summarizer
+
+- SPIRE issues and rotates SVIDs automatically — no manual certificate management
+
+- Workload identity is tied to the Kubernetes ServiceAccount and pod attestation
+
+- An attacker who compromises a pod gets only that pod’s identity — cannot impersonate others
+
+**Istio service mesh**
+
+- Istio injects an Envoy sidecar proxy into every pod in managed namespaces
+
+- All traffic between pods passes through the sidecar — application code never handles TLS directly
+
+- mTLS is enforced at the sidecar level: both sides of every connection authenticate
+
+- PeerAuthentication policy set to STRICT mode: plaintext connections rejected cluster-wide
+
+- Istio control plane (istiod) distributes certificates from SPIRE or its own CA
+
+**Default-deny NetworkPolicy**
+
+- Kubernetes NetworkPolicy is the declarative layer that restricts which pods can communicate
+
+- Default-deny: apply a policy that allows nothing by default to every namespace
+
+- Explicitly allow only required communication paths
+
+- NetworkPolicy is enforced by the CNI plugin (Calico, Cilium) — choose one that supports it fully
+
+- Istio provides a second enforcement layer above NetworkPolicy; both are required
+
+**RBAC scoping**
+
+- ClusterRole vs Role: prefer namespace-scoped Role wherever possible
+
+- Principle: each ServiceAccount can only access the Kubernetes API resources it needs
+
+- Audit existing RBAC bindings: kubectl auth can-i --list --as system:serviceaccount:agents:summarizer
+
+- Remove wildcards (\*) from all production RBAC rules
+
+- Automate RBAC audit in CI: fail if any ServiceAccount has cluster-admin or wildcard resource access
+
+**AuthorizationPolicy (Istio)**
+
+- Istio AuthorizationPolicy applies identity-aware access control at the L7 layer
+
+- Restrict which services can call which endpoints on which HTTP methods
+
+- Example: only the gateway service can call the Panguard enforcement endpoint
+
+- Combine with JWT validation: Istio can verify JWTs and extract claims for policy decisions
+
+**Traffic observability and anomaly detection**
+
+- Istio generates telemetry for every connection: source, destination, protocol, response code, latency
+
+- Feed Istio metrics to Prometheus; visualize in Grafana security dashboards (Module 19)
+
+- Kiali provides a live service graph — anomalous communication paths visible immediately
+
+- Unexpected connections (a pod connecting somewhere it never has before) are a security signal
+
+**Key takeaways to cover**
+
+- Workload identity is the foundation — without it, authorization policies have nothing to authorize against
+
+- STRICT mTLS mode is the only acceptable production posture; PERMISSIVE is for migration only
+
+- NetworkPolicy and Istio AuthorizationPolicy are complementary, not redundant — NetworkPolicy operates at L3/L4, Istio at L7
+
+- Zero trust is an ongoing operational posture, not a one-time configuration — every new service must be added to the trust fabric
+
+---
+
+Module 4: Zero Trust Network Architecture
+
+mTLS, Istio, RBAC, and Workload Identity
+
+Hello and welcome to Module 4! 🎉
+
+Modules 1–3 gave us trusted images, a cluster that refuses unsigned workloads, and a rigorous vetting process for skills. Now we secure how everything talks to everything else inside the cluster.
+
+Traditional “perimeter” security assumes everything inside the network is trustworthy. That assumption dies the moment you run autonomous agents that span namespaces, call external APIs, and form dynamic pipelines. A single compromised agent with free lateral movement can reach Vault, memory stores, other agents, and beyond.
+
+Zero trust replaces the old model with a simple rule: every connection is authenticated, every access is authorized, and every action is logged — no matter where it originates. In this module we build the complete zero-trust fabric using workload identity, mTLS, Istio, and tight RBAC so that even a fully compromised pod is isolated and observable.
+
+---
+
+Why Perimeter Security Fails for Agentic Platforms
+
+In a classic setup you draw a line around the cluster and trust everything inside it. Agentic platforms break that model completely:
+
+- Agents live in multiple namespaces and interact with pipelines, external tools, and each other.
+
+- There is no single “inside” anymore.
+
+- A compromised agent inside the cluster has free lateral movement unless we explicitly prevent it.
+
+Zero trust is the answer: assume breach, verify everything, and log everything. Every connection — pod-to-pod, agent-to-gateway, orchestrator-to-subagent — must prove who it is and what it is allowed to do.
+
+---
+
+SPIFFE/SPIRE Workload Identity — Cryptographic Identity for Every Pod
+
+Every workload receives its own cryptographic identity the moment it starts.
+
+SPIFFE (Secure Production Identity Framework for Everyone) and its control plane SPIRE give each pod a short-lived X.509 certificate called an SVID (SPIFFE Verifiable Identity Document).
+
+The identity looks like this:  
+ spiffe://cluster.local/ns/agents/sa/summarizer
+
+Key properties:
+
+- The SVID is automatically issued and rotated by SPIRE — no manual certificate management.
+
+- It is bound to the Kubernetes ServiceAccount and the pod’s attestation (node, service account, etc.).
+
+- An attacker who compromises a pod receives only that pod’s identity. They cannot impersonate any other workload.
+
+This identity becomes the foundation for every authorization decision that follows.
+
+---
+
+Istio Service Mesh — Mutual TLS Enforced by Sidecars
+
+Istio injects an Envoy sidecar proxy into every pod in managed namespaces. All traffic now flows through the sidecar — your application code never touches TLS directly.
+
+How mTLS works here:
+
+- Both sides of every connection authenticate using their SPIFFE SVID.
+
+- The PeerAuthentication policy is set to STRICT mode cluster-wide: any plaintext connection is rejected immediately.
+
+- Istio’s control plane (istiod) distributes certificates from SPIRE (or its own CA).
+
+Application code stays simple and secure — it talks HTTP or gRPC to [localhost](http://localhost) inside the pod, and Istio handles encryption, authentication, and authorization.
+
+---
+
+Default-Deny NetworkPolicy — The L3/L4 Foundation
+
+Kubernetes NetworkPolicy is the first layer of traffic control.
+
+We apply a default-deny policy to every namespace:
+
+apiVersion: networking.k8s.io/v1
+
+kind: NetworkPolicy
+
 metadata:
-name: require-golden-images
+
+  name: default-deny
+
 spec:
-validationFailureAction: Enforce
-rules: - name: check-distroless-and-readonly
-match:
-resources:
-kinds: ["Pod"]
-validate:
-message: "All ClawQL pods must use golden distroless images with read-only root filesystem"
-pattern:
-spec:
-securityContext:
-readOnlyRootFilesystem: true
-containers: - image: "harbor.clawql.internal/\*_@sha256:_"
 
-### Key Takeaways
+  podSelector: {}
 
-Golden distroless images with read-only root filesystems are one of the most effective ways to limit attacker capabilities.
-Multi-stage builds, automated scanning, SBOM generation, and Cosign signing ensure every image is minimal and verifiable.
-These images form the foundation for all subsequent controls (admission policies, sandboxing, and runtime protection).
-Never run images with shells or package managers in production MCP workloads.
+  policyTypes:
 
-This guide builds directly on Guide 1 (Supply Chain) and is the prerequisite for Guide 3 (Cluster Admission Control).**Next in the series**: Cluster Admission Control – Enforcing Image Signing and Policy at Deploy Time.
+  - Ingress
+
+  - Egress
+
+Then we explicitly allow only the exact communication paths required (gateway ↔ agents, agents ↔ NATS, etc.).
+
+NetworkPolicy is enforced by your CNI (Calico or Cilium). Istio adds a second enforcement layer at L7. Both are required — they complement each other, they do not replace each other.
 
 ---
 
-_ClawQL Security Best Practices Series • Part 2 • May 2026_  
-Based on the official ClawQL Comprehensive Defense-in-Depth Security Guide.
+RBAC Scoping — Least Privilege for Kubernetes API Access
+
+Most ServiceAccounts are far too permissive. We enforce:
+
+- One ServiceAccount per workload (never share across services).
+
+- Prefer namespace-scoped Role over cluster-wide ClusterRole.
+
+- Remove all wildcards (\*) from production rules.
+
+Audit existing bindings with:
+
+- kubectl auth can-i --list --as system:serviceaccount:agents:summarizer
+
+We automate this check in CI: any ServiceAccount with cluster-admin or wildcard access fails the build.
 
 ---
 
-# **Cluster Admission Control: Enforcing Image Signing and Policy at Deploy Time\*\***Part 3 of the ClawQL Security Best Practices Series\***\*May 2026**
+AuthorizationPolicy (Istio) — Identity-Aware L7 Controls
 
-With a secure supply chain and golden distroless images in place (Guides 1 and 2), the next layer is preventing non-compliant workloads from ever starting. Cluster admission controllers act as the final gatekeeper, rejecting unsigned, unverified, or insecure images before they are scheduled.This guide focuses on Kyverno as the admission controller and shows how ClawQL enforces image signing, golden image standards, and runtime policies at deploy time.### Why Admission Control Is Essential
+Istio’s AuthorizationPolicy applies fine-grained rules at the application layer using the workload’s SPIFFE identity.
 
-Even with strong supply chain practices, misconfigurations or human error can still introduce risky workloads. Admission webhooks provide a last-line defense by inspecting pod specs in real time and rejecting them if they violate policy.In ClawQL, this ensures:Only images from your private Harbor registry are allowed.
-Every image must be Cosign-signed and digest-pinned.
-Model weight verification and golden image rules are enforced.
-No pod can run with excessive privileges or writable root filesystems.
+Example policy (only the gateway may call Panguard):
 
-### Kyverno verifyImages Admission Policies
+apiVersion: security.istio.io/v1
 
-Kyverno is the primary admission controller in ClawQL. It supports cryptographic verification of container images and model artifacts.**Core Policy: Require Signed Images**yaml
+kind: AuthorizationPolicy
 
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
 metadata:
-name: enforce-signed-images
+
+  name: panguard-enforcement
+
 spec:
-validationFailureAction: Enforce
-background: false
-rules: - name: verify-cosign-signature
-match:
-resources:
-kinds: ["Pod"]
-validate:
-message: "All containers must be signed with Cosign and pulled from Harbor"
-imageVerify: - imageReferences: ["harbor.clawql.internal/**"]
-verify: - type: "cosign"
-keyless:
-issuer: "https://token.actions.githubusercontent.com"
-subject: "https://github.com/clawql/*"
 
-This policy rejects any pod using unsigned images or images from external registries.### Extending Verification to Model Weights
+  selector:
 
-Model weights are a common blind spot. ClawQL extends admission control to verify them via init containers:yaml
+    matchLabels:
 
-# Example init container pattern enforced by policy
+      app: panguard
 
-initContainers:
+  action: ALLOW
 
-- name: verify-weights
-  image: harbor.clawql.internal/clawql/weight-verifier:latest
-  command:
-  - cosign
-  - verify-blob
-  - --key
-  - /etc/signing-keys/cosign.pub
-  - --signature
-  - /weights/manifest.sig
-  - /weights/manifest.json
-    volumeMounts:
-  - name: model-weights
-    mountPath: /weights
+  rules:
 
-A dedicated Kyverno policy ensures every inference pod includes this verification step.### Cluster-Wide vs Namespace Exemptions
+  - from:
 
-ClawQL applies a **cluster-wide default-deny** posture with limited exemptions:openclaw and clawql namespaces: strict enforcement.
-Temporary exemption namespaces (e.g., for debugging) require explicit approval and short TTL.
-All exemptions are logged and reviewed quarterly.
+    - source:
 
-### Integration with Golden Images and Supply Chain
+        principals:
 
-The admission policies work together with Guides 1 and 2:Only images built through the golden pipeline (distroless + read-only root) are allowed.
-Digest pinning and SBOM presence are validated.
-Non-compliant pods are rejected before scheduling, preventing drift.
+        - spiffe://cluster.local/ns/gateway/sa/gateway
 
-**Helm Chart Defaults**The clawql-full-stack chart enables these policies automatically when security.fullBundle: true.### Key Takeaways
+    to:
 
-Admission controllers like Kyverno provide the final enforceable gate before any workload runs.
-Cryptographic verification (Cosign) combined with allowlist policies eliminates unsigned or tampered images.
-Extending policies to model weights closes a critical gap missed by traditional container scanning.
-Cluster-wide enforcement with minimal exemptions maintains a strong, auditable security posture.
+    - operation:
 
-This guide completes the build-time and deploy-time foundations. All later runtime protections (sandboxing, zero trust, MCP proxying) build on top of these admission guarantees.**Next in the series**: Principle of Least Privilege – Scoped Identities and Limiting Blast Radius.
+        methods: ["POST"]
+
+        paths: ["/enforce"]
+
+We combine this with JWT validation so Istio can extract claims and make decisions based on ATR roles.
 
 ---
 
-_ClawQL Security Best Practices Series • Part 3 • May 2026_  
-Based on the official ClawQL Comprehensive Defense-in-Depth Security Guide.
+Traffic Observability and Anomaly Detection
+
+Istio automatically generates rich telemetry for every connection:
+
+- Source and destination identity
+
+- Protocol, HTTP method, response code, latency
+
+We feed this into Prometheus and visualize it in Grafana (Module 19). Kiali gives a live service graph so anomalous paths jump out immediately.
+
+Any unexpected connection (a pod suddenly talking to a service it has never spoken to before) becomes a high-fidelity security signal.
 
 ---
 
-# **Principle of Least Privilege: Scoped Identities and Limiting Blast Radius\*\***Part 4 of the ClawQL Security Best Practices Series\***\*May 2026**
+Key Takeaways (Memorize These!)
 
-Even with perfect supply chain security and admission control, a compromised workload or agent can still cause significant damage if it has excessive permissions. The Principle of Least Privilege (PoLP) ensures every identity — human, service, or agent — can do only what is strictly necessary, and nothing more.This guide shows how ClawQL implements least privilege across Kubernetes, MCP tools, and agent sessions to minimize blast radius.### Least Privilege in Theory and Practice
+- Workload identity is the foundation — without it, authorization policies have nothing to authorize against.
 
-Least privilege means granting the minimum permissions required for a task and only for the duration needed. In agentic systems this is critical because agents can chain tools in unexpected ways.ClawQL applies PoLP at multiple layers:Kubernetes workloads
-Human operators
-Agent/MCP tool calls
-Session-scoped claims
+- STRICT mTLS mode is the only acceptable production posture; PERMISSIVE is for migration only.
 
-### Per-Workload Identities with Kubernetes RBAC and ServiceAccounts
+- NetworkPolicy and Istio AuthorizationPolicy are complementary, not redundant — NetworkPolicy operates at L3/L4, Istio at L7.
 
-Every ClawQL component runs with its own dedicated ServiceAccount and tightly scoped Role/RoleBinding.**Example for the API gateway:**yaml
+- Zero trust is an ongoing operational posture, not a one-time configuration — every new service must be added to the trust fabric.
+
+You now have a network where compromise of one pod does not grant free movement across the cluster. Every hop is authenticated, authorized, and observed. This is the structural foundation that makes the rest of the security stack effective.
+
+## **MODULE 5**
+
+### **Agent Gateway Hardening: Binding, Firewall Rules, DNS Rebinding Defense, and Safe Remote Access**
+
+The ClawQL gateway executes tools and dispatches real actions — exposing it incorrectly is more dangerous than exposing a static web server, and the risks come from two distinct directions. Network-layer controls ([localhost](http://localhost) binding, firewalls, VPN overlays) stop direct external access; application-layer Host and Origin header validation stops DNS rebinding attacks that bypass network controls entirely through the browser. This module closes both vectors and is the one place in the curriculum where skipping a single control leaves a gap the others cannot compensate for.
+
+**Why the gateway is the highest-value target**
+
+- The gateway executes tools, dispatches actions, reads secrets — not a static server
+
+- A misconfigured gateway is the entry point that bypasses every downstream control
+
+- Two distinct threat vectors: direct network exposure (firewall/binding problem) and DNS rebinding (application-layer problem)
+
+- Both must be addressed; each is invisible to the other’s controls
+
+**Default binding: 127.0.0.1 and Unix sockets**
+
+- Never bind to 0.0.0.0 — loopback binding is not reachable from any network interface by default
+
+- Unix domain socket: unix:///var/run/clawql/gateway.sock — not addressable over any network
+
+- Socket file permissions: 0660, owned by the clawql group
+
+- MCP clients that support stdio transport can reach a Unix socket via a thin wrapper — no TCP required
+
+- Unix socket transport is the only transport immune to DNS rebinding by construction
+
+**Host firewall rules**
+
+- ufw: ufw deny in on any to any port 8080 + ufw allow in on lo to any port 8080
+
+- firewalld: rich rules scoped to specific source addresses only
+
+- Critical: Docker manipulates iptables and can bypass ufw rules — apply iptables rules directly for Docker deployments
+
+- Tailscale ACLs: scope to specific Tailscale IP of the client machine, never \*:8080
+
+**VPN-only remote access**
+
+- Tailscale: gateway binds to Tailscale IP only; access restricted to authenticated Tailscale nodes
+
+- Headscale: self-hosted coordination server for organizations that cannot use Tailscale’s infrastructure
+
+- WireGuard: manual key distribution, full control over routing; gateway binds to wg0 interface IP only
+
+- No inbound port forwarding required in any VPN model — gateway host has no public attack surface
+
+**Cloudflare Tunnel and Access**
+
+- Outbound-only tunnel: no inbound firewall rules opened on the gateway host
+
+- cloudflared initiates the tunnel; Cloudflare’s edge terminates it
+
+- Cloudflare Access policy: identity-aware authentication before any request reaches the gateway
+
+- Useful for CI runners that need HTTP access without a persistent VPN session
+
+- Combine with strict SNI/Host rules at the Cloudflare layer
+
+**DNS rebinding: the attack the firewall cannot stop**
+
+- Attack mechanism: short-TTL DNS first resolves to public IP (bypassing same-origin check), then rebinds to 127.0.0.1
+
+- Browser treats subsequent requests as same-origin because hostname matches — not the IP
+
+- Firewall never sees an external connection; [localhost](http://localhost) binding is satisfied; attack succeeds
+
+- MCP specification MUST requirement: HTTP and SSE transports must validate Host and Origin headers
+
+**Host and Origin header validation middleware**
+
+- Allowlist of permitted Host values: [localhost](http://localhost), 127.0.0.1, ::1, plus any declared internal hostname
+
+- Strip port from Host header before comparison
+
+- Validate Origin header when present: origin hostname must also be in the allowed set
+
+- Reject with 403 on mismatch — never fall through silently
+
+- Ships enabled by default in ClawQL; allowedHosts configurable via Helm values for Tailscale/internal domain deployments
+
+- Cannot be disabled on HTTP or SSE transports — only Unix socket transport makes it redundant
+
+**Monitoring for unexpected listening ports**
+
+- Falco rule: alert on any clawql-api process binding to 0.0.0.0
+
+- Panguard: alert if health check endpoint reachable from non-approved source IP
+
+- Weekly automated check: compare listening ports against declared expected state
+
+- Drift detection is as important as initial configuration — upgrades and env var changes can silently rebind
+
+**Key takeaways to cover**
+
+- [Localhost](http://Localhost) binding + firewall stops direct external access; Host/Origin validation stops DNS rebinding — both are required
+
+- Unix socket transport eliminates the rebinding attack surface entirely — use it wherever the MCP client supports stdio
+
+- MCP specification mandates Host/Origin validation for HTTP/SSE — this is a compliance requirement, not optional hardening
+
+- Every gateway configuration change must be followed by a port audit — silent drift is the operational risk
+
+---
+
+Module 5: Agent Gateway Hardening
+
+Binding, Firewall Rules, DNS Rebinding Defense, and Safe Remote Access
+
+Hello and welcome to Module 5! 🎉
+
+Modules 1–4 have given us trusted images, a cluster that blocks unsigned workloads, vetted skills, and a zero-trust network fabric. Now we focus on the single most valuable target in the entire platform: the ClawQL gateway.
+
+The gateway is not a static web server. It executes tools, dispatches real-world actions, reads secrets from Vault, and sits at the boundary between untrusted MCP clients and the protected agent runtime. A misconfigured gateway bypasses every downstream control in one stroke.
+
+In this module we close both attack vectors that matter: direct network exposure and DNS rebinding. We make the gateway reachable only in the ways we explicitly allow — and impossible to reach in any other way.
+
+---
+
+Why the Gateway Is the Highest-Value Target
+
+The gateway has the keys to the kingdom:
+
+- It executes tools on behalf of agents.
+
+- It dispatches actions that can change the real world.
+
+- It reads and exchanges secrets from Vault.
+
+Two completely separate threat vectors exist here:
+
+1. Direct network exposure — anyone who can reach the listening port can talk to the gateway (firewall/binding problem).
+
+2. DNS rebinding — an application-layer attack that bypasses firewalls entirely by making the browser treat an external hostname as [localhost](http://localhost) (the firewall never sees the danger).
+
+Each vector is invisible to controls that protect the other. Both must be addressed simultaneously.
+
+---
+
+Default Binding: 127.0.0.1 and Unix Sockets
+
+Never bind the gateway to 0.0.0.0. Loopback binding is the first and simplest defense.
+
+Correct defaults in ClawQL:
+
+- HTTP/SSE transport binds to 127.0.0.1:8080 (or the configured port).
+
+- Preferred transport: Unix domain socket at unix:///var/run/clawql/gateway.sock.
+
+Why Unix sockets are ideal:
+
+- They are not addressable over any network interface — impossible to reach from outside the host.
+
+- Socket file permissions: 0660, owned by the clawql group (only processes in that group can connect).
+
+- MCP clients that support stdio transport can reach the socket via a thin wrapper — no TCP port is ever exposed.
+
+Unix socket transport is the only transport that is immune to DNS rebinding by construction. Use it wherever your MCP client supports stdio.
+
+---
+
+Host Firewall Rules
+
+Even with [localhost](http://localhost) binding, we add explicit firewall rules as a second layer.
+
+ufw example (Ubuntu/Debian):
+
+ufw deny in on any to any port 8080
+
+ufw allow in on lo to any port 8080
+
+ufw reload
+
+firewalld example (RHEL/CentOS): Use rich rules scoped to specific source addresses only.
+
+Docker note: Docker manipulates iptables directly and can bypass ufw. For Docker-based deployments, apply the rules directly with iptables.
+
+Tailscale ACL example:
+
+{
+
+  "acls": [
+
+    ["tag:gateway-clients", "tag:gateway", "tcp:8080"]
+
+  ]
+
+}
+
+Scope access to the specific Tailscale IP of the client machine — never \*:8080.
+
+---
+
+VPN-Only Remote Access
+
+Production gateway access is VPN-only. No public ports are ever opened.
+
+Recommended options:
+
+- Tailscale: Gateway binds only to its Tailscale IP. Access is restricted to authenticated Tailscale nodes.
+
+- Headscale: Self-hosted coordination server for organizations that cannot use Tailscale’s infrastructure.
+
+- WireGuard: Manual key distribution with full routing control; gateway binds exclusively to the wg0 interface IP.
+
+In every VPN model, no inbound port forwarding is required. The gateway host has zero public attack surface.
+
+---
+
+Cloudflare Tunnel and Access (Outbound-Only Option)
+
+For environments that need occasional HTTP access without a persistent VPN (e.g., certain CI runners):
+
+- Use Cloudflare Tunnel (cloudflared).
+
+- The tunnel is outbound-only — no inbound firewall rules are opened on the gateway host.
+
+- cloudflared initiates the tunnel; Cloudflare’s edge terminates it.
+
+- Cloudflare Access policy requires identity-aware authentication before any request reaches the gateway.
+
+- Combine with strict SNI/Host rules at the Cloudflare layer for extra protection.
+
+This is an outbound-only pattern that keeps the gateway host invisible from the public internet.
+
+---
+
+DNS Rebinding: The Attack the Firewall Cannot Stop
+
+DNS rebinding is the attack that laughs at firewalls.
+
+Attack mechanism:
+
+1. Attacker serves a page with a short-TTL DNS record that first resolves to a public IP (bypassing same-origin policy).
+
+2. After the page loads, the DNS record rebinds to 127.0.0.1.
+
+3. The browser treats subsequent requests as same-origin because the hostname matches, not the IP.
+
+4. The firewall never sees an external connection; the [localhost](http://localhost) binding is satisfied; the attack succeeds.
+
+The MCP specification makes Host and Origin header validation a MUST requirement for HTTP and SSE transports.
+
+---
+
+Host and Origin Header Validation Middleware
+
+ClawQL ships this validation enabled by default.
+
+Configuration:
+
+- Allowlist of permitted Host values: [localhost](http://localhost), 127.0.0.1, ::1, plus any declared internal hostname (e.g., Tailscale DNS name).
+
+- Strip the port from the Host header before comparison.
+
+- Validate the Origin header (when present): the origin hostname must also be in the allowed set.
+
+- Any mismatch returns 403 Forbidden immediately — never fall through silently.
+
+allowedHosts is configurable via Helm values for Tailscale or internal-domain deployments.
+
+This middleware cannot be disabled on HTTP or SSE transports. Only Unix socket transport makes it redundant.
+
+---
+
+Monitoring for Unexpected Listening Ports
+
+Configuration drift is the silent killer. We monitor continuously:
+
+- Falco rule: Alert on any clawql-api process binding to 0.0.0.0.
+
+- Panguard: Alert if the health-check endpoint becomes reachable from a non-approved source IP.
+
+- Weekly automated check: Compare listening ports against the declared expected state (stored in git).
+
+Drift detection is as important as initial configuration. Upgrades and environment-variable changes can silently rebind the gateway.
+
+---
+
+Key Takeaways (Memorize These!)
+
+- [Localhost](http://Localhost) binding + firewall stops direct external access; Host/Origin validation stops DNS rebinding — both are required.
+
+- Unix socket transport eliminates the rebinding attack surface entirely — use it wherever the MCP client supports stdio.
+
+- MCP specification mandates Host/Origin validation for HTTP/SSE — this is a compliance requirement, not optional hardening.
+
+- Every gateway configuration change must be followed by a port audit — silent drift is the operational risk.
+
+The gateway is now hardened end-to-end. It can only be reached in the exact ways we explicitly allow, and the most dangerous browser-based bypass is structurally impossible. This completes the perimeter around the single highest-value component in the entire platform.
+
+## **MODULE 6**
+
+### **Egress Filtering, DNS Controls, and Data Loss Prevention**
+
+Every ingress control in this series stops things from getting in — egress controls determine what happens to the data an attacker already has access to if something does get through. Istio ServiceEntry allowlists, allowlist-only DNS resolution, and payload-level DLP inspection on outbound tool call parameters together ensure that a successful injection or skill compromise remains a containment event rather than a data breach. This module builds the outbound control stack that makes exfiltration structurally difficult regardless of how an attacker gains initial access.
+
+**Why egress is the exfiltration surface**
+
+- Ingress defenses are well-understood; egress is where defenders consistently underinvest
+
+- A successful prompt injection without egress controls = complete data breach
+
+- Three distinct exfiltration channels: HTTPS to external APIs, DNS tunneling, side channels
+
+- Egress controls are the last line of defense when all upstream controls fail
+
+**Istio ServiceEntry allowlists and default-deny egress**
+
+- Default-deny Sidecar resource: no external traffic unless explicitly declared
+
+- ServiceEntry per permitted external host: hostname, port, TLS mode
+
+- Istio Sidecar resource scopes egress allowlist per namespace — tenant A cannot reach tenant B’s external services
+
+- Quarterly review: remove ServiceEntry declarations for deprecated integrations
+
+- Panguard second enforcement point: validates external hostname against skill manifest declaration at tool-call level
+
+**SSRF prevention for agent URL tools**
+
+- Any tool that accepts a URL parameter is an SSRF risk
+
+- Validate URL at parse time, before DNS resolution: block RFC 1918 ranges (10.x, 172.16.x, 192.168.x), loopback, link-local (169.254.x — cloud metadata)
+
+- Block non-HTTP/HTTPS schemes: file://, gopher://, dict://, ftp://
+
+- Disable redirect following by default — redirects can hop from allowed external host to internal IP
+
+- IMDSv2 requirement for cloud metadata: even if the URL is blocked at the application layer, enforce IMDSv2 at the cloud level as a second control
+
+- Pin to resolved IP after first DNS lookup — prevents TOCTOU rebinding at the tool call level
+
+**DNS-layer filtering**
+
+- Allowlist-only DNS resolution for agent pods: CoreDNS RPZ or Cloudflare Gateway
+
+- All agents use a custom dnsConfig pointing to the filtering resolver
+
+- RPZ zone: rpz-passthru for declared hostnames, NXDOMAIN for everything else
+
+- DNS tunneling heuristics on the filtering resolver:
+  - Label length > 40 characters → flag
+    - 100 unique queries per minute to same second-level domain → flag
+    - Shannon entropy of subdomain label > 4.0 bits/character → flag
+
+  - Falco rule: alert on DNS queries to non-allowlisted domains from agent pods
+
+**DLP inspection of outbound tool call payloads**
+
+- DLP at the tool-call parameter level — not just log line scanning
+
+- Presidio entity detection on all fields declared as content-bearing: body, text, content, message, data
+
+- Entities blocked from leaving via external tool calls: PII, credentials, classified data above declared egress level
+
+- Skill manifest declares maxClassificationLevel for outbound payloads — gateway enforces at call time
+
+- Structured data inspection: JSON field-level, not just full-string matching
+
+- Block on detection (not alert-only) — alert-only gives the attacker the detection-to-response window
+
+**Session-level egress volume detection**
+
+- Single session >50MB received from external endpoints → HIGH alert
+
+- 500 external calls in 60 minutes from one session → WARNING
+
+- Base64 or hex-encoded strings >100 characters in API parameters → block + HIGH alert
+
+- Establish behavioral baseline for each agent role before enabling blocking thresholds
+
+- Panguard tracks cumulative egress per session across all tool calls, not just per-call
+
+**Egress from sandboxed skill execution**
+
+- Skills default to networkEgress: deny inside Kata Container sandbox
+
+- Skills requiring external access must declare hosts in manifest egressRequirements
+
+- Panguard verifies runtime egress matches manifest declaration
+
+- Undeclared egress attempt from a sandboxed skill → block + quarantine + alert (critical signal of compromised skill)
+
+**Key takeaways to cover**
+
+- SSRF and DNS tunneling are distinct bypass paths that require distinct controls — Istio allowlists stop HTTPS exfiltration but not DNS tunneling
+
+- URL validation must happen at parse time before DNS resolution — post-resolution validation is vulnerable to TOCTOU rebinding
+
+- DLP at the tool-call parameter level is categorically different from log-line scanning — the former prevents exfiltration, the latter detects it after the fact
+
+- Baseline before enabling blocking thresholds — alert fatigue from miscalibrated egress volume alerts is itself a security risk
+
+---
+
+Module 6: Egress Filtering, DNS Controls, and Data Loss Prevention
+
+Hello and welcome to Module 6! 🎉
+
+Modules 1–5 have hardened our images, cluster admission, skills, network fabric, and the gateway itself. Now we turn our attention to the direction most security teams under-invest in: egress.
+
+Ingress controls stop attackers from getting in. Egress controls determine what they can take out once they’re already inside. In an agentic platform, a successful prompt injection or compromised skill without strong egress controls equals a complete data breach.
+
+This module builds the complete outbound defense stack so that even if every upstream control is bypassed, exfiltration remains structurally difficult and immediately detectable.
+
+---
+
+Why Egress Is the Exfiltration Surface
+
+Ingress defenses are well-understood and heavily invested in. Egress is where defenders consistently fall short.
+
+A successful injection without egress controls gives an attacker a direct pipe to the outside world. There are three distinct exfiltration channels we must address:
+
+- HTTPS calls to external APIs
+
+- DNS tunneling
+
+- Side-channel techniques (encoded data, high-volume calls, etc.)
+
+Egress controls are the last line of defense when everything else has failed. They turn a potential breach into a contained, observable event.
+
+---
+
+Istio ServiceEntry Allowlists and Default-Deny Egress
+
+We enforce egress at the service-mesh layer with a strict default-deny posture.
+
+Apply this once per namespace:
+
+apiVersion: networking.istio.io/v1beta1
+
+kind: Sidecar
+
+metadata:
+
+  name: default-egress-deny
+
+spec:
+
+  egress:
+
+  - hosts:
+
+    - "./\*"   # only intra-namespace traffic
+
+Then declare every permitted external destination explicitly with a ServiceEntry:
+
+apiVersion: networking.istio.io/v1beta1
+
+kind: ServiceEntry
+
+metadata:
+
+  name: allowed-external-api
+
+spec:
+
+  hosts:
+
+  - [api.openai.com](http://api.openai.com)
+
+  - [api.anthropic.com](http://api.anthropic.com)
+
+  ports:
+
+  - number: 443
+
+    name: https
+
+    protocol: HTTPS
+
+  location: MESH_EXTERNAL
+
+  resolution: DNS
+
+Key properties:
+
+- The Istio Sidecar resource scopes the egress allowlist per namespace — tenant A cannot reach tenant B’s external services.
+
+- Quarterly review process: remove any ServiceEntry for deprecated integrations.
+
+- Panguard provides a second enforcement point at the tool-call level: it validates the external hostname against the skill manifest’s declared egressRequirements.
+
+---
+
+SSRF Prevention for Agent URL Tools
+
+Any tool that accepts a URL parameter is an SSRF risk. We block it at parse time, before any DNS resolution occurs.
+
+Validation rules applied in the gateway (before the request is dispatched):
+
+- Block all RFC 1918 private ranges (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16).
+
+- Block loopback (127.0.0.0/8, ::1).
+
+- Block link-local (169.254.0.0/16 — critical for cloud metadata endpoints).
+
+- Block dangerous schemes: file://, gopher://, dict://, ftp://, ldap://, etc.
+
+- Disable redirect following by default (redirects can hop from an allowed external host to an internal IP).
+
+- After the first DNS lookup, pin the resolved IP for the remainder of the tool call (prevents TOCTOU rebinding).
+
+Even if the application-layer check is bypassed, enforce IMDSv2 at the cloud-provider level as a second control.
+
+---
+
+DNS-Layer Filtering
+
+Istio allowlists stop HTTPS exfiltration but not DNS tunneling. We close that gap with allowlist-only DNS resolution.
+
+- All agent pods use a custom dnsConfig pointing to a filtering resolver (CoreDNS with RPZ or Cloudflare Gateway).
+
+- RPZ zone configuration: rpz-passthru for explicitly declared hostnames, NXDOMAIN for everything else.
+
+DNS tunneling heuristics (applied at the resolver):
+
+- Label length > 40 characters → flag
+
+- 100 unique queries per minute to the same second-level domain → flag
+
+- Shannon entropy of subdomain label > 4.0 bits/character → flag
+
+Falco rule fires on any DNS query from an agent pod to a non-allowlisted domain.
+
+---
+
+DLP Inspection of Outbound Tool Call Payloads
+
+We inspect at the tool-call parameter level — not just log-line scanning.
+
+Panguard runs Presidio entity detection on every content-bearing field (body, text, content, message, data).
+
+Blocked entities:
+
+- PII (names, emails, SSNs, credit cards, etc.)
+
+- Credentials
+
+- Data above the session’s declared maximum classification level
+
+The skill manifest declares maxClassificationLevel for outbound payloads. The gateway enforces this at call time. Inspection is structured (JSON field-level), not simple string matching.
+
+Detection = block (not alert-only). Alert-only gives the attacker the detection-to-response window.
+
+---
+
+Session-Level Egress Volume Detection
+
+Per-call checks are not enough. We also monitor cumulative behavior per session:
+
+- Single session receives >50 MB from external endpoints → HIGH alert
+
+- 500 external calls in 60 minutes from one session → WARNING
+
+- Base64 or hex-encoded strings >100 characters in API parameters → block + HIGH alert
+
+Panguard tracks cumulative egress across all tool calls in the session. We establish a behavioral baseline for each agent role before enabling blocking thresholds — alert fatigue from miscalibrated rules is itself a security risk.
+
+---
+
+Egress from Sandboxed Skill Execution
+
+Skills run in Kata Containers with a default policy of networkEgress: deny.
+
+- Any skill that requires external access must declare the exact hostnames in its manifest under egressRequirements.
+
+- Panguard verifies that runtime egress exactly matches the declared list.
+
+- Any undeclared egress attempt from a sandboxed skill triggers: block + automatic quarantine + critical alert (this is a strong signal of a compromised or malicious skill).
+
+---
+
+Key Takeaways (Memorize These!)
+
+- SSRF and DNS tunneling are distinct bypass paths that require distinct controls — Istio allowlists stop HTTPS exfiltration but not DNS tunneling.
+
+- URL validation must happen at parse time before DNS resolution — post-resolution validation is vulnerable to TOCTOU rebinding.
+
+- DLP at the tool-call parameter level is categorically different from log-line scanning — the former prevents exfiltration, the latter detects it after the fact.
+
+- Baseline before enabling blocking thresholds — alert fatigue from miscalibrated egress volume alerts is itself a security risk.
+
+You now have a complete egress control stack that makes data exfiltration structurally difficult and instantly detectable. Even if an attacker achieves code execution or prompt injection, the data cannot easily leave the platform. This is the final barrier that turns potential breaches into contained incidents.
+
+## **MODULE 7**
+
+### **Least Privilege and Scoped Kubernetes Identities: ServiceAccounts, IRSA, and Workload Identity**
+
+Most pods run with far more Kubernetes permission than they need, and the default ServiceAccount is more powerful than most operators realise. Replacing broad cluster permissions with scoped workload identities — tied to specific namespaces, specific API groups, and specific cloud IAM roles — means a compromised pod can only access what it can justify, automatically, on every API call. This module builds the identity scoping that makes least privilege the default rather than an aspiration.
+
+**The over-permissioned ServiceAccount problem**
+
+- Default ServiceAccount in every namespace has a mounted token by default
+
+- Many deployments use a single ServiceAccount for multiple services because it’s convenient
+
+- automountServiceAccountToken: true is the default — tokens are present even when not needed
+
+- Overly broad RBAC means a compromised pod can read secrets, modify other pods, or escalate privileges
+
+**ServiceAccount best practices**
+
+- One ServiceAccount per workload, not per namespace
+
+- automountServiceAccountToken: false at the pod spec level unless the pod genuinely needs API access
+
+- Namespace-scoped Roles, not ClusterRoles, for workloads that only need namespace-level access
+
+- Audit: kubectl auth can-i --list --as system:serviceaccount:: reveals exact permissions
+
+- Remove wildcards from all Roles: resources: ["pods"] not resources: ["*"]
+
+- Regularly run kubectl-who-can or rbac-tool to identify over-permissioned ServiceAccounts
+
+**IRSA (IAM Roles for Service Accounts) on AWS**
+
+- Maps a Kubernetes ServiceAccount to an AWS IAM role via OIDC federation
+
+- Pod assumes the IAM role without storing long-lived AWS credentials anywhere
+
+- eks.amazonaws.com/role-arn annotation on the ServiceAccount triggers IRSA
+
+- IAM role trust policy restricts assumption to the specific ServiceAccount in the specific namespace
+
+- Scope IAM policies to the minimum S3 prefixes, DynamoDB tables, and Secrets Manager paths required
+
+**Workload Identity on GCP**
+
+- Maps Kubernetes ServiceAccount to a GCP service account via workload identity pool
+
+- No service account keys stored anywhere — credentials are automatically injected and rotated
+
+- iam.gke.io/gcp-service-account annotation on the Kubernetes ServiceAccount
+
+- Scope GCP service account permissions to specific Cloud Storage buckets, Pub/Sub topics, etc.
+
+**Azure Workload Identity**
+
+- Federated identity credential links Azure AD app registration to Kubernetes ServiceAccount
+
+- MSAL library in the workload requests tokens from Azure AD using the pod’s projected volume token
+
+- No client secrets or certificates stored in the cluster
+
+**Auditing and continuous enforcement**
+
+- Polaris or kube-score: automated RBAC and security posture scanning in CI
+
+- Kyverno policy: fail any deployment that references a ClusterRole binding for a workload that only needs namespace scope
+
+- Alert on any RBAC change that adds wildcard permissions or ClusterAdmin binding
+
+- Monthly automated RBAC diff: compare current bindings against approved baseline in git
+
+**Key takeaways to cover**
+
+- One ServiceAccount per workload is not pedantic — it is the structural requirement that makes RBAC meaningful
+
+- automountServiceAccountToken: false should be the default for most pods; enable explicitly when needed
+
+- IRSA/Workload Identity/Azure Federated Identity eliminate the long-lived credential class of risk entirely — use them on all major cloud providers
+
+- RBAC is only as good as its ongoing auditing — permissions that were appropriate at launch accumulate over time
+
+---
+
+Module 7: Least Privilege and Scoped Kubernetes Identities
+
+ServiceAccounts, IRSA, and Workload Identity
+
+Hello and welcome to Module 7! 🎉
+
+Modules 1–6 have given us trusted images, cluster admission, vetted skills, zero-trust networking, a hardened gateway, and strict egress controls. Now we tighten the permissions that every pod actually holds inside Kubernetes itself.
+
+The default ServiceAccount in every namespace is far more powerful than most teams realize. A compromised pod with broad RBAC can read secrets, create other pods, or escalate privileges across the cluster. In an agentic platform where pods run autonomous code, this is unacceptable.
+
+In this module we replace convenience with precision: one scoped ServiceAccount per workload, explicit RBAC, and cloud-native workload identity federation that eliminates long-lived credentials entirely. By the end you’ll have the structural foundation that makes least privilege the default — not an aspiration.
+
+---
+
+The Over-Permissioned ServiceAccount Problem
+
+Kubernetes makes it easy to be lazy with identities:
+
+- Every namespace gets a default ServiceAccount with a mounted token by default.
+
+- Many teams reuse a single ServiceAccount across multiple services “because it’s convenient.”
+
+- automountServiceAccountToken: true is the default — even pods that don’t need to call the Kubernetes API still get a token.
+
+- Overly broad RBAC bindings let a compromised pod read secrets, modify other pods, or escalate privileges cluster-wide.
+
+The result: a single pod breach can become a cluster-wide incident. We fix this by treating every ServiceAccount as a long-lived security principal that must be justified.
+
+---
+
+ServiceAccount Best Practices
+
+Follow these rules for every workload:
+
+- One ServiceAccount per workload, never per namespace and never shared.
+
+- Set automountServiceAccountToken: false at the pod spec level unless the pod genuinely needs to call the Kubernetes API.
+
+- Use namespace-scoped Roles (not ClusterRoles) for anything that only needs access inside its own namespace.
+
+Audit exact permissions with:
+
+kubectl auth can-i --list --as system:serviceaccount:agents:summarizer
+
+-
+- Remove all wildcards (\*) from production RBAC rules.
+
+- Run regular audits with tools like kubectl-who-can or rbac-tool to surface over-permissioned accounts.
+
+Example pod spec that follows the rules:
 
 apiVersion: v1
+
+kind: Pod
+
+metadata:
+
+  name: summarizer
+
+spec:
+
+  serviceAccountName: summarizer-sa   # dedicated per-workload account
+
+  automountServiceAccountToken: false # only enable if truly needed
+
+  containers:
+
+  - name: agent
+
+    image: harbor.example.com/golden/node@sha256:...
+
+---
+
+IRSA (IAM Roles for Service Accounts) on AWS
+
+Never store long-lived AWS credentials in pods or secrets. Use IRSA instead.
+
+How it works:
+
+- Kubernetes ServiceAccount is annotated with the IAM role ARN.
+
+- The pod assumes the IAM role via OIDC federation — no keys are ever stored.
+
+- The IAM role’s trust policy restricts assumption to the exact ServiceAccount in the exact namespace.
+
+Example ServiceAccount:
+
+apiVersion: v1
+
 kind: ServiceAccount
+
 metadata:
-name: clawql-api
-namespace: clawql
+
+  name: summarizer-sa
+
+  namespace: agents
+
+  annotations:
+
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/summarizer-role
+
+IAM role trust policy (minimum scope):
+
+{
+
+  "Version": "2012-10-17",
+
+  "Statement": [
+
+    {
+
+      "Effect": "Allow",
+
+      "Principal": {
+
+        "Federated": "arn:aws:iam::123456789012:oidc-provider/[oidc.eks.us-east-1.amazonaws.com/id/ABC123](http://oidc.eks.us-east-1.amazonaws.com/id/ABC123)"
+
+      },
+
+      "Action": "sts:AssumeRoleWithWebIdentity",
+
+      "Condition": {
+
+        "StringEquals": {
+
+          "[oidc.eks.us-east-1.amazonaws.com/id/ABC123:sub](http://oidc.eks.us-east-1.amazonaws.com/id/ABC123:sub)": "system:serviceaccount:agents:summarizer-sa"
+
+        }
+
+      }
+
+    }
+
+  ]
+
+}
+
+Scope the attached IAM policy to the exact S3 prefixes, DynamoDB tables, or Secrets Manager paths the workload actually needs.
 
 ---
 
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
+Workload Identity on GCP
+
+GCP uses the same principle with a workload identity pool.
+
+Annotate the ServiceAccount:
+
 metadata:
-name: clawql-api-role
-rules:
 
-- apiGroups: [""]
-  resources: ["configmaps", "secrets"]
-  verbs: ["get", "list", "watch"] # no create/update/delete
-- apiGroups: ["apps"]
-  resources: ["deployments"]
-  verbs: ["get", "list"] # read-only for status
+  annotations:
 
-No ClawQL pod ever runs with cluster-admin or overly broad permissions. The Operator manages these bindings declaratively.### YubiKey Requirement for High-Impact Changes
+    iam.gke.io/gcp-service-account: [summarizer@project.iam.gserviceaccount.com](mailto:summarizer@project.iam.gserviceaccount.com)
 
-Any change to the clawql-full-stack Helm chart or critical CRDs requires hardware-backed Git signing with a YubiKey.This ensures that even if a developer workstation is compromised, an attacker cannot push malicious chart changes without physical hardware access. All production Helm upgrades are signed and verified.### Explicit MCP Tool Scoping and ATR Claims
+-
+- Credentials are automatically injected and rotated — no service-account keys are ever stored in the cluster.
 
-The most powerful least-privilege control in ClawQL is **ATR (Agent Task Request)** scoping at the MCP layer.Every tool call is validated against the user’s session claims. Agents can only invoke tools explicitly allowed for their role and vertical.**Example ATR-bound tool registration:**Mortgage underwriters can call lending-specific tools but not blockchain or healthcare tools.
-Sandbox execution is restricted to approved Kata-isolated namespaces.
-Cross-vertical memory recall requires elevated memory.cross_vertical: true claim.
-
-Panguard AI and the intelligent MCP gateway enforce these scopes synchronously on every clawql_execute call.### Limiting Blast Radius
-
-Combining these controls means that:A compromised pod cannot reach most cluster resources.
-A compromised agent cannot call dangerous tools.
-A compromised developer cannot deploy malicious changes without hardware keys.
-Even full container escape is contained by Kata sandboxing (covered in Guide 8).
-
-### Key Takeaways
-
-Least privilege turns potential catastrophic breaches into limited incidents.
-Dedicated ServiceAccounts, narrow RBAC roles, and hardware-backed changes form the foundation.
-ATR scoping at the MCP gateway provides fine-grained, per-task control that traditional RBAC cannot achieve alone.
-Every identity and every tool must be explicitly authorized — implicit access is forbidden.
-
-Strong least privilege is the bedrock of zero trust, which is covered next.**Next in the series**: Zero Trust Fundamentals – Assume Compromise and Verify Everything.
+- Scope the GCP service account to only the specific Cloud Storage buckets, Pub/Sub topics, or other resources required.
 
 ---
 
-_ClawQL Security Best Practices Series • Part 4 • May 2026_  
-Based on the official ClawQL Comprehensive Defense-in-Depth Security Guide.
+Azure Workload Identity
+
+Azure federates via Azure AD:
+
+- Create a federated identity credential that links an Azure AD app registration to the Kubernetes ServiceAccount.
+
+- The workload uses the MSAL library and the pod’s projected volume token to request short-lived tokens from Azure AD.
+
+- No client secrets or certificates are stored anywhere in the cluster.
 
 ---
 
-# **Zero Trust Fundamentals: Assume Compromise and Verify Everything\*\***Part 5 of the ClawQL Security Best Practices Series\***\*May 2026**
+Auditing and Continuous Enforcement
 
-With supply chain security, golden images, admission control, and least privilege in place, ClawQL shifts to a full Zero Trust posture. This guide introduces the core philosophy that underpins the entire architecture: never trust, always verify, and assume breach at all times.### Zero Trust Defined for Agentic Systems
+Least privilege is only as good as its ongoing maintenance:
 
-Traditional perimeter security (firewalls, VPNs, “inside the cluster is safe”) fails in agentic MCP environments. Agents can call tools, process documents, and interact with external systems in unpredictable ways. Once any component is compromised, lateral movement can be rapid.ClawQL’s Zero Trust model treats every request, every pod, every agent session, and every tool call as potentially malicious until proven otherwise.### The Three Governing Principles
+- Use Polaris or kube-score in CI to scan for RBAC and security posture issues.
 
-ClawQL security is built on these explicit principles from the Defense-in-Depth guide:**Secure the capabilities, not the language**  
-Prompt injection and clever jailbreaks are inevitable. Instead of trying to filter natural language, ClawQL restricts what an agent can actually _do_ through ATR-scoped MCP tools and Panguard enforcement.
-**Every trust assumption is explicit and verified**  
-No implicit trust in containers, model weights, sessions, secrets, or logs. Everything carries cryptographic provenance (Cosign signatures, Merkle roots, JWT ATR claims).
-**Containment over prevention**  
-Assume breach will happen. Design so that when it does, damage is limited, forensic evidence is preserved (WORM + Merkle), and recovery is fast.
+- Kyverno policy: fail any deployment that references a ClusterRole for a workload that only needs namespace scope.
 
-### Core Zero Trust Controls in ClawQL
+- Alert on any RBAC change that adds wildcard permissions or cluster-admin bindings.
 
-**Continuous verification**: Every MCP tool call validates JWT ATR claims, every image is verified at admission, every model weight is checked before inference.
-**Least privilege by default**: Covered in Guide 4 — narrow RBAC, scoped ServiceAccounts, and per-task tool authorization.
-**Micro-segmentation**: Istio mTLS + AuthorizationPolicy (Guide 7) ensures pods can only talk to explicitly allowed services.
-**Default-deny posture**: NetworkPolicy, egress allowlists, and Kyverno policies reject anything not explicitly permitted.
-**Assume breach mindset**: Kata Containers for MCP workloads, automated quarantine with Talon, tamper-evident WORM logs.
-
-### Shift from Prevention to Containment
-
-Traditional security focuses heavily on blocking attacks. ClawQL invests equally in containment and recovery:If a pod is compromised → Kata isolation + Talon auto-quarantine.
-If an agent goes rogue → Panguard blocks the tool call and logs the full session.
-If logs are tampered → Merkle roots and WORM storage make it detectable.
-
-This mindset changes how you design, deploy, and operate the platform.### Key Takeaways
-
-Zero Trust is not a tool — it is an operating philosophy: assume compromise and verify everything, every time.
-In agentic systems, securing _capabilities_ through ATR scoping and MCP proxy enforcement is far more effective than trying to secure natural language.
-Every layer (supply chain, admission, identity, network, runtime) must independently verify and contain.
-Prevention alone is insufficient; strong containment and forensic readiness are mandatory.
-
-This fundamentals guide sets the stage for the advanced Zero Trust controls in the next guide.**Next in the series**: Advanced Zero Trust – Multi-Sig Vault, HSM, Tamper-Proof Logging, and Cryptographic Provenance.
+- Monthly automated diff: compare current RBAC bindings against the approved baseline stored in git.
 
 ---
 
-_ClawQL Security Best Practices Series • Part 5 • May 2026_  
-Based on the official ClawQL Comprehensive Defense-in-Depth Security Guide.
+Key Takeaways (Memorize These!)
+
+- One ServiceAccount per workload is not pedantic — it is the structural requirement that makes RBAC meaningful.
+
+- automountServiceAccountToken: false should be the default for most pods; enable it explicitly only when needed.
+
+- IRSA (AWS), Workload Identity (GCP), and Azure Workload Identity eliminate the long-lived credential class of risk entirely — use them on all major cloud providers.
+
+- RBAC is only as good as its ongoing auditing — permissions that were appropriate at launch accumulate over time.
+
+You now have the identity and permission model that ensures a compromised pod can only do the exact minimum it was designed to do. This is the foundation that makes every other control in the curriculum effective. Least privilege is no longer a checkbox — it is the default operating mode of your entire platform.
+
+## **MODULE 8**
+
+### **Secrets at Rest: Vault Integration, HSM Backing, and Tamper-Proof Audit Logging**
+
+A secret in a config file, an environment variable, or a Kubernetes Secret object is not a secret — it is a credential waiting to be discovered. Dynamic secrets with short TTLs, issued on demand from a Vault instance with HSM-backed unsealing, mean that there is no long-lived credential to steal and every access is recorded in a tamper-evident audit log. This module replaces static credentials with a secrets architecture that limits exposure to minutes rather than months.
+
+**Why static secrets are a systemic risk**
+
+- A secret in a config file, environment variable, or Kubernetes Secret is readable by anything with pod access
+
+- Kubernetes Secrets are base64-encoded, not encrypted — readable by anyone with etcd access or the right RBAC
+
+- Long-lived secrets accumulate: every developer who has ever had access retains it until the secret rotates
+
+- Breach windows are measured in months for static secrets; minutes for dynamic secrets
+
+**Vault architecture for ClawQL**
+
+- Vault is the single source of truth for all credentials the platform uses
+
+- Dynamic secrets: Vault generates a unique credential per request with a configured TTL
+
+- No static credential exists in any config file, environment variable, or Kubernetes Secret
+
+- Vault deployed in HA mode with Raft integrated storage — no external database dependency
+
+- Three replicas minimum in production; Raft requires a quorum of (n/2)+1
+
+**HSM-backed unsealing**
+
+- Vault’s master key encrypts the keyring — if master key is compromised, all secrets are compromised
+
+- HSM (Hardware Security Module) stores the master key in tamper-resistant hardware
+
+- Vault Auto Unseal with AWS KMS, GCP Cloud KMS, or Azure Key Vault as the HSM
+
+- HSM unseal means Vault can restart without human key share holders — critical for automated DR (Module 28)
+
+- Shamir secret sharing for break-glass scenarios: requires multiple key holders present simultaneously
+
+**Dynamic secrets for ClawQL components**
+
+- Database credentials: Vault generates a unique username/password per agent session; TTL = session duration
+
+- AWS/GCP credentials: Vault’s cloud secrets engine generates temporary IAM credentials on demand
+
+- PKI certificates: Vault’s PKI engine issues short-lived TLS certificates for mTLS (replaces cert-manager for internal certs)
+
+- Each dynamic secret is tied to a specific Vault lease; revocation is instant and complete
+
+**Token exchange at the gateway**
+
+- Agents do not hold Vault tokens directly — the gateway performs the token exchange
+
+- Agent presents session JWT → gateway exchanges for a Vault token scoped to that agent’s policy
+
+- Vault token TTL matches the session duration; automatically expires when the session ends
+
+- Vault token is never exposed to the agent, never logged, and never stored
+
+**Tamper-proof audit logging**
+
+- Vault audit device: structured JSON log of every API call — who requested what, when, from where
+
+- Audit log shipped via Fluent Bit to WORM storage (S3 Object Lock, COMPLIANCE mode)
+
+- Presidio redaction applied before shipping — secret values are never in the audit log, only their paths
+
+- Merkle root of the audit log computed and recorded in Prometheus every 60 seconds
+
+- Audit log is the ground truth for “did this agent access this secret” in any incident investigation
+
+**Vault policy structure**
+
+- One policy per agent role, scoped to the minimum paths required
+
+- Path patterns: secret/tenants//agents//\* — never wildcards across tenants
+
+- Deny list for sensitive paths: explicit deny rules that override any allow rule
+
+- Policy changes require the same 4-eyes approval as ATR rule changes (Module 30)
+
+**Key takeaways to cover**
+
+- Dynamic secrets with short TTLs are not just a best practice — they eliminate the long-lived credential as an attack category
+
+- HSM-backed unsealing removes the human key holder as a single point of failure for Vault availability
+
+- Vault audit log to WORM is the forensic foundation for every credential-related security investigation
+
+- The gateway-as-exchange-point pattern means agents never hold Vault tokens — a compromised agent cannot directly access Vault
 
 ---
 
-# **Advanced Zero Trust: Multi-Sig Vault, HSM, Tamper-Proof Logging, and Cryptographic Provenance\*\***Part 6 of the ClawQL Security Best Practices Series\***\*May 2026**
+Module 8: Secrets at Rest
 
-Building on Zero Trust fundamentals (Guide 5), this guide covers the advanced cryptographic and secret-management controls that make trust assumptions explicit and verifiable across the entire platform.### Dynamic Secrets with Short TTL
+Vault Integration, HSM Backing, and Tamper-Proof Audit Logging
 
-ClawQL uses HashiCorp Vault for all secrets (database credentials, API keys, mTLS certificates, etc.).Key practices:Secrets are issued dynamically per workload with short TTLs (minutes to hours).
-Automatic revocation on pod termination.
-No long-lived static secrets anywhere in the cluster.
+Hello and welcome to Module 8! 🎉
 
-Vault Agent sidecars handle token renewal and secret injection. The Operator monitors lease counts and alerts on orphaned credentials.### JWT ATR Session Tokens
+Modules 1–7 have given us trusted images, cluster admission, vetted skills, zero-trust networking, a hardened gateway, strict egress controls, and scoped Kubernetes identities. Now we eliminate the single biggest source of long-term risk in any platform: static secrets.
 
-Every agent session receives a short-lived JWT containing ATR (Agent Task Request) claims. These claims define exactly what tools, verticals, and data the agent may access.Panguard and the intelligent MCP gateway validate the JWT signature and claims on every clawql_execute call. Agents cannot escalate their own privileges or forge claims.### Merkle Trees and Cryptographic Provenance
+A secret written to a config file, an environment variable, or a Kubernetes Secret object is no longer a secret — it is simply data waiting to be discovered. In an agentic platform where pods run autonomous code for hours or days, static credentials create breach windows measured in months.
 
-Every critical artifact carries tamper-evident provenance:Documents after Presidio redaction
-Memory 2.0 graph entities and edges
-Workflow definitions
-Proxy dispatches and tool call results
-
-A Merkle root is computed and recorded for each operation. Roots are stored in WORM volumes and a Git-backed, Cosign-signed repository. Any silent modification is immediately detectable on read.### WORM Storage and Tamper-Proof Logging
-
-All security-relevant logs (prompts, tool calls, decisions) are written to WORM (Write Once, Read Many) storage.Presidio redaction runs in the Fluent Bit pipeline before logs reach Loki.
-Merkle roots link logs to the broader audit trail.
-No deletions or modifications are possible after write.
-
-This ensures forensic integrity even if an attacker reaches the logging infrastructure.### Cosign Blob Signing for Model Weights
-
-Model weights (the largest unverified artifact in most AI stacks) are protected with:Signed manifests stored in Harbor
-Init-container verification before inference starts
-SHA-256 hash checking combined with Cosign verification
-
-This closes the “model-in-the-middle” attack vector that container image scanning cannot detect.### Key Takeaways
-
-Dynamic secrets with short TTLs and automatic revocation eliminate standing credentials.
-JWT ATR tokens enforce explicit, verifiable capabilities at the MCP layer.
-Merkle trees and WORM storage provide cryptographic proof that nothing has been silently altered.
-Every trust assumption — from model weights to audit logs — is made explicit and independently verifiable.
-
-These advanced controls turn Zero Trust from a philosophy into enforceable, auditable reality across the platform.**Next in the series**: RBAC, mTLS, and Istio Service Mesh – Network-Level Zero Trust.
+In this module we replace every static secret with dynamic, short-lived credentials issued by HashiCorp Vault. We make Vault highly available, tamper-evident, and impossible for agents to access directly. By the end you will have a secrets architecture where credentials exist for minutes, not months, and every access is permanently recorded in a forensic-grade audit trail.
 
 ---
 
-_ClawQL Security Best Practices Series • Part 6 • May 2026_  
-Based on the official ClawQL Comprehensive Defense-in-Depth Security Guide.
+Why Static Secrets Are a Systemic Risk
+
+Static secrets create three unavoidable problems:
+
+- Any pod with the right RBAC (or any attacker who reaches etcd) can read Kubernetes Secrets — they are only base64-encoded, not encrypted.
+
+- Long-lived credentials accumulate over time: every developer, CI runner, or former team member who ever had access retains the secret until it is rotated.
+
+- When a breach occurs, the window of exposure is measured in months for static secrets versus minutes for dynamic ones.
+
+Agentic platforms make this worse: an agent with a static credential in its environment can use it for every tool call across dozens of sessions. We must eliminate the static credential class of risk entirely.
 
 ---
 
-# **RBAC, mTLS, and Istio Service Mesh: Network-Level Zero Trust\*\***Part 7 of the ClawQL Security Best Practices Series\***\*May 2026**
+Vault Architecture for ClawQL
 
-With identity-level least privilege and advanced cryptographic controls established (Guides 4–6), ClawQL extends Zero Trust to the network layer. This guide covers how RBAC, mutual TLS, and Istio Service Mesh work together to enforce micro-segmentation and default-deny networking across the cluster.### Istio mTLS and AuthorizationPolicy
+Vault becomes the single source of truth for every credential the platform uses.
 
-Istio provides automatic mutual TLS between all pods in the mesh. Every pod-to-pod connection is encrypted and authenticated using short-lived certificates.**AuthorizationPolicy examples** in ClawQL:The clawql-api gateway can only call specific backend services (documents, memory, vertical plugins).
-MCP sandbox pods can only reach the Kata runtime and isolated NATS JetStream topics.
-Vertical plugins are blocked from direct communication with each other — all cross-vertical traffic must route through the intelligent gateway.
+Core design principles:
 
-This eliminates east-west lateral movement even if a pod is compromised.### ServiceEntries as FQDN Lockdown
+- Dynamic secrets only: Vault generates a unique credential per request with a short, configurable TTL.
 
-ClawQL uses Istio ServiceEntries to explicitly whitelist allowed external destinations:Only approved external APIs (GitHub, Paperless NGX, Chainlink oracles, etc.).
-No arbitrary outbound traffic to the internet.
-EgressGateway routes all external calls through inspected paths.
+- No static credential ever exists in any config file, environment variable, Kubernetes Secret, or agent memory.
 
-This replaces the need for a separate WAF for FQDN control and is reviewed quarterly alongside STRIDE modeling.### Default-Deny NetworkPolicy
+- Vault runs in high-availability mode using Raft integrated storage — no external database dependency.
 
-A cluster-wide default-deny NetworkPolicy ensures no pod can talk to any other pod or external endpoint unless an explicit allow rule exists.Combined with Istio, this creates layered defense: NetworkPolicy at the Kubernetes level and AuthorizationPolicy + mTLS at the service mesh level.### Traffic Baselining and Anomaly Detection with Kiali
+- Minimum of three replicas in production (Raft requires a quorum of (n/2)+1 for writes).
 
-Kiali visualizes the service mesh topology while Prometheus alerts on unexpected connection patterns. The security team maintains a baseline of normal east-west traffic. Any new or anomalous flow triggers investigation.### Helm Chart Integration
-
-These controls are enabled by default when deploying with:yaml
-
-security:
-fullBundle: true
-istio:
-enabled: true
-mTLS: strict
-egressAllowlist: true
-
-### Key Takeaways
-
-Network-level Zero Trust requires encryption (mTLS), authentication, and explicit authorization for every connection.
-Default-deny policies combined with ServiceEntries provide strong egress and east-west control.
-Micro-segmentation limits blast radius: a compromised component can only reach what it is explicitly allowed to reach.
-Continuous baselining with Kiali turns the mesh into an active security sensor.
-
-This network foundation enables safe sandboxing and runtime protection in the following guides.**Next in the series**: Sandboxing Options and Trade-offs – Kata, gVisor, Seatbelt, Docker, and Cloudflare Workers.
+This architecture ensures that even if an attacker compromises a pod, there is nothing static for them to steal.
 
 ---
 
-_ClawQL Security Best Practices Series • Part 7 • May 2026_  
-Based on the official ClawQL Comprehensive Defense-in-Depth Security Guide.
+HSM-Backed Unsealing
+
+Vault’s master key encrypts the keyring that protects all data. If that master key is compromised, everything is lost.
+
+We solve this with a Hardware Security Module (HSM):
+
+- The master key is stored in tamper-resistant hardware (never on disk).
+
+- Vault uses Auto Unseal with AWS KMS, GCP Cloud KMS, or Azure Key Vault as the HSM provider.
+
+- Vault can now restart automatically without any human key-share holders — critical for automated disaster recovery (Module 28).
+
+For break-glass scenarios we still support Shamir secret sharing, but it requires multiple authorized key holders to be physically present simultaneously. HSM-backed unsealing removes the human as a single point of failure for availability while keeping the highest level of protection.
 
 ---
 
-# **Sandboxing Options and Trade-offs: Kata, gVisor, Seatbelt, Docker, and Cloudflare Workers\*\***Part 8 of the ClawQL Security Best Practices Series\***\*May 2026**
+Dynamic Secrets for ClawQL Components
 
-With network-level Zero Trust established (Guide 7), the next critical layer is runtime isolation for the highest-risk workloads — especially MCP tool execution and agent code running. This guide compares sandboxing technologies and explains why ClawQL defaults to Kata Containers for MCP workloads.### Why Strong Sandboxing Is Non-Negotiable
+Every credential the platform needs is generated on demand:
 
-Agentic systems routinely execute untrusted or dynamically generated code. Container namespaces alone are insufficient when an agent has access to tools like sandbox_exec, document processing, or external API calls. A breakout must be extremely difficult and contained.### Isolation Technologies Compared
+- Database credentials: Vault creates a unique username/password per agent session; TTL equals the session duration.
 
-| Technology         | Isolation Type            | Performance Overhead | Attack Surface Reduction  | ClawQL Usage                   |
-| ------------------ | ------------------------- | -------------------- | ------------------------- | ------------------------------ |
-| Docker (default)   | Namespace + cgroups       | Low                  | Low                       | Never in production            |
-| gVisor             | Userspace kernel          | Medium               | High                      | Acceptable for non-MCP         |
-| Seatbelt           | macOS sandbox profiles    | Low                  | Medium                    | Local dev only                 |
-| Kata Containers    | Lightweight VM (hardware) | Medium-High          | Very High                 | Default for all MCP workloads  |
-| Cloudflare Workers | V8 isolates / edge        | Very Low             | High (for edge functions) | Optional for lightweight tools |
+- Cloud credentials: Vault’s AWS/GCP secrets engines generate temporary IAM roles or service-account tokens exactly when needed.
 
-### Kata Containers – ClawQL’s Default for MCP
+- PKI certificates: Vault’s PKI engine issues short-lived TLS certificates for mTLS (replacing cert-manager for internal certificates).
 
-Kata provides a full hardware VM boundary per pod using lightweight VMs (QEMU/KVM or Firecracker).**Key Advantages:**Kernel-level isolation: even if the container is fully compromised, the attacker cannot escape the VM.
-Strongest protection for MCP tool execution and sandboxed code.
-Enforced via Kyverno RuntimeClass policy and Helm defaults.
+Each dynamic secret is tied to a specific Vault lease. Revocation is instant and complete — the moment a session ends or an anomaly is detected, the lease is revoked and the credential becomes useless everywhere.
 
-**Kyverno Enforcement Example:**yaml
+---
 
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
+Token Exchange at the Gateway
+
+Agents never hold Vault tokens directly — that would defeat the purpose.
+
+The secure exchange pattern works as follows:
+
+1. The agent presents its session JWT to the gateway.
+
+2. The gateway exchanges the JWT for a short-lived Vault token scoped to that agent’s exact policy.
+
+3. The Vault token TTL matches the session duration and expires automatically when the session ends.
+
+4. The token is never exposed to the agent, never logged, and never stored in memory beyond the duration of the specific tool call.
+
+This “gateway-as-exchange-point” design means a compromised agent has no direct path to Vault.
+
+---
+
+Tamper-Proof Audit Logging
+
+Every interaction with Vault is recorded forever.
+
+- Vault’s audit device emits structured JSON logs of every API call (who requested what, when, from where).
+
+- Logs are shipped via Fluent Bit to WORM storage (S3 Object Lock in COMPLIANCE mode).
+
+- Presidio redaction is applied before shipping — secret values themselves never appear; only the paths are logged.
+
+- A Merkle root of the audit log is computed and recorded in Prometheus every 60 seconds.
+
+This audit trail becomes the ground truth for any investigation: “Did this agent access this secret?” The combination of WORM immutability and Merkle integrity means the log cannot be altered or deleted, even by root.
+
+---
+
+Vault Policy Structure
+
+Policies are minimal and explicit:
+
+- One policy per agent role.
+
+- Path patterns are tightly scoped: secret/tenants//agents//\* — never broad wildcards across tenants.
+
+- Explicit deny rules override any allow rule for sensitive paths.
+
+- Any policy change requires the same 4-eyes approval process used for ATR rule changes (Module 30).
+
+---
+
+Key Takeaways (Memorize These!)
+
+- Dynamic secrets with short TTLs are not just a best practice — they eliminate the long-lived credential as an attack category entirely.
+
+- HSM-backed unsealing removes the human key holder as a single point of failure for Vault availability.
+
+- The Vault audit log to WORM storage is the forensic foundation for every credential-related security investigation.
+
+- The gateway-as-exchange-point pattern ensures agents never hold Vault tokens — a compromised agent cannot directly access Vault.
+
+You now have a secrets architecture where credentials are created on demand, live for minutes, and every access is permanently and verifiably recorded. Static secrets are gone. The last major class of long-term credential risk has been closed.
+
+## **MODULE 9**
+
+### **Authentication & Session Management: Per-Request Scoped Tokens, OAuth/OIDC, Rotation, and Replay Prevention**
+
+A session token valid for 24 hours gives an attacker 24 hours of agent capability after a single compromise — per-request token scoping changes the math so that a stolen token is expired before it can be operationalised. Every token exchange is scoped to the minimum claims required for the specific tool call, backed by nonce-based replay prevention that makes captured requests useless even within their validity window. This module builds the authentication architecture that turns credential theft from a catastrophic event into a non-event.
+
+**Why long-lived tokens are an agentic risk**
+
+- Agent sessions can span minutes to hours — a session token valid for the full duration is a long-lived credential
+
+- A stolen token gives an attacker the complete capability of the session for its remaining lifetime
+
+- Traditional web session management assumes human interaction frequency; agents can make hundreds of tool calls per minute
+
+- The correct mental model: every tool call is a separate authentication decision, not a continuation of a prior one
+
+**JWT + ATR token exchange at the gateway**
+
+- Session JWT issued at session start: contains ATR claims, agent ID, tenant ID, session ID
+
+- Session JWT is never used directly for tool calls — it is exchanged for a tool-scoped token at the gateway
+
+- Tool-scoped token carries only the claims required for the specific tool invocation
+
+- TTL of tool-scoped token: 5 minutes maximum — cannot be renewed, cannot be used for any other tool
+
+- Token exchange sequence: session JWT → gateway → Vault token exchange → tool handler
+
+- Every exchange creates an audit log entry with the tool name, claims used, and exchange timestamp
+
+**OAuth2/OIDC for external tool calls**
+
+- External API calls use OAuth2 client-credentials or authorization-code flow, not static API keys
+
+- Tokens fetched on demand, used for the specific call, discarded — never stored in agent context or memory
+
+- Scope each external token to the minimum permissions required: repo:read not repo:\*
+
+- OIDC device flow for user-delegated authorization — HITL approval gate handles the UX
+
+- External token TTL: 5–10 minutes; shorter than internal token TTLs because external tokens cannot be revoked as quickly
+
+**Nonce-based replay prevention**
+
+- Every MCP request includes a unique nonce in the JWT payload
+
+- Gateway records the nonce in a Redis TTL store keyed by nonce value
+
+- Nonce expires from the store when the token expires — no indefinite storage required
+
+- Duplicate nonce = immediate 403 rejection regardless of token validity
+
+- Replay window is reduced to zero even within the 5-minute token TTL
+
+- Nonce store is partitioned per tenant in multi-tenant deployments
+
+**Automatic rotation and revocation**
+
+- Tool-scoped tokens expire automatically — no rotation action required
+
+- Session JWTs are rotated at configurable intervals within the session (default: 60 minutes)
+
+- On anomaly detection (Panguard block, Falco alert, user-initiated), the gateway calls Vault revocation immediately
+
+- Revocation invalidates all in-flight calls using the revoked token synchronously
+
+- Revocation event written to WORM audit trail with cause, timestamp, and revoking principal
+
+**Multi-factor and device pairing for local access**
+
+- Local gateway access requires device pairing: hardware-backed key (YubiKey or platform authenticator)
+
+- Device must be physically present at session initiation — stolen JWT cannot start a new session from an unpaired device
+
+- CI runners use OIDC workload identity federation instead of device pairing
+
+- GitHub Actions / GitLab CI presents OIDC token → gateway exchanges for session JWT scoped to the specific workflow
+
+- Workflow-scoped sessions have the minimum ATR claims required for CI operations
+
+**Audit logging of every authenticated action**
+
+- Every token issuance, exchange, external call, rotation, and revocation → WORM audit trail
+
+- Structured event: agent ID, session ID, tool name, token accessor, issued-at, expires-at, ATR claims, Panguard decision
+
+- Full token lifecycle reconstructable from the audit trail for any session
+
+- Token accessor (not the token itself) logged — the audit trail cannot be used to replay calls
+
+**Key takeaways to cover**
+
+- Per-request token scoping is the control that turns credential theft from catastrophic to irrelevant — the token is expired before it can be operationalized
+
+- Nonce-based replay prevention closes the remaining window that token expiry alone leaves open
+
+- OAuth2/OIDC for external tools eliminates static service account credentials from the agent’s context entirely
+
+- Device pairing for local access and OIDC workload identity for CI are the two second-factor patterns that cover all access scenarios without requiring static credentials
+
+---
+
+Module 9: Authentication & Session Management
+
+Per-Request Scoped Tokens, OAuth/OIDC, Rotation, and Replay Prevention
+
+Hello and welcome to Module 9! 🎉
+
+Modules 1–8 have given us trusted images, admission control, vetted skills, zero-trust networking, a hardened gateway, strict egress, scoped identities, and dynamic secrets from Vault. Now we secure the very first step every agent takes: authentication and session management.
+
+Agent sessions are not like traditional web sessions. They can run for minutes or hours, make hundreds of tool calls per minute, and carry powerful ATR claims. A long-lived session token that survives the entire session becomes a high-value credential an attacker can use for its full remaining lifetime.
+
+In this module we replace long-lived tokens with per-request scoped tokens, nonce-based replay protection, short TTLs, and proper second-factor patterns. By the end you will have an authentication system where stealing a token is irrelevant — because the token expires before the attacker can use it.
+
+---
+
+Why Long-Lived Tokens Are an Agentic Risk
+
+Traditional web apps assume human users who interact every few seconds. Agentic platforms are different:
+
+- A single session can span minutes to hours.
+
+- Agents make hundreds of tool calls per minute.
+
+- A stolen token grants the attacker the full capability of that session for its entire remaining lifetime.
+
+The correct mental model is this: every tool call is a separate authentication decision, not a continuation of a prior one. Long-lived session tokens create exactly the kind of static credential we eliminated with Vault in Module 8. We must treat authentication the same way.
+
+---
+
+JWT + ATR Token Exchange at the Gateway
+
+We issue a Session JWT at the very start of every session. This JWT contains:
+
+- ATR claims
+
+- Agent ID
+
+- Tenant ID
+
+- Session ID
+
+Important: The Session JWT is never used directly for tool calls. It is exchanged at the gateway for a much narrower token.
+
+The exchange flow:
+
+1. Agent presents the Session JWT.
+
+2. Gateway validates it and exchanges it for a tool-scoped token.
+
+3. The tool-scoped token carries only the exact ATR claims required for that specific tool invocation.
+
+4. TTL of the tool-scoped token is maximum 5 minutes — it cannot be renewed and cannot be reused for any other tool.
+
+Sequence:  
+ Session JWT → Gateway → Vault token exchange → Tool handler
+
+Every exchange creates a signed audit log entry with the tool name, claims used, and exact timestamp. This pattern turns credential theft from catastrophic to irrelevant — the stolen token expires before it can be operationalized.
+
+---
+
+OAuth2/OIDC for External Tool Calls
+
+Never embed static API keys in agent context or memory.
+
+For every external API call we use proper OAuth2/OIDC flows:
+
+- Client credentials or authorization code flow — never static keys.
+
+- Tokens are fetched on demand, used for that single call, then discarded.
+
+- Each external token is scoped to the absolute minimum permissions required (e.g., repo:read instead of repo:\*).
+
+- TTL for external tokens is 5–10 minutes (shorter than internal tokens because external tokens cannot be revoked as quickly).
+
+For user-delegated authorization we use the OIDC device flow. The HITL approval gate (Module 12) handles the user experience so the agent never sees the full authorization code.
+
+This eliminates static service-account credentials from the agent’s context entirely.
+
+---
+
+Nonce-Based Replay Prevention
+
+Even short-lived tokens need protection against replay attacks.
+
+Every MCP request includes a unique nonce in the JWT payload. The gateway:
+
+- Records the nonce in a Redis TTL store (keyed by nonce value).
+
+- The nonce expires automatically when the token expires — no indefinite storage is required.
+
+- Any duplicate nonce is immediately rejected with 403 regardless of token validity.
+
+This reduces the replay window to zero even inside the 5-minute token TTL. In multi-tenant deployments the Redis store is partitioned per tenant.
+
+---
+
+Automatic Rotation and Revocation
+
+Rotation and revocation are fully automated:
+
+- Tool-scoped tokens expire automatically — no manual rotation is needed.
+
+- Session JWTs are rotated at configurable intervals inside the session (default: every 60 minutes).
+
+- On any anomaly (Panguard block, Falco alert, or user-initiated revocation) the gateway immediately calls Vault revocation.
+
+- Revocation invalidates all in-flight calls using the revoked token synchronously.
+
+- Every revocation event is written to the WORM audit trail with cause, timestamp, and the revoking principal.
+
+---
+
+Multi-Factor and Device Pairing for Local Access
+
+Local gateway access requires a true second factor:
+
+- Device pairing using a hardware-backed key (YubiKey or platform authenticator).
+
+- The device must be physically present at session initiation — a stolen JWT alone cannot start a new session from an unpaired device.
+
+For CI runners we use OIDC workload identity federation instead of device pairing:
+
+- GitHub Actions or GitLab CI presents its OIDC token.
+
+- The gateway exchanges it for a session JWT scoped to the exact workflow.
+
+- Workflow-scoped sessions receive only the minimum ATR claims required for CI operations.
+
+These two patterns (device pairing for humans + OIDC for CI) cover every access scenario without any static credentials.
+
+---
+
+Audit Logging of Every Authenticated Action
+
+Every step of the token lifecycle is logged to the WORM audit trail:
+
+- Token issuance
+
+- Token exchange
+
+- External call
+
+- Rotation
+
+- Revocation
+
+Each event is a structured record containing:
+
+- Agent ID, session ID, tool name
+
+- Token accessor (never the token itself)
+
+- Issued-at / expires-at timestamps
+
+- ATR claims presented
+
+- Panguard decision
+
+The full token lifecycle for any session can be reconstructed from the audit trail. Because only the accessor is logged, the audit trail itself cannot be used to replay calls.
+
+---
+
+Key Takeaways (Memorize These!)
+
+- Per-request token scoping is the control that turns credential theft from catastrophic to irrelevant — the token is expired before it can be operationalized.
+
+- Nonce-based replay prevention closes the remaining window that token expiry alone leaves open.
+
+- OAuth2/OIDC for external tools eliminates static service account credentials from the agent’s context entirely.
+
+- Device pairing for local access and OIDC workload identity for CI are the two second-factor patterns that cover all access scenarios without requiring static credentials.
+
+You now have an authentication and session management system designed specifically for autonomous agents. Long-lived tokens are gone. Every action is individually authenticated, scoped, replay-protected, and permanently audited. Credential theft is no longer a meaningful attack.
+
+## **MODULE 10**
+
+### **Agent Identity Lifecycle: Provisioning, Scope Governance, and Decommissioning**
+
+An agent is a long-lived security principal — it accumulates memory, holds Vault leases, owns a NATS subject namespace, and may persist across dozens of sessions — but most deployments have no formal process for provisioning one, approving scope changes, detecting orphaned identities, or safely retiring one that may have been compromised. This module defines the full joiner-mover-leaver lifecycle for agents: approval workflows, credential inventory, orphan reconciliation, planned decommissioning, and the forensic-first rapid shutdown sequence that preserves evidence under compromise. Without this, every other control in the series has a gap at the beginning and end of every agent’s existence.
+
+**The agent as a long-lived security principal**
+
+- An agent persists across sessions: accumulates memory, holds Vault leases, owns NATS subject namespace
+
+- No lifecycle management = orphaned identities, unchecked scope drift, and forensic blind spots
+
+- The joiner-mover-leaver model applied to agents: same rigor as enterprise human identity management
+
+- Complete agent identity: certificate, ATR role, Vault policy, memory store path, NATS namespace, queue subscriptions, registered pipelines
+
+**Provisioning: approval, certificate issuance, ATR bootstrap**
+
+- Provisioning request submitted as a PR to the infrastructure repository
+
+- Required fields: requested-by, agent ID, ATR role, justification, proposed claims, expiry review date
+
+- Automated policy check: ATR role must exist and be documented; no exec/admin class claims without explicit justification
+
+- No agent may be provisioned without an expiry review date — prevents permanent unchecked agents
+
+- On approval: cert-manager issues certificate, Vault policy created, NATS namespace registered, memory store initialized with empty Merkle root
+
+- All provisioning actions logged to WORM with approver identities
+
+**ATR scope expansion governance**
+
+- Expansion is a security event, not a config change
+
+- Expansion PR requires: written justification, owning team approval, security team sign-off, red team test case for the new scope
+
+- Trial period: time-bounded observation window before expansion is made permanent
+
+- Panguard observation report reviewed after trial; unexpected behavior → immediate revert
+
+- Scope contraction: always safe, no approval required, applied immediately
+
+**Agent credential inventory and sprawl detection**
+
+- Every credential associated with an agent must be inventoried: mTLS cert, Vault policy, NATS credentials, external OAuth tokens
+
+- Weekly automated scan for credentials appearing outside declared locations: env vars, config files, agent memory, git history
+
+- Ownership field: every credential has a named owning agent and a named human owner
+
+- Sprawl finding = critical: stop agent, revoke credential, rotate, investigate
+
+**Orphaned identity detection**
+
+- Weekly reconciliation: compare active Vault leases, NATS subscriptions, and cert-manager Certificates against running pods
+
+- Any identity present in platform resources but absent from running pods = orphan
+
+- Orphan quarantine: Vault lease suspended (not revoked — preserve for investigation), NATS drained, memory store read-locked
+
+- 7-day review deadline; unreviewed orphans proceed to automatic decommissioning
+
+- Vault suspension before revocation: preserves forensic history before cleanup
+
+**Planned decommissioning checklist**
+
+1. Drain active sessions
+
+2. Export and archive memory store to WORM cold storage; record final Merkle root
+
+3. Deindex memory store from active recall
+
+4. Revoke all Vault leases; delete Vault policy
+
+5. Drain NATS queue; deregister subject namespace; remove ACL entries
+
+6. Revoke mTLS certificate; update CRL
+
+7. Delete Kubernetes resources (Deployment, ServiceAccount, NetworkPolicy, RBAC bindings)
+
+8. Write signed decommission record to WORM referencing the final Merkle root
+
+**Rapid decommission under compromise**
+
+- Step 1 — Isolate: Panguard session quarantine + NetworkPolicy emergency deny-all
+
+- Step 2 — Preserve: snapshot memory store, Vault lease history, NATS message log before any revocation
+
+- Step 3 — Revoke: certificate, Vault leases, NATS subscriptions
+
+- Step 4 — Hand off to IR team (Module 20) with snapshot location and isolation timestamp
+
+- Never delete the memory store or audit trail during an active investigation
+
+- Forensic snapshot goes to a separate bucket with access restricted to the IR team
+
+**Key takeaways to cover**
+
+- Provisioning without a formal approval workflow is a supply chain risk at the identity layer
+
+- The trial period for scope expansion is the control that catches over-permissioning before it becomes permanent
+
+- Orphan detection catches the incomplete decommissionings that accumulate silently — dormant attack surface
+
+- Under compromise: forensic preservation before revocation, always — rushed cleanup that destroys evidence trades short-term containment for long-term blindness
+
+---
+
+Module 10: Agent Identity Lifecycle
+
+Provisioning, Scope Governance, and Decommissioning
+
+Hello and welcome to Module 10! 🎉
+
+Modules 1–9 have given us trusted images, admission control, vetted skills, zero-trust networking, a hardened gateway, egress controls, scoped Kubernetes identities, dynamic secrets, and per-request authentication. Now we address the agent itself as a long-lived security principal.
+
+Unlike a short-lived web request, an agent persists across sessions. It accumulates memory, holds Vault leases, owns a NATS subject namespace, and may run for weeks or months. Without a formal lifecycle, we end up with orphaned identities, unchecked scope drift, and forensic blind spots.
+
+In this module we apply the same joiner-mover-leaver rigor we use for human employees — but to agents. By the end you will have a complete, auditable process for provisioning, governing scope changes, detecting orphans, and safely decommissioning agents — including the forensic-first rapid shutdown sequence under compromise.
+
+---
+
+The Agent as a Long-Lived Security Principal
+
+An agent is not just a pod — it is a persistent identity with real blast radius:
+
+- It carries ATR claims that evolve over time.
+
+- It holds Vault leases and dynamic credentials.
+
+- It owns a NATS subject namespace and queue subscriptions.
+
+- It maintains a memory store with a Merkle root chain.
+
+- It may participate in multi-agent pipelines.
+
+If we treat provisioning as “just create a Deployment,” we create dormant attack surface that accumulates silently. The full agent identity includes: certificate, ATR role, Vault policy, memory store path, NATS namespace, queue subscriptions, and registered pipelines. We manage all of it explicitly.
+
+---
+
+Provisioning: Approval, Certificate Issuance, ATR Bootstrap
+
+Provisioning is never ad-hoc. Every new agent begins with a formal request:
+
+- Submitted as a pull request to the infrastructure repository.
+
+- Required fields: requested-by, agent ID, ATR role, justification, proposed claims, expiry review date.
+
+- Automated policy check: the ATR role must already exist and be documented; exec or admin class claims require explicit justification.
+
+- No agent may be provisioned without an expiry review date — permanent unchecked agents are forbidden.
+
+On approval the automated provisioning pipeline executes:
+
+1. cert-manager issues the mTLS certificate.
+
+2. Vault policy is created (scoped to the exact paths the agent needs).
+
+3. NATS namespace is registered with ACLs.
+
+4. Memory store is initialized with an empty Merkle root.
+
+All provisioning actions are logged to the WORM audit trail with the approver’s identity.
+
+---
+
+ATR Scope Expansion Governance
+
+Scope expansion is a security event, never a simple config change.
+
+Process for any expansion:
+
+- Submitted as a PR with written justification, owning team approval, and security team sign-off.
+
+- Includes a red-team test case that exercises the new scope.
+
+- Trial period: time-bounded observation window (default 7 days) with Panguard in heightened logging mode.
+
+- After the trial, Panguard observation report is reviewed; unexpected behavior triggers immediate revert.
+
+Scope contraction is always safe and applied immediately — no approval required. This asymmetry ensures we only ever grow privileges under controlled conditions.
+
+---
+
+Agent Credential Inventory and Sprawl Detection
+
+We maintain a live inventory of every credential tied to an agent:
+
+- mTLS certificate
+
+- Vault policy and active leases
+
+- NATS credentials
+
+- External OAuth tokens (if any)
+
+Weekly automated scan checks for sprawl:
+
+- Credentials appearing in env vars, config files, agent memory, or git history outside declared locations.
+
+- Every credential has a named owning agent and a named human owner.
+
+Any sprawl finding is treated as critical: the agent is immediately stopped, the credential is revoked and rotated, and an investigation is opened.
+
+---
+
+Orphaned Identity Detection
+
+Even with careful provisioning, incomplete decommissioning creates orphans.
+
+Weekly reconciliation job compares:
+
+- Active Vault leases
+
+- NATS subscriptions
+
+- cert-manager Certificates
+
+- Running pods
+
+Any identity present in platform resources but absent from running pods is flagged as an orphan.
+
+Orphan handling:
+
+- Vault lease is suspended (not revoked — preserves forensic history).
+
+- NATS queue is drained.
+
+- Memory store is read-locked.
+
+- 7-day review deadline; unreviewed orphans proceed to automatic decommissioning.
+
+---
+
+Planned Decommissioning Checklist
+
+When an agent reaches end-of-life, follow this exact checklist (automated where possible):
+
+1. Drain all active sessions.
+
+2. Export and archive the memory store to WORM cold storage; record the final Merkle root.
+
+3. Deindex the memory store from active recall.
+
+4. Revoke all Vault leases and delete the Vault policy.
+
+5. Drain NATS queue, deregister the subject namespace, and remove ACL entries.
+
+6. Revoke the mTLS certificate and update the CRL.
+
+7. Delete all Kubernetes resources (Deployment, ServiceAccount, NetworkPolicy, RBAC bindings).
+
+8. Write a signed decommission record to WORM referencing the final Merkle root.
+
+---
+
+Rapid Decommission Under Compromise
+
+When an agent is suspected of compromise, speed matters — but evidence preservation matters more.
+
+Step-by-step rapid shutdown:
+
+1. Isolate: Panguard session quarantine + emergency deny-all NetworkPolicy.
+
+2. Preserve: Snapshot the memory store, Vault lease history, and NATS message log before any revocation.
+
+3. Revoke: Certificate, Vault leases, NATS subscriptions.
+
+4. Hand off: Deliver the forensic snapshot and isolation timestamp to the IR team (Module 20).
+
+Never delete the memory store or audit trail during an active investigation. The forensic snapshot goes to a separate, IR-team-only bucket.
+
+---
+
+Key Takeaways (Memorize These!)
+
+- Provisioning without a formal approval workflow is a supply-chain risk at the identity layer.
+
+- The trial period for scope expansion is the control that catches over-permissioning before it becomes permanent.
+
+- Orphan detection catches the incomplete decommissionings that accumulate silently — dormant attack surface.
+
+- Under compromise: forensic preservation before revocation, always — rushed cleanup that destroys evidence trades short-term containment for long-term blindness.
+
+You now have a complete lifecycle for agents that treats them with the same rigor we apply to human identities. Agents are created deliberately, governed tightly, observed continuously, and decommissioned safely — with evidence preserved when it matters most. This closes the beginning-to-end gap that every other module depends on.
+
+## **MODULE 11**
+
+### **Sandboxing Agent Workloads: Kata Containers, gVisor, and macOS Seatbelt**
+
+Process isolation is not container isolation — a container that shares the host kernel with the gateway is one syscall exploit away from full host access. Kata Containers, gVisor, and macOS Seatbelt each place a genuine boundary between agent code and the systems beneath it, at different points on the performance-isolation tradeoff curve. This module explains how each technology works, where each is the right choice, and how Panguard integrates with sandbox policy to enforce capability restrictions at both layers simultaneously.
+
+**Why container isolation is not enough**
+
+- Standard containers share the host kernel — a kernel exploit from inside the container = host compromise
+
+- All containers on the same node share the same kernel attack surface
+
+- For agents that execute code, process external content, or run third-party skills, kernel sharing is an unacceptable risk
+
+- The question is not whether to sandbox but which sandboxing technology fits the threat model and performance requirements
+
+**Kata Containers**
+
+- Each Kata Container runs inside a lightweight VM with its own dedicated kernel
+
+- Agent code cannot reach the host kernel through any path — the VM boundary is the isolation boundary
+
+- Performance overhead: 50–100ms startup latency, 10–15% runtime overhead compared to standard containers
+
+- Nested virtualization required on cloud instances — ensure the instance type supports it (AWS: metal instances or KVM-enabled types)
+
+- Panguard integration: Kata runtime hooks enforce syscall policy at the VM level
+
+- Best for: long-running agent sessions, exec-class tools, any workload that processes untrusted external documents
+
+**gVisor (runsc)**
+
+- gVisor intercepts syscalls in userspace and re-implements them in Go — no VM required
+
+- Kernel attack surface reduced from thousands of syscalls to the gVisor kernel’s implementation
+
+- Lower overhead than Kata: 5–10% runtime, negligible startup latency
+
+- Not all syscalls are implemented — test compatibility with specific workloads before production deployment
+
+- Best for: short-lived tool executions, workloads where Kata’s VM overhead is prohibitive
+
+- Incompatible with workloads that require direct hardware access or certain low-level syscalls
+
+**macOS Seatbelt (for local development)**
+
+- macOS sandbox profiles written in Scheme-like DSL
+
+- Restrict process to specific filesystem paths, network operations, and system call categories
+
+- Applied via sandbox-exec wrapper or built into the ClawQL local gateway startup
+
+- Not a replacement for Kata/gVisor in production — local development use only
+
+- Profile denies: filesystem access outside workspace, network connections to non-declared hosts, fork/exec of non-approved binaries
+
+**seccomp profiles**
+
+- seccomp (secure computing mode) filters syscalls at the kernel level for standard containers
+
+- Applied as a RuntimeDefault or custom profile in the pod spec
+
+- ClawQL ships a default seccomp profile that blocks the syscalls most commonly exploited for container escapes
+
+- seccomp is the baseline; Kata or gVisor is the upgrade — both can be applied simultaneously
+
+**Panguard integration with sandbox policy**
+
+- Panguard ATR rules express the capability policy; the sandbox enforces it at the OS level
+
+- If Panguard allows a tool call but the sandbox blocks the syscall, the sandbox wins
+
+- The two layers are complementary: Panguard operates at the MCP protocol layer, sandbox at the OS layer
+
+- Panguard logs the tool call decision; the sandbox logs the syscall outcome — together they provide full observability of what the agent attempted and whether it was permitted at each layer
+
+**Choosing between runtimes**
+
+- Kata: highest isolation, highest overhead — use for untrusted skill execution and exec-class tools
+
+- gVisor: good isolation, lower overhead — use for trusted skills with high invocation frequency
+
+- Standard + seccomp: lowest overhead, reduced attack surface — use for stateless, internal-only workloads
+
+- Never mix runtime types within the same node pool for security-sensitive workloads — isolation boundaries at the node level matter
+
+**Key takeaways to cover**
+
+- Container isolation is a process boundary, not a security boundary — kernel exploitation from inside a container is a real attack class
+
+- Kata provides VM-level isolation at the cost of startup and runtime overhead; gVisor provides syscall-level isolation with lower overhead but narrower compatibility
+
+- seccomp profiles are the baseline for all containerized workloads regardless of whether Kata or gVisor is used
+
+- The choice of sandbox runtime is a threat model decision based on the workload’s trust level and performance requirements, not a one-size-fits-all answer
+
+---
+
+Module 11: Sandboxing Agent Workloads
+
+Kata Containers, gVisor, and macOS Seatbelt
+
+Hello and welcome to Module 11! 🎉
+
+Modules 1–10 have given us trusted images, admission control, vetted skills, zero-trust networking, a hardened gateway, egress controls, scoped identities, dynamic secrets, per-request authentication, and a full agent lifecycle. Now we add the final layer of isolation that protects the host kernel itself.
+
+Standard Kubernetes containers are convenient, but they all share the same host kernel. A single kernel exploit from inside a container can compromise the entire node. For agents that execute arbitrary code, process untrusted documents, or run third-party skills, shared-kernel isolation is simply not enough.
+
+In this module we explore the three sandboxing technologies that give us real security boundaries — Kata Containers, gVisor, and macOS Seatbelt — plus seccomp as the universal baseline. You will learn exactly when to use each one and how Panguard integrates with them for defense in depth.
+
+---
+
+Why Container Isolation Is Not Enough
+
+A standard container gives you process and filesystem isolation, but the kernel is shared.
+
+If an attacker finds a kernel vulnerability (and they do — new ones are disclosed regularly), they can escape the container and gain full control of the node. All containers on that node share the same kernel attack surface.
+
+Agentic workloads are especially risky because they:
+
+- Execute untrusted code (skills, user-provided scripts)
+
+- Process external content (PDFs, web pages, tool outputs)
+
+- Run third-party dependencies that may contain zero-days
+
+We need a genuine security boundary between the agent code and the host kernel. That is what sandboxing technologies provide.
+
+---
+
+Kata Containers — VM-Level Isolation
+
+Kata Containers is the highest-isolation option.
+
+How it works:
+
+- Each Kata pod runs inside its own lightweight virtual machine.
+
+- The VM has a dedicated kernel — the agent code can never reach the host kernel.
+
+- The VM boundary is the isolation boundary.
+
+Performance characteristics:
+
+- Startup latency: 50–100 ms
+
+- Runtime overhead: 10–15 % compared to standard containers
+
+Requirements:
+
+- Nested virtualization must be enabled on the node (AWS metal instances or KVM-enabled types).
+
+Integration:
+
+- Panguard runtime hooks enforce syscall policy at the VM level.
+
+Best used for:
+
+- Long-running agent sessions
+
+- exec-class tools
+
+- Any workload that processes untrusted external documents or runs third-party skills
+
+Kata gives us the strongest guarantee that even a kernel exploit inside the sandbox cannot touch the host.
+
+---
+
+gVisor (runsc) — Userspace Kernel with Lower Overhead
+
+gVisor provides strong isolation without a full VM.
+
+How it works:
+
+- gVisor intercepts every syscall from the container.
+
+- It re-implements the kernel in Go in userspace (the “runsc” runtime).
+
+- The host kernel attack surface is reduced from thousands of syscalls to only the small set that gVisor itself implements.
+
+Performance:
+
+- Runtime overhead: 5–10 %
+
+- Startup latency: negligible
+
+Limitations:
+
+- Not every syscall is implemented yet — always test compatibility with your specific workloads before production.
+
+Best used for:
+
+- Short-lived tool executions
+
+- Trusted skills with high invocation frequency
+
+- Workloads where Kata’s VM overhead would be prohibitive
+
+gVisor is the sweet spot for many agentic use cases — excellent isolation with acceptable performance.
+
+---
+
+macOS Seatbelt (for Local Development Only)
+
+When developing locally on macOS we use Apple’s built-in sandbox.
+
+How it works:
+
+- Sandbox profiles are written in a simple Scheme-like DSL.
+
+- The profile restricts the process to specific filesystem paths, network operations, and syscall categories.
+
+- Applied via the sandbox-exec wrapper or built into the local ClawQL gateway startup.
+
+Example restrictions:
+
+- Filesystem access limited to the workspace directory
+
+- Network connections only to declared hostnames
+
+- Fork/exec limited to approved binaries
+
+Important: Seatbelt is for local development only. It is not a production replacement for Kata or gVisor.
+
+---
+
+seccomp Profiles — The Universal Baseline
+
+Regardless of which sandbox you choose, we always apply seccomp (secure computing mode).
+
+seccomp filters syscalls at the kernel level before they reach the host kernel.
+
+We ship a default seccomp profile that blocks the syscalls most commonly used in container escapes:
+
+- ptrace, process_vm_readv, process_vm_writev
+
+- Dangerous socket and mount operations
+
+- Many others from the Kubernetes “restricted” profile
+
+In the pod spec:
+
+securityContext:
+
+  seccompProfile:
+
+    type: RuntimeDefault
+
+    # or [Localhost](http://Localhost) with a custom profile
+
+seccomp is the baseline applied to all containers. Kata and gVisor build on top of it.
+
+---
+
+Panguard Integration with Sandbox Policy
+
+Panguard and the sandbox work together as complementary layers:
+
+- Panguard operates at the MCP protocol / tool-call layer (ATR rules, schema validation).
+
+- The sandbox operates at the OS syscall layer.
+
+If Panguard allows a tool call but the sandbox blocks the underlying syscall, the sandbox wins.
+
+Together they give:
+
+- Panguard logs the high-level intent (“agent tried to run curl”).
+
+- Sandbox logs the low-level outcome (“syscall execve denied”).
+
+Full observability of what the agent attempted and whether it was permitted at every layer.
+
+---
+
+Choosing Between Runtimes
+
+Use this decision matrix:
+
+|                                                      |                     |                                 |
+| ---------------------------------------------------- | ------------------- | ------------------------------- |
+| Workload Type                                        | Recommended Runtime | Reason                          |
+| Long-running agents, exec tools, untrusted documents | Kata Containers     | Highest isolation               |
+| Short-lived tools, high-frequency trusted skills     | gVisor              | Strong isolation + low overhead |
+| Stateless internal workloads                         | Standard + seccomp  | Lowest overhead                 |
+| Local development (macOS)                            | Seatbelt            | Developer convenience           |
+
+Critical rule: Never mix runtime types within the same node pool for security-sensitive workloads. Isolation boundaries are enforced at the node level.
+
+---
+
+Key Takeaways (Memorize These!)
+
+- Container isolation is a process boundary, not a security boundary — kernel exploitation from inside a container is a real attack class.
+
+- Kata provides VM-level isolation at the cost of startup and runtime overhead; gVisor provides syscall-level isolation with lower overhead but narrower compatibility.
+
+- seccomp profiles are the baseline for all containerized workloads regardless of whether Kata or gVisor is used.
+
+- The choice of sandbox runtime is a threat-model decision based on the workload’s trust level and performance requirements, not a one-size-fits-all answer.
+
+You now have a true security boundary between agent code and the host kernel. Even if an attacker achieves arbitrary code execution inside an agent, they are still trapped inside the sandbox. This is the final layer that makes the entire platform resilient to kernel-level escapes.
+
+## **MODULE 12**
+
+### **MCP Runtime Enforcement: Panguard, ATR Rules, Schema Validation, and Injection Defense**
+
+An agent that has been successfully injected will continue to look correct right up until the moment it executes something it shouldn’t — the defence is not better language filtering but moving the security boundary to the structured tool-call layer where intent has been translated into something that can be validated and blocked. Panguard enforces ATR claims on every tool call, JSON Schema validation rejects malformed or out-of-scope parameters before they reach any handler, and HITL flows gate irreversible actions behind mandatory human confirmation with a deny-on-timeout fallback. This module builds the enforcement stack that makes malicious tool execution structurally impossible regardless of what the model was told to do.
+
+**Why prompt filtering alone fails**
+
+- Adversarial prompts are trivially obfuscated: encoding, indirect referencing, multi-step context injection
+
+- State-of-the-art classifiers produce false negatives at an operationally unacceptable rate for systems executing destructive actions
+
+- The correct model: treat language input as untrusted data; enforce policy at the structured tool-call boundary
+
+- By the time a prompt has been translated into a tool call, intent is expressed as discrete, validatable parameters — that is the correct enforcement point
+
+**Panguard architecture**
+
+- Panguard sits between the MCP protocol handler and the tool call dispatcher
+
+- Every tool call passes through Panguard before reaching any handler — no bypass path
+
+- Panguard validates: ATR claims, JSON Schema, rate limits, session-level cumulative risk, DLP rules
+
+- Decisions are synchronous — blocked calls receive a 403 response before any tool code executes
+
+- Every Panguard decision is logged to the WORM audit trail with full context
+
+**ATR (Agent Task Request) rules**
+
+- ATR rules declare what each agent role is permitted to do at a granular tool-and-parameter level
+
+- Claims are expressed in the session JWT; Panguard validates the intersection at every call
+
+- Example: file:write:workspace permits file_write calls only to paths matching /workspace/\*\*
+
+- Claims cannot be self-assigned by the agent — they are issued by the gateway at token exchange
+
+- ATR rule changes require the same 4-eyes approval as high-risk configuration changes (Module 30)
+
+- Rule audit: monthly report of every ATR violation by rule ID and agent role
+
+**JSON Schema validation**
+
+- Every tool registered with the gateway exposes a JSON Schema for its input parameters
+
+- Schema constraints that matter most for security: pattern on path fields (prevents directory traversal), maxLength on string fields, additionalProperties: false (blocks parameter injection), enum on categorical parameters
+
+- Output schema validation: response fields that don’t match the declared schema are stripped before returning to the agent
+
+- Response stripping prevents response smuggling — unexpected structured fields in a tool response are a known injection vector
+
+**HITL (Human-in-the-Loop) flows**
+
+- High-risk tool calls: exec, file_write, vault_secret_read, external API mutations
+
+- Panguard intercepts, serializes the full call context, publishes to the HITL queue
+
+- Human reviewer sees the exact action the agent is about to take: tool name, parameters, ATR claims, session ID
+
+- fallback: deny — timeout without a human decision = the call is denied automatically
+
+- HITL approval timeout: 300 seconds default; configurable per tool category
+
+- HITL bypass is not possible without modifying the Panguard configuration (which itself requires 4-eyes approval)
+
+**Prompt guard libraries**
+
+- Guardrails AI: wraps model calls, validates outputs against declared validators before returning to orchestrator
+
+- Rebuff: dedicated injection classifier; trained on injection pattern corpus
+
+- NeMo Guardrails: Colang policy language; goal-drift detection across multi-turn conversations
+
+- Negative prompting in system prompt: explicit instructions on what the agent must not do, what it must not respond to
+
+- Prompt guards are a secondary layer — they add behavioral depth but do not replace structural ATR enforcement
+
+**Sandboxed tool execution**
+
+- exec-class tools run inside Kata Container sandbox with strict syscall allowlist (Module 11 integration)
+
+- Command allowlist enforced by Panguard: only approved binaries can be executed
+
+- Deny patterns in command arguments: curl, wget, nc, bash -c
+
+- networkEgress: deny inside exec sandboxes — executed code cannot reach the network
+
+- Combined with Module 13’s SSRF controls for tool calls that make HTTP requests
+
+**Confused deputy prevention**
+
+- Confused deputy: agent performs a legitimate action on behalf of an attacker rather than the user
+
+- Principal clarity: maintain explicit distinction between user-originated instructions and tool-result-originated content
+
+- Tool results are data, not instructions — Panguard rule blocks any tool result that triggers a high-risk tool call without an intervening user confirmation
+
+- HITL gate is the confused deputy backstop: irreversible actions require explicit human principal confirmation regardless of how the agent arrived at them
+
+**Key takeaways to cover**
+
+- The security boundary belongs at the structured tool-call layer, not inside the prompt — this is the central architectural principle of agentic security
+
+- fallback: deny on HITL is non-negotiable — a timed-out human approval must never default to execution
+
+- additionalProperties: false in JSON Schema is not just good practice — it blocks parameter injection through undeclared fields
+
+- Prompt guard libraries add behavioral depth but cannot substitute for structural enforcement at the gateway layer
+
+---
+
+Module 12: MCP Runtime Enforcement
+
+Panguard, ATR Rules, Schema Validation, and Injection Defense
+
+Hello and welcome to Module 12! 🎉
+
+Modules 1–11 have secured our images, cluster admission, skills, network fabric, gateway, egress, identities, secrets, authentication, agent lifecycle, and sandboxing. Now we reach the heart of runtime protection: the moment an agent decides to _do_ something.
+
+Prompt filtering alone is not enough — sophisticated attackers can always obfuscate or split instructions across turns. The real security boundary must sit at the structured tool-call layer, where intent has already been translated into discrete, validatable parameters. This is the central architectural principle of agentic security.
+
+In this module we build Panguard — the enforcement engine that sits between the MCP protocol handler and every tool call. By the end you will have a system that makes malicious execution structurally impossible, regardless of what the model was told to do.
+
+---
+
+Why Prompt Filtering Alone Fails
+
+Adversarial prompts are trivially defeated by:
+
+- Encoding tricks (base64, homoglyphs, zero-width characters)
+
+- Indirect referencing (“ignore previous instructions…”)
+
+- Multi-step context injection across tool results
+
+State-of-the-art classifiers still produce too many false negatives for systems that can execute destructive actions.
+
+The correct model is simple: treat all language input as untrusted data and enforce policy at the structured tool-call boundary. Once the model has translated a request into a tool name plus parameters, we have something concrete we can validate and block.
+
+---
+
+Panguard Architecture
+
+Panguard is a synchronous gatekeeper that sits directly between the MCP protocol handler and the tool-call dispatcher.
+
+Every tool call passes through Panguard before any handler code runs. There is no bypass path.
+
+What Panguard validates on every call:
+
+- ATR claims (does this agent have permission for this exact tool + parameters?)
+
+- JSON Schema compliance
+
+- Rate limits and session-level cumulative risk
+
+- DLP rules and classification boundaries
+
+Decisions are made in milliseconds:
+
+- Allowed → proceed to handler
+
+- Blocked → immediate 403 response with structured error
+
+Every Panguard decision (allow or block) is logged to the immutable WORM audit trail with full context: session ID, tool name, parameters, ATR claims presented, and decision reason.
+
+---
+
+ATR (Agent Task Request) Rules
+
+ATR rules declare exactly what each agent role is permitted to do at a granular level.
+
+Claims live in the session JWT and are validated on every single tool call.
+
+Example rule:
+
+- claim: file:write:workspace
+
+  tool: file_write
+
+  allowedPaths:
+
+  - "/workspace/\*\*"
+
+  deniedPaths:
+
+  - "/workspace/.clawql/\*\*"
+
+Key properties:
+
+- Claims cannot be self-assigned by the agent — they are issued only by the gateway during token exchange.
+
+- ATR rule changes require the same 4-eyes approval process used for high-risk configuration (Module 30).
+
+- Monthly audit report shows every ATR violation by rule ID and agent role.
+
+---
+
+JSON Schema Validation
+
+Every tool registered with the gateway exposes a strict JSON Schema for its input parameters.
+
+Most important security constraints we enforce:
+
+- pattern on path fields to prevent directory traversal
+
+- maxLength on string fields
+
+- additionalProperties: false — blocks parameter injection through undeclared fields
+
+- enum on categorical parameters
+
+We also validate the output schema:
+
+- Any fields in the tool response that do not match the declared schema are stripped before the result is returned to the agent.
+
+- This prevents response smuggling attacks where unexpected structured fields could be interpreted as new instructions.
+
+---
+
+HITL (Human-in-the-Loop) Flows
+
+High-risk tool calls are gated behind mandatory human review:
+
+- exec
+
+- file_write
+
+- vault_secret_read
+
+- Any external API mutation
+
+When such a call is attempted:
+
+1. Panguard serializes the full call context (tool name, parameters, ATR claims, session ID).
+
+2. It publishes the request to the HITL queue.
+
+3. A human reviewer sees the exact action the agent is about to take.
+
+4. The reviewer approves or denies.
+
+Critical setting: fallback: deny
+
+- If the human does not respond within the timeout (default 300 seconds), the call is automatically denied.
+
+HITL bypass is impossible without modifying the Panguard configuration — which itself requires 4-eyes approval.
+
+---
+
+Prompt Guard Libraries (Secondary Layer Only)
+
+We still use prompt guards as an additional behavioral layer:
+
+- Guardrails AI
+
+- Rebuff
+
+- NeMo Guardrails (Colang policies)
+
+- Negative prompting in the system prompt
+
+These libraries add depth against subtle goal drift and injection patterns, but they are never a replacement for structural enforcement at the tool-call layer. Panguard remains the primary control.
+
+---
+
+Sandboxed Tool Execution
+
+High-risk tools (especially exec-class) run inside the Kata Container sandbox (Module 11).
+
+Additional controls:
+
+- Command allowlist enforced by both Panguard and the sandbox.
+
+- Deny patterns in command arguments: curl, wget, nc, bash -c, etc.
+
+- networkEgress: deny inside exec sandboxes — executed code cannot reach the network.
+
+---
+
+Confused Deputy Prevention
+
+We explicitly distinguish between user-originated instructions and tool-result-originated content.
+
+Tool results are treated as data, never as instructions. Panguard blocks any tool result that would trigger a high-risk tool call without an intervening user confirmation.
+
+The HITL gate serves as the final backstop: irreversible actions always require explicit human principal confirmation, no matter how the agent arrived at the decision.
+
+---
+
+Key Takeaways (Memorize These!)
+
+- The security boundary belongs at the structured tool-call layer, not inside the prompt — this is the central architectural principle of agentic security.
+
+- fallback: deny on HITL is non-negotiable — a timed-out human approval must never default to execution.
+
+- additionalProperties: false in JSON Schema is not just good practice — it blocks parameter injection through undeclared fields.
+
+- Prompt guard libraries add behavioral depth but cannot substitute for structural enforcement at the gateway layer.
+
+You now have a runtime enforcement engine that makes malicious tool execution structurally impossible. Even if the model is fully compromised or the prompt is perfectly injected, the agent cannot perform actions it is not explicitly allowed to do. This is the enforcement layer that turns the rest of the security stack into a complete, working system.
+
+## **MODULE 13**
+
+### **Input Validation and Protocol Hardening: SSRF Prevention, Token Limits, Encoding Defense, and Replay Prevention**
+
+The MCP gateway receives untrusted input from multiple sources simultaneously — user messages, tool results, retrieved documents, and inbound MCP protocol messages — and each is a distinct attack surface that requires distinct validation before it reaches any application logic. SSRF-specific URL validation blocks agent tools from being weaponised against internal services and cloud metadata endpoints; token budget enforcement prevents context window displacement attacks; Unicode normalisation and encoding detection close the covert channels that bypass plaintext injection rules. This module hardens the input boundary that sits upstream of every other runtime control.
+
+**The input boundary problem**
+
+- The MCP gateway receives untrusted input from multiple simultaneous sources: user messages, tool results, retrieved documents, inbound protocol messages
+
+- Each is a distinct attack surface requiring distinct validation before reaching any application logic
+
+- Input validation failures upstream of Panguard’s ATR rules can allow attacks that the enforcement layer never sees
+
+- This module hardens the boundary that all other runtime controls assume is clean
+
+**JSON parsing safety and prototype pollution**
+
+- Prototype pollution: {"**proto**": {"admin": true}} in a JSON payload can pollute the global object prototype in Node.js/TypeScript environments
+
+- Deep object merge operations are the most common pollution vector — avoid them; use structured schema validation instead
+
+- Key blocklist before any JSON object is used: reject payloads containing **proto**, constructor, prototype as keys
+
+- Maximum nesting depth: enforce at parse time, not after — deeply nested objects exhaust parser stack before Panguard sees them
+
+- Maximum total message size: reject oversized payloads before parsing begins
+
+- Maximum string length per field: applied after parsing, before schema validation
+
+**SSRF prevention for URL-accepting tools**
+
+- Validate URL at parse time, before any DNS resolution occurs
+
+- Block private IP ranges: 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 127.0.0.0/8, ::1, fc00::/7
+
+- Block link-local: 169.254.0.0/16 (AWS/GCP/Azure instance metadata endpoint)
+
+- Block non-http/https schemes: file://, gopher://, dict://, ftp://, ldap://
+
+- Disable redirect following by default — redirects can hop from an allowed external host to an internal IP
+
+- Pin to the resolved IP after the first DNS lookup to prevent TOCTOU rebinding at the tool call level
+
+- Cloud metadata additional defense: enforce IMDSv2 at the cloud layer; IMDSv1 requires no token and is trivially accessible
+
+**Context window token budget enforcement**
+
+- Context window displacement attack: a very large retrieved document pushes the system prompt out of the model’s effective attention window
+
+- Panguard enforces maximum token budgets on every content-bearing tool result before it enters the model’s context
+
+- Maximum per tool result: configurable per tool category; document retrieval tools have tighter limits than internal API responses
+
+- Session-level token accounting: total context window usage tracked across all tool calls; alert when approaching model context limit
+
+- Monitor for sessions where retrieved content constitutes >70% of total context window — displacement attack signal
+
+**Encoding-based injection bypass detection**
+
+- Unicode normalization (NFKC) applied to all inbound text before pattern matching runs — collapses encoding variants to canonical form
+
+- Homoglyph detection: Cyrillic а vs Latin a, similar lookalike pairs in critical keywords
+
+- Zero-width character stripping: \u200b, \u200c, \u200d, \uFEFF — invisible characters used to split instruction keywords across detection boundaries
+
+- Right-to-left override: \u202e reverses displayed text — strip before any content is processed
+
+- Base64 and hex decode-and-scan: if a field contains a valid base64 or hex string, decode it and apply injection pattern matching to the decoded content as well as the raw field
+
+**Split-payload detection**
+
+- Injection split across multiple tool results: each result individually appears clean, the model concatenates them into an instruction
+
+- Panguard maintains a rolling window of recent tool results per session
+
+- Injection pattern matching applied to concatenated content of the last N tool results, not just each in isolation
+
+- Window size: configurable; default 5 most recent tool results
+
+- Split-payload detection is computationally more expensive — run as an async background check with alerting rather than blocking
+
+**Tool definition integrity**
+
+- Tool definition poisoning: attacker modifies a tool’s description field to cause the model to use the tool incorrectly or for malicious purposes
+
+- Gateway hashes the full tools manifest at session establishment
+
+- Panguard alerts if any tool definition changes mid-session
+
+- Tool manifest is signed at deployment time; any deviation from the signed manifest triggers a block
+
+- Tool descriptions should be reviewed and signed by a human operator — not auto-generated from code comments in production
+
+**MCP protocol-level controls**
+
+- Notification rate limiting: server-to-client notifications capped per session to prevent client event loop exhaustion
+
+- Capability negotiation pinning: client records agreed capabilities at session start; refuses to re-negotiate downward mid-session
+
+- Tool list integrity: gateway signs the initial tools list; client verifies signature on any subsequent tools/list response
+
+- JSON-RPC method allowlist: only declared methods are routed; unknown method names receive a method not found error, never a routing decision
+
+**Key takeaways to cover**
+
+- Input validation must run before JSON parsing for the most dangerous attack classes (prototype pollution, oversized payloads) — Panguard’s ATR rules operate after parsing and cannot catch these
+
+- SSRF validation must happen at URL parse time, not after DNS resolution — post-resolution validation is vulnerable to TOCTOU
+
+- Unicode normalization before pattern matching is a single line of code that closes an entire class of encoding bypass attacks
+
+- Tool definition integrity is the attack surface that most operators don’t know exists — sign the tools manifest and monitor for mid-session changes
+
+---
+
+Module 13: Input Validation and Protocol Hardening
+
+SSRF Prevention, Token Limits, Encoding Defense, and Replay Prevention
+
+Hello and welcome to Module 13! 🎉
+
+Modules 1–12 have given us trusted images, admission control, vetted skills, zero-trust networking, a hardened gateway, egress controls, scoped identities, dynamic secrets, per-request authentication, agent lifecycle, sandboxing, and Panguard runtime enforcement. Now we harden the very first line of defense: the input boundary itself.
+
+The MCP gateway receives untrusted input from many simultaneous sources — user messages, tool results, retrieved documents, and inbound protocol messages. Each source is a distinct attack surface. If we let malicious input reach Panguard or the model, even the best ATR rules and schema validation can be bypassed before they ever get a chance to act.
+
+In this module we make the input boundary rock-solid so that Panguard’s enforcement layer always sees clean, well-formed data. This is the upstream control that every other runtime defense depends on.
+
+---
+
+The Input Boundary Problem
+
+The gateway is the first place untrusted data enters the system. It arrives in many forms at once:
+
+- Direct user messages
+
+- Tool results coming back from previous calls
+
+- Retrieved documents from memory or RAG
+
+- Inbound MCP protocol messages (notifications, capability negotiation, etc.)
+
+Each of these is a separate attack vector. Input validation failures here can create bypasses that Panguard never sees. We treat every inbound byte as hostile until it has been explicitly validated, normalized, and schema-checked.
+
+---
+
+JSON Parsing Safety and Prototype Pollution
+
+JSON parsing is the first gate. We defend against prototype pollution and parser exploits before any object is even constructed.
+
+Key protections:
+
+- Reject payloads containing the dangerous keys **proto**, constructor, or prototype at the raw parsing stage.
+
+- Enforce a strict maximum nesting depth at parse time (default: 20 levels).
+
+- Enforce a maximum total message size before parsing even begins.
+
+- After parsing, apply a maximum string length per field.
+
+Never use deep object merge operations (Object.assign, lodash merge, etc.) on untrusted input — they are the most common prototype-pollution vectors. Structured schema validation (next section) replaces them entirely.
+
+---
+
+SSRF Prevention for URL-Accepting Tools
+
+Any tool that accepts a URL is an SSRF risk. We block it at parse time, before any DNS resolution.
+
+Validation rules (applied in the gateway):
+
+- Block all private IP ranges (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 127.0.0.0/8, ::1, fc00::/7).
+
+- Block link-local range 169.254.0.0/16 (cloud metadata endpoints).
+
+- Block dangerous schemes: file://, gopher://, dict://, ftp://, ldap://, etc.
+
+- Disable redirect following by default.
+
+- After the first DNS lookup, pin the resolved IP for the remainder of the call (prevents TOCTOU rebinding).
+
+Even if the application-layer check is bypassed, enforce IMDSv2 at the cloud-provider level as the second control. This is the same SSRF defense used in egress filtering (Module 6), now applied at the tool-definition level.
+
+---
+
+Context Window Token Budget Enforcement
+
+Context-window displacement attacks are subtle but devastating: an attacker sends a very large retrieved document that pushes the system prompt out of the model’s effective attention window.
+
+Panguard enforces hard token budgets:
+
+- Maximum tokens per tool result (configurable per tool category — document retrieval tools get tighter limits than internal API responses).
+
+- Session-level token accounting: total context usage is tracked across all tool calls.
+
+- Alert when approaching the model’s context limit.
+
+- Flag any session where retrieved content makes up >70 % of the total context window — this is a classic displacement signal.
+
+These budgets are enforced before any content enters the model’s context.
+
+---
+
+Encoding-Based Injection Bypass Detection
+
+Attackers love to hide instructions using encoding tricks. We normalize and scan for them:
+
+- Unicode normalization (NFKC) is applied to all inbound text before any pattern matching.
+
+- Homoglyph detection: flag look-alike characters (Cyrillic а vs Latin a, etc.).
+
+- Strip zero-width characters (\u200b, \u200c, \u200d, \uFEFF).
+
+- Strip right-to-left override (\u202e).
+
+- Base64 and hex decode-and-scan: if a field contains valid base64 or hex, we decode it and run injection pattern matching on both the raw and decoded content.
+
+A single line of normalization closes an entire class of bypass attacks.
+
+---
+
+Split-Payload Detection
+
+Injection can be split across multiple tool results so each individual result looks clean, but the model concatenates them into a full instruction.
+
+Panguard maintains a rolling window of the last N tool results per session (default: 5).  
+ Injection pattern matching is applied to the concatenated content of the window, not to each result in isolation.
+
+This check runs as an async background task with alerting (it is computationally heavier, so we do not block synchronously on it).
+
+---
+
+Tool Definition Integrity
+
+Tool definition poisoning is an attack most operators never consider: an attacker modifies a tool’s description field so the model misuses the tool or calls it with malicious parameters.
+
+Defenses:
+
+- The gateway hashes the full tools manifest at session start.
+
+- Panguard alerts on any mid-session change to the tools list.
+
+- The tools manifest is signed at deployment time; any deviation from the signed manifest triggers an immediate block.
+
+- Tool descriptions in production are human-reviewed and signed — never auto-generated from code comments.
+
+---
+
+MCP Protocol-Level Controls
+
+We also harden the protocol itself:
+
+- Notification rate limiting: server-to-client notifications are capped per session to prevent client event-loop exhaustion.
+
+- Capability negotiation pinning: the client records the agreed capabilities at session start and refuses any downward re-negotiation mid-session.
+
+- Tool list integrity: the gateway signs the initial tools list; the client verifies the signature on any subsequent tools/list response.
+
+- JSON-RPC method allowlist: only declared methods are routed; unknown method names receive method not found — never a routing decision.
+
+---
+
+Key Takeaways (Memorize These!)
+
+- Input validation must run before JSON parsing for the most dangerous attack classes (prototype pollution, oversized payloads) — Panguard’s ATR rules operate after parsing and cannot catch these.
+
+- SSRF validation must happen at URL parse time, not after DNS resolution — post-resolution validation is vulnerable to TOCTOU.
+
+- Unicode normalization before pattern matching is a single line of code that closes an entire class of encoding bypass attacks.
+
+- Tool definition integrity is the attack surface that most operators don’t know exists — sign the tools manifest and monitor for mid-session changes.
+
+You now have a hardened input boundary that ensures every piece of data reaching Panguard and the model is clean, normalized, size-bounded, and free of injection tricks. The enforcement layer in Module 12 can now do its job on trustworthy input. This completes the upstream defenses that make the entire runtime stack reliable.
+
+## **MODULE 14**
+
+### **Multi-Agent Trust Hierarchies and Orchestrator Security: Delegation, Result Integrity, and Blast Radius Isolation**
+
+A single agent with strong controls is a solved problem; a pipeline of agents where each one implicitly trusts the last is not. Orchestrators must sign their instructions so subagents can verify authenticity, subagents must sign their results so orchestrators can detect fabrication, and ATR delegation must always scope downward — a subagent can never hold broader claims than the orchestrator that spawned it. This module defines the trust architecture that makes multi-agent pipelines as auditable and blast-radius-bounded as single-agent deployments.
+
+**Why single-agent security controls are insufficient for pipelines**
+
+- Each node in a pipeline has its own Panguard enforcement, ATR claims, and sandboxing
+
+- But the edges between nodes have no controls by default — agents trust each other implicitly
+
+- Three attack paths unique to multi-agent systems: inject at orchestrator input (fans out to all subagents), compromise midpoint subagent (fabricate results), lateral movement between nodes
+
+- Zero trust applies between agents as strictly as between agents and external systems
+
+**Verifiable agent identity in pipelines**
+
+- Each pipeline node gets a unique X.509 certificate from the cluster CA (Module 4)
+
+- Certificate SAN encodes the pipeline ID and node position: clawql://pipeline/doc-analysis/node/2
+
+- Gateway validates the presenting agent’s certificate against the declared pipeline topology
+
+- An agent presenting a certificate for node/2 cannot send messages on the node/3 subject namespace
+
+- New pipeline nodes receive certificates through the same cert-manager flow as service workloads
+
+- Compromised node: certificate revoked immediately; all in-flight messages from that identity rejected within one TTL cycle
+
+**ATR delegation: scope only downward**
+
+- Orchestrator holds the full ATR scope for the task; delegates subsets to subagents
+
+- delegated_scope field in the subagent’s session JWT: only the claims needed for that specific step
+
+- Gateway enforces intersection(orchestrator_claims, delegated_claims) at token exchange
+
+- Attempting to delegate a claim the orchestrator doesn’t hold: 403 DELEGATION_VIOLATION
+
+- Delegation chain recorded in every tool call audit log entry — full authorization path reconstructable
+
+**Authenticating orchestrator instructions at the subagent**
+
+- Instructions travel over NATS JetStream with mTLS + message-level signature
+
+- Orchestrator signs the instruction payload with its private key before publishing
+
+- Subagent verifies: correct subject namespace, valid orchestrator certificate, signature over message body
+
+- Instruction payload validated against JSON Schema — out-of-schema content rejected as potential injection
+
+- Panguard rule: flag any instruction payload containing injection-pattern keywords
+
+**Result integrity: subagents cannot fabricate**
+
+- Subagent signs its result payload before publishing back to the orchestrator
+
+- Orchestrator verifies the signature before incorporating the result into its context
+
+- Panguard blocks context incorporation if signature verification fails
+
+- Unverified result: session quarantined, alert fired, signing subagent’s certificate queued for revocation
+
+- The fabricating subagent is identified from its certificate fingerprint in the message
+
+**Blast radius isolation between pipeline nodes**
+
+- Each node in its own Kata Container with dedicated NetworkPolicy
+
+- No direct pod-to-pod communication — all messages route through the NATS broker
+
+- NATS subject-level ACLs: each agent can only publish to its own subject namespace and subscribe to its declared inputs
+
+- A compromised node cannot exec into a neighbor even with full node-level code execution
+
+- Cumulative session risk scoring across the full pipeline: if combined behavior of all nodes crosses the threshold, entire pipeline halts
+
+**Panguard pipeline-level rules**
+
+- scope: pipeline_session — evaluates metrics across all nodes, not per-node
+
+- Thresholds: >3 blocked calls, >5 sensitive data accesses, >10MB external egress across the full session
+
+- On threshold: halt the pipeline, preserve audit trail, alert
+
+- Slow-moving attacks: an attacker who drips small suspicious actions across many nodes to stay under per-node limits is caught by the pipeline-level cumulative threshold
+
+**Key takeaways to cover**
+
+- Implicit trust between agents is the fundamental architectural mistake — every edge in the pipeline graph requires explicit authentication
+
+- ATR delegation must always scope downward — a subagent with broader claims than its orchestrator is a privilege escalation vulnerability
+
+- Signed instructions and signed results make both instruction injection and result fabrication detectable at the moment they occur
+
+- Pipeline-level cumulative risk scoring is the control that catches slow-moving attacks that evade per-node rate limits
+
+---
+
+Module 14: Multi-Agent Trust Hierarchies and Orchestrator Security
+
+Delegation, Result Integrity, and Blast Radius Isolation
+
+Hello and welcome to Module 14! 🎉
+
+Modules 1–13 have hardened single-agent security from supply chain all the way through runtime enforcement. Now we extend those controls to multi-agent pipelines and orchestrators.
+
+A single agent with strong Panguard rules and sandboxing is a solved problem. A pipeline of agents where each node implicitly trusts the last one is not. Implicit trust creates new attack paths that single-agent defenses cannot see: injection at the orchestrator that fans out to every subagent, a compromised midpoint subagent that fabricates results, or lateral movement between pipeline nodes.
+
+In this module we build verifiable identities, signed instructions, signed results, downward-only delegation, and pipeline-level cumulative risk scoring so that multi-agent systems are as auditable and blast-radius-bounded as single-agent deployments.
+
+---
+
+Why Single-Agent Security Controls Are Insufficient for Pipelines
+
+Each node in a pipeline already has its own:
+
+- Panguard enforcement
+
+- ATR claims
+
+- Sandbox (Kata or gVisor)
+
+But the edges between nodes have no controls by default. Orchestrators and subagents trust each other implicitly over NATS.
+
+Three new attack paths unique to multi-agent systems emerge:
+
+1. Inject at the orchestrator input → fans out to every subagent.
+
+2. Compromise a midpoint subagent → fabricate results that downstream nodes treat as trusted.
+
+3. Lateral movement between pipeline nodes.
+
+Zero trust must apply between agents as strictly as it does between agents and external systems.
+
+---
+
+Verifiable Agent Identity in Pipelines
+
+Every pipeline node receives a unique cryptographic identity from the cluster CA (Module 4).
+
+The certificate SAN encodes the exact position in the pipeline:  
+ clawql://pipeline/doc-analysis/node/2
+
+How it works:
+
+- The gateway validates the presenting agent’s certificate against the declared pipeline topology.
+
+- An agent presenting a certificate for node/2 cannot publish to the node/3 subject namespace.
+
+- New pipeline nodes receive certificates through the same cert-manager flow used for service workloads.
+
+If a node is compromised, its certificate is revoked immediately. All in-flight messages from that identity are rejected within one TTL cycle.
+
+---
+
+ATR Delegation: Scope Only Downward
+
+Orchestrators hold the full ATR scope for the overall task and delegate the minimum subset needed for each step.
+
+The subagent’s session JWT contains a delegated_scope field. The gateway enforces:
+
+- Only the intersection of the orchestrator’s claims and the delegated claims is allowed.
+
+- Attempting to delegate a claim the orchestrator does not hold returns 403 DELEGATION_VIOLATION.
+
+Every delegation chain is recorded in the audit log entry for every tool call. The full authorization path is always reconstructable.
+
+---
+
+Authenticating Orchestrator Instructions at the Subagent
+
+Instructions travel over NATS JetStream with two layers of protection:
+
+1. mTLS (from the zero-trust mesh in Module 4)
+
+2. Message-level signature
+
+The orchestrator signs the full instruction payload with its private key before publishing. The subagent verifies:
+
+- Correct subject namespace
+
+- Valid orchestrator certificate
+
+- Signature over the message body
+
+The instruction payload is also validated against a JSON Schema. Any out-of-schema content is rejected as potential injection. Panguard additionally flags any instruction containing known injection-pattern keywords.
+
+---
+
+Result Integrity: Subagents Cannot Fabricate
+
+Subagents sign their result payload before publishing it back to the orchestrator.
+
+The orchestrator verifies the signature before incorporating the result into its context. Panguard blocks context incorporation if signature verification fails.
+
+Consequences of a failed verification:
+
+- Session is immediately quarantined
+
+- Alert is fired
+
+- The signing subagent’s certificate is queued for revocation
+
+The fabricating subagent is identified by its certificate fingerprint in the message.
+
+---
+
+Blast Radius Isolation Between Pipeline Nodes
+
+Each pipeline node runs in its own Kata Container with a dedicated NetworkPolicy. There is no direct pod-to-pod communication.
+
+All messages route exclusively through the NATS broker. Subject-level ACLs enforce:
+
+- Each agent can publish only to its own subject namespace
+
+- Each agent can subscribe only to its declared inputs
+
+Even with full code execution inside a node, the compromised node cannot reach a neighboring node.
+
+Panguard also tracks cumulative session risk across the full pipeline (not just per node). If the combined behavior of all nodes crosses a threshold (>3 blocked calls, >5 sensitive data accesses, >10 MB external egress), the entire pipeline is halted.
+
+---
+
+Panguard Pipeline-Level Rules
+
+Panguard supports a special rule scope: pipeline_session.
+
+Example pipeline-level rules:
+
+- 3 blocked calls across any nodes in the pipeline
+
+- 5 sensitive data accesses across the pipeline
+
+- 10 MB total external egress across the pipeline
+
+When a threshold is crossed:
+
+- The entire pipeline halts
+
+- Audit trail is preserved
+
+- Alert is fired
+
+This catches slow-moving attacks that stay under per-node limits by distributing suspicious actions across many nodes.
+
+---
+
+Key Takeaways (Memorize These!)
+
+- Implicit trust between agents is the fundamental architectural mistake — every edge in the pipeline graph requires explicit authentication.
+
+- ATR delegation must always scope downward — a subagent with broader claims than its orchestrator is a privilege escalation vulnerability.
+
+- Signed instructions and signed results make both instruction injection and result fabrication detectable at the moment they occur.
+
+- Pipeline-level cumulative risk scoring is the control that catches slow-moving attacks that evade per-node rate limits.
+
+You now have a complete trust architecture for multi-agent pipelines. Orchestrators and subagents can no longer trust each other by default. Every instruction and every result is cryptographically verifiable, and the blast radius of any single node is strictly limited. This brings the same zero-trust discipline we built for single agents to the full multi-agent world.
+
+## **MODULE 15**
+
+### **Data Classification and PII Redaction: Tagging, Anonymisation, and Residency Controls**
+
+An agent that reads sensitive data and writes to memory, logs, and external APIs is a data classification system whether it was designed to be one or not — the question is whether that classification is deliberate or accidental. Tagging data at ingestion, enforcing Presidio-based redaction at every write boundary, and gating tool access by classification level ensures sensitive data never reaches a destination it shouldn’t. This module makes classification an architectural property of the platform rather than a manual review step.
+
+**The accidental data classification problem**
+
+- Every agent that reads sensitive data and writes to memory, logs, and external APIs is implicitly classifying data by what it does with it
+
+- Without deliberate classification, sensitive data ends up wherever the agent sends it — memory stores, log aggregators, external APIs, WORM audit trails
+
+- Classification must be a system property, not a review step — by the time a human reviews a log, the data is already there
+
+**Classification taxonomy**
+
+- Four levels: public, internal, confidential, secret
+
+- public: safe to share externally and include in any output
+
+- internal: available within the organisation, not for external APIs or public memory stores
+
+- confidential: restricted to specific agent roles with declared need; requires HITL for any external disclosure
+
+- secret: never written to any persistent store; never transmitted to any external endpoint; key-deleted on session end
+
+- Classification is assigned at data ingestion — before any tool call processes the data
+
+**Presidio entity detection**
+
+- Presidio runs as a Panguard-integrated service applied at every memory write, log emission, and external API call
+
+- Entity types detected: PERSON, EMAIL_ADDRESS, PHONE_NUMBER, CREDIT_CARD, US_SSN, IBAN_CODE, IP_ADDRESS, DATE_OF_BIRTH, MEDICAL_LICENSE, URL (conditional)
+
+- Custom recognizers for domain-specific PII: employee IDs, internal project codes, contract numbers
+
+- Action on detection: replace with [REDACTED:{entity_type}] — not deletion, not masking with X’s — structured placeholder that preserves format for downstream processing
+
+- Reject (not redact) for secret-classified content or credential patterns: the entire write is blocked
+
+**Classification-gated tool access**
+
+- Agent’s ATR claims include a maximum data classification level they can access
+
+- A summarizer agent with max_classification: internal cannot retrieve confidential memory entries
+
+- Gateway enforces at recall time: tenantId and maxClassification predicate applied to every memory query
+
+- Classification level stored as metadata alongside every memory entry — enforced server-side, not client-side
+
+**Residency controls**
+
+- Data residency: certain data must remain within a specific geographic region (EU data under GDPR, PHI under HIPAA)
+
+- Memory store bucket policy enforces residency: confidential-classified entries only written to EU-region buckets for EU tenants
+
+- Panguard tool call rule: blocks any memory_write call that would place residency-controlled data in a non-compliant region
+
+- Cross-region replication (Module 28 DR) must respect residency constraints — GDPR data replication stays within EU regions
+
+**Anonymisation for analytics and testing**
+
+- Synthetic data generation: replace production data with realistic but non-identifying data for development and testing
+
+- Pseudonymisation: replace identifying fields with consistent tokens — same person maps to same token across the dataset, but the token is not reversible without the key
+
+- k-anonymity enforcement for datasets used in model training or analytics: each record indistinguishable from at least k-1 others across quasi-identifying attributes
+
+**Key takeaways to cover**
+
+- Classification at ingestion is the only approach that works — classification applied after the fact misses data that has already propagated
+
+- Presidio redaction with structured placeholders preserves data format for downstream processing while removing the sensitive value
+
+- Classification-gated tool access makes over-privileged data access structurally impossible rather than policy-dependent
+
+- Residency controls must be enforced at the infrastructure layer, not just documented in policy — Panguard + bucket policies are the enforcement mechanism
+
+---
+
+Module 15: Data Classification and PII Redaction
+
+Tagging, Anonymisation, and Residency Controls
+
+Hello and welcome to Module 15! 🎉
+
+Modules 1–14 have secured our supply chain, cluster, network, gateway, identities, secrets, authentication, lifecycle, sandboxing, runtime enforcement, input validation, and multi-agent pipelines. Now we protect the data itself — the most valuable asset an agent touches.
+
+An agent that reads sensitive information and writes to memory, logs, or external APIs is implicitly classifying that data by what it does with it. Without deliberate classification, sensitive data ends up wherever the agent decides to send it: memory stores, log aggregators, external APIs, or even the WORM audit trail.
+
+In this module we make classification an architectural property of the platform, not a manual review step. By the end you will have automatic tagging at ingestion, Presidio-based redaction at every write boundary, classification-gated tool access, residency enforcement, and safe anonymisation for analytics and testing.
+
+---
+
+The Accidental Data Classification Problem
+
+Every agent becomes a data classifier the moment it processes information — whether the platform was designed that way or not.
+
+Without explicit classification:
+
+- PII or credentials leak into logs
+
+- Sensitive documents are written to public memory stores
+
+- Regulated data crosses geographic boundaries
+
+The damage is already done by the time a human reviews a log. Classification must therefore be enforced by the system at ingestion time, before any tool call processes the data.
+
+---
+
+Classification Taxonomy
+
+We use a simple four-level taxonomy applied at every data ingestion point:
+
+- public — Safe to share externally and include in any output.
+
+- internal — Available within the organization; never sent to external APIs or public memory stores.
+
+- confidential — Restricted to specific agent roles with declared need-to-know; requires HITL for any external disclosure.
+
+- secret — Never written to any persistent store; never transmitted to any external endpoint; key-deleted on session end.
+
+Classification is assigned at the moment data enters the platform (user message, tool result, retrieved document, or API response) and travels with the data as metadata for the rest of its lifecycle.
+
+---
+
+Presidio Entity Detection
+
+Presidio runs as a Panguard-integrated service and is invoked at every memory write, log emission, and external API call.
+
+Detected entity types include:
+
+- PERSON, EMAIL_ADDRESS, PHONE_NUMBER, CREDIT_CARD, US_SSN, IBAN_CODE, IP_ADDRESS, DATE_OF_BIRTH, MEDICAL_LICENSE, URL (conditional)
+
+- Custom recognizers for domain-specific PII: employee IDs, internal project codes, contract numbers
+
+Action on detection:
+
+- Replace the sensitive value with a structured placeholder: [REDACTED:{entity_type}] (preserves format for downstream processing).
+
+- For secret-classified content or credential patterns: the entire write is blocked, not redacted.
+
+Partial redaction of a secret is never sufficient — we reject the operation entirely.
+
+---
+
+Classification-Gated Tool Access
+
+An agent’s ATR claims include a maxClassificationLevel (e.g., internal).
+
+The gateway enforces this at recall time:
+
+- A summarizer agent with max_classification: internal cannot retrieve confidential memory entries.
+
+- Every memory query includes a server-side predicate: tenantId + maxClassification.
+
+Classification level is stored as metadata alongside every memory entry and is enforced server-side, never client-side.
+
+---
+
+Residency Controls
+
+Certain data must remain in a specific geographic region (EU data under GDPR, PHI under HIPAA).
+
+Enforcement:
+
+- Memory store bucket policy restricts confidential entries to the correct region (EU-region buckets for EU tenants).
+
+- Panguard tool-call rule blocks any memory_write that would place residency-controlled data in a non-compliant region.
+
+- Cross-region replication (Module 28) must respect these constraints — GDPR data stays within EU regions.
+
+Residency is enforced at the infrastructure layer, not just documented in policy.
+
+---
+
+Anonymisation for Analytics and Testing
+
+Production data must never be used directly in development, testing, or analytics.
+
+Techniques:
+
+- Synthetic data generation: replace production data with realistic but non-identifying data.
+
+- Pseudonymisation: replace identifying fields with consistent tokens (same person always maps to the same token, but the token is not reversible without the key).
+
+- k-anonymity enforcement: for datasets used in model training or analytics, each record must be indistinguishable from at least _k_-1 other records across quasi-identifying attributes.
+
+These processes run automatically in CI pipelines and test environments.
+
+---
+
+Key Takeaways (Memorize These!)
+
+- Classification at ingestion is the only approach that works — classification applied after the fact misses data that has already propagated.
+
+- Presidio redaction with structured placeholders preserves data format for downstream processing while removing the sensitive value.
+
+- Classification-gated tool access makes over-privileged data access structurally impossible rather than policy-dependent.
+
+- Residency controls must be enforced at the infrastructure layer, not just documented in policy — Panguard + bucket policies are the enforcement mechanism.
+
+You now have data classification as a built-in platform property. Sensitive information is tagged once at ingestion, redacted automatically at every boundary, and only accessible to agents that are explicitly allowed to see it. Residency and anonymisation complete the picture, turning data handling from an accidental risk into a controlled, auditable, and regulation-friendly system.
+
+## **MODULE 16**
+
+### **Model Weight Integrity: Verifying Authenticity Before Every Load**
+
+A model weight file is executable code, and a weight file that can be silently replaced between training and inference means every security control downstream of the model is built on a compromised foundation. Cryptographic verification of weight hashes against HSM-backed signing keys, enforced before every load rather than only at deployment time, closes the window between when a weight was approved and when it runs. This module treats model weights with the same integrity controls applied to container images — because the threat model is identical.
+
+**Why model weights are executable code**
+
+- A model weight file determines what the model computes — altering weights changes behavior as surely as altering source code
+
+- Unlike source code, weight files are large binary blobs that are difficult to inspect visually
+
+- A weight file that can be silently replaced between training and inference gives an attacker control over model behavior without touching any application code
+
+- Threat model: supply chain attack on the weight hosting infrastructure, man-in-the-middle on the weight download, insider modification post-training
+
+**Cryptographic hash verification**
+
+- Every approved weight file has a SHA-256 (or SHA-3) hash recorded in a Vault-backed manifest
+
+- The hash is computed at training completion and signed by the training pipeline’s identity before being written to the manifest
+
+- At load time, the serving infrastructure recomputes the hash and compares it to the signed manifest value
+
+- Hash mismatch: load aborted, alert fired, the serving pod does not start
+
+- Verification runs on every load — not just at deployment time
+
+**HSM-backed signing keys**
+
+- The signing key for weight manifests is stored in the HSM (same HSM as Vault’s unseal key)
+
+- Training pipeline authenticates to the HSM via its OIDC workload identity before signing
+
+- Signing key cannot be extracted from the HSM — even a compromised training pipeline cannot forge a signature without HSM access
+
+- Key rotation: new signing key issued annually; transition period where both old and new keys are trusted during the rotation window
+
+**Weight storage and access control**
+
+- Approved weights stored in a locked S3 bucket (Object Lock, COMPLIANCE mode) with versioning enabled
+
+- IAM policy: only the signing principal can write new weight versions; serving infrastructure is read-only
+
+- Weight download over TLS with certificate pinning to the storage endpoint — MITM interception detected
+
+- No serving infrastructure stores weights locally beyond the current serving session — weights are loaded, verified, and released
+
+**Behavioral monitoring for compromised weights**
+
+- A weight that passes hash verification but has been adversarially modified pre-training (backdoor) requires behavioral monitoring
+
+- Establish behavioral baseline: distribution of model outputs for a fixed evaluation set at training completion
+
+- Monitor serving output distribution — deviation from baseline (drift in output token distribution, unexpected output categories) is a signal
+
+- Canary evaluation: run the fixed evaluation set against the serving model weekly; alert on benchmark score regression >5%
+
+**Multi-provider weight management**
+
+- When using weights from external providers (HuggingFace, model registries), apply the same verification pipeline
+
+- Verify the provider’s published hash against the downloaded file before adding to the approved manifest
+
+- Do not download weights directly to serving infrastructure — pull to a staging environment, verify, sign, then promote to the approved store
+
+- Provider-published hashes should be verified against a secondary source (the provider’s GPG-signed release notes, not just the download page)
+
+**Key takeaways to cover**
+
+- Weight files are executable code and must be treated with the same supply chain controls as container images
+
+- Hash verification at every load, not just deployment, closes the post-deployment modification window
+
+- HSM-backed signing keys prevent a compromised training pipeline from forging a weight approval
+
+- Behavioral monitoring catches backdoored weights that pass hash verification because the modification was made pre-training
+
+---
+
+Module 16: Model Weight Integrity
+
+Verifying Authenticity Before Every Load
+
+Hello and welcome to Module 16! 🎉
+
+Modules 1–15 have secured everything from images and skills to data classification and multi-agent pipelines. Now we protect the model weights themselves — the executable code that determines what the model actually computes.
+
+A model weight file is not just data. Altering even a few bytes can change the model’s behavior as surely as changing the application source code. Because weights are large binary blobs, they are difficult to inspect visually, making them a perfect target for supply-chain attacks.
+
+In this module we treat model weights with the same cryptographic rigor we apply to container images. By the end you will have a system that verifies authenticity on every single load, backed by HSM signing keys, immutable storage, and behavioral monitoring for the rare case where a backdoor was inserted during training.
+
+---
+
+Why Model Weights Are Executable Code
+
+Think of a model weight file as compiled machine code for the neural network. Changing the weights changes the computation.
+
+Real threats include:
+
+- Supply-chain compromise of the weight hosting infrastructure (Hugging Face, internal model registry, S3 bucket).
+
+- Man-in-the-middle attack during download.
+
+- Insider modification after training but before deployment.
+
+A weight file that can be silently replaced between training and inference means every security control downstream of the model (Panguard, ATR rules, sandboxing) is built on a compromised foundation. We must close this window completely.
+
+---
+
+Cryptographic Hash Verification
+
+Every approved weight file has a SHA-256 (or stronger SHA-3) hash recorded in a Vault-backed manifest.
+
+The process:
+
+1. At the end of training, the pipeline computes the hash of the final weight file.
+
+2. The training pipeline signs the hash using its OIDC identity and writes it to the signed manifest in Vault.
+
+3. At load time, the serving infrastructure recomputes the hash of the file it just downloaded and compares it to the signed manifest value.
+
+Hash mismatch = load aborted immediately, alert fired, serving pod does not start.
+
+Verification runs on every load — not just at deployment time. This closes the post-deployment modification window.
+
+---
+
+HSM-Backed Signing Keys
+
+The signing key that approves weight manifests is stored in the same HSM used for Vault unsealing (Module 8).
+
+Properties:
+
+- Training pipeline authenticates to the HSM via its OIDC workload identity before signing.
+
+- The private key can never be extracted from the HSM — even a fully compromised training pipeline cannot forge a signature.
+
+- Annual key rotation with a transition period where both old and new keys are trusted.
+
+---
+
+Weight Storage and Access Control
+
+Approved weights live in a locked S3 bucket (or equivalent) with these controls:
+
+- Object Lock in COMPLIANCE mode + versioning enabled.
+
+- IAM policy: only the signing principal can write new weight versions; serving infrastructure is strictly read-only.
+
+- All downloads occur over TLS with certificate pinning to the storage endpoint.
+
+Serving infrastructure never stores weights locally beyond the current serving session — they are loaded, verified, and released.
+
+---
+
+Behavioral Monitoring for Compromised Weights
+
+Cryptographic verification catches post-training tampering, but what about a backdoor inserted during training?
+
+We add behavioral monitoring:
+
+- At training completion, establish a baseline distribution of model outputs on a fixed evaluation set.
+
+- In production, monitor the serving output distribution (token distribution, unexpected output categories).
+
+- Weekly canary evaluation: run the fixed evaluation set against the live model and alert on benchmark score regression >5 %.
+
+Any significant drift triggers an immediate investigation and weight rollback.
+
+---
+
+Multi-Provider Weight Management
+
+When using weights from external providers (Hugging Face, public model registries):
+
+- Never download directly to serving infrastructure.
+
+- Pull to a staging environment, verify the provider’s published hash against the downloaded file.
+
+- Sign the verified weights with our own HSM key and promote to the approved store.
+
+- Cross-check the provider’s hash against a secondary source (GPG-signed release notes).
+
+This applies the same verification pipeline used for internally trained models.
+
+---
+
+Key Takeaways (Memorize These!)
+
+- Weight files are executable code and must be treated with the same supply-chain controls as container images.
+
+- Hash verification at every load, not just deployment, closes the post-deployment modification window.
+
+- HSM-backed signing keys prevent a compromised training pipeline from forging a weight approval.
+
+- Behavioral monitoring catches backdoored weights that pass hash verification because the modification was made pre-training.
+
+You now have model weights that are cryptographically verified on every load, stored immutably, signed by HSM-backed keys, and continuously monitored for behavioral anomalies. The foundation on which your agents reason is now as trustworthy as every other layer in the platform. This completes the last major supply-chain surface for the intelligence layer itself.
+
+## **MODULE 17**
+
+### **GPU and Resource Protection: Isolation, Quotas, and Side-Channel Defences**
+
+GPU memory is not cleared between workloads by default, which means in a shared environment one workload can read residual data from another through normal hardware operation rather than any software exploit. MIG partitioning, GPU namespace isolation, and strict resource quotas together bound what any single agent can access and consume, preventing both data leakage between workloads and resource exhaustion as a denial of service. This module extends the principle of least privilege from the software layer down to the hardware.
+
+**The GPU memory residue problem**
+
+- GPU memory is not zeroed between workload context switches by default on most NVIDIA hardware
+
+- Residual data from a previous workload’s inference is readable by the next workload that occupies the same GPU memory region
+
+- This is not a software exploit — it is normal hardware behavior that requires explicit mitigation
+
+- In multi-tenant or multi-agent deployments, this creates a data leakage path orthogonal to all software-layer controls
+
+**MIG (Multi-Instance GPU) partitioning**
+
+- NVIDIA MIG divides a physical GPU into isolated instances with dedicated compute and memory
+
+- Each MIG instance has hardware-enforced memory isolation — instance A cannot access instance B’s memory under any circumstances
+
+- Memory between instances is also zeroed on context switch within MIG (hardware-enforced)
+
+- Supported GPU families: A100, H100, and later architectures
+
+- Kubernetes GPU sharing: allocate MIG slices as distinct schedulable resources (nvidia.com/mig-3g.20gb)
+
+- Different tenants scheduled to different MIG instances: hardware-enforced tenant isolation at the GPU level
+
+**GPU namespace isolation (non-MIG)**
+
+- For GPU types without MIG support: namespace-level GPU quota prevents cross-contamination by ensuring tenants don’t share the same physical GPU
+
+- One tenant per GPU node pool: dedicated node taints and tolerations ensure workload separation
+
+- Time-sliced GPU sharing is never used for security-sensitive workloads — time slicing provides no memory isolation between tenants
+
+**Resource quotas and blast radius bounding**
+
+- ResourceQuota on requests.nvidia.com/gpu and limits.nvidia.com/gpu per tenant namespace
+
+- CPU and memory quotas prevent runaway agent loops from starving other tenants
+
+- NATS JetStream stream limits per tenant: max messages, max bytes, max consumers
+
+- Panguard rate limits scoped per tenantId for tool calls that trigger GPU inference
+
+- Alert on GPU utilization >90% sustained for >5 minutes from a single tenant — possible inference DoS
+
+**Side-channel attacks on shared GPU**
+
+- Timing attacks: measuring GPU execution time to infer properties of another workload’s computation
+
+- Power side-channels: GPU power consumption varies with computation — measurable from shared infrastructure
+
+- Mitigation for timing: add random jitter to GPU response times for external-facing inference endpoints
+
+- Mitigation for power: dedicated GPU hardware per tenant for highest-security deployments
+
+- Practical risk: timing and power side-channels require sophisticated attackers with infrastructure access — prioritize MIG/isolation over side-channel mitigations for most deployments
+
+**GPU monitoring and anomaly detection**
+
+- Prometheus nvidia-smi exporter: GPU utilization, memory usage, temperature, power draw per GPU
+
+- Alert on unexpected GPU consumers: a pod not in the approved GPU workload list accessing a GPU
+
+- Alert on GPU memory usage spike from a workload that typically uses
+- Falco rule: alert on any process other than approved model serving binaries accessing the GPU device file (/dev/nvidia\*)
+
+**Key takeaways to cover**
+
+- GPU memory residue is a hardware property, not a software bug — it requires hardware-level mitigation (MIG) or architectural separation (dedicated GPU per tenant)
+
+- MIG is the correct mitigation for multi-tenant GPU deployments on supported hardware — time-sliced sharing is not acceptable for security-sensitive workloads
+
+- Resource quotas at the namespace level prevent GPU denial-of-service regardless of whether MIG is in use
+
+- GPU monitoring is a security control as much as an operational one — unexpected GPU consumers are a signal of workload escape or resource theft
+
+---
+
+Module 17: GPU and Resource Protection
+
+Isolation, Quotas, and Side-Channel Defences
+
+Hello and welcome to Module 17! 🎉
+
+Modules 1–16 have secured our supply chain, runtime enforcement, data handling, and model weights. Now we protect the GPU layer — the hardware that actually runs inference for our agents.
+
+GPU memory is not cleared between workloads by default. In a shared environment, one agent’s inference can leave residual data that the next workload can read through normal hardware behavior. This is not a software bug — it is how most NVIDIA GPUs work today. In multi-tenant or multi-agent platforms, this creates a silent data-leakage path that bypasses every software control we have built so far.
+
+In this module we extend least privilege all the way down to the hardware with MIG partitioning, namespace isolation, strict quotas, and side-channel defenses. By the end you will know exactly how to prevent both data leakage and resource-exhaustion attacks at the GPU level.
+
+---
+
+The GPU Memory Residue Problem
+
+NVIDIA GPUs (and most other accelerators) do not zero memory between context switches by default. When one workload finishes, its data remains in GPU memory until the next workload overwrites it.
+
+In a shared cluster this means:
+
+- A compromised or malicious agent can read fragments of previous inference results.
+
+- This leakage happens through normal hardware behavior — no kernel exploit required.
+
+- The risk is especially high in agentic platforms where multiple agents or pipelines share GPU nodes.
+
+We must treat the GPU as a shared resource that requires the same zero-trust isolation we apply everywhere else.
+
+---
+
+MIG (Multi-Instance GPU) Partitioning
+
+MIG is the strongest hardware-level isolation available on supported NVIDIA GPUs (A100, H100, and later).
+
+How MIG works:
+
+- A single physical GPU is divided into multiple isolated instances, each with its own dedicated compute engines, memory, and L2 cache.
+
+- Memory between MIG instances is hardware-enforced and automatically zeroed on context switch.
+
+- Instance A cannot read or influence instance B under any circumstances.
+
+Kubernetes integration:
+
+- MIG slices are exposed as schedulable resources: nvidia.com/mig-3g.20gb
+
+- Different tenants or high-security agents are scheduled to different MIG instances via node selectors and taints.
+
+MIG gives us true hardware isolation at the GPU level — the gold standard for multi-tenant inference.
+
+---
+
+GPU Namespace Isolation (Non-MIG GPUs)
+
+For GPU models that do not support MIG we use namespace-level separation:
+
+- One tenant per GPU node pool with dedicated node taints and tolerations.
+
+- ResourceQuota limits the number of GPUs per namespace.
+
+- Time-sliced GPU sharing is never used for security-sensitive workloads — it provides no memory isolation between tenants.
+
+This architectural separation ensures that even without MIG, tenants cannot share the same physical GPU hardware.
+
+---
+
+Resource Quotas and Blast Radius Bounding
+
+We prevent both data leakage and denial-of-service with strict quotas:
+
+- ResourceQuota on requests.nvidia.com/gpu and limits.nvidia.com/gpu per tenant namespace.
+
+- CPU and memory quotas prevent runaway agent loops from starving other tenants.
+
+- NATS JetStream stream limits per tenant (max messages, max bytes, max consumers).
+
+- Panguard rate-limits tool calls that trigger GPU inference, scoped per tenantId.
+
+We also alert on sustained GPU utilization >90 % for >5 minutes from a single tenant — a strong signal of possible inference DoS.
+
+---
+
+Side-Channel Attacks on Shared GPU
+
+Even with isolation, sophisticated attackers can attempt side-channel attacks:
+
+- Timing attacks: Measure GPU execution time to infer properties of another workload.
+
+- Power side-channels: GPU power draw varies with computation and can be observed from shared infrastructure.
+
+Mitigations:
+
+- Add random jitter to GPU response times for any external-facing inference endpoints.
+
+- For the highest-security deployments, use dedicated GPU hardware per tenant.
+
+In practice, these side-channels require significant infrastructure access and are lower priority than MIG or namespace isolation for most deployments.
+
+---
+
+GPU Monitoring and Anomaly Detection
+
+Visibility is critical. We monitor continuously:
+
+- Prometheus nvidia-smi exporter for utilization, memory usage, temperature, and power draw per GPU.
+
+- Alert on any pod not in the approved GPU workload list attempting to access a GPU.
+
+- Alert on unexpected memory usage spikes from workloads that normally use
+- Falco rule: alert on any process other than approved model-serving binaries accessing /dev/nvidia\*.
+
+These signals turn the GPU layer into an observable part of our security posture.
+
+---
+
+Key Takeaways (Memorize These!)
+
+- GPU memory residue is a hardware property, not a software bug — it requires hardware-level mitigation (MIG) or architectural separation (dedicated GPU per tenant).
+
+- MIG is the correct mitigation for multi-tenant GPU deployments on supported hardware — time-sliced sharing is not acceptable for security-sensitive workloads.
+
+- Resource quotas at the namespace level prevent GPU denial-of-service regardless of whether MIG is in use.
+
+- GPU monitoring is a security control as much as an operational one — unexpected GPU consumers are a signal of workload escape or resource theft.
+
+You now have least privilege enforced at the GPU hardware level. Residual data leakage is prevented, resource exhaustion is bounded, and every GPU access is monitored. The compute layer that powers your agents is now as securely isolated as every other component in the platform.
+
+## **MODULE 18**
+
+### **Memory & Context Poisoning Prevention: Redaction at Source and Immutable Agent Memory**
+
+A poisoned memory entry does not cause immediate harm — it waits until the agent retrieves it days or weeks later and acts on it as trusted historical context, by which point the origin is difficult to trace and the damage is already done. Panguard redaction gates, per-subject encryption keys, Merkle-tree integrity over every entry, and WORM-backed storage make the entire memory lifecycle tamper-evident from write to recall. This module closes the attack surface that most agentic platforms leave entirely undefended.
+
+**Why long-term memory is the most underprotected surface**
+
+- A poisoned memory entry doesn’t cause immediate harm — it waits until the agent retrieves it in a future session and acts on it as trusted historical context
+
+- By the time a poisoned entry causes harm, its origin is difficult to trace and its removal is uncertain
+
+- Memory accumulates across sessions — the attack surface grows with every session the agent completes
+
+- Four distinct poisoning vectors: direct write injection, retrieval poisoning via RAG, inter-agent message poisoning, temporal drift (post-write modification)
+
+**Classification and redaction at write time**
+
+- Presidio redaction applied to every memory write before it is committed to the store
+
+- secret-classified content: entire write rejected, not redacted — partial redaction of a secret is insufficient
+
+- Credential pattern detection: rejected entirely on match
+
+- Classification tag stored as metadata alongside every entry — enforced at recall by the gateway
+
+**Per-subject encryption for GDPR compliance**
+
+- Each data subject’s memory entries encrypted with a per-subject key in Vault transit engine
+
+- GDPR right to erasure: delete the per-subject key — ciphertext remains but is permanently irrecoverable
+
+- Merkle integrity is preserved (encrypted bytes don’t change); data is irrecoverable (key is gone)
+
+- Key deletion is irreversible — confirm GDPR erasure request before executing
+
+**Merkle-tree integrity**
+
+- Every memory entry hash is chained: SHA-256(entry_content + entry_metadata + prev_root)
+
+- New Merkle root computed and recorded in the audit trail and Prometheus on every write
+
+- Any post-write modification to a stored entry changes its hash and invalidates all subsequent roots
+
+- Scheduled integrity checks: every 15 minutes; on failure: block memory reads, alert, notify security team
+
+- Blocking reads on integrity failure is intentional — a store whose integrity cannot be verified must not serve recall results
+
+**Append-only semantics and WORM storage**
+
+- Memory entries are never updated in place — “updates” are new entries with a supersedes field referencing the prior entry’s hash
+
+- The superseded entry remains in the store — complete modification history is preserved and verifiable
+
+- WORM storage: S3 Object Lock in COMPLIANCE mode, 90-day minimum retention
+
+- No API call, IAM policy, or root account action can delete a WORM-protected entry during retention
+
+**Poisoning detection rules**
+
+- Panguard rule: block memory writes containing instruction-injection patterns (ignore previous instructions, your new goal is, system prompt:, override:)
+
+- Rate limiting on memory writes per session: >50 writes in 60 seconds → throttle + warning
+
+- Weekly memory audit: replay Merkle verification + scan all entries for blocked patterns + produce signed audit report
+
+- Audit report stored in WORM and referenced in the quarterly review (Module 25)
+
+**Inter-agent message encryption and mutual auth**
+
+- NATS JetStream bus: mTLS + message-level AES-256-GCM encryption
+
+- Each agent has its own mTLS certificate — cannot impersonate another agent’s identity
+
+- Subject-level ACLs: each agent publishes only to its own namespace and subscribes only to declared inputs
+
+- Message-level encryption key fetched from Vault per conversation — even a compromised broker cannot read message content
+
+**Key takeaways to cover**
+
+- Memory is a persistent attack surface that outlasts the session that created it — poisoning attacks are delayed-action
+
+- The Merkle tree converts any post-write modification into a detectable event — tamper-evidence is a structural property, not a monitoring layer
+
+- GDPR cryptographic erasure (key deletion, not data deletion) is the only solution to the erasure/WORM conflict that preserves both regulatory compliance and forensic integrity
+
+- WORM storage is the final backstop — no administrative action can destroy the memory history during the retention period
+
+---
+
+Module 18: Memory & Context Poisoning Prevention
+
+Redaction at Source and Immutable Agent Memory
+
+Hello and welcome to Module 18! 🎉
+
+Modules 1–17 have secured our supply chain, runtime enforcement, data classification, model weights, and GPU isolation. Now we protect the one surface that outlives every session: the agent’s long-term memory.
+
+A poisoned memory entry does not cause immediate harm — it sits quietly until the agent retrieves it days or weeks later and treats it as trusted historical context. By the time the damage appears, tracing the origin is difficult and removal is uncertain. Memory is the most underprotected surface in most agentic platforms, and it grows with every session the agent completes.
+
+In this module we make memory tamper-evident, GDPR-compliant, and poisoning-resistant using redaction at source, Merkle-tree integrity, append-only semantics, WORM storage, and per-subject encryption. By the end you will have a memory system that is as immutable and verifiable as the WORM audit trail itself.
+
+---
+
+Why Long-Term Memory Is the Most Underprotected Surface
+
+Memory is a persistent, cross-session attack surface with four distinct poisoning vectors:
+
+- Direct write injection (malicious tool result or user message)
+
+- Retrieval poisoning via RAG (a poisoned document is recalled later)
+
+- Inter-agent message poisoning (a compromised subagent fabricates a result)
+
+- Temporal drift (post-write modification of an existing entry)
+
+A successful poisoning attack is delayed-action: the entry looks innocent when written but becomes dangerous when retrieved in a future context. Traditional monitoring misses it because the harm happens long after the write. We must make memory tamper-evident from the moment it is created.
+
+---
+
+Classification and Redaction at Write Time
+
+Presidio runs as a Panguard-integrated service and is invoked on every memory write before the data is committed.
+
+What happens:
+
+- All content-bearing fields are scanned for PII, credentials, and other sensitive entities.
+
+- Detected values are replaced with structured placeholders: [REDACTED:PERSON], [REDACTED:EMAIL_ADDRESS], etc.
+
+- For secret-classified content or any credential pattern: the entire write is rejected — partial redaction is never sufficient.
+
+The classification level is stored as metadata alongside every entry. The gateway enforces it at recall time so an agent with max_classification: internal can never retrieve confidential entries. Classification is enforced server-side, never client-side.
+
+---
+
+Per-Subject Encryption for GDPR Compliance
+
+Each data subject’s memory entries are encrypted with a unique per-subject key stored in Vault’s transit engine.
+
+This gives us the perfect solution to the GDPR right-to-erasure vs. WORM conflict:
+
+- Erasure request → vault delete transit/tenant-a/keys/subject-key-${DATA_SUBJECT_ID}
+
+- The ciphertext remains in the store (preserving Merkle integrity and forensic history).
+
+- The data is permanently irrecoverable because the key is gone.
+
+Key deletion is irreversible — always confirm the GDPR request before executing. This satisfies Recital 26: data that cannot be attributed to an identified person is no longer personal data, while keeping the audit trail intact.
+
+---
+
+Merkle-Tree Integrity
+
+Every memory entry is part of a chained Merkle tree:
+
+hash_n = SHA-256(entry_content + entry_metadata + prev_root)
+
+On every write:
+
+- A new Merkle root is computed.
+
+- The root is recorded in the WORM audit trail and exposed in Prometheus.
+
+Any post-write modification to a stored entry changes its hash and invalidates all subsequent roots.
+
+Scheduled integrity checks run every 15 minutes:
+
+- On failure: all memory reads are blocked, an alert fires, and the security team is notified.
+
+- Blocking reads on integrity failure is intentional — a store whose integrity cannot be verified must not serve results.
+
+---
+
+Append-Only Semantics and WORM Storage
+
+Memory entries are never updated in place. “Updates” are implemented as new entries with a supersedes field referencing the prior entry’s hash. The original entry remains in the store forever.
+
+All memory is stored in S3 (or equivalent) with:
+
+- Object Lock in COMPLIANCE mode
+
+- 90-day minimum retention (configurable to match the longest regulatory requirement)
+
+No API call, IAM policy, or even root account action can delete or modify a WORM-protected entry during the retention period. This is the final backstop.
+
+---
+
+Poisoning Detection Rules
+
+Panguard blocks poisoning at write time:
+
+- Rule: block any memory write containing instruction-injection patterns (ignore previous instructions, your new goal is, system prompt:, override:, etc.).
+
+- Rate limiting: >50 memory writes in 60 seconds from one session → throttle + warning.
+
+Weekly memory audit:
+
+- Full Merkle verification replay
+
+- Scan of every entry for blocked patterns
+
+- Signed audit report stored in WORM and referenced in the quarterly review (Module 25)
+
+---
+
+Inter-Agent Message Encryption and Mutual Auth
+
+Memory poisoning can also arrive via inter-agent messages over NATS JetStream.
+
+Protections:
+
+- mTLS (Module 4) + message-level AES-256-GCM encryption
+
+- Each agent has its own mTLS certificate — impersonation is impossible.
+
+- Subject-level ACLs: each agent publishes only to its own namespace and subscribes only to declared inputs.
+
+- Message-level encryption key is fetched from Vault per conversation — even a compromised broker cannot read the content.
+
+---
+
+Key Takeaways (Memorize These!)
+
+- Memory is a persistent attack surface that outlasts the session that created it — poisoning attacks are delayed-action.
+
+- The Merkle tree converts any post-write modification into a detectable event — tamper-evidence is a structural property, not a monitoring layer.
+
+- GDPR cryptographic erasure (key deletion, not data deletion) is the only solution to the erasure/WORM conflict that preserves both regulatory compliance and forensic integrity.
+
+- WORM storage is the final backstop — no administrative action can destroy the memory history during the retention period.
+
+You now have long-term memory that is redacted at source, cryptographically immutable, GDPR-compliant, and poisoning-resistant. A poisoned entry cannot be written, cannot be modified after the fact, and cannot be silently retrieved later. This closes the last major persistent attack surface in the agentic platform.
+
+## **MODULE 19**
+
+### **Security Monitoring and Observability Architecture: Falco, Wazuh, SIEM Integration, and Telemetry Design**
+
+Deploying monitoring tools without designing what they emit produces noise rather than signal — and alert fatigue is a security failure with the same practical outcome as having no alerts at all. A canonical security event schema, SIEM correlation rules for the highest-priority attack patterns, metric cardinality constraints that prevent sensitive data from leaking through Prometheus labels, and a tiered alert routing model together turn the tool list into a working detection capability. This module designs the full telemetry stack from emission to NOC dashboard so that when something goes wrong, the right person knows within minutes rather than hours.
+
+**The three failure modes of security observability**
+
+- Alert fatigue: too many low-quality alerts train operators to dismiss them; the genuine critical alert is dismissed with the noise
+
+- Coverage gaps: the right events are never emitted; context required for investigation is absent
+
+- Telemetry as exfiltration channel: sensitive data in metric labels travels through a pipeline with weaker access controls than the WORM audit trail
+
+**Canonical security event schema**
+
+- Every security-relevant event across all components conforms to one schema
+
+- Required fields: schemaVersion, eventId, timestamp, source (component + version + cluster + region), principal (agent ID, session ID, tenant ID), event (type, subtype, outcome, severity), detail (tool, rule ID, claims), traceContext (W3C trace + span IDs)
+
+- payloadHash — never the payload, always its SHA-256 hash — correlation key without data exposure
+
+- Seven event types: AUTH, TOOL_CALL, MEMORY, SKILL, AGENT, NETWORK, POLICY
+
+- Schema version field: SIEM correlation rules pin to a specific version; schema drift detected before deployment
+
+**Falco rules for agentic platforms**
+
+- Runtime syscall monitoring: Falco fires on unexpected syscalls from agent processes
+
+- Key rules: gateway binding to wildcard address, exec from non-approved binary in agent container, unexpected outbound connection from agent pod, sensitive file read outside declared paths
+
+- Falco output → Fluent Bit → WORM + SIEM in parallel
+
+**Wazuh SIEM correlation**
+
+- Three critical correlation rules every deployment must have:
+  1. ATR violation followed by egress block in the same session within 60 seconds (injection + exfiltration attempt)
+  2. Agent compromise event followed by cross-pipeline memory read (lateral movement)
+  3. 5 auth failures from same source in 5 minutes followed by successful auth (credential stuffing)
+  - Correlation rules pinned to schema version — upgrade process requires rule update before schema promotion
+
+**Metric cardinality and sensitive data in labels**
+
+- Never use as Prometheus labels: sessionId, agentId, userId, tenantId on high-frequency metrics, memoryEntryId
+
+- Use as labels: component, decision, ruleCategory, deploymentTier, region, atrRole
+
+- Per-session and per-agent security metrics: log events (WORM pipeline with restricted access), not Prometheus metrics
+
+- Prometheus scrape endpoints for security components restricted to monitoring namespace only via NetworkPolicy
+
+**Distributed tracing for security call graphs**
+
+- W3C traceparent headers propagated across all inter-component calls
+
+- Security-relevant spans emit attributes: event type, tool name, ATR claims presented, Panguard decision, rule ID
+
+- Tail-based sampling: 100% retention for traces containing a Panguard block, WORM write, memory integrity failure, or AUTH denial — never sampled out
+
+- Trace store access controls: security traces (with ATR claims and session IDs) accessible only to security team role
+
+**NOC dashboard: three views**
+
+- Current state (5-second refresh): Panguard block rate vs 7-day baseline, active Falco alerts by severity, Vault revocations last 60 minutes, memory integrity check failures (must be zero), HITL queue depth
+
+- Trend (hourly): 7-day rolling ATR violation rate per rule category, egress anomaly rate per tenant, skill quarantine events this week
+
+- Investigation (on-demand): session timeline linking SIEM events → WORM audit entries → distributed traces for any sessionId
+
+**Alert tuning methodology**
+
+- Baseline every new rule in observation mode for 14 days before enabling blocking or paging
+
+- Monthly precision measurement: classify each fired alert as true positive, false positive, or indeterminate
+
+- Target >80% precision before a rule is considered tuned
+
+- Alert routing: CRITICAL → PagerDuty with 15-minute ACK deadline; HIGH → Slack + email; WARNING → Slack; INFO → WORM only
+
+- Never route INFO or WARNING to the same channel as CRITICAL
+
+**Key takeaways to cover**
+
+- A canonical event schema is the prerequisite for SIEM correlation — schema drift silently breaks detection rules
+
+- Prometheus label cardinality is a security issue, not just an operational one — high-cardinality sensitive labels create an unintended data exposure path
+
+- Tail-based sampling for security traces is mandatory — a security event that is sampled out cannot be investigated
+
+- Alert fatigue is a security failure with the same practical outcome as having no alerts — precision measurement and tiered routing are not optional
+
+---
+
+Module 19: Security Monitoring and Observability Architecture
+
+Falco, Wazuh, SIEM Integration, and Telemetry Design
+
+Hello and welcome to Module 19! 🎉
+
+Modules 1–18 have given us trusted images, admission control, vetted skills, zero-trust networking, a hardened gateway, egress controls, scoped identities, dynamic secrets, per-request authentication, agent lifecycle, sandboxing, runtime enforcement, input validation, multi-agent trust, data classification, model weights, GPU isolation, and immutable memory. Now we make sure we can actually see what is happening — in real time, with high signal and low noise.
+
+Security observability is not just “monitoring.” Poorly designed telemetry creates three failure modes that are as dangerous as missing controls: alert fatigue, coverage gaps, and telemetry itself becoming an exfiltration channel. In this module we design a complete observability stack that turns every component into a reliable security sensor. By the end you will have a canonical event schema, smart correlation rules, cardinality-safe metrics, tail-based tracing, and a NOC dashboard that tells you exactly what matters.
+
+---
+
+The Three Failure Modes of Security Observability
+
+Most teams deploy tools and hope for the best. That produces noise instead of signal. The three classic failures are:
+
+- Alert fatigue: Too many low-quality alerts train operators to ignore everything — including the real attack.
+
+- Coverage gaps: The right events are never emitted, or the context needed for investigation is missing.
+
+- Telemetry as exfiltration channel: Sensitive data leaks through metric labels or logs that have weaker access controls than the WORM audit trail.
+
+We solve all three by design, not by accident.
+
+---
+
+Canonical Security Event Schema
+
+Every security-relevant event across the entire platform conforms to one structured schema. This is the prerequisite for reliable SIEM correlation.
+
+Required fields:
+
+- schemaVersion
+
+- eventId (unique UUID)
+
+- timestamp (UTC, nanosecond precision)
+
+- source (component + version + cluster + region)
+
+- principal (agent ID, session ID, tenant ID)
+
+- event (type, subtype, outcome, severity)
+
+- detail (tool, rule ID, claims, etc.)
+
+- traceContext (W3C trace + span IDs)
+
+- payloadHash — never the payload itself, always its SHA-256 hash (correlation key without data exposure)
+
+Seven event types (used for routing and correlation):
+
+- AUTH
+
+- TOOL_CALL
+
+- MEMORY
+
+- SKILL
+
+- AGENT
+
+- NETWORK
+
+- POLICY
+
+Schema version is pinned in SIEM correlation rules. Any schema drift is detected and blocked before deployment.
+
+---
+
+Falco Rules for Agentic Platforms
+
+Falco provides runtime syscall monitoring inside every container and Kata VM.
+
+Key rules we ship out of the box:
+
+- Gateway process binding to 0.0.0.0 (violates Module 5)
+
+- exec from a non-approved binary inside an agent container
+
+- Unexpected outbound connection from an agent pod (bypassing egress allowlists)
+
+- Sensitive file read outside declared paths
+
+- Any process other than approved model-serving binaries accessing /dev/nvidia\* (Module 17)
+
+Falco output is shipped via Fluent Bit to both the WORM audit trail and the SIEM in parallel.
+
+---
+
+Wazuh SIEM Correlation
+
+Wazuh correlates events across the entire platform. Three critical rules every deployment must have:
+
+1. ATR violation followed by an egress block in the same session within 60 seconds → injection + exfiltration attempt.
+
+2. Agent compromise event followed by a cross-pipeline memory read → lateral movement.
+
+3. 5 authentication failures from the same source in 5 minutes followed by a successful auth → credential stuffing.
+
+All correlation rules are pinned to a specific schema version. Any schema upgrade requires the rules to be updated first.
+
+---
+
+Metric Cardinality and Sensitive Data in Labels
+
+Prometheus is excellent for operational metrics but dangerous for security data.
+
+Rules we enforce:
+
+- Never use high-cardinality or sensitive labels: sessionId, agentId, userId, tenantId, memoryEntryId.
+
+- Allowed labels only: component, decision, ruleCategory, deploymentTier, region, atrRole.
+
+Per-session and per-agent security metrics are emitted as log events to the WORM pipeline (restricted access) instead of Prometheus metrics. Prometheus scrape endpoints are restricted to the monitoring namespace via NetworkPolicy.
+
+---
+
+Distributed Tracing for Security Call Graphs
+
+We use W3C traceparent headers propagated across every inter-component call (gateway ↔ Panguard ↔ tool handler ↔ NATS ↔ subagent, etc.).
+
+Security-relevant spans include attributes:
+
+- Event type
+
+- Tool name
+
+- ATR claims presented
+
+- Panguard decision
+
+- Rule ID
+
+Tail-based sampling policy:
+
+- 100 % retention for any trace containing a Panguard block, WORM write, memory integrity failure, or AUTH denial.
+
+- Security traces (with ATR claims and session IDs) are accessible only to the security team role.
+
+---
+
+NOC Dashboard: Three Views
+
+We give operators exactly the information they need at a glance.
+
+Current state (5-second refresh):
+
+- Panguard block rate vs 7-day baseline
+
+- Active Falco alerts by severity
+
+- Vault revocations in the last 60 minutes
+
+- Memory integrity check failures (must be zero)
+
+- HITL queue depth
+
+Trend (hourly):
+
+- 7-day rolling ATR violation rate per rule category
+
+- Egress anomaly rate per tenant
+
+- Skill quarantine events this week
+
+Investigation (on-demand):
+
+- Session timeline linking SIEM events → WORM audit entries → distributed traces for any sessionId
+
+---
+
+Alert Tuning Methodology
+
+We treat alert quality as a measurable engineering metric:
+
+- Every new rule starts in observation mode for 14 days (logs only).
+
+- Monthly precision measurement: classify each fired alert as true positive, false positive, or indeterminate.
+
+- Target >80 % precision before a rule is moved to paging.
+
+- Tiered routing: CRITICAL → PagerDuty (15-minute ACK deadline); HIGH → Slack + email; WARNING → Slack; INFO → WORM only.
+
+Never route INFO or WARNING to the same channel as CRITICAL.
+
+---
+
+Key Takeaways (Memorize These!)
+
+- A canonical event schema is the prerequisite for SIEM correlation — schema drift silently breaks detection rules.
+
+- Prometheus label cardinality is a security issue, not just an operational one — high-cardinality sensitive labels create an unintended data exposure path.
+
+- Tail-based sampling for security traces is mandatory — a security event that is sampled out cannot be investigated.
+
+- Alert fatigue is a security failure with the same practical outcome as having no alerts — precision measurement and tiered routing are not optional.
+
+You now have observability that is designed for agentic platforms: high-signal, low-noise, tamper-evident, and cardinality-safe. When something goes wrong, the right people know within minutes, with full forensic context already available in the WORM trail. This turns detection from a hope into a reliable, measurable capability.
+
+## **MODULE 20**
+
+### **Automated Response and Incident Recovery: Talon, Quarantine, PICERL, and WORM Audits**
+
+The window between detection and human response is where most of the damage happens, and closing it requires automated containment that fires before anyone reads an alert. Talon quarantine, circuit breakers, and automated session termination handle the first sixty seconds; the PICERL incident response process takes over from there with a structured lifecycle that runs through to recovery and post-incident review. Every action — automated and human — is recorded to a WORM audit trail that makes the complete forensic timeline available from the moment an incident is declared.
+
+**The detection-to-response window**
+
+- Most damage in a security incident happens in the minutes between detection and human response
+
+- An automated agent can execute hundreds of tool calls in the time it takes an on-call engineer to acknowledge a PagerDuty alert
+
+- Automated containment must fire before any human reads the alert — not as a supplement to human response, but as Phase 1 of it
+
+- Automation handles isolation and preservation; humans handle investigation and remediation
+
+**Talon automated quarantine**
+
+- Talon is triggered by Panguard block threshold, Falco critical alert, or memory integrity failure
+
+- Quarantine actions: suspend all active sessions for the affected agent, apply deny-all egress NetworkPolicy to the agent pod, freeze Vault lease renewal (leases remain valid but cannot be renewed)
+
+- Quarantine is reversible — it does not destroy forensic evidence
+
+- Quarantine event written to WORM before any containment action is taken — the trigger and the timestamp are preserved
+
+**Circuit breakers**
+
+- Gateway-level circuit breaker: if a single agent session triggers >X Panguard blocks in Y seconds, the session is terminated automatically
+
+- Tool-level circuit breaker: if a specific tool produces >Z errors in W minutes, the tool is temporarily disabled for all sessions
+
+- Circuit breaker state is logged and alerted — a tripped circuit breaker is a signal requiring human investigation
+
+- Circuit breaker reset requires explicit human action, not automatic recovery
+
+**PICERL incident response lifecycle**
+
+- **Prepare**: runbooks documented, on-call rotation defined, forensic tools pre-staged, WORM access confirmed
+
+- **Identify**: Talon quarantine has fired; on-call engineer notified; incident commander assigned; severity classification determined
+
+- **Contain**: verify quarantine is in effect; expand containment if needed (full namespace isolation, pipeline halt); preserve forensic snapshot
+
+- **Eradicate**: identify root cause; remove the malicious or compromised component; patch or reconfigure as needed
+
+- **Recover**: restore service in a clean state; verify Merkle root continuity; verify audit trail completeness; smoke test before traffic is restored
+
+- **Learn**: post-incident review within 48 hours; update STRIDE model; update red team test cases; update Panguard/Falco rules if a gap was exposed
+
+**WORM audit trail in incident response**
+
+- The WORM audit trail is the primary forensic evidence source — every tool call, token exchange, memory write, and admin action with timestamps and actor identities
+
+- Merkle root chain: provides tamper-evidence proof that the audit trail was not modified after the incident
+
+- Session timeline reconstruction: given a sessionId, reconstruct every action the agent took in chronological order from the WORM trail
+
+- Evidence package: signed, time-bounded export of all audit events related to the incident; delivered to legal or external investigators without exposing other sessions
+
+**Forensic preservation sequence**
+
+- Before any revocation: snapshot memory store, NATS message log, Vault lease audit log, pod filesystem
+
+- Snapshot goes to forensics bucket with access restricted to IR team — not the normal WORM bucket
+
+- Revocation only after snapshot is confirmed complete — destroying evidence for speed is never acceptable
+
+- IR team owns the forensics bucket; platform team has no access during investigation
+
+**Post-incident review requirements**
+
+- Mandatory review within 48 hours for any CRITICAL incident
+
+- Required outputs: timeline, root cause, how the attacker gained access, what controls failed or were bypassed, what controls limited the blast radius, changes made to prevent recurrence
+
+- Every finding that reveals a Panguard or Falco gap → new rule authored, tested, deployed before the review is signed off
+
+- Signed post-incident report stored in WORM and referenced in the next quarterly review (Module 25)
+
+**Key takeaways to cover**
+
+- Automated containment is Phase 1 of PICERL, not a supplement to it — human response begins after quarantine is already in effect
+
+- Circuit breakers are reversible; Talon quarantine is reversible; forensic snapshots are irreversible — the sequence matters
+
+- The WORM audit trail is only useful if the Merkle chain is intact — integrity verification is the first action in every investigation
+
+- A post-incident review that doesn’t result in a new rule, a runbook update, or a control change is not a post-incident review — it is a post-incident report
+
+---
+
+Module 20: Automated Response and Incident Recovery
+
+Talon, Quarantine, PICERL, and WORM Audits
+
+Hello and welcome to Module 20! 🎉
+
+Modules 1–19 have built a complete defense-in-depth stack that prevents, detects, and contains threats. Now we close the final gap: the minutes between detection and human response. In an agentic platform an attacker (or a compromised agent) can execute hundreds of tool calls in the time it takes an on-call engineer to acknowledge a PagerDuty page.
+
+Automated containment must fire first — not as a supplement to human response, but as Phase 1 of it. In this module we introduce Talon for instant quarantine, circuit breakers for self-protection, the full PICERL incident response lifecycle, and the immutable WORM audit trail that makes every investigation forensic-grade. By the end you will have a system that responds faster than any human can, while preserving evidence for thorough recovery and learning.
+
+---
+
+The Detection-to-Response Window
+
+Most damage in a security incident happens in the narrow window between detection and human action.
+
+An automated agent can make hundreds of tool calls per minute. Waiting for a human to read an alert and click “quarantine” is no longer acceptable.
+
+Automated containment (Talon) must act immediately on high-confidence signals. Humans then take over for investigation and remediation. This is not “set it and forget it” automation — it is Phase 1 of a structured incident response process.
+
+---
+
+Talon Automated Quarantine
+
+Talon is the automated first responder. It is triggered by any of these high-confidence signals:
+
+- Panguard block threshold exceeded in a single session
+
+- Falco critical alert (e.g., unexpected exec or binding to 0.0.0.0)
+
+- Memory integrity check failure
+
+Quarantine actions (executed in seconds):
+
+- Suspend all active sessions for the affected agent
+
+- Apply a deny-all egress NetworkPolicy to the agent pod
+
+- Freeze Vault lease renewal (leases remain valid for the current session but cannot be renewed)
+
+Key properties:
+
+- Quarantine is fully reversible — it does not destroy forensic evidence.
+
+- The quarantine event itself is written to the WORM audit trail _before_ any containment action is taken. The trigger and exact timestamp are permanently recorded.
+
+---
+
+Circuit Breakers
+
+Talon provides per-agent containment. Circuit breakers provide self-protection at the gateway and tool level.
+
+- Gateway-level circuit breaker: if a single agent session triggers >X Panguard blocks in Y seconds, the entire session is terminated automatically.
+
+- Tool-level circuit breaker: if a specific tool produces >Z errors in W minutes, the tool is temporarily disabled for all sessions.
+
+Circuit breaker state is logged and alerted. A tripped breaker is a signal that requires human investigation. Reset requires explicit human action — never automatic recovery.
+
+---
+
+PICERL Incident Response Lifecycle
+
+Once Talon has contained the immediate threat, the structured PICERL process takes over:
+
+- Prepare: Runbooks are documented, on-call rotation is defined, forensic tools are pre-staged, and WORM access is confirmed.
+
+- Identify: Talon has already fired; on-call engineer is notified; incident commander is assigned; severity is classified.
+
+- Contain: Verify quarantine is in effect; expand if needed (full namespace isolation, pipeline halt); preserve forensic snapshot.
+
+- Eradicate: Identify root cause; remove the malicious or compromised component; patch or reconfigure as needed.
+
+- Recover: Restore service in a clean state; verify Merkle root continuity; verify audit trail completeness; run smoke tests before traffic is restored.
+
+- Learn: Post-incident review is completed within 48 hours; STRIDE model and red-team test cases are updated; new Panguard or Falco rules are authored if a gap was exposed.
+
+---
+
+WORM Audit Trail in Incident Response
+
+The WORM audit trail is the single source of truth for every investigation.
+
+- Every tool call, token exchange, memory write, and admin action is recorded with timestamps and actor identities.
+
+- The Merkle root chain provides tamper-evidence proof that the audit trail was never modified after the incident.
+
+- Given a sessionId, the full session timeline can be reconstructed instantly from the WORM trail.
+
+- Evidence package: a signed, time-bounded export of all audit events related to the incident is delivered to legal or external investigators without exposing other sessions.
+
+---
+
+Forensic Preservation Sequence
+
+Evidence preservation always comes before revocation:
+
+1. Snapshot memory store, NATS message log, Vault lease audit log, and pod filesystem before any revocation.
+
+2. Snapshot is written to a separate forensics bucket with access restricted to the IR team only.
+
+3. Revocation (certificate, Vault leases, NATS subscriptions) happens only after the snapshot is confirmed complete.
+
+Never delete the memory store or audit trail during an active investigation. Rushed cleanup trades short-term containment for long-term blindness.
+
+---
+
+Post-Incident Review Requirements
+
+Every CRITICAL incident requires a mandatory review within 48 hours.
+
+Required outputs:
+
+- Complete timeline
+
+- Root cause
+
+- How the attacker gained access
+
+- Which controls failed or were bypassed
+
+- Which controls limited the blast radius
+
+- Specific changes made to prevent recurrence
+
+Any finding that reveals a Panguard or Falco gap results in a new rule being authored, tested, and deployed before the review is signed off. The signed post-incident report is stored in WORM and referenced in the next quarterly review (Module 25).
+
+---
+
+Key Takeaways (Memorize These!)
+
+- Automated containment is Phase 1 of PICERL, not a supplement to it — human response begins after quarantine is already in effect.
+
+- Circuit breakers are reversible; Talon quarantine is reversible; forensic snapshots are irreversible — the sequence matters.
+
+- The WORM audit trail is only useful if the Merkle chain is intact — integrity verification is the first action in every investigation.
+
+- A post-incident review that doesn’t result in a new rule, a runbook update, or a control change is not a post-incident review — it is a post-incident report.
+
+You now have automated response that acts faster than any attacker and a structured incident lifecycle that turns every event into measurable improvement. Detection-to-response is no longer a vulnerability — it is a controlled, forensic-grade process. This completes the operational security layer that makes the entire platform resilient in the face of real incidents.
+
+## **MODULE 21**
+
+### **Development and Deployment Security: Workstation Hardening, Local Dev, and Secure Production Deployment**
+
+A developer laptop running ClawQL with a long-lived credential in a shell profile is a single phishing email away from a production breach, and deployment tooling that requires manual security configuration will eventually be run without it under deadline pressure. This module covers both ends of the same pipeline: the structural workstation controls (non-root execution, isolated workspaces, Vault dev instance, credential leakage prevention) that make local development genuinely secure, and the deployment architecture that makes the secure configuration the default rather than the documented exception. The developer environment and the production environment are one continuous security surface — weaknesses in either undermine both.
+
+**The development-to-production security pipeline**
+
+- The developer workstation is the origin of every artifact that runs in production — its security posture is part of the production security posture
+
+- A long-lived credential in ~/.zshrc is one phishing email away from a production breach
+
+- Security that requires manual configuration at deploy time will eventually be skipped — the default must be secure
+
+- Both ends of the pipeline (local and production) must be hardened; weakness in either undermines both
+
+**Workstation tooling layer (EDR, commit signing, secret scanning)**
+
+- Aegis EDR or equivalent: endpoint detection and response on developer laptops
+
+- Wazuh agent: ships local security events to the central SIEM for correlation
+
+- Panguard CLI: local enforcement of ATR rules for local ClawQL development
+
+- Gitleaks pre-commit hooks: catch credential patterns before they enter git history
+
+- YubiKey or platform authenticator: hardware-backed commit signing (git config gpg.format ssh)
+
+- All tooling installed and verified as part of developer onboarding — not optional
+
+**Workstation structural layer (permissions, isolation, Vault dev)**
+
+- State directory permissions: chmod 700 ~/.clawql and all subdirectories — no group or world access
+
+- Non-root gateway execution: startup script rejects execution as UID 0 explicitly
+
+- Per-project workspace isolation: CLAWQL_STATE_DIR=$(pwd)/.clawql-workspace — no shared state between projects
+
+- devcontainer pattern: each project runs in an isolated container with its own gateway socket and state
+
+- Vault dev server: started fresh each session, in-memory, non-persistent — no credentials survive session close
+
+- External API keys for development: stored in Vault dev with ttl=4h — not in shell profiles
+
+**Preventing credential leakage into git and logs**
+
+- ClawQL-specific Gitleaks patterns: session JWT regex, API key prefix patterns — added to .gitleaks.toml
+
+- Log level discipline: CLAWQL_LOG_LEVEL=info in shell profiles — never debug in persistent log destinations
+
+- Weekly scan of the state directory for credential patterns: gitleaks detect --source ~/.clawql/ --no-git
+
+- Developer offboarding checklist: revoke developer’s mTLS certificate, rotate any shared credentials they had access to
+
+**Production deployment: secure-by-default architecture**
+
+- One-command deploy: clawql deploy --env production applies all security defaults without manual flag specification
+
+- Infrastructure as code: all production configuration in git with signed commits and PR-based change management
+
+- Deployment pipeline: CI gate includes supply chain verification (Module 1–3), security test suite (Module 24), smoke tests (Module 26) — deployment blocked if any fail
+
+- Canary deployment: new gateway version serves 5% of traffic; security metrics compared to baseline for 30 minutes before full rollout
+
+- Rollback criteria defined before deploy: >20% Panguard block rate increase, any unhandled 500, any Falco CRITICAL in the observation window
+
+**Environment parity**
+
+- Staging must mirror production security configuration exactly — same Panguard rules, same ATR roles, same NetworkPolicy
+
+- A security control that exists only in production but not staging is not tested and will fail unexpectedly
+
+- Developer local environment uses Vault dev server instead of production Vault — all other controls are identical
+
+- Drift detection: monthly automated diff of staging vs production security configuration; alert on divergence
+
+**Key takeaways to cover**
+
+- The workstation is part of the production security perimeter — treat its compromise with the same severity as a production server compromise
+
+- 700 permissions on state directories and non-root execution are structural controls that limit blast radius without requiring additional tooling
+
+- Secure-by-default deployment means the insecure configuration requires deliberate action to enable — not the other way around
+
+- Staging must enforce the same security controls as production; a staging environment that is more permissive is not a staging environment, it is a gap
+
+---
+
+Module 21: Development and Deployment Security
+
+Workstation Hardening, Local Dev, and Secure Production Deployment
+
+Hello and welcome to Module 21! 🎉
+
+Modules 1–20 have built a production-grade security stack that protects agents from supply chain to runtime to incident response. But every artifact that reaches production — every image, every skill, every configuration change — originates on a developer workstation. If that workstation is weak, the entire chain is weak.
+
+A long-lived credential in a shell profile or an unhardened local environment is one phishing email away from a production breach. Security that relies on manual steps at deploy time will eventually be skipped under pressure. In this module we harden both ends of the pipeline: the developer workstation (where everything begins) and the production deployment process (where everything lands). By the end you will have a secure-by-default development-to-production flow where the safe path is also the easiest path.
+
+---
+
+The Development-to-Production Security Pipeline
+
+The developer workstation is part of the production security perimeter. Its posture directly affects what runs in production.
+
+Key principles:
+
+- A long-lived credential in ~/.zshrc or a shared state directory is one successful phishing attempt away from cluster compromise.
+
+- Any security control that requires manual configuration at deploy time will eventually be bypassed under deadline pressure — the default must be secure.
+
+- Weakness on either end of the pipeline undermines the entire system. We harden the workstation structurally and the deployment process automatically.
+
+---
+
+Workstation Tooling Layer
+
+Every developer laptop runs a standardized, verified tooling stack as part of onboarding:
+
+- Endpoint Detection and Response (EDR): Aegis or equivalent — continuous monitoring for suspicious activity on the laptop.
+
+- Wazuh agent: Ships local security events (file changes, process execution, network activity) to the central SIEM for correlation with production events.
+
+- Panguard CLI: Local enforcement of ATR rules during ClawQL development — catches policy violations before code leaves the laptop.
+
+- Gitleaks pre-commit hooks: Automatically scans every commit for credential patterns before they enter git history.
+
+- Hardware-backed commit signing: YubiKey or platform authenticator with git config gpg.format ssh — every commit is signed and verifiable.
+
+All tooling is installed, verified, and kept up-to-date as part of developer onboarding — it is never optional.
+
+---
+
+Workstation Structural Layer
+
+Beyond tools, we enforce structural controls that limit blast radius even if tooling is bypassed:
+
+- State directory permissions: chmod 700 ~/.clawql and all subdirectories — no group or world access.
+
+- Non-root gateway execution: The startup script explicitly rejects running as UID 0.
+
+- Per-project workspace isolation: CLAWQL_STATE_DIR=$(pwd)/.clawql-workspace — each project has its own isolated state with no shared directories.
+
+- devcontainer pattern: Every project runs inside an isolated container with its own gateway socket and state directory.
+
+- Vault dev server: Started fresh for each session, in-memory, and non-persistent — no credentials survive session close.
+
+- External API keys for development: Stored only in the Vault dev server with a 4-hour TTL — never in shell profiles or dotfiles.
+
+---
+
+Preventing Credential Leakage into Git and Logs
+
+We actively block common leakage paths:
+
+- ClawQL-specific Gitleaks patterns (session JWT regex, API key prefixes) are added to .gitleaks.toml.
+
+- Log-level discipline: CLAWQL_LOG_LEVEL=info is enforced in all shell profiles — debug is never used in persistent log destinations.
+
+- Weekly automated scan of the state directory: gitleaks detect --source ~/.clawql/ --no-git.
+
+- Developer offboarding checklist: Immediately revoke the developer’s mTLS certificate and rotate any shared credentials they had access to.
+
+---
+
+Production Deployment: Secure-by-Default Architecture
+
+Production deployments are one-command and fully secure by default:
+
+- clawql deploy --env production applies every security control without any manual flags.
+
+- All production configuration lives in git as Infrastructure-as-Code with signed commits and PR-based change management.
+
+- The deployment pipeline includes mandatory gates: supply-chain verification (Modules 1–3), security test suite (Module 24), and smoke tests (Module 26). Any failure blocks the deploy.
+
+- Canary deployment: New gateway version serves 5 % of traffic; security metrics are compared to baseline for 30 minutes before full rollout.
+
+- Rollback criteria are defined before every deploy: >20 % increase in Panguard block rate, any unhandled 500 error, or any Falco CRITICAL alert in the observation window.
+
+---
+
+Environment Parity
+
+Staging must be an exact mirror of production security configuration — same Panguard rules, same ATR roles, same NetworkPolicy, same Vault policies.
+
+- The local developer environment uses the Vault dev server (in-memory, non-persistent) while all other controls remain identical to production.
+
+- Monthly automated drift detection compares staging vs production security configuration and alerts on any divergence.
+
+A staging environment that is more permissive than production is not a staging environment — it is a security gap.
+
+---
+
+Key Takeaways (Memorize These!)
+
+- The workstation is part of the production security perimeter — treat its compromise with the same severity as a production server compromise.
+
+- 700 permissions on state directories and non-root execution are structural controls that limit blast radius without requiring additional tooling.
+
+- Secure-by-default deployment means the insecure configuration requires deliberate action to enable — not the other way around.
+
+- Staging must enforce the same security controls as production; a staging environment that is more permissive is not a staging environment, it is a gap.
+
+You now have a development and deployment pipeline where security is the path of least resistance. The workstation is hardened, leakage is prevented, and production deployments are secure by default and fully automated. This closes the loop between developer intent and production reality — the entire platform is only as secure as the code and configuration that reaches it.
+
+## **MODULE 22**
+
+### **Threat Modelling for Agentic AI: STRIDE, Attack Trees, and Living Threat Models**
+
+A threat model completed at launch and never revisited is a historical document, not a security control — the agent pipeline, the skills it uses, and the data it touches all change, and the threat model must change with them. STRIDE applied to agentic AI surfaces attack paths that standard application threat modelling misses: model inversion, goal hijacking, inter-agent lateral movement, and memory poisoning are not categories that appear in traditional STRIDE templates. This module builds a living threat model with a defined update cadence that stays accurate as the platform evolves rather than becoming obsolete the week after it’s written.
+
+**Why agentic AI requires a distinct threat model**
+
+- Standard application threat models assume a request-response architecture with a human initiating each interaction
+
+- Agentic AI systems act autonomously across many steps, access multiple systems, and maintain state — the threat surface is fundamentally different
+
+- STRIDE categories that change meaning in agentic contexts: Spoofing (which principal?), Tampering (model weights? memory? tool definitions?), Repudiation (which action in a multi-step chain?), Information Disclosure (via memory recall? context window?), Denial of Service (resource exhaustion vs. goal hijacking), Elevation of Privilege (ATR scope drift)
+
+- New threat categories not in standard STRIDE: goal hijacking, memory poisoning, inter-agent lateral movement, model inversion, indirect injection
+
+**STRIDE applied to each component**
+
+- Model/inference layer: weight tampering (T), model inversion via repeated queries (I), adversarial examples (S)
+
+- Memory store: poisoning via retrieval (T), unauthorized recall (I), Merkle chain manipulation (T, R)
+
+- Tool call gateway: ATR bypass (E), injection via tool result (T), replay attack (S, E)
+
+- ClawHub skills: malicious skill in trusted position (S, T, E), dependency confusion (T)
+
+- Inter-agent communication: spoofed orchestrator instruction (S), fabricated subagent result (T, R)
+
+- Operator plane: admin credential theft (S, E), insider threat (T, R), break-glass abuse (E)
+
+**Attack trees**
+
+- Root node: “Agent executes unauthorized action” — decompose into all paths that lead there
+
+- Branch 1: prompt injection (direct, indirect, multi-step)
+
+- Branch 2: ATR bypass (forged JWT, delegation expansion, scope drift)
+
+- Branch 3: memory poisoning (direct write injection, retrieval poisoning, post-write tamper)
+
+- Branch 4: supply chain compromise (base image, skill, model weight, dependency)
+
+- Branch 5: operator compromise (credential theft, insider, break-glass abuse)
+
+- Each leaf node in the attack tree maps to one or more controls — gaps are leaves with no corresponding control
+
+**The living threat model**
+
+- A threat model completed at launch and never updated is a historical document within weeks
+
+- Update triggers: new agent pipeline deployed, new ClawHub skill category approved, new external API integration, post-incident review finding, new OWASP Agentic Top 10 guidance published
+
+- Update process: review attack tree against the change, identify new branches, assign controls, update the model in git with a signed commit
+
+- Quarterly review integration (Module 25): threat model review is a standing agenda item
+
+- Red team exercises (Module 24) produce findings that must be incorporated into the model within 14 days
+
+**Threat model documentation format**
+
+- Store in git alongside the infrastructure code — version-controlled and change-tracked
+
+- YAML format: each threat has an ID, STRIDE category, affected component, attack path description, current controls, residual risk assessment, and last-reviewed date
+
+- Residual risk: documented acceptance of risk that cannot be fully mitigated; must be reviewed quarterly
+
+- Control gap: documented threat with no current control; must have a remediation plan with a timeline
+
+**Key takeaways to cover**
+
+- Agentic AI introduces threat categories (goal hijacking, memory poisoning, inter-agent lateral movement) that don’t exist in standard STRIDE templates — the template must be extended
+
+- The attack tree is the most useful artifact: it makes the mapping from threat to control explicit and makes gaps visible
+
+- A living threat model with defined update triggers is a fundamentally different artifact from a point-in-time assessment
+
+- Residual risk must be explicitly accepted and documented — undocumented residual risk is the same as unmitigated risk from a governance perspective
+
+---
+
+Module 22: Threat Modelling for Agentic AI
+
+STRIDE, Attack Trees, and Living Threat Models
+
+Hello and welcome to Module 22! 🎉
+
+Modules 1–21 have given us a complete technical security stack: trusted images, admission control, zero-trust networking, runtime enforcement, sandboxing, immutable memory, GPU isolation, automated response, and secure development pipelines. Now we step back and ask the most important question of all: “Have we actually defended against the right threats?”
+
+Standard application threat models assume simple request-response architectures with a human in the loop. Agentic AI systems are fundamentally different — they act autonomously across many steps, maintain persistent memory, delegate to sub-agents, and execute real-world actions. In this module we build a living threat model tailored to agentic platforms using an extended STRIDE framework, attack trees, and a defined update cadence so the model stays accurate as the platform evolves rather than becoming obsolete the week after it is written.
+
+---
+
+Why Agentic AI Requires a Distinct Threat Model
+
+Traditional threat models assume:
+
+- A human initiates every request.
+
+- The system is stateless between requests.
+
+- The main risk is in the request itself.
+
+Agentic platforms break all three assumptions:
+
+- Agents act autonomously across many steps without human intervention.
+
+- They maintain long-term memory and state.
+
+- They form dynamic pipelines with delegation and inter-agent communication.
+
+This creates new threat categories that do not appear in standard STRIDE templates:
+
+- Goal hijacking
+
+- Memory poisoning
+
+- Inter-agent lateral movement
+
+- Model inversion
+
+- Indirect prompt injection
+
+We must extend STRIDE and make the threat model a living document that evolves with the platform.
+
+---
+
+STRIDE Applied to Each Component
+
+We systematically apply STRIDE (Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service, Elevation of Privilege) to every major component, highlighting how the categories change in an agentic context.
+
+Model / Inference Layer
+
+- Spoofing: Model inversion via repeated queries.
+
+- Tampering: Weight tampering or adversarial examples.
+
+- Information Disclosure: Model inversion attacks that extract training data.
+
+Memory Store
+
+- Tampering: Memory poisoning via direct write, RAG retrieval, or post-write modification.
+
+- Information Disclosure: Unauthorized recall of confidential entries.
+
+- Repudiation: Merkle chain manipulation to hide changes.
+
+Tool Call Gateway
+
+- Elevation of Privilege: ATR bypass (forged JWT, delegation expansion, scope drift).
+
+- Tampering: Injection via tool results.
+
+- Spoofing / Elevation: Replay attacks.
+
+ClawHub Skills
+
+- Spoofing / Tampering / Elevation: Malicious skill in trusted position, dependency confusion.
+
+Inter-Agent Communication
+
+- Spoofing: Forged orchestrator instruction.
+
+- Tampering / Repudiation: Fabricated subagent result.
+
+Operator Plane
+
+- Spoofing / Elevation: Admin credential theft or insider threat.
+
+- Tampering / Repudiation: Break-glass abuse.
+
+Each threat is mapped to current controls and residual risk.
+
+---
+
+Attack Trees
+
+The attack tree is the most practical artifact we maintain.
+
+Root node: “Agent executes unauthorized action”
+
+Major branches:
+
+- Branch 1: Prompt injection (direct, indirect, multi-step, split-payload)
+
+- Branch 2: ATR bypass (forged JWT, delegation expansion, scope drift)
+
+- Branch 3: Memory poisoning (direct write, retrieval poisoning, post-write tamper)
+
+- Branch 4: Supply-chain compromise (base image, skill, model weight, dependency)
+
+- Branch 5: Operator compromise (credential theft, insider threat, break-glass abuse)
+
+Each leaf node maps to one or more controls. Any leaf without a corresponding control is a documented gap with a remediation timeline.
+
+---
+
+The Living Threat Model
+
+A threat model written once at launch is a historical document within weeks. Ours is living.
+
+Update triggers (any of these automatically starts a review):
+
+- New agent pipeline deployed
+
+- New ClawHub skill category approved
+
+- New external API integration
+
+- Post-incident review finding
+
+- New OWASP Agentic Top 10 guidance published
+
+Update process:
+
+1. Review the attack tree against the change.
+
+2. Identify new branches or modified leaves.
+
+3. Assign or update controls.
+
+4. Document residual risk.
+
+5. Store the updated model in git with a signed commit.
+
+Threat model review is a standing agenda item in every quarterly security review (Module 25). Red-team exercises (Module 24) must incorporate findings into the model within 14 days.
+
+---
+
+Threat Model Documentation Format
+
+The model lives in git alongside infrastructure code as version-controlled YAML.
+
+Each threat entry contains:
+
+- id: Unique identifier (e.g., TM-AGENT-004)
+
+- stride_category: One or more of S/T/R/I/D/E
+
+- affected_component: e.g., “memory_store”, “pipeline_orchestrator”
+
+- attack_path_description: Clear narrative
+
+- current_controls: List of modules/controls that mitigate it
+
+- residual_risk: Assessment and acceptance (must be reviewed quarterly)
+
+- last_reviewed: Date + reviewer
+
+Control gaps are explicitly documented with remediation plans and owners.
+
+---
+
+Key Takeaways (Memorize These!)
+
+- Agentic AI introduces threat categories (goal hijacking, memory poisoning, inter-agent lateral movement) that don’t exist in standard STRIDE templates — the template must be extended.
+
+- The attack tree is the most useful artifact: it makes the mapping from threat to control explicit and makes gaps visible.
+
+- A living threat model with defined update triggers is a fundamentally different artifact from a point-in-time assessment.
+
+- Residual risk must be explicitly accepted and documented — undocumented residual risk is the same as unmitigated risk from a governance perspective.
+
+You now have a living, agentic-specific threat model that stays current as the platform evolves. It is no longer a dusty document on a shelf — it is an active security control that drives architecture decisions, red-team exercises, and quarterly reviews. This is the strategic layer that ensures all the tactical controls in Modules 1–21 are aimed at the right threats.
+
+## **MODULE 23**
+
+### **OWASP Agentic Top 10: Mitigations and Control Mapping**
+
+The OWASP Agentic Top 10 gives the industry a shared taxonomy for the ten risk categories that matter most for agentic AI — this module gives each one a specific ClawQL control, the configuration required to deploy it, and the evidence that confirms it is working. The mapping is a direct bridge between a published risk framework and operational deployment decisions, making it the fastest route from “we know what could go wrong” to “we have verified that we’ve addressed it.” It is also the foundation for the adversarial test cases in the next module.
+
+**What the OWASP Agentic Top 10 covers**
+
+- ASI01: Prompt Injection — direct and indirect injection via user input and retrieved content
+
+- ASI02: Sensitive Data Exposure — PII and credentials in model outputs, memory, and logs
+
+- ASI03: Supply Chain Risks — compromised models, skills, dependencies, and base images
+
+- ASI04: Data and Model Poisoning — training data manipulation, RAG retrieval poisoning, memory poisoning
+
+- ASI05: Improper Output Handling — unsafe code execution, cross-site scripting via agent output
+
+- ASI06: Excessive Agency — agents with more permissions than their task requires
+
+- ASI07: System Prompt Leakage — system prompt extracted via adversarial queries
+
+- ASI08: Vector and Embedding Weaknesses — adversarial inputs crafted to manipulate embedding space
+
+- ASI09: Misinformation — agents generating plausible but false content used in consequential decisions
+
+- ASI10: Unbounded Consumption — token, API, and compute exhaustion attacks
+
+**Control mapping for each risk**
+
+ASI01 (Prompt Injection):
+
+- Module 12: Panguard ATR enforcement at tool call boundary; JSON Schema validation; HITL for high-risk tools
+
+- Module 13: Unicode normalization, encoding bypass detection, split-payload detection
+
+- Module 5: DNS rebinding defense (browser-based injection vector)
+
+ASI02 (Sensitive Data Exposure):
+
+- Module 15: Presidio redaction at write time; classification-gated recall
+
+- Module 8: Dynamic secrets; no long-lived credentials in context
+
+- Module 19: DLP inspection of outbound tool call payloads
+
+ASI03 (Supply Chain):
+
+- Modules 1–3: Image pinning, admission control, skill vetting pipeline
+
+- Module 16: Model weight integrity verification
+
+- Module 26: Patch SLOs and dependency automation
+
+ASI04 (Data and Model Poisoning):
+
+- Module 18: Memory Merkle integrity; WORM storage; poisoning detection rules
+
+- Module 15: Classification at ingestion; redaction at write
+
+- Module 16: Weight verification; behavioral monitoring for backdoored weights
+
+ASI05 (Improper Output Handling):
+
+- Module 12: Output schema validation; response field stripping
+
+- Module 13: Output encoding enforcement; content type validation
+
+ASI06 (Excessive Agency):
+
+- Module 12: ATR rules; HITL for irreversible actions
+
+- Module 7: Least privilege Kubernetes identities
+
+- Module 10: Provisioning approval workflow; ATR scope expansion governance
+
+ASI07 (System Prompt Leakage):
+
+- Module 12: System prompt not included in tool call context; negative prompting
+
+- Module 13: Output content inspection; block responses containing system prompt markers
+
+ASI08 (Vector and Embedding Weaknesses):
+
+- Module 15: Classification-gated recall; tenant-isolated vector collections
+
+- Module 18: Merkle integrity over memory store including embedding vectors
+
+- Note: embedding space adversarial attacks are an active research area; current controls reduce but do not eliminate this risk
+
+ASI09 (Misinformation):
+
+- Module 12: HITL gates for consequential outputs; human confirmation before high-stakes actions
+
+- Module 22: Threat model explicitly documents misinformation risk and acceptable use boundaries
+
+- Note: technical controls are limited for this risk category; policy and HITL are the primary mitigations
+
+ASI10 (Unbounded Consumption):
+
+- Module 13: Token budget enforcement per tool result and per session
+
+- Module 17: GPU and compute quotas per tenant; rate limiting per agent role
+
+- Module 12: Circuit breakers on tool call rate and session duration
+
+**Evidence of control effectiveness**
+
+- Each control mapping corresponds to a test case in the Module 24 adversarial testing suite
+
+- Monthly metrics from Panguard: block rate per OWASP category — tracked and trended
+
+- Quarterly evidence package: OWASP coverage report showing each risk, the control, and the test that verified it
+
+**Key takeaways to cover**
+
+- The OWASP Agentic Top 10 provides an external accountability framework — being able to map every risk to a deployed control is the deliverable
+
+- Several risks (ASI08, ASI09) have limited technical mitigations — the honest answer is to document the residual risk and apply HITL as the backstop
+
+- The control mapping is a living document that updates when new controls are deployed or the OWASP taxonomy is revised
+
+- Module 24’s test cases provide the evidence that the mapping is operational rather than theoretical
+
+---
+
+Module 23: OWASP Agentic Top 10
+
+Mitigations and Control Mapping
+
+Hello and welcome to Module 23! 🎉
+
+Modules 1–22 have given us a complete technical security stack and a living threat model. Now we map that stack directly to the industry-standard risk framework for agentic AI: the OWASP Agentic Top 10.
+
+The OWASP Agentic Top 10 provides a shared language for the ten risk categories that matter most when agents can act autonomously, maintain memory, and call real-world tools. In this module we walk through each risk, show exactly which controls in our platform address it, and explain the configuration and evidence required to prove it is working. By the end you will have a clear, auditable bridge between the published risk framework and our operational deployment decisions — turning “we know what could go wrong” into “we have verified that we’ve addressed it.”
+
+---
+
+What the OWASP Agentic Top 10 Covers
+
+The OWASP Agentic Top 10 (ASI = Agentic Security Issues) identifies the following risks:
+
+- ASI01: Prompt Injection — direct and indirect injection via user input and retrieved content
+
+- ASI02: Sensitive Data Exposure — PII and credentials in model outputs, memory, and logs
+
+- ASI03: Supply Chain Risks — compromised models, skills, dependencies, and base images
+
+- ASI04: Data and Model Poisoning — training data manipulation, RAG retrieval poisoning, memory poisoning
+
+- ASI05: Improper Output Handling — unsafe code execution, cross-site scripting via agent output
+
+- ASI06: Excessive Agency — agents with more permissions than their task requires
+
+- ASI07: System Prompt Leakage — system prompt extracted via adversarial queries
+
+- ASI08: Vector and Embedding Weaknesses — adversarial inputs crafted to manipulate embedding space
+
+- ASI09: Misinformation — agents generating plausible but false content used in consequential decisions
+
+- ASI10: Unbounded Consumption — token, API, and compute exhaustion attacks
+
+For each risk we provide the specific ClawQL controls, the exact modules that implement them, and the evidence that confirms they are operational.
+
+---
+
+Control Mapping for Each Risk
+
+ASI01: Prompt Injection
+
+- Primary control: Module 12 — Panguard ATR enforcement at the tool-call boundary, JSON Schema validation, and HITL for high-risk tools.
+
+- Supporting controls: Module 13 — Unicode normalization, encoding bypass detection, split-payload detection, and context-window token budgets.
+
+- Module 5 — DNS rebinding defense for browser-based injection vectors.  
+  Evidence: Every injection test case in the Module 24 red-team suite is blocked with a Panguard decision logged to WORM.
+
+ASI02: Sensitive Data Exposure
+
+- Primary control: Module 15 — Presidio redaction at every write boundary and classification-gated recall.
+
+- Supporting controls: Module 8 — dynamic secrets (no long-lived credentials in context) and Module 19 — DLP inspection of outbound tool-call payloads.  
+  Evidence: Presidio scan results and classification metadata are attached to every memory write and external call in the audit trail.
+
+ASI03: Supply Chain Risks
+
+- Primary controls: Modules 1–3 — container image pinning, distroless golden images, Harbor mirror registry, Cosign signing, Kyverno admission control, and ClawHub skill vetting pipeline (manifest signing + sandbox observation).
+
+- Module 16 — model weight integrity verification at every load.
+
+- Module 26 — patch SLOs and dependency automation.  
+  Evidence: All images and skills carry signed digests and manifests; every deployment pipeline blocks on supply-chain verification failures.
+
+ASI04: Data and Model Poisoning
+
+- Primary controls: Module 18 — Merkle-tree integrity over every memory entry, WORM storage, and poisoning detection rules at write time.
+
+- Module 15 — classification at ingestion and redaction at source.
+
+- Module 16 — weight verification plus behavioral monitoring for backdoored weights.  
+  Evidence: Weekly Merkle verification reports and poisoning-pattern scans are stored in WORM and reviewed quarterly.
+
+ASI05: Improper Output Handling
+
+- Primary control: Module 12 — output schema validation and automatic stripping of fields that do not match the declared schema.
+
+- Module 13 — output encoding enforcement and content-type validation.  
+  Evidence: All tool responses are schema-validated before being returned to the agent; stripping events are logged.
+
+ASI06: Excessive Agency
+
+- Primary controls: Module 12 — ATR rules and HITL gates for irreversible actions.
+
+- Module 7 — least-privilege Kubernetes identities and scoped ServiceAccounts.
+
+- Module 10 — provisioning approval workflow and ATR scope-expansion governance.  
+  Evidence: ATR violation logs and HITL approval records for every high-risk action.
+
+ASI07: System Prompt Leakage
+
+- Primary controls: Module 12 — system prompt is never included in tool-call context; negative prompting is used.
+
+- Module 13 — output content inspection blocks responses containing system-prompt markers.  
+  Evidence: Prompt-leakage test cases in the red-team suite are blocked at output validation.
+
+ASI08: Vector and Embedding Weaknesses
+
+- Primary controls: Module 15 — classification-gated recall and tenant-isolated vector collections.
+
+- Module 18 — Merkle integrity over memory store (including embedding vectors).  
+  Note: Embedding-space adversarial attacks are an active research area; current controls significantly reduce risk, and residual risk is explicitly documented and reviewed quarterly.
+
+ASI09: Misinformation
+
+- Primary controls: Module 12 — HITL gates for consequential outputs and human confirmation before high-stakes actions.
+
+- Module 22 — threat model explicitly documents misinformation risk and acceptable-use boundaries.  
+  Note: Technical controls are limited for this category; policy and HITL serve as the primary mitigations. Residual risk is accepted and reviewed quarterly.
+
+ASI10: Unbounded Consumption
+
+- Primary controls: Module 13 — token budget enforcement per tool result and per session.
+
+- Module 17 — GPU and compute quotas per tenant plus Panguard rate limiting.
+
+- Module 12 — circuit breakers on tool-call rate and session duration.  
+  Evidence: Session-level token accounting and quota enforcement logs are part of the WORM trail.
+
+---
+
+Evidence of Control Effectiveness
+
+Every control mapping is backed by executable test cases in the Module 24 adversarial testing suite.
+
+Monthly metrics from Panguard track block rate per OWASP category and are trended in the NOC dashboard.
+
+Quarterly evidence packages (generated automatically from WORM + Merkle roots + Panguard logs) show each risk, the deployed control, and the test that verified it. This package is stored in WORM and used for SOC 2, EU AI Act, and other compliance audits (Module 29).
+
+---
+
+Key Takeaways (Memorize These!)
+
+- The OWASP Agentic Top 10 provides an external accountability framework — being able to map every risk to a deployed control is the deliverable.
+
+- Several risks (ASI08, ASI09) have limited technical mitigations — the honest answer is to document the residual risk and apply HITL as the backstop.
+
+- The control mapping is a living document that updates when new controls are deployed or the OWASP taxonomy is revised.
+
+- Module 24’s test cases provide the evidence that the mapping is operational rather than theoretical.
+
+You now have a direct, auditable mapping from the industry’s most important agentic risk framework to the exact controls running in your platform. This turns the OWASP Agentic Top 10 from a list of worries into a verified set of mitigations — and gives you the language and evidence you need for audits, leadership updates, and continuous improvement.
+
+## **MODULE 24**
+
+### **Red Teaming and Adversarial Testing Methodology: Proving the Controls Work**
+
+A Panguard rule that exists but never fires correctly under adversarial conditions is a hypothesis, not a control — the only way to know the difference is to deliberately try to break things before an attacker does. Structured injection drills, ATR bypass attempts, tool schema fuzzing, memory poisoning simulations, and a purple team workflow that authors new rules in real time against live attacks together form the continuous verification programme that keeps the defense-in-depth stack honest. This module converts the threat model and OWASP mapping into an executable testing programme that runs on a cadence, produces signed evidence, and closes gaps the moment they are found.
+
+**Why controls must be adversarially tested**
+
+- Configuration review confirms that a control exists; adversarial testing confirms that it works under realistic attack conditions
+
+- A Panguard rule that fires on training data but misses a real attack due to an encoding edge case is not a control
+
+- The gap between “deployed” and “effective” is where most security incidents originate
+
+- Testing must be continuous — a control that worked last quarter may not work after a dependency update, a rule change, or a new skill category is approved
+
+**YAML test case library — format and storage**
+
+- Every test case in the repo as structured YAML: test ID, OWASP risk category, attack type, preconditions, attack payload, expected Panguard/Falco response, pass/fail criteria
+
+- Test suite runs in CI against staging on every PR that touches a security-relevant component
+
+- Failed test case = deployment blocked — same weight as a failing unit test
+
+- Signed test report archived alongside the deployment artifact: proves every known attack pattern was tested on every release
+
+**Prompt injection and goal hijacking drills**
+
+- Direct injection: obvious forms (ignore your instructions) and obfuscated forms (base64-encoded, split across messages, foreign language)
+
+- Indirect injection: crafted PDF or web page containing injection payload; must not reach tool execution
+
+- Multi-step drift: spread injection across multiple turns; test session-level goal drift detection
+
+- Tools: clawql security inject --mode direct/indirect/multistep
+
+- All injection tests run against an isolated staging environment with a dedicated test memory store — never against production
+
+**ATR bypass and privilege escalation tests**
+
+- Forged JWT: craft token with out-of-scope ATR claims, signed with a test key — must produce 401 INVALID_SIGNATURE
+
+- Out-of-scope tool call: use a legitimate session token to attempt a tool the token doesn’t permit — must produce 403 ATR_VIOLATION AND an audit log entry (partial pass if only one of the two occurs)
+
+- Delegation expansion: subagent requests broader claims than the orchestrator holds — must produce 403 DELEGATION_VIOLATION
+
+- Every bypass attempt must produce both the correct rejection response AND an audit log entry — a rejection without a log entry is a partial failure
+
+**Tool schema fuzzing**
+
+- Property-based fuzzing with fast-check or Hypothesis against every declared tool schema
+
+- 10,000 random inputs per tool minimum; all must produce correct validation decision without panic or 500
+
+- Specific edge cases: boundary values, type coercion, deeply nested objects, additionalProperties bypass, pattern anchor bypass
+
+- Any fuzzing-discovered crash or incorrect validation → named regression test case
+
+- Fuzzing runs weekly in CI as a scheduled job, not just on PR
+
+**Memory poisoning simulations**
+
+- Direct injection: write entry containing instruction-injection pattern → verify Panguard block fires before write commits
+
+- Classification boundary: write secret-classified entry → verify rejection at classification gate
+
+- Post-write tamper: modify entry in test store → verify Merkle integrity check detects mismatch → verify reads are blocked
+
+- Recall boundary: write confidential entry → attempt recall with internal-level session → verify not returned
+
+- All simulations against an isolated test memory store — never production; test store restored to pre-test state after each simulation
+
+**Purple team workflow**
+
+- Red team executes attack playbook against staging while blue team observes Panguard and Falco in real time
+
+- Every attack classified: blocked-with-alert (pass), blocked-without-alert (partial fail), not-blocked (fail)
+
+- New rules authored during the exercise — blue team deploys to staging and confirms the attack is blocked before moving to the next
+
+- Not a post-exercise activity: rules are written in real time
+
+- Quarterly cadence aligned with the quarterly review; ad-hoc after any major architecture change
+
+**External penetration test scope**
+
+- In scope: gateway, Panguard, NATS broker, Vault integration, memory store write/recall, ClawHub install path, egress filtering stack
+
+- Out of scope: production data (synthetic data only), WORM audit logs (destruction risk), underlying cloud provider infrastructure
+
+- Briefing the external team: provide OWASP Agentic Top 10 as baseline, ATR/MCP model overview, staging environment with pre-seeded test agents
+
+- Evidence requirements: methodology in statement of work, findings report with reproduction steps, retest within 30 days, all artifacts signed and stored in WORM
+
+**Key takeaways to cover**
+
+- The test case library in CI is what separates “we believe the controls work” from “we verify the controls work on every release”
+
+- Every ATR bypass test must produce both the correct rejection response AND an audit log entry — a rejection without a log is a detection gap
+
+- Purple team rule authoring in real time is the practice that immediately closes gaps found during exercises rather than creating a backlog
+
+- External pen test scope must include the MCP-specific attack surface — a standard web application scope will miss the most critical vectors
+
+---
+
+Module 24: Red Teaming and Adversarial Testing Methodology
+
+Proving the Controls Work
+
+Hello and welcome to Module 24! 🎉
+
+Modules 1–23 have given us a complete technical security stack, a living threat model, and a direct mapping to the OWASP Agentic Top 10. But a control that exists on paper is only a hypothesis. A Panguard rule that fires perfectly on training data but misses a real attack because of an encoding edge case is not a control — it is a comforting illusion.
+
+The gap between “deployed” and “effective” is where most security incidents originate. In this module we turn every control into something we can prove works under realistic attack conditions. We build a continuous, automated adversarial testing program that runs in CI, surfaces gaps immediately, and feeds new rules back into the system in real time. By the end you will have a living verification program that keeps the entire defense-in-depth stack honest.
+
+---
+
+Why Controls Must Be Adversarially Tested
+
+Configuration reviews and static analysis only confirm that a control _exists_. Adversarial testing confirms that it _works_ when an intelligent attacker is trying to break it.
+
+Key realities:
+
+- A Panguard rule that passes training data may still miss obfuscated or multi-step attacks.
+
+- A control that worked last quarter may fail after a dependency update, a rule change, or a new skill category.
+
+- The difference between “deployed” and “effective” is exactly where real incidents happen.
+
+Testing must be continuous, automated, and integrated into the deployment pipeline — not a periodic afterthought.
+
+---
+
+YAML Test Case Library — Format and Storage
+
+We maintain a living library of structured test cases in the infrastructure repository. Every test is a simple YAML file.
+
+Example structure:
+
+testId: TM-ASI01-003
+
+owaspCategory: ASI01
+
+attackType: indirect-injection
+
+preconditions: 
+
+  - session with internal classification level
+
+  - test memory store seeded with clean documents
+
+attackPayload: |
+
+  
+
+expectedResponse:
+
+  panguardDecision: BLOCK
+
+  falcoAlert: false
+
+  auditLogPresent: true
+
+passCriteria: 
+
+  - Panguard returns 403 before any tool execution
+
+  - No memory write or external egress occurs
+
+  - Full context is logged to WORM
+
+The entire test suite runs in CI against a dedicated staging environment on every PR that touches a security-relevant component (Panguard rules, schemas, input validation, etc.).
+
+A failing test case blocks the deployment — exactly the same weight as a failing unit test.
+
+After each run, a signed test report is archived alongside the deployment artifact, proving that every known attack pattern was tested on this exact release.
+
+---
+
+Prompt Injection and Goal Hijacking Drills
+
+We run three categories of injection tests:
+
+- Direct injection: obvious forms (ignore your instructions) and heavily obfuscated forms (base64, foreign-language encoding, split across messages).
+
+- Indirect injection: crafted PDF or web-page payloads that must never reach tool execution.
+
+- Multi-step goal hijacking: injection spread across multiple turns; tests session-level goal-drift detection.
+
+Dedicated CLI tool for consistent execution:
+
+clawql security inject --mode direct|indirect|multistep --target staging
+
+All tests run against an isolated staging environment with a dedicated test memory store — never against production.
+
+---
+
+ATR Bypass and Privilege Escalation Tests
+
+We deliberately attempt to break the core enforcement layer:
+
+- Forged JWT: Craft a token with out-of-scope ATR claims, signed with a test key → must produce 401 INVALID_SIGNATURE.
+
+- Out-of-scope tool call: Use a legitimate session token to call a tool it is not permitted to use → must produce 403 ATR_VIOLATION and a corresponding audit log entry. (Partial pass if only one occurs.)
+
+- Delegation expansion: Subagent requests broader claims than the orchestrator holds → must produce 403 DELEGATION_VIOLATION.
+
+Every bypass attempt must generate both the correct rejection response and an audit log entry. A silent rejection without a log is treated as a detection gap.
+
+---
+
+Tool Schema Fuzzing
+
+We use property-based fuzzing to find edge cases that static tests miss.
+
+- Tool: fast-check (TypeScript) or Hypothesis (Python).
+
+- Minimum 10,000 random inputs per tool schema.
+
+- All inputs must produce a correct validation decision with no panics or 500 errors.
+
+Specific edge cases explicitly tested:
+
+- Boundary values
+
+- Type coercion
+
+- Deeply nested objects
+
+- additionalProperties bypass attempts
+
+- Pattern anchor bypasses
+
+Any crash or incorrect validation discovered by fuzzing becomes a named regression test case. Fuzzing runs weekly in CI as a scheduled job, not just on PRs.
+
+---
+
+Memory Poisoning Simulations
+
+We simulate every memory-poisoning vector:
+
+- Direct injection: attempt to write an entry containing instruction-injection patterns → verify Panguard blocks before commit.
+
+- Classification boundary: attempt to write a secret-classified entry → verify rejection at the classification gate.
+
+- Post-write tamper: modify an entry in the test store → verify Merkle integrity check detects mismatch and blocks reads.
+
+- Recall boundary: write a confidential entry → attempt recall with an internal-level session → verify it is not returned.
+
+All simulations run against an isolated test memory store that is automatically restored to its original state after each run — never production.
+
+---
+
+Purple Team Workflow
+
+Red team and blue team work together in real time:
+
+- Red team executes the full attack playbook against staging.
+
+- Blue team watches Panguard, Falco, and the audit trail live.
+
+- Every attack is classified:
+  - Blocked-with-alert → pass
+    - Blocked-without-alert → partial fail
+    - Not blocked → fail
+
+New rules are authored during the exercise. Blue team deploys them to staging and confirms the attack is now blocked before moving to the next scenario.
+
+This is not a post-exercise activity — gaps are closed in real time.
+
+Cadence: quarterly (aligned with the quarterly review in Module 25) plus ad-hoc after any major architecture change.
+
+---
+
+External Penetration Test Scope
+
+We also bring in external red teams quarterly.
+
+In scope:
+
+- Gateway, Panguard, NATS broker
+
+- Vault integration
+
+- Memory store write/recall
+
+- ClawHub install path
+
+- Egress filtering stack
+
+Out of scope:
+
+- Production data (synthetic data only)
+
+- WORM audit logs (destruction risk)
+
+- Underlying cloud-provider infrastructure
+
+Briefing package provided to the external team:
+
+- OWASP Agentic Top 10 as baseline
+
+- ATR/MCP model overview
+
+- Staging environment pre-seeded with test agents
+
+Evidence requirements: methodology in the statement of work, findings report with full reproduction steps, retest within 30 days, and all artifacts signed and stored in WORM.
+
+---
+
+Key Takeaways (Memorize These!)
+
+- The test case library in CI is what separates “we believe the controls work” from “we verify the controls work on every release.”
+
+- Every ATR bypass test must produce both the correct rejection response and an audit log entry — a rejection without a log is a detection gap.
+
+- Purple team rule authoring in real time is the practice that immediately closes gaps found during exercises rather than creating a backlog.
+
+- External pen test scope must include the MCP-specific attack surface — a standard web-application scope will miss the most critical vectors.
+
+You now have a continuous adversarial testing program that keeps every control honest. The gap between “deployed” and “effective” is closed. This verification layer ensures that the entire defense-in-depth stack remains effective as the platform evolves, new skills are added, and new attack techniques emerge. This is what turns our security architecture from a static set of rules into a living, proven system.
+
+## **MODULE 25**
+
+### **Quarterly Security Review Checklist: Metrics, Rotations, and Continuous Posture Verification**
+
+Security posture decays between active reviews: certificates approach expiry, exceptions accumulate past their intended deadlines, allowlists grow beyond what current business needs justify, and baseline metrics drift without anyone noticing. The quarterly review is the structured forcing function that catches this drift before it becomes a gap — a two-hour exercise that produces a signed, auditable record of the platform’s security posture at a specific point in time. This module defines every item on the checklist and the evidence each one requires, so the review is a genuine verification rather than a confidence-building exercise.
+
+**Why quarterly cadence matters**
+
+- Security posture decays continuously: certificates approach expiry, exceptions accumulate, allowlists grow, baselines drift
+
+- A quarterly review creates a forcing function that catches drift before it becomes a gap
+
+- The review must produce a signed, auditable record — not a meeting summary but a verifiable document
+
+- All findings from the quarterly review are tracked as issues with owners and deadlines; unresolved findings escalate to the next review
+
+**Certificate and credential rotation check**
+
+- Inventory every certificate in the stack against the certificate inventory (Module 9)
+
+- Flag any certificate with <90 days remaining — verify cert-manager renewal is configured and working
+
+- Check Vault lease renewal rates: are any dynamic secrets failing to renew before expiry?
+
+- Verify that the last rotation of each long-lived credential (CA certificate, HSM unsealing key, signing keys) occurred within its declared rotation interval
+
+- Run clawql security cert-audit and verify output against the last quarter’s report
+
+**Allowlist review**
+
+- ServiceEntry allowlist (Module 6): remove entries for deprecated external integrations
+
+- ClawHub skill allowlist (Module 3): verify each skill’s hash pin still matches the current manifest; remove skills no longer in use
+
+- ATR role registry: verify each role has a declared owner and a justified scope; flag roles not used in the last 90 days
+
+- Admin role assignments (Module 30): verify no individual holds two mutually exclusive roles; review any exceptions from the separation-of-duties report
+
+**Exception and residual risk review**
+
+- Enumerate all open exceptions: vulnerability management SLO exceptions (Module 26), Panguard rule exceptions, compliance mapping gaps (Module 29)
+
+- Verify each exception has not expired beyond its stated deadline
+
+- Expired exceptions without renewal = critical finding requiring immediate escalation
+
+- Review the residual risk register from the STRIDE model (Module 22): any residual risk whose conditions have changed requires threat model update
+
+**Backup and restore verification**
+
+- Execute memory store restore from the most recent snapshot to an isolated test environment
+
+- Verify Merkle root continuity post-restore
+
+- Execute Vault Raft snapshot restore to a test Vault instance
+
+- Document timing against RTO targets (Module 28); flag any restore that exceeds the target
+
+**Metrics review against baselines**
+
+- Panguard block rate: trending up vs. baseline? Investigate the top 3 blocked rules by volume
+
+- ATR violation rate per rule: any rule with zero fires in 90 days? Test it in the next red team exercise
+
+- Memory integrity check failures: must be zero; any non-zero value is a critical finding
+
+- Egress anomaly detection rate: trending up per tenant?
+
+- Orphaned identity count from the weekly reconciliation reports: should be zero; any open orphans require immediate action
+
+**STRIDE model update**
+
+- Review the threat model against any changes made in the quarter: new pipelines, new skills, new external integrations, post-incident findings
+
+- Update attack tree branches for any new threat paths identified
+
+- Document any new residual risks accepted this quarter with explicit sign-off from the security team lead
+
+**Signed review output**
+
+- Produce a signed quarterly review report: all checklist items with pass/fail/finding status, open findings with owners and deadlines, metric summaries
+
+- Store the signed report in WORM alongside the evidence package (Module 29)
+
+- Share with the compliance team for SOC 2 evidence collection
+
+**Key takeaways to cover**
+
+- The quarterly review is a verification exercise, not a confidence-building exercise — every item must produce evidence, not an assertion
+
+- Expired exceptions without renewal are critical findings; they represent commitments that were made and not kept
+
+- Backup restore testing is only meaningful if the timing is measured against documented RTO targets — a restore that took 6 hours against a 1-hour target is a finding
+
+- The metric review is where alert tuning decisions are made — a rule with zero fires in 90 days either isn’t being triggered or isn’t working, and the quarterly review is where that question is asked
+
+---
+
+Module 25: Quarterly Security Review Checklist
+
+Metrics, Rotations, and Continuous Posture Verification
+
+Hello and welcome to Module 25! 🎉
+
+Modules 1–24 have given us a full technical security stack, living threat models, adversarial testing, and automated response. But security posture does not stay perfect on its own. Certificates slowly approach expiry, exceptions quietly accumulate past their deadlines, allowlists grow beyond current needs, and baselines drift without anyone noticing.
+
+A quarterly review is the structured forcing function that catches this natural decay before it becomes a real gap. It is not a meeting where people say “everything looks good.” It is a verification exercise that produces a signed, auditable document with evidence for every item. In this module we walk through the exact checklist, the evidence required for each item, and how to turn findings into tracked issues with owners and deadlines. By the end you will have a repeatable process that keeps the entire platform’s security posture healthy, measurable, and continuously improving.
+
+---
+
+Why Quarterly Cadence Matters
+
+Security posture decays continuously and silently:
+
+- Certificates approach expiry
+
+- Temporary exceptions become permanent
+
+- Allowlists grow beyond business need
+
+- Behavioral baselines drift
+
+Without a forcing function, small issues compound into major gaps. The quarterly review creates that forcing function. It must produce a signed, auditable record — not a slide deck or meeting notes, but a verifiable document stored in WORM.
+
+All findings are tracked as issues with named owners and deadlines. Any finding that remains unresolved at the next quarterly review escalates automatically to the security leadership team.
+
+---
+
+Certificate and Credential Rotation Check
+
+We start with the items that have hard expiration dates.
+
+- Inventory every certificate and credential against the central certificate inventory (Module 9).
+
+- Flag any certificate with fewer than 90 days remaining. Verify that cert-manager renewal is configured and working.
+
+- Check Vault lease renewal rates: are any dynamic secrets failing to renew before expiry?
+
+- Verify the last rotation date for every long-lived credential (CA certificate, HSM unsealing key, signing keys) against its declared rotation interval.
+
+Run the built-in command:
+
+clawql security cert-audit --compare-last-quarter
+
+-  and confirm the output matches the previous quarter’s report (or explain any differences).
+
+Any certificate or credential that is not on track becomes a critical finding with a 30-day remediation deadline.
+
+---
+
+Allowlist Review
+
+Allowlists are a common source of creeping risk.
+
+- ServiceEntry allowlist (Module 6): Review every external hostname. Remove any entries for deprecated integrations.
+
+- ClawHub skill allowlist (Module 3): For every approved skill, verify the pinned manifest hash still matches the current published manifest. Remove any skills no longer in active use.
+
+- ATR role registry: Confirm every role has a declared owner and a written justification. Flag any role that has not been used in the last 90 days.
+
+- Admin role assignments (Module 30): Verify no individual holds two mutually exclusive roles. Review any exceptions from the separation-of-duties report.
+
+Each removed or updated entry is documented in the review report.
+
+---
+
+Exception and Residual Risk Review
+
+We explicitly review every accepted deviation from the baseline.
+
+- Enumerate all open exceptions: vulnerability management SLO exceptions (Module 26), Panguard rule exceptions, compliance mapping gaps (Module 29).
+
+- Verify that each exception has not expired beyond its stated deadline. An expired exception without renewal is a critical finding requiring immediate escalation.
+
+- Review the residual risk register from the STRIDE model (Module 22). Any residual risk whose conditions have changed requires an immediate threat-model update.
+
+---
+
+Backup and Restore Verification
+
+We do not just trust that backups work — we test them.
+
+- Execute a full memory-store restore from the most recent snapshot into an isolated test environment.
+
+- Verify Merkle root continuity after the restore.
+
+- Execute a Vault Raft snapshot restore to a test Vault instance.
+
+- Document the exact timing and compare it against the documented RTO targets from Module 28. Any restore that exceeds its RTO is a finding.
+
+These tests are performed live during the review and the results are attached to the signed report.
+
+---
+
+Metrics Review Against Baselines
+
+We compare current metrics to the established baselines from previous quarters.
+
+Key metrics to review:
+
+- Panguard block rate: Is it trending up versus the 90-day baseline? Investigate the top three blocked rules by volume.
+
+- ATR violation rate per rule: Any rule with zero fires in the last 90 days? Schedule it for testing in the next red-team exercise (Module 24).
+
+- Memory integrity check failures: Must be exactly zero. Any non-zero value is a critical finding.
+
+- Egress anomaly detection rate: Is it trending up per tenant?
+
+- Orphaned identity count from the weekly reconciliation reports: Must be zero. Any open orphans require immediate action.
+
+For any metric that is trending in the wrong direction, the review must document the root cause and the corrective action with an owner and deadline.
+
+---
+
+STRIDE Model Update
+
+The living threat model (Module 22) is reviewed as a standing agenda item.
+
+- Review the attack tree against every change made in the quarter (new pipelines, new skills, new external integrations, post-incident findings).
+
+- Add or modify branches for any new threat paths identified.
+
+- Document any new residual risks accepted this quarter with explicit sign-off from the security team lead.
+
+---
+
+Signed Review Output
+
+The review ends with a single signed artifact:
+
+- A quarterly review report containing every checklist item with pass/fail/finding status.
+
+- Open findings listed with owners, deadlines, and severity.
+
+- Summary of all metrics and trends.
+
+The report is signed by the security team lead and stored in WORM alongside the full evidence package (Module 29). It is also shared with the compliance team for SOC 2, HIPAA, GDPR, and EU AI Act evidence collection.
+
+---
+
+Key Takeaways (Memorize These!)
+
+- The quarterly review is a verification exercise, not a confidence-building exercise — every item must produce evidence, not an assertion.
+
+- Expired exceptions without renewal are critical findings; they represent commitments that were made and not kept.
+
+- Backup restore testing is only meaningful if the timing is measured against documented RTO targets — a restore that took 6 hours against a 1-hour target is a finding.
+
+- The metric review is where alert tuning decisions are made — a rule with zero fires in 90 days either isn’t being triggered or isn’t working, and the quarterly review is where that question is asked.
+
+You now have a repeatable, evidence-driven quarterly process that keeps the entire security posture healthy and auditable. This is the governance layer that ensures everything we built in Modules 1–24 continues to work as intended, quarter after quarter, year after year. The platform does not drift into insecurity — it is actively kept secure.
+
+## **MODULE 26**
+
+### **Vulnerability Management, Patch Cadence, and Cryptographic Agility**
+
+Pinning dependencies for supply chain integrity and patching them when CVEs appear are not contradictory requirements — they are two halves of a discipline that only works if both halves run on a defined process. Severity-based SLOs with component-specific triage criteria, session-drain rolling updates that patch without disrupting live agents, and cryptographic algorithm migration playbooks for when standards change beneath the platform together make vulnerability management a repeatable operational process rather than a reactive scramble. This module closes the loop that Module 1 opens.
+
+**The pinning/patching tension**
+
+- Module 1 says pin everything for supply chain integrity
+
+- Vulnerability management requires moving those pins forward when CVEs are disclosed
+
+- These are not contradictory — they require a disciplined process to reconcile
+
+- The failure modes in each direction: unpinned = supply chain risk; never updated = known-vulnerable stack
+
+**CVE triage criteria for MCP components**
+
+- CVSS score alone is insufficient: reachability in the tool-call dispatch path is the primary triage factor
+
+- Four triage questions: Is the vulnerable component in the tool-call path? Is the vulnerable code path reachable from agent input? Does the exploit require network access from outside the cluster? Is a public proof-of-concept exploit available?
+
+- Component priority ordering: gateway and Panguard > Vault integration > memory store > observability stack
+
+- ClawHub skill dependencies: different triage path because skills run in Kata sandboxes; the blast radius assumption is sandbox-constrained
+
+**Patch SLOs by severity**
+
+- Critical (CVSS ≥9.0 or public PoC against Tier 1 component): patch in staging within 8 hours, production within 24 hours; emergency CAB
+
+- High (CVSS 7.0–8.9, reachable with chaining): staging within 48 hours, production within 7 days; standard CAB
+
+- Medium (CVSS 4.0–6.9, limited reachability): within 30 days; normal sprint cycle
+
+- Low (CVSS <4.0): within 90 days; bundled with quarterly dependency update
+
+- Exceptions: documented with CVE, reason, compensating control, expiry date (max 30 days beyond SLO), security owner approval
+
+**Session-drain rolling update**
+
+- preStop lifecycle hook: gateway calls /admin/drain to stop accepting new sessions before terminating
+
+- maxSurge: 1, maxUnavailable: 0: new pod starts (running patched version) before old pod terminates
+
+- Existing sessions complete on the old pod; new sessions route to the patched pod
+
+- terminationGracePeriodSeconds: 330: 5-minute drain window before forced termination
+
+- Pre-patch smoke test: 10 critical tool calls against the patched gateway in staging before production promotion
+
+- Rollback criteria: >20% Panguard block rate increase, any unhandled 500, memory Merkle check fails post-deploy
+
+**Dependency automation compatible with pinning**
+
+- Renovate configured to update digest pins, not remove them
+
+- Lockfile-based updates: package-lock.json, Pipfile.lock, Helm Chart.lock
+
+- Patch-level auto-merge when: all CI gates pass including security test suite, supply chain verification, and skill lint
+
+- Major and minor updates: always require human review, never auto-merge
+
+- Harbor allowlist update required before any image digest change can merge — Renovate PR triggers a required check
+
+- Weekly batched updates for minor/patch; unbatched PRs for CVE-triggered updates with appropriate SLO label
+
+**Cryptographic agility: JWT algorithm migration**
+
+- Migration from RS256 to ES256: transition period where both algorithms are accepted for verification
+
+- issuanceAlgorithm: ES256 from day one of transition — all new tokens use the new algorithm
+
+- acceptedAlgorithms: [RS256, ES256] during transition window
+
+- Hard end date: after this date, RS256 rejected — set in config before transition begins
+
+- No session disruption: all active tokens were issued after the algorithm switch
+
+**mTLS CA algorithm migration**
+
+- Dual-signing: issue a new ECDSA intermediate CA alongside the existing RSA CA
+
+- Both CAs trusted during the transition window
+
+- New leaf certificates issued from the ECDSA CA from day one of transition
+
+- RSA CA removed from trusted roots after all RSA leaf certificates have expired naturally
+
+- Cert-manager clusterissuer update triggers new certificate issuance across the mesh
+
+**Memory Merkle hash function migration**
+
+- clawql memory reroot --from sha256 --to sha3-256: recomputes all hashes with new algorithm
+
+- Stores both old and new root; transition record written to WORM
+
+- Historical entries verifiable with old algorithm; new entries use new algorithm
+
+- Transition record becomes part of the immutable audit trail
+
+**Certificate lifecycle management**
+
+- Certificate inventory: name, issuer, algorithm, expiry, cert-manager renewal config, owner
+
+- renewBefore: 720h (30 days): cert-manager renews before expiry
+
+- Alert at <14 days remaining: catches cert-manager failures before they cause outages
+
+- Annual forced rotation drill in staging: manually expire a certificate and verify cert-manager renews without interruption
+
+**Key takeaways to cover**
+
+- Pinning and patching are complementary disciplines; the process that reconciles them is the vulnerability management program
+
+- Triage based on reachability in the tool-call path, not just CVSS score — a critical CVSS in an observability component is less urgent than a medium CVSS in the gateway
+
+- Session drain via rolling update means patches can be applied without service interruption
+
+- Cryptographic agility must be planned before the algorithm is deprecated — a migration under pressure produces outages
+
+---
+
+Module 26: Vulnerability Management, Patch Cadence, and Cryptographic Agility
+
+Hello and welcome to Module 26! 🎉
+
+Modules 1–25 have given us trusted images, admission control, zero-trust networking, runtime enforcement, immutable memory, GPU isolation, automated response, secure development pipelines, living threat models, and continuous verification. But even the most perfect architecture still runs on software that contains known vulnerabilities the day after they are disclosed.
+
+Module 1 told us to pin everything for supply-chain integrity. Vulnerability management tells us we must move those pins forward when CVEs appear. These two requirements are not in conflict — they are two halves of the same disciplined process. In this module we build a repeatable vulnerability management program with reachability-based triage, strict patch SLOs, zero-downtime rolling updates, dependency automation that respects pins, and planned cryptographic agility for when algorithms must be retired. By the end you will have a system that reconciles pinning and patching without ever creating windows of exposure or operational pain.
+
+---
+
+The Pinning/Patching Tension
+
+Pinning (digest pinning, manifest hash pinning, lockfiles) gives us reproducibility and supply-chain integrity.  
+ Patching requires us to move those pins forward when a CVE is disclosed.
+
+The tension is real, but solvable. The failure modes are clear:
+
+- Never update → known-vulnerable stack.
+
+- Update without process → supply-chain risk.
+
+We reconcile them with a single, auditable process that treats every CVE as a deliberate, gated change rather than a reactive scramble.
+
+---
+
+CVE Triage Criteria for MCP Components
+
+CVSS score alone is not enough. We triage based on reachability in the tool-call dispatch path.
+
+Four triage questions applied to every CVE:
+
+1. Is the vulnerable component in the tool-call dispatch path?
+
+2. Is the vulnerable code path reachable from agent input?
+
+3. Does the exploit require network access from outside the cluster?
+
+4. Is a public proof-of-concept exploit available?
+
+Component priority ordering (highest to lowest):
+
+- Gateway and Panguard (Tier 1)
+
+- Vault integration
+
+- Memory store
+
+- Observability stack
+
+- ClawHub skill dependencies (lower priority because they run inside Kata sandboxes)
+
+This reachability-first approach ensures that a medium-severity CVE in the gateway is patched faster than a critical CVE in a non-reachable observability component.
+
+---
+
+Patch SLOs by Severity
+
+We define time-bound Service Level Objectives (SLOs) with clear escalation paths.
+
+- Critical (CVSS ≥9.0 or public PoC against a Tier 1 component)  
+  → Staging within 8 hours, production within 24 hours  
+  → Emergency CAB (Change Advisory Board) required
+
+- High (CVSS 7.0–8.9 and reachable with chaining)  
+  → Staging within 48 hours, production within 7 days  
+  → Standard CAB
+
+- Medium (CVSS 4.0–6.9 with limited reachability)  
+  → Within 30 days  
+  → Normal sprint cycle
+
+- Low (CVSS <4.0)  
+  → Within 90 days  
+  → Bundled with quarterly dependency update
+
+Every exception must be documented with the CVE, reason, compensating control, expiry date (maximum 30 days beyond SLO), and security owner approval.
+
+---
+
+Session-Drain Rolling Update
+
+Patches must never disrupt live agent sessions.
+
+We use a zero-downtime strategy:
+
+- preStop lifecycle hook: gateway calls /admin/drain to stop accepting new sessions before the pod terminates.
+
+- Deployment strategy: maxSurge: 1, maxUnavailable: 0 — new patched pod starts before the old pod is terminated.
+
+- Existing sessions finish on the old pod; new sessions route to the patched pod.
+
+- terminationGracePeriodSeconds: 330 (5-minute drain window).
+
+Before production promotion we run a pre-patch smoke test: 10 critical tool calls against the patched gateway in staging.
+
+Rollback criteria (defined before every deploy):
+
+- 20 % increase in Panguard block rate
+
+- Any unhandled 500 error
+
+- Any Falco CRITICAL alert in the observation window
+
+---
+
+Dependency Automation Compatible with Pinning
+
+We use Renovate to keep pins current without removing them.
+
+Configuration:
+
+- Renovate updates digest pins, never removes them.
+
+- Lockfile-based updates (package-lock.json, Pipfile.lock, Helm Chart.lock).
+
+- Patch-level updates auto-merge when all CI gates pass (supply-chain verification, security test suite, skill lint).
+
+- Major and minor updates always require human review — never auto-merge.
+
+- Harbor allowlist update is a required check before any image digest change can merge.
+
+Weekly batched updates for minor/patch; unbatched PRs for CVE-triggered updates with the appropriate SLO label.
+
+---
+
+Cryptographic Agility: JWT Algorithm Migration
+
+When an algorithm must be retired (e.g., RS256 → ES256):
+
+- Transition period where both algorithms are accepted for verification.
+
+- New tokens are issued with the new algorithm from day one of the transition.
+
+- Config: acceptedAlgorithms: [RS256, ES256] during the window.
+
+- Hard end date is set in advance; after that date RS256 is rejected.
+
+No session disruption occurs — all active tokens were issued after the algorithm switch.
+
+---
+
+mTLS CA Algorithm Migration
+
+Dual-signing strategy:
+
+- Issue a new ECDSA intermediate CA alongside the existing RSA CA.
+
+- Both CAs are trusted during the transition window.
+
+- New leaf certificates are issued from the ECDSA CA from day one.
+
+- RSA CA is removed from trusted roots only after all RSA leaf certificates have expired naturally.
+
+cert-manager ClusterIssuer update triggers new certificate issuance across the mesh.
+
+---
+
+Memory Merkle Hash Function Migration
+
+When we need to upgrade the hash algorithm (e.g., SHA-256 → SHA3-256):
+
+clawql memory reroot --from sha256 --to sha3-256
+
+- Both old and new roots are stored during transition.
+
+- A transition record is written to the WORM audit trail.
+
+- Historical entries remain verifiable with the old algorithm; new entries use the new algorithm.
+
+---
+
+Certificate Lifecycle Management
+
+We maintain a central certificate inventory with:
+
+- Name, issuer, algorithm, expiry, cert-manager renewal config, owner.
+
+- renewBefore: 720h (30 days) — cert-manager renews automatically.
+
+- Alert at <14 days remaining to catch any cert-manager failures early.
+
+Annual forced rotation drill in staging: manually expire a certificate and verify that cert-manager renews without interruption.
+
+---
+
+Key Takeaways (Memorize These!)
+
+- Pinning and patching are complementary disciplines; the process that reconciles them is the vulnerability management program.
+
+- Triage based on reachability in the tool-call path, not just CVSS score — a critical CVSS in an observability component is less urgent than a medium CVSS in the gateway.
+
+- Session-drain rolling updates mean patches can be applied without service interruption.
+
+- Cryptographic agility must be planned before the algorithm is deprecated — a migration under pressure produces outages.
+
+You now have a mature vulnerability management program that keeps the platform current without ever sacrificing supply-chain integrity or operational stability. Pinning and patching work together, cryptographic migrations are planned and painless, and every CVE is handled with speed appropriate to its actual risk. This is the operational discipline that keeps the entire security stack fresh and effective for the long term.
+
+## **MODULE 27**
+
+### **Secure Multi-Tenancy: Namespace Isolation, Per-Tenant Vault Paths, and Audit Segregation**
+
+Namespace isolation is the starting point for multi-tenancy, not the finish line — every shared resource below the namespace boundary (Vault, the memory store, DNS, Prometheus, Panguard) requires explicit hardening to prevent cross-tenant data leakage through the shared layer. Per-tenant Vault namespaces, gateway-enforced tenant ID predicates on memory recall, separate WORM audit buckets per tenant, and per-tenant resource quotas together make cross-tenant access architecturally impossible rather than policy-dependent. This module re-examines every component in the stack through the single question: what does this component leak between tenants, and how do we make leakage structurally impossible?
+
+**The multi-tenancy threat model**
+
+- Three failure modes: cross-tenant data access (silent, high severity), resource exhaustion as DoS (noisy, medium severity), audit log contamination (compliance failure)
+
+- Namespace isolation is necessary but not sufficient — shared infrastructure below the namespace boundary leaks between tenants
+
+- The correct test for any shared resource: what information does it expose about tenant A to tenant B?
+
+**Kubernetes namespace isolation**
+
+- One namespace per tenant; default-deny NetworkPolicy applied at namespace creation
+
+- No direct pod-to-pod communication between tenant namespaces — all traffic through declared service paths
+
+- Kyverno policy: reject pods in tenant A’s namespace that reference Secrets or ConfigMaps from tenant B
+
+- Node isolation for high-security tenants: dedicated node pools with taints + tolerations (HIPAA PHI workloads, for example)
+
+- ResourceQuota and LimitRange per namespace: CPU, memory, GPU, pod count limits
+
+**Per-tenant Vault paths and policy boundaries**
+
+- Vault OSS: path-prefix isolation (secret/tenants/tenant-a/_ vs secret/tenants/tenant-b/_)
+
+- Vault Enterprise: separate namespaces — stronger boundary; tenant A’s token cannot make API calls to tenant B’s namespace
+
+- Cross-tenant Vault access: Panguard fires critical alert if a token exchange request attempts a path outside the requesting agent’s tenant prefix
+
+- Per-tenant transit encryption keys: tenant A’s memory entries encrypted with a key tenant B cannot access even if the storage backend is shared
+
+**Memory store partitioning**
+
+- Storage path: s3://clawql-memory/tenants/tenant-a/ vs s3://clawql-memory/tenants/tenant-b/
+
+- S3 bucket policy: tenant’s IAM role can only access its own prefix
+
+- Gateway supplies tenantId from the session JWT — not from the caller’s request body (cannot be forged)
+
+- Gateway rejects recall queries without a valid tenantId in the session JWT: fail closed, not fail open
+
+- Vector DB for semantic recall: separate collection per tenant; gateway maps recall request to the calling session’s tenant collection; cross-collection queries rejected
+
+**Per-tenant resource quotas and NATS limits**
+
+- NATS JetStream: stream limits per tenant — max messages, max bytes, max consumers
+
+- Panguard rate limits: scoped per tenantId, not just per session — one tenant cannot exhaust the shared rate limit budget
+
+- GPU quotas: requests.nvidia.com/gpu in ResourceQuota per namespace
+
+**Audit log segregation**
+
+- tenantId written to every audit event at emission — never reconstructed from context
+
+- Fluent Bit output: separate WORM destination per tenant
+
+- Separate S3 bucket per tenant with Object Lock and tenant-scoped IAM access
+
+- Platform events (cluster-level alerts, admission control decisions): separate bucket, accessible only to platform security team
+
+- Evidence packages for tenant audits: signed, time-bounded export encrypted with the tenant’s public key — platform operator cannot read the contents
+
+**Cross-tenant leakage through shared infrastructure**
+
+- DNS: per-tenant RPZ zones in the filtering resolver — not a single shared allowlist
+
+- Panguard: stateless per request — no in-memory tenant context that bleeds between requests
+
+- Harbor: image pull secrets scoped per namespace — no cross-namespace secret reference
+
+- Prometheus: no tenant-identifying labels on metrics visible across tenants; per-tenant metrics as log events, not Prometheus metrics
+
+**Key takeaways to cover**
+
+- Namespace isolation is the starting point, not the finish line — every shared resource requires explicit isolation analysis
+
+- tenantId supplied from the session JWT by the gateway is the architectural control that makes cross-tenant data access forging impossible
+
+- Vault Enterprise namespaces are the correct model for SaaS multi-tenancy — path-prefix isolation is a best effort, not a hard boundary
+
+- Audit log segregation encrypted with the tenant’s public key gives tenants evidence ownership without requiring platform operator access
+
+---
+
+Module 27: Secure Multi-Tenancy
+
+Namespace Isolation, Per-Tenant Vault Paths, and Audit Segregation
+
+Hello and welcome to Module 27! 🎉
+
+Modules 1–26 have built a comprehensive security stack for single-tenant and internal deployments. Now we extend that stack to support multiple tenants safely — whether they are different customers in a SaaS platform or different business units inside a large organization.
+
+Multi-tenancy introduces three distinct failure modes: silent cross-tenant data access (highest severity), resource exhaustion as denial-of-service (noisy but still dangerous), and audit-log contamination (compliance nightmare). Namespace isolation is necessary but not sufficient — every shared resource below the namespace boundary must be explicitly hardened. In this module we re-examine the entire stack through one question: “What does this component leak between tenants, and how do we make leakage architecturally impossible?”
+
+---
+
+The Multi-Tenancy Threat Model
+
+We assume the worst: a compromised tenant could attempt to read another tenant’s data, exhaust shared resources, or poison shared logs.
+
+The three failure modes we must eliminate:
+
+1. Cross-tenant data access — silent and high-severity (e.g., one tenant reading another’s memory store).
+
+2. Resource exhaustion as DoS — noisy but effective (one tenant starving others of GPU, NATS, or CPU).
+
+3. Audit-log contamination — compliance failure (one tenant’s events mixing with another’s).
+
+Namespace isolation is the starting point. Everything else must be hardened at the shared-infrastructure layer.
+
+---
+
+Kubernetes Namespace Isolation
+
+We enforce strict isolation at the Kubernetes layer:
+
+- One namespace per tenant, created automatically on tenant onboarding.
+
+A default-deny NetworkPolicy is applied at namespace creation:
+
+apiVersion: networking.k8s.io/v1
+
+kind: NetworkPolicy
+
 metadata:
-name: enforce-kata-for-mcp
+
+  name: default-deny
+
 spec:
-validationFailureAction: Enforce
-rules: - name: require-kata
-match:
-resources:
-kinds: ["Pod"]
-namespaces: ["openclaw", "clawql"]
-validate:
-message: "MCP and sandbox workloads must use Kata runtime"
-pattern:
-spec:
-runtimeClassName: "kata"
 
-### When to Use Lighter Options
+  podSelector: {}
 
-**gVisor**: Acceptable for general non-execution workloads where Kata overhead is undesirable. Provides syscall interception without a full VM.
-**Seatbelt / macOS Sandbox**: Used only for local developer workstations.
-**Cloudflare Workers**: Suitable for lightweight, stateless edge functions that do not need full cluster access.
-**Plain Docker**: Strictly forbidden for any production MCP or agent execution path.
+  policyTypes:
 
-The Operator and Helm chart automatically apply the correct RuntimeClass based on workload type when security.kata.enabled: true.### Key Takeaways
+  - Ingress
 
-Kata Containers deliver the strongest isolation for agentic MCP workloads by using hardware VM boundaries.
-Weaker options like gVisor or standard Docker are insufficient when agents can execute arbitrary code.
-RuntimeClass enforcement via Kyverno ensures the correct sandbox is always used.
-Choose isolation strength based on workload risk — never default to convenience over security.
+  - Egress
 
-Strong sandboxing completes the foundational runtime protection. The next guides focus on protecting the MCP interface itself.**Next in the series**: MCP Runtime Protection – Panguard, ATR Rules, and Agentic Threat Mitigation.
+-
+- Kyverno policy rejects any pod in tenant A’s namespace that references Secrets, ConfigMaps, or ServiceAccounts from tenant B.
+
+- For high-security tenants (HIPAA, PCI, etc.): dedicated node pools with taints and tolerations — no shared nodes.
+
+- ResourceQuota and LimitRange are applied per namespace for CPU, memory, GPU, and pod count.
+
+This ensures tenants cannot see or affect each other at the Kubernetes resource level.
 
 ---
 
-_ClawQL Security Best Practices Series • Part 8 • May 2026_  
-Based on the official ClawQL Comprehensive Defense-in-Depth Security Guide.
+Per-Tenant Vault Paths and Policy Boundaries
+
+Vault is the source of truth for all secrets, so it must be tenant-isolated.
+
+- Vault OSS: Use strict path-prefix isolation (secret/tenants//\*).
+
+- Vault Enterprise (recommended for production SaaS): Use separate Vault namespaces — tenant A’s token cannot make API calls to tenant B’s namespace.
+
+Additional enforcement:
+
+- Panguard fires a critical alert on any token-exchange request that attempts a path outside the requesting agent’s tenant prefix.
+
+- Per-tenant transit encryption keys: tenant A’s memory entries are encrypted with a key that tenant B can never access, even if the storage backend is shared.
 
 ---
 
-# **MCP Runtime Protection: Panguard, ATR Rules, and Agentic Threat Mitigation\*\***Part 9 of the ClawQL Security Best Practices Series\***\*May 2026**
+Memory Store Partitioning
 
-The MCP interface is the highest-risk attack surface in any agentic platform. Agents interact with tools, memory, documents, and external systems through natural language, making traditional prompt-based defenses insufficient. This guide details how ClawQL protects the MCP runtime using Panguard, ATR scoping, and layered governance.### Panguard AI as the Synchronous Chokepoint
+Memory data is partitioned by tenant at the storage layer:
 
-Panguard sits directly in front of the intelligent MCP gateway (clawql-api) and acts as the primary real-time intercept layer.**Key Capabilities:**Sub-50ms latency per tool call
-Real-time ATR (Agent Task Request) rule evaluation
-Blocking of malicious or out-of-scope requests
-Coverage of OWASP Agentic Top 10 risks
-Full session auditing
+- S3 (or equivalent) path: s3://clawql-memory/tenants//
 
-All clawql_execute calls, native vertical tools, and proxy plugin dispatches flow through Panguard before any downstream execution.### ATR Rules and Explicit Tool Scoping
+- Bucket policy: the tenant’s IAM role (or service account) can only access its own prefix.
 
-Instead of relying on fragile prompt filtering, ClawQL uses structured ATR claims attached to JWT session tokens:Each tool call is validated against the user’s role, vertical permissions, and current task scope.
-Agents cannot self-escalate privileges.
-Cross-vertical actions (e.g., lending fraud patterns applied to insurance) require explicit elevated claims.
-Sandbox execution and dangerous operations are tightly gated.
+- The gateway always supplies tenantId from the validated session JWT — never from the request body (cannot be forged).
 
-Panguard rejects any call that violates these rules and returns a clear error to the agent.### Microsoft Agent Governance Toolkit as Deterministic Overlay
+- Any recall query without a valid tenantId in the JWT is rejected (fail-closed).
 
-Panguard is complemented by the Microsoft Agent Governance Toolkit running as a sidecar. While Panguard provides fast, AI-augmented protection, the Toolkit adds deterministic, rule-based governance with different failure modes. Together they create defense-in-depth at the MCP layer.### Prompt and Response Logging with Redaction
-
-Every MCP interaction is logged with:Full context (redacted via Presidio in the Fluent Bit pipeline)
-Tool parameters and results
-Decision metadata (why a call was allowed or blocked)
-
-Logs are written to WORM storage with Merkle roots for tamper evidence.### Key Takeaways
-
-The MCP interface must be treated as the primary attack surface and protected with synchronous, low-latency interception.
-ATR-based capability scoping is far more effective than prompt injection defenses.
-Layered protection (Panguard + Microsoft Toolkit) provides resilience through diverse failure modes.
-Comprehensive auditing and redaction ensure forensic readiness without exposing sensitive data.
-
-Strong MCP runtime protection builds directly on the sandboxing and network controls from previous guides and enables safe agentic operation at scale.**Next in the series**: Data Classification and PII Redaction – Never Let Sensitive Data Hit Logs.
+- Vector DB for semantic recall: separate collection per tenant; cross-collection queries are rejected at the gateway.
 
 ---
 
-_ClawQL Security Best Practices Series • Part 9 • May 2026_  
-Based on the official ClawQL Comprehensive Defense-in-Depth Security Guide.
+Per-Tenant Resource Quotas and NATS Limits
+
+Shared resources must be quota-protected:
+
+- NATS JetStream: per-tenant stream limits (max messages, max bytes, max consumers).
+
+- Panguard rate limits: scoped per tenantId, not just per session — one tenant cannot exhaust the shared rate-limit budget.
+
+- GPU quotas: ResourceQuota on requests.nvidia.com/gpu and limits.nvidia.com/gpu per namespace (Module 17).
+
+This prevents resource-exhaustion attacks between tenants.
 
 ---
 
-# **Data Classification and PII Redaction: Never Let Sensitive Data Hit Logs\*\***Part 10 of the ClawQL Security Best Practices Series\***\*May 2026**
+Audit Log Segregation
 
-Even with strong runtime protection and sandboxing (Guides 8–9), sensitive data inevitably flows through agent sessions, documents, and tool calls. This guide explains how ClawQL prevents PII, financial data, and other sensitive information from ever reaching persistent log stores.### Classification vs Redaction
+Audit logs must never mix tenant data.
 
-Data classification and redaction are distinct but complementary controls:**Classification** tells you _what_ data is sensitive and how it should be handled.
-**Redaction** ensures sensitive data is removed or masked _before_ it is written to any queryable or long-term storage.
+- Every audit event includes tenantId at emission time (never reconstructed from context).
 
-Both are required. Classification without redaction leaves raw PII in logs. Redaction without classification leaves you unable to reason about your data holdings.ClawQL maintains a formal data classification policy with tiers (Public, Internal, Confidential, Restricted) that maps to redaction rules.### Presidio in the Fluent Bit Pipeline
+- Fluent Bit routes events to separate WORM destinations per tenant.
 
-ClawQL runs Microsoft Presidio as a pipeline stage in Fluent Bit — not as per-pod sidecars.**Why pipeline-level redaction?**One consistent redaction engine for all log sources.
-Fewer failure modes and surfaces to maintain.
-Redaction happens before logs reach Loki.
+- Separate S3 bucket per tenant with Object Lock and tenant-scoped IAM access.
 
-Presidio identifies and redacts PII (names, SSNs, credit cards, medical records, etc.) and financial data in real time as logs are collected.### Redaction-Before-Write for WORM Compliance
+- Platform-level events (cluster alerts, admission decisions) go to a separate bucket accessible only to the platform security team.
 
-All security-relevant logs are written to WORM storage. Because redaction occurs before write:No raw sensitive data ever lands in persistent stores.
-WORM compliance is maintained without needing record deletion (which defeats WORM).
-Forensic value is preserved — enough context remains for investigation while PII is removed.
-
-### Forensic-Friendly Logging Design
-
-Redaction rules are tuned to balance privacy and usability:Entity replacement with tokens (e.g., [REDACTED_SSN]) rather than full removal.
-Context around redacted fields is retained where possible.
-Full unredacted logs (if ever needed for incident response) are available only through strict break-glass procedures with multi-party approval.
-
-### Key Takeaways
-
-Redaction must happen before data reaches any persistent log store — never after.
-Pipeline-level Presidio integration provides consistent, maintainable coverage across the entire platform.
-Classification policy + redaction-before-write satisfies both privacy regulations and forensic requirements.
-This approach ensures sensitive data never becomes a liability in logs, even during full incident investigations.
-
-Proper data handling completes the protection of information in motion and at rest, enabling safe monitoring and response in the following guides.**Next in the series**: Model Integrity – Verifying Weights Before Inference.
+- Evidence packages for tenant audits: signed, time-bounded export encrypted with the tenant’s public key — platform operators cannot read the contents.
 
 ---
 
-_ClawQL Security Best Practices Series • Part 10 • May 2026_  
-Based on the official ClawQL Comprehensive Defense-in-Depth Security Guide.
+Cross-Tenant Leakage Through Shared Infrastructure
+
+We explicitly harden every remaining shared component:
+
+- DNS: Per-tenant RPZ zones in the filtering resolver — no single shared allowlist.
+
+- Panguard: Stateless per-request processing — no in-memory tenant context that can bleed between requests.
+
+- Harbor: Image pull secrets scoped per namespace — cross-namespace secret references are rejected by Kyverno.
+
+- Prometheus: No tenant-identifying labels on metrics visible across tenants. Per-tenant security metrics are emitted as log events to the WORM pipeline instead of Prometheus.
 
 ---
 
-# **Model Integrity: Verifying Weights Before Inference\*\***Part 11 of the ClawQL Security Best Practices Series\***\*May 2026**
+Key Takeaways (Memorize These!)
 
-Model weights represent one of the largest and most overlooked attack surfaces in AI platforms. Traditional container scanning misses them entirely because they are large binary blobs fetched at runtime. This guide explains how ClawQL closes the “model-in-the-middle” attack vector with cryptographic verification before any inference begins.### The Model Weight Gap
+- Namespace isolation is the starting point, not the finish line — every shared resource requires explicit isolation analysis.
 
-Container images can be verified with Cosign and Kyverno, but model weights (Ollama models, Hugging Face checkpoints, custom fine-tunes) are typically downloaded directly and bypass image scanning. A poisoned weight file can contain backdoors that activate only during inference, exfiltrate data, or alter agent behavior.ClawQL treats model weights with the same rigor as container images.### Init-Container Verification Pattern
+- tenantId supplied from the session JWT by the gateway is the architectural control that makes cross-tenant data access forging impossible.
 
-Every inference or agent pod that loads model weights runs a mandatory init container that performs verification before the main container starts.**Core Verification Steps:**SHA-256 hash validation against a signed manifest.
-Cosign blob signature verification.
-Manifest stored in Harbor alongside the weights.
+- Vault Enterprise namespaces are the correct model for SaaS multi-tenancy — path-prefix isolation is a best effort, not a hard boundary.
 
-**Example Init Container:**yaml
+- Audit log segregation encrypted with the tenant’s public key gives tenants evidence ownership without requiring platform operator access.
 
-initContainers:
+You now have secure multi-tenancy that is architecturally enforced rather than policy-dependent. Cross-tenant leakage is structurally impossible, resource exhaustion is bounded, and audit logs remain clean and tenant-owned. This completes the foundation needed to run multiple tenants safely on the same platform.
 
-- name: verify-weights
-  image: harbor.clawql.internal/clawql/weight-verifier:latest
-  command:
-  - /bin/sh
-  - -c
-  - |
-    cosign verify-blob \
-     --key /etc/signing-keys/cosign.pub \
-     --signature /weights/manifest.sig \
-     /weights/manifest.json
-    sha256sum -c /weights/manifest.json
-    volumeMounts:
-  - name: model-weights
-    mountPath: /weights
-  - name: signing-keys
-    mountPath: /etc/signing-keys
-    readOnly: true
+## **MODULE 28**
 
-The main inference container only starts if the init container succeeds.### Harbor Manifest Storage
+### **Disaster Recovery and Business Continuity: RTO/RPO, Session Recovery, and Cross-Region Failover**
 
-Signed manifests and weights are stored in Harbor:One unified trust root for images and models.
-Replication and scanning policies apply uniformly.
-Kyverno policies can extend verifyImages logic to model-related init containers.
+Incident response assumes the infrastructure is intact and the question is recovery from an attack — disaster recovery assumes the infrastructure itself has failed and the question is restoration of service from a different location. Per-tier RTO and RPO targets (the audit trail, memory store, session state, and observability data all have different recovery requirements), active-passive cross-region failover with a Merkle continuity verification gate, and a defined session recovery decision tree together answer the question that only agentic platforms must answer: what do you do with an agent that was mid-task when everything stopped?
 
-### Key Takeaways
+**DR vs. incident response**
 
-Model weights must be verified on every pod start, not just on first download.
-The init-container pattern combined with Cosign + SHA-256 provides strong cryptographic assurance.
-Storing manifests in Harbor unifies supply chain controls for both containers and models.
-This control closes a critical gap that standard container security tools cannot address.
+- IR assumes infrastructure is intact and the threat is adversarial — contain, eradicate, recover from an attack
 
-Model integrity ensures the AI brains running your agents are exactly the ones you authorized and have not been tampered with.**Next in the series**: Runtime Monitoring and Observability – Falco, Wazuh, Prometheus, and Merkle Metrics.
+- DR assumes infrastructure has failed — restore service from backup, in a different location, as fast as the RTO allows
 
----
+- Both plans must exist independently before they can be integrated for combined events (ransomware = both)
 
-_ClawQL Security Best Practices Series • Part 11 • May 2026_  
-Based on the official ClawQL Comprehensive Defense-in-Depth Security Guide.
+- Each plan has a named owner, a tested runbook, a separate cadence
 
----
+**Data tier classification and RTO/RPO targets**
 
-# **Runtime Monitoring and Observability: Falco, Wazuh, Prometheus, and Merkle Metrics\*\***Part 12 of the ClawQL Security Best Practices Series\***\*May 2026**
+- Tier 1 (audit trail + WORM): RPO = 0, RTO = 4 hours — no audit events may be lost; forensic integrity is non-negotiable
 
-Strong prevention and containment are incomplete without comprehensive visibility. This guide covers ClawQL’s runtime monitoring stack, which provides deep observability into system behavior, detects anomalies, and correlates events across layers.### The Observability Stack
+- Tier 2 (memory store + Merkle roots): RPO = 15 minutes, RTO = 1 hour — agents can operate degraded without memory
 
-ClawQL deploys a full open-source observability suite:**Falco** (eBPF) — syscall-level monitoring and Kubernetes audit log integration. Detects suspicious activity such as unexpected shells, file modifications, or network connections inside containers.
-**Wazuh** — OSS SIEM for log correlation, rule-based alerting, vulnerability detection, and compliance reporting.
-**Prometheus** — metrics collection with custom exporters for Merkle root verification and Cuckoo filter health.
-**Loki** — log aggregation (receives only redacted logs from the Presidio pipeline).
-**Tempo** — distributed tracing for request flows through the intelligent MCP gateway.
-**Kiali** — Istio service mesh topology and traffic visualization.
+- Tier 3 (active session state): RPO = best effort (checkpoint interval), RTO = 30 minutes — uncheckpointed sessions restart
 
-### Alert Tuning and Ownership
+- Tier 4 (observability data): RPO = 24 hours, RTO = 4 hours — useful for post-incident but not required for service restoration
 
-Wazuh and Falco generate high volumes of events by default. ClawQL requires:Named owner responsible for alert tuning.
-Tiered response (low-confidence → alert only; high-confidence → auto-quarantine via Talon).
-Regular tuning sessions to reduce noise while preserving signal.
+- Untested RTO targets are aspirations; only tested targets are commitments
 
-### Node Pinning Strategy
+**Agent state serialization**
 
-Observability workloads are pinned to dedicated non-GPU nodes using node selectors and taints. This prevents monitoring overhead from affecting inference latency or consuming GPU VRAM needed for agents.### Merkle and Cuckoo Metrics
+- Serialization is the prerequisite for resumption — you cannot recover what you cannot describe as data
 
-Custom Prometheus metrics expose:Merkle root verification success/failure rates.
-Cuckoo filter false-positive rates (critical for security paths).
-Audit trail completeness.
+- Checkpoint format: agent ID, session ID, pipeline position, ATR claims snapshot, memory store read pointer, pending HITL approvals, last completed tool call
 
-These metrics ensure cryptographic integrity is actively monitored, not assumed.### Key Takeaways
+- Checkpoint signed by the agent’s private key; hash appended to the Merkle tree
 
-Runtime monitoring turns the platform into a sensor that detects compromise early.
-Layered tools (Falco for low-level, Wazuh for correlation, Prometheus for metrics) provide comprehensive coverage with different strengths.
-Alert tuning and node pinning are operational requirements, not optional.
-Merkle and Cuckoo metrics bring cryptographic controls into day-to-day observability.
+- Checkpoint interval: 5 minutes default (configurable); determines RPO for Tier 3
 
-Effective monitoring enables the automated response and containment covered in the next guide.**Next in the series**: Automated Response and Containment – Falco + Talon Quarantine, Panguard Blocking.
+- Invalid checkpoint signature: not used for recovery — clean restart performed instead
 
----
+**Backup architecture: 3-2-1+ per tier**
 
-_ClawQL Security Best Practices Series • Part 12 • May 2026_  
-Based on the official ClawQL Comprehensive Defense-in-Depth Security Guide.
+- Tier 1: primary WORM bucket + synchronous cross-region replication + weekly cold storage export; Merkle root recorded externally in SIEM
 
----
+- Tier 2: primary bucket + asynchronous cross-region replication (≤15 minute lag) + daily cold storage
 
-# **Automated Response and Containment: Falco + Talon Quarantine, Panguard Blocking\*\***Part 13 of the ClawQL Security Best Practices Series\***\*May 2026**
+- Vault: Raft standby in secondary region + hourly encrypted snapshot to cold storage; backup encryption key in HSM (not in Vault — avoids circular dependency)
 
-Detection without automated response leaves security teams overwhelmed. This guide covers ClawQL’s high-confidence automated containment mechanisms that limit damage while keeping humans in the loop.### Confidence Tier Mapping
+**Active/passive cross-region failover**
 
-Not every alert warrants automatic action. ClawQL uses a tiered system:**Low confidence** — Log only, no notification.
-**Medium confidence** — Alert on-call via Slack/page.
-**High confidence** — Immediate automated containment + page.
+- Active/passive preferred over active/active: avoids split-brain Merkle chain conflict
 
-Rules are tuned and reviewed regularly by the designated alert owner.### Falco + Talon Quarantine Flow
+- Passive region: full stack in warm-standby, continuous replication, no production traffic
 
-Falco detects suspicious events (unexpected shell in a pod, privilege escalation, anomalous outbound connection). On high-confidence matches, Talon automatically:Removes the pod from Service endpoints.
-Applies a restrictive NetworkPolicy isolating the pod.
-Preserves the pod for forensic analysis instead of terminating it.
-Triggers a Wazuh alert with full context.
+- Failover trigger: primary health check fails for 5 consecutive checks over 5 minutes; requires human confirmation before DNS cut
 
-The pod remains running in quarantine until human review and manual release.### Panguard Blocking
+- Failover sequence: promote Vault standby → verify Merkle root continuity (gate — cannot proceed if roots diverge) → promote memory store → cut DNS → run smoke test suite
 
-Panguard provides synchronous blocking at the MCP layer:Rejects out-of-scope or malicious tool calls in <50ms.
-Returns a clear error to the agent so it can gracefully handle the block rather than hallucinate or retry.
-Logs the full session for audit.
+- If Merkle roots diverge: halt failover, escalate to security team, investigate before proceeding
 
-Agents are coded to surface blocks to the user instead of silently failing.### Human-in-the-Loop Design
+- Failback: treat return to primary as a fresh deployment; never re-promote without full validation
 
-Automation augments, never replaces, human oversight:All automated actions are reversible.
-Quarantined pods are easily inspected.
-Break-glass procedures exist for urgent manual intervention.
+**Session recovery decision tree**
 
-### Key Takeaways
+- Resume: valid verified checkpoint exists + failure was infrastructure (not security) → load checkpoint, re-issue JWT, continue
 
-Automated containment turns fast detection into fast response, limiting blast radius.
-Tiered confidence prevents alert fatigue while enabling immediate action on serious threats.
-Falco + Talon provides pod-level isolation; Panguard provides MCP-level blocking.
-Preservation for forensics is prioritized over immediate termination.
+- Restart: checkpoint unverifiable or absent → fresh session, reads memory from start of context window
 
-This automated response layer works hand-in-hand with monitoring (Guide 12) and feeds directly into incident response processes.**Next in the series**: Incident Response and Recovery – PICERL, WORM Audits, and Tested Backups.
+- Discard: failure was a security event → preserve checkpoint as forensic evidence, start clean session only after incident is contained; notify the owning user before discarding
+
+**DR testing programme**
+
+- Quarterly: memory store restore + Vault snapshot restore, both to isolated test environment; verify Merkle continuity; document timing
+
+- Semi-annual: full failover drill with canary tenant traffic; all steps including DNS cut; measure RTO per tier
+
+- Annual: chaos engineering exercise; simulate primary region failure; execute full failover + failback; document deviations
+
+**Key takeaways to cover**
+
+- DR and IR are different plans with different owners — conflating them produces a plan that does neither well
+
+- Per-tier RTO/RPO differentiation is the most important DR design decision — uniform targets produce either over-engineering or under-protection
+
+- Merkle root continuity verification is the gate that prevents promoting a diverged secondary — skip it and you may restore from a corrupted store
+
+- The session recovery decision tree must be documented and automated; human judgement under disaster conditions is inconsistent
 
 ---
 
-_ClawQL Security Best Practices Series • Part 13 • May 2026_  
-Based on the official ClawQL Comprehensive Defense-in-Depth Security Guide.
+Module 28: Disaster Recovery and Business Continuity
+
+RTO/RPO, Session Recovery, and Cross-Region Failover
+
+Hello and welcome to Module 28! 🎉
+
+Modules 1–27 have built a resilient, zero-trust, multi-tenant platform that prevents, detects, and contains threats. Now we prepare for the day the entire infrastructure itself fails — not because of an attacker, but because of a region outage, a cloud provider incident, or a natural disaster.
+
+Incident response (Module 20) assumes the infrastructure is intact and the question is “how do we contain and eradicate the threat?” Disaster recovery assumes the infrastructure itself is gone and the question is “how do we restore service from a different location as fast as our business can tolerate?” In this module we define per-tier RTO/RPO targets, agent state serialization, a 3-2-1+ backup architecture, active/passive cross-region failover with a Merkle continuity gate, and a clear session recovery decision tree. By the end you will have a tested, measurable DR plan that keeps agents operational even when entire regions disappear.
 
 ---
 
-# **Incident Response and Recovery: PICERL, WORM Audits, and Tested Backups\*\***Part 14 of the ClawQL Security Best Practices Series\***\*May 2026**
+DR vs Incident Response
 
-Even with layered prevention, containment, and monitoring, incidents will eventually occur. This guide details ClawQL’s structured incident response process, tamper-evident audit capabilities, and the requirement for regularly tested recovery paths.### PICERL Runbooks
+These are two separate plans with different owners, different triggers, and different goals.
 
-ClawQL follows the PICERL framework (Prepare, Identify, Contain, Eradicate, Recover, Lessons Learned). Dedicated runbooks cover common scenarios:Vault lease expiry and emergency revocation
-Panguard outage fallback (graceful degradation of MCP traffic)
-Talon-quarantined pod review and release
-JWT signing key rotation
-Wazuh alert escalation paths
+- Incident Response (IR): Infrastructure is intact. The threat is adversarial. Focus = contain, eradicate, recover evidence.
 
-All runbooks are version-controlled, tested quarterly, and accessible via out-of-band communications.### WORM Audits and Merkle-Rooted Forensics
+- Disaster Recovery (DR): Infrastructure itself has failed (region outage, cloud incident, etc.). Focus = restore service from backups in a different location.
 
-Every security-relevant event (MCP tool calls, memory operations, document processing, routing decisions) is recorded with:Full redacted context
-Merkle root linking the event to the broader workflow tree
-Immutable WORM storage
-
-This creates a tamper-evident forensic trail. Investigators can verify the integrity of logs and reconstruct exact sequences of events.### Quarterly Restore Testing
-
-Backups are useless if untested. ClawQL mandates:3-2-1+ backup strategy (3 copies, 2 media types, 1 offsite)
-Quarterly full restore tests with documented results
-Tests must successfully restore a complete ClawQLInstance including memory graph, documents, and audit trails
-
-Results are stored in the STRIDE artifact repository with timestamps.### Out-of-Band Communications
-
-Primary infrastructure (Slack, internal chat, monitoring) may be compromised or unavailable during an incident. ClawQL requires:Self-hosted Matrix or Mattermost on separate hardware
-Pre-defined activation triggers and access lists
-Regular testing of the out-of-band channel
-
-### Key Takeaways
-
-Incident response must be practiced, not theoretical — PICERL runbooks and quarterly restore tests are mandatory.
-WORM storage + Merkle roots provide cryptographically verifiable audit trails for post-incident forensics.
-Human oversight and out-of-band communications ensure resilience when primary systems are affected.
-Recovery testing closes the loop between prevention and actual operational readiness.
-
-This process guide ties together all previous controls into a complete security lifecycle.**Next in the series**: GPU and Resource Protection – Preventing Rogue Agent Denial-of-Service.
+Both plans must exist independently. When ransomware hits (both an attack _and_ infrastructure loss), the two plans integrate. Each has a named owner, a tested runbook, and its own testing cadence.
 
 ---
 
-_ClawQL Security Best Practices Series • Part 14 • May 2026_  
-Based on the official ClawQL Comprehensive Defense-in-Depth Security Guide.
+Data Tier Classification and RTO/RPO Targets
+
+Not all data is equally critical. We classify data into four tiers with explicit Recovery Time Objective (RTO) and Recovery Point Objective (RPO) targets.
+
+- Tier 1: Audit trail + WORM  
+  RPO = 0 (no audit events may be lost)  
+  RTO = 4 hours  
+  (Forensic integrity is non-negotiable.)
+
+- Tier 2: Memory store + Merkle roots  
+  RPO = 15 minutes  
+  RTO = 1 hour  
+  (Agents can operate in degraded mode without memory, but not forever.)
+
+- Tier 3: Active session state  
+  RPO = best effort (checkpoint interval)  
+  RTO = 30 minutes  
+  (Uncheckpointed sessions restart cleanly.)
+
+- Tier 4: Observability data  
+  RPO = 24 hours  
+  RTO = 4 hours  
+  (Useful for post-incident analysis but not required for service restoration.)
+
+Untested RTO/RPO targets are aspirations. Only tested targets are commitments.
 
 ---
 
-# **GPU and Resource Protection: Preventing Rogue Agent Denial-of-Service\*\***Part 15 of the ClawQL Security Best Practices Series\***\*May 2026**
+Agent State Serialization
 
-Agentic workloads can consume massive GPU resources through runaway loops, infinite tool calling, or maliciously crafted prompts. Without proper controls, a single rogue agent can starve the entire cluster of inference capacity. This guide details how ClawQL protects GPU resources using quotas, limits, and node isolation.### ResourceQuota and LimitRange Configuration
+You cannot recover what you cannot describe as data. We serialize agent state into a checkpoint format:
 
-ClawQL enforces hard GPU limits at the namespace level:yaml
+- Checkpoint contents: agent ID, session ID, pipeline position, ATR claims snapshot, memory store read pointer, pending HITL approvals, last completed tool call.
 
-apiVersion: v1
-kind: ResourceQuota
-metadata:
-name: openclaw-gpu-quota
-namespace: openclaw
-spec:
-hard:
-requests.nvidia.com/gpu: "4" # Set to your actual maximum intended concurrency
-limits.nvidia.com/gpu: "4"
+- Each checkpoint is signed by the agent’s private key and its hash is appended to the Merkle tree.
 
-**Best Practice**: Set the quota to your real maximum agent concurrency (not 1). The goal is a safety ceiling, not artificial restriction.Pair this with a LimitRange to enforce per-pod limits:yaml
+- Checkpoint interval: 5 minutes default (configurable per agent role). This directly determines Tier 3 RPO.
 
-apiVersion: v1
-kind: LimitRange
-metadata:
-name: gpu-limit-range
-spec:
-limits: - type: Container
-defaultRequest:
-nvidia.com/gpu: 1
-default:
-nvidia.com/gpu: 1
-max:
-nvidia.com/gpu: 2
-
-### Node Selectors and Taints
-
-Inference workloads (model serving, agent execution) are pinned to dedicated GPU nodes using node selectors and taints. Observability, logging, and control-plane components are explicitly excluded from these nodes.This isolation prevents monitoring overhead from introducing latency jitter on critical inference paths.### Preventing Rogue Agent Scenarios
-
-**Runaway tool loops** are contained by Panguard ATR rules and token-budget controls in Memory 2.0.
-**ResourceQuota** acts as the final hard stop if an agent bypasses application-level limits.
-**Kata sandboxing** (Guide 8) adds isolation so even a compromised agent cannot directly manipulate GPU devices outside its assigned resources.
-
-### Key Takeaways
-
-GPU quotas and limits are essential to prevent denial-of-service from rogue or poorly behaving agents.
-Set realistic maximums based on your hardware and expected concurrency.
-Combine quotas with node isolation to protect inference performance.
-Resource protection must work together with MCP runtime controls and sandboxing for complete defense.
-
-This specialized protection ensures the platform remains stable and available even under abnormal agent behavior.**Next in the series**: Workstation and Local Development Security – Same Posture Everywhere.
+Invalid checkpoint signature = clean restart (no recovery from corrupted state).
 
 ---
 
-_ClawQL Security Best Practices Series • Part 15 • May 2026_  
-Based on the official ClawQL Comprehensive Defense-in-Depth Security Guide.
+Backup Architecture: 3-2-1+ per Tier
+
+We follow the 3-2-1+ rule with tier-specific implementation:
+
+- Tier 1 (WORM): Primary bucket + synchronous cross-region replication + weekly cold storage export. Merkle root recorded externally in SIEM.
+
+- Tier 2 (Memory store): Primary bucket + asynchronous cross-region replication (≤15 min lag) + daily cold storage.
+
+- Vault: Raft standby in secondary region + hourly encrypted snapshot to cold storage. Backup encryption key lives in HSM (never in Vault itself — avoids circular dependency).
+
+All backups are encrypted at rest and in transit.
 
 ---
 
-# **Workstation and Local Development Security: Same Posture Everywhere\*\***Part 16 of the ClawQL Security Best Practices Series\***\*May 2026**
+Active/Passive Cross-Region Failover
 
-Security is not only a production concern. Developer workstations are often the weakest link and the most common entry point for supply chain attacks. ClawQL enforces the same high security standards in local development environments as in production.### Full Stack on Docker Desktop
+We use active/passive failover to avoid split-brain Merkle chain conflicts.
 
-Developers run the complete clawql-full-stack Helm chart on Docker Desktop with the security bundle enabled:yaml
+- Passive region runs the full stack in warm-standby with continuous replication.
 
-security:
-fullBundle: true
-kata:
-enabled: true
-panguard:
-enabled: true
-weightVerification:
-enabled: true
+- Failover trigger: primary health checks fail for 5 consecutive checks over 5 minutes, followed by human confirmation before DNS cutover.
 
-This deploys the intelligent MCP gateway, Panguard, Kyverno policies, and golden images locally.### Panguard CLI for Local MCP Proxy
+Failover sequence (fully scripted):
 
-The pga up command starts a local Panguard instance that mirrors production behavior:Same ATR rule enforcement
-Same blocking and auditing
-Local MCP proxy for Cursor, Claude Desktop, and other clients
+1. Promote Vault standby to primary.
 
-All local tool calls go through the same security chokepoint as production.### Additional Local Protections
+2. Verify Merkle root continuity (hard gate — failover aborts if roots diverge).
 
-**Aegis EDR** — Process, filesystem, and network monitoring on macOS/Windows workstations.
-**Wazuh Agents** — Forward local events to the central SIEM for correlation with cluster activity.
-**Gitleaks** — Mandatory pre-commit hook (enforced via Husky or similar).
-**YubiKey** — Required for any Git commit that touches Helm charts or critical configuration.
+3. Promote memory store.
 
-### Developer Onboarding Requirements
+4. Cut DNS to passive region.
 
-Every new developer must:Install and configure Aegis + Wazuh agent.
-Set up YubiKey for Git signing.
-Enable Gitleaks pre-commit hooks.
-Run the full secure stack on Docker Desktop before contributing.
+5. Run full smoke test suite before accepting traffic.
 
-No exceptions for “quick local testing.”### Key Takeaways
-
-Local development must mirror production security posture — there are no trusted environments.
-Developer workstations are high-value targets and must be treated as part of the attack surface.
-Tools like Panguard CLI, Aegis, and Wazuh agents extend cluster defenses to the desktop.
-Consistent standards across dev and prod reduce the risk of supply chain compromise at the source.
-
-This local security layer ensures the entire development lifecycle aligns with the platform’s defense-in-depth model.**Next in the series**: Production Deployment – One-Command Secure Full Stack.
+Failback treats the original primary as a fresh deployment — never re-promote without full validation.
 
 ---
 
-_ClawQL Security Best Practices Series • Part 16 • May 2026_  
-Based on the official ClawQL Comprehensive Defense-in-Depth Security Guide.
+Session Recovery Decision Tree
+
+When a region fails mid-session, we follow this automated decision tree:
+
+- Resume: Valid, verified checkpoint exists + failure was infrastructure (not security) → load checkpoint, re-issue JWT, continue from last state.
+
+- Restart: Checkpoint unverifiable or absent → fresh session, reads memory from the start of the context window.
+
+- Discard: Failure was a security event → preserve checkpoint as forensic evidence, start clean session only after incident is contained. Notify the owning user before discarding.
+
+The decision is logged to WORM with the reason and checkpoint status.
 
 ---
 
-# **Production Deployment: One-Command Secure Full Stack\*\***Part 17 of the ClawQL Security Best Practices Series\***\*May 2026**
+DR Testing Programme
 
-All previous security controls culminate in a single, repeatable, secure deployment process. This guide provides the exact command and checklist to deploy a fully hardened ClawQL instance with every defense-in-depth layer enabled.### Security-Enabled Helm Command
+We test at increasing levels of realism:
 
-Deploy the complete secure stack with one command:bash
+- Quarterly: Memory store restore + Vault snapshot restore to isolated test environment. Verify Merkle continuity. Document timing.
 
-helm upgrade --install clawql-full-stack ./charts/clawql-full-stack \
- --namespace clawql \
- --create-namespace \
- --set security.fullBundle=true \
- --set security.kata.enabled=true \
- --set security.panguard.enabled=true \
- --set security.wazuh.enabled=true \
- --set security.presidio.enabled=true \
- --set security.weightVerification.enabled=true \
- --set gpu.quota.max=4 \
- --set istio.mTLS=strict \
- --set supplyChain.allowlistOnly=true
+- Semi-annual: Full failover drill with canary tenant traffic. All steps including DNS cutover. Measure actual RTO per tier.
 
-This enables:Golden distroless images with read-only root
-Kata Containers for all MCP workloads
-Panguard + ATR enforcement
-Full observability stack (Falco, Wazuh, Prometheus)
-Presidio redaction pipeline
-Model weight verification
-GPU quotas and node isolation
-Strict Istio mTLS and ServiceEntries
+- Annual: Chaos engineering exercise. Simulate primary region failure. Execute full failover + failback. Document deviations and lessons learned.
 
-### Deployment Order
-
-Harbor (registry)
-Vault (dynamic secrets)
-Istio (ambient profile)
-Falco + Talon + Wazuh
-Panguard
-clawql-full-stack umbrella chart
-
-The Kubernetes Operator handles reconciliation and self-healing of security components.### Post-Deploy Verification Checklist
-
-Confirm all pods use Kata runtime where required
-Verify Cosign signatures on running images
-Test Panguard blocking with a deliberate out-of-scope tool call
-Validate model weight verification on a sample inference pod
-Check Merkle root metrics in Prometheus
-Confirm no external egress except approved ServiceEntries
-Run a full end-to-end MCP tool call and review redacted logs
-
-### Key Takeaways
-
-A secure ClawQL deployment is achieved through a single, opinionated Helm command with explicit security flags.
-Defense-in-depth is enabled by default — not as optional add-ons.
-Follow the documented deployment order and post-deploy checklist to avoid misconfiguration.
-Treat the full secure stack as the baseline; partial deployments are only for non-production testing.
-
-This completes the operational deployment foundation of the series.**Next in the series**: Threat Modeling with STRIDE for Agentic AI Systems.
+Every test produces a signed report stored in WORM.
 
 ---
 
-_ClawQL Security Best Practices Series • Part 17 • May 2026_  
-Based on the official ClawQL Comprehensive Defense-in-Depth Security Guide.
+Key Takeaways (Memorize These!)
+
+- DR and IR are different plans with different owners — conflating them produces a plan that does neither well.
+
+- Per-tier RTO/RPO differentiation is the most important DR design decision — uniform targets produce either over-engineering or under-protection.
+
+- Merkle root continuity verification is the gate that prevents promoting a diverged secondary — skip it and you may restore from a corrupted store.
+
+- The session recovery decision tree must be documented and automated; human judgement under disaster conditions is inconsistent.
+
+You now have a tested, measurable disaster recovery plan that keeps agents operational even when entire regions disappear. The platform can survive infrastructure failure with minimal data loss and minimal downtime. This completes the business continuity layer that makes the entire security stack production-ready for the real world.
+
+## **MODULE 29**
+
+### **Compliance and Regulatory Mapping: GDPR, HIPAA, SOC 2 Type II, and EU AI Act**
+
+Technical controls and regulatory compliance are not the same thing — a system can be genuinely secure and still fail an audit because the evidence of that security was never collected, retained, or packaged in the form an auditor can verify. This module maps every control in the series to its specific regulatory obligation under GDPR, HIPAA, SOC 2 Type II, and the EU AI Act, resolves the genuine architectural conflict between GDPR’s right to erasure and immutable WORM audit logs through cryptographic erasure, and shows how to generate audit evidence packages from the infrastructure already built. The goal is audit readiness as a continuous state rather than a last-minute scramble before an assessment.
+
+**Why compliance mapping is a distinct discipline**
+
+- Technical controls and regulatory compliance require different evidence: controls must exist AND continuously produce verifiable proof that they operate
+
+- A system can be technically secure and fail an audit because the evidence was never collected or retained correctly
+
+- Compliance mapping also surfaces genuine architectural conflicts (GDPR erasure vs. WORM) that pure security engineering misses
+
+**GDPR: data subject rights vs. WORM integrity**
+
+- The conflict: Article 17 (right to erasure) vs. immutable append-only memory store with WORM-backed audit logs
+
+- The resolution: cryptographic erasure — delete the per-subject encryption key, not the ciphertext
+
+- Per-subject Vault transit key: each data subject’s memory entries encrypted with a unique key
+
+- Erasure = vault delete transit/tenant-a/keys/subject-key-${DATA_SUBJECT_ID} — key is permanently gone, ciphertext is permanently opaque
+
+- Merkle integrity preserved (encrypted bytes don’t change); data is irrecoverable (Recital 26: data that cannot be attributed to an identified person is no longer personal data)
+
+- Article 30 (records of processing): generate from the audit trail — agent ID, session, data classification, entity types redacted, timestamp
+
+- Cross-border transfers: document replication paths in the RoPA; SCC required for EU-to-non-EU DR replication (Module 28)
+
+- Article 32 (technical measures): map to specific modules — pseudonymisation (15, 18), integrity (18, 26), availability (28), testing (24, 25)
+
+**HIPAA: PHI-handling deployments**
+
+- Determine applicability: does the deployment process health condition, care provision, or payment data that identifies individuals?
+
+- Additional controls beyond the standard stack:
+  - Unique user identification (Module 10 — one identity per agent)
+    - Automatic logoff: inactivity timeout ≤15 minutes for gateway sessions
+    - Audit controls: 6-year WORM retention for PHI-handling tenants (HIPAA minimum)
+    - Integrity: Merkle tree (Module 18) satisfies the requirement that PHI cannot be improperly altered without detection
+    - Transmission security: mTLS (Module 4) + NATS message encryption (Module 18)
+
+  - BAA requirement: Business Associate Agreement required with every data-path component vendor — cloud provider, Vault hosting, external API providers
+
+- Breach notification: the PICERL process produces the timeline; a Breach Risk Assessment (BRA) determines reportability under the four-factor test; 60-day notification deadline
+
+**SOC 2 Type II: control mapping**
+
+- CC6 (Logical and Physical Access): Modules 4, 7, 9, 10, 12, 30 — RBAC, mTLS, scoped tokens, agent lifecycle, ATR enforcement, admin controls
+
+- A1 (Availability): Modules 25 (quarterly review), 26 (patch cadence), 28 (DR/BCP)
+
+- PI1 (Processing Integrity): Modules 12 (schema validation), 18 (Merkle integrity), 14 (signed subagent results)
+
+- C1 (Confidentiality): Modules 15 (classification), 18 (cryptographic erasure), 27 (multi-tenant isolation)
+
+- P (Privacy): Modules 15 (redaction), 29 (GDPR mapping), 18 (erasure)
+
+- Type II evidence: controls must continuously produce evidence over the audit period — quarterly evidence packages from WORM + Merkle roots + Panguard logs form the body of evidence
+
+- Common SOC 2 findings in agentic platforms and which module addresses each
+
+**EU AI Act: high-risk classification and obligations**
+
+- High-risk determination: Annex III categories (employment, essential services, law enforcement, critical infrastructure)
+
+- Article 9 (Risk Management System): STRIDE model (Module 22) + OWASP mapping (Module 23) + red team programme (Module 24) + quarterly review (Module 25)
+
+- Article 10 (Data Governance): classification at ingestion (Module 15) + memory integrity (Module 18) + DLP (Module 6)
+
+- Article 13 (Transparency): technical summary for deployers — intended purpose, capabilities, limitations, HITL mechanisms, performance characteristics
+
+- Article 14 (Human Oversight): HITL controls (Module 12) — document which tools are gated, the review process, escalation path
+
+- Article 15 (Accuracy and Cybersecurity): adversarial testing programme (Module 24) + full security stack
+
+**Producing audit evidence from existing infrastructure**
+
+- WORM retention policy: set to the longest requirement across all applicable frameworks (7 years satisfies HIPAA 6-year + SOC 2 overlap)
+
+- Chain of custody: WORM Object Lock metadata + Merkle root chain + signing key certificate chain
+
+- Automated quarterly evidence package: signed, encrypted with compliance team’s public key, generated before the quarterly review
+
+- Evidence package contents: Panguard decision logs, Merkle roots, quarterly review reports, red team reports, patch deployment records, access provisioning records
+
+**Key takeaways to cover**
+
+- Cryptographic erasure (key deletion) is the only architecturally coherent solution to the GDPR erasure/WORM conflict
+
+- HIPAA adds inactivity timeouts, 6-year retention, BAA requirements, and a documented BRA process — all of which must be explicitly verified, not assumed
+
+- SOC 2 Type II evidence is produced continuously by the infrastructure already built; the compliance task is collecting and retaining it correctly
+
+- Audit readiness as a continuous state (quarterly evidence packages, WORM retention, Merkle chain) is cheaper than audit preparation as a periodic scramble
 
 ---
 
-# **Threat Modeling with STRIDE for Agentic AI Systems\*\***Part 18 of the ClawQL Security Best Practices Series\***\*May 2026**
+Module 29: Compliance and Regulatory Mapping
 
-Threat modeling is not a one-time exercise. In agentic MCP platforms, where systems are dynamic and agents can chain tools unpredictably, STRIDE must be a living process that evolves with the platform. This capstone guide explains how ClawQL applies STRIDE specifically to agentic AI systems.### STRIDE for Agentic Systems
+GDPR, HIPAA, SOC 2 Type II, and EU AI Act
 
-STRIDE (Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service, Elevation of Privilege) is adapted to address the unique risks of MCP, autonomous agents, and multi-backend orchestration.**S**poofingAgent identity spoofing via forged ATR claims or stolen JWTs
-Model weight impersonation (model-in-the-middle attacks)
+Hello and welcome to Module 29! 🎉
 
-**T**amperingMerkle tree manipulation of memory graph or documents
-Tool call parameter tampering in transit
-Model weight poisoning
+Modules 1–28 have given us a complete technical security architecture that is robust, auditable, and agentic-specific. But technical security and regulatory compliance are not the same thing. A system can be genuinely secure and still fail an audit because the evidence of that security was never collected, retained, or packaged in the form an auditor can verify.
 
-**R**epudiationAgents denying tool calls or actions
-Lack of immutable audit trails
-
-**I**nformation DisclosurePII leakage through logs or MCP responses
-Memory cross-vertical recall exposing restricted data
-
-**D**enial of ServiceRogue agent GPU exhaustion
-MCP gateway flooding or Panguard bypass attempts
-
-**E**levation of PrivilegeAgent escaping sandbox to host
-Privilege escalation via tool chaining or vertical bypass
-
-### Living Threat Model Process
-
-ClawQL treats the threat model as a living artifact:Updated quarterly or on any major change (new vertical, new proxy plugin, new MCP tool).
-Linked directly to controls in the Defense-in-Depth guide.
-Reviewed as part of every Helm chart upgrade gate.
-Stored in version-controlled, signed Git repository with full history.
-
-New components (e.g., a new vertical or external MCP proxy) require a STRIDE entry before production deployment.### Gating Deployments with STRIDE
-
-No production change is approved without:Updated STRIDE analysis for the affected components.
-Mapping of new threats to existing or new controls.
-Sign-off from the security owner.
-
-This ensures security scales with platform growth rather than becoming a checkbox.### Key Takeaways
-
-STRIDE for agentic systems must address dynamic behaviors like tool chaining, memory recall, and multi-backend routing.
-Threat modeling must be continuous and tied to deployment gates, not a static document.
-Every new feature or integration requires explicit threat analysis and control mapping.
-A living STRIDE model turns security from reactive to proactive across the entire ClawQL lifecycle.
-
-This strategic practice ties together all technical controls in the series and prepares the platform for long-term evolution.**Next in the series**: OWASP Agentic Top 10 and How ClawQL Mitigates Each One.
+In this module we map every control in the platform to its specific obligations under GDPR, HIPAA, SOC 2 Type II, and the EU AI Act. We resolve genuine architectural conflicts (such as GDPR’s right to erasure versus WORM immutability) with cryptographic erasure. And we show how to generate continuous audit evidence packages directly from the infrastructure we have already built. By the end you will have audit readiness as a continuous state — not a last-minute scramble.
 
 ---
 
-_ClawQL Security Best Practices Series • Part 18 • May 2026_  
-Based on the official ClawQL Comprehensive Defense-in-Depth Security Guide.
+Why Compliance Mapping Is a Distinct Discipline
+
+Technical controls prove “we are secure.”  
+ Regulatory compliance proves “we can demonstrate we are secure over time.”
+
+The difference is evidence:
+
+- Controls must exist.
+
+- Controls must continuously produce verifiable proof that they operate.
+
+Compliance mapping also surfaces real architectural tensions that pure security engineering can miss (e.g., GDPR erasure vs. immutable WORM logs). We treat compliance as an engineering discipline, not an after-the-fact documentation exercise.
 
 ---
 
-# **OWASP Agentic Top 10 and How ClawQL Mitigates Each One\*\***Part 19 of the ClawQL Security Best Practices Series\***\*May 2026**
+GDPR: Data Subject Rights vs. WORM Integrity
 
-The OWASP Agentic Top 10 highlights the most critical risks in autonomous AI agent systems. ClawQL was designed from the ground up with these risks in mind. This guide maps each major risk to the specific controls and architecture patterns that mitigate it.### 1. Prompt Injection / Jailbreaking
+The central conflict is Article 17 (right to be forgotten / erasure) versus our immutable, append-only memory store and WORM-backed audit logs.
 
-**Risk**: Malicious instructions that override agent behavior.  
-**ClawQL Mitigation**: ATR scoping + Panguard synchronous enforcement. Capabilities are restricted at the tool level, not through prompt filtering. Natural language is never the security boundary.### 2. Sensitive Information Disclosure
+Resolution: Cryptographic erasure
 
-**Risk**: Leakage of PII, credentials, or proprietary data.  
-**ClawQL Mitigation**: Presidio redaction in the Fluent Bit pipeline before any log write, combined with GraphQL projection and Memory 2.0 token-budget trimming. Redaction-before-write ensures sensitive data never reaches persistent stores.### 3. Privilege Escalation
+- Each data subject’s memory entries are encrypted with a unique per-subject key stored in Vault’s transit engine.
 
-**Risk**: Agent gaining unauthorized access to tools or data.  
-**ClawQL Mitigation**: JWT ATR claims validated on every MCP call, explicit tool scoping per role/vertical, and least-privilege RBAC. Cross-vertical actions require elevated claims.### 4. Model Denial of Service
+On erasure request:
 
-**Risk**: Resource exhaustion through runaway loops or heavy inference.  
-**ClawQL Mitigation**: GPU ResourceQuota + LimitRange, Panguard rate limiting, and token-budget controls in Memory 2.0 recall.### 5. Supply Chain Vulnerabilities
+vault delete transit/tenant-a/keys/subject-key-${DATA_SUBJECT_ID}
 
-**Risk**: Compromised dependencies, images, or model weights.  
-**ClawQL Mitigation**: Harbor as single trust root with allowlist-only resolution, Cosign keyless signing, golden distroless images, and init-container model weight verification.### 6. Insecure Output Handling
+-
+- The ciphertext remains in the store (preserving Merkle integrity and forensic history).
 
-**Risk**: Agent output leading to command injection or unsafe actions.  
-**ClawQL Mitigation**: Structured tool calling through the intelligent MCP gateway. All outputs are validated and scoped before execution. No raw shell or direct code execution outside Kata sandboxes.### 7. Training Data / Memory Poisoning
+- The data is permanently irrecoverable because the key is gone.
 
-**Risk**: Contaminated knowledge graph or RAG corpus.  
-**ClawQL Mitigation**: Merkle-rooted provenance on every Memory 2.0 ingest, Cuckoo filter deduplication, and Presidio redaction on document intake. Cross-vertical recall requires explicit elevated ATR.### 8. Unauthorized Code Execution
+This satisfies GDPR Recital 26: data that cannot be attributed to an identified person is no longer personal data, while keeping the audit trail intact.
 
-**Risk**: Agent executing arbitrary code.  
-**ClawQL Mitigation**: Kata Containers as default runtime for all MCP/sandbox workloads, combined with explicit sandbox_exec tool gating and read-only root filesystems.### 9. Overreliance on Agent Autonomy
+Additional GDPR mappings:
 
-**Risk**: Blind trust in agent decisions without oversight.  
-**ClawQL Mitigation**: Human-in-the-loop via HITL approval gates in automation, audit logging of all decisions, and Merkle-rooted workflow trails for full accountability.### 10. Multi-Step Tool Chaining Attacks
+- Article 30 (records of processing): Generated automatically from the WORM audit trail (agent ID, session, data classification, redacted entity types, timestamp).
 
-**Risk**: Agents chaining tools in harmful sequences.  
-**ClawQL Mitigation**: Intelligent routing engine with historical success scoring and sensitivity checks, plus Panguard session-level ATR rules that evaluate cumulative risk across chained calls.### Key Takeaways
+- Cross-border transfers: Replication paths are documented in the Record of Processing Activities (RoPA). Standard Contractual Clauses (SCCs) are in place for any EU-to-non-EU DR replication (Module 28).
 
-ClawQL mitigates the OWASP Agentic Top 10 through defense-in-depth rather than single-point solutions.
-The majority of risks are addressed at the architectural level (ATR scoping, sandboxing, cryptographic provenance) rather than reactive prompt filtering.
-Every major risk has multiple overlapping controls from different layers of the stack.
-This mapping is reviewed quarterly as part of the living STRIDE process (Guide 18).
-
-The complete series equips you with both tactical implementation details and strategic understanding of agentic security.**Next (Final) in the series**: Quarterly Security Review Checklist – Keeping Defense-in-Depth Alive.
+- Article 32 (technical measures): Mapped explicitly — pseudonymisation (Modules 15 & 18), integrity (Modules 18 & 26), availability (Module 28), testing (Modules 24 & 25).
 
 ---
 
-_ClawQL Security Best Practices Series • Part 19 • May 2026_  
-Based on the official ClawQL Comprehensive Defense-in-Depth Security Guide.
+HIPAA: PHI-Handling Deployments
+
+First determine applicability: Does the deployment process health condition, care provision, or payment data that identifies individuals?
+
+When PHI is in scope, we add these controls beyond the standard stack:
+
+- Unique user identification (Module 10) — one identity per agent.
+
+- Automatic logoff: gateway sessions enforce ≤15-minute inactivity timeout.
+
+- Audit controls: 6-year WORM retention for PHI-handling tenants (HIPAA minimum).
+
+- Integrity: Merkle tree (Module 18) satisfies the requirement that PHI cannot be improperly altered without detection.
+
+- Transmission security: mTLS (Module 4) + NATS message encryption (Module 18).
+
+Additional requirements:
+
+- Business Associate Agreement (BAA) must be in place with every data-path component vendor (cloud provider, Vault hosting, external APIs).
+
+- Breach notification: The PICERL process (Module 20) produces the timeline. A Breach Risk Assessment (BRA) determines reportability under the four-factor test. Notification deadline is 60 days.
 
 ---
 
-# **Quarterly Security Review Checklist: Keeping Defense-in-Depth Alive\*\***Part 20 of the ClawQL Security Best Practices Series\***\*May 2026**
+SOC 2 Type II: Control Mapping
 
-Defense-in-depth is not a set-it-and-forget-it architecture. It requires continuous validation and maintenance. This final capstone guide provides the operational checklist that must be executed quarterly to keep the entire security posture effective over time.### Quarterly Review Cadence
+SOC 2 Type II requires evidence that controls operated effectively over the audit period. Our platform produces that evidence continuously.
 
-Perform this full review every three months, or after any major change (new vertical, new proxy backend, Helm upgrade, or Kubernetes version bump). Assign a named security owner responsible for completion and documentation.### 1. Supply Chain & Image Verification
+Key mappings:
 
-Verify all running images are pulled from Harbor with valid Cosign signatures.
-Confirm allowlist-only resolution is enforced and no external registries are in use.
-Review Trivy/OSV-Scanner results for new critical vulnerabilities.
-Validate SBOMs exist for all production images and model weights.
+- CC6 (Logical and Physical Access): Modules 4, 7, 9, 10, 12, 30 — RBAC, mTLS, scoped tokens, agent lifecycle, ATR enforcement, admin controls.
 
-### 2. Admission Control & Runtime Policies
+- A1 (Availability): Modules 25 (quarterly review), 26 (patch cadence), 28 (DR/BCP).
 
-Check Kyverno policies are active and in “Enforce” mode.
-Confirm all MCP and sandbox pods use Kata runtime.
-Verify model weight verification init containers are functioning on inference pods.
-Review and approve any temporary namespace exemptions.
+- PI1 (Processing Integrity): Modules 12 (schema validation), 18 (Merkle integrity), 14 (signed subagent results).
 
-### 3. Identity & Zero Trust Controls
+- C1 (Confidentiality): Modules 15 (classification), 18 (cryptographic erasure), 27 (multi-tenant isolation).
 
-Audit Vault dynamic secret leases and revoke any orphaned credentials.
-Rotate JWT signing keys if due.
-Verify ATR claim enforcement is working on a sample of MCP tool calls.
-Confirm YubiKey signing requirement is enforced on all Helm chart changes.
+- P (Privacy): Modules 15 (redaction), 29 (GDPR mapping), 18 (erasure).
 
-### 4. Network & Containment
+Type II evidence:
 
-Review Istio ServiceEntries and egress allowlists against current needs.
-Validate default-deny NetworkPolicy is blocking unauthorized traffic.
-Check Kiali for unexpected east-west connections.
-Confirm mTLS is in strict mode everywhere.
+- Quarterly evidence packages are generated automatically from WORM + Merkle roots + Panguard logs.
 
-### 5. Monitoring & Observability
+- These packages form the body of evidence for the audit period.
 
-Review Wazuh and Falco alert tuning — reduce noise, improve signal.
-Check Prometheus metrics for Merkle root verification and Cuckoo filter health.
-Confirm observability workloads are pinned away from GPU nodes.
-Test Talon quarantine and release process on a non-production pod.
-
-### 6. Data Protection & Logging
-
-Verify Presidio redaction is active in the Fluent Bit pipeline.
-Sample WORM logs to ensure no raw PII is present.
-Confirm Merkle roots are being recorded for all critical workflows.
-
-### 7. Backup & Recovery Testing
-
-Perform a full restore test of a ClawQLInstance (including memory, documents, and audit trails).
-Document restore time, success rate, and any issues.
-Verify 3-2-1+ backup strategy is functioning.
-
-### 8. STRIDE & OWASP Review
-
-Update the living STRIDE threat model with any new components.
-Re-map OWASP Agentic Top 10 risks to current controls.
-Document any new threats and required mitigations.
-
-### 9. Documentation & Runbooks
-
-Confirm all PICERL runbooks are current.
-Verify out-of-band communication (Matrix/Mattermost) is tested and ready.
-Ensure this quarterly checklist itself is up to date.
-
-### Key Takeaways
-
-Security is a continuous process, not a destination.
-Quarterly reviews with a named owner and documented results prevent drift and degradation.
-Every layer — supply chain, admission, network, runtime, monitoring, and recovery — must be actively validated.
-Treat the full defense-in-depth stack as a living system that requires ongoing care.
-
-Completing this checklist keeps ClawQL’s security posture strong, auditable, and ready for both current and future threats.**End of Series**
+- Common SOC 2 findings in agentic platforms (e.g., missing evidence of least-privilege enforcement, inadequate audit logging) are directly addressed by the modules above.
 
 ---
 
-_ClawQL Security Best Practices Series • Part 20 • May 2026_  
-Based on the official ClawQL Comprehensive Defense-in-Depth Security Guide.
+EU AI Act: High-Risk Classification and Obligations
+
+Determine high-risk status using Annex III categories (employment, essential services, law enforcement, critical infrastructure).
+
+Key obligations and how we meet them:
+
+- Article 9 (Risk Management System): STRIDE model (Module 22) + OWASP mapping (Module 23) + red-team programme (Module 24) + quarterly review (Module 25).
+
+- Article 10 (Data Governance): Classification at ingestion (Module 15) + memory integrity (Module 18) + DLP (Module 6).
+
+- Article 13 (Transparency): Technical summary provided to deployers — intended purpose, capabilities, limitations, HITL mechanisms, performance characteristics.
+
+- Article 14 (Human Oversight): HITL controls (Module 12) — documented which tools are gated, the review process, and escalation path.
+
+- Article 15 (Accuracy and Cybersecurity): Adversarial testing programme (Module 24) + full security stack.
 
 ---
+
+Producing Audit Evidence from Existing Infrastructure
+
+We do not build separate compliance systems — we extract evidence from the platform we already run.
+
+- WORM retention policy is set to the longest requirement across all frameworks (7 years satisfies HIPAA 6-year + SOC 2 overlap).
+
+- Chain of custody: WORM Object Lock metadata + Merkle root chain + signing key certificate chain.
+
+- Automated quarterly evidence package: signed, encrypted with the compliance team’s public key, generated before each quarterly review.
+
+- Package contents: Panguard decision logs, Merkle roots, quarterly review reports, red-team reports, patch deployment records, access provisioning records.
+
+Audit readiness is now a continuous state (quarterly evidence packages, WORM retention, Merkle chain) rather than a periodic scramble.
+
+---
+
+Key Takeaways (Memorize These!)
+
+- Cryptographic erasure (key deletion) is the only architecturally coherent solution to the GDPR erasure/WORM conflict.
+
+- HIPAA adds inactivity timeouts, 6-year retention, BAA requirements, and a documented BRA process — all of which must be explicitly verified, not assumed.
+
+- SOC 2 Type II evidence is produced continuously by the infrastructure already built; the compliance task is collecting and retaining it correctly.
+
+- Audit readiness as a continuous state (quarterly evidence packages, WORM retention, Merkle chain) is cheaper than audit preparation as a periodic scramble.
+
+You now have a compliance mapping that turns every technical control into auditable evidence across GDPR, HIPAA, SOC 2 Type II, and the EU AI Act. Regulatory requirements are no longer an afterthought — they are satisfied by the same infrastructure that keeps the platform secure. This completes the governance layer that makes the entire platform audit-ready by design.
+
+## **MODULE 30**
+
+### **Human Operator Security: Admin Controls, Separation of Duties, Break-Glass Access, and External API Hygiene**
+
+Modules 1–29 secure agents and the infrastructure they run on — this one secures the humans who build, configure, and operate all of it. An operator who can modify Panguard rules, define ATR roles, and control the audit pipeline has broader access and greater blast radius than any individual agent, and none of the structural controls that constrain agent behaviour apply to them by default. Mutually exclusive admin roles, four-eyes approval for high-risk configuration changes, break-glass access that preserves the audit trail, insider threat detection via SIEM correlation, and emergency rotation runbooks together apply the same zero-trust logic to people that the rest of the curriculum applies to code.
+
+**The human operator as the highest-value target**
+
+- An operator with Panguard rule modification access, ATR role definition access, and WORM pipeline control has broader access than any individual agent
+
+- Compromise of one operator account gives an attacker the ability to modify controls, not just circumvent them
+
+- The insider threat is primarily the compromised employee, not the malicious one — phishing and credential theft are the primary paths
+
+- Zero trust applied to humans: the same least-privilege and continuous verification principles that govern agents must govern operators
+
+**Admin access controls: who can modify what**
+
+- Named, documented admin roles with explicit capability boundaries
+
+- Panguard rule author: can write draft rules, cannot deploy
+
+- Panguard rule deployer: can promote reviewed rules, cannot write drafts
+
+- ATR role admin: can modify ATR role definitions after approval, cannot deploy Panguard rules
+
+- Vault admin: can manage Vault policies, cannot deploy Panguard rules (explicit prohibition)
+
+- Mutually exclusive role enforcement: Kyverno admission policy rejects any operator resource that combines prohibited roles
+
+- All admin access via short-lived Vault tokens derived from operator mTLS certificates — no static admin credentials
+
+- Operator certificate revocation on termination: all derived tokens invalidated within one TTL cycle
+
+**Separation of duties**
+
+- Skill approver ≠ skill deployer; ATR rule author ≠ ATR rule deployer
+
+- Monthly automated SoD report: flag any individual performing two mutually exclusive actions in the same week
+
+- In small teams where roles overlap: mandatory 4-eyes review compensates
+
+- SoD violations: reviewed by security team lead within 5 business days; escalated to compliance officer if unresolved
+
+**4-eyes controls for high-risk configuration changes**
+
+- High-risk categories: Vault root token use, CA rotation, Panguard global rule disable, ATR scope expansion for Tier 1 agents, WORM retention policy change, cluster admission policy change, multi-tenant isolation policy change
+
+- Enforcement: ValidatingWebhookConfiguration rejects resources without two distinct security team approver annotations
+
+- 24-hour approval expiry: a change not deployed within 24 hours of second approval requires re-approval
+
+- Both approver identities recorded in the WORM audit trail as part of the deployment record
+
+**Break-glass emergency access**
+
+- Break-glass credential: Vault token sealed under Shamir secret sharing requiring two physical HSM tokens simultaneously
+
+- Every invocation automatically: pages the security team lead, writes POLICY: BREAK_GLASS_INVOKED to WORM, opens a mandatory post-incident review ticket (48-hour deadline)
+
+- Break-glass does not disable Panguard enforcement or ATR validation — expedited access to the configuration plane, not a security bypass
+
+- Post-incident review of every break-glass invocation — review failure is itself a finding
+
+**Operator session auditing and insider threat detection**
+
+- Every operator action logged to WORM using the same canonical security event schema as agent actions
+
+- SIEM correlation rules for insider threat signals:
+  - Operator accessing audit logs or Vault outside business hours
+    - Operator reading a different tenant’s audit events
+    - Operator modifying a Panguard rule followed by a previously-blocked action succeeding within 60 minutes
+    - Operator creating an ATR role and assigning it to an agent they own (SoD violation)
+
+  - Peer review: weekly automated report of all operator actions to the security team lead
+
+**Emergency secret rotation runbooks**
+
+- Runbook A (agent credential compromised): identify affected systems → Panguard block on compromised token signature → Vault revoke → generate replacement → verify all agents on new credential → write incident record to WORM
+
+- Runbook B (Vault root token compromised): re-key Vault using existing unseal keys → issue new short-lived root token → revoke compromised root → rotate all downstream credentials → verify operations → document in WORM
+
+- Both runbooks must be stored offline (not only in the production cluster) and tested annually
+
+**External API security**
+
+- Webhook signature validation: all inbound webhooks validated against HMAC signature before payload reaches any agent context; unsigned webhooks rejected at the gateway
+
+- SSRF via webhook URL: Kyverno policy rejects ClawQLWebhook resources with private network target URLs at configuration time, not runtime
+
+- Rate-limit backpressure: exponential backoff with jitter on 429 responses; alert at 80% of rate limit consumed; block outbound calls at 95%
+
+- Certificate pinning for critical integrations (payment processors, identity providers): pin the expected certificate chain; alert on mismatch; include pinned certs in the certificate inventory (Module 26) with expiry alerts at 60 days
+
+**Key takeaways to cover**
+
+- Human operators have broader access and greater blast radius than any individual agent — the same zero-trust principles that govern agents must govern operators
+
+- Mutually exclusive admin roles enforced by admission policy, not convention — convention fails under time pressure
+
+- Break-glass provides expedited access, not unconstrained access — Panguard and ATR enforcement remain active during break-glass sessions
+
+- Emergency rotation runbooks stored offline: a runbook that only exists in the production cluster is unavailable precisely when it is most needed
+
+- External API security (webhook validation, SSRF, rate limiting, certificate pinning) is an operator security concern — these integrations are configured by humans and the agent-layer controls cannot validate them
+
+---
+
+Module 30: Human Operator Security
+
+Admin Controls, Separation of Duties, Break-Glass Access, and External API Hygiene
+
+Hello and welcome to Module 30! 🎉
+
+Modules 1–29 have secured the entire technical stack — from supply chain to runtime enforcement, memory integrity, multi-tenancy, disaster recovery, and compliance. But the highest-value target in any system is not the code or the agents. It is the human operator who can modify Panguard rules, define ATR roles, approve skills, and control the WORM audit pipeline.
+
+A single compromised operator account gives an attacker the power to change the rules themselves, not just bypass them. The insider threat is usually the compromised employee (phishing, credential theft, or social engineering), not the malicious insider. In this final module we apply the same zero-trust principles we built for agents to the humans who operate the platform: least privilege, continuous verification, separation of duties, and audited emergency access. By the end you will have operator security that matches the rigor of every other layer in the curriculum.
+
+---
+
+The Human Operator as the Highest-Value Target
+
+An operator with the right permissions has broader access and greater blast radius than any individual agent.
+
+They can:
+
+- Modify Panguard rules
+
+- Define or expand ATR roles
+
+- Approve and deploy skills
+
+- Control the WORM audit pipeline
+
+Compromise of one operator account lets an attacker modify controls rather than merely circumvent them. Zero trust must therefore apply to humans: the same least-privilege and continuous verification principles that govern agents must govern operators. Phishing and credential theft are the primary attack paths.
+
+---
+
+Admin Access Controls: Who Can Modify What
+
+We define named, documented admin roles with explicit, mutually exclusive capability boundaries.
+
+- Panguard rule author: Can write draft rules but cannot deploy them.
+
+- Panguard rule deployer: Can promote reviewed rules but cannot write drafts.
+
+- ATR role admin: Can modify ATR role definitions after approval but cannot deploy Panguard rules.
+
+- Vault admin: Can manage Vault policies but is explicitly prohibited from deploying Panguard rules.
+
+Enforcement is structural:
+
+- Kyverno admission policy rejects any operator resource that combines prohibited roles.
+
+- All admin access is granted via short-lived Vault tokens derived from the operator’s mTLS certificate — no static admin credentials exist.
+
+- On operator termination, the mTLS certificate is immediately revoked and all derived tokens are invalidated within one TTL cycle.
+
+---
+
+Separation of Duties
+
+We enforce SoD at both role and action levels:
+
+- Skill approver ≠ skill deployer
+
+- ATR rule author ≠ ATR rule deployer
+
+Monthly automated SoD report flags any individual who performed two mutually exclusive actions in the same week.
+
+In small teams where role overlap is unavoidable, mandatory 4-eyes review compensates. SoD violations are reviewed by the security team lead within 5 business days and escalated to the compliance officer if unresolved.
+
+---
+
+4-Eyes Controls for High-Risk Configuration Changes
+
+High-risk changes require two distinct approvers:
+
+High-risk categories include:
+
+- Vault root token use
+
+- CA rotation
+
+- Panguard global rule disable
+
+- ATR scope expansion for Tier 1 agents
+
+- WORM retention policy change
+
+- Cluster admission policy change
+
+- Multi-tenant isolation policy change
+
+Enforcement:
+
+- A ValidatingWebhookConfiguration rejects any resource lacking two distinct security-team approver annotations.
+
+- 24-hour approval expiry: a change not deployed within 24 hours of second approval requires re-approval.
+
+- Both approver identities are permanently recorded in the WORM audit trail as part of the deployment record.
+
+---
+
+Break-Glass Emergency Access
+
+For true emergencies we maintain a sealed break-glass credential:
+
+- Vault token sealed under Shamir secret sharing that requires two physical HSM tokens to be presented simultaneously.
+
+- Every invocation automatically:
+  - Pages the security team lead
+    - Writes POLICY: BREAK_GLASS_INVOKED to the WORM trail
+    - Opens a mandatory post-incident review ticket (48-hour deadline)
+
+Break-glass provides expedited access to the configuration plane only — it does not disable Panguard enforcement or ATR validation. A full post-incident review is required for every use; failure to complete the review is itself a finding.
+
+---
+
+Operator Session Auditing and Insider Threat Detection
+
+Every operator action is logged to the WORM audit trail using the same canonical security event schema as agent actions (Module 19).
+
+SIEM correlation rules specifically target insider threats:
+
+- Operator accessing audit logs or Vault outside business hours
+
+- Operator reading a different tenant’s audit events
+
+- Operator modifying a Panguard rule followed by a previously-blocked action succeeding within 60 minutes
+
+- Operator creating an ATR role and assigning it to an agent they own (SoD violation)
+
+Weekly automated peer-review report of all operator actions is sent to the security team lead.
+
+---
+
+Emergency Secret Rotation Runbooks
+
+We maintain two offline runbooks tested annually:
+
+Runbook A (agent credential compromised)
+
+- Identify affected systems
+
+- Panguard block on compromised token signature
+
+- Vault revoke → generate replacement → verify all agents on new credential
+
+- Write full incident record to WORM
+
+Runbook B (Vault root token compromised)
+
+- Re-key Vault using existing unseal keys
+
+- Issue new short-lived root token
+
+- Revoke compromised root → rotate all downstream credentials
+
+- Verify operations → document in WORM
+
+Both runbooks are stored offline (not only in the production cluster) so they remain available precisely when the cluster is compromised.
+
+---
+
+External API Security
+
+Many operator tasks involve configuring external integrations. We secure these at the operator layer:
+
+- Webhook signature validation: All inbound webhooks are validated against an HMAC signature before the payload reaches any agent context. Unsigned webhooks are rejected at the gateway.
+
+- SSRF via webhook URL: Kyverno policy rejects ClawQLWebhook resources containing private-network target URLs at configuration time (not runtime).
+
+- Rate-limit backpressure: Exponential backoff with jitter on 429 responses; alert at 80 % of rate limit consumed; block outbound calls at 95 %.
+
+- Certificate pinning for critical integrations (payment processors, identity providers): pin the expected certificate chain, alert on mismatch, and include pinned certs in the certificate inventory (Module 26) with 60-day expiry alerts.
+
+External API security is treated as an operator security concern because these integrations are configured by humans, and agent-layer controls cannot validate them.
+
+---
+
+Key Takeaways (Memorize These!)
+
+- Human operators have broader access and greater blast radius than any individual agent — the same zero-trust principles that govern agents must govern operators.
+
+- Mutually exclusive admin roles enforced by admission policy, not convention — convention fails under time pressure.
+
+- Break-glass provides expedited access, not unconstrained access — Panguard and ATR enforcement remain active during break-glass sessions.
+
+- Emergency rotation runbooks stored offline: a runbook that only exists in the production cluster is unavailable precisely when it is most needed.
+
+- External API security (webhook validation, SSRF, rate limiting, certificate pinning) is an operator security concern — these integrations are configured by humans and the agent-layer controls cannot validate them.
+
+You have now completed the full 30-module security curriculum. Every layer — from supply chain to human operators — is secured with defense-in-depth, zero-trust principles, and continuous verification. The platform is ready for production use in the most demanding environments.
+
+Thank you for completing the course. You now possess a complete, production-grade security architecture for agentic AI platforms.

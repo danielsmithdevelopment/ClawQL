@@ -1,0 +1,171 @@
+---
+title: "Secure Multi-Tenancy: Namespace Isolation, Per-Tenant Vault Paths, and Audit Segregation"
+series: "Agentic AI Security Curriculum"
+level: advanced
+tags:
+  - multi-tenancy
+  - vault
+  - isolation
+  - audit
+part: 27
+total_parts: 30
+date: "May 2026"
+slug: "secure-multi-tenancy-isolation"
+canonical_path: "/security/best-practices/secure-multi-tenancy-isolation"
+description: "Tenant-scoped Vault paths, memory partitions, and per-tenant WORM audit destinations."
+prev: "vulnerability-management-patch-cryptography"
+next: "disaster-recovery-business-continuity"
+---
+
+# Secure Multi-Tenancy: Namespace Isolation, Per-Tenant Vault Paths, and Audit Segregation
+
+Namespace Isolation, Per-Tenant Vault Paths, and Audit Segregation
+
+Hello and welcome to Module 27!
+
+Modules 1–26 have built a comprehensive security stack for single-tenant and internal deployments. Now we extend that stack to support multiple tenants safely — whether they are different customers in a SaaS platform or different business units inside a large organization.
+
+Multi-tenancy introduces three distinct failure modes: silent cross-tenant data access (highest severity), resource exhaustion as denial-of-service (noisy but still dangerous), and audit-log contamination (compliance nightmare). Namespace isolation is necessary but not sufficient — every shared resource below the namespace boundary must be explicitly hardened. In this module we re-examine the entire stack through one question: “What does this component leak between tenants, and how do we make leakage architecturally impossible?”
+
+---
+
+The Multi-Tenancy Threat Model
+
+We assume the worst: a compromised tenant could attempt to read another tenant’s data, exhaust shared resources, or poison shared logs.
+
+The three failure modes we must eliminate:
+
+1. Cross-tenant data access — silent and high-severity (e.g., one tenant reading another’s memory store).
+
+2. Resource exhaustion as DoS — noisy but effective (one tenant starving others of GPU, NATS, or CPU).
+
+3. Audit-log contamination — compliance failure (one tenant’s events mixing with another’s).
+
+Namespace isolation is the starting point. Everything else must be hardened at the shared-infrastructure layer.
+
+---
+
+Kubernetes Namespace Isolation
+
+We enforce strict isolation at the Kubernetes layer:
+
+- One namespace per tenant, created automatically on tenant onboarding.
+
+A default-deny NetworkPolicy is applied at namespace creation:
+
+apiVersion: networking.k8s.io/v1
+
+kind: NetworkPolicy
+
+metadata:
+
+  name: default-deny
+
+spec:
+
+  podSelector: {}
+
+  policyTypes:
+
+  - Ingress
+
+  - Egress
+
+-
+- Kyverno policy rejects any pod in tenant A’s namespace that references Secrets, ConfigMaps, or ServiceAccounts from tenant B.
+
+- For high-security tenants (HIPAA, PCI, etc.): dedicated node pools with taints and tolerations — no shared nodes.
+
+- ResourceQuota and LimitRange are applied per namespace for CPU, memory, GPU, and pod count.
+
+This ensures tenants cannot see or affect each other at the Kubernetes resource level.
+
+---
+
+Per-Tenant Vault Paths and Policy Boundaries
+
+Vault is the source of truth for all secrets, so it must be tenant-isolated.
+
+- Vault OSS: Use strict path-prefix isolation (secret/tenants//\*).
+
+- Vault Enterprise (recommended for production SaaS): Use separate Vault namespaces — tenant A’s token cannot make API calls to tenant B’s namespace.
+
+Additional enforcement:
+
+- Panguard fires a critical alert on any token-exchange request that attempts a path outside the requesting agent’s tenant prefix.
+
+- Per-tenant transit encryption keys: tenant A’s memory entries are encrypted with a key that tenant B can never access, even if the storage backend is shared.
+
+---
+
+Memory Store Partitioning
+
+Memory data is partitioned by tenant at the storage layer:
+
+- S3 (or equivalent) path: s3://clawql-memory/tenants//
+
+- Bucket policy: the tenant’s IAM role (or service account) can only access its own prefix.
+
+- The gateway always supplies tenantId from the validated session JWT — never from the request body (cannot be forged).
+
+- Any recall query without a valid tenantId in the JWT is rejected (fail-closed).
+
+- Vector DB for semantic recall: separate collection per tenant; cross-collection queries are rejected at the gateway.
+
+---
+
+Per-Tenant Resource Quotas and NATS Limits
+
+Shared resources must be quota-protected:
+
+- NATS JetStream: per-tenant stream limits (max messages, max bytes, max consumers).
+
+- Panguard rate limits: scoped per tenantId, not just per session — one tenant cannot exhaust the shared rate-limit budget.
+
+- GPU quotas: ResourceQuota on requests.nvidia.com/gpu and limits.nvidia.com/gpu per namespace (Module 17).
+
+This prevents resource-exhaustion attacks between tenants.
+
+---
+
+Audit Log Segregation
+
+Audit logs must never mix tenant data.
+
+- Every audit event includes tenantId at emission time (never reconstructed from context).
+
+- Fluent Bit routes events to separate WORM destinations per tenant.
+
+- Separate S3 bucket per tenant with Object Lock and tenant-scoped IAM access.
+
+- Platform-level events (cluster alerts, admission decisions) go to a separate bucket accessible only to the platform security team.
+
+- Evidence packages for tenant audits: signed, time-bounded export encrypted with the tenant’s public key — platform operators cannot read the contents.
+
+---
+
+Cross-Tenant Leakage Through Shared Infrastructure
+
+We explicitly harden every remaining shared component:
+
+- DNS: Per-tenant RPZ zones in the filtering resolver — no single shared allowlist.
+
+- Panguard: Stateless per-request processing — no in-memory tenant context that can bleed between requests.
+
+- Harbor: Image pull secrets scoped per namespace — cross-namespace secret references are rejected by Kyverno.
+
+- Prometheus: No tenant-identifying labels on metrics visible across tenants. Per-tenant security metrics are emitted as log events to the WORM pipeline instead of Prometheus.
+
+---
+
+Key Takeaways (Memorize These!)
+
+- Namespace isolation is the starting point, not the finish line — every shared resource requires explicit isolation analysis.
+
+- tenantId supplied from the session JWT by the gateway is the architectural control that makes cross-tenant data access forging impossible.
+
+- Vault Enterprise namespaces are the correct model for SaaS multi-tenancy — path-prefix isolation is a best effort, not a hard boundary.
+
+- Audit log segregation encrypted with the tenant’s public key gives tenants evidence ownership without requiring platform operator access.
+
+You now have secure multi-tenancy that is architecturally enforced rather than policy-dependent. Cross-tenant leakage is structurally impossible, resource exhaustion is bounded, and audit logs remain clean and tenant-owned. This completes the foundation needed to run multiple tenants safely on the same platform.
