@@ -36,7 +36,8 @@ export default function VisionMasterEnablementPage() {
           >
             docs/vision/clawql-master-enablement-guide.md
           </a>{' '}
-          on <code className="font-mono text-xs">main</code> — edit there, then run{' '}
+          on <code className="font-mono text-xs">main</code> — edit there, then
+          run{' '}
           <code className="font-mono text-xs">
             node scripts/sync-clawql-master-enablement-doc.mjs
           </code>{' '}

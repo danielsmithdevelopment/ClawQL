@@ -1,4 +1,5 @@
 # ClawQL — Master Enablement Document
+
 **Unified Living Reference & Technical Bible — May 2026 Edition**
 Public Document · Open for Community Review & Contribution · Apache 2.0 / MIT
 
@@ -6,20 +7,20 @@ Public Document · Open for Community Review & Contribution · Apache 2.0 / MIT
 
 ## Document Control
 
-| Field | Value |
-|---|---|
-| Version | 2026.05 |
-| Status | Living Document |
-| Last Updated | May 15, 2026 |
-| License | Apache 2.0 (core); MIT (clawql-pageindex); CC-BY-SA 4.0 (documentation) |
+| Field        | Value                                                                   |
+| ------------ | ----------------------------------------------------------------------- |
+| Version      | 2026.05                                                                 |
+| Status       | Living Document                                                         |
+| Last Updated | May 15, 2026                                                            |
+| License      | Apache 2.0 (core); MIT (clawql-pageindex); CC-BY-SA 4.0 (documentation) |
 
 ### Version History
 
-| Version | Summary |
-|---|---|
+| Version | Summary                                                                                                        |
+| ------- | -------------------------------------------------------------------------------------------------------------- |
 | 2026.05 | Consolidated public master reference. Merged vision, architecture, deployment tiers, and compliance framework. |
-| 2026.04 | Initial modular Effect-TS architecture baseline. |
-| Earlier | Internal vision documents (April 2026). |
+| 2026.04 | Initial modular Effect-TS architecture baseline.                                                               |
+| Earlier | Internal vision documents (April 2026).                                                                        |
 
 ---
 
@@ -29,35 +30,35 @@ Public Document · Open for Community Review & Contribution · Apache 2.0 / MIT
 
 ClawQL is under active development. Not all components described in this document are shipped. The table below is the canonical reference for what exists today.
 
-| Package | Status |
-|---|---|
-| `clawql-core` | 🔨 In development |
-| `clawql-api` | 🔨 In development |
-| `clawql-auth` | 🔨 In development |
-| `clawql-documents` | 🔨 In development |
-| `clawql-memory` | 🔨 In development |
-| `clawql-pageindex` | 🔨 In development |
-| `clawql-mcp` | ✅ Shipped |
-| `clawql-ouroboros` | ✅ Shipped |
-| `mcp-grpc-transport` | ✅ Shipped |
-| `clawql-data` | 📋 Planned |
-| `clawql-automation` | 📋 Planned |
-| `clawql-telemetry` | 📋 Planned |
-| `clawql-sandbox` | 📋 Planned |
-| `clawql-printingpress` | 📋 Planned |
-| `clawql-goose` | 📋 Planned |
-| `clawql-lending` | 📋 Planned — not shipped |
-| `clawql-legal` | 📋 Planned — not shipped |
-| `clawql-healthcare` | 📋 Planned — not shipped |
-| `clawql-insurance` | 📋 Planned — not shipped |
-| `clawql-supplychain` | 📋 Planned — not shipped |
-| `clawql-government` | 📋 Planned — not shipped |
-| `clawql-manufacturing` | 📋 Planned — not shipped |
-| `clawql-education` | 📋 Planned — not shipped |
-| `clawql-engineering` | 📋 Planned — not shipped |
-| `clawql-blockchain` | 📋 Planned — not shipped |
-| Kubernetes Operator | 📋 Planned |
-| Natural Language Dashboard | 📋 Planned |
+| Package                    | Status                   |
+| -------------------------- | ------------------------ |
+| `clawql-core`              | 🔨 In development        |
+| `clawql-api`               | 🔨 In development        |
+| `clawql-auth`              | 🔨 In development        |
+| `clawql-documents`         | 🔨 In development        |
+| `clawql-memory`            | 🔨 In development        |
+| `clawql-pageindex`         | 🔨 In development        |
+| `clawql-mcp`               | ✅ Shipped               |
+| `clawql-ouroboros`         | ✅ Shipped               |
+| `mcp-grpc-transport`       | ✅ Shipped               |
+| `clawql-data`              | 📋 Planned               |
+| `clawql-automation`        | 📋 Planned               |
+| `clawql-telemetry`         | 📋 Planned               |
+| `clawql-sandbox`           | 📋 Planned               |
+| `clawql-printingpress`     | 📋 Planned               |
+| `clawql-goose`             | 📋 Planned               |
+| `clawql-lending`           | 📋 Planned — not shipped |
+| `clawql-legal`             | 📋 Planned — not shipped |
+| `clawql-healthcare`        | 📋 Planned — not shipped |
+| `clawql-insurance`         | 📋 Planned — not shipped |
+| `clawql-supplychain`       | 📋 Planned — not shipped |
+| `clawql-government`        | 📋 Planned — not shipped |
+| `clawql-manufacturing`     | 📋 Planned — not shipped |
+| `clawql-education`         | 📋 Planned — not shipped |
+| `clawql-engineering`       | 📋 Planned — not shipped |
+| `clawql-blockchain`        | 📋 Planned — not shipped |
+| Kubernetes Operator        | 📋 Planned               |
+| Natural Language Dashboard | 📋 Planned               |
 
 This document specifies the intended complete design. Implementation is phased and demand-driven; no fixed delivery dates are set. All interfaces, schemas, and patterns described here are stable and intended for broad adoption.
 
@@ -65,13 +66,13 @@ This document specifies the intended complete design. Implementation is phased a
 
 ## Intended Audience & How to Use This Document
 
-| Audience | Start here |
-|---|---|
-| Quick evaluators | §2, §4, §17 |
+| Audience                  | Start here      |
+| ------------------------- | --------------- |
+| Quick evaluators          | §2, §4, §17     |
 | Developers & contributors | §5, §6, §7, §19 |
-| Platform operators | §13, §14, §16 |
-| Architects | §6, §7, §8, §9 |
-| Compliance & legal teams | §12, §11, §18 |
+| Platform operators        | §13, §14, §16   |
+| Architects                | §6, §7, §8, §9  |
+| Compliance & legal teams  | §12, §11, §18   |
 
 Cross-references are provided throughout. All YAML, schemas, and code examples are written against the reference implementation.
 
@@ -152,13 +153,13 @@ Shared assets make up 95%+ of code. Both forks use the same security baseline, H
 
 ## 1.5 Key Differentiators
 
-| Comparison | How ClawQL differs |
-|---|---|
-| **vs. base Goose** | Adds persistent memory, document intelligence, compliance controls, and a unified MCP surface. Goose is the execution runtime; ClawQL is the full platform. |
-| **vs. Stripe Minions** | ClawQL is self-hostable, open-source, and regulation-first. Minions targets cloud-native payment workflows; ClawQL targets any regulated domain. |
-| **vs. Hermes / OpenClaw** | Hermes/OpenClaw are messaging and supervisor layers. ClawQL embeds them as components within a larger orchestration platform. |
-| **vs. LangGraph / Semantic Kernel** | ClawQL is not an agent framework — it is the infrastructure layer beneath agents. It provides the tools those frameworks call, not the reasoning logic. |
-| **vs. generic MCP servers** | Generic MCP servers are point integrations. ClawQL is a composable, audited, compliance-aware platform that hosts and manages many MCP surfaces under one gateway. |
+| Comparison                          | How ClawQL differs                                                                                                                                                 |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **vs. base Goose**                  | Adds persistent memory, document intelligence, compliance controls, and a unified MCP surface. Goose is the execution runtime; ClawQL is the full platform.        |
+| **vs. Stripe Minions**              | ClawQL is self-hostable, open-source, and regulation-first. Minions targets cloud-native payment workflows; ClawQL targets any regulated domain.                   |
+| **vs. Hermes / OpenClaw**           | Hermes/OpenClaw are messaging and supervisor layers. ClawQL embeds them as components within a larger orchestration platform.                                      |
+| **vs. LangGraph / Semantic Kernel** | ClawQL is not an agent framework — it is the infrastructure layer beneath agents. It provides the tools those frameworks call, not the reasoning logic.            |
+| **vs. generic MCP servers**         | Generic MCP servers are point integrations. ClawQL is a composable, audited, compliance-aware platform that hosts and manages many MCP surfaces under one gateway. |
 
 ## 1.6 Ultimate Goal
 
@@ -239,6 +240,7 @@ ClawQL runs from a laptop to a large-scale enterprise cluster on the same codeba
 **Runtime:** Docker Compose (preferred) or single-node k3s. No Operator required.
 
 **Included:**
+
 - `clawql-api` (single replica)
 - `clawql-memory` with SQLite backend
 - `clawql-pageindex` (embedded)
@@ -271,14 +273,14 @@ ClawQL runs from a laptop to a large-scale enterprise cluster on the same codeba
 
 > These figures are measured at idle under minimal load. "Active" figures are approximate and vary widely with document size, concurrency, and model complexity.
 
-| Component | Idle RAM | Active RAM | CPU at idle / active |
-|---|---|---|---|
-| `clawql-api` | ~150 MB | 300–500 MB | Low / Medium |
-| Postgres + TimescaleDB | ~512 MB | 1–2 GB | Low / Medium |
-| Apache Tika | ~200 MB | 800 MB–1.5 GB | Low / High |
-| Presidio | ~400 MB | 1.5–2 GB | Medium / High |
-| Goose (active task) | — | 512 MB–1 GB | Medium / High |
-| NATS JetStream | ~256 MB | 512 MB–2 GB | Low / Medium |
+| Component              | Idle RAM | Active RAM    | CPU at idle / active |
+| ---------------------- | -------- | ------------- | -------------------- |
+| `clawql-api`           | ~150 MB  | 300–500 MB    | Low / Medium         |
+| Postgres + TimescaleDB | ~512 MB  | 1–2 GB        | Low / Medium         |
+| Apache Tika            | ~200 MB  | 800 MB–1.5 GB | Low / High           |
+| Presidio               | ~400 MB  | 1.5–2 GB      | Medium / High        |
+| Goose (active task)    | —        | 512 MB–1 GB   | Medium / High        |
+| NATS JetStream         | ~256 MB  | 512 MB–2 GB   | Low / Medium         |
 
 ## 3.5 Cost Model
 
@@ -288,14 +290,14 @@ ClawQL runs from a laptop to a large-scale enterprise cluster on the same codeba
 
 ## 3.6 Tier Selection Decision Matrix
 
-| Requirement | Tier 1 | Tier 2 | Tier 3 |
-|---|---|---|---|
-| Solo developer / prototyping | ✅ | — | — |
-| Team production (single vertical) | — | ✅ | — |
-| Multi-tenant / regulated | — | — | ✅ |
-| Kata / full isolation | — | Optional | ✅ |
-| Goose + Printing Press at scale | — | Limited | ✅ |
-| Full vertical ecosystem | — | 1–2 | Unlimited |
+| Requirement                       | Tier 1 | Tier 2   | Tier 3    |
+| --------------------------------- | ------ | -------- | --------- |
+| Solo developer / prototyping      | ✅     | —        | —         |
+| Team production (single vertical) | —      | ✅       | —         |
+| Multi-tenant / regulated          | —      | —        | ✅        |
+| Kata / full isolation             | —      | Optional | ✅        |
+| Goose + Printing Press at scale   | —      | Limited  | ✅        |
+| Full vertical ecosystem           | —      | 1–2      | Unlimited |
 
 ---
 
@@ -315,40 +317,40 @@ Universal intelligent MCP gateway and primary product surface. Implements `creat
 
 ## 4.2 Default-Enabled Horizontal Layers
 
-| Package | Status | Responsibilities |
-|---|---|---|
-| `clawql-auth` | 🔨 In development | Multi-mode authentication, RBAC/ABAC, vertical RLS, ATR claim enrichment, session management |
+| Package            | Status            | Responsibilities                                                                                 |
+| ------------------ | ----------------- | ------------------------------------------------------------------------------------------------ |
+| `clawql-auth`      | 🔨 In development | Multi-mode authentication, RBAC/ABAC, vertical RLS, ATR claim enrichment, session management     |
 | `clawql-documents` | 🔨 In development | Complete document intelligence pipeline (Tika, Gotenberg, Stirling-PDF, Presidio, Paperless NGX) |
-| `clawql-memory` | 🔨 In development | Memory 2.0 hybrid system (vault + graph + PageIndex + Onyx) |
-| `clawql-pageindex` | 🔨 In development | Standalone MIT package — vectorless hierarchical indexing |
+| `clawql-memory`    | 🔨 In development | Memory 2.0 hybrid system (vault + graph + PageIndex + Onyx)                                      |
+| `clawql-pageindex` | 🔨 In development | Standalone MIT package — vectorless hierarchical indexing                                        |
 
 ## 4.3 Default-Disabled (Opt-In) Horizontal Layers
 
-| Package | Status | Responsibilities |
-|---|---|---|
-| `clawql-data` | 📋 Planned | Pluggable data providers (Valkey, Postgres, DuckDB, SeaweedFS, etc.) |
-| `clawql-automation` | 📋 Planned | NATS JetStream scheduling, HITL gates, notifications, workflows |
-| `clawql-telemetry` | 📋 Planned | OpenTelemetry + Prometheus (Operator-injected sidecar) |
-| `clawql-sandbox` | 📋 Planned | Kata Containers / gVisor secure execution |
-| `clawql-printingpress` | 📋 Planned | On-demand generation of signed Go CLIs and MCP servers |
-| `clawql-goose` | 📋 Planned | Management of Goose agent runtimes |
+| Package                | Status     | Responsibilities                                                     |
+| ---------------------- | ---------- | -------------------------------------------------------------------- |
+| `clawql-data`          | 📋 Planned | Pluggable data providers (Valkey, Postgres, DuckDB, SeaweedFS, etc.) |
+| `clawql-automation`    | 📋 Planned | NATS JetStream scheduling, HITL gates, notifications, workflows      |
+| `clawql-telemetry`     | 📋 Planned | OpenTelemetry + Prometheus (Operator-injected sidecar)               |
+| `clawql-sandbox`       | 📋 Planned | Kata Containers / gVisor secure execution                            |
+| `clawql-printingpress` | 📋 Planned | On-demand generation of signed Go CLIs and MCP servers               |
+| `clawql-goose`         | 📋 Planned | Management of Goose agent runtimes                                   |
 
 ## 4.4 Vertical Packages
 
 **All verticals are planned and not yet shipped.** They are specified here so that contributors, evaluators, and regulated customers can understand the intended scope and begin integration planning.
 
-| Package | Domain |
-|---|---|
-| `clawql-lending` | Mortgage, auto, BNPL, commercial underwriting (flagship regulated workflow) |
-| `clawql-blockchain` | Hyperledger Fabric, Chainlink, The Graph, ERC-4337, x402 |
-| `clawql-legal` | Contract intelligence, clause extraction, privilege redaction |
-| `clawql-healthcare` | FHIR, HL7, DICOM, HIPAA de-identification |
-| `clawql-insurance` | Claims processing, fraud detection |
-| `clawql-supplychain` | BOL, customs, invoice matching, tariff compliance |
-| `clawql-government` | Permitting, FOIA, procurement |
-| `clawql-manufacturing` | Work orders, BOM, traceability |
-| `clawql-education` | LMS, syllabus generation, FERPA |
-| `clawql-engineering` | MATLAB/Simulink integration |
+| Package                | Domain                                                                      |
+| ---------------------- | --------------------------------------------------------------------------- |
+| `clawql-lending`       | Mortgage, auto, BNPL, commercial underwriting (flagship regulated workflow) |
+| `clawql-blockchain`    | Hyperledger Fabric, Chainlink, The Graph, ERC-4337, x402                    |
+| `clawql-legal`         | Contract intelligence, clause extraction, privilege redaction               |
+| `clawql-healthcare`    | FHIR, HL7, DICOM, HIPAA de-identification                                   |
+| `clawql-insurance`     | Claims processing, fraud detection                                          |
+| `clawql-supplychain`   | BOL, customs, invoice matching, tariff compliance                           |
+| `clawql-government`    | Permitting, FOIA, procurement                                               |
+| `clawql-manufacturing` | Work orders, BOM, traceability                                              |
+| `clawql-education`     | LMS, syllabus generation, FERPA                                             |
+| `clawql-engineering`   | MATLAB/Simulink integration                                                 |
 
 ## 4.5 Already Shipped Packages
 
@@ -437,6 +439,7 @@ sandbox printingpress       goose              automation
 ## 5.3 Strict Dependency Rules & Enforcement
 
 **Rules:**
+
 - No vertical package may import another vertical. Cross-vertical communication must route through `clawql-api.execute()` or gated `clawql-memory` recall using `cross_vertical` mode.
 - Horizontal layers may not import other horizontal layers directly (except through `clawql-api`).
 - `clawql-telemetry` is never imported; it is injected as an OpenTelemetry sidecar by the Operator.
@@ -445,6 +448,7 @@ sandbox printingpress       goose              automation
 - `clawql-pageindex` has zero dependencies on any other ClawQL package.
 
 **Enforcement mechanisms:**
+
 - ESLint `no-restricted-imports` + custom architecture rules
 - TypeScript project references (`tsconfig.json`)
 - Turborepo dependency graph validation
@@ -489,8 +493,8 @@ Registration occurs exclusively via Effect Layers.
 
 ```typescript
 export interface ProviderSpec {
-  kind: SpecKind;          // e.g. "postgres", "duckdb", "valkey", "fabric"
-  id: string;              // unique within instance
+  kind: SpecKind; // e.g. "postgres", "duckdb", "valkey", "fabric"
+  id: string; // unique within instance
   enabled: boolean;
   secretRef?: string;
   url?: string;
@@ -560,7 +564,7 @@ export const LendingVertical = defineVertical({
     createProviderSpec({ kind: "postgres", id: "operational" }),
     createProviderSpec({ kind: "duckdb", id: "analytics" }),
   ],
-  layer: LendingLayer
+  layer: LendingLayer,
 });
 ```
 
@@ -574,10 +578,11 @@ export const LendingLayer = Layer.effect(ClawQLApi, (api) =>
     yield* api.registerPlugin({
       id: "lending",
       version: "1.0.0",
-      onRegister: (api) => Effect.gen(function* () {
-        yield* api.registerTools(lendingTools);
-        yield* api.registerSpecs(requiredSpecs);
-      }),
+      onRegister: (api) =>
+        Effect.gen(function* () {
+          yield* api.registerTools(lendingTools);
+          yield* api.registerSpecs(requiredSpecs);
+        }),
       requiredSpecs: lendingSpecs,
       onIngestHook: redactionAndMerkleHook,
     });
@@ -606,8 +611,7 @@ it("creates deal room", () =>
   Effect.gen(function* () {
     const result = yield* createDealRoom(input);
     expect(result).toBeDefined();
-  }).pipe(Effect.provide(TestLayer))
-);
+  }).pipe(Effect.provide(TestLayer)));
 ```
 
 No external services required for most integration tests.
@@ -617,15 +621,16 @@ No external services required for most integration tests.
 Every `execute()` call flows through a typed, observable pipeline:
 
 ```typescript
-const execute = (action, input) => Effect.gen(function* () {
-  const session = yield* validateATR(input.atr);
-  yield* Panguard.enforce(session, action);
-  const redacted = yield* Presidio.redact(input);
-  const route = yield* router.select(action, redacted);
-  const result = yield* route.provider.execute(redacted);
-  yield* updateMerkle(result);
-  return result;
-}).pipe(Effect.provide(SecurityLayer));
+const execute = (action, input) =>
+  Effect.gen(function* () {
+    const session = yield* validateATR(input.atr);
+    yield* Panguard.enforce(session, action);
+    const redacted = yield* Presidio.redact(input);
+    const route = yield* router.select(action, redacted);
+    const result = yield* route.provider.execute(redacted);
+    yield* updateMerkle(result);
+    return result;
+  }).pipe(Effect.provide(SecurityLayer));
 ```
 
 All steps are instrumented with OpenTelemetry traces.
@@ -654,29 +659,35 @@ Every boundary applies Presidio redaction (where applicable) and Merkle auditing
 ## 7.2 Component Details
 
 ### Hot / In-Memory — Valkey
+
 - Redis-protocol compatible, BSD 3-clause licensed
 - Caching, rate limiting, session management, feature stores, vector similarity search
 - Primary hot path for ATR claims and transient operation state
 
 ### Embedded / Local — SQLite
+
 - Zero-config local memory and per-agent state
 - Default for Tier 1 developer deployments and edge scenarios
 
 ### Transactional / OLTP — Postgres
+
 - Core operational data, users, sessions, graph store for Memory 2.0
 - TimescaleDB extension for temporal queries
 - pgvector for hybrid relational + vector search
 
 ### Analytical / Lakehouse
+
 - **DuckDB (MIT):** Embedded columnar analytics, zero-ETL Parquet/S3/Iceberg queries, ML features
 - **SeaweedFS (Apache 2.0):** S3-compatible object storage for raw files, documents, and generated binaries
 - **Iceberg tables** for schema evolution and transactional lakehouse semantics
 
 ### Streaming & Real-Time
+
 - **NATS JetStream (Apache 2.0):** Durable messaging, event backbone, and workflow triggers
 - **Apache Flink (Apache 2.0):** Real-time ETL, document pipeline materialisation, and sync to DuckDB/Onyx
 
 ### Knowledge & Documents
+
 - **Onyx:** Enterprise semantic search with real-time Flink synchronisation (optional)
 - **`clawql-documents` pipeline:** Tika → Gotenberg → Stirling-PDF → Presidio → Paperless NGX with hierarchy extraction for PageIndex
 
@@ -721,7 +732,7 @@ const results = await clawql.search("latest lending deals for client ABC123");
 // Execution with full security, routing, and auditing
 const outcome = await clawql.execute("lending.createDealRoom", input, {
   atr: sessionToken,
-  projection: `dealRoom { id title amount status counterparty { name } }`
+  projection: `dealRoom { id title amount status counterparty { name } }`,
 });
 ```
 
@@ -755,12 +766,12 @@ All steps are typed Effect pipelines with full OpenTelemetry tracing.
 
 ## 8.5 Security Hooks at Every Step
 
-| Phase | Controls |
-|---|---|
-| `beforeExecute` | ATR + Panguard + Presidio redaction |
+| Phase             | Controls                                |
+| ----------------- | --------------------------------------- |
+| `beforeExecute`   | ATR + Panguard + Presidio redaction     |
 | `duringExecution` | Real-time monitoring, resource limiting |
-| `afterExecute` | Merkle update + WORM audit write |
-| `onError` | Structured error with recovery options |
+| `afterExecute`    | Merkle update + WORM audit write        |
+| `onError`         | Structured error with recovery options  |
 
 Verticals may register additional domain-specific hooks.
 
@@ -770,11 +781,11 @@ Tools are dynamically registered using normalised operation IDs (`kind__provider
 
 ## 8.7 Failure Modes & Resilience
 
-| Failure | Behaviour |
-|---|---|
-| `clawql-api` pod restart | Supergraph rebuilt from persisted specs |
-| Protocol adapter failure | Degraded status in supergraph |
-| Circuit breaker open | Tool temporarily unavailable with automatic recovery |
+| Failure                         | Behaviour                                                       |
+| ------------------------------- | --------------------------------------------------------------- |
+| `clawql-api` pod restart        | Supergraph rebuilt from persisted specs                         |
+| Protocol adapter failure        | Degraded status in supergraph                                   |
+| Circuit breaker open            | Tool temporarily unavailable with automatic recovery            |
 | Schema conflict on registration | Old tool preserved; conflict flagged in dashboard and audit log |
 
 ---
@@ -805,6 +816,7 @@ Full end-to-end pipeline with failure isolation:
 5. **Paperless NGX** — long-term archive with auto-tagging and Onyx sync
 
 **Key design decisions:**
+
 - Hierarchy tree extraction feeds PageIndex
 - Per-stage Merkle roots
 - Failure isolation: partial results returned with `stageErrors` array
@@ -814,12 +826,12 @@ Full end-to-end pipeline with failure isolation:
 
 Hybrid persistent memory combining multiple storage models:
 
-| Layer | Backend | Purpose |
-|---|---|---|
-| Vault | Filesystem (Obsidian-style) | Raw document and note storage |
-| Graph | Postgres / SQLite | Adjacency-list store with temporal edges |
-| PageIndex | SQLite (default) | Vectorless hierarchical tree |
-| Onyx | Optional, Flink-synced | Semantic search |
+| Layer     | Backend                     | Purpose                                  |
+| --------- | --------------------------- | ---------------------------------------- |
+| Vault     | Filesystem (Obsidian-style) | Raw document and note storage            |
+| Graph     | Postgres / SQLite           | Adjacency-list store with temporal edges |
+| PageIndex | SQLite (default)            | Vectorless hierarchical tree             |
+| Onyx      | Optional, Flink-synced      | Semantic search                          |
 
 **Recall Modes:** `vault`, `graph`, `pageindex`, `hybrid` (default), `onyx`, `fabric`, `cross_vertical` (ATR-gated)
 
@@ -827,11 +839,11 @@ Hybrid persistent memory combining multiple storage models:
 
 **Performance targets** (measured on Tier 2 hardware: 4-core, 8 GB RAM node; dataset: <250,000 nodes; network: LAN):
 
-| Operation | Target |
-|---|---|
-| Single-hop recall (≤50 nodes) | < 50 ms p99 |
-| Hybrid recall (≤250 nodes, 5 hops) | < 500 ms p99 |
-| `cross_vertical` recall | < 1 second p99 |
+| Operation                          | Target         |
+| ---------------------------------- | -------------- |
+| Single-hop recall (≤50 nodes)      | < 50 ms p99    |
+| Hybrid recall (≤250 nodes, 5 hops) | < 500 ms p99   |
+| `cross_vertical` recall            | < 1 second p99 |
 
 These are design targets, not measured production results. Benchmarks on representative hardware will be published as the platform matures.
 
@@ -842,6 +854,7 @@ Pruning scheduler runs daily, enforcing `maxGraphNodes` (default 250,000).
 Standalone MIT package. Designed for structural navigation of documents (contracts, patient records, BOMs, syllabi).
 
 **Capabilities:**
+
 - Vectorless tree construction and weighted traversal (BFS/DFS)
 - Token-budgeted content synthesis for LLM context windows
 - Multiple storage adapters (SQLite default)
@@ -851,12 +864,12 @@ Fully functional without any other ClawQL dependency. Complements Onyx semantic 
 
 ## 9.5 Remaining Horizontal Layers
 
-| Package | Status | Summary |
-|---|---|---|
-| `clawql-data` | 📋 Planned | Unified provider lifecycle for Valkey, Postgres, DuckDB, SeaweedFS |
+| Package             | Status     | Summary                                                                   |
+| ------------------- | ---------- | ------------------------------------------------------------------------- |
+| `clawql-data`       | 📋 Planned | Unified provider lifecycle for Valkey, Postgres, DuckDB, SeaweedFS        |
 | `clawql-automation` | 📋 Planned | NATS JetStream scheduling, HITL gates, notifications, workflow blueprints |
-| `clawql-telemetry` | 📋 Planned | OpenTelemetry + Prometheus + Grafana; injected as sidecar, never imported |
-| `clawql-sandbox` | 📋 Planned | Kata/gVisor execution with persistent volumes and resource quotas |
+| `clawql-telemetry`  | 📋 Planned | OpenTelemetry + Prometheus + Grafana; injected as sidecar, never imported |
+| `clawql-sandbox`    | 📋 Planned | Kata/gVisor execution with persistent volumes and resource quotas         |
 
 ---
 
@@ -882,6 +895,7 @@ Verticals are first-class Effect Layers that:
 **Scope:** Mortgage, auto, BNPL, payday, and commercial lending workflows.
 
 **Planned capabilities:**
+
 - Deal room automation with document pipeline + Presidio redaction
 - Credit analysis and risk scoring (DuckDB + Flink)
 - Underwriting decision engine with DiGiFi plugins
@@ -991,13 +1005,13 @@ All requests carry enriched `ATRClaims` (Actor–Tenant–Role):
 ```typescript
 interface ATRClaims {
   actorId: string;
-  actorType: 'human' | 'agent' | 'service';
+  actorType: "human" | "agent" | "service";
   sessionId: string;
   issuedAt: number;
   expiresAt: number;
 
   tenantId: string;
-  tenantTier: 'local' | 'standard' | 'enterprise';
+  tenantTier: "local" | "standard" | "enterprise";
 
   roles: string[];
   scopes: string[];
@@ -1013,7 +1027,7 @@ interface ATRClaims {
     pruneAccess: boolean;
   };
 
-  classificationLevel?: 'unclassified' | 'cui' | 'secret' | 'top_secret';
+  classificationLevel?: "unclassified" | "cui" | "secret" | "top_secret";
   minimumNecessary?: boolean;
   purpose?: string;
 
@@ -1053,12 +1067,12 @@ Claims are JWT-encoded, verified at every layer, and immutable once issued.
 
 ## 11.7 Effect Layer Security Hooks
 
-| Phase | Controls |
-|---|---|
-| `beforeExecute` | ATR + Panguard + redaction |
-| `duringExecution` | Real-time monitoring |
-| `afterExecute` | Merkle update + WORM audit |
-| Domain hooks | Vertical-specific rules |
+| Phase             | Controls                   |
+| ----------------- | -------------------------- |
+| `beforeExecute`   | ATR + Panguard + redaction |
+| `duringExecution` | Real-time monitoring       |
+| `afterExecute`    | Merkle update + WORM audit |
+| Domain hooks      | Vertical-specific rules    |
 
 ## 11.8 GDPR Right-to-Erasure + WORM Compliance
 
@@ -1073,12 +1087,12 @@ Solved via cryptographic erasure:
 
 Enforced at four layers:
 
-| Layer | Mechanism |
-|---|---|
-| Network | Istio NetworkPolicies + dedicated namespaces |
-| Data | `tenantId` filter in every graph traversal |
-| Compute | Per-tenant sandbox pods |
-| Encryption | Per-tenant keys at rest |
+| Layer      | Mechanism                                    |
+| ---------- | -------------------------------------------- |
+| Network    | Istio NetworkPolicies + dedicated namespaces |
+| Data       | `tenantId` filter in every graph traversal   |
+| Compute    | Per-tenant sandbox pods                      |
+| Encryption | Per-tenant keys at rest                      |
 
 ## 11.10 Observability, Incident Response & Recovery
 
@@ -1090,25 +1104,25 @@ Enforced at four layers:
 
 ## 11.11 Security Deliverables Matrix
 
-| Control | clawql-api | Verticals | Sandbox | Documents | Memory |
-|---|---|---|---|---|---|
-| Kata/gVisor | ✅ | ✅ | ✅ | ✅ | — |
-| Panguard Proxy | ✅ | ✅ | — | — | — |
-| Presidio Redaction | ✅ | ✅ | — | ✅ | ✅ |
-| Merkle Auditing | ✅ | ✅ | ✅ | ✅ | ✅ |
-| ATR + RLS | ✅ | ✅ | ✅ | ✅ | ✅ |
-| WORM Audit Tables | ✅ | ✅ | — | ✅ | ✅ |
+| Control            | clawql-api | Verticals | Sandbox | Documents | Memory |
+| ------------------ | ---------- | --------- | ------- | --------- | ------ |
+| Kata/gVisor        | ✅         | ✅        | ✅      | ✅        | —      |
+| Panguard Proxy     | ✅         | ✅        | —       | —         | —      |
+| Presidio Redaction | ✅         | ✅        | —       | ✅        | ✅     |
+| Merkle Auditing    | ✅         | ✅        | ✅      | ✅        | ✅     |
+| ATR + RLS          | ✅         | ✅        | ✅      | ✅        | ✅     |
+| WORM Audit Tables  | ✅         | ✅        | —       | ✅        | ✅     |
 
 ## 11.12 Threat Model Coverage
 
-| Threat | Primary Mitigation |
-|---|---|
-| Prompt injection / tool misuse | Blocked by Panguard + ATR |
-| Supply-chain attack | SBOM + Cosign |
-| Data exfiltration | Redaction + egress controls |
-| Privilege escalation | RLS + immutable claims |
-| Audit tampering | Merkle + WORM |
-| Cross-tenant data leakage | Multi-tenancy isolation (§11.9) |
+| Threat                         | Primary Mitigation              |
+| ------------------------------ | ------------------------------- |
+| Prompt injection / tool misuse | Blocked by Panguard + ATR       |
+| Supply-chain attack            | SBOM + Cosign                   |
+| Data exfiltration              | Redaction + egress controls     |
+| Privilege escalation           | RLS + immutable claims          |
+| Audit tampering                | Merkle + WORM                   |
+| Cross-tenant data leakage      | Multi-tenancy isolation (§11.9) |
 
 ---
 
@@ -1143,7 +1157,7 @@ metadata:
   name: clawql-production
   namespace: clawql
 spec:
-  tier: enterprise                   # local | standard | enterprise
+  tier: enterprise # local | standard | enterprise
 
   api:
     enabled: true
@@ -1169,7 +1183,7 @@ spec:
 
   auth:
     enabled: true
-    mode: oidc                       # noAuth requires explicit flag + webhook check
+    mode: oidc # noAuth requires explicit flag + webhook check
     oidc:
       issuer: https://auth.example.com
       clientId: clawql
@@ -1197,7 +1211,7 @@ spec:
     presidio:
       enabled: true
       models: [pii, financial, medical, privilege]
-      failurePolicy: block           # never skip redaction
+      failurePolicy: block # never skip redaction
       redactBeforeMerkle: true
 
   memory:
@@ -1227,7 +1241,7 @@ spec:
 
   sandbox:
     enabled: true
-    runtimeClass: kata               # or gVisor
+    runtimeClass: kata # or gVisor
     persistentVolumes:
       - name: generated-tools
         mountPath: /opt/clawql/generated-tools
@@ -1240,7 +1254,7 @@ spec:
 
   goose:
     enabled: true
-    replicas: 0                      # default: scale from 0
+    replicas: 0 # default: scale from 0
     maxReplicas: 50
     image: block/goose:v2026.05
     memoryIngest: true
@@ -1336,30 +1350,33 @@ Hallucinated `operationId`s are rejected by `clawql-api.execute()` with structur
 
 The ClawQL Dashboard uses only `clawql-api.search()` and `clawql-api.execute()` calls. All pages are fully agent-accessible.
 
-| Page | Key capabilities |
-|---|---|
-| Memory Explorer | Vault browser, force-directed graph, PageIndex tree, hybrid recall tester, provenance chains, pruning editor |
-| Documents Pipeline | Ingestion queue, drag-and-drop upload, per-stage Merkle logs, before/after redaction preview, quarantine management |
-| Agents & Execution | Live Goose monitor, task queue, blueprint library, Printing Press tool catalog, sandbox job history, HITL approvals |
-| Tools Registry | All MCP tools, operationId browser, schemas, usage examples, projected token costs, circuit breaker state |
-| Configuration & Verticals | One-click toggles, spec registration wizard, visual CRD editor, Effect Layer composition preview |
-| Users & Access | Role/permission manager, ATR claim inspector and simulator, session audit viewer, vertical RLS matrix |
-| Observability | Prometheus metrics, OpenTelemetry trace explorer, recall latency heatmaps, Cuckoo filter health |
-| Compliance Center | Unified compliance matrices, audit report generator, chain-of-custody exporter, GDPR erasure workflow, data lineage viewer |
+| Page                      | Key capabilities                                                                                                           |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Memory Explorer           | Vault browser, force-directed graph, PageIndex tree, hybrid recall tester, provenance chains, pruning editor               |
+| Documents Pipeline        | Ingestion queue, drag-and-drop upload, per-stage Merkle logs, before/after redaction preview, quarantine management        |
+| Agents & Execution        | Live Goose monitor, task queue, blueprint library, Printing Press tool catalog, sandbox job history, HITL approvals        |
+| Tools Registry            | All MCP tools, operationId browser, schemas, usage examples, projected token costs, circuit breaker state                  |
+| Configuration & Verticals | One-click toggles, spec registration wizard, visual CRD editor, Effect Layer composition preview                           |
+| Users & Access            | Role/permission manager, ATR claim inspector and simulator, session audit viewer, vertical RLS matrix                      |
+| Observability             | Prometheus metrics, OpenTelemetry trace explorer, recall latency heatmaps, Cuckoo filter health                            |
+| Compliance Center         | Unified compliance matrices, audit report generator, chain-of-custody exporter, GDPR erasure workflow, data lineage viewer |
 
 ## 13.4 Example Natural-Language Commands
 
 **Configuration & Scaling:**
+
 - "enable duckdb analytics on seaweedfs lake with Iceberg support"
 - "scale goose replicas to 20 during business hours and 5 at night"
 - "activate healthcare claims pipeline with presidio medical redaction"
 
 **Workflow & Operations:**
+
 - "process this W-2.pdf for underwriting — extract, redact, validate, sign, archive"
 - "create a new lending deal room for client ABC123 and invite underwriters"
 - "run cross_vertical recall between lending and legal for matter XYZ with elevated claims"
 
 **Governance:**
+
 - "generate compliance report for all active verticals with Merkle proofs"
 - "roll back the last two configuration changes"
 - "rotate all Presidio models to latest version and reprocess last 500 documents"
@@ -1377,6 +1394,7 @@ ClawQL treats agent runtimes and tool generation as first-class, persistent plat
 Manages Block's Goose instances as ephemeral or persistent workloads inside the secure sandbox.
 
 **Planned features:**
+
 - Default 0 idle replicas; scales to 1+ on demand and returns to 0 on completion
 - Persistent volumes for Goose state that survive pod restarts
 - Automatic output capture and ingestion into Memory 2.0
@@ -1402,6 +1420,7 @@ This abstraction allows swapping Goose for Hermes, a custom agent, or any other 
 Enables agents to create new agent-native tools on demand.
 
 **Planned capabilities:**
+
 - Generates Go CLIs and full MCP servers from natural language descriptions or schemas
 - Builds occur in isolated Kubernetes Jobs with network egress disabled
 - Every binary is Cosign-signed before installation
@@ -1410,6 +1429,7 @@ Enables agents to create new agent-native tools on demand.
 - Pre-installed high-value CLIs (flight-goat, shopify-goat, etc.)
 
 **Security controls:**
+
 - Reproducible builds with pinned base images
 - Signature verification before registration
 - Persistent volume isolation per tenant/vertical
@@ -1419,6 +1439,7 @@ Enables agents to create new agent-native tools on demand.
 Provides the self-improvement layer for extraction schemas, workflows, and tool quality.
 
 **Core mechanism:**
+
 - Seed-based evolutionary loops with clear goals, acceptance criteria, and brownfield context
 - Automatic ingestion of HITL corrections, validation set performance, and agent feedback
 - Postgres-backed event store for lineage and experiment tracking
@@ -1475,6 +1496,7 @@ All chaos scenarios must recover gracefully with proper alerts and partial resul
 ## 15.2 Observability Stack
 
 **Primary tools:**
+
 - **SigNoz** — Unified traces, logs, metrics, and exceptions (OpenTelemetry-native, ClickHouse backend)
 - **Prometheus + Grafana** — Operational metrics and dashboards
 - **Jaeger / Langfuse** — Distributed tracing (especially for complex workflows)
@@ -1482,6 +1504,7 @@ All chaos scenarios must recover gracefully with proper alerts and partial resul
 **Automatic instrumentation:** Every Effect-TS pipeline emits spans. Per-vertical, per-provider, and per-workflow metrics (latency, error rate, token usage, HITL rate, Ouroboros convergence).
 
 **Key dashboards included in Helm chart:**
+
 - IDP Pipeline Overview (documents processed, HITL rate, redaction coverage)
 - Memory 2.0 Health (recall latency, node count, pruning status)
 - Goose Execution (active tasks, checkpoint recovery rate)
@@ -1502,6 +1525,7 @@ Common operational commands:
 All changes are audited with Merkle roots and visible in the Compliance Center.
 
 **Self-healing features:**
+
 - Automatic pod restarts on Layer composition failure
 - Cuckoo filter warm-up on pod restart
 - Queue draining after service recovery
@@ -1581,15 +1605,15 @@ ClawQL is engineered for production use in regulated environments. This section 
 
 ## 17.1 Compliance Frameworks Supported
 
-| Domain | Framework | Primary mechanism |
-|---|---|---|
-| Healthcare | HIPAA, HITECH | `clawql-healthcare` + Presidio + cryptographic erasure |
-| Legal / Finance | ABA Model Rules, NAIC model laws | Privilege enforcement, ethical walls |
-| Government | FedRAMP-ready | Classification level handling, `clawql-government` |
-| Education | FERPA | FERPA-compliant partitioning, `clawql-education` |
-| Manufacturing | ITAR/EAR, ISO 9001, C-TPAT | `clawql-manufacturing` |
-| General | GDPR | Cryptographic erasure, SOC 2 Type II controls |
-| AI Transparency | EU AI Act | Audit trails, lineage, decision provenance |
+| Domain          | Framework                        | Primary mechanism                                      |
+| --------------- | -------------------------------- | ------------------------------------------------------ |
+| Healthcare      | HIPAA, HITECH                    | `clawql-healthcare` + Presidio + cryptographic erasure |
+| Legal / Finance | ABA Model Rules, NAIC model laws | Privilege enforcement, ethical walls                   |
+| Government      | FedRAMP-ready                    | Classification level handling, `clawql-government`     |
+| Education       | FERPA                            | FERPA-compliant partitioning, `clawql-education`       |
+| Manufacturing   | ITAR/EAR, ISO 9001, C-TPAT       | `clawql-manufacturing`                                 |
+| General         | GDPR                             | Cryptographic erasure, SOC 2 Type II controls          |
+| AI Transparency | EU AI Act                        | Audit trails, lineage, decision provenance             |
 
 Note: Vertical-specific compliance features are gated on those verticals shipping. See §4.4 for current status.
 
@@ -1618,13 +1642,13 @@ ClawQL provides templates, evidence packs, and architecture decision records to 
 
 ## 18.1 Versioning Policy
 
-| Component | Scheme | Notes |
-|---|---|---|
-| `clawql-core` + `clawql-api` | Strict SemVer | Major bump for any breaking change to public APIs, Effect Layer contracts, or ATR schema |
-| Horizontal packages | Independent SemVer | Within the same major as core |
-| Vertical packages | Independent SemVer | Declare compatible core version ranges in `peerDependencies` |
-| Printing Press artefacts | Own SemVer | Inside persistent volumes; metadata stored in Memory 2.0 |
-| Operator & Helm Charts | Calendar versioning (e.g., 2026.5.0) | Aligned with major feature releases |
+| Component                    | Scheme                               | Notes                                                                                    |
+| ---------------------------- | ------------------------------------ | ---------------------------------------------------------------------------------------- |
+| `clawql-core` + `clawql-api` | Strict SemVer                        | Major bump for any breaking change to public APIs, Effect Layer contracts, or ATR schema |
+| Horizontal packages          | Independent SemVer                   | Within the same major as core                                                            |
+| Vertical packages            | Independent SemVer                   | Declare compatible core version ranges in `peerDependencies`                             |
+| Printing Press artefacts     | Own SemVer                           | Inside persistent volumes; metadata stored in Memory 2.0                                 |
+| Operator & Helm Charts       | Calendar versioning (e.g., 2026.5.0) | Aligned with major feature releases                                                      |
 
 **Major version coordination:** Any breaking change in `clawql-core` triggers simultaneous major version increases across all dependent packages. A compatibility shim is provided during the transition period.
 
@@ -1664,6 +1688,7 @@ Templates, CI validation scripts, and example PRs are in the repository.
 - Marketplace-ready structure for commercial vertical extensions
 
 **Phased priorities (no fixed dates — demand-driven):**
+
 - Core horizontal package stabilisation
 - First vertical implementations (lending as flagship)
 - Kubernetes Operator and natural language dashboard
@@ -1682,12 +1707,12 @@ Templates, CI validation scripts, and example PRs are in the repository.
 ```typescript
 interface ATRClaims {
   actorId: string;
-  actorType: 'human' | 'agent' | 'service';
+  actorType: "human" | "agent" | "service";
   sessionId: string;
   issuedAt: number;
   expiresAt: number;
   tenantId: string;
-  tenantTier: 'local' | 'standard' | 'enterprise';
+  tenantTier: "local" | "standard" | "enterprise";
   roles: string[];
   scopes: string[];
   verticals: string[];
@@ -1699,7 +1724,7 @@ interface ATRClaims {
     crossVerticalRead: boolean;
     pruneAccess: boolean;
   };
-  classificationLevel?: 'unclassified' | 'cui' | 'secret' | 'top_secret';
+  classificationLevel?: "unclassified" | "cui" | "secret" | "top_secret";
   minimumNecessary?: boolean;
   purpose?: string;
   requestId: string;
@@ -1714,8 +1739,14 @@ export interface Plugin {
   readonly version: string;
   readonly vertical?: string;
   onRegister(api: ClawQLApi): Effect.Effect<void, ClawQLError, ClawQLApi>;
-  onIngestHook?(node: EntityNode, context: IngestContext): Effect.Effect<EntityNode, ClawQLError, ClawQLApi>;
-  onRecallFilter?(claims: ATRClaims, options: RecallOptions): Effect.Effect<RecallOptions, ClawQLError, ClawQLApi>;
+  onIngestHook?(
+    node: EntityNode,
+    context: IngestContext
+  ): Effect.Effect<EntityNode, ClawQLError, ClawQLApi>;
+  onRecallFilter?(
+    claims: ATRClaims,
+    options: RecallOptions
+  ): Effect.Effect<RecallOptions, ClawQLError, ClawQLApi>;
   onComplianceReport?(): Effect.Effect<ComplianceReport, ClawQLError, ClawQLApi>;
   requiredSpecs?: ProviderSpec[];
   recommendedSpecs?: ProviderSpec[];
@@ -1749,57 +1780,59 @@ export interface ProviderSpec {
 ## 19.3 Cuckoo Filter & Merkle Design Details
 
 **Cuckoo Filter:**
+
 - Must declare capacity at creation (`capacity: 500_000` recommended)
 - Default false-positive rate: 0.1%
 - Warm-up from audit table on pod restart
 - At 95% fill → warning; at 100% → fallback to audit table hash check
 
 **Merkle Auditing:**
+
 - Ring buffer: 90 days default
 - Cold storage bridge for long-term retention and legal hold
 - Roots generated after Presidio redaction
 
 ## 19.4 Comprehensive Failure Modes Catalog
 
-| Failure | Behaviour |
-|---|---|
-| Presidio unavailable | Ingest blocked — never skipped |
-| Tika/Gotenberg timeout | Partial results with `stageErrors` |
-| Goose OOM | Checkpoint + resume |
-| Circuit breaker open | Tool temporarily unavailable; auto-recovery |
-| Cuckoo filter full | Fallback to audit table hash check |
-| Vault unavailable | Cached secrets used; alert triggered |
-| Supergraph build failure | Previous version remains active |
+| Failure                  | Behaviour                                   |
+| ------------------------ | ------------------------------------------- |
+| Presidio unavailable     | Ingest blocked — never skipped              |
+| Tika/Gotenberg timeout   | Partial results with `stageErrors`          |
+| Goose OOM                | Checkpoint + resume                         |
+| Circuit breaker open     | Tool temporarily unavailable; auto-recovery |
+| Cuckoo filter full       | Fallback to audit table hash check          |
+| Vault unavailable        | Cached secrets used; alert triggered        |
+| Supergraph build failure | Previous version remains active             |
 
 All failures are structured, observable, and auditable.
 
 ## 19.5 Glossary
 
-| Term | Definition |
-|---|---|
-| **ATR** | Actor–Tenant–Role. The claims schema carried by every request to enforce identity, tenancy, and role-based access at all layers. |
-| **Cuckoo filter** | A probabilistic data structure providing O(1) deduplication at ingest with configurable false-positive rates. Used to prevent duplicate nodes entering Memory 2.0. |
-| **Effect-TS** | A TypeScript library providing typed effects, composable Layers, structured concurrency, and resource management. The foundational runtime for ClawQL. |
-| **Goose** | Block's open-source agent runtime. ClawQL manages Goose instances via `clawql-goose` as ephemeral or persistent workloads. |
-| **Hermes** | The conversational supervisor LLM responsible for intent parsing, tool selection, and multi-turn dialogue in the natural language interface. |
-| **Kata Containers** | A container runtime using lightweight VMs for strong hardware-level isolation. The default sandbox runtime in Tier 2 and Tier 3. |
-| **MCP** | Model Context Protocol. The standard protocol ClawQL uses for all agent-to-tool communication. |
-| **Merkle tree** | A hash tree used by ClawQL to produce tamper-evident roots for all writes (documents, memory nodes, generated binaries). Stored in WORM audit tables. |
-| **NATS JetStream** | A durable messaging layer (Apache 2.0) used for event streaming, workflow triggers, and HITL gate notifications. |
-| **Onyx** | An open-source enterprise semantic search system. Used as the optional semantic recall layer in Memory 2.0. |
-| **OpenClaw** | The stateless WebSocket messaging gateway that sits in front of Hermes and handles connection management, queuing, and streaming. |
-| **Ouroboros** | ClawQL's evolutionary self-improvement loop system. Evolves extraction schemas, workflows, and tool quality using seed-based iteration and HITL feedback. |
-| **PageIndex** | Vectorless hierarchical document indexing. A standalone MIT package that builds and traverses tree structures for structural document navigation without vector embeddings. |
-| **Panguard** | ClawQL's real-time MCP proxy. Enforces ATR scoping, scans prompts and responses, and operates in-line with sub-50ms latency targets. |
-| **Paperless NGX** | An open-source document management system used as the long-term archive in the `clawql-documents` pipeline. |
-| **Presidio** | Microsoft's open-source data anonymisation and PII detection library. Runs at every data boundary in ClawQL; failure policy is always `block`. |
-| **Printing Press** | ClawQL's on-demand tool generation system. Produces signed Go CLIs and MCP servers from natural language descriptions or schemas. |
-| **RLS** | Row-Level Security. Postgres-level data filtering enforced per vertical and per tenant throughout the platform. |
-| **SeaweedFS** | An Apache 2.0-licensed distributed object storage system providing S3-compatible APIs. Used as the analytical lakehouse storage layer. |
-| **SeeTheGreens** | The regulated enterprise fork of ClawQL, featuring enhanced compliance controls and the flagship lending LOS. |
-| **Stirling-PDF** | An open-source PDF processing tool used in the `clawql-documents` pipeline for OCR, merging, splitting, and visual redaction. |
-| **Valkey** | A BSD 3-clause-licensed, Redis-protocol-compatible key-value store. The hot-tier cache and rate-limiting layer in ClawQL. |
-| **WORM** | Write Once Read Many. Audit tables that use Postgres rules and SQLite triggers to prevent any modification or deletion of audit records. |
+| Term                | Definition                                                                                                                                                                  |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **ATR**             | Actor–Tenant–Role. The claims schema carried by every request to enforce identity, tenancy, and role-based access at all layers.                                            |
+| **Cuckoo filter**   | A probabilistic data structure providing O(1) deduplication at ingest with configurable false-positive rates. Used to prevent duplicate nodes entering Memory 2.0.          |
+| **Effect-TS**       | A TypeScript library providing typed effects, composable Layers, structured concurrency, and resource management. The foundational runtime for ClawQL.                      |
+| **Goose**           | Block's open-source agent runtime. ClawQL manages Goose instances via `clawql-goose` as ephemeral or persistent workloads.                                                  |
+| **Hermes**          | The conversational supervisor LLM responsible for intent parsing, tool selection, and multi-turn dialogue in the natural language interface.                                |
+| **Kata Containers** | A container runtime using lightweight VMs for strong hardware-level isolation. The default sandbox runtime in Tier 2 and Tier 3.                                            |
+| **MCP**             | Model Context Protocol. The standard protocol ClawQL uses for all agent-to-tool communication.                                                                              |
+| **Merkle tree**     | A hash tree used by ClawQL to produce tamper-evident roots for all writes (documents, memory nodes, generated binaries). Stored in WORM audit tables.                       |
+| **NATS JetStream**  | A durable messaging layer (Apache 2.0) used for event streaming, workflow triggers, and HITL gate notifications.                                                            |
+| **Onyx**            | An open-source enterprise semantic search system. Used as the optional semantic recall layer in Memory 2.0.                                                                 |
+| **OpenClaw**        | The stateless WebSocket messaging gateway that sits in front of Hermes and handles connection management, queuing, and streaming.                                           |
+| **Ouroboros**       | ClawQL's evolutionary self-improvement loop system. Evolves extraction schemas, workflows, and tool quality using seed-based iteration and HITL feedback.                   |
+| **PageIndex**       | Vectorless hierarchical document indexing. A standalone MIT package that builds and traverses tree structures for structural document navigation without vector embeddings. |
+| **Panguard**        | ClawQL's real-time MCP proxy. Enforces ATR scoping, scans prompts and responses, and operates in-line with sub-50ms latency targets.                                        |
+| **Paperless NGX**   | An open-source document management system used as the long-term archive in the `clawql-documents` pipeline.                                                                 |
+| **Presidio**        | Microsoft's open-source data anonymisation and PII detection library. Runs at every data boundary in ClawQL; failure policy is always `block`.                              |
+| **Printing Press**  | ClawQL's on-demand tool generation system. Produces signed Go CLIs and MCP servers from natural language descriptions or schemas.                                           |
+| **RLS**             | Row-Level Security. Postgres-level data filtering enforced per vertical and per tenant throughout the platform.                                                             |
+| **SeaweedFS**       | An Apache 2.0-licensed distributed object storage system providing S3-compatible APIs. Used as the analytical lakehouse storage layer.                                      |
+| **SeeTheGreens**    | The regulated enterprise fork of ClawQL, featuring enhanced compliance controls and the flagship lending LOS.                                                               |
+| **Stirling-PDF**    | An open-source PDF processing tool used in the `clawql-documents` pipeline for OCR, merging, splitting, and visual redaction.                                               |
+| **Valkey**          | A BSD 3-clause-licensed, Redis-protocol-compatible key-value store. The hot-tier cache and rate-limiting layer in ClawQL.                                                   |
+| **WORM**            | Write Once Read Many. Audit tables that use Postgres rules and SQLite triggers to prevent any modification or deletion of audit records.                                    |
 
 ## 19.6 Key References
 
@@ -1809,5 +1842,5 @@ All failures are structured, observable, and auditable.
 
 ---
 
-*ClawQL Master Enablement Document · May 2026 Edition · Apache 2.0 / MIT / CC-BY-SA 4.0*
-*Single authoritative source of truth — implementation is phased; this document defines the intended design.*
+_ClawQL Master Enablement Document · May 2026 Edition · Apache 2.0 / MIT / CC-BY-SA 4.0_
+_Single authoritative source of truth — implementation is phased; this document defines the intended design._
