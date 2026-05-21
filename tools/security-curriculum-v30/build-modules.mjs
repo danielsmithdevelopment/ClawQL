@@ -27,7 +27,7 @@ function yamlList(items) {
 function frontmatter(m, prev, next) {
   const lines = [
     '---',
-    `title: "${m.title.replace(/"/g, '\\"')}"`,
+    `title: ${JSON.stringify(m.title)}`,
     'series: "Agentic AI Security Curriculum"',
     `level: ${m.level}`,
     'tags:',
@@ -37,7 +37,7 @@ function frontmatter(m, prev, next) {
     'date: "May 2026"',
     `slug: "${m.slug}"`,
     `canonical_path: "/security/best-practices/${m.slug}"`,
-    `description: "${m.description.replace(/"/g, '\\"')}"`,
+    `description: ${JSON.stringify(m.description)}`,
   ]
   if (prev) lines.push(`prev: "${prev}"`)
   if (next) lines.push(`next: "${next}"`)

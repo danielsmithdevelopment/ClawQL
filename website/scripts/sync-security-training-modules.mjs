@@ -59,7 +59,10 @@ function escapeMdxCurlyOutsideFences(body) {
         return line
       }
       if (inFence) return line
-      return line.replace(/\{/g, '\\{').replace(/\}/g, '\\}')
+      return line
+        .replace(/\\/g, '\\\\')
+        .replace(/\{/g, '\\{')
+        .replace(/\}/g, '\\}')
     })
     .join('\n')
 }
