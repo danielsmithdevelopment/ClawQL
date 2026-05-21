@@ -1,0 +1,314 @@
+# Red Teaming and Adversarial Testing Methodology: Proving the Controls Work
+
+Proving the Controls Work
+
+Hello and welcome to Module 24!
+
+Modules 1–23 have given us a complete technical security stack, a living threat model, and a direct mapping to the OWASP Agentic Top 10. But a control that exists on paper is only a hypothesis. A Panguard rule that fires perfectly on training data but misses a real attack because of an encoding edge case is not a control — it is a comforting illusion.
+
+The gap between “deployed” and “effective” is where most security incidents originate. In this module we turn every control into something we can prove works under realistic attack conditions. We build a continuous, automated adversarial testing program that runs in CI, surfaces gaps immediately, and feeds new rules back into the system in real time. By the end you will have a living verification program that keeps the entire defense-in-depth stack honest.
+
+---
+
+Why Controls Must Be Adversarially Tested
+
+Configuration reviews and static analysis only confirm that a control _exists_. Adversarial testing confirms that it _works_ when an intelligent attacker is trying to break it.
+
+Key realities:
+
+- A Panguard rule that passes training data may still miss obfuscated or multi-step attacks.
+
+- A control that worked last quarter may fail after a dependency update, a rule change, or a new skill category.
+
+- The difference between “deployed” and “effective” is exactly where real incidents happen.
+
+Testing must be continuous, automated, and integrated into the deployment pipeline — not a periodic afterthought.
+
+---
+
+YAML Test Case Library — Format and Storage
+
+We maintain a living library of structured test cases in the infrastructure repository. Every test is a simple YAML file.
+
+Example structure:
+
+testId: TM-ASI01-003
+
+owaspCategory: ASI01
+
+attackType: indirect-injection
+
+preconditions: 
+
+  - session with internal classification level
+
+  - test memory store seeded with clean documents
+
+attackPayload: |
+
+  
+
+expectedResponse:
+
+  panguardDecision: BLOCK
+
+  falcoAlert: false
+
+  auditLogPresent: true
+
+passCriteria: 
+
+  - Panguard returns 403 before any tool execution
+
+  - No memory write or external egress occurs
+
+  - Full context is logged to WORM
+
+The entire test suite runs in CI against a dedicated staging environment on every PR that touches a security-relevant component (Panguard rules, schemas, input validation, etc.).
+
+A failing test case blocks the deployment — exactly the same weight as a failing unit test.
+
+After each run, a signed test report is archived alongside the deployment artifact, proving that every known attack pattern was tested on this exact release.
+
+---
+
+Prompt Injection and Goal Hijacking Drills
+
+We run three categories of injection tests:
+
+- Direct injection: obvious forms (ignore your instructions) and heavily obfuscated forms (base64, foreign-language encoding, split across messages).
+
+- Indirect injection: crafted PDF or web-page payloads that must never reach tool execution.
+
+- Multi-step goal hijacking: injection spread across multiple turns; tests session-level goal-drift detection.
+
+Dedicated CLI tool for consistent execution:
+
+clawql security inject --mode direct|indirect|multistep --target staging
+
+All tests run against an isolated staging environment with a dedicated test memory store — never against production.
+
+---
+
+ATR Bypass and Privilege Escalation Tests
+
+We deliberately attempt to break the core enforcement layer:
+
+- Forged JWT: Craft a token with out-of-scope ATR claims, signed with a test key → must produce 401 INVALID_SIGNATURE.
+
+- Out-of-scope tool call: Use a legitimate session token to call a tool it is not permitted to use → must produce 403 ATR_VIOLATION and a corresponding audit log entry. (Partial pass if only one occurs.)
+
+- Delegation expansion: Subagent requests broader claims than the orchestrator holds → must produce 403 DELEGATION_VIOLATION.
+
+Every bypass attempt must generate both the correct rejection response and an audit log entry. A silent rejection without a log is treated as a detection gap.
+
+---
+
+Tool Schema Fuzzing
+
+We use property-based fuzzing to find edge cases that static tests miss.
+
+- Tool: fast-check (TypeScript) or Hypothesis (Python).
+
+- Minimum 10,000 random inputs per tool schema.
+
+- All inputs must produce a correct validation decision with no panics or 500 errors.
+
+Specific edge cases explicitly tested:
+
+- Boundary values
+
+- Type coercion
+
+- Deeply nested objects
+
+- additionalProperties bypass attempts
+
+- Pattern anchor bypasses
+
+Any crash or incorrect validation discovered by fuzzing becomes a named regression test case. Fuzzing runs weekly in CI as a scheduled job, not just on PRs.
+
+---
+
+Memory Poisoning Simulations
+
+We simulate every memory-poisoning vector:
+
+- Direct injection: attempt to write an entry containing instruction-injection patterns → verify Panguard blocks before commit.
+
+- Classification boundary: attempt to write a secret-classified entry → verify rejection at the classification gate.
+
+- Post-write tamper: modify an entry in the test store → verify Merkle integrity check detects mismatch and blocks reads.
+
+- Recall boundary: write a confidential entry → attempt recall with an internal-level session → verify it is not returned.
+
+All simulations run against an isolated test memory store that is automatically restored to its original state after each run — never production.
+
+---
+
+Purple Team Workflow
+
+Red team and blue team work together in real time:
+
+- Red team executes the full attack playbook against staging.
+
+- Blue team watches Panguard, Falco, and the audit trail live.
+
+- Every attack is classified:
+  - Blocked-with-alert → pass
+    - Blocked-without-alert → partial fail
+    - Not blocked → fail
+
+New rules are authored during the exercise. Blue team deploys them to staging and confirms the attack is now blocked before moving to the next scenario.
+
+This is not a post-exercise activity — gaps are closed in real time.
+
+Cadence: quarterly (aligned with the quarterly review in Module 25) plus ad-hoc after any major architecture change.
+
+---
+
+External Penetration Test Scope
+
+We also bring in external red teams quarterly.
+
+In scope:
+
+- Gateway, Panguard, NATS broker
+
+- Vault integration
+
+- Memory store write/recall
+
+- ClawHub install path
+
+- Egress filtering stack
+
+Out of scope:
+
+- Production data (synthetic data only)
+
+- WORM audit logs (destruction risk)
+
+- Underlying cloud-provider infrastructure
+
+Briefing package provided to the external team:
+
+- OWASP Agentic Top 10 as baseline
+
+- ATR/MCP model overview
+
+- Staging environment pre-seeded with test agents
+
+Evidence requirements: methodology in the statement of work, findings report with full reproduction steps, retest within 30 days, and all artifacts signed and stored in WORM.
+
+---
+
+Key Takeaways (Memorize These!)
+
+- The test case library in CI is what separates “we believe the controls work” from “we verify the controls work on every release.”
+
+- Every ATR bypass test must produce both the correct rejection response and an audit log entry — a rejection without a log is a detection gap.
+
+- Purple team rule authoring in real time is the practice that immediately closes gaps found during exercises rather than creating a backlog.
+
+- External pen test scope must include the MCP-specific attack surface — a standard web-application scope will miss the most critical vectors.
+
+You now have a continuous adversarial testing program that keeps every control honest. The gap between “deployed” and “effective” is closed. This verification layer ensures that the entire defense-in-depth stack remains effective as the platform evolves, new skills are added, and new attack techniques emerge. This is what turns our security architecture from a static set of rules into a living, proven system.
+
+## **MODULE 25**
+
+### **Quarterly Security Review Checklist: Metrics, Rotations, and Continuous Posture Verification**
+
+Security posture decays between active reviews: certificates approach expiry, exceptions accumulate past their intended deadlines, allowlists grow beyond what current business needs justify, and baseline metrics drift without anyone noticing. The quarterly review is the structured forcing function that catches this drift before it becomes a gap — a two-hour exercise that produces a signed, auditable record of the platform’s security posture at a specific point in time. This module defines every item on the checklist and the evidence each one requires, so the review is a genuine verification rather than a confidence-building exercise.
+
+**Why quarterly cadence matters**
+
+- Security posture decays continuously: certificates approach expiry, exceptions accumulate, allowlists grow, baselines drift
+
+- A quarterly review creates a forcing function that catches drift before it becomes a gap
+
+- The review must produce a signed, auditable record — not a meeting summary but a verifiable document
+
+- All findings from the quarterly review are tracked as issues with owners and deadlines; unresolved findings escalate to the next review
+
+**Certificate and credential rotation check**
+
+- Inventory every certificate in the stack against the certificate inventory (Module 9)
+
+- Flag any certificate with &lt;90 days remaining — verify cert-manager renewal is configured and working
+
+- Check Vault lease renewal rates: are any dynamic secrets failing to renew before expiry?
+
+- Verify that the last rotation of each long-lived credential (CA certificate, HSM unsealing key, signing keys) occurred within its declared rotation interval
+
+- Run clawql security cert-audit and verify output against the last quarter’s report
+
+**Allowlist review**
+
+- ServiceEntry allowlist (Module 6): remove entries for deprecated external integrations
+
+- ClawHub skill allowlist (Module 3): verify each skill’s hash pin still matches the current manifest; remove skills no longer in use
+
+- ATR role registry: verify each role has a declared owner and a justified scope; flag roles not used in the last 90 days
+
+- Admin role assignments (Module 30): verify no individual holds two mutually exclusive roles; review any exceptions from the separation-of-duties report
+
+**Exception and residual risk review**
+
+- Enumerate all open exceptions: vulnerability management SLO exceptions (Module 26), Panguard rule exceptions, compliance mapping gaps (Module 29)
+
+- Verify each exception has not expired beyond its stated deadline
+
+- Expired exceptions without renewal = critical finding requiring immediate escalation
+
+- Review the residual risk register from the STRIDE model (Module 22): any residual risk whose conditions have changed requires threat model update
+
+**Backup and restore verification**
+
+- Execute memory store restore from the most recent snapshot to an isolated test environment
+
+- Verify Merkle root continuity post-restore
+
+- Execute Vault Raft snapshot restore to a test Vault instance
+
+- Document timing against RTO targets (Module 28); flag any restore that exceeds the target
+
+**Metrics review against baselines**
+
+- Panguard block rate: trending up vs. baseline? Investigate the top 3 blocked rules by volume
+
+- ATR violation rate per rule: any rule with zero fires in 90 days? Test it in the next red team exercise
+
+- Memory integrity check failures: must be zero; any non-zero value is a critical finding
+
+- Egress anomaly detection rate: trending up per tenant?
+
+- Orphaned identity count from the weekly reconciliation reports: should be zero; any open orphans require immediate action
+
+**STRIDE model update**
+
+- Review the threat model against any changes made in the quarter: new pipelines, new skills, new external integrations, post-incident findings
+
+- Update attack tree branches for any new threat paths identified
+
+- Document any new residual risks accepted this quarter with explicit sign-off from the security team lead
+
+**Signed review output**
+
+- Produce a signed quarterly review report: all checklist items with pass/fail/finding status, open findings with owners and deadlines, metric summaries
+
+- Store the signed report in WORM alongside the evidence package (Module 29)
+
+- Share with the compliance team for SOC 2 evidence collection
+
+**Key takeaways to cover**
+
+- The quarterly review is a verification exercise, not a confidence-building exercise — every item must produce evidence, not an assertion
+
+- Expired exceptions without renewal are critical findings; they represent commitments that were made and not kept
+
+- Backup restore testing is only meaningful if the timing is measured against documented RTO targets — a restore that took 6 hours against a 1-hour target is a finding
+
+- The metric review is where alert tuning decisions are made — a rule with zero fires in 90 days either isn’t being triggered or isn’t working, and the quarterly review is where that question is asked
+
+---

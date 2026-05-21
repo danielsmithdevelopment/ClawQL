@@ -5,7 +5,7 @@ import { trainingModules } from '@/generated/security-training/registry'
 import { docsPageMetadata } from '@/lib/seo'
 
 export const metadata = docsPageMetadata({
-  title: 'Agentic AI security best practices (20 modules)',
+  title: 'Agentic AI security best practices (30 modules)',
   description:
     'Vendor-neutral security guides: supply chain, admission control, zero trust, MCP runtime, data classification, IR, and quarterly review.',
   path: '/security/best-practices',

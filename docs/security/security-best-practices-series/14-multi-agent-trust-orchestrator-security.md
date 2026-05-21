@@ -1,0 +1,315 @@
+---
+title: "Multi-Agent Trust Hierarchies and Orchestrator Security: Delegation, Result Integrity, and Blast Radius Isolation"
+series: "Agentic AI Security Curriculum"
+level: advanced
+tags:
+  - multi-agent
+  - orchestrator
+  - nats
+  - delegation
+part: 14
+total_parts: 30
+date: "May 2026"
+slug: "multi-agent-trust-orchestrator-security"
+canonical_path: "/security/best-practices/multi-agent-trust-orchestrator-security"
+description: "Signed instructions and results, downward-only ATR delegation, and pipeline-level risk scoring."
+prev: "input-validation-protocol-hardening"
+next: "data-classification-pii-redaction-residency"
+---
+# Multi-Agent Trust Hierarchies and Orchestrator Security: Delegation, Result Integrity, and Blast Radius Isolation
+
+Delegation, Result Integrity, and Blast Radius Isolation
+
+Hello and welcome to Module 14! 
+
+Modules 1–13 have hardened single-agent security from supply chain all the way through runtime enforcement. Now we extend those controls to multi-agent pipelines and orchestrators.
+
+A single agent with strong Panguard rules and sandboxing is a solved problem. A pipeline of agents where each node implicitly trusts the last one is not. Implicit trust creates new attack paths that single-agent defenses cannot see: injection at the orchestrator that fans out to every subagent, a compromised midpoint subagent that fabricates results, or lateral movement between pipeline nodes.
+
+In this module we build verifiable identities, signed instructions, signed results, downward-only delegation, and pipeline-level cumulative risk scoring so that multi-agent systems are as auditable and blast-radius-bounded as single-agent deployments.
+
+
+
+---
+
+
+
+Why Single-Agent Security Controls Are Insufficient for Pipelines
+
+Each node in a pipeline already has its own:
+
+- Panguard enforcement  
+
+- ATR claims  
+
+- Sandbox (Kata or gVisor)  
+
+
+But the edges between nodes have no controls by default. Orchestrators and subagents trust each other implicitly over NATS.
+
+Three new attack paths unique to multi-agent systems emerge:
+
+1. Inject at the orchestrator input → fans out to every subagent.  
+
+2. Compromise a midpoint subagent → fabricate results that downstream nodes treat as trusted.  
+
+3. Lateral movement between pipeline nodes.  
+
+
+Zero trust must apply between agents as strictly as it does between agents and external systems.
+
+
+
+---
+
+
+
+Verifiable Agent Identity in Pipelines
+
+Every pipeline node receives a unique cryptographic identity from the cluster CA (Module 4).
+
+The certificate SAN encodes the exact position in the pipeline:  
+ clawql://pipeline/doc-analysis/node/2
+
+How it works:
+
+- The gateway validates the presenting agent’s certificate against the declared pipeline topology.  
+
+- An agent presenting a certificate for node/2 cannot publish to the node/3 subject namespace.  
+
+- New pipeline nodes receive certificates through the same cert-manager flow used for service workloads.  
+
+
+If a node is compromised, its certificate is revoked immediately. All in-flight messages from that identity are rejected within one TTL cycle.
+
+
+
+---
+
+
+
+ATR Delegation: Scope Only Downward
+
+Orchestrators hold the full ATR scope for the overall task and delegate the minimum subset needed for each step.
+
+The subagent’s session JWT contains a delegated_scope field. The gateway enforces:
+
+- Only the intersection of the orchestrator’s claims and the delegated claims is allowed.  
+
+- Attempting to delegate a claim the orchestrator does not hold returns 403 DELEGATION_VIOLATION.  
+
+
+Every delegation chain is recorded in the audit log entry for every tool call. The full authorization path is always reconstructable.
+
+
+
+---
+
+
+
+Authenticating Orchestrator Instructions at the Subagent
+
+Instructions travel over NATS JetStream with two layers of protection:
+
+1. mTLS (from the zero-trust mesh in Module 4)  
+
+2. Message-level signature  
+
+
+The orchestrator signs the full instruction payload with its private key before publishing. The subagent verifies:
+
+- Correct subject namespace  
+
+- Valid orchestrator certificate  
+
+- Signature over the message body  
+
+
+The instruction payload is also validated against a JSON Schema. Any out-of-schema content is rejected as potential injection. Panguard additionally flags any instruction containing known injection-pattern keywords.
+
+
+
+---
+
+
+
+Result Integrity: Subagents Cannot Fabricate
+
+Subagents sign their result payload before publishing it back to the orchestrator.
+
+The orchestrator verifies the signature before incorporating the result into its context. Panguard blocks context incorporation if signature verification fails.
+
+Consequences of a failed verification:
+
+- Session is immediately quarantined  
+
+- Alert is fired  
+
+- The signing subagent’s certificate is queued for revocation  
+
+
+The fabricating subagent is identified by its certificate fingerprint in the message.
+
+
+
+---
+
+
+
+Blast Radius Isolation Between Pipeline Nodes
+
+Each pipeline node runs in its own Kata Container with a dedicated NetworkPolicy. There is no direct pod-to-pod communication.
+
+All messages route exclusively through the NATS broker. Subject-level ACLs enforce:
+
+- Each agent can publish only to its own subject namespace  
+
+- Each agent can subscribe only to its declared inputs  
+
+
+Even with full code execution inside a node, the compromised node cannot reach a neighboring node.
+
+Panguard also tracks cumulative session risk across the full pipeline (not just per node). If the combined behavior of all nodes crosses a threshold (>3 blocked calls, >5 sensitive data accesses, >10 MB external egress), the entire pipeline is halted.
+
+
+
+---
+
+
+
+Panguard Pipeline-Level Rules
+
+Panguard supports a special rule scope: pipeline_session.
+
+Example pipeline-level rules:
+
+- 3 blocked calls across any nodes in the pipeline  
+  
+
+- 5 sensitive data accesses across the pipeline  
+  
+
+- 10 MB total external egress across the pipeline  
+  
+
+
+When a threshold is crossed:
+
+- The entire pipeline halts  
+
+- Audit trail is preserved  
+
+- Alert is fired  
+
+
+This catches slow-moving attacks that stay under per-node limits by distributing suspicious actions across many nodes.
+
+
+
+---
+
+
+
+Key Takeaways (Memorize These!)
+
+- Implicit trust between agents is the fundamental architectural mistake — every edge in the pipeline graph requires explicit authentication.  
+
+- ATR delegation must always scope downward — a subagent with broader claims than its orchestrator is a privilege escalation vulnerability.  
+
+- Signed instructions and signed results make both instruction injection and result fabrication detectable at the moment they occur.  
+
+- Pipeline-level cumulative risk scoring is the control that catches slow-moving attacks that evade per-node rate limits.  
+
+
+You now have a complete trust architecture for multi-agent pipelines. Orchestrators and subagents can no longer trust each other by default. Every instruction and every result is cryptographically verifiable, and the blast radius of any single node is strictly limited. This brings the same zero-trust discipline we built for single agents to the full multi-agent world.
+
+
+
+## **MODULE 15**
+
+### **Data Classification and PII Redaction: Tagging, Anonymisation, and Residency Controls**
+
+An agent that reads sensitive data and writes to memory, logs, and external APIs is a data classification system whether it was designed to be one or not — the question is whether that classification is deliberate or accidental. Tagging data at ingestion, enforcing Presidio-based redaction at every write boundary, and gating tool access by classification level ensures sensitive data never reaches a destination it shouldn’t. This module makes classification an architectural property of the platform rather than a manual review step.
+
+**The accidental data classification problem**
+
+- Every agent that reads sensitive data and writes to memory, logs, and external APIs is implicitly classifying data by what it does with it  
+
+- Without deliberate classification, sensitive data ends up wherever the agent sends it — memory stores, log aggregators, external APIs, WORM audit trails  
+
+- Classification must be a system property, not a review step — by the time a human reviews a log, the data is already there  
+
+
+**Classification taxonomy**
+
+- Four levels: public, internal, confidential, secret  
+
+- public: safe to share externally and include in any output  
+
+- internal: available within the organisation, not for external APIs or public memory stores  
+
+- confidential: restricted to specific agent roles with declared need; requires HITL for any external disclosure  
+
+- secret: never written to any persistent store; never transmitted to any external endpoint; key-deleted on session end  
+
+- Classification is assigned at data ingestion — before any tool call processes the data  
+
+
+**Presidio entity detection**
+
+- Presidio runs as a Panguard-integrated service applied at every memory write, log emission, and external API call  
+
+- Entity types detected: PERSON, EMAIL_ADDRESS, PHONE_NUMBER, CREDIT_CARD, US_SSN, IBAN_CODE, IP_ADDRESS, DATE_OF_BIRTH, MEDICAL_LICENSE, URL (conditional)  
+
+- Custom recognizers for domain-specific PII: employee IDs, internal project codes, contract numbers  
+
+- Action on detection: replace with [REDACTED:{entity_type}] — not deletion, not masking with X’s — structured placeholder that preserves format for downstream processing  
+
+- Reject (not redact) for secret-classified content or credential patterns: the entire write is blocked  
+
+
+**Classification-gated tool access**
+
+- Agent’s ATR claims include a maximum data classification level they can access  
+
+- A summarizer agent with max_classification: internal cannot retrieve confidential memory entries  
+
+- Gateway enforces at recall time: tenantId and maxClassification predicate applied to every memory query  
+
+- Classification level stored as metadata alongside every memory entry — enforced server-side, not client-side  
+
+
+**Residency controls**
+
+- Data residency: certain data must remain within a specific geographic region (EU data under GDPR, PHI under HIPAA)  
+
+- Memory store bucket policy enforces residency: confidential-classified entries only written to EU-region buckets for EU tenants  
+
+- Panguard tool call rule: blocks any memory_write call that would place residency-controlled data in a non-compliant region  
+
+- Cross-region replication (Module 28 DR) must respect residency constraints — GDPR data replication stays within EU regions  
+
+
+**Anonymisation for analytics and testing**
+
+- Synthetic data generation: replace production data with realistic but non-identifying data for development and testing  
+
+- Pseudonymisation: replace identifying fields with consistent tokens — same person maps to same token across the dataset, but the token is not reversible without the key  
+
+- k-anonymity enforcement for datasets used in model training or analytics: each record indistinguishable from at least k-1 others across quasi-identifying attributes  
+
+
+**Key takeaways to cover**
+
+- Classification at ingestion is the only approach that works — classification applied after the fact misses data that has already propagated  
+
+- Presidio redaction with structured placeholders preserves data format for downstream processing while removing the sensitive value  
+
+- Classification-gated tool access makes over-privileged data access structurally impossible rather than policy-dependent  
+
+- Residency controls must be enforced at the infrastructure layer, not just documented in policy — Panguard + bucket policies are the enforcement mechanism  
+
+
+
+
+---

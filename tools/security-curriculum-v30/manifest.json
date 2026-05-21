@@ -1,0 +1,242 @@
+[
+  {
+    "part": 1,
+    "slug": "container-image-security-pinning-distroless-golden-images",
+    "title": "Container Image Security: Pinning, Distroless Pipelines, Mirror Registries, and Golden Images",
+    "level": "foundational",
+    "tags": ["supply-chain", "containers", "distroless", "harbor", "sbom", "trivy"],
+    "description": "Digest pinning, distroless golden images, private mirror registries, and CI scanning from source to registry."
+  },
+  {
+    "part": 2,
+    "slug": "cluster-admission-control-signing-policy",
+    "title": "Cluster Admission Control: Image Signing, Kyverno, and Blocking Unsigned Workloads",
+    "level": "foundational",
+    "tags": ["kubernetes", "kyverno", "cosign", "admission-control", "pod-security"],
+    "description": "Cosign verification and Kyverno admission policies that block unsigned or policy-violating workloads."
+  },
+  {
+    "part": 3,
+    "slug": "clawhub-skill-vetting-safe-installation",
+    "title": "ClawHub Skill Vetting and Safe Installation: Signature Verification, Sandbox Testing, and Allowlisting",
+    "level": "foundational",
+    "tags": ["skills", "supply-chain", "cosign", "sandbox", "allowlist"],
+    "description": "Vet third-party skills with manifest signing, static analysis, sandbox observation, and hash pinning."
+  },
+  {
+    "part": 4,
+    "slug": "zero-trust-network-mtls-istio-rbac",
+    "title": "Zero Trust Network Architecture: mTLS, Istio, RBAC, and Workload Identity",
+    "level": "intermediate",
+    "tags": ["zero-trust", "istio", "mtls", "networkpolicy", "spiffe"],
+    "description": "SPIFFE workload identity, STRICT mTLS, default-deny networking, and L7 AuthorizationPolicy."
+  },
+  {
+    "part": 5,
+    "slug": "agent-gateway-hardening-dns-rebinding",
+    "title": "Agent Gateway Hardening: Binding, Firewall Rules, DNS Rebinding Defense, and Safe Remote Access",
+    "level": "intermediate",
+    "tags": ["gateway", "mcp", "dns-rebinding", "tailscale", "firewall"],
+    "description": "Localhost binding, VPN-only access, Host/Origin validation, and listening-port drift detection."
+  },
+  {
+    "part": 6,
+    "slug": "egress-filtering-dns-dlp",
+    "title": "Egress Filtering, DNS Controls, and Data Loss Prevention",
+    "level": "intermediate",
+    "tags": ["egress", "ssrf", "dns", "dlp", "istio"],
+    "description": "ServiceEntry allowlists, SSRF prevention, DNS tunneling heuristics, and tool-call DLP."
+  },
+  {
+    "part": 7,
+    "slug": "least-privilege-scoped-kubernetes-identities",
+    "title": "Least Privilege and Scoped Kubernetes Identities: ServiceAccounts, IRSA, and Workload Identity",
+    "level": "intermediate",
+    "tags": ["rbac", "serviceaccount", "irsa", "workload-identity"],
+    "description": "One ServiceAccount per workload, scoped RBAC, and cloud workload identity federation."
+  },
+  {
+    "part": 8,
+    "slug": "secrets-at-rest-vault-hsm-audit",
+    "title": "Secrets at Rest: Vault Integration, HSM Backing, and Tamper-Proof Audit Logging",
+    "level": "intermediate",
+    "tags": ["vault", "hsm", "dynamic-secrets", "audit"],
+    "description": "Dynamic secrets, HSM unseal, gateway token exchange, and WORM Vault audit logs."
+  },
+  {
+    "part": 9,
+    "slug": "authentication-session-management-scoped-tokens",
+    "title": "Authentication and Session Management: Per-Request Scoped Tokens, OAuth/OIDC, Rotation, and Replay Prevention",
+    "level": "intermediate",
+    "tags": ["authentication", "oauth", "jwt", "nonce", "session"],
+    "description": "Tool-scoped tokens, OAuth for external APIs, nonce replay prevention, and device pairing."
+  },
+  {
+    "part": 10,
+    "slug": "agent-identity-lifecycle-provisioning",
+    "title": "Agent Identity Lifecycle: Provisioning, Scope Governance, and Decommissioning",
+    "level": "intermediate",
+    "tags": ["identity", "atr", "provisioning", "decommissioning"],
+    "description": "Joiner-mover-leaver for agents: approval workflows, scope trials, orphan detection, and forensic shutdown."
+  },
+  {
+    "part": 11,
+    "slug": "sandboxing-kata-gvisor-seatbelt",
+    "title": "Sandboxing Agent Workloads: Kata Containers, gVisor, and macOS Seatbelt",
+    "level": "intermediate",
+    "tags": ["sandbox", "kata", "gvisor", "seccomp", "seatbelt"],
+    "description": "Choose Kata, gVisor, or seccomp baselines by workload trust and performance requirements."
+  },
+  {
+    "part": 12,
+    "slug": "mcp-runtime-enforcement-panguard-atr",
+    "title": "MCP Runtime Enforcement: Panguard, ATR Rules, Schema Validation, and Injection Defense",
+    "level": "advanced",
+    "tags": ["panguard", "atr", "mcp", "hitl", "json-schema"],
+    "description": "Enforce policy at the structured tool-call layer with ATR, schema validation, and HITL deny-on-timeout."
+  },
+  {
+    "part": 13,
+    "slug": "input-validation-protocol-hardening",
+    "title": "Input Validation and Protocol Hardening: SSRF Prevention, Token Limits, Encoding Defense, and Replay Prevention",
+    "level": "advanced",
+    "tags": ["input-validation", "ssrf", "mcp", "prototype-pollution"],
+    "description": "Harden the MCP input boundary before Panguard: JSON safety, SSRF, token budgets, and tool manifest integrity."
+  },
+  {
+    "part": 14,
+    "slug": "multi-agent-trust-orchestrator-security",
+    "title": "Multi-Agent Trust Hierarchies and Orchestrator Security: Delegation, Result Integrity, and Blast Radius Isolation",
+    "level": "advanced",
+    "tags": ["multi-agent", "orchestrator", "nats", "delegation"],
+    "description": "Signed instructions and results, downward-only ATR delegation, and pipeline-level risk scoring."
+  },
+  {
+    "part": 15,
+    "slug": "data-classification-pii-redaction-residency",
+    "title": "Data Classification and PII Redaction: Tagging, Anonymisation, and Residency Controls",
+    "level": "intermediate",
+    "tags": ["pii", "presidio", "classification", "gdpr", "residency"],
+    "description": "Four-level taxonomy, Presidio at write boundaries, and classification-gated recall."
+  },
+  {
+    "part": 16,
+    "slug": "model-weight-integrity-verification",
+    "title": "Model Weight Integrity: Verifying Authenticity Before Every Load",
+    "level": "intermediate",
+    "tags": ["models", "supply-chain", "hsm", "weights"],
+    "description": "Signed weight manifests, per-load hash verification, and behavioral monitoring for backdoors."
+  },
+  {
+    "part": 17,
+    "slug": "gpu-resource-protection-isolation",
+    "title": "GPU and Resource Protection: Isolation, Quotas, and Side-Channel Defences",
+    "level": "intermediate",
+    "tags": ["gpu", "mig", "quotas", "multi-tenant"],
+    "description": "MIG isolation, namespace GPU quotas, and monitoring for unexpected GPU consumers."
+  },
+  {
+    "part": 18,
+    "slug": "memory-context-poisoning-prevention",
+    "title": "Memory and Context Poisoning Prevention: Redaction at Source and Immutable Agent Memory",
+    "level": "advanced",
+    "tags": ["memory", "merkle", "worm", "poisoning", "gdpr"],
+    "description": "Merkle integrity, WORM storage, per-subject encryption, and poisoning detection at write time."
+  },
+  {
+    "part": 19,
+    "slug": "security-monitoring-observability-siem",
+    "title": "Security Monitoring and Observability Architecture: Falco, Wazuh, SIEM Integration, and Telemetry Design",
+    "level": "advanced",
+    "tags": ["falco", "siem", "observability", "prometheus", "tracing"],
+    "description": "Canonical security event schema, SIEM correlation, cardinality-safe metrics, and NOC dashboards."
+  },
+  {
+    "part": 20,
+    "slug": "automated-response-incident-recovery-picerl",
+    "title": "Automated Response and Incident Recovery: Talon, Quarantine, PICERL, and WORM Audits",
+    "level": "advanced",
+    "tags": ["incident-response", "picerl", "talon", "worm", "forensics"],
+    "description": "Automated quarantine, circuit breakers, PICERL lifecycle, and forensic preservation before revocation."
+  },
+  {
+    "part": 21,
+    "slug": "development-deployment-security",
+    "title": "Development and Deployment Security: Workstation Hardening, Local Dev, and Secure Production Deployment",
+    "level": "intermediate",
+    "tags": ["workstation", "gitleaks", "deployment", "staging"],
+    "description": "Harden developer laptops and enforce secure-by-default production deploys with staging parity."
+  },
+  {
+    "part": 22,
+    "slug": "threat-modelling-stride-agentic-ai",
+    "title": "Threat Modelling for Agentic AI: STRIDE, Attack Trees, and Living Threat Models",
+    "level": "advanced",
+    "tags": ["threat-modeling", "stride", "attack-trees"],
+    "description": "Extend STRIDE for agentic threats and maintain a living threat model in version control."
+  },
+  {
+    "part": 23,
+    "slug": "owasp-agentic-top-10-mitigations",
+    "title": "OWASP Agentic Top 10: Mitigations and Control Mapping",
+    "level": "advanced",
+    "tags": ["owasp", "compliance", "controls"],
+    "description": "Map ASI01–ASI10 to deployed ClawQL controls with test evidence from the adversarial suite."
+  },
+  {
+    "part": 24,
+    "slug": "red-teaming-adversarial-testing",
+    "title": "Red Teaming and Adversarial Testing Methodology: Proving the Controls Work",
+    "level": "advanced",
+    "tags": ["red-team", "testing", "fuzzing", "purple-team"],
+    "description": "YAML attack library in CI, purple-team exercises, and MCP-scoped external pen tests."
+  },
+  {
+    "part": 25,
+    "slug": "quarterly-security-review-checklist",
+    "title": "Quarterly Security Review Checklist: Metrics, Rotations, and Continuous Posture Verification",
+    "level": "advanced",
+    "tags": ["governance", "audit", "operations"],
+    "description": "Evidence-driven quarterly review: rotations, allowlists, restore tests, and signed reports."
+  },
+  {
+    "part": 26,
+    "slug": "vulnerability-management-patch-cryptography",
+    "title": "Vulnerability Management, Patch Cadence, and Cryptographic Agility",
+    "level": "advanced",
+    "tags": ["cve", "patching", "renovate", "cryptography"],
+    "description": "Reachability-based triage, session-drain rolling updates, and planned algorithm migrations."
+  },
+  {
+    "part": 27,
+    "slug": "secure-multi-tenancy-isolation",
+    "title": "Secure Multi-Tenancy: Namespace Isolation, Per-Tenant Vault Paths, and Audit Segregation",
+    "level": "advanced",
+    "tags": ["multi-tenancy", "vault", "isolation", "audit"],
+    "description": "Tenant-scoped Vault paths, memory partitions, and per-tenant WORM audit destinations."
+  },
+  {
+    "part": 28,
+    "slug": "disaster-recovery-business-continuity",
+    "title": "Disaster Recovery and Business Continuity: RTO/RPO, Session Recovery, and Cross-Region Failover",
+    "level": "advanced",
+    "tags": ["dr", "bcp", "rto", "rpo", "merkle"],
+    "description": "Per-tier RTO/RPO, agent checkpoints, active/passive failover, and session recovery decision tree."
+  },
+  {
+    "part": 29,
+    "slug": "compliance-regulatory-mapping",
+    "title": "Compliance and Regulatory Mapping: GDPR, HIPAA, SOC 2 Type II, and EU AI Act",
+    "level": "advanced",
+    "tags": ["gdpr", "hipaa", "soc2", "eu-ai-act", "compliance"],
+    "description": "Map controls to GDPR, HIPAA, SOC 2, and EU AI Act with cryptographic erasure and evidence packages."
+  },
+  {
+    "part": 30,
+    "slug": "human-operator-security-admin-controls",
+    "title": "Human Operator Security: Admin Controls, Separation of Duties, Break-Glass Access, and External API Hygiene",
+    "level": "advanced",
+    "tags": ["operators", "sod", "break-glass", "insider-threat"],
+    "description": "Mutually exclusive admin roles, 4-eyes changes, break-glass with audit, and webhook hardening."
+  }
+]

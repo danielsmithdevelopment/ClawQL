@@ -1,25 +1,35 @@
 import type { ComponentType } from 'react'
 
-import Body5 from './bodies/advanced-zero-trust-vault-hsm-provenance.mdx'
-import Body12 from './bodies/automated-response-containment.mdx'
-import Body2 from './bodies/cluster-admission-control-signing-policy.mdx'
-import Body9 from './bodies/data-classification-pii-redaction-logs.mdx'
-import Body1 from './bodies/golden-images-distroless-pipelines.mdx'
-import Body14 from './bodies/gpu-resource-protection.mdx'
-import Body13 from './bodies/incident-response-recovery-picerl.mdx'
-import Body3 from './bodies/least-privilege-scoped-identities.mdx'
-import Body8 from './bodies/mcp-runtime-protection-panguard-atr.mdx'
-import Body10 from './bodies/model-integrity-verifying-weights.mdx'
-import Body18 from './bodies/owasp-agentic-top-10-mitigations.mdx'
-import Body16 from './bodies/production-deployment-secure-full-stack.mdx'
-import Body19 from './bodies/quarterly-security-review-checklist.mdx'
-import Body6 from './bodies/rbac-mtls-istio-service-mesh.mdx'
-import Body11 from './bodies/runtime-monitoring-observability.mdx'
-import Body7 from './bodies/sandboxing-kata-gvisor-tradeoffs.mdx'
-import Body0 from './bodies/supply-chain-pinning-mirror-registry.mdx'
-import Body17 from './bodies/threat-modeling-stride-agentic-ai.mdx'
-import Body15 from './bodies/workstation-local-development-security.mdx'
-import Body4 from './bodies/zero-trust-fundamentals.mdx'
+import Body4 from './bodies/agent-gateway-hardening-dns-rebinding.mdx'
+import Body9 from './bodies/agent-identity-lifecycle-provisioning.mdx'
+import Body8 from './bodies/authentication-session-management-scoped-tokens.mdx'
+import Body19 from './bodies/automated-response-incident-recovery-picerl.mdx'
+import Body2 from './bodies/clawhub-skill-vetting-safe-installation.mdx'
+import Body1 from './bodies/cluster-admission-control-signing-policy.mdx'
+import Body28 from './bodies/compliance-regulatory-mapping.mdx'
+import Body0 from './bodies/container-image-security-pinning-distroless-golden-images.mdx'
+import Body14 from './bodies/data-classification-pii-redaction-residency.mdx'
+import Body20 from './bodies/development-deployment-security.mdx'
+import Body27 from './bodies/disaster-recovery-business-continuity.mdx'
+import Body5 from './bodies/egress-filtering-dns-dlp.mdx'
+import Body16 from './bodies/gpu-resource-protection-isolation.mdx'
+import Body29 from './bodies/human-operator-security-admin-controls.mdx'
+import Body12 from './bodies/input-validation-protocol-hardening.mdx'
+import Body6 from './bodies/least-privilege-scoped-kubernetes-identities.mdx'
+import Body11 from './bodies/mcp-runtime-enforcement-panguard-atr.mdx'
+import Body17 from './bodies/memory-context-poisoning-prevention.mdx'
+import Body15 from './bodies/model-weight-integrity-verification.mdx'
+import Body13 from './bodies/multi-agent-trust-orchestrator-security.mdx'
+import Body22 from './bodies/owasp-agentic-top-10-mitigations.mdx'
+import Body24 from './bodies/quarterly-security-review-checklist.mdx'
+import Body23 from './bodies/red-teaming-adversarial-testing.mdx'
+import Body10 from './bodies/sandboxing-kata-gvisor-seatbelt.mdx'
+import Body7 from './bodies/secrets-at-rest-vault-hsm-audit.mdx'
+import Body26 from './bodies/secure-multi-tenancy-isolation.mdx'
+import Body18 from './bodies/security-monitoring-observability-siem.mdx'
+import Body21 from './bodies/threat-modelling-stride-agentic-ai.mdx'
+import Body25 from './bodies/vulnerability-management-patch-cryptography.mdx'
+import Body3 from './bodies/zero-trust-network-mtls-istio-rbac.mdx'
 
 export type TrainingModuleMeta = {
   slug: string
@@ -33,242 +43,364 @@ export type TrainingModuleMeta = {
 
 export const trainingModules: TrainingModuleMeta[] = [
   {
-    slug: 'supply-chain-pinning-mirror-registry',
+    slug: 'container-image-security-pinning-distroless-golden-images',
     title:
-      'Supply Chain Security: Why Pinning Versions and Running Your Own Mirror Registry Matters',
+      'Container Image Security: Pinning, Distroless Pipelines, Mirror Registries, and Golden Images',
     description:
-      'Explain why the software supply chain is a primary risk for agentic AI and tool-calling platforms.',
+      'Digest pinning, distroless golden images, private mirror registries, and CI scanning from source to registry.',
     part: 1,
-    totalParts: 20,
+    totalParts: 30,
     prev: null,
-    next: 'golden-images-distroless-pipelines',
-  },
-  {
-    slug: 'golden-images-distroless-pipelines',
-    title:
-      'Building Golden Images: Automated Scanning, Hardening, and Distroless Pipelines',
-    description:
-      'Explain why minimal (e.g. distroless) images and read-only root filesystems reduce container blast radius.',
-    part: 2,
-    totalParts: 20,
-    prev: 'supply-chain-pinning-mirror-registry',
     next: 'cluster-admission-control-signing-policy',
   },
   {
     slug: 'cluster-admission-control-signing-policy',
     title:
-      'Cluster Admission Control: Enforcing Image Signing and Policy at Deploy Time',
+      'Cluster Admission Control: Image Signing, Kyverno, and Blocking Unsigned Workloads',
     description:
-      'Describe the role of admission controllers in preventing mis-scoped workloads from running.',
+      'Cosign verification and Kyverno admission policies that block unsigned or policy-violating workloads.',
+    part: 2,
+    totalParts: 30,
+    prev: 'container-image-security-pinning-distroless-golden-images',
+    next: 'clawhub-skill-vetting-safe-installation',
+  },
+  {
+    slug: 'clawhub-skill-vetting-safe-installation',
+    title:
+      'ClawHub Skill Vetting and Safe Installation: Signature Verification, Sandbox Testing, and Allowlisting',
+    description:
+      'Vet third-party skills with manifest signing, static analysis, sandbox observation, and hash pinning.',
     part: 3,
-    totalParts: 20,
-    prev: 'golden-images-distroless-pipelines',
-    next: 'least-privilege-scoped-identities',
-  },
-  {
-    slug: 'least-privilege-scoped-identities',
-    title:
-      'Principle of Least Privilege: Scoped Identities and Limiting Blast Radius',
-    description:
-      'Apply least privilege to Kubernetes identities (ServiceAccounts, Roles, bindings).',
-    part: 4,
-    totalParts: 20,
+    totalParts: 30,
     prev: 'cluster-admission-control-signing-policy',
-    next: 'zero-trust-fundamentals',
+    next: 'zero-trust-network-mtls-istio-rbac',
   },
   {
-    slug: 'zero-trust-fundamentals',
-    title: 'Zero Trust Fundamentals: Assume Compromise and Verify Everything',
+    slug: 'zero-trust-network-mtls-istio-rbac',
+    title:
+      'Zero Trust Network Architecture: mTLS, Istio, RBAC, and Workload Identity',
     description:
-      'State Zero Trust principles in the context of autonomous agents and external tools.',
+      'SPIFFE workload identity, STRICT mTLS, default-deny networking, and L7 AuthorizationPolicy.',
+    part: 4,
+    totalParts: 30,
+    prev: 'clawhub-skill-vetting-safe-installation',
+    next: 'agent-gateway-hardening-dns-rebinding',
+  },
+  {
+    slug: 'agent-gateway-hardening-dns-rebinding',
+    title:
+      'Agent Gateway Hardening: Binding, Firewall Rules, DNS Rebinding Defense, and Safe Remote Access',
+    description:
+      'Localhost binding, VPN-only access, Host/Origin validation, and listening-port drift detection.',
     part: 5,
-    totalParts: 20,
-    prev: 'least-privilege-scoped-identities',
-    next: 'advanced-zero-trust-vault-hsm-provenance',
+    totalParts: 30,
+    prev: 'zero-trust-network-mtls-istio-rbac',
+    next: 'egress-filtering-dns-dlp',
   },
   {
-    slug: 'advanced-zero-trust-vault-hsm-provenance',
-    title:
-      'Advanced Zero Trust: Multi-Sig Vault, HSM, Tamper-Proof Logging, and Cryptographic Provenance',
+    slug: 'egress-filtering-dns-dlp',
+    title: 'Egress Filtering, DNS Controls, and Data Loss Prevention',
     description:
-      'Compare static vs dynamic secrets and justify short TTLs for machine identities.',
+      'ServiceEntry allowlists, SSRF prevention, DNS tunneling heuristics, and tool-call DLP.',
     part: 6,
-    totalParts: 20,
-    prev: 'zero-trust-fundamentals',
-    next: 'rbac-mtls-istio-service-mesh',
+    totalParts: 30,
+    prev: 'agent-gateway-hardening-dns-rebinding',
+    next: 'least-privilege-scoped-kubernetes-identities',
   },
   {
-    slug: 'rbac-mtls-istio-service-mesh',
-    title: 'RBAC, mTLS, and Istio Service Mesh: Network-Level Zero Trust',
+    slug: 'least-privilege-scoped-kubernetes-identities',
+    title:
+      'Least Privilege and Scoped Kubernetes Identities: ServiceAccounts, IRSA, and Workload Identity',
     description:
-      'Explain mutual TLS and service identity for east-west traffic in Kubernetes.',
+      'One ServiceAccount per workload, scoped RBAC, and cloud workload identity federation.',
     part: 7,
-    totalParts: 20,
-    prev: 'advanced-zero-trust-vault-hsm-provenance',
-    next: 'sandboxing-kata-gvisor-tradeoffs',
+    totalParts: 30,
+    prev: 'egress-filtering-dns-dlp',
+    next: 'secrets-at-rest-vault-hsm-audit',
   },
   {
-    slug: 'sandboxing-kata-gvisor-tradeoffs',
+    slug: 'secrets-at-rest-vault-hsm-audit',
     title:
-      'Sandboxing Options and Trade-offs: Kata, gVisor, Seatbelt, Docker, and Cloudflare Workers',
+      'Secrets at Rest: Vault Integration, HSM Backing, and Tamper-Proof Audit Logging',
     description:
-      'Compare isolation technologies (VM-backed runtimes, user-space kernels, OS sandboxes).',
+      'Dynamic secrets, HSM unseal, gateway token exchange, and WORM Vault audit logs.',
     part: 8,
-    totalParts: 20,
-    prev: 'rbac-mtls-istio-service-mesh',
-    next: 'mcp-runtime-protection-panguard-atr',
+    totalParts: 30,
+    prev: 'least-privilege-scoped-kubernetes-identities',
+    next: 'authentication-session-management-scoped-tokens',
   },
   {
-    slug: 'mcp-runtime-protection-panguard-atr',
+    slug: 'authentication-session-management-scoped-tokens',
     title:
-      'MCP Runtime Protection: Panguard, ATR Rules, and Agentic Threat Mitigation',
+      'Authentication and Session Management: Per-Request Scoped Tokens, OAuth/OIDC, Rotation, and Replay Prevention',
     description:
-      'Explain synchronous policy enforcement for tool and API calls in agent architectures.',
+      'Tool-scoped tokens, OAuth for external APIs, nonce replay prevention, and device pairing.',
     part: 9,
-    totalParts: 20,
-    prev: 'sandboxing-kata-gvisor-tradeoffs',
-    next: 'data-classification-pii-redaction-logs',
+    totalParts: 30,
+    prev: 'secrets-at-rest-vault-hsm-audit',
+    next: 'agent-identity-lifecycle-provisioning',
   },
   {
-    slug: 'data-classification-pii-redaction-logs',
+    slug: 'agent-identity-lifecycle-provisioning',
     title:
-      'Data Classification and PII Redaction: Never Let Sensitive Data Hit Logs',
+      'Agent Identity Lifecycle: Provisioning, Scope Governance, and Decommissioning',
     description:
-      'Distinguish data classification from redaction and logging policy.',
+      'Joiner-mover-leaver for agents: approval workflows, scope trials, orphan detection, and forensic shutdown.',
     part: 10,
-    totalParts: 20,
-    prev: 'mcp-runtime-protection-panguard-atr',
-    next: 'model-integrity-verifying-weights',
+    totalParts: 30,
+    prev: 'authentication-session-management-scoped-tokens',
+    next: 'sandboxing-kata-gvisor-seatbelt',
   },
   {
-    slug: 'model-integrity-verifying-weights',
-    title: 'Model Integrity: Verifying Weights Before Inference',
+    slug: 'sandboxing-kata-gvisor-seatbelt',
+    title:
+      'Sandboxing Agent Workloads: Kata Containers, gVisor, and macOS Seatbelt',
     description:
-      'Explain why model artifacts need integrity checks beyond container image scanning.',
+      'Choose Kata, gVisor, or seccomp baselines by workload trust and performance requirements.',
     part: 11,
-    totalParts: 20,
-    prev: 'data-classification-pii-redaction-logs',
-    next: 'runtime-monitoring-observability',
+    totalParts: 30,
+    prev: 'agent-identity-lifecycle-provisioning',
+    next: 'mcp-runtime-enforcement-panguard-atr',
   },
   {
-    slug: 'runtime-monitoring-observability',
+    slug: 'mcp-runtime-enforcement-panguard-atr',
     title:
-      'Runtime Monitoring and Observability: Falco, Wazuh, Prometheus, and Merkle Metrics',
+      'MCP Runtime Enforcement: Panguard, ATR Rules, Schema Validation, and Injection Defense',
     description:
-      'Layer host-level detection, SIEM correlation, metrics, and tracing for AI platforms.',
+      'Enforce policy at the structured tool-call layer with ATR, schema validation, and HITL deny-on-timeout.',
     part: 12,
-    totalParts: 20,
-    prev: 'model-integrity-verifying-weights',
-    next: 'automated-response-containment',
+    totalParts: 30,
+    prev: 'sandboxing-kata-gvisor-seatbelt',
+    next: 'input-validation-protocol-hardening',
   },
   {
-    slug: 'automated-response-containment',
+    slug: 'input-validation-protocol-hardening',
     title:
-      'Automated Response and Containment: Falco + Talon Quarantine, Panguard Blocking',
+      'Input Validation and Protocol Hardening: SSRF Prevention, Token Limits, Encoding Defense, and Replay Prevention',
     description:
-      'Map alert confidence to automated vs manual response actions.',
+      'Harden the MCP input boundary before Panguard: JSON safety, SSRF, token budgets, and tool manifest integrity.',
     part: 13,
-    totalParts: 20,
-    prev: 'runtime-monitoring-observability',
-    next: 'incident-response-recovery-picerl',
+    totalParts: 30,
+    prev: 'mcp-runtime-enforcement-panguard-atr',
+    next: 'multi-agent-trust-orchestrator-security',
   },
   {
-    slug: 'incident-response-recovery-picerl',
+    slug: 'multi-agent-trust-orchestrator-security',
     title:
-      'Incident Response and Recovery: PICERL, WORM Audits, and Tested Backups',
+      'Multi-Agent Trust Hierarchies and Orchestrator Security: Delegation, Result Integrity, and Blast Radius Isolation',
     description:
-      'Use a structured incident lifecycle (e.g. prepare → identify → contain → recover).',
+      'Signed instructions and results, downward-only ATR delegation, and pipeline-level risk scoring.',
     part: 14,
-    totalParts: 20,
-    prev: 'automated-response-containment',
-    next: 'gpu-resource-protection',
+    totalParts: 30,
+    prev: 'input-validation-protocol-hardening',
+    next: 'data-classification-pii-redaction-residency',
   },
   {
-    slug: 'gpu-resource-protection',
+    slug: 'data-classification-pii-redaction-residency',
     title:
-      'GPU and Resource Protection: Preventing Rogue Agent Denial-of-Service',
+      'Data Classification and PII Redaction: Tagging, Anonymisation, and Residency Controls',
     description:
-      'Apply quotas, limits, and scheduling policies to protect shared GPU pools.',
+      'Four-level taxonomy, Presidio at write boundaries, and classification-gated recall.',
     part: 15,
-    totalParts: 20,
-    prev: 'incident-response-recovery-picerl',
-    next: 'workstation-local-development-security',
+    totalParts: 30,
+    prev: 'multi-agent-trust-orchestrator-security',
+    next: 'model-weight-integrity-verification',
   },
   {
-    slug: 'workstation-local-development-security',
-    title:
-      'Workstation and Local Development Security: Same Posture Everywhere',
+    slug: 'model-weight-integrity-verification',
+    title: 'Model Weight Integrity: Verifying Authenticity Before Every Load',
     description:
-      'Extend production security expectations to developer laptops and CI runners.',
+      'Signed weight manifests, per-load hash verification, and behavioral monitoring for backdoors.',
     part: 16,
-    totalParts: 20,
-    prev: 'gpu-resource-protection',
-    next: 'production-deployment-secure-full-stack',
+    totalParts: 30,
+    prev: 'data-classification-pii-redaction-residency',
+    next: 'gpu-resource-protection-isolation',
   },
   {
-    slug: 'production-deployment-secure-full-stack',
-    title: 'Production Deployment: One-Command Secure Full Stack',
+    slug: 'gpu-resource-protection-isolation',
+    title:
+      'GPU and Resource Protection: Isolation, Quotas, and Side-Channel Defences',
     description:
-      'Assemble a repeatable secure rollout checklist for complex stacks.',
+      'MIG isolation, namespace GPU quotas, and monitoring for unexpected GPU consumers.',
     part: 17,
-    totalParts: 20,
-    prev: 'workstation-local-development-security',
-    next: 'threat-modeling-stride-agentic-ai',
+    totalParts: 30,
+    prev: 'model-weight-integrity-verification',
+    next: 'memory-context-poisoning-prevention',
   },
   {
-    slug: 'threat-modeling-stride-agentic-ai',
-    title: 'Threat Modeling with STRIDE for Agentic AI Systems',
+    slug: 'memory-context-poisoning-prevention',
+    title:
+      'Memory and Context Poisoning Prevention: Redaction at Source and Immutable Agent Memory',
     description:
-      'Apply STRIDE categories to agent identity, tools, memory, and orchestration.',
+      'Merkle integrity, WORM storage, per-subject encryption, and poisoning detection at write time.',
     part: 18,
-    totalParts: 20,
-    prev: 'production-deployment-secure-full-stack',
+    totalParts: 30,
+    prev: 'gpu-resource-protection-isolation',
+    next: 'security-monitoring-observability-siem',
+  },
+  {
+    slug: 'security-monitoring-observability-siem',
+    title:
+      'Security Monitoring and Observability Architecture: Falco, Wazuh, SIEM Integration, and Telemetry Design',
+    description:
+      'Canonical security event schema, SIEM correlation, cardinality-safe metrics, and NOC dashboards.',
+    part: 19,
+    totalParts: 30,
+    prev: 'memory-context-poisoning-prevention',
+    next: 'automated-response-incident-recovery-picerl',
+  },
+  {
+    slug: 'automated-response-incident-recovery-picerl',
+    title:
+      'Automated Response and Incident Recovery: Talon, Quarantine, PICERL, and WORM Audits',
+    description:
+      'Automated quarantine, circuit breakers, PICERL lifecycle, and forensic preservation before revocation.',
+    part: 20,
+    totalParts: 30,
+    prev: 'security-monitoring-observability-siem',
+    next: 'development-deployment-security',
+  },
+  {
+    slug: 'development-deployment-security',
+    title:
+      'Development and Deployment Security: Workstation Hardening, Local Dev, and Secure Production Deployment',
+    description:
+      'Harden developer laptops and enforce secure-by-default production deploys with staging parity.',
+    part: 21,
+    totalParts: 30,
+    prev: 'automated-response-incident-recovery-picerl',
+    next: 'threat-modelling-stride-agentic-ai',
+  },
+  {
+    slug: 'threat-modelling-stride-agentic-ai',
+    title:
+      'Threat Modelling for Agentic AI: STRIDE, Attack Trees, and Living Threat Models',
+    description:
+      'Extend STRIDE for agentic threats and maintain a living threat model in version control.',
+    part: 22,
+    totalParts: 30,
+    prev: 'development-deployment-security',
     next: 'owasp-agentic-top-10-mitigations',
   },
   {
     slug: 'owasp-agentic-top-10-mitigations',
-    title: 'OWASP Agentic Top 10: Mapping Risks to Architectural Controls',
+    title: 'OWASP Agentic Top 10: Mitigations and Control Mapping',
     description:
-      'Navigate the OWASP Agentic risk list and map items to layered controls.',
-    part: 19,
-    totalParts: 20,
-    prev: 'threat-modeling-stride-agentic-ai',
+      'Map ASI01–ASI10 to deployed ClawQL controls with test evidence from the adversarial suite.',
+    part: 23,
+    totalParts: 30,
+    prev: 'threat-modelling-stride-agentic-ai',
+    next: 'red-teaming-adversarial-testing',
+  },
+  {
+    slug: 'red-teaming-adversarial-testing',
+    title:
+      'Red Teaming and Adversarial Testing Methodology: Proving the Controls Work',
+    description:
+      'YAML attack library in CI, purple-team exercises, and MCP-scoped external pen tests.',
+    part: 24,
+    totalParts: 30,
+    prev: 'owasp-agentic-top-10-mitigations',
     next: 'quarterly-security-review-checklist',
   },
   {
     slug: 'quarterly-security-review-checklist',
     title:
-      'Quarterly Security Review Checklist: Keeping Defense-in-Depth Alive',
+      'Quarterly Security Review Checklist: Metrics, Rotations, and Continuous Posture Verification',
     description:
-      'Run a periodic defense-in-depth review across supply chain, runtime, and data.',
-    part: 20,
-    totalParts: 20,
-    prev: 'owasp-agentic-top-10-mitigations',
+      'Evidence-driven quarterly review: rotations, allowlists, restore tests, and signed reports.',
+    part: 25,
+    totalParts: 30,
+    prev: 'red-teaming-adversarial-testing',
+    next: 'vulnerability-management-patch-cryptography',
+  },
+  {
+    slug: 'vulnerability-management-patch-cryptography',
+    title: 'Vulnerability Management, Patch Cadence, and Cryptographic Agility',
+    description:
+      'Reachability-based triage, session-drain rolling updates, and planned algorithm migrations.',
+    part: 26,
+    totalParts: 30,
+    prev: 'quarterly-security-review-checklist',
+    next: 'secure-multi-tenancy-isolation',
+  },
+  {
+    slug: 'secure-multi-tenancy-isolation',
+    title:
+      'Secure Multi-Tenancy: Namespace Isolation, Per-Tenant Vault Paths, and Audit Segregation',
+    description:
+      'Tenant-scoped Vault paths, memory partitions, and per-tenant WORM audit destinations.',
+    part: 27,
+    totalParts: 30,
+    prev: 'vulnerability-management-patch-cryptography',
+    next: 'disaster-recovery-business-continuity',
+  },
+  {
+    slug: 'disaster-recovery-business-continuity',
+    title:
+      'Disaster Recovery and Business Continuity: RTO/RPO, Session Recovery, and Cross-Region Failover',
+    description:
+      'Per-tier RTO/RPO, agent checkpoints, active/passive failover, and session recovery decision tree.',
+    part: 28,
+    totalParts: 30,
+    prev: 'secure-multi-tenancy-isolation',
+    next: 'compliance-regulatory-mapping',
+  },
+  {
+    slug: 'compliance-regulatory-mapping',
+    title:
+      'Compliance and Regulatory Mapping: GDPR, HIPAA, SOC 2 Type II, and EU AI Act',
+    description:
+      'Map controls to GDPR, HIPAA, SOC 2, and EU AI Act with cryptographic erasure and evidence packages.',
+    part: 29,
+    totalParts: 30,
+    prev: 'disaster-recovery-business-continuity',
+    next: 'human-operator-security-admin-controls',
+  },
+  {
+    slug: 'human-operator-security-admin-controls',
+    title:
+      'Human Operator Security: Admin Controls, Separation of Duties, Break-Glass Access, and External API Hygiene',
+    description:
+      'Mutually exclusive admin roles, 4-eyes changes, break-glass with audit, and webhook hardening.',
+    part: 30,
+    totalParts: 30,
+    prev: 'compliance-regulatory-mapping',
     next: null,
   },
 ]
 
 export const trainingBodies: Record<string, ComponentType> = {
-  'supply-chain-pinning-mirror-registry': Body0,
-  'golden-images-distroless-pipelines': Body1,
-  'cluster-admission-control-signing-policy': Body2,
-  'least-privilege-scoped-identities': Body3,
-  'zero-trust-fundamentals': Body4,
-  'advanced-zero-trust-vault-hsm-provenance': Body5,
-  'rbac-mtls-istio-service-mesh': Body6,
-  'sandboxing-kata-gvisor-tradeoffs': Body7,
-  'mcp-runtime-protection-panguard-atr': Body8,
-  'data-classification-pii-redaction-logs': Body9,
-  'model-integrity-verifying-weights': Body10,
-  'runtime-monitoring-observability': Body11,
-  'automated-response-containment': Body12,
-  'incident-response-recovery-picerl': Body13,
-  'gpu-resource-protection': Body14,
-  'workstation-local-development-security': Body15,
-  'production-deployment-secure-full-stack': Body16,
-  'threat-modeling-stride-agentic-ai': Body17,
-  'owasp-agentic-top-10-mitigations': Body18,
-  'quarterly-security-review-checklist': Body19,
+  'container-image-security-pinning-distroless-golden-images': Body0,
+  'cluster-admission-control-signing-policy': Body1,
+  'clawhub-skill-vetting-safe-installation': Body2,
+  'zero-trust-network-mtls-istio-rbac': Body3,
+  'agent-gateway-hardening-dns-rebinding': Body4,
+  'egress-filtering-dns-dlp': Body5,
+  'least-privilege-scoped-kubernetes-identities': Body6,
+  'secrets-at-rest-vault-hsm-audit': Body7,
+  'authentication-session-management-scoped-tokens': Body8,
+  'agent-identity-lifecycle-provisioning': Body9,
+  'sandboxing-kata-gvisor-seatbelt': Body10,
+  'mcp-runtime-enforcement-panguard-atr': Body11,
+  'input-validation-protocol-hardening': Body12,
+  'multi-agent-trust-orchestrator-security': Body13,
+  'data-classification-pii-redaction-residency': Body14,
+  'model-weight-integrity-verification': Body15,
+  'gpu-resource-protection-isolation': Body16,
+  'memory-context-poisoning-prevention': Body17,
+  'security-monitoring-observability-siem': Body18,
+  'automated-response-incident-recovery-picerl': Body19,
+  'development-deployment-security': Body20,
+  'threat-modelling-stride-agentic-ai': Body21,
+  'owasp-agentic-top-10-mitigations': Body22,
+  'red-teaming-adversarial-testing': Body23,
+  'quarterly-security-review-checklist': Body24,
+  'vulnerability-management-patch-cryptography': Body25,
+  'secure-multi-tenancy-isolation': Body26,
+  'disaster-recovery-business-continuity': Body27,
+  'compliance-regulatory-mapping': Body28,
+  'human-operator-security-admin-controls': Body29,
 }
 
 export function getTrainingMeta(slug: string): TrainingModuleMeta | undefined {

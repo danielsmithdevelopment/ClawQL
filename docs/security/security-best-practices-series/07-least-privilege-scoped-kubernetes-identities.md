@@ -1,0 +1,363 @@
+---
+title: "Least Privilege and Scoped Kubernetes Identities: ServiceAccounts, IRSA, and Workload Identity"
+series: "Agentic AI Security Curriculum"
+level: intermediate
+tags:
+  - rbac
+  - serviceaccount
+  - irsa
+  - workload-identity
+part: 7
+total_parts: 30
+date: "May 2026"
+slug: "least-privilege-scoped-kubernetes-identities"
+canonical_path: "/security/best-practices/least-privilege-scoped-kubernetes-identities"
+description: "One ServiceAccount per workload, scoped RBAC, and cloud workload identity federation."
+prev: "egress-filtering-dns-dlp"
+next: "secrets-at-rest-vault-hsm-audit"
+---
+# Least Privilege and Scoped Kubernetes Identities: ServiceAccounts, IRSA, and Workload Identity
+
+ServiceAccounts, IRSA, and Workload Identity
+
+Hello and welcome to Module 7! 
+
+Modules 1–6 have given us trusted images, cluster admission, vetted skills, zero-trust networking, a hardened gateway, and strict egress controls. Now we tighten the permissions that every pod actually holds inside Kubernetes itself.
+
+The default ServiceAccount in every namespace is far more powerful than most teams realize. A compromised pod with broad RBAC can read secrets, create other pods, or escalate privileges across the cluster. In an agentic platform where pods run autonomous code, this is unacceptable.
+
+In this module we replace convenience with precision: one scoped ServiceAccount per workload, explicit RBAC, and cloud-native workload identity federation that eliminates long-lived credentials entirely. By the end you’ll have the structural foundation that makes least privilege the default — not an aspiration.
+
+
+
+---
+
+
+
+The Over-Permissioned ServiceAccount Problem
+
+Kubernetes makes it easy to be lazy with identities:
+
+- Every namespace gets a default ServiceAccount with a mounted token by default.  
+
+- Many teams reuse a single ServiceAccount across multiple services “because it’s convenient.”  
+
+- automountServiceAccountToken: true is the default — even pods that don’t need to call the Kubernetes API still get a token.  
+
+- Overly broad RBAC bindings let a compromised pod read secrets, modify other pods, or escalate privileges cluster-wide.  
+
+
+The result: a single pod breach can become a cluster-wide incident. We fix this by treating every ServiceAccount as a long-lived security principal that must be justified.
+
+
+
+---
+
+
+
+ServiceAccount Best Practices
+
+Follow these rules for every workload:
+
+- One ServiceAccount per workload, never per namespace and never shared.  
+
+- Set automountServiceAccountToken: false at the pod spec level unless the pod genuinely needs to call the Kubernetes API.  
+
+- Use namespace-scoped Roles (not ClusterRoles) for anything that only needs access inside its own namespace.  
+
+
+Audit exact permissions with:  
+  
+ kubectl auth can-i --list --as system:serviceaccount:agents:summarizer
+
+- 
+- Remove all wildcards (*) from production RBAC rules.  
+
+- Run regular audits with tools like kubectl-who-can or rbac-tool to surface over-permissioned accounts.  
+
+
+Example pod spec that follows the rules:
+
+apiVersion: v1
+
+kind: Pod
+
+metadata:
+
+  name: summarizer
+
+spec:
+
+  serviceAccountName: summarizer-sa   # dedicated per-workload account
+
+  automountServiceAccountToken: false # only enable if truly needed
+
+  containers:
+
+  - name: agent
+
+    image: harbor.example.com/golden/node@sha256:...
+
+
+
+
+
+---
+
+
+
+IRSA (IAM Roles for Service Accounts) on AWS
+
+Never store long-lived AWS credentials in pods or secrets. Use IRSA instead.
+
+How it works:
+
+- Kubernetes ServiceAccount is annotated with the IAM role ARN.  
+
+- The pod assumes the IAM role via OIDC federation — no keys are ever stored.  
+
+- The IAM role’s trust policy restricts assumption to the exact ServiceAccount in the exact namespace.  
+
+
+Example ServiceAccount:
+
+apiVersion: v1
+
+kind: ServiceAccount
+
+metadata:
+
+  name: summarizer-sa
+
+  namespace: agents
+
+  annotations:
+
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/summarizer-role
+
+
+
+IAM role trust policy (minimum scope):
+
+{
+
+  "Version": "2012-10-17",
+
+  "Statement": [
+
+    {
+
+      "Effect": "Allow",
+
+      "Principal": {
+
+        "Federated": "arn:aws:iam::123456789012:oidc-provider/[oidc.eks.us-east-1.amazonaws.com/id/ABC123](http://oidc.eks.us-east-1.amazonaws.com/id/ABC123)"
+
+      },
+
+      "Action": "sts:AssumeRoleWithWebIdentity",
+
+      "Condition": {
+
+        "StringEquals": {
+
+          "[oidc.eks.us-east-1.amazonaws.com/id/ABC123:sub](http://oidc.eks.us-east-1.amazonaws.com/id/ABC123:sub)": "system:serviceaccount:agents:summarizer-sa"
+
+        }
+
+      }
+
+    }
+
+  ]
+
+}
+
+
+
+Scope the attached IAM policy to the exact S3 prefixes, DynamoDB tables, or Secrets Manager paths the workload actually needs.
+
+
+
+---
+
+
+
+Workload Identity on GCP
+
+GCP uses the same principle with a workload identity pool.
+
+Annotate the ServiceAccount:  
+  
+ metadata:
+
+  annotations:
+
+    iam.gke.io/gcp-service-account: [summarizer@project.iam.gserviceaccount.com](mailto:summarizer@project.iam.gserviceaccount.com)
+
+- 
+- Credentials are automatically injected and rotated — no service-account keys are ever stored in the cluster.  
+
+- Scope the GCP service account to only the specific Cloud Storage buckets, Pub/Sub topics, or other resources required.  
+
+
+
+
+---
+
+
+
+Azure Workload Identity
+
+Azure federates via Azure AD:
+
+- Create a federated identity credential that links an Azure AD app registration to the Kubernetes ServiceAccount.  
+
+- The workload uses the MSAL library and the pod’s projected volume token to request short-lived tokens from Azure AD.  
+
+- No client secrets or certificates are stored anywhere in the cluster.  
+
+
+
+
+---
+
+
+
+Auditing and Continuous Enforcement
+
+Least privilege is only as good as its ongoing maintenance:
+
+- Use Polaris or kube-score in CI to scan for RBAC and security posture issues.  
+
+- Kyverno policy: fail any deployment that references a ClusterRole for a workload that only needs namespace scope.  
+
+- Alert on any RBAC change that adds wildcard permissions or cluster-admin bindings.  
+
+- Monthly automated diff: compare current RBAC bindings against the approved baseline stored in git.  
+
+
+
+
+---
+
+
+
+Key Takeaways (Memorize These!)
+
+- One ServiceAccount per workload is not pedantic — it is the structural requirement that makes RBAC meaningful.  
+
+- automountServiceAccountToken: false should be the default for most pods; enable it explicitly only when needed.  
+
+- IRSA (AWS), Workload Identity (GCP), and Azure Workload Identity eliminate the long-lived credential class of risk entirely — use them on all major cloud providers.  
+
+- RBAC is only as good as its ongoing auditing — permissions that were appropriate at launch accumulate over time.  
+
+
+You now have the identity and permission model that ensures a compromised pod can only do the exact minimum it was designed to do. This is the foundation that makes every other control in the curriculum effective. Least privilege is no longer a checkbox — it is the default operating mode of your entire platform.
+
+
+
+## **MODULE 8**
+
+### **Secrets at Rest: Vault Integration, HSM Backing, and Tamper-Proof Audit Logging**
+
+A secret in a config file, an environment variable, or a Kubernetes Secret object is not a secret — it is a credential waiting to be discovered. Dynamic secrets with short TTLs, issued on demand from a Vault instance with HSM-backed unsealing, mean that there is no long-lived credential to steal and every access is recorded in a tamper-evident audit log. This module replaces static credentials with a secrets architecture that limits exposure to minutes rather than months.
+
+**Why static secrets are a systemic risk**
+
+- A secret in a config file, environment variable, or Kubernetes Secret is readable by anything with pod access  
+
+- Kubernetes Secrets are base64-encoded, not encrypted — readable by anyone with etcd access or the right RBAC  
+
+- Long-lived secrets accumulate: every developer who has ever had access retains it until the secret rotates  
+
+- Breach windows are measured in months for static secrets; minutes for dynamic secrets  
+
+
+**Vault architecture for ClawQL**
+
+- Vault is the single source of truth for all credentials the platform uses  
+
+- Dynamic secrets: Vault generates a unique credential per request with a configured TTL  
+
+- No static credential exists in any config file, environment variable, or Kubernetes Secret  
+
+- Vault deployed in HA mode with Raft integrated storage — no external database dependency  
+
+- Three replicas minimum in production; Raft requires a quorum of (n/2)+1  
+
+
+**HSM-backed unsealing**
+
+- Vault’s master key encrypts the keyring — if master key is compromised, all secrets are compromised  
+
+- HSM (Hardware Security Module) stores the master key in tamper-resistant hardware  
+
+- Vault Auto Unseal with AWS KMS, GCP Cloud KMS, or Azure Key Vault as the HSM  
+
+- HSM unseal means Vault can restart without human key share holders — critical for automated DR (Module 28)  
+
+- Shamir secret sharing for break-glass scenarios: requires multiple key holders present simultaneously  
+
+
+**Dynamic secrets for ClawQL components**
+
+- Database credentials: Vault generates a unique username/password per agent session; TTL = session duration  
+
+- AWS/GCP credentials: Vault’s cloud secrets engine generates temporary IAM credentials on demand  
+
+- PKI certificates: Vault’s PKI engine issues short-lived TLS certificates for mTLS (replaces cert-manager for internal certs)  
+
+- Each dynamic secret is tied to a specific Vault lease; revocation is instant and complete  
+
+
+**Token exchange at the gateway**
+
+- Agents do not hold Vault tokens directly — the gateway performs the token exchange  
+
+- Agent presents session JWT → gateway exchanges for a Vault token scoped to that agent’s policy  
+
+- Vault token TTL matches the session duration; automatically expires when the session ends  
+
+- Vault token is never exposed to the agent, never logged, and never stored  
+
+
+**Tamper-proof audit logging**
+
+- Vault audit device: structured JSON log of every API call — who requested what, when, from where  
+
+- Audit log shipped via Fluent Bit to WORM storage (S3 Object Lock, COMPLIANCE mode)  
+
+- Presidio redaction applied before shipping — secret values are never in the audit log, only their paths  
+
+- Merkle root of the audit log computed and recorded in Prometheus every 60 seconds  
+
+- Audit log is the ground truth for “did this agent access this secret” in any incident investigation  
+
+
+**Vault policy structure**
+
+- One policy per agent role, scoped to the minimum paths required  
+
+- Path patterns: secret/tenants//agents//* — never wildcards across tenants  
+
+- Deny list for sensitive paths: explicit deny rules that override any allow rule  
+
+- Policy changes require the same 4-eyes approval as ATR rule changes (Module 30)  
+
+
+**Key takeaways to cover**
+
+- Dynamic secrets with short TTLs are not just a best practice — they eliminate the long-lived credential as an attack category  
+
+- HSM-backed unsealing removes the human key holder as a single point of failure for Vault availability  
+
+- Vault audit log to WORM is the forensic foundation for every credential-related security investigation  
+
+- The gateway-as-exchange-point pattern means agents never hold Vault tokens — a compromised agent cannot directly access Vault  
+
+
+
+
+---
