@@ -45,7 +45,7 @@
     "@grpc/proto-loader": "^0.8.1",
     "@grpc/reflection": "^1.0.4",
     "google-proto-files": "^4.2.0",
-    "protobufjs": "^7.5.8"
+    "protobufjs": "^8.4.2"
   },
   "devDependencies": {
     "@modelcontextprotocol/sdk": "^1.27.1",
