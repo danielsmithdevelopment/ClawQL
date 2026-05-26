@@ -101,7 +101,7 @@
     },
     "dependencies": {
         "@graphql-mesh/utils": "^0.104.36",
-        "@grpc/grpc-js": "^1.14.3",
+        "@grpc/grpc-js": "^1.14.4",
         "@grpc/proto-loader": "^0.8.1",
         "@modelcontextprotocol/sdk": "^1.29.0",
         "@omnigraph/openapi": "^0.109.51",
@@ -128,16 +128,16 @@
     "devDependencies": {
         "@eslint/js": "^10.0.1",
         "@types/express": "^5.0.6",
-        "@types/node": "^25.9.0",
+        "@types/node": "^25.9.1",
         "@types/pg": "^8.20.0",
         "@types/sql.js": "^1.4.11",
-        "@vitest/coverage-v8": "^4.1.6",
+        "@vitest/coverage-v8": "^4.1.7",
         "eslint": "^10.4.0",
         "prettier": "^3.8.3",
         "tsx": "^4.22.2",
         "typescript": "^6.0.3",
-        "typescript-eslint": "^8.59.4",
-        "vitest": "^4.1.6"
+        "typescript-eslint": "^8.60.0",
+        "vitest": "^4.1.7"
     },
     "overrides": {
         "@protobufjs/utf8": "1.1.1",
@@ -150,6 +150,7 @@
         "path-to-regexp": "8.4.0",
         "picomatch": "4.0.4",
         "postcss": "8.5.10",
+        "qs": "6.15.2",
         "protobufjs": "7.6.0",
         "google-proto-files": {
             "protobufjs": "7.6.0"
