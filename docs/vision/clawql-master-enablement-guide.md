@@ -34,58 +34,58 @@ ClawQL is under active development. This document describes the **target** modul
 
 ### Implementation today vs target architecture
 
-| Topic | Today (`main`) | Target (this document) |
-| ----- | -------------- | ---------------------- |
-| **Code layout** | TypeScript monorepo; **`clawql-mcp`** + **`clawql-ouroboros`** + **`mcp-grpc-transport`** | Turborepo packages (`clawql-core`, `clawql-api`, …) composed with **Effect-TS** Layers (§6) |
-| **MCP tools** | **`search`**, **`execute`**, Core **`audit`** / **`cache`**; optional flags for memory, documents, sandbox, ouroboros, schedule, notify | Same **`search()` / `execute()`** surface via **`clawql-api`**; optional single-tool host profiles are not required |
-| **Ground truth for env/tools** | [`docs/mcp/mcp-tools.md`](../mcp/mcp-tools.md), [`docs/readme/configuration.md`](../readme/configuration.md) | Package boundaries and operator CRD in §4–§13 |
+| Topic                          | Today (`main`)                                                                                                                          | Target (this document)                                                                                              |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| **Code layout**                | TypeScript monorepo; **`clawql-mcp`** + **`clawql-ouroboros`** + **`mcp-grpc-transport`**                                               | Turborepo packages (`clawql-core`, `clawql-api`, …) composed with **Effect-TS** Layers (§6)                         |
+| **MCP tools**                  | **`search`**, **`execute`**, Core **`audit`** / **`cache`**; optional flags for memory, documents, sandbox, ouroboros, schedule, notify | Same **`search()` / `execute()`** surface via **`clawql-api`**; optional single-tool host profiles are not required |
+| **Ground truth for env/tools** | [`docs/mcp/mcp-tools.md`](../mcp/mcp-tools.md), [`docs/readme/configuration.md`](../readme/configuration.md)                            | Package boundaries and operator CRD in §4–§13                                                                       |
 
 ### Package extraction status (modularization epic [#306](https://github.com/danielsmithdevelopment/ClawQL/issues/306))
 
 | Package                    | As standalone npm package |
-| -------------------------- | ----------------------- |
-| `clawql-core`              | 🔨 In development       |
-| `clawql-api`               | 🔨 In development       |
-| `clawql-auth`              | 🔨 In development       |
-| `clawql-documents`         | 🔨 In development       |
-| `clawql-memory`            | 🔨 In development       |
-| `clawql-pageindex`         | 🔨 In development       |
-| `clawql-mcp`               | ✅ Shipped              |
-| `clawql-ouroboros`         | ✅ Shipped              |
-| `mcp-grpc-transport`       | ✅ Shipped              |
-| `clawql-data`              | 📋 Planned              |
-| `clawql-automation`        | 📋 Planned              |
-| `clawql-telemetry`         | 📋 Planned              |
-| `clawql-sandbox`           | 📋 Planned              |
-| `clawql-printingpress`     | 📋 Planned              |
-| `clawql-goose`             | 📋 Planned              |
-| `clawql-lending`           | 📋 Planned              |
-| `clawql-legal`             | 📋 Planned              |
-| `clawql-healthcare`        | 📋 Planned              |
-| `clawql-insurance`         | 📋 Planned              |
-| `clawql-supplychain`       | 📋 Planned              |
-| `clawql-government`        | 📋 Planned              |
-| `clawql-manufacturing`     | 📋 Planned              |
-| `clawql-education`         | 📋 Planned              |
-| `clawql-engineering`       | 📋 Planned              |
-| `clawql-blockchain`        | 📋 Planned              |
-| Kubernetes Operator        | 📋 Planned              |
-| Natural Language Dashboard | 📋 Planned              |
+| -------------------------- | ------------------------- |
+| `clawql-core`              | 🔨 In development         |
+| `clawql-api`               | 🔨 In development         |
+| `clawql-auth`              | 🔨 In development         |
+| `clawql-documents`         | 🔨 In development         |
+| `clawql-memory`            | 🔨 In development         |
+| `clawql-pageindex`         | 🔨 In development         |
+| `clawql-mcp`               | ✅ Shipped                |
+| `clawql-ouroboros`         | ✅ Shipped                |
+| `mcp-grpc-transport`       | ✅ Shipped                |
+| `clawql-data`              | 📋 Planned                |
+| `clawql-automation`        | 📋 Planned                |
+| `clawql-telemetry`         | 📋 Planned                |
+| `clawql-sandbox`           | 📋 Planned                |
+| `clawql-printingpress`     | 📋 Planned                |
+| `clawql-goose`             | 📋 Planned                |
+| `clawql-lending`           | 📋 Planned                |
+| `clawql-legal`             | 📋 Planned                |
+| `clawql-healthcare`        | 📋 Planned                |
+| `clawql-insurance`         | 📋 Planned                |
+| `clawql-supplychain`       | 📋 Planned                |
+| `clawql-government`        | 📋 Planned                |
+| `clawql-manufacturing`     | 📋 Planned                |
+| `clawql-education`         | 📋 Planned                |
+| `clawql-engineering`       | 📋 Planned                |
+| `clawql-blockchain`        | 📋 Planned                |
+| Kubernetes Operator        | 📋 Planned                |
+| Natural Language Dashboard | 📋 Planned                |
 
 ### Capability in `clawql-mcp` today (may run before packages split)
 
-| Capability | In `clawql-mcp` today | Notes |
-| ---------- | --------------------- | ----- |
-| Core **`search` / `execute`** | ✅ Always on | OpenAPI / Discovery + optional native GraphQL/gRPC |
-| **`audit` / `cache`** | ✅ Always on | In-process; not separate packages |
-| **Vault memory** | ✅ Default on | `memory_ingest` / `memory_recall`; `CLAWQL_ENABLE_MEMORY=0` to hide |
-| **Document stack** | ✅ Default on | Bundled providers + `ingest_external_knowledge`; `CLAWQL_ENABLE_DOCUMENTS=0` |
-| **Automation** | 🔶 Opt-in | `schedule`, `notify` behind `CLAWQL_ENABLE_*` |
-| **Sandbox** | 🔶 Opt-in | `sandbox_exec` behind `CLAWQL_ENABLE_SANDBOX` |
-| **Ouroboros MCP** | 🔶 Opt-in | `ouroboros_*` behind `CLAWQL_ENABLE_OUROBOROS` |
-| **Telemetry** | 🔶 Partial | `/metrics`, Grafana dashboard JSON; full operator sidecar model planned |
-| **Printing Press / Goose** | 📋 Planned | Specified in §14; not MCP tools today |
-| **Industry verticals** | 📋 Planned | No `clawql-lending` etc. packages yet |
+| Capability                    | In `clawql-mcp` today | Notes                                                                        |
+| ----------------------------- | --------------------- | ---------------------------------------------------------------------------- |
+| Core **`search` / `execute`** | ✅ Always on          | OpenAPI / Discovery + optional native GraphQL/gRPC                           |
+| **`audit` / `cache`**         | ✅ Always on          | In-process; not separate packages                                            |
+| **Vault memory**              | ✅ Default on         | `memory_ingest` / `memory_recall`; `CLAWQL_ENABLE_MEMORY=0` to hide          |
+| **Document stack**            | ✅ Default on         | Bundled providers + `ingest_external_knowledge`; `CLAWQL_ENABLE_DOCUMENTS=0` |
+| **Automation**                | 🔶 Opt-in             | `schedule`, `notify` behind `CLAWQL_ENABLE_*`                                |
+| **Sandbox**                   | 🔶 Opt-in             | `sandbox_exec` behind `CLAWQL_ENABLE_SANDBOX`                                |
+| **Ouroboros MCP**             | 🔶 Opt-in             | `ouroboros_*` behind `CLAWQL_ENABLE_OUROBOROS`                               |
+| **Telemetry**                 | 🔶 Partial            | `/metrics`, Grafana dashboard JSON; full operator sidecar model planned      |
+| **Printing Press / Goose**    | 📋 Planned            | Specified in §14; not MCP tools today                                        |
+| **Industry verticals**        | 📋 Planned            | No `clawql-lending` etc. packages yet                                        |
 
 This document specifies the intended complete design. Implementation is phased and demand-driven; no fixed delivery dates are set.
 

@@ -10,11 +10,11 @@ This document plans the **three coupled changes** that reshape the server: **Eff
 
 ## 1. Why these three belong together
 
-| Pillar | What it solves | Without the others |
-| ------ | -------------- | ------------------ |
-| **Effect-TS** | Typed errors, resources, concurrency, **Layer DI**, testable substitution | Package splits devolve into `async` singletons and hidden imports |
-| **Modularization** | Enforceable dependency graph, publishable units, smaller deploy profiles | Effect Layers have nowhere clean to live |
-| **Plugins / gateway** | Opt-in verticals, proxy MCP backends, zero footprint when off | Monolith `tools.ts` keeps growing; env flags alone do not scale |
+| Pillar                | What it solves                                                            | Without the others                                                |
+| --------------------- | ------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| **Effect-TS**         | Typed errors, resources, concurrency, **Layer DI**, testable substitution | Package splits devolve into `async` singletons and hidden imports |
+| **Modularization**    | Enforceable dependency graph, publishable units, smaller deploy profiles  | Effect Layers have nowhere clean to live                          |
+| **Plugins / gateway** | Opt-in verticals, proxy MCP backends, zero footprint when off             | Monolith `tools.ts` keeps growing; env flags alone do not scale   |
 
 **Composition rule (from enablement):** horizontal and vertical packages export **Effect `Layer`s**; `clawql-api` is the **only merge root**; MCP is a **thin transport adapter** that never owns business logic.
 
@@ -49,25 +49,25 @@ flowchart TB
 
 ## 2. Locked program decisions (May 2026)
 
-| Topic | Decision |
-| ----- | -------- |
-| **Monorepo tooling** | **Turborepo now** — introduce `turbo.json` with the first `packages/clawql-core` workspace (Phase 0), not after `clawql-api`. |
-| **Merkle / Cuckoo** | **Inside `clawql-core`** — `merkle/` and `cuckoo/` (or equivalent) as internal modules; **no** separate `@clawql/merkle` / `@clawql/cuckoo` npm workspaces. |
-| **`clawql-ouroboros`** | **Effect rewrite now** — do not long-term Layer-wrap legacy `async` internals; port package to Effect as part of Phase 1–2 (parallel to memory plugin work). |
-| **Panguard** | **First-class proxy `Plugin`** in `clawql-api` — migrate `panguard-mcp-bridge` behavior into the gateway plugin model (`ProviderSpec` `kind: "mcp-proxy"` / policy hook), not a permanent sidecar-only process. |
-| **Release policy** | **Incremental minors** with documented deprecations (`@deprecated`, changelog, migration notes). **Major semver** when a breaking MCP contract, config, or default behavior change is unavoidable — no “platform v2” big-bang requirement. |
+| Topic                  | Decision                                                                                                                                                                                                                                   |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Monorepo tooling**   | **Turborepo now** — introduce `turbo.json` with the first `packages/clawql-core` workspace (Phase 0), not after `clawql-api`.                                                                                                              |
+| **Merkle / Cuckoo**    | **Inside `clawql-core`** — `merkle/` and `cuckoo/` (or equivalent) as internal modules; **no** separate `@clawql/merkle` / `@clawql/cuckoo` npm workspaces.                                                                                |
+| **`clawql-ouroboros`** | **Effect rewrite now** — do not long-term Layer-wrap legacy `async` internals; port package to Effect as part of Phase 1–2 (parallel to memory plugin work).                                                                               |
+| **Panguard**           | **First-class proxy `Plugin`** in `clawql-api` — migrate `panguard-mcp-bridge` behavior into the gateway plugin model (`ProviderSpec` `kind: "mcp-proxy"` / policy hook), not a permanent sidecar-only process.                            |
+| **Release policy**     | **Incremental minors** with documented deprecations (`@deprecated`, changelog, migration notes). **Major semver** when a breaking MCP contract, config, or default behavior change is unavoidable — no “platform v2” big-bang requirement. |
 
 ---
 
 ## 3. Current state (`main` today)
 
-| Area | Today | Target |
-| ---- | ----- | ------ |
-| **Layout** | Single `clawql-mcp` package; `src/*.ts` (~200+ modules); workspaces: `clawql-ouroboros`, `mcp-grpc-transport`, `panguard-mcp-bridge` | Turborepo packages per enablement §4–§5 |
-| **Runtime** | `async`/`await`, Zod at MCP boundary, direct imports | Effect programs + Layers; Schema inward over time |
-| **Entry** | `server.ts` / `server-http.ts` → `createRegisteredMcpServer()` → `registerTools()` in `tools.ts` | Same **external** MCP contract; handlers delegate to `Runtime.runPromise` / scoped runtime |
-| **Features** | `CLAWQL_ENABLE_*` gates optional tools | Same flags → **include or omit Layers** at startup (no dead code in minimal tiers) |
-| **Effect** | Not in `package.json` | Pinned `@effect/*` monorepo-wide |
+| Area         | Today                                                                                                                                | Target                                                                                     |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
+| **Layout**   | Single `clawql-mcp` package; `src/*.ts` (~200+ modules); workspaces: `clawql-ouroboros`, `mcp-grpc-transport`, `panguard-mcp-bridge` | Turborepo packages per enablement §4–§5                                                    |
+| **Runtime**  | `async`/`await`, Zod at MCP boundary, direct imports                                                                                 | Effect programs + Layers; Schema inward over time                                          |
+| **Entry**    | `server.ts` / `server-http.ts` → `createRegisteredMcpServer()` → `registerTools()` in `tools.ts`                                     | Same **external** MCP contract; handlers delegate to `Runtime.runPromise` / scoped runtime |
+| **Features** | `CLAWQL_ENABLE_*` gates optional tools                                                                                               | Same flags → **include or omit Layers** at startup (no dead code in minimal tiers)         |
+| **Effect**   | Not in `package.json`                                                                                                                | Pinned `@effect/*` monorepo-wide                                                           |
 
 **Non-negotiable during migration:** MCP tools **`search`** and **`execute`** (plus Core **`audit`** / **`cache`**) stay registered and behavior-compatible unless a major version explicitly documents a break.
 
@@ -116,9 +116,7 @@ Do **not** freeze `main` for a rewrite. Extract and convert **by vertical slice*
 
 ```typescript
 // MCP handler (stays sync/async-friendly for SDK)
-const result = await Effect.runPromise(
-  program.pipe(Effect.provide(AppLayer))
-);
+const result = await Effect.runPromise(program.pipe(Effect.provide(AppLayer)));
 ```
 
 **Exit criteria:** CI green; no user-visible behavior change; one service fully on Effect.
@@ -127,12 +125,12 @@ const result = await Effect.runPromise(
 
 **Goal:** Packages exist; MCP still in `clawql-mcp` but calls into `clawql-api`.
 
-| Deliverable | Notes |
-| ----------- | ----- |
-| `clawql-core` published internally | Types, errors, core Tags, audit/cache Layers |
-| `clawql-api` `createApi(config)` | Holds plugin list, exposes `search`/`execute` as Effects |
+| Deliverable                                                                                   | Notes                                                                                      |
+| --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `clawql-core` published internally                                                            | Types, errors, core Tags, audit/cache Layers                                               |
+| `clawql-api` `createApi(config)`                                                              | Holds plugin list, exposes `search`/`execute` as Effects                                   |
 | Move `spec-loader` / `spec-search` / OpenAPI→GraphQL **execute core** behind `ExecuteService` | Largest risk — maintain parity tests (`tools-handlers.test.ts`, graphql/grpc parity tests) |
-| `tools.ts` thins to registration + `runPromise` | Strangler: handlers become one-liners |
+| `tools.ts` thins to registration + `runPromise`                                               | Strangler: handlers become one-liners                                                      |
 
 **Exit criteria:** All existing integration tests pass; `search`/`execute` latency within agreed budget (profile before/after).
 
@@ -140,14 +138,14 @@ const result = await Effect.runPromise(
 
 **Goal:** Optional tools are plugins, not `if` branches in `tools.ts`.
 
-| Current module cluster | Plugin / Layer |
-| ---------------------- | -------------- |
-| `memory-ingest`, `memory-recall`, vault | `MemoryPlugin` / `clawql-memory` |
-| `external-ingest`, providers | `DocumentsPlugin` / `clawql-documents` |
-| `clawql-schedule`, `clawql-notify` | `AutomationPlugin` |
-| `sandbox-*` | `SandboxPlugin` |
-| `ouroboros-mcp` | **`clawql-ouroboros` Effect rewrite** + `OuroborosPlugin` Layer (no long-term async wrapper) |
-| `knowledge-search-onyx` | Sub-plugin under documents or api |
+| Current module cluster                  | Plugin / Layer                                                                               |
+| --------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `memory-ingest`, `memory-recall`, vault | `MemoryPlugin` / `clawql-memory`                                                             |
+| `external-ingest`, providers            | `DocumentsPlugin` / `clawql-documents`                                                       |
+| `clawql-schedule`, `clawql-notify`      | `AutomationPlugin`                                                                           |
+| `sandbox-*`                             | `SandboxPlugin`                                                                              |
+| `ouroboros-mcp`                         | **`clawql-ouroboros` Effect rewrite** + `OuroborosPlugin` Layer (no long-term async wrapper) |
+| `knowledge-search-onyx`                 | Sub-plugin under documents or api                                                            |
 
 **Env mapping:** `getClawqlOptionalToolFlags()` → `Layer.mergeAll(...enabledLayers)` at `createApi()` (replaces scattered `if (enableSchedule)` in `server.ts`).
 
@@ -177,17 +175,17 @@ const result = await Effect.runPromise(
 
 Priority = **dependency order** + **test coverage** + **user impact**.
 
-| Order | Current `src/` (representative) | Target package | Effect-first? |
-| ----- | ------------------------------- | -------------- | ------------- |
-| 1 | `clawql-audit.ts`, `clawql-cache.ts` | `clawql-core` | Yes |
-| 2 | `spec-loader.ts`, `spec-search.ts`, `graphql-in-process-execute.ts`, `rest-operation.ts` | `clawql-api` | Yes (execute path) |
-| 3 | `merkle-tree.ts`, `memory-cuckoo-metrics.ts` | `clawql-core` (`merkle/`, `cuckoo/`) | Yes |
-| 4 | `memory-*.ts`, `vault-*`, `vector-store/` | `clawql-memory` | Yes |
-| 5 | `external-ingest.ts`, `provider-registry.ts`, `providers/` | `clawql-documents` | Mixed → Effect |
-| 6 | `clawql-schedule.ts`, `clawql-notify.ts` | `clawql-automation` | Yes |
-| 7 | `sandbox-*.ts` | `clawql-sandbox` | Bridge heavy (OS/process) |
-| 8 | `ouroboros/`, `packages/clawql-ouroboros` | `clawql-ouroboros` (Effect rewrite) + MCP glue in api | Yes — rewrite package, not wrap |
-| 9 | `server.ts`, `server-http.ts`, `mcp-server-factory.ts` | `clawql-mcp` transport only | Thin adapter |
+| Order | Current `src/` (representative)                                                          | Target package                                        | Effect-first?                   |
+| ----- | ---------------------------------------------------------------------------------------- | ----------------------------------------------------- | ------------------------------- |
+| 1     | `clawql-audit.ts`, `clawql-cache.ts`                                                     | `clawql-core`                                         | Yes                             |
+| 2     | `spec-loader.ts`, `spec-search.ts`, `graphql-in-process-execute.ts`, `rest-operation.ts` | `clawql-api`                                          | Yes (execute path)              |
+| 3     | `merkle-tree.ts`, `memory-cuckoo-metrics.ts`                                             | `clawql-core` (`merkle/`, `cuckoo/`)                  | Yes                             |
+| 4     | `memory-*.ts`, `vault-*`, `vector-store/`                                                | `clawql-memory`                                       | Yes                             |
+| 5     | `external-ingest.ts`, `provider-registry.ts`, `providers/`                               | `clawql-documents`                                    | Mixed → Effect                  |
+| 6     | `clawql-schedule.ts`, `clawql-notify.ts`                                                 | `clawql-automation`                                   | Yes                             |
+| 7     | `sandbox-*.ts`                                                                           | `clawql-sandbox`                                      | Bridge heavy (OS/process)       |
+| 8     | `ouroboros/`, `packages/clawql-ouroboros`                                                | `clawql-ouroboros` (Effect rewrite) + MCP glue in api | Yes — rewrite package, not wrap |
+| 9     | `server.ts`, `server-http.ts`, `mcp-server-factory.ts`                                   | `clawql-mcp` transport only                           | Thin adapter                    |
 
 **Keep in transport:** MCP SDK types, stdio/HTTP session lifecycle, OTEL wrap at boundary (`wrapMcpToolHandler` → span around `runPromise`).
 
@@ -225,14 +223,14 @@ Align with enablement §5.4:
 
 ## 9. Governance & CI
 
-| Check | Purpose |
-| ----- | ------- |
-| ESLint `no-restricted-imports` | Package layering (enablement §5.3) |
-| TypeScript project references | Physical monorepo boundaries |
-| Turborepo `dependsOn` | Build order |
+| Check                            | Purpose                                                      |
+| -------------------------------- | ------------------------------------------------------------ |
+| ESLint `no-restricted-imports`   | Package layering (enablement §5.3)                           |
+| TypeScript project references    | Physical monorepo boundaries                                 |
+| Turborepo `dependsOn`            | Build order                                                  |
 | **Effect Layer cycle detection** | Custom script or test that fails on circular `Layer.provide` |
-| madge / arch diagram diff | Same as modularization doc |
-| Parity test suite | MCP stdio + HTTP + gRPC unchanged |
+| madge / arch diagram diff        | Same as modularization doc                                   |
+| Parity test suite                | MCP stdio + HTTP + gRPC unchanged                            |
 
 Pin **one** Effect version across workspaces; Renovate/group bump.
 
@@ -249,15 +247,15 @@ Pin **one** Effect version across workspaces; Renovate/group bump.
 
 ## 11. GitHub tracking (suggested)
 
-Keep [#306](https://github.com/danielsmithdevelopment/ClawQL/issues/306) for **package extraction**. Add a **hub issue or sub-epic** (suggested title: *Effect-TS foundation + server rearchitecture*) linking:
+Keep [#306](https://github.com/danielsmithdevelopment/ClawQL/issues/306) for **package extraction**. Add a **hub issue or sub-epic** (suggested title: _Effect-TS foundation + server rearchitecture_) linking:
 
-| Track | Example issues |
-| ----- | -------------- |
-| `effect-foundation` | Pin deps; `clawql-core` scaffold; AuditService port |
-| `effect-api` | Execute/search pipeline in Effect; `createApi()` |
-| `effect-plugins` | Memory/documents/automation as Layers |
-| `effect-gateway` | `PanguardProxyPlugin` + proxy router |
-| `effect-ouroboros` | `clawql-ouroboros` Effect rewrite |
+| Track                     | Example issues                                                                      |
+| ------------------------- | ----------------------------------------------------------------------------------- |
+| `effect-foundation`       | Pin deps; `clawql-core` scaffold; AuditService port                                 |
+| `effect-api`              | Execute/search pipeline in Effect; `createApi()`                                    |
+| `effect-plugins`          | Memory/documents/automation as Layers                                               |
+| `effect-gateway`          | `PanguardProxyPlugin` + proxy router                                                |
+| `effect-ouroboros`        | `clawql-ouroboros` Effect rewrite                                                   |
 | `modularization-platform` | npm publish per [#306](https://github.com/danielsmithdevelopment/ClawQL/issues/306) |
 
 Label cross-cutting PRs with both `effect-foundation` and `modularization-platform` when they touch extraction.
@@ -266,16 +264,16 @@ Label cross-cutting PRs with both `effect-foundation` and `modularization-platfo
 
 ## 12. Risks and mitigations
 
-| Risk | Mitigation |
-| ---- | ---------- |
-| Learning curve | Phase 0 spike; bridge pattern; pair on reviews |
-| Execute path regression | Strangler + parity tests; benchmark suite |
-| MCP SDK friction | Keep SDK outside Effect; only business logic inside |
-| Double schema (Zod + Schema) | Temporary; codegen or single source later |
-| Scope coupling with verticals | Freeze vertical breadth until Phase 2 plugins done |
-| “Big bang” rewrite pressure | Explicit rule: every PR must ship behavior |
+| Risk                           | Mitigation                                                      |
+| ------------------------------ | --------------------------------------------------------------- |
+| Learning curve                 | Phase 0 spike; bridge pattern; pair on reviews                  |
+| Execute path regression        | Strangler + parity tests; benchmark suite                       |
+| MCP SDK friction               | Keep SDK outside Effect; only business logic inside             |
+| Double schema (Zod + Schema)   | Temporary; codegen or single source later                       |
+| Scope coupling with verticals  | Freeze vertical breadth until Phase 2 plugins done              |
+| “Big bang” rewrite pressure    | Explicit rule: every PR must ship behavior                      |
 | Ouroboros Effect rewrite scope | Dedicated `effect-ouroboros` track; parity tests before cutover |
-| Panguard migration | Proxy plugin first; deprecate sidecar path over minors per §10 |
+| Panguard migration             | Proxy plugin first; deprecate sidecar path over minors per §10  |
 
 ---
 
