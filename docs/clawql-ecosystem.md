@@ -870,9 +870,9 @@ Merkle trees, typed **`memory_ingest`** receipts, optional Postgres-backed Ourob
 
 ### Planned
 
-- **Cuckoo filter integration:** Ingestion path, Ouroboros Execute phase, Tika/Gotenberg output checks, Onyx knowledge retrieval cache, recall result deduplication
-- **Merkle tree integration:** Per-step hashing in Ouroboros including Onyx retrieval steps as leaves; root stored in Postgres; optional `proofOfIntegrity` GraphQL endpoint
-- **Hybrid memory.db (sqlite-vec):** SQLite + sqlite-vec vector sidecar alongside Obsidian vault; vector-ranked chunk retrieval; content hash for incremental re-embedding; designed as drop-in upgrade to sidecar embedding files
+- **Cuckoo filter — extend beyond recall:** Core paths already support optional predicates via **`CLAWQL_CUCKOO_*`** and **`memory.db`** ([§ Cuckoo Filters](#cuckoo-filters-o1-deduplication), [`hybrid-memory-backends.md`](memory/hybrid-memory-backends.md)). Planned: ingestion defaults, Ouroboros Execute memoization, Tika/Gotenberg artifact dedup, Onyx query memoization, MCP `search` memoization, OSV duplicate suppression.
+- **Merkle tree — extend beyond vault index:** **`CLAWQL_MERKLE_ENABLED=1`** fingerprints vault index state today ([§ Merkle Trees](#merkle-trees-cryptographic-audit-trails)). Planned: per-step pipeline chains (Onyx → Tika → Stirling → Paperless → GitHub), Postgres anchoring for multi-step workflows, optional `proofOfIntegrity` GraphQL.
+- **Hybrid memory.db — extend vector sidecar:** SQLite graph + vault ship today; **`CLAWQL_VECTOR_BACKEND`** and sqlite-vec paths are partial ([`memory-db-schema.md`](memory/memory-db-schema.md), [`vector-search-design.md`](memory/vector-search-design.md)). Planned: vector-ranked chunk retrieval at scale, content-hash incremental re-embedding as primary backend.
 - **Unified Helm chart finalization:** All 12+ services including Onyx, Flink, OSV-Scanner jobs, optional Istio/Kiali, resource limits, init jobs
 - **LangFuse eval loops + compliance packaging**
 - **Fabric medium tier:** Ouroboros-aware Evaluate ↔ ledger queries; Onyx citation attestations; proofs in Vault; multi-org consortia onboarding
