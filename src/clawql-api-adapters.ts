@@ -3,14 +3,17 @@
  * MCP handlers call SearchService / ExecuteService via getClawqlApi().
  */
 
-import { createClawQLApi, ExecuteService, SearchService, type ClawQLApiHandle } from "clawql-api";
+import {
+  createClawQLApi,
+  makeExecuteLive,
+  SearchService,
+  type ClawQLApiHandle,
+  type ExecuteClawqlOperationParams,
+} from "clawql-api";
 import { Effect, Layer } from "effect";
+import { mcpExecuteEnvironment } from "./mcp-execute-environment.js";
 import { loadSpec } from "./spec-loader.js";
 import { formatSearchResults, searchOperations } from "./spec-search.js";
-import {
-  executeClawqlOperationCore,
-  type ExecuteClawqlOperationParams,
-} from "./tools-execute-core.js";
 
 export const SearchLive = Layer.succeed(
   SearchService,
@@ -24,20 +27,7 @@ export const SearchLive = Layer.succeed(
   })
 );
 
-export const ExecuteLive = Layer.succeed(
-  ExecuteService,
-  ExecuteService.of({
-    execute: (input) =>
-      Effect.tryPromise(async () => {
-        const content = await executeClawqlOperationCore({
-          operationId: input.operationId,
-          args: input.args ?? {},
-          fields: input.fields,
-        });
-        return { content };
-      }),
-  })
-);
+export const ExecuteLive = makeExecuteLive(mcpExecuteEnvironment);
 
 let apiHandle: ClawQLApiHandle | undefined;
 

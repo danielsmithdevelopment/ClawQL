@@ -6,7 +6,6 @@
  * Uses sql.js (WASM) so installs work with `npm ci --ignore-scripts` and Node 20+ CI.
  */
 
-import { createHash } from "node:crypto";
 import { createRequire } from "node:module";
 import { mkdir, readFile, rename, stat, writeFile } from "node:fs/promises";
 import { basename, dirname, isAbsolute, join } from "node:path";
@@ -40,8 +39,7 @@ import {
   syncMemoryArtifactsToPostgres,
   type MemoryArtifactPayload,
 } from "./memory-artifacts.js";
-import { CuckooFilter } from "./cuckoo-filter.js";
-import { cuckooMetricsEnabled, recordCuckooLookup } from "./memory-cuckoo-metrics.js";
+import { CuckooFilter, cuckooMetricsEnabled, recordCuckooLookup, sha256HexUtf8 } from "clawql-core";
 import {
   getCachedCuckooFilter,
   getCachedMerkleSnapshot,
@@ -81,10 +79,6 @@ export function memoryDbSyncEnabled(): boolean {
 
 function isoNow(): string {
   return new Date().toISOString();
-}
-
-function sha256Utf8(s: string): string {
-  return createHash("sha256").update(s, "utf8").digest("hex");
 }
 
 function extractTitle(markdown: string): string {
@@ -554,7 +548,7 @@ export async function syncMemoryDbFromDocuments(
     db.run("BEGIN");
     try {
       for (const { doc, path, plan, chunks } of planned) {
-        const bodySha = sha256Utf8(doc.text);
+        const bodySha = sha256HexUtf8(doc.text);
         const byteLen = Buffer.byteLength(doc.text, "utf8");
         const title = extractTitle(doc.text);
 

@@ -1,10 +1,17 @@
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 import { ClawQLApi, createClawQLApi } from "./index.js";
+import { PANGUARD_PROXY_PLUGIN_ID } from "./plugins/panguard-proxy-plugin.js";
 
 describe("createClawQLApi", () => {
-  it("registers plugins via ClawQLApi service", async () => {
+  it("registers Panguard proxy plugin by default", () => {
     const api = createClawQLApi();
+    const plugins = api.registry.list();
+    expect(plugins.some((p) => p.id === PANGUARD_PROXY_PLUGIN_ID)).toBe(true);
+  });
+
+  it("registers plugins via ClawQLApi service", async () => {
+    const api = createClawQLApi({ plugins: [] });
     await api.run(
       Effect.gen(function* () {
         const claw = yield* ClawQLApi;
@@ -17,7 +24,7 @@ describe("createClawQLApi", () => {
   });
 
   it("rejects duplicate plugin ids", async () => {
-    const api = createClawQLApi();
+    const api = createClawQLApi({ plugins: [] });
     await expect(
       api.run(
         Effect.gen(function* () {

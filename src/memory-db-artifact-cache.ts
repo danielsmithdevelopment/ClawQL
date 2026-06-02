@@ -4,7 +4,7 @@
  * backing file changes. Keys include `mtimeMs` + `size` so any `persistDb` write misses the cache.
  */
 
-import type { CuckooFilter } from "./cuckoo-filter.js";
+import type { CuckooFilter } from "clawql-core";
 
 export type MerkleSnapshotRow = {
   rootHex: string;

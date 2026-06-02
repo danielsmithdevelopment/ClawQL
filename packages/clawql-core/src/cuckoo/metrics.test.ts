@@ -5,9 +5,9 @@ import {
   recordCuckooLookup,
   recordCuckooRebuild,
   resetCuckooMetricsForTests,
-} from "./memory-cuckoo-metrics.js";
+} from "./metrics.js";
 
-describe("memory-cuckoo-metrics", () => {
+describe("cuckoo metrics", () => {
   const saved = process.env.CLAWQL_CUCKOO_METRICS;
 
   afterEach(() => {

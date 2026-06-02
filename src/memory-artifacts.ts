@@ -3,9 +3,12 @@
  */
 
 import type { Database } from "sql.js";
-import { CuckooFilter } from "./cuckoo-filter.js";
-import { buildMerkleSnapshot, type MerkleDocumentRow } from "./merkle-tree.js";
-import { recordCuckooRebuild } from "./memory-cuckoo-metrics.js";
+import {
+  buildMerkleSnapshot,
+  CuckooFilter,
+  recordCuckooRebuild,
+  type MerkleDocumentRow,
+} from "clawql-core";
 import { ensurePgVectorSchema, getPostgresVectorPool } from "./vector-store/pgvector.js";
 
 export function cuckooMembershipArtifactsEnabled(): boolean {
