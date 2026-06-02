@@ -16,7 +16,11 @@
 import { readFile } from "node:fs/promises";
 import { isAbsolute, resolve as resolvePath } from "node:path";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { Effect } from "effect";
+import { ExecuteService, SearchService } from "clawql-api";
 import { z } from "zod";
+import { getClawqlApi } from "./clawql-api-adapters.js";
+import { mergedAuthHeaders } from "./auth-headers.js";
 import { getPackageRoot } from "./package-root.js";
 import { resolveBundledProvider } from "./provider-registry.js";
 import {
@@ -28,12 +32,8 @@ import {
   operationIdToGraphQLName,
   operationIdToRunStyleName,
 } from "./graphql-execute-helpers.js";
-import { executeOperationGraphQL } from "./graphql-in-process-execute.js";
-import { executeNativeGraphQL } from "./execute-native-graphql.js";
-import { executeNativeGrpc } from "./execute-native-grpc.js";
-import { loadSpec, resolveApiBaseUrlForOperation } from "./spec-loader.js";
-import { searchOperations, formatSearchResults } from "./spec-search.js";
-import { executeRestOperation, mergedAuthHeaders } from "./rest-operation.js";
+import { loadSpec } from "./spec-loader.js";
+import { defaultFields, executeOutputFields, projectRestByFields } from "./tools-execute-core.js";
 import { handleClawqlCodeToolInput } from "./sandbox-bridge-client.js";
 import { handleIngestExternalKnowledgeToolInput } from "./external-ingest.js";
 import { handleMemoryIngestToolInput } from "./memory-ingest.js";
@@ -46,59 +46,10 @@ import { handleKnowledgeSearchOnyxToolInput } from "./knowledge-search-onyx.js";
 import { registerOuroborosTools } from "./ouroboros-mcp.js";
 import { handleHitlEnqueueLabelStudioToolInput } from "./hitl-label-studio.js";
 import { wrapMcpToolHandler } from "./otel-tracing.js";
-import type { OpenAPIDoc } from "./spec-loader.js";
+
+export { executeOutputFields, projectRestByFields } from "./tools-execute-core.js";
 
 type GraphQLFieldInfo = { name: string; args: string[] };
-
-/**
- * REST execute paths (multi-spec or GraphQL→REST fallback) return the full HTTP JSON body.
- * When the caller passed `fields`, keep only those top-level keys so behavior aligns with
- * the GraphQL selection set (nested GraphQL fragments are not parsed—list top-level names).
- */
-export function projectRestByFields(data: unknown, fields: string[] | undefined): unknown {
-  if (!fields?.length) return data;
-  const pick = (item: unknown): unknown => {
-    if (item !== null && typeof item === "object" && !Array.isArray(item)) {
-      const obj = item as Record<string, unknown>;
-      const out: Record<string, unknown> = {};
-      for (const f of fields) {
-        if (Object.prototype.hasOwnProperty.call(obj, f)) out[f] = obj[f];
-      }
-      return out;
-    }
-    return item;
-  };
-  if (Array.isArray(data)) return data.map(pick);
-  return pick(data);
-}
-
-/**
- * When `execute` omits `fields`, use these for GitHub pull mutations/get: GraphQL selection
- * plus a final top-level pick. The Mesh/OpenAPI layer often returns the full REST JSON even
- * when the document asks for scalars only.
- */
-function defaultExecuteOutputFields(operationId: string): string[] | undefined {
-  switch (operationId) {
-    case "pulls/create":
-    case "pulls/update":
-    case "pulls/get":
-      return ["html_url", "number", "title", "state", "url"];
-    case "chat_postMessage":
-      // Include `error` so Slack `ok:false` bodies survive projection before `notify` remaps them.
-      return ["ok", "error", "channel", "ts", "message", "warning"];
-    default:
-      return undefined;
-  }
-}
-
-/** Effective field list for GraphQL selection and post-response projection. */
-export function executeOutputFields(
-  operationId: string,
-  fields: string[] | undefined
-): string[] | undefined {
-  if (fields && fields.length > 0) return fields;
-  return defaultExecuteOutputFields(operationId);
-}
 
 /**
  * On startup: log whether pregenerated GraphQL introspection exists on disk (optional).
@@ -125,11 +76,13 @@ export async function handleClawqlSearchToolInput(params: {
   query: string;
   limit: number;
 }): Promise<{ content: { type: "text"; text: string }[] }> {
-  const { operations } = await loadSpec();
-  const results = searchOperations(operations, params.query, params.limit);
-  return {
-    content: [{ type: "text", text: formatSearchResults(results) }],
-  };
+  return getClawqlApi().run(
+    Effect.gen(function* () {
+      const search = yield* SearchService;
+      const { formattedText } = yield* search.search(params);
+      return { content: [{ type: "text" as const, text: formattedText }] };
+    })
+  );
 }
 
 /** MCP `execute` implementation (exported for tests). */
@@ -138,188 +91,13 @@ export async function handleClawqlExecuteToolInput(params: {
   args: Record<string, unknown>;
   fields?: string[];
 }): Promise<{ content: { type: "text"; text: string }[] }> {
-  const { operationId, args, fields } = params;
-  const loaded = await loadSpec();
-  const { operations, openapi, openapis, multi } = loaded;
-  const op = operations.find((o) => o.id === operationId);
-
-  if (!op) {
-    return {
-      content: [
-        {
-          type: "text",
-          text: JSON.stringify({
-            error: `Unknown operationId: "${operationId}". Use search() to find valid operation IDs.`,
-          }),
-        },
-      ],
-    };
-  }
-
-  const openapiForOp = multi && openapis?.length ? openapis[op.specIndex ?? 0] : openapi;
-
-  const outputFields = executeOutputFields(operationId, fields);
-
-  if (op.protocolKind === "graphql" && op.nativeGraphQL) {
-    const selectedFields = outputFields?.length ? outputFields.join("\n        ") : "__typename";
-    const exec = await executeNativeGraphQL(op, args, selectedFields);
-    if (!exec.ok) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify({
-              error: exec.error,
-              specLabel: op.specLabel ?? null,
-              hint: "Native GraphQL execute failed (check endpoint, auth, and arguments).",
-            }),
-          },
-        ],
-      };
-    }
-    const root = exec.data as Record<string, unknown> | null | undefined;
-    const inner =
-      root && typeof root === "object" && op.nativeGraphQL.fieldName in root
-        ? root[op.nativeGraphQL.fieldName]
-        : exec.data;
-    return {
-      content: [
-        {
-          type: "text",
-          text: JSON.stringify(projectRestByFields(inner, outputFields), null, 2),
-        },
-      ],
-    };
-  }
-
-  if (op.protocolKind === "grpc" && op.nativeGrpc) {
-    const exec = await executeNativeGrpc(op, args);
-    if (!exec.ok) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify({
-              error: exec.error,
-              specLabel: op.specLabel ?? null,
-              hint: "Native gRPC execute failed (check endpoint, TLS/insecure, proto, and arguments).",
-            }),
-          },
-        ],
-      };
-    }
-    return {
-      content: [
-        {
-          type: "text",
-          text: JSON.stringify(projectRestByFields(exec.data, outputFields), null, 2),
-        },
-      ],
-    };
-  }
-
-  if (multi) {
-    const fallback = await executeRestOperation(op, args, openapiForOp);
-    if (!fallback.ok) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify({
-              error: fallback.error,
-              specLabel: op.specLabel ?? null,
-              hint: "Multi-spec OpenAPI operations use REST only. Native GraphQL/gRPC ops use protocol execute.",
-            }),
-          },
-        ],
-      };
-    }
-    return {
-      content: [
-        {
-          type: "text",
-          text: JSON.stringify(projectRestByFields(fallback.data, outputFields), null, 2),
-        },
-      ],
-    };
-  }
-
-  if (op.requestBody && op.requestBodyContentType?.toLowerCase() === "application/octet-stream") {
-    const rest = await executeRestOperation(op, args, openapiForOp);
-    if (!rest.ok) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify({
-              error: rest.error,
-              specLabel: op.specLabel ?? null,
-              hint: "application/octet-stream execute uses REST only; GraphQL projection is skipped.",
-            }),
-          },
-        ],
-      };
-    }
-    return {
-      content: [
-        {
-          type: "text",
-          text: JSON.stringify(projectRestByFields(rest.data, outputFields), null, 2),
-        },
-      ],
-    };
-  }
-
-  try {
-    const selectedFields = outputFields?.length
-      ? outputFields.join("\n        ")
-      : defaultFields(operationId);
-
-    const baseUrl = resolveApiBaseUrlForOperation(openapiForOp as OpenAPIDoc, op);
-    const inProc = await executeOperationGraphQL(
-      openapiForOp as OpenAPIDoc,
-      baseUrl,
-      op,
-      args,
-      selectedFields
-    );
-    if (!inProc.ok) {
-      throw new Error(inProc.error);
-    }
-    return {
-      content: [
-        {
-          type: "text",
-          text: JSON.stringify(projectRestByFields(inProc.data, outputFields), null, 2),
-        },
-      ],
-    };
-  } catch (err: unknown) {
-    const fallback = await executeRestOperation(op, args, openapiForOp);
-    if (!fallback.ok) {
-      const reason = err instanceof Error ? err.message : String(err);
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify({
-              error: reason,
-              fallbackError: fallback.error,
-              hint: "GraphQL execution failed and REST fallback also failed.",
-            }),
-          },
-        ],
-      };
-    }
-    return {
-      content: [
-        {
-          type: "text",
-          text: JSON.stringify(projectRestByFields(fallback.data, outputFields), null, 2),
-        },
-      ],
-    };
-  }
+  return getClawqlApi().run(
+    Effect.gen(function* () {
+      const execute = yield* ExecuteService;
+      const { content } = yield* execute.execute(params);
+      return { content: [...content] };
+    })
+  );
 }
 
 /** Slack Web API `chat.postMessage` operation id in bundled `providers/slack/openapi.json`. */
@@ -881,40 +659,6 @@ async function tryLoadIntrospectionFromDisk(): Promise<{
   } catch {
     return null;
   }
-}
-
-/** Default field selection so the agent gets useful data without specifying fields. */
-function defaultFields(operationId: string): string {
-  if (operationId.includes(".services.list"))
-    return "services { name uri latestReadyRevision reconciling createTime }\nnextPageToken";
-  if (operationId.includes(".jobs.list"))
-    return "jobs { name reconciling createTime updateTime }\nnextPageToken";
-  if (operationId.includes(".executions.list"))
-    return "executions { name job succeededCount failedCount runningCount createTime }\nnextPageToken";
-  if (operationId.includes(".revisions.list"))
-    return "revisions { name service reconciling createTime }\nnextPageToken";
-  if (operationId.includes(".operations.list"))
-    return "operations { name done error { code message } }\nnextPageToken";
-  if (operationId.includes(".tasks.list"))
-    return "tasks { name job execution createTime }\nnextPageToken";
-  if (operationId.includes(".services.get"))
-    return "name uri latestReadyRevision latestCreatedRevision reconciling terminalCondition { type state message } createTime updateTime";
-  if (operationId.includes(".jobs.get"))
-    return "name reconciling terminalCondition { type state message } latestCreatedExecution { name createTime } createTime updateTime";
-  if (operationId.includes(".operations.get") || operationId.includes(".operations.wait"))
-    return "name done error { code message } metadata";
-  if (operationId.includes(".executions.get"))
-    return "name job succeededCount failedCount runningCount completionTime createTime";
-  if (operationId.includes("IamPolicy")) return "version bindings { role members }";
-  if (
-    operationId.includes(".create") ||
-    operationId.includes(".patch") ||
-    operationId.includes(".delete") ||
-    operationId.includes(".run") ||
-    operationId.includes(".cancel")
-  )
-    return "name done error { code message }";
-  return "name";
 }
 
 // Narrow test surface for critical path helper behavior.
