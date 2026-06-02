@@ -8,7 +8,7 @@ export type ExecuteInput = {
 };
 
 export type ExecuteOutput = {
-  readonly data: unknown;
+  readonly content: { readonly type: "text"; readonly text: string }[];
 };
 
 export class ExecuteService extends Context.Tag("clawql/ExecuteService")<

@@ -7,7 +7,8 @@ export type SearchInput = {
 };
 
 export type SearchOutput = {
-  readonly results: readonly unknown[];
+  /** MCP `search` tool body text (from `formatSearchResults`). */
+  readonly formattedText: string;
 };
 
 export class SearchService extends Context.Tag("clawql/SearchService")<

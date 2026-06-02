@@ -9,6 +9,7 @@ import type { Operation } from "./spec-loader.js";
 import { handleMemoryIngestToolInput } from "./memory-ingest.js";
 import { handleMemoryRecallToolInput } from "./memory-recall.js";
 import { handleClawqlCodeToolInput } from "./sandbox-bridge-client.js";
+import { resetClawqlApiForTests } from "./clawql-api-adapters.js";
 import {
   handleClawqlExecuteToolInput,
   handleClawqlSearchToolInput,
@@ -24,6 +25,7 @@ describe("MCP tool handlers", () => {
   afterEach(() => {
     vi.restoreAllMocks();
     resetSchemaFieldCache();
+    resetClawqlApiForTests();
   });
 
   it("handleClawqlSearchToolInput returns JSON results", async () => {

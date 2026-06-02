@@ -111,6 +111,7 @@
         "@opentelemetry/resources": "^2.7.1",
         "@opentelemetry/sdk-trace-base": "^2.7.1",
         "@opentelemetry/sdk-trace-node": "^2.7.1",
+        "clawql-api": "file:../packages/clawql-api",
         "clawql-core": "workspace:*",
         "clawql-ouroboros": "workspace:*",
         "dotenv": "^17.4.2",

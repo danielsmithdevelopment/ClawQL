@@ -10,8 +10,10 @@ export type ClawQLApiRuntimeServices = ClawQLApi | SearchService | ExecuteServic
 export type ClawQLApiRuntimeError = PluginAlreadyRegisteredError | ClawQLError | Error;
 
 export type CreateClawQLApiOptions = {
-  /** Extra Layers merged after defaults (e.g. SearchLive/ExecuteLive from clawql-mcp adapters). */
-  readonly layers?: Layer.Layer<ClawQLApiRuntimeServices, never, never>;
+  /** Replaces default SearchNotConfiguredLive (MCP adapter from clawql-mcp). */
+  readonly searchLayer?: Layer.Layer<SearchService, never, never>;
+  /** Replaces default ExecuteNotConfiguredLive (MCP adapter from clawql-mcp). */
+  readonly executeLayer?: Layer.Layer<ExecuteService, never, never>;
 };
 
 export type ClawQLApiHandle = {
@@ -32,10 +34,10 @@ export function createClawQLApi(options: CreateClawQLApiOptions = {}): ClawQLApi
   const baseLayer: Layer.Layer<ClawQLApiRuntimeServices, never, never> = Layer.mergeAll(
     AuditLive,
     Layer.succeed(ClawQLApi, clawqlApiLayer(registry)),
-    SearchNotConfiguredLive,
-    ExecuteNotConfiguredLive
+    options.searchLayer ?? SearchNotConfiguredLive,
+    options.executeLayer ?? ExecuteNotConfiguredLive
   );
-  const layer = options.layers ? Layer.mergeAll(baseLayer, options.layers) : baseLayer;
+  const layer = baseLayer;
   const runtime = ManagedRuntime.make(layer);
 
   return {
