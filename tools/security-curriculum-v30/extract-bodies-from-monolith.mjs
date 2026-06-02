@@ -9,7 +9,10 @@ import { fileURLToPath } from 'node:url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(__dirname, '../..')
-const monolith = path.join(repoRoot, 'docs/security/security-guide-series.md')
+const monolith = path.join(
+  repoRoot,
+  'docs/security/archive/security-guide-series.md',
+)
 const bodiesDir = path.join(__dirname, 'bodies')
 const manifest = JSON.parse(
   fs.readFileSync(path.join(__dirname, 'manifest.json'), 'utf8'),

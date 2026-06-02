@@ -108,7 +108,7 @@ Thirty **vendor-neutral** Markdown modules for security architects, platform eng
 
 ## Source monolith
 
-The long-form narrative is still available as one file: [`../security-guide-series.md`](../security-guide-series.md) (legacy 20-part structure; prefer this 30-module series for new work).
+The long-form monolith export (historical) lives at [`../archive/security-guide-series.md`](../archive/security-guide-series.md). **Prefer this 30-module series** for all new edits; regenerate site MDX with `website/scripts/sync-security-training-modules.mjs` (do not hand-edit `website/src/generated/security-training/`).
 
 ## Maintenance
 

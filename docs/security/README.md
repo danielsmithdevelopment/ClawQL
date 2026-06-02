@@ -8,6 +8,7 @@ This section tracks ClawQL security architecture, shipped controls, and roadmap 
 
 ## Core references
 
+- **Security training (30 modules):** [`security-best-practices-series/README.md`](security-best-practices-series/README.md) — canonical; site: `/security/best-practices/*` (sync via `website/scripts/sync-security-training-modules.mjs`). Legacy monolith: [`archive/security-guide-series.md`](archive/security-guide-series.md).
 - Defense-in-depth reference guide: `clawql-security-defense-in-depth.md`
 - Engineering deliverables matrix (shipped/partial/planned): `clawql-security-defense-deliverables.md`
 - **npm** publish hardening (pack → scan → publish, provenance / OIDC): [`npm-supply-chain.md`](npm-supply-chain.md)
