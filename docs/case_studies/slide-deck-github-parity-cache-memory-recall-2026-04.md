@@ -83,7 +83,7 @@ Twelve new issues were opened to connect the **April 2026** deck to an explicit 
 | **#160** | **Tempo** / **OTLP** tracing                                                                                                      |
 | **#161** | **HashiCorp Vault** or **OpenBao** (vs chart **Obsidian** `vault` hostPath naming)                                                |
 | **#162** | **ClawQL-Web3** — AgentKit / **IPFS** / **CCIP** (extends beyond **#88**)                                                         |
-| **#163** | **Transcript** parity: [`clawql-slides-transcript.md`](../presentations/clawql-slides-transcript.md) vs **80** slides + **§08**   |
+| **#163** | **Transcript** parity: [`clawql-slides-transcript.md`](../presentations/archive/clawql-slides-transcript.md) vs **80** slides + **§08**   |
 | **#164** | **Defense-in-depth** doc → control / deliverable **matrix**                                                                       |
 | **#165** | **Meta:** update obsolete **slide §** references in existing issue bodies                                                         |
 | **#166** | **Demos** — honest walkthroughs for high-stakes narrative slides (e.g. 50, 56)                                                    |

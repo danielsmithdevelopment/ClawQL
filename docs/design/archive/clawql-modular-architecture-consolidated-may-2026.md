@@ -1,6 +1,8 @@
 # ClawQL Modular Architecture — Consolidated Summary (May 2026)
 
-This document is the single source of truth compiling discussions, decisions, refinements, diagram alignment, security considerations, Memory 2.0 details (Daniel Smith), plugin architecture, Helm configuration, extraction strategy, and implementation guidance.
+> **Archived — superseded.** Canonical modularization narrative: [`docs/vision/clawql-modularization-v2.md`](../../vision/clawql-modularization-v2.md). Companion package matrix: [`docs/vision/clawql-modularization.md`](../../vision/clawql-modularization.md). This May 2026 draft incorrectly marks many packages as “Published: Yes” — the monorepo today ships **`clawql-mcp`**, **`clawql-ouroboros`**, **`mcp-grpc-transport`**, and **`panguard-mcp-bridge`** only.
+
+This document was a draft compiling discussions, decisions, refinements, diagram alignment, security considerations, Memory 2.0 details, plugin architecture, Helm configuration, extraction strategy, and implementation guidance.
 
 ## 1. Core Vision & Feature Tiers Alignment
 

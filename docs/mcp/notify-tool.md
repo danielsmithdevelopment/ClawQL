@@ -198,7 +198,7 @@ The chart exposes **`enableNotify`** → **`CLAWQL_ENABLE_NOTIFY=1`**. Set the t
 **Node 25 + full Slack OpenAPI:** building GraphQL from the **bundled** **`providers/slack/openapi.json`** can throw inside **`@omnigraph/json-schema`** (`Cannot set property input … only a getter`); **`execute` / `notify`** then use **REST** fallback. **`src/notify-graphql-path.test.ts`** uses a **minimal** Slack fixture so the GraphQL path stays testable on all supported Node versions. Upstream report template: **[`graphql-mesh-node-compatibility.md`](../design/graphql-mesh-node-compatibility.md)**.
 
 - **Automated:** **`src/clawql-notify.test.ts`** (handler guards, multi-spec REST path with mocked **`node-fetch`**, Slack **`ok:true` / `ok:false`**, **`thread_ts`** in form body) and **`src/server.test.ts`** (**`notify`** appears in **`listTools`** when **`CLAWQL_ENABLE_NOTIFY=1`**).
-- **Follow-ups (GitHub):** [#136](https://github.com/danielsmithdevelopment/ClawQL/issues/136)–[#140](https://github.com/danielsmithdevelopment/ClawQL/issues/140) — see **[backlog/notify-tool-test-backlog.md](../backlog/notify-tool-test-backlog.md)** for titles and bodies.
+- **Follow-ups (GitHub):** [#136](https://github.com/danielsmithdevelopment/ClawQL/issues/136)–[#140](https://github.com/danielsmithdevelopment/ClawQL/issues/140) — see **[backlog/archive/notify-tool-test-backlog.md](../backlog/archive/notify-tool-test-backlog.md)** for titles and bodies.
 
 ---
 

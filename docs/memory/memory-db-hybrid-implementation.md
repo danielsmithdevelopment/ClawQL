@@ -2,7 +2,9 @@
 
 This document explains **what was built**, **why**, **how the pieces fit together**, and **how to operate** the SQLite sidecar beside the Obsidian vault. It complements the schema reference **[memory-db-schema.md](memory-db-schema.md)** with implementation detail and file-level navigation.
 
-**Optional Postgres (vectors + future Cuckoo / Merkle):** see **[hybrid-memory-backends.md](hybrid-memory-backends.md)** for the dual-backend story and migration conventions.
+**Read order:** [memory-db-schema.md](memory-db-schema.md) → [hybrid-memory-backends.md](hybrid-memory-backends.md) → [vector-search-design.md](vector-search-design.md) → this file (implementation narrative).
+
+**Postgres vectors + Cuckoo / Merkle (env-gated):** see **[hybrid-memory-backends.md](hybrid-memory-backends.md)** for the dual-backend story and migration conventions.
 
 ---
 
@@ -13,7 +15,7 @@ This document explains **what was built**, **why**, **how the pieces fit togethe
 | Item                                                                  | Role                                                                                                                                                                                                                                             |
 | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **[#27](https://github.com/danielsmithdevelopment/ClawQL/issues/27)** | Primary driver: **`memory.db` schema**, **wikilink relations**, **chunking contract**, migrations, ingest + recall wiring.                                                                                                                       |
-| **[#24](https://github.com/danielsmithdevelopment/ClawQL/issues/24)** | Epic: hybrid memory (sqlite-vec + Cuckoo + vault); this work is the **relational foundation** before vectors and membership filters land.                                                                                                        |
+| **[#24](https://github.com/danielsmithdevelopment/ClawQL/issues/24)** | Epic: hybrid memory (sqlite-vec + Cuckoo + vault). **Shipped/partial:** relational foundation, optional Cuckoo/Merkle via **`CLAWQL_CUCKOO_*`** / **`CLAWQL_MERKLE_*`** — see **[hybrid-memory-backends.md](hybrid-memory-backends.md)**. Remaining: pipeline-wide dedup, richer vector scale-out.                                                                                                        |
 | **[#16](https://github.com/danielsmithdevelopment/ClawQL/issues/16)** | **Shipped for `memory_recall`:** optional embeddings + sqlite/postgres vector backends (see **`hybrid-memory-backends.md`**). **Still open / future:** semantic retrieval for spec **`search`**; **`vector-search-design.md`** tracks direction. |
 
 ### 1.2 Product intent

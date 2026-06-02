@@ -1,3 +1,5 @@
+> **Archived — unmaintained plain-text variant.** Canonical deck: [`../clawql-slides.md`](../clawql-slides.md).
+
 ClawQL — Full Text Transcript
 Slide 1 — ClawQL
 ClawQL
