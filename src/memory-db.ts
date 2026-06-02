@@ -39,12 +39,7 @@ import {
   syncMemoryArtifactsToPostgres,
   type MemoryArtifactPayload,
 } from "./memory-artifacts.js";
-import {
-  CuckooFilter,
-  cuckooMetricsEnabled,
-  recordCuckooLookup,
-  sha256HexUtf8,
-} from "clawql-core";
+import { CuckooFilter, cuckooMetricsEnabled, recordCuckooLookup, sha256HexUtf8 } from "clawql-core";
 import {
   getCachedCuckooFilter,
   getCachedMerkleSnapshot,
