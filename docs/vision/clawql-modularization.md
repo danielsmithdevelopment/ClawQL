@@ -6,7 +6,9 @@
 
 ## Document scope & evidence (read this first)
 
-This document is a **target modularization and platform architecture** for ClawQL. It mixes **shipped today**, **partial**, and **planned** work in one narrative. In particular, **§2 “To ship”** describes **intended package boundaries and responsibilities**, not “installable npm packages available now,” unless the same name also appears under **§2.4 Shipped**. For the **v2.0 intelligent MCP gateway** narrative (single front-end for multi-backend MCP), see [`clawql-modularization-v2.md`](./clawql-modularization-v2.md).
+> **Companion only (v1.9).** **Canonical vision** is [`clawql-master-enablement-guide.md`](./clawql-master-enablement-guide.md). This file is a **historical package-matrix** companion; [`clawql-modularization-v2.md`](./clawql-modularization-v2.md) adds gateway/orchestration notes and may also lag enablement.
+
+This document is a **target modularization and platform architecture** for ClawQL. It mixes **shipped today**, **partial**, and **planned** work in one narrative. In particular, **§2 “To ship”** describes **intended package boundaries and responsibilities**, not “installable npm packages available now,” unless the same name also appears under **§2.4 Shipped**.
 
 **Where to ground claims in Git:**
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# One-shot: create GitHub epic + per-package issues for docs/vision/clawql-modularization.md
+# One-shot: create GitHub epic + per-package issues (package list: v1.9 §2, v2 companion, enablement canon)
 # Idempotency: running twice will create a second epic with the same title — run once per program.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -13,7 +13,7 @@ gh label create "modularization-shipped" --color "1D76DB" --description "Already
 EPIC_BODY=$(cat <<'EOF'
 ## Scope
 
-Tracks **creation, modularization alignment, and npm publishing** for every package named in [ClawQL Modularization](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/vision/clawql-modularization.md) (§2 — package ecosystem).
+Tracks **creation, modularization alignment, and npm publishing** for every package in the modularization companions ([v1.9 §2](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/vision/clawql-modularization.md), [v2 §2](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/vision/clawql-modularization-v2.md)). **Canonical product vision:** [Master enablement](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/vision/clawql-master-enablement-guide.md).
 
 ## Definition of done (close this epic)
 
@@ -32,7 +32,9 @@ Tracks **creation, modularization alignment, and npm publishing** for every pack
 
 ## Reference
 
-- Vision: [`docs/vision/clawql-modularization.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/vision/clawql-modularization.md)
+- **Canonical vision:** [`docs/vision/clawql-master-enablement-guide.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/vision/clawql-master-enablement-guide.md)
+- Package matrix (v1.9): [`docs/vision/clawql-modularization.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/vision/clawql-modularization.md)
+- Modularization v2 (companion): [`docs/vision/clawql-modularization-v2.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/vision/clawql-modularization-v2.md)
 - k3s security stack (production context): [`docs/security/clawql-comprehensive-defense-in-depth-mcp-k3s-may-2026.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/clawql-comprehensive-defense-in-depth-mcp-k3s-may-2026.md)
 EOF
 )

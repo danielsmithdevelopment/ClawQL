@@ -3,6 +3,8 @@
 **Unified Living Reference & Technical Bible — May 2026 Edition**
 Public Document · Open for Community Review & Contribution · Apache 2.0 / MIT
 
+> **Canonical vision.** This file is the **authoritative** product and architecture reference for ClawQL. Older companions — [`clawql-modularization-v2.md`](./clawql-modularization-v2.md) (modularization + gateway notes) and [`clawql-modularization.md`](./clawql-modularization.md) (v1.9 package matrix) — may lag this document; when they disagree, **enablement wins**. For **what ships in `main` today**, pair with [`docs/clawql-ecosystem.md`](../clawql-ecosystem.md), [`docs/mcp/mcp-tools.md`](../mcp/mcp-tools.md), and [`docs/readme/configuration.md`](../readme/configuration.md).
+
 ---
 
 ## Document Control
@@ -28,39 +30,64 @@ Public Document · Open for Community Review & Contribution · Apache 2.0 / MIT
 
 **Read this before anything else.**
 
-ClawQL is under active development. Not all components described in this document are shipped. The table below is the canonical reference for what exists today.
+ClawQL is under active development. This document describes the **target** modular platform; today most capability lives in the monolithic **`clawql-mcp`** npm package while packages are extracted ([#306](https://github.com/danielsmithdevelopment/ClawQL/issues/306)).
 
-| Package                    | Status                   |
-| -------------------------- | ------------------------ |
-| `clawql-core`              | 🔨 In development        |
-| `clawql-api`               | 🔨 In development        |
-| `clawql-auth`              | 🔨 In development        |
-| `clawql-documents`         | 🔨 In development        |
-| `clawql-memory`            | 🔨 In development        |
-| `clawql-pageindex`         | 🔨 In development        |
-| `clawql-mcp`               | ✅ Shipped               |
-| `clawql-ouroboros`         | ✅ Shipped               |
-| `mcp-grpc-transport`       | ✅ Shipped               |
-| `clawql-data`              | 📋 Planned               |
-| `clawql-automation`        | 📋 Planned               |
-| `clawql-telemetry`         | 📋 Planned               |
-| `clawql-sandbox`           | 📋 Planned               |
-| `clawql-printingpress`     | 📋 Planned               |
-| `clawql-goose`             | 📋 Planned               |
-| `clawql-lending`           | 📋 Planned — not shipped |
-| `clawql-legal`             | 📋 Planned — not shipped |
-| `clawql-healthcare`        | 📋 Planned — not shipped |
-| `clawql-insurance`         | 📋 Planned — not shipped |
-| `clawql-supplychain`       | 📋 Planned — not shipped |
-| `clawql-government`        | 📋 Planned — not shipped |
-| `clawql-manufacturing`     | 📋 Planned — not shipped |
-| `clawql-education`         | 📋 Planned — not shipped |
-| `clawql-engineering`       | 📋 Planned — not shipped |
-| `clawql-blockchain`        | 📋 Planned — not shipped |
-| Kubernetes Operator        | 📋 Planned               |
-| Natural Language Dashboard | 📋 Planned               |
+### Implementation today vs target architecture
 
-This document specifies the intended complete design. Implementation is phased and demand-driven; no fixed delivery dates are set. All interfaces, schemas, and patterns described here are stable and intended for broad adoption.
+| Topic | Today (`main`) | Target (this document) |
+| ----- | -------------- | ---------------------- |
+| **Code layout** | TypeScript monorepo; **`clawql-mcp`** + **`clawql-ouroboros`** + **`mcp-grpc-transport`** | Turborepo packages (`clawql-core`, `clawql-api`, …) composed with **Effect-TS** Layers (§6) |
+| **MCP tools** | **`search`**, **`execute`**, Core **`audit`** / **`cache`**; optional flags for memory, documents, sandbox, ouroboros, schedule, notify | Same **`search()` / `execute()`** surface via **`clawql-api`**; optional single-tool host profiles are not required |
+| **Ground truth for env/tools** | [`docs/mcp/mcp-tools.md`](../mcp/mcp-tools.md), [`docs/readme/configuration.md`](../readme/configuration.md) | Package boundaries and operator CRD in §4–§13 |
+
+### Package extraction status (modularization epic [#306](https://github.com/danielsmithdevelopment/ClawQL/issues/306))
+
+| Package                    | As standalone npm package |
+| -------------------------- | ----------------------- |
+| `clawql-core`              | 🔨 In development       |
+| `clawql-api`               | 🔨 In development       |
+| `clawql-auth`              | 🔨 In development       |
+| `clawql-documents`         | 🔨 In development       |
+| `clawql-memory`            | 🔨 In development       |
+| `clawql-pageindex`         | 🔨 In development       |
+| `clawql-mcp`               | ✅ Shipped              |
+| `clawql-ouroboros`         | ✅ Shipped              |
+| `mcp-grpc-transport`       | ✅ Shipped              |
+| `clawql-data`              | 📋 Planned              |
+| `clawql-automation`        | 📋 Planned              |
+| `clawql-telemetry`         | 📋 Planned              |
+| `clawql-sandbox`           | 📋 Planned              |
+| `clawql-printingpress`     | 📋 Planned              |
+| `clawql-goose`             | 📋 Planned              |
+| `clawql-lending`           | 📋 Planned              |
+| `clawql-legal`             | 📋 Planned              |
+| `clawql-healthcare`        | 📋 Planned              |
+| `clawql-insurance`         | 📋 Planned              |
+| `clawql-supplychain`       | 📋 Planned              |
+| `clawql-government`        | 📋 Planned              |
+| `clawql-manufacturing`     | 📋 Planned              |
+| `clawql-education`         | 📋 Planned              |
+| `clawql-engineering`       | 📋 Planned              |
+| `clawql-blockchain`        | 📋 Planned              |
+| Kubernetes Operator        | 📋 Planned              |
+| Natural Language Dashboard | 📋 Planned              |
+
+### Capability in `clawql-mcp` today (may run before packages split)
+
+| Capability | In `clawql-mcp` today | Notes |
+| ---------- | --------------------- | ----- |
+| Core **`search` / `execute`** | ✅ Always on | OpenAPI / Discovery + optional native GraphQL/gRPC |
+| **`audit` / `cache`** | ✅ Always on | In-process; not separate packages |
+| **Vault memory** | ✅ Default on | `memory_ingest` / `memory_recall`; `CLAWQL_ENABLE_MEMORY=0` to hide |
+| **Document stack** | ✅ Default on | Bundled providers + `ingest_external_knowledge`; `CLAWQL_ENABLE_DOCUMENTS=0` |
+| **Automation** | 🔶 Opt-in | `schedule`, `notify` behind `CLAWQL_ENABLE_*` |
+| **Sandbox** | 🔶 Opt-in | `sandbox_exec` behind `CLAWQL_ENABLE_SANDBOX` |
+| **Ouroboros MCP** | 🔶 Opt-in | `ouroboros_*` behind `CLAWQL_ENABLE_OUROBOROS` |
+| **Telemetry** | 🔶 Partial | `/metrics`, Grafana dashboard JSON; full operator sidecar model planned |
+| **Printing Press / Goose** | 📋 Planned | Specified in §14; not MCP tools today |
+| **Industry verticals** | 📋 Planned | No `clawql-lending` etc. packages yet |
+
+This document specifies the intended complete design. Implementation is phased and demand-driven; no fixed delivery dates are set.
 
 ---
 
@@ -78,7 +105,7 @@ Cross-references are provided throughout. All YAML, schemas, and code examples a
 
 ### Resources
 
-- **GitHub:** https://github.com/clawql/clawql
+- **GitHub:** https://github.com/danielsmithdevelopment/ClawQL
 - **Docs:** https://docs.clawql.com
 - **Community:** Discord + GitHub Discussions + RFC process (links in repository)
 - **Demo / Pilot Requests:** Open an issue or contact via GitHub
@@ -358,11 +385,13 @@ Universal intelligent MCP gateway and primary product surface. Implements `creat
 - `clawql-ouroboros` ✅
 - `mcp-grpc-transport` ✅
 
-## 4.6 Internal Monorepo Utilities
+## 4.6 Internal modules (inside `clawql-core`)
 
-- `@clawql/merkle`
-- `@clawql/cuckoo`
-- `@clawql/utils`
+Not separate npm packages — live as modules in **`clawql-core`** per [rearchitecture plan](../design/effect-ts-modularization-rearchitecture-plan.md) §2:
+
+- **Merkle** — tamper-evident roots (`merkle-tree` today)
+- **Cuckoo** — ingest deduplication / filters
+- **Utils** — shared primitives (`normalizeOperationId`, IDs, etc.)
 
 ---
 
@@ -410,11 +439,9 @@ All arrows represent allowed import directions only. No upward or cross-layer im
 ## 5.2 Full Acyclic Dependency Graph
 
 ```
-@clawql/merkle   @clawql/cuckoo   @clawql/utils
-         │              │              │
-         └──────────────┴──────────────┘
+   clawql-core  (merkle · cuckoo · utils modules)
                         │
-                   clawql-core
+                   (exports to dependents)
                         │
            ┌────────────┴────────────────┐
            │                             │
@@ -514,6 +541,8 @@ The registry performs compile-time and runtime validation of required providers 
 ---
 
 # 6. Effect-TS Foundation & Registry System
+
+**Implementation plan (phased migration from today’s `clawql-mcp` monolith):** [`docs/design/effect-ts-modularization-rearchitecture-plan.md`](../design/effect-ts-modularization-rearchitecture-plan.md) — Effect-TS, Turborepo + modularization ([#306](https://github.com/danielsmithdevelopment/ClawQL/issues/306)), and the plugin/gateway model are one coordinated program. Locked choices: Turborepo with `clawql-core` first; Merkle/Cuckoo inside core; `clawql-ouroboros` Effect rewrite; Panguard as proxy `Plugin`; minors + deprecations (majors only when breaks are required).
 
 Effect-TS is the architectural foundation of ClawQL, providing compile-time guarantees for dependencies, errors, resources, and concurrency across dozens of verticals and providers.
 
@@ -1539,7 +1568,7 @@ All changes are audited with Merkle roots and visible in the Compliance Center.
 
 ```bash
 # 1. Clone and bootstrap
-git clone https://github.com/clawql/clawql.git
+git clone https://github.com/danielsmithdevelopment/ClawQL.git
 cd clawql/examples/clawql-local-docker-compose
 ./bootstrap.sh
 
@@ -1838,9 +1867,9 @@ All failures are structured, observable, and auditable.
 
 - Original April 2026 vision deck cross-mapped to this document (available in repository)
 - All code examples are production-ready and located in the public repository
-- Community RFC index: https://github.com/clawql/clawql/discussions
+- Community RFC index: https://github.com/danielsmithdevelopment/ClawQL/discussions
 
 ---
 
 _ClawQL Master Enablement Document · May 2026 Edition · Apache 2.0 / MIT / CC-BY-SA 4.0_
-_Single authoritative source of truth — implementation is phased; this document defines the intended design._
+_Canonical vision document — companions: modularization v1.9 / v2.0. Implementation is phased; this document defines the intended design._

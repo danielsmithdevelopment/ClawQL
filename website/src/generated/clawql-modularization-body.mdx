@@ -7,22 +7,23 @@
 **ClawQL Modularization & Intelligent MCP Orchestration**  
 **Version 2.0** · May 2026
 
-**This document is the new canonical north star.** It merges the modular platform vision with a production-ready intelligent MCP gateway architecture that makes ClawQL the single unified front-end for the entire MCP ecosystem.
+**Companion (v2.0).** **Canonical vision** is [`clawql-master-enablement-guide.md`](./clawql-master-enablement-guide.md). This file supplements enablement with a **package checklist**, **dependency stack**, operator CRD detail, and **intelligent MCP gateway** notes. When this doc disagrees with enablement (MCP tool shape, Effect-TS timeline, shipped vs planned), **enablement wins**.
 
-**How to read this:** Product, engineering, platform, and operator teams should treat this as the authoritative target architecture. Many capabilities described here are already partially shipped; others are now explicitly prioritized for v2.0.
+**How to read this:** Use for modularization epic [#306](https://github.com/danielsmithdevelopment/ClawQL/issues/306) and gateway direction; pair with [`docs/clawql-ecosystem.md`](../clawql-ecosystem.md) and [`docs/mcp/mcp-tools.md`](../mcp/mcp-tools.md) for what ships in `clawql-mcp` today.
 
-**Canonical Markdown:** docs/vision/clawql-modularization-v2.md (this file).
+**Markdown source:** docs/vision/clawql-modularization-v2.md (this file).
 
 ---
 
 ## Document scope & evidence (read this first)
 
-This document is the **v2.0 north star**: modular platform plus **intelligent MCP gateway** (single front-end for native specs, verticals, and proxy MCP backends). It mixes **shipped today**, **partial**, and **planned** work in one narrative.
+This document is a **v2.0 companion**: modular platform plus **intelligent MCP gateway** ideas (multi-backend routing, proxy plugins). It mixes **shipped today**, **partial**, and **planned** work in one narrative.
 
 **Where to ground claims in Git:**
 
+- **Canonical vision:** [`clawql-master-enablement-guide.md`](./clawql-master-enablement-guide.md)
 - **Ecosystem and shipped surface:** [`docs/clawql-ecosystem.md`](../clawql-ecosystem.md)
-- **v1.9 package vision (companion):** [`clawql-modularization.md`](./clawql-modularization.md)
+- **v1.9 package matrix (companion):** [`clawql-modularization.md`](./clawql-modularization.md)
 - **Roadmap:** [#259](https://github.com/danielsmithdevelopment/ClawQL/issues/259), [#306](https://github.com/danielsmithdevelopment/ClawQL/issues/306)
 
 **Section 12 week labels:** Illustrative phase order for planning — not a wall-clock promise unless resourced.
@@ -61,14 +62,15 @@ Zero operational burden via Kubernetes Operator + Dashboard + Agent Chat. The Op
 Defense-in-Depth: Merkle, ATR, Presidio, WORM, Kata, RBAC/ABAC — applied uniformly at the gateway layer before any downstream call.
 Clean separation: primitives (clawql-core) → universal API (clawql-api + intelligent MCP wrapper) → memory + documents → verticals and proxy plugins.
 
-**v2.0 Architectural Shift (the new canonical direction):**  
-ClawQL no longer competes as “yet another MCP server.” It becomes the **intelligent front-end gateway** for the entire MCP ecosystem. Every downstream MCP backend (native verticals, external servers, OpenAPI services, gRPC endpoints, GraphQL subgraphs, Fabric gateways, etc.) registers as a plugin inside clawql-api. Agents and LLMs interact with **exactly one** high-level tool:
+**v2.0 gateway direction (companion — see enablement for MCP canon):**  
+ClawQL becomes an **intelligent front-end gateway** for the MCP ecosystem: downstream backends register as plugins inside `clawql-api`; routing, ATR, Memory 2.0 enrichment, GraphQL projection, Merkle auditing, and Presidio redaction happen **before** downstream calls.
+
+**MCP surface (enablement is authoritative):** Production agents use **`search()`** and **`execute()`** as in [`clawql-master-enablement-guide.md`](./clawql-master-enablement-guide.md) and today’s **`clawql-mcp`** server ([`docs/mcp/mcp-tools.md`](../mcp/mcp-tools.md)). The optional **single-tool** profile below is a **host simplification sketch**, not a replacement for shipped tools:
 
 ```ts
-
 {
   name: "clawql_execute",
-  description: "Execute any task using the unified ClawQL platform (memory, documents, sandbox, automation, multi-backend orchestration, vertical workflows, etc.)",
+  description: "Optional unified host profile — maps to search/execute + routed backends",
   parameters: {
     operation: { type: "string" },
     args: { type: "object" },
@@ -76,8 +78,6 @@ ClawQL no longer competes as “yet another MCP server.” It becomes the **inte
   }
 }
 ```
-
-All intelligence lives in ClawQL: ATR enforcement, Memory 2.0 enrichment, intelligent routing, GraphQL projection, Merkle auditing, and Presidio redaction happen **before** the call reaches any downstream backend. This delivers 50–85% token reduction, deterministic performance, centralized security, and zero reconfiguration when new backends are added.
 
 The result is a platform that is both dramatically simpler for daily use and infinitely more powerful at enterprise scale.
 
@@ -1081,15 +1081,17 @@ Basic OpenClaw dashboard (search + execute UI, tool list)
 
 **Proxy Plugin:** A plugin that forwards `execute()` calls to an external MCP endpoint while applying full ClawQL capabilities (memory, audit, redaction, etc.).
 
-**High-Level Tool Surface:** The single `clawql_execute` tool exposed to all downstream LLMs/agents.
+**High-Level Tool Surface:** Optional unified host profile (`clawql_execute` sketch in §1). **Shipped MCP canon:** `search` / `execute` per master enablement.
 
 **ATR:** Agent Task Request context (permissions, identity, audit trail).
 
 ### B. Comparison: Before vs After v2.0 Gateway
 
+_“One high-level tool” is a **target host profile**; today’s server exposes **`search` / `execute`** (and optional tiered tools). See enablement for authoritative MCP surface._
+
 | Aspect               | Before (v1.x)              | After (v2.0)                            |
 | -------------------- | -------------------------- | --------------------------------------- |
-| Tools seen by LLM    | Dozens–hundreds of schemas | 1 high-level tool                       |
+| Tools seen by LLM    | Dozens–hundreds of schemas | 1 high-level tool (optional profile)    |
 | Token usage          | High                       | 50–85% lower                            |
 | Security enforcement | Per-backend                | Uniform in ClawQL                       |
 | Memory enrichment    | Manual per agent           | Automatic before every call             |
