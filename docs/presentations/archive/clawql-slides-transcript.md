@@ -1,10 +1,10 @@
 ---
 title: "ClawQL — Full Text Transcript (April 2026)"
-date: 2026-04-22T03:07:02.209Z
-tags: [clawql-ingest]
-clawql_ingest: true
-clawql_ingest_created: "2026-04-22T03:07:02.209Z"
+archived: true
+superseded_by: docs/presentations/clawql-slides.md
 ---
+
+> **Archived — outdated.** Describes a **35-slide** deck with optional **`cache`/`audit`** and **eight** bundled providers. Canonical deck: [`../clawql-slides.md`](../clawql-slides.md) (~80 slides). Track parity: [#163](https://github.com/danielsmithdevelopment/ClawQL/issues/163).
 
 # ClawQL — Full Text Transcript (April 2026)
 
