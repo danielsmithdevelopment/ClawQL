@@ -33,11 +33,7 @@ import {
   operationIdToRunStyleName,
 } from "./graphql-execute-helpers.js";
 import { loadSpec } from "./spec-loader.js";
-import {
-  defaultFields,
-  executeOutputFields,
-  projectRestByFields,
-} from "./tools-execute-core.js";
+import { defaultFields, executeOutputFields, projectRestByFields } from "./tools-execute-core.js";
 import { handleClawqlCodeToolInput } from "./sandbox-bridge-client.js";
 import { handleIngestExternalKnowledgeToolInput } from "./external-ingest.js";
 import { handleMemoryIngestToolInput } from "./memory-ingest.js";
