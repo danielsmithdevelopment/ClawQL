@@ -21,6 +21,7 @@ export default defineConfig({
     include: [
       "src/**/*.test.ts",
       "packages/mcp-grpc-transport/src/**/*.test.ts",
+      "packages/clawql-core/src/**/*.test.ts",
       "packages/clawql-ouroboros/src/**/*.test.ts",
       "packages/panguard-mcp-bridge/src/**/*.test.ts",
     ],
@@ -33,12 +34,14 @@ export default defineConfig({
       include: [
         "src/**/*.ts",
         "packages/mcp-grpc-transport/src/**/*.ts",
+        "packages/clawql-core/src/**/*.ts",
         "packages/clawql-ouroboros/src/**/*.ts",
         "packages/panguard-mcp-bridge/src/**/*.ts",
       ],
       exclude: [
         "src/**/*.test.ts",
         "packages/mcp-grpc-transport/src/**/*.test.ts",
+        "packages/clawql-core/src/**/*.test.ts",
         "packages/clawql-ouroboros/src/**/*.test.ts",
         "packages/panguard-mcp-bridge/src/**/*.test.ts",
         "src/test-utils/**",

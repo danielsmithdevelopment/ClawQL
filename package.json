@@ -53,8 +53,9 @@
         ".cursor/mcp.json.example"
     ],
     "scripts": {
-        "clean": "rm -rf dist packages/mcp-grpc-transport/dist packages/clawql-ouroboros/dist packages/panguard-mcp-bridge/dist",
-        "build": "npm run clean && npm run build -w mcp-grpc-transport && npm run build -w clawql-ouroboros && npm run build -w panguard-mcp-bridge && tsc",
+        "clean": "rm -rf dist packages/clawql-core/dist packages/mcp-grpc-transport/dist packages/clawql-ouroboros/dist packages/panguard-mcp-bridge/dist",
+        "build": "npm run clean && npm run build -w clawql-core && npm run build -w mcp-grpc-transport && npm run build -w clawql-ouroboros && npm run build -w panguard-mcp-bridge && tsc",
+        "build:turbo": "turbo run build",
         "prepublishOnly": "npm run build",
         "start": "node dist/server.js",
         "start:http": "node dist/server-http.js",
@@ -90,10 +91,10 @@
         "pretest": "npm run build",
         "test": "vitest run",
         "test:coverage": "npm run build && vitest run --coverage",
-        "lint": "eslint \"src/**/*.ts\" \"packages/mcp-grpc-transport/src/**/*.ts\" \"packages/clawql-ouroboros/src/**/*.ts\" \"packages/panguard-mcp-bridge/src/**/*.ts\" \"vitest.config.ts\" --max-warnings 0 --cache --cache-location .eslintcache",
-        "lint:fix": "eslint \"src/**/*.ts\" \"packages/mcp-grpc-transport/src/**/*.ts\" \"packages/clawql-ouroboros/src/**/*.ts\" \"packages/panguard-mcp-bridge/src/**/*.ts\" \"vitest.config.ts\" --fix --cache --cache-location .eslintcache",
-        "format": "prettier --write \"src/**/*.{ts,tsx}\" \"packages/mcp-grpc-transport/**/*.{ts,md,json}\" \"docs/**/*.md\" \".github/**/*.yml\" \"*.md\" \"vitest.config.ts\" \"eslint.config.js\" \"tsconfig.json\" \".prettierrc.json\" --cache --cache-location .prettier-cache && npm run format --prefix website",
-        "format:check": "prettier --check \"src/**/*.{ts,tsx}\" \"packages/mcp-grpc-transport/**/*.{ts,md,json}\" \"docs/**/*.md\" \".github/**/*.yml\" \"*.md\" \"vitest.config.ts\" \"eslint.config.js\" \"tsconfig.json\" \".prettierrc.json\" --cache --cache-location .prettier-cache && npm run format:check --prefix website",
+        "lint": "eslint \"src/**/*.ts\" \"packages/clawql-core/src/**/*.ts\" \"packages/mcp-grpc-transport/src/**/*.ts\" \"packages/clawql-ouroboros/src/**/*.ts\" \"packages/panguard-mcp-bridge/src/**/*.ts\" \"vitest.config.ts\" --max-warnings 0 --cache --cache-location .eslintcache",
+        "lint:fix": "eslint \"src/**/*.ts\" \"packages/clawql-core/src/**/*.ts\" \"packages/mcp-grpc-transport/src/**/*.ts\" \"packages/clawql-ouroboros/src/**/*.ts\" \"packages/panguard-mcp-bridge/src/**/*.ts\" \"vitest.config.ts\" --fix --cache --cache-location .eslintcache",
+        "format": "prettier --write \"src/**/*.{ts,tsx}\" \"packages/clawql-core/**/*.{ts,md,json}\" \"packages/mcp-grpc-transport/**/*.{ts,md,json}\" \"docs/**/*.md\" \".github/**/*.yml\" \"*.md\" \"vitest.config.ts\" \"eslint.config.js\" \"tsconfig.json\" \".prettierrc.json\" \"turbo.json\" --cache --cache-location .prettier-cache && npm run format --prefix website",
+        "format:check": "prettier --check \"src/**/*.{ts,tsx}\" \"packages/clawql-core/**/*.{ts,md,json}\" \"packages/mcp-grpc-transport/**/*.{ts,md,json}\" \"docs/**/*.md\" \".github/**/*.yml\" \"*.md\" \"vitest.config.ts\" \"eslint.config.js\" \"tsconfig.json\" \".prettierrc.json\" \"turbo.json\" --cache --cache-location .prettier-cache && npm run format:check --prefix website",
         "release:git-tag": "bash scripts/release/git-release-tag.sh",
         "release:git-tag:push": "bash scripts/release/git-release-tag.sh --push",
         "release:git-backfill-tags": "bash scripts/release/git-backfill-npm-release-tags.sh",
@@ -110,6 +111,7 @@
         "@opentelemetry/resources": "^2.7.1",
         "@opentelemetry/sdk-trace-base": "^2.7.1",
         "@opentelemetry/sdk-trace-node": "^2.7.1",
+        "clawql-core": "workspace:*",
         "clawql-ouroboros": "workspace:*",
         "dotenv": "^17.4.2",
         "express": "^5.2.1",
@@ -137,6 +139,7 @@
         "tsx": "^4.22.2",
         "typescript": "^6.0.3",
         "typescript-eslint": "^8.60.0",
+        "turbo": "^2.5.4",
         "vitest": "^4.1.7"
     },
     "overrides": {

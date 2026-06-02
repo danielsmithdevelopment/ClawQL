@@ -1,8 +1,16 @@
 /**
  * In-process audit ring buffer for MCP `audit` tool (GitHub #89).
  * **Not durable** — restart clears buffer; use `memory_ingest` for compliance-grade trails.
+ *
+ * Ring buffer + config live in `clawql-core`; this module adds MCP/Zod, Loki, and Prometheus.
  */
 
+import {
+  getClawqlAuditMaxEntries,
+  getDefaultAuditRingBuffer,
+  resetDefaultAuditRingBufferForTests,
+  type ClawqlAuditEntry,
+} from "clawql-core";
 import { z } from "zod";
 import { maybePushAuditEntryToLoki } from "./clawql-audit-loki.js";
 import { logMcpToolShape } from "./mcp-tool-log.js";
@@ -11,29 +19,12 @@ import {
   prometheusRecordAuditClear,
 } from "./native-protocol-prometheus.js";
 
-export type ClawqlAuditEntry = {
-  ts: string;
-  category: string;
-  action: string;
-  summary: string;
-  correlationId?: string;
+export type { ClawqlAuditEntry };
+
+export {
+  getClawqlAuditMaxEntries,
+  resetDefaultAuditRingBufferForTests as resetClawqlAuditBufferForTests,
 };
-
-const buffer: ClawqlAuditEntry[] = [];
-
-/** Exported for tests — `CLAWQL_AUDIT_MAX_ENTRIES` (default 500, min 1, max 50_000). */
-export function getClawqlAuditMaxEntries(): number {
-  const v = process.env.CLAWQL_AUDIT_MAX_ENTRIES?.trim();
-  if (!v) return 500;
-  const n = Number.parseInt(v, 10);
-  if (!Number.isFinite(n)) return 500;
-  return Math.min(Math.max(n, 1), 50_000);
-}
-
-/** Test helper — clears buffer. */
-export function resetClawqlAuditBufferForTests(): void {
-  buffer.length = 0;
-}
 
 export const auditToolSchema = {
   operation: z
@@ -95,7 +86,7 @@ export async function handleAuditToolInput(
   params: unknown
 ): Promise<{ content: { type: "text"; text: string }[] }> {
   const parsed = auditInputSchema.parse(params);
-  const max = getClawqlAuditMaxEntries();
+  const buffer = getDefaultAuditRingBuffer();
 
   logMcpToolShape("audit", {
     operation: parsed.operation,
@@ -114,31 +105,25 @@ export async function handleAuditToolInput(
         summary: parsed.summary!.trim(),
         correlationId: parsed.correlationId?.trim() || undefined,
       };
-      buffer.push(entry);
-      let dropped = 0;
-      while (buffer.length > max) {
-        buffer.shift();
-        dropped++;
-      }
-      prometheusRecordAuditAppend(buffer.length, dropped);
+      const { total, dropped } = buffer.append(entry);
+      prometheusRecordAuditAppend(total, dropped);
       maybePushAuditEntryToLoki(entry);
-      return jsonResponse({ ok: true, total: buffer.length, dropped });
+      return jsonResponse({ ok: true, total, dropped });
     }
     case "list": {
       const limit = parsed.limit ?? 20;
-      const slice = buffer.slice(-limit);
+      const { total, maxEntries, entries } = buffer.list(limit);
       return jsonResponse({
         ok: true,
-        total: buffer.length,
-        maxEntries: max,
-        entries: slice,
+        total,
+        maxEntries: maxEntries,
+        entries,
       });
     }
     case "clear": {
-      const n = buffer.length;
-      buffer.length = 0;
+      const { cleared } = buffer.clear();
       prometheusRecordAuditClear();
-      return jsonResponse({ ok: true, cleared: n });
+      return jsonResponse({ ok: true, cleared });
     }
     default:
       return jsonResponse({ ok: false, error: "unsupported operation" });
