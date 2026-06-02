@@ -6,7 +6,7 @@
 | ---- | ------- |
 | `manifest.json` | Titles, slugs, tags, `part` / `description` |
 | `bodies/NN.md` | Module body (no frontmatter) |
-| `extract-bodies-from-monolith.mjs` | Split `docs/security/security-guide-series.md` narratives into `bodies/` |
+| `extract-bodies-from-monolith.mjs` | Split `docs/security/archive/security-guide-series.md` narratives into `bodies/` |
 | `build-modules.mjs` | Write `docs/security/security-best-practices-series/NN-<slug>.md` |
 
 ## Workflow

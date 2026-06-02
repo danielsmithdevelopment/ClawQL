@@ -18,6 +18,20 @@ npm run build
 npm start
 ```
 
+## Canonical doc sources (do not edit generated MDX by hand)
+
+Long pages under `src/generated/` are copied from repo `docs/` at **prebuild** / **dev**:
+
+| Site route                     | Source                                                                    | Sync script                                     |
+| ------------------------------ | ------------------------------------------------------------------------- | ----------------------------------------------- |
+| `/vision/modularization`       | `docs/vision/clawql-modularization-v2.md`                                 | `scripts/sync-clawql-modularization-doc.mjs`    |
+| `/vision/slide-deck`           | `docs/presentations/clawql-slides.md`                                     | `scripts/sync-clawql-slides-doc.mjs`            |
+| `/vision/technical-enablement` | `docs/vision/clawql-master-enablement-guide.md`                           | `scripts/sync-clawql-master-enablement-doc.mjs` |
+| `/security/defense-in-depth`   | `docs/security/clawql-comprehensive-defense-in-depth-mcp-k3s-may-2026.md` | `scripts/sync-clawql-defense-in-depth-doc.mjs`  |
+| `/security/best-practices/*`   | `docs/security/security-best-practices-series/*.md`                       | `scripts/sync-security-training-modules.mjs`    |
+
+Edit the **Markdown sources**, then run `npm run dev` or `npm run build` so generated fragments stay in sync.
+
 ## Performance, accessibility (WCAG-oriented), and SEO
 
 - **Runbook (incident prevention, Lighthouse CI, Workers):** [`../docs/website/website-performance-workers-guardrails.md`](../docs/website/website-performance-workers-guardrails.md)
@@ -38,7 +52,7 @@ export NEXT_PUBLIC_SITE_URL=https://docs.clawql.com
 npm run deploy
 ```
 
-**CI (automatic):** on push to `main` that changes **`website/**`**, **`.github/workflows/deploy-docs.yml` runs `npm run deploy`**. Configure repository **Secrets** (Settings → Secrets and variables → Actions):
+**CI (automatic):** on push to `main` that changes **`website/**`**, **`.github/workflows/deploy-docs.yml`runs`npm run deploy`**. Configure repository **Secrets\*\* (Settings → Secrets and variables → Actions):
 
 - **`CLOUDFLARE_API_TOKEN`** — **required**. Create a [Cloudflare API token](https://developers.cloudflare.com/fundamentals/api/get-started/create-token/) with **Account** / **Cloudflare Workers** (Edit) or equivalent to deploy the Worker. Wrangler will use it instead of a stored OAuth session.
 - **`CLOUDFLARE_ACCOUNT_ID`** — **optional**; **`wrangler.jsonc` already sets** `account_id` for the docs Worker. You only need this **secret** if you override the account in CI. **Account-scoped** API tokens (e.g. the “Edit Cloudflare Workers” template) cannot call the user **/memberships** API, so wrangler must know the account (via **`account_id` in `wrangler.jsonc`** or this env) or deploy fails with error **9106** on `/memberships`.
