@@ -40,12 +40,10 @@ import {
   type MemoryArtifactPayload,
 } from "./memory-artifacts.js";
 import {
-  buildMerkleSnapshot,
   CuckooFilter,
   cuckooMetricsEnabled,
   recordCuckooLookup,
   sha256HexUtf8,
-  type MerkleDocumentRow,
 } from "clawql-core";
 import {
   getCachedCuckooFilter,
