@@ -60,7 +60,14 @@ if (!src || !fs.existsSync(src)) {
   process.exit(1)
 }
 
-fs.copyFileSync(src, dst)
+let body = fs.readFileSync(src, 'utf8')
+// GitHub renders images relative to docs/vision/*.md; the site serves them from
+// /public. Rewrite the repo-relative path used in the canonical doc.
+body = body.replaceAll(
+  '../../website/public/vision/clawql-dependency-stack.png',
+  '/vision/clawql-dependency-stack.png',
+)
+fs.writeFileSync(dst, body)
 execSync('npx prettier --write src/generated/clawql-modularization-body.mdx', {
   cwd: websiteRoot,
   stdio: 'inherit',
