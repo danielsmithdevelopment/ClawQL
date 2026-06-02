@@ -1,7 +1,13 @@
-import { AuditLive, type ClawQLError, PluginAlreadyRegisteredError } from "clawql-core";
+import {
+  AuditLive,
+  type ClawQLError,
+  type Plugin,
+  PluginAlreadyRegisteredError,
+} from "clawql-core";
 import { Effect, Layer, ManagedRuntime } from "effect";
 import { ClawQLApi, clawqlApiLayer } from "./clawql-api-service.js";
 import { ExecuteNotConfiguredLive, ExecuteService } from "./execute-service.js";
+import { defaultPlugins } from "./plugins/panguard-proxy-plugin.js";
 import { PluginRegistry } from "./plugin-registry.js";
 import { SearchNotConfiguredLive, SearchService } from "./search-service.js";
 
@@ -14,6 +20,8 @@ export type CreateClawQLApiOptions = {
   readonly searchLayer?: Layer.Layer<SearchService, never, never>;
   /** Replaces default ExecuteNotConfiguredLive (MCP adapter from clawql-mcp). */
   readonly executeLayer?: Layer.Layer<ExecuteService, never, never>;
+  /** Plugins registered at composition root (defaults include Panguard proxy). */
+  readonly plugins?: readonly Plugin[];
 };
 
 export type ClawQLApiHandle = {
@@ -27,10 +35,13 @@ export type ClawQLApiHandle = {
 
 /**
  * Composition root for ClawQL (enablement §5, plan Phase 1).
- * MCP transport will call `run(searchEffect)` / `run(executeEffect)` in a follow-up PR.
+ * MCP transport calls `run(searchEffect)` / `run(executeEffect)` via adapters.
  */
 export function createClawQLApi(options: CreateClawQLApiOptions = {}): ClawQLApiHandle {
   const registry = new PluginRegistry();
+  for (const plugin of options.plugins ?? defaultPlugins()) {
+    Effect.runSync(registry.register(plugin));
+  }
   const baseLayer: Layer.Layer<ClawQLApiRuntimeServices, never, never> = Layer.mergeAll(
     AuditLive,
     Layer.succeed(ClawQLApi, clawqlApiLayer(registry)),

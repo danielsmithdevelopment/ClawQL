@@ -189,7 +189,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
             }
             if (process.env.CLAWQL_CUCKOO_ENABLED === "1") {
               base.cuckooMembershipArtifactsEnabled = true;
-              const { getCuckooMetricsSnapshot } = await import("./memory-cuckoo-metrics.js");
+              const { getCuckooMetricsSnapshot } = await import("clawql-core");
               base.cuckooMetrics = getCuckooMetricsSnapshot();
               base.cuckooFilterPersistedAt = await loadCuckooArtifactUpdatedAt(vault);
             }

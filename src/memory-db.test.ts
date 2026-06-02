@@ -4,7 +4,7 @@ import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import initSqlJs from "sql.js";
-import { getCuckooMetricsSnapshot } from "./memory-cuckoo-metrics.js";
+import { getCuckooMetricsSnapshot, resetCuckooMetricsForTests } from "clawql-core";
 import {
   chunkIdMaybeInMemoryIndex,
   loadVaultMerkleSnapshotFromDb,
@@ -12,7 +12,6 @@ import {
   resolveMemoryDatabasePath,
   syncMemoryDbFromDocuments,
 } from "./memory-db.js";
-import { resetCuckooMetricsForTests } from "./memory-cuckoo-metrics.js";
 import { resetMemoryDbArtifactCachesForTests } from "./memory-db-artifact-cache.js";
 
 describe("memory-db", () => {
