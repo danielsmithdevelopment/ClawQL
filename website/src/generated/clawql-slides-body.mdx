@@ -22,18 +22,20 @@ _Natural language. Any API. Any document. Any knowledge source. On-chain truth +
 
 An MCP (Model Context Protocol) server (`clawql-mcp` on npm) that lets AI assistants and autonomous agents discover and call any REST operation across any OpenAPI-described API — without context bloat, without custom wrappers — plus a complete local-first document pipeline, enterprise-wide semantic knowledge search via Onyx (40+ connectors, Flink real-time sync), durable cross-session Obsidian vault memory, invisible Ouroboros orchestration, Cuckoo Filters, Merkle Trees, and production-grade secrets/storage/security.
 
-**2026 (both forks, optional where noted):** public MCP endpoint with **x402 / MPP** micropayments; agentic wallets (**Coinbase AgentKit** + **ERC-4337**); IPFS pinning; blockchain anchoring; **The Graph** (subgraph + x402 where applicable); **Chainlink** (CRE, oracles, **CCIP**, Functions, x402-native patterns); and **Hyperledger Fabric** as a toggleable permissioned layer (`CLAWQL_ENABLE_FABRIC=true`).
+**Verify shipped vs roadmap:** [`docs/clawql-ecosystem.md`](../clawql-ecosystem.md) (appendix **Fiction and roadmap**) and [`docs/security/clawql-security-defense-deliverables.md`](../security/clawql-security-defense-deliverables.md).
+
+**2026 roadmap (both forks — not all flags exist in this repo today):** public MCP endpoint with **x402 / MPP** micropayments; agentic wallets (**Coinbase AgentKit** + **ERC-4337**); IPFS pinning; blockchain anchoring; **The Graph** (subgraph + x402 where applicable); **Chainlink** (CRE, oracles, **CCIP**, Functions, x402-native patterns); **Hyperledger Fabric** as a permissioned layer ([#187](https://github.com/danielsmithdevelopment/ClawQL/issues/187) — **no** `CLAWQL_ENABLE_FABRIC` or `providers/fabric` in the open-source tree yet).
 
 **PLATFORM HIGHLIGHTS**
 
 - MCP Server (stdio / HTTP / gRPC) + GraphQL projection; OpenAPI 3 + Swagger 2 + Google Discovery
-- 9+ bundled providers (GitHub, Google Cloud, Cloudflare, Paperless NGX, Stirling-PDF, Slack, Tika, Gotenberg, Onyx)
+- **13** bundled vendor specs in `BUNDLED_PROVIDERS` (GitHub, Cloudflare, Slack, Sentry, n8n, Linear, Tika, Gotenberg, Paperless, Stirling, Onyx, Jira, Bitbucket) plus **`google`** / **`all-providers`** presets — see [`providers/README.md`](../../providers/README.md)
 - Obsidian vault memory + hybrid sqlite-vec (roadmap)
 - Full document pipeline (1,000+ formats) — Tika → Gotenberg → Stirling → Paperless
 - Onyx enterprise knowledge (40+ connectors, Flink-synced, citation-backed)
 - Ouroboros 5-phase loop; Cuckoo Filters + Merkle trees (cryptographic audit)
 - **ClawQL-Web3 (public fork):** x402 micropayments, agent wallets, IPFS + CCIP anchoring
-- **Hyperledger Fabric (optional):** permissioned provenance, private channels, RWA registration, multi-org consortia (regulated fork) or lightweight anchoring (public fork)
+- **Hyperledger Fabric (roadmap):** permissioned provenance, private channels, RWA registration — design only in-repo today ([#187](https://github.com/danielsmithdevelopment/ClawQL/issues/187))
 - **The Graph + Chainlink** as first-class on-chain data + execution surfaces (bundled-provider model)
 - **OSV-Scanner (Google):** layer-aware **container + dependency** vulnerability detection and **SBOM** support, wired into the **Golden Image Pipeline** (with **Trivy**); scannable on demand via the same `search` / `execute` surface when the OSV spec is loaded
 - **Istio (optional):** **mTLS**, authz policy, traffic management, **Kiali** topology — **Ambient** or sidecar; zero-trust east-west between ClawQL, Paperless, Onyx, document services, and data planes
@@ -78,7 +80,7 @@ ClawQL is published as `clawql-mcp` on npm. The core bridge remains **`search` +
 **New 2026 layers (shared core; opt-in by fork and by env):**
 
 - **ClawQL-Web3 (public):** discoverable, payable MCP endpoint; x402 / MPP; ERC-4337 agent wallets; IPFS; CCIP anchoring.
-- **Hyperledger Fabric:** `CLAWQL_ENABLE_FABRIC` — peers, orderers, CouchDB, chaincode as a Helm sub-chart when enabled. Same `search` / `execute` / GraphQL + Ouroboros paths; appears like any other bundled provider (`providers/fabric/openapi.yaml` + ABIs) where applicable.
+- **Hyperledger Fabric (roadmap):** target model is peers, orderers, CouchDB, chaincode as an optional Helm sub-chart and bundled provider — **not shipped** in this repository ([#187](https://github.com/danielsmithdevelopment/ClawQL/issues/187)); same `search` / `execute` story when it lands.
 - **The Graph + Chainlink:** bundled-provider style tooling for on-chain data, oracles, CRE, CCIP, and Functions.
 
 The regulated fork (**SeeTheGreens / ClawQL-MCP**) and the public fork (**ClawQL-Web3**) are **one codebase** — zero drift. Fabric mode differs by deployment (full consortia vs. lightweight anchoring), not by a separate product core.
@@ -132,7 +134,7 @@ _Three audiences — one platform that serves all of them from a single deployme
 **Investors & Partners**
 
 - Agentic **Web3** infrastructure: enterprise knowledge + optional **permissioned-ledger** positioning (Fabric hybrid) + **x402** + **The Graph / Chainlink** in one product story
-- Early MCP + automation moat: 9+ bundled providers, Onyx, durable memory, Ouroboros
+- Early MCP + automation moat: **13** bundled vendor specs (+ Google preset), Onyx, durable memory, Ouroboros
 - Technical moat: Obsidian + Onyx + Merkle + (optional) Fabric provenance and public on-chain verifiability — network effects as more agents and consortia join
 - **Public fork revenue** (usage, RWA, channel services) can subsidize regulated / private fork development; same core code preserves engineering leverage
 - Local-first story still resonates for enterprise and regulated buyers
@@ -167,13 +169,13 @@ _Four logical layers: clients, ClawQL core + platform security hooks, service ta
 - **`memory_ingest` / `memory_recall`**, **`knowledge_search_onyx`**
 - **GraphQL projection** — strips verbose JSON (Onyx, **OSV** reports, service metrics)
 - **Ouroboros** — Interview → Seed → Execute → Evaluate → Evolve
-- **`notify()`**, **`cache`**, **`audit`** (optional ring buffer: tool calls, Onyx retrievals, **OSV** / scan summaries)
+- **`notify()`** (optional, `CLAWQL_ENABLE_NOTIFY`); **`cache`** and **`audit`** (Core — ring buffer for tool calls, Onyx retrievals, **OSV** / scan summaries)
 
 **Layer 3 — API & data-plane targets**
 
 - GitHub, Google Cloud, Cloudflare, Paperless NGX, Stirling-PDF, Tika, Gotenberg, Slack
 - **Onyx** (40+ connectors, Flink-synced) + any custom **OpenAPI** in `providers/`
-- **Hyperledger Fabric** (optional) — **peer** / **orderer** / **CA** and optional **REST** **gateway**; **`search`/`execute`** to **chaincode** like any provider when `CLAWQL_ENABLE_FABRIC` is on
+- **Hyperledger Fabric** (roadmap [#187](https://github.com/danielsmithdevelopment/ClawQL/issues/187)) — peer / orderer / CA and optional REST gateway; target: **`search`/`execute`** to chaincode like any bundled provider
 - **MinIO** / object storage, **Postgres** / **Dragonfly** (Redis-protocol) for seeds, Merkle, state
 
 **Layer 4 — Security, supply chain, and service mesh (cluster-wide)**
@@ -829,7 +831,7 @@ The Slack spec is retained in `providers/slack.json` as one of the nine default 
 
 # 04 — Infrastructure
 
-_9+ bundled providers (incl. **OSV-Scanner** surface) · **12+** runtime services in one **Helm** release · **optional Istio** + **Kiali** · **Trivy** + **OSV-Scanner** in **Golden Image** · **Vault**/ · Privacy- and **zero-trust**-first._
+_**13** bundled vendor specs (+ Google preset) · **12+** runtime services in one **Helm** release · **optional Istio** + **Kiali** · **Trivy** + **OSV-Scanner** in **Golden Image** · **Vault**/ · Privacy- and **zero-trust**-first._
 
 ---
 
@@ -1201,15 +1203,17 @@ All of the above inherits the shared core (MCP, Ouroboros, Obsidian, Onyx, docum
 
 ---
 
-## Slide 38 — Hyperledger Fabric — First-Class Optional Layer
+## Slide 38 — Hyperledger Fabric — Roadmap Layer
 
-### Hyperledger Fabric — First-Class Optional Permissioned Ledger Layer
+### Hyperledger Fabric — Target Permissioned Ledger Layer (roadmap)
 
-**Toggle:** `CLAWQL_ENABLE_FABRIC` (default off). When on, deploys as a **Helm sub-chart** (peers, orderers, CouchDB, CA, chaincode).
+> **Not in the open-source repo today:** no `CLAWQL_ENABLE_FABRIC`, no `fabric.enabled` in `charts/clawql-mcp`, no `providers/fabric/openapi.yaml`. Track [#187](https://github.com/danielsmithdevelopment/ClawQL/issues/187). Illustrative Helm below is **vision**, not current chart values.
+
+**Target toggle (roadmap):** env/chart flag (name TBD). When shipped, deploy as a **Helm sub-chart** (peers, orderers, CouchDB, CA, chaincode).
 
 **Principles**
 
-- **Non-breaking & no drift** — Same `search` + `execute` model; shows up as a bundled provider (`providers/fabric/openapi.yaml` + ABIs) like everything else.
+- **Non-breaking & no drift** — Same `search` + `execute` model; target bundled provider (`providers/fabric/openapi.yaml` + ABIs) like everything else.
 - **Hybrid public/private** — Public Web3 can use lightweight or anchoring-only Fabric; the regulated fork can run full multi-org consortia with private channels.
 - **In-process paths** — Calls run through the GraphQL projection and Ouroboros like The Graph and Chainlink.
 
@@ -1478,14 +1482,14 @@ Same **Interview → Seed → Execute → Evaluate → Evolve** spine as the inv
 ### Helm & Fabric / Web3 — **`values.yaml` touchpoints (illustrative)**
 
 ```yaml
-# Excerpt — not exhaustive; see chart README for your release.
+# Illustrative vision excerpt — NOT current charts/clawql-mcp/values.yaml.
+# Verify shipped keys in docs/deployment/helm.md and clawql-security-defense-deliverables.md.
 clawql:
   web3:
     x402:
-      enabled: true
+      enabled: true # roadmap
   fabric:
-    enabled: true
-    # CLAWQL_ENABLE_FABRIC — Wire env from chart:
+    enabled: true # roadmap — see issue #187
     channel: 'clawql-provenance'
   agentWallets:
     policy:
@@ -1509,7 +1513,7 @@ kiali:
   enabled: true
 ```
 
-- Toggle Fabric via **`CLAWQL_ENABLE_FABRIC` / chart `fabric.enabled`**; image pulls, CA, peer, orderer, and CouchDB come from the **Fabric sub-chart**.
+- **Fabric (roadmap):** when [#187](https://github.com/danielsmithdevelopment/ClawQL/issues/187) lands, chart/env toggles would wire peers, orderer, CA, and CouchDB from a **Fabric sub-chart**.
 - **x402 / MPP** block — payment receiver, price list per tool, and 402 response templates; pair with the public HTTP MCP transport.
 - **OSV-Scanner** + **Trivy** — schedules, **SBOM** paths, and **admission** **Kyverno** / **OPA** hooks live next to `goldenImage` in the same `values` tree.
 - **Istio** + **Kiali** — one namespace-level mesh toggle; **Ambient** recommended for new clusters; **mTLS** mode **STRICT** for prod overlays.
