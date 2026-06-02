@@ -2,6 +2,8 @@
 
 **Purpose:** Map the **long-term intelligent document processing (IDP)** vision (local-first, agentic, observable, GitOps-ready) to **shipped code**, **GitHub issues**, and **explicit gaps**. Use this with [OpenClaw IDP skill profile](../openclaw/openclaw-idp-skill-profile.md) and [gap closure plan (prioritized)](gap-closure-plan-prioritized-2026.md).
 
+**Product vision canon:** [`docs/vision/clawql-master-enablement-guide.md`](../vision/clawql-master-enablement-guide.md) (companions: modularization v1.9 / v2.0).
+
 **Epic (checklist only, no extra scope):** [#259](https://github.com/danielsmithdevelopment/ClawQL/issues/259) — rolls up **#241–#258**.
 
 **Last updated:** 2026-05-02

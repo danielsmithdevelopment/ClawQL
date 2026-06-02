@@ -7,7 +7,7 @@ import { docsPageMetadata } from '@/lib/seo'
 export const metadata = docsPageMetadata({
   title: 'Master enablement — unified technical reference',
   description:
-    'ClawQL Master Enablement Document (May 2026): platform status, architecture, deployment tiers, compliance, and phased package roadmap — canonical living reference from docs/vision.',
+    'ClawQL Master Enablement Document (May 2026): canonical vision — platform status, architecture, deployment tiers, compliance, and phased package roadmap from docs/vision.',
   path: '/vision/technical-enablement',
   ogType: 'article',
 })
@@ -22,14 +22,14 @@ export default function VisionMasterEnablementPage() {
         <Tag color="claw" variant="medium">
           Vision
         </Tag>
-        <Tag color="amber" variant="medium">
-          Living document
+        <Tag color="claw" variant="medium">
+          Canonical vision
         </Tag>
       </div>
 
       <div className="not-prose mb-8">
         <Note>
-          <strong>Source:</strong> Generated from{' '}
+          <strong>Canonical vision.</strong> Generated from{' '}
           <a
             href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/vision/clawql-master-enablement-guide.md"
             className="font-medium text-inherit underline underline-offset-2"

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Split docs/security/security-guide-series.md "Module N:" narratives into
+ * Split docs/security/archive/security-guide-series.md "Module N:" narratives into
  * tools/security-curriculum-v30/bodies/NN.md (strips emoji, normalizes headings).
  */
 import fs from 'node:fs'

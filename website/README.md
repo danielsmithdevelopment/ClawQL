@@ -20,13 +20,15 @@ npm start
 
 ## Canonical doc sources (do not edit generated MDX by hand)
 
+**Product vision canon:** `docs/vision/clawql-master-enablement-guide.md` → `/vision/technical-enablement`. Modularization v2 on `/vision/modularization` is a **companion** (package checklist / gateway notes).
+
 Long pages under `src/generated/` are copied from repo `docs/` at **prebuild** / **dev**:
 
 | Site route                     | Source                                                                    | Sync script                                     |
 | ------------------------------ | ------------------------------------------------------------------------- | ----------------------------------------------- |
-| `/vision/modularization`       | `docs/vision/clawql-modularization-v2.md`                                 | `scripts/sync-clawql-modularization-doc.mjs`    |
+| `/vision/technical-enablement` | `docs/vision/clawql-master-enablement-guide.md` (**canonical vision**)  | `scripts/sync-clawql-master-enablement-doc.mjs` |
+| `/vision/modularization`       | `docs/vision/clawql-modularization-v2.md` (companion)                     | `scripts/sync-clawql-modularization-doc.mjs`    |
 | `/vision/slide-deck`           | `docs/presentations/clawql-slides.md`                                     | `scripts/sync-clawql-slides-doc.mjs`            |
-| `/vision/technical-enablement` | `docs/vision/clawql-master-enablement-guide.md`                           | `scripts/sync-clawql-master-enablement-doc.mjs` |
 | `/security/defense-in-depth`   | `docs/security/clawql-comprehensive-defense-in-depth-mcp-k3s-may-2026.md` | `scripts/sync-clawql-defense-in-depth-doc.mjs`  |
 | `/security/best-practices/*`   | `docs/security/security-best-practices-series/*.md`                       | `scripts/sync-security-training-modules.mjs`    |
 

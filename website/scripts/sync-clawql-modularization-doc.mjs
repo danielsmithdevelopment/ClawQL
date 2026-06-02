@@ -1,10 +1,10 @@
 /**
- * Copies the canonical ClawQL Modularization vision doc (v2.0) from docs/ into an
- * MDX fragment under src/generated/ so /vision/modularization imports one source
- * of truth without hand-duplicating long Markdown.
+ * Copies the v2.0 **companion** modularization doc from docs/ into an MDX fragment
+ * for /vision/modularization. Overall product vision canon is
+ * docs/vision/clawql-master-enablement-guide.md (/vision/technical-enablement).
  *
  * Source: docs/vision/clawql-modularization-v2.md → src/generated/clawql-modularization-body.mdx
- * (The v1.9 narrative remains in-repo at docs/vision/clawql-modularization.md for GitHub readers.)
+ * (v1.9 package matrix: docs/vision/clawql-modularization.md — GitHub only.)
  *
  * Run from website/: node scripts/sync-clawql-modularization-doc.mjs
  *
