@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { formatSearchResults, searchOperations } from "./spec-search.js";
-import type { Operation } from "./spec-loader.js";
+import type { Operation } from "./operation-types.js";
 
 const baseOp = {
   method: "GET",

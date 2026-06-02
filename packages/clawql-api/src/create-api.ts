@@ -9,9 +9,14 @@ import { ClawQLApi, clawqlApiLayer } from "./clawql-api-service.js";
 import { ExecuteNotConfiguredLive, ExecuteService } from "./execute-service.js";
 import { defaultPlugins } from "./plugins/panguard-proxy-plugin.js";
 import { PluginRegistry } from "./plugin-registry.js";
+import { McpProxyPipeline, mcpProxyPipelineLayer } from "./proxy/mcp-proxy-pipeline.js";
 import { SearchNotConfiguredLive, SearchService } from "./search-service.js";
 
-export type ClawQLApiRuntimeServices = ClawQLApi | SearchService | ExecuteService;
+export type ClawQLApiRuntimeServices =
+  | ClawQLApi
+  | SearchService
+  | ExecuteService
+  | McpProxyPipeline;
 
 export type ClawQLApiRuntimeError = PluginAlreadyRegisteredError | ClawQLError | Error;
 
@@ -45,6 +50,7 @@ export function createClawQLApi(options: CreateClawQLApiOptions = {}): ClawQLApi
   const baseLayer: Layer.Layer<ClawQLApiRuntimeServices, never, never> = Layer.mergeAll(
     AuditLive,
     Layer.succeed(ClawQLApi, clawqlApiLayer(registry)),
+    mcpProxyPipelineLayer(registry),
     options.searchLayer ?? SearchNotConfiguredLive,
     options.executeLayer ?? ExecuteNotConfiguredLive
   );

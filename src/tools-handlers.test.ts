@@ -2,14 +2,12 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import * as specLoader from "./spec-loader.js";
+import type { OpenAPIDoc, Operation } from "./spec-loader.js";
 import { resetSpecCache } from "./spec-loader.js";
-import type { OpenAPIDoc } from "./spec-loader.js";
-import type { Operation } from "./spec-loader.js";
 import { handleMemoryIngestToolInput } from "./memory-ingest.js";
 import { handleMemoryRecallToolInput } from "./memory-recall.js";
 import { handleClawqlCodeToolInput } from "./sandbox-bridge-client.js";
-import { resetClawqlApiForTests } from "./clawql-api-adapters.js";
+import { resetClawqlApiForTests, setLoadSpecForTests } from "./clawql-api-adapters.js";
 import {
   handleClawqlExecuteToolInput,
   handleClawqlSearchToolInput,
@@ -25,6 +23,7 @@ describe("MCP tool handlers", () => {
   afterEach(() => {
     vi.restoreAllMocks();
     resetSchemaFieldCache();
+    setLoadSpecForTests(undefined);
     resetClawqlApiForTests();
   });
 
@@ -40,7 +39,7 @@ describe("MCP tool handlers", () => {
         parameters: {},
       } as Operation,
     ];
-    vi.spyOn(specLoader, "loadSpec").mockResolvedValue({
+    setLoadSpecForTests(async () => ({
       operations,
       openapi: {
         openapi: "3.0.0",
@@ -49,7 +48,7 @@ describe("MCP tool handlers", () => {
         components: { schemas: {} },
       },
       rawSource: {},
-    });
+    }));
 
     const out = await handleClawqlSearchToolInput({
       query: "list pets",
@@ -62,7 +61,7 @@ describe("MCP tool handlers", () => {
   });
 
   it("handleClawqlExecuteToolInput returns error for unknown operationId", async () => {
-    vi.spyOn(specLoader, "loadSpec").mockResolvedValue({
+    setLoadSpecForTests(async () => ({
       operations: [],
       openapi: {
         openapi: "3.0.0",
@@ -71,7 +70,7 @@ describe("MCP tool handlers", () => {
         components: { schemas: {} },
       },
       rawSource: {},
-    });
+    }));
     const out = await handleClawqlExecuteToolInput({
       operationId: "missing.op",
       args: {},
@@ -108,7 +107,7 @@ describe("MCP tool handlers", () => {
           components: { schemas: {} },
         };
 
-        vi.spyOn(specLoader, "loadSpec").mockResolvedValue({
+        setLoadSpecForTests(async () => ({
           operations: [
             {
               id: "alpha::listPets",
@@ -126,7 +125,7 @@ describe("MCP tool handlers", () => {
           openapis: [openapi],
           multi: true,
           rawSource: {},
-        });
+        }));
 
         const out = await handleClawqlExecuteToolInput({
           operationId: "alpha::listPets",
@@ -178,7 +177,7 @@ describe("MCP tool handlers", () => {
           components: { schemas: {} },
         };
 
-        vi.spyOn(specLoader, "loadSpec").mockResolvedValue({
+        setLoadSpecForTests(async () => ({
           operations: [
             {
               id: "listPets",
@@ -193,7 +192,7 @@ describe("MCP tool handlers", () => {
           openapi,
           multi: false,
           rawSource: {},
-        });
+        }));
 
         resetSpecCache();
         resetSchemaFieldCache();

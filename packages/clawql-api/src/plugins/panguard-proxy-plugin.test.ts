@@ -3,6 +3,7 @@ import {
   createPanguardProxyPlugin,
   defaultPlugins,
   PANGUARD_PROXY_PLUGIN_ID,
+  panguardInProcessEnabled,
   panguardProxyPluginEnabled,
 } from "./panguard-proxy-plugin.js";
 
@@ -12,6 +13,15 @@ describe("createPanguardProxyPlugin", () => {
     expect(plugin.id).toBe(PANGUARD_PROXY_PLUGIN_ID);
     expect(plugin.kind).toBe("mcp-proxy");
     expect(plugin.vertical).toBe("security");
+  });
+
+  it("registers beforeCallTool when in-process", () => {
+    const saved = process.env.CLAWQL_PANGUARD_IN_PROCESS;
+    process.env.CLAWQL_PANGUARD_IN_PROCESS = "1";
+    const plugin = createPanguardProxyPlugin();
+    expect(plugin.beforeCallTool).toBeDefined();
+    if (saved === undefined) delete process.env.CLAWQL_PANGUARD_IN_PROCESS;
+    else process.env.CLAWQL_PANGUARD_IN_PROCESS = saved;
   });
 
   it("defaultPlugins includes Panguard unless disabled", () => {
@@ -24,5 +34,15 @@ describe("createPanguardProxyPlugin", () => {
     expect(defaultPlugins()).toHaveLength(0);
     if (saved === undefined) delete process.env.CLAWQL_PANGUARD_PROXY_PLUGIN;
     else process.env.CLAWQL_PANGUARD_PROXY_PLUGIN = saved;
+  });
+
+  it("panguardInProcessEnabled follows env", () => {
+    const saved = process.env.CLAWQL_PANGUARD_IN_PROCESS;
+    delete process.env.CLAWQL_PANGUARD_IN_PROCESS;
+    expect(panguardInProcessEnabled()).toBe(false);
+    process.env.CLAWQL_PANGUARD_IN_PROCESS = "1";
+    expect(panguardInProcessEnabled()).toBe(true);
+    if (saved === undefined) delete process.env.CLAWQL_PANGUARD_IN_PROCESS;
+    else process.env.CLAWQL_PANGUARD_IN_PROCESS = saved;
   });
 });
