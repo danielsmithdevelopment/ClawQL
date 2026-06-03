@@ -14,11 +14,15 @@ export function stripVaultFrontmatter(s: string): string {
 /** Obsidian `[[note|alias]]` uses the left side as target. */
 export function extractWikilinkTargets(markdown: string): string[] {
   const out: string[] = [];
-  const re = /\[\[([^\]]+)\]\]/g;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(markdown)) !== null) {
-    const raw = m[1].split("|")[0]?.trim();
+  let i = 0;
+  while (i < markdown.length) {
+    const start = markdown.indexOf("[[", i);
+    if (start === -1) break;
+    const end = markdown.indexOf("]]", start + 2);
+    if (end === -1) break;
+    const raw = markdown.slice(start + 2, end).split("|")[0]?.trim();
     if (raw) out.push(raw);
+    i = end + 2;
   }
   return out;
 }

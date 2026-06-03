@@ -114,8 +114,10 @@ function schemaRefToName(schema: unknown): string | undefined {
   if (!schema || typeof schema !== "object") return undefined;
   const s = schema as Record<string, unknown>;
   if (typeof s.$ref !== "string") return undefined;
-  const m = s.$ref.match(/#\/components\/schemas\/(.+)$/);
-  return m ? m[1] : undefined;
+  const prefix = "#/components/schemas/";
+  if (!s.$ref.startsWith(prefix)) return undefined;
+  const name = s.$ref.slice(prefix.length);
+  return name.length > 0 ? name : undefined;
 }
 
 /** Inline `#/components/requestBodies/<name>` so MIME + schema can be read (e.g. Cloudflare rulesets). */
