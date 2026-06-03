@@ -20,7 +20,10 @@ export function extractWikilinkTargets(markdown: string): string[] {
     if (start === -1) break;
     const end = markdown.indexOf("]]", start + 2);
     if (end === -1) break;
-    const raw = markdown.slice(start + 2, end).split("|")[0]?.trim();
+    const raw = markdown
+      .slice(start + 2, end)
+      .split("|")[0]
+      ?.trim();
     if (raw) out.push(raw);
     i = end + 2;
   }
