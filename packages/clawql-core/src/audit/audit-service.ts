@@ -48,7 +48,7 @@ function serviceFromBuffer(
         };
         return buffer.append(entry);
       }),
-    list: (limit) => Effect.sync(() => buffer.list(limit)),
+    list: (limit: number) => Effect.sync(() => buffer.list(limit)),
     clear: () => Effect.sync(() => buffer.clear()),
     resetForTests: () => Effect.sync(() => resetBuffer()),
   });
