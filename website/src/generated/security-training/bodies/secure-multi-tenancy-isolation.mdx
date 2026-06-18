@@ -67,7 +67,7 @@ Per-Tenant Vault Paths and Policy Boundaries
 
 Vault is the source of truth for all secrets, so it must be tenant-isolated.
 
-- Vault OSS: Use strict path-prefix isolation (secret/tenants//\*).
+- Vault OSS: Use strict path-prefix isolation (secret/tenants//\\\*).
 
 - Vault Enterprise (recommended for production SaaS): Use separate Vault namespaces — tenant A’s token cannot make API calls to tenant B’s namespace.
 

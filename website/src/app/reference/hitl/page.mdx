@@ -1,0 +1,37 @@
+import { Button } from '@/components/Button'
+import { Note } from '@/components/mdx'
+
+# HITL & human interfaces
+
+Human-in-the-loop patterns for agent systems that must pause for approval, route work to reviewers, or expose hypermedia dashboards. {{ className: 'lead' }}
+
+## Approval flows (protocol v2.1)
+
+High-impact tool calls use **two-phase commit** with JSON for agents and **HTML + htmx** for human operators. Responses include **`approval_url`** (HATEOAS) so the next action is discoverable from the envelope.
+
+→ [Protocol reference (v2.1)](/reference/protocol) · [DAOS specification](/ouroboros/specification)
+
+## Label Studio integration
+
+Optional **`hitl_enqueue_label_studio`** (**`CLAWQL_ENABLE_HITL_LABEL_STUDIO=1`**) enqueues review tasks and accepts webhook callbacks.
+
+→ [HITL — Label Studio](/hitl-label-studio) · [Learn: schedule & notify](/learn/schedule-notify-workflows)
+
+## Natural language dashboard (planned)
+
+The **Natural Language Dashboard** and **Agent Dashboard as hypermedia** are specified in the [Contributor Technical Specification](/contributing/technical-specification) and [Vision & Roadmap](/vision/roadmap) — not yet shipped as a standalone product surface.
+
+<Note>
+  Until the dashboard ships, use Label Studio + Slack **`notify`** for human
+  review loops, and the gateway approval endpoints for destructive/financial
+  tool gates.
+</Note>
+
+<div className="not-prose my-8 flex flex-wrap gap-3">
+  <Button href="/reference/protocol" arrow="right">
+    <>Protocol reference</>
+  </Button>
+  <Button href="/hitl-label-studio" variant="outline">
+    <>Label Studio guide</>
+  </Button>
+</div>

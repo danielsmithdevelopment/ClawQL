@@ -82,7 +82,7 @@ Key rules we ship out of the box:
 
 - Sensitive file read outside declared paths
 
-- Any process other than approved model-serving binaries accessing /dev/nvidia\* (Module 17)
+- Any process other than approved model-serving binaries accessing /dev/nvidia\\\* (Module 17)
 
 Falco output is shipped via Fluent Bit to both the WORM audit trail and the SIEM in parallel.
 

@@ -1,119 +1,69 @@
 # Model Weight Integrity: Verifying Authenticity Before Every Load
 
-Verifying Authenticity Before Every Load
+## Why model weights are executable code
 
-Hello and welcome to Module 16!
+- A model weight file determines what the model computes — altering weights changes behavior as surely as altering source code
+- Unlike source code, weight files are large binary blobs that are difficult to inspect visually
+- A weight file that can be silently replaced between training and inference gives an attacker control over model behavior without touching any application code
+- Threat model: supply chain attack on the weight hosting infrastructure, man-in-the-middle on the weight download, insider modification post-training
 
-Modules 1–15 have secured everything from images and skills to data classification and multi-agent pipelines. Now we protect the model weights themselves — the executable code that determines what the model actually computes.
+## Cryptographic hash verification
 
-A model weight file is not just data. Altering even a few bytes can change the model’s behavior as surely as changing the application source code. Because weights are large binary blobs, they are difficult to inspect visually, making them a perfect target for supply-chain attacks.
+- Every approved weight file has a SHA-256 (or SHA-3) hash recorded in a Vault-backed manifest
+- The hash is computed at training completion and signed by the training pipeline's identity before being written to the manifest
+- At load time, the serving infrastructure recomputes the hash and compares it to the signed manifest value
+- Hash mismatch: load aborted, alert fired, the serving pod does not start
+- Verification runs on every load — not just at deployment time
 
-In this module we treat model weights with the same cryptographic rigor we apply to container images. By the end you will have a system that verifies authenticity on every single load, backed by HSM signing keys, immutable storage, and behavioral monitoring for the rare case where a backdoor was inserted during training.
+## HSM-backed signing keys
 
----
+- The signing key for weight manifests is stored in the HSM (same HSM as Vault's unseal key)
+- Training pipeline authenticates to the HSM via its OIDC workload identity before signing
+- Signing key cannot be extracted from the HSM — even a compromised training pipeline cannot forge a signature without HSM access
+- Key rotation: new signing key issued annually; transition period where both old and new keys are trusted during the rotation window
 
-Why Model Weights Are Executable Code
+## Weight storage and access control
 
-Think of a model weight file as compiled machine code for the neural network. Changing the weights changes the computation.
+- Approved weights stored in a locked S3 bucket (Object Lock, COMPLIANCE mode) with versioning enabled
+- IAM policy: only the signing principal can write new weight versions; serving infrastructure is read-only
+- Weight download over TLS with certificate pinning to the storage endpoint — MITM interception detected
+- No serving infrastructure stores weights locally beyond the current serving session — weights are loaded, verified, and released
 
-Real threats include:
+## What hash verification does and does not cover
 
-- Supply-chain compromise of the weight hosting infrastructure (Hugging Face, internal model registry, S3 bucket).
+Hash verification answers one question precisely: is this the exact file that was signed at training completion? It answers that question with cryptographic certainty. It does not, and cannot, answer a different question: was the _training process_ that produced this file compromised before it ever got signed?
 
-- Man-in-the-middle attack during download.
+A weight file modified after training — swapped on a storage volume, intercepted in transit, replaced by a compromised serving node — is caught by hash verification, every time, on every load. This is the threat model hash verification exists for, and it covers it completely.
 
-- Insider modification after training but before deployment.
+A backdoor introduced _during_ training — through poisoned training data, a compromised training pipeline that produces a model with hidden behavior, or a subtly adversarial fine-tuning step — produces a weight file that is entirely legitimate from the hash verification's perspective. It was signed correctly, by the correct pipeline, because the pipeline itself produced the backdoored weights as its normal output. There is no hash to mismatch.
 
-A weight file that can be silently replaced between training and inference means every security control downstream of the model (Panguard, ATR rules, sandboxing) is built on a compromised foundation. We must close this window completely.
+## Detecting training-time backdoors is an open problem, not a solved one
 
----
+Be direct about this with anyone relying on this module for assurance: there is no reliable, general technique for detecting a backdoor introduced during training by examining the resulting weights. This is an active area of research, and published results are typically specific to particular backdoor types, trigger patterns, or model architectures — they do not generalize to "detect any backdoor in any model."
 
-Cryptographic Hash Verification
+What this module's controls actually provide, honestly stated:
 
-Every approved weight file has a SHA-256 (or stronger SHA-3) hash recorded in a Vault-backed manifest.
+- **Hash verification and HSM-backed signing** close the _post-training_ tampering vector completely. This is real, mechanical security and should be implemented regardless.
+- **Behavioral evaluation against a fixed test set** (a canary suite run on every model update) can catch backdoors that manifest as _general capability regression_ — a model that got measurably worse at its evaluation suite is suspicious regardless of cause. It is not designed to and should not be relied upon to catch a backdoor that is narrow, targeted, and doesn't touch the evaluation distribution at all — which describes most backdoors of actual concern.
+- **Output distribution monitoring in production** can surface a deployed model behaving differently than its evaluation suite predicted — useful for catching drift, environment mismatches, or a backdoor that happens to trigger on production traffic patterns not represented in evaluation. It is not a backdoor detector; it is a "this model is behaving unexpectedly" detector, and a sophisticated backdoor is specifically designed not to trigger this.
 
-The process:
+## What this means operationally
 
-1. At the end of training, the pipeline computes the hash of the final weight file.
+The defensible position is: control the training pipeline's integrity as rigorously as you control the weight storage's integrity. Hash verification and signing protect the chain _from training completion onward_ — extend the same supply chain discipline (Modules 1–3) to the training pipeline itself: who can modify training code, what data sources feed training, what review gates exist before a training run that will produce a production model. This is where backdoor risk is actually addressed — not at the weight-loading step, where it's already too late to detect most backdoors that matter.
 
-2. The training pipeline signs the hash using its OIDC identity and writes it to the signed manifest in Vault.
+For externally-sourced weights (Module 26's multi-provider weight management), this risk is structurally higher — you have no visibility into the training pipeline at all. The mitigation is not technical verification of the weights themselves; it is provenance and reputation of the source, combined with the broadest practical behavioral evaluation before promotion, with the explicit understanding that evaluation provides a floor of confidence, not a ceiling.
 
-3. At load time, the serving infrastructure recomputes the hash of the file it just downloaded and compares it to the signed manifest value.
+## Multi-provider weight management
 
-Hash mismatch = load aborted immediately, alert fired, serving pod does not start.
+- When using weights from external providers (HuggingFace, model registries), apply the same hash and signature verification pipeline described above for post-acquisition integrity
+- Verify the provider's published hash against the downloaded file before adding to the approved manifest
+- Do not download weights directly to serving infrastructure — pull to a staging environment, verify, sign, then promote to the approved store
+- Provider-published hashes should be verified against a secondary source (the provider's GPG-signed release notes, not just the download page)
+- Run the full behavioral evaluation suite (Module 24) before promoting any externally-sourced weight to production, and treat the result as informative rather than conclusive for training-time integrity
 
-Verification runs on every load — not just at deployment time. This closes the post-deployment modification window.
+## Key takeaways
 
----
-
-HSM-Backed Signing Keys
-
-The signing key that approves weight manifests is stored in the same HSM used for Vault unsealing (Module 8).
-
-Properties:
-
-- Training pipeline authenticates to the HSM via its OIDC workload identity before signing.
-
-- The private key can never be extracted from the HSM — even a fully compromised training pipeline cannot forge a signature.
-
-- Annual key rotation with a transition period where both old and new keys are trusted.
-
----
-
-Weight Storage and Access Control
-
-Approved weights live in a locked S3 bucket (or equivalent) with these controls:
-
-- Object Lock in COMPLIANCE mode + versioning enabled.
-
-- IAM policy: only the signing principal can write new weight versions; serving infrastructure is strictly read-only.
-
-- All downloads occur over TLS with certificate pinning to the storage endpoint.
-
-Serving infrastructure never stores weights locally beyond the current serving session — they are loaded, verified, and released.
-
----
-
-Behavioral Monitoring for Compromised Weights
-
-Cryptographic verification catches post-training tampering, but what about a backdoor inserted during training?
-
-We add behavioral monitoring:
-
-- At training completion, establish a baseline distribution of model outputs on a fixed evaluation set.
-
-- In production, monitor the serving output distribution (token distribution, unexpected output categories).
-
-- Weekly canary evaluation: run the fixed evaluation set against the live model and alert on benchmark score regression >5 %.
-
-Any significant drift triggers an immediate investigation and weight rollback.
-
----
-
-Multi-Provider Weight Management
-
-When using weights from external providers (Hugging Face, public model registries):
-
-- Never download directly to serving infrastructure.
-
-- Pull to a staging environment, verify the provider’s published hash against the downloaded file.
-
-- Sign the verified weights with our own HSM key and promote to the approved store.
-
-- Cross-check the provider’s hash against a secondary source (GPG-signed release notes).
-
-This applies the same verification pipeline used for internally trained models.
-
----
-
-Key Takeaways (Memorize These!)
-
-- Weight files are executable code and must be treated with the same supply-chain controls as container images.
-
-- Hash verification at every load, not just deployment, closes the post-deployment modification window.
-
-- HSM-backed signing keys prevent a compromised training pipeline from forging a weight approval.
-
-- Behavioral monitoring catches backdoored weights that pass hash verification because the modification was made pre-training.
-
-You now have model weights that are cryptographically verified on every load, stored immutably, signed by HSM-backed keys, and continuously monitored for behavioral anomalies. The foundation on which your agents reason is now as trustworthy as every other layer in the platform. This completes the last major supply-chain surface for the intelligence layer itself.
+- Hash verification and HSM-backed signing completely close the post-training tampering vector — implement this regardless of anything else in this module
+- Detecting a backdoor introduced during training by examining the resulting weights is an open research problem with no general solution — do not represent behavioral monitoring as solving this
+- Behavioral evaluation and output monitoring are real, useful controls for capability regression and production drift — they are not backdoor detectors, and should not be the basis for a claim that backdoored weights will be caught
+- Backdoor risk is addressed by securing the training pipeline itself, not by inspecting its output — apply the same supply chain rigor to training infrastructure as to weight storage

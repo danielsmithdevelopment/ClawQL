@@ -40,10 +40,10 @@ function HomeMarketingSectionsSkeleton() {
       </div>
       <div>
         <h2
-          id="case-studies"
+          id="examples"
           className="scroll-mt-24 text-2xl font-bold tracking-tight text-zinc-900 dark:text-white"
         >
-          Case studies
+          Examples
         </h2>
         <div className="not-prose mt-4 border-t border-zinc-900/5 pt-10 dark:border-white/5">
           <div className="grid min-h-[10rem] grid-cols-1 gap-8 sm:grid-cols-2 xl:grid-cols-3">

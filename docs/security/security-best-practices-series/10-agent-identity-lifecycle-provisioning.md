@@ -8,7 +8,7 @@ tags:
   - provisioning
   - decommissioning
 part: 10
-total_parts: 30
+total_parts: 32
 date: "May 2026"
 slug: "agent-identity-lifecycle-provisioning"
 canonical_path: "/security/best-practices/agent-identity-lifecycle-provisioning"

@@ -1,5 +1,5 @@
 /**
- * Copies the v2.0 **companion** modularization doc from docs/ into an MDX fragment
+ * Copies the v2.1 modularization doc from docs/ into an MDX fragment
  * for /vision/modularization. Overall product vision canon is
  * docs/vision/clawql-master-enablement-guide.md (/vision/technical-enablement).
  *
@@ -66,6 +66,10 @@ let body = fs.readFileSync(src, 'utf8')
 body = body.replaceAll(
   '../../website/public/vision/clawql-dependency-stack.png',
   '/vision/clawql-dependency-stack.png',
+)
+body = body.replaceAll(
+  '](./clawql-hybrid-decentralized-github-alternative.md)',
+  '](/vision/immutable-releases)',
 )
 fs.writeFileSync(dst, body)
 execSync('npx prettier --write src/generated/clawql-modularization-body.mdx', {

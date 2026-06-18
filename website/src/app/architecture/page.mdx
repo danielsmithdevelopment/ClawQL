@@ -1,0 +1,31 @@
+import { Button } from '@/components/Button'
+import { Note } from '@/components/mdx'
+import { ArchitectureHubGrid } from '@/components/DocsHubSections'
+
+# Architecture & Vision
+
+ClawQL is an **agent-first operating system** — not another prompt library. These documents define the 6-layer platform, strategic coordination, and how immutable releases anchor trust. {{ className: 'lead' }}
+
+<Note>
+  **Start here for status:** [Vision & Roadmap](/vision/roadmap) (honest shipped
+  vs planned). **Unified index:** [Master enablement
+  guide](/vision/technical-enablement) v2.1.
+</Note>
+
+<div className="not-prose my-8 flex flex-wrap gap-3">
+  <Button href="/vision/roadmap" arrow="right">
+    <>Vision & Roadmap</>
+  </Button>
+  <Button href="/vision/technical-enablement" variant="outline">
+    <>Master enablement</>
+  </Button>
+  <Button href="/ouroboros/specification" variant="outline">
+    <>DAOS specification</>
+  </Button>
+</div>
+
+## Platform architecture
+
+The stack spans **Layer 0 immutable releases** through **LGTMP observability**. Package boundaries and the intelligent MCP gateway are specified in Modularization v2.1; the DAOS specification covers protocol v2.1, HATEOAS approval flows, and decentralized handoff.
+
+<ArchitectureHubGrid />

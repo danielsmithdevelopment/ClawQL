@@ -76,6 +76,39 @@ function rewriteLinksForSite(body) {
   return escapeMdxCurlyOutsideFences(
     escapeLessThanBeforeDigit(
       body
+        .replaceAll('](./clawql-vision-roadmap.md)', '](/vision/roadmap)')
+        .replaceAll(
+          '](./clawql-modularization-v2.md)',
+          '](/vision/modularization)',
+        )
+        .replaceAll(
+          '](./clawql-hybrid-decentralized-github-alternative.md)',
+          '](/vision/immutable-releases)',
+        )
+        .replaceAll(
+          '](../contributing/clawql-contributor-technical-specification.md)',
+          '](/contributing/technical-specification)',
+        )
+        .replaceAll(
+          '](../deployment/clawql-deployment-operations-guide.md)',
+          '](/deployment/operations-guide)',
+        )
+        .replaceAll(
+          '](../security/clawql-defense-in-depth-security-guide.md)',
+          '](/security/defense-in-depth)',
+        )
+        .replaceAll(
+          '](../security/security-best-practices-series/README.md)',
+          '](/security/best-practices)',
+        )
+        .replaceAll(
+          '](../architecture/clawql-token-efficiency.md)',
+          '](/architecture/token-efficiency)',
+        )
+        .replaceAll(
+          '](../ouroboros/decentralized-agent-operating-system-specification.md)',
+          '](/ouroboros/specification)',
+        )
         .replaceAll('](../../charts/', `](${GH_MAIN}/charts/`)
         .replaceAll('](../../docs/', `](${GH_MAIN}/docs/`)
         .replaceAll('](../docs/', `](${GH_MAIN}/docs/`)

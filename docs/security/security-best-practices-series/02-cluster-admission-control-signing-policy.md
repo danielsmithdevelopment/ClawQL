@@ -9,7 +9,7 @@ tags:
   - admission-control
   - pod-security
 part: 2
-total_parts: 30
+total_parts: 32
 date: "May 2026"
 slug: "cluster-admission-control-signing-policy"
 canonical_path: "/security/best-practices/cluster-admission-control-signing-policy"

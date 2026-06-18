@@ -3,7 +3,7 @@ import { docsPageMetadata } from '@/lib/seo'
 export const metadata = docsPageMetadata({
   title: 'ClawQL Modularization',
   description:
-    'ClawQL Modularization v2.0: intelligent MCP gateway, package ecosystem, operator CRD, defense-in-depth, and phased roadmap — vision with planned and in-progress work vs shipped code.',
+    'ClawQL Modularization v2.1: package boundaries, dependency graph, Kubernetes Operator, and intelligent MCP gateway design — authoritative reference for contributors.',
   path: '/vision/modularization',
   ogType: 'article',
 })

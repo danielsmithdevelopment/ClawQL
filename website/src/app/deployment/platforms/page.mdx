@@ -1,0 +1,41 @@
+# Platform operations
+
+**Streamable HTTP**, optional **gRPC**, **Docker**, and **Cloud Run** — the transport and hosting options that sit alongside [Tier 1 Quickstart](/quickstart) and [Kubernetes](/deployment/kubernetes). {{ className: 'lead' }}
+
+## Streamable HTTP
+
+From the published package:
+
+```bash
+PORT=8080 npx -p clawql-mcp clawql-mcp-http
+```
+
+Default local MCP endpoint (**`make local-k8s-up`** + **`values-docker-desktop.yaml`**): **`http://clawql-mcp.localhost/mcp`**. Configure the client with **`url`**, not **`command`**.
+
+**Private tailnet:** [Tailscale & Headscale](/tailscale) — MagicDNS, Serve, and **`CLAWQL_MCP_URL`** patterns.
+
+## Optional gRPC (protobuf MCP)
+
+Set **`ENABLE_GRPC=1`**; the server listens on **`GRPC_PORT`** (default **50051**). On Kubernetes, the **`clawql-mcp-http`** Service publishes HTTP and gRPC — see [Kubernetes](/deployment/kubernetes).
+
+## Docker
+
+Multi-stage **Distroless** image: [`docker/README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docker/README.md).
+
+## Security and supply chain
+
+Golden image pipeline: [`docs/security/golden-image-pipeline.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/golden-image-pipeline.md). Cluster admission: [Security](/security).
+
+## Cloud Run
+
+```bash
+PROJECT_ID="your-project-id" REGION="us-central1" bash scripts/deploy/deploy-cloud-run.sh
+```
+
+Full options: [`docs/deployment/deploy-cloud-run.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/deploy-cloud-run.md).
+
+## Human-in-the-loop
+
+Optional **`hitl_enqueue_label_studio`** — [HITL & human interfaces](/reference/hitl).
+
+Details for remote Kustomize deploy: [`docs/deployment/deploy-k8s.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/deploy-k8s.md).

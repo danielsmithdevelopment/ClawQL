@@ -92,9 +92,9 @@ Attackers love to hide instructions using encoding tricks. We normalize and scan
 
 - Homoglyph detection: flag look-alike characters (Cyrillic а vs Latin a, etc.).
 
-- Strip zero-width characters (\u200b, \u200c, \u200d, \uFEFF).
+- Strip zero-width characters (\\u200b, \\u200c, \\u200d, \\uFEFF).
 
-- Strip right-to-left override (\u202e).
+- Strip right-to-left override (\\u202e).
 
 - Base64 and hex decode-and-scan: if a field contains valid base64 or hex, we decode it and run injection pattern matching on both the raw and decoded content.
 

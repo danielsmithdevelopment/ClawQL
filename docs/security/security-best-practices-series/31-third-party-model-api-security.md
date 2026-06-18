@@ -1,0 +1,83 @@
+---
+title: "Third-Party Model API Security: Securing Calls to External LLM Providers"
+series: "Agentic AI Security Curriculum"
+level: intermediate
+tags:
+  - external-models
+  - api-keys
+  - classification
+  - egress
+  - retention
+part: 31
+total_parts: 32
+date: "May 2026"
+slug: "third-party-model-api-security"
+canonical_path: "/security/best-practices/third-party-model-api-security"
+description: "API key hygiene, classification-gated outbound prompts, provider retention policies, multi-provider routing, and WORM audit for external LLM calls."
+prev: "human-operator-security-admin-controls"
+next: "where-to-start-prioritization-new-deployment"
+---
+
+# Third-Party Model API Security: Securing Calls to External LLM Providers
+
+## Why this is a distinct problem from self-hosted model security
+
+- Most of this curriculum assumes models running inside infrastructure you control — self-hosted weights, gateways you operate, sandboxes you configure
+- Many production systems instead call external providers: OpenAI, Anthropic, Google, and others, over the public internet
+- This shifts the trust boundary. You no longer control the inference environment, the logging policy, or the data retention practices of the system processing your prompts
+- The threat model is not "can this model be compromised" — it's "what happens to everything I send to this model, and who else might see it"
+
+## API key management for external providers
+
+- External provider API keys are bearer credentials — anyone holding the key can make calls billed to your account and can potentially access response data if the provider's API allows key-scoped retrieval of past requests
+- Store provider API keys in Vault, issued as dynamic secrets where the provider supports key rotation via API; for providers that only support long-lived keys, treat rotation as a manual operational task with a defined schedule (Module 26 patch cadence applies here too)
+- Never embed provider API keys in agent context, system prompts, or anything that could be reflected back in a response — a model cannot leak a credential it never received
+- Separate API keys per environment (dev/staging/production) and, where the provider supports it, per service or per team — a leaked staging key should not grant production-level rate limits or billing exposure
+- Monitor provider usage dashboards for anomalous request volume or cost spikes — this is often the first signal of a leaked key, frequently before any internal alert fires
+
+## Data sent to external providers is data you no longer control
+
+- Every prompt, every tool result included in context, and every piece of retrieved memory sent to an external provider leaves your infrastructure
+- Apply the same Presidio redaction (Module 15) to outbound requests to external model providers as to any other external tool call — classification-gated content should never reach an external model's context window
+- `maxClassificationLevel` from the skill manifest model (Module 6) applies here: if a workflow involves `confidential`-or-above data, either the external model call must be restricted to `internal`-or-below content, or the workflow must use a self-hosted model instead
+- This is not a theoretical restriction — it is the practical reason many regulated organizations maintain a self-hosted model specifically for workflows touching classified data, while using external providers for general-purpose tasks
+
+## Provider data retention and training use policies
+
+- Providers differ — and change — their policies on whether API request data is retained, for how long, and whether it can be used for model training
+- Do not rely on memory or general reputation for a provider's current policy. Policies change, and the policy that applies to a consumer chat product is often different from the policy that applies to API usage
+- Before routing any workflow through an external provider, verify the current policy for the specific API product being used (not the company's general policy) and record the verification date and source in the provider's `ProviderSpec` configuration
+- Re-verify on a defined cadence (quarterly, aligned with Module 25) — a policy that was acceptable at integration time is not guaranteed to remain acceptable
+- Zero-data-retention (ZDR) options, where offered, should be the default for any workflow processing `internal`-or-above data, configured explicitly rather than assumed
+
+## Prompt injection via external model responses
+
+- An external model's response is, from your system's perspective, the same category of untrusted input as a tool result or a log line (Module 12's core principle: tool results are data, not instructions)
+- This applies even though the external model is "your" model in the sense that you're paying for and directing it — its output can still be influenced by content you included in the prompt (including retrieved documents, tool results, or user input), and that output flows back into your agent's context as if it were trusted reasoning
+- The same Panguard ATR enforcement that governs tool calls must govern any action taken as a result of an external model's response — the external model's output does not get to bypass the tool-call boundary just because it came from "the LLM" rather than "a tool"
+
+## Network-level controls for external API calls
+
+- External provider endpoints are declared in the egress allowlist (Module 6) like any other external host — `api.anthropic.com`, `api.openai.com`, etc., each as an explicit `ServiceEntry`
+- TLS certificate pinning for provider endpoints, consistent with the certificate inventory in Module 26, with the same 60-day expiry alerting
+- DLP inspection (Module 6) applies to outbound requests to external model providers exactly as it does to any other external tool call — the request body containing the prompt and context is the payload being inspected
+- Rate limit monitoring for external provider calls serves double duty: it catches both cost overruns and a subset of exfiltration patterns (Module 13's session-level egress volume detection extends naturally to external model calls)
+
+## Multi-provider routing and fallback considerations
+
+- Systems that route between multiple external providers (for cost, capability, or availability reasons) must apply data classification and retention policy checks per-provider, not once for the system as a whole — a workflow approved for Provider A's ZDR tier is not automatically approved for Provider B
+- Fallback logic that silently routes a request to a different provider on failure can silently violate a classification boundary if the fallback provider's policy hasn't been verified — fallback routing rules must inherit the same `maxClassificationLevel` checks as the primary route, not bypass them
+- Model routing configuration (as described for Layer 8 of token-optimization architectures) must be classification-aware: routing a sub-task to a cheaper or faster model is a cost decision, but routing it to a _different provider_ is also a data-handling decision, and the two should not be conflated in configuration
+
+## Audit logging for external model calls
+
+- Every call to an external provider is logged to the WORM audit trail (Module 19's canonical schema) with the same fields as any other external tool call: `requestId`, `actorId`, classification level of the content sent, provider, model identifier, and `payloadHash` — never the payload itself
+- Token usage and cost per call should be logged as structured data, not just aggregated in a billing dashboard — per-session cost anomalies are a security signal (an agent in a runaway loop calling an external model thousands of times) as much as a cost-control one
+- If a provider's policy changes in a way that affects previously-sent data (for example, a retention period that retroactively applies to historical requests), the audit trail is what allows you to determine which sessions, tenants, and data classifications were affected
+
+## Key takeaways
+
+- Calling an external model provider extends your trust boundary to include that provider's infrastructure, logging, and data policies — this requires the same rigor as any other external integration, not less because "it's just the LLM"
+- Provider data retention and training-use policies must be verified per API product and re-verified on a defined schedule, not assumed from general reputation
+- Classification-gated content must never reach an external provider unless that provider's verified policy and configuration support the content's classification level
+- Multi-provider routing must carry classification checks through every fallback path — a verified policy for one provider does not transfer to another

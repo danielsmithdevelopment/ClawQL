@@ -5,7 +5,7 @@ import { trainingModules } from '@/generated/security-training/registry'
 import { docsPageMetadata } from '@/lib/seo'
 
 export const metadata = docsPageMetadata({
-  title: 'Agentic AI security best practices (30 modules)',
+  title: 'Agentic AI security best practices (32 modules)',
   description:
     'Vendor-neutral security guides: supply chain, admission control, zero trust, MCP runtime, data classification, IR, and quarterly review.',
   path: '/security/best-practices',
@@ -29,7 +29,7 @@ export default function SecurityTrainingHubPage() {
         Agentic AI security best practices
       </h1>
       <p className="mt-4 max-w-3xl text-lg text-zinc-600 dark:text-zinc-400">
-        Twenty modules derived from the repo&apos;s{' '}
+        Thirty-two modules derived from the repo&apos;s{' '}
         <a
           href="https://github.com/danielsmithdevelopment/ClawQL/tree/main/docs/security/security-best-practices-series"
           className="font-medium text-claw-graph underline decoration-claw-graph/40 underline-offset-2 hover:text-zinc-900 dark:text-claw-cyan dark:hover:text-claw-cyan-bright"

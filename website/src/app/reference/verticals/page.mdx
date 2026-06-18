@@ -1,0 +1,39 @@
+import { Button } from '@/components/Button'
+import { Note } from '@/components/mdx'
+
+# Verticals guide
+
+Vertical packages (**lending**, **legal**, **healthcare**, etc.) extend the gateway with domain-specific tools while sharing security, memory, and audit infrastructure. {{ className: 'lead' }}
+
+<Note>
+  **No vertical packages are shipped yet.** This page indexes how to enable and
+  build them from the [Contributor Technical
+  Specification](/contributing/technical-specification).
+</Note>
+
+## Design rules
+
+- Verticals **never import other verticals** — cross-domain operations route through **`clawql-api.execute()`**
+- Disabled verticals have **zero runtime footprint** (Operator / `ClawQLInstance` CRD)
+- Each vertical declares **`maxClassificationLevel`**, required ATR purposes, and Presidio policies
+
+## Enabling a vertical
+
+1. Set vertical flags in Tier 2+ **`ClawQLInstance`** spec (see [Deployment & Operations Guide](/deployment/operations-guide))
+2. Register vertical plugins at gateway startup per contributor spec § vertical packages
+3. Run vertical-specific evaluation suites before production promotion
+
+## Building a new vertical
+
+→ [Contributor Technical Specification](/contributing/technical-specification) — vertical plugin interface, Effect-TS patterns, and CI dependency rules
+
+→ [Modularization v2.1](/vision/modularization) — opt-in package ecosystem
+
+<div className="not-prose my-8 flex flex-wrap gap-3">
+  <Button href="/contributing/technical-specification" arrow="right">
+    <>Contributor spec</>
+  </Button>
+  <Button href="/deployment/operations-guide" variant="outline">
+    <>Deployment guide</>
+  </Button>
+</div>

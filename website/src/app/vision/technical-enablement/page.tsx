@@ -5,9 +5,9 @@ import MasterEnablementBody from '@/generated/clawql-master-enablement-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
 
 export const metadata = docsPageMetadata({
-  title: 'Master enablement — unified technical reference',
+  title: 'Master enablement — Agent-First Operating System',
   description:
-    'ClawQL Master Enablement Document (May 2026): canonical vision — platform status, architecture, deployment tiers, compliance, and phased package roadmap from docs/vision.',
+    'ClawQL Master Architecture & Enablement Guide v2.1 (June 2026): 6-layer architecture, Layer 0 immutable releases, gateway, Memory 2.0, Ouroboros, security, LGTMP observability, and documentation suite index.',
   path: '/vision/technical-enablement',
   ogType: 'article',
 })
@@ -23,13 +23,14 @@ export default function VisionMasterEnablementPage() {
           Vision
         </Tag>
         <Tag color="claw" variant="medium">
-          Canonical vision
+          v2.1 · June 2026
         </Tag>
       </div>
 
       <div className="not-prose mb-8">
         <Note>
-          <strong>Canonical vision.</strong> Generated from{' '}
+          <strong>Master Architecture & Enablement Guide.</strong> Generated
+          from{' '}
           <a
             href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/vision/clawql-master-enablement-guide.md"
             className="font-medium text-inherit underline underline-offset-2"
@@ -44,19 +45,40 @@ export default function VisionMasterEnablementPage() {
           from <code className="font-mono text-xs">website/</code> (also runs on{' '}
           <code className="font-mono text-xs">prebuild</code> /{' '}
           <code className="font-mono text-xs">dev</code>
-          ). Companion vision docs:{' '}
+          ). Start with{' '}
+          <a
+            href="/vision/roadmap"
+            className="font-medium text-inherit underline underline-offset-2"
+          >
+            Vision & Roadmap
+          </a>{' '}
+          for shipped vs planned status. Deep dives:{' '}
           <a
             href="/vision/modularization"
             className="font-medium text-inherit underline underline-offset-2"
           >
-            Modularization v2.0
+            Modularization
           </a>
           ,{' '}
           <a
-            href="/vision/slide-deck"
+            href="/vision/immutable-releases"
             className="font-medium text-inherit underline underline-offset-2"
           >
-            Slide deck
+            Immutable releases
+          </a>
+          ,{' '}
+          <a
+            href="/contributing/technical-specification"
+            className="font-medium text-inherit underline underline-offset-2"
+          >
+            Contributor spec
+          </a>
+          ,{' '}
+          <a
+            href="/deployment/operations-guide"
+            className="font-medium text-inherit underline underline-offset-2"
+          >
+            Deployment guide
           </a>
           .
         </Note>

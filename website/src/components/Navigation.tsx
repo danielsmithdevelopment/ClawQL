@@ -113,7 +113,8 @@ function VisibleSectionHighlight({
     ? Math.max(1, visibleSections.length) * itemHeight
     : itemHeight
   let top =
-    group.links.findIndex((link) => link.href === pathname) * itemHeight +
+    group.links.findIndex((link) => linkMatchesPath(link.href, pathname)) *
+      itemHeight +
     firstVisibleSectionIndex * itemHeight
 
   return (
@@ -137,7 +138,9 @@ function ActivePageMarker({
 }) {
   let itemHeight = remToPx(2)
   let offset = remToPx(0.25)
-  let activePageIndex = group.links.findIndex((link) => link.href === pathname)
+  let activePageIndex = group.links.findIndex((link) =>
+    linkMatchesPath(link.href, pathname),
+  )
   let top = offset + activePageIndex * itemHeight
 
   return (
@@ -150,6 +153,12 @@ function ActivePageMarker({
       style={{ top }}
     />
   )
+}
+
+function linkMatchesPath(href: string, pathname: string) {
+  if (href === pathname) return true
+  if (href === '/' || href.startsWith('http')) return false
+  return pathname.startsWith(`${href}/`)
 }
 
 function NavigationGroup({
@@ -169,7 +178,7 @@ function NavigationGroup({
   )
 
   let isActiveGroup =
-    group.links.findIndex((link) => link.href === pathname) !== -1
+    group.links.findIndex((link) => linkMatchesPath(link.href, pathname)) !== -1
 
   return (
     <li className={clsx('relative mt-6', className)}>
@@ -197,7 +206,10 @@ function NavigationGroup({
         <ul role="list" className="border-l border-transparent">
           {group.links.map((link) => (
             <motion.li key={link.href} layout="position" className="relative">
-              <NavLink href={link.href} active={link.href === pathname}>
+              <NavLink
+                href={link.href}
+                active={linkMatchesPath(link.href, pathname)}
+              >
                 {link.title}
               </NavLink>
               <AnimatePresence mode="popLayout" initial={false}>
@@ -238,147 +250,119 @@ function NavigationGroup({
 
 export const navigation: Array<NavGroup> = [
   {
-    title: 'Vision & roadmap',
+    title: 'Getting started',
     links: [
+      { title: 'Overview', href: '/getting-started' },
+      { title: 'Quickstart', href: '/quickstart' },
+      { title: 'Install', href: '/install' },
+      { title: 'MCP clients', href: '/mcp-clients' },
+      { title: 'Choose your tier', href: '/deployment' },
+    ],
+  },
+  {
+    title: 'Architecture & vision',
+    links: [
+      { title: 'Architecture hub', href: '/architecture' },
+      { title: 'Vision & Roadmap', href: '/vision/roadmap' },
       {
         title: 'Master enablement guide',
         href: '/vision/technical-enablement',
       },
+      { title: 'Modularization v2.1', href: '/vision/modularization' },
       {
-        title: 'ClawQL Modularization',
-        href: '/vision/modularization',
+        title: 'Immutable releases (Layer 0)',
+        href: '/vision/immutable-releases',
       },
-      {
-        title: 'Consolidated slide deck (~80 slides)',
-        href: '/vision/slide-deck',
-      },
+      { title: 'DAOS specification', href: '/ouroboros/specification' },
+      { title: 'Slide deck', href: '/vision/slide-deck' },
     ],
   },
   {
-    title: 'ClawQL Learn',
+    title: 'Deployment & operations',
     links: [
-      { title: 'Overview', href: '/learn' },
+      { title: 'Deployment hub', href: '/deployment' },
       {
-        title: 'Using search & execute',
-        href: '/learn/search-and-execute-mcp',
+        title: 'Operations guide (Tier 1–3)',
+        href: '/deployment/operations-guide',
       },
+      { title: 'Tier 2: Kubernetes', href: '/deployment/kubernetes' },
+      { title: 'Helm chart', href: '/helm' },
+      { title: 'Platform ops (HTTP, Docker)', href: '/deployment/platforms' },
+      { title: 'Tailscale & Headscale', href: '/tailscale' },
+      { title: 'Dashboard on Kubernetes', href: '/dashboard-kubernetes' },
       {
-        title: 'External ingest & knowledge lake',
-        href: '/learn/external-ingest-knowledge',
+        title: 'Istio & observability lab',
+        href: '/docker-desktop-observability',
       },
-      {
-        title: 'Onyx enterprise search',
-        href: '/learn/knowledge-search-onyx',
-      },
-      {
-        title: 'Document pipeline (5 vendors)',
-        href: '/learn/document-pipeline',
-      },
-      {
-        title: 'Sandbox exec (Seatbelt / Docker / CF)',
-        href: '/learn/sandbox-exec',
-      },
-      {
-        title: 'Ouroboros tools (seed / loop / lineage)',
-        href: '/learn/ouroboros-tools',
-      },
-      {
-        title: 'OpenClaw with ClawQL',
-        href: '/learn/openclaw-and-clawql',
-      },
-      {
-        title: 'Schedule & notify workflows',
-        href: '/learn/schedule-notify-workflows',
-      },
-      {
-        title: 'Cache handoff between chats',
-        href: '/learn/cache-handoff-between-chats',
-      },
-      {
-        title: 'Vault memory between chats',
-        href: '/learn/vault-memory-between-chats',
-      },
-      {
-        title: 'Audit tool & observability',
-        href: '/learn/audit-tool-and-observability',
-      },
+      { title: 'OpenClaw + ClawQL', href: '/openclaw' },
     ],
   },
   {
     title: 'Guides',
     links: [
-      { title: 'Introduction', href: '/' },
-      { title: 'Quickstart', href: '/quickstart' },
-      { title: 'Install', href: '/install' },
-      { title: 'MCP clients', href: '/mcp-clients' },
-      { title: 'OpenClaw + ClawQL', href: '/openclaw' },
-      { title: 'Spec configuration', href: '/spec-configuration' },
-      { title: 'Troubleshooting', href: '/troubleshooting' },
-      { title: 'Security', href: '/security' },
+      { title: 'Guides hub', href: '/guides' },
+      { title: 'ClawQL Learn', href: '/learn' },
+      { title: 'Token efficiency', href: '/architecture/token-efficiency' },
+      { title: 'Security overview', href: '/security' },
+      { title: 'Defense in depth', href: '/security/defense-in-depth' },
       {
-        title: 'Security training (30 modules)',
+        title: 'Security curriculum (32 modules)',
         href: '/security/best-practices',
       },
-      {
-        title: 'Defense in depth (full guide)',
-        href: '/security/defense-in-depth',
-      },
-      { title: 'Deployment', href: '/deployment' },
-      { title: 'Tailscale & Headscale', href: '/tailscale' },
-      { title: 'Kubernetes', href: '/kubernetes' },
-      { title: 'Dashboard on Kubernetes', href: '/dashboard-kubernetes' },
-      {
-        title: 'Docker Desktop: Istio & observability',
-        href: '/docker-desktop-observability',
-      },
-      { title: 'Helm', href: '/helm' },
-    ],
-  },
-  {
-    title: 'Case studies',
-    links: [
-      {
-        title: 'Case study: Cloudflare docs',
-        href: '/case-studies/cloudflare-docs-mcp',
-      },
-      {
-        title: 'Case study: Vault + GitHub session',
-        href: '/case-studies/vault-memory-github-session-2026-04',
-      },
-      {
-        title: 'Case study: Cross-thread vault recall',
-        href: '/case-studies/cross-thread-vault-recall',
-      },
-      {
-        title: 'Case study: TrueNAS corgicave homelab',
-        href: '/case-studies/truenas-scale-corgicave-homelab',
-      },
-      {
-        title: 'Case study: Worker 1102, MCP debug, memory',
-        href: '/case-studies/docs-clawql-worker-1102-mcp-memory-2026-04',
-      },
-      {
-        title: 'Case study: Slide deck, cache, memory_recall, GitHub',
-        href: '/case-studies/slide-deck-github-parity-cache-memory-recall-2026-04',
-      },
+      { title: 'HITL & human interfaces', href: '/reference/hitl' },
+      { title: 'Verticals guide', href: '/reference/verticals' },
+      { title: 'Troubleshooting', href: '/troubleshooting' },
     ],
   },
   {
     title: 'Reference',
     links: [
-      { title: 'Tools', href: '/tools' },
+      { title: 'Reference hub', href: '/reference' },
+      { title: 'Protocol v2.1', href: '/reference/protocol' },
+      { title: 'Core concepts', href: '/concepts' },
+      { title: 'MCP tools', href: '/tools' },
+      { title: 'Configuration', href: '/spec-configuration' },
+      {
+        title: 'Contributor specification',
+        href: '/contributing/technical-specification',
+      },
+      { title: 'Optional tools hub', href: '/reference/optional-tools' },
       { title: 'Ouroboros library', href: '/ouroboros' },
-      { title: 'Session cache', href: '/cache' },
-      { title: 'Schedule synthetic checks', href: '/schedule' },
-      { title: 'Slack notify', href: '/notify' },
-      { title: 'HITL — Label Studio', href: '/hitl-label-studio' },
-      { title: 'Onyx knowledge search', href: '/onyx-knowledge' },
-      { title: 'Flink Onyx sync', href: '/flink-onyx-sync' },
-      { title: 'NATS JetStream', href: '/nats-jetstream' },
-      { title: 'GraphQL layer', href: '/graphql-proxy' },
       { title: 'Bundled specs', href: '/bundled-specs' },
-      { title: 'Concepts', href: '/concepts' },
+      { title: 'GraphQL layer', href: '/graphql-proxy' },
+      { title: 'NATS JetStream', href: '/nats-jetstream' },
       { title: 'Benchmarks', href: '/benchmarks' },
+    ],
+  },
+  {
+    title: 'Examples',
+    links: [
+      { title: 'Examples hub', href: '/examples' },
+      {
+        title: 'Cloudflare docs deploy',
+        href: '/case-studies/cloudflare-docs-mcp',
+      },
+      {
+        title: 'Vault + GitHub session',
+        href: '/case-studies/vault-memory-github-session-2026-04',
+      },
+      {
+        title: 'Cross-thread vault recall',
+        href: '/case-studies/cross-thread-vault-recall',
+      },
+    ],
+  },
+  {
+    title: 'Resources',
+    links: [
+      { title: 'Resources hub', href: '/resources' },
+      { title: 'Roadmap', href: '/vision/roadmap' },
+      { title: 'Changelog & releases', href: '/resources/changelog' },
+      { title: 'Migration guide', href: '/resources/migration' },
+      {
+        title: 'GitHub',
+        href: 'https://github.com/danielsmithdevelopment/ClawQL',
+      },
     ],
   },
 ]
@@ -388,9 +372,12 @@ export function Navigation(props: React.ComponentPropsWithoutRef<'nav'>) {
     <nav aria-label="Documentation" {...props}>
       <ul role="list">
         <TopLevelNavItem href="/">Home</TopLevelNavItem>
-        <TopLevelNavItem href="/quickstart">Quickstart</TopLevelNavItem>
+        <TopLevelNavItem href="/getting-started">
+          Getting started
+        </TopLevelNavItem>
+        <TopLevelNavItem href="/architecture">Architecture</TopLevelNavItem>
+        <TopLevelNavItem href="/deployment">Deployment</TopLevelNavItem>
         <TopLevelNavItem href="/learn">Learn</TopLevelNavItem>
-        <TopLevelNavItem href="/vision/modularization">Vision</TopLevelNavItem>
         <TopLevelNavItem href="https://github.com/danielsmithdevelopment/ClawQL">
           GitHub
         </TopLevelNavItem>

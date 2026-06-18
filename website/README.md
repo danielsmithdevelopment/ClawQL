@@ -20,16 +20,22 @@ npm start
 
 ## Canonical doc sources (do not edit generated MDX by hand)
 
-**Product vision canon:** `docs/vision/clawql-master-enablement-guide.md` → `/vision/technical-enablement`. Modularization v2 on `/vision/modularization` is a **companion** (package checklist / gateway notes).
+**Product vision:** `docs/vision/clawql-vision-roadmap.md` → `/vision/roadmap` (**start here** — public edition). Master Architecture & Enablement Guide v2.1: `docs/vision/clawql-master-enablement-guide.md` → `/vision/technical-enablement` (unified index). Modularization v2.1 on `/vision/modularization` is the package-boundary companion.
 
 Long pages under `src/generated/` are copied from repo `docs/` at **prebuild** / **dev**:
 
 | Site route                     | Source                                                                    | Sync script                                     |
 | ------------------------------ | ------------------------------------------------------------------------- | ----------------------------------------------- |
-| `/vision/technical-enablement` | `docs/vision/clawql-master-enablement-guide.md` (**canonical vision**)  | `scripts/sync-clawql-master-enablement-doc.mjs` |
+| `/vision/roadmap`              | `docs/vision/clawql-vision-roadmap.md` (**public edition — start here**)  | `scripts/sync-clawql-vision-roadmap-doc.mjs`    |
+| `/contributing/technical-specification` | `docs/contributing/clawql-contributor-technical-specification.md` | `scripts/sync-clawql-contributor-technical-spec-doc.mjs` |
+| `/deployment/operations-guide` | `docs/deployment/clawql-deployment-operations-guide.md` | `scripts/sync-clawql-deployment-operations-guide-doc.mjs` |
+| `/ouroboros/specification` | `docs/ouroboros/decentralized-agent-operating-system-specification.md` | `scripts/sync-decentralized-agent-operating-system-spec-doc.mjs` |
+| `/architecture/token-efficiency` | `docs/architecture/clawql-token-efficiency.md` | `scripts/sync-clawql-token-efficiency-doc.mjs` |
+| `/vision/technical-enablement` | `docs/vision/clawql-master-enablement-guide.md` (full technical reference)| `scripts/sync-clawql-master-enablement-doc.mjs` |
 | `/vision/modularization`       | `docs/vision/clawql-modularization-v2.md` (companion)                     | `scripts/sync-clawql-modularization-doc.mjs`    |
+| `/vision/immutable-releases`   | `docs/vision/clawql-hybrid-decentralized-github-alternative.md` (Layer 0) | `scripts/sync-clawql-hybrid-decentralized-doc.mjs` |
 | `/vision/slide-deck`           | `docs/presentations/clawql-slides.md`                                     | `scripts/sync-clawql-slides-doc.mjs`            |
-| `/security/defense-in-depth`   | `docs/security/clawql-comprehensive-defense-in-depth-mcp-k3s-may-2026.md` | `scripts/sync-clawql-defense-in-depth-doc.mjs`  |
+| `/security/defense-in-depth`   | `docs/security/clawql-defense-in-depth-security-guide.md` (deployment reference) | `scripts/sync-clawql-defense-in-depth-doc.mjs`  |
 | `/security/best-practices/*`   | `docs/security/security-best-practices-series/*.md`                       | `scripts/sync-security-training-modules.mjs`    |
 
 Edit the **Markdown sources**, then run `npm run dev` or `npm run build` so generated fragments stay in sync.

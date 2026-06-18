@@ -43,7 +43,7 @@ Audit exact permissions with:
 kubectl auth can-i --list --as system:serviceaccount:agents:summarizer
 
 -
-- Remove all wildcards (\*) from production RBAC rules.
+- Remove all wildcards (\\\*) from production RBAC rules.
 
 - Run regular audits with tools like kubectl-who-can or rbac-tool to surface over-permissioned accounts.
 

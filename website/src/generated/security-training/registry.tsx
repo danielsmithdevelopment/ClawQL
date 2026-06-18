@@ -27,8 +27,10 @@ import Body10 from './bodies/sandboxing-kata-gvisor-seatbelt.mdx'
 import Body7 from './bodies/secrets-at-rest-vault-hsm-audit.mdx'
 import Body26 from './bodies/secure-multi-tenancy-isolation.mdx'
 import Body18 from './bodies/security-monitoring-observability-siem.mdx'
+import Body30 from './bodies/third-party-model-api-security.mdx'
 import Body21 from './bodies/threat-modelling-stride-agentic-ai.mdx'
 import Body25 from './bodies/vulnerability-management-patch-cryptography.mdx'
+import Body31 from './bodies/where-to-start-prioritization-new-deployment.mdx'
 import Body3 from './bodies/zero-trust-network-mtls-istio-rbac.mdx'
 
 export type TrainingModuleMeta = {
@@ -49,7 +51,7 @@ export const trainingModules: TrainingModuleMeta[] = [
     description:
       'Digest pinning, distroless golden images, private mirror registries, and CI scanning from source to registry.',
     part: 1,
-    totalParts: 30,
+    totalParts: 32,
     prev: null,
     next: 'cluster-admission-control-signing-policy',
   },
@@ -60,7 +62,7 @@ export const trainingModules: TrainingModuleMeta[] = [
     description:
       'Cosign verification and Kyverno admission policies that block unsigned or policy-violating workloads.',
     part: 2,
-    totalParts: 30,
+    totalParts: 32,
     prev: 'container-image-security-pinning-distroless-golden-images',
     next: 'clawhub-skill-vetting-safe-installation',
   },
@@ -71,7 +73,7 @@ export const trainingModules: TrainingModuleMeta[] = [
     description:
       'Vet third-party skills with manifest signing, static analysis, sandbox observation, and hash pinning.',
     part: 3,
-    totalParts: 30,
+    totalParts: 32,
     prev: 'cluster-admission-control-signing-policy',
     next: 'zero-trust-network-mtls-istio-rbac',
   },
@@ -82,7 +84,7 @@ export const trainingModules: TrainingModuleMeta[] = [
     description:
       'SPIFFE workload identity, STRICT mTLS, default-deny networking, and L7 AuthorizationPolicy.',
     part: 4,
-    totalParts: 30,
+    totalParts: 32,
     prev: 'clawhub-skill-vetting-safe-installation',
     next: 'agent-gateway-hardening-dns-rebinding',
   },
@@ -93,7 +95,7 @@ export const trainingModules: TrainingModuleMeta[] = [
     description:
       'Localhost binding, VPN-only access, Host/Origin validation, and listening-port drift detection.',
     part: 5,
-    totalParts: 30,
+    totalParts: 32,
     prev: 'zero-trust-network-mtls-istio-rbac',
     next: 'egress-filtering-dns-dlp',
   },
@@ -103,7 +105,7 @@ export const trainingModules: TrainingModuleMeta[] = [
     description:
       'ServiceEntry allowlists, SSRF prevention, DNS tunneling heuristics, and tool-call DLP.',
     part: 6,
-    totalParts: 30,
+    totalParts: 32,
     prev: 'agent-gateway-hardening-dns-rebinding',
     next: 'least-privilege-scoped-kubernetes-identities',
   },
@@ -114,7 +116,7 @@ export const trainingModules: TrainingModuleMeta[] = [
     description:
       'One ServiceAccount per workload, scoped RBAC, and cloud workload identity federation.',
     part: 7,
-    totalParts: 30,
+    totalParts: 32,
     prev: 'egress-filtering-dns-dlp',
     next: 'secrets-at-rest-vault-hsm-audit',
   },
@@ -125,7 +127,7 @@ export const trainingModules: TrainingModuleMeta[] = [
     description:
       'Dynamic secrets, HSM unseal, gateway token exchange, and WORM Vault audit logs.',
     part: 8,
-    totalParts: 30,
+    totalParts: 32,
     prev: 'least-privilege-scoped-kubernetes-identities',
     next: 'authentication-session-management-scoped-tokens',
   },
@@ -136,7 +138,7 @@ export const trainingModules: TrainingModuleMeta[] = [
     description:
       'Tool-scoped tokens, OAuth for external APIs, nonce replay prevention, and device pairing.',
     part: 9,
-    totalParts: 30,
+    totalParts: 32,
     prev: 'secrets-at-rest-vault-hsm-audit',
     next: 'agent-identity-lifecycle-provisioning',
   },
@@ -147,7 +149,7 @@ export const trainingModules: TrainingModuleMeta[] = [
     description:
       'Joiner-mover-leaver for agents: approval workflows, scope trials, orphan detection, and forensic shutdown.',
     part: 10,
-    totalParts: 30,
+    totalParts: 32,
     prev: 'authentication-session-management-scoped-tokens',
     next: 'sandboxing-kata-gvisor-seatbelt',
   },
@@ -158,7 +160,7 @@ export const trainingModules: TrainingModuleMeta[] = [
     description:
       'Choose Kata, gVisor, or seccomp baselines by workload trust and performance requirements.',
     part: 11,
-    totalParts: 30,
+    totalParts: 32,
     prev: 'agent-identity-lifecycle-provisioning',
     next: 'mcp-runtime-enforcement-panguard-atr',
   },
@@ -169,7 +171,7 @@ export const trainingModules: TrainingModuleMeta[] = [
     description:
       'Enforce policy at the structured tool-call layer with ATR, schema validation, and HITL deny-on-timeout.',
     part: 12,
-    totalParts: 30,
+    totalParts: 32,
     prev: 'sandboxing-kata-gvisor-seatbelt',
     next: 'input-validation-protocol-hardening',
   },
@@ -180,7 +182,7 @@ export const trainingModules: TrainingModuleMeta[] = [
     description:
       'Harden the MCP input boundary before Panguard: JSON safety, SSRF, token budgets, and tool manifest integrity.',
     part: 13,
-    totalParts: 30,
+    totalParts: 32,
     prev: 'mcp-runtime-enforcement-panguard-atr',
     next: 'multi-agent-trust-orchestrator-security',
   },
@@ -191,7 +193,7 @@ export const trainingModules: TrainingModuleMeta[] = [
     description:
       'Signed instructions and results, downward-only ATR delegation, and pipeline-level risk scoring.',
     part: 14,
-    totalParts: 30,
+    totalParts: 32,
     prev: 'input-validation-protocol-hardening',
     next: 'data-classification-pii-redaction-residency',
   },
@@ -202,7 +204,7 @@ export const trainingModules: TrainingModuleMeta[] = [
     description:
       'Four-level taxonomy, Presidio at write boundaries, and classification-gated recall.',
     part: 15,
-    totalParts: 30,
+    totalParts: 32,
     prev: 'multi-agent-trust-orchestrator-security',
     next: 'model-weight-integrity-verification',
   },
@@ -210,9 +212,9 @@ export const trainingModules: TrainingModuleMeta[] = [
     slug: 'model-weight-integrity-verification',
     title: 'Model Weight Integrity: Verifying Authenticity Before Every Load',
     description:
-      'Signed weight manifests, per-load hash verification, and behavioral monitoring for backdoors.',
+      'Signed weight manifests, per-load hash verification, honest limits of backdoor detection, and multi-provider weight promotion.',
     part: 16,
-    totalParts: 30,
+    totalParts: 32,
     prev: 'data-classification-pii-redaction-residency',
     next: 'gpu-resource-protection-isolation',
   },
@@ -223,7 +225,7 @@ export const trainingModules: TrainingModuleMeta[] = [
     description:
       'MIG isolation, namespace GPU quotas, and monitoring for unexpected GPU consumers.',
     part: 17,
-    totalParts: 30,
+    totalParts: 32,
     prev: 'model-weight-integrity-verification',
     next: 'memory-context-poisoning-prevention',
   },
@@ -234,7 +236,7 @@ export const trainingModules: TrainingModuleMeta[] = [
     description:
       'Merkle integrity, WORM storage, per-subject encryption, and poisoning detection at write time.',
     part: 18,
-    totalParts: 30,
+    totalParts: 32,
     prev: 'gpu-resource-protection-isolation',
     next: 'security-monitoring-observability-siem',
   },
@@ -245,7 +247,7 @@ export const trainingModules: TrainingModuleMeta[] = [
     description:
       'Canonical security event schema, SIEM correlation, cardinality-safe metrics, and NOC dashboards.',
     part: 19,
-    totalParts: 30,
+    totalParts: 32,
     prev: 'memory-context-poisoning-prevention',
     next: 'automated-response-incident-recovery-picerl',
   },
@@ -256,7 +258,7 @@ export const trainingModules: TrainingModuleMeta[] = [
     description:
       'Automated quarantine, circuit breakers, PICERL lifecycle, and forensic preservation before revocation.',
     part: 20,
-    totalParts: 30,
+    totalParts: 32,
     prev: 'security-monitoring-observability-siem',
     next: 'development-deployment-security',
   },
@@ -267,7 +269,7 @@ export const trainingModules: TrainingModuleMeta[] = [
     description:
       'Harden developer laptops and enforce secure-by-default production deploys with staging parity.',
     part: 21,
-    totalParts: 30,
+    totalParts: 32,
     prev: 'automated-response-incident-recovery-picerl',
     next: 'threat-modelling-stride-agentic-ai',
   },
@@ -278,7 +280,7 @@ export const trainingModules: TrainingModuleMeta[] = [
     description:
       'Extend STRIDE for agentic threats and maintain a living threat model in version control.',
     part: 22,
-    totalParts: 30,
+    totalParts: 32,
     prev: 'development-deployment-security',
     next: 'owasp-agentic-top-10-mitigations',
   },
@@ -288,7 +290,7 @@ export const trainingModules: TrainingModuleMeta[] = [
     description:
       'Map ASI01–ASI10 to deployed ClawQL controls with test evidence from the adversarial suite.',
     part: 23,
-    totalParts: 30,
+    totalParts: 32,
     prev: 'threat-modelling-stride-agentic-ai',
     next: 'red-teaming-adversarial-testing',
   },
@@ -299,7 +301,7 @@ export const trainingModules: TrainingModuleMeta[] = [
     description:
       'YAML attack library in CI, purple-team exercises, and MCP-scoped external pen tests.',
     part: 24,
-    totalParts: 30,
+    totalParts: 32,
     prev: 'owasp-agentic-top-10-mitigations',
     next: 'quarterly-security-review-checklist',
   },
@@ -310,7 +312,7 @@ export const trainingModules: TrainingModuleMeta[] = [
     description:
       'Evidence-driven quarterly review: rotations, allowlists, restore tests, and signed reports.',
     part: 25,
-    totalParts: 30,
+    totalParts: 32,
     prev: 'red-teaming-adversarial-testing',
     next: 'vulnerability-management-patch-cryptography',
   },
@@ -320,7 +322,7 @@ export const trainingModules: TrainingModuleMeta[] = [
     description:
       'Reachability-based triage, session-drain rolling updates, and planned algorithm migrations.',
     part: 26,
-    totalParts: 30,
+    totalParts: 32,
     prev: 'quarterly-security-review-checklist',
     next: 'secure-multi-tenancy-isolation',
   },
@@ -331,7 +333,7 @@ export const trainingModules: TrainingModuleMeta[] = [
     description:
       'Tenant-scoped Vault paths, memory partitions, and per-tenant WORM audit destinations.',
     part: 27,
-    totalParts: 30,
+    totalParts: 32,
     prev: 'vulnerability-management-patch-cryptography',
     next: 'disaster-recovery-business-continuity',
   },
@@ -342,7 +344,7 @@ export const trainingModules: TrainingModuleMeta[] = [
     description:
       'Per-tier RTO/RPO, agent checkpoints, active/passive failover, and session recovery decision tree.',
     part: 28,
-    totalParts: 30,
+    totalParts: 32,
     prev: 'secure-multi-tenancy-isolation',
     next: 'compliance-regulatory-mapping',
   },
@@ -353,7 +355,7 @@ export const trainingModules: TrainingModuleMeta[] = [
     description:
       'Map controls to GDPR, HIPAA, SOC 2, and EU AI Act with cryptographic erasure and evidence packages.',
     part: 29,
-    totalParts: 30,
+    totalParts: 32,
     prev: 'disaster-recovery-business-continuity',
     next: 'human-operator-security-admin-controls',
   },
@@ -364,8 +366,29 @@ export const trainingModules: TrainingModuleMeta[] = [
     description:
       'Mutually exclusive admin roles, 4-eyes changes, break-glass with audit, and webhook hardening.',
     part: 30,
-    totalParts: 30,
+    totalParts: 32,
     prev: 'compliance-regulatory-mapping',
+    next: 'third-party-model-api-security',
+  },
+  {
+    slug: 'third-party-model-api-security',
+    title:
+      'Third-Party Model API Security: Securing Calls to External LLM Providers',
+    description:
+      'API key hygiene, classification-gated outbound prompts, provider retention policies, multi-provider routing, and WORM audit for external LLM calls.',
+    part: 31,
+    totalParts: 32,
+    prev: 'human-operator-security-admin-controls',
+    next: 'where-to-start-prioritization-new-deployment',
+  },
+  {
+    slug: 'where-to-start-prioritization-new-deployment',
+    title: 'Where to Start: Prioritization for a New Deployment',
+    description:
+      'Sequencing guide for new deployments — the five controls to implement first, second tier before scaling, and why partial coverage is worse than focused depth.',
+    part: 32,
+    totalParts: 32,
+    prev: 'third-party-model-api-security',
     next: null,
   },
 ]
@@ -401,6 +424,8 @@ export const trainingBodies: Record<string, ComponentType> = {
   'disaster-recovery-business-continuity': Body27,
   'compliance-regulatory-mapping': Body28,
   'human-operator-security-admin-controls': Body29,
+  'third-party-model-api-security': Body30,
+  'where-to-start-prioritization-new-deployment': Body31,
 }
 
 export function getTrainingMeta(slug: string): TrainingModuleMeta | undefined {

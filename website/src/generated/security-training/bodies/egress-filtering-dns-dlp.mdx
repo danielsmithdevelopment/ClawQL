@@ -46,7 +46,7 @@ spec:
 
   - hosts:
 
-    - "./\*"   # only intra-namespace traffic
+    - "./\\\*"   # only intra-namespace traffic
 
 Then declare every permitted external destination explicitly with a ServiceEntry:
 

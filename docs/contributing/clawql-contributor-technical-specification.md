@@ -1,0 +1,1187 @@
+# ClawQL — Contributor Technical Specification
+
+**For developers building verticals, providers, and extensions · May 2026**
+Apache 2.0 / MIT · [github.com/clawql/clawql](https://github.com/clawql/clawql)
+
+---
+
+## Before You Start
+
+This document is a specification of contracts, not a getting-started guide. It assumes you have already read the Vision & Roadmap document and understand what ClawQL is and where it is in development. It does not repeat that context here.
+
+If you want to run ClawQL locally before reading further, start with the [Deployment & Operations Guide](../deployment/clawql-deployment-operations-guide.md). Come back here when you are ready to build something.
+
+**Phase 1 (core stabilisation) must be complete before vertical contributions can be merged.** You can write and test a vertical now using the in-memory test layers described in §3.4. You cannot merge it to main until `clawql-core` and `clawql-api` have reached their Phase 1 exit criteria. This is intentional — merging against an unstable Plugin interface means rebuilding the vertical when the interface changes.
+
+### Required Familiarity
+
+This document assumes working knowledge of:
+
+- **TypeScript** with strict mode enabled
+- **Effect-TS** — at minimum, `Effect.gen`, `Layer`, `Context.Tag`, and `Schema`. The Effect-TS documentation at [effect.website](https://effect.website) is the canonical reference.
+- **Turborepo** for monorepo task orchestration
+- **TypeScript project references** for cross-package type checking
+
+If Effect-TS is new to you, read §3 before anything else. The architectural constraints in §2 will not make sense without understanding how Layers enforce them.
+
+### Repository Structure
+
+```
+clawql/
+├── packages/
+│   ├── core/              # clawql-core — all shared types and utilities
+│   ├── api/               # clawql-api — the gateway
+│   ├── auth/              # clawql-auth
+│   ├── documents/         # clawql-documents
+│   ├── memory/            # clawql-memory
+│   ├── pageindex/         # clawql-pageindex (MIT, standalone)
+│   └── [horizontal packages]
+├── verticals/
+│   ├── lending/           # clawql-lending (flagship, planned)
+│   ├── legal/             # clawql-legal (planned)
+│   └── [other verticals]
+├── internal/
+│   ├── merkle/            # @clawql/merkle
+│   ├── cuckoo/            # @clawql/cuckoo
+│   └── utils/             # @clawql/utils
+├── examples/
+│   └── clawql-local-docker-compose/
+├── tools/
+│   └── vertical-template/ # Starting point for new verticals
+└── turbo.json
+```
+
+All packages under `packages/` and `verticals/` must satisfy the dependency rules in §3. The `internal/` packages have no ClawQL dependencies and may be used freely.
+
+---
+
+## 1. Core Contracts
+
+These are the interfaces every contributor must understand. They live in `clawql-core` and are the only shared surface between packages. Do not duplicate them. Do not import equivalent types from anywhere else.
+
+### 1.1 The `Plugin` Interface
+
+Every vertical and every major horizontal package implements `Plugin`. It is the registration contract between a package and `clawql-api`.
+
+```typescript
+export interface Plugin {
+  // Identity
+  readonly id: string; // kebab-case, globally unique: "lending", "legal-us"
+  readonly version: string; // SemVer string: "1.0.0"
+  readonly vertical?: string; // parent vertical ID, if this is a sub-plugin
+
+  // Lifecycle — required
+  onRegister(api: ClawQLApi): Effect.Effect<void, ClawQLError, ClawQLApi>;
+
+  // Lifecycle — optional hooks
+  onIngestHook?(
+    node: EntityNode,
+    context: IngestContext
+  ): Effect.Effect<EntityNode, ClawQLError, ClawQLApi>;
+
+  onRecallFilter?(
+    claims: ATRClaims,
+    options: RecallOptions
+  ): Effect.Effect<RecallOptions, ClawQLError, ClawQLApi>;
+
+  onComplianceReport?(): Effect.Effect<ComplianceReport, ClawQLError, ClawQLApi>;
+
+  onTeardown?(api: ClawQLApi): Effect.Effect<void, ClawQLError, ClawQLApi>;
+
+  // Provider declarations
+  requiredSpecs?: ProviderSpec[];
+  recommendedSpecs?: ProviderSpec[];
+}
+```
+
+**Field-level semantics:**
+
+`id` must be globally unique across all registered plugins. Collisions cause registration failure. Use your vertical name for the primary plugin (`"lending"`) and qualified names for sub-plugins (`"lending-blockchain"`). IDs are kebab-case only — no dots, no underscores, no camelCase.
+
+`version` is a SemVer string. It is stored in audit logs and used to correlate behaviour changes with deployments. It must match the package version in `package.json`.
+
+`onRegister` is called once at gateway startup when the plugin’s Effect Layer is composed. It receives the `ClawQLApi` service and must use it to register tools, specs, and hooks. It must be idempotent — if the gateway restarts and recomposes layers, `onRegister` may be called again.
+
+`onIngestHook` is called for every node entering Memory 2.0 that belongs to this vertical’s scope. Use it for domain-specific validation, enrichment, or rejection. It must return the (possibly modified) node or fail with a typed error. It must not perform I/O outside of Effect-managed services. If this hook is not implemented, nodes pass through unmodified.
+
+`onRecallFilter` is called before Memory 2.0 returns results to a caller. Use it to apply domain-specific recall restrictions beyond what ATR claims already enforce. It receives the caller’s claims and the current recall options, and returns modified options. Do not use this to bypass ATR — use it to add restrictions, not remove them.
+
+`onComplianceReport` is called by the Compliance Center when generating audit reports. It must return a `ComplianceReport` describing which regulatory frameworks this vertical operates under, what controls are active, and the compliance matrix for the current deployment. If not implemented, the vertical appears in the report with no compliance metadata — which is an audit finding, not a silent omission.
+
+`onTeardown` is called when the plugin is being disabled or the gateway is shutting down. Use it to flush buffers, close connections, or perform cleanup that Effect resource management does not handle automatically. Not required if the plugin has no such resources.
+
+`requiredSpecs` lists the `ProviderSpec` instances that must be satisfied before this plugin can register. If any required spec is absent, the Operator admission webhook rejects the deployment and the plugin does not attempt to register. Listing a spec here but not implementing a meaningful dependency on it is a contribution defect — it will be caught in review.
+
+`recommendedSpecs` lists specs that enhance the plugin’s functionality but are not required. The gateway logs a warning at startup if recommended specs are absent, but does not block registration.
+
+### 1.2 `ProviderSpec` and `SpecKind`
+
+```typescript
+export type SpecKind =
+  | "postgres"
+  | "sqlite"
+  | "valkey"
+  | "duckdb"
+  | "seaweedfs"
+  | "nats"
+  | "onyx"
+  | "fabric"
+  | "tika"
+  | "gotenberg"
+  | "presidio"
+  | "paperless"
+  | "vault"
+  | "flink";
+
+export interface ProviderSpec {
+  kind: SpecKind;
+  id: string; // unique within the instance, e.g. "operational", "analytics"
+  enabled: boolean;
+  secretRef?: string; // Kubernetes secret name containing credentials
+  url?: string; // connection URL if not derivable from secretRef
+  capabilities?: string[]; // subset of capabilities this provider is configured for
+  options?: Record<string, unknown>;
+}
+```
+
+`SpecKind` is an exhaustive enum. If you need a provider type that is not listed, open an RFC — do not extend the type locally and do not use `string`. The RFC process exists precisely for additions like this.
+
+`id` within a spec must be unique within the `ClawQLInstance`. Two verticals may both require a `postgres` spec, but they should require it with the same `id` if they share a database, or different `ids` if they require separate instances. The Operator uses `id` to resolve which actual connection satisfies which spec.
+
+`capabilities` is an optional filter. If a vertical only needs the `analytics` capability of a DuckDB instance and not the `ml-features` capability, declaring it prevents the vertical from being satisfied by an under-configured provider.
+
+### 1.3 `ATRClaims` — Full Schema with Field Semantics
+
+```typescript
+export interface ATRClaims {
+  // Actor identity
+  actorId: string; // stable, opaque identifier for the actor
+  actorType: "human" | "agent" | "service";
+  sessionId: string; // ULID, unique per session
+  issuedAt: number; // Unix timestamp (seconds)
+  expiresAt: number; // Unix timestamp (seconds); enforced at every layer
+
+  // Tenant context
+  tenantId: string; // opaque, stable; used as partition key throughout
+  tenantTier: "local" | "standard" | "enterprise";
+
+  // Permissions
+  roles: string[]; // RBAC roles, e.g. ["underwriter", "compliance-viewer"]
+  scopes: string[]; // OAuth2-style scopes, e.g. ["lending:read", "memory:write"]
+
+  // Vertical access
+  verticals: string[]; // IDs of verticals this actor may access
+  crossVertical: boolean; // whether cross-vertical recall is permitted at all
+  crossVerticalPurpose?: string; // required when crossVertical is true
+
+  // Memory privileges
+  memoryPrivileges: {
+    read: boolean;
+    write: boolean;
+    crossVerticalRead: boolean; // separate from crossVertical — controls memory specifically
+    pruneAccess: boolean; // whether this actor can trigger pruning
+  };
+
+  // Classification (government / regulated use)
+  classificationLevel?: "unclassified" | "cui" | "secret" | "top_secret";
+
+  // Purpose and minimisation
+  minimumNecessary?: boolean; // when true, gateway applies maximum field projection
+  purpose?: string; // human-readable statement of processing purpose for audit
+
+  // Request correlation
+  requestId: string; // ULID, unique per request; appears in all audit records
+}
+```
+
+**What contributors may and may not do with ATRClaims:**
+
+Verticals receive `ATRClaims` in `onRecallFilter` and `onIngestHook`. You may read any field to apply domain-specific logic. You must not modify claims — they are immutable once issued and are verified by signature at every layer. You must not store claims outside of in-flight Effect pipelines — they contain session-scoped material that must not persist. If you need to record that a particular role performed an action, record the `actorId` and `requestId`, not the full claims object.
+
+`crossVerticalPurpose` is required whenever `crossVertical` is true. If your vertical initiates a cross-vertical recall and the claims do not contain a purpose, the gateway rejects the request with `ATR_MISSING_PURPOSE`. Do not silently retry without the field.
+
+`minimumNecessary` should be respected in `onRecallFilter`. If it is true and your filter would return fields beyond what the stated purpose requires, apply additional projection.
+
+### 1.4 `normalizeOperationId` — Algorithm and Edge Cases
+
+All MCP tool operation IDs follow the format `kind__provider__operation` using double underscores as separators.
+
+```typescript
+// From clawql-core
+export function normalizeOperationId(kind: string, provider: string, operation: string): string;
+```
+
+**Examples:**
+
+| kind         | provider       | operation        | Result                                  |
+| ------------ | -------------- | ---------------- | --------------------------------------- |
+| `lending`    | `underwriting` | `createDealRoom` | `lending__underwriting__createDealRoom` |
+| `legal`      | `contracts`    | `clause_extract` | `legal__contracts__clause_extract`      |
+| `healthcare` | `fhir`         | `parse_r4`       | `healthcare__fhir__parse_r4`            |
+
+**Edge cases:**
+
+Single underscores within any segment are preserved as-is. `clause_extract` stays `clause_extract`.
+
+Double underscores within a segment are escaped to `__ESC__` before the ID is constructed. If your operation name is `create__room`, it becomes `create__ESC__room` in the output, producing `kind__provider__create__ESC__room`. This is the only safe way to include double underscores in a segment. In practice: do not use double underscores in segment names. It is avoidable and the escaping, while correct, is ugly.
+
+Operation IDs are case-sensitive. `createDealRoom` and `createdealroom` are different tools. Use camelCase for the operation segment and lowercase for kind and provider segments.
+
+The full registered ID must be globally unique within a ClawQL instance. The Operator quarantines collisions rather than silently overwriting — a registered tool’s ID cannot be claimed by a later-registered tool.
+
+### 1.5 `AgentRuntime` Abstraction
+
+This interface lives in `clawql-core` and is implemented by `clawql-goose`. It is documented here because verticals that need to spawn agent tasks must use it — they must not import `clawql-goose` directly.
+
+```typescript
+export interface AgentRuntime {
+  provision(config: AgentConfig): Effect.Effect<AgentHandle, AgentError, never>;
+  execute(handle: AgentHandle, task: Task): Effect.Effect<TaskResult, AgentError, never>;
+  getTools(handle: AgentHandle): Effect.Effect<MCPTool[], AgentError, never>;
+  captureOutputs(handle: AgentHandle): Stream.Stream<Output, AgentError, never>;
+  teardown(handle: AgentHandle): Effect.Effect<void, AgentError, never>;
+}
+
+export interface AgentConfig {
+  verticalId: string;
+  tenantId: string;
+  claims: ATRClaims;
+  resourceLimits?: ResourceLimits;
+  blueprintId?: string;
+}
+```
+
+Verticals access `AgentRuntime` as a service via Effect Context — they do not construct it. The concrete implementation (Goose, or any future replacement) is injected by the Layer system.
+
+---
+
+## 2. Architecture Rules
+
+These rules are enforced mechanically. Violating them causes CI to fail. Understanding why they exist makes them easier to work with.
+
+### 2.1 The Dependency Graph Is Acyclic and Unidirectional
+
+```
+@clawql/merkle   @clawql/cuckoo   @clawql/utils
+         │              │              │
+         └──────────────┴──────────────┘
+                        │
+                   clawql-core
+                        │
+           ┌────────────┴──────────────┐
+           │                           │
+      clawql-api            clawql-pageindex
+           │
+    ┌──────┼────────────────────┐
+    │      │                    │
+clawql- clawql-           clawql-
+ auth  documents           memory
+           │
+    ┌──────┼────────────────────┼──────────────────┐
+    │      │                    │                  │
+clawql- clawql-         clawql-            clawql-
+sandbox printingpress    goose           automation
+    ┌──────────────────────────────────────────────┐
+    │                                              │
+[Verticals]                             clawql-telemetry
+```
+
+Arrows point in the direction of allowed imports. No package may import from a package above it or beside it in the same layer. Verticals may not import other verticals.
+
+### 2.2 Rule Catalogue and Enforcement
+
+**Rule 1: No vertical imports another vertical.**
+
+Cross-vertical communication must route through `clawql-api.execute()` or gated Memory 2.0 `cross_vertical` recall. There is no exception.
+
+_Why:_ Vertical-to-vertical imports create hidden coupling. If `clawql-legal` imports `clawql-lending`, disabling the lending vertical breaks legal. The routing requirement makes dependencies explicit and auditable.
+
+_Enforcement:_ ESLint `no-restricted-imports` configured in `verticals/` to reject any import from another path under `verticals/`. TypeScript project references also block cross-vertical type access at compile time.
+
+**Rule 2: Horizontal layers do not import other horizontal layers.**
+
+A horizontal package may only import from `clawql-core`, the `internal/` utilities, and its own sub-packages. If it needs a capability from another horizontal, it receives it as an injected service via Effect Context.
+
+_Why:_ Horizontal layers form a peer group. Circular imports between them are a real risk if the rule is not enforced. The injection pattern also keeps each horizontal independently testable.
+
+_Enforcement:_ ESLint rules + TypeScript project references. CI runs `madge --circular` on every PR and fails if any cycle is detected.
+
+**Rule 3: `clawql-telemetry` is never imported.**
+
+It is injected as an OpenTelemetry sidecar by the Kubernetes Operator. No package should have a compile-time dependency on it.
+
+_Why:_ Telemetry should be zero-cost to disable and transparently available when enabled. Import-based telemetry creates bundle bloat and makes it impossible to run packages without the telemetry stack.
+
+_Enforcement:_ ESLint `no-restricted-imports` blocks any import of `clawql-telemetry` in all other packages.
+
+**Rule 4: All shared types come from `clawql-core`.**
+
+Do not redeclare `ATRClaims`, `EntityNode`, `Plugin`, or any other core type locally. Do not import equivalent types from third-party packages and alias them.
+
+_Why:_ Type divergence is the leading cause of silent integration failures. If two packages define their own version of `ATRClaims`, TypeScript may accept code that fails at runtime when the types drift.
+
+_Enforcement:_ Code review + import linting. There is no automated check that can reliably detect structural duplication, so reviewers must be vigilant.
+
+**Rule 5: `clawql-pageindex` has zero ClawQL dependencies.**
+
+It may only import from its own sub-packages and approved third-party libraries. It must remain usable as a standalone MIT package outside of ClawQL.
+
+_Why:_ It is published separately under MIT for use cases that do not need the full platform. Introducing a ClawQL dependency breaks every external consumer.
+
+_Enforcement:_ Separate `tsconfig.json` with `paths` configured to exclude all `@clawql/*` imports. CI validates the published package can be installed and used without any other ClawQL package present.
+
+**Rule 6: `clawql-lending` declares `clawql-blockchain` as an optional peer dependency only.**
+
+It must not fail to register if blockchain is disabled.
+
+_Why:_ The lending vertical has both regulated (no blockchain) and Web3 (blockchain-enabled) use cases. Making blockchain required would exclude the majority of lending deployments.
+
+_Enforcement:_ Code review. The optional peer pattern must be verified in the contribution checklist.
+
+### 2.3 Cross-Vertical Communication in Practice
+
+When a vertical needs data from another vertical, the correct pattern is:
+
+```typescript
+// Inside a vertical's Effect pipeline — DO THIS
+const result =
+  yield *
+  ClawQLApi.pipe(
+    Effect.flatMap((api) =>
+      api.execute("legal__contracts__clause_extract", {
+        documentId,
+        atr: {
+          ...currentClaims,
+          crossVertical: true,
+          crossVerticalPurpose: "underwriting-risk-assessment",
+        },
+      })
+    )
+  );
+```
+
+```typescript
+// DO NOT DO THIS — importing another vertical directly
+import { extractClauses } from "@clawql/legal"; // ❌ rejected by ESLint
+```
+
+The execute call routes through `clawql-api`, which validates the elevated ATR claims, enforces that `crossVerticalPurpose` is present, and stamps the result with lineage metadata before returning it. That metadata is what makes cross-vertical decisions auditable.
+
+### 2.4 Allowed vs. Prohibited Import Patterns
+
+```typescript
+// ✅ Allowed: importing from clawql-core
+import { Plugin, ATRClaims, EntityNode, ProviderSpec } from "@clawql/core";
+
+// ✅ Allowed: importing from internal utilities
+import { computeMerkleRoot } from "@clawql/merkle";
+import { CuckooFilter } from "@clawql/cuckoo";
+
+// ✅ Allowed: receiving a horizontal capability via Effect Context
+const memory = yield* MemoryService;
+
+// ✅ Allowed: calling another vertical via the gateway
+const result = yield* api.execute("legal__contracts__clause_extract", params);
+
+// ❌ Prohibited: importing another vertical
+import { extractClauses } from "@clawql/legal";
+
+// ❌ Prohibited: importing a horizontal layer directly from a vertical
+import { ingest } from "@clawql/memory";
+
+// ❌ Prohibited: importing clawql-telemetry
+import { tracer } from "@clawql/telemetry";
+
+// ❌ Prohibited: redefining core types
+interface MyATRClaims { actorId: string; ... } // use ATRClaims from @clawql/core
+```
+
+---
+
+## 3. Effect-TS Patterns
+
+This section describes the patterns ClawQL uses. Deviations from these patterns in contributed code will be flagged in review. The patterns exist to ensure consistent error handling, resource cleanup, testability, and compile-time safety across the entire codebase.
+
+### 3.1 The Service Pattern
+
+Every major capability in ClawQL is exposed as an Effect service — a typed tag that can be required as a dependency and provided via a Layer.
+
+```typescript
+// Defining a service (in clawql-core or the package that owns it)
+export class MemoryService extends Context.Tag("MemoryService")<
+  MemoryService,
+  {
+    readonly ingest: (node: EntityNode) => Effect.Effect<void, MemoryError, never>;
+    readonly recall: (
+      query: RecallQuery,
+      claims: ATRClaims
+    ) => Effect.Effect<EntityNode[], MemoryError, never>;
+  }
+>() {}
+```
+
+```typescript
+// Using a service in a vertical
+const myEffect = Effect.gen(function* () {
+  const memory = yield* MemoryService;
+  const results = yield* memory.recall({ query: "client ABC123" }, claims);
+  return results;
+});
+```
+
+The vertical declares `MemoryService` as a dependency through its Layer. The Layer system ensures it is provided before the vertical registers. If it is not provided, the code does not compile.
+
+### 3.2 Layer Composition — The Canonical Pattern
+
+Every vertical and horizontal package exports a `Live` layer that wires together its dependencies and registers itself with the gateway.
+
+```typescript
+// The canonical vertical Layer pattern
+export const LendingLive: Layer.Layer<
+  never,
+  ClawQLError,
+  ClawQLApi | MemoryService | DocumentsService
+> = Layer.effectDiscard(
+  Effect.gen(function* () {
+    const api = yield* ClawQLApi;
+
+    yield* api.registerPlugin({
+      id: "lending",
+      version: "1.0.0",
+
+      onRegister: (api) =>
+        Effect.gen(function* () {
+          yield* api.registerTools(lendingTools);
+          yield* api.registerSpecs(lendingRequiredSpecs);
+        }),
+
+      requiredSpecs: lendingRequiredSpecs,
+      onIngestHook: lendingIngestHook,
+      onRecallFilter: lendingRecallFilter,
+      onComplianceReport: lendingComplianceReport,
+    });
+  })
+);
+```
+
+The type signature `Layer.Layer<never, ClawQLError, ClawQLApi | MemoryService | DocumentsService>` is the dependency declaration. It says: this layer produces nothing new (`never`), may fail with `ClawQLError`, and requires `ClawQLApi`, `MemoryService`, and `DocumentsService` to be in scope. The compiler enforces this. If you add a new service usage inside the layer without adding it to the type, the code fails to compile.
+
+### 3.3 Required vs. Optional Providers at Compile Time
+
+Required providers are expressed in the Layer type signature. Optional providers are handled with `Effect.serviceOption`:
+
+```typescript
+// Optional blockchain provider — lending works without it
+const blockchainOpt = yield * Effect.serviceOption(BlockchainService);
+if (Option.isSome(blockchainOpt)) {
+  yield * blockchainOpt.value.tokenize(asset);
+} else {
+  yield * Effect.logWarning("Blockchain not available; skipping tokenization");
+}
+```
+
+Do not use `try/catch` around service accesses to handle missing providers. The Effect service option pattern is the correct approach — it is explicit, typed, and does not suppress other errors.
+
+### 3.4 In-Memory Test Layers — Full Working Example
+
+Every vertical must provide a test layer that substitutes real services with in-memory implementations. External services are not available in unit and most integration tests.
+
+```typescript
+// test/layers.ts in a vertical package
+
+const MemoryTestLayer = Layer.succeed(MemoryService, {
+  ingest: (node) => Effect.succeed(void 0),
+  recall: (_query, _claims) =>
+    Effect.succeed([
+      {
+        id: "test-node-1",
+        content: "Test client ABC123",
+        verticalId: "lending",
+        tenantId: "test-tenant",
+        merkleRoot: "abc123",
+        createdAt: Date.now(),
+      } satisfies EntityNode,
+    ]),
+});
+
+const DocumentsTestLayer = Layer.succeed(DocumentsService, {
+  process: (_input) =>
+    Effect.succeed({
+      stages: ["tika", "presidio"],
+      result: { text: "Employer: Acme Corp\nEIN: 12-3456789" },
+      merkleRoots: { tika: "root1", presidio: "root2" },
+      stageErrors: [],
+    }),
+});
+
+export const LendingTestLayer = Layer.mergeAll(
+  MemoryTestLayer,
+  DocumentsTestLayer,
+  // Provide a minimal ClawQLApi stub
+  Layer.succeed(ClawQLApi, makeMockApi()),
+  LendingLive
+);
+
+// Usage in tests
+it("creates a deal room", () =>
+  Effect.gen(function* () {
+    const api = yield* ClawQLApi;
+    const result = yield* api.execute("lending__underwriting__createDealRoom", {
+      clientId: "ABC123",
+      dealType: "mortgage",
+      amount: 450000,
+    });
+    expect(result.dealRoom.id).toBeDefined();
+    expect(result.dealRoom.status).toBe("open");
+  }).pipe(Effect.provide(LendingTestLayer), Effect.runPromise));
+```
+
+`makeMockApi()` is exported from `clawql-core`’s test utilities. It records all `registerTools`, `registerSpecs`, and `execute` calls for assertion.
+
+### 3.5 Typed Error Factories
+
+All errors in ClawQL packages must use the typed error factories from `clawql-core`. Do not throw raw `Error` objects. Do not use `Effect.fail(new Error(...))`.
+
+```typescript
+import { ClawQLError, makeError } from "@clawql/core";
+
+// Use a predefined error kind
+yield *
+  Effect.fail(
+    makeError("PROVIDER_UNAVAILABLE", {
+      providerId: "postgres-operational",
+      verticalId: "lending",
+      message: "Connection pool exhausted",
+    })
+  );
+
+// Define a vertical-specific error kind (register it in your vertical's onRegister)
+yield *
+  Effect.fail(
+    makeError("LENDING_UNDERWRITING_FAILED", {
+      dealId,
+      reason: "credit score below threshold",
+      score: creditScore,
+    })
+  );
+```
+
+Typed errors appear correctly in audit logs, OpenTelemetry traces, and structured error responses. Raw `Error` objects produce opaque audit entries that cannot be queried by the Compliance Center.
+
+### 3.6 Streaming
+
+For operations that produce results incrementally (document processing stages, large recall results, agent output capture), use `Stream`:
+
+```typescript
+const processDocumentStream = (
+  input: DocumentInput
+): Stream.Stream<ProcessingStage, ClawQLError, DocumentsService> =>
+  Stream.gen(function* () {
+    const docs = yield* DocumentsService;
+
+    yield* Stream.fromEffect(
+      docs.runTika(input).pipe(Effect.map((r) => ({ stage: "tika" as const, result: r })))
+    );
+
+    yield* Stream.fromEffect(
+      docs.runPresidio(input).pipe(Effect.map((r) => ({ stage: "presidio" as const, result: r })))
+    );
+  }).pipe(Stream.flatten());
+```
+
+Do not buffer entire large results in memory. If your tool returns a list that could be unbounded, return a `Stream`, not an `Array`.
+
+---
+
+## 4. Writing a Vertical
+
+### 4.1 Step-by-Step from Fork to Merged PR
+
+**Step 1: Fork the vertical template**
+
+```bash
+cp -r tools/vertical-template verticals/my-vertical
+cd verticals/my-vertical
+# Edit package.json: name, description, version
+# Edit src/index.ts: replace "template" with your vertical ID
+```
+
+The template includes the correct `tsconfig.json` (with the right project references and path exclusions), the right ESLint config, a stub `Plugin` implementation, an empty tools file, an empty compliance report, and a test harness with `makeMockApi()` wired up.
+
+**Step 2: Implement the `Plugin` interface**
+
+Start with the minimum viable implementation — `onRegister` with at least one tool registered. Get this compiling and passing the test harness before adding more.
+
+**Step 3: Define `requiredSpecs` and `recommendedSpecs`**
+
+Be conservative. Only declare a spec as required if your vertical genuinely cannot function without it. An analytics DuckDB instance is probably recommended, not required, if your vertical can operate (more slowly) using Postgres.
+
+**Step 4: Register tools using `normalizeOperationId`**
+
+```typescript
+import { normalizeOperationId, defineTool } from "@clawql/core";
+
+export const lendingTools = [
+  defineTool({
+    operationId: normalizeOperationId("lending", "underwriting", "createDealRoom"),
+    description: "Creates a new deal room for a lending transaction.",
+    inputSchema: CreateDealRoomSchema, // Effect Schema
+    outputSchema: DealRoomSchema,
+    handler: createDealRoomHandler,
+  }),
+  // ...
+];
+```
+
+All input and output schemas must be Effect `Schema` definitions from `@effect/schema`. Do not use Zod, Yup, or hand-rolled validators. Effect Schema is what the gateway uses for validation, projection, and documentation generation.
+
+**Step 5: Implement ingest and recall hooks**
+
+Implement `onIngestHook` if your vertical ingests domain-specific node types that need validation or enrichment. Implement `onRecallFilter` if your vertical has access restrictions beyond what ATR claims enforce (e.g., ethical walls in legal, patient-level partitioning in healthcare).
+
+Both hooks must be pure Effect pipelines. No side effects outside of injected services.
+
+**Step 6: Declare the compliance matrix entry**
+
+```typescript
+export const lendingComplianceReport = (): Effect.Effect<ComplianceReport, never, never> =>
+  Effect.succeed({
+    verticalId: "lending",
+    frameworks: ["TILA", "RESPA", "ECOA", "HMDA"],
+    controls: {
+      presidioEnabled: true,
+      merkleAuditingEnabled: true,
+      atrEnforcementEnabled: true,
+      wormAuditEnabled: true,
+      dataRetentionPolicy: "7-years-post-closure",
+    },
+    notes: "ATR controls align with CFPB Ability-to-Repay requirements.",
+  });
+```
+
+Do not leave this unimplemented. The Compliance Center generates reports that auditors read. A vertical without a compliance report entry is an audit finding.
+
+**Step 7: Write unit and integration tests (≥80% coverage)**
+
+```bash
+# Run tests from the vertical package directory
+pnpm test
+
+# Check coverage
+pnpm test:coverage
+```
+
+Coverage below 80% on non-generated code fails CI. Coverage is measured on `src/` excluding `src/index.ts` barrel exports.
+
+For integration tests, provide fixture documents in `test/fixtures/`. The CI integration test runner starts the services defined in `docker-compose.test.yml` before running integration tests. If your vertical requires a service not already in the base compose file, add it there and document the reason.
+
+**Step 8: Add an end-to-end test in Tier 1 Docker Compose**
+
+Add your vertical’s toggle to `examples/clawql-local-docker-compose/docker-compose.yml` and add an end-to-end test in `examples/clawql-local-docker-compose/tests/`. The E2E test must:
+
+1. Enable your vertical via CRD (or environment variable in Tier 1)
+2. Ingest at least one fixture document through the full pipeline
+3. Perform at least one recall
+4. Execute at least one domain-specific tool
+5. Verify a Merkle root was produced
+
+**Step 9: Update the Operator CRD fragment and Helm values**
+
+Add your vertical’s toggle to:
+
+- `operator/config/crd/clawqlinstance_types.go` — add the field to the spec struct
+- `charts/clawql-full-stack/values.yaml` — add the default (disabled) toggle
+- `charts/clawql-full-stack/templates/` — add the conditional include
+
+**Step 10: Provide documentation**
+
+Add `docs/verticals/my-vertical.md` covering:
+
+- What the vertical does and who it is for
+- Required and recommended providers
+- All registered tools with input/output schemas described in plain language
+- At least five example natural-language commands
+- The compliance matrix entry explained in plain language
+- Known limitations
+
+**Step 11: Submit PR with architecture diagram diff check passing**
+
+The CI pipeline runs `pnpm arch:check` which compares the current dependency graph against the committed diagram. If your vertical introduces a new dependency that is not in the diagram, the check fails. Update the diagram in `docs/architecture/dependency-graph.mmd` as part of your PR.
+
+**Step 12: Community review**
+
+PRs require approval from at least two maintainers. The review checklist is pinned in the PR template. Verticals cannot merge to `main` until Phase 1 exit criteria are met — but they can be reviewed, iterated on, and approved in draft PRs during Phase 1.
+
+### 4.2 Tool Registration in Detail
+
+```typescript
+export const createDealRoomHandler = (
+  input: CreateDealRoomInput,
+  context: ToolContext // provided by clawql-api; contains claims, requestId, etc.
+): Effect.Effect<DealRoom, LendingError, MemoryService | DocumentsService> =>
+  Effect.gen(function* () {
+    // Validate business rules
+    if (input.amount <= 0) {
+      yield* Effect.fail(makeError("LENDING_INVALID_AMOUNT", { amount: input.amount }));
+    }
+
+    // Use injected services
+    const memory = yield* MemoryService;
+
+    // Record the operation with full provenance
+    yield* memory.ingest({
+      id: generateULID(),
+      content: `Deal room created for client ${input.clientId}`,
+      verticalId: "lending",
+      tenantId: context.claims.tenantId,
+      metadata: {
+        dealType: input.dealType,
+        amount: input.amount,
+        requestId: context.claims.requestId,
+      },
+      merkleRoot: "", // populated by Memory 2.0 ingest pipeline
+      createdAt: Date.now(),
+    });
+
+    return {
+      id: generateULID(),
+      clientId: input.clientId,
+      dealType: input.dealType,
+      amount: input.amount,
+      status: "open",
+      createdAt: Date.now(),
+    };
+  });
+```
+
+The handler must not call `clawql-api.execute()` recursively for operations it owns — handle the logic directly. It may call `clawql-api.execute()` for cross-vertical operations, using elevated claims as described in §2.3.
+
+### 4.3 Common Contribution Mistakes
+
+**Mistake: Using `async/await` inside Effect pipelines.**
+
+```typescript
+// ❌ Wrong
+onIngestHook: async (node, context) => {
+  const validated = await validateNode(node);
+  return validated;
+};
+
+// ✅ Correct
+onIngestHook: (node, context) =>
+  Effect.gen(function* () {
+    const validated = yield* validateNode(node);
+    return validated;
+  });
+```
+
+`async/await` inside Effect pipelines bypasses structured concurrency, breaks error typing, and prevents resource cleanup.
+
+**Mistake: Calling `console.log` for logging.**
+
+```typescript
+// ❌ Wrong
+console.log("Processing node:", node.id);
+
+// ✅ Correct
+yield * Effect.logInfo("Processing node", { nodeId: node.id });
+```
+
+`Effect.logInfo`, `Effect.logWarning`, and `Effect.logError` produce structured log entries that appear in SigNoz with the correct trace context. `console.log` produces unstructured output that cannot be correlated with traces or filtered by tenant.
+
+**Mistake: Storing ATRClaims in memory or database.**
+
+Claims are session-scoped and must not persist. Store `actorId` and `requestId` for audit purposes. Never store the full claims object.
+
+**Mistake: Declaring more required providers than actually required.**
+
+If your vertical can degrade gracefully without a provider, use `recommendedSpecs` and handle the absent service with `Effect.serviceOption`. Over-declaring required specs blocks deployments unnecessarily.
+
+**Mistake: Failing to implement `onComplianceReport`.**
+
+This is a silent omission in terms of compilation but an active audit finding. Every vertical must implement it.
+
+---
+
+## 5. Writing a Provider
+
+Providers are adapters that connect ClawQL to external systems. They implement a service interface defined in `clawql-core` and register via a `ProviderSpec`.
+
+### 5.1 ProviderSpec Registration
+
+```typescript
+export const MyProviderSpec = createProviderSpec({
+  kind: "postgres", // must be an existing SpecKind
+  id: "my-provider",
+  enabled: true,
+  secretRef: "my-provider-credentials",
+  capabilities: ["read", "write", "analytics"],
+});
+```
+
+If your provider implements a kind not yet in `SpecKind`, open an RFC before proceeding. The RFC process ensures the kind name is stable before it is depended upon.
+
+### 5.2 Health Check Contract
+
+Every provider must expose a health check that `clawql-api` can poll before registering it in the supergraph:
+
+```typescript
+export interface ProviderHealthCheck {
+  check(): Effect.Effect<HealthStatus, never, never>;
+}
+
+export type HealthStatus =
+  | { status: "healthy"; latencyMs: number }
+  | { status: "degraded"; latencyMs: number; reason: string }
+  | { status: "unhealthy"; reason: string };
+```
+
+The health check must complete within 5 seconds. If it does not respond, the gateway treats the provider as unhealthy. Health checks must not perform writes. They should be the minimum operation necessary to confirm the provider is reachable and operational — a `SELECT 1` for Postgres, a `PING` for Valkey.
+
+### 5.3 Circuit Breaker Integration
+
+Providers are automatically wrapped in a circuit breaker by `clawql-api`. The defaults are 5 consecutive failures to open, 30 seconds before a probe, and one probe before returning to closed. You do not need to implement the circuit breaker — you need to ensure your provider’s errors are typed correctly so the circuit breaker can distinguish transient failures (which count toward the threshold) from permanent failures (which do not):
+
+```typescript
+export type ProviderError =
+  | { _tag: "TransientError"; message: string } // counts toward circuit breaker
+  | { _tag: "PermanentError"; message: string } // does not trip circuit breaker
+  | { _tag: "AuthError"; message: string }; // does not trip circuit breaker
+```
+
+### 5.4 Lifecycle via Effect Layers
+
+```typescript
+export const MyProviderLive = Layer.scoped(
+  MyProviderService,
+  Effect.gen(function* () {
+    // Acquire resources
+    const connection = yield* Effect.acquireRelease(connectToMyProvider(config), (conn) =>
+      Effect.promise(() => conn.close())
+    );
+
+    return {
+      query: (sql) =>
+        Effect.tryPromise({
+          try: () => connection.query(sql),
+          catch: (e) => makeError("PROVIDER_QUERY_FAILED", { message: String(e) }),
+        }),
+    };
+  })
+);
+```
+
+`Layer.scoped` ensures the `acquireRelease` bracket runs on teardown. Resources managed this way are guaranteed to be cleaned up when the Layer is released, regardless of how the program exits.
+
+---
+
+## 6. Security Contracts Contributors Must Honour
+
+These are not guidelines. Contributions that violate these contracts will not be merged.
+
+### 6.1 Presidio Integration Points
+
+Presidio redaction must run before any data is written to persistent storage and before any data is returned across a trust boundary. In practice, this means:
+
+- **Before Memory 2.0 ingest:** The `onIngestHook` receives pre-redacted nodes from the documents pipeline. If your hook produces new text content (e.g., by concatenating fields), that content must be redacted before the hook returns.
+- **Before tool output is returned:** If your tool handler produces output containing user-supplied text, it must be routed through the `RedactionService` before returning.
+
+```typescript
+// Redacting tool output
+const redacted =
+  yield *
+  RedactionService.pipe(
+    Effect.flatMap((r) =>
+      r.redact(rawOutput, { vertical: "lending", models: ["pii", "financial"] })
+    )
+  );
+```
+
+If `RedactionService` is unavailable, the tool handler must fail with `PRESIDIO_UNAVAILABLE`. It must not return unredacted content. The failure policy is `block`, not `passthrough`.
+
+### 6.2 Merkle Rooting
+
+Every write that produces a persistent artefact must generate a Merkle root. In most cases this is handled automatically by Memory 2.0 and the documents pipeline. If your vertical writes directly to a provider (e.g., writing a generated report to SeaweedFS), you must compute and record the root:
+
+```typescript
+import { computeMerkleRoot } from "@clawql/merkle";
+
+const content = serializeReport(report);
+const root = computeMerkleRoot(content);
+
+yield *
+  auditLog.record({
+    requestId: context.claims.requestId,
+    actorId: context.claims.actorId,
+    tenantId: context.claims.tenantId,
+    operation: "report.write",
+    merkleRoot: root,
+    timestamp: Date.now(),
+  });
+
+yield * storageProvider.write(path, content);
+```
+
+The Merkle root must be recorded before the write, not after. If the write fails, the audit record must be rolled back or marked as failed. Do not produce orphaned audit records that claim a write succeeded when it did not.
+
+### 6.3 ATR Enforcement
+
+Verticals must not make their own access control decisions based on raw role or scope strings. Use the `PolicyService` from `clawql-core`:
+
+```typescript
+// ✅ Correct
+const permitted =
+  yield *
+  PolicyService.pipe(
+    Effect.flatMap((p) =>
+      p.check(context.claims, {
+        operation: "createDealRoom",
+        resource: { vertical: "lending", tenantId: input.tenantId },
+      })
+    )
+  );
+
+if (!permitted) {
+  yield * Effect.fail(makeError("ATR_PERMISSION_DENIED", { requestId: context.claims.requestId }));
+}
+```
+
+```typescript
+// ❌ Wrong — rolling your own access control
+if (!context.claims.roles.includes("underwriter")) {
+  throw new Error("Forbidden");
+}
+```
+
+Hand-rolled access control is not audited, is not consistent with other verticals, and will not be caught by the ATR enforcement layer. Use `PolicyService`.
+
+### 6.4 What “Never Bypass Core Security Middleware” Means in Implementation Terms
+
+`clawql-api`’s `execute()` pipeline runs the full security stack on every call: ATR validation, Panguard enforcement, Presidio redaction, Merkle auditing. If your vertical needs to call another tool, it must go through `api.execute()`. There are no internal shortcut methods that skip the security stack. If you find yourself wanting one, that is a signal that the security model needs to handle your use case — open an RFC.
+
+---
+
+## 7. Testing Requirements
+
+### 7.1 Coverage Thresholds
+
+| Test type                                                             | Target                      | Enforced              |
+| --------------------------------------------------------------------- | --------------------------- | --------------------- |
+| Pure functions (Merkle, Cuckoo, normalizeOperationId, ATR validation) | 100%                        | Yes — CI blocks merge |
+| Service layer in verticals and horizontals                            | ≥80%                        | Yes — CI blocks merge |
+| Tool handlers                                                         | ≥80%                        | Yes — CI blocks merge |
+| Integration tests (against live services)                             | One test per pipeline stage | Yes — CI blocks merge |
+| E2E test (full workflow)                                              | One per vertical            | Yes — CI blocks merge |
+
+Coverage is measured with `c8` over the compiled output. Generated files (Schema-derived types, etc.) are excluded.
+
+### 7.2 Integration Test Fixture Format
+
+Fixtures live in `test/fixtures/` and follow this naming convention:
+
+```
+test/fixtures/
+├── documents/
+│   ├── w2-simple.pdf
+│   ├── w2-complex-with-pii.pdf
+│   ├── contract-nda-standard.pdf
+│   └── [domain-specific documents]
+├── entities/
+│   ├── client-abc123.json    # EntityNode fixture
+│   └── deal-room-001.json
+└── atr/
+    ├── underwriter-claims.json
+    ├── viewer-claims.json
+    └── cross-vertical-claims.json
+```
+
+ATR fixture files contain valid `ATRClaims` objects for different permission levels. Use them in tests rather than constructing claims by hand — hand-constructed claims in tests tend to be permissive in ways that mask real access control bugs.
+
+### 7.3 Contract Test Requirements
+
+If your contribution adds a new callable surface to `clawql-api` (a new tool, a new operation on an existing tool, or a new schema), you must add a contract test in `packages/api/test/contracts/`. Contract tests use Pact to define the consumer’s expectations and verify the provider satisfies them. Any breaking change to a contracted surface requires a major version bump.
+
+### 7.4 Running Chaos Scenarios Locally
+
+A subset of the chaos scenarios can be run locally with Docker Compose:
+
+```bash
+# Kill Presidio mid-ingest and verify ingest is blocked
+pnpm chaos:presidio-kill
+
+# Fill Cuckoo filter to 100% and verify fallback
+pnpm chaos:cuckoo-fill
+
+# Kill memory service and verify recall returns appropriate error
+pnpm chaos:memory-kill
+```
+
+These scripts are in `tools/chaos/`. They use Docker Compose to manipulate the test stack and assert correct failure behaviour. Verticals with complex ingest or recall paths should add vertical-specific scenarios here.
+
+---
+
+## 8. CI Pipeline Reference
+
+Every PR runs the following checks in order. All must pass for a PR to be mergeable.
+
+| Check              | Tool                        | What it validates                                    |
+| ------------------ | --------------------------- | ---------------------------------------------------- |
+| Type check         | `tsc --noEmit`              | TypeScript correctness across all project references |
+| Lint               | ESLint + custom rules       | Import restrictions, architecture rules, code style  |
+| Unit tests         | Vitest                      | Pure function coverage, typed error usage            |
+| Cycle detection    | `madge --circular`          | No circular imports anywhere in the graph            |
+| Architecture diff  | `pnpm arch:check`           | Dependency graph matches committed diagram           |
+| Integration tests  | Vitest + Docker Compose     | Live service tests with fixture documents            |
+| Coverage           | `c8`                        | Coverage thresholds per §7.1                         |
+| Contract tests     | Pact                        | Consumer-provider contracts for clawql-api surface   |
+| E2E test           | Playwright + Docker Compose | Full workflow test for affected verticals            |
+| SBOM generation    | Syft                        | Software bill of materials                           |
+| Vulnerability scan | Trivy + OSV-Scanner         | Known CVEs in dependencies                           |
+| License check      | Fossa                       | No GPL-incompatible licenses in production code      |
+
+**Reproducing failures locally:**
+
+```bash
+# Run all CI checks locally (minus SBOM and license — run these in CI)
+pnpm ci:local
+
+# Run a specific check
+pnpm typecheck
+pnpm lint
+pnpm test:unit
+pnpm arch:check
+pnpm test:integration  # requires Docker
+
+# View the architecture diagram
+pnpm arch:view         # opens the dependency graph in your browser
+```
+
+If the architecture diff check fails, it means your changes introduced a new dependency path not reflected in `docs/architecture/dependency-graph.mmd`. Update the diagram, verify it reflects the actual graph using `arch:view`, and commit the updated file.
+
+---
+
+## 9. Versioning for Contributors
+
+### 9.1 SemVer Rules for Verticals
+
+Verticals version independently of the platform. Declare your compatible core version range in `package.json`:
+
+```json
+{
+  "name": "@clawql/lending",
+  "version": "1.0.0",
+  "peerDependencies": {
+    "@clawql/core": "^1.0.0",
+    "@clawql/api": "^1.0.0"
+  }
+}
+```
+
+Bump rules for vertical versions:
+
+| Change                                        | Required bump               |
+| --------------------------------------------- | --------------------------- |
+| New tool added                                | Minor                       |
+| Tool input schema changed non-additively      | Major                       |
+| Tool removed                                  | Major                       |
+| New optional field added to tool input/output | Patch (with Schema default) |
+| Bug fix with no schema change                 | Patch                       |
+| New required provider spec declared           | Major                       |
+
+### 9.2 When a Change Requires a Core Major Bump
+
+A change to `clawql-core` or `clawql-api` requires a major version bump if it:
+
+- Removes or renames a field in `ATRClaims`
+- Removes or renames a method on the `Plugin` interface
+- Changes the semantics of an existing `Plugin` lifecycle method
+- Removes a `SpecKind`
+- Changes the `normalizeOperationId` algorithm in a way that produces different output for existing inputs
+- Changes the Effect Layer type signature of any public service
+
+A change does not require a major bump if it:
+
+- Adds a new optional field to `ATRClaims`
+- Adds a new optional lifecycle method to `Plugin`
+- Adds a new `SpecKind`
+- Adds a new service to `clawql-core` that is not depended on by existing packages
+
+When a core major bump occurs, all dependent packages must release a simultaneous major version. A compatibility shim is provided for one minor version cycle to ease migration.
+
+### 9.3 `peerDependencies` Policy
+
+Use `peerDependencies` for all ClawQL packages. Do not use `dependencies`. This prevents multiple copies of `clawql-core` from being bundled in the same deployment, which would cause type mismatches that TypeScript cannot detect across package boundaries.
+
+---
+
+## Appendix A: Quick Reference Checklist
+
+Use this before submitting a PR.
+
+- [ ] `Plugin` interface fully implemented with no methods left as `undefined`
+- [ ] `onComplianceReport` implemented and returns a complete `ComplianceReport`
+- [ ] All tools registered with `normalizeOperationId` and Effect Schema definitions
+- [ ] All input/output schemas use `@effect/schema`, not Zod or hand-rolled validators
+- [ ] `requiredSpecs` and `recommendedSpecs` are minimal and accurate
+- [ ] No `console.log` — all logging uses `Effect.logInfo` / `Effect.logWarning` / `Effect.logError`
+- [ ] No `async/await` outside of Effect pipelines
+- [ ] ATRClaims are never stored in persistent state
+- [ ] Presidio redaction called before any user content is written or returned
+- [ ] Merkle root computed and recorded for any direct provider writes
+- [ ] `PolicyService` used for access control, not raw claim inspection
+- [ ] No import of another vertical package
+- [ ] No import of `clawql-telemetry`
+- [ ] All types imported from `@clawql/core`, not redeclared locally
+- [ ] Unit test coverage ≥80%
+- [ ] At least one integration test per pipeline stage
+- [ ] E2E test covers ingest → recall → tool execution → Merkle verification
+- [ ] `onTeardown` implemented if the plugin holds external resources
+- [ ] Architecture diagram updated if new dependency paths introduced
+- [ ] Compliance matrix entry documented in plain language in `docs/`
+- [ ] Five or more example natural-language commands in `docs/`
+- [ ] `peerDependencies` used, not `dependencies`, for all ClawQL packages
+- [ ] SemVer bump type justified in PR description
+
+## Appendix B: Key Imports Reference
+
+```typescript
+// Core contracts — always from @clawql/core
+import {
+  Plugin,
+  ATRClaims,
+  EntityNode,
+  IngestContext,
+  RecallOptions,
+  RecallQuery,
+  ComplianceReport,
+  ProviderSpec,
+  SpecKind,
+  AgentRuntime,
+  AgentConfig,
+  AgentHandle,
+  ClawQLError,
+  ClawQLApi,
+  ToolContext,
+  makeError,
+  normalizeOperationId,
+  defineTool,
+  createProviderSpec,
+  generateULID,
+} from "@clawql/core";
+
+// Services — accessed via Effect Context, not imported directly
+// MemoryService, DocumentsService, RedactionService, PolicyService, AuditLogService
+
+// Internal utilities
+import { computeMerkleRoot } from "@clawql/merkle";
+import { CuckooFilter } from "@clawql/cuckoo";
+
+// Effect-TS — pin to the workspace version
+import { Effect, Layer, Stream, Option, Context, Schema } from "effect";
+```
+
+---
+
+_ClawQL Contributor Technical Specification · May 2026 · Apache 2.0 / MIT_
+_For platform vision and roadmap: see the [Vision & Roadmap document](../vision/clawql-vision-roadmap.md)._
+_For deployment instructions: see the [Deployment & Operations Guide](../deployment/clawql-deployment-operations-guide.md)._

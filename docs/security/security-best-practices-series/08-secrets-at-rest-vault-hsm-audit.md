@@ -8,7 +8,7 @@ tags:
   - dynamic-secrets
   - audit
 part: 8
-total_parts: 30
+total_parts: 32
 date: "May 2026"
 slug: "secrets-at-rest-vault-hsm-audit"
 canonical_path: "/security/best-practices/secrets-at-rest-vault-hsm-audit"

@@ -8,7 +8,7 @@ tags:
   - fuzzing
   - purple-team
 part: 24
-total_parts: 30
+total_parts: 32
 date: "May 2026"
 slug: "red-teaming-adversarial-testing"
 canonical_path: "/security/best-practices/red-teaming-adversarial-testing"

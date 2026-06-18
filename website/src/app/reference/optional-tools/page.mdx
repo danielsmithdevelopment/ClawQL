@@ -1,0 +1,20 @@
+import { Button } from '@/components/Button'
+import { Note } from '@/components/mdx'
+import { OptionalToolsHubGrid } from '@/components/DocsHubSections'
+
+# Optional MCP tools
+
+**ClawQL Core** always registers **`search`**, **`execute`**, **`audit`**, and **`cache`**. The tools below are optional — enable via **`CLAWQL_ENABLE_*`** env vars. Each links to a **Learn** walkthrough rather than a standalone low-level page. {{ className: 'lead' }}
+
+<Note>
+  Prefer the unified [MCP tool reference](/tools) for parameters and behavior.
+  These pages teach *workflows*, not duplicate API docs.
+</Note>
+
+<OptionalToolsHubGrid />
+
+<div className="not-prose my-8">
+  <Button href="/tools" variant="text" arrow="right">
+    <>Full tool reference</>
+  </Button>
+</div>
