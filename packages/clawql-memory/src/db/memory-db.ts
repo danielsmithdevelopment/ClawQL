@@ -29,10 +29,7 @@ import {
   vectorDualWriteToMemoryDb,
   type ChunkWithEmbedding,
 } from "../embedding/embedding.js";
-import {
-  loadPostgresChunkVectorsByPaths,
-  upsertPostgresChunkVectors,
-} from "../vector/pgvector.js";
+import { loadPostgresChunkVectorsByPaths, upsertPostgresChunkVectors } from "../vector/pgvector.js";
 import {
   rebuildSqliteMemoryArtifacts,
   syncMemoryArtifactsToPostgres,
