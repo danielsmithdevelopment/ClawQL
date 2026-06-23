@@ -1,0 +1,64 @@
+{
+  "name": "clawql-documents",
+  "version": "0.0.1",
+  "description": "ClawQL document ingest pipeline: external knowledge import into vault (#307 order 5)",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./ingest/external-ingest": {
+      "types": "./dist/ingest/external-ingest.d.ts",
+      "import": "./dist/ingest/external-ingest.js",
+      "require": "./dist/ingest/external-ingest.cjs"
+    },
+    "./ingest/url-format": {
+      "types": "./dist/ingest/url-format.d.ts",
+      "import": "./dist/ingest/url-format.js",
+      "require": "./dist/ingest/url-format.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "npm run clean && tsup",
+    "prepublishOnly": "npm run build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "clawql-api": "file:../clawql-api",
+    "clawql-memory": "file:../clawql-memory",
+    "node-html-markdown": "^2.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsup": "^8.3.0",
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.1"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/danielsmithdevelopment/ClawQL.git",
+    "directory": "packages/clawql-documents"
+  },
+  "keywords": [
+    "clawql",
+    "documents",
+    "ingest",
+    "mcp"
+  ]
+}
