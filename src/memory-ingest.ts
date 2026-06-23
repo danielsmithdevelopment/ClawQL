@@ -11,8 +11,11 @@ import {
 } from "./enterprise-citations.js";
 import { getObsidianVaultPath } from "./vault-config.js";
 import { readToolOutputsFileForIngest } from "./memory-ingest-file.js";
+import { slugifyTitle } from "clawql-memory/ingest/slug";
 import { readVaultTextFile, withVaultWriteLock, writeVaultTextFileAtomic } from "./vault-utils.js";
 import { logMcpToolShape } from "./mcp-tool-log.js";
+
+export { slugifyTitle };
 
 const MEMORY_DIR = "Memory";
 
@@ -61,16 +64,6 @@ export type MemoryIngestResult = {
   /** When **`CLAWQL_CUCKOO_ENABLED=1`** and **`memory.db`** sync ran: membership filter was rebuilt for chunk ids. */
   cuckooMembershipReady?: boolean;
 };
-
-export function slugifyTitle(title: string): string {
-  const s = title
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "")
-    .slice(0, 96);
-  return s || "note";
-}
 
 function normalizeWikilink(name: string): string {
   const t = name.trim();

@@ -13,6 +13,26 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
+    "./vault/config": {
+      "types": "./dist/vault/config.d.ts",
+      "import": "./dist/vault/config.js",
+      "require": "./dist/vault/config.cjs"
+    },
+    "./vault/utils": {
+      "types": "./dist/vault/utils.d.ts",
+      "import": "./dist/vault/utils.js",
+      "require": "./dist/vault/utils.cjs"
+    },
+    "./vault/slug-index": {
+      "types": "./dist/vault/slug-index.d.ts",
+      "import": "./dist/vault/slug-index.js",
+      "require": "./dist/vault/slug-index.cjs"
+    },
+    "./ingest/slug": {
+      "types": "./dist/ingest/slug.d.ts",
+      "import": "./dist/ingest/slug.js",
+      "require": "./dist/ingest/slug.cjs"
+    },
     "./package.json": "./package.json"
   },
   "scripts": {
