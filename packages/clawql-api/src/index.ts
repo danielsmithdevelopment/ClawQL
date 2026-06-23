@@ -4,6 +4,7 @@ export * from "./config/optional-flags.js";
 export * from "./create-api.js";
 export * from "./execute/index.js";
 export * from "./execute-service.js";
+export * from "./graphql/index.js";
 export * from "./plugin-registry.js";
 export * from "./plugins/index.js";
 export * from "./proxy/index.js";
