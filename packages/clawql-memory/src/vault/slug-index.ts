@@ -32,15 +32,25 @@ export async function listVaultMarkdownRelPaths(
   return out;
 }
 
+function extractFirstH1Title(markdown: string): string | undefined {
+  const body = stripVaultFrontmatter(markdown);
+  for (const line of body.split("\n")) {
+    if (line.startsWith("# ")) {
+      const title = line.slice(2).trim();
+      if (title) return title;
+    }
+  }
+  return undefined;
+}
+
 export function buildSlugToVaultPath(files: { path: string; text: string }[]): Map<string, string> {
   const slugToPath = new Map<string, string>();
   for (const f of files) {
     const s = slugifyTitle(basename(f.path, ".md"));
     if (!slugToPath.has(s)) slugToPath.set(s, f.path);
-    const h = stripVaultFrontmatter(f.text);
-    const hm = h.match(/^#\s+(.+)$/m);
-    if (hm) {
-      const hs = slugifyTitle(hm[1].trim());
+    const title = extractFirstH1Title(f.text);
+    if (title) {
+      const hs = slugifyTitle(title);
       if (!slugToPath.has(hs)) slugToPath.set(hs, f.path);
     }
   }
