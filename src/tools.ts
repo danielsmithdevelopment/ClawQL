@@ -20,7 +20,6 @@ import { Effect } from "effect";
 import { ExecuteService, SearchService } from "clawql-api";
 import { z } from "zod";
 import { getClawqlApi, runMcpProxyBeforeCallTool } from "./clawql-api-adapters.js";
-import { mergedAuthHeaders } from "./auth-headers.js";
 import { getPackageRoot } from "./package-root.js";
 import { resolveBundledProvider } from "./provider-registry.js";
 import {
@@ -41,6 +40,11 @@ import { handleMemoryRecallToolInput } from "./memory-recall.js";
 import { cacheToolSchema, handleCacheToolInput } from "./clawql-cache.js";
 import { auditToolSchema, handleAuditToolInput } from "./clawql-audit.js";
 import { handleScheduleToolInput, scheduleToolSchema } from "./clawql-schedule.js";
+import {
+  configureNotifyDeps,
+  runNotifySlack,
+  SLACK_NOTIFY_OPERATION_ID,
+} from "clawql-automation/notify/notify";
 import { getClawqlOptionalToolFlags } from "./clawql-optional-flags.js";
 import { handleKnowledgeSearchOnyxToolInput } from "./knowledge-search-onyx.js";
 import { registerOuroborosTools } from "./ouroboros-mcp.js";
@@ -102,122 +106,16 @@ export async function handleClawqlExecuteToolInput(params: {
   );
 }
 
-/** Slack Web API `chat.postMessage` operation id in bundled `providers/slack/openapi.json`. */
-export const SLACK_NOTIFY_OPERATION_ID = "chat_postMessage";
+export { SLACK_NOTIFY_OPERATION_ID };
 
-/**
- * MCP `notify`: posts to Slack via the same path as `execute(chat_postMessage, …)`.
- * Registered only when `CLAWQL_ENABLE_NOTIFY=1` ([#77]).
- */
-export async function handleNotifyToolInput(params: {
-  channel: string;
-  text: string;
-  thread_ts?: string;
-  blocks?: string;
-  attachments?: string;
-  username?: string;
-  icon_emoji?: string;
-  icon_url?: string;
-  mrkdwn?: boolean;
-  unfurl_links?: boolean;
-  unfurl_media?: boolean;
-  reply_broadcast?: boolean;
-  parse?: string;
-  link_names?: boolean;
-  as_user?: boolean;
-  fields?: string[];
-}): Promise<{ content: { type: "text"; text: string }[] }> {
-  const auth = mergedAuthHeaders("slack");
-  if (!auth.Authorization) {
-    return {
-      content: [
-        {
-          type: "text",
-          text: JSON.stringify({
-            error:
-              "Slack bot token missing. Set CLAWQL_SLACK_TOKEN (or SLACK_BOT_TOKEN, SLACK_TOKEN, CLAWQL_SLACK_BOT_TOKEN), or a `slack` entry in CLAWQL_PROVIDER_AUTH_JSON.",
-          }),
-        },
-      ],
-    };
-  }
-
-  const channel = params.channel?.trim();
-  const text = params.text?.trim();
-  if (!channel || !text) {
-    return {
-      content: [
-        {
-          type: "text",
-          text: JSON.stringify({ error: "`channel` and `text` are required (non-empty strings)." }),
-        },
-      ],
-    };
-  }
-
-  const loaded = await loadSpec();
-  const op = loaded.operations.find((o) => o.id === SLACK_NOTIFY_OPERATION_ID);
-  if (!op) {
-    return {
-      content: [
-        {
-          type: "text",
-          text: JSON.stringify({
-            error: `Loaded spec has no Slack ${SLACK_NOTIFY_OPERATION_ID} (chat.postMessage). Include slack in CLAWQL_BUNDLED_PROVIDERS, set CLAWQL_PROVIDER=slack, or point CLAWQL_SPEC_PATH at the Slack Web API OpenAPI.`,
-          }),
-        },
-      ],
-    };
-  }
-
-  const args: Record<string, unknown> = { channel, text };
-  const passthrough: (keyof typeof params)[] = [
-    "thread_ts",
-    "blocks",
-    "attachments",
-    "username",
-    "icon_emoji",
-    "icon_url",
-    "parse",
-  ];
-  for (const k of passthrough) {
-    const v = params[k];
-    if (typeof v === "string" && v.trim()) args[k] = v.trim();
-  }
-  if (params.mrkdwn !== undefined) args.mrkdwn = params.mrkdwn;
-  if (params.unfurl_links !== undefined) args.unfurl_links = params.unfurl_links;
-  if (params.unfurl_media !== undefined) args.unfurl_media = params.unfurl_media;
-  if (params.reply_broadcast !== undefined) args.reply_broadcast = params.reply_broadcast;
-  if (params.link_names !== undefined) args.link_names = params.link_names;
-  if (params.as_user !== undefined) args.as_user = params.as_user;
-
-  const exec = await handleClawqlExecuteToolInput({
-    operationId: SLACK_NOTIFY_OPERATION_ID,
-    args,
-    fields: params.fields?.length ? params.fields : undefined,
-  });
-  const body = exec.content[0]?.text;
-  if (typeof body !== "string") return exec;
-  try {
-    const parsed = JSON.parse(body) as { ok?: boolean; error?: string };
-    if (parsed && typeof parsed === "object" && parsed.ok === false) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify({
-              error: parsed.error ?? "Slack API returned ok:false",
-              slack: parsed,
-            }),
-          },
-        ],
-      };
-    }
-  } catch {
-    // non-JSON execute error — return as-is
-  }
-  return exec;
+/** MCP `notify` — delegates to `clawql-automation` (registered when `CLAWQL_ENABLE_NOTIFY=1`). */
+export async function handleNotifyToolInput(
+  params: Parameters<typeof runNotifySlack>[0]
+): Promise<{ content: { type: "text"; text: string }[] }> {
+  return runNotifySlack(params);
 }
+
+configureNotifyDeps({ execute: (params) => handleClawqlExecuteToolInput(params) });
 
 export function registerTools(server: McpServer) {
   server.tool(

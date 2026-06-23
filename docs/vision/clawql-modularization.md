@@ -6,7 +6,7 @@
 
 ## Document scope & evidence (read this first)
 
-> **Companion only (v1.9).** **Canonical vision** is [`clawql-master-enablement-guide.md`](./clawql-master-enablement-guide.md). This file is a **historical package-matrix** companion; [`clawql-modularization-v2.md`](./clawql-modularization-v2.md) adds gateway/orchestration notes and may also lag enablement.
+> **Companion only (v1.9).** **Canonical vision** is [`clawql-master-enablement-guide.md`](./clawql-master-enablement-guide.md). **Implementation ground truth (June 2026):** [`../design/modularization-implementation-status.md`](../design/modularization-implementation-status.md). This file is a **historical package-matrix** companion; [`clawql-modularization-v2.md`](./clawql-modularization-v2.md) adds gateway/orchestration notes.
 
 This document is a **target modularization and platform architecture** for ClawQL. It mixes **shipped today**, **partial**, and **planned** work in one narrative. In particular, **§2 “To ship”** describes **intended package boundaries and responsibilities**, not “installable npm packages available now,” unless the same name also appears under **§2.4 Shipped**.
 
@@ -81,9 +81,16 @@ ClawQL is a modular, production-grade, self-healing, multi-tenant AI memory + ag
 
 | Package              | Status                                                                                |
 | -------------------- | ------------------------------------------------------------------------------------- |
-| `clawql-mcp`         | ✅ MCP server, stdio/HTTP/gRPC transports, tool registration                          |
+| `clawql-mcp`         | ✅ MCP server, stdio/HTTP/gRPC transports, tool registration (`src/`)                 |
 | `clawql-ouroboros`   | ✅ Evolutionary loops, Seed, EvolutionaryLoop, InMemoryEventStore, PostgresEventStore |
 | `mcp-grpc-transport` | ✅ First TypeScript gRPC transport for MCP                                            |
+| `clawql-core`        | ✅ Audit, cache, Merkle, Cuckoo, `Plugin` types (extraction order 1)                  |
+| `clawql-api`         | ✅ Spec load/search, execute, `createClawQLApi`, Panguard proxy plugin (order 2)      |
+| `clawql-memory`      | ✅ Vault, `memory.db`, ingest/recall (orders 4–7)                                     |
+| `clawql-documents`   | 🔨 Scaffold — `ingest_external_knowledge` (order 5; full pipeline planned)            |
+| `clawql-automation`  | 🔨 Scaffold — schedule + notify (order 6)                                             |
+
+See [`modularization-implementation-status.md`](../design/modularization-implementation-status.md) for subpath exports, shims, and MCP wiring.
 
 ### 2.5 Internal (Monorepo, Not Published Standalone)
 

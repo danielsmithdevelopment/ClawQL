@@ -9,26 +9,28 @@ Apache 2.0 / MIT · [github.com/clawql/clawql](https://github.com/clawql/clawql)
 
 ClawQL is under active development. Most of what this document describes is not yet running. The table below is the honest current state. Everything after it describes where ClawQL is going and why.
 
-| Package                    | Status                    |
-| -------------------------- | ------------------------- |
-| `clawql-mcp`               | ✅ Shipped                |
-| `clawql-ouroboros`         | ✅ Shipped                |
-| `mcp-grpc-transport`       | ✅ Shipped                |
-| `clawql-core`              | 🔨 In development         |
-| `clawql-api`               | 🔨 In development         |
-| `clawql-auth`              | 🔨 In development         |
-| `clawql-documents`         | 🔨 In development         |
-| `clawql-memory`            | 🔨 In development         |
-| `clawql-pageindex`         | 🔨 In development         |
-| `clawql-data`              | 📋 Planned                |
-| `clawql-automation`        | 📋 Planned                |
-| `clawql-telemetry`         | 📋 Planned                |
-| `clawql-sandbox`           | 📋 Planned                |
-| `clawql-printingpress`     | 📋 Planned                |
-| `clawql-goose`             | 📋 Planned                |
-| Kubernetes Operator        | 📋 Planned                |
-| Natural Language Dashboard | 📋 Planned                |
-| All vertical packages      | 📋 Planned — none shipped |
+| Package                    | Status                                                        |
+| -------------------------- | ------------------------------------------------------------- |
+| `clawql-mcp`               | ✅ Shipped (transport + MCP registration in `src/`)           |
+| `clawql-ouroboros`         | ✅ Shipped                                                    |
+| `mcp-grpc-transport`       | ✅ Shipped                                                    |
+| `clawql-core`              | ✅ Shipped (audit, Merkle, Cuckoo, Plugin types)              |
+| `clawql-api`               | ✅ Shipped (spec, execute, gateway scaffold, Panguard plugin) |
+| `clawql-memory`            | ✅ Shipped (vault, memory.db, ingest/recall)                  |
+| `clawql-documents`         | 🔨 Scaffold (external ingest; full pipeline planned)          |
+| `clawql-automation`        | 🔨 Scaffold (schedule + notify; NATS/HITL planned)            |
+| `clawql-auth`              | 📋 Planned (auth helpers live in `clawql-api` today)          |
+| `clawql-pageindex`         | 📋 Planned                                                    |
+| `clawql-data`              | 📋 Planned                                                    |
+| `clawql-telemetry`         | 📋 Planned                                                    |
+| `clawql-sandbox`           | 📋 Planned (logic still in `src/`)                            |
+| `clawql-printingpress`     | 📋 Planned                                                    |
+| `clawql-goose`             | 📋 Planned                                                    |
+| Kubernetes Operator        | 📋 Planned                                                    |
+| Natural Language Dashboard | 📋 Planned                                                    |
+| All vertical packages      | 📋 Planned — none shipped                                     |
+
+**Detail:** [Modularization implementation status](../design/modularization-implementation-status.md) (package contents, MCP flow, extraction PRs, plugin roadmap).
 
 If you are evaluating ClawQL for immediate production use, the answer today is: the foundation is being built, the shipped pieces work, and the platform is not yet ready for production deployment. If you are evaluating it as something to build on, contribute to, or adopt early, read on.
 
@@ -44,7 +46,7 @@ A practical way to think about it: when an agent needs to process a mortgage doc
 
 **ClawQL is not a generic MCP server.** Generic MCP servers are point integrations — one tool, one backend. ClawQL hosts and manages many tools under one gateway with consistent security, auditing, and memory across all of them.
 
-**ClawQL is not vaporware with a logo.** Three packages are shipped and in use. The core is in active development. The architecture is fully specified with working code examples and enforced dependency rules. The gap between what is specified and what is shipped is real and acknowledged throughout this document.
+**ClawQL is not vaporware with a logo.** The MCP server and workspace packages are shipped and in use; horizontal extraction (core → api → memory → documents → automation) is **on `main`** with transport shims retained for compatibility. The **full** gateway, plugin Layers, Operator, and verticals remain ahead — acknowledged throughout this document and in [Modularization implementation status](../design/modularization-implementation-status.md).
 
 ---
 
