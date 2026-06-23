@@ -1,16 +1,15 @@
 /**
- * MCP execute entry — delegates to clawql-api execute core with injected environment.
+ * MCP execute entry — delegates to clawql-api execute core.
  */
 
 import {
   defaultFields,
-  executeClawqlOperationWithEnv,
+  executeClawqlOperation,
   executeOutputFields,
   projectRestByFields,
   type ExecuteClawqlOperationParams,
   type McpTextContent,
 } from "clawql-api";
-import { mcpExecuteEnvironment } from "./mcp-execute-environment.js";
 
 export type { ExecuteClawqlOperationParams, McpTextContent };
 
@@ -20,5 +19,5 @@ export { defaultFields, executeOutputFields, projectRestByFields };
 export async function executeClawqlOperationCore(
   params: ExecuteClawqlOperationParams
 ): Promise<McpTextContent[]> {
-  return executeClawqlOperationWithEnv(mcpExecuteEnvironment, params);
+  return executeClawqlOperation(params);
 }

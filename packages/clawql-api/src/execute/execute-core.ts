@@ -1,26 +1,29 @@
 /**
  * Core `execute` implementation (OpenAPI / GraphQL / gRPC / REST paths).
- * REST and in-process GraphQL are in-package; native GraphQL/gRPC remain injected via `ExecuteEnvironment`.
+ * All protocol paths run in-package; optional `loadSpecFn` supports tests and MCP overrides.
  */
 
 import { executeOperationGraphQL } from "../graphql/in-process-execute.js";
-import { resolveApiBaseUrlForOperation, type OpenAPIDoc } from "../spec/spec-loader.js";
+import { loadSpec, resolveApiBaseUrlForOperation, type OpenAPIDoc } from "../spec/spec-loader.js";
 import type { Operation } from "../spec/operation-types.js";
+import type { LoadSpecFn } from "../search/search-live.js";
 import { defaultFields, executeOutputFields, projectRestByFields } from "./field-projection.js";
+import { executeNativeGraphQL } from "./native-graphql.js";
+import { executeNativeGrpc } from "./native-grpc.js";
 import { executeRestOperation } from "./rest-operation.js";
-import type { ExecuteClawqlOperationParams, ExecuteEnvironment, McpTextContent } from "./types.js";
+import type { ExecuteClawqlOperationParams, McpTextContent } from "./types.js";
 
 function textContent(text: string): McpTextContent[] {
   return [{ type: "text", text }];
 }
 
 /** Shared execute body — returns MCP text content blocks. */
-export async function executeClawqlOperationWithEnv(
-  env: ExecuteEnvironment,
-  params: ExecuteClawqlOperationParams
+export async function executeClawqlOperation(
+  params: ExecuteClawqlOperationParams,
+  loadSpecFn: LoadSpecFn = loadSpec
 ): Promise<McpTextContent[]> {
   const { operationId, args, fields } = params;
-  const loaded = await env.loadSpec();
+  const loaded = await loadSpecFn();
   const { operations, openapi, openapis, multi } = loaded;
   const op = operations.find((o) => o.id === operationId);
 
@@ -39,7 +42,7 @@ export async function executeClawqlOperationWithEnv(
 
   if (op.protocolKind === "graphql" && op.nativeGraphQL) {
     const selectedFields = outputFields?.length ? outputFields.join("\n        ") : "__typename";
-    const exec = await env.executeNativeGraphQL(op, args, selectedFields);
+    const exec = await executeNativeGraphQL(op as Operation, args, selectedFields);
     if (!exec.ok) {
       return textContent(
         JSON.stringify({
@@ -58,7 +61,7 @@ export async function executeClawqlOperationWithEnv(
   }
 
   if (op.protocolKind === "grpc" && op.nativeGrpc) {
-    const exec = await env.executeNativeGrpc(op, args);
+    const exec = await executeNativeGrpc(op as Operation, args);
     if (!exec.ok) {
       return textContent(
         JSON.stringify({
