@@ -7,13 +7,13 @@ The docs site is a **Next.js** app on **Cloudflare Workers** (OpenNext). Caching
 
 ## Defaults (repo)
 
-| Pattern                                  | Behavior                                                                                                                                                                                                   |
-| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **`/:path*`** (default)                  | `public, max-age=0, s-maxage=604800, stale-while-revalidate=2592000` (~7d edge, ~30d stale) — see **`website/src/lib/edge-cache-control.mjs`**.                                                             |
-| **Heavy MDX routes** (case studies, vision, operations guide, contributor spec, ouroboros spec, defense-in-depth, security training, token efficiency) | `s-maxage=2592000` (~30d), `stale-while-revalidate=7776000` (~90d) — purge after urgent edits. |
-| **`/_next/image`**                       | Long-lived cache (optimized images are content-addressed by URL).                                                                                                                                          |
-| **`/_next/static/:path*`**               | `immutable` + 1 year — matches hashed webpack chunks.                                                                                                                                                      |
-| **`/ClawQL-logo.jpeg`** (via `_headers`) | Shorter browser/edge TTL so a replaced file is picked up without renaming.                                                                                                                                 |
+| Pattern                                                                                                                                                | Behavior                                                                                                                                        |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`/:path*`** (default)                                                                                                                                | `public, max-age=0, s-maxage=604800, stale-while-revalidate=2592000` (~7d edge, ~30d stale) — see **`website/src/lib/edge-cache-control.mjs`**. |
+| **Heavy MDX routes** (case studies, vision, operations guide, contributor spec, ouroboros spec, defense-in-depth, security training, token efficiency) | `s-maxage=2592000` (~30d), `stale-while-revalidate=7776000` (~90d) — purge after urgent edits.                                                  |
+| **`/_next/image`**                                                                                                                                     | Long-lived cache (optimized images are content-addressed by URL).                                                                               |
+| **`/_next/static/:path*`**                                                                                                                             | `immutable` + 1 year — matches hashed webpack chunks.                                                                                           |
+| **`/ClawQL-logo.jpeg`** (via `_headers`)                                                                                                               | Shorter browser/edge TTL so a replaced file is picked up without renaming.                                                                      |
 
 ## OpenNext (Workers CPU / Error 1102)
 
