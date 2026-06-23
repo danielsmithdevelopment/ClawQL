@@ -98,15 +98,9 @@ export function hashIngestSection(input: MemoryIngestInput): string {
   return h.digest("hex");
 }
 
-export function extractIngestHashes(markdown: string): Set<string> {
-  const set = new Set<string>();
-  const re = /<!--\s*clawql-hash:([a-f0-9]{64})\s*-->/g;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(markdown)) !== null) {
-    set.add(m[1]);
-  }
-  return set;
-}
+import { extractIngestHashes } from "clawql-memory/ingest/hashes";
+
+export { extractIngestHashes };
 
 function buildSectionBody(
   input: MemoryIngestInput,

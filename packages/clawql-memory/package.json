@@ -33,6 +33,41 @@
       "import": "./dist/ingest/slug.js",
       "require": "./dist/ingest/slug.cjs"
     },
+    "./ingest/hashes": {
+      "types": "./dist/ingest/hashes.d.ts",
+      "import": "./dist/ingest/hashes.js",
+      "require": "./dist/ingest/hashes.cjs"
+    },
+    "./embedding/embedding": {
+      "types": "./dist/embedding/embedding.d.ts",
+      "import": "./dist/embedding/embedding.js",
+      "require": "./dist/embedding/embedding.cjs"
+    },
+    "./db/artifacts": {
+      "types": "./dist/db/artifacts.d.ts",
+      "import": "./dist/db/artifacts.js",
+      "require": "./dist/db/artifacts.cjs"
+    },
+    "./db/postgres-migrations": {
+      "types": "./dist/db/postgres-migrations.d.ts",
+      "import": "./dist/db/postgres-migrations.js",
+      "require": "./dist/db/postgres-migrations.cjs"
+    },
+    "./db/memory-db": {
+      "types": "./dist/db/memory-db.d.ts",
+      "import": "./dist/db/memory-db.js",
+      "require": "./dist/db/memory-db.cjs"
+    },
+    "./vector/pgvector": {
+      "types": "./dist/vector/pgvector.d.ts",
+      "import": "./dist/vector/pgvector.js",
+      "require": "./dist/vector/pgvector.cjs"
+    },
+    "./vault/provider-index": {
+      "types": "./dist/vault/provider-index.d.ts",
+      "import": "./dist/vault/provider-index.js",
+      "require": "./dist/vault/provider-index.cjs"
+    },
     "./package.json": "./package.json"
   },
   "scripts": {
@@ -43,10 +78,14 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "clawql-core": "file:../clawql-core"
+    "clawql-core": "file:../clawql-core",
+    "pg": "^8.21.0",
+    "sql.js": "^1.14.1"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "@types/pg": "^8.20.0",
+    "@types/sql.js": "^1.4.11",
     "tsup": "^8.3.0",
     "typescript": "^6.0.2",
     "vitest": "^4.1.1"
