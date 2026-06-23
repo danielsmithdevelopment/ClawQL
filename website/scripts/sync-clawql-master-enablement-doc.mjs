@@ -86,6 +86,18 @@ function rewriteLinksForSite(body) {
           '](/vision/immutable-releases)',
         )
         .replaceAll(
+          '](../design/clawql-plugin-model.md)',
+          '](/reference/plugins)',
+        )
+        .replaceAll(
+          '](../reference/clawql-plugin-registry.md)',
+          '](/reference/plugins#plugin-registry)',
+        )
+        .replaceAll(
+          '](../design/modularization-implementation-status.md)',
+          `](${GH_MAIN}/docs/design/modularization-implementation-status.md)`,
+        )
+        .replaceAll(
           '](../contributing/clawql-contributor-technical-specification.md)',
           '](/contributing/technical-specification)',
         )

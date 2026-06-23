@@ -118,6 +118,8 @@ Layer 0 (clawql-release) depends only on core utilities and produces bundles con
 
 All downstream calls (native or proxied) pass through the same security and auditing pipeline.
 
+**Horizontal plugins:** memory, documents, and automation will register their MCP tools via `Plugin.onRegister` when composed — see [ClawQL plugin model](../design/clawql-plugin-model.md).
+
 ---
 
 ## 6. Operator & Configuration

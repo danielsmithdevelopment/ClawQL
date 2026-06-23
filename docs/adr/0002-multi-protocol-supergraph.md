@@ -28,6 +28,8 @@ The longer-term **vision** (all sources behind one supergraph) is unchanged; **5
 
 ## Context
 
+> **Modularization note (June 2026):** Many `src/*.ts` paths below are **thin shims** re-exporting `packages/clawql-api/` (spec load, native protocol merge, execute). Canonical implementations live in the workspace packages; see [`modularization-implementation-status.md`](../design/modularization-implementation-status.md).
+
 Today ClawQL builds an in-process GraphQL schema from **OpenAPI** via **`@omnigraph/openapi`** (`graphql-schema-builder.ts`). Multi-spec merges keep **`search`** on one index; **`execute`** uses **REST** per owning OpenAPI/Discovery spec **unless** the operation is a **native** GraphQL or gRPC entry (see § Current implementation). Combined HTTP **`/graphql`** still reflects the **first** OpenAPI spec for debugging. The product direction remains a **unified supergraph** so additional protocols can participate behind **`search` → `execute`** without breaking existing OpenAPI/Discovery users.
 
 ### Current implementation (in-repo)

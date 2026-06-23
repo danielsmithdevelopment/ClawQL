@@ -12,7 +12,7 @@ Companion: [`effect-ts-modularization-rearchitecture-plan.md`](./effect-ts-modul
 
 ClawQL is mid-flight on a **strangler extraction** from the root `clawql-mcp` package into workspace packages under `packages/`. The MCP server (`src/server.ts`, `src/tools.ts`) remains the **transport adapter**; business logic moves into publishable units with **thin `src/` shims** for backward-compatible imports.
 
-**What landed (extraction orders 1–6, PRs [#401](https://github.com/danielsmithdevelopment/ClawQL/pull/401)–[#430](https://github.com/danielsmithdevelopment/ClawQL/pull/430)):**
+**What landed (extraction phases 1–9, PRs [#401](https://github.com/danielsmithdevelopment/ClawQL/pull/401)–[#430](https://github.com/danielsmithdevelopment/ClawQL/pull/430)):**
 
 | Package             | Role today                                                                                                 |
 | ------------------- | ---------------------------------------------------------------------------------------------------------- |
@@ -160,7 +160,7 @@ MCP: `handleScheduleToolInput` shim in `src/clawql-schedule.ts`; `handleNotifyTo
 | 8     | [#429](https://github.com/danielsmithdevelopment/ClawQL/pull/429) | `clawql-documents` package                                             |
 | 9     | [#430](https://github.com/danielsmithdevelopment/ClawQL/pull/430) | `clawql-automation` (schedule + notify)                                |
 
-**Next extraction orders** ([plan §6](./effect-ts-modularization-rearchitecture-plan.md#6-mapping-src--packages-first-extraction-order)):
+**Next extraction (post–phase 9)** ([plan §6](./effect-ts-modularization-rearchitecture-plan.md#6-mapping-src--packages-first-extraction-order)):
 
 | Order | Target                      | Representative `src/`                     |
 | ----- | --------------------------- | ----------------------------------------- |
@@ -193,6 +193,8 @@ interface Plugin {
 Optional tools (memory, schedule, notify, …) are still registered **directly in `tools.ts`**, not via `Plugin.onRegister`.
 
 ### 6.2 Target (third-party + vertical plugins)
+
+**Full explanation (recommended read):** [ClawQL plugin model](./clawql-plugin-model.md) — what memory/documents/automation “becoming plugins” means. **Registry:** [Plugin registry](../reference/clawql-plugin-registry.md) — shipped vs planned plugins, MCP tools, enable flags.
 
 From enablement §5.4 and the Effect plan §8:
 
@@ -242,6 +244,8 @@ These vision items are **not** done by package extraction alone:
 
 | Doc                                                                       | Use when                                  |
 | ------------------------------------------------------------------------- | ----------------------------------------- |
+| [ClawQL plugin model](./clawql-plugin-model.md)                           | Horizontal plugins, MCP tool registration |
+| [Plugin registry](../reference/clawql-plugin-registry.md)                 | Shipped vs planned plugins, enable flags  |
 | [Master enablement guide](../vision/clawql-master-enablement-guide.md)    | Platform intent, 6-layer model            |
 | [Modularization v2](../vision/clawql-modularization-v2.md)                | Target package boundaries, gateway design |
 | [Effect + plugin plan](./effect-ts-modularization-rearchitecture-plan.md) | Effect phases, plugin checklist, CI       |

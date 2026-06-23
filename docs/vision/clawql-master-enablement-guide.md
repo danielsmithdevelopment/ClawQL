@@ -188,6 +188,8 @@ Read the full documentation suite, deploy the Tier 1 stack, and begin building p
 | Document                                                                                             | Role                                                                                |
 | ---------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
 | **[Modularization implementation status](../design/modularization-implementation-status.md)**        | **Ground truth** — monorepo layout, shims, phases, Effect/plugin status (June 2026) |
+| **[ClawQL plugin model](../design/clawql-plugin-model.md)**                                          | Horizontal plugins — MCP tool registration, lifecycle, third-party path             |
+| **[Plugin registry](../reference/clawql-plugin-registry.md)**                                        | Shipped vs planned plugins, MCP tools, enable flags                                 |
 | [Vision & Roadmap](./clawql-vision-roadmap.md)                                                       | Public edition — honest shipped vs planned, phased delivery                         |
 | [Modularization v2.1](./clawql-modularization-v2.md)                                                 | Package boundaries, dependency graph, intelligent MCP gateway                       |
 | [Immutable releases (Layer 0)](./clawql-hybrid-decentralized-github-alternative.md)                  | Arweave bundles, Radicle, Rift, `clawql-release`, manifest schema                   |

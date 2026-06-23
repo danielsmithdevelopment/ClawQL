@@ -2,6 +2,8 @@
 
 This document explains **what was built**, **why**, **how the pieces fit together**, and **how to operate** the SQLite sidecar beside the Obsidian vault. It complements the schema reference **[memory-db-schema.md](memory-db-schema.md)** with implementation detail and file-level navigation.
 
+> **Path convention (June 2026):** Tables below list **`src/` shims** for backward compatibility. **Canonical implementations** live under **`packages/clawql-memory/`** (see [`modularization-implementation-status.md`](../design/modularization-implementation-status.md) §4.3).
+
 **Read order:** [memory-db-schema.md](memory-db-schema.md) → [hybrid-memory-backends.md](hybrid-memory-backends.md) → [vector-search-design.md](vector-search-design.md) → this file (implementation narrative).
 
 **Postgres vectors + Cuckoo / Merkle (env-gated):** see **[hybrid-memory-backends.md](hybrid-memory-backends.md)** for the dual-backend story and migration conventions.
@@ -98,9 +100,11 @@ Implemented as **`vaultChunkId()`** so re-ingest replaces the same logical chunk
 
 ---
 
-## 6. Module map (source files)
+## 6. Module map (`src/` shims → `packages/clawql-memory/`)
 
-| File                                                                     | Responsibility                                                                                                                                                                                                                                                                                                                  |
+Paths below are **`src/` transport shims**. Canonical modules: `packages/clawql-memory/` (vault, memory-db, ingest, recall, vector, etc.) — see [`modularization-implementation-status.md`](../design/modularization-implementation-status.md).
+
+| File (shim)                                                              | Responsibility                                                                                                                                                                                                                                                                                                                  |
 | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **`src/vault-markdown.ts`**                                              | Shared **`stripVaultFrontmatter`**, **`extractWikilinkTargets`** — single definition for recall, chunking, and DB sync.                                                                                                                                                                                                         |
 | **`src/memory-slug-index.ts`**                                           | **`listVaultMarkdownRelPaths`**: directory walk honoring `CLAWQL_MEMORY_RECALL_MAX_FILES`, skipping dot dirs. **`buildSlugToVaultPath`**: slug index from `{ path, text }[]`.                                                                                                                                                   |

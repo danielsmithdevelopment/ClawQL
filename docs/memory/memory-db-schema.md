@@ -16,7 +16,7 @@ The vault Markdown files remain the **source of truth**; the DB is a **derived i
 
 ## Migrations
 
-Table **`schema_migrations`** records applied DDL versions. The in-code constant **`SCHEMA_VERSION`** is **2** in `src/memory-db.ts` (bump when adding migrations). Migration **2** adds optional Cuckoo / Merkle artifact tables.
+Table **`schema_migrations`** records applied DDL versions. The in-code constant **`SCHEMA_VERSION`** is **2** in `packages/clawql-memory/` (memory-db module; shim: `src/memory-db.ts`). Bump when adding migrations. Migration **2** adds optional Cuckoo / Merkle artifact tables.
 
 ## Tables
 

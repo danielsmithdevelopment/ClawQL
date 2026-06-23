@@ -90,15 +90,15 @@ ClawQL is a modular, production-grade, self-healing, multi-tenant AI memory + ag
 | `clawql-documents`   | 🔨 Scaffold — `ingest_external_knowledge` (order 5; full pipeline planned)            |
 | `clawql-automation`  | 🔨 Scaffold — schedule + notify (order 6)                                             |
 
-See [`modularization-implementation-status.md`](../design/modularization-implementation-status.md) for subpath exports, shims, and MCP wiring.
+See [`modularization-implementation-status.md`](../design/modularization-implementation-status.md) for subpath exports, shims, and MCP wiring. For what it means for memory/documents/automation to **become plugins** (MCP tool registration, lifecycle), see [`clawql-plugin-model.md`](../design/clawql-plugin-model.md).
 
-### 2.5 Internal (Monorepo, Not Published Standalone)
+### 2.5 Internal modules (inside `clawql-core`, not separate npm workspaces)
 
-| Package          | Responsibilities                                           |
-| ---------------- | ---------------------------------------------------------- |
-| `@clawql/merkle` | SHA-256 Merkle tree computation and root verification      |
-| `@clawql/cuckoo` | Cuckoo filter for O(1) probabilistic deduplication         |
-| `@clawql/utils`  | Hashing, ID generation, date utils, `normalizeOperationId` |
+| Module (in `packages/clawql-core/`) | Responsibilities                                           |
+| ----------------------------------- | ---------------------------------------------------------- |
+| `merkle/`                           | SHA-256 Merkle tree computation and root verification      |
+| `cuckoo/`                           | Cuckoo filter for O(1) probabilistic deduplication         |
+| shared utils                        | Hashing, ID generation, date utils, `normalizeOperationId` |
 
 ---
 

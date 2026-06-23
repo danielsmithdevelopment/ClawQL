@@ -69,7 +69,7 @@ Same embedding provider and chunking code; only **connection + SQL** differ.
 
 ### 5. Integration points
 
-- **`memory_recall`:** **implemented** — hybrid lexical + vector seeds + wikilink graph; fusion via **`CLAWQL_MEMORY_VECTOR_*`** (see **`src/memory-recall.ts`**).
+- **`memory_recall`:** **implemented** — hybrid lexical + vector seeds + wikilink graph; fusion via **`CLAWQL_MEMORY_VECTOR_*`** (shim: **`src/memory-recall.ts`**; canonical: **`packages/clawql-memory/recall/`**).
 - **`search` (OpenAPI spec):** **future** — optional vector re-rank or parallel index over operation descriptions when an index exists; fallback to current keyword ranker in `spec-search`.
 
 ## Phasing

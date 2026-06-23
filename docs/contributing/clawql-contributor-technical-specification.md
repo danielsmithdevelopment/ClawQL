@@ -11,7 +11,7 @@ This document is a specification of contracts, not a getting-started guide. It a
 
 If you want to run ClawQL locally before reading further, start with the [Deployment & Operations Guide](../deployment/clawql-deployment-operations-guide.md). Come back here when you are ready to build something.
 
-**Phase 1 (core stabilisation) must be complete before vertical contributions can be merged.** You can write and test a vertical now using the in-memory test layers described in §3.4. You cannot merge it to main until `clawql-core` and `clawql-api` have reached their Phase 1 exit criteria. This is intentional — merging against an unstable Plugin interface means rebuilding the vertical when the interface changes.
+**Package extraction (phases 1–9) is on `main`.** Vertical contributions still require a **stable Plugin Layer API** (`onRegister` tool registration, `requiredSpecs`, third-party contract) — see [Plugin model](../../docs/design/clawql-plugin-model.md) and [implementation status](../../docs/design/modularization-implementation-status.md). You can write and test a vertical now using the in-memory test layers described in §3.4. Do not merge a vertical to `main` until the **Plugin interface exit criteria** in §1.1 are met for the surfaces your vertical depends on.
 
 ### Required Familiarity
 
@@ -29,21 +29,16 @@ If Effect-TS is new to you, read §3 before anything else. The architectural con
 ```
 clawql/
 ├── packages/
-│   ├── core/              # clawql-core — all shared types and utilities
-│   ├── api/               # clawql-api — the gateway
-│   ├── auth/              # clawql-auth
-│   ├── documents/         # clawql-documents
-│   ├── memory/            # clawql-memory
-│   ├── pageindex/         # clawql-pageindex (MIT, standalone)
-│   └── [horizontal packages]
-├── verticals/
-│   ├── lending/           # clawql-lending (flagship, planned)
-│   ├── legal/             # clawql-legal (planned)
-│   └── [other verticals]
-├── internal/
-│   ├── merkle/            # @clawql/merkle
-│   ├── cuckoo/            # @clawql/cuckoo
-│   └── utils/             # @clawql/utils
+│   ├── clawql-core/       # types, audit, Merkle, Cuckoo, Plugin interface
+│   ├── clawql-api/        # gateway composition root, search/execute
+│   ├── clawql-memory/     # vault, memory.db, ingest/recall
+│   ├── clawql-documents/  # external ingest scaffold
+│   ├── clawql-automation/ # schedule + notify
+│   ├── clawql-ouroboros/  # evolutionary loop library
+│   └── [future horizontal packages]
+├── src/                   # MCP transport + thin shims (strangler)
+├── providers/             # bundled OpenAPI / GraphQL / gRPC specs
+├── verticals/             # planned — not in tree yet
 ├── examples/
 │   └── clawql-local-docker-compose/
 ├── tools/
@@ -51,7 +46,9 @@ clawql/
 └── turbo.json
 ```
 
-All packages under `packages/` and `verticals/` must satisfy the dependency rules in §3. The `internal/` packages have no ClawQL dependencies and may be used freely.
+Merkle and Cuckoo live **inside `packages/clawql-core/`** — not separate `@clawql/merkle` npm workspaces. Import from `clawql-core` (or the documented subpaths) in new code.
+
+All packages under `packages/` must satisfy the dependency rules in §3. Future `verticals/` packages will follow the same rules when added.
 
 ---
 
@@ -62,6 +59,8 @@ These are the interfaces every contributor must understand. They live in `clawql
 ### 1.1 The `Plugin` Interface
 
 Every vertical and every major horizontal package implements `Plugin`. It is the registration contract between a package and `clawql-api`.
+
+**Horizontal packages (memory, documents, automation):** see [ClawQL plugin model](../design/clawql-plugin-model.md) for how these become plugins that register their MCP tools (`memory_ingest`, `ingest_external_knowledge`, `schedule`, etc.) and how that differs from the current `tools.ts` layout.
 
 ```typescript
 export interface Plugin {
@@ -262,28 +261,21 @@ These rules are enforced mechanically. Violating them causes CI to fail. Underst
 ### 2.1 The Dependency Graph Is Acyclic and Unidirectional
 
 ```
-@clawql/merkle   @clawql/cuckoo   @clawql/utils
-         │              │              │
-         └──────────────┴──────────────┘
-                        │
-                   clawql-core
-                        │
-           ┌────────────┴──────────────┐
-           │                           │
-      clawql-api            clawql-pageindex
-           │
-    ┌──────┼────────────────────┐
-    │      │                    │
-clawql- clawql-           clawql-
- auth  documents           memory
-           │
-    ┌──────┼────────────────────┼──────────────────┐
-    │      │                    │                  │
-clawql- clawql-         clawql-            clawql-
-sandbox printingpress    goose           automation
-    ┌──────────────────────────────────────────────┐
-    │                                              │
-[Verticals]                             clawql-telemetry
+clawql-core  (merkle/, cuckoo/, utils/ — internal modules)
+     │
+     ├──────────────┐
+     │              │
+clawql-api    clawql-pageindex (planned)
+     │
+┌────┼────────────────────┐
+│    │                    │
+clawql-auth (planned)  clawql-memory
+clawql-documents
+clawql-automation
+     │
+┌────┴──────────────────────────────────────────────┐
+│  clawql-sandbox, clawql-telemetry, verticals…     │
+└───────────────────────────────────────────────────┘
 ```
 
 Arrows point in the direction of allowed imports. No package may import from a package above it or beside it in the same layer. Verticals may not import other verticals.
@@ -300,7 +292,7 @@ _Enforcement:_ ESLint `no-restricted-imports` configured in `verticals/` to reje
 
 **Rule 2: Horizontal layers do not import other horizontal layers.**
 
-A horizontal package may only import from `clawql-core`, the `internal/` utilities, and its own sub-packages. If it needs a capability from another horizontal, it receives it as an injected service via Effect Context.
+A horizontal package may only import from `clawql-core` and its own sub-packages. If it needs a capability from another horizontal, it receives it as an injected service via Effect Context.
 
 _Why:_ Horizontal layers form a peer group. Circular imports between them are a real risk if the rule is not enforced. The injection pattern also keeps each horizontal independently testable.
 
@@ -374,7 +366,7 @@ The execute call routes through `clawql-api`, which validates the elevated ATR c
 import { Plugin, ATRClaims, EntityNode, ProviderSpec } from "@clawql/core";
 
 // ✅ Allowed: importing from internal utilities
-import { computeMerkleRoot } from "@clawql/merkle";
+import { computeMerkleRoot } from "clawql-core";
 import { CuckooFilter } from "@clawql/cuckoo";
 
 // ✅ Allowed: receiving a horizontal capability via Effect Context
@@ -904,7 +896,7 @@ If `RedactionService` is unavailable, the tool handler must fail with `PRESIDIO_
 Every write that produces a persistent artefact must generate a Merkle root. In most cases this is handled automatically by Memory 2.0 and the documents pipeline. If your vertical writes directly to a provider (e.g., writing a generated report to SeaweedFS), you must compute and record the root:
 
 ```typescript
-import { computeMerkleRoot } from "@clawql/merkle";
+import { computeMerkleRoot } from "clawql-core";
 
 const content = serializeReport(report);
 const root = computeMerkleRoot(content);
@@ -999,7 +991,7 @@ ATR fixture files contain valid `ATRClaims` objects for different permission lev
 
 ### 7.3 Contract Test Requirements
 
-If your contribution adds a new callable surface to `clawql-api` (a new tool, a new operation on an existing tool, or a new schema), you must add a contract test in `packages/api/test/contracts/`. Contract tests use Pact to define the consumer’s expectations and verify the provider satisfies them. Any breaking change to a contracted surface requires a major version bump.
+If your contribution adds a new callable surface to `clawql-api` (a new tool, a new operation on an existing tool, or a new schema), you must add a contract test in `packages/clawql-api/test/contracts/`. Contract tests use Pact to define the consumer’s expectations and verify the provider satisfies them. Any breaking change to a contracted surface requires a major version bump.
 
 ### 7.4 Running Chaos Scenarios Locally
 
@@ -1173,7 +1165,7 @@ import {
 // MemoryService, DocumentsService, RedactionService, PolicyService, AuditLogService
 
 // Internal utilities
-import { computeMerkleRoot } from "@clawql/merkle";
+import { computeMerkleRoot } from "clawql-core";
 import { CuckooFilter } from "@clawql/cuckoo";
 
 // Effect-TS — pin to the workspace version

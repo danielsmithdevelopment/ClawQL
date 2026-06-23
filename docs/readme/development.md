@@ -37,13 +37,12 @@ Core registration entrypoint:
 
 - `src/tools.ts`
 
-Related modules:
+Related modules (MCP transport + shims — **canonical logic in `packages/clawql-memory/`**):
 
-- `src/memory-ingest.ts`
-- `src/memory-recall.ts`
-- `src/sandbox-bridge-client.ts`
-- `src/vault-config.ts`
-- `src/vault-utils.ts`
+- `src/memory-ingest.ts` → `clawql-memory/ingest/*`
+- `src/memory-recall.ts` → `clawql-memory/recall/*`
+- `src/vault-config.ts`, `src/vault-utils.ts` → `clawql-memory/vault/*`
+- `src/sandbox-bridge-client.ts` (sandbox — still in `src/` until `clawql-sandbox` extraction)
 
 ## GraphQL Notes
 
