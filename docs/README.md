@@ -17,6 +17,8 @@ This directory is organized by purpose so operational guides, product docs, and 
 
 - **Token efficiency — layered approach** (Code Mode, response trimming, caching, semantic cache, model routing): [`architecture/clawql-token-efficiency.md`](architecture/clawql-token-efficiency.md) — [`/architecture/token-efficiency`](https://docs.clawql.com/architecture/token-efficiency)
 - **Modularization implementation status** (ground truth — packages, shims, MCP flow, Effect/plugin status, June 2026): [`design/modularization-implementation-status.md`](design/modularization-implementation-status.md)
+- **ClawQL plugin model** (memory/documents/automation as plugins, MCP tools, third-party extensions): [`design/clawql-plugin-model.md`](design/clawql-plugin-model.md) — [`/reference/plugins`](https://docs.clawql.com/reference/plugins)
+- **Plugin registry** (shipped vs planned plugins, MCP tool ownership, enable flags): [`reference/clawql-plugin-registry.md`](reference/clawql-plugin-registry.md) — [`/reference/plugins`](https://docs.clawql.com/reference/plugins)
 - **Effect-TS + plugin rearchitecture plan** (Layer composition, plugin checklist): [`design/effect-ts-modularization-rearchitecture-plan.md`](design/effect-ts-modularization-rearchitecture-plan.md)
 - **ClawQL Modularization v1.9** (companion — historical package matrix): [`vision/clawql-modularization.md`](vision/clawql-modularization.md) — package delivery epic [#306](https://github.com/danielsmithdevelopment/ClawQL/issues/306)
 - ClawQL ecosystem (vision deck — core loop, hybrid memory, pipeline, Onyx, Ouroboros, infra, roadmap): [`clawql-ecosystem.md`](clawql-ecosystem.md)

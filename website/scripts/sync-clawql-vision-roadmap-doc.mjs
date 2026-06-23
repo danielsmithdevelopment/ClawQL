@@ -66,6 +66,11 @@ const body = fs.readFileSync(src, 'utf8')
     '](../deployment/clawql-deployment-operations-guide.md)',
     '](/deployment/operations-guide)',
   )
+  .replaceAll('](../design/clawql-plugin-model.md)', '](/reference/plugins)')
+  .replaceAll(
+    '](../design/modularization-implementation-status.md)',
+    `](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/modularization-implementation-status.md)`,
+  )
 fs.writeFileSync(dst, body)
 execSync('npx prettier --write src/generated/clawql-vision-roadmap-body.mdx', {
   cwd: websiteRoot,

@@ -269,6 +269,7 @@ export const navigation: Array<NavGroup> = [
         href: '/vision/technical-enablement',
       },
       { title: 'Modularization v2.1', href: '/vision/modularization' },
+      { title: 'Plugin model & registry', href: '/reference/plugins' },
       {
         title: 'Immutable releases (Layer 0)',
         href: '/vision/immutable-releases',
@@ -318,6 +319,7 @@ export const navigation: Array<NavGroup> = [
     title: 'Reference',
     links: [
       { title: 'Reference hub', href: '/reference' },
+      { title: 'Plugin model & registry', href: '/reference/plugins' },
       { title: 'Protocol v2.1', href: '/reference/protocol' },
       { title: 'Core concepts', href: '/concepts' },
       { title: 'MCP tools', href: '/tools' },

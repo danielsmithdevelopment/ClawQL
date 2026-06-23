@@ -2,6 +2,8 @@
 
 Superseded or draft architecture material kept for history. **Do not treat as engineering truth.**
 
-| File                                                                                                           | Status                                                                                                                                                                                                                  |
-| -------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [`clawql-modular-architecture-consolidated-may-2026.md`](clawql-modular-architecture-consolidated-may-2026.md) | Superseded by [`../../vision/clawql-modularization-v2.md`](../../vision/clawql-modularization-v2.md) (canonical) and [`../../vision/clawql-modularization.md`](../../vision/clawql-modularization.md) (v1.9 companion). |
+| File                                                                           | Status |
+| ------------------------------------------------------------------------------ | ------ |
+| _(none — consolidated May 2026 draft removed; use implementation status + v2)_ | —      |
+
+**Canonical instead:** [`modularization-implementation-status.md`](../modularization-implementation-status.md) · [`clawql-modularization-v2.md`](../../vision/clawql-modularization-v2.md) · [`clawql-modularization.md`](../../vision/clawql-modularization.md) (v1.9 companion).

@@ -50,6 +50,8 @@ Top-level docs index: `docs/README.md`
 
 ### Core references
 
+- **Modularization ground truth:** `docs/design/modularization-implementation-status.md`
+- **Plugin model & registry:** `docs/design/clawql-plugin-model.md`, `docs/reference/clawql-plugin-registry.md`
 - MCP tools and examples: `docs/mcp/mcp-tools.md`
 - Workflow recipes: `docs/recipes/README.md`
 - Memory and vault workflows: `docs/memory/memory-obsidian.md`

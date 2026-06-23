@@ -11,20 +11,22 @@ Apache 2.0 / MIT · [github.com/clawql/clawql](https://github.com/clawql/clawql)
 
 Not everything described in this guide is available yet. This table governs what you can actually run:
 
-| Component                                      | Available         | Notes                                 |
-| ---------------------------------------------- | ----------------- | ------------------------------------- |
-| Tier 1 Docker Compose                          | ✅                | Runnable today                        |
-| `clawql-api`                                   | 🔨 In development | Core gateway; required for everything |
-| `clawql-memory` (SQLite)                       | 🔨 In development | Memory backend for Tier 1             |
-| Document pipeline (Tika, Gotenberg, Paperless) | 🔨 In development | Stages ship together                  |
-| Presidio redaction                             | 🔨 In development | Disabled by default in Tier 1         |
-| Tier 2 Helm deployment                         | 📋 Planned        | Requires Operator                     |
-| Tier 3 enterprise deployment                   | 📋 Planned        | Requires Operator + Istio support     |
-| Kubernetes Operator                            | 📋 Planned        | Required for Tier 2 and 3             |
-| Natural language dashboard                     | 📋 Planned        | Requires Operator                     |
-| Goose agent runtime                            | 📋 Planned        | —                                     |
-| Printing Press                                 | 📋 Planned        | —                                     |
-| All verticals                                  | 📋 Planned        | None shipped                          |
+| Component                                      | Available  | Notes                                                            |
+| ---------------------------------------------- | ---------- | ---------------------------------------------------------------- |
+| Tier 1 Docker Compose                          | ✅         | Runnable today                                                   |
+| `clawql-api` (gateway package)                 | ✅         | Shipped in monorepo; MCP delegates via `createClawQLApi()`       |
+| `clawql-memory` (vault + optional `memory.db`) | ✅         | Shipped; Tier 1 uses SQLite sidecar when enabled                 |
+| `clawql-documents` (external ingest scaffold)  | ✅         | `ingest_external_knowledge` core shipped; not full Tika pipeline |
+| `clawql-automation` (schedule + notify)        | ✅         | Opt-in via `CLAWQL_ENABLE_SCHEDULE` / `CLAWQL_ENABLE_NOTIFY`     |
+| Document pipeline (Tika, Gotenberg, Paperless) | 📋 Planned | Full orchestration not in `clawql-documents` yet                 |
+| Presidio redaction                             | 📋 Planned | Disabled by default in Tier 1                                    |
+| Tier 2 Helm deployment                         | 📋 Planned | Requires Operator                                                |
+| Tier 3 enterprise deployment                   | 📋 Planned | Requires Operator + Istio support                                |
+| Kubernetes Operator                            | 📋 Planned | Required for Tier 2 and 3                                        |
+| Natural language dashboard                     | 📋 Planned | Requires Operator                                                |
+| Goose agent runtime                            | 📋 Planned | —                                                                |
+| Printing Press                                 | 📋 Planned | —                                                                |
+| All verticals                                  | 📋 Planned | None shipped                                                     |
 
 If you need Tier 2 or Tier 3 today, watch the GitHub releases page. This guide is written to be complete for when those tiers ship, and the Tier 1 sections are accurate now.
 

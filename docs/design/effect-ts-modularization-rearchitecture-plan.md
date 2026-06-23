@@ -1,6 +1,6 @@
 # Effect-TS + modularization + plugin rearchitecture plan
 
-**Status:** In progress (June 2026) — extraction orders 1–6 merged; Effect foundation partial. See [`modularization-implementation-status.md`](./modularization-implementation-status.md).  
+**Status:** In progress (June 2026) — extraction **phases 1–9** merged ([#401](https://github.com/danielsmithdevelopment/ClawQL/pull/401)–[#430](https://github.com/danielsmithdevelopment/ClawQL/pull/430)); Effect foundation partial. See [`modularization-implementation-status.md`](./modularization-implementation-status.md). **Plugin model (horizontal packages):** [`clawql-plugin-model.md`](./clawql-plugin-model.md).
 **Canonical vision:** [`docs/vision/clawql-master-enablement-guide.md`](../vision/clawql-master-enablement-guide.md) (§5–§6, plugin interface, execute pipeline)  
 **Package checklist companion:** [`docs/vision/clawql-modularization-v2.md`](../vision/clawql-modularization-v2.md) · epic [#306](https://github.com/danielsmithdevelopment/ClawQL/issues/306)
 
@@ -106,16 +106,16 @@ Each ships **`XxxLayer = Layer.effect(...)`** registering a `Plugin` implementat
 
 Do **not** freeze `main` for a rewrite. Extract and convert **by vertical slice** on the hot path first (`search` / `execute`), then memory/documents, then optional tools.
 
-### Phase 0 — Foundation spike (1–2 weeks)
+### Phase 0 — Foundation spike ✅ (merged)
 
 **Goal:** Prove Effect fits the repo without moving MCP.
 
-- Add `@effect/platform`, `effect`, `@effect/schema` (single pinned version in root `package.json`).
-- Add **Turborepo** (`turbo.json`, root scripts `turbo run build|test|lint`) and create **`packages/clawql-core`** as the first pipeline task (TypeScript project reference from root).
-- Scaffold `clawql-core` with `merkle/` + `cuckoo/` module dirs (move from `src/merkle-tree.ts` etc. in follow-up PRs).
-- Port **one** bounded subsystem end-to-end in Effect, e.g. **audit ring buffer** (`clawql-audit.ts` → `AuditService` + `AuditLive` Layer).
-- Unit tests using `Effect.provide(AuditTestLayer)` — no Docker.
-- Document **runtime bridge** pattern for MCP handlers:
+**Shipped:**
+
+- `effect` pinned in root + `clawql-api`; **Turborepo** (`turbo.json`) and **`packages/clawql-core`** exist.
+- Merkle + Cuckoo modules inside **`clawql-core`** (not separate npm workspaces).
+- **Audit ring buffer** on Effect (`AuditService` + `AuditLive` Layer).
+- **Runtime bridge** pattern documented and used by MCP handlers:
 
 ```typescript
 // MCP handler (stays sync/async-friendly for SDK)
@@ -124,22 +124,25 @@ const result = await Effect.runPromise(program.pipe(Effect.provide(AppLayer)));
 
 **Exit criteria:** CI green; no user-visible behavior change; one service fully on Effect.
 
-### Phase 1 — `clawql-core` + `clawql-api` skeleton (align modularization Phase 1 Week 1)
+### Phase 1 — `clawql-core` + `clawql-api` skeleton ✅ (merged)
 
 **Goal:** Packages exist; MCP still in `clawql-mcp` but calls into `clawql-api`.
 
-| Deliverable                                                                                   | Notes                                                                                      |
-| --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `clawql-core` published internally                                                            | Types, errors, core Tags, audit/cache Layers                                               |
-| `clawql-api` `createApi(config)`                                                              | Holds plugin list, exposes `search`/`execute` as Effects                                   |
-| Move `spec-loader` / `spec-search` / OpenAPI→GraphQL **execute core** behind `ExecuteService` | Largest risk — maintain parity tests (`tools-handlers.test.ts`, graphql/grpc parity tests) |
-| `tools.ts` thins to registration + `runPromise`                                               | Strangler: handlers become one-liners                                                      |
+**Shipped:** `clawql-core` + `clawql-api` workspaces; `createClawQLApi()`; `SearchService` / `ExecuteService` Effect Layers; MCP `search`/`execute` via `getClawqlApi().run(Effect…)`; `PanguardProxyPlugin`; extraction phases 2–9 (memory, documents, automation packages).
+
+**Remaining from original Phase 1 table:**
+
+| Deliverable                                     | Notes                                                                        |
+| ----------------------------------------------- | ---------------------------------------------------------------------------- |
+| `tools.ts` thins to registration + `runPromise` | Partial — core tools delegate; optional tools still registered in `tools.ts` |
 
 **Exit criteria:** All existing integration tests pass; `search`/`execute` latency within agreed budget (profile before/after).
 
-### Phase 2 — Plugin registry + feature tiers as Layers (Week 2–3)
+### Phase 2 — Plugin registry + feature tiers as Layers (in progress)
 
 **Goal:** Optional tools are plugins, not `if` branches in `tools.ts`.
+
+**Shipped:** `PluginRegistry`, `PanguardProxyPlugin`, `McpProxyPipeline`. **Not shipped:** `MemoryPlugin` / `DocumentsPlugin` / `AutomationPlugin` registering MCP tools via `onRegister`.
 
 | Current module cluster                  | Plugin / Layer                                                                               |
 | --------------------------------------- | -------------------------------------------------------------------------------------------- |
@@ -284,14 +287,14 @@ Label cross-cutting PRs with both `effect-foundation` and `modularization-platfo
 ## 13. Recommended next steps (post-extraction, June 2026)
 
 1. **Docs:** keep [`modularization-implementation-status.md`](./modularization-implementation-status.md) updated as extractions merge.
-2. **Plugin Layers:** `MemoryPlugin`, `DocumentsPlugin`, `AutomationPlugin` — register MCP tools via `onRegister`; shrink `tools.ts`.
+2. **Plugin Layers:** `MemoryPlugin`, `DocumentsPlugin`, `AutomationPlugin` — register MCP tools via `onRegister`; shrink `tools.ts`. See [ClawQL plugin model](./clawql-plugin-model.md).
 3. **Transport:** extract `clawql-sandbox`; move server lifecycle toward transport-only package.
 4. **Effect:** port memory/documents/automation hot paths behind `Effect.tryPromise` → native Effect incrementally.
 5. **Third-party plugins:** document npm package template + `CLAWQL_PLUGINS` / Operator toggle once Layer list is stable.
 6. **Ouroboros:** continue `effect-ouroboros` track (parity tests before cutover).
 7. **Operator/dashboard:** defer dynamic Layer CRD until `createApi(Layer[])` is stable in process.
 
-**Completed (no longer kickoff items):** Turborepo scaffold; `clawql-core` + `AuditService`; execute/search `Effect` services; `PanguardProxyPlugin` sketch; extraction orders 1–6 ([#306](https://github.com/danielsmithdevelopment/ClawQL/issues/306)).
+**Completed (no longer kickoff items):** Turborepo scaffold; `clawql-core` + `AuditService`; execute/search `Effect` services; `PanguardProxyPlugin`; extraction **phases 1–9** ([#306](https://github.com/danielsmithdevelopment/ClawQL/issues/306), PRs [#401](https://github.com/danielsmithdevelopment/ClawQL/pull/401)–[#430](https://github.com/danielsmithdevelopment/ClawQL/pull/430)).
 
 ---
 

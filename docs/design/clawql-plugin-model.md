@@ -1,0 +1,183 @@
+# ClawQL plugin model — horizontal packages and MCP tools
+
+**Status:** Partially shipped (June 2026)  
+**Audience:** Contributors, integrators, and third-party plugin authors  
+**Related:** [Modularization implementation status](./modularization-implementation-status.md) · [Effect + plugin plan](./effect-ts-modularization-rearchitecture-plan.md) · [Plugin registry](../reference/clawql-plugin-registry.md) · [Contributor Technical Specification §1.1](../contributing/clawql-contributor-technical-specification.md)
+
+This document explains what it means for **`clawql-memory`**, **`clawql-documents`**, and **`clawql-automation`** to become **plugins**, how that differs from today’s layout, and how third-party plugins will work.
+
+---
+
+## 1. One-sentence summary
+
+A **plugin** is how a package tells **`clawql-api`**: “When I’m enabled, register my MCP tools, wire my background workers, declare my provider dependencies, and participate in gateway hooks — and when I’m disabled, leave zero footprint.”
+
+For memory, documents, and automation, **yes — the plugin’s main visible job is registering the respective MCP tools** (`memory_ingest`, `memory_recall`, `ingest_external_knowledge`, `schedule`, `notify`). Plugins also own **lifecycle** and optional **pipeline hooks**, not just tool names.
+
+---
+
+## 2. Today: packages exist, `tools.ts` still owns registration
+
+Extraction phases 1–9 moved **business logic** into workspace packages. MCP registration did **not** move with it.
+
+| Package             | Logic lives in                                              | MCP tools still registered in                                            |
+| ------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `clawql-memory`     | `runMemoryIngest`, `runMemoryRecall`, vault, `memory.db`, … | `src/tools.ts` (`if (enableMemory) { server.tool("memory_ingest", …) }`) |
+| `clawql-documents`  | `runIngestExternalKnowledge`, URL formatting                | `src/tools.ts` (`ingest_external_knowledge`)                             |
+| `clawql-automation` | schedule worker, `runNotifySlack`                           | `src/tools.ts` + `src/clawql-schedule.ts` shim (`schedule`, `notify`)    |
+
+Transport-only concerns stay in `src/` today:
+
+- Zod schemas at `server.tool(...)` registration time
+- `wrapMcpToolHandler` (OpenTelemetry)
+- `logMcpToolShape` (payload shape logging, no secrets)
+- `CLAWQL_ENABLE_*` gates in `registerTools()`
+
+So the split is **intentionally incomplete**: packages are libraries; **`tools.ts` is still the switchboard** that decides which tools exist.
+
+---
+
+## 3. Target: each horizontal package ships a `Plugin`
+
+At gateway startup, composition looks like:
+
+```ts
+createClawQLApi({
+  plugins: [
+    PanguardProxyPlugin, // kind: mcp-proxy — policy chokepoint, no new tools
+    MemoryPlugin, // registers memory_* tools when enabled
+    DocumentsPlugin, // registers ingest_external_knowledge when enabled
+    AutomationPlugin, // registers schedule + notify; starts schedule worker
+    // future: LendingPlugin, YourCompanyPlugin, …
+  ],
+});
+```
+
+When **`CLAWQL_ENABLE_MEMORY=0`** (or the Operator CRD omits the memory Layer), **`MemoryPlugin` is not composed** → `listTools` has no `memory_ingest` / `memory_recall`, and heavy vault/sql.js paths are not loaded for that process tier.
+
+### 3.1 MCP tools each horizontal plugin will register
+
+| Plugin (planned)     | MCP tools                        | Notes                                                                                                        |
+| -------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| **MemoryPlugin**     | `memory_ingest`, `memory_recall` | Vault writes, `memory.db` sync, optional vectors                                                             |
+| **DocumentsPlugin**  | `ingest_external_knowledge`      | Today’s bulk Markdown + URL ingest; future document-pipeline tools (Tika, etc.) would register here too      |
+| **AutomationPlugin** | `schedule`, `notify`             | Schedule worker starts in `onRegister` or Layer scope; notify uses execute path for Slack `chat_postMessage` |
+
+Core tools **`search`**, **`execute`**, **`cache`**, and **`audit`** stay in the gateway / core tier — not owned by these horizontal plugins.
+
+### 3.2 Conceptual `onRegister` (not shipped yet)
+
+The contributor spec defines the **target** contract: `onRegister` receives `ClawQLApi` and registers tools via Effect. A simplified illustration:
+
+```typescript
+const MemoryPlugin: Plugin = {
+  id: "clawql-memory",
+  version: "1.0.0",
+  onRegister: (api) =>
+    Effect.gen(function* () {
+      yield* api.registerMcpTool("memory_ingest", memoryIngestSchema, handleMemoryIngest);
+      yield* api.registerMcpTool("memory_recall", memoryRecallSchema, handleMemoryRecall);
+    }),
+  onTeardown: (api) =>
+    Effect.gen(function* () {
+      // Close pools, flush workers if any
+    }),
+};
+```
+
+Handlers call into **`clawql-memory`** (`runMemoryIngest`, etc.). Transport wrappers (`logMcpToolShape`) may remain in a thin MCP adapter or move behind a small registration helper on `ClawQLApi` — that detail is implementation, not the model.
+
+---
+
+## 4. Plugins are more than tool registration
+
+Tool registration is what most integrators see. The full plugin contract (see [Contributor Technical Specification §1.1](../contributing/clawql-contributor-technical-specification.md)) also includes:
+
+| Capability                               | Purpose                                    | Example                                                    |
+| ---------------------------------------- | ------------------------------------------ | ---------------------------------------------------------- |
+| **`onRegister`**                         | Register MCP tools, internal ops, hooks    | MemoryPlugin adds `memory_*` tools                         |
+| **`onTeardown`**                         | Graceful shutdown                          | AutomationPlugin stops schedule worker, closes sql.js DB   |
+| **`requiredSpecs` / `recommendedSpecs`** | Startup validation                         | AutomationPlugin `notify` may require Slack in loaded spec |
+| **`onIngestHook`**                       | Transform/filter nodes entering Memory 2.0 | Vertical enriches or rejects ingest payloads               |
+| **`onRecallFilter`**                     | Tighten recall beyond ATR                  | Ethical wall, patient partition                            |
+| **`beforeCallTool`** (`mcp-proxy` kind)  | Run before any MCP tool                    | **Panguard** today — no new tools                          |
+
+### 4.1 Panguard: plugin without tools
+
+**`PanguardProxyPlugin`** is already shipped. It does **not** register MCP tools. It implements **`beforeCallTool`** so policy/ATR runs on every tool invocation. Same `Plugin` interface, different role — shows that “plugin” ≠ “adds tools” only.
+
+---
+
+## 5. Shipped vs target (honest matrix)
+
+| Item                                       | Shipped today                                                                            | Target                                                                   |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `Plugin` interface                         | Minimal (`id`, `version`, `onRegister`, `onTeardown`, `beforeCallTool`) in `clawql-core` | Full contract in contributor spec (`onIngestHook`, `requiredSpecs`, …)   |
+| `PluginRegistry` + `createClawQLApi()`     | ✅                                                                                       | ✅                                                                       |
+| Memory / documents / automation as plugins | ❌ Logic in packages; tools in `tools.ts`                                                | `MemoryPlugin`, `DocumentsPlugin`, `AutomationPlugin`                    |
+| Third-party npm plugins                    | ❌ No public registration API                                                            | Publish `clawql-*-plugin`; compose via Operator / env                    |
+| Effect `Layer` per horizontal package      | ❌ Domain code mostly `async`                                                            | `MemoryLayer`, `DocumentsLayer`, `AutomationLayer` composed at bootstrap |
+
+---
+
+## 6. What extraction already did vs what “becoming plugins” finishes
+
+| Done (package extraction)                                                       | Remaining (plugin work)                                                                      |
+| ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `runMemoryIngest`, `runMemoryRecall`, vault, `memory.db` in `clawql-memory`     | Move `server.tool("memory_ingest", …)` blocks from `tools.ts` into `MemoryPlugin.onRegister` |
+| `runIngestExternalKnowledge` in `clawql-documents`                              | Same for `ingest_external_knowledge`                                                         |
+| Schedule + notify in `clawql-automation`; `configureNotifyDeps` from `tools.ts` | Fold notify wiring into `AutomationLayer`; register `schedule` / `notify` in plugin          |
+| Thin MCP shims + `logMcpToolShape` in `src/`                                    | Keep transport-only concerns in MCP package or `registerMcpTool` helper                      |
+
+**Becoming plugins does not mean moving more files** — it means **owning MCP surface area and lifecycle when enabled**, instead of centralizing registration in `tools.ts`.
+
+---
+
+## 7. Third-party and vertical plugins
+
+The same model extends to **verticals** (`clawql-lending`, `clawql-legal`, …) and **community extensions**:
+
+1. Publish an npm package (e.g. `clawql-acme-widgets`) depending on **`clawql-core`** + **`clawql-api`** — **not** on `clawql-mcp` transport internals.
+2. Export a `Plugin` (and eventually an Effect `Layer`).
+3. Implement **`onRegister`** to register your MCP tools and declare **`requiredSpecs`** if you need Postgres, Onyx, etc.
+4. Document the Operator toggle or `CLAWQL_ENABLE_*` flag that includes or omits your Layer.
+
+Until Layer composition is stable, in-repo extensions should continue via **bundled providers** (`providers/`) and MCP tools in the monorepo. Third-party registration without forking `tools.ts` is explicitly **roadmap**, not current API.
+
+---
+
+## 8. Request flow (target)
+
+```
+Agent (stdio / HTTP / gRPC)
+        │
+        ▼
+  MCP transport (src/server*.ts, thin tools adapter)
+        │
+        ▼
+  createClawQLApi({ plugins: [...] })
+        │
+        ├── Core: search / execute / cache / audit (always on)
+        │
+        ├── PanguardProxyPlugin.beforeCallTool (every tool)
+        │
+        └── If MemoryPlugin composed:
+              memory_ingest / memory_recall → clawql-memory
+            If DocumentsPlugin composed:
+              ingest_external_knowledge → clawql-documents
+            If AutomationPlugin composed:
+              schedule / notify → clawql-automation
+```
+
+---
+
+## 9. References
+
+| Doc                                                                                                       | Use when                                 |
+| --------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| [Plugin registry](../reference/clawql-plugin-registry.md)                                                 | Shipped vs planned plugins, enable flags |
+| [Modularization implementation status](./modularization-implementation-status.md)                         | Package layout, shims, extraction PRs    |
+| [Effect + plugin plan](./effect-ts-modularization-rearchitecture-plan.md)                                 | Effect Layers, plugin checklist, CI      |
+| [Contributor Technical Specification §1.1](../contributing/clawql-contributor-technical-specification.md) | Full `Plugin` field semantics            |
+| [MCP tools matrix](../mcp/mcp-tools.md)                                                                   | Operator-facing tool list and env flags  |
+| [#306](https://github.com/danielsmithdevelopment/ClawQL/issues/306)                                       | Package delivery epic                    |

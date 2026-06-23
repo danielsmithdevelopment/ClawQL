@@ -45,7 +45,7 @@ ClawQL treats **vault Markdown** as the **source of truth**. Derived state can l
 ## Postgres schema conventions
 
 - **Prefix:** all ClawQL tables use **`clawql_`**.
-- **Migrations:** **`clawql_pg_schema_migrations`** (versioned DDL, same idea as `schema_migrations` in `memory.db`). See **`src/memory-backends/postgres-migrations.ts`** (invoked from **`src/vector-store/pgvector.ts`**).
+- **Migrations:** **`clawql_pg_schema_migrations`** (versioned DDL, same idea as `schema_migrations` in `memory.db`). Canonical: **`packages/clawql-memory/`** (`memory-backends/postgres-migrations.ts`, `vector/pgvector.ts`); shims: **`src/memory-backends/postgres-migrations.ts`**, **`src/vector-store/pgvector.ts`**.
 - **Extension:** **`CREATE EXTENSION IF NOT EXISTS vector`** (migration 1).
 - **Artifact tables:** **`clawql_cuckoo_chunk_membership`**, **`clawql_vault_merkle`** (migration **2**) — mirrors the SQLite single-row snapshots when hybrid-memory sync runs against Postgres.
 

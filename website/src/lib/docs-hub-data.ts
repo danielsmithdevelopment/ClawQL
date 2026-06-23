@@ -92,6 +92,13 @@ export const architectureHubCards: Array<ReferenceCard> = [
     icon: PackageIcon,
   }),
   card({
+    href: '/reference/plugins',
+    name: 'Plugin model & registry',
+    description:
+      'Horizontal plugins, MCP tool ownership, shipped vs planned registry.',
+    icon: SquaresPlusIcon,
+  }),
+  card({
     href: '/vision/immutable-releases',
     name: 'Immutable releases (Layer 0)',
     description:
@@ -251,6 +258,13 @@ export const referenceHubCards: Array<ReferenceCard> = [
     name: 'Protocol reference (v2.1)',
     description: 'Uniform envelope, approval flows, HATEOAS, two-phase commit.',
     icon: DocumentIcon,
+  }),
+  card({
+    href: '/reference/plugins',
+    name: 'Plugin model & registry',
+    description:
+      'Extension contract, horizontal plugins, MCP tools per plugin, enable flags.',
+    icon: SquaresPlusIcon,
   }),
   card({
     href: '/tools',

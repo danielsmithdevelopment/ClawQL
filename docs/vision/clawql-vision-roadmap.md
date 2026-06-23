@@ -30,7 +30,7 @@ ClawQL is under active development. Most of what this document describes is not 
 | Natural Language Dashboard | 📋 Planned                                                    |
 | All vertical packages      | 📋 Planned — none shipped                                     |
 
-**Detail:** [Modularization implementation status](../design/modularization-implementation-status.md) (package contents, MCP flow, extraction PRs, plugin roadmap).
+**Detail:** [Modularization implementation status](../design/modularization-implementation-status.md) (package contents, MCP flow, extraction PRs, plugin roadmap). **Horizontal plugins:** [ClawQL plugin model](../design/clawql-plugin-model.md).
 
 If you are evaluating ClawQL for immediate production use, the answer today is: the foundation is being built, the shipped pieces work, and the platform is not yet ready for production deployment. If you are evaluating it as something to build on, contribute to, or adopt early, read on.
 
@@ -130,7 +130,7 @@ For technical readers, the full rationale and patterns are in the [Contributor T
 
 ### Planned
 
-All vertical packages, the Kubernetes Operator, the natural language dashboard, and the remaining horizontal packages (`clawql-data`, `clawql-automation`, `clawql-sandbox`, `clawql-printingpress`, `clawql-goose`, `clawql-telemetry`) are planned and not yet in development. Their specifications are fully written and stable, and they will not be started until the packages they depend on are stable.
+All vertical packages, the Kubernetes Operator, the natural language dashboard, and the remaining horizontal packages (`clawql-data`, `clawql-sandbox`, `clawql-printingpress`, `clawql-goose`, `clawql-telemetry`) are planned and not yet in development. **`clawql-automation`** is a **scaffold** on `main` (schedule + notify extracted; NATS/HITL planned). Specifications for not-yet-started packages are written and stable; work begins when upstream dependencies stabilize.
 
 ---
 

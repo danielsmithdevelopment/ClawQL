@@ -4,12 +4,12 @@
 
 **Works as a standalone npm library today.** You do **not** need the ClawQL MCP server: bring your own `EventStore`, LLM calls inside Wonder/Reflect, and real side effects inside `Executor`. ClawQL uses this package as one consumer; others can embed the same loop in agents, job workers, or internal tools.
 
-| Resource | Link |
-| -------- | ---- |
-| **Long-form guide + copy-paste examples** | [docs/ouroboros/clawql-ouroboros.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/ouroboros/clawql-ouroboros.md) |
-| **Human-friendly overview (ClawQL docs site)** | [docs.clawql.com/ouroboros](https://docs.clawql.com/ouroboros) |
-| **Source** | [packages/clawql-ouroboros](https://github.com/danielsmithdevelopment/ClawQL/tree/main/packages/clawql-ouroboros) |
-| **Issues / discussions** | [ClawQL issues](https://github.com/danielsmithdevelopment/ClawQL/issues) |
+| Resource                                       | Link                                                                                                                                |
+| ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| **Long-form guide + copy-paste examples**      | [docs/ouroboros/clawql-ouroboros.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/ouroboros/clawql-ouroboros.md) |
+| **Human-friendly overview (ClawQL docs site)** | [docs.clawql.com/ouroboros](https://docs.clawql.com/ouroboros)                                                                      |
+| **Source**                                     | [packages/clawql-ouroboros](https://github.com/danielsmithdevelopment/ClawQL/tree/main/packages/clawql-ouroboros)                   |
+| **Issues / discussions**                       | [ClawQL issues](https://github.com/danielsmithdevelopment/ClawQL/issues)                                                            |
 
 ## Requirements
 
@@ -41,22 +41,18 @@ Installing the **root** repo with `npm install github:danielsmithdevelopment/Cla
 
 ## What you get
 
-| Export path | Use case |
-| ----------- | -------- |
-| **`clawql-ouroboros`** | `SeedSchema`, types, `EvolutionaryLoop`, `ConvergenceCriteria`, `RegressionDetector`, `InMemoryEventStore`, interfaces |
+| Export path                      | Use case                                                                                                                                                                                                         |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`clawql-ouroboros`**           | `SeedSchema`, types, `EvolutionaryLoop`, `ConvergenceCriteria`, `RegressionDetector`, `InMemoryEventStore`, interfaces                                                                                           |
 | **`clawql-ouroboros/mcp-hooks`** | `ouroborosMcpTools` — Zod input schemas + async handlers for seed-from-document, run loop, lineage query (wire to [@modelcontextprotocol/sdk](https://www.npmjs.com/package/@modelcontextprotocol/sdk) yourself) |
-| **`clawql-ouroboros/poller`** | `startSeedsPoller` — `setInterval` worker; you supply `fetchPending(): Promise<Seed[]>` and `markFailed(seedId, err)` |
+| **`clawql-ouroboros/poller`**    | `startSeedsPoller` — `setInterval` worker; you supply `fetchPending(): Promise<Seed[]>` and `markFailed(seedId, err)`                                                                                            |
 
 **Runtime dependencies:** `zod` ^4, `uuid` ^11 (declared in this package’s `package.json`).
 
 ## Minimal example
 
 ```typescript
-import {
-  EvolutionaryLoop,
-  InMemoryEventStore,
-  SeedSchema,
-} from "clawql-ouroboros";
+import { EvolutionaryLoop, InMemoryEventStore, SeedSchema } from "clawql-ouroboros";
 
 const store = new InMemoryEventStore();
 
@@ -111,7 +107,7 @@ const loop = new EvolutionaryLoop(
       })),
     }),
   },
-  { minGenerations: 2, maxGenerations: 10, convergenceThreshold: 0.95 },
+  { minGenerations: 2, maxGenerations: 10, convergenceThreshold: 0.95 }
 );
 
 const result = await loop.run(seed);
@@ -128,19 +124,19 @@ More examples (convergence-only, MCP hooks, poller) are in the **[full guide](ht
 
 ## What you implement
 
-| Interface | Responsibility |
-| --------- | --------------- |
-| **`EventStore`** | Append events; **`getLineage(rootSeedId)`** returns a full **`OntologyLineage`**. Use **`InMemoryEventStore`** for tests; use Postgres / Redis-compatible caches / etc. for production. |
-| **`WonderEngine`** | Optional refinement signals after each generation (often LLM). |
-| **`ReflectEngine`** | Produces **`Partial<Seed>`** updates for the next generation (often LLM). |
-| **`Executor`** | Runs the task for the current seed — **your** API calls, sandboxes, or agent tool loop. |
-| **`Evaluator`** | Scores output vs acceptance criteria / principles — rules, tests, LLM, or mix. |
+| Interface           | Responsibility                                                                                                                                                                          |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`EventStore`**    | Append events; **`getLineage(rootSeedId)`** returns a full **`OntologyLineage`**. Use **`InMemoryEventStore`** for tests; use Postgres / Redis-compatible caches / etc. for production. |
+| **`WonderEngine`**  | Optional refinement signals after each generation (often LLM).                                                                                                                          |
+| **`ReflectEngine`** | Produces **`Partial<Seed>`** updates for the next generation (often LLM).                                                                                                               |
+| **`Executor`**      | Runs the task for the current seed — **your** API calls, sandboxes, or agent tool loop.                                                                                                 |
+| **`Evaluator`**     | Scores output vs acceptance criteria / principles — rules, tests, LLM, or mix.                                                                                                          |
 
 The library **does not** call OpenAI, Anthropic, or ClawQL by default; those belong in your adapters.
 
 ## Relationship to [Q00/ouroboros](https://github.com/Q00/ouroboros)
 
-The popular **Python** project is a full product (interview CLI, MCP plugin, PAL routing, Double Diamond execution, persistence, TUI, etc.). **`clawql-ouroboros`** is a **small, embeddable TypeScript core**: overlapping *ideas* (seed, wonder/reflect, convergence), **not** feature parity or a claim to be the “official” TS port. The **`clawql-`** prefix scopes naming to this ecosystem.
+The popular **Python** project is a full product (interview CLI, MCP plugin, PAL routing, Double Diamond execution, persistence, TUI, etc.). **`clawql-ouroboros`** is a **small, embeddable TypeScript core**: overlapping _ideas_ (seed, wonder/reflect, convergence), **not** feature parity or a claim to be the “official” TS port. The **`clawql-`** prefix scopes naming to this ecosystem.
 
 ## Current limitations (honest scope)
 

@@ -76,6 +76,14 @@ function rewriteLinksForSite(body) {
           '](../deployment/clawql-deployment-operations-guide.md)',
           '](/deployment/operations-guide)',
         )
+        .replaceAll(
+          '](../design/clawql-plugin-model.md)',
+          '](/reference/plugins)',
+        )
+        .replaceAll(
+          '](../design/modularization-implementation-status.md)',
+          `](${GH_MAIN}/docs/design/modularization-implementation-status.md)`,
+        )
         .replaceAll('](../../docs/', `](${GH_MAIN}/docs/`)
         .replaceAll('](../docs/', `](${GH_MAIN}/docs/`),
     ),

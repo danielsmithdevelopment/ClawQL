@@ -23,6 +23,7 @@ const websiteRoot = path.resolve(__dirname, '..')
 const dstDir = path.join(websiteRoot, 'src/generated')
 const dst = path.join(dstDir, 'clawql-modularization-body.mdx')
 const srcRelative = path.join('docs', 'vision', 'clawql-modularization-v2.md')
+const GH_MAIN = 'https://github.com/danielsmithdevelopment/ClawQL/blob/main'
 
 /** Walk parents from `website/` until docs/vision exists in repo. */
 function findRepoRootWithDocsVision() {
@@ -70,6 +71,14 @@ body = body.replaceAll(
 body = body.replaceAll(
   '](./clawql-hybrid-decentralized-github-alternative.md)',
   '](/vision/immutable-releases)',
+)
+body = body.replaceAll(
+  '](../design/clawql-plugin-model.md)',
+  '](/reference/plugins)',
+)
+body = body.replaceAll(
+  '](../design/modularization-implementation-status.md)',
+  `](${GH_MAIN}/docs/design/modularization-implementation-status.md)`,
 )
 fs.writeFileSync(dst, body)
 execSync('npx prettier --write src/generated/clawql-modularization-body.mdx', {
