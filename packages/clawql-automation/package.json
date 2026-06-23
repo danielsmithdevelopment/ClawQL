@@ -1,0 +1,66 @@
+{
+  "name": "clawql-automation",
+  "version": "0.0.1",
+  "description": "ClawQL automation: schedule worker + Slack notify (#307 order 6)",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./notify/notify": {
+      "types": "./dist/notify/notify.d.ts",
+      "import": "./dist/notify/notify.js",
+      "require": "./dist/notify/notify.cjs"
+    },
+    "./schedule/schedule": {
+      "types": "./dist/schedule/schedule.d.ts",
+      "import": "./dist/schedule/schedule.js",
+      "require": "./dist/schedule/schedule.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "npm run clean && tsup",
+    "prepublishOnly": "npm run build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "clawql-api": "file:../clawql-api",
+    "sql.js": "^1.14.1",
+    "zod": "4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/sql.js": "^1.4.11",
+    "tsup": "^8.3.0",
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.1"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/danielsmithdevelopment/ClawQL.git",
+    "directory": "packages/clawql-automation"
+  },
+  "keywords": [
+    "clawql",
+    "automation",
+    "schedule",
+    "notify",
+    "mcp"
+  ]
+}
