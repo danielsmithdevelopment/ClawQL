@@ -4,14 +4,25 @@ This directory is organized by purpose so operational guides, product docs, and 
 
 ## Core Product Docs
 
-- **ClawQL Master enablement guide** (**canonical vision** — platform status, architecture, Effect-TS target, deployment tiers, compliance, package roadmap): [`vision/clawql-master-enablement-guide.md`](vision/clawql-master-enablement-guide.md) — [`/vision/technical-enablement`](https://docs.clawql.com/vision/technical-enablement)
-- **ClawQL Modularization v2.0** (companion — package checklist, dependency stack diagram, gateway/orchestration notes; may lag enablement): [`vision/clawql-modularization-v2.md`](vision/clawql-modularization-v2.md) — on **docs.clawql.com** as [`/vision/modularization`](https://docs.clawql.com/vision/modularization)
+- **ClawQL Vision & Roadmap** (**start here** — public edition, honest shipped vs planned status, phased delivery): [`vision/clawql-vision-roadmap.md`](vision/clawql-vision-roadmap.md) — [`/vision/roadmap`](https://docs.clawql.com/vision/roadmap)
+- **ClawQL Master enablement guide** (v2.1 — unified 6-layer architecture index, documentation suite hub): [`vision/clawql-master-enablement-guide.md`](vision/clawql-master-enablement-guide.md) — [`/vision/technical-enablement`](https://docs.clawql.com/vision/technical-enablement)
+- **ClawQL Modularization v2.1** (package boundaries, dependency graph, Operator, intelligent MCP gateway): [`vision/clawql-modularization-v2.md`](vision/clawql-modularization-v2.md) — [`/vision/modularization`](https://docs.clawql.com/vision/modularization)
+- **Immutable releases — hybrid decentralized GitHub alternative** (Layer 0: `clawql-release`, Arweave, Radicle, Rift, release manifest): [`vision/clawql-hybrid-decentralized-github-alternative.md`](vision/clawql-hybrid-decentralized-github-alternative.md) — [`/vision/immutable-releases`](https://docs.clawql.com/vision/immutable-releases)
+
+## Contributing
+
+- **Contributor Technical Specification** (Plugin contracts, Effect-TS patterns, architecture rules, vertical/provider guides, CI): [`contributing/clawql-contributor-technical-specification.md`](contributing/clawql-contributor-technical-specification.md) — [`/contributing/technical-specification`](https://docs.clawql.com/contributing/technical-specification)
+
+## Architecture
+
+- **Token efficiency — layered approach** (Code Mode, response trimming, caching, semantic cache, model routing): [`architecture/clawql-token-efficiency.md`](architecture/clawql-token-efficiency.md) — [`/architecture/token-efficiency`](https://docs.clawql.com/architecture/token-efficiency)
 - **ClawQL Modularization v1.9** (companion — historical package matrix): [`vision/clawql-modularization.md`](vision/clawql-modularization.md) — package delivery epic [#306](https://github.com/danielsmithdevelopment/ClawQL/issues/306)
 - ClawQL ecosystem (vision deck — core loop, hybrid memory, pipeline, Onyx, Ouroboros, infra, roadmap): [`clawql-ecosystem.md`](clawql-ecosystem.md)
 - Feature tiers (always on / default-on opt-out / default-off opt-in): `readme/configuration.md` § **Feature tiers** — diagram: [`readme/images/clawql-feature-tiers.png`](readme/images/clawql-feature-tiers.png)
 - MCP tools and operator guides: [`mcp/mcp-tools.md`](mcp/mcp-tools.md), [`mcp/external-ingest.md`](mcp/external-ingest.md), [`mcp/cache-tool.md`](mcp/cache-tool.md), [`mcp/enterprise-mcp-tools.md`](mcp/enterprise-mcp-tools.md), [`mcp/notify-tool.md`](mcp/notify-tool.md), [`mcp/hitl-label-studio.md`](mcp/hitl-label-studio.md), [`mcp/onyx-knowledge-tool.md`](mcp/onyx-knowledge-tool.md), [`mcp/schedule-synthetic-checks.md`](mcp/schedule-synthetic-checks.md)
 - Memory and vault: [`memory/memory-obsidian.md`](memory/memory-obsidian.md), [`memory/memory-db-schema.md`](memory/memory-db-schema.md), [`memory/memory-db-hybrid-implementation.md`](memory/memory-db-hybrid-implementation.md), [`memory/hybrid-memory-backends.md`](memory/hybrid-memory-backends.md), [`memory/vector-search-design.md`](memory/vector-search-design.md)
 - Ouroboros library: [`ouroboros/clawql-ouroboros.md`](ouroboros/clawql-ouroboros.md)
+- **DAOS specification** (transport + strategic layers, NSV/SGDOP, Coordinator): [`ouroboros/decentralized-agent-operating-system-specification.md`](ouroboros/decentralized-agent-operating-system-specification.md) — [`/ouroboros/specification`](https://docs.clawql.com/ouroboros/specification)
 
 ## Getting Started and README Splits
 
@@ -23,6 +34,8 @@ This directory is organized by purpose so operational guides, product docs, and 
 - `skills/README.md` (tool workflow playbooks)
 
 ## Deployment and Platform Operations
+
+- **Deployment & Operations Guide** (Tier 1–3, CRD reference, auth, verticals, day-2 ops, NL commands, observability, troubleshooting): [`deployment/clawql-deployment-operations-guide.md`](deployment/clawql-deployment-operations-guide.md) — [`/deployment/operations-guide`](https://docs.clawql.com/deployment/operations-guide)
 
 - `openclaw/using-openclaw-with-clawql.md` — **full guide:** OpenClaw CLI + ClawQL MCP (install, `openclaw mcp set`, HTTP/stdio, validation, remote); website **`/openclaw`**
 - `openclaw/clawql-bootstrap.md` — register ClawQL in OpenClaw, env matrix, smoke checklist ([#226](https://github.com/danielsmithdevelopment/ClawQL/issues/226))
@@ -47,6 +60,7 @@ This directory is organized by purpose so operational guides, product docs, and 
 - **HITL Label Studio extensions (planned):** pre-annotations + vertical config packs — [#247](https://github.com/danielsmithdevelopment/ClawQL/issues/247) (extends shipped [#228](https://github.com/danielsmithdevelopment/ClawQL/issues/228))
 - **Golden image pipeline** (CI → scan → push → sign → deploy enforcement): `security/golden-image-pipeline.md` — plus **public GHCR packages** requirement for **`docker pull`** / Kyverno: top-level **`docker/README.md`** § **GHCR visibility**
 - Defense-in-depth reference guide: `security/clawql-security-defense-in-depth.md`
+- **Defense-in-Depth Security Guide** (condensed deployment reference — what you deploy): [`security/clawql-defense-in-depth-security-guide.md`](security/clawql-defense-in-depth-security-guide.md) — [`/security/defense-in-depth`](https://docs.clawql.com/security/defense-in-depth)
 - Deliverables matrix (shipped vs partial vs planned): `security/clawql-security-defense-deliverables.md`
 - npm publish hardening: `security/npm-supply-chain.md`
 - Image signature enforcement at deploy (Kyverno / policy): `security/image-signature-enforcement.md`

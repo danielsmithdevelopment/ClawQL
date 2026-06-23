@@ -9,7 +9,7 @@ tags:
   - tailscale
   - firewall
 part: 5
-total_parts: 30
+total_parts: 32
 date: "May 2026"
 slug: "agent-gateway-hardening-dns-rebinding"
 canonical_path: "/security/best-practices/agent-gateway-hardening-dns-rebinding"

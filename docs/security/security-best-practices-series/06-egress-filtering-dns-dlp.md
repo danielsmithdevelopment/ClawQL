@@ -9,7 +9,7 @@ tags:
   - dlp
   - istio
 part: 6
-total_parts: 30
+total_parts: 32
 date: "May 2026"
 slug: "egress-filtering-dns-dlp"
 canonical_path: "/security/best-practices/egress-filtering-dns-dlp"

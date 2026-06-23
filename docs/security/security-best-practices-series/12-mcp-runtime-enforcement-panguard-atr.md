@@ -9,7 +9,7 @@ tags:
   - hitl
   - json-schema
 part: 12
-total_parts: 30
+total_parts: 32
 date: "May 2026"
 slug: "mcp-runtime-enforcement-panguard-atr"
 canonical_path: "/security/best-practices/mcp-runtime-enforcement-panguard-atr"

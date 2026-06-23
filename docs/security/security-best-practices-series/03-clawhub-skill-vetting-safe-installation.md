@@ -9,7 +9,7 @@ tags:
   - sandbox
   - allowlist
 part: 3
-total_parts: 30
+total_parts: 32
 date: "May 2026"
 slug: "clawhub-skill-vetting-safe-installation"
 canonical_path: "/security/best-practices/clawhub-skill-vetting-safe-installation"

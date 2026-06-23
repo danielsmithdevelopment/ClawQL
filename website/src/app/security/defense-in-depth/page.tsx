@@ -7,7 +7,7 @@ import { docsPageMetadata } from '@/lib/seo'
 export const metadata = docsPageMetadata({
   title: 'Defense in depth — MCP & k3s security',
   description:
-    'Full ClawQL security architecture: supply chain, IaC, runtime, MCP chokepoints, Vault, Istio, audit — consolidated May 2026 guide (same as docs/security in the repo).',
+    'ClawQL Defense-in-Depth Security Guide: condensed deployment reference for supply chain, zero-trust, MCP runtime, Panguard, Kata, WORM audit, and GPU protection on self-hosted k3s.',
   path: '/security/defense-in-depth',
   ogType: 'article',
 })
@@ -29,30 +29,27 @@ export default function SecurityDefenseInDepthPage() {
 
       <div className="not-prose mb-8">
         <Note>
-          <strong>Source:</strong> Generated from{' '}
+          <strong>Deployment reference.</strong> Generated from{' '}
           <a
-            href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/clawql-comprehensive-defense-in-depth-mcp-k3s-may-2026.md"
+            href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/clawql-defense-in-depth-security-guide.md"
             className="font-medium text-inherit underline underline-offset-2"
           >
-            docs/security/clawql-comprehensive-defense-in-depth-mcp-k3s-may-2026.md
+            docs/security/clawql-defense-in-depth-security-guide.md
           </a>{' '}
-          on <code className="font-mono text-xs">main</code> — edit there, then
-          run{' '}
-          <code className="font-mono text-xs">
-            node scripts/sync-clawql-defense-in-depth-doc.mjs
-          </code>{' '}
-          from <code className="font-mono text-xs">website/</code> (also runs on{' '}
-          <code className="font-mono text-xs">prebuild</code> /{' '}
-          <code className="font-mono text-xs">dev</code>
-          ). Relative repo links are rewritten to GitHub in the generated file.
-          The guide body is included in the{' '}
-          <strong>static HTML for this URL at build time</strong> (no
-          Suspense/streaming shell) for crawlers and link previews. Summary:{' '}
+          on <code className="font-mono text-xs">main</code>. For reasoning,
+          red-team cases, and configuration specifics, see the{' '}
+          <a
+            href="/security/best-practices"
+            className="font-medium text-inherit underline underline-offset-2"
+          >
+            Security best practices curriculum
+          </a>
+          . Overview:{' '}
           <a
             href="/security"
             className="font-medium text-inherit underline underline-offset-2"
           >
-            Security overview
+            Security
           </a>
           .
         </Note>

@@ -1,4 +1,3 @@
-import type { ReferenceCard } from '@/components/ReferenceResourceCard'
 import { BellIcon } from '@/components/icons/BellIcon'
 import { BoltIcon } from '@/components/icons/BoltIcon'
 import { BookIcon } from '@/components/icons/BookIcon'
@@ -14,6 +13,8 @@ import { PackageIcon } from '@/components/icons/PackageIcon'
 import { ShapesIcon } from '@/components/icons/ShapesIcon'
 import { SquaresPlusIcon } from '@/components/icons/SquaresPlusIcon'
 import { TagIcon } from '@/components/icons/TagIcon'
+import type { ReferenceCard } from '@/components/ReferenceResourceCard'
+import { exampleSiteCards } from '@/lib/docs-hub-data'
 
 /** Curated `/learn/*` lessons (matches sidebar “ClawQL Learn” minus Overview). */
 export const learnModuleSiteCards: Array<ReferenceCard> = [
@@ -215,7 +216,7 @@ export const learnRelatedGuideSiteCards: Array<ReferenceCard> = [
     },
   },
   {
-    href: '/kubernetes',
+    href: '/deployment/kubernetes',
     name: 'Kubernetes',
     description:
       'Helm install, gRPC and HTTP, auth, rebuilds, and Kustomize patterns for dev and prod clusters.',
@@ -300,92 +301,9 @@ export const learnRelatedGuideSiteCards: Array<ReferenceCard> = [
   },
 ]
 
-export const caseStudySiteCards: Array<ReferenceCard> = [
-  {
-    href: '/case-studies/cloudflare-docs-mcp',
-    name: 'Case study: Cloudflare docs',
-    description:
-      'End-to-end MCP workflow: search, execute, memory_recall, memory_ingest — deploying docs.clawql.com and fixing Worker runtime issues.',
-    icon: BookIcon,
-    pattern: {
-      y: 18,
-      squares: [
-        [0, 0],
-        [1, 2],
-      ],
-    },
-  },
-  {
-    href: '/case-studies/vault-memory-github-session-2026-04',
-    name: 'Case study: Vault + GitHub session',
-    description:
-      'memory_ingest at scale, issue triage and new tracking issues, prioritization, and shipping the enterprise audit tool with full docs and Helm wiring.',
-    icon: BookIcon,
-    pattern: {
-      y: 12,
-      squares: [
-        [2, 1],
-        [0, 2],
-      ],
-    },
-  },
-  {
-    href: '/case-studies/cross-thread-vault-recall',
-    name: 'Case study: Cross-thread vault recall',
-    description:
-      'Before and after: repo-only search vs memory_recall — Obsidian graph, Cuckoo/hybrid memory roadmaps, wikilinks, and session resume workflows.',
-    icon: BookIcon,
-    pattern: {
-      y: 6,
-      squares: [
-        [1, 0],
-        [2, 2],
-      ],
-    },
-  },
-  {
-    href: '/case-studies/truenas-scale-corgicave-homelab',
-    name: 'Case study: TrueNAS corgicave homelab',
-    description:
-      'TrueNAS SCALE on a switch island: Mac errno 49, Docker/K8s utun, memory_ingest/recall, Thunderbolt vs SSH — full triage ladder and resolution.',
-    icon: BookIcon,
-    pattern: {
-      y: 0,
-      squares: [
-        [0, 1],
-        [1, 1],
-      ],
-    },
-  },
-  {
-    href: '/case-studies/docs-clawql-worker-1102-mcp-memory-2026-04',
-    name: 'Case study: Worker 1102 + MCP + memory',
-    description:
-      'docs.clawql.com incident: Error 1102 and waitUntil warnings; search/execute on Cloudflare APIs; memory_ingest postmortem; Lighthouse CI and prevention runbook.',
-    icon: BookIcon,
-    pattern: {
-      y: 24,
-      squares: [
-        [0, 0],
-        [2, 1],
-      ],
-    },
-  },
-  {
-    href: '/case-studies/slide-deck-github-parity-cache-memory-recall-2026-04',
-    name: 'Case study: Slide deck vs GitHub (cache + recall)',
-    description:
-      'memory_recall before filing parity issues; cache() for ephemeral scratch; 12 new issues for deck themes; memory_ingest to close the loop — April 2026 session.',
-    icon: BookIcon,
-    pattern: {
-      y: 2,
-      squares: [
-        [1, 1],
-        [0, 2],
-      ],
-    },
-  },
-]
+export const caseStudySiteCards = exampleSiteCards
+
+export { exampleSiteCards }
 
 export const referenceSiteCards: Array<ReferenceCard> = [
   {
@@ -417,7 +335,7 @@ export const referenceSiteCards: Array<ReferenceCard> = [
     },
   },
   {
-    href: '/kubernetes',
+    href: '/deployment/kubernetes',
     name: 'gRPC and Kubernetes',
     description:
       'Optional protobuf MCP over gRPC (port 50051), Streamable HTTP on /mcp, ENABLE_GRPC, Docker Desktop and remote clusters.',

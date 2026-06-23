@@ -1,0 +1,27 @@
+import { Button } from '@/components/Button'
+import { ReferenceHubGrid } from '@/components/DocsHubSections'
+
+# Reference
+
+API surfaces, configuration, protocol contracts, and implementation specifications — organized for operators and contributors. {{ className: 'lead' }}
+
+<div className="not-prose my-8 flex flex-wrap gap-3">
+  <Button href="/tools" arrow="right">
+    <>MCP tools</>
+  </Button>
+  <Button href="/spec-configuration" variant="outline">
+    <>Configuration</>
+  </Button>
+  <Button href="/contributing/technical-specification" variant="outline">
+    <>Contributor spec</>
+  </Button>
+</div>
+
+## Sections
+
+- **Core concepts** — architecture, feature tiers, planning vs execution
+- **Protocol v2.1** — uniform envelope, approvals, HATEOAS, two-phase commit
+- **Tools & configuration** — MCP tool surface and `CLAWQL_*` environment variables
+- **Contributor specification** — Effect-TS contracts, CRD fields, CI enforcement
+
+<ReferenceHubGrid />

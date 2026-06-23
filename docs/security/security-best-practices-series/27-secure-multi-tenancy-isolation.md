@@ -8,7 +8,7 @@ tags:
   - isolation
   - audit
 part: 27
-total_parts: 30
+total_parts: 32
 date: "May 2026"
 slug: "secure-multi-tenancy-isolation"
 canonical_path: "/security/best-practices/secure-multi-tenancy-isolation"

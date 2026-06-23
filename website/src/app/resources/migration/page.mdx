@@ -1,0 +1,47 @@
+import { Button } from '@/components/Button'
+import { Note } from '@/components/mdx'
+
+# Migration guide
+
+Upgrade paths for ClawQL MCP server versions and teams moving from ad-hoc MCP integrations. {{ className: 'lead' }}
+
+<Note>
+  Detailed Tier 1 upgrade steps live in the [Deployment & Operations Guide
+  §1.7](/deployment/operations-guide). This page covers cross-version and
+  cross-platform moves.
+</Note>
+
+## Upgrading clawql-mcp
+
+1. Check [GitHub Releases](https://github.com/danielsmithdevelopment/ClawQL/releases) for breaking changes
+2. Update **`CLAWQL_*`** env vars if provider or feature-tier defaults changed — [Configuration reference](/spec-configuration)
+3. For Kubernetes/Helm: bump image digest in values, run **`helm upgrade`**, verify **`/healthz`**
+4. Re-run smoke tests: **`search`** on a known operation, **`execute`** dry path, vault **`memory_recall`** if enabled
+
+## Docker Compose / Tier 1
+
+→ [Operations guide §1.7 Upgrading Tier 1](/deployment/operations-guide)
+
+## Kubernetes / Helm
+
+→ [Operations guide §2](/deployment/operations-guide) · [Helm chart](/helm)
+
+## From other MCP servers
+
+| From                   | To ClawQL                                                                 |
+| ---------------------- | ------------------------------------------------------------------------- |
+| Raw OpenAPI in context | **`search`** + **`execute`** — specs stay on disk                         |
+| Single-vendor MCP      | **`CLAWQL_PROVIDER=all-providers`** or narrow preset                      |
+| Custom tool servers    | Proxy via gateway or migrate to **`execute`** operations                  |
+| No vault memory        | Enable **`memory_ingest`** / **`memory_recall`** with Obsidian vault path |
+
+→ [Concepts](/concepts) · [Using search & execute](/learn/search-and-execute-mcp)
+
+<div className="not-prose my-8 flex flex-wrap gap-3">
+  <Button href="/deployment/operations-guide" arrow="right">
+    <>Deployment guide</>
+  </Button>
+  <Button href="/troubleshooting" variant="outline">
+    <>Troubleshooting</>
+  </Button>
+</div>

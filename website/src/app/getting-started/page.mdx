@@ -1,0 +1,48 @@
+import { Button } from '@/components/Button'
+import { Note } from '@/components/mdx'
+
+# Getting started
+
+Run ClawQL in minutes, pick a deployment tier, then dive into guides and reference docs. {{ className: 'lead' }}
+
+<div className="not-prose my-8 flex flex-wrap gap-3">
+  <Button href="/quickstart" arrow="right">
+    <>Quickstart</>
+  </Button>
+  <Button href="/install" variant="outline">
+    <>Install</>
+  </Button>
+  <Button href="/mcp-clients" variant="outline">
+    <>MCP clients</>
+  </Button>
+</div>
+
+## Recommended path
+
+1. [Quickstart](/quickstart) — `npx clawql-mcp` and connect Cursor or Claude Desktop
+2. [MCP clients](/mcp-clients) — stdio, HTTP, and auth token wiring
+3. [Concepts](/concepts) — how **`search`** and **`execute`** save context
+4. [Using search & execute](/learn/search-and-execute-mcp) — first hands-on lesson
+5. [Choose your deployment tier](/deployment) — Tier 1 local → Tier 2 Kubernetes → Tier 3 enterprise
+
+## Choose your tier
+
+|                | Tier 1                                       | Tier 2                                       | Tier 3                                              |
+| -------------- | -------------------------------------------- | -------------------------------------------- | --------------------------------------------------- |
+| **Best for**   | Evaluation, solo dev                         | Team Kubernetes                              | Regulated / multi-tenant                            |
+| **Start here** | [Quickstart](/quickstart)                    | [Kubernetes](/deployment/kubernetes)         | [Operations guide §3](/deployment/operations-guide) |
+| **Full guide** | [Ops guide §1](/deployment/operations-guide) | [Ops guide §2](/deployment/operations-guide) | [Ops guide §3](/deployment/operations-guide)        |
+
+<Note>
+  Tier 1 Docker Compose is runnable today for evaluation. Tier 2–3 Operator
+  features are documented in the [Deployment & Operations
+  Guide](/deployment/operations-guide) — watch [Vision &
+  Roadmap](/vision/roadmap) for shipping status.
+</Note>
+
+## Next steps
+
+- [Architecture & Vision](/architecture) — platform layers and DAOS
+- [Guides](/guides) — token efficiency, security, Learn modules
+- [Reference](/reference) — tools, configuration, contributor spec
+- [Examples](/examples) — session walkthroughs and postmortems

@@ -9,7 +9,7 @@ tags:
   - networkpolicy
   - spiffe
 part: 4
-total_parts: 30
+total_parts: 32
 date: "May 2026"
 slug: "zero-trust-network-mtls-istio-rbac"
 canonical_path: "/security/best-practices/zero-trust-network-mtls-istio-rbac"

@@ -7,7 +7,7 @@ tags:
   - stride
   - attack-trees
 part: 22
-total_parts: 30
+total_parts: 32
 date: "May 2026"
 slug: "threat-modelling-stride-agentic-ai"
 canonical_path: "/security/best-practices/threat-modelling-stride-agentic-ai"

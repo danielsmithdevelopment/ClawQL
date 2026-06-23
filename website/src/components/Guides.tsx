@@ -3,70 +3,50 @@ import { Heading } from '@/components/Heading'
 
 const guides = [
   {
-    href: '/install',
-    name: 'Install',
+    href: '/getting-started',
+    name: 'Getting started',
     description:
-      'Install clawql-mcp, understand package size and binaries, and run with npx or from source.',
+      'Quickstart path, tier chooser, and links to deployment tiers.',
   },
   {
-    href: '/mcp-clients',
-    name: 'MCP clients',
+    href: '/architecture',
+    name: 'Architecture & vision',
     description:
-      'Wire Cursor, Claude Desktop, or HTTP hosts with stdio, spec env, vault, and sandbox bridge.',
-  },
-  {
-    href: '/spec-configuration',
-    name: 'Spec configuration',
-    description:
-      'OpenAPI paths, URLs, Google Discovery, merged presets, and CLAWQL_* precedence.',
+      '6-layer platform, DAOS, immutable releases, token efficiency.',
   },
   {
     href: '/deployment',
-    name: 'Deployment',
+    name: 'Deployment & operations',
     description:
-      'Docker, Streamable HTTP, Cloud Run, and links to Kubernetes and remote deploy.',
+      'Tier 1–3 hub: Compose, Kubernetes, Helm, enterprise observability.',
   },
   {
-    href: '/security',
+    href: '/guides',
+    name: 'Guides',
+    description:
+      'Learn modules, security, HITL, verticals, and token economics.',
+  },
+  {
+    href: '/reference',
+    name: 'Reference',
+    description:
+      'Protocol v2.1, MCP tools, configuration, contributor specification.',
+  },
+  {
+    href: '/security/defense-in-depth',
     name: 'Security',
     description:
-      'Golden image pipeline end-to-end, Kyverno admission by default, Cosign keyless, Trivy/OSV gates, and defense-in-depth references.',
+      'Defense in depth, security curriculum, golden image pipeline.',
   },
   {
-    href: '/kubernetes',
-    name: 'Kubernetes',
-    description:
-      'Docker Desktop / Rancher via Helm (Ingress clawql-mcp.localhost — prod parity), auth, rebuilds, and Kustomize dev/prod deploy.',
+    href: '/learn',
+    name: 'ClawQL Learn',
+    description: 'Hands-on modules: search/execute, vault, sandbox, Ouroboros.',
   },
   {
-    href: '/docker-desktop-observability',
-    name: 'Istio & observability',
-    description:
-      'Prometheus, Grafana, Tempo, Kiali, OTel Collector with optional Istio on Docker Desktop—beginner getting-started for each tool.',
-  },
-  {
-    href: '/helm',
-    name: 'Helm',
-    description:
-      'Helm chart at charts/clawql-mcp: install, values, GHCR image, optional Ingress and PVC.',
-  },
-  {
-    href: '/notify',
-    name: 'Slack notify',
-    description:
-      'Optional notify tool (CLAWQL_ENABLE_NOTIFY): chat.postMessage, tokens, channels, and JSON examples.',
-  },
-  {
-    href: '/hitl-label-studio',
-    name: 'HITL — Label Studio',
-    description:
-      'Optional hitl_enqueue_label_studio (CLAWQL_ENABLE_HITL_LABEL_STUDIO): Label Studio import API, webhook to memory_ingest or audit, Helm and OpenClaw notes.',
-  },
-  {
-    href: '/onyx-knowledge',
-    name: 'Onyx knowledge search',
-    description:
-      'Optional knowledge_search_onyx (CLAWQL_ENABLE_ONYX): ONYX_BASE_URL, tokens, semantic search examples, vault pairing.',
+    href: '/examples',
+    name: 'Examples',
+    description: 'Workflow walkthroughs and session postmortems.',
   },
 ]
 
@@ -74,7 +54,7 @@ export function Guides() {
   return (
     <div className="my-16 xl:max-w-none">
       <Heading level={2} id="guides">
-        Guides
+        Documentation hubs
       </Heading>
       <div className="not-prose mt-4 grid grid-cols-1 gap-8 border-t border-zinc-900/5 pt-10 sm:grid-cols-2 xl:grid-cols-4 dark:border-white/5">
         {guides.map((guide) => (

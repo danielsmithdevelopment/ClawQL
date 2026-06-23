@@ -1,73 +1,54 @@
-# Deployment
+# Deployment & Operations
 
-Production-style setups run **one** service: **`clawql-mcp-http`** exposes MCP at **`/mcp`** and GraphQL at **`/graphql`** on the same port. {{ className: 'lead' }}
+Choose a **deployment tier** that matches your environment. All tiers use the same MCP surface (`search` / `execute`); higher tiers add isolation, multi-tenancy, and enterprise controls. {{ className: 'lead' }}
 
-## Streamable HTTP
+<Note>
+  **Full reference:** the [Deployment & Operations
+  Guide](/deployment/operations-guide) is the authoritative Tier 1–3 document —
+  CRD fields, auth, verticals, day-2 ops, and troubleshooting.
+</Note>
 
-From the published package:
+## Choose your tier
 
-```bash
-PORT=8080 npx -p clawql-mcp clawql-mcp-http
-```
+| Question                                     | Tier 1 | Tier 2   | Tier 3   |
+| -------------------------------------------- | ------ | -------- | -------- |
+| Evaluating ClawQL or building locally?       | ✅     | —        | —        |
+| Team-accessible shared deployment?           | —      | ✅       | —        |
+| Multi-tenant isolation & regulated controls? | —      | Limited  | ✅       |
+| Kubernetes required?                         | No     | Yes      | Yes      |
+| Kata / gVisor runtime isolation?             | No     | Optional | Required |
 
-Default local MCP endpoint (**`make local-k8s-up`** + **`values-docker-desktop.yaml`**): **`http://clawql-mcp.localhost/mcp`** (**Ingress** — prod parity), health **`/healthz`**, Prometheus scrape **`GET /metrics`** (**`prom-client`** OpenMetrics). **Compose** / **`npx`** still often use **`http://localhost:8080/mcp`**. Configure the client with **`url`**, not **`command`**.
+If you are unsure, **start with Tier 1**. Configuration format is compatible enough that migrating to Tier 2 later does not require relearning fundamentals.
 
-**Native GraphQL/gRPC metrics:** scrape **`GET /metrics`** for OpenMetrics counters/gauges per **`sourceLabel`**. Optionally set **`CLAWQL_HEALTHZ_NATIVE_PROTOCOL_METRICS=1`** so **`GET /healthz`** also includes the same snapshot as JSON (**`nativeProtocolMetrics`**). Disable the metrics route only if required: **`CLAWQL_DISABLE_HTTP_METRICS=1`**. Repo: **[`docs/readme/deployment.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/readme/deployment.md)** ([#191](https://github.com/danielsmithdevelopment/ClawQL/issues/191)).
+## Tier paths
 
-**Private tailnet:** if you are **new to Tailscale / Headscale**, start with **[Tailscale & Headscale](/tailscale)** (same content as **[`docs/deployment/tailscale-and-headscale-for-clawql.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/tailscale-and-headscale-for-clawql.md)**). For **managed Tailscale**, use HTTPS MagicDNS (for example **`https://your-machine.your-tailnet.ts.net/mcp`**) or **Serve**; for **self-hosted Headscale** and **`*.clawql.local`**, use runbook **[`docs/deployment/headscale-tailnet.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/headscale-tailnet.md)** ([#206](https://github.com/danielsmithdevelopment/ClawQL/issues/206)) and ACL starter **[`docs/deployment/headscale-acls-clawql.hujson`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/headscale-acls-clawql.hujson)** ([#213](https://github.com/danielsmithdevelopment/ClawQL/issues/213)). Keep **`CLAWQL_MCP_URL`** in env and reference **`${env:CLAWQL_MCP_URL}`** in **`mcp.json`**; align **`PAPERLESS_BASE_URL`**, **`ONYX_BASE_URL`**, **`CLAWQL_SANDBOX_BRIDGE_URL`**, and similar with the same network. Short form: **[`docs/readme/deployment.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/readme/deployment.md#private-tailnet-tailscale-magicdns)** ([#211](https://github.com/danielsmithdevelopment/ClawQL/issues/211)).
+### Tier 1 — Local / Docker Compose
 
-## Optional gRPC (protobuf MCP)
+- [Quickstart](/quickstart) — `npx clawql-mcp` in minutes
+- [Install](/install) — binaries, Docker, Streamable HTTP
+- Operations guide [§1 Tier 1](/deployment/operations-guide) — Compose layout, local YAML, Presidio opt-in
 
-The same registered tools (including **`CallTool`**) can be exposed over **gRPC** in the **same process** as Streamable HTTP. Set **`ENABLE_GRPC=1`**; the server listens on **`GRPC_PORT`** (default **50051**) using the **[`mcp-grpc-transport`](https://www.npmjs.com/package/mcp-grpc-transport)** package (`model_context_protocol.Mcp`, `grpc.health.v1.Health`, optional reflection). Clients must send **`mcp-protocol-version`** metadata on protobuf RPCs. Invoking from the shell: **[`packages/mcp-grpc-transport` README — Testing and invoking MCP over gRPC](https://github.com/danielsmithdevelopment/ClawQL/blob/main/packages/mcp-grpc-transport/README.md#testing-and-invoking-mcp-over-grpc)**. On **Kubernetes**, the **`clawql-mcp-http`** Service publishes **HTTP** and **gRPC (50051)** so agents can reach **`localhost:50051`** (or the LoadBalancer IP) without port-forward when gRPC is enabled—see [Kubernetes](/kubernetes) and [`docs/deployment/deploy-k8s.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/deploy-k8s.md#service-ports-http-and-grpc).
+### Tier 2 — Standard Kubernetes + Helm
 
-## Docker
+- [Kubernetes on Docker Desktop](/deployment/kubernetes) — `make local-k8s-up`, Ingress, signed GHCR images, Kyverno
+- [Helm chart](/helm) — `charts/clawql-mcp` values and upgrades
+- [Dashboard on Kubernetes](/dashboard-kubernetes) — bundled UI and vault sync
+- Operations guide [§2 Tier 2](/deployment/operations-guide) — Operator, Helm, team scale
 
-The repo ships a multi-stage **Distroless** image (`docker/README.md`) with `dist/`, `bin/`, and `providers/` for offline bundled specs. Build, run, and compose examples:
+### Tier 3 — Enterprise
 
-[`github.com/danielsmithdevelopment/ClawQL/blob/main/docker/README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docker/README.md)
+- [Docker Desktop: Istio & observability](/docker-desktop-observability) — mTLS lab, LGTMP stack patterns
+- [Tailscale & Headscale](/tailscale) — private tailnet MCP access
+- Operations guide [§3 Tier 3](/deployment/operations-guide) — Kata/gVisor, Istio, Vault, dedicated pools
 
-## Security and supply chain
+## Platform operations
 
-**Golden image (containers):** end-to-end narrative—repo gates → **single** BuildKit OCI export per image → **Trivy** on that layout → **`skopeo copy`** (same bytes) → **Cosign keyless** → **`imagetools`** promotion of **`latest`** / **`nightly`** — is in **[`docs/security/golden-image-pipeline.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/golden-image-pipeline.md)**. **Kubernetes:** the **Helm** chart defaults **Kyverno `verifyImages`** for the ClawQL GHCR images (MCP, website, dashboard, and bridge) ([Security](/security), **[`image-signature-enforcement.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/image-signature-enforcement.md)**). **npm** packages use a separate flow: **[`npm-supply-chain.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/npm-supply-chain.md)**. Operator **`cosign verify`** commands: [`docker/README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docker/README.md).
+- [Streamable HTTP & Cloud Run](/deployment/platforms) — HTTP transport, gRPC, Docker image, Cloud Run script
+- [OpenClaw + ClawQL](/openclaw) — gateway integration
+- [Security overview](/security) — golden image pipeline and cluster admission
 
-## Cloud Run
+import { DeploymentHubGrid } from '@/components/DocsHubSections'
 
-One-shot script (sets project/region via env):
+## All deployment topics
 
-```bash
-PROJECT_ID="your-project-id" \
-REGION="us-central1" \
-bash scripts/deploy/deploy-cloud-run.sh
-```
-
-Or with Make:
-
-```bash
-PROJECT_ID="your-project-id" REGION="us-central1" make deploy-cloud-run
-```
-
-After deploy, agents use **`https://<mcp-service-url>/mcp`**. Full options: [`docs/deployment/deploy-cloud-run.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/deploy-cloud-run.md).
-
-## Kubernetes
-
-**Local MCP on Kubernetes** (namespace **`clawql`**, **Ingress** **`http://clawql-mcp.localhost/mcp`**, **signed GHCR** images, **Kyverno** installed by **`make local-k8s-up`**) is covered on **[Kubernetes](/kubernetes)**.
-
-**Bundled dashboard** deployment and Vault-sync behavior is covered on **[Dashboard on Kubernetes](/dashboard-kubernetes)**.
-
-**Optional Istio + observability lab** (Prometheus, Grafana, Grafana Tempo, Kiali, OpenTelemetry Collector): beginner-oriented walkthrough on **[Docker Desktop: Istio & observability](/docker-desktop-observability)**; canonical copy in **[`docs/deployment/docker-desktop-istio-observability.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/docker-desktop-istio-observability.md)**.
-
-For **remote** clusters, use Kustomize overlays with image tag injection:
-
-```bash
-ENV=dev IMAGE=us-central1-docker.pkg.dev/<project>/<repo>/clawql-mcp TAG=<tag> make deploy-k8s
-```
-
-Or install with **Helm** from **`charts/clawql-mcp`**: **[Helm](/helm)** and [`docs/deployment/helm.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/helm.md).
-
-Optional **NATS JetStream** (event backbone for agents / Ouroboros / edge sync): **[NATS JetStream](/nats-jetstream)** ([#127](https://github.com/danielsmithdevelopment/ClawQL/issues/127)).
-
-**OpenClaw (gateway / MCP host for ClawQL):** full guide **[OpenClaw + ClawQL](/openclaw)** · [`docs/openclaw/using-openclaw-with-clawql.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/openclaw/using-openclaw-with-clawql.md); bootstrap [`docs/openclaw/clawql-bootstrap.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/openclaw/clawql-bootstrap.md) ([#226](https://github.com/danielsmithdevelopment/ClawQL/issues/226)); IDP skill profile [`docs/openclaw/openclaw-idp-skill-profile.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/openclaw/openclaw-idp-skill-profile.md) ([#227](https://github.com/danielsmithdevelopment/ClawQL/issues/227)); umbrella [#128](https://github.com/danielsmithdevelopment/ClawQL/issues/128).
-
-**Human-in-the-loop (Label Studio):** optional **`hitl_enqueue_label_studio`** when **`CLAWQL_ENABLE_HITL_LABEL_STUDIO=1`** — enqueue review tasks via the Label Studio import API and expose **`POST /hitl/label-studio/webhook`** for annotation callbacks ([#228](https://github.com/danielsmithdevelopment/ClawQL/issues/228)). Website overview **[HITL — Label Studio](/hitl-label-studio)**; full operator guide [`docs/mcp/hitl-label-studio.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/hitl-label-studio.md). Helm: **`enableHitlLabelStudio`** in [`docs/deployment/helm.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/helm.md).
-
-Details: [`docs/deployment/deploy-k8s.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/deploy-k8s.md). Extended container and manifest notes: [`docker/README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docker/README.md).
+<DeploymentHubGrid />

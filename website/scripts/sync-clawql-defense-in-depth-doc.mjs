@@ -1,16 +1,12 @@
 /**
- * Copies the comprehensive defense-in-depth security guide into src/generated/ for
- * /security/defense-in-depth. Rewrites relative repo links to github.com so they
- * work from the docs site origin.
+ * Copies the Defense-in-Depth Security Guide into src/generated/ for
+ * /security/defense-in-depth.
  *
- * Source: docs/security/clawql-comprehensive-defense-in-depth-mcp-k3s-may-2026.md
+ * Source: docs/security/clawql-defense-in-depth-security-guide.md
  *   → src/generated/clawql-defense-in-depth-body.mdx
  *
- * Run from website/: node scripts/sync-clawql-defense-in-depth-doc.mjs
- *
- * Docker (`docker build` with context `./website`): if `docs/security/` is missing
- * but `src/generated/clawql-defense-in-depth-body.mdx` exists, exit 0 and keep
- * the committed file.
+ * Legacy comprehensive doc (archived reference):
+ *   docs/security/clawql-comprehensive-defense-in-depth-mcp-k3s-may-2026.md
  */
 import { execSync } from 'node:child_process'
 import fs from 'node:fs'
@@ -24,7 +20,7 @@ const dst = path.join(dstDir, 'clawql-defense-in-depth-body.mdx')
 const srcRelative = path.join(
   'docs',
   'security',
-  'clawql-comprehensive-defense-in-depth-mcp-k3s-may-2026.md',
+  'clawql-defense-in-depth-security-guide.md',
 )
 
 const GH_MAIN = 'https://github.com/danielsmithdevelopment/ClawQL/blob/main'
@@ -45,26 +41,48 @@ function findRepoRootWithDocsSecurity() {
   return null
 }
 
-/** Map relative Markdown links to absolute GitHub blob URLs for site rendering. */
+function escapeLessThanBeforeDigit(body) {
+  return body.replace(/<(?=\d)/g, '&lt;')
+}
+
+function escapeMdxCurlyOutsideFences(body) {
+  const lines = body.split('\n')
+  let inFence = false
+  return lines
+    .map((line) => {
+      const fence = line.match(/^(`{3,}|~{3,})(.*)$/)
+      if (fence) {
+        if (!inFence) inFence = true
+        else if (!fence[2].trim()) inFence = false
+        return line
+      }
+      if (inFence) return line
+      return line
+        .replace(/\\/g, '\\\\')
+        .replace(/\{/g, '\\{')
+        .replace(/\}/g, '\\}')
+    })
+    .join('\n')
+}
+
 function rewriteLinksForSite(body) {
-  return body
-    .replaceAll('](../../charts/', `](${GH_MAIN}/charts/`)
-    .replaceAll('](../../docs/', `](${GH_MAIN}/docs/`)
-    .replaceAll('](../../docker/', `](${GH_MAIN}/docker/`)
-    .replaceAll('](../../AGENTS.md)', `](${GH_MAIN}/AGENTS.md)`)
-    .replaceAll(
-      '](clawql-security-defense-in-depth.md)',
-      `](${GH_MAIN}/docs/security/clawql-security-defense-in-depth.md)`,
-    )
-    .replaceAll(
-      '](clawql-security-defense-deliverables.md)',
-      `](${GH_MAIN}/docs/security/clawql-security-defense-deliverables.md)`,
-    )
-    .replaceAll(
-      '](runtime-class-containment.md)',
-      `](${GH_MAIN}/docs/security/runtime-class-containment.md)`,
-    )
-    .replaceAll('](mcp-proxy-jwt-atr.md)', `](${GH_MAIN}/docs/security/mcp-proxy-jwt-atr.md)`)
+  return escapeMdxCurlyOutsideFences(
+    escapeLessThanBeforeDigit(
+      body
+        .replaceAll(
+          '](security-best-practices-series/)',
+          '](/security/best-practices)',
+        )
+        .replaceAll(
+          '](mcp-proxy-jwt-atr.md)',
+          `](${GH_MAIN}/docs/security/mcp-proxy-jwt-atr.md)`,
+        )
+        .replaceAll('](../../charts/', `](${GH_MAIN}/charts/`)
+        .replaceAll('](../../docs/', `](${GH_MAIN}/docs/`)
+        .replaceAll('](../../docker/', `](${GH_MAIN}/docker/`)
+        .replaceAll('](../../AGENTS.md)', `](${GH_MAIN}/AGENTS.md)`),
+    ),
+  )
 }
 
 fs.mkdirSync(dstDir, { recursive: true })
@@ -75,7 +93,7 @@ const src = repoRoot ? path.join(repoRoot, srcRelative) : null
 if (!src || !fs.existsSync(src)) {
   if (fs.existsSync(dst)) {
     console.warn(
-      'sync-clawql-defense-in-depth-doc: docs/security/clawql-comprehensive-defense-in-depth-mcp-k3s-may-2026.md not found; keeping existing src/generated/clawql-defense-in-depth-body.mdx (typical for Docker context ./website)',
+      'sync-clawql-defense-in-depth-doc: source not found; keeping existing generated MDX',
     )
     process.exit(0)
   }
@@ -86,8 +104,11 @@ if (!src || !fs.existsSync(src)) {
   process.exit(1)
 }
 
-const raw = fs.readFileSync(src, 'utf8')
-fs.writeFileSync(dst, rewriteLinksForSite(raw), 'utf8')
+fs.writeFileSync(
+  dst,
+  rewriteLinksForSite(fs.readFileSync(src, 'utf8')),
+  'utf8',
+)
 
 execSync('npx prettier --write src/generated/clawql-defense-in-depth-body.mdx', {
   cwd: websiteRoot,
