@@ -152,7 +152,6 @@
         "ip-address": "10.1.1",
         "@opentelemetry/core": "2.8.0",
         "esbuild": "0.28.1",
-        "esbuild@0.27.7": "0.28.1",
         "hono": "4.12.25",
         "js-yaml": "4.2.0",
         "path-to-regexp": "8.4.0",
