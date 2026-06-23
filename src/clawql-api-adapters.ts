@@ -16,7 +16,6 @@ import {
   type LoadSpecFn,
 } from "clawql-api";
 import { Effect, Layer } from "effect";
-import { mcpExecuteEnvironment } from "./mcp-execute-environment.js";
 
 let loadSpecOverride: LoadSpecFn | undefined;
 
@@ -30,23 +29,12 @@ function resolveLoadSpec(): LoadSpecFn {
   return loadSpecOverride ?? loadSpec;
 }
 
-function buildExecuteEnvironment() {
-  const loadSpecFn = resolveLoadSpec();
-  return {
-    ...mcpExecuteEnvironment,
-    loadSpec: async () => {
-      const loaded = await loadSpecFn();
-      return { ...loaded, multi: loaded.multi ?? false };
-    },
-  };
-}
-
 function buildSearchLive(): Layer.Layer<SearchService> {
   return makeSearchLive(resolveLoadSpec());
 }
 
 function buildExecuteLive() {
-  return makeExecuteLive(buildExecuteEnvironment());
+  return makeExecuteLive(resolveLoadSpec());
 }
 
 let apiHandle: ClawQLApiHandle | undefined;

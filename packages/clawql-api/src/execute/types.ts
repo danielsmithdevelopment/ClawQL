@@ -27,24 +27,3 @@ export type ExecuteOperation = {
     rpcName: string;
   };
 };
-
-export type LoadedSpecForExecute = {
-  operations: ExecuteOperation[];
-  openapi: unknown;
-  openapis?: unknown[];
-  multi: boolean;
-};
-
-/** IO boundary injected by clawql-mcp until native GraphQL/gRPC executors move (#308). */
-export type ExecuteEnvironment = {
-  loadSpec: () => Promise<LoadedSpecForExecute>;
-  executeNativeGraphQL: (
-    op: ExecuteOperation,
-    args: Record<string, unknown>,
-    selectedFields: string
-  ) => Promise<ExecuteOperationResult>;
-  executeNativeGrpc: (
-    op: ExecuteOperation,
-    args: Record<string, unknown>
-  ) => Promise<ExecuteOperationResult>;
-};
