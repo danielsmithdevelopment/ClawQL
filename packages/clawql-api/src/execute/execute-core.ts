@@ -1,8 +1,9 @@
 /**
  * Core `execute` implementation (OpenAPI / GraphQL / gRPC / REST paths).
- * REST is in-package; native GraphQL/gRPC and in-process GraphQL remain injected via `ExecuteEnvironment`.
+ * REST and in-process GraphQL are in-package; native GraphQL/gRPC remain injected via `ExecuteEnvironment`.
  */
 
+import { executeOperationGraphQL } from "../graphql/in-process-execute.js";
 import { resolveApiBaseUrlForOperation, type OpenAPIDoc } from "../spec/spec-loader.js";
 import type { Operation } from "../spec/operation-types.js";
 import { defaultFields, executeOutputFields, projectRestByFields } from "./field-projection.js";
@@ -104,10 +105,10 @@ export async function executeClawqlOperationWithEnv(
       : defaultFields(operationId);
 
     const baseUrl = resolveApiBaseUrlForOperation(openapiForOp, op as Operation);
-    const inProc = await env.executeOperationGraphQL(
+    const inProc = await executeOperationGraphQL(
       openapiForOp,
       baseUrl,
-      op,
+      op as Operation,
       args,
       selectedFields
     );
