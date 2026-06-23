@@ -78,6 +78,9 @@ export const viewport: Viewport = {
   initialScale: 1,
 }
 
+/** Entire docs site is SSG — required for OpenNext static-assets incremental cache. */
+export const dynamic = 'force-static'
+
 export default function RootLayout({
   children,
 }: {

@@ -9,6 +9,11 @@ export function middleware(request: NextRequest) {
   const pathname =
     rawPath.length > 1 && rawPath.endsWith('/') ? rawPath.slice(0, -1) : rawPath
 
+  const accept = request.headers.get('accept') ?? ''
+  if (!/\btext\/markdown\b/i.test(accept)) {
+    return NextResponse.next()
+  }
+
   if (pathname.startsWith('/_next') || pathname.startsWith('/api/')) {
     return NextResponse.next()
   }
@@ -20,11 +25,6 @@ export function middleware(request: NextRequest) {
     if (base.includes('.')) {
       return NextResponse.next()
     }
-  }
-
-  const accept = request.headers.get('accept') ?? ''
-  if (!/\btext\/markdown\b/i.test(accept)) {
-    return NextResponse.next()
   }
 
   const path = pathname === '' ? '/' : pathname

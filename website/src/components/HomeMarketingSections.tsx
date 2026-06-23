@@ -1,14 +1,14 @@
 'use client'
 
-// Dynamic import keeps a separate chunk; default `ssr: true` ships real HTML for guides/cards
-// (better LCP and Lighthouse). If `/` Worker 1102 or cold HTML cost rises on OpenNext + CF, see
-// docs/website/website-performance-workers-guardrails.md (tradeoff vs `ssr: false`).
+// Dynamic import + ssr:false keeps homepage marketing off the Worker HTML path (1102 mitigation).
+// Skeleton preserves #guides / #examples anchors before client hydrate.
 import dynamic from 'next/dynamic'
 
 const HomeMarketingSectionsInner = dynamic(
   () => import('./HomeMarketingSectionsInner'),
   {
     loading: HomeMarketingSectionsSkeleton,
+    ssr: false,
   },
 )
 

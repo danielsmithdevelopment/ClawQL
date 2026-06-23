@@ -7,6 +7,11 @@ import { recmaPlugins } from './src/mdx/recma.mjs'
 import { rehypePlugins } from './src/mdx/rehype.mjs'
 import { remarkPlugins } from './src/mdx/remark.mjs'
 import withSearch from './src/mdx/search.mjs'
+import {
+  EDGE_HEAVY_HTML_CACHE_CONTROL,
+  EDGE_HTML_CACHE_CONTROL,
+  HEAVY_HTML_ROUTE_SOURCES,
+} from './src/lib/edge-cache-control.mjs'
 
 // Dev-only: dynamic import keeps `@opennextjs/cloudflare` out of the Docker/standalone runtime trace.
 async function initOpenNextCloudflareDevIfNeeded() {
@@ -115,9 +120,7 @@ const nextConfig = {
         headers: [
           {
             key: 'Cache-Control',
-            // Longer shared edge TTL → fewer fresh HTML generations on the Worker (10ms CPU budget on Free).
-            value:
-              'public, max-age=0, s-maxage=86400, stale-while-revalidate=604800',
+            value: EDGE_HTML_CACHE_CONTROL,
           },
           {
             key: 'Referrer-Policy',
@@ -129,14 +132,13 @@ const nextConfig = {
           },
         ],
       },
-      // Case studies: largest MDX + most 1102-prone — maximize edge HTML reuse (purge dashboard after urgent edits).
-      {
-        source: '/case-studies/:path*',
+      // Heavy MDX / generated routes — longest edge TTL (Worker 1102 mitigation on Cloudflare Free).
+      ...HEAVY_HTML_ROUTE_SOURCES.map((source) => ({
+        source,
         headers: [
           {
             key: 'Cache-Control',
-            value:
-              'public, max-age=0, s-maxage=604800, stale-while-revalidate=2592000',
+            value: EDGE_HEAVY_HTML_CACHE_CONTROL,
           },
           {
             key: 'Referrer-Policy',
@@ -147,45 +149,7 @@ const nextConfig = {
             value: 'nosniff',
           },
         ],
-      },
-      // Full slide deck: very large MDX body (static route bundle); long edge TTL like case studies.
-      {
-        source: '/vision/slide-deck',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value:
-              'public, max-age=0, s-maxage=604800, stale-while-revalidate=2592000',
-          },
-          {
-            key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin',
-          },
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
-          },
-        ],
-      },
-      // Comprehensive security guide (large MDX, static route bundle).
-      {
-        source: '/security/defense-in-depth',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value:
-              'public, max-age=0, s-maxage=604800, stale-while-revalidate=2592000',
-          },
-          {
-            key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin',
-          },
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
-          },
-        ],
-      },
+      })),
       {
         source: '/_next/image',
         headers: [
