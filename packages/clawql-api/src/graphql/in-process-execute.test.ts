@@ -1,6 +1,6 @@
 import { GraphQLNonNull, GraphQLObjectType, GraphQLSchema, GraphQLString } from "graphql";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { Operation } from "./operation-types.js";
+import type { Operation } from "../spec/operation-types.js";
 
 type Mode = "success" | "build-fail" | "missing-field" | "resolver-error";
 
@@ -71,7 +71,7 @@ const testCtx = vi.hoisted(() => {
   return { state, makeSuccessSchema, makeMissingFieldSchema, makeResolverErrorSchema };
 });
 
-vi.mock("./graphql-schema-builder.js", () => ({
+vi.mock("./schema-builder.js", () => ({
   buildGraphQLSchema: async () => {
     const mode = testCtx.state.mode;
     if (mode === "build-fail") {
@@ -107,7 +107,7 @@ describe("graphql-in-process-execute", () => {
 
   it("returns ok=false when schema build fails", async () => {
     testCtx.state.mode = "build-fail";
-    const { executeOperationGraphQL } = await import("./graphql-in-process-execute.js");
+    const { executeOperationGraphQL } = await import("./in-process-execute.js");
     const out = await executeOperationGraphQL(
       {},
       "http://example.com",
@@ -120,7 +120,7 @@ describe("graphql-in-process-execute", () => {
 
   it("returns ok=false when no GraphQL field matches operation", async () => {
     testCtx.state.mode = "missing-field";
-    const { executeOperationGraphQL } = await import("./graphql-in-process-execute.js");
+    const { executeOperationGraphQL } = await import("./in-process-execute.js");
     const out = await executeOperationGraphQL(
       {},
       "http://example.com",
@@ -138,7 +138,7 @@ describe("graphql-in-process-execute", () => {
 
   it("returns ok=false when resolver throws", async () => {
     testCtx.state.mode = "resolver-error";
-    const { executeOperationGraphQL } = await import("./graphql-in-process-execute.js");
+    const { executeOperationGraphQL } = await import("./in-process-execute.js");
     const out = await executeOperationGraphQL(
       {},
       "http://example.com",
@@ -151,7 +151,7 @@ describe("graphql-in-process-execute", () => {
 
   it("returns root field data on success", async () => {
     testCtx.state.mode = "success";
-    const { executeOperationGraphQL } = await import("./graphql-in-process-execute.js");
+    const { executeOperationGraphQL } = await import("./in-process-execute.js");
     const out = await executeOperationGraphQL(
       {},
       "http://example.com",
