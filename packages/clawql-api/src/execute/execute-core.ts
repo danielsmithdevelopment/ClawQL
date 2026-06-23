@@ -1,9 +1,12 @@
 /**
  * Core `execute` implementation (OpenAPI / GraphQL / gRPC / REST paths).
- * IO is injected via `ExecuteEnvironment` until spec-loader migrates into clawql-api.
+ * REST is in-package; native GraphQL/gRPC and in-process GraphQL remain injected via `ExecuteEnvironment`.
  */
 
+import { resolveApiBaseUrlForOperation, type OpenAPIDoc } from "../spec/spec-loader.js";
+import type { Operation } from "../spec/operation-types.js";
 import { defaultFields, executeOutputFields, projectRestByFields } from "./field-projection.js";
+import { executeRestOperation } from "./rest-operation.js";
 import type { ExecuteClawqlOperationParams, ExecuteEnvironment, McpTextContent } from "./types.js";
 
 function textContent(text: string): McpTextContent[] {
@@ -28,7 +31,9 @@ export async function executeClawqlOperationWithEnv(
     );
   }
 
-  const openapiForOp = multi && openapis?.length ? openapis[op.specIndex ?? 0] : openapi;
+  const openapiForOp = (
+    multi && openapis?.length ? openapis[op.specIndex ?? 0] : openapi
+  ) as OpenAPIDoc;
   const outputFields = executeOutputFields(operationId, fields);
 
   if (op.protocolKind === "graphql" && op.nativeGraphQL) {
@@ -66,7 +71,7 @@ export async function executeClawqlOperationWithEnv(
   }
 
   if (multi) {
-    const fallback = await env.executeRestOperation(op, args, openapiForOp);
+    const fallback = await executeRestOperation(op as Operation, args, openapiForOp);
     if (!fallback.ok) {
       return textContent(
         JSON.stringify({
@@ -80,7 +85,7 @@ export async function executeClawqlOperationWithEnv(
   }
 
   if (op.requestBody && op.requestBodyContentType?.toLowerCase() === "application/octet-stream") {
-    const rest = await env.executeRestOperation(op, args, openapiForOp);
+    const rest = await executeRestOperation(op as Operation, args, openapiForOp);
     if (!rest.ok) {
       return textContent(
         JSON.stringify({
@@ -98,7 +103,7 @@ export async function executeClawqlOperationWithEnv(
       ? outputFields.join("\n        ")
       : defaultFields(operationId);
 
-    const baseUrl = env.resolveApiBaseUrlForOperation(openapiForOp, op);
+    const baseUrl = resolveApiBaseUrlForOperation(openapiForOp, op as Operation);
     const inProc = await env.executeOperationGraphQL(
       openapiForOp,
       baseUrl,
@@ -111,7 +116,7 @@ export async function executeClawqlOperationWithEnv(
     }
     return textContent(JSON.stringify(projectRestByFields(inProc.data, outputFields), null, 2));
   } catch (err: unknown) {
-    const fallback = await env.executeRestOperation(op, args, openapiForOp);
+    const fallback = await executeRestOperation(op as Operation, args, openapiForOp);
     if (!fallback.ok) {
       const reason = err instanceof Error ? err.message : String(err);
       return textContent(

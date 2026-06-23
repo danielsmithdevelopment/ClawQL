@@ -35,7 +35,7 @@ export type LoadedSpecForExecute = {
   multi: boolean;
 };
 
-/** IO boundary injected by clawql-mcp until spec-loader moves into clawql-api (#308). */
+/** IO boundary injected by clawql-mcp until native + in-process GraphQL executors move (#308). */
 export type ExecuteEnvironment = {
   loadSpec: () => Promise<LoadedSpecForExecute>;
   executeNativeGraphQL: (
@@ -47,11 +47,6 @@ export type ExecuteEnvironment = {
     op: ExecuteOperation,
     args: Record<string, unknown>
   ) => Promise<ExecuteOperationResult>;
-  executeRestOperation: (
-    op: ExecuteOperation,
-    args: Record<string, unknown>,
-    openapi: unknown
-  ) => Promise<ExecuteOperationResult>;
   executeOperationGraphQL: (
     openapi: unknown,
     baseUrl: string,
@@ -59,5 +54,4 @@ export type ExecuteEnvironment = {
     args: Record<string, unknown>,
     selectedFields: string
   ) => Promise<ExecuteOperationResult>;
-  resolveApiBaseUrlForOperation: (openapi: unknown, op: ExecuteOperation) => string;
 };
