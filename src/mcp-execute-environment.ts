@@ -1,14 +1,14 @@
 /**
- * MCP-side IO boundary for clawql-api execute core (until spec-loader migrates).
+ * MCP-side IO boundary for clawql-api execute core (REST/GraphQL/gRPC executors remain in transport).
  */
 
 import type { ExecuteEnvironment } from "clawql-api";
+import { loadSpec, resolveApiBaseUrlForOperation, type OpenAPIDoc } from "clawql-api";
 import { executeNativeGrpc } from "./execute-native-grpc.js";
 import { executeNativeGraphQL } from "./execute-native-graphql.js";
 import { executeOperationGraphQL } from "./graphql-in-process-execute.js";
 import type { Operation } from "./operation-types.js";
 import { executeRestOperation } from "./rest-operation.js";
-import { loadSpec, resolveApiBaseUrlForOperation, type OpenAPIDoc } from "./spec-loader.js";
 
 export const mcpExecuteEnvironment: ExecuteEnvironment = {
   loadSpec: async () => {

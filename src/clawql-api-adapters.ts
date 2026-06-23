@@ -5,29 +5,49 @@
 
 import {
   createClawQLApi,
+  loadSpec,
   makeExecuteLive,
+  makeSearchLive,
+  McpProxyPipeline,
   SearchService,
   type ClawQLApiHandle,
   type ExecuteClawqlOperationParams,
+  type LoadedSpec,
+  type LoadSpecFn,
 } from "clawql-api";
 import { Effect, Layer } from "effect";
 import { mcpExecuteEnvironment } from "./mcp-execute-environment.js";
-import { loadSpec } from "./spec-loader.js";
-import { formatSearchResults, searchOperations } from "./spec-search.js";
 
-export const SearchLive = Layer.succeed(
-  SearchService,
-  SearchService.of({
-    search: ({ query, limit }) =>
-      Effect.tryPromise(async () => {
-        const { operations } = await loadSpec();
-        const results = searchOperations(operations, query, limit ?? 5);
-        return { formattedText: formatSearchResults(results) };
-      }),
-  })
-);
+let loadSpecOverride: LoadSpecFn | undefined;
 
-export const ExecuteLive = makeExecuteLive(mcpExecuteEnvironment);
+/** Test hook — inject mock loadSpec for search/execute handlers. */
+export function setLoadSpecForTests(fn: LoadSpecFn | undefined): void {
+  loadSpecOverride = fn;
+  resetClawqlApiForTests();
+}
+
+function resolveLoadSpec(): LoadSpecFn {
+  return loadSpecOverride ?? loadSpec;
+}
+
+function buildExecuteEnvironment() {
+  const loadSpecFn = resolveLoadSpec();
+  return {
+    ...mcpExecuteEnvironment,
+    loadSpec: async () => {
+      const loaded = await loadSpecFn();
+      return { ...loaded, multi: loaded.multi ?? false };
+    },
+  };
+}
+
+function buildSearchLive(): Layer.Layer<SearchService> {
+  return makeSearchLive(resolveLoadSpec());
+}
+
+function buildExecuteLive() {
+  return makeExecuteLive(buildExecuteEnvironment());
+}
 
 let apiHandle: ClawQLApiHandle | undefined;
 
@@ -35,8 +55,8 @@ let apiHandle: ClawQLApiHandle | undefined;
 export function getClawqlApi(): ClawQLApiHandle {
   if (!apiHandle) {
     apiHandle = createClawQLApi({
-      searchLayer: SearchLive,
-      executeLayer: ExecuteLive,
+      searchLayer: buildSearchLive(),
+      executeLayer: buildExecuteLive(),
     });
   }
   return apiHandle;
@@ -47,4 +67,14 @@ export function resetClawqlApiForTests(): void {
   apiHandle = undefined;
 }
 
-export type { ExecuteClawqlOperationParams };
+/** Run mcp-proxy `beforeCallTool` hooks (Panguard in-process policy). */
+export async function runMcpProxyBeforeCallTool(toolName: string, args: unknown): Promise<void> {
+  await getClawqlApi().run(
+    Effect.gen(function* () {
+      const pipeline = yield* McpProxyPipeline;
+      yield* pipeline.runBeforeCallTool({ toolName, args });
+    })
+  );
+}
+
+export type { ExecuteClawqlOperationParams, LoadedSpec, LoadSpecFn };
