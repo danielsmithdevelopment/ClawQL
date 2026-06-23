@@ -61,13 +61,14 @@ npm run lh -- http://127.0.0.1:3000/case-studies/cloudflare-docs-mcp --preset=de
 ### Product / runtime
 
 - [ ] **Watch Observability** for **`waitUntil()`** warnings and **1102** spikes after every **large MDX** or **OpenNext** upgrade.
-- [ ] **Cache strategy:** keep **`Cache-Control`** sensible (`website/next.config.mjs` + `public/_headers`); **`/case-studies/*`** uses a **longer `s-maxage`** than the default `/:path*` to cut **1102** on heavy MDX — avoid unnecessary **purge-all** after deploy (purge only when you need immediate HTML consistency).
+- [ ] **OpenNext static cache:** **`staticAssetsIncrementalCache`** + **`enableCacheInterception`** in **`website/open-next.config.ts`**; root **`force-static`** in **`website/src/app/layout.tsx`**.
+- [ ] **Cache strategy:** keep **`Cache-Control`** sensible (`website/next.config.mjs` + `public/_headers` + **`website/src/lib/edge-cache-control.mjs`**); heavy MDX routes use **30d `s-maxage`** — avoid unnecessary **purge-all** after deploy (purge only when you need immediate HTML consistency).
 - [ ] **Plan limits:** confirm whether **Free vs Paid** Workers CPU limits are acceptable for **worst-case** case-study pages.
 - [ ] **Upstream:** track **`@opennextjs/cloudflare`** and **Next.js** releases for Worker **`waitUntil` / `after()`** fixes.
 
 ### Content / front-end (reduces per-invocation cost)
 
-- [ ] **Home + header:** marketing sections and search use **dynamic imports with SSR** so Lighthouse/LCP see real HTML sooner; that adds a little **Worker HTML work** on cold `/` compared to `ssr: false`. If **1102** on `/` spikes after a change here, re-read this doc and consider the tradeoff.
+- [ ] **Home + header:** marketing sections on `/` use **`dynamic(..., { ssr: false })`** to reduce Worker HTML work on cold loads (skeleton placeholders until hydrate). Revisit if LCP regresses in Lighthouse CI.
 - [ ] Prefer **concise** case studies or **split** very long narratives; fewer **above-the-fold** images per page.
 - [ ] Ensure markdown images have **meaningful `alt`** (WCAG); default **`loading="lazy"`** is set in **`website/src/components/mdx.tsx`**.
 - [ ] After large content changes, run **`npm run lh:docs`** (or CI) and spot-check **LCP** on case study URLs.
