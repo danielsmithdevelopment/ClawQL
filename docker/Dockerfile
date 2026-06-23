@@ -15,6 +15,7 @@ COPY package.json package-lock.json ./
 COPY packages/clawql-core/package.json ./packages/clawql-core/
 COPY packages/clawql-api/package.json ./packages/clawql-api/
 COPY packages/clawql-memory/package.json ./packages/clawql-memory/
+COPY packages/clawql-documents/package.json ./packages/clawql-documents/
 COPY packages/mcp-grpc-transport/package.json ./packages/mcp-grpc-transport/
 COPY packages/clawql-ouroboros/package.json ./packages/clawql-ouroboros/
 # `workspace:*` deps (e.g. clawql-ouroboros) need every workspace package.json present before `npm ci`.
