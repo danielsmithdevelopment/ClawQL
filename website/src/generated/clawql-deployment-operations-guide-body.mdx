@@ -1,0 +1,1871 @@
+# ClawQL — Deployment & Operations Guide
+
+**For platform engineers and operators · May 2026**  
+Apache 2.0 / MIT · [github.com/clawql/clawql](https://github.com/clawql/clawql)
+
+---
+
+## Before You Start
+
+### What Is Available to Deploy Today
+
+Not everything described in this guide is available yet. This table governs what you can actually run:
+
+| Component                                      | Available         | Notes                                 |
+| ---------------------------------------------- | ----------------- | ------------------------------------- |
+| Tier 1 Docker Compose                          | ✅                | Runnable today                        |
+| `clawql-api`                                   | 🔨 In development | Core gateway; required for everything |
+| `clawql-memory` (SQLite)                       | 🔨 In development | Memory backend for Tier 1             |
+| Document pipeline (Tika, Gotenberg, Paperless) | 🔨 In development | Stages ship together                  |
+| Presidio redaction                             | 🔨 In development | Disabled by default in Tier 1         |
+| Tier 2 Helm deployment                         | 📋 Planned        | Requires Operator                     |
+| Tier 3 enterprise deployment                   | 📋 Planned        | Requires Operator + Istio support     |
+| Kubernetes Operator                            | 📋 Planned        | Required for Tier 2 and 3             |
+| Natural language dashboard                     | 📋 Planned        | Requires Operator                     |
+| Goose agent runtime                            | 📋 Planned        | —                                     |
+| Printing Press                                 | 📋 Planned        | —                                     |
+| All verticals                                  | 📋 Planned        | None shipped                          |
+
+If you need Tier 2 or Tier 3 today, watch the GitHub releases page. This guide is written to be complete for when those tiers ship, and the Tier 1 sections are accurate now.
+
+### Choosing a Tier
+
+| Question                                                    | Tier 1 | Tier 2   | Tier 3    |
+| ----------------------------------------------------------- | ------ | -------- | --------- |
+| Are you evaluating ClawQL or building locally?              | ✅     | —        | —         |
+| Do you need a team-accessible deployment?                   | —      | ✅       | —         |
+| Do you need multi-tenant isolation?                         | —      | —        | ✅        |
+| Do you need regulated compliance controls?                  | —      | Limited  | ✅        |
+| Do you have a Kubernetes cluster?                           | No     | Required | Required  |
+| Do you need Kata Containers or gVisor?                      | No     | Optional | Required  |
+| Do you need more than two verticals running simultaneously? | No     | 1–2      | Unlimited |
+
+If you are unsure, start with Tier 1. The configuration format is compatible enough that migrating to Tier 2 later does not require relearning anything fundamental.
+
+### Prerequisites by Tier
+
+**Tier 1:**
+
+- Docker Engine ≥24.0 and Docker Compose v2
+- 4 GB RAM available to Docker (8 GB recommended)
+- 40 GB free disk space
+- Ports 8080, 5432, 6379 available on localhost
+
+**Tier 2 (additional):**
+
+- Kubernetes ≥1.28 (k3s or kubeadm)
+- `kubectl` ≥1.28
+- Helm ≥3.13
+- `cert-manager` ≥1.13 installed in the cluster
+- A StorageClass that supports `ReadWriteOnce`
+- 3 nodes with ≥4 cores and ≥8 GB RAM each
+
+**Tier 3 (additional):**
+
+- Kubernetes ≥1.29
+- Kata Containers or gVisor configured as a `RuntimeClass`
+- Istio ≥1.20 installed with mTLS enforced
+- Dedicated node pools for database, compute, and gateway workloads
+- HashiCorp Vault ≥1.15 (external or cluster-hosted)
+- A StorageClass backed by NVMe with ≥1000 MB/s throughput
+- 5+ nodes with ≥8 cores and ≥32 GB RAM each
+
+---
+
+## 1. Tier 1: Local Developer Deployment
+
+### 1.1 Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/clawql/clawql.git
+cd clawql
+
+# Run the bootstrap script
+# This checks prerequisites, generates local secrets, and writes clawql.local.yaml
+./examples/clawql-local-docker-compose/bootstrap.sh
+
+# Start the stack
+cd examples/clawql-local-docker-compose
+docker compose up -d
+```
+
+The bootstrap script will:
+
+1. Check that Docker Engine and Compose v2 are installed
+2. Verify port availability (8080, 5432, 6379)
+3. Generate a local signing key for ATR tokens
+4. Generate a random local admin password
+5. Write `clawql.local.yaml` with defaults appropriate for local use
+6. Print a summary of what will be started
+
+If any prerequisite check fails, the script exits with a clear error. Fix the issue and re-run — it is safe to run multiple times.
+
+### 1.2 Verification
+
+```bash
+# Check that all services are running
+docker compose ps
+
+# Expected output — all services should show "running"
+# NAME                     STATUS
+# clawql-api               running
+# clawql-memory-sqlite     running
+# paperless-ngx            running
+# tika                     running
+# gotenberg                running
+# redis                    running (Paperless broker only)
+
+# Verify the gateway responds
+curl http://localhost:8080/healthz
+# Expected: {"status":"ok","version":"..."}
+
+# Verify the document pipeline
+curl http://localhost:8080/api/pipeline/healthz
+# Expected: {"tika":"ok","gotenberg":"ok","paperless":"ok"}
+
+# Open the dashboard
+open http://localhost:8080
+```
+
+If a service is not running, check its logs:
+
+```bash
+docker compose logs clawql-api --tail 50
+docker compose logs tika --tail 50
+```
+
+### 1.3 Configuration Reference (`clawql.local.yaml`)
+
+The bootstrap script generates this file. You can edit it and restart the stack to apply changes.
+
+```yaml
+# clawql.local.yaml — Tier 1 local configuration
+# All values shown are defaults generated by bootstrap.sh
+
+tier: local
+
+api:
+  port: 8080
+  logLevel: info # debug | info | warn | error
+  auth:
+    mode: noAuth # noAuth is only permitted in tier: local
+    # Any other tier rejects noAuth at startup
+
+memory:
+  backend: sqlite
+  path: ./data/memory.db
+  recall:
+    defaultMode: hybrid
+    maxHops: 3 # reduced from production default of 5
+    maxNodes: 100 # reduced from production default of 250
+    tokenBudget: 16000 # reduced from production default of 32000
+  pruning:
+    enabled: true
+    schedule: '0 4 * * *'
+    maxNodes: 50000 # reduced from production default of 250000
+
+documents:
+  tika:
+    url: http://tika:9998
+    timeoutSeconds: 30
+  gotenberg:
+    url: http://gotenberg:3000
+    timeoutSeconds: 60
+  paperless:
+    url: http://paperless-ngx:8000
+    apiKeyRef: local-paperless-key # resolved from ./secrets/paperless.key
+  presidio:
+    enabled: false # Presidio is optional in Tier 1
+    # Set to true and add presidio to docker-compose.override.yml
+    # to enable. Required for any data you consider sensitive.
+    failurePolicy: block # This value cannot be changed — block is always enforced
+
+pageindex:
+  enabled: true
+  storageBackend: sqlite
+  path: ./data/pageindex.db
+
+telemetry:
+  enabled: false # Enable by adding SigNoz to docker-compose.override.yml
+
+# Verticals — all disabled by default in Tier 1
+# Enable by setting enabled: true and ensuring required providers are present
+verticals: {}
+```
+
+**Fields you are likely to change:**
+
+`api.logLevel`: Set to `debug` when troubleshooting. Debug logs include full request/response bodies, which are verbose but useful.
+
+`documents.presidio.enabled`: If you are processing documents that contain PII, set this to `true` and add Presidio to `docker-compose.override.yml` (see §1.5). The bootstrap script leaves it disabled because Presidio requires an additional ~400 MB of RAM at idle.
+
+`memory.recall.maxHops` and `memory.recall.maxNodes`: Increase these if you find recall results are being cut off. The Tier 1 defaults are conservative for low-RAM machines.
+
+### 1.4 First Run: Processing a Document
+
+Once the stack is running, try the document pipeline:
+
+```bash
+# Upload a document via the API
+curl -X POST http://localhost:8080/api/documents/ingest \
+  -H "Content-Type: multipart/form-data" \
+  -F "file=@/path/to/your/document.pdf" \
+  -F "metadata={\"tags\":[\"test\"]}"
+
+# Expected response
+# {
+#   "documentId": "01J...",
+#   "status": "processing",
+#   "stages": ["tika", "gotenberg", "paperless"],
+#   "merkleRoot": null   <- populated when processing completes
+# }
+
+# Check processing status
+curl http://localhost:8080/api/documents/{documentId}/status
+```
+
+You can also use the dashboard at [localhost:8080](http://localhost:8080) — go to the Documents Pipeline page and use the drag-and-drop uploader.
+
+To trigger processing via the natural language interface:
+
+```
+@hermes process this document
+```
+
+(Attach the file in the chat interface.)
+
+### 1.5 Enabling Presidio in Tier 1
+
+Create `docker-compose.override.yml` in the same directory as `docker-compose.yml`:
+
+```yaml
+# docker-compose.override.yml
+services:
+  presidio-analyzer:
+    image: mcr.microsoft.com/presidio-analyzer:latest
+    ports:
+      - '5001:3000'
+    environment:
+      - GRPC_PORT=5001
+
+  presidio-anonymizer:
+    image: mcr.microsoft.com/presidio-anonymizer:latest
+    ports:
+      - '5002:3000'
+```
+
+Then update `clawql.local.yaml`:
+
+```yaml
+documents:
+  presidio:
+    enabled: true
+    analyzerUrl: http://presidio-analyzer:3000
+    anonymizerUrl: http://presidio-anonymizer:3000
+    models: [pii, financial] # pii | financial | medical | privilege
+    failurePolicy: block
+```
+
+Restart the stack:
+
+```bash
+docker compose up -d
+```
+
+### 1.6 Common Failure Modes — Tier 1
+
+**Problem:** `clawql-api` starts but returns 503 on document ingest.
+
+Check: Tika has not finished starting. It can take 30–60 seconds on first start while it loads MIME detection libraries.
+
+```bash
+docker compose logs tika --tail 20
+# Wait for: "Started Apache Tika server at http://0.0.0.0:9998/"
+```
+
+**Problem:** Memory is exhausted and containers are being OOMKilled.
+
+Check: Presidio is running and your machine has less than 8 GB available to Docker. Either disable Presidio or increase Docker’s memory allocation in Docker Desktop settings.
+
+**Problem:** `clawql.local.yaml` changes are not taking effect.
+
+Cause: The API caches configuration at startup. Restart the API container after configuration changes:
+
+```bash
+docker compose restart clawql-api
+```
+
+**Problem:** SQLite memory database is growing unexpectedly large.
+
+Check: Pruning is disabled or the pruning schedule has not run yet. Trigger a manual prune:
+
+```bash
+curl -X POST http://localhost:8080/api/memory/prune
+```
+
+**Problem:** Paperless NGX is not receiving documents.
+
+Check: Redis is running (it is the Paperless task broker) and the API key in `./secrets/paperless.key` matches the Paperless admin credentials.
+
+```bash
+docker compose logs redis --tail 10
+docker compose logs paperless-ngx --tail 20
+```
+
+### 1.7 Upgrading Tier 1
+
+```bash
+git pull origin main
+docker compose pull
+docker compose up -d
+```
+
+SQLite databases are persisted in `./data/` and are not affected by upgrades. If a migration is required, it runs automatically at API startup and is logged:
+
+```bash
+docker compose logs clawql-api | grep "migration"
+```
+
+If a migration fails, the API will not start. The failure message will indicate which migration failed and what to do. Do not delete the SQLite files to work around a migration failure — open an issue.
+
+## 2. Tier 2: Standard Self-Hosted Deployment
+
+> **Note:** The Kubernetes Operator is not yet shipped. This section documents the intended deployment procedure and will be accurate when the Operator ships. Do not attempt Tier 2 deployment until the Operator is available.
+
+### 2.1 Cluster Prerequisites Verification
+
+```bash
+# Verify Kubernetes version
+kubectl version --short
+# Required: Server Version >= v1.28
+
+# Verify cert-manager
+kubectl get pods -n cert-manager
+# All cert-manager pods should be Running
+
+# Verify a StorageClass exists
+kubectl get storageclass
+# At least one StorageClass should show (default)
+
+# Verify Helm
+helm version --short
+# Required: >= v3.13
+```
+
+### 2.2 Installing the ClawQL Operator
+
+```bash
+# Add the ClawQL Helm repository
+helm repo add clawql https://charts.clawql.com
+helm repo update
+
+# Install the Operator
+helm upgrade --install clawql-operator clawql/clawql-operator \
+  --namespace clawql-system \
+  --create-namespace \
+  --version 2026.5.0
+
+# Verify the Operator is running
+kubectl -n clawql-system get pods
+# clawql-operator-xxx   2/2   Running
+
+# Verify the CRD was installed
+kubectl get crd clawqlinstances.clawql.io
+```
+
+### 2.3 Installing ClawQL
+
+Create a values file for your deployment:
+
+```yaml
+# values-tier2.yaml
+tier: standard
+
+api:
+  replicas: 2
+  minReplicas: 1
+  maxReplicas: 6
+
+auth:
+  mode: oidc # configure your OIDC provider below
+  oidc:
+    issuer: https://your-auth-provider.example.com
+    clientId: clawql
+    clientSecretRef:
+      name: clawql-oidc-secret
+      key: clientSecret
+
+documents:
+  tika:
+    replicas: 2
+  gotenberg:
+    replicas: 2
+  presidio:
+    enabled: true
+    models: [pii, financial]
+    failurePolicy: block
+
+memory:
+  backend: postgres
+  postgres:
+    secretRef: clawql-postgres-secret
+
+telemetry:
+  enabled: true
+  zeroEgress: true
+```
+
+Create the OIDC client secret before installing:
+
+```bash
+kubectl create namespace clawql
+
+kubectl create secret generic clawql-oidc-secret \
+  --namespace clawql \
+  --from-literal=clientSecret=YOUR_OIDC_CLIENT_SECRET
+
+kubectl create secret generic clawql-postgres-secret \
+  --namespace clawql \
+  --from-literal=uri=postgres://user:password@host:5432/clawql
+```
+
+Install ClawQL:
+
+```bash
+helm upgrade --install clawql clawql/clawql-full-stack \
+  --namespace clawql \
+  --create-namespace \
+  --values values-tier2.yaml \
+  --version 2026.5.0
+```
+
+### 2.4 Verifying the Deployment
+
+```bash
+# Watch the Operator reconcile the ClawQLInstance
+kubectl -n clawql get clawqlinstance clawql -w
+
+# Expected progression:
+# NAME     TIER       STATUS        AGE
+# clawql   standard   Reconciling   5s
+# clawql   standard   Reconciling   15s
+# clawql   standard   Ready         45s
+
+# Check all pods are running
+kubectl -n clawql get pods
+
+# Verify the gateway
+kubectl -n clawql port-forward svc/clawql-api 8080:8080 &
+curl http://localhost:8080/healthz
+```
+
+### 2.5 Persistent Volume Setup
+
+The Operator creates PersistentVolumeClaims automatically. If your cluster requires specific storage class annotations, add them to your values file:
+
+```yaml
+storage:
+  storageClassName: standard
+  api:
+    size: 10Gi
+  documents:
+    size: 100Gi
+  memory:
+    size: 20Gi
+```
+
+Verify volumes are bound:
+
+```bash
+kubectl -n clawql get pvc
+# All PVCs should show STATUS: Bound
+```
+
+### 2.6 Certificate Management
+
+ClawQL uses cert-manager for TLS. The Operator creates Certificate resources automatically. Verify:
+
+```bash
+kubectl -n clawql get certificates
+# All certificates should show READY: True
+```
+
+If a certificate is not ready after 5 minutes, check the cert-manager logs:
+
+```bash
+kubectl -n cert-manager logs -l app=cert-manager --tail 50
+```
+
+### 2.7 First-Run Verification Checklist — Tier 2
+
+Run through this after every fresh installation:
+
+- All pods in clawql namespace are Running or Completed
+- ClawQLInstance shows STATUS: Ready
+- `curl https://your-domain/healthz` returns `\{"status":"ok"\}`
+- `curl https://your-domain/api/pipeline/healthz` shows all stages ok
+- Login via OIDC succeeds
+- Upload a test document and verify it appears in Paperless NGX
+- Verify a Merkle root is produced for the ingested document
+- Verify SigNoz is receiving traces (if telemetry enabled)
+
+### 2.8 Common Failure Modes — Tier 2
+
+**Problem:** ClawQLInstance is stuck in Reconciling.
+
+Check Operator logs:
+
+```bash
+kubectl -n clawql-system logs -l app=clawql-operator --tail 100
+```
+
+Common causes: missing secrets, PVC not binding, Operator cannot reach the Kubernetes API (RBAC issue).
+
+**Problem:** Pods are in Pending state.
+
+```bash
+kubectl -n clawql describe pod POD_NAME
+```
+
+Look at the Events section. Common causes: insufficient cluster resources, no node matching the pod's nodeSelector, PVC not bound.
+
+**Problem:** Auth is not working after OIDC configuration.
+
+Verify the OIDC issuer is reachable from inside the cluster:
+
+```bash
+kubectl -n clawql run test-curl --rm -it --image=curlimages/curl -- \
+  curl https://your-auth-provider.example.com/.well-known/openid-configuration
+```
+
+**Problem:** Postgres connection failing.
+
+```bash
+# Test the connection string directly
+kubectl -n clawql run test-psql --rm -it --image=postgres:15 -- \
+  psql "postgres://user:password@host:5432/clawql" -c "SELECT 1;"
+```
+
+---
+
+## 3. Tier 3: Enterprise Production Deployment
+
+> **Note:** Planned — not yet shipped. This section documents the intended deployment procedure.
+
+### 3.1 Additional Prerequisites
+
+**Kata Containers or gVisor:**
+
+```bash
+# Verify RuntimeClass is available
+kubectl get runtimeclass
+
+# Expected output should include:
+# NAME   HANDLER   AGE
+# kata   kata      ...
+# gvisor runsc     ...
+```
+
+**Istio:**
+
+```bash
+# Verify Istio is installed
+kubectl -n istio-system get pods
+# istiod-xxx should be Running
+
+# Verify mTLS is enforced in the target namespace
+kubectl get peerauthentication -n clawql
+```
+
+**Vault:**
+
+```bash
+# Verify Vault is reachable and unsealed
+vault status
+# Sealed: false
+# HA Enabled: true
+```
+
+### 3.2 Multi-Tenancy Configuration
+
+Multi-tenant deployments require additional values:
+
+```yaml
+# values-tier3.yaml
+tier: enterprise
+
+auth:
+  mode: oidc
+  multiTenantIsolation: true
+  verticalRLS: true
+
+sandbox:
+  enabled: true
+  runtimeClass: kata # kata | gvisor
+
+networking:
+  istio:
+    enabled: true
+    mtls: STRICT
+
+vault:
+  enabled: true
+  address: https://vault.internal.example.com
+  authMethod: kubernetes
+  role: clawql
+
+multiTenancy:
+  isolationLevel: full # full | namespace | logical
+  namespacePerTenant: true
+```
+
+### 3.3 HA Configuration
+
+All stateful components should be configured for HA at Tier 3:
+
+```yaml
+api:
+  replicas: 3
+  minReplicas: 2
+  maxReplicas: 12
+
+postgres:
+  replicas: 3
+  ha: true
+
+nats:
+  replicas: 3
+  ha: true
+
+valkey:
+  mode: cluster
+  replicas: 6 # 3 primary + 3 replica
+```
+
+### 3.4 Node Pool Configuration
+
+Label your node pools and configure the Helm chart to use them:
+
+```bash
+# Label dedicated node pools
+kubectl label nodes NODE_NAME clawql.io/pool=gateway
+kubectl label nodes NODE_NAME clawql.io/pool=database
+kubectl label nodes NODE_NAME clawql.io/pool=compute
+```
+
+```yaml
+# values-tier3.yaml (continued)
+nodePools:
+  gateway:
+    nodeSelector:
+      clawql.io/pool: gateway
+    tolerations: []
+  database:
+    nodeSelector:
+      clawql.io/pool: database
+  compute:
+    nodeSelector:
+      clawql.io/pool: compute
+```
+
+### 3.5 First-Run Verification Checklist — Tier 3
+
+In addition to the Tier 2 checklist:
+
+- All pods are running with the correct runtimeClassName (kata or gvisor)
+- `kubectl get peerauthentication -n clawql` shows mTLS STRICT
+- Vault is providing dynamic secrets (check clawql-api logs for "vault secret injected")
+- Multi-tenant isolation test: create two tenants and verify tenant A cannot read tenant B's memory
+- Network policy test: verify a pod in clawql namespace cannot reach external IPs
+- ATR violation test: attempt an operation beyond your claims and verify it is rejected and logged
+
+---
+
+## 4. `ClawQLInstance` CRD Reference
+
+This section covers every field in the CRD. Fields not documented here are internal to the Operator and should not be set manually.
+
+### 4.1 `spec.tier`
+
+```yaml
+tier: local | standard | enterprise
+```
+
+Controls which validation rules and default resource limits apply. `local` is only valid in single-node deployments and disables admission webhooks that enforce multi-tenant security.
+
+### 4.2 `spec.api`
+
+```yaml
+api:
+  enabled: true
+  replicas: 3 # Desired replica count; overridden by HPA when active
+  minReplicas: 2 # Minimum replicas; HPA will not scale below this
+  maxReplicas: 12 # Maximum replicas
+  expose:
+    rest: true # Expose REST HTTP endpoint
+    grpc: true # Expose gRPC endpoint
+  mcp:
+    stdio: true # MCP over stdio (for local CLIs)
+    http: true # MCP over HTTP
+    grpc: true # MCP over gRPC
+  bundledProviders: # External MCP servers to register at startup
+    - github
+    - slack
+    - paperless
+    - tika
+    - gotenberg
+  circuitBreaker:
+    failureThreshold: 5 # Consecutive failures before circuit opens
+    halfOpenProbeIntervalSeconds: 30 # Time before attempting recovery probe
+```
+
+### 4.3 `spec.auth`
+
+```yaml
+auth:
+  enabled: true
+  mode: noAuth | apiKey | oidc | saml | oauth2 | ldap
+  # noAuth: rejected by admission webhook unless tier is local
+  # apiKey: static API key; acceptable for Tier 2 internal use
+  # oidc: recommended for all user-facing deployments
+  oidc:
+    issuer: https://...
+    clientId: ...
+    clientSecretRef:
+      name: secret-name
+      key: secret-key
+    scopes: [openid, profile, email] # default
+    groupsClaim: groups # claim containing role groups
+  rbac:
+    enabled: true
+  abac:
+    enabled: true
+    policyConfigMap: clawql-abac-policy # ConfigMap containing ABAC rules
+  verticalRLS: true
+  multiTenantIsolation: false # Set true for Tier 3
+```
+
+**Admission webhook behaviour for `noAuth`:** The webhook rejects any ClawQLInstance with `auth.mode: noAuth` unless `spec.tier` is `local`. This cannot be overridden via annotation or any other mechanism. It is a hard control, not a warning.
+
+### 4.4 `spec.documents`
+
+```yaml
+documents:
+  enabled: true
+  failureIsolation:
+    true # Partial results returned on stage failure
+    # Set false to fail the entire ingest on any stage error
+  tika:
+    enabled: true
+    replicas: 2
+    image: apache/tika:2.9.0 # Pin to a specific version in production
+    timeoutSeconds: 30
+  gotenberg:
+    enabled: true
+    replicas: 2
+    timeoutSeconds: 60
+  stirling:
+    enabled: true # Required for OCR; disable to save ~200MB RAM
+  paperless:
+    enabled: true
+    secretRef: paperless-api-key # Secret containing PAPERLESS_API_KEY
+    url: http://paperless-ngx:8000 # Override if running Paperless externally
+  presidio:
+    enabled: true
+    models:
+      - pii # Names, addresses, phone numbers, email, SSN
+      - financial # Credit card numbers, bank accounts, IBAN
+      - medical # Diagnoses, medications, patient identifiers
+      - privilege # Attorney-client communication markers (heuristic)
+    failurePolicy: block # Cannot be changed. Presidio failure always blocks ingest.
+    redactBeforeMerkle: true # Cannot be changed. Redaction always precedes rooting.
+```
+
+**`failureIsolation`:** When true, if Tika times out, the document proceeds to subsequent stages with a `stageErrors` entry for Tika. When false, a Tika timeout fails the entire ingest. Use false for regulated workflows where partial processing is not acceptable.
+
+### 4.5 `spec.memory`
+
+```yaml
+memory:
+  hybrid:
+    enabled: true
+  storage:
+    backend: sqlite | postgres
+    sqlite:
+      path: /data/memory.db # Only valid in Tier 1
+    postgres:
+      secretRef: memory-db-secret # Secret containing DATABASE_URL
+  layers:
+    vault: true # Filesystem-style document vault
+    graph: true # Adjacency-list graph store
+    pageindex: true # Vectorless hierarchical index
+    onyx: false # Semantic search (requires Onyx deployment)
+  ingest:
+    confidenceThreshold:
+      0.78 # Minimum LLM extraction confidence for node creation
+      # Nodes below this threshold are discarded
+    presidioEnabled: true # Must match documents.presidio.enabled
+    failureIsolation: true
+  recall:
+    defaultMode: hybrid # vault | graph | pageindex | hybrid | onyx | cross_vertical
+    maxHops: 5 # Maximum graph traversal depth
+    maxNodes: 250 # Maximum nodes returned per recall
+    tokenBudget: 32000 # Maximum tokens in synthesised recall result
+  pruning:
+    enabled: true
+    schedule: '0 4 * * *' # Cron schedule; runs daily at 4am by default
+    maxGraphNodes: 250000 # Trigger pruning when graph exceeds this size
+```
+
+**`confidenceThreshold`:** Entities extracted with confidence below this value are not written to the graph. Lower values create more nodes (higher recall, lower precision). Higher values create fewer, more reliable nodes. 0.78 is the recommended starting point; tune based on your domain's extraction quality.
+
+**`tokenBudget`:** The memory recall system uses PageIndex to synthesise a response within this token budget before returning it to the caller. This prevents context window overflow when a recall matches many nodes. Increase for models with large context windows; decrease for cost-sensitive deployments.
+
+### 4.6 `spec.sandbox`
+
+```yaml
+sandbox:
+  enabled: false # Default disabled; required for Goose and Printing Press
+  runtimeClass: kata # kata | gvisor
+  persistentVolumes:
+    - name: generated-tools
+      mountPath: /opt/clawql/generated-tools
+      storageClass: standard
+      size: 100Gi
+    - name: goose-state
+      mountPath: /opt/clawql/goose
+      storageClass: standard
+      size: 50Gi
+  resourceQuotas:
+    cpu: '4'
+    memory: 8Gi
+    maxPods: 20
+```
+
+### 4.7 `spec.goose`
+
+```yaml
+goose:
+  enabled: false
+  replicas: 0 # Always start at 0; scale on demand
+  maxReplicas: 50
+  image: block/goose:v2026.05
+  memoryIngest: true # Automatically ingest Goose outputs into Memory 2.0
+  blueprintSupport: true
+  checkpointOnOOM: true # Checkpoint task state before OOMKill
+```
+
+### 4.8 `spec.printingpress`
+
+```yaml
+printingpress:
+  enabled: false
+  factoryBinaryPath: /usr/local/bin/pp
+  outputDir: /opt/clawql/generated-tools
+  autoRegisterMcp: true # Register generated MCP servers automatically
+  autoIngestMemory: true # Ingest generated tool metadata into Memory 2.0
+  binarySigningEnabled: true # Cosign-sign all generated binaries before registration
+```
+
+### 4.9 `spec.automation`
+
+```yaml
+automation:
+  enabled: false
+  nats:
+    enabled: true
+    replicas: 3
+    storage: 20Gi
+  hitl:
+    enabled: true
+    approvalTimeoutHours: 24 # Tasks awaiting human approval expire after this
+    notificationWebhook: '' # Optional: POST approval requests to this URL
+```
+
+### 4.10 Vertical Toggles
+
+```yaml
+# All verticals default to disabled
+# Enable by setting enabled: true
+# The Operator validates required providers before enabling
+
+lending:
+  enabled: false
+
+legal:
+  enabled: false
+
+healthcare:
+  enabled: false
+
+insurance:
+  enabled: false
+
+supplychain:
+  enabled: false
+
+government:
+  enabled: false
+
+manufacturing:
+  enabled: false
+
+education:
+  enabled: false
+
+engineering:
+  enabled: false
+  matlab:
+    licenseSecretRef: matlab-license-secret # Required if MATLAB is available
+    fallbackToPython: true # Use SciPy/Control when MATLAB unavailable
+```
+
+---
+
+## 5. Authentication Configuration
+
+### 5.1 `noAuth` Mode
+
+Only valid when `spec.tier: local`. Used for development and evaluation when you do not want to configure an identity provider.
+
+```yaml
+auth:
+  mode: noAuth
+```
+
+All requests are treated as a single local actor with full permissions. There is no session isolation, no ATR enforcement, and no tenant separation. **Never use `noAuth` for any data you consider sensitive or any multi-user deployment.**
+
+### 5.2 API Key Mode
+
+Acceptable for Tier 2 internal services or CI environments where OIDC is not practical.
+
+```bash
+# Create the API key secret
+kubectl create secret generic clawql-api-keys \
+  --namespace clawql \
+  --from-literal=keys='[{"id":"ci-key","secret":"YOUR_SECRET","roles":["ci"],"scopes":["lending:read"]}]'
+```
+
+```yaml
+auth:
+  mode: apiKey
+  apiKey:
+    secretRef: clawql-api-keys
+```
+
+API keys do not expire. Rotate them by updating the secret and restarting the API pods.
+
+### 5.3 OIDC Configuration
+
+```yaml
+auth:
+  mode: oidc
+  oidc:
+    issuer: https://your-auth-provider.example.com
+    clientId: clawql
+    clientSecretRef:
+      name: clawql-oidc-secret
+      key: clientSecret
+    scopes: [openid, profile, email, groups]
+    groupsClaim: groups # The JWT claim containing the user's groups
+    roleMapping: # Map OIDC groups to ClawQL roles
+      'clawql-admins': admin
+      'clawql-underwriters': underwriter
+      'clawql-viewers': viewer
+```
+
+ClawQL validates the OIDC issuer's discovery document at startup. If the issuer is unreachable, the API will not start. Ensure the issuer URL is reachable from inside the cluster (not just from outside).
+
+**Verification:**
+
+```bash
+# Test that ClawQL can reach the OIDC discovery endpoint
+kubectl -n clawql exec -it deploy/clawql-api -- \
+  curl https://your-auth-provider.example.com/.well-known/openid-configuration
+```
+
+### 5.4 RBAC and ABAC Policy Management
+
+ClawQL ships with a default RBAC policy that maps roles to capabilities:
+
+| Role                | Capabilities                                |
+| ------------------- | ------------------------------------------- |
+| `admin`             | All operations across all verticals         |
+| `operator`          | All operations except user management       |
+| `underwriter`       | Lending vertical read/write, memory read    |
+| `compliance-viewer` | All verticals read-only, compliance reports |
+| `viewer`            | Memory read, document read, no writes       |
+
+Custom roles and ABAC policies are defined in a ConfigMap:
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: clawql-abac-policy
+  namespace: clawql
+data:
+  policy.json: |
+    {
+      "rules": [
+        {
+          "actorType": "agent",
+          "roles": ["underwriter"],
+          "verticals": ["lending"],
+          "operations": ["lending__*__*"],
+          "conditions": {
+            "tenantId": "${claims.tenantId}"
+          }
+        }
+      ]
+    }
+```
+
+Apply policy changes:
+
+```bash
+kubectl apply -f abac-policy.yaml
+# Policy takes effect within 15 seconds (Operator reconciliation interval)
+```
+
+### 5.5 Session Management for Long-Running Goose Tasks
+
+Goose tasks can run for hours. ATR tokens expire by default within the issuer's configured session timeout. To prevent Goose tasks from failing mid-run due to token expiry:
+
+```yaml
+auth:
+  taskScopedTokenRefresh:
+    enabled: true
+    refreshIntervalMinutes: 30 # Refresh token before it expires
+    maxTaskDurationHours: 24 # Hard limit; tasks running longer are terminated
+```
+
+The refresh mechanism uses a dedicated service account, not the user's session. It is scoped to the exact permissions of the original task and cannot escalate beyond them.
+
+---
+
+## 6. Enabling Verticals
+
+### 6.1 What Happens When You Enable a Vertical
+
+Enabling a vertical triggers the following Operator actions:
+
+- **Pre-flight validation:** The Operator checks that all `requiredSpecs` declared by the vertical are satisfied. If any are missing, the vertical is not enabled and the instance status shows the missing providers.
+- **Effect Layer composition:** The vertical's Layer is added to the gateway's startup composition.
+- **RBAC injection:** Role bindings for the vertical's default roles are created in the namespace.
+- **RLS policy injection:** Row-Level Security rules for the vertical's data scope are applied to the Postgres database.
+- **Tool registration:** The vertical's tools appear in `clawql-api`'s supergraph.
+- **Compliance matrix update:** The vertical's compliance entry becomes queryable in the Compliance Center.
+
+This takes approximately 30–60 seconds. The instance status transitions through Reconciling back to Ready.
+
+### 6.2 Pre-Flight Checks per Vertical
+
+Before enabling a vertical, verify its required providers are configured:
+
+```bash
+# Check what a vertical requires before enabling it
+kubectl -n clawql exec -it deploy/clawql-operator -- \
+  clawql-operator preflight --vertical lending
+
+# Example output:
+# Vertical: lending
+# Required providers:
+#   ✅ postgres (operational) — found
+#   ✅ duckdb (analytics) — found
+#   ⚠️  nats (automation) — not found (recommended, not required)
+# Pre-flight: PASS — safe to enable
+```
+
+### 6.3 Enabling a Vertical
+
+**Via CRD patch:**
+
+```bash
+kubectl -n clawql patch clawqlinstance clawql \
+  --type=merge \
+  --patch='{"spec":{"lending":{"enabled":true}}}'
+```
+
+**Via natural language (when dashboard is available):**
+
+```
+@hermes enable the lending vertical
+```
+
+**Via Helm upgrade:**
+
+```bash
+helm upgrade clawql clawql/clawql-full-stack \
+  --namespace clawql \
+  --reuse-values \
+  --set lending.enabled=true
+```
+
+### 6.4 Post-Enable Verification
+
+```bash
+# Verify the vertical's tools are registered
+curl http://localhost:8080/api/tools?vertical=lending
+
+# Verify RLS is applied
+kubectl -n clawql exec -it deploy/postgres -- \
+  psql -U clawql -c "SELECT * FROM pg_policies WHERE tablename LIKE 'lending_%';"
+
+# Verify the compliance matrix entry
+curl http://localhost:8080/api/compliance?vertical=lending
+```
+
+### 6.5 Disabling a Vertical Safely
+
+Disabling a vertical does not delete its data. It removes the tools from the supergraph, deactivates the Effect Layer, and revokes the RBAC bindings. Existing memory nodes and documents tagged to the vertical remain in storage.
+
+```bash
+kubectl -n clawql patch clawqlinstance clawql \
+  --type=merge \
+  --patch='{"spec":{"lending":{"enabled":false}}}'
+```
+
+If you want to disable a vertical and purge its data, see the Day-2 Operations section on data management.
+
+---
+
+## 7. Day-2 Operations
+
+### 7.1 Scaling Components
+
+**Scaling the gateway (manual):**
+
+```bash
+kubectl -n clawql patch clawqlinstance clawql \
+  --type=merge \
+  --patch='{"spec":{"api":{"replicas":5}}}'
+```
+
+**Scaling via natural language:**
+
+```
+@hermes scale the api to 5 replicas
+@hermes scale goose to 20 replicas during business hours and 3 at night
+```
+
+KEDA ScaledObjects handle time-based scaling automatically when the natural language command includes schedule intent. The Operator translates these into KEDA CronJob scaled objects.
+
+**Scaling Tika and Gotenberg** during high document volume:
+
+```bash
+kubectl -n clawql patch clawqlinstance clawql \
+  --type=merge \
+  --patch='{"spec":{"documents":{"tika":{"replicas":4},"gotenberg":{"replicas":4}}}}'
+```
+
+### 7.2 Secret Rotation
+
+**Rotating the Postgres secret:**
+
+```bash
+# Update the secret
+kubectl -n clawql create secret generic clawql-postgres-secret \
+  --from-literal=uri=postgres://user:NEWPASSWORD@host:5432/clawql \
+  --dry-run=client -o yaml | kubectl apply -f -
+
+# Trigger reconciliation to pick up the new secret
+kubectl -n clawql annotate clawqlinstance clawql \
+  clawql.io/force-reconcile=$(date +%s)
+```
+
+The Operator will restart affected pods in a rolling fashion. No downtime for the gateway (with ≥2 replicas).
+
+**Rotating OIDC client secrets:**
+
+```bash
+kubectl -n clawql create secret generic clawql-oidc-secret \
+  --from-literal=clientSecret=NEW_SECRET \
+  --dry-run=client -o yaml | kubectl apply -f -
+
+kubectl -n clawql rollout restart deploy/clawql-api
+```
+
+### 7.3 Presidio Model Updates and Document Reprocessing
+
+When Presidio releases updated models (for example, improved PII detection), update the Presidio image and reprocess recent documents:
+
+```bash
+# Update Presidio to a new image
+kubectl -n clawql patch clawqlinstance clawql \
+  --type=merge \
+  --patch='{"spec":{"documents":{"presidio":{"image":"mcr.microsoft.com/presidio-analyzer:2.2.354"}}}}'
+```
+
+```
+# Reprocess the last N documents via natural language
+@hermes rotate Presidio models and reprocess the last 500 documents
+```
+
+```bash
+# Or via API
+curl -X POST http://localhost:8080/api/documents/reprocess \
+  -H "Authorization: Bearer TOKEN" \
+  -d '{"filter":{"limit":500,"orderBy":"createdAt","direction":"desc"}}'
+```
+
+Reprocessing runs as a background job. Status is visible in the Dashboard under Documents Pipeline → Reprocessing Jobs.
+
+### 7.4 Backup and Restore
+
+**What needs backing up:**
+
+| Component                         | Backup method                            | Frequency                           |
+| --------------------------------- | ---------------------------------------- | ----------------------------------- |
+| Postgres (memory, auth, audit)    | `pg_dump` or Postgres operator snapshots | Daily minimum; hourly for regulated |
+| SeaweedFS (documents, binaries)   | S3-compatible snapshot or replication    | Daily                               |
+| Vault (secrets, keys)             | Vault snapshot                           | Daily                               |
+| Merkle ring buffer (cold storage) | Included in Postgres backup              | —                                   |
+| `ClawQLInstance` CRD              | `kubectl get clawqlinstance -o yaml`     | On every change                     |
+
+**Backing up Postgres:**
+
+```bash
+kubectl -n clawql exec -it deploy/postgres -- \
+  pg_dump -U clawql clawql > clawql-backup-$(date +%Y%m%d).sql
+```
+
+**Restoring Postgres:**
+
+```bash
+# Scale down the API first to prevent writes during restore
+kubectl -n clawql scale deploy/clawql-api --replicas=0
+
+# Restore
+kubectl -n clawql exec -i deploy/postgres -- \
+  psql -U clawql clawql < clawql-backup-20260515.sql
+
+# Scale back up
+kubectl -n clawql scale deploy/clawql-api --replicas=3
+
+# Warm up the Cuckoo filter (runs automatically at pod start)
+kubectl -n clawql logs deploy/clawql-api | grep "cuckoo warmup"
+```
+
+### 7.5 Log Retention and Audit Export
+
+Audit logs are stored in the WORM audit table in Postgres. They cannot be deleted (the WORM trigger prevents it). They can be exported:
+
+```bash
+# Export audit logs for a date range
+curl -X POST http://localhost:8080/api/compliance/export \
+  -H "Authorization: Bearer TOKEN" \
+  -d '{
+    "from": "2026-01-01T00:00:00Z",
+    "to": "2026-01-31T23:59:59Z",
+    "format": "json",
+    "includesMerkleRoots": true
+  }'
+```
+
+```
+# Via natural language
+@hermes export audit logs for January 2026 with Merkle proofs as JSON
+```
+
+For long-term retention beyond the 90-day ring buffer, configure the cold storage bridge:
+
+```yaml
+memory:
+  audit:
+    coldStorage:
+      enabled: true
+      backend: s3 # s3 | gcs | azure
+      bucket: clawql-audit-cold
+      secretRef: cold-storage-credentials
+      retentionYears: 7
+```
+
+### 7.6 Legal Hold
+
+Legal hold prevents audit records and their associated Merkle roots from being pruned or evicted, regardless of retention policy.
+
+```bash
+# Enable legal hold for a matter
+curl -X POST http://localhost:8080/api/compliance/legal-hold \
+  -H "Authorization: Bearer TOKEN" \
+  -d '{"matterId":"matter-2026-001","reason":"Litigation hold for Smith v. Acme"}'
+```
+
+```
+# Via natural language
+@hermes place a legal hold on matter 2026-001 for Smith v Acme litigation
+```
+
+```bash
+# List active holds
+curl http://localhost:8080/api/compliance/legal-holds \
+  -H "Authorization: Bearer TOKEN"
+
+# Release a hold (requires admin role)
+curl -X DELETE http://localhost:8080/api/compliance/legal-hold/matter-2026-001 \
+  -H "Authorization: Bearer TOKEN"
+```
+
+Legal hold is enforced at the WORM table level — the hold status is checked before any pruning operation and the pruner skips held records without operator intervention.
+
+### 7.7 GDPR Erasure Request Workflow
+
+```bash
+# Submit an erasure request
+curl -X POST http://localhost:8080/api/gdpr/erasure \
+  -H "Authorization: Bearer TOKEN" \
+  -d '{"subjectId":"user-abc123","reason":"GDPR Article 17 request received 2026-05-15"}'
+```
+
+```
+# Via natural language
+@hermes process a GDPR erasure request for subject user-abc123
+```
+
+```bash
+# Check status
+curl http://localhost:8080/api/gdpr/erasure/REQUEST_ID \
+  -H "Authorization: Bearer TOKEN"
+```
+
+**What erasure does:**
+
+- Locates all Vault keys associated with the subject in HashiCorp Vault
+- Destroys the keys (Vault's key destroy operation — the key material is gone)
+- All data encrypted with those keys becomes permanently undecipherable
+- The WORM audit table retains a record that an erasure was performed for this subject, with a timestamp and the operator's actorId
+- The Merkle roots of the audit records remain intact — the audit trail is preserved, but the personal content is gone
+
+Erasure is irreversible. There is no undo. The operator confirmation step requires explicit acknowledgment.
+
+---
+
+## 8. Natural Language Operations Reference
+
+The natural language interface translates commands into `clawql-api.execute()` calls or Operator CRD patches. This table covers the full set of supported commands.
+
+### 8.1 Scaling and Configuration
+
+| Command                                                          | Translates to                                               |
+| ---------------------------------------------------------------- | ----------------------------------------------------------- |
+| "scale the api to N replicas"                                    | `spec.api.replicas: N` patch                                |
+| "scale goose to N replicas"                                      | `spec.goose.replicas: N` patch                              |
+| "scale goose to N replicas during business hours and M at night" | KEDA CronJob ScaledObject                                   |
+| "scale tika to N replicas"                                       | `spec.documents.tika.replicas: N` patch                     |
+| "enable [vertical] vertical"                                     | `spec.[vertical].enabled: true` patch with pre-flight check |
+| "disable [vertical] vertical"                                    | `spec.[vertical].enabled: false` patch                      |
+| "enable duckdb analytics on seaweedfs"                           | `spec.data.duckdb.enabled: true` + S3 config patch          |
+| "set log level to debug"                                         | `spec.api.logLevel: debug` patch                            |
+
+### 8.2 Document Operations
+
+| Command                                                 | Translates to                                         |
+| ------------------------------------------------------- | ----------------------------------------------------- |
+| "process this document"                                 | `documents.ingest` with attached file                 |
+| "process this W-2.pdf for underwriting"                 | `documents.ingest` + `lending.underwriting.extractW2` |
+| "rotate Presidio models and reprocess last N documents" | Presidio image update + `documents.reprocess` job     |
+| "show me the ingestion queue"                           | `documents.queue.list`                                |
+| "quarantine document ID"                                | `documents.quarantine`                                |
+| "release document ID from quarantine"                   | `documents.quarantine.release`                        |
+
+### 8.3 Memory and Recall
+
+| Command                                                              | Translates to                                                       |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| "recall everything we know about client ABC123"                      | `memory.recall` with `hybrid` mode                                  |
+| "run cross-vertical recall between lending and legal for matter XYZ" | `memory.recall` with `cross_vertical` mode + elevated claims prompt |
+| "show the memory graph for client ABC123"                            | `memory.graph.query` + Dashboard graph view                         |
+| "prune the memory graph"                                             | `memory.prune` job                                                  |
+| "set the pruning threshold to N nodes"                               | `spec.memory.pruning.maxGraphNodes: N` patch                        |
+
+### 8.4 Compliance and Audit
+
+| Command                                                 | Translates to                                    |
+| ------------------------------------------------------- | ------------------------------------------------ |
+| "generate a compliance report for [vertical]"           | `compliance.report` with Merkle proofs           |
+| "generate a compliance report for all active verticals" | `compliance.report` across all enabled verticals |
+| "export audit logs for [date range]"                    | `compliance.export` with date filter             |
+| "place a legal hold on matter [ID]"                     | `compliance.legalHold.create`                    |
+| "release the legal hold on matter [ID]"                 | `compliance.legalHold.release`                   |
+| "process a GDPR erasure request for subject [ID]"       | `gdpr.erasure.create` with confirmation step     |
+| "show data lineage for decision [ID]"                   | `compliance.lineage.query`                       |
+
+### 8.5 Governance and Rollback
+
+| Command                             | Translates to                                         |
+| ----------------------------------- | ----------------------------------------------------- |
+| "roll back the last change"         | Operator rollback to previous ClawQLInstance revision |
+| "roll back the last N changes"      | Operator rollback N revisions                         |
+| "show recent configuration changes" | `operator.history.list`                               |
+| "rotate all secrets"                | Operator secret rotation job                          |
+
+### 8.6 Commands That Require Elevated ATR Claims
+
+The following commands require the admin role. Attempting them without it returns a structured `ATR_PERMISSION_DENIED` error with the required claims listed:
+
+- GDPR erasure requests
+- Legal hold creation and release
+- Secret rotation
+- Rollback operations
+- Disabling a vertical that has active data
+
+### 8.7 Commands Not Supported via Natural Language
+
+The following must be performed via kubectl directly. They are not available via natural language because they bypass the Operator's safety checks or require direct cluster access:
+
+- Deleting a ClawQLInstance resource
+- Modifying WORM audit tables directly
+- Accessing Vault secrets directly
+- Modifying node taints or labels
+- Modifying Istio AuthorizationPolicies directly
+
+---
+
+## 9. Observability Reference
+
+### 9.1 SigNoz Setup
+
+SigNoz is the default observability backend. It is injected as a sidecar by the Operator when `spec.telemetry.enabled: true`.
+
+```bash
+# Port-forward to SigNoz UI
+kubectl -n clawql port-forward svc/signoz 3301:3301
+
+# Open in browser
+open http://localhost:3301
+```
+
+Pre-built dashboards are imported automatically on first run. If they are missing:
+
+```bash
+curl -X POST http://localhost:3301/api/v1/dashboards/import \
+  -H "Content-Type: application/json" \
+  -d @charts/clawql-full-stack/dashboards/clawql-overview.json
+```
+
+### 9.2 Key Metrics Reference
+
+| Metric                                 | Description                                 | Alert threshold      |
+| -------------------------------------- | ------------------------------------------- | -------------------- |
+| `clawql_api_execute_duration_ms`       | Latency of `execute()` calls by operationId | p99 > 2000ms         |
+| `clawql_api_circuit_breaker_open`      | Circuit breakers currently open             | Any > 0              |
+| `clawql_memory_recall_duration_ms`     | Memory recall latency by mode               | p99 > 500ms (hybrid) |
+| `clawql_memory_graph_node_count`       | Total nodes in the graph                    | > 200,000            |
+| `clawql_documents_ingest_errors_total` | Failed ingest attempts by stage             | Any increase         |
+| `clawql_presidio_failures_total`       | Presidio failures (always blocks)           | Any > 0              |
+| `clawql_atr_violations_total`          | ATR enforcement rejections                  | Any increase         |
+| `clawql_cuckoo_fill_ratio`             | Cuckoo filter fill percentage               | > 0.90               |
+| `clawql_audit_worm_writes_total`       | Successful WORM audit writes                | Drop to 0            |
+
+### 9.3 Trace Interpretation for Common Workflows
+
+**A document ingest trace** should show spans in this order:
+
+`documents.ingest` → `tika.extract` → `gotenberg.convert` → `presidio.redact` → `merkle.root` → `memory.ingest` → `paperless.archive`
+
+If `presidio.redact` is absent in a trace for a document that should be redacted, that is a critical finding — open an incident immediately.
+
+If `merkle.root` appears before `presidio.redact`, that is also a critical finding — redaction must always precede rooting.
+
+**A memory recall trace** should show:
+
+`memory.recall` → `graph.traverse` (if graph mode) → `pageindex.synthesise` → `token.budget.apply`
+
+If `token.budget.apply` is consistently truncating results (visible in the span attributes), consider increasing `spec.memory.recall.tokenBudget` or reducing `spec.memory.recall.maxNodes`.
+
+### 9.4 Cuckoo Filter Health Monitoring
+
+The Cuckoo filter provides O(1) deduplication at memory ingest. It must be warmed from the audit table on every pod restart, which takes a few seconds on small deployments and up to 30 seconds on large ones.
+
+```bash
+# Check fill ratio
+curl http://localhost:8080/api/memory/cuckoo/status
+
+# Expected response
+```
+
+```json
+{
+  "capacity": 500000,
+  "count": 127453,
+  "fillRatio": 0.255,
+  "status": "healthy",
+  "warmedUpAt": "2026-05-15T04:12:33Z"
+}
+```
+
+`status` values: `healthy`, `warning` (>90% fill), `fallback` (100% fill).
+
+At 95% fill, the Cuckoo filter emits a warning and the `clawql_cuckoo_fill_ratio` metric triggers an alert. At 100% fill, deduplication falls back to a direct audit table hash check. This is slower but correct. Increase capacity in `clawql-core`'s configuration and rebuild if this becomes routine.
+
+---
+
+## 10. Troubleshooting
+
+### 10.1 Structured Failure Catalog
+
+**Symptom:** `execute()` returns `TOOL_NOT_FOUND`
+
+Causes:
+
+- The vertical containing the tool is not enabled
+- The tool's operationId is wrong (check case sensitivity and double-underscore convention)
+- The tool's circuit breaker is open
+
+Resolution:
+
+```bash
+# List all registered tools
+curl http://localhost:8080/api/tools | jq '.[] | .operationId'
+
+# Check circuit breaker state
+curl http://localhost:8080/api/tools/OPERATION_ID/health
+```
+
+---
+
+**Symptom:** Document ingest returns `PRESIDIO_UNAVAILABLE`
+
+This is expected behaviour — the failure policy is block. Presidio is down or unreachable.
+
+Resolution:
+
+```bash
+kubectl -n clawql get pods | grep presidio
+kubectl -n clawql logs deploy/presidio-analyzer --tail 50
+```
+
+Do not restart Presidio and retry automatically without investigating the root cause. If Presidio is failing consistently, check its memory allocation — it is the most common cause.
+
+---
+
+**Symptom:** Memory recall returns fewer results than expected
+
+Causes:
+
+- `maxNodes` limit is truncating results
+- `tokenBudget` is truncating the synthesised response
+- Confidence threshold at ingest was too high, so nodes were not created
+- Pruning has removed older nodes
+
+Resolution:
+
+```bash
+# Check the recall trace for truncation spans
+# In SigNoz, filter traces by operation "memory.recall" and look for "token.budget.apply"
+
+# Temporarily raise maxNodes for a specific recall
+curl -X POST http://localhost:8080/api/memory/recall \
+  -d '{"query":"client ABC123","options":{"maxNodes":500,"maxHops":7}}'
+```
+
+---
+
+**Symptom:** `ATR_PERMISSION_DENIED` for an operation that should be allowed
+
+Causes:
+
+- The user's role does not include the required scope
+- The vertical is listed in `requiredVerticals` for the operation but not in the user's `ATRClaims.verticals`
+- `crossVertical: true` is required but not present in the claims
+
+Resolution:
+
+```bash
+# Inspect the ATR claims for the current session (admin only)
+curl http://localhost:8080/api/auth/session/inspect \
+  -H "Authorization: Bearer TOKEN"
+
+# Check what claims the operation requires
+curl http://localhost:8080/api/tools/OPERATION_ID/requirements
+```
+
+---
+
+**Symptom:** Circuit breaker is open for an external tool
+
+Resolution:
+
+```bash
+# Check the circuit breaker state
+curl http://localhost:8080/api/tools/OPERATION_ID/health
+# {"state":"open","failures":5,"openedAt":"...","nextProbeAt":"..."}
+
+# The circuit breaker probes automatically after halfOpenProbeIntervalSeconds (default 30s)
+# To force an immediate probe:
+curl -X POST http://localhost:8080/api/tools/OPERATION_ID/probe
+```
+
+---
+
+**Symptom:** Goose pod OOMKilled mid-task
+
+If `checkpointOnOOM: true` is set, the task is automatically checkpointed before the kill. The checkpoint is stored in the persistent volume at `/opt/clawql/goose/checkpoints/`.
+
+```bash
+# List available checkpoints
+curl http://localhost:8080/api/goose/checkpoints
+
+# Resume a checkpointed task
+curl -X POST http://localhost:8080/api/goose/tasks/TASK_ID/resume
+```
+
+If checkpointing did not save enough state to resume, increase Goose's memory limit:
+
+```yaml
+goose:
+  resources:
+    requests:
+      memory: 1Gi
+    limits:
+      memory: 2Gi
+```
+
+---
+
+**Symptom:** Merkle root inconsistency warning in Operator logs
+
+The Operator periodically verifies that Merkle roots in the WORM audit table are consistent with the content in storage. An inconsistency means either a storage corruption or an attempt to tamper.
+
+```bash
+kubectl -n clawql-system logs deploy/clawql-operator | grep "merkle inconsistency"
+```
+
+Escalate immediately. Do not attempt to repair Merkle roots manually — contact the maintainers and preserve the state for forensic analysis.
+
+### 10.2 Reading Merkle Audit Trails for Debugging
+
+The Merkle audit trail can be queried to reconstruct the exact sequence of operations on any document or memory node:
+
+```bash
+# Get the audit trail for a document
+curl http://localhost:8080/api/audit/document/DOCUMENT_ID \
+  -H "Authorization: Bearer TOKEN"
+
+# Get the audit trail for a memory node
+curl http://localhost:8080/api/audit/memory-node/NODE_ID \
+  -H "Authorization: Bearer TOKEN"
+
+# Verify a specific Merkle root
+curl http://localhost:8080/api/audit/verify \
+  -d '{"merkleRoot":"abc123...","contentId":"DOCUMENT_ID"}'
+```
+
+The audit trail shows every operation that touched the resource, in order, with the actorId, requestId, and timestamp for each. This is the primary tool for incident forensics.
+
+---
+
+## 11. Upgrade Procedures
+
+### 11.1 Checking for Upgrades
+
+```bash
+helm repo update
+helm search repo clawql --versions | head -10
+```
+
+### 11.2 Core Upgrade Path
+
+ClawQL uses calendar versioning for the Operator and Helm charts. Minor updates (e.g., 2026.5.0 → 2026.5.1) are always backward compatible. Major updates (e.g., 2026.5.x → 2026.6.0) may include CRD schema migrations.
+
+**Before any upgrade:**
+
+```bash
+# Back up the current ClawQLInstance spec
+kubectl get clawqlinstance clawql -n clawql -o yaml > clawql-instance-backup.yaml
+
+# Check the release notes for migration steps
+helm show changelog clawql/clawql-full-stack --version TARGET_VERSION
+```
+
+### 11.3 Helm Chart Upgrade
+
+```bash
+# Upgrade (non-breaking)
+helm upgrade clawql clawql/clawql-full-stack \
+  --namespace clawql \
+  --reuse-values \
+  --version 2026.5.1
+
+# Watch the rollout
+kubectl -n clawql rollout status deploy/clawql-api
+```
+
+### 11.4 CRD Schema Migrations
+
+If the release notes indicate a CRD schema migration, run it before upgrading the chart:
+
+```bash
+# Run the migration job
+kubectl apply -f https://charts.clawql.com/migrations/2026.6.0/migrate.yaml
+
+# Wait for it to complete
+kubectl -n clawql wait job/clawql-migration --for=condition=complete --timeout=300s
+
+# Verify
+kubectl -n clawql logs job/clawql-migration
+```
+
+Do not upgrade the Helm chart until the migration job completes successfully. See §13 for recovery when a migration job fails partway through.
+
+### 11.5 Rollback Procedure
+
+**Via Helm:**
+
+```bash
+# List available revisions
+helm history clawql -n clawql
+
+# Roll back to a specific revision
+helm rollback clawql REVISION -n clawql
+```
+
+**Via natural language:**
+
+```
+@hermes roll back the last upgrade
+```
+
+**Manual rollback of ClawQLInstance CRD:**
+
+```bash
+kubectl apply -f clawql-instance-backup.yaml
+```
+
+After rollback, verify:
+
+```bash
+curl http://localhost:8080/healthz
+kubectl -n clawql get clawqlinstance clawql
+```
+
+If the Operator does not reconcile to Ready within 2 minutes after rollback, check the Operator logs:
+
+```bash
+kubectl -n clawql-system logs deploy/clawql-operator --tail 100
+```
+
+---
+
+## 12. Health Checks and Readiness Probes
+
+`clawql-api` exposes two separate endpoints for Kubernetes health checking, and they answer different questions. Configuring both correctly matters for rolling upgrades and for how the cluster behaves during partial outages.
+
+**`/healthz` — liveness.** This answers "is the process alive and responding at all?" It's intentionally lightweight — it doesn't check the database, Vault, or anything downstream. If this fails repeatedly, Kubernetes assumes the process is hung or crashed and restarts the pod.
+
+**`/readyz` — readiness.** This answers "is this pod ready to receive traffic right now?" It checks the things that actually determine whether a request to this pod will succeed: the database connection, Vault connectivity (Tier 3), whether the supergraph has finished building, and whether the Cuckoo filter has finished warming up. If any of these checks fail, `/readyz` returns HTTP 503 and Kubernetes removes the pod from the service's endpoint list — but does **not** restart it. The pod stays running and gets added back to rotation automatically once the check passes.
+
+The distinction matters because the right response to each failure is different. If Postgres has a brief connection blip, you don't want Kubernetes restarting the gateway pod — that doesn't fix Postgres, and it adds churn on top of an already-degraded dependency. You want traffic routed away from that pod until the dependency recovers, which is exactly what a failing readiness probe does.
+
+Example probe configuration:
+
+```yaml
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: 8080
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /readyz
+    port: 8080
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  failureThreshold: 3
+```
+
+`/readyz` returns a breakdown of individual checks:
+
+```json
+{
+  "status": "ready",
+  "checks": {
+    "database": "ok",
+    "cuckooFilter": "warming",
+    "supergraph": "ok",
+    "vault": "ok"
+  }
+}
+```
+
+If any check is not `"ok"`, the overall `status` becomes `"not_ready"` and the endpoint returns 503.
+
+**Cuckoo filter warmup and readiness.** As covered in §9.4, warmup takes anywhere from a few seconds to about 30 seconds depending on deployment size. During this window, `/readyz` reports `cuckooFilter: "warming"` and the pod stays out of rotation — no requests are dropped, they're just not sent to this pod yet. With at least two replicas, this means rolling restarts have zero downtime: the old pod keeps serving until the new pod's `/readyz` reports ready.
+
+**A common misconfiguration** is pointing the readiness probe at `/healthz` instead of `/readyz`. This makes a pod "ready" before its Cuckoo filter has finished warming up. The pod will still work — memory deduplication just falls back to the slower audit-table hash check until warmup finishes — but you may see a temporary latency bump on `memory.recall` calls immediately after a rolling upgrade. Pointing readiness at `/readyz` avoids this entirely.
+
+---
+
+## 13. Migration Failure Recovery
+
+§11.4 covers the normal migration path. This section covers what to do when a migration job fails partway through.
+
+**Before running any migration**, back up Postgres specifically — not just the `ClawQLInstance` CRD from §11.2:
+
+```bash
+kubectl -n clawql exec -it deploy/postgres -- \
+  pg_dump -U clawql clawql > pre-migration-backup-$(date +%Y%m%d).sql
+```
+
+This is in addition to the CRD backup, not a replacement for it.
+
+**How migrations are structured.** Each individual migration step runs inside its own database transaction — a step either fully applies or doesn't apply at all. There's no such thing as a half-applied _step_. But a single release can bundle several steps, and if step 3 of 5 fails, steps 1 and 2 have already committed successfully.
+
+**Checking what happened:**
+
+```bash
+# Check the job's logs for the last successfully applied step
+kubectl -n clawql logs job/clawql-migration
+```
+
+```bash
+# Check the migration tracking table directly
+kubectl -n clawql exec -it deploy/postgres -- \
+  psql -U clawql clawql -c "SELECT * FROM clawql_migrations ORDER BY applied_at DESC LIMIT 5;"
+```
+
+Compare the most recently applied migration against the list of steps for the target version in the release notes.
+
+**When it's safe to re-run the job.** If the failure was transient — a dropped connection, a timeout — and the logs show the failure happened _before_ a step started executing (not partway through one), re-running picks up from the next unapplied step:
+
+```bash
+kubectl delete job clawql-migration -n clawql
+kubectl apply -f https://charts.clawql.com/migrations/2026.6.0/migrate.yaml
+```
+
+**When NOT to re-run.** If the logs show a step failed _partway through its own execution_ — for example, a step that adds a column and then backfills it, where the column was created but the backfill query errored — re-running is risky. The job may try to create the column again, fail with "already exists," and obscure what actually went wrong.
+
+**Recovery in this case** is to restore from the pre-migration backup, not to manually patch the schema:
+
+```bash
+kubectl -n clawql scale deploy/clawql-api --replicas=0
+
+kubectl -n clawql exec -i deploy/postgres -- \
+  psql -U clawql -c "DROP DATABASE clawql;"
+
+kubectl -n clawql exec -i deploy/postgres -- \
+  psql -U clawql -c "CREATE DATABASE clawql;"
+
+kubectl -n clawql exec -i deploy/postgres -- \
+  psql -U clawql clawql < pre-migration-backup-20260601.sql
+```
+
+After restoring, the cluster is back on the schema version it was running before the migration attempt. Roll back to the previous chart version and bring the gateway back up on that version — do not apply the new Helm values yet:
+
+```bash
+helm rollback clawql -n clawql
+kubectl -n clawql scale deploy/clawql-api --replicas=3
+```
+
+Open an issue with the migration job logs attached before attempting the upgrade again. Manually patching the schema to match what a partially-applied migration expected is the most common cause of database state that becomes very difficult to recover later — restoring from the backup and retrying with a fixed migration is almost always faster than diagnosing a hand-patched schema.
+
+---
+
+_ClawQL Deployment & Operations Guide · May 2026 · Apache 2.0 / MIT_  
+_For platform vision: see the [Vision & Roadmap document](/vision/roadmap)._  
+_For contributor contracts: see the [Contributor Technical Specification](/contributing/technical-specification)._

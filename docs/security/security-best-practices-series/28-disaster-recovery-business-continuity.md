@@ -9,7 +9,7 @@ tags:
   - rpo
   - merkle
 part: 28
-total_parts: 30
+total_parts: 32
 date: "May 2026"
 slug: "disaster-recovery-business-continuity"
 canonical_path: "/security/best-practices/disaster-recovery-business-continuity"

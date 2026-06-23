@@ -8,7 +8,7 @@ tags:
   - nats
   - delegation
 part: 14
-total_parts: 30
+total_parts: 32
 date: "May 2026"
 slug: "multi-agent-trust-orchestrator-security"
 canonical_path: "/security/best-practices/multi-agent-trust-orchestrator-security"

@@ -8,7 +8,7 @@ tags:
   - deployment
   - staging
 part: 21
-total_parts: 30
+total_parts: 32
 date: "May 2026"
 slug: "development-deployment-security"
 canonical_path: "/security/best-practices/development-deployment-security"

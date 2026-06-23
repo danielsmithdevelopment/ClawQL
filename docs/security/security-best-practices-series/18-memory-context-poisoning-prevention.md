@@ -9,7 +9,7 @@ tags:
   - poisoning
   - gdpr
 part: 18
-total_parts: 30
+total_parts: 32
 date: "May 2026"
 slug: "memory-context-poisoning-prevention"
 canonical_path: "/security/best-practices/memory-context-poisoning-prevention"

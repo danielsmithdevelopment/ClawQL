@@ -9,7 +9,7 @@ tags:
   - prometheus
   - tracing
 part: 19
-total_parts: 30
+total_parts: 32
 date: "May 2026"
 slug: "security-monitoring-observability-siem"
 canonical_path: "/security/best-practices/security-monitoring-observability-siem"

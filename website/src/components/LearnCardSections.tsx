@@ -2,8 +2,8 @@
 
 import { Heading } from '@/components/Heading'
 import { ReferenceResourceCard } from '@/components/ReferenceResourceCard'
+import { exampleSiteCards } from '@/lib/docs-hub-data'
 import {
-  caseStudySiteCards,
   learnModuleSiteCards,
   learnRelatedGuideSiteCards,
 } from '@/lib/docs-site-card-data'
@@ -48,15 +48,21 @@ export function LearnCardSections() {
       </div>
 
       <div className="my-16 xl:max-w-none">
-        <Heading level={2} id="case-studies">
-          Case studies
+        <Heading level={2} id="examples">
+          Examples & walkthroughs
         </Heading>
         <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-          Long-form narratives: incidents, sessions, and homelab deep dives —
-          same cards as the home page Case studies section.
+          Session narratives and postmortems — see{' '}
+          <a
+            href="/examples"
+            className="font-medium underline underline-offset-2"
+          >
+            all examples
+          </a>
+          .
         </p>
         <div className={cardGridClass}>
-          {caseStudySiteCards.map((card) => (
+          {exampleSiteCards.slice(0, 3).map((card) => (
             <ReferenceResourceCard key={card.href} resource={card} />
           ))}
         </div>

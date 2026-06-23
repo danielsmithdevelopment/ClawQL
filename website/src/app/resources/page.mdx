@@ -1,0 +1,23 @@
+import { Button } from '@/components/Button'
+import { ResourcesHubGrid } from '@/components/DocsHubSections'
+
+# Resources
+
+Roadmap, releases, troubleshooting, migration notes, and community links. {{ className: 'lead' }}
+
+<div className="not-prose my-8 flex flex-wrap gap-3">
+  <Button href="/vision/roadmap" arrow="right">
+    <>Roadmap</>
+  </Button>
+  <Button href="/troubleshooting" variant="outline">
+    <>Troubleshooting</>
+  </Button>
+  <Button
+    href="https://github.com/danielsmithdevelopment/ClawQL/releases"
+    variant="outline"
+  >
+    <>GitHub releases</>
+  </Button>
+</div>
+
+<ResourcesHubGrid />

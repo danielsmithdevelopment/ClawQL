@@ -60,6 +60,31 @@ const nextConfig = {
         destination: '/vision/technical-enablement',
         permanent: true,
       },
+      {
+        source: '/kubernetes',
+        destination: '/deployment/kubernetes',
+        permanent: true,
+      },
+      {
+        source: '/cache',
+        destination: '/learn/cache-handoff-between-chats',
+        permanent: true,
+      },
+      {
+        source: '/schedule',
+        destination: '/learn/schedule-notify-workflows',
+        permanent: true,
+      },
+      {
+        source: '/notify',
+        destination: '/learn/schedule-notify-workflows',
+        permanent: true,
+      },
+      {
+        source: '/case-studies',
+        destination: '/examples',
+        permanent: true,
+      },
     ]
   },
   /**

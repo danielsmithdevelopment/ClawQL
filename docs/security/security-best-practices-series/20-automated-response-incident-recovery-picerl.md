@@ -9,7 +9,7 @@ tags:
   - worm
   - forensics
 part: 20
-total_parts: 30
+total_parts: 32
 date: "May 2026"
 slug: "automated-response-incident-recovery-picerl"
 canonical_path: "/security/best-practices/automated-response-incident-recovery-picerl"

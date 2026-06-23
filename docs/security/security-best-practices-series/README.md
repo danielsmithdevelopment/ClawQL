@@ -1,6 +1,6 @@
-# Agentic AI Security Curriculum (30 modules)
+# Agentic AI Security Curriculum (32 modules)
 
-Thirty **vendor-neutral** Markdown modules for security architects, platform engineers, and teams shipping **LLM agents, tool calling, and MCP-style integrations**. Each file is standalone with YAML frontmatter for the static site, internal wiki, or docs generator.
+Thirty-two **vendor-neutral** Markdown modules for security architects, platform engineers, and teams shipping **LLM agents, tool calling, and MCP-style integrations**. Each file is standalone with YAML frontmatter for the static site, internal wiki, or docs generator.
 
 **Build from sources:** `node tools/security-curriculum-v30/build-modules.mjs` (reads `tools/security-curriculum-v30/manifest.json` + `bodies/NN.md`).
 
@@ -86,9 +86,16 @@ Thirty **vendor-neutral** Markdown modules for security architects, platform eng
 |  29 | Compliance and Regulatory Mapping | [`compliance-regulatory-mapping`](29-compliance-regulatory-mapping.md)                   |
 |  30 | Human Operator Security           | [`human-operator-security-admin-controls`](30-human-operator-security-admin-controls.md) |
 
+### XI. External Models and Deployment Sequencing
+
+|   # | Title                                               | Slug                                                                                                 |
+| --: | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+|  31 | Third-Party Model API Security                      | [`third-party-model-api-security`](31-third-party-model-api-security.md)                             |
+|  32 | Where to Start: Prioritization for a New Deployment | [`where-to-start-prioritization-new-deployment`](32-where-to-start-prioritization-new-deployment.md) |
+
 ## How to use this material
 
-- Work through `01` … `30` in order, or jump by section using `part` / `prev` / `next` in frontmatter.
+- Work through `01` … `32` in order, or jump by section using `part` / `prev` / `next` in frontmatter.
 - Body text uses illustrative YAML, policies, and product names (Harbor, Kyverno, Istio, Kata, and similar). Treat them as **patterns**, not mandatory SKUs.
 
 ## Frontmatter reference (CMS / site generators)
@@ -99,7 +106,7 @@ Thirty **vendor-neutral** Markdown modules for security architects, platform eng
 | `series`               | `Agentic AI Security Curriculum`                                                                        |
 | `level`                | `foundational`, `intermediate`, or `advanced` — tune for your taxonomy                                  |
 | `tags`                 | YAML list of lowercase tokens (e.g. `kubernetes`, `sbom`, `owasp`) for faceted search / related content |
-| `part` / `total_parts` | Position in curriculum (`total_parts` is **30**)                                                        |
+| `part` / `total_parts` | Position in curriculum (`total_parts` is **32**)                                                        |
 | `date`                 | Publication or review stamp                                                                             |
 | `slug`                 | URL-safe identifier                                                                                     |
 | `canonical_path`       | Suggested site path (e.g. `/security/best-practices/<slug>`)                                            |
@@ -108,7 +115,7 @@ Thirty **vendor-neutral** Markdown modules for security architects, platform eng
 
 ## Source monolith
 
-The long-form monolith export (historical) lives at [`../archive/security-guide-series.md`](../archive/security-guide-series.md). **Prefer this 30-module series** for all new edits; regenerate site MDX with `website/scripts/sync-security-training-modules.mjs` (do not hand-edit `website/src/generated/security-training/`).
+The long-form monolith export (historical) lives at [`../archive/security-guide-series.md`](../archive/security-guide-series.md). **Prefer this 32-module series** for all new edits; regenerate site MDX with `website/scripts/sync-security-training-modules.mjs` (do not hand-edit `website/src/generated/security-training/`).
 
 ## Maintenance
 

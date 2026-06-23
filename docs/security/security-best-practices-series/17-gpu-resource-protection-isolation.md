@@ -8,7 +8,7 @@ tags:
   - quotas
   - multi-tenant
 part: 17
-total_parts: 30
+total_parts: 32
 date: "May 2026"
 slug: "gpu-resource-protection-isolation"
 canonical_path: "/security/best-practices/gpu-resource-protection-isolation"

@@ -107,7 +107,7 @@ Visibility is critical. We monitor continuously:
 - Alert on any pod not in the approved GPU workload list attempting to access a GPU.
 
 - Alert on unexpected memory usage spikes from workloads that normally use
-- Falco rule: alert on any process other than approved model-serving binaries accessing /dev/nvidia\*.
+- Falco rule: alert on any process other than approved model-serving binaries accessing /dev/nvidia\\\*.
 
 These signals turn the GPU layer into an observable part of our security posture.
 

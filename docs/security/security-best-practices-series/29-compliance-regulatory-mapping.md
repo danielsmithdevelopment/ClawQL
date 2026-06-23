@@ -9,7 +9,7 @@ tags:
   - eu-ai-act
   - compliance
 part: 29
-total_parts: 30
+total_parts: 32
 date: "May 2026"
 slug: "compliance-regulatory-mapping"
 canonical_path: "/security/best-practices/compliance-regulatory-mapping"

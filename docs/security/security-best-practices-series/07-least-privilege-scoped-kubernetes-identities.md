@@ -8,7 +8,7 @@ tags:
   - irsa
   - workload-identity
 part: 7
-total_parts: 30
+total_parts: 32
 date: "May 2026"
 slug: "least-privilege-scoped-kubernetes-identities"
 canonical_path: "/security/best-practices/least-privilege-scoped-kubernetes-identities"

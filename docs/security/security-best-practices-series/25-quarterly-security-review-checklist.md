@@ -7,7 +7,7 @@ tags:
   - audit
   - operations
 part: 25
-total_parts: 30
+total_parts: 32
 date: "May 2026"
 slug: "quarterly-security-review-checklist"
 canonical_path: "/security/best-practices/quarterly-security-review-checklist"

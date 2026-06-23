@@ -29,5 +29,7 @@
   "/security/best-practices/secure-multi-tenancy-isolation",
   "/security/best-practices/disaster-recovery-business-continuity",
   "/security/best-practices/compliance-regulatory-mapping",
-  "/security/best-practices/human-operator-security-admin-controls"
+  "/security/best-practices/human-operator-security-admin-controls",
+  "/security/best-practices/third-party-model-api-security",
+  "/security/best-practices/where-to-start-prioritization-new-deployment"
 ]

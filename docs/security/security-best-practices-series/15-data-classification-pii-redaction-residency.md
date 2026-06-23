@@ -9,7 +9,7 @@ tags:
   - gdpr
   - residency
 part: 15
-total_parts: 30
+total_parts: 32
 date: "May 2026"
 slug: "data-classification-pii-redaction-residency"
 canonical_path: "/security/best-practices/data-classification-pii-redaction-residency"

@@ -8,12 +8,13 @@ tags:
   - break-glass
   - insider-threat
 part: 30
-total_parts: 30
+total_parts: 32
 date: "May 2026"
 slug: "human-operator-security-admin-controls"
 canonical_path: "/security/best-practices/human-operator-security-admin-controls"
 description: "Mutually exclusive admin roles, 4-eyes changes, break-glass with audit, and webhook hardening."
 prev: "compliance-regulatory-mapping"
+next: "third-party-model-api-security"
 ---
 
 # Human Operator Security: Admin Controls, Separation of Duties, Break-Glass Access, and External API Hygiene
