@@ -38,6 +38,21 @@
       "import": "./dist/ingest/hashes.js",
       "require": "./dist/ingest/hashes.cjs"
     },
+    "./ingest/enterprise-citations": {
+      "types": "./dist/ingest/enterprise-citations.d.ts",
+      "import": "./dist/ingest/enterprise-citations.js",
+      "require": "./dist/ingest/enterprise-citations.cjs"
+    },
+    "./ingest/ingest": {
+      "types": "./dist/ingest/ingest.d.ts",
+      "import": "./dist/ingest/ingest.js",
+      "require": "./dist/ingest/ingest.cjs"
+    },
+    "./recall/recall": {
+      "types": "./dist/recall/recall.d.ts",
+      "import": "./dist/recall/recall.js",
+      "require": "./dist/recall/recall.cjs"
+    },
     "./embedding/embedding": {
       "types": "./dist/embedding/embedding.d.ts",
       "import": "./dist/embedding/embedding.js",
