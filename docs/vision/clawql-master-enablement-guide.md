@@ -150,12 +150,17 @@ _Full design: [Deployment & Operations Guide](../deployment/clawql-deployment-op
 
 ## XII. Current Status & Roadmap (June 2026)
 
-**Shipped**: MCP transport, Ouroboros foundations, Layer 0 tooling, LGTMP reference stack.  
-**In Development**: Core packages (Phase 1).  
-**Tier 1**: Runnable today via Docker Compose.  
-**Next**: Phase 1 stabilization → Lending vertical → Operator → community verticals.
+**Shipped:** MCP transport (stdio/HTTP/gRPC), Ouroboros library, Layer 0 tooling, LGTMP reference stack, **horizontal package extraction** (`clawql-core`, `clawql-api`, `clawql-memory`, `clawql-documents`, `clawql-automation` scaffolds) — see **[Modularization implementation status](../design/modularization-implementation-status.md)**.
 
-_Honest shipped vs planned table: [Vision & Roadmap](./clawql-vision-roadmap.md). Implementation contracts: [Contributor Technical Specification](../contributing/clawql-contributor-technical-specification.md)._
+**In progress:** Effect `Layer` plugins for memory/documents/automation; transport thinning (`tools.ts` → plugin registration); third-party plugin npm contract.
+
+**Effect-TS:** `search` / `execute` + `PluginRegistry` + Panguard proxy run on Effect; extracted domain packages remain mostly `async` during migration ([Effect plan](../design/effect-ts-modularization-rearchitecture-plan.md)).
+
+**Tier 1:** Runnable today via Docker Compose.
+
+**Next:** Plugin Layers → `clawql-sandbox` extraction → Operator dynamic composition → community verticals.
+
+_Honest shipped vs planned table: [Vision & Roadmap](./clawql-vision-roadmap.md). Implementation ground truth: [Modularization implementation status](../design/modularization-implementation-status.md). Contracts: [Contributor Technical Specification](../contributing/clawql-contributor-technical-specification.md)._
 
 ## XIII. Why This Matters
 
@@ -180,14 +185,15 @@ Read the full documentation suite, deploy the Tier 1 stack, and begin building p
 
 ## Documentation suite
 
-| Document                                                                                             | Role                                                              |
-| ---------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| [Vision & Roadmap](./clawql-vision-roadmap.md)                                                       | Public edition — honest shipped vs planned, phased delivery       |
-| [Modularization v2.1](./clawql-modularization-v2.md)                                                 | Package boundaries, dependency graph, intelligent MCP gateway     |
-| [Immutable releases (Layer 0)](./clawql-hybrid-decentralized-github-alternative.md)                  | Arweave bundles, Radicle, Rift, `clawql-release`, manifest schema |
-| [Contributor Technical Specification](../contributing/clawql-contributor-technical-specification.md) | Implementation contracts, Effect-TS patterns, CI rules            |
-| [Deployment & Operations Guide](../deployment/clawql-deployment-operations-guide.md)                 | Tier 1–3, CRD reference, day-2 ops                                |
-| [Defense-in-Depth Security Guide](../security/clawql-defense-in-depth-security-guide.md)             | What to deploy — condensed operator reference                     |
-| [Security curriculum](../security/security-best-practices-series/README.md)                          | 32 modules — why and how to prove controls                        |
-| [Token efficiency (8 layers)](../architecture/clawql-token-efficiency.md)                            | Code Mode through model routing                                   |
-| [DAOS specification](../ouroboros/decentralized-agent-operating-system-specification.md)             | Transport + strategic coordination layers                         |
+| Document                                                                                             | Role                                                                                |
+| ---------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| **[Modularization implementation status](../design/modularization-implementation-status.md)**        | **Ground truth** — monorepo layout, shims, phases, Effect/plugin status (June 2026) |
+| [Vision & Roadmap](./clawql-vision-roadmap.md)                                                       | Public edition — honest shipped vs planned, phased delivery                         |
+| [Modularization v2.1](./clawql-modularization-v2.md)                                                 | Package boundaries, dependency graph, intelligent MCP gateway                       |
+| [Immutable releases (Layer 0)](./clawql-hybrid-decentralized-github-alternative.md)                  | Arweave bundles, Radicle, Rift, `clawql-release`, manifest schema                   |
+| [Contributor Technical Specification](../contributing/clawql-contributor-technical-specification.md) | Implementation contracts, Effect-TS patterns, CI rules                              |
+| [Deployment & Operations Guide](../deployment/clawql-deployment-operations-guide.md)                 | Tier 1–3, CRD reference, day-2 ops                                                  |
+| [Defense-in-Depth Security Guide](../security/clawql-defense-in-depth-security-guide.md)             | What to deploy — condensed operator reference                                       |
+| [Security curriculum](../security/security-best-practices-series/README.md)                          | 32 modules — why and how to prove controls                                          |
+| [Token efficiency (8 layers)](../architecture/clawql-token-efficiency.md)                            | Code Mode through model routing                                                     |
+| [DAOS specification](../ouroboros/decentralized-agent-operating-system-specification.md)             | Transport + strategic coordination layers                                           |

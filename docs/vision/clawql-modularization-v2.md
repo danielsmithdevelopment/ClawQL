@@ -6,7 +6,7 @@ This document defines package boundaries, the dependency graph, Operator behavio
 
 For the full platform vision, see the [Master Enablement Guide](./clawql-master-enablement-guide.md).
 
----
+**Implementation status (June 2026):** [Modularization implementation status](../design/modularization-implementation-status.md) — what is extracted to `packages/` today vs this document’s target boundaries.
 
 ## 1. Vision & Core Objectives
 
@@ -60,11 +60,22 @@ Vertical packages (clawql-lending, clawql-legal, etc.)
 
 Horizontal packages (telemetry, sandbox, automation, etc.)
 
-### 3.4 Shipped
+### 3.4 Shipped (workspace packages)
 
-- clawql-mcp
-- clawql-ouroboros
-- mcp-grpc-transport
+| Package              | Status                                                     |
+| -------------------- | ---------------------------------------------------------- |
+| `clawql-mcp`         | ✅ MCP server (`src/`), stdio/HTTP/gRPC                    |
+| `clawql-ouroboros`   | ✅ Evolutionary loop library                               |
+| `mcp-grpc-transport` | ✅ gRPC MCP transport                                      |
+| `clawql-core`        | ✅ Primitives + `Plugin` types                             |
+| `clawql-api`         | ✅ Spec, execute, `createClawQLApi`, Panguard proxy plugin |
+| `clawql-memory`      | ✅ Vault + `memory.db` + ingest/recall                     |
+| `clawql-documents`   | 🔨 Scaffold — external ingest only                         |
+| `clawql-automation`  | 🔨 Scaffold — schedule + notify                            |
+
+**Implementation detail:** [Modularization implementation status](../design/modularization-implementation-status.md).
+
+**Still planned as standalone packages:** `clawql-auth`, `clawql-pageindex`, full document pipeline orchestration, NATS-backed automation, verticals.
 
 ---
 
