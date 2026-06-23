@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.3.0] - 2026-06-02
+
+Minor release: **monorepo modularization phases 2–9** — workspace packages **`clawql-core`**, **`clawql-api`**, **`clawql-memory`**, **`clawql-documents`**, **`clawql-automation`** with thin **`src/`** shims; **`search`/`execute`** on Effect-TS via **`createClawQLApi()`**; **`PanguardProxyPlugin`**; plugin model + registry docs and **`/reference/plugins`** on docs.clawql.com. **No intentional MCP tool or env-flag breaks** — same **`search`**, **`execute`**, **`memory_*`**, optional tools behind existing **`CLAWQL_ENABLE_*`** gates. **`charts/clawql-mcp`** **Chart.version** **0.6.6** with **`appVersion` `6.3.0`**. Release notes: **[`RELEASE_NOTES_v6.3.0.md`](RELEASE_NOTES_v6.3.0.md)**.
+
+### Added
+
+- **Workspace packages (phases 2–9, [#306](https://github.com/danielsmithdevelopment/ClawQL/issues/306)):** **`clawql-core`** (audit, Merkle, Cuckoo, `Plugin` types), **`clawql-api`** (spec load/search, REST/GraphQL/gRPC execute, `createClawQLApi()`, provider registry), **`clawql-memory`** (vault, `memory.db`, ingest/recall, embeddings), **`clawql-documents`** (external ingest scaffold), **`clawql-automation`** (schedule worker + Slack notify). Ground truth: [`docs/design/modularization-implementation-status.md`](docs/design/modularization-implementation-status.md).
+- **Effect-TS gateway path:** MCP **`search`** / **`execute`** delegate through **`getClawqlApi().run(Effect…)`** (`SearchService` / `ExecuteService` Layers) — [#401](https://github.com/danielsmithdevelopment/ClawQL/pull/401), [#423](https://github.com/danielsmithdevelopment/ClawQL/pull/423)–[#430](https://github.com/danielsmithdevelopment/ClawQL/pull/430).
+- **`PanguardProxyPlugin`:** first-class **`mcp-proxy`** plugin with **`beforeCallTool`** chokepoint ([#308](https://github.com/danielsmithdevelopment/ClawQL/issues/308), [#272](https://github.com/danielsmithdevelopment/ClawQL/issues/272)).
+- **Turborepo:** `turbo.json` + workspace build order for extracted packages.
+- **Documentation:** plugin model, plugin registry, implementation-status sync across vision docs; docs site **[`/reference/plugins`](https://docs.clawql.com/reference/plugins)** ([#431](https://github.com/danielsmithdevelopment/ClawQL/pull/431)).
+
+### Changed
+
+- **Internal layout:** business logic moved into **`packages/*`**; **`src/tools.ts`** remains MCP registration transport; **`configureNotifyDeps`** wires automation notify from transport ([#430](https://github.com/danielsmithdevelopment/ClawQL/pull/430)).
+- **Docker:** Dockerfiles copy workspace **`package.json`** files before **`npm ci`** for modularization builds.
+- **Docs site:** information architecture revamp, hub pages, synced vision/enablement/modularization bodies ([#420](https://github.com/danielsmithdevelopment/ClawQL/pull/420)).
+
+### Documentation
+
+- **[`docs/design/clawql-plugin-model.md`](docs/design/clawql-plugin-model.md)** — horizontal packages becoming plugins.
+- **[`docs/reference/clawql-plugin-registry.md`](docs/reference/clawql-plugin-registry.md)** — shipped vs planned plugin registry.
+- Deployment guide, package READMEs, contributor spec, and memory docs aligned with phases 1–9 shipped state.
+
 ## [6.2.1] - 2026-05-19
 
 Patch release: **`fetch-provider-specs`** hardening (Paperless `/api/schema/` validation, **Paperless-ngx ≥ 2.15** guidance, in-cluster HTTP diagnostics, **Gotenberg** pinned upstream OpenAPI when `/openapi.json` is absent), **Helm** Paperless default image **2.15.0** and removal of ineffective **`PAPERLESS_API_TOKEN`** injection into the Paperless container, **full bundled** **Tika**/**Gotenberg** OpenAPI surfaces, refreshed pinned public and live-fetched provider specs (**Onyx** `operationId` alignment for **`knowledge_search_onyx`** / Ouroboros ingest), **Istio** `*.localhost` provider VirtualServices when Stirling exists (not gated on full stack), **`execute`** multipart **`fileEncoding: base64`**, consolidated **dependency** and **OSV** updates, and **OpenTelemetry** **2.7.x** + OTLP exporter **0.218**. **`charts/clawql-mcp`** **Chart.version** **0.6.5** with **`appVersion` `6.2.1`**. Release notes: **[`RELEASE_NOTES_v6.2.1.md`](RELEASE_NOTES_v6.2.1.md)**.
