@@ -30,9 +30,16 @@ spec:
           image: "{{ .Values.dashboard.image.repository }}:{{ .Values.dashboard.image.tag }}"
           imagePullPolicy: {{ .Values.dashboard.image.pullPolicy }}
           env:
-            {{- if .Values.dashboard.openclawChatUrl }}
+            {{- $openclawChatUrl := include "clawql-mcp.dashboardOpenclawChatUrl" . }}
+            {{- if $openclawChatUrl }}
             - name: CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL
-              value: {{ .Values.dashboard.openclawChatUrl | quote }}
+              value: {{ $openclawChatUrl | quote }}
+            {{- end }}
+            - name: CLAWQL_OBSIDIAN_VAULT_PATH
+              value: {{ .Values.obsidianVaultPath | quote }}
+            {{- if .Values.hermes.enabled }}
+            - name: CLAWQL_DASHBOARD_HERMES_OPS
+              value: "1"
             {{- end }}
             - name: CLAWQL_DASHBOARD_ALLOW_K8S_SYNC
               value: {{ ternary "1" "0" .Values.dashboard.allowSync | quote }}
@@ -64,4 +71,24 @@ spec:
             {{- toYaml .Values.dashboard.livenessProbe | nindent 12 }}
           resources:
             {{- toYaml .Values.dashboard.resources | nindent 12 }}
+          volumeMounts:
+            - name: obsidian-vault
+              mountPath: {{ .Values.obsidianVaultPath | quote }}
+      volumes:
+        - name: obsidian-vault
+          {{- if .Values.persistence.enabled }}
+          {{- if .Values.persistence.existingClaim }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistence.existingClaim }}
+          {{- else }}
+          persistentVolumeClaim:
+            claimName: {{ include "clawql-mcp.fullname" . }}-vault
+          {{- end }}
+          {{- else if .Values.vault.hostPath.enabled }}
+          hostPath:
+            path: {{ quote (required "vault.hostPath.path is required when vault.hostPath.enabled" .Values.vault.hostPath.path) }}
+            type: {{ .Values.vault.hostPath.type | default "DirectoryOrCreate" }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
 {{- end }}

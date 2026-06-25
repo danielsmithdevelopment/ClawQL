@@ -750,8 +750,8 @@ dashboard:
   replicaCount: 1
   allowSync: true
   # Optional in-cluster OpenClaw chat HTTP endpoint for Agent Chat.
-  # Example (same namespace): http://openclaw:8787/v1/chat
-  # Example (cross-namespace): http://openclaw.<ns>.svc.cluster.local:8787/v1/chat
+  # Empty: auto-wires to OpenClaw chat-bridge when openclaw.enabled && openclaw.chatBridge.enabled.
+  # Example override: http://<release>-openclaw.<ns>.svc.cluster.local:8787/v1/chat
   openclawChatUrl: ""
   image:
     repository: ghcr.io/danielsmithdevelopment/clawql-dashboard
@@ -865,6 +865,189 @@ istio:
     egressGatewayServiceName: istio-egressgateway
     gatewayName: clawql-provider-egress-gateway
 
+# OpenClaw gateway (optional) — upstream Kubernetes layout: https://docs.openclaw.ai/install/kubernetes
+# Default image is the GHCR vendor mirror (`openclaw-vendor`, not npm CLI). Binds loopback in-pod; access via
+# `kubectl port-forward svc/<release>-openclaw 18789:18789`. Opt-in: `openclaw.enabled=true` and set
+# `openclaw.gatewayToken` (unless `openclaw.existingSecret`). Docker Desktop: `CLAWQL_ENABLE_OPENCLAW=1`
+# and `OPENCLAW_GATEWAY_TOKEN=...` with `make local-k8s-up` (see scripts/kubernetes/local-k8s-docker-desktop.sh).
+openclaw:
+  enabled: false
+  replicaCount: 1
+  gateway:
+    port: 18789
+  # Default: GHCR mirror published by `.github/workflows/container-mirror.yml` (scan → push → Cosign).
+  # Until the first successful mirror run, override with upstream: `--set openclaw.image.repository=ghcr.io/openclaw/openclaw`.
+  image:
+    repository: ghcr.io/danielsmithdevelopment/openclaw-vendor
+    tag: slim
+    pullPolicy: IfNotPresent
+  initImage:
+    repository: busybox
+    tag: "1.37"
+    pullPolicy: IfNotPresent
+  initResources:
+    requests:
+      cpu: 50m
+      memory: 32Mi
+    limits:
+      cpu: 100m
+      memory: 64Mi
+  initSecurityContext:
+    runAsUser: 1000
+    runAsGroup: 1000
+  podSecurityContext:
+    fsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 2Gi
+  probes:
+    liveness:
+      initialDelaySeconds: 60
+      periodSeconds: 30
+      timeoutSeconds: 10
+    readiness:
+      initialDelaySeconds: 15
+      periodSeconds: 10
+      timeoutSeconds: 5
+  service:
+    type: ClusterIP
+    port: 18789
+  persistence:
+    enabled: true
+    storageClass: ""
+    accessModes:
+      - ReadWriteOnce
+    size: 10Gi
+    existingClaim: ""
+  # Required when enabled unless existingSecret is set (openssl rand -hex 24).
+  gatewayToken: ""
+  # Use an existing Secret with OPENCLAW_GATEWAY_TOKEN (and optional provider keys) instead of chart-created Secret.
+  existingSecret: ""
+  anthropicApiKey: ""
+  openaiApiKey: ""
+  geminiApiKey: ""
+  openrouterApiKey: ""
+  # Full JSON for openclaw.json; empty uses chart default (loopback gateway + token auth).
+  openclawJson: ""
+  agentsMd: |
+    # OpenClaw Assistant
+
+    You are a helpful AI assistant running in Kubernetes (deployed by the ClawQL Helm chart).
+    ClawQL MCP is pre-registered under `mcp.servers` — use `search` then `execute` for API operations.
+  # Auto-register in-cluster ClawQL Streamable HTTP MCP in default openclaw.json (`mcp.servers`).
+  clawqlMcp:
+    enabled: true
+    serverName: clawql
+    # Override full URL (e.g. Tailscale / Ingress). Empty: chart computes cluster DNS
+    # (MCP Service, or mcpProxy Service when mcpProxy.enabled).
+    url: ""
+    # Optional Bearer for MCP chokepoint / JWT (OpenClaw resolves ${CLAWQL_MCP_BEARER_TOKEN} in headers).
+    bearerToken: ""
+    bearerTokenSecret:
+      name: ""
+      key: CLAWQL_MCP_BEARER_TOKEN
+  # HTTP shim for dashboard Agent Chat (`POST /v1/chat` → `openclaw agent`). Sidecar in the OpenClaw pod.
+  chatBridge:
+    enabled: true
+    port: 8787
+    host: "0.0.0.0"
+    agentId: main
+    openclawBin: node
+    openclawCliEntry: /app/dist/index.js
+    timeoutSec: 120
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      runAsGroup: 1000
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop:
+          - ALL
+    extraEnv: []
+  podAnnotations: {}
+  extraEnv: []
+
+# Goose agent runtime (optional) — Block Goose CLI pool; implements AgentRuntime target (see contributor spec §1.5).
+# Default image is upstream `ghcr.io/aaif-goose/goose` (not yet mirrored). Scale `replicaCount` on demand;
+# full task API / checkpoint resume is Operator-era — this chart ships a stateful idle pool + ClawQL MCP URL.
+goose:
+  enabled: false
+  replicaCount: 0
+  maxReplicas: 50
+  image:
+    repository: ghcr.io/aaif-goose/goose
+    tag: latest
+    pullPolicy: IfNotPresent
+  provider: openai
+  model: gpt-4o
+  existingSecret: ""
+  openaiApiKey: ""
+  anthropicApiKey: ""
+  clawqlMcp:
+    enabled: true
+    url: ""
+  persistence:
+    enabled: true
+    mountPath: /opt/clawql/goose
+    storageClass: ""
+    accessModes:
+      - ReadWriteOnce
+    size: 50Gi
+    existingClaim: ""
+  podSecurityContext:
+    fsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: false
+    capabilities:
+      drop:
+        - ALL
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: "2"
+      memory: 2Gi
+  # Placeholder until AgentRuntime HTTP/task API lands — keeps pods alive for PVC + env wiring checks.
+  idleCommand:
+    - sleep
+    - infinity
+  podAnnotations: {}
+  extraEnv: []
+
+# Hermes — natural-language platform ops (`@hermes …` in dashboard). No separate container; enables dashboard flag.
+hermes:
+  enabled: false
+
 # Kyverno ClusterPolicy: require Cosign (keyless / GitHub Actions) for ClawQL GHCR images (default on).
 # Prerequisite: Kyverno installed in the cluster (CRD kyverno.io/v1 ClusterPolicy). For clusters without
 # Kyverno, set kyverno.imageSignaturePolicy.enabled=false before install, or install Kyverno first.
@@ -890,6 +1073,8 @@ kyverno:
       - "ghcr.io/danielsmithdevelopment/clawql-panguard-mcp-bridge*"
       - "ghcr.io/danielsmithdevelopment/clawql-website*"
       - "ghcr.io/danielsmithdevelopment/clawql-dashboard*"
+      # OpenClaw vendor mirror (same Cosign identity as clawql-* — see container-mirror workflow).
+      - "ghcr.io/danielsmithdevelopment/openclaw-vendor*"
     # Optional: docker-registry Secrets in namespace **kyverno** for verifyImages when GHCR packages are private.
     # Upstream images are public; `make local-k8s-up` only creates **clawql-kyverno-ghcr-pull** when
     # `CLAWQL_KYVERNO_GHCR_PULL_TOKEN` or `GITHUB_TOKEN` / `GH_TOKEN` / `CLAWQL_GITHUB_TOKEN` is set (set

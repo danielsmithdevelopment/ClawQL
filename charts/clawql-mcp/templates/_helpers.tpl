@@ -86,6 +86,98 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- printf "%s-flink" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
+{{- define "clawql-mcp.openclawDeploymentName" -}}
+{{- printf "%s-openclaw" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{- define "clawql-mcp.openclawSecretName" -}}
+{{- if .Values.openclaw.existingSecret }}
+{{- .Values.openclaw.existingSecret | trunc 63 | trimSuffix "-" }}
+{{- else }}
+{{- printf "%s-openclaw-secrets" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+{{- end }}
+
+{{- define "clawql-mcp.openclawConfigMapName" -}}
+{{- printf "%s-openclaw-config" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{- define "clawql-mcp.openclawPvcName" -}}
+{{- printf "%s-openclaw-home" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{- define "clawql-mcp.openclawLabels" -}}
+{{ include "clawql-mcp.labels" . }}
+app.kubernetes.io/component: openclaw
+{{- end }}
+
+{{- define "clawql-mcp.openclawSelectorLabels" -}}
+{{ include "clawql-mcp.selectorLabels" . }}
+app.kubernetes.io/component: openclaw
+{{- end }}
+
+{{/* In-cluster Streamable HTTP MCP URL for OpenClaw (mcp.servers). Honors mcpProxy when enabled. */}}
+{{- define "clawql-mcp.openclawClawqlMcpUrl" -}}
+{{- if .Values.openclaw.clawqlMcp.url -}}
+{{- .Values.openclaw.clawqlMcp.url -}}
+{{- else if .Values.mcpProxy.enabled -}}
+{{- printf "http://%s.%s.svc.cluster.local:%v%s" (include "clawql-mcp.mcpProxyName" .) .Release.Namespace (.Values.mcpProxy.service.http.port | int) .Values.mcpPath -}}
+{{- else -}}
+{{- printf "http://%s.%s.svc.cluster.local:%v%s" (include "clawql-mcp.fullname" .) .Release.Namespace (.Values.service.http.port | int) .Values.mcpPath -}}
+{{- end -}}
+{{- end }}
+
+{{/* Dashboard Agent Chat → OpenClaw chat-bridge HTTP endpoint (POST /v1/chat). */}}
+{{- define "clawql-mcp.openclawChatBridgeUrl" -}}
+{{- printf "http://%s.%s.svc.cluster.local:%v/v1/chat" (include "clawql-mcp.openclawDeploymentName" .) .Release.Namespace (.Values.openclaw.chatBridge.port | int) -}}
+{{- end }}
+
+{{/* In-cluster ClawQL MCP URL for Goose (CLAWQL_MCP_URL). */}}
+{{- define "clawql-mcp.gooseClawqlMcpUrl" -}}
+{{- if .Values.goose.clawqlMcp.url -}}
+{{- .Values.goose.clawqlMcp.url -}}
+{{- else if .Values.mcpProxy.enabled -}}
+{{- printf "http://%s.%s.svc.cluster.local:%v%s" (include "clawql-mcp.mcpProxyName" .) .Release.Namespace (.Values.mcpProxy.service.http.port | int) .Values.mcpPath -}}
+{{- else -}}
+{{- printf "http://%s.%s.svc.cluster.local:%v%s" (include "clawql-mcp.fullname" .) .Release.Namespace (.Values.service.http.port | int) .Values.mcpPath -}}
+{{- end -}}
+{{- end }}
+
+{{- define "clawql-mcp.gooseDeploymentName" -}}
+{{- printf "%s-goose" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{- define "clawql-mcp.gooseSecretName" -}}
+{{- if .Values.goose.existingSecret }}
+{{- .Values.goose.existingSecret | trunc 63 | trimSuffix "-" }}
+{{- else }}
+{{- printf "%s-goose-secrets" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+{{- end }}
+
+{{- define "clawql-mcp.goosePvcName" -}}
+{{- printf "%s-goose-state" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{- define "clawql-mcp.gooseLabels" -}}
+{{ include "clawql-mcp.labels" . }}
+app.kubernetes.io/component: goose
+{{- end }}
+
+{{- define "clawql-mcp.gooseSelectorLabels" -}}
+{{ include "clawql-mcp.selectorLabels" . }}
+app.kubernetes.io/component: goose
+{{- end }}
+
+{{/* Resolved dashboard OpenClaw chat URL: explicit value or auto from openclaw chat bridge. */}}
+{{- define "clawql-mcp.dashboardOpenclawChatUrl" -}}
+{{- if .Values.dashboard.openclawChatUrl -}}
+{{- .Values.dashboard.openclawChatUrl -}}
+{{- else if and .Values.openclaw.enabled .Values.openclaw.chatBridge.enabled -}}
+{{- include "clawql-mcp.openclawChatBridgeUrl" . -}}
+{{- end -}}
+{{- end }}
+
 {{- define "clawql-mcp.flinkJobManagerName" -}}
 {{- printf "%s-jobmanager" (include "clawql-mcp.flinkName" .) | trunc 63 | trimSuffix "-" }}
 {{- end }}

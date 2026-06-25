@@ -1,0 +1,17 @@
+{{- if and .Values.goose.enabled .Values.goose.persistence.enabled (not .Values.goose.persistence.existingClaim) }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "clawql-mcp.goosePvcName" . }}
+  labels:
+    {{- include "clawql-mcp.gooseLabels" . | nindent 4 }}
+spec:
+  accessModes:
+    {{- toYaml .Values.goose.persistence.accessModes | nindent 4 }}
+  {{- if .Values.goose.persistence.storageClass }}
+  storageClassName: {{ .Values.goose.persistence.storageClass | quote }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.goose.persistence.size | quote }}
+{{- end }}

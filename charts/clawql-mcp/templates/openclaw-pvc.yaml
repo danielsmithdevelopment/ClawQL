@@ -1,0 +1,17 @@
+{{- if and .Values.openclaw.enabled .Values.openclaw.persistence.enabled (not .Values.openclaw.persistence.existingClaim) }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "clawql-mcp.openclawPvcName" . }}
+  labels:
+    {{- include "clawql-mcp.openclawLabels" . | nindent 4 }}
+spec:
+  accessModes:
+    {{- toYaml .Values.openclaw.persistence.accessModes | nindent 4 }}
+  resources:
+    requests:
+      storage: {{ .Values.openclaw.persistence.size | quote }}
+  {{- if .Values.openclaw.persistence.storageClass }}
+  storageClassName: {{ .Values.openclaw.persistence.storageClass | quote }}
+  {{- end }}
+{{- end }}

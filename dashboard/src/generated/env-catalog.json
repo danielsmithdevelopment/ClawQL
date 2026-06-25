@@ -98,6 +98,14 @@
           "sensitive": true
         },
         {
+          "key": "CLAWQL_KYVERNO_GHCR_PULL_TOKEN",
+          "sensitive": true
+        },
+        {
+          "key": "CLAWQL_GHCR_PULL_USERNAME",
+          "sensitive": false
+        },
+        {
           "key": "LINEAR_API_KEY",
           "sensitive": true
         },
@@ -126,11 +134,19 @@
           "sensitive": true
         },
         {
+          "key": "STIRLING_OPENAPI_PATHS",
+          "sensitive": false
+        },
+        {
           "key": "TIKA_BASE_URL",
           "sensitive": false
         },
         {
           "key": "GOTENBERG_BASE_URL",
+          "sensitive": false
+        },
+        {
+          "key": "GOTENBERG_OPENAPI_PIN_URL",
           "sensitive": false
         },
         {
@@ -195,7 +211,19 @@
           "sensitive": false
         },
         {
+          "key": "GRPC_MAX_MESSAGE_LENGTH",
+          "sensitive": false
+        },
+        {
           "key": "GRPC_PORT",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_MCP_GRPC_ADDR",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_MCP_TRANSPORT",
           "sensitive": false
         },
         {

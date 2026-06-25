@@ -1,0 +1,96 @@
+# Mirror selected third-party container images into this org's GHCR, gated the same way as
+# first-party images: **Trivy** on the exact OCI bytes pulled (**HIGH** / **CRITICAL**, `.trivyignore`),
+# then **`skopeo copy`** to GHCR (no rebuild), then **Cosign** keyless (**v2**, `--recursive` for
+# multi-arch indexes). If Trivy fails, nothing is pushed or signed — rolling tags do not advance.
+#
+# Pair with Helm `openclaw.image.repository: ghcr.io/danielsmithdevelopment/openclaw-vendor` (or pass
+# `--set`) and Kyverno `imageReferences` including `ghcr.io/danielsmithdevelopment/openclaw-vendor*`
+# (chart default includes this after merge).
+#
+# Upstream may ship vulnerabilities ClawQL does not ignore in `.trivyignore`; either add narrow
+# ignores (documented) or pin an older upstream digest in the matrix until upstream fixes land.
+name: Container mirror (vendor images)
+
+on:
+  schedule:
+    # Daily, after docker-publish (06:00 UTC) — adjust if both compete for quota.
+    - cron: "45 7 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: container-mirror-${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+
+env:
+  TRIVY_SCAN_IMAGE: ghcr.io/aquasecurity/trivy:0.59.1
+  # Destination registry/package for OpenClaw mirror (must match Kyverno imageReferences glob).
+  OPENCLAW_MIRROR_IMAGE: ghcr.io/danielsmithdevelopment/openclaw-vendor
+
+jobs:
+  mirror-openclaw-slim:
+    name: Mirror OpenClaw slim
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install skopeo
+        run: sudo apt-get update && sudo apt-get install -y skopeo
+
+      - name: Copy upstream image to local OCI layout (no GHCR write yet)
+        run: |
+          set -euo pipefail
+          SRC_UPSTREAM="docker://ghcr.io/openclaw/openclaw:slim"
+          DEST_LOCAL="oci:${RUNNER_TEMP}/openclaw-mirror-oci"
+          rm -rf "${RUNNER_TEMP}/openclaw-mirror-oci"
+          skopeo copy --all "${SRC_UPSTREAM}" "${DEST_LOCAL}"
+
+      - name: Trivy scan OCI layout (HIGH / CRITICAL — gate before registry push)
+        run: |
+          set -euo pipefail
+          docker run --rm \
+            -v "${GITHUB_WORKSPACE}:/repo:ro" \
+            -v "${RUNNER_TEMP}/openclaw-mirror-oci:/work/oci:ro" \
+            "${{ env.TRIVY_SCAN_IMAGE }}" \
+            image \
+            --scanners vuln \
+            --severity HIGH,CRITICAL \
+            --exit-code 1 \
+            --ignorefile /repo/.trivyignore \
+            --input /work/oci
+
+      - name: Push scanned bytes to GHCR (skopeo — same layout Trivy scanned)
+        id: push
+        run: |
+          set -euo pipefail
+          AUTH=(--authfile "${DOCKER_CONFIG:-$HOME/.docker}/config.json")
+          SRC="oci:${RUNNER_TEMP}/openclaw-mirror-oci"
+          DEST_BASE="${{ env.OPENCLAW_MIRROR_IMAGE }}"
+          DATE_TAG="$(date -u +%Y%m%d)"
+          # Rolling tag that tracks upstream :slim; digest is the verification unit for Cosign/Kyverno.
+          skopeo copy "${AUTH[@]}" --all "${SRC}" "docker://${DEST_BASE}:slim"
+          DIGEST="$(skopeo inspect "${AUTH[@]}" "docker://${DEST_BASE}:slim" --format '{{.Digest}}')"
+          # Additional labels on the same digest (no second upload of layer bytes).
+          skopeo copy "${AUTH[@]}" "docker://${DEST_BASE}@${DIGEST}" "docker://${DEST_BASE}:mirror-${DATE_TAG}"
+          skopeo copy "${AUTH[@]}" "docker://${DEST_BASE}@${DIGEST}" "docker://${DEST_BASE}:run-${{ github.run_id }}"
+          echo "digest=${DIGEST}" >> "$GITHUB_OUTPUT"
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@b5e753ae2d39589c7b38850b463739151fc67f07
+        with:
+          cosign-release: v2.4.3
+
+      - name: Cosign sign (keyless, recursive — same identity as docker-publish / Kyverno policy)
+        if: ${{ steps.push.outputs.digest != '' }}
+        run: cosign sign --yes --recursive "${{ env.OPENCLAW_MIRROR_IMAGE }}@${{ steps.push.outputs.digest }}"

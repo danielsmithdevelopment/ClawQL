@@ -1,0 +1,250 @@
+{{- if .Values.openclaw.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "clawql-mcp.openclawDeploymentName" . }}
+  labels:
+    {{- include "clawql-mcp.openclawLabels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.openclaw.replicaCount }}
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "clawql-mcp.openclawSelectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "clawql-mcp.openclawSelectorLabels" . | nindent 8 }}
+      {{- with .Values.openclaw.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      automountServiceAccountToken: false
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.openclaw.podSecurityContext | nindent 8 }}
+      initContainers:
+        - name: init-config
+          image: "{{ .Values.openclaw.initImage.repository }}:{{ .Values.openclaw.initImage.tag }}"
+          imagePullPolicy: {{ .Values.openclaw.initImage.pullPolicy }}
+          command:
+            - sh
+            - -c
+            - |
+              cp /config/openclaw.json /home/node/.openclaw/openclaw.json
+              mkdir -p /home/node/.openclaw/workspace
+              cp /config/AGENTS.md /home/node/.openclaw/workspace/AGENTS.md
+          securityContext:
+            {{- toYaml .Values.openclaw.initSecurityContext | nindent 12 }}
+          resources:
+            {{- toYaml .Values.openclaw.initResources | nindent 12 }}
+          volumeMounts:
+            - name: openclaw-home
+              mountPath: /home/node/.openclaw
+            - name: config
+              mountPath: /config
+      containers:
+        - name: gateway
+          image: "{{ .Values.openclaw.image.repository }}:{{ .Values.openclaw.image.tag }}"
+          imagePullPolicy: {{ .Values.openclaw.image.pullPolicy }}
+          command:
+            - node
+            - /app/dist/index.js
+            - gateway
+            - run
+          ports:
+            - name: gateway
+              containerPort: {{ .Values.openclaw.gateway.port }}
+              protocol: TCP
+          env:
+            - name: HOME
+              value: /home/node
+            - name: OPENCLAW_CONFIG_DIR
+              value: /home/node/.openclaw
+            - name: NODE_ENV
+              value: production
+            - name: OPENCLAW_GATEWAY_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "clawql-mcp.openclawSecretName" . }}
+                  key: OPENCLAW_GATEWAY_TOKEN
+            - name: ANTHROPIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "clawql-mcp.openclawSecretName" . }}
+                  key: ANTHROPIC_API_KEY
+                  optional: true
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "clawql-mcp.openclawSecretName" . }}
+                  key: OPENAI_API_KEY
+                  optional: true
+            - name: GEMINI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "clawql-mcp.openclawSecretName" . }}
+                  key: GEMINI_API_KEY
+                  optional: true
+            - name: OPENROUTER_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "clawql-mcp.openclawSecretName" . }}
+                  key: OPENROUTER_API_KEY
+                  optional: true
+            {{- if and .Values.openclaw.clawqlMcp.enabled (or .Values.openclaw.clawqlMcp.bearerToken .Values.openclaw.clawqlMcp.bearerTokenSecret.name) }}
+            - name: CLAWQL_MCP_BEARER_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  {{- if .Values.openclaw.clawqlMcp.bearerTokenSecret.name }}
+                  name: {{ .Values.openclaw.clawqlMcp.bearerTokenSecret.name }}
+                  key: {{ .Values.openclaw.clawqlMcp.bearerTokenSecret.key | default "CLAWQL_MCP_BEARER_TOKEN" }}
+                  {{- else }}
+                  name: {{ include "clawql-mcp.openclawSecretName" . }}
+                  key: CLAWQL_MCP_BEARER_TOKEN
+                  {{- end }}
+            {{- end }}
+          {{- with .Values.openclaw.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.openclaw.resources | nindent 12 }}
+          {{- $gp := .Values.openclaw.gateway.port | int }}
+          livenessProbe:
+            exec:
+              command:
+                - node
+                - -e
+                - {{ printf "require('http').get('http://127.0.0.1:%d/healthz', r => process.exit(r.statusCode < 400 ? 0 : 1)).on('error', () => process.exit(1))" $gp | quote }}
+            initialDelaySeconds: {{ .Values.openclaw.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.openclaw.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.openclaw.probes.liveness.timeoutSeconds }}
+          readinessProbe:
+            exec:
+              command:
+                - node
+                - -e
+                - {{ printf "require('http').get('http://127.0.0.1:%d/readyz', r => process.exit(r.statusCode < 400 ? 0 : 1)).on('error', () => process.exit(1))" $gp | quote }}
+            initialDelaySeconds: {{ .Values.openclaw.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.openclaw.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.openclaw.probes.readiness.timeoutSeconds }}
+          volumeMounts:
+            - name: openclaw-home
+              mountPath: /home/node/.openclaw
+            - name: tmp-volume
+              mountPath: /tmp
+          securityContext:
+            {{- toYaml .Values.openclaw.securityContext | nindent 12 }}
+        {{- if .Values.openclaw.chatBridge.enabled }}
+        - name: chat-bridge
+          image: "{{ .Values.openclaw.image.repository }}:{{ .Values.openclaw.image.tag }}"
+          imagePullPolicy: {{ .Values.openclaw.image.pullPolicy }}
+          command:
+            - node
+            - /bridge/openclaw-chat-bridge.mjs
+          ports:
+            - name: chat
+              containerPort: {{ .Values.openclaw.chatBridge.port }}
+              protocol: TCP
+          env:
+            - name: OPENCLAW_CHAT_BRIDGE_HOST
+              value: {{ .Values.openclaw.chatBridge.host | quote }}
+            - name: OPENCLAW_CHAT_BRIDGE_PORT
+              value: {{ .Values.openclaw.chatBridge.port | quote }}
+            - name: CLAWQL_OPENCLAW_AGENT_ID
+              value: {{ .Values.openclaw.chatBridge.agentId | quote }}
+            - name: OPENCLAW_BIN
+              value: {{ .Values.openclaw.chatBridge.openclawBin | quote }}
+            - name: OPENCLAW_CLI_ENTRY
+              value: {{ .Values.openclaw.chatBridge.openclawCliEntry | quote }}
+            - name: OPENCLAW_AGENT_TIMEOUT_SEC
+              value: {{ .Values.openclaw.chatBridge.timeoutSec | quote }}
+            - name: HOME
+              value: /home/node
+            - name: OPENCLAW_CONFIG_DIR
+              value: /home/node/.openclaw
+            - name: NODE_ENV
+              value: production
+            - name: OPENCLAW_GATEWAY_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "clawql-mcp.openclawSecretName" . }}
+                  key: OPENCLAW_GATEWAY_TOKEN
+            - name: ANTHROPIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "clawql-mcp.openclawSecretName" . }}
+                  key: ANTHROPIC_API_KEY
+                  optional: true
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "clawql-mcp.openclawSecretName" . }}
+                  key: OPENAI_API_KEY
+                  optional: true
+            - name: GEMINI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "clawql-mcp.openclawSecretName" . }}
+                  key: GEMINI_API_KEY
+                  optional: true
+            - name: OPENROUTER_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "clawql-mcp.openclawSecretName" . }}
+                  key: OPENROUTER_API_KEY
+                  optional: true
+          {{- with .Values.openclaw.chatBridge.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: chat
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: chat
+            initialDelaySeconds: 15
+            periodSeconds: 30
+            timeoutSeconds: 5
+          resources:
+            {{- toYaml .Values.openclaw.chatBridge.resources | nindent 12 }}
+          volumeMounts:
+            - name: openclaw-home
+              mountPath: /home/node/.openclaw
+            - name: chat-bridge
+              mountPath: /bridge
+              readOnly: true
+            - name: tmp-volume
+              mountPath: /tmp
+          securityContext:
+            {{- toYaml .Values.openclaw.chatBridge.securityContext | nindent 12 }}
+        {{- end }}
+      volumes:
+        - name: openclaw-home
+          {{- if .Values.openclaw.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ default (include "clawql-mcp.openclawPvcName" .) .Values.openclaw.persistence.existingClaim }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        - name: config
+          configMap:
+            name: {{ include "clawql-mcp.openclawConfigMapName" . }}
+        {{- if .Values.openclaw.chatBridge.enabled }}
+        - name: chat-bridge
+          configMap:
+            name: {{ include "clawql-mcp.openclawDeploymentName" . }}-chat-bridge
+        {{- end }}
+        - name: tmp-volume
+          emptyDir: {}
+{{- end }}

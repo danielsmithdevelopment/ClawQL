@@ -4,6 +4,7 @@ import { Plus } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { formatThreadUpdatedAt } from '@/lib/chat-storage'
 import { cn } from '@/lib/utils'
 
 import type { ChatThread } from './types'
@@ -15,6 +16,7 @@ export function ChatThreadsSidebar({
   onNewChat,
   filter,
   onFilterChange,
+  loading = false,
 }: {
   threads: ChatThread[]
   selectedId: string | null
@@ -22,6 +24,7 @@ export function ChatThreadsSidebar({
   onNewChat: () => void
   filter: string
   onFilterChange: (v: string) => void
+  loading?: boolean
 }) {
   return (
     <aside className="flex h-full min-h-0 flex-col border-r border-white/10 bg-zinc-900/40">
@@ -38,6 +41,14 @@ export function ChatThreadsSidebar({
         </Button>
       </div>
       <ul className="min-h-0 flex-1 space-y-0.5 overflow-y-auto p-2">
+        {loading ? (
+          <li className="px-3 py-6 text-center text-xs text-zinc-500">Loading chats from vault…</li>
+        ) : threads.length === 0 ? (
+          <li className="px-3 py-6 text-center text-xs text-zinc-500">
+            No chats yet. Press <span className="font-medium text-zinc-400">+</span> to start one — history is saved under{' '}
+            <span className="font-mono text-zinc-400">~/.ClawQL/Dashboard/chats/</span>.
+          </li>
+        ) : null}
         {threads.map((t) => {
           const sel = t.id === selectedId
           return (
@@ -50,20 +61,8 @@ export function ChatThreadsSidebar({
                   sel ? 'border-l-2 border-l-orange-500 bg-orange-500/10 pl-[10px]' : 'hover:bg-white/5',
                 )}
               >
-                <span className="flex items-center gap-2 font-medium text-zinc-100">
-                  {t.dot ? (
-                    <span
-                      className={cn(
-                        'size-1.5 shrink-0 rounded-full',
-                        t.dot === 'green' && 'bg-emerald-500',
-                        t.dot === 'amber' && 'bg-amber-500',
-                        t.dot === 'zinc' && 'bg-zinc-600',
-                      )}
-                    />
-                  ) : null}
-                  {t.title}
-                </span>
-                <span className="text-[11px] text-zinc-500">{t.updatedAtLabel}</span>
+                <span className="font-medium text-zinc-100">{t.title}</span>
+                <span className="text-[11px] text-zinc-500">{formatThreadUpdatedAt(t.updatedAt)}</span>
               </button>
             </li>
           )

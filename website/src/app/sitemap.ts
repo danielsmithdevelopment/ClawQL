@@ -191,6 +191,11 @@ const ENTRIES: Array<Entry> = [
     changeFrequency: 'monthly',
     priority: 0.78,
   },
+  {
+    path: '/case-studies/openclaw-clawql-memory-recall-2026-06',
+    changeFrequency: 'monthly',
+    priority: 0.8,
+  },
 ]
 
 function trainingSitemapEntries(): Entry[] {

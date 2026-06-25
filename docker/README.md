@@ -70,7 +70,7 @@ cosign verify "$IMAGE" \
   --certificate-oidc-issuer-regexp 'https://token\.actions\.githubusercontent\.com.*'
 ```
 
-Use the same **`cosign verify`** pattern for **`ghcr.io/danielsmithdevelopment/clawql-website@sha256:…`** and **`ghcr.io/danielsmithdevelopment/clawql-dashboard@sha256:…`** (same identity regexes). If you fork the repo, adjust the **`certificate-identity-regexp`** to match your GitHub org/repo.
+Use the same **`cosign verify`** pattern for **`ghcr.io/danielsmithdevelopment/clawql-website@sha256:…`**, **`ghcr.io/danielsmithdevelopment/clawql-dashboard@sha256:…`**, and **vendor mirrors** (e.g. OpenClaw **`ghcr.io/danielsmithdevelopment/openclaw-vendor`**) — same identity regexes; OpenClaw mirrors are built by **[`.github/workflows/container-mirror.yml`](../.github/workflows/container-mirror.yml)** (Trivy-gated **`skopeo copy`**, no rebuild). If you fork the repo, adjust the **`certificate-identity-regexp`** to match your GitHub org/repo.
 
 **Cluster enforcement:** CI signing does not, by itself, stop someone from applying an unsigned image. For **admission-time** enforcement (e.g. Kyverno **`verifyImages`** + digest pins), see **[`docs/security/image-signature-enforcement.md`](../docs/security/image-signature-enforcement.md)**.
 

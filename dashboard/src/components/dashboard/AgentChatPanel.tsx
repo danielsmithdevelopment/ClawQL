@@ -1,60 +1,21 @@
 'use client'
 
 import { Loader2, SendHorizontal } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import {
+  fetchChatMessages,
+  patchChatThreadApi,
+  saveChatMessagesApi,
+  titleFromFirstMessage,
+} from '@/lib/chat-storage'
 import { cn } from '@/lib/utils'
 
-type ToolStep = { label: string; state: 'done' | 'active' | 'pending' }
+import type { ChatAgentMessage, ChatMessage, ChatThread, ChatToolStep } from './types'
 
-type AgentBubble = {
-  kind: 'agent'
-  id: string
-  status: 'running' | 'queued' | 'done'
-  intro: string
-  steps?: ToolStep[]
-}
-
-type UserBubble = { kind: 'user'; id: string; text: string }
-
-type Bubble = UserBubble | AgentBubble
-
-const DEMO_BY_THREAD: Record<string, Bubble[]> = {
-  'thread-1': [
-    {
-      kind: 'user',
-      id: 'u1',
-      text: 'Pull the Q1 revenue data from Snowflake and cross-reference with the Stripe invoice breakdown. Flag accounts with >15% MoM decline.',
-    },
-    {
-      kind: 'agent',
-      id: 'a1',
-      status: 'running',
-      intro: 'On it. Querying Snowflake now…',
-      steps: [
-        { label: 'Connected to Snowflake…', state: 'done' },
-        { label: 'Fetched 2,847 account rows…', state: 'done' },
-        { label: 'Joined with Stripe invoice data…', state: 'done' },
-        { label: 'Calculating MoM delta per account…', state: 'active' },
-        { label: 'Analyzing revenue trends…', state: 'pending' },
-      ],
-    },
-    {
-      kind: 'agent',
-      id: 'a2',
-      status: 'queued',
-      intro: 'QUEUED — Waiting on Snowflake result',
-      steps: [
-        { label: 'Stream results to dashboard…', state: 'pending' },
-        { label: 'Compose summary table…', state: 'pending' },
-      ],
-    },
-  ],
-}
-
-function StepIcon({ state }: { state: ToolStep['state'] }) {
+function StepIcon({ state }: { state: ChatToolStep['state'] }) {
   if (state === 'done') {
     return <span className="text-emerald-500">✓</span>
   }
@@ -64,16 +25,59 @@ function StepIcon({ state }: { state: ToolStep['state'] }) {
   return <span className="text-zinc-600">⋯</span>
 }
 
-export function AgentChatPanel({ threadId, threadTitle }: { threadId: string; threadTitle: string }) {
-  const seed = useMemo(() => DEMO_BY_THREAD[threadId] ?? [], [threadId])
-  const [bubbles, setBubbles] = useState<Bubble[]>(seed)
+export function AgentChatPanel({
+  threadId,
+  threadTitle,
+  onThreadActivity,
+  onThreadMetaFromServer,
+}: {
+  threadId: string
+  threadTitle: string
+  onThreadActivity?: (patch: { title?: string; updatedAt: number }) => void
+  onThreadMetaFromServer?: (thread: ChatThread) => void
+}) {
+  const [bubbles, setBubbles] = useState<ChatMessage[]>([])
+  const [messagesLoadedFor, setMessagesLoadedFor] = useState<string | null>(null)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
   const [proxyHint, setProxyHint] = useState<string | null>(null)
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
-    setBubbles(DEMO_BY_THREAD[threadId] ?? [])
+    let cancelled = false
+    void (async () => {
+      setLoadError(null)
+      try {
+        const messages = await fetchChatMessages(threadId)
+        if (cancelled) return
+        setBubbles(messages)
+        setMessagesLoadedFor(threadId)
+      } catch (e) {
+        if (!cancelled) {
+          setLoadError(e instanceof Error ? e.message : 'Failed to load messages')
+          setBubbles([])
+          setMessagesLoadedFor(threadId)
+        }
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
   }, [threadId])
+
+  useEffect(() => {
+    if (messagesLoadedFor !== threadId) return
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+    saveTimerRef.current = setTimeout(() => {
+      void saveChatMessagesApi(threadId, bubbles).catch(() => {
+        setLoadError('Failed to save messages to vault')
+      })
+    }, 400)
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+    }
+  }, [threadId, bubbles, messagesLoadedFor])
 
   useEffect(() => {
     let cancelled = false
@@ -97,13 +101,31 @@ export function AgentChatPanel({ threadId, threadTitle }: { threadId: string; th
     }
   }, [])
 
+  const touchThread = useCallback(
+    async (patch?: { title?: string }) => {
+      const updatedAt = Date.now()
+      onThreadActivity?.({ ...patch, updatedAt })
+      try {
+        const thread = await patchChatThreadApi(threadId, { ...patch, updatedAt })
+        onThreadMetaFromServer?.(thread)
+      } catch {
+        /* index may still update from activity callback */
+      }
+    },
+    [onThreadActivity, onThreadMetaFromServer, threadId],
+  )
+
   const send = useCallback(async () => {
     const text = input.trim()
     if (!text || sending) return
     setInput('')
     setSending(true)
     const uid = `u-${Date.now()}`
+    const isFirstUserMessage = bubbles.every((b) => b.kind !== 'user')
     setBubbles((prev) => [...prev, { kind: 'user', id: uid, text }])
+    void touchThread(
+      isFirstUserMessage && threadTitle === 'New chat' ? { title: titleFromFirstMessage(text) } : undefined,
+    )
 
     try {
       const r = await fetch('/api/agent/chat', {
@@ -115,31 +137,29 @@ export function AgentChatPanel({ threadId, threadTitle }: { threadId: string; th
         reply?: string
         demo?: boolean
         error?: string
-        steps?: ToolStep[]
+        steps?: ChatToolStep[]
       }
       if (!r.ok) {
-        setBubbles((prev) => [
-          ...prev,
-          {
-            kind: 'agent',
-            id: `a-${Date.now()}`,
-            status: 'done',
-            intro: data.error ?? r.statusText,
-            steps: [],
-          },
-        ])
-        return
-      }
-      setBubbles((prev) => [
-        ...prev,
-        {
+        const agentMsg: ChatAgentMessage = {
           kind: 'agent',
           id: `a-${Date.now()}`,
           status: 'done',
-          intro: data.reply ?? '(empty response)',
-          steps: data.steps,
-        },
-      ])
+          intro: data.error ?? r.statusText,
+          steps: [],
+        }
+        setBubbles((prev) => [...prev, agentMsg])
+        void touchThread()
+        return
+      }
+      const agentMsg: ChatAgentMessage = {
+        kind: 'agent',
+        id: `a-${Date.now()}`,
+        status: 'done',
+        intro: data.reply ?? '(empty response)',
+        steps: data.steps,
+      }
+      setBubbles((prev) => [...prev, agentMsg])
+      void touchThread()
       if (data.demo) {
         setProxyHint(
           'Demo mode: configure CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL to stream from your bundled OpenClaw service.',
@@ -155,10 +175,11 @@ export function AgentChatPanel({ threadId, threadTitle }: { threadId: string; th
           intro: e instanceof Error ? e.message : 'Request failed',
         },
       ])
+      void touchThread()
     } finally {
       setSending(false)
     }
-  }, [input, sending, threadTitle, threadId])
+  }, [input, sending, threadTitle, threadId, bubbles, touchThread])
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-zinc-950">
@@ -166,11 +187,9 @@ export function AgentChatPanel({ threadId, threadTitle }: { threadId: string; th
         <div>
           <h1 className="text-lg font-semibold tracking-tight text-white sm:text-xl">{threadTitle}</h1>
           <p className="mt-1 font-mono text-[11px] text-zinc-500">
+            thread: <span className="text-zinc-400">{threadId}</span>
+            <span className="mx-2 text-zinc-700">·</span>
             agent: <span className="text-zinc-400">claw-main</span>
-            <span className="mx-2 text-zinc-700">·</span>
-            sandbox: <span className="text-zinc-400">docker</span>
-            <span className="mx-2 text-zinc-700">·</span>
-            <span className="text-zinc-500">2m ago</span>
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -191,10 +210,19 @@ export function AgentChatPanel({ threadId, threadTitle }: { threadId: string; th
           {proxyHint}
         </p>
       ) : null}
+      {loadError ? (
+        <p className="shrink-0 border-b border-red-500/20 bg-red-500/10 px-4 py-2 text-xs text-red-200 sm:px-6" role="alert">
+          {loadError}
+        </p>
+      ) : null}
 
       <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-4 py-6 sm:px-6">
-        {bubbles.length === 0 ? (
-          <p className="text-center text-sm text-zinc-500">Start the conversation — messages go to the bundled OpenClaw agent when the chat URL is configured.</p>
+        {messagesLoadedFor !== threadId ? (
+          <p className="text-center text-sm text-zinc-500">Loading conversation…</p>
+        ) : bubbles.length === 0 ? (
+          <p className="text-center text-sm text-zinc-500">
+            Start the conversation — messages persist under your vault and reuse this thread id with OpenClaw.
+          </p>
         ) : null}
         {bubbles.map((b) =>
           b.kind === 'user' ? (
@@ -234,7 +262,7 @@ export function AgentChatPanel({ threadId, threadTitle }: { threadId: string; th
                     )}
                   </span>
                 </div>
-                <p className="text-sm text-zinc-200">{b.intro}</p>
+                <p className="whitespace-pre-wrap text-sm text-zinc-200">{b.intro}</p>
                 {b.steps && b.steps.length > 0 ? (
                   <div className="rounded-lg border border-white/10 bg-black/40 p-3 font-mono text-[11px] leading-relaxed text-zinc-300">
                     <div className="mb-2 flex items-center justify-between text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
@@ -279,22 +307,6 @@ export function AgentChatPanel({ threadId, threadTitle }: { threadId: string; th
               {sending ? <Loader2 className="size-4 animate-spin" /> : <SendHorizontal className="size-4" />}
             </Button>
           </div>
-          <div className="flex flex-wrap items-center justify-between gap-2 px-1 text-[11px] text-zinc-500">
-            <span>
-              <Button variant="ghost" size="sm" type="button" className="h-7 px-2 text-[11px] text-zinc-400">
-                Attach
-              </Button>
-            </span>
-            <span className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" type="button" className="h-7 px-2 text-[11px] text-zinc-400">
-                Tool
-              </Button>
-              <Button variant="ghost" size="sm" type="button" className="h-7 px-2 text-[11px] text-zinc-400">
-                Tools ▾
-              </Button>
-            </span>
-          </div>
-          <p className="px-1 font-mono text-[10px] text-emerald-500/90">✓ HATS: 24 queued</p>
         </div>
       </div>
     </div>

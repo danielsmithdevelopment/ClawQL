@@ -33,6 +33,9 @@ set -euo pipefail
 # Optional: CLAWQL_ISTIO_HELM_TIMEOUT / CLAWQL_ISTIO_ZTUNNEL_HELM_TIMEOUT — Istio sub-chart --wait (see install-istio-docker-desktop.sh; ztunnel often needs the extra margin).
 # Optional: CLAWQL_SKIP_DOCKER_DESKTOP_MOUNT_RSHARED=1 — skip automatic Docker Desktop VM mount --make-rshared (breaks ambient istio-cni on many setups).
 # Optional: CLAWQL_LOCAL_K8S_FULL_STACK=0 — quick MCP+UI only (skips Onyx/Flink/pipeline/NATS; short helm --wait).
+# Optional: CLAWQL_ENABLE_OPENCLAW=1 — deploy OpenClaw gateway container (Helm `openclaw.enabled=true`).
+# Requires OPENCLAW_GATEWAY_TOKEN (non-empty); passed as `--set-string openclaw.gatewayToken=...`.
+# See https://docs.openclaw.ai/install/kubernetes and charts/clawql-mcp/values.yaml (`openclaw.*`).
 #
 # Optional: CLAWQL_KYVERNO_CHART_VERSION — Kyverno Helm chart version (default 3.7.2).
 #
@@ -143,6 +146,8 @@ if [[ -n "${INSTALL_ISTIO}" ]] && [[ "${CLAWQL_ISTIO_INSTALL_INGRESS_GATEWAY:-1}
 fi
 HELM_TIMEOUT="${CLAWQL_HELM_TIMEOUT:-${_helm_timeout_default}}"
 ISTIO_HEAVY_OBS="${CLAWQL_ISTIO_INSTALL_HEAVY_OBSERVABILITY_ADDONS:-1}"
+ENABLE_OPENCLAW="${CLAWQL_ENABLE_OPENCLAW:-}"
+OPENCLAW_GATEWAY_TOKEN="${OPENCLAW_GATEWAY_TOKEN:-}"
 KYVERNO_CHART_VERSION="${CLAWQL_KYVERNO_CHART_VERSION:-3.7.2}"
 KYVERNO_CRDS_MIGRATION="${CLAWQL_LOCAL_K8S_KYVERNO_CRDS_MIGRATION:-0}"
 VAULT_BACKEND="${CLAWQL_LOCAL_K8S_VAULT_BACKEND:-hostPath}"
@@ -353,10 +358,22 @@ if [[ "${INSTALLER}" == "helm" ]]; then
     HELM_VAULT_ARGS+=(--set "persistence.enabled=true")
   fi
 
+  HELM_OPENCLAW_ARGS=()
+  if [[ "${ENABLE_OPENCLAW}" == "1" ]]; then
+    if [[ -z "${OPENCLAW_GATEWAY_TOKEN}" ]]; then
+      echo "ERROR: CLAWQL_ENABLE_OPENCLAW=1 requires OPENCLAW_GATEWAY_TOKEN (non-empty)."
+      echo "       Example: OPENCLAW_GATEWAY_TOKEN=\$(openssl rand -hex 24) make local-k8s-up"
+      exit 1
+    fi
+    HELM_OPENCLAW_ARGS+=(--set "openclaw.enabled=true")
+    HELM_OPENCLAW_ARGS+=(--set-string "openclaw.gatewayToken=${OPENCLAW_GATEWAY_TOKEN}")
+    echo "==> OpenClaw: enabling Helm sub-workload (openclaw.enabled=true)"
+  fi
+
   set +e
   # set -u: empty-array expansion can trip nounset in some Bash builds; use ${arr[@]+"${arr[@]}"} guards.
   # Single line: avoid `\` continuation bugs that surface as `--wait: command not found` (exit 127).
-  helm_ctx upgrade --install "${RELEASE_NAME}" "${CHART}" --namespace "${NAMESPACE}" --create-namespace -f "${VALUES_LOCAL}" "${HELM_VAULT_ARGS[@]+"${HELM_VAULT_ARGS[@]}"}" "${HELM_QUICK_SET_ARGS[@]+"${HELM_QUICK_SET_ARGS[@]}"}" "${HELM_OFFLOAD_LOCALHOST_INGRESS_ARGS[@]+"${HELM_OFFLOAD_LOCALHOST_INGRESS_ARGS[@]}"}" "${HELM_MCP_SVC_TYPE_ARGS[@]+"${HELM_MCP_SVC_TYPE_ARGS[@]}"}" "${HELM_KYVERNO_GHCR_ARGS[@]+"${HELM_KYVERNO_GHCR_ARGS[@]}"}" --wait --timeout "${HELM_TIMEOUT}"
+  helm_ctx upgrade --install "${RELEASE_NAME}" "${CHART}" --namespace "${NAMESPACE}" --create-namespace -f "${VALUES_LOCAL}" "${HELM_VAULT_ARGS[@]+"${HELM_VAULT_ARGS[@]}"}" "${HELM_QUICK_SET_ARGS[@]+"${HELM_QUICK_SET_ARGS[@]}"}" "${HELM_OFFLOAD_LOCALHOST_INGRESS_ARGS[@]+"${HELM_OFFLOAD_LOCALHOST_INGRESS_ARGS[@]}"}" "${HELM_MCP_SVC_TYPE_ARGS[@]+"${HELM_MCP_SVC_TYPE_ARGS[@]}"}" "${HELM_KYVERNO_GHCR_ARGS[@]+"${HELM_KYVERNO_GHCR_ARGS[@]}"}" "${HELM_OPENCLAW_ARGS[@]+"${HELM_OPENCLAW_ARGS[@]}"}" --wait --timeout "${HELM_TIMEOUT}"
   HELM_EXIT=$?
   set -e
   if [[ "${HELM_EXIT}" -ne 0 ]]; then
