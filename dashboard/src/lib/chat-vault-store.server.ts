@@ -1,13 +1,18 @@
 import { access, appendFile, mkdir, readFile, writeFile } from 'node:fs/promises'
 import { constants } from 'node:fs'
-import { join, resolve, sep } from 'node:path'
+import { dirname } from 'node:path'
 
 import type { ChatAgentMessage, ChatMessage, ChatUserMessage } from '@/components/dashboard/types'
 
-import { getObsidianVaultRoot } from './vault-path.server'
+import { getObsidianVaultRoot, resolveVaultPath } from './vault-path.server'
 
 const INDEX_VERSION = 1
-const THREAD_ID_RE = /^thread-[0-9]+$/
+const THREAD_ID_RE = /^thread-([0-9]+)$/
+const STORAGE_KEY_RE = /^[0-9]+$/
+
+const CHAT_INDEX_REL = 'Dashboard/chats/index.json'
+const CHAT_THREADS_REL = 'Dashboard/chats/threads'
+const AGENT_CHAT_LOG_REL = 'Dashboard/logs/agent-chat.jsonl'
 
 export type ChatThreadMeta = {
   id: string
@@ -27,62 +32,63 @@ export type ChatVaultInfo = {
   writable: boolean
 }
 
-/** Validates and returns a safe thread id for filesystem paths (CodeQL: no traversal). */
-export function sanitizeThreadId(threadId: string): string {
-  const trimmed = threadId.trim()
-  if (!THREAD_ID_RE.test(trimmed)) {
+/** Parsed thread id — storageKey is digits-only for vault-relative paths. */
+export type ParsedThreadId = { id: string; storageKey: string }
+
+export function parseThreadId(threadId: string): ParsedThreadId {
+  const match = THREAD_ID_RE.exec(threadId.trim())
+  if (!match?.[1] || !STORAGE_KEY_RE.test(match[1])) {
     throw new Error('Invalid thread id')
   }
-  return trimmed
+  return { id: `thread-${match[1]}`, storageKey: match[1] }
+}
+
+export function sanitizeThreadId(threadId: string): string {
+  return parseThreadId(threadId).id
 }
 
 export function assertValidThreadId(threadId: string): void {
-  sanitizeThreadId(threadId)
+  parseThreadId(threadId)
 }
 
 export function isValidThreadId(threadId: string): boolean {
-  return THREAD_ID_RE.test(threadId.trim())
+  try {
+    parseThreadId(threadId)
+    return true
+  } catch {
+    return false
+  }
 }
 
-export function chatsRootPath(vaultRoot: string): string {
-  return join(vaultRoot, 'Dashboard', 'chats')
-}
-
-export function logsRootPath(vaultRoot: string): string {
-  return join(vaultRoot, 'Dashboard', 'logs')
+function chatsRootPath(vaultRoot: string): string {
+  return resolveVaultPath(vaultRoot, 'Dashboard/chats')
 }
 
 function indexFilePath(vaultRoot: string): string {
-  return join(chatsRootPath(vaultRoot), 'index.json')
+  return resolveVaultPath(vaultRoot, CHAT_INDEX_REL)
 }
 
-function threadsRootDir(vaultRoot: string): string {
-  return resolve(chatsRootPath(vaultRoot), 'threads')
-}
-
-function threadDir(vaultRoot: string, safeThreadId: string): string {
-  const root = threadsRootDir(vaultRoot)
-  const dir = resolve(root, safeThreadId)
-  if (dir !== root && !dir.startsWith(`${root}${sep}`)) {
-    throw new Error('Invalid thread path')
+function threadDirRel(storageKey: string): string {
+  if (!STORAGE_KEY_RE.test(storageKey)) {
+    throw new Error('Invalid thread storage key')
   }
-  return dir
+  return `${CHAT_THREADS_REL}/${storageKey}`
 }
 
-function metaFilePath(vaultRoot: string, safeThreadId: string): string {
-  return join(threadDir(vaultRoot, safeThreadId), 'meta.json')
+function metaFilePath(vaultRoot: string, storageKey: string): string {
+  return resolveVaultPath(vaultRoot, `${threadDirRel(storageKey)}/meta.json`)
 }
 
-function messagesFilePath(vaultRoot: string, safeThreadId: string): string {
-  return join(threadDir(vaultRoot, safeThreadId), 'messages.jsonl')
+function messagesFilePath(vaultRoot: string, storageKey: string): string {
+  return resolveVaultPath(vaultRoot, `${threadDirRel(storageKey)}/messages.jsonl`)
 }
 
-function activityFilePath(vaultRoot: string, safeThreadId: string): string {
-  return join(threadDir(vaultRoot, safeThreadId), 'activity.jsonl')
+function activityFilePath(vaultRoot: string, storageKey: string): string {
+  return resolveVaultPath(vaultRoot, `${threadDirRel(storageKey)}/activity.jsonl`)
 }
 
 function agentChatLogPath(vaultRoot: string): string {
-  return join(logsRootPath(vaultRoot), 'agent-chat.jsonl')
+  return resolveVaultPath(vaultRoot, AGENT_CHAT_LOG_REL)
 }
 
 export async function getChatVaultInfo(): Promise<ChatVaultInfo> {
@@ -101,7 +107,7 @@ export async function getChatVaultInfo(): Promise<ChatVaultInfo> {
 
 async function ensureChatDirs(vaultRoot: string): Promise<void> {
   await mkdir(chatsRootPath(vaultRoot), { recursive: true })
-  await mkdir(logsRootPath(vaultRoot), { recursive: true })
+  await mkdir(resolveVaultPath(vaultRoot, 'Dashboard/logs'), { recursive: true })
 }
 
 async function readIndex(vaultRoot: string): Promise<ChatIndexFile> {
@@ -149,11 +155,12 @@ export async function listChatThreads(): Promise<{
 export async function createChatThread(title = 'New chat'): Promise<ChatThreadMeta> {
   const vaultRoot = getObsidianVaultRoot()
   const now = new Date().toISOString()
-  const id = sanitizeThreadId(`thread-${Date.now()}`)
+  const { id, storageKey } = parseThreadId(`thread-${Date.now()}`)
   const meta: ChatThreadMeta = { id, title, createdAt: now, updatedAt: now }
-  await mkdir(threadDir(vaultRoot, id), { recursive: true })
-  await writeFile(metaFilePath(vaultRoot, id), `${JSON.stringify(meta, null, 2)}\n`, 'utf8')
-  await writeFile(messagesFilePath(vaultRoot, id), '', 'utf8')
+  const threadDir = resolveVaultPath(vaultRoot, threadDirRel(storageKey))
+  await mkdir(threadDir, { recursive: true })
+  await writeFile(metaFilePath(vaultRoot, storageKey), `${JSON.stringify(meta, null, 2)}\n`, 'utf8')
+  await writeFile(messagesFilePath(vaultRoot, storageKey), '', 'utf8')
   const index = await readIndex(vaultRoot)
   index.threads = [meta, ...index.threads.filter((t) => t.id !== id)]
   await writeIndex(vaultRoot, index)
@@ -165,8 +172,8 @@ export async function updateChatThread(
   patch: { title?: string; updatedAt?: string },
 ): Promise<ChatThreadMeta> {
   const vaultRoot = getObsidianVaultRoot()
-  const safeId = sanitizeThreadId(threadId)
-  const metaPath = metaFilePath(vaultRoot, safeId)
+  const { id, storageKey } = parseThreadId(threadId)
+  const metaPath = metaFilePath(vaultRoot, storageKey)
   let meta: ChatThreadMeta
   try {
     meta = JSON.parse(await readFile(metaPath, 'utf8')) as ChatThreadMeta
@@ -175,10 +182,11 @@ export async function updateChatThread(
   }
   if (patch.title !== undefined) meta.title = patch.title
   meta.updatedAt = patch.updatedAt ?? new Date().toISOString()
+  meta.id = id
   await writeFile(metaPath, `${JSON.stringify(meta, null, 2)}\n`, 'utf8')
   const index = await readIndex(vaultRoot)
-  index.threads = index.threads.map((t) => (t.id === safeId ? meta : t))
-  if (!index.threads.some((t) => t.id === safeId)) {
+  index.threads = index.threads.map((t) => (t.id === id ? meta : t))
+  if (!index.threads.some((t) => t.id === id)) {
     index.threads.unshift(meta)
   }
   await writeIndex(vaultRoot, index)
@@ -215,9 +223,9 @@ function parseMessageLine(line: string): ChatMessage | null {
 
 export async function loadChatMessages(threadId: string): Promise<ChatMessage[]> {
   const vaultRoot = getObsidianVaultRoot()
-  const safeId = sanitizeThreadId(threadId)
+  const { storageKey } = parseThreadId(threadId)
   try {
-    const raw = await readFile(messagesFilePath(vaultRoot, safeId), 'utf8')
+    const raw = await readFile(messagesFilePath(vaultRoot, storageKey), 'utf8')
     return raw
       .split('\n')
       .map(parseMessageLine)
@@ -229,11 +237,12 @@ export async function loadChatMessages(threadId: string): Promise<ChatMessage[]>
 
 export async function saveChatMessages(threadId: string, messages: ChatMessage[]): Promise<void> {
   const vaultRoot = getObsidianVaultRoot()
-  const safeId = sanitizeThreadId(threadId)
-  await mkdir(threadDir(vaultRoot, safeId), { recursive: true })
+  const { id, storageKey } = parseThreadId(threadId)
+  const threadDir = resolveVaultPath(vaultRoot, threadDirRel(storageKey))
+  await mkdir(threadDir, { recursive: true })
   const lines = messages.map((m) => JSON.stringify({ ...m, at: new Date().toISOString() }))
-  await writeFile(messagesFilePath(vaultRoot, safeId), lines.length ? `${lines.join('\n')}\n` : '', 'utf8')
-  await updateChatThread(safeId, { updatedAt: new Date().toISOString() })
+  await writeFile(messagesFilePath(vaultRoot, storageKey), lines.length ? `${lines.join('\n')}\n` : '', 'utf8')
+  await updateChatThread(id, { updatedAt: new Date().toISOString() })
 }
 
 export async function appendChatActivity(
@@ -241,17 +250,20 @@ export async function appendChatActivity(
   event: Record<string, unknown>,
 ): Promise<void> {
   const vaultRoot = getObsidianVaultRoot()
-  const safeId = sanitizeThreadId(threadId)
-  await mkdir(threadDir(vaultRoot, safeId), { recursive: true })
-  const row = JSON.stringify({ at: new Date().toISOString(), threadId: safeId, ...event })
-  await appendFile(activityFilePath(vaultRoot, safeId), `${row}\n`, 'utf8')
+  const { id, storageKey } = parseThreadId(threadId)
+  const threadDir = resolveVaultPath(vaultRoot, threadDirRel(storageKey))
+  await mkdir(threadDir, { recursive: true })
+  const row = JSON.stringify({ at: new Date().toISOString(), threadId: id, ...event })
+  await appendFile(activityFilePath(vaultRoot, storageKey), `${row}\n`, 'utf8')
 }
 
 export async function appendAgentChatLog(event: Record<string, unknown>): Promise<void> {
   const vaultRoot = getObsidianVaultRoot()
   await ensureChatDirs(vaultRoot)
+  const logPath = agentChatLogPath(vaultRoot)
+  await mkdir(dirname(logPath), { recursive: true })
   const row = JSON.stringify({ at: new Date().toISOString(), ...event })
-  await appendFile(agentChatLogPath(vaultRoot), `${row}\n`, 'utf8')
+  await appendFile(logPath, `${row}\n`, 'utf8')
 }
 
 export async function importChatThreadsFromLocal(payload: {
@@ -261,40 +273,41 @@ export async function importChatThreadsFromLocal(payload: {
   const vaultRoot = getObsidianVaultRoot()
   let imported = 0
   for (const t of payload.threads) {
-    let safeId: string
+    let parsed: ParsedThreadId
     try {
-      safeId = sanitizeThreadId(t.id)
+      parsed = parseThreadId(t.id)
     } catch {
       continue
     }
-    const existing = await loadChatMessages(safeId)
+    const existing = await loadChatMessages(parsed.id)
     if (existing.length > 0) continue
     const createdAt = new Date(t.updatedAt).toISOString()
     const meta: ChatThreadMeta = {
-      id: safeId,
+      id: parsed.id,
       title: t.title,
       createdAt,
       updatedAt: createdAt,
     }
-    await mkdir(threadDir(vaultRoot, safeId), { recursive: true })
-    await writeFile(metaFilePath(vaultRoot, safeId), `${JSON.stringify(meta, null, 2)}\n`, 'utf8')
+    const threadDir = resolveVaultPath(vaultRoot, threadDirRel(parsed.storageKey))
+    await mkdir(threadDir, { recursive: true })
+    await writeFile(metaFilePath(vaultRoot, parsed.storageKey), `${JSON.stringify(meta, null, 2)}\n`, 'utf8')
     const messages = payload.messagesByThreadId[t.id] ?? []
     if (messages.length > 0) {
-      await saveChatMessages(safeId, messages)
+      await saveChatMessages(parsed.id, messages)
     }
     imported += 1
   }
   const index = await readIndex(vaultRoot)
   for (const t of payload.threads) {
-    let safeId: string
+    let parsed: ParsedThreadId
     try {
-      safeId = sanitizeThreadId(t.id)
+      parsed = parseThreadId(t.id)
     } catch {
       continue
     }
-    if (index.threads.some((x) => x.id === safeId)) continue
+    if (index.threads.some((x) => x.id === parsed.id)) continue
     index.threads.push({
-      id: safeId,
+      id: parsed.id,
       title: t.title,
       createdAt: new Date(t.updatedAt).toISOString(),
       updatedAt: new Date(t.updatedAt).toISOString(),
