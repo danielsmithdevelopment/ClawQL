@@ -352,6 +352,10 @@ export const navigation: Array<NavGroup> = [
         title: 'Cross-thread vault recall',
         href: '/case-studies/cross-thread-vault-recall',
       },
+      {
+        title: 'OpenClaw memory_recall',
+        href: '/case-studies/openclaw-clawql-memory-recall-2026-06',
+      },
     ],
   },
   {

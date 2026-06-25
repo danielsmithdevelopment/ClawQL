@@ -33,18 +33,39 @@ The **Agent Chat** panel calls `POST /api/agent/chat`, which proxies to **`CLAWQ
    CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL=http://127.0.0.1:8787/v1/chat npm run dev
    ```
 
-4. Open **Agent Chat** in the UI; messages go to `openclaw agent --local` per request.
+4. Open **Agent Chat** in the UI; messages go to `openclaw agent --local` per request. **Chat history** is written under **`$CLAWQL_OBSIDIAN_VAULT_PATH/Dashboard/chats/`** (default **`~/.ClawQL/Dashboard/chats/`**) so you can reopen threads and continue with the same **`threadId`** for OpenClaw.
+
+### Vault layout (dashboard data)
+
+```
+~/.ClawQL/                          # CLAWQL_OBSIDIAN_VAULT_PATH (default)
+  Memory/                           # memory_ingest / memory_recall notes
+  memory.db                         # hybrid recall sidecar
+  Dashboard/
+    chats/
+      index.json                    # thread list
+      threads/
+        thread-<ms>/
+          meta.json                 # title, createdAt, updatedAt
+          messages.jsonl            # conversation (one JSON object per line)
+          activity.jsonl            # per-thread API events
+    logs/
+      agent-chat.jsonl              # cross-thread chat API log
+```
+
+Existing browser **localStorage** chats are **imported once** into the vault on first load when the vault index is empty.
 
 | Variable | Purpose |
 | -------- | ------- |
 | `CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL` | Full URL to POST chat JSON (use bridge URL above for local dev). |
+| `CLAWQL_OBSIDIAN_VAULT_PATH` | Obsidian vault root for dashboard chat persistence (default **`~/.ClawQL`**). Chats live under **`Dashboard/chats/`**; API logs under **`Dashboard/logs/`**. Same path as ClawQL MCP **`memory_*`** tools. |
 | `OPENCLAW_CHAT_BRIDGE_PORT` | Bridge listen port (default **8787**). |
 | `CLAWQL_OPENCLAW_AGENT_ID` | `openclaw agent --agent` id (default **main**). |
 | `OPENCLAW_AGENT_TIMEOUT_SEC` | Per-message CLI timeout in seconds (default **120**). |
 
 **OpenRouter:** add **`OPENROUTER_API_KEY`** to repo **`.env`** (the bridge loads repo-root `.env` for unset keys) **or** run **`openclaw models auth paste-token --provider openrouter`**. Then set a default OpenRouter-backed model (**`openclaw models list --all --provider openrouter`** then **`openclaw models set …`**) so inference is not still pinned to **`openai/*`** (see **`docs/openclaw/using-openclaw-with-clawql.md`** §5.6).
 
-**Kubernetes / Rancher:** do not rely on `.env` in the image — set **`dashboard.openclawChatUrl`** in Helm so the Deployment gets **`CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL`**. Start from **`charts/clawql-mcp/values-rancher.example.yaml`** and **`docs/deployment/helm.md`**.
+**Kubernetes / Rancher:** do not rely on `.env` in the image — set **`dashboard.openclawChatUrl`** in Helm so the Deployment gets **`CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL`**, or leave it empty when **`openclaw.chatBridge.enabled`** (default) auto-wires to the OpenClaw sidecar (`http://<release>-openclaw.<ns>.svc.cluster.local:8787/v1/chat`). Start from **`charts/clawql-mcp/values-rancher.example.yaml`** and **`docs/deployment/helm.md`**.
 
 Dev and production builds use **webpack** (`--webpack`) so file tracing stays predictable inside the ClawQL monorepo; `next.config.mjs` sets `outputFileTracingRoot` to the repo root when multiple lockfiles are present.
 

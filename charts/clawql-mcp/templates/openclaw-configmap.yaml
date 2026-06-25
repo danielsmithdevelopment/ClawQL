@@ -1,0 +1,54 @@
+{{- if .Values.openclaw.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "clawql-mcp.openclawConfigMapName" . }}
+  labels:
+    {{- include "clawql-mcp.openclawLabels" . | nindent 4 }}
+data:
+  {{- if .Values.openclaw.openclawJson }}
+  openclaw.json: |
+{{- .Values.openclaw.openclawJson | nindent 4 }}
+  {{- else }}
+  openclaw.json: |
+    {
+      "gateway": {
+        "mode": "local",
+        "bind": "loopback",
+        "port": {{ .Values.openclaw.gateway.port }},
+        "auth": {
+          "mode": "token"
+        },
+        "controlUi": {
+          "enabled": true
+        }
+      },
+      "agents": {
+        "defaults": {
+          "workspace": "~/.openclaw/workspace"
+        },
+        "list": [
+          {
+            "id": "default",
+            "name": "OpenClaw Assistant",
+            "workspace": "~/.openclaw/workspace"
+          }
+        ]
+      }{{- if .Values.openclaw.clawqlMcp.enabled }},
+      "mcp": {
+        "servers": {
+          {{ .Values.openclaw.clawqlMcp.serverName | quote }}: {
+            "url": {{ include "clawql-mcp.openclawClawqlMcpUrl" . | quote }},
+            "transport": "streamable-http"{{- if or .Values.openclaw.clawqlMcp.bearerToken .Values.openclaw.clawqlMcp.bearerTokenSecret.name }},
+            "headers": {
+              "Authorization": "Bearer ${CLAWQL_MCP_BEARER_TOKEN}"
+            }{{- end }}
+          }
+        }
+      }{{- end }},
+      "cron": { "enabled": false }
+    }
+  {{- end }}
+  AGENTS.md: |
+{{- .Values.openclaw.agentsMd | nindent 4 }}
+{{- end }}

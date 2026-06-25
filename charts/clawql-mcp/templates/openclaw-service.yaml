@@ -1,0 +1,23 @@
+{{- if .Values.openclaw.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "clawql-mcp.openclawDeploymentName" . }}
+  labels:
+    {{- include "clawql-mcp.openclawLabels" . | nindent 4 }}
+spec:
+  type: {{ .Values.openclaw.service.type }}
+  selector:
+    {{- include "clawql-mcp.openclawSelectorLabels" . | nindent 4 }}
+  ports:
+    - name: gateway
+      port: {{ .Values.openclaw.service.port }}
+      targetPort: gateway
+      protocol: TCP
+    {{- if .Values.openclaw.chatBridge.enabled }}
+    - name: chat
+      port: {{ .Values.openclaw.chatBridge.port }}
+      targetPort: chat
+      protocol: TCP
+    {{- end }}
+{{- end }}

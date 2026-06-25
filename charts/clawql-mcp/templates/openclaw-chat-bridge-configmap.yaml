@@ -1,0 +1,12 @@
+{{- if and .Values.openclaw.enabled .Values.openclaw.chatBridge.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "clawql-mcp.openclawDeploymentName" . }}-chat-bridge
+  labels:
+    {{- include "clawql-mcp.openclawLabels" . | nindent 4 }}
+    app.kubernetes.io/component: openclaw-chat-bridge
+data:
+  openclaw-chat-bridge.mjs: |
+{{ .Files.Get "files/openclaw-chat-bridge.mjs" | indent 4 }}
+{{- end }}

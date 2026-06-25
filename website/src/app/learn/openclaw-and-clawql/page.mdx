@@ -108,6 +108,8 @@ npm run smoke:openclaw-bootstrap
 
 Then in **OpenClaw**: confirm **`openclaw mcp show clawql`**, drive a prompt that **`search`**es then **`execute`**s (e.g. GitHub commits) with tight **`fields`**. If tools are missing, verify **`listTools`** on ClawQL alone before debugging OpenClaw routing ([clawql-bootstrap.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/openclaw/clawql-bootstrap.md)).
 
+**Worked example — vault recall from agent chat:** [OpenClaw → `memory_recall` case study](/case-studies/openclaw-clawql-memory-recall-2026-06) (verbatim transcript, **`clawql__memory_recall`** tool trace, cross-session notes).
+
 ## Environment variables and remote MCP
 
 - **Stdio:** add an **`env`** object inside the same JSON as **`command`** / **`args`** — same pattern as Cursor **`mcp.json`** ([using-openclaw-with-clawql.md § 5.4](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/openclaw/using-openclaw-with-clawql.md)).

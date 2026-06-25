@@ -1,0 +1,80 @@
+{{- if .Values.goose.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "clawql-mcp.gooseDeploymentName" . }}
+  labels:
+    {{- include "clawql-mcp.gooseLabels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.goose.replicaCount }}
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "clawql-mcp.gooseSelectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "clawql-mcp.gooseSelectorLabels" . | nindent 8 }}
+      {{- with .Values.goose.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      automountServiceAccountToken: false
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.goose.podSecurityContext | nindent 8 }}
+      containers:
+        - name: goose
+          image: "{{ .Values.goose.image.repository }}:{{ .Values.goose.image.tag }}"
+          imagePullPolicy: {{ .Values.goose.image.pullPolicy }}
+          command:
+            {{- toYaml .Values.goose.idleCommand | nindent 12 }}
+          env:
+            - name: GOOSE_PROVIDER
+              value: {{ .Values.goose.provider | quote }}
+            - name: GOOSE_MODEL
+              value: {{ .Values.goose.model | quote }}
+            {{- if .Values.goose.clawqlMcp.enabled }}
+            - name: CLAWQL_MCP_URL
+              value: {{ include "clawql-mcp.gooseClawqlMcpUrl" . | quote }}
+            {{- end }}
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "clawql-mcp.gooseSecretName" . }}
+                  key: OPENAI_API_KEY
+                  optional: true
+            - name: ANTHROPIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "clawql-mcp.gooseSecretName" . }}
+                  key: ANTHROPIC_API_KEY
+                  optional: true
+          {{- with .Values.goose.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.goose.resources | nindent 12 }}
+          volumeMounts:
+            - name: goose-state
+              mountPath: {{ .Values.goose.persistence.mountPath }}
+            - name: goose-config
+              mountPath: /home/goose/.config/goose
+          securityContext:
+            {{- toYaml .Values.goose.securityContext | nindent 12 }}
+      volumes:
+        - name: goose-state
+          {{- if .Values.goose.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ default (include "clawql-mcp.goosePvcName" .) .Values.goose.persistence.existingClaim }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        - name: goose-config
+          emptyDir: {}
+{{- end }}

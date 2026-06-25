@@ -5,6 +5,7 @@ import { caseStudyCrossThreadVaultRecallSections } from '@/lib/case-study-cross-
 import { caseStudySlideDeckGithubParitySections } from '@/lib/case-study-slide-deck-github-parity-sections'
 import { caseStudyTruenasCorgicaveSections } from '@/lib/case-study-truenas-corgicave-sections'
 import { caseStudyVaultMemorySessionSections } from '@/lib/case-study-vault-memory-session-sections'
+import { caseStudyOpenclawMemoryRecallSections } from '@/lib/case-study-openclaw-memory-recall-sections'
 import { caseStudyWorker1102McpMemorySections } from '@/lib/case-study-worker-1102-mcp-memory-sections'
 import { homePageSections } from '@/lib/home-page-sections'
 import { learnAuditObservabilitySections } from '@/lib/learn-audit-observability-sections'
@@ -49,4 +50,6 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
     caseStudyWorker1102McpMemorySections,
   '/case-studies/slide-deck-github-parity-cache-memory-recall-2026-04':
     caseStudySlideDeckGithubParitySections,
+  '/case-studies/openclaw-clawql-memory-recall-2026-06':
+    caseStudyOpenclawMemoryRecallSections,
 }

@@ -67,6 +67,10 @@ These values control where dashboard sync reads/writes:
 
 Default rollout target is `clawql-mcp-http`.
 
+## Agent Chat persistence
+
+With **`CLAWQL_OBSIDIAN_VAULT_PATH`** (chart: **`obsidianVaultPath`**) and the shared **obsidian-vault** volume mount, the dashboard writes Agent Chat history under **`Dashboard/chats/`** on the same disk as **`Memory/`** and **`memory.db`**. Enable OpenClaw + chat bridge (**`openclaw.enabled`**, **`openclaw.chatBridge.enabled`**) so **`CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL`** auto-wires; see [OpenClaw + ClawQL](/openclaw) and [Helm](/helm).
+
 ## Signed image enforcement
 
 Kyverno verifyImages includes dashboard by default via:

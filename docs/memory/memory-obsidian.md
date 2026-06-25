@@ -30,6 +30,20 @@ If **`CLAWQL_VECTOR_BACKEND`** is unset / **`off`** (default), recall stays **le
 
 For the **structured sidecar** (`memory.db`: chunks, optional chunk vectors, wikilink edges), see **[memory-db-schema.md](memory-db-schema.md)**, **[memory-db-hybrid-implementation.md](memory-db-hybrid-implementation.md)**, and **[hybrid-memory-backends.md](hybrid-memory-backends.md)**.
 
+## Dashboard data (Agent Chat)
+
+The ClawQL **dashboard** (local **`npm run dev`** or Helm **`dashboard.enabled`**) uses the **same vault root** as MCP when **`CLAWQL_OBSIDIAN_VAULT_PATH`** is set (local default: **`~/.ClawQL`**). It does **not** mix with **`Memory/`** ingest pages; it keeps operator UI state in a sibling tree:
+
+| Path | Purpose |
+| ---- | ------- |
+| **`Dashboard/chats/index.json`** | Thread list (title, timestamps) |
+| **`Dashboard/chats/threads/<id>/meta.json`** | Per-thread metadata |
+| **`Dashboard/chats/threads/<id>/messages.jsonl`** | User/agent messages (one JSON object per line) |
+| **`Dashboard/chats/threads/<id>/activity.jsonl`** | Per-thread chat API events |
+| **`Dashboard/logs/agent-chat.jsonl`** | Cross-thread Agent Chat API log |
+
+Thread **`id`** values (e.g. **`thread-<epoch-ms>`**) are passed to OpenClaw as **`threadId`** so you can reopen a sidebar chat and continue. **`memory_recall`** does not scan **`Dashboard/`** by default (recall subtree is **`Memory/`**); vault notes from **`memory_ingest`** remain separate from dashboard chat files. See **[dashboard/README.md](../../dashboard/README.md)** and the **[OpenClaw memory_recall case study](../case_studies/openclaw-clawql-memory-recall-agent-chat-2026-06.md)**.
+
 ## Wikilinks and semantics
 
 `[[Page Name]]` links are **untyped**: they mean “related page,” not “contradicts” vs “supports.” For richer semantics, teams combine tags, folders, or prose in the note body—same as in human-maintained wikis.

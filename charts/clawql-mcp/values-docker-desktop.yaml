@@ -265,9 +265,8 @@ ui:
 
 dashboard:
   enabled: true
-  # Set when an OpenClaw service is running in-cluster and exposes POST /v1/chat -> { reply }.
-  # Use full service DNS for portability across Rancher/RKE2 and namespace-scoped resolution.
-  openclawChatUrl: http://openclaw.clawql.svc.cluster.local:8787/v1/chat
+  # Auto-wires to OpenClaw chat-bridge when openclaw.enabled && openclaw.chatBridge.enabled (see openclaw.*).
+  openclawChatUrl: ""
   image:
     repository: ghcr.io/danielsmithdevelopment/clawql-dashboard
     tag: latest
@@ -455,3 +454,9 @@ kyverno:
 #     value: "1"
 #   - name: OTEL_EXPORTER_OTLP_ENDPOINT
 #     value: "http://clawql-otel-collector.istio-system.svc:4318/v1/traces"
+
+# Optional OpenClaw gateway (containerized; not npm). Enable via values or env-driven install:
+#   CLAWQL_ENABLE_OPENCLAW=1 OPENCLAW_GATEWAY_TOKEN="$(openssl rand -hex 24)" make local-k8s-up
+# openclaw:
+#   enabled: true
+#   gatewayToken: "<set via --set-string or ExternalSecrets; do not commit>"

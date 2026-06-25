@@ -34,3 +34,20 @@
 
 {{ if .Values.nats.enabled }}4{{ else }}3{{ end }}. Kyverno image signature policy is enabled: verify Kyverno is installed and `kubectl get clusterpolicy` shows the ClawQL GHCR Cosign policy. See `docs/security/image-signature-enforcement.md`.
 {{- end }}
+{{- if .Values.openclaw.enabled }}
+
+OpenClaw gateway (enabled): Control UI on loopback in the pod — port-forward then open http://127.0.0.1:18789 (gateway token: `kubectl get secret {{ include "clawql-mcp.openclawSecretName" . }} -n {{ .Release.Namespace }} -o jsonpath='{.data.OPENCLAW_GATEWAY_TOKEN}' | base64 -d`). Upstream layout: https://docs.openclaw.ai/install/kubernetes
+
+   kubectl port-forward --namespace {{ .Release.Namespace }} svc/{{ include "clawql-mcp.openclawDeploymentName" . }} 18789:{{ .Values.openclaw.service.port }}
+{{- if .Values.openclaw.chatBridge.enabled }}
+{{- if .Values.dashboard.enabled }}
+Dashboard Agent Chat auto-wires to: {{ include "clawql-mcp.openclawChatBridgeUrl" . }}
+{{- else }}
+Chat bridge (POST /v1/chat): {{ include "clawql-mcp.openclawChatBridgeUrl" . }} — set dashboard.enabled or dashboard.openclawChatUrl to use Agent Chat.
+{{- end }}
+{{- end }}
+{{- end }}
+{{- if .Values.goose.enabled }}
+
+Goose agent pool (enabled): {{ .Values.goose.replicaCount }} replica(s); CLAWQL_MCP_URL wired when goose.clawqlMcp.enabled. Scale via `goose.replicaCount` (max {{ .Values.goose.maxReplicas }} planned for HPA).
+{{- end }}

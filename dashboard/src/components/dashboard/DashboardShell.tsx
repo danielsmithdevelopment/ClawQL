@@ -1,10 +1,16 @@
 'use client'
 
 import { Group, Panel, Separator } from 'react-resizable-panels'
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import type { EnvCatalog } from '@/lib/env-catalog'
 import { EnvForm } from '@/components/EnvForm'
+import {
+  createChatThreadApi,
+  fetchChatVault,
+  formatThreadUpdatedAt,
+  importLegacyLocalChatsToVault,
+} from '@/lib/chat-storage'
 
 import { AgentChatPanel } from './AgentChatPanel'
 import { AppHeader } from './AppHeader'
@@ -13,23 +19,46 @@ import { PlaceholderPanel } from './PlaceholderPanel'
 import { PrimaryNav } from './PrimaryNav'
 import type { ChatThread, DashboardSection } from './types'
 
-const INITIAL_THREADS: ChatThread[] = [
-  { id: 'thread-1', title: 'Quarterly Reports', updatedAtLabel: '2m ago', dot: 'green' },
-  { id: 'thread-2', title: 'New Payment Provider', updatedAtLabel: '18h ago', dot: 'amber' },
-  { id: 'thread-3', title: 'Publish New Analysis', updatedAtLabel: '1d ago' },
-  { id: 'thread-4', title: 'Incident Post-mortem', updatedAtLabel: '2d ago' },
-  { id: 'thread-5', title: 'On-Call Rot', updatedAtLabel: '3d ago', dot: 'zinc' },
-  { id: 'thread-6', title: 'Architecture Overview', updatedAtLabel: '4d ago' },
-  { id: 'thread-7', title: 'Monitoring', updatedAtLabel: '5d ago' },
-  { id: 'thread-8', title: 'Generate OpenAPI', updatedAtLabel: '1w ago' },
-  { id: 'thread-9', title: 'Pipeline', updatedAtLabel: '1w ago' },
-]
+function sortThreads(threads: ChatThread[]): ChatThread[] {
+  return [...threads].sort((a, b) => b.updatedAt - a.updatedAt)
+}
 
 export function DashboardShell({ catalog }: { catalog: EnvCatalog }) {
   const [section, setSection] = useState<DashboardSection>('agent-chat')
-  const [threads, setThreads] = useState<ChatThread[]>(INITIAL_THREADS)
-  const [selectedThreadId, setSelectedThreadId] = useState<string | null>('thread-1')
+  const [threads, setThreads] = useState<ChatThread[]>([])
+  const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null)
   const [threadFilter, setThreadFilter] = useState('')
+  const [vaultRoot, setVaultRoot] = useState<string | null>(null)
+  const [vaultError, setVaultError] = useState<string | null>(null)
+  const [storageReady, setStorageReady] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      try {
+        let data = await fetchChatVault()
+        if (!cancelled && data.threads.length === 0) {
+          await importLegacyLocalChatsToVault()
+          data = await fetchChatVault()
+        }
+        if (cancelled) return
+        setVaultRoot(data.vaultRoot)
+        setVaultError(data.writable ? null : `Vault path is not writable: ${data.vaultRoot}`)
+        const sorted = sortThreads(data.threads)
+        setThreads(sorted)
+        setSelectedThreadId(sorted[0]?.id ?? null)
+      } catch (e) {
+        if (!cancelled) {
+          setVaultError(e instanceof Error ? e.message : 'Failed to load chats from vault')
+        }
+      } finally {
+        if (!cancelled) setStorageReady(true)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const selectedTitle = useMemo(() => {
     const t = threads.find((x) => x.id === selectedThreadId)
@@ -43,17 +72,54 @@ export function DashboardShell({ catalog }: { catalog: EnvCatalog }) {
   }, [threads, threadFilter])
 
   const onNewChat = () => {
-    const id = `thread-${Date.now()}`
-    setThreads((prev) => [{ id, title: 'New chat', updatedAtLabel: 'now' }, ...prev])
-    setSelectedThreadId(id)
-    setSection('agent-chat')
+    void (async () => {
+      try {
+        const thread = await createChatThreadApi('New chat')
+        setThreads((prev) => sortThreads([thread, ...prev]))
+        setSelectedThreadId(thread.id)
+        setSection('agent-chat')
+        setVaultError(null)
+      } catch (e) {
+        setVaultError(e instanceof Error ? e.message : 'Failed to create chat')
+      }
+    })()
   }
+
+  const onThreadActivity = useCallback((threadId: string, patch: { title?: string; updatedAt: number }) => {
+    setThreads((prev) =>
+      sortThreads(
+        prev.map((t) =>
+          t.id === threadId
+            ? {
+                ...t,
+                ...(patch.title !== undefined ? { title: patch.title } : {}),
+                updatedAt: patch.updatedAt,
+              }
+            : t,
+        ),
+      ),
+    )
+  }, [])
+
+  const onThreadMetaFromServer = useCallback((thread: ChatThread) => {
+    setThreads((prev) => sortThreads(prev.map((t) => (t.id === thread.id ? thread : t))))
+  }, [])
 
   const showChatThreads = section === 'agent-chat'
 
   return (
     <div className="flex h-dvh min-h-0 flex-col bg-zinc-950 text-zinc-100">
       <AppHeader />
+      {vaultRoot ? (
+        <p className="shrink-0 border-b border-white/5 bg-zinc-900/50 px-4 py-1.5 font-mono text-[10px] text-zinc-500 sm:px-6">
+          Chats: <span className="text-zinc-400">{vaultRoot}/Dashboard/chats/</span>
+        </p>
+      ) : null}
+      {vaultError ? (
+        <p className="shrink-0 border-b border-amber-500/20 bg-amber-500/10 px-4 py-2 text-xs text-amber-200 sm:px-6" role="alert">
+          {vaultError}
+        </p>
+      ) : null}
       <Group
         key={showChatThreads ? 'layout-chat-3' : 'layout-main-2'}
         id="dashboard-panels"
@@ -77,6 +143,7 @@ export function DashboardShell({ catalog }: { catalog: EnvCatalog }) {
                 onNewChat={onNewChat}
                 filter={threadFilter}
                 onFilterChange={setThreadFilter}
+                loading={!storageReady}
               />
             </Panel>
             <Separator
@@ -86,8 +153,22 @@ export function DashboardShell({ catalog }: { catalog: EnvCatalog }) {
           </>
         ) : null}
         <Panel id="main" defaultSize={showChatThreads ? '58%' : '78%'} minSize="36%" className="min-h-0 min-w-0">
-          {section === 'agent-chat' && selectedThreadId ? (
-            <AgentChatPanel threadId={selectedThreadId} threadTitle={selectedTitle} />
+          {section === 'agent-chat' && selectedThreadId && storageReady ? (
+            <AgentChatPanel
+              threadId={selectedThreadId}
+              threadTitle={selectedTitle}
+              onThreadActivity={(patch) => onThreadActivity(selectedThreadId, patch)}
+              onThreadMetaFromServer={onThreadMetaFromServer}
+            />
+          ) : section === 'agent-chat' ? (
+            <PlaceholderPanel
+              title="Agent Chat"
+              description={
+                storageReady
+                  ? 'Create a chat with + in the sidebar. History is stored under your ClawQL vault (Dashboard/chats/).'
+                  : 'Loading chat history from vault…'
+              }
+            />
           ) : section === 'configuration' ? (
             <div className="h-full overflow-y-auto bg-zinc-950 px-4 py-6 sm:px-8">
               <div className="mx-auto max-w-5xl">

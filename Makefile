@@ -26,6 +26,18 @@ helm-lint:
 		-f charts/clawql-mcp/test-values-mcp-proxy-custom.yaml \
 		--set kyverno.imageSignaturePolicy.enabled=false \
 		--set envFromSecret=clawql-lint-provider-env >/dev/null
+	@helm template test charts/clawql-mcp --namespace clawql \
+		--set openclaw.enabled=true \
+		--set dashboard.enabled=true \
+		--set-string openclaw.gatewayToken=helm-lint-test-token \
+		--set kyverno.imageSignaturePolicy.enabled=false \
+		--set envFromSecret=clawql-lint-provider-env >/dev/null
+	@helm template test charts/clawql-mcp --namespace clawql \
+		--set goose.enabled=true \
+		--set goose.replicaCount=1 \
+		--set-string goose.openaiApiKey=helm-lint-test \
+		--set kyverno.imageSignaturePolicy.enabled=false \
+		--set envFromSecret=clawql-lint-provider-env >/dev/null
 	@echo "helm-lint OK"
 
 # After applying docs/deployment/vault-istio-authorizationpolicy*.yaml to a live cluster

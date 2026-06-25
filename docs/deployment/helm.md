@@ -251,6 +251,33 @@ make verify-vault-policy
 
 Optional: `CLAWQL_VAULT_POLICY_NS=my-ns make verify-vault-policy`
 
+**Optional OpenClaw gateway** (containerized [`openclaw`](https://docs.openclaw.ai/install/kubernetes) workload — not the npm CLI): set **`openclaw.enabled=true`**, provide **`openclaw.gatewayToken`** (unless **`openclaw.existingSecret`** names a Secret that already has **`OPENCLAW_GATEWAY_TOKEN`**), and optionally provider keys under **`openclaw.*ApiKey`**. Default image is **`ghcr.io/danielsmithdevelopment/openclaw-vendor:slim`** (daily mirror + Trivy gate + Cosign in **[`.github/workflows/container-mirror.yml`](../../.github/workflows/container-mirror.yml)**); use **`openclaw.image.repository=ghcr.io/openclaw/openclaw`** if you prefer upstream before the mirror exists. Loopback bind in-pod, **`ClusterIP`** Service on **18789**. Access with **`kubectl port-forward svc/<fullname>-openclaw 18789:18789`** (see post-install **`NOTES`**).
+
+When **`openclaw.clawqlMcp.enabled`** is **`true`** (default), the chart renders **`mcp.servers.clawql`** in **`openclaw.json`** pointing at in-cluster Streamable HTTP MCP (`http://<mcp-service>.<ns>.svc.cluster.local:<port>/mcp`; uses **`mcpProxy`** Service when **`mcpProxy.enabled`**). Override with **`openclaw.clawqlMcp.url`**. For JWT-gated MCP, set **`openclaw.clawqlMcp.bearerToken`** or **`openclaw.clawqlMcp.bearerTokenSecret`** (injected as **`CLAWQL_MCP_BEARER_TOKEN`** for OpenClaw header interpolation).
+
+```bash
+helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
+  --set openclaw.enabled=true \
+  --set-string openclaw.gatewayToken="$(openssl rand -hex 24)"
+```
+
+Docker Desktop **`make local-k8s-up`** opt-in: **`CLAWQL_ENABLE_OPENCLAW=1`** and **`OPENCLAW_GATEWAY_TOKEN=...`** (see **`scripts/kubernetes/local-k8s-docker-desktop.sh`**).
+
+**Dashboard Agent Chat → OpenClaw:** when **`openclaw.chatBridge.enabled`** (default **`true`**) and **`dashboard.openclawChatUrl`** is empty, the chart injects **`CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL`** pointing at the in-pod chat-bridge sidecar (`POST /v1/chat` on port **8787**). The bridge runs **`openclaw agent`** per request ([`dashboard/scripts/openclaw-chat-bridge.mjs`](../../dashboard/scripts/openclaw-chat-bridge.mjs); chart copy under **`charts/clawql-mcp/files/`**). Disable with **`openclaw.chatBridge.enabled=false`** or override **`dashboard.openclawChatUrl`**.
+
+**Dashboard chat history on the Obsidian vault:** when **`dashboard.enabled=true`**, the Deployment sets **`CLAWQL_OBSIDIAN_VAULT_PATH`** (same as MCP **`obsidianVaultPath`**, default **`/vault`**) and mounts the **obsidian-vault** volume (PVC, **`vault.hostPath`**, or **`emptyDir`** — same precedence as the MCP pod). Agent Chat threads persist under **`Dashboard/chats/`** (`index.json`, per-thread **`meta.json`**, **`messages.jsonl`**, **`activity.jsonl`**); API logs append to **`Dashboard/logs/agent-chat.jsonl`**. Local dev default without env: **`~/.ClawQL`**. See **[`dashboard/README.md`](../../dashboard/README.md)** and **[memory-obsidian.md](../memory/memory-obsidian.md)** § Dashboard data.
+
+**Optional Goose agent pool** ([`block/goose`](https://github.com/block/goose)): **`goose.enabled=true`**, set **`goose.replicaCount`** (start at **0**, scale on demand), provider keys via **`goose.*ApiKey`** or **`goose.existingSecret`**. Injects **`CLAWQL_MCP_URL`** when **`goose.clawqlMcp.enabled`**. Stateful PVC at **`goose.persistence.mountPath`** (default **`/opt/clawql/goose`**). Idle **`sleep infinity`** until AgentRuntime task API ships.
+
+**Hermes (NL ops):** **`hermes.enabled=true`** sets **`CLAWQL_DASHBOARD_HERMES_OPS=1`** on the dashboard Deployment (reserved for **`@hermes`** routing — see deployment ops guide). No separate container.
+
+```bash
+helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
+  --set openclaw.enabled=true \
+  --set dashboard.enabled=true \
+  --set-string openclaw.gatewayToken="$(openssl rand -hex 24)"
+```
+
 **Persistent Obsidian memory** (`memory_ingest` / `memory_recall` survive pod restarts; PVC at **`/vault`**, not secrets manager):
 
 ```bash

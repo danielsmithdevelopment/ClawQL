@@ -234,6 +234,7 @@ ClawQL exposes **`GET /metrics`** on **`clawql-mcp-http`**. Grafana import and P
 | ---------------------------------------------------------------- | --------------------------------- |
 | [`clawql-bootstrap.md`](clawql-bootstrap.md)                     | Smoke script, condensed checklist |
 | [`openclaw-idp-skill-profile.md`](openclaw-idp-skill-profile.md) | IDP provider matrix               |
+| [`../case_studies/openclaw-clawql-memory-recall-agent-chat-2026-06.md`](../case_studies/openclaw-clawql-memory-recall-agent-chat-2026-06.md) | Worked example: agent chat → **`memory_recall`** |
 | [`docs/mcp/mcp-tools.md`](../mcp/mcp-tools.md)                   | MCP tool catalog                  |
 | [`docs/readme/configuration.md`](../readme/configuration.md)     | **`CLAWQL_*`** reference          |
 | [`docs/readme/deployment.md`](../readme/deployment.md)           | HTTP / gRPC deployment            |

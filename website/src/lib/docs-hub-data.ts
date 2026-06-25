@@ -68,6 +68,13 @@ export const exampleSiteCards: Array<ReferenceCard> = [
       'memory_recall before filing issues; cache scratch state; vault ingest to close the loop.',
     icon: BookIcon,
   }),
+  card({
+    href: '/case-studies/openclaw-clawql-memory-recall-2026-06',
+    name: 'Example: OpenClaw memory_recall',
+    description:
+      'Agent gateway chat calls clawql__memory_recall; verbatim transcript; cross-session vault knowledge for solo builders.',
+    icon: BookIcon,
+  }),
 ]
 
 export const architectureHubCards: Array<ReferenceCard> = [
