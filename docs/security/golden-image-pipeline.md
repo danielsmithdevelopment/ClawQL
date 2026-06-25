@@ -162,12 +162,12 @@ Many enterprises front GHCR (or any upstream) with **[Harbor](https://goharbor.i
 
 Workflow: **[`.github/workflows/container-mirror.yml`](../../.github/workflows/container-mirror.yml)** (scheduled **daily** + **`workflow_dispatch`**).
 
-| Step | Behavior |
-| --- | --- |
-| Pull | **`skopeo copy`** from **`docker://ghcr.io/openclaw/openclaw:slim`** to a **local OCI layout** (no GHCR write). |
-| Gate | **Trivy** **`image`** scan on that layout (**HIGH** / **CRITICAL**, [`.trivyignore`](../../.trivyignore)) — failure → **no push**. |
+| Step    | Behavior                                                                                                                                                                     |
+| ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Pull    | **`skopeo copy`** from **`docker://ghcr.io/openclaw/openclaw:slim`** to a **local OCI layout** (no GHCR write).                                                              |
+| Gate    | **Trivy** **`image`** scan on that layout (**HIGH** / **CRITICAL**, [`.trivyignore`](../../.trivyignore)) — failure → **no push**.                                           |
 | Publish | **`skopeo copy`** the **same layout** to **`ghcr.io/danielsmithdevelopment/openclaw-vendor`** (**`:slim`**, **`:mirror-YYYYMMDD`**, **`:run-<run_id>`** tags on one digest). |
-| Sign | **Cosign v2** **`sign --recursive`** on the pushed digest (**same OIDC identity** as **`docker-publish`** — matches Helm **`kyverno.imageSignaturePolicy`** defaults). |
+| Sign    | **Cosign v2** **`sign --recursive`** on the pushed digest (**same OIDC identity** as **`docker-publish`** — matches Helm **`kyverno.imageSignaturePolicy`** defaults).       |
 
 Helm **`openclaw.image.repository`** defaults to **`ghcr.io/danielsmithdevelopment/openclaw-vendor`**; Kyverno **`imageReferences`** includes **`openclaw-vendor*`** so admission matches **this repo’s** signatures. Third-party base CVEs may require narrow **`.trivyignore`** updates or pinning an older upstream digest in the workflow until upstream fixes land.
 
