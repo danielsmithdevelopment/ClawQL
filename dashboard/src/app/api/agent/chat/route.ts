@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 
-import { appendAgentChatLog, appendChatActivity } from '@/lib/chat-vault-store.server'
+import { appendAgentChatLog, appendChatActivity, isValidThreadId } from '@/lib/chat-vault-store.server'
 
 type Body = { message?: string; threadTitle?: string; threadId?: string }
 
@@ -21,14 +21,16 @@ export async function POST(req: Request) {
     typeof body.threadId === 'string' && body.threadId.trim() ? body.threadId.trim() : 'clawql-dashboard'
 
   const started = Date.now()
-  try {
-    await appendChatActivity(threadId, {
-      type: 'chat_request',
-      threadTitle: body.threadTitle,
-      messagePreview: message.slice(0, 240),
-    })
-  } catch {
-    /* vault logging is best-effort */
+  if (isValidThreadId(threadId)) {
+    try {
+      await appendChatActivity(threadId, {
+        type: 'chat_request',
+        threadTitle: body.threadTitle,
+        messagePreview: message.slice(0, 240),
+      })
+    } catch {
+      /* vault logging is best-effort */
+    }
   }
 
   const upstream = process.env.CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL?.trim()
@@ -72,13 +74,15 @@ export async function POST(req: Request) {
     const durationMs = Date.now() - started
 
     try {
-      await appendChatActivity(threadId, {
-        type: 'chat_response',
-        ok: res.ok,
-        status: res.status,
-        durationMs,
-        demo: false,
-      })
+      if (isValidThreadId(threadId)) {
+        await appendChatActivity(threadId, {
+          type: 'chat_response',
+          ok: res.ok,
+          status: res.status,
+          durationMs,
+          demo: false,
+        })
+      }
       await appendAgentChatLog({
         type: 'chat_response',
         threadId,
@@ -106,11 +110,13 @@ export async function POST(req: Request) {
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Upstream request failed'
     try {
-      await appendChatActivity(threadId, {
-        type: 'chat_error',
-        error: msg,
-        durationMs: Date.now() - started,
-      })
+      if (isValidThreadId(threadId)) {
+        await appendChatActivity(threadId, {
+          type: 'chat_error',
+          error: msg,
+          durationMs: Date.now() - started,
+        })
+      }
     } catch {
       /* ignore */
     }
