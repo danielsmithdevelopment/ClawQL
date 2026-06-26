@@ -1,0 +1,160 @@
+openapi: 3.0.3
+info:
+  title: Nextcloud WebDAV + OCS (IDP subset)
+  description: >
+    Curated Nextcloud operations for ClawQL IDP: WebDAV file I/O under
+    `/remote.php/dav/files/{username}/…` and OCS sharing APIs. Base URL:
+    **NEXTCLOUD_BASE_URL** (no trailing slash). Auth: app password via
+    **NEXTCLOUD_APP_PASSWORD** + **NEXTCLOUD_USERNAME** (Basic). See
+    `docs/providers/nextcloud-onboarding.md`.
+  version: "29.x-idp"
+servers:
+  - url: http://nextcloud:8080
+    description: Default Nextcloud in ClawQL Helm idpCollaboration stack
+
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+  parameters:
+    UsernamePath:
+      in: path
+      name: username
+      required: true
+      schema:
+        type: string
+      description: Nextcloud account name (often NEXTCLOUD_USERNAME).
+    FilePath:
+      in: path
+      name: filePath
+      required: true
+      schema:
+        type: string
+      description: Path relative to the user's files root (e.g. `IDP/invoices/q1.pdf`).
+
+security:
+  - basicAuth: []
+
+paths:
+  /ocs/v2.php/cloud/capabilities:
+    get:
+      operationId: nextcloud_ocs_capabilities
+      summary: OCS capabilities (health / version probe)
+      parameters:
+        - in: header
+          name: OCS-APIRequest
+          required: true
+          schema:
+            type: string
+            default: "true"
+      responses:
+        "200":
+          description: OCS XML/JSON capabilities
+
+  /ocs/v2.php/apps/files_sharing/api/v1/shares:
+    get:
+      operationId: nextcloud_shares_list
+      summary: List shares (OCS)
+      parameters:
+        - in: header
+          name: OCS-APIRequest
+          required: true
+          schema:
+            type: string
+            default: "true"
+        - in: query
+          name: path
+          schema:
+            type: string
+          description: Optional folder path filter
+      responses:
+        "200":
+          description: Share list (OCS JSON)
+    post:
+      operationId: nextcloud_shares_create
+      summary: Create a public or user share (OCS)
+      parameters:
+        - in: header
+          name: OCS-APIRequest
+          required: true
+          schema:
+            type: string
+            default: "true"
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                path:
+                  type: string
+                shareType:
+                  type: integer
+                  description: "0=user, 3=public link, etc."
+                permissions:
+                  type: integer
+                publicUpload:
+                  type: boolean
+              required:
+                - path
+                - shareType
+      responses:
+        "200":
+          description: Created share metadata
+
+  /remote.php/dav/files/{username}/{filePath}:
+    parameters:
+      - $ref: "#/components/parameters/UsernamePath"
+      - $ref: "#/components/parameters/FilePath"
+    get:
+      operationId: nextcloud_webdav_download
+      summary: Download file bytes (WebDAV GET)
+      responses:
+        "200":
+          description: File content
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+    put:
+      operationId: nextcloud_webdav_upload
+      summary: Upload or overwrite file (WebDAV PUT)
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+          "*/*":
+            schema:
+              type: string
+              format: binary
+      responses:
+        "201":
+          description: Created
+        "204":
+          description: Updated
+    delete:
+      operationId: nextcloud_webdav_delete
+      summary: Delete file or folder (WebDAV DELETE)
+      responses:
+        "204":
+          description: Deleted
+    propfind:
+      operationId: nextcloud_webdav_list
+      summary: List folder contents (WebDAV PROPFIND)
+      parameters:
+        - in: header
+          name: Depth
+          required: true
+          schema:
+            type: string
+            enum: ["0", "1", "infinity"]
+            default: "1"
+      responses:
+        "207":
+          description: Multi-status WebDAV listing

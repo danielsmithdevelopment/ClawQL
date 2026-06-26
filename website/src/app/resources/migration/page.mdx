@@ -6,9 +6,9 @@ import { Note } from '@/components/mdx'
 Upgrade paths for ClawQL MCP server versions and teams moving from ad-hoc MCP integrations. {{ className: 'lead' }}
 
 <Note>
-  Detailed Tier 1 upgrade steps live in the [Deployment & Operations Guide
-  §1.7](/deployment/operations-guide). This page covers cross-version and
-  cross-platform moves.
+  Helm upgrade steps live in the [Deployment & Operations
+  Guide](/deployment/operations-guide) (Day-2 section). This page covers
+  cross-version and cross-platform moves.
 </Note>
 
 ## Upgrading clawql-mcp
@@ -18,13 +18,13 @@ Upgrade paths for ClawQL MCP server versions and teams moving from ad-hoc MCP in
 3. For Kubernetes/Helm: bump image digest in values, run **`helm upgrade`**, verify **`/healthz`**
 4. Re-run smoke tests: **`search`** on a known operation, **`execute`** dry path, vault **`memory_recall`** if enabled
 
-## Docker Compose / Tier 1
+## Docker Compose (planned)
 
-→ [Operations guide §1.7 Upgrading Tier 1](/deployment/operations-guide)
+Four-stack Compose ([#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251)) is not shipped. Use **`make local-k8s-up`** (Helm) today → [Helm chart](/helm)
 
 ## Kubernetes / Helm
 
-→ [Operations guide §2](/deployment/operations-guide) · [Helm chart](/helm)
+→ [Operations guide](/deployment/operations-guide) · [Helm chart](/helm)
 
 ## From other MCP servers
 

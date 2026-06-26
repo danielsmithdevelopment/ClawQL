@@ -24,6 +24,10 @@ afterEach(() => {
   delete process.env.CLAWQL_STIRLING_API_KEY;
   delete process.env.ONYX_API_TOKEN;
   delete process.env.CLAWQL_ONYX_API_TOKEN;
+  delete process.env.NEXTCLOUD_USERNAME;
+  delete process.env.NEXTCLOUD_APP_PASSWORD;
+  delete process.env.CONESHARE_API_TOKEN;
+  delete process.env.CLAWQL_CONESHARE_API_TOKEN;
   delete process.env.SLACK_BOT_TOKEN;
   delete process.env.N8N_API_KEY;
   delete process.env.SENTRY_AUTH_TOKEN;
@@ -184,6 +188,22 @@ describe("mergedAuthHeaders", () => {
     process.env.CLAWQL_ONYX_API_TOKEN = "fallback_tok";
     expect(mergedAuthHeaders("onyx")).toEqual({
       Authorization: "Bearer fallback_tok",
+    });
+  });
+
+  it("uses Basic auth and OCS header for specLabel nextcloud", () => {
+    process.env.NEXTCLOUD_USERNAME = "svc";
+    process.env.NEXTCLOUD_APP_PASSWORD = "app-pass";
+    expect(mergedAuthHeaders("nextcloud")).toEqual({
+      Authorization: `Basic ${Buffer.from("svc:app-pass", "utf8").toString("base64")}`,
+      "OCS-APIRequest": "true",
+    });
+  });
+
+  it("uses Bearer for specLabel coneshare", () => {
+    process.env.CONESHARE_API_TOKEN = "jwt-access";
+    expect(mergedAuthHeaders("coneshare")).toEqual({
+      Authorization: "Bearer jwt-access",
     });
   });
 

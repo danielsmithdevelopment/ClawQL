@@ -3,7 +3,7 @@ import { Note } from '@/components/mdx'
 
 # Getting started
 
-Run ClawQL in minutes, pick a deployment tier, then dive into guides and reference docs. {{ className: 'lead' }}
+Run ClawQL in minutes, deploy the full IDP stack with Helm, then dive into guides and reference docs. {{ className: 'lead' }}
 
 <div className="not-prose my-8 flex flex-wrap gap-3">
   <Button href="/quickstart" arrow="right">
@@ -23,21 +23,20 @@ Run ClawQL in minutes, pick a deployment tier, then dive into guides and referen
 2. [MCP clients](/mcp-clients) — stdio, HTTP, and auth token wiring
 3. [Concepts](/concepts) — how **`search`** and **`execute`** save context
 4. [Using search & execute](/learn/search-and-execute-mcp) — first hands-on lesson
-5. [Choose your deployment tier](/deployment) — Tier 1 local → Tier 2 Kubernetes → Tier 3 enterprise
+5. [Deploy with Helm](/helm) — full stack via `make local-k8s-up` or `helm upgrade --install`
 
-## Choose your tier
+## Deployment options
 
-|                | Tier 1                                       | Tier 2                                       | Tier 3                                              |
-| -------------- | -------------------------------------------- | -------------------------------------------- | --------------------------------------------------- |
-| **Best for**   | Evaluation, solo dev                         | Team Kubernetes                              | Regulated / multi-tenant                            |
-| **Start here** | [Quickstart](/quickstart)                    | [Kubernetes](/deployment/kubernetes)         | [Operations guide §3](/deployment/operations-guide) |
-| **Full guide** | [Ops guide §1](/deployment/operations-guide) | [Ops guide §2](/deployment/operations-guide) | [Ops guide §3](/deployment/operations-guide)        |
+| Path                | Best for                  | Start here                                           |
+| ------------------- | ------------------------- | ---------------------------------------------------- |
+| **Local MCP**       | Evaluation, solo dev      | [Quickstart](/quickstart)                            |
+| **Helm full stack** | Team K8s, IDP pipeline    | [Kubernetes](/deployment/kubernetes) · [Helm](/helm) |
+| **Operations**      | Upgrades, secrets, health | [Operations guide](/deployment/operations-guide)     |
 
 <Note>
-  Tier 1 Docker Compose is runnable today for evaluation. Tier 2–3 Operator
-  features are documented in the [Deployment & Operations
-  Guide](/deployment/operations-guide) — watch [Vision &
-  Roadmap](/vision/roadmap) for shipping status.
+  A future **ClawQL Operator** and three-tier CRD model are **design-only** —
+  see [Operator target architecture](/design/operator-target-architecture).
+  Shipped installs use **Helm `clawql-mcp`** directly.
 </Note>
 
 ## Next steps

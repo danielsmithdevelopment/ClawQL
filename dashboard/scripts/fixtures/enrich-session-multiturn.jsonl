@@ -1,0 +1,6 @@
+{"type":"message","id":"u1","timestamp":"2026-06-26T00:00:01.000Z","message":{"role":"user","content":[{"type":"text","text":"first turn"}]}}
+{"type":"message","id":"a1","parentId":"u1","timestamp":"2026-06-26T00:00:02.000Z","message":{"role":"assistant","content":[{"type":"toolCall","id":"call-old","name":"clawql__search","arguments":{"query":"old"}}]}}
+{"type":"message","id":"r1","parentId":"a1","timestamp":"2026-06-26T00:00:03.000Z","message":{"role":"toolResult","toolCallId":"call-old","toolName":"clawql__search","content":[{"type":"text","text":"{}"}],"isError":false}}
+{"type":"message","id":"u2","timestamp":"2026-06-26T00:01:01.000Z","message":{"role":"user","content":[{"type":"text","text":"second turn"}]}}
+{"type":"message","id":"a2","parentId":"u2","timestamp":"2026-06-26T00:01:02.000Z","message":{"role":"assistant","content":[{"type":"toolCall","id":"call-new","name":"clawql__execute","arguments":{"operationId":"stirling::redact","args":{}}}]}}
+{"type":"message","id":"r2","parentId":"a2","timestamp":"2026-06-26T00:01:03.000Z","message":{"role":"toolResult","toolCallId":"call-new","toolName":"clawql__execute","content":[{"type":"text","text":"{\"merkleRoot\":\"abc123\"}"}],"isError":false}}

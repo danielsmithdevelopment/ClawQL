@@ -14,13 +14,13 @@ ClawQL is mid-flight on a **strangler extraction** from the root `clawql-mcp` pa
 
 **What landed (extraction phases 1–9, PRs [#401](https://github.com/danielsmithdevelopment/ClawQL/pull/401)–[#430](https://github.com/danielsmithdevelopment/ClawQL/pull/430)):**
 
-| Package             | Role today                                                                                                 |
-| ------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `clawql-core`       | Audit ring buffer, cache helpers, Merkle + Cuckoo, `Plugin` types, shared errors                           |
-| `clawql-api`        | Spec load/search, REST/GraphQL/gRPC execute, provider registry, `createClawQLApi()`, Panguard proxy plugin |
-| `clawql-memory`     | Vault I/O, `memory.db`, embeddings, ingest/recall, enterprise citations                                    |
-| `clawql-documents`  | `ingest_external_knowledge` core + URL formatting (**scaffold** — not the full Tika/Gotenberg pipeline)    |
-| `clawql-automation` | `schedule` worker + Slack `notify` core (**scaffold** — no NATS/HITL yet)                                  |
+| Package             | Role today                                                                                                                                                        |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `clawql-core`       | Audit ring buffer, cache helpers, Merkle + Cuckoo, `Plugin` types, shared errors                                                                                  |
+| `clawql-api`        | Spec load/search, REST/GraphQL/gRPC execute, provider registry, `createClawQLApi()`, Panguard proxy plugin                                                        |
+| `clawql-memory`     | Vault I/O, `memory.db`, embeddings, ingest/recall, enterprise citations                                                                                           |
+| `clawql-documents`  | `ingest_external_knowledge`, **`DEFAULT_IDP_PIPELINE`** recipe, bundled IDP provider merge (7 vendors via `clawql-api`); automated multi-hop runner still roadmap |
+| `clawql-automation` | `schedule` worker + Slack `notify` core (**scaffold** — no NATS/HITL yet)                                                                                         |
 
 **What is still mostly in `src/`:** MCP tool registration (`tools.ts`), optional tools (sandbox, Onyx, HITL, Ouroboros glue), GraphQL proxy entrypoints, server lifecycle.
 
@@ -122,14 +122,17 @@ Use **subpath imports** at server hot paths (avoid the barrel — loads sql.js +
 
 MCP handlers: `src/memory-ingest.ts`, `src/memory-recall.ts` (thin wrappers + `logMcpToolShape`).
 
-### 4.4 `clawql-documents` (scaffold)
+### 4.4 `clawql-documents`
 
-| Subpath                                   | Module                         |
-| ----------------------------------------- | ------------------------------ |
-| `clawql-documents/ingest/external-ingest` | `runIngestExternalKnowledge`   |
-| `clawql-documents/ingest/url-format`      | URL → Markdown for vault notes |
+| Subpath                                   | Module                                |
+| ----------------------------------------- | ------------------------------------- |
+| `clawql-documents/ingest/external-ingest` | `runIngestExternalKnowledge`          |
+| `clawql-documents/ingest/url-format`      | URL → Markdown for vault notes        |
+| `clawql-documents/pipeline/idp-pipeline`  | `DEFAULT_IDP_PIPELINE`, stage helpers |
 
-**Not yet extracted:** Tika, Gotenberg, Stirling-PDF, Paperless, Presidio orchestration (vision in [`clawql-modularization-v2.md`](../vision/clawql-modularization-v2.md) §3.2).
+**Shipped via MCP + Helm (not a hidden runner):** seven bundled document vendors (**tika**, **gotenberg**, **stirling**, **paperless**, **onyx**, **nextcloud**, **coneshare**) in `clawql-api` — agents compose **`search`/`execute`**; see [`idp-pipeline.md`](../providers/idp-pipeline.md).
+
+**Not yet extracted:** automated orchestration with retries, Merkle per hop, Presidio gateway hooks (vision in [`clawql-modularization-v2.md`](../vision/clawql-modularization-v2.md) §3.2).
 
 MCP handler: `src/external-ingest.ts`.
 
@@ -159,6 +162,8 @@ MCP: `handleScheduleToolInput` shim in `src/clawql-schedule.ts`; `handleNotifyTo
 | 7     | [#428](https://github.com/danielsmithdevelopment/ClawQL/pull/428) | memory ingest/recall + enterprise citations                            |
 | 8     | [#429](https://github.com/danielsmithdevelopment/ClawQL/pull/429) | `clawql-documents` package                                             |
 | 9     | [#430](https://github.com/danielsmithdevelopment/ClawQL/pull/430) | `clawql-automation` (schedule + notify)                                |
+
+**Planned (not extracted):** Kubernetes Operator + **`ClawQLInstance` CRD** — see [`operator-target-architecture.md`](./operator-target-architecture.md) ([#255](https://github.com/danielsmithdevelopment/ClawQL/issues/255)).
 
 **Next extraction (post–phase 9)** ([plan §6](./effect-ts-modularization-rearchitecture-plan.md#6-mapping-src--packages-first-extraction-order)):
 

@@ -142,7 +142,7 @@ mcpProxy:
 
 # memory_ingest / memory_recall (default on). Set false to inject CLAWQL_ENABLE_MEMORY=0.
 enableMemory: true
-# Document stack: tika, gotenberg, paperless, stirling, onyx in all-providers merge + ingest_external_knowledge + (with enableOnyx) knowledge_search_onyx. Set false to inject CLAWQL_ENABLE_DOCUMENTS=0.
+# Document stack: tika, gotenberg, paperless, stirling, onyx, nextcloud, coneshare in all-providers merge + ingest_external_knowledge + (with enableOnyx) knowledge_search_onyx. Set false to inject CLAWQL_ENABLE_DOCUMENTS=0.
 enableDocuments: true
 
 # MCP sandbox_exec — isolated snippets (bridge / Seatbelt / Docker; #207). Default off; set true + bridge URL/token (or CLAWQL_SANDBOX_BACKEND) via extraEnv.
@@ -479,6 +479,54 @@ documentPipeline:
       existingDataClaim: ""
       existingConsumeClaim: ""
 
+# Nextcloud + ConeShare collaboration layer (IDP storage + secure sharing).
+# Enable with `idpCollaboration.enabled=true`. Nextcloud uses SQLite in-pod for lab installs;
+# point `coneshare.externalUrl` at an existing ConeShare instance or co-deploy `coneshare.enabled`.
+idpCollaboration:
+  enabled: false
+  nextcloud:
+    enabled: true
+    image:
+      repository: nextcloud
+      tag: "29-apache"
+      pullPolicy: IfNotPresent
+    service:
+      port: 8080
+    auth:
+      adminUser: admin
+      adminPassword: ""
+      existingSecret: ""
+    persistence:
+      size: 20Gi
+      storageClass: ""
+      existingClaim: ""
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        cpu: "2"
+        memory: 2Gi
+  coneshare:
+    enabled: false
+    externalUrl: ""
+    image:
+      repository: conesharedev/coneshare
+      tag: rolling
+      pullPolicy: IfNotPresent
+    service:
+      port: 80
+    auth:
+      apiToken: ""
+      existingSecret: ""
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        cpu: "2"
+        memory: 2Gi
+
 stores:
   postgres:
     enabled: true
@@ -753,6 +801,8 @@ dashboard:
   # Empty: auto-wires to OpenClaw chat-bridge when openclaw.enabled && openclaw.chatBridge.enabled.
   # Example override: http://<release>-openclaw.<ns>.svc.cluster.local:8787/v1/chat
   openclawChatUrl: ""
+  # Agent Chat SSE streaming (dashboard simulates or proxies bridge /v1/chat/stream).
+  chatStream: true
   image:
     repository: ghcr.io/danielsmithdevelopment/clawql-dashboard
     tag: latest
@@ -851,8 +901,18 @@ providerIngress:
     host: onyx.localhost
     path: /
     pathType: Prefix
+  nextcloud:
+    enabled: true
+    host: nextcloud.localhost
+    path: /
+    pathType: Prefix
+  coneshare:
+    enabled: true
+    host: coneshare.localhost
+    path: /
+    pathType: Prefix
 
-# Optional Istio ServiceEntry / EgressGateway allowlist for bundled SaaS provider HTTPS (#275).
+# Optional Istio ServiceEntry
 # Requires cluster Istio CRDs. Install **istio-egressgateway** (chart **istio/gateway**) with selector
 # **istio: egressgateway** when **throughEgressGateway** is true. See **docs/deployment/helm.md**.
 istio:

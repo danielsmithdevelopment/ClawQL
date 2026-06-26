@@ -164,6 +164,21 @@ OpenClaw ships the **`openrouter`** provider ([plugin](https://docs.openclaw.ai/
 
 Free-tier discovery without a key is metadata-only: **`openclaw models scan --no-probe`** (see upstream docs). Live calls still need **`OPENROUTER_API_KEY`** or a stored profile.
 
+### 5.7 ClawQL dashboard Agent Chat
+
+The **ClawQL dashboard** (`dashboard/` Next.js app) includes an **Agent Chat** panel that proxies to the same OpenClaw agent via an HTTP bridge — useful for operators who prefer a browser UI over the OpenClaw app.
+
+| Piece                 | Location                                                                         |
+| --------------------- | -------------------------------------------------------------------------------- |
+| **Full reference**    | **[`docs/dashboard/agent-chat.md`](../dashboard/agent-chat.md)**                 |
+| **Local bridge**      | `cd dashboard && npm run openclaw:chat-bridge` → `http://127.0.0.1:8787/v1/chat` |
+| **Dashboard env**     | `CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL=http://127.0.0.1:8787/v1/chat`               |
+| **Streaming**         | `POST /v1/chat/stream` (SSE); default on via `CLAWQL_DASHBOARD_CHAT_STREAM=1`    |
+| **Thread continuity** | Dashboard `threadId` → bridge → `openclaw agent --session-id`                    |
+| **Persistence**       | `$CLAWQL_OBSIDIAN_VAULT_PATH/Dashboard/chats/` (shared vault with MCP memory)    |
+
+IDP agents should follow the **[dashboard response contract](../dashboard/agent-chat.md#7-agent-response-contract-rich-idp-ui)** when enriching replies with `attachments`, `steps`, and `pipelineStatus`. See also the **[OpenClaw IDP skill profile](openclaw-idp-skill-profile.md#dashboard-agent-chat-response-contract)**.
+
 ---
 
 ## 6. Validate without OpenClaw UI

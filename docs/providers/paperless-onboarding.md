@@ -100,5 +100,6 @@ If you need direct document upload/ingest operations through ClawQL `execute`, r
 
 ## References
 
+- [IDP pipeline hub](idp-pipeline.md)
 - [Paperless-ngx REST API docs](https://docs.paperless-ngx.com/api/)
 - [Paperless-ngx administration docs](https://docs.paperless-ngx.com/administration/)

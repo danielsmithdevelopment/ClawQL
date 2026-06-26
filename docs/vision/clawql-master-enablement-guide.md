@@ -136,7 +136,7 @@ The Kubernetes Operator manages `ClawQLInstance` CRD for tier, vertical enableme
 - Tier 2: Helm + Operator (team scale)
 - Tier 3: Full enterprise (Kata/gVisor, Istio mTLS, dedicated pools)
 
-_Full design: [Deployment & Operations Guide](../deployment/clawql-deployment-operations-guide.md) · [Modularization v2.1](./clawql-modularization-v2.md)._
+_Full design: [Deployment & Operations Guide](../deployment/clawql-deployment-operations-guide.md) · [Operator target architecture (planned)](../design/operator-target-architecture.md) · [Modularization v2.1](./clawql-modularization-v2.md)._
 
 ## XI. How It All Works Together
 
@@ -150,7 +150,7 @@ _Full design: [Deployment & Operations Guide](../deployment/clawql-deployment-op
 
 ## XII. Current Status & Roadmap (June 2026)
 
-**Shipped:** MCP transport (stdio/HTTP/gRPC), Ouroboros library, Layer 0 tooling, LGTMP reference stack, **horizontal package extraction** (`clawql-core`, `clawql-api`, `clawql-memory`, `clawql-documents`, `clawql-automation` scaffolds) — see **[Modularization implementation status](../design/modularization-implementation-status.md)**.
+**Shipped:** MCP transport (stdio/HTTP/gRPC), Ouroboros library, Layer 0 tooling, LGTMP reference stack, **horizontal package extraction** (`clawql-core`, `clawql-api`, `clawql-memory`, `clawql-documents`, `clawql-automation`), **seven-vendor IDP pipeline** (bundled providers + Helm + [`idp-pipeline.md`](../providers/idp-pipeline.md)) — see **[Modularization implementation status](../design/modularization-implementation-status.md)**.
 
 **In progress:** Effect `Layer` plugins for memory/documents/automation; transport thinning (`tools.ts` → plugin registration); third-party plugin npm contract.
 
@@ -192,9 +192,12 @@ Read the full documentation suite, deploy the Tier 1 stack, and begin building p
 | **[Plugin registry](../reference/clawql-plugin-registry.md)**                                        | Shipped vs planned plugins, MCP tools, enable flags                                 |
 | [Vision & Roadmap](./clawql-vision-roadmap.md)                                                       | Public edition — honest shipped vs planned, phased delivery                         |
 | [Modularization v2.1](./clawql-modularization-v2.md)                                                 | Package boundaries, dependency graph, intelligent MCP gateway                       |
+| **[IDP stack (April 2026)](./clawql-idp-stack.md)**                                                  | End-to-end document pipeline, Nextcloud, Coneshare, orchestration planes, redaction |
 | [Immutable releases (Layer 0)](./clawql-hybrid-decentralized-github-alternative.md)                  | Arweave bundles, Radicle, Rift, `clawql-release`, manifest schema                   |
 | [Contributor Technical Specification](../contributing/clawql-contributor-technical-specification.md) | Implementation contracts, Effect-TS patterns, CI rules                              |
-| [Deployment & Operations Guide](../deployment/clawql-deployment-operations-guide.md)                 | Tier 1–3, CRD reference, day-2 ops                                                  |
+| [Deployment & Operations Guide](../deployment/clawql-deployment-operations-guide.md)                 | Shipped Helm ops — quick start, day-2, health                                       |
+| [Operator target architecture](../design/operator-target-architecture.md)                            | Planned tiers, CRD, verticals, NL ops (not shipped)                                 |
+| [Dashboard Agent Chat](../dashboard/agent-chat.md)                                                   | Browser UI, SSE, vault threads, IDP attachment JSON contract                        |
 | [Defense-in-Depth Security Guide](../security/clawql-defense-in-depth-security-guide.md)             | What to deploy — condensed operator reference                                       |
 | [Security curriculum](../security/security-best-practices-series/README.md)                          | 32 modules — why and how to prove controls                                          |
 | [Token efficiency (8 layers)](../architecture/clawql-token-efficiency.md)                            | Code Mode through model routing                                                     |

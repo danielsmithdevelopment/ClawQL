@@ -197,18 +197,25 @@ export async function executeRestOperation(
     (op.path === "/version" || op.flatPath === "/version");
   const isTikaPutParse =
     op.specLabel === "tika" && method === "PUT" && (op.path === "/tika" || op.flatPath === "/tika");
+  const isNextcloudPropfind = method === "PROPFIND" && op.specLabel === "nextcloud";
   const headers: Record<string, string> = {
     Accept: isTikaVersionGet
       ? "text/plain"
       : isTikaPutParse
         ? "application/json"
-        : wantsBinary
-          ? "*/*"
-          : "application/json",
+        : isNextcloudPropfind
+          ? "application/xml"
+          : wantsBinary
+            ? "*/*"
+            : "application/json",
     ...mergedAuthHeaders(op.specLabel),
   };
+  if (isNextcloudPropfind) {
+    headers.Depth =
+      typeof args.depth === "string" && args.depth.trim() ? String(args.depth).trim() : "1";
+  }
   const init: FetchRequestInit = { method, headers };
-  if (method !== "GET" && method !== "HEAD" && op.requestBody) {
+  if (method !== "GET" && method !== "HEAD" && method !== "PROPFIND" && op.requestBody) {
     const ct = op.requestBodyContentType?.toLowerCase();
     if (ct === "multipart/form-data" && typeof FormData !== "undefined") {
       const fd = new FormData();

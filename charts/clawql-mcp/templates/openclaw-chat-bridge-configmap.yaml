@@ -9,4 +9,8 @@ metadata:
 data:
   openclaw-chat-bridge.mjs: |
 {{ .Files.Get "files/openclaw-chat-bridge.mjs" | indent 4 }}
+  openclaw-chat-enrich.mjs: |
+{{ .Files.Get "files/openclaw-chat-enrich.mjs" | indent 4 }}
+  openclaw-reply-from-json.mjs: |
+{{ .Files.Get "files/openclaw-reply-from-json.mjs" | indent 4 }}
 {{- end }}

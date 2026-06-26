@@ -1,28 +1,31 @@
 'use client'
 
-import { Loader2, SendHorizontal } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { AgentConversation } from '@/components/agent-chat/AgentConversation'
+import { ChatComposer } from '@/components/agent-chat/ChatComposer'
+import type { AgentChatApiResponse, ChatAgentMessage, ChatMessage } from '@/components/dashboard/types'
+import type { ChatThread } from '@/components/dashboard/types'
 import {
   fetchChatMessages,
   patchChatThreadApi,
   saveChatMessagesApi,
   titleFromFirstMessage,
 } from '@/lib/chat-storage'
-import { cn } from '@/lib/utils'
+import { consumeAgentChatStream, sendAgentChatJson } from '@/lib/chat-stream.client'
 
-import type { ChatAgentMessage, ChatMessage, ChatThread, ChatToolStep } from './types'
-
-function StepIcon({ state }: { state: ChatToolStep['state'] }) {
-  if (state === 'done') {
-    return <span className="text-emerald-500">✓</span>
+function agentMessageFromApi(id: string, data: AgentChatApiResponse, status: ChatAgentMessage['status']): ChatAgentMessage {
+  return {
+    kind: 'agent',
+    id,
+    status,
+    intro: data.reply ?? data.error ?? '(empty response)',
+    steps: data.steps,
+    attachments: data.attachments,
+    citations: data.citations,
+    toolCalls: data.toolCalls,
+    pipelineStatus: data.pipelineStatus,
   }
-  if (state === 'active') {
-    return <Loader2 className="size-3.5 animate-spin text-orange-500" aria-hidden />
-  }
-  return <span className="text-zinc-600">⋯</span>
 }
 
 export function AgentChatPanel({
@@ -36,11 +39,13 @@ export function AgentChatPanel({
   onThreadActivity?: (patch: { title?: string; updatedAt: number }) => void
   onThreadMetaFromServer?: (thread: ChatThread) => void
 }) {
-  const [bubbles, setBubbles] = useState<ChatMessage[]>([])
+  const [messages, setMessages] = useState<ChatMessage[]>([])
   const [messagesLoadedFor, setMessagesLoadedFor] = useState<string | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
+  const [isStreaming, setIsStreaming] = useState(false)
+  const [streamEnabled, setStreamEnabled] = useState(true)
   const [proxyHint, setProxyHint] = useState<string | null>(null)
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -49,14 +54,14 @@ export function AgentChatPanel({
     void (async () => {
       setLoadError(null)
       try {
-        const messages = await fetchChatMessages(threadId)
+        const loaded = await fetchChatMessages(threadId)
         if (cancelled) return
-        setBubbles(messages)
+        setMessages(loaded)
         setMessagesLoadedFor(threadId)
       } catch (e) {
         if (!cancelled) {
           setLoadError(e instanceof Error ? e.message : 'Failed to load messages')
-          setBubbles([])
+          setMessages([])
           setMessagesLoadedFor(threadId)
         }
       }
@@ -70,27 +75,30 @@ export function AgentChatPanel({
     if (messagesLoadedFor !== threadId) return
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
     saveTimerRef.current = setTimeout(() => {
-      void saveChatMessagesApi(threadId, bubbles).catch(() => {
+      void saveChatMessagesApi(threadId, messages).catch(() => {
         setLoadError('Failed to save messages to vault')
       })
     }, 400)
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
     }
-  }, [threadId, bubbles, messagesLoadedFor])
+  }, [threadId, messages, messagesLoadedFor])
 
   useEffect(() => {
     let cancelled = false
     void (async () => {
       try {
         const r = await fetch('/api/agent/config')
-        const j = (await r.json()) as { openclawConfigured?: boolean }
-        if (!cancelled && j.openclawConfigured === false) {
-          setProxyHint(
-            'OpenClaw proxy URL is not set on this dashboard. Set CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL on the pod to reach your in-cluster OpenClaw agent.',
-          )
-        } else if (!cancelled) {
-          setProxyHint(null)
+        const j = (await r.json()) as { openclawConfigured?: boolean; chatStream?: boolean }
+        if (!cancelled) {
+          if (j.openclawConfigured === false) {
+            setProxyHint(
+              'OpenClaw proxy URL is not set on this dashboard. Set CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL on the pod to reach your in-cluster OpenClaw agent.',
+            )
+          } else {
+            setProxyHint(null)
+          }
+          setStreamEnabled(j.chatStream !== false)
         }
       } catch {
         /* ignore */
@@ -120,66 +128,71 @@ export function AgentChatPanel({
     if (!text || sending) return
     setInput('')
     setSending(true)
+    setIsStreaming(false)
+
     const uid = `u-${Date.now()}`
-    const isFirstUserMessage = bubbles.every((b) => b.kind !== 'user')
-    setBubbles((prev) => [...prev, { kind: 'user', id: uid, text }])
+    const aid = `a-${Date.now()}`
+    const isFirstUserMessage = messages.every((b) => b.kind !== 'user')
+
+    setMessages((prev) => [
+      ...prev,
+      { kind: 'user', id: uid, text },
+      { kind: 'agent', id: aid, status: 'running', intro: '' },
+    ])
     void touchThread(
       isFirstUserMessage && threadTitle === 'New chat' ? { title: titleFromFirstMessage(text) } : undefined,
     )
 
-    try {
-      const r = await fetch('/api/agent/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text, threadTitle, threadId }),
-      })
-      const data = (await r.json()) as {
-        reply?: string
-        demo?: boolean
-        error?: string
-        steps?: ChatToolStep[]
-      }
-      if (!r.ok) {
-        const agentMsg: ChatAgentMessage = {
-          kind: 'agent',
-          id: `a-${Date.now()}`,
-          status: 'done',
-          intro: data.error ?? r.statusText,
-          steps: [],
-        }
-        setBubbles((prev) => [...prev, agentMsg])
-        void touchThread()
-        return
-      }
-      const agentMsg: ChatAgentMessage = {
-        kind: 'agent',
-        id: `a-${Date.now()}`,
-        status: 'done',
-        intro: data.reply ?? '(empty response)',
-        steps: data.steps,
-      }
-      setBubbles((prev) => [...prev, agentMsg])
-      void touchThread()
+    const payload = { message: text, threadTitle, threadId }
+
+    const finalizeAgent = (data: AgentChatApiResponse) => {
+      setMessages((prev) =>
+        prev.map((m) => (m.id === aid ? agentMessageFromApi(aid, data, 'done') : m)),
+      )
       if (data.demo) {
         setProxyHint(
           'Demo mode: configure CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL to stream from your bundled OpenClaw service.',
         )
       }
-    } catch (e) {
-      setBubbles((prev) => [
-        ...prev,
-        {
-          kind: 'agent',
-          id: `a-${Date.now()}`,
-          status: 'done',
-          intro: e instanceof Error ? e.message : 'Request failed',
-        },
-      ])
       void touchThread()
+    }
+
+    try {
+      if (streamEnabled) {
+        setIsStreaming(true)
+        await consumeAgentChatStream(payload, {
+          onDelta: (chunk) => {
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === aid && m.kind === 'agent' ? { ...m, intro: m.intro + chunk, status: 'running' } : m,
+              ),
+            )
+          },
+          onDone: (data) => {
+            setIsStreaming(false)
+            finalizeAgent(data)
+          },
+          onError: (err) => {
+            setIsStreaming(false)
+            finalizeAgent({ error: err })
+          },
+        })
+      } else {
+        const result = await sendAgentChatJson(payload)
+        if (!result.ok) {
+          finalizeAgent({ error: result.error ?? 'Request failed' })
+        } else {
+          finalizeAgent(result)
+        }
+      }
+    } catch (e) {
+      setIsStreaming(false)
+      finalizeAgent({ error: e instanceof Error ? e.message : 'Request failed' })
     } finally {
       setSending(false)
+      setIsStreaming(false)
     }
-  }, [input, sending, threadTitle, threadId, bubbles, touchThread])
+  }, [input, sending, threadTitle, threadId, messages, touchThread, streamEnabled])
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-zinc-950">
@@ -193,122 +206,38 @@ export function AgentChatPanel({
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" type="button" className="text-xs">
-            PR #42
-          </Button>
-          <Button variant="outline" size="sm" type="button" className="text-xs">
-            Sandbox
-          </Button>
-          <Button variant="outline" size="sm" type="button" className="text-xs">
-            Logs
-          </Button>
+          <span className="inline-flex items-center rounded-md border border-white/10 px-2 py-1 text-[10px] uppercase tracking-wide text-zinc-500">
+            {streamEnabled ? 'SSE stream' : 'JSON mode'}
+          </span>
         </div>
       </div>
 
       {proxyHint ? (
-        <p className="shrink-0 border-b border-amber-500/20 bg-amber-500/10 px-4 py-2 text-xs text-amber-200 sm:px-6" role="status">
+        <p
+          className="shrink-0 border-b border-amber-500/20 bg-amber-500/10 px-4 py-2 text-xs text-amber-200 sm:px-6"
+          role="status"
+        >
           {proxyHint}
         </p>
       ) : null}
       {loadError ? (
-        <p className="shrink-0 border-b border-red-500/20 bg-red-500/10 px-4 py-2 text-xs text-red-200 sm:px-6" role="alert">
+        <p
+          className="shrink-0 border-b border-red-500/20 bg-red-500/10 px-4 py-2 text-xs text-red-200 sm:px-6"
+          role="alert"
+        >
           {loadError}
         </p>
       ) : null}
 
-      <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-4 py-6 sm:px-6">
-        {messagesLoadedFor !== threadId ? (
-          <p className="text-center text-sm text-zinc-500">Loading conversation…</p>
-        ) : bubbles.length === 0 ? (
-          <p className="text-center text-sm text-zinc-500">
-            Start the conversation — messages persist under your vault and reuse this thread id with OpenClaw.
-          </p>
-        ) : null}
-        {bubbles.map((b) =>
-          b.kind === 'user' ? (
-            <div key={b.id} className="flex justify-end">
-              <div className="max-w-[85%] rounded-2xl rounded-tr-md bg-zinc-800 px-4 py-3 text-sm leading-relaxed text-zinc-100">
-                {b.text}
-              </div>
-            </div>
-          ) : (
-            <div key={b.id} className="flex justify-start">
-              <div className="max-w-[min(100%,42rem)] space-y-3">
-                <div className="flex items-center gap-2 text-xs text-zinc-400">
-                  <span className="inline-flex size-6 items-center justify-center rounded bg-orange-500/20 text-[10px] font-bold text-orange-400">
-                    C
-                  </span>
-                  <span className="font-medium text-zinc-300">claw — agent</span>
-                  <span
-                    className={cn(
-                      'inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[10px] uppercase',
-                      b.status === 'running' && 'bg-orange-500/15 text-orange-400',
-                      b.status === 'queued' && 'bg-zinc-800 text-zinc-500',
-                      b.status === 'done' && 'bg-zinc-800 text-zinc-400',
-                    )}
-                  >
-                    {b.status === 'running' ? (
-                      <>
-                        <span className="relative flex size-2">
-                          <span className="absolute inline-flex size-full animate-ping rounded-full bg-orange-400 opacity-60" />
-                          <span className="relative inline-flex size-2 rounded-full bg-orange-500" />
-                        </span>
-                        running
-                      </>
-                    ) : b.status === 'queued' ? (
-                      'queued'
-                    ) : (
-                      'done'
-                    )}
-                  </span>
-                </div>
-                <p className="whitespace-pre-wrap text-sm text-zinc-200">{b.intro}</p>
-                {b.steps && b.steps.length > 0 ? (
-                  <div className="rounded-lg border border-white/10 bg-black/40 p-3 font-mono text-[11px] leading-relaxed text-zinc-300">
-                    <div className="mb-2 flex items-center justify-between text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
-                      <span>Tool execution</span>
-                      <span className="text-orange-400">{b.status === 'running' ? '● active' : '○ idle'}</span>
-                    </div>
-                    <ul className="space-y-1.5">
-                      {b.steps.map((s, i) => (
-                        <li key={i} className="flex gap-2">
-                          <span className="shrink-0 pt-0.5">
-                            <StepIcon state={s.state} />
-                          </span>
-                          <span className={cn(s.state === 'pending' && 'text-zinc-600')}>{s.label}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ) : null}
-              </div>
-            </div>
-          ),
-        )}
+      <div className="flex min-h-0 flex-1 flex-col">
+        <AgentConversation
+          messages={messages}
+          isStreaming={isStreaming}
+          loading={messagesLoadedFor !== threadId}
+        />
       </div>
 
-      <div className="shrink-0 border-t border-white/10 bg-zinc-950 p-3 sm:p-4">
-        <div className="mx-auto flex max-w-4xl flex-col gap-2">
-          <div className="flex gap-2 rounded-xl border border-white/10 bg-zinc-900/80 p-2 shadow-inner">
-            <Input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault()
-                  void send()
-                }
-              }}
-              placeholder="Message Claw… (@mention tools, /commands)"
-              className="h-11 flex-1 border-0 bg-transparent shadow-none focus-visible:ring-0"
-              disabled={sending}
-            />
-            <Button type="button" size="icon" className="shrink-0 bg-orange-500 text-zinc-950 hover:bg-orange-400" disabled={sending} onClick={() => void send()} aria-label="Send">
-              {sending ? <Loader2 className="size-4 animate-spin" /> : <SendHorizontal className="size-4" />}
-            </Button>
-          </div>
-        </div>
-      </div>
+      <ChatComposer input={input} sending={sending} onInputChange={setInput} onSend={() => void send()} />
     </div>
   )
 }

@@ -3,12 +3,16 @@ import type { Section } from '@/components/SectionProvider'
 /** In-page nav for `/learn/document-pipeline` (h2 ids match @sindresorhus/slugify). */
 export const learnDocumentPipelineSections: Array<Section> = [
   {
-    title: 'What the five-vendor document stack is',
-    id: 'what-the-five-vendor-document-stack-is',
+    title: 'What the seven-vendor document stack is',
+    id: 'what-the-seven-vendor-document-stack-is',
   },
   {
-    title: 'Recommended data flow from Tika to Onyx',
-    id: 'recommended-data-flow-from-tika-to-onyx',
+    title: 'Recommended IDP data flow',
+    id: 'recommended-idp-data-flow',
+  },
+  {
+    title: 'Nextcloud collaboration storage',
+    id: 'nextcloud-collaboration-storage',
   },
   {
     title: 'Tika text and metadata extraction',
@@ -20,6 +24,10 @@ export const learnDocumentPipelineSections: Array<Section> = [
   {
     title: 'Onyx enterprise retrieval and ingestion',
     id: 'onyx-enterprise-retrieval-and-ingestion',
+  },
+  {
+    title: 'Coneshare secure sharing and VDR',
+    id: 'coneshare-secure-sharing-and-vdr',
   },
   {
     title: 'Orchestrating with search and execute',

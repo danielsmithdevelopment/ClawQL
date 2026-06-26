@@ -4,7 +4,8 @@
  *
  * Chart copy: charts/clawql-mcp/files/openclaw-chat-bridge.mjs (keep in sync with this file).
  *
- * The dashboard API route POSTs JSON { message, threadTitle?, threadId? } and expects JSON { reply }.
+ * The dashboard API route POSTs JSON { message, threadTitle?, threadId? } and expects JSON
+ * { reply, steps?, attachments?, citations?, toolCalls?, pipelineStatus? } (enriched from OpenClaw session audit).
  * OpenClaw exposes `openclaw agent` (CLI) — not this HTTP shape — so this script runs the CLI per request.
  *
  * Usage:
@@ -19,6 +20,8 @@ import http from 'node:http'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { spawn } from 'node:child_process'
+import { buildChatResponseBody } from './openclaw-chat-enrich.mjs'
+import { replyFromAgentJson } from './openclaw-reply-from-json.mjs'
 
 /** Load repo-root `.env` into process.env without overriding existing vars (minimal parser). */
 function loadRepoRootEnvDotfile() {
@@ -62,44 +65,6 @@ function json(res, status, body) {
   res.end(s)
 }
 
-/** Best-effort extract human reply from `openclaw agent --json` stdout. */
-function replyFromAgentJson(parsed) {
-  if (parsed == null) return null
-  if (typeof parsed === 'string') return parsed
-  if (typeof parsed.reply === 'string') return parsed.reply
-  if (typeof parsed.response === 'string') return parsed.response
-  if (typeof parsed.output === 'string') return parsed.output
-  if (typeof parsed.text === 'string') return parsed.text
-  if (typeof parsed.message === 'string') return parsed.message
-  if (Array.isArray(parsed.payloads) && parsed.payloads.length > 0) {
-    const parts = parsed.payloads
-      .map((p) => (p && typeof p === 'object' && typeof p.text === 'string' ? p.text.trim() : ''))
-      .filter(Boolean)
-    if (parts.length > 0) return parts.join('\n\n')
-  }
-  if (parsed.meta && typeof parsed.meta === 'object') {
-    const visible = parsed.meta.finalAssistantVisibleText ?? parsed.meta.finalAssistantRawText
-    if (typeof visible === 'string' && visible.trim()) return visible.trim()
-  }
-  if (Array.isArray(parsed.messages)) {
-    for (let i = parsed.messages.length - 1; i >= 0; i--) {
-      const m = parsed.messages[i]
-      if (m && typeof m === 'object') {
-        const c = m.content ?? m.text ?? m.body
-        if (typeof c === 'string') return c
-      }
-    }
-  }
-  if (typeof parsed.result === 'object' && parsed.result && typeof parsed.result.text === 'string') {
-    return parsed.result.text
-  }
-  try {
-    return JSON.stringify(parsed, null, 2)
-  } catch {
-    return String(parsed)
-  }
-}
-
 function openclawAgentArgs(sessionId, message) {
   const agentArgs = [
     'agent',
@@ -140,15 +105,42 @@ function runOpenclawAgent(sessionId, message) {
   })
 }
 
+function formatSse(event, data) {
+  return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`
+}
+
+function* chunkText(text, size = 14) {
+  for (let i = 0; i < text.length; i += size) {
+    yield text.slice(i, i + size)
+  }
+}
+
+async function streamReply(res, payload) {
+  const reply = typeof payload.reply === 'string' ? payload.reply : ''
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream; charset=utf-8',
+    'Cache-Control': 'no-cache, no-transform',
+    Connection: 'keep-alive',
+  })
+  for (const chunk of chunkText(reply)) {
+    res.write(formatSse('delta', { type: 'delta', text: chunk }))
+    await new Promise((r) => setTimeout(r, 16))
+  }
+  res.write(formatSse('done', { type: 'done', ...payload }))
+  res.end()
+}
+
 const server = http.createServer(async (req, res) => {
   if (req.method === 'GET' && (req.url === '/healthz' || req.url === '/')) {
     return json(res, 200, { ok: true, service: 'openclaw-chat-bridge', agent: AGENT_ID, port: PORT })
   }
 
-  if (req.method !== 'POST' || req.url !== '/v1/chat') {
+  if (req.method !== 'POST' || (req.url !== '/v1/chat' && req.url !== '/v1/chat/stream')) {
     res.writeHead(404, { 'Content-Type': 'text/plain' })
     return res.end('Not found')
   }
+
+  const wantsStream = req.url === '/v1/chat/stream'
 
   let raw = ''
   try {
@@ -203,7 +195,12 @@ const server = http.createServer(async (req, res) => {
   }
 
   const reply = replyFromAgentJson(parsed)
-  return json(res, 200, { reply: reply ?? '(empty response)' })
+  const responseBody = buildChatResponseBody(parsed, reply ?? '(empty response)')
+
+  if (wantsStream) {
+    return streamReply(res, responseBody)
+  }
+  return json(res, 200, responseBody)
 })
 
 server.listen(PORT, HOST, () => {

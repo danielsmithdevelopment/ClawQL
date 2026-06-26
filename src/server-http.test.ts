@@ -607,4 +607,64 @@ describe("server-http", () => {
       resetSchemaFieldCache();
     }
   }, 25_000);
+
+  it("POST /idp/coneshare/webhook returns 401 when token mismatch", async () => {
+    const savedConeshare = process.env.CLAWQL_ENABLE_CONESHARE;
+    const savedTok = process.env.CLAWQL_CONESHARE_WEBHOOK_TOKEN;
+    process.env.CLAWQL_ENABLE_CONESHARE = "1";
+    process.env.CLAWQL_CONESHARE_WEBHOOK_TOKEN = "expected-secret";
+    delete process.env.NODE_ENV;
+    resetSpecCache();
+    resetSchemaFieldCache();
+    try {
+      await withHttpServer(async (base) => {
+        const res = await fetch(`${base}/idp/coneshare/webhook`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer wrong",
+          },
+          body: JSON.stringify({ event: "viewer_joined", share_link_id: "sl-1" }),
+        });
+        expect(res.status).toBe(401);
+      });
+    } finally {
+      if (savedConeshare === undefined) delete process.env.CLAWQL_ENABLE_CONESHARE;
+      else process.env.CLAWQL_ENABLE_CONESHARE = savedConeshare;
+      if (savedTok === undefined) delete process.env.CLAWQL_CONESHARE_WEBHOOK_TOKEN;
+      else process.env.CLAWQL_CONESHARE_WEBHOOK_TOKEN = savedTok;
+      resetSpecCache();
+      resetSchemaFieldCache();
+    }
+  }, 25_000);
+
+  it("POST /idp/coneshare/webhook returns 503 in production without webhook token", async () => {
+    const savedConeshare = process.env.CLAWQL_ENABLE_CONESHARE;
+    const savedTok = process.env.CLAWQL_CONESHARE_WEBHOOK_TOKEN;
+    const savedNodeEnv = process.env.NODE_ENV;
+    process.env.CLAWQL_ENABLE_CONESHARE = "1";
+    delete process.env.CLAWQL_CONESHARE_WEBHOOK_TOKEN;
+    process.env.NODE_ENV = "production";
+    resetSpecCache();
+    resetSchemaFieldCache();
+    try {
+      await withHttpServer(async (base) => {
+        const res = await fetch(`${base}/idp/coneshare/webhook`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({}),
+        });
+        expect(res.status).toBe(503);
+      });
+    } finally {
+      if (savedConeshare === undefined) delete process.env.CLAWQL_ENABLE_CONESHARE;
+      else process.env.CLAWQL_ENABLE_CONESHARE = savedConeshare;
+      if (savedTok === undefined) delete process.env.CLAWQL_CONESHARE_WEBHOOK_TOKEN;
+      else process.env.CLAWQL_CONESHARE_WEBHOOK_TOKEN = savedTok;
+      if (savedNodeEnv === undefined) delete process.env.NODE_ENV;
+      else process.env.NODE_ENV = savedNodeEnv;
+      resetSpecCache();
+      resetSchemaFieldCache();
+    }
+  }, 25_000);
 });

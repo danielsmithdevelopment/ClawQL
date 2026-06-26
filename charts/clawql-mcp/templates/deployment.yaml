@@ -203,6 +203,18 @@ spec:
               value: "http://{{ include "clawql-mcp.paperlessName" . }}:{{ .Values.documentPipeline.paperless.service.port }}"
             {{- end }}
             {{- end }}
+            {{- if .Values.idpCollaboration.enabled }}
+            {{- if .Values.idpCollaboration.nextcloud.enabled }}
+            - name: NEXTCLOUD_BASE_URL
+              value: "http://{{ include "clawql-mcp.nextcloudName" . }}:{{ .Values.idpCollaboration.nextcloud.service.port }}"
+            {{- end }}
+            {{- if or .Values.idpCollaboration.coneshare.enabled .Values.idpCollaboration.coneshare.externalUrl }}
+            - name: CONESHARE_BASE_URL
+              value: {{ default (printf "http://%s:%d" (include "clawql-mcp.coneshareName" .) (.Values.idpCollaboration.coneshare.service.port | int)) .Values.idpCollaboration.coneshare.externalUrl | quote }}
+            - name: CLAWQL_ENABLE_CONESHARE
+              value: "1"
+            {{- end }}
+            {{- end }}
             {{- with .Values.extraEnv }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
@@ -210,14 +222,19 @@ spec:
           {{- $paperlessSecretManaged := and $dpEnabled .Values.documentPipeline.paperless.enabled (not .Values.documentPipeline.paperless.auth.existingSecret) }}
           {{- $stirlingSecretManaged := and $dpEnabled (not .Values.documentPipeline.stirling.auth.existingSecret) (ne .Values.documentPipeline.stirling.auth.apiKey "") }}
           {{- $chartDocPipelineAuthSecret := or $paperlessSecretManaged $stirlingSecretManaged }}
-          {{- if and .Values.secretSourcing.requireVaultBackedSecrets (not .Values.envFromSecret) (eq (len .Values.envFromSecrets) 0) (not $chartDocPipelineAuthSecret) }}
+          {{- $idpSecretManaged := and .Values.idpCollaboration.enabled (or (and .Values.idpCollaboration.nextcloud.enabled (not .Values.idpCollaboration.nextcloud.auth.existingSecret) (ne .Values.idpCollaboration.nextcloud.auth.adminPassword "")) (and .Values.idpCollaboration.coneshare.enabled (not .Values.idpCollaboration.coneshare.auth.existingSecret) (ne .Values.idpCollaboration.coneshare.auth.apiToken ""))) }}
+          {{- if and .Values.secretSourcing.requireVaultBackedSecrets (not .Values.envFromSecret) (eq (len .Values.envFromSecrets) 0) (not $chartDocPipelineAuthSecret) (not $idpSecretManaged) }}
           {{- fail "secretSourcing.requireVaultBackedSecrets=true requires envFromSecret or envFromSecrets (Vault-synced Kubernetes Secret names)." }}
           {{- end }}
-          {{- if or $chartDocPipelineAuthSecret .Values.envFromSecret (gt (len .Values.envFromSecrets) 0) }}
+          {{- if or $chartDocPipelineAuthSecret $idpSecretManaged .Values.envFromSecret (gt (len .Values.envFromSecrets) 0) }}
           envFrom:
             {{- if $chartDocPipelineAuthSecret }}
             - secretRef:
                 name: {{ include "clawql-mcp.documentPipelineSecretName" . }}
+            {{- end }}
+            {{- if $idpSecretManaged }}
+            - secretRef:
+                name: {{ include "clawql-mcp.idpCollaborationSecretName" . }}
             {{- end }}
             {{- if .Values.envFromSecret }}
             - secretRef:

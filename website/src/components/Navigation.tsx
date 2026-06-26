@@ -283,8 +283,12 @@ export const navigation: Array<NavGroup> = [
     links: [
       { title: 'Deployment hub', href: '/deployment' },
       {
-        title: 'Operations guide (Tier 1–3)',
+        title: 'Operations guide (Helm)',
         href: '/deployment/operations-guide',
+      },
+      {
+        title: 'Operator target architecture (planned)',
+        href: '/design/operator-target-architecture',
       },
       { title: 'Tier 2: Kubernetes', href: '/deployment/kubernetes' },
       { title: 'Helm chart', href: '/helm' },

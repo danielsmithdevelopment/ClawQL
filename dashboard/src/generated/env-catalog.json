@@ -573,6 +573,14 @@
           "sensitive": false
         },
         {
+          "key": "CLAWQL_DASHBOARD_CHAT_STREAM",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_DASHBOARD_CHAT_ENRICH",
+          "sensitive": false
+        },
+        {
           "key": "OPENCLAW_CHAT_BRIDGE_PORT",
           "sensitive": false
         },

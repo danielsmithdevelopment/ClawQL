@@ -38,6 +38,8 @@ import {
 } from "./native-protocol-prometheus.js";
 import { maybeInitOtelTracing } from "./otel-tracing.js";
 import { handleLabelStudioWebhookRequest } from "./hitl-label-studio.js";
+import { handleConeshareWebhookRequest } from "./coneshare-webhook.js";
+import { createWebhookRateLimiter } from "./webhook-rate-limit.js";
 
 const PORT = Number.parseInt(process.env.PORT ?? process.env.MCP_PORT ?? "8080", 10);
 const DEFAULT_MCP_PATH = "/mcp";
@@ -211,7 +213,23 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         if (!res.headersSent) {
           res.status(500).json({
             ok: false,
-            error: err instanceof Error ? err.message : String(err),
+            error: "internal server error",
+          });
+        }
+      }
+    });
+  }
+
+  if (getClawqlOptionalToolFlags().enableConeshare) {
+    app.post("/idp/coneshare/webhook", createWebhookRateLimiter(), async (req, res) => {
+      try {
+        await handleConeshareWebhookRequest(req, res);
+      } catch (err: unknown) {
+        console.error("[clawql-mcp-http] POST /idp/coneshare/webhook error:", err);
+        if (!res.headersSent) {
+          res.status(500).json({
+            ok: false,
+            error: "internal server error",
           });
         }
       }

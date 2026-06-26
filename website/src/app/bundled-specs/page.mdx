@@ -2,11 +2,11 @@
 
 The npm package ships **`providers/`**—optional on-disk API descriptions so cold start avoids downloading multi‑MB specs. Most **native GraphQL / gRPC** upstreams are configured only via **`CLAWQL_GRAPHQL_SOURCES`** / **`CLAWQL_GRPC_SOURCES`** ([Spec configuration](/spec-configuration)). **Exception:** **Linear** is a **bundled GraphQL-only** vendor (`providers/linear/schema.graphql`); use **`CLAWQL_PROVIDER=linear`** or include **`linear`** in **`CLAWQL_BUNDLED_PROVIDERS`** / **`all-providers`**. For **multi-spec**, the only unconfigured default is the full merge **`all-providers`**. Any other multi-spec load is **explicit**: set `CLAWQL_BUNDLED_PROVIDERS`, `CLAWQL_SPEC_PATHS`, or a merged `CLAWQL_PROVIDER` (for example `google`, `atlassian`, or `all-providers` set on purpose). See [Spec configuration](/spec-configuration). {{ className: 'lead' }}
 
-**Learn walkthrough** (Tika → Gotenberg → Stirling → Paperless → Onyx, orchestration): [Document pipeline](/learn/document-pipeline).
+**Learn walkthrough** (Nextcloud → Tika → Gotenberg → Stirling → Paperless → Onyx → Coneshare): [Document pipeline](/learn/document-pipeline) · [IDP pipeline hub (repo)](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/providers/idp-pipeline.md).
 
-## Canonical REST-forward matrix (9 vendors)
+## Canonical REST-forward matrix (document stack + SaaS defaults)
 
-Use this as the default-bundle reference for **REST / OpenAPI–heavy** workflows. It matches the historical “nine vendor” docs story; **`google`** is a merged Discovery preset, not a single file.
+Use this as the default-bundle reference for **REST / OpenAPI–heavy** workflows. The table includes the **seven-vendor IDP stack** plus common SaaS presets; **`google`** is a merged Discovery preset, not a single file.
 
 | Provider id (`CLAWQL_PROVIDER` / `CLAWQL_BUNDLED_PROVIDERS`) | Primary auth env(s)                                  | Typical use in workflows                                                                                      |
 | ------------------------------------------------------------ | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
@@ -18,6 +18,8 @@ Use this as the default-bundle reference for **REST / OpenAPI–heavy** workflow
 | `tika`                                                       | `CLAWQL_BEARER_TOKEN` (+ `TIKA_BASE_URL`)            | Text/metadata extraction from many file types                                                                 |
 | `gotenberg`                                                  | `CLAWQL_BEARER_TOKEN` (+ `GOTENBERG_BASE_URL`)       | HTML/office/markdown to PDF conversion                                                                        |
 | `onyx`                                                       | `ONYX_API_TOKEN` (+ `ONYX_BASE_URL`)                 | Enterprise knowledge search via optional `knowledge_search_onyx`; optional ingestion via `execute`            |
+| `nextcloud`                                                  | `NEXTCLOUD_USERNAME`, `NEXTCLOUD_APP_PASSWORD`       | WebDAV intake/outbox, OCS shares for IDP                                                                      |
+| `coneshare`                                                  | `CONESHARE_API_TOKEN` (+ `CONESHARE_BASE_URL`)       | Secure share links, VDR; webhook `POST /idp/coneshare/webhook` when `CLAWQL_ENABLE_CONESHARE=1`               |
 | `google`                                                     | `CLAWQL_GOOGLE_ACCESS_TOKEN` / `GOOGLE_ACCESS_TOKEN` | Bundled Google Cloud Discovery merge (multiple APIs); part of default cross-provider search and execute flows |
 
 ## Bundled GraphQL-only: `linear`

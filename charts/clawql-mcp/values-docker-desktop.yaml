@@ -326,8 +326,25 @@ providerIngress:
   onyx:
     enabled: true
     host: onyx.localhost
+  nextcloud:
+    enabled: true
+    host: nextcloud.localhost
+  coneshare:
+    enabled: false
+    host: coneshare.localhost
 
-# MCP provider tokens — Kubernetes Secret synced from Vault (External Secrets Operator). Bootstrap:
+# Nextcloud + ConeShare (IDP storage + VDR). Nextcloud co-deploys with SQLite for local dev.
+# ConeShare lab image is minimal — set `coneshare.externalUrl` for a full coneshare-compose stack.
+idpCollaboration:
+  enabled: true
+  nextcloud:
+    enabled: true
+    auth:
+      adminUser: admin
+      adminPassword: clawql-local-nextcloud-dev
+  coneshare:
+    enabled: false
+    externalUrl: ""
 # docs/deployment/external-secrets-operator-install.md (ClusterSecretStore + ExternalSecret **`clawql-provider-env`**).
 envFromSecret: clawql-provider-env
 

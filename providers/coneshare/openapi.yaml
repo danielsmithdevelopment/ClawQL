@@ -1,0 +1,214 @@
+openapi: 3.0.3
+info:
+  title: ConeShare API (IDP subset)
+  description: >
+    Curated ConeShare REST subset for ClawQL IDP — JWT auth, share links, data
+    rooms. Full upstream schema: coneshare/coneshare `backend/docs/api/openapi.yaml`.
+    Base URL: **CONESHARE_BASE_URL** (API root, typically includes `/api/v1` prefix
+    or site root — ClawQL normalizes to service root). Auth: **CONESHARE_API_TOKEN**
+    (Bearer JWT) or obtain via `coneshare_token_create`. See
+    `docs/providers/coneshare-onboarding.md`.
+  version: "1.5.0-idp"
+servers:
+  - url: http://coneshare:80
+    description: Default ConeShare web/API service in ClawQL Helm idpCollaboration stack
+
+components:
+  securitySchemes:
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    TokenPair:
+      type: object
+      properties:
+        access:
+          type: string
+        refresh:
+          type: string
+    ShareLink:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        public_url:
+          type: string
+        password:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+    Dataroom:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+
+security:
+  - jwtAuth: []
+
+paths:
+  /api/v1/token/:
+    post:
+      operationId: coneshare_token_create
+      summary: Obtain JWT access/refresh pair
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+              required:
+                - username
+                - password
+      responses:
+        "200":
+          description: Token pair
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenPair"
+
+  /api/v1/token/refresh/:
+    post:
+      operationId: coneshare_token_refresh
+      summary: Refresh JWT access token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refresh:
+                  type: string
+              required:
+                - refresh
+      responses:
+        "200":
+          description: New access token
+
+  /api/v1/share-links/:
+    get:
+      operationId: coneshare_share_links_list
+      summary: List share links
+      tags:
+        - sharelinks
+      responses:
+        "200":
+          description: Share link array
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ShareLink"
+    post:
+      operationId: coneshare_share_links_create
+      summary: Create a secure share link
+      tags:
+        - sharelinks
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ShareLink"
+      responses:
+        "201":
+          description: Created share link
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShareLink"
+
+  /api/v1/share-links/{id}/:
+    get:
+      operationId: coneshare_share_links_retrieve
+      summary: Retrieve share link by id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Share link
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShareLink"
+
+  /api/v1/datarooms/:
+    get:
+      operationId: coneshare_datarooms_list
+      summary: List virtual data rooms
+      tags:
+        - datarooms
+      responses:
+        "200":
+          description: Data room list
+    post:
+      operationId: coneshare_datarooms_create
+      summary: Create a virtual data room
+      tags:
+        - datarooms
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Dataroom"
+      responses:
+        "201":
+          description: Created data room
+
+  /api/v1/datarooms/{id}/:
+    get:
+      operationId: coneshare_datarooms_retrieve
+      summary: Retrieve data room by id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Data room
+
+  /api/v1/datarooms/{id}/add-content/:
+    post:
+      operationId: coneshare_datarooms_add_content
+      summary: Add documents to a data room
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "200":
+          description: Content added

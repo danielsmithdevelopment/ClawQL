@@ -1,0 +1,173 @@
+{{- if .Values.idpCollaboration.enabled }}
+{{- $ncEnabled := .Values.idpCollaboration.nextcloud.enabled }}
+{{- $csEnabled := .Values.idpCollaboration.coneshare.enabled }}
+{{- $ncSecretManaged := and $ncEnabled (not .Values.idpCollaboration.nextcloud.auth.existingSecret) (ne .Values.idpCollaboration.nextcloud.auth.adminPassword "") }}
+{{- $csSecretManaged := and $csEnabled (not .Values.idpCollaboration.coneshare.auth.existingSecret) (ne .Values.idpCollaboration.coneshare.auth.apiToken "") }}
+{{- if or $ncSecretManaged $csSecretManaged }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ include "clawql-mcp.idpCollaborationSecretName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: idp-collaboration
+type: Opaque
+data:
+  {{- if $ncSecretManaged }}
+  nextcloud-admin-user: {{ .Values.idpCollaboration.nextcloud.auth.adminUser | b64enc | quote }}
+  nextcloud-admin-password: {{ .Values.idpCollaboration.nextcloud.auth.adminPassword | b64enc | quote }}
+  NEXTCLOUD_USERNAME: {{ .Values.idpCollaboration.nextcloud.auth.adminUser | b64enc | quote }}
+  NEXTCLOUD_APP_PASSWORD: {{ .Values.idpCollaboration.nextcloud.auth.adminPassword | b64enc | quote }}
+  {{- end }}
+  {{- if $csSecretManaged }}
+  coneshare-api-token: {{ .Values.idpCollaboration.coneshare.auth.apiToken | b64enc | quote }}
+  CONESHARE_API_TOKEN: {{ .Values.idpCollaboration.coneshare.auth.apiToken | b64enc | quote }}
+  {{- end }}
+{{- end }}
+{{- if and $ncEnabled (not .Values.idpCollaboration.nextcloud.persistence.existingClaim) }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "clawql-mcp.nextcloudName" . }}-data
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: nextcloud
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.idpCollaboration.nextcloud.persistence.size }}
+  {{- if .Values.idpCollaboration.nextcloud.persistence.storageClass }}
+  storageClassName: {{ .Values.idpCollaboration.nextcloud.persistence.storageClass | quote }}
+  {{- end }}
+{{- end }}
+{{- if $ncEnabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "clawql-mcp.nextcloudName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: nextcloud
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.idpCollaboration.nextcloud.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "clawql-mcp.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: nextcloud
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "clawql-mcp.nextcloudName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: nextcloud
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "clawql-mcp.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: nextcloud
+  template:
+    metadata:
+      labels:
+        {{- include "clawql-mcp.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: nextcloud
+    spec:
+      containers:
+        - name: nextcloud
+          image: "{{ .Values.idpCollaboration.nextcloud.image.repository }}:{{ .Values.idpCollaboration.nextcloud.image.tag }}"
+          imagePullPolicy: {{ .Values.idpCollaboration.nextcloud.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          env:
+            - name: NEXTCLOUD_ADMIN_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ default (include "clawql-mcp.idpCollaborationSecretName" .) .Values.idpCollaboration.nextcloud.auth.existingSecret }}
+                  key: nextcloud-admin-user
+                  optional: true
+            - name: NEXTCLOUD_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ default (include "clawql-mcp.idpCollaborationSecretName" .) .Values.idpCollaboration.nextcloud.auth.existingSecret }}
+                  key: nextcloud-admin-password
+                  optional: true
+            - name: SQLITE_DATABASE
+              value: nextcloud
+          volumeMounts:
+            - name: nextcloud-data
+              mountPath: /var/www/html
+          resources:
+            {{- toYaml .Values.idpCollaboration.nextcloud.resources | nindent 12 }}
+      volumes:
+        - name: nextcloud-data
+          {{- if .Values.idpCollaboration.nextcloud.persistence.existingClaim }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.idpCollaboration.nextcloud.persistence.existingClaim }}
+          {{- else }}
+          persistentVolumeClaim:
+            claimName: {{ include "clawql-mcp.nextcloudName" . }}-data
+          {{- end }}
+{{- end }}
+{{- if $csEnabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "clawql-mcp.coneshareName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: coneshare
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.idpCollaboration.coneshare.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "clawql-mcp.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: coneshare
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "clawql-mcp.coneshareName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: coneshare
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "clawql-mcp.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: coneshare
+  template:
+    metadata:
+      labels:
+        {{- include "clawql-mcp.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: coneshare
+    spec:
+      containers:
+        - name: coneshare
+          image: "{{ .Values.idpCollaboration.coneshare.image.repository }}:{{ .Values.idpCollaboration.coneshare.image.tag }}"
+          imagePullPolicy: {{ .Values.idpCollaboration.coneshare.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.idpCollaboration.coneshare.resources | nindent 12 }}
+{{- end }}
+{{- end }}
