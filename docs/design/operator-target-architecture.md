@@ -1840,9 +1840,9 @@ kubectl -n clawql scale deploy/clawql-api --replicas=3
 Open an issue with the migration job logs attached before attempting the upgrade again. Manually patching the schema to match what a partially-applied migration expected is the most common cause of database state that becomes very difficult to recover later — restoring from the backup and retrying with a fixed migration is almost always faster than diagnosing a hand-patched schema.
 
 ---
+
 ---
 
 _ClawQL Operator target architecture · June 2026 · Apache 2.0 / MIT_  
 _Shipped installs: [Operations Guide](../deployment/clawql-deployment-operations-guide.md) · [Helm](../deployment/helm.md)_  
 _Platform vision: [Vision & Roadmap](../vision/clawql-vision-roadmap.md) · Contracts: [Contributor Technical Specification](../contributing/clawql-contributor-technical-specification.md)_
-

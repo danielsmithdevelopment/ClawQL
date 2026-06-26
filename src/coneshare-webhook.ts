@@ -19,8 +19,10 @@ function webhookAuthOk(req: Request): boolean {
   const expected = webhookTokenExpected();
   if (!expected) return process.env.NODE_ENV !== "production";
   const header =
-    req.header("authorization")?.replace(/^Bearer\s+/i, "").trim() ??
-    req.header("x-coneshare-webhook-token")?.trim();
+    req
+      .header("authorization")
+      ?.replace(/^Bearer\s+/i, "")
+      .trim() ?? req.header("x-coneshare-webhook-token")?.trim();
   return header === expected;
 }
 

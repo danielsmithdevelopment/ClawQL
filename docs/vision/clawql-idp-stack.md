@@ -59,13 +59,13 @@ ClawQL acts as the orchestration and agent interface layer. Agents (via Cursor, 
 
 ### Status
 
-| Capability | Status |
-| ---------- | ------ |
-| External Markdown/URL ingest | **Shipped** |
-| **`DEFAULT_IDP_PIPELINE` recipe** (typed steps + dashboard labels) | **Shipped** — agent-composed **`search`/`execute`**; see [`idp-pipeline.md`](../providers/idp-pipeline.md) |
-| Tika → Gotenberg → Stirling → Paperless automated runner | **Gap** — Helm services exist; package orchestration not yet extracted |
-| Presidio gateway integration in pipeline | **Partial** — Panguard vision; [#245](https://github.com/danielsmithdevelopment/ClawQL/issues/245) |
-| Plugin Layer registration (`DocumentsLayer`) | **Planned** — [`modularization-implementation-status.md`](../design/modularization-implementation-status.md) |
+| Capability                                                         | Status                                                                                                       |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| External Markdown/URL ingest                                       | **Shipped**                                                                                                  |
+| **`DEFAULT_IDP_PIPELINE` recipe** (typed steps + dashboard labels) | **Shipped** — agent-composed **`search`/`execute`**; see [`idp-pipeline.md`](../providers/idp-pipeline.md)   |
+| Tika → Gotenberg → Stirling → Paperless automated runner           | **Gap** — Helm services exist; package orchestration not yet extracted                                       |
+| Presidio gateway integration in pipeline                           | **Partial** — Panguard vision; [#245](https://github.com/danielsmithdevelopment/ClawQL/issues/245)           |
+| Plugin Layer registration (`DocumentsLayer`)                       | **Planned** — [`modularization-implementation-status.md`](../design/modularization-implementation-status.md) |
 
 Implementing this package to production quality is a **P0 enabler** for the IDP story described in this document.
 
@@ -244,15 +244,15 @@ Long-running agent runtimes live in [ClawQL-Agent](https://github.com/danielsmit
 
 Beyond the core PDF pipeline, production IDP requires structured extraction, classification, privacy masking, and reviewer gates.
 
-| Capability | Role in IDP | Status |
-| ---------- | ----------- | ------ |
-| **LangExtract** | Schema-bound extraction with character grounding and HTML visualization | **Partial** — [#246](https://github.com/danielsmithdevelopment/ClawQL/issues/246) |
-| **Docling MCP** | Layout-aware parsing + fine-tuned classifier path | **Partial** — [#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248) |
-| **Local sparse-MoE mask** | Privacy mask before extraction on sensitive corpora | **Partial** — [#245](https://github.com/danielsmithdevelopment/ClawQL/issues/245) |
-| **Label Studio HITL** | Enqueue + webhook for reviewer tasks | **Shipped** — [#228](https://github.com/danielsmithdevelopment/ClawQL/issues/228) |
-| **Pre-annotations + vertical packs** | Lending/healthcare/legal Label Studio templates | **Partial** — [#247](https://github.com/danielsmithdevelopment/ClawQL/issues/247) |
-| **Multi-reviewer RBAC** | CE vs enterprise Label Studio patterns | **Partial** — [#249](https://github.com/danielsmithdevelopment/ClawQL/issues/249) |
-| **Langfuse eval → Ouroboros seed** | Active learning / seed evolution from eval scores | **Partial** — [#250](https://github.com/danielsmithdevelopment/ClawQL/issues/250) |
+| Capability                           | Role in IDP                                                             | Status                                                                            |
+| ------------------------------------ | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| **LangExtract**                      | Schema-bound extraction with character grounding and HTML visualization | **Partial** — [#246](https://github.com/danielsmithdevelopment/ClawQL/issues/246) |
+| **Docling MCP**                      | Layout-aware parsing + fine-tuned classifier path                       | **Partial** — [#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248) |
+| **Local sparse-MoE mask**            | Privacy mask before extraction on sensitive corpora                     | **Partial** — [#245](https://github.com/danielsmithdevelopment/ClawQL/issues/245) |
+| **Label Studio HITL**                | Enqueue + webhook for reviewer tasks                                    | **Shipped** — [#228](https://github.com/danielsmithdevelopment/ClawQL/issues/228) |
+| **Pre-annotations + vertical packs** | Lending/healthcare/legal Label Studio templates                         | **Partial** — [#247](https://github.com/danielsmithdevelopment/ClawQL/issues/247) |
+| **Multi-reviewer RBAC**              | CE vs enterprise Label Studio patterns                                  | **Partial** — [#249](https://github.com/danielsmithdevelopment/ClawQL/issues/249) |
+| **Langfuse eval → Ouroboros seed**   | Active learning / seed evolution from eval scores                       | **Partial** — [#250](https://github.com/danielsmithdevelopment/ClawQL/issues/250) |
 
 ## 11. Security, Audit, and Resilience
 
@@ -260,9 +260,9 @@ Beyond the core PDF pipeline, production IDP requires structured extraction, cla
 
 Two **distinct** redaction layers — complementary, not redundant:
 
-| Layer | When | Purpose |
-| ----- | ---- | ------- |
-| **Stirling-PDF (document stage)** | During pipeline processing, **before** archive and **before** agent context | Remove PII from **file bytes** — PDFs, OCR output, merged documents. Merkle-attested redaction logs. Goal: no sensitive data **needs** redacting by the time agents see document-derived text. |
+| Layer                                  | When                                                                                    | Purpose                                                                                                                                                                                                                                                  |
+| -------------------------------------- | --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Stirling-PDF (document stage)**      | During pipeline processing, **before** archive and **before** agent context             | Remove PII from **file bytes** — PDFs, OCR output, merged documents. Merkle-attested redaction logs. Goal: no sensitive data **needs** redacting by the time agents see document-derived text.                                                           |
 | **Presidio (MCP / agent I/O gateway)** | On agent **input/output**, memory writes, log emission, external API calls via Panguard | Catch **residual** entities in tool payloads, chat context, vault notes, and `execute()` responses — including non-document leaks (Slack snippets, pasted secrets). Applied at the gateway so sensitive info never enters LLM context or durable memory. |
 
 **Ordering:** Stirling first on documents → then Presidio on whatever crosses the agent boundary. Both layers emit audit metadata; Merkle roots cover pipeline stages ([#114](https://github.com/danielsmithdevelopment/ClawQL/issues/114), [#115](https://github.com/danielsmithdevelopment/ClawQL/issues/115)).
@@ -278,17 +278,17 @@ Two **distinct** redaction layers — complementary, not redundant:
 
 ## 12. Observability, Events, and Deployment
 
-| Area | Capability | Status |
-| ---- | ---------- | ------ |
-| **Metrics** | ClawQL `/metrics` + Grafana | **Shipped** / **Partial** — [#210](https://github.com/danielsmithdevelopment/ClawQL/issues/210) |
-| **Tracing** | Langfuse + IDP dashboards; Tempo (prod) vs Jaeger (lab) per [ADR 0003](../adr/0003-tempo-dragonfly-local-operations.md) | **Gap** — [#252](https://github.com/danielsmithdevelopment/ClawQL/issues/252) |
-| **Events** | NATS JetStream (Helm + conventions); KEDA scale on queue lag | **Partial** / **Gap** — [#127](https://github.com/danielsmithdevelopment/ClawQL/issues/127), [#257](https://github.com/danielsmithdevelopment/ClawQL/issues/257) |
-| **Helm core** | `charts/clawql-mcp` lean chart | **Shipped** |
-| **IDP umbrella** | Optional `clawql-idp` chart (full stack + Nextcloud + Coneshare) | **Gap** — [#255](https://github.com/danielsmithdevelopment/ClawQL/issues/255) |
-| **Compose verticals** | Four opinionated stacks (lending, healthcare, legal, education) | **Gap** — [#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251) |
-| **OpenClaw** | Install + MCP bootstrap; Slack one-mention IDP runbook | **Shipped** / **Gap** — [#226](https://github.com/danielsmithdevelopment/ClawQL/issues/226), [#256](https://github.com/danielsmithdevelopment/ClawQL/issues/256) |
-| **Samples** | Lending W-2 end-to-end pack | **Gap** — [#253](https://github.com/danielsmithdevelopment/ClawQL/issues/253) |
-| **Self-service GitOps** | Agent → PR → Argo CD pipelines | **Gap** — [#258](https://github.com/danielsmithdevelopment/ClawQL/issues/258) |
+| Area                    | Capability                                                                                                              | Status                                                                                                                                                           |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Metrics**             | ClawQL `/metrics` + Grafana                                                                                             | **Shipped** / **Partial** — [#210](https://github.com/danielsmithdevelopment/ClawQL/issues/210)                                                                  |
+| **Tracing**             | Langfuse + IDP dashboards; Tempo (prod) vs Jaeger (lab) per [ADR 0003](../adr/0003-tempo-dragonfly-local-operations.md) | **Gap** — [#252](https://github.com/danielsmithdevelopment/ClawQL/issues/252)                                                                                    |
+| **Events**              | NATS JetStream (Helm + conventions); KEDA scale on queue lag                                                            | **Partial** / **Gap** — [#127](https://github.com/danielsmithdevelopment/ClawQL/issues/127), [#257](https://github.com/danielsmithdevelopment/ClawQL/issues/257) |
+| **Helm core**           | `charts/clawql-mcp` lean chart                                                                                          | **Shipped**                                                                                                                                                      |
+| **IDP umbrella**        | Optional `clawql-idp` chart (full stack + Nextcloud + Coneshare)                                                        | **Gap** — [#255](https://github.com/danielsmithdevelopment/ClawQL/issues/255)                                                                                    |
+| **Compose verticals**   | Four opinionated stacks (lending, healthcare, legal, education)                                                         | **Gap** — [#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251)                                                                                    |
+| **OpenClaw**            | Install + MCP bootstrap; Slack one-mention IDP runbook                                                                  | **Shipped** / **Gap** — [#226](https://github.com/danielsmithdevelopment/ClawQL/issues/226), [#256](https://github.com/danielsmithdevelopment/ClawQL/issues/256) |
+| **Samples**             | Lending W-2 end-to-end pack                                                                                             | **Gap** — [#253](https://github.com/danielsmithdevelopment/ClawQL/issues/253)                                                                                    |
+| **Self-service GitOps** | Agent → PR → Argo CD pipelines                                                                                          | **Gap** — [#258](https://github.com/danielsmithdevelopment/ClawQL/issues/258)                                                                                    |
 
 ## 13. End-to-End Example Workflow
 

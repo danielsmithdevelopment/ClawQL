@@ -20,22 +20,22 @@ When the operator uses the **ClawQL dashboard Agent Chat** panel, format complet
 
 Legend: **Ready** = shipped in this repo with bundled or refreshed OpenAPI; **Partial** = env-dependent or roadmap; **Not MCP** = outside MCP tool surface today.
 
-| Layer                           | Mechanism                                                  | Required env / base URLs                                   | Status  | Notes                                                                                                                                                                                                                                                                                                                              |
-| ------------------------------- | ---------------------------------------------------------- | ---------------------------------------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Extract / parse**             | **`execute`** on **`tika`** spec (`TIKA_BASE_URL`)         | **`TIKA_BASE_URL`**                                        | Ready   | [`tika-onboarding.md`](../providers/tika-onboarding.md) |
-| **HTML → PDF / renders**        | **`execute`** on **`gotenberg`**                           | **`GOTENBERG_BASE_URL`**                                   | Ready   | [`gotenberg-onboarding.md`](../providers/gotenberg-onboarding.md) |
-| **PDF transforms / redact**     | **`execute`** on **`stirling`**                            | **`STIRLING_BASE_URL`**, optional **`STIRLING_API_KEY`**   | Ready   | [`stirling-onboarding.md`](../providers/stirling-onboarding.md) |
-| **Archive / metadata**          | **`execute`** on **`paperless`**                           | **`PAPERLESS_BASE_URL`**, **`PAPERLESS_API_TOKEN`**        | Ready   | [`paperless-onboarding.md`](../providers/paperless-onboarding.md) |
-| **Enterprise search**           | **`knowledge_search_onyx`** or **`execute`** on **`onyx`** | **`CLAWQL_ENABLE_ONYX=1`**, **`ONYX_BASE_URL`**, token     | Ready   | [`onyx-onboarding.md`](../providers/onyx-onboarding.md), [`onyx-knowledge-tool.md`](../mcp/onyx-knowledge-tool.md) |
-| **Collaboration storage**       | **`execute`** on **`nextcloud`**                           | **`NEXTCLOUD_BASE_URL`**, username + app password          | Ready   | [`nextcloud-onboarding.md`](../providers/nextcloud-onboarding.md) |
-| **Secure sharing / VDR**        | **`execute`** on **`coneshare`** + webhook                 | **`CONESHARE_BASE_URL`**, token; **`CLAWQL_ENABLE_CONESHARE=1`** | Ready   | [`coneshare-onboarding.md`](../providers/coneshare-onboarding.md) |
-| **Pipeline recipe**             | **`DEFAULT_IDP_PIPELINE`** in **`clawql-documents`**       | All vendor base URLs above                                 | Ready   | [`idp-pipeline.md`](../providers/idp-pipeline.md) — agent-composed **`search`/`execute`**; automated runner still roadmap |
-| **Post-Paperless → Onyx index** | **`execute`** (Onyx ingestion API)                         | Same as Onyx                                               | Partial | Tracked as product glue ([#120](https://github.com/danielsmithdevelopment/ClawQL/issues/120)).                                                                                                                                                                                                                                     |
-| **Bulk ingest + vault**         | **`ingest_external_knowledge`**                            | **`CLAWQL_EXTERNAL_INGEST=1`**, vault path, optional fetch | Ready   | **[`docs/mcp/external-ingest.md`](../mcp/external-ingest.md)**.                                                                                                                                                                                                                                                                    |
-| **Privacy / redaction**         | Local MoE mask pipeline (planned) + policy controls        | Helm / sidecar / gateway                                   | Partial | Tracked: [#245](https://github.com/danielsmithdevelopment/ClawQL/issues/245). Until shipped, align with **[`docs/mcp/enterprise-mcp-tools.md`](../mcp/enterprise-mcp-tools.md#regulated-deployments)** and deployment controls.                                                                                                    |
-| **Structured workflows**        | **`ouroboros_*`** MCP tools                                | **`CLAWQL_ENABLE_OUROBOROS=1`**                            | Ready   | **[`docs/ouroboros/clawql-ouroboros.md`](../ouroboros/clawql-ouroboros.md)** — optional overlay on linear IDP chains.                                                                                                                                                                                                              |
-| **Dashboard Agent Chat**        | OpenClaw bridge → Next.js SSE + vault threads              | **`CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL`**, dashboard Helm  | Ready   | **[`docs/dashboard/agent-chat.md`](../dashboard/agent-chat.md)** — rich JSON (`attachments`, `steps`, `pipelineStatus`).                                                                                                                                                                                                            |
-| **LangExtract / Docling**       | N/A in MCP catalog (today)                                 | —                                                          | Partial | LangExtract: [#246](https://github.com/danielsmithdevelopment/ClawQL/issues/246). Docling + classifier: [#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248). Matrix: [IDP master requirements](../roadmap/idp-master-requirements-matrix.md). Until shipped, **`execute`** on merged custom OpenAPI remains valid. |
+| Layer                           | Mechanism                                                  | Required env / base URLs                                         | Status  | Notes                                                                                                                                                                                                                                                                                                                              |
+| ------------------------------- | ---------------------------------------------------------- | ---------------------------------------------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Extract / parse**             | **`execute`** on **`tika`** spec (`TIKA_BASE_URL`)         | **`TIKA_BASE_URL`**                                              | Ready   | [`tika-onboarding.md`](../providers/tika-onboarding.md)                                                                                                                                                                                                                                                                            |
+| **HTML → PDF / renders**        | **`execute`** on **`gotenberg`**                           | **`GOTENBERG_BASE_URL`**                                         | Ready   | [`gotenberg-onboarding.md`](../providers/gotenberg-onboarding.md)                                                                                                                                                                                                                                                                  |
+| **PDF transforms / redact**     | **`execute`** on **`stirling`**                            | **`STIRLING_BASE_URL`**, optional **`STIRLING_API_KEY`**         | Ready   | [`stirling-onboarding.md`](../providers/stirling-onboarding.md)                                                                                                                                                                                                                                                                    |
+| **Archive / metadata**          | **`execute`** on **`paperless`**                           | **`PAPERLESS_BASE_URL`**, **`PAPERLESS_API_TOKEN`**              | Ready   | [`paperless-onboarding.md`](../providers/paperless-onboarding.md)                                                                                                                                                                                                                                                                  |
+| **Enterprise search**           | **`knowledge_search_onyx`** or **`execute`** on **`onyx`** | **`CLAWQL_ENABLE_ONYX=1`**, **`ONYX_BASE_URL`**, token           | Ready   | [`onyx-onboarding.md`](../providers/onyx-onboarding.md), [`onyx-knowledge-tool.md`](../mcp/onyx-knowledge-tool.md)                                                                                                                                                                                                                 |
+| **Collaboration storage**       | **`execute`** on **`nextcloud`**                           | **`NEXTCLOUD_BASE_URL`**, username + app password                | Ready   | [`nextcloud-onboarding.md`](../providers/nextcloud-onboarding.md)                                                                                                                                                                                                                                                                  |
+| **Secure sharing / VDR**        | **`execute`** on **`coneshare`** + webhook                 | **`CONESHARE_BASE_URL`**, token; **`CLAWQL_ENABLE_CONESHARE=1`** | Ready   | [`coneshare-onboarding.md`](../providers/coneshare-onboarding.md)                                                                                                                                                                                                                                                                  |
+| **Pipeline recipe**             | **`DEFAULT_IDP_PIPELINE`** in **`clawql-documents`**       | All vendor base URLs above                                       | Ready   | [`idp-pipeline.md`](../providers/idp-pipeline.md) — agent-composed **`search`/`execute`**; automated runner still roadmap                                                                                                                                                                                                          |
+| **Post-Paperless → Onyx index** | **`execute`** (Onyx ingestion API)                         | Same as Onyx                                                     | Partial | Tracked as product glue ([#120](https://github.com/danielsmithdevelopment/ClawQL/issues/120)).                                                                                                                                                                                                                                     |
+| **Bulk ingest + vault**         | **`ingest_external_knowledge`**                            | **`CLAWQL_EXTERNAL_INGEST=1`**, vault path, optional fetch       | Ready   | **[`docs/mcp/external-ingest.md`](../mcp/external-ingest.md)**.                                                                                                                                                                                                                                                                    |
+| **Privacy / redaction**         | Local MoE mask pipeline (planned) + policy controls        | Helm / sidecar / gateway                                         | Partial | Tracked: [#245](https://github.com/danielsmithdevelopment/ClawQL/issues/245). Until shipped, align with **[`docs/mcp/enterprise-mcp-tools.md`](../mcp/enterprise-mcp-tools.md#regulated-deployments)** and deployment controls.                                                                                                    |
+| **Structured workflows**        | **`ouroboros_*`** MCP tools                                | **`CLAWQL_ENABLE_OUROBOROS=1`**                                  | Ready   | **[`docs/ouroboros/clawql-ouroboros.md`](../ouroboros/clawql-ouroboros.md)** — optional overlay on linear IDP chains.                                                                                                                                                                                                              |
+| **Dashboard Agent Chat**        | OpenClaw bridge → Next.js SSE + vault threads              | **`CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL`**, dashboard Helm         | Ready   | **[`docs/dashboard/agent-chat.md`](../dashboard/agent-chat.md)** — rich JSON (`attachments`, `steps`, `pipelineStatus`).                                                                                                                                                                                                           |
+| **LangExtract / Docling**       | N/A in MCP catalog (today)                                 | —                                                                | Partial | LangExtract: [#246](https://github.com/danielsmithdevelopment/ClawQL/issues/246). Docling + classifier: [#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248). Matrix: [IDP master requirements](../roadmap/idp-master-requirements-matrix.md). Until shipped, **`execute`** on merged custom OpenAPI remains valid. |
 
 ## Reference workflow contract (chat-shaped)
 
@@ -75,11 +75,29 @@ When the workflow is triggered from the **ClawQL dashboard** Agent Chat panel (O
     { "label": "execute paperless::…", "state": "done" }
   ],
   "attachments": [
-    { "kind": "pipeline", "id": "p1", "stage": "stirling-redact", "status": "done", "merkleRoot": "<hex>" },
-    { "kind": "document", "id": "d1", "title": "invoice-001.pdf", "provider": "paperless", "paperlessId": 42 }
+    {
+      "kind": "pipeline",
+      "id": "p1",
+      "stage": "stirling-redact",
+      "status": "done",
+      "merkleRoot": "<hex>"
+    },
+    {
+      "kind": "document",
+      "id": "d1",
+      "title": "invoice-001.pdf",
+      "provider": "paperless",
+      "paperlessId": 42
+    }
   ],
   "citations": [
-    { "kind": "onyx_citation", "id": "c1", "title": "Vendor rate card", "snippet": "…", "score": 0.9 }
+    {
+      "kind": "onyx_citation",
+      "id": "c1",
+      "title": "Vendor rate card",
+      "snippet": "…",
+      "score": 0.9
+    }
   ],
   "pipelineStatus": { "phases": ["tika", "gotenberg", "stirling", "paperless", "onyx"] }
 }
@@ -87,12 +105,12 @@ When the workflow is triggered from the **ClawQL dashboard** Agent Chat panel (O
 
 ### Attachment kinds
 
-| `kind` | Use when |
-| ------ | -------- |
-| `document` | Paperless or Nextcloud artifact (`provider`, optional `paperlessId` / `url`) |
-| `onyx_citation` | `knowledge_search_onyx` or ingest citation handoff |
-| `coneshare` | Secure share / VDR link (`roomUrl`) |
-| `pipeline` | Stage status + optional `merkleRoot` after Stirling/audit |
+| `kind`          | Use when                                                                     |
+| --------------- | ---------------------------------------------------------------------------- |
+| `document`      | Paperless or Nextcloud artifact (`provider`, optional `paperlessId` / `url`) |
+| `onyx_citation` | `knowledge_search_onyx` or ingest citation handoff                           |
+| `coneshare`     | Secure share / VDR link (`roomUrl`)                                          |
+| `pipeline`      | Stage status + optional `merkleRoot` after Stirling/audit                    |
 
 Always pair **`reply`** prose with **`memory_ingest`** for durable vault notes when decisions must survive beyond the chat thread.
 

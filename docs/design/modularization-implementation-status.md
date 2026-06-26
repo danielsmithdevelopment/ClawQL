@@ -14,13 +14,13 @@ ClawQL is mid-flight on a **strangler extraction** from the root `clawql-mcp` pa
 
 **What landed (extraction phases 1–9, PRs [#401](https://github.com/danielsmithdevelopment/ClawQL/pull/401)–[#430](https://github.com/danielsmithdevelopment/ClawQL/pull/430)):**
 
-| Package             | Role today                                                                                                 |
-| ------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `clawql-core`       | Audit ring buffer, cache helpers, Merkle + Cuckoo, `Plugin` types, shared errors                           |
-| `clawql-api`        | Spec load/search, REST/GraphQL/gRPC execute, provider registry, `createClawQLApi()`, Panguard proxy plugin |
-| `clawql-memory`     | Vault I/O, `memory.db`, embeddings, ingest/recall, enterprise citations                                    |
+| Package             | Role today                                                                                                                                                        |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `clawql-core`       | Audit ring buffer, cache helpers, Merkle + Cuckoo, `Plugin` types, shared errors                                                                                  |
+| `clawql-api`        | Spec load/search, REST/GraphQL/gRPC execute, provider registry, `createClawQLApi()`, Panguard proxy plugin                                                        |
+| `clawql-memory`     | Vault I/O, `memory.db`, embeddings, ingest/recall, enterprise citations                                                                                           |
 | `clawql-documents`  | `ingest_external_knowledge`, **`DEFAULT_IDP_PIPELINE`** recipe, bundled IDP provider merge (7 vendors via `clawql-api`); automated multi-hop runner still roadmap |
-| `clawql-automation` | `schedule` worker + Slack `notify` core (**scaffold** — no NATS/HITL yet)                                  |
+| `clawql-automation` | `schedule` worker + Slack `notify` core (**scaffold** — no NATS/HITL yet)                                                                                         |
 
 **What is still mostly in `src/`:** MCP tool registration (`tools.ts`), optional tools (sandbox, Onyx, HITL, Ouroboros glue), GraphQL proxy entrypoints, server lifecycle.
 
@@ -124,10 +124,10 @@ MCP handlers: `src/memory-ingest.ts`, `src/memory-recall.ts` (thin wrappers + `l
 
 ### 4.4 `clawql-documents`
 
-| Subpath                                   | Module                         |
-| ----------------------------------------- | ------------------------------ |
-| `clawql-documents/ingest/external-ingest` | `runIngestExternalKnowledge`   |
-| `clawql-documents/ingest/url-format`      | URL → Markdown for vault notes |
+| Subpath                                   | Module                                |
+| ----------------------------------------- | ------------------------------------- |
+| `clawql-documents/ingest/external-ingest` | `runIngestExternalKnowledge`          |
+| `clawql-documents/ingest/url-format`      | URL → Markdown for vault notes        |
 | `clawql-documents/pipeline/idp-pipeline`  | `DEFAULT_IDP_PIPELINE`, stage helpers |
 
 **Shipped via MCP + Helm (not a hidden runner):** seven bundled document vendors (**tika**, **gotenberg**, **stirling**, **paperless**, **onyx**, **nextcloud**, **coneshare**) in `clawql-api` — agents compose **`search`/`execute`**; see [`idp-pipeline.md`](../providers/idp-pipeline.md).

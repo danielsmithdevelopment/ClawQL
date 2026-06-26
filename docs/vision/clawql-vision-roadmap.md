@@ -9,26 +9,26 @@ Apache 2.0 / MIT · [github.com/clawql/clawql](https://github.com/clawql/clawql)
 
 ClawQL is under active development. Most of what this document describes is not yet running. The table below is the honest current state. Everything after it describes where ClawQL is going and why.
 
-| Package                    | Status                                                        |
-| -------------------------- | ------------------------------------------------------------- |
-| `clawql-mcp`               | ✅ Shipped (transport + MCP registration in `src/`)           |
-| `clawql-ouroboros`         | ✅ Shipped                                                    |
-| `mcp-grpc-transport`       | ✅ Shipped                                                    |
-| `clawql-core`              | ✅ Shipped (audit, Merkle, Cuckoo, Plugin types)              |
-| `clawql-api`               | ✅ Shipped (spec, execute, gateway scaffold, Panguard plugin) |
-| `clawql-memory`            | ✅ Shipped (vault, memory.db, ingest/recall)                  |
+| Package                    | Status                                                                                                            |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `clawql-mcp`               | ✅ Shipped (transport + MCP registration in `src/`)                                                               |
+| `clawql-ouroboros`         | ✅ Shipped                                                                                                        |
+| `mcp-grpc-transport`       | ✅ Shipped                                                                                                        |
+| `clawql-core`              | ✅ Shipped (audit, Merkle, Cuckoo, Plugin types)                                                                  |
+| `clawql-api`               | ✅ Shipped (spec, execute, gateway scaffold, Panguard plugin)                                                     |
+| `clawql-memory`            | ✅ Shipped (vault, memory.db, ingest/recall)                                                                      |
 | `clawql-documents`         | ✅ Shipped ingest + **`DEFAULT_IDP_PIPELINE`**; 7 bundled IDP vendors via **`execute`**; automated runner planned |
-| `clawql-automation`        | 🔨 Scaffold (schedule + notify; NATS/HITL planned)            |
-| `clawql-auth`              | 📋 Planned (auth helpers live in `clawql-api` today)          |
-| `clawql-pageindex`         | 📋 Planned                                                    |
-| `clawql-data`              | 📋 Planned                                                    |
-| `clawql-telemetry`         | 📋 Planned                                                    |
-| `clawql-sandbox`           | 📋 Planned (logic still in `src/`)                            |
-| `clawql-printingpress`     | 📋 Planned                                                    |
-| `clawql-goose`             | 📋 Planned                                                    |
-| Kubernetes Operator        | 📋 Planned                                                    |
-| Natural Language Dashboard | 📋 Planned                                                    |
-| All vertical packages      | 📋 Planned — none shipped                                     |
+| `clawql-automation`        | 🔨 Scaffold (schedule + notify; NATS/HITL planned)                                                                |
+| `clawql-auth`              | 📋 Planned (auth helpers live in `clawql-api` today)                                                              |
+| `clawql-pageindex`         | 📋 Planned                                                                                                        |
+| `clawql-data`              | 📋 Planned                                                                                                        |
+| `clawql-telemetry`         | 📋 Planned                                                                                                        |
+| `clawql-sandbox`           | 📋 Planned (logic still in `src/`)                                                                                |
+| `clawql-printingpress`     | 📋 Planned                                                                                                        |
+| `clawql-goose`             | 📋 Planned                                                                                                        |
+| Kubernetes Operator        | 📋 Planned                                                                                                        |
+| Natural Language Dashboard | 📋 Planned                                                                                                        |
+| All vertical packages      | 📋 Planned — none shipped                                                                                         |
 
 **Detail:** [Modularization implementation status](../design/modularization-implementation-status.md) (package contents, MCP flow, extraction PRs, plugin roadmap). **Horizontal plugins:** [ClawQL plugin model](../design/clawql-plugin-model.md).
 

@@ -35,7 +35,8 @@ export default function DeploymentOperationsGuidePage() {
           >
             docs/deployment/clawql-deployment-operations-guide.md
           </a>{' '}
-          on <code className="font-mono text-xs">main</code>.           Planned Operator / CRD content lives in the{' '}
+          on <code className="font-mono text-xs">main</code>. Planned Operator /
+          CRD content lives in the{' '}
           <a
             href="/design/operator-target-architecture"
             className="font-medium text-inherit underline underline-offset-2"

@@ -56,25 +56,25 @@ flowchart LR
   Cards --> Panel
 ```
 
-| Hop | Protocol | Notes |
-| --- | -------- | ----- |
+| Hop               | Protocol                          | Notes                                                          |
+| ----------------- | --------------------------------- | -------------------------------------------------------------- |
 | Browser → Next.js | SSE (`text/event-stream`) or JSON | Streaming **on** by default (`CLAWQL_DASHBOARD_CHAT_STREAM=1`) |
-| Next.js → bridge | HTTP POST JSON | Base URL from `CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL` |
-| Bridge → OpenClaw | CLI subprocess | One `openclaw agent` invocation per user message |
-| Next.js → vault | File I/O | Debounced client save → `PUT /api/agent/chats/[threadId]` |
+| Next.js → bridge  | HTTP POST JSON                    | Base URL from `CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL`             |
+| Bridge → OpenClaw | CLI subprocess                    | One `openclaw agent` invocation per user message               |
+| Next.js → vault   | File I/O                          | Debounced client save → `PUT /api/agent/chats/[threadId]`      |
 
 **Source files**
 
-| Area | Path |
-| ---- | ---- |
-| UI container | [`dashboard/src/components/dashboard/AgentChatPanel.tsx`](../../dashboard/src/components/dashboard/AgentChatPanel.tsx) |
-| Conversation + scroll | [`dashboard/src/components/agent-chat/AgentConversation.tsx`](../../dashboard/src/components/agent-chat/AgentConversation.tsx) |
-| IDP attachment cards | [`dashboard/src/components/agent-chat/IdpAttachmentCards.tsx`](../../dashboard/src/components/agent-chat/IdpAttachmentCards.tsx) |
-| Types | [`dashboard/src/components/dashboard/types.ts`](../../dashboard/src/components/dashboard/types.ts) |
-| JSON proxy | [`dashboard/src/app/api/agent/chat/route.ts`](../../dashboard/src/app/api/agent/chat/route.ts) |
-| SSE proxy | [`dashboard/src/app/api/agent/chat/stream/route.ts`](../../dashboard/src/app/api/agent/chat/stream/route.ts) |
-| Vault store | [`dashboard/src/lib/chat-vault-store.server.ts`](../../dashboard/src/lib/chat-vault-store.server.ts) |
-| Bridge (local + Helm copy) | [`dashboard/scripts/openclaw-chat-bridge.mjs`](../../dashboard/scripts/openclaw-chat-bridge.mjs) |
+| Area                       | Path                                                                                                                             |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| UI container               | [`dashboard/src/components/dashboard/AgentChatPanel.tsx`](../../dashboard/src/components/dashboard/AgentChatPanel.tsx)           |
+| Conversation + scroll      | [`dashboard/src/components/agent-chat/AgentConversation.tsx`](../../dashboard/src/components/agent-chat/AgentConversation.tsx)   |
+| IDP attachment cards       | [`dashboard/src/components/agent-chat/IdpAttachmentCards.tsx`](../../dashboard/src/components/agent-chat/IdpAttachmentCards.tsx) |
+| Types                      | [`dashboard/src/components/dashboard/types.ts`](../../dashboard/src/components/dashboard/types.ts)                               |
+| JSON proxy                 | [`dashboard/src/app/api/agent/chat/route.ts`](../../dashboard/src/app/api/agent/chat/route.ts)                                   |
+| SSE proxy                  | [`dashboard/src/app/api/agent/chat/stream/route.ts`](../../dashboard/src/app/api/agent/chat/stream/route.ts)                     |
+| Vault store                | [`dashboard/src/lib/chat-vault-store.server.ts`](../../dashboard/src/lib/chat-vault-store.server.ts)                             |
+| Bridge (local + Helm copy) | [`dashboard/scripts/openclaw-chat-bridge.mjs`](../../dashboard/scripts/openclaw-chat-bridge.mjs)                                 |
 
 ---
 
@@ -82,12 +82,12 @@ flowchart LR
 
 The chat panel uses [shadcn/ui June 2026 chat components](https://ui.shadcn.com/docs/changelog/2026-06-chat-components):
 
-| Primitive | Purpose |
-| --------- | ------- |
-| **MessageScroller** | Auto-follow at live edge; respects manual scroll-up; jump-to-latest button |
-| **Message** / **Bubble** | User vs agent rows, alignment, avatars |
-| **Attachment** | IDP document/citation/share cards |
-| **Marker** | Streaming shimmer (“Generating response…”) |
+| Primitive                | Purpose                                                                    |
+| ------------------------ | -------------------------------------------------------------------------- |
+| **MessageScroller**      | Auto-follow at live edge; respects manual scroll-up; jump-to-latest button |
+| **Message** / **Bubble** | User vs agent rows, alignment, avatars                                     |
+| **Attachment**           | IDP document/citation/share cards                                          |
+| **Marker**               | Streaming shimmer (“Generating response…”)                                 |
 
 Initialized via `npx shadcn@latest init` in `dashboard/`; headless scroll logic from `@shadcn/react/message-scroller`.
 
@@ -141,10 +141,10 @@ Same JSON body. Response: **`text/event-stream`**.
 
 Events:
 
-| Event | Payload | When |
-| ----- | ------- | ---- |
-| `delta` | `{ "type": "delta", "text": "<chunk>" }` | Token/chunk of reply text |
-| `done` | `{ "type": "done", …AgentChatApiResponse }` | Final structured payload |
+| Event   | Payload                                     | When                      |
+| ------- | ------------------------------------------- | ------------------------- |
+| `delta` | `{ "type": "delta", "text": "<chunk>" }`    | Token/chunk of reply text |
+| `done`  | `{ "type": "done", …AgentChatApiResponse }` | Final structured payload  |
 
 Example stream:
 
@@ -165,14 +165,14 @@ data: {"type":"done","reply":"Processed 3 invoices…","attachments":[…],"step
 
 ### 4.3 Thread CRUD
 
-| Method | Path | Purpose |
-| ------ | ---- | ------- |
-| `GET` | `/api/agent/chats` | List threads + vault status |
-| `POST` | `/api/agent/chats` | Create thread |
-| `PUT` | `/api/agent/chats` | Import legacy localStorage batch |
-| `GET` | `/api/agent/chats/[threadId]` | Load `messages.jsonl` |
-| `PUT` | `/api/agent/chats/[threadId]` | Save messages |
-| `PATCH` | `/api/agent/chats/[threadId]` | Update title / `updatedAt` |
+| Method  | Path                          | Purpose                          |
+| ------- | ----------------------------- | -------------------------------- |
+| `GET`   | `/api/agent/chats`            | List threads + vault status      |
+| `POST`  | `/api/agent/chats`            | Create thread                    |
+| `PUT`   | `/api/agent/chats`            | Import legacy localStorage batch |
+| `GET`   | `/api/agent/chats/[threadId]` | Load `messages.jsonl`            |
+| `PUT`   | `/api/agent/chats/[threadId]` | Save messages                    |
+| `PATCH` | `/api/agent/chats/[threadId]` | Update title / `updatedAt`       |
 
 ---
 
@@ -180,11 +180,11 @@ data: {"type":"done","reply":"Processed 3 invoices…","attachments":[…],"step
 
 OpenClaw exposes **`openclaw agent`** (CLI), not HTTP. The bridge adapts dashboard JSON to CLI and back.
 
-| Endpoint | Maps to |
-| -------- | ------- |
-| `POST /v1/chat` | Full JSON response after CLI completes |
+| Endpoint               | Maps to                                             |
+| ---------------------- | --------------------------------------------------- |
+| `POST /v1/chat`        | Full JSON response after CLI completes              |
 | `POST /v1/chat/stream` | SSE: chunk `reply` text, then `done` with full body |
-| `GET /healthz` | Liveness |
+| `GET /healthz`         | Liveness                                            |
 
 Request body (both):
 
@@ -242,10 +242,35 @@ Each line in `messages.jsonl` is a **`ChatMessage`**:
   "status": "done",
   "intro": "Processed 3 invoices…",
   "steps": [{ "label": "execute tika::…", "state": "done" }],
-  "attachments": [{ "kind": "document", "id": "d1", "title": "inv.pdf", "provider": "paperless", "paperlessId": 42 }],
-  "citations": [{ "kind": "onyx_citation", "id": "c1", "title": "Pricing policy", "snippet": "…", "score": 0.91 }],
-  "toolCalls": [{ "name": "execute", "args": { "operationId": "paperless::documents_create" }, "resultPreview": "id: 42" }],
-  "pipelineStatus": { "workflowId": "ouro-seed-abc", "phases": ["tika", "gotenberg", "stirling", "paperless"] }
+  "attachments": [
+    {
+      "kind": "document",
+      "id": "d1",
+      "title": "inv.pdf",
+      "provider": "paperless",
+      "paperlessId": 42
+    }
+  ],
+  "citations": [
+    {
+      "kind": "onyx_citation",
+      "id": "c1",
+      "title": "Pricing policy",
+      "snippet": "…",
+      "score": 0.91
+    }
+  ],
+  "toolCalls": [
+    {
+      "name": "execute",
+      "args": { "operationId": "paperless::documents_create" },
+      "resultPreview": "id: 42"
+    }
+  ],
+  "pipelineStatus": {
+    "workflowId": "ouro-seed-abc",
+    "phases": ["tika", "gotenberg", "stirling", "paperless"]
+  }
 }
 ```
 
@@ -259,16 +284,16 @@ Canonical TypeScript: [`dashboard/src/components/dashboard/types.ts`](../../dash
 
 ### 7.1 Top-level fields
 
-| Field | Type | Required | UI effect |
-| ----- | ---- | -------- | --------- |
-| `reply` | string | Yes* | Main agent bubble text (*or `error`) |
-| `error` | string | No | Shown as agent message on failure |
-| `demo` | boolean | No | Triggers demo-mode banner |
-| `steps` | `ChatToolStep[]` | No | Tool execution panel |
-| `attachments` | `ChatAttachment[]` | No | IDP cards below reply |
-| `citations` | `ChatAttachment[]` | No | Same renderer (Onyx-heavy) |
-| `toolCalls` | `ChatToolCall[]` | No | Persisted; future UI |
-| `pipelineStatus` | `{ workflowId?, phases? }` | No | Phase chips under reply |
+| Field            | Type                       | Required | UI effect                             |
+| ---------------- | -------------------------- | -------- | ------------------------------------- |
+| `reply`          | string                     | Yes\*    | Main agent bubble text (\*or `error`) |
+| `error`          | string                     | No       | Shown as agent message on failure     |
+| `demo`           | boolean                    | No       | Triggers demo-mode banner             |
+| `steps`          | `ChatToolStep[]`           | No       | Tool execution panel                  |
+| `attachments`    | `ChatAttachment[]`         | No       | IDP cards below reply                 |
+| `citations`      | `ChatAttachment[]`         | No       | Same renderer (Onyx-heavy)            |
+| `toolCalls`      | `ChatToolCall[]`           | No       | Persisted; future UI                  |
+| `pipelineStatus` | `{ workflowId?, phases? }` | No       | Phase chips under reply               |
 
 ### 7.2 `ChatToolStep`
 
@@ -293,11 +318,11 @@ Canonical TypeScript: [`dashboard/src/components/dashboard/types.ts`](../../dash
 }
 ```
 
-| Field | Notes |
-| ----- | ----- |
-| `provider` | `"paperless"` or `"nextcloud"` |
-| `paperlessId` | Shown when `url` absent |
-| `url` | Optional deep link |
+| Field         | Notes                          |
+| ------------- | ------------------------------ |
+| `provider`    | `"paperless"` or `"nextcloud"` |
+| `paperlessId` | Shown when `url` absent        |
+| `url`         | Optional deep link             |
 
 #### `onyx_citation` — Enterprise knowledge
 
@@ -341,11 +366,11 @@ Roadmap: bundled Coneshare provider; agents can emit cards today for custom inte
 }
 ```
 
-| `status` | Badge color |
-| -------- | ----------- |
+| `status`  | Badge color         |
+| --------- | ------------------- |
 | `running` | Orange (processing) |
-| `done` | Green |
-| `failed` | Red |
+| `done`    | Green               |
+| `failed`  | Red                 |
 
 Emit after Stirling document redaction, Ouroboros phases, or audit tool Merkle roots ([#114](https://github.com/danielsmithdevelopment/ClawQL/issues/114)).
 
@@ -410,16 +435,16 @@ Implementation: [`dashboard/scripts/openclaw-chat-enrich.mjs`](../../dashboard/s
 
 **Mapped tool patterns:**
 
-| ClawQL tool | Dashboard fields |
-|-------------|------------------|
-| `clawql__execute` with `paperless::*` | `attachments[]` document card, `pipelineStatus.phases` |
-| `clawql__execute` with `stirling::*` + Merkle | `attachments[]` pipeline card |
-| `clawql__execute` with `onyx::*` | `citations[]` |
-| `clawql__execute` with `nextcloud::*` | `attachments[]` document card (`provider: nextcloud`) |
-| `clawql__execute` with `coneshare::*` | `attachments[]` Coneshare card (`kind: coneshare`) |
-| `clawql__memory_recall` | `citations[]` (vault paths) |
-| `clawql__knowledge_search_onyx` | `citations[]` |
-| Any `clawql__*` in the turn | `steps[]` + `toolCalls[]` |
+| ClawQL tool                                   | Dashboard fields                                       |
+| --------------------------------------------- | ------------------------------------------------------ |
+| `clawql__execute` with `paperless::*`         | `attachments[]` document card, `pipelineStatus.phases` |
+| `clawql__execute` with `stirling::*` + Merkle | `attachments[]` pipeline card                          |
+| `clawql__execute` with `onyx::*`              | `citations[]`                                          |
+| `clawql__execute` with `nextcloud::*`         | `attachments[]` document card (`provider: nextcloud`)  |
+| `clawql__execute` with `coneshare::*`         | `attachments[]` Coneshare card (`kind: coneshare`)     |
+| `clawql__memory_recall`                       | `citations[]` (vault paths)                            |
+| `clawql__knowledge_search_onyx`               | `citations[]`                                          |
+| Any `clawql__*` in the turn                   | `steps[]` + `toolCalls[]`                              |
 
 For automation that bypasses OpenClaw, POST the full envelope directly to `/api/agent/chat` or `/api/agent/chat/stream`.
 
@@ -443,36 +468,36 @@ Full IDP workflow steps: [OpenClaw IDP skill profile](../openclaw/openclaw-idp-s
 
 ### 8.3 Mapping MCP tools → UI fields
 
-| MCP action | Suggested UI field |
-| ---------- | ------------------ |
-| `execute` on Tika/Gotenberg/Stirling/Paperless | `steps[]` with `operationId` as label |
-| Successful Paperless create | `attachments[]` kind `document` |
-| `knowledge_search_onyx` hit | `citations[]` kind `onyx_citation` |
-| Stirling redact + Merkle | `attachments[]` kind `pipeline` |
-| Ouroboros seed id | `pipelineStatus.workflowId` |
-| Coneshare API (future) | `attachments[]` kind `coneshare` |
-| `memory_ingest` | Mention in `reply`; vault note linked by thread |
+| MCP action                                     | Suggested UI field                              |
+| ---------------------------------------------- | ----------------------------------------------- |
+| `execute` on Tika/Gotenberg/Stirling/Paperless | `steps[]` with `operationId` as label           |
+| Successful Paperless create                    | `attachments[]` kind `document`                 |
+| `knowledge_search_onyx` hit                    | `citations[]` kind `onyx_citation`              |
+| Stirling redact + Merkle                       | `attachments[]` kind `pipeline`                 |
+| Ouroboros seed id                              | `pipelineStatus.workflowId`                     |
+| Coneshare API (future)                         | `attachments[]` kind `coneshare`                |
+| `memory_ingest`                                | Mention in `reply`; vault note linked by thread |
 
 ---
 
 ## 9. Environment variables
 
-| Variable | Default | Purpose |
-| -------- | ------- | ------- |
-| `CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL` | — | Bridge base, e.g. `http://127.0.0.1:8787/v1/chat` |
-| `CLAWQL_DASHBOARD_CHAT_STREAM` | `1` | Set `0` to disable SSE |
-| `CLAWQL_OBSIDIAN_VAULT_PATH` | `~/.ClawQL` | Chat persistence root |
-| `OPENCLAW_CHAT_BRIDGE_PORT` | `8787` | Bridge listen port |
-| `CLAWQL_OPENCLAW_AGENT_ID` | `main` | OpenClaw agent id |
-| `OPENCLAW_AGENT_TIMEOUT_SEC` | `120` | CLI timeout |
+| Variable                             | Default     | Purpose                                           |
+| ------------------------------------ | ----------- | ------------------------------------------------- |
+| `CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL` | —           | Bridge base, e.g. `http://127.0.0.1:8787/v1/chat` |
+| `CLAWQL_DASHBOARD_CHAT_STREAM`       | `1`         | Set `0` to disable SSE                            |
+| `CLAWQL_OBSIDIAN_VAULT_PATH`         | `~/.ClawQL` | Chat persistence root                             |
+| `OPENCLAW_CHAT_BRIDGE_PORT`          | `8787`      | Bridge listen port                                |
+| `CLAWQL_OPENCLAW_AGENT_ID`           | `main`      | OpenClaw agent id                                 |
+| `OPENCLAW_AGENT_TIMEOUT_SEC`         | `120`       | CLI timeout                                       |
 
 Helm (`values.yaml`):
 
 ```yaml
 dashboard:
   enabled: true
-  openclawChatUrl: ""      # auto-wired to sidecar when empty
-  chatStream: true         # → CLAWQL_DASHBOARD_CHAT_STREAM
+  openclawChatUrl: "" # auto-wired to sidecar when empty
+  chatStream: true # → CLAWQL_DASHBOARD_CHAT_STREAM
 ```
 
 ---
@@ -511,34 +536,34 @@ Cluster smoke (bridge + proxy): [`scripts/kubernetes/smoke-openclaw-chat-bridge.
 
 ## 12. Troubleshooting
 
-| Symptom | Check |
-| ------- | ----- |
-| Demo banner, no real replies | `CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL` unset; bridge not running |
-| No streaming | `CLAWQL_DASHBOARD_CHAT_STREAM=0`; use `/v1/chat/stream` on bridge |
-| Thread not continuing | Same `threadId` sent to bridge (`--session-id`) |
-| Messages not persisted | Vault writable at `CLAWQL_OBSIDIAN_VAULT_PATH`; browser console for save errors |
-| Plain text only, no cards | Upstream JSON lacks `attachments` / `steps` — check bridge enrichment (§8) and that ClawQL MCP tools ran |
-| 502 from bridge | `openclaw` on PATH, model auth, `OPENCLAW_AGENT_TIMEOUT_SEC` |
+| Symptom                      | Check                                                                                                    |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Demo banner, no real replies | `CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL` unset; bridge not running                                           |
+| No streaming                 | `CLAWQL_DASHBOARD_CHAT_STREAM=0`; use `/v1/chat/stream` on bridge                                        |
+| Thread not continuing        | Same `threadId` sent to bridge (`--session-id`)                                                          |
+| Messages not persisted       | Vault writable at `CLAWQL_OBSIDIAN_VAULT_PATH`; browser console for save errors                          |
+| Plain text only, no cards    | Upstream JSON lacks `attachments` / `steps` — check bridge enrichment (§8) and that ClawQL MCP tools ran |
+| 502 from bridge              | `openclaw` on PATH, model auth, `OPENCLAW_AGENT_TIMEOUT_SEC`                                             |
 
 ---
 
 ## 13. Roadmap
 
-| Item | Tracking |
-| ---- | -------- |
-| Bridge auto-maps MCP tool audit → `steps` + attachments | Dashboard + OpenClaw glue |
-| Coneshare bundled provider → native share cards | IDP stack §8 |
-| Ouroboros live phase sidebar | [#110](https://github.com/danielsmithdevelopment/ClawQL/issues/110) area |
-| OpenClaw native token streaming → bridge passthrough | Upstream OpenClaw |
+| Item                                                    | Tracking                                                                 |
+| ------------------------------------------------------- | ------------------------------------------------------------------------ |
+| Bridge auto-maps MCP tool audit → `steps` + attachments | Dashboard + OpenClaw glue                                                |
+| Coneshare bundled provider → native share cards         | IDP stack §8                                                             |
+| Ouroboros live phase sidebar                            | [#110](https://github.com/danielsmithdevelopment/ClawQL/issues/110) area |
+| OpenClaw native token streaming → bridge passthrough    | Upstream OpenClaw                                                        |
 
 ---
 
 ## 14. Document index
 
-| Doc | Content |
-| --- | ------- |
-| **This page** | Canonical Agent Chat reference |
-| [IDP stack](../vision/clawql-idp-stack.md) | Full document pipeline vision |
-| [IDP requirements matrix](../roadmap/idp-master-requirements-matrix.md) | Shipped vs gap tracking |
-| [OpenClaw IDP profile](../openclaw/openclaw-idp-skill-profile.md) | MCP workflow + dashboard JSON contract |
-| [Design / implementation notes](../design/dashboard-shadcn-chat-integration.md) | shadcn integration history |
+| Doc                                                                             | Content                                |
+| ------------------------------------------------------------------------------- | -------------------------------------- |
+| **This page**                                                                   | Canonical Agent Chat reference         |
+| [IDP stack](../vision/clawql-idp-stack.md)                                      | Full document pipeline vision          |
+| [IDP requirements matrix](../roadmap/idp-master-requirements-matrix.md)         | Shipped vs gap tracking                |
+| [OpenClaw IDP profile](../openclaw/openclaw-idp-skill-profile.md)               | MCP workflow + dashboard JSON contract |
+| [Design / implementation notes](../design/dashboard-shadcn-chat-integration.md) | shadcn integration history             |

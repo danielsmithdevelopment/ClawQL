@@ -192,12 +192,12 @@ Read the full documentation suite, deploy the Tier 1 stack, and begin building p
 | **[Plugin registry](../reference/clawql-plugin-registry.md)**                                        | Shipped vs planned plugins, MCP tools, enable flags                                 |
 | [Vision & Roadmap](./clawql-vision-roadmap.md)                                                       | Public edition — honest shipped vs planned, phased delivery                         |
 | [Modularization v2.1](./clawql-modularization-v2.md)                                                 | Package boundaries, dependency graph, intelligent MCP gateway                       |
-| **[IDP stack (April 2026)](./clawql-idp-stack.md)**                                                  | End-to-end document pipeline, Nextcloud, Coneshare, orchestration planes, redaction   |
+| **[IDP stack (April 2026)](./clawql-idp-stack.md)**                                                  | End-to-end document pipeline, Nextcloud, Coneshare, orchestration planes, redaction |
 | [Immutable releases (Layer 0)](./clawql-hybrid-decentralized-github-alternative.md)                  | Arweave bundles, Radicle, Rift, `clawql-release`, manifest schema                   |
 | [Contributor Technical Specification](../contributing/clawql-contributor-technical-specification.md) | Implementation contracts, Effect-TS patterns, CI rules                              |
-| [Deployment & Operations Guide](../deployment/clawql-deployment-operations-guide.md)                 | Shipped Helm ops — quick start, day-2, health                                              |
-| [Operator target architecture](../design/operator-target-architecture.md)                              | Planned tiers, CRD, verticals, NL ops (not shipped)                                       |
-| [Dashboard Agent Chat](../dashboard/agent-chat.md)                                                   | Browser UI, SSE, vault threads, IDP attachment JSON contract                      |
+| [Deployment & Operations Guide](../deployment/clawql-deployment-operations-guide.md)                 | Shipped Helm ops — quick start, day-2, health                                       |
+| [Operator target architecture](../design/operator-target-architecture.md)                            | Planned tiers, CRD, verticals, NL ops (not shipped)                                 |
+| [Dashboard Agent Chat](../dashboard/agent-chat.md)                                                   | Browser UI, SSE, vault threads, IDP attachment JSON contract                        |
 | [Defense-in-Depth Security Guide](../security/clawql-defense-in-depth-security-guide.md)             | What to deploy — condensed operator reference                                       |
 | [Security curriculum](../security/security-best-practices-series/README.md)                          | 32 modules — why and how to prove controls                                          |
 | [Token efficiency (8 layers)](../architecture/clawql-token-efficiency.md)                            | Code Mode through model routing                                                     |

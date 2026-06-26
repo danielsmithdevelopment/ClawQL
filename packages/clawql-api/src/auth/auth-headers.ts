@@ -171,7 +171,11 @@ function envResolvedAuthHeaders(specLabel?: string): Record<string, string> {
   }
   if (effective === "nextcloud") {
     const user = trimEnv("NEXTCLOUD_USERNAME", "CLAWQL_NEXTCLOUD_USERNAME");
-    const pass = trimEnv("NEXTCLOUD_APP_PASSWORD", "CLAWQL_NEXTCLOUD_APP_PASSWORD", "NEXTCLOUD_PASSWORD");
+    const pass = trimEnv(
+      "NEXTCLOUD_APP_PASSWORD",
+      "CLAWQL_NEXTCLOUD_APP_PASSWORD",
+      "NEXTCLOUD_PASSWORD"
+    );
     if (!user || !pass) return { "OCS-APIRequest": "true" };
     const token = Buffer.from(`${user}:${pass}`, "utf8").toString("base64");
     return { Authorization: `Basic ${token}`, "OCS-APIRequest": "true" };

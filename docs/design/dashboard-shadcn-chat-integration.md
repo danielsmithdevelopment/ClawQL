@@ -11,15 +11,15 @@
 
 ## Summary (what shipped)
 
-| Area | Delivered |
-| ---- | --------- |
-| **UI** | `AgentConversation` (MessageScroller), `ChatMessageRow`, `IdpAttachmentCards`, `ChatComposer` |
-| **Streaming** | `POST /api/agent/chat/stream` (SSE); bridge `POST /v1/chat/stream` |
-| **Schema** | `attachments`, `citations`, `toolCalls`, `pipelineStatus` on agent messages |
-| **Persistence** | Backward-compatible `messages.jsonl` in vault |
-| **Deploy** | `CLAWQL_DASHBOARD_CHAT_STREAM`, Helm `dashboard.chatStream` |
-| **Bridge enrichment** | `openclaw-chat-enrich.mjs` — session audit → `steps` / `attachments` / `citations` |
-| **Tests** | `dashboard/e2e/agent-chat.spec.ts`, `npm run test:chat-enrich` |
+| Area                  | Delivered                                                                                     |
+| --------------------- | --------------------------------------------------------------------------------------------- |
+| **UI**                | `AgentConversation` (MessageScroller), `ChatMessageRow`, `IdpAttachmentCards`, `ChatComposer` |
+| **Streaming**         | `POST /api/agent/chat/stream` (SSE); bridge `POST /v1/chat/stream`                            |
+| **Schema**            | `attachments`, `citations`, `toolCalls`, `pipelineStatus` on agent messages                   |
+| **Persistence**       | Backward-compatible `messages.jsonl` in vault                                                 |
+| **Deploy**            | `CLAWQL_DASHBOARD_CHAT_STREAM`, Helm `dashboard.chatStream`                                   |
+| **Bridge enrichment** | `openclaw-chat-enrich.mjs` — session audit → `steps` / `attachments` / `citations`            |
+| **Tests**             | `dashboard/e2e/agent-chat.spec.ts`, `npm run test:chat-enrich`                                |
 
 ---
 
