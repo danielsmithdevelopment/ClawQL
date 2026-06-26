@@ -7,7 +7,7 @@ import { docsPageMetadata } from '@/lib/seo'
 export const metadata = docsPageMetadata({
   title: 'Deployment & Operations Guide',
   description:
-    'ClawQL Deployment & Operations Guide (May 2026): Tier 1 Docker Compose, configuration, Presidio, troubleshooting, and tier selection for operators.',
+    'ClawQL operations for shipped Helm installs: quick start, health checks, secrets, upgrades, and links to the seven-vendor IDP pipeline.',
   path: '/deployment/operations-guide',
   ogType: 'article',
 })
@@ -21,8 +21,8 @@ export default function DeploymentOperationsGuidePage() {
         <Tag color="claw" variant="medium">
           Deployment
         </Tag>
-        <Tag color="amber" variant="medium">
-          Tier 1 available
+        <Tag color="sky" variant="medium">
+          Helm · shipped
         </Tag>
       </div>
 
@@ -35,9 +35,14 @@ export default function DeploymentOperationsGuidePage() {
           >
             docs/deployment/clawql-deployment-operations-guide.md
           </a>{' '}
-          on <code className="font-mono text-xs">main</code>. Tier 2/3 and
-          Operator sections document intended procedures — see availability
-          table in the guide. See also{' '}
+          on <code className="font-mono text-xs">main</code>.           Planned Operator / CRD content lives in the{' '}
+          <a
+            href="/design/operator-target-architecture"
+            className="font-medium text-inherit underline underline-offset-2"
+          >
+            Operator target architecture
+          </a>
+          . See{' '}
           <a
             href="/vision/roadmap"
             className="font-medium text-inherit underline underline-offset-2"

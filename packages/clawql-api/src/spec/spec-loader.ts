@@ -842,6 +842,8 @@ export function resolveBundledSelfHostedBaseUrl(specLabel?: string): string | un
     tika: "TIKA_BASE_URL",
     gotenberg: "GOTENBERG_BASE_URL",
     onyx: "ONYX_BASE_URL",
+    nextcloud: "NEXTCLOUD_BASE_URL",
+    coneshare: "CONESHARE_BASE_URL",
   };
   const envKey = envByLabel[label];
   if (!envKey) return undefined;

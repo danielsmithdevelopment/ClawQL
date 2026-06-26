@@ -17,7 +17,7 @@ ClawQL is under active development. Most of what this document describes is not 
 | `clawql-core`              | ✅ Shipped (audit, Merkle, Cuckoo, Plugin types)              |
 | `clawql-api`               | ✅ Shipped (spec, execute, gateway scaffold, Panguard plugin) |
 | `clawql-memory`            | ✅ Shipped (vault, memory.db, ingest/recall)                  |
-| `clawql-documents`         | 🔨 Scaffold (external ingest; full pipeline planned)          |
+| `clawql-documents`         | ✅ Shipped ingest + **`DEFAULT_IDP_PIPELINE`**; 7 bundled IDP vendors via **`execute`**; automated runner planned |
 | `clawql-automation`        | 🔨 Scaffold (schedule + notify; NATS/HITL planned)            |
 | `clawql-auth`              | 📋 Planned (auth helpers live in `clawql-api` today)          |
 | `clawql-pageindex`         | 📋 Planned                                                    |
@@ -122,7 +122,7 @@ For technical readers, the full rationale and patterns are in the [Contributor T
 
 **`clawql-auth`** handles authentication modes (OIDC, SAML, OAuth2, API key), RBAC/ABAC policy, and ATR claim enrichment.
 
-**`clawql-documents`** is the document intelligence pipeline: Apache Tika for extraction, Gotenberg for conversion, Stirling-PDF for OCR and manipulation, Presidio for redaction, and Paperless NGX for archiving. Each stage runs in sequence with failure isolation.
+**`clawql-documents`** ships external ingest, the **`DEFAULT_IDP_PIPELINE`** recipe, and stage helpers. **Seven bundled providers** (Nextcloud, Tika, Gotenberg, Stirling, Paperless, Onyx, Coneshare) are available via **`search`/`execute`** and Helm — see [`idp-pipeline.md`](../providers/idp-pipeline.md). Presidio agent I/O redaction and an automated multi-hop runner remain roadmap.
 
 **`clawql-memory`** is the hybrid persistent memory system combining a filesystem vault, a graph store, a vectorless hierarchical index (PageIndex), and optional semantic search via Onyx.
 
@@ -192,7 +192,7 @@ If none of that is sufficient for your use case, the honest advice is to wait fo
 
 ### Try it
 
-The Tier 1 Docker Compose deployment is the fastest way to see what ClawQL can do today. It runs `clawql-api`, `clawql-memory` with a SQLite backend, the document pipeline (Tika, Gotenberg, Paperless NGX), and basic authentication.
+The fastest way to see the full IDP stack today is **`make local-k8s-up`** (Helm + Docker Desktop) or **`helm upgrade --install`** per [helm.md](../deployment/helm.md). It co-deploys MCP, optional document pipeline services, Onyx, Nextcloud, dashboard, and vault memory. Tier 1 four-stack Docker Compose ([#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251)) is planned but not shipped.
 
 ```bash
 git clone https://github.com/clawql/clawql.git
@@ -220,4 +220,4 @@ The public roadmap is tracked in GitHub Discussions with phase-level milestones.
 
 _ClawQL Vision & Roadmap · May 2026 · Apache 2.0 / MIT_  
 _For implementation contracts: see the [Contributor Technical Specification](../contributing/clawql-contributor-technical-specification.md)._  
-_For deployment instructions: see the [Deployment & Operations Guide](../deployment/clawql-deployment-operations-guide.md)._
+_For planned Operator / CRD deployment: see [Operator target architecture](../design/operator-target-architecture.md). Shipped installs: [Deployment & Operations Guide](../deployment/clawql-deployment-operations-guide.md)._

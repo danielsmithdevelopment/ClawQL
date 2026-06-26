@@ -183,6 +183,22 @@ export const BUNDLED_PROVIDERS: Record<string, BundledProvider> = {
     fallbackUrl:
       "https://raw.githubusercontent.com/danielsmithdevelopment/ClawQL/main/providers/onyx/openapi.yaml",
   },
+  /** Nextcloud WebDAV + OCS (IDP storage). Base URL: NEXTCLOUD_BASE_URL. Auth: app password (Basic). */
+  nextcloud: {
+    id: "nextcloud",
+    bundledSpecPath: "providers/nextcloud/openapi.yaml",
+    format: "openapi",
+    fallbackUrl:
+      "https://raw.githubusercontent.com/danielsmithdevelopment/ClawQL/main/providers/nextcloud/openapi.yaml",
+  },
+  /** ConeShare secure sharing / VDR (IDP). Base URL: CONESHARE_BASE_URL. Auth: JWT Bearer. */
+  coneshare: {
+    id: "coneshare",
+    bundledSpecPath: "providers/coneshare/openapi.yaml",
+    format: "openapi",
+    fallbackUrl:
+      "https://raw.githubusercontent.com/danielsmithdevelopment/ClawQL/main/providers/coneshare/openapi.yaml",
+  },
   /**
    * Linear — public GraphQL API only (no REST OpenAPI).
    * SDL is vendored from Linear's MIT-licensed SDK (`packages/sdk/src/schema.graphql`).
@@ -280,7 +296,9 @@ export const BUNDLED_MERGED_VENDOR_LABELS: readonly string[] =
  * merge when **`CLAWQL_ENABLE_DOCUMENTS=0`**. **`CLAWQL_BUNDLED_PROVIDERS=…`** can still list these ids explicitly.
  */
 export const BUNDLED_DOCUMENT_VENDOR_IDS: readonly string[] = [
+  "coneshare",
   "gotenberg",
+  "nextcloud",
   "onyx",
   "paperless",
   "stirling",
@@ -324,7 +342,7 @@ export const BUNDLED_PROVIDER_GROUPS: Record<string, BundledProviderGroup> = {
   google: { resolve: resolveGoogleTop50Items },
   /**
    * Google Cloud bundle + every other bundled vendor (Jira, Bitbucket, Cloudflare, GitHub, …).
-   * The document stack (**tika**, **gotenberg**, **paperless**, **stirling**, **onyx**) is included unless **`CLAWQL_ENABLE_DOCUMENTS=0`**. Default when no spec env.
+   * The document stack (**tika**, **gotenberg**, **paperless**, **stirling**, **onyx**, **nextcloud**, **coneshare**) is included unless **`CLAWQL_ENABLE_DOCUMENTS=0`**. Default when no spec env.
    */
   "all-providers": { resolve: resolveAllBundledProvidersItems },
 };

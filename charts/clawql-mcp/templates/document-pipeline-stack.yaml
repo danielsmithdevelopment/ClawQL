@@ -23,6 +23,7 @@ data:
   {{- if $paperlessSecretManaged }}
   {{- if .Values.documentPipeline.paperless.auth.apiToken }}
   paperless-api-token: {{ .Values.documentPipeline.paperless.auth.apiToken | b64enc | quote }}
+  PAPERLESS_API_TOKEN: {{ .Values.documentPipeline.paperless.auth.apiToken | b64enc | quote }}
   {{- end }}
   {{- if .Values.documentPipeline.paperless.auth.secretKey }}
   paperless-secret-key: {{ .Values.documentPipeline.paperless.auth.secretKey | b64enc | quote }}

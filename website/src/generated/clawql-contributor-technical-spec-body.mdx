@@ -9,7 +9,7 @@ Apache 2.0 / MIT · [github.com/clawql/clawql](https://github.com/clawql/clawql)
 
 This document is a specification of contracts, not a getting-started guide. It assumes you have already read the Vision & Roadmap document and understand what ClawQL is and where it is in development. It does not repeat that context here.
 
-If you want to run ClawQL locally before reading further, start with the [Deployment & Operations Guide](/deployment/operations-guide). Come back here when you are ready to build something.
+If you want to run ClawQL locally before reading further, start with the [Deployment & Operations Guide](/deployment/operations-guide) ([Helm](../deployment/helm.md) or `npx clawql-mcp`). Come back here when you are ready to build something.
 
 **Package extraction (phases 1–9) is on `main`.** Vertical contributions still require a **stable Plugin Layer API** (`onRegister` tool registration, `requiredSpecs`, third-party contract) — see [Plugin model](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/clawql-plugin-model.md) and [implementation status](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/modularization-implementation-status.md). You can write and test a vertical now using the in-memory test layers described in §3.4. Do not merge a vertical to `main` until the **Plugin interface exit criteria** in §1.1 are met for the surfaces your vertical depends on.
 
@@ -32,7 +32,7 @@ clawql/
 │   ├── clawql-core/       # types, audit, Merkle, Cuckoo, Plugin interface
 │   ├── clawql-api/        # gateway composition root, search/execute
 │   ├── clawql-memory/     # vault, memory.db, ingest/recall
-│   ├── clawql-documents/  # external ingest scaffold
+│   ├── clawql-documents/  # ingest + DEFAULT_IDP_PIPELINE recipe
 │   ├── clawql-automation/ # schedule + notify
 │   ├── clawql-ouroboros/  # evolutionary loop library
 │   └── [future horizontal packages]
@@ -1209,4 +1209,4 @@ import { Effect, Layer, Stream, Option, Context, Schema } from 'effect'
 
 _ClawQL Contributor Technical Specification · May 2026 · Apache 2.0 / MIT_
 _For platform vision and roadmap: see the [Vision & Roadmap document](/vision/roadmap)._
-_For deployment instructions: see the [Deployment & Operations Guide](/deployment/operations-guide)._
+_For deployment instructions: see the [Deployment & Operations Guide](/deployment/operations-guide). Planned Operator model: [Operator target architecture](../design/operator-target-architecture.md)._

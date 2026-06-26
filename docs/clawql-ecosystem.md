@@ -376,7 +376,7 @@ Slack (threads, channels, DMs), Google Drive (Docs, Sheets, Slides), Confluence 
 
 **clawql-ouroboros** ([`clawql-ouroboros.md`](ouroboros/clawql-ouroboros.md)) supplies evolutionary-loop primitives; the MCP server exposes **optional** tools when **`CLAWQL_ENABLE_OUROBOROS=1`**: `ouroboros_create_seed_from_document`, `ouroboros_run_evolutionary_loop`, `ouroboros_get_lineage_status`. Optional **`CLAWQL_OUROBOROS_DATABASE_URL`** persists events to Postgres instead of in-memory.
 
-Natural-language routing (“fast path” vs full loop) is a **product vision** — today assistants compose **`search`/`execute`**, **`memory_*`**, **`knowledge_search_onyx`**, document providers, etc., explicitly or via prompts. Complex pipelines (Tika → Gotenberg → Stirling → Paperless → Onyx) are orchestrated through **those tools** and Helm-deployed services — not a hidden automatic router described here.
+Natural-language routing (“fast path” vs full loop) is a **product vision** — today assistants compose **`search`/`execute`**, **`memory_*`**, **`knowledge_search_onyx`**, document providers, etc., explicitly or via prompts. Complex pipelines (Nextcloud → Tika → Gotenberg → Stirling → Paperless → Onyx → Coneshare) are orchestrated through **`search`/`execute`**, **`DEFAULT_IDP_PIPELINE`**, and Helm-deployed services — not a hidden automatic router described here.
 
 Seeds / lineage storage match the library + MCP wiring in-repo; full **Interview → Seed → Execute → Evaluate → Evolve** automation as a single invisible daemon remains **roadmap** material alongside Ouroboros issues ([#141](https://github.com/danielsmithdevelopment/ClawQL/issues/141), [#142](https://github.com/danielsmithdevelopment/ClawQL/issues/142)).
 

@@ -4,6 +4,7 @@ import { dirname } from 'node:path'
 
 import type { ChatAgentMessage, ChatMessage, ChatUserMessage } from '@/components/dashboard/types'
 
+import { parseChatMessageLine } from './chat-message-parse'
 import { getObsidianVaultRoot, resolveVaultPath } from './vault-path.server'
 
 const INDEX_VERSION = 1
@@ -194,31 +195,7 @@ export async function updateChatThread(
 }
 
 function parseMessageLine(line: string): ChatMessage | null {
-  const trimmed = line.trim()
-  if (!trimmed) return null
-  try {
-    const row = JSON.parse(trimmed) as ChatMessage & { at?: string }
-    if (row.kind === 'user' && typeof row.id === 'string' && typeof row.text === 'string') {
-      return { kind: 'user', id: row.id, text: row.text }
-    }
-    if (
-      row.kind === 'agent' &&
-      typeof row.id === 'string' &&
-      typeof row.intro === 'string' &&
-      (row.status === 'running' || row.status === 'queued' || row.status === 'done')
-    ) {
-      return {
-        kind: 'agent',
-        id: row.id,
-        status: row.status,
-        intro: row.intro,
-        steps: row.steps,
-      }
-    }
-  } catch {
-    return null
-  }
-  return null
+  return parseChatMessageLine(line)
 }
 
 export async function loadChatMessages(threadId: string): Promise<ChatMessage[]> {

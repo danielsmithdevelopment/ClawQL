@@ -1,33 +1,38 @@
-# Document pipeline: **Tika → Gotenberg → Stirling → Paperless → Onyx**
+# Document pipeline: **Nextcloud → Tika → Gotenberg → Stirling → Paperless → Onyx → Coneshare**
 
-ClawQL does **not** run one hidden daemon that magically pipes bytes through all five services. Instead, it loads **bundled OpenAPI** specs for **[Apache Tika](https://tika.apache.org/)**, **[Gotenberg](https://gotenberg.dev/)**, **[Stirling-PDF](https://docs.stirlingpdf.com/)**, **[Paperless-ngx](https://docs.paperless-ngx.com/)**, and **[Onyx](https://www.onyx.app/)** into the same **`search` / `execute`** index as the rest of your providers. **You** (or an agent) choose **which** operations to call and **in what order**—that composition is the **document pipeline**. {{ className: 'lead' }}
+ClawQL does **not** run one hidden daemon that magically pipes bytes through all services. Instead, it loads **bundled OpenAPI** specs for **[Nextcloud](https://nextcloud.com/)**, **[Apache Tika](https://tika.apache.org/)**, **[Gotenberg](https://gotenberg.dev/)**, **[Stirling-PDF](https://docs.stirlingpdf.com/)**, **[Paperless-ngx](https://docs.paperless-ngx.com/)**, **[Onyx](https://www.onyx.app/)**, and **[ConeShare](https://github.com/coneshare/coneshare)** into the same **`search` / `execute`** index as the rest of your providers. **You** (or an agent) choose **which** operations to call and **in what order**—that composition is the **document pipeline**. {{ className: 'lead' }}
 
-The **usual production story** is: **extract** heterogeneous files (**Tika**) → **normalize** to stable PDFs (**Gotenberg**) → **fix** PDFs (**Stirling**) → **archive** with metadata and OCR (**Paperless**) → **surface** in permission-aware enterprise search (**Onyx**), optionally **pushing** text from Paperless into Onyx’s ingestion API so assistants can find it with **`knowledge_search_onyx`**. That last hop is **after** Paperless because the archive is the **system of record**; Onyx is the **retrieval layer** ([introducing-clawql-onyx.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/posts/introducing-clawql-onyx.md) § “Where It Fits”).
+The **usual production story** is: **intake** from Nextcloud WebDAV → **extract** heterogeneous files (**Tika**) → **normalize** to stable PDFs (**Gotenberg**) → **redact/remediate** (**Stirling**) → **archive** with metadata and OCR (**Paperless**) → **index** for enterprise search (**Onyx**) → **sync** processed artifacts back to Nextcloud → **share** via secure links / VDR (**Coneshare**). Canonical recipe: **`DEFAULT_IDP_PIPELINE`** in **`clawql-documents`** — see [IDP pipeline hub](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/providers/idp-pipeline.md).
 
 **Intro essays (background):** [Tika](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/posts/introducing-clawql-tika.md) · [Gotenberg](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/posts/introducing-clawql-gotenberg.md) · [Stirling](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/posts/introducing-clawql-stirling.md) · [Paperless](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/posts/introducing-clawql-paperless.md) · [Onyx](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/posts/introducing-clawql-onyx.md). **Matrix:** [Bundled specs](/bundled-specs), [providers/README.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/providers/README.md). **Helm / topology:** [Helm](/helm), [Docker Desktop observability](/docker-desktop-observability).
 
-## What the five-vendor document stack is
+## What the seven-vendor document stack is
 
 | Vendor        | Role in the stack                                                                                                                                                                                                                                                                                                                                                                                                                |
 | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Nextcloud** | **Collaboration storage** — WebDAV intake/outbox, OCS shares ([nextcloud-onboarding.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/providers/nextcloud-onboarding.md))                                                                                                                                                                                                                                      |
 | **Tika**      | **Detection + text + metadata** extraction from many binary and office formats — the **normalization primitive** before chunking or conversion ([introducing-clawql-tika.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/posts/introducing-clawql-tika.md)).                                                                                                                                                 |
 | **Gotenberg** | **API-first conversion** to PDF (LibreOffice + Chromium routes) so downstream steps see a **consistent artifact** ([introducing-clawql-gotenberg.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/posts/introducing-clawql-gotenberg.md)).                                                                                                                                                                    |
-| **Stirling**  | **Self-hosted PDF toolkit** — split, merge, compress, rotate, sanitize — **remediation** between conversion and archive ([introducing-clawql-stirling.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/posts/introducing-clawql-stirling.md)).                                                                                                                                                                |
+| **Stirling**  | **Self-hosted PDF toolkit** — split, merge, compress, rotate, **PII redaction** — **remediation** between conversion and archive ([introducing-clawql-stirling.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/posts/introducing-clawql-stirling.md)).                                                                                                                                                                |
 | **Paperless** | **DMS / archive** — ingest, OCR, tags, correspondents, searchable vault of record ([introducing-clawql-paperless.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/posts/introducing-clawql-paperless.md)).                                                                                                                                                                                                    |
-| **Onyx**      | **Enterprise retrieval** — connectors, hybrid search, permissions; optional **ingestion** of text you already trust (e.g. from Paperless) via **`onyx_ingest_document`** ([introducing-clawql-onyx.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/posts/introducing-clawql-onyx.md), [onyx-knowledge-tool.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/onyx-knowledge-tool.md)). |
+| **Onyx**      | **Enterprise retrieval** — connectors, hybrid search, permissions; optional **ingestion** via **`onyx::upsert_ingestion_doc`** ([introducing-clawql-onyx.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/posts/introducing-clawql-onyx.md), [onyx-knowledge-tool.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/onyx-knowledge-tool.md)). |
+| **Coneshare** | **Secure sharing / VDR** — share links, data rooms, viewer webhook → vault ([coneshare-onboarding.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/providers/coneshare-onboarding.md))                                                                                                                                                                                                                          |
 
 **MCP surface:** **`ingest_external_knowledge`** (vault Markdown / URL) and **`knowledge_search_onyx`** (when **`CLAWQL_ENABLE_ONYX=1`**) sit beside raw **`execute`** on these providers — see [External ingest & knowledge lake](/learn/external-ingest-knowledge) and [Onyx enterprise search](/learn/knowledge-search-onyx).
 
-## Recommended data flow from Tika to Onyx
+## Recommended IDP data flow
 
 ```text
+[Nextcloud IDP/inbox …]
+        │  WebDAV download
+        ▼
 [binary / Office / email …]
-        │  Tika: detect + extract text/metadata (and decide if you need OCR elsewhere)
+        │  Tika: detect + extract text/metadata
         ▼
 [optional: Office/HTML → PDF]
         │  Gotenberg: deterministic PDF artifact
         ▼
-[PDF cleanup: split oversized, rotate, compress]
+[PDF cleanup + PII redaction]
         │  Stirling: remediation profile per tenant policy
         ▼
 [archive + tags + correspondent + OCR in DMS]
@@ -36,10 +41,22 @@ The **usual production story** is: **extract** heterogeneous files (**Tika**) �
 [optional: push same text/metadata into enterprise index]
         │  Onyx: ingestion API + knowledge_search_onyx for assistants
         ▼
+[sync processed file back to Nextcloud]
+        │  WebDAV upload to IDP/processed/…
+        ▼
+[secure share link / data room]
+        │  Coneshare: VDR + viewer webhook → vault/audit
+        ▼
 Users / agents query with permissions enforced by Onyx
 ```
 
-**Why not “Onyx before Paperless”?** You _can_ call Onyx search at any time, but **durable filing**, **legal retention**, and **human classification** usually belong in **Paperless first**; Onyx then **indexes** what you want searchable across the org. The bundled **`onyx::onyx_ingest_document`** path is documented as **post-Paperless** for that reason ([onyx-knowledge-tool.md § 5](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/onyx-knowledge-tool.md)).
+**Why not “Onyx before Paperless”?** You _can_ call Onyx search at any time, but **durable filing**, **legal retention**, and **human classification** usually belong in **Paperless first**; Onyx then **indexes** what you want searchable across the org. The bundled **`onyx::upsert_ingestion_doc`** path is documented as **post-Paperless** for that reason ([onyx-knowledge-tool.md § 5](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/onyx-knowledge-tool.md)).
+
+## Nextcloud collaboration storage
+
+- **Use when** operators or upstream systems drop files in a **shared folder** (`IDP/inbox/…`) and agents should **download**, then **upload processed** output to `IDP/processed/…`.
+- **In ClawQL:** **`NEXTCLOUD_BASE_URL`**, **`NEXTCLOUD_USERNAME`**, **`NEXTCLOUD_APP_PASSWORD`**; **`search`** / **`execute`** on WebDAV + OCS ([nextcloud-onboarding.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/providers/nextcloud-onboarding.md)).
+- **Helm:** **`idpCollaboration.enabled`** + **`nextcloud.enabled`** — enabled in **`values-docker-desktop.yaml`** for local dev.
 
 ## Tika text and metadata extraction
 
@@ -63,13 +80,19 @@ Users / agents query with permissions enforced by Onyx
 
 - **Use when** you need **long-lived storage**, **metadata taxonomy**, and **human-friendly** browse/filter UX ([introducing-clawql-paperless.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/posts/introducing-clawql-paperless.md)).
 - **In ClawQL:** **`PAPERLESS_BASE_URL`** + **`PAPERLESS_API_TOKEN`** (`Authorization: Token …`); **`search`** / **`execute`** on document consumption, listing, and metadata APIs ([paperless-onboarding.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/providers/paperless-onboarding.md)).
-- **Pairing:** after **`execute`** returns a new document **`id`**, optionally call **`onyx::onyx_ingest_document`** with a stable **`paperless-{id}`** semantic identifier ([onyx-knowledge-tool.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/onyx-knowledge-tool.md) § Post-Paperless) or enable the **Ouroboros** hook **`CLAWQL_OUROBOROS_ONYX_AFTER_PAPERLESS`** for automated follow-up when you run spec-first loops ([Ouroboros tools](/learn/ouroboros-tools)).
+- **Pairing:** after **`execute`** returns a new document **`id`**, optionally call **`onyx::upsert_ingestion_doc`** with a stable **`paperless-{id}`** semantic identifier ([onyx-knowledge-tool.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/onyx-knowledge-tool.md) § Post-Paperless) or enable the **Ouroboros** hook **`CLAWQL_OUROBOROS_ONYX_AFTER_PAPERLESS`** for automated follow-up when you run spec-first loops ([Ouroboros tools](/learn/ouroboros-tools)).
 
 ## Onyx enterprise retrieval and ingestion
 
 - **Use when** the audience is **the whole company** (Slack, Drive, Confluence, …) and answers must respect **ACLs** ([introducing-clawql-onyx.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/posts/introducing-clawql-onyx.md)).
-- **In ClawQL:** **`ONYX_BASE_URL`** + Bearer token; optional **`knowledge_search_onyx`** for ergonomic **`query`** → **`search_query`**; **`execute("onyx::onyx_ingest_document", …)`** for pushing **Paperless-linked** text into the index ([Onyx enterprise search](/learn/knowledge-search-onyx)).
+- **In ClawQL:** **`ONYX_BASE_URL`** + Bearer token; optional **`knowledge_search_onyx`** for ergonomic **`query`** → **`search_query`**; **`execute("onyx::upsert_ingestion_doc", …)`** for pushing **Paperless-linked** text into the index ([Onyx enterprise search](/learn/knowledge-search-onyx)).
 - **Flink / connectors:** continuous sync into Onyx is a **deployment** concern ([#119](https://github.com/danielsmithdevelopment/ClawQL/issues/119), [Flink Onyx sync](/flink-onyx-sync)) — ClawQL exposes the **API surface**, not the connector daemons themselves.
+
+## Coneshare secure sharing and VDR
+
+- **Use when** archived documents need **external review** under audit — secure share links, virtual data rooms, viewer analytics.
+- **In ClawQL:** **`CONESHARE_BASE_URL`**, **`CONESHARE_API_TOKEN`**; **`CLAWQL_ENABLE_CONESHARE=1`** registers **`POST /idp/coneshare/webhook`** for viewer events → vault/audit ([coneshare-onboarding.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/providers/coneshare-onboarding.md)).
+- **Helm:** **`idpCollaboration.coneshare.externalUrl`** for production [coneshare-compose](https://github.com/coneshare/coneshare-compose) stacks; lab co-deploy is optional.
 
 ## Orchestrating with search and execute
 
@@ -82,14 +105,17 @@ No single tool replaces **thinking through state**: pass **explicit** file buffe
 
 ## Documents feature flag and environment
 
-- **`CLAWQL_ENABLE_DOCUMENTS`** (default **on**): when set to **`0`**, ClawQL **drops** **tika**, **gotenberg**, **paperless**, **stirling**, **onyx** from the default **`all-providers`** merge and **hides** **`ingest_external_knowledge`** and **`knowledge_search_onyx`** — see [Concepts](/concepts) and [configuration § Feature tiers](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/readme/configuration.md#feature-tiers-architecture-diagram). You can still set **`CLAWQL_BUNDLED_PROVIDERS`** to list only the document vendors you want.
-- **Per-service base URLs and tokens** live in **`.env.example`** and [Bundled specs](/bundled-specs) — refresh committed specs with **`npm run fetch-provider-specs`** when your upstream exposes **`/openapi.json`** or Paperless **`/api/schema/`** ([providers/README.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/providers/README.md) § refresh).
-- **Helm:** **`enableDocuments`** / document pipeline subcharts — [Helm](/helm).
+- **`CLAWQL_ENABLE_DOCUMENTS`** (default **on**): when set to **`0`**, ClawQL **drops** **tika**, **gotenberg**, **paperless**, **stirling**, **onyx**, **nextcloud**, and **coneshare** from the default **`all-providers`** merge and **hides** **`ingest_external_knowledge`** and **`knowledge_search_onyx`** — see [Concepts](/concepts) and [configuration § Feature tiers](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/readme/configuration.md#feature-tiers-architecture-diagram). You can still set **`CLAWQL_BUNDLED_PROVIDERS`** to list only the document vendors you want.
+- **Per-service base URLs and tokens** live in **`.env.example`** and [IDP pipeline hub](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/providers/idp-pipeline.md) — refresh committed specs with **`npm run fetch-provider-specs`** when your upstream exposes **`/openapi.json`** or Paperless **`/api/schema/`** ([providers/README.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/providers/README.md) § refresh).
+- **Helm:** **`enableDocuments`** / **`documentPipeline`** + **`idpCollaboration`** + **`onyx`** — [Helm](/helm).
 
 ## Related posts guides and references
 
 | Topic              | Link                                                                                                                                     |
 | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| **IDP pipeline hub** | [idp-pipeline.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/providers/idp-pipeline.md)                           |
+| Nextcloud          | [nextcloud-onboarding.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/providers/nextcloud-onboarding.md)           |
+| Coneshare          | [coneshare-onboarding.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/providers/coneshare-onboarding.md)           |
 | Tika deep dive     | [introducing-clawql-tika.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/posts/introducing-clawql-tika.md)           |
 | Gotenberg          | [introducing-clawql-gotenberg.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/posts/introducing-clawql-gotenberg.md) |
 | Stirling           | [introducing-clawql-stirling.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/posts/introducing-clawql-stirling.md)   |

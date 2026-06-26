@@ -263,9 +263,9 @@ helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
 
 Docker Desktop **`make local-k8s-up`** opt-in: **`CLAWQL_ENABLE_OPENCLAW=1`** and **`OPENCLAW_GATEWAY_TOKEN=...`** (see **`scripts/kubernetes/local-k8s-docker-desktop.sh`**).
 
-**Dashboard Agent Chat → OpenClaw:** when **`openclaw.chatBridge.enabled`** (default **`true`**) and **`dashboard.openclawChatUrl`** is empty, the chart injects **`CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL`** pointing at the in-pod chat-bridge sidecar (`POST /v1/chat` on port **8787**). The bridge runs **`openclaw agent`** per request ([`dashboard/scripts/openclaw-chat-bridge.mjs`](../../dashboard/scripts/openclaw-chat-bridge.mjs); chart copy under **`charts/clawql-mcp/files/`**). Disable with **`openclaw.chatBridge.enabled=false`** or override **`dashboard.openclawChatUrl`**.
+**Dashboard Agent Chat → OpenClaw:** when **`openclaw.chatBridge.enabled`** (default **`true`**) and **`dashboard.openclawChatUrl`** is empty, the chart injects **`CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL`** pointing at the in-pod chat-bridge sidecar (`POST /v1/chat` and **`/v1/chat/stream`** on port **8787**). The bridge runs **`openclaw agent`** per request and enriches responses from session tool audit ([`openclaw-chat-enrich.mjs`](../../dashboard/scripts/openclaw-chat-enrich.mjs); chart copy under **`charts/clawql-mcp/files/`**). **`dashboard.chatStream`** (default **`true`**) sets **`CLAWQL_DASHBOARD_CHAT_STREAM=1`** for SSE in the UI. Full reference: **[`docs/dashboard/agent-chat.md`](../dashboard/agent-chat.md)**. Disable bridge with **`openclaw.chatBridge.enabled=false`** or override **`dashboard.openclawChatUrl`**.
 
-**Dashboard chat history on the Obsidian vault:** when **`dashboard.enabled=true`**, the Deployment sets **`CLAWQL_OBSIDIAN_VAULT_PATH`** (same as MCP **`obsidianVaultPath`**, default **`/vault`**) and mounts the **obsidian-vault** volume (PVC, **`vault.hostPath`**, or **`emptyDir`** — same precedence as the MCP pod). Agent Chat threads persist under **`Dashboard/chats/`** (`index.json`, per-thread **`meta.json`**, **`messages.jsonl`**, **`activity.jsonl`**); API logs append to **`Dashboard/logs/agent-chat.jsonl`**. Local dev default without env: **`~/.ClawQL`**. See **[`dashboard/README.md`](../../dashboard/README.md)** and **[memory-obsidian.md](../memory/memory-obsidian.md)** § Dashboard data.
+**Dashboard chat history on the Obsidian vault:** when **`dashboard.enabled=true`**, the Deployment sets **`CLAWQL_OBSIDIAN_VAULT_PATH`** (same as MCP **`obsidianVaultPath`**, default **`/vault`**) and mounts the **obsidian-vault** volume (PVC, **`vault.hostPath`**, or **`emptyDir`** — same precedence as the MCP pod). Agent Chat threads persist under **`Dashboard/chats/`** (`index.json`, per-thread **`meta.json`**, **`messages.jsonl`**, **`activity.jsonl`**); API logs append to **`Dashboard/logs/agent-chat.jsonl`**. Local dev default without env: **`~/.ClawQL`**. See **[`docs/dashboard/agent-chat.md`](../dashboard/agent-chat.md)**, **[`dashboard/README.md`](../../dashboard/README.md)**, and **[memory-obsidian.md](../memory/memory-obsidian.md)** § Dashboard data.
 
 **Optional Goose agent pool** ([`block/goose`](https://github.com/block/goose)): **`goose.enabled=true`**, set **`goose.replicaCount`** (start at **0**, scale on demand), provider keys via **`goose.*ApiKey`** or **`goose.existingSecret`**. Injects **`CLAWQL_MCP_URL`** when **`goose.clawqlMcp.enabled`**. Stateful PVC at **`goose.persistence.mountPath`** (default **`/opt/clawql/goose`**). Idle **`sleep infinity`** until AgentRuntime task API ships.
 
@@ -394,7 +394,7 @@ Helm deploys **only** the NATS server. **JetStream streams and consumers** are c
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | `clawql.workflow.>` | Ouroboros phases, workflow checkpoints, structured loops ([#110](https://github.com/danielsmithdevelopment/ClawQL/issues/110)) |
 | `clawql.agent.>`    | Agent coordination, LangGraph-related handoff ([ClawQL-Agent](https://github.com/danielsmithdevelopment/ClawQL-Agent))         |
-| `clawql.document.>` | Document pipeline hops (Tika → Gotenberg → Stirling → Paperless), provenance                                                   |
+| `clawql.document.>` | Document pipeline hops (Nextcloud → Tika → Gotenberg → Stirling → Paperless → Onyx → Coneshare), provenance |
 | `clawql.edge.>`     | Edge worker join/leave/status ([#129](https://github.com/danielsmithdevelopment/ClawQL/issues/129))                            |
 
 Defaults live in chart **`values.yaml`** as **`nats.subjectConvention`** (`workflow` / `agent` / `document` / `edge` keys) for operators and downstream charts.
@@ -487,7 +487,7 @@ helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace -
   -f charts/clawql-mcp/values-rancher.example.yaml
 ```
 
-Point **`openclawChatUrl`** at the workload that exposes **`POST /v1/chat`** (`{ reply }` JSON). See **`docs/openclaw/using-openclaw-with-clawql.md`** for OpenClaw + model/auth context.
+Point **`openclawChatUrl`** at the workload that exposes **`POST /v1/chat`** (`{ reply }` JSON) and optionally **`POST /v1/chat/stream`** (SSE). See **`docs/openclaw/using-openclaw-with-clawql.md`** and **`docs/dashboard/agent-chat.md`** for OpenClaw, streaming, and the agent JSON contract.
 
 Verify the dashboard pod received the proxy URL:
 

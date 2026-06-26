@@ -1,51 +1,32 @@
 # Deployment & Operations
 
-Choose a **deployment tier** that matches your environment. All tiers use the same MCP surface (`search` / `execute`); higher tiers add isolation, multi-tenancy, and enterprise controls. {{ className: 'lead' }}
+Deploy ClawQL with **Helm** (`charts/clawql-mcp`) for the full IDP stack, or run **`clawql-mcp`** locally for a minimal MCP surface. {{ className: 'lead' }}
 
 <Note>
-  **Full reference:** the [Deployment & Operations
-  Guide](/deployment/operations-guide) is the authoritative Tier 1–3 document —
-  CRD fields, auth, verticals, day-2 ops, and troubleshooting.
+  **Operations guide:** [Deployment & Operations Guide](/deployment/operations-guide) — shipped Helm paths, health checks, day-2 ops. **Planned Operator / CRD model:** [Operator target architecture](/design/operator-target-architecture) ([#255](https://github.com/danielsmithdevelopment/ClawQL/issues/255)).
 </Note>
 
-## Choose your tier
+## Shipped paths (use today)
 
-| Question                                     | Tier 1 | Tier 2   | Tier 3   |
-| -------------------------------------------- | ------ | -------- | -------- |
-| Evaluating ClawQL or building locally?       | ✅     | —        | —        |
-| Team-accessible shared deployment?           | —      | ✅       | —        |
-| Multi-tenant isolation & regulated controls? | —      | Limited  | ✅       |
-| Kubernetes required?                         | No     | Yes      | Yes      |
-| Kata / gVisor runtime isolation?             | No     | Optional | Required |
-
-If you are unsure, **start with Tier 1**. Configuration format is compatible enough that migrating to Tier 2 later does not require relearning fundamentals.
-
-## Tier paths
-
-### Tier 1 — Local / Docker Compose
-
-- [Quickstart](/quickstart) — `npx clawql-mcp` in minutes
-- [Install](/install) — binaries, Docker, Streamable HTTP
-- Operations guide [§1 Tier 1](/deployment/operations-guide) — Compose layout, local YAML, Presidio opt-in
-
-### Tier 2 — Standard Kubernetes + Helm
-
-- [Kubernetes on Docker Desktop](/deployment/kubernetes) — `make local-k8s-up`, Ingress, signed GHCR images, Kyverno
-- [Helm chart](/helm) — `charts/clawql-mcp` values and upgrades
-- [Dashboard on Kubernetes](/dashboard-kubernetes) — bundled UI and vault sync
-- Operations guide [§2 Tier 2](/deployment/operations-guide) — Operator, Helm, team scale
-
-### Tier 3 — Enterprise
-
-- [Docker Desktop: Istio & observability](/docker-desktop-observability) — mTLS lab, LGTMP stack patterns
-- [Tailscale & Headscale](/tailscale) — private tailnet MCP access
-- Operations guide [§3 Tier 3](/deployment/operations-guide) — Kata/gVisor, Istio, Vault, dedicated pools
+| Goal | Start here |
+| ---- | ---------- |
+| **Full local IDP stack** (Docker Desktop) | `make local-k8s-up` → [Kubernetes](/deployment/kubernetes) · [Helm](/helm) |
+| **Minimal MCP** | [Quickstart](/quickstart) · [Install](/install) |
+| **Seven-vendor document pipeline** | [Document pipeline learn page](/learn/document-pipeline) · [IDP hub (repo)](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/providers/idp-pipeline.md) |
+| **Dashboard + Agent Chat** | [Dashboard on Kubernetes](/dashboard-kubernetes) |
+| **Secrets & upgrades** | [Operations guide](/deployment/operations-guide) · [Helm](/helm) |
 
 ## Platform operations
 
-- [Streamable HTTP & Cloud Run](/deployment/platforms) — HTTP transport, gRPC, Docker image, Cloud Run script
+- [Streamable HTTP & Cloud Run](/deployment/platforms) — HTTP transport, gRPC, Docker image
 - [OpenClaw + ClawQL](/openclaw) — gateway integration
-- [Security overview](/security) — golden image pipeline and cluster admission
+- [Security overview](/security) — golden image pipeline and Kyverno
+- [Docker Desktop: Istio & observability](/docker-desktop-observability) — lab mTLS + LGTMP
+- [Tailscale & Headscale](/tailscale) — private tailnet MCP access
+
+## Planned (design only)
+
+A three-tier **Operator + `ClawQLInstance` CRD** model and four-stack **Docker Compose** ([#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251)) are specified but **not shipped**. See the [Operator target architecture](/design/operator-target-architecture) design reference.
 
 import { DeploymentHubGrid } from '@/components/DocsHubSections'
 

@@ -1,0 +1,5 @@
+{"type":"session","version":3,"id":"enrich-fixture","timestamp":"2026-06-26T00:00:00.000Z"}
+{"type":"message","id":"u1","timestamp":"2026-06-26T00:00:01.000Z","message":{"role":"user","content":[{"type":"text","text":"Process invoice"}]}}
+{"type":"message","id":"a1","parentId":"u1","timestamp":"2026-06-26T00:00:02.000Z","message":{"role":"assistant","content":[{"type":"toolCall","id":"call-exec","name":"clawql__execute","arguments":{"operationId":"paperless::documents_create","args":{"title":"invoice.pdf"}}}]}}
+{"type":"message","id":"r1","parentId":"a1","timestamp":"2026-06-26T00:00:03.000Z","message":{"role":"toolResult","toolCallId":"call-exec","toolName":"clawql__execute","content":[{"type":"text","text":"{\"id\":99,\"title\":\"invoice.pdf\"}"}],"isError":false}}
+{"type":"message","id":"a2","parentId":"r1","timestamp":"2026-06-26T00:00:04.000Z","message":{"role":"assistant","content":[{"type":"text","text":"Uploaded invoice to Paperless."}]}}

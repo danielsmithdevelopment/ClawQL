@@ -169,6 +169,17 @@ function envResolvedAuthHeaders(specLabel?: string): Record<string, string> {
     const bearer = trimEnv("ONYX_API_TOKEN", "CLAWQL_ONYX_API_TOKEN");
     return bearer ? { Authorization: `Bearer ${bearer}` } : {};
   }
+  if (effective === "nextcloud") {
+    const user = trimEnv("NEXTCLOUD_USERNAME", "CLAWQL_NEXTCLOUD_USERNAME");
+    const pass = trimEnv("NEXTCLOUD_APP_PASSWORD", "CLAWQL_NEXTCLOUD_APP_PASSWORD", "NEXTCLOUD_PASSWORD");
+    if (!user || !pass) return { "OCS-APIRequest": "true" };
+    const token = Buffer.from(`${user}:${pass}`, "utf8").toString("base64");
+    return { Authorization: `Basic ${token}`, "OCS-APIRequest": "true" };
+  }
+  if (effective === "coneshare") {
+    const bearer = trimEnv("CONESHARE_API_TOKEN", "CLAWQL_CONESHARE_API_TOKEN");
+    return bearer ? { Authorization: `Bearer ${bearer}` } : {};
+  }
 
   if ((label && isGoogleDiscoverySpecLabel(label)) || isGoogleDiscoverySpecLabel(effective)) {
     const bearer = trimEnv("CLAWQL_GOOGLE_ACCESS_TOKEN", "GOOGLE_ACCESS_TOKEN");

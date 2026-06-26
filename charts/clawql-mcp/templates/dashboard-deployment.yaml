@@ -35,6 +35,8 @@ spec:
             - name: CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL
               value: {{ $openclawChatUrl | quote }}
             {{- end }}
+            - name: CLAWQL_DASHBOARD_CHAT_STREAM
+              value: {{ ternary "1" "0" (.Values.dashboard.chatStream | default true) | quote }}
             - name: CLAWQL_OBSIDIAN_VAULT_PATH
               value: {{ .Values.obsidianVaultPath | quote }}
             {{- if .Values.hermes.enabled }}

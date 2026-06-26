@@ -20,7 +20,7 @@ export interface OpenAPIDocLike {
   info: { title: string; version: string };
 }
 
-const HTTP_METHODS = ["get", "post", "put", "patch", "delete", "head", "options"] as const;
+const HTTP_METHODS = ["get", "post", "put", "patch", "delete", "head", "options", "propfind"] as const;
 
 export function operationsFromOpenAPI(doc: OpenAPIDocLike): Operation[] {
   const paths = doc.paths ?? {};

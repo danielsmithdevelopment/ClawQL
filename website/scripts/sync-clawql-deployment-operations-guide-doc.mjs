@@ -80,6 +80,48 @@ function rewriteLinksForSite(body) {
           '](../contributing/clawql-contributor-technical-specification.md)',
           '](/contributing/technical-specification)',
         )
+        .replaceAll(
+          '](../design/operator-target-architecture.md)',
+          '](/design/operator-target-architecture)',
+        )
+        .replaceAll('](helm.md)', '](/helm)')
+        .replaceAll('](deploy-k8s.md)', '](/deployment/kubernetes)')
+        .replaceAll(
+          '](../providers/idp-pipeline.md)',
+          `](${GH_MAIN}/docs/providers/idp-pipeline.md)`,
+        )
+        .replaceAll(
+          '](../providers/nextcloud-onboarding.md)',
+          `](${GH_MAIN}/docs/providers/nextcloud-onboarding.md)`,
+        )
+        .replaceAll(
+          '](../providers/coneshare-onboarding.md)',
+          `](${GH_MAIN}/docs/providers/coneshare-onboarding.md)`,
+        )
+        .replaceAll(
+          '](../mcp/onyx-knowledge-tool.md)',
+          `](${GH_MAIN}/docs/mcp/onyx-knowledge-tool.md)`,
+        )
+        .replaceAll(
+          '](../dashboard/agent-chat.md)',
+          `](${GH_MAIN}/docs/dashboard/agent-chat.md)`,
+        )
+        .replaceAll(
+          '](../readme/configuration.md#feature-tiers-architecture-diagram)',
+          `](${GH_MAIN}/docs/readme/configuration.md#feature-tiers-architecture-diagram)`,
+        )
+        .replaceAll(
+          '](../readme/troubleshooting.md)',
+          '](/troubleshooting)',
+        )
+        .replaceAll(
+          '](../docker/docker-desktop-observability.md)',
+          '](/docker-desktop-observability)',
+        )
+        .replaceAll(
+          '](../providers/idp-pipeline.md#helm-enable-the-full-stack)',
+          `](${GH_MAIN}/docs/providers/idp-pipeline.md#helm-enable-the-full-stack)`,
+        )
         .replaceAll('](../../docs/', `](${GH_MAIN}/docs/`)
         .replaceAll('](../docs/', `](${GH_MAIN}/docs/`),
       ),

@@ -25,7 +25,7 @@ const rawOptionalFlagsSchema = z.object({
   /** Default on: `memory_ingest` / `memory_recall`. Set `0` / `false` / `no` to unregister. */
   CLAWQL_ENABLE_MEMORY: z.string().optional(),
   /**
-   * Default on: document pipeline — bundled tika / gotenberg / paperless / stirling / onyx in **`all-providers`**, plus
+   * Default on: document pipeline — bundled tika / gotenberg / paperless / stirling / onyx / **nextcloud** / **coneshare** in **`all-providers`**, plus
    * **`ingest_external_knowledge`** and (with **`CLAWQL_ENABLE_ONYX`**) **`knowledge_search_onyx`**. Set `0` to opt out.
    */
   CLAWQL_ENABLE_DOCUMENTS: z.string().optional(),
@@ -37,6 +37,8 @@ const rawOptionalFlagsSchema = z.object({
   CLAWQL_ENABLE_SANDBOX: z.string().optional(),
   /** ([#228](https://github.com/danielsmithdevelopment/ClawQL/issues/228)): HITL Label Studio enqueue + webhook path. Default false. */
   CLAWQL_ENABLE_HITL_LABEL_STUDIO: z.string().optional(),
+  /** ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254)): ConeShare webhook + IDP sharing integration. Default false. */
+  CLAWQL_ENABLE_CONESHARE: z.string().optional(),
 });
 
 export type ClawqlOptionalToolFlags = {
@@ -52,7 +54,7 @@ export type ClawqlOptionalToolFlags = {
    */
   enableMemory: boolean;
   /**
-   * Document stack: default merge includes tika, gotenberg, paperless, stirling, onyx; registers **`ingest_external_knowledge`**;
+   * Document stack: default merge includes tika, gotenberg, paperless, stirling, onyx, nextcloud, coneshare; registers **`ingest_external_knowledge`**;
    * pairs with **`knowledge_search_onyx`** when **`CLAWQL_ENABLE_ONYX=1`**. Set **`CLAWQL_ENABLE_DOCUMENTS=0`** to opt out.
    */
   enableDocuments: boolean;
@@ -84,6 +86,10 @@ export type ClawqlOptionalToolFlags = {
    * ([#228](https://github.com/danielsmithdevelopment/ClawQL/issues/228)): **`hitl_enqueue_label_studio`** + **`POST /hitl/label-studio/webhook`**. Default false.
    */
   enableHitlLabelStudio: boolean;
+  /**
+   * ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254)): **`POST /idp/coneshare/webhook`** + bundled **coneshare** provider. Default false.
+   */
+  enableConeshare: boolean;
 };
 
 function rawToFlags(raw: z.infer<typeof rawOptionalFlagsSchema>): ClawqlOptionalToolFlags {
@@ -100,6 +106,7 @@ function rawToFlags(raw: z.infer<typeof rawOptionalFlagsSchema>): ClawqlOptional
     enableOuroboros: envTruthy(raw.CLAWQL_ENABLE_OUROBOROS),
     enableSandbox: envTruthy(raw.CLAWQL_ENABLE_SANDBOX),
     enableHitlLabelStudio: envTruthy(raw.CLAWQL_ENABLE_HITL_LABEL_STUDIO),
+    enableConeshare: envTruthy(raw.CLAWQL_ENABLE_CONESHARE),
   };
 }
 

@@ -29,7 +29,7 @@ An MCP (Model Context Protocol) server (`clawql-mcp` on npm) that lets AI assist
 **PLATFORM HIGHLIGHTS**
 
 - MCP Server (stdio / HTTP / gRPC) + GraphQL projection; OpenAPI 3 + Swagger 2 + Google Discovery
-- **13** bundled vendor specs in `BUNDLED_PROVIDERS` (GitHub, Cloudflare, Slack, Sentry, n8n, Linear, Tika, Gotenberg, Paperless, Stirling, Onyx, Jira, Bitbucket) plus **`google`** / **`all-providers`** presets — see [`providers/README.md`](../../providers/README.md)
+- **15** bundled vendor specs in `BUNDLED_PROVIDERS` (GitHub, Cloudflare, Slack, Sentry, n8n, Linear, Tika, Gotenberg, Paperless, Stirling, Onyx, **Nextcloud**, **Coneshare**, Jira, Bitbucket) plus **`google`** / **`all-providers`** presets — see [`providers/README.md`](../../providers/README.md)
 - Obsidian vault memory + hybrid sqlite-vec (roadmap)
 - Full document pipeline (1,000+ formats) — Tika → Gotenberg → Stirling → Paperless
 - Onyx enterprise knowledge (40+ connectors, Flink-synced, citation-backed)
@@ -348,7 +348,7 @@ With ClawQL’s GraphQL projection: `execute()` passes the response through an i
 
 # 02 — Document Pipeline
 
-_Stirling-PDF · Paperless NGX · Apache Tika · Gotenberg · Onyx — **knowledge-augmented, security-scanned** end-to-end: **Trivy** + **OSV-Scanner** in the **Golden Image** path; optional **Istio mTLS** between every hop._
+_Stirling-PDF · Paperless NGX · Apache Tika · Gotenberg · Onyx · **Nextcloud** · **Coneshare** — **knowledge-augmented, security-scanned** end-to-end: **Trivy** + **OSV-Scanner** in the **Golden Image** path; optional **Istio mTLS** between every hop._
 
 ---
 
@@ -356,25 +356,33 @@ _Stirling-PDF · Paperless NGX · Apache Tika · Gotenberg · Onyx — **knowled
 
 ### Document Pipeline Overview
 
-_Five document/knowledge services plus a **security** pass — a complete, knowledge-augmented, **scan-aware** processing and archival system._
+_Seven-vendor IDP stack plus security passes — collaboration storage, processing, archive, enterprise search, and secure sharing._
 
 **The two-layer + security architecture**
 
 **Knowledge layer** (parallel / on-demand via Ouroboros):
 **Onyx** (40+ connectors, Flink-synced) provides company context before, during, and after workflows.
 
+**Collaboration layer** (intake / outbox):
+**Nextcloud** WebDAV + OCS shares — human-visible folders (`IDP/inbox`, `IDP/processed`).
+
 **Document processing layer** (sequential):
 **Tika** → **Gotenberg** → **Stirling** → **Paperless**.
+
+**Sharing layer** (post-archive):
+**Coneshare** secure links / VDR; webhook → vault when **`CLAWQL_ENABLE_CONESHARE=1`**.
 
 **Security layer** (post-build and/or post-step):
 
 - **OSV-Scanner** — on **images** and **lockfiles** (CI cron or on-demand `execute`); **SBOM**-friendly output folded into the Golden Image gate and optional **`memory_ingest`**
 - **Trivy** — in CI on every build; high/critical gates with Cosign+policy; complements OSV (ecosystem overlap is intentional: defense in depth)
-- **Istio** — **mTLS** + authz for east-west calls (`clawql` → `tika` → `paperless` → `onyx`); not a substitute for app auth but **zero-trust** on the wire
+- **Istio** — **mTLS** + authz for east-west calls (`clawql` → `tika` → `paperless` → `onyx` → `nextcloud`); not a substitute for app auth but **zero-trust** on the wire
 
-**Services (Helm, internal DNS)** — Tika `tika:9998`, Gotenberg `gotenberg:3000`, Stirling `stirling-pdf:8080`, Paperless `paperless:8000`, Onyx `onyx:8080` (optional), **OSV-Scanner** optional **CronJob** or sidecar `osv-scanner:8080` (illustrative), all behind **Istio** when enabled.
+**Services (Helm, internal DNS)** — Nextcloud `nextcloud:8080`, Tika `tika:9998`, Gotenberg `gotenberg:3000`, Stirling `stirling-pdf:8080`, Paperless `paperless:8000`, Onyx `onyx:8080` (optional), Coneshare `coneshare:80` or external URL, **OSV-Scanner** optional **CronJob** or sidecar `osv-scanner:8080` (illustrative), all behind **Istio** when enabled.
 
-All three logical layers feed **Obsidian** via **`memory_ingest`**; **memory_recall** surfaces Onyx, Merkle, and (if ingested) OSV summary in one ranked set.
+All layers feed **Obsidian** via **`memory_ingest`**; **memory_recall** surfaces Onyx, Merkle, and (if ingested) OSV summary in one ranked set.
+
+**Recipe:** **`DEFAULT_IDP_PIPELINE`** in **`clawql-documents`** — see [`idp-pipeline.md`](../../providers/idp-pipeline.md).
 
 ---
 
@@ -1674,7 +1682,7 @@ SQLite + sqlite-vec vector sidecar alongside Obsidian vault. Works alongside Ony
 Include new providers, Ouroboros TS port, Onyx + Flink configs, Cuckoo + Merkle integrations. Roll out to `clawql` namespace. Zero new pods for Ouroboros.
 
 **FUTURE — Docs + Case Studies Update**
-New docs.clawql.com case study for the knowledge-augmented document pipeline. Updated bundled-specs page with 9-provider table. `knowledge_search_onyx` tool reference documentation.
+New docs.clawql.com case study for the knowledge-augmented document pipeline. Updated bundled-specs page with document-stack providers (incl. Nextcloud, Coneshare). `knowledge_search_onyx` tool reference documentation.
 
 **FUTURE — Additional Onyx Connectors via Flink**
 New data sources become new Flink connector jobs — no ClawQL code changes required. Future connectors: Postal (email), additional internal systems, custom data sources via `CLAWQL_SPEC_PATH`.

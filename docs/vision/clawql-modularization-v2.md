@@ -50,7 +50,7 @@ ClawQL is a modular, production-grade, self-healing, multi-tenant AI memory and 
 | Package          | Responsibilities                                                       |
 | ---------------- | ---------------------------------------------------------------------- |
 | clawql-auth      | Authentication modes, RBAC/ABAC, ATR enrichment                        |
-| clawql-documents | Document pipeline (Tika → Gotenberg → Stirling → Paperless + Presidio) |
+| clawql-documents | Document pipeline — 7 bundled IDP vendors + ingest + `DEFAULT_IDP_PIPELINE` recipe (automated runner roadmap) |
 | clawql-memory    | Memory 2.0 (Vault + Graph + PageIndex + optional Onyx)                 |
 | clawql-pageindex | Standalone MIT vectorless hierarchical indexing                        |
 

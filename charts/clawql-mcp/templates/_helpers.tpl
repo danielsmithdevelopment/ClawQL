@@ -69,6 +69,18 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- printf "%s-paperless" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
+{{- define "clawql-mcp.nextcloudName" -}}
+{{- printf "%s-nextcloud" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{- define "clawql-mcp.coneshareName" -}}
+{{- printf "%s-coneshare" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{- define "clawql-mcp.idpCollaborationSecretName" -}}
+{{- printf "%s-idp-collaboration" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
 {{- define "clawql-mcp.storesPostgresName" -}}
 {{- printf "%s-postgres" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
 {{- end }}

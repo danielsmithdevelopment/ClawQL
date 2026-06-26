@@ -38,6 +38,7 @@ import {
 } from "./native-protocol-prometheus.js";
 import { maybeInitOtelTracing } from "./otel-tracing.js";
 import { handleLabelStudioWebhookRequest } from "./hitl-label-studio.js";
+import { handleConeshareWebhookRequest } from "./coneshare-webhook.js";
 
 const PORT = Number.parseInt(process.env.PORT ?? process.env.MCP_PORT ?? "8080", 10);
 const DEFAULT_MCP_PATH = "/mcp";
@@ -208,6 +209,22 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         await handleLabelStudioWebhookRequest(req, res);
       } catch (err: unknown) {
         console.error("[clawql-mcp-http] POST /hitl/label-studio/webhook error:", err);
+        if (!res.headersSent) {
+          res.status(500).json({
+            ok: false,
+            error: err instanceof Error ? err.message : String(err),
+          });
+        }
+      }
+    });
+  }
+
+  if (getClawqlOptionalToolFlags().enableConeshare) {
+    app.post("/idp/coneshare/webhook", async (req, res) => {
+      try {
+        await handleConeshareWebhookRequest(req, res);
+      } catch (err: unknown) {
+        console.error("[clawql-mcp-http] POST /idp/coneshare/webhook error:", err);
         if (!res.headersSent) {
           res.status(500).json({
             ok: false,
