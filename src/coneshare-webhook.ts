@@ -9,6 +9,7 @@ import { handleAuditToolInput } from "./clawql-audit.js";
 import { getClawqlOptionalToolFlags } from "./clawql-optional-flags.js";
 import { handleMemoryIngestToolInput } from "./memory-ingest.js";
 import { getObsidianVaultPath } from "./vault-config.js";
+import { enforceWebhookRateLimit } from "./webhook-rate-limit.js";
 
 function webhookTokenExpected(): string | undefined {
   const t = process.env.CLAWQL_CONESHARE_WEBHOOK_TOKEN?.trim();
@@ -64,6 +65,7 @@ function extractConeshareEvent(body: unknown): {
 
 /** POST **`/idp/coneshare/webhook`** — ConeShare automation / analytics callback. */
 export async function handleConeshareWebhookRequest(req: Request, res: Response): Promise<void> {
+  if (!enforceWebhookRateLimit(req, res)) return;
   if (!webhookTokenExpected() && process.env.NODE_ENV === "production") {
     res.status(503).json({
       ok: false,

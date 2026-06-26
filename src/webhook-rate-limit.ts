@@ -2,7 +2,7 @@
  * Lightweight in-process rate limiting for inbound webhook routes (CodeQL js/missing-rate-limiting).
  */
 
-import type { NextFunction, Request, Response } from "express";
+import type { Request, Response } from "express";
 
 type Bucket = { count: number; resetAt: number };
 
@@ -13,8 +13,8 @@ function webhookRateLimitPerMinute(): number {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 120;
 }
 
-/** Express middleware — caps webhook POST volume per client IP per minute. */
-export function webhookRateLimitMiddleware(req: Request, res: Response, next: NextFunction): void {
+/** Returns false after sending 429 when the client IP exceeded the webhook quota. */
+export function enforceWebhookRateLimit(req: Request, res: Response): boolean {
   const max = webhookRateLimitPerMinute();
   const windowMs = 60_000;
   const key = req.ip ?? "unknown";
@@ -27,9 +27,9 @@ export function webhookRateLimitMiddleware(req: Request, res: Response, next: Ne
   bucket.count += 1;
   if (bucket.count > max) {
     res.status(429).json({ ok: false, error: "rate limit exceeded" });
-    return;
+    return false;
   }
-  next();
+  return true;
 }
 
 /** @internal test helper */

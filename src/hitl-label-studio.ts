@@ -8,6 +8,7 @@ import { handleAuditToolInput } from "./clawql-audit.js";
 import { getClawqlOptionalToolFlags } from "./clawql-optional-flags.js";
 import { handleMemoryIngestToolInput } from "./memory-ingest.js";
 import { getObsidianVaultPath } from "./vault-config.js";
+import { enforceWebhookRateLimit } from "./webhook-rate-limit.js";
 
 export type HitlLabelStudioEnqueueParams = {
   /** Label Studio project primary key (integer). */
@@ -240,6 +241,7 @@ function extractWebhookFields(body: unknown): {
  * When vault memory is enabled and path is writable, records reviewer output via **`memory_ingest`**; otherwise **`audit`** append.
  */
 export async function handleLabelStudioWebhookRequest(req: Request, res: Response): Promise<void> {
+  if (!enforceWebhookRateLimit(req, res)) return;
   if (!getWebhookTokenExpected() && process.env.NODE_ENV === "production") {
     res.status(503).json({
       ok: false,

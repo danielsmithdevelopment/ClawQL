@@ -39,7 +39,6 @@ import {
 import { maybeInitOtelTracing } from "./otel-tracing.js";
 import { handleLabelStudioWebhookRequest } from "./hitl-label-studio.js";
 import { handleConeshareWebhookRequest } from "./coneshare-webhook.js";
-import { webhookRateLimitMiddleware } from "./webhook-rate-limit.js";
 
 const PORT = Number.parseInt(process.env.PORT ?? process.env.MCP_PORT ?? "8080", 10);
 const DEFAULT_MCP_PATH = "/mcp";
@@ -205,7 +204,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   });
 
   if (getClawqlOptionalToolFlags().enableHitlLabelStudio) {
-    app.post("/hitl/label-studio/webhook", webhookRateLimitMiddleware, async (req, res) => {
+    app.post("/hitl/label-studio/webhook", async (req, res) => {
       try {
         await handleLabelStudioWebhookRequest(req, res);
       } catch (err: unknown) {
@@ -221,7 +220,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   }
 
   if (getClawqlOptionalToolFlags().enableConeshare) {
-    app.post("/idp/coneshare/webhook", webhookRateLimitMiddleware, async (req, res) => {
+    app.post("/idp/coneshare/webhook", async (req, res) => {
       try {
         await handleConeshareWebhookRequest(req, res);
       } catch (err: unknown) {
