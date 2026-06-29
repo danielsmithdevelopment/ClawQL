@@ -13,10 +13,7 @@ import { McpProxyPipeline, mcpProxyPipelineLayer } from "./proxy/mcp-proxy-pipel
 import { SearchNotConfiguredLive, SearchService } from "./search-service.js";
 
 export type ClawQLApiRuntimeServices =
-  | ClawQLApi
-  | SearchService
-  | ExecuteService
-  | McpProxyPipeline;
+  ClawQLApi | SearchService | ExecuteService | McpProxyPipeline;
 
 export type ClawQLApiRuntimeError = PluginAlreadyRegisteredError | ClawQLError | Error;
 

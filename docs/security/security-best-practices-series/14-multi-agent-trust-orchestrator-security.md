@@ -60,7 +60,7 @@ Verifiable Agent Identity in Pipelines
 Every pipeline node receives a unique cryptographic identity from the cluster CA (Module 4).
 
 The certificate SAN encodes the exact position in the pipeline:  
- clawql://pipeline/doc-analysis/node/2
+clawql://pipeline/doc-analysis/node/2
 
 How it works:
 

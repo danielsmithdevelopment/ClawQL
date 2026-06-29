@@ -33,7 +33,7 @@ In this module we map every control in the platform to its specific obligations 
 Why Compliance Mapping Is a Distinct Discipline
 
 Technical controls prove “we are secure.”  
- Regulatory compliance proves “we can demonstrate we are secure over time.”
+Regulatory compliance proves “we can demonstrate we are secure over time.”
 
 The difference is evidence:
 
