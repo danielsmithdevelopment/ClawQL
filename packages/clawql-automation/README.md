@@ -16,7 +16,8 @@ Prefer subpath imports (`clawql-automation/schedule/schedule`, `clawql-automatio
 
 | Feature                                  | Status                                   | Tracking                                                                                                                                   |
 | ---------------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| Argo Workflows `workflow` MCP tool       | **Designed** — extends `AutomationPlugin` (template-only v1, `@kubernetes/client-node`, Argo ≥ 3.4.0) | [Design doc](../../docs/design/workflow-tool-argo.md), [ADR 0004](../../docs/adr/0004-argo-cd-workflows-clawql-pipelines.md), [#243](https://github.com/danielsmithdevelopment/ClawQL/issues/243) |
+| Argo Workflows `workflow` MCP tool       | **Shipped** (opt-in) — extends `AutomationPlugin` | [Design doc](../../docs/design/workflow-tool-argo.md), `CLAWQL_ENABLE_WORKFLOW=1`, [#243](https://github.com/danielsmithdevelopment/ClawQL/issues/243) |
+| Vault daily digest WorkflowTemplate      | **Shipped** — `deployment/argo-workflows/templates/clawql-vault-daily-digest.yaml` | `npm run workflow:vault-digest` (local); Argo template `clawql-vault-daily-digest` |
 | Argo CD GitOps provider                  | **Planned**                              | [#244](https://github.com/danielsmithdevelopment/ClawQL/issues/244)                                                                        |
 | NATS / HITL suspend-resume orchestration | **Planned**                              | [#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254)                                                                        |
 

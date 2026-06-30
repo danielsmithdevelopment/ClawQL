@@ -1,6 +1,7 @@
 # Design: `workflow` MCP tool (Argo Workflows)
 
-**Status:** Design agreed (June 2026) — implementation not shipped  
+**Status:** Phase A shipped (June 2026) — `CLAWQL_ENABLE_WORKFLOW=1`  
+**Operator guide:** [`docs/mcp/workflow-tool.md`](../mcp/workflow-tool.md)
 **Tracking:** [#243](https://github.com/danielsmithdevelopment/ClawQL/issues/243), [ADR 0004](../adr/0004-argo-cd-workflows-clawql-pipelines.md)  
 **Package:** `packages/clawql-automation` — extends **`AutomationPlugin`**
 

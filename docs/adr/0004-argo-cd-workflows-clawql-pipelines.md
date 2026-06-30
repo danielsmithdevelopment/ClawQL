@@ -1,6 +1,6 @@
 # ADR 0004: Optional **`workflow`** MCP tool (Argo Workflows) and optional Argo CD
 
-- Status: **Proposed** (design agreed June 2026 — implementation pending; see [`docs/design/workflow-tool-argo.md`](../design/workflow-tool-argo.md))
+- Status: **Accepted** (Phase A implemented June 2026 — `CLAWQL_ENABLE_WORKFLOW=1`, [#243](https://github.com/danielsmithdevelopment/ClawQL/issues/243))
 - Date: 2026-05-02 (updated 2026-06-30)
 - Intent: **post-6.0.0** capability — align after the semver-major release that ships current breaking Helm + MCP surface changes (see changelog **Unreleased** / **6.0.0** planning)
 - Tracking: [#239](https://github.com/danielsmithdevelopment/ClawQL/issues/239), implementation [#243](https://github.com/danielsmithdevelopment/ClawQL/issues/243)
