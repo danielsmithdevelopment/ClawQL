@@ -2,6 +2,8 @@
 
 **npm consumers:** the **registry README** lives in [`packages/clawql-ouroboros/README.md`](../packages/clawql-ouroboros/README.md) (install, quick start, export table, scope vs Q00). This file is the **longer guide** with full examples.
 
+**Platform design:** [DAOS Unified Architecture v2.7](./daos-unified-architecture-specification-v2.7.md) · [Coordination layer](./daos-coordination-layer-specification.md) · [Build plan v2.7.1](./daos-build-plan-v2.7.1.md)
+
 TypeScript workspace package at [`packages/clawql-ouroboros`](../packages/clawql-ouroboros): **specification-first** seeds, **Wonder / Reflect** hooks, an **evolutionary loop** over pluggable **Executor** / **Evaluator**, **ontology convergence** (similarity, stagnation, oscillation, regression gates), and optional **MCP-shaped tool definitions** for crystallizing document text into seeds.
 
 **This is not the full [Q00/ouroboros](https://github.com/Q00/ouroboros) Python product** (interview CLI, PAL routing, Double Diamond execution, LiteLLM, SQL event store, plugin, TUI, and so on). The ClawQL package is a **portable subset** aimed at embedding inside **ClawQL** and other Node runtimes. Conceptual overlap (seed, wonder/reflect, convergence) is intentional; API and feature parity are not.

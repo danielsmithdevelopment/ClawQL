@@ -1,20 +1,20 @@
 import { Note } from '@/components/mdx'
 import { Prose } from '@/components/Prose'
 import { Tag } from '@/components/Tag'
-import DaosCoordinationBody from '@/generated/daos-coordination-layer-spec-body.mdx'
+import DaosBuildPlanBody from '@/generated/daos-build-plan-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
 
 export const metadata = docsPageMetadata({
-  title: 'DAOS Coordination Layer — transport & Ouroboros',
+  title: 'DAOS Build Plan v2.7.1',
   description:
-    'DAOS coordination layer: HTTP + NATS JetStream handoff, NSV and SGDOP diversity metrics, reputation attribution, Diversity Dividends, and Coordinator integration.',
-  path: '/ouroboros/specification',
+    'DAOS P0–P3 implementation contract: Manifest validator, PEP state machine, Coordinator Watchdog, Circuit Breaker, Memory 2.0 pruning, Diversity Dividends, and Command Deck Action Views.',
+  path: '/ouroboros/build-plan',
   ogType: 'article',
 })
 
 export const dynamic = 'force-static'
 
-export default function DaosSpecificationPage() {
+export default function DaosBuildPlanPage() {
   return (
     <article className="flex h-full flex-col pt-10 pb-10">
       <div className="not-prose mb-6 flex flex-wrap items-center gap-2">
@@ -22,39 +22,39 @@ export default function DaosSpecificationPage() {
           Ouroboros
         </Tag>
         <Tag color="zinc" variant="medium">
-          Coordination
+          Build plan
         </Tag>
       </div>
 
       <div className="not-prose mb-8">
         <Note>
-          <strong>Transport + strategic coordination.</strong> Generated from{' '}
+          <strong>Engineering contract.</strong> Generated from{' '}
           <a
-            href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/ouroboros/daos-coordination-layer-specification.md"
+            href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/ouroboros/daos-build-plan-v2.7.1.md"
             className="font-medium text-inherit underline underline-offset-2"
           >
-            docs/ouroboros/daos-coordination-layer-specification.md
+            docs/ouroboros/daos-build-plan-v2.7.1.md
           </a>{' '}
-          on <code className="font-mono text-xs">main</code>. Full platform:{' '}
+          on <code className="font-mono text-xs">main</code>. Architecture:{' '}
           <a
             href="/ouroboros/daos"
             className="font-medium text-inherit underline underline-offset-2"
           >
             DAOS Unified v2.7
           </a>
-          . Shipped library:{' '}
+          . Ground truth status:{' '}
           <a
-            href="/ouroboros"
+            href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/modularization-implementation-status.md"
             className="font-medium text-inherit underline underline-offset-2"
           >
-            Ouroboros library
+            modularization implementation status
           </a>
           .
         </Note>
       </div>
 
       <Prose className="flex-auto">
-        <DaosCoordinationBody />
+        <DaosBuildPlanBody />
       </Prose>
     </article>
   )
