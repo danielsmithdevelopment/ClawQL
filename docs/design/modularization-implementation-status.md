@@ -26,7 +26,7 @@ ClawQL is mid-flight on a **strangler extraction** from the root `clawql-mcp` pa
 
 **Effect-TS:** **Partial.** `search` / `execute` run through `createClawQLApi()` + `SearchService` / `ExecuteService` Effect Layers; extracted packages are still largely **`async`/`await`** with Zod at MCP boundaries. Full Layer composition for memory/documents/automation is **planned**, not shipped.
 
-**Plugin ecosystem:** **Phase 2 started.** `Plugin` + `PluginRegistry` + `PanguardProxyPlugin` + **`MemoryPlugin`** (`registerMcpTool` / `onRegister`). Documents/Automation are **not** Effect `Layer` plugins yet; third-party npm plugins are **not** a supported public API yet.
+**Plugin ecosystem:** **Phase 2 in progress.** `MemoryPlugin`, `DocumentsPlugin`, and **`AutomationPlugin`** register MCP tools via `onRegister`. Argo Workflows integration (`workflow` tool) is **planned** for `AutomationPlugin` — not shipped ([#243](https://github.com/danielsmithdevelopment/ClawQL/issues/243), [ADR 0004](../adr/0004-argo-cd-workflows-clawql-pipelines.md)).
 
 ---
 
@@ -185,7 +185,7 @@ interface Plugin {
   id: string;
   version: string;
   kind?: "default" | "mcp-proxy";
-  onRegister?: () => Effect.Effect<void, ClawQLError>;
+  onRegister?: (api: ClawQLPluginRegistrationApi) => Effect.Effect<void, ClawQLError>;
   onTeardown?: () => Effect.Effect<void, ClawQLError>;
   beforeCallTool?: (ctx) => Effect.Effect<void, ClawQLError>; // mcp-proxy
 }
@@ -197,7 +197,7 @@ interface Plugin {
 - **`DocumentsPlugin`** (`createDocumentsPlugin` in `clawql-documents`) — registers `ingest_external_knowledge` and optionally `knowledge_search_onyx` when documents/Onyx flags are on; composed from `src/clawql-api-adapters.ts`.
 - **`McpProxyPipeline`** — wires registry into MCP tool path via `clawql-api-adapters.ts`.
 
-Optional tools (documents, schedule, notify, …) are still registered **directly in `tools.ts`**, not via `Plugin.onRegister`.
+- **`AutomationPlugin`** (`createAutomationPlugin` in `clawql-automation`) — registers `schedule` / `notify` when enabled; starts schedule worker in `onRegister`. **Future:** Argo Workflows `workflow` MCP tool ([#243](https://github.com/danielsmithdevelopment/ClawQL/issues/243)).
 
 ### 6.2 Target (third-party + vertical plugins)
 

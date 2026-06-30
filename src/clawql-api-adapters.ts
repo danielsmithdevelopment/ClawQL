@@ -13,6 +13,7 @@ import {
   type LoadSpecFn,
 } from "clawql-api";
 import { createDocumentsPlugin } from "clawql-documents/plugin";
+import { createAutomationPlugin } from "clawql-automation/plugin";
 import type { Plugin } from "clawql-core";
 import { Effect, Layer } from "effect";
 
@@ -38,16 +39,23 @@ function buildExecuteLive() {
 
 function buildMcpPlugins(): readonly Plugin[] {
   const flags = getClawqlOptionalToolFlags();
-  return [
-    ...composeDefaultPlugins({ enableMemory: flags.enableMemory }),
-    ...(flags.enableDocuments
-      ? [
-          createDocumentsPlugin({
-            enableOnyx: flags.enableOnyxKnowledge,
-          }),
-        ]
-      : []),
-  ];
+  const plugins: Plugin[] = [...composeDefaultPlugins({ enableMemory: flags.enableMemory })];
+  if (flags.enableDocuments) {
+    plugins.push(
+      createDocumentsPlugin({
+        enableOnyx: flags.enableOnyxKnowledge,
+      })
+    );
+  }
+  if (flags.enableSchedule || flags.enableNotify) {
+    plugins.push(
+      createAutomationPlugin({
+        enableSchedule: flags.enableSchedule,
+        enableNotify: flags.enableNotify,
+      })
+    );
+  }
+  return plugins;
 }
 
 let apiHandle: ClawQLApiHandle | undefined;

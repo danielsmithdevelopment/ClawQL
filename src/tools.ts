@@ -35,14 +35,13 @@ import { loadSpec } from "./spec-loader.js";
 import { defaultFields, executeOutputFields, projectRestByFields } from "./tools-execute-core.js";
 import { handleClawqlCodeToolInput } from "./sandbox-bridge-client.js";
 import { cacheToolSchema, handleCacheToolInput } from "./clawql-cache.js";
-import { configureDocumentsPluginDeps } from "clawql-documents/plugin";
 import { auditToolSchema, handleAuditToolInput } from "./clawql-audit.js";
-import { handleScheduleToolInput, scheduleToolSchema } from "./clawql-schedule.js";
 import {
-  configureNotifyDeps,
-  runNotifySlack,
+  configureAutomationPluginDeps,
+  handleNotifyToolInput,
   SLACK_NOTIFY_OPERATION_ID,
-} from "clawql-automation/notify/notify";
+} from "clawql-automation/plugin";
+import { configureDocumentsPluginDeps } from "clawql-documents/plugin";
 import { getClawqlOptionalToolFlags } from "./clawql-optional-flags.js";
 import { registerOuroborosTools } from "./ouroboros-mcp.js";
 import { handleHitlEnqueueLabelStudioToolInput } from "./hitl-label-studio.js";
@@ -103,19 +102,12 @@ export async function handleClawqlExecuteToolInput(params: {
   );
 }
 
-export { SLACK_NOTIFY_OPERATION_ID };
+export { SLACK_NOTIFY_OPERATION_ID, handleNotifyToolInput };
 
-/** MCP `notify` — delegates to `clawql-automation` (registered when `CLAWQL_ENABLE_NOTIFY=1`). */
-export async function handleNotifyToolInput(
-  params: Parameters<typeof runNotifySlack>[0]
-): Promise<{ content: { type: "text"; text: string }[] }> {
-  return runNotifySlack(params);
-}
-
-configureNotifyDeps({ execute: (params) => handleClawqlExecuteToolInput(params) });
+configureAutomationPluginDeps({ execute: (params) => handleClawqlExecuteToolInput(params) });
 configureDocumentsPluginDeps({ execute: (params) => handleClawqlExecuteToolInput(params) });
 
-/** Register MCP tools declared by composed plugins (MemoryPlugin, future DocumentsPlugin, …). */
+/** Register MCP tools declared by composed plugins (MemoryPlugin, DocumentsPlugin, AutomationPlugin, …). */
 function registerPluginMcpTools(server: McpServer): void {
   for (const tool of getClawqlApi().listMcpTools()) {
     server.tool(
@@ -222,62 +214,6 @@ export function registerTools(server: McpServer) {
       "sandbox_exec",
       sandboxCodeSchema,
       wrapMcpToolHandler("sandbox_exec", handleClawqlCodeToolInput)
-    );
-  }
-
-  if (getClawqlOptionalToolFlags().enableSchedule) {
-    server.tool(
-      "schedule",
-      scheduleToolSchema,
-      wrapMcpToolHandler("schedule", handleScheduleToolInput)
-    );
-  }
-
-  if (getClawqlOptionalToolFlags().enableNotify) {
-    server.tool(
-      "notify",
-      {
-        channel: z
-          .string()
-          .min(1)
-          .describe(
-            "Channel ID (C…), private group, or DM — same as Slack chat.postMessage `channel`."
-          ),
-        text: z
-          .string()
-          .min(1)
-          .describe("Message text. Include Onyx/Paperless links inline for workflow summaries."),
-        thread_ts: z
-          .string()
-          .optional()
-          .describe("Optional parent message `ts` to post in a thread."),
-        blocks: z
-          .string()
-          .optional()
-          .describe("Optional JSON string of Block Kit blocks (Slack form field `blocks`)."),
-        attachments: z.string().optional().describe("Optional JSON string of legacy attachments."),
-        username: z
-          .string()
-          .optional()
-          .describe("Override bot display name (requires as_user false)."),
-        icon_emoji: z.string().optional().describe("Override bot icon emoji."),
-        icon_url: z.string().optional().describe("Override bot icon image URL."),
-        mrkdwn: z.boolean().optional().describe("Pass false to disable Slack mrkdwn parsing."),
-        unfurl_links: z.boolean().optional(),
-        unfurl_media: z.boolean().optional(),
-        reply_broadcast: z.boolean().optional(),
-        parse: z.string().optional().describe("Slack parse mode: full | none | …"),
-        link_names: z.boolean().optional(),
-        as_user: z.boolean().optional(),
-        fields: z
-          .array(z.string())
-          .optional()
-          .describe(
-            "Optional top-level response keys to return (same as execute `fields`). " +
-              "Omit for defaults: ok, channel, ts, message."
-          ),
-      },
-      wrapMcpToolHandler("notify", handleNotifyToolInput)
     );
   }
 
