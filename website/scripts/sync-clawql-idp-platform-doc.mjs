@@ -64,14 +64,23 @@ function rewriteLinksForSite(body) {
   return escapeMdxCurlyOutsideFences(
     escapeLessThanBeforeDigit(
       body
-        .replaceAll('](../providers/idp-pipeline.md)', '](/learn/document-pipeline)')
+        .replaceAll(
+          '](../providers/idp-pipeline.md)',
+          '](/learn/document-pipeline)',
+        )
         .replaceAll('](../providers/', `](${GH_MAIN}/docs/providers/`)
         .replaceAll('](../openclaw/', `](${GH_MAIN}/docs/openclaw/`)
         .replaceAll('](../roadmap/', `](${GH_MAIN}/docs/roadmap/`)
         .replaceAll('](../dashboard/', `](${GH_MAIN}/docs/dashboard/`)
-        .replaceAll('](../deployment/clawql-deployment-operations-guide.md)', '](/deployment/operations-guide)')
+        .replaceAll(
+          '](../deployment/clawql-deployment-operations-guide.md)',
+          '](/deployment/operations-guide)',
+        )
         .replaceAll('](../deployment/', `](${GH_MAIN}/docs/deployment/`)
-        .replaceAll('](./clawql-master-enablement-guide.md)', '](/vision/technical-enablement)')
+        .replaceAll(
+          '](./clawql-master-enablement-guide.md)',
+          '](/vision/technical-enablement)',
+        )
         .replaceAll('](./clawql-vision-roadmap.md)', '](/vision/roadmap)')
         .replaceAll('](../../charts/', `](${GH_MAIN}/charts/`),
     ),
