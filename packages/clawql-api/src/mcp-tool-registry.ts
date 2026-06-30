@@ -34,10 +34,9 @@ export class McpToolRegistry {
   }
 
   registrationApi(): ClawQLPluginRegistrationApi {
-    const registry = this;
     return {
       registerMcpTool: (tool: McpToolDefinition) =>
-        registry.register({
+        this.register({
           name: tool.name,
           schema: tool.schema as Record<string, z.ZodTypeAny>,
           handler: tool.handler,
