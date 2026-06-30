@@ -13,6 +13,11 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
+    "./mcp/tool-shape-log": {
+      "types": "./dist/mcp/tool-shape-log.d.ts",
+      "import": "./dist/mcp/tool-shape-log.js",
+      "require": "./dist/mcp/tool-shape-log.cjs"
+    },
     "./package.json": "./package.json"
   },
   "scripts": {

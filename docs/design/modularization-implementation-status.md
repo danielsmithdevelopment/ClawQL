@@ -193,7 +193,8 @@ interface Plugin {
 
 - **`PluginRegistry`** (`clawql-api`) — register plugins at `createClawQLApi()` startup; `onRegister` receives `ClawQLPluginRegistrationApi` with `registerMcpTool`.
 - **`PanguardProxyPlugin`** — first `mcp-proxy` plugin; `beforeCallTool` for policy/ATR chokepoint ([#272](https://github.com/danielsmithdevelopment/ClawQL/issues/272)).
-- **`MemoryPlugin`** (`createMemoryPlugin`) — registers `memory_ingest` / `memory_recall` via `onRegister` when `CLAWQL_ENABLE_MEMORY` is on (default). MCP transport applies tools via `registerPluginMcpTools()` in `tools.ts`.
+- **`MemoryPlugin`** (`createMemoryPlugin`) — registers `memory_ingest` / `memory_recall` via `onRegister` when `CLAWQL_ENABLE_MEMORY` is on (default).
+- **`DocumentsPlugin`** (`createDocumentsPlugin` in `clawql-documents`) — registers `ingest_external_knowledge` and optionally `knowledge_search_onyx` when documents/Onyx flags are on; composed from `src/clawql-api-adapters.ts`.
 - **`McpProxyPipeline`** — wires registry into MCP tool path via `clawql-api-adapters.ts`.
 
 Optional tools (documents, schedule, notify, …) are still registered **directly in `tools.ts`**, not via `Plugin.onRegister`.

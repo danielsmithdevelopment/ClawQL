@@ -2,6 +2,7 @@ export * from "./auth/auth-headers.js";
 export * from "./clawql-api-service.js";
 export * from "./config/optional-flags.js";
 export * from "./create-api.js";
+export * from "./plugins/compose-default-plugins.js";
 export * from "./execute/index.js";
 export * from "./execute-service.js";
 export * from "./graphql/index.js";

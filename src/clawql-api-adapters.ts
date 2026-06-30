@@ -1,10 +1,7 @@
-/**
- * Effect Layers that adapt existing clawql-mcp search/execute logic for clawql-api.
- * MCP handlers call SearchService / ExecuteService via getClawqlApi().
- */
-
 import {
+  composeDefaultPlugins,
   createClawQLApi,
+  getClawqlOptionalToolFlags,
   loadSpec,
   makeExecuteLive,
   makeSearchLive,
@@ -15,6 +12,8 @@ import {
   type LoadedSpec,
   type LoadSpecFn,
 } from "clawql-api";
+import { createDocumentsPlugin } from "clawql-documents/plugin";
+import type { Plugin } from "clawql-core";
 import { Effect, Layer } from "effect";
 
 let loadSpecOverride: LoadSpecFn | undefined;
@@ -37,6 +36,20 @@ function buildExecuteLive() {
   return makeExecuteLive(resolveLoadSpec());
 }
 
+function buildMcpPlugins(): readonly Plugin[] {
+  const flags = getClawqlOptionalToolFlags();
+  return [
+    ...composeDefaultPlugins({ enableMemory: flags.enableMemory }),
+    ...(flags.enableDocuments
+      ? [
+          createDocumentsPlugin({
+            enableOnyx: flags.enableOnyxKnowledge,
+          }),
+        ]
+      : []),
+  ];
+}
+
 let apiHandle: ClawQLApiHandle | undefined;
 
 /** Process-wide ClawQL API runtime (search/execute + plugin registry). */
@@ -45,6 +58,7 @@ export function getClawqlApi(): ClawQLApiHandle {
     apiHandle = createClawQLApi({
       searchLayer: buildSearchLive(),
       executeLayer: buildExecuteLive(),
+      plugins: buildMcpPlugins(),
     });
   }
   return apiHandle;

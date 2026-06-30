@@ -34,8 +34,8 @@ import {
 import { loadSpec } from "./spec-loader.js";
 import { defaultFields, executeOutputFields, projectRestByFields } from "./tools-execute-core.js";
 import { handleClawqlCodeToolInput } from "./sandbox-bridge-client.js";
-import { handleIngestExternalKnowledgeToolInput } from "./external-ingest.js";
 import { cacheToolSchema, handleCacheToolInput } from "./clawql-cache.js";
+import { configureDocumentsPluginDeps } from "clawql-documents/plugin";
 import { auditToolSchema, handleAuditToolInput } from "./clawql-audit.js";
 import { handleScheduleToolInput, scheduleToolSchema } from "./clawql-schedule.js";
 import {
@@ -44,7 +44,6 @@ import {
   SLACK_NOTIFY_OPERATION_ID,
 } from "clawql-automation/notify/notify";
 import { getClawqlOptionalToolFlags } from "./clawql-optional-flags.js";
-import { handleKnowledgeSearchOnyxToolInput } from "./knowledge-search-onyx.js";
 import { registerOuroborosTools } from "./ouroboros-mcp.js";
 import { handleHitlEnqueueLabelStudioToolInput } from "./hitl-label-studio.js";
 import { wrapMcpToolHandler } from "./otel-tracing.js";
@@ -114,6 +113,7 @@ export async function handleNotifyToolInput(
 }
 
 configureNotifyDeps({ execute: (params) => handleClawqlExecuteToolInput(params) });
+configureDocumentsPluginDeps({ execute: (params) => handleClawqlExecuteToolInput(params) });
 
 /** Register MCP tools declared by composed plugins (MemoryPlugin, future DocumentsPlugin, …). */
 function registerPluginMcpTools(server: McpServer): void {
@@ -225,53 +225,6 @@ export function registerTools(server: McpServer) {
     );
   }
 
-  if (getClawqlOptionalToolFlags().enableDocuments) {
-    server.tool(
-      "ingest_external_knowledge",
-      {
-        source: z
-          .string()
-          .optional()
-          .describe(
-            'Importer: "markdown" (default when documents[] is set) or "url" for HTTPS fetch (requires CLAWQL_EXTERNAL_INGEST_FETCH=1). Omit payload for roadmap preview.'
-          ),
-        dryRun: z
-          .boolean()
-          .optional()
-          .describe(
-            "Default true: validate only. Set false to write Markdown or (url mode) fetch and write."
-          ),
-        scope: z
-          .string()
-          .optional()
-          .describe(
-            "Optional vault-relative .md path for url imports (default: Memory/external/<slug>.md)."
-          ),
-        documents: z
-          .array(
-            z.object({
-              path: z.string().min(1).max(512).describe("Vault-relative path; must end with .md"),
-              markdown: z
-                .string()
-                .max(2_097_152)
-                .describe("Markdown body UTF-8 (max ~2 MiB per file)."),
-            })
-          )
-          .max(50)
-          .optional()
-          .describe("Bulk Markdown files to import when CLAWQL_EXTERNAL_INGEST=1."),
-        url: z
-          .string()
-          .max(2048)
-          .optional()
-          .describe(
-            "HTTPS URL to fetch when source is url and CLAWQL_EXTERNAL_INGEST_FETCH=1 (opt-in network)."
-          ),
-      },
-      wrapMcpToolHandler("ingest_external_knowledge", handleIngestExternalKnowledgeToolInput)
-    );
-  }
-
   if (getClawqlOptionalToolFlags().enableSchedule) {
     server.tool(
       "schedule",
@@ -370,58 +323,6 @@ export function registerTools(server: McpServer) {
           .describe("Optional provenance object stored under data.clawql_hitl.provenance."),
       },
       wrapMcpToolHandler("hitl_enqueue_label_studio", handleHitlEnqueueLabelStudioToolInput)
-    );
-  }
-
-  if (
-    getClawqlOptionalToolFlags().enableOnyxKnowledge &&
-    getClawqlOptionalToolFlags().enableDocuments
-  ) {
-    server.tool(
-      "knowledge_search_onyx",
-      {
-        query: z
-          .string()
-          .min(1)
-          .describe(
-            "Natural language or keyword query against the Onyx index (maps to `search_query` on the Onyx API)."
-          ),
-        num_hits: z
-          .number()
-          .int()
-          .min(1)
-          .max(100)
-          .optional()
-          .describe("Max hits to return (default 15)."),
-        include_content: z
-          .boolean()
-          .optional()
-          .describe("Include chunk/content in results when supported (default true)."),
-        stream: z
-          .boolean()
-          .optional()
-          .describe("Must be false or omitted; streaming is not supported for this tool."),
-        run_query_expansion: z
-          .boolean()
-          .optional()
-          .describe("Whether to run query expansion on the Onyx side (default false)."),
-        hybrid_alpha: z
-          .number()
-          .optional()
-          .describe("Optional hybrid search alpha (Onyx-specific)."),
-        filters: z
-          .record(z.string(), z.unknown())
-          .optional()
-          .describe("Optional Onyx index filters object."),
-        tenant_id: z.string().optional().describe("Optional multi-tenant id (query parameter)."),
-        fields: z
-          .array(z.string())
-          .optional()
-          .describe(
-            "Optional top-level JSON keys to keep from the Onyx response (same as execute `fields`)."
-          ),
-      },
-      wrapMcpToolHandler("knowledge_search_onyx", handleKnowledgeSearchOnyxToolInput)
     );
   }
 
