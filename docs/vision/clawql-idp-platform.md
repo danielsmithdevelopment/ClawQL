@@ -49,14 +49,14 @@ Enterprises manage documents across dozens of disconnected tools: OCR vendors, P
 
 ## Business Value at a Glance
 
-| Value Driver | Detail |
-| ------------ | ------ |
-| **Cost Reduction** | Replaces 5–10 SaaS subscriptions. Self-hosted plan has no per-document or per-user fees beyond infrastructure. |
-| **Compliance** | Data processed locally (self-hosted) or in a dedicated tenant (hosted). Cryptographic audit trail for every step. |
-| **AI Readiness** | Native MCP integration means AI agents operate the full pipeline without custom code. Improves as models improve. |
-| **Scalability** | Kubernetes/Helm deployment scales horizontally. 1,000+ document formats supported. |
+| Value Driver         | Detail                                                                                                                |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| **Cost Reduction**   | Replaces 5–10 SaaS subscriptions. Self-hosted plan has no per-document or per-user fees beyond infrastructure.        |
+| **Compliance**       | Data processed locally (self-hosted) or in a dedicated tenant (hosted). Cryptographic audit trail for every step.     |
+| **AI Readiness**     | Native MCP integration means AI agents operate the full pipeline without custom code. Improves as models improve.     |
+| **Scalability**      | Kubernetes/Helm deployment scales horizontally. 1,000+ document formats supported.                                    |
 | **VDR Market Entry** | Coneshare delivers Virtual Data Room capabilities at a fraction of incumbent pricing, with full pipeline integration. |
-| **Hosted Revenue** | Managed hosted plan creates recurring SaaS revenue on top of the open-source self-hosted core. |
+| **Hosted Revenue**   | Managed hosted plan creates recurring SaaS revenue on top of the open-source self-hosted core.                        |
 
 ---
 
@@ -64,14 +64,14 @@ Enterprises manage documents across dozens of disconnected tools: OCR vendors, P
 
 ClawQL is available in two deployment configurations. Both run identical pipeline logic; they differ in who manages the infrastructure and where data resides.
 
-| | **Self-Hosted** | **Managed Hosted** |
-| --- | --- | --- |
-| **Target customer** | Enterprises with existing Kubernetes infrastructure and strict data residency requirements. | Teams who want ClawQL's capabilities without managing infrastructure. |
-| **Data residency** | Fully local — no data leaves the operator's environment. | Tenant-isolated; data processed and stored in dedicated infrastructure per customer. |
-| **Infrastructure** | Customer-managed Kubernetes/Helm. ClawQL provides the chart. | Fully managed by ClawQL. Customer connects via API or web UI. |
-| **Licensing model** | Apache 2.0 core — free to deploy. Commercial support tiers available. | Monthly or annual subscription. Usage-based tiers by document volume and seats. |
-| **Deployment time** | Hours to days depending on existing Kubernetes maturity. | Minutes. Tenant provisioned automatically on signup. |
-| **Updates** | Customer-managed via Helm chart upgrades. | Managed by ClawQL — customers always on latest release. |
+|                     | **Self-Hosted**                                                                             | **Managed Hosted**                                                                   |
+| ------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| **Target customer** | Enterprises with existing Kubernetes infrastructure and strict data residency requirements. | Teams who want ClawQL's capabilities without managing infrastructure.                |
+| **Data residency**  | Fully local — no data leaves the operator's environment.                                    | Tenant-isolated; data processed and stored in dedicated infrastructure per customer. |
+| **Infrastructure**  | Customer-managed Kubernetes/Helm. ClawQL provides the chart.                                | Fully managed by ClawQL. Customer connects via API or web UI.                        |
+| **Licensing model** | Apache 2.0 core — free to deploy. Commercial support tiers available.                       | Monthly or annual subscription. Usage-based tiers by document volume and seats.      |
+| **Deployment time** | Hours to days depending on existing Kubernetes maturity.                                    | Minutes. Tenant provisioned automatically on signup.                                 |
+| **Updates**         | Customer-managed via Helm chart upgrades.                                                   | Managed by ClawQL — customers always on latest release.                              |
 
 ---
 
@@ -85,14 +85,14 @@ Paperless-ngx is licensed under GPL-3.0. In a self-hosted deployment this presen
 
 Rather than substituting a different GPL-adjacent DMS, ClawQL replaces Paperless-ngx with a purpose-built archive layer assembled from components already in the stack. This results in a cleaner, more capable architecture:
 
-| Component | Role in Archive Layer |
-| --------- | --------------------- |
-| **Nextcloud** | Human-accessible file storage and team UI. Documents are stored here as first-class files, browsable and shareable without any DMS login. |
-| **Nextcloud Automated Tagging** | Rule-based collaborative tags applied on upload/update via the Files Automated Tagging app. Replaces Paperless tag assignment for basic classification. |
-| **Nextcloud Full-Text Search** | Elasticsearch-backed full-text search with Tesseract OCR integration indexes all PDFs and Office files. Replaces Paperless search for keyword retrieval. |
+| Component                            | Role in Archive Layer                                                                                                                                                                                                                                      |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Nextcloud**                        | Human-accessible file storage and team UI. Documents are stored here as first-class files, browsable and shareable without any DMS login.                                                                                                                  |
+| **Nextcloud Automated Tagging**      | Rule-based collaborative tags applied on upload/update via the Files Automated Tagging app. Replaces Paperless tag assignment for basic classification.                                                                                                    |
+| **Nextcloud Full-Text Search**       | Elasticsearch-backed full-text search with Tesseract OCR integration indexes all PDFs and Office files. Replaces Paperless search for keyword retrieval.                                                                                                   |
 | **ClawQL Metadata Store (Postgres)** | A lightweight ClawQL-managed Postgres schema stores rich document metadata: correspondent, document type, custom fields, processing history, and Merkle roots. This replaces Paperless's Django metadata model with a schema fully under ClawQL's control. |
-| **Onyx** | Semantic search and cross-document knowledge retrieval. Substantially more powerful than Paperless search — supports vector search, citation-backed results, and 40+ connector integrations. |
-| **Stirling-PDF** | OCR is handled here, before archiving, rather than on import. Documents arrive in Nextcloud already OCR'd and text-searchable. |
+| **Onyx**                             | Semantic search and cross-document knowledge retrieval. Substantially more powerful than Paperless search — supports vector search, citation-backed results, and 40+ connector integrations.                                                               |
+| **Stirling-PDF**                     | OCR is handled here, before archiving, rather than on import. Documents arrive in Nextcloud already OCR'd and text-searchable.                                                                                                                             |
 
 **Net result:** the hosted plan archive layer is more capable than Paperless-ngx in every dimension that matters for enterprise use — richer metadata, superior search (Onyx semantic vs. Paperless keyword), native file access via Nextcloud, and no GPL dependency. The only thing lost is Paperless's dedicated web UI, which is replaced by Nextcloud's file browser and Onyx's search interface.
 
@@ -110,11 +110,11 @@ Each hosted customer receives a dedicated tenant with full isolation at the data
 
 The hosted plan is structured around document volume and seat count, with a free tier to drive adoption:
 
-| Tier | Included | Target Customer |
-| ---- | -------- | --------------- |
-| **Free** | 500 documents/month, 1 user, 5 GB storage. Full pipeline, no VDR. | Individual evaluation, freelancers. |
-| **Starter** | 5,000 documents/month, 5 users, 50 GB storage. Full pipeline + Coneshare VDR. | Small teams, startups, SMBs. |
-| **Business** | 25,000 documents/month, 25 users, 500 GB storage. Priority processing, SLA. | Growing companies, legal/finance teams. |
+| Tier           | Included                                                                              | Target Customer                          |
+| -------------- | ------------------------------------------------------------------------------------- | ---------------------------------------- |
+| **Free**       | 500 documents/month, 1 user, 5 GB storage. Full pipeline, no VDR.                     | Individual evaluation, freelancers.      |
+| **Starter**    | 5,000 documents/month, 5 users, 50 GB storage. Full pipeline + Coneshare VDR.         | Small teams, startups, SMBs.             |
+| **Business**   | 25,000 documents/month, 25 users, 500 GB storage. Priority processing, SLA.           | Growing companies, legal/finance teams.  |
 | **Enterprise** | Unlimited documents, unlimited users, dedicated infrastructure, custom SLA, SSO/SAML. | Large enterprises, regulated industries. |
 
 > **Note:** these tiers are indicative. Final pricing should be validated against infrastructure cost modeling and customer discovery before launch.
@@ -135,17 +135,17 @@ ClawQL's IDP platform automates the full document lifecycle: ingestion, classifi
 
 ### Component Map
 
-| Component | Role in Platform |
-| --------- | ---------------- |
-| **ClawQL Core** | MCP server and AI orchestration layer (TypeScript, Apache 2.0) |
-| **Apache Tika** | Universal document parsing and metadata extraction (1,000+ formats) |
-| **Gotenberg** | High-fidelity document-to-PDF conversion (LibreOffice + Chromium) |
-| **Stirling-PDF** | PDF manipulation, PII redaction, OCR, and Merkle audit generation |
+| Component                | Role in Platform                                                              |
+| ------------------------ | ----------------------------------------------------------------------------- |
+| **ClawQL Core**          | MCP server and AI orchestration layer (TypeScript, Apache 2.0)                |
+| **Apache Tika**          | Universal document parsing and metadata extraction (1,000+ formats)           |
+| **Gotenberg**            | High-fidelity document-to-PDF conversion (LibreOffice + Chromium)             |
+| **Stirling-PDF**         | PDF manipulation, PII redaction, OCR, and Merkle audit generation             |
 | **ClawQL Archive Layer** | Nextcloud + Postgres metadata store + Onyx. Replaces Paperless-ngx. GPL-free. |
-| **Onyx** | Semantic search and knowledge layer with 40+ pre-built connectors |
-| **Obsidian Vault** | Durable cross-session agent memory (Markdown, local, portable) |
-| **Nextcloud** | Human-accessible file storage, collaboration, and archive UI |
-| **Coneshare** | Secure sharing, Virtual Data Rooms, and engagement analytics (MIT) |
+| **Onyx**                 | Semantic search and knowledge layer with 40+ pre-built connectors             |
+| **Obsidian Vault**       | Durable cross-session agent memory (Markdown, local, portable)                |
+| **Nextcloud**            | Human-accessible file storage, collaboration, and archive UI                  |
+| **Coneshare**            | Secure sharing, Virtual Data Rooms, and engagement analytics (MIT)            |
 
 Paperless-ngx (GPL-3.0) is supported in self-hosted deployments for operators who prefer it. It is not included in the managed hosted plan. The ClawQL-native archive layer described above is the default for all new deployments and all hosted customers.
 
@@ -162,7 +162,7 @@ ClawQL is a TypeScript-based Model Context Protocol (MCP) server published as `c
 - **`search()`:** Discovers available operations by natural language query across all loaded OpenAPI specs. Agents never need to know the full API surface.
 - **`execute()`:** Invokes a specific operation with parameters. Optional GraphQL projection trims responses for token efficiency.
 
-A single agent prompt — *"Process Q1 invoices, redact PII, cross-reference our pricing knowledge base, archive, create a data room, notify Slack"* — triggers the entire pipeline automatically through this two-tool interface. No custom integration code. No manual handoffs.
+A single agent prompt — _"Process Q1 invoices, redact PII, cross-reference our pricing knowledge base, archive, create a data room, notify Slack"_ — triggers the entire pipeline automatically through this two-tool interface. No custom integration code. No manual handoffs.
 
 ### Key Capabilities
 
@@ -259,16 +259,16 @@ The ClawQL archive layer replaces Paperless-ngx with a purpose-built combination
 
 **What This Replaces from Paperless-ngx**
 
-| Paperless-ngx Feature | ClawQL Archive Equivalent |
-| --------------------- | ------------------------- |
-| Consumption inbox (watch folder) | Nextcloud folder watch + ClawQL webhook trigger |
-| Auto-tagging on import | Nextcloud Automated Tagging app + ClawQL agent tag assignment via Ouroboros |
-| Correspondent tracking | ClawQL Postgres metadata store (correspondent field) |
-| Document type classification | ClawQL Postgres metadata store + Onyx semantic classification |
-| Full-text search | Nextcloud Elasticsearch full-text search (keyword) + Onyx (semantic) |
-| OCR on import | Stirling-PDF OCR upstream — documents are pre-OCR'd before archiving |
-| REST API | ClawQL MCP tools expose metadata store and Nextcloud API uniformly |
-| Archive web UI | Nextcloud file browser (human access) + Onyx search UI (semantic access) |
+| Paperless-ngx Feature            | ClawQL Archive Equivalent                                                   |
+| -------------------------------- | --------------------------------------------------------------------------- |
+| Consumption inbox (watch folder) | Nextcloud folder watch + ClawQL webhook trigger                             |
+| Auto-tagging on import           | Nextcloud Automated Tagging app + ClawQL agent tag assignment via Ouroboros |
+| Correspondent tracking           | ClawQL Postgres metadata store (correspondent field)                        |
+| Document type classification     | ClawQL Postgres metadata store + Onyx semantic classification               |
+| Full-text search                 | Nextcloud Elasticsearch full-text search (keyword) + Onyx (semantic)        |
+| OCR on import                    | Stirling-PDF OCR upstream — documents are pre-OCR'd before archiving        |
+| REST API                         | ClawQL MCP tools expose metadata store and Nextcloud API uniformly          |
+| Archive web UI                   | Nextcloud file browser (human access) + Onyx search UI (semantic access)    |
 
 The ClawQL archive layer is more capable than Paperless-ngx in every dimension relevant to enterprise use: richer metadata (Postgres vs. Django ORM), superior search (Onyx semantic + Elasticsearch keyword vs. Paperless keyword-only), native file collaboration (Nextcloud), and zero GPL dependency.
 
@@ -378,7 +378,7 @@ Hyperledger Fabric integration is planned for permissioned blockchain-based docu
 
 ## End-to-End Workflow Example
 
-The following illustrates a complete IDP workflow triggered by a single agent instruction: *"Process Q1 invoices, redact PII, cross-reference our pricing knowledge base, archive, create a data room, and notify the team."*
+The following illustrates a complete IDP workflow triggered by a single agent instruction: _"Process Q1 invoices, redact PII, cross-reference our pricing knowledge base, archive, create a data room, and notify the team."_
 
 1. Document arrives in a Nextcloud folder (or via email/WebDAV). ClawQL detects it via folder watch or webhook.
 2. ClawQL agent invokes Tika via `execute()`: MIME detection, text extraction, metadata extraction.
@@ -399,12 +399,12 @@ The entire sequence above runs from a single natural-language agent prompt. No c
 
 ClawQL competes across three adjacent markets simultaneously: IDP platforms, Virtual Data Rooms, and AI agent infrastructure. Its differentiation is the combination of full-stack sovereignty, native AI orchestration, cryptographic auditability, and a hosted product that requires none of the infrastructure overhead of incumbents.
 
-| Competitor Category | ClawQL Differentiation |
-| ------------------- | ---------------------- |
-| **SaaS IDP Vendors** (Hyperscience, Kofax, ABBYY) | Cloud-hosted; data leaves your environment. Per-document pricing becomes expensive at scale. No native MCP/agent interface. ClawQL: self-hosted or tenant-isolated hosted, flat pricing, MCP-native from day one. |
-| **VDR Incumbents** (Intralinks, Datasite, Ansarada) | Hosted VDRs with no document processing pipeline. Cannot redact, convert, or semantically index. High per-user/per-GB/per-deal licensing. ClawQL: full pipeline integration, usage-based hosted pricing, Coneshare VDR included. |
-| **Open-source point tools** (Tika, Stirling, Nextcloud standalone) | Individual tools without orchestration. Significant custom integration effort required. No AI agent interface. ClawQL: unified orchestration, Helm deployment, MCP-native agent access out of the box. |
-| **AI document platforms** (emerging LLM-native tools) | Typically cloud-only, limited format support, no VDR, no Merkle audit trail. ClawQL: 1,000+ formats, cryptographic audit, VDR distribution, self-hosted option for regulated industries. |
+| Competitor Category                                                | ClawQL Differentiation                                                                                                                                                                                                           |
+| ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **SaaS IDP Vendors** (Hyperscience, Kofax, ABBYY)                  | Cloud-hosted; data leaves your environment. Per-document pricing becomes expensive at scale. No native MCP/agent interface. ClawQL: self-hosted or tenant-isolated hosted, flat pricing, MCP-native from day one.                |
+| **VDR Incumbents** (Intralinks, Datasite, Ansarada)                | Hosted VDRs with no document processing pipeline. Cannot redact, convert, or semantically index. High per-user/per-GB/per-deal licensing. ClawQL: full pipeline integration, usage-based hosted pricing, Coneshare VDR included. |
+| **Open-source point tools** (Tika, Stirling, Nextcloud standalone) | Individual tools without orchestration. Significant custom integration effort required. No AI agent interface. ClawQL: unified orchestration, Helm deployment, MCP-native agent access out of the box.                           |
+| **AI document platforms** (emerging LLM-native tools)              | Typically cloud-only, limited format support, no VDR, no Merkle audit trail. ClawQL: 1,000+ formats, cryptographic audit, VDR distribution, self-hosted option for regulated industries.                                         |
 
 ClawQL's MCP-native architecture means it benefits automatically from improvements in AI model capabilities. As frontier models improve, ClawQL's automation depth increases without code changes.
 
@@ -444,17 +444,17 @@ ClawQL deploys via a unified Helm chart that provisions the full stack. All serv
 
 All components in the default ClawQL stack operate under licenses permissive for commercial deployment and SaaS distribution. Paperless-ngx (GPL-3.0) is available as an optional self-hosted toggle but is not part of the hosted plan or the default stack.
 
-| Component | License & Commercial Notes |
-| --------- | -------------------------- |
-| **ClawQL Core** | Apache 2.0 — permissive, commercial use and SaaS distribution allowed. |
-| **Coneshare** | MIT — permissive, commercial use and SaaS distribution allowed. |
-| **Apache Tika** | Apache 2.0 — permissive, commercial use allowed. |
-| **Gotenberg** | MIT — permissive, commercial use allowed. |
-| **Stirling-PDF** | Open-core. Base features open-source. Enterprise tiers commercially licensed by Stirling. |
-| **Nextcloud** | AGPL-3.0. Self-hosted use is unrestricted. Nextcloud GmbH offers commercial enterprise licensing. AGPL requires source disclosure of modifications if distributed, but does not propagate to ClawQL or applications using Nextcloud via API/network. |
-| **Onyx** | Open-source core. Review current repository license for enterprise commercial terms. |
-| **Obsidian Vault Format** | Plain Markdown — fully open, no license restrictions on vault data. |
-| **Paperless-ngx (optional)** | GPL-3.0. Self-hosted deployments only. Not included in hosted plan. Operators should review GPL obligations before distributing derivative products. |
+| Component                    | License & Commercial Notes                                                                                                                                                                                                                           |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **ClawQL Core**              | Apache 2.0 — permissive, commercial use and SaaS distribution allowed.                                                                                                                                                                               |
+| **Coneshare**                | MIT — permissive, commercial use and SaaS distribution allowed.                                                                                                                                                                                      |
+| **Apache Tika**              | Apache 2.0 — permissive, commercial use allowed.                                                                                                                                                                                                     |
+| **Gotenberg**                | MIT — permissive, commercial use allowed.                                                                                                                                                                                                            |
+| **Stirling-PDF**             | Open-core. Base features open-source. Enterprise tiers commercially licensed by Stirling.                                                                                                                                                            |
+| **Nextcloud**                | AGPL-3.0. Self-hosted use is unrestricted. Nextcloud GmbH offers commercial enterprise licensing. AGPL requires source disclosure of modifications if distributed, but does not propagate to ClawQL or applications using Nextcloud via API/network. |
+| **Onyx**                     | Open-source core. Review current repository license for enterprise commercial terms.                                                                                                                                                                 |
+| **Obsidian Vault Format**    | Plain Markdown — fully open, no license restrictions on vault data.                                                                                                                                                                                  |
+| **Paperless-ngx (optional)** | GPL-3.0. Self-hosted deployments only. Not included in hosted plan. Operators should review GPL obligations before distributing derivative products.                                                                                                 |
 
 The managed hosted plan is built entirely on Apache 2.0, MIT, and AGPL-licensed components. No GPL dependencies are present in the hosted stack. Legal review of AGPL network use clauses is recommended but standard for SaaS products built on AGPL software.
 
@@ -525,10 +525,10 @@ Standard Nextcloud has no document metadata model, no correspondent tracking, an
 
 ## Operator references
 
-| Doc | Purpose |
-| --- | ------- |
-| [IDP pipeline hub](../providers/idp-pipeline.md) | Bundled providers, env, Helm, `DEFAULT_IDP_PIPELINE` |
-| [Requirements matrix](../roadmap/idp-master-requirements-matrix.md) | Shipped vs gap tracking |
-| [OpenClaw IDP skill profile](../openclaw/openclaw-idp-skill-profile.md) | Agent + dashboard contract |
-| [Agent chat contract](../dashboard/agent-chat.md) | Rich IDP UI JSON |
-| [Helm chart](../../charts/clawql-mcp/README.md) | Co-deploy document stack |
+| Doc                                                                     | Purpose                                              |
+| ----------------------------------------------------------------------- | ---------------------------------------------------- |
+| [IDP pipeline hub](../providers/idp-pipeline.md)                        | Bundled providers, env, Helm, `DEFAULT_IDP_PIPELINE` |
+| [Requirements matrix](../roadmap/idp-master-requirements-matrix.md)     | Shipped vs gap tracking                              |
+| [OpenClaw IDP skill profile](../openclaw/openclaw-idp-skill-profile.md) | Agent + dashboard contract                           |
+| [Agent chat contract](../dashboard/agent-chat.md)                       | Rich IDP UI JSON                                     |
+| [Helm chart](../../charts/clawql-mcp/README.md)                         | Co-deploy document stack                             |

@@ -192,7 +192,7 @@ Read the full documentation suite, deploy the Tier 1 stack, and begin building p
 | **[Plugin registry](../reference/clawql-plugin-registry.md)**                                        | Shipped vs planned plugins, MCP tools, enable flags                                 |
 | [Vision & Roadmap](./clawql-vision-roadmap.md)                                                       | Public edition — honest shipped vs planned, phased delivery                         |
 | [Modularization v2.1](./clawql-modularization-v2.md)                                                 | Package boundaries, dependency graph, intelligent MCP gateway                       |
-| **[IDP Platform (April 2026)](./clawql-idp-platform.md)**                                            | End-to-end IDP: self-hosted + hosted, archive layer, Coneshare VDR, Merkle audit |
+| **[IDP Platform (April 2026)](./clawql-idp-platform.md)**                                            | End-to-end IDP: self-hosted + hosted, archive layer, Coneshare VDR, Merkle audit    |
 | [Immutable releases (Layer 0)](./clawql-hybrid-decentralized-github-alternative.md)                  | Arweave bundles, Radicle, Rift, `clawql-release`, manifest schema                   |
 | [Contributor Technical Specification](../contributing/clawql-contributor-technical-specification.md) | Implementation contracts, Effect-TS patterns, CI rules                              |
 | [Deployment & Operations Guide](../deployment/clawql-deployment-operations-guide.md)                 | Shipped Helm ops — quick start, day-2, health                                       |

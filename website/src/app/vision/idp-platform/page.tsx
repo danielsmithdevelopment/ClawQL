@@ -36,7 +36,8 @@ export default function VisionIdpPlatformPage() {
           >
             docs/vision/clawql-idp-platform.md
           </a>{' '}
-          on <code className="font-mono text-xs">main</code>. Operator walkthrough:{' '}
+          on <code className="font-mono text-xs">main</code>. Operator
+          walkthrough:{' '}
           <a
             href="/learn/document-pipeline"
             className="font-medium text-inherit underline underline-offset-2"
