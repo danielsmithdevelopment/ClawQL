@@ -17,7 +17,7 @@ import {
   dockerCliReachable,
   resetSandboxDockerProbeForTest,
   seatbeltBinaryPresent,
-} from "./sandbox-capabilities.js";
+} from "./capabilities.js";
 
 describe("sandbox-capabilities", () => {
   const saved: NodeJS.ProcessEnv = {};

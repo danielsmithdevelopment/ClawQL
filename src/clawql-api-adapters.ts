@@ -14,6 +14,7 @@ import {
 } from "clawql-api";
 import { createDocumentsPlugin } from "clawql-documents/plugin";
 import { createAutomationPlugin } from "clawql-automation/plugin";
+import { createSandboxPlugin } from "clawql-sandbox/plugin";
 import type { Plugin } from "clawql-core";
 import { Effect, Layer } from "effect";
 
@@ -54,6 +55,9 @@ function buildMcpPlugins(): readonly Plugin[] {
         enableNotify: flags.enableNotify,
       })
     );
+  }
+  if (flags.enableSandbox) {
+    plugins.push(createSandboxPlugin());
   }
   return plugins;
 }

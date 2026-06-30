@@ -3,7 +3,7 @@
  */
 
 import crypto from "node:crypto";
-import type { SandboxLanguage, SandboxPersistenceMode } from "./sandbox-types.js";
+import type { SandboxLanguage, SandboxPersistenceMode } from "./types.js";
 
 export function defaultPersistence(): SandboxPersistenceMode {
   const v = process.env.CLAWQL_SANDBOX_PERSISTENCE_MODE?.trim().toLowerCase();
