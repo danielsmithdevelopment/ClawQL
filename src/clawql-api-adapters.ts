@@ -15,6 +15,7 @@ import {
 import { createDocumentsPlugin } from "clawql-documents/plugin";
 import { createAutomationPlugin } from "clawql-automation/plugin";
 import { createSandboxPlugin } from "clawql-sandbox/plugin";
+import { createOuroborosPlugin } from "clawql-ouroboros/plugin";
 import type { Plugin } from "clawql-core";
 import { Effect, Layer } from "effect";
 
@@ -58,6 +59,9 @@ function buildMcpPlugins(): readonly Plugin[] {
   }
   if (flags.enableSandbox) {
     plugins.push(createSandboxPlugin());
+  }
+  if (flags.enableOuroboros) {
+    plugins.push(createOuroborosPlugin());
   }
   return plugins;
 }

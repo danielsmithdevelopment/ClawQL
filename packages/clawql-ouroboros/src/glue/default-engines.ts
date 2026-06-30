@@ -3,8 +3,9 @@
  * Executor returns structured JSON; evaluator checks for a synthetic error marker.
  */
 
-import type { Evaluator, Executor, ReflectEngine, Seed, WonderEngine } from "clawql-ouroboros";
-import { isGoogleDiscoverySpecLabel } from "../auth-headers.js";
+import type { Evaluator, Executor, ReflectEngine, WonderEngine } from "../interfaces.js";
+import type { Seed } from "../seed.js";
+import { isGoogleDiscoverySpecLabel } from "clawql-api";
 
 type ToolTextResponse = { content?: Array<{ type?: string; text?: string }> };
 const KNOWN_PROVIDERS = ["github", "cloudflare", "slack", "jira", "gcp", "google"] as const;

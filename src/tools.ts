@@ -41,8 +41,8 @@ import {
   SLACK_NOTIFY_OPERATION_ID,
 } from "clawql-automation/plugin";
 import { configureDocumentsPluginDeps } from "clawql-documents/plugin";
+import { configureOuroborosPluginDeps } from "clawql-ouroboros/plugin";
 import { getClawqlOptionalToolFlags } from "./clawql-optional-flags.js";
-import { registerOuroborosTools } from "./ouroboros-mcp.js";
 import { handleHitlEnqueueLabelStudioToolInput } from "./hitl-label-studio.js";
 import { wrapMcpToolHandler } from "./otel-tracing.js";
 
@@ -105,8 +105,12 @@ export { SLACK_NOTIFY_OPERATION_ID, handleNotifyToolInput };
 
 configureAutomationPluginDeps({ execute: (params) => handleClawqlExecuteToolInput(params) });
 configureDocumentsPluginDeps({ execute: (params) => handleClawqlExecuteToolInput(params) });
+configureOuroborosPluginDeps({
+  search: (params) => handleClawqlSearchToolInput(params),
+  execute: (params) => handleClawqlExecuteToolInput(params),
+});
 
-/** Register MCP tools declared by composed plugins (Memory, Documents, Automation, Sandbox, …). */
+/** Register MCP tools declared by composed plugins (Memory, Documents, Automation, Sandbox, Ouroboros, …). */
 function registerPluginMcpTools(server: McpServer): void {
   for (const tool of getClawqlApi().listMcpTools()) {
     server.tool(
@@ -222,10 +226,6 @@ export function registerTools(server: McpServer) {
       },
       wrapMcpToolHandler("hitl_enqueue_label_studio", handleHitlEnqueueLabelStudioToolInput)
     );
-  }
-
-  if (getClawqlOptionalToolFlags().enableOuroboros) {
-    registerOuroborosTools(server);
   }
 }
 

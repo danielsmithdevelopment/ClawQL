@@ -385,4 +385,4 @@ jobs:
         run: npm ci
 
       - name: Run Ouroboros Postgres integration tests
-        run: npx vitest run src/ouroboros/postgres-event-store.integration.test.ts
+        run: npx vitest run packages/clawql-ouroboros/src/glue/postgres-event-store.integration.test.ts

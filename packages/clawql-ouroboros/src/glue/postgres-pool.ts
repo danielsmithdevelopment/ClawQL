@@ -4,7 +4,7 @@
  */
 
 import pg from "pg";
-import { runOuroborosPostgresMigrations } from "../memory-backends/ouroboros-postgres-migrations.js";
+import { runOuroborosPostgresMigrations } from "./postgres-migrations.js";
 
 let pool: pg.Pool | null = null;
 let migrationsDone = false;

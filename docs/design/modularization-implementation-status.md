@@ -22,7 +22,7 @@ ClawQL is mid-flight on a **strangler extraction** from the root `clawql-mcp` pa
 | `clawql-documents`  | `ingest_external_knowledge`, **`DEFAULT_IDP_PIPELINE`** recipe, bundled IDP provider merge (7 vendors via `clawql-api`); automated multi-hop runner still roadmap |
 | `clawql-automation` | `schedule` worker + Slack `notify` core (**scaffold** — no NATS/HITL yet)                                                                                         |
 
-**What is still mostly in `src/`:** MCP tool registration (`tools.ts`), optional tools (HITL, Ouroboros glue), GraphQL proxy entrypoints, server lifecycle. **`sandbox_exec`** is now **`SandboxPlugin`** in `clawql-sandbox` (Kata default in-cluster).
+**What is still mostly in `src/`:** MCP tool registration (`tools.ts`), optional HITL glue, GraphQL proxy entrypoints, server lifecycle.
 
 **Effect-TS:** **Partial.** `search` / `execute` run through `createClawQLApi()` + `SearchService` / `ExecuteService` Effect Layers; extracted packages are still largely **`async`/`await`** with Zod at MCP boundaries. Full Layer composition for memory/documents/automation is **planned**, not shipped.
 
@@ -199,6 +199,7 @@ interface Plugin {
 
 - **`AutomationPlugin`** (`createAutomationPlugin` in `clawql-automation`) — registers `schedule` / `notify` when enabled; starts schedule worker in `onRegister`. **Future:** Argo Workflows `workflow` MCP tool ([#243](https://github.com/danielsmithdevelopment/ClawQL/issues/243)).
 - **`SandboxPlugin`** (`createSandboxPlugin` in `clawql-sandbox`) — registers `sandbox_exec` when `CLAWQL_ENABLE_SANDBOX=1`. **Kata Containers** default in-cluster (`auto` cascade); Docker / bridge / Seatbelt fallbacks.
+- **`OuroborosPlugin`** (`createOuroborosPlugin` in `clawql-ouroboros`) — registers `ouroboros_*` when `CLAWQL_ENABLE_OUROBOROS=1`; Postgres pool shutdown in `onRegister` / `onTeardown`.
 
 ### 6.2 Target (third-party + vertical plugins)
 

@@ -24,7 +24,6 @@ import {
   getVaultStartupStatus,
   validateOrDegradeObsidianVaultAtStartup,
 } from "./vault-config.js";
-import { registerOuroborosPoolShutdownHooks } from "./ouroboros/postgres-pool.js";
 import { registerPostgresPoolShutdownHooks } from "./vector-store/pgvector.js";
 import { getClawqlOptionalToolFlags } from "./clawql-optional-flags.js";
 import {
@@ -321,7 +320,6 @@ async function main() {
   await maybeInitOtelTracing();
   registerSpecCacheShutdownHooks();
   registerPostgresPoolShutdownHooks();
-  registerOuroborosPoolShutdownHooks();
   const app = await createMcpHttpApp();
   const grpcPromise = maybeStartGrpcMcpServer({
     createMcpServer: () => createRegisteredMcpServer(),
