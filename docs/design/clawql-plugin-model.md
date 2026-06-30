@@ -110,13 +110,13 @@ Tool registration is what most integrators see. The full plugin contract (see [C
 
 ## 5. Shipped vs target (honest matrix)
 
-| Item                                       | Shipped today                                                                                      | Target                                                                   |
-| ------------------------------------------ | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `Plugin` interface                         | Minimal (`id`, `version`, `onRegister`, `onTeardown`, `beforeCallTool`) in `clawql-core`           | Full contract in contributor spec (`onIngestHook`, `requiredSpecs`, …)   |
-| `PluginRegistry` + `createClawQLApi()`     | ✅                                                                                                 | ✅                                                                       |
-| Memory / documents / automation as plugins | 🔨 **MemoryPlugin** + **DocumentsPlugin** via `onRegister`; automation still in `tools.ts` | `AutomationPlugin`                                    |
-| Third-party npm plugins                    | ❌ No public registration API                                                                      | Publish `clawql-*-plugin`; compose via Operator / env                    |
-| Effect `Layer` per horizontal package      | ❌ Domain code mostly `async`                                                                      | `MemoryLayer`, `DocumentsLayer`, `AutomationLayer` composed at bootstrap |
+| Item                                       | Shipped today                                                                              | Target                                                                   |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
+| `Plugin` interface                         | Minimal (`id`, `version`, `onRegister`, `onTeardown`, `beforeCallTool`) in `clawql-core`   | Full contract in contributor spec (`onIngestHook`, `requiredSpecs`, …)   |
+| `PluginRegistry` + `createClawQLApi()`     | ✅                                                                                         | ✅                                                                       |
+| Memory / documents / automation as plugins | 🔨 **MemoryPlugin** + **DocumentsPlugin** via `onRegister`; automation still in `tools.ts` | `AutomationPlugin`                                                       |
+| Third-party npm plugins                    | ❌ No public registration API                                                              | Publish `clawql-*-plugin`; compose via Operator / env                    |
+| Effect `Layer` per horizontal package      | ❌ Domain code mostly `async`                                                              | `MemoryLayer`, `DocumentsLayer`, `AutomationLayer` composed at bootstrap |
 
 ---
 
@@ -125,7 +125,7 @@ Tool registration is what most integrators see. The full plugin contract (see [C
 | Done (package extraction)                                                       | Remaining (plugin work)                                                                              |
 | ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
 | `runMemoryIngest`, `runMemoryRecall`, vault, `memory.db` in `clawql-memory`     | ✅ `MemoryPlugin.onRegister` registers `memory_*` tools; `tools.ts` calls `registerPluginMcpTools()` |
-| `runIngestExternalKnowledge` in `clawql-documents`                              | ✅ `DocumentsPlugin.onRegister` registers ingest + optional Onyx tools                           |
+| `runIngestExternalKnowledge` in `clawql-documents`                              | ✅ `DocumentsPlugin.onRegister` registers ingest + optional Onyx tools                               |
 | Schedule + notify in `clawql-automation`; `configureNotifyDeps` from `tools.ts` | Fold notify wiring into `AutomationLayer`; register `schedule` / `notify` in plugin                  |
 | Thin MCP shims + `logMcpToolShape` in `src/`                                    | Keep transport-only concerns in MCP package or `registerMcpTool` helper                              |
 

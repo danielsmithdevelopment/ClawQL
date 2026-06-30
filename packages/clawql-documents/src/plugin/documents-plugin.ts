@@ -1,7 +1,4 @@
-import {
-  runIngestExternalKnowledge,
-  type ExternalIngestInput,
-} from "../ingest/external-ingest.js";
+import { runIngestExternalKnowledge, type ExternalIngestInput } from "../ingest/external-ingest.js";
 import { logMcpToolShape } from "clawql-api/mcp/tool-shape-log";
 import type { Plugin } from "clawql-core";
 import { Effect } from "effect";
@@ -23,11 +20,15 @@ export const ingestExternalKnowledgeToolSchema = {
   dryRun: z
     .boolean()
     .optional()
-    .describe("Default true: validate only. Set false to write Markdown or (url mode) fetch and write."),
+    .describe(
+      "Default true: validate only. Set false to write Markdown or (url mode) fetch and write."
+    ),
   scope: z
     .string()
     .optional()
-    .describe("Optional vault-relative .md path for url imports (default: Memory/external/<slug>.md)."),
+    .describe(
+      "Optional vault-relative .md path for url imports (default: Memory/external/<slug>.md)."
+    ),
   documents: z
     .array(
       z.object({
@@ -74,12 +75,17 @@ export const knowledgeSearchOnyxToolSchema = {
     .optional()
     .describe("Whether to run query expansion on the Onyx side (default false)."),
   hybrid_alpha: z.number().optional().describe("Optional hybrid search alpha (Onyx-specific)."),
-  filters: z.record(z.string(), z.unknown()).optional().describe("Optional Onyx index filters object."),
+  filters: z
+    .record(z.string(), z.unknown())
+    .optional()
+    .describe("Optional Onyx index filters object."),
   tenant_id: z.string().optional().describe("Optional multi-tenant id (query parameter)."),
   fields: z
     .array(z.string())
     .optional()
-    .describe("Optional top-level JSON keys to keep from the Onyx response (same as execute `fields`)."),
+    .describe(
+      "Optional top-level JSON keys to keep from the Onyx response (same as execute `fields`)."
+    ),
 };
 
 export async function handleIngestExternalKnowledgeToolInput(
