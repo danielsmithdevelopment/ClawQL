@@ -27,10 +27,10 @@ This directory is organized by purpose so operational guides, product docs, and 
 - Feature tiers (always on / default-on opt-out / default-off opt-in): `readme/configuration.md` § **Feature tiers** — diagram: [`readme/images/clawql-feature-tiers.png`](readme/images/clawql-feature-tiers.png)
 - MCP tools and operator guides: [`mcp/mcp-tools.md`](mcp/mcp-tools.md), [`mcp/external-ingest.md`](mcp/external-ingest.md), [`mcp/cache-tool.md`](mcp/cache-tool.md), [`mcp/enterprise-mcp-tools.md`](mcp/enterprise-mcp-tools.md), [`mcp/notify-tool.md`](mcp/notify-tool.md), [`mcp/hitl-label-studio.md`](mcp/hitl-label-studio.md), [`mcp/onyx-knowledge-tool.md`](mcp/onyx-knowledge-tool.md), [`mcp/schedule-synthetic-checks.md`](mcp/schedule-synthetic-checks.md)
 - Memory and vault: [`memory/memory-obsidian.md`](memory/memory-obsidian.md), [`memory/memory-db-schema.md`](memory/memory-db-schema.md), [`memory/memory-db-hybrid-implementation.md`](memory/memory-db-hybrid-implementation.md), [`memory/hybrid-memory-backends.md`](memory/hybrid-memory-backends.md), [`memory/vector-search-design.md`](memory/vector-search-design.md)
-- Ouroboros library: [`ouroboros/clawql-ouroboros.md`](ouroboros/clawql-ouroboros.md)
-- **DAOS Unified Architecture v2.7** (7-layer platform, Manifest, PEP, Memory 2.0): [`ouroboros/daos-unified-architecture-specification-v2.7.md`](ouroboros/daos-unified-architecture-specification-v2.7.md) — [`/ouroboros/daos`](https://docs.clawql.com/ouroboros/daos)
-- **DAOS coordination layer** (transport + NATS handoff, NSV/SGDOP, Diversity Dividends): [`ouroboros/daos-coordination-layer-specification.md`](ouroboros/daos-coordination-layer-specification.md) — [`/ouroboros/specification`](https://docs.clawql.com/ouroboros/specification)
-- **DAOS build plan v2.7.1** (P0–P3 implementation contract): [`ouroboros/daos-build-plan-v2.7.1.md`](ouroboros/daos-build-plan-v2.7.1.md) — [`/ouroboros/build-plan`](https://docs.clawql.com/ouroboros/build-plan)
+- Ouroboros library (evolutionary loop — shipped): [`ouroboros/clawql-ouroboros.md`](ouroboros/clawql-ouroboros.md)
+- **DAOS Unified Architecture v2.7** (**vision / roadmap** — NSV, SGDOP, model fingerprinting not shipped): [`ouroboros/daos-unified-architecture-specification-v2.7.md`](ouroboros/daos-unified-architecture-specification-v2.7.md) — [`/ouroboros/daos`](https://docs.clawql.com/ouroboros/daos)
+- **DAOS coordination layer** (**vision / roadmap** — transport + NATS handoff, NSV/SGDOP, Diversity Dividends): [`ouroboros/daos-coordination-layer-specification.md`](ouroboros/daos-coordination-layer-specification.md) — [`/ouroboros/specification`](https://docs.clawql.com/ouroboros/specification)
+- **DAOS build plan v2.7.1** (**vision / roadmap** — P0–P3 implementation contract): [`ouroboros/daos-build-plan-v2.7.1.md`](ouroboros/daos-build-plan-v2.7.1.md) — [`/ouroboros/build-plan`](https://docs.clawql.com/ouroboros/build-plan)
 
 ## Getting Started and README Splits
 

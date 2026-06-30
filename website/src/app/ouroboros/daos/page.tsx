@@ -21,6 +21,9 @@ export default function DaosUnifiedArchitecturePage() {
         <Tag color="claw" variant="medium">
           Ouroboros
         </Tag>
+        <Tag color="zinc" variant="medium">
+          Vision / roadmap
+        </Tag>
         <Tag color="claw" variant="medium">
           DAOS v2.7
         </Tag>
@@ -28,7 +31,16 @@ export default function DaosUnifiedArchitecturePage() {
 
       <div className="not-prose mb-8">
         <Note>
-          <strong>Canonical DAOS platform spec.</strong> Generated from{' '}
+          <strong>Vision &amp; roadmap document.</strong> NSV, SGDOP, model
+          fingerprinting, the Coordinator, and related DAOS coordination
+          primitives are <strong>not shipped yet</strong>. The shipped{' '}
+          <a
+            href="/ouroboros"
+            className="font-medium text-inherit underline underline-offset-2"
+          >
+            Ouroboros library
+          </a>{' '}
+          provides the evolutionary loop only. Generated from{' '}
           <a
             href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/ouroboros/daos-unified-architecture-specification-v2.7.md"
             className="font-medium text-inherit underline underline-offset-2"

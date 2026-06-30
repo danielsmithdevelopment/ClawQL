@@ -22,13 +22,18 @@ export default function DaosSpecificationPage() {
           Ouroboros
         </Tag>
         <Tag color="zinc" variant="medium">
+          Vision / roadmap
+        </Tag>
+        <Tag color="zinc" variant="medium">
           Coordination
         </Tag>
       </div>
 
       <div className="not-prose mb-8">
         <Note>
-          <strong>Transport + strategic coordination.</strong> Generated from{' '}
+          <strong>Vision &amp; roadmap document.</strong> NSV, SGDOP, Diversity
+          Dividends, and the Coordinator are <strong>not shipped yet</strong>.
+          Generated from{' '}
           <a
             href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/ouroboros/daos-coordination-layer-specification.md"
             className="font-medium text-inherit underline underline-offset-2"
