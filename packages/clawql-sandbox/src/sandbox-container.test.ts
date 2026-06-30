@@ -23,7 +23,7 @@ vi.mock("node:child_process", async (importOriginal) => {
   };
 });
 
-import { callDockerSandbox } from "./sandbox-container.js";
+import { callDockerSandbox } from "./container.js";
 
 describe("sandbox-container", () => {
   afterEach(() => {
