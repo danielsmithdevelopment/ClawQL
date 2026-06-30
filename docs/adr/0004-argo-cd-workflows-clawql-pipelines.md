@@ -42,7 +42,7 @@ Two CNCF-aligned systems are often named together but serve different roles:
 - **Phase A — Workflows:** When **`CLAWQL_ENABLE_WORKFLOW=1`**, register the optional **`workflow`** MCP tool via **`AutomationPlugin.onRegister`**. Implement handler logic in **`packages/clawql-automation`** (composed by **`buildMcpPlugins()`** in `src/clawql-api-adapters.ts`); HTTP and stdio transports inherit registration automatically.
 - **Kubernetes client:** **`@kubernetes/client-node`** — `CustomObjectsApi` for Argo CRDs, `CoreV1Api` for pod logs.
 - **Submit model (v1):** **Template-only** — `submit` creates a `Workflow` from an allowlisted **`WorkflowTemplate`** or **`ClusterWorkflowTemplate`** reference plus parameters. **No** arbitrary inline `Workflow` specs in v1.
-- **Operations (Phase A):** `submit`, `get`, `list`, `list_templates`, `logs`. Phase A.2 adds `wait` (poll until terminal phase or timeout) and optional `delete` (env-gated).
+- **Operations (Phase A):** `submit`, `get`, `list`, `list_templates`, `logs`, `wait` (poll until terminal phase or timeout). Phase A.2 adds optional `delete` (env-gated).
 - **Tool I/O:** Workflow-oriented JSON (namespace, name, template ref, parameters, phase, condensed nodes, `links.argo_ui`) — not raw `kubectl` or full CRD dumps.
 - **Correlation:** Submitted workflows carry label **`clawql.dev/correlation-id`** (caller `correlation_id`) and **`clawql.dev/managed: "true"`** for list/filter and audit pairing.
 - **Connection and RBAC** via explicit env (in-cluster ServiceAccount or **`CLAWQL_WORKFLOW_KUBECONFIG`** for dev) documented alongside the flag — same security posture as §3 below.

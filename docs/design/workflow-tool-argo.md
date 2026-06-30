@@ -30,7 +30,7 @@ Agents keep using **`search` / `execute`** for ad hoc API calls. **`workflow`** 
 | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Submit model**           | **Template-only** — `submit` accepts `template_ref` + `parameters` only. No arbitrary inline `Workflow` specs in v1.                                                                                 |
 | **K8s client**             | **`@kubernetes/client-node`** (`CustomObjectsApi` for Argo CRDs; `CoreV1Api` for pod logs).                                                                                                          |
-| **Polling**                | Ship **`get`** in Phase A; add **`wait`** (timeout + terminal phase) in Phase A.2. Agents may loop `get` until v1.2.                                                                                 |
+| **Polling**                | **`get`** and **`wait`** (timeout + terminal phase) shipped in Phase A / A.2. Agents may still loop `get` if needed.                                                                                 |
 | **Correlation**            | Standard label **`clawql.dev/correlation-id`** on submitted workflows; pair with **`audit.correlationId`** and HITL `seed_id` ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254)). |
 | **Managed marker**         | Label **`clawql.dev/managed: "true"`** on all tool-created workflows.                                                                                                                                |
 | **Minimum Argo Workflows** | **≥ 3.4.0** (CRD group `argoproj.io/v1alpha1`, `workflowTemplateRef` on `Workflow`). Integration tests target the same floor.                                                                        |
@@ -46,9 +46,11 @@ packages/clawql-automation/
   src/
     workflow/
       workflow.ts          # zod schema, handler, env guards
+      wait.ts              # poll until terminal phase or timeout
       k8s-client.ts        # client-node factory + test doubles
       argo-mapper.ts       # CRD ↔ agent-friendly JSON
       workflow.test.ts
+      wait.test.ts
     plugin/
       automation-plugin.ts # + enableWorkflow
       deps.ts              # + configureWorkflowDeps({ createK8sClient })
@@ -88,6 +90,7 @@ Operation-discriminated union (same pattern as **`schedule`**): top-level **`ope
 | -------------------- | ---------------------------------------------------------------------------------------------------- |
 | **`submit`**         | Create a `Workflow` from an allowlisted `WorkflowTemplate` or `ClusterWorkflowTemplate` + parameters |
 | **`get`**            | Run status, phase, condensed node summary                                                            |
+| **`wait`**           | Poll `get` until terminal phase (`Succeeded` / `Failed` / `Error`) or timeout                        |
 | **`list`**           | List workflows in an allowlisted namespace (label / phase filters)                                   |
 | **`logs`**           | Bounded log excerpt for a node / pod                                                                 |
 | **`list_templates`** | Catalog templates the SA can read                                                                    |
@@ -96,7 +99,6 @@ Operation-discriminated union (same pattern as **`schedule`**): top-level **`ope
 
 | `operation`  | Purpose                                                         |
 | ------------ | --------------------------------------------------------------- |
-| **`wait`**   | Poll `get` until terminal phase or timeout                      |
 | **`delete`** | Delete workflow — gated by **`CLAWQL_WORKFLOW_ALLOW_DELETE=1`** |
 
 ### Phase B ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254), [#244](https://github.com/danielsmithdevelopment/ClawQL/issues/244))
@@ -266,7 +268,7 @@ if (flags.enableSchedule || flags.enableNotify || flags.enableWorkflow) {
 
 ### Phase A.2
 
-- [ ] `wait` with timeout
+- [x] `wait` with timeout
 - [ ] `delete` behind `CLAWQL_WORKFLOW_ALLOW_DELETE`
 - [ ] Optional notify on terminal phase
 - [ ] Helm SA + Role binding values
