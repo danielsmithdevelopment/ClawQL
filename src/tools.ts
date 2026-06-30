@@ -34,19 +34,15 @@ import {
 import { loadSpec } from "./spec-loader.js";
 import { defaultFields, executeOutputFields, projectRestByFields } from "./tools-execute-core.js";
 import { handleClawqlCodeToolInput } from "./sandbox-bridge-client.js";
-import { handleIngestExternalKnowledgeToolInput } from "./external-ingest.js";
-import { handleMemoryIngestToolInput } from "./memory-ingest.js";
-import { handleMemoryRecallToolInput } from "./memory-recall.js";
 import { cacheToolSchema, handleCacheToolInput } from "./clawql-cache.js";
 import { auditToolSchema, handleAuditToolInput } from "./clawql-audit.js";
-import { handleScheduleToolInput, scheduleToolSchema } from "./clawql-schedule.js";
 import {
-  configureNotifyDeps,
-  runNotifySlack,
+  configureAutomationPluginDeps,
+  handleNotifyToolInput,
   SLACK_NOTIFY_OPERATION_ID,
-} from "clawql-automation/notify/notify";
+} from "clawql-automation/plugin";
+import { configureDocumentsPluginDeps } from "clawql-documents/plugin";
 import { getClawqlOptionalToolFlags } from "./clawql-optional-flags.js";
-import { handleKnowledgeSearchOnyxToolInput } from "./knowledge-search-onyx.js";
 import { registerOuroborosTools } from "./ouroboros-mcp.js";
 import { handleHitlEnqueueLabelStudioToolInput } from "./hitl-label-studio.js";
 import { wrapMcpToolHandler } from "./otel-tracing.js";
@@ -106,16 +102,25 @@ export async function handleClawqlExecuteToolInput(params: {
   );
 }
 
-export { SLACK_NOTIFY_OPERATION_ID };
+export { SLACK_NOTIFY_OPERATION_ID, handleNotifyToolInput };
 
-/** MCP `notify` — delegates to `clawql-automation` (registered when `CLAWQL_ENABLE_NOTIFY=1`). */
-export async function handleNotifyToolInput(
-  params: Parameters<typeof runNotifySlack>[0]
-): Promise<{ content: { type: "text"; text: string }[] }> {
-  return runNotifySlack(params);
+configureAutomationPluginDeps({ execute: (params) => handleClawqlExecuteToolInput(params) });
+configureDocumentsPluginDeps({ execute: (params) => handleClawqlExecuteToolInput(params) });
+
+/** Register MCP tools declared by composed plugins (MemoryPlugin, DocumentsPlugin, AutomationPlugin, …). */
+function registerPluginMcpTools(server: McpServer): void {
+  for (const tool of getClawqlApi().listMcpTools()) {
+    server.tool(
+      tool.name,
+      tool.schema,
+      wrapMcpToolHandler(tool.name, (args) =>
+        tool.handler(args).then((result) => ({
+          content: result.content.map((c) => ({ type: "text" as const, text: c.text })),
+        }))
+      )
+    );
+  }
 }
-
-configureNotifyDeps({ execute: (params) => handleClawqlExecuteToolInput(params) });
 
 export function registerTools(server: McpServer) {
   server.tool(
@@ -173,6 +178,8 @@ export function registerTools(server: McpServer) {
   server.tool("cache", cacheToolSchema, wrapMcpToolHandler("cache", handleCacheToolInput));
   server.tool("audit", auditToolSchema, wrapMcpToolHandler("audit", handleAuditToolInput));
 
+  registerPluginMcpTools(server);
+
   if (getClawqlOptionalToolFlags().enableSandbox) {
     const sandboxCodeSchema = {
       code: z
@@ -207,202 +214,6 @@ export function registerTools(server: McpServer) {
       "sandbox_exec",
       sandboxCodeSchema,
       wrapMcpToolHandler("sandbox_exec", handleClawqlCodeToolInput)
-    );
-  }
-
-  const memoryEnterpriseCitationSchema = z.object({
-    title: z.string().max(500).optional(),
-    url: z.string().max(2048).optional(),
-    document_id: z.string().max(200).optional(),
-    source: z.string().max(200).optional(),
-    snippet: z.string().max(400).optional(),
-  });
-
-  if (getClawqlOptionalToolFlags().enableMemory) {
-    server.tool(
-      "memory_ingest",
-      {
-        title: z
-          .string()
-          .min(1)
-          .describe("Suggested Obsidian page title (used for the file name and heading)."),
-        insights: z.string().optional().describe("Key insights to persist."),
-        conversation: z.string().optional().describe("Conversation transcript or summary text."),
-        toolOutputs: z
-          .union([z.string(), z.array(z.string())])
-          .optional()
-          .describe("Tool result body, or a list of results to record."),
-        toolOutputsFile: z
-          .string()
-          .optional()
-          .describe(
-            "If set, the ClawQL server reads UTF-8 from this file path and uses it as `toolOutputs` (small MCP payload; " +
-              "large content does not go through the tool round-trip). File must be under an allowed root " +
-              "(`CLAWQL_MEMORY_INGEST_FILE_ROOTS` or, by default, the process current working directory). " +
-              "Takes precedence over `toolOutputs` if both are set. Set `CLAWQL_MEMORY_INGEST_FILE=0` to reject."
-          ),
-        enterpriseCitations: z
-          .array(memoryEnterpriseCitationSchema)
-          .max(30)
-          .optional()
-          .describe(
-            "Optional short citation rows (e.g. trimmed from Onyx `knowledge_search_onyx` JSON). " +
-              "Stored as a small Markdown block in the vault — not full retrieval payloads (#130)."
-          ),
-        wikilinks: z
-          .array(z.string())
-          .optional()
-          .describe(
-            "Other vault page names to link with Obsidian [[wikilinks]] (plain names; brackets optional)."
-          ),
-        sessionId: z.string().optional().describe("Optional session label (shown in the note)."),
-        append: z
-          .boolean()
-          .optional()
-          .describe(
-            "When the page already exists, append a new section (default true). Set false to replace the file."
-          ),
-      },
-      wrapMcpToolHandler("memory_ingest", handleMemoryIngestToolInput)
-    );
-
-    server.tool(
-      "memory_recall",
-      {
-        query: z
-          .string()
-          .min(1)
-          .describe(
-            "Natural language or keywords to find in vault Markdown (filename + body + headings)."
-          ),
-        limit: z
-          .number()
-          .int()
-          .min(1)
-          .max(50)
-          .optional()
-          .describe("Max notes to return (default: CLAWQL_MEMORY_RECALL_LIMIT or 10)."),
-        maxDepth: z
-          .number()
-          .int()
-          .min(0)
-          .max(10)
-          .optional()
-          .describe(
-            "How many wikilink hops to follow from keyword hits (default: CLAWQL_MEMORY_RECALL_MAX_DEPTH or 2)."
-          ),
-        minScore: z
-          .number()
-          .min(0)
-          .optional()
-          .describe(
-            "Minimum keyword match score to seed a note (default: CLAWQL_MEMORY_RECALL_MIN_SCORE or 1)."
-          ),
-      },
-      wrapMcpToolHandler("memory_recall", handleMemoryRecallToolInput)
-    );
-  }
-
-  if (getClawqlOptionalToolFlags().enableDocuments) {
-    server.tool(
-      "ingest_external_knowledge",
-      {
-        source: z
-          .string()
-          .optional()
-          .describe(
-            'Importer: "markdown" (default when documents[] is set) or "url" for HTTPS fetch (requires CLAWQL_EXTERNAL_INGEST_FETCH=1). Omit payload for roadmap preview.'
-          ),
-        dryRun: z
-          .boolean()
-          .optional()
-          .describe(
-            "Default true: validate only. Set false to write Markdown or (url mode) fetch and write."
-          ),
-        scope: z
-          .string()
-          .optional()
-          .describe(
-            "Optional vault-relative .md path for url imports (default: Memory/external/<slug>.md)."
-          ),
-        documents: z
-          .array(
-            z.object({
-              path: z.string().min(1).max(512).describe("Vault-relative path; must end with .md"),
-              markdown: z
-                .string()
-                .max(2_097_152)
-                .describe("Markdown body UTF-8 (max ~2 MiB per file)."),
-            })
-          )
-          .max(50)
-          .optional()
-          .describe("Bulk Markdown files to import when CLAWQL_EXTERNAL_INGEST=1."),
-        url: z
-          .string()
-          .max(2048)
-          .optional()
-          .describe(
-            "HTTPS URL to fetch when source is url and CLAWQL_EXTERNAL_INGEST_FETCH=1 (opt-in network)."
-          ),
-      },
-      wrapMcpToolHandler("ingest_external_knowledge", handleIngestExternalKnowledgeToolInput)
-    );
-  }
-
-  if (getClawqlOptionalToolFlags().enableSchedule) {
-    server.tool(
-      "schedule",
-      scheduleToolSchema,
-      wrapMcpToolHandler("schedule", handleScheduleToolInput)
-    );
-  }
-
-  if (getClawqlOptionalToolFlags().enableNotify) {
-    server.tool(
-      "notify",
-      {
-        channel: z
-          .string()
-          .min(1)
-          .describe(
-            "Channel ID (C…), private group, or DM — same as Slack chat.postMessage `channel`."
-          ),
-        text: z
-          .string()
-          .min(1)
-          .describe("Message text. Include Onyx/Paperless links inline for workflow summaries."),
-        thread_ts: z
-          .string()
-          .optional()
-          .describe("Optional parent message `ts` to post in a thread."),
-        blocks: z
-          .string()
-          .optional()
-          .describe("Optional JSON string of Block Kit blocks (Slack form field `blocks`)."),
-        attachments: z.string().optional().describe("Optional JSON string of legacy attachments."),
-        username: z
-          .string()
-          .optional()
-          .describe("Override bot display name (requires as_user false)."),
-        icon_emoji: z.string().optional().describe("Override bot icon emoji."),
-        icon_url: z.string().optional().describe("Override bot icon image URL."),
-        mrkdwn: z.boolean().optional().describe("Pass false to disable Slack mrkdwn parsing."),
-        unfurl_links: z.boolean().optional(),
-        unfurl_media: z.boolean().optional(),
-        reply_broadcast: z.boolean().optional(),
-        parse: z.string().optional().describe("Slack parse mode: full | none | …"),
-        link_names: z.boolean().optional(),
-        as_user: z.boolean().optional(),
-        fields: z
-          .array(z.string())
-          .optional()
-          .describe(
-            "Optional top-level response keys to return (same as execute `fields`). " +
-              "Omit for defaults: ok, channel, ts, message."
-          ),
-      },
-      wrapMcpToolHandler("notify", handleNotifyToolInput)
     );
   }
 
@@ -448,58 +259,6 @@ export function registerTools(server: McpServer) {
           .describe("Optional provenance object stored under data.clawql_hitl.provenance."),
       },
       wrapMcpToolHandler("hitl_enqueue_label_studio", handleHitlEnqueueLabelStudioToolInput)
-    );
-  }
-
-  if (
-    getClawqlOptionalToolFlags().enableOnyxKnowledge &&
-    getClawqlOptionalToolFlags().enableDocuments
-  ) {
-    server.tool(
-      "knowledge_search_onyx",
-      {
-        query: z
-          .string()
-          .min(1)
-          .describe(
-            "Natural language or keyword query against the Onyx index (maps to `search_query` on the Onyx API)."
-          ),
-        num_hits: z
-          .number()
-          .int()
-          .min(1)
-          .max(100)
-          .optional()
-          .describe("Max hits to return (default 15)."),
-        include_content: z
-          .boolean()
-          .optional()
-          .describe("Include chunk/content in results when supported (default true)."),
-        stream: z
-          .boolean()
-          .optional()
-          .describe("Must be false or omitted; streaming is not supported for this tool."),
-        run_query_expansion: z
-          .boolean()
-          .optional()
-          .describe("Whether to run query expansion on the Onyx side (default false)."),
-        hybrid_alpha: z
-          .number()
-          .optional()
-          .describe("Optional hybrid search alpha (Onyx-specific)."),
-        filters: z
-          .record(z.string(), z.unknown())
-          .optional()
-          .describe("Optional Onyx index filters object."),
-        tenant_id: z.string().optional().describe("Optional multi-tenant id (query parameter)."),
-        fields: z
-          .array(z.string())
-          .optional()
-          .describe(
-            "Optional top-level JSON keys to keep from the Onyx response (same as execute `fields`)."
-          ),
-      },
-      wrapMcpToolHandler("knowledge_search_onyx", handleKnowledgeSearchOnyxToolInput)
     );
   }
 

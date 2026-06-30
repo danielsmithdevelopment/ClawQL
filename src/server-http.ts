@@ -27,7 +27,6 @@ import {
 import { registerOuroborosPoolShutdownHooks } from "./ouroboros/postgres-pool.js";
 import { registerPostgresPoolShutdownHooks } from "./vector-store/pgvector.js";
 import { getClawqlOptionalToolFlags } from "./clawql-optional-flags.js";
-import { registerScheduleWorkerShutdownHooks, startScheduleWorker } from "./clawql-schedule.js";
 import {
   getNativeProtocolMetricsSnapshot,
   nativeProtocolMetricsEnabled,
@@ -323,10 +322,6 @@ async function main() {
   registerSpecCacheShutdownHooks();
   registerPostgresPoolShutdownHooks();
   registerOuroborosPoolShutdownHooks();
-  if (getClawqlOptionalToolFlags().enableSchedule) {
-    registerScheduleWorkerShutdownHooks();
-    startScheduleWorker();
-  }
   const app = await createMcpHttpApp();
   const grpcPromise = maybeStartGrpcMcpServer({
     createMcpServer: () => createRegisteredMcpServer(),

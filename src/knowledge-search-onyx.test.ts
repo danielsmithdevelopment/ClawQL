@@ -1,5 +1,9 @@
-import { describe, expect, it, vi } from "vitest";
-import * as specLoader from "./spec-loader.js";
+import * as clawqlApi from "clawql-api";
+import {
+  configureDocumentsPluginDeps,
+  resetDocumentsPluginDepsForTests,
+} from "clawql-documents/plugin";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { OpenAPIDoc } from "./spec-loader.js";
 import type { Operation } from "./spec-loader.js";
 import {
@@ -7,7 +11,6 @@ import {
   handleKnowledgeSearchOnyxToolInput,
   resolveOnyxSendSearchOperationId,
 } from "./knowledge-search-onyx.js";
-import * as tools from "./tools.js";
 
 describe("resolveOnyxSendSearchOperationId", () => {
   it("prefers merged onyx:: id", () => {
@@ -40,8 +43,21 @@ describe("resolveOnyxSendSearchOperationId", () => {
 });
 
 describe("handleKnowledgeSearchOnyxToolInput", () => {
+  beforeEach(() => {
+    configureDocumentsPluginDeps({
+      execute: vi.fn().mockResolvedValue({
+        content: [{ type: "text", text: JSON.stringify({ ok: true }) }],
+      }),
+    });
+  });
+
+  afterEach(() => {
+    resetDocumentsPluginDepsForTests();
+    vi.restoreAllMocks();
+  });
+
   it("returns JSON error when Onyx operation is not in the loaded index", async () => {
-    vi.spyOn(specLoader, "loadSpec").mockResolvedValue({
+    vi.spyOn(clawqlApi, "loadSpec").mockResolvedValue({
       operations: [{ id: "pets.list" } as Operation],
       openapi: {
         openapi: "3.0.0",
@@ -66,7 +82,7 @@ describe("handleKnowledgeSearchOnyxToolInput", () => {
       components: { schemas: {} },
     };
 
-    vi.spyOn(specLoader, "loadSpec").mockResolvedValue({
+    vi.spyOn(clawqlApi, "loadSpec").mockResolvedValue({
       operations: [
         {
           id: `onyx::${ONYX_SEND_SEARCH_OPERATION_ID}`,
@@ -88,15 +104,16 @@ describe("handleKnowledgeSearchOnyxToolInput", () => {
       rawSource: {},
     });
 
-    const spy = vi.spyOn(tools, "handleClawqlExecuteToolInput").mockResolvedValue({
+    const execute = vi.fn().mockResolvedValue({
       content: [{ type: "text", text: JSON.stringify({ ok: true }) }],
     });
+    configureDocumentsPluginDeps({ execute });
 
     const out = await handleKnowledgeSearchOnyxToolInput({
       query: "pricing policy",
       num_hits: 5,
     });
-    expect(spy).toHaveBeenCalledWith({
+    expect(execute).toHaveBeenCalledWith({
       operationId: `onyx::${ONYX_SEND_SEARCH_OPERATION_ID}`,
       args: {
         search_query: "pricing policy",
@@ -108,11 +125,10 @@ describe("handleKnowledgeSearchOnyxToolInput", () => {
       fields: undefined,
     });
     expect(JSON.parse(out.content[0].text)).toEqual({ ok: true });
-    spy.mockRestore();
   });
 
   it("rejects stream=true", async () => {
-    vi.spyOn(specLoader, "loadSpec").mockResolvedValue({
+    vi.spyOn(clawqlApi, "loadSpec").mockResolvedValue({
       operations: [{ id: `onyx::${ONYX_SEND_SEARCH_OPERATION_ID}` } as Operation],
       openapi: {
         openapi: "3.0.0",

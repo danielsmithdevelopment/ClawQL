@@ -18,8 +18,6 @@ import { preloadSchemaFieldCacheFromDisk } from "./tools.js";
 import { validateOrDegradeObsidianVaultAtStartup } from "./vault-config.js";
 import { registerOuroborosPoolShutdownHooks } from "./ouroboros/postgres-pool.js";
 import { registerPostgresPoolShutdownHooks } from "./vector-store/pgvector.js";
-import { getClawqlOptionalToolFlags } from "./clawql-optional-flags.js";
-import { registerScheduleWorkerShutdownHooks, startScheduleWorker } from "./clawql-schedule.js";
 import { maybeInitOtelTracing } from "./otel-tracing.js";
 
 async function main() {
@@ -32,10 +30,6 @@ async function main() {
   // Prefer pregenerated introspection.json (bundled or CLAWQL_INTROSPECTION_PATH) over live proxy introspection
   await preloadSchemaFieldCacheFromDisk();
   await validateOrDegradeObsidianVaultAtStartup();
-  if (getClawqlOptionalToolFlags().enableSchedule) {
-    registerScheduleWorkerShutdownHooks();
-    startScheduleWorker();
-  }
 
   const server = createRegisteredMcpServer({
     name: "cloudrun-mcp",

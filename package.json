@@ -54,7 +54,7 @@
     ],
     "scripts": {
         "clean": "rm -rf dist packages/clawql-core/dist packages/clawql-api/dist packages/clawql-memory/dist packages/clawql-documents/dist packages/clawql-automation/dist packages/mcp-grpc-transport/dist packages/clawql-ouroboros/dist packages/panguard-mcp-bridge/dist",
-        "build": "npm run clean && npm run build -w clawql-core && npm run build -w clawql-api && npm run build -w clawql-memory && npm run build -w clawql-documents && npm run build -w clawql-automation && npm run build -w mcp-grpc-transport && npm run build -w clawql-ouroboros && npm run build -w panguard-mcp-bridge && tsc",
+        "build": "npm run clean && npm run build -w clawql-core && npm run build -w clawql-memory && npm run build -w clawql-api && npm run build -w clawql-documents && npm run build -w clawql-automation && npm run build -w mcp-grpc-transport && npm run build -w clawql-ouroboros && npm run build -w panguard-mcp-bridge && tsc",
         "build:turbo": "turbo run build",
         "prepublishOnly": "npm run build",
         "start": "node dist/server.js",

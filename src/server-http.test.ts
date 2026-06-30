@@ -10,6 +10,7 @@ import {
   recordNativeGraphqlExecute,
   resetNativeProtocolMetricsForTests,
 } from "./native-protocol-metrics.js";
+import { resetClawqlApiForTests } from "./clawql-api-adapters.js";
 import { createMcpHttpApp } from "./server-http.js";
 import { resetSpecCache } from "./spec-loader.js";
 import { resetSchemaFieldCache } from "./tools.js";
@@ -48,6 +49,7 @@ describe("server-http", () => {
     delete process.env.CLAWQL_CORS_ALLOW_ORIGIN;
     resetSpecCache();
     resetSchemaFieldCache();
+    resetClawqlApiForTests();
   });
 
   afterEach(() => {
@@ -58,6 +60,7 @@ describe("server-http", () => {
     }
     resetSpecCache();
     resetSchemaFieldCache();
+    resetClawqlApiForTests();
   });
 
   async function withHttpServer(run: (baseUrl: string) => Promise<void>): Promise<void> {

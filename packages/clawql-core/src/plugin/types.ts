@@ -1,5 +1,6 @@
 import type { Effect } from "effect";
-import type { ClawQLError } from "../errors/clawql-error.js";
+import type { ClawQLError, McpToolAlreadyRegisteredError } from "../errors/clawql-error.js";
+import type { ClawQLPluginRegistrationApi } from "./registration-api.js";
 
 export type PluginKind = "default" | "mcp-proxy";
 
@@ -18,7 +19,9 @@ export interface Plugin {
   readonly vertical?: string;
   readonly kind?: PluginKind;
 
-  onRegister?: () => Effect.Effect<void, ClawQLError>;
+  onRegister?: (
+    api: ClawQLPluginRegistrationApi
+  ) => Effect.Effect<void, ClawQLError | McpToolAlreadyRegisteredError>;
   onTeardown?: () => Effect.Effect<void, ClawQLError>;
   /** `mcp-proxy` plugins: run before MCP tool handlers (Panguard ATR, etc.). */
   beforeCallTool?: (ctx: McpProxyCallContext) => Effect.Effect<void, ClawQLError>;

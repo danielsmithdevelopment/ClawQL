@@ -1,13 +1,37 @@
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 import { ClawQLApi, createClawQLApi } from "./index.js";
+import { MEMORY_PLUGIN_ID } from "./plugins/memory-plugin.js";
 import { PANGUARD_PROXY_PLUGIN_ID } from "./plugins/panguard-proxy-plugin.js";
 
 describe("createClawQLApi", () => {
   it("registers Panguard proxy plugin by default", () => {
+    const api = createClawQLApi({ plugins: [] });
+    const withDefaults = createClawQLApi();
+    expect(withDefaults.registry.list().some((p) => p.id === PANGUARD_PROXY_PLUGIN_ID)).toBe(true);
+    expect(api.registry.list()).toHaveLength(0);
+  });
+
+  it("registers MemoryPlugin and MCP tools when memory tier is enabled", () => {
+    const saved = process.env.CLAWQL_ENABLE_MEMORY;
+    process.env.CLAWQL_ENABLE_MEMORY = "1";
     const api = createClawQLApi();
-    const plugins = api.registry.list();
-    expect(plugins.some((p) => p.id === PANGUARD_PROXY_PLUGIN_ID)).toBe(true);
+    expect(api.registry.list().some((p) => p.id === MEMORY_PLUGIN_ID)).toBe(true);
+    const names = api.listMcpTools().map((t) => t.name);
+    expect(names).toContain("memory_ingest");
+    expect(names).toContain("memory_recall");
+    if (saved === undefined) delete process.env.CLAWQL_ENABLE_MEMORY;
+    else process.env.CLAWQL_ENABLE_MEMORY = saved;
+  });
+
+  it("omits MemoryPlugin when CLAWQL_ENABLE_MEMORY=0", () => {
+    const saved = process.env.CLAWQL_ENABLE_MEMORY;
+    process.env.CLAWQL_ENABLE_MEMORY = "0";
+    const api = createClawQLApi();
+    expect(api.registry.list().some((p) => p.id === MEMORY_PLUGIN_ID)).toBe(false);
+    expect(api.listMcpTools()).toHaveLength(0);
+    if (saved === undefined) delete process.env.CLAWQL_ENABLE_MEMORY;
+    else process.env.CLAWQL_ENABLE_MEMORY = saved;
   });
 
   it("registers plugins via ClawQLApi service", async () => {
