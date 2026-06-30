@@ -2,7 +2,11 @@ import { logMcpToolShape } from "clawql-api/mcp/tool-shape-log";
 import type { Plugin } from "clawql-core";
 import { Effect } from "effect";
 import { z } from "zod";
-import { runNotifySlack, SLACK_NOTIFY_OPERATION_ID, type NotifySlackInput } from "../notify/notify.js";
+import {
+  runNotifySlack,
+  SLACK_NOTIFY_OPERATION_ID,
+  type NotifySlackInput,
+} from "../notify/notify.js";
 import {
   handleScheduleToolInput as runScheduleTool,
   registerScheduleWorkerShutdownHooks,

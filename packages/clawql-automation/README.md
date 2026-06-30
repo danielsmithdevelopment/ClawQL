@@ -14,10 +14,10 @@ Prefer subpath imports (`clawql-automation/schedule/schedule`, `clawql-automatio
 
 ## Roadmap (not shipped)
 
-| Feature | Status | Tracking |
-| ------- | ------ | -------- |
-| Argo Workflows `workflow` MCP tool | **Planned** — extends `AutomationPlugin` | [ADR 0004](../../docs/adr/0004-argo-cd-workflows-clawql-pipelines.md), [#243](https://github.com/danielsmithdevelopment/ClawQL/issues/243) |
-| Argo CD GitOps provider | **Planned** | [#244](https://github.com/danielsmithdevelopment/ClawQL/issues/244) |
-| NATS / HITL suspend-resume orchestration | **Planned** | [#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254) |
+| Feature                                  | Status                                   | Tracking                                                                                                                                   |
+| ---------------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Argo Workflows `workflow` MCP tool       | **Planned** — extends `AutomationPlugin` | [ADR 0004](../../docs/adr/0004-argo-cd-workflows-clawql-pipelines.md), [#243](https://github.com/danielsmithdevelopment/ClawQL/issues/243) |
+| Argo CD GitOps provider                  | **Planned**                              | [#244](https://github.com/danielsmithdevelopment/ClawQL/issues/244)                                                                        |
+| NATS / HITL suspend-resume orchestration | **Planned**                              | [#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254)                                                                        |
 
 See [`docs/design/modularization-implementation-status.md`](../../docs/design/modularization-implementation-status.md) and [`docs/reference/clawql-plugin-registry.md`](../../docs/reference/clawql-plugin-registry.md).
