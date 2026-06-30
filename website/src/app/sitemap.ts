@@ -16,6 +16,11 @@ type Entry = {
 const ENTRIES: Array<Entry> = [
   { path: '/', changeFrequency: 'weekly', priority: 1 },
   {
+    path: '/vision/idp-platform',
+    changeFrequency: 'monthly',
+    priority: 0.92,
+  },
+  {
     path: '/vision/technical-enablement',
     changeFrequency: 'monthly',
     priority: 0.9,

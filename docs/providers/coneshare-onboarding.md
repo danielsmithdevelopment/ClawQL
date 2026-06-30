@@ -50,5 +50,5 @@ Agent replies enriched by the chat bridge emit `attachments[]` with `kind: "cone
 ## Related
 
 - [IDP pipeline hub](idp-pipeline.md)
-- [IDP stack §8](../vision/clawql-idp-stack.md)
+- [IDP Platform](../vision/clawql-idp-platform.md)
 - [Agent chat contract](../dashboard/agent-chat.md)

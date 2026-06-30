@@ -76,6 +76,8 @@ function rewriteLinksForSite(body) {
   return escapeMdxCurlyOutsideFences(
     escapeLessThanBeforeDigit(
       body
+        .replaceAll('](./clawql-idp-platform.md)', '](/vision/idp-platform)')
+        .replaceAll('](./clawql-idp-stack.md)', '](/vision/idp-platform)')
         .replaceAll('](./clawql-vision-roadmap.md)', '](/vision/roadmap)')
         .replaceAll(
           '](./clawql-modularization-v2.md)',

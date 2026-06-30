@@ -7,6 +7,7 @@ This directory is organized by purpose so operational guides, product docs, and 
 - **ClawQL Vision & Roadmap** (**start here** — public edition, honest shipped vs planned status, phased delivery): [`vision/clawql-vision-roadmap.md`](vision/clawql-vision-roadmap.md) — [`/vision/roadmap`](https://docs.clawql.com/vision/roadmap)
 - **ClawQL Master enablement guide** (v2.1 — unified 6-layer architecture index, documentation suite hub): [`vision/clawql-master-enablement-guide.md`](vision/clawql-master-enablement-guide.md) — [`/vision/technical-enablement`](https://docs.clawql.com/vision/technical-enablement)
 - **ClawQL Modularization v2.1** (package boundaries, dependency graph, Operator, intelligent MCP gateway): [`vision/clawql-modularization-v2.md`](vision/clawql-modularization-v2.md) — [`/vision/modularization`](https://docs.clawql.com/vision/modularization)
+- **ClawQL IDP Platform** (April 2026 — self-hosted vs hosted, ClawQL-native archive layer, competitive positioning): [`vision/clawql-idp-platform.md`](vision/clawql-idp-platform.md) — [`/vision/idp-platform`](https://docs.clawql.com/vision/idp-platform)
 - **Immutable releases — hybrid decentralized GitHub alternative** (Layer 0: `clawql-release`, Arweave, Radicle, Rift, release manifest): [`vision/clawql-hybrid-decentralized-github-alternative.md`](vision/clawql-hybrid-decentralized-github-alternative.md) — [`/vision/immutable-releases`](https://docs.clawql.com/vision/immutable-releases)
 
 ## Contributing
@@ -42,7 +43,7 @@ This directory is organized by purpose so operational guides, product docs, and 
 
 - **Deployment & Operations Guide** (shipped Helm paths): [`deployment/clawql-deployment-operations-guide.md`](deployment/clawql-deployment-operations-guide.md) — [`/deployment/operations-guide`](https://docs.clawql.com/deployment/operations-guide)
 - **Operator target architecture** (planned CRD / tiers — not shipped): [`design/operator-target-architecture.md`](design/operator-target-architecture.md) ([#255](https://github.com/danielsmithdevelopment/ClawQL/issues/255))
-- **IDP document pipeline hub** (seven bundled vendors): [`providers/idp-pipeline.md`](providers/idp-pipeline.md)
+- **IDP document pipeline hub** (seven bundled vendors): [`providers/idp-pipeline.md`](providers/idp-pipeline.md) — [`/learn/document-pipeline`](https://docs.clawql.com/learn/document-pipeline)
 
 - `openclaw/using-openclaw-with-clawql.md` — **full guide:** OpenClaw CLI + ClawQL MCP (install, `openclaw mcp set`, HTTP/stdio, validation, remote); website **`/openclaw`**
 - `openclaw/clawql-bootstrap.md` — register ClawQL in OpenClaw, env matrix, smoke checklist ([#226](https://github.com/danielsmithdevelopment/ClawQL/issues/226))

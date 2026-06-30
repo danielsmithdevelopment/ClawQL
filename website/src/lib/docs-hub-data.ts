@@ -85,6 +85,13 @@ export const architectureHubCards: Array<ReferenceCard> = [
     icon: BookIcon,
   }),
   card({
+    href: '/vision/idp-platform',
+    name: 'IDP Platform',
+    description:
+      'Self-hosted vs hosted IDP, ClawQL-native archive layer, VDR, Merkle audit.',
+    icon: DocumentIcon,
+  }),
+  card({
     href: '/vision/technical-enablement',
     name: 'Master enablement guide',
     description:

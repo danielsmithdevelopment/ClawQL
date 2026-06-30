@@ -265,6 +265,10 @@ export const navigation: Array<NavGroup> = [
       { title: 'Architecture hub', href: '/architecture' },
       { title: 'Vision & Roadmap', href: '/vision/roadmap' },
       {
+        title: 'IDP Platform',
+        href: '/vision/idp-platform',
+      },
+      {
         title: 'Master enablement guide',
         href: '/vision/technical-enablement',
       },
