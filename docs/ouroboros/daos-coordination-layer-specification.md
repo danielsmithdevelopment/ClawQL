@@ -1,5 +1,7 @@
 # The Decentralized Agent Operating System: Coordination Layer Specification
 
+> **Vision & roadmap document.** Part II (NSV, SGDOP, reputation, Diversity Dividends, Coordinator) describes **target design** — these coordination primitives are **not shipped yet**. The shipped [`clawql-ouroboros`](./clawql-ouroboros.md) package provides the evolutionary loop only. Ground truth: [modularization implementation status](../design/modularization-implementation-status.md).
+
 ## Scope and Relationship to the DAOS Unified Specification
 
 This document specifies the **transport and coordination layer** of the ClawQL Decentralized Agent Operating System. It covers the HTTP + NATS JetStream handoff protocol, the Ouroboros strategic coordination engine (NSV, SGDOP, reputation attribution, and Diversity Dividends), and the mathematical foundations underlying both.

@@ -34,7 +34,7 @@ ClawQL closes all three gaps simultaneously through a layered, defense-in-depth 
 | **1** | Collaboration                      | Radicle (primary) + GitHub mirror                                                                | Human & agent development surface                                             |
 | **2** | Execution & Intelligent Gateway    | `clawql-api`, `clawql-core`, `clawql-auth`                                                       | Single MCP surface, routing, enforcement, token optimization                  |
 | **3** | Memory & Documents                 | `clawql-memory` (Vault + Graph + PageIndex), `clawql-documents`, `clawql-pageindex`              | Persistent hybrid knowledge with Merkle stamping                              |
-| **4** | Strategic Coordination             | `clawql-ouroboros` (NSV + SGDOP) + optional DAOS integration                                     | Swarm diversity, reputation, recruitment, convergence control                 |
+| **4** | Strategic Coordination             | `clawql-ouroboros` evolutionary loop (shipped); DAOS swarm coordination — NSV + SGDOP (roadmap)  | Swarm diversity, reputation, recruitment, convergence control                 |
 | **5** | Security & Compliance              | ATRClaims, Presidio, Merkle/WORM, Vault, external-provider policies                              | Uniform zero-trust controls across all boundaries                             |
 | **6** | Observability & Runtime Protection | LGTMP (Alloy + Langfuse + Beyla + Faro + Loki/Tempo/Mimir/Pyroscope + Falco/Tetragon/Wazuh + k6) | Full visibility, AI tracing, runtime enforcement, anomaly detection           |
 
@@ -75,14 +75,15 @@ _Full design: [Modularization v2.1](/vision/modularization) · [Token efficiency
 
 ## VI. Layer 4: Ouroboros (Strategic Coordination)
 
-Ouroboros governs multi-agent systems as a stochastic control problem.
+**Shipped today:** [`clawql-ouroboros`](../ouroboros/clawql-ouroboros.md) — specification-first seeds, evolutionary loop, ontology convergence gates, optional MCP tools when `CLAWQL_ENABLE_OUROBOROS=1`.
+
+**Roadmap (DAOS coordination — not shipped yet):**
 
 - **NSV (Normalized Semantic Variance)**: Cheap tripwire for cognitive convergence.
 - **SGDOP (Semantic GDOP)**: Identifies the exact blind-spot direction in embedding space when convergence is detected, enabling precise recruitment.
-- Reputation system protects dissent and rewards alignment with verified outcomes.
-- Integrates with DAOS-style decentralized handoff (NATS JetStream + two-phase commit) where needed.
+- Reputation system, Diversity Dividends, model fingerprinting, and NATS JetStream Coordinator integration.
 
-_Full design: [DAOS Unified Architecture v2.7](/ouroboros/daos). Coordination deep dive: [Coordination layer spec](/ouroboros/specification)._
+_Full target design (vision): [DAOS Unified Architecture v2.7](/ouroboros/daos). Coordination deep dive: [Coordination layer spec](/ouroboros/specification)._
 
 ## VII. Token Efficiency (8 Compounding Layers)
 
@@ -145,12 +146,12 @@ _Full design: [Deployment & Operations Guide](/deployment/operations-guide) · [
 3. Operator/admission controller verifies manifest.
 4. Agent calls `search()`/`execute()` on gateway.
 5. Gateway enforces security → routes to Memory 2.0 or tools.
-6. Operation is Merkle-stamped, observed in Langfuse + LGTMP, governed by Ouroboros.
+6. Operation is Merkle-stamped, observed in Langfuse + LGTMP; DAOS/Ouroboros swarm coordination applies when deployed (roadmap).
 7. Everything remains auditable and reversible via manifest policy.
 
 ## XII. Current Status & Roadmap (June 2026)
 
-**Shipped:** MCP transport (stdio/HTTP/gRPC), Ouroboros library, Layer 0 tooling, LGTMP reference stack, **horizontal package extraction** (`clawql-core`, `clawql-api`, `clawql-memory`, `clawql-documents`, `clawql-automation`), **seven-vendor IDP pipeline** (bundled providers + Helm + [`idp-pipeline.md`](../providers/idp-pipeline.md)) — see **[Modularization implementation status](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/modularization-implementation-status.md)**.
+**Shipped:** MCP transport (stdio/HTTP/gRPC), `clawql-ouroboros` evolutionary loop library (not DAOS NSV/SGDOP coordination), Layer 0 tooling, LGTMP reference stack, **horizontal package extraction** (`clawql-core`, `clawql-api`, `clawql-memory`, `clawql-documents`, `clawql-automation`), **seven-vendor IDP pipeline** (bundled providers + Helm + [`idp-pipeline.md`](../providers/idp-pipeline.md)) — see **[Modularization implementation status](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/modularization-implementation-status.md)**.
 
 **In progress:** Effect `Layer` plugins for memory/documents/automation; transport thinning (`tools.ts` → plugin registration); third-party plugin npm contract.
 
@@ -185,22 +186,22 @@ Read the full documentation suite, deploy the Tier 1 stack, and begin building p
 
 ## Documentation suite
 
-| Document                                                                                                                                                   | Role                                                                                |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| **[Modularization implementation status](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/modularization-implementation-status.md)** | **Ground truth** — monorepo layout, shims, phases, Effect/plugin status (June 2026) |
-| **[ClawQL plugin model](/reference/plugins)**                                                                                                              | Horizontal plugins — MCP tool registration, lifecycle, third-party path             |
-| **[Plugin registry](/reference/plugins#plugin-registry)**                                                                                                  | Shipped vs planned plugins, MCP tools, enable flags                                 |
-| [Vision & Roadmap](/vision/roadmap)                                                                                                                        | Public edition — honest shipped vs planned, phased delivery                         |
-| [Modularization v2.1](/vision/modularization)                                                                                                              | Package boundaries, dependency graph, intelligent MCP gateway                       |
-| **[IDP Platform (April 2026)](/vision/idp-platform)**                                                                                                      | End-to-end IDP: self-hosted + hosted, archive layer, Coneshare VDR, Merkle audit    |
-| [Immutable releases (Layer 0)](/vision/immutable-releases)                                                                                                 | Arweave bundles, Radicle, Rift, `clawql-release`, manifest schema                   |
-| [Contributor Technical Specification](/contributing/technical-specification)                                                                               | Implementation contracts, Effect-TS patterns, CI rules                              |
-| [Deployment & Operations Guide](/deployment/operations-guide)                                                                                              | Shipped Helm ops — quick start, day-2, health                                       |
-| [Operator target architecture](../design/operator-target-architecture.md)                                                                                  | Planned tiers, CRD, verticals, NL ops (not shipped)                                 |
-| [Dashboard Agent Chat](../dashboard/agent-chat.md)                                                                                                         | Browser UI, SSE, vault threads, IDP attachment JSON contract                        |
-| [Defense-in-Depth Security Guide](/security/defense-in-depth)                                                                                              | What to deploy — condensed operator reference                                       |
-| [Security curriculum](/security/best-practices)                                                                                                            | 32 modules — why and how to prove controls                                          |
-| [Token efficiency (8 layers)](/architecture/token-efficiency)                                                                                              | Code Mode through model routing                                                     |
-| [DAOS Unified Architecture v2.7](/ouroboros/daos)                                                                                                          | 7-layer platform, Manifest, PEP, Memory 2.0, Circuit Breaker                        |
-| [Coordination layer spec](/ouroboros/specification)                                                                                                        | Transport + NSV/SGDOP, Diversity Dividends, Coordinator                             |
-| [DAOS build plan v2.7.1](/ouroboros/build-plan)                                                                                                            | P0–P3 engineering contract                                                          |
+| Document                                                                                                                                                   | Role                                                                                         |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| **[Modularization implementation status](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/modularization-implementation-status.md)** | **Ground truth** — monorepo layout, shims, phases, Effect/plugin status (June 2026)          |
+| **[ClawQL plugin model](/reference/plugins)**                                                                                                              | Horizontal plugins — MCP tool registration, lifecycle, third-party path                      |
+| **[Plugin registry](/reference/plugins#plugin-registry)**                                                                                                  | Shipped vs planned plugins, MCP tools, enable flags                                          |
+| [Vision & Roadmap](/vision/roadmap)                                                                                                                        | Public edition — honest shipped vs planned, phased delivery                                  |
+| [Modularization v2.1](/vision/modularization)                                                                                                              | Package boundaries, dependency graph, intelligent MCP gateway                                |
+| **[IDP Platform (April 2026)](/vision/idp-platform)**                                                                                                      | End-to-end IDP: self-hosted + hosted, archive layer, Coneshare VDR, Merkle audit             |
+| [Immutable releases (Layer 0)](/vision/immutable-releases)                                                                                                 | Arweave bundles, Radicle, Rift, `clawql-release`, manifest schema                            |
+| [Contributor Technical Specification](/contributing/technical-specification)                                                                               | Implementation contracts, Effect-TS patterns, CI rules                                       |
+| [Deployment & Operations Guide](/deployment/operations-guide)                                                                                              | Shipped Helm ops — quick start, day-2, health                                                |
+| [Operator target architecture](../design/operator-target-architecture.md)                                                                                  | Planned tiers, CRD, verticals, NL ops (not shipped)                                          |
+| [Dashboard Agent Chat](../dashboard/agent-chat.md)                                                                                                         | Browser UI, SSE, vault threads, IDP attachment JSON contract                                 |
+| [Defense-in-Depth Security Guide](/security/defense-in-depth)                                                                                              | What to deploy — condensed operator reference                                                |
+| [Security curriculum](/security/best-practices)                                                                                                            | 32 modules — why and how to prove controls                                                   |
+| [Token efficiency (8 layers)](/architecture/token-efficiency)                                                                                              | Code Mode through model routing                                                              |
+| [DAOS Unified Architecture v2.7](/ouroboros/daos)                                                                                                          | **Vision / roadmap** — 7-layer platform, Manifest, PEP, Memory 2.0, Circuit Breaker          |
+| [Coordination layer spec](/ouroboros/specification)                                                                                                        | **Vision / roadmap** — transport + NSV/SGDOP, Diversity Dividends, Coordinator (not shipped) |
+| [DAOS build plan v2.7.1](/ouroboros/build-plan)                                                                                                            | **Vision / roadmap** — P0–P3 engineering contract                                            |

@@ -22,13 +22,18 @@ export default function DaosBuildPlanPage() {
           Ouroboros
         </Tag>
         <Tag color="zinc" variant="medium">
+          Vision / roadmap
+        </Tag>
+        <Tag color="zinc" variant="medium">
           Build plan
         </Tag>
       </div>
 
       <div className="not-prose mb-8">
         <Note>
-          <strong>Engineering contract.</strong> Generated from{' '}
+          <strong>Vision &amp; roadmap engineering contract.</strong> P0–P3
+          items including NSV, SGDOP, and model fingerprinting are{' '}
+          <strong>not shipped yet</strong>. Generated from{' '}
           <a
             href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/ouroboros/daos-build-plan-v2.7.1.md"
             className="font-medium text-inherit underline underline-offset-2"

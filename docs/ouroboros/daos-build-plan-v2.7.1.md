@@ -6,6 +6,8 @@
 
 **Related:** [DAOS Unified Architecture v2.7](./daos-unified-architecture-specification-v2.7.md) · [Coordination layer](./daos-coordination-layer-specification.md) · [Ouroboros library](./clawql-ouroboros.md) · [Modularization implementation status](../design/modularization-implementation-status.md)
 
+> **Vision & roadmap document.** This build plan defines the P0–P3 implementation contract for future DAOS capabilities. **NSV, SGDOP, model fingerprinting, the Coordinator, and related coordination primitives are not shipped yet** — they are sequenced here as engineering work ahead.
+
 ---
 
 ### 1. Executive Summary

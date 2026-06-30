@@ -6,6 +6,8 @@
 
 **Related:** [Coordination layer](./daos-coordination-layer-specification.md) · [Build plan v2.7.1](./daos-build-plan-v2.7.1.md) · [Ouroboros library](./clawql-ouroboros.md) · [Master enablement guide](../vision/clawql-master-enablement-guide.md) · [NATS JetStream](../deployment/helm.md)
 
+> **Vision & roadmap document.** This specification describes target design intent for the full DAOS platform. **NSV, SGDOP, model fingerprinting, the Coordinator, Diversity Dividends, Circuit Breaker, Command Deck, and full PEP ActionType enforcement are not shipped yet.** The shipped [`clawql-ouroboros`](./clawql-ouroboros.md) package today provides the evolutionary loop (seeds, ontology convergence gates, optional MCP tools) — not DAOS swarm coordination. Verify shipped status against [modularization implementation status](../design/modularization-implementation-status.md) before citing externally.
+
 ---
 
 ### Executive Summary
@@ -24,7 +26,7 @@ Four open-source agent runtimes ship as bundled options: **OpenClaw**, **Hermes*
 
 **Governance-as-Code** is a first-class design principle: all coordination tuning parameters and **ActionType contracts** live in the versioned, Merkle-anchored **Manifest**. **Policy Presets** provide validated starting configurations for common deployment archetypes. The **Manifest schema** is proposed as the **Universal Agent Manifest** open standard, with the standalone `clawql-manifest-validator` library enabling broad adoption across the agent ecosystem.
 
-**Implementation status**: Transport layer, Ouroboros foundations, Layer 0 tooling, and LGTMP observability are shipped. The Coordinator Watchdog, Circuit Breaker, Command Deck Action Views, Semantic Pruning, Diversity Dividends, Memory 2.0, and full ActionType PEP are in active development. Design intent and shipped status remain explicitly separated throughout.
+**Implementation status**: MCP transport, the `clawql-ouroboros` evolutionary loop library, Layer 0 tooling, and LGTMP observability are shipped. **NSV, SGDOP, model fingerprinting, the Coordinator, Diversity Dividends,** the Coordinator Watchdog, Circuit Breaker, Command Deck Action Views, Semantic Pruning, Memory 2.0, and full ActionType PEP are roadmap or in active development. Design intent and shipped status remain explicitly separated throughout.
 
 ---
 
@@ -32,15 +34,15 @@ Four open-source agent runtimes ship as bundled options: **OpenClaw**, **Hermes*
 
 The architecture enforces a strictly acyclic dependency graph. All cross-layer communication routes through the Intelligent Gateway (Layer 2). Verticals never import other verticals.
 
-| Layer | Name                               | Core Responsibility                                                    | Key Components                                                          |
-| ----- | ---------------------------------- | ---------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| **0** | Immutable Releases                 | Trust anchor & verifiable artifacts                                    | `clawql-release`, Arweave, Manifests, `clawql-manifest-validator`       |
-| **1** | Collaboration                      | Human + agent development                                              | Radicle + GitHub mirror                                                 |
-| **2** | Execution & Intelligent Gateway    | PEP & unified safe execution                                           | `clawql-api`, `clawql-core`, `clawql-auth`, ActionType enforcement      |
-| **3** | Memory & Documents                 | Persistent hybrid knowledge + semantic pruning + pre-pruning snapshots | `clawql-memory`, `clawql-documents`, PageIndex                          |
-| **4** | Strategic Coordination             | Diversity, convergence control, evolution, circuit breaker             | `clawql-ouroboros` (NSV + SGDOP + Fingerprinting + Diversity Dividends) |
-| **5** | Security & Compliance              | Zero-trust + air-gap breakout                                          | ATRClaims, Presidio, WORM audit, Tetragon                               |
-| **6** | Observability & Runtime Protection | Visibility + enforcement + Watchdog + Command Deck                     | LGTMP stack + Langfuse + Beyla + Falco                                  |
+| Layer | Name                               | Core Responsibility                                                    | Key Components                                                                                                                         |
+| ----- | ---------------------------------- | ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **0** | Immutable Releases                 | Trust anchor & verifiable artifacts                                    | `clawql-release`, Arweave, Manifests, `clawql-manifest-validator`                                                                      |
+| **1** | Collaboration                      | Human + agent development                                              | Radicle + GitHub mirror                                                                                                                |
+| **2** | Execution & Intelligent Gateway    | PEP & unified safe execution                                           | `clawql-api`, `clawql-core`, `clawql-auth`, ActionType enforcement                                                                     |
+| **3** | Memory & Documents                 | Persistent hybrid knowledge + semantic pruning + pre-pruning snapshots | `clawql-memory`, `clawql-documents`, PageIndex                                                                                         |
+| **4** | Strategic Coordination             | Diversity, convergence control, evolution, circuit breaker             | `clawql-ouroboros` evolutionary loop (shipped); DAOS coordination — NSV + SGDOP + model fingerprinting + Diversity Dividends (roadmap) |
+| **5** | Security & Compliance              | Zero-trust + air-gap breakout                                          | ATRClaims, Presidio, WORM audit, Tetragon                                                                                              |
+| **6** | Observability & Runtime Protection | Visibility + enforcement + Watchdog + Command Deck                     | LGTMP stack + Langfuse + Beyla + Falco                                                                                                 |
 
 ---
 
@@ -743,15 +745,17 @@ All Command Deck actions are appended to the WORM audit trail with operator iden
 
 **Shipped and available today**:
 
-- MCP transport layer (standard and advanced tiers)
-- Ouroboros foundations: NSV, SGDOP, fingerprinting hooks with TTL cache and peer-triggered invalidation
+- MCP transport layer (stdio/HTTP/gRPC)
+- `clawql-ouroboros` evolutionary loop library (seeds, ontology convergence gates, optional MCP tools when `CLAWQL_ENABLE_OUROBOROS=1`) — **not** DAOS NSV/SGDOP coordination
 - Layer 0 tooling: `clawql-release`, Arweave bundling, Manifest v1.1 schema draft
 - LGTMP observability reference stack
 - Tier 1 Docker Compose evaluation stack
 - Bundled runtimes: OpenClaw, Hermes (v0.17.0), Goose, Pi
 
-**In active development**:
+**Roadmap / in active development**:
 
+- NSV, SGDOP, and model fingerprinting coordination engine with TTL cache and peer-triggered invalidation
+- Coordinator (position events, dispersion calibration, recruitment)
 - Full gateway PEP with two-phase ActionType enforcement and state machine (P0-B)
 - `clawql-manifest-validator` with Domain-Separated Merkle logic and HSM provider interface (P0-A)
 - Coordinator Watchdog with dual-axis heartbeat verification and CAS-based KV writes (P1)
