@@ -7,17 +7,8 @@ import { spawn } from "node:child_process";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import type {
-  SandboxBridgeResponse,
-  SandboxCodeToolInput,
-  SandboxLanguage,
-} from "./sandbox-types.js";
-import {
-  defaultPersistence,
-  parseTimeoutMs,
-  resolveSandboxId,
-  snippetFilename,
-} from "./sandbox-shared.js";
+import type { SandboxBridgeResponse, SandboxCodeToolInput, SandboxLanguage } from "./types.js";
+import { defaultPersistence, parseTimeoutMs, resolveSandboxId, snippetFilename } from "./shared.js";
 
 const CONTAINER_WORKSPACE = "/workspace";
 

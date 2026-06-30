@@ -6,7 +6,7 @@ import type { OpenAPIDoc, Operation } from "./spec-loader.js";
 import { resetSpecCache } from "./spec-loader.js";
 import { handleMemoryIngestToolInput } from "./memory-ingest.js";
 import { handleMemoryRecallToolInput } from "./memory-recall.js";
-import { handleClawqlCodeToolInput } from "./sandbox-bridge-client.js";
+import { handleClawqlCodeToolInput } from "clawql-sandbox/plugin";
 import { resetClawqlApiForTests, setLoadSpecForTests } from "./clawql-api-adapters.js";
 import {
   handleClawqlExecuteToolInput,

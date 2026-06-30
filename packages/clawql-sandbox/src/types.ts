@@ -10,7 +10,7 @@ export type SandboxCodeToolInput = {
 };
 
 /** Which **`sandbox_exec`** path handled the run (JSON visibility for ops / audits). */
-export type SandboxExecBackendKind = "bridge" | "macos-seatbelt" | "docker";
+export type SandboxExecBackendKind = "kata" | "bridge" | "macos-seatbelt" | "docker";
 
 export type SandboxBridgeResponse = {
   stdout: string;

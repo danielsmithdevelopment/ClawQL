@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { callMacosSeatbeltSandbox } from "./sandbox-macos-seatbelt.js";
+import { callMacosSeatbeltSandbox } from "./macos-seatbelt.js";
 
 describe("sandbox-macos-seatbelt", () => {
   it("rejects non-darwin platforms", async () => {

@@ -3,32 +3,49 @@ import {
   parseExplicitSandboxBackendEnv,
   resolveSandboxBackendChoice,
   type SandboxBackendAutoDeps,
-} from "./sandbox-backend-selection.js";
+} from "./backend-selection.js";
 
 describe("parseExplicitSandboxBackendEnv", () => {
-  const saved = process.env.CLAWQL_SANDBOX_BACKEND;
+  const saved = {
+    backend: process.env.CLAWQL_SANDBOX_BACKEND,
+    k8sHost: process.env.KUBERNETES_SERVICE_HOST,
+  };
 
   beforeEach(() => {
     delete process.env.CLAWQL_SANDBOX_BACKEND;
+    delete process.env.KUBERNETES_SERVICE_HOST;
   });
 
   afterEach(() => {
-    if (saved === undefined) delete process.env.CLAWQL_SANDBOX_BACKEND;
-    else process.env.CLAWQL_SANDBOX_BACKEND = saved;
+    if (saved.backend === undefined) delete process.env.CLAWQL_SANDBOX_BACKEND;
+    else process.env.CLAWQL_SANDBOX_BACKEND = saved.backend;
+    if (saved.k8sHost === undefined) delete process.env.KUBERNETES_SERVICE_HOST;
+    else process.env.KUBERNETES_SERVICE_HOST = saved.k8sHost;
   });
 
-  it("defaults unset to bridge (non-breaking)", () => {
+  it("defaults unset off-cluster to bridge", () => {
     expect(parseExplicitSandboxBackendEnv()).toBe("bridge");
+  });
+
+  it("defaults unset in-cluster to auto (Kata-first)", () => {
+    process.env.KUBERNETES_SERVICE_HOST = "10.0.0.1";
+    expect(parseExplicitSandboxBackendEnv()).toBeNull();
   });
 
   it("auto enables cascade", () => {
     process.env.CLAWQL_SANDBOX_BACKEND = "auto";
     expect(parseExplicitSandboxBackendEnv()).toBeNull();
   });
+
+  it("accepts kata alias", () => {
+    process.env.CLAWQL_SANDBOX_BACKEND = "kata-containers";
+    expect(parseExplicitSandboxBackendEnv()).toBe("kata");
+  });
 });
 
 describe("resolveSandboxBackendChoice", () => {
   const depsAllTrue: SandboxBackendAutoDeps = {
+    kata: async () => true,
     seatbelt: () => true,
     docker: async () => true,
     bridge: () => true,
@@ -39,14 +56,20 @@ describe("resolveSandboxBackendChoice", () => {
     expect(r).toEqual({ ok: true, backend: "bridge" });
   });
 
-  it("auto prefers seatbelt when available", async () => {
-    const r = await resolveSandboxBackendChoice(null, depsAllTrue);
-    expect(r).toEqual({ ok: true, backend: "macos-seatbelt" });
+  it("explicit kata pins kata", async () => {
+    const r = await resolveSandboxBackendChoice("kata", depsAllTrue);
+    expect(r).toEqual({ ok: true, backend: "kata" });
   });
 
-  it("auto uses docker when seatbelt unavailable", async () => {
+  it("auto prefers kata when available", async () => {
+    const r = await resolveSandboxBackendChoice(null, depsAllTrue);
+    expect(r).toEqual({ ok: true, backend: "kata" });
+  });
+
+  it("auto uses docker when kata unavailable", async () => {
     const deps: SandboxBackendAutoDeps = {
-      seatbelt: () => false,
+      kata: async () => false,
+      seatbelt: () => true,
       docker: async () => true,
       bridge: () => true,
     };
@@ -56,6 +79,7 @@ describe("resolveSandboxBackendChoice", () => {
 
   it("auto uses bridge when only bridge is configured", async () => {
     const deps: SandboxBackendAutoDeps = {
+      kata: async () => false,
       seatbelt: () => false,
       docker: async () => false,
       bridge: () => true,
@@ -66,6 +90,7 @@ describe("resolveSandboxBackendChoice", () => {
 
   it("auto fails when nothing is available", async () => {
     const deps: SandboxBackendAutoDeps = {
+      kata: async () => false,
       seatbelt: () => false,
       docker: async () => false,
       bridge: () => false,

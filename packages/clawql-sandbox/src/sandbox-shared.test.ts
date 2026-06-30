@@ -1,10 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import {
-  defaultPersistence,
-  parseTimeoutMs,
-  resolveSandboxId,
-  snippetFilename,
-} from "./sandbox-shared.js";
+import { defaultPersistence, parseTimeoutMs, resolveSandboxId, snippetFilename } from "./shared.js";
 
 describe("sandbox-shared", () => {
   const saved: Record<string, string | undefined> = {};
