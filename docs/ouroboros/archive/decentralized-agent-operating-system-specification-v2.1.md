@@ -398,7 +398,7 @@ V_pool_new = (1 - eta) * V_pool_old + eta * V
 
 where `eta` governs how quickly the baseline adapts; too high and it chases noise, too low and it lags real shifts in swarm performance.
 
-The full reputation update for agent `i`, given Evaluator verdict `V` in `\{0, 1\}`:
+The full reputation update for agent `i`, given Evaluator verdict `V` in `{0, 1}`:
 
 ```
 delta_w_i = gamma * (S_i - S_bar) * (V - V_pool)
@@ -561,4 +561,4 @@ The transport layer guarantees durable, ordered, safely gated communication usin
 
 ---
 
-_For the shipped TypeScript library and MCP tools, see [`clawql-ouroboros.md`](/ouroboros). For platform context, see the [Vision & Roadmap document](/vision/roadmap)._
+_For the shipped TypeScript library and MCP tools, see [`clawql-ouroboros.md`](./clawql-ouroboros.md). For platform context, see the [Vision & Roadmap document](../vision/clawql-vision-roadmap.md)._

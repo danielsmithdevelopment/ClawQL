@@ -1,9 +1,8 @@
 /**
- * Copies the DAOS (Decentralized Agent Operating System) full specification
- * into an MDX fragment for /ouroboros/specification.
+ * Copies the DAOS build plan v2.7.1 into src/generated/ for /ouroboros/build-plan.
  *
- * Source: docs/ouroboros/decentralized-agent-operating-system-specification.md
- *   → src/generated/decentralized-agent-operating-system-spec-body.mdx
+ * Source: docs/ouroboros/daos-build-plan-v2.7.1.md
+ *   → src/generated/daos-build-plan-body.mdx
  */
 import { execSync } from 'node:child_process'
 import fs from 'node:fs'
@@ -13,21 +12,15 @@ import { fileURLToPath } from 'node:url'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const websiteRoot = path.resolve(__dirname, '..')
 const dstDir = path.join(websiteRoot, 'src/generated')
-const dst = path.join(dstDir, 'decentralized-agent-operating-system-spec-body.mdx')
-const srcRelative = path.join(
-  'docs',
-  'ouroboros',
-  'decentralized-agent-operating-system-specification.md',
-)
+const dst = path.join(dstDir, 'daos-build-plan-body.mdx')
+const srcRelative = path.join('docs', 'ouroboros', 'daos-build-plan-v2.7.1.md')
 
 const GH_MAIN = 'https://github.com/danielsmithdevelopment/ClawQL/blob/main'
 
 function findRepoRootWithDocs() {
   let dir = websiteRoot
   for (let i = 0; i < 10; i++) {
-    if (fs.existsSync(path.join(dir, 'docs'))) {
-      return dir
-    }
+    if (fs.existsSync(path.join(dir, 'docs'))) return dir
     const parent = path.dirname(dir)
     if (parent === dir) break
     dir = parent
@@ -59,18 +52,34 @@ function escapeMdxCurlyOutsideFences(body) {
     .join('\n')
 }
 
+function rewriteDaosLinks(body) {
+  return body
+    .replaceAll(
+      '](./daos-unified-architecture-specification-v2.7.md)',
+      '](/ouroboros/daos)',
+    )
+    .replaceAll(
+      '](./daos-coordination-layer-specification.md)',
+      '](/ouroboros/specification)',
+    )
+    .replaceAll('](./daos-build-plan-v2.7.1.md)', '](/ouroboros/build-plan)')
+    .replaceAll('](./clawql-ouroboros.md)', '](/ouroboros)')
+    .replaceAll(
+      '](../vision/clawql-master-enablement-guide.md)',
+      '](/vision/technical-enablement)',
+    )
+    .replaceAll('](../deployment/helm.md)', '](/helm')
+    .replaceAll(
+      '](../design/modularization-implementation-status.md)',
+      `](${GH_MAIN}/docs/design/modularization-implementation-status.md)`,
+    )
+    .replaceAll('](../../docs/', `](${GH_MAIN}/docs/`)
+    .replaceAll('](../docs/', `](${GH_MAIN}/docs/`)
+}
+
 function rewriteLinksForSite(body) {
   return escapeMdxCurlyOutsideFences(
-    escapeLessThanBeforeDigit(
-      body
-        .replaceAll('](./clawql-ouroboros.md)', '](/ouroboros)')
-        .replaceAll(
-          '](../vision/clawql-vision-roadmap.md)',
-          '](/vision/roadmap)',
-        )
-        .replaceAll('](../../docs/', `](${GH_MAIN}/docs/`)
-        .replaceAll('](../docs/', `](${GH_MAIN}/docs/`),
-    ),
+    escapeLessThanBeforeDigit(rewriteDaosLinks(body)),
   )
 }
 
@@ -82,19 +91,19 @@ const src = repoRoot ? path.join(repoRoot, srcRelative) : null
 if (!src || !fs.existsSync(src)) {
   if (fs.existsSync(dst)) {
     console.warn(
-      'sync-decentralized-agent-operating-system-spec-doc: source not found; keeping existing generated MDX',
+      'sync-daos-build-plan-doc: source not found; keeping existing generated MDX',
     )
     process.exit(0)
   }
   console.error(
-    'sync-decentralized-agent-operating-system-spec-doc: missing source and no generated MDX at',
+    'sync-daos-build-plan-doc: missing source and no generated MDX at',
     dst,
   )
   process.exit(1)
 }
 
 fs.writeFileSync(dst, rewriteLinksForSite(fs.readFileSync(src, 'utf8')), 'utf8')
-execSync(
-  'npx prettier --write src/generated/decentralized-agent-operating-system-spec-body.mdx',
-  { cwd: websiteRoot, stdio: 'inherit' },
-)
+execSync('npx prettier --write src/generated/daos-build-plan-body.mdx', {
+  cwd: websiteRoot,
+  stdio: 'inherit',
+})

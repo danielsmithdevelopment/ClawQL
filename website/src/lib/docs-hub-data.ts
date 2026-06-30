@@ -120,10 +120,17 @@ export const architectureHubCards: Array<ReferenceCard> = [
     icon: LinkIcon,
   }),
   card({
-    href: '/ouroboros/specification',
-    name: 'DAOS specification',
+    href: '/ouroboros/daos',
+    name: 'DAOS Unified Architecture',
     description:
-      'Decentralized Agent Operating System — protocol v2.1, HATEOAS approvals, NATS handoff.',
+      '7-layer platform v2.7: Manifest, PEP, Memory 2.0, Ouroboros, Circuit Breaker.',
+    icon: SquaresPlusIcon,
+  }),
+  card({
+    href: '/ouroboros/specification',
+    name: 'DAOS coordination layer',
+    description:
+      'NATS handoff, NSV/SGDOP diversity metrics, Diversity Dividends, Coordinator.',
     icon: SquaresPlusIcon,
   }),
   card({

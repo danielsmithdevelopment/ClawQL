@@ -120,6 +120,18 @@ function rewriteLinksForSite(body) {
           '](/architecture/token-efficiency)',
         )
         .replaceAll(
+          '](../ouroboros/daos-unified-architecture-specification-v2.7.md)',
+          '](/ouroboros/daos)',
+        )
+        .replaceAll(
+          '](../ouroboros/daos-coordination-layer-specification.md)',
+          '](/ouroboros/specification)',
+        )
+        .replaceAll(
+          '](../ouroboros/daos-build-plan-v2.7.1.md)',
+          '](/ouroboros/build-plan)',
+        )
+        .replaceAll(
           '](../ouroboros/decentralized-agent-operating-system-specification.md)',
           '](/ouroboros/specification)',
         )
