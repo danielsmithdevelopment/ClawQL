@@ -8,24 +8,24 @@ Template-ref **`submit`** only in v1 — agents start reviewed **`WorkflowTempla
 
 ## Required configuration
 
-| Variable | Purpose |
-| -------- | ------- |
-| `CLAWQL_ENABLE_WORKFLOW` | Register the tool |
+| Variable                              | Purpose                               |
+| ------------------------------------- | ------------------------------------- |
+| `CLAWQL_ENABLE_WORKFLOW`              | Register the tool                     |
 | `CLAWQL_WORKFLOW_NAMESPACE_ALLOWLIST` | Comma-separated namespaces (required) |
-| `CLAWQL_WORKFLOW_DEFAULT_NAMESPACE` | Default namespace when omitted |
+| `CLAWQL_WORKFLOW_DEFAULT_NAMESPACE`   | Default namespace when omitted        |
 
 Optional: `CLAWQL_WORKFLOW_KUBECONFIG` (dev), `CLAWQL_WORKFLOW_TEMPLATE_ALLOWLIST`, `CLAWQL_WORKFLOW_ARGO_UI_BASE_URL`, `CLAWQL_WORKFLOW_ALLOW_DELETE=1`.
 
 ## Operations
 
-| `operation` | Purpose |
-| ----------- | ------- |
-| `submit` | Create `Workflow` from `template_ref` + `parameters` |
-| `get` | Phase, condensed node summary |
-| `list` | List workflows (label / phase filters) |
-| `list_templates` | Catalog templates in namespace |
-| `logs` | Bounded pod log excerpt |
-| `delete` | When `CLAWQL_WORKFLOW_ALLOW_DELETE=1` |
+| `operation`      | Purpose                                              |
+| ---------------- | ---------------------------------------------------- |
+| `submit`         | Create `Workflow` from `template_ref` + `parameters` |
+| `get`            | Phase, condensed node summary                        |
+| `list`           | List workflows (label / phase filters)               |
+| `list_templates` | Catalog templates in namespace                       |
+| `logs`           | Bounded pod log excerpt                              |
+| `delete`         | When `CLAWQL_WORKFLOW_ALLOW_DELETE=1`                |
 
 ## Example: vault daily digest
 

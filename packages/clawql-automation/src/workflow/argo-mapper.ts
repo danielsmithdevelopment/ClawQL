@@ -87,16 +87,11 @@ function summarizeNodes(w: ArgoWorkflowObject): WorkflowNodeSummary[] | undefine
   return out.length ? out : undefined;
 }
 
-export function mapWorkflowToSummary(
-  w: ArgoWorkflowObject,
-  namespace: string
-): WorkflowSummary {
+export function mapWorkflowToSummary(w: ArgoWorkflowObject, namespace: string): WorkflowSummary {
   const name = workflowName(w);
   const baseUrl = getWorkflowArgoUiBaseUrl();
   const links =
-    baseUrl && name
-      ? { argo_ui: `${baseUrl}/workflows/${namespace}/${name}` }
-      : undefined;
+    baseUrl && name ? { argo_ui: `${baseUrl}/workflows/${namespace}/${name}` } : undefined;
   return {
     namespace,
     name,

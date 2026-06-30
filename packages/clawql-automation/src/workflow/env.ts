@@ -95,8 +95,7 @@ export function isTemplateAllowed(
 ): boolean {
   const allowlist = getWorkflowTemplateAllowlist();
   if (allowlist.length === 0) return true;
-  const key =
-    kind === "ClusterWorkflowTemplate" ? `cluster/${name}` : `${namespace ?? ""}/${name}`;
+  const key = kind === "ClusterWorkflowTemplate" ? `cluster/${name}` : `${namespace ?? ""}/${name}`;
   return allowlist.some((entry) => {
     if (entry === key) return true;
     if (entry.endsWith("/*") && key.startsWith(entry.slice(0, -1))) return true;

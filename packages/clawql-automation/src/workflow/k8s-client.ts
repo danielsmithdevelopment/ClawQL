@@ -2,12 +2,7 @@
  * Kubernetes client factory for Argo Workflows CRDs (`@kubernetes/client-node`).
  */
 
-import {
-  CoreV1Api,
-  CustomObjectsApi,
-  KubeConfig,
-  type V1Pod,
-} from "@kubernetes/client-node";
+import { CoreV1Api, CustomObjectsApi, KubeConfig, type V1Pod } from "@kubernetes/client-node";
 import { getWorkflowKubeconfigPath } from "./env.js";
 
 export type WorkflowK8sClients = {

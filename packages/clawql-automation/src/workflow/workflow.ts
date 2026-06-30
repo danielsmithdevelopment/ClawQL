@@ -10,11 +10,7 @@ import {
   type WorkflowTemplateRef,
 } from "./argo-mapper.js";
 import { ARGO_CRD, getWorkflowGenerateNamePrefix, resolveWorkflowNamespace } from "./env.js";
-import {
-  getWorkflowK8sClients,
-  readPodLogs,
-  type ArgoWorkflowObject,
-} from "./k8s-client.js";
+import { getWorkflowK8sClients, readPodLogs, type ArgoWorkflowObject } from "./k8s-client.js";
 import {
   getWorkflowLogTailMax,
   isNamespaceAllowed,
@@ -68,8 +64,7 @@ const workflowInputSchema = z.object(workflowToolSchema).superRefine((data, ctx)
     ) {
       ctx.addIssue({
         code: "custom",
-        message:
-          "WorkflowTemplate requires template_ref.namespace or top-level namespace",
+        message: "WorkflowTemplate requires template_ref.namespace or top-level namespace",
       });
     }
     const paramCount = Object.keys(data.parameters ?? {}).length;
@@ -85,11 +80,7 @@ const workflowInputSchema = z.object(workflowToolSchema).superRefine((data, ctx)
       }
     }
   }
-  if (
-    data.operation === "get" ||
-    data.operation === "delete" ||
-    data.operation === "logs"
-  ) {
+  if (data.operation === "get" || data.operation === "delete" || data.operation === "logs") {
     if (!data.name?.trim()) {
       ctx.addIssue({ code: "custom", message: `${data.operation} requires name` });
     }
@@ -118,8 +109,7 @@ function requireNamespace(
   if (!ns) {
     return {
       ok: false,
-      error:
-        "namespace is required (set namespace or CLAWQL_WORKFLOW_DEFAULT_NAMESPACE)",
+      error: "namespace is required (set namespace or CLAWQL_WORKFLOW_DEFAULT_NAMESPACE)",
     };
   }
   if (!isNamespaceAllowed(ns)) {
@@ -145,10 +135,7 @@ function resolveTemplateRef(
   };
 }
 
-async function getWorkflow(
-  namespace: string,
-  name: string
-): Promise<ArgoWorkflowObject> {
+async function getWorkflow(namespace: string, name: string): Promise<ArgoWorkflowObject> {
   const { customObjects } = await getWorkflowK8sClients();
   const res = await customObjects.getNamespacedCustomObject({
     group: ARGO_CRD.group,

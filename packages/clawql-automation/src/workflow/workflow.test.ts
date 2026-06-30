@@ -1,8 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import {
-  buildSubmitWorkflowBody,
-  mapWorkflowToSummary,
-} from "../argo-mapper.js";
+import { buildSubmitWorkflowBody, mapWorkflowToSummary } from "../argo-mapper.js";
 import {
   configureWorkflowK8sFactory,
   resetWorkflowK8sClientsForTests,
