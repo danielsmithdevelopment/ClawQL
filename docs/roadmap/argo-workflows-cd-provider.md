@@ -33,15 +33,15 @@ Add **optional** integration so agents use a dedicated MCP **`workflow`** tool (
 
 ## Resolved design questions (June 2026)
 
-| Question | Resolution |
-| -------- | ---------- |
-| **Spec source** | Dedicated **`workflow`** MCP tool with curated ops — not CRD OpenAPI via **`execute`** for Phase A. |
-| **Auth** | In-cluster SA (production) **and** **`CLAWQL_WORKFLOW_KUBECONFIG`** (dev). |
-| **Submit shape** | **Template-only** v1 — `WorkflowTemplate` / `ClusterWorkflowTemplate` + parameters. |
-| **K8s client** | **`@kubernetes/client-node`**. |
-| **Polling** | **`get`** in Phase A; **`wait`** in Phase A.2. |
-| **Correlation** | Label **`clawql.dev/correlation-id`** + **`clawql.dev/managed`**. |
-| **Version skew** | Minimum **Argo Workflows ≥ 3.4.0**. Argo CD minimum TBD at Phase B. |
+| Question         | Resolution                                                                                          |
+| ---------------- | --------------------------------------------------------------------------------------------------- |
+| **Spec source**  | Dedicated **`workflow`** MCP tool with curated ops — not CRD OpenAPI via **`execute`** for Phase A. |
+| **Auth**         | In-cluster SA (production) **and** **`CLAWQL_WORKFLOW_KUBECONFIG`** (dev).                          |
+| **Submit shape** | **Template-only** v1 — `WorkflowTemplate` / `ClusterWorkflowTemplate` + parameters.                 |
+| **K8s client**   | **`@kubernetes/client-node`**.                                                                      |
+| **Polling**      | **`get`** in Phase A; **`wait`** in Phase A.2.                                                      |
+| **Correlation**  | Label **`clawql.dev/correlation-id`** + **`clawql.dev/managed`**.                                   |
+| **Version skew** | Minimum **Argo Workflows ≥ 3.4.0**. Argo CD minimum TBD at Phase B.                                 |
 
 ## References
 
