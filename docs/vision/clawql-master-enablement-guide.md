@@ -82,7 +82,7 @@ Ouroboros governs multi-agent systems as a stochastic control problem.
 - Reputation system protects dissent and rewards alignment with verified outcomes.
 - Integrates with DAOS-style decentralized handoff (NATS JetStream + two-phase commit) where needed.
 
-_Full design: [DAOS specification](../ouroboros/decentralized-agent-operating-system-specification.md)._
+_Full design: [DAOS Unified Architecture v2.7](../ouroboros/daos-unified-architecture-specification-v2.7.md). Coordination deep dive: [Coordination layer spec](../ouroboros/daos-coordination-layer-specification.md)._
 
 ## VII. Token Efficiency (8 Compounding Layers)
 
@@ -192,7 +192,7 @@ Read the full documentation suite, deploy the Tier 1 stack, and begin building p
 | **[Plugin registry](../reference/clawql-plugin-registry.md)**                                        | Shipped vs planned plugins, MCP tools, enable flags                                 |
 | [Vision & Roadmap](./clawql-vision-roadmap.md)                                                       | Public edition — honest shipped vs planned, phased delivery                         |
 | [Modularization v2.1](./clawql-modularization-v2.md)                                                 | Package boundaries, dependency graph, intelligent MCP gateway                       |
-| **[IDP stack (April 2026)](./clawql-idp-stack.md)**                                                  | End-to-end document pipeline, Nextcloud, Coneshare, orchestration planes, redaction |
+| **[IDP Platform (April 2026)](./clawql-idp-platform.md)**                                            | End-to-end IDP: self-hosted + hosted, archive layer, Coneshare VDR, Merkle audit    |
 | [Immutable releases (Layer 0)](./clawql-hybrid-decentralized-github-alternative.md)                  | Arweave bundles, Radicle, Rift, `clawql-release`, manifest schema                   |
 | [Contributor Technical Specification](../contributing/clawql-contributor-technical-specification.md) | Implementation contracts, Effect-TS patterns, CI rules                              |
 | [Deployment & Operations Guide](../deployment/clawql-deployment-operations-guide.md)                 | Shipped Helm ops — quick start, day-2, health                                       |
@@ -201,4 +201,6 @@ Read the full documentation suite, deploy the Tier 1 stack, and begin building p
 | [Defense-in-Depth Security Guide](../security/clawql-defense-in-depth-security-guide.md)             | What to deploy — condensed operator reference                                       |
 | [Security curriculum](../security/security-best-practices-series/README.md)                          | 32 modules — why and how to prove controls                                          |
 | [Token efficiency (8 layers)](../architecture/clawql-token-efficiency.md)                            | Code Mode through model routing                                                     |
-| [DAOS specification](../ouroboros/decentralized-agent-operating-system-specification.md)             | Transport + strategic coordination layers                                           |
+| [DAOS Unified Architecture v2.7](../ouroboros/daos-unified-architecture-specification-v2.7.md)       | 7-layer platform, Manifest, PEP, Memory 2.0, Circuit Breaker                        |
+| [Coordination layer spec](../ouroboros/daos-coordination-layer-specification.md)                     | Transport + NSV/SGDOP, Diversity Dividends, Coordinator                             |
+| [DAOS build plan v2.7.1](../ouroboros/daos-build-plan-v2.7.1.md)                                     | P0–P3 engineering contract                                                          |

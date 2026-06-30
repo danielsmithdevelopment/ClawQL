@@ -5,7 +5,7 @@
 
 **Scope:** Agent Chat panel in `dashboard/` using shadcn/ui **MessageScroller**, **Message**, **Bubble**, **Attachment**, and **Marker** ([June 2026 chat components](https://ui.shadcn.com/docs/changelog/2026-06-chat-components)).
 
-**Related:** [IDP stack](../vision/clawql-idp-stack.md) · [Dashboard README](../../dashboard/README.md) · [OpenClaw IDP profile](../openclaw/openclaw-idp-skill-profile.md)
+**Related:** [IDP Platform](../vision/clawql-idp-platform.md) · [Dashboard README](../../dashboard/README.md) · [OpenClaw IDP profile](../openclaw/openclaw-idp-skill-profile.md)
 
 ---
 
@@ -68,4 +68,4 @@ The sections below preserved the original integration plan; behavior may differ 
 
 - shadcn/ui chat changelog: https://ui.shadcn.com/docs/changelog/2026-06-chat-components
 - Canonical guide: [`docs/dashboard/agent-chat.md`](../dashboard/agent-chat.md)
-- IDP stack: [`clawql-idp-stack.md`](../vision/clawql-idp-stack.md)
+- IDP Platform: [`clawql-idp-platform.md`](../vision/clawql-idp-platform.md)

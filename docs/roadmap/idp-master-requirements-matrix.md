@@ -2,7 +2,7 @@
 
 **Purpose:** Map the **long-term intelligent document processing (IDP)** vision (local-first, agentic, observable, GitOps-ready) to **shipped code**, **GitHub issues**, and **explicit gaps**. Use this with [OpenClaw IDP skill profile](../openclaw/openclaw-idp-skill-profile.md) and [gap closure plan (prioritized)](gap-closure-plan-prioritized-2026.md).
 
-**Product vision canon:** [`docs/vision/clawql-master-enablement-guide.md`](../vision/clawql-master-enablement-guide.md) (companions: modularization v1.9 / v2.0). **Stack narrative (April 2026):** [`clawql-idp-stack.md`](../vision/clawql-idp-stack.md) — IDP components, defense-in-depth redaction, orchestration planes.
+**Product vision canon:** [`docs/vision/clawql-master-enablement-guide.md`](../vision/clawql-master-enablement-guide.md) (companions: modularization v1.9 / v2.0). **IDP platform design (April 2026):** [`clawql-idp-platform.md`](../vision/clawql-idp-platform.md) — self-hosted vs hosted, ClawQL-native archive layer, competitive positioning. **Prior stack narrative (archived):** [`archive/clawql-idp-stack-april-2026.md`](../vision/archive/clawql-idp-stack-april-2026.md).
 
 **Epic (checklist only, no extra scope):** [#259](https://github.com/danielsmithdevelopment/ClawQL/issues/259) — rolls up **#241–#258**.
 
@@ -25,10 +25,10 @@
 | Master reference area | Requirement                                                                     | Status                    | Primary tracking                                                                                                                                                                                                                |
 | --------------------- | ------------------------------------------------------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Ingestion**         | Tika, Gotenberg, Stirling, Paperless, Onyx, Nextcloud, Coneshare (Helm + specs) | **Shipped**               | [`idp-pipeline.md`](../providers/idp-pipeline.md), [IDP profile](../openclaw/openclaw-idp-skill-profile.md)                                                                                                                     |
-| **Ingestion**         | **`clawql-documents` automated pipeline runner** (Merkle, hooks, retries)       | **Gap**                   | [`clawql-idp-stack.md`](../vision/clawql-idp-stack.md) §3, [#307](https://github.com/danielsmithdevelopment/ClawQL/issues/307) — **`DEFAULT_IDP_PIPELINE` recipe shipped**                                                      |
+| **Ingestion**         | **`clawql-documents` automated pipeline runner** (Merkle, hooks, retries)       | **Gap**                   | [`clawql-idp-platform.md`](../vision/clawql-idp-platform.md), [#307](https://github.com/danielsmithdevelopment/ClawQL/issues/307) — **`DEFAULT_IDP_PIPELINE` recipe shipped**                                                   |
 | **Ingestion**         | Introspection refresh for all doc providers                                     | **Partial**               | [#125](https://github.com/danielsmithdevelopment/ClawQL/issues/125)                                                                                                                                                             |
-| **Privacy**           | **Stirling-PDF document redaction** (upstream of agents)                        | **Partial**               | Helm + Stirling provider; orchestration in **`clawql-documents`** gap; [`clawql-idp-stack.md`](../vision/clawql-idp-stack.md) §11.1                                                                                             |
-| **Privacy**           | **Presidio agent I/O redaction** (MCP/Panguard gateway)                         | **Partial**               | Panguard vision, enablement guide; [#245](https://github.com/danielsmithdevelopment/ClawQL/issues/245) (sparse-MoE adjacency); [`clawql-idp-stack.md`](../vision/clawql-idp-stack.md) §11.1                                     |
+| **Privacy**           | **Stirling-PDF document redaction** (upstream of agents)                        | **Partial**               | Helm + Stirling provider; orchestration in **`clawql-documents`** gap; [`clawql-idp-platform.md`](../vision/clawql-idp-platform.md) § Security                                                                                  |
+| **Privacy**           | **Presidio agent I/O redaction** (MCP/Panguard gateway)                         | **Partial**               | Panguard vision, enablement guide; [#245](https://github.com/danielsmithdevelopment/ClawQL/issues/245) (sparse-MoE adjacency); [`clawql-idp-platform.md`](../vision/clawql-idp-platform.md) § Security                          |
 | **Privacy**           | Local sparse-MoE mask before extraction                                         | **Partial**               | [#245](https://github.com/danielsmithdevelopment/ClawQL/issues/245)                                                                                                                                                             |
 | **Extraction**        | LangExtract (schema + char grounding + HTML viz)                                | **Partial**               | [#246](https://github.com/danielsmithdevelopment/ClawQL/issues/246)                                                                                                                                                             |
 | **Classification**    | Docling MCP + fine-tuned classifier                                             | **Partial**               | [#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248)                                                                                                                                                             |
@@ -70,7 +70,7 @@
 - **Merkle / audit attestations** in IDP chains: [#114](https://github.com/danielsmithdevelopment/ClawQL/issues/114), [#115](https://github.com/danielsmithdevelopment/ClawQL/issues/115), [#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89) (audit tool).
 - **Istio / ambient** lab: Docker Desktop observability doc + ADR 0003.
 - **Sandbox** execution: [#207](https://github.com/danielsmithdevelopment/ClawQL/issues/207), `CLAWQL_ENABLE_SANDBOX`.
-- **Defense-in-depth redaction model** (Stirling document stage vs Presidio agent I/O): [`clawql-idp-stack.md`](../vision/clawql-idp-stack.md) §11.1 — not a duplicate row; matrix tracks implementation per layer above.
+- **Defense-in-depth redaction model** (Stirling document stage vs Presidio agent I/O): [`clawql-idp-platform.md`](../vision/clawql-idp-platform.md) § Security — not a duplicate row; matrix tracks implementation per layer above.
 
 ---
 
@@ -85,4 +85,4 @@
 
 ## Maintenance
 
-When the master reference changes, update this table, [`clawql-idp-stack.md`](../vision/clawql-idp-stack.md), and the **Primary tracking** links. Prefer **one** canonical issue per row; split only when blast radius or repo boundary demands it.
+When the master reference changes, update this table, [`clawql-idp-platform.md`](../vision/clawql-idp-platform.md), and the **Primary tracking** links. Prefer **one** canonical issue per row; split only when blast radius or repo boundary demands it.

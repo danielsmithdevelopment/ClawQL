@@ -29,7 +29,9 @@ Long pages under `src/generated/` are copied from repo `docs/` at **prebuild** /
 | `/vision/roadmap`              | `docs/vision/clawql-vision-roadmap.md` (**public edition — start here**)  | `scripts/sync-clawql-vision-roadmap-doc.mjs`    |
 | `/contributing/technical-specification` | `docs/contributing/clawql-contributor-technical-specification.md` | `scripts/sync-clawql-contributor-technical-spec-doc.mjs` |
 | `/deployment/operations-guide` | `docs/deployment/clawql-deployment-operations-guide.md` | `scripts/sync-clawql-deployment-operations-guide-doc.mjs` |
-| `/ouroboros/specification` | `docs/ouroboros/decentralized-agent-operating-system-specification.md` | `scripts/sync-decentralized-agent-operating-system-spec-doc.mjs` |
+| `/ouroboros/daos` | `docs/ouroboros/daos-unified-architecture-specification-v2.7.md` | `scripts/sync-daos-unified-architecture-spec-doc.mjs` |
+| `/ouroboros/specification` | `docs/ouroboros/daos-coordination-layer-specification.md` | `scripts/sync-daos-coordination-layer-spec-doc.mjs` |
+| `/ouroboros/build-plan` | `docs/ouroboros/daos-build-plan-v2.7.1.md` | `scripts/sync-daos-build-plan-doc.mjs` |
 | `/architecture/token-efficiency` | `docs/architecture/clawql-token-efficiency.md` | `scripts/sync-clawql-token-efficiency-doc.mjs` |
 | `/vision/technical-enablement` | `docs/vision/clawql-master-enablement-guide.md` (full technical reference)| `scripts/sync-clawql-master-enablement-doc.mjs` |
 | `/vision/modularization`       | `docs/vision/clawql-modularization-v2.md` (companion)                     | `scripts/sync-clawql-modularization-doc.mjs`    |

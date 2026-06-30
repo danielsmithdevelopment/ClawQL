@@ -1,6 +1,6 @@
 # OpenClaw IDP skill profile (ClawQL document pipeline)
 
-This is the **canonical** operator + agent contract for **OpenClaw-triggered intelligent document processing (IDP)** on ClawQL MCP. It satisfies **[#227](https://github.com/danielsmithdevelopment/ClawQL/issues/227)**. End-to-end OpenClaw install + MCP registration: **[`using-openclaw-with-clawql.md`](using-openclaw-with-clawql.md)**. Bootstrap wiring and smokes: **[`clawql-bootstrap.md`](clawql-bootstrap.md)** ([#226](https://github.com/danielsmithdevelopment/ClawQL/issues/226)). Umbrella tracking: **[#128](https://github.com/danielsmithdevelopment/ClawQL/issues/128)**. **Epic checklist (IDP + platform #241–#258):** [#259](https://github.com/danielsmithdevelopment/ClawQL/issues/259).
+This is the **canonical** operator + agent contract for **OpenClaw-triggered intelligent document processing (IDP)** on ClawQL MCP. It satisfies **[#227](https://github.com/danielsmithdevelopment/ClawQL/issues/227)**. **Product design:** [IDP Platform](../vision/clawql-idp-platform.md). End-to-end OpenClaw install + MCP registration: **[`using-openclaw-with-clawql.md`](using-openclaw-with-clawql.md)**. Bootstrap wiring and smokes: **[`clawql-bootstrap.md`](clawql-bootstrap.md)** ([#226](https://github.com/danielsmithdevelopment/ClawQL/issues/226)). Umbrella tracking: **[#128](https://github.com/danielsmithdevelopment/ClawQL/issues/128)**. **Epic checklist (IDP + platform #241–#258):** [#259](https://github.com/danielsmithdevelopment/ClawQL/issues/259).
 
 ## Profile summary
 

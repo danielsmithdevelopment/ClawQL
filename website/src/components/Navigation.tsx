@@ -265,6 +265,10 @@ export const navigation: Array<NavGroup> = [
       { title: 'Architecture hub', href: '/architecture' },
       { title: 'Vision & Roadmap', href: '/vision/roadmap' },
       {
+        title: 'IDP Platform',
+        href: '/vision/idp-platform',
+      },
+      {
         title: 'Master enablement guide',
         href: '/vision/technical-enablement',
       },
@@ -274,7 +278,10 @@ export const navigation: Array<NavGroup> = [
         title: 'Immutable releases (Layer 0)',
         href: '/vision/immutable-releases',
       },
-      { title: 'DAOS specification', href: '/ouroboros/specification' },
+      { title: 'DAOS Unified Architecture', href: '/ouroboros/daos' },
+      { title: 'Coordination layer', href: '/ouroboros/specification' },
+      { title: 'DAOS build plan', href: '/ouroboros/build-plan' },
+      { title: 'Ouroboros library', href: '/ouroboros' },
       { title: 'Slide deck', href: '/vision/slide-deck' },
     ],
   },

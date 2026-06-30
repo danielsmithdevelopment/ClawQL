@@ -4,7 +4,13 @@ ClawQL ships **seven bundled document vendors** for intelligent document process
 
 **Canonical recipe:** `DEFAULT_IDP_PIPELINE` in **`packages/clawql-documents`** (`idp-pipeline.ts`) — Nextcloud intake → Tika → Gotenberg → Stirling → Paperless → Onyx → Nextcloud sync → Coneshare share/VDR.
 
-**Related:** [OpenClaw IDP skill profile](../openclaw/openclaw-idp-skill-profile.md) · [IDP stack vision](../vision/clawql-idp-stack.md) · [Requirements matrix](../roadmap/idp-master-requirements-matrix.md) · [Agent chat contract](../dashboard/agent-chat.md) · [Helm](../../charts/clawql-mcp/README.md)
+**Related:** [IDP Platform vision](../vision/clawql-idp-platform.md) · [OpenClaw IDP skill profile](../openclaw/openclaw-idp-skill-profile.md) · [Requirements matrix](../roadmap/idp-master-requirements-matrix.md) · [Agent chat contract](../dashboard/agent-chat.md) · [Helm](../../charts/clawql-mcp/README.md)
+
+---
+
+## Deployment models
+
+ClawQL supports **self-hosted** (full data sovereignty via Helm) and **managed hosted** (tenant-isolated SaaS) deployments. Both run the same pipeline logic; the hosted plan uses the **ClawQL-native archive layer** (Nextcloud + Postgres metadata + Onyx) instead of Paperless-ngx (GPL-3.0). Self-hosted operators may still enable Paperless via Helm. See [IDP Platform § Deployment models](../vision/clawql-idp-platform.md#deployment-models) and [§ ClawQL Archive Layer](../vision/clawql-idp-platform.md#stage-4-clawql-archive-layer--storage-metadata-and-retrieval).
 
 ---
 
@@ -20,7 +26,7 @@ Nextcloud (inbox) → Tika → Gotenberg → Stirling → Paperless → Onyx →
 | Extract | **`tika`** | Text + metadata from 1,000+ formats | `documentPipeline.tika` |
 | Normalize | **`gotenberg`** | Office/HTML → PDF | `documentPipeline.gotenberg` |
 | Redact / fix PDF | **`stirling`** | PII redaction, split/merge | `documentPipeline.stirling` |
-| Archive | **`paperless`** | DMS, OCR, tags | `documentPipeline.paperless` |
+| Archive | **`paperless`** (self-hosted optional) or **ClawQL archive layer** (Nextcloud + Postgres + Onyx — default / hosted) | DMS or native archive | `documentPipeline.paperless` (optional) · `idpCollaboration.nextcloud` |
 | Enterprise search | **`onyx`** | Hybrid search + ingestion API | `onyx.enabled` |
 | Secure sharing | **`coneshare`** | VDR, share links, viewer webhook | `idpCollaboration.coneshare` |
 

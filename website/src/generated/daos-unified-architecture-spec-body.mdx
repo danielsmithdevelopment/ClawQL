@@ -1,0 +1,790 @@
+# ClawQL / Decentralized Agent Operating System (DAOS)
+
+## Unified Architecture Specification
+
+### Version 2.7 · June 2026
+
+**Related:** [Coordination layer](/ouroboros/specification) · [Build plan v2.7.1](/ouroboros/build-plan) · [Ouroboros library](/ouroboros) · [Master enablement guide](/vision/technical-enablement) · [NATS JetStream](/helm
+
+---
+
+### Executive Summary
+
+ClawQL is a production-grade **Decentralized Agent Operating System** that provides the missing infrastructure layer for autonomous agents: persistent memory, verifiable releases, uniform security, strategic swarm coordination, and **governed action execution**.
+
+It solves three core failures in current agent systems:
+
+- Ephemeral state and loss of institutional knowledge
+- Lack of verifiable provenance for artifacts and decisions
+- Correlated errors and convergence in multi-agent systems
+
+The system is built around a **7-layer architecture** (Layers 0–6) with a single intelligent gateway serving as the universal surface and Policy Enforcement Point (PEP). Layer 0 functions as the immutable trust anchor. All components are modular, with negligible runtime overhead when disabled.
+
+Four open-source agent runtimes ship as bundled options: **OpenClaw**, **Hermes** (by Nous Research), **Goose** (by Block), and **Pi**. Each can be used standalone or as a building block inside ClawQL's coordination layer.
+
+**Governance-as-Code** is a first-class design principle: all coordination tuning parameters and **ActionType contracts** live in the versioned, Merkle-anchored **Manifest**. **Policy Presets** provide validated starting configurations for common deployment archetypes. The **Manifest schema** is proposed as the **Universal Agent Manifest** open standard, with the standalone `clawql-manifest-validator` library enabling broad adoption across the agent ecosystem.
+
+**Implementation status**: Transport layer, Ouroboros foundations, Layer 0 tooling, and LGTMP observability are shipped. The Coordinator Watchdog, Circuit Breaker, Command Deck Action Views, Semantic Pruning, Diversity Dividends, Memory 2.0, and full ActionType PEP are in active development. Design intent and shipped status remain explicitly separated throughout.
+
+---
+
+### 1. The 7-Layer Architecture (Layers 0–6)
+
+The architecture enforces a strictly acyclic dependency graph. All cross-layer communication routes through the Intelligent Gateway (Layer 2). Verticals never import other verticals.
+
+| Layer | Name                               | Core Responsibility                                                    | Key Components                                                          |
+| ----- | ---------------------------------- | ---------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| **0** | Immutable Releases                 | Trust anchor & verifiable artifacts                                    | `clawql-release`, Arweave, Manifests, `clawql-manifest-validator`       |
+| **1** | Collaboration                      | Human + agent development                                              | Radicle + GitHub mirror                                                 |
+| **2** | Execution & Intelligent Gateway    | PEP & unified safe execution                                           | `clawql-api`, `clawql-core`, `clawql-auth`, ActionType enforcement      |
+| **3** | Memory & Documents                 | Persistent hybrid knowledge + semantic pruning + pre-pruning snapshots | `clawql-memory`, `clawql-documents`, PageIndex                          |
+| **4** | Strategic Coordination             | Diversity, convergence control, evolution, circuit breaker             | `clawql-ouroboros` (NSV + SGDOP + Fingerprinting + Diversity Dividends) |
+| **5** | Security & Compliance              | Zero-trust + air-gap breakout                                          | ATRClaims, Presidio, WORM audit, Tetragon                               |
+| **6** | Observability & Runtime Protection | Visibility + enforcement + Watchdog + Command Deck                     | LGTMP stack + Langfuse + Beyla + Falco                                  |
+
+---
+
+### 2. Layer 0: Immutable Releases (Trust Anchor)
+
+Every official release is a permanent Arweave bundle containing source, images, SBOMs, signatures, attestations, and the structured **Manifest**.
+
+#### 2.1 Manifest as Policy-as-Code and Proposed Open Standard
+
+The Manifest is the atomic unit of trust in ClawQL. Every ActionType contract, policy parameter, and permission is anchored to a single Merkle root, making the entire lifecycle chain of custody verifiable by any party with access to the root. An operator, an admission controller, or an autonomous agent can verify the full provenance of any decision by walking that root.
+
+The **Universal Agent Manifest** is being developed as an open standard with community governance, versioning, and explicit extension points. The goal is cross-platform adoption: any agent framework implementing the schema gains interoperable identity, provenance, and policy enforcement without requiring ClawQL's full stack.
+
+#### 2.2 Manifest Validator (`clawql-manifest-validator`)
+
+A standalone, dependency-free library published separately from the ClawQL stack. It is the canonical reference implementation: ClawQL's own gateway uses it as a library rather than reimplementing validation logic, so third-party runtimes adopting the Universal Manifest schema run identical checks.
+
+**Validation scope**:
+
+- Schema conformance against the versioned Manifest schema
+- Merkle root integrity, including Domain-Separated ActionLeaves (see 2.3)
+- HSM signature verification for `base_model_hsm_signature` and breakout authorization signatures
+- Policy Block parameter range enforcement at parse time — invalid values (e.g., `kappa > 1.0`, `nsv_crit > 1.0`, `eta` outside (0,1)) are caught before they propagate to runtime
+- Preset resolution: expands named preset, applies per-field overrides, validates the result
+- ActionType contract completeness and internal consistency
+
+The validator ships a `MockHSMProvider` for testing that accepts a pre-loaded key map, keeping the library dependency-free in production while fully testable in isolation.
+
+#### 2.3 Domain-Separated Merkle Binding for ActionTypes
+
+Standard Merkle trees are vulnerable to action injection: an attacker who substitutes an action definition after manifest publication cannot be detected from the root hash alone unless the binding is domain-separated. ClawQL prevents this by computing a typed ActionLeaf for each ActionType:
+
+```
+ActionLeaf = SHA-256("CLAWQL_ACTION_V1" || CanonicalJSON(action))
+```
+
+The domain prefix `"CLAWQL_ACTION_V1"` prevents cross-protocol hash collisions and makes the binding version-explicit. ActionLeaves are sorted and incorporated into the Manifest Merkle root alongside other domain-separated leaves (Identity, Policy, Provenance). The validator recomputes and verifies the root on every load; any tampered or unrecognized action causes a fail-closed rejection before the gateway processes the request.
+
+#### 2.4 Manifest Schema Version History
+
+The Manifest schema is versioned independently of the ClawQL platform version.
+
+- **v1.0**: Established core structure — identity, provenance, permissions, policy coordination block, and Policy Presets.
+- **v1.1** (current): Adds the `actions` block with first-class ActionType contracts, Domain-Separated Merkle binding over ActionLeaves, `governance` and `side_effects` fields per ActionType, and `circuit_breaker_approval_quorum` in the Policy Block. Manifests declaring `manifest_version: "1.0"` remain valid under the v1.1 validator; they are treated as having an empty `actions` block and all actions default to the legacy safe/high-impact classification. Manifests declaring `manifest_version: "1.1"` must include fully specified ActionTypes for any non-safe operation.
+
+#### 2.5 Manifest Structure
+
+```yaml
+manifest_version: '1.1'
+merkle_root: '<root hash over all domain-separated leaves>'
+
+identity:
+  agent_id: '<stable identifier>'
+  runtime: 'hermes|openclaw|goose|pi|custom'
+  runtime_version: '<semver>'
+  model_family: '<fingerprint label>'
+  coordinator_key_ref: '<HSM key reference for ReputationUpdate HMAC verification>'
+
+provenance:
+  artifact_cids: [...]
+  build_source: '<Rift snapshot or git-worktree ref>'
+  base_model_weight_hash: '<hash>'
+  base_model_hsm_signature: '<HSM sig>'
+
+permissions:
+  tool_use: [...]
+  classification_level: 'standard|sensitive|restricted|high'
+  processing_purpose: '<explicit purpose string>'
+
+policy:
+  preset: 'finance-compliance-high|research-exploration-high|software-dev-balanced|custom'
+  required_signatures: <N>
+  canary_rollout: <bool>
+  rollback_rules: '<policy ref>'
+  compatible_policy_version: '<semver range>'
+
+  coordination:
+    nsv_crit: <float>
+    sgdop_eigenvalue_floor: <float>
+    s_bar: <float> # anisotropy correction baseline
+    gamma: <float> # reputation learning rate
+    eta: <float> # V_pool decay rate
+    tau: <float> # softmax temperature
+    kappa: <float> # dividend-to-floor scaling
+    lambda_d: <float> # dividend decay rate
+    d_crit: <float> # blind-spot contribution threshold
+    d_crit_hysteresis: <float> # hysteresis band around d_crit
+    w_consistency: <int> # rounds required for dividend accrual
+    variance_ceiling: <float> # jitter dampening ceiling
+    enable_contribution_isolation: <bool> # optional; adds Coordinator compute cost
+    fingerprint_ttl_hours: <int>
+    fingerprint_confidence_floor: <float>
+    pruning_context_threshold: <float>
+    pruning_retain_turns: <int>
+    max_distillation_depth: <int> # default: 2; prevents recursive distillation loops
+
+    circuit_breaker:
+      watchdog_window_seconds: <int>
+      signal_absence_threshold: <int>
+      full_absence_threshold: <int>
+      circuit_breaker_approval_quorum: <int> # quorum for Conservative Mode-promoted actions
+
+    breakout_authorization:
+      required_signers: <N>
+      total_signers: <M>
+
+    memory:
+      fidelity_high_threshold: <float> # default: 0.90
+      fidelity_low_threshold: <float> # default: 0.75
+      retention_days_standard: <int> # default: 30
+      retention_days_extended: <int> # default: 60
+      retention_days_maximum: <int> # default: 90
+
+actions:
+  - id: 'asset.transfer_sensitive'
+    version: '1.3.0'
+    description: 'Transfer ownership of a sensitive asset between accounts.'
+    input_schema:
+      type: object
+      properties:
+        from_account: { type: string }
+        to_account: { type: string }
+        asset_id: { type: string }
+        amount: { type: number, minimum: 0 }
+      required: [from_account, to_account, asset_id, amount]
+    output_schema:
+      type: object
+      properties:
+        transaction_id: { type: string }
+        status: { type: string, enum: [pending, confirmed, rejected] }
+    governance:
+      classification: 'restricted'
+      risk_tier: 5
+      requires_approval: true
+      approval_quorum: 3
+      requires_two_phase_commit: true
+      authorized_roles: [finance-agent, compliance-officer]
+      max_impact:
+        currency: 'USD'
+        value: 1000000
+    side_effects:
+      - object: 'asset'
+        operation: 'transfer_ownership'
+        state_transition: 'owned_by:from_account → owned_by:to_account'
+        requires_confirmation: true
+        reversible: false
+    execution:
+      handler: 'finance.transfer_handler'
+      timeout_seconds: 30
+      retry_policy: none
+```
+
+#### 2.6 Policy Presets
+
+Named starting configurations for common deployment archetypes. The validator expands the preset, applies per-field overrides, and validates the result. `custom` preset requires a complete `policy.coordination` block with no omitted fields.
+
+**`finance-compliance-high`**: Tight convergence detection, high fingerprint confidence, short TTLs, conservative circuit breaker thresholds, high N-of-M breakout authorization. Intended for regulated workloads where auditability and model-family diversity certification are primary requirements.
+
+```yaml
+nsv_crit: 0.35
+sgdop_eigenvalue_floor: 1e-5
+s_bar: <calibrated per embeddingModelVersion>
+gamma: 0.05
+eta: 0.02
+tau: 0.3
+kappa: 0.1
+lambda_d: 0.05
+d_crit: 0.7
+d_crit_hysteresis: 0.02
+w_consistency: 5
+variance_ceiling: 0.15
+enable_contribution_isolation: true
+fingerprint_ttl_hours: 6
+fingerprint_confidence_floor: 0.97
+pruning_context_threshold: 0.70
+pruning_retain_turns: 20
+max_distillation_depth: 2
+circuit_breaker:
+  watchdog_window_seconds: 30
+  signal_absence_threshold: 2
+  full_absence_threshold: 4
+  circuit_breaker_approval_quorum: 3
+breakout_authorization:
+  required_signers: 3
+  total_signers: 5
+memory:
+  fidelity_high_threshold: 0.95
+  fidelity_low_threshold: 0.85
+  retention_days_standard: 30
+  retention_days_extended: 60
+  retention_days_maximum: 90
+```
+
+**`research-exploration-high`**: Loose convergence thresholds, aggressive Diversity Dividend accrual, long fingerprint TTLs, tolerant circuit breaker thresholds. Intended for creative and research workloads where broad exploration takes priority over tight convergence control.
+
+```yaml
+nsv_crit: 0.15
+sgdop_eigenvalue_floor: 1e-6
+s_bar: <calibrated per embeddingModelVersion>
+gamma: 0.15
+eta: 0.10
+tau: 1.5
+kappa: 0.25
+lambda_d: 0.02
+d_crit: 0.4
+d_crit_hysteresis: 0.03
+w_consistency: 2
+variance_ceiling: 0.35
+enable_contribution_isolation: false
+fingerprint_ttl_hours: 48
+fingerprint_confidence_floor: 0.80
+pruning_context_threshold: 0.88
+pruning_retain_turns: 6
+max_distillation_depth: 2
+circuit_breaker:
+  watchdog_window_seconds: 120
+  signal_absence_threshold: 5
+  full_absence_threshold: 10
+  circuit_breaker_approval_quorum: 1
+breakout_authorization:
+  required_signers: 1
+  total_signers: 3
+memory:
+  fidelity_high_threshold: 0.85
+  fidelity_low_threshold: 0.70
+  retention_days_standard: 30
+  retention_days_extended: 60
+  retention_days_maximum: 90
+```
+
+**`software-dev-balanced`**: Moderate values across the board for mixed read-heavy and occasional high-impact tool use. Default choice for general-purpose software development agents, including Pi-based coding workflows.
+
+```yaml
+nsv_crit: 0.22
+sgdop_eigenvalue_floor: 1e-6
+s_bar: <calibrated per embeddingModelVersion>
+gamma: 0.10
+eta: 0.05
+tau: 0.8
+kappa: 0.15
+lambda_d: 0.03
+d_crit: 0.55
+d_crit_hysteresis: 0.02
+w_consistency: 3
+variance_ceiling: 0.25
+enable_contribution_isolation: false
+fingerprint_ttl_hours: 24
+fingerprint_confidence_floor: 0.90
+pruning_context_threshold: 0.80
+pruning_retain_turns: 10
+max_distillation_depth: 2
+circuit_breaker:
+  watchdog_window_seconds: 60
+  signal_absence_threshold: 3
+  full_absence_threshold: 6
+  circuit_breaker_approval_quorum: 2
+breakout_authorization:
+  required_signers: 2
+  total_signers: 3
+memory:
+  fidelity_high_threshold: 0.90
+  fidelity_low_threshold: 0.75
+  retention_days_standard: 30
+  retention_days_extended: 60
+  retention_days_maximum: 90
+```
+
+---
+
+### 3. Layer 1: Collaboration
+
+Human and agent co-development with full provenance tracking. ActionType updates are staged, reviewed, and attested before reaching Layer 0 — no action contract enters the Manifest without passing through this review gate. Radicle provides sovereign P2P collaboration; GitHub mirroring supports enterprise workflows. Every commit carries contributor and reviewer attestations that feed into the Manifest provenance block, preserving a full lineage from code change to deployed ActionType.
+
+---
+
+### 4. Layer 2: Intelligent Gateway & Governed Action Engine (`clawql-api`)
+
+The Gateway is the **Policy Enforcement Point (PEP)**. All agent requests pass through it regardless of runtime. No action executes without completing the full governed action flow.
+
+**Core capabilities**:
+
+- Unified `search()` / `execute()` API
+- Code Mode (default): ~99.8% input token reduction via SDK generation
+- Mandatory Presidio redaction on all inputs and outputs before any processing or persistence
+- Two-phase commit for high-impact actions: staged over GET (inert), confirmed over POST (executes)
+- Native vertical plugins + proxy plugins for external MCP/OpenAPI/GraphQL
+- Full observability spans with WORM injection
+- Circuit Breaker enforcement: Conservative and Blind Mode constraints applied automatically to all runtimes without per-agent reconfiguration
+
+#### 4.1 Bundled Agent Runtimes
+
+ClawQL ships four open-source runtimes as first-class bundled options. All four are treated uniformly by the Gateway: they submit requests through the governed action flow, inherit ATRClaims enforcement, emit position events to Ouroboros, and participate in swarm coordination when desired.
+
+**OpenClaw** is the original ClawQL runtime, designed for persistent multi-channel deployments where long-lived memory and conversation continuity are primary requirements. Its architecture is optimized for self-hosted operation across chat interfaces and API endpoints, making it the natural reference implementation for the ClawQL transport protocol and the baseline against which other runtimes are integrated.
+
+**Hermes** (Nous Research) is an open-source autonomous agent runtime built around persistent memory, self-improving skill creation, and provider-agnostic model access. MIT-licensed, designed for always-on local or server deployment, and as of June 2026 among the most widely deployed open-source agent frameworks by GitHub activity and OpenRouter usage. Hermes supports over 40 LLM providers and native MCP servers, and its Kanban multi-agent platform supports swarm topologies with per-task model overrides. Hermes MoA 2.0, shipped June 2026, adds Mixture-of-Agents preset support — composing any combination of providers into a named preset accessible as a single model in the normal model picker, with fan-out to reference models and aggregation by a designated model per turn.
+
+**Goose** (Block) is a developer workflow automation runtime focused on extensible tool use and local execution. Its design prioritizes composability with existing developer toolchains, making it a natural fit for CI/CD-adjacent workloads and automated code review pipelines inside the governed ClawQL environment.
+
+**Pi** is a minimal, terminal-first coding agent harness built around a lightweight core — basic read, write, edit, and bash tools — that self-extends at runtime through TypeScript extensions, skills, prompt templates, and themes. Pi's extension and package system means its footprint at startup is intentionally small; capability is added on demand rather than bundled. This makes Pi especially well-suited for developer-centric and coding-heavy workloads, for Tier 1 and Tier 2 deployments where resource footprint matters, and as a composable building block inside ClawQL's governed environment. Pi extensions that declare their tool use as ActionTypes receive Command Deck oversight and WORM auditing without any additional integration work — the governed action flow applies uniformly to Pi's dynamically loaded capabilities the same way it applies to statically declared tools in other runtimes.
+
+#### 4.2 Governed Action Flow (PEP)
+
+The PEP executes in two phases: a validation and retrieval phase that assembles all inputs needed for policy evaluation, followed by a policy evaluation and execution phase that applies them in order.
+
+**Phase 1 — Validation and retrieval** (both steps complete before policy evaluation begins):
+
+1. Validate the Manifest root via `clawql-manifest-validator` and retrieve the verified `ActionType` contract for the requested action.
+2. Extract and validate the ATRClaims token (role, purpose, scope, classification context).
+
+**Phase 2 — Policy evaluation and execution** (applied in sequence against the verified ActionType and ATRClaims from Phase 1): 3. Role match: verify the caller's role is listed in `governance.authorized_roles` for this ActionType. 4. Purpose alignment: verify the ATRClaims `purpose` field is consistent with the ActionType's declared `side_effects`. An agent invoking a restricted action with an undeclared or mismatched purpose is rejected at this step before any execution occurs. 5. Constraint checks: evaluate impact limits (e.g., `governance.max_impact`) and any classification-level restrictions against the ATRClaims context. 6. If `governance.requires_two_phase_commit`: stage the action in `PENDING_ACTIONS` with a `conservative_mode_promotion` flag if Circuit Breaker is in Conservative Mode, and surface an Action View in the Command Deck. Execution waits for operator confirmation. The promotion is irrevocable for the lifetime of that staged record — it is not re-evaluated when the Circuit Breaker later returns to Nominal. 7. On all checks passing (and operator confirmation if required): execute the action, then log to the WORM trail with the ActionLeaf hash, ATRClaims hash, Manifest root, and timestamp. If the WORM write fails, execution is rolled back and the action transitions to `CANCELLED` — execution never completes without an audit record.
+
+Circuit Breaker state automatically tightens enforcement: Conservative Mode routes all non-read actions to Command Deck approval regardless of `requires_two_phase_commit`, using `circuit_breaker_approval_quorum` from the Policy Block. Blind Mode halts all non-read actions unconditionally.
+
+#### 4.3 Two-Phase Commit State Machine
+
+Actions requiring operator approval follow a defined state machine with explicit transitions and WORM entries at each step:
+
+```
+STAGED → AWAITING_APPROVAL → EXECUTED → WORM_LOGGED
+                          ↘ CANCELLED → WORM_LOGGED
+```
+
+| From                | Trigger                                       | To                  | Fail condition                                        |
+| ------------------- | --------------------------------------------- | ------------------- | ----------------------------------------------------- |
+| —                   | PEP Phase 2 passes, two-phase-commit required | `STAGED`            | Any Phase 2 check fails → reject, no state created    |
+| `STAGED`            | Command Deck opens Action View                | `AWAITING_APPROVAL` | TTL expired → `CANCELLED`                             |
+| `AWAITING_APPROVAL` | Operator confirms with valid quorum           | `EXECUTED`          | Quorum not met → remain `AWAITING_APPROVAL`           |
+| `AWAITING_APPROVAL` | Operator cancels or TTL expires               | `CANCELLED`         | —                                                     |
+| `EXECUTED`          | WORM write succeeds                           | `WORM_LOGGED`       | WORM write fails → rollback to `CANCELLED`            |
+| `CANCELLED`         | WORM write succeeds                           | `WORM_LOGGED`       | WORM write fails → retry with backoff, alert operator |
+
+`EXECUTED` is never externally visible — it is an internal transition that completes atomically with the WORM write. From the perspective of any caller, an action is either pending, cancelled, or worm-logged.
+
+---
+
+### 5. Layer 3: Memory 2.0
+
+Hybrid Vault + Graph + PageIndex storage with mandatory Presidio redaction before persistence. Every node carries a Merkle root. Recalls are filtered by ATRClaims with explicit purpose for cross-vertical access.
+
+#### 5.1 Semantic Pruning
+
+Long-lived agents accumulate session history that can exhaust model context windows, degrading reasoning quality without adding information. The pruning engine runs as a post-turn hook and enforces the following policy:
+
+**Trigger**: Context utilization at or above `pruning_context_threshold` (from Policy Block, default 0.80), measured in tokens using the active model's tokenizer — not character count.
+
+**Context lock**: Before pruning, the engine checks `PENDING_ACTIONS` for any entries whose `correlation_id` links them to the current session's context. Any turns causally preceding a pending action are excluded from distillation until the action resolves. This ensures an operator reviewing an Action View in the Command Deck can always trace the reasoning that produced the staged action.
+
+**Distillation depth ceiling**: Each turn carries a `distillation_depth` field (0 for raw turns, incrementing with each distillation). The engine refuses to distill any turn at `max_distillation_depth` (Policy Block, default 2). If the only candidate turns are at max depth, the engine emits a `PRUNING_DEPTH_CEILING` event to WORM and surfaces an Action Recommendation to the Command Deck rather than entering a recursive distillation loop.
+
+**Distillation**: A designated distillation model (lighter than the agent's reasoning model) produces a structured `DistillationOutput`:
+
+- `task_state`, `key_decisions`, `established_facts`, `outstanding_actions`, `open_questions`
+- `fidelity_score` (0.0–1.0 self-assessed): if below a configurable floor (default 0.75), the engine extends the verbatim window by additional turns and emits a `PRUNING_LOW_FIDELITY` warning to WORM and Langfuse rather than proceeding with a high-risk summary.
+
+**Preserved verbatim**: Unacted tool results, high-priority flagged content, turns causally linked to pending actions, and the most recent `pruning_retain_turns` turns.
+
+**Transaction**: The pruning operation is atomic. Active context is not replaced until the pre-pruning snapshot writer confirms a durable cold-storage write (see 5.2). If any step fails, the engine rolls back to the pre-pruning state and emits a `PRUNING_FAILED` event.
+
+**Third-party client boundary**: In environments where ClawQL does not control the host client's context window, pruning shifts from corrective to preventive — agents offload working state to Memory 2.0 rather than accumulating it in the visible conversation.
+
+#### 5.2 Pre-Pruning Snapshot and Retention
+
+**Snapshot**: Before any distillation, a bit-perfect snapshot of the agent's current context is written to encrypted cold storage. The encryption key is derived from the Manifest's HSM-backed Merkle root — not the agent's session keys — ensuring recoverability even if the agent's runtime state is fully compromised. The snapshot write must confirm as durable before active context replacement proceeds.
+
+**Retention tiers**:
+
+| Tier         | Content                            | Retention                     |
+| ------------ | ---------------------------------- | ----------------------------- |
+| Hot          | Active in-process context          | Session lifetime              |
+| Warm         | Bit-perfect cold-storage snapshots | Fidelity-weighted (see below) |
+| Cold/Archive | WORM audit entries                 | Permanent                     |
+
+Warm retention duration is a function of the distillation's `fidelity_score`:
+
+- `fidelity_score >= fidelity_high_threshold`: `retention_days_standard` (default 30)
+- `fidelity_score >= fidelity_low_threshold`: `retention_days_extended` (default 60)
+- `fidelity_score < fidelity_low_threshold`: `retention_days_maximum` (default 90)
+
+A low-fidelity distillation keeps its backup longer because the distillation was risky — the raw content is more likely to be needed for recovery.
+
+**Session termination**: Explicit close archives remaining hot context as a terminal verbatim snapshot (`fidelity_score: 1.0`, `retention_days_standard`). Session close is blocked if `PENDING_ACTIONS` entries exist for that session — the operator must resolve or cancel them first. Implicit close (timeout or process death) follows the same archival path but writes a `SESSION_TIMEOUT` WORM entry distinguishable from `SESSION_CLOSED`, flagging to operators that the termination was not clean.
+
+**Audit permanence**: WORM entries for snapshot events are permanent. After a warm snapshot expires and its cold-storage content is deleted, the WORM entry remains with the `fidelity_score`, `distillation_depth`, token counts, and `cold_storage_ref`. An auditor can always prove a pruning event occurred at a specific fidelity under a specific Policy Block version, even after the content is gone.
+
+---
+
+### 6. Layer 4: Strategic Coordination (Ouroboros)
+
+All parameters sourced from the active Manifest Policy Block. Presets provide validated defaults; per-field overrides apply on top. All four bundled runtimes participate in Ouroboros coordination identically — the Coordinator treats Pi extension calls, Hermes MoA outputs, Goose tool invocations, and OpenClaw sessions as equivalent position events.
+
+#### 6.1 NSV — Normalized Semantic Variance
+
+Mean pairwise cosine distance across all agents sharing an `embeddingModelVersion`:
+
+```
+NSV = (1 / (n * (n-1))) * sum over i != j of (1 - cos(theta_i,j))
+```
+
+A cheap scalar tripwire for swarm-level clustering. Convergence threshold `nsv_crit` is calibrated per embedding model via a baseline dispersion run rather than fixed universally, because embedding spaces are anisotropic and a single cutoff does not transfer reliably across models. Calibration validity is bounded by the diversity of the calibration run itself.
+
+#### 6.2 SGDOP — Semantic GDOP
+
+Derived from GPS Geometric Dilution of Precision's matrix-conditioning mathematics, adapted for embedding space via Gram matrix eigendecomposition rather than borrowed as a label.
+
+Let `C` be the embedding of the swarm's current candidate output. For each agent, compute the chord direction from the candidate toward that agent's position, then stack these as rows of matrix `U`. The Gram matrix `K = U·Uᵗ` (n×n) is eigendecomposed; SGDOP is the sum of reciprocals of nonzero eigenvalues above the `sgdop_eigenvalue_floor`:
+
+```
+SGDOP = sum over lambda_j > floor of (1 / lambda_j)
+```
+
+When NSV triggers, SGDOP identifies the specific **blind-spot direction** by lifting the smallest nonzero eigenvector back into embedding space — the literal axis the swarm has failed to explore. Recruitment is then targeted: rather than "add a diverse agent," the Coordinator requests an agent whose position projects strongly onto that specific direction.
+
+#### 6.3 Diversity Dividends
+
+A persistent reputation floor mechanism rewarding agents that **consistently** fill SGDOP-identified blind-spot directions across multiple rounds — distinct from per-turn softmax selection weighting.
+
+**Reward function** (hardened against reward hacking):
+
+```
+AccrueDividend_i = (blind_spot_projection_i > d_crit + d_crit_hysteresis)
+                 AND (verdict = 1)
+                 AND (ConsistencyWindow confirmed over last w_consistency rounds)
+
+VariancePenalty_i = 1 - min(1.0, position_variance_i / variance_ceiling)
+
+IsolationScale_i = contribution_isolation_score_i  [if enabled, else 1.0]
+
+delta_D_i = delta_d * VariancePenalty_i * IsolationScale_i  [if AccrueDividend_i]
+
+D_i_new   = min(1.0, decay(D_i_old, lambda_d) + delta_D_i)
+w_floor_i = min(W_FLOOR_CEILING, w_min + kappa * D_i_new)
+```
+
+**Reward hacking mitigations**:
+
+- _Outcome gate_: dividends only accrue on `verdict = 1`. Projecting onto a blind spot while the swarm fails is not rewarded.
+- _Consistency window_: accrual requires confirmed blind-spot coverage for `w_consistency` consecutive rounds, preventing opportunistic contrarian positioning.
+- _Variance penalty_: high position variance (jitter) dampens accrual, discouraging dimension-hopping without penalizing genuine positional evolution.
+- _Contribution isolation_: when enabled, scales accrual by the agent's marginal influence on the SGDOP coverage map — a parked agent that contributes no counterfactual shift receives reduced credit.
+- _Hysteresis band_: accrual starts at `d_crit + d_crit_hysteresis` and continues until `d_crit - d_crit_hysteresis`, preventing oscillation at threshold boundaries due to embedding model floating-point variance.
+
+Every accrual decision and its denial reason are written to WORM as `OuroborosPayload` entries with the session `correlation_id`.
+
+Agents in active re-sync, Conservative Mode, or under anomalous drift investigation are gated from accruing dividends until their status resolves.
+
+#### 6.4 Agent Reputation Interface
+
+The Coordinator pushes `ReputationUpdate` messages to all agents on a fixed coordination cycle. Agents do not poll.
+
+```typescript
+interface ReputationUpdate {
+  session_id: string
+  agent_id: string
+  coordinator_seq: number // monotonic per session
+  issued_at: number
+  manifest_root: string
+  policy_version: string
+
+  reputation: {
+    w_i: number
+    w_floor_i: number
+    D_i: number
+    consistency_streak: number
+    w_consistency_required: number
+  }
+
+  last_accrual: {
+    accrued: boolean
+    reason: string
+    blind_spot_projection: number
+    d_crit: number
+    variance_penalty: number
+    isolation_score: number | null
+  }
+
+  directive: {
+    blind_spot_direction: number[] // unit vector — explicit exploration target
+    blind_spot_magnitude: number // current SGDOP value
+    directive_weight: number // 0.0–1.0 urgency signal
+    swarm_nsv: number
+    swarm_size: number
+  }
+
+  coordinator_key_ref: string
+  hmac: string // over all fields above except hmac
+}
+```
+
+**Acceptance rules** (agent-side, applied in order):
+
+1. Reject if `coordinator_seq <= last_accepted_seq` — stale, discard silently.
+2. Reject if `manifest_root` does not match the agent's active Manifest — discard silently.
+3. Reject if HMAC verification fails — write `REPUTATION_UPDATE_HMAC_FAILURE` to WORM and alert. This is a security event, not a network artifact.
+
+The `directive.blind_spot_direction` gives the agent an explicit target vector rather than leaving it to infer exploration direction from reputation values. The agent's internal reasoning remains its own; the directive is a bias signal, not a command. The Contribution Isolation Score in the reward function provides the downstream deterrent for agents that park their embedding at the target without producing content that materially influences the coverage map.
+
+#### 6.5 Evolutionary Loops and Marketplace Recruitment
+
+Multi-generation coordination with baseline-corrected reputation (protecting dissenters), Diversity Dividend incentive alignment (rewarding persistent blind-spot coverage), and SGDOP-targeted marketplace recruitment. When NSV crosses `nsv_crit` and SGDOP identifies a blind-spot direction, the Coordinator recruits from the agent marketplace using `blind_spot_direction` as a targeting vector — selecting candidates whose historical positions project strongly onto the underrepresented axis, weighted by softmax over reputation scores.
+
+#### 6.6 Fingerprinting
+
+Behavioral model fingerprinting provides model-identity-level diversity signals that embedding metrics cannot detect — two semantically distant outputs can still share failure modes inherited from the same base model.
+
+**Methods**: Active probing (3–8 calibrated queries, cached as TTL assets) or passive classifier analysis. Results carry confidence scores and `model_family` labels emitted as events on the shared stream.
+
+**Cache**: Fingerprints are TTL assets (`fingerprint_ttl_hours` from Policy Block). Invalidated on runtime version tag change, model config change, RAG/tool config delta, or manual re-probe. On confidence drop below `fingerprint_confidence_floor`, a background re-probe is queued without blocking the current turn.
+
+**Peer-triggered invalidation**: Anomalous drift in one agent triggers background re-probes for all agents sharing the same `model_family` label — scoped to label matching, not a separate lineage graph. Peer re-probes are background operations; they do not block current turns.
+
+**Drift as health metric**:
+
+- _Expected drift_: consistent with known configuration changes. Logged informatively to WORM.
+- _Anomalous drift_: rapid or large-magnitude shift inconsistent with known changes. Triggers self-healing: Manifest re-sync, re-probe to establish new baseline, dividend accrual hold, peer invalidation, WORM entry. The triggering agent does not accrue dividends until re-sync confirms.
+
+#### 6.7 Hermes MoA Integration
+
+Hermes MoA 2.0 fans out each turn to configurable reference models and aggregates with a designated aggregator. Credential failures on individual reference models do not abort turns. Recursive MoA trees are intentionally blocked.
+
+MoA presets run inside ClawQL evolutionary loops. NSV/SGDOP monitors MoA output-level convergence — a failure mode MoA's own aggregation step cannot self-detect. Fingerprint verification confirms reference model diversity at the model-family level before and during runs. The recommended configuration for high-performance governable reasoning: MoA preset + NSV/SGDOP monitoring + fingerprint verification + Diversity Dividends for persistent blind-spot coverage.
+
+#### 6.8 Coordinator Circuit Breaker
+
+Three named states driven externally by the Coordinator Watchdog (Layer 6):
+
+**Nominal**: Normal operation.
+
+**Conservative Mode**: Triggered at `signal_absence_threshold` consecutive missed watchdog windows, or on heartbeat content that is stale (valid HMAC, delayed delivery) — not on corrupt content.
+
+- Agents pinned to last confirmed stable model configuration
+- Non-essential agents suspended
+- No new Diversity Dividend accrual or marketplace recruitment
+- All non-read actions require Command Deck approval at `circuit_breaker_approval_quorum`
+- Safe reads and handoffs proceed normally
+- Action Recommendation emitted with full diagnostic context
+- Conservative-to-Nominal recovery is automatic on resumed valid heartbeats — no operator action required
+
+**Blind Mode**: Triggered at `full_absence_threshold` consecutive missed windows, or immediately on `HEARTBEAT_CORRUPT` (content fails HMAC or Ouroboros checkpoint — skip Conservative, go direct to Blind).
+
+- All `AWAITING_APPROVAL` actions flushed to `CANCELLED` with `blind_mode_transition` reason, atomically with the KV write setting Blind Mode. The KV entry carries `flushed_at: null` until flush completes, then `flushed_at: <timestamp>`. The PEP rejects all non-read actions during both writes.
+- All high-impact actions halted unconditionally
+- Read-only operations proceed
+- Critical alert to all registered operators
+- Resumption requires air-gap breakout — Command Deck acknowledgment alone is insufficient
+
+All state transitions logged to WORM with triggering signal count, active Policy Block version, `kv_state_version`, `flushed_at`, and count of actions flushed.
+
+#### 6.9 Circuit Breaker Stress Tests
+
+Three synthetic failure scenarios with defined pass conditions. Security and compliance teams should require all three to pass before certifying a production deployment.
+
+**`coordinator-loop-failure`**: Coordinator emits signals at the correct interval with invalid content (NSV outside [0,1], malformed SGDOP eigenvalues, failing Ouroboros checkpoint HMAC). Pass: watchdog distinguishes content corruption from absence; system transitions directly to Blind (not Conservative); WORM records `HEARTBEAT_CORRUPT` with specific failure; all `AWAITING_APPROVAL` actions cancelled with `blind_mode_transition`; gateway enforces Blind Mode within one request cycle.
+
+**`extreme-divergence`**: Synthetic agent pool produces maximum NSV while SGDOP blind-spot direction rotates rapidly. Pass: Conservative Mode does not trigger on high NSV alone (it is a Coordinator output failure signal, not a diversity threshold); SGDOP computation completes without numerical instability; Diversity Dividend accrual correctly identifies agents tracking the rotating blind-spot direction.
+
+**`cascade-recoordination`**: N ≥ 4 agents simultaneously inject anomalous drift events. Pass: peer-triggered invalidation does not cascade beyond `model_family` boundary; re-sync load does not inadvertently trigger Conservative Mode; dividend accrual hold applied and lifted per-agent (not as a batch); all re-sync events individually recorded in WORM.
+
+---
+
+### 7. Layer 5: Security & Compliance
+
+Applied uniformly at the gateway across all runtimes:
+
+- Signed ATRClaims with classification level and processing purpose
+- Mandatory Presidio redaction before any external call or persistence
+- Per-provider verification for external LLMs (ZDR + retention policy)
+- Model weight integrity verification (hash + HSM signature on every load)
+- Runtime enforcement via Tetragon + Falco + Wazuh
+- Immutable WORM Merkle audit trail — every entry carries ActionLeaf hash, ATRClaims hash, Manifest root, policy version, session ID, agent ID, source, correlation ID, event kind, and a typed payload (see WORM schema below)
+- Fail-closed nonce store for replay protection
+- Egress default-deny with explicit allowlist
+
+#### 7.1 WORM Entry Schema
+
+All components write to a shared envelope to enable causal graph queries across the full audit trail:
+
+```typescript
+interface WORMEntry {
+  worm_seq: number // assigned by WORM writer, never by caller
+  entry_id: string // UUID
+  timestamp_ms: number
+  manifest_root: string
+  policy_version: string
+  session_id: string
+  agent_id: string
+  source:
+    | 'PEP'
+    | 'WATCHDOG'
+    | 'MEMORY'
+    | 'OUROBOROS'
+    | 'BREAKOUT'
+    | 'COMMAND_DECK'
+  correlation_id: string // links all entries for one action's lifecycle
+  event_kind: string
+  payload: WORMPayload // typed union discriminated by event_kind
+}
+```
+
+The `correlation_id` is set at action creation and carried through every subsequent entry — `STAGED`, `AWAITING_APPROVAL`, `EXECUTED` or `CANCELLED`, `WORM_LOGGED`, any Conservative Mode promotion, any Command Deck approval. A compliance query for a single action's full lifecycle is a single index lookup, not a join across heterogeneous event shapes. The WORM writer assigns `worm_seq` atomically; callers submit entries without a sequence number and the writer rejects any entry missing mandatory envelope fields.
+
+#### 7.2 Air-Gap Breakout Path
+
+Appends signed override events to the WORM trail; never modifies existing entries. A recorded override is defensible; a modified trail is not.
+
+**Available actions**:
+
+- Halt specific agent without system-wide halt
+- Force Manifest re-sync outside normal scheduling
+- Override stuck two-phase-commit approval
+- Freeze Diversity Dividend accrual pending investigation
+- Resume from Blind Mode (only path to clear Blind Mode)
+- Emit administrative audit event (free-text, signed, no system action)
+
+All require N-of-M multi-party authorization (`breakout_authorization` from Policy Block). Failed authorization attempts are audited. The breakout path itself is monitored — using it creates a WORM entry including failed attempts.
+
+---
+
+### 8. Layer 6: Observability & Runtime Protection
+
+- **Langfuse**: LLM chains, tool use, RAG traces, anomaly detection, fingerprint traces, drift visualization, Action View audit traces, distillation fidelity tracking
+- **Beyla**: Zero-code eBPF instrumentation
+- **Faro**: Frontend telemetry
+- **Alloy**: Unified collection pipeline
+- Loki, Tempo, Mimir, Pyroscope for logs/traces/metrics/profiling
+- Runtime threat detection: Falco + Tetragon + Wazuh
+- k6 for synthetic monitoring
+
+All observability data treated as untrusted input.
+
+#### 8.1 Coordinator Watchdog
+
+Process-isolated from the Coordinator — cannot share process space with what it monitors. Tracks two independent failure axes:
+
+- **Liveness** (`HEARTBEAT_STALE` / `HEARTBEAT_ABSENT`): signal delivery delayed or absent. Drives Conservative Mode at `signal_absence_threshold`.
+- **Correctness** (`HEARTBEAT_CORRUPT`): signal delivered but content fails HMAC or Ouroboros checkpoint. Drives immediate Blind Mode, skipping Conservative.
+
+Heartbeats carry an HMAC over sequence number and a recent Ouroboros checkpoint hash (NSV value, active `embeddingModelVersion`, last SGDOP computation timestamp), so the Watchdog verifies liveness and logical continuity in one check.
+
+The Watchdog writes circuit breaker state to the shared KV store via Compare-And-Swap: reads version, updates state, increments `kv_state_version`, writes back. If the version changed since the read, it re-fetches and retries. The PEP reads this KV entry on every request (500ms cache TTL) and treats a decreasing `kv_state_version` as a `WATCHDOG_SYNC_ERROR`, halting to prevent operating on inconsistent state.
+
+On Watchdog restart, it reads from both KV (current enforced state) and WORM (audit history). If they disagree, it holds at the more restrictive state, appends a `WATCHDOG_RESTART_DIVERGENCE` event to WORM, and alerts operators. KV wins for "current state"; WORM wins for "what happened."
+
+The Watchdog is itself monitored by Falco + Beyla to prevent it becoming a silent single point of failure.
+
+#### 8.2 Automated Action Recommendations
+
+Structured recommendations emitted when combinations of NSV, SGDOP blind-spot direction, fingerprint confidence, drift delta, distillation fidelity, and Circuit Breaker state cross defined thresholds. Examples: "NSV below `nsv_crit` AND SGDOP high AND two agents in re-sync → recruit in blind-spot direction X with minimum model-family diversity N"; "PRUNING_DEPTH_CEILING reached in session Y → operator intervention required." Gives smaller teams a guided interpretation path rather than requiring manual correlation across all metrics.
+
+#### 8.3 Command Deck (Mission Control)
+
+Unified operator interface for swarm governance and action approval.
+
+**Semantic visualization**: 2D projection (PCA or UMAP) of current agent positions relative to the active candidate, with SGDOP blind-spot direction overlaid as a vector and NSV as a density contour. Captures clustering, unexplored directions, and convergence distance without the interpretive overhead of a 3D representation.
+
+**Action Views**: When an action is staged for two-phase-commit approval, the Command Deck renders an Action View derived directly from the verified ActionType contract. The rendering mechanism is schema-driven: the Command Deck reads the ActionType's `input_schema` and `output_schema` (standard JSON Schema) and generates the approval form from those fields. ActionType authors write one schema that governs both runtime validation and operator-facing presentation — there is no divergence path between what the system enforces and what the operator sees. Each Action View includes: the input form populated with staged values, the `side_effects` list with state transition descriptions, the `governance` block showing classification, risk tier, and approval quorum, and a justification trace showing which agent requested the action and under which ATRClaims context. Pi extension actions are rendered identically — the schema-driven approach is runtime-agnostic.
+
+**Operator actions**:
+
+- Approve or reject staged Action Views (confirm or cancel two-phase-commit)
+- Approve or reject Action Recommendations (recruitment, re-probe, agent suspension, depth-ceiling intervention)
+- Initiate air-gap breakout actions with inline N-of-M authorization flow
+- Inspect per-agent fingerprint, drift delta, Diversity Dividend score, reputation weight, and consistency streak
+- View and diff active Manifest Policy Block against previous versions
+- Trigger manual NSV/SGDOP recomputation
+- Acknowledge Conservative Mode alerts (Blind Mode requires air-gap breakout, not acknowledgment)
+
+All Command Deck actions are appended to the WORM audit trail with operator identity, timestamp, and the Manifest root active at the time of the action.
+
+---
+
+### 9. Modularity & Deployment
+
+- Strict Effect-TS layering with compile-time dependency enforcement
+- Kubernetes Operator manages a single `ClawQLInstance` CRD
+- Disabled features carry negligible runtime overhead
+- Pi's minimal footprint makes it particularly suitable for resource-constrained Tier 1 and Tier 2 environments
+
+**Tiers**:
+
+- **Tier 1**: Docker Compose (evaluation) — all four runtimes available; full governed action flow; observability stack optional
+- **Tier 2**: Standard Kubernetes + Operator — full feature set; Watchdog and Circuit Breaker active
+- **Tier 3**: Enterprise (Kata/gVisor, Istio mTLS, dedicated HSMs, full isolation) — TEE attestation; hardware-backed HSM for all signature operations
+
+---
+
+### 10. How the Layers Work Together
+
+1. Developer creates release via `clawql-release publish` → permanent Arweave bundle + Manifest v1.1. The validator computes Domain-Separated ActionLeaves for every ActionType, incorporates them into the Merkle root alongside Identity, Policy, and Provenance leaves, verifies HSM signatures, resolves the Policy Preset with per-field overrides, and rejects any invalid configuration at parse time.
+
+2. Agent (OpenClaw, Hermes, Goose, Pi, or any MCP-compatible client) calls `search()` / `execute()` on the gateway. The PEP runs Phase 1 (Manifest validation + ATRClaims extraction) then Phase 2 (role match → purpose alignment → constraint checks → two-phase-commit staging if required). Conservative Mode promotes non-two-phase-commit actions to require approval; the promotion is stamped into the `STAGED` record and is irrevocable for that action's lifetime.
+
+3. Memory 2.0 enriches context. The pruning engine runs post-turn: checks pending action context lock, evaluates distillation depth ceiling, invokes the distillation model, confirms a durable pre-pruning snapshot write (HSM-anchored encryption key) before replacing active context.
+
+4. Ouroboros monitors NSV against `nsv_crit` and triggers SGDOP computation on threshold breach. SGDOP identifies the blind-spot direction and lifts it into embedding space as a recruitment target. Fingerprint cache serves model-identity signals; anomalous drift triggers self-healing and `model_family`-scoped peer invalidation. Reputation updates carrying the blind-spot directive are pushed to all agents on the coordination cycle. Diversity Dividends accrue through the outcome-gated, consistency-windowed, variance-penalized function.
+
+5. Coordinator Watchdog monitors signal emission on both liveness and correctness axes. Circuit Breaker transitions state as thresholds are crossed, writing to the KV store via CAS and flushing `AWAITING_APPROVAL` actions atomically on Blind Mode entry.
+
+6. Staged actions surface as schema-driven Action Views in the Command Deck. Operators see exactly the contract the system enforces. Action Recommendations synthesize NSV/SGDOP/drift/fidelity signals into guided intervention proposals.
+
+7. Every operation — PEP action lifecycle, Watchdog transitions, distillation events, fingerprint drift, dividend accrual decisions, breakout actions, Command Deck approvals — is WORM-audited under the shared envelope with `correlation_id`, `manifest_root`, `policy_version`, and `worm_seq` assigned atomically by the writer. The active Policy Block version is recorded alongside every decision it governed.
+
+---
+
+### 11. Current Status (June 2026)
+
+**Shipped and available today**:
+
+- MCP transport layer (standard and advanced tiers)
+- Ouroboros foundations: NSV, SGDOP, fingerprinting hooks with TTL cache and peer-triggered invalidation
+- Layer 0 tooling: `clawql-release`, Arweave bundling, Manifest v1.1 schema draft
+- LGTMP observability reference stack
+- Tier 1 Docker Compose evaluation stack
+- Bundled runtimes: OpenClaw, Hermes (v0.17.0), Goose, Pi
+
+**In active development**:
+
+- Full gateway PEP with two-phase ActionType enforcement and state machine (P0-B)
+- `clawql-manifest-validator` with Domain-Separated Merkle logic and HSM provider interface (P0-A)
+- Coordinator Watchdog with dual-axis heartbeat verification and CAS-based KV writes (P1)
+- Circuit Breaker state machine with three-scenario stress test suite (P1)
+- Memory 2.0: Semantic Pruning engine with distillation depth ceiling and context lock (P2-A)
+- Memory 2.0: Pre-pruning snapshot storage with fidelity-weighted retention and session rotation (P2-B)
+- Diversity Dividend accrual with outcome gate, consistency window, variance penalty, and hysteresis band (P3-A)
+- Agent Reputation Interface with push-based `ReputationUpdate` and HMAC verification (P3-B)
+- Command Deck prototype with schema-driven Action View rendering
+- `clawql-manifest-validator` standalone library
+- Policy Preset library with all three presets and calibration guidance
+- Universal Manifest community governance process
+
+The strategic framing in this document describes the full design intent of the completed system. The shipped/in-development distinction above is maintained throughout and should be verified against current release notes before citing implementation status to external parties.
+
+---
+
+### 12. Design Philosophy
+
+- **Permanence first** — Immutable releases, Domain-Separated Merkle-sealed ActionType contracts, WORM audits that can be appended but never modified. The audit trail outlives the content it describes.
+- **Governance-as-Code** — Risk tolerance, action contracts, and policy thresholds are versioned deployment decisions, not codebase constants. Presets lower the barrier; per-field overrides preserve flexibility.
+- **Defense in depth** — Cryptographic integrity at the ActionType level, purpose-aware ATRClaims authorization at the gateway, fail-closed wherever enforcement and WORM writes fail.
+- **Pragmatic hybrid** — Decentralized guarantees (Arweave permanence, Merkle auditability) with centralized convenience (single gateway PEP, unified Command Deck).
+- **Complementary, not competitive** — OpenClaw, Hermes MoA, Goose, and Pi are high-quality components inside the coordinated system. Pi's minimal core and extension model exemplifies the composability ClawQL is designed to enable.
+- **Resilience by architecture** — Coordinator Watchdog with dual-axis failure detection, Circuit Breaker with defined stress tests, pre-pruning snapshots, distillation depth ceiling, and air-gap breakout path mean the system degrades gracefully and recovers cleanly.
+- **Honest about maturity** — Shipped and in-development are kept explicitly separate. Trust is built by shipping what is claimed, not by claiming what is not yet shipped.
+
+---
+
+**ClawQL is infrastructure for trustworthy, long-lived, multi-agent systems.**

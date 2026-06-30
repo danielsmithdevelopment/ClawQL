@@ -1,0 +1,260 @@
+# ClawQL / Decentralized Agent Operating System (DAOS)
+
+## Unified Architecture Specification: Final Consolidated Build Plan
+
+### Version 2.7.1 · June 2026
+
+**Related:** [DAOS Unified Architecture v2.7](/ouroboros/daos) · [Coordination layer](/ouroboros/specification) · [Ouroboros library](/ouroboros) · [Modularization implementation status](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/modularization-implementation-status.md)
+
+---
+
+### 1. Executive Summary
+
+This document consolidates the architectural and engineering requirements for the ClawQL OS and defines the implementation contract for the P0–P3 build sequence. It transitions the system from design intent to strictly specified build artifacts. The full architecture is defined in the companion specification (v2.7); this document distills the invariants, interfaces, and sequencing that engineers need to begin implementation without ambiguity.
+
+The architecture is governed by a 7-layer acyclic model with **Policy-as-Code** via a Merkle-anchored **Universal Manifest**. ClawQL supports four bundled agent runtimes: **OpenClaw**, **Hermes** (Nous Research), **Goose** (Block), and **Pi**. All four participate uniformly in the governed action flow, PEP enforcement, and Ouroboros coordination from day one. Pi's lightweight core and runtime extensibility via extensions, skills, and packages make it particularly well-suited for developer-centric and coding-heavy workloads inside the governed environment.
+
+---
+
+### 2. Trust Anchor & Governance (Layer 0)
+
+**Manifest v1.1** is the atomic unit of trust. Every policy parameter, ActionType contract, and coordination threshold is locked to a single Merkle root. No component trusts a value that cannot be traced to that root.
+
+**Validator (`clawql-manifest-validator`)**: A zero-dependency TypeScript library and the canonical reference implementation. ClawQL's own gateway uses it as a library; third-party runtimes adopting the Universal Manifest schema run identical checks.
+
+Key validation behaviors:
+
+- **Domain-separation**: ActionLeaves computed as `SHA-256("CLAWQL_ACTION_V1" || CanonicalJSON(action))`. The prefix prevents cross-protocol hash collisions and makes the binding version-explicit.
+- **HSM integration**: Caller-injected `HSMProvider` interface for signature verification. The library ships a `MockHSMProvider` for testing; production callers inject their own. No HSM client is bundled.
+- **Parameter range enforcement at parse time**: Invalid values (e.g., `kappa > 1.0`, `eta` outside (0,1)) are caught before they propagate to runtime. The validator rejects, never silently adjusts.
+- **Preset resolution**: Expands named preset, applies per-field overrides, validates the result. `custom` preset requires every field; no silent defaults.
+
+**ActionTypes**: Every non-safe action must define a full `input_schema`, `output_schema`, `governance`, and `side_effects` block. The JSON Schema fields serve double duty: runtime PEP validation and Command Deck Action View rendering. ActionTypes are enforced identically regardless of which runtime invokes them — OpenClaw, Hermes, Goose, or Pi.
+
+---
+
+### 3. Execution & Security (Layers 2 and 5)
+
+#### PEP State Machine (Two-Phase Commit)
+
+```
+STAGED → AWAITING_APPROVAL → EXECUTED → WORM_LOGGED
+                          ↘ CANCELLED → WORM_LOGGED
+```
+
+**Invariants**:
+
+- `EXECUTED` is never externally visible without a completed WORM write. If the WORM write fails, execution rolls back and the action transitions to `CANCELLED`.
+- `STAGED` is only created after all Phase 2 policy checks pass. A failed check produces no state entry.
+- Conservative Mode promotion is applied at staging time and is irrevocable. An action promoted to `requires_two_phase_commit` under Conservative Mode retains that requirement even if the Circuit Breaker returns to Nominal before the operator confirms. The promotion is stamped into the `STAGED` record and the confirmation path reads quorum requirements from the staged record, not from the current Circuit Breaker state.
+- Confirmation quorum for promoted actions uses `circuit_breaker_approval_quorum` from the Policy Block, not the ActionType's `approval_quorum`. These are separate fields for a reason: Conservative Mode elevates the threshold beyond what the ActionType author anticipated.
+
+**PEP Phase 1** (both complete before Phase 2 begins):
+
+1. Validate Manifest root via `clawql-manifest-validator`; retrieve verified `ActionType`.
+2. Extract and validate ATRClaims token (role, purpose, scope, classification).
+
+**PEP Phase 2** (sequential; first failure rejects the request): 3. Role match against `governance.authorized_roles`. 4. Purpose alignment: ATRClaims `purpose` consistent with declared `side_effects`. 5. Constraint checks: `governance.max_impact` and classification-level restrictions. 6. Stage if `requires_two_phase_commit`; surface Action View in Command Deck. 7. Execute on confirmation; write to WORM. Fail closed if WORM write fails.
+
+All four runtimes submit requests through the same PEP channel. Pi agents, including those using dynamically loaded extensions, receive identical ATRClaims validation, purpose alignment, and two-phase commit treatment.
+
+#### Shared Circuit Breaker KV Interface
+
+```typescript
+export interface CircuitBreakerState {
+  version: number // monotonic; PEP rejects decreasing versions
+  state: 'NOMINAL' | 'CONSERVATIVE' | 'BLIND'
+  last_transition_at: number
+  last_valid_seq: number
+  requires_breakout: boolean
+  flushed_at: number | null // null until Blind Mode flush completes
+}
+```
+
+The Watchdog is the **only writer**. It writes via CAS (read version → update state → increment version → write back; retry on version conflict). The PEP is the only consumer. The Command Deck reads this key to render current system state. A PEP instance that observes a decreasing `version` triggers `WATCHDOG_SYNC_ERROR` and halts.
+
+---
+
+### 4. Observability & Runtime Protection (Layer 6)
+
+#### Coordinator Watchdog
+
+The Watchdog monitors the Coordinator as a black box via its emitted heartbeat stream. It cannot share process space with the Coordinator. It is itself monitored by Falco + Beyla to prevent it becoming a silent single point of failure.
+
+**Two failure axes** (distinct triggers, distinct responses):
+
+| Signal                                 | Meaning                                          | Response                                                |
+| -------------------------------------- | ------------------------------------------------ | ------------------------------------------------------- |
+| `HEARTBEAT_STALE` / `HEARTBEAT_ABSENT` | Delivery delayed or absent                       | Conservative Mode at `signal_absence_threshold` windows |
+| `HEARTBEAT_CORRUPT`                    | Delivered but fails HMAC or Ouroboros checkpoint | Blind Mode immediately — skip Conservative              |
+
+Liveness and correctness are distinct problems. An agent that is slow is not the same as an agent whose logic is provably wrong. Treating them identically would either under-respond to corruption (waiting for absence threshold) or over-respond to network blips (going directly to Blind on a delayed delivery).
+
+**Blind Mode flush sequence** (two CAS writes, both audited):
+
+1. Write `\{ state: "BLIND", flushed_at: null, version: n+1 \}` to KV.
+2. Flush all `AWAITING_APPROVAL` entries to `CANCELLED` with `cancelled_reason: "blind_mode_transition"`, writing a WORM entry per action with the session `correlation_id`.
+3. Write `\{ flushed_at: Date.now(), version: n+2 \}` to KV.
+
+The PEP rejects all non-read actions during both writes. `flushed_at: null` signals that the transition is in-flight. No operator can confirm a pending action while `flushed_at` is null.
+
+**Conservative-to-Nominal recovery** is automatic on resumed valid heartbeats — no operator action required. Blind-to-Nominal requires air-gap breakout — no automatic recovery.
+
+**On restart**, the Watchdog reads both KV (current enforced state) and WORM (last recorded transition). If they disagree, it holds at the more restrictive state, appends a `WATCHDOG_RESTART_DIVERGENCE` event to WORM, and alerts operators. KV is authoritative for "what state am I enforcing now"; WORM is authoritative for "what was the last recorded transition."
+
+#### Circuit Breaker Stress Tests
+
+Three scenarios with defined pass conditions — all three must pass before a deployment is certified:
+
+**`coordinator-loop-failure`**: Coordinator emits at correct interval with invalid content (failing Ouroboros checkpoint HMAC). Pass: system goes directly to Blind (not Conservative); WORM records `HEARTBEAT_CORRUPT`; all `AWAITING_APPROVAL` actions cancelled with `blind_mode_transition`; gateway enforces Blind within one request cycle after second CAS write.
+
+**`extreme-divergence`**: Synthetic agents produce maximum NSV with rapidly rotating SGDOP blind-spot direction. Pass: Conservative Mode does not trigger on high NSV alone (it is a Coordinator output failure signal, not a diversity metric breach); SGDOP computation completes without numerical instability.
+
+**`cascade-recoordination`**: N ≥ 4 agents simultaneously inject anomalous drift. Pass: peer invalidation does not cascade beyond `model_family` boundary; re-sync load does not inadvertently trigger Conservative Mode; dividend accrual holds applied and lifted per-agent, not as a batch.
+
+#### Command Deck Action Views
+
+Rendered from the verified `ActionType` JSON Schema — the same schema the PEP uses for runtime validation. There is no separate UI schema. ActionType authors write one contract that governs both enforcement and presentation. Action Views work identically for all four runtimes; Pi extension actions are indistinguishable from statically declared tool actions in the Command Deck view.
+
+---
+
+### 5. Memory 2.0: Pruning and Distillation (Layer 3)
+
+**Trigger**: `context_utilization >= pruning_context_threshold` (measured in tokens, active model tokenizer — not character count).
+
+**Causal lock**: Any turns causally preceding a `PENDING_ACTIONS` entry (linked by `correlation_id`) are excluded from distillation until the action resolves. An operator reviewing an Action View can always trace the reasoning that produced it.
+
+**Distillation depth ceiling**: `max_distillation_depth` (Policy Block, default 2) caps recursive summarization. A turn at max depth is permanently verbatim. If all candidate turns are at max depth, the engine emits `PRUNING_DEPTH_CEILING` to WORM and surfaces an Action Recommendation rather than attempting further distillation. Depth is tracked per-turn via `distillation_depth` field; `output_depth = max(input_depths_consumed) + 1`.
+
+**Fidelity fallback**: If the distillation model's self-assessed `fidelity_score` falls below the configured floor (default 0.75), the engine extends the verbatim window by additional turns and emits `PRUNING_LOW_FIDELITY` to WORM. It does not proceed with a high-risk summary.
+
+**Atomicity**: The pruning operation does not replace active context until the snapshot writer confirms a durable cold-storage write. If any step fails, the engine rolls back to pre-pruning state and emits `PRUNING_FAILED`.
+
+**Fidelity-weighted retention**:
+
+| Fidelity score                              | Retention                           |
+| ------------------------------------------- | ----------------------------------- |
+| `>= fidelity_high_threshold` (default 0.90) | 30 days (`retention_days_standard`) |
+| `>= fidelity_low_threshold` (default 0.75)  | 60 days (`retention_days_extended`) |
+| `< fidelity_low_threshold`                  | 90 days (`retention_days_maximum`)  |
+
+A low-fidelity distillation keeps its backup longer because the distillation was risky — the raw content is more likely to be needed for recovery. All thresholds and durations are Policy Block fields; none are hardcoded.
+
+**WORM permanence**: After a warm snapshot expires and its cold-storage content is deleted, the WORM entry remains with `fidelity_score`, `distillation_depth`, token counts, and `cold_storage_ref`. An auditor can always prove a pruning event occurred at a specific fidelity under a specific Policy Block version, even after the content is gone.
+
+**Session termination**: Explicit close is blocked if `PENDING_ACTIONS` entries exist for the session. On close, remaining hot context is archived as a terminal verbatim snapshot (`fidelity_score: 1.0`, standard retention). Implicit close (timeout or process death) follows the same archival path but writes `SESSION_TIMEOUT` to WORM, distinguishable from `SESSION_CLOSED` for compliance review.
+
+---
+
+### 6. Strategic Coordination (Layer 4)
+
+#### Diversity Dividend Accrual
+
+The reward function is outcome-gated and multi-gated against reward hacking:
+
+```
+AccrueDividend_i =
+  (blind_spot_projection_i > d_crit + d_crit_hysteresis)    // threshold with hysteresis
+  AND (verdict = 1)                                           // outcome gate
+  AND (consistency confirmed over last w_consistency rounds)  // persistence gate
+
+delta_D_i = delta_d
+          * (1 - min(1.0, position_variance_i / variance_ceiling))  // variance penalty
+          * isolation_score_i                                         // isolation scale (if enabled)
+
+D_i_new   = min(1.0, decay(D_i_old, lambda_d) + delta_D_i)
+w_floor_i = min(W_FLOOR_CEILING, w_min + kappa * D_i_new)
+```
+
+Every accrual decision — including the specific gate that denied accrual — is written to WORM as an `OuroborosPayload` with the session `correlation_id`. An agent with unexpectedly low dividends can be debugged by querying its WORM trail and reading the denial reasons directly.
+
+Agents in active re-sync, Conservative Mode, or under anomalous drift investigation are gated from accruing until their status resolves.
+
+#### Agent Reputation Interface
+
+Push-based: the Coordinator broadcasts `ReputationUpdate` on every coordination cycle. Agents do not poll.
+
+Each update carries:
+
+- Current `w_i`, `w_floor_i`, `D_i`, `consistency_streak`
+- Last accrual decision with denial reason
+- `directive.blind_spot_direction`: unit vector — the explicit exploration target the Coordinator has identified. Agents bias toward this direction; they do not compute it themselves.
+- `directive_weight`: 0.0–1.0 urgency signal. High weight means the gap is severe; low weight means the agent should weight its own reasoning more heavily.
+- HMAC over the full payload, keyed to `coordinator_key_ref` from the Manifest
+
+**Agent acceptance rules** (applied in order):
+
+1. `coordinator_seq <= last_accepted_seq` → discard silently (stale, not an error)
+2. `manifest_root` mismatch → discard silently (agent hasn't loaded new Manifest yet)
+3. HMAC verification fails → write `REPUTATION_UPDATE_HMAC_FAILURE` to WORM and alert (security event, not a network artifact)
+
+All four runtimes implement the same acceptance rules. Pi agents participate in reputation updates and use the `blind_spot_direction` directive identically to other runtimes.
+
+#### Heartbeat Protocol
+
+The Coordinator emits a heartbeat on every coordination cycle. The heartbeat carries two multiplexed signals:
+
+**Liveness signal (Pulse)**: monotonically increasing `heartbeat_seq`, `timestamp_ms`, `session_id`. The Watchdog uses this to track signal absence.
+
+**Correctness signal**: HMAC over `heartbeat_seq` plus a recent Ouroboros checkpoint hash (`nsv_value`, active `embeddingModelVersion`, `last_sgdop_timestamp`). The Watchdog verifies this independently of the liveness check — a valid HMAC on a stale sequence is still a liveness failure; a non-monotonic sequence with a valid HMAC on otherwise valid content is still a correctness failure.
+
+The `ReputationUpdate` broadcast is separate from the heartbeat — reputation updates carry the full per-agent payload and are delivered to individual agents; the heartbeat is a Coordinator-to-Watchdog signal only. The two share the `coordinator_seq` counter so the Watchdog can detect gaps in either stream.
+
+The heartbeat specification will be fully formalized in the P3 engineering phase alongside the reputation interface implementation. The multiplexed structure and HMAC scheme are locked; the wire format and transport binding (NATS subject, message envelope) are defined during P3 implementation.
+
+---
+
+### 7. Global WORM Audit Envelope
+
+Every audit entry from every component uses this mandatory envelope:
+
+```typescript
+export interface WORMEntry {
+  worm_seq: number // assigned atomically by WORM writer; never by caller
+  entry_id: string // UUID
+  timestamp_ms: number
+  manifest_root: string // active Manifest at write time
+  policy_version: string // active Policy Block version
+  session_id: string
+  agent_id: string // stable agent identifier from Manifest identity block
+  source: WORMSource // "PEP" | "WATCHDOG" | "MEMORY" | "OUROBOROS" | "BREAKOUT" | "COMMAND_DECK"
+  correlation_id: string // links all entries for one action's lifecycle
+  event_kind: string // e.g., "ACTION_STAGED", "CIRCUIT_BREAKER_TRANSITION"
+  payload: WORMPayload // typed union discriminated by event_kind
+  action_leaf_hash?: string // present when entry relates to a specific ActionType
+}
+```
+
+**Writer rules**:
+
+- `worm_seq` is assigned by the WORM writer, never by the caller. Callers submit entries without a sequence number.
+- Entries missing any mandatory field are rejected with an error returned to the caller. Silent drops are prohibited.
+- A failed WORM write returned to the PEP causes execution rollback. The WORM writer is the final gatekeeper.
+
+**`correlation_id` discipline**: set at action creation, carried through every subsequent entry for that action's lifecycle. A compliance query for a single action's full history — from `STAGED` through `WORM_LOGGED`, including any Conservative Mode promotion, Command Deck approvals, and breakout events — is a single index lookup, not a join.
+
+---
+
+### 8. Implementation Sequencing
+
+| Priority | Deliverable                            | Acceptance Criterion                                                                                                                                |
+| -------- | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **P0-A** | `clawql-manifest-validator`            | 100% pass on domain-separation, Merkle integrity, backward-compat, and parameter range tests                                                        |
+| **P0-B** | Gateway PEP state machine              | Fail-closed on WORM write failure; Conservative Mode promotion irrevocable; all four runtimes pass integration tests                                |
+| **P1**   | Coordinator Watchdog + Circuit Breaker | All three stress test scenarios pass; KV/WORM divergence detected on restart; dual-axis failure discrimination confirmed                            |
+| **P2-A** | Semantic Pruning + Distillation engine | Depth ceiling enforced; causal lock prevents pruning pending-action context; rollback on snapshot write failure                                     |
+| **P2-B** | Snapshot retention + session rotation  | Fidelity-weighted TTLs correct; session close blocked on pending actions; WORM entries persist after content deletion                               |
+| **P3-A** | Diversity Dividend accrual             | Outcome gate, consistency window, variance penalty, and hysteresis all enforce correctly; every denial reason logged to WORM                        |
+| **P3-B** | Agent Reputation Interface             | HMAC failure triggers WORM alert; stale seq discarded silently; `blind_spot_direction` is a unit vector; all four runtimes accept and apply updates |
+
+**P0 note**: The validator and PEP must support all four runtimes from day one. Pi integration is not a follow-on task — it is a first-class P0 requirement. An engineer building the PEP should treat a Pi extension invoking a restricted action as the primary test case, not an edge case.
+
+**P1 dependency**: P1 (Watchdog) can begin in parallel with P0-B once the `CircuitBreakerState` interface is agreed. The Watchdog has no compile-time dependency on the PEP; it only needs the KV contract and the WORM envelope schema.
+
+**P2 dependency**: P2-A depends on P0-A (validator, for Manifest Policy Block reads) and the WORM envelope schema. It does not depend on P1 being complete; the pruning engine reads `PENDING_ACTIONS` from the same KV store the PEP writes, not from the Circuit Breaker state.
+
+**P3 dependency**: P3-A (Dividend Accrual) depends on P0-B (PEP, for Evaluator verdict events) and P1 (Circuit Breaker state, for dividend gating during Conservative Mode). P3-B (Reputation Interface) depends on P3-A for the accrual values it broadcasts.
+
+---
+
+**Consolidated specification approved as of June 28, 2026. Implementation begins on P0 components immediately. Pi runtime integration is a first-class requirement at every priority level.**

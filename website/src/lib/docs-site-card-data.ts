@@ -64,7 +64,7 @@ export const learnModuleSiteCards: Array<ReferenceCard> = [
     href: '/learn/document-pipeline',
     name: 'Document pipeline',
     description:
-      'Seven-vendor IDP path: Nextcloud → Tika → Gotenberg → Stirling → Paperless → Onyx → Coneshare.',
+      'Seven-vendor IDP path: Nextcloud → Tika → Gotenberg → Stirling → archive → Onyx → Coneshare.',
     icon: PackageIcon,
     pattern: {
       y: 20,

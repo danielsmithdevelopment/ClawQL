@@ -1,7 +1,7 @@
 # ClawQL Dashboard — Agent Chat
 
 **Status:** Shipped (June 2026)  
-**Audience:** Operators, OpenClaw integrators, and agents that drive the [IDP stack](../vision/clawql-idp-stack.md) from the dashboard UI.
+**Audience:** Operators, OpenClaw integrators, and agents that drive the [IDP Platform](../vision/clawql-idp-platform.md) from the dashboard UI.
 
 **Related:** [Dashboard README](../../dashboard/README.md) · [OpenClaw + ClawQL](../openclaw/using-openclaw-with-clawql.md) · [OpenClaw IDP skill profile](../openclaw/openclaw-idp-skill-profile.md) · [Design notes (implementation history)](../design/dashboard-shadcn-chat-integration.md)
 
@@ -563,7 +563,7 @@ Cluster smoke (bridge + proxy): [`scripts/kubernetes/smoke-openclaw-chat-bridge.
 | Doc                                                                             | Content                                |
 | ------------------------------------------------------------------------------- | -------------------------------------- |
 | **This page**                                                                   | Canonical Agent Chat reference         |
-| [IDP stack](../vision/clawql-idp-stack.md)                                      | Full document pipeline vision          |
+| [IDP Platform](../vision/clawql-idp-platform.md)                                | Full document pipeline vision          |
 | [IDP requirements matrix](../roadmap/idp-master-requirements-matrix.md)         | Shipped vs gap tracking                |
 | [OpenClaw IDP profile](../openclaw/openclaw-idp-skill-profile.md)               | MCP workflow + dashboard JSON contract |
 | [Design / implementation notes](../design/dashboard-shadcn-chat-integration.md) | shadcn integration history             |

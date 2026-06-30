@@ -16,6 +16,11 @@ type Entry = {
 const ENTRIES: Array<Entry> = [
   { path: '/', changeFrequency: 'weekly', priority: 1 },
   {
+    path: '/vision/idp-platform',
+    changeFrequency: 'monthly',
+    priority: 0.92,
+  },
+  {
     path: '/vision/technical-enablement',
     changeFrequency: 'monthly',
     priority: 0.9,
@@ -139,6 +144,14 @@ const ENTRIES: Array<Entry> = [
   },
   { path: '/helm', changeFrequency: 'monthly', priority: 0.88 },
   { path: '/tools', changeFrequency: 'weekly', priority: 0.9 },
+  { path: '/ouroboros', changeFrequency: 'monthly', priority: 0.88 },
+  { path: '/ouroboros/daos', changeFrequency: 'monthly', priority: 0.91 },
+  {
+    path: '/ouroboros/specification',
+    changeFrequency: 'monthly',
+    priority: 0.9,
+  },
+  { path: '/ouroboros/build-plan', changeFrequency: 'monthly', priority: 0.88 },
   { path: '/spec-configuration', changeFrequency: 'monthly', priority: 0.85 },
   { path: '/troubleshooting', changeFrequency: 'monthly', priority: 0.82 },
   { path: '/security', changeFrequency: 'monthly', priority: 0.9 },
