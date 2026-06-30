@@ -51,7 +51,7 @@ This directory is organized by purpose so operational guides, product docs, and 
 - `openclaw/clawql-bootstrap.md` — register ClawQL in OpenClaw, env matrix, smoke checklist ([#226](https://github.com/danielsmithdevelopment/ClawQL/issues/226))
 - `openclaw/openclaw-idp-skill-profile.md` — **OpenClaw IDP** canonical tools, provider matrix, workflow contract ([#227](https://github.com/danielsmithdevelopment/ClawQL/issues/227))
 - `deployment/helm.md` § **NATS JetStream deep dive** — optional in-cluster event backbone, subject conventions, ops ([#127](https://github.com/danielsmithdevelopment/ClawQL/issues/127)); website **`/nats-jetstream`**
-- **Roadmap tracking (GitHub):** [epic #259](https://github.com/danielsmithdevelopment/ClawQL/issues/259) (checklist **#241–#258**); in-repo plans: [`roadmap/gap-closure-plan-prioritized-2026.md`](roadmap/gap-closure-plan-prioritized-2026.md), [`roadmap/idp-master-requirements-matrix.md`](roadmap/idp-master-requirements-matrix.md); Argo / **`workflow`** [ADR 0004](adr/0004-argo-cd-workflows-clawql-pipelines.md), [#239](https://github.com/danielsmithdevelopment/ClawQL/issues/239)
+- **Roadmap tracking (GitHub):** [epic #259](https://github.com/danielsmithdevelopment/ClawQL/issues/259) (checklist **#241–#258**); in-repo plans: [`roadmap/gap-closure-plan-prioritized-2026.md`](roadmap/gap-closure-plan-prioritized-2026.md), [`roadmap/idp-master-requirements-matrix.md`](roadmap/idp-master-requirements-matrix.md); Argo / **`workflow`** [ADR 0004](adr/0004-argo-cd-workflows-clawql-pipelines.md), [design](design/workflow-tool-argo.md), [#239](https://github.com/danielsmithdevelopment/ClawQL/issues/239)
 - `deployment/deploy-cloud-run.md`
 - `deployment/deploy-k8s.md`
 - `deployment/helm.md`

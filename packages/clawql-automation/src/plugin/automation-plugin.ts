@@ -18,8 +18,9 @@ import {
 export const AUTOMATION_PLUGIN_ID = "clawql-automation";
 
 /**
- * Future: Argo Workflows / Argo CD integration (`workflow` MCP tool, CronWorkflow triggers)
- * will extend this plugin — see ADR 0004 and #243/#244. Not implemented yet.
+ * Planned: Argo Workflows `workflow` MCP tool extends this plugin — template-ref submit only in v1,
+ * `@kubernetes/client-node`, Argo Workflows ≥ 3.4.0. See docs/design/workflow-tool-argo.md, ADR 0004, #243.
+ * Argo CD (Phase B): #244. Not implemented yet.
  */
 export const notifyToolSchema = {
   channel: z
