@@ -82,6 +82,8 @@ export function getClawqlApi(): ClawQLApiHandle {
 
 /** Test helper — next getClawqlApi() builds a fresh runtime. */
 export function resetClawqlApiForTests(): void {
+  if (!apiHandle) return;
+  Effect.runSync(apiHandle.registry.teardownAll());
   apiHandle = undefined;
 }
 
