@@ -51,7 +51,7 @@ When plugin registration lands, each tool will be registered only if its plugin 
 | `knowledge_search_onyx`          | `clawql-documents` (Onyx) | `src/`                      | [Onyx knowledge](https://docs.clawql.com/learn/knowledge-search-onyx)    |
 | `schedule`                       | `clawql-automation`       | `clawql-automation`         | [Schedule](https://docs.clawql.com/schedule)                             |
 | `notify`                         | `clawql-automation`       | `clawql-automation`         | [Notify](https://docs.clawql.com/notify)                                 |
-| `sandbox_exec`                   | `clawql-sandbox`          | `src/`                      | [Sandbox exec](https://docs.clawql.com/learn/sandbox-exec)               |
+| `sandbox_exec`                   | `clawql-sandbox`          | `clawql-sandbox`            | [Sandbox exec](https://docs.clawql.com/learn/sandbox-exec)               |
 | `ouroboros_*`                    | `clawql-ouroboros`        | `clawql-ouroboros`          | [Ouroboros](https://docs.clawql.com/ouroboros)                           |
 | `hitl_enqueue_label_studio`      | TBD                       | `src/`                      | [HITL](https://docs.clawql.com/hitl-label-studio)                        |
 
@@ -71,7 +71,7 @@ createClawQLApi({
 });
 ```
 
-Today **`PanguardProxyPlugin`**, **`MemoryPlugin`**, **`DocumentsPlugin`**, and **`AutomationPlugin`** are composed at startup (`buildMcpPlugins` in `clawql-api-adapters.ts`). Remaining optional tools (sandbox, HITL, Ouroboros) are still registered in `src/tools.ts`.
+Today **`PanguardProxyPlugin`**, **`MemoryPlugin`**, **`DocumentsPlugin`**, **`AutomationPlugin`**, and **`SandboxPlugin`** (when enabled) are composed at startup (`buildMcpPlugins` in `clawql-api-adapters.ts`). Remaining optional tools (HITL, Ouroboros) are still registered in `src/tools.ts`.
 
 ---
 
