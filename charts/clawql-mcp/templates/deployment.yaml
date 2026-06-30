@@ -132,6 +132,25 @@ spec:
             - name: CLAWQL_ENABLE_SANDBOX
               value: "1"
             {{- end }}
+            {{- if and .Values.enableSandbox .Values.sandboxKata.enabled (not .Values.sandboxDocker.enabled) }}
+            - name: CLAWQL_SANDBOX_BACKEND
+              value: "kata"
+            - name: CLAWQL_SANDBOX_KATA_RUNTIME_CLASS
+              value: {{ .Values.sandboxKata.runtimeClassName | default .Values.security.kata.runtimeClassName | quote }}
+            {{- if .Values.sandboxKata.namespace }}
+            - name: CLAWQL_SANDBOX_KATA_NAMESPACE
+              value: {{ .Values.sandboxKata.namespace | quote }}
+            {{- end }}
+            {{- if .Values.sandboxKata.serviceAccount }}
+            - name: CLAWQL_SANDBOX_KATA_SERVICE_ACCOUNT
+              value: {{ .Values.sandboxKata.serviceAccount | quote }}
+            {{- end }}
+            {{- else if and .Values.enableSandbox .Values.security.kata.enabled (not .Values.sandboxDocker.enabled) (not .Values.sandboxKata.enabled) }}
+            - name: CLAWQL_SANDBOX_BACKEND
+              value: "kata"
+            - name: CLAWQL_SANDBOX_KATA_RUNTIME_CLASS
+              value: {{ .Values.security.kata.runtimeClassName | quote }}
+            {{- end }}
             {{- if and .Values.enableSandbox .Values.sandboxDocker.enabled }}
             - name: CLAWQL_SANDBOX_BACKEND
               value: "docker"

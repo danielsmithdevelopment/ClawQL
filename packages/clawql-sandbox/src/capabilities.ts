@@ -1,15 +1,26 @@
 /**
- * Probes for sandbox_exec backends: Seatbelt binary, Docker/Podman CLI, Cloudflare bridge credentials.
+ * Probes for sandbox_exec backends: Kata RuntimeClass, Seatbelt binary, Docker/Podman CLI, Cloudflare bridge credentials.
  */
 
 import { spawn } from "node:child_process";
 import fs from "node:fs";
+import {
+  createInClusterKataClient,
+  kataRuntimeClassAvailable,
+  kataSandboxEnabled,
+} from "./kata-kubernetes.js";
 
 let dockerProbe: Promise<boolean> | undefined;
+let kataProbe: Promise<boolean> | undefined;
 
 /** Test-only: reset cached Docker CLI probe between Vitest cases. */
 export function resetSandboxDockerProbeForTest(): void {
   dockerProbe = undefined;
+}
+
+/** Test-only: reset cached Kata probe between Vitest cases. */
+export function resetSandboxKataProbeForTest(): void {
+  kataProbe = undefined;
 }
 
 function dockerBin(): string {
@@ -56,4 +67,17 @@ async function probeDockerCliOnce(): Promise<boolean> {
 export async function dockerCliReachable(): Promise<boolean> {
   dockerProbe ??= probeDockerCliOnce();
   return dockerProbe;
+}
+
+async function probeKataRuntimeOnce(): Promise<boolean> {
+  if (!kataSandboxEnabled()) return false;
+  const client = createInClusterKataClient();
+  if (!client) return false;
+  return kataRuntimeClassAvailable(client);
+}
+
+/** True when Kata RuntimeClass is reachable in-cluster (cached per process). */
+export async function kataRuntimeReachable(): Promise<boolean> {
+  kataProbe ??= probeKataRuntimeOnce();
+  return kataProbe;
 }

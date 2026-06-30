@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { callSandboxBridge, handleClawqlCodeToolInput } from "./sandbox-bridge-client.js";
+import { callSandboxBridge, handleClawqlCodeToolInput } from "./bridge-client.js";
 
 describe("sandbox-bridge-client", () => {
   const saved: Record<string, string | undefined> = {};

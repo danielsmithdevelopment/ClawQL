@@ -2,7 +2,7 @@
  * tools.ts
  *
  * Core tools: search, execute, then immediately cache + audit (non-negotiable; must not follow optional branches that could throw). audit = in-process ring buffer (#89); cache = in-process LRU KV (#75).
- * Optional: **`sandbox_exec`** when **`CLAWQL_ENABLE_SANDBOX=1`** — bridge / Seatbelt / Docker (`CLAWQL_SANDBOX_BACKEND`).
+ * Optional: **`sandbox_exec`** when **`CLAWQL_ENABLE_SANDBOX=1`** — Kata (default in-cluster), Docker, Seatbelt, Cloudflare bridge (`CLAWQL_SANDBOX_BACKEND`).
  * memory_ingest / memory_recall — Obsidian vault notes (default on; set CLAWQL_ENABLE_MEMORY=0 to hide; writable vault).
  * Optional: ingest_external_knowledge — bulk Markdown + optional URL fetch (GitHub #40); default on; **`CLAWQL_ENABLE_DOCUMENTS=0`** to hide.
  * Optional: knowledge_search_onyx — Onyx when CLAWQL_ENABLE_ONYX and documents enabled; **`CLAWQL_ENABLE_DOCUMENTS=0`** hides (GitHub #118).
@@ -33,7 +33,6 @@ import {
 } from "./graphql-execute-helpers.js";
 import { loadSpec } from "./spec-loader.js";
 import { defaultFields, executeOutputFields, projectRestByFields } from "./tools-execute-core.js";
-import { handleClawqlCodeToolInput } from "./sandbox-bridge-client.js";
 import { cacheToolSchema, handleCacheToolInput } from "./clawql-cache.js";
 import { auditToolSchema, handleAuditToolInput } from "./clawql-audit.js";
 import {
@@ -107,7 +106,7 @@ export { SLACK_NOTIFY_OPERATION_ID, handleNotifyToolInput };
 configureAutomationPluginDeps({ execute: (params) => handleClawqlExecuteToolInput(params) });
 configureDocumentsPluginDeps({ execute: (params) => handleClawqlExecuteToolInput(params) });
 
-/** Register MCP tools declared by composed plugins (MemoryPlugin, DocumentsPlugin, AutomationPlugin, …). */
+/** Register MCP tools declared by composed plugins (Memory, Documents, Automation, Sandbox, …). */
 function registerPluginMcpTools(server: McpServer): void {
   for (const tool of getClawqlApi().listMcpTools()) {
     server.tool(
@@ -179,43 +178,6 @@ export function registerTools(server: McpServer) {
   server.tool("audit", auditToolSchema, wrapMcpToolHandler("audit", handleAuditToolInput));
 
   registerPluginMcpTools(server);
-
-  if (getClawqlOptionalToolFlags().enableSandbox) {
-    const sandboxCodeSchema = {
-      code: z
-        .string()
-        .describe(
-          "Source code to run isolated. CLAWQL_SANDBOX_BACKEND unset = Cloudflare bridge only; auto = Seatbelt then Docker then bridge; or pin bridge|macos-seatbelt|docker."
-        ),
-      language: z
-        .enum(["python", "javascript", "shell"])
-        .describe("python (python3), javascript (Node .mjs), or shell (posix sh script body)."),
-      sessionId: z
-        .string()
-        .optional()
-        .describe(
-          "When persistenceMode is session or persistent, reuse the same id to keep a stable sandbox filesystem (e.g. persist files across calls)."
-        ),
-      persistenceMode: z
-        .enum(["ephemeral", "session", "persistent"])
-        .optional()
-        .describe(
-          "Overrides CLAWQL_SANDBOX_PERSISTENCE_MODE. ephemeral = new sandbox each call; session = per sessionId; persistent = one shared sandbox."
-        ),
-      timeoutMs: z
-        .number()
-        .int()
-        .min(1000)
-        .optional()
-        .describe("Optional wall-clock limit in ms (capped by CLAWQL_SANDBOX_TIMEOUT_MS_MAX)."),
-    };
-
-    server.tool(
-      "sandbox_exec",
-      sandboxCodeSchema,
-      wrapMcpToolHandler("sandbox_exec", handleClawqlCodeToolInput)
-    );
-  }
 
   if (getClawqlOptionalToolFlags().enableHitlLabelStudio) {
     server.tool(

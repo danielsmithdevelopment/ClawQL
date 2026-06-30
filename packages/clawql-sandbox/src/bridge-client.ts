@@ -9,11 +9,12 @@
 import {
   parseExplicitSandboxBackendEnv,
   resolveSandboxBackendChoice,
-} from "./sandbox-backend-selection.js";
-import { callDockerSandbox } from "./sandbox-container.js";
-import { callMacosSeatbeltSandbox } from "./sandbox-macos-seatbelt.js";
-import { defaultPersistence, parseTimeoutMs } from "./sandbox-shared.js";
-import type { SandboxBridgeResponse, SandboxCodeToolInput } from "./sandbox-types.js";
+} from "./backend-selection.js";
+import { callDockerSandbox } from "./container.js";
+import { callKataSandbox } from "./kata-kubernetes.js";
+import { callMacosSeatbeltSandbox } from "./macos-seatbelt.js";
+import { defaultPersistence, parseTimeoutMs } from "./shared.js";
+import type { SandboxBridgeResponse, SandboxCodeToolInput } from "./types.js";
 
 export type {
   SandboxBridgeResponse,
@@ -21,7 +22,7 @@ export type {
   SandboxLanguage,
   SandboxPersistenceMode,
   SandboxExecBackendKind,
-} from "./sandbox-types.js";
+} from "./types.js";
 
 export async function callSandboxBridge(
   input: SandboxCodeToolInput
@@ -135,7 +136,9 @@ export async function handleClawqlCodeToolInput(
   }
 
   let result: SandboxBridgeResponse;
-  if (choice.backend === "macos-seatbelt") {
+  if (choice.backend === "kata") {
+    result = await callKataSandbox(params);
+  } else if (choice.backend === "macos-seatbelt") {
     result = await callMacosSeatbeltSandbox(params);
   } else if (choice.backend === "docker") {
     result = await callDockerSandbox(params);
