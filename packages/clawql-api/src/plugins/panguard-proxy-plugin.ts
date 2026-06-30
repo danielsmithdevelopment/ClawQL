@@ -30,7 +30,7 @@ export function createPanguardProxyPlugin(options: PanguardProxyPluginOptions = 
     version: "0.1.0",
     kind: "mcp-proxy",
     vertical: "security",
-    onRegister: () =>
+    onRegister: (_api) =>
       Effect.sync(() => {
         if (process.env.CLAWQL_PANGUARD_PROXY_DEBUG?.trim() === "1") {
           process.stderr.write(

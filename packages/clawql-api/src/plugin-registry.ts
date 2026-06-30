@@ -1,10 +1,22 @@
 import { Effect } from "effect";
-import { PluginAlreadyRegisteredError, type ClawQLError, type Plugin } from "clawql-core";
+import {
+  PluginAlreadyRegisteredError,
+  type ClawQLPluginRegistrationApi,
+  type ClawQLError,
+  type McpToolAlreadyRegisteredError,
+  type Plugin,
+} from "clawql-core";
 
 export class PluginRegistry {
   private readonly plugins = new Map<string, Plugin>();
 
-  register(plugin: Plugin): Effect.Effect<void, PluginAlreadyRegisteredError | ClawQLError> {
+  register(
+    plugin: Plugin,
+    registrationApi: ClawQLPluginRegistrationApi
+  ): Effect.Effect<
+    void,
+    PluginAlreadyRegisteredError | ClawQLError | McpToolAlreadyRegisteredError
+  > {
     const plugins = this.plugins;
     return Effect.gen(function* () {
       if (plugins.has(plugin.id)) {
@@ -12,7 +24,7 @@ export class PluginRegistry {
       }
       plugins.set(plugin.id, plugin);
       if (plugin.onRegister) {
-        yield* plugin.onRegister();
+        yield* plugin.onRegister(registrationApi);
       }
     });
   }

@@ -9,3 +9,9 @@ export class ClawQLError extends Data.TaggedError("ClawQLError")<{
 export class PluginAlreadyRegisteredError extends Data.TaggedError("PluginAlreadyRegisteredError")<{
   readonly pluginId: string;
 }> {}
+
+export class McpToolAlreadyRegisteredError extends Data.TaggedError(
+  "McpToolAlreadyRegisteredError"
+)<{
+  readonly toolName: string;
+}> {}

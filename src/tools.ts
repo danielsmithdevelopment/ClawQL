@@ -35,8 +35,6 @@ import { loadSpec } from "./spec-loader.js";
 import { defaultFields, executeOutputFields, projectRestByFields } from "./tools-execute-core.js";
 import { handleClawqlCodeToolInput } from "./sandbox-bridge-client.js";
 import { handleIngestExternalKnowledgeToolInput } from "./external-ingest.js";
-import { handleMemoryIngestToolInput } from "./memory-ingest.js";
-import { handleMemoryRecallToolInput } from "./memory-recall.js";
 import { cacheToolSchema, handleCacheToolInput } from "./clawql-cache.js";
 import { auditToolSchema, handleAuditToolInput } from "./clawql-audit.js";
 import { handleScheduleToolInput, scheduleToolSchema } from "./clawql-schedule.js";
@@ -117,6 +115,21 @@ export async function handleNotifyToolInput(
 
 configureNotifyDeps({ execute: (params) => handleClawqlExecuteToolInput(params) });
 
+/** Register MCP tools declared by composed plugins (MemoryPlugin, future DocumentsPlugin, …). */
+function registerPluginMcpTools(server: McpServer): void {
+  for (const tool of getClawqlApi().listMcpTools()) {
+    server.tool(
+      tool.name,
+      tool.schema,
+      wrapMcpToolHandler(tool.name, (args) =>
+        tool.handler(args).then((result) => ({
+          content: result.content.map((c) => ({ type: "text" as const, text: c.text })),
+        }))
+      )
+    );
+  }
+}
+
 export function registerTools(server: McpServer) {
   server.tool(
     "search",
@@ -173,6 +186,8 @@ export function registerTools(server: McpServer) {
   server.tool("cache", cacheToolSchema, wrapMcpToolHandler("cache", handleCacheToolInput));
   server.tool("audit", auditToolSchema, wrapMcpToolHandler("audit", handleAuditToolInput));
 
+  registerPluginMcpTools(server);
+
   if (getClawqlOptionalToolFlags().enableSandbox) {
     const sandboxCodeSchema = {
       code: z
@@ -207,99 +222,6 @@ export function registerTools(server: McpServer) {
       "sandbox_exec",
       sandboxCodeSchema,
       wrapMcpToolHandler("sandbox_exec", handleClawqlCodeToolInput)
-    );
-  }
-
-  const memoryEnterpriseCitationSchema = z.object({
-    title: z.string().max(500).optional(),
-    url: z.string().max(2048).optional(),
-    document_id: z.string().max(200).optional(),
-    source: z.string().max(200).optional(),
-    snippet: z.string().max(400).optional(),
-  });
-
-  if (getClawqlOptionalToolFlags().enableMemory) {
-    server.tool(
-      "memory_ingest",
-      {
-        title: z
-          .string()
-          .min(1)
-          .describe("Suggested Obsidian page title (used for the file name and heading)."),
-        insights: z.string().optional().describe("Key insights to persist."),
-        conversation: z.string().optional().describe("Conversation transcript or summary text."),
-        toolOutputs: z
-          .union([z.string(), z.array(z.string())])
-          .optional()
-          .describe("Tool result body, or a list of results to record."),
-        toolOutputsFile: z
-          .string()
-          .optional()
-          .describe(
-            "If set, the ClawQL server reads UTF-8 from this file path and uses it as `toolOutputs` (small MCP payload; " +
-              "large content does not go through the tool round-trip). File must be under an allowed root " +
-              "(`CLAWQL_MEMORY_INGEST_FILE_ROOTS` or, by default, the process current working directory). " +
-              "Takes precedence over `toolOutputs` if both are set. Set `CLAWQL_MEMORY_INGEST_FILE=0` to reject."
-          ),
-        enterpriseCitations: z
-          .array(memoryEnterpriseCitationSchema)
-          .max(30)
-          .optional()
-          .describe(
-            "Optional short citation rows (e.g. trimmed from Onyx `knowledge_search_onyx` JSON). " +
-              "Stored as a small Markdown block in the vault — not full retrieval payloads (#130)."
-          ),
-        wikilinks: z
-          .array(z.string())
-          .optional()
-          .describe(
-            "Other vault page names to link with Obsidian [[wikilinks]] (plain names; brackets optional)."
-          ),
-        sessionId: z.string().optional().describe("Optional session label (shown in the note)."),
-        append: z
-          .boolean()
-          .optional()
-          .describe(
-            "When the page already exists, append a new section (default true). Set false to replace the file."
-          ),
-      },
-      wrapMcpToolHandler("memory_ingest", handleMemoryIngestToolInput)
-    );
-
-    server.tool(
-      "memory_recall",
-      {
-        query: z
-          .string()
-          .min(1)
-          .describe(
-            "Natural language or keywords to find in vault Markdown (filename + body + headings)."
-          ),
-        limit: z
-          .number()
-          .int()
-          .min(1)
-          .max(50)
-          .optional()
-          .describe("Max notes to return (default: CLAWQL_MEMORY_RECALL_LIMIT or 10)."),
-        maxDepth: z
-          .number()
-          .int()
-          .min(0)
-          .max(10)
-          .optional()
-          .describe(
-            "How many wikilink hops to follow from keyword hits (default: CLAWQL_MEMORY_RECALL_MAX_DEPTH or 2)."
-          ),
-        minScore: z
-          .number()
-          .min(0)
-          .optional()
-          .describe(
-            "Minimum keyword match score to seed a note (default: CLAWQL_MEMORY_RECALL_MIN_SCORE or 1)."
-          ),
-      },
-      wrapMcpToolHandler("memory_recall", handleMemoryRecallToolInput)
     );
   }
 

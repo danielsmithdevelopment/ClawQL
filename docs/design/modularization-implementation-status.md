@@ -26,7 +26,7 @@ ClawQL is mid-flight on a **strangler extraction** from the root `clawql-mcp` pa
 
 **Effect-TS:** **Partial.** `search` / `execute` run through `createClawQLApi()` + `SearchService` / `ExecuteService` Effect Layers; extracted packages are still largely **`async`/`await`** with Zod at MCP boundaries. Full Layer composition for memory/documents/automation is **planned**, not shipped.
 
-**Plugin ecosystem:** **Foundation only.** `Plugin` + `PluginRegistry` + `PanguardProxyPlugin` exist in `clawql-core` / `clawql-api`. Memory/Documents/Automation are **not** Effect `Layer` plugins yet; third-party npm plugins are **not** a supported public API yet.
+**Plugin ecosystem:** **Phase 2 started.** `Plugin` + `PluginRegistry` + `PanguardProxyPlugin` + **`MemoryPlugin`** (`registerMcpTool` / `onRegister`). Documents/Automation are **not** Effect `Layer` plugins yet; third-party npm plugins are **not** a supported public API yet.
 
 ---
 
@@ -191,11 +191,12 @@ interface Plugin {
 }
 ```
 
-- **`PluginRegistry`** (`clawql-api`) — register plugins at `createClawQLApi()` startup.
+- **`PluginRegistry`** (`clawql-api`) — register plugins at `createClawQLApi()` startup; `onRegister` receives `ClawQLPluginRegistrationApi` with `registerMcpTool`.
 - **`PanguardProxyPlugin`** — first `mcp-proxy` plugin; `beforeCallTool` for policy/ATR chokepoint ([#272](https://github.com/danielsmithdevelopment/ClawQL/issues/272)).
+- **`MemoryPlugin`** (`createMemoryPlugin`) — registers `memory_ingest` / `memory_recall` via `onRegister` when `CLAWQL_ENABLE_MEMORY` is on (default). MCP transport applies tools via `registerPluginMcpTools()` in `tools.ts`.
 - **`McpProxyPipeline`** — wires registry into MCP tool path via `clawql-api-adapters.ts`.
 
-Optional tools (memory, schedule, notify, …) are still registered **directly in `tools.ts`**, not via `Plugin.onRegister`.
+Optional tools (documents, schedule, notify, …) are still registered **directly in `tools.ts`**, not via `Plugin.onRegister`.
 
 ### 6.2 Target (third-party + vertical plugins)
 
