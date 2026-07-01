@@ -130,11 +130,7 @@ const workflowInputSchema = z.object(workflowToolSchema).superRefine((data, ctx)
       ctx.addIssue({ code: "custom", message: `${data.operation} requires name` });
     }
   }
-  if (
-    data.operation === "wait" ||
-    data.operation === "suspend" ||
-    data.operation === "resume"
-  ) {
+  if (data.operation === "wait" || data.operation === "suspend" || data.operation === "resume") {
     if (!data.name?.trim()) {
       ctx.addIssue({ code: "custom", message: `${data.operation} requires name` });
     }

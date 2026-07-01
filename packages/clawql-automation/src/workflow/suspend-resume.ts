@@ -4,7 +4,11 @@
  */
 
 import { ARGO_CRD, isNamespaceAllowed, workflowToolEnabled } from "./env.js";
-import { getWorkflowK8sClients, type ArgoWorkflowNodeStatus, type ArgoWorkflowObject } from "./k8s-client.js";
+import {
+  getWorkflowK8sClients,
+  type ArgoWorkflowNodeStatus,
+  type ArgoWorkflowObject,
+} from "./k8s-client.js";
 import { isTerminalWorkflowPhase } from "./wait.js";
 
 export function isActiveSuspendNode(node: ArgoWorkflowNodeStatus): boolean {
@@ -86,7 +90,10 @@ async function replaceWorkflowObject(
   return res as ArgoWorkflowObject;
 }
 
-export async function suspendWorkflow(namespace: string, name: string): Promise<ArgoWorkflowObject> {
+export async function suspendWorkflow(
+  namespace: string,
+  name: string
+): Promise<ArgoWorkflowObject> {
   const wf = await getWorkflowObject(namespace, name);
   if (isTerminalWorkflowPhase(wf.status?.phase)) {
     throw new Error(`workflow ${name} is already completed (phase: ${wf.status?.phase})`);
@@ -143,7 +150,9 @@ export async function resumeWorkflow(
     const updatedNode: ArgoWorkflowNodeStatus = {
       ...node,
       phase: "Succeeded",
-      message: node.message ? `${node.message}; Resumed by clawql workflow tool` : "Resumed by clawql workflow tool",
+      message: node.message
+        ? `${node.message}; Resumed by clawql workflow tool`
+        : "Resumed by clawql workflow tool",
       finishedAt,
     };
     next.status!.nodes![nodeId] = updatedNode;
@@ -235,9 +244,7 @@ export type HitlWebhookResumeResult =
   | { attempted: true; ok: false; error: string };
 
 /** Resume an Argo workflow when Label Studio webhook completes (opt-in). */
-export async function maybeResumeWorkflowFromHitl(
-  hitl: unknown
-): Promise<HitlWebhookResumeResult> {
+export async function maybeResumeWorkflowFromHitl(hitl: unknown): Promise<HitlWebhookResumeResult> {
   if (!hitlWebhookResumeWorkflowEnabled()) return { attempted: false };
   if (!workflowToolEnabled()) {
     return { attempted: true, ok: false, error: "workflow tool is not enabled" };

@@ -35,9 +35,7 @@ describe("nodeMatchesFieldSelector", () => {
 
   it("requires all comma-separated clauses", () => {
     expect(nodeMatchesFieldSelector("displayName=approve,phase=Running", node, "n1")).toBe(true);
-    expect(nodeMatchesFieldSelector("displayName=approve,phase=Succeeded", node, "n1")).toBe(
-      false
-    );
+    expect(nodeMatchesFieldSelector("displayName=approve,phase=Succeeded", node, "n1")).toBe(false);
   });
 });
 
