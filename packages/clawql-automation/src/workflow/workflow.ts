@@ -17,12 +17,15 @@ import {
   isTemplateAllowed,
   workflowDeleteAllowed,
   workflowToolEnabled,
+  WORKFLOW_CORRELATION_LABEL,
 } from "./env.js";
 import {
   getWorkflowWaitPollSecondsDefault,
   getWorkflowWaitTimeoutSecondsDefault,
+  isTerminalWorkflowPhase,
   waitForWorkflow,
 } from "./wait.js";
+import { appendWorkflowAudit } from "./workflow-audit.js";
 
 const templateRefSchema = z.object({
   kind: z.enum(["WorkflowTemplate", "ClusterWorkflowTemplate"]),
@@ -161,6 +164,16 @@ function resolveTemplateRef(
   };
 }
 
+function workflowCorrelationId(
+  explicit?: string,
+  labels?: Record<string, string>
+): string | undefined {
+  const fromInput = explicit?.trim();
+  if (fromInput) return fromInput;
+  const fromLabel = labels?.[WORKFLOW_CORRELATION_LABEL]?.trim();
+  return fromLabel || undefined;
+}
+
 async function getWorkflow(namespace: string, name: string): Promise<ArgoWorkflowObject> {
   const { customObjects } = await getWorkflowK8sClients();
   const res = await customObjects.getNamespacedCustomObject({
@@ -217,6 +230,11 @@ export async function handleWorkflowToolInput(
           body,
         })) as ArgoWorkflowObject;
         const summary = mapWorkflowToSummary(created, nsCheck.namespace);
+        appendWorkflowAudit({
+          action: "submit",
+          summary: `namespace=${nsCheck.namespace} name=${summary.name} phase=${summary.phase} template=${summary.template_ref?.name ?? "unknown"}`,
+          correlationId: workflowCorrelationId(parsed.correlation_id, summary.labels),
+        });
         return jsonResponse({
           ok: true,
           operation: "submit",
@@ -231,6 +249,13 @@ export async function handleWorkflowToolInput(
         if (parsed.include_nodes === false) {
           delete summary.nodes;
         }
+        if (isTerminalWorkflowPhase(summary.phase)) {
+          appendWorkflowAudit({
+            action: "terminal",
+            summary: `namespace=${nsCheck.namespace} name=${summary.name} phase=${summary.phase}`,
+            correlationId: workflowCorrelationId(undefined, summary.labels),
+          });
+        }
         return jsonResponse({ ok: true, operation: "get", workflow: summary });
       }
       case "wait": {
@@ -243,6 +268,11 @@ export async function handleWorkflowToolInput(
           pollIntervalSeconds: parsed.poll_interval_seconds ?? getWorkflowWaitPollSecondsDefault(),
           includeNodes: parsed.include_nodes,
           getWorkflow,
+        });
+        appendWorkflowAudit({
+          action: result.timedOut ? "wait_timeout" : "terminal",
+          summary: `namespace=${nsCheck.namespace} name=${parsed.name} phase=${result.workflow.phase} timed_out=${result.timedOut} polls=${result.polls}`,
+          correlationId: workflowCorrelationId(undefined, result.workflow.labels),
         });
         return jsonResponse({
           ok: !result.timedOut,

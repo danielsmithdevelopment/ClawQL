@@ -175,6 +175,25 @@ sandboxDocker:
 # MCP notify tool — Slack chat.postMessage (#77). Requires Slack in provider merge + CLAWQL_SLACK_TOKEN (via extraEnv / secret).
 enableNotify: false
 
+# MCP workflow tool — Argo Workflows submit/observe (#243, ADR 0004). Requires Argo Workflows ≥ 3.4.0 in cluster.
+enableWorkflow: false
+
+# When enableWorkflow: true — namespace allowlist, RBAC Role/RoleBinding, and workflow env vars.
+workflow:
+  rbac: true
+  # Empty = release namespace only. Each entry gets a Role + RoleBinding for the MCP ServiceAccount.
+  namespaceAllowlist: []
+  defaultNamespace: ""
+  templateAllowlist: ""
+  argoUiBaseUrl: ""
+  allowDelete: false
+  logTailMax: 200
+  waitTimeoutSeconds: 600
+  waitPollSeconds: 5
+  generateNamePrefix: clawql-
+  # Grant get/list on ClusterWorkflowTemplate (cluster-scoped read).
+  clusterTemplates: true
+
 # MCP hitl_enqueue_label_studio — Label Studio HITL bridge (#228). Requires CLAWQL_LABEL_STUDIO_* via extraEnv / secret.
 enableHitlLabelStudio: false
 
