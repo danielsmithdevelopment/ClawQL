@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
+import { resetDefaultAuditRingBufferForTests, getDefaultAuditRingBuffer } from "clawql-core";
 import { buildSubmitWorkflowBody, mapWorkflowToSummary } from "./argo-mapper.js";
 import {
   configureWorkflowK8sFactory,
@@ -80,6 +81,7 @@ describe("mapWorkflowToSummary", () => {
 describe("handleWorkflowToolInput", () => {
   afterEach(() => {
     resetWorkflowK8sClientsForTests();
+    resetDefaultAuditRingBufferForTests();
     delete process.env.CLAWQL_ENABLE_WORKFLOW;
     delete process.env.CLAWQL_WORKFLOW_NAMESPACE_ALLOWLIST;
     delete process.env.CLAWQL_WORKFLOW_DEFAULT_NAMESPACE;
@@ -124,6 +126,8 @@ describe("handleWorkflowToolInput", () => {
     const body = JSON.parse(res.content[0]!.text);
     expect(body.ok).toBe(true);
     expect(body.workflow.name).toBe("clawql-xyz");
+    const audit = getDefaultAuditRingBuffer().list(5).entries;
+    expect(audit.some((e) => e.action === "submit" && e.category === "workflow")).toBe(true);
   });
 
   it("waits until workflow reaches terminal phase", async () => {
@@ -160,5 +164,7 @@ describe("handleWorkflowToolInput", () => {
     expect(body.workflow.phase).toBe("Succeeded");
     expect(body.timed_out).toBe(false);
     expect(body.polls).toBe(2);
+    const audit = getDefaultAuditRingBuffer().list(5).entries;
+    expect(audit.some((e) => e.action === "terminal" && e.category === "workflow")).toBe(true);
   });
 });

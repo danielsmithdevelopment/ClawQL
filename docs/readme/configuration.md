@@ -29,13 +29,13 @@ Unset means **on**. Set **`0`**, **`false`**, or **`no`** to hide tools or shrin
 
 Set **`1`** / **`true`** / **`yes`** where noted:
 
-| Band                  | MCP tools                       | Flags / prerequisites                                                                                                                                                                                                                                                           |
-| --------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **ClawQL Sandbox**    | **`sandbox_exec`**              | **`CLAWQL_ENABLE_SANDBOX=1`** registers the tool. Then **`CLAWQL_SANDBOX_BACKEND`**: omit = bridge; **`auto`** = Seatbelt → Docker → bridge; or pin **`bridge`** \| **`macos-seatbelt`** \| **`docker`** ([#207](https://github.com/danielsmithdevelopment/ClawQL/issues/207)). |
-| **ClawQL Ouroboros**  | **`ouroboros_*`** (three tools) | **`CLAWQL_ENABLE_OUROBOROS=1`**                                                                                                                                                                                                                                                 |
-| **ClawQL Automation** | **`schedule`**, **`notify`**    | **`CLAWQL_ENABLE_SCHEDULE=1`**, **`CLAWQL_ENABLE_NOTIFY=1`**                                                                                                                                                                                                                    |
+| Band                  | MCP tools                                    | Flags / prerequisites                                                                                                                                                                                                                                                           |
+| --------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **ClawQL Sandbox**    | **`sandbox_exec`**                           | **`CLAWQL_ENABLE_SANDBOX=1`** registers the tool. Then **`CLAWQL_SANDBOX_BACKEND`**: omit = bridge; **`auto`** = Seatbelt → Docker → bridge; or pin **`bridge`** \| **`macos-seatbelt`** \| **`docker`** ([#207](https://github.com/danielsmithdevelopment/ClawQL/issues/207)). |
+| **ClawQL Ouroboros**  | **`ouroboros_*`** (three tools)              | **`CLAWQL_ENABLE_OUROBOROS=1`**                                                                                                                                                                                                                                                 |
+| **ClawQL Automation** | **`schedule`**, **`notify`**, **`workflow`** | **`CLAWQL_ENABLE_SCHEDULE=1`**, **`CLAWQL_ENABLE_NOTIFY=1`**, **`CLAWQL_ENABLE_WORKFLOW=1`** (Argo Workflows ≥ 3.4.0; namespace allowlist required)                                                                                                                             |
 
-**Planned (ADR 0004, not shipped until implemented):** optional **`workflow`** tool (**`CLAWQL_ENABLE_WORKFLOW=1`**) — durable **Argo Workflows**–backed pipelines (template-ref **`submit`** only in v1), implemented in **`clawql-automation`** / **`AutomationPlugin`** like **`schedule`** / **`notify`**. Requires **Argo Workflows ≥ 3.4.0**. See [`docs/design/workflow-tool-argo.md`](../design/workflow-tool-argo.md) and [`docs/adr/0004-argo-cd-workflows-clawql-pipelines.md`](../adr/0004-argo-cd-workflows-clawql-pipelines.md).
+**`workflow`** — durable **Argo Workflows** pipelines (template-ref **`submit`**, **`wait`**, **`get`**, **`logs`**). Implemented in **`clawql-automation`** / **`AutomationPlugin`**. Helm: **`enableWorkflow: true`** + **`workflow.namespaceAllowlist`** (see [`charts/clawql-mcp/README.md`](../../charts/clawql-mcp/README.md)). Operator guide: [`docs/mcp/workflow-tool.md`](../mcp/workflow-tool.md).
 
 **`knowledge_search_onyx`** — **`CLAWQL_ENABLE_ONYX=1`** plus **Documents** still enabled (documents off hides the tool regardless).
 
@@ -105,7 +105,7 @@ When Stage 1 is active:
 See **[Feature tiers](#feature-tiers-architecture-diagram)** first. Quick list:
 
 - **Default on, opt out:** `CLAWQL_ENABLE_MEMORY`, `CLAWQL_ENABLE_DOCUMENTS` — set `0` / `false` / `no` to hide tools or trim default **`all-providers`** (documents).
-- **Default off, opt in:** `CLAWQL_ENABLE_SCHEDULE`, `CLAWQL_ENABLE_NOTIFY`, `CLAWQL_ENABLE_ONYX`, `CLAWQL_ENABLE_OUROBOROS`. **Planned:** `CLAWQL_ENABLE_WORKFLOW` for the **`workflow`** tool (ADR 0004).
+- **Default off, opt in:** `CLAWQL_ENABLE_SCHEDULE`, `CLAWQL_ENABLE_NOTIFY`, `CLAWQL_ENABLE_WORKFLOW`, `CLAWQL_ENABLE_ONYX`, `CLAWQL_ENABLE_OUROBOROS`.
 
 ## `.env` loading and canonical `CLAWQL_*` names
 

@@ -16,6 +16,22 @@ Template-ref **`submit`** only in v1 — agents start reviewed **`WorkflowTempla
 
 Optional: `CLAWQL_WORKFLOW_KUBECONFIG` (dev), `CLAWQL_WORKFLOW_TEMPLATE_ALLOWLIST`, `CLAWQL_WORKFLOW_ARGO_UI_BASE_URL`, `CLAWQL_WORKFLOW_ALLOW_DELETE=1`, `CLAWQL_WORKFLOW_WAIT_TIMEOUT_SECONDS` (default `600`), `CLAWQL_WORKFLOW_WAIT_POLL_SECONDS` (default `5`).
 
+## Helm (`charts/clawql-mcp`)
+
+```yaml
+enableWorkflow: true
+workflow:
+  namespaceAllowlist:
+    - clawql
+  defaultNamespace: clawql
+  rbac: true # Role + RoleBinding per namespace; ClusterRole for ClusterWorkflowTemplate read
+  argoUiBaseUrl: https://argo.example.com
+```
+
+The chart injects `CLAWQL_ENABLE_WORKFLOW=1`, namespace allowlist, and wait/log defaults. Apply Argo templates into each allowlisted namespace (see [`deployment/argo-workflows/README.md`](../../deployment/argo-workflows/README.md)).
+
+Terminal `submit` / `wait` / terminal `get` events append to the in-process **`audit`** ring buffer (`category: workflow`).
+
 ## Operations
 
 | `operation`      | Purpose                                                                 |

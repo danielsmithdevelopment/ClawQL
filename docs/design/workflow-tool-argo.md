@@ -237,7 +237,7 @@ if (flags.enableSchedule || flags.enableNotify || flags.enableWorkflow) {
 
 | Tool                            | v1 pattern                                                                                            |
 | ------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| **`audit`**                     | Handler appends on `submit` and on terminal `get` / `wait`                                            |
+| **`audit`**                     | Handler appends on `submit` and on terminal `get` / `wait` (shipped)                                  |
 | **`notify`**                    | Agent-driven; optional server hook in A.2                                                             |
 | **`memory_ingest`**             | Documented agent skill post-run                                                                       |
 | **`hitl_enqueue_label_studio`** | Future: suspend → HITL → resume ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254)) |
@@ -269,9 +269,10 @@ if (flags.enableSchedule || flags.enableNotify || flags.enableWorkflow) {
 ### Phase A.2
 
 - [x] `wait` with timeout
-- [ ] `delete` behind `CLAWQL_WORKFLOW_ALLOW_DELETE`
+- [x] `delete` behind `CLAWQL_WORKFLOW_ALLOW_DELETE` (handler shipped; Helm `workflow.allowDelete`)
+- [x] `audit` append on `submit` and terminal `get` / `wait`
+- [x] Helm SA + Role binding values (`enableWorkflow`, `workflow-rbac.yaml`)
 - [ ] Optional notify on terminal phase
-- [ ] Helm SA + Role binding values
 
 ### Phase B
 

@@ -51,3 +51,9 @@ Chat bridge (POST /v1/chat): {{ include "clawql-mcp.openclawChatBridgeUrl" . }} 
 
 Goose agent pool (enabled): {{ .Values.goose.replicaCount }} replica(s); CLAWQL_MCP_URL wired when goose.clawqlMcp.enabled. Scale via `goose.replicaCount` (max {{ .Values.goose.maxReplicas }} planned for HPA).
 {{- end }}
+{{- if .Values.enableWorkflow }}
+
+Workflow tool (Argo): enableWorkflow is on — namespace allowlist: {{ include "clawql-mcp.workflowNamespaceList" . }}
+  Apply templates: kubectl apply -f deployment/argo-workflows/templates/ -n <allowlisted-namespace>
+  MCP flow: submit → wait → optional logs. See docs/mcp/workflow-tool.md
+{{- end }}

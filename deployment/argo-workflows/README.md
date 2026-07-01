@@ -7,7 +7,7 @@ Optional **bring-your-own Argo Workflows** (≥ **3.4.0**) manifests. ClawQL doe
 - Argo Workflows controller running in the cluster
 - ClawQL MCP deployed with vault memory enabled (`CLAWQL_OBSIDIAN_VAULT_PATH` writable — e.g. Helm `vault.hostPath` or PVC)
 - MCP **`workflow`** tool enabled on the operator workstation or in-cluster agent: `CLAWQL_ENABLE_WORKFLOW=1`, `CLAWQL_WORKFLOW_NAMESPACE_ALLOWLIST`
-- ServiceAccount with permission to create `Workflow` resources and read `WorkflowTemplate` in the target namespace
+- ServiceAccount with permission to create `Workflow` resources and read `WorkflowTemplate` in the target namespace (or enable **`enableWorkflow: true`** + **`workflow.rbac: true`** on the ClawQL Helm chart — see [`docs/mcp/workflow-tool.md`](../../docs/mcp/workflow-tool.md))
 
 Apply templates into an allowlisted namespace (example `clawql`):
 
