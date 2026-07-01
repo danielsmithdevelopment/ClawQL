@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **NATS JetStream workflow events** ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254), [#127](https://github.com/danielsmithdevelopment/ClawQL/issues/127)): opt-in publish (`CLAWQL_NATS_ENABLE_PUBLISH=1`) for HITL/workflow lifecycle; JetStream consumer (`CLAWQL_NATS_ENABLE_CONSUMER=1` + `CLAWQL_NATS_CONSUMER_RESUME_WORKFLOW=1`) resumes Argo workflows on `hitl.completed`; ConeShare viewer events on `clawql.document.*`.
+
+### Documentation
+
+- HITL + workflow tool guides: NATS dual-path (sync webhook vs async consumer); `.env.example` NATS block.
+
 ## [6.4.0] - 2026-07-01
 
 Minor release: **plugin Phase 2 (MCP registration)** for Memory, Documents, Automation (Argo **`workflow`** + **`argocd`**), Sandbox (Kata in-cluster), and Ouroboros; **eight-vendor IDP** merge (Docling, Nextcloud, ConeShare); full **Argo Workflows** control plane (wait, suspend/resume, cron, artifacts, notify-on-wait); **`loadSpec()` coalesce** for test stability. **No intentional MCP contract breaks** — same tool names and env gates; default **`all-providers`** merge is larger when documents are on. **`charts/clawql-mcp`** **Chart.version** **0.6.7** with **`appVersion` `6.4.0`**. Release notes: **[`RELEASE_NOTES_v6.4.0.md`](RELEASE_NOTES_v6.4.0.md)**.

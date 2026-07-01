@@ -9,6 +9,7 @@ import { handleAuditToolInput } from "./clawql-audit.js";
 import { getClawqlOptionalToolFlags } from "./clawql-optional-flags.js";
 import { handleMemoryIngestToolInput } from "./memory-ingest.js";
 import { getObsidianVaultPath } from "./vault-config.js";
+import { publishConeshareViewerEvent } from "clawql-automation/nats/publish-hooks";
 
 function webhookTokenExpected(): string | undefined {
   const t = process.env.CLAWQL_CONESHARE_WEBHOOK_TOKEN?.trim();
@@ -78,6 +79,12 @@ export async function handleConeshareWebhookRequest(req: Request, res: Response)
 
   const body = req.body;
   const { eventType, shareLinkId, roomUrl, viewerEmail } = extractConeshareEvent(body);
+  void publishConeshareViewerEvent({
+    event_type: eventType,
+    share_link_id: shareLinkId,
+    room_url: roomUrl,
+    viewer_email: viewerEmail,
+  });
   const flags = getClawqlOptionalToolFlags();
   const vault = getObsidianVaultPath();
 

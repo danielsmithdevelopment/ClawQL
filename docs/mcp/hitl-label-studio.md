@@ -99,6 +99,22 @@ flowchart LR
 
 Webhook JSON responses include **`workflow_resume`** when a resume was attempted (`ok`, `resumed_nodes`, or `error`).
 
+### 4.6 NATS JetStream (async HITL path, [#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254))
+
+When Helm deploys NATS (`nats.enabled=true`), ClawQL can **publish** and **consume** workflow events on JetStream subject roots (`clawql.workflow.*`). Use this for multi-replica HTTP, async replay, or decoupled producers (edge, Ouroboros).
+
+| Env                                          | Meaning                                                                                                                   |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| **`CLAWQL_NATS_URL`**                        | NATS server URL (injected by Helm when `nats.enabled=true`).                                                              |
+| **`CLAWQL_NATS_JETSTREAM=1`**                | Require JetStream (set by Helm when `nats.jetStream.enabled=true`).                                                       |
+| **`CLAWQL_NATS_ENABLE_PUBLISH=1`**           | Publish `hitl.enqueued`, `hitl.completed`, `workflow.suspended`, `workflow.resumed` events.                               |
+| **`CLAWQL_NATS_ENABLE_CONSUMER=1`**          | Start in-process JetStream consumer worker.                                                                               |
+| **`CLAWQL_NATS_CONSUMER_RESUME_WORKFLOW=1`** | Consumer calls **`workflow` `resume`** on **`clawql.workflow.hitl.completed`** (requires **`CLAWQL_ENABLE_WORKFLOW=1`**). |
+
+**Dual path:** keep **`CLAWQL_HITL_WEBHOOK_RESUME_WORKFLOW=1`** for synchronous resume in the webhook handler; enable the NATS consumer for async / multi-pod deployments. If both run, duplicate resume attempts on an already-resumed workflow are treated as success.
+
+Deep dive: [`docs/deployment/helm.md`](../deployment/helm.md#nats-jetstream-deep-dive) · lending W-2 sample: [`deployment/samples/lending-w2/`](../../deployment/samples/lending-w2/README.md).
+
 ---
 
 ## 5. MCP tool: `hitl_enqueue_label_studio`

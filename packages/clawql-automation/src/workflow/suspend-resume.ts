@@ -246,6 +246,11 @@ export type HitlWebhookResumeResult =
 /** Resume an Argo workflow when Label Studio webhook completes (opt-in). */
 export async function maybeResumeWorkflowFromHitl(hitl: unknown): Promise<HitlWebhookResumeResult> {
   if (!hitlWebhookResumeWorkflowEnabled()) return { attempted: false };
+  return resumeWorkflowFromHitlRef(hitl);
+}
+
+/** Resume from HITL metadata (used by webhook sync path and NATS consumer). */
+export async function resumeWorkflowFromHitlRef(hitl: unknown): Promise<HitlWebhookResumeResult> {
   if (!workflowToolEnabled()) {
     return { attempted: true, ok: false, error: "workflow tool is not enabled" };
   }

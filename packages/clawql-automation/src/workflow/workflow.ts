@@ -31,6 +31,10 @@ import {
   waitForWorkflow,
 } from "./wait.js";
 import { resumeWorkflow, suspendWorkflow } from "./suspend-resume.js";
+import {
+  publishWorkflowResumedEvent,
+  publishWorkflowSuspendedEvent,
+} from "../nats/publish-hooks.js";
 import { maybeNotifyWorkflowTerminal } from "./workflow-notify.js";
 import { appendWorkflowAudit } from "./workflow-audit.js";
 import { listWorkflowArtifacts } from "./workflow-artifacts.js";
@@ -537,6 +541,11 @@ export async function handleWorkflowToolInput(
           summary: `namespace=${nsCheck.namespace} name=${summary.name} phase=${summary.phase}`,
           correlationId: workflowCorrelationId(undefined, summary.labels),
         });
+        void publishWorkflowSuspendedEvent({
+          workflow_ref: { namespace: nsCheck.namespace, name: parsed.name! },
+          correlation_id: workflowCorrelationId(undefined, summary.labels),
+          source: "workflow_tool",
+        });
         return jsonResponse({
           ok: true,
           operation: "suspend",
@@ -557,6 +566,17 @@ export async function handleWorkflowToolInput(
           action: "resume",
           summary: `namespace=${nsCheck.namespace} name=${summary.name} resumed_nodes=${result.resumed_nodes.join(",") || "workflow-level"} workflow_level=${result.workflow_level_resumed}`,
           correlationId: workflowCorrelationId(undefined, summary.labels),
+        });
+        void publishWorkflowResumedEvent({
+          workflow_ref: {
+            namespace: nsCheck.namespace,
+            name: parsed.name!,
+            node_field_selector: parsed.node_field_selector,
+          },
+          correlation_id: workflowCorrelationId(undefined, summary.labels),
+          resumed_nodes: result.resumed_nodes,
+          workflow_level_resumed: result.workflow_level_resumed,
+          source: "workflow_tool",
         });
         return jsonResponse({
           ok: true,

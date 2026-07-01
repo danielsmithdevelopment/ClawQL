@@ -8,6 +8,8 @@ export default defineConfig({
     "workflow/workflow": "src/workflow/workflow.ts",
     "workflow/suspend-resume": "src/workflow/suspend-resume.ts",
     "argocd/argocd": "src/argocd/argocd.ts",
+    "nats/env": "src/nats/env.ts",
+    "nats/publish-hooks": "src/nats/publish-hooks.ts",
     "workflow/vault-digest/run-vault-digest": "src/workflow/vault-digest/run-vault-digest.ts",
     "workflow/vault-digest/cli": "src/workflow/vault-digest/cli.ts",
     "plugin/index": "src/plugin/index.ts",
