@@ -25,8 +25,9 @@ import {
   isTerminalWorkflowPhase,
   waitForWorkflow,
 } from "./wait.js";
-import { appendWorkflowAudit } from "./workflow-audit.js";
+import { resumeWorkflow, suspendWorkflow } from "./suspend-resume.js";
 import { maybeNotifyWorkflowTerminal } from "./workflow-notify.js";
+import { appendWorkflowAudit } from "./workflow-audit.js";
 
 const templateRefSchema = z.object({
   kind: z.enum(["WorkflowTemplate", "ClusterWorkflowTemplate"]),
@@ -36,8 +37,20 @@ const templateRefSchema = z.object({
 
 export const workflowToolSchema = {
   operation: z
-    .enum(["submit", "get", "list", "delete", "logs", "list_templates", "wait"])
-    .describe("submit | get | list | delete | logs | list_templates | wait for Argo Workflows."),
+    .enum([
+      "submit",
+      "get",
+      "list",
+      "delete",
+      "logs",
+      "list_templates",
+      "wait",
+      "suspend",
+      "resume",
+    ])
+    .describe(
+      "submit | get | list | delete | logs | list_templates | wait | suspend | resume for Argo Workflows."
+    ),
   namespace: z.string().max(63).optional(),
   name: z.string().max(253).optional(),
   generate_name: z
@@ -76,6 +89,13 @@ export const workflowToolSchema = {
     .max(60)
     .optional()
     .describe("For wait: seconds between polls (default CLAWQL_WORKFLOW_WAIT_POLL_SECONDS or 5)."),
+  node_field_selector: z
+    .string()
+    .max(512)
+    .optional()
+    .describe(
+      "For resume: optional Argo node-field-selector (e.g. displayName=approve) to resume a specific suspend step."
+    ),
 };
 
 const workflowInputSchema = z.object(workflowToolSchema).superRefine((data, ctx) => {
@@ -110,9 +130,13 @@ const workflowInputSchema = z.object(workflowToolSchema).superRefine((data, ctx)
       ctx.addIssue({ code: "custom", message: `${data.operation} requires name` });
     }
   }
-  if (data.operation === "wait") {
+  if (
+    data.operation === "wait" ||
+    data.operation === "suspend" ||
+    data.operation === "resume"
+  ) {
     if (!data.name?.trim()) {
-      ctx.addIssue({ code: "custom", message: "wait requires name" });
+      ctx.addIssue({ code: "custom", message: `${data.operation} requires name` });
     }
   }
   if (data.operation === "logs" && !data.node_name?.trim()) {
@@ -419,6 +443,45 @@ export async function handleWorkflowToolInput(
           operation: "list_templates",
           namespace: nsCheck.namespace,
           templates: templates.filter(Boolean),
+        });
+      }
+      case "suspend": {
+        const nsCheck = requireNamespace(parsed.namespace);
+        if (!nsCheck.ok) return jsonResponse({ ok: false, error: nsCheck.error });
+        const wf = await suspendWorkflow(nsCheck.namespace, parsed.name!);
+        const summary = mapWorkflowToSummary(wf, nsCheck.namespace);
+        appendWorkflowAudit({
+          action: "suspend",
+          summary: `namespace=${nsCheck.namespace} name=${summary.name} phase=${summary.phase}`,
+          correlationId: workflowCorrelationId(undefined, summary.labels),
+        });
+        return jsonResponse({
+          ok: true,
+          operation: "suspend",
+          workflow: summary,
+          suspended: true,
+        });
+      }
+      case "resume": {
+        const nsCheck = requireNamespace(parsed.namespace);
+        if (!nsCheck.ok) return jsonResponse({ ok: false, error: nsCheck.error });
+        const result = await resumeWorkflow(
+          nsCheck.namespace,
+          parsed.name!,
+          parsed.node_field_selector
+        );
+        const summary = mapWorkflowToSummary(result.workflow, nsCheck.namespace);
+        appendWorkflowAudit({
+          action: "resume",
+          summary: `namespace=${nsCheck.namespace} name=${summary.name} resumed_nodes=${result.resumed_nodes.join(",") || "workflow-level"} workflow_level=${result.workflow_level_resumed}`,
+          correlationId: workflowCorrelationId(undefined, summary.labels),
+        });
+        return jsonResponse({
+          ok: true,
+          operation: "resume",
+          workflow: summary,
+          resumed_nodes: result.resumed_nodes,
+          workflow_level_resumed: result.workflow_level_resumed,
         });
       }
     }

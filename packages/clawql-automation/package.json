@@ -28,6 +28,11 @@
       "import": "./dist/workflow/workflow.js",
       "require": "./dist/workflow/workflow.cjs"
     },
+    "./workflow/suspend-resume": {
+      "types": "./dist/workflow/suspend-resume.d.ts",
+      "import": "./dist/workflow/suspend-resume.js",
+      "require": "./dist/workflow/suspend-resume.cjs"
+    },
     "./workflow/vault-digest/run-vault-digest": {
       "types": "./dist/workflow/vault-digest/run-vault-digest.d.ts",
       "import": "./dist/workflow/vault-digest/run-vault-digest.js",

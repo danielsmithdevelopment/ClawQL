@@ -55,6 +55,7 @@ checks = [
         "allow delete env",
     ),
     (r"name: clawql-mcp-http-workflow", "workflow Role name"),
+    (r"- update", "workflow update RBAC for suspend/resume"),
     (r"clusterworkflowtemplates", "ClusterWorkflowTemplate read RBAC"),
 ]
 

@@ -4,6 +4,7 @@
 
 import type { ArgoWorkflowObject } from "./k8s-client.js";
 import { getWorkflowArgoUiBaseUrl } from "./env.js";
+import { workflowHasActiveSuspend } from "./suspend-resume.js";
 
 export type WorkflowTemplateRef = {
   kind: "WorkflowTemplate" | "ClusterWorkflowTemplate";
@@ -32,6 +33,8 @@ export type WorkflowSummary = {
   labels?: Record<string, string>;
   nodes?: WorkflowNodeSummary[];
   links?: { argo_ui?: string };
+  /** True when workflow-level spec.suspend or an active suspend-template node is waiting. */
+  suspended?: boolean;
 };
 
 export type WorkflowTemplateSummary = {
@@ -73,7 +76,7 @@ function summarizeNodes(w: ArgoWorkflowObject): WorkflowNodeSummary[] | undefine
   if (!nodes) return undefined;
   const out: WorkflowNodeSummary[] = [];
   for (const [id, node] of Object.entries(nodes)) {
-    if (node.type === "Pod" || node.podName) {
+    if (node.type === "Pod" || node.podName || node.type === "Suspend") {
       out.push({
         id,
         name: node.displayName ?? node.name ?? id,
@@ -104,6 +107,7 @@ export function mapWorkflowToSummary(w: ArgoWorkflowObject, namespace: string): 
     labels: w.metadata?.labels,
     nodes: summarizeNodes(w),
     links,
+    suspended: workflowHasActiveSuspend(w) || undefined,
   };
 }
 

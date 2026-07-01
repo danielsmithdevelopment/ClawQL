@@ -91,20 +91,29 @@ flowchart LR
 | **`CLAWQL_ENABLE_MEMORY`** not disabled **and** writable **`CLAWQL_OBSIDIAN_VAULT_PATH`** | **`memory_ingest`** appends to vault note title **`HITL Label Studio review`**; raw JSON in **`toolOutputs`**; **`sessionId`** from **`data.clawql_hitl.correlation_id`** when present. |
 | Otherwise                                                                                 | **`audit`** append-only line (category **`hitl`**, action **`label_studio_webhook`**) — **not** durable compliance-grade alone.                                                         |
 
+### 4.5 Workflow auto-resume (Argo HITL, [#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254))
+
+| Env                                         | Meaning                                                                                                                                                                                                                                                          |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`CLAWQL_HITL_WEBHOOK_RESUME_WORKFLOW=1`** | After webhook auth, call **`workflow` `resume`** when **`data.clawql_hitl.workflow`** (from **`workflow_ref`** on enqueue) or **`provenance.workflow_namespace` / `workflow_name`** is present. Requires **`CLAWQL_ENABLE_WORKFLOW=1`** and namespace allowlist. |
+
+Webhook JSON responses include **`workflow_resume`** when a resume was attempted (`ok`, `resumed_nodes`, or `error`).
+
 ---
 
 ## 5. MCP tool: `hitl_enqueue_label_studio`
 
 ### 5.1 Parameters
 
-| Field                | Required | Description                                                                                                                                                                                  |
-| -------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **`project_id`**     | yes      | Integer primary key of the Label Studio project (`/api/projects/{id}/import`).                                                                                                               |
-| **`tasks`**          | yes      | Non-empty array (max 100 in schema). Each element: **`data`** — object shown to annotators as **`task.data`**; optional **`meta`** — merged into **`data.meta`**.                            |
-| **`confidence`**     | no       | Number in **[0, 1]** stored under **`data.clawql_hitl.confidence`** for reviewer context (your policy maps low scores here).                                                                 |
-| **`correlation_id`** | no       | String for cross-system correlation (OpenClaw run id, request id). Stored under **`data.clawql_hitl.correlation_id`**; echoed into webhook **`memory_ingest`** **`sessionId`** when present. |
-| **`seed_id`**        | no       | Optional Ouroboros / workflow seed id — **`data.clawql_hitl.seed_id`**.                                                                                                                      |
-| **`provenance`**     | no       | Arbitrary JSON object under **`data.clawql_hitl.provenance`** (doc URLs, pipeline ids — avoid secrets).                                                                                      |
+| Field                | Required | Description                                                                                                                                                                                         |
+| -------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`project_id`**     | yes      | Integer primary key of the Label Studio project (`/api/projects/{id}/import`).                                                                                                                      |
+| **`tasks`**          | yes      | Non-empty array (max 100 in schema). Each element: **`data`** — object shown to annotators as **`task.data`**; optional **`meta`** — merged into **`data.meta`**.                                   |
+| **`confidence`**     | no       | Number in **[0, 1]** stored under **`data.clawql_hitl.confidence`** for reviewer context (your policy maps low scores here).                                                                        |
+| **`correlation_id`** | no       | String for cross-system correlation (OpenClaw run id, request id). Stored under **`data.clawql_hitl.correlation_id`**; echoed into webhook **`memory_ingest`** **`sessionId`** when present.        |
+| **`seed_id`**        | no       | Optional Ouroboros / workflow seed id — **`data.clawql_hitl.seed_id`**.                                                                                                                             |
+| **`workflow_ref`**   | no       | Argo Workflow to resume on webhook when **`CLAWQL_HITL_WEBHOOK_RESUME_WORKFLOW=1`** — stored as **`data.clawql_hitl.workflow`** (`namespace`, `name`, optional `node_field_selector`).              |
+| **`provenance`**     | no       | Arbitrary JSON object under **`data.clawql_hitl.provenance`** (doc URLs, pipeline ids — avoid secrets). May include `workflow_namespace` / `workflow_name` as an alternative to **`workflow_ref`**. |
 
 Every task also receives **`data.clawql_hitl.enqueued_at`** (ISO timestamp) and **`data.clawql_hitl.source`** = **`clawql_mcp`**.
 

@@ -53,6 +53,12 @@ Requires `CLAWQL_SLACK_TOKEN` (or equivalent) like the `notify` tool. Set `CLAWQ
 | `list_templates` | Catalog templates in namespace                                          |
 | `logs`           | Bounded pod log excerpt                                                 |
 | `delete`         | When `CLAWQL_WORKFLOW_ALLOW_DELETE=1`                                   |
+| `suspend`        | Pause workflow execution (`spec.suspend`) or prepare for HITL gate      |
+| `resume`         | Resume workflow-level suspend or active `suspend` template nodes        |
+
+Optional **`node_field_selector`** on **`resume`** targets a specific suspend step (e.g. `displayName=approve`), matching Argo’s `argo resume --node-field-selector`.
+
+When a workflow is waiting on human review, **`get`** responses include **`suspended: true`**.
 
 ## Example: vault daily digest
 
@@ -86,6 +92,27 @@ After `submit`, use **`wait`** instead of manually polling `get`:
 ```
 
 Response includes `workflow`, `waited_seconds`, `timed_out`, and `polls`. `ok` is `false` when the timeout elapses before a terminal phase.
+
+### HITL suspend → review → resume ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254))
+
+Pipelines with Argo **`suspend`** template steps can pair with **`hitl_enqueue_label_studio`**:
+
+1. Workflow reaches a suspend step (`get` shows `suspended: true`).
+2. Agent enqueues Label Studio tasks with **`workflow_ref`** (`namespace`, `name`, optional `node_field_selector`).
+3. On annotation webhook, set **`CLAWQL_HITL_WEBHOOK_RESUME_WORKFLOW=1`** (and **`CLAWQL_ENABLE_WORKFLOW=1`**) to auto-call **`resume`**.
+
+Manual resume:
+
+```json
+{
+  "operation": "resume",
+  "namespace": "clawql",
+  "name": "suspend-template-abc12",
+  "node_field_selector": "displayName=approve"
+}
+```
+
+See [`hitl-label-studio.md`](hitl-label-studio.md) for webhook configuration.
 
 **Local (no Argo):** `npm run workflow:vault-digest` with `CLAWQL_OBSIDIAN_VAULT_PATH` set.
 

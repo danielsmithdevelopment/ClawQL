@@ -66,6 +66,7 @@ export type ArgoWorkflowObject = {
     creationTimestamp?: string;
   };
   spec?: {
+    suspend?: boolean;
     arguments?: { parameters?: { name: string; value?: string }[] };
     workflowTemplateRef?: {
       name?: string;
@@ -77,20 +78,24 @@ export type ArgoWorkflowObject = {
     phase?: string;
     startedAt?: string;
     finishedAt?: string;
-    nodes?: Record<
-      string,
-      {
-        displayName?: string;
-        name?: string;
-        phase?: string;
-        startedAt?: string;
-        finishedAt?: string;
-        type?: string;
-        id?: string;
-        podName?: string;
-      }
-    >;
+    nodes?: Record<string, ArgoWorkflowNodeStatus>;
   };
+};
+
+export type ArgoWorkflowNodeStatus = {
+  displayName?: string;
+  name?: string;
+  phase?: string;
+  startedAt?: string;
+  finishedAt?: string;
+  type?: string;
+  id?: string;
+  podName?: string;
+  message?: string;
+  templateName?: string;
+  templateRef?: { name?: string; template?: string };
+  inputs?: { parameters?: { name: string; value?: string }[] };
+  outputs?: { parameters?: { name: string; value?: string; valueFrom?: { default?: string } }[] };
 };
 
 export async function readPodLogs(

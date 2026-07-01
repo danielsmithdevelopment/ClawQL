@@ -219,6 +219,16 @@ export function registerTools(server: McpServer) {
           .optional()
           .describe("Optional id for OpenClaw / logs / webhook correlation."),
         seed_id: z.string().max(256).optional().describe("Optional Ouroboros or workflow seed id."),
+        workflow_ref: z
+          .object({
+            namespace: z.string().min(1).max(63),
+            name: z.string().min(1).max(253),
+            node_field_selector: z.string().max(512).optional(),
+          })
+          .optional()
+          .describe(
+            "Optional Argo Workflow to resume on Label Studio webhook when CLAWQL_HITL_WEBHOOK_RESUME_WORKFLOW=1."
+          ),
         provenance: z
           .record(z.string(), z.unknown())
           .optional()
