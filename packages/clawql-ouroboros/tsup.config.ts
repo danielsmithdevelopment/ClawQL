@@ -1,9 +1,15 @@
 import { defineConfig } from "tsup";
 
 export default defineConfig({
-  entry: ["src/index.ts", "src/mcp-hooks.ts", "src/poller.ts"],
+  entry: {
+    index: "src/index.ts",
+    "mcp-hooks": "src/mcp-hooks.ts",
+    poller: "src/poller.ts",
+    "plugin/index": "src/plugin/index.ts",
+  },
   format: ["esm", "cjs"],
   dts: true,
   sourcemap: true,
   clean: true,
+  external: ["clawql-api", "clawql-core", "effect", "pg"],
 });

@@ -23,6 +23,11 @@
       "import": "./dist/poller.js",
       "require": "./dist/poller.cjs"
     },
+    "./plugin": {
+      "types": "./dist/plugin/index.d.ts",
+      "import": "./dist/plugin/index.js",
+      "require": "./dist/plugin/index.cjs"
+    },
     "./package.json": "./package.json"
   },
   "scripts": {
@@ -33,11 +38,16 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "clawql-api": "file:../clawql-api",
+    "clawql-core": "file:../clawql-core",
+    "effect": "3.21.2",
+    "pg": "^8.21.0",
     "uuid": "^14.0.0",
     "zod": "^4.3.6"
   },
-  "devDependencies": {
+    "devDependencies": {
     "@types/node": "^22.0.0",
+    "@types/pg": "^8.20.0",
     "tsup": "^8.3.0",
     "typescript": "^6.0.2",
     "vitest": "^4.1.1"

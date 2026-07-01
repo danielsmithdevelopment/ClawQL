@@ -1,6 +1,7 @@
 # Design: `workflow` MCP tool (Argo Workflows)
 
-**Status:** Design agreed (June 2026) — implementation not shipped  
+**Status:** Phase A shipped (June 2026) — `CLAWQL_ENABLE_WORKFLOW=1`
+**Operator guide:** [`docs/mcp/workflow-tool.md`](../mcp/workflow-tool.md)
 **Tracking:** [#243](https://github.com/danielsmithdevelopment/ClawQL/issues/243), [ADR 0004](../adr/0004-argo-cd-workflows-clawql-pipelines.md)  
 **Package:** `packages/clawql-automation` — extends **`AutomationPlugin`**
 
@@ -29,7 +30,7 @@ Agents keep using **`search` / `execute`** for ad hoc API calls. **`workflow`** 
 | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Submit model**           | **Template-only** — `submit` accepts `template_ref` + `parameters` only. No arbitrary inline `Workflow` specs in v1.                                                                                 |
 | **K8s client**             | **`@kubernetes/client-node`** (`CustomObjectsApi` for Argo CRDs; `CoreV1Api` for pod logs).                                                                                                          |
-| **Polling**                | Ship **`get`** in Phase A; add **`wait`** (timeout + terminal phase) in Phase A.2. Agents may loop `get` until v1.2.                                                                                 |
+| **Polling**                | **`get`** and **`wait`** (timeout + terminal phase) shipped in Phase A / A.2. Agents may still loop `get` if needed.                                                                                 |
 | **Correlation**            | Standard label **`clawql.dev/correlation-id`** on submitted workflows; pair with **`audit.correlationId`** and HITL `seed_id` ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254)). |
 | **Managed marker**         | Label **`clawql.dev/managed: "true"`** on all tool-created workflows.                                                                                                                                |
 | **Minimum Argo Workflows** | **≥ 3.4.0** (CRD group `argoproj.io/v1alpha1`, `workflowTemplateRef` on `Workflow`). Integration tests target the same floor.                                                                        |
@@ -45,9 +46,11 @@ packages/clawql-automation/
   src/
     workflow/
       workflow.ts          # zod schema, handler, env guards
+      wait.ts              # poll until terminal phase or timeout
       k8s-client.ts        # client-node factory + test doubles
       argo-mapper.ts       # CRD ↔ agent-friendly JSON
       workflow.test.ts
+      wait.test.ts
     plugin/
       automation-plugin.ts # + enableWorkflow
       deps.ts              # + configureWorkflowDeps({ createK8sClient })
@@ -87,6 +90,7 @@ Operation-discriminated union (same pattern as **`schedule`**): top-level **`ope
 | -------------------- | ---------------------------------------------------------------------------------------------------- |
 | **`submit`**         | Create a `Workflow` from an allowlisted `WorkflowTemplate` or `ClusterWorkflowTemplate` + parameters |
 | **`get`**            | Run status, phase, condensed node summary                                                            |
+| **`wait`**           | Poll `get` until terminal phase (`Succeeded` / `Failed` / `Error`) or timeout                        |
 | **`list`**           | List workflows in an allowlisted namespace (label / phase filters)                                   |
 | **`logs`**           | Bounded log excerpt for a node / pod                                                                 |
 | **`list_templates`** | Catalog templates the SA can read                                                                    |
@@ -95,14 +99,15 @@ Operation-discriminated union (same pattern as **`schedule`**): top-level **`ope
 
 | `operation`  | Purpose                                                         |
 | ------------ | --------------------------------------------------------------- |
-| **`wait`**   | Poll `get` until terminal phase or timeout                      |
 | **`delete`** | Delete workflow — gated by **`CLAWQL_WORKFLOW_ALLOW_DELETE=1`** |
 
 ### Phase B ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254), [#244](https://github.com/danielsmithdevelopment/ClawQL/issues/244))
 
-- **`suspend` / `resume`** — HITL glue with Label Studio / webhooks
-- **`submit_cron`** — `CronWorkflow` management
-- **`artifacts`** — list artifact refs when RBAC permits
+| `operation`              | Purpose                                          |
+| ------------------------ | ------------------------------------------------ |
+| **`suspend` / `resume`** | HITL glue with Label Studio / webhooks (shipped) |
+| **`submit_cron`**        | `CronWorkflow` management                        |
+| **`artifacts`**          | list artifact refs when RBAC permits             |
 
 ### `submit` input (template-only)
 
@@ -176,16 +181,18 @@ For **`ClusterWorkflowTemplate`**, use `clusterScope: true` on `workflowTemplate
 
 ## Environment configuration
 
-| Variable                                  | Purpose                                                |
-| ----------------------------------------- | ------------------------------------------------------ |
-| **`CLAWQL_ENABLE_WORKFLOW`**              | `1` / `true` / `yes` — register **`workflow`** tool    |
-| **`CLAWQL_WORKFLOW_NAMESPACE_ALLOWLIST`** | Comma-separated namespaces (**required** when enabled) |
-| **`CLAWQL_WORKFLOW_DEFAULT_NAMESPACE`**   | Default when caller omits `namespace`                  |
-| **`CLAWQL_WORKFLOW_TEMPLATE_ALLOWLIST`**  | Optional `ns/name` or `cluster/name` globs             |
-| **`CLAWQL_WORKFLOW_KUBECONFIG`**          | Out-of-cluster kubeconfig path (dev)                   |
-| **`CLAWQL_WORKFLOW_ARGO_UI_BASE_URL`**    | Build `links.argo_ui` in responses                     |
-| **`CLAWQL_WORKFLOW_ALLOW_DELETE`**        | `1` to permit `delete` (default off)                   |
-| **`CLAWQL_WORKFLOW_LOG_TAIL_MAX`**        | Cap `tail_lines` (default **200**)                     |
+| Variable                                  | Purpose                                                           |
+| ----------------------------------------- | ----------------------------------------------------------------- |
+| **`CLAWQL_ENABLE_WORKFLOW`**              | `1` / `true` / `yes` — register **`workflow`** tool               |
+| **`CLAWQL_WORKFLOW_NAMESPACE_ALLOWLIST`** | Comma-separated namespaces (**required** when enabled)            |
+| **`CLAWQL_WORKFLOW_DEFAULT_NAMESPACE`**   | Default when caller omits `namespace`                             |
+| **`CLAWQL_WORKFLOW_TEMPLATE_ALLOWLIST`**  | Optional `ns/name` or `cluster/name` globs                        |
+| **`CLAWQL_WORKFLOW_KUBECONFIG`**          | Out-of-cluster kubeconfig path (dev)                              |
+| **`CLAWQL_WORKFLOW_ARGO_UI_BASE_URL`**    | Build `links.argo_ui` in responses                                |
+| **`CLAWQL_WORKFLOW_ALLOW_DELETE`**        | `1` to permit `delete` (default off)                              |
+| **`CLAWQL_WORKFLOW_LOG_TAIL_MAX`**        | Cap `tail_lines` (default **200**)                                |
+| **`CLAWQL_WORKFLOW_NOTIFY_ON_TERMINAL`**  | `1` to Slack-notify when `wait` completes (needs channel + token) |
+| **`CLAWQL_WORKFLOW_NOTIFY_CHANNEL`**      | Slack channel for terminal `wait` notifications                   |
 
 ### Validation (every mutating call)
 
@@ -203,12 +210,12 @@ Panguard **`beforeCallTool`** runs on **`workflow`** like any other MCP tool.
 
 Minimum verbs for Phase A:
 
-| Resource                    | Verbs                                 |
-| --------------------------- | ------------------------------------- |
-| `workflows` (`argoproj.io`) | create, get, list, watch              |
-| `workflowtemplates`         | get, list                             |
-| `clusterworkflowtemplates`  | get, list (if cluster templates used) |
-| `pods`, `pods/log`          | get, list (for **`logs`**)            |
+| Resource                    | Verbs                                                    |
+| --------------------------- | -------------------------------------------------------- |
+| `workflows` (`argoproj.io`) | create, get, list, watch, patch, update (suspend/resume) |
+| `workflowtemplates`         | get, list                                                |
+| `clusterworkflowtemplates`  | get, list (if cluster templates used)                    |
+| `pods`, `pods/log`          | get, list (for **`logs`**)                               |
 
 **Not granted by default:** `cluster-admin`, cross-namespace list, arbitrary `Workflow` patch, secret access. **`delete`** only when env + Role explicitly allow it.
 
@@ -232,24 +239,25 @@ if (flags.enableSchedule || flags.enableNotify || flags.enableWorkflow) {
 
 ## Sibling tool integration
 
-| Tool                            | v1 pattern                                                                                            |
-| ------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| **`audit`**                     | Handler appends on `submit` and on terminal `get` / `wait`                                            |
-| **`notify`**                    | Agent-driven; optional server hook in A.2                                                             |
-| **`memory_ingest`**             | Documented agent skill post-run                                                                       |
-| **`hitl_enqueue_label_studio`** | Future: suspend → HITL → resume ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254)) |
-| **`schedule`**                  | Future `action.kind: "argo_workflow"` — out of Phase A scope                                          |
+| Tool                            | v1 pattern                                                                                                                                          |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`audit`**                     | Handler appends on `submit` and on terminal `get` / `wait` (shipped)                                                                                |
+| **`notify`**                    | Optional server hook on `wait` when `CLAWQL_WORKFLOW_NOTIFY_ON_TERMINAL=1` (shipped)                                                                |
+| **`memory_ingest`**             | Documented agent skill post-run                                                                                                                     |
+| **`hitl_enqueue_label_studio`** | Enqueue review tasks; optional **`workflow_ref`** + webhook auto-**`resume`** ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254)) |
+| **`schedule`**                  | Future `action.kind: "argo_workflow"` — out of Phase A scope                                                                                        |
 
 ---
 
 ## Testing
 
-| Layer       | Approach                                                                                        |
-| ----------- | ----------------------------------------------------------------------------------------------- |
-| Unit        | Mock `CustomObjectsApi` / mapper fixture CRDs                                                   |
-| Schema      | zod superRefine (missing template, disallowed namespace)                                        |
-| Plugin      | `automation-plugin.test.ts` — registers `workflow` when `enableWorkflow`                        |
-| Integration | Optional CI: **kind** + **Argo Workflows ≥ 3.4.0**, submit minimal template, assert `get` phase |
+| Layer       | Approach                                                                                         |
+| ----------- | ------------------------------------------------------------------------------------------------ |
+| Unit        | Mock `CustomObjectsApi` / mapper fixture CRDs; handler tests for all Phase A operations          |
+| Helm CI     | `scripts/kubernetes/test-helm-workflow-templates.sh` (`enableWorkflow` render + RBAC assertions) |
+| Schema      | zod superRefine (missing template, disallowed namespace)                                         |
+| Plugin      | `automation-plugin.test.ts` — registers `workflow` when `enableWorkflow`                         |
+| Integration | Optional CI: **kind** + **Argo Workflows ≥ 3.4.0**, submit minimal template, assert `get` phase  |
 
 ---
 
@@ -257,22 +265,23 @@ if (flags.enableSchedule || flags.enableNotify || flags.enableWorkflow) {
 
 ### Phase A (MVP)
 
-- [ ] `submit`, `get`, `list`, `list_templates`, `logs`
-- [ ] Template-ref-only submits
-- [ ] Namespace allowlist + reference RBAC docs
-- [ ] `CLAWQL_ENABLE_WORKFLOW` + plugin registration
-- [ ] `docs/mcp/workflow-tool.md` (operator guide)
+- [x] `submit`, `get`, `list`, `list_templates`, `logs`
+- [x] Template-ref-only submits
+- [x] Namespace allowlist + reference RBAC docs
+- [x] `CLAWQL_ENABLE_WORKFLOW` + plugin registration
+- [x] `docs/mcp/workflow-tool.md` (operator guide)
 
 ### Phase A.2
 
-- [ ] `wait` with timeout
-- [ ] `delete` behind `CLAWQL_WORKFLOW_ALLOW_DELETE`
-- [ ] Optional notify on terminal phase
-- [ ] Helm SA + Role binding values
+- [x] `wait` with timeout
+- [x] `delete` behind `CLAWQL_WORKFLOW_ALLOW_DELETE` (handler shipped; Helm `workflow.allowDelete`)
+- [x] `audit` append on `submit` and terminal `get` / `wait`
+- [x] Helm SA + Role binding values (`enableWorkflow`, `workflow-rbac.yaml`)
+- [x] Optional notify on terminal phase (`CLAWQL_WORKFLOW_NOTIFY_ON_TERMINAL`, `wait` hook)
 
 ### Phase B
 
-- [ ] `suspend` / `resume` + HITL ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254))
+- [x] `suspend` / `resume` + HITL ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254))
 - [ ] Argo CD — separate flag or `execute` on Argo CD OpenAPI ([#244](https://github.com/danielsmithdevelopment/ClawQL/issues/244))
 
 ---

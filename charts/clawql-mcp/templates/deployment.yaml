@@ -161,6 +161,42 @@ spec:
             - name: CLAWQL_ENABLE_NOTIFY
               value: "1"
             {{- end }}
+            {{- if .Values.enableWorkflow }}
+            - name: CLAWQL_ENABLE_WORKFLOW
+              value: "1"
+            - name: CLAWQL_WORKFLOW_NAMESPACE_ALLOWLIST
+              value: {{ include "clawql-mcp.workflowNamespaceList" . | quote }}
+            - name: CLAWQL_WORKFLOW_DEFAULT_NAMESPACE
+              value: {{ include "clawql-mcp.workflowDefaultNamespace" . | quote }}
+            {{- if .Values.workflow.templateAllowlist }}
+            - name: CLAWQL_WORKFLOW_TEMPLATE_ALLOWLIST
+              value: {{ .Values.workflow.templateAllowlist | quote }}
+            {{- end }}
+            {{- if .Values.workflow.argoUiBaseUrl }}
+            - name: CLAWQL_WORKFLOW_ARGO_UI_BASE_URL
+              value: {{ .Values.workflow.argoUiBaseUrl | quote }}
+            {{- end }}
+            {{- if .Values.workflow.allowDelete }}
+            - name: CLAWQL_WORKFLOW_ALLOW_DELETE
+              value: "1"
+            {{- end }}
+            - name: CLAWQL_WORKFLOW_LOG_TAIL_MAX
+              value: {{ .Values.workflow.logTailMax | int | quote }}
+            - name: CLAWQL_WORKFLOW_WAIT_TIMEOUT_SECONDS
+              value: {{ .Values.workflow.waitTimeoutSeconds | int | quote }}
+            - name: CLAWQL_WORKFLOW_WAIT_POLL_SECONDS
+              value: {{ .Values.workflow.waitPollSeconds | int | quote }}
+            - name: CLAWQL_WORKFLOW_GENERATE_NAME_PREFIX
+              value: {{ .Values.workflow.generateNamePrefix | quote }}
+            {{- if .Values.workflow.notifyOnTerminal }}
+            - name: CLAWQL_WORKFLOW_NOTIFY_ON_TERMINAL
+              value: "1"
+            {{- end }}
+            {{- if .Values.workflow.notifyChannel }}
+            - name: CLAWQL_WORKFLOW_NOTIFY_CHANNEL
+              value: {{ .Values.workflow.notifyChannel | quote }}
+            {{- end }}
+            {{- end }}
             {{- if .Values.enableHitlLabelStudio }}
             - name: CLAWQL_ENABLE_HITL_LABEL_STUDIO
               value: "1"

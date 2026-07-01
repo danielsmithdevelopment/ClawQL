@@ -1,0 +1,79 @@
+{{- if and .Values.enableWorkflow .Values.workflow.rbac }}
+{{- $nsList := .Values.workflow.namespaceAllowlist }}
+{{- if not $nsList }}
+{{- $nsList = list .Release.Namespace }}
+{{- end }}
+{{- range $ns := $nsList }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "clawql-mcp.fullname" $ }}-workflow
+  namespace: {{ $ns }}
+  labels:
+    {{- include "clawql-mcp.labels" $ | nindent 4 }}
+rules:
+  - apiGroups: ["argoproj.io"]
+    resources: ["workflows"]
+    verbs:
+      - create
+      - get
+      - list
+      - watch
+      - patch
+      - update
+      {{- if $.Values.workflow.allowDelete }}
+      - delete
+      {{- end }}
+  - apiGroups: ["argoproj.io"]
+    resources: ["workflowtemplates"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["pods", "pods/log"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "clawql-mcp.fullname" $ }}-workflow
+  namespace: {{ $ns }}
+  labels:
+    {{- include "clawql-mcp.labels" $ | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "clawql-mcp.fullname" $ }}-workflow
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "clawql-mcp.serviceAccountName" $ }}
+    namespace: {{ $.Release.Namespace }}
+{{- end }}
+{{- if .Values.workflow.clusterTemplates }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "clawql-mcp.fullname" . }}-workflow-cwft
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+rules:
+  - apiGroups: ["argoproj.io"]
+    resources: ["clusterworkflowtemplates"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "clawql-mcp.fullname" . }}-workflow-cwft
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "clawql-mcp.fullname" . }}-workflow-cwft
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "clawql-mcp.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}
+{{- end }}
+{{- end }}

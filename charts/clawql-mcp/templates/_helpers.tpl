@@ -33,6 +33,24 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 {{- end }}
 
+{{- define "clawql-mcp.workflowNamespaceList" -}}
+{{- if .Values.workflow.namespaceAllowlist -}}
+{{- .Values.workflow.namespaceAllowlist | join "," -}}
+{{- else -}}
+{{- .Release.Namespace -}}
+{{- end -}}
+{{- end }}
+
+{{- define "clawql-mcp.workflowDefaultNamespace" -}}
+{{- if .Values.workflow.defaultNamespace -}}
+{{- .Values.workflow.defaultNamespace -}}
+{{- else if .Values.workflow.namespaceAllowlist -}}
+{{- index .Values.workflow.namespaceAllowlist 0 -}}
+{{- else -}}
+{{- .Release.Namespace -}}
+{{- end -}}
+{{- end }}
+
 {{- define "clawql-mcp.uiName" -}}
 {{- printf "%s-ui" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
 {{- end }}

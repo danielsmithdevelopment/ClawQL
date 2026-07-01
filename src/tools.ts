@@ -41,8 +41,8 @@ import {
   SLACK_NOTIFY_OPERATION_ID,
 } from "clawql-automation/plugin";
 import { configureDocumentsPluginDeps } from "clawql-documents/plugin";
+import { configureOuroborosPluginDeps } from "clawql-ouroboros/plugin";
 import { getClawqlOptionalToolFlags } from "./clawql-optional-flags.js";
-import { registerOuroborosTools } from "./ouroboros-mcp.js";
 import { handleHitlEnqueueLabelStudioToolInput } from "./hitl-label-studio.js";
 import { wrapMcpToolHandler } from "./otel-tracing.js";
 
@@ -105,8 +105,12 @@ export { SLACK_NOTIFY_OPERATION_ID, handleNotifyToolInput };
 
 configureAutomationPluginDeps({ execute: (params) => handleClawqlExecuteToolInput(params) });
 configureDocumentsPluginDeps({ execute: (params) => handleClawqlExecuteToolInput(params) });
+configureOuroborosPluginDeps({
+  search: (params) => handleClawqlSearchToolInput(params),
+  execute: (params) => handleClawqlExecuteToolInput(params),
+});
 
-/** Register MCP tools declared by composed plugins (Memory, Documents, Automation, Sandbox, …). */
+/** Register MCP tools declared by composed plugins (Memory, Documents, Automation, Sandbox, Ouroboros, …). */
 function registerPluginMcpTools(server: McpServer): void {
   for (const tool of getClawqlApi().listMcpTools()) {
     server.tool(
@@ -215,6 +219,16 @@ export function registerTools(server: McpServer) {
           .optional()
           .describe("Optional id for OpenClaw / logs / webhook correlation."),
         seed_id: z.string().max(256).optional().describe("Optional Ouroboros or workflow seed id."),
+        workflow_ref: z
+          .object({
+            namespace: z.string().min(1).max(63),
+            name: z.string().min(1).max(253),
+            node_field_selector: z.string().max(512).optional(),
+          })
+          .optional()
+          .describe(
+            "Optional Argo Workflow to resume on Label Studio webhook when CLAWQL_HITL_WEBHOOK_RESUME_WORKFLOW=1."
+          ),
         provenance: z
           .record(z.string(), z.unknown())
           .optional()
@@ -222,10 +236,6 @@ export function registerTools(server: McpServer) {
       },
       wrapMcpToolHandler("hitl_enqueue_label_studio", handleHitlEnqueueLabelStudioToolInput)
     );
-  }
-
-  if (getClawqlOptionalToolFlags().enableOuroboros) {
-    registerOuroborosTools(server);
   }
 }
 

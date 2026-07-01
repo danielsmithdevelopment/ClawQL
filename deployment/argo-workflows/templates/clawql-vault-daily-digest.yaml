@@ -1,0 +1,40 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: clawql-vault-daily-digest
+  labels:
+    clawql.dev/managed: "true"
+    clawql.dev/template: vault-digest
+spec:
+  entrypoint: vault-digest
+  volumes:
+    - name: vault
+      persistentVolumeClaim:
+        claimName: clawql-vault
+  arguments:
+    parameters:
+      - name: hours_back
+        value: "24"
+      - name: clawql_image
+        value: ghcr.io/danielsmithdevelopment/clawql-mcp:latest
+  templates:
+    - name: vault-digest
+      inputs:
+        parameters:
+          - name: hours_back
+          - name: clawql_image
+      container:
+        image: "{{inputs.parameters.clawql_image}}"
+        command: ["node"]
+        args:
+          - "node_modules/clawql-automation/dist/workflow/vault-digest/cli.js"
+          - "--hours"
+          - "{{inputs.parameters.hours_back}}"
+        env:
+          - name: CLAWQL_OBSIDIAN_VAULT_PATH
+            value: /vault
+          - name: CLAWQL_VAULT_DIGEST_HOURS
+            value: "{{inputs.parameters.hours_back}}"
+        volumeMounts:
+          - name: vault
+            mountPath: /vault

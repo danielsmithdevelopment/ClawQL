@@ -760,9 +760,12 @@ function buildStubLoadedSpec(): LoadedSpec {
 // ─────────────────────────────────────────────
 
 let cachedSpec: LoadedSpec | null = null;
+/** Coalesce concurrent `loadSpec()` calls so env is read once (avoids parallel all-providers loads in tests). */
+let loadInFlight: Promise<LoadedSpec> | null = null;
 
 export function resetSpecCache(): void {
   cachedSpec = null;
+  loadInFlight = null;
   resetNativeProtocolRegistry();
 }
 
@@ -779,9 +782,7 @@ export function registerSpecCacheShutdownHooks(): void {
   process.once("SIGTERM", flush);
 }
 
-export async function loadSpec(): Promise<LoadedSpec> {
-  if (cachedSpec) return cachedSpec;
-
+async function loadSpecUncached(): Promise<LoadedSpec> {
   if (shouldLoadNativeProtocolsOnlyMode()) {
     const stub = buildStubLoadedSpec();
     cachedSpec = await mergeNativeProtocolOperations(stub);
@@ -827,6 +828,16 @@ export async function loadSpec(): Promise<LoadedSpec> {
     `[spec-loader] Loaded ${cachedSpec.operations.length} operations (${loaded.openapi.info?.title ?? "API"})`
   );
   return cachedSpec;
+}
+
+export async function loadSpec(): Promise<LoadedSpec> {
+  if (cachedSpec) return cachedSpec;
+  if (!loadInFlight) {
+    loadInFlight = loadSpecUncached().finally(() => {
+      loadInFlight = null;
+    });
+  }
+  return loadInFlight;
 }
 
 /**

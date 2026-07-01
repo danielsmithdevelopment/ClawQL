@@ -20,13 +20,13 @@ ClawQL is mid-flight on a **strangler extraction** from the root `clawql-mcp` pa
 | `clawql-api`        | Spec load/search, REST/GraphQL/gRPC execute, provider registry, `createClawQLApi()`, Panguard proxy plugin                                                        |
 | `clawql-memory`     | Vault I/O, `memory.db`, embeddings, ingest/recall, enterprise citations                                                                                           |
 | `clawql-documents`  | `ingest_external_knowledge`, **`DEFAULT_IDP_PIPELINE`** recipe, bundled IDP provider merge (7 vendors via `clawql-api`); automated multi-hop runner still roadmap |
-| `clawql-automation` | `schedule` worker + Slack `notify` core (**scaffold** — no NATS/HITL yet)                                                                                         |
+| `clawql-automation` | `schedule` worker, Slack `notify`, Argo **`workflow`** tool (opt-in); NATS/HITL still roadmap                                                                   |
 
-**What is still mostly in `src/`:** MCP tool registration (`tools.ts`), optional tools (HITL, Ouroboros glue), GraphQL proxy entrypoints, server lifecycle. **`sandbox_exec`** is now **`SandboxPlugin`** in `clawql-sandbox` (Kata default in-cluster).
+**What is still mostly in `src/`:** MCP tool registration (`tools.ts`), optional HITL glue, GraphQL proxy entrypoints, server lifecycle.
 
 **Effect-TS:** **Partial.** `search` / `execute` run through `createClawQLApi()` + `SearchService` / `ExecuteService` Effect Layers; extracted packages are still largely **`async`/`await`** with Zod at MCP boundaries. Full Layer composition for memory/documents/automation is **planned**, not shipped.
 
-**Plugin ecosystem:** **Phase 2 in progress.** `MemoryPlugin`, `DocumentsPlugin`, **`AutomationPlugin`**, and **`SandboxPlugin`** register MCP tools via `onRegister`. Argo Workflows **`workflow`** tool is **designed** for `AutomationPlugin` — not shipped ([#243](https://github.com/danielsmithdevelopment/ClawQL/issues/243), [ADR 0004](../adr/0004-argo-cd-workflows-clawql-pipelines.md), [workflow design](workflow-tool-argo.md)).
+**Plugin ecosystem:** **Phase 2 in progress.** `MemoryPlugin`, `DocumentsPlugin`, **`AutomationPlugin`**, **`SandboxPlugin`**, and **`OuroborosPlugin`** register MCP tools via `onRegister`. Argo Workflows **`workflow`** tool ships in `AutomationPlugin` when `CLAWQL_ENABLE_WORKFLOW=1` ([#243](https://github.com/danielsmithdevelopment/ClawQL/issues/243), [ADR 0004](../adr/0004-argo-cd-workflows-clawql-pipelines.md), [workflow design](workflow-tool-argo.md)).
 
 ---
 
@@ -137,16 +137,17 @@ MCP handlers: `src/memory-ingest.ts`, `src/memory-recall.ts` (thin wrappers + `l
 
 MCP handler: `src/external-ingest.ts`.
 
-### 4.5 `clawql-automation` (scaffold)
+### 4.5 `clawql-automation`
 
 | Subpath                               | Module                                            |
 | ------------------------------------- | ------------------------------------------------- |
 | `clawql-automation/schedule/schedule` | sql.js schedule DB, worker, synthetic HTTP checks |
 | `clawql-automation/notify/notify`     | `runNotifySlack` via injected `execute`           |
+| `clawql-automation/workflow/workflow` | Argo Workflows submit/get/wait/list/logs (opt-in) |
 
 `tools.ts` calls `configureNotifyDeps({ execute: handleClawqlExecuteToolInput })` so the schedule worker can notify without importing `tools.ts` (breaks the old circular import).
 
-MCP: `handleScheduleToolInput` shim in `src/clawql-schedule.ts`; `handleNotifyToolInput` remains exported from `tools.ts` as a one-liner delegate.
+MCP: `handleScheduleToolInput` shim in `src/clawql-schedule.ts`; `handleNotifyToolInput` remains exported from `tools.ts` as a one-liner delegate. **`workflow`** registers via **`AutomationPlugin.onRegister`** when `CLAWQL_ENABLE_WORKFLOW=1` — see [workflow-tool-argo.md](workflow-tool-argo.md).
 
 ---
 
@@ -198,8 +199,9 @@ interface Plugin {
 - **`DocumentsPlugin`** (`createDocumentsPlugin` in `clawql-documents`) — registers `ingest_external_knowledge` and optionally `knowledge_search_onyx` when documents/Onyx flags are on; composed from `src/clawql-api-adapters.ts`.
 - **`McpProxyPipeline`** — wires registry into MCP tool path via `clawql-api-adapters.ts`.
 
-- **`AutomationPlugin`** (`createAutomationPlugin` in `clawql-automation`) — registers `schedule` / `notify` when enabled; starts schedule worker in `onRegister`. **Designed, not shipped:** Argo Workflows `workflow` MCP tool ([#243](https://github.com/danielsmithdevelopment/ClawQL/issues/243), [workflow-tool-argo.md](workflow-tool-argo.md)).
+- **`AutomationPlugin`** (`createAutomationPlugin` in `clawql-automation`) — registers `schedule` / `notify` / `workflow` when enabled; starts schedule worker in `onRegister`. Argo **`workflow`** is opt-in (`CLAWQL_ENABLE_WORKFLOW=1`) ([#243](https://github.com/danielsmithdevelopment/ClawQL/issues/243), [workflow-tool-argo.md](workflow-tool-argo.md)).
 - **`SandboxPlugin`** (`createSandboxPlugin` in `clawql-sandbox`) — registers `sandbox_exec` when `CLAWQL_ENABLE_SANDBOX=1`. **Kata Containers** default in-cluster (`auto` cascade); Docker / bridge / Seatbelt fallbacks.
+- **`OuroborosPlugin`** (`createOuroborosPlugin` in `clawql-ouroboros`) — registers `ouroboros_*` when `CLAWQL_ENABLE_OUROBOROS=1`; Postgres pool shutdown in `onRegister` / `onTeardown`.
 
 ### 6.2 Target (third-party + vertical plugins)
 
