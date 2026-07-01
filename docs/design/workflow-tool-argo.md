@@ -1,6 +1,6 @@
 # Design: `workflow` MCP tool (Argo Workflows)
 
-**Status:** Phase A shipped (June 2026) — `CLAWQL_ENABLE_WORKFLOW=1`  
+**Status:** Phase A shipped (June 2026) — `CLAWQL_ENABLE_WORKFLOW=1`
 **Operator guide:** [`docs/mcp/workflow-tool.md`](../mcp/workflow-tool.md)
 **Tracking:** [#243](https://github.com/danielsmithdevelopment/ClawQL/issues/243), [ADR 0004](../adr/0004-argo-cd-workflows-clawql-pipelines.md)  
 **Package:** `packages/clawql-automation` — extends **`AutomationPlugin`**
@@ -266,11 +266,11 @@ if (flags.enableSchedule || flags.enableNotify || flags.enableWorkflow) {
 
 ### Phase A (MVP)
 
-- [ ] `submit`, `get`, `list`, `list_templates`, `logs`
-- [ ] Template-ref-only submits
-- [ ] Namespace allowlist + reference RBAC docs
-- [ ] `CLAWQL_ENABLE_WORKFLOW` + plugin registration
-- [ ] `docs/mcp/workflow-tool.md` (operator guide)
+- [x] `submit`, `get`, `list`, `list_templates`, `logs`
+- [x] Template-ref-only submits
+- [x] Namespace allowlist + reference RBAC docs
+- [x] `CLAWQL_ENABLE_WORKFLOW` + plugin registration
+- [x] `docs/mcp/workflow-tool.md` (operator guide)
 
 ### Phase A.2
 
