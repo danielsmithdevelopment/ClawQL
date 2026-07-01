@@ -9,11 +9,11 @@ This runbook describes how operators train, evaluate, and promote a **tenant-spe
 
 ## 1. Goals
 
-| Outcome | How ClawQL uses it |
-| ------- | ------------------ |
-| Document type label + confidence | Agent or Argo step decides auto-process vs HITL |
-| Versioned model artifact | Env pin (`CLASSIFIER_MODEL_URI` / sidecar image tag) |
-| Eval gates before promote | Block production traffic until metrics pass |
+| Outcome                          | How ClawQL uses it                                   |
+| -------------------------------- | ---------------------------------------------------- |
+| Document type label + confidence | Agent or Argo step decides auto-process vs HITL      |
+| Versioned model artifact         | Env pin (`CLASSIFIER_MODEL_URI` / sidecar image tag) |
+| Eval gates before promote        | Block production traffic until metrics pass          |
 
 ClawQL does **not** ship trained weights — only **provider wiring**, **samples**, and **orchestration** hooks (`workflow` suspend/resume, `hitl_enqueue_label_studio`).
 
@@ -34,11 +34,11 @@ ClawQL does **not** ship trained weights — only **provider wiring**, **samples
 
 Choose one path (BYO — not bundled in ClawQL):
 
-| Approach | When |
-| -------- | ---- |
-| **sklearn / fastText** on Docling text + metadata | Fast baseline, CPU-friendly |
-| **LayoutLM / Donut fine-tune** | Form-heavy scans (W-2 boxes) |
-| **Hosted AutoML** (Vertex, SageMaker) | Enterprise MLOps already in place |
+| Approach                                          | When                              |
+| ------------------------------------------------- | --------------------------------- |
+| **sklearn / fastText** on Docling text + metadata | Fast baseline, CPU-friendly       |
+| **LayoutLM / Donut fine-tune**                    | Form-heavy scans (W-2 boxes)      |
+| **Hosted AutoML** (Vertex, SageMaker)             | Enterprise MLOps already in place |
 
 **Feature contract (recommended):**
 
@@ -64,11 +64,11 @@ Train script lives in **your** repo or MLOps project; export:
 
 Before promote, require **all** on a frozen holdout set:
 
-| Metric | Suggested gate |
-| ------ | -------------- |
-| Macro F1 | ≥ 0.92 |
-| W-2 recall (lending) | ≥ 0.98 |
-| False positive rate on “unknown” | ≤ 2% |
+| Metric                           | Suggested gate |
+| -------------------------------- | -------------- |
+| Macro F1                         | ≥ 0.92         |
+| W-2 recall (lending)             | ≥ 0.98         |
+| False positive rate on “unknown” | ≤ 2%           |
 
 Log evals to Langfuse or your tracker ([#250](https://github.com/danielsmithdevelopment/ClawQL/issues/250)). **Do not** auto-promote from a single happy-path demo.
 
@@ -123,11 +123,11 @@ High-confidence path: skip HITL, continue to Paperless/Onyx **`execute`** steps.
 
 ## 7. Promote / rollback
 
-| Action | Steps |
-| ------ | ----- |
-| **Promote** | Tag image `v1.2.0` → update Argo / Helm values → run smoke on [W-2 sample](../../deployment/samples/lending-w2/README.md) |
-| **Rollback** | Revert image tag or `CLASSIFIER_MODEL_URI`; re-run eval suite |
-| **Audit** | `memory_ingest` model version + metrics snapshot per promote |
+| Action       | Steps                                                                                                                     |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| **Promote**  | Tag image `v1.2.0` → update Argo / Helm values → run smoke on [W-2 sample](../../deployment/samples/lending-w2/README.md) |
+| **Rollback** | Revert image tag or `CLASSIFIER_MODEL_URI`; re-run eval suite                                                             |
+| **Audit**    | `memory_ingest` model version + metrics snapshot per promote                                                              |
 
 ---
 
