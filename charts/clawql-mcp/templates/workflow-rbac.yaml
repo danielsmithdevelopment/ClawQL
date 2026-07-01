@@ -20,6 +20,8 @@ rules:
       - get
       - list
       - watch
+      - patch
+      - update
       {{- if $.Values.workflow.allowDelete }}
       - delete
       {{- end }}

@@ -9,6 +9,7 @@ import { getClawqlOptionalToolFlags } from "./clawql-optional-flags.js";
 import { handleMemoryIngestToolInput } from "./memory-ingest.js";
 import { getObsidianVaultPath } from "./vault-config.js";
 import { enforceWebhookRateLimit } from "./webhook-rate-limit.js";
+import { maybeResumeWorkflowFromHitl } from "clawql-automation/workflow/suspend-resume";
 
 export type HitlLabelStudioEnqueueParams = {
   /** Label Studio project primary key (integer). */
@@ -21,6 +22,12 @@ export type HitlLabelStudioEnqueueParams = {
   correlation_id?: string;
   /** Optional Ouroboros / workflow lineage id. */
   seed_id?: string;
+  /** When set, stored under `data.clawql_hitl.workflow` for webhook-driven Argo resume ([#254]). */
+  workflow_ref?: {
+    namespace: string;
+    name: string;
+    node_field_selector?: string;
+  };
   /** Extra provenance (URLs, doc ids); merged into `data.clawql_hitl.provenance`. */
   provenance?: Record<string, unknown>;
 };
@@ -46,6 +53,15 @@ function mergeHitlMetadata(
   if (params.confidence !== undefined) hitl.confidence = params.confidence;
   if (params.correlation_id?.trim()) hitl.correlation_id = params.correlation_id.trim();
   if (params.seed_id?.trim()) hitl.seed_id = params.seed_id.trim();
+  if (params.workflow_ref) {
+    hitl.workflow = {
+      namespace: params.workflow_ref.namespace.trim(),
+      name: params.workflow_ref.name.trim(),
+      ...(params.workflow_ref.node_field_selector?.trim()
+        ? { node_field_selector: params.workflow_ref.node_field_selector.trim() }
+        : {}),
+    };
+  }
   if (params.provenance && Object.keys(params.provenance).length > 0) {
     hitl.provenance = params.provenance;
   }
@@ -255,7 +271,13 @@ export async function handleLabelStudioWebhookRequest(req: Request, res: Respons
   }
 
   const body = req.body;
-  const { correlationId, taskId } = extractWebhookFields(body);
+  const { correlationId, taskId, taskData } = extractWebhookFields(body);
+  const clawqlHitl =
+    taskData?.clawql_hitl && typeof taskData.clawql_hitl === "object"
+      ? taskData.clawql_hitl
+      : undefined;
+
+  const workflowResume = await maybeResumeWorkflowFromHitl(clawqlHitl);
 
   const flags = getClawqlOptionalToolFlags();
   const vault = getObsidianVaultPath();
@@ -290,7 +312,12 @@ export async function handleLabelStudioWebhookRequest(req: Request, res: Respons
     } catch {
       parsed = { raw: text };
     }
-    res.status(200).json({ ok: true, durable: "memory_ingest", result: parsed });
+    res.status(200).json({
+      ok: true,
+      durable: "memory_ingest",
+      result: parsed,
+      workflow_resume: workflowResume.attempted ? workflowResume : undefined,
+    });
     return;
   }
 
@@ -298,7 +325,7 @@ export async function handleLabelStudioWebhookRequest(req: Request, res: Respons
     operation: "append",
     category: "hitl",
     action: "label_studio_webhook",
-    summary: `task=${String(taskId)} correlation=${correlationId ?? "none"} annotation_bytes=${truncated.length}`,
+    summary: `task=${String(taskId)} correlation=${correlationId ?? "none"} annotation_bytes=${truncated.length}${workflowResume.attempted ? ` workflow_resume_ok=${workflowResume.ok}` : ""}`,
     correlationId,
   });
 
@@ -306,5 +333,6 @@ export async function handleLabelStudioWebhookRequest(req: Request, res: Respons
     ok: true,
     durable: "audit",
     note: "memory_ingest skipped (memory off or vault missing); recorded to audit ring buffer only",
+    workflow_resume: workflowResume.attempted ? workflowResume : undefined,
   });
 }

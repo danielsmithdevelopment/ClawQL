@@ -30,14 +30,17 @@ function mockClients(handlers: {
   listClusterTemplates?: () => Promise<{ items?: { metadata?: { name?: string } }[] }>;
   create?: () => Promise<ArgoWorkflowObject>;
   delete?: () => Promise<void>;
+  replace?: (body: ArgoWorkflowObject) => Promise<ArgoWorkflowObject>;
   logs?: () => Promise<string>;
 }): void {
+  let lastWorkflow: ArgoWorkflowObject | undefined;
   configureWorkflowK8sFactory(async () => {
     const clients: WorkflowK8sClients = {
       customObjects: {
         getNamespacedCustomObject: async () => {
           if (!handlers.get) throw new Error("get not mocked");
-          return handlers.get();
+          lastWorkflow = await handlers.get();
+          return lastWorkflow;
         },
         listNamespacedCustomObject: async (params: { plural?: string }) => {
           if (params.plural === "workflowtemplates") {
@@ -58,6 +61,10 @@ function mockClients(handlers: {
         deleteNamespacedCustomObject: async () => {
           if (!handlers.delete) throw new Error("delete not mocked");
           await handlers.delete();
+        },
+        replaceNamespacedCustomObject: async (params: { body?: ArgoWorkflowObject }) => {
+          if (!handlers.replace) throw new Error("replace not mocked");
+          return handlers.replace(params.body ?? lastWorkflow ?? sampleWorkflow("Running"));
         },
       } as never,
       coreV1: {
@@ -372,5 +379,66 @@ describe("handleWorkflowToolInput", () => {
     await expect(
       handleWorkflowToolInput({ operation: "logs", name: "clawql-xyz" })
     ).rejects.toThrow();
+  });
+
+  it("suspends a running workflow", async () => {
+    enableWorkflowEnv();
+    let replaced: ArgoWorkflowObject | undefined;
+    mockClients({
+      get: async () => sampleWorkflow("Running"),
+      replace: async (body) => {
+        replaced = body;
+        return body;
+      },
+    });
+
+    const { handleWorkflowToolInput } = await import("./workflow.js");
+    const res = await handleWorkflowToolInput({ operation: "suspend", name: "clawql-xyz" });
+    const body = JSON.parse(res.content[0]!.text);
+    expect(body.ok).toBe(true);
+    expect(body.suspended).toBe(true);
+    expect(replaced?.spec?.suspend).toBe(true);
+    const audit = getDefaultAuditRingBuffer().list(5).entries;
+    expect(audit.some((e) => e.action === "suspend")).toBe(true);
+  });
+
+  it("resumes active suspend-template node", async () => {
+    enableWorkflowEnv();
+    const wf: ArgoWorkflowObject = {
+      metadata: { name: "clawql-xyz", namespace: "clawql" },
+      status: {
+        phase: "Running",
+        nodes: {
+          "2": { displayName: "approve", type: "Suspend", phase: "Running" },
+        },
+      },
+    };
+    let replaced: ArgoWorkflowObject | undefined;
+    mockClients({
+      get: async () => wf,
+      replace: async (body) => {
+        replaced = body;
+        return body;
+      },
+    });
+
+    const { handleWorkflowToolInput } = await import("./workflow.js");
+    const res = await handleWorkflowToolInput({
+      operation: "resume",
+      name: "clawql-xyz",
+      node_field_selector: "displayName=approve",
+    });
+    const body = JSON.parse(res.content[0]!.text);
+    expect(body.ok).toBe(true);
+    expect(body.resumed_nodes).toEqual(["approve"]);
+    expect(replaced?.status?.nodes?.["2"]?.phase).toBe("Succeeded");
+    const audit = getDefaultAuditRingBuffer().list(5).entries;
+    expect(audit.some((e) => e.action === "resume")).toBe(true);
+  });
+
+  it("rejects resume without name", async () => {
+    enableWorkflowEnv();
+    const { handleWorkflowToolInput } = await import("./workflow.js");
+    await expect(handleWorkflowToolInput({ operation: "resume" })).rejects.toThrow();
   });
 });

@@ -103,9 +103,11 @@ Operation-discriminated union (same pattern as **`schedule`**): top-level **`ope
 
 ### Phase B ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254), [#244](https://github.com/danielsmithdevelopment/ClawQL/issues/244))
 
-- **`suspend` / `resume`** — HITL glue with Label Studio / webhooks
-- **`submit_cron`** — `CronWorkflow` management
-- **`artifacts`** — list artifact refs when RBAC permits
+| `operation`              | Purpose                                          |
+| ------------------------ | ------------------------------------------------ |
+| **`suspend` / `resume`** | HITL glue with Label Studio / webhooks (shipped) |
+| **`submit_cron`**        | `CronWorkflow` management                        |
+| **`artifacts`**          | list artifact refs when RBAC permits             |
 
 ### `submit` input (template-only)
 
@@ -208,12 +210,12 @@ Panguard **`beforeCallTool`** runs on **`workflow`** like any other MCP tool.
 
 Minimum verbs for Phase A:
 
-| Resource                    | Verbs                                 |
-| --------------------------- | ------------------------------------- |
-| `workflows` (`argoproj.io`) | create, get, list, watch              |
-| `workflowtemplates`         | get, list                             |
-| `clusterworkflowtemplates`  | get, list (if cluster templates used) |
-| `pods`, `pods/log`          | get, list (for **`logs`**)            |
+| Resource                    | Verbs                                                    |
+| --------------------------- | -------------------------------------------------------- |
+| `workflows` (`argoproj.io`) | create, get, list, watch, patch, update (suspend/resume) |
+| `workflowtemplates`         | get, list                                                |
+| `clusterworkflowtemplates`  | get, list (if cluster templates used)                    |
+| `pods`, `pods/log`          | get, list (for **`logs`**)                               |
 
 **Not granted by default:** `cluster-admin`, cross-namespace list, arbitrary `Workflow` patch, secret access. **`delete`** only when env + Role explicitly allow it.
 
@@ -237,13 +239,13 @@ if (flags.enableSchedule || flags.enableNotify || flags.enableWorkflow) {
 
 ## Sibling tool integration
 
-| Tool                            | v1 pattern                                                                                            |
-| ------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| **`audit`**                     | Handler appends on `submit` and on terminal `get` / `wait` (shipped)                                  |
-| **`notify`**                    | Optional server hook on `wait` when `CLAWQL_WORKFLOW_NOTIFY_ON_TERMINAL=1` (shipped)                  |
-| **`memory_ingest`**             | Documented agent skill post-run                                                                       |
-| **`hitl_enqueue_label_studio`** | Future: suspend → HITL → resume ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254)) |
-| **`schedule`**                  | Future `action.kind: "argo_workflow"` — out of Phase A scope                                          |
+| Tool                            | v1 pattern                                                                                                                                          |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`audit`**                     | Handler appends on `submit` and on terminal `get` / `wait` (shipped)                                                                                |
+| **`notify`**                    | Optional server hook on `wait` when `CLAWQL_WORKFLOW_NOTIFY_ON_TERMINAL=1` (shipped)                                                                |
+| **`memory_ingest`**             | Documented agent skill post-run                                                                                                                     |
+| **`hitl_enqueue_label_studio`** | Enqueue review tasks; optional **`workflow_ref`** + webhook auto-**`resume`** ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254)) |
+| **`schedule`**                  | Future `action.kind: "argo_workflow"` — out of Phase A scope                                                                                        |
 
 ---
 
@@ -279,7 +281,7 @@ if (flags.enableSchedule || flags.enableNotify || flags.enableWorkflow) {
 
 ### Phase B
 
-- [ ] `suspend` / `resume` + HITL ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254))
+- [x] `suspend` / `resume` + HITL ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254))
 - [ ] Argo CD — separate flag or `execute` on Argo CD OpenAPI ([#244](https://github.com/danielsmithdevelopment/ClawQL/issues/244))
 
 ---
