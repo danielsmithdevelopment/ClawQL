@@ -99,7 +99,7 @@ Cross-cutting items from the **consolidated IDP super-edition** roadmap that are
 | **Argo suspend/resume** + HITL + optional **NATS**                 | [#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254) — **shipped** (webhook + JetStream publish/consumer)                                            |
 | Optional **`clawql-idp`** umbrella Helm chart                      | [#255](https://github.com/danielsmithdevelopment/ClawQL/issues/255)                                                                                                 |
 | **Slack-first** OpenClaw IDP runbook                               | [#256](https://github.com/danielsmithdevelopment/ClawQL/issues/256)                                                                                                 |
-| **KEDA** autoscaling (NATS queues)                                 | [#257](https://github.com/danielsmithdevelopment/ClawQL/issues/257) — **shipped** [`nats-keda-worker.md`](../deployment/nats-keda-worker.md) |
+| **KEDA** autoscaling (NATS queues)                                 | [#257](https://github.com/danielsmithdevelopment/ClawQL/issues/257) — **shipped** [`nats-keda-worker.md`](../deployment/nats-keda-worker.md)                        |
 | Agent → **Git PR** → **Argo CD** promotion                         | [#258](https://github.com/danielsmithdevelopment/ClawQL/issues/258)                                                                                                 |
 
 ---
