@@ -1,8 +1,14 @@
 import { workflowToolEnabled } from "../workflow/env.js";
-import { parseHitlWorkflowRef, resumeWorkflowFromHitlRef, type HitlWorkflowRef } from "../workflow/suspend-resume.js";
+import {
+  parseHitlWorkflowRef,
+  resumeWorkflowFromHitlRef,
+  type HitlWorkflowRef,
+} from "../workflow/suspend-resume.js";
 import type { WorkflowEventEnvelope } from "./envelope.js";
 
-export function workflowRefFromEnvelope(envelope: WorkflowEventEnvelope): HitlWorkflowRef | undefined {
+export function workflowRefFromEnvelope(
+  envelope: WorkflowEventEnvelope
+): HitlWorkflowRef | undefined {
   if (envelope.workflow_ref?.namespace && envelope.workflow_ref?.name) {
     return envelope.workflow_ref;
   }

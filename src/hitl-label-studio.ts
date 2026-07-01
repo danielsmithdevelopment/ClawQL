@@ -9,7 +9,10 @@ import { getClawqlOptionalToolFlags } from "./clawql-optional-flags.js";
 import { handleMemoryIngestToolInput } from "./memory-ingest.js";
 import { getObsidianVaultPath } from "./vault-config.js";
 import { enforceWebhookRateLimit } from "./webhook-rate-limit.js";
-import { maybeResumeWorkflowFromHitl, parseHitlWorkflowRef } from "clawql-automation/workflow/suspend-resume";
+import {
+  maybeResumeWorkflowFromHitl,
+  parseHitlWorkflowRef,
+} from "clawql-automation/workflow/suspend-resume";
 import {
   publishHitlCompletedEvent,
   publishHitlEnqueuedEvent,
