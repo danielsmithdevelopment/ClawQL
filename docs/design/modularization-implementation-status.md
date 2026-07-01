@@ -20,7 +20,7 @@ ClawQL is mid-flight on a **strangler extraction** from the root `clawql-mcp` pa
 | `clawql-api`        | Spec load/search, REST/GraphQL/gRPC execute, provider registry, `createClawQLApi()`, Panguard proxy plugin                                                        |
 | `clawql-memory`     | Vault I/O, `memory.db`, embeddings, ingest/recall, enterprise citations                                                                                           |
 | `clawql-documents`  | `ingest_external_knowledge`, **`DEFAULT_IDP_PIPELINE`** recipe, bundled IDP provider merge (7 vendors via `clawql-api`); automated multi-hop runner still roadmap |
-| `clawql-automation` | `schedule` worker, Slack `notify`, Argo **`workflow`** tool (opt-in); NATS/HITL still roadmap                                                                   |
+| `clawql-automation` | `schedule` worker, Slack `notify`, Argo **`workflow`** tool (opt-in); NATS/HITL still roadmap                                                                     |
 
 **What is still mostly in `src/`:** MCP tool registration (`tools.ts`), optional HITL glue, GraphQL proxy entrypoints, server lifecycle.
 
