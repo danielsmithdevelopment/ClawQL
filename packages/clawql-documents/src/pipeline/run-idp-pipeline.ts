@@ -3,7 +3,6 @@ import { z } from "zod";
 import { idpPipelineRunnerEnabled } from "./env.js";
 import { runIdpPipeline, type RunIdpPipelineInput } from "./runner.js";
 import { getDocumentsPluginDeps } from "../plugin/deps.js";
-import type { IdpPipelineStage } from "./idp-pipeline.js";
 
 const stageEnum = z.enum([
   "nextcloud",
