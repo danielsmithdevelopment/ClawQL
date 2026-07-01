@@ -197,6 +197,15 @@ workflow:
   notifyOnTerminal: false
   notifyChannel: ""
 
+# MCP argocd tool — Argo CD Application observe/sync (#244). Requires Argo CD in cluster.
+enableArgoCd: false
+argocd:
+  rbac: true
+  # Namespaces where Application CRs are managed (often `argocd`).
+  namespaceAllowlist: []
+  defaultNamespace: ""
+  allowSync: false
+
 # MCP hitl_enqueue_label_studio — Label Studio HITL bridge (#228). Requires CLAWQL_LABEL_STUDIO_* via extraEnv / secret.
 enableHitlLabelStudio: false
 

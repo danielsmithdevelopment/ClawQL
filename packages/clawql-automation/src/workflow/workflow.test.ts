@@ -441,4 +441,59 @@ describe("handleWorkflowToolInput", () => {
     const { handleWorkflowToolInput } = await import("./workflow.js");
     await expect(handleWorkflowToolInput({ operation: "resume" })).rejects.toThrow();
   });
+
+  it("submit_cron creates CronWorkflow", async () => {
+    enableWorkflowEnv();
+    let createdBody: unknown;
+    mockClients({
+      create: async () => {
+        createdBody = {
+          metadata: { name: "digest-daily", namespace: "clawql" },
+          spec: {
+            schedule: "0 6 * * *",
+            workflowSpec: { workflowTemplateRef: { name: "digest" } },
+          },
+        };
+        return createdBody as ArgoWorkflowObject;
+      },
+    });
+
+    const { handleWorkflowToolInput } = await import("./workflow.js");
+    const res = await handleWorkflowToolInput({
+      operation: "submit_cron",
+      name: "digest-daily",
+      schedule: "0 6 * * *",
+      template_ref: { kind: "WorkflowTemplate", name: "digest", namespace: "clawql" },
+    });
+    const body = JSON.parse(res.content[0]!.text);
+    expect(body.ok).toBe(true);
+    expect(body.cron_workflow.name).toBe("digest-daily");
+  });
+
+  it("artifacts lists output refs", async () => {
+    enableWorkflowEnv();
+    mockClients({
+      get: async () =>
+        ({
+          metadata: { name: "clawql-xyz" },
+          status: {
+            nodes: {
+              n1: {
+                displayName: "export",
+                outputs: { artifacts: [{ name: "out.json", path: "/tmp/out.json" }] },
+              },
+            },
+          },
+        }) as ArgoWorkflowObject,
+    });
+
+    const { handleWorkflowToolInput } = await import("./workflow.js");
+    const res = await handleWorkflowToolInput({
+      operation: "artifacts",
+      name: "clawql-xyz",
+    });
+    const body = JSON.parse(res.content[0]!.text);
+    expect(body.ok).toBe(true);
+    expect(body.artifacts[0].artifact_name).toBe("out.json");
+  });
 });

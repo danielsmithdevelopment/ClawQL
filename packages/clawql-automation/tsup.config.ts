@@ -7,6 +7,7 @@ export default defineConfig({
     "schedule/schedule": "src/schedule/schedule.ts",
     "workflow/workflow": "src/workflow/workflow.ts",
     "workflow/suspend-resume": "src/workflow/suspend-resume.ts",
+    "argocd/argocd": "src/argocd/argocd.ts",
     "workflow/vault-digest/run-vault-digest": "src/workflow/vault-digest/run-vault-digest.ts",
     "workflow/vault-digest/cli": "src/workflow/vault-digest/cli.ts",
     "plugin/index": "src/plugin/index.ts",

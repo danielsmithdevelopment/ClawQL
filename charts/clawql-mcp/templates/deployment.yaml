@@ -197,6 +197,18 @@ spec:
               value: {{ .Values.workflow.notifyChannel | quote }}
             {{- end }}
             {{- end }}
+            {{- if .Values.enableArgoCd }}
+            - name: CLAWQL_ENABLE_ARGO_CD
+              value: "1"
+            - name: CLAWQL_ARGO_CD_NAMESPACE_ALLOWLIST
+              value: {{ include "clawql-mcp.argocdNamespaceList" . | quote }}
+            - name: CLAWQL_ARGO_CD_DEFAULT_NAMESPACE
+              value: {{ include "clawql-mcp.argocdDefaultNamespace" . | quote }}
+            {{- if .Values.argocd.allowSync }}
+            - name: CLAWQL_ARGO_CD_ALLOW_SYNC
+              value: "1"
+            {{- end }}
+            {{- end }}
             {{- if .Values.enableHitlLabelStudio }}
             - name: CLAWQL_ENABLE_HITL_LABEL_STUDIO
               value: "1"

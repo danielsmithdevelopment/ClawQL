@@ -9,6 +9,11 @@ import {
   mapWorkflowToSummary,
   type WorkflowTemplateRef,
 } from "./argo-mapper.js";
+import {
+  buildSubmitCronWorkflowBody,
+  mapCronWorkflowToSummary,
+  type ArgoCronWorkflowObject,
+} from "./cron-workflow.js";
 import { ARGO_CRD, getWorkflowGenerateNamePrefix, resolveWorkflowNamespace } from "./env.js";
 import { getWorkflowK8sClients, readPodLogs, type ArgoWorkflowObject } from "./k8s-client.js";
 import {
@@ -28,6 +33,7 @@ import {
 import { resumeWorkflow, suspendWorkflow } from "./suspend-resume.js";
 import { maybeNotifyWorkflowTerminal } from "./workflow-notify.js";
 import { appendWorkflowAudit } from "./workflow-audit.js";
+import { listWorkflowArtifacts } from "./workflow-artifacts.js";
 
 const templateRefSchema = z.object({
   kind: z.enum(["WorkflowTemplate", "ClusterWorkflowTemplate"]),
@@ -47,9 +53,16 @@ export const workflowToolSchema = {
       "wait",
       "suspend",
       "resume",
+      "submit_cron",
+      "get_cron",
+      "list_cron",
+      "delete_cron",
+      "suspend_cron",
+      "resume_cron",
+      "artifacts",
     ])
     .describe(
-      "submit | get | list | delete | logs | list_templates | wait | suspend | resume for Argo Workflows."
+      "Argo Workflows: submit, get, list, delete, logs, list_templates, wait, suspend, resume, submit_cron, get_cron, list_cron, delete_cron, suspend_cron, resume_cron, artifacts."
     ),
   namespace: z.string().max(63).optional(),
   name: z.string().max(253).optional(),
@@ -96,6 +109,16 @@ export const workflowToolSchema = {
     .describe(
       "For resume: optional Argo node-field-selector (e.g. displayName=approve) to resume a specific suspend step."
     ),
+  schedule: z
+    .string()
+    .max(128)
+    .optional()
+    .describe("For submit_cron: cron schedule expression (e.g. 0 6 * * *)."),
+  timezone: z.string().max(64).optional().describe("For submit_cron: IANA timezone (default UTC)."),
+  cron_suspend: z
+    .boolean()
+    .optional()
+    .describe("For submit_cron: create schedule in suspended state (default false)."),
 };
 
 const workflowInputSchema = z.object(workflowToolSchema).superRefine((data, ctx) => {
@@ -134,6 +157,35 @@ const workflowInputSchema = z.object(workflowToolSchema).superRefine((data, ctx)
     if (!data.name?.trim()) {
       ctx.addIssue({ code: "custom", message: `${data.operation} requires name` });
     }
+  }
+  if (data.operation === "submit_cron") {
+    if (!data.name?.trim()) {
+      ctx.addIssue({ code: "custom", message: "submit_cron requires name" });
+    }
+    if (!data.schedule?.trim()) {
+      ctx.addIssue({ code: "custom", message: "submit_cron requires schedule" });
+    }
+    if (!data.template_ref) {
+      ctx.addIssue({ code: "custom", message: "submit_cron requires template_ref" });
+    } else if (
+      data.template_ref.kind === "WorkflowTemplate" &&
+      !data.template_ref.namespace?.trim() &&
+      !data.namespace?.trim()
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message: "WorkflowTemplate requires template_ref.namespace or top-level namespace",
+      });
+    }
+  }
+  const cronNameOps = ["get_cron", "delete_cron", "suspend_cron", "resume_cron"] as const;
+  if ((cronNameOps as readonly string[]).includes(data.operation)) {
+    if (!data.name?.trim()) {
+      ctx.addIssue({ code: "custom", message: `${data.operation} requires name` });
+    }
+  }
+  if (data.operation === "artifacts" && !data.name?.trim()) {
+    ctx.addIssue({ code: "custom", message: "artifacts requires name" });
   }
   if (data.operation === "logs" && !data.node_name?.trim()) {
     ctx.addIssue({ code: "custom", message: "logs requires node_name" });
@@ -205,6 +257,40 @@ async function getWorkflow(namespace: string, name: string): Promise<ArgoWorkflo
     name,
   });
   return res as ArgoWorkflowObject;
+}
+
+async function getCronWorkflow(namespace: string, name: string): Promise<ArgoCronWorkflowObject> {
+  const { customObjects } = await getWorkflowK8sClients();
+  const res = await customObjects.getNamespacedCustomObject({
+    group: ARGO_CRD.group,
+    version: ARGO_CRD.version,
+    namespace,
+    plural: ARGO_CRD.cronWorkflowPlural,
+    name,
+  });
+  return res as ArgoCronWorkflowObject;
+}
+
+async function patchCronSuspend(
+  namespace: string,
+  name: string,
+  suspend: boolean
+): Promise<ArgoCronWorkflowObject> {
+  const { customObjects } = await getWorkflowK8sClients();
+  const existing = await getCronWorkflow(namespace, name);
+  const updated: ArgoCronWorkflowObject = {
+    ...existing,
+    spec: { ...existing.spec, suspend },
+  };
+  const res = await customObjects.replaceNamespacedCustomObject({
+    group: ARGO_CRD.group,
+    version: ARGO_CRD.version,
+    namespace,
+    plural: ARGO_CRD.cronWorkflowPlural,
+    name,
+    body: updated,
+  });
+  return res as ArgoCronWorkflowObject;
 }
 
 export async function handleWorkflowToolInput(
@@ -478,6 +564,140 @@ export async function handleWorkflowToolInput(
           workflow: summary,
           resumed_nodes: result.resumed_nodes,
           workflow_level_resumed: result.workflow_level_resumed,
+        });
+      }
+      case "submit_cron": {
+        const nsCheck = requireNamespace(parsed.namespace);
+        if (!nsCheck.ok) return jsonResponse({ ok: false, error: nsCheck.error });
+        const templateRef = resolveTemplateRef(parsed.template_ref!, nsCheck.namespace);
+        if (
+          !isTemplateAllowed(
+            templateRef.kind,
+            templateRef.name,
+            templateRef.namespace ?? nsCheck.namespace
+          )
+        ) {
+          return jsonResponse({
+            ok: false,
+            error: `template is not in CLAWQL_WORKFLOW_TEMPLATE_ALLOWLIST: ${templateRef.name}`,
+          });
+        }
+        const body = buildSubmitCronWorkflowBody({
+          name: parsed.name!,
+          namespace: nsCheck.namespace,
+          schedule: parsed.schedule!,
+          timezone: parsed.timezone,
+          templateRef,
+          parameters: parsed.parameters,
+          labels: parsed.labels,
+          correlationId: parsed.correlation_id,
+          suspend: parsed.cron_suspend,
+        });
+        const { customObjects } = await getWorkflowK8sClients();
+        const created = (await customObjects.createNamespacedCustomObject({
+          group: ARGO_CRD.group,
+          version: ARGO_CRD.version,
+          namespace: nsCheck.namespace,
+          plural: ARGO_CRD.cronWorkflowPlural,
+          body,
+        })) as ArgoCronWorkflowObject;
+        const summary = mapCronWorkflowToSummary(created, nsCheck.namespace);
+        appendWorkflowAudit({
+          action: "submit_cron",
+          summary: `namespace=${nsCheck.namespace} name=${summary.name} schedule=${summary.schedule} template=${summary.template_ref?.name ?? "unknown"}`,
+          correlationId: workflowCorrelationId(parsed.correlation_id, summary.labels),
+        });
+        return jsonResponse({ ok: true, operation: "submit_cron", cron_workflow: summary });
+      }
+      case "get_cron": {
+        const nsCheck = requireNamespace(parsed.namespace);
+        if (!nsCheck.ok) return jsonResponse({ ok: false, error: nsCheck.error });
+        const cron = await getCronWorkflow(nsCheck.namespace, parsed.name!);
+        return jsonResponse({
+          ok: true,
+          operation: "get_cron",
+          cron_workflow: mapCronWorkflowToSummary(cron, nsCheck.namespace),
+        });
+      }
+      case "list_cron": {
+        const nsCheck = requireNamespace(parsed.namespace);
+        if (!nsCheck.ok) return jsonResponse({ ok: false, error: nsCheck.error });
+        const limit = parsed.limit ?? 50;
+        const { customObjects } = await getWorkflowK8sClients();
+        const res = (await customObjects.listNamespacedCustomObject({
+          group: ARGO_CRD.group,
+          version: ARGO_CRD.version,
+          namespace: nsCheck.namespace,
+          plural: ARGO_CRD.cronWorkflowPlural,
+          labelSelector: parsed.label_selector,
+          limit,
+        })) as { items?: ArgoCronWorkflowObject[] };
+        const cronWorkflows = (res.items ?? []).map((c) =>
+          mapCronWorkflowToSummary(c, nsCheck.namespace)
+        );
+        return jsonResponse({
+          ok: true,
+          operation: "list_cron",
+          namespace: nsCheck.namespace,
+          cron_workflows: cronWorkflows,
+        });
+      }
+      case "delete_cron": {
+        if (!workflowDeleteAllowed()) {
+          return jsonResponse({
+            ok: false,
+            error: "delete_cron is disabled. Set CLAWQL_WORKFLOW_ALLOW_DELETE=1.",
+          });
+        }
+        const nsCheck = requireNamespace(parsed.namespace);
+        if (!nsCheck.ok) return jsonResponse({ ok: false, error: nsCheck.error });
+        const { customObjects } = await getWorkflowK8sClients();
+        await customObjects.deleteNamespacedCustomObject({
+          group: ARGO_CRD.group,
+          version: ARGO_CRD.version,
+          namespace: nsCheck.namespace,
+          plural: ARGO_CRD.cronWorkflowPlural,
+          name: parsed.name!,
+        });
+        return jsonResponse({
+          ok: true,
+          operation: "delete_cron",
+          namespace: nsCheck.namespace,
+          name: parsed.name,
+          deleted: true,
+        });
+      }
+      case "suspend_cron": {
+        const nsCheck = requireNamespace(parsed.namespace);
+        if (!nsCheck.ok) return jsonResponse({ ok: false, error: nsCheck.error });
+        const cron = await patchCronSuspend(nsCheck.namespace, parsed.name!, true);
+        return jsonResponse({
+          ok: true,
+          operation: "suspend_cron",
+          cron_workflow: mapCronWorkflowToSummary(cron, nsCheck.namespace),
+        });
+      }
+      case "resume_cron": {
+        const nsCheck = requireNamespace(parsed.namespace);
+        if (!nsCheck.ok) return jsonResponse({ ok: false, error: nsCheck.error });
+        const cron = await patchCronSuspend(nsCheck.namespace, parsed.name!, false);
+        return jsonResponse({
+          ok: true,
+          operation: "resume_cron",
+          cron_workflow: mapCronWorkflowToSummary(cron, nsCheck.namespace),
+        });
+      }
+      case "artifacts": {
+        const nsCheck = requireNamespace(parsed.namespace);
+        if (!nsCheck.ok) return jsonResponse({ ok: false, error: nsCheck.error });
+        const wf = await getWorkflow(nsCheck.namespace, parsed.name!);
+        const artifacts = listWorkflowArtifacts(wf, parsed.node_name);
+        return jsonResponse({
+          ok: true,
+          operation: "artifacts",
+          namespace: nsCheck.namespace,
+          workflow: parsed.name,
+          artifacts,
         });
       }
     }

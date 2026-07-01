@@ -386,3 +386,35 @@ jobs:
 
       - name: Run Ouroboros Postgres integration tests
         run: npx vitest run packages/clawql-ouroboros/src/glue/postgres-event-store.integration.test.ts
+
+  argo-workflows-integration-optional:
+    name: Argo Workflows integration (optional)
+    needs:
+      [
+        lint,
+        workflow-scripts,
+        website-docker-smoke,
+        panguard-bridge-docker-smoke,
+        website-playwright-smoke,
+        supply-chain,
+        secret-scan,
+      ]
+    if: vars.CLAWQL_ENABLE_ARGO_WORKFLOWS_KIND_CI == '1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+        with:
+          node-version: "25"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build clawql-automation
+        run: npm run build --workspace=clawql-automation
+
+      - name: Run Argo Workflows kind integration script
+        run: bash scripts/kubernetes/test-argo-workflow-kind.sh

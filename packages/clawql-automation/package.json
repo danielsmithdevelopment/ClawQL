@@ -33,6 +33,11 @@
       "import": "./dist/workflow/suspend-resume.js",
       "require": "./dist/workflow/suspend-resume.cjs"
     },
+    "./argocd/argocd": {
+      "types": "./dist/argocd/argocd.d.ts",
+      "import": "./dist/argocd/argocd.js",
+      "require": "./dist/argocd/argocd.cjs"
+    },
     "./workflow/vault-digest/run-vault-digest": {
       "types": "./dist/workflow/vault-digest/run-vault-digest.d.ts",
       "import": "./dist/workflow/vault-digest/run-vault-digest.js",

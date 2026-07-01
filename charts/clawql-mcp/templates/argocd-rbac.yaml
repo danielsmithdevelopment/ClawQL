@@ -1,0 +1,43 @@
+{{- if and .Values.enableArgoCd .Values.argocd.rbac }}
+{{- $nsList := .Values.argocd.namespaceAllowlist }}
+{{- if not $nsList }}
+{{- $nsList = list "argocd" }}
+{{- end }}
+{{- range $ns := $nsList }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "clawql-mcp.fullname" $ }}-argocd
+  namespace: {{ $ns }}
+  labels:
+    {{- include "clawql-mcp.labels" $ | nindent 4 }}
+rules:
+  - apiGroups: ["argoproj.io"]
+    resources: ["applications"]
+    verbs:
+      - get
+      - list
+      - watch
+      {{- if $.Values.argocd.allowSync }}
+      - patch
+      - update
+      {{- end }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "clawql-mcp.fullname" $ }}-argocd
+  namespace: {{ $ns }}
+  labels:
+    {{- include "clawql-mcp.labels" $ | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "clawql-mcp.fullname" $ }}-argocd
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "clawql-mcp.serviceAccountName" $ }}
+    namespace: {{ $.Release.Namespace }}
+{{- end }}
+{{- end }}

@@ -33,6 +33,8 @@ const rawOptionalFlagsSchema = z.object({
   CLAWQL_ENABLE_NOTIFY: z.string().optional(),
   /** ([#243](https://github.com/danielsmithdevelopment/ClawQL/issues/243)): Argo Workflows `workflow` MCP tool. Default false. */
   CLAWQL_ENABLE_WORKFLOW: z.string().optional(),
+  /** ([#244](https://github.com/danielsmithdevelopment/ClawQL/issues/244)): Argo CD `argocd` MCP tool. Default false. */
+  CLAWQL_ENABLE_ARGO_CD: z.string().optional(),
   CLAWQL_ENABLE_VISION: z.string().optional(),
   CLAWQL_ENABLE_ONYX: z.string().optional(),
   CLAWQL_ENABLE_OUROBOROS: z.string().optional(),
@@ -73,6 +75,10 @@ export type ClawqlOptionalToolFlags = {
    */
   enableWorkflow: boolean;
   /**
+   * ([#244](https://github.com/danielsmithdevelopment/ClawQL/issues/244)): MCP `argocd` tool (Argo CD Applications). Default false.
+   */
+  enableArgoCd: boolean;
+  /**
    * Planned (#78): `vision` / `multimodal` tool. Default false until implemented.
    */
   enableVision: boolean;
@@ -108,6 +114,7 @@ function rawToFlags(raw: z.infer<typeof rawOptionalFlagsSchema>): ClawqlOptional
     enableSchedule: envTruthy(raw.CLAWQL_ENABLE_SCHEDULE),
     enableNotify: envTruthy(raw.CLAWQL_ENABLE_NOTIFY),
     enableWorkflow: envTruthy(raw.CLAWQL_ENABLE_WORKFLOW),
+    enableArgoCd: envTruthy(raw.CLAWQL_ENABLE_ARGO_CD),
     enableVision: envTruthy(raw.CLAWQL_ENABLE_VISION),
     enableOnyxKnowledge: envTruthy(raw.CLAWQL_ENABLE_ONYX),
     enableOuroboros: envTruthy(raw.CLAWQL_ENABLE_OUROBOROS),
