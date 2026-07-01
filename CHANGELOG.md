@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **IDP pipeline runner** ([#307](https://github.com/danielsmithdevelopment/ClawQL/issues/307)): MCP **`run_idp_pipeline`** when **`CLAWQL_ENABLE_IDP_PIPELINE=1`** — synchronous **`DEFAULT_IDP_PIPELINE`** execution with per-hop retries, Merkle snapshots, and **`onPipelineHop`** hook; docs **[`docs/mcp/idp-pipeline-runner.md`](docs/mcp/idp-pipeline-runner.md)**.
 - **NATS JetStream workflow events** ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254), [#127](https://github.com/danielsmithdevelopment/ClawQL/issues/127)): opt-in publish (`CLAWQL_NATS_ENABLE_PUBLISH=1`) for HITL/workflow lifecycle; JetStream consumer (`CLAWQL_NATS_ENABLE_CONSUMER=1` + `CLAWQL_NATS_CONSUMER_RESUME_WORKFLOW=1`) resumes Argo workflows on `hitl.completed`; ConeShare viewer events on `clawql.document.*`.
 
 ### Documentation

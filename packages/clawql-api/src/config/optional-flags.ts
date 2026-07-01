@@ -43,6 +43,8 @@ const rawOptionalFlagsSchema = z.object({
   CLAWQL_ENABLE_HITL_LABEL_STUDIO: z.string().optional(),
   /** ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254)): ConeShare webhook + IDP sharing integration. Default false. */
   CLAWQL_ENABLE_CONESHARE: z.string().optional(),
+  /** ([#307](https://github.com/danielsmithdevelopment/ClawQL/issues/307)): `run_idp_pipeline` automated DEFAULT_IDP_PIPELINE executor. Default false. */
+  CLAWQL_ENABLE_IDP_PIPELINE: z.string().optional(),
 });
 
 export type ClawqlOptionalToolFlags = {
@@ -102,6 +104,10 @@ export type ClawqlOptionalToolFlags = {
    * ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254)): **`POST /idp/coneshare/webhook`** + bundled **coneshare** provider. Default false.
    */
   enableConeshare: boolean;
+  /**
+   * ([#307](https://github.com/danielsmithdevelopment/ClawQL/issues/307)): **`run_idp_pipeline`** — automated `DEFAULT_IDP_PIPELINE` executor. Default false.
+   */
+  enableIdpPipeline: boolean;
 };
 
 function rawToFlags(raw: z.infer<typeof rawOptionalFlagsSchema>): ClawqlOptionalToolFlags {
@@ -121,6 +127,7 @@ function rawToFlags(raw: z.infer<typeof rawOptionalFlagsSchema>): ClawqlOptional
     enableSandbox: envTruthy(raw.CLAWQL_ENABLE_SANDBOX),
     enableHitlLabelStudio: envTruthy(raw.CLAWQL_ENABLE_HITL_LABEL_STUDIO),
     enableConeshare: envTruthy(raw.CLAWQL_ENABLE_CONESHARE),
+    enableIdpPipeline: envTruthy(raw.CLAWQL_ENABLE_IDP_PIPELINE),
   };
 }
 

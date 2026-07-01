@@ -17,6 +17,9 @@ describe("getClawqlOptionalToolFlags", () => {
       CLAWQL_ENABLE_ONYX: undefined,
       CLAWQL_ENABLE_OUROBOROS: undefined,
       CLAWQL_ENABLE_SANDBOX: undefined,
+      CLAWQL_ENABLE_HITL_LABEL_STUDIO: undefined,
+      CLAWQL_ENABLE_CONESHARE: undefined,
+      CLAWQL_ENABLE_IDP_PIPELINE: undefined,
     });
     expect(f.enableGrpc).toBe(false);
     expect(f.enableGrpcReflection).toBe(false);
@@ -30,6 +33,9 @@ describe("getClawqlOptionalToolFlags", () => {
     expect(f.enableOnyxKnowledge).toBe(false);
     expect(f.enableOuroboros).toBe(false);
     expect(f.enableSandbox).toBe(false);
+    expect(f.enableHitlLabelStudio).toBe(false);
+    expect(f.enableConeshare).toBe(false);
+    expect(f.enableIdpPipeline).toBe(false);
   });
 
   it("parses ENABLE_GRPC and ENABLE_GRPC_REFLECTION", () => {
@@ -76,6 +82,7 @@ describe("getClawqlOptionalToolFlags", () => {
       CLAWQL_ENABLE_OUROBOROS: "yes",
       CLAWQL_ENABLE_SANDBOX: "1",
       CLAWQL_ENABLE_DOCUMENTS: "1",
+      CLAWQL_ENABLE_IDP_PIPELINE: "1",
     } as NodeJS.ProcessEnv);
     expect(f.enableMemory).toBe(true);
     expect(f.enableDocuments).toBe(true);
@@ -86,5 +93,6 @@ describe("getClawqlOptionalToolFlags", () => {
     expect(f.enableOnyxKnowledge).toBe(true);
     expect(f.enableOuroboros).toBe(true);
     expect(f.enableSandbox).toBe(true);
+    expect(f.enableIdpPipeline).toBe(true);
   });
 });
