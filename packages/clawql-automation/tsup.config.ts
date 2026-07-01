@@ -10,6 +10,8 @@ export default defineConfig({
     "argocd/argocd": "src/argocd/argocd.ts",
     "nats/env": "src/nats/env.ts",
     "nats/publish-hooks": "src/nats/publish-hooks.ts",
+    "nats/cli": "src/nats/cli.ts",
+    "nats/bootstrap-cli": "src/nats/bootstrap-cli.ts",
     "workflow/vault-digest/run-vault-digest": "src/workflow/vault-digest/run-vault-digest.ts",
     "workflow/vault-digest/cli": "src/workflow/vault-digest/cli.ts",
     "plugin/index": "src/plugin/index.ts",

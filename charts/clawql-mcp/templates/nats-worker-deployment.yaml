@@ -1,0 +1,86 @@
+{{- if and .Values.nats.worker.enabled (include "clawql-mcp.natsConfigured" .) }}
+{{- if not .Values.enableWorkflow }}
+{{- fail "nats.worker.enabled requires enableWorkflow=true (HITL resume consumer)" }}
+{{- end }}
+{{- if and .Values.nats.keda.enabled (not .Values.nats.enabled) }}
+{{- fail "nats.keda.enabled with in-cluster monitoring requires nats.enabled=true (or disable keda)" }}
+{{- end }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "clawql-mcp.natsWorkerName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: nats-worker
+spec:
+  {{- if not .Values.nats.keda.enabled }}
+  replicas: {{ .Values.nats.worker.replicas }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "clawql-mcp.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: nats-worker
+  template:
+    metadata:
+      labels:
+        {{- include "clawql-mcp.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: nats-worker
+    spec:
+      serviceAccountName: {{ include "clawql-mcp.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: nats-worker
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["node", "node_modules/clawql-automation/dist/nats/cli.js"]
+          env:
+            - name: NODE_OPTIONS
+              value: {{ .Values.nodeOptions | quote }}
+            - name: CLAWQL_ENABLE_WORKFLOW
+              value: "1"
+            - name: CLAWQL_WORKFLOW_NAMESPACE_ALLOWLIST
+              value: {{ include "clawql-mcp.workflowNamespaceList" . | quote }}
+            - name: CLAWQL_WORKFLOW_DEFAULT_NAMESPACE
+              value: {{ include "clawql-mcp.workflowDefaultNamespace" . | quote }}
+            {{- if .Values.workflow.templateAllowlist }}
+            - name: CLAWQL_WORKFLOW_TEMPLATE_ALLOWLIST
+              value: {{ .Values.workflow.templateAllowlist | quote }}
+            {{- end }}
+            - name: CLAWQL_WORKFLOW_LOG_TAIL_MAX
+              value: {{ .Values.workflow.logTailMax | int | quote }}
+            - name: CLAWQL_WORKFLOW_WAIT_TIMEOUT_SECONDS
+              value: {{ .Values.workflow.waitTimeoutSeconds | int | quote }}
+            - name: CLAWQL_WORKFLOW_WAIT_POLL_SECONDS
+              value: {{ .Values.workflow.waitPollSeconds | int | quote }}
+            - name: CLAWQL_WORKFLOW_GENERATE_NAME_PREFIX
+              value: {{ .Values.workflow.generateNamePrefix | quote }}
+            {{- if .Values.nats.url }}
+            - name: CLAWQL_NATS_URL
+              value: {{ .Values.nats.url | quote }}
+            {{- else if .Values.nats.enabled }}
+            - name: CLAWQL_NATS_URL
+              value: "nats://{{ include "clawql-mcp.natsName" . }}:{{ .Values.nats.service.clientPort }}"
+            {{- end }}
+            {{- if and .Values.nats.enabled .Values.nats.jetStream.enabled }}
+            - name: CLAWQL_NATS_JETSTREAM
+              value: "1"
+            {{- end }}
+            - name: CLAWQL_NATS_ENABLE_CONSUMER
+              value: "1"
+            - name: CLAWQL_NATS_CONSUMER_RESUME_WORKFLOW
+              value: "1"
+            - name: CLAWQL_NATS_STREAM_WORKFLOW
+              value: {{ include "clawql-mcp.natsJetStreamStream" . | quote }}
+            - name: CLAWQL_NATS_CONSUMER_DURABLE
+              value: {{ include "clawql-mcp.natsJetStreamConsumer" . | quote }}
+            - name: CLAWQL_NATS_SUBJECT_WORKFLOW
+              value: {{ .Values.nats.subjectConvention.workflow | quote }}
+            {{- with .Values.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          resources:
+            {{- toYaml .Values.nats.worker.resources | nindent 12 }}
+{{- end }}

@@ -250,6 +250,26 @@ app.kubernetes.io/component: goose
 {{- printf "%s-config" (include "clawql-mcp.natsName" .) | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
+{{- define "clawql-mcp.natsWorkerName" -}}
+{{- printf "%s-nats-worker" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{- define "clawql-mcp.natsMonitoringEndpoint" -}}
+{{- printf "%s:%d" (include "clawql-mcp.natsName" .) (.Values.nats.service.monitorPort | int) }}
+{{- end }}
+
+{{- define "clawql-mcp.natsJetStreamStream" -}}
+{{- default "CLAWQL_WORKFLOW" .Values.nats.keda.stream }}
+{{- end }}
+
+{{- define "clawql-mcp.natsJetStreamConsumer" -}}
+{{- default "clawql-hitl-resume" .Values.nats.keda.consumer }}
+{{- end }}
+
+{{- define "clawql-mcp.natsConfigured" -}}
+{{- if or .Values.nats.enabled .Values.nats.url }}1{{- end }}
+{{- end }}
+
 {{- define "clawql-mcp.onyxName" -}}
 {{- printf "%s-onyx" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
 {{- end }}

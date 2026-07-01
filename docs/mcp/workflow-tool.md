@@ -121,7 +121,7 @@ Manual resume:
 
 See [`hitl-label-studio.md`](hitl-label-studio.md) for webhook configuration.
 
-**NATS async path ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254)):** with **`CLAWQL_NATS_ENABLE_PUBLISH=1`**, suspend/resume and HITL lifecycle events publish to JetStream (`clawql.workflow.*`). Enable **`CLAWQL_NATS_ENABLE_CONSUMER=1`** + **`CLAWQL_NATS_CONSUMER_RESUME_WORKFLOW=1`** for consumer-driven resume on **`hitl.completed`** (complements synchronous **`CLAWQL_HITL_WEBHOOK_RESUME_WORKFLOW`**).
+**NATS async path ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254)):** with **`CLAWQL_NATS_ENABLE_PUBLISH=1`**, suspend/resume and HITL lifecycle events publish to JetStream (`clawql.workflow.*`). Enable **`CLAWQL_NATS_ENABLE_CONSUMER=1`** + **`CLAWQL_NATS_CONSUMER_RESUME_WORKFLOW=1`** for consumer-driven resume on **`hitl.completed`** (complements synchronous **`CLAWQL_HITL_WEBHOOK_RESUME_WORKFLOW`**). For production scale, use Helm **`nats.worker`** + **`nats.keda`** ([#257](https://github.com/danielsmithdevelopment/ClawQL/issues/257)) — **[nats-keda-worker.md](../deployment/nats-keda-worker.md)**.
 
 ### Scheduled runs (`submit_cron`)
 
