@@ -27,9 +27,7 @@ export async function maybeNotifyWorkflowTerminal(input: {
   const template = input.workflow.template_ref?.name ?? "unknown";
   const correlation = input.workflow.labels?.["clawql.dev/correlation-id"];
   const status = input.timedOut ? "TIMEOUT" : phase.toUpperCase();
-  const uiLine = input.workflow.links?.argo_ui
-    ? `\nargo_ui=${input.workflow.links.argo_ui}`
-    : "";
+  const uiLine = input.workflow.links?.argo_ui ? `\nargo_ui=${input.workflow.links.argo_ui}` : "";
 
   const text =
     `Workflow ${status}: ${input.namespace}/${input.name}\n` +
