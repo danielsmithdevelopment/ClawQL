@@ -52,5 +52,6 @@ See [`docs/design/workflow-tool-argo.md`](../../docs/design/workflow-tool-argo.m
 
 ## Related
 
+- [Smoke test: vault daily digest](SMOKE.md)
 - [Design: workflow MCP tool](../../docs/design/workflow-tool-argo.md)
 - [ADR 0004](../../docs/adr/0004-argo-cd-workflows-clawql-pipelines.md)

@@ -179,16 +179,18 @@ For **`ClusterWorkflowTemplate`**, use `clusterScope: true` on `workflowTemplate
 
 ## Environment configuration
 
-| Variable                                  | Purpose                                                |
-| ----------------------------------------- | ------------------------------------------------------ |
-| **`CLAWQL_ENABLE_WORKFLOW`**              | `1` / `true` / `yes` — register **`workflow`** tool    |
-| **`CLAWQL_WORKFLOW_NAMESPACE_ALLOWLIST`** | Comma-separated namespaces (**required** when enabled) |
-| **`CLAWQL_WORKFLOW_DEFAULT_NAMESPACE`**   | Default when caller omits `namespace`                  |
-| **`CLAWQL_WORKFLOW_TEMPLATE_ALLOWLIST`**  | Optional `ns/name` or `cluster/name` globs             |
-| **`CLAWQL_WORKFLOW_KUBECONFIG`**          | Out-of-cluster kubeconfig path (dev)                   |
-| **`CLAWQL_WORKFLOW_ARGO_UI_BASE_URL`**    | Build `links.argo_ui` in responses                     |
-| **`CLAWQL_WORKFLOW_ALLOW_DELETE`**        | `1` to permit `delete` (default off)                   |
-| **`CLAWQL_WORKFLOW_LOG_TAIL_MAX`**        | Cap `tail_lines` (default **200**)                     |
+| Variable                                  | Purpose                                                           |
+| ----------------------------------------- | ----------------------------------------------------------------- |
+| **`CLAWQL_ENABLE_WORKFLOW`**              | `1` / `true` / `yes` — register **`workflow`** tool               |
+| **`CLAWQL_WORKFLOW_NAMESPACE_ALLOWLIST`** | Comma-separated namespaces (**required** when enabled)            |
+| **`CLAWQL_WORKFLOW_DEFAULT_NAMESPACE`**   | Default when caller omits `namespace`                             |
+| **`CLAWQL_WORKFLOW_TEMPLATE_ALLOWLIST`**  | Optional `ns/name` or `cluster/name` globs                        |
+| **`CLAWQL_WORKFLOW_KUBECONFIG`**          | Out-of-cluster kubeconfig path (dev)                              |
+| **`CLAWQL_WORKFLOW_ARGO_UI_BASE_URL`**    | Build `links.argo_ui` in responses                                |
+| **`CLAWQL_WORKFLOW_ALLOW_DELETE`**        | `1` to permit `delete` (default off)                              |
+| **`CLAWQL_WORKFLOW_LOG_TAIL_MAX`**        | Cap `tail_lines` (default **200**)                                |
+| **`CLAWQL_WORKFLOW_NOTIFY_ON_TERMINAL`**  | `1` to Slack-notify when `wait` completes (needs channel + token) |
+| **`CLAWQL_WORKFLOW_NOTIFY_CHANNEL`**      | Slack channel for terminal `wait` notifications                   |
 
 ### Validation (every mutating call)
 
@@ -238,7 +240,7 @@ if (flags.enableSchedule || flags.enableNotify || flags.enableWorkflow) {
 | Tool                            | v1 pattern                                                                                            |
 | ------------------------------- | ----------------------------------------------------------------------------------------------------- |
 | **`audit`**                     | Handler appends on `submit` and on terminal `get` / `wait` (shipped)                                  |
-| **`notify`**                    | Agent-driven; optional server hook in A.2                                                             |
+| **`notify`**                    | Optional server hook on `wait` when `CLAWQL_WORKFLOW_NOTIFY_ON_TERMINAL=1` (shipped)                  |
 | **`memory_ingest`**             | Documented agent skill post-run                                                                       |
 | **`hitl_enqueue_label_studio`** | Future: suspend → HITL → resume ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254)) |
 | **`schedule`**                  | Future `action.kind: "argo_workflow"` — out of Phase A scope                                          |
@@ -272,7 +274,7 @@ if (flags.enableSchedule || flags.enableNotify || flags.enableWorkflow) {
 - [x] `delete` behind `CLAWQL_WORKFLOW_ALLOW_DELETE` (handler shipped; Helm `workflow.allowDelete`)
 - [x] `audit` append on `submit` and terminal `get` / `wait`
 - [x] Helm SA + Role binding values (`enableWorkflow`, `workflow-rbac.yaml`)
-- [ ] Optional notify on terminal phase
+- [x] Optional notify on terminal phase (`CLAWQL_WORKFLOW_NOTIFY_ON_TERMINAL`, `wait` hook)
 
 ### Phase B
 

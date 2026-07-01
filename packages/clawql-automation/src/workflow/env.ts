@@ -63,6 +63,10 @@ export function workflowDeleteAllowed(): boolean {
   return envTruthy(process.env.CLAWQL_WORKFLOW_ALLOW_DELETE);
 }
 
+export function workflowTerminalNotifyEnabled(): boolean {
+  return envTruthy(process.env.CLAWQL_WORKFLOW_NOTIFY_ON_TERMINAL);
+}
+
 export function getWorkflowLogTailMax(): number {
   const raw = process.env.CLAWQL_WORKFLOW_LOG_TAIL_MAX?.trim();
   if (!raw) return 200;
