@@ -35,7 +35,7 @@ Set **`1`** / **`true`** / **`yes`** where noted:
 | **ClawQL Ouroboros**  | **`ouroboros_*`** (three tools) | **`CLAWQL_ENABLE_OUROBOROS=1`**                                                                                                                                                                                                                                                 |
 | **ClawQL Automation** | **`schedule`**, **`notify`**    | **`CLAWQL_ENABLE_SCHEDULE=1`**, **`CLAWQL_ENABLE_NOTIFY=1`**                                                                                                                                                                                                                    |
 
-**Planned (ADR 0004, not shipped until implemented):** optional **`workflow`** tool (**`CLAWQL_ENABLE_WORKFLOW=1`**, name TBD) — durable **Argo Workflows**–backed pipelines, implemented in **`clawql-mcp`** like **`schedule`** / **`notify`**. See [`docs/adr/0004-argo-cd-workflows-clawql-pipelines.md`](../adr/0004-argo-cd-workflows-clawql-pipelines.md).
+**Planned (ADR 0004, not shipped until implemented):** optional **`workflow`** tool (**`CLAWQL_ENABLE_WORKFLOW=1`**) — durable **Argo Workflows**–backed pipelines (template-ref **`submit`** only in v1), implemented in **`clawql-automation`** / **`AutomationPlugin`** like **`schedule`** / **`notify`**. Requires **Argo Workflows ≥ 3.4.0**. See [`docs/design/workflow-tool-argo.md`](../design/workflow-tool-argo.md) and [`docs/adr/0004-argo-cd-workflows-clawql-pipelines.md`](../adr/0004-argo-cd-workflows-clawql-pipelines.md).
 
 **`knowledge_search_onyx`** — **`CLAWQL_ENABLE_ONYX=1`** plus **Documents** still enabled (documents off hides the tool regardless).
 

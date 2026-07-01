@@ -27,4 +27,14 @@ describe("createAutomationPlugin", () => {
     Effect.runSync(createAutomationPlugin({ enableNotify: true }).onRegister!(api));
     expect(registry.list().map((t) => t.name)).toEqual(["notify"]);
   });
+
+  it("registers workflow when enableWorkflow", () => {
+    configureAutomationPluginDeps({
+      execute: async () => ({ content: [{ type: "text", text: "{}" }] }),
+    });
+    const registry = new McpToolRegistry();
+    const api = registry.registrationApi();
+    Effect.runSync(createAutomationPlugin({ enableWorkflow: true }).onRegister!(api));
+    expect(registry.list().map((t) => t.name)).toEqual(["workflow"]);
+  });
 });

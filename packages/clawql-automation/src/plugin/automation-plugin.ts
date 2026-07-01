@@ -14,12 +14,16 @@ import {
   startScheduleWorker,
   stopScheduleWorker,
 } from "../schedule/schedule.js";
+import {
+  handleWorkflowToolInput as runWorkflowTool,
+  workflowToolSchema,
+} from "../workflow/workflow.js";
 
 export const AUTOMATION_PLUGIN_ID = "clawql-automation";
 
 /**
- * Future: Argo Workflows / Argo CD integration (`workflow` MCP tool, CronWorkflow triggers)
- * will extend this plugin — see ADR 0004 and #243/#244. Not implemented yet.
+ * Argo Workflows `workflow` MCP tool — template-ref submit only in v1.
+ * Vault digest WorkflowTemplate: deployment/argo-workflows/templates/clawql-vault-daily-digest.yaml
  */
 export const notifyToolSchema = {
   channel: z
@@ -79,14 +83,28 @@ export async function handleNotifyToolInput(
   return runNotifySlack(params);
 }
 
+export async function handleWorkflowToolInput(
+  params: unknown
+): Promise<{ content: { type: "text"; text: string }[] }> {
+  const p = params as { operation?: string; namespace?: string; name?: string };
+  logMcpToolShape("workflow", {
+    operation: p.operation,
+    namespaceLen: p.namespace?.length,
+    nameLen: p.name?.length,
+  });
+  return runWorkflowTool(params);
+}
+
 export type CreateAutomationPluginOptions = {
   readonly enableSchedule?: boolean;
   readonly enableNotify?: boolean;
+  readonly enableWorkflow?: boolean;
 };
 
 export function createAutomationPlugin(options: CreateAutomationPluginOptions = {}): Plugin {
   const enableSchedule = options.enableSchedule ?? false;
   const enableNotify = options.enableNotify ?? false;
+  const enableWorkflow = options.enableWorkflow ?? false;
   return {
     id: AUTOMATION_PLUGIN_ID,
     version: "0.1.0",
@@ -107,6 +125,13 @@ export function createAutomationPlugin(options: CreateAutomationPluginOptions = 
             name: "notify",
             schema: notifyToolSchema,
             handler: (args) => handleNotifyToolInput(args as NotifySlackInput),
+          });
+        }
+        if (enableWorkflow) {
+          yield* api.registerMcpTool({
+            name: "workflow",
+            schema: workflowToolSchema,
+            handler: (args) => handleWorkflowToolInput(args),
           });
         }
       }),

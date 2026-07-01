@@ -23,6 +23,21 @@
       "import": "./dist/schedule/schedule.js",
       "require": "./dist/schedule/schedule.cjs"
     },
+    "./workflow/workflow": {
+      "types": "./dist/workflow/workflow.d.ts",
+      "import": "./dist/workflow/workflow.js",
+      "require": "./dist/workflow/workflow.cjs"
+    },
+    "./workflow/vault-digest/run-vault-digest": {
+      "types": "./dist/workflow/vault-digest/run-vault-digest.d.ts",
+      "import": "./dist/workflow/vault-digest/run-vault-digest.js",
+      "require": "./dist/workflow/vault-digest/run-vault-digest.cjs"
+    },
+    "./workflow/vault-digest/cli": {
+      "types": "./dist/workflow/vault-digest/cli.d.ts",
+      "import": "./dist/workflow/vault-digest/cli.js",
+      "require": "./dist/workflow/vault-digest/cli.cjs"
+    },
     "./plugin": {
       "types": "./dist/plugin/index.d.ts",
       "import": "./dist/plugin/index.js",
@@ -38,8 +53,10 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@kubernetes/client-node": "^1.3.0",
     "clawql-api": "file:../clawql-api",
     "clawql-core": "file:../clawql-core",
+    "clawql-memory": "file:../clawql-memory",
     "effect": "3.21.2",
     "sql.js": "^1.14.1",
     "zod": "4.3.6"

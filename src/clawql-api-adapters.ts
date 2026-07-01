@@ -49,11 +49,12 @@ function buildMcpPlugins(): readonly Plugin[] {
       })
     );
   }
-  if (flags.enableSchedule || flags.enableNotify) {
+  if (flags.enableSchedule || flags.enableNotify || flags.enableWorkflow) {
     plugins.push(
       createAutomationPlugin({
         enableSchedule: flags.enableSchedule,
         enableNotify: flags.enableNotify,
+        enableWorkflow: flags.enableWorkflow,
       })
     );
   }
