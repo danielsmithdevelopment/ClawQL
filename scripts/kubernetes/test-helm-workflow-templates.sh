@@ -54,7 +54,7 @@ checks = [
         r"name: CLAWQL_WORKFLOW_ALLOW_DELETE\n\s+value: \"1\"",
         "allow delete env",
     ),
-    (r"name: test-clawql-mcp-workflow", "workflow Role name"),
+    (r"name: clawql-mcp-http-workflow", "workflow Role name"),
     (r"clusterworkflowtemplates", "ClusterWorkflowTemplate read RBAC"),
 ]
 
@@ -66,7 +66,7 @@ for pattern, message in checks:
 if "CLAWQL_ENABLE_WORKFLOW" in disabled:
     print("ERROR: workflow env rendered when enableWorkflow=false")
     sys.exit(1)
-if "test-clawql-mcp-workflow" in disabled:
+if "clawql-mcp-http-workflow" in disabled:
     print("ERROR: workflow RBAC rendered when enableWorkflow=false")
     sys.exit(1)
 PY
