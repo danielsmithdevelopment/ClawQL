@@ -249,12 +249,13 @@ if (flags.enableSchedule || flags.enableNotify || flags.enableWorkflow) {
 
 ## Testing
 
-| Layer       | Approach                                                                                        |
-| ----------- | ----------------------------------------------------------------------------------------------- |
-| Unit        | Mock `CustomObjectsApi` / mapper fixture CRDs                                                   |
-| Schema      | zod superRefine (missing template, disallowed namespace)                                        |
-| Plugin      | `automation-plugin.test.ts` — registers `workflow` when `enableWorkflow`                        |
-| Integration | Optional CI: **kind** + **Argo Workflows ≥ 3.4.0**, submit minimal template, assert `get` phase |
+| Layer       | Approach                                                                                         |
+| ----------- | ------------------------------------------------------------------------------------------------ |
+| Unit        | Mock `CustomObjectsApi` / mapper fixture CRDs; handler tests for all Phase A operations          |
+| Helm CI     | `scripts/kubernetes/test-helm-workflow-templates.sh` (`enableWorkflow` render + RBAC assertions) |
+| Schema      | zod superRefine (missing template, disallowed namespace)                                         |
+| Plugin      | `automation-plugin.test.ts` — registers `workflow` when `enableWorkflow`                         |
+| Integration | Optional CI: **kind** + **Argo Workflows ≥ 3.4.0**, submit minimal template, assert `get` phase  |
 
 ---
 
