@@ -9,7 +9,11 @@ import { getClawqlOptionalToolFlags } from "./clawql-optional-flags.js";
 import { handleMemoryIngestToolInput } from "./memory-ingest.js";
 import { getObsidianVaultPath } from "./vault-config.js";
 import { enforceWebhookRateLimit } from "./webhook-rate-limit.js";
-import { maybeResumeWorkflowFromHitl } from "clawql-automation/workflow/suspend-resume";
+import { maybeResumeWorkflowFromHitl, parseHitlWorkflowRef } from "clawql-automation/workflow/suspend-resume";
+import {
+  publishHitlCompletedEvent,
+  publishHitlEnqueuedEvent,
+} from "clawql-automation/nats/publish-hooks";
 
 export type HitlLabelStudioEnqueueParams = {
   /** Label Studio project primary key (integer). */
@@ -185,6 +189,23 @@ export async function handleHitlEnqueueLabelStudioToolInput(
     };
   }
 
+  const workflowRef = params.workflow_ref
+    ? {
+        namespace: params.workflow_ref.namespace.trim(),
+        name: params.workflow_ref.name.trim(),
+        ...(params.workflow_ref.node_field_selector?.trim()
+          ? { node_field_selector: params.workflow_ref.node_field_selector.trim() }
+          : {}),
+      }
+    : undefined;
+
+  void publishHitlEnqueuedEvent({
+    correlation_id: params.correlation_id?.trim(),
+    workflow_ref: workflowRef,
+    project_id: params.project_id,
+    task_count: payload.length,
+  });
+
   return {
     content: [
       {
@@ -278,6 +299,13 @@ export async function handleLabelStudioWebhookRequest(req: Request, res: Respons
       : undefined;
 
   const workflowResume = await maybeResumeWorkflowFromHitl(clawqlHitl);
+
+  const workflowRef = clawqlHitl ? parseHitlWorkflowRef(clawqlHitl) : undefined;
+  void publishHitlCompletedEvent({
+    correlation_id: correlationId,
+    workflow_ref: workflowRef,
+    clawql_hitl: clawqlHitl,
+  });
 
   const flags = getClawqlOptionalToolFlags();
   const vault = getObsidianVaultPath();

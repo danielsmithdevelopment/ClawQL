@@ -19,6 +19,7 @@ import {
   workflowToolSchema,
 } from "../workflow/workflow.js";
 import { argocdToolSchema, handleArgocdToolInput as runArgocdTool } from "../argocd/argocd.js";
+import { startNatsWorkflowWorker, stopNatsWorkflowWorker } from "../nats/worker.js";
 
 export const AUTOMATION_PLUGIN_ID = "clawql-automation";
 
@@ -113,6 +114,7 @@ export type CreateAutomationPluginOptions = {
   readonly enableNotify?: boolean;
   readonly enableWorkflow?: boolean;
   readonly enableArgoCd?: boolean;
+  readonly enableNatsWorker?: boolean;
 };
 
 export function createAutomationPlugin(options: CreateAutomationPluginOptions = {}): Plugin {
@@ -120,6 +122,7 @@ export function createAutomationPlugin(options: CreateAutomationPluginOptions = 
   const enableNotify = options.enableNotify ?? false;
   const enableWorkflow = options.enableWorkflow ?? false;
   const enableArgoCd = options.enableArgoCd ?? false;
+  const enableNatsWorker = options.enableNatsWorker ?? false;
   return {
     id: AUTOMATION_PLUGIN_ID,
     version: "0.1.0",
@@ -156,10 +159,14 @@ export function createAutomationPlugin(options: CreateAutomationPluginOptions = 
             handler: (args) => handleArgocdToolInput(args),
           });
         }
+        if (enableNatsWorker) {
+          startNatsWorkflowWorker();
+        }
       }),
     onTeardown: () =>
       Effect.sync(() => {
         if (enableSchedule) stopScheduleWorker();
+        if (enableNatsWorker) void stopNatsWorkflowWorker();
       }),
   };
 }

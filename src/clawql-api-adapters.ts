@@ -14,6 +14,7 @@ import {
 } from "clawql-api";
 import { createDocumentsPlugin } from "clawql-documents/plugin";
 import { createAutomationPlugin } from "clawql-automation/plugin";
+import { natsConfiguredForConsumer } from "clawql-automation/nats/env";
 import { createSandboxPlugin } from "clawql-sandbox/plugin";
 import { createOuroborosPlugin } from "clawql-ouroboros/plugin";
 import type { Plugin } from "clawql-core";
@@ -49,13 +50,20 @@ function buildMcpPlugins(): readonly Plugin[] {
       })
     );
   }
-  if (flags.enableSchedule || flags.enableNotify || flags.enableWorkflow || flags.enableArgoCd) {
+  if (
+    flags.enableSchedule ||
+    flags.enableNotify ||
+    flags.enableWorkflow ||
+    flags.enableArgoCd ||
+    natsConfiguredForConsumer()
+  ) {
     plugins.push(
       createAutomationPlugin({
         enableSchedule: flags.enableSchedule,
         enableNotify: flags.enableNotify,
         enableWorkflow: flags.enableWorkflow,
         enableArgoCd: flags.enableArgoCd,
+        enableNatsWorker: natsConfiguredForConsumer(),
       })
     );
   }

@@ -245,7 +245,7 @@ These vision items are **not** done by package extraction alone:
 | `clawql-auth` package                         | 📋 Auth headers + env JSON in `clawql-api`; no standalone auth package |
 | `clawql-pageindex`                            | 📋 Not started                                                         |
 | Document pipeline (Tika → … → Paperless)      | 📋 Orchestration not in `clawql-documents` yet                         |
-| NATS / HITL in `clawql-automation`            | 📋 Planned                                                             |
+| NATS / HITL in `clawql-automation`            | ✅ Shipped (JetStream publish + HITL resume consumer)                  |
 | Kubernetes Operator Layer composition         | 📋 Planned                                                             |
 | Transport-only `clawql-mcp` npm package split | 📋 `src/` still ~200 modules with shims                                |
 

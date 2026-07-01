@@ -38,6 +38,16 @@
       "import": "./dist/argocd/argocd.js",
       "require": "./dist/argocd/argocd.cjs"
     },
+    "./nats/env": {
+      "types": "./dist/nats/env.d.ts",
+      "import": "./dist/nats/env.js",
+      "require": "./dist/nats/env.cjs"
+    },
+    "./nats/publish-hooks": {
+      "types": "./dist/nats/publish-hooks.d.ts",
+      "import": "./dist/nats/publish-hooks.js",
+      "require": "./dist/nats/publish-hooks.cjs"
+    },
     "./workflow/vault-digest/run-vault-digest": {
       "types": "./dist/workflow/vault-digest/run-vault-digest.d.ts",
       "import": "./dist/workflow/vault-digest/run-vault-digest.js",
@@ -68,6 +78,7 @@
     "clawql-core": "file:../clawql-core",
     "clawql-memory": "file:../clawql-memory",
     "effect": "3.21.2",
+    "nats": "^2.29.3",
     "sql.js": "^1.14.1",
     "zod": "4.3.6"
   },
