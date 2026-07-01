@@ -55,6 +55,13 @@ Requires `CLAWQL_SLACK_TOKEN` (or equivalent) like the `notify` tool. Set `CLAWQ
 | `delete`         | When `CLAWQL_WORKFLOW_ALLOW_DELETE=1`                                   |
 | `suspend`        | Pause workflow execution (`spec.suspend`) or prepare for HITL gate      |
 | `resume`         | Resume workflow-level suspend or active `suspend` template nodes        |
+| `submit_cron`    | Create `CronWorkflow` from `template_ref` + `schedule`                  |
+| `get_cron`       | Cron schedule status                                                    |
+| `list_cron`      | List `CronWorkflow` resources                                           |
+| `delete_cron`    | When `CLAWQL_WORKFLOW_ALLOW_DELETE=1`                                   |
+| `suspend_cron`   | Pause scheduled runs (`spec.suspend`)                                   |
+| `resume_cron`    | Resume a suspended cron schedule                                        |
+| `artifacts`      | List output artifact refs from workflow nodes (no binary download)      |
 
 Optional **`node_field_selector`** on **`resume`** targets a specific suspend step (e.g. `displayName=approve`), matching Argo’s `argo resume --node-field-selector`.
 
@@ -113,6 +120,26 @@ Manual resume:
 ```
 
 See [`hitl-label-studio.md`](hitl-label-studio.md) for webhook configuration.
+
+### Scheduled runs (`submit_cron`)
+
+```json
+{
+  "operation": "submit_cron",
+  "namespace": "clawql",
+  "name": "vault-digest-daily",
+  "schedule": "0 6 * * *",
+  "timezone": "UTC",
+  "template_ref": {
+    "kind": "WorkflowTemplate",
+    "name": "clawql-vault-daily-digest",
+    "namespace": "clawql"
+  },
+  "parameters": { "hours_back": "24" }
+}
+```
+
+Use **`suspend_cron`** / **`resume_cron`** to pause or resume the schedule without deleting the `CronWorkflow`.
 
 **Local (no Argo):** `npm run workflow:vault-digest` with `CLAWQL_OBSIDIAN_VAULT_PATH` set.
 

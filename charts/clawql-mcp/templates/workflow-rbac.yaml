@@ -28,6 +28,18 @@ rules:
   - apiGroups: ["argoproj.io"]
     resources: ["workflowtemplates"]
     verbs: ["get", "list"]
+  - apiGroups: ["argoproj.io"]
+    resources: ["cronworkflows"]
+    verbs:
+      - create
+      - get
+      - list
+      - watch
+      - patch
+      - update
+      {{- if $.Values.workflow.allowDelete }}
+      - delete
+      {{- end }}
   - apiGroups: [""]
     resources: ["pods", "pods/log"]
     verbs: ["get", "list"]

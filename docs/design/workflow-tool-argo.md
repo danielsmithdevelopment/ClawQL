@@ -106,8 +106,8 @@ Operation-discriminated union (same pattern as **`schedule`**): top-level **`ope
 | `operation`              | Purpose                                          |
 | ------------------------ | ------------------------------------------------ |
 | **`suspend` / `resume`** | HITL glue with Label Studio / webhooks (shipped) |
-| **`submit_cron`**        | `CronWorkflow` management                        |
-| **`artifacts`**          | list artifact refs when RBAC permits             |
+| **`submit_cron`**        | `CronWorkflow` management (shipped)              |
+| **`artifacts`**          | list artifact refs when RBAC permits (shipped)   |
 
 ### `submit` input (template-only)
 
@@ -210,12 +210,13 @@ Panguard **`beforeCallTool`** runs on **`workflow`** like any other MCP tool.
 
 Minimum verbs for Phase A:
 
-| Resource                    | Verbs                                                    |
-| --------------------------- | -------------------------------------------------------- |
-| `workflows` (`argoproj.io`) | create, get, list, watch, patch, update (suspend/resume) |
-| `workflowtemplates`         | get, list                                                |
-| `clusterworkflowtemplates`  | get, list (if cluster templates used)                    |
-| `pods`, `pods/log`          | get, list (for **`logs`**)                               |
+| Resource                    | Verbs                                                           |
+| --------------------------- | --------------------------------------------------------------- |
+| `workflows` (`argoproj.io`) | create, get, list, watch, patch, update (suspend/resume)        |
+| `workflowtemplates`         | get, list                                                       |
+| `cronworkflows`             | create, get, list, watch, patch, update (+ delete when allowed) |
+| `clusterworkflowtemplates`  | get, list (if cluster templates used)                           |
+| `pods`, `pods/log`          | get, list (for **`logs`**)                                      |
 
 **Not granted by default:** `cluster-admin`, cross-namespace list, arbitrary `Workflow` patch, secret access. **`delete`** only when env + Role explicitly allow it.
 
@@ -282,7 +283,8 @@ if (flags.enableSchedule || flags.enableNotify || flags.enableWorkflow) {
 ### Phase B
 
 - [x] `suspend` / `resume` + HITL ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254))
-- [ ] Argo CD — separate flag or `execute` on Argo CD OpenAPI ([#244](https://github.com/danielsmithdevelopment/ClawQL/issues/244))
+- [x] `submit_cron`, `artifacts` ([#243](https://github.com/danielsmithdevelopment/ClawQL/issues/243))
+- [x] Argo CD `argocd` tool ([#244](https://github.com/danielsmithdevelopment/ClawQL/issues/244))
 
 ---
 

@@ -51,6 +51,24 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
 {{- end }}
 
+{{- define "clawql-mcp.argocdNamespaceList" -}}
+{{- if .Values.argocd.namespaceAllowlist -}}
+{{- .Values.argocd.namespaceAllowlist | join "," -}}
+{{- else -}}
+argocd
+{{- end -}}
+{{- end }}
+
+{{- define "clawql-mcp.argocdDefaultNamespace" -}}
+{{- if .Values.argocd.defaultNamespace -}}
+{{- .Values.argocd.defaultNamespace -}}
+{{- else if .Values.argocd.namespaceAllowlist -}}
+{{- index .Values.argocd.namespaceAllowlist 0 -}}
+{{- else -}}
+argocd
+{{- end -}}
+{{- end }}
+
 {{- define "clawql-mcp.uiName" -}}
 {{- printf "%s-ui" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
 {{- end }}
