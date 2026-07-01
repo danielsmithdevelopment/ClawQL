@@ -6,11 +6,7 @@
 import type { McpToolResult } from "clawql-core";
 import type { DocumentsPluginExecuteParams } from "../plugin/deps.js";
 import { resolveArgsTemplate, type ArgsTemplateContext } from "./args-template.js";
-import {
-  idpPipelineMaxRetries,
-  idpPipelineRetryDelayMs,
-  merklePerHopEnabled,
-} from "./env.js";
+import { idpPipelineMaxRetries, idpPipelineRetryDelayMs, merklePerHopEnabled } from "./env.js";
 import {
   DEFAULT_IDP_PIPELINE,
   pipelineStepsForDashboard,
@@ -18,9 +14,7 @@ import {
   type IdpPipelineStep,
 } from "./idp-pipeline.js";
 
-export type PipelineExecuteFn = (
-  params: DocumentsPluginExecuteParams
-) => Promise<McpToolResult>;
+export type PipelineExecuteFn = (params: DocumentsPluginExecuteParams) => Promise<McpToolResult>;
 
 export type PipelineHopMerkleSnapshot = {
   rootHex: string;
@@ -221,9 +215,7 @@ export async function runIdpPipeline(
           operationId: step.operationId,
           args,
         });
-        const text = result.content
-          .map((c) => ("text" in c ? c.text : ""))
-          .join("\n");
+        const text = result.content.map((c) => ("text" in c ? c.text : "")).join("\n");
         const parsed = parseExecuteText(text);
         if (parsed.ok) {
           ok = true;

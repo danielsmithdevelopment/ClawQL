@@ -17,10 +17,7 @@ const miniPipeline = [
 describe("runIdpPipeline", () => {
   it("dry-runs all hops without calling execute", async () => {
     const execute = vi.fn();
-    const result = await runIdpPipeline(
-      { dry_run: true, pipeline: miniPipeline },
-      { execute }
-    );
+    const result = await runIdpPipeline({ dry_run: true, pipeline: miniPipeline }, { execute });
     expect(execute).not.toHaveBeenCalled();
     expect(result.ok).toBe(true);
     expect(result.dry_run).toBe(true);

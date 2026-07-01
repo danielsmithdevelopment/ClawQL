@@ -8,10 +8,7 @@ function envOrEmpty(key: string): string {
 }
 
 /** Resolve `${NEXTCLOUD_USERNAME}`, `${document_path}`, etc. in args templates. */
-export function resolveArgsTemplate(
-  value: unknown,
-  ctx: ArgsTemplateContext
-): unknown {
+export function resolveArgsTemplate(value: unknown, ctx: ArgsTemplateContext): unknown {
   if (typeof value === "string") {
     const docPath = ctx.document_path?.trim() || "IDP/inbox/document.pdf";
     const processed =

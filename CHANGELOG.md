@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Documentation
 
+- **`docs/mcp/idp-pipeline-runner.md`**, IDP matrix #307 → Shipped, plugin registry + **`mcp-tools.md`** **`run_idp_pipeline`** row.
 - HITL + workflow tool guides: NATS dual-path (sync webhook vs async consumer); `.env.example` NATS block.
 
 ## [6.4.0] - 2026-07-01

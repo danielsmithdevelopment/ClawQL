@@ -43,7 +43,9 @@ export const runIdpPipelineToolSchema = {
   skip_stages: z
     .array(stageEnum)
     .optional()
-    .describe("Omit hops for these pipeline stages (e.g. skip paperless when using archive layer)."),
+    .describe(
+      "Omit hops for these pipeline stages (e.g. skip paperless when using archive layer)."
+    ),
   stop_on_error: z
     .boolean()
     .optional()

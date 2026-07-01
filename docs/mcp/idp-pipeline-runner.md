@@ -10,13 +10,13 @@ Automated multi-hop execution of **`DEFAULT_IDP_PIPELINE`** inside **`clawql-doc
 
 ## Enable
 
-| Env | Default | Effect |
-| --- | ------- | ------ |
-| **`CLAWQL_ENABLE_DOCUMENTS`** | on | Required — document stack + **`ingest_external_knowledge`** |
-| **`CLAWQL_ENABLE_IDP_PIPELINE`** | off | Registers MCP **`run_idp_pipeline`** |
-| **`CLAWQL_IDP_PIPELINE_MAX_RETRIES`** | `2` | Per-hop retries after execute failure |
-| **`CLAWQL_IDP_PIPELINE_RETRY_DELAY_MS`** | `500` | Backoff base (multiplied by attempt index) |
-| **`CLAWQL_MERKLE_ENABLED`** | off | When `1`, successful hops may include **`merkle_snapshot`** |
+| Env                                      | Default | Effect                                                      |
+| ---------------------------------------- | ------- | ----------------------------------------------------------- |
+| **`CLAWQL_ENABLE_DOCUMENTS`**            | on      | Required — document stack + **`ingest_external_knowledge`** |
+| **`CLAWQL_ENABLE_IDP_PIPELINE`**         | off     | Registers MCP **`run_idp_pipeline`**                        |
+| **`CLAWQL_IDP_PIPELINE_MAX_RETRIES`**    | `2`     | Per-hop retries after execute failure                       |
+| **`CLAWQL_IDP_PIPELINE_RETRY_DELAY_MS`** | `500`   | Backoff base (multiplied by attempt index)                  |
+| **`CLAWQL_MERKLE_ENABLED`**              | off     | When `1`, successful hops may include **`merkle_snapshot`** |
 
 ```bash
 CLAWQL_ENABLE_DOCUMENTS=1
