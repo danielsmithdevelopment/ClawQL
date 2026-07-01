@@ -65,10 +65,10 @@ flowchart TB
 | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
 | **Layout**   | Workspaces: `clawql-core`, `clawql-api`, `clawql-memory`, `clawql-documents`, `clawql-automation`, `clawql-ouroboros`, transports; `src/` shims + MCP handlers | Turborepo; transport-only `clawql-mcp`; remove shims when imports migrate                |
 | **Runtime**  | Effect for `search`/`execute` + plugins; **async** in memory/documents/automation packages; Zod at MCP boundary                                                | Effect programs + Layers in all extracted packages; Schema inward over time              |
-| **Entry**    | `server.ts` → `tools.ts` → `getClawqlApi().run(Effect…)` for core tools; optional tools registered in `tools.ts`                                               | Handlers delegate to `Plugin.onRegister` + `createClawQLApi({ layers })`                 |
+| **Entry**    | `server.ts` → `tools.ts` (core + HITL) → `getClawqlApi().run(Effect…)`; optional tools via **`buildMcpPlugins()`** + **`onRegister`**                          | Handlers delegate to **`Plugin.onRegister`** + **`createClawQLApi({ layers })`**         |
 | **Features** | `CLAWQL_ENABLE_*` gates optional tools                                                                                                                         | Same flags → **include or omit Layers** at startup                                       |
 | **Effect**   | Pinned in `clawql-api`; `AuditLive`, `SearchService`, `ExecuteService`, `PluginRegistry`                                                                       | Layer composition for memory/documents/automation; `@effect/schema` at stable boundaries |
-| **Plugins**  | `PanguardProxyPlugin` shipped; memory/schedule/notify **not** plugins yet                                                                                      | `MemoryPlugin`, `DocumentsPlugin`, `AutomationPlugin`; third-party npm plugins           |
+| **Plugins**  | **`PanguardProxyPlugin`** + horizontal **`onRegister`** plugins (Memory, Documents, Automation, Sandbox, Ouroboros); HITL inline                               | Effect **`Layer`** per horizontal package; third-party npm plugins                       |
 
 **Ground truth:** [`modularization-implementation-status.md`](./modularization-implementation-status.md).
 
@@ -132,9 +132,9 @@ const result = await Effect.runPromise(program.pipe(Effect.provide(AppLayer)));
 
 **Remaining from original Phase 1 table:**
 
-| Deliverable                                     | Notes                                                                        |
-| ----------------------------------------------- | ---------------------------------------------------------------------------- |
-| `tools.ts` thins to registration + `runPromise` | Partial — core tools delegate; optional tools still registered in `tools.ts` |
+| Deliverable                                     | Notes                                                                                              |
+| ----------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `tools.ts` thins to registration + `runPromise` | Partial — core + HITL in `tools.ts`; optional tools via **`buildMcpPlugins()`** + **`onRegister`** |
 
 **Exit criteria:** All existing integration tests pass; `search`/`execute` latency within agreed budget (profile before/after).
 
@@ -142,16 +142,16 @@ const result = await Effect.runPromise(program.pipe(Effect.provide(AppLayer)));
 
 **Goal:** Optional tools are plugins, not `if` branches in `tools.ts`.
 
-**Shipped:** `PluginRegistry`, `PanguardProxyPlugin`, `McpProxyPipeline`. **Not shipped:** `MemoryPlugin` / `DocumentsPlugin` / `AutomationPlugin` registering MCP tools via `onRegister`.
+**Shipped:** `PluginRegistry`, `PanguardProxyPlugin`, `McpProxyPipeline`, **`MemoryPlugin`**, **`DocumentsPlugin`**, **`AutomationPlugin`** (schedule / notify / workflow / argocd), **`SandboxPlugin`**, **`OuroborosPlugin`** — MCP tools register via **`onRegister`**. **Not shipped:** Effect **`Layer`** wrappers per horizontal package; **`Layer.mergeAll`** at `createApi()`.
 
-| Current module cluster                  | Plugin / Layer                                                                               |
-| --------------------------------------- | -------------------------------------------------------------------------------------------- |
-| `memory-ingest`, `memory-recall`, vault | `MemoryPlugin` / `clawql-memory`                                                             |
-| `external-ingest`, providers            | `DocumentsPlugin` / `clawql-documents`                                                       |
-| `clawql-schedule`, `clawql-notify`      | `AutomationPlugin`                                                                           |
-| `sandbox-*`                             | `SandboxPlugin`                                                                              |
-| `ouroboros-mcp`                         | **`clawql-ouroboros` Effect rewrite** + `OuroborosPlugin` Layer (no long-term async wrapper) |
-| `knowledge-search-onyx`                 | Sub-plugin under documents or api                                                            |
+| Current module cluster                  | Plugin / Layer                                                                                                 |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `memory-ingest`, `memory-recall`, vault | `MemoryPlugin` / `clawql-memory`                                                                               |
+| `external-ingest`, providers            | `DocumentsPlugin` / `clawql-documents`                                                                         |
+| `clawql-schedule`, `clawql-notify`      | `AutomationPlugin`                                                                                             |
+| `sandbox-*`                             | `SandboxPlugin` ✅ (registration); Layer 📋                                                                    |
+| `ouroboros-mcp`                         | **`OuroborosPlugin`** ✅ (registration); **`clawql-ouroboros` Effect rewrite** 📋 (no long-term async wrapper) |
+| `knowledge-search-onyx`                 | Sub-plugin under documents or api                                                                              |
 
 **Env mapping:** `getClawqlOptionalToolFlags()` → `Layer.mergeAll(...enabledLayers)` at `createApi()` (replaces scattered `if (enableSchedule)` in `server.ts`).
 
@@ -181,17 +181,17 @@ const result = await Effect.runPromise(program.pipe(Effect.provide(AppLayer)));
 
 Priority = **dependency order** + **test coverage** + **user impact**.
 
-| Order | Current `src/` (representative)                                                          | Target package                                        | Extracted? (June 2026)             | Effect-first?                   |
-| ----- | ---------------------------------------------------------------------------------------- | ----------------------------------------------------- | ---------------------------------- | ------------------------------- |
-| 1     | `clawql-audit.ts`, `clawql-cache.ts`                                                     | `clawql-core`                                         | ✅ (shims remain)                  | Yes                             |
-| 2     | `spec-loader.ts`, `spec-search.ts`, `graphql-in-process-execute.ts`, `rest-operation.ts` | `clawql-api`                                          | ✅                                 | Yes (execute path)              |
-| 3     | `merkle-tree.ts`, `memory-cuckoo-metrics.ts`                                             | `clawql-core` (`merkle/`, `cuckoo/`)                  | ✅                                 | Yes                             |
-| 4     | `memory-*.ts`, `vault-*`, `vector-store/`                                                | `clawql-memory`                                       | ✅                                 | Layer plugin 📋                 |
-| 5     | `external-ingest.ts`, `provider-registry.ts`, `providers/`                               | `clawql-documents` + `clawql-api`                     | 🔨 ingest only; registry in api    | Mixed → Effect                  |
-| 6     | `clawql-schedule.ts`, `clawql-notify.ts`                                                 | `clawql-automation`                                   | ✅                                 | Layer plugin 📋                 |
-| 7     | `sandbox-*.ts`                                                                           | `clawql-sandbox`                                      | 📋                                 | Bridge heavy (OS/process)       |
-| 8     | `ouroboros/`, `packages/clawql-ouroboros`                                                | `clawql-ouroboros` (Effect rewrite) + MCP glue in api | 📋 package shipped; Effect rewrite | Yes — rewrite package, not wrap |
-| 9     | `server.ts`, `server-http.ts`, `mcp-server-factory.ts`                                   | `clawql-mcp` transport only                           | 📋                                 | Thin adapter                    |
+| Order | Current `src/` (representative)                                                          | Target package                                        | Extracted? (June 2026)                      | Effect-first?                   |
+| ----- | ---------------------------------------------------------------------------------------- | ----------------------------------------------------- | ------------------------------------------- | ------------------------------- |
+| 1     | `clawql-audit.ts`, `clawql-cache.ts`                                                     | `clawql-core`                                         | ✅ (shims remain)                           | Yes                             |
+| 2     | `spec-loader.ts`, `spec-search.ts`, `graphql-in-process-execute.ts`, `rest-operation.ts` | `clawql-api`                                          | ✅                                          | Yes (execute path)              |
+| 3     | `merkle-tree.ts`, `memory-cuckoo-metrics.ts`                                             | `clawql-core` (`merkle/`, `cuckoo/`)                  | ✅                                          | Yes                             |
+| 4     | `memory-*.ts`, `vault-*`, `vector-store/`                                                | `clawql-memory`                                       | ✅                                          | Layer plugin 📋                 |
+| 5     | `external-ingest.ts`, `provider-registry.ts`, `providers/`                               | `clawql-documents` + `clawql-api`                     | 🔨 ingest only; registry in api             | Mixed → Effect                  |
+| 6     | `clawql-schedule.ts`, `clawql-notify.ts`                                                 | `clawql-automation`                                   | ✅                                          | Layer plugin 📋                 |
+| 7     | `sandbox-*.ts`                                                                           | `clawql-sandbox`                                      | ✅ package + **`SandboxPlugin`**            | Bridge heavy (OS/process)       |
+| 8     | `ouroboros/`, `packages/clawql-ouroboros`                                                | `clawql-ouroboros` (Effect rewrite) + MCP glue in api | ✅ **`OuroborosPlugin`**; Effect rewrite 📋 | Yes — rewrite package, not wrap |
+| 9     | `server.ts`, `server-http.ts`, `mcp-server-factory.ts`                                   | `clawql-mcp` transport only                           | 📋                                          | Thin adapter                    |
 
 **Keep in transport:** MCP SDK types, stdio/HTTP session lifecycle, OTEL wrap at boundary (`wrapMcpToolHandler` → span around `runPromise`).
 
