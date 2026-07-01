@@ -1,0 +1,19 @@
+<View>
+  <Header value="W-2 field review (synthetic lending demo)"/>
+  <Text name="instructions" value="Verify employer, wages, and withholding. Correct any misread values from Docling parse."/>
+  <Text name="employer_name" toName="doc" value="$employer_name"/>
+  <TextArea name="doc" value="$text" readonly="true"/>
+  <Labels name="doc_type" toName="doc">
+    <Label value="w2" background="#2ECC40"/>
+    <Label value="1099" background="#FF851B"/>
+    <Label value="pay_stub" background="#0074D9"/>
+    <Label value="other" background="#AAAAAA"/>
+  </Labels>
+  <Number name="wages" toName="doc" value="$wages"/>
+  <Number name="federal_withheld" toName="doc" value="$federal_withheld"/>
+  <Choices name="approve" toName="doc" choice="single">
+    <Choice value="approve"/>
+    <Choice value="reject"/>
+    <Choice value="needs_rescan"/>
+  </Choices>
+</View>

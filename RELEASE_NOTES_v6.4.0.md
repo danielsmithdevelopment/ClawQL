@@ -10,11 +10,12 @@
 - **Argo CD `argocd` tool** ([#244](https://github.com/danielsmithdevelopment/ClawQL/issues/244)): **`CLAWQL_ENABLE_ARGO_CD=1`** — Application observe/sync via Kubernetes CRD API; Helm **`argocd`** RBAC.
 - **Sandbox Kata (in-cluster):** **`CLAWQL_ENABLE_SANDBOX=1`** with unset backend in Kubernetes defaults to **`auto`** (**Kata** → Docker → bridge → Seatbelt); Helm **`sandboxKata`**.
 - **IDP expansion:** default **`all-providers`** merge adds **nextcloud** + **coneshare** when documents are enabled; optional ConeShare webhook (**`CLAWQL_ENABLE_CONESHARE=1`**).
+- **Docling + lending W-2 samples:** bundled **`docling`** provider ([#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248)); W-2 reference pack ([#253](https://github.com/danielsmithdevelopment/ClawQL/issues/253)) under **`deployment/samples/lending-w2/`**; classifier runbook at **`docs/runbooks/fine-tuned-classifier.md`**.
 
 ### Upgrade notes (6.3.x → 6.4.0)
 
 - **Not a semver-major break** — same MCP tool names and **`CLAWQL_ENABLE_*`** gates for existing features.
-- **Larger default merge:** with documents on (default), cold **`loadSpec()`** may load **two more bundled vendors** (**nextcloud**, **coneshare**). Set **`CLAWQL_ENABLE_DOCUMENTS=0`** or narrow **`CLAWQL_BUNDLED_PROVIDERS`** if you want a smaller index.
+- **Larger default merge:** with documents on (default), cold **`loadSpec()`** may load **three more bundled vendors** (**nextcloud**, **coneshare**, **docling**) vs 6.3.x. Set **`CLAWQL_ENABLE_DOCUMENTS=0`** or narrow **`CLAWQL_BUNDLED_PROVIDERS`** if you want a smaller index.
 - **Sandbox in Kubernetes:** unset **`CLAWQL_SANDBOX_BACKEND`** now defaults to **`auto`** (Kata-first) in-cluster, not bridge-only. Pin **`bridge`** or **`docker`** to preserve prior behavior.
 - **New opt-in flags:** **`CLAWQL_ENABLE_WORKFLOW`**, **`CLAWQL_ENABLE_ARGO_CD`**, **`CLAWQL_ENABLE_CONESHARE`** (+ Helm **`enableWorkflow`**, **`argocd`**, **`idpCollaboration`**, **`sandboxKata`**).
 - **Effect Layers:** still **partial** — only **`search`** / **`execute`** use Effect Layers today; horizontal packages remain **`async`** behind plugins. Full **`Layer.mergeAll`** is a follow-on milestone, not required for this minor.

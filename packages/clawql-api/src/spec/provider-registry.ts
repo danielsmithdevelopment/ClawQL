@@ -132,6 +132,17 @@ export const BUNDLED_PROVIDERS: Record<string, BundledProvider> = {
     bundledIntrospectionPath: "providers/n8n/introspection.json",
     bundledSchemaSdlPath: "providers/n8n/schema.graphql",
   },
+  /**
+   * Docling Serve — layout-aware document conversion (v1 REST API).
+   * Base URL: DOCLING_BASE_URL. Auth: optional DOCLING_API_KEY → X-Api-Key.
+   */
+  docling: {
+    id: "docling",
+    bundledSpecPath: "providers/docling/openapi.yaml",
+    format: "openapi",
+    fallbackUrl:
+      "https://raw.githubusercontent.com/danielsmithdevelopment/ClawQL/main/providers/docling/openapi.yaml",
+  },
   /** Apache Tika server (JAX-RS). Base URL: TIKA_BASE_URL. */
   tika: {
     id: "tika",
@@ -297,6 +308,7 @@ export const BUNDLED_MERGED_VENDOR_LABELS: readonly string[] =
  */
 export const BUNDLED_DOCUMENT_VENDOR_IDS: readonly string[] = [
   "coneshare",
+  "docling",
   "gotenberg",
   "nextcloud",
   "onyx",
@@ -342,7 +354,7 @@ export const BUNDLED_PROVIDER_GROUPS: Record<string, BundledProviderGroup> = {
   google: { resolve: resolveGoogleTop50Items },
   /**
    * Google Cloud bundle + every other bundled vendor (Jira, Bitbucket, Cloudflare, GitHub, …).
-   * The document stack (**tika**, **gotenberg**, **paperless**, **stirling**, **onyx**, **nextcloud**, **coneshare**) is included unless **`CLAWQL_ENABLE_DOCUMENTS=0`**. Default when no spec env.
+   * The document stack (**tika**, **gotenberg**, **paperless**, **stirling**, **onyx**, **nextcloud**, **coneshare**, **docling**) is included unless **`CLAWQL_ENABLE_DOCUMENTS=0`**. Default when no spec env.
    */
   "all-providers": { resolve: resolveAllBundledProvidersItems },
 };

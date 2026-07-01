@@ -1,0 +1,27 @@
+Form W-2 Wage and Tax Statement
+*** SYNTHETIC DEMO — NOT A REAL TAXPAYER DOCUMENT ***
+
+Tax Year: 2025
+Employer:
+  Name: ACME LENDING DEMO INC
+  EIN: 12-3456789
+  Address: 100 Demo Plaza, Example City, EX 00000
+
+Employee:
+  Name: JANE Q PUBLIC
+  SSN: 000-00-0000
+  Address: 42 Sample Lane, Example City, EX 00001
+
+Box 1  Wages, tips, other compensation:     85000.00
+Box 2  Federal income tax withheld:         12000.00
+Box 3  Social security wages:               85000.00
+Box 4  Social security tax withheld:         5270.00
+Box 5  Medicare wages and tips:             85000.00
+Box 6  Medicare tax withheld:                1232.50
+Box 12a Code D  401(k) contributions:        8500.00
+Box 13  Statutory employee:                 unchecked
+Box 15  State: EX    Employer state ID: 12-3456789
+Box 16  State wages:                         85000.00
+Box 17  State income tax:                    4250.00
+
+Control number: SYNTH-W2-2025-001

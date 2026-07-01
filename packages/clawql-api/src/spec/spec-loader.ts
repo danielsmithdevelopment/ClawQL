@@ -848,6 +848,7 @@ export function resolveBundledSelfHostedBaseUrl(specLabel?: string): string | un
   const label = specLabel?.trim().toLowerCase();
   if (!label) return undefined;
   const envByLabel: Record<string, string> = {
+    docling: "DOCLING_BASE_URL",
     paperless: "PAPERLESS_BASE_URL",
     stirling: "STIRLING_BASE_URL",
     tika: "TIKA_BASE_URL",

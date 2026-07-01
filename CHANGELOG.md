@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [6.4.0] - 2026-07-01
 
-Minor release: **plugin Phase 2 (MCP registration)** for Memory, Documents, Automation (Argo **`workflow`** + **`argocd`**), Sandbox (Kata in-cluster), and Ouroboros; **seven-vendor IDP** merge (Nextcloud / ConeShare); full **Argo Workflows** control plane (wait, suspend/resume, cron, artifacts, notify-on-wait); **`loadSpec()` coalesce** for test stability. **No intentional MCP contract breaks** — same tool names and env gates; default **`all-providers`** merge is larger when documents are on. **`charts/clawql-mcp`** **Chart.version** **0.6.7** with **`appVersion` `6.4.0`**. Release notes: **[`RELEASE_NOTES_v6.4.0.md`](RELEASE_NOTES_v6.4.0.md)**.
+Minor release: **plugin Phase 2 (MCP registration)** for Memory, Documents, Automation (Argo **`workflow`** + **`argocd`**), Sandbox (Kata in-cluster), and Ouroboros; **eight-vendor IDP** merge (Docling, Nextcloud, ConeShare); full **Argo Workflows** control plane (wait, suspend/resume, cron, artifacts, notify-on-wait); **`loadSpec()` coalesce** for test stability. **No intentional MCP contract breaks** — same tool names and env gates; default **`all-providers`** merge is larger when documents are on. **`charts/clawql-mcp`** **Chart.version** **0.6.7** with **`appVersion` `6.4.0`**. Release notes: **[`RELEASE_NOTES_v6.4.0.md`](RELEASE_NOTES_v6.4.0.md)**.
 
 ### Added
 
@@ -18,13 +18,15 @@ Minor release: **plugin Phase 2 (MCP registration)** for Memory, Documents, Auto
 - **Argo CD `argocd` MCP tool** ([#244](https://github.com/danielsmithdevelopment/ClawQL/issues/244), [#459](https://github.com/danielsmithdevelopment/ClawQL/pull/459)): **`CLAWQL_ENABLE_ARGO_CD=1`** — Application get/list/sync via Kubernetes CRD API; Helm **`argocd`** RBAC values; operator guide [`docs/mcp/argocd-tool.md`](docs/mcp/argocd-tool.md).
 - **Sandbox Kata backend:** **`clawql-sandbox`** — in-cluster **`auto`** prefers **Kata** → Docker → bridge → Seatbelt; Helm **`sandboxKata`** RBAC ([#449](https://github.com/danielsmithdevelopment/ClawQL/pull/449)).
 - **IDP collaboration:** bundled **nextcloud** + **coneshare** in default **`all-providers`** when documents on; **`CLAWQL_ENABLE_CONESHARE=1`** webhook path ([#434](https://github.com/danielsmithdevelopment/ClawQL/pull/434)).
+- **Docling provider** ([#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248)): bundled **`docling`** in **`BUNDLED_DOCUMENT_VENDOR_IDS`**; **`DOCLING_BASE_URL`** / **`DOCLING_API_KEY`**; curated Docling Serve v1 OpenAPI.
+- **Lending W-2 sample pack** ([#253](https://github.com/danielsmithdevelopment/ClawQL/issues/253)): Argo **`WorkflowTemplate`**, Label Studio config, OpenClaw prompt, synthetic fixture under **`deployment/samples/lending-w2/`**.
 - **Ouroboros plugin glue** moved to **`packages/clawql-ouroboros/src/glue/`**; Postgres pool shutdown owned by plugin **`onTeardown`**.
 - **CI / smoke:** Helm template assertions for workflow + Argo CD RBAC ([#456](https://github.com/danielsmithdevelopment/ClawQL/pull/456)); optional **kind** + Argo Workflows integration script ([#459](https://github.com/danielsmithdevelopment/ClawQL/pull/459)); Argo smoke runbook [`deployment/argo-workflows/SMOKE.md`](deployment/argo-workflows/SMOKE.md).
 
 ### Changed
 
 - **`buildMcpPlugins()`** composes horizontal plugins from **`clawql-api-adapters.ts`**; **`tools.ts`** retains core tools + HITL only.
-- **Default `all-providers` merge** includes **nextcloud** and **coneshare** when **`CLAWQL_ENABLE_DOCUMENTS`** is on (default).
+- **Default `all-providers` merge** includes **docling**, **nextcloud**, and **coneshare** when **`CLAWQL_ENABLE_DOCUMENTS`** is on (default).
 - **In-cluster sandbox:** unset **`CLAWQL_SANDBOX_BACKEND`** defaults to **`auto`** (Kata-first) instead of bridge-only.
 - **`resetClawqlApiForTests()`** runs plugin **`onTeardown`**; **`loadSpec()`** coalesces concurrent loads (Vitest teardown stability on Node 24/25).
 
@@ -37,6 +39,7 @@ Minor release: **plugin Phase 2 (MCP registration)** for Memory, Documents, Auto
 ### Documentation
 
 - **`docs/mcp/workflow-tool.md`**, **`docs/mcp/argocd-tool.md`**, **`docs/design/workflow-tool-argo.md`** (ADR 0004 blueprint aligned with shipped state, [#450](https://github.com/danielsmithdevelopment/ClawQL/pull/450)); plugin registry and configuration tiers updated for **`workflow`**, **`argocd`**, Kata sandbox, and shipped plugins.
+- **`docs/providers/docling-onboarding.md`**, **`docs/runbooks/fine-tuned-classifier.md`**, **`deployment/samples/lending-w2/`** ([#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248), [#253](https://github.com/danielsmithdevelopment/ClawQL/issues/253)); IDP matrix refresh ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254) partial).
 - IDP Platform + DAOS v2.7 documentation suite ([#445](https://github.com/danielsmithdevelopment/ClawQL/pull/445)).
 
 ## [6.3.0] - 2026-06-02
