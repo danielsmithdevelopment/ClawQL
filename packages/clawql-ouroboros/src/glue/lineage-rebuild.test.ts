@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { StoredEvent } from "clawql-ouroboros";
+import type { StoredEvent } from "../interfaces.js";
 import { buildOntologyLineageFromEvents } from "./lineage-rebuild.js";
 
 describe("buildOntologyLineageFromEvents", () => {

@@ -2,8 +2,8 @@
  * Postgres-backed {@link EventStore} for clawql-ouroboros lineages (#142).
  */
 
-import type { EventStore, StoredEvent } from "clawql-ouroboros";
-import type { OntologyLineage } from "clawql-ouroboros";
+import type { EventStore, StoredEvent } from "../interfaces.js";
+import type { OntologyLineage } from "../lineage.js";
 import type pg from "pg";
 import { buildOntologyLineageFromEvents } from "./lineage-rebuild.js";
 import { ensureOuroborosSchema } from "./postgres-pool.js";

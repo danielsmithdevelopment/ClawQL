@@ -2,7 +2,9 @@
  * Rebuild {@link OntologyLineage} from stored events (shared by in-memory semantics and Postgres).
  */
 
-import type { GenerationRecord, OntologyLineage, Seed, StoredEvent } from "clawql-ouroboros";
+import type { GenerationRecord, OntologyLineage } from "../lineage.js";
+import type { Seed } from "../seed.js";
+import type { StoredEvent } from "../interfaces.js";
 
 interface GenerationCompletedPayload {
   generation_number: number;
