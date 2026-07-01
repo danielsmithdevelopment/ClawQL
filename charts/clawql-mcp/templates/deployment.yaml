@@ -188,6 +188,14 @@ spec:
               value: {{ .Values.workflow.waitPollSeconds | int | quote }}
             - name: CLAWQL_WORKFLOW_GENERATE_NAME_PREFIX
               value: {{ .Values.workflow.generateNamePrefix | quote }}
+            {{- if .Values.workflow.notifyOnTerminal }}
+            - name: CLAWQL_WORKFLOW_NOTIFY_ON_TERMINAL
+              value: "1"
+            {{- end }}
+            {{- if .Values.workflow.notifyChannel }}
+            - name: CLAWQL_WORKFLOW_NOTIFY_CHANNEL
+              value: {{ .Values.workflow.notifyChannel | quote }}
+            {{- end }}
             {{- end }}
             {{- if .Values.enableHitlLabelStudio }}
             - name: CLAWQL_ENABLE_HITL_LABEL_STUDIO

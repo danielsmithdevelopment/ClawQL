@@ -193,6 +193,9 @@ workflow:
   generateNamePrefix: clawql-
   # Grant get/list on ClusterWorkflowTemplate (cluster-scoped read).
   clusterTemplates: true
+  # Optional Slack when `wait` completes (requires CLAWQL_SLACK_TOKEN; does not require enableNotify).
+  notifyOnTerminal: false
+  notifyChannel: ""
 
 # MCP hitl_enqueue_label_studio — Label Studio HITL bridge (#228). Requires CLAWQL_LABEL_STUDIO_* via extraEnv / secret.
 enableHitlLabelStudio: false

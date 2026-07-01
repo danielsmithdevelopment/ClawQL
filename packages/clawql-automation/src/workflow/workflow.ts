@@ -26,6 +26,7 @@ import {
   waitForWorkflow,
 } from "./wait.js";
 import { appendWorkflowAudit } from "./workflow-audit.js";
+import { maybeNotifyWorkflowTerminal } from "./workflow-notify.js";
 
 const templateRefSchema = z.object({
   kind: z.enum(["WorkflowTemplate", "ClusterWorkflowTemplate"]),
@@ -273,6 +274,14 @@ export async function handleWorkflowToolInput(
           action: result.timedOut ? "wait_timeout" : "terminal",
           summary: `namespace=${nsCheck.namespace} name=${parsed.name} phase=${result.workflow.phase} timed_out=${result.timedOut} polls=${result.polls}`,
           correlationId: workflowCorrelationId(undefined, result.workflow.labels),
+        });
+        await maybeNotifyWorkflowTerminal({
+          namespace: nsCheck.namespace,
+          name: parsed.name!,
+          workflow: result.workflow,
+          timedOut: result.timedOut,
+          waitedSeconds: Math.round(result.waitedMs / 1000),
+          polls: result.polls,
         });
         return jsonResponse({
           ok: !result.timedOut,

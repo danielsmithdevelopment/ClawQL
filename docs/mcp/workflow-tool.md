@@ -32,6 +32,16 @@ The chart injects `CLAWQL_ENABLE_WORKFLOW=1`, namespace allowlist, and wait/log 
 
 Terminal `submit` / `wait` / terminal `get` events append to the in-process **`audit`** ring buffer (`category: workflow`).
 
+Optional **Slack on `wait` completion** (does not require the `notify` MCP tool to be registered):
+
+```yaml
+workflow:
+  notifyOnTerminal: true
+  notifyChannel: C01234567
+```
+
+Requires `CLAWQL_SLACK_TOKEN` (or equivalent) like the `notify` tool. Set `CLAWQL_WORKFLOW_NOTIFY_ON_TERMINAL=1` and `CLAWQL_WORKFLOW_NOTIFY_CHANNEL` when not using Helm.
+
 ## Operations
 
 | `operation`      | Purpose                                                                 |
@@ -83,5 +93,6 @@ The digest collects `memory_ingest` notes under `Memory/` from the last 24 hours
 
 ## Related
 
+- [Smoke test runbook](../../deployment/argo-workflows/SMOKE.md)
 - [Argo templates README](../../deployment/argo-workflows/README.md)
 - [ADR 0004](../adr/0004-argo-cd-workflows-clawql-pipelines.md)
