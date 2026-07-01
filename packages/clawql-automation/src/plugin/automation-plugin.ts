@@ -18,6 +18,7 @@ import {
   handleWorkflowToolInput as runWorkflowTool,
   workflowToolSchema,
 } from "../workflow/workflow.js";
+import { argocdToolSchema, handleArgocdToolInput as runArgocdTool } from "../argocd/argocd.js";
 
 export const AUTOMATION_PLUGIN_ID = "clawql-automation";
 
@@ -95,16 +96,30 @@ export async function handleWorkflowToolInput(
   return runWorkflowTool(params);
 }
 
+export async function handleArgocdToolInput(
+  params: unknown
+): Promise<{ content: { type: "text"; text: string }[] }> {
+  const p = params as { operation?: string; namespace?: string; name?: string };
+  logMcpToolShape("argocd", {
+    operation: p.operation,
+    namespaceLen: p.namespace?.length,
+    nameLen: p.name?.length,
+  });
+  return runArgocdTool(params);
+}
+
 export type CreateAutomationPluginOptions = {
   readonly enableSchedule?: boolean;
   readonly enableNotify?: boolean;
   readonly enableWorkflow?: boolean;
+  readonly enableArgoCd?: boolean;
 };
 
 export function createAutomationPlugin(options: CreateAutomationPluginOptions = {}): Plugin {
   const enableSchedule = options.enableSchedule ?? false;
   const enableNotify = options.enableNotify ?? false;
   const enableWorkflow = options.enableWorkflow ?? false;
+  const enableArgoCd = options.enableArgoCd ?? false;
   return {
     id: AUTOMATION_PLUGIN_ID,
     version: "0.1.0",
@@ -132,6 +147,13 @@ export function createAutomationPlugin(options: CreateAutomationPluginOptions = 
             name: "workflow",
             schema: workflowToolSchema,
             handler: (args) => handleWorkflowToolInput(args),
+          });
+        }
+        if (enableArgoCd) {
+          yield* api.registerMcpTool({
+            name: "argocd",
+            schema: argocdToolSchema,
+            handler: (args) => handleArgocdToolInput(args),
           });
         }
       }),

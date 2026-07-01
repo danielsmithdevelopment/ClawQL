@@ -11,6 +11,7 @@ export const ARGO_CRD = {
   workflowPlural: "workflows",
   workflowTemplatePlural: "workflowtemplates",
   clusterWorkflowTemplatePlural: "clusterworkflowtemplates",
+  cronWorkflowPlural: "cronworkflows",
 } as const;
 
 /** Minimum supported Argo Workflows release (see docs/design/workflow-tool-argo.md). */

@@ -56,6 +56,7 @@ checks = [
     ),
     (r"name: clawql-mcp-http-workflow", "workflow Role name"),
     (r"- update", "workflow update RBAC for suspend/resume"),
+    (r"cronworkflows", "CronWorkflow RBAC"),
     (r"clusterworkflowtemplates", "ClusterWorkflowTemplate read RBAC"),
 ]
 
