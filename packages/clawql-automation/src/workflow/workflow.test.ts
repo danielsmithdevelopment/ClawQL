@@ -1,10 +1,10 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { buildSubmitWorkflowBody, mapWorkflowToSummary } from "../argo-mapper.js";
+import { buildSubmitWorkflowBody, mapWorkflowToSummary } from "./argo-mapper.js";
 import {
   configureWorkflowK8sFactory,
   resetWorkflowK8sClientsForTests,
   type ArgoWorkflowObject,
-} from "../k8s-client.js";
+} from "./k8s-client.js";
 
 describe("buildSubmitWorkflowBody", () => {
   it("builds template-ref workflow with managed labels", () => {
@@ -86,7 +86,7 @@ describe("handleWorkflowToolInput", () => {
   });
 
   it("returns disabled when flag off", async () => {
-    const { handleWorkflowToolInput } = await import("../workflow.js");
+    const { handleWorkflowToolInput } = await import("./workflow.js");
     const res = await handleWorkflowToolInput({ operation: "get", name: "x" });
     const body = JSON.parse(res.content[0]!.text);
     expect(body.ok).toBe(false);
@@ -111,7 +111,7 @@ describe("handleWorkflowToolInput", () => {
       coreV1: {} as never,
     }));
 
-    const { handleWorkflowToolInput } = await import("../workflow.js");
+    const { handleWorkflowToolInput } = await import("./workflow.js");
     const res = await handleWorkflowToolInput({
       operation: "submit",
       template_ref: {
@@ -124,5 +124,41 @@ describe("handleWorkflowToolInput", () => {
     const body = JSON.parse(res.content[0]!.text);
     expect(body.ok).toBe(true);
     expect(body.workflow.name).toBe("clawql-xyz");
+  });
+
+  it("waits until workflow reaches terminal phase", async () => {
+    process.env.CLAWQL_ENABLE_WORKFLOW = "1";
+    process.env.CLAWQL_WORKFLOW_NAMESPACE_ALLOWLIST = "clawql";
+    process.env.CLAWQL_WORKFLOW_DEFAULT_NAMESPACE = "clawql";
+
+    let polls = 0;
+    configureWorkflowK8sFactory(async () => ({
+      customObjects: {
+        getNamespacedCustomObject: async () => {
+          polls++;
+          const phase = polls < 2 ? "Running" : "Succeeded";
+          return {
+            metadata: { name: "clawql-xyz", namespace: "clawql" },
+            status: { phase },
+            spec: { workflowTemplateRef: { name: "clawql-vault-daily-digest" } },
+          } satisfies ArgoWorkflowObject;
+        },
+      } as never,
+      coreV1: {} as never,
+    }));
+
+    const { handleWorkflowToolInput } = await import("./workflow.js");
+    const res = await handleWorkflowToolInput({
+      operation: "wait",
+      name: "clawql-xyz",
+      timeout_seconds: 30,
+      poll_interval_seconds: 1,
+    });
+    const body = JSON.parse(res.content[0]!.text);
+    expect(body.ok).toBe(true);
+    expect(body.operation).toBe("wait");
+    expect(body.workflow.phase).toBe("Succeeded");
+    expect(body.timed_out).toBe(false);
+    expect(body.polls).toBe(2);
   });
 });

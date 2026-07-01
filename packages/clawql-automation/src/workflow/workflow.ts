@@ -18,6 +18,11 @@ import {
   workflowDeleteAllowed,
   workflowToolEnabled,
 } from "./env.js";
+import {
+  getWorkflowWaitPollSecondsDefault,
+  getWorkflowWaitTimeoutSecondsDefault,
+  waitForWorkflow,
+} from "./wait.js";
 
 const templateRefSchema = z.object({
   kind: z.enum(["WorkflowTemplate", "ClusterWorkflowTemplate"]),
@@ -27,8 +32,8 @@ const templateRefSchema = z.object({
 
 export const workflowToolSchema = {
   operation: z
-    .enum(["submit", "get", "list", "delete", "logs", "list_templates"])
-    .describe("submit | get | list | delete | logs | list_templates for Argo Workflows."),
+    .enum(["submit", "get", "list", "delete", "logs", "list_templates", "wait"])
+    .describe("submit | get | list | delete | logs | list_templates | wait for Argo Workflows."),
   namespace: z.string().max(63).optional(),
   name: z.string().max(253).optional(),
   generate_name: z
@@ -51,6 +56,22 @@ export const workflowToolSchema = {
     .enum(["WorkflowTemplate", "ClusterWorkflowTemplate", "both"])
     .optional()
     .describe("For list_templates (default both)."),
+  timeout_seconds: z
+    .number()
+    .int()
+    .min(1)
+    .max(7200)
+    .optional()
+    .describe(
+      "For wait: max seconds to poll (default CLAWQL_WORKFLOW_WAIT_TIMEOUT_SECONDS or 600)."
+    ),
+  poll_interval_seconds: z
+    .number()
+    .int()
+    .min(1)
+    .max(60)
+    .optional()
+    .describe("For wait: seconds between polls (default CLAWQL_WORKFLOW_WAIT_POLL_SECONDS or 5)."),
 };
 
 const workflowInputSchema = z.object(workflowToolSchema).superRefine((data, ctx) => {
@@ -83,6 +104,11 @@ const workflowInputSchema = z.object(workflowToolSchema).superRefine((data, ctx)
   if (data.operation === "get" || data.operation === "delete" || data.operation === "logs") {
     if (!data.name?.trim()) {
       ctx.addIssue({ code: "custom", message: `${data.operation} requires name` });
+    }
+  }
+  if (data.operation === "wait") {
+    if (!data.name?.trim()) {
+      ctx.addIssue({ code: "custom", message: "wait requires name" });
     }
   }
   if (data.operation === "logs" && !data.node_name?.trim()) {
@@ -206,6 +232,31 @@ export async function handleWorkflowToolInput(
           delete summary.nodes;
         }
         return jsonResponse({ ok: true, operation: "get", workflow: summary });
+      }
+      case "wait": {
+        const nsCheck = requireNamespace(parsed.namespace);
+        if (!nsCheck.ok) return jsonResponse({ ok: false, error: nsCheck.error });
+        const result = await waitForWorkflow({
+          namespace: nsCheck.namespace,
+          name: parsed.name!,
+          timeoutSeconds: parsed.timeout_seconds ?? getWorkflowWaitTimeoutSecondsDefault(),
+          pollIntervalSeconds: parsed.poll_interval_seconds ?? getWorkflowWaitPollSecondsDefault(),
+          includeNodes: parsed.include_nodes,
+          getWorkflow,
+        });
+        return jsonResponse({
+          ok: !result.timedOut,
+          operation: "wait",
+          workflow: result.workflow,
+          waited_seconds: Math.round(result.waitedMs / 1000),
+          timed_out: result.timedOut,
+          polls: result.polls,
+          ...(result.timedOut
+            ? {
+                error: `workflow did not reach a terminal phase within ${parsed.timeout_seconds ?? getWorkflowWaitTimeoutSecondsDefault()}s (last phase: ${result.workflow.phase})`,
+              }
+            : {}),
+        });
       }
       case "list": {
         const nsCheck = requireNamespace(parsed.namespace);
