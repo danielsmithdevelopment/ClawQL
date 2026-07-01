@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Documentation
 
+- **`docs/deployment/nats-keda-worker.md`**, Helm `nats.worker` / `nats.keda` values, IDP matrix #257 → Shipped.
 - **`docs/mcp/idp-pipeline-runner.md`**, IDP matrix #307 → Shipped, plugin registry + **`mcp-tools.md`** **`run_idp_pipeline`** row.
 - HITL + workflow tool guides: NATS dual-path (sync webhook vs async consumer); `.env.example` NATS block.
 
