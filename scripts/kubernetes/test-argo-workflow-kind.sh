@@ -27,7 +27,8 @@ cleanup() {
 trap cleanup EXIT
 
 kind create cluster --name "${CLUSTER_NAME}" --wait 120s
-export KUBECONFIG="$(kind get kubeconfig --name "${CLUSTER_NAME}")"
+KUBECONFIG="$(kind get kubeconfig --name "${CLUSTER_NAME}")"
+export KUBECONFIG
 
 kubectl create namespace argo
 kubectl create namespace "${NS}"

@@ -14,7 +14,7 @@ helm template test charts/clawql-mcp --namespace clawql \
   "${_LINT_SECRET[@]}" \
   --set kyverno.imageSignaturePolicy.enabled=false \
   --set enableArgoCd=true \
-  --set argocd.namespaceAllowlist={argocd} \
+  --set 'argocd.namespaceAllowlist={argocd}' \
   --set argocd.defaultNamespace=argocd \
   --set argocd.allowSync=true >"${TMP_ENABLED}"
 
