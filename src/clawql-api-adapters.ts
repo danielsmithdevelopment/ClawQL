@@ -47,6 +47,7 @@ function buildMcpPlugins(): readonly Plugin[] {
     plugins.push(
       createDocumentsPlugin({
         enableOnyx: flags.enableOnyxKnowledge,
+        enableIdpPipeline: flags.enableIdpPipeline,
       })
     );
   }

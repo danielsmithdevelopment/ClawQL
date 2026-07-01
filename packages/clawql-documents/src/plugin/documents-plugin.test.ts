@@ -28,4 +28,15 @@ describe("createDocumentsPlugin", () => {
     const names = registry.list().map((t) => t.name);
     expect(names).toEqual(["ingest_external_knowledge", "knowledge_search_onyx"]);
   });
+
+  it("registers run_idp_pipeline when enableIdpPipeline is true", () => {
+    configureDocumentsPluginDeps({
+      execute: async () => ({ content: [{ type: "text", text: "{}" }] }),
+    });
+    const registry = new McpToolRegistry();
+    const api = registry.registrationApi();
+    Effect.runSync(createDocumentsPlugin({ enableIdpPipeline: true }).onRegister!(api));
+    const names = registry.list().map((t) => t.name);
+    expect(names).toEqual(["ingest_external_knowledge", "run_idp_pipeline"]);
+  });
 });

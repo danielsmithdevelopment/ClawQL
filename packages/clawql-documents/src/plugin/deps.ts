@@ -1,4 +1,5 @@
 import type { McpToolResult } from "clawql-core";
+import type { PipelineHopHookEvent } from "../pipeline/runner.js";
 
 export type DocumentsPluginExecuteParams = {
   readonly operationId: string;
@@ -8,6 +9,8 @@ export type DocumentsPluginExecuteParams = {
 
 export type DocumentsPluginDeps = {
   execute: (params: DocumentsPluginExecuteParams) => Promise<McpToolResult>;
+  /** Optional lifecycle hook after each pipeline hop (audit, NATS, etc.). */
+  onPipelineHop?: (event: PipelineHopHookEvent) => void | Promise<void>;
 };
 
 let deps: DocumentsPluginDeps | undefined;

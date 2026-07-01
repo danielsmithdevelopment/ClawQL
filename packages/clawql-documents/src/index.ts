@@ -18,3 +18,10 @@ export {
   type IdpPipelineStage,
   type IdpPipelineStep,
 } from "./pipeline/idp-pipeline.js";
+export { resolveArgsTemplate, type ArgsTemplateContext } from "./pipeline/args-template.js";
+export {
+  runIdpPipeline,
+  type PipelineHopResult,
+  type RunIdpPipelineInput,
+  type RunIdpPipelineResult,
+} from "./pipeline/runner.js";

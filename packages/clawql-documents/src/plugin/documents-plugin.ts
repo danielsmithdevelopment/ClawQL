@@ -1,3 +1,8 @@
+import {
+  handleRunIdpPipelineToolInput,
+  runIdpPipelineToolSchema,
+} from "../pipeline/run-idp-pipeline.js";
+import type { RunIdpPipelineInput } from "../pipeline/runner.js";
 import { runIngestExternalKnowledge, type ExternalIngestInput } from "../ingest/external-ingest.js";
 import { logMcpToolShape } from "clawql-api/mcp/tool-shape-log";
 import type { Plugin } from "clawql-core";
@@ -107,10 +112,13 @@ export async function handleIngestExternalKnowledgeToolInput(
 export type CreateDocumentsPluginOptions = {
   /** Register `knowledge_search_onyx` when `CLAWQL_ENABLE_ONYX=1` (requires documents tier). */
   readonly enableOnyx?: boolean;
+  /** Register `run_idp_pipeline` when `CLAWQL_ENABLE_IDP_PIPELINE=1` ([#307](https://github.com/danielsmithdevelopment/ClawQL/issues/307)). */
+  readonly enableIdpPipeline?: boolean;
 };
 
 export function createDocumentsPlugin(options: CreateDocumentsPluginOptions = {}): Plugin {
   const enableOnyx = options.enableOnyx ?? false;
+  const enableIdpPipeline = options.enableIdpPipeline ?? false;
   return {
     id: DOCUMENTS_PLUGIN_ID,
     version: "0.1.0",
@@ -127,6 +135,13 @@ export function createDocumentsPlugin(options: CreateDocumentsPluginOptions = {}
             name: "knowledge_search_onyx",
             schema: knowledgeSearchOnyxToolSchema,
             handler: (args) => handleKnowledgeSearchOnyxToolInput(args as KnowledgeSearchOnyxInput),
+          });
+        }
+        if (enableIdpPipeline) {
+          yield* api.registerMcpTool({
+            name: "run_idp_pipeline",
+            schema: runIdpPipelineToolSchema,
+            handler: (args) => handleRunIdpPipelineToolInput(args as RunIdpPipelineInput),
           });
         }
       }),

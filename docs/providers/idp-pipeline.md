@@ -58,11 +58,12 @@ See **`.env.example`** for localhost / in-cluster defaults aligned with **`value
 | ---- | ---- |
 | **`ingest_external_knowledge`** | Bulk Markdown / URL → vault (documents feature on) |
 | **`knowledge_search_onyx`** | Ergonomic Onyx search (`CLAWQL_ENABLE_ONYX=1`) |
+| **`run_idp_pipeline`** | Automated **`DEFAULT_IDP_PIPELINE`** executor (`CLAWQL_ENABLE_IDP_PIPELINE=1`) |
 | **`memory_ingest` / `memory_recall`** | Durable operator notes + citations |
 | **`ouroboros_*`** | Spec-first multi-phase loops (optional) |
 | **`hitl_enqueue_label_studio`** | Human review enqueue (optional) |
 
-Automated multi-hop execution inside **`clawql-documents`** (beyond the recipe + agent composition) remains roadmap ([#307](https://github.com/danielsmithdevelopment/ClawQL/issues/307), [#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254)).
+Automated multi-hop execution is available via MCP **`run_idp_pipeline`** when **`CLAWQL_ENABLE_IDP_PIPELINE=1`** ([#307](https://github.com/danielsmithdevelopment/ClawQL/issues/307)) — see **[idp-pipeline-runner.md](../mcp/idp-pipeline-runner.md)**. Background queue workers remain roadmap ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254)).
 
 ---
 

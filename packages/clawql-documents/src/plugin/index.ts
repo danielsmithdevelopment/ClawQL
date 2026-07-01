@@ -6,6 +6,10 @@ export {
   type DocumentsPluginExecuteParams,
 } from "./deps.js";
 export {
+  handleRunIdpPipelineToolInput,
+  runIdpPipelineToolSchema,
+} from "../pipeline/run-idp-pipeline.js";
+export {
   createDocumentsPlugin,
   DOCUMENTS_PLUGIN_ID,
   handleIngestExternalKnowledgeToolInput,
