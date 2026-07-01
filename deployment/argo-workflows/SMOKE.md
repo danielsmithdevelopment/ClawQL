@@ -97,10 +97,10 @@ Same digest logic as the Argo template step; use this when validating runner cha
 
 ## Troubleshooting
 
-| Symptom | Check |
-| ------- | ----- |
-| `workflow tool is not enabled` | `CLAWQL_ENABLE_WORKFLOW=1` |
-| `namespace is not in allowlist` | `CLAWQL_WORKFLOW_NAMESPACE_ALLOWLIST` includes target ns |
-| RBAC forbidden on submit | RoleBinding for MCP SA in workflow namespace |
-| `wait` times out | `kubectl get workflow -n clawql`; pod logs via `workflow` `logs` |
-| Empty digest | Notes under `Memory/` within `hours_back` window |
+| Symptom                         | Check                                                            |
+| ------------------------------- | ---------------------------------------------------------------- |
+| `workflow tool is not enabled`  | `CLAWQL_ENABLE_WORKFLOW=1`                                       |
+| `namespace is not in allowlist` | `CLAWQL_WORKFLOW_NAMESPACE_ALLOWLIST` includes target ns         |
+| RBAC forbidden on submit        | RoleBinding for MCP SA in workflow namespace                     |
+| `wait` times out                | `kubectl get workflow -n clawql`; pod logs via `workflow` `logs` |
+| Empty digest                    | Notes under `Memory/` within `hours_back` window                 |
