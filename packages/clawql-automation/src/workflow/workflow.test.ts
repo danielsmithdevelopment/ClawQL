@@ -1,11 +1,92 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { resetDefaultAuditRingBufferForTests, getDefaultAuditRingBuffer } from "clawql-core";
+import { getDefaultAuditRingBuffer, resetDefaultAuditRingBufferForTests } from "clawql-core";
 import { buildSubmitWorkflowBody, mapWorkflowToSummary } from "./argo-mapper.js";
 import {
   configureWorkflowK8sFactory,
   resetWorkflowK8sClientsForTests,
   type ArgoWorkflowObject,
+  type WorkflowK8sClients,
 } from "./k8s-client.js";
+
+function enableWorkflowEnv(): void {
+  process.env.CLAWQL_ENABLE_WORKFLOW = "1";
+  process.env.CLAWQL_WORKFLOW_NAMESPACE_ALLOWLIST = "clawql";
+  process.env.CLAWQL_WORKFLOW_DEFAULT_NAMESPACE = "clawql";
+}
+
+function clearWorkflowEnv(): void {
+  delete process.env.CLAWQL_ENABLE_WORKFLOW;
+  delete process.env.CLAWQL_WORKFLOW_NAMESPACE_ALLOWLIST;
+  delete process.env.CLAWQL_WORKFLOW_DEFAULT_NAMESPACE;
+  delete process.env.CLAWQL_WORKFLOW_ALLOW_DELETE;
+  delete process.env.CLAWQL_WORKFLOW_NOTIFY_ON_TERMINAL;
+  delete process.env.CLAWQL_WORKFLOW_NOTIFY_CHANNEL;
+}
+
+function mockClients(handlers: {
+  get?: () => Promise<ArgoWorkflowObject>;
+  list?: () => Promise<{ items?: ArgoWorkflowObject[] }>;
+  listTemplates?: () => Promise<{ items?: { metadata?: { name?: string; namespace?: string } }[] }>;
+  listClusterTemplates?: () => Promise<{ items?: { metadata?: { name?: string } }[] }>;
+  create?: () => Promise<ArgoWorkflowObject>;
+  delete?: () => Promise<void>;
+  logs?: () => Promise<string>;
+}): void {
+  configureWorkflowK8sFactory(async () => {
+    const clients: WorkflowK8sClients = {
+      customObjects: {
+        getNamespacedCustomObject: async () => {
+          if (!handlers.get) throw new Error("get not mocked");
+          return handlers.get();
+        },
+        listNamespacedCustomObject: async (params: { plural?: string }) => {
+          if (params.plural === "workflowtemplates") {
+            if (!handlers.listTemplates) throw new Error("listTemplates not mocked");
+            return handlers.listTemplates();
+          }
+          if (!handlers.list) throw new Error("list not mocked");
+          return handlers.list();
+        },
+        listClusterCustomObject: async () => {
+          if (!handlers.listClusterTemplates) throw new Error("listClusterTemplates not mocked");
+          return handlers.listClusterTemplates();
+        },
+        createNamespacedCustomObject: async () => {
+          if (!handlers.create) throw new Error("create not mocked");
+          return handlers.create();
+        },
+        deleteNamespacedCustomObject: async () => {
+          if (!handlers.delete) throw new Error("delete not mocked");
+          await handlers.delete();
+        },
+      } as never,
+      coreV1: {
+        readNamespacedPodLog: async () => handlers.logs?.() ?? "log line\n",
+      } as never,
+    };
+    return clients;
+  });
+}
+
+const sampleWorkflow = (phase: string): ArgoWorkflowObject => ({
+  metadata: {
+    name: "clawql-xyz",
+    namespace: "clawql",
+    labels: { "clawql.dev/correlation-id": "corr-1" },
+  },
+  status: {
+    phase,
+    nodes: {
+      "1": {
+        displayName: "vault-digest",
+        phase,
+        type: "Pod",
+        podName: "clawql-xyz-vault-digest-1",
+      },
+    },
+  },
+  spec: { workflowTemplateRef: { name: "clawql-vault-daily-digest" } },
+});
 
 describe("buildSubmitWorkflowBody", () => {
   it("builds template-ref workflow with managed labels", () => {
@@ -82,9 +163,7 @@ describe("handleWorkflowToolInput", () => {
   afterEach(() => {
     resetWorkflowK8sClientsForTests();
     resetDefaultAuditRingBufferForTests();
-    delete process.env.CLAWQL_ENABLE_WORKFLOW;
-    delete process.env.CLAWQL_WORKFLOW_NAMESPACE_ALLOWLIST;
-    delete process.env.CLAWQL_WORKFLOW_DEFAULT_NAMESPACE;
+    clearWorkflowEnv();
   });
 
   it("returns disabled when flag off", async () => {
@@ -96,9 +175,7 @@ describe("handleWorkflowToolInput", () => {
   });
 
   it("submits workflow when mocked k8s client is configured", async () => {
-    process.env.CLAWQL_ENABLE_WORKFLOW = "1";
-    process.env.CLAWQL_WORKFLOW_NAMESPACE_ALLOWLIST = "clawql";
-    process.env.CLAWQL_WORKFLOW_DEFAULT_NAMESPACE = "clawql";
+    enableWorkflowEnv();
 
     const created: ArgoWorkflowObject = {
       metadata: { name: "clawql-xyz", namespace: "clawql" },
@@ -106,12 +183,7 @@ describe("handleWorkflowToolInput", () => {
       spec: { workflowTemplateRef: { name: "clawql-vault-daily-digest" } },
     };
 
-    configureWorkflowK8sFactory(async () => ({
-      customObjects: {
-        createNamespacedCustomObject: async () => created,
-      } as never,
-      coreV1: {} as never,
-    }));
+    mockClients({ create: async () => created });
 
     const { handleWorkflowToolInput } = await import("./workflow.js");
     const res = await handleWorkflowToolInput({
@@ -131,25 +203,16 @@ describe("handleWorkflowToolInput", () => {
   });
 
   it("waits until workflow reaches terminal phase", async () => {
-    process.env.CLAWQL_ENABLE_WORKFLOW = "1";
-    process.env.CLAWQL_WORKFLOW_NAMESPACE_ALLOWLIST = "clawql";
-    process.env.CLAWQL_WORKFLOW_DEFAULT_NAMESPACE = "clawql";
+    enableWorkflowEnv();
 
     let polls = 0;
-    configureWorkflowK8sFactory(async () => ({
-      customObjects: {
-        getNamespacedCustomObject: async () => {
-          polls++;
-          const phase = polls < 2 ? "Running" : "Succeeded";
-          return {
-            metadata: { name: "clawql-xyz", namespace: "clawql" },
-            status: { phase },
-            spec: { workflowTemplateRef: { name: "clawql-vault-daily-digest" } },
-          } satisfies ArgoWorkflowObject;
-        },
-      } as never,
-      coreV1: {} as never,
-    }));
+    mockClients({
+      get: async () => {
+        polls++;
+        const phase = polls < 2 ? "Running" : "Succeeded";
+        return sampleWorkflow(phase);
+      },
+    });
 
     const { handleWorkflowToolInput } = await import("./workflow.js");
     const res = await handleWorkflowToolInput({
@@ -166,5 +229,148 @@ describe("handleWorkflowToolInput", () => {
     expect(body.polls).toBe(2);
     const audit = getDefaultAuditRingBuffer().list(5).entries;
     expect(audit.some((e) => e.action === "terminal" && e.category === "workflow")).toBe(true);
+  });
+
+  it("get appends audit when phase is terminal", async () => {
+    enableWorkflowEnv();
+    mockClients({ get: async () => sampleWorkflow("Succeeded") });
+
+    const { handleWorkflowToolInput } = await import("./workflow.js");
+    const res = await handleWorkflowToolInput({ operation: "get", name: "clawql-xyz" });
+    const body = JSON.parse(res.content[0]!.text);
+    expect(body.ok).toBe(true);
+    expect(body.workflow.phase).toBe("Succeeded");
+    const audit = getDefaultAuditRingBuffer().list(5).entries;
+    expect(audit.some((e) => e.action === "terminal")).toBe(true);
+  });
+
+  it("get does not audit when phase is non-terminal", async () => {
+    enableWorkflowEnv();
+    mockClients({ get: async () => sampleWorkflow("Running") });
+
+    const { handleWorkflowToolInput } = await import("./workflow.js");
+    await handleWorkflowToolInput({ operation: "get", name: "clawql-xyz" });
+    const audit = getDefaultAuditRingBuffer().list(5).entries;
+    expect(audit).toHaveLength(0);
+  });
+
+  it("lists workflows with optional phase filter", async () => {
+    enableWorkflowEnv();
+    mockClients({
+      list: async () => ({
+        items: [sampleWorkflow("Running"), sampleWorkflow("Succeeded")],
+      }),
+    });
+
+    const { handleWorkflowToolInput } = await import("./workflow.js");
+    const res = await handleWorkflowToolInput({
+      operation: "list",
+      phase: "Succeeded",
+    });
+    const body = JSON.parse(res.content[0]!.text);
+    expect(body.ok).toBe(true);
+    expect(body.workflows).toHaveLength(1);
+    expect(body.workflows[0].phase).toBe("Succeeded");
+  });
+
+  it("list_templates returns namespace and cluster templates", async () => {
+    enableWorkflowEnv();
+    mockClients({
+      listTemplates: async () => ({
+        items: [{ metadata: { name: "clawql-vault-daily-digest", namespace: "clawql" } }],
+      }),
+      listClusterTemplates: async () => ({
+        items: [{ metadata: { name: "global-digest" } }],
+      }),
+    });
+
+    const { handleWorkflowToolInput } = await import("./workflow.js");
+    const res = await handleWorkflowToolInput({ operation: "list_templates" });
+    const body = JSON.parse(res.content[0]!.text);
+    expect(body.ok).toBe(true);
+    expect(body.templates).toHaveLength(2);
+    expect(body.templates.map((t: { name: string }) => t.name).sort()).toEqual([
+      "clawql-vault-daily-digest",
+      "global-digest",
+    ]);
+  });
+
+  it("rejects delete when CLAWQL_WORKFLOW_ALLOW_DELETE is off", async () => {
+    enableWorkflowEnv();
+    mockClients({ delete: async () => {} });
+
+    const { handleWorkflowToolInput } = await import("./workflow.js");
+    const res = await handleWorkflowToolInput({ operation: "delete", name: "clawql-xyz" });
+    const body = JSON.parse(res.content[0]!.text);
+    expect(body.ok).toBe(false);
+    expect(body.error).toMatch(/delete is disabled/i);
+  });
+
+  it("deletes workflow when delete is allowed", async () => {
+    enableWorkflowEnv();
+    process.env.CLAWQL_WORKFLOW_ALLOW_DELETE = "1";
+    let deleted = false;
+    mockClients({
+      delete: async () => {
+        deleted = true;
+      },
+    });
+
+    const { handleWorkflowToolInput } = await import("./workflow.js");
+    const res = await handleWorkflowToolInput({ operation: "delete", name: "clawql-xyz" });
+    const body = JSON.parse(res.content[0]!.text);
+    expect(body.ok).toBe(true);
+    expect(body.deleted).toBe(true);
+    expect(deleted).toBe(true);
+  });
+
+  it("returns pod logs for a workflow node", async () => {
+    enableWorkflowEnv();
+    mockClients({
+      get: async () => sampleWorkflow("Succeeded"),
+      logs: async () => "digest complete\n",
+    });
+
+    const { handleWorkflowToolInput } = await import("./workflow.js");
+    const res = await handleWorkflowToolInput({
+      operation: "logs",
+      name: "clawql-xyz",
+      node_name: "vault-digest",
+    });
+    const body = JSON.parse(res.content[0]!.text);
+    expect(body.ok).toBe(true);
+    expect(body.logs).toBe("digest complete\n");
+    expect(body.pod_name).toBe("clawql-xyz-vault-digest-1");
+  });
+
+  it("rejects disallowed namespace", async () => {
+    enableWorkflowEnv();
+    process.env.CLAWQL_WORKFLOW_NAMESPACE_ALLOWLIST = "other-ns";
+
+    const { handleWorkflowToolInput } = await import("./workflow.js");
+    const res = await handleWorkflowToolInput({ operation: "get", name: "clawql-xyz" });
+    const body = JSON.parse(res.content[0]!.text);
+    expect(body.ok).toBe(false);
+    expect(body.error).toMatch(/not in CLAWQL_WORKFLOW_NAMESPACE_ALLOWLIST/i);
+  });
+
+  it("rejects submit without template_ref", async () => {
+    enableWorkflowEnv();
+    const { handleWorkflowToolInput } = await import("./workflow.js");
+    await expect(handleWorkflowToolInput({ operation: "submit" })).rejects.toThrow();
+  });
+
+  it("rejects wait without name", async () => {
+    enableWorkflowEnv();
+    const { handleWorkflowToolInput } = await import("./workflow.js");
+    await expect(handleWorkflowToolInput({ operation: "wait" })).rejects.toThrow();
+  });
+
+  it("rejects logs without node_name", async () => {
+    enableWorkflowEnv();
+    const { handleWorkflowToolInput } = await import("./workflow.js");
+    await expect(
+      handleWorkflowToolInput({ operation: "logs", name: "clawql-xyz" })
+    ).rejects.toThrow();
   });
 });
