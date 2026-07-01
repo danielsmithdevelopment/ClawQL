@@ -1,6 +1,6 @@
 # Gap closure plan and remaining roadmap (prioritized)
 
-**Status:** living document — execution tracked in GitHub issues below. **Last updated:** 2026-05-02.
+**Status:** living document — execution tracked in GitHub issues below. **Last updated:** 2026-06-30.
 
 **Epic checklist (no extra scope):** [#259](https://github.com/danielsmithdevelopment/ClawQL/issues/259) lists **#241–#258** in one place.
 
@@ -12,7 +12,7 @@ This plan closes known **product gaps** called out for HITL, classification, act
 
 | Priority | Gap                            | Closure direction                                                                                         | Target      | Tracking                                                            |
 | -------- | ------------------------------ | --------------------------------------------------------------------------------------------------------- | ----------- | ------------------------------------------------------------------- |
-| **P1**   | **Auto-classifier maturity**   | **Docling** as MCP/loadable provider + **fine-tuned classifier** model path and docs                      | **Q2 2026** | [#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248) |
+| **P1**   | **Auto-classifier maturity**   | **Docling** as MCP/loadable provider + **fine-tuned classifier** model path and docs                      | **Q2 2026** | [#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248) — **Docling bundled** + [`fine-tuned-classifier.md`](../runbooks/fine-tuned-classifier.md); BYO train/promote |
 | **P2**   | **Multi-reviewer RBAC** (HITL) | Document **Label Studio CE** workarounds + optional **enterprise Label Studio** / BYO path                | Rolling     | [#249](https://github.com/danielsmithdevelopment/ClawQL/issues/249) |
 | **P3**   | **Active learning loop**       | **Langfuse** (or compatible) **eval hooks** → **Ouroboros** seed create/update with gates (~80% there)    | Rolling     | [#250](https://github.com/danielsmithdevelopment/ClawQL/issues/250) |
 | **P4**   | **One-click vertical stacks**  | Ship **four** opinionated **Docker Compose** files: **lending**, **healthcare**, **legal**, **education** | Rolling     | [#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251) |
@@ -30,6 +30,8 @@ This plan closes known **product gaps** called out for HITL, classification, act
 3. Cross-link **LangExtract** structured extraction ([#246](https://github.com/danielsmithdevelopment/ClawQL/issues/246)) where extraction + classification meet.
 
 **Exit criteria:** Docling on documented path; classifier promotion documented; security/release notes for images.
+
+**Progress (6.4.0):** bundled **`docling`** provider, onboarding doc, classifier runbook — remainder is tenant-specific model training (BYO).
 
 ---
 
@@ -93,8 +95,8 @@ Cross-cutting items from the **consolidated IDP super-edition** roadmap that are
 | Track                                                              | Issue                                                               |
 | ------------------------------------------------------------------ | ------------------------------------------------------------------- |
 | Observability bundle (Langfuse + Grafana/Prometheus + trace guide) | [#252](https://github.com/danielsmithdevelopment/ClawQL/issues/252) |
-| Lending W-2 **reference sample pack** (Argo + LS + OpenClaw)       | [#253](https://github.com/danielsmithdevelopment/ClawQL/issues/253) |
-| **Argo suspend/resume** + HITL + optional **NATS**                 | [#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254) |
+| Lending W-2 **reference sample pack** (Argo + LS + OpenClaw)       | [#253](https://github.com/danielsmithdevelopment/ClawQL/issues/253) — **shipped** [`deployment/samples/lending-w2/`](../../deployment/samples/lending-w2/README.md) |
+| **Argo suspend/resume** + HITL + optional **NATS**                 | [#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254) — suspend/resume + webhook **shipped**; NATS open |
 | Optional **`clawql-idp`** umbrella Helm chart                      | [#255](https://github.com/danielsmithdevelopment/ClawQL/issues/255) |
 | **Slack-first** OpenClaw IDP runbook                               | [#256](https://github.com/danielsmithdevelopment/ClawQL/issues/256) |
 | **KEDA** autoscaling (NATS queues)                                 | [#257](https://github.com/danielsmithdevelopment/ClawQL/issues/257) |

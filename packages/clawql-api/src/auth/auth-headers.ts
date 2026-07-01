@@ -165,6 +165,10 @@ function envResolvedAuthHeaders(specLabel?: string): Record<string, string> {
     const bearer = trimEnv("CLAWQL_BEARER_TOKEN");
     return bearer ? { Authorization: `Bearer ${bearer}` } : {};
   }
+  if (effective === "docling") {
+    const apiKey = trimEnv("DOCLING_API_KEY", "CLAWQL_DOCLING_API_KEY");
+    return apiKey ? { "X-Api-Key": apiKey } : {};
+  }
   if (effective === "onyx") {
     const bearer = trimEnv("ONYX_API_TOKEN", "CLAWQL_ONYX_API_TOKEN");
     return bearer ? { Authorization: `Bearer ${bearer}` } : {};

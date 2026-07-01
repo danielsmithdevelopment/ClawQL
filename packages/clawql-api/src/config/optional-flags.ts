@@ -25,7 +25,7 @@ const rawOptionalFlagsSchema = z.object({
   /** Default on: `memory_ingest` / `memory_recall`. Set `0` / `false` / `no` to unregister. */
   CLAWQL_ENABLE_MEMORY: z.string().optional(),
   /**
-   * Default on: document pipeline — bundled tika / gotenberg / paperless / stirling / onyx / **nextcloud** / **coneshare** in **`all-providers`**, plus
+   * Default on: document pipeline — bundled tika / docling / gotenberg / paperless / stirling / onyx / **nextcloud** / **coneshare** in **`all-providers`**, plus
    * **`ingest_external_knowledge`** and (with **`CLAWQL_ENABLE_ONYX`**) **`knowledge_search_onyx`**. Set `0` to opt out.
    */
   CLAWQL_ENABLE_DOCUMENTS: z.string().optional(),

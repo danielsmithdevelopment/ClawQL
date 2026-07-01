@@ -1,0 +1,109 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: clawql-lending-w2-ingest
+  labels:
+    clawql.dev/managed: "true"
+    clawql.dev/template: lending-w2
+    clawql.dev/vertical: lending
+spec:
+  entrypoint: w2-pipeline
+  arguments:
+    parameters:
+      - name: document_path
+        value: fixtures/synthetic-w2.txt
+      - name: confidence_threshold
+        value: "0.95"
+      - name: clawql_image
+        value: ghcr.io/danielsmithdevelopment/clawql-mcp:latest
+  templates:
+    - name: w2-pipeline
+      inputs:
+        parameters:
+          - name: document_path
+          - name: confidence_threshold
+          - name: clawql_image
+      steps:
+        - - name: classify
+            template: classify-demo
+            arguments:
+              parameters:
+                - name: document_path
+                  value: "{{inputs.parameters.document_path}}"
+                - name: confidence_threshold
+                  value: "{{inputs.parameters.confidence_threshold}}"
+        - - name: hitl-review
+            template: hitl-gate
+            when: "{{steps.classify.outputs.parameters.needs_hitl}} == true"
+        - - name: finalize
+            template: finalize-record
+            arguments:
+              parameters:
+                - name: label
+                  value: "{{steps.classify.outputs.parameters.label}}"
+                - name: confidence
+                  value: "{{steps.classify.outputs.parameters.confidence}}"
+
+    - name: classify-demo
+      inputs:
+        parameters:
+          - name: document_path
+          - name: confidence_threshold
+      script:
+        image: alpine:3.20
+        command: [sh]
+        source: |
+          set -eu
+          DOC="{{inputs.parameters.document_path}}"
+          THRESH="{{inputs.parameters.confidence_threshold}}"
+          # Demo heuristic: filenames containing "w2" → high confidence W-2
+          LABEL="unknown"
+          CONF="0.50"
+          case "$DOC" in
+            *w2*|*W2*) LABEL="w2"; CONF="0.92" ;;
+            *1099*) LABEL="1099"; CONF="0.88" ;;
+          esac
+          NEEDS="false"
+          if awk -v c="$CONF" -v t="$THRESH" 'BEGIN { exit (c+0 < t+0) ? 1 : 0 }'; then
+            NEEDS="false"
+          else
+            NEEDS="true"
+          fi
+          echo "$LABEL" > /tmp/label
+          echo "$CONF" > /tmp/confidence
+          echo "$NEEDS" > /tmp/needs_hitl
+        outputs:
+          parameters:
+            - name: label
+              valueFrom:
+                path: /tmp/label
+            - name: confidence
+              valueFrom:
+                path: /tmp/confidence
+            - name: needs_hitl
+              valueFrom:
+                path: /tmp/needs_hitl
+
+    - name: hitl-gate
+      suspend: {}
+
+    - name: finalize-record
+      inputs:
+        parameters:
+          - name: label
+          - name: confidence
+      container:
+        image: alpine:3.20
+        command: [sh, -c]
+        args:
+          - |
+            set -eu
+            mkdir -p /tmp/artifacts
+            printf '{"label":"%s","confidence":"%s","status":"complete","vertical":"lending"}\n' \
+              "{{inputs.parameters.label}}" "{{inputs.parameters.confidence}}" \
+              > /tmp/artifacts/w2-result.json
+            cat /tmp/artifacts/w2-result.json
+        outputs:
+          artifacts:
+            - name: w2-result
+              path: /tmp/artifacts/w2-result.json

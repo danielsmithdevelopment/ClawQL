@@ -50,6 +50,14 @@ The template defaults to `ghcr.io/danielsmithdevelopment/clawql-mcp:latest`. Ove
 
 See [`docs/design/workflow-tool-argo.md`](../../docs/design/workflow-tool-argo.md) for minimum Role verbs. The digest step only needs vault read/write inside the pod (no Kubernetes API from the script).
 
+## Lending W-2 sample ([#253](https://github.com/danielsmithdevelopment/ClawQL/issues/253))
+
+Reference pack under [`deployment/samples/lending-w2/`](../samples/lending-w2/README.md): Docling parse → classify → Argo **suspend** → Label Studio HITL → webhook **resume**. Apply:
+
+```bash
+kubectl apply -f deployment/samples/lending-w2/workflow-template.yaml -n clawql
+```
+
 ## Related
 
 - [Smoke test: vault daily digest](SMOKE.md)

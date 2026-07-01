@@ -1,8 +1,8 @@
 # IDP document pipeline (bundled providers)
 
-ClawQL ships **seven bundled document vendors** for intelligent document processing (IDP). Agents compose them with **`search`** → **`execute`**; the dashboard chat bridge maps tool calls to IDP cards; Helm can co-deploy the services in-cluster.
+ClawQL ships **eight bundled document vendors** for intelligent document processing (IDP). Agents compose them with **`search`** → **`execute`**; the dashboard chat bridge maps tool calls to IDP cards; Helm can co-deploy the services in-cluster.
 
-**Canonical recipe:** `DEFAULT_IDP_PIPELINE` in **`packages/clawql-documents`** (`idp-pipeline.ts`) — Nextcloud intake → Tika → Gotenberg → Stirling → Paperless → Onyx → Nextcloud sync → Coneshare share/VDR.
+**Canonical recipe:** `DEFAULT_IDP_PIPELINE` in **`packages/clawql-documents`** (`idp-pipeline.ts`) — Nextcloud intake → Docling (layout parse) or Tika → Gotenberg → Stirling → Paperless → Onyx → Nextcloud sync → Coneshare share/VDR.
 
 **Related:** [IDP Platform vision](../vision/clawql-idp-platform.md) · [OpenClaw IDP skill profile](../openclaw/openclaw-idp-skill-profile.md) · [Requirements matrix](../roadmap/idp-master-requirements-matrix.md) · [Agent chat contract](../dashboard/agent-chat.md) · [Helm](../../charts/clawql-mcp/README.md)
 
@@ -17,12 +17,13 @@ ClawQL supports **self-hosted** (full data sovereignty via Helm) and **managed h
 ## Stack overview
 
 ```text
-Nextcloud (inbox) → Tika → Gotenberg → Stirling → Paperless → Onyx → Nextcloud (processed) → Coneshare (VDR)
+Nextcloud (inbox) → Docling (layout) / Tika → Gotenberg → Stirling → Paperless → Onyx → Nextcloud (processed) → Coneshare (VDR)
 ```
 
 | Stage | Provider id | Role | Helm block |
 | ----- | ----------- | ---- | ---------- |
 | Intake / sync | **`nextcloud`** | WebDAV + OCS shares | `idpCollaboration.nextcloud` |
+| Layout parse | **`docling`** | Layout-aware OCR + tables (forms, W-2) | BYO sidecar / `DOCLING_BASE_URL` |
 | Extract | **`tika`** | Text + metadata from 1,000+ formats | `documentPipeline.tika` |
 | Normalize | **`gotenberg`** | Office/HTML → PDF | `documentPipeline.gotenberg` |
 | Redact / fix PDF | **`stirling`** | PII redaction, split/merge | `documentPipeline.stirling` |
@@ -30,7 +31,7 @@ Nextcloud (inbox) → Tika → Gotenberg → Stirling → Paperless → Onyx →
 | Enterprise search | **`onyx`** | Hybrid search + ingestion API | `onyx.enabled` |
 | Secure sharing | **`coneshare`** | VDR, share links, viewer webhook | `idpCollaboration.coneshare` |
 
-All seven ids are in **`BUNDLED_DOCUMENT_VENDOR_IDS`** — included in default **`all-providers`** unless **`CLAWQL_ENABLE_DOCUMENTS=0`**.
+All eight ids are in **`BUNDLED_DOCUMENT_VENDOR_IDS`** — included in default **`all-providers`** unless **`CLAWQL_ENABLE_DOCUMENTS=0`**.
 
 ---
 
@@ -38,6 +39,7 @@ All seven ids are in **`BUNDLED_DOCUMENT_VENDOR_IDS`** — included in default *
 
 | Provider | Base URL | Auth env |
 | -------- | -------- | -------- |
+| `docling` | `DOCLING_BASE_URL` | Optional `DOCLING_API_KEY` → `X-Api-Key` |
 | `tika` | `TIKA_BASE_URL` | Optional `CLAWQL_BEARER_TOKEN` |
 | `gotenberg` | `GOTENBERG_BASE_URL` | Optional `CLAWQL_BEARER_TOKEN` |
 | `stirling` | `STIRLING_BASE_URL` | `STIRLING_API_KEY` → `X-API-KEY` |

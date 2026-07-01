@@ -1,0 +1,268 @@
+openapi: 3.0.3
+info:
+  title: Docling Serve (IDP subset)
+  description: >
+    Curated **Docling Serve v1** REST API for layout-aware document conversion.
+    Upstream: [docling-project/docling-serve](https://github.com/docling-project/docling-serve).
+    Base URL: **DOCLING_BASE_URL** (default `http://localhost:5001`). Optional auth:
+    **DOCLING_API_KEY** → `X-Api-Key`. See `docs/providers/docling-onboarding.md`.
+  version: "1.x-idp"
+servers:
+  - url: http://localhost:5001
+    description: Default Docling Serve port (local / sidecar)
+
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+  schemas:
+    HttpSource:
+      type: object
+      required:
+        - kind
+        - url
+      properties:
+        kind:
+          type: string
+          enum: [http]
+        url:
+          type: string
+          format: uri
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+    FileSource:
+      type: object
+      required:
+        - kind
+        - base64_string
+        - filename
+      properties:
+        kind:
+          type: string
+          enum: [file]
+        base64_string:
+          type: string
+          description: Base64-encoded document bytes
+        filename:
+          type: string
+    ConvertOptions:
+      type: object
+      description: Subset of Docling conversion options (see live `/docs` for full schema)
+      properties:
+        from_formats:
+          type: array
+          items:
+            type: string
+        to_formats:
+          type: array
+          items:
+            type: string
+        do_ocr:
+          type: boolean
+        do_table_structure:
+          type: boolean
+        include_images:
+          type: boolean
+    ConvertSourceRequest:
+      type: object
+      required:
+        - sources
+      properties:
+        sources:
+          type: array
+          minItems: 1
+          items:
+            oneOf:
+              - $ref: "#/components/schemas/HttpSource"
+              - $ref: "#/components/schemas/FileSource"
+        options:
+          $ref: "#/components/schemas/ConvertOptions"
+        target:
+          type: object
+          description: Output target (e.g. in-body JSON vs zip file)
+    AsyncTaskResponse:
+      type: object
+      properties:
+        task_id:
+          type: string
+    TaskStatus:
+      type: object
+      properties:
+        task_id:
+          type: string
+        status:
+          type: string
+        progress:
+          type: number
+
+security: []
+
+paths:
+  /health:
+    get:
+      operationId: docling_health
+      summary: Health check
+      responses:
+        "200":
+          description: Service healthy
+
+  /docs:
+    get:
+      operationId: docling_openapi_docs
+      summary: Interactive OpenAPI / Swagger UI
+      responses:
+        "200":
+          description: HTML documentation
+
+  /v1/convert/source:
+    post:
+      operationId: docling_convert_source
+      summary: Convert document from HTTP URL or base64 file source (sync)
+      security:
+        - apiKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConvertSourceRequest"
+      responses:
+        "200":
+          description: Conversion result (JSON or zip per target)
+          content:
+            application/json:
+              schema:
+                type: object
+            application/zip:
+              schema:
+                type: string
+                format: binary
+
+  /v1/convert/file:
+    post:
+      operationId: docling_convert_file
+      summary: Convert uploaded file (multipart, sync)
+      security:
+        - apiKey: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                options:
+                  type: string
+                  description: JSON-encoded ConvertOptions
+              required:
+                - files
+      responses:
+        "200":
+          description: Conversion result
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /v1/convert/source/async:
+    post:
+      operationId: docling_convert_source_async
+      summary: Submit async conversion from sources
+      security:
+        - apiKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConvertSourceRequest"
+      responses:
+        "200":
+          description: Task accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AsyncTaskResponse"
+
+  /v1/convert/file/async:
+    post:
+      operationId: docling_convert_file_async
+      summary: Submit async conversion from uploaded file
+      security:
+        - apiKey: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                options:
+                  type: string
+              required:
+                - files
+      responses:
+        "200":
+          description: Task accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AsyncTaskResponse"
+
+  /v1/status/poll/{task_id}:
+    get:
+      operationId: docling_status_poll
+      summary: Poll async task status
+      security:
+        - apiKey: []
+      parameters:
+        - in: path
+          name: task_id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Task status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskStatus"
+
+  /v1/result/{task_id}:
+    get:
+      operationId: docling_result_get
+      summary: Fetch finished async conversion result
+      security:
+        - apiKey: []
+      parameters:
+        - in: path
+          name: task_id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Conversion result
+          content:
+            application/json:
+              schema:
+                type: object
+            application/zip:
+              schema:
+                type: string
+                format: binary
