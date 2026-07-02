@@ -258,6 +258,16 @@ spec:
             - name: CLAWQL_NATS_JETSTREAM
               value: "1"
             {{- end }}
+            {{- if and (include "clawql-mcp.natsConfigured" .) .Values.nats.appIntegration.publish }}
+            - name: CLAWQL_NATS_ENABLE_PUBLISH
+              value: "1"
+            {{- end }}
+            {{- if and .Values.enableWorkflow (include "clawql-mcp.natsConfigured" .) .Values.nats.appIntegration.embeddedConsumer (not .Values.nats.worker.enabled) }}
+            - name: CLAWQL_NATS_ENABLE_CONSUMER
+              value: "1"
+            - name: CLAWQL_NATS_CONSUMER_RESUME_WORKFLOW
+              value: "1"
+            {{- end }}
             {{- if .Values.documentPipeline.enabled }}
             - name: TIKA_BASE_URL
               value: "http://{{ include "clawql-mcp.tikaName" . }}:{{ .Values.documentPipeline.tika.service.port }}"

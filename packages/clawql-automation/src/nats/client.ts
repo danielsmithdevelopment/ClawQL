@@ -91,6 +91,29 @@ export type HitlCompletedConsumerHandler = (
 let consumerAbort: AbortController | undefined;
 let consumerLoopPromise: Promise<void> | undefined;
 
+export async function ensureHitlResumeConsumer(): Promise<void> {
+  if (!natsUrl() || !natsJetStreamEnabled()) {
+    throw new Error("CLAWQL_NATS_URL and CLAWQL_NATS_JETSTREAM=1 are required");
+  }
+  await ensureWorkflowStream();
+  const nc = await getConnection();
+  const jsm = await nc.jetstreamManager();
+  const streamName = natsStreamName();
+  const durable = natsHitlResumeConsumerDurable();
+  const filterSubject = workflowEventSubject("hitl.completed");
+
+  try {
+    await jsm.consumers.info(streamName, durable);
+  } catch {
+    await jsm.consumers.add(streamName, {
+      durable_name: durable,
+      filter_subject: filterSubject,
+      ack_policy: AckPolicy.Explicit,
+      deliver_policy: DeliverPolicy.All,
+    });
+  }
+}
+
 export async function startHitlCompletedConsumer(
   handler: HitlCompletedConsumerHandler
 ): Promise<void> {
@@ -101,23 +124,10 @@ export async function startHitlCompletedConsumer(
   consumerAbort = abort;
 
   consumerLoopPromise = (async () => {
-    await ensureWorkflowStream();
-    const nc = await getConnection();
-    const jsm = await nc.jetstreamManager();
+    await ensureHitlResumeConsumer();
+
     const streamName = natsStreamName();
     const durable = natsHitlResumeConsumerDurable();
-    const filterSubject = workflowEventSubject("hitl.completed");
-
-    try {
-      await jsm.consumers.info(streamName, durable);
-    } catch {
-      await jsm.consumers.add(streamName, {
-        durable_name: durable,
-        filter_subject: filterSubject,
-        ack_policy: AckPolicy.Explicit,
-        deliver_policy: DeliverPolicy.All,
-      });
-    }
 
     const js = await getJetStream();
     const consumer = await js.consumers.get(streamName, durable);
@@ -140,6 +150,8 @@ export async function startHitlCompletedConsumer(
   })().catch(() => {
     /* loop exits on connection loss; restart requires process recycle */
   });
+
+  return consumerLoopPromise;
 }
 
 export async function stopNatsClient(): Promise<void> {

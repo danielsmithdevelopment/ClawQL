@@ -48,6 +48,16 @@
       "import": "./dist/nats/publish-hooks.js",
       "require": "./dist/nats/publish-hooks.cjs"
     },
+    "./nats/cli": {
+      "types": "./dist/nats/cli.d.ts",
+      "import": "./dist/nats/cli.js",
+      "require": "./dist/nats/cli.cjs"
+    },
+    "./nats/bootstrap-cli": {
+      "types": "./dist/nats/bootstrap-cli.d.ts",
+      "import": "./dist/nats/bootstrap-cli.js",
+      "require": "./dist/nats/bootstrap-cli.cjs"
+    },
     "./workflow/vault-digest/run-vault-digest": {
       "types": "./dist/workflow/vault-digest/run-vault-digest.d.ts",
       "import": "./dist/workflow/vault-digest/run-vault-digest.js",

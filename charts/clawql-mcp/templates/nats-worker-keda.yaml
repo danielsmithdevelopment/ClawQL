@@ -1,0 +1,26 @@
+{{- if and .Values.nats.worker.enabled .Values.nats.keda.enabled .Values.nats.enabled }}
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ include "clawql-mcp.natsWorkerName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: nats-worker
+spec:
+  scaleTargetRef:
+    name: {{ include "clawql-mcp.natsWorkerName" . }}
+  pollingInterval: {{ .Values.nats.keda.pollingInterval }}
+  cooldownPeriod: {{ .Values.nats.keda.cooldownPeriod }}
+  minReplicaCount: {{ .Values.nats.keda.minReplicaCount }}
+  maxReplicaCount: {{ .Values.nats.keda.maxReplicaCount }}
+  triggers:
+    - type: nats-jetstream
+      metadata:
+        natsServerMonitoringEndpoint: {{ include "clawql-mcp.natsMonitoringEndpoint" . | quote }}
+        account: {{ .Values.nats.keda.account | quote }}
+        stream: {{ include "clawql-mcp.natsJetStreamStream" . | quote }}
+        consumer: {{ include "clawql-mcp.natsJetStreamConsumer" . | quote }}
+        lagThreshold: {{ .Values.nats.keda.lagThreshold | quote }}
+        activationLagThreshold: {{ .Values.nats.keda.activationLagThreshold | quote }}
+        useHttps: "false"
+{{- end }}

@@ -698,6 +698,36 @@ nats:
     agent: clawql.agent
     document: clawql.document
     edge: clawql.edge
+  # MCP publish + optional embedded consumer ([#254]). Standalone worker + KEDA ([#257]).
+  appIntegration:
+    publish: false
+    # When true and nats.worker.enabled=false, run consumer inside clawql-mcp-http.
+    embeddedConsumer: true
+  worker:
+    enabled: false
+    replicas: 1
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: "1"
+        memory: 512Mi
+  keda:
+    enabled: false
+    # Requires KEDA (https://keda.sh) installed in the cluster.
+    minReplicaCount: 0
+    maxReplicaCount: 10
+    lagThreshold: "5"
+    activationLagThreshold: "1"
+    pollingInterval: 15
+    cooldownPeriod: 300
+    account: "$G"
+    # Defaults match clawql-automation env (CLAWQL_WORKFLOW / clawql-hitl-resume).
+    stream: ""
+    consumer: ""
+    # Pre-create JetStream consumer so KEDA can read lag before first worker pod.
+    bootstrapConsumer: true
 
 # Extra env (e.g. tokens from literal — prefer existing secrets for production).
 extraEnv: []

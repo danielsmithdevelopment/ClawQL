@@ -345,6 +345,10 @@ With `nats.enabled=true`, templates render:
 - `nats.url` if provided (external cluster), otherwise
 - in-cluster DNS (`nats://<release>-nats:<clientPort>`) when enabled
 - `CLAWQL_NATS_JETSTREAM=1` when `nats.jetStream.enabled=true`
+- `CLAWQL_NATS_ENABLE_PUBLISH=1` when `nats.appIntegration.publish=true` ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254))
+- Embedded consumer env on MCP only when `nats.appIntegration.embeddedConsumer=true` and `nats.worker.enabled=false`
+
+Optional **KEDA-scaled NATS worker** ([#257](https://github.com/danielsmithdevelopment/ClawQL/issues/257)): set `nats.worker.enabled=true` and `nats.keda.enabled=true` (requires KEDA in cluster). See **[nats-keda-worker.md](nats-keda-worker.md)**.
 
 This means you can switch between in-cluster and external NATS by value changes alone, without editing deployment templates.
 

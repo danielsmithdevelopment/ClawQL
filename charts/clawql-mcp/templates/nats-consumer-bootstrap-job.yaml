@@ -1,0 +1,46 @@
+{{- if and .Values.nats.worker.enabled .Values.nats.keda.enabled .Values.nats.keda.bootstrapConsumer (include "clawql-mcp.natsConfigured" .) }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "clawql-mcp.natsWorkerName" . }}-bootstrap
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: nats-worker
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-weight: "5"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  ttlSecondsAfterFinished: 600
+  template:
+    metadata:
+      labels:
+        {{- include "clawql-mcp.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: nats-worker
+    spec:
+      restartPolicy: OnFailure
+      serviceAccountName: {{ include "clawql-mcp.serviceAccountName" . }}
+      containers:
+        - name: bootstrap-consumer
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["node", "node_modules/clawql-automation/dist/nats/bootstrap-cli.js"]
+          env:
+            {{- if .Values.nats.url }}
+            - name: CLAWQL_NATS_URL
+              value: {{ .Values.nats.url | quote }}
+            {{- else if .Values.nats.enabled }}
+            - name: CLAWQL_NATS_URL
+              value: "nats://{{ include "clawql-mcp.natsName" . }}:{{ .Values.nats.service.clientPort }}"
+            {{- end }}
+            {{- if and .Values.nats.enabled .Values.nats.jetStream.enabled }}
+            - name: CLAWQL_NATS_JETSTREAM
+              value: "1"
+            {{- end }}
+            - name: CLAWQL_NATS_STREAM_WORKFLOW
+              value: {{ include "clawql-mcp.natsJetStreamStream" . | quote }}
+            - name: CLAWQL_NATS_CONSUMER_DURABLE
+              value: {{ include "clawql-mcp.natsJetStreamConsumer" . | quote }}
+            - name: CLAWQL_NATS_SUBJECT_WORKFLOW
+              value: {{ .Values.nats.subjectConvention.workflow | quote }}
+{{- end }}
