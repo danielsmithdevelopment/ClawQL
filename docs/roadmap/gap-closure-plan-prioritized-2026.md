@@ -1,6 +1,6 @@
 # Gap closure plan and remaining roadmap (prioritized)
 
-**Status:** living document — execution tracked in GitHub issues below. **Last updated:** 2026-06-30.
+**Status:** living document — execution tracked in GitHub issues below. **Last updated:** 2026-07-02.
 
 **Epic checklist (no extra scope):** [#259](https://github.com/danielsmithdevelopment/ClawQL/issues/259) lists **#241–#258** in one place.
 
@@ -10,12 +10,12 @@ This plan closes known **product gaps** called out for HITL, classification, act
 
 ## Priority overview
 
-| Priority | Gap                            | Closure direction                                                                                         | Target      | Tracking                                                                                                                                                                            |
-| -------- | ------------------------------ | --------------------------------------------------------------------------------------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **P1**   | **Auto-classifier maturity**   | **Docling** as MCP/loadable provider + **fine-tuned classifier** model path and docs                      | **Q2 2026** | [#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248) — **Shipped** (Helm Docling, **`classify_document`**, reference classifier + compose); tenant train/promote BYO |
-| **P2**   | **Multi-reviewer RBAC** (HITL) | Document **Label Studio CE** workarounds + optional **enterprise Label Studio** / BYO path                | Rolling     | [#249](https://github.com/danielsmithdevelopment/ClawQL/issues/249)                                                                                                                 |
-| **P3**   | **Active learning loop**       | **Langfuse** (or compatible) **eval hooks** → **Ouroboros** seed create/update with gates (~80% there)    | Rolling     | [#250](https://github.com/danielsmithdevelopment/ClawQL/issues/250)                                                                                                                 |
-| **P4**   | **One-click vertical stacks**  | Ship **four** opinionated **Docker Compose** files: **lending**, **healthcare**, **legal**, **education** | Rolling     | [#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251)                                                                                                                 |
+| Priority | Gap                            | Closure direction                                                                                         | Target      | Tracking                                                                                                                                                                                               |
+| -------- | ------------------------------ | --------------------------------------------------------------------------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **P1**   | **Auto-classifier maturity**   | **Docling** as MCP/loadable provider + **fine-tuned classifier** model path and docs                      | **Q2 2026** | [#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248) — **Shipped** (Helm Docling, **`classify_document`**, reference classifier + compose); tenant train/promote BYO                    |
+| **P2**   | **Multi-reviewer RBAC** (HITL) | Document **Label Studio CE** workarounds + optional **enterprise Label Studio** / BYO path                | Rolling     | [#249](https://github.com/danielsmithdevelopment/ClawQL/issues/249) — **Shipped** (CE vs Enterprise matrix + dual-project two-person pattern in [`hitl-label-studio.md`](../mcp/hitl-label-studio.md)) |
+| **P3**   | **Active learning loop**       | **Langfuse** (or compatible) **eval hooks** → **Ouroboros** seed create/update with gates (~80% there)    | Rolling     | [#250](https://github.com/danielsmithdevelopment/ClawQL/issues/250)                                                                                                                                    |
+| **P4**   | **One-click vertical stacks**  | Ship **four** opinionated **Docker Compose** files: **lending**, **healthcare**, **legal**, **education** | Rolling     | [#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251)                                                                                                                                    |
 
 ---
 
@@ -46,6 +46,8 @@ This plan closes known **product gaps** called out for HITL, classification, act
 3. Optional Helm **pointers** to enterprise LS (BYO license) without redistributing paid bits.
 
 **Exit criteria:** Operators can choose a pattern without reading source; links to upstream LS docs versioned.
+
+**Shipped (6.4.x docs):** [§14 Multi-reviewer RBAC](../mcp/hitl-label-studio.md#14-multi-reviewer-rbac-ce-vs-enterprise) — CE vs Enterprise matrix, ClawQL role mapping, CE workarounds, **dual-project two-person rule** pattern, Helm BYO enterprise pointers ([#249](https://github.com/danielsmithdevelopment/ClawQL/issues/249)).
 
 **Related:** [#228](https://github.com/danielsmithdevelopment/ClawQL/issues/228), [#247](https://github.com/danielsmithdevelopment/ClawQL/issues/247).
 
