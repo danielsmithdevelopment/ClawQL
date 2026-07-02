@@ -25,7 +25,10 @@ import {
   validateOrDegradeObsidianVaultAtStartup,
 } from "./vault-config.js";
 import { registerPostgresPoolShutdownHooks } from "clawql-memory/vector/pgvector";
-import { getClawqlOptionalToolFlags } from "clawql-api";
+import {
+  getClawqlOptionalToolFlags,
+  type ClawqlOptionalToolFlags,
+} from "clawql-api";
 import {
   getNativeProtocolMetricsSnapshot,
   nativeProtocolMetricsEnabled,
@@ -123,6 +126,14 @@ export type CreateMcpHttpAppOptions = {
   host?: string;
   /** Skip spec preload (tests that mock `loadSpec` upstream). */
   skipSpecPreload?: boolean;
+  /**
+   * Snapshot optional tool flags at app build time (tests). Avoids route registration races when a
+   * timed-out test restores `process.env` while the next test is calling `createMcpHttpApp`.
+   */
+  optionalFlagsSnapshot?: Pick<
+    ClawqlOptionalToolFlags,
+    "enableHitlLabelStudio" | "enableConeshare"
+  >;
 };
 
 /**
@@ -204,7 +215,9 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
     res.json(base);
   });
 
-  if (getClawqlOptionalToolFlags().enableHitlLabelStudio) {
+  const optionalFlags = options.optionalFlagsSnapshot ?? getClawqlOptionalToolFlags();
+
+  if (optionalFlags.enableHitlLabelStudio) {
     app.post("/hitl/label-studio/webhook", async (req, res) => {
       try {
         await handleLabelStudioWebhookRequest(req, res);
@@ -220,7 +233,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
     });
   }
 
-  if (getClawqlOptionalToolFlags().enableConeshare) {
+  if (optionalFlags.enableConeshare) {
     app.post("/idp/coneshare/webhook", createWebhookRateLimiter(), async (req, res) => {
       try {
         await handleConeshareWebhookRequest(req, res);

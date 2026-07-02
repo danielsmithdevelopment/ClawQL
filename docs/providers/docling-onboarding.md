@@ -62,8 +62,27 @@ Pair with the [fine-tuned classifier runbook](../runbooks/fine-tuned-classifier.
 ## Deploy snippet (Docker)
 
 ```bash
-docker run -p 5001:5001 quay.io/docling-project/docling-serve
+docker run -p 5001:5001 quay.io/docling-project/docling-serve-cpu:v1.14.3
 ```
+
+Or use the reference Compose stack (Docling + classifier):
+
+```bash
+docker compose -f docker/compose/docling-classifier.compose.yml up -d
+```
+
+### Helm (in-cluster)
+
+```yaml
+documentPipeline:
+  enabled: true
+  docling:
+    enabled: true   # ~2–6 GiB RAM; opt-in
+```
+
+When enabled, the MCP Deployment receives **`DOCLING_BASE_URL`** pointing at the chart Service. Local Docker Desktop: **`values-docker-desktop.yaml`** enables Docling + **`docling.localhost`** ingress.
+
+**Security:** Pin **`documentPipeline.docling.image.tag`** in production; the default CPU image is upstream **quay.io/docling-project/docling-serve-cpu** — review [Docling Serve](https://github.com/docling-project/docling-serve) release notes before promote.
 
 Verify: `curl -s http://localhost:5001/health`
 

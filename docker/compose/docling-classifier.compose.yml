@@ -1,0 +1,57 @@
+# Docling + classifier + LangExtract — local Compose ([#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248), [#246](https://github.com/danielsmithdevelopment/ClawQL/issues/246))
+#
+# Usage:
+#   docker compose -f docker/compose/docling-classifier.compose.yml up -d
+#   curl -s http://localhost:5001/health
+#   curl -s http://localhost:8080/health
+#   curl -s http://localhost:8090/health
+#
+# Point ClawQL MCP at:
+#   DOCLING_BASE_URL=http://localhost:5001
+#   CLASSIFIER_BASE_URL=http://localhost:8080
+#   LANGEXTRACT_BASE_URL=http://localhost:8090
+#   CLAWQL_ENABLE_IDP_CLASSIFIER=1
+#   CLAWQL_ENABLE_LANGEXTRACT=1
+
+services:
+  docling:
+    image: quay.io/docling-project/docling-serve-cpu:v1.14.3
+    ports:
+      - "5001:5001"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:5001/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+
+  classifier:
+    build:
+      context: ../../deployment/samples/classifier-http
+    ports:
+      - "8080:8080"
+    environment:
+      MODEL_VERSION: reference-heuristic-v1
+      CLASSIFIER_MIN_CONFIDENCE: "0.85"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+
+  langextract:
+    build:
+      context: ../../deployment/samples/langextract-http
+    ports:
+      - "8090:8090"
+    environment:
+      LANGEXTRACT_MODE: demo
+      LANGEXTRACT_BACKEND: openrouter
+      LANGEXTRACT_MODEL_ID: deepseek/deepseek-chat
+      LANGEXTRACT_ARTIFACTS_DIR: /tmp/langextract-artifacts
+      # Live mode: set LANGEXTRACT_MODE=live and OPENROUTER_API_KEY (or LANGEXTRACT_BACKEND=ollama)
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8090/health"]
+      interval: 15s
+      timeout: 3s
+      retries: 5

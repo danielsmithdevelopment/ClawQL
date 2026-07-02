@@ -48,6 +48,7 @@ export type RunIdpPipelineInput = {
   correlation_id?: string;
   document_path?: string;
   processed_path?: string;
+  document_url?: string;
   from_step?: number;
   to_step?: number;
 };
@@ -149,6 +150,7 @@ export async function runIdpPipeline(
   const ctx: ArgsTemplateContext = {
     document_path: input.document_path,
     processed_path: input.processed_path,
+    document_url: input.document_url,
   };
 
   const hops: PipelineHopResult[] = [];

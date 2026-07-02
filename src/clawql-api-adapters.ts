@@ -48,6 +48,8 @@ function buildMcpPlugins(): readonly Plugin[] {
       createDocumentsPlugin({
         enableOnyx: flags.enableOnyxKnowledge,
         enableIdpPipeline: flags.enableIdpPipeline,
+        enableIdpClassifier: flags.enableIdpClassifier,
+        enableLangextract: flags.enableLangextract,
       })
     );
   }

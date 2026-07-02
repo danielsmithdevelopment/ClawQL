@@ -6,6 +6,7 @@ import { getDocumentsPluginDeps } from "../plugin/deps.js";
 
 const stageEnum = z.enum([
   "nextcloud",
+  "docling",
   "tika",
   "gotenberg",
   "stirling",
@@ -31,10 +32,12 @@ export const runIdpPipelineToolSchema = {
     .describe(
       "Nextcloud relative path for inbox file (substitutes ${document_path} / ${source_path} in templates)."
     ),
-  processed_path: z
+  document_url: z
     .string()
     .optional()
-    .describe("Output path for processed upload step (${processed_path} template)."),
+    .describe(
+      "HTTP(S) URL for Docling layout parse (${document_url} template). Defaults from IDP_DOCUMENT_URL or Nextcloud WebDAV."
+    ),
   step_args: z
     .record(z.string(), z.record(z.string(), z.unknown()))
     .optional()

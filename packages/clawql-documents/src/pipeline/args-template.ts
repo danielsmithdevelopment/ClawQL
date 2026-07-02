@@ -1,10 +1,23 @@
 export type ArgsTemplateContext = {
   document_path?: string;
   processed_path?: string;
+  document_url?: string;
 };
 
 function envOrEmpty(key: string): string {
   return process.env[key]?.trim() ?? "";
+}
+
+function defaultDocumentUrl(ctx: ArgsTemplateContext): string {
+  const explicit = ctx.document_url?.trim() || envOrEmpty("IDP_DOCUMENT_URL");
+  if (explicit) return explicit;
+  const base = envOrEmpty("NEXTCLOUD_BASE_URL").replace(/\/$/, "");
+  const user = envOrEmpty("NEXTCLOUD_USERNAME");
+  const docPath = ctx.document_path?.trim() || "IDP/inbox/document.pdf";
+  if (base && user) {
+    return `${base}/remote.php/dav/files/${encodeURIComponent(user)}/${docPath.replace(/^\//, "")}`;
+  }
+  return "https://example.com/idp/inbox/document.pdf";
 }
 
 /** Resolve `${NEXTCLOUD_USERNAME}`, `${document_path}`, etc. in args templates. */
@@ -14,12 +27,14 @@ export function resolveArgsTemplate(value: unknown, ctx: ArgsTemplateContext): u
     const processed =
       ctx.processed_path?.trim() ||
       docPath.replace(/\/inbox\//i, "/processed/").replace(/^inbox\//i, "processed/");
+    const documentUrl = defaultDocumentUrl(ctx);
     return value
       .replace(/\$\{NEXTCLOUD_USERNAME\}/g, envOrEmpty("NEXTCLOUD_USERNAME"))
       .replace(/\$\{NEXTCLOUD_APP_PASSWORD\}/g, envOrEmpty("NEXTCLOUD_APP_PASSWORD"))
       .replace(/\$\{document_path\}/g, docPath)
       .replace(/\$\{source_path\}/g, docPath)
-      .replace(/\$\{processed_path\}/g, processed);
+      .replace(/\$\{processed_path\}/g, processed)
+      .replace(/\$\{document_url\}/g, documentUrl);
   }
   if (Array.isArray(value)) {
     return value.map((v) => resolveArgsTemplate(v, ctx));

@@ -23,7 +23,7 @@ Nextcloud (inbox) → Docling (layout) / Tika → Gotenberg → Stirling → Pap
 | Stage | Provider id | Role | Helm block |
 | ----- | ----------- | ---- | ---------- |
 | Intake / sync | **`nextcloud`** | WebDAV + OCS shares | `idpCollaboration.nextcloud` |
-| Layout parse | **`docling`** | Layout-aware OCR + tables (forms, W-2) | BYO sidecar / `DOCLING_BASE_URL` |
+| Layout parse | **`docling`** | Layout-aware OCR + tables (forms, W-2) | `documentPipeline.docling` (opt-in; large CPU image) |
 | Extract | **`tika`** | Text + metadata from 1,000+ formats | `documentPipeline.tika` |
 | Normalize | **`gotenberg`** | Office/HTML → PDF | `documentPipeline.gotenberg` |
 | Redact / fix PDF | **`stirling`** | PII redaction, split/merge | `documentPipeline.stirling` |
@@ -59,6 +59,8 @@ See **`.env.example`** for localhost / in-cluster defaults aligned with **`value
 | **`ingest_external_knowledge`** | Bulk Markdown / URL → vault (documents feature on) |
 | **`knowledge_search_onyx`** | Ergonomic Onyx search (`CLAWQL_ENABLE_ONYX=1`) |
 | **`run_idp_pipeline`** | Automated **`DEFAULT_IDP_PIPELINE`** executor (`CLAWQL_ENABLE_IDP_PIPELINE=1`) |
+| **`classify_document`** | POST to **`CLASSIFIER_BASE_URL`** or local heuristic (`CLAWQL_ENABLE_IDP_CLASSIFIER=1`) |
+| **`extract_document`** | LangExtract grounded fields + HTML path refs (`CLAWQL_ENABLE_LANGEXTRACT=1`) |
 | **`memory_ingest` / `memory_recall`** | Durable operator notes + citations |
 | **`ouroboros_*`** | Spec-first multi-phase loops (optional) |
 | **`hitl_enqueue_label_studio`** | Human review enqueue (optional) |
@@ -117,6 +119,7 @@ The MCP Deployment receives **`TIKA_BASE_URL`**, **`GOTENBERG_BASE_URL`**, **`ST
 | Onyx | [onyx-onboarding.md](onyx-onboarding.md) · [onyx-knowledge-tool.md](../mcp/onyx-knowledge-tool.md) |
 | Nextcloud | [nextcloud-onboarding.md](nextcloud-onboarding.md) |
 | Coneshare | [coneshare-onboarding.md](coneshare-onboarding.md) |
+| LangExtract | [langextract-onboarding.md](langextract-onboarding.md) |
 
 Refresh committed OpenAPI from live instances: **`npm run fetch-provider-specs`** ([`providers/README.md`](../../providers/README.md)).
 
@@ -129,6 +132,7 @@ Reference sequence (agents fill paths/ids in **`args`**):
 | Step | operationId |
 | ---- | ----------- |
 | Download inbox | `nextcloud::nextcloud_webdav_download` |
+| Layout parse | `docling::docling_convert_source` |
 | Extract | `tika::tika_parse_put` |
 | Convert | `gotenberg::post_forms_libreoffice_convert` |
 | Redact | `stirling::redactPdfAuto` |

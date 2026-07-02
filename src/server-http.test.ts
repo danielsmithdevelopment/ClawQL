@@ -5,12 +5,13 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   recordNativeGraphqlExecute,
   resetNativeProtocolMetricsForTests,
 } from "clawql-api";
 import { resetClawqlApiForTests } from "./clawql-api-adapters.js";
+import { getClawqlOptionalToolFlags } from "clawql-api";
 import { createMcpHttpApp } from "./server-http.js";
 import { resetSpecCache } from "clawql-api";
 import { resetSchemaFieldCache } from "./tools.js";
@@ -21,28 +22,41 @@ import { resetSchemaFieldCache } from "./tools.js";
  * connections first avoids EnvironmentTeardownError (RPC pending onUserConsoleLog).
  */
 function closeHttpServer(server: Server): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (typeof server.closeIdleConnections === "function") {
-      server.closeIdleConnections();
-    }
-    if (typeof server.closeAllConnections === "function") {
-      server.closeAllConnections();
-    }
-    server.close((err) => {
-      if (err) {
-        reject(err);
-        return;
+  return Promise.race([
+    new Promise<void>((resolve, reject) => {
+      if (typeof server.closeIdleConnections === "function") {
+        server.closeIdleConnections();
       }
-      // Vitest can still be draining onUserConsoleLog RPC when the worker exits.
-      setImmediate(() => resolve());
-    });
-  });
+      if (typeof server.closeAllConnections === "function") {
+        server.closeAllConnections();
+      }
+      server.close((err) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        setImmediate(() => resolve());
+      });
+    }),
+    new Promise<void>((resolve) => setTimeout(resolve, 3_000)),
+  ]);
 }
+
+/** MCP SDK client.close() can hang when a prior timed-out test left SSE sockets open. */
+async function closeMcpClient(client: { close(): Promise<void> }): Promise<void> {
+  await Promise.race([client.close(), new Promise<void>((resolve) => setTimeout(resolve, 5_000))]);
+}
+
+const STREAMABLE_HTTP_TEST_TIMEOUT_MS = 45_000;
 
 const here = dirname(fileURLToPath(import.meta.url));
 const minimalSpec = join(here, "test-utils/fixtures/minimal-petstore.json");
 
 describe("server-http", () => {
+  beforeAll(() => {
+    vi.setConfig({ testTimeout: 15_000 });
+  });
+
   const saved: Record<string, string | undefined> = {};
 
   beforeEach(() => {
@@ -71,7 +85,14 @@ describe("server-http", () => {
   });
 
   async function withHttpServer(run: (baseUrl: string) => Promise<void>): Promise<void> {
-    const app = await createMcpHttpApp({ mcpPath: "/mcp" });
+    const flags = getClawqlOptionalToolFlags();
+    const app = await createMcpHttpApp({
+      mcpPath: "/mcp",
+      optionalFlagsSnapshot: {
+        enableHitlLabelStudio: flags.enableHitlLabelStudio,
+        enableConeshare: flags.enableConeshare,
+      },
+    });
     const server = createServer(app);
     server.listen(0, "127.0.0.1");
     await once(server, "listening");
@@ -362,319 +383,355 @@ describe("server-http", () => {
     });
   });
 
-  it("streamable HTTP listTools includes sandbox_exec when CLAWQL_ENABLE_SANDBOX=1", async () => {
-    const vaultDir = mkdtempSync(join(tmpdir(), "clawql-http-sandbox-"));
-    const savedSandbox = process.env.CLAWQL_ENABLE_SANDBOX;
-    const savedVault = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
-    process.env.CLAWQL_ENABLE_SANDBOX = "1";
-    process.env.CLAWQL_OBSIDIAN_VAULT_PATH = vaultDir;
-    await mkdir(join(vaultDir, "Memory"), { recursive: true });
-    resetSpecCache();
-    resetSchemaFieldCache();
-    try {
-      await withHttpServer(async (base) => {
-        const { StreamableHTTPClientTransport } =
-          await import("@modelcontextprotocol/sdk/client/streamableHttp.js");
-        const { Client } = await import("@modelcontextprotocol/sdk/client/index.js");
-        const transport = new StreamableHTTPClientTransport(new URL(`${base}/mcp`));
-        const client = new Client({ name: "vitest-http-sandbox", version: "1.0.0" }, {});
-        await client.connect(transport);
-        try {
-          const { tools } = await client.listTools();
-          const names = new Set(tools.map((t) => t.name));
-          expect(names.has("sandbox_exec")).toBe(true);
-        } finally {
-          await client.close();
-        }
-      });
-    } finally {
-      await rm(vaultDir, { recursive: true, force: true }).catch(() => {});
-      if (savedSandbox === undefined) delete process.env.CLAWQL_ENABLE_SANDBOX;
-      else process.env.CLAWQL_ENABLE_SANDBOX = savedSandbox;
-      if (savedVault === undefined) delete process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
-      else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = savedVault;
+  it(
+    "streamable HTTP listTools includes sandbox_exec when CLAWQL_ENABLE_SANDBOX=1",
+    async () => {
+      const vaultDir = mkdtempSync(join(tmpdir(), "clawql-http-sandbox-"));
+      const savedSandbox = process.env.CLAWQL_ENABLE_SANDBOX;
+      const savedVault = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
+      process.env.CLAWQL_ENABLE_SANDBOX = "1";
+      process.env.CLAWQL_OBSIDIAN_VAULT_PATH = vaultDir;
+      await mkdir(join(vaultDir, "Memory"), { recursive: true });
       resetSpecCache();
       resetSchemaFieldCache();
-    }
-  }, 25_000);
-
-  it("streamable HTTP listTools includes notify when CLAWQL_ENABLE_NOTIFY=1 (#140)", async () => {
-    const vaultDir = mkdtempSync(join(tmpdir(), "clawql-http-notify-"));
-    const savedNotify = process.env.CLAWQL_ENABLE_NOTIFY;
-    const savedVault = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
-    process.env.CLAWQL_ENABLE_NOTIFY = "1";
-    process.env.CLAWQL_OBSIDIAN_VAULT_PATH = vaultDir;
-    await mkdir(join(vaultDir, "Memory"), { recursive: true });
-    resetSpecCache();
-    resetSchemaFieldCache();
-    try {
-      await withHttpServer(async (base) => {
-        const { StreamableHTTPClientTransport } =
-          await import("@modelcontextprotocol/sdk/client/streamableHttp.js");
-        const { Client } = await import("@modelcontextprotocol/sdk/client/index.js");
-        const transport = new StreamableHTTPClientTransport(new URL(`${base}/mcp`));
-        const client = new Client({ name: "vitest-http-notify", version: "1.0.0" }, {});
-        await client.connect(transport);
-        try {
-          const { tools } = await client.listTools();
-          const names = new Set(tools.map((t) => t.name));
-          expect(names.has("notify")).toBe(true);
-        } finally {
-          await client.close();
-        }
-      });
-    } finally {
-      await rm(vaultDir, { recursive: true, force: true }).catch(() => {});
-      if (savedNotify === undefined) delete process.env.CLAWQL_ENABLE_NOTIFY;
-      else process.env.CLAWQL_ENABLE_NOTIFY = savedNotify;
-      if (savedVault === undefined) delete process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
-      else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = savedVault;
-      resetSpecCache();
-      resetSchemaFieldCache();
-    }
-  }, 25_000);
-
-  it("streamable HTTP listTools includes knowledge_search_onyx when CLAWQL_ENABLE_ONYX=1 (#144)", async () => {
-    const vaultDir = mkdtempSync(join(tmpdir(), "clawql-http-onyx-"));
-    const savedOnyx = process.env.CLAWQL_ENABLE_ONYX;
-    const savedVault = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
-    process.env.CLAWQL_ENABLE_ONYX = "1";
-    process.env.CLAWQL_OBSIDIAN_VAULT_PATH = vaultDir;
-    await mkdir(join(vaultDir, "Memory"), { recursive: true });
-    resetSpecCache();
-    resetSchemaFieldCache();
-    try {
-      await withHttpServer(async (base) => {
-        const { StreamableHTTPClientTransport } =
-          await import("@modelcontextprotocol/sdk/client/streamableHttp.js");
-        const { Client } = await import("@modelcontextprotocol/sdk/client/index.js");
-        const transport = new StreamableHTTPClientTransport(new URL(`${base}/mcp`));
-        const client = new Client({ name: "vitest-http-onyx", version: "1.0.0" }, {});
-        await client.connect(transport);
-        try {
-          const { tools } = await client.listTools();
-          const names = new Set(tools.map((t) => t.name));
-          expect(names.has("knowledge_search_onyx")).toBe(true);
-        } finally {
-          await client.close();
-        }
-      });
-    } finally {
-      await rm(vaultDir, { recursive: true, force: true }).catch(() => {});
-      if (savedOnyx === undefined) delete process.env.CLAWQL_ENABLE_ONYX;
-      else process.env.CLAWQL_ENABLE_ONYX = savedOnyx;
-      if (savedVault === undefined) delete process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
-      else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = savedVault;
-      resetSpecCache();
-      resetSchemaFieldCache();
-    }
-  }, 25_000);
-
-  it("streamable HTTP listTools includes ouroboros_* when CLAWQL_ENABLE_OUROBOROS=1 (#141)", async () => {
-    const vaultDir = mkdtempSync(join(tmpdir(), "clawql-http-ouroboros-"));
-    const savedOuro = process.env.CLAWQL_ENABLE_OUROBOROS;
-    const savedVault = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
-    process.env.CLAWQL_ENABLE_OUROBOROS = "1";
-    process.env.CLAWQL_OBSIDIAN_VAULT_PATH = vaultDir;
-    await mkdir(join(vaultDir, "Memory"), { recursive: true });
-    resetSpecCache();
-    resetSchemaFieldCache();
-    try {
-      await withHttpServer(async (base) => {
-        const { StreamableHTTPClientTransport } =
-          await import("@modelcontextprotocol/sdk/client/streamableHttp.js");
-        const { Client } = await import("@modelcontextprotocol/sdk/client/index.js");
-        const transport = new StreamableHTTPClientTransport(new URL(`${base}/mcp`));
-        const client = new Client({ name: "vitest-http-ouroboros", version: "1.0.0" }, {});
-        await client.connect(transport);
-        try {
-          const { tools } = await client.listTools();
-          const names = new Set(tools.map((t) => t.name));
-          expect(names.has("ouroboros_create_seed_from_document")).toBe(true);
-          expect(names.has("ouroboros_run_evolutionary_loop")).toBe(true);
-          expect(names.has("ouroboros_get_lineage_status")).toBe(true);
-        } finally {
-          await client.close();
-        }
-      });
-    } finally {
-      await rm(vaultDir, { recursive: true, force: true }).catch(() => {});
-      if (savedOuro === undefined) delete process.env.CLAWQL_ENABLE_OUROBOROS;
-      else process.env.CLAWQL_ENABLE_OUROBOROS = savedOuro;
-      if (savedVault === undefined) delete process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
-      else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = savedVault;
-      resetSpecCache();
-      resetSchemaFieldCache();
-    }
-  }, 25_000);
-
-  it("streamable HTTP listTools includes hitl_enqueue_label_studio when CLAWQL_ENABLE_HITL_LABEL_STUDIO=1 (#228)", async () => {
-    const vaultDir = mkdtempSync(join(tmpdir(), "clawql-http-hitl-"));
-    const savedHitl = process.env.CLAWQL_ENABLE_HITL_LABEL_STUDIO;
-    const savedVault = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
-    process.env.CLAWQL_ENABLE_HITL_LABEL_STUDIO = "1";
-    process.env.CLAWQL_OBSIDIAN_VAULT_PATH = vaultDir;
-    await mkdir(join(vaultDir, "Memory"), { recursive: true });
-    resetSpecCache();
-    resetSchemaFieldCache();
-    try {
-      await withHttpServer(async (base) => {
-        const { StreamableHTTPClientTransport } =
-          await import("@modelcontextprotocol/sdk/client/streamableHttp.js");
-        const { Client } = await import("@modelcontextprotocol/sdk/client/index.js");
-        const transport = new StreamableHTTPClientTransport(new URL(`${base}/mcp`));
-        const client = new Client({ name: "vitest-http-hitl", version: "1.0.0" }, {});
-        await client.connect(transport);
-        try {
-          const { tools } = await client.listTools();
-          const names = new Set(tools.map((t) => t.name));
-          expect(names.has("hitl_enqueue_label_studio")).toBe(true);
-        } finally {
-          await client.close();
-        }
-      });
-    } finally {
-      await rm(vaultDir, { recursive: true, force: true }).catch(() => {});
-      if (savedHitl === undefined) delete process.env.CLAWQL_ENABLE_HITL_LABEL_STUDIO;
-      else process.env.CLAWQL_ENABLE_HITL_LABEL_STUDIO = savedHitl;
-      if (savedVault === undefined) delete process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
-      else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = savedVault;
-      resetSpecCache();
-      resetSchemaFieldCache();
-    }
-  }, 25_000);
-
-  it("POST /hitl/label-studio/webhook returns 401 when token mismatch (#228)", async () => {
-    const vaultDir = mkdtempSync(join(tmpdir(), "clawql-http-hitl-wh-"));
-    const savedHitl = process.env.CLAWQL_ENABLE_HITL_LABEL_STUDIO;
-    const savedVault = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
-    const savedTok = process.env.CLAWQL_HITL_WEBHOOK_TOKEN;
-    process.env.CLAWQL_ENABLE_HITL_LABEL_STUDIO = "1";
-    process.env.CLAWQL_OBSIDIAN_VAULT_PATH = vaultDir;
-    await mkdir(join(vaultDir, "Memory"), { recursive: true });
-    process.env.CLAWQL_HITL_WEBHOOK_TOKEN = "expected-secret";
-    delete process.env.NODE_ENV;
-    resetSpecCache();
-    resetSchemaFieldCache();
-    try {
-      await withHttpServer(async (base) => {
-        const res = await fetch(`${base}/hitl/label-studio/webhook`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer wrong",
-          },
-          body: JSON.stringify({ task: { id: 1, data: {} } }),
+      try {
+        await withHttpServer(async (base) => {
+          const { StreamableHTTPClientTransport } =
+            await import("@modelcontextprotocol/sdk/client/streamableHttp.js");
+          const { Client } = await import("@modelcontextprotocol/sdk/client/index.js");
+          const transport = new StreamableHTTPClientTransport(new URL(`${base}/mcp`));
+          const client = new Client({ name: "vitest-http-sandbox", version: "1.0.0" }, {});
+          await client.connect(transport);
+          try {
+            const { tools } = await client.listTools();
+            const names = new Set(tools.map((t) => t.name));
+            expect(names.has("sandbox_exec")).toBe(true);
+          } finally {
+            await closeMcpClient(client);
+          }
         });
-        expect(res.status).toBe(401);
-      });
-    } finally {
-      await rm(vaultDir, { recursive: true, force: true }).catch(() => {});
-      if (savedHitl === undefined) delete process.env.CLAWQL_ENABLE_HITL_LABEL_STUDIO;
-      else process.env.CLAWQL_ENABLE_HITL_LABEL_STUDIO = savedHitl;
-      if (savedVault === undefined) delete process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
-      else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = savedVault;
-      if (savedTok === undefined) delete process.env.CLAWQL_HITL_WEBHOOK_TOKEN;
-      else process.env.CLAWQL_HITL_WEBHOOK_TOKEN = savedTok;
-      resetSpecCache();
-      resetSchemaFieldCache();
-    }
-  }, 25_000);
+      } finally {
+        await rm(vaultDir, { recursive: true, force: true }).catch(() => {});
+        if (savedSandbox === undefined) delete process.env.CLAWQL_ENABLE_SANDBOX;
+        else process.env.CLAWQL_ENABLE_SANDBOX = savedSandbox;
+        if (savedVault === undefined) delete process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
+        else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = savedVault;
+        resetSpecCache();
+        resetSchemaFieldCache();
+      }
+    },
+    STREAMABLE_HTTP_TEST_TIMEOUT_MS
+  );
 
-  it("POST /hitl/label-studio/webhook returns 503 in production without webhook token (#228)", async () => {
-    const vaultDir = mkdtempSync(join(tmpdir(), "clawql-http-hitl-prod-"));
-    const savedHitl = process.env.CLAWQL_ENABLE_HITL_LABEL_STUDIO;
-    const savedVault = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
-    const savedTok = process.env.CLAWQL_HITL_WEBHOOK_TOKEN;
-    const savedNodeEnv = process.env.NODE_ENV;
-    process.env.CLAWQL_ENABLE_HITL_LABEL_STUDIO = "1";
-    process.env.CLAWQL_OBSIDIAN_VAULT_PATH = vaultDir;
-    await mkdir(join(vaultDir, "Memory"), { recursive: true });
-    delete process.env.CLAWQL_HITL_WEBHOOK_TOKEN;
-    process.env.NODE_ENV = "production";
-    resetSpecCache();
-    resetSchemaFieldCache();
-    try {
-      await withHttpServer(async (base) => {
-        const res = await fetch(`${base}/hitl/label-studio/webhook`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({}),
-        });
-        expect(res.status).toBe(503);
-      });
-    } finally {
-      await rm(vaultDir, { recursive: true, force: true }).catch(() => {});
-      if (savedHitl === undefined) delete process.env.CLAWQL_ENABLE_HITL_LABEL_STUDIO;
-      else process.env.CLAWQL_ENABLE_HITL_LABEL_STUDIO = savedHitl;
-      if (savedVault === undefined) delete process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
-      else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = savedVault;
-      if (savedTok === undefined) delete process.env.CLAWQL_HITL_WEBHOOK_TOKEN;
-      else process.env.CLAWQL_HITL_WEBHOOK_TOKEN = savedTok;
-      if (savedNodeEnv === undefined) delete process.env.NODE_ENV;
-      else process.env.NODE_ENV = savedNodeEnv;
+  it(
+    "streamable HTTP listTools includes notify when CLAWQL_ENABLE_NOTIFY=1 (#140)",
+    async () => {
+      const vaultDir = mkdtempSync(join(tmpdir(), "clawql-http-notify-"));
+      const savedNotify = process.env.CLAWQL_ENABLE_NOTIFY;
+      const savedVault = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
+      process.env.CLAWQL_ENABLE_NOTIFY = "1";
+      process.env.CLAWQL_OBSIDIAN_VAULT_PATH = vaultDir;
+      await mkdir(join(vaultDir, "Memory"), { recursive: true });
       resetSpecCache();
       resetSchemaFieldCache();
-    }
-  }, 25_000);
+      try {
+        await withHttpServer(async (base) => {
+          const { StreamableHTTPClientTransport } =
+            await import("@modelcontextprotocol/sdk/client/streamableHttp.js");
+          const { Client } = await import("@modelcontextprotocol/sdk/client/index.js");
+          const transport = new StreamableHTTPClientTransport(new URL(`${base}/mcp`));
+          const client = new Client({ name: "vitest-http-notify", version: "1.0.0" }, {});
+          await client.connect(transport);
+          try {
+            const { tools } = await client.listTools();
+            const names = new Set(tools.map((t) => t.name));
+            expect(names.has("notify")).toBe(true);
+          } finally {
+            await closeMcpClient(client);
+          }
+        });
+      } finally {
+        await rm(vaultDir, { recursive: true, force: true }).catch(() => {});
+        if (savedNotify === undefined) delete process.env.CLAWQL_ENABLE_NOTIFY;
+        else process.env.CLAWQL_ENABLE_NOTIFY = savedNotify;
+        if (savedVault === undefined) delete process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
+        else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = savedVault;
+        resetSpecCache();
+        resetSchemaFieldCache();
+      }
+    },
+    STREAMABLE_HTTP_TEST_TIMEOUT_MS
+  );
 
-  it("POST /idp/coneshare/webhook returns 401 when token mismatch", async () => {
-    const savedConeshare = process.env.CLAWQL_ENABLE_CONESHARE;
-    const savedTok = process.env.CLAWQL_CONESHARE_WEBHOOK_TOKEN;
-    process.env.CLAWQL_ENABLE_CONESHARE = "1";
-    process.env.CLAWQL_CONESHARE_WEBHOOK_TOKEN = "expected-secret";
-    delete process.env.NODE_ENV;
-    resetSpecCache();
-    resetSchemaFieldCache();
-    try {
-      await withHttpServer(async (base) => {
-        const res = await fetch(`${base}/idp/coneshare/webhook`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer wrong",
-          },
-          body: JSON.stringify({ event: "viewer_joined", share_link_id: "sl-1" }),
-        });
-        expect(res.status).toBe(401);
-      });
-    } finally {
-      if (savedConeshare === undefined) delete process.env.CLAWQL_ENABLE_CONESHARE;
-      else process.env.CLAWQL_ENABLE_CONESHARE = savedConeshare;
-      if (savedTok === undefined) delete process.env.CLAWQL_CONESHARE_WEBHOOK_TOKEN;
-      else process.env.CLAWQL_CONESHARE_WEBHOOK_TOKEN = savedTok;
+  it(
+    "streamable HTTP listTools includes knowledge_search_onyx when CLAWQL_ENABLE_ONYX=1 (#144)",
+    async () => {
+      const vaultDir = mkdtempSync(join(tmpdir(), "clawql-http-onyx-"));
+      const savedOnyx = process.env.CLAWQL_ENABLE_ONYX;
+      const savedVault = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
+      process.env.CLAWQL_ENABLE_ONYX = "1";
+      process.env.CLAWQL_OBSIDIAN_VAULT_PATH = vaultDir;
+      await mkdir(join(vaultDir, "Memory"), { recursive: true });
       resetSpecCache();
       resetSchemaFieldCache();
-    }
-  }, 25_000);
+      try {
+        await withHttpServer(async (base) => {
+          const { StreamableHTTPClientTransport } =
+            await import("@modelcontextprotocol/sdk/client/streamableHttp.js");
+          const { Client } = await import("@modelcontextprotocol/sdk/client/index.js");
+          const transport = new StreamableHTTPClientTransport(new URL(`${base}/mcp`));
+          const client = new Client({ name: "vitest-http-onyx", version: "1.0.0" }, {});
+          await client.connect(transport);
+          try {
+            const { tools } = await client.listTools();
+            const names = new Set(tools.map((t) => t.name));
+            expect(names.has("knowledge_search_onyx")).toBe(true);
+          } finally {
+            await closeMcpClient(client);
+          }
+        });
+      } finally {
+        await rm(vaultDir, { recursive: true, force: true }).catch(() => {});
+        if (savedOnyx === undefined) delete process.env.CLAWQL_ENABLE_ONYX;
+        else process.env.CLAWQL_ENABLE_ONYX = savedOnyx;
+        if (savedVault === undefined) delete process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
+        else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = savedVault;
+        resetSpecCache();
+        resetSchemaFieldCache();
+      }
+    },
+    STREAMABLE_HTTP_TEST_TIMEOUT_MS
+  );
 
-  it("POST /idp/coneshare/webhook returns 503 in production without webhook token", async () => {
-    const savedConeshare = process.env.CLAWQL_ENABLE_CONESHARE;
-    const savedTok = process.env.CLAWQL_CONESHARE_WEBHOOK_TOKEN;
-    const savedNodeEnv = process.env.NODE_ENV;
-    process.env.CLAWQL_ENABLE_CONESHARE = "1";
-    delete process.env.CLAWQL_CONESHARE_WEBHOOK_TOKEN;
-    process.env.NODE_ENV = "production";
-    resetSpecCache();
-    resetSchemaFieldCache();
-    try {
-      await withHttpServer(async (base) => {
-        const res = await fetch(`${base}/idp/coneshare/webhook`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({}),
-        });
-        expect(res.status).toBe(503);
-      });
-    } finally {
-      if (savedConeshare === undefined) delete process.env.CLAWQL_ENABLE_CONESHARE;
-      else process.env.CLAWQL_ENABLE_CONESHARE = savedConeshare;
-      if (savedTok === undefined) delete process.env.CLAWQL_CONESHARE_WEBHOOK_TOKEN;
-      else process.env.CLAWQL_CONESHARE_WEBHOOK_TOKEN = savedTok;
-      if (savedNodeEnv === undefined) delete process.env.NODE_ENV;
-      else process.env.NODE_ENV = savedNodeEnv;
+  it(
+    "streamable HTTP listTools includes ouroboros_* when CLAWQL_ENABLE_OUROBOROS=1 (#141)",
+    async () => {
+      const vaultDir = mkdtempSync(join(tmpdir(), "clawql-http-ouroboros-"));
+      const savedOuro = process.env.CLAWQL_ENABLE_OUROBOROS;
+      const savedVault = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
+      process.env.CLAWQL_ENABLE_OUROBOROS = "1";
+      process.env.CLAWQL_OBSIDIAN_VAULT_PATH = vaultDir;
+      await mkdir(join(vaultDir, "Memory"), { recursive: true });
       resetSpecCache();
       resetSchemaFieldCache();
-    }
-  }, 25_000);
+      try {
+        await withHttpServer(async (base) => {
+          const { StreamableHTTPClientTransport } =
+            await import("@modelcontextprotocol/sdk/client/streamableHttp.js");
+          const { Client } = await import("@modelcontextprotocol/sdk/client/index.js");
+          const transport = new StreamableHTTPClientTransport(new URL(`${base}/mcp`));
+          const client = new Client({ name: "vitest-http-ouroboros", version: "1.0.0" }, {});
+          await client.connect(transport);
+          try {
+            const { tools } = await client.listTools();
+            const names = new Set(tools.map((t) => t.name));
+            expect(names.has("ouroboros_create_seed_from_document")).toBe(true);
+            expect(names.has("ouroboros_run_evolutionary_loop")).toBe(true);
+            expect(names.has("ouroboros_get_lineage_status")).toBe(true);
+          } finally {
+            await closeMcpClient(client);
+          }
+        });
+      } finally {
+        await rm(vaultDir, { recursive: true, force: true }).catch(() => {});
+        if (savedOuro === undefined) delete process.env.CLAWQL_ENABLE_OUROBOROS;
+        else process.env.CLAWQL_ENABLE_OUROBOROS = savedOuro;
+        if (savedVault === undefined) delete process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
+        else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = savedVault;
+        resetSpecCache();
+        resetSchemaFieldCache();
+      }
+    },
+    STREAMABLE_HTTP_TEST_TIMEOUT_MS
+  );
+
+  it(
+    "streamable HTTP listTools includes hitl_enqueue_label_studio when CLAWQL_ENABLE_HITL_LABEL_STUDIO=1 (#228)",
+    async () => {
+      const vaultDir = mkdtempSync(join(tmpdir(), "clawql-http-hitl-"));
+      const savedHitl = process.env.CLAWQL_ENABLE_HITL_LABEL_STUDIO;
+      const savedVault = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
+      process.env.CLAWQL_ENABLE_HITL_LABEL_STUDIO = "1";
+      process.env.CLAWQL_OBSIDIAN_VAULT_PATH = vaultDir;
+      await mkdir(join(vaultDir, "Memory"), { recursive: true });
+      resetSpecCache();
+      resetSchemaFieldCache();
+      try {
+        await withHttpServer(async (base) => {
+          const { StreamableHTTPClientTransport } =
+            await import("@modelcontextprotocol/sdk/client/streamableHttp.js");
+          const { Client } = await import("@modelcontextprotocol/sdk/client/index.js");
+          const transport = new StreamableHTTPClientTransport(new URL(`${base}/mcp`));
+          const client = new Client({ name: "vitest-http-hitl", version: "1.0.0" }, {});
+          await client.connect(transport);
+          try {
+            const { tools } = await client.listTools();
+            const names = new Set(tools.map((t) => t.name));
+            expect(names.has("hitl_enqueue_label_studio")).toBe(true);
+          } finally {
+            await closeMcpClient(client);
+          }
+        });
+      } finally {
+        await rm(vaultDir, { recursive: true, force: true }).catch(() => {});
+        if (savedHitl === undefined) delete process.env.CLAWQL_ENABLE_HITL_LABEL_STUDIO;
+        else process.env.CLAWQL_ENABLE_HITL_LABEL_STUDIO = savedHitl;
+        if (savedVault === undefined) delete process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
+        else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = savedVault;
+        resetSpecCache();
+        resetSchemaFieldCache();
+      }
+    },
+    STREAMABLE_HTTP_TEST_TIMEOUT_MS
+  );
+
+  it(
+    "POST /hitl/label-studio/webhook returns 401 when token mismatch (#228)",
+    async () => {
+      const vaultDir = mkdtempSync(join(tmpdir(), "clawql-http-hitl-wh-"));
+      const savedHitl = process.env.CLAWQL_ENABLE_HITL_LABEL_STUDIO;
+      const savedVault = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
+      const savedTok = process.env.CLAWQL_HITL_WEBHOOK_TOKEN;
+      process.env.CLAWQL_ENABLE_HITL_LABEL_STUDIO = "1";
+      process.env.CLAWQL_OBSIDIAN_VAULT_PATH = vaultDir;
+      await mkdir(join(vaultDir, "Memory"), { recursive: true });
+      process.env.CLAWQL_HITL_WEBHOOK_TOKEN = "expected-secret";
+      delete process.env.NODE_ENV;
+      resetSpecCache();
+      resetSchemaFieldCache();
+      try {
+        await withHttpServer(async (base) => {
+          const res = await fetch(`${base}/hitl/label-studio/webhook`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer wrong",
+            },
+            body: JSON.stringify({ task: { id: 1, data: {} } }),
+          });
+          expect(res.status).toBe(401);
+        });
+      } finally {
+        await rm(vaultDir, { recursive: true, force: true }).catch(() => {});
+        if (savedHitl === undefined) delete process.env.CLAWQL_ENABLE_HITL_LABEL_STUDIO;
+        else process.env.CLAWQL_ENABLE_HITL_LABEL_STUDIO = savedHitl;
+        if (savedVault === undefined) delete process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
+        else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = savedVault;
+        if (savedTok === undefined) delete process.env.CLAWQL_HITL_WEBHOOK_TOKEN;
+        else process.env.CLAWQL_HITL_WEBHOOK_TOKEN = savedTok;
+        resetSpecCache();
+        resetSchemaFieldCache();
+      }
+    },
+    STREAMABLE_HTTP_TEST_TIMEOUT_MS
+  );
+
+  it(
+    "POST /hitl/label-studio/webhook returns 503 in production without webhook token (#228)",
+    async () => {
+      const vaultDir = mkdtempSync(join(tmpdir(), "clawql-http-hitl-prod-"));
+      const savedHitl = process.env.CLAWQL_ENABLE_HITL_LABEL_STUDIO;
+      const savedVault = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
+      const savedTok = process.env.CLAWQL_HITL_WEBHOOK_TOKEN;
+      const savedNodeEnv = process.env.NODE_ENV;
+      process.env.CLAWQL_ENABLE_HITL_LABEL_STUDIO = "1";
+      process.env.CLAWQL_OBSIDIAN_VAULT_PATH = vaultDir;
+      await mkdir(join(vaultDir, "Memory"), { recursive: true });
+      delete process.env.CLAWQL_HITL_WEBHOOK_TOKEN;
+      process.env.NODE_ENV = "production";
+      resetSpecCache();
+      resetSchemaFieldCache();
+      try {
+        await withHttpServer(async (base) => {
+          const res = await fetch(`${base}/hitl/label-studio/webhook`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({}),
+          });
+          expect(res.status).toBe(503);
+        });
+      } finally {
+        await rm(vaultDir, { recursive: true, force: true }).catch(() => {});
+        if (savedHitl === undefined) delete process.env.CLAWQL_ENABLE_HITL_LABEL_STUDIO;
+        else process.env.CLAWQL_ENABLE_HITL_LABEL_STUDIO = savedHitl;
+        if (savedVault === undefined) delete process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
+        else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = savedVault;
+        if (savedTok === undefined) delete process.env.CLAWQL_HITL_WEBHOOK_TOKEN;
+        else process.env.CLAWQL_HITL_WEBHOOK_TOKEN = savedTok;
+        if (savedNodeEnv === undefined) delete process.env.NODE_ENV;
+        else process.env.NODE_ENV = savedNodeEnv;
+        resetSpecCache();
+        resetSchemaFieldCache();
+      }
+    },
+    STREAMABLE_HTTP_TEST_TIMEOUT_MS
+  );
+
+  it(
+    "POST /idp/coneshare/webhook returns 401 when token mismatch",
+    async () => {
+      const savedConeshare = process.env.CLAWQL_ENABLE_CONESHARE;
+      const savedTok = process.env.CLAWQL_CONESHARE_WEBHOOK_TOKEN;
+      process.env.CLAWQL_ENABLE_CONESHARE = "1";
+      process.env.CLAWQL_CONESHARE_WEBHOOK_TOKEN = "expected-secret";
+      delete process.env.NODE_ENV;
+      resetSpecCache();
+      resetSchemaFieldCache();
+      try {
+        await withHttpServer(async (base) => {
+          const res = await fetch(`${base}/idp/coneshare/webhook`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer wrong",
+            },
+            body: JSON.stringify({ event: "viewer_joined", share_link_id: "sl-1" }),
+          });
+          expect(res.status).toBe(401);
+        });
+      } finally {
+        if (savedConeshare === undefined) delete process.env.CLAWQL_ENABLE_CONESHARE;
+        else process.env.CLAWQL_ENABLE_CONESHARE = savedConeshare;
+        if (savedTok === undefined) delete process.env.CLAWQL_CONESHARE_WEBHOOK_TOKEN;
+        else process.env.CLAWQL_CONESHARE_WEBHOOK_TOKEN = savedTok;
+        resetSpecCache();
+        resetSchemaFieldCache();
+      }
+    },
+    STREAMABLE_HTTP_TEST_TIMEOUT_MS
+  );
+
+  it(
+    "POST /idp/coneshare/webhook returns 503 in production without webhook token",
+    async () => {
+      const savedConeshare = process.env.CLAWQL_ENABLE_CONESHARE;
+      const savedTok = process.env.CLAWQL_CONESHARE_WEBHOOK_TOKEN;
+      const savedNodeEnv = process.env.NODE_ENV;
+      process.env.CLAWQL_ENABLE_CONESHARE = "1";
+      delete process.env.CLAWQL_CONESHARE_WEBHOOK_TOKEN;
+      process.env.NODE_ENV = "production";
+      resetSpecCache();
+      resetSchemaFieldCache();
+      try {
+        await withHttpServer(async (base) => {
+          const res = await fetch(`${base}/idp/coneshare/webhook`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({}),
+          });
+          expect(res.status).toBe(503);
+        });
+      } finally {
+        if (savedConeshare === undefined) delete process.env.CLAWQL_ENABLE_CONESHARE;
+        else process.env.CLAWQL_ENABLE_CONESHARE = savedConeshare;
+        if (savedTok === undefined) delete process.env.CLAWQL_CONESHARE_WEBHOOK_TOKEN;
+        else process.env.CLAWQL_CONESHARE_WEBHOOK_TOKEN = savedTok;
+        if (savedNodeEnv === undefined) delete process.env.NODE_ENV;
+        else process.env.NODE_ENV = savedNodeEnv;
+        resetSpecCache();
+        resetSchemaFieldCache();
+      }
+    },
+    STREAMABLE_HTTP_TEST_TIMEOUT_MS
+  );
 });
