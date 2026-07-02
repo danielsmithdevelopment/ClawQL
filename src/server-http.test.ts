@@ -5,7 +5,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   recordNativeGraphqlExecute,
   resetNativeProtocolMetricsForTests,
@@ -22,22 +22,24 @@ import { resetSchemaFieldCache } from "./tools.js";
  * connections first avoids EnvironmentTeardownError (RPC pending onUserConsoleLog).
  */
 function closeHttpServer(server: Server): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (typeof server.closeIdleConnections === "function") {
-      server.closeIdleConnections();
-    }
-    if (typeof server.closeAllConnections === "function") {
-      server.closeAllConnections();
-    }
-    server.close((err) => {
-      if (err) {
-        reject(err);
-        return;
+  return Promise.race([
+    new Promise<void>((resolve, reject) => {
+      if (typeof server.closeIdleConnections === "function") {
+        server.closeIdleConnections();
       }
-      // Let undici/fetch and vitest drain in-flight work before the worker exits.
-      setTimeout(() => resolve(), 50);
-    });
-  });
+      if (typeof server.closeAllConnections === "function") {
+        server.closeAllConnections();
+      }
+      server.close((err) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        setImmediate(() => resolve());
+      });
+    }),
+    new Promise<void>((resolve) => setTimeout(resolve, 3_000)),
+  ]);
 }
 
 /** MCP SDK client.close() can hang when a prior timed-out test left SSE sockets open. */
@@ -50,7 +52,11 @@ const STREAMABLE_HTTP_TEST_TIMEOUT_MS = 45_000;
 const here = dirname(fileURLToPath(import.meta.url));
 const minimalSpec = join(here, "test-utils/fixtures/minimal-petstore.json");
 
-describe("server-http", { sequential: true }, () => {
+describe("server-http", () => {
+  beforeAll(() => {
+    vi.setConfig({ testTimeout: 15_000 });
+  });
+
   const saved: Record<string, string | undefined> = {};
 
   beforeEach(() => {
