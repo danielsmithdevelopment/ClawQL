@@ -22,12 +22,19 @@ import { resetSchemaFieldCache } from "./tools.js";
  */
 function closeHttpServer(server: Server): Promise<void> {
   return new Promise((resolve, reject) => {
+    if (typeof server.closeIdleConnections === "function") {
+      server.closeIdleConnections();
+    }
     if (typeof server.closeAllConnections === "function") {
       server.closeAllConnections();
     }
     server.close((err) => {
-      if (err) reject(err);
-      else resolve();
+      if (err) {
+        reject(err);
+        return;
+      }
+      // Vitest can still be draining onUserConsoleLog RPC when the worker exits.
+      setImmediate(() => resolve());
     });
   });
 }

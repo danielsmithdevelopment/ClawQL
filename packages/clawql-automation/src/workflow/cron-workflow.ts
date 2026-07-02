@@ -85,8 +85,7 @@ export function mapCronWorkflowToSummary(
     labels: cron.metadata?.labels,
     last_scheduled_at: cron.status?.lastScheduledTime,
     active_workflows: cron.status?.active?.map((a) => a.name).filter(Boolean) as
-      | string[]
-      | undefined,
+      string[] | undefined,
   };
 }
 

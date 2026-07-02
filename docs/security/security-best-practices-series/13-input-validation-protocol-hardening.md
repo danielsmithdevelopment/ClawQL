@@ -126,7 +126,7 @@ Split-Payload Detection
 Injection can be split across multiple tool results so each individual result looks clean, but the model concatenates them into a full instruction.
 
 Panguard maintains a rolling window of the last N tool results per session (default: 5).  
- Injection pattern matching is applied to the concatenated content of the window, not to each result in isolation.
+Injection pattern matching is applied to the concatenated content of the window, not to each result in isolation.
 
 This check runs as an async background task with alerting (it is computationally heavier, so we do not block synchronously on it).
 

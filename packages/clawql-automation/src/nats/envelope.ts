@@ -4,10 +4,7 @@ import { natsDocumentSubjectRoot, natsWorkflowSubjectRoot } from "./env.js";
 export const WORKFLOW_EVENT_SCHEMA_VERSION = 1;
 
 export type WorkflowEventType =
-  | "hitl.enqueued"
-  | "hitl.completed"
-  | "workflow.suspended"
-  | "workflow.resumed";
+  "hitl.enqueued" | "hitl.completed" | "workflow.suspended" | "workflow.resumed";
 
 export type WorkflowEventEnvelope = {
   schema_version: typeof WORKFLOW_EVENT_SCHEMA_VERSION;
