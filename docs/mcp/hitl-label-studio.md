@@ -212,10 +212,10 @@ Ensure **Ingress** or **LoadBalancer** exposes **`/hitl/label-studio/webhook`** 
 
 **Label Studio deployment (BYO):** This chart does **not** install Label Studio. Point **`CLAWQL_LABEL_STUDIO_URL`** at your instance:
 
-| Edition | Install | RBAC |
-| ------- | ------- | ---- |
-| **Community** | [Docker `heartexlabs/label-studio`](https://labelstud.io/guide/install.html) or `pip install label-studio` | No org/project RBAC — see [§14 Multi-reviewer RBAC](#14-multi-reviewer-rbac-ce-vs-enterprise) |
-| **Enterprise** | [HumanSignal install guide](https://docs.humansignal.com/guide/install) (license required) | Native Annotator / Reviewer roles, SAML, workspaces |
+| Edition        | Install                                                                                                    | RBAC                                                                                          |
+| -------------- | ---------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| **Community**  | [Docker `heartexlabs/label-studio`](https://labelstud.io/guide/install.html) or `pip install label-studio` | No org/project RBAC — see [§14 Multi-reviewer RBAC](#14-multi-reviewer-rbac-ce-vs-enterprise) |
+| **Enterprise** | [HumanSignal install guide](https://docs.humansignal.com/guide/install) (license required)                 | Native Annotator / Reviewer roles, SAML, workspaces                                           |
 
 Example **`extraEnv`** / Secret keys only (no paid bits in-chart):
 
@@ -258,16 +258,16 @@ Full keys table: [`docs/deployment/helm.md`](deployment/helm.md).
 
 ## 12. Related documentation
 
-| Doc                                                                 | Topic                                                                                  |
-| ------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| [`docs/mcp/mcp-tools.md`](mcp-tools.md)                             | **`hitl_enqueue_label_studio`** in tools matrix                                        |
-| [`docs/mcp/notify-tool.md`](notify-tool.md)                         | Slack **`notify`** ([#77](https://github.com/danielsmithdevelopment/ClawQL/issues/77)) |
-| [`docs/openclaw/clawql-bootstrap.md`](openclaw/clawql-bootstrap.md) | OpenClaw MCP registration                                                              |
-| [`docs/deployment/helm.md`](deployment/helm.md)                     | **`enableHitlLabelStudio`**                                                            |
-| [`docs/mcp/enterprise-mcp-tools.md`](enterprise-mcp-tools.md)       | Feature-flag table                                                                     |
+| Doc                                                                                        | Topic                                                                                                  |
+| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| [`docs/mcp/mcp-tools.md`](mcp-tools.md)                                                    | **`hitl_enqueue_label_studio`** in tools matrix                                                        |
+| [`docs/mcp/notify-tool.md`](notify-tool.md)                                                | Slack **`notify`** ([#77](https://github.com/danielsmithdevelopment/ClawQL/issues/77))                 |
+| [`docs/openclaw/clawql-bootstrap.md`](openclaw/clawql-bootstrap.md)                        | OpenClaw MCP registration                                                                              |
+| [`docs/deployment/helm.md`](deployment/helm.md)                                            | **`enableHitlLabelStudio`**                                                                            |
+| [`docs/mcp/enterprise-mcp-tools.md`](enterprise-mcp-tools.md)                              | Feature-flag table                                                                                     |
 | [`deployment/samples/lending-w2/README.md`](../../deployment/samples/lending-w2/README.md) | W-2 HITL + suspend/resume sample ([#253](https://github.com/danielsmithdevelopment/ClawQL/issues/253)) |
-| [Label Studio docs](https://labelstud.io/guide/)                    | Import API, webhooks, projects                                                         |
-| [Label Studio CE vs Enterprise](https://labelstud.io/guide/label_studio_compare) | RBAC capability matrix (upstream)                                              |
+| [Label Studio docs](https://labelstud.io/guide/)                                           | Import API, webhooks, projects                                                                         |
+| [Label Studio CE vs Enterprise](https://labelstud.io/guide/label_studio_compare)           | RBAC capability matrix (upstream)                                                                      |
 
 ---
 
@@ -284,28 +284,28 @@ ClawQL integrates with **your** Label Studio deployment. **Who may import, annot
 
 ### 14.1 Capability matrix (Label Studio)
 
-| Capability | Community Edition | Starter Cloud | Enterprise |
-| ---------- | ----------------- | ------------- | ---------- |
-| **Org / workspace RBAC** | ❌ | Limited | ✅ |
-| **Project roles (Annotator / Reviewer)** | ❌ | ✅ | ✅ |
-| **Assign tasks to specific users** | ❌ | ✅ | ✅ |
-| **Assign reviewers to tasks** | ❌ | ✅ | ✅ |
-| **Role-based review workflows** | ❌ | Limited | ✅ |
-| **Fine-grained action permissions** | ❌ | ❌ | ✅ |
-| **SAML / LDAP SSO** | ❌ | ❌ | ✅ |
-| **REST import API** (`/api/projects/{id}/import`) | ✅ | ✅ | ✅ |
-| **Project webhooks** | ✅ | ✅ | ✅ |
+| Capability                                        | Community Edition | Starter Cloud | Enterprise |
+| ------------------------------------------------- | ----------------- | ------------- | ---------- |
+| **Org / workspace RBAC**                          | ❌                | Limited       | ✅         |
+| **Project roles (Annotator / Reviewer)**          | ❌                | ✅            | ✅         |
+| **Assign tasks to specific users**                | ❌                | ✅            | ✅         |
+| **Assign reviewers to tasks**                     | ❌                | ✅            | ✅         |
+| **Role-based review workflows**                   | ❌                | Limited       | ✅         |
+| **Fine-grained action permissions**               | ❌                | ❌            | ✅         |
+| **SAML / LDAP SSO**                               | ❌                | ❌            | ✅         |
+| **REST import API** (`/api/projects/{id}/import`) | ✅                | ✅            | ✅         |
+| **Project webhooks**                              | ✅                | ✅            | ✅         |
 
 ClawQL needs only **import API + webhooks** on the Label Studio side. Multi-reviewer policy is **your** choice of edition plus orchestration.
 
 ### 14.2 ClawQL role mapping (who does what)
 
-| Action | Typical actor | ClawQL / Label Studio surface | CE note |
-| ------ | ------------- | ----------------------------- | ------- |
-| **Enqueue review tasks** | Agent, CI, or automation | MCP **`hitl_enqueue_label_studio`** → LS **import** | Use a **dedicated service account** token in **`CLAWQL_LABEL_STUDIO_API_TOKEN`** — not a human annotator’s password |
-| **Annotate / label** | Human reviewer(s) | Label Studio UI on **`task.data`** | On CE, any user with project access can edit; **separate LS accounts** per person |
-| **Approve / reject (policy)** | Second reviewer or lead | LS **Reviewer** role (Enterprise) **or** orchestration on webhook (CE pattern below) | CE has no native “reviewer only” role |
-| **Record decision + resume pipeline** | ClawQL + optional Argo | **`POST /hitl/label-studio/webhook`** → **`memory_ingest`** / **`audit`**; optional **`workflow` `resume`** ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254)) | Webhook token restricts **who can POST to ClawQL**, not who annotates in LS |
+| Action                                | Typical actor            | ClawQL / Label Studio surface                                                                                                                                                     | CE note                                                                                                             |
+| ------------------------------------- | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| **Enqueue review tasks**              | Agent, CI, or automation | MCP **`hitl_enqueue_label_studio`** → LS **import**                                                                                                                               | Use a **dedicated service account** token in **`CLAWQL_LABEL_STUDIO_API_TOKEN`** — not a human annotator’s password |
+| **Annotate / label**                  | Human reviewer(s)        | Label Studio UI on **`task.data`**                                                                                                                                                | On CE, any user with project access can edit; **separate LS accounts** per person                                   |
+| **Approve / reject (policy)**         | Second reviewer or lead  | LS **Reviewer** role (Enterprise) **or** orchestration on webhook (CE pattern below)                                                                                              | CE has no native “reviewer only” role                                                                               |
+| **Record decision + resume pipeline** | ClawQL + optional Argo   | **`POST /hitl/label-studio/webhook`** → **`memory_ingest`** / **`audit`**; optional **`workflow` `resume`** ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254)) | Webhook token restricts **who can POST to ClawQL**, not who annotates in LS                                         |
 
 ### 14.3 Community Edition workarounds
 
@@ -345,13 +345,13 @@ sequenceDiagram
 
 **Setup:**
 
-| Step | Detail |
-| ---- | ------ |
-| 1 | Create **two** Label Studio projects (same labeling config XML — see [`deployment/samples/lending-w2/label-studio-config.xml`](../../deployment/samples/lending-w2/label-studio-config.xml)). |
-| 2 | **Reviewer A** — access only to **primary** project. **Reviewer B** — access only to **secondary** (on CE: separate logins + discipline; on Enterprise: project-level Annotator/Reviewer roles). |
-| 3 | Primary enqueue sets **`provenance.review_stage`: `"primary"`** and **`correlation_id`** (workflow id). |
-| 4 | Webhook handler or agent policy: on primary completion, call **`hitl_enqueue_label_studio`** again with **`project_id`** = secondary, same **`correlation_id`**, **`provenance.review_stage`: `"secondary"`**, and **`provenance.primary_task_id`** from the webhook payload. |
-| 5 | On secondary completion, set **`CLAWQL_HITL_WEBHOOK_RESUME_WORKFLOW=1`** (or NATS consumer [#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254)) so Argo **`resume`** runs only after the second review. |
+| Step | Detail                                                                                                                                                                                                                                                                        |
+| ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1    | Create **two** Label Studio projects (same labeling config XML — see [`deployment/samples/lending-w2/label-studio-config.xml`](../../deployment/samples/lending-w2/label-studio-config.xml)).                                                                                 |
+| 2    | **Reviewer A** — access only to **primary** project. **Reviewer B** — access only to **secondary** (on CE: separate logins + discipline; on Enterprise: project-level Annotator/Reviewer roles).                                                                              |
+| 3    | Primary enqueue sets **`provenance.review_stage`: `"primary"`** and **`correlation_id`** (workflow id).                                                                                                                                                                       |
+| 4    | Webhook handler or agent policy: on primary completion, call **`hitl_enqueue_label_studio`** again with **`project_id`** = secondary, same **`correlation_id`**, **`provenance.review_stage`: `"secondary"`**, and **`provenance.primary_task_id`** from the webhook payload. |
+| 5    | On secondary completion, set **`CLAWQL_HITL_WEBHOOK_RESUME_WORKFLOW=1`** (or NATS consumer [#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254)) so Argo **`resume`** runs only after the second review.                                                       |
 
 **Merge policy (explicit):** Treat **`review_stage=secondary`** webhook as **approval**; **`primary`** alone must **not** resume production workflows. Implement the branch in OpenClaw, a thin webhook forwarder, or your agent runbook — ClawQL records every webhook; **gating** is orchestration-side.
 
