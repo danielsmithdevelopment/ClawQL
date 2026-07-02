@@ -50,9 +50,7 @@ const STREAMABLE_HTTP_TEST_TIMEOUT_MS = 45_000;
 const here = dirname(fileURLToPath(import.meta.url));
 const minimalSpec = join(here, "test-utils/fixtures/minimal-petstore.json");
 
-describe("server-http", () => {
-  describe.configure({ mode: "serial" });
-
+describe("server-http", { sequential: true }, () => {
   const saved: Record<string, string | undefined> = {};
 
   beforeEach(() => {
