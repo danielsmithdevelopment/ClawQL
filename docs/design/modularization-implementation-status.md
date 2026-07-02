@@ -1,6 +1,6 @@
 # Modularization implementation status
 
-**As of June 2026** · Ground truth for package extraction ([#306](https://github.com/danielsmithdevelopment/ClawQL/issues/306))
+**As of July 2026** · Ground truth for package extraction ([#306](https://github.com/danielsmithdevelopment/ClawQL/issues/306))
 
 > **Read this first** when you need **shipped vs planned** for the monorepo layout, MCP wiring, plugin roadmap, or Effect-TS migration. Vision docs ([`clawql-master-enablement-guide.md`](../vision/clawql-master-enablement-guide.md), [`clawql-modularization-v2.md`](../vision/clawql-modularization-v2.md)) describe **target** architecture; this file describes **what is in the tree today**.
 
@@ -19,14 +19,14 @@ ClawQL is mid-flight on a **strangler extraction** from the root `clawql-mcp` pa
 | `clawql-core`       | Audit ring buffer, cache helpers, Merkle + Cuckoo, `Plugin` types, shared errors                                                                                  |
 | `clawql-api`        | Spec load/search, REST/GraphQL/gRPC execute, provider registry, `createClawQLApi()`, Panguard proxy plugin                                                        |
 | `clawql-memory`     | Vault I/O, `memory.db`, embeddings, ingest/recall, enterprise citations                                                                                           |
-| `clawql-documents`  | `ingest_external_knowledge`, **`DEFAULT_IDP_PIPELINE`** recipe, bundled IDP provider merge (7 vendors via `clawql-api`); automated multi-hop runner still roadmap |
-| `clawql-automation` | `schedule` worker, Slack `notify`, Argo **`workflow`** tool (opt-in); NATS/HITL still roadmap                                                                     |
+| `clawql-documents`  | `ingest_external_knowledge`, **`DEFAULT_IDP_PIPELINE`**, **`run_idp_pipeline`** ([#307](https://github.com/danielsmithdevelopment/ClawQL/issues/307)), **`classify_document`** / **`extract_document`**; bundled IDP merge (**8 vendors** via `clawql-api`) |
+| `clawql-automation` | `schedule` worker, Slack `notify`, Argo **`workflow`** + **`argocd`** tools (opt-in); NATS JetStream publish/consume when enabled ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254)) |
 
 **What is still mostly in `src/`:** MCP tool registration (`tools.ts`), optional HITL glue, GraphQL proxy entrypoints, server lifecycle.
 
 **Effect-TS:** **Partial.** `search` / `execute` run through `createClawQLApi()` + `SearchService` / `ExecuteService` Effect Layers; extracted packages are still largely **`async`/`await`** with Zod at MCP boundaries. Full Layer composition for memory/documents/automation is **planned**, not shipped.
 
-**Plugin ecosystem:** **Phase 2 in progress.** `MemoryPlugin`, `DocumentsPlugin`, **`AutomationPlugin`**, **`SandboxPlugin`**, and **`OuroborosPlugin`** register MCP tools via `onRegister`. Argo Workflows **`workflow`** tool ships in `AutomationPlugin` when `CLAWQL_ENABLE_WORKFLOW=1` ([#243](https://github.com/danielsmithdevelopment/ClawQL/issues/243), [ADR 0004](../adr/0004-argo-cd-workflows-clawql-pipelines.md), [workflow design](workflow-tool-argo.md)).
+**Plugin ecosystem:** **Phase 2 shipped.** `MemoryPlugin`, `DocumentsPlugin`, **`AutomationPlugin`**, **`SandboxPlugin`**, and **`OuroborosPlugin`** register MCP tools via `onRegister`. Argo Workflows **`workflow`** and Argo CD **`argocd`** ship in `AutomationPlugin` when enabled ([#243](https://github.com/danielsmithdevelopment/ClawQL/issues/243), [#244](https://github.com/danielsmithdevelopment/ClawQL/issues/244), [ADR 0004](../adr/0004-argo-cd-workflows-clawql-pipelines.md)).
 
 ---
 

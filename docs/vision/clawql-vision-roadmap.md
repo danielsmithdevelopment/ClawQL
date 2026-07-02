@@ -1,6 +1,6 @@
 # ClawQL — Vision & Roadmap
 
-**Public Edition · May 2026**  
+**Public Edition · July 2026**  
 Apache 2.0 / MIT · [github.com/clawql/clawql](https://github.com/clawql/clawql)
 
 ---
@@ -17,13 +17,13 @@ ClawQL is under active development. Most of what this document describes is not 
 | `clawql-core`              | ✅ Shipped (audit, Merkle, Cuckoo, Plugin types)                                                                  |
 | `clawql-api`               | ✅ Shipped (spec, execute, gateway scaffold, Panguard plugin)                                                     |
 | `clawql-memory`            | ✅ Shipped (vault, memory.db, ingest/recall)                                                                      |
-| `clawql-documents`         | ✅ Shipped ingest + **`DEFAULT_IDP_PIPELINE`**; 7 bundled IDP vendors via **`execute`**; automated runner planned |
-| `clawql-automation`        | 🔨 Scaffold (schedule + notify; NATS/HITL planned)                                                                |
-| `clawql-auth`              | 📋 Planned (auth helpers live in `clawql-api` today)                                                              |
-| `clawql-pageindex`         | 📋 Planned                                                                                                        |
-| `clawql-data`              | 📋 Planned                                                                                                        |
-| `clawql-telemetry`         | 📋 Planned                                                                                                        |
-| `clawql-sandbox`           | 📋 Planned (logic still in `src/`)                                                                                |
+| `clawql-documents`         | ✅ Shipped — ingest + **`DEFAULT_IDP_PIPELINE`** + **`run_idp_pipeline`**; 8 bundled IDP vendors; **`classify_document`** / **`extract_document`** opt-in |
+| `clawql-automation`        | ✅ Shipped — schedule, notify, **`workflow`**, **`argocd`**; NATS JetStream opt-in ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254)) |
+| `clawql-auth`              | 📋 Planned (auth helpers live in `clawql-api` today)                                                                                                        |
+| `clawql-pageindex`         | 📋 Planned                                                                                                                                                  |
+| `clawql-data`              | 📋 Planned                                                                                                                                                  |
+| `clawql-telemetry`         | 📋 Planned                                                                                                                                                  |
+| `clawql-sandbox`           | ✅ Shipped — **`SandboxPlugin`**, Kata default in-cluster **`auto`**                                                                                        |
 | `clawql-printingpress`     | 📋 Planned                                                                                                        |
 | `clawql-goose`             | 📋 Planned                                                                                                        |
 | Kubernetes Operator        | 📋 Planned                                                                                                        |

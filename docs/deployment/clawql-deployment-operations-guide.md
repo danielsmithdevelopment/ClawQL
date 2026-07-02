@@ -131,7 +131,7 @@ cp .env.example .env   # set TIKA_BASE_URL, PAPERLESS_API_TOKEN, etc.
 npm run start:http
 ```
 
-Default provider merge is **`all-providers`** (includes all seven IDP vendors unless **`CLAWQL_ENABLE_DOCUMENTS=0`**).
+Default provider merge is **`all-providers`** (includes all **eight** IDP vendors unless **`CLAWQL_ENABLE_DOCUMENTS=0`**).
 
 ---
 
@@ -154,7 +154,7 @@ Full specification: **[Operator target architecture](../design/operator-target-a
 | ------------------------- | ---------------------------------------------------------------------------- |
 | Helm chart                | [helm.md](helm.md)                                                           |
 | Kustomize / K8s           | [deploy-k8s.md](deploy-k8s.md)                                               |
-| IDP seven-vendor stack    | [idp-pipeline.md](../providers/idp-pipeline.md)                              |
+| IDP eight-vendor stack    | [idp-pipeline.md](../providers/idp-pipeline.md) · [clawql-idp-helm.md](clawql-idp-helm.md) · [observability/README.md](../observability/README.md) |
 | Operator design (planned) | [operator-target-architecture.md](../design/operator-target-architecture.md) |
 | Vision & roadmap          | [clawql-vision-roadmap.md](../vision/clawql-vision-roadmap.md)               |
 

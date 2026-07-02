@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+> **Note:** Items below are on **`main`** (post-**6.4.0** npm tag) and documented in release notes / IDP wave guides; they will appear in the next semver release entry when tagged.
+
 ### Added
 
 - **Docling Helm reference deployment + classifier** ([#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248)): opt-in **`documentPipeline.docling`** (`quay.io/docling-project/docling-serve-cpu:v1.14.3`), **`DOCLING_BASE_URL`** wiring, **`docling.localhost`** ingress; MCP **`classify_document`** when **`CLAWQL_ENABLE_IDP_CLASSIFIER=1`**; reference classifier HTTP sample + **`docker/compose/docling-classifier.compose.yml`**; **`DEFAULT_IDP_PIPELINE`** Docling layout-parse hop.

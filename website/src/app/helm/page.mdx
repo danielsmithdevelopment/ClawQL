@@ -82,6 +82,20 @@ idpCollaboration:
     externalUrl: '' # point at coneshare-compose in production
 ```
 
+## Umbrella chart: full IDP (`charts/clawql-idp`)
+
+For document pipeline + collaboration + optional Docling in one install:
+
+```bash
+helm upgrade --install clawql-idp ./charts/clawql-idp \
+  --namespace clawql \
+  --create-namespace \
+  -f charts/clawql-idp/values-idp-full.yaml
+```
+
+- **Guide:** [`docs/deployment/clawql-idp-helm.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/clawql-idp-helm.md)
+- **Observability:** [`docs/observability/README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/observability/README.md)
+
 ## Helm vs Kustomize
 
 |             | [Kubernetes / Kustomize](/kubernetes)       | Helm (this page)                                                           |

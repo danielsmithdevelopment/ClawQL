@@ -1,6 +1,6 @@
 # ClawQL Grafana dashboards
 
-**Shipped in-repo:** dashboard JSON + Prometheus scrape path ([#210](https://github.com/danielsmithdevelopment/ClawQL/issues/210) — closed). **Active follow-up:** [#225](https://github.com/danielsmithdevelopment/ClawQL/issues/225) (OpenClaw exposure, extra `/metrics` panels when series land, optional GitOps dashboard wiring).
+**Shipped in-repo:** dashboard JSON + Prometheus scrape path ([#210](https://github.com/danielsmithdevelopment/ClawQL/issues/210) — closed). **IDP operator bundle index:** [`docs/observability/README.md`](../observability/README.md) ([#252](https://github.com/danielsmithdevelopment/ClawQL/issues/252)). **Active follow-up:** [#225](https://github.com/danielsmithdevelopment/ClawQL/issues/225) (OpenClaw exposure, extra `/metrics` panels when series land, optional GitOps dashboard wiring).
 
 ## Bundled dashboard
 
