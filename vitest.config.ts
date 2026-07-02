@@ -28,6 +28,7 @@ export default defineConfig({
       "packages/clawql-sandbox/src/**/*.test.ts",
       "packages/clawql-ouroboros/src/**/*.test.ts",
       "packages/panguard-mcp-bridge/src/**/*.test.ts",
+      "scripts/kubernetes/**/*.test.ts",
     ],
     /** Avoid worker RPC teardown races when HTTP servers + fetch leave sockets pending. */
     teardownTimeout: 20_000,

@@ -81,6 +81,7 @@ spec:
             {{- with .Values.extraEnv }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
+          {{- include "clawql-mcp.envFromSecretRefs" . | nindent 10 }}
           resources:
             {{- toYaml .Values.nats.worker.resources | nindent 12 }}
 {{- end }}

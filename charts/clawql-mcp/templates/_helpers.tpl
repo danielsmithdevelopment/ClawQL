@@ -270,6 +270,24 @@ app.kubernetes.io/component: goose
 {{- if or .Values.nats.enabled .Values.nats.url }}1{{- end }}
 {{- end }}
 
+{{- define "clawql-mcp.vaultServiceUrl" -}}
+{{- printf "http://%s-hashicorpvault.%s.svc.cluster.local:8200" .Release.Name .Release.Namespace }}
+{{- end }}
+
+{{- define "clawql-mcp.envFromSecretRefs" -}}
+{{- if or .Values.envFromSecret (gt (len .Values.envFromSecrets) 0) }}
+envFrom:
+  {{- if .Values.envFromSecret }}
+  - secretRef:
+      name: {{ .Values.envFromSecret }}
+  {{- end }}
+  {{- range .Values.envFromSecrets }}
+  - secretRef:
+      name: {{ . | quote }}
+  {{- end }}
+{{- end }}
+{{- end }}
+
 {{- define "clawql-mcp.onyxName" -}}
 {{- printf "%s-onyx" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
 {{- end }}
