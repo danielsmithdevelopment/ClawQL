@@ -6,14 +6,18 @@ End-to-end **intelligent document processing** sample for mortgage / lending und
 
 ## Contents
 
-| File | Purpose |
-| ---- | ------- |
-| [`workflow-template.yaml`](workflow-template.yaml) | Argo `WorkflowTemplate` — parse → classify → suspend → finalize |
-| [`label-studio-config.xml`](label-studio-config.xml) | Label Studio labeling UI for W-2 field validation |
-| [`openclaw-prompt.md`](openclaw-prompt.md) | OpenClaw system prompt addendum + tool sequence |
-| [`fixtures/synthetic-w2.txt`](fixtures/synthetic-w2.txt) | Demo W-2 text (upload or base64 to Docling) |
+| File                                                     | Purpose                                                         |
+| -------------------------------------------------------- | --------------------------------------------------------------- |
+| [`workflow-template.yaml`](workflow-template.yaml)       | Argo `WorkflowTemplate` — parse → classify → suspend → finalize |
+| [`label-studio-config.xml`](label-studio-config.xml)     | Label Studio labeling UI for W-2 field validation               |
+| [`openclaw-prompt.md`](openclaw-prompt.md)               | OpenClaw system prompt addendum + tool sequence                 |
+| [`fixtures/synthetic-w2.txt`](fixtures/synthetic-w2.txt) | Demo W-2 text (upload or base64 to Docling)                     |
 
 ## Prerequisites
+
+**Docker Compose (local POC):** [`docker/compose/lending.compose.yml`](../../docker/compose/lending.compose.yml) — one-command lending stack ([#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251)). See [`docker/compose/README.md`](../../docker/compose/README.md).
+
+**Kubernetes / production-style:**
 
 - ClawQL MCP with **`CLAWQL_ENABLE_WORKFLOW=1`**, **`CLAWQL_ENABLE_HITL_LABEL_STUDIO=1`**, documents on (default)
 - **`DOCLING_BASE_URL`** pointing at Docling Serve

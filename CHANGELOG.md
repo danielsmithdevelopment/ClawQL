@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Lending vertical Docker Compose** ([#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251)): **`docker/compose/lending.compose.yml`** — ClawQL MCP + Docling + reference classifier + LangExtract (demo) + Label Studio CE; env template **`lending.env.example`**; guide **[`docker/compose/README.md`](docker/compose/README.md)**; `make compose-lending-config-test`.
 - **Docling Helm reference deployment + classifier** ([#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248)): opt-in **`documentPipeline.docling`** (`quay.io/docling-project/docling-serve-cpu:v1.14.3`), **`DOCLING_BASE_URL`** wiring, **`docling.localhost`** ingress; MCP **`classify_document`** when **`CLAWQL_ENABLE_IDP_CLASSIFIER=1`**; reference classifier HTTP sample + **`docker/compose/docling-classifier.compose.yml`**; **`DEFAULT_IDP_PIPELINE`** Docling layout-parse hop.
 - **LangExtract extraction layer** ([#246](https://github.com/danielsmithdevelopment/ClawQL/issues/246)): MCP **`extract_document`** when **`CLAWQL_ENABLE_LANGEXTRACT=1`** — grounded extractions via **`LANGEXTRACT_BASE_URL`** or local heuristic; reference Python sidecar (`deployment/samples/langextract-http/`), threat model, onboarding doc. Live-mode pip deps documented in sample README (no committed `requirements.txt` — OSV supply-chain gate).
 - **Vault default provider secrets** ([#241](https://github.com/danielsmithdevelopment/ClawQL/issues/241)): default **`envFromSecret: clawql-provider-env`**, full IDP provider KV catalog, Helm **`secretSourcing.externalSecrets`**, expanded **`import-dotenv-to-vault`**, docs **[`docs/deployment/vault-provider-secrets.md`](docs/deployment/vault-provider-secrets.md)**.
@@ -22,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Documentation
 
+- **`docker/compose/README.md`**, gap plan + IDP matrix #251 lending stack.
 - **`docs/mcp/langfuse-eval-ouroboros.md`**, IDP matrix #250 → Shipped.
 - **HITL multi-reviewer RBAC** ([#249](https://github.com/danielsmithdevelopment/ClawQL/issues/249)): CE vs Enterprise capability matrix, ClawQL role mapping, CE workarounds, **dual-project two-person rule** pattern, Helm BYO Label Studio pointers — [`docs/mcp/hitl-label-studio.md`](docs/mcp/hitl-label-studio.md#14-multi-reviewer-rbac-ce-vs-enterprise).
 - **`docs/deployment/nats-keda-worker.md`**, Helm `nats.worker` / `nats.keda` values, IDP matrix #257 → Shipped.

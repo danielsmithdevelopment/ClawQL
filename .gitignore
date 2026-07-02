@@ -8,6 +8,7 @@ dist/
 .env
 .env.*
 !.env.example
+docker/compose/lending.env
 
 # Logs
 *.log
