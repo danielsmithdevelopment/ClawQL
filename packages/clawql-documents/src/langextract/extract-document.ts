@@ -1,10 +1,6 @@
 import { logMcpToolShape } from "clawql-api/mcp/tool-shape-log";
 import { z } from "zod";
-import {
-  langextractBaseUrl,
-  langextractDefaultModelId,
-  langextractToolEnabled,
-} from "./env.js";
+import { langextractBaseUrl, langextractDefaultModelId, langextractToolEnabled } from "./env.js";
 
 const extractionExampleSchema = z.object({
   extraction_class: z.string().min(1),
