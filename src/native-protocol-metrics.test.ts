@@ -6,9 +6,9 @@ import {
   recordNativeGraphqlExecute,
   recordNativeMergeFromOperations,
   resetNativeProtocolMetricsForTests,
-} from "./native-protocol-metrics.js";
-import { renderPrometheusMetrics } from "./native-protocol-prometheus.js";
-import type { Operation } from "./operation-types.js";
+} from "clawql-api";
+import { renderPrometheusMetrics } from "clawql-api";
+import type { Operation } from "clawql-api";
 
 function gqlOp(label: string): Operation {
   return {

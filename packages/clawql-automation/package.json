@@ -73,6 +73,11 @@
       "import": "./dist/plugin/index.js",
       "require": "./dist/plugin/index.cjs"
     },
+    "./hitl/label-studio": {
+      "types": "./dist/hitl/label-studio.d.ts",
+      "import": "./dist/hitl/label-studio.js",
+      "require": "./dist/hitl/label-studio.cjs"
+    },
     "./package.json": "./package.json"
   },
   "scripts": {
@@ -93,6 +98,7 @@
     "zod": "4.3.6"
   },
   "devDependencies": {
+    "@types/express": "^5.0.6",
     "@types/node": "^22.0.0",
     "@types/sql.js": "^1.4.11",
     "tsup": "^8.3.0",

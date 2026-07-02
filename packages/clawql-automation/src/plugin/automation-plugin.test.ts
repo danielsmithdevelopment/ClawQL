@@ -47,4 +47,14 @@ describe("createAutomationPlugin", () => {
     Effect.runSync(createAutomationPlugin({ enableArgoCd: true }).onRegister!(api));
     expect(registry.list().map((t) => t.name)).toEqual(["argocd"]);
   });
+
+  it("registers hitl_enqueue_label_studio when enableHitlLabelStudio", () => {
+    configureAutomationPluginDeps({
+      execute: async () => ({ content: [{ type: "text", text: "{}" }] }),
+    });
+    const registry = new McpToolRegistry();
+    const api = registry.registrationApi();
+    Effect.runSync(createAutomationPlugin({ enableHitlLabelStudio: true }).onRegister!(api));
+    expect(registry.list().map((t) => t.name)).toEqual(["hitl_enqueue_label_studio"]);
+  });
 });

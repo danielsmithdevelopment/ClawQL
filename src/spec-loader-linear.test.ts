@@ -3,7 +3,7 @@
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { loadSpec, resetSpecCache } from "./spec-loader.js";
+import { loadSpec, resetSpecCache } from "clawql-api";
 
 describe("spec-loader bundled Linear (GraphQL-only)", () => {
   const keysToClear = [

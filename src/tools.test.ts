@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { __testUtils } from "./tools.js";
-import type { Operation } from "./spec-loader.js";
+import type { Operation } from "clawql-api";
 
 const op = {
   id: "run.projects.locations.services.get",

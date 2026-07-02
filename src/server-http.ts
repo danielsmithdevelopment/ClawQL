@@ -16,7 +16,7 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { attachGraphqlHttpToMcpApp } from "./graphql-http-attach.js";
 import { createRegisteredMcpServer } from "./mcp-server-factory.js";
-import { loadSpec, registerSpecCacheShutdownHooks } from "./spec-loader.js";
+import { loadSpec, registerSpecCacheShutdownHooks } from "clawql-api";
 import { preloadSchemaFieldCacheFromDisk } from "./tools.js";
 import { maybeStartGrpcMcpServer } from "mcp-grpc-transport";
 import {
@@ -24,21 +24,13 @@ import {
   getVaultStartupStatus,
   validateOrDegradeObsidianVaultAtStartup,
 } from "./vault-config.js";
-import { registerPostgresPoolShutdownHooks } from "./vector-store/pgvector.js";
-import {
-  getClawqlOptionalToolFlags,
-  type ClawqlOptionalToolFlags,
-} from "./clawql-optional-flags.js";
-import {
-  getNativeProtocolMetricsSnapshot,
-  nativeProtocolMetricsEnabled,
-} from "./native-protocol-metrics.js";
-import {
-  prometheusDisabledForHttp,
-  renderPrometheusMetrics,
-} from "./native-protocol-prometheus.js";
+import { registerPostgresPoolShutdownHooks } from "clawql-memory/vector/pgvector";
+import { getClawqlOptionalToolFlags, type ClawqlOptionalToolFlags } from "clawql-api";
+import { getNativeProtocolMetricsSnapshot, nativeProtocolMetricsEnabled } from "clawql-api";
+import { prometheusDisabledForHttp, renderPrometheusMetrics } from "clawql-api";
 import { maybeInitOtelTracing } from "./otel-tracing.js";
-import { handleLabelStudioWebhookRequest } from "./hitl-label-studio.js";
+import { handleLabelStudioWebhookRequest } from "clawql-automation/hitl/label-studio";
+import { configureHitlTransportDeps } from "./hitl-transport.js";
 import { handleConeshareWebhookRequest } from "./coneshare-webhook.js";
 import { createWebhookRateLimiter } from "./webhook-rate-limit.js";
 
@@ -140,6 +132,7 @@ export type CreateMcpHttpAppOptions = {
  * Each call uses a fresh session transport map (safe for parallel tests).
  */
 export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): Promise<Express> {
+  configureHitlTransportDeps();
   if (!options.skipSpecPreload) {
     await loadSpec();
     await preloadSchemaFieldCacheFromDisk();
@@ -193,7 +186,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
             loadCuckooArtifactUpdatedAt,
             loadVaultMerkleSnapshotFromDb,
             memoryDbSyncEnabled,
-          } = await import("./memory-db.js");
+          } = await import("clawql-memory/db/memory-db");
           if (memoryDbSyncEnabled()) {
             if (process.env.CLAWQL_MERKLE_ENABLED === "1") {
               base.merkleSnapshot = await loadVaultMerkleSnapshotFromDb(vault);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { extractWikilinkTargets, stripVaultFrontmatter } from "./vault-markdown.js";
+import { extractWikilinkTargets, stripVaultFrontmatter } from "clawql-memory";
 
 describe("vault-markdown", () => {
   it("stripVaultFrontmatter removes leading YAML block", () => {

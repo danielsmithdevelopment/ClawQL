@@ -3,20 +3,11 @@
  * Opt-in via **`CLAWQL_ENABLE_HITL_LABEL_STUDIO=1`**.
  */
 
+import { getClawqlOptionalToolFlags } from "clawql-api";
 import type { Request, Response } from "express";
-import { handleAuditToolInput } from "./clawql-audit.js";
-import { getClawqlOptionalToolFlags } from "./clawql-optional-flags.js";
-import { handleMemoryIngestToolInput } from "./memory-ingest.js";
-import { getObsidianVaultPath } from "./vault-config.js";
-import { enforceWebhookRateLimit } from "./webhook-rate-limit.js";
-import {
-  maybeResumeWorkflowFromHitl,
-  parseHitlWorkflowRef,
-} from "clawql-automation/workflow/suspend-resume";
-import {
-  publishHitlCompletedEvent,
-  publishHitlEnqueuedEvent,
-} from "clawql-automation/nats/publish-hooks";
+import { publishHitlCompletedEvent, publishHitlEnqueuedEvent } from "../nats/publish-hooks.js";
+import { maybeResumeWorkflowFromHitl, parseHitlWorkflowRef } from "../workflow/suspend-resume.js";
+import { getHitlWebhookDeps } from "./deps.js";
 
 export type HitlLabelStudioEnqueueParams = {
   /** Label Studio project primary key (integer). */
@@ -281,7 +272,8 @@ function extractWebhookFields(body: unknown): {
  * When vault memory is enabled and path is writable, records reviewer output via **`memory_ingest`**; otherwise **`audit`** append.
  */
 export async function handleLabelStudioWebhookRequest(req: Request, res: Response): Promise<void> {
-  if (!enforceWebhookRateLimit(req, res)) return;
+  const deps = getHitlWebhookDeps();
+  if (!deps.enforceWebhookRateLimit(req, res)) return;
   if (!getWebhookTokenExpected() && process.env.NODE_ENV === "production") {
     res.status(503).json({
       ok: false,
@@ -311,7 +303,7 @@ export async function handleLabelStudioWebhookRequest(req: Request, res: Respons
   });
 
   const flags = getClawqlOptionalToolFlags();
-  const vault = getObsidianVaultPath();
+  const vault = deps.getObsidianVaultPath();
 
   const insightsParts = [
     "## Summary",
@@ -329,7 +321,7 @@ export async function handleLabelStudioWebhookRequest(req: Request, res: Respons
     rawPayload.length > 120_000 ? `${rawPayload.slice(0, 120_000)}\n… (truncated)` : rawPayload;
 
   if (flags.enableMemory && vault) {
-    const mem = await handleMemoryIngestToolInput({
+    const mem = await deps.handleMemoryIngest({
       title: "HITL Label Studio review",
       insights,
       sessionId: correlationId,
@@ -352,7 +344,7 @@ export async function handleLabelStudioWebhookRequest(req: Request, res: Respons
     return;
   }
 
-  await handleAuditToolInput({
+  await deps.handleAudit({
     operation: "append",
     category: "hitl",
     action: "label_studio_webhook",
@@ -367,3 +359,5 @@ export async function handleLabelStudioWebhookRequest(req: Request, res: Respons
     workflow_resume: workflowResume.attempted ? workflowResume : undefined,
   });
 }
+
+export { configureHitlWebhookDeps, resetHitlWebhookDepsForTests } from "./deps.js";

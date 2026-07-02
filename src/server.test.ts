@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { resetSpecCache } from "./spec-loader.js";
+import { resetSpecCache } from "clawql-api";
 import { resetSchemaFieldCache } from "./tools.js";
 
 const here = dirname(fileURLToPath(import.meta.url));

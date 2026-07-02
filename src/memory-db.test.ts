@@ -11,8 +11,8 @@ import {
   loadWikilinkEdgesFromDatabase,
   resolveMemoryDatabasePath,
   syncMemoryDbFromDocuments,
-} from "./memory-db.js";
-import { resetMemoryDbArtifactCachesForTests } from "./memory-db-artifact-cache.js";
+} from "clawql-memory/db/memory-db";
+import { resetMemoryDbArtifactCachesForTests } from "clawql-memory";
 
 describe("memory-db", () => {
   const savedVault = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;

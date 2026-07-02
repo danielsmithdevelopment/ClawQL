@@ -7,7 +7,7 @@ import {
   resolveVaultPath,
   withVaultWriteLock,
   writeVaultTextFileAtomic,
-} from "./vault-utils.js";
+} from "clawql-memory/vault/utils";
 
 describe("vault-utils", () => {
   const dirs: string[] = [];

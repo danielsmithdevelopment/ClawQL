@@ -6,14 +6,10 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  recordNativeGraphqlExecute,
-  resetNativeProtocolMetricsForTests,
-} from "./native-protocol-metrics.js";
+import { recordNativeGraphqlExecute, resetNativeProtocolMetricsForTests } from "clawql-api";
 import { resetClawqlApiForTests } from "./clawql-api-adapters.js";
-import { getClawqlOptionalToolFlags } from "./clawql-optional-flags.js";
+import { getClawqlOptionalToolFlags, resetSpecCache } from "clawql-api";
 import { createMcpHttpApp, type CreateMcpHttpAppOptions } from "./server-http.js";
-import { resetSpecCache } from "./spec-loader.js";
 import { resetSchemaFieldCache } from "./tools.js";
 
 /** Optional-flag / webhook HTTP tests — cold `loadSpec()` is unnecessary and flaky on CI. */
@@ -264,7 +260,7 @@ describe("server-http", () => {
     process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS = "1";
     await mkdir(join(dir, "Memory"), { recursive: true });
     await writeFile(join(dir, "Memory/a.md"), "# A\n", "utf8");
-    const { syncMemoryDbFromDocuments } = await import("./memory-db.js");
+    const { syncMemoryDbFromDocuments } = await import("clawql-memory/db/memory-db");
     const text = await readFile(join(dir, "Memory/a.md"), "utf8");
     await syncMemoryDbFromDocuments(dir, [{ path: "Memory/a.md", text, mtimeMs: 1 }]);
     try {
@@ -295,7 +291,7 @@ describe("server-http", () => {
     process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS = "1";
     await mkdir(join(dir, "Memory"), { recursive: true });
     await writeFile(join(dir, "Memory/a.md"), "# A\n", "utf8");
-    const { syncMemoryDbFromDocuments } = await import("./memory-db.js");
+    const { syncMemoryDbFromDocuments } = await import("clawql-memory/db/memory-db");
     const text = await readFile(join(dir, "Memory/a.md"), "utf8");
     await syncMemoryDbFromDocuments(dir, [{ path: "Memory/a.md", text, mtimeMs: 1 }]);
     try {
