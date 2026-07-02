@@ -281,7 +281,7 @@ dashboard:
     pod: clawql-vault-0
     addr: http://127.0.0.1:8200
     mount: secret
-    path: provider/env
+    path: clawql/providers
   resources:
     requests:
       cpu: 25m

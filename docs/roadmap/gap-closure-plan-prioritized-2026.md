@@ -83,7 +83,7 @@ This plan closes known **product gaps** called out for HITL, classification, act
 
 ## Related roadmap (already filed)
 
-- **Vault default for API keys:** [#241](https://github.com/danielsmithdevelopment/ClawQL/issues/241) · **Vault UI:** [#242](https://github.com/danielsmithdevelopment/ClawQL/issues/242)
+- **Vault default for API keys:** [#241](https://github.com/danielsmithdevelopment/ClawQL/issues/241) — **shipped** [vault-provider-secrets.md](../deployment/vault-provider-secrets.md) · **Vault UI:** [#242](https://github.com/danielsmithdevelopment/ClawQL/issues/242) — **shipped** (dashboard **Provider secrets**)
 - **`workflow` + Argo Workflows:** [#243](https://github.com/danielsmithdevelopment/ClawQL/issues/243) · **Argo CD Phase B:** [#244](https://github.com/danielsmithdevelopment/ClawQL/issues/244)
 - **Privacy filter (local MoE):** [#245](https://github.com/danielsmithdevelopment/ClawQL/issues/245) · **LangExtract:** [#246](https://github.com/danielsmithdevelopment/ClawQL/issues/246)
 - **HITL pre-annotations + vertical packs:** [#247](https://github.com/danielsmithdevelopment/ClawQL/issues/247)

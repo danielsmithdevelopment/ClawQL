@@ -7,7 +7,7 @@
  *
  * Default KV path matches the External Secrets docs shape: mount **`secret`**, logical path **`clawql/dotenv`**
  * (every non-empty `.env` key becomes a KV field). Use **`--mode providers`** to write only **`clawql/providers`**
- * (`githubToken`, `slackToken`, `onyxApiToken`) for `docs/deployment/vault-external-secrets-kubernetes-auth.yaml`.
+ * (`githubToken`, `slackToken`, `onyxApiToken`, … — see docs/deployment/vault-provider-secrets.md`) for ExternalSecret sync.
  *
  * See: docs/deployment/external-secrets-operator-install.md
  *
@@ -22,6 +22,10 @@ import { config as loadEnv } from "dotenv";
 import { existsSync, mkdtempSync, writeFileSync, unlinkSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
+import {
+  buildProvidersVaultPayload,
+  PROVIDER_VAULT_KEY_CATALOG,
+} from "./provider-vault-key-catalog.js";
 
 type Mode = "full" | "providers";
 
@@ -132,27 +136,15 @@ function buildPayload(
   parsed: Record<string, string>,
   mode: Mode,
 ): Record<string, string> {
-  const out: Record<string, string> = {};
   if (mode === "providers") {
-    const gh =
-      parsed.CLAWQL_GITHUB_TOKEN?.trim() ||
-      parsed.CLAWQL_BEARER_TOKEN?.trim() ||
-      "";
-    const slack = parsed.CLAWQL_SLACK_TOKEN?.trim() || "";
-    const onyx =
-      parsed.ONYX_API_TOKEN?.trim() ||
-      parsed.CLAWQL_ONYX_API_TOKEN?.trim() ||
-      "";
-    if (gh) out.githubToken = gh;
-    if (slack) out.slackToken = slack;
-    if (onyx) out.onyxApiToken = onyx;
+    const out = buildProvidersVaultPayload(parsed);
     if (Object.keys(out).length === 0) {
-      throw new Error(
-        "mode=providers: no CLAWQL_GITHUB_TOKEN/CLAWQL_BEARER_TOKEN, CLAWQL_SLACK_TOKEN, or ONYX_API_TOKEN/CLAWQL_ONYX_API_TOKEN in .env",
-      );
+      const keys = PROVIDER_VAULT_KEY_CATALOG.flatMap((e) => [...e.envAliases]).join(", ");
+      throw new Error(`mode=providers: no recognized provider tokens in .env (expected one of: ${keys})`);
     }
     return out;
   }
+  const out: Record<string, string> = {};
   for (const [k, v] of Object.entries(parsed)) {
     if (v === undefined || v === "") continue;
     out[k] = v;

@@ -733,14 +733,46 @@ nats:
 extraEnv: []
 
 # Optional: load env vars from an existing Secret (keys become env var names).
-envFromSecret: ""
+# Default name matches External Secrets + `make bootstrap-vault-eso` ([#241](https://github.com/danielsmithdevelopment/ClawQL/issues/241)).
+envFromSecret: clawql-provider-env
 
 # Optional: multiple Secrets merged into envFrom (listed order). Use with External Secrets / VSO → Kubernetes Secrets.
 envFromSecrets: []
 
-# When true, chart rendering fails unless envFromSecret or envFromSecrets is set (production posture).
+# Vault-backed provider credentials — production default ([#241](https://github.com/danielsmithdevelopment/ClawQL/issues/241)).
 secretSourcing:
   requireVaultBackedSecrets: true
+  externalSecrets:
+    # Render ClusterSecretStore + ExternalSecret (requires External Secrets Operator CRDs in cluster).
+    enabled: false
+    secretName: clawql-provider-env
+    clusterSecretStoreName: ""
+    vaultServer: ""
+    vaultMount: secret
+    vaultKvPath: clawql/providers
+    vaultAuthRole: clawql-eso-read
+    kubernetesAuthMount: kubernetes
+    refreshInterval: 5m
+    esoServiceAccount:
+      name: external-secrets
+      namespace: external-secrets
+  # Vault KV `secret/clawql/providers` property → Kubernetes Secret key (becomes container env var).
+  providerEnvMapping:
+    - { property: githubToken, envKey: CLAWQL_GITHUB_TOKEN }
+    - { property: slackToken, envKey: CLAWQL_SLACK_TOKEN }
+    - { property: onyxApiToken, envKey: ONYX_API_TOKEN }
+    - { property: paperlessApiToken, envKey: PAPERLESS_API_TOKEN }
+    - { property: stirlingApiKey, envKey: STIRLING_API_KEY }
+    - { property: doclingApiKey, envKey: DOCLING_API_KEY }
+    - { property: nextcloudUsername, envKey: NEXTCLOUD_USERNAME }
+    - { property: nextcloudAppPassword, envKey: NEXTCLOUD_APP_PASSWORD }
+    - { property: coneshareApiToken, envKey: CONESHARE_API_TOKEN }
+    - { property: cloudflareApiToken, envKey: CLAWQL_CLOUDFLARE_API_TOKEN }
+    - { property: googleAccessToken, envKey: CLAWQL_GOOGLE_ACCESS_TOKEN }
+    - { property: atlassianApiToken, envKey: CLAWQL_ATLASSIAN_TOKEN }
+    - { property: labelStudioApiToken, envKey: CLAWQL_LABEL_STUDIO_API_TOKEN }
+    - { property: hitlWebhookToken, envKey: CLAWQL_HITL_WEBHOOK_TOKEN }
+    - { property: coneshareWebhookToken, envKey: CLAWQL_CONESHARE_WEBHOOK_TOKEN }
 
 # Bundled HashiCorp Vault Helm chart (**always** installed — see **Chart.yaml** dependencies). Do not set
 # **`hashicorpvault.enabled`** to **`false`**; template validation fails (`templates/zzz-defense-in-depth-secrets-policies.yaml`).
@@ -890,7 +922,7 @@ dashboard:
     pod: clawql-vault-0
     addr: http://127.0.0.1:8200
     mount: secret
-    path: provider/env
+    path: clawql/providers
   resources:
     requests:
       cpu: 100m

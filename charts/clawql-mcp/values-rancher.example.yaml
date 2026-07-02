@@ -12,9 +12,8 @@
 # Typical path: Vault → External Secrets → `envFromSecret: clawql-provider-env`.
 #
 # Chart baseline still needs a Vault-synced Secret name for MCP env (default guard: `secretSourcing.requireVaultBackedSecrets=true`).
-# Uncomment when that Secret exists in the release namespace (name must match your ESO reconcile target):
-#
-# envFromSecret: clawql-provider-env
+# Default name matches main `values.yaml` and `make bootstrap-vault-eso`:
+envFromSecret: clawql-provider-env
 #
 # Prerequisites:
 # - Kyverno running before install, or add `--set kyverno.imageSignaturePolicy.enabled=false` temporarily.

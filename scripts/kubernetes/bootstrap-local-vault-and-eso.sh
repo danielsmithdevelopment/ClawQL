@@ -188,15 +188,27 @@ if [[ "${SKIP_VAULT_SEED:-0}" != "1" ]]; then
     vault kv put secret/clawql/providers \
       githubToken=CHANGE_ME_GITHUB_TOKEN \
       slackToken=CHANGE_ME_SLACK_TOKEN \
-      onyxApiToken=CHANGE_ME_ONYX_TOKEN
+      onyxApiToken=CHANGE_ME_ONYX_TOKEN \
+      paperlessApiToken=CHANGE_ME_PAPERLESS_TOKEN \
+      stirlingApiKey=CHANGE_ME_STIRLING_KEY \
+      doclingApiKey=CHANGE_ME_DOCLING_KEY \
+      nextcloudUsername=CHANGE_ME_NEXTCLOUD_USER \
+      nextcloudAppPassword=CHANGE_ME_NEXTCLOUD_APP_PASSWORD \
+      coneshareApiToken=CHANGE_ME_CONESHARE_TOKEN \
+      labelStudioApiToken=CHANGE_ME_LABEL_STUDIO_TOKEN \
+      hitlWebhookToken=CHANGE_ME_HITL_WEBHOOK_TOKEN \
+      coneshareWebhookToken=CHANGE_ME_CONESHARE_WEBHOOK_TOKEN
   "
 else
   echo "==> SKIP_VAULT_SEED=1 — not writing placeholder KV"
 fi
 
-echo "==> Apply ClusterSecretStore + ExternalSecret"
-kubectl_ctx apply -f "${ROOT}/docs/deployment/external-secrets-vault-cluster-secret-store.yaml"
-kubectl_ctx apply -f "${ROOT}/docs/deployment/vault-external-secrets-kubernetes-auth.yaml"
+echo "==> Apply ClusterSecretStore + ExternalSecret (Helm template)"
+helm_ctx template "${REL}" "${ROOT}/charts/clawql-mcp" -n "${NS}" \
+  --set envFromSecret=clawql-provider-env \
+  --set secretSourcing.externalSecrets.enabled=true \
+  --set kyverno.imageSignaturePolicy.enabled=false \
+  | kubectl_ctx apply -f -
 
 echo "==> Wait for ExternalSecret to sync (up to 3m)"
 for _ in $(seq 1 36); do

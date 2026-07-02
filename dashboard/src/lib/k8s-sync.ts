@@ -4,6 +4,13 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { promisify } from 'node:util'
 
+import {
+  applyEnvChangesToVaultProviderData,
+  isProvidersVaultPath,
+  PROVIDERS_VAULT_KV_PATH,
+  vaultProviderDataToEnv,
+} from './provider-vault-catalog'
+
 const execFile = promisify(execFileCallback)
 
 export type SecretSyncOptions = {
@@ -21,7 +28,7 @@ function vaultMount(): string {
 }
 
 function vaultPath(): string {
-  return process.env.CLAWQL_DASHBOARD_VAULT_PATH?.trim() || 'clawql/dotenv'
+  return process.env.CLAWQL_DASHBOARD_VAULT_PATH?.trim() || PROVIDERS_VAULT_KV_PATH
 }
 
 function vaultNamespace(): string {
@@ -38,6 +45,10 @@ function vaultAddr(): string {
 
 function vaultToken(): string {
   return process.env.CLAWQL_DASHBOARD_VAULT_TOKEN?.trim() || process.env.VAULT_TOKEN?.trim() || 'root'
+}
+
+function providersMode(): boolean {
+  return isProvidersVaultPath(vaultPath())
 }
 
 /** RFC 6901 escape for a single path segment after `/data/`. */
@@ -155,13 +166,7 @@ async function patchSecretData(
   ])
 }
 
-/**
- * Decode all `data` entries from a Secret. Returns `null` if the Secret does not exist.
- */
-export async function readSecretData(
-  _namespace: string,
-  _secretName: string,
-): Promise<Record<string, string> | null> {
+async function readVaultKvRaw(): Promise<Record<string, string> | null> {
   try {
     const { stdout } = await execVaultInPod(['kv', 'get', '-mount', vaultMount(), '-format=json', vaultPath()])
     const doc = JSON.parse(stdout) as {
@@ -187,6 +192,53 @@ export async function readSecretData(
   }
 }
 
+async function readKubernetesSecretData(
+  namespace: string,
+  secretName: string,
+): Promise<Record<string, string> | null> {
+  try {
+    const { stdout } = await execKubectl([
+      'get',
+      'secret',
+      secretName,
+      '-n',
+      namespace,
+      '-o',
+      'json',
+    ])
+    const doc = JSON.parse(stdout) as { data?: Record<string, string> }
+    const data = doc.data ?? {}
+    const out: Record<string, string> = {}
+    for (const [k, v] of Object.entries(data)) {
+      out[k] = Buffer.from(v, 'base64').toString('utf8')
+    }
+    return out
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e)
+    if (/NotFound|not found/i.test(msg)) return null
+    throw e instanceof Error ? e : new Error(msg)
+  }
+}
+
+/**
+ * Read provider/env values for the dashboard form.
+ * Source of truth: Vault KV; falls back to the Kubernetes Secret when Vault is empty.
+ */
+export async function readSecretData(
+  namespace: string,
+  secretName: string,
+): Promise<Record<string, string> | null> {
+  const vaultRaw = await readVaultKvRaw()
+  if (providersMode()) {
+    if (vaultRaw && Object.keys(vaultRaw).length > 0) {
+      return vaultProviderDataToEnv(vaultRaw)
+    }
+    const secretData = await readKubernetesSecretData(namespace, secretName)
+    return secretData && Object.keys(secretData).length > 0 ? secretData : null
+  }
+  return vaultRaw
+}
+
 async function writeVaultData(data: Record<string, string>): Promise<void> {
   const dir = await mkdtemp(join(tmpdir(), 'clawql-dashboard-vault-'))
   const localPath = join(dir, 'payload.json')
@@ -207,7 +259,7 @@ async function removeSecretDataKeys(
   keys: string[],
 ): Promise<void> {
   if (keys.length === 0) return
-  const decoded = await readSecretData(namespace, secretName)
+  const decoded = await readKubernetesSecretData(namespace, secretName)
   if (!decoded) return
   const ops = keys
     .filter((k) => Object.prototype.hasOwnProperty.call(decoded, k))
@@ -226,6 +278,30 @@ async function removeSecretDataKeys(
   ])
 }
 
+async function syncKubernetesSecretEnv(
+  namespace: string,
+  secretName: string,
+  envLiterals: Record<string, string>,
+  removeKeys: string[],
+): Promise<void> {
+  const hasLiterals = Object.keys(envLiterals).length > 0
+  const hasRemoves = removeKeys.length > 0
+  if (!hasLiterals && !hasRemoves) return
+
+  const exists = await secretExists(namespace, secretName)
+  if (!exists) {
+    if (!hasLiterals) return
+    await createSecretFromLiterals(namespace, secretName, envLiterals)
+    return
+  }
+  if (hasLiterals) {
+    await patchSecretData(namespace, secretName, envLiterals)
+  }
+  if (hasRemoves) {
+    await removeSecretDataKeys(namespace, secretName, removeKeys)
+  }
+}
+
 async function rolloutRestartDeployment(
   namespace: string,
   deploymentName: string,
@@ -234,10 +310,10 @@ async function rolloutRestartDeployment(
 }
 
 /**
- * Apply literal updates and/or removals to the Secret, then restart the deployment so pods reload.
+ * Apply literal updates and/or removals, persist Vault KV, sync the Kubernetes Secret, restart rollout.
  */
 export async function syncSecretAndRestart(opts: SecretSyncOptions): Promise<void> {
-  const { namespace, deploymentName, literals } = opts
+  const { namespace, secretName, deploymentName, literals } = opts
   const removeKeys = (opts.removeKeys ?? []).filter((k) => k.trim() !== '')
   const hasLiterals = Object.keys(literals).length > 0
   const hasRemoves = removeKeys.length > 0
@@ -246,7 +322,18 @@ export async function syncSecretAndRestart(opts: SecretSyncOptions): Promise<voi
     throw new Error('No changes to apply')
   }
 
-  const current = (await readSecretData(namespace, 'ignored')) ?? {}
+  if (providersMode()) {
+    const currentVault = (await readVaultKvRaw()) ?? {}
+    const nextVault = applyEnvChangesToVaultProviderData(currentVault, literals, removeKeys)
+    await writeVaultData(nextVault)
+
+    const envLiterals: Record<string, string> = { ...literals }
+    await syncKubernetesSecretEnv(namespace, secretName, envLiterals, removeKeys)
+    await rolloutRestartDeployment(namespace, deploymentName)
+    return
+  }
+
+  const current = (await readVaultKvRaw()) ?? {}
   const next: Record<string, string> = { ...current }
 
   for (const [k, v] of Object.entries(literals)) {
@@ -257,5 +344,6 @@ export async function syncSecretAndRestart(opts: SecretSyncOptions): Promise<voi
   }
 
   await writeVaultData(next)
+  await syncKubernetesSecretEnv(namespace, secretName, literals, removeKeys)
   await rolloutRestartDeployment(namespace, deploymentName)
 }

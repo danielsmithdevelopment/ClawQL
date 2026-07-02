@@ -4,7 +4,7 @@ import { Group, Panel, Separator } from 'react-resizable-panels'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import type { EnvCatalog } from '@/lib/env-catalog'
-import { EnvForm } from '@/components/EnvForm'
+import { ProviderVaultForm } from '@/components/ProviderVaultForm'
 import {
   createChatThreadApi,
   fetchChatVault,
@@ -23,7 +23,7 @@ function sortThreads(threads: ChatThread[]): ChatThread[] {
   return [...threads].sort((a, b) => b.updatedAt - a.updatedAt)
 }
 
-export function DashboardShell({ catalog }: { catalog: EnvCatalog }) {
+export function DashboardShell({ catalog: _catalog }: { catalog: EnvCatalog }) {
   const [section, setSection] = useState<DashboardSection>('agent-chat')
   const [threads, setThreads] = useState<ChatThread[]>([])
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null)
@@ -172,12 +172,12 @@ export function DashboardShell({ catalog }: { catalog: EnvCatalog }) {
           ) : section === 'configuration' ? (
             <div className="h-full overflow-y-auto bg-zinc-950 px-4 py-6 sm:px-8">
               <div className="mx-auto max-w-5xl">
-                <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-orange-400">Vault & cluster</h2>
+                <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-orange-400">Provider secrets</h2>
                 <p className="mb-8 max-w-2xl text-sm text-zinc-500">
-                  Map variables from <code className="rounded bg-white/10 px-1">.env.example</code> into Vault, sync the
-                  MCP deployment, and restart the rollout.
+                  Configure bundled vendor API keys without the Vault CLI. Values are stored in{' '}
+                  <code className="rounded bg-white/10 px-1">secret/clawql/providers</code> and synced to your cluster.
                 </p>
-                <EnvForm catalog={catalog} />
+                <ProviderVaultForm />
               </div>
             </div>
           ) : section === 'memory' ? (

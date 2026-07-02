@@ -2,7 +2,7 @@
 
 Use [External Secrets Operator](https://external-secrets.io/) (ESO) so **Vault KV stays the source of truth** and Kubernetes `Secret` objects refresh automatically when Vault values change.
 
-This matches the Helm posture documented in **`docs/deployment/helm.md`**: **`envFromSecret` / `envFromSecrets`** on `clawql-mcp-http` reference **Vault-synced** Secrets (do not use `.env` for cluster provider credentials).
+This matches the Helm posture documented in **`docs/deployment/helm.md`** and **[`docs/deployment/vault-provider-secrets.md`](vault-provider-secrets.md)** ([#241](https://github.com/danielsmithdevelopment/ClawQL/issues/241)): **`envFromSecret` / `envFromSecrets`** on `clawql-mcp-http` reference **Vault-synced** Secrets (do not use `.env` for cluster provider credentials).
 
 Pinned chart (2026‑05‑05 upstream): **`external-secrets/external-secrets` chart `2.4.1`** (app **`v2.4.1`**).
 

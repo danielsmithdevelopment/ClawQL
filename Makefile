@@ -65,7 +65,10 @@ helm-argocd-template-tests:
 helm-nats-keda-template-tests:
 	@bash scripts/kubernetes/test-helm-nats-keda-templates.sh
 
-lint-k8s-manifests: helm-lint helm-ui-template-tests helm-workflow-template-tests helm-argocd-template-tests helm-nats-keda-template-tests kustomize-local-lint
+helm-vault-secrets-template-tests:
+	@bash scripts/kubernetes/test-helm-vault-secrets-templates.sh
+
+lint-k8s-manifests: helm-lint helm-ui-template-tests helm-workflow-template-tests helm-argocd-template-tests helm-nats-keda-template-tests helm-vault-secrets-template-tests kustomize-local-lint
 
 # Local desktop k8s: default Helm + Istio ambient + Gateway/VS + heavy observability; CLAWQL_LOCAL_K8S_ISTIO=0 skips mesh
 local-k8s-up:

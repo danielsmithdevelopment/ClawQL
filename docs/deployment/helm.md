@@ -22,6 +22,8 @@ For **cluster secrets** (tokens for Slack, Onyx, GitHub, cloud APIs, and so on),
 
 For production, use **HashiCorp Vault** as source-of-truth and sync selected keys into namespaced Kubernetes Secrets. Then reference those Secrets from this chart with **`envFromSecret`** / **`envFromSecrets`**.
 
+**Default (6.4.x+):** **`envFromSecret: clawql-provider-env`** — see **[vault-provider-secrets.md](vault-provider-secrets.md)** ([#241](https://github.com/danielsmithdevelopment/ClawQL/issues/241)) for the full provider KV catalog and Helm **`secretSourcing.externalSecrets`** option.
+
 ### Recommended auth method
 
 Use **Vault Kubernetes auth** (ServiceAccount JWT) for in-cluster secret sync controllers. It is the best default for this stack because it avoids long-lived static credentials in-cluster and ties Vault access to Kubernetes workload identity.
@@ -471,7 +473,7 @@ dashboard:
     pod: clawql-vault-0
     addr: http://127.0.0.1:8200
     mount: secret
-    path: provider/env
+    path: clawql/providers
 ```
 
 Operational notes:
