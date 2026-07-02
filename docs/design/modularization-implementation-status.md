@@ -24,7 +24,7 @@ ClawQL is mid-flight on a **strangler extraction** from the root `clawql-mcp` pa
 
 **What is still mostly in `src/`:** MCP tool registration for core tools (`search`/`execute`/`cache`/`audit`), GraphQL proxy entrypoints, server lifecycle, and transport glue (audit/cache MCP wrappers, OTEL, webhooks). **~35 deprecated shims removed** (July 2026); imports now target workspace packages directly.
 
-**Effect-TS:** **Partial.** `search` / `execute` run through `createClawQLApi()` + `SearchService` / `ExecuteService` Effect Layers; extracted packages are still largely **`async`/`await`** with Zod at MCP boundaries. Full Layer composition for memory/documents/automation is **planned**, not shipped.
+**Effect-TS:** **Partial.** `search` / `execute` run through `createClawQLApi()` + `SearchService` / `ExecuteService` Effect Layers; memory/documents/automation register via **`pluginLayers`** (`makeMemoryLayer`, `makeDocumentsLayer`, `makeAutomationLayer`). Domain packages remain largely **`async`/`await`** at IO edges.
 
 **Plugin ecosystem:** **Phase 2 shipped.** `MemoryPlugin`, `DocumentsPlugin`, **`AutomationPlugin`** (includes **`hitl_enqueue_label_studio`** when enabled), **`SandboxPlugin`**, and **`OuroborosPlugin`** register MCP tools via `onRegister`. Argo Workflows **`workflow`** and Argo CD **`argocd`** ship in `AutomationPlugin` when enabled ([#243](https://github.com/danielsmithdevelopment/ClawQL/issues/243), [#244](https://github.com/danielsmithdevelopment/ClawQL/issues/244), [ADR 0004](../adr/0004-argo-cd-workflows-clawql-pipelines.md), [workflow design](workflow-tool-argo.md)).
 
@@ -221,16 +221,16 @@ From enablement §5.4 and the Effect plan §8:
 
 ## 7. Effect-TS migration status
 
-| Area                                                     | Status                                                 |
-| -------------------------------------------------------- | ------------------------------------------------------ |
-| `effect` dependency                                      | ✅ Pinned in `clawql-api`                              |
-| `SearchService` / `ExecuteService`                       | ✅ Live Layers; MCP uses `getClawqlApi().run(Effect…)` |
-| `AuditLive`                                              | ✅ Composed in `createClawQLApi()`                     |
-| `Plugin` / `PluginRegistry`                              | ✅ Effect `register` / `beforeCallTool`                |
-| Extracted packages (`memory`, `documents`, `automation`) | ❌ Still `async`; no `Layer` wrappers                  |
-| `@effect/schema` at boundaries                           | ❌ Zod remains at MCP tool registration                |
-| Memory/Documents `Plugin` Layers                         | 📋 Planned                                             |
-| Operator dynamic Layer list from CRD                     | 📋 Deferred until `createApi(Layer[])` stable          |
+| Area                                                     | Status                                                                                                    |
+| -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `effect` dependency                                      | ✅ Pinned in `clawql-api`                                                                                 |
+| `SearchService` / `ExecuteService`                       | ✅ Live Layers; MCP uses `getClawqlApi().run(Effect…)`                                                    |
+| `AuditLive`                                              | ✅ Composed in `createClawQLApi()`                                                                        |
+| `Plugin` / `PluginRegistry`                              | ✅ Effect `register` / `beforeCallTool`                                                                   |
+| Extracted packages (`memory`, `documents`, `automation`) | ❌ Still `async`; no `Layer` wrappers                                                                     |
+| `@effect/schema` at boundaries                           | ❌ Zod remains at MCP tool registration                                                                   |
+| Memory/Documents/Automation `Plugin` Layers              | ✅ `makeMemoryLayer`, `makeDocumentsLayer`, `makeAutomationLayer` via `createClawQLApi({ pluginLayers })` |
+| Operator dynamic Layer list from CRD                     | 📋 Deferred until `createApi(Layer[])` stable                                                             |
 
 **Rule for new code in extracted packages:** prefer Effect in `clawql-core` / `clawql-api`; legacy `async` is acceptable at IO edges during migration (`Effect.tryPromise`). See plan §7.
 

@@ -1,19 +1,22 @@
 import {
-  composeDefaultPlugins,
   createClawQLApi,
+  defaultPlugins,
   getClawqlOptionalToolFlags,
   loadSpec,
   makeExecuteLive,
+  makeMemoryLayer,
   makeSearchLive,
   McpProxyPipeline,
   SearchService,
   type ClawQLApiHandle,
+  type ClawQLApiRuntimeError,
+  type ClawQLApiRuntimeServices,
   type ExecuteClawqlOperationParams,
   type LoadedSpec,
   type LoadSpecFn,
 } from "clawql-api";
-import { createDocumentsPlugin } from "clawql-documents/plugin";
-import { createAutomationPlugin } from "clawql-automation/plugin";
+import { makeDocumentsLayer } from "clawql-documents/plugin";
+import { makeAutomationLayer } from "clawql-automation/plugin";
 import { natsConfiguredForConsumer } from "clawql-automation/nats/env";
 import { createSandboxPlugin } from "clawql-sandbox/plugin";
 import { createOuroborosPlugin } from "clawql-ouroboros/plugin";
@@ -40,12 +43,31 @@ function buildExecuteLive() {
   return makeExecuteLive(resolveLoadSpec());
 }
 
-function buildMcpPlugins(): readonly Plugin[] {
+function buildSyncOptionalPlugins(): readonly Plugin[] {
   const flags = getClawqlOptionalToolFlags();
-  const plugins: Plugin[] = [...composeDefaultPlugins({ enableMemory: flags.enableMemory })];
+  const plugins: Plugin[] = [];
+  if (flags.enableSandbox) {
+    plugins.push(createSandboxPlugin());
+  }
+  if (flags.enableOuroboros) {
+    plugins.push(createOuroborosPlugin({ enableLangfuseEval: flags.enableLangfuseEval }));
+  }
+  return plugins;
+}
+
+function buildEnabledPluginLayers(): readonly Layer.Layer<
+  never,
+  ClawQLApiRuntimeError,
+  ClawQLApiRuntimeServices
+>[] {
+  const flags = getClawqlOptionalToolFlags();
+  const layers: Layer.Layer<never, ClawQLApiRuntimeError, ClawQLApiRuntimeServices>[] = [];
+  if (flags.enableMemory) {
+    layers.push(makeMemoryLayer());
+  }
   if (flags.enableDocuments) {
-    plugins.push(
-      createDocumentsPlugin({
+    layers.push(
+      makeDocumentsLayer({
         enableOnyx: flags.enableOnyxKnowledge,
         enableIdpPipeline: flags.enableIdpPipeline,
         enableIdpClassifier: flags.enableIdpClassifier,
@@ -61,8 +83,8 @@ function buildMcpPlugins(): readonly Plugin[] {
     flags.enableHitlLabelStudio ||
     natsConfiguredForConsumer()
   ) {
-    plugins.push(
-      createAutomationPlugin({
+    layers.push(
+      makeAutomationLayer({
         enableSchedule: flags.enableSchedule,
         enableNotify: flags.enableNotify,
         enableWorkflow: flags.enableWorkflow,
@@ -72,13 +94,7 @@ function buildMcpPlugins(): readonly Plugin[] {
       })
     );
   }
-  if (flags.enableSandbox) {
-    plugins.push(createSandboxPlugin());
-  }
-  if (flags.enableOuroboros) {
-    plugins.push(createOuroborosPlugin({ enableLangfuseEval: flags.enableLangfuseEval }));
-  }
-  return plugins;
+  return layers;
 }
 
 let apiHandle: ClawQLApiHandle | undefined;
@@ -89,7 +105,8 @@ export function getClawqlApi(): ClawQLApiHandle {
     apiHandle = createClawQLApi({
       searchLayer: buildSearchLive(),
       executeLayer: buildExecuteLive(),
-      plugins: buildMcpPlugins(),
+      plugins: [...defaultPlugins(), ...buildSyncOptionalPlugins()],
+      pluginLayers: buildEnabledPluginLayers(),
     });
   }
   return apiHandle;

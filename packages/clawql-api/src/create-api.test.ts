@@ -1,6 +1,7 @@
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 import { ClawQLApi, createClawQLApi } from "./index.js";
+import { makeMemoryLayer } from "./plugins/memory-layer.js";
 import { MEMORY_PLUGIN_ID } from "./plugins/memory-plugin.js";
 import { PANGUARD_PROXY_PLUGIN_ID } from "./plugins/panguard-proxy-plugin.js";
 
@@ -58,5 +59,20 @@ describe("createClawQLApi", () => {
         })
       )
     ).rejects.toThrow();
+  });
+
+  it("registers plugins from pluginLayers at runtime init", () => {
+    const saved = process.env.CLAWQL_ENABLE_MEMORY;
+    process.env.CLAWQL_ENABLE_MEMORY = "1";
+    try {
+      const api = createClawQLApi({
+        plugins: [],
+        pluginLayers: [makeMemoryLayer()],
+      });
+      expect(api.registry.list().some((p) => p.id === MEMORY_PLUGIN_ID)).toBe(true);
+    } finally {
+      if (saved === undefined) delete process.env.CLAWQL_ENABLE_MEMORY;
+      else process.env.CLAWQL_ENABLE_MEMORY = saved;
+    }
   });
 });

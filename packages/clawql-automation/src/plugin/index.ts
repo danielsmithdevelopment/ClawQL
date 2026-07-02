@@ -3,6 +3,7 @@ export {
   resetAutomationPluginDepsForTests,
   type AutomationPluginDeps,
 } from "./deps.js";
+export { makeAutomationLayer, type AutomationLayerError } from "./automation-layer.js";
 export {
   AUTOMATION_PLUGIN_ID,
   createAutomationPlugin,
