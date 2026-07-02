@@ -12,7 +12,7 @@ Feature tiers (aligned with the [architecture diagram](docs/readme/images/clawql
 - Stdio and HTTP MCP server modes
 - Bundled provider specs for offline lookup and multi-provider workflows
 
-Primary package: `clawql-mcp`  
+Primary package: `clawql-mcp` (current release: **6.4.0** — [`RELEASE_NOTES_v6.4.0.md`](RELEASE_NOTES_v6.4.0.md))  
 Repo: https://github.com/danielsmithdevelopment/ClawQL
 
 ### Container images on GHCR (Docker / Helm)
@@ -66,9 +66,17 @@ Top-level docs index: `docs/README.md`
 - Docker: `docker/README.md`
 - Cloud Run: `docs/deployment/deploy-cloud-run.md`
 - Kubernetes: `docs/deployment/deploy-k8s.md`
-- Helm chart: `docs/deployment/helm.md`
+- Helm chart (`clawql-mcp`): `docs/deployment/helm.md`
+- **IDP umbrella chart (`clawql-idp`):** `docs/deployment/clawql-idp-helm.md` — full-stack profile via `values-idp-full.yaml`
+- **IDP observability bundle:** `docs/observability/README.md` (Grafana dashboard + trace/metrics guide)
+- **OpenClaw + Slack IDP runbook:** `docs/openclaw/slack-first-idp-runbook.md`
+- **Agent PR → Argo CD GitOps:** `docs/gitops/agent-pr-argocd-pipeline.md`
 - Tailscale / Headscale (beginner guide): `docs/deployment/tailscale-and-headscale-for-clawql.md` (website **`/tailscale`**)
 - Headscale runbook + ACL starter: `docs/deployment/headscale-tailnet.md`, `docs/deployment/headscale-acls-clawql.hujson`
+
+### IDP (intelligent document processing)
+
+Eight bundled vendors (Nextcloud, Docling, Tika, Gotenberg, Stirling, Paperless, Onyx, Coneshare) compose via **`search`** / **`execute`** or optional MCP tools (**`run_idp_pipeline`**, **`classify_document`**, **`extract_document`**). Hub: `docs/providers/idp-pipeline.md` · matrix: `docs/roadmap/idp-master-requirements-matrix.md` · OpenClaw profile: `docs/openclaw/openclaw-idp-skill-profile.md`
 
 ### Security and supply chain
 

@@ -22,6 +22,7 @@ describe("getClawqlOptionalToolFlags", () => {
       CLAWQL_ENABLE_IDP_PIPELINE: undefined,
       CLAWQL_ENABLE_IDP_CLASSIFIER: undefined,
       CLAWQL_ENABLE_LANGEXTRACT: undefined,
+      CLAWQL_ENABLE_LANGFUSE_EVAL: undefined,
     });
     expect(f.enableGrpc).toBe(false);
     expect(f.enableGrpcReflection).toBe(false);
@@ -40,6 +41,7 @@ describe("getClawqlOptionalToolFlags", () => {
     expect(f.enableIdpPipeline).toBe(false);
     expect(f.enableIdpClassifier).toBe(false);
     expect(f.enableLangextract).toBe(false);
+    expect(f.enableLangfuseEval).toBe(false);
   });
 
   it("parses ENABLE_GRPC and ENABLE_GRPC_REFLECTION", () => {
@@ -89,6 +91,7 @@ describe("getClawqlOptionalToolFlags", () => {
       CLAWQL_ENABLE_IDP_PIPELINE: "1",
       CLAWQL_ENABLE_IDP_CLASSIFIER: "1",
       CLAWQL_ENABLE_LANGEXTRACT: "1",
+      CLAWQL_ENABLE_LANGFUSE_EVAL: "1",
     } as NodeJS.ProcessEnv);
     expect(f.enableMemory).toBe(true);
     expect(f.enableDocuments).toBe(true);
@@ -102,5 +105,6 @@ describe("getClawqlOptionalToolFlags", () => {
     expect(f.enableIdpPipeline).toBe(true);
     expect(f.enableIdpClassifier).toBe(true);
     expect(f.enableLangextract).toBe(true);
+    expect(f.enableLangfuseEval).toBe(true);
   });
 });

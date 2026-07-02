@@ -28,6 +28,11 @@
       "import": "./dist/plugin/index.js",
       "require": "./dist/plugin/index.cjs"
     },
+    "./eval": {
+      "types": "./dist/eval/index.d.ts",
+      "import": "./dist/eval/index.js",
+      "require": "./dist/eval/index.cjs"
+    },
     "./package.json": "./package.json"
   },
   "scripts": {

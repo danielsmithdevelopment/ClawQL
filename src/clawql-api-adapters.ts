@@ -50,7 +50,7 @@ function buildSyncOptionalPlugins(): readonly Plugin[] {
     plugins.push(createSandboxPlugin());
   }
   if (flags.enableOuroboros) {
-    plugins.push(createOuroborosPlugin());
+    plugins.push(createOuroborosPlugin({ enableLangfuseEval: flags.enableLangfuseEval }));
   }
   return plugins;
 }

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+> **Note:** Items below are on **`main`** (post-**6.4.0** npm tag) and documented in release notes / IDP wave guides; they will appear in the next semver release entry when tagged.
+
 ### Added
 
 - **Docling Helm reference deployment + classifier** ([#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248)): opt-in **`documentPipeline.docling`** (`quay.io/docling-project/docling-serve-cpu:v1.14.3`), **`DOCLING_BASE_URL`** wiring, **`docling.localhost`** ingress; MCP **`classify_document`** when **`CLAWQL_ENABLE_IDP_CLASSIFIER=1`**; reference classifier HTTP sample + **`docker/compose/docling-classifier.compose.yml`**; **`DEFAULT_IDP_PIPELINE`** Docling layout-parse hop.
@@ -16,9 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **KEDA NATS JetStream worker** ([#257](https://github.com/danielsmithdevelopment/ClawQL/issues/257)): optional `nats.worker` Deployment + `nats.keda` ScaledObject for HITL resume consumer lag; bootstrap Job + `nats/cli.js` / `nats/bootstrap-cli.js` in **clawql-automation**; docs **[`docs/deployment/nats-keda-worker.md`](docs/deployment/nats-keda-worker.md)**.
 - **IDP pipeline runner** ([#307](https://github.com/danielsmithdevelopment/ClawQL/issues/307)): MCP **`run_idp_pipeline`** when **`CLAWQL_ENABLE_IDP_PIPELINE=1`** — synchronous **`DEFAULT_IDP_PIPELINE`** execution with per-hop retries, Merkle snapshots, and **`onPipelineHop`** hook; docs **[`docs/mcp/idp-pipeline-runner.md`](docs/mcp/idp-pipeline-runner.md)**.
 - **NATS JetStream workflow events** ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254), [#127](https://github.com/danielsmithdevelopment/ClawQL/issues/127)): opt-in publish (`CLAWQL_NATS_ENABLE_PUBLISH=1`) for HITL/workflow lifecycle; JetStream consumer (`CLAWQL_NATS_ENABLE_CONSUMER=1` + `CLAWQL_NATS_CONSUMER_RESUME_WORKFLOW=1`) resumes Argo workflows on `hitl.completed`; ConeShare viewer events on `clawql.document.*`.
+- **Langfuse eval → Ouroboros** ([#250](https://github.com/danielsmithdevelopment/ClawQL/issues/250)): **`CLAWQL_ENABLE_LANGFUSE_EVAL=1`** + **`CLAWQL_ENABLE_OUROBOROS=1`** — **`POST /observability/langfuse/webhook`**, MCP **`ouroboros_propose_seed_revision_from_eval`**; default dry-run (`CLAWQL_LANGFUSE_EVAL_AUTO_APPLY` off); docs **[`docs/mcp/langfuse-eval-ouroboros.md`](docs/mcp/langfuse-eval-ouroboros.md)**.
 
 ### Documentation
 
+- **`docs/mcp/langfuse-eval-ouroboros.md`**, IDP matrix #250 → Shipped.
 - **HITL multi-reviewer RBAC** ([#249](https://github.com/danielsmithdevelopment/ClawQL/issues/249)): CE vs Enterprise capability matrix, ClawQL role mapping, CE workarounds, **dual-project two-person rule** pattern, Helm BYO Label Studio pointers — [`docs/mcp/hitl-label-studio.md`](docs/mcp/hitl-label-studio.md#14-multi-reviewer-rbac-ce-vs-enterprise).
 - **`docs/deployment/nats-keda-worker.md`**, Helm `nats.worker` / `nats.keda` values, IDP matrix #257 → Shipped.
 - **`docs/mcp/idp-pipeline-runner.md`**, IDP matrix #307 → Shipped, plugin registry + **`mcp-tools.md`** **`run_idp_pipeline`** row.

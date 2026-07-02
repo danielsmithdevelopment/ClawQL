@@ -20,10 +20,10 @@ ClawQL groups capabilities into three bands. This matches the **layer diagram** 
 
 Unset means **on**. Set **`0`**, **`false`**, or **`no`** to hide tools or shrink the default **`all-providers`** merge:
 
-| Band                 | MCP tools                                                                                         | Env to opt out                                                                                                                                                                                                               |
-| -------------------- | ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **ClawQL Memory**    | **`memory_ingest`**, **`memory_recall`**                                                          | **`CLAWQL_ENABLE_MEMORY=0`**                                                                                                                                                                                                 |
-| **ClawQL Documents** | **`ingest_external_knowledge`**; **`knowledge_search_onyx`** when also **`CLAWQL_ENABLE_ONYX=1`** | **`CLAWQL_ENABLE_DOCUMENTS=0`** (drops **tika**, **gotenberg**, **paperless**, **stirling**, **onyx** from the default merge; hides document MCP tools). Explicit **`CLAWQL_BUNDLED_PROVIDERS=…`** can still list those ids. |
+| Band                 | MCP tools                                                                                                                                                                                            | Env to opt out                                                                                                                                                                                                                                                          |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **ClawQL Memory**    | **`memory_ingest`**, **`memory_recall`**                                                                                                                                                             | **`CLAWQL_ENABLE_MEMORY=0`**                                                                                                                                                                                                                                            |
+| **ClawQL Documents** | **`ingest_external_knowledge`**; **`knowledge_search_onyx`** when also **`CLAWQL_ENABLE_ONYX=1`**; optional **`run_idp_pipeline`**, **`classify_document`**, **`extract_document`** (separate flags) | **`CLAWQL_ENABLE_DOCUMENTS=0`** (drops **docling**, **tika**, **gotenberg**, **paperless**, **stirling**, **onyx**, **nextcloud**, **coneshare** from the default merge; hides document MCP tools). Explicit **`CLAWQL_BUNDLED_PROVIDERS=…`** can still list those ids. |
 
 ### Default off — opt in
 
@@ -40,6 +40,8 @@ Set **`1`** / **`true`** / **`yes`** where noted:
 **`argocd`** — observe/sync **Argo CD Applications** via Kubernetes CRD API. **`CLAWQL_ENABLE_ARGO_CD=1`** + namespace allowlist. Helm: **`argocd.enabled`**. Operator guide: [`docs/mcp/argocd-tool.md`](../mcp/argocd-tool.md).
 
 **`knowledge_search_onyx`** — **`CLAWQL_ENABLE_ONYX=1`** plus **Documents** still enabled (documents off hides the tool regardless).
+
+**IDP MCP tools (documents on, each opt-in):** **`run_idp_pipeline`** (`CLAWQL_ENABLE_IDP_PIPELINE=1`), **`classify_document`** (`CLAWQL_ENABLE_IDP_CLASSIFIER=1`), **`extract_document`** (`CLAWQL_ENABLE_LANGEXTRACT=1`). See [`docs/mcp/idp-pipeline-runner.md`](../mcp/idp-pipeline-runner.md), [`docs/runbooks/fine-tuned-classifier.md`](../runbooks/fine-tuned-classifier.md), [`docs/providers/langextract-onboarding.md`](../providers/langextract-onboarding.md).
 
 ### Diagram vs. this build
 

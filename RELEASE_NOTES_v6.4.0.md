@@ -11,6 +11,9 @@
 - **Sandbox Kata (in-cluster):** **`CLAWQL_ENABLE_SANDBOX=1`** with unset backend in Kubernetes defaults to **`auto`** (**Kata** → Docker → bridge → Seatbelt); Helm **`sandboxKata`**.
 - **IDP expansion:** default **`all-providers`** merge adds **nextcloud** + **coneshare** when documents are enabled; optional ConeShare webhook (**`CLAWQL_ENABLE_CONESHARE=1`**).
 - **Docling + lending W-2 samples:** bundled **`docling`** provider ([#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248)); W-2 reference pack ([#253](https://github.com/danielsmithdevelopment/ClawQL/issues/253)) under **`deployment/samples/lending-w2/`**; classifier runbook at **`docs/runbooks/fine-tuned-classifier.md`**.
+- **IDP epic wave (#252–#258):** umbrella Helm chart **`charts/clawql-idp`** + **`values-idp-full.yaml`**; observability bundle (**`docs/observability/`**, Grafana **`clawql-idp-observability.json`**); Slack-first IDP runbook; agent PR → Argo CD GitOps doc.
+- **LangExtract + pipeline runner:** MCP **`extract_document`** (`CLAWQL_ENABLE_LANGEXTRACT=1`), **`run_idp_pipeline`** (`CLAWQL_ENABLE_IDP_PIPELINE=1`); reference sidecar **`deployment/samples/langextract-http/`** (demo mode by default; live pip deps in Dockerfile comments — no committed `requirements.txt` for OSV).
+- **Vault provider secrets (#241):** default **`envFromSecret: clawql-provider-env`**, dashboard Provider secrets UI (#242), KEDA NATS worker (#257).
 
 ### Upgrade notes (6.3.x → 6.4.0)
 
@@ -23,7 +26,8 @@
 
 ### Helm chart
 
-- **`charts/clawql-mcp`:** **Chart.version `0.6.7`**, **`appVersion` `6.4.0`** (aligns with npm). Review new values: **`enableWorkflow`**, **`workflow.*`**, **`argocd`**, **`sandboxKata`**, **`idpCollaboration`**.
+- **`charts/clawql-mcp`:** **Chart.version `0.6.7`**, **`appVersion` `6.4.0`** (aligns with npm). Review new values: **`enableWorkflow`**, **`workflow.*`**, **`argocd`**, **`sandboxKata`**, **`idpCollaboration`**, **`documentPipeline.docling`**.
+- **`charts/clawql-idp`:** umbrella chart for full IDP profile — see **`docs/deployment/clawql-idp-helm.md`** and **`values-idp-full.yaml`**.
 
 ### Install
 

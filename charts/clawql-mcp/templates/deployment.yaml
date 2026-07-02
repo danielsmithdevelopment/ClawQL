@@ -228,6 +228,10 @@ spec:
             - name: CLAWQL_ENABLE_OUROBOROS
               value: "1"
             {{- end }}
+            {{- if .Values.enableLangfuseEval }}
+            - name: CLAWQL_ENABLE_LANGFUSE_EVAL
+              value: "1"
+            {{- end }}
             {{- if .Values.ouroborosDatabaseUrl }}
             - name: CLAWQL_OUROBOROS_DATABASE_URL
               value: {{ .Values.ouroborosDatabaseUrl | quote }}

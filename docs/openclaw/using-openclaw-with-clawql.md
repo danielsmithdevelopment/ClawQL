@@ -6,6 +6,7 @@ This guide describes **end-to-end** how to run **OpenClaw** (the **CLI / gateway
 
 - **[`clawql-bootstrap.md`](clawql-bootstrap.md)** — Phase 0 smoke tests and checklist ([#226](https://github.com/danielsmithdevelopment/ClawQL/issues/226)).
 - **[`openclaw-idp-skill-profile.md`](openclaw-idp-skill-profile.md)** — OpenClaw + document pipeline contract ([#227](https://github.com/danielsmithdevelopment/ClawQL/issues/227)).
+- **[`slack-first-idp-runbook.md`](slack-first-idp-runbook.md)** — Slack + OpenClaw end-to-end IDP workflow ([#256](https://github.com/danielsmithdevelopment/ClawQL/issues/256)); deploy via **[`clawql-idp-helm.md`](../deployment/clawql-idp-helm.md)**.
 
 **Umbrella tracking:** [#128](https://github.com/danielsmithdevelopment/ClawQL/issues/128).
 
