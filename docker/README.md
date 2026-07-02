@@ -6,12 +6,12 @@ Slim [Distroless](https://github.com/GoogleContainerTools/distroless) image with
 
 Upstream **ClawQL** ships four container images under **`ghcr.io/danielsmithdevelopment/`**:
 
-| Image | Typical use |
-| ----- | ----------- |
-| **`clawql-mcp`** | MCP server runtime |
-| **`clawql-website`** | Bundled docs / provider UI (`make local-k8s-up`) |
-| **`clawql-dashboard`** | Env / ops dashboard Helm workload |
-| **`clawql-panguard-mcp-bridge`** | Optional MCP gateway image |
+| Image                            | Typical use                                      |
+| -------------------------------- | ------------------------------------------------ |
+| **`clawql-mcp`**                 | MCP server runtime                               |
+| **`clawql-website`**             | Bundled docs / provider UI (`make local-k8s-up`) |
+| **`clawql-dashboard`**           | Env / ops dashboard Helm workload                |
+| **`clawql-panguard-mcp-bridge`** | Optional MCP gateway image                       |
 
 Those packages are **required to stay Public** so that:
 
@@ -122,18 +122,21 @@ docker run -i --rm --entrypoint node clawql-mcp dist/server.js
 
 ## Layout
 
-| Path                             | Purpose                                                           |
-| -------------------------------- | ----------------------------------------------------------------- |
-| `docker/Dockerfile`              | Multi-stage build → distroless runtime                            |
-| `.dockerignore`                  | Keeps build context small (root; used by `docker build` from `.`) |
-| `docker/docker-compose.yml`      | Local stack (`clawql-mcp-http` only)                              |
-| `docker/kubernetes-starter.yaml` | Starter K8s namespace + Deployments + Services                    |
+| Path                             | Purpose                                                                                                                                         |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `docker/Dockerfile`              | Multi-stage build → distroless runtime                                                                                                          |
+| `.dockerignore`                  | Keeps build context small (root; used by `docker build` from `.`)                                                                               |
+| `docker/docker-compose.yml`      | Local stack (`clawql-mcp-http` only)                                                                                                            |
+| `docker/compose/`                | Vertical IDP stacks ([#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251)) — start with [`compose/README.md`](compose/README.md) |
+| `docker/kubernetes-starter.yaml` | Starter K8s namespace + Deployments + Services                                                                                                  |
 
 **Helm:** a maintained chart lives at **`charts/clawql-mcp`** — see **[`docs/deployment/helm.md`](../docs/deployment/helm.md)**. Kustomize overlays remain under **`docker/kustomize/`**.
 
 ## Docker Compose (local)
 
 **Conflict with Kubernetes:** If you use **`make local-k8s-up`** (ClawQL in the **`clawql`** namespace), **do not** run Compose on the same machine. Compose binds **`localhost:8080`** (MCP); Kubernetes local Helm exposes MCP on **Ingress** **`http://clawql-mcp.localhost/mcp`** (prod parity — same pattern as **`https://mcp.example.com/mcp`**). **`localhost:4000`** may still conflict for GraphQL. Stop Compose first: `docker compose -f docker/docker-compose.yml down`. Prefer **one** local runtime: either Compose **or** K8s (recommended when Langfuse or other workloads already run in-cluster).
+
+**Lending vertical (W-2 IDP demo):** [`compose/lending.compose.yml`](compose/lending.compose.yml) — ClawQL + Docling + classifier + LangExtract + Label Studio. See [`compose/README.md`](compose/README.md).
 
 Run both services together (containers use **`restart: unless-stopped`** so they come back after Docker Desktop or host reboot):
 
@@ -162,7 +165,7 @@ Endpoints:
 3. From the repo root, **`make local-k8s-up`** installs **Kyverno** (namespace **`kyverno`**) and applies a **ClusterPolicy** that **enforces Cosign (keyless)** signatures for **`ghcr.io/danielsmithdevelopment/clawql-mcp*`**, **`clawql-panguard-mcp-bridge*`**, **`clawql-website*`**, and **`clawql-dashboard*`** in the **`clawql`** release namespace only. With **Istio** (default ambient), **`ingress-nginx` is omitted automatically** and **`istio-ingress`** **`deployment/clawql-mcp-ingress`** is exposed on **localhost :80 / :50051** via **`Service/clawql-mcp-ingress` `type: LoadBalancer`** on **docker-desktop** / **rancher-desktop** kube contexts (automatic — **`hostNetwork`** would bind inside the VM only). On other clusters the script defaults **`hostNetwork`** + **ClusterIP** unless you set **`CLAWQL_ISTIO_GATEWAY_HOST_NETWORK=0`**. **Gateway + VirtualServices** terminate **`localhost`**, **`clawql-mcp.localhost`**, **`clawql.localhost`**, **`onyx.localhost`**, … without per-user **`kubectl`** steps. Helm still deploys MCP + UI workloads; **`CLAWQL_LOCAL_K8S_ISTIO=0`** switches back to **ingress-nginx** + rendered **Ingress**. It runs **`helm upgrade --install`** with **`charts/clawql-mcp/values-docker-desktop.yaml`**: **`svc/clawql-mcp-http`** is **ClusterIP by default when Istio is on**, signed **`ghcr.io/.../clawql-mcp:latest`**, **`ghcr.io/.../clawql-website:latest`**, and **`ghcr.io/.../clawql-dashboard:latest`** (`pullPolicy: Always`), **`all-providers`**, and a vault backend:
    - default **hostPath** at **`$HOME/.ClawQL`** (override **`CLAWQL_LOCAL_VAULT_HOST_PATH`**),
    - or in-cluster **PVC** with **`CLAWQL_LOCAL_K8S_VAULT_BACKEND=pvc make local-k8s-up`**.
-   The cluster must reach **Rekor** / Sigstore for verification. **Full stack defaults** (dashboard, docs UI, document pipeline, Onyx, **`sandboxDocker`**, …) stay **enabled** in **`values-docker-desktop.yaml`**. Published images are intended to be **public** (GitHub has **no published REST `PATCH`** for container visibility — use Package settings; **§ GHCR visibility** at the top of this file). **`docker-publish.yml`** fails if anonymous reads on **`:latest`** still fail. Run **`make ghcr-packages-public`** after **`gh auth refresh -s read:packages -h github.com`** for a **GET** visibility audit. **GHCR `DENIED`** on forks: make packages **Public** or use Kyverno **`imageRegistrySecretNames`** (**`docs/security/image-signature-enforcement.md`**).
+     The cluster must reach **Rekor** / Sigstore for verification. **Full stack defaults** (dashboard, docs UI, document pipeline, Onyx, **`sandboxDocker`**, …) stay **enabled** in **`values-docker-desktop.yaml`**. Published images are intended to be **public** (GitHub has **no published REST `PATCH`** for container visibility — use Package settings; **§ GHCR visibility** at the top of this file). **`docker-publish.yml`** fails if anonymous reads on **`:latest`** still fail. Run **`make ghcr-packages-public`** after **`gh auth refresh -s read:packages -h github.com`** for a **GET** visibility audit. **GHCR `DENIED`** on forks: make packages **Public** or use Kyverno **`imageRegistrySecretNames`** (**`docs/security/image-signature-enforcement.md`**).
 
 ```bash
 make local-k8s-up
@@ -204,13 +207,13 @@ make local-k8s-up
 
 **UIs (namespace `istio-system`):**
 
-| Tool           | Port-forward                                                    | URL                          |
-| -------------- | --------------------------------------------------------------- | ---------------------------- |
-| **Kiali**      | `kubectl port-forward svc/kiali 20001:20001 -n istio-system`    | http://localhost:20001/kiali |
-| **Grafana**    | `kubectl port-forward svc/grafana 3000:3000 -n istio-system`    | http://localhost:3000        |
-| **Prometheus** | `kubectl port-forward svc/prometheus 9090:9090 -n istio-system` | http://localhost:9090        |
-| **Loki**       | `kubectl port-forward svc/clawql-loki 3100:3100 -n istio-system` | API on **3100** (Grafana datasource **`http://clawql-loki:3100`**) |
-| **Tempo**      | `kubectl port-forward svc/clawql-tempo 3200:3200 -n istio-system` | Grafana Tempo datasource **`http://clawql-tempo:3200`** |
+| Tool           | Port-forward                                                      | URL                                                                |
+| -------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------ |
+| **Kiali**      | `kubectl port-forward svc/kiali 20001:20001 -n istio-system`      | http://localhost:20001/kiali                                       |
+| **Grafana**    | `kubectl port-forward svc/grafana 3000:3000 -n istio-system`      | http://localhost:3000                                              |
+| **Prometheus** | `kubectl port-forward svc/prometheus 9090:9090 -n istio-system`   | http://localhost:9090                                              |
+| **Loki**       | `kubectl port-forward svc/clawql-loki 3100:3100 -n istio-system`  | API on **3100** (Grafana datasource **`http://clawql-loki:3100`**) |
+| **Tempo**      | `kubectl port-forward svc/clawql-tempo 3200:3200 -n istio-system` | Grafana Tempo datasource **`http://clawql-tempo:3200`**            |
 
 **ClawQL MCP → OTLP (optional):** set **`CLAWQL_ENABLE_OTEL_TRACING=1`** and **`OTEL_EXPORTER_OTLP_ENDPOINT=http://clawql-otel-collector.istio-system.svc:4318/v1/traces`** on **`deployment/clawql-mcp-http`** (or add the same under **`extraEnv`** in **`values-docker-desktop.yaml`**) so spans reach **Tempo** via the collector when heavy addons are on. You can instead send OTLP straight to **`http://clawql-tempo.istio-system.svc:4317`** (gRPC) or **`http://clawql-tempo.istio-system.svc:4318`** (HTTP).
 

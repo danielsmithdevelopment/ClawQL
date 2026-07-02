@@ -1,0 +1,113 @@
+# Lending / mortgage W-2 IDP stack — Docker Compose ([#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251))
+#
+# Opinionated local stack: ClawQL MCP + Docling + reference classifier + LangExtract + Label Studio CE.
+# Synthetic demo data only — not legal or underwriting advice.
+#
+# Usage:
+#   cp docker/compose/lending.env.example docker/compose/lending.env
+#   docker compose -f docker/compose/lending.compose.yml --env-file docker/compose/lending.env up -d --build
+#
+# See docker/compose/README.md and deployment/samples/lending-w2/README.md
+
+name: clawql-lending
+
+services:
+  clawql-mcp:
+    build:
+      context: ../..
+      dockerfile: docker/Dockerfile
+      target: runtime-with-docker-cli
+    image: clawql-mcp:lending-local
+    container_name: clawql-lending-mcp
+    restart: unless-stopped
+    ports:
+      - "${CLAWQL_HOST_PORT:-8080}:8080"
+    environment:
+      PORT: "8080"
+      NODE_ENV: development
+      CLAWQL_OBSIDIAN_VAULT_PATH: /vault
+      CLAWQL_ENABLE_HITL_LABEL_STUDIO: "1"
+      CLAWQL_ENABLE_IDP_CLASSIFIER: "1"
+      CLAWQL_ENABLE_LANGEXTRACT: "1"
+      CLAWQL_ENABLE_IDP_PIPELINE: "1"
+      DOCLING_BASE_URL: http://docling:5001
+      CLASSIFIER_BASE_URL: http://classifier:8080
+      CLASSIFIER_MIN_CONFIDENCE: ${CLASSIFIER_MIN_CONFIDENCE:-0.85}
+      LANGEXTRACT_BASE_URL: http://langextract:8090
+      CLAWQL_LABEL_STUDIO_URL: http://label-studio:8080
+      CLAWQL_LABEL_STUDIO_API_TOKEN: ${CLAWQL_LABEL_STUDIO_API_TOKEN}
+      CLAWQL_HITL_WEBHOOK_TOKEN: ${CLAWQL_HITL_WEBHOOK_TOKEN}
+      CLAWQL_HITL_WEBHOOK_RESUME_WORKFLOW: "0"
+    volumes:
+      - ${CLAWQL_VAULT_HOST_PATH:-${HOME}/.ClawQL-lending}:/vault
+      - ../../deployment/samples/lending-w2/fixtures:/fixtures:ro
+    depends_on:
+      docling:
+        condition: service_healthy
+      classifier:
+        condition: service_healthy
+      langextract:
+        condition: service_healthy
+      label-studio:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/healthz"]
+      interval: 20s
+      timeout: 5s
+      retries: 12
+      start_period: 120s
+
+  docling:
+    image: quay.io/docling-project/docling-serve-cpu:v1.14.3
+    ports:
+      - "${DOCLING_HOST_PORT:-5001}:5001"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:5001/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+
+  classifier:
+    build:
+      context: ../../deployment/samples/classifier-http
+    environment:
+      MODEL_VERSION: lending-w2-reference-v1
+      CLASSIFIER_MIN_CONFIDENCE: ${CLASSIFIER_MIN_CONFIDENCE:-0.85}
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+
+  langextract:
+    build:
+      context: ../../deployment/samples/langextract-http
+    ports:
+      - "${LANGEXTRACT_HOST_PORT:-8090}:8090"
+    environment:
+      LANGEXTRACT_MODE: demo
+      LANGEXTRACT_BACKEND: openrouter
+      LANGEXTRACT_MODEL_ID: deepseek/deepseek-chat
+      LANGEXTRACT_ARTIFACTS_DIR: /tmp/langextract-artifacts
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8090/health"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+
+  label-studio:
+    image: heartexlabs/label-studio:1.14.0
+    container_name: clawql-lending-label-studio
+    restart: unless-stopped
+    ports:
+      - "${LABEL_STUDIO_HOST_PORT:-8095}:8080"
+    environment:
+      LABEL_STUDIO_HOST: ${LABEL_STUDIO_PUBLIC_URL:-http://localhost:8095}
+      LABEL_STUDIO_USERNAME: ${LABEL_STUDIO_USERNAME:-admin@localhost}
+      LABEL_STUDIO_PASSWORD: ${LABEL_STUDIO_PASSWORD:-changeme}
+    volumes:
+      - label-studio-data:/label-studio/data
+
+volumes:
+  label-studio-data:

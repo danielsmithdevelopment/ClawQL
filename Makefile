@@ -1,4 +1,4 @@
-.PHONY: deploy-cloud-run deploy-k8s deploy-docs local-k8s-up bootstrap-vault-eso local-k8s-mcp-delete local-docker-up helm-lint helm-ui-template-tests helm-workflow-template-tests helm-argocd-template-tests helm-nats-keda-template-tests helm-vault-secrets-template-tests helm-docling-template-tests helm-idp-template-tests kustomize-local-lint lint-k8s-manifests smoke-grpcurl-istio-gateway-mcp smoke-mcp-http-istio-gateway smoke-localhost-uis verify-vault-policy verify-mcp-core-tools-local
+.PHONY: deploy-cloud-run deploy-k8s deploy-docs local-k8s-up bootstrap-vault-eso local-k8s-mcp-delete local-docker-up helm-lint helm-ui-template-tests helm-workflow-template-tests helm-argocd-template-tests helm-nats-keda-template-tests helm-vault-secrets-template-tests helm-docling-template-tests helm-idp-template-tests compose-lending-config-test kustomize-local-lint lint-k8s-manifests smoke-grpcurl-istio-gateway-mcp smoke-mcp-http-istio-gateway smoke-localhost-uis verify-vault-policy verify-mcp-core-tools-local
 
 # Validate charts/clawql-mcp (requires helm on PATH)
 helm-lint:
@@ -76,7 +76,10 @@ helm-docling-template-tests:
 helm-idp-template-tests:
 	@bash scripts/kubernetes/test-helm-idp-templates.sh
 
-lint-k8s-manifests: helm-lint helm-ui-template-tests helm-workflow-template-tests helm-argocd-template-tests helm-nats-keda-template-tests helm-vault-secrets-template-tests helm-docling-template-tests helm-idp-template-tests kustomize-local-lint
+compose-lending-config-test:
+	@bash scripts/dev/test-compose-lending-config.sh
+
+lint-k8s-manifests: helm-lint helm-ui-template-tests helm-workflow-template-tests helm-argocd-template-tests helm-nats-keda-template-tests helm-vault-secrets-template-tests helm-docling-template-tests helm-idp-template-tests compose-lending-config-test kustomize-local-lint
 
 # Local desktop k8s: default Helm + Istio ambient + Gateway/VS + heavy observability; CLAWQL_LOCAL_K8S_ISTIO=0 skips mesh
 local-k8s-up:
