@@ -31,7 +31,7 @@ Operators who require **local-only** processing should use **demo mode** or **`L
 
 ## Versioning
 
-Pin the reference sidecar image digest or rebuild from `deployment/samples/langextract-http/Dockerfile`. Upstream Python packages: `langextract`, optional `langextract-provider-openrouter` (see `requirements.txt`).
+Pin the reference sidecar image digest or rebuild from `deployment/samples/langextract-http/Dockerfile`. Live-mode Python deps are operator-installed with pinned versions documented in the sample README (not a committed `requirements.txt`).
 
 ## Reviewer workflow
 

@@ -9,7 +9,7 @@ Schema-guided, **character-grounded** extraction via [google/langextract](https:
 | Mode | Env | Behavior |
 | ---- | --- | -------- |
 | **demo** (default) | `LANGEXTRACT_MODE=demo` | Regex grounding for W-2 demo fields — **no cloud LLM** |
-| **live** | `LANGEXTRACT_MODE=live` + backend credentials | Calls upstream `langextract` (install `requirements.txt` in image) |
+| **live** | `LANGEXTRACT_MODE=live` + backend credentials | Calls upstream `langextract` (operator-installed; see below) |
 
 ## Live backends (no direct Gemini dependency)
 
@@ -49,6 +49,12 @@ JSON
 ### Live OpenRouter example
 
 ```bash
+pip install \
+  'langextract[openai]>=1.0.0' \
+  'langextract-provider-openrouter>=0.1.3' \
+  'aiohttp>=3.14.1' \
+  'idna>=3.15'
+
 export LANGEXTRACT_MODE=live
 export LANGEXTRACT_BACKEND=openrouter
 export OPENROUTER_API_KEY=sk-or-...
@@ -59,6 +65,8 @@ python deployment/samples/langextract-http/server.py
 ### Live Ollama example
 
 ```bash
+pip install 'langextract[openai]>=1.0.0' 'aiohttp>=3.14.1' 'idna>=3.15'
+
 export LANGEXTRACT_MODE=live
 export LANGEXTRACT_BACKEND=ollama
 export LANGEXTRACT_MODEL_ID=gemma2:2b
@@ -96,6 +104,15 @@ LANGEXTRACT_BASE_URL=http://localhost:8090
 ## Security
 
 See [`docs/security/langextract-threat-model.md`](../../docs/security/langextract-threat-model.md). **Default-off** in ClawQL; demo mode sends no text to cloud LLMs.
+
+## Docker
+
+```bash
+docker build -t clawql-langextract-reference deployment/samples/langextract-http
+docker run --rm -p 8090:8090 clawql-langextract-reference
+```
+
+Default image is **demo mode** (stdlib only). For **live** mode, extend the image with the pinned `pip install` lines above (see `Dockerfile` comments). We do not commit a `requirements.txt` — CI **OSV-Scanner** scans all repo manifests; optional sample pip deps are documented here instead.
 
 ## Compose
 

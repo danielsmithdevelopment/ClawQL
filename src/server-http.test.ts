@@ -5,19 +5,19 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   recordNativeGraphqlExecute,
   resetNativeProtocolMetricsForTests,
 } from "./native-protocol-metrics.js";
 import { resetClawqlApiForTests } from "./clawql-api-adapters.js";
+import { getClawqlOptionalToolFlags } from "./clawql-optional-flags.js";
 import { createMcpHttpApp, type CreateMcpHttpAppOptions } from "./server-http.js";
 import { resetSpecCache } from "./spec-loader.js";
 import { resetSchemaFieldCache } from "./tools.js";
 
 /** Optional-flag / webhook HTTP tests — cold `loadSpec()` is unnecessary and flaky on CI. */
 const FAST_HTTP_APP_OPTS: CreateMcpHttpAppOptions = { skipSpecPreload: true };
-const HTTP_OPTIONAL_TOOL_TIMEOUT_MS = 60_000;
 
 /**
  * Close the HTTP server without hanging the Vitest worker: undici/fetch can leave
@@ -25,28 +25,41 @@ const HTTP_OPTIONAL_TOOL_TIMEOUT_MS = 60_000;
  * connections first avoids EnvironmentTeardownError (RPC pending onUserConsoleLog).
  */
 function closeHttpServer(server: Server): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (typeof server.closeIdleConnections === "function") {
-      server.closeIdleConnections();
-    }
-    if (typeof server.closeAllConnections === "function") {
-      server.closeAllConnections();
-    }
-    server.close((err) => {
-      if (err) {
-        reject(err);
-        return;
+  return Promise.race([
+    new Promise<void>((resolve, reject) => {
+      if (typeof server.closeIdleConnections === "function") {
+        server.closeIdleConnections();
       }
-      // Vitest can still be draining onUserConsoleLog RPC when the worker exits.
-      setImmediate(() => resolve());
-    });
-  });
+      if (typeof server.closeAllConnections === "function") {
+        server.closeAllConnections();
+      }
+      server.close((err) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        setImmediate(() => resolve());
+      });
+    }),
+    new Promise<void>((resolve) => setTimeout(resolve, 3_000)),
+  ]);
 }
+
+/** MCP SDK client.close() can hang when a prior timed-out test left SSE sockets open. */
+async function closeMcpClient(client: { close(): Promise<void> }): Promise<void> {
+  await Promise.race([client.close(), new Promise<void>((resolve) => setTimeout(resolve, 5_000))]);
+}
+
+const STREAMABLE_HTTP_TEST_TIMEOUT_MS = 45_000;
 
 const here = dirname(fileURLToPath(import.meta.url));
 const minimalSpec = join(here, "test-utils/fixtures/minimal-petstore.json");
 
 describe("server-http", () => {
+  beforeAll(() => {
+    vi.setConfig({ testTimeout: 15_000 });
+  });
+
   const saved: Record<string, string | undefined> = {};
 
   beforeEach(() => {
@@ -78,7 +91,16 @@ describe("server-http", () => {
     run: (baseUrl: string) => Promise<void>,
     appOptions: CreateMcpHttpAppOptions = {}
   ): Promise<void> {
-    const app = await createMcpHttpApp({ mcpPath: "/mcp", ...appOptions });
+    const flags = getClawqlOptionalToolFlags();
+    const app = await createMcpHttpApp({
+      mcpPath: "/mcp",
+      host: "127.0.0.1",
+      ...appOptions,
+      optionalFlagsSnapshot: appOptions.optionalFlagsSnapshot ?? {
+        enableHitlLabelStudio: flags.enableHitlLabelStudio,
+        enableConeshare: flags.enableConeshare,
+      },
+    });
     const server = createServer(app);
     server.listen(0, "127.0.0.1");
     await once(server, "listening");
@@ -403,7 +425,7 @@ describe("server-http", () => {
             const names = new Set(tools.map((t) => t.name));
             expect(names.has("sandbox_exec")).toBe(true);
           } finally {
-            await client.close();
+            await closeMcpClient(client);
           }
         }, FAST_HTTP_APP_OPTS);
       } finally {
@@ -417,7 +439,7 @@ describe("server-http", () => {
         resetClawqlApiForTests();
       }
     },
-    HTTP_OPTIONAL_TOOL_TIMEOUT_MS
+    STREAMABLE_HTTP_TEST_TIMEOUT_MS
   );
 
   it(
@@ -443,7 +465,7 @@ describe("server-http", () => {
             const names = new Set(tools.map((t) => t.name));
             expect(names.has("notify")).toBe(true);
           } finally {
-            await client.close();
+            await closeMcpClient(client);
           }
         }, FAST_HTTP_APP_OPTS);
       } finally {
@@ -457,7 +479,7 @@ describe("server-http", () => {
         resetClawqlApiForTests();
       }
     },
-    HTTP_OPTIONAL_TOOL_TIMEOUT_MS
+    STREAMABLE_HTTP_TEST_TIMEOUT_MS
   );
 
   it(
@@ -483,7 +505,7 @@ describe("server-http", () => {
             const names = new Set(tools.map((t) => t.name));
             expect(names.has("knowledge_search_onyx")).toBe(true);
           } finally {
-            await client.close();
+            await closeMcpClient(client);
           }
         }, FAST_HTTP_APP_OPTS);
       } finally {
@@ -497,7 +519,7 @@ describe("server-http", () => {
         resetClawqlApiForTests();
       }
     },
-    HTTP_OPTIONAL_TOOL_TIMEOUT_MS
+    STREAMABLE_HTTP_TEST_TIMEOUT_MS
   );
 
   it(
@@ -525,7 +547,7 @@ describe("server-http", () => {
             expect(names.has("ouroboros_run_evolutionary_loop")).toBe(true);
             expect(names.has("ouroboros_get_lineage_status")).toBe(true);
           } finally {
-            await client.close();
+            await closeMcpClient(client);
           }
         }, FAST_HTTP_APP_OPTS);
       } finally {
@@ -539,7 +561,7 @@ describe("server-http", () => {
         resetClawqlApiForTests();
       }
     },
-    HTTP_OPTIONAL_TOOL_TIMEOUT_MS
+    STREAMABLE_HTTP_TEST_TIMEOUT_MS
   );
 
   it(
@@ -565,7 +587,7 @@ describe("server-http", () => {
             const names = new Set(tools.map((t) => t.name));
             expect(names.has("hitl_enqueue_label_studio")).toBe(true);
           } finally {
-            await client.close();
+            await closeMcpClient(client);
           }
         }, FAST_HTTP_APP_OPTS);
       } finally {
@@ -579,7 +601,7 @@ describe("server-http", () => {
         resetClawqlApiForTests();
       }
     },
-    HTTP_OPTIONAL_TOOL_TIMEOUT_MS
+    STREAMABLE_HTTP_TEST_TIMEOUT_MS
   );
 
   it(
@@ -620,7 +642,7 @@ describe("server-http", () => {
         resetClawqlApiForTests();
       }
     },
-    HTTP_OPTIONAL_TOOL_TIMEOUT_MS
+    STREAMABLE_HTTP_TEST_TIMEOUT_MS
   );
 
   it(
@@ -661,7 +683,7 @@ describe("server-http", () => {
         resetClawqlApiForTests();
       }
     },
-    HTTP_OPTIONAL_TOOL_TIMEOUT_MS
+    STREAMABLE_HTTP_TEST_TIMEOUT_MS
   );
 
   it(
@@ -695,7 +717,7 @@ describe("server-http", () => {
         resetClawqlApiForTests();
       }
     },
-    HTTP_OPTIONAL_TOOL_TIMEOUT_MS
+    STREAMABLE_HTTP_TEST_TIMEOUT_MS
   );
 
   it(
@@ -729,6 +751,6 @@ describe("server-http", () => {
         resetClawqlApiForTests();
       }
     },
-    HTTP_OPTIONAL_TOOL_TIMEOUT_MS
+    STREAMABLE_HTTP_TEST_TIMEOUT_MS
   );
 });
