@@ -8,6 +8,8 @@ This runbook supports **[#226](https://github.com/danielsmithdevelopment/ClawQL/
 
 **IDP skill profile (agents/operators):** **[`openclaw-idp-skill-profile.md`](openclaw-idp-skill-profile.md)** ([#227](https://github.com/danielsmithdevelopment/ClawQL/issues/227)) — canonical tools, provider matrix, and workflow contract.
 
+**Slack-first IDP runbook:** **[`slack-first-idp-runbook.md`](slack-first-idp-runbook.md)** ([#256](https://github.com/danielsmithdevelopment/ClawQL/issues/256)) — one @mention flow, `notify` completion, shipped tool sequence.
+
 ## What “green” means
 
 1. ClawQL MCP serves tools over **stdio** or **Streamable HTTP** with a documented env matrix.
@@ -148,7 +150,7 @@ After MCP is healthy, operators typically want **metrics** and a **dashboard**:
 
 1. **Scrape** **`clawql-mcp-http`** **`GET /metrics`** (OpenMetrics). With **Helm**, default **`metrics.prometheusScrapeAnnotations.enabled: true`** annotates the Service for common Prometheus setups; see **[`charts/clawql-mcp/README.md`](../../charts/clawql-mcp/README.md)** and **[`docs/deployment/helm.md`](../deployment/helm.md)**.
 2. **Import** **`docs/grafana/clawql-core-observability.json`** into Grafana — full steps and Istio dashboard IDs in **[`docs/grafana/README.md`](../grafana/README.md)**.
-3. **OpenClaw:** embedding Grafana or curated deep links in the OpenClaw UI is **not** implemented here; track **[#225](https://github.com/danielsmithdevelopment/ClawQL/issues/225)** (follow-ups) and **[#128](https://github.com/danielsmithdevelopment/ClawQL/issues/128)** (ecosystem). Phase 0 bootstrap ([#226](https://github.com/danielsmithdevelopment/ClawQL/issues/226)) does **not** require Grafana.
+3. **OpenClaw:** embedding Grafana or curated deep links in the OpenClaw UI is **not** implemented here; track **[#225](https://github.com/danielsmithdevelopment/ClawQL/issues/225)** (follow-ups) and **[#128](https://github.com/danielsmithdevelopment/ClawQL/issues/128)** (ecosystem). **IDP bundle:** **[`docs/observability/README.md`](../observability/README.md)** ([#252](https://github.com/danielsmithdevelopment/ClawQL/issues/252)).
 
 ## Troubleshooting
 

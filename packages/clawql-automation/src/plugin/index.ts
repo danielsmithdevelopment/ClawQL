@@ -10,6 +10,7 @@ export {
   handleScheduleToolInput,
   handleWorkflowToolInput,
   handleArgocdToolInput,
+  hitlLabelStudioToolSchema,
   notifyToolSchema,
   SLACK_NOTIFY_OPERATION_ID,
   type CreateAutomationPluginOptions,

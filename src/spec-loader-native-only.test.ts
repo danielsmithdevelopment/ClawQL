@@ -6,7 +6,7 @@ vi.mock("node-fetch", () => ({
 }));
 
 import fetch from "node-fetch";
-import { loadSpec, resetSpecCache } from "./spec-loader.js";
+import { loadSpec, resetSpecCache } from "clawql-api";
 
 describe("spec-loader native-protocol-only", () => {
   const keysToClear = [

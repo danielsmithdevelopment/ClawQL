@@ -6,7 +6,7 @@
 
 import type { Request, Response } from "express";
 import { handleAuditToolInput } from "./clawql-audit.js";
-import { getClawqlOptionalToolFlags } from "./clawql-optional-flags.js";
+import { getClawqlOptionalToolFlags } from "clawql-api";
 import { handleMemoryIngestToolInput } from "./memory-ingest.js";
 import { getObsidianVaultPath } from "./vault-config.js";
 import { publishConeshareViewerEvent } from "clawql-automation/nats/publish-hooks";

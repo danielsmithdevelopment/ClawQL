@@ -1,0 +1,33 @@
+# Default: lean IDP profile on top of clawql-mcp (same as installing clawql-mcp with opinionated flags).
+# For a full local lab stack, use values-idp-full.yaml.
+#
+# Decision record: umbrella chart composes the existing clawql-mcp chart via Helm dependency;
+# it does not fork templates. Operators who only need MCP should install charts/clawql-mcp directly.
+
+clawql-mcp:
+  fullnameOverride: clawql-mcp-http
+
+  provider: all-providers
+  enableMemory: true
+  enableDocuments: true
+
+  # Required by clawql-mcp chart policy — point at Vault-synced Secret (see values-lint.yaml).
+  envFromSecret: clawql-provider-env
+
+  metrics:
+    prometheusScrapeAnnotations:
+      enabled: true
+    serviceMonitor:
+      enabled: false
+
+  # Document pipeline vendors (Tika, Gotenberg, Stirling, Paperless) — off by default in lean profile.
+  documentPipeline:
+    enabled: false
+
+  enableWorkflow: false
+  enableArgoCd: false
+  enableNotify: false
+  openclaw:
+    enabled: false
+  dashboard:
+    enabled: false

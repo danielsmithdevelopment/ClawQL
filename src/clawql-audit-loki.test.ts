@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { handleAuditToolInput, resetClawqlAuditBufferForTests } from "./clawql-audit.js";
-import { resetNativeProtocolPrometheusForTests } from "./native-protocol-prometheus.js";
+import { resetNativeProtocolPrometheusForTests } from "clawql-api";
 
 describe("clawql-audit-loki", () => {
   const savedUrl = process.env.CLAWQL_LOKI_PUSH_URL;

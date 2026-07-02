@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { buildGraphQLSchema } from "./graphql-schema-builder.js";
-import type { OpenAPIDoc } from "./spec-loader.js";
+import { buildGraphQLSchema } from "clawql-api";
+import type { OpenAPIDoc } from "clawql-api";
 
 describe("buildGraphQLSchema", () => {
   it("builds an executable schema from a minimal OpenAPI doc", async () => {

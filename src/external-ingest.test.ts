@@ -4,8 +4,8 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { resetMemoryDbArtifactCachesForTests } from "./memory-db-artifact-cache.js";
-import { syncMemoryDbFromDocuments } from "./memory-db.js";
+import { resetMemoryDbArtifactCachesForTests } from "clawql-memory";
+import { syncMemoryDbFromDocuments } from "clawql-memory/db/memory-db";
 import { runIngestExternalKnowledge } from "./external-ingest.js";
 
 describe("external-ingest", () => {

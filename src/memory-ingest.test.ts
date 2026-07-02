@@ -3,7 +3,7 @@ import { access, mkdtemp, readFile, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { resetMemoryDbArtifactCachesForTests } from "./memory-db-artifact-cache.js";
+import { resetMemoryDbArtifactCachesForTests } from "clawql-memory";
 import {
   extractIngestHashes,
   hashIngestSection,

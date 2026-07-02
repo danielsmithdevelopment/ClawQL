@@ -15,6 +15,7 @@ export default defineConfig({
     "workflow/vault-digest/run-vault-digest": "src/workflow/vault-digest/run-vault-digest.ts",
     "workflow/vault-digest/cli": "src/workflow/vault-digest/cli.ts",
     "plugin/index": "src/plugin/index.ts",
+    "hitl/label-studio": "src/hitl/label-studio.ts",
   },
   format: ["esm", "cjs"],
   dts: true,

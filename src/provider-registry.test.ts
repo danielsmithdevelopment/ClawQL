@@ -6,7 +6,7 @@ import {
   resolveBundledProvider,
   resolveBundledProviderGroup,
   resolveItemsFromBundledProviderEnvList,
-} from "./provider-registry.js";
+} from "clawql-api";
 
 describe("provider-registry", () => {
   it("lists bundled provider ids", () => {

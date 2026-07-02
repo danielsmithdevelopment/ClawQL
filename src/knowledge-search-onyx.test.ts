@@ -4,8 +4,8 @@ import {
   resetDocumentsPluginDepsForTests,
 } from "clawql-documents/plugin";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { OpenAPIDoc } from "./spec-loader.js";
-import type { Operation } from "./spec-loader.js";
+import type { OpenAPIDoc } from "clawql-api";
+import type { Operation } from "clawql-api";
 import {
   ONYX_SEND_SEARCH_OPERATION_ID,
   handleKnowledgeSearchOnyxToolInput,

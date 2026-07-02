@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { executeRestOperation, mergedAuthHeaders, renderPath } from "./rest-operation.js";
-import type { OpenAPIDoc } from "./spec-loader.js";
-import type { Operation } from "./operation-types.js";
-import { INLINE_OPENAPI_REQUEST_BODY } from "./operation-types.js";
+import { executeRestOperation, mergedAuthHeaders, renderPath } from "clawql-api";
+import type { OpenAPIDoc } from "clawql-api";
+import type { Operation } from "clawql-api";
+import { INLINE_OPENAPI_REQUEST_BODY } from "clawql-api";
 import { withFetchServer } from "./test-utils/fetch-test-server.js";
 
 function makeOpenApi(serverUrl: string): OpenAPIDoc {

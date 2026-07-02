@@ -13,7 +13,7 @@ import {
 } from "clawql-ouroboros/eval";
 import { getOuroborosContext } from "clawql-ouroboros/plugin";
 import { handleAuditToolInput } from "./clawql-audit.js";
-import { getClawqlOptionalToolFlags } from "./clawql-optional-flags.js";
+import { getClawqlOptionalToolFlags } from "clawql-api";
 import { handleMemoryIngestToolInput } from "./memory-ingest.js";
 import { getObsidianVaultPath } from "./vault-config.js";
 import { enforceWebhookRateLimit } from "./webhook-rate-limit.js";

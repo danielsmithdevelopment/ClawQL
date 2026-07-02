@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  planVaultMarkdownChunks,
-  vaultChunkId,
-  CHUNK_STRATEGY_PARAGRAPH_V1,
-} from "./memory-chunk.js";
+import { planVaultMarkdownChunks, vaultChunkId, CHUNK_STRATEGY_PARAGRAPH_V1 } from "clawql-memory";
 
 describe("memory-chunk", () => {
   it("planVaultMarkdownChunks strips frontmatter and splits paragraphs", () => {
