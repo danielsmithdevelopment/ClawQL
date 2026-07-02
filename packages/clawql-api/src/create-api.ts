@@ -25,15 +25,24 @@ export type CreateClawQLApiOptions = {
   readonly searchLayer?: Layer.Layer<SearchService, never, never>;
   /** Replaces default ExecuteNotConfiguredLive (MCP adapter from clawql-mcp). */
   readonly executeLayer?: Layer.Layer<ExecuteService, never, never>;
-  /** Plugins registered at composition root (defaults include Panguard + Memory when enabled). */
+  /** Plugins registered synchronously at composition root (defaults include Panguard + Memory when enabled). */
   readonly plugins?: readonly Plugin[];
+  /**
+   * Effect Layers that register plugins at runtime via `ClawQLApi.registerPlugin`.
+   * Merged after the base layer; each layer may require `ClawQLApi`, `ExecuteService`, etc.
+   */
+  readonly pluginLayers?: readonly Layer.Layer<
+    never,
+    ClawQLApiRuntimeError,
+    ClawQLApiRuntimeServices
+  >[];
 };
 
 export type ClawQLApiHandle = {
   readonly registry: PluginRegistry;
   readonly mcpTools: McpToolRegistry;
-  readonly layer: Layer.Layer<ClawQLApiRuntimeServices, never, never>;
-  readonly runtime: ManagedRuntime.ManagedRuntime<ClawQLApiRuntimeServices, never>;
+  readonly layer: Layer.Layer<ClawQLApiRuntimeServices, ClawQLApiRuntimeError, never>;
+  readonly runtime: ManagedRuntime.ManagedRuntime<ClawQLApiRuntimeServices, ClawQLApiRuntimeError>;
   readonly listMcpTools: () => readonly import("./mcp-tool-registry.js").McpToolRegistration[];
   readonly run: <A, E extends ClawQLApiRuntimeError>(
     program: Effect.Effect<A, E, ClawQLApiRuntimeServices>
@@ -59,7 +68,12 @@ export function createClawQLApi(options: CreateClawQLApiOptions = {}): ClawQLApi
     options.searchLayer ?? SearchNotConfiguredLive,
     options.executeLayer ?? ExecuteNotConfiguredLive
   );
-  const layer = baseLayer;
+  for (const pluginLayer of options.pluginLayers ?? []) {
+    Effect.runSync(
+      Effect.scoped(Layer.build(Layer.provideMerge(pluginLayer, baseLayer)))
+    );
+  }
+  const layer: Layer.Layer<ClawQLApiRuntimeServices, ClawQLApiRuntimeError, never> = baseLayer;
   const runtime = ManagedRuntime.make(layer);
 
   return {

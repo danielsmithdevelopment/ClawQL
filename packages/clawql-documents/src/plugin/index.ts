@@ -5,6 +5,7 @@ export {
   type DocumentsPluginDeps,
   type DocumentsPluginExecuteParams,
 } from "./deps.js";
+export { makeDocumentsLayer, type DocumentsLayerError } from "./documents-layer.js";
 export {
   handleRunIdpPipelineToolInput,
   runIdpPipelineToolSchema,
