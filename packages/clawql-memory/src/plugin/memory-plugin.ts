@@ -1,9 +1,9 @@
-import { runMemoryIngest, type MemoryIngestInput } from "clawql-memory/ingest/ingest";
-import { runMemoryRecall, type MemoryRecallInput } from "clawql-memory/recall/recall";
 import type { Plugin } from "clawql-core";
+import { logMcpToolShape } from "clawql-api/mcp/tool-shape-log";
 import { Effect } from "effect";
 import { z } from "zod";
-import { logMcpToolShape } from "../mcp/tool-shape-log.js";
+import { runMemoryIngest, type MemoryIngestInput } from "../ingest/ingest.js";
+import { runMemoryRecall, type MemoryRecallInput } from "../recall/recall.js";
 
 export const MEMORY_PLUGIN_ID = "clawql-memory";
 

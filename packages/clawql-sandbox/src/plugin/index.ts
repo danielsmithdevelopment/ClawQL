@@ -1,3 +1,4 @@
+export { makeSandboxLayer, type SandboxLayerError } from "./sandbox-layer.js";
 export {
   createSandboxPlugin,
   handleSandboxExecToolInput,

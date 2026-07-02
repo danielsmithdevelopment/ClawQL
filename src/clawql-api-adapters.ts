@@ -4,24 +4,16 @@ import {
   getClawqlOptionalToolFlags,
   loadSpec,
   makeExecuteLive,
-  makeMemoryLayer,
   makeSearchLive,
   McpProxyPipeline,
   SearchService,
   type ClawQLApiHandle,
-  type ClawQLApiRuntimeError,
-  type ClawQLApiRuntimeServices,
   type ExecuteClawqlOperationParams,
   type LoadedSpec,
   type LoadSpecFn,
 } from "clawql-api";
-import { makeDocumentsLayer } from "clawql-documents/plugin";
-import { makeAutomationLayer } from "clawql-automation/plugin";
-import { natsConfiguredForConsumer } from "clawql-automation/nats/env";
-import { createSandboxPlugin } from "clawql-sandbox/plugin";
-import { createOuroborosPlugin } from "clawql-ouroboros/plugin";
-import type { Plugin } from "clawql-core";
 import { Effect, Layer } from "effect";
+import { composeHorizontalPluginLayers } from "./compose-horizontal-plugin-layers.js";
 
 let loadSpecOverride: LoadSpecFn | undefined;
 
@@ -43,60 +35,6 @@ function buildExecuteLive() {
   return makeExecuteLive(resolveLoadSpec());
 }
 
-function buildSyncOptionalPlugins(): readonly Plugin[] {
-  const flags = getClawqlOptionalToolFlags();
-  const plugins: Plugin[] = [];
-  if (flags.enableSandbox) {
-    plugins.push(createSandboxPlugin());
-  }
-  if (flags.enableOuroboros) {
-    plugins.push(createOuroborosPlugin({ enableLangfuseEval: flags.enableLangfuseEval }));
-  }
-  return plugins;
-}
-
-function buildEnabledPluginLayers(): readonly Layer.Layer<
-  never,
-  ClawQLApiRuntimeError,
-  ClawQLApiRuntimeServices
->[] {
-  const flags = getClawqlOptionalToolFlags();
-  const layers: Layer.Layer<never, ClawQLApiRuntimeError, ClawQLApiRuntimeServices>[] = [];
-  if (flags.enableMemory) {
-    layers.push(makeMemoryLayer());
-  }
-  if (flags.enableDocuments) {
-    layers.push(
-      makeDocumentsLayer({
-        enableOnyx: flags.enableOnyxKnowledge,
-        enableIdpPipeline: flags.enableIdpPipeline,
-        enableIdpClassifier: flags.enableIdpClassifier,
-        enableLangextract: flags.enableLangextract,
-      })
-    );
-  }
-  if (
-    flags.enableSchedule ||
-    flags.enableNotify ||
-    flags.enableWorkflow ||
-    flags.enableArgoCd ||
-    flags.enableHitlLabelStudio ||
-    natsConfiguredForConsumer()
-  ) {
-    layers.push(
-      makeAutomationLayer({
-        enableSchedule: flags.enableSchedule,
-        enableNotify: flags.enableNotify,
-        enableWorkflow: flags.enableWorkflow,
-        enableArgoCd: flags.enableArgoCd,
-        enableHitlLabelStudio: flags.enableHitlLabelStudio,
-        enableNatsWorker: natsConfiguredForConsumer(),
-      })
-    );
-  }
-  return layers;
-}
-
 let apiHandle: ClawQLApiHandle | undefined;
 
 /** Process-wide ClawQL API runtime (search/execute + plugin registry). */
@@ -105,8 +43,8 @@ export function getClawqlApi(): ClawQLApiHandle {
     apiHandle = createClawQLApi({
       searchLayer: buildSearchLive(),
       executeLayer: buildExecuteLive(),
-      plugins: [...defaultPlugins(), ...buildSyncOptionalPlugins()],
-      pluginLayers: buildEnabledPluginLayers(),
+      plugins: [...defaultPlugins()],
+      pluginLayers: composeHorizontalPluginLayers(getClawqlOptionalToolFlags()),
     });
   }
   return apiHandle;

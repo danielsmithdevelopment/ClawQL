@@ -17,6 +17,7 @@ export default defineConfig({
     "db/postgres-migrations": "src/db/postgres-migrations.ts",
     "db/memory-db": "src/db/memory-db.ts",
     "vector/pgvector": "src/vector/pgvector.ts",
+    "plugin/index": "src/plugin/index.ts",
   },
   format: ["esm", "cjs"],
   dts: true,

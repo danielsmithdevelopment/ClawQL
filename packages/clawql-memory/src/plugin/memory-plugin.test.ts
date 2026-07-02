@@ -1,7 +1,7 @@
-import { describe, expect, it } from "vitest";
-import { McpToolRegistry } from "../mcp-tool-registry.js";
-import { createMemoryPlugin, MEMORY_PLUGIN_ID } from "./memory-plugin.js";
 import { Effect } from "effect";
+import { describe, expect, it } from "vitest";
+import { McpToolRegistry } from "clawql-api";
+import { createMemoryPlugin, MEMORY_PLUGIN_ID } from "./memory-plugin.js";
 
 describe("createMemoryPlugin", () => {
   it("registers memory_ingest and memory_recall on onRegister", () => {

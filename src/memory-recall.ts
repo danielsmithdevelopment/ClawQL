@@ -1,4 +1,4 @@
-import { handleMemoryRecallToolInput } from "clawql-api";
+import { handleMemoryRecallToolInput } from "clawql-memory/plugin";
 
 export {
   extractWikilinkTargets,
