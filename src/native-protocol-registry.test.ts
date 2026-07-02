@@ -5,7 +5,7 @@ import {
   registerGraphQLSource,
   registerGrpcClient,
   resetNativeProtocolRegistry,
-} from "./native-protocol-registry.js";
+} from "clawql-api";
 
 describe("native-protocol-registry", () => {
   it("registers and returns GraphQL source metadata", () => {

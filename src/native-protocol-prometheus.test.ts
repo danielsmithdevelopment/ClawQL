@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { prometheusDisabledForHttp } from "./native-protocol-prometheus.js";
+import { prometheusDisabledForHttp } from "clawql-api";
 
 describe("native-protocol-prometheus (HTTP metrics gate)", () => {
   const saved = process.env.CLAWQL_DISABLE_HTTP_METRICS;

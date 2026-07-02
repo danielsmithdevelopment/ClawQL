@@ -3,7 +3,7 @@ import {
   planVaultMarkdownChunks,
   vaultChunkId,
   CHUNK_STRATEGY_PARAGRAPH_V1,
-} from "./memory-chunk.js";
+} from "clawql-memory";
 
 describe("memory-chunk", () => {
   it("planVaultMarkdownChunks strips frontmatter and splits paragraphs", () => {

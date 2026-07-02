@@ -4,7 +4,7 @@ import {
   cosineSimilarity,
   float32ArrayToBlob,
   rankDocumentsByChunkSimilarity,
-} from "./memory-embedding.js";
+} from "clawql-memory/embedding/embedding";
 
 describe("memory-embedding", () => {
   it("cosineSimilarity is 1 for identical unit vectors", () => {

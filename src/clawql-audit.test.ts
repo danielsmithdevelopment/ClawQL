@@ -7,7 +7,7 @@ import {
 import {
   renderPrometheusMetrics,
   resetNativeProtocolPrometheusForTests,
-} from "./native-protocol-prometheus.js";
+} from "clawql-api";
 
 describe("clawql-audit", () => {
   const saved = process.env.CLAWQL_AUDIT_MAX_ENTRIES;

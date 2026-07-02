@@ -8,7 +8,7 @@
  * Optional: knowledge_search_onyx — Onyx when CLAWQL_ENABLE_ONYX and documents enabled; **`CLAWQL_ENABLE_DOCUMENTS=0`** hides (GitHub #118).
  * Optional: schedule — persisted jobs + manual synthetic trigger when CLAWQL_ENABLE_SCHEDULE (GitHub #76).
  * Optional: notify — Slack chat.postMessage when CLAWQL_ENABLE_NOTIFY (GitHub #77); requires Slack in loaded spec + bot token.
- * Optional: hitl_enqueue_label_studio — Label Studio review queue when CLAWQL_ENABLE_HITL_LABEL_STUDIO (GitHub #228).
+ * Optional: hitl_enqueue_label_studio — Label Studio review queue when CLAWQL_ENABLE_HITL_LABEL_STUDIO (GitHub #228); registered via AutomationPlugin.
  * Optional: ouroboros_* — evolutionary loop tools when CLAWQL_ENABLE_OUROBOROS (GitHub #141); optional CLAWQL_OUROBOROS_DATABASE_URL for Postgres lineage (#142).
  * Single-spec `execute` runs OpenAPI→GraphQL in-process; field resolution uses `graphql-execute-helpers`.
  */
@@ -20,8 +20,8 @@ import { Effect } from "effect";
 import { ExecuteService, SearchService } from "clawql-api";
 import { z } from "zod";
 import { getClawqlApi, runMcpProxyBeforeCallTool } from "./clawql-api-adapters.js";
-import { getPackageRoot } from "./package-root.js";
-import { resolveBundledProvider } from "./provider-registry.js";
+import { getPackageRoot } from "clawql-api";
+import { resolveBundledProvider } from "clawql-api";
 import {
   buildVarArgs,
   buildVarDeclarations,
@@ -30,8 +30,8 @@ import {
   normalizeArgsForField,
   operationIdToGraphQLName,
   operationIdToRunStyleName,
-} from "./graphql-execute-helpers.js";
-import { loadSpec } from "./spec-loader.js";
+} from "clawql-api";
+import { loadSpec } from "clawql-api";
 import { defaultFields, executeOutputFields, projectRestByFields } from "./tools-execute-core.js";
 import { cacheToolSchema, handleCacheToolInput } from "./clawql-cache.js";
 import { auditToolSchema, handleAuditToolInput } from "./clawql-audit.js";
@@ -42,8 +42,6 @@ import {
 } from "clawql-automation/plugin";
 import { configureDocumentsPluginDeps } from "clawql-documents/plugin";
 import { configureOuroborosPluginDeps } from "clawql-ouroboros/plugin";
-import { getClawqlOptionalToolFlags } from "./clawql-optional-flags.js";
-import { handleHitlEnqueueLabelStudioToolInput } from "./hitl-label-studio.js";
 import { wrapMcpToolHandler } from "./otel-tracing.js";
 
 export { executeOutputFields, projectRestByFields } from "./tools-execute-core.js";
@@ -182,61 +180,6 @@ export function registerTools(server: McpServer) {
   server.tool("audit", auditToolSchema, wrapMcpToolHandler("audit", handleAuditToolInput));
 
   registerPluginMcpTools(server);
-
-  if (getClawqlOptionalToolFlags().enableHitlLabelStudio) {
-    server.tool(
-      "hitl_enqueue_label_studio",
-      {
-        project_id: z
-          .number()
-          .int()
-          .min(1)
-          .describe("Label Studio project id (integer pk in /api/projects/{id}/import)."),
-        tasks: z
-          .array(
-            z.object({
-              data: z
-                .record(z.string(), z.unknown())
-                .describe("Task fields shown to annotators (maps to Label Studio task.data)."),
-              meta: z
-                .record(z.string(), z.unknown())
-                .optional()
-                .describe("Optional extra JSON merged into task.data.meta."),
-            })
-          )
-          .min(1)
-          .max(100)
-          .describe("Tasks to import in one batch."),
-        confidence: z
-          .number()
-          .min(0)
-          .max(1)
-          .optional()
-          .describe("Optional model confidence stored under data.clawql_hitl.confidence."),
-        correlation_id: z
-          .string()
-          .max(512)
-          .optional()
-          .describe("Optional id for OpenClaw / logs / webhook correlation."),
-        seed_id: z.string().max(256).optional().describe("Optional Ouroboros or workflow seed id."),
-        workflow_ref: z
-          .object({
-            namespace: z.string().min(1).max(63),
-            name: z.string().min(1).max(253),
-            node_field_selector: z.string().max(512).optional(),
-          })
-          .optional()
-          .describe(
-            "Optional Argo Workflow to resume on Label Studio webhook when CLAWQL_HITL_WEBHOOK_RESUME_WORKFLOW=1."
-          ),
-        provenance: z
-          .record(z.string(), z.unknown())
-          .optional()
-          .describe("Optional provenance object stored under data.clawql_hitl.provenance."),
-      },
-      wrapMcpToolHandler("hitl_enqueue_label_studio", handleHitlEnqueueLabelStudioToolInput)
-    );
-  }
 }
 
 // ─────────────────────────────────────────────────────────────

@@ -12,11 +12,11 @@
 import "./load-env.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { NPM_PACKAGE_VERSION } from "./npm-version.js";
-import { loadSpec, registerSpecCacheShutdownHooks } from "./spec-loader.js";
+import { loadSpec, registerSpecCacheShutdownHooks } from "clawql-api";
 import { createRegisteredMcpServer } from "./mcp-server-factory.js";
 import { preloadSchemaFieldCacheFromDisk } from "./tools.js";
 import { validateOrDegradeObsidianVaultAtStartup } from "./vault-config.js";
-import { registerPostgresPoolShutdownHooks } from "./vector-store/pgvector.js";
+import { registerPostgresPoolShutdownHooks } from "clawql-memory/vector/pgvector";
 import { maybeInitOtelTracing } from "./otel-tracing.js";
 
 async function main() {

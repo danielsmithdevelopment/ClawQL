@@ -4,7 +4,7 @@
 
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { getPackageRoot } from "./package-root.js";
+import { getPackageRoot } from "clawql-api";
 
 function readVersion(): string {
   try {

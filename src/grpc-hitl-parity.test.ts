@@ -13,7 +13,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { maybeStartGrpcMcpServer } from "mcp-grpc-transport";
 import { createRegisteredMcpServer } from "./mcp-server-factory.js";
 import { SUPPORTED_PROTOCOL_VERSIONS } from "@modelcontextprotocol/sdk/types.js";
-import { resetSpecCache } from "./spec-loader.js";
+import { resetSpecCache } from "clawql-api";
 import { resetSchemaFieldCache } from "./tools.js";
 
 const here = dirname(fileURLToPath(import.meta.url));

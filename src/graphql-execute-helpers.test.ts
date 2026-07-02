@@ -7,8 +7,8 @@ import {
   operationIdToGraphQLName,
   operationIdToRunStyleName,
   resolveGraphQLFieldFromSchema,
-} from "./graphql-execute-helpers.js";
-import type { Operation } from "./operation-types.js";
+} from "clawql-api";
+import type { Operation } from "clawql-api";
 
 function op(partial: Partial<Operation> & Pick<Operation, "id" | "flatPath">): Operation {
   return {

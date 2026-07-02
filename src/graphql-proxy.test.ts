@@ -4,7 +4,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createGraphqlProxyApp } from "./graphql-proxy.js";
-import { resetSpecCache } from "./spec-loader.js";
+import { resetSpecCache } from "clawql-api";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const minimalSpec = join(here, "test-utils/fixtures/minimal-petstore.json");

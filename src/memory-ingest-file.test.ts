@@ -7,7 +7,7 @@ import {
   getMemoryIngestFileRootsReal,
   isMemoryIngestFileReadEnabled,
   readToolOutputsFileForIngest,
-} from "./memory-ingest-file.js";
+} from "clawql-memory";
 
 describe("memory-ingest-file", () => {
   const saved: Record<string, string | undefined> = {};

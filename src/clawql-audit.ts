@@ -17,7 +17,7 @@ import { logMcpToolShape } from "./mcp-tool-log.js";
 import {
   prometheusRecordAuditAppend,
   prometheusRecordAuditClear,
-} from "./native-protocol-prometheus.js";
+} from "clawql-api";
 
 export type { ClawqlAuditEntry };
 

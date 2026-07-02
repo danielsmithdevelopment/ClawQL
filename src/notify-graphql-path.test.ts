@@ -11,9 +11,9 @@ import { createServer, type Server } from "node:http";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { executeOperationGraphQL } from "./graphql-in-process-execute.js";
-import * as restOperation from "./rest-operation.js";
-import { loadSpec, resetSpecCache } from "./spec-loader.js";
+import { executeOperationGraphQL } from "clawql-api";
+import * as restOperation from "clawql-api";
+import { loadSpec, resetSpecCache } from "clawql-api";
 import { executeOutputFields, handleNotifyToolInput, resetSchemaFieldCache } from "./tools.js";
 
 const here = dirname(fileURLToPath(import.meta.url));

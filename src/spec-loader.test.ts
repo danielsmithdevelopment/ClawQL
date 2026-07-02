@@ -9,8 +9,8 @@ import {
   sanitizeSchemaNode,
   type OpenAPIDoc,
   type Operation,
-} from "./spec-loader.js";
-import { operationsFromOpenAPI } from "./openapi-operations.js";
+} from "clawql-api";
+import { operationsFromOpenAPI } from "clawql-api";
 
 describe("operationsFromOpenAPI", () => {
   it("prefers multipart/form-data over application/json when both are declared", () => {

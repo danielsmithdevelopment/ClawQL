@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getClawqlOptionalToolFlags } from "./clawql-optional-flags.js";
+import { getClawqlOptionalToolFlags } from "clawql-api";
 
 describe("getClawqlOptionalToolFlags", () => {
   it("defaults memory and documents on; other optional CLAWQL_ENABLE_* off", () => {

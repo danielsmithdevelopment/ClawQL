@@ -1,7 +1,7 @@
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { loadSpec, resetSpecCache } from "./spec-loader.js";
+import { loadSpec, resetSpecCache } from "clawql-api";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const petA = join(here, "test-utils/fixtures/minimal-petstore.json");

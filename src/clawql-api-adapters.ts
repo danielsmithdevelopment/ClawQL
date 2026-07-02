@@ -56,6 +56,7 @@ function buildMcpPlugins(): readonly Plugin[] {
     flags.enableNotify ||
     flags.enableWorkflow ||
     flags.enableArgoCd ||
+    flags.enableHitlLabelStudio ||
     natsConfiguredForConsumer()
   ) {
     plugins.push(
@@ -64,6 +65,7 @@ function buildMcpPlugins(): readonly Plugin[] {
         enableNotify: flags.enableNotify,
         enableWorkflow: flags.enableWorkflow,
         enableArgoCd: flags.enableArgoCd,
+        enableHitlLabelStudio: flags.enableHitlLabelStudio,
         enableNatsWorker: natsConfiguredForConsumer(),
       })
     );

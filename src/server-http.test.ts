@@ -9,10 +9,10 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   recordNativeGraphqlExecute,
   resetNativeProtocolMetricsForTests,
-} from "./native-protocol-metrics.js";
+} from "clawql-api";
 import { resetClawqlApiForTests } from "./clawql-api-adapters.js";
 import { createMcpHttpApp } from "./server-http.js";
-import { resetSpecCache } from "./spec-loader.js";
+import { resetSpecCache } from "clawql-api";
 import { resetSchemaFieldCache } from "./tools.js";
 
 /**
@@ -224,7 +224,7 @@ describe("server-http", () => {
     process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS = "1";
     await mkdir(join(dir, "Memory"), { recursive: true });
     await writeFile(join(dir, "Memory/a.md"), "# A\n", "utf8");
-    const { syncMemoryDbFromDocuments } = await import("./memory-db.js");
+    const { syncMemoryDbFromDocuments } = await import("clawql-memory/db/memory-db");
     const text = await readFile(join(dir, "Memory/a.md"), "utf8");
     await syncMemoryDbFromDocuments(dir, [{ path: "Memory/a.md", text, mtimeMs: 1 }]);
     try {
@@ -255,7 +255,7 @@ describe("server-http", () => {
     process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS = "1";
     await mkdir(join(dir, "Memory"), { recursive: true });
     await writeFile(join(dir, "Memory/a.md"), "# A\n", "utf8");
-    const { syncMemoryDbFromDocuments } = await import("./memory-db.js");
+    const { syncMemoryDbFromDocuments } = await import("clawql-memory/db/memory-db");
     const text = await readFile(join(dir, "Memory/a.md"), "utf8");
     await syncMemoryDbFromDocuments(dir, [{ path: "Memory/a.md", text, mtimeMs: 1 }]);
     try {

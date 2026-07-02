@@ -4,7 +4,7 @@ import {
   extractEnterpriseCitationsFromOnyxSearchJson,
   normalizeEnterpriseCitations,
   stableEnterpriseCitationsPayload,
-} from "./enterprise-citations.js";
+} from "clawql-memory/ingest/enterprise-citations";
 
 describe("enterprise-citations", () => {
   it("extracts from documents[] shape", () => {
