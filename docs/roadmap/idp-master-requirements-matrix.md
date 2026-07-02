@@ -4,7 +4,7 @@
 
 **Product vision canon:** [`docs/vision/clawql-master-enablement-guide.md`](../vision/clawql-master-enablement-guide.md) (companions: modularization v1.9 / v2.0). **IDP platform design (April 2026):** [`clawql-idp-platform.md`](../vision/clawql-idp-platform.md) — self-hosted vs hosted, ClawQL-native archive layer, competitive positioning. **Prior stack narrative (archived):** [`archive/clawql-idp-stack-april-2026.md`](../vision/archive/clawql-idp-stack-april-2026.md).
 
-**Epic (checklist only, no extra scope):** [#259](https://github.com/danielsmithdevelopment/ClawQL/issues/259) — rolls up **#241–#258**.
+**Epic (checklist only, no extra scope):** [#259](https://github.com/danielsmithdevelopment/ClawQL/issues/259) — rolls up **#241–#258**. Living status: [epic-259-checklist.md](epic-259-checklist.md).
 
 **Last updated:** 2026-07-01
 

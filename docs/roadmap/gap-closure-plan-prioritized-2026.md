@@ -2,7 +2,7 @@
 
 **Status:** living document — execution tracked in GitHub issues below. **Last updated:** 2026-06-30.
 
-**Epic checklist (no extra scope):** [#259](https://github.com/danielsmithdevelopment/ClawQL/issues/259) lists **#241–#258** in one place.
+**Epic checklist (no extra scope):** [#259](https://github.com/danielsmithdevelopment/ClawQL/issues/259) lists **#241–#258** in one place. Living status: [epic-259-checklist.md](epic-259-checklist.md).
 
 This plan closes known **product gaps** called out for HITL, classification, active learning, and vertical onboarding. Priority is **P1 → P4** (highest first). Quarter hints are **targets**, not guarantees.
 
@@ -92,15 +92,15 @@ This plan closes known **product gaps** called out for HITL, classification, act
 
 Cross-cutting items from the **consolidated IDP super-edition** roadmap that are **not** covered by P1–P4 alone: [IDP master requirements matrix](idp-master-requirements-matrix.md).
 
-| Track                                                              | Issue                                                                                                                                                               |
-| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Observability bundle (Langfuse + Grafana/Prometheus + trace guide) | [#252](https://github.com/danielsmithdevelopment/ClawQL/issues/252)                                                                                                 |
-| Lending W-2 **reference sample pack** (Argo + LS + OpenClaw)       | [#253](https://github.com/danielsmithdevelopment/ClawQL/issues/253) — **shipped** [`deployment/samples/lending-w2/`](../../deployment/samples/lending-w2/README.md) |
-| **Argo suspend/resume** + HITL + optional **NATS**                 | [#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254) — **shipped** (webhook + JetStream publish/consumer)                                            |
-| Optional **`clawql-idp`** umbrella Helm chart                      | [#255](https://github.com/danielsmithdevelopment/ClawQL/issues/255)                                                                                                 |
-| **Slack-first** OpenClaw IDP runbook                               | [#256](https://github.com/danielsmithdevelopment/ClawQL/issues/256)                                                                                                 |
-| **KEDA** autoscaling (NATS queues)                                 | [#257](https://github.com/danielsmithdevelopment/ClawQL/issues/257) — **shipped** [`nats-keda-worker.md`](../deployment/nats-keda-worker.md)                        |
-| Agent → **Git PR** → **Argo CD** promotion                         | [#258](https://github.com/danielsmithdevelopment/ClawQL/issues/258)                                                                                                 |
+| Track                                                              | Issue                                                                                                                                                                                                                                   |
+| ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Observability bundle (Langfuse + Grafana/Prometheus + trace guide) | [#252](https://github.com/danielsmithdevelopment/ClawQL/issues/252)                                                                                                                                                                     |
+| Lending W-2 **reference sample pack** (Argo + LS + OpenClaw)       | [#253](https://github.com/danielsmithdevelopment/ClawQL/issues/253) — **shipped** [`deployment/samples/lending-w2/`](../../deployment/samples/lending-w2/README.md) (close issue via `scripts/github/close-shipped-epic-259-issues.sh`) |
+| **Argo suspend/resume** + HITL + optional **NATS**                 | [#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254) — **shipped** (webhook + JetStream publish/consumer)                                                                                                                |
+| Optional **`clawql-idp`** umbrella Helm chart                      | [#255](https://github.com/danielsmithdevelopment/ClawQL/issues/255)                                                                                                                                                                     |
+| **Slack-first** OpenClaw IDP runbook                               | [#256](https://github.com/danielsmithdevelopment/ClawQL/issues/256)                                                                                                                                                                     |
+| **KEDA** autoscaling (NATS queues)                                 | [#257](https://github.com/danielsmithdevelopment/ClawQL/issues/257) — **shipped** [`nats-keda-worker.md`](../deployment/nats-keda-worker.md)                                                                                            |
+| Agent → **Git PR** → **Argo CD** promotion                         | [#258](https://github.com/danielsmithdevelopment/ClawQL/issues/258)                                                                                                                                                                     |
 
 ---
 
