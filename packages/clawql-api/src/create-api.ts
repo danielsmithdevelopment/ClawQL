@@ -69,9 +69,7 @@ export function createClawQLApi(options: CreateClawQLApiOptions = {}): ClawQLApi
     options.executeLayer ?? ExecuteNotConfiguredLive
   );
   for (const pluginLayer of options.pluginLayers ?? []) {
-    Effect.runSync(
-      Effect.scoped(Layer.build(Layer.provideMerge(pluginLayer, baseLayer)))
-    );
+    Effect.runSync(Effect.scoped(Layer.build(Layer.provideMerge(pluginLayer, baseLayer))));
   }
   const layer: Layer.Layer<ClawQLApiRuntimeServices, ClawQLApiRuntimeError, never> = baseLayer;
   const runtime = ManagedRuntime.make(layer);

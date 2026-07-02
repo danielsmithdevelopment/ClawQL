@@ -1,9 +1,14 @@
-import type { ClawQLError, McpToolAlreadyRegisteredError, PluginAlreadyRegisteredError } from "clawql-core";
+import type {
+  ClawQLError,
+  McpToolAlreadyRegisteredError,
+  PluginAlreadyRegisteredError,
+} from "clawql-core";
 import { Effect, Layer } from "effect";
 import { ClawQLApi } from "../clawql-api-service.js";
 import { createMemoryPlugin } from "./memory-plugin.js";
 
-export type MemoryLayerError = PluginAlreadyRegisteredError | ClawQLError | McpToolAlreadyRegisteredError;
+export type MemoryLayerError =
+  PluginAlreadyRegisteredError | ClawQLError | McpToolAlreadyRegisteredError;
 
 /**
  * Effect Layer that registers {@link createMemoryPlugin} via `ClawQLApi.registerPlugin`.

@@ -1,14 +1,15 @@
-import type { ClawQLError, McpToolAlreadyRegisteredError, PluginAlreadyRegisteredError } from "clawql-core";
+import type {
+  ClawQLError,
+  McpToolAlreadyRegisteredError,
+  PluginAlreadyRegisteredError,
+} from "clawql-core";
 import { ClawQLApi, ExecuteService } from "clawql-api";
 import { Effect, Layer } from "effect";
 import { configureAutomationPluginDeps } from "./deps.js";
 import { createAutomationPlugin, type CreateAutomationPluginOptions } from "./automation-plugin.js";
 
 export type AutomationLayerError =
-  | PluginAlreadyRegisteredError
-  | ClawQLError
-  | McpToolAlreadyRegisteredError
-  | Error;
+  PluginAlreadyRegisteredError | ClawQLError | McpToolAlreadyRegisteredError | Error;
 
 /**
  * Effect Layer that wires Automation execute deps and registers {@link createAutomationPlugin}.
