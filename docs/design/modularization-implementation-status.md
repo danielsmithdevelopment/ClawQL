@@ -14,13 +14,13 @@ ClawQL is mid-flight on a **strangler extraction** from the root `clawql-mcp` pa
 
 **What landed (extraction phases 1–9, PRs [#401](https://github.com/danielsmithdevelopment/ClawQL/pull/401)–[#430](https://github.com/danielsmithdevelopment/ClawQL/pull/430)):**
 
-| Package             | Role today                                                                                                                                                        |
-| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `clawql-core`       | Audit ring buffer, cache helpers, Merkle + Cuckoo, `Plugin` types, shared errors                                                                                  |
-| `clawql-api`        | Spec load/search, REST/GraphQL/gRPC execute, provider registry, `createClawQLApi()`, Panguard proxy plugin                                                        |
-| `clawql-memory`     | Vault I/O, `memory.db`, embeddings, ingest/recall, enterprise citations                                                                                           |
+| Package             | Role today                                                                                                                                                                                                                                                  |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `clawql-core`       | Audit ring buffer, cache helpers, Merkle + Cuckoo, `Plugin` types, shared errors                                                                                                                                                                            |
+| `clawql-api`        | Spec load/search, REST/GraphQL/gRPC execute, provider registry, `createClawQLApi()`, Panguard proxy plugin                                                                                                                                                  |
+| `clawql-memory`     | Vault I/O, `memory.db`, embeddings, ingest/recall, enterprise citations                                                                                                                                                                                     |
 | `clawql-documents`  | `ingest_external_knowledge`, **`DEFAULT_IDP_PIPELINE`**, **`run_idp_pipeline`** ([#307](https://github.com/danielsmithdevelopment/ClawQL/issues/307)), **`classify_document`** / **`extract_document`**; bundled IDP merge (**8 vendors** via `clawql-api`) |
-| `clawql-automation` | `schedule` worker, Slack `notify`, Argo **`workflow`** + **`argocd`** tools (opt-in); NATS JetStream publish/consume when enabled ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254)) |
+| `clawql-automation` | `schedule` worker, Slack `notify`, Argo **`workflow`** + **`argocd`** tools (opt-in); NATS JetStream publish/consume when enabled ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254))                                                     |
 
 **What is still mostly in `src/`:** MCP tool registration (`tools.ts`), optional HITL glue, GraphQL proxy entrypoints, server lifecycle.
 

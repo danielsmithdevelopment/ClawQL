@@ -150,13 +150,13 @@ Full specification: **[Operator target architecture](../design/operator-target-a
 
 ## Related documentation
 
-| Topic                     | Link                                                                         |
-| ------------------------- | ---------------------------------------------------------------------------- |
-| Helm chart                | [helm.md](helm.md)                                                           |
-| Kustomize / K8s           | [deploy-k8s.md](deploy-k8s.md)                                               |
+| Topic                     | Link                                                                                                                                               |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Helm chart                | [helm.md](helm.md)                                                                                                                                 |
+| Kustomize / K8s           | [deploy-k8s.md](deploy-k8s.md)                                                                                                                     |
 | IDP eight-vendor stack    | [idp-pipeline.md](../providers/idp-pipeline.md) · [clawql-idp-helm.md](clawql-idp-helm.md) · [observability/README.md](../observability/README.md) |
-| Operator design (planned) | [operator-target-architecture.md](../design/operator-target-architecture.md) |
-| Vision & roadmap          | [clawql-vision-roadmap.md](../vision/clawql-vision-roadmap.md)               |
+| Operator design (planned) | [operator-target-architecture.md](../design/operator-target-architecture.md)                                                                       |
+| Vision & roadmap          | [clawql-vision-roadmap.md](../vision/clawql-vision-roadmap.md)                                                                                     |
 
 ---
 
