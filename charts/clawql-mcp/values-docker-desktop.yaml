@@ -311,6 +311,9 @@ providerIngress:
   stirling:
     enabled: true
     host: stirling.localhost
+  docling:
+    enabled: true
+    host: docling.localhost
   tika:
     enabled: true
     host: tika.localhost
@@ -383,6 +386,15 @@ sandboxDocker:
   enforceHostPathSocketType: false
 
 documentPipeline:
+  docling:
+    enabled: true
+    resources:
+      requests:
+        cpu: 250m
+        memory: 2Gi
+      limits:
+        cpu: "2"
+        memory: 6Gi
   tika:
     resources:
       requests:

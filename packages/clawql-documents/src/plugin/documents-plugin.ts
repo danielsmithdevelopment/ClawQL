@@ -3,6 +3,16 @@ import {
   runIdpPipelineToolSchema,
 } from "../pipeline/run-idp-pipeline.js";
 import type { RunIdpPipelineInput } from "../pipeline/runner.js";
+import {
+  classifyDocumentToolSchema,
+  handleClassifyDocumentToolInput,
+  type ClassifyDocumentInput,
+} from "../classify/classify-document.js";
+import {
+  extractDocumentToolSchema,
+  handleExtractDocumentToolInput,
+  type ExtractDocumentInput,
+} from "../langextract/extract-document.js";
 import { runIngestExternalKnowledge, type ExternalIngestInput } from "../ingest/external-ingest.js";
 import { logMcpToolShape } from "clawql-api/mcp/tool-shape-log";
 import type { Plugin } from "clawql-core";
@@ -114,11 +124,17 @@ export type CreateDocumentsPluginOptions = {
   readonly enableOnyx?: boolean;
   /** Register `run_idp_pipeline` when `CLAWQL_ENABLE_IDP_PIPELINE=1` ([#307](https://github.com/danielsmithdevelopment/ClawQL/issues/307)). */
   readonly enableIdpPipeline?: boolean;
+  /** Register `classify_document` when `CLAWQL_ENABLE_IDP_CLASSIFIER=1` ([#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248)). */
+  readonly enableIdpClassifier?: boolean;
+  /** Register `extract_document` when `CLAWQL_ENABLE_LANGEXTRACT=1` ([#246](https://github.com/danielsmithdevelopment/ClawQL/issues/246)). */
+  readonly enableLangextract?: boolean;
 };
 
 export function createDocumentsPlugin(options: CreateDocumentsPluginOptions = {}): Plugin {
   const enableOnyx = options.enableOnyx ?? false;
   const enableIdpPipeline = options.enableIdpPipeline ?? false;
+  const enableIdpClassifier = options.enableIdpClassifier ?? false;
+  const enableLangextract = options.enableLangextract ?? false;
   return {
     id: DOCUMENTS_PLUGIN_ID,
     version: "0.1.0",
@@ -142,6 +158,20 @@ export function createDocumentsPlugin(options: CreateDocumentsPluginOptions = {}
             name: "run_idp_pipeline",
             schema: runIdpPipelineToolSchema,
             handler: (args) => handleRunIdpPipelineToolInput(args as RunIdpPipelineInput),
+          });
+        }
+        if (enableIdpClassifier) {
+          yield* api.registerMcpTool({
+            name: "classify_document",
+            schema: classifyDocumentToolSchema,
+            handler: (args) => handleClassifyDocumentToolInput(args as ClassifyDocumentInput),
+          });
+        }
+        if (enableLangextract) {
+          yield* api.registerMcpTool({
+            name: "extract_document",
+            schema: extractDocumentToolSchema,
+            handler: (args) => handleExtractDocumentToolInput(args as ExtractDocumentInput),
           });
         }
       }),

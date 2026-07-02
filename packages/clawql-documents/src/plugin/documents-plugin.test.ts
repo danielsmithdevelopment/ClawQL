@@ -39,4 +39,26 @@ describe("createDocumentsPlugin", () => {
     const names = registry.list().map((t) => t.name);
     expect(names).toEqual(["ingest_external_knowledge", "run_idp_pipeline"]);
   });
+
+  it("registers classify_document when enableIdpClassifier is true", () => {
+    configureDocumentsPluginDeps({
+      execute: async () => ({ content: [{ type: "text", text: "{}" }] }),
+    });
+    const registry = new McpToolRegistry();
+    const api = registry.registrationApi();
+    Effect.runSync(createDocumentsPlugin({ enableIdpClassifier: true }).onRegister!(api));
+    const names = registry.list().map((t) => t.name);
+    expect(names).toEqual(["ingest_external_knowledge", "classify_document"]);
+  });
+
+  it("registers extract_document when enableLangextract is true", () => {
+    configureDocumentsPluginDeps({
+      execute: async () => ({ content: [{ type: "text", text: "{}" }] }),
+    });
+    const registry = new McpToolRegistry();
+    const api = registry.registrationApi();
+    Effect.runSync(createDocumentsPlugin({ enableLangextract: true }).onRegister!(api));
+    const names = registry.list().map((t) => t.name);
+    expect(names).toEqual(["ingest_external_knowledge", "extract_document"]);
+  });
 });

@@ -4,7 +4,7 @@
  */
 
 export type IdpPipelineStage =
-  "nextcloud" | "tika" | "gotenberg" | "stirling" | "paperless" | "onyx" | "coneshare";
+  "nextcloud" | "docling" | "tika" | "gotenberg" | "stirling" | "paperless" | "onyx" | "coneshare";
 
 export type IdpPipelineStep = {
   stage: IdpPipelineStage;
@@ -20,7 +20,20 @@ export const DEFAULT_IDP_PIPELINE: IdpPipelineStep[] = [
     stage: "nextcloud",
     operationId: "nextcloud::nextcloud_webdav_download",
     label: "Download from Nextcloud",
-    argsTemplate: { username: "${NEXTCLOUD_USERNAME}", filePath: "IDP/inbox/document.pdf" },
+    argsTemplate: { username: "${NEXTCLOUD_USERNAME}", filePath: "${document_path}" },
+  },
+  {
+    stage: "docling",
+    operationId: "docling::docling_convert_source",
+    label: "Layout parse (Docling)",
+    argsTemplate: {
+      sources: [{ kind: "http", url: "${document_url}" }],
+      options: {
+        to_formats: ["md", "json"],
+        do_ocr: true,
+        do_table_structure: true,
+      },
+    },
   },
   {
     stage: "tika",
@@ -82,6 +95,7 @@ export function idpStageFromOperationId(operationId: string): IdpPipelineStage |
   const stage = bare?.toLowerCase();
   if (
     stage === "nextcloud" ||
+    stage === "docling" ||
     stage === "tika" ||
     stage === "gotenberg" ||
     stage === "stirling" ||

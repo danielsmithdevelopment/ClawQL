@@ -10,7 +10,8 @@
 {{- end }}
 {{- $paperlessSecretManaged := and $paperlessEnabled (not .Values.documentPipeline.paperless.auth.existingSecret) }}
 {{- $stirlingSecretManaged := and (not .Values.documentPipeline.stirling.auth.existingSecret) (ne .Values.documentPipeline.stirling.auth.apiKey "") }}
-{{- if or $paperlessSecretManaged $stirlingSecretManaged }}
+{{- $doclingSecretManaged := and .Values.documentPipeline.docling.enabled (not .Values.documentPipeline.docling.auth.existingSecret) (ne .Values.documentPipeline.docling.auth.apiKey "") }}
+{{- if or $paperlessSecretManaged $stirlingSecretManaged $doclingSecretManaged }}
 apiVersion: v1
 kind: Secret
 metadata:
@@ -41,6 +42,9 @@ data:
   {{- if $stirlingSecretManaged }}
   stirling-api-key: {{ .Values.documentPipeline.stirling.auth.apiKey | b64enc | quote }}
   STIRLING_API_KEY: {{ .Values.documentPipeline.stirling.auth.apiKey | b64enc | quote }}
+  {{- end }}
+  {{- if $doclingSecretManaged }}
+  DOCLING_API_KEY: {{ .Values.documentPipeline.docling.auth.apiKey | b64enc | quote }}
   {{- end }}
 {{- end }}
 {{- if and $postgresEnabled (not .Values.stores.postgres.auth.existingSecret) }}
@@ -183,6 +187,75 @@ spec:
               protocol: TCP
           resources:
             {{- toYaml .Values.documentPipeline.tika.resources | nindent 12 }}
+{{- if .Values.documentPipeline.docling.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "clawql-mcp.doclingName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: docling
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: docling
+  ports:
+    - name: http
+      port: {{ .Values.documentPipeline.docling.service.port | int }}
+      targetPort: http
+      protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "clawql-mcp.doclingName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: docling
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: docling
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: docling
+    spec:
+      containers:
+        - name: docling
+          image: "{{ .Values.documentPipeline.docling.image.repository }}:{{ .Values.documentPipeline.docling.image.tag }}"
+          imagePullPolicy: {{ .Values.documentPipeline.docling.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.documentPipeline.docling.service.port | int }}
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 12
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 6
+          resources:
+            {{- toYaml .Values.documentPipeline.docling.resources | nindent 12 }}
+{{- end }}
 ---
 apiVersion: v1
 kind: Service

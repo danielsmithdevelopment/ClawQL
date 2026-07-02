@@ -33,6 +33,7 @@ describe("idp-pipeline", () => {
     expect(stages).toContain("nextcloud");
     expect(stages).toContain("coneshare");
     expect(stages).toContain("paperless");
+    expect(stages).toContain("docling");
   });
 
   it("pipelineStepsForDashboard marks progress", () => {
@@ -45,6 +46,7 @@ describe("idp-pipeline", () => {
   it("idpStageFromOperationId parses merged ids", () => {
     expect(idpStageFromOperationId("nextcloud::nextcloud_webdav_upload")).toBe("nextcloud");
     expect(idpStageFromOperationId("coneshare::coneshare_share_links_create")).toBe("coneshare");
+    expect(idpStageFromOperationId("docling::docling_convert_source")).toBe("docling");
     expect(idpStageFromOperationId("tika::tika_parse_put")).toBe("tika");
   });
 
