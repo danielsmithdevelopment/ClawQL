@@ -25,18 +25,9 @@ import {
   validateOrDegradeObsidianVaultAtStartup,
 } from "./vault-config.js";
 import { registerPostgresPoolShutdownHooks } from "clawql-memory/vector/pgvector";
-import {
-  getClawqlOptionalToolFlags,
-  type ClawqlOptionalToolFlags,
-} from "clawql-api";
-import {
-  getNativeProtocolMetricsSnapshot,
-  nativeProtocolMetricsEnabled,
-} from "clawql-api";
-import {
-  prometheusDisabledForHttp,
-  renderPrometheusMetrics,
-} from "clawql-api";
+import { getClawqlOptionalToolFlags, type ClawqlOptionalToolFlags } from "clawql-api";
+import { getNativeProtocolMetricsSnapshot, nativeProtocolMetricsEnabled } from "clawql-api";
+import { prometheusDisabledForHttp, renderPrometheusMetrics } from "clawql-api";
 import { maybeInitOtelTracing } from "./otel-tracing.js";
 import { handleLabelStudioWebhookRequest } from "clawql-automation/hitl/label-studio";
 import { configureHitlTransportDeps } from "./hitl-transport.js";

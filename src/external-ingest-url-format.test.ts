@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { buildUrlIngestNote, formatUrlResponseAsMarkdown } from "clawql-documents/ingest/url-format";
+import {
+  buildUrlIngestNote,
+  formatUrlResponseAsMarkdown,
+} from "clawql-documents/ingest/url-format";
 
 describe("external-ingest-url-format", () => {
   it("pretty-prints JSON and titles npm registry docs", () => {

@@ -4,10 +4,7 @@ import {
   handleAuditToolInput,
   resetClawqlAuditBufferForTests,
 } from "./clawql-audit.js";
-import {
-  renderPrometheusMetrics,
-  resetNativeProtocolPrometheusForTests,
-} from "clawql-api";
+import { renderPrometheusMetrics, resetNativeProtocolPrometheusForTests } from "clawql-api";
 
 describe("clawql-audit", () => {
   const saved = process.env.CLAWQL_AUDIT_MAX_ENTRIES;

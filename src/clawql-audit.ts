@@ -14,10 +14,7 @@ import {
 import { z } from "zod";
 import { maybePushAuditEntryToLoki } from "./clawql-audit-loki.js";
 import { logMcpToolShape } from "./mcp-tool-log.js";
-import {
-  prometheusRecordAuditAppend,
-  prometheusRecordAuditClear,
-} from "clawql-api";
+import { prometheusRecordAuditAppend, prometheusRecordAuditClear } from "clawql-api";
 
 export type { ClawqlAuditEntry };
 

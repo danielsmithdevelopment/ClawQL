@@ -247,7 +247,7 @@ These vision items are **not** done by package extraction alone:
 | Document pipeline (Tika → … → Paperless)      | 📋 Orchestration not in `clawql-documents` yet                         |
 | NATS / HITL in `clawql-automation`            | ✅ Shipped (JetStream publish + HITL resume consumer)                  |
 | Kubernetes Operator Layer composition         | 📋 Planned                                                             |
-| Transport-only `clawql-mcp` npm package split | 📋 `src/` slimmed; shims removed; transport glue remains |
+| Transport-only `clawql-mcp` npm package split | 📋 `src/` slimmed; shims removed; transport glue remains               |
 
 ---
 

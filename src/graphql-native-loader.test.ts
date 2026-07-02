@@ -9,10 +9,7 @@ vi.mock("node-fetch", () => ({
 }));
 
 import fetch from "node-fetch";
-import {
-  introspectionJsonToQuery,
-  loadGraphqlNativeOperationsFromConfigs,
-} from "clawql-api";
+import { introspectionJsonToQuery, loadGraphqlNativeOperationsFromConfigs } from "clawql-api";
 import { resetNativeProtocolRegistry } from "clawql-api";
 
 describe("graphql-native-loader", () => {

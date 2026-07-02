@@ -6,10 +6,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  recordNativeGraphqlExecute,
-  resetNativeProtocolMetricsForTests,
-} from "clawql-api";
+import { recordNativeGraphqlExecute, resetNativeProtocolMetricsForTests } from "clawql-api";
 import { resetClawqlApiForTests } from "./clawql-api-adapters.js";
 import { getClawqlOptionalToolFlags } from "clawql-api";
 import { createMcpHttpApp } from "./server-http.js";
