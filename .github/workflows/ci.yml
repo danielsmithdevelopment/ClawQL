@@ -26,8 +26,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      # actions/checkout@v6.0.2
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      # actions/checkout@v7.0.0
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
 
       # actions/setup-node@v6.3.0
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
@@ -35,16 +35,16 @@ jobs:
           node-version: "25"
           cache: npm
 
-      # actions/cache@v4.2.3
-      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae
+      # actions/cache@v6.1.0
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: .eslintcache
           key: eslint-${{ runner.os }}-${{ hashFiles('eslint.config.js', 'package-lock.json') }}
           restore-keys: |
             eslint-${{ runner.os }}-
 
-      # actions/cache@v4.2.3
-      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae
+      # actions/cache@v6.1.0
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: .prettier-cache
           key: prettier-${{ runner.os }}-${{ hashFiles('.prettierrc.json', 'package-lock.json') }}
@@ -87,7 +87,7 @@ jobs:
       contents: write
       pull-requests: read
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
         with:
           ref: ${{ github.head_ref }}
           repository: ${{ github.event.pull_request.head.repo.full_name }}
@@ -98,7 +98,7 @@ jobs:
           node-version: "25"
           cache: npm
 
-      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: .prettier-cache
           key: prettier-${{ runner.os }}-${{ hashFiles('.prettierrc.json', 'package-lock.json') }}
@@ -144,8 +144,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      # actions/checkout@v6.0.2
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      # actions/checkout@v7.0.0
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
 
       - name: Install ShellCheck
         run: |
@@ -157,8 +157,8 @@ jobs:
 
       - uses: rhysd/actionlint@914e7df21a07ef503a81201c76d2b11c789d3fca
 
-      # azure/setup-helm@v4.3.0
-      - uses: azure/setup-helm@dda3372f752e03dde6b3237bc9431cdc2f7a02a2
+      # azure/setup-helm@v5.0.1
+      - uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310
         with:
           version: v3.17.0
 
@@ -172,8 +172,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      # actions/checkout@v6.0.2
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      # actions/checkout@v7.0.0
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
 
       - name: Gitleaks (working tree)
         run: |
@@ -186,8 +186,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
-      # actions/checkout@v6.0.2
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      # actions/checkout@v7.0.0
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
 
       # Pin image digest moves with upstream; OSV DB is live at scan time.
       - name: OSV-Scanner (lockfiles + manifests)
@@ -225,8 +225,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      # actions/checkout@v6.0.2
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      # actions/checkout@v7.0.0
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
 
       - name: Read package metadata
         id: pkg
@@ -266,7 +266,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
 
       - name: Docker build (Panguard bridge image)
         run: docker build -f docker/panguard-mcp-bridge/Dockerfile -t clawql-panguard-bridge:ci .
@@ -277,8 +277,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      # actions/checkout@v6.0.2
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      # actions/checkout@v7.0.0
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
 
       # actions/setup-node@v6.3.0
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
@@ -316,8 +316,8 @@ jobs:
       matrix:
         node-version: [22, 24, 25]
     steps:
-      # actions/checkout@v6.0.2
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      # actions/checkout@v7.0.0
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
 
       # actions/setup-node@v6.3.0
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
@@ -372,8 +372,8 @@ jobs:
     env:
       CLAWQL_OUROBOROS_DATABASE_URL: postgres://clawql:clawql@127.0.0.1:5432/clawql_ouroboros
     steps:
-      # actions/checkout@v6.0.2
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      # actions/checkout@v7.0.0
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
 
       # actions/setup-node@v6.3.0
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
@@ -403,7 +403,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
 
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         with:

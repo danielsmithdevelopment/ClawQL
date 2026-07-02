@@ -17,14 +17,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
-      # actions/checkout@v6.0.2
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      # actions/checkout@v7.0.0
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
         with:
           fetch-depth: 0
 
-      # trufflesecurity/trufflehog@v3.95.3 (tag → commit pin for supply chain)
+      # trufflesecurity/trufflehog@v3.95.6 (tag → commit pin for supply chain)
       - name: TruffleHog OSS
-        uses: trufflesecurity/trufflehog@37b77001d0174ebec2fcca2bd83ff83a6d45a3ab
+        uses: trufflesecurity/trufflehog@30d5bb91af1a771378349dbbb0c82129392acf70
         with:
           path: ./
           extra_args: --exclude-paths=.github/trufflehog-exclude-paths.txt
