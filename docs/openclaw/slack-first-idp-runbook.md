@@ -26,16 +26,16 @@ clawql-mcp  ── search / execute ──► Docling (layout) → Tika → Stir
 
 ## Required configuration
 
-| Component           | Env / Helm                                      | Purpose                 |
-| ------------------- | ----------------------------------------------- | ----------------------- |
-| ClawQL MCP          | `CLAWQL_ENABLE_DOCUMENTS=1` (default)           | Document vendor merge   |
-| Docling layout parse | `DOCLING_BASE_URL`, optional `DOCLING_API_KEY`   | Forms/tables/W-2 ([#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248)) |
-| Classifier (optional) | `CLAWQL_ENABLE_IDP_CLASSIFIER=1`, `IDP_CLASSIFIER_BASE_URL` | Fine-tuned doc type routing ([#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248)) |
-| LangExtract (optional) | `CLAWQL_ENABLE_LANGEXTRACT=1`, `LANGEXTRACT_BASE_URL` | Schema extraction + grounding ([#246](https://github.com/danielsmithdevelopment/ClawQL/issues/246)) |
-| Slack notify        | `CLAWQL_ENABLE_NOTIFY=1`, `CLAWQL_SLACK_TOKEN`  | Completion message      |
-| Vault (optional)    | `CLAWQL_OBSIDIAN_VAULT_PATH`                    | Durable `memory_ingest` |
-| Workflow (optional) | `CLAWQL_ENABLE_WORKFLOW=1`, namespace allowlist | Durable Argo run        |
-| HITL (optional)     | `CLAWQL_ENABLE_HITL_LABEL_STUDIO=1`             | Human review gate       |
+| Component              | Env / Helm                                                  | Purpose                                                                                             |
+| ---------------------- | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| ClawQL MCP             | `CLAWQL_ENABLE_DOCUMENTS=1` (default)                       | Document vendor merge                                                                               |
+| Docling layout parse   | `DOCLING_BASE_URL`, optional `DOCLING_API_KEY`              | Forms/tables/W-2 ([#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248))              |
+| Classifier (optional)  | `CLAWQL_ENABLE_IDP_CLASSIFIER=1`, `IDP_CLASSIFIER_BASE_URL` | Fine-tuned doc type routing ([#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248))   |
+| LangExtract (optional) | `CLAWQL_ENABLE_LANGEXTRACT=1`, `LANGEXTRACT_BASE_URL`       | Schema extraction + grounding ([#246](https://github.com/danielsmithdevelopment/ClawQL/issues/246)) |
+| Slack notify           | `CLAWQL_ENABLE_NOTIFY=1`, `CLAWQL_SLACK_TOKEN`              | Completion message                                                                                  |
+| Vault (optional)       | `CLAWQL_OBSIDIAN_VAULT_PATH`                                | Durable `memory_ingest`                                                                             |
+| Workflow (optional)    | `CLAWQL_ENABLE_WORKFLOW=1`, namespace allowlist             | Durable Argo run                                                                                    |
+| HITL (optional)        | `CLAWQL_ENABLE_HITL_LABEL_STUDIO=1`                         | Human review gate                                                                                   |
 
 Helm full profile: [`charts/clawql-idp/values-idp-full.yaml`](../../charts/clawql-idp/values-idp-full.yaml) with `enableNotify: true`.
 
@@ -66,18 +66,18 @@ Slack replies must be short prose + links. Use `audit.append` with the same `cor
 
 After a successful run, the thread should contain **links and ids**, not raw PDFs or tokens:
 
-| Artifact     | Example                           | Source tool              |
-| ------------ | --------------------------------- | ------------------------ |
-| Layout parse | "Docling extracted W-2 boxes"     | `execute` on `docling`   |
-| Parse status | "Tika extracted 2 pages"        | `execute` on `tika`      |
-| Classification | "w2_form (0.94 confidence)"   | `classify_document` (optional) |
-| Extraction   | "W-2 box 1–6 grounded fields"   | `extract_document` (optional) |
-| Redaction    | "Stirling job succeeded"          | `execute` on `stirling`  |
-| Archive      | `Paperless doc #1842`             | `execute` on `paperless` |
-| Search       | "3 Onyx citations"                | `knowledge_search_onyx`  |
-| Vault note   | `Memory/underwriting/w2-2026.md`  | `memory_ingest`          |
-| Workflow     | `workflow clawql-abc12 Succeeded` | `workflow` `wait`        |
-| Completion   | `notify` message in channel       | `notify`                 |
+| Artifact       | Example                           | Source tool                    |
+| -------------- | --------------------------------- | ------------------------------ |
+| Layout parse   | "Docling extracted W-2 boxes"     | `execute` on `docling`         |
+| Parse status   | "Tika extracted 2 pages"          | `execute` on `tika`            |
+| Classification | "w2_form (0.94 confidence)"       | `classify_document` (optional) |
+| Extraction     | "W-2 box 1–6 grounded fields"     | `extract_document` (optional)  |
+| Redaction      | "Stirling job succeeded"          | `execute` on `stirling`        |
+| Archive        | `Paperless doc #1842`             | `execute` on `paperless`       |
+| Search         | "3 Onyx citations"                | `knowledge_search_onyx`        |
+| Vault note     | `Memory/underwriting/w2-2026.md`  | `memory_ingest`                |
+| Workflow       | `workflow clawql-abc12 Succeeded` | `workflow` `wait`              |
+| Completion     | `notify` message in channel       | `notify`                       |
 
 ### Sample `notify` payload
 
