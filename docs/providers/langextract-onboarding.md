@@ -52,8 +52,13 @@ See [`deployment/samples/langextract-http/README.md`](../../deployment/samples/l
 | -------- | ------- |
 | `CLAWQL_ENABLE_LANGEXTRACT` | Register MCP tool (default off) |
 | `LANGEXTRACT_BASE_URL` | Sidecar HTTP base (e.g. `http://localhost:8090`) |
-| `LANGEXTRACT_MODEL_ID` | Default model for live mode (`gemini-2.5-flash`) |
-| `GEMINI_API_KEY` | Required for sidecar **live** mode only |
+| `LANGEXTRACT_BACKEND` | Live sidecar backend: `openrouter` (default), `ollama`, or `openai_compatible` |
+| `LANGEXTRACT_MODEL_ID` | Model for live mode — OpenRouter: `deepseek/deepseek-chat`; Ollama: `gemma2:2b` |
+| `OPENROUTER_API_KEY` | Live **openrouter** backend (ClawQL standard — same as OpenClaw) |
+| `OLLAMA_BASE_URL` | Live **ollama** backend (default `http://localhost:11434`) |
+| `OPENAI_API_KEY` + `OPENAI_API_BASE_URL` | Live **openai_compatible** backend only |
+
+ClawQL does **not** require a direct **Gemini** API key for LangExtract. Use OpenRouter or local Ollama.
 
 ## Security
 
@@ -64,3 +69,4 @@ Read [`docs/security/langextract-threat-model.md`](../security/langextract-threa
 - [IDP pipeline hub](idp-pipeline.md)
 - [Docling onboarding](docling-onboarding.md)
 - [Fine-tuned classifier runbook](../runbooks/fine-tuned-classifier.md)
+- [Using OpenClaw with ClawQL](../openclaw/using-openclaw-with-clawql.md) — OpenRouter key setup

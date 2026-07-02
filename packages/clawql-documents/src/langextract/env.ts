@@ -16,7 +16,11 @@ export function langextractBaseUrl(): string | undefined {
 }
 
 export function langextractDefaultModelId(): string {
-  return process.env.LANGEXTRACT_MODEL_ID?.trim() || "gemini-2.5-flash";
+  return process.env.LANGEXTRACT_MODEL_ID?.trim() || "deepseek/deepseek-chat";
+}
+
+export function langextractBackend(): string {
+  return process.env.LANGEXTRACT_BACKEND?.trim().toLowerCase() || "openrouter";
 }
 
 export function langextractArtifactsDir(): string {

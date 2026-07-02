@@ -9,14 +9,24 @@ Schema-guided, **character-grounded** extraction via [google/langextract](https:
 | Mode | Env | Behavior |
 | ---- | --- | -------- |
 | **demo** (default) | `LANGEXTRACT_MODE=demo` | Regex grounding for W-2 demo fields — **no cloud LLM** |
-| **live** | `LANGEXTRACT_MODE=live` + `GEMINI_API_KEY` | Calls upstream `langextract` (install `requirements.txt` in image) |
+| **live** | `LANGEXTRACT_MODE=live` + backend credentials | Calls upstream `langextract` (install `requirements.txt` in image) |
+
+## Live backends (no direct Gemini dependency)
+
+| Backend | Env | Credentials |
+| ------- | --- | ----------- |
+| **openrouter** (default) | `LANGEXTRACT_BACKEND=openrouter` | `OPENROUTER_API_KEY` — model id e.g. `deepseek/deepseek-chat` |
+| **ollama** | `LANGEXTRACT_BACKEND=ollama` | `OLLAMA_BASE_URL` (default `http://localhost:11434`) — model id e.g. `gemma2:2b` |
+| **openai_compatible** | `LANGEXTRACT_BACKEND=openai_compatible` | `OPENAI_API_KEY` + `OPENAI_API_BASE_URL` |
+
+ClawQL operators typically use **OpenRouter** (same key as OpenClaw) or **local Ollama** — not a standalone Gemini API key.
 
 ## API
 
 | Method | Path | Body | Response |
 | ------ | ---- | ---- | -------- |
-| `GET` | `/health` | — | `{ "ok": true, "mode": "demo" }` |
-| `POST` | `/extract` | `{ "text", "prompt_description"?, "examples"?, "model_id"?, "write_html"?, "doc_id"? }` | `{ "ok", "extractions"[], "artifact_paths"? }` |
+| `GET` | `/health` | — | `{ "ok": true, "mode": "demo", "backend": "openrouter" }` |
+| `POST` | `/extract` | `{ "text", "prompt_description"?, "examples"?, "model_id"?, "backend"?, "write_html"?, "doc_id"? }` | `{ "ok", "extractions"[], "artifact_paths"? }` |
 
 Each extraction includes `char_interval: { start, end }` when grounded. Extractions with `char_interval: null` should be dropped before promote (per upstream guidance).
 
@@ -34,6 +44,26 @@ curl -s -X POST http://localhost:8090/extract \
   "doc_id": "w2-demo"
 }
 JSON
+```
+
+### Live OpenRouter example
+
+```bash
+export LANGEXTRACT_MODE=live
+export LANGEXTRACT_BACKEND=openrouter
+export OPENROUTER_API_KEY=sk-or-...
+export LANGEXTRACT_MODEL_ID=deepseek/deepseek-chat
+python deployment/samples/langextract-http/server.py
+```
+
+### Live Ollama example
+
+```bash
+export LANGEXTRACT_MODE=live
+export LANGEXTRACT_BACKEND=ollama
+export LANGEXTRACT_MODEL_ID=gemma2:2b
+export OLLAMA_BASE_URL=http://localhost:11434
+python deployment/samples/langextract-http/server.py
 ```
 
 ## Wire to ClawQL MCP
@@ -69,4 +99,4 @@ See [`docs/security/langextract-threat-model.md`](../../docs/security/langextrac
 
 ## Compose
 
-[`docker/compose/docling-classifier.compose.yml`](../../docker/compose/docling-classifier.compose.yml) includes this service on port **8090**.
+[`docker/compose/docling-classifier.compose.yml`](../../docker/compose/docling-classifier.compose.yml) includes this service on port **8090** (demo mode by default).

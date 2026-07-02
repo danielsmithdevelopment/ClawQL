@@ -1,6 +1,11 @@
 import { logMcpToolShape } from "clawql-api/mcp/tool-shape-log";
 import { z } from "zod";
-import { langextractBaseUrl, langextractDefaultModelId, langextractToolEnabled } from "./env.js";
+import {
+  langextractBaseUrl,
+  langextractBackend,
+  langextractDefaultModelId,
+  langextractToolEnabled,
+} from "./env.js";
 
 const extractionExampleSchema = z.object({
   extraction_class: z.string().min(1),
@@ -39,7 +44,15 @@ export const extractDocumentToolSchema = {
   model_id: z
     .string()
     .optional()
-    .describe("LLM model id (default LANGEXTRACT_MODEL_ID or gemini-2.5-flash)."),
+    .describe(
+      "LLM model id for live sidecar (default LANGEXTRACT_MODEL_ID). OpenRouter: e.g. deepseek/deepseek-chat; Ollama: e.g. gemma2:2b."
+    ),
+  backend: z
+    .enum(["openrouter", "ollama", "openai_compatible"])
+    .optional()
+    .describe(
+      "Live sidecar backend override (default LANGEXTRACT_BACKEND or openrouter). Use ollama for local models."
+    ),
   write_html: z
     .boolean()
     .optional()
@@ -62,6 +75,7 @@ export type ExtractDocumentInput = {
     }>;
   }>;
   model_id?: string;
+  backend?: "openrouter" | "ollama" | "openai_compatible";
   write_html?: boolean;
   doc_id?: string;
 };
@@ -76,6 +90,7 @@ export type GroundedExtraction = {
 export type ExtractDocumentResult = {
   ok: boolean;
   provider?: "langextract-sidecar" | "heuristic-local";
+  backend?: string;
   model_id?: string;
   extractions?: GroundedExtraction[];
   artifact_paths?: {
@@ -176,6 +191,7 @@ export async function extractDocument(input: ExtractDocumentInput): Promise<Extr
     prompt_description,
     examples,
     model_id: input.model_id ?? langextractDefaultModelId(),
+    backend: input.backend ?? langextractBackend(),
     write_html: input.write_html ?? false,
     doc_id: input.doc_id,
   };
@@ -203,6 +219,7 @@ export async function extractDocument(input: ExtractDocumentInput): Promise<Extr
     return {
       ok: true,
       provider: "langextract-sidecar",
+      backend: parsed.backend,
       model_id: parsed.model_id,
       extractions: parsed.extractions,
       artifact_paths: parsed.artifact_paths,

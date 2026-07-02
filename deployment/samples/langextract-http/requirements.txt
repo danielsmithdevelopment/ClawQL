@@ -1,1 +1,3 @@
 langextract>=1.0.0
+langextract[openai]>=1.0.0
+langextract-provider-openrouter>=0.1.3

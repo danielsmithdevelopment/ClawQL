@@ -46,7 +46,10 @@ services:
       - "8090:8090"
     environment:
       LANGEXTRACT_MODE: demo
+      LANGEXTRACT_BACKEND: openrouter
+      LANGEXTRACT_MODEL_ID: deepseek/deepseek-chat
       LANGEXTRACT_ARTIFACTS_DIR: /tmp/langextract-artifacts
+      # Live mode: set LANGEXTRACT_MODE=live and OPENROUTER_API_KEY (or LANGEXTRACT_BACKEND=ollama)
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8090/health"]
       interval: 15s
