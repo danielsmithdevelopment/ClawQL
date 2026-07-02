@@ -17,10 +17,10 @@ import { pathToFileURL } from "node:url";
 import express from "express";
 import type { Express } from "express";
 import { createHandler } from "graphql-http/lib/use/express";
-import { getPackageRoot } from "./package-root.js";
-import { resolveBundledProvider } from "./provider-registry.js";
-import { loadSpec, resolveApiBaseUrl } from "./spec-loader.js";
-import { buildGraphQLSchema } from "./graphql-schema-builder.js";
+import { getPackageRoot } from "clawql-api";
+import { resolveBundledProvider } from "clawql-api";
+import { loadSpec, resolveApiBaseUrl } from "clawql-api";
+import { buildGraphQLSchema } from "clawql-api";
 
 const PORT = process.env.GRAPHQL_PORT ? parseInt(process.env.GRAPHQL_PORT, 10) : 4000;
 

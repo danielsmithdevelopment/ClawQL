@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { runMemoryIngest } from "./memory-ingest.js";
-import { updateProviderIndexPage } from "./memory-provider-index.js";
+import { updateProviderIndexPage } from "clawql-memory/vault/provider-index";
 
 describe("memory-provider-index", () => {
   const savedVault = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;

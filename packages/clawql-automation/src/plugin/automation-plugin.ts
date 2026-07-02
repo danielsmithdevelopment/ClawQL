@@ -20,6 +20,10 @@ import {
 } from "../workflow/workflow.js";
 import { argocdToolSchema, handleArgocdToolInput as runArgocdTool } from "../argocd/argocd.js";
 import { startNatsWorkflowWorker, stopNatsWorkflowWorker } from "../nats/worker.js";
+import {
+  handleHitlEnqueueLabelStudioToolInput,
+  type HitlLabelStudioEnqueueParams,
+} from "../hitl/label-studio.js";
 
 export const AUTOMATION_PLUGIN_ID = "clawql-automation";
 
@@ -59,6 +63,55 @@ export const notifyToolSchema = {
       "Optional top-level response keys to return (same as execute `fields`). " +
         "Omit for defaults: ok, channel, ts, message."
     ),
+};
+
+export const hitlLabelStudioToolSchema = {
+  project_id: z
+    .number()
+    .int()
+    .min(1)
+    .describe("Label Studio project id (integer pk in /api/projects/{id}/import)."),
+  tasks: z
+    .array(
+      z.object({
+        data: z
+          .record(z.string(), z.unknown())
+          .describe("Task fields shown to annotators (maps to Label Studio task.data)."),
+        meta: z
+          .record(z.string(), z.unknown())
+          .optional()
+          .describe("Optional extra JSON merged into task.data.meta."),
+      })
+    )
+    .min(1)
+    .max(100)
+    .describe("Tasks to import in one batch."),
+  confidence: z
+    .number()
+    .min(0)
+    .max(1)
+    .optional()
+    .describe("Optional model confidence stored under data.clawql_hitl.confidence."),
+  correlation_id: z
+    .string()
+    .max(512)
+    .optional()
+    .describe("Optional id for OpenClaw / logs / webhook correlation."),
+  seed_id: z.string().max(256).optional().describe("Optional Ouroboros or workflow seed id."),
+  workflow_ref: z
+    .object({
+      namespace: z.string().min(1).max(63),
+      name: z.string().min(1).max(253),
+      node_field_selector: z.string().max(512).optional(),
+    })
+    .optional()
+    .describe(
+      "Optional Argo Workflow to resume on Label Studio webhook when CLAWQL_HITL_WEBHOOK_RESUME_WORKFLOW=1."
+    ),
+  provenance: z
+    .record(z.string(), z.unknown())
+    .optional()
+    .describe("Optional provenance object stored under data.clawql_hitl.provenance."),
 };
 
 export async function handleScheduleToolInput(
@@ -115,6 +168,7 @@ export type CreateAutomationPluginOptions = {
   readonly enableWorkflow?: boolean;
   readonly enableArgoCd?: boolean;
   readonly enableNatsWorker?: boolean;
+  readonly enableHitlLabelStudio?: boolean;
 };
 
 export function createAutomationPlugin(options: CreateAutomationPluginOptions = {}): Plugin {
@@ -123,6 +177,7 @@ export function createAutomationPlugin(options: CreateAutomationPluginOptions = 
   const enableWorkflow = options.enableWorkflow ?? false;
   const enableArgoCd = options.enableArgoCd ?? false;
   const enableNatsWorker = options.enableNatsWorker ?? false;
+  const enableHitlLabelStudio = options.enableHitlLabelStudio ?? false;
   return {
     id: AUTOMATION_PLUGIN_ID,
     version: "0.1.0",
@@ -157,6 +212,14 @@ export function createAutomationPlugin(options: CreateAutomationPluginOptions = 
             name: "argocd",
             schema: argocdToolSchema,
             handler: (args) => handleArgocdToolInput(args),
+          });
+        }
+        if (enableHitlLabelStudio) {
+          yield* api.registerMcpTool({
+            name: "hitl_enqueue_label_studio",
+            schema: hitlLabelStudioToolSchema,
+            handler: (args) =>
+              handleHitlEnqueueLabelStudioToolInput(args as HitlLabelStudioEnqueueParams),
           });
         }
         if (enableNatsWorker) {

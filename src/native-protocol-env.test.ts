@@ -4,7 +4,7 @@ import {
   parseGraphQLSourcesEnv,
   shouldLoadNativeProtocolsOnlyMode,
   wantsOpenAPISpecSelectionEnv,
-} from "./native-protocol-env.js";
+} from "clawql-api";
 
 describe("native-protocol-env", () => {
   const saved = { ...process.env };

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizeOperationId, sanitizeOperationSegment } from "./spec-kind.js";
+import { normalizeOperationId, sanitizeOperationSegment } from "clawql-api";
 
 describe("sanitizeOperationSegment", () => {
   it("keeps alphanumerics", () => {

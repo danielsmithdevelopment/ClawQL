@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { isGoogleDiscoverySpecLabel, mergedAuthHeaders } from "./auth-headers.js";
+import { isGoogleDiscoverySpecLabel, mergedAuthHeaders } from "clawql-api";
 
 afterEach(() => {
   delete process.env.CLAWQL_HTTP_HEADERS;

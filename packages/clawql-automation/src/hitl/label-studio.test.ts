@@ -7,7 +7,7 @@ import {
   getHitlLabelStudioRestConfig,
   handleHitlEnqueueLabelStudioToolInput,
   labelStudioImportTasks,
-} from "./hitl-label-studio.js";
+} from "./label-studio.js";
 
 describe("hitl-label-studio", () => {
   const saved: NodeJS.ProcessEnv = {};

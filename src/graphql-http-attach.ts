@@ -4,8 +4,8 @@
 
 import type { Express } from "express";
 import { createHandler } from "graphql-http/lib/use/express";
-import { buildGraphQLSchema } from "./graphql-schema-builder.js";
-import { loadSpec, resolveApiBaseUrl } from "./spec-loader.js";
+import { buildGraphQLSchema } from "clawql-api";
+import { loadSpec, resolveApiBaseUrl } from "clawql-api";
 
 export async function attachGraphqlHttpToMcpApp(app: Express): Promise<void> {
   const loaded = await loadSpec();
