@@ -207,6 +207,9 @@ argocd:
   allowSync: false
 
 # MCP hitl_enqueue_label_studio — Label Studio HITL bridge (#228). Requires CLAWQL_LABEL_STUDIO_* via extraEnv / secret.
+# Label Studio itself is BYO (not bundled). RBAC: docs/mcp/hitl-label-studio.md#14-multi-reviewer-rbac-ce-vs-enterprise (#249).
+#   CE: heartexlabs/label-studio or pip install label-studio — no native multi-reviewer RBAC.
+#   Enterprise: https://docs.humansignal.com/guide/install — SAML/RBAC; license required; not redistributed in this chart.
 enableHitlLabelStudio: false
 
 # MCP knowledge_search_onyx — Onyx POST /search/send-search-message (#118). Requires onyx in provider merge + ONYX_BASE_URL + Bearer token (extraEnv / secret).

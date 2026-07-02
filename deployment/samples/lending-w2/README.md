@@ -128,5 +128,6 @@ Use [`openclaw-prompt.md`](openclaw-prompt.md) as a system prompt addendum. Full
 
 - [Argo workflows README](../../deployment/argo-workflows/README.md)
 - [HITL Label Studio](../../docs/mcp/hitl-label-studio.md)
+- [Multi-reviewer RBAC (CE two-person pattern)](../../docs/mcp/hitl-label-studio.md#14-multi-reviewer-rbac-ce-vs-enterprise) ([#249](https://github.com/danielsmithdevelopment/ClawQL/issues/249))
 - [Fine-tuned classifier runbook](../../docs/runbooks/fine-tuned-classifier.md)
 - [workflow MCP tool](../../docs/mcp/workflow-tool.md)
