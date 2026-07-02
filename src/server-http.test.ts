@@ -8,10 +8,12 @@ import { fileURLToPath } from "node:url";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { recordNativeGraphqlExecute, resetNativeProtocolMetricsForTests } from "clawql-api";
 import { resetClawqlApiForTests } from "./clawql-api-adapters.js";
-import { getClawqlOptionalToolFlags } from "clawql-api";
-import { createMcpHttpApp } from "./server-http.js";
-import { resetSpecCache } from "clawql-api";
+import { getClawqlOptionalToolFlags, resetSpecCache } from "clawql-api";
+import { createMcpHttpApp, type CreateMcpHttpAppOptions } from "./server-http.js";
 import { resetSchemaFieldCache } from "./tools.js";
+
+/** Optional-flag / webhook HTTP tests — cold `loadSpec()` is unnecessary and flaky on CI. */
+const FAST_HTTP_APP_OPTS: CreateMcpHttpAppOptions = { skipSpecPreload: true };
 
 /**
  * Close the HTTP server without hanging the Vitest worker: undici/fetch can leave
@@ -81,11 +83,16 @@ describe("server-http", () => {
     resetClawqlApiForTests();
   });
 
-  async function withHttpServer(run: (baseUrl: string) => Promise<void>): Promise<void> {
+  async function withHttpServer(
+    run: (baseUrl: string) => Promise<void>,
+    appOptions: CreateMcpHttpAppOptions = {}
+  ): Promise<void> {
     const flags = getClawqlOptionalToolFlags();
     const app = await createMcpHttpApp({
       mcpPath: "/mcp",
-      optionalFlagsSnapshot: {
+      host: "127.0.0.1",
+      ...appOptions,
+      optionalFlagsSnapshot: appOptions.optionalFlagsSnapshot ?? {
         enableHitlLabelStudio: flags.enableHitlLabelStudio,
         enableConeshare: flags.enableConeshare,
       },
@@ -101,6 +108,17 @@ describe("server-http", () => {
     } finally {
       await closeHttpServer(server);
     }
+  }
+
+  function resetOptionalToolHttpTestState(options?: { enableDocuments?: boolean }): void {
+    if (options?.enableDocuments === true) {
+      process.env.CLAWQL_ENABLE_DOCUMENTS = "1";
+    } else {
+      process.env.CLAWQL_ENABLE_DOCUMENTS = "0";
+    }
+    resetSpecCache();
+    resetSchemaFieldCache();
+    resetClawqlApiForTests();
   }
 
   it("POST /graphql returns schema introspection", async () => {
@@ -389,8 +407,7 @@ describe("server-http", () => {
       process.env.CLAWQL_ENABLE_SANDBOX = "1";
       process.env.CLAWQL_OBSIDIAN_VAULT_PATH = vaultDir;
       await mkdir(join(vaultDir, "Memory"), { recursive: true });
-      resetSpecCache();
-      resetSchemaFieldCache();
+      resetOptionalToolHttpTestState();
       try {
         await withHttpServer(async (base) => {
           const { StreamableHTTPClientTransport } =
@@ -406,7 +423,7 @@ describe("server-http", () => {
           } finally {
             await closeMcpClient(client);
           }
-        });
+        }, FAST_HTTP_APP_OPTS);
       } finally {
         await rm(vaultDir, { recursive: true, force: true }).catch(() => {});
         if (savedSandbox === undefined) delete process.env.CLAWQL_ENABLE_SANDBOX;
@@ -415,6 +432,7 @@ describe("server-http", () => {
         else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = savedVault;
         resetSpecCache();
         resetSchemaFieldCache();
+        resetClawqlApiForTests();
       }
     },
     STREAMABLE_HTTP_TEST_TIMEOUT_MS
@@ -429,8 +447,7 @@ describe("server-http", () => {
       process.env.CLAWQL_ENABLE_NOTIFY = "1";
       process.env.CLAWQL_OBSIDIAN_VAULT_PATH = vaultDir;
       await mkdir(join(vaultDir, "Memory"), { recursive: true });
-      resetSpecCache();
-      resetSchemaFieldCache();
+      resetOptionalToolHttpTestState();
       try {
         await withHttpServer(async (base) => {
           const { StreamableHTTPClientTransport } =
@@ -446,7 +463,7 @@ describe("server-http", () => {
           } finally {
             await closeMcpClient(client);
           }
-        });
+        }, FAST_HTTP_APP_OPTS);
       } finally {
         await rm(vaultDir, { recursive: true, force: true }).catch(() => {});
         if (savedNotify === undefined) delete process.env.CLAWQL_ENABLE_NOTIFY;
@@ -455,6 +472,7 @@ describe("server-http", () => {
         else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = savedVault;
         resetSpecCache();
         resetSchemaFieldCache();
+        resetClawqlApiForTests();
       }
     },
     STREAMABLE_HTTP_TEST_TIMEOUT_MS
@@ -469,8 +487,7 @@ describe("server-http", () => {
       process.env.CLAWQL_ENABLE_ONYX = "1";
       process.env.CLAWQL_OBSIDIAN_VAULT_PATH = vaultDir;
       await mkdir(join(vaultDir, "Memory"), { recursive: true });
-      resetSpecCache();
-      resetSchemaFieldCache();
+      resetOptionalToolHttpTestState({ enableDocuments: true });
       try {
         await withHttpServer(async (base) => {
           const { StreamableHTTPClientTransport } =
@@ -486,7 +503,7 @@ describe("server-http", () => {
           } finally {
             await closeMcpClient(client);
           }
-        });
+        }, FAST_HTTP_APP_OPTS);
       } finally {
         await rm(vaultDir, { recursive: true, force: true }).catch(() => {});
         if (savedOnyx === undefined) delete process.env.CLAWQL_ENABLE_ONYX;
@@ -495,6 +512,7 @@ describe("server-http", () => {
         else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = savedVault;
         resetSpecCache();
         resetSchemaFieldCache();
+        resetClawqlApiForTests();
       }
     },
     STREAMABLE_HTTP_TEST_TIMEOUT_MS
@@ -509,8 +527,7 @@ describe("server-http", () => {
       process.env.CLAWQL_ENABLE_OUROBOROS = "1";
       process.env.CLAWQL_OBSIDIAN_VAULT_PATH = vaultDir;
       await mkdir(join(vaultDir, "Memory"), { recursive: true });
-      resetSpecCache();
-      resetSchemaFieldCache();
+      resetOptionalToolHttpTestState();
       try {
         await withHttpServer(async (base) => {
           const { StreamableHTTPClientTransport } =
@@ -528,7 +545,7 @@ describe("server-http", () => {
           } finally {
             await closeMcpClient(client);
           }
-        });
+        }, FAST_HTTP_APP_OPTS);
       } finally {
         await rm(vaultDir, { recursive: true, force: true }).catch(() => {});
         if (savedOuro === undefined) delete process.env.CLAWQL_ENABLE_OUROBOROS;
@@ -537,6 +554,7 @@ describe("server-http", () => {
         else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = savedVault;
         resetSpecCache();
         resetSchemaFieldCache();
+        resetClawqlApiForTests();
       }
     },
     STREAMABLE_HTTP_TEST_TIMEOUT_MS
@@ -551,8 +569,7 @@ describe("server-http", () => {
       process.env.CLAWQL_ENABLE_HITL_LABEL_STUDIO = "1";
       process.env.CLAWQL_OBSIDIAN_VAULT_PATH = vaultDir;
       await mkdir(join(vaultDir, "Memory"), { recursive: true });
-      resetSpecCache();
-      resetSchemaFieldCache();
+      resetOptionalToolHttpTestState();
       try {
         await withHttpServer(async (base) => {
           const { StreamableHTTPClientTransport } =
@@ -568,7 +585,7 @@ describe("server-http", () => {
           } finally {
             await closeMcpClient(client);
           }
-        });
+        }, FAST_HTTP_APP_OPTS);
       } finally {
         await rm(vaultDir, { recursive: true, force: true }).catch(() => {});
         if (savedHitl === undefined) delete process.env.CLAWQL_ENABLE_HITL_LABEL_STUDIO;
@@ -577,6 +594,7 @@ describe("server-http", () => {
         else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = savedVault;
         resetSpecCache();
         resetSchemaFieldCache();
+        resetClawqlApiForTests();
       }
     },
     STREAMABLE_HTTP_TEST_TIMEOUT_MS
@@ -594,8 +612,7 @@ describe("server-http", () => {
       await mkdir(join(vaultDir, "Memory"), { recursive: true });
       process.env.CLAWQL_HITL_WEBHOOK_TOKEN = "expected-secret";
       delete process.env.NODE_ENV;
-      resetSpecCache();
-      resetSchemaFieldCache();
+      resetOptionalToolHttpTestState();
       try {
         await withHttpServer(async (base) => {
           const res = await fetch(`${base}/hitl/label-studio/webhook`, {
@@ -607,7 +624,7 @@ describe("server-http", () => {
             body: JSON.stringify({ task: { id: 1, data: {} } }),
           });
           expect(res.status).toBe(401);
-        });
+        }, FAST_HTTP_APP_OPTS);
       } finally {
         await rm(vaultDir, { recursive: true, force: true }).catch(() => {});
         if (savedHitl === undefined) delete process.env.CLAWQL_ENABLE_HITL_LABEL_STUDIO;
@@ -618,6 +635,7 @@ describe("server-http", () => {
         else process.env.CLAWQL_HITL_WEBHOOK_TOKEN = savedTok;
         resetSpecCache();
         resetSchemaFieldCache();
+        resetClawqlApiForTests();
       }
     },
     STREAMABLE_HTTP_TEST_TIMEOUT_MS
@@ -636,8 +654,7 @@ describe("server-http", () => {
       await mkdir(join(vaultDir, "Memory"), { recursive: true });
       delete process.env.CLAWQL_HITL_WEBHOOK_TOKEN;
       process.env.NODE_ENV = "production";
-      resetSpecCache();
-      resetSchemaFieldCache();
+      resetOptionalToolHttpTestState();
       try {
         await withHttpServer(async (base) => {
           const res = await fetch(`${base}/hitl/label-studio/webhook`, {
@@ -646,7 +663,7 @@ describe("server-http", () => {
             body: JSON.stringify({}),
           });
           expect(res.status).toBe(503);
-        });
+        }, FAST_HTTP_APP_OPTS);
       } finally {
         await rm(vaultDir, { recursive: true, force: true }).catch(() => {});
         if (savedHitl === undefined) delete process.env.CLAWQL_ENABLE_HITL_LABEL_STUDIO;
@@ -659,6 +676,7 @@ describe("server-http", () => {
         else process.env.NODE_ENV = savedNodeEnv;
         resetSpecCache();
         resetSchemaFieldCache();
+        resetClawqlApiForTests();
       }
     },
     STREAMABLE_HTTP_TEST_TIMEOUT_MS
@@ -672,8 +690,7 @@ describe("server-http", () => {
       process.env.CLAWQL_ENABLE_CONESHARE = "1";
       process.env.CLAWQL_CONESHARE_WEBHOOK_TOKEN = "expected-secret";
       delete process.env.NODE_ENV;
-      resetSpecCache();
-      resetSchemaFieldCache();
+      resetOptionalToolHttpTestState();
       try {
         await withHttpServer(async (base) => {
           const res = await fetch(`${base}/idp/coneshare/webhook`, {
@@ -685,7 +702,7 @@ describe("server-http", () => {
             body: JSON.stringify({ event: "viewer_joined", share_link_id: "sl-1" }),
           });
           expect(res.status).toBe(401);
-        });
+        }, FAST_HTTP_APP_OPTS);
       } finally {
         if (savedConeshare === undefined) delete process.env.CLAWQL_ENABLE_CONESHARE;
         else process.env.CLAWQL_ENABLE_CONESHARE = savedConeshare;
@@ -693,6 +710,7 @@ describe("server-http", () => {
         else process.env.CLAWQL_CONESHARE_WEBHOOK_TOKEN = savedTok;
         resetSpecCache();
         resetSchemaFieldCache();
+        resetClawqlApiForTests();
       }
     },
     STREAMABLE_HTTP_TEST_TIMEOUT_MS
@@ -707,8 +725,7 @@ describe("server-http", () => {
       process.env.CLAWQL_ENABLE_CONESHARE = "1";
       delete process.env.CLAWQL_CONESHARE_WEBHOOK_TOKEN;
       process.env.NODE_ENV = "production";
-      resetSpecCache();
-      resetSchemaFieldCache();
+      resetOptionalToolHttpTestState();
       try {
         await withHttpServer(async (base) => {
           const res = await fetch(`${base}/idp/coneshare/webhook`, {
@@ -717,7 +734,7 @@ describe("server-http", () => {
             body: JSON.stringify({}),
           });
           expect(res.status).toBe(503);
-        });
+        }, FAST_HTTP_APP_OPTS);
       } finally {
         if (savedConeshare === undefined) delete process.env.CLAWQL_ENABLE_CONESHARE;
         else process.env.CLAWQL_ENABLE_CONESHARE = savedConeshare;
@@ -727,6 +744,7 @@ describe("server-http", () => {
         else process.env.NODE_ENV = savedNodeEnv;
         resetSpecCache();
         resetSchemaFieldCache();
+        resetClawqlApiForTests();
       }
     },
     STREAMABLE_HTTP_TEST_TIMEOUT_MS

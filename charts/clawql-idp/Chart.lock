@@ -1,0 +1,6 @@
+dependencies:
+- name: clawql-mcp
+  repository: file://../clawql-mcp
+  version: 0.6.7
+digest: sha256:04bb255996308502716015934e84592e91aa092ff28145f7c1b64608982e1a08
+generated: "2026-07-02T03:56:06.490104442Z"

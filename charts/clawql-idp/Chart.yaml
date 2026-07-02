@@ -1,0 +1,10 @@
+apiVersion: v2
+name: clawql-idp
+description: Umbrella Helm chart for a k3s-friendly ClawQL IDP stack (MCP + document pipeline + OpenClaw + Argo hooks)
+type: application
+version: 0.1.0
+appVersion: "6.4.0"
+dependencies:
+  - name: clawql-mcp
+    version: 0.6.7
+    repository: file://../clawql-mcp

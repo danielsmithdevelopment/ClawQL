@@ -1,0 +1,40 @@
+# Example Langfuse Helm values (BYO — not a clawql-mcp subchart)
+#
+# Tracking: #252 — deploy Langfuse separately; wire ClawQL-Agent / LangGraph SDK at runtime.
+# Upstream chart: https://github.com/langfuse/langfuse-k8s (verify version/license before prod).
+#
+# Usage (illustrative — adjust for your cluster):
+#   helm repo add langfuse https://langfuse.github.io/langfuse-k8s
+#   helm upgrade --install langfuse langfuse/langfuse \
+#     -f docs/observability/langfuse-values.example.yaml \
+#     --namespace langfuse --create-namespace
+
+langfuse:
+  # Public URL agents use (in-cluster DNS or ingress)
+  nextauth:
+    url: http://langfuse.langfuse.svc.cluster.local:3000
+
+  # Generate via Langfuse UI or helm secrets — never commit real keys
+  salt:
+    value: "REPLACE_ME"
+  encryptionKey:
+    value: "REPLACE_ME"
+
+postgresql:
+  auth:
+    password: "REPLACE_ME"
+
+clickhouse:
+  auth:
+    password: "REPLACE_ME"
+
+# Optional: expose /metrics for Grafana when your Langfuse chart supports it
+serviceMonitor:
+  enabled: false
+  labels:
+    release: kube-prometheus-stack
+
+# ClawQL-Agent env (set in Agent deployment, not clawql-mcp):
+#   LANGFUSE_HOST=https://langfuse.example.com
+#   LANGFUSE_PUBLIC_KEY=pk-lf-...
+#   LANGFUSE_SECRET_KEY=sk-lf-...
