@@ -129,7 +129,10 @@ export type CreateMcpHttpAppOptions = {
    * Snapshot optional tool flags at app build time (tests). Avoids route registration races when a
    * timed-out test restores `process.env` while the next test is calling `createMcpHttpApp`.
    */
-  optionalFlagsSnapshot?: Pick<ClawqlOptionalToolFlags, "enableHitlLabelStudio" | "enableConeshare">;
+  optionalFlagsSnapshot?: Pick<
+    ClawqlOptionalToolFlags,
+    "enableHitlLabelStudio" | "enableConeshare"
+  >;
 };
 
 /**
