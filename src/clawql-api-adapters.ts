@@ -49,6 +49,7 @@ function buildMcpPlugins(): readonly Plugin[] {
         enableOnyx: flags.enableOnyxKnowledge,
         enableIdpPipeline: flags.enableIdpPipeline,
         enableIdpClassifier: flags.enableIdpClassifier,
+        enableLangextract: flags.enableLangextract,
       })
     );
   }

@@ -136,6 +136,6 @@ High-confidence path: skip HITL, continue to Paperless/Onyx **`execute`** steps.
 
 ## 8. Cross-links
 
-- **Extraction after classify:** LangExtract ([#246](https://github.com/danielsmithdevelopment/ClawQL/issues/246)) for schema-bound field grounding.
+- **Extraction after classify:** LangExtract ([#246](https://github.com/danielsmithdevelopment/ClawQL/issues/246)) — MCP **`extract_document`** + [`langextract-onboarding.md`](../providers/langextract-onboarding.md).
 - **End-to-end lending demo:** [deployment/samples/lending-w2](../../deployment/samples/lending-w2/README.md).
 - **Matrix row:** [IDP master requirements — Classification](../roadmap/idp-master-requirements-matrix.md).
