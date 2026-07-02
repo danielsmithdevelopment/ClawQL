@@ -25,7 +25,7 @@ Operators who require **local-only** processing should use **demo mode** or **`L
 | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **LLM hallucination**               | Schema + few-shot examples; drop extractions with `char_interval: null`; HITL review on low-confidence classify path ([#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248)) |
 | **PII in prompts**                  | Run Stirling redaction **before** extract when source docs contain sensitive fields; vault/object-store artifacts with RBAC                                                                |
-| **Surprise cloud egress**           | `CLAWQL_ENABLE_LANGEXTRACT=1` required; live mode requires explicit `OPENROUTER_API_KEY` (or local Ollama); demo mode default in reference image                                            |
+| **Surprise cloud egress**           | `CLAWQL_ENABLE_LANGEXTRACT=1` required; live mode requires explicit `OPENROUTER_API_KEY` (or local Ollama); demo mode default in reference image                                           |
 | **Large artifact exfil via MCP**    | MCP returns **path references** (`artifact_paths.html_path`) — not multi-MiB HTML inline                                                                                                   |
 | **Prompt injection in source text** | Treat parsed document text as untrusted input; human review for high-impact fields                                                                                                         |
 
