@@ -101,6 +101,12 @@ Replace placeholders with real tokens via **`import-dotenv-to-vault`** or **`vau
 
 ---
 
-## Out of scope ([#242](https://github.com/danielsmithdevelopment/ClawQL/issues/242))
+## Dashboard UI ([#242](https://github.com/danielsmithdevelopment/ClawQL/issues/242))
 
-Operator UI for browsing/editing Vault paths — use Vault CLI, UI, or your GitOps pipeline for now.
+Non-technical operators can configure provider tokens in the bundled ClawQL dashboard:
+
+1. Open **Provider secrets** in the left nav (local: `http://clawql.localhost` when the dashboard Ingress is enabled).
+2. Paste API keys or an entire `.env` snippet — matching provider keys auto-fill.
+3. Click **Save & apply** — the dashboard writes **`secret/clawql/providers`**, patches **`Secret/clawql-provider-env`**, and restarts **`clawql-mcp-http`**.
+
+Helm wires the dashboard pod with `CLAWQL_DASHBOARD_VAULT_PATH=clawql/providers` and `dashboard.allowSync: true`. See [`dashboard/README.md`](../../dashboard/README.md) and [`helm.md`](helm.md) § dashboard.

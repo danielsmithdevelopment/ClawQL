@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  applyEnvChangesToVaultProviderData,
   buildProvidersVaultPayload,
+  isProvidersVaultPath,
   PROVIDER_VAULT_KEY_CATALOG,
+  vaultProviderDataToEnv,
 } from "./provider-vault-key-catalog.js";
 
 describe("provider-vault-key-catalog", () => {
@@ -29,5 +32,32 @@ describe("provider-vault-key-catalog", () => {
     const envKeys = PROVIDER_VAULT_KEY_CATALOG.map((e) => e.envKey);
     expect(new Set(props).size).toBe(props.length);
     expect(new Set(envKeys).size).toBe(envKeys.length);
+  });
+
+  it("maps vault KV to env keys for dashboard sync", () => {
+    expect(
+      vaultProviderDataToEnv({
+        paperlessApiToken: "p",
+        onyxApiToken: "o",
+      }),
+    ).toEqual({
+      PAPERLESS_API_TOKEN: "p",
+      ONYX_API_TOKEN: "o",
+    });
+  });
+
+  it("applies env diffs to vault provider payload", () => {
+    expect(
+      applyEnvChangesToVaultProviderData(
+        { paperlessApiToken: "old" },
+        { PAPERLESS_API_TOKEN: "new" },
+        [],
+      ),
+    ).toEqual({ paperlessApiToken: "new" });
+  });
+
+  it("detects providers vault path", () => {
+    expect(isProvidersVaultPath("clawql/providers")).toBe(true);
+    expect(isProvidersVaultPath("clawql/dotenv")).toBe(false);
   });
 });

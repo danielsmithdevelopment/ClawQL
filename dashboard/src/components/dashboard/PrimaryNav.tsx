@@ -22,7 +22,7 @@ const NAV: { id: DashboardSection; label: string; icon: typeof MessageSquare }[]
   { id: 'tasks', label: 'Tasks', icon: ListTodo },
   { id: 'activity', label: 'Activity', icon: Activity },
   { id: 'applications', label: 'Applications', icon: LayoutGrid },
-  { id: 'configuration', label: 'Configuration', icon: Settings },
+  { id: 'configuration', label: 'Provider secrets', icon: Settings },
 ]
 
 export function PrimaryNav({

@@ -1,6 +1,8 @@
 # ClawQL dashboard
 
-Small Next.js app (same brand styling as `website/`) that renders every key from the repo **`.env.example`** (via generated `src/generated/env-catalog.json`) and can **read/write Vault KV values**, then **`kubectl rollout restart`** the MCP deployment so pods reload env values.
+Small Next.js app (same brand styling as `website/`) with a **Provider secrets** panel for all bundled vendor API keys (GitHub, Slack, Paperless, IDP hops, HITL tokens). Operators paste tokens or `.env` snippets; the server writes **`secret/clawql/providers`**, syncs **`Secret/clawql-provider-env`**, and restarts **`clawql-mcp-http`** — no Vault CLI required ([#242](https://github.com/danielsmithdevelopment/ClawQL/issues/242)).
+
+An advanced **`.env.example`** catalog (`EnvForm`) remains in the codebase for full env editing when `CLAWQL_DASHBOARD_VAULT_PATH=clawql/dotenv`.
 
 ## Run locally
 
@@ -57,14 +59,14 @@ The **Agent Chat** panel calls `POST /api/agent/chat` (JSON) or **`POST /api/age
 
 Existing browser **localStorage** chats are **imported once** into the vault on first load when the vault index is empty.
 
-| Variable | Purpose |
-| -------- | ------- |
-| `CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL` | Full URL to POST chat JSON (use bridge URL above for local dev). |
-| `CLAWQL_DASHBOARD_CHAT_STREAM` | Set to `0` to disable SSE streaming (default **on**). Bridge stream endpoint: `/v1/chat/stream`. |
-| `CLAWQL_OBSIDIAN_VAULT_PATH` | Obsidian vault root for dashboard chat persistence (default **`~/.ClawQL`**). Chats live under **`Dashboard/chats/`**; API logs under **`Dashboard/logs/`**. Same path as ClawQL MCP **`memory_*`** tools. |
-| `OPENCLAW_CHAT_BRIDGE_PORT` | Bridge listen port (default **8787**). |
-| `CLAWQL_OPENCLAW_AGENT_ID` | `openclaw agent --agent` id (default **main**). |
-| `OPENCLAW_AGENT_TIMEOUT_SEC` | Per-message CLI timeout in seconds (default **120**). |
+| Variable                             | Purpose                                                                                                                                                                                                    |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL` | Full URL to POST chat JSON (use bridge URL above for local dev).                                                                                                                                           |
+| `CLAWQL_DASHBOARD_CHAT_STREAM`       | Set to `0` to disable SSE streaming (default **on**). Bridge stream endpoint: `/v1/chat/stream`.                                                                                                           |
+| `CLAWQL_OBSIDIAN_VAULT_PATH`         | Obsidian vault root for dashboard chat persistence (default **`~/.ClawQL`**). Chats live under **`Dashboard/chats/`**; API logs under **`Dashboard/logs/`**. Same path as ClawQL MCP **`memory_*`** tools. |
+| `OPENCLAW_CHAT_BRIDGE_PORT`          | Bridge listen port (default **8787**).                                                                                                                                                                     |
+| `CLAWQL_OPENCLAW_AGENT_ID`           | `openclaw agent --agent` id (default **main**).                                                                                                                                                            |
+| `OPENCLAW_AGENT_TIMEOUT_SEC`         | Per-message CLI timeout in seconds (default **120**).                                                                                                                                                      |
 
 **OpenRouter:** add **`OPENROUTER_API_KEY`** to repo **`.env`** (the bridge loads repo-root `.env` for unset keys) **or** run **`openclaw models auth paste-token --provider openrouter`**. Then set a default OpenRouter-backed model (**`openclaw models list --all --provider openrouter`** then **`openclaw models set …`**) so inference is not still pinned to **`openai/*`** (see **`docs/openclaw/using-openclaw-with-clawql.md`** §5.6).
 
@@ -84,20 +86,20 @@ In local dev (`npm run dev`), Kubernetes sync defaults to **enabled** unless exp
 `CLAWQL_DASHBOARD_ALLOW_K8S_SYNC=0`. In production (`npm run build && npm run start`), it stays **off** unless
 `CLAWQL_DASHBOARD_ALLOW_K8S_SYNC=1` is set. Enable it only on a trusted machine that already has **`kubectl`** access.
 
-| Variable | Purpose |
-|----------|---------|
-| `CLAWQL_DASHBOARD_ALLOW_K8S_SYNC` | Must be **`1`** for `GET /api/k8s/secret-env` (Vault prefill) and `POST /api/k8s/sync-secret` (Vault save + rollout). |
-| `CLAWQL_DASHBOARD_SYNC_TOKEN` | If set, clients must send `Authorization: Bearer <same value>`. |
-| `KUBE_CONTEXT` | Optional; passed to kubectl as `--context`. |
-| `CLAWQL_DASHBOARD_K8S_NAMESPACE` | Default namespace (default **`clawql`**). |
-| `CLAWQL_DASHBOARD_K8S_SECRET_NAME` | Form field default only (legacy label retained in API route names). |
-| `CLAWQL_DASHBOARD_K8S_DEPLOYMENT` | Default Deployment (default **`clawql-mcp-http`**). |
-| `CLAWQL_DASHBOARD_VAULT_NAMESPACE` | Vault pod namespace used for `kubectl exec` (default **`clawql`**). |
-| `CLAWQL_DASHBOARD_VAULT_POD` | Vault pod name (default **`clawql-hashicorpvault-0`**). |
-| `CLAWQL_DASHBOARD_VAULT_ADDR` | Vault address used inside pod exec (default **`http://127.0.0.1:8200`**). |
-| `CLAWQL_DASHBOARD_VAULT_MOUNT` | Vault KV mount (default **`secret`**). |
-| `CLAWQL_DASHBOARD_VAULT_PATH` | Vault logical path (default **`clawql/dotenv`**). |
-| `CLAWQL_DASHBOARD_VAULT_TOKEN` / `VAULT_TOKEN` | Vault token used for read/write (defaults to **`root`** in local dev Vault chart mode). |
+| Variable                                       | Purpose                                                                                                                  |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `CLAWQL_DASHBOARD_ALLOW_K8S_SYNC`              | Must be **`1`** for `GET /api/k8s/secret-env` (Vault prefill) and `POST /api/k8s/sync-secret` (Vault save + rollout).    |
+| `CLAWQL_DASHBOARD_SYNC_TOKEN`                  | If set, clients must send `Authorization: Bearer <same value>`.                                                          |
+| `KUBE_CONTEXT`                                 | Optional; passed to kubectl as `--context`.                                                                              |
+| `CLAWQL_DASHBOARD_K8S_NAMESPACE`               | Default namespace (default **`clawql`**).                                                                                |
+| `CLAWQL_DASHBOARD_K8S_SECRET_NAME`             | Form field default only (legacy label retained in API route names).                                                      |
+| `CLAWQL_DASHBOARD_K8S_DEPLOYMENT`              | Default Deployment (default **`clawql-mcp-http`**).                                                                      |
+| `CLAWQL_DASHBOARD_VAULT_NAMESPACE`             | Vault pod namespace used for `kubectl exec` (default **`clawql`**).                                                      |
+| `CLAWQL_DASHBOARD_VAULT_POD`                   | Vault pod name (default **`clawql-hashicorpvault-0`**).                                                                  |
+| `CLAWQL_DASHBOARD_VAULT_ADDR`                  | Vault address used inside pod exec (default **`http://127.0.0.1:8200`**).                                                |
+| `CLAWQL_DASHBOARD_VAULT_MOUNT`                 | Vault KV mount (default **`secret`**).                                                                                   |
+| `CLAWQL_DASHBOARD_VAULT_PATH`                  | Vault logical path (default **`clawql/providers`** — provider API keys; use **`clawql/dotenv`** for full `.env` mirror). |
+| `CLAWQL_DASHBOARD_VAULT_TOKEN` / `VAULT_TOKEN` | Vault token used for read/write (defaults to **`root`** in local dev Vault chart mode).                                  |
 
 Source of truth is Vault KV. If ESO syncs Vault values into Kubernetes Secrets, ESO reconciliation continues on its configured **`refreshInterval`** after dashboard writes.
 
