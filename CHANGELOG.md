@@ -16,8 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **KEDA NATS JetStream worker** ([#257](https://github.com/danielsmithdevelopment/ClawQL/issues/257)): optional `nats.worker` Deployment + `nats.keda` ScaledObject for HITL resume consumer lag; bootstrap Job + `nats/cli.js` / `nats/bootstrap-cli.js` in **clawql-automation**; docs **[`docs/deployment/nats-keda-worker.md`](docs/deployment/nats-keda-worker.md)**.
 - **IDP pipeline runner** ([#307](https://github.com/danielsmithdevelopment/ClawQL/issues/307)): MCP **`run_idp_pipeline`** when **`CLAWQL_ENABLE_IDP_PIPELINE=1`** — synchronous **`DEFAULT_IDP_PIPELINE`** execution with per-hop retries, Merkle snapshots, and **`onPipelineHop`** hook; docs **[`docs/mcp/idp-pipeline-runner.md`](docs/mcp/idp-pipeline-runner.md)**.
 - **NATS JetStream workflow events** ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254), [#127](https://github.com/danielsmithdevelopment/ClawQL/issues/127)): opt-in publish (`CLAWQL_NATS_ENABLE_PUBLISH=1`) for HITL/workflow lifecycle; JetStream consumer (`CLAWQL_NATS_ENABLE_CONSUMER=1` + `CLAWQL_NATS_CONSUMER_RESUME_WORKFLOW=1`) resumes Argo workflows on `hitl.completed`; ConeShare viewer events on `clawql.document.*`.
+- **Langfuse eval → Ouroboros** ([#250](https://github.com/danielsmithdevelopment/ClawQL/issues/250)): **`CLAWQL_ENABLE_LANGFUSE_EVAL=1`** + **`CLAWQL_ENABLE_OUROBOROS=1`** — **`POST /observability/langfuse/webhook`**, MCP **`ouroboros_propose_seed_revision_from_eval`**; default dry-run (`CLAWQL_LANGFUSE_EVAL_AUTO_APPLY` off); docs **[`docs/mcp/langfuse-eval-ouroboros.md`](docs/mcp/langfuse-eval-ouroboros.md)**.
 
 ### Documentation
+
+- **`docs/mcp/langfuse-eval-ouroboros.md`**, IDP matrix #250 → Shipped.
 
 - **`docs/deployment/nats-keda-worker.md`**, Helm `nats.worker` / `nats.keda` values, IDP matrix #257 → Shipped.
 - **`docs/mcp/idp-pipeline-runner.md`**, IDP matrix #307 → Shipped, plugin registry + **`mcp-tools.md`** **`run_idp_pipeline`** row.

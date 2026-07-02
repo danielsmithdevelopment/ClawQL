@@ -5,10 +5,16 @@ import { z } from "zod";
 import {
   CreateSeedFromDocumentSchema,
   GetLineageStatusSchema,
+  ProposeSeedRevisionFromEvalSchema,
   RunOuroborosSchema,
   ouroborosMcpTools,
 } from "../mcp-hooks.js";
 import { ensureOuroborosPoolShutdownHooks, getOuroborosContext, resetOuroborosContextForTests } from "./context.js";
+
+export type OuroborosPluginOptions = {
+  /** ([#250](https://github.com/danielsmithdevelopment/ClawQL/issues/250)): register `ouroboros_propose_seed_revision_from_eval`. */
+  enableLangfuseEval?: boolean;
+};
 
 export const OUROBOROS_PLUGIN_ID = "clawql-ouroboros";
 
@@ -16,8 +22,9 @@ function textResult(obj: unknown): { content: { type: "text"; text: string }[] }
   return { content: [{ type: "text", text: JSON.stringify(obj) }] };
 }
 
-export function createOuroborosPlugin(): Plugin {
+export function createOuroborosPlugin(options: OuroborosPluginOptions = {}): Plugin {
   const t = ouroborosMcpTools;
+  const enableLangfuseEval = options.enableLangfuseEval === true;
   return {
     id: OUROBOROS_PLUGIN_ID,
     version: "0.1.1",
@@ -68,6 +75,23 @@ export function createOuroborosPlugin(): Plugin {
             return textResult(r);
           },
         });
+        if (enableLangfuseEval) {
+          yield* api.registerMcpTool({
+            name: t.proposeSeedRevisionFromEval.name,
+            schema: ProposeSeedRevisionFromEvalSchema.shape,
+            handler: async (args) => {
+              logMcpToolShape(t.proposeSeedRevisionFromEval.name, {
+                hasPayload: (args as { payload?: unknown }).payload !== undefined,
+                scoreValue: (args as { scoreValue?: number }).scoreValue,
+              });
+              const r = await t.proposeSeedRevisionFromEval.handler(
+                args as z.infer<typeof ProposeSeedRevisionFromEvalSchema>,
+                getOuroborosContext()
+              );
+              return textResult(r);
+            },
+          });
+        }
       }),
     onTeardown: () => Effect.sync(() => resetOuroborosContextForTests()),
   };

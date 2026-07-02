@@ -397,6 +397,8 @@ onyx:
 
 # MCP ouroboros_* tools — clawql-ouroboros evolutionary loop (#141). Optional Postgres for durable events (#142).
 enableOuroboros: false
+# Langfuse eval webhook + ouroboros_propose_seed_revision_from_eval (#250). Requires enableOuroboros.
+enableLangfuseEval: false
 # When set, injects CLAWQL_OUROBOROS_DATABASE_URL. Prefer envFromSecret / extraEnv if the URL contains credentials.
 ouroborosDatabaseUrl: ""
 # Optional in-cluster Postgres for Ouroboros event lineage (#142), deployed alongside clawql-mcp.

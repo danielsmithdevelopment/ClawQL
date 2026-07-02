@@ -49,6 +49,8 @@ const rawOptionalFlagsSchema = z.object({
   CLAWQL_ENABLE_IDP_CLASSIFIER: z.string().optional(),
   /** ([#246](https://github.com/danielsmithdevelopment/ClawQL/issues/246)): `extract_document` LangExtract HTTP wrapper. Default false. */
   CLAWQL_ENABLE_LANGEXTRACT: z.string().optional(),
+  /** ([#250](https://github.com/danielsmithdevelopment/ClawQL/issues/250)): Langfuse eval webhook + `ouroboros_propose_seed_revision_from_eval`. Default false. */
+  CLAWQL_ENABLE_LANGFUSE_EVAL: z.string().optional(),
 });
 
 export type ClawqlOptionalToolFlags = {
@@ -120,6 +122,10 @@ export type ClawqlOptionalToolFlags = {
    * ([#246](https://github.com/danielsmithdevelopment/ClawQL/issues/246)): **`extract_document`** — POST to `LANGEXTRACT_BASE_URL` or local heuristic. Default false.
    */
   enableLangextract: boolean;
+  /**
+   * ([#250](https://github.com/danielsmithdevelopment/ClawQL/issues/250)): **`POST /observability/langfuse/webhook`** + **`ouroboros_propose_seed_revision_from_eval`** (with Ouroboros). Default false.
+   */
+  enableLangfuseEval: boolean;
 };
 
 function rawToFlags(raw: z.infer<typeof rawOptionalFlagsSchema>): ClawqlOptionalToolFlags {
@@ -142,6 +148,7 @@ function rawToFlags(raw: z.infer<typeof rawOptionalFlagsSchema>): ClawqlOptional
     enableIdpPipeline: envTruthy(raw.CLAWQL_ENABLE_IDP_PIPELINE),
     enableIdpClassifier: envTruthy(raw.CLAWQL_ENABLE_IDP_CLASSIFIER),
     enableLangextract: envTruthy(raw.CLAWQL_ENABLE_LANGEXTRACT),
+    enableLangfuseEval: envTruthy(raw.CLAWQL_ENABLE_LANGFUSE_EVAL),
   };
 }
 
