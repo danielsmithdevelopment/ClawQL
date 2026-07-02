@@ -9,7 +9,11 @@ import {
   RunOuroborosSchema,
   ouroborosMcpTools,
 } from "../mcp-hooks.js";
-import { ensureOuroborosPoolShutdownHooks, getOuroborosContext, resetOuroborosContextForTests } from "./context.js";
+import {
+  ensureOuroborosPoolShutdownHooks,
+  getOuroborosContext,
+  resetOuroborosContextForTests,
+} from "./context.js";
 
 export type OuroborosPluginOptions = {
   /** ([#250](https://github.com/danielsmithdevelopment/ClawQL/issues/250)): register `ouroboros_propose_seed_revision_from_eval`. */

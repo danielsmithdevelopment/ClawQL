@@ -74,9 +74,7 @@ function buildMcpPlugins(): readonly Plugin[] {
     plugins.push(createSandboxPlugin());
   }
   if (flags.enableOuroboros) {
-    plugins.push(
-      createOuroborosPlugin({ enableLangfuseEval: flags.enableLangfuseEval })
-    );
+    plugins.push(createOuroborosPlugin({ enableLangfuseEval: flags.enableLangfuseEval }));
   }
   return plugins;
 }

@@ -6,9 +6,9 @@
 
 When **`CLAWQL_ENABLE_LANGFUSE_EVAL=1`** and **`CLAWQL_ENABLE_OUROBOROS=1`**:
 
-| Surface | Purpose |
-|--------|---------|
-| **`POST /observability/langfuse/webhook`** | Ingest Langfuse (or compatible) score webhooks |
+| Surface                                         | Purpose                                                    |
+| ----------------------------------------------- | ---------------------------------------------------------- |
+| **`POST /observability/langfuse/webhook`**      | Ingest Langfuse (or compatible) score webhooks             |
 | **`ouroboros_propose_seed_revision_from_eval`** | Same normalization + gating from MCP (requires both flags) |
 
 **Default-off auto-apply:** seed lineage is **never** mutated unless **`CLAWQL_LANGFUSE_EVAL_AUTO_APPLY=1`** (or per-call `autoApply: true` on the MCP tool). Without it, ClawQL records a **proposed** patch and vault/audit trail only.
@@ -43,13 +43,13 @@ sequenceDiagram
 
 ## 3. Configuration reference
 
-| Variable | Default | Notes |
-|----------|---------|-------|
-| `CLAWQL_ENABLE_LANGFUSE_EVAL` | off | Registers webhook + MCP tool (with Ouroboros) |
-| `CLAWQL_ENABLE_OUROBOROS` | off | Required for lineage load / apply |
-| `CLAWQL_LANGFUSE_WEBHOOK_TOKEN` | unset | **Required** when `NODE_ENV=production` |
-| `CLAWQL_LANGFUSE_EVAL_MIN_SCORE` | `0.8` | Threshold for propose vs ticket |
-| `CLAWQL_LANGFUSE_EVAL_AUTO_APPLY` | off | `1` / `true` / `yes` to mutate seeds |
+| Variable                          | Default | Notes                                         |
+| --------------------------------- | ------- | --------------------------------------------- |
+| `CLAWQL_ENABLE_LANGFUSE_EVAL`     | off     | Registers webhook + MCP tool (with Ouroboros) |
+| `CLAWQL_ENABLE_OUROBOROS`         | off     | Required for lineage load / apply             |
+| `CLAWQL_LANGFUSE_WEBHOOK_TOKEN`   | unset   | **Required** when `NODE_ENV=production`       |
+| `CLAWQL_LANGFUSE_EVAL_MIN_SCORE`  | `0.8`   | Threshold for propose vs ticket               |
+| `CLAWQL_LANGFUSE_EVAL_AUTO_APPLY` | off     | `1` / `true` / `yes` to mutate seeds          |
 
 Helm: **`enableLangfuseEval: true`** (pairs with **`enableOuroboros: true`**). Inject **`CLAWQL_LANGFUSE_WEBHOOK_TOKEN`** via **`extraEnv`** / **`envFromSecret`**.
 

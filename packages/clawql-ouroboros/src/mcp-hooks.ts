@@ -64,7 +64,7 @@ export const ProposeSeedRevisionFromEvalSchema = z.object({
 function deriveGoal(
   documentId: string,
   metadata: Record<string, unknown>,
-  goalHint?: string,
+  goalHint?: string
 ): string {
   if (goalHint) return goalHint;
   const title =
@@ -145,7 +145,7 @@ const STOP_WORDS = new Set([
 
 function inferOntologyFields(
   text: string,
-  maxFields = 8,
+  maxFields = 8
 ): Array<{ name: string; field_type: string; description: string; required: boolean }> {
   const freq = new Map<string, number>();
 
@@ -193,7 +193,7 @@ export const ouroborosMcpTools = {
 
     handler: async (
       input: z.infer<typeof CreateSeedFromDocumentSchema>,
-      _context: OuroborosContext,
+      _context: OuroborosContext
     ): Promise<{ success: true; seed: Seed } | { success: false; error: string }> => {
       try {
         const goal = deriveGoal(input.documentId, input.metadata, input.goalHint);

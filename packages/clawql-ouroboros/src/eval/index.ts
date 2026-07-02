@@ -1,7 +1,4 @@
-export {
-  normalizeLangfuseEvalPayload,
-  type NormalizedLangfuseEval,
-} from "./langfuse-normalize.js";
+export { normalizeLangfuseEvalPayload, type NormalizedLangfuseEval } from "./langfuse-normalize.js";
 export {
   buildSeedRevisionProposal,
   langfuseEvalAutoApplyEnabled,
