@@ -6,6 +6,7 @@ export default defineConfig({
     "mcp-hooks": "src/mcp-hooks.ts",
     poller: "src/poller.ts",
     "plugin/index": "src/plugin/index.ts",
+    "eval/index": "src/eval/index.ts",
   },
   format: ["esm", "cjs"],
   dts: true,

@@ -95,6 +95,7 @@ describe("server-http", () => {
       optionalFlagsSnapshot: appOptions.optionalFlagsSnapshot ?? {
         enableHitlLabelStudio: flags.enableHitlLabelStudio,
         enableConeshare: flags.enableConeshare,
+        enableLangfuseEval: flags.enableLangfuseEval,
       },
     });
     const server = createServer(app);
@@ -745,6 +746,74 @@ describe("server-http", () => {
         resetSpecCache();
         resetSchemaFieldCache();
         resetClawqlApiForTests();
+      }
+    },
+    STREAMABLE_HTTP_TEST_TIMEOUT_MS
+  );
+
+  it(
+    "POST /observability/langfuse/webhook returns 401 when token mismatch (#250)",
+    async () => {
+      const savedLangfuse = process.env.CLAWQL_ENABLE_LANGFUSE_EVAL;
+      const savedTok = process.env.CLAWQL_LANGFUSE_WEBHOOK_TOKEN;
+      process.env.CLAWQL_ENABLE_LANGFUSE_EVAL = "1";
+      process.env.CLAWQL_LANGFUSE_WEBHOOK_TOKEN = "expected-secret";
+      delete process.env.NODE_ENV;
+      resetSpecCache();
+      resetSchemaFieldCache();
+      try {
+        await withHttpServer(async (base) => {
+          const res = await fetch(`${base}/observability/langfuse/webhook`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer wrong",
+            },
+            body: JSON.stringify({ value: 0.5 }),
+          });
+          expect(res.status).toBe(401);
+        });
+      } finally {
+        if (savedLangfuse === undefined) delete process.env.CLAWQL_ENABLE_LANGFUSE_EVAL;
+        else process.env.CLAWQL_ENABLE_LANGFUSE_EVAL = savedLangfuse;
+        if (savedTok === undefined) delete process.env.CLAWQL_LANGFUSE_WEBHOOK_TOKEN;
+        else process.env.CLAWQL_LANGFUSE_WEBHOOK_TOKEN = savedTok;
+        resetSpecCache();
+        resetSchemaFieldCache();
+      }
+    },
+    STREAMABLE_HTTP_TEST_TIMEOUT_MS
+  );
+
+  it(
+    "POST /observability/langfuse/webhook returns 503 in production without webhook token (#250)",
+    async () => {
+      const savedLangfuse = process.env.CLAWQL_ENABLE_LANGFUSE_EVAL;
+      const savedTok = process.env.CLAWQL_LANGFUSE_WEBHOOK_TOKEN;
+      const savedNodeEnv = process.env.NODE_ENV;
+      process.env.CLAWQL_ENABLE_LANGFUSE_EVAL = "1";
+      delete process.env.CLAWQL_LANGFUSE_WEBHOOK_TOKEN;
+      process.env.NODE_ENV = "production";
+      resetSpecCache();
+      resetSchemaFieldCache();
+      try {
+        await withHttpServer(async (base) => {
+          const res = await fetch(`${base}/observability/langfuse/webhook`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ value: 0.9 }),
+          });
+          expect(res.status).toBe(503);
+        });
+      } finally {
+        if (savedLangfuse === undefined) delete process.env.CLAWQL_ENABLE_LANGFUSE_EVAL;
+        else process.env.CLAWQL_ENABLE_LANGFUSE_EVAL = savedLangfuse;
+        if (savedTok === undefined) delete process.env.CLAWQL_LANGFUSE_WEBHOOK_TOKEN;
+        else process.env.CLAWQL_LANGFUSE_WEBHOOK_TOKEN = savedTok;
+        if (savedNodeEnv === undefined) delete process.env.NODE_ENV;
+        else process.env.NODE_ENV = savedNodeEnv;
+        resetSpecCache();
+        resetSchemaFieldCache();
       }
     },
     STREAMABLE_HTTP_TEST_TIMEOUT_MS

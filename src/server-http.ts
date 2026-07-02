@@ -32,6 +32,7 @@ import { maybeInitOtelTracing } from "./otel-tracing.js";
 import { handleLabelStudioWebhookRequest } from "clawql-automation/hitl/label-studio";
 import { configureHitlTransportDeps } from "./hitl-transport.js";
 import { handleConeshareWebhookRequest } from "./coneshare-webhook.js";
+import { handleLangfuseEvalWebhookRequest } from "./langfuse-eval-webhook.js";
 import { createWebhookRateLimiter } from "./webhook-rate-limit.js";
 
 const PORT = Number.parseInt(process.env.PORT ?? process.env.MCP_PORT ?? "8080", 10);
@@ -123,7 +124,7 @@ export type CreateMcpHttpAppOptions = {
    */
   optionalFlagsSnapshot?: Pick<
     ClawqlOptionalToolFlags,
-    "enableHitlLabelStudio" | "enableConeshare"
+    "enableHitlLabelStudio" | "enableConeshare" | "enableLangfuseEval"
   >;
 };
 
@@ -230,6 +231,22 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         await handleConeshareWebhookRequest(req, res);
       } catch (err: unknown) {
         console.error("[clawql-mcp-http] POST /idp/coneshare/webhook error:", err);
+        if (!res.headersSent) {
+          res.status(500).json({
+            ok: false,
+            error: "internal server error",
+          });
+        }
+      }
+    });
+  }
+
+  if (optionalFlags.enableLangfuseEval) {
+    app.post("/observability/langfuse/webhook", createWebhookRateLimiter(), async (req, res) => {
+      try {
+        await handleLangfuseEvalWebhookRequest(req, res);
+      } catch (err: unknown) {
+        console.error("[clawql-mcp-http] POST /observability/langfuse/webhook error:", err);
         if (!res.headersSent) {
           res.status(500).json({
             ok: false,

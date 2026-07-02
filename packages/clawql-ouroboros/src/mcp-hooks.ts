@@ -3,6 +3,13 @@ import { v4 as uuidv4 } from "uuid";
 import { SeedSchema, type Seed } from "./seed.js";
 import { EvolutionaryLoop } from "./evolutionary-loop.js";
 import type { EventStore } from "./interfaces.js";
+import {
+  langfuseEvalAutoApplyEnabled,
+  loadLatestSeedFromLineage,
+  normalizeLangfuseEvalPayload,
+  parseLangfuseMinScore,
+  processLangfuseEval,
+} from "./eval/index.js";
 
 // ---------------------------------------------------------------------------
 // Typed MCP context
@@ -35,12 +42,29 @@ export const GetLineageStatusSchema = z.object({
   seedId: z.string().min(1),
 });
 
+export const ProposeSeedRevisionFromEvalSchema = z.object({
+  /** Raw Langfuse webhook / export JSON, or omit when passing explicit score fields. */
+  payload: z.unknown().optional(),
+  scoreName: z.string().optional(),
+  scoreValue: z.number().min(0).max(1).optional(),
+  seedId: z.string().optional(),
+  traceId: z.string().optional(),
+  comment: z.string().optional(),
+  correlationId: z.string().optional(),
+  /** Override `CLAWQL_LANGFUSE_EVAL_AUTO_APPLY` for this call. */
+  autoApply: z.boolean().optional(),
+  /** Override `CLAWQL_LANGFUSE_EVAL_MIN_SCORE` for this call. */
+  minScore: z.number().min(0).max(1).optional(),
+  /** Inline seed when lineage lookup is unavailable. */
+  baseSeed: z.unknown().optional(),
+});
+
 // ---------------------------------------------------------------------------
 
 function deriveGoal(
   documentId: string,
   metadata: Record<string, unknown>,
-  goalHint?: string,
+  goalHint?: string
 ): string {
   if (goalHint) return goalHint;
   const title =
@@ -121,7 +145,7 @@ const STOP_WORDS = new Set([
 
 function inferOntologyFields(
   text: string,
-  maxFields = 8,
+  maxFields = 8
 ): Array<{ name: string; field_type: string; description: string; required: boolean }> {
   const freq = new Map<string, number>();
 
@@ -169,7 +193,7 @@ export const ouroborosMcpTools = {
 
     handler: async (
       input: z.infer<typeof CreateSeedFromDocumentSchema>,
-      _context: OuroborosContext,
+      _context: OuroborosContext
     ): Promise<{ success: true; seed: Seed } | { success: false; error: string }> => {
       try {
         const goal = deriveGoal(input.documentId, input.metadata, input.goalHint);
@@ -262,6 +286,54 @@ export const ouroborosMcpTools = {
 
     handler: async (input: z.infer<typeof GetLineageStatusSchema>, context: OuroborosContext) => {
       return await context.eventStore.getLineage(input.seedId);
+    },
+  },
+
+  proposeSeedRevisionFromEval: {
+    name: "ouroboros_propose_seed_revision_from_eval" as const,
+    description:
+      "Normalize a Langfuse eval score and propose (or optionally apply) an Ouroboros seed revision ([#250](https://github.com/danielsmithdevelopment/ClawQL/issues/250))",
+    inputSchema: ProposeSeedRevisionFromEvalSchema,
+
+    handler: async (
+      input: z.infer<typeof ProposeSeedRevisionFromEvalSchema>,
+      context: OuroborosContext
+    ) => {
+      let evalEvent =
+        input.payload !== undefined ? normalizeLangfuseEvalPayload(input.payload) : null;
+      if (!evalEvent && input.scoreValue !== undefined) {
+        evalEvent = {
+          scoreName: input.scoreName?.trim() || "langfuse_score",
+          scoreValue: input.scoreValue,
+          traceId: input.traceId,
+          seedId: input.seedId,
+          correlationId: input.correlationId,
+          comment: input.comment,
+          metadata: {},
+        };
+      }
+      if (!evalEvent) {
+        return {
+          ok: false,
+          error: "Missing eval: provide `payload` or `scoreValue` (+ optional scoreName/seedId)",
+        };
+      }
+
+      const minScore = input.minScore ?? parseLangfuseMinScore(process.env);
+      const autoApply = input.autoApply ?? langfuseEvalAutoApplyEnabled(process.env);
+      let baseSeed: Seed | undefined;
+      if (input.baseSeed !== undefined) {
+        baseSeed = SeedSchema.parse(input.baseSeed);
+      }
+
+      return await processLangfuseEval(evalEvent, {
+        minScore,
+        autoApply,
+        eventStore: context.eventStore,
+        baseSeed,
+        loadSeedByLineageId: async (seedId) =>
+          loadLatestSeedFromLineage(context.eventStore, seedId),
+      });
     },
   },
 } as const;
