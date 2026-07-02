@@ -45,6 +45,8 @@ const rawOptionalFlagsSchema = z.object({
   CLAWQL_ENABLE_CONESHARE: z.string().optional(),
   /** ([#307](https://github.com/danielsmithdevelopment/ClawQL/issues/307)): `run_idp_pipeline` automated DEFAULT_IDP_PIPELINE executor. Default false. */
   CLAWQL_ENABLE_IDP_PIPELINE: z.string().optional(),
+  /** ([#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248)): `classify_document` HTTP classifier wrapper. Default false. */
+  CLAWQL_ENABLE_IDP_CLASSIFIER: z.string().optional(),
 });
 
 export type ClawqlOptionalToolFlags = {
@@ -108,6 +110,10 @@ export type ClawqlOptionalToolFlags = {
    * ([#307](https://github.com/danielsmithdevelopment/ClawQL/issues/307)): **`run_idp_pipeline`** — automated `DEFAULT_IDP_PIPELINE` executor. Default false.
    */
   enableIdpPipeline: boolean;
+  /**
+   * ([#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248)): **`classify_document`** — POST to `CLASSIFIER_BASE_URL` or local heuristic. Default false.
+   */
+  enableIdpClassifier: boolean;
 };
 
 function rawToFlags(raw: z.infer<typeof rawOptionalFlagsSchema>): ClawqlOptionalToolFlags {
@@ -128,6 +134,7 @@ function rawToFlags(raw: z.infer<typeof rawOptionalFlagsSchema>): ClawqlOptional
     enableHitlLabelStudio: envTruthy(raw.CLAWQL_ENABLE_HITL_LABEL_STUDIO),
     enableConeshare: envTruthy(raw.CLAWQL_ENABLE_CONESHARE),
     enableIdpPipeline: envTruthy(raw.CLAWQL_ENABLE_IDP_PIPELINE),
+    enableIdpClassifier: envTruthy(raw.CLAWQL_ENABLE_IDP_CLASSIFIER),
   };
 }
 

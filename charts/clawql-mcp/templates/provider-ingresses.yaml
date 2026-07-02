@@ -80,6 +80,45 @@ spec:
                   number: {{ .Values.documentPipeline.stirling.service.port }}
 ---
 {{- end }}
+{{- if and .Values.documentPipeline.enabled .Values.documentPipeline.docling.enabled .Values.providerIngress.docling.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "clawql-mcp.doclingName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: docling
+  {{- with $annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- with $className }}
+  ingressClassName: {{ . }}
+  {{- end }}
+  {{- if $tls }}
+  tls:
+    {{- range $tls }}
+    - hosts:
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ .secretName }}
+    {{- end }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.providerIngress.docling.host | quote }}
+      http:
+        paths:
+          - path: {{ .Values.providerIngress.docling.path }}
+            pathType: {{ .Values.providerIngress.docling.pathType }}
+            backend:
+              service:
+                name: {{ include "clawql-mcp.doclingName" . }}
+                port:
+                  number: {{ .Values.documentPipeline.docling.service.port }}
+---
+{{- end }}
 {{- if and .Values.documentPipeline.enabled .Values.providerIngress.tika.enabled }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress

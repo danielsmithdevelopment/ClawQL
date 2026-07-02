@@ -93,6 +93,10 @@ argocd
 {{- printf "%s-tika" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
+{{- define "clawql-mcp.doclingName" -}}
+{{- printf "%s-docling" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
 {{- define "clawql-mcp.gotenbergName" -}}
 {{- printf "%s-gotenberg" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
 {{- end }}

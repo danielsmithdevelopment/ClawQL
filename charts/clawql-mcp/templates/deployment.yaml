@@ -271,6 +271,10 @@ spec:
             {{- if .Values.documentPipeline.enabled }}
             - name: TIKA_BASE_URL
               value: "http://{{ include "clawql-mcp.tikaName" . }}:{{ .Values.documentPipeline.tika.service.port }}"
+            {{- if .Values.documentPipeline.docling.enabled }}
+            - name: DOCLING_BASE_URL
+              value: "http://{{ include "clawql-mcp.doclingName" . }}:{{ .Values.documentPipeline.docling.service.port }}"
+            {{- end }}
             - name: GOTENBERG_BASE_URL
               value: "http://{{ include "clawql-mcp.gotenbergName" . }}:{{ .Values.documentPipeline.gotenberg.service.port }}"
             - name: STIRLING_BASE_URL

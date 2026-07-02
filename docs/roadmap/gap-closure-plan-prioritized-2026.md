@@ -12,7 +12,7 @@ This plan closes known **product gaps** called out for HITL, classification, act
 
 | Priority | Gap                            | Closure direction                                                                                         | Target      | Tracking                                                                                                                                                                          |
 | -------- | ------------------------------ | --------------------------------------------------------------------------------------------------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **P1**   | **Auto-classifier maturity**   | **Docling** as MCP/loadable provider + **fine-tuned classifier** model path and docs                      | **Q2 2026** | [#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248) — **Docling bundled** + [`fine-tuned-classifier.md`](../runbooks/fine-tuned-classifier.md); BYO train/promote |
+| **P1**   | **Auto-classifier maturity**   | **Docling** as MCP/loadable provider + **fine-tuned classifier** model path and docs                      | **Q2 2026** | [#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248) — **Shipped** (Helm Docling, **`classify_document`**, reference classifier + compose); tenant train/promote BYO |
 | **P2**   | **Multi-reviewer RBAC** (HITL) | Document **Label Studio CE** workarounds + optional **enterprise Label Studio** / BYO path                | Rolling     | [#249](https://github.com/danielsmithdevelopment/ClawQL/issues/249)                                                                                                               |
 | **P3**   | **Active learning loop**       | **Langfuse** (or compatible) **eval hooks** → **Ouroboros** seed create/update with gates (~80% there)    | Rolling     | [#250](https://github.com/danielsmithdevelopment/ClawQL/issues/250)                                                                                                               |
 | **P4**   | **One-click vertical stacks**  | Ship **four** opinionated **Docker Compose** files: **lending**, **healthcare**, **legal**, **education** | Rolling     | [#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251)                                                                                                               |
@@ -31,7 +31,7 @@ This plan closes known **product gaps** called out for HITL, classification, act
 
 **Exit criteria:** Docling on documented path; classifier promotion documented; security/release notes for images.
 
-**Progress (6.4.0):** bundled **`docling`** provider, onboarding doc, classifier runbook — remainder is tenant-specific model training (BYO).
+**Progress (6.4.0+):** bundled **`docling`**, Helm **`documentPipeline.docling`**, MCP **`classify_document`**, reference classifier HTTP + Compose — tenant-specific model training remains BYO.
 
 ---
 

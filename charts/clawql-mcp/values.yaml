@@ -436,6 +436,25 @@ ouroborosPostgres:
 # plus their minimal backing stores for integrated local/self-hosted workflows.
 documentPipeline:
   enabled: true
+  docling:
+    # Layout-aware parse ([#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248)). Large CPU image (~4 GiB); opt-in.
+    enabled: false
+    image:
+      repository: quay.io/docling-project/docling-serve-cpu
+      tag: v1.14.3
+      pullPolicy: IfNotPresent
+    service:
+      port: 5001
+    resources:
+      requests:
+        cpu: 250m
+        memory: 2Gi
+      limits:
+        cpu: "2"
+        memory: 6Gi
+    auth:
+      apiKey: ""
+      existingSecret: ""
   tika:
     image:
       repository: apache/tika
@@ -982,6 +1001,11 @@ providerIngress:
   tika:
     enabled: true
     host: tika.localhost
+    path: /
+    pathType: Prefix
+  docling:
+    enabled: true
+    host: docling.localhost
     path: /
     pathType: Prefix
   gotenberg:

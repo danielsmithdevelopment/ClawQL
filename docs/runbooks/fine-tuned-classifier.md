@@ -103,9 +103,12 @@ Argo / agent calls `POST /classify` with Docling JSON; response:
 ```bash
 CLASSIFIER_BASE_URL=http://classifier.idp.svc:8080
 CLASSIFIER_MIN_CONFIDENCE=0.85
+CLAWQL_ENABLE_IDP_CLASSIFIER=1
 ```
 
-Agents **`search`** your custom OpenAPI for `classify` or call via `CLAWQL_SPEC_PATHS` until a bundled classifier provider lands.
+Agents call MCP **`classify_document`** (posts to **`CLASSIFIER_BASE_URL/classify`**) or **`search`** your custom OpenAPI for `classify` via **`CLAWQL_SPEC_PATHS`**.
+
+Reference heuristic server: [`deployment/samples/classifier-http/`](../../deployment/samples/classifier-http/README.md). Compose with Docling: [`docker/compose/docling-classifier.compose.yml`](../../docker/compose/docling-classifier.compose.yml).
 
 ---
 
