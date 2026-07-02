@@ -4,13 +4,7 @@
  */
 
 export type IdpPipelineStage =
-  | "nextcloud"
-  | "tika"
-  | "gotenberg"
-  | "stirling"
-  | "paperless"
-  | "onyx"
-  | "coneshare";
+  "nextcloud" | "tika" | "gotenberg" | "stirling" | "paperless" | "onyx" | "coneshare";
 
 export type IdpPipelineStep = {
   stage: IdpPipelineStage;

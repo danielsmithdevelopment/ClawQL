@@ -248,8 +248,7 @@ export async function runUnaryWithDependents<T extends UnaryWithCommon>(
   for (let round = 0; round < maxRounds; round++) {
     const res = await invoke(common);
     const dr = res.common?.dependent_requests as
-      | Record<string, Record<string, unknown>>
-      | undefined;
+      Record<string, Record<string, unknown>> | undefined;
     if (!dr || Object.keys(dr).length === 0) {
       return res;
     }

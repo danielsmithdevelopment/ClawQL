@@ -70,8 +70,7 @@ function mcpValueToProtobufJs(v: Record<string, unknown>): Record<string, unknow
     return { boolValue: Boolean(v.bool_value ?? v.boolValue) };
   }
   const structInner = (v.struct_value ?? v.structValue) as
-    | { fields?: Record<string, Record<string, unknown>> }
-    | undefined;
+    { fields?: Record<string, Record<string, unknown>> } | undefined;
   if (structInner && typeof structInner === "object" && structInner.fields) {
     const inner: Record<string, unknown> = {};
     for (const [k2, v2] of Object.entries(structInner.fields)) {

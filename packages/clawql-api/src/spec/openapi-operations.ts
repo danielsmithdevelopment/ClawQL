@@ -184,8 +184,7 @@ function extractResponseSchemaName(responses: unknown): string | undefined {
     const resp = r[code];
     if (!resp || typeof resp !== "object") continue;
     const content = (resp as Record<string, unknown>).content as
-      | Record<string, unknown>
-      | undefined;
+      Record<string, unknown> | undefined;
     if (!content) continue;
 
     for (const ct of [

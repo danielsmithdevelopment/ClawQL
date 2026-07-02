@@ -45,17 +45,17 @@ _Phase 2 uses representative JSON in `docs/benchmarks/response-examples/` unless
           &quot;initialNodeCount&quot;: 3,
           &quot;status&quot;: &quot;RUNNING&quot;,
           &quot;version&quot;: &quot;1.29.0-gke.1108000&quot;
-        
+
 … [truncated; 1685 chars total]</code></pre></td><td valign="top"><pre><code>{
-  &quot;clusters&quot;: [
-    {
-      &quot;name&quot;: &quot;projects/demo-proj/locations/us-central1/clusters/prod&quot;,
-      &quot;status&quot;: &quot;RUNNING&quot;,
-      &quot;endpoint&quot;: &quot;34.118.229.12&quot;,
-      &quot;selfLink&quot;: &quot;https://container.googleapis.com/v1/projects/demo-proj/locations/us-central1/clusters/prod&quot;
-    }
-  ],
-  &quot;nextPageToken&quot;: &quot;&quot;
+&quot;clusters&quot;: [
+{
+&quot;name&quot;: &quot;projects/demo-proj/locations/us-central1/clusters/prod&quot;,
+&quot;status&quot;: &quot;RUNNING&quot;,
+&quot;endpoint&quot;: &quot;34.118.229.12&quot;,
+&quot;selfLink&quot;: &quot;https://container.googleapis.com/v1/projects/demo-proj/locations/us-central1/clusters/prod&quot;
+}
+],
+&quot;nextPageToken&quot;: &quot;&quot;
 }</code></pre></td></tr></tbody></table>
 
 ### `jira`
@@ -103,12 +103,12 @@ _Phase 2 uses representative JSON in `docs/benchmarks/response-examples/` unless
       &quot;id&quot;: &quot;10001&quot;,
       &quot;subtask&quot;: false
     },
-    
+
 … [truncated; 1543 chars total]</code></pre></td><td valign="top"><pre><code>{
-  &quot;id&quot;: &quot;10042&quot;,
-  &quot;key&quot;: &quot;K8S-101&quot;,
-  &quot;self&quot;: &quot;https://your-domain.atlassian.net/rest/api/3/issue/10042&quot;,
-  &quot;summary&quot;: &quot;Wire GKE service to Cloudflare DNS&quot;
+&quot;id&quot;: &quot;10042&quot;,
+&quot;key&quot;: &quot;K8S-101&quot;,
+&quot;self&quot;: &quot;https://your-domain.atlassian.net/rest/api/3/issue/10042&quot;,
+&quot;summary&quot;: &quot;Wire GKE service to Cloudflare DNS&quot;
 }</code></pre></td></tr></tbody></table>
 
 ### `cloudflare`

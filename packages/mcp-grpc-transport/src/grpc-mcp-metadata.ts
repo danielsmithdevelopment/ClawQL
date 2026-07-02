@@ -8,8 +8,7 @@ import {
 export const MCP_PROTOCOL_VERSION_METADATA_KEY = "mcp-protocol-version";
 
 export type ProtocolVersionCheck =
-  | { ok: true; version: string }
-  | { ok: false; details: string; sendLatestInMetadata: boolean };
+  { ok: true; version: string } | { ok: false; details: string; sendLatestInMetadata: boolean };
 
 export function getMetadataValue(metadata: grpc.Metadata, key: string): string | undefined {
   const vals = metadata.get(key);

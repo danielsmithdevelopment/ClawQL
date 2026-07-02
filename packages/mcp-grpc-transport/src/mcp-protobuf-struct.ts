@@ -83,8 +83,7 @@ export function valueToJson(v: Record<string, unknown> | undefined | null): unkn
     return bool;
   }
   const structVal = (v.struct_value ?? v.structValue) as
-    | { fields?: Record<string, unknown> }
-    | undefined;
+    { fields?: Record<string, unknown> } | undefined;
   if (structVal && typeof structVal === "object") {
     return structToJson(structVal);
   }

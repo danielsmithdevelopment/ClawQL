@@ -1106,7 +1106,7 @@ Every workload receives its own cryptographic identity the moment it starts.
 SPIFFE (Secure Production Identity Framework for Everyone) and its control plane SPIRE give each pod a short-lived X.509 certificate called an SVID (SPIFFE Verifiable Identity Document).
 
 The identity looks like this:  
- spiffe://cluster.local/ns/agents/sa/summarizer
+spiffe://cluster.local/ns/agents/sa/summarizer
 
 Key properties:
 
@@ -2508,7 +2508,7 @@ The exchange flow:
 4. TTL of the tool-scoped token is maximum 5 minutes — it cannot be renewed and cannot be reused for any other tool.
 
 Sequence:  
- Session JWT → Gateway → Vault token exchange → Tool handler
+Session JWT → Gateway → Vault token exchange → Tool handler
 
 Every exchange creates a signed audit log entry with the tool name, claims used, and exact timestamp. This pattern turns credential theft from catastrophic to irrelevant — the stolen token expires before it can be operationalized.
 
@@ -3743,7 +3743,7 @@ Split-Payload Detection
 Injection can be split across multiple tool results so each individual result looks clean, but the model concatenates them into a full instruction.
 
 Panguard maintains a rolling window of the last N tool results per session (default: 5).  
- Injection pattern matching is applied to the concatenated content of the window, not to each result in isolation.
+Injection pattern matching is applied to the concatenated content of the window, not to each result in isolation.
 
 This check runs as an async background task with alerting (it is computationally heavier, so we do not block synchronously on it).
 
@@ -3934,7 +3934,7 @@ Verifiable Agent Identity in Pipelines
 Every pipeline node receives a unique cryptographic identity from the cluster CA (Module 4).
 
 The certificate SAN encodes the exact position in the pipeline:  
- clawql://pipeline/doc-analysis/node/2
+clawql://pipeline/doc-analysis/node/2
 
 How it works:
 
@@ -6876,7 +6876,7 @@ Module 1 told us to pin everything for supply-chain integrity. Vulnerability man
 The Pinning/Patching Tension
 
 Pinning (digest pinning, manifest hash pinning, lockfiles) gives us reproducibility and supply-chain integrity.  
- Patching requires us to move those pins forward when a CVE is disclosed.
+Patching requires us to move those pins forward when a CVE is disclosed.
 
 The tension is real, but solvable. The failure modes are clear:
 
@@ -7651,7 +7651,7 @@ In this module we map every control in the platform to its specific obligations 
 Why Compliance Mapping Is a Distinct Discipline
 
 Technical controls prove “we are secure.”  
- Regulatory compliance proves “we can demonstrate we are secure over time.”
+Regulatory compliance proves “we can demonstrate we are secure over time.”
 
 The difference is evidence:
 

@@ -71,7 +71,7 @@ The exchange flow:
 4. TTL of the tool-scoped token is maximum 5 minutes — it cannot be renewed and cannot be reused for any other tool.
 
 Sequence:  
- Session JWT → Gateway → Vault token exchange → Tool handler
+Session JWT → Gateway → Vault token exchange → Tool handler
 
 Every exchange creates a signed audit log entry with the tool name, claims used, and exact timestamp. This pattern turns credential theft from catastrophic to irrelevant — the stolen token expires before it can be operationalized.
 
