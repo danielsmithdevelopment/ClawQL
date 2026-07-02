@@ -4,7 +4,7 @@ ClawQL ships **eight bundled document vendors** for intelligent document process
 
 **Canonical recipe:** `DEFAULT_IDP_PIPELINE` in **`packages/clawql-documents`** (`idp-pipeline.ts`) — Nextcloud intake → Docling (layout parse) or Tika → Gotenberg → Stirling → Paperless → Onyx → Nextcloud sync → Coneshare share/VDR.
 
-**Related:** [IDP Platform vision](../vision/clawql-idp-platform.md) · [OpenClaw IDP skill profile](../openclaw/openclaw-idp-skill-profile.md) · [Requirements matrix](../roadmap/idp-master-requirements-matrix.md) · [Agent chat contract](../dashboard/agent-chat.md) · [Helm](../../charts/clawql-mcp/README.md)
+**Related:** [IDP Platform vision](../vision/clawql-idp-platform.md) · [OpenClaw IDP skill profile](../openclaw/openclaw-idp-skill-profile.md) · [Slack-first IDP runbook](../openclaw/slack-first-idp-runbook.md) · [Requirements matrix](../roadmap/idp-master-requirements-matrix.md) · [Umbrella Helm](../deployment/clawql-idp-helm.md) · [Observability bundle](../observability/README.md) · [Agent chat contract](../dashboard/agent-chat.md) · [Helm `clawql-mcp`](../../charts/clawql-mcp/README.md)
 
 ---
 
@@ -71,11 +71,15 @@ Automated multi-hop execution is available via MCP **`run_idp_pipeline`** when *
 
 ## Helm: enable the full stack
 
-**Document pipeline** (Tika, Gotenberg, Stirling, Paperless + stores):
+**Umbrella chart (recommended for full IDP):** [`clawql-idp-helm.md`](../deployment/clawql-idp-helm.md) — `helm install` with **`values-idp-full.yaml`**.
+
+**Base chart (`clawql-mcp`)** — document pipeline (Docling opt-in, Tika, Gotenberg, Stirling, Paperless + stores):
 
 ```yaml
 documentPipeline:
   enabled: true
+  docling:
+    enabled: true   # opt-in — large CPU image; layout parse for forms/W-2
 enableDocuments: true
 ```
 
@@ -112,6 +116,7 @@ The MCP Deployment receives **`TIKA_BASE_URL`**, **`GOTENBERG_BASE_URL`**, **`ST
 
 | Provider | Guide |
 | -------- | ----- |
+| Docling | [docling-onboarding.md](docling-onboarding.md) |
 | Tika | [tika-onboarding.md](tika-onboarding.md) |
 | Gotenberg | [gotenberg-onboarding.md](gotenberg-onboarding.md) |
 | Stirling | [stirling-onboarding.md](stirling-onboarding.md) |
