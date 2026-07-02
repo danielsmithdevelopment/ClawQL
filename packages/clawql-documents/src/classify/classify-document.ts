@@ -1,10 +1,6 @@
 import { logMcpToolShape } from "clawql-api/mcp/tool-shape-log";
 import { z } from "zod";
-import {
-  classifierBaseUrl,
-  classifierMinConfidence,
-  idpClassifierToolEnabled,
-} from "./env.js";
+import { classifierBaseUrl, classifierMinConfidence, idpClassifierToolEnabled } from "./env.js";
 
 export const classifyDocumentToolSchema = {
   doc_id: z.string().optional().describe("Optional stable document id for audit trails."),
@@ -120,8 +116,7 @@ export async function classifyDocument(
       ok: true,
       label,
       confidence: Number.isFinite(confidence) ? confidence : undefined,
-      model_version:
-        typeof parsed.model_version === "string" ? parsed.model_version : undefined,
+      model_version: typeof parsed.model_version === "string" ? parsed.model_version : undefined,
       min_confidence: minConf,
       needs_hitl: needsHitl,
     };
