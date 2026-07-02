@@ -32,6 +32,8 @@ export default defineConfig({
     ],
     /** Avoid worker RPC teardown races when HTTP servers + fetch leave sockets pending. */
     teardownTimeout: 30_000,
+    /** HTTP/MCP tests log to stderr; intercepting console queues onUserConsoleLog RPC that can race worker exit. */
+    disableConsoleIntercept: true,
     pool: "forks",
     coverage: {
       provider: "v8",

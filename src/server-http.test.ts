@@ -11,6 +11,7 @@ import {
   resetNativeProtocolMetricsForTests,
 } from "./native-protocol-metrics.js";
 import { resetClawqlApiForTests } from "./clawql-api-adapters.js";
+import { getClawqlOptionalToolFlags } from "./clawql-optional-flags.js";
 import { createMcpHttpApp } from "./server-http.js";
 import { resetSpecCache } from "./spec-loader.js";
 import { resetSchemaFieldCache } from "./tools.js";
@@ -33,16 +34,28 @@ function closeHttpServer(server: Server): Promise<void> {
         reject(err);
         return;
       }
-      // Vitest can still be draining onUserConsoleLog RPC when the worker exits.
-      setImmediate(() => resolve());
+      // Let undici/fetch and vitest drain in-flight work before the worker exits.
+      setTimeout(() => resolve(), 50);
     });
   });
 }
+
+/** MCP SDK client.close() can hang when a prior timed-out test left SSE sockets open. */
+async function closeMcpClient(client: { close(): Promise<void> }): Promise<void> {
+  await Promise.race([
+    client.close(),
+    new Promise<void>((resolve) => setTimeout(resolve, 5_000)),
+  ]);
+}
+
+const STREAMABLE_HTTP_TEST_TIMEOUT_MS = 45_000;
 
 const here = dirname(fileURLToPath(import.meta.url));
 const minimalSpec = join(here, "test-utils/fixtures/minimal-petstore.json");
 
 describe("server-http", () => {
+  describe.configure({ mode: "serial" });
+
   const saved: Record<string, string | undefined> = {};
 
   beforeEach(() => {
@@ -71,7 +84,14 @@ describe("server-http", () => {
   });
 
   async function withHttpServer(run: (baseUrl: string) => Promise<void>): Promise<void> {
-    const app = await createMcpHttpApp({ mcpPath: "/mcp" });
+    const flags = getClawqlOptionalToolFlags();
+    const app = await createMcpHttpApp({
+      mcpPath: "/mcp",
+      optionalFlagsSnapshot: {
+        enableHitlLabelStudio: flags.enableHitlLabelStudio,
+        enableConeshare: flags.enableConeshare,
+      },
+    });
     const server = createServer(app);
     server.listen(0, "127.0.0.1");
     await once(server, "listening");
@@ -384,7 +404,7 @@ describe("server-http", () => {
           const names = new Set(tools.map((t) => t.name));
           expect(names.has("sandbox_exec")).toBe(true);
         } finally {
-          await client.close();
+          await closeMcpClient(client);
         }
       });
     } finally {
@@ -396,7 +416,7 @@ describe("server-http", () => {
       resetSpecCache();
       resetSchemaFieldCache();
     }
-  }, 25_000);
+  }, STREAMABLE_HTTP_TEST_TIMEOUT_MS);
 
   it("streamable HTTP listTools includes notify when CLAWQL_ENABLE_NOTIFY=1 (#140)", async () => {
     const vaultDir = mkdtempSync(join(tmpdir(), "clawql-http-notify-"));
@@ -420,7 +440,7 @@ describe("server-http", () => {
           const names = new Set(tools.map((t) => t.name));
           expect(names.has("notify")).toBe(true);
         } finally {
-          await client.close();
+          await closeMcpClient(client);
         }
       });
     } finally {
@@ -432,7 +452,7 @@ describe("server-http", () => {
       resetSpecCache();
       resetSchemaFieldCache();
     }
-  }, 25_000);
+  }, STREAMABLE_HTTP_TEST_TIMEOUT_MS);
 
   it("streamable HTTP listTools includes knowledge_search_onyx when CLAWQL_ENABLE_ONYX=1 (#144)", async () => {
     const vaultDir = mkdtempSync(join(tmpdir(), "clawql-http-onyx-"));
@@ -456,7 +476,7 @@ describe("server-http", () => {
           const names = new Set(tools.map((t) => t.name));
           expect(names.has("knowledge_search_onyx")).toBe(true);
         } finally {
-          await client.close();
+          await closeMcpClient(client);
         }
       });
     } finally {
@@ -468,7 +488,7 @@ describe("server-http", () => {
       resetSpecCache();
       resetSchemaFieldCache();
     }
-  }, 25_000);
+  }, STREAMABLE_HTTP_TEST_TIMEOUT_MS);
 
   it("streamable HTTP listTools includes ouroboros_* when CLAWQL_ENABLE_OUROBOROS=1 (#141)", async () => {
     const vaultDir = mkdtempSync(join(tmpdir(), "clawql-http-ouroboros-"));
@@ -494,7 +514,7 @@ describe("server-http", () => {
           expect(names.has("ouroboros_run_evolutionary_loop")).toBe(true);
           expect(names.has("ouroboros_get_lineage_status")).toBe(true);
         } finally {
-          await client.close();
+          await closeMcpClient(client);
         }
       });
     } finally {
@@ -506,7 +526,7 @@ describe("server-http", () => {
       resetSpecCache();
       resetSchemaFieldCache();
     }
-  }, 25_000);
+  }, STREAMABLE_HTTP_TEST_TIMEOUT_MS);
 
   it("streamable HTTP listTools includes hitl_enqueue_label_studio when CLAWQL_ENABLE_HITL_LABEL_STUDIO=1 (#228)", async () => {
     const vaultDir = mkdtempSync(join(tmpdir(), "clawql-http-hitl-"));
@@ -530,7 +550,7 @@ describe("server-http", () => {
           const names = new Set(tools.map((t) => t.name));
           expect(names.has("hitl_enqueue_label_studio")).toBe(true);
         } finally {
-          await client.close();
+          await closeMcpClient(client);
         }
       });
     } finally {
@@ -542,7 +562,7 @@ describe("server-http", () => {
       resetSpecCache();
       resetSchemaFieldCache();
     }
-  }, 25_000);
+  }, STREAMABLE_HTTP_TEST_TIMEOUT_MS);
 
   it("POST /hitl/label-studio/webhook returns 401 when token mismatch (#228)", async () => {
     const vaultDir = mkdtempSync(join(tmpdir(), "clawql-http-hitl-wh-"));
@@ -579,7 +599,7 @@ describe("server-http", () => {
       resetSpecCache();
       resetSchemaFieldCache();
     }
-  }, 25_000);
+  }, STREAMABLE_HTTP_TEST_TIMEOUT_MS);
 
   it("POST /hitl/label-studio/webhook returns 503 in production without webhook token (#228)", async () => {
     const vaultDir = mkdtempSync(join(tmpdir(), "clawql-http-hitl-prod-"));
@@ -616,7 +636,7 @@ describe("server-http", () => {
       resetSpecCache();
       resetSchemaFieldCache();
     }
-  }, 25_000);
+  }, STREAMABLE_HTTP_TEST_TIMEOUT_MS);
 
   it("POST /idp/coneshare/webhook returns 401 when token mismatch", async () => {
     const savedConeshare = process.env.CLAWQL_ENABLE_CONESHARE;
@@ -646,7 +666,7 @@ describe("server-http", () => {
       resetSpecCache();
       resetSchemaFieldCache();
     }
-  }, 25_000);
+  }, STREAMABLE_HTTP_TEST_TIMEOUT_MS);
 
   it("POST /idp/coneshare/webhook returns 503 in production without webhook token", async () => {
     const savedConeshare = process.env.CLAWQL_ENABLE_CONESHARE;
@@ -676,5 +696,5 @@ describe("server-http", () => {
       resetSpecCache();
       resetSchemaFieldCache();
     }
-  }, 25_000);
+  }, STREAMABLE_HTTP_TEST_TIMEOUT_MS);
 });
