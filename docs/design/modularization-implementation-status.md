@@ -221,16 +221,16 @@ From enablement §5.4 and the Effect plan §8:
 
 ## 7. Effect-TS migration status
 
-| Area                                                     | Status                                                                                                    |
-| -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `effect` dependency                                      | ✅ Pinned in `clawql-api`                                                                                 |
-| `SearchService` / `ExecuteService`                       | ✅ Live Layers; MCP uses `getClawqlApi().run(Effect…)`                                                    |
-| `AuditLive`                                              | ✅ Composed in `createClawQLApi()`                                                                        |
-| `Plugin` / `PluginRegistry`                              | ✅ Effect `register` / `beforeCallTool`                                                                   |
-| Extracted packages (`memory`, `documents`, `automation`, `sandbox`, `ouroboros`) | ❌ Still `async` at IO edges; Layer wrappers shipped |
-| `@effect/schema` at boundaries                           | ❌ Zod remains at MCP tool registration                                                                   |
-| Horizontal `Plugin` Layers                               | ✅ All tiers via `composeHorizontalPluginLayers()` |
-| Operator dynamic Layer list from CRD                     | ✅ `composeHorizontalPluginLayersFromTierSpec()` maps `ClawQLHorizontalTierSpec` → Layers |
+| Area                                                                             | Status                                                                                    |
+| -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `effect` dependency                                                              | ✅ Pinned in `clawql-api`                                                                 |
+| `SearchService` / `ExecuteService`                                               | ✅ Live Layers; MCP uses `getClawqlApi().run(Effect…)`                                    |
+| `AuditLive`                                                                      | ✅ Composed in `createClawQLApi()`                                                        |
+| `Plugin` / `PluginRegistry`                                                      | ✅ Effect `register` / `beforeCallTool`                                                   |
+| Extracted packages (`memory`, `documents`, `automation`, `sandbox`, `ouroboros`) | ❌ Still `async` at IO edges; Layer wrappers shipped                                      |
+| `@effect/schema` at boundaries                                                   | ❌ Zod remains at MCP tool registration                                                   |
+| Horizontal `Plugin` Layers                                                       | ✅ All tiers via `composeHorizontalPluginLayers()`                                        |
+| Operator dynamic Layer list from CRD                                             | ✅ `composeHorizontalPluginLayersFromTierSpec()` maps `ClawQLHorizontalTierSpec` → Layers |
 
 **Rule for new code in extracted packages:** prefer Effect in `clawql-core` / `clawql-api`; legacy `async` is acceptable at IO edges during migration (`Effect.tryPromise`). See plan §7.
 

@@ -1,4 +1,8 @@
-import type { ClawQLError, McpToolAlreadyRegisteredError, PluginAlreadyRegisteredError } from "clawql-core";
+import type {
+  ClawQLError,
+  McpToolAlreadyRegisteredError,
+  PluginAlreadyRegisteredError,
+} from "clawql-core";
 import { ClawQLApi } from "clawql-api";
 import { Effect, Layer } from "effect";
 import { createMemoryPlugin } from "./memory-plugin.js";

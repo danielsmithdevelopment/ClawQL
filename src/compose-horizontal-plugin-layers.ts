@@ -39,7 +39,10 @@ export type ClawQLHorizontalTierSpec = {
   };
 };
 
-function tierEnabled(section: { readonly enabled?: boolean } | undefined, fallback: boolean): boolean {
+function tierEnabled(
+  section: { readonly enabled?: boolean } | undefined,
+  fallback: boolean
+): boolean {
   return section?.enabled ?? fallback;
 }
 
