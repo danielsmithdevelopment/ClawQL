@@ -7,6 +7,7 @@
 | File                                                                 | UID                         | Description                                                                                                                                             |
 | -------------------------------------------------------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [`clawql-core-observability.json`](./clawql-core-observability.json) | `clawql-core-observability` | **Native protocol** counters/gauges exposed on **`GET /metrics`** (see [`src/native-protocol-prometheus.ts`](../../src/native-protocol-prometheus.ts)). |
+| [`clawql-idp-observability.json`](./clawql-idp-observability.json)   | `clawql-idp-observability`  | **IDP operator** panels — audit rate, buffer depth, native protocol ([#252](https://github.com/danielsmithdevelopment/ClawQL/issues/252)).              |
 
 ### Import (any Grafana)
 

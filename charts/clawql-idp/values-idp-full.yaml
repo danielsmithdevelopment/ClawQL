@@ -1,0 +1,81 @@
+# Full IDP stack profile for k3s / single-node labs (MS-A2 class: ≥ 8 GiB RAM recommended, 12–16 GiB for Onyx).
+# Install:
+#   helm dependency update charts/clawql-idp
+#   helm upgrade --install clawql-idp charts/clawql-idp \
+#     -f charts/clawql-idp/values-idp-full.yaml \
+#     --namespace clawql --create-namespace \
+#     --set clawql-mcp.envFromSecret=clawql-provider-env
+#
+# BYO: Argo Workflows controller, Argo CD, Langfuse, Label Studio — see docs/deployment/clawql-idp-helm.md
+
+clawql-mcp:
+  fullnameOverride: clawql-mcp-http
+  deploymentStrategy:
+    type: Recreate
+
+  provider: all-providers
+  nodeOptions: "--max-old-space-size=768"
+
+  enableMemory: true
+  enableDocuments: true
+  enableGrpc: true
+  enableSandbox: true
+  enableNotify: true
+  enableOnyx: true
+  enableOuroboros: true
+  enableWorkflow: true
+  enableArgoCd: true
+
+  workflow:
+    namespaceAllowlist:
+      - clawql
+      - argo
+    defaultNamespace: clawql
+    notifyOnTerminal: true
+
+  argocd:
+    namespaceAllowlist:
+      - argocd
+    defaultNamespace: argocd
+    allowSync: false
+
+  documentPipeline:
+    enabled: true
+    docling:
+      enabled: true
+      resources:
+        requests:
+          cpu: 250m
+          memory: 2Gi
+        limits:
+          cpu: "2"
+          memory: 6Gi
+
+  idpCollaboration:
+    enabled: true
+
+  nats:
+    enabled: true
+
+  ouroborosPostgres:
+    enabled: true
+    auth:
+      password: "change-me"
+
+  openclaw:
+    enabled: true
+    chatBridge:
+      enabled: true
+
+  dashboard:
+    enabled: true
+
+  metrics:
+    prometheusScrapeAnnotations:
+      enabled: true
+    serviceMonitor:
+      enabled: true
+      labels:
+        release: kube-prometheus-stack
+
+  envFromSecret: clawql-provider-env
