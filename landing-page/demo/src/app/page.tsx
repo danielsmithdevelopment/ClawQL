@@ -17,7 +17,9 @@ import { HeroTwoColumnWithPhoto } from '@/components/sections/hero-two-column-wi
 import { Plan, PricingMultiTier } from '@/components/sections/pricing-multi-tier'
 import { Stat, StatsFourColumns } from '@/components/sections/stats-four-columns'
 import { Section } from '@/components/elements/section'
+import { WorkflowFeedSection } from '@/components/sections/workflow-feed'
 import { caseStudies, idpPipelineStages, mcpToolTiers, multiProviderBenchmark } from '@/lib/marketing'
+import { workflowFeeds } from '@/lib/workflow-feeds'
 import { managedPrice, pricing } from '@/lib/pricing'
 import { site } from '@/lib/site'
 
@@ -113,6 +115,23 @@ export default function Page() {
           <ToolTierSection {...mcpToolTiers.idp} />
         </div>
       </Section>
+
+      {/* Workflow feeds — tool calling sequences from case studies */}
+      <WorkflowFeedSection
+        id="workflows"
+        eyebrow="Workflows in practice"
+        headline="What a real ClawQL session looks like."
+        subheadline={
+          <p>
+            Published case studies document the same pattern: agents call MCP tools in sequence — recall context,
+            discover operations with <code className="text-sm">search</code>, act with{' '}
+            <code className="text-sm">execute</code>, then persist outcomes with{' '}
+            <code className="text-sm">memory_ingest</code>. These feeds show the chronology without pasting specs into
+            the chat.
+          </p>
+        }
+        feeds={workflowFeeds}
+      />
 
       {/* IDP pipeline */}
       <Section

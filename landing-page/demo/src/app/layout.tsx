@@ -53,6 +53,9 @@ export default function RootLayout({
             links={
               <>
                 <NavbarLink href="/#tools">Tools</NavbarLink>
+                <NavbarLink href="/#workflows" className="max-lg:hidden">
+                  Workflows
+                </NavbarLink>
                 <NavbarLink href="/#idp">IDP</NavbarLink>
                 <NavbarLink href="/#case-studies">Case studies</NavbarLink>
                 <NavbarLink href={site.urls.pricing}>Pricing</NavbarLink>
@@ -97,6 +100,7 @@ export default function RootLayout({
               <>
                 <FooterCategory title="Product">
                   <FooterLink href="/#tools">Tools</FooterLink>
+                  <FooterLink href="/#workflows">Workflows</FooterLink>
                   <FooterLink href="/#case-studies">Case studies</FooterLink>
                   <FooterLink href={site.urls.pricing}>Pricing</FooterLink>
                   <FooterLink href={site.urls.signup}>Sign up</FooterLink>
