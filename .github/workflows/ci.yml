@@ -271,6 +271,36 @@ jobs:
       - name: Docker build (Panguard bridge image)
         run: docker build -f docker/panguard-mcp-bridge/Dockerfile -t clawql-panguard-bridge:ci .
 
+  distribution-npm-pack-smoke:
+    name: npm pack install smoke
+    needs: [lint, workflow-scripts]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+        with:
+          node-version: "25"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: npm pack → clean install smoke
+        run: bash scripts/dev/test-npm-pack-install.sh
+
+  mcp-docker-workspace-smoke:
+    name: MCP Docker workspace deps smoke
+    needs: [lint, workflow-scripts]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+
+      - name: Docker build + /healthz
+        run: bash scripts/dev/test-docker-mcp-workspace-deps.sh
+
   website-playwright-smoke:
     name: Website Playwright smoke
     needs: [lint, workflow-scripts]
@@ -305,6 +335,8 @@ jobs:
         workflow-scripts,
         website-docker-smoke,
         panguard-bridge-docker-smoke,
+        distribution-npm-pack-smoke,
+        mcp-docker-workspace-smoke,
         website-playwright-smoke,
         supply-chain,
         secret-scan,
@@ -348,6 +380,8 @@ jobs:
         workflow-scripts,
         website-docker-smoke,
         panguard-bridge-docker-smoke,
+        distribution-npm-pack-smoke,
+        mcp-docker-workspace-smoke,
         website-playwright-smoke,
         supply-chain,
         secret-scan,
@@ -395,6 +429,8 @@ jobs:
         workflow-scripts,
         website-docker-smoke,
         panguard-bridge-docker-smoke,
+        distribution-npm-pack-smoke,
+        mcp-docker-workspace-smoke,
         website-playwright-smoke,
         supply-chain,
         secret-scan,
