@@ -6,8 +6,6 @@ import { Link } from '@/components/elements/link'
 import { ArrowNarrowRightIcon } from '@/components/icons/arrow-narrow-right-icon'
 import { CallToActionSimple } from '@/components/sections/call-to-action-simple'
 import {
-  CaseStudyCard,
-  CaseStudyGrid,
   IdpStageCard,
   ToolTierSection,
 } from '@/components/sections/clawql-marketing'
@@ -17,7 +15,7 @@ import { Plan, PricingMultiTier } from '@/components/sections/pricing-multi-tier
 import { Stat, StatsFourColumns } from '@/components/sections/stats-four-columns'
 import { Section } from '@/components/elements/section'
 import { WorkflowFeedSection } from '@/components/sections/workflow-feed'
-import { caseStudies, idpPipelineStages, mcpToolTiers, multiProviderBenchmark } from '@/lib/marketing'
+import { idpPipelineStages, mcpToolTiers, multiProviderBenchmark } from '@/lib/marketing'
 import { workflowFeeds } from '@/lib/workflow-feeds'
 import { managedPrice, pricing } from '@/lib/pricing'
 import { site } from '@/lib/site'
@@ -157,31 +155,6 @@ export default function Page() {
           ))}
         </div>
       </Section>
-
-      {/* Case studies */}
-      <CaseStudyGrid
-        id="case-studies"
-        eyebrow="Case studies"
-        headline="Published workflows — not marketing fiction."
-        subheadline={
-          <p>
-            Each study documents real tool traces, failures, fixes, and token measurements. Read the full narratives on{' '}
-            <a href={`${site.urls.docs}/case-studies`} className="underline">
-              docs.clawql.com
-            </a>
-            .
-          </p>
-        }
-        footer={
-          <Link href={`${site.urls.docs}/case-studies`} className="mt-6">
-            View all case studies <ArrowNarrowRightIcon />
-          </Link>
-        }
-      >
-        {caseStudies.map((study) => (
-          <CaseStudyCard key={study.slug} {...study} />
-        ))}
-      </CaseStudyGrid>
 
       {/* FAQs */}
       <FAQsTwoColumnAccordion id="faqs" headline="Questions & Answers">
