@@ -12,7 +12,7 @@ Feature tiers (aligned with the [architecture diagram](docs/readme/images/clawql
 - Stdio and HTTP MCP server modes
 - Bundled provider specs for offline lookup and multi-provider workflows
 
-Primary package: `clawql-mcp` (current release: **6.4.0** — [`RELEASE_NOTES_v6.4.0.md`](RELEASE_NOTES_v6.4.0.md))  
+Primary package: `clawql-mcp` (current release: **6.4.1** — [`RELEASE_NOTES_v6.4.1.md`](RELEASE_NOTES_v6.4.1.md))  
 Repo: https://github.com/danielsmithdevelopment/ClawQL
 
 ### Container images on GHCR (Docker / Helm)

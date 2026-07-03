@@ -1,0 +1,133 @@
+# Publish clawql-mcp to npmjs.com after supply-chain gates on the exact tarball users install.
+# Trigger: annotated tag v<package.json version> (e.g. v6.4.1) or manual workflow_dispatch.
+# Requires npm trusted publishing (OIDC) and/or NPM_TOKEN secret on the repo.
+name: npm publish
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+concurrency:
+  group: npm-publish-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  TRIVY_SCAN_IMAGE: ghcr.io/aquasecurity/trivy:0.59.1
+
+jobs:
+  repo-supply-chain:
+    name: Repo supply chain (OSV + Trivy fs + Syft SBOM)
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+
+      - name: OSV-Scanner (lockfiles + manifests)
+        run: docker run --rm -v "$PWD:/repo" -w /repo ghcr.io/google/osv-scanner:latest scan --recursive --config osv-scanner.toml .
+
+      - name: Trivy filesystem (HIGH / CRITICAL)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+        with:
+          scan-type: fs
+          scan-ref: "."
+          scanners: vuln
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+          trivyignores: .trivyignore
+          skip-dirs: node_modules,website/node_modules,dashboard/node_modules,dist,packages/mcp-grpc-transport/dist,packages/clawql-ouroboros/dist,packages/panguard-mcp-bridge/dist,.git
+
+      - name: CycloneDX SBOM (Syft)
+        run: |
+          docker run --rm -v "$PWD:/repo" -w /repo anchore/syft:v1.19.0 \
+            scan . -o "cyclonedx-json=sbom-cyclonedx-npm-publish.cdx.json"
+
+      - name: Upload repository SBOM
+        uses: actions/upload-artifact@v7
+        with:
+          name: sbom-cyclonedx-npm-publish
+          path: sbom-cyclonedx-npm-publish.cdx.json
+          if-no-files-found: error
+
+  publish:
+    name: Pack, scan, and publish clawql-mcp
+    needs: [repo-supply-chain]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+
+      - name: Verify tag matches package.json (tag releases only)
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF#refs/tags/}"
+          VERSION="${TAG#v}"
+          PKG_VERSION="$(node -p "require('./package.json').version")"
+          if [[ "${VERSION}" != "${PKG_VERSION}" ]]; then
+            echo "ERROR: tag ${TAG} does not match package.json version ${PKG_VERSION}" >&2
+            exit 1
+          fi
+          echo "Publishing clawql-mcp@${PKG_VERSION} for tag ${TAG}"
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+        with:
+          node-version: "25"
+          registry-url: https://registry.npmjs.org
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: npm pack install smoke
+        run: bash scripts/dev/test-npm-pack-install.sh
+
+      - name: Pack release tarball
+        id: pack
+        run: |
+          set -euo pipefail
+          PACK_DIR="${RUNNER_TEMP}/clawql-mcp-pack"
+          rm -rf "${PACK_DIR}"
+          mkdir -p "${PACK_DIR}"
+          npm pack --pack-destination "${PACK_DIR}" >/dev/null
+          TARBALL="$(find "${PACK_DIR}" -maxdepth 1 -name 'clawql-mcp-*.tgz' -print -quit)"
+          if [[ -z "${TARBALL}" || ! -f "${TARBALL}" ]]; then
+            echo "ERROR: npm pack did not produce clawql-mcp-*.tgz" >&2
+            exit 1
+          fi
+          echo "tarball=${TARBALL}" >> "$GITHUB_OUTPUT"
+          echo "Packed ${TARBALL}"
+
+      - name: Trivy scan packed tarball root (HIGH / CRITICAL)
+        run: |
+          set -euo pipefail
+          UNPACK="${RUNNER_TEMP}/clawql-mcp-unpack"
+          rm -rf "${UNPACK}"
+          mkdir -p "${UNPACK}"
+          tar -xzf "${{ steps.pack.outputs.tarball }}" -C "${UNPACK}"
+          docker run --rm \
+            -v "${GITHUB_WORKSPACE}:/repo:ro" \
+            -v "${UNPACK}:/work/unpack:ro" \
+            "${{ env.TRIVY_SCAN_IMAGE }}" \
+            fs \
+            --scanners vuln \
+            --severity HIGH,CRITICAL \
+            --ignore-unfixed \
+            --exit-code 1 \
+            --ignorefile /repo/.trivyignore \
+            /work/unpack/package
+
+      - name: Publish to npm (provenance)
+        run: |
+          set -euo pipefail
+          if [[ -n "${NPM_TOKEN:-}" ]]; then
+            export NODE_AUTH_TOKEN="${NPM_TOKEN}"
+          fi
+          npm publish "${{ steps.pack.outputs.tarball }}" --provenance --access public
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

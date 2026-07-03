@@ -53,12 +53,8 @@ ENV CLAWQL_OBSIDIAN_VAULT_PATH=/vault
 # Optional at runtime (not baked in): CLAWQL_SANDBOX_BRIDGE_URL, CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN for sandbox_exec.
 
 COPY --from=builder --chown=nonroot:nonroot /app/node_modules ./node_modules
-# Workspace deps are linked from `node_modules`; copy package trees (dist) for distroless paths.
-COPY --from=builder --chown=nonroot:nonroot /app/packages/mcp-grpc-transport ./packages/mcp-grpc-transport
-COPY --from=builder --chown=nonroot:nonroot /app/packages/clawql-ouroboros ./packages/clawql-ouroboros
-COPY --from=builder --chown=nonroot:nonroot /app/packages/clawql-automation ./packages/clawql-automation
-COPY --from=builder --chown=nonroot:nonroot /app/packages/clawql-memory ./packages/clawql-memory
-COPY --from=builder --chown=nonroot:nonroot /app/packages/clawql-operator ./packages/clawql-operator
+# Workspace deps are symlinked from `node_modules` → `packages/*`; copy all built package trees for distroless.
+COPY --from=builder --chown=nonroot:nonroot /app/packages ./packages
 COPY --from=builder --chown=nonroot:nonroot /app/dist ./dist
 COPY --from=builder --chown=nonroot:nonroot /app/bin ./bin
 COPY --from=builder --chown=nonroot:nonroot /app/providers ./providers
@@ -89,11 +85,7 @@ ENV NODE_ENV=production
 ENV CLAWQL_BUNDLED_OFFLINE=1
 ENV CLAWQL_OBSIDIAN_VAULT_PATH=/vault
 COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/packages/mcp-grpc-transport ./packages/mcp-grpc-transport
-COPY --from=builder /app/packages/clawql-ouroboros ./packages/clawql-ouroboros
-COPY --from=builder /app/packages/clawql-automation ./packages/clawql-automation
-COPY --from=builder /app/packages/clawql-memory ./packages/clawql-memory
-COPY --from=builder /app/packages/clawql-operator ./packages/clawql-operator
+COPY --from=builder /app/packages ./packages
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/bin ./bin
 COPY --from=builder /app/providers ./providers
