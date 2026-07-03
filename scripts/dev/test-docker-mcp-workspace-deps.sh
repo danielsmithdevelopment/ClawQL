@@ -13,10 +13,7 @@ docker build -f docker/Dockerfile --target runtime -t "${IMAGE}" .
 docker rm -f "${CONTAINER}" >/dev/null 2>&1 || true
 docker run -d --name "${CONTAINER}" -p 18080:8080 "${IMAGE}" >/dev/null
 
-cleanup() {
-  docker rm -f "${CONTAINER}" >/dev/null 2>&1 || true
-}
-trap cleanup EXIT
+trap 'docker rm -f "${CONTAINER}" >/dev/null 2>&1 || true' EXIT
 
 for _ in $(seq 1 60); do
   if curl -fsS "http://127.0.0.1:18080/healthz" >/dev/null 2>&1; then
