@@ -3,6 +3,7 @@ import { ClawQLLogo } from '@/components/elements/clawql-logo'
 import { Main } from '@/components/elements/main'
 import { GitHubIcon } from '@/components/icons/social/github-icon'
 import { XIcon } from '@/components/icons/social/x-icon'
+import { NavbarIndustriesMenu } from '@/components/elements/navbar-industries-menu'
 import {
   FooterCategory,
   FooterLink,
@@ -57,6 +58,7 @@ export default function RootLayout({
                   Workflows
                 </NavbarLink>
                 <NavbarLink href="/#idp">IDP</NavbarLink>
+                <NavbarIndustriesMenu />
                 <NavbarLink href="/#security">Security</NavbarLink>
                 <NavbarLink href={site.urls.pricing}>Pricing</NavbarLink>
                 <NavbarLink href={site.urls.docs}>Docs</NavbarLink>
@@ -105,6 +107,12 @@ export default function RootLayout({
                   <FooterLink href={site.urls.pricing}>Pricing</FooterLink>
                   <FooterLink href={site.urls.signup}>Sign up</FooterLink>
                   <FooterLink href={site.urls.docs}>Documentation</FooterLink>
+                </FooterCategory>
+                <FooterCategory title="Industries">
+                  <FooterLink href="/industries/lending">Lending</FooterLink>
+                  <FooterLink href="/industries/real-estate">Real estate</FooterLink>
+                  <FooterLink href="/industries/healthcare">Healthcare</FooterLink>
+                  <FooterLink href="/industries">All industries</FooterLink>
                 </FooterCategory>
                 <FooterCategory title="Developers">
                   <FooterLink href={site.urls.github}>GitHub</FooterLink>
