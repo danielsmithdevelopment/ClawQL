@@ -123,6 +123,11 @@ jobs:
             /work/unpack/package
 
       - name: Publish to npm (provenance)
-        run: npm publish "${{ steps.pack.outputs.tarball }}" --provenance --access public
+        run: |
+          set -euo pipefail
+          if [[ -n "${NPM_TOKEN:-}" ]]; then
+            export NODE_AUTH_TOKEN="${NPM_TOKEN}"
+          fi
+          npm publish "${{ steps.pack.outputs.tarball }}" --provenance --access public
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
