@@ -3,8 +3,8 @@ import type {
   McpToolAlreadyRegisteredError,
   PluginAlreadyRegisteredError,
 } from "clawql-core";
+import { ClawQLApi } from "clawql-api";
 import { Effect, Layer } from "effect";
-import { ClawQLApi } from "../clawql-api-service.js";
 import { createMemoryPlugin } from "./memory-plugin.js";
 
 export type MemoryLayerError =
@@ -12,7 +12,6 @@ export type MemoryLayerError =
 
 /**
  * Effect Layer that registers {@link createMemoryPlugin} via `ClawQLApi.registerPlugin`.
- * Composed at the MCP adapter root when memory is enabled.
  */
 export function makeMemoryLayer(): Layer.Layer<never, MemoryLayerError, ClawQLApi> {
   return Layer.effectDiscard(

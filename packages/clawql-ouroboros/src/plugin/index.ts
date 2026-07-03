@@ -1,3 +1,4 @@
+export { makeOuroborosLayer, type OuroborosLayerError } from "./ouroboros-layer.js";
 export {
   configureOuroborosPluginDeps,
   resetOuroborosPluginDepsForTests,

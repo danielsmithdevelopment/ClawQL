@@ -1,4 +1,4 @@
-import { handleMemoryIngestToolInput } from "clawql-api";
+import { handleMemoryIngestToolInput } from "clawql-memory/plugin";
 
 export {
   slugifyTitle,
