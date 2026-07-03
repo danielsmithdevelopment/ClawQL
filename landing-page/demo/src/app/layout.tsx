@@ -57,6 +57,7 @@ export default function RootLayout({
                   Workflows
                 </NavbarLink>
                 <NavbarLink href="/#idp">IDP</NavbarLink>
+                <NavbarLink href="/#security">Security</NavbarLink>
                 <NavbarLink href={site.urls.pricing}>Pricing</NavbarLink>
                 <NavbarLink href={site.urls.docs}>Docs</NavbarLink>
                 <NavbarLink href={site.urls.signup} className="sm:hidden">
@@ -100,6 +101,7 @@ export default function RootLayout({
                 <FooterCategory title="Product">
                   <FooterLink href="/#tools">Tools</FooterLink>
                   <FooterLink href="/#workflows">Workflows</FooterLink>
+                  <FooterLink href="/#security">Security</FooterLink>
                   <FooterLink href={site.urls.pricing}>Pricing</FooterLink>
                   <FooterLink href={site.urls.signup}>Sign up</FooterLink>
                   <FooterLink href={site.urls.docs}>Documentation</FooterLink>
@@ -108,6 +110,7 @@ export default function RootLayout({
                   <FooterLink href={site.urls.github}>GitHub</FooterLink>
                   <FooterLink href={site.urls.npm}>npm package</FooterLink>
                   <FooterLink href={`${site.urls.docs}/readme/getting-started`}>Quick start</FooterLink>
+                  <FooterLink href={`${site.urls.docs}/security`}>Security</FooterLink>
                   <FooterLink href={`${site.urls.docs}/mcp/mcp-tools`}>MCP tools</FooterLink>
                 </FooterCategory>
                 <FooterCategory title="Company">

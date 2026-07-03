@@ -14,8 +14,10 @@ import { HeroTwoColumnWithPhoto } from '@/components/sections/hero-two-column-wi
 import { Plan, PricingMultiTier } from '@/components/sections/pricing-multi-tier'
 import { Stat, StatsFourColumns } from '@/components/sections/stats-four-columns'
 import { Section } from '@/components/elements/section'
+import { SecuritySection } from '@/components/sections/security-section'
 import { WorkflowFeedSection } from '@/components/sections/workflow-feed'
 import { idpPipelineStages, mcpToolTiers, multiProviderBenchmark } from '@/lib/marketing'
+import { securityEnforcementLayers, securityPillars } from '@/lib/security-marketing'
 import { workflowFeeds } from '@/lib/workflow-feeds'
 import { managedPrice, pricing } from '@/lib/pricing'
 import { site } from '@/lib/site'
@@ -156,6 +158,27 @@ export default function Page() {
         </div>
       </Section>
 
+      {/* Security */}
+      <SecuritySection
+        id="security"
+        eyebrow="Security"
+        headline="Built to prove, not just claim."
+        subheadline={
+          <p>
+            ClawQL documents how container images are scanned, signed, and enforced from CI through Kubernetes
+            admission — plus a 32-module curriculum for agentic AI deployments. Same controls on self-hosted Helm and
+            dedicated managed accounts.
+          </p>
+        }
+        cta={
+          <Link href={`${site.urls.docs}/security`}>
+            Read the security hub <ArrowNarrowRightIcon />
+          </Link>
+        }
+        pillars={securityPillars}
+        enforcementLayers={securityEnforcementLayers}
+      />
+
       {/* FAQs */}
       <FAQsTwoColumnAccordion id="faqs" headline="Questions & Answers">
         <Faq
@@ -177,6 +200,11 @@ export default function Page() {
           id="faq-4"
           question="Do you offer enterprise contracts?"
           answer="Yes — for very high volume, custom SLAs, and on-call support. We don't list a fixed enterprise price; contracts are scoped individually and typically start around $3,000/month. Contact sales to discuss."
+        />
+        <Faq
+          id="faq-5"
+          question="How does ClawQL handle supply chain and runtime security?"
+          answer="Container images pass OSV, Trivy, and SBOM gates in CI, are Cosign-signed, and Kyverno verifyImages rejects unsigned digests at deploy time by default. Runtime layers — MCP ATR scoping, audit, sandbox isolation, PII redaction in the IDP pipeline — are documented in the 32-module security curriculum and defense-in-depth guide on docs.clawql.com/security."
         />
       </FAQsTwoColumnAccordion>
 
