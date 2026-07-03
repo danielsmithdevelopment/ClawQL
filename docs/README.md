@@ -89,6 +89,14 @@ This directory is organized by purpose so operational guides, product docs, and 
 - Benchmarks: `benchmarks/`
 - Case studies: `case_studies/`
 
+## See The Greens LOS (lender-facing copy)
+
+Website trust pages for **[seethegreens.com](https://seethegreens.com/)** — written for **ops, compliance, and IT diligence**, not ClawQL implementers:
+
+- Index: [`seethegreens/README.md`](seethegreens/README.md)
+- [Architecture / how it works](seethegreens/architecture.md)
+- [Security & compliance](seethegreens/security-and-compliance.md)
+
 ## Architecture / ADR / Design
 
 - ADRs: `adr/` — includes [**0002 Multi-protocol supergraph**](adr/0002-multi-protocol-supergraph.md) (native GraphQL + gRPC merged via **`CLAWQL_GRAPHQL_SOURCES`** / **`CLAWQL_GRPC_SOURCES`**; epic [#178](https://github.com/danielsmithdevelopment/ClawQL/issues/178)); [**0003 Tempo + Dragonfly for local ops**](adr/0003-tempo-dragonfly-local-operations.md) (Istio Docker Desktop lab: **Tempo-only** traces; **`clawql-mcp`**: **Dragonfly-only** Redis-protocol brokers); [**0004 Argo Workflows + Argo CD providers**](adr/0004-argo-cd-workflows-clawql-pipelines.md) (shipped **`workflow`** + **`argocd`** tools; roadmap [`roadmap/argo-workflows-cd-provider.md`](roadmap/argo-workflows-cd-provider.md), [#239](https://github.com/danielsmithdevelopment/ClawQL/issues/239))
