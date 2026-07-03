@@ -4,10 +4,10 @@ Markdown drafts for **[seethegreens.com](https://seethegreens.com/)** pages that
 
 ## Intended audience
 
-| Page | Primary readers | They care about |
-| ---- | --------------- | --------------- |
-| [architecture.md](./architecture.md) | VP / Director of **Operations**, **Production**, **Processing**; **IT integration** leads | How loans move through the system, where humans decide, what integrates with their stack |
-| [security-and-compliance.md](./security-and-compliance.md) | **Compliance**, **Risk**, **Internal Audit**, **InfoSec**, **Vendor Management** | Data handling, audit trails, access control, regulatory alignment, diligence questions |
+| Page                                                       | Primary readers                                                                           | They care about                                                                          |
+| ---------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| [architecture.md](./architecture.md)                       | VP / Director of **Operations**, **Production**, **Processing**; **IT integration** leads | How loans move through the system, where humans decide, what integrates with their stack |
+| [security-and-compliance.md](./security-and-compliance.md) | **Compliance**, **Risk**, **Internal Audit**, **InfoSec**, **Vendor Management**          | Data handling, audit trails, access control, regulatory alignment, diligence questions   |
 
 **Not the audience:** MCP implementers, Kubernetes operators, or OpenClaw developers — point them to [ClawQL docs](../README.md) and [IDP pipeline hub](../providers/idp-pipeline.md).
 

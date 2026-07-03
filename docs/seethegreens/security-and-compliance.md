@@ -10,24 +10,24 @@
 
 See The Greens is built for **regulated lending**. Security and compliance controls are part of the **baseline product**, not a paid add-on.
 
-| Control area | Summary |
-| ------------ | ------- |
-| **Access** | Role-based access; least privilege for processors, underwriters, admins, and integrations |
-| **Data protection** | Encryption in transit and at rest; tenant isolation in multi-tenant deployments |
-| **Audit** | Tamper-evident activity records for document touches, system recommendations, and human decisions |
-| **Human oversight** | Licensed staff retain credit and underwriting authority; AI pre-processes and suggests |
+| Control area           | Summary                                                                                                       |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------- |
+| **Access**             | Role-based access; least privilege for processors, underwriters, admins, and integrations                     |
+| **Data protection**    | Encryption in transit and at rest; tenant isolation in multi-tenant deployments                               |
+| **Audit**              | Tamper-evident activity records for document touches, system recommendations, and human decisions             |
+| **Human oversight**    | Licensed staff retain credit and underwriting authority; AI pre-processes and suggests                        |
 | **Compliance support** | Configurable rules for TRID, RESPA, ATR/QM, and investor overlays — continuous checks, not only post-close QC |
 
 ---
 
 ## Who should read which section
 
-| Your role | Start here |
-| --------- | ---------- |
-| **Compliance / Legal** | [Regulatory alignment](#regulatory-alignment), [Audit & exam support](#audit-and-exam-support) |
+| Your role                 | Start here                                                                                                                   |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| **Compliance / Legal**    | [Regulatory alignment](#regulatory-alignment), [Audit & exam support](#audit-and-exam-support)                               |
 | **InfoSec / Vendor risk** | [Data handling](#data-handling), [Identity & access](#identity-and-access), [Infrastructure](#infrastructure-and-operations) |
-| **Internal audit / QC** | [Audit and exam support](#audit-and-exam-support), [Human-in-the-loop](#human-in-the-loop) |
-| **Production / Ops** | [Human-in-the-loop](#human-in-the-loop) — day-to-day gates and overrides |
+| **Internal audit / QC**   | [Audit and exam support](#audit-and-exam-support), [Human-in-the-loop](#human-in-the-loop)                                   |
+| **Production / Ops**      | [Human-in-the-loop](#human-in-the-loop) — day-to-day gates and overrides                                                     |
 
 ---
 
@@ -50,10 +50,10 @@ See The Greens does **not** require you to send data to a public LLM for core do
 
 ### Encryption
 
-| State | Standard |
-| ----- | -------- |
-| **In transit** | TLS 1.2+ for all client and API connections |
-| **At rest** | Industry-standard encryption for databases and object storage in managed deployments |
+| State          | Standard                                                                             |
+| -------------- | ------------------------------------------------------------------------------------ |
+| **In transit** | TLS 1.2+ for all client and API connections                                          |
+| **At rest**    | Industry-standard encryption for databases and object storage in managed deployments |
 
 Self-hosted customers apply their own key management (KMS/HSM) per their enterprise standards.
 
@@ -69,13 +69,13 @@ Dedicated and self-hosted options support **US-only** or **customer-specified re
 
 Access is granted by **role**, not shared credentials:
 
-| Typical role | Access pattern |
-| ------------ | -------------- |
-| **Processor** | Assigned loans; upload docs; clear conditions; no system config |
-| **Underwriter** | Read file + extractions; decision authority per your policy |
-| **Admin / Ops** | Configure rules, overlays, integrations |
-| **Integration service account** | Scoped API keys — read and/or write per integration |
-| **Auditor (read-only)** | Export activity and document history; no production changes |
+| Typical role                    | Access pattern                                                  |
+| ------------------------------- | --------------------------------------------------------------- |
+| **Processor**                   | Assigned loans; upload docs; clear conditions; no system config |
+| **Underwriter**                 | Read file + extractions; decision authority per your policy     |
+| **Admin / Ops**                 | Configure rules, overlays, integrations                         |
+| **Integration service account** | Scoped API keys — read and/or write per integration             |
+| **Auditor (read-only)**         | Export activity and document history; no production changes     |
 
 **Separation of duties:** configuration changes (rules, overlays, integration secrets) can require **admin** roles distinct from day-to-day processing — including optional **two-person** patterns for high-risk human-review queues.
 
@@ -97,13 +97,13 @@ Access is granted by **role**, not shared credentials:
 
 See The Greens is **not** an autonomous underwriting engine.
 
-| Step | System | Human |
-| ---- | ------ | ----- |
-| Document read & classify | Automated | — |
-| Guideline check | Automated against **your** rules | — |
-| Low-confidence extraction | Routed to **review queue** | Processor validates or corrects |
-| Credit / UW decision | — | **Licensed staff only** |
-| Condition cleared | System tracks satisfaction | Processor / UW confirms |
+| Step                      | System                           | Human                           |
+| ------------------------- | -------------------------------- | ------------------------------- |
+| Document read & classify  | Automated                        | —                               |
+| Guideline check           | Automated against **your** rules | —                               |
+| Low-confidence extraction | Routed to **review queue**       | Processor validates or corrects |
+| Credit / UW decision      | —                                | **Licensed staff only**         |
+| Condition cleared         | System tracks satisfaction       | Processor / UW confirms         |
 
 When AI confidence falls below your threshold — or policy always requires review for a doc type (e.g. W-2 in high-touch programs) — the loan **does not silently proceed**. Work waits in a **human review queue** with a full audit of what was suggested and what was changed.
 
@@ -138,7 +138,7 @@ Traditional QC samples closed files. See The Greens pushes validation **forward*
 
 - Defects surface when documents **arrive**
 - Conditions tie to **extracted evidence**, not only checklist templates
-- Exam questions like *“show me how this LOX was triggered”* map to a **single trace**
+- Exam questions like _“show me how this LOX was triggered”_ map to a **single trace**
 
 ---
 
@@ -146,13 +146,13 @@ Traditional QC samples closed files. See The Greens pushes validation **forward*
 
 See The Greens **supports** compliance programs; it does not replace your compliance officer or legal interpretation.
 
-| Area | How the product helps |
-| ---- | --------------------- |
-| **TRID / RESPA** | Event-driven disclosure and change-of-circumstance **rules** tied to loan milestones and data changes |
-| **ATR/QM** | Document completeness and income documentation checks at intake — configurable to your ATR policy |
-| **Investor / GSE overlays** | Separate rule packs per investor; same engine, different thresholds |
-| **Fair lending** | Human decisions logged; automated steps rule-based and versioned |
-| **Records retention** | Configurable retention and export for your records management |
+| Area                        | How the product helps                                                                                 |
+| --------------------------- | ----------------------------------------------------------------------------------------------------- |
+| **TRID / RESPA**            | Event-driven disclosure and change-of-circumstance **rules** tied to loan milestones and data changes |
+| **ATR/QM**                  | Document completeness and income documentation checks at intake — configurable to your ATR policy     |
+| **Investor / GSE overlays** | Separate rule packs per investor; same engine, different thresholds                                   |
+| **Fair lending**            | Human decisions logged; automated steps rule-based and versioned                                      |
+| **Records retention**       | Configurable retention and export for your records management                                         |
 
 **Important:** Final compliance determination remains with **your institution**. We provide configurable automation and audit evidence; you own overlay content and sign-off.
 
@@ -164,13 +164,13 @@ See The Greens runs on infrastructure designed for **regulated workloads**. Unde
 
 ### Operational security (typical managed deployment)
 
-| Practice | Purpose |
-| -------- | ------- |
-| **Vulnerability scanning** | Images and dependencies scanned before release |
-| **Signed artifacts** | Deployments reject unverified container images |
-| **Secrets management** | Integration tokens and API keys stored in vault-backed secrets — not in source code |
-| **Network isolation** | Production environments segmented from development |
-| **Monitoring & alerting** | Security-relevant events forwarded to your SIEM (optional) |
+| Practice                   | Purpose                                                                             |
+| -------------------------- | ----------------------------------------------------------------------------------- |
+| **Vulnerability scanning** | Images and dependencies scanned before release                                      |
+| **Signed artifacts**       | Deployments reject unverified container images                                      |
+| **Secrets management**     | Integration tokens and API keys stored in vault-backed secrets — not in source code |
+| **Network isolation**      | Production environments segmented from development                                  |
+| **Monitoring & alerting**  | Security-relevant events forwarded to your SIEM (optional)                          |
 
 Self-hosted customers implement the same patterns in their cluster using the **reference security architecture** provided during onboarding.
 
@@ -184,11 +184,11 @@ Self-hosted customers implement the same patterns in their cluster using the **r
 
 ## Certifications and diligence
 
-| Topic | Status (update before publishing) |
-| ----- | -------------------------------- |
-| **SOC 2 Type II** | _[ In progress / available under NDA — confirm with legal before claiming on site ]_ |
-| **Penetration testing** | _[ Annual third-party test — summary available under NDA ]_ |
-| **Questionnaires** | SIG Lite, CAIQ, or custom VRM forms supported for enterprise deals |
+| Topic                   | Status (update before publishing)                                                    |
+| ----------------------- | ------------------------------------------------------------------------------------ |
+| **SOC 2 Type II**       | _[ In progress / available under NDA — confirm with legal before claiming on site ]_ |
+| **Penetration testing** | _[ Annual third-party test — summary available under NDA ]_                          |
+| **Questionnaires**      | SIG Lite, CAIQ, or custom VRM forms supported for enterprise deals                   |
 
 **Do not imply certification on the marketing site until complete.** The homepage badge “SOC 2 — Enterprise security standards” should link here and state actual status.
 
@@ -216,13 +216,13 @@ Managed deployments may use **infrastructure subprocessors** (cloud hosting, obj
 
 ## Your responsibilities (shared model)
 
-| You provide | We provide |
-| ----------- | ---------- |
-| Accurate overlay and investor rule content | Engine to evaluate rules and log results |
-| IdP / SSO configuration | RBAC integration |
-| Legal and compliance sign-off | Audit exports and configuration versioning |
-| Integration credentials (pricing, LOS, etc.) | Secure storage and scoped API access |
-| User training on human-review queues | Product documentation and onboarding |
+| You provide                                  | We provide                                 |
+| -------------------------------------------- | ------------------------------------------ |
+| Accurate overlay and investor rule content   | Engine to evaluate rules and log results   |
+| IdP / SSO configuration                      | RBAC integration                           |
+| Legal and compliance sign-off                | Audit exports and configuration versioning |
+| Integration credentials (pricing, LOS, etc.) | Secure storage and scoped API access       |
+| User training on human-review queues         | Product documentation and onboarding       |
 
 ---
 

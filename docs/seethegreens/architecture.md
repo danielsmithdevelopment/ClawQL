@@ -12,12 +12,12 @@ See The Greens is a **loan origination system** built around one idea: **catch d
 
 Your team still makes every credit and underwriting decision. The system handles repetitive work — reading documents, checking them against investor and agency rules, organizing the file room, and opening conditions when data says something needs attention.
 
-| Role | What changes |
-| ---- | ------------ |
-| **Processors** | Review **exceptions** (large deposits, missing pages, guideline mismatches), not every upload |
-| **Underwriters** | Work from a cleaner file with pre-validated extractions and a clear condition list |
-| **Ops / QC** | Audit trail starts at **intake**, not after closing |
-| **IT** | One API surface for documents, workflows, and notifications instead of a patchwork of OCR vendors |
+| Role             | What changes                                                                                      |
+| ---------------- | ------------------------------------------------------------------------------------------------- |
+| **Processors**   | Review **exceptions** (large deposits, missing pages, guideline mismatches), not every upload     |
+| **Underwriters** | Work from a cleaner file with pre-validated extractions and a clear condition list                |
+| **Ops / QC**     | Audit trail starts at **intake**, not after closing                                               |
+| **IT**           | One API surface for documents, workflows, and notifications instead of a patchwork of OCR vendors |
 
 ---
 
@@ -84,7 +84,7 @@ This is the workflow buyers ask about most often.
 1. **Upload** — Processor or borrower drops `BankStatement_Jan2026.pdf` on the loan.
 2. **Extract** — System reads transaction lines and balances (not just OCR text).
 3. **Validate** — A deposit of **$48,500** on Jan 14 exceeds your configured threshold.
-4. **Recommend** — UI shows: *Income verified against W-2 and paystub* ✓ and *Large deposit detected* ⚠.
+4. **Recommend** — UI shows: _Income verified against W-2 and paystub_ ✓ and _Large deposit detected_ ⚠.
 5. **Condition** — **Letter of Explanation** is **auto-added** to the loan’s condition list with the extracted amount and date pre-filled.
 6. **Human** — Processor accepts the recommendation, edits wording, or rejects and writes their own — then clears the condition when the LOX is on file.
 
@@ -96,13 +96,13 @@ The same pattern applies to missing W-2 pages, income gaps, expired documents, a
 
 ## What AI does — and does not do
 
-| AI handles | Your licensed staff handle |
-| ---------- | ------------------------- |
-| Document classification and renaming | Credit decisions and approvals |
-| Field extraction (W-2, paystub, bank stmt, tax returns) | Final underwriting sign-off |
-| Guideline checks against configured overlays | Exceptions that need judgment |
-| Condition **suggestions** from extracted data | Clearing conditions and file status |
-| File-room hygiene (versions, categories) | Client communication and disclosures |
+| AI handles                                              | Your licensed staff handle           |
+| ------------------------------------------------------- | ------------------------------------ |
+| Document classification and renaming                    | Credit decisions and approvals       |
+| Field extraction (W-2, paystub, bank stmt, tax returns) | Final underwriting sign-off          |
+| Guideline checks against configured overlays            | Exceptions that need judgment        |
+| Condition **suggestions** from extracted data           | Clearing conditions and file status  |
+| File-room hygiene (versions, categories)                | Client communication and disclosures |
 
 **Human-in-the-loop is default**, not an upgrade tier. When confidence is low or policy requires it, work routes to a **review queue** before the loan moves forward.
 
@@ -110,15 +110,15 @@ The same pattern applies to missing W-2 pages, income gaps, expired documents, a
 
 ## How this differs from a legacy LOS + bolt-on OCR
 
-| Topic | Typical legacy stack | See The Greens |
-| ----- | -------------------- | -------------- |
-| Document intelligence | Batch OCR or manual indexing | Validated **on upload** against your overlays |
-| Conditions | Template checklists + manual entry | Generated from **extracted fields** and loan data |
-| File room | Processors rename and sort | Self-organizing categories and version control |
-| Memory across sessions | Often lost between tools or users | **Persistent loan context** for the file |
-| Audit | Mutable logs, sample QC | **Tamper-evident** activity record per touch |
-| Automation changes | IT release cycles | **Ops-configurable rules** for most workflow changes |
-| Future agent tools | Siloed vendor APIs | **Unified gateway** — same APIs for people and approved automations |
+| Topic                  | Typical legacy stack               | See The Greens                                                      |
+| ---------------------- | ---------------------------------- | ------------------------------------------------------------------- |
+| Document intelligence  | Batch OCR or manual indexing       | Validated **on upload** against your overlays                       |
+| Conditions             | Template checklists + manual entry | Generated from **extracted fields** and loan data                   |
+| File room              | Processors rename and sort         | Self-organizing categories and version control                      |
+| Memory across sessions | Often lost between tools or users  | **Persistent loan context** for the file                            |
+| Audit                  | Mutable logs, sample QC            | **Tamper-evident** activity record per touch                        |
+| Automation changes     | IT release cycles                  | **Ops-configurable rules** for most workflow changes                |
+| Future agent tools     | Siloed vendor APIs                 | **Unified gateway** — same APIs for people and approved automations |
 
 ---
 
@@ -142,11 +142,11 @@ For a technical integration workshop, request a [demo](https://seethegreens.com/
 
 ## Deployment options
 
-| Model | Best for |
-| ----- | -------- |
-| **Managed cloud** | Fastest time to value; we operate the platform; you configure rules and integrations |
-| **Dedicated / VPC** | Stricter data residency or network isolation with managed ops |
-| **Self-hosted** | Maximum control; your infrastructure team runs the environment with our reference architecture |
+| Model               | Best for                                                                                       |
+| ------------------- | ---------------------------------------------------------------------------------------------- |
+| **Managed cloud**   | Fastest time to value; we operate the platform; you configure rules and integrations           |
+| **Dedicated / VPC** | Stricter data residency or network isolation with managed ops                                  |
+| **Self-hosted**     | Maximum control; your infrastructure team runs the environment with our reference architecture |
 
 All models share the **same product logic** — deployment choice affects **where data lives and who runs the cluster**, not a forked codebase.
 
@@ -161,7 +161,7 @@ Operations teams get **dashboards and exports** for:
 - Review-queue depth and turnaround
 - Compliance rule hits and disclosure triggers
 
-Your team can answer: *“Why did this loan get a LOX yesterday?”* with a **traceable path** from upload → extraction → rule → condition → processor action.
+Your team can answer: _“Why did this loan get a LOX yesterday?”_ with a **traceable path** from upload → extraction → rule → condition → processor action.
 
 ---
 
