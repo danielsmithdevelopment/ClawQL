@@ -7,11 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-> **Note:** Items below are on **`main`** (post-**6.4.0** npm tag) and documented in release notes / IDP wave guides; they will appear in the next semver release entry when tagged.
-
-### Fixed
-
-- **npm + Docker distribution**: **`clawql-mcp`** npm tarball now **bundles** all **`clawql-*`** workspace packages (no broken **`workspace:*`** / **`file:../packages`** on install); **`docker/Dockerfile`** runtime copies the full **`packages/`** tree so **`node_modules`** symlinks resolve; CI smokes **`scripts/dev/test-npm-pack-install.sh`** and **`scripts/dev/test-docker-mcp-workspace-deps.sh`**.
+> **Note:** Items below are on **`main`** (post-**6.4.1** npm tag) and documented in release notes / IDP wave guides; they will appear in the next semver release entry when tagged.
 
 ### Added
 
@@ -33,6 +29,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`docs/deployment/nats-keda-worker.md`**, Helm `nats.worker` / `nats.keda` values, IDP matrix #257 → Shipped.
 - **`docs/mcp/idp-pipeline-runner.md`**, IDP matrix #307 → Shipped, plugin registry + **`mcp-tools.md`** **`run_idp_pipeline`** row.
 - HITL + workflow tool guides: NATS dual-path (sync webhook vs async consumer); `.env.example` NATS block.
+
+## [6.4.1] - 2026-07-03
+
+Patch release: fixes **broken npm and Docker distribution** for **`clawql-mcp@6.4.0`** — fresh **`npm install`** and **`docker pull`** failed without cloning and building from source. **`charts/clawql-mcp`** **Chart.version** **0.6.8** with **`appVersion` `6.4.1`**. Release notes: **[`RELEASE_NOTES_v6.4.1.md`](RELEASE_NOTES_v6.4.1.md)**.
+
+### Fixed
+
+- **npm + Docker distribution** ([#477](https://github.com/danielsmithdevelopment/ClawQL/pull/477)): **`clawql-mcp`** npm tarball **bundles** all **`clawql-*`** workspace packages with compiled **`dist/`**; **`prepack`** runs **`npm run build`** before pack; **`docker/Dockerfile`** runtime copies the full **`packages/`** tree; CI smokes **`scripts/dev/test-npm-pack-install.sh`** and **`scripts/dev/test-docker-mcp-workspace-deps.sh`**.
 
 ## [6.4.0] - 2026-07-01
 
