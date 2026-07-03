@@ -12,7 +12,6 @@ import {
   ToolTierSection,
 } from '@/components/sections/clawql-marketing'
 import { FAQsTwoColumnAccordion, Faq } from '@/components/sections/faqs-two-column-accordion'
-import { Feature, FeaturesTwoColumnWithDemos } from '@/components/sections/features-two-column-with-demos'
 import { HeroTwoColumnWithPhoto } from '@/components/sections/hero-two-column-with-photo'
 import { Plan, PricingMultiTier } from '@/components/sections/pricing-multi-tier'
 import { Stat, StatsFourColumns } from '@/components/sections/stats-four-columns'
@@ -158,55 +157,6 @@ export default function Page() {
           ))}
         </div>
       </Section>
-
-      {/* Deep dives */}
-      <FeaturesTwoColumnWithDemos
-        id="features"
-        eyebrow="How it helps"
-        headline="From token savings to document pipelines."
-        subheadline={
-          <p>
-            Published case studies show the same pattern: agents use ClawQL tools instead of pasting specs, improvising
-            API calls, or losing context between sessions.
-          </p>
-        }
-        features={
-          <>
-            <Feature
-              headline="search → execute replaces spec dumps"
-              subheadline={
-                <p>
-                  The GitHub bundled spec is ~9 MB. Instead of pasting it, agents search for{' '}
-                  <code className="text-sm">repos/list-commits</code> or{' '}
-                  <code className="text-sm">repos/update</code>, then execute with validated args. Planning context
-                  drops from millions of tokens to a few thousand — measured on danielsmithdevelopment/ClawQL.
-                </p>
-              }
-              cta={
-                <Link href="https://docs.clawql.com/case-studies/github-provider-danielsmithdevelopment-clawql">
-                  GitHub provider case study <ArrowNarrowRightIcon />
-                </Link>
-              }
-            />
-            <Feature
-              headline="IDP: classify, extract, pipeline, notify"
-              subheadline={
-                <p>
-                  <code className="text-sm">classify_document</code> routes W-2s and invoices to the right handler.{' '}
-                  <code className="text-sm">extract_document</code> returns grounded fields with provenance.{' '}
-                  <code className="text-sm">run_idp_pipeline</code> chains all eight vendors;{' '}
-                  <code className="text-sm">notify</code> posts completion to Slack with Paperless and Onyx links.
-                </p>
-              }
-              cta={
-                <Link href={`${site.urls.docs}/openclaw/slack-first-idp-runbook`}>
-                  Slack-first IDP runbook <ArrowNarrowRightIcon />
-                </Link>
-              }
-            />
-          </>
-        }
-      />
 
       {/* Case studies */}
       <CaseStudyGrid
