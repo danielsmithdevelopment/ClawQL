@@ -46,6 +46,7 @@ export default function Page() {
                 </p>
                 <h2 className="text-base font-semibold text-mist-950 dark:text-white">{industry.name}</h2>
                 <p className="text-sm/7 text-mist-700 dark:text-mist-400">{industry.headline}</p>
+                <p className="line-clamp-3 text-sm/7 text-mist-600 dark:text-mist-500">{industry.overview}</p>
               </div>
               <Link href={`/industries/${industry.slug}`}>
                 View use cases <ArrowNarrowRightIcon />

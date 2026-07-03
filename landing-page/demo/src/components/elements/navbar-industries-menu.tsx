@@ -1,7 +1,9 @@
+'use client'
+
 import Link from 'next/link'
 
 import { clsx } from 'clsx/lite'
-import type { ReactNode } from 'react'
+import { type ReactNode, useState } from 'react'
 import { industries } from '@/lib/industries'
 
 function IndustryMenuLink({
@@ -27,6 +29,8 @@ function IndustryMenuLink({
 }
 
 export function NavbarIndustriesMenu() {
+  const [mobileOpen, setMobileOpen] = useState(false)
+
   return (
     <>
       {/* Desktop dropdown */}
@@ -53,18 +57,41 @@ export function NavbarIndustriesMenu() {
         </div>
       </div>
 
-      {/* Mobile — nested links */}
-      <div className="flex flex-col gap-3 lg:hidden">
-        <span className="text-3xl/10 font-medium text-mist-950 dark:text-white">Industries</span>
-        {industries.map((industry) => (
-          <Link
-            key={industry.slug}
-            href={`/industries/${industry.slug}`}
-            className="pl-4 text-2xl/10 font-medium text-mist-600 dark:text-mist-300"
+      {/* Mobile — click to expand submenu */}
+      <div className="lg:hidden">
+        <button
+          type="button"
+          onClick={() => setMobileOpen((open) => !open)}
+          aria-expanded={mobileOpen}
+          aria-controls="mobile-industries-submenu"
+          className="inline-flex w-full items-center justify-between gap-2 text-3xl/10 font-medium text-mist-950 dark:text-white"
+        >
+          Industries
+          <svg
+            viewBox="0 0 8 5"
+            fill="currentColor"
+            className={clsx('size-3 opacity-60 transition-transform', mobileOpen && 'rotate-180')}
+            aria-hidden
           >
-            {industry.name}
-          </Link>
-        ))}
+            <path d="M.22.22a.75.75 0 0 1 1.06 0L4 2.94 7.72.22a.75.75 0 1 1 1.06 1.06L4.53 4.53a.75.75 0 0 1-1.06 0L.22 1.28a.75.75 0 0 1 0-1.06Z" />
+          </svg>
+        </button>
+        {mobileOpen ? (
+          <div id="mobile-industries-submenu" className="mt-3 flex flex-col gap-3 pl-4">
+            {industries.map((industry) => (
+              <Link
+                key={industry.slug}
+                href={`/industries/${industry.slug}`}
+                className="text-2xl/10 font-medium text-mist-600 dark:text-mist-300"
+              >
+                {industry.name}
+              </Link>
+            ))}
+            <Link href="/industries" className="text-2xl/10 font-medium text-mist-500 dark:text-mist-400">
+              All industries
+            </Link>
+          </div>
+        ) : null}
       </div>
     </>
   )
