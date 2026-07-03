@@ -5,7 +5,6 @@ import { Section } from '../elements/section'
 import { ArrowNarrowRightIcon } from '../icons/arrow-narrow-right-icon'
 import { ChatBubbleCircleEllipsisIcon } from '../icons/chat-bubble-circle-ellipsis-icon'
 import { CheckmarkIcon } from '../icons/checkmark-icon'
-import { CodeSquareIcon } from '../icons/code-square-icon'
 import { TerminalIcon } from '../icons/terminal-icon'
 import type { WorkflowFeed, WorkflowFeedStep, WorkflowFeedStepKind } from '@/lib/workflow-feeds'
 
@@ -90,10 +89,6 @@ export function WorkflowFeedSection({
           <WorkflowFeedPanel key={feed.slug} feed={feed} />
         ))}
       </div>
-      <p className="mt-2 flex items-center gap-2 text-sm/7 text-mist-600 dark:text-mist-400">
-        <CodeSquareIcon className="size-3.5 shrink-0 text-mist-500" />
-        Sequences are abbreviated from published case studies — full tool traces, failures, and fixes are in the docs.
-      </p>
     </Section>
   )
 }
