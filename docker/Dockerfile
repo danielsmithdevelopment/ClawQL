@@ -20,6 +20,7 @@ COPY packages/clawql-automation/package.json ./packages/clawql-automation/
 COPY packages/clawql-sandbox/package.json ./packages/clawql-sandbox/
 COPY packages/mcp-grpc-transport/package.json ./packages/mcp-grpc-transport/
 COPY packages/clawql-ouroboros/package.json ./packages/clawql-ouroboros/
+COPY packages/clawql-operator/package.json ./packages/clawql-operator/
 # `workspace:*` deps (e.g. clawql-ouroboros) need every workspace package.json present before `npm ci`.
 # `prepare` runs `tsc` before src/ exists — skip lifecycle scripts until deps are installed.
 RUN npm ci --ignore-scripts
@@ -57,6 +58,7 @@ COPY --from=builder --chown=nonroot:nonroot /app/packages/mcp-grpc-transport ./p
 COPY --from=builder --chown=nonroot:nonroot /app/packages/clawql-ouroboros ./packages/clawql-ouroboros
 COPY --from=builder --chown=nonroot:nonroot /app/packages/clawql-automation ./packages/clawql-automation
 COPY --from=builder --chown=nonroot:nonroot /app/packages/clawql-memory ./packages/clawql-memory
+COPY --from=builder --chown=nonroot:nonroot /app/packages/clawql-operator ./packages/clawql-operator
 COPY --from=builder --chown=nonroot:nonroot /app/dist ./dist
 COPY --from=builder --chown=nonroot:nonroot /app/bin ./bin
 COPY --from=builder --chown=nonroot:nonroot /app/providers ./providers
@@ -91,6 +93,7 @@ COPY --from=builder /app/packages/mcp-grpc-transport ./packages/mcp-grpc-transpo
 COPY --from=builder /app/packages/clawql-ouroboros ./packages/clawql-ouroboros
 COPY --from=builder /app/packages/clawql-automation ./packages/clawql-automation
 COPY --from=builder /app/packages/clawql-memory ./packages/clawql-memory
+COPY --from=builder /app/packages/clawql-operator ./packages/clawql-operator
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/bin ./bin
 COPY --from=builder /app/providers ./providers

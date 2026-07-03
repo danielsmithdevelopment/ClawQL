@@ -1,0 +1,87 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: clawqlinstances.clawql.io
+  labels:
+    app.kubernetes.io/name: clawql-operator
+spec:
+  group: clawql.io
+  names:
+    kind: ClawQLInstance
+    listKind: ClawQLInstanceList
+    plural: clawqlinstances
+    singular: clawqlinstance
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Tier
+          type: string
+          jsonPath: .spec.tier
+        - name: Phase
+          type: string
+          jsonPath: .status.phase
+        - name: Age
+          type: date
+          jsonPath: .metadata.creationTimestamp
+      schema:
+        openAPIV3Schema:
+          type: object
+          required: [spec]
+          properties:
+            spec:
+              type: object
+              x-kubernetes-preserve-unknown-fields: true
+              properties:
+                tier:
+                  type: string
+                  enum: [local, standard, enterprise]
+                memory:
+                  type: object
+                  properties:
+                    enabled:
+                      type: boolean
+                documents:
+                  type: object
+                  x-kubernetes-preserve-unknown-fields: true
+                automation:
+                  type: object
+                  x-kubernetes-preserve-unknown-fields: true
+                sandbox:
+                  type: object
+                  properties:
+                    enabled:
+                      type: boolean
+                ouroboros:
+                  type: object
+                  x-kubernetes-preserve-unknown-fields: true
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                observedGeneration:
+                  type: integer
+                configMapName:
+                  type: string
+                message:
+                  type: string
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                      status:
+                        type: string
+                      reason:
+                        type: string
+                      message:
+                        type: string
+                      lastTransitionTime:
+                        type: string

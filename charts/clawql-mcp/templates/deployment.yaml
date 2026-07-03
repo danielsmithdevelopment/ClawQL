@@ -232,6 +232,10 @@ spec:
             - name: CLAWQL_ENABLE_LANGFUSE_EVAL
               value: "1"
             {{- end }}
+            {{- if and .Values.instanceSpec.enabled .Values.instanceSpec.configMapName }}
+            - name: CLAWQL_INSTANCE_SPEC_FILE
+              value: {{ printf "%s/horizontalTierSpec.json" (.Values.instanceSpec.mountPath | default "/etc/clawql/instance") | quote }}
+            {{- end }}
             {{- if .Values.ouroborosDatabaseUrl }}
             - name: CLAWQL_OUROBOROS_DATABASE_URL
               value: {{ .Values.ouroborosDatabaseUrl | quote }}
@@ -341,6 +345,11 @@ spec:
           volumeMounts:
             - name: obsidian-vault
               mountPath: {{ .Values.obsidianVaultPath }}
+            {{- if and .Values.instanceSpec.enabled .Values.instanceSpec.configMapName }}
+            - name: clawql-instance-spec
+              mountPath: {{ .Values.instanceSpec.mountPath | default "/etc/clawql/instance" | quote }}
+              readOnly: true
+            {{- end }}
             {{- if and .Values.enableSandbox .Values.sandboxDocker.enabled }}
             - name: clawql-docker-cli-static
               mountPath: /opt/clawql-docker
@@ -363,6 +372,11 @@ spec:
             {{- if $enforceSocketType }}
             type: Socket
             {{- end }}
+        {{- end }}
+        {{- if and .Values.instanceSpec.enabled .Values.instanceSpec.configMapName }}
+        - name: clawql-instance-spec
+          configMap:
+            name: {{ .Values.instanceSpec.configMapName | quote }}
         {{- end }}
         {{- /* Volume "obsidian-vault": Obsidian Markdown memory (.Values.vault / persistence), not HashiCorp Vault — #161 */}}
         - name: obsidian-vault

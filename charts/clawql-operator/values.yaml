@@ -1,0 +1,31 @@
+# Opt-in operator — does not replace charts/clawql-mcp. Install MCP separately as today.
+
+replicaCount: 1
+
+image:
+  repository: ghcr.io/danielsmithdevelopment/clawql-mcp
+  tag: latest
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  create: true
+  name: ""
+
+rbac:
+  create: true
+
+crd:
+  install: true
+
+operator:
+  # When false, chart installs CRD/RBAC only (useful for GitOps CRD bootstrap).
+  enabled: true
+  # Reconcile all ClawQLInstance resources cluster-wide.
+  watchAllNamespaces: true
+  extraArgs: ["--once"]
+
+resources: {}
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

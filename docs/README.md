@@ -44,7 +44,8 @@ This directory is organized by purpose so operational guides, product docs, and 
 ## Deployment and Platform Operations
 
 - **Deployment & Operations Guide** (shipped Helm paths): [`deployment/clawql-deployment-operations-guide.md`](deployment/clawql-deployment-operations-guide.md) — [`/deployment/operations-guide`](https://docs.clawql.com/deployment/operations-guide)
-- **Operator target architecture** (planned CRD / tiers — not shipped): [`design/operator-target-architecture.md`](design/operator-target-architecture.md) ([#255](https://github.com/danielsmithdevelopment/ClawQL/issues/255))
+- **Operator scaffold (opt-in CRD + reconcile):** [`deployment/clawql-operator-helm.md`](deployment/clawql-operator-helm.md) ([#255](https://github.com/danielsmithdevelopment/ClawQL/issues/255))
+- **Operator target architecture** (full CRD / tiers roadmap): [`design/operator-target-architecture.md`](design/operator-target-architecture.md)
 - **IDP document pipeline hub** (eight bundled vendors): [`providers/idp-pipeline.md`](providers/idp-pipeline.md) — [`/learn/document-pipeline`](https://docs.clawql.com/learn/document-pipeline)
 - **IDP umbrella Helm chart** (`charts/clawql-idp`, full profile): [`deployment/clawql-idp-helm.md`](deployment/clawql-idp-helm.md)
 - **IDP observability bundle** (Grafana + trace/metrics guide, #252): [`observability/README.md`](observability/README.md)
