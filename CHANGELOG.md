@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **Note:** Items below are on **`main`** (post-**6.4.0** npm tag) and documented in release notes / IDP wave guides; they will appear in the next semver release entry when tagged.
 
+### Fixed
+
+- **npm + Docker distribution**: **`clawql-mcp`** npm tarball now **bundles** all **`clawql-*`** workspace packages (no broken **`workspace:*`** / **`file:../packages`** on install); **`docker/Dockerfile`** runtime copies the full **`packages/`** tree so **`node_modules`** symlinks resolve; CI smokes **`scripts/dev/test-npm-pack-install.sh`** and **`scripts/dev/test-docker-mcp-workspace-deps.sh`**.
+
 ### Added
 
 - **Lending vertical Docker Compose** ([#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251)): **`docker/compose/lending.compose.yml`** — ClawQL MCP + Docling + reference classifier + LangExtract (demo) + Label Studio CE; env template **`lending.env.example`**; guide **[`docker/compose/README.md`](docker/compose/README.md)**; `make compose-lending-config-test`.
