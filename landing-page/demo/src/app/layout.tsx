@@ -87,11 +87,10 @@ export default function RootLayout({
             id="footer"
             cta={
               <NewsletterForm
-                headline="Managed accounts waitlist"
+                headline="Early access waitlist"
                 subheadline={
                   <p>
-                    Be first to know when ClawQL managed hosting opens — hosted MCP endpoints, vault memory, and bundled
-                    providers without running your own cluster. {site.waitlistPromise}
+                    {site.earlyAccess.summary} {site.waitlistPromise}
                   </p>
                 }
                 source="footer"

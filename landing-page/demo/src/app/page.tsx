@@ -1,3 +1,4 @@
+import { AnnouncementBadge } from '@/components/elements/announcement-badge'
 import { ButtonLink, PlainButtonLink } from '@/components/elements/button'
 import { InstallCommand } from '@/components/elements/install-command'
 import { ClawQLHeroLogo } from '@/components/elements/clawql-hero-logo'
@@ -12,43 +13,37 @@ import { FAQsTwoColumnAccordion, Faq } from '@/components/sections/faqs-two-colu
 import { HeroTwoColumnWithPhoto } from '@/components/sections/hero-two-column-with-photo'
 import { Plan, PricingMultiTier } from '@/components/sections/pricing-multi-tier'
 import { SecuritySection } from '@/components/sections/security-section'
-import { SocialProofBar } from '@/components/sections/social-proof-bar'
 import { Stat, StatsFourColumns } from '@/components/sections/stats-four-columns'
 import { Section } from '@/components/elements/section'
 import { WorkflowFeedSection } from '@/components/sections/workflow-feed'
 import { idpPipelineStages, mcpToolTiers, multiProviderBenchmark } from '@/lib/marketing'
 import { securityEnforcementLayers, securityPillars } from '@/lib/security-marketing'
-import { getSocialProofStats } from '@/lib/social-proof'
 import { workflowFeeds } from '@/lib/workflow-feeds'
 import { managedPrice, pricing } from '@/lib/pricing'
 import { site } from '@/lib/site'
 
-export default async function Page() {
-  const socialProof = await getSocialProofStats()
-
+export default function Page() {
   return (
     <>
       {/* Hero */}
       <HeroTwoColumnWithPhoto
         id="hero"
         eyebrow={
-          <>
-            <SocialProofBar stats={socialProof} />
-          </>
+          <AnnouncementBadge href={site.urls.signup} text={site.earlyAccess.badge} cta="Join waitlist" />
         }
         headline="AI agents that work your entire stack — without blowing your context budget."
         subheadline={
           <p>
-            ClawQL connects agents to your APIs, documents, and institutional memory in one closed loop:{' '}
-            <strong>recall</strong> what you know, <strong>search</strong> the right operation, <strong>execute</strong>{' '}
-            it, and <strong>ingest</strong> the outcome back into the vault. Specs stay server-side — not in your prompt.
+            {site.earlyAccess.summary} Connect agents to your APIs, documents, and institutional memory in one closed
+            loop — <strong>recall</strong>, <strong>search</strong>, <strong>execute</strong>, and{' '}
+            <strong>ingest</strong> — with specs server-side, not in your prompt.
           </p>
         }
         cta={
           <div className="flex w-full max-w-xl flex-col gap-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
               <ButtonLink href={site.urls.signup} size="lg">
-                Get a managed account
+                Join early access
               </ButtonLink>
               <PlainButtonLink href={`${site.urls.docs}/readme/getting-started`} size="lg">
                 Self-host free <ArrowNarrowRightIcon />
@@ -208,7 +203,7 @@ export default async function Page() {
         <Faq
           id="faq-2"
           question="What's the difference between shared and dedicated managed hosting?"
-          answer="Shared managed hosting is multi-tenant — cost-effective at $299/month ($250/month on annual billing) but may see reduced performance during bursts and is not fully isolated for strict compliance. Dedicated managed hosting runs on hardware for your organization only at $599/month ($500/month annual) — full isolation, no neighbor tenants."
+          answer="Shared managed hosting is multi-tenant — cost-effective at $299/month ($250/month on annual billing) but may see reduced performance during bursts and is not fully isolated for strict compliance. Dedicated managed hosting runs on hardware for your organization only at $599/month ($500/month annual) — full isolation, no neighbor tenants. Both tiers are in early access with founder-led onboarding — join the waitlist for a slot."
         />
         <Faq
           id="faq-3"
@@ -222,6 +217,11 @@ export default async function Page() {
         />
         <Faq
           id="faq-5"
+          question="Is managed hosting available today?"
+          answer="Self-hosting is available now — npm, Helm, and the full open-source stack. Managed Shared and Dedicated hosting is in early access: limited tenant slots, founder-led onboarding, and personal replies to waitlist signups. Join the waitlist or contact sales for Dedicated and Enterprise requirements."
+        />
+        <Faq
+          id="faq-6"
           question="How does ClawQL handle supply chain and runtime security?"
           answer="Container images pass OSV, Trivy, and SBOM gates in CI, are Cosign-signed, and Kyverno verifyImages rejects unsigned digests at deploy time by default. Runtime layers — MCP ATR scoping, audit, sandbox isolation, PII redaction in the IDP pipeline — are documented in the 32-module security curriculum and defense-in-depth guide on docs.clawql.com/security."
         />
@@ -230,7 +230,8 @@ export default async function Page() {
       {/* Pricing */}
       <PricingMultiTier
         id="pricing"
-        headline="Self-host free. Shared or dedicated managed hosting when you're ready."
+        headline="Self-host free today. Managed hosting — early access waitlist."
+        subheadline={<p className="text-center text-sm/7 text-mist-600 dark:text-mist-400">{site.earlyAccess.pricingNote}</p>}
         plans={
           <>
             <Plan
@@ -254,7 +255,7 @@ export default async function Page() {
               features={[...pricing.shared.features]}
               cta={
                 <ButtonLink href={site.urls.signup} size="lg">
-                  Join waitlist
+                  Join early access
                 </ButtonLink>
               }
             />
@@ -267,7 +268,7 @@ export default async function Page() {
               features={[...pricing.dedicated.features]}
               cta={
                 <ButtonLink href={site.urls.signup} size="lg">
-                  Join waitlist
+                  Join early access
                 </ButtonLink>
               }
             />

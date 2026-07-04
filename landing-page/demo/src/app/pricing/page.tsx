@@ -45,7 +45,7 @@ function plans(billing: BillingPeriod) {
         features={[...pricing.shared.features]}
         cta={
           <ButtonLink href={site.urls.signup} size="lg">
-            Join waitlist
+            Join early access
           </ButtonLink>
         }
       />
@@ -63,7 +63,7 @@ function plans(billing: BillingPeriod) {
         features={[...pricing.dedicated.features]}
         cta={
           <ButtonLink href={site.urls.signup} size="lg">
-            Join waitlist
+            Join early access
           </ButtonLink>
         }
       />
@@ -83,14 +83,19 @@ export default function Page() {
         headline="Pricing"
         subheadline={
           <p>
-            Self-host for free on your own hardware. Shared managed hosting is multi-tenant and cost-effective.
-            Dedicated managed hosting runs on hardware reserved for your organization only.
+            {site.earlyAccess.summary} Self-host the full stack free on your hardware today. Shared and dedicated
+            managed tiers are in early access — join the waitlist for founder-led onboarding.
           </p>
         }
         options={['Monthly', 'Yearly']}
         annualSavingsLabel={annualBillingSavingsLabel}
         plans={{ Monthly: plans('Monthly'), Yearly: plans('Yearly') }}
       />
+
+      <Section id="early-access" eyebrow="Early access" headline="Managed hosting is onboarding its first tenants">
+        <p className="max-w-3xl text-sm/7 text-mist-700 dark:text-mist-400">{site.earlyAccess.pricingNote}</p>
+        <p className="mt-4 max-w-3xl text-sm/7 text-mist-600 dark:text-mist-500">{site.waitlistPromise}</p>
+      </Section>
 
       <PlanComparisonTable
         id="pricing-compare"
@@ -229,12 +234,12 @@ export default function Page() {
 
       <CallToActionSimpleCentered
         id="call-to-action"
-        headline="Start free or join the waitlist"
-        subheadline={<p>Install clawql-mcp on your hardware, or reserve shared or dedicated managed hosting.</p>}
+        headline="Start free or join early access"
+        subheadline={<p>Install clawql-mcp on your hardware, or join the waitlist for managed Shared and Dedicated hosting.</p>}
         cta={
           <div className="flex items-center gap-4">
             <ButtonLink href={site.urls.signup} size="lg">
-              Join waitlist
+              Join early access
             </ButtonLink>
             <PlainButtonLink href={site.urls.docs} size="lg">
               Self-host guide <ChevronIcon />

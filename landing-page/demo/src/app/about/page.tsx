@@ -40,7 +40,7 @@ export default function Page() {
           </p>
         }
       >
-        <div className="grid grid-cols-1 gap-6 text-sm/7 text-mist-700 sm:grid-cols-2 dark:text-mist-400">
+        <div className="grid grid-cols-1 gap-6 text-sm/7 text-mist-700 sm:grid-cols-2 lg:grid-cols-3 dark:text-mist-400">
           <div className="rounded-xl bg-mist-950/2.5 p-6 dark:bg-white/5">
             <h3 className="font-semibold text-mist-950 dark:text-white">ClawQL and See The Greens</h3>
             <p className="mt-2">
@@ -51,10 +51,17 @@ export default function Page() {
             </p>
           </div>
           <div className="rounded-xl bg-mist-950/2.5 p-6 dark:bg-white/5">
+            <h3 className="font-semibold text-mist-950 dark:text-white">Early access, founder-led</h3>
+            <p className="mt-2">
+              Managed hosting is in early access — onboarding the first Dedicated and Shared tenants with founder-led
+              setup, not a self-serve checkout. The open-source core is production-ready today; hosted slots are limited
+              while we validate pipeline reliability under real workloads.
+            </p>
+          </div>
+          <div className="rounded-xl bg-mist-950/2.5 p-6 dark:bg-white/5 sm:col-span-2 lg:col-span-1">
             <h3 className="font-semibold text-mist-950 dark:text-white">What we publish</h3>
             <p className="mt-2">
-              Case studies include tool traces, failure modes, fixes, and token measurements — the same detail we expect
-              from production engineering write-ups. The{' '}
+              Case studies include tool traces, failure modes, fixes, and token measurements. The{' '}
               <Link href={site.urls.releases}>GitHub release changelog</Link> tracks what ships each version; docs at{' '}
               <Link href={site.urls.docs}>docs.clawql.com</Link> stay aligned with the codebase.
             </p>
@@ -131,7 +138,7 @@ export default function Page() {
         cta={
           <div className="flex items-center gap-4">
             <ButtonLink href={site.urls.signup} size="lg">
-              Join waitlist
+              Join early access
             </ButtonLink>
             <PlainButtonLink href={`${site.urls.docs}/case-studies`} size="lg">
               All case studies <ChevronIcon />
