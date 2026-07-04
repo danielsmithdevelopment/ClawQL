@@ -2,6 +2,9 @@ export type BillingPeriod = 'Monthly' | 'Yearly'
 
 export const pricingPlanNames = ['Self-hosted', 'Shared', 'Dedicated'] as const
 
+/** Annual billing saves ~16% vs monthly ($3,588 → $3,000 shared; $7,188 → $6,000 dedicated). */
+export const annualBillingSavingsLabel = '2 months free'
+
 export const pricing = {
   selfHosted: {
     name: 'Self-hosted',

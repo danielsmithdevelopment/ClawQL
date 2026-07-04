@@ -2,7 +2,6 @@ import { ButtonLink, PlainButtonLink } from '@/components/elements/button'
 import { ClawQLLogo } from '@/components/elements/clawql-logo'
 import { Main } from '@/components/elements/main'
 import { GitHubIcon } from '@/components/icons/social/github-icon'
-import { XIcon } from '@/components/icons/social/x-icon'
 import { NavbarIndustriesMenu } from '@/components/elements/navbar-industries-menu'
 import {
   FooterCategory,
@@ -88,11 +87,10 @@ export default function RootLayout({
             id="footer"
             cta={
               <NewsletterForm
-                headline="Managed accounts waitlist"
+                headline="Early access waitlist"
                 subheadline={
                   <p>
-                    Be first to know when ClawQL managed hosting opens — hosted MCP endpoints, vault memory, and
-                    bundled providers without running your own cluster.
+                    {site.earlyAccess.summary} {site.waitlistPromise}
                   </p>
                 }
                 source="footer"
@@ -120,6 +118,7 @@ export default function RootLayout({
                 <FooterCategory title="Developers">
                   <FooterLink href={site.urls.github}>GitHub</FooterLink>
                   <FooterLink href={site.urls.npm}>npm package</FooterLink>
+                  <FooterLink href={site.urls.releases}>Changelog & releases</FooterLink>
                   <FooterLink href={`${site.urls.docs}/readme/getting-started`}>Quick start</FooterLink>
                   <FooterLink href={`${site.urls.docs}/security`}>Security</FooterLink>
                   <FooterLink href={`${site.urls.docs}/mcp/mcp-tools`}>MCP tools</FooterLink>
@@ -136,9 +135,6 @@ export default function RootLayout({
             fineprint={`© ${new Date().getFullYear()} ClawQL`}
             socialLinks={
               <>
-                <SocialLink href="https://x.com" name="X">
-                  <XIcon />
-                </SocialLink>
                 <SocialLink href={site.urls.github} name="GitHub">
                   <GitHubIcon />
                 </SocialLink>

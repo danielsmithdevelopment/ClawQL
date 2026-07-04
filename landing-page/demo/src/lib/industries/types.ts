@@ -23,6 +23,10 @@ export type Industry = {
   subheadline: string
   packageName: string
   status: 'shipped' | 'partial' | 'planned'
+  /** Override the default status badge label when partial/shipped/planned is too vague. */
+  statusLabel?: string
+  /** Short production reference — e.g. a vertical product powered by ClawQL. */
+  productionReference?: string
   overview: string
   painPoints: readonly { title: string; body: string }[]
   platformCapabilities: readonly string[]

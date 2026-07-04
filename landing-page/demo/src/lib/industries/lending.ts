@@ -8,6 +8,9 @@ export const lendingIndustry: Industry = {
     'ClawQL’s lending vertical (clawql-lending) composes the IDP pipeline, vault memory, HITL review, and workflow automation for loan origination — W-2s, bank statements, and underwriting packages without pasting specs or losing audit trails.',
   packageName: 'clawql-lending',
   status: 'partial',
+  statusLabel: 'W-2 + HITL available · full LOS shipping with vertical package',
+  productionReference:
+    'ClawQL powers vertical lending products like See The Greens LOS — a mortgage-first loan origination system built on the same IDP, vault, and HITL stack documented here.',
   overview:
     'Mortgage, auto, BNPL, payday, and commercial lending share the same document-heavy intake problem: borrowers submit heterogeneous PDFs, underwriters re-ask for the same conditions, and API integrations sprawl across LOS, credit, and document vendors. Modularization v2.1 defines clawql-lending as five sub-verticals on one gateway — MortgagePlugin, AutoPlugin, BNPLPlugin, PaydayPlugin, and CommercialPlugin — plus shared UnderwritingPlugin and CompliancePlugin for Reg Z, ECOA, and fair-lending guardrails. Today you can run the lending Docker Compose stack and the shipped W-2 reference pack; full LOS tool registration ships with the vertical package.',
   painPoints: [
@@ -35,7 +38,7 @@ export const lendingIndustry: Industry = {
     { name: 'gse_validate', description: 'Validate loan data against agency guidelines indexed in Onyx.' },
     { name: 'condition_clear', description: 'Record and recall underwriting conditions with vault threading.' },
     { name: 'pii_redact', description: 'Strip borrower PII before documents enter search indexes.' },
-    { name: 'loan_archive', description: 'Tag and archive loan packages in Paperless or the native archive layer.' },
+    { name: 'loan_archive', description: 'Tag and archive loan packages in the ClawQL Archive Layer or Paperless-ngx on self-hosted stacks.' },
     { name: 'bnpl_decision / fraud_check', description: 'Sub-second decision loops for BNPL with Cuckoo dedup on doc batches.' },
   ],
   documentTypes: [

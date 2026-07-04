@@ -1,4 +1,5 @@
 import { ButtonLink, PlainButtonLink } from '@/components/elements/button'
+import { Link } from '@/components/elements/link'
 import { ChevronIcon } from '@/components/icons/chevron-icon'
 import { CaseStudyCard, CaseStudyGrid, ToolTierSection } from '@/components/sections/clawql-marketing'
 import { CallToActionSimple } from '@/components/sections/call-to-action-simple'
@@ -26,6 +27,47 @@ export default function Page() {
           </p>
         }
       />
+
+      <Section
+        id="story"
+        eyebrow="Why ClawQL exists"
+        headline="Built from production agent work — not a demo."
+        subheadline={
+          <p>
+            ClawQL started as the MCP layer behind real deployments: multi-provider DevOps workflows, document
+            pipelines for regulated industries, and cross-session memory that survives when you switch between Cursor,
+            OpenClaw, and Kubernetes. The open-source core ships what we run in production.
+          </p>
+        }
+      >
+        <div className="grid grid-cols-1 gap-6 text-sm/7 text-mist-700 sm:grid-cols-2 lg:grid-cols-3 dark:text-mist-400">
+          <div className="rounded-xl bg-mist-950/2.5 p-6 dark:bg-white/5">
+            <h3 className="font-semibold text-mist-950 dark:text-white">ClawQL and See The Greens</h3>
+            <p className="mt-2">
+              See The Greens is a mortgage-first loan origination system powered by ClawQL — the same IDP pipeline, vault
+              memory, and HITL patterns documented on this site. ClawQL is the horizontal platform; See The Greens is one
+              vertical product built on it. Neither implies exclusivity — lenders can self-host ClawQL or build their own
+              LOS on the same stack.
+            </p>
+          </div>
+          <div className="rounded-xl bg-mist-950/2.5 p-6 dark:bg-white/5">
+            <h3 className="font-semibold text-mist-950 dark:text-white">Early access, founder-led</h3>
+            <p className="mt-2">
+              Managed hosting is in early access — onboarding the first Dedicated and Shared tenants with founder-led
+              setup, not a self-serve checkout. The open-source core is production-ready today; hosted slots are limited
+              while we validate pipeline reliability under real workloads.
+            </p>
+          </div>
+          <div className="rounded-xl bg-mist-950/2.5 p-6 dark:bg-white/5 sm:col-span-2 lg:col-span-1">
+            <h3 className="font-semibold text-mist-950 dark:text-white">What we publish</h3>
+            <p className="mt-2">
+              Case studies include tool traces, failure modes, fixes, and token measurements. The{' '}
+              <Link href={site.urls.releases}>GitHub release changelog</Link> tracks what ships each version; docs at{' '}
+              <Link href={site.urls.docs}>docs.clawql.com</Link> stay aligned with the codebase.
+            </p>
+          </div>
+        </div>
+      </Section>
 
       <Section
         id="philosophy"
@@ -89,12 +131,14 @@ export default function Page() {
         id="call-to-action"
         headline="Read the case studies. Run the tools."
         subheadline={
-          <p>Self-host today or join the managed waitlist for hosted MCP, vault, and IDP.</p>
+          <p>
+            Self-host today or join the managed waitlist for hosted MCP, vault, and IDP. {site.waitlistPromise}
+          </p>
         }
         cta={
           <div className="flex items-center gap-4">
             <ButtonLink href={site.urls.signup} size="lg">
-              Join waitlist
+              Join early access
             </ButtonLink>
             <PlainButtonLink href={`${site.urls.docs}/case-studies`} size="lg">
               All case studies <ChevronIcon />
