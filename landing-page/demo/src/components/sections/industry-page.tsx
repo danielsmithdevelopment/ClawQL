@@ -4,12 +4,18 @@ import { Section } from '@/components/elements/section'
 import { ArrowNarrowRightIcon } from '@/components/icons/arrow-narrow-right-icon'
 import { CallToActionSimple } from '@/components/sections/call-to-action-simple'
 import { HeroSimpleCentered } from '@/components/sections/hero-simple-centered'
+import { NewsletterForm } from '@/components/sections/footer-with-newsletter-form-categories-and-social-icons'
 import type { Industry } from '@/lib/industries'
 import { site } from '@/lib/site'
 
-function StatusBadge({ status }: { status: Industry['status'] }) {
+function StatusBadge({ industry }: { industry: Industry }) {
   const label =
-    status === 'shipped' ? 'Shipped samples' : status === 'partial' ? 'Partial — samples shipping' : 'Planned vertical'
+    industry.statusLabel ??
+    (industry.status === 'shipped'
+      ? 'Shipped samples'
+      : industry.status === 'partial'
+        ? 'Partial — samples shipping'
+        : 'Planned vertical')
   return (
     <span className="inline-flex rounded-full bg-mist-950/5 px-3 py-1 text-xs font-medium tracking-wide text-mist-600 uppercase dark:bg-white/10 dark:text-mist-300">
       {label}
@@ -17,29 +23,103 @@ function StatusBadge({ status }: { status: Industry['status'] }) {
   )
 }
 
+function DisclaimerNotice({ text }: { text: string }) {
+  return (
+    <div className="mx-auto max-w-3xl rounded-xl border border-amber-500/25 bg-amber-500/5 px-5 py-4 text-sm/7 text-mist-700 dark:text-mist-300">
+      {text}
+    </div>
+  )
+}
+
 function ctaSubheadline(industry: Industry) {
   if (industry.status === 'partial' || industry.status === 'shipped') {
     return (
       <p>
-        Self-host the lending compose stack today, or join the managed waitlist for hosted MCP, vault, and IDP tailored
-        to {industry.name.toLowerCase()} workflows.
+        Self-host the {industry.name.toLowerCase()} compose stack today, or join the managed waitlist for hosted MCP,
+        vault, and IDP tailored to {industry.name.toLowerCase()} workflows. {site.waitlistPromise}
       </p>
     )
   }
   return (
     <p>
-      Join the waitlist for early access to {industry.packageName}, or self-host ClawQL Core with the IDP pipeline and
-      vault while vertical tools ship on the modularization roadmap.
+      Join the waitlist to get notified when {industry.packageName} ships — or self-host ClawQL Core with the IDP
+      pipeline and vault today. {site.waitlistPromise}
     </p>
   )
 }
 
-export function IndustryPage({ industry }: { industry: Industry }) {
+function PlannedIndustryStub({ industry }: { industry: Industry }) {
   return (
     <>
       <HeroSimpleCentered
         id="hero"
-        eyebrow={<StatusBadge status={industry.status} />}
+        eyebrow={<StatusBadge industry={industry} />}
+        headline={industry.headline}
+        subheadline={<p>{industry.subheadline}</p>}
+      />
+
+      <Section id="overview" eyebrow="Status" headline={`${industry.name} vertical — on the roadmap`}>
+        <p className="max-w-3xl text-sm/7 text-mist-700 dark:text-mist-400">{industry.overview}</p>
+        <p className="mt-4 max-w-3xl text-sm/7 text-mist-600 dark:text-mist-500">
+          Lending is the most developed vertical today — with W-2 intake, HITL review, and a shipped Docker Compose
+          stack. Other industries share the same ClawQL Core (search, execute, memory, IDP) and will register domain
+          tools via modularization v2.1 as each package ships.
+        </p>
+      </Section>
+
+      <Section
+        id="notify"
+        eyebrow="Get notified"
+        headline={`Notify me when ${industry.name.toLowerCase()} ships`}
+        subheadline={
+          <p>
+            Leave your email and mention &ldquo;{industry.name}&rdquo; in the message — we&apos;ll reach out when{' '}
+            {industry.packageName} enters early access.
+          </p>
+        }
+      >
+        <NewsletterForm
+          headline="Vertical waitlist"
+          subheadline={<p>{site.waitlistPromise}</p>}
+          source="footer"
+          className="max-w-md"
+        />
+      </Section>
+
+      <CallToActionSimple
+        id="cta"
+        headline="Need lending or document automation today?"
+        subheadline={
+          <p>
+            Explore the lending vertical or self-host ClawQL Core with the full IDP pipeline while {industry.name}{' '}
+            tools are in development.
+          </p>
+        }
+        cta={
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+            <ButtonLink href="/industries/lending" size="lg">
+              View lending vertical
+            </ButtonLink>
+            <PlainButtonLink href={`${site.urls.docs}/vision/modularization`} size="lg">
+              Modularization roadmap <ArrowNarrowRightIcon />
+            </PlainButtonLink>
+          </div>
+        }
+      />
+    </>
+  )
+}
+
+export function IndustryPage({ industry }: { industry: Industry }) {
+  if (industry.status === 'planned') {
+    return <PlannedIndustryStub industry={industry} />
+  }
+
+  return (
+    <>
+      <HeroSimpleCentered
+        id="hero"
+        eyebrow={<StatusBadge industry={industry} />}
         headline={industry.headline}
         subheadline={<p>{industry.subheadline}</p>}
         cta={
@@ -54,8 +134,19 @@ export function IndustryPage({ industry }: { industry: Industry }) {
         }
       />
 
+      {industry.disclaimer ? (
+        <section className="pb-8">
+          <div className="px-6">
+            <DisclaimerNotice text={industry.disclaimer} />
+          </div>
+        </section>
+      ) : null}
+
       <Section id="overview" eyebrow="Overview" headline={`ClawQL for ${industry.name.toLowerCase()}`}>
         <p className="max-w-3xl text-sm/7 text-mist-700 dark:text-mist-400">{industry.overview}</p>
+        {industry.productionReference ? (
+          <p className="mt-4 max-w-3xl text-sm/7 text-mist-600 dark:text-mist-500">{industry.productionReference}</p>
+        ) : null}
       </Section>
 
       <Section
@@ -231,9 +322,6 @@ export function IndustryPage({ industry }: { industry: Industry }) {
             </li>
           ))}
         </ul>
-        {industry.disclaimer ? (
-          <p className="mt-6 text-sm/7 text-mist-500 dark:text-mist-400">{industry.disclaimer}</p>
-        ) : null}
       </Section>
 
       {industry.relatedResources.length > 0 ? (

@@ -64,6 +64,7 @@ export function PricingHeroMultiTier<T extends string>({
   options,
   plans,
   footer,
+  annualSavingsLabel,
   className,
   ...props
 }: {
@@ -73,6 +74,8 @@ export function PricingHeroMultiTier<T extends string>({
   options: readonly T[]
   plans: Record<T, ReactNode>
   footer?: ReactNode
+  /** Shown on the annual billing toggle — e.g. "2 months free". */
+  annualSavingsLabel?: string
 } & ComponentProps<'section'>) {
   return (
     <section className={clsx('py-16', className)} {...props}>
@@ -92,6 +95,11 @@ export function PricingHeroMultiTier<T extends string>({
                   className="rounded-full px-4 py-1 text-sm/7 font-medium text-mist-950 aria-selected:bg-mist-950 aria-selected:text-white dark:text-white dark:aria-selected:bg-white/10 dark:aria-selected:text-white"
                 >
                   {option}
+                  {annualSavingsLabel && option === 'Yearly' ? (
+                    <span className="ml-1.5 rounded-full bg-emerald-600/15 px-2 py-0.5 text-xs font-semibold text-emerald-800 dark:bg-emerald-400/15 dark:text-emerald-300">
+                      {annualSavingsLabel}
+                    </span>
+                  ) : null}
                 </button>
               ))}
             </ElTabList>

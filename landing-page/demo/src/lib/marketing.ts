@@ -162,9 +162,10 @@ export const idpPipelineStages = [
     detail: 'PII redaction, split, and merge before documents enter the archive.',
   },
   {
-    vendor: 'Paperless / Archive',
-    role: 'Archive',
-    detail: 'Self-hosted Paperless-ngx or the ClawQL-native archive layer on managed accounts.',
+    vendor: 'ClawQL Archive Layer',
+    role: 'Managed archive',
+    detail:
+      'Nextcloud + Postgres metadata store, Onyx-indexed — the default on managed accounts. Paperless-ngx compatible for self-hosted deployments.',
   },
   {
     vendor: 'Onyx',

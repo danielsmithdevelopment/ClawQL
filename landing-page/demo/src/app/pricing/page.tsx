@@ -5,13 +5,16 @@ import { FAQsAccordion, Faq } from '@/components/sections/faqs-accordion'
 import { PlanComparisonTable } from '@/components/sections/plan-comparison-table'
 import { Plan, PricingHeroMultiTier } from '@/components/sections/pricing-hero-multi-tier'
 import { Section } from '@/components/elements/section'
-import { managedPrice, pricing, pricingPlanNames, type BillingPeriod } from '@/lib/pricing'
+import { managedPrice, annualBillingSavingsLabel, pricing, pricingPlanNames, type BillingPeriod } from '@/lib/pricing'
 import { site } from '@/lib/site'
 
 function plans(billing: BillingPeriod) {
   const annualNote =
     billing === 'Yearly' ? (
-      <span className="block text-mist-500"> Billed annually ($3,000/yr shared · $6,000/yr dedicated).</span>
+      <span className="block text-mist-500">
+        {' '}
+        Billed annually ($3,000/yr shared · $6,000/yr dedicated) — {annualBillingSavingsLabel} vs monthly billing.
+      </span>
     ) : null
 
   return (
@@ -85,6 +88,7 @@ export default function Page() {
           </p>
         }
         options={['Monthly', 'Yearly']}
+        annualSavingsLabel={annualBillingSavingsLabel}
         plans={{ Monthly: plans('Monthly'), Yearly: plans('Yearly') }}
       />
 
@@ -131,8 +135,20 @@ export default function Page() {
               { name: 'classify_document', value: true },
               { name: 'extract_document', value: true },
               {
-                name: 'Managed archive layer',
-                value: { 'Self-hosted': 'Optional Paperless', Shared: true, Dedicated: true },
+                name: 'ClawQL Archive Layer (managed)',
+                value: {
+                  'Self-hosted': 'Paperless-ngx optional',
+                  Shared: true,
+                  Dedicated: true,
+                },
+              },
+              {
+                name: 'hitl_enqueue_label_studio',
+                value: {
+                  'Self-hosted': 'Self-deploy Label Studio',
+                  Shared: false,
+                  Dedicated: false,
+                },
               },
             ],
           },
@@ -171,7 +187,7 @@ export default function Page() {
         id="enterprise"
         eyebrow="Enterprise"
         headline="High volume, custom SLAs, and on-call support"
-        subheadline={<p>{pricing.enterprise.subheadline}</p>}
+        subheadline={<p>{pricing.enterprise.subheadline} Enterprise includes managed HITL via hitl_enqueue_label_studio.</p>}
       >
         <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {pricing.enterprise.features.map((feature) => (

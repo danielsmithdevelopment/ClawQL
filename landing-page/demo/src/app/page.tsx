@@ -1,4 +1,3 @@
-import { AnnouncementBadge } from '@/components/elements/announcement-badge'
 import { ButtonLink, PlainButtonLink } from '@/components/elements/button'
 import { InstallCommand } from '@/components/elements/install-command'
 import { ClawQLHeroLogo } from '@/components/elements/clawql-hero-logo'
@@ -12,35 +11,37 @@ import {
 import { FAQsTwoColumnAccordion, Faq } from '@/components/sections/faqs-two-column-accordion'
 import { HeroTwoColumnWithPhoto } from '@/components/sections/hero-two-column-with-photo'
 import { Plan, PricingMultiTier } from '@/components/sections/pricing-multi-tier'
+import { SecuritySection } from '@/components/sections/security-section'
+import { SocialProofBar } from '@/components/sections/social-proof-bar'
 import { Stat, StatsFourColumns } from '@/components/sections/stats-four-columns'
 import { Section } from '@/components/elements/section'
-import { SecuritySection } from '@/components/sections/security-section'
 import { WorkflowFeedSection } from '@/components/sections/workflow-feed'
 import { idpPipelineStages, mcpToolTiers, multiProviderBenchmark } from '@/lib/marketing'
 import { securityEnforcementLayers, securityPillars } from '@/lib/security-marketing'
+import { getSocialProofStats } from '@/lib/social-proof'
 import { workflowFeeds } from '@/lib/workflow-feeds'
 import { managedPrice, pricing } from '@/lib/pricing'
 import { site } from '@/lib/site'
 
-export default function Page() {
+export default async function Page() {
+  const socialProof = await getSocialProofStats()
+
   return (
     <>
       {/* Hero */}
       <HeroTwoColumnWithPhoto
         id="hero"
         eyebrow={
-          <AnnouncementBadge
-            href={site.urls.signup}
-            text="Managed accounts with full IDP pipeline — join the waitlist"
-            cta="Sign up"
-          />
+          <>
+            <SocialProofBar stats={socialProof} />
+          </>
         }
-        headline="Memory, APIs, and documents in one closed loop."
+        headline="AI agents that work your entire stack — without blowing your context budget."
         subheadline={
           <p>
-            ClawQL is an MCP server where agents <strong>recall</strong> what you know, <strong>search</strong> the
-            right API operation, <strong>execute</strong> it, and <strong>ingest</strong> the outcome back into the
-            vault. Token-efficient by design — bundled specs stay server-side, not in your prompt.
+            ClawQL connects agents to your APIs, documents, and institutional memory in one closed loop:{' '}
+            <strong>recall</strong> what you know, <strong>search</strong> the right operation, <strong>execute</strong>{' '}
+            it, and <strong>ingest</strong> the outcome back into the vault. Specs stay server-side — not in your prompt.
           </p>
         }
         cta={
@@ -49,8 +50,8 @@ export default function Page() {
               <ButtonLink href={site.urls.signup} size="lg">
                 Get a managed account
               </ButtonLink>
-              <PlainButtonLink href={`${site.urls.docs}/providers/idp-pipeline`} size="lg">
-                Explore IDP pipeline <ArrowNarrowRightIcon />
+              <PlainButtonLink href={`${site.urls.docs}/readme/getting-started`} size="lg">
+                Self-host free <ArrowNarrowRightIcon />
               </PlainButtonLink>
             </div>
             <InstallCommand className="w-full max-w-lg" snippet={site.installCommand} />
@@ -60,15 +61,34 @@ export default function Page() {
         photoFrame={false}
       />
 
-      {/* Multi-provider token savings benchmark */}
-      <StatsFourColumns
-        id="proof"
-        eyebrow="Token savings benchmark"
-        headline="7,174 indexed endpoints → 62 surfaced by search."
+      {/* Workflow feeds — proof before tool grid */}
+      <WorkflowFeedSection
+        id="workflows"
+        eyebrow="Workflows in practice"
+        headline="What a real ClawQL session looks like."
         subheadline={
           <p>
-            Offline workflow across {multiProviderBenchmark.providers}: stand up GKE, configure Cloudflare DNS and
-            caching, and draft a Jira rollout — without pasting megabyte specs into the prompt.
+            Published case studies document the same pattern: agents call MCP tools in sequence — recall context,
+            discover operations with <code className="text-sm">search</code>, act with{' '}
+            <code className="text-sm">execute</code>, then persist outcomes with{' '}
+            <code className="text-sm">memory_ingest</code>. These feeds show the chronology without pasting specs into
+            the chat.
+          </p>
+        }
+        feeds={workflowFeeds}
+      />
+
+      {/* Token savings benchmark — lead differentiator */}
+      <StatsFourColumns
+        id="proof"
+        eyebrow="Context compression"
+        headline={`${multiProviderBenchmark.compressionRatio} compression — ${multiProviderBenchmark.indexedOperations} endpoints indexed, ${multiProviderBenchmark.workflowOperations} surfaced per workflow.`}
+        subheadline={
+          <p>
+            The answer to &ldquo;won&apos;t this just fill up my context?&rdquo; Offline benchmark across{' '}
+            {multiProviderBenchmark.providers}: stand up GKE, configure Cloudflare DNS, and draft a Jira rollout — with
+            planning tokens dropping from {multiProviderBenchmark.planningTokensBefore} to{' '}
+            {multiProviderBenchmark.planningTokensAfter}.
           </p>
         }
         cta={
@@ -77,6 +97,10 @@ export default function Page() {
           </Link>
         }
       >
+        <Stat
+          stat={multiProviderBenchmark.compressionRatio}
+          text="Compression ratio on the three-provider benchmark — measured with ceil(bytes ÷ 4) token estimates."
+        />
         <Stat
           stat={multiProviderBenchmark.indexedOperations}
           text="API operations indexed across Google Cloud (4,141), Cloudflare (2,697), and Jira (336) — specs stay in the MCP server."
@@ -89,11 +113,23 @@ export default function Page() {
           stat={`${multiProviderBenchmark.planningTokensBefore} → ${multiProviderBenchmark.planningTokensAfter}`}
           text="Planning-context tokens: naive full-spec paste vs compact workflow artifact (~99.9% reduction)."
         />
-        <Stat
-          stat={multiProviderBenchmark.compressionRatio}
-          text="Compression ratio on the three-provider benchmark — measured with ceil(bytes ÷ 4) token estimates."
-        />
       </StatsFourColumns>
+
+      {/* Closed loop summary before tool grid */}
+      <Section
+        id="how-it-works"
+        eyebrow="How it fits together"
+        headline="Memory, APIs, and documents in one closed loop."
+        subheadline={
+          <p>
+            A typical session: an agent <strong>recalls</strong> prior vault notes about a deployment,{' '}
+            <strong>searches</strong> Cloudflare and GCP for the right DNS and cluster operations,{' '}
+            <strong>executes</strong> them with validated args, then <strong>ingests</strong> the outcome so the next
+            session — in Cursor, OpenClaw, or your cluster — picks up where this one left off. Document workflows follow
+            the same pattern through the IDP pipeline.
+          </p>
+        }
+      />
 
       {/* MCP tool tiers */}
       <Section
@@ -115,23 +151,6 @@ export default function Page() {
         </div>
       </Section>
 
-      {/* Workflow feeds — tool calling sequences from case studies */}
-      <WorkflowFeedSection
-        id="workflows"
-        eyebrow="Workflows in practice"
-        headline="What a real ClawQL session looks like."
-        subheadline={
-          <p>
-            Published case studies document the same pattern: agents call MCP tools in sequence — recall context,
-            discover operations with <code className="text-sm">search</code>, act with{' '}
-            <code className="text-sm">execute</code>, then persist outcomes with{' '}
-            <code className="text-sm">memory_ingest</code>. These feeds show the chronology without pasting specs into
-            the chat.
-          </p>
-        }
-        feeds={workflowFeeds}
-      />
-
       {/* IDP pipeline */}
       <Section
         id="idp"
@@ -142,7 +161,7 @@ export default function Page() {
             Drop a file in Nextcloud; agents orchestrate layout parsing, PDF normalization, PII redaction, archival, hybrid
             search, and secure sharing — via <code className="text-sm">search</code> → <code className="text-sm">execute</code>{' '}
             or automated <code className="text-sm">run_idp_pipeline</code>. Self-host the full stack with Helm; managed
-            accounts run the ClawQL-native archive layer.
+            accounts run the ClawQL Archive Layer (Nextcloud + Onyx-indexed metadata) by default.
           </p>
         }
         cta={

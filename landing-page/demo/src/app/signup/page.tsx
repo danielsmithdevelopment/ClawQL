@@ -23,7 +23,8 @@ export default function Page() {
         subheadline={
           <p>
             Shared managed hosting from $299/month ($250/month annual) or dedicated single-tenant from $599/month
-            ($500/month annual). Full MCP tools, vault memory, and IDP pipeline — join the waitlist for early access.
+            ($500/month annual). Full MCP tools, vault memory, and IDP pipeline — join the waitlist for early access.{' '}
+            {site.waitlistPromise}
           </p>
         }
         cta={<WaitlistSignupForm className="mx-auto" />}
