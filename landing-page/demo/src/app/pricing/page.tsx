@@ -1,5 +1,6 @@
 import { ButtonLink, PlainButtonLink } from '@/components/elements/button'
 import { ChevronIcon } from '@/components/icons/chevron-icon'
+import { CompetitivePricingSection } from '@/components/sections/competitive-pricing-section'
 import { CallToActionSimpleCentered } from '@/components/sections/call-to-action-simple-centered'
 import { FAQsAccordion, Faq } from '@/components/sections/faqs-accordion'
 import { PlanComparisonTable } from '@/components/sections/plan-comparison-table'
@@ -11,6 +12,7 @@ import {
   managedPrice,
   pricing,
   pricingPlanNames,
+  sovereignSecurityPack,
   type BillingPeriod,
 } from '@/lib/pricing'
 import { site } from '@/lib/site'
@@ -70,17 +72,17 @@ function managedPlans(billing: BillingPeriod) {
         }
       />
       <Plan
-        name={pricing.dedicated.name}
-        price={managedPrice('dedicated', billing)}
-        period={pricing.dedicated.period}
+        name={pricing.professional.name}
+        price={managedPrice('professional', billing)}
+        period={pricing.professional.period}
         subheadline={
           <p>
-            {pricing.dedicated.subheadline}
+            {pricing.professional.subheadline}
             {annualNote ? <span className="block text-mist-500">{annualNote}</span> : null}
           </p>
         }
-        badge={pricing.dedicated.badge}
-        features={[...pricing.dedicated.features]}
+        badge={pricing.professional.badge}
+        features={[...pricing.professional.features]}
         cta={
           <ButtonLink href={site.urls.signup} size="lg">
             Join early access
@@ -120,7 +122,7 @@ export default function Page() {
         subheadline={
           <p>
             {site.earlyAccess.summary} Document volume and storage limits apply per tier; storage overage billed at
-            $0.02/GB on Starter and Business ($0.015/GB pass-through on Dedicated).
+            $0.02/GB on Starter and Business, $0.015/GB pass-through on Professional.
           </p>
         }
         options={['Monthly', 'Yearly']}
@@ -133,6 +135,8 @@ export default function Page() {
         <p className="mt-4 max-w-3xl text-sm/7 text-mist-600 dark:text-mist-500">{site.waitlistPromise}</p>
       </Section>
 
+      <CompetitivePricingSection />
+
       <PlanComparisonTable
         id="pricing-compare"
         plans={[...pricingPlanNames]}
@@ -144,10 +148,10 @@ export default function Page() {
                 name: 'Documents / month',
                 value: {
                   'Self-hosted': 'Unlimited (your infra)',
-                  Free: '500',
+                  Free: '200',
                   Starter: '5,000',
                   Business: '25,000',
-                  Dedicated: 'Unlimited',
+                  Professional: '75,000',
                 },
               },
               {
@@ -157,7 +161,7 @@ export default function Page() {
                   Free: '1',
                   Starter: '5',
                   Business: '25',
-                  Dedicated: 'Unlimited',
+                  Professional: 'Unlimited',
                 },
               },
               {
@@ -167,7 +171,7 @@ export default function Page() {
                   Free: '5 GB',
                   Starter: '50 GB',
                   Business: '500 GB',
-                  Dedicated: '1 TB',
+                  Professional: '2 TB',
                 },
               },
               {
@@ -177,7 +181,7 @@ export default function Page() {
                   Free: 'N/A',
                   Starter: '$0.02/GB',
                   Business: '$0.02/GB',
-                  Dedicated: '$0.015/GB',
+                  Professional: '$0.015/GB',
                 },
               },
             ],
@@ -192,7 +196,7 @@ export default function Page() {
                   Free: false,
                   Starter: true,
                   Business: true,
-                  Dedicated: 'Full + analytics',
+                  Professional: 'Full + advanced analytics',
                 },
               },
               {
@@ -201,8 +205,8 @@ export default function Page() {
                   'Self-hosted': 'Self-managed',
                   Free: 'Basic',
                   Starter: 'Full',
-                  Business: 'Full',
-                  Dedicated: 'Full',
+                  Business: 'Full + cross-doc',
+                  Professional: 'Full + cross-doc',
                 },
               },
               {
@@ -212,7 +216,27 @@ export default function Page() {
                   Free: 'Low',
                   Starter: 'Standard',
                   Business: 'Priority',
-                  Dedicated: 'Priority',
+                  Professional: 'Dedicated queue',
+                },
+              },
+              {
+                name: 'Obsidian memory vault',
+                value: {
+                  'Self-hosted': 'Self-managed',
+                  Free: false,
+                  Starter: true,
+                  Business: true,
+                  Professional: true,
+                },
+              },
+              {
+                name: 'Dynamic watermarking (VDR)',
+                value: {
+                  'Self-hosted': 'Self-deploy optional',
+                  Free: false,
+                  Starter: true,
+                  Business: true,
+                  Professional: true,
                 },
               },
               {
@@ -222,7 +246,7 @@ export default function Page() {
                   Free: true,
                   Starter: true,
                   Business: true,
-                  Dedicated: true,
+                  Professional: true,
                 },
               },
             ],
@@ -237,7 +261,7 @@ export default function Page() {
                   Free: true,
                   Starter: true,
                   Business: true,
-                  Dedicated: true,
+                  Professional: true,
                 },
               },
               {
@@ -247,27 +271,41 @@ export default function Page() {
                   Free: 'Shared',
                   Starter: 'Shared',
                   Business: 'Shared',
-                  Dedicated: 'Dedicated namespace',
+                  Professional: 'Dedicated namespace',
                 },
+              },
+              {
+                name: 'Merkle cryptographic audit trail',
+                value: true,
               },
               {
                 name: 'Sovereign inference (no external LLM APIs)',
                 value: {
                   'Self-hosted': 'Your deployment',
-                  Free: true,
+                  Free: false,
                   Starter: true,
                   Business: true,
-                  Dedicated: true,
+                  Professional: true,
                 },
               },
               {
-                name: 'hitl_enqueue_label_studio',
+                name: 'HITL review (Label Studio)',
                 value: {
-                  'Self-hosted': 'Self-deploy Label Studio',
+                  'Self-hosted': 'Self-deploy',
                   Free: false,
-                  Starter: false,
-                  Business: false,
-                  Dedicated: false,
+                  Starter: true,
+                  Business: true,
+                  Professional: true,
+                },
+              },
+              {
+                name: 'Pre-trained document skill library',
+                value: {
+                  'Self-hosted': 'Vertical adapters',
+                  Free: 'Vertical adapters',
+                  Starter: 'Vertical adapters',
+                  Business: 'Vertical adapters',
+                  Professional: 'One vertical fine-tune included',
                 },
               },
             ],
@@ -282,7 +320,7 @@ export default function Page() {
                   Free: 'None',
                   Starter: '99% uptime',
                   Business: '99.5% uptime',
-                  Dedicated: '99.9% uptime',
+                  Professional: '99.9% uptime',
                 },
               },
               {
@@ -292,7 +330,17 @@ export default function Page() {
                   Free: 'Community',
                   Starter: 'Email (48 hr)',
                   Business: 'Email (24 hr)',
-                  Dedicated: 'Priority + Slack',
+                  Professional: 'Slack Connect + email',
+                },
+              },
+              {
+                name: 'SSO / SAML',
+                value: {
+                  'Self-hosted': false,
+                  Free: false,
+                  Starter: false,
+                  Business: false,
+                  Professional: true,
                 },
               },
             ],
@@ -301,13 +349,31 @@ export default function Page() {
       />
 
       <Section
+        id="sovereign-security-pack"
+        eyebrow="Add-on"
+        headline={`${sovereignSecurityPack.name} — ${sovereignSecurityPack.monthlyPrice}${sovereignSecurityPack.period}`}
+        subheadline={<p>{sovereignSecurityPack.subheadline}</p>}
+      >
+        <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {sovereignSecurityPack.features.map((feature) => (
+            <li
+              key={feature}
+              className="rounded-xl bg-mist-950/2.5 px-4 py-3 text-sm/7 text-mist-700 dark:bg-white/5 dark:text-mist-400"
+            >
+              {feature}
+            </li>
+          ))}
+        </ul>
+      </Section>
+
+      <Section
         id="enterprise"
         eyebrow="Enterprise"
-        headline="Custom contracts for SSO, EU residency, and on-call support"
+        headline={`Enterprise from ${pricing.enterprise.priceFrom}${pricing.enterprise.period}`}
         subheadline={
           <p>
-            {pricing.enterprise.subheadline} Enterprise adds managed HITL via hitl_enqueue_label_studio, dedicated CSM,
-            and custom SLAs beyond the $599/mo Dedicated tier.
+            {pricing.enterprise.subheadline} Contact sales for annual terms, EU residency, and custom SLAs beyond
+            Professional.
           </p>
         }
       >
@@ -334,23 +400,43 @@ export default function Page() {
         />
         <Faq
           id="faq-2"
-          question="What's the difference between Starter, Business, and Dedicated?"
-          answer="Starter ($149/mo) and Business ($299/mo) run on shared multi-tenant infrastructure with document volume limits (5,000 and 25,000 documents/month). Dedicated ($599/mo) gives your organization a dedicated namespace with full resource allocation, unlimited documents, and 99.9% uptime SLA. All managed tiers are in early access with founder-led onboarding."
+          question="What's the difference between Starter, Business, and Professional?"
+          answer={`Starter (${pricing.starter.monthlyPrice}/mo) and Business (${pricing.business.monthlyPrice}/mo) run on shared multi-tenant infrastructure with document volume limits (5,000 and 25,000 documents/month). Professional (${pricing.professional.monthlyPrice}/mo) gives your organization a dedicated namespace, one vertical fine-tune adapter, SSO/SAML, and 99.9% uptime SLA. All managed tiers are in early access with founder-led onboarding.`}
         />
         <Faq
           id="faq-3"
           question="What is the managed Free tier?"
-          answer="Free ($0/mo) lets you process up to 500 documents/month on hosted infrastructure with basic Onyx search — a way to try the real pipeline before upgrading to Starter for Coneshare VDR and higher limits. It is not the same as self-hosting, which has no document cap enforced by ClawQL."
+          answer="Free ($0/mo) lets you process up to 200 documents/month on hosted infrastructure with basic Onyx search — a way to try the real pipeline before upgrading to Starter for Coneshare VDR, sovereign inference, and higher limits. It is not the same as self-hosting, which has no document cap enforced by ClawQL."
         />
         <Faq
           id="faq-4"
           question="Can I switch tiers later?"
-          answer="Yes. Vault exports, provider auth, and pipeline configuration can migrate between tiers. Upgrade when you hit document quotas or need Dedicated isolation for compliance."
+          answer="Yes. Vault exports, provider auth, and pipeline configuration can migrate between tiers. Upgrade when you hit document quotas or need Professional isolation and vertical fine-tuning for compliance."
         />
         <Faq
           id="faq-5"
+          question="How does ClawQL pricing compare to Hyperscience or ABBYY?"
+          answer={`Incumbent IDP vendors often charge per page ($0.02–$1.50+) or $40K–$100K+/year in enterprise contracts. A Business customer processing 25,000 documents/month at ~5 pages each would pay tens of thousands per month at per-page IDP rates. ClawQL Business is ${pricing.business.monthlyPrice}/month flat with IDP, VDR, semantic search, and agent orchestration bundled — see the competitive section above for illustrative TCO math.`}
+        />
+        <Faq
+          id="faq-6"
+          question="Why is ClawQL priced below legacy VDR and IDP stacks?"
+          answer={`Intralinks, Datasite, and similar vendors price per deal, per page, or $10K–$200K+/year with storage overages and setup fees. Starter at ${pricing.starter.monthlyPrice}/month includes Coneshare VDR in the subscription. Pricing is anchored to replacement value — still 6–20× below the incumbent stack — while remaining credible to enterprise procurement teams.`}
+        />
+        <Faq
+          id="faq-7"
+          question="Do you match ABBYY's pre-trained document skills?"
+          answer="Not on day one. ABBYY Vantage ships 150+ pre-built skills for common document types. ClawQL composes classify, extract, and HITL per vertical — lending W-2 samples ship today; broader skill libraries build with vertical packages. We state this openly in competitive evaluations rather than overclaiming."
+        />
+        <Faq
+          id="faq-8"
+          question="What is the Sovereign Security Pack?"
+          answer={`The Sovereign Security Pack (${sovereignSecurityPack.monthlyPrice}${sovereignSecurityPack.period}) is an optional add-on on Starter, Business, and Professional. It bundles Kata VM isolation, model weight integrity verification, WORM Merkle audit logs, Panguard fail-closed ATR, and monthly posture reports. Enterprise includes it by default.`}
+        />
+        <Faq
+          id="faq-9"
           question="Do you publish enterprise pricing?"
-          answer="Enterprise contracts are custom-scoped for SSO/SAML, EU data residency, on-call support, and very high volume. Contact sales to discuss annual terms."
+          answer={`Enterprise contracts start from ${pricing.enterprise.priceFrom}${pricing.enterprise.period} for dedicated nodes, custom fine-tuning with retraining, EU multi-region, DPA/BAA, and a dedicated CSM. Contact sales to discuss annual terms.`}
         />
       </FAQsAccordion>
 
@@ -359,7 +445,7 @@ export default function Page() {
         headline="Self-host free or join early access"
         subheadline={
           <p>
-            Install clawql-mcp on your hardware, or join the waitlist for managed Free, Starter, Business, or Dedicated
+            Install clawql-mcp on your hardware, or join the waitlist for managed Free, Starter, Business, or Professional
             hosting.
           </p>
         }

@@ -202,8 +202,8 @@ export default function Page() {
         />
         <Faq
           id="faq-2"
-          question="What's the difference between Starter, Business, and Dedicated?"
-          answer="Starter ($149/mo) and Business ($299/mo) are shared multi-tenant plans with 5,000 and 25,000 documents/month respectively. Dedicated ($599/mo) gives your organization an isolated namespace with unlimited documents and 99.9% uptime SLA. All managed tiers are in early access — join the waitlist for founder-led onboarding."
+          question="What's the difference between Starter, Business, and Professional?"
+          answer={`Starter (${pricing.starter.monthlyPrice}/mo) and Business (${pricing.business.monthlyPrice}/mo) are shared multi-tenant plans with 5,000 and 25,000 documents/month respectively. Professional (${pricing.professional.monthlyPrice}/mo) gives your organization a dedicated namespace, one vertical fine-tune adapter, SSO/SAML, and 99.9% uptime SLA. All managed tiers are in early access — join the waitlist for founder-led onboarding.`}
         />
         <Faq
           id="faq-3"
@@ -213,12 +213,12 @@ export default function Page() {
         <Faq
           id="faq-4"
           question="Do you offer enterprise contracts?"
-          answer="Yes — for very high volume, custom SLAs, and on-call support. We don't list a fixed enterprise price; contracts are scoped individually and typically start around $3,000/month. Contact sales to discuss."
+          answer={`Yes — Enterprise starts from ${pricing.enterprise.priceFrom}${pricing.enterprise.period} for dedicated nodes, custom fine-tuning, EU multi-region, DPA/BAA, and a dedicated CSM. Contact sales to scope annual terms.`}
         />
         <Faq
           id="faq-5"
           question="Is managed hosting available today?"
-          answer="Self-hosting is available now — npm, Helm, and the full open-source stack. Managed Free, Starter, Business, and Dedicated hosting is in early access: limited tenant slots, founder-led onboarding, and personal replies to waitlist signups."
+          answer="Self-hosting is available now — npm, Helm, and the full open-source stack. Managed Free, Starter, Business, Professional, and Enterprise hosting is in early access: limited tenant slots, founder-led onboarding, and personal replies to waitlist signups."
         />
         <Faq
           id="faq-6"
@@ -230,7 +230,7 @@ export default function Page() {
       {/* Pricing teaser — full grid on /pricing */}
       <PricingMultiTier
         id="pricing"
-        headline="Self-host free. Managed tiers from $149/mo — early access."
+        headline={`Self-host free. Managed tiers from ${pricing.starter.monthlyPrice}/mo — early access.`}
         subheadline={<p className="text-center text-sm/7 text-mist-600 dark:text-mist-400">{site.earlyAccess.pricingNote}</p>}
         plans={
           <>
@@ -273,12 +273,12 @@ export default function Page() {
               }
             />
             <Plan
-              name={pricing.dedicated.name}
-              price={pricing.dedicated.monthlyPrice}
-              period={pricing.dedicated.period}
-              subheadline={<p>{pricing.dedicated.subheadline}</p>}
-              badge={pricing.dedicated.badge}
-              features={pricing.dedicated.features.slice(0, 4)}
+              name={pricing.professional.name}
+              price={pricing.professional.monthlyPrice}
+              period={pricing.professional.period}
+              subheadline={<p>{pricing.professional.subheadline}</p>}
+              badge={pricing.professional.badge}
+              features={pricing.professional.features.slice(0, 4)}
               cta={
                 <PlainButtonLink href={site.urls.pricing} size="lg">
                   All tiers & limits <ArrowNarrowRightIcon />

@@ -53,8 +53,8 @@ export default function Page() {
           <div className="rounded-xl bg-mist-950/2.5 p-6 dark:bg-white/5">
             <h3 className="font-semibold text-mist-950 dark:text-white">Early access, founder-led</h3>
             <p className="mt-2">
-              Managed hosting is in early access — onboarding the first Dedicated and Shared tenants with founder-led
-              setup, not a self-serve checkout. The open-source core is production-ready today; hosted slots are limited
+              Managed hosting is in early access — onboarding the first Professional and shared-tenancy tenants with
+              founder-led setup, not a self-serve checkout. The open-source core is production-ready today; hosted slots are limited
               while we validate pipeline reliability under real workloads.
             </p>
           </div>
