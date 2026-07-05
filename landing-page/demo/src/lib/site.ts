@@ -6,9 +6,9 @@ export const site = {
   earlyAccess: {
     badge: 'Managed hosting is in early access — accepting waitlist signups',
     summary:
-      'ClawQL is open source and self-hostable today. Shared and dedicated managed hosting is onboarding its first tenants — founder-led setup, limited slots, full IDP pipeline included.',
+      'ClawQL is open source and self-hostable today. Managed hosting (Free, Starter, Business, Professional, Enterprise) is onboarding its first tenants — founder-led setup, limited slots, sovereign inference on paid plans.',
     pricingNote:
-      'Listed managed prices are early-access anchors. We onboard Dedicated customers first, then expand shared tenancy as capacity grows.',
+      'Managed tiers follow the June 2026 GTM model — value-anchored pricing against the IDP + VDR + search stack incumbents sell separately. We onboard Professional and Business customers first, then Starter shared slots as capacity grows. All managed tiers are early access with founder-led onboarding.',
   },
   waitlistPromise:
     'Join the waitlist for managed hosting — we reply personally when a slot opens. Self-host free with npm or Helm while you wait.',

@@ -8,6 +8,7 @@ import { Feature, FeaturesThreeColumn } from '@/components/sections/features-thr
 import { HeroSimpleCentered } from '@/components/sections/hero-simple-centered'
 import { Section } from '@/components/elements/section'
 import { idpPipelineStages, mcpToolTiers } from '@/lib/marketing'
+import { pricing } from '@/lib/pricing'
 import { site } from '@/lib/site'
 
 export const metadata = {
@@ -22,8 +23,9 @@ export default function Page() {
         headline="Join early access for managed ClawQL"
         subheadline={
           <p>
-            {site.earlyAccess.summary} Shared from $299/month ($250/month annual) or dedicated single-tenant from
-            $599/month ($500/month annual). {site.waitlistPromise}
+            {site.earlyAccess.summary} Managed Free ($0), Starter ({pricing.starter.monthlyPrice}/mo), Business (
+            {pricing.business.monthlyPrice}/mo), and Professional ({pricing.professional.monthlyPrice}/mo) — join the
+            waitlist for founder-led onboarding. {site.waitlistPromise}
           </p>
         }
         cta={<WaitlistSignupForm className="mx-auto" />}
@@ -113,7 +115,8 @@ export default function Page() {
       <section className="pb-24">
         <div className="mx-auto flex max-w-xl flex-col items-center gap-4 px-6 text-center">
           <p className="text-sm/7 text-mist-700 dark:text-mist-400">
-            Enterprise: custom SLAs, on-call support, and very high volume — typically from ~$3,000/month.{' '}
+            Enterprise: dedicated node, custom fine-tuning, EU multi-region — from {pricing.enterprise.priceFrom}
+            {pricing.enterprise.period}.{' '}
             <a href={site.urls.contact} className="underline">
               Contact sales
             </a>{' '}
