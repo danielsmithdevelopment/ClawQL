@@ -5,44 +5,64 @@ import { FAQsAccordion, Faq } from '@/components/sections/faqs-accordion'
 import { PlanComparisonTable } from '@/components/sections/plan-comparison-table'
 import { Plan, PricingHeroMultiTier } from '@/components/sections/pricing-hero-multi-tier'
 import { Section } from '@/components/elements/section'
-import { managedPrice, annualBillingSavingsLabel, pricing, pricingPlanNames, type BillingPeriod } from '@/lib/pricing'
+import {
+  annualBillingNoteText,
+  annualBillingSavingsLabel,
+  managedPrice,
+  pricing,
+  pricingPlanNames,
+  type BillingPeriod,
+} from '@/lib/pricing'
 import { site } from '@/lib/site'
 
-function plans(billing: BillingPeriod) {
-  const annualNote =
-    billing === 'Yearly' ? (
-      <span className="block text-mist-500">
-        {' '}
-        Billed annually ($3,000/yr shared · $6,000/yr dedicated) — {annualBillingSavingsLabel} vs monthly billing.
-      </span>
-    ) : null
+function managedPlans(billing: BillingPeriod) {
+  const annualNote = annualBillingNoteText(billing)
 
   return (
     <>
       <Plan
-        name={pricing.selfHosted.name}
-        price={pricing.selfHosted.price}
-        period={pricing.selfHosted.period}
-        subheadline={<p>{pricing.selfHosted.subheadline}</p>}
-        features={[...pricing.selfHosted.features]}
+        name={pricing.managedFree.name}
+        price={pricing.managedFree.monthlyPrice}
+        period={pricing.managedFree.period}
+        subheadline={<p>{pricing.managedFree.subheadline}</p>}
+        badge={pricing.managedFree.badge}
+        features={[...pricing.managedFree.features]}
         cta={
-          <ButtonLink href={`${site.urls.docs}/readme/getting-started`} size="lg">
-            Quick start
+          <ButtonLink href={site.urls.signup} size="lg">
+            Join early access
           </ButtonLink>
         }
       />
       <Plan
-        name={pricing.shared.name}
-        price={managedPrice('shared', billing)}
-        period={pricing.shared.period}
+        name={pricing.starter.name}
+        price={managedPrice('starter', billing)}
+        period={pricing.starter.period}
         subheadline={
           <p>
-            {pricing.shared.subheadline}
-            {annualNote}
+            {pricing.starter.subheadline}
+            {annualNote ? <span className="block text-mist-500">{annualNote}</span> : null}
           </p>
         }
-        badge={pricing.shared.badge}
-        features={[...pricing.shared.features]}
+        badge={pricing.starter.badge}
+        features={[...pricing.starter.features]}
+        cta={
+          <ButtonLink href={site.urls.signup} size="lg">
+            Join early access
+          </ButtonLink>
+        }
+      />
+      <Plan
+        name={pricing.business.name}
+        price={managedPrice('business', billing)}
+        period={pricing.business.period}
+        subheadline={
+          <p>
+            {pricing.business.subheadline}
+            {annualNote ? <span className="block text-mist-500">{annualNote}</span> : null}
+          </p>
+        }
+        badge={pricing.business.badge}
+        features={[...pricing.business.features]}
         cta={
           <ButtonLink href={site.urls.signup} size="lg">
             Join early access
@@ -56,7 +76,7 @@ function plans(billing: BillingPeriod) {
         subheadline={
           <p>
             {pricing.dedicated.subheadline}
-            {annualNote}
+            {annualNote ? <span className="block text-mist-500">{annualNote}</span> : null}
           </p>
         }
         badge={pricing.dedicated.badge}
@@ -78,18 +98,34 @@ export const metadata = {
 export default function Page() {
   return (
     <>
+      <Section id="self-hosted" eyebrow="Open source" headline="Self-host free on your hardware">
+        <div className="flex flex-col gap-6 rounded-xl bg-mist-950/2.5 p-6 sm:flex-row sm:items-center sm:justify-between dark:bg-white/5">
+          <div className="max-w-2xl">
+            <p className="text-sm/7 text-mist-700 dark:text-mist-400">{pricing.selfHosted.subheadline}</p>
+            <ul className="mt-4 space-y-1 text-sm/7 text-mist-600 dark:text-mist-500">
+              {pricing.selfHosted.features.map((feature) => (
+                <li key={feature}>· {feature}</li>
+              ))}
+            </ul>
+          </div>
+          <ButtonLink href={`${site.urls.docs}/readme/getting-started`} size="lg" className="shrink-0">
+            Quick start
+          </ButtonLink>
+        </div>
+      </Section>
+
       <PricingHeroMultiTier
         id="pricing"
-        headline="Pricing"
+        headline="Managed hosting"
         subheadline={
           <p>
-            {site.earlyAccess.summary} Self-host the full stack free on your hardware today. Shared and dedicated
-            managed tiers are in early access — join the waitlist for founder-led onboarding.
+            {site.earlyAccess.summary} Document volume and storage limits apply per tier; storage overage billed at
+            $0.02/GB on Starter and Business ($0.015/GB pass-through on Dedicated).
           </p>
         }
         options={['Monthly', 'Yearly']}
         annualSavingsLabel={annualBillingSavingsLabel}
-        plans={{ Monthly: plans('Monthly'), Yearly: plans('Yearly') }}
+        plans={{ Monthly: managedPlans('Monthly'), Yearly: managedPlans('Yearly') }}
       />
 
       <Section id="early-access" eyebrow="Early access" headline="Managed hosting is onboarding its first tenants">
@@ -102,48 +138,125 @@ export default function Page() {
         plans={[...pricingPlanNames]}
         features={[
           {
-            title: 'Hosting model',
+            title: 'Usage & storage',
             features: [
-              { name: 'Your own hardware', value: { 'Self-hosted': true, Shared: false, Dedicated: false } },
               {
-                name: 'Multi-tenant shared infra',
-                value: { 'Self-hosted': false, Shared: true, Dedicated: false },
+                name: 'Documents / month',
+                value: {
+                  'Self-hosted': 'Unlimited (your infra)',
+                  Free: '500',
+                  Starter: '5,000',
+                  Business: '25,000',
+                  Dedicated: 'Unlimited',
+                },
               },
               {
-                name: 'Dedicated hardware (single-tenant)',
-                value: { 'Self-hosted': false, Shared: false, Dedicated: true },
+                name: 'Users',
+                value: {
+                  'Self-hosted': 'Unlimited',
+                  Free: '1',
+                  Starter: '5',
+                  Business: '25',
+                  Dedicated: 'Unlimited',
+                },
               },
               {
-                name: 'Full isolation for compliance',
-                value: { 'Self-hosted': true, Shared: false, Dedicated: true },
+                name: 'Storage included',
+                value: {
+                  'Self-hosted': 'Your choice',
+                  Free: '5 GB',
+                  Starter: '50 GB',
+                  Business: '500 GB',
+                  Dedicated: '1 TB',
+                },
+              },
+              {
+                name: 'Storage overage',
+                value: {
+                  'Self-hosted': 'N/A',
+                  Free: 'N/A',
+                  Starter: '$0.02/GB',
+                  Business: '$0.02/GB',
+                  Dedicated: '$0.015/GB',
+                },
               },
             ],
           },
           {
-            title: 'Core MCP',
+            title: 'Document intelligence',
             features: [
-              { name: 'search & execute', value: true },
-              { name: 'audit & cache', value: true },
-              { name: 'Bundled providers', value: true },
-              { name: 'Stdio MCP', value: true },
               {
-                name: 'Hosted HTTP MCP',
-                value: { 'Self-hosted': false, Shared: true, Dedicated: true },
+                name: 'Coneshare VDR',
+                value: {
+                  'Self-hosted': 'Self-deploy optional',
+                  Free: false,
+                  Starter: true,
+                  Business: true,
+                  Dedicated: 'Full + analytics',
+                },
               },
-            ],
-          },
-          {
-            title: 'IDP document pipeline',
-            features: [
-              { name: 'Eight bundled vendors', value: true },
-              { name: 'run_idp_pipeline', value: true },
-              { name: 'classify_document', value: true },
-              { name: 'extract_document', value: true },
+              {
+                name: 'Onyx semantic search',
+                value: {
+                  'Self-hosted': 'Self-managed',
+                  Free: 'Basic',
+                  Starter: 'Full',
+                  Business: 'Full',
+                  Dedicated: 'Full',
+                },
+              },
+              {
+                name: 'Processing priority',
+                value: {
+                  'Self-hosted': '—',
+                  Free: 'Low',
+                  Starter: 'Standard',
+                  Business: 'Priority',
+                  Dedicated: 'Priority',
+                },
+              },
               {
                 name: 'ClawQL Archive Layer (managed)',
                 value: {
                   'Self-hosted': 'Paperless-ngx optional',
-                  Shared: true,
+                  Free: true,
+                  Starter: true,
+                  Business: true,
+                  Dedicated: true,
+                },
+              },
+            ],
+          },
+          {
+            title: 'Platform',
+            features: [
+              {
+                name: 'Hosted HTTP MCP',
+                value: {
+                  'Self-hosted': false,
+                  Free: true,
+                  Starter: true,
+                  Business: true,
+                  Dedicated: true,
+                },
+              },
+              {
+                name: 'Tenant isolation',
+                value: {
+                  'Self-hosted': 'Your hardware',
+                  Free: 'Shared',
+                  Starter: 'Shared',
+                  Business: 'Shared',
+                  Dedicated: 'Dedicated namespace',
+                },
+              },
+              {
+                name: 'Sovereign inference (no external LLM APIs)',
+                value: {
+                  'Self-hosted': 'Your deployment',
+                  Free: true,
+                  Starter: true,
+                  Business: true,
                   Dedicated: true,
                 },
               },
@@ -151,37 +264,36 @@ export default function Page() {
                 name: 'hitl_enqueue_label_studio',
                 value: {
                   'Self-hosted': 'Self-deploy Label Studio',
-                  Shared: false,
+                  Free: false,
+                  Starter: false,
+                  Business: false,
                   Dedicated: false,
                 },
               },
             ],
           },
           {
-            title: 'Memory & knowledge',
+            title: 'Support & SLA',
             features: [
               {
-                name: 'Vault memory (memory_recall)',
-                value: { 'Self-hosted': 'Self-managed', Shared: true, Dedicated: true },
-              },
-              { name: 'Document ingest', value: true },
-              {
-                name: 'Onyx enterprise search',
-                value: { 'Self-hosted': 'Self-managed', Shared: true, Dedicated: true },
-              },
-            ],
-          },
-          {
-            title: 'Support',
-            features: [
-              { name: 'Community support', value: { 'Self-hosted': true, Shared: true, Dedicated: true } },
-              {
-                name: 'Email support',
-                value: { 'Self-hosted': false, Shared: true, Dedicated: 'Priority' },
+                name: 'SLA',
+                value: {
+                  'Self-hosted': '—',
+                  Free: 'None',
+                  Starter: '99% uptime',
+                  Business: '99.5% uptime',
+                  Dedicated: '99.9% uptime',
+                },
               },
               {
-                name: 'SSO / RBAC',
-                value: { 'Self-hosted': false, Shared: false, Dedicated: true },
+                name: 'Support',
+                value: {
+                  'Self-hosted': 'Community',
+                  Free: 'Community',
+                  Starter: 'Email (48 hr)',
+                  Business: 'Email (24 hr)',
+                  Dedicated: 'Priority + Slack',
+                },
               },
             ],
           },
@@ -191,8 +303,13 @@ export default function Page() {
       <Section
         id="enterprise"
         eyebrow="Enterprise"
-        headline="High volume, custom SLAs, and on-call support"
-        subheadline={<p>{pricing.enterprise.subheadline} Enterprise includes managed HITL via hitl_enqueue_label_studio.</p>}
+        headline="Custom contracts for SSO, EU residency, and on-call support"
+        subheadline={
+          <p>
+            {pricing.enterprise.subheadline} Enterprise adds managed HITL via hitl_enqueue_label_studio, dedicated CSM,
+            and custom SLAs beyond the $599/mo Dedicated tier.
+          </p>
+        }
       >
         <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {pricing.enterprise.features.map((feature) => (
@@ -213,29 +330,39 @@ export default function Page() {
         <Faq
           id="faq-1"
           question="Is self-hosted really free?"
-          answer="Yes. ClawQL is open source. You pay only for the compute and storage on your own hardware. All core MCP tools are included with no license fee."
+          answer="Yes. ClawQL is open source. You pay only for compute and storage on your hardware. All core MCP tools and the full IDP pipeline are included with no license fee."
         />
         <Faq
           id="faq-2"
-          question="What's the difference between shared and dedicated managed hosting?"
-          answer="Shared managed hosting is multi-tenant — your workload runs alongside other customers on the same infrastructure. It's more affordable but may see reduced performance during burst periods and does not provide complete isolation if regulators or compliance require it. Dedicated managed hosting deploys onto hardware reserved for your organization only — no other customers, full isolation."
+          question="What's the difference between Starter, Business, and Dedicated?"
+          answer="Starter ($149/mo) and Business ($299/mo) run on shared multi-tenant infrastructure with document volume limits (5,000 and 25,000 documents/month). Dedicated ($599/mo) gives your organization a dedicated namespace with full resource allocation, unlimited documents, and 99.9% uptime SLA. All managed tiers are in early access with founder-led onboarding."
         />
         <Faq
           id="faq-3"
-          question="Can I switch from shared to dedicated later?"
-          answer="Yes. Vault exports, provider auth, and pipeline configuration can migrate between tiers. Contact us when your compliance or performance requirements outgrow shared hosting."
+          question="What is the managed Free tier?"
+          answer="Free ($0/mo) lets you process up to 500 documents/month on hosted infrastructure with basic Onyx search — a way to try the real pipeline before upgrading to Starter for Coneshare VDR and higher limits. It is not the same as self-hosting, which has no document cap enforced by ClawQL."
         />
         <Faq
           id="faq-4"
+          question="Can I switch tiers later?"
+          answer="Yes. Vault exports, provider auth, and pipeline configuration can migrate between tiers. Upgrade when you hit document quotas or need Dedicated isolation for compliance."
+        />
+        <Faq
+          id="faq-5"
           question="Do you publish enterprise pricing?"
-          answer="Enterprise contracts are custom-scoped for very high volume, dedicated SLAs, and on-call support. We don't list a fixed price — engagements typically start around $3,000/month depending on requirements. Contact sales to discuss."
+          answer="Enterprise contracts are custom-scoped for SSO/SAML, EU data residency, on-call support, and very high volume. Contact sales to discuss annual terms."
         />
       </FAQsAccordion>
 
       <CallToActionSimpleCentered
         id="call-to-action"
-        headline="Start free or join early access"
-        subheadline={<p>Install clawql-mcp on your hardware, or join the waitlist for managed Shared and Dedicated hosting.</p>}
+        headline="Self-host free or join early access"
+        subheadline={
+          <p>
+            Install clawql-mcp on your hardware, or join the waitlist for managed Free, Starter, Business, or Dedicated
+            hosting.
+          </p>
+        }
         cta={
           <div className="flex items-center gap-4">
             <ButtonLink href={site.urls.signup} size="lg">
