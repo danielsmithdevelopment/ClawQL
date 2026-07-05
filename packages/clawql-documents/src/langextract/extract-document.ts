@@ -226,7 +226,8 @@ function heuristicExtract(input: ExtractDocumentInput): ExtractDocumentResult {
           extraction_class: "schedule_b_exception",
           extraction_text: val,
           attributes: { item: match[1] },
-          char_interval: offset >= 0 ? { start: offset, end: offset + val.length } : findSpan(text, val),
+          char_interval:
+            offset >= 0 ? { start: offset, end: offset + val.length } : findSpan(text, val),
         });
       }
     }

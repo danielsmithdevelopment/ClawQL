@@ -57,10 +57,14 @@ function heuristicClassify(input: ClassifyDocumentInput): ClassifyDocumentResult
   } else if (/pay\s*stub|earnings statement/i.test(corpus)) {
     label = "pay_stub";
     confidence = 0.86;
-  } else if (/title\s*commitment|schedule\s*b|alta\s*commitment|commitment\s*for\s*title/i.test(corpus)) {
+  } else if (
+    /title\s*commitment|schedule\s*b|alta\s*commitment|commitment\s*for\s*title/i.test(corpus)
+  ) {
     label = "title_commitment";
     confidence = 0.91;
-  } else if (/purchase\s*(and\s*)?sale|purchase\s*price|earnest\s*money|residential\s*contract/i.test(corpus)) {
+  } else if (
+    /purchase\s*(and\s*)?sale|purchase\s*price|earnest\s*money|residential\s*contract/i.test(corpus)
+  ) {
     label = "purchase_agreement";
     confidence = 0.9;
   } else if (/appraisal\s*report|uniform\s*residential|urar/i.test(corpus)) {

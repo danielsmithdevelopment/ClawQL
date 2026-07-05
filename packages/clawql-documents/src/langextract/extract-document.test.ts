@@ -46,7 +46,9 @@ describe("extractDocument", () => {
       expect(result.ok).toBe(true);
       expect(result.extractions?.some((e) => e.extraction_class === "property_address")).toBe(true);
       expect(result.extractions?.some((e) => e.extraction_class === "policy_amount")).toBe(true);
-      expect(result.extractions?.some((e) => e.extraction_class === "schedule_b_exception")).toBe(true);
+      expect(result.extractions?.some((e) => e.extraction_class === "schedule_b_exception")).toBe(
+        true
+      );
     } finally {
       if (prev === undefined) delete process.env.LANGEXTRACT_BASE_URL;
       else process.env.LANGEXTRACT_BASE_URL = prev;
