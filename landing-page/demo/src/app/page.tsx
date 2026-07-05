@@ -19,7 +19,7 @@ import { WorkflowFeedSection } from '@/components/sections/workflow-feed'
 import { idpPipelineStages, mcpToolTiers, multiProviderBenchmark } from '@/lib/marketing'
 import { securityEnforcementLayers, securityPillars } from '@/lib/security-marketing'
 import { workflowFeeds } from '@/lib/workflow-feeds'
-import { managedPrice, pricing } from '@/lib/pricing'
+import { pricing } from '@/lib/pricing'
 import { site } from '@/lib/site'
 
 export default function Page() {
@@ -202,8 +202,8 @@ export default function Page() {
         />
         <Faq
           id="faq-2"
-          question="What's the difference between shared and dedicated managed hosting?"
-          answer="Shared managed hosting is multi-tenant — cost-effective at $299/month ($250/month on annual billing) but may see reduced performance during bursts and is not fully isolated for strict compliance. Dedicated managed hosting runs on hardware for your organization only at $599/month ($500/month annual) — full isolation, no neighbor tenants. Both tiers are in early access with founder-led onboarding — join the waitlist for a slot."
+          question="What's the difference between Starter, Business, and Professional?"
+          answer={`Starter (${pricing.starter.monthlyPrice}/mo) and Business (${pricing.business.monthlyPrice}/mo) are shared multi-tenant plans with 5,000 and 25,000 documents/month respectively. Professional (${pricing.professional.monthlyPrice}/mo) gives your organization a dedicated namespace, one vertical fine-tune adapter, SSO/SAML, and 99.9% uptime SLA. All managed tiers are in early access — join the waitlist for founder-led onboarding.`}
         />
         <Faq
           id="faq-3"
@@ -213,12 +213,12 @@ export default function Page() {
         <Faq
           id="faq-4"
           question="Do you offer enterprise contracts?"
-          answer="Yes — for very high volume, custom SLAs, and on-call support. We don't list a fixed enterprise price; contracts are scoped individually and typically start around $3,000/month. Contact sales to discuss."
+          answer={`Yes — Enterprise starts from ${pricing.enterprise.priceFrom}${pricing.enterprise.period} for dedicated nodes, custom fine-tuning, EU multi-region, DPA/BAA, and a dedicated CSM. Contact sales to scope annual terms.`}
         />
         <Faq
           id="faq-5"
           question="Is managed hosting available today?"
-          answer="Self-hosting is available now — npm, Helm, and the full open-source stack. Managed Shared and Dedicated hosting is in early access: limited tenant slots, founder-led onboarding, and personal replies to waitlist signups. Join the waitlist or contact sales for Dedicated and Enterprise requirements."
+          answer="Self-hosting is available now — npm, Helm, and the full open-source stack. Managed Free, Starter, Business, Professional, and Enterprise hosting is in early access: limited tenant slots, founder-led onboarding, and personal replies to waitlist signups."
         />
         <Faq
           id="faq-6"
@@ -227,10 +227,10 @@ export default function Page() {
         />
       </FAQsTwoColumnAccordion>
 
-      {/* Pricing */}
+      {/* Pricing teaser — full grid on /pricing */}
       <PricingMultiTier
         id="pricing"
-        headline="Self-host free today. Managed hosting — early access waitlist."
+        headline={`Self-host free. Managed tiers from ${pricing.starter.monthlyPrice}/mo — early access.`}
         subheadline={<p className="text-center text-sm/7 text-mist-600 dark:text-mist-400">{site.earlyAccess.pricingNote}</p>}
         plans={
           <>
@@ -239,7 +239,7 @@ export default function Page() {
               price={pricing.selfHosted.price}
               period={pricing.selfHosted.period}
               subheadline={<p>{pricing.selfHosted.subheadline}</p>}
-              features={[...pricing.selfHosted.features]}
+              features={pricing.selfHosted.features.slice(0, 4)}
               cta={
                 <ButtonLink href={`${site.urls.docs}/readme/getting-started`} size="lg">
                   Quick start
@@ -247,12 +247,12 @@ export default function Page() {
               }
             />
             <Plan
-              name={pricing.shared.name}
-              price={managedPrice('shared', 'Monthly')}
-              period={pricing.shared.period}
-              subheadline={<p>{pricing.shared.subheadline}</p>}
-              badge={pricing.shared.badge}
-              features={[...pricing.shared.features]}
+              name={pricing.starter.name}
+              price={pricing.starter.monthlyPrice}
+              period={pricing.starter.period}
+              subheadline={<p>{pricing.starter.subheadline}</p>}
+              badge={pricing.starter.badge}
+              features={pricing.starter.features.slice(0, 4)}
               cta={
                 <ButtonLink href={site.urls.signup} size="lg">
                   Join early access
@@ -260,16 +260,29 @@ export default function Page() {
               }
             />
             <Plan
-              name={pricing.dedicated.name}
-              price={managedPrice('dedicated', 'Monthly')}
-              period={pricing.dedicated.period}
-              subheadline={<p>{pricing.dedicated.subheadline}</p>}
-              badge={pricing.dedicated.badge}
-              features={[...pricing.dedicated.features]}
+              name={pricing.business.name}
+              price={pricing.business.monthlyPrice}
+              period={pricing.business.period}
+              subheadline={<p>{pricing.business.subheadline}</p>}
+              badge={pricing.business.badge}
+              features={pricing.business.features.slice(0, 4)}
               cta={
                 <ButtonLink href={site.urls.signup} size="lg">
                   Join early access
                 </ButtonLink>
+              }
+            />
+            <Plan
+              name={pricing.professional.name}
+              price={pricing.professional.monthlyPrice}
+              period={pricing.professional.period}
+              subheadline={<p>{pricing.professional.subheadline}</p>}
+              badge={pricing.professional.badge}
+              features={pricing.professional.features.slice(0, 4)}
+              cta={
+                <PlainButtonLink href={site.urls.pricing} size="lg">
+                  All tiers & limits <ArrowNarrowRightIcon />
+                </PlainButtonLink>
               }
             />
           </>
