@@ -22,8 +22,8 @@ export default function Page() {
         headline="Join early access for managed ClawQL"
         subheadline={
           <p>
-            {site.earlyAccess.summary} Shared from $299/month ($250/month annual) or dedicated single-tenant from
-            $599/month ($500/month annual). {site.waitlistPromise}
+            {site.earlyAccess.summary} Managed Free ($0), Starter ($149/mo), Business ($299/mo), and Dedicated
+            ($599/mo) — join the waitlist for founder-led onboarding. {site.waitlistPromise}
           </p>
         }
         cta={<WaitlistSignupForm className="mx-auto" />}

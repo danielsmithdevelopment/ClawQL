@@ -108,7 +108,7 @@ export function PricingHeroMultiTier<T extends string>({
             {options.map((option) => (
               <div
                 key={option}
-                className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3"
+                className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4"
               >
                 {plans[option]}
               </div>
