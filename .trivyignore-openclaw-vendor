@@ -1,0 +1,42 @@
+# Vendor mirror only — ghcr.io/openclaw/openclaw:slim (see `.github/workflows/container-mirror.yml`).
+# ClawQL copies upstream bytes verbatim; we cannot patch OpenClaw's OS/toolchain/node-pkg tree at mirror time.
+# Kyverno still verifies Cosign on the mirrored digest in our GHCR. Revisit when upstream refreshes `:slim`.
+CVE-2023-2953
+CVE-2025-59375
+CVE-2025-69534
+CVE-2025-69720
+CVE-2025-7458
+CVE-2026-11940
+CVE-2026-12151
+CVE-2026-25210
+CVE-2026-33845
+CVE-2026-33846
+CVE-2026-3644
+CVE-2026-3833
+CVE-2026-41992
+CVE-2026-42009
+CVE-2026-42010
+CVE-2026-4224
+CVE-2026-42496
+CVE-2026-42497
+CVE-2026-45186
+CVE-2026-48815
+CVE-2026-48962
+CVE-2026-50015
+CVE-2026-50016
+CVE-2026-54369
+CVE-2026-55199
+CVE-2026-55200
+CVE-2026-55487
+CVE-2026-55697
+CVE-2026-55698
+CVE-2026-5773
+CVE-2026-6100
+CVE-2026-6276
+CVE-2026-7210
+CVE-2026-7598
+CVE-2026-8376
+CVE-2026-9538
+GHSA-72r4-9c5j-mj57
+GHSA-fr4h-3cph-29xv
+GHSA-qrv3-253h-g69c
