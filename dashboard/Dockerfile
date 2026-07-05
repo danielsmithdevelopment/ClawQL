@@ -1,5 +1,6 @@
 FROM node:22-alpine AS deps
 WORKDIR /app
+RUN apk upgrade --no-cache
 COPY package*.json ./
 RUN npm ci
 
@@ -8,12 +9,14 @@ WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-# generate-env-catalog.mjs resolves ../../.env.example from dashboard/scripts in monorepo layout
+# Monorepo catalog generators resolve repoRoot as `/` when build context is `./dashboard` only.
 COPY .env.example /.env.example
+COPY scripts/kubernetes/provider-vault-key-catalog.ts /scripts/kubernetes/provider-vault-key-catalog.ts
 RUN npm run build
 
 FROM node:22-alpine AS runner
 WORKDIR /app
+RUN apk upgrade --no-cache
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV HOSTNAME=0.0.0.0

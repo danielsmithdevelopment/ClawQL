@@ -226,8 +226,12 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y skopeo
 
       # `dashboard/Dockerfile` copies `.env.example` into the image for `prebuild` (env catalog). Build context is `./dashboard` only, so stage the repo-root catalog source first.
-      - name: Stage repo .env.example for dashboard Docker context
-        run: cp "${GITHUB_WORKSPACE}/.env.example" "${GITHUB_WORKSPACE}/dashboard/.env.example"
+      - name: Stage repo sources for dashboard Docker context
+        run: |
+          cp "${GITHUB_WORKSPACE}/.env.example" "${GITHUB_WORKSPACE}/dashboard/.env.example"
+          mkdir -p "${GITHUB_WORKSPACE}/dashboard/scripts/kubernetes"
+          cp "${GITHUB_WORKSPACE}/scripts/kubernetes/provider-vault-key-catalog.ts" \
+            "${GITHUB_WORKSPACE}/dashboard/scripts/kubernetes/provider-vault-key-catalog.ts"
 
       - name: Build OCI layout (single artifact — scanned and pushed)
         run: |
