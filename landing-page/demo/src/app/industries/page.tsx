@@ -28,9 +28,9 @@ export default function Page() {
         headline="One gateway. Domain-specific workflows."
         subheadline={
           <p>
-            ClawQL modularization v2.1 defines opt-in vertical packages — lending, healthcare, legal, insurance, and
-            more — that share security, memory, audit, and the IDP pipeline. Lending is the most developed vertical
-            today; others are on the roadmap with notify-me waitlists.
+            ClawQL modularization v2.1 defines opt-in vertical packages that share security, memory, audit, and the IDP
+            pipeline. <strong>Lending</strong> and <strong>real estate</strong> have shipped reference workflows today;
+            healthcare, legal, and insurance are on the roadmap.
           </p>
         }
         cta={

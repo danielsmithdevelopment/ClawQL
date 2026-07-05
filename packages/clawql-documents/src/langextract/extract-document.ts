@@ -33,9 +33,11 @@ export const extractDocumentToolSchema = {
     .optional()
     .describe("Natural-language extraction instructions for LangExtract."),
   schema_preset: z
-    .enum(["w2"])
+    .enum(["w2", "title_commitment", "purchase_agreement", "buyer_offer"])
     .optional()
-    .describe("Built-in few-shot preset when examples are omitted (demo: w2)."),
+    .describe(
+      "Built-in few-shot preset when examples are omitted (w2, title_commitment, purchase_agreement, buyer_offer)."
+    ),
   examples: z
     .array(exampleSchema)
     .max(20)
@@ -65,7 +67,7 @@ export const extractDocumentToolSchema = {
 export type ExtractDocumentInput = {
   text: string;
   prompt_description?: string;
-  schema_preset?: "w2";
+  schema_preset?: "w2" | "title_commitment" | "purchase_agreement" | "buyer_offer";
   examples?: Array<{
     text: string;
     extractions: Array<{
@@ -121,36 +123,279 @@ const W2_EXAMPLES = [
   },
 ];
 
+const TITLE_COMMITMENT_PROMPT =
+  "Extract title commitment Schedule A and Schedule B fields with character-level grounding.";
+
+const TITLE_COMMITMENT_EXAMPLES = [
+  {
+    text: "Property Address: 123 Main Street\nPolicy Amount: $485,000.00\nSCHEDULE B — EXCEPTIONS\n3. Easement for utilities recorded in Instrument No. 2015-002211",
+    extractions: [
+      {
+        extraction_class: "property_address",
+        extraction_text: "123 Main Street",
+        attributes: {},
+      },
+      {
+        extraction_class: "policy_amount",
+        extraction_text: "485,000.00",
+        attributes: { schedule: "A" },
+      },
+      {
+        extraction_class: "schedule_b_exception",
+        extraction_text: "Easement for utilities recorded in Instrument No. 2015-002211",
+        attributes: { item: "3" },
+      },
+    ],
+  },
+];
+
+const PURCHASE_AGREEMENT_PROMPT =
+  "Extract purchase and sale agreement fields with character-level grounding.";
+
+const PURCHASE_AGREEMENT_EXAMPLES = [
+  {
+    text: "Buyer: ALEX M SAMPLE\nSeller: JORDAN T DEMO\nPurchase Price: $485,000.00\nEarnest Money Deposit: $10,000.00\nClosing Date: July 15, 2026",
+    extractions: [
+      {
+        extraction_class: "buyer_name",
+        extraction_text: "ALEX M SAMPLE",
+        attributes: {},
+      },
+      {
+        extraction_class: "seller_name",
+        extraction_text: "JORDAN T DEMO",
+        attributes: {},
+      },
+      {
+        extraction_class: "purchase_price",
+        extraction_text: "485,000.00",
+        attributes: {},
+      },
+      {
+        extraction_class: "earnest_money",
+        extraction_text: "10,000.00",
+        attributes: {},
+      },
+      {
+        extraction_class: "closing_date",
+        extraction_text: "July 15, 2026",
+        attributes: {},
+      },
+    ],
+  },
+];
+
+const BUYER_OFFER_PROMPT =
+  "Extract buyer offer / purchase agreement fields including contingencies with character-level grounding.";
+
+const BUYER_OFFER_EXAMPLES = [
+  {
+    text: "Purchase Price: $478,000.00\nEarnest Money: $8,000.00\nClosing Date: August 1, 2026\nFinancing Contingency: Conventional loan, 21 days to secure commitment\nInspection Contingency: 10 days from acceptance\nAppraisal Contingency: Property must appraise at or above purchase price",
+    extractions: [
+      {
+        extraction_class: "purchase_price",
+        extraction_text: "478,000.00",
+        attributes: {},
+      },
+      {
+        extraction_class: "earnest_money",
+        extraction_text: "8,000.00",
+        attributes: {},
+      },
+      {
+        extraction_class: "closing_date",
+        extraction_text: "August 1, 2026",
+        attributes: {},
+      },
+      {
+        extraction_class: "financing_contingency",
+        extraction_text: "Conventional loan, 21 days to secure commitment",
+        attributes: {},
+      },
+      {
+        extraction_class: "inspection_contingency",
+        extraction_text: "10 days from acceptance",
+        attributes: {},
+      },
+      {
+        extraction_class: "appraisal_contingency",
+        extraction_text: "Property must appraise at or above purchase price",
+        attributes: {},
+      },
+    ],
+  },
+];
+
 function findSpan(text: string, needle: string): { start: number; end: number } | null {
   const idx = text.indexOf(needle);
   if (idx < 0) return null;
   return { start: idx, end: idx + needle.length };
 }
 
+function appendPurchaseAgreementFields(text: string, extractions: GroundedExtraction[]): void {
+  const priceMatch = text.match(/Purchase Price:\s*\$?([\d,]+\.\d{2})/i);
+  if (priceMatch?.[1]) {
+    extractions.push({
+      extraction_class: "purchase_price",
+      extraction_text: priceMatch[1],
+      attributes: {},
+      char_interval: findSpan(text, priceMatch[1]),
+    });
+  }
+  const earnestMatch = text.match(/Earnest Money(?: Deposit)?:\s*\$?([\d,]+\.\d{2})/i);
+  if (earnestMatch?.[1]) {
+    extractions.push({
+      extraction_class: "earnest_money",
+      extraction_text: earnestMatch[1],
+      attributes: {},
+      char_interval: findSpan(text, earnestMatch[1]),
+    });
+  }
+  const closingMatch = text.match(/Closing Date:\s*([^\n]+)/i);
+  if (closingMatch?.[1]) {
+    const val = closingMatch[1].trim();
+    extractions.push({
+      extraction_class: "closing_date",
+      extraction_text: val,
+      attributes: {},
+      char_interval: findSpan(text, val),
+    });
+  }
+  const buyerMatch = text.match(/Buyer:\s*([A-Z][A-Z .'-]+)/i);
+  if (buyerMatch?.[1]) {
+    const val = buyerMatch[1].trim();
+    extractions.push({
+      extraction_class: "buyer_name",
+      extraction_text: val,
+      attributes: {},
+      char_interval: findSpan(text, val),
+    });
+  }
+  const sellerMatch = text.match(/Seller:\s*([A-Z][A-Z .'-]+)/i);
+  if (sellerMatch?.[1]) {
+    const val = sellerMatch[1].trim();
+    extractions.push({
+      extraction_class: "seller_name",
+      extraction_text: val,
+      attributes: {},
+      char_interval: findSpan(text, val),
+    });
+  }
+}
+
+function appendBuyerOfferContingencies(text: string, extractions: GroundedExtraction[]): void {
+  const financingMatch = text.match(/Financing Contingency:\s*([^\n]+)/i);
+  if (financingMatch?.[1]) {
+    const val = financingMatch[1].trim();
+    extractions.push({
+      extraction_class: "financing_contingency",
+      extraction_text: val,
+      attributes: {},
+      char_interval: findSpan(text, val),
+    });
+  }
+  const inspectionMatch = text.match(/Inspection Contingency:\s*([^\n]+)/i);
+  if (inspectionMatch?.[1]) {
+    const val = inspectionMatch[1].trim();
+    extractions.push({
+      extraction_class: "inspection_contingency",
+      extraction_text: val,
+      attributes: {},
+      char_interval: findSpan(text, val),
+    });
+  }
+  const appraisalMatch = text.match(/Appraisal Contingency:\s*([^\n]+)/i);
+  if (appraisalMatch?.[1]) {
+    const val = appraisalMatch[1].trim();
+    extractions.push({
+      extraction_class: "appraisal_contingency",
+      extraction_text: val,
+      attributes: {},
+      char_interval: findSpan(text, val),
+    });
+  }
+  const saleMatch = text.match(/Sale of Buyer'?s?(?: Current)? Property:\s*([^\n]+)/i);
+  if (saleMatch?.[1]) {
+    const val = saleMatch[1].trim();
+    extractions.push({
+      extraction_class: "sale_of_home_contingency",
+      extraction_text: val,
+      attributes: {},
+      char_interval: findSpan(text, val),
+    });
+  }
+}
+
 function heuristicExtract(input: ExtractDocumentInput): ExtractDocumentResult {
   const text = input.text;
   const extractions: GroundedExtraction[] = [];
 
-  const wagesMatch = text.match(/Box\s*1[^\d]*(\d[\d,]*\.\d{2})/i);
-  if (wagesMatch?.[1]) {
-    const span = findSpan(text, wagesMatch[1]);
-    extractions.push({
-      extraction_class: "wages",
-      extraction_text: wagesMatch[1],
-      attributes: { box: "1" },
-      char_interval: span,
-    });
-  }
+  if (input.schema_preset === "title_commitment") {
+    const addressMatch = text.match(/Property Address:\s*([^\n]+)/i);
+    if (addressMatch?.[1]) {
+      const val = addressMatch[1].trim();
+      extractions.push({
+        extraction_class: "property_address",
+        extraction_text: val,
+        attributes: {},
+        char_interval: findSpan(text, val),
+      });
+    }
+    const policyMatch = text.match(/Policy Amount:\s*\$?([\d,]+\.\d{2})/i);
+    if (policyMatch?.[1]) {
+      extractions.push({
+        extraction_class: "policy_amount",
+        extraction_text: policyMatch[1],
+        attributes: { schedule: "A" },
+        char_interval: findSpan(text, policyMatch[1]),
+      });
+    }
+    const exceptionsBlock = text.split(/SCHEDULE B — EXCEPTIONS/i)[1];
+    if (exceptionsBlock) {
+      const exceptionRe = /^\s*(\d+)\.\s+(.+)$/gm;
+      let match: RegExpExecArray | null;
+      while ((match = exceptionRe.exec(exceptionsBlock)) !== null && extractions.length < 12) {
+        const val = match[2].trim();
+        const offset = text.indexOf(val, text.indexOf(exceptionsBlock));
+        extractions.push({
+          extraction_class: "schedule_b_exception",
+          extraction_text: val,
+          attributes: { item: match[1] },
+          char_interval:
+            offset >= 0 ? { start: offset, end: offset + val.length } : findSpan(text, val),
+        });
+      }
+    }
+  } else if (
+    input.schema_preset === "purchase_agreement" ||
+    input.schema_preset === "buyer_offer"
+  ) {
+    appendPurchaseAgreementFields(text, extractions);
+    if (input.schema_preset === "buyer_offer") {
+      appendBuyerOfferContingencies(text, extractions);
+    }
+  } else {
+    const wagesMatch = text.match(/Box\s*1[^\d]*(\d[\d,]*\.\d{2})/i);
+    if (wagesMatch?.[1]) {
+      const span = findSpan(text, wagesMatch[1]);
+      extractions.push({
+        extraction_class: "wages",
+        extraction_text: wagesMatch[1],
+        attributes: { box: "1" },
+        char_interval: span,
+      });
+    }
 
-  const nameMatch = text.match(/Employee:\s*\n\s*Name:\s*([A-Z][A-Z .'-]+)/i);
-  if (nameMatch?.[1]) {
-    const span = findSpan(text, nameMatch[1].trim());
-    extractions.push({
-      extraction_class: "employee_name",
-      extraction_text: nameMatch[1].trim(),
-      attributes: {},
-      char_interval: span,
-    });
+    const nameMatch = text.match(/Employee:\s*\n\s*Name:\s*([A-Z][A-Z .'-]+)/i);
+    if (nameMatch?.[1]) {
+      const span = findSpan(text, nameMatch[1].trim());
+      extractions.push({
+        extraction_class: "employee_name",
+        extraction_text: nameMatch[1].trim(),
+        attributes: {},
+        char_interval: span,
+      });
+    }
   }
 
   const grounded = extractions.filter((e) => e.char_interval != null);
@@ -171,6 +416,24 @@ function resolvePromptAndExamples(input: ExtractDocumentInput): {
     return {
       prompt_description: input.prompt_description ?? W2_PROMPT,
       examples: input.examples ?? W2_EXAMPLES,
+    };
+  }
+  if (input.schema_preset === "title_commitment") {
+    return {
+      prompt_description: input.prompt_description ?? TITLE_COMMITMENT_PROMPT,
+      examples: input.examples ?? TITLE_COMMITMENT_EXAMPLES,
+    };
+  }
+  if (input.schema_preset === "purchase_agreement") {
+    return {
+      prompt_description: input.prompt_description ?? PURCHASE_AGREEMENT_PROMPT,
+      examples: input.examples ?? PURCHASE_AGREEMENT_EXAMPLES,
+    };
+  }
+  if (input.schema_preset === "buyer_offer") {
+    return {
+      prompt_description: input.prompt_description ?? BUYER_OFFER_PROMPT,
+      examples: input.examples ?? BUYER_OFFER_EXAMPLES,
     };
   }
   return {

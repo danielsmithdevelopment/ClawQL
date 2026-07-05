@@ -20,10 +20,14 @@ export default function Page() {
     <>
       <HeroSimpleCentered
         id="signup-hero"
-        headline="Join early access for managed ClawQL"
+        headline="Book a demo or join early access"
         subheadline={
           <p>
-            {site.earlyAccess.summary} Managed Free ($0), Starter ({pricing.starter.monthlyPrice}/mo), Business (
+            {site.earlyAccess.summary} Real estate teams: see the{' '}
+            <a href="/industries/real-estate#demo-pitch" className="underline">
+              one-paragraph pitch
+            </a>{' '}
+            to forward before your demo. Managed Free ($0), Starter ({pricing.starter.monthlyPrice}/mo), Business (
             {pricing.business.monthlyPrice}/mo), and Professional ({pricing.professional.monthlyPrice}/mo) — join the
             waitlist for founder-led onboarding. {site.waitlistPromise}
           </p>

@@ -57,6 +57,27 @@ function heuristicClassify(input: ClassifyDocumentInput): ClassifyDocumentResult
   } else if (/pay\s*stub|earnings statement/i.test(corpus)) {
     label = "pay_stub";
     confidence = 0.86;
+  } else if (
+    /title\s*commitment|schedule\s*b|alta\s*commitment|commitment\s*for\s*title/i.test(corpus)
+  ) {
+    label = "title_commitment";
+    confidence = 0.91;
+  } else if (
+    /buyer\s*offer|offer\s*to\s*purchase|fsbo\s*offer|counter\s*offer\s*to\s*purchase/i.test(corpus)
+  ) {
+    label = "buyer_offer";
+    confidence = 0.89;
+  } else if (
+    /purchase\s*(and\s*)?sale|purchase\s*price|earnest\s*money|residential\s*contract/i.test(corpus)
+  ) {
+    label = "purchase_agreement";
+    confidence = 0.9;
+  } else if (/appraisal\s*report|uniform\s*residential|urar/i.test(corpus)) {
+    label = "appraisal";
+    confidence = 0.87;
+  } else if (/hoa|homeowners\s*association|condo\s*disclosure/i.test(corpus)) {
+    label = "hoa_disclosure";
+    confidence = 0.86;
   }
   const minConf = input.min_confidence ?? classifierMinConfidence();
   return {

@@ -16,6 +16,23 @@ export type IndustryResource = {
   href: string
 }
 
+export type IndustryStackRow = {
+  system: string
+  role: string
+}
+
+export type IndustryAudience = {
+  /** Anchor id for deep links — e.g. brokerage, fsbo */
+  id: string
+  name: string
+  headline: string
+  overview: string
+  /** Audience-specific forward pitch; falls back to industry.demoPitch when omitted. */
+  demoPitch?: string
+  stackPlacement?: readonly IndustryStackRow[]
+  useCases?: readonly { title: string; body: string }[]
+}
+
 export type Industry = {
   slug: string
   name: string
@@ -27,6 +44,14 @@ export type Industry = {
   statusLabel?: string
   /** Short production reference — e.g. a vertical product powered by ClawQL. */
   productionReference?: string
+  /** How ClawQL fits alongside incumbent systems (CRM, storage, transaction tools). */
+  stackPlacement?: readonly IndustryStackRow[]
+  /** Industry-wide competitive context — franchise-agnostic framing. */
+  marketContext?: string
+  /** One-paragraph pitch for forwarding to prospects or partners. */
+  demoPitch?: string
+  /** Dual-audience targeting — e.g. brokerages vs FSBO sellers on the same vertical page. */
+  audiences?: readonly IndustryAudience[]
   overview: string
   painPoints: readonly { title: string; body: string }[]
   platformCapabilities: readonly string[]

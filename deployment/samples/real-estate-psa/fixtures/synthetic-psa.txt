@@ -1,0 +1,32 @@
+RESIDENTIAL PURCHASE AND SALE AGREEMENT
+*** SYNTHETIC DEMO — NOT A REAL CONTRACT ***
+
+Date: June 1, 2026
+Property: 123 Main Street, Example City, EX 00000
+
+Buyer:  ALEX M SAMPLE
+Seller: JORDAN T DEMO
+
+Purchase Price: $485,000.00
+Earnest Money Deposit: $10,000.00 (held by Example Title & Escrow LLC)
+Closing Date: July 15, 2026
+
+Financing Contingency: Conventional loan, 20% down, 30 days from acceptance
+Inspection Period: 10 days from mutual acceptance
+Title Commitment Due: 5 days before closing
+
+Included Personal Property: Refrigerator, washer, dryer (as-is)
+
+Seller Representations:
+  - No known material defects except as disclosed in attached disclosure packet
+  - HOA dues current through May 2026 ($185/month Sunny Acres HOA)
+
+Special Terms:
+  - Seller to provide HOA estoppel within 7 days
+  - Buyer may assign contract to immediate family with seller approval
+
+Signatures:
+  Buyer:  _________________________  Date: _______
+  Seller: _________________________  Date: _______
+
+Control Number: SYNTH-PSA-2026-0042

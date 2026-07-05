@@ -125,7 +125,7 @@ export function IndustryPage({ industry }: { industry: Industry }) {
         cta={
           <div className="flex flex-col items-center gap-4 sm:flex-row">
             <ButtonLink href={site.urls.signup} size="lg">
-              Talk to us about {industry.name.toLowerCase()}
+              Book a demo
             </ButtonLink>
             <PlainButtonLink href={industry.docsHref} size="lg">
               Technical docs <ArrowNarrowRightIcon />
@@ -148,6 +148,142 @@ export function IndustryPage({ industry }: { industry: Industry }) {
           <p className="mt-4 max-w-3xl text-sm/7 text-mist-600 dark:text-mist-500">{industry.productionReference}</p>
         ) : null}
       </Section>
+
+      {industry.marketContext ? (
+        <Section
+          id="market"
+          eyebrow="Industry context"
+          headline={
+            industry.audiences && industry.audiences.length > 0
+              ? 'The gap brokerages and FSBO sellers share'
+              : 'The gap every brokerage stack shares'
+          }
+          subheadline={
+            <p>
+              {industry.audiences && industry.audiences.length > 0
+                ? 'CRM and flat-fee listing tools compete on pipeline and MLS access — nobody classifies title commitments or compares buyer offers with grounded citations.'
+                : 'Franchise CRMs compete on lead gen and agent productivity — transaction document intelligence is still unowned.'}
+            </p>
+          }
+        >
+          <p className="max-w-3xl text-sm/7 text-mist-700 dark:text-mist-400">{industry.marketContext}</p>
+        </Section>
+      ) : null}
+
+      {industry.audiences && industry.audiences.length > 0 ? (
+        <Section
+          id="audiences"
+          eyebrow="Who it's for"
+          headline="Two audiences, one document engine"
+          subheadline={
+            <p>
+              Same classify → extract → recall pipeline — positioned for transaction coordinators at
+              brokerages and for FSBO sellers comparing offers without a coordinator seat.
+            </p>
+          }
+        >
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            {industry.audiences.map((audience) => (
+              <article
+                key={audience.id}
+                id={audience.id}
+                className="scroll-mt-24 flex flex-col gap-5 rounded-xl border border-mist-950/10 bg-mist-950/2.5 p-6 dark:border-white/10 dark:bg-white/5"
+              >
+                <div className="flex flex-col gap-2">
+                  <p className="text-xs font-medium tracking-wide text-mist-500 uppercase dark:text-mist-400">
+                    {audience.name}
+                  </p>
+                  <h3 className="text-lg font-semibold text-mist-950 dark:text-white">{audience.headline}</h3>
+                  <p className="text-sm/7 text-mist-700 dark:text-mist-400">{audience.overview}</p>
+                </div>
+                {audience.stackPlacement && audience.stackPlacement.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full min-w-[320px] border-collapse text-left text-sm/7">
+                      <thead>
+                        <tr className="border-b border-mist-950/10 dark:border-white/10">
+                          <th className="py-2 pr-3 font-semibold text-mist-950 dark:text-white">System</th>
+                          <th className="py-2 font-semibold text-mist-950 dark:text-white">Role</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {audience.stackPlacement.map((row) => (
+                          <tr key={row.system} className="border-b border-mist-950/5 dark:border-white/5">
+                            <td className="py-2 pr-3 font-medium text-mist-950 dark:text-white">{row.system}</td>
+                            <td className="py-2 text-mist-700 dark:text-mist-400">{row.role}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : null}
+                {audience.useCases && audience.useCases.length > 0 ? (
+                  <ul className="flex flex-col gap-3">
+                    {audience.useCases.map((useCase) => (
+                      <li key={useCase.title} className="text-sm/7 text-mist-700 dark:text-mist-400">
+                        <span className="font-semibold text-mist-950 dark:text-white">{useCase.title}: </span>
+                        {useCase.body}
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+                {audience.demoPitch ? (
+                  <blockquote className="rounded-lg border border-mist-950/10 bg-white/50 p-4 text-sm/7 text-mist-700 dark:border-white/10 dark:bg-mist-950/20 dark:text-mist-300">
+                    {audience.demoPitch}
+                  </blockquote>
+                ) : null}
+              </article>
+            ))}
+          </div>
+        </Section>
+      ) : null}
+
+      {industry.stackPlacement && industry.stackPlacement.length > 0 && !industry.audiences?.length ? (
+        <Section
+          id="stack"
+          eyebrow="Where ClawQL fits"
+          headline="Works alongside your existing stack"
+          subheadline={
+            <p>
+              ClawQL is not a CRM or transaction management replacement — it is the intelligent document layer that
+              connects contacts, files, and deal context.
+            </p>
+          }
+        >
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[480px] border-collapse text-left text-sm/7">
+              <thead>
+                <tr className="border-b border-mist-950/10 dark:border-white/10">
+                  <th className="py-3 pr-4 font-semibold text-mist-950 dark:text-white">System</th>
+                  <th className="py-3 font-semibold text-mist-950 dark:text-white">Role</th>
+                </tr>
+              </thead>
+              <tbody>
+                {industry.stackPlacement.map((row) => (
+                  <tr key={row.system} className="border-b border-mist-950/5 dark:border-white/5">
+                    <td className="py-3 pr-4 font-medium text-mist-950 dark:text-white">{row.system}</td>
+                    <td className="py-3 text-mist-700 dark:text-mist-400">{row.role}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Section>
+      ) : null}
+
+      {industry.demoPitch ? (
+        <Section
+          id="demo-pitch"
+          eyebrow="Forward to your team"
+          headline="One-paragraph pitch"
+          subheadline={
+            <p>Copy and send this to transaction coordinators, team leads, or tech evaluators before a demo.</p>
+          }
+        >
+          <blockquote className="max-w-3xl rounded-xl border border-mist-950/10 bg-mist-950/2.5 p-6 text-sm/7 text-mist-700 dark:border-white/10 dark:bg-white/5 dark:text-mist-300">
+            {industry.demoPitch}
+          </blockquote>
+        </Section>
+      ) : null}
 
       <Section
         id="pain-points"
@@ -340,12 +476,12 @@ export function IndustryPage({ industry }: { industry: Industry }) {
 
       <CallToActionSimple
         id="cta"
-        headline={`Ready to pilot ClawQL in ${industry.name.toLowerCase()}?`}
+        headline={`Ready to demo ClawQL for ${industry.name.toLowerCase()}?`}
         subheadline={ctaSubheadline(industry)}
         cta={
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
             <ButtonLink href={site.urls.signup} size="lg">
-              Join waitlist
+              Book a demo
             </ButtonLink>
             <PlainButtonLink href={`${site.urls.docs}/vision/modularization`} size="lg">
               Modularization roadmap <ArrowNarrowRightIcon />

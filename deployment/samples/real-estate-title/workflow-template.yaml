@@ -1,0 +1,116 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: clawql-realestate-title-ingest
+  labels:
+    clawql.dev/managed: "true"
+    clawql.dev/template: real-estate-title
+    clawql.dev/vertical: real-estate
+spec:
+  entrypoint: title-pipeline
+  arguments:
+    parameters:
+      - name: document_path
+        value: fixtures/synthetic-title-commitment.txt
+      - name: confidence_threshold
+        value: "0.90"
+      - name: deal_id
+        value: demo-deal-123-main
+      - name: clawql_image
+        value: ghcr.io/danielsmithdevelopment/clawql-mcp:latest
+  templates:
+    - name: title-pipeline
+      inputs:
+        parameters:
+          - name: document_path
+          - name: confidence_threshold
+          - name: deal_id
+          - name: clawql_image
+      steps:
+        - - name: classify
+            template: classify-demo
+            arguments:
+              parameters:
+                - name: document_path
+                  value: "{{inputs.parameters.document_path}}"
+                - name: confidence_threshold
+                  value: "{{inputs.parameters.confidence_threshold}}"
+        - - name: hitl-review
+            template: hitl-gate
+            when: "{{steps.classify.outputs.parameters.needs_hitl}} == true"
+        - - name: finalize
+            template: finalize-record
+            arguments:
+              parameters:
+                - name: label
+                  value: "{{steps.classify.outputs.parameters.label}}"
+                - name: confidence
+                  value: "{{steps.classify.outputs.parameters.confidence}}"
+                - name: deal_id
+                  value: "{{inputs.parameters.deal_id}}"
+
+    - name: classify-demo
+      inputs:
+        parameters:
+          - name: document_path
+          - name: confidence_threshold
+      script:
+        image: alpine:3.20
+        command: [sh]
+        source: |
+          set -eu
+          DOC="{{inputs.parameters.document_path}}"
+          THRESH="{{inputs.parameters.confidence_threshold}}"
+          LABEL="unknown"
+          CONF="0.50"
+          case "$DOC" in
+            *title*|*Title*|*commitment*) LABEL="title_commitment"; CONF="0.91" ;;
+            *psa*|*PSA*|*purchase*) LABEL="purchase_agreement"; CONF="0.89" ;;
+            *appraisal*) LABEL="appraisal"; CONF="0.87" ;;
+            *hoa*|*HOA*) LABEL="hoa_disclosure"; CONF="0.86" ;;
+          esac
+          NEEDS="false"
+          if awk -v c="$CONF" -v t="$THRESH" 'BEGIN { exit (c+0 < t+0) ? 1 : 0 }'; then
+            NEEDS="false"
+          else
+            NEEDS="true"
+          fi
+          echo "$LABEL" > /tmp/label
+          echo "$CONF" > /tmp/confidence
+          echo "$NEEDS" > /tmp/needs_hitl
+        outputs:
+          parameters:
+            - name: label
+              valueFrom:
+                path: /tmp/label
+            - name: confidence
+              valueFrom:
+                path: /tmp/confidence
+            - name: needs_hitl
+              valueFrom:
+                path: /tmp/needs_hitl
+
+    - name: hitl-gate
+      suspend: {}
+
+    - name: finalize-record
+      inputs:
+        parameters:
+          - name: label
+          - name: confidence
+          - name: deal_id
+      container:
+        image: alpine:3.20
+        command: [sh, -c]
+        args:
+          - |
+            set -eu
+            mkdir -p /tmp/artifacts
+            printf '{"label":"%s","confidence":"%s","deal_id":"%s","status":"complete","vertical":"real-estate","document_role":"title_commitment"}\n' \
+              "{{inputs.parameters.label}}" "{{inputs.parameters.confidence}}" "{{inputs.parameters.deal_id}}" \
+              > /tmp/artifacts/title-result.json
+            cat /tmp/artifacts/title-result.json
+        outputs:
+          artifacts:
+            - name: title-result
+              path: /tmp/artifacts/title-result.json
