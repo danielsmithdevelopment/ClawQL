@@ -16,6 +16,11 @@ export type IndustryResource = {
   href: string
 }
 
+export type IndustryStackRow = {
+  system: string
+  role: string
+}
+
 export type Industry = {
   slug: string
   name: string
@@ -27,6 +32,10 @@ export type Industry = {
   statusLabel?: string
   /** Short production reference — e.g. a vertical product powered by ClawQL. */
   productionReference?: string
+  /** How ClawQL fits alongside incumbent systems (e.g. KW Command + Google Drive). */
+  stackPlacement?: readonly IndustryStackRow[]
+  /** One-paragraph pitch for forwarding to prospects or partners. */
+  demoPitch?: string
   overview: string
   painPoints: readonly { title: string; body: string }[]
   platformCapabilities: readonly string[]

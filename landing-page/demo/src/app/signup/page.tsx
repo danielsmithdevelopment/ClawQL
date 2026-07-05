@@ -19,11 +19,14 @@ export default function Page() {
     <>
       <HeroSimpleCentered
         id="signup-hero"
-        headline="Join early access for managed ClawQL"
+        headline="Book a demo or join early access"
         subheadline={
           <p>
-            {site.earlyAccess.summary} Shared from $299/month ($250/month annual) or dedicated single-tenant from
-            $599/month ($500/month annual). {site.waitlistPromise}
+            {site.earlyAccess.summary} Real estate teams: see the{' '}
+            <a href="/industries/real-estate#demo-pitch" className="underline">
+              one-paragraph pitch
+            </a>{' '}
+            to forward before your demo. Shared from $299/month or dedicated from $599/month. {site.waitlistPromise}
           </p>
         }
         cta={<WaitlistSignupForm className="mx-auto" />}

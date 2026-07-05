@@ -125,7 +125,7 @@ export function IndustryPage({ industry }: { industry: Industry }) {
         cta={
           <div className="flex flex-col items-center gap-4 sm:flex-row">
             <ButtonLink href={site.urls.signup} size="lg">
-              Talk to us about {industry.name.toLowerCase()}
+              Book a demo
             </ButtonLink>
             <PlainButtonLink href={industry.docsHref} size="lg">
               Technical docs <ArrowNarrowRightIcon />
@@ -148,6 +148,54 @@ export function IndustryPage({ industry }: { industry: Industry }) {
           <p className="mt-4 max-w-3xl text-sm/7 text-mist-600 dark:text-mist-500">{industry.productionReference}</p>
         ) : null}
       </Section>
+
+      {industry.stackPlacement && industry.stackPlacement.length > 0 ? (
+        <Section
+          id="stack"
+          eyebrow="Where ClawQL fits"
+          headline="Works alongside your existing stack"
+          subheadline={
+            <p>
+              ClawQL is not a CRM or transaction management replacement — it is the intelligent document layer that
+              connects contacts, files, and deal context.
+            </p>
+          }
+        >
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[480px] border-collapse text-left text-sm/7">
+              <thead>
+                <tr className="border-b border-mist-950/10 dark:border-white/10">
+                  <th className="py-3 pr-4 font-semibold text-mist-950 dark:text-white">System</th>
+                  <th className="py-3 font-semibold text-mist-950 dark:text-white">Role</th>
+                </tr>
+              </thead>
+              <tbody>
+                {industry.stackPlacement.map((row) => (
+                  <tr key={row.system} className="border-b border-mist-950/5 dark:border-white/5">
+                    <td className="py-3 pr-4 font-medium text-mist-950 dark:text-white">{row.system}</td>
+                    <td className="py-3 text-mist-700 dark:text-mist-400">{row.role}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Section>
+      ) : null}
+
+      {industry.demoPitch ? (
+        <Section
+          id="demo-pitch"
+          eyebrow="Forward to your team"
+          headline="One-paragraph pitch"
+          subheadline={
+            <p>Copy and send this to transaction coordinators, team leads, or tech evaluators before a demo.</p>
+          }
+        >
+          <blockquote className="max-w-3xl rounded-xl border border-mist-950/10 bg-mist-950/2.5 p-6 text-sm/7 text-mist-700 dark:border-white/10 dark:bg-white/5 dark:text-mist-300">
+            {industry.demoPitch}
+          </blockquote>
+        </Section>
+      ) : null}
 
       <Section
         id="pain-points"
@@ -340,12 +388,12 @@ export function IndustryPage({ industry }: { industry: Industry }) {
 
       <CallToActionSimple
         id="cta"
-        headline={`Ready to pilot ClawQL in ${industry.name.toLowerCase()}?`}
+        headline={`Ready to demo ClawQL for ${industry.name.toLowerCase()}?`}
         subheadline={ctaSubheadline(industry)}
         cta={
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
             <ButtonLink href={site.urls.signup} size="lg">
-              Join waitlist
+              Book a demo
             </ButtonLink>
             <PlainButtonLink href={`${site.urls.docs}/vision/modularization`} size="lg">
               Modularization roadmap <ArrowNarrowRightIcon />
