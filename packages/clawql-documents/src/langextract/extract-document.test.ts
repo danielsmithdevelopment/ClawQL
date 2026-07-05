@@ -5,9 +5,19 @@ import { describe, expect, it } from "vitest";
 
 import { extractDocument } from "./extract-document.js";
 
-const fixturePath = join(
+const w2FixturePath = join(
   dirname(fileURLToPath(import.meta.url)),
   "../../../../deployment/samples/lending-w2/fixtures/synthetic-w2.txt"
+);
+
+const titleFixturePath = join(
+  dirname(fileURLToPath(import.meta.url)),
+  "../../../../deployment/samples/real-estate-title/fixtures/synthetic-title-commitment.txt"
+);
+
+const psaFixturePath = join(
+  dirname(fileURLToPath(import.meta.url)),
+  "../../../../deployment/samples/real-estate-psa/fixtures/synthetic-psa.txt"
 );
 
 describe("extractDocument", () => {
@@ -15,12 +25,44 @@ describe("extractDocument", () => {
     const prev = process.env.LANGEXTRACT_BASE_URL;
     delete process.env.LANGEXTRACT_BASE_URL;
     try {
-      const text = readFileSync(fixturePath, "utf8");
+      const text = readFileSync(w2FixturePath, "utf8");
       const result = await extractDocument({ text, schema_preset: "w2" });
       expect(result.ok).toBe(true);
       expect(result.extractions?.length).toBeGreaterThan(0);
       expect(result.extractions?.every((e) => e.char_interval != null)).toBe(true);
       expect(result.extractions?.some((e) => e.extraction_class === "wages")).toBe(true);
+    } finally {
+      if (prev === undefined) delete process.env.LANGEXTRACT_BASE_URL;
+      else process.env.LANGEXTRACT_BASE_URL = prev;
+    }
+  });
+
+  it("extracts title commitment fields from real estate fixture", async () => {
+    const prev = process.env.LANGEXTRACT_BASE_URL;
+    delete process.env.LANGEXTRACT_BASE_URL;
+    try {
+      const text = readFileSync(titleFixturePath, "utf8");
+      const result = await extractDocument({ text, schema_preset: "title_commitment" });
+      expect(result.ok).toBe(true);
+      expect(result.extractions?.some((e) => e.extraction_class === "property_address")).toBe(true);
+      expect(result.extractions?.some((e) => e.extraction_class === "policy_amount")).toBe(true);
+      expect(result.extractions?.some((e) => e.extraction_class === "schedule_b_exception")).toBe(true);
+    } finally {
+      if (prev === undefined) delete process.env.LANGEXTRACT_BASE_URL;
+      else process.env.LANGEXTRACT_BASE_URL = prev;
+    }
+  });
+
+  it("extracts PSA fields from real estate fixture", async () => {
+    const prev = process.env.LANGEXTRACT_BASE_URL;
+    delete process.env.LANGEXTRACT_BASE_URL;
+    try {
+      const text = readFileSync(psaFixturePath, "utf8");
+      const result = await extractDocument({ text, schema_preset: "purchase_agreement" });
+      expect(result.ok).toBe(true);
+      expect(result.extractions?.some((e) => e.extraction_class === "purchase_price")).toBe(true);
+      expect(result.extractions?.some((e) => e.extraction_class === "earnest_money")).toBe(true);
+      expect(result.extractions?.some((e) => e.extraction_class === "closing_date")).toBe(true);
     } finally {
       if (prev === undefined) delete process.env.LANGEXTRACT_BASE_URL;
       else process.env.LANGEXTRACT_BASE_URL = prev;

@@ -38,4 +38,35 @@ describe("classifyDocument", () => {
       else process.env.CLASSIFIER_MIN_CONFIDENCE = prevMin;
     }
   });
+
+  it("classifies title commitments for real estate vertical", async () => {
+    const prev = process.env.CLASSIFIER_BASE_URL;
+    delete process.env.CLASSIFIER_BASE_URL;
+    try {
+      const result = await classifyDocument({
+        docling_md: "# ALTA COMMITMENT FOR TITLE INSURANCE\nSchedule B — Exceptions",
+      });
+      expect(result.ok).toBe(true);
+      expect(result.label).toBe("title_commitment");
+      expect(result.confidence).toBeGreaterThan(0.9);
+    } finally {
+      if (prev === undefined) delete process.env.CLASSIFIER_BASE_URL;
+      else process.env.CLASSIFIER_BASE_URL = prev;
+    }
+  });
+
+  it("classifies purchase agreements for real estate vertical", async () => {
+    const prev = process.env.CLASSIFIER_BASE_URL;
+    delete process.env.CLASSIFIER_BASE_URL;
+    try {
+      const result = await classifyDocument({
+        text: "RESIDENTIAL PURCHASE AND SALE AGREEMENT\nPurchase Price: $485,000.00",
+      });
+      expect(result.ok).toBe(true);
+      expect(result.label).toBe("purchase_agreement");
+    } finally {
+      if (prev === undefined) delete process.env.CLASSIFIER_BASE_URL;
+      else process.env.CLASSIFIER_BASE_URL = prev;
+    }
+  });
 });

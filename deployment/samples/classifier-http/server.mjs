@@ -30,6 +30,18 @@ function classify(body) {
   } else if (/pay\s*stub|earnings statement/.test(corpus)) {
     label = "pay_stub";
     confidence = 0.86;
+  } else if (/title\s*commitment|schedule\s*b|alta\s*commitment|commitment\s*for\s*title/.test(corpus)) {
+    label = "title_commitment";
+    confidence = 0.91;
+  } else if (/purchase\s*(and\s*)?sale|purchase\s*price|earnest\s*money|residential\s*contract/.test(corpus)) {
+    label = "purchase_agreement";
+    confidence = 0.9;
+  } else if (/appraisal\s*report|uniform\s*residential|urar/.test(corpus)) {
+    label = "appraisal";
+    confidence = 0.87;
+  } else if (/hoa|homeowners\s*association|condo\s*disclosure/.test(corpus)) {
+    label = "hoa_disclosure";
+    confidence = 0.86;
   }
 
   const minConf =

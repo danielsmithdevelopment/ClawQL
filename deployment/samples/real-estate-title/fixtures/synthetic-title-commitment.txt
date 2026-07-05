@@ -1,0 +1,37 @@
+ALTA COMMITMENT FOR TITLE INSURANCE
+*** SYNTHETIC DEMO — NOT A REAL TITLE COMMITMENT ***
+
+Commitment Number: SYNTH-TITLE-2026-0042
+Effective Date: June 15, 2026
+Property Address: 123 Main Street, Example City, EX 00000
+Legal Description: Lot 7, Block 2, Sunny Acres Subdivision, per plat recorded in Book 12, Page 34
+
+Proposed Insured:
+  Buyer: ALEX M SAMPLE
+  Seller: JORDAN T DEMO
+
+Title Company:
+  Example Title & Escrow LLC
+  File Number: ET-2026-1188
+
+SCHEDULE A
+  Policy Amount: $485,000.00
+  Proposed Insured Amount: $485,000.00
+  Estate or Interest: Fee Simple
+  Title Vested In: JORDAN T DEMO, a single person
+
+SCHEDULE B — REQUIREMENTS
+  1. Pay the full premium and any endorsements.
+  2. Provide a satisfactory affidavit of title from Seller.
+  3. Record deed from Seller to Buyer.
+
+SCHEDULE B — EXCEPTIONS
+  1. Taxes for the year 2026, not yet due and payable.
+  2. Covenants, conditions, and restrictions recorded in Instrument No. 2019-004455.
+  3. Easement for utilities recorded in Instrument No. 2015-002211 (12-foot utility easement along rear boundary).
+  4. Matter shown on survey dated May 28, 2026, prepared by Demo Survey Co.
+  5. Rights of parties in possession not shown by public records.
+
+Notes for transaction coordinator:
+  Exception 3 may require curative endorsement — verify with seller disclosure.
+  HOA estoppel not yet received.

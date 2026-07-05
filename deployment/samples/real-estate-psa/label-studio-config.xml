@@ -1,0 +1,21 @@
+<View>
+  <Header value="Purchase and sale agreement — field review (synthetic demo)"/>
+  <Text name="instructions" value="Verify purchase price, earnest money, closing date, and party names against the parsed contract."/>
+  <TextArea name="doc" value="$text" readonly="true"/>
+  <Labels name="doc_type" toName="doc">
+    <Label value="purchase_agreement" background="#2ECC40"/>
+    <Label value="counter_offer" background="#FF851B"/>
+    <Label value="addendum" background="#0074D9"/>
+    <Label value="other" background="#AAAAAA"/>
+  </Labels>
+  <Number name="purchase_price" toName="doc" value="$purchase_price"/>
+  <Number name="earnest_money" toName="doc" value="$earnest_money"/>
+  <Text name="closing_date" toName="doc" value="$closing_date"/>
+  <Text name="buyer_name" toName="doc" value="$buyer_name"/>
+  <Text name="seller_name" toName="doc" value="$seller_name"/>
+  <Choices name="approve" toName="doc" choice="single">
+    <Choice value="approve"/>
+    <Choice value="reject"/>
+    <Choice value="needs_rescan"/>
+  </Choices>
+</View>
