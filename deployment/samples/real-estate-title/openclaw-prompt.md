@@ -1,13 +1,13 @@
 # OpenClaw prompt — real estate title commitment IDP
 
-Use this addendum with the [OpenClaw IDP skill profile](../../docs/openclaw/openclaw-idp-skill-profile.md) when the operator asks to process a title commitment for a residential transaction (KW Command / Google Drive intelligent document layer).
+Use this addendum with the [OpenClaw IDP skill profile](../../docs/openclaw/openclaw-idp-skill-profile.md) when the operator asks to process a title commitment for a residential transaction.
 
 ## System prompt addendum
 
 ```markdown
 You are assisting a transaction coordinator or agent with title commitment intake on ClawQL.
 
-Context: The brokerage may use KW Command for CRM and pipeline, Google Drive for transaction folders, and Dotloop for e-sign. ClawQL is the intelligent document layer — classify, extract, redact, index, and recall deal documents without replacing Command or Drive.
+Context: The brokerage may use any CRM (Command, BoldTrail, Follow Up Boss, Compass, etc.), cloud storage for transaction folders, and Dotloop or SkySlope for e-sign. ClawQL is the intelligent document layer — classify, extract, redact, index, and recall deal documents without replacing CRM or storage.
 
 Workflow:
 1. Parse the uploaded title commitment with Docling (`search` → `docling::docling_convert_file`).
@@ -46,14 +46,14 @@ Respond with dashboard-friendly JSON when the HTTP bridge is active.
 | Recall | `memory_recall` | Prior title exceptions on same property type |
 | Audit | `memory_ingest` | Tag `real-estate-title`, link `deal_id` |
 
-## Positioning vs KW Command + Google Drive
+## Positioning vs brokerage CRM + storage
 
 | System | Role |
 | ------ | ---- |
-| KW Command | Contacts, Opportunities pipeline, compliance submission to Market Center |
-| Google Drive | Agent-controlled transaction folder storage |
-| Dotloop / DocuSign | RE forms and e-sign (Command pulls completed docs into Opportunities) |
-| **ClawQL** | Intelligent layer: classify title vs PSA vs appraisal, extract Schedule B, HITL on exceptions, semantic search, vault memory across deals |
+| Brokerage CRM | Contacts, pipeline, compliance — Command, BoldTrail, Follow Up Boss, Compass, etc. |
+| Cloud storage | Transaction folder storage agents control |
+| Transaction tools | RE forms and e-sign — Dotloop, SkySlope, DocuSign |
+| **ClawQL** | Intelligent layer: classify title vs PSA, extract Schedule B, HITL, semantic search, vault memory |
 
 ## Related
 

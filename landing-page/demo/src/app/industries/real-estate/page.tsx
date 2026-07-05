@@ -4,9 +4,9 @@ import { industriesBySlug } from '@/lib/industries'
 const industry = industriesBySlug['real-estate']
 
 export const metadata = {
-  title: 'Real estate — intelligent document layer for KW Command + Drive',
+  title: 'Real estate — intelligent document layer for brokerages',
   description:
-    'ClawQL classifies title commitments and purchase agreements, routes Schedule B exceptions to HITL review, and unifies deal documents with vault memory — without replacing KW Command or Google Drive.',
+    'ClawQL classifies title commitments and purchase agreements for any brokerage stack — Command, BoldTrail, Follow Up Boss, Compass, Dotloop, or Drive-based workflows — without replacing your CRM.',
 }
 
 export default function Page() {

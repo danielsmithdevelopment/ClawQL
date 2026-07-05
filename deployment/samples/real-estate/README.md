@@ -1,6 +1,6 @@
 # Real estate vertical reference workflows
 
-Shipped reference packs for ClawQL as the **intelligent document layer** in residential real estate — especially teams on **KW Command + Google Drive + Dotloop** who need classify, extract, HITL, semantic search, and vault memory without replacing their CRM.
+Shipped reference packs for ClawQL as the **intelligent document layer** in residential real estate — for brokerages on any CRM (Command, BoldTrail/kvCORE, Follow Up Boss, Compass, etc.) plus cloud storage and transaction tools who need classify, extract, HITL, semantic search, and vault memory without replacing their stack.
 
 | Pack | WorkflowTemplate | Primary document | HITL focus |
 | ---- | ---------------- | ---------------- | ---------- |
@@ -10,13 +10,13 @@ Shipped reference packs for ClawQL as the **intelligent document layer** in resi
 ## Architecture placement
 
 ```text
-KW Command          → contacts, Opportunities pipeline, compliance to Market Center
-Google Drive        → transaction folder storage (agent-controlled)
-Dotloop / DocuSign  → RE forms + e-sign (Command pulls into Opportunities)
+Brokerage CRM       → contacts, pipeline, compliance (varies by franchise)
+Cloud storage       → transaction folders (Drive, Dropbox, SharePoint)
+Transaction / e-sign → Dotloop, SkySlope, DocuSign, Paperless Pipeline
 ClawQL              → parse, classify, extract, redact, index, recall, VDR share
 ```
 
-ClawQL does **not** replace Command or Drive. It replaces the manual re-read loop: coordinators opening PDFs in Drive because Command and Drive don't share a semantic index.
+ClawQL does **not** replace CRM or storage. It replaces the manual re-read loop: coordinators opening PDFs because no system shares a semantic index across the deal file.
 
 ## Local demo
 

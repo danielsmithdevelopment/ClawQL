@@ -32,8 +32,10 @@ export type Industry = {
   statusLabel?: string
   /** Short production reference — e.g. a vertical product powered by ClawQL. */
   productionReference?: string
-  /** How ClawQL fits alongside incumbent systems (e.g. KW Command + Google Drive). */
+  /** How ClawQL fits alongside incumbent systems (CRM, storage, transaction tools). */
   stackPlacement?: readonly IndustryStackRow[]
+  /** Industry-wide competitive context — franchise-agnostic framing. */
+  marketContext?: string
   /** One-paragraph pitch for forwarding to prospects or partners. */
   demoPitch?: string
   overview: string

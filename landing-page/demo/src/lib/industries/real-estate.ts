@@ -5,38 +5,40 @@ export const realEstateIndustry: Industry = {
   name: 'Real estate',
   headline: 'The intelligent document layer for property transactions.',
   subheadline:
-    'Unify deal documents, extracted fields, and transaction memory in one place — without replacing KW Command, Google Drive, or Dotloop. ClawQL classifies title commitments and purchase agreements, routes Schedule B exceptions to human review, and answers diligence questions with grounded citations.',
+    'Unify deal documents, extracted fields, and transaction memory in one place — without replacing your brokerage CRM, cloud storage, or transaction platform. ClawQL classifies title commitments and purchase agreements, routes Schedule B exceptions to human review, and answers diligence questions with grounded citations.',
   packageName: 'real-estate transaction samples',
   status: 'partial',
-  statusLabel: 'Title + PSA workflows shipped · Command integration in progress',
+  statusLabel: 'Title + PSA workflows shipped · CRM-agnostic integration',
   productionReference:
-    'Shipped reference workflows mirror the lending W-2 pattern used for See The Greens LOS — parse, classify, extract, HITL, vault recall — applied to residential transaction coordinators and KW agents running Command + Drive.',
+    'Shipped reference workflows mirror the lending W-2 pattern used for See The Greens LOS — parse, classify, extract, HITL, vault recall — applied to transaction coordinators at any brokerage running an all-in-one CRM or a best-of-breed stack.',
+  marketContext:
+    'Major brokerages standardize on different CRM operating systems — Keller Williams (Command), eXp (BoldTrail/kvCORE), Compass and Anywhere brands (Home Platform), and thousands of high-volume teams on Follow Up Boss — but none of them classify title commitments, extract Schedule B exceptions with citations, or answer cross-deal diligence questions from indexed transaction files. AI investment in 2026 skews toward lead gen, listing copy, and routing; the transaction coordination layer — where deals actually close — still runs on Google Drive folders and manual re-reads. Teams that add an intelligent document layer first compress coordinator hours per file; brokerages that wait inherit a compounding disadvantage as competitors build institutional memory deal by deal.',
   demoPitch:
-    'ClawQL sits alongside KW Command and Google Drive as the intelligent document layer: when a title commitment or PSA lands in your transaction folder, ClawQL classifies it, extracts purchase price and Schedule B exceptions with citations, routes low-confidence reads to a coordinator for review, and indexes everything for semantic search — so your team stops re-reading the same 200-page diligence folder. Command keeps your contacts and compliance workflow; Drive keeps your files; ClawQL connects them with AI that actually understands what is in the documents. Live demo uses synthetic data only; early access includes founder-led setup.',
+    'Every major brokerage runs a CRM for contacts and pipeline, a transaction tool for e-sign and compliance, and Google Drive or Dropbox for transaction folders — but nothing connects them intelligently. When a title commitment or PSA lands in a deal folder, ClawQL classifies it, extracts purchase price and Schedule B exceptions with citations, routes low-confidence reads to a coordinator for review, and indexes everything for semantic search — so teams stop re-reading the same 200-page diligence folder. Your CRM keeps contacts and compliance; your storage keeps the files; ClawQL is the layer that understands what is in the documents and remembers it across deals. Works alongside Command, BoldTrail, Follow Up Boss, Compass, Dotloop, or SkySlope — no migration required. Live demo uses synthetic data only; early access includes founder-led setup.',
   stackPlacement: [
     {
-      system: 'KW Command',
-      role: 'Contacts, Opportunities pipeline, compliance submission to Market Center — stays your CRM.',
+      system: 'Brokerage CRM',
+      role: 'Contacts, pipeline, lead routing — Command, BoldTrail/kvCORE, Follow Up Boss, Compass Home Platform, Lofty, etc. ClawQL does not replace your CRM.',
     },
     {
-      system: 'Google Drive',
-      role: 'Transaction folder storage agents control — ClawQL does not require migration off Drive.',
+      system: 'Cloud storage',
+      role: 'Transaction folders (Google Drive, Dropbox, SharePoint) — agents keep vendor independence; ClawQL adds intelligence on top.',
     },
     {
-      system: 'Dotloop / DocuSign',
-      role: 'RE forms and e-sign — Command pulls completed docs into Opportunities; ClawQL handles upstream intelligence.',
+      system: 'Transaction / e-sign',
+      role: 'Dotloop, SkySlope, DocuSign Rooms, Paperless Pipeline — forms, signatures, broker compliance checklists.',
     },
     {
       system: 'ClawQL',
-      role: 'Classify, extract, redact PII, semantic search, vault memory, Coneshare VDR — the layer Command and Drive do not provide.',
+      role: 'Classify, extract, redact PII, semantic search, vault memory, Coneshare VDR — the document intelligence layer no CRM ships today.',
     },
   ],
   overview:
-    'Residential transactions generate dozens of PDFs per deal — purchase agreements, title commitments, appraisals, HOA disclosures — often split across KW Command (pipeline), Google Drive (folders), and Dotloop (e-sign). Coordinators re-read the same files because nothing shares a semantic index. ClawQL is the intelligent document layer: shipped reference packs for title commitments and PSAs demonstrate parse → classify → extract → HITL → vault threading with deal_id metadata. Financed purchases can reuse clawql-lending mortgage tools (gse_validate, loan_archive); Coneshare VDR closes the loop when external parties access sensitive files.',
+    'Residential transactions generate dozens of PDFs per deal — purchase agreements, title commitments, appraisals, HOA disclosures — often split across a brokerage CRM (pipeline), cloud storage (folders), and a transaction platform (e-sign). Coordinators re-read the same files because nothing shares a semantic index, regardless of franchise. ClawQL is the intelligent document layer: shipped reference packs for title commitments and PSAs demonstrate parse → classify → extract → HITL → vault threading with deal_id metadata. Financed purchases can reuse clawql-lending mortgage tools; Coneshare VDR closes the loop when external parties access sensitive files.',
   painPoints: [
     {
-      title: 'Command knows the deal — Drive holds the files',
-      body: 'KW Command tracks contacts and Opportunity stages, but Google Drive folders do not classify, extract, or link back to the CRM record. Coordinators manually match filenames to deals and re-open PDFs for every question.',
+      title: 'CRM knows the deal — folders hold the files',
+      body: 'Brokerage CRMs track contacts and pipeline stages, but Drive folders do not classify, extract, or link back to the deal record. Coordinators manually match filenames to transactions and re-open PDFs for every question — at every franchise.',
     },
     {
       title: 'Schedule B exceptions need human judgment',
@@ -44,11 +46,12 @@ export const realEstateIndustry: Industry = {
     },
     {
       title: 'Cross-deal memory lives in someone\'s head',
-      body: '"How did we handle this utility easement last time?" has no answer in Command or Drive. memory_recall threads title exceptions, cleared conditions, and party notes across sessions with wikilinks per deal_id.',
+      body: '"How did we handle this utility easement last time?" has no answer in CRM or storage. memory_recall threads title exceptions, cleared conditions, and party notes across sessions with wikilinks per deal_id.',
     },
   ],
   platformCapabilities: [
     'Shipped title commitment + PSA reference workflows (Argo suspend/resume + Label Studio HITL)',
+    'CRM-agnostic — works with Command, BoldTrail, Follow Up Boss, Compass, or custom stacks',
     'classify_document labels: title_commitment, purchase_agreement, appraisal, hoa_disclosure',
     'extract_document presets with char_interval citations for PSA and Schedule A/B fields',
     'Eight-vendor IDP pipeline — Gotenberg normalization, Stirling PII redaction, Onyx search',
@@ -72,15 +75,15 @@ export const realEstateIndustry: Industry = {
   useCases: [
     {
       title: 'Title commitment intake',
-      body: 'Parse title commitments with Docling, classify Schedule B routing, extract policy amount and exceptions with citations, HITL when confidence is low — vault note links to the deal_id used in your Drive folder naming convention.',
+      body: 'Parse title commitments with Docling, classify Schedule B routing, extract policy amount and exceptions with citations, HITL when confidence is low — vault note links to the deal_id used in your folder naming convention.',
     },
     {
       title: 'PSA field extraction',
       body: 'Extract purchase price, earnest money, closing date, and parties from purchase agreements — cross-check against title policy amount via memory_recall before closing.',
     },
     {
-      title: 'Command + Drive without the re-read loop',
-      body: 'ClawQL does not replace Command or Drive. It makes documents in Drive intelligible to agents: "What is the earnest money on 123 Main?" returns a grounded answer with char_interval, not a Ctrl+F hunt.',
+      title: 'CRM + storage without the re-read loop',
+      body: 'ClawQL does not replace your CRM or cloud folders. It makes transaction PDFs intelligible to agents: "What is the earnest money on 123 Main?" returns a grounded answer with char_interval, not a Ctrl+F hunt.',
     },
     {
       title: 'Secure external sharing',
@@ -142,7 +145,7 @@ export const realEstateIndustry: Industry = {
     'Merkle audit trail on agent processing steps — not just activity logs',
     'Self-hosted option keeps transaction docs on your infrastructure',
     'Synthetic fixtures only in reference packs — no real client data in demos',
-    'VDR viewer webhooks for external access audit without replacing Command compliance',
+    'VDR viewer webhooks for external access audit without replacing broker compliance workflows',
   ],
   relatedResources: [
     { label: 'Real estate workflow overview', href: 'https://github.com/danielsmithdevelopment/ClawQL/tree/main/deployment/samples/real-estate' },
@@ -153,5 +156,5 @@ export const realEstateIndustry: Industry = {
   ],
   docsHref: 'https://github.com/danielsmithdevelopment/ClawQL/tree/main/deployment/samples/real-estate',
   disclaimer:
-    'Reference packs and demos use synthetic data only — not legal, title, or brokerage advice. KW Command, Dotloop, and Google Drive are third-party products; ClawQL integrates as an intelligent document layer, not a CRM replacement.',
+    'Reference packs and demos use synthetic data only — not legal, title, or brokerage advice. Third-party CRM, storage, and transaction products are not affiliated with ClawQL; integration is as an intelligent document layer, not a CRM replacement.',
 }

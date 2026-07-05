@@ -149,6 +149,22 @@ export function IndustryPage({ industry }: { industry: Industry }) {
         ) : null}
       </Section>
 
+      {industry.marketContext ? (
+        <Section
+          id="market"
+          eyebrow="Industry context"
+          headline="The gap every brokerage stack shares"
+          subheadline={
+            <p>
+              Franchise CRMs compete on lead gen and agent productivity — transaction document intelligence is still
+              unowned.
+            </p>
+          }
+        >
+          <p className="max-w-3xl text-sm/7 text-mist-700 dark:text-mist-400">{industry.marketContext}</p>
+        </Section>
+      ) : null}
+
       {industry.stackPlacement && industry.stackPlacement.length > 0 ? (
         <Section
           id="stack"
