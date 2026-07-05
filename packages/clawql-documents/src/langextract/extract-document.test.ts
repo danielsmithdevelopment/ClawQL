@@ -90,9 +90,9 @@ describe("extractDocument", () => {
       expect(result.extractions?.some((e) => e.extraction_class === "inspection_contingency")).toBe(
         true
       );
-      expect(result.extractions?.some((e) => e.extraction_class === "sale_of_home_contingency")).toBe(
-        true
-      );
+      expect(
+        result.extractions?.some((e) => e.extraction_class === "sale_of_home_contingency")
+      ).toBe(true);
     } finally {
       if (prev === undefined) delete process.env.LANGEXTRACT_BASE_URL;
       else process.env.LANGEXTRACT_BASE_URL = prev;

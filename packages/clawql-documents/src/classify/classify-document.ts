@@ -63,9 +63,7 @@ function heuristicClassify(input: ClassifyDocumentInput): ClassifyDocumentResult
     label = "title_commitment";
     confidence = 0.91;
   } else if (
-    /buyer\s*offer|offer\s*to\s*purchase|fsbo\s*offer|counter\s*offer\s*to\s*purchase/i.test(
-      corpus
-    )
+    /buyer\s*offer|offer\s*to\s*purchase|fsbo\s*offer|counter\s*offer\s*to\s*purchase/i.test(corpus)
   ) {
     label = "buyer_offer";
     confidence = 0.89;
