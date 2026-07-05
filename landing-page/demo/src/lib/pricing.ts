@@ -1,9 +1,9 @@
 export type BillingPeriod = 'Monthly' | 'Yearly'
 
-export type ManagedTierId = 'starter' | 'business' | 'dedicated'
+export type ManagedTierId = 'starter' | 'business' | 'professional'
 
-/** Comparison table columns — self-hosted plus managed tiers from the GTM playbook. */
-export const pricingPlanNames = ['Self-hosted', 'Free', 'Starter', 'Business', 'Dedicated'] as const
+/** Comparison table columns — self-hosted plus managed tiers (June 2026 GTM, revised pricing). */
+export const pricingPlanNames = ['Self-hosted', 'Free', 'Starter', 'Business', 'Professional'] as const
 
 export type PricingPlanName = (typeof pricingPlanNames)[number]
 
@@ -11,9 +11,25 @@ export type PricingPlanName = (typeof pricingPlanNames)[number]
 export const annualBillingSavingsLabel = '2 months free'
 
 export const annualBillingTotals = {
-  starter: '$1,488/yr',
-  business: '$2,988/yr',
-  dedicated: '$5,988/yr',
+  starter: '$2,988/yr',
+  business: '$5,988/yr',
+  professional: '$12,000/yr',
+} as const
+
+export const sovereignSecurityPack = {
+  name: 'Sovereign Security Pack',
+  monthlyPrice: '$200',
+  period: '/mo',
+  subheadline:
+    'Optional on Starter, Business, and Professional. Included in Enterprise. Makes defense-in-depth controls visible and purchasable — Kata isolation, model weight verification, WORM Merkle audit logs, Panguard fail-closed ATR, and monthly posture reports.',
+  features: [
+    'Kata Container VM isolation for agent workloads',
+    'Model weight integrity verification (SHA-256 + Cosign)',
+    'WORM Merkle audit logs with signed Git commits',
+    'Panguard ATR fail-closed enforcement',
+    'Presidio pre-log redaction pipeline',
+    'Monthly automated security posture report',
+  ],
 } as const
 
 export const pricing = {
@@ -38,11 +54,11 @@ export const pricing = {
     period: '/mo',
     badge: 'Managed · early access',
     subheadline:
-      'Try the real hosted pipeline — Tika, Gotenberg, Stirling, archive, and Onyx basic — with usage limits. Coneshare VDR and sovereign inference not included on Free.',
+      'Real pipeline access — not a demo environment. Process documents through the full stack before committing. Coneshare VDR and sovereign inference not included.',
     features: [
-      '500 documents/month',
+      '200 documents/month',
       '1 user · 5 GB storage',
-      'Hosted MCP + IDP pipeline',
+      'Full pipeline + Merkle audit',
       'Onyx semantic search (basic)',
       'Community support',
     ],
@@ -50,65 +66,70 @@ export const pricing = {
   starter: {
     name: 'Starter',
     shortName: 'Starter' as const,
-    monthlyPrice: '$149',
-    annualPricePerMonth: '$124',
+    monthlyPrice: '$299',
+    annualPricePerMonth: '$249',
     period: '/mo',
     badge: 'Shared tenancy',
+    valueAnchor: 'Replaces DocSend + basic IDP — DocSend alone runs $150–250/user/mo with no processing.',
     subheadline:
-      'Multi-tenant managed hosting for teams processing contracts, invoices, or compliance docs — Coneshare VDR included.',
+      'Small teams replacing DocSend and point OCR tools. Coneshare VDR, sovereign inference, and Obsidian vault included.',
     features: [
       '5,000 documents/month',
       '5 users · 50 GB storage',
-      'Coneshare VDR + Label Studio HITL',
-      'Full Onyx · sovereign inference',
+      'Coneshare VDR + dynamic watermarking',
+      'Sovereign LLM · Obsidian vault',
       'Email support (48 hr)',
     ],
   },
   business: {
     name: 'Business',
     shortName: 'Business' as const,
-    monthlyPrice: '$299',
-    annualPricePerMonth: '$249',
-    period: '/mo',
-    badge: 'Shared tenancy',
-    subheadline:
-      'Higher document volume and priority processing for growing teams — still multi-tenant, with 99.5% uptime SLA.',
-    features: [
-      '25,000 documents/month',
-      '25 users · 500 GB storage',
-      'Coneshare VDR + priority queue',
-      'Full Onyx semantic search',
-      'Email support (24 hr)',
-    ],
-  },
-  dedicated: {
-    name: 'Dedicated',
-    shortName: 'Dedicated' as const,
     monthlyPrice: '$599',
     annualPricePerMonth: '$499',
     period: '/mo',
-    badge: 'Single-tenant',
+    badge: 'Shared tenancy',
+    valueAnchor: 'Equivalent incumbent stack: $3,000–6,000/mo across IDP + VDR + search.',
     subheadline:
-      'Dedicated namespace with full node resource allocation — no neighbor tenants. Sovereign inference; unlimited documents.',
+      'Growing teams with real document volume and compliance awareness. Priority queue, full VDR analytics, 99.5% SLA.',
     features: [
-      'Unlimited documents',
-      'Unlimited users · 1 TB storage',
-      'Coneshare VDR + analytics',
-      '99.9% uptime SLA',
-      'Priority email + Slack connect',
+      '25,000 documents/month',
+      '25 users · 500 GB storage',
+      'Coneshare VDR · full analytics',
+      'Onyx cross-document search',
+      'Email support (24 hr)',
+    ],
+  },
+  professional: {
+    name: 'Professional',
+    shortName: 'Professional' as const,
+    monthlyPrice: '$1,200',
+    annualPricePerMonth: '$1,000',
+    period: '/mo',
+    badge: 'Dedicated namespace',
+    valueAnchor: 'Vertical deployments — lending, legal, healthcare. One fine-tune adapter included.',
+    subheadline:
+      'Compliance-driven buyers needing a dedicated namespace, SSO/SAML, and a vertical fine-tune adapter trained on your document patterns.',
+    features: [
+      '75,000 documents/month',
+      'Unlimited users · 2 TB storage',
+      'Dedicated namespace + priority queue',
+      'One vertical fine-tune adapter',
+      'SSO/SAML · Slack Connect · 99.9% SLA',
     ],
   },
   enterprise: {
     name: 'Enterprise',
+    priceFrom: '$3,500',
+    period: '/mo',
     subheadline:
-      'Custom annual contracts for EU data residency, SSO/SAML, on-call support, and very high volume. Scoped individually — contact sales.',
+      'Large enterprises and regulated industries. Dedicated node, custom fine-tune with ongoing retraining, multi-region (EU available), DPA/BAA, dedicated CSM. Sovereign Security Pack included.',
     features: [
-      'Everything in Dedicated',
-      'SSO / SAML',
-      'EU data residency (roadmap)',
-      'Multi-reviewer HITL RBAC',
+      'Unlimited documents · custom storage',
+      'Dedicated node (not just namespace)',
+      'Custom vertical fine-tune + retraining',
+      'EU multi-region · white-label Coneshare',
+      'Sovereign Security Pack included',
       'Dedicated CSM & custom SLA',
-      'Security review assistance',
     ],
   },
 } as const
@@ -120,5 +141,8 @@ export function managedPrice(tier: ManagedTierId, billing: BillingPeriod): strin
 
 export function annualBillingNoteText(billing: BillingPeriod): string | null {
   if (billing !== 'Yearly') return null
-  return ` Billed annually (${annualBillingTotals.starter} Starter · ${annualBillingTotals.business} Business · ${annualBillingTotals.dedicated} Dedicated) — ${annualBillingSavingsLabel} vs monthly billing.`
+  return ` Billed annually (${annualBillingTotals.starter} Starter · ${annualBillingTotals.business} Business · ${annualBillingTotals.professional} Professional) — ${annualBillingSavingsLabel} vs monthly billing.`
 }
+
+/** Business tier all-in max with optional Sovereign Security Pack. */
+export const businessAllInMonthly = '$799'

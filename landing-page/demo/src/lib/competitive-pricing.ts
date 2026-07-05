@@ -1,34 +1,48 @@
 /** Competitive landscape benchmarks — July 2026 research. Illustrative; verify at procurement time. */
 
+import { businessAllInMonthly } from './pricing'
+
 export const competitiveHeadline =
   'IDP, VDR, semantic search, and agent orchestration — competitors make you buy these separately.'
 
 export const competitiveSummary =
-  'Hyperscience, ABBYY Vantage, and legacy VDR vendors price per page, per user, or six-figure annual contracts. ClawQL charges flat monthly tiers with document volume caps — and bundles parsing, redaction, archive, Onyx search, Coneshare VDR, and MCP agent tooling in one stack.'
+  'Pricing is anchored to what ClawQL replaces — IDP vendors, VDR platforms, and compliance tooling that together run $5,000–15,000+/month. Flat tiers remain dramatically below per-page incumbents while pricing credibly against the stack, not generic SaaS.'
 
 export const tcoBenchmarks = [
   {
     label: 'vs Hyperscience (IDP)',
     scenario: 'Business tier: 25,000 documents/mo × ~5 pages = 125,000 pages',
     incumbent: '~$1.50/page → ~$187,500/mo',
-    clawql: 'Business tier: $299/mo flat',
+    clawql: 'Business tier: $599/mo flat',
     note: 'Volume-based IDP pricing scales linearly with every page processed.',
   },
   {
     label: 'vs ABBYY Vantage (IDP)',
     scenario: 'Same 125,000 pages/mo at mid-range ~$0.05/page',
     incumbent: '~$6,250/mo + professional services',
-    clawql: 'Business tier: $299/mo flat',
+    clawql: 'Business tier: $599/mo flat',
     note: 'Enterprise IDP deals often run $40K–$100K/yr before services (30–60% of year-one cost).',
   },
   {
     label: 'vs VDR incumbents',
     scenario: 'Starter tier with Coneshare VDR included',
-    incumbent: 'Intralinks/Datasite: $10K–$200K+/yr; $0.40–$0.85/page',
-    clawql: 'Starter: $149/mo ($1,788/yr)',
+    incumbent: 'Intralinks/Datasite: $10K–$200K+/yr; Ansarada ~$3,069/mo for 5 GB',
+    clawql: 'Starter: $299/mo ($3,588/yr)',
     note: 'Legacy VDR adds storage overages ($100–$300/GB), per-seat fees, and setup charges.',
   },
 ] as const
+
+export const stackReplacementSummary = {
+  headline: 'Full stack replacement cost (Business-tier customer)',
+  profile: '25 users · 25,000 documents/month · VDR sharing with external parties',
+  incumbentRange: '$5,000–15,000+/month',
+  incumbentDetail:
+    'Across Hyperscience or ABBYY (IDP), Intralinks or Datasite (VDR), standalone enterprise search, and custom audit tooling — separate contracts and data exposure points.',
+  clawqlBusiness: '$599/month',
+  clawqlBusinessMax: `${businessAllInMonthly}/month with Sovereign Security Pack`,
+  savingsNote:
+    '6–20× below incumbent stack at comparable capability, with sovereign inference and zero external LLM API calls.',
+} as const
 
 export type CompetitorColumn = 'ClawQL Business' | 'Hyperscience' | 'ABBYY Vantage' | 'Intralinks / Datasite'
 
@@ -45,7 +59,7 @@ export const competitorColumns: CompetitorColumn[] = [
   'Intralinks / Datasite',
 ]
 
-/** Feature comparison vs IDP and VDR incumbents — Business tier as ClawQL reference. */
+/** Feature comparison vs IDP and VDR incumbents — Business tier ($599/mo) as ClawQL reference. */
 export const competitorFeatureRows: CompetitorFeatureRow[] = [
   {
     feature: 'Document parsing (1,000+ formats)',
@@ -96,30 +110,25 @@ export const competitorFeatureRows: CompetitorFeatureRow[] = [
     values: { 'ClawQL Business': true, Hyperscience: false, 'ABBYY Vantage': false, 'Intralinks / Datasite': false },
   },
   {
-    feature: 'HITL review queue',
-    values: { 'ClawQL Business': true, Hyperscience: true, 'ABBYY Vantage': true, 'Intralinks / Datasite': false },
-    footnote: 'ClawQL uses Label Studio HITL — mature for W-2/lending samples; enterprise multi-reviewer RBAC on roadmap.',
-  },
-  {
     feature: 'Pre-trained document skills library',
     values: {
-      'ClawQL Business': 'Vertical adapters (building)',
+      'ClawQL Business': 'Vertical adapters (Professional+)',
       Hyperscience: 'Extensive',
       'ABBYY Vantage': '150+ skills',
       'Intralinks / Datasite': false,
     },
     footnote:
-      'ABBYY ships broad pre-built skills day one. ClawQL composes classify/extract/HITL per vertical — honest gap until vertical packages ship.',
+      'ABBYY ships broad pre-built skills day one. ClawQL Professional includes one vertical fine-tune adapter; Enterprise adds custom retraining.',
   },
   {
     feature: 'SSO / SAML',
     values: { 'ClawQL Business': false, Hyperscience: true, 'ABBYY Vantage': true, 'Intralinks / Datasite': true },
-    footnote: 'ClawQL Dedicated includes SSO/RBAC; Enterprise adds full SAML programs.',
+    footnote: 'ClawQL Professional and Enterprise include SSO/SAML.',
   },
   {
     feature: 'Pricing model',
     values: {
-      'ClawQL Business': '$299/mo flat',
+      'ClawQL Business': '$599/mo flat',
       Hyperscience: '~$0.50–$1.50/page',
       'ABBYY Vantage': '$40K–$100K+/yr',
       'Intralinks / Datasite': '$10K–$200K+/yr',
@@ -129,8 +138,8 @@ export const competitorFeatureRows: CompetitorFeatureRow[] = [
 
 export const competitiveHonestyNotes = [
   {
-    title: 'Why flat pricing can look “too cheap”',
-    body: 'Procurement teams comparing $299/mo to six-figure IDP or VDR quotes may assume something is missing. The answer is bundle economics: you are not buying a single capability — and ClawQL self-host and managed options eliminate separate infrastructure engineering teams that incumbents bake into TCO arguments.',
+    title: 'Value-anchored, not volume-discounted',
+    body: 'Revised tiers price against the $5K–15K/month stack ClawQL replaces — not against generic SaaS. Starter at $299/mo credibly replaces DocSend plus basic IDP; Business at $599/mo replaces a multi-vendor compliance stack that incumbents sell separately.',
   },
   {
     title: 'The per-page TCO counter-argument',
@@ -138,6 +147,6 @@ export const competitiveHonestyNotes = [
   },
   {
     title: 'Where incumbents still lead',
-    body: 'ABBYY Vantage ships 150+ pre-trained skills for common document types. ClawQL’s answer is vertical fine-tune adapters and the full IDP + VDR + agent stack — but those vertical packages take time to build. We do not claim parity on day-one skill libraries.',
+    body: 'ABBYY Vantage ships 150+ pre-trained skills for common document types. ClawQL Professional includes one vertical fine-tune adapter; building the full library takes time. We state this openly in competitive evaluations rather than overclaiming day-one parity.',
   },
 ] as const
