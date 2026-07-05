@@ -38,7 +38,7 @@ export const pricing = {
     period: '/mo',
     badge: 'Managed · early access',
     subheadline:
-      'Try the real hosted pipeline — Tika, Gotenberg, Stirling, archive, and Onyx basic — with usage limits. Coneshare VDR not included.',
+      'Try the real hosted pipeline — Tika, Gotenberg, Stirling, archive, and Onyx basic — with usage limits. Coneshare VDR and sovereign inference not included on Free.',
     features: [
       '500 documents/month',
       '1 user · 5 GB storage',
@@ -59,8 +59,8 @@ export const pricing = {
     features: [
       '5,000 documents/month',
       '5 users · 50 GB storage',
-      'Coneshare VDR',
-      'Full Onyx semantic search',
+      'Coneshare VDR + Label Studio HITL',
+      'Full Onyx · sovereign inference',
       'Email support (48 hr)',
     ],
   },
@@ -106,7 +106,7 @@ export const pricing = {
       'Everything in Dedicated',
       'SSO / SAML',
       'EU data residency (roadmap)',
-      'hitl_enqueue_label_studio',
+      'Multi-reviewer HITL RBAC',
       'Dedicated CSM & custom SLA',
       'Security review assistance',
     ],

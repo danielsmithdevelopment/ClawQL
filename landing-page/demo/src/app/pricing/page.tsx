@@ -1,5 +1,6 @@
 import { ButtonLink, PlainButtonLink } from '@/components/elements/button'
 import { ChevronIcon } from '@/components/icons/chevron-icon'
+import { CompetitivePricingSection } from '@/components/sections/competitive-pricing-section'
 import { CallToActionSimpleCentered } from '@/components/sections/call-to-action-simple-centered'
 import { FAQsAccordion, Faq } from '@/components/sections/faqs-accordion'
 import { PlanComparisonTable } from '@/components/sections/plan-comparison-table'
@@ -133,6 +134,8 @@ export default function Page() {
         <p className="mt-4 max-w-3xl text-sm/7 text-mist-600 dark:text-mist-500">{site.waitlistPromise}</p>
       </Section>
 
+      <CompetitivePricingSection />
+
       <PlanComparisonTable
         id="pricing-compare"
         plans={[...pricingPlanNames]}
@@ -251,23 +254,37 @@ export default function Page() {
                 },
               },
               {
+                name: 'Merkle cryptographic audit trail',
+                value: true,
+              },
+              {
                 name: 'Sovereign inference (no external LLM APIs)',
                 value: {
                   'Self-hosted': 'Your deployment',
-                  Free: true,
+                  Free: false,
                   Starter: true,
                   Business: true,
                   Dedicated: true,
                 },
               },
               {
-                name: 'hitl_enqueue_label_studio',
+                name: 'HITL review (Label Studio)',
                 value: {
-                  'Self-hosted': 'Self-deploy Label Studio',
+                  'Self-hosted': 'Self-deploy',
                   Free: false,
-                  Starter: false,
-                  Business: false,
-                  Dedicated: false,
+                  Starter: true,
+                  Business: true,
+                  Dedicated: true,
+                },
+              },
+              {
+                name: 'Pre-trained document skill library',
+                value: {
+                  'Self-hosted': 'Vertical adapters',
+                  Free: 'Vertical adapters',
+                  Starter: 'Vertical adapters',
+                  Business: 'Vertical adapters',
+                  Dedicated: 'Vertical adapters',
                 },
               },
             ],
@@ -295,6 +312,16 @@ export default function Page() {
                   Dedicated: 'Priority + Slack',
                 },
               },
+              {
+                name: 'SSO / SAML',
+                value: {
+                  'Self-hosted': false,
+                  Free: false,
+                  Starter: false,
+                  Business: false,
+                  Dedicated: true,
+                },
+              },
             ],
           },
         ]}
@@ -306,8 +333,8 @@ export default function Page() {
         headline="Custom contracts for SSO, EU residency, and on-call support"
         subheadline={
           <p>
-            {pricing.enterprise.subheadline} Enterprise adds managed HITL via hitl_enqueue_label_studio, dedicated CSM,
-            and custom SLAs beyond the $599/mo Dedicated tier.
+            {pricing.enterprise.subheadline} Enterprise adds multi-reviewer HITL RBAC, dedicated CSM, and custom SLAs
+            beyond the $599/mo Dedicated tier.
           </p>
         }
       >
@@ -349,6 +376,21 @@ export default function Page() {
         />
         <Faq
           id="faq-5"
+          question="How does ClawQL pricing compare to Hyperscience or ABBYY?"
+          answer="Incumbent IDP vendors often charge per page ($0.02–$1.50+) or $40K–$100K+/year in enterprise contracts. A Business customer processing 25,000 documents/month at ~5 pages each would pay tens of thousands per month at per-page IDP rates. ClawQL Business is $299/month flat with IDP, VDR, semantic search, and agent orchestration bundled — see the competitive section above for illustrative TCO math."
+        />
+        <Faq
+          id="faq-6"
+          question="Why is ClawQL so much cheaper than legacy VDR tools?"
+          answer="Intralinks, Datasite, and similar vendors price per deal, per page, or $10K–$200K+/year with storage overages and setup fees. Starter at $149/month includes Coneshare VDR in the subscription. The trade-off: we are early-stage with founder-led onboarding, not a decades-old vendor with a global services army."
+        />
+        <Faq
+          id="faq-7"
+          question="Do you match ABBYY's pre-trained document skills?"
+          answer="Not on day one. ABBYY Vantage ships 150+ pre-built skills for common document types. ClawQL composes classify, extract, and HITL per vertical — lending W-2 samples ship today; broader skill libraries build with vertical packages. We state this openly in competitive evaluations rather than overclaiming."
+        />
+        <Faq
+          id="faq-8"
           question="Do you publish enterprise pricing?"
           answer="Enterprise contracts are custom-scoped for SSO/SAML, EU data residency, on-call support, and very high volume. Contact sales to discuss annual terms."
         />
