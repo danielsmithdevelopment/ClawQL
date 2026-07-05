@@ -65,8 +65,8 @@ Full k8s + Argo suspend/resume path: [`deployment/samples/lending-w2/README.md`]
 Same Compose services support title commitment and PSA fixtures:
 
 1. Parse: [`fixtures/synthetic-title-commitment.txt`](../../deployment/samples/real-estate-title/fixtures/synthetic-title-commitment.txt) or [`synthetic-psa.txt`](../../deployment/samples/real-estate-psa/fixtures/synthetic-psa.txt).
-2. Classify: MCP **`classify_document`** — labels include `title_commitment`, `purchase_agreement`.
-3. Extract: **`extract_document`** with `schema_preset: "title_commitment"` or `"purchase_agreement"`.
+2. Classify: MCP **`classify_document`** — labels include `title_commitment`, `purchase_agreement`, `buyer_offer`.
+3. Extract: **`extract_document`** with `schema_preset: "title_commitment"`, `"purchase_agreement"`, or `"buyer_offer"`.
 4. HITL + Argo: see [`deployment/samples/real-estate/README.md`](../../deployment/samples/real-estate/README.md).
 
 ## Validate Compose (CI / local)

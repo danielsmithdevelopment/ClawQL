@@ -1,11 +1,12 @@
 # Real estate vertical reference workflows
 
-Shipped reference packs for ClawQL as the **intelligent document layer** in residential real estate — for brokerages on any CRM (Command, BoldTrail/kvCORE, Follow Up Boss, Compass, etc.) plus cloud storage and transaction tools who need classify, extract, HITL, semantic search, and vault memory without replacing their stack.
+Shipped reference packs for ClawQL as the **intelligent document layer** in residential real estate — for brokerages on any CRM (Command, BoldTrail/kvCORE, Follow Up Boss, Compass, etc.) plus cloud storage and transaction tools, **and** for FSBO sellers comparing buyer offers alongside Houzeo or Beycome — who need classify, extract, HITL, semantic search, and vault memory without replacing their stack.
 
 | Pack | WorkflowTemplate | Primary document | HITL focus |
 | ---- | ---------------- | ---------------- | ---------- |
 | [real-estate-title](real-estate-title/README.md) | `clawql-realestate-title-ingest` | Title commitment | Schedule B exception classification |
 | [real-estate-psa](real-estate-psa/README.md) | `clawql-realestate-psa-ingest` | Purchase agreement | Contract field confirmation |
+| [real-estate-fsbo](real-estate-fsbo/README.md) | — (agent-driven) | Buyer offer | Offer field / contingency confirmation |
 
 ## Architecture placement
 
@@ -33,8 +34,8 @@ Bootstrap Label Studio with `real-estate-title/label-studio-config.xml` or `real
 
 Horizontal MCP tools support real-estate labels and schema presets:
 
-- **`classify_document`**: `title_commitment`, `purchase_agreement`, `appraisal`, `hoa_disclosure`
-- **`extract_document`**: `schema_preset: "title_commitment"` | `"purchase_agreement"`
+- **`classify_document`**: `title_commitment`, `purchase_agreement`, `buyer_offer`, `appraisal`, `hoa_disclosure`
+- **`extract_document`**: `schema_preset: "title_commitment"` | `"purchase_agreement"` | `"buyer_offer"`
 
 ## Related
 

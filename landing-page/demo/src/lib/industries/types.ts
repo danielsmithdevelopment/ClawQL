@@ -21,6 +21,18 @@ export type IndustryStackRow = {
   role: string
 }
 
+export type IndustryAudience = {
+  /** Anchor id for deep links — e.g. brokerage, fsbo */
+  id: string
+  name: string
+  headline: string
+  overview: string
+  /** Audience-specific forward pitch; falls back to industry.demoPitch when omitted. */
+  demoPitch?: string
+  stackPlacement?: readonly IndustryStackRow[]
+  useCases?: readonly { title: string; body: string }[]
+}
+
 export type Industry = {
   slug: string
   name: string
@@ -38,6 +50,8 @@ export type Industry = {
   marketContext?: string
   /** One-paragraph pitch for forwarding to prospects or partners. */
   demoPitch?: string
+  /** Dual-audience targeting — e.g. brokerages vs FSBO sellers on the same vertical page. */
+  audiences?: readonly IndustryAudience[]
   overview: string
   painPoints: readonly { title: string; body: string }[]
   platformCapabilities: readonly string[]

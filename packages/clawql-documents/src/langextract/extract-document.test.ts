@@ -20,6 +20,11 @@ const psaFixturePath = join(
   "../../../../deployment/samples/real-estate-psa/fixtures/synthetic-psa.txt"
 );
 
+const fsboOfferFixturePath = join(
+  dirname(fileURLToPath(import.meta.url)),
+  "../../../../deployment/samples/real-estate-fsbo/fixtures/synthetic-buyer-offer.txt"
+);
+
 describe("extractDocument", () => {
   it("uses local heuristic when LANGEXTRACT_BASE_URL is unset", async () => {
     const prev = process.env.LANGEXTRACT_BASE_URL;
@@ -65,6 +70,29 @@ describe("extractDocument", () => {
       expect(result.extractions?.some((e) => e.extraction_class === "purchase_price")).toBe(true);
       expect(result.extractions?.some((e) => e.extraction_class === "earnest_money")).toBe(true);
       expect(result.extractions?.some((e) => e.extraction_class === "closing_date")).toBe(true);
+    } finally {
+      if (prev === undefined) delete process.env.LANGEXTRACT_BASE_URL;
+      else process.env.LANGEXTRACT_BASE_URL = prev;
+    }
+  });
+
+  it("extracts FSBO buyer offer fields including contingencies", async () => {
+    const prev = process.env.LANGEXTRACT_BASE_URL;
+    delete process.env.LANGEXTRACT_BASE_URL;
+    try {
+      const text = readFileSync(fsboOfferFixturePath, "utf8");
+      const result = await extractDocument({ text, schema_preset: "buyer_offer" });
+      expect(result.ok).toBe(true);
+      expect(result.extractions?.some((e) => e.extraction_class === "purchase_price")).toBe(true);
+      expect(result.extractions?.some((e) => e.extraction_class === "financing_contingency")).toBe(
+        true
+      );
+      expect(result.extractions?.some((e) => e.extraction_class === "inspection_contingency")).toBe(
+        true
+      );
+      expect(result.extractions?.some((e) => e.extraction_class === "sale_of_home_contingency")).toBe(
+        true
+      );
     } finally {
       if (prev === undefined) delete process.env.LANGEXTRACT_BASE_URL;
       else process.env.LANGEXTRACT_BASE_URL = prev;

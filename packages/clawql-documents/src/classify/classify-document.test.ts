@@ -69,4 +69,20 @@ describe("classifyDocument", () => {
       else process.env.CLASSIFIER_BASE_URL = prev;
     }
   });
+
+  it("classifies FSBO buyer offers before generic purchase agreement", async () => {
+    const prev = process.env.CLASSIFIER_BASE_URL;
+    delete process.env.CLASSIFIER_BASE_URL;
+    try {
+      const result = await classifyDocument({
+        text: "OFFER TO PURCHASE — FSBO\nPurchase Price: $478,000.00",
+      });
+      expect(result.ok).toBe(true);
+      expect(result.label).toBe("buyer_offer");
+      expect(result.confidence).toBeGreaterThan(0.85);
+    } finally {
+      if (prev === undefined) delete process.env.CLASSIFIER_BASE_URL;
+      else process.env.CLASSIFIER_BASE_URL = prev;
+    }
+  });
 });
