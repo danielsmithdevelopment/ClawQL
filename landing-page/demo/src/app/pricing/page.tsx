@@ -9,16 +9,20 @@ import { Section } from '@/components/elements/section'
 import {
   annualBillingNoteText,
   annualBillingSavingsLabel,
+  executionOveragePerThousand,
   managedPrice,
+  pluginBundles,
   pricing,
   pricingPlanNames,
   sovereignSecurityPack,
   type BillingPeriod,
+  type GatewayTierId,
+  type IdpTierId,
 } from '@/lib/pricing'
 import { site } from '@/lib/site'
 
-function managedPlans(billing: BillingPeriod) {
-  const annualNote = annualBillingNoteText(billing)
+function gatewayPlans(billing: BillingPeriod) {
+  const gatewayTiers: GatewayTierId[] = ['developer', 'teams']
 
   return (
     <>
@@ -35,60 +39,65 @@ function managedPlans(billing: BillingPeriod) {
           </ButtonLink>
         }
       />
-      <Plan
-        name={pricing.starter.name}
-        price={managedPrice('starter', billing)}
-        period={pricing.starter.period}
-        subheadline={
-          <p>
-            {pricing.starter.subheadline}
-            {annualNote ? <span className="block text-mist-500">{annualNote}</span> : null}
-          </p>
-        }
-        badge={pricing.starter.badge}
-        features={[...pricing.starter.features]}
-        cta={
-          <ButtonLink href={site.urls.signup} size="lg">
-            Join early access
-          </ButtonLink>
-        }
-      />
-      <Plan
-        name={pricing.business.name}
-        price={managedPrice('business', billing)}
-        period={pricing.business.period}
-        subheadline={
-          <p>
-            {pricing.business.subheadline}
-            {annualNote ? <span className="block text-mist-500">{annualNote}</span> : null}
-          </p>
-        }
-        badge={pricing.business.badge}
-        features={[...pricing.business.features]}
-        cta={
-          <ButtonLink href={site.urls.signup} size="lg">
-            Join early access
-          </ButtonLink>
-        }
-      />
-      <Plan
-        name={pricing.professional.name}
-        price={managedPrice('professional', billing)}
-        period={pricing.professional.period}
-        subheadline={
-          <p>
-            {pricing.professional.subheadline}
-            {annualNote ? <span className="block text-mist-500">{annualNote}</span> : null}
-          </p>
-        }
-        badge={pricing.professional.badge}
-        features={[...pricing.professional.features]}
-        cta={
-          <ButtonLink href={site.urls.signup} size="lg">
-            Join early access
-          </ButtonLink>
-        }
-      />
+      {gatewayTiers.map((tier) => {
+        const plan = pricing[tier]
+        const annualNote = annualBillingNoteText(billing, tier)
+        return (
+          <Plan
+            key={tier}
+            name={plan.name}
+            price={managedPrice(tier, billing)}
+            period={plan.period}
+            subheadline={
+              <p>
+                {plan.subheadline}
+                {annualNote ? <span className="block text-mist-500">{annualNote}</span> : null}
+              </p>
+            }
+            badge={plan.badge}
+            features={[...plan.features]}
+            cta={
+              <ButtonLink href={site.urls.signup} size="lg">
+                Join early access
+              </ButtonLink>
+            }
+          />
+        )
+      })}
+    </>
+  )
+}
+
+function idpPlans(billing: BillingPeriod) {
+  const idpTiers: IdpTierId[] = ['starter', 'business', 'professional']
+
+  return (
+    <>
+      {idpTiers.map((tier) => {
+        const plan = pricing[tier]
+        const annualNote = annualBillingNoteText(billing, tier)
+        return (
+          <Plan
+            key={tier}
+            name={plan.name}
+            price={managedPrice(tier, billing)}
+            period={plan.period}
+            subheadline={
+              <p>
+                {plan.subheadline}
+                {annualNote ? <span className="block text-mist-500">{annualNote}</span> : null}
+              </p>
+            }
+            badge={plan.badge}
+            features={[...plan.features]}
+            cta={
+              <ButtonLink href={site.urls.signup} size="lg">
+                Join early access
+              </ButtonLink>
+            }
+          />
+        )
+      })}
     </>
   )
 }
@@ -116,18 +125,56 @@ export default function Page() {
         </div>
       </Section>
 
-      <PricingHeroMultiTier
-        id="pricing"
-        headline="Managed hosting"
+      <Section
+        id="plugin-bundles"
+        eyebrow="Plugin model"
+        headline="Pay for the plugins you activate"
         subheadline={
           <p>
-            {site.earlyAccess.summary} Document volume and storage limits apply per tier; storage overage billed at
-            $0.02/GB on Starter and Business, $0.015/GB pass-through on Professional.
+            ClawQL Core (<code className="text-sm">search</code>, <code className="text-sm">execute</code>,{' '}
+            <code className="text-sm">audit</code>, <code className="text-sm">cache</code>) is always on. Memory, IDP,
+            and vertical packages activate via <code className="text-sm">CLAWQL_ENABLE_*</code> flags — managed tiers map
+            to plugin bundles, not one-size-fits-all document quotas.
+          </p>
+        }
+      >
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+          {Object.values(pluginBundles).map((bundle) => (
+            <div key={bundle.name} className="flex flex-col gap-2 rounded-xl bg-mist-950/2.5 p-5 dark:bg-white/5">
+              <h3 className="text-base font-semibold text-mist-950 dark:text-white">{bundle.name}</h3>
+              <p className="text-sm/7 text-mist-700 dark:text-mist-400">{bundle.description}</p>
+              <p className="text-xs text-mist-500">Tiers: {bundle.tiers.join(' · ')}</p>
+            </div>
+          ))}
+        </div>
+      </Section>
+
+      <PricingHeroMultiTier
+        id="pricing-gateway"
+        headline="Agent gateway & memory"
+        subheadline={
+          <p>
+            MCP gateway + vault memory for teams connecting agents to APIs — no IDP pipeline, no GPU inference. Execution
+            overage {executionOveragePerThousand}/1,000 (matches Executor).
           </p>
         }
         options={['Monthly', 'Yearly']}
         annualSavingsLabel={annualBillingSavingsLabel}
-        plans={{ Monthly: managedPlans('Monthly'), Yearly: managedPlans('Yearly') }}
+        plans={{ Monthly: gatewayPlans('Monthly'), Yearly: gatewayPlans('Yearly') }}
+      />
+
+      <PricingHeroMultiTier
+        id="pricing-idp"
+        headline="IDP plugin bundle"
+        subheadline={
+          <p>
+            Document processing, Coneshare VDR, and sovereign inference — explicitly opted in. Storage overage $0.02/GB
+            on Starter and Business, $0.015/GB on Professional.
+          </p>
+        }
+        options={['Monthly', 'Yearly']}
+        annualSavingsLabel={annualBillingSavingsLabel}
+        plans={{ Monthly: idpPlans('Monthly'), Yearly: idpPlans('Yearly') }}
       />
 
       <Section id="early-access" eyebrow="Early access" headline="Managed hosting is onboarding its first tenants">
@@ -142,13 +189,80 @@ export default function Page() {
         plans={[...pricingPlanNames]}
         features={[
           {
-            title: 'Usage & storage',
+            title: 'Plugin bundle',
             features: [
+              {
+                name: 'MCP Gateway (Core)',
+                value: {
+                  'Self-hosted': true,
+                  Free: true,
+                  Developer: true,
+                  Teams: true,
+                  Starter: true,
+                  Business: true,
+                  Professional: true,
+                },
+              },
+              {
+                name: 'Memory vault + Onyx search',
+                value: {
+                  'Self-hosted': 'Self-managed',
+                  Free: 'Basic vault',
+                  Developer: true,
+                  Teams: 'Full Onyx',
+                  Starter: true,
+                  Business: true,
+                  Professional: true,
+                },
+              },
+              {
+                name: 'IDP plugin bundle',
+                value: {
+                  'Self-hosted': 'Opt-in',
+                  Free: false,
+                  Developer: false,
+                  Teams: false,
+                  Starter: true,
+                  Business: true,
+                  Professional: true,
+                },
+              },
+            ],
+          },
+          {
+            title: 'Usage & metering',
+            features: [
+              {
+                name: 'Executions / month',
+                value: {
+                  'Self-hosted': 'Unlimited (your infra)',
+                  Free: '10,000',
+                  Developer: '50,000',
+                  Teams: '250,000',
+                  Starter: '—',
+                  Business: '—',
+                  Professional: '—',
+                },
+              },
+              {
+                name: 'Execution overage',
+                value: {
+                  'Self-hosted': 'N/A',
+                  Free: executionOveragePerThousand + '/1K',
+                  Developer: executionOveragePerThousand + '/1K',
+                  Teams: executionOveragePerThousand + '/1K',
+                  Starter: '—',
+                  Business: '—',
+                  Professional: '—',
+                },
+              },
               {
                 name: 'Documents / month',
                 value: {
                   'Self-hosted': 'Unlimited (your infra)',
-                  Free: '200',
+                  Free: '—',
+                  Developer: '—',
+                  Teams: '—',
                   Starter: '5,000',
                   Business: '25,000',
                   Professional: '75,000',
@@ -159,153 +273,52 @@ export default function Page() {
                 value: {
                   'Self-hosted': 'Unlimited',
                   Free: '1',
+                  Developer: '3',
+                  Teams: '10',
                   Starter: '5',
                   Business: '25',
                   Professional: 'Unlimited',
                 },
               },
-              {
-                name: 'Storage included',
-                value: {
-                  'Self-hosted': 'Your choice',
-                  Free: '5 GB',
-                  Starter: '50 GB',
-                  Business: '500 GB',
-                  Professional: '2 TB',
-                },
-              },
-              {
-                name: 'Storage overage',
-                value: {
-                  'Self-hosted': 'N/A',
-                  Free: 'N/A',
-                  Starter: '$0.02/GB',
-                  Business: '$0.02/GB',
-                  Professional: '$0.015/GB',
-                },
-              },
             ],
           },
           {
-            title: 'Document intelligence',
+            title: 'Document intelligence (IDP bundle)',
             features: [
               {
                 name: 'Coneshare VDR',
                 value: {
                   'Self-hosted': 'Self-deploy optional',
                   Free: false,
+                  Developer: false,
+                  Teams: false,
                   Starter: true,
                   Business: true,
                   Professional: 'Full + advanced analytics',
                 },
               },
               {
-                name: 'Onyx semantic search',
-                value: {
-                  'Self-hosted': 'Self-managed',
-                  Free: 'Basic',
-                  Starter: 'Full',
-                  Business: 'Full + cross-doc',
-                  Professional: 'Full + cross-doc',
-                },
-              },
-              {
-                name: 'Processing priority',
-                value: {
-                  'Self-hosted': '—',
-                  Free: 'Low',
-                  Starter: 'Standard',
-                  Business: 'Priority',
-                  Professional: 'Dedicated queue',
-                },
-              },
-              {
-                name: 'Obsidian memory vault',
-                value: {
-                  'Self-hosted': 'Self-managed',
-                  Free: false,
-                  Starter: true,
-                  Business: true,
-                  Professional: true,
-                },
-              },
-              {
-                name: 'Dynamic watermarking (VDR)',
-                value: {
-                  'Self-hosted': 'Self-deploy optional',
-                  Free: false,
-                  Starter: true,
-                  Business: true,
-                  Professional: true,
-                },
-              },
-              {
-                name: 'ClawQL Archive Layer (managed)',
-                value: {
-                  'Self-hosted': 'Paperless-ngx optional',
-                  Free: true,
-                  Starter: true,
-                  Business: true,
-                  Professional: true,
-                },
-              },
-            ],
-          },
-          {
-            title: 'Platform',
-            features: [
-              {
-                name: 'Hosted HTTP MCP',
-                value: {
-                  'Self-hosted': false,
-                  Free: true,
-                  Starter: true,
-                  Business: true,
-                  Professional: true,
-                },
-              },
-              {
-                name: 'Tenant isolation',
-                value: {
-                  'Self-hosted': 'Your hardware',
-                  Free: 'Shared',
-                  Starter: 'Shared',
-                  Business: 'Shared',
-                  Professional: 'Dedicated namespace',
-                },
-              },
-              {
-                name: 'Merkle cryptographic audit trail',
-                value: true,
-              },
-              {
-                name: 'Sovereign inference (no external LLM APIs)',
+                name: 'Sovereign inference',
                 value: {
                   'Self-hosted': 'Your deployment',
                   Free: false,
+                  Developer: false,
+                  Teams: false,
                   Starter: true,
                   Business: true,
                   Professional: true,
                 },
               },
               {
-                name: 'HITL review (Label Studio)',
+                name: 'classify / extract / HITL',
                 value: {
-                  'Self-hosted': 'Self-deploy',
+                  'Self-hosted': 'Opt-in',
                   Free: false,
+                  Developer: false,
+                  Teams: false,
                   Starter: true,
                   Business: true,
                   Professional: true,
-                },
-              },
-              {
-                name: 'Pre-trained document skill library',
-                value: {
-                  'Self-hosted': 'Vertical adapters',
-                  Free: 'Vertical adapters',
-                  Starter: 'Vertical adapters',
-                  Business: 'Vertical adapters',
-                  Professional: 'One vertical fine-tune included',
                 },
               },
             ],
@@ -318,19 +331,11 @@ export default function Page() {
                 value: {
                   'Self-hosted': '—',
                   Free: 'None',
+                  Developer: 'None',
+                  Teams: '99% uptime',
                   Starter: '99% uptime',
                   Business: '99.5% uptime',
                   Professional: '99.9% uptime',
-                },
-              },
-              {
-                name: 'Support',
-                value: {
-                  'Self-hosted': 'Community',
-                  Free: 'Community',
-                  Starter: 'Email (48 hr)',
-                  Business: 'Email (24 hr)',
-                  Professional: 'Slack Connect + email',
                 },
               },
               {
@@ -338,6 +343,8 @@ export default function Page() {
                 value: {
                   'Self-hosted': false,
                   Free: false,
+                  Developer: false,
+                  Teams: false,
                   Starter: false,
                   Business: false,
                   Professional: true,
@@ -396,47 +403,42 @@ export default function Page() {
         <Faq
           id="faq-1"
           question="Is self-hosted really free?"
-          answer="Yes. ClawQL is open source. You pay only for compute and storage on your hardware. All core MCP tools and the full IDP pipeline are included with no license fee."
+          answer="Yes. ClawQL is open source. You pay only for compute and storage on your hardware. Enable plugins via CLAWQL_ENABLE_* flags — Core is always on; IDP vendors activate when you need document processing."
         />
         <Faq
           id="faq-2"
-          question="What's the difference between Starter, Business, and Professional?"
-          answer={`Starter (${pricing.starter.monthlyPrice}/mo) and Business (${pricing.business.monthlyPrice}/mo) run on shared multi-tenant infrastructure with document volume limits (5,000 and 25,000 documents/month). Professional (${pricing.professional.monthlyPrice}/mo) gives your organization a dedicated namespace, one vertical fine-tune adapter, SSO/SAML, and 99.9% uptime SLA. All managed tiers are in early access with founder-led onboarding.`}
+          question="What's the difference between Developer, Teams, and Starter?"
+          answer={`Developer (${pricing.developer.monthlyPrice}/mo) is MCP gateway + memory vault — no IDP. Teams (${pricing.teams.monthlyPrice}/mo) adds full Onyx semantic search. Starter (${pricing.starter.monthlyPrice}/mo) activates the IDP plugin bundle (classify, extract, VDR, sovereign inference). You only pay for document processing when you opt into IDP tiers.`}
         />
         <Faq
           id="faq-3"
-          question="What is the managed Free tier?"
-          answer="Free ($0/mo) lets you process up to 200 documents/month on hosted infrastructure with basic Onyx search — a way to try the real pipeline before upgrading to Starter for Coneshare VDR, sovereign inference, and higher limits. It is not the same as self-hosting, which has no document cap enforced by ClawQL."
+          question="How does ClawQL compare to Executor?"
+          answer={`Executor Team is $150/org/mo for 250,000 MCP executions. ClawQL Developer is ${pricing.developer.monthlyPrice}/mo (50,000 executions) and Teams is ${pricing.teams.monthlyPrice}/mo with vault memory and Onyx search — capabilities Executor does not ship. Overage matches at ${executionOveragePerThousand}/1,000 executions.`}
         />
         <Faq
           id="faq-4"
           question="Can I switch tiers later?"
-          answer="Yes. Vault exports, provider auth, and pipeline configuration can migrate between tiers. Upgrade when you hit document quotas or need Professional isolation and vertical fine-tuning for compliance."
+          answer="Yes. Vault exports, provider auth, and plugin flags migrate between tiers. Start on Teams for agent memory; upgrade to Starter when you need IDP document processing."
         />
         <Faq
           id="faq-5"
-          question="How does ClawQL pricing compare to Hyperscience or ABBYY?"
-          answer={`Incumbent IDP vendors often charge per page ($0.02–$1.50+) or $40K–$100K+/year in enterprise contracts. A Business customer processing 25,000 documents/month at ~5 pages each would pay tens of thousands per month at per-page IDP rates. ClawQL Business is ${pricing.business.monthlyPrice}/month flat with IDP, VDR, semantic search, and agent orchestration bundled — see the competitive section above for illustrative TCO math.`}
+          question="How does ClawQL IDP pricing compare to Hyperscience or ABBYY?"
+          answer={`Incumbent IDP vendors charge per page or $40K–$100K+/year. ClawQL Business (IDP bundle) is ${pricing.business.monthlyPrice}/month flat with VDR, semantic search, and agent orchestration included — see the competitive section for TCO math.`}
         />
         <Faq
           id="faq-6"
-          question="Why is ClawQL priced below legacy VDR and IDP stacks?"
-          answer={`Intralinks, Datasite, and similar vendors price per deal, per page, or $10K–$200K+/year with storage overages and setup fees. Starter at ${pricing.starter.monthlyPrice}/month includes Coneshare VDR in the subscription. Pricing is anchored to replacement value — still 6–20× below the incumbent stack — while remaining credible to enterprise procurement teams.`}
+          question="What tier fits real estate teams on Command + Google Drive?"
+          answer={`Teams (${pricing.teams.monthlyPrice}/mo) for MCP gateway + Onyx search over Drive folders + vault memory across deals. Add Starter (${pricing.starter.monthlyPrice}/mo) when you need title commitment classify/extract or Coneshare VDR for trackable disclosure packages. See /industries/real-estate.`}
         />
         <Faq
           id="faq-7"
-          question="Do you match ABBYY's pre-trained document skills?"
-          answer="Not on day one. ABBYY Vantage ships 150+ pre-built skills for common document types. ClawQL composes classify, extract, and HITL per vertical — lending W-2 samples ship today; broader skill libraries build with vertical packages. We state this openly in competitive evaluations rather than overclaiming."
+          question="What is the Sovereign Security Pack?"
+          answer={`The Sovereign Security Pack (${sovereignSecurityPack.monthlyPrice}${sovereignSecurityPack.period}) is an optional add-on on any paid tier. Enterprise includes it by default.`}
         />
         <Faq
           id="faq-8"
-          question="What is the Sovereign Security Pack?"
-          answer={`The Sovereign Security Pack (${sovereignSecurityPack.monthlyPrice}${sovereignSecurityPack.period}) is an optional add-on on Starter, Business, and Professional. It bundles Kata VM isolation, model weight integrity verification, WORM Merkle audit logs, Panguard fail-closed ATR, and monthly posture reports. Enterprise includes it by default.`}
-        />
-        <Faq
-          id="faq-9"
           question="Do you publish enterprise pricing?"
-          answer={`Enterprise contracts start from ${pricing.enterprise.priceFrom}${pricing.enterprise.period} for dedicated nodes, custom fine-tuning with retraining, EU multi-region, DPA/BAA, and a dedicated CSM. Contact sales to discuss annual terms.`}
+          answer={`Enterprise contracts start from ${pricing.enterprise.priceFrom}${pricing.enterprise.period} for dedicated nodes, custom fine-tuning, EU multi-region, DPA/BAA, and a dedicated CSM.`}
         />
       </FAQsAccordion>
 
@@ -445,8 +447,8 @@ export default function Page() {
         headline="Self-host free or join early access"
         subheadline={
           <p>
-            Install clawql-mcp on your hardware, or join the waitlist for managed Free, Starter, Business, or Professional
-            hosting.
+            Install clawql-mcp on your hardware, or join the waitlist — gateway from {pricing.developer.monthlyPrice}/mo,
+            IDP bundle from {pricing.starter.monthlyPrice}/mo.
           </p>
         }
         cta={

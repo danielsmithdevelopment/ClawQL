@@ -202,8 +202,8 @@ export default function Page() {
         />
         <Faq
           id="faq-2"
-          question="What's the difference between Starter, Business, and Professional?"
-          answer={`Starter (${pricing.starter.monthlyPrice}/mo) and Business (${pricing.business.monthlyPrice}/mo) are shared multi-tenant plans with 5,000 and 25,000 documents/month respectively. Professional (${pricing.professional.monthlyPrice}/mo) gives your organization a dedicated namespace, one vertical fine-tune adapter, SSO/SAML, and 99.9% uptime SLA. All managed tiers are in early access — join the waitlist for founder-led onboarding.`}
+          question="What's the difference between Developer, Teams, and Starter?"
+          answer={`Developer (${pricing.developer.monthlyPrice}/mo) is MCP gateway + memory — no IDP. Teams (${pricing.teams.monthlyPrice}/mo) adds full Onyx search. Starter (${pricing.starter.monthlyPrice}/mo) activates the IDP plugin bundle. Gateway-only buyers should not pay for document processing they do not use.`}
         />
         <Faq
           id="faq-3"
@@ -218,7 +218,7 @@ export default function Page() {
         <Faq
           id="faq-5"
           question="Is managed hosting available today?"
-          answer="Self-hosting is available now — npm, Helm, and the full open-source stack. Managed Free, Starter, Business, Professional, and Enterprise hosting is in early access: limited tenant slots, founder-led onboarding, and personal replies to waitlist signups."
+          answer="Self-hosting is available now — npm, Helm, and the full open-source stack. Managed gateway tiers from $29/mo and IDP bundles from $299/mo are in early access: limited tenant slots, founder-led onboarding, and personal replies to waitlist signups."
         />
         <Faq
           id="faq-6"
@@ -230,7 +230,7 @@ export default function Page() {
       {/* Pricing teaser — full grid on /pricing */}
       <PricingMultiTier
         id="pricing"
-        headline={`Self-host free. Managed tiers from ${pricing.starter.monthlyPrice}/mo — early access.`}
+        headline={`Self-host free. Gateway from ${pricing.developer.monthlyPrice}/mo · IDP from ${pricing.starter.monthlyPrice}/mo.`}
         subheadline={<p className="text-center text-sm/7 text-mist-600 dark:text-mist-400">{site.earlyAccess.pricingNote}</p>}
         plans={
           <>
@@ -247,38 +247,38 @@ export default function Page() {
               }
             />
             <Plan
+              name={pricing.developer.name}
+              price={pricing.developer.monthlyPrice}
+              period={pricing.developer.period}
+              subheadline={<p>{pricing.developer.subheadline}</p>}
+              badge={pricing.developer.badge}
+              features={pricing.developer.features.slice(0, 4)}
+              cta={
+                <ButtonLink href={site.urls.signup} size="lg">
+                  Join early access
+                </ButtonLink>
+              }
+            />
+            <Plan
+              name={pricing.teams.name}
+              price={pricing.teams.monthlyPrice}
+              period={pricing.teams.period}
+              subheadline={<p>{pricing.teams.subheadline}</p>}
+              badge={pricing.teams.badge}
+              features={pricing.teams.features.slice(0, 4)}
+              cta={
+                <ButtonLink href={site.urls.signup} size="lg">
+                  Join early access
+                </ButtonLink>
+              }
+            />
+            <Plan
               name={pricing.starter.name}
               price={pricing.starter.monthlyPrice}
               period={pricing.starter.period}
               subheadline={<p>{pricing.starter.subheadline}</p>}
               badge={pricing.starter.badge}
               features={pricing.starter.features.slice(0, 4)}
-              cta={
-                <ButtonLink href={site.urls.signup} size="lg">
-                  Join early access
-                </ButtonLink>
-              }
-            />
-            <Plan
-              name={pricing.business.name}
-              price={pricing.business.monthlyPrice}
-              period={pricing.business.period}
-              subheadline={<p>{pricing.business.subheadline}</p>}
-              badge={pricing.business.badge}
-              features={pricing.business.features.slice(0, 4)}
-              cta={
-                <ButtonLink href={site.urls.signup} size="lg">
-                  Join early access
-                </ButtonLink>
-              }
-            />
-            <Plan
-              name={pricing.professional.name}
-              price={pricing.professional.monthlyPrice}
-              period={pricing.professional.period}
-              subheadline={<p>{pricing.professional.subheadline}</p>}
-              badge={pricing.professional.badge}
-              features={pricing.professional.features.slice(0, 4)}
               cta={
                 <PlainButtonLink href={site.urls.pricing} size="lg">
                   All tiers & limits <ArrowNarrowRightIcon />

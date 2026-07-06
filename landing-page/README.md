@@ -36,15 +36,16 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Content model
 
-The site promotes three hosting models:
+The site promotes plugin-bundle hosting models:
 
-1. **Self-hosted (free)** — Open-source `clawql-mcp` on your own hardware
-2. **Shared managed hosting** — Free, Starter ($299/mo), Business ($599/mo) on multi-tenant infrastructure
-3. **Professional ($1,200/mo)** — Dedicated namespace, SSO/SAML, vertical fine-tune adapter
+1. **Self-hosted (free)** — Open-source `clawql-mcp`; enable plugins via `CLAWQL_ENABLE_*`
+2. **Gateway + memory** — Developer $29/mo, Teams $99/mo (MCP executions + vault + Onyx; no IDP)
+3. **IDP plugin bundle** — Starter $299/mo, Business $599/mo, Professional $1,200/mo (document processing + VDR)
+4. **Enterprise** — from $3,500/mo (dedicated node, custom fine-tune, Sovereign Security Pack included)
 
-**Enterprise** contracts (from $3,500/mo — dedicated node, custom fine-tuning, EU multi-region) are contact-sales only.
+**Sovereign Security Pack** (+$200/mo on any paid tier) bundles Kata isolation, WORM Merkle audit, Panguard ATR.
 
-Signup forms currently point to the waitlist flow (`/signup`). Wire `EmailSignupForm` actions to your backend or email provider when ready for production.
+Signup forms point to the waitlist flow (`/signup`). Wire `WaitlistSignupForm` to your backend when ready.
 
 ## Template origin
 

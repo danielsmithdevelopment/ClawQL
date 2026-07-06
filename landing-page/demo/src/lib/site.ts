@@ -6,9 +6,9 @@ export const site = {
   earlyAccess: {
     badge: 'Managed hosting is in early access — accepting waitlist signups',
     summary:
-      'ClawQL is open source and self-hostable today. Managed hosting (Free, Starter, Business, Professional, Enterprise) is onboarding its first tenants — founder-led setup, limited slots, sovereign inference on paid plans.',
+      'ClawQL is open source and self-hostable today. Managed hosting uses plugin bundles — gateway + memory from $29/mo, IDP document processing from $299/mo — with founder-led onboarding and limited slots.',
     pricingNote:
-      'Managed tiers follow the June 2026 GTM model — value-anchored pricing against the IDP + VDR + search stack incumbents sell separately. We onboard Professional and Business customers first, then Starter shared slots as capacity grows. All managed tiers are early access with founder-led onboarding.',
+      'Gateway tiers (Developer $29, Teams $99) compete on MCP executions and vault memory. IDP tiers (Starter $299+) activate document processing, VDR, and sovereign inference explicitly. All managed tiers are early access with founder-led onboarding.',
   },
   waitlistPromise:
     'Join the waitlist for managed hosting — we reply personally when a slot opens. Self-host free with npm or Helm while you wait.',
