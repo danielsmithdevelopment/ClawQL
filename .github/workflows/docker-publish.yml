@@ -95,7 +95,7 @@ jobs:
       # docker/metadata-action@v6.1.0 — only **immutable** tags on registry push; `latest` / `nightly` promoted after gates.
       - name: Docker metadata
         id: meta
-        uses: docker/metadata-action@80c7e94dd9b9319bd5eb7a0e0fe9291e23a2a2e9
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302
         with:
           images: ${{ env.IMAGE_NAME }}
           tags: |
@@ -213,7 +213,7 @@ jobs:
 
       - name: Docker metadata
         id: meta
-        uses: docker/metadata-action@80c7e94dd9b9319bd5eb7a0e0fe9291e23a2a2e9
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302
         with:
           images: ${{ env.DASHBOARD_IMAGE_NAME }}
           tags: |
@@ -336,7 +336,7 @@ jobs:
 
       - name: Docker metadata
         id: meta
-        uses: docker/metadata-action@80c7e94dd9b9319bd5eb7a0e0fe9291e23a2a2e9
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302
         with:
           images: ${{ env.PANGUARD_BRIDGE_IMAGE_NAME }}
           tags: |
@@ -461,7 +461,7 @@ jobs:
       # docker/metadata-action@v6.1.0 — immutable **`sha-*`** only until promotion (same as MCP image).
       - name: Docker metadata
         id: meta
-        uses: docker/metadata-action@80c7e94dd9b9319bd5eb7a0e0fe9291e23a2a2e9
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302
         with:
           images: ${{ env.WEBSITE_IMAGE_NAME }}
           tags: |
