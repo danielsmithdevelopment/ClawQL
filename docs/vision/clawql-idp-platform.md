@@ -110,15 +110,15 @@ Each hosted customer receives a dedicated tenant with full isolation at the data
 
 Managed hosting is structured around **plugin bundles**, not a single document-volume ladder. Gateway-only customers pay dramatically less than IDP customers.
 
-| Tier | Price | Plugin bundle | Included |
-| ---- | ----- | ------------- | -------- |
-| **Free** | $0/mo | MCP Gateway | 10,000 executions/mo, 1 user, basic memory vault — no IDP, no VDR |
-| **Developer** | $29/mo | Gateway + memory | 50,000 executions/mo, 3 users, vault memory — no IDP, no GPU |
-| **Teams** | $99/mo | Gateway + memory + Onyx | 250,000 executions/mo, 10 users, full Onyx semantic search — no IDP |
-| **Starter** | $299/mo | IDP plugin bundle | 5,000 documents/mo, VDR, classify/extract, sovereign inference |
-| **Business** | $599/mo | IDP plugin bundle | 25,000 documents/mo, priority queue, full VDR analytics, 99.5% SLA |
-| **Professional** | $1,200/mo | Full stack | 75,000 documents/mo, dedicated namespace, vertical fine-tune, SSO/SAML |
-| **Enterprise** | from $3,500/mo | Full stack + security | Dedicated node, custom fine-tune, EU multi-region, Sovereign Security Pack included |
+| Tier             | Price          | Plugin bundle           | Included                                                                            |
+| ---------------- | -------------- | ----------------------- | ----------------------------------------------------------------------------------- |
+| **Free**         | $0/mo          | MCP Gateway             | 10,000 executions/mo, 1 user, basic memory vault — no IDP, no VDR                   |
+| **Developer**    | $29/mo         | Gateway + memory        | 50,000 executions/mo, 3 users, vault memory — no IDP, no GPU                        |
+| **Teams**        | $99/mo         | Gateway + memory + Onyx | 250,000 executions/mo, 10 users, full Onyx semantic search — no IDP                 |
+| **Starter**      | $299/mo        | IDP plugin bundle       | 5,000 documents/mo, VDR, classify/extract, sovereign inference                      |
+| **Business**     | $599/mo        | IDP plugin bundle       | 25,000 documents/mo, priority queue, full VDR analytics, 99.5% SLA                  |
+| **Professional** | $1,200/mo      | Full stack              | 75,000 documents/mo, dedicated namespace, vertical fine-tune, SSO/SAML              |
+| **Enterprise**   | from $3,500/mo | Full stack + security   | Dedicated node, custom fine-tune, EU multi-region, Sovereign Security Pack included |
 
 Execution overage on gateway tiers: **$0.20 per 1,000 executions** (matches [Executor](https://executor.sh/) Team pricing). Sovereign Security Pack: **+$200/mo** on any paid tier.
 
@@ -404,22 +404,22 @@ The entire sequence above runs from a single natural-language agent prompt. No c
 
 ClawQL competes across four adjacent markets — price each plugin bundle against the right incumbent:
 
-| Competitor Category | ClawQL tier | ClawQL differentiation |
-| ------------------- | ----------- | ---------------------- |
-| **MCP gateways** ([Executor](https://executor.sh/), emerging agent infrastructure) | Developer ($29/mo), Teams ($99/mo) | Same context-efficient search/execute pattern. ClawQL adds Obsidian vault memory, Onyx semantic search, and optional IDP platform Executor does not ship. Executor Team is $150/org for 250K executions; ClawQL Teams is $99 with memory. |
-| **SaaS IDP vendors** (Hyperscience, Kofax, ABBYY) | Starter–Professional (IDP bundle) | Cloud-hosted; per-document pricing at scale. No native MCP/agent interface. ClawQL: tenant-isolated hosted or self-hosted, flat IDP tiers, MCP-native from day one. |
-| **VDR incumbents** (Intralinks, Datasite, Ansarada) | Starter+ (IDP bundle includes Coneshare) | Hosted VDRs with no document processing pipeline. High per-user/per-GB/per-deal licensing. ClawQL: full pipeline integration, Coneshare VDR included in IDP subscription. |
-| **Vertical CRMs** (REsimpli, franchise transaction tools) | Teams ($99/mo) for agent memory; Starter ($299/mo) for IDP | CRMs track pipeline; Drive folders hold files. ClawQL connects CRM APIs + storage via MCP, indexes documents in Onyx, threads deal context in vault — without replacing Command, Dotloop, or SkySlope. |
+| Competitor Category                                                                | ClawQL tier                                                | ClawQL differentiation                                                                                                                                                                                                                    |
+| ---------------------------------------------------------------------------------- | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **MCP gateways** ([Executor](https://executor.sh/), emerging agent infrastructure) | Developer ($29/mo), Teams ($99/mo)                         | Same context-efficient search/execute pattern. ClawQL adds Obsidian vault memory, Onyx semantic search, and optional IDP platform Executor does not ship. Executor Team is $150/org for 250K executions; ClawQL Teams is $99 with memory. |
+| **SaaS IDP vendors** (Hyperscience, Kofax, ABBYY)                                  | Starter–Professional (IDP bundle)                          | Cloud-hosted; per-document pricing at scale. No native MCP/agent interface. ClawQL: tenant-isolated hosted or self-hosted, flat IDP tiers, MCP-native from day one.                                                                       |
+| **VDR incumbents** (Intralinks, Datasite, Ansarada)                                | Starter+ (IDP bundle includes Coneshare)                   | Hosted VDRs with no document processing pipeline. High per-user/per-GB/per-deal licensing. ClawQL: full pipeline integration, Coneshare VDR included in IDP subscription.                                                                 |
+| **Vertical CRMs** (REsimpli, franchise transaction tools)                          | Teams ($99/mo) for agent memory; Starter ($299/mo) for IDP | CRMs track pipeline; Drive folders hold files. ClawQL connects CRM APIs + storage via MCP, indexes documents in Onyx, threads deal context in vault — without replacing Command, Dotloop, or SkySlope.                                    |
 
 ### Real estate vertical
 
 Brokerages on Keller Williams Command, eXp BoldTrail, Follow Up Boss, or Compass share a structural gap: **CRM knows the deal, Drive holds the files** — no semantic link between contacts and transaction PDFs.
 
-| Need | Recommended tier | Why |
-| ---- | ---------------- | --- |
-| Connect Command + Drive, semantic search, deal memory | **Teams ($99/mo)** | MCP gateway + Onyx + vault — no IDP overhead for teams that do not process documents daily |
-| Title commitment classify/extract, Coneshare VDR for disclosures | **Starter ($299/mo)** | IDP plugin bundle — explicitly opted in |
-| REsimpli comparison | Teams vs REsimpli Basic ($149/mo) | REsimpli is CRM-only for investors; ClawQL unifies CRM integration, document search, and agent memory |
+| Need                                                             | Recommended tier                  | Why                                                                                                   |
+| ---------------------------------------------------------------- | --------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Connect Command + Drive, semantic search, deal memory            | **Teams ($99/mo)**                | MCP gateway + Onyx + vault — no IDP overhead for teams that do not process documents daily            |
+| Title commitment classify/extract, Coneshare VDR for disclosures | **Starter ($299/mo)**             | IDP plugin bundle — explicitly opted in                                                               |
+| REsimpli comparison                                              | Teams vs REsimpli Basic ($149/mo) | REsimpli is CRM-only for investors; ClawQL unifies CRM integration, document search, and agent memory |
 
 ClawQL does **not** replace Dotloop (forms, e-sign, broker compliance) or MLS listing platforms. It is the intelligent document layer on top.
 
