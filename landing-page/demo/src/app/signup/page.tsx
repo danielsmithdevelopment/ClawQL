@@ -27,9 +27,9 @@ export default function Page() {
             <a href="/industries/real-estate#demo-pitch" className="underline">
               one-paragraph pitch
             </a>{' '}
-            to forward before your demo. Managed Free ($0), Starter ({pricing.starter.monthlyPrice}/mo), Business (
-            {pricing.business.monthlyPrice}/mo), and Professional ({pricing.professional.monthlyPrice}/mo) — join the
-            waitlist for founder-led onboarding. {site.waitlistPromise}
+            to forward before your demo. Gateway from {pricing.developer.monthlyPrice}/mo, Teams{' '}
+            {pricing.teams.monthlyPrice}/mo, IDP bundle from {pricing.starter.monthlyPrice}/mo — join the waitlist for
+            founder-led onboarding. {site.waitlistPromise}
           </p>
         }
         cta={<WaitlistSignupForm className="mx-auto" />}

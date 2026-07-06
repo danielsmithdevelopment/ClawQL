@@ -1,5 +1,6 @@
 import { clsx } from 'clsx/lite'
 import type { ComponentProps } from 'react'
+import { Link } from '@/components/elements/link'
 import { Section } from '../elements/section'
 import { CheckmarkIcon } from '../icons/checkmark-icon'
 import { MinusIcon } from '../icons/minus-icon'
@@ -9,6 +10,8 @@ import {
   competitiveHeadline,
   competitiveHonestyNotes,
   competitiveSummary,
+  executorBenchmark,
+  realEstateVertical,
   stackReplacementSummary,
   tcoBenchmarks,
 } from '@/lib/competitive-pricing'
@@ -40,11 +43,7 @@ export function CompetitivePricingSection({ className, ...props }: ComponentProp
         id="competitive"
         eyebrow="Competitive landscape"
         headline={competitiveHeadline}
-        subheadline={
-          <p>
-            {competitiveSummary}
-          </p>
-        }
+        subheadline={<p>{competitiveSummary}</p>}
       >
         <div className="grid grid-cols-1 gap-2 lg:grid-cols-3">
           {tcoBenchmarks.map((benchmark) => (
@@ -67,6 +66,57 @@ export function CompetitivePricingSection({ className, ...props }: ComponentProp
             </div>
           ))}
         </div>
+
+        <div className="mt-10 rounded-xl border border-mist-950/10 bg-mist-950/2.5 p-6 sm:p-8 dark:border-white/10 dark:bg-white/5">
+          <h3 className="text-xl font-semibold text-mist-950 dark:text-white">
+            vs {executorBenchmark.name} — direct MCP gateway competitor
+          </h3>
+          <p className="mt-2 text-sm/7 text-mist-700 dark:text-mist-400">{executorBenchmark.tagline}</p>
+          <p className="mt-2 text-sm/7 text-mist-600 dark:text-mist-500">{executorBenchmark.tokenEfficiency}</p>
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <p className="text-xs font-medium tracking-wide text-mist-500 uppercase">{executorBenchmark.name} pricing</p>
+              <ul className="mt-2 space-y-1 text-sm/7 text-mist-700 dark:text-mist-400">
+                {executorBenchmark.pricing.map((row) => (
+                  <li key={row.tier}>
+                    <span className="font-medium text-mist-950 dark:text-white">{row.tier}</span> {row.price} —{' '}
+                    {row.includes}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <p className="text-xs font-medium tracking-wide text-mist-500 uppercase">ClawQL response</p>
+              <p className="mt-2 text-sm font-semibold text-mist-950 dark:text-white">
+                {executorBenchmark.clawqlResponse.tier}
+              </p>
+              <p className="mt-2 text-sm/7 text-mist-700 dark:text-mist-400">
+                {executorBenchmark.clawqlResponse.advantage}
+              </p>
+              <p className="mt-2 text-xs/6 text-mist-500 dark:text-mist-400">
+                {executorBenchmark.clawqlResponse.honestGap}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-6 rounded-xl border border-mist-950/10 bg-mist-950/2.5 p-6 sm:p-8 dark:border-white/10 dark:bg-white/5">
+          <h3 className="text-xl font-semibold text-mist-950 dark:text-white">{realEstateVertical.headline}</h3>
+          <p className="mt-2 text-sm/7 text-mist-700 dark:text-mist-400">{realEstateVertical.problem}</p>
+          <p className="mt-4 text-sm/7 text-mist-700 dark:text-mist-400">{realEstateVertical.clawqlPitch}</p>
+          <p className="mt-4 text-sm font-medium text-mist-950 dark:text-white">{realEstateVertical.recommendedTier}</p>
+          <ul className="mt-4 space-y-2 text-sm/7 text-mist-600 dark:text-mist-500">
+            {realEstateVertical.competitors.map((c) => (
+              <li key={c.name}>
+                <span className="font-medium text-mist-800 dark:text-mist-200">{c.name}</span> ({c.pricing}) — {c.gap}
+              </li>
+            ))}
+          </ul>
+          <Link href={realEstateVertical.href} className="mt-4 inline-block text-sm font-medium">
+            Real estate vertical →
+          </Link>
+        </div>
+
         <div className="mt-10 rounded-xl border border-mist-950/10 bg-mist-950/2.5 p-6 sm:p-8 dark:border-white/10 dark:bg-white/5">
           <h3 className="text-xl font-semibold text-mist-950 dark:text-white">{stackReplacementSummary.headline}</h3>
           <p className="mt-2 text-sm/7 text-mist-600 dark:text-mist-400">{stackReplacementSummary.profile}</p>
@@ -81,7 +131,7 @@ export function CompetitivePricingSection({ className, ...props }: ComponentProp
               </p>
             </div>
             <div>
-              <p className="text-xs font-medium tracking-wide text-mist-500 uppercase">ClawQL Business</p>
+              <p className="text-xs font-medium tracking-wide text-mist-500 uppercase">ClawQL Business (IDP bundle)</p>
               <p className="mt-1 text-lg font-semibold text-mist-950 dark:text-white">
                 {stackReplacementSummary.clawqlBusiness}
               </p>
@@ -101,11 +151,11 @@ export function CompetitivePricingSection({ className, ...props }: ComponentProp
       <Section
         id="competitor-features"
         eyebrow="Feature comparison"
-        headline="ClawQL Business ($599/mo) vs IDP and VDR incumbents"
+        headline="ClawQL Business ($599/mo IDP bundle) vs IDP and VDR incumbents"
         subheadline={
           <p>
-            Competitors typically sell IDP <em>or</em> VDR. ClawQL bundles both plus semantic search and MCP agent
-            orchestration. Compare at the Business tier — our mid-market managed plan.
+            Competitors typically sell IDP <em>or</em> VDR. ClawQL IDP tiers bundle both plus semantic search, MCP
+            gateway, and agent memory. Gateway-only tiers are compared against Executor above.
           </p>
         }
       >
@@ -129,10 +179,7 @@ export function CompetitivePricingSection({ className, ...props }: ComponentProp
             <tbody>
               {competitorFeatureRows.map((row) => (
                 <tr key={row.feature} className="group border-t border-mist-950/5 dark:border-white/10">
-                  <th
-                    scope="row"
-                    className="py-4 pr-4 font-normal text-mist-700 dark:text-mist-400"
-                  >
+                  <th scope="row" className="py-4 pr-4 font-normal text-mist-700 dark:text-mist-400">
                     <div className="flex flex-col gap-1">
                       <span>{row.feature}</span>
                       {row.footnote ? (
@@ -141,10 +188,7 @@ export function CompetitivePricingSection({ className, ...props }: ComponentProp
                     </div>
                   </th>
                   {competitorColumns.map((col) => (
-                    <td
-                      key={col}
-                      className="px-3 py-4 text-center text-mist-700 dark:text-mist-400"
-                    >
+                    <td key={col} className="px-3 py-4 text-center text-mist-700 dark:text-mist-400">
                       <CellValue value={row.values[col]} />
                     </td>
                   ))}
@@ -155,7 +199,7 @@ export function CompetitivePricingSection({ className, ...props }: ComponentProp
         </div>
       </Section>
 
-      <Section id="competitive-honesty" eyebrow="Honest positioning" headline="What to expect in enterprise evaluations">
+      <Section id="competitive-honesty" eyebrow="Honest positioning" headline="What to expect in evaluations">
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           {competitiveHonestyNotes.map((note) => (
             <div key={note.title} className="flex flex-col gap-2 rounded-xl bg-mist-950/2.5 p-6 dark:bg-white/5">
