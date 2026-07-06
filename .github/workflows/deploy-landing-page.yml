@@ -12,7 +12,7 @@ on:
 
 concurrency:
   group: deploy-landing-page-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -59,6 +59,21 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Deploy
+      - name: Deploy to GitHub Pages (attempt 1)
         id: deployment
         uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e
+        continue-on-error: true
+      - name: Deploy to GitHub Pages (attempt 2)
+        id: deployment_retry_2
+        if: steps.deployment.outcome == 'failure'
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e
+        continue-on-error: true
+      - name: Deploy to GitHub Pages (attempt 3)
+        id: deployment_retry_3
+        if: steps.deployment.outcome == 'failure' && steps.deployment_retry_2.outcome == 'failure'
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e
+      - name: Verify deploy succeeded
+        if: steps.deployment.outcome == 'failure' && steps.deployment_retry_2.outcome == 'failure' && steps.deployment_retry_3.outcome == 'failure'
+        run: |
+          echo "GitHub Pages deploy failed after 3 attempts"
+          exit 1

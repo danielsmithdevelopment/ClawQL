@@ -39,10 +39,10 @@ Open [http://localhost:3000](http://localhost:3000).
 The site promotes three hosting models:
 
 1. **Self-hosted (free)** — Open-source `clawql-mcp` on your own hardware
-2. **Shared managed hosting ($299/mo · $250/mo annual)** — Multi-tenant hosted MCP, vault, and IDP
-3. **Dedicated managed hosting ($599/mo · $500/mo annual)** — Single-tenant hardware, full isolation
+2. **Shared managed hosting** — Free, Starter ($299/mo), Business ($599/mo) on multi-tenant infrastructure
+3. **Professional ($1,200/mo)** — Dedicated namespace, SSO/SAML, vertical fine-tune adapter
 
-**Enterprise** contracts (custom SLAs, on-call, high volume) are contact-sales only — no fixed list price.
+**Enterprise** contracts (from $3,500/mo — dedicated node, custom fine-tuning, EU multi-region) are contact-sales only.
 
 Signup forms currently point to the waitlist flow (`/signup`). Wire `EmailSignupForm` actions to your backend or email provider when ready for production.
 
