@@ -1,10 +1,10 @@
 import { ButtonLink, PlainButtonLink } from '@/components/elements/button'
 import { Link } from '@/components/elements/link'
-import { ChevronIcon } from '@/components/icons/chevron-icon'
-import { CaseStudyCard, CaseStudyGrid, ToolTierSection } from '@/components/sections/clawql-marketing'
-import { CallToActionSimple } from '@/components/sections/call-to-action-simple'
-import { HeroSimpleCentered } from '@/components/sections/hero-simple-centered'
 import { Section } from '@/components/elements/section'
+import { ChevronIcon } from '@/components/icons/chevron-icon'
+import { CallToActionSimple } from '@/components/sections/call-to-action-simple'
+import { CaseStudyCard, CaseStudyGrid, ToolTierSection } from '@/components/sections/clawql-marketing'
+import { HeroSimpleCentered } from '@/components/sections/hero-simple-centered'
 import { caseStudies, mcpToolTiers } from '@/lib/marketing'
 import { site } from '@/lib/site'
 
@@ -34,9 +34,9 @@ export default function Page() {
         headline="Built from production agent work — not a demo."
         subheadline={
           <p>
-            ClawQL started as the MCP layer behind real deployments: multi-provider DevOps workflows, document
-            pipelines for regulated industries, and cross-session memory that survives when you switch between Cursor,
-            OpenClaw, and Kubernetes. The open-source core ships what we run in production.
+            ClawQL started as the MCP layer behind real deployments: multi-provider DevOps workflows, document pipelines
+            for regulated industries, and cross-session memory that survives when you switch between Cursor, OpenClaw,
+            and Kubernetes. The open-source core ships what we run in production.
           </p>
         }
       >
@@ -44,21 +44,21 @@ export default function Page() {
           <div className="rounded-xl bg-mist-950/2.5 p-6 dark:bg-white/5">
             <h3 className="font-semibold text-mist-950 dark:text-white">ClawQL and See The Greens</h3>
             <p className="mt-2">
-              See The Greens is a mortgage-first loan origination system powered by ClawQL — the same IDP pipeline, vault
-              memory, and HITL patterns documented on this site. ClawQL is the horizontal platform; See The Greens is one
-              vertical product built on it. Neither implies exclusivity — lenders can self-host ClawQL or build their own
-              LOS on the same stack.
+              See The Greens is a mortgage-first loan origination system powered by ClawQL — the same IDP pipeline,
+              vault memory, and HITL patterns documented on this site. ClawQL is the horizontal platform; See The Greens
+              is one vertical product built on it. Neither implies exclusivity — lenders can self-host ClawQL or build
+              their own LOS on the same stack.
             </p>
           </div>
           <div className="rounded-xl bg-mist-950/2.5 p-6 dark:bg-white/5">
             <h3 className="font-semibold text-mist-950 dark:text-white">Early access, founder-led</h3>
             <p className="mt-2">
               Managed hosting is in early access — onboarding the first Professional and shared-tenancy tenants with
-              founder-led setup, not a self-serve checkout. The open-source core is production-ready today; hosted slots are limited
-              while we validate pipeline reliability under real workloads.
+              founder-led setup, not a self-serve checkout. The open-source core is production-ready today; hosted slots
+              are limited while we validate pipeline reliability under real workloads.
             </p>
           </div>
-          <div className="rounded-xl bg-mist-950/2.5 p-6 dark:bg-white/5 sm:col-span-2 lg:col-span-1">
+          <div className="rounded-xl bg-mist-950/2.5 p-6 sm:col-span-2 lg:col-span-1 dark:bg-white/5">
             <h3 className="font-semibold text-mist-950 dark:text-white">What we publish</h3>
             <p className="mt-2">
               Case studies include tool traces, failure modes, fixes, and token measurements. The{' '}
@@ -89,8 +89,9 @@ export default function Page() {
           <div className="rounded-xl bg-mist-950/2.5 p-6 dark:bg-white/5">
             <h3 className="font-semibold text-mist-950 dark:text-white">Token efficiency</h3>
             <p className="mt-2">
-              GitHub&apos;s bundled spec alone is ~2.28M planning tokens. <code className="text-sm">search</code> returns
-              ranked operation IDs in thousands of tokens — measured in our published GitHub provider case study.
+              GitHub&apos;s bundled spec alone is ~2.28M planning tokens. <code className="text-sm">search</code>{' '}
+              returns ranked operation IDs in thousands of tokens — measured in our published GitHub provider case
+              study.
             </p>
           </div>
           <div className="rounded-xl bg-mist-950/2.5 p-6 dark:bg-white/5">
@@ -130,15 +131,11 @@ export default function Page() {
       <CallToActionSimple
         id="call-to-action"
         headline="Read the case studies. Run the tools."
-        subheadline={
-          <p>
-            Self-host today or join the managed waitlist for hosted MCP, vault, and IDP. {site.waitlistPromise}
-          </p>
-        }
+        subheadline={<p>Self-host today or start a 14-day Developer trial. {site.waitlistPromise}</p>}
         cta={
           <div className="flex items-center gap-4">
             <ButtonLink href={site.urls.signup} size="lg">
-              Join early access
+              Start free trial
             </ButtonLink>
             <PlainButtonLink href={`${site.urls.docs}/case-studies`} size="lg">
               All case studies <ChevronIcon />

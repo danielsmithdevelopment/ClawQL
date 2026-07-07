@@ -9,20 +9,22 @@ export type IdpTierId = 'starter' | 'business' | 'professional'
 export type ManagedTierId = GatewayTierId | IdpTierId
 
 /** Comparison table columns — self-hosted plus all managed tiers. */
-export const pricingPlanNames = [
-  'Self-hosted',
-  'Free',
-  'Developer',
-  'Teams',
-  'Starter',
-  'Business',
-  'Professional',
-] as const
+export const pricingPlanNames = ['Self-hosted', 'Developer', 'Teams', 'Starter', 'Business', 'Professional'] as const
 
 export type PricingPlanName = (typeof pricingPlanNames)[number]
 
-/** Customer-facing promise — no execution caps or overage on any tier. */
-export const unlimitedExecutionsTagline = 'Unlimited MCP executions on every tier — no caps, no overage, no meter.'
+/** Customer-facing promise — no execution caps or overage on hosted tiers. */
+export const unlimitedExecutionsTagline =
+  'Unlimited MCP executions on every hosted tier — no caps, no overage, no meter.'
+
+/** Hosted entry point — full Developer tier evaluation, no perpetual free hosted plan. */
+export const hostedFreeTrial = {
+  durationDays: 14,
+  headline: '14-day free trial',
+  subheadline:
+    'Full Developer tier — persistent vault memory, unlimited executions, global edge endpoint. No credit card required.',
+  noCreditCard: true,
+} as const
 
 /** Gateway-tier hosting benefits (customer-facing; no provider names). */
 export const gatewayEdgeHostingFeature = 'Global edge-hosted MCP endpoint'
@@ -45,7 +47,7 @@ export const pluginBundles = {
     name: 'MCP Gateway',
     description:
       'search, execute, audit, cache — always-on Core. Global edge hosting on gateway tiers. Unlimited integrations and executions. Vault-backed memory with no per-recall egress penalties.',
-    tiers: ['Free', 'Developer', 'Teams'] as const,
+    tiers: ['Developer', 'Teams'] as const,
   },
   memory: {
     name: 'Memory & Search',
@@ -83,33 +85,13 @@ export const pricing = {
     price: '$0',
     period: '',
     subheadline:
-      'Run the full open-source stack on your hardware — enable only the plugins you need via CLAWQL_ENABLE_* flags.',
+      'Want free forever? Run the full Apache 2.0 stack on your hardware — Helm chart, GHCR images, no license fee, no feature restrictions. Enable only the plugins you need via CLAWQL_ENABLE_* flags.',
     features: [
       'search, execute, audit, cache (Core — always on)',
       'memory_ingest & memory_recall (default on)',
       'Full IDP pipeline when you opt in (8 vendors)',
+      'Apache 2.0 — free forever, you pay infra only',
       'Helm charts & GHCR images',
-      'No license fee — you pay infra only',
-    ],
-  },
-  managedFree: {
-    name: 'Free',
-    shortName: 'Free' as const,
-    monthlyPrice: '$0',
-    period: '/mo',
-    badge: 'Gateway · early access',
-    pluginBundle: 'gateway' as const,
-    subheadline:
-      'Try the hosted MCP gateway — connect agents to your APIs without IDP or VDR overhead. Memory vault included at evaluation scale.',
-    features: [
-      'Unlimited MCP executions',
-      gatewayEdgeHostingFeature,
-      vaultRecallStorageFeature,
-      singleMcpEndpointFeature,
-      '1 user · 3 integrations',
-      'Core MCP + basic memory vault',
-      'No IDP pipeline · no Coneshare VDR',
-      'Community support',
     ],
   },
   developer: {
@@ -118,12 +100,12 @@ export const pricing = {
     monthlyPrice: '$29',
     annualPricePerMonth: '$24',
     period: '/mo',
-    badge: 'Gateway + memory',
+    badge: 'Gateway + memory · 14-day trial',
     pluginBundle: 'gateway' as const,
     valueAnchor:
       'Unlimited executions + vault memory + eight efficiency layers — executor.sh caps usage and charges overage.',
     subheadline:
-      'MCP gateway + agent memory vault for developers connecting Claude Code, Cursor, or Codex to your APIs. No IDP, no GPU inference.',
+      'MCP gateway + agent memory vault for developers connecting Claude Code, Cursor, or Codex to your APIs. Start with a 14-day free trial — no credit card. No IDP, no GPU inference.',
     features: [
       'Unlimited MCP executions',
       gatewayEdgeHostingFeature,

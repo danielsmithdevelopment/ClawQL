@@ -1,26 +1,23 @@
 import { AnnouncementBadge } from '@/components/elements/announcement-badge'
 import { ButtonLink, PlainButtonLink } from '@/components/elements/button'
-import { InstallCommand } from '@/components/elements/install-command'
 import { ClawQLHeroLogo } from '@/components/elements/clawql-hero-logo'
+import { InstallCommand } from '@/components/elements/install-command'
 import { Link } from '@/components/elements/link'
+import { Section } from '@/components/elements/section'
 import { ArrowNarrowRightIcon } from '@/components/icons/arrow-narrow-right-icon'
 import { CallToActionSimple } from '@/components/sections/call-to-action-simple'
-import {
-  IdpStageCard,
-  ToolTierSection,
-} from '@/components/sections/clawql-marketing'
+import { IdpStageCard, ToolTierSection } from '@/components/sections/clawql-marketing'
 import { FAQsTwoColumnAccordion, Faq } from '@/components/sections/faqs-two-column-accordion'
 import { HeroTwoColumnWithPhoto } from '@/components/sections/hero-two-column-with-photo'
 import { Plan, PricingMultiTier } from '@/components/sections/pricing-multi-tier'
 import { SecuritySection } from '@/components/sections/security-section'
 import { Stat, StatsFourColumns } from '@/components/sections/stats-four-columns'
-import { Section } from '@/components/elements/section'
 import { WorkflowFeedSection } from '@/components/sections/workflow-feed'
 import { idpPipelineStages, mcpToolTiers, multiProviderBenchmark } from '@/lib/marketing'
-import { securityEnforcementLayers, securityPillars } from '@/lib/security-marketing'
-import { workflowFeeds } from '@/lib/workflow-feeds'
 import { pricing } from '@/lib/pricing'
+import { securityEnforcementLayers, securityPillars } from '@/lib/security-marketing'
 import { site } from '@/lib/site'
+import { workflowFeeds } from '@/lib/workflow-feeds'
 
 export default function Page() {
   return (
@@ -28,9 +25,7 @@ export default function Page() {
       {/* Hero */}
       <HeroTwoColumnWithPhoto
         id="hero"
-        eyebrow={
-          <AnnouncementBadge href={site.urls.signup} text={site.earlyAccess.badge} cta="Join waitlist" />
-        }
+        eyebrow={<AnnouncementBadge href={site.urls.signup} text={site.earlyAccess.badge} cta="Start trial" />}
         headline="AI agents that work your entire stack — without blowing your context budget."
         subheadline={
           <p>
@@ -43,7 +38,7 @@ export default function Page() {
           <div className="flex w-full max-w-xl flex-col gap-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
               <ButtonLink href={site.urls.signup} size="lg">
-                Join early access
+                Start free trial
               </ButtonLink>
               <PlainButtonLink href={`${site.urls.docs}/readme/getting-started`} size="lg">
                 Self-host free <ArrowNarrowRightIcon />
@@ -153,10 +148,11 @@ export default function Page() {
         headline="Eight vendors. One agent-composable pipeline."
         subheadline={
           <p>
-            Drop a file in Nextcloud; agents orchestrate layout parsing, PDF normalization, PII redaction, archival, hybrid
-            search, and secure sharing — via <code className="text-sm">search</code> → <code className="text-sm">execute</code>{' '}
-            or automated <code className="text-sm">run_idp_pipeline</code>. Self-host the full stack with Helm; managed
-            accounts run the ClawQL Archive Layer (Nextcloud + Onyx-indexed metadata) by default.
+            Drop a file in Nextcloud; agents orchestrate layout parsing, PDF normalization, PII redaction, archival,
+            hybrid search, and secure sharing — via <code className="text-sm">search</code> →{' '}
+            <code className="text-sm">execute</code> or automated <code className="text-sm">run_idp_pipeline</code>.
+            Self-host the full stack with Helm; managed accounts run the ClawQL Archive Layer (Nextcloud + Onyx-indexed
+            metadata) by default.
           </p>
         }
         cta={
@@ -179,9 +175,9 @@ export default function Page() {
         headline="Built to prove, not just claim."
         subheadline={
           <p>
-            ClawQL documents how container images are scanned, signed, and enforced from CI through Kubernetes
-            admission — plus a 32-module curriculum for agentic AI deployments. Same controls on self-hosted Helm and
-            dedicated managed accounts.
+            ClawQL documents how container images are scanned, signed, and enforced from CI through Kubernetes admission
+            — plus a 32-module curriculum for agentic AI deployments. Same controls on self-hosted Helm and dedicated
+            managed accounts.
           </p>
         }
         cta={
@@ -218,7 +214,7 @@ export default function Page() {
         <Faq
           id="faq-5"
           question="Is managed hosting available today?"
-          answer="Self-hosting is available now — npm, Helm, and the full open-source stack. Managed gateway tiers from $29/mo and IDP bundles from $299/mo are in early access: limited tenant slots, founder-led onboarding, and personal replies to waitlist signups."
+          answer="Self-hosting is available now — npm, Helm, and the full Apache 2.0 stack with no license fee. That is your free tier. Hosted gateway starts with a 14-day Developer trial (no credit card): full persistent vault and unlimited executions. IDP bundles from $299/mo onboard with founder-led setup."
         />
         <Faq
           id="faq-6"
@@ -230,8 +226,10 @@ export default function Page() {
       {/* Pricing teaser — full grid on /pricing */}
       <PricingMultiTier
         id="pricing"
-        headline={`Self-host free. Gateway from ${pricing.developer.monthlyPrice}/mo · IDP from ${pricing.starter.monthlyPrice}/mo.`}
-        subheadline={<p className="text-center text-sm/7 text-mist-600 dark:text-mist-400">{site.earlyAccess.pricingNote}</p>}
+        headline="Start your 14-day trial or self-host free"
+        subheadline={
+          <p className="text-center text-sm/7 text-mist-600 dark:text-mist-400">{site.earlyAccess.pricingNote}</p>
+        }
         plans={
           <>
             <Plan
@@ -255,7 +253,7 @@ export default function Page() {
               features={pricing.developer.features.slice(0, 4)}
               cta={
                 <ButtonLink href={site.urls.signup} size="lg">
-                  Join early access
+                  Start free trial
                 </ButtonLink>
               }
             />
@@ -299,7 +297,6 @@ export default function Page() {
           </ButtonLink>
         }
       />
-
     </>
   )
 }

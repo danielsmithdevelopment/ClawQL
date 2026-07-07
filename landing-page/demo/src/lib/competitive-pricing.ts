@@ -235,7 +235,7 @@ export const competitorFeatureRows: CompetitorFeatureRow[] = [
 export const competitiveHonestyNotes = [
   {
     title: 'Unlimited executions — deliberate pricing',
-    body: 'Gateway tiers run at the global edge and scale with demand — an extra execution or memory_recall costs us almost nothing in egress. Charging per execution creates a perverse incentive to throttle agents. ClawQL prices on hosting model, storage, and plugin bundles. Unlimited executions on every tier, including Free. executor.sh caps usage and bills $0.20/1,000 overage.',
+    body: 'Gateway tiers run at the global edge and scale with demand — an extra execution or memory_recall costs us almost nothing in egress. Charging per execution creates a perverse incentive to throttle agents. ClawQL prices on hosting model, storage, and plugin bundles. Unlimited executions on every hosted tier. Self-host free forever on Apache 2.0. executor.sh caps usage and bills $0.20/1,000 overage.',
   },
   {
     title: 'Plugin bundles, not one-size-fits-all',

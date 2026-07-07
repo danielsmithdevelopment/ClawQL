@@ -1,14 +1,14 @@
 import { ButtonLink, PlainButtonLink } from '@/components/elements/button'
-import { WaitlistSignupForm } from '@/components/elements/waitlist-signup-form'
 import { InstallCommand } from '@/components/elements/install-command'
+import { Section } from '@/components/elements/section'
+import { WaitlistSignupForm } from '@/components/elements/waitlist-signup-form'
 import { ArrowNarrowRightIcon } from '@/components/icons/arrow-narrow-right-icon'
 import { CheckmarkIcon } from '@/components/icons/checkmark-icon'
 import { IdpStageCard, ToolCard } from '@/components/sections/clawql-marketing'
 import { Feature, FeaturesThreeColumn } from '@/components/sections/features-three-column'
 import { HeroSimpleCentered } from '@/components/sections/hero-simple-centered'
-import { Section } from '@/components/elements/section'
 import { idpPipelineStages, mcpToolTiers } from '@/lib/marketing'
-import { pricing } from '@/lib/pricing'
+import { hostedFreeTrial, pricing } from '@/lib/pricing'
 import { site } from '@/lib/site'
 
 export const metadata = {
@@ -20,16 +20,16 @@ export default function Page() {
     <>
       <HeroSimpleCentered
         id="signup-hero"
-        headline="Book a demo or join early access"
+        headline="Start your 14-day trial or book a demo"
         subheadline={
           <p>
             {site.earlyAccess.summary} Real estate teams: see the{' '}
             <a href="/industries/real-estate#demo-pitch" className="underline">
               one-paragraph pitch
             </a>{' '}
-            to forward before your demo. Gateway from {pricing.developer.monthlyPrice}/mo, Teams{' '}
-            {pricing.teams.monthlyPrice}/mo, IDP bundle from {pricing.starter.monthlyPrice}/mo — join the waitlist for
-            founder-led onboarding. {site.waitlistPromise}
+            to forward before your demo. Developer trial is {hostedFreeTrial.durationDays} days, no credit card. Gateway
+            from {pricing.developer.monthlyPrice}/mo, Teams {pricing.teams.monthlyPrice}/mo, IDP bundle from{' '}
+            {pricing.starter.monthlyPrice}/mo. {site.waitlistPromise}
           </p>
         }
         cta={<WaitlistSignupForm className="mx-auto" />}
