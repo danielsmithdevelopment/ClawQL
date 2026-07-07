@@ -5,7 +5,7 @@ import { businessAllInMonthly, pricing, unlimitedExecutionsTagline } from './pri
 export const competitiveHeadline = 'Gateway, memory, and IDP — price each plugin bundle against the right incumbent.'
 
 export const competitiveSummary =
-  'ClawQL is not one product at one price. Developer and Teams tiers replace stateless MCP routers like executor.sh with persistent vault memory, Onyx semantic search, eight compounding token-efficiency layers, and unlimited executions on every tier — no meter, no overage. Starter through Professional compete with IDP and VDR incumbents on document volume — a $8,000–15,000/month stack sold separately elsewhere.'
+  'ClawQL is not one product at one price. Developer and Teams tiers replace stateless MCP routers like executor.sh with a global edge gateway, persistent vault memory (no egress penalties on recall), Onyx semantic search, eight compounding token-efficiency layers, and unlimited executions — no meter, no overage. Starter through Professional compete with IDP and VDR incumbents on document volume — a $8,000–15,000/month stack sold separately elsewhere.'
 
 /** MCP gateway competitor — executor.sh (direct competitor to ClawQL gateway layer). */
 export const executorBenchmark = {
@@ -48,7 +48,8 @@ export const executorComparisonRows: ExecutorComparisonRow[] = [
   {
     dimension: 'Agent memory',
     executor: 'None. No cross-session memory, no vault, no memory_recall.',
-    clawql: 'Built-in Obsidian vault — agents recall architectural decisions from prior sessions.',
+    clawql:
+      'Built-in Obsidian vault — agents recall architectural decisions from prior sessions. No egress penalties on memory recall.',
   },
   {
     dimension: 'Semantic search',
@@ -79,7 +80,7 @@ export const executorComparisonRows: ExecutorComparisonRow[] = [
   {
     dimension: 'Execution pricing',
     executor: '250,000 cap on Team + $0.20/1,000 overage. Customers watch a meter and throttle agents.',
-    clawql: 'Unlimited executions on every tier — Free through Enterprise. No caps, no overage bills.',
+    clawql: 'Unlimited executions on every tier. No caps, no overage bills, no egress tax on vault recall.',
   },
   {
     dimension: 'Pricing (gateway-only)',
@@ -93,8 +94,8 @@ export const tcoBenchmarks = [
     label: 'vs executor.sh (MCP gateway)',
     scenario: 'Team connecting Cursor to GitHub, Stripe, Jira — heavy daily agent usage',
     incumbent: 'executor.sh Team: $150/org/mo + $0.20/1,000 overage — pay more as agents work harder',
-    clawql: `Teams: ${pricing.teams.monthlyPrice}/mo — unlimited executions, vault memory, Onyx search`,
-    note: 'We do not tax usage. executor.sh meters executions and bills overage.',
+    clawql: `Teams: ${pricing.teams.monthlyPrice}/mo — unlimited executions, edge-hosted gateway, vault memory, Onyx search`,
+    note: 'No execution meter, no egress tax on vault recall. executor.sh meters executions and bills overage.',
   },
   {
     label: 'vs Hyperscience (IDP)',
@@ -234,7 +235,7 @@ export const competitorFeatureRows: CompetitorFeatureRow[] = [
 export const competitiveHonestyNotes = [
   {
     title: 'Unlimited executions — deliberate pricing',
-    body: 'MCP gateway workers are stateless and scale on spot capacity — an extra execution costs us almost nothing. Charging per execution creates a perverse incentive to throttle agents. ClawQL prices on hosting model, storage, and plugin bundles. Unlimited executions on every tier, including Free. executor.sh caps usage and bills $0.20/1,000 overage.',
+    body: 'Gateway tiers run at the global edge and scale with demand — an extra execution or memory_recall costs us almost nothing in egress. Charging per execution creates a perverse incentive to throttle agents. ClawQL prices on hosting model, storage, and plugin bundles. Unlimited executions on every tier, including Free. executor.sh caps usage and bills $0.20/1,000 overage.',
   },
   {
     title: 'Plugin bundles, not one-size-fits-all',
@@ -242,7 +243,7 @@ export const competitiveHonestyNotes = [
   },
   {
     title: 'executor.sh vs ClawQL (MCP gateway)',
-    body: 'executor.sh implements one token-efficiency layer and routes tool calls behind a usage meter. ClawQL compounds eight efficiency layers, ships persistent vault memory, Onyx semantic search, unlimited executions, and an optional full IDP platform. executor.sh has no equivalent at any price point beyond Layer 1 routing.',
+    body: 'executor.sh implements one token-efficiency layer and routes tool calls behind a usage meter. ClawQL compounds eight efficiency layers, ships a global edge gateway, persistent vault memory without egress penalties on recall, Onyx semantic search, unlimited executions, and an optional full IDP platform. executor.sh has no equivalent at any price point beyond Layer 1 routing.',
   },
   {
     title: 'Where incumbents still lead',

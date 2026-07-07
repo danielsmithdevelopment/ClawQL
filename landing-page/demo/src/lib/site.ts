@@ -8,7 +8,7 @@ export const site = {
     summary:
       'ClawQL is open source and self-hostable today. Managed hosting uses plugin bundles — unlimited executions on every tier, gateway + memory from $29/mo, IDP document processing from $299/mo — with founder-led onboarding and limited slots.',
     pricingNote:
-      'Gateway tiers (Developer $29, Teams $99) ship unlimited MCP executions plus vault memory and Onyx search. IDP tiers (Starter $299+) activate document processing, VDR, and sovereign inference explicitly. All managed tiers are early access with founder-led onboarding.',
+      'Gateway tiers (Developer $29, Teams $99) deploy at the global edge with unlimited MCP executions, vault memory (no egress penalties on recall), and Onyx search on Teams. IDP tiers (Starter $299+) activate document processing, VDR, and sovereign inference explicitly. All managed tiers are early access with founder-led onboarding.',
   },
   waitlistPromise:
     'Join the waitlist for managed hosting — we reply personally when a slot opens. Self-host free with npm or Helm while you wait.',
