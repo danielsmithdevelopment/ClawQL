@@ -9,12 +9,12 @@ import { Section } from '@/components/elements/section'
 import {
   annualBillingNoteText,
   annualBillingSavingsLabel,
-  executionOveragePerThousand,
   managedPrice,
   pluginBundles,
   pricing,
   pricingPlanNames,
   sovereignSecurityPack,
+  unlimitedExecutionsTagline,
   type BillingPeriod,
   type GatewayTierId,
   type IdpTierId,
@@ -154,8 +154,8 @@ export default function Page() {
         headline="Agent gateway & memory"
         subheadline={
           <p>
-            MCP gateway + vault memory for teams connecting agents to APIs — no IDP pipeline, no GPU inference. Execution
-            overage {executionOveragePerThousand}/1,000 beyond included volume.
+            MCP gateway + vault memory for teams connecting agents to APIs — no IDP pipeline, no GPU inference.{' '}
+            {unlimitedExecutionsTagline}
           </p>
         }
         options={['Monthly', 'Yearly']}
@@ -230,30 +230,18 @@ export default function Page() {
             ],
           },
           {
-            title: 'Usage & metering',
+            title: 'Usage',
             features: [
               {
-                name: 'Executions / month',
+                name: 'MCP executions',
                 value: {
                   'Self-hosted': 'Unlimited (your infra)',
-                  Free: '10,000',
-                  Developer: '50,000',
-                  Teams: '250,000',
-                  Starter: '—',
-                  Business: '—',
-                  Professional: '—',
-                },
-              },
-              {
-                name: 'Execution overage',
-                value: {
-                  'Self-hosted': 'N/A',
-                  Free: executionOveragePerThousand + '/1K',
-                  Developer: executionOveragePerThousand + '/1K',
-                  Teams: executionOveragePerThousand + '/1K',
-                  Starter: '—',
-                  Business: '—',
-                  Professional: '—',
+                  Free: 'Unlimited',
+                  Developer: 'Unlimited',
+                  Teams: 'Unlimited',
+                  Starter: 'Unlimited',
+                  Business: 'Unlimited',
+                  Professional: 'Unlimited',
                 },
               },
               {
@@ -413,7 +401,12 @@ export default function Page() {
         <Faq
           id="faq-3"
           question="How does ClawQL compare to executor.sh?"
-          answer={`executor.sh is a stateless MCP tool router — one token-efficiency layer, basic audit log, no memory, no semantic search, no document pipeline. ClawQL Developer (${pricing.developer.monthlyPrice}/mo) and Teams (${pricing.teams.monthlyPrice}/mo) implement the same search/execute pattern plus seven additional efficiency layers, persistent Obsidian vault memory, and Onyx semantic search. IDP tiers from ${pricing.starter.monthlyPrice}/mo add document processing, Coneshare VDR, and sovereign inference — none of which executor.sh offers at any price.`}
+          answer={`executor.sh caps executions (250,000/mo on Team) and charges $0.20/1,000 overage — customers watch a meter. ClawQL offers unlimited executions on every tier, including Free. ClawQL Developer (${pricing.developer.monthlyPrice}/mo) and Teams (${pricing.teams.monthlyPrice}/mo) add seven additional token-efficiency layers, persistent Obsidian vault memory, and Onyx semantic search on top of the same search/execute pattern. IDP tiers from ${pricing.starter.monthlyPrice}/mo add document processing, Coneshare VDR, and sovereign inference — none of which executor.sh offers.`}
+        />
+        <Faq
+          id="faq-3b"
+          question="Are MCP executions really unlimited?"
+          answer="Yes. Every managed tier — Free through Enterprise — includes unlimited MCP executions. We price on hosting model, storage, and plugin bundles because those drive real infrastructure cost. Stateless gateway workers scale automatically; taxing executions only encourages customers to throttle their agents. executor.sh is the outlier with execution caps and overage billing."
         />
         <Faq
           id="faq-4"
@@ -447,8 +440,8 @@ export default function Page() {
         headline="Self-host free or join early access"
         subheadline={
           <p>
-            Install clawql-mcp on your hardware, or join the waitlist — gateway from {pricing.developer.monthlyPrice}/mo,
-            IDP bundle from {pricing.starter.monthlyPrice}/mo.
+            Install clawql-mcp on your hardware, or join the waitlist — unlimited executions on every tier, gateway from{' '}
+            {pricing.developer.monthlyPrice}/mo, IDP bundle from {pricing.starter.monthlyPrice}/mo.
           </p>
         }
         cta={

@@ -224,7 +224,7 @@ export function CompetitivePricingSection({ className, ...props }: ComponentProp
       </Section>
 
       <Section id="competitive-honesty" eyebrow="Competitive positioning" headline="What to expect in evaluations">
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {competitiveHonestyNotes.map((note) => (
             <div key={note.title} className="flex flex-col gap-2 rounded-xl bg-mist-950/2.5 p-6 dark:bg-white/5">
               <h3 className="text-base font-semibold text-mist-950 dark:text-white">{note.title}</h3>
