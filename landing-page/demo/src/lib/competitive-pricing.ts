@@ -1,4 +1,4 @@
-/** Competitive landscape benchmarks — July 2026 research. Illustrative; verify at procurement time. */
+/** Competitive landscape benchmarks — June 2026 GTM playbook. Illustrative; verify at procurement time. */
 
 import { businessAllInMonthly, executionOveragePerThousand, pricing } from './pricing'
 
@@ -6,35 +6,87 @@ export const competitiveHeadline =
   'Gateway, memory, and IDP — price each plugin bundle against the right incumbent.'
 
 export const competitiveSummary =
-  'ClawQL is not one product at one price. Developer and Teams tiers compete with MCP gateways like Executor on executions while adding vault memory Executor does not ship. Starter through Professional compete with IDP and VDR incumbents on document volume — a $5,000–15,000/month stack sold separately elsewhere.'
+  'ClawQL is not one product at one price. Developer and Teams tiers replace stateless MCP routers like executor.sh with persistent vault memory, Onyx semantic search, and eight compounding token-efficiency layers — capabilities executor.sh does not ship at any price. Starter through Professional compete with IDP and VDR incumbents on document volume — a $8,000–15,000/month stack sold separately elsewhere.'
 
-/** MCP gateway competitor — Executor.sh (YC-backed, MIT, July 2026). */
+/** MCP gateway competitor — executor.sh (direct competitor to ClawQL gateway layer). */
 export const executorBenchmark = {
-  name: 'Executor',
+  name: 'executor.sh',
   href: 'https://executor.sh/',
-  tagline: 'MCP gateway — one endpoint, normalized OpenAPI/GraphQL/MCP tools, sandboxed execution.',
-  tokenEfficiency: '1,640 tools → ~278,800 tokens without Executor vs 1 execute tool → ~1,044 tokens with.',
+  positioning:
+    'Stateless MCP tool router. Normalizes OpenAPI/GraphQL/MCP into a search-and-execute gateway with host-side secret injection and basic audit logging. That is the complete product.',
   pricing: [
     { tier: 'Free', price: '$0', includes: '3 members · 10,000 executions/mo' },
-    { tier: 'Team', price: '$150/org/mo', includes: 'Unlimited members · 250,000 executions/mo' },
+    { tier: 'Team', price: '$150/org/mo', includes: 'Unlimited members · 250,000 executions/mo · basic audit log only' },
     { tier: 'Overage', price: executionOveragePerThousand + '/1,000', includes: 'Both Free and Team' },
   ],
   clawqlResponse: {
-    tier: `Developer ${pricing.developer.monthlyPrice}/mo`,
+    tiers: `Developer ${pricing.developer.monthlyPrice}/mo · Teams ${pricing.teams.monthlyPrice}/mo`,
     advantage:
-      'Undercuts Executor Team on price while adding Obsidian vault memory, memory_recall across sessions, and optional Onyx search on Teams — capabilities Executor lists as "coming soon" for traces only.',
-    honestGap:
-      'Executor ships desktop/CLI/cloud, polished onboarding, and YC distribution. ClawQL wins on memory + platform depth, not on gateway UX polish alone.',
+      'ClawQL implements the same Layer 1 search/execute pattern, then compounds seven additional efficiency layers on top — plus persistent Obsidian vault memory, Onyx semantic search, and an optional full IDP platform. executor.sh stops at Layer 1.',
+    closing:
+      'executor.sh is a stateless tool router. ClawQL is a stateful agent operating system. This is not a close comparison.',
   },
 } as const
 
+export type ExecutorComparisonRow = {
+  dimension: string
+  executor: string
+  clawql: string
+}
+
+/** Dimension-by-dimension comparison — Market 1 (MCP Gateway) from GTM playbook. */
+export const executorComparisonRows: ExecutorComparisonRow[] = [
+  {
+    dimension: 'Token efficiency architecture',
+    executor: 'One layer: search-and-execute pattern only.',
+    clawql:
+      'Eight compounding layers — response trimming, prose compression, prompt caching, semantic cache, history compression, final prompt trimming, and model routing on top of search/execute.',
+  },
+  {
+    dimension: 'Agent memory',
+    executor: 'None. No cross-session memory, no vault, no memory_recall.',
+    clawql: 'Built-in Obsidian vault — agents recall architectural decisions from prior sessions.',
+  },
+  {
+    dimension: 'Semantic search',
+    executor: 'None.',
+    clawql: 'Onyx enterprise search — 40+ connectors, hybrid keyword + vector, citation-backed results.',
+  },
+  {
+    dimension: 'Security architecture',
+    executor: 'Host-side secret injection and basic audit log. No public defense-in-depth documentation.',
+    clawql:
+      'Kata VM isolation, WORM Merkle audit logs, Panguard fail-closed ATR, model weight integrity verification, Presidio pre-log redaction — documented at docs.clawql.com/security/defense-in-depth.',
+  },
+  {
+    dimension: 'Document processing pipeline',
+    executor: 'None.',
+    clawql: 'Full IDP — Tika, Gotenberg, Stirling-PDF, archive layer, Merkle audit per step.',
+  },
+  {
+    dimension: 'Virtual data room',
+    executor: 'None.',
+    clawql: 'Coneshare VDR included from IDP Starter tier — trackable links, engagement analytics, watermarking.',
+  },
+  {
+    dimension: 'Sovereign LLM inference',
+    executor: 'None. All inference routes to external APIs.',
+    clawql: 'Fine-tuned Qwen3.6-27B inside tenant boundary — Istio egress block, no tokens leave the namespace.',
+  },
+  {
+    dimension: 'Pricing (gateway-only)',
+    executor: 'Team $150/org/mo — executions only, no memory or search.',
+    clawql: `Developer ${pricing.developer.monthlyPrice}/mo with vault memory; Teams ${pricing.teams.monthlyPrice}/mo adds Onyx search. IDP from ${pricing.starter.monthlyPrice}/mo.`,
+  },
+]
+
 export const tcoBenchmarks = [
   {
-    label: 'vs Executor (MCP gateway)',
+    label: 'vs executor.sh (MCP gateway)',
     scenario: 'Team connecting Cursor to GitHub, Stripe, Jira — 250,000 executions/mo',
-    incumbent: 'Executor Team: $150/org/mo',
-    clawql: `Teams: ${pricing.teams.monthlyPrice}/mo with vault + Onyx search`,
-    note: 'Developer at $29/mo undercuts for smaller teams; Teams adds semantic memory Executor does not offer.',
+    incumbent: 'executor.sh Team: $150/org/mo — tool routing only',
+    clawql: `Teams: ${pricing.teams.monthlyPrice}/mo — vault memory + Onyx search + eight efficiency layers`,
+    note: 'executor.sh routes API calls. ClawQL routes, remembers, searches, and optionally processes documents.',
   },
   {
     label: 'vs Hyperscience (IDP)',
@@ -78,13 +130,13 @@ export const realEstateVertical = {
 export const stackReplacementSummary = {
   headline: 'Full stack replacement cost (Business-tier IDP customer)',
   profile: '25 users · 25,000 documents/month · VDR sharing with external parties',
-  incumbentRange: '$5,000–15,000+/month',
+  incumbentRange: '$8,000–15,000+/month',
   incumbentDetail:
-    'Across Hyperscience or ABBYY (IDP), Intralinks or Datasite (VDR), standalone enterprise search, and custom audit tooling — separate contracts and data exposure points.',
+    'executor.sh + ABBYY + Intralinks + Glean + compliance tooling — separate contracts, separate data exposure points, no unified audit trail.',
   clawqlBusiness: `${pricing.business.monthlyPrice}/month`,
   clawqlBusinessMax: `${businessAllInMonthly}/month with Sovereign Security Pack`,
   savingsNote:
-    '6–20× below incumbent stack at comparable capability, with sovereign inference and zero external LLM API calls.',
+    '10–19× below incumbent stack at comparable capability, with sovereign inference and zero external LLM API calls.',
 } as const
 
 export type CompetitorColumn = 'ClawQL Business' | 'Hyperscience' | 'ABBYY Vantage' | 'Intralinks / Datasite'
@@ -169,11 +221,11 @@ export const competitorFeatureRows: CompetitorFeatureRow[] = [
 export const competitiveHonestyNotes = [
   {
     title: 'Plugin bundles, not one-size-fits-all',
-    body: 'Gateway-only buyers should not pay for Stirling, Gotenberg, and GPU inference. Developer ($29) and Teams ($99) compete on executions and memory. IDP tiers ($299+) are explicitly opted-in document processing — priced against Hyperscience and Intralinks, not Executor.',
+    body: 'Gateway-only buyers should not pay for Stirling, Gotenberg, and GPU inference. Developer ($29) and Teams ($99) replace executor.sh for pure API routing — with memory and search executor.sh cannot match. IDP tiers ($299+) are explicitly opted-in document processing — priced against Hyperscience and Intralinks.',
   },
   {
-    title: 'Respect Executor on gateway UX',
-    body: 'Executor is YC-backed, MIT licensed, and genuinely good at context-efficient MCP routing. ClawQL matches search/execute efficiency and adds durable vault memory, Onyx search, and an optional IDP platform Executor does not attempt.',
+    title: 'executor.sh vs ClawQL (MCP gateway)',
+    body: 'executor.sh implements one token-efficiency layer and routes tool calls. ClawQL compounds eight efficiency layers, ships persistent vault memory, Onyx semantic search, a full IDP pipeline, Coneshare VDR, sovereign LLM inference, and documented defense-in-depth security. executor.sh has no equivalent at any price point beyond Layer 1 routing.',
   },
   {
     title: 'Where incumbents still lead',

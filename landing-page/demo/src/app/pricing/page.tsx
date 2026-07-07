@@ -155,7 +155,7 @@ export default function Page() {
         subheadline={
           <p>
             MCP gateway + vault memory for teams connecting agents to APIs — no IDP pipeline, no GPU inference. Execution
-            overage {executionOveragePerThousand}/1,000 (matches Executor).
+            overage {executionOveragePerThousand}/1,000 beyond included volume.
           </p>
         }
         options={['Monthly', 'Yearly']}
@@ -412,8 +412,8 @@ export default function Page() {
         />
         <Faq
           id="faq-3"
-          question="How does ClawQL compare to Executor?"
-          answer={`Executor Team is $150/org/mo for 250,000 MCP executions. ClawQL Developer is ${pricing.developer.monthlyPrice}/mo (50,000 executions) and Teams is ${pricing.teams.monthlyPrice}/mo with vault memory and Onyx search — capabilities Executor does not ship. Overage matches at ${executionOveragePerThousand}/1,000 executions.`}
+          question="How does ClawQL compare to executor.sh?"
+          answer={`executor.sh is a stateless MCP tool router — one token-efficiency layer, basic audit log, no memory, no semantic search, no document pipeline. ClawQL Developer (${pricing.developer.monthlyPrice}/mo) and Teams (${pricing.teams.monthlyPrice}/mo) implement the same search/execute pattern plus seven additional efficiency layers, persistent Obsidian vault memory, and Onyx semantic search. IDP tiers from ${pricing.starter.monthlyPrice}/mo add document processing, Coneshare VDR, and sovereign inference — none of which executor.sh offers at any price.`}
         />
         <Faq
           id="faq-4"

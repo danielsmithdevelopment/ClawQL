@@ -21,7 +21,7 @@ export const pricingPlanNames = [
 
 export type PricingPlanName = (typeof pricingPlanNames)[number]
 
-/** Execution overage — matches Executor.sh (July 2026). */
+/** Execution overage on gateway tiers. */
 export const executionOveragePerThousand = '$0.20'
 
 /** Annual billing: ~2 months free on paid managed tiers. */
@@ -109,7 +109,7 @@ export const pricing = {
     period: '/mo',
     badge: 'Gateway + memory',
     pluginBundle: 'gateway' as const,
-    valueAnchor: 'Executor Team is $150/org — ClawQL adds durable vault memory they do not ship.',
+    valueAnchor: 'Replace executor.sh routing with vault memory, Onyx search, and eight efficiency layers — from $29/mo.',
     subheadline:
       'MCP gateway + agent memory vault for developers connecting Claude Code, Cursor, or Codex to your APIs. No IDP, no GPU inference.',
     features: [

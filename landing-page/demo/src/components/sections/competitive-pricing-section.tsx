@@ -11,6 +11,7 @@ import {
   competitiveHonestyNotes,
   competitiveSummary,
   executorBenchmark,
+  executorComparisonRows,
   realEstateVertical,
   stackReplacementSummary,
   tcoBenchmarks,
@@ -69,10 +70,9 @@ export function CompetitivePricingSection({ className, ...props }: ComponentProp
 
         <div className="mt-10 rounded-xl border border-mist-950/10 bg-mist-950/2.5 p-6 sm:p-8 dark:border-white/10 dark:bg-white/5">
           <h3 className="text-xl font-semibold text-mist-950 dark:text-white">
-            vs {executorBenchmark.name} — direct MCP gateway competitor
+            vs {executorBenchmark.name} — stateless tool router, not a platform
           </h3>
-          <p className="mt-2 text-sm/7 text-mist-700 dark:text-mist-400">{executorBenchmark.tagline}</p>
-          <p className="mt-2 text-sm/7 text-mist-600 dark:text-mist-500">{executorBenchmark.tokenEfficiency}</p>
+          <p className="mt-2 text-sm/7 text-mist-700 dark:text-mist-400">{executorBenchmark.positioning}</p>
           <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <p className="text-xs font-medium tracking-wide text-mist-500 uppercase">{executorBenchmark.name} pricing</p>
@@ -86,17 +86,39 @@ export function CompetitivePricingSection({ className, ...props }: ComponentProp
               </ul>
             </div>
             <div>
-              <p className="text-xs font-medium tracking-wide text-mist-500 uppercase">ClawQL response</p>
+              <p className="text-xs font-medium tracking-wide text-mist-500 uppercase">ClawQL gateway tiers</p>
               <p className="mt-2 text-sm font-semibold text-mist-950 dark:text-white">
-                {executorBenchmark.clawqlResponse.tier}
+                {executorBenchmark.clawqlResponse.tiers}
               </p>
               <p className="mt-2 text-sm/7 text-mist-700 dark:text-mist-400">
                 {executorBenchmark.clawqlResponse.advantage}
               </p>
-              <p className="mt-2 text-xs/6 text-mist-500 dark:text-mist-400">
-                {executorBenchmark.clawqlResponse.honestGap}
+              <p className="mt-2 text-sm/7 font-medium text-mist-800 dark:text-mist-200">
+                {executorBenchmark.clawqlResponse.closing}
               </p>
             </div>
+          </div>
+          <div className="mt-6 overflow-x-auto">
+            <table className="w-full min-w-[640px] border-collapse text-left text-sm/5">
+              <thead>
+                <tr>
+                  <th className="py-3 pr-4 font-medium text-mist-950 dark:text-white">Dimension</th>
+                  <th className="px-3 py-3 font-medium text-mist-950 dark:text-white">{executorBenchmark.name}</th>
+                  <th className="px-3 py-3 font-medium text-mist-950 dark:text-white">ClawQL</th>
+                </tr>
+              </thead>
+              <tbody>
+                {executorComparisonRows.map((row) => (
+                  <tr key={row.dimension} className="border-t border-mist-950/5 dark:border-white/10">
+                    <th scope="row" className="py-3 pr-4 font-normal text-mist-700 dark:text-mist-400">
+                      {row.dimension}
+                    </th>
+                    <td className="px-3 py-3 text-mist-600 dark:text-mist-500">{row.executor}</td>
+                    <td className="px-3 py-3 text-mist-700 dark:text-mist-400">{row.clawql}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
 
@@ -155,7 +177,7 @@ export function CompetitivePricingSection({ className, ...props }: ComponentProp
         subheadline={
           <p>
             Competitors typically sell IDP <em>or</em> VDR. ClawQL IDP tiers bundle both plus semantic search, MCP
-            gateway, and agent memory. Gateway-only tiers are compared against Executor above.
+            gateway, and agent memory. Gateway-only tiers are compared against executor.sh above.
           </p>
         }
       >
@@ -199,7 +221,7 @@ export function CompetitivePricingSection({ className, ...props }: ComponentProp
         </div>
       </Section>
 
-      <Section id="competitive-honesty" eyebrow="Honest positioning" headline="What to expect in evaluations">
+      <Section id="competitive-honesty" eyebrow="Competitive positioning" headline="What to expect in evaluations">
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           {competitiveHonestyNotes.map((note) => (
             <div key={note.title} className="flex flex-col gap-2 rounded-xl bg-mist-950/2.5 p-6 dark:bg-white/5">
