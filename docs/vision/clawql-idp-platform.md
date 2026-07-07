@@ -112,7 +112,7 @@ Managed hosting is structured around **plugin bundles**, not a single document-v
 
 | Tier             | Price          | Plugin bundle           | Included                                                                                                  |
 | ---------------- | -------------- | ----------------------- | --------------------------------------------------------------------------------------------------------- |
-| **Developer**    | $29/mo         | Gateway + memory        | Unlimited executions, 1 user, vault memory — no IDP, no GPU. 14-day free trial available.                   |
+| **Developer**    | $29/mo         | Gateway + memory        | Unlimited executions, 1 user, vault memory — no IDP, no GPU. 14-day free trial available.                 |
 | **Teams**        | $99/mo         | Gateway + memory + Onyx | Unlimited executions, 5 users, full Onyx semantic search — no IDP                                         |
 | **Starter**      | $299/mo        | IDP plugin bundle       | Unlimited executions, 5 users, 5,000 documents/mo, VDR, classify/extract, sovereign inference             |
 | **Business**     | $599/mo        | IDP plugin bundle       | Unlimited executions, 25,000 documents/mo, priority queue, full VDR analytics, 99.5% SLA                  |
