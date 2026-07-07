@@ -39,7 +39,7 @@ Open [http://localhost:3000](http://localhost:3000).
 The site promotes plugin-bundle hosting models:
 
 1. **Self-hosted (free)** — Open-source `clawql-mcp`; enable plugins via `CLAWQL_ENABLE_*`
-2. **Gateway + memory** — Developer $29/mo, Teams $99/mo (MCP executions + vault + Onyx; no IDP)
+2. **Gateway + memory** — Developer $29/mo, Teams $99/mo (unlimited MCP executions + vault + Onyx; no IDP)
 3. **IDP plugin bundle** — Starter $299/mo, Business $599/mo, Professional $1,200/mo (document processing + VDR)
 4. **Enterprise** — from $3,500/mo (dedicated node, custom fine-tune, Sovereign Security Pack included)
 

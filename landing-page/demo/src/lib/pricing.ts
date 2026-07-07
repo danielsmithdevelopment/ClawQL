@@ -21,8 +21,8 @@ export const pricingPlanNames = [
 
 export type PricingPlanName = (typeof pricingPlanNames)[number]
 
-/** Execution overage on gateway tiers. */
-export const executionOveragePerThousand = '$0.20'
+/** Customer-facing promise — no execution caps or overage on any tier. */
+export const unlimitedExecutionsTagline = 'Unlimited MCP executions on every tier — no caps, no overage, no meter.'
 
 /** Annual billing: ~2 months free on paid managed tiers. */
 export const annualBillingSavingsLabel = '2 months free'
@@ -38,7 +38,8 @@ export const annualBillingTotals = {
 export const pluginBundles = {
   gateway: {
     name: 'MCP Gateway',
-    description: 'search, execute, audit, cache — always-on Core. Unlimited integrations.',
+    description:
+      'search, execute, audit, cache — always-on Core. Unlimited integrations. Unlimited executions on every tier.',
     tiers: ['Free', 'Developer', 'Teams'] as const,
   },
   memory: {
@@ -94,7 +95,7 @@ export const pricing = {
     subheadline:
       'Try the hosted MCP gateway — connect agents to your APIs without IDP or VDR overhead. Memory vault included at evaluation scale.',
     features: [
-      '10,000 executions/month',
+      'Unlimited MCP executions',
       '1 user · 3 integrations',
       'Core MCP + basic memory vault',
       'No IDP pipeline · no Coneshare VDR',
@@ -109,14 +110,14 @@ export const pricing = {
     period: '/mo',
     badge: 'Gateway + memory',
     pluginBundle: 'gateway' as const,
-    valueAnchor: 'Replace executor.sh routing with vault memory, Onyx search, and eight efficiency layers — from $29/mo.',
+    valueAnchor:
+      'Unlimited executions + vault memory + eight efficiency layers — executor.sh caps usage and charges overage.',
     subheadline:
       'MCP gateway + agent memory vault for developers connecting Claude Code, Cursor, or Codex to your APIs. No IDP, no GPU inference.',
     features: [
-      '50,000 executions/month',
+      'Unlimited MCP executions',
       '3 users · unlimited integrations',
       'memory_ingest & memory_recall vault',
-      `Overage ${executionOveragePerThousand}/1,000 executions`,
       'Email support (72 hr)',
     ],
   },
@@ -132,11 +133,10 @@ export const pricing = {
     subheadline:
       'Full Onyx semantic search + memory vault + MCP gateway for teams building agent workflows. Still no IDP bundle — add Starter when you need document processing.',
     features: [
-      '250,000 executions/month',
+      'Unlimited MCP executions',
       '10 users · unlimited integrations',
       'Full Onyx semantic search',
       'Obsidian vault + ingest_external_knowledge',
-      `Overage ${executionOveragePerThousand}/1,000 executions`,
     ],
   },
   starter: {
@@ -151,6 +151,7 @@ export const pricing = {
     subheadline:
       'Activates the IDP plugin bundle: Tika, Gotenberg, Stirling, archive layer, classify/extract, Coneshare VDR, sovereign inference.',
     features: [
+      'Unlimited MCP executions',
       '5,000 documents/month',
       '5 users · 50 GB storage',
       'Coneshare VDR + dynamic watermarking',
@@ -170,6 +171,7 @@ export const pricing = {
     subheadline:
       'Full IDP bundle + priority processing, enhanced Onyx, 25,000 documents/month, 99.5% SLA.',
     features: [
+      'Unlimited MCP executions',
       '25,000 documents/month',
       '25 users · 500 GB storage',
       'Coneshare VDR · full analytics',
@@ -189,6 +191,7 @@ export const pricing = {
     subheadline:
       'Full IDP bundle + dedicated namespace, SSO/SAML, one vertical fine-tune adapter, 99.9% SLA.',
     features: [
+      'Unlimited MCP executions',
       '75,000 documents/month',
       'Unlimited users · 2 TB storage',
       'Dedicated namespace + priority queue',
