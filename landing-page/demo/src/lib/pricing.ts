@@ -27,6 +27,7 @@ export const unlimitedExecutionsTagline = 'Unlimited MCP executions on every tie
 /** Gateway-tier hosting benefits (customer-facing; no provider names). */
 export const gatewayEdgeHostingFeature = 'Global edge-hosted MCP endpoint'
 export const vaultRecallStorageFeature = 'Vault storage — no egress penalties on memory recall'
+export const singleMcpEndpointFeature = 'One MCP endpoint on every tier — same URL when you upgrade'
 
 /** Annual billing: ~2 months free on paid managed tiers. */
 export const annualBillingSavingsLabel = '2 months free'
@@ -53,7 +54,8 @@ export const pluginBundles = {
   },
   idp: {
     name: 'IDP Plugin Bundle',
-    description: 'Tika, Gotenberg, Stirling, archive layer, classify/extract, Coneshare VDR, sovereign inference.',
+    description:
+      'Opt-in dedicated document-processing infrastructure — Tika, Gotenberg, Stirling, archive layer, classify/extract, Coneshare VDR, sovereign inference. Provisions when you activate Starter or above.',
     tiers: ['Starter', 'Business', 'Professional'] as const,
   },
 } as const
@@ -103,6 +105,7 @@ export const pricing = {
       'Unlimited MCP executions',
       gatewayEdgeHostingFeature,
       vaultRecallStorageFeature,
+      singleMcpEndpointFeature,
       '1 user · 3 integrations',
       'Core MCP + basic memory vault',
       'No IDP pipeline · no Coneshare VDR',
@@ -125,6 +128,7 @@ export const pricing = {
       'Unlimited MCP executions',
       gatewayEdgeHostingFeature,
       vaultRecallStorageFeature,
+      singleMcpEndpointFeature,
       '1 user · unlimited integrations',
       'memory_ingest & memory_recall vault',
       'Email support (72 hr)',
@@ -145,6 +149,7 @@ export const pricing = {
       'Unlimited MCP executions',
       gatewayEdgeHostingFeature,
       vaultRecallStorageFeature,
+      singleMcpEndpointFeature,
       '5 users · unlimited integrations',
       'Full Onyx semantic search',
       'Obsidian vault + ingest_external_knowledge',
@@ -160,9 +165,10 @@ export const pricing = {
     pluginBundle: 'idp' as const,
     valueAnchor: 'Replaces DocSend + basic IDP — you opted into document processing explicitly.',
     subheadline:
-      'Activates the IDP plugin bundle: Tika, Gotenberg, Stirling, archive layer, classify/extract, Coneshare VDR, sovereign inference.',
+      'Activates the IDP plugin bundle on dedicated tenant infrastructure: Tika, Gotenberg, Stirling, archive layer, classify/extract, Coneshare VDR, sovereign inference. Your MCP endpoint and vault memory stay the same.',
     features: [
       'Unlimited MCP executions',
+      'Dedicated tenant · full IDP pipeline',
       '5,000 documents/month',
       '5 users · 50 GB storage',
       'Coneshare VDR + dynamic watermarking',

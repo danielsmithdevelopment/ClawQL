@@ -460,7 +460,20 @@ ClawQL deploys via a unified Helm chart that provisions the full stack. All serv
 - Persistent volumes for Obsidian vaults, Nextcloud files, Onyx indexes, and Postgres.
 - Paperless-ngx available via feature toggle for operators who prefer it (self-hosted only).
 
-### Hosted Stack (per tenant)
+### Hosted infrastructure model
+
+Managed hosting uses a **hybrid model** aligned to plugin bundles — without changing the customer-facing MCP endpoint:
+
+| Tier class                                      | Infrastructure                         | What the customer gets                                                                         |
+| ----------------------------------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| **Free, Developer, Teams**                      | Global edge + object storage for vault | MCP gateway, memory vault, cache, audit. Unlimited executions. Low-latency endpoint worldwide. |
+| **Starter, Business, Professional, Enterprise** | Dedicated tenant (Kubernetes)          | Full IDP pipeline, Onyx at scale, Nextcloud archive, Coneshare VDR, sovereign inference.       |
+
+A single routing layer dispatches each request by tenant tier. **Vault documents live in shared object storage** accessible from both gateway and IDP backends — upgrading from Teams to Starter retains full agent memory history without migration. The customer's MCP URL and auth token do not change on upgrade.
+
+AWS (EKS + Karpenter) provisions **only when the first IDP customer signs** — not at gateway-tier launch. This keeps bootstrap burn minimal while gateway tiers validate product-market fit.
+
+### Hosted Stack (per tenant — IDP tiers)
 
 - Dedicated Nextcloud instance, Postgres schema, and Onyx index per tenant.
 - Shared ClawQL core and processing services (Tika, Gotenberg, Stirling-PDF) with tenant-scoped job queues.
