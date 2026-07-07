@@ -1,21 +1,21 @@
-import { clsx } from 'clsx/lite'
-import type { ComponentProps } from 'react'
 import { Link } from '@/components/elements/link'
-import { Section } from '../elements/section'
-import { CheckmarkIcon } from '../icons/checkmark-icon'
-import { MinusIcon } from '../icons/minus-icon'
 import {
-  competitorColumns,
-  competitorFeatureRows,
   competitiveHeadline,
   competitiveHonestyNotes,
   competitiveSummary,
+  competitorColumns,
+  competitorFeatureRows,
   executorBenchmark,
   executorComparisonRows,
   realEstateVertical,
   stackReplacementSummary,
   tcoBenchmarks,
 } from '@/lib/competitive-pricing'
+import { clsx } from 'clsx/lite'
+import type { ComponentProps } from 'react'
+import { Section } from '../elements/section'
+import { CheckmarkIcon } from '../icons/checkmark-icon'
+import { MinusIcon } from '../icons/minus-icon'
 
 function CellValue({ value }: { value: string | boolean }) {
   if (value === true) {
@@ -75,7 +75,9 @@ export function CompetitivePricingSection({ className, ...props }: ComponentProp
           <p className="mt-2 text-sm/7 text-mist-700 dark:text-mist-400">{executorBenchmark.positioning}</p>
           <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <p className="text-xs font-medium tracking-wide text-mist-500 uppercase">{executorBenchmark.name} pricing</p>
+              <p className="text-xs font-medium tracking-wide text-mist-500 uppercase">
+                {executorBenchmark.name} pricing
+              </p>
               <ul className="mt-2 space-y-1 text-sm/7 text-mist-700 dark:text-mist-400">
                 {executorBenchmark.pricing.map((row) => (
                   <li key={row.tier}>

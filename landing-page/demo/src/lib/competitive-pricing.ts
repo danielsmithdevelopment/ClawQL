@@ -2,8 +2,7 @@
 
 import { businessAllInMonthly, executionOveragePerThousand, pricing } from './pricing'
 
-export const competitiveHeadline =
-  'Gateway, memory, and IDP — price each plugin bundle against the right incumbent.'
+export const competitiveHeadline = 'Gateway, memory, and IDP — price each plugin bundle against the right incumbent.'
 
 export const competitiveSummary =
   'ClawQL is not one product at one price. Developer and Teams tiers replace stateless MCP routers like executor.sh with persistent vault memory, Onyx semantic search, and eight compounding token-efficiency layers — capabilities executor.sh does not ship at any price. Starter through Professional compete with IDP and VDR incumbents on document volume — a $8,000–15,000/month stack sold separately elsewhere.'
@@ -16,7 +15,11 @@ export const executorBenchmark = {
     'Stateless MCP tool router. Normalizes OpenAPI/GraphQL/MCP into a search-and-execute gateway with host-side secret injection and basic audit logging. That is the complete product.',
   pricing: [
     { tier: 'Free', price: '$0', includes: '3 members · 10,000 executions/mo' },
-    { tier: 'Team', price: '$150/org/mo', includes: 'Unlimited members · 250,000 executions/mo · basic audit log only' },
+    {
+      tier: 'Team',
+      price: '$150/org/mo',
+      includes: 'Unlimited members · 250,000 executions/mo · basic audit log only',
+    },
     { tier: 'Overage', price: executionOveragePerThousand + '/1,000', includes: 'Both Free and Team' },
   ],
   clawqlResponse: {
@@ -166,7 +169,12 @@ export const competitorFeatureRows: CompetitorFeatureRow[] = [
   },
   {
     feature: 'PII redaction',
-    values: { 'ClawQL Business': true, Hyperscience: 'Partial', 'ABBYY Vantage': true, 'Intralinks / Datasite': 'Add-on' },
+    values: {
+      'ClawQL Business': true,
+      Hyperscience: 'Partial',
+      'ABBYY Vantage': true,
+      'Intralinks / Datasite': 'Add-on',
+    },
   },
   {
     feature: 'Merkle cryptographic audit trail',
