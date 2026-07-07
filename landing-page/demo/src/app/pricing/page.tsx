@@ -1,11 +1,11 @@
 import { ButtonLink, PlainButtonLink } from '@/components/elements/button'
+import { Section } from '@/components/elements/section'
 import { ChevronIcon } from '@/components/icons/chevron-icon'
-import { CompetitivePricingSection } from '@/components/sections/competitive-pricing-section'
 import { CallToActionSimpleCentered } from '@/components/sections/call-to-action-simple-centered'
+import { CompetitivePricingSection } from '@/components/sections/competitive-pricing-section'
 import { FAQsAccordion, Faq } from '@/components/sections/faqs-accordion'
 import { PlanComparisonTable } from '@/components/sections/plan-comparison-table'
 import { Plan, PricingHeroMultiTier } from '@/components/sections/pricing-hero-multi-tier'
-import { Section } from '@/components/elements/section'
 import {
   annualBillingNoteText,
   annualBillingSavingsLabel,
@@ -133,8 +133,8 @@ export default function Page() {
           <p>
             ClawQL Core (<code className="text-sm">search</code>, <code className="text-sm">execute</code>,{' '}
             <code className="text-sm">audit</code>, <code className="text-sm">cache</code>) is always on. Memory, IDP,
-            and vertical packages activate via <code className="text-sm">CLAWQL_ENABLE_*</code> flags — managed tiers map
-            to plugin bundles, not one-size-fits-all document quotas.
+            and vertical packages activate via <code className="text-sm">CLAWQL_ENABLE_*</code> flags — managed tiers
+            map to plugin bundles, not one-size-fits-all document quotas.
           </p>
         }
       >
@@ -261,8 +261,8 @@ export default function Page() {
                 value: {
                   'Self-hosted': 'Unlimited',
                   Free: '1',
-                  Developer: '3',
-                  Teams: '10',
+                  Developer: '1',
+                  Teams: '5',
                   Starter: '5',
                   Business: '25',
                   Professional: 'Unlimited',

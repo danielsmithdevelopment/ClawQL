@@ -76,7 +76,8 @@ export const pricing = {
     shortName: 'Self-hosted' as const,
     price: '$0',
     period: '',
-    subheadline: 'Run the full open-source stack on your hardware — enable only the plugins you need via CLAWQL_ENABLE_* flags.',
+    subheadline:
+      'Run the full open-source stack on your hardware — enable only the plugins you need via CLAWQL_ENABLE_* flags.',
     features: [
       'search, execute, audit, cache (Core — always on)',
       'memory_ingest & memory_recall (default on)',
@@ -116,7 +117,7 @@ export const pricing = {
       'MCP gateway + agent memory vault for developers connecting Claude Code, Cursor, or Codex to your APIs. No IDP, no GPU inference.',
     features: [
       'Unlimited MCP executions',
-      '3 users · unlimited integrations',
+      '1 user · unlimited integrations',
       'memory_ingest & memory_recall vault',
       'Email support (72 hr)',
     ],
@@ -134,7 +135,7 @@ export const pricing = {
       'Full Onyx semantic search + memory vault + MCP gateway for teams building agent workflows. Still no IDP bundle — add Starter when you need document processing.',
     features: [
       'Unlimited MCP executions',
-      '10 users · unlimited integrations',
+      '5 users · unlimited integrations',
       'Full Onyx semantic search',
       'Obsidian vault + ingest_external_knowledge',
     ],
@@ -168,8 +169,7 @@ export const pricing = {
     badge: 'IDP plugin bundle',
     pluginBundle: 'idp' as const,
     valueAnchor: 'Equivalent incumbent stack: $3,000–6,000/mo across IDP + VDR + search.',
-    subheadline:
-      'Full IDP bundle + priority processing, enhanced Onyx, 25,000 documents/month, 99.5% SLA.',
+    subheadline: 'Full IDP bundle + priority processing, enhanced Onyx, 25,000 documents/month, 99.5% SLA.',
     features: [
       'Unlimited MCP executions',
       '25,000 documents/month',
@@ -188,8 +188,7 @@ export const pricing = {
     badge: 'Full stack',
     pluginBundle: 'idp' as const,
     valueAnchor: 'Vertical deployments — lending, legal, real estate. One fine-tune adapter included.',
-    subheadline:
-      'Full IDP bundle + dedicated namespace, SSO/SAML, one vertical fine-tune adapter, 99.9% SLA.',
+    subheadline: 'Full IDP bundle + dedicated namespace, SSO/SAML, one vertical fine-tune adapter, 99.9% SLA.',
     features: [
       'Unlimited MCP executions',
       '75,000 documents/month',

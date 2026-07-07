@@ -113,9 +113,9 @@ Managed hosting is structured around **plugin bundles**, not a single document-v
 | Tier             | Price          | Plugin bundle           | Included                                                                                                  |
 | ---------------- | -------------- | ----------------------- | --------------------------------------------------------------------------------------------------------- |
 | **Free**         | $0/mo          | MCP Gateway             | Unlimited executions, 1 user, basic memory vault — no IDP, no VDR                                         |
-| **Developer**    | $29/mo         | Gateway + memory        | Unlimited executions, 3 users, vault memory — no IDP, no GPU                                              |
-| **Teams**        | $99/mo         | Gateway + memory + Onyx | Unlimited executions, 10 users, full Onyx semantic search — no IDP                                        |
-| **Starter**      | $299/mo        | IDP plugin bundle       | Unlimited executions, 5,000 documents/mo, VDR, classify/extract, sovereign inference                      |
+| **Developer**    | $29/mo         | Gateway + memory        | Unlimited executions, 1 user, vault memory — no IDP, no GPU                                               |
+| **Teams**        | $99/mo         | Gateway + memory + Onyx | Unlimited executions, 5 users, full Onyx semantic search — no IDP                                         |
+| **Starter**      | $299/mo        | IDP plugin bundle       | Unlimited executions, 5 users, 5,000 documents/mo, VDR, classify/extract, sovereign inference             |
 | **Business**     | $599/mo        | IDP plugin bundle       | Unlimited executions, 25,000 documents/mo, priority queue, full VDR analytics, 99.5% SLA                  |
 | **Professional** | $1,200/mo      | Full stack              | Unlimited executions, 75,000 documents/mo, dedicated namespace, vertical fine-tune, SSO/SAML              |
 | **Enterprise**   | from $3,500/mo | Full stack + security   | Unlimited executions, dedicated node, custom fine-tune, EU multi-region, Sovereign Security Pack included |
