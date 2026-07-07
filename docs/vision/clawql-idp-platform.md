@@ -108,12 +108,11 @@ Each hosted customer receives a dedicated tenant with full isolation at the data
 
 ### Hosted Plan: Pricing Model (July 2026 — plugin bundles)
 
-Managed hosting is structured around **plugin bundles**, not a single document-volume ladder. Gateway-only customers pay dramatically less than IDP customers.
+Managed hosting is structured around **plugin bundles**, not a single document-volume ladder. Gateway-only customers pay dramatically less than IDP customers. There is **no perpetual free hosted tier** — self-host free forever on Apache 2.0, or start a **14-day Developer trial** (no credit card).
 
 | Tier             | Price          | Plugin bundle           | Included                                                                                                  |
 | ---------------- | -------------- | ----------------------- | --------------------------------------------------------------------------------------------------------- |
-| **Free**         | $0/mo          | MCP Gateway             | Unlimited executions, 1 user, basic memory vault — no IDP, no VDR                                         |
-| **Developer**    | $29/mo         | Gateway + memory        | Unlimited executions, 1 user, vault memory — no IDP, no GPU                                               |
+| **Developer**    | $29/mo         | Gateway + memory        | Unlimited executions, 1 user, vault memory — no IDP, no GPU. 14-day free trial available.                   |
 | **Teams**        | $99/mo         | Gateway + memory + Onyx | Unlimited executions, 5 users, full Onyx semantic search — no IDP                                         |
 | **Starter**      | $299/mo        | IDP plugin bundle       | Unlimited executions, 5 users, 5,000 documents/mo, VDR, classify/extract, sovereign inference             |
 | **Business**     | $599/mo        | IDP plugin bundle       | Unlimited executions, 25,000 documents/mo, priority queue, full VDR analytics, 99.5% SLA                  |
@@ -466,7 +465,7 @@ Managed hosting uses a **hybrid model** aligned to plugin bundles — without ch
 
 | Tier class                                      | Infrastructure                         | What the customer gets                                                                         |
 | ----------------------------------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| **Free, Developer, Teams**                      | Global edge + object storage for vault | MCP gateway, memory vault, cache, audit. Unlimited executions. Low-latency endpoint worldwide. |
+| **Developer, Teams**                            | Global edge + object storage for vault | MCP gateway, memory vault, cache, audit. Unlimited executions. Low-latency endpoint worldwide. |
 | **Starter, Business, Professional, Enterprise** | Dedicated tenant (Kubernetes)          | Full IDP pipeline, Onyx at scale, Nextcloud archive, Coneshare VDR, sovereign inference.       |
 
 A single routing layer dispatches each request by tenant tier. **Vault documents live in shared object storage** accessible from both gateway and IDP backends — upgrading from Teams to Starter retains full agent memory history without migration. The customer's MCP URL and auth token do not change on upgrade.
@@ -516,7 +515,7 @@ The following outlines planned capabilities beyond the April 2026 release. Roadm
 
 ### Near-Term (Next 1–3 Months)
 
-- Hosted plan beta launch with Free and Starter tiers.
+- Hosted plan beta launch with 14-day Developer trial and Starter tiers.
 - ClawQL Metadata Store REST API for direct metadata query without MCP client.
 - Nextcloud app for in-browser document processing trigger (no agent client required).
 - Automated tenant provisioning and onboarding flow for hosted customers.

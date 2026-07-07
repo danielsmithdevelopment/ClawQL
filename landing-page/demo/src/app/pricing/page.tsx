@@ -10,6 +10,7 @@ import {
   annualBillingNoteText,
   annualBillingSavingsLabel,
   gatewayEdgeHostingFeature,
+  hostedFreeTrial,
   managedPrice,
   pluginBundles,
   pricing,
@@ -27,22 +28,10 @@ function gatewayPlans(billing: BillingPeriod) {
 
   return (
     <>
-      <Plan
-        name={pricing.managedFree.name}
-        price={pricing.managedFree.monthlyPrice}
-        period={pricing.managedFree.period}
-        subheadline={<p>{pricing.managedFree.subheadline}</p>}
-        badge={pricing.managedFree.badge}
-        features={[...pricing.managedFree.features]}
-        cta={
-          <ButtonLink href={site.urls.signup} size="lg">
-            Join early access
-          </ButtonLink>
-        }
-      />
       {gatewayTiers.map((tier) => {
         const plan = pricing[tier]
         const annualNote = annualBillingNoteText(billing, tier)
+        const isDeveloper = tier === 'developer'
         return (
           <Plan
             key={tier}
@@ -59,7 +48,7 @@ function gatewayPlans(billing: BillingPeriod) {
             features={[...plan.features]}
             cta={
               <ButtonLink href={site.urls.signup} size="lg">
-                Join early access
+                {isDeveloper ? 'Start free trial' : 'Join early access'}
               </ButtonLink>
             }
           />
@@ -110,7 +99,7 @@ export const metadata = {
 export default function Page() {
   return (
     <>
-      <Section id="self-hosted" eyebrow="Open source" headline="Self-host free on your hardware">
+      <Section id="self-hosted" eyebrow="Open source" headline="Want free forever? Run it yourself.">
         <div className="flex flex-col gap-6 rounded-xl bg-mist-950/2.5 p-6 sm:flex-row sm:items-center sm:justify-between dark:bg-white/5">
           <div className="max-w-2xl">
             <p className="text-sm/7 text-mist-700 dark:text-mist-400">{pricing.selfHosted.subheadline}</p>
@@ -179,7 +168,23 @@ export default function Page() {
         plans={{ Monthly: idpPlans('Monthly'), Yearly: idpPlans('Yearly') }}
       />
 
-      <Section id="early-access" eyebrow="Early access" headline="Managed hosting is onboarding its first tenants">
+      <Section
+        id="free-trial"
+        eyebrow="Hosted entry"
+        headline={`${hostedFreeTrial.headline} — no credit card required`}
+      >
+        <p className="max-w-3xl text-sm/7 text-mist-700 dark:text-mist-400">{hostedFreeTrial.subheadline}</p>
+        <p className="mt-4 max-w-3xl text-sm/7 text-mist-600 dark:text-mist-500">
+          Evaluate the full Developer tier — not a crippled sandbox. When the trial ends, continue at{' '}
+          {pricing.developer.monthlyPrice}/mo or upgrade to Teams. Prefer zero cost? Self-host the full Apache 2.0 stack
+          with no feature restrictions.
+        </p>
+        <ButtonLink href={site.urls.signup} size="lg" className="mt-6">
+          Start free trial
+        </ButtonLink>
+      </Section>
+
+      <Section id="early-access" eyebrow="IDP tiers" headline="Document processing tiers are onboarding first tenants">
         <p className="max-w-3xl text-sm/7 text-mist-700 dark:text-mist-400">{site.earlyAccess.pricingNote}</p>
         <p className="mt-4 max-w-3xl text-sm/7 text-mist-600 dark:text-mist-500">{site.waitlistPromise}</p>
       </Section>
@@ -197,7 +202,6 @@ export default function Page() {
                 name: 'MCP Gateway (Core)',
                 value: {
                   'Self-hosted': true,
-                  Free: true,
                   Developer: true,
                   Teams: true,
                   Starter: true,
@@ -209,7 +213,6 @@ export default function Page() {
                 name: 'Memory vault + Onyx search',
                 value: {
                   'Self-hosted': 'Self-managed',
-                  Free: 'Basic vault',
                   Developer: true,
                   Teams: 'Full Onyx',
                   Starter: true,
@@ -221,7 +224,6 @@ export default function Page() {
                 name: 'IDP plugin bundle',
                 value: {
                   'Self-hosted': 'Opt-in',
-                  Free: false,
                   Developer: false,
                   Teams: false,
                   Starter: true,
@@ -238,7 +240,6 @@ export default function Page() {
                 name: 'MCP executions',
                 value: {
                   'Self-hosted': 'Unlimited (your infra)',
-                  Free: 'Unlimited',
                   Developer: 'Unlimited',
                   Teams: 'Unlimited',
                   Starter: 'Unlimited',
@@ -250,7 +251,6 @@ export default function Page() {
                 name: 'Gateway hosting',
                 value: {
                   'Self-hosted': 'Your infra',
-                  Free: 'Global edge',
                   Developer: 'Global edge',
                   Teams: 'Global edge',
                   Starter: 'Dedicated tenant',
@@ -262,7 +262,6 @@ export default function Page() {
                 name: 'MCP endpoint',
                 value: {
                   'Self-hosted': 'Your deployment',
-                  Free: 'Same URL all tiers',
                   Developer: 'Same URL all tiers',
                   Teams: 'Same URL all tiers',
                   Starter: 'Same URL all tiers',
@@ -274,7 +273,6 @@ export default function Page() {
                 name: 'Vault on tier upgrade',
                 value: {
                   'Self-hosted': 'Your data',
-                  Free: 'Carries over',
                   Developer: 'Carries over',
                   Teams: 'Carries over',
                   Starter: 'Carries over',
@@ -286,7 +284,6 @@ export default function Page() {
                 name: 'Vault recall egress',
                 value: {
                   'Self-hosted': 'Your infra',
-                  Free: 'No penalties',
                   Developer: 'No penalties',
                   Teams: 'No penalties',
                   Starter: 'Included',
@@ -298,7 +295,6 @@ export default function Page() {
                 name: 'Documents / month',
                 value: {
                   'Self-hosted': 'Unlimited (your infra)',
-                  Free: '—',
                   Developer: '—',
                   Teams: '—',
                   Starter: '5,000',
@@ -310,7 +306,6 @@ export default function Page() {
                 name: 'Users',
                 value: {
                   'Self-hosted': 'Unlimited',
-                  Free: '1',
                   Developer: '1',
                   Teams: '5',
                   Starter: '5',
@@ -327,7 +322,6 @@ export default function Page() {
                 name: 'Coneshare VDR',
                 value: {
                   'Self-hosted': 'Self-deploy optional',
-                  Free: false,
                   Developer: false,
                   Teams: false,
                   Starter: true,
@@ -339,7 +333,6 @@ export default function Page() {
                 name: 'Sovereign inference',
                 value: {
                   'Self-hosted': 'Your deployment',
-                  Free: false,
                   Developer: false,
                   Teams: false,
                   Starter: true,
@@ -351,7 +344,6 @@ export default function Page() {
                 name: 'classify / extract / HITL',
                 value: {
                   'Self-hosted': 'Opt-in',
-                  Free: false,
                   Developer: false,
                   Teams: false,
                   Starter: true,
@@ -368,7 +360,6 @@ export default function Page() {
                 name: 'SLA',
                 value: {
                   'Self-hosted': '—',
-                  Free: 'None',
                   Developer: 'None',
                   Teams: '99% uptime',
                   Starter: '99% uptime',
@@ -380,7 +371,6 @@ export default function Page() {
                 name: 'SSO / SAML',
                 value: {
                   'Self-hosted': false,
-                  Free: false,
                   Developer: false,
                   Teams: false,
                   Starter: false,
@@ -441,7 +431,12 @@ export default function Page() {
         <Faq
           id="faq-1"
           question="Is self-hosted really free?"
-          answer="Yes. ClawQL is open source. You pay only for compute and storage on your hardware. Enable plugins via CLAWQL_ENABLE_* flags — Core is always on; IDP vendors activate when you need document processing."
+          answer="Yes — that is your free tier. ClawQL is Apache 2.0 open source. Run the full stack on your hardware with no license fee and no feature restrictions. You pay only for compute and storage. Enable plugins via CLAWQL_ENABLE_* flags — Core is always on; IDP vendors activate when you need document processing."
+        />
+        <Faq
+          id="faq-1b"
+          question="Do I need a credit card to start the free trial?"
+          answer={`No. The ${hostedFreeTrial.durationDays}-day trial gives you the full Developer tier — persistent vault memory, unlimited executions, global edge endpoint. No credit card required. When the trial ends, continue at ${pricing.developer.monthlyPrice}/mo or upgrade to Teams.`}
         />
         <Faq
           id="faq-2"
@@ -451,12 +446,12 @@ export default function Page() {
         <Faq
           id="faq-3"
           question="How does ClawQL compare to executor.sh?"
-          answer={`executor.sh caps executions (250,000/mo on Team) and charges $0.20/1,000 overage — customers watch a meter. ClawQL offers unlimited executions on every tier, including Free, with no egress penalties on vault memory recall. ClawQL Developer (${pricing.developer.monthlyPrice}/mo) and Teams (${pricing.teams.monthlyPrice}/mo) add a global edge gateway, seven additional token-efficiency layers, persistent Obsidian vault memory, and Onyx semantic search on Teams. IDP tiers from ${pricing.starter.monthlyPrice}/mo add document processing, Coneshare VDR, and sovereign inference — none of which executor.sh offers.`}
+          answer={`executor.sh caps executions (250,000/mo on Team) and charges $0.20/1,000 overage — customers watch a meter. ClawQL offers unlimited executions on every hosted tier, with no egress penalties on vault memory recall. Self-host free forever on Apache 2.0, or start a 14-day Developer trial. ClawQL Developer (${pricing.developer.monthlyPrice}/mo) and Teams (${pricing.teams.monthlyPrice}/mo) add a global edge gateway, seven additional token-efficiency layers, persistent Obsidian vault memory, and Onyx semantic search on Teams. IDP tiers from ${pricing.starter.monthlyPrice}/mo add document processing, Coneshare VDR, and sovereign inference — none of which executor.sh offers.`}
         />
         <Faq
           id="faq-3b"
           question="Are MCP executions really unlimited?"
-          answer="Yes. Every managed tier — Free through Enterprise — includes unlimited MCP executions. We price on hosting model, storage, and plugin bundles because those drive real infrastructure cost — not per-call metering or egress on memory recall. Gateway tiers scale at the global edge; taxing executions or recall only encourages customers to throttle their agents. executor.sh is the outlier with execution caps and overage billing."
+          answer="Yes. Every hosted tier — Developer through Enterprise — includes unlimited MCP executions. We price on hosting model, storage, and plugin bundles because those drive real infrastructure cost — not per-call metering or egress on memory recall. Gateway tiers scale at the global edge; taxing executions or recall only encourages customers to throttle their agents. executor.sh is the outlier with execution caps and overage billing."
         />
         <Faq
           id="faq-4"
@@ -466,7 +461,7 @@ export default function Page() {
         <Faq
           id="faq-4b"
           question="Why are gateway and IDP tiers priced differently?"
-          answer="Gateway tiers (Free, Developer, Teams) need only MCP routing, vault memory, cache, and audit — lightweight workloads that run at the global edge with near-zero marginal cost per tenant. IDP tiers (Starter+) activate document processing, Onyx at scale, Coneshare VDR, and sovereign inference on dedicated tenant infrastructure. You only pay for the heavy stack when you opt in."
+          answer="Gateway tiers (Developer, Teams) need only MCP routing, vault memory, cache, and audit — lightweight workloads that run at the global edge. IDP tiers (Starter+) activate document processing, Onyx at scale, Coneshare VDR, and sovereign inference on dedicated tenant infrastructure. You only pay for the heavy stack when you opt in. No perpetual free hosted plan — self-host free forever or start a 14-day Developer trial."
         />
         <Faq
           id="faq-5"
@@ -492,17 +487,18 @@ export default function Page() {
 
       <CallToActionSimpleCentered
         id="call-to-action"
-        headline="Self-host free or join early access"
+        headline="Self-host free or start your 14-day trial"
         subheadline={
           <p>
-            Install clawql-mcp on your hardware, or join the waitlist — unlimited executions on every tier, gateway from{' '}
-            {pricing.developer.monthlyPrice}/mo, IDP bundle from {pricing.starter.monthlyPrice}/mo.
+            Install clawql-mcp on your hardware — Apache 2.0, no license fee — or try hosted Developer free for{' '}
+            {hostedFreeTrial.durationDays} days. Gateway from {pricing.developer.monthlyPrice}/mo, IDP bundle from{' '}
+            {pricing.starter.monthlyPrice}/mo.
           </p>
         }
         cta={
           <div className="flex items-center gap-4">
             <ButtonLink href={site.urls.signup} size="lg">
-              Join early access
+              Start free trial
             </ButtonLink>
             <PlainButtonLink href={site.urls.docs} size="lg">
               Self-host guide <ChevronIcon />
