@@ -9,6 +9,7 @@ import { Plan, PricingHeroMultiTier } from '@/components/sections/pricing-hero-m
 import {
   annualBillingNoteText,
   annualBillingSavingsLabel,
+  gatewayEdgeHostingFeature,
   managedPrice,
   pluginBundles,
   pricing,
@@ -154,8 +155,8 @@ export default function Page() {
         headline="Agent gateway & memory"
         subheadline={
           <p>
-            MCP gateway + vault memory for teams connecting agents to APIs — no IDP pipeline, no GPU inference.{' '}
-            {unlimitedExecutionsTagline}
+            {gatewayEdgeHostingFeature} + vault memory for teams connecting agents to APIs — no IDP pipeline, no GPU
+            inference. {unlimitedExecutionsTagline}
           </p>
         }
         options={['Monthly', 'Yearly']}
@@ -242,6 +243,30 @@ export default function Page() {
                   Starter: 'Unlimited',
                   Business: 'Unlimited',
                   Professional: 'Unlimited',
+                },
+              },
+              {
+                name: 'Gateway hosting',
+                value: {
+                  'Self-hosted': 'Your infra',
+                  Free: 'Global edge',
+                  Developer: 'Global edge',
+                  Teams: 'Global edge',
+                  Starter: 'Dedicated tenant',
+                  Business: 'Dedicated tenant',
+                  Professional: 'Dedicated tenant',
+                },
+              },
+              {
+                name: 'Vault recall egress',
+                value: {
+                  'Self-hosted': 'Your infra',
+                  Free: 'No penalties',
+                  Developer: 'No penalties',
+                  Teams: 'No penalties',
+                  Starter: 'Included',
+                  Business: 'Included',
+                  Professional: 'Included',
                 },
               },
               {
@@ -401,12 +426,12 @@ export default function Page() {
         <Faq
           id="faq-3"
           question="How does ClawQL compare to executor.sh?"
-          answer={`executor.sh caps executions (250,000/mo on Team) and charges $0.20/1,000 overage — customers watch a meter. ClawQL offers unlimited executions on every tier, including Free. ClawQL Developer (${pricing.developer.monthlyPrice}/mo) and Teams (${pricing.teams.monthlyPrice}/mo) add seven additional token-efficiency layers, persistent Obsidian vault memory, and Onyx semantic search on top of the same search/execute pattern. IDP tiers from ${pricing.starter.monthlyPrice}/mo add document processing, Coneshare VDR, and sovereign inference — none of which executor.sh offers.`}
+          answer={`executor.sh caps executions (250,000/mo on Team) and charges $0.20/1,000 overage — customers watch a meter. ClawQL offers unlimited executions on every tier, including Free, with no egress penalties on vault memory recall. ClawQL Developer (${pricing.developer.monthlyPrice}/mo) and Teams (${pricing.teams.monthlyPrice}/mo) add a global edge gateway, seven additional token-efficiency layers, persistent Obsidian vault memory, and Onyx semantic search on Teams. IDP tiers from ${pricing.starter.monthlyPrice}/mo add document processing, Coneshare VDR, and sovereign inference — none of which executor.sh offers.`}
         />
         <Faq
           id="faq-3b"
           question="Are MCP executions really unlimited?"
-          answer="Yes. Every managed tier — Free through Enterprise — includes unlimited MCP executions. We price on hosting model, storage, and plugin bundles because those drive real infrastructure cost. Stateless gateway workers scale automatically; taxing executions only encourages customers to throttle their agents. executor.sh is the outlier with execution caps and overage billing."
+          answer="Yes. Every managed tier — Free through Enterprise — includes unlimited MCP executions. We price on hosting model, storage, and plugin bundles because those drive real infrastructure cost — not per-call metering or egress on memory recall. Gateway tiers scale at the global edge; taxing executions or recall only encourages customers to throttle their agents. executor.sh is the outlier with execution caps and overage billing."
         />
         <Faq
           id="faq-4"

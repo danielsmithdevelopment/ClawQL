@@ -24,6 +24,10 @@ export type PricingPlanName = (typeof pricingPlanNames)[number]
 /** Customer-facing promise — no execution caps or overage on any tier. */
 export const unlimitedExecutionsTagline = 'Unlimited MCP executions on every tier — no caps, no overage, no meter.'
 
+/** Gateway-tier hosting benefits (customer-facing; no provider names). */
+export const gatewayEdgeHostingFeature = 'Global edge-hosted MCP endpoint'
+export const vaultRecallStorageFeature = 'Vault storage — no egress penalties on memory recall'
+
 /** Annual billing: ~2 months free on paid managed tiers. */
 export const annualBillingSavingsLabel = '2 months free'
 
@@ -39,7 +43,7 @@ export const pluginBundles = {
   gateway: {
     name: 'MCP Gateway',
     description:
-      'search, execute, audit, cache — always-on Core. Unlimited integrations. Unlimited executions on every tier.',
+      'search, execute, audit, cache — always-on Core. Global edge hosting on gateway tiers. Unlimited integrations and executions. Vault-backed memory with no per-recall egress penalties.',
     tiers: ['Free', 'Developer', 'Teams'] as const,
   },
   memory: {
@@ -97,6 +101,8 @@ export const pricing = {
       'Try the hosted MCP gateway — connect agents to your APIs without IDP or VDR overhead. Memory vault included at evaluation scale.',
     features: [
       'Unlimited MCP executions',
+      gatewayEdgeHostingFeature,
+      vaultRecallStorageFeature,
       '1 user · 3 integrations',
       'Core MCP + basic memory vault',
       'No IDP pipeline · no Coneshare VDR',
@@ -117,6 +123,8 @@ export const pricing = {
       'MCP gateway + agent memory vault for developers connecting Claude Code, Cursor, or Codex to your APIs. No IDP, no GPU inference.',
     features: [
       'Unlimited MCP executions',
+      gatewayEdgeHostingFeature,
+      vaultRecallStorageFeature,
       '1 user · unlimited integrations',
       'memory_ingest & memory_recall vault',
       'Email support (72 hr)',
@@ -135,6 +143,8 @@ export const pricing = {
       'Full Onyx semantic search + memory vault + MCP gateway for teams building agent workflows. Still no IDP bundle — add Starter when you need document processing.',
     features: [
       'Unlimited MCP executions',
+      gatewayEdgeHostingFeature,
+      vaultRecallStorageFeature,
       '5 users · unlimited integrations',
       'Full Onyx semantic search',
       'Obsidian vault + ingest_external_knowledge',
