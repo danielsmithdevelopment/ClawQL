@@ -133,9 +133,9 @@ export default function Page() {
         subheadline={
           <p>
             ClawQL Core (<code className="text-sm">search</code>, <code className="text-sm">execute</code>,{' '}
-            <code className="text-sm">audit</code>, <code className="text-sm">cache</code>) is always on. Memory, IDP,
-            and vertical packages activate via <code className="text-sm">CLAWQL_ENABLE_*</code> flags — managed tiers
-            map to plugin bundles, not one-size-fits-all document quotas.
+            <code className="text-sm">audit</code>, <code className="text-sm">cache</code>) is always on. Gateway
+            bundles run at the global edge; the IDP bundle provisions dedicated document-processing infrastructure when
+            you opt in — same MCP endpoint and vault across upgrades.
           </p>
         }
       >
@@ -169,8 +169,9 @@ export default function Page() {
         headline="IDP plugin bundle"
         subheadline={
           <p>
-            Document processing, Coneshare VDR, and sovereign inference — explicitly opted in. Storage overage $0.02/GB
-            on Starter and Business, $0.015/GB on Professional.
+            Dedicated tenant infrastructure for document processing, Coneshare VDR, and sovereign inference — explicitly
+            opted in. Your MCP endpoint and vault memory stay the same when you upgrade from Teams. Storage overage
+            $0.02/GB on Starter and Business, $0.015/GB on Professional.
           </p>
         }
         options={['Monthly', 'Yearly']}
@@ -255,6 +256,30 @@ export default function Page() {
                   Starter: 'Dedicated tenant',
                   Business: 'Dedicated tenant',
                   Professional: 'Dedicated tenant',
+                },
+              },
+              {
+                name: 'MCP endpoint',
+                value: {
+                  'Self-hosted': 'Your deployment',
+                  Free: 'Same URL all tiers',
+                  Developer: 'Same URL all tiers',
+                  Teams: 'Same URL all tiers',
+                  Starter: 'Same URL all tiers',
+                  Business: 'Same URL all tiers',
+                  Professional: 'Same URL all tiers',
+                },
+              },
+              {
+                name: 'Vault on tier upgrade',
+                value: {
+                  'Self-hosted': 'Your data',
+                  Free: 'Carries over',
+                  Developer: 'Carries over',
+                  Teams: 'Carries over',
+                  Starter: 'Carries over',
+                  Business: 'Carries over',
+                  Professional: 'Carries over',
                 },
               },
               {
@@ -436,7 +461,12 @@ export default function Page() {
         <Faq
           id="faq-4"
           question="Can I switch tiers later?"
-          answer="Yes. Vault exports, provider auth, and plugin flags migrate between tiers. Start on Teams for agent memory; upgrade to Starter when you need IDP document processing."
+          answer="Yes. Upgrade from Teams to Starter (or any IDP tier) without changing your MCP endpoint URL, auth token, or vault memory — agents pick up where they left off. Vault exports, provider auth, and plugin flags migrate between tiers. Start on Teams for agent memory; add the IDP bundle when you need document processing."
+        />
+        <Faq
+          id="faq-4b"
+          question="Why are gateway and IDP tiers priced differently?"
+          answer="Gateway tiers (Free, Developer, Teams) need only MCP routing, vault memory, cache, and audit — lightweight workloads that run at the global edge with near-zero marginal cost per tenant. IDP tiers (Starter+) activate document processing, Onyx at scale, Coneshare VDR, and sovereign inference on dedicated tenant infrastructure. You only pay for the heavy stack when you opt in."
         />
         <Faq
           id="faq-5"

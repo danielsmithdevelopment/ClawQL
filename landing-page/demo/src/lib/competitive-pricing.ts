@@ -239,7 +239,11 @@ export const competitiveHonestyNotes = [
   },
   {
     title: 'Plugin bundles, not one-size-fits-all',
-    body: 'Gateway-only buyers should not pay for Stirling, Gotenberg, and GPU inference. Developer ($29) and Teams ($99) replace executor.sh for pure API routing — with memory, search, and unlimited executions executor.sh cannot match. IDP tiers ($299+) are explicitly opted-in document processing — priced against Hyperscience and Intralinks.',
+    body: 'Gateway-only buyers should not pay for Stirling, Gotenberg, and GPU inference. Developer ($29) and Teams ($99) run at the global edge with memory, search, and unlimited executions. IDP tiers ($299+) provision dedicated document-processing infrastructure only when you opt in — priced against Hyperscience and Intralinks.',
+  },
+  {
+    title: 'Seamless tier upgrades',
+    body: 'One MCP endpoint on every tier. Upgrade from Teams to Starter and your URL, auth token, and vault memory history stay the same — agents retain full context without a migration project. IDP infrastructure activates behind the same endpoint.',
   },
   {
     title: 'executor.sh vs ClawQL (MCP gateway)',
