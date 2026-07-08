@@ -240,10 +240,25 @@ async function resolveGoogleTop50Items(): Promise<ProviderGroupItem[]> {
   }));
 }
 
+async function resolveAwsTop50Items(): Promise<ProviderGroupItem[]> {
+  const root = getPackageRoot();
+  const manifestPath = resolvePath(root, "providers/aws/aws-top50-apis.json");
+  const text = await readFile(manifestPath, "utf-8");
+  const data = JSON.parse(text) as { apis: Array<{ slug: string }> };
+  if (!Array.isArray(data.apis)) {
+    throw new Error("aws-top50-apis.json: expected apis[]");
+  }
+  return data.apis.map((a) => ({
+    kind: "openapi" as const,
+    abs: resolvePath(root, "providers/aws/apis", a.slug, "openapi.yaml"),
+    label: a.slug,
+  }));
+}
+
 /**
  * Build a merged load from a comma/semicolon/newline-separated list of **bundled** ids
- * (keys of **`BUNDLED_PROVIDERS`**, case-insensitive) and/or **`google`** (full bundled Google Cloud Discovery set
- * from `google-top50-apis.json`). Use **`CLAWQL_BUNDLED_PROVIDERS`** in `spec-loader`; there is no other default
+ * (keys of **`BUNDLED_PROVIDERS`**, case-insensitive) and/or **`google`** / **`aws`** (manifest-backed cloud bundles).
+ * Use **`CLAWQL_BUNDLED_PROVIDERS`** in `spec-loader`; there is no other default
  * custom merge — only this list, path list, or **`all-providers`**. Deprecated id **`google-top50`** is accepted as
  * an alias for **`google`**.
  */
@@ -269,9 +284,17 @@ export async function resolveItemsFromBundledProviderEnvList(
       }
       continue;
     }
+    if (id === "aws") {
+      for (const a of await resolveAwsTop50Items()) {
+        if (seen.has(a.label)) continue;
+        seen.add(a.label);
+        out.push(a);
+      }
+      continue;
+    }
     const p = BUNDLED_PROVIDERS[id];
     if (!p) {
-      const valid = [...Object.keys(BUNDLED_PROVIDERS), "google"].sort().join(", ");
+      const valid = [...Object.keys(BUNDLED_PROVIDERS), "google", "aws"].sort().join(", ");
       throw new Error(`Unknown id "${part}" in CLAWQL_BUNDLED_PROVIDERS. Valid: ${valid}`);
     }
     if (seen.has(p.id)) continue;
@@ -322,6 +345,7 @@ const BUNDLED_DOCUMENT_VENDOR_SET = new Set(BUNDLED_DOCUMENT_VENDOR_IDS);
 async function resolveAllBundledProvidersItems(): Promise<ProviderGroupItem[]> {
   const root = getPackageRoot();
   const google = await resolveGoogleTop50Items();
+  const aws = await resolveAwsTop50Items();
   const allowDocuments = getClawqlOptionalToolFlags().enableDocuments;
   const labels = BUNDLED_MERGED_VENDOR_LABELS.filter(
     (id) => allowDocuments || !BUNDLED_DOCUMENT_VENDOR_SET.has(id)
@@ -345,15 +369,17 @@ async function resolveAllBundledProvidersItems(): Promise<ProviderGroupItem[]> {
       });
     }
   }
-  return [...google, ...rest];
+  return [...google, ...aws, ...rest];
 }
 
 export const BUNDLED_PROVIDER_GROUPS: Record<string, BundledProviderGroup> = {
   atlassian: { providers: ["jira", "bitbucket"] },
   /** Merged bundled Google Cloud APIs from `providers/google/google-top50-apis.json` (see providers docs). */
   google: { resolve: resolveGoogleTop50Items },
+  /** Merged bundled AWS APIs from `providers/aws/aws-top50-apis.json` (see providers docs). */
+  aws: { resolve: resolveAwsTop50Items },
   /**
-   * Google Cloud bundle + every other bundled vendor (Jira, Bitbucket, Cloudflare, GitHub, …).
+   * Google Cloud + AWS bundles + every other bundled vendor (Jira, Bitbucket, Cloudflare, GitHub, …).
    * The document stack (**tika**, **gotenberg**, **paperless**, **stirling**, **onyx**, **nextcloud**, **coneshare**, **docling**) is included unless **`CLAWQL_ENABLE_DOCUMENTS=0`**. Default when no spec env.
    */
   "all-providers": { resolve: resolveAllBundledProvidersItems },
@@ -379,7 +405,7 @@ export function listBundledProviderGroupIds(): string[] {
 
 const REMOVED_BUNDLED_PROVIDER_GROUP_IDS: Readonly<Record<string, string>> = {
   "default-multi-provider":
-    "The default-multi-provider merge was removed. Use CLAWQL_BUNDLED_PROVIDERS (comma-separated ids) or CLAWQL_SPEC_PATHS, or all-providers / CLAWQL_PROVIDER=google, atlassian, all-providers. See README.",
+    "The default-multi-provider merge was removed. Use CLAWQL_BUNDLED_PROVIDERS (comma-separated ids) or CLAWQL_SPEC_PATHS, or all-providers / CLAWQL_PROVIDER=google / aws / atlassian / all-providers. See README.",
 };
 
 export async function resolveBundledProviderGroup(

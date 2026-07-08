@@ -39,6 +39,7 @@ describe("provider-registry", () => {
   it("lists merged preset ids including google (not google-top50)", () => {
     const groups = listBundledProviderGroupIds();
     expect(groups).toContain("google");
+    expect(groups).toContain("aws");
     expect(groups).not.toContain("google-top50");
   });
 
@@ -59,6 +60,16 @@ describe("provider-registry", () => {
     expect(items!.some((x) => x.label === "compute-v1")).toBe(true);
     expect(
       items!.some((x) => x.abs.endsWith("/providers/google/apis/compute-v1/discovery.json"))
+    ).toBe(true);
+  });
+
+  it("resolves aws merged group from manifest", async () => {
+    const items = await resolveBundledProviderGroup("aws");
+    expect(items).toBeDefined();
+    expect(items!.length).toBe(50);
+    expect(items!.some((x) => x.label === "ec2-2016-11-15")).toBe(true);
+    expect(
+      items!.some((x) => x.abs.endsWith("/providers/aws/apis/ec2-2016-11-15/openapi.yaml"))
     ).toBe(true);
   });
 
@@ -90,6 +101,7 @@ describe("provider-registry", () => {
     expect(labels.has("tika")).toBe(true);
     expect(labels.has("onyx")).toBe(true);
     expect(labels.has("linear")).toBe(true);
+    expect(labels.has("ec2-2016-11-15")).toBe(true);
     expect(
       items!.every((x) =>
         x.kind === "graphql" ? x.schemaAbs.includes("/providers/") : x.abs.includes("/providers/")
@@ -125,6 +137,13 @@ describe("provider-registry", () => {
     const labels = new Set(items.map((x) => x.label));
     expect(labels.has("github")).toBe(true);
     expect(labels.has("compute-v1")).toBe(true);
+  });
+
+  it("resolveItemsFromBundledProviderEnvList with aws includes service slugs", async () => {
+    const items = await resolveItemsFromBundledProviderEnvList("github,aws");
+    const labels = new Set(items.map((x) => x.label));
+    expect(labels.has("github")).toBe(true);
+    expect(labels.has("sts-2011-06-15")).toBe(true);
   });
 
   it("CLAWQL_BUNDLED_PROVIDERS still includes paperless when CLAWQL_ENABLE_DOCUMENTS=0 (explicit list)", async () => {

@@ -5,10 +5,10 @@
  * - Local file (JSON or YAML OpenAPI 3 / Swagger 2), or
  * - URL to fetch the same, or
  * - Google Discovery document URL, or
- * - Default: **`all-providers`** — Google Cloud (bundled) + every other bundled spec (document stack
+ * - Default: **`all-providers`** — Google Cloud + AWS (bundled) + every other bundled spec (document stack
  *   tika / gotenberg / paperless / stirling / onyx omitted when **`CLAWQL_ENABLE_DOCUMENTS=0`**).
- * - Custom merge: **`CLAWQL_BUNDLED_PROVIDERS=a,b,…`** (bundled vendor ids and/or **`google`**) or **`CLAWQL_SPEC_PATHS=…`**.
- * - Optional merged **`CLAWQL_PROVIDER`** presets: **`google`**, **`atlassian`**, **`all-providers`**.
+ * - Custom merge: **`CLAWQL_BUNDLED_PROVIDERS=a,b,…`** (bundled vendor ids and/or **`google`** / **`aws`**) or **`CLAWQL_SPEC_PATHS=…`**.
+ * - Optional merged **`CLAWQL_PROVIDER`** presets: **`google`**, **`aws`**, **`atlassian`**, **`all-providers`**.
  *
  * Produces a flattened Operation list for search + OpenAPI 3 for GraphQL.
  */
@@ -17,6 +17,7 @@ import { readFile } from "node:fs/promises";
 import { resolve as resolvePath } from "node:path";
 import fetch from "node-fetch";
 import { parse as parseYaml } from "yaml";
+import { isAwsSpecLabel, resolveAwsApiBaseUrl } from "../auth/aws-auth.js";
 import { convertObj } from "swagger2openapi";
 import type { Operation, ParameterInfo } from "./operation-types.js";
 import { loadGraphqlNativeOperationsFromConfigs } from "./graphql-native-loader.js";
@@ -887,6 +888,12 @@ export function resolveApiBaseUrl(openapi: OpenAPIDoc, specLabel?: string): stri
 
   const override = process.env.CLAWQL_API_BASE_URL || process.env.API_BASE_URL;
   if (override) return override.replace(/\/$/, "");
+
+  const label = specLabel?.trim().toLowerCase();
+  const effective = label || process.env.CLAWQL_PROVIDER?.trim().toLowerCase();
+  if (effective && isAwsSpecLabel(effective)) {
+    return resolveAwsApiBaseUrl(openapi);
+  }
 
   const server = openapi.servers?.[0]?.url;
   if (typeof server === "string" && server.length > 0) {

@@ -421,4 +421,24 @@ describe("executeRestOperation", () => {
       }
     );
   });
+
+  it("returns error for AWS specLabel when SigV4 credentials are missing", async () => {
+    delete process.env.AWS_ACCESS_KEY_ID;
+    delete process.env.AWS_SECRET_ACCESS_KEY;
+    delete process.env.CLAWQL_AWS_ACCESS_KEY_ID;
+    delete process.env.CLAWQL_AWS_SECRET_ACCESS_KEY;
+    const out = await executeRestOperation(
+      makeOp({ specLabel: "sts-2011-06-15", flatPath: "#Action=GetCallerIdentity", path: "#Action=GetCallerIdentity" }),
+      {},
+      {
+        openapi: "3.0.0",
+        info: { title: "STS", version: "2011-06-15", "x-serviceName": "sts" },
+        servers: [{ url: "https://sts.amazonaws.com" }],
+      }
+    );
+    expect(out.ok).toBe(false);
+    if (!out.ok) {
+      expect(out.error).toMatch(/SigV4 credentials/i);
+    }
+  });
 });
