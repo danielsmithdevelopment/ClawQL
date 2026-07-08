@@ -13,7 +13,10 @@ import { createMcpHttpApp, type CreateMcpHttpAppOptions } from "./server-http.js
 import { resetSchemaFieldCache } from "./tools.js";
 
 /** Optional-flag / webhook HTTP tests — cold `loadSpec()` is unnecessary and flaky on CI. */
-const FAST_HTTP_APP_OPTS: CreateMcpHttpAppOptions = { skipSpecPreload: true };
+const FAST_HTTP_APP_OPTS: CreateMcpHttpAppOptions = {
+  skipSpecPreload: true,
+  skipGraphqlAttach: true,
+};
 
 /**
  * Close the HTTP server without hanging the Vitest worker: undici/fetch can leave
