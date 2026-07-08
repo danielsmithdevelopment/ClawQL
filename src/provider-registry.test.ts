@@ -20,6 +20,7 @@ describe("provider-registry", () => {
     expect(ids).toContain("stirling");
     expect(ids).toContain("onyx");
     expect(ids).toContain("linear");
+    expect(ids).toContain("notion");
     expect(ids).not.toContain("atlassian"); // group, not concrete provider
   });
 
@@ -90,6 +91,7 @@ describe("provider-registry", () => {
     expect(labels.has("tika")).toBe(true);
     expect(labels.has("onyx")).toBe(true);
     expect(labels.has("linear")).toBe(true);
+    expect(labels.has("notion")).toBe(true);
     expect(
       items!.every((x) =>
         x.kind === "graphql" ? x.schemaAbs.includes("/providers/") : x.abs.includes("/providers/")

@@ -226,6 +226,14 @@ function envResolvedAuthHeaders(specLabel?: string): Record<string, string> {
     );
     return bearer ? { Authorization: `Bearer ${bearer}` } : {};
   }
+  if (effective === "notion") {
+    const token = trimEnv("NOTION_API_TOKEN", "CLAWQL_NOTION_API_TOKEN", "NOTION_TOKEN");
+    const version = trimEnv("NOTION_VERSION", "CLAWQL_NOTION_VERSION") ?? "2022-06-28";
+    const headers: Record<string, string> = {};
+    if (token) headers.Authorization = `Bearer ${token}`;
+    if (version) headers["Notion-Version"] = version;
+    return headers;
+  }
   if (effective === "n8n") {
     const key = trimEnv("N8N_API_KEY", "CLAWQL_N8N_API_KEY"); // gitleaks:allow — env var names, not secret values
     return key ? { "X-N8N-API-KEY": key } : {};

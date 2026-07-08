@@ -13,13 +13,13 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve as resolvePath } from "node:path";
 import { existsSync } from "node:fs";
 import { introspectionFromSchema, printSchema } from "graphql";
-import { buildGraphQLSchema } from "../../src/graphql-schema-builder.js";
 import {
+  BUNDLED_PROVIDERS,
+  buildGraphQLSchema,
+  getPackageRoot,
   loadOpenAPIFromAbsolutePath,
   resolveApiBaseUrl,
-} from "../../src/spec-loader.js";
-import { BUNDLED_PROVIDERS } from "../../src/provider-registry.js";
-import { getPackageRoot } from "../../src/package-root.js";
+} from "clawql-api";
 
 async function main() {
   const root = getPackageRoot();

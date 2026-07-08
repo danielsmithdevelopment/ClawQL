@@ -45,6 +45,14 @@ export const PROVIDER_VAULT_KEY_CATALOG: readonly ProviderVaultKeyEntry[] = [
     hint: "Bearer token for knowledge_search_onyx and enterprise evidence.",
   },
   {
+    vaultProperty: "notionApiToken",
+    envKey: "NOTION_API_TOKEN",
+    envAliases: ["NOTION_API_TOKEN", "CLAWQL_NOTION_API_TOKEN", "NOTION_TOKEN"],
+    label: "Notion integration token",
+    group: "Core integrations",
+    hint: "Internal integration secret (secret_…) for the Notion REST API provider.",
+  },
+  {
     vaultProperty: "paperlessApiToken",
     envKey: "PAPERLESS_API_TOKEN",
     envAliases: ["PAPERLESS_API_TOKEN", "CLAWQL_PAPERLESS_API_TOKEN"],

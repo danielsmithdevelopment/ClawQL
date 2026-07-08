@@ -120,6 +120,18 @@ export const BUNDLED_PROVIDERS: Record<string, BundledProvider> = {
     bundledSchemaSdlPath: "providers/sentry/schema.graphql",
   },
   /**
+   * Notion REST API — official OpenAPI from developers.notion.com.
+   * Auth: NOTION_API_TOKEN (Bearer integration token) + required Notion-Version header.
+   */
+  notion: {
+    id: "notion",
+    bundledSpecPath: "providers/notion/openapi.json",
+    format: "openapi",
+    fallbackUrl: "https://developers.notion.com/openapi.json",
+    bundledIntrospectionPath: "providers/notion/introspection.json",
+    bundledSchemaSdlPath: "providers/notion/schema.graphql",
+  },
+  /**
    * n8n Public API (bundled spec extracted from Swagger UI; see scripts/providers/fetch-n8n-openapi.mjs).
    * Fallback: same file on the default upstream repo (for clones without `providers/n8n/openapi.json`).
    */
