@@ -18,12 +18,12 @@ Registers optional automation and GitOps MCP tools. Each tool is gated independe
 
 ## MCP tools
 
-| Tool | Enable flag | Purpose |
-| ---- | ----------- | ------- |
-| **`schedule`** | **`CLAWQL_ENABLE_SCHEDULE=1`** | Persisted jobs + synthetic HTTP checks |
-| **`notify`** | **`CLAWQL_ENABLE_NOTIFY=1`** | Slack `chat.postMessage` wrapper |
-| **`workflow`** | **`CLAWQL_ENABLE_WORKFLOW=1`** | Argo Workflows submit/wait/logs ([#243](https://github.com/danielsmithdevelopment/ClawQL/issues/243)) |
-| **`argocd`** | **`CLAWQL_ENABLE_ARGO_CD=1`** | Argo CD Application observe/sync ([#244](https://github.com/danielsmithdevelopment/ClawQL/issues/244)) |
+| Tool           | Enable flag                    | Purpose                                                                                                |
+| -------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| **`schedule`** | **`CLAWQL_ENABLE_SCHEDULE=1`** | Persisted jobs + synthetic HTTP checks                                                                 |
+| **`notify`**   | **`CLAWQL_ENABLE_NOTIFY=1`**   | Slack `chat.postMessage` wrapper                                                                       |
+| **`workflow`** | **`CLAWQL_ENABLE_WORKFLOW=1`** | Argo Workflows submit/wait/logs ([#243](https://github.com/danielsmithdevelopment/ClawQL/issues/243))  |
+| **`argocd`**   | **`CLAWQL_ENABLE_ARGO_CD=1`**  | Argo CD Application observe/sync ([#244](https://github.com/danielsmithdevelopment/ClawQL/issues/244)) |
 
 ## Prerequisites
 

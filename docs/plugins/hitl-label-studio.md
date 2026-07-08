@@ -18,18 +18,18 @@ Human-in-the-loop review via [Label Studio](https://labelstud.io/) task import a
 
 ## MCP tools (target)
 
-| Tool | Purpose |
-| ---- | ------- |
+| Tool                            | Purpose                       |
+| ------------------------------- | ----------------------------- |
 | **`hitl_enqueue_label_studio`** | Import tasks for human review |
 
 ## Enable (today)
 
-| Env | Effect |
-| --- | ------ |
-| **`CLAWQL_ENABLE_HITL_LABEL_STUDIO=1`** | Register tool + webhook route |
-| **`CLAWQL_LABEL_STUDIO_URL`** | Label Studio base URL |
-| **`CLAWQL_LABEL_STUDIO_API_TOKEN`** | API token |
-| **`CLAWQL_HITL_WEBHOOK_TOKEN`** | Webhook auth (required in production) |
+| Env                                     | Effect                                |
+| --------------------------------------- | ------------------------------------- |
+| **`CLAWQL_ENABLE_HITL_LABEL_STUDIO=1`** | Register tool + webhook route         |
+| **`CLAWQL_LABEL_STUDIO_URL`**           | Label Studio base URL                 |
+| **`CLAWQL_LABEL_STUDIO_API_TOKEN`**     | API token                             |
+| **`CLAWQL_HITL_WEBHOOK_TOKEN`**         | Webhook auth (required in production) |
 
 ## Learn more
 

@@ -18,23 +18,23 @@ Covers external knowledge import, enterprise search via Onyx, and optional intel
 
 ## MCP tools
 
-| Tool | When registered |
-| ---- | ---------------- |
-| **`ingest_external_knowledge`** | Documents plugin on (default) |
-| **`knowledge_search_onyx`** | Documents on + **`CLAWQL_ENABLE_ONYX=1`** + **`onyx`** in spec merge |
-| **`run_idp_pipeline`** | **`CLAWQL_ENABLE_IDP_PIPELINE=1`** |
-| **`classify_document`** | **`CLAWQL_ENABLE_IDP_CLASSIFIER=1`** |
-| **`extract_document`** | **`CLAWQL_ENABLE_LANGEXTRACT=1`** |
+| Tool                            | When registered                                                      |
+| ------------------------------- | -------------------------------------------------------------------- |
+| **`ingest_external_knowledge`** | Documents plugin on (default)                                        |
+| **`knowledge_search_onyx`**     | Documents on + **`CLAWQL_ENABLE_ONYX=1`** + **`onyx`** in spec merge |
+| **`run_idp_pipeline`**          | **`CLAWQL_ENABLE_IDP_PIPELINE=1`**                                   |
+| **`classify_document`**         | **`CLAWQL_ENABLE_IDP_CLASSIFIER=1`**                                 |
+| **`extract_document`**          | **`CLAWQL_ENABLE_LANGEXTRACT=1`**                                    |
 
 Bundled IDP vendors (Tika, Gotenberg, Paperless, Stirling, Docling, Nextcloud, ConeShare) are loaded via **`execute`** when included in the spec merge — not separate plugins.
 
 ## Enable / disable
 
-| Env | Default | Effect |
-| --- | ------- | ------ |
-| **`CLAWQL_ENABLE_DOCUMENTS=0`** | on | Omit `DocumentsPlugin` and document MCP tools; trims IDP vendors from **`all-providers`** only |
-| **`CLAWQL_ENABLE_ONYX=1`** | off | Register **`knowledge_search_onyx`** |
-| **`CLAWQL_EXTERNAL_INGEST=1`** | off | Allow URL fetch mode on **`ingest_external_knowledge`** |
+| Env                             | Default | Effect                                                                                         |
+| ------------------------------- | ------- | ---------------------------------------------------------------------------------------------- |
+| **`CLAWQL_ENABLE_DOCUMENTS=0`** | on      | Omit `DocumentsPlugin` and document MCP tools; trims IDP vendors from **`all-providers`** only |
+| **`CLAWQL_ENABLE_ONYX=1`**      | off     | Register **`knowledge_search_onyx`**                                                           |
+| **`CLAWQL_EXTERNAL_INGEST=1`**  | off     | Allow URL fetch mode on **`ingest_external_knowledge`**                                        |
 
 Explicit **`CLAWQL_BUNDLED_PROVIDERS=paperless,tika,...`** can still list IDP vendor ids when **`CLAWQL_ENABLE_DOCUMENTS=0`**.
 

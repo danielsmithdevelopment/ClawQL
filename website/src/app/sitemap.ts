@@ -1,7 +1,7 @@
 import { type MetadataRoute } from 'next'
 
-import trainingPaths from '@/generated/security-training/sitemap-paths.json'
 import pluginPaths from '@/generated/clawql-plugins/sitemap-paths.json'
+import trainingPaths from '@/generated/security-training/sitemap-paths.json'
 import { getSiteOrigin } from '@/lib/site-url'
 
 /** Sitemap is fully static URLs; avoid per-request `lastModified` churn for crawlers. */

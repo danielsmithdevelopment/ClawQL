@@ -18,16 +18,16 @@ Persists durable session knowledge to an **Obsidian-compatible vault** and recal
 
 ## MCP tools
 
-| Tool | Purpose |
-| ---- | ------- |
+| Tool                | Purpose                                                                              |
+| ------------------- | ------------------------------------------------------------------------------------ |
 | **`memory_ingest`** | Write structured insights, wikilinks, and optional verbatim tool output to the vault |
-| **`memory_recall`** | Query the vault (text + optional graph depth) before deep work |
+| **`memory_recall`** | Query the vault (text + optional graph depth) before deep work                       |
 
 ## Enable / disable
 
-| Env | Default | Effect |
-| --- | ------- | ------ |
-| **`CLAWQL_ENABLE_MEMORY=0`** | on | Omit `MemoryPlugin` and hide both tools |
+| Env                          | Default | Effect                                  |
+| ---------------------------- | ------- | --------------------------------------- |
+| **`CLAWQL_ENABLE_MEMORY=0`** | on      | Omit `MemoryPlugin` and hide both tools |
 
 ## Prerequisites
 

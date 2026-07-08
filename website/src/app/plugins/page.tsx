@@ -49,11 +49,11 @@ export default function PluginsHubPage() {
 
       <div className="not-prose mb-10">
         <Note>
-          <strong>Gateway core</strong> (<code>search</code>, <code>execute</code>
-          , <code>audit</code>, <code>cache</code>) is always on — not a plugin.{' '}
-          <strong>Bundled providers</strong> control which API specs load; they
-          are documented here because they define the default install experience
-          alongside MCP plugins.
+          <strong>Gateway core</strong> (<code>search</code>,{' '}
+          <code>execute</code>, <code>audit</code>, <code>cache</code>) is
+          always on — not a plugin. <strong>Bundled providers</strong> control
+          which API specs load; they are documented here because they define the
+          default install experience alongside MCP plugins.
         </Note>
       </div>
 

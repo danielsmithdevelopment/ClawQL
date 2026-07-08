@@ -12,7 +12,10 @@ import { docsPageMetadata } from '@/lib/seo'
 
 export const dynamic = 'force-static'
 
-const STATUS_TAG: Record<string, { label: string; color: 'claw' | 'sky' | 'amber' | 'zinc' | 'rose' }> = {
+const STATUS_TAG: Record<
+  string,
+  { label: string; color: 'claw' | 'sky' | 'amber' | 'zinc' | 'rose' }
+> = {
   'always-on': { label: 'Always on', color: 'sky' },
   'default-on': { label: 'Default on', color: 'claw' },
   'opt-in': { label: 'Opt in', color: 'amber' },
@@ -55,7 +58,10 @@ export default async function PluginPage({
     notFound()
   }
 
-  const status = STATUS_TAG[m.status] ?? { label: m.status, color: 'zinc' as const }
+  const status = STATUS_TAG[m.status] ?? {
+    label: m.status,
+    color: 'zinc' as const,
+  }
   const prevHref = m.prev ? `/plugins/${m.prev}` : null
   const nextHref = m.next ? `/plugins/${m.next}` : null
 

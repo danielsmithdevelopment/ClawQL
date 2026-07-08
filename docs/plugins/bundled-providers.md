@@ -19,33 +19,33 @@ Think of this as the **framework vs library** install model: an opinionated defa
 
 Fresh install with no `CLAWQL_*` spec variables loads the **opinionated default stack**:
 
-| Provider | Notes |
-| -------- | ----- |
-| **Cloudflare** | Edge/DNS/Workers APIs |
-| **GitHub** | REST automation |
-| **Slack** | Web API (powers optional **`notify`** when enabled) |
-| **Linear** | Bundled GraphQL-only vendor |
-| **Notion** | Official REST OpenAPI |
-| **Onyx** | Enterprise search spec (pair with **`CLAWQL_ENABLE_ONYX=1`** for MCP search tool) |
+| Provider       | Notes                                                                             |
+| -------------- | --------------------------------------------------------------------------------- |
+| **Cloudflare** | Edge/DNS/Workers APIs                                                             |
+| **GitHub**     | REST automation                                                                   |
+| **Slack**      | Web API (powers optional **`notify`** when enabled)                               |
+| **Linear**     | Bundled GraphQL-only vendor                                                       |
+| **Notion**     | Official REST OpenAPI                                                             |
+| **Onyx**       | Enterprise search spec (pair with **`CLAWQL_ENABLE_ONYX=1`** for MCP search tool) |
 
 ## Cloud add-ons (default stack only)
 
-| Env | Effect |
-| --- | ------ |
-| **`CLAWQL_ENABLE_GOOGLE=1`** | Add Google Cloud top-50 Discovery merge to default stack |
-| **`CLAWQL_ENABLE_AWS=1`** | Add AWS top-50 OpenAPI merge (SigV4 via **`execute`**) |
-| **`CLAWQL_ENABLE_CLOUDFLARE=0`** | Omit Cloudflare from default stack |
+| Env                              | Effect                                                   |
+| -------------------------------- | -------------------------------------------------------- |
+| **`CLAWQL_ENABLE_GOOGLE=1`**     | Add Google Cloud top-50 Discovery merge to default stack |
+| **`CLAWQL_ENABLE_AWS=1`**        | Add AWS top-50 OpenAPI merge (SigV4 via **`execute`**)   |
+| **`CLAWQL_ENABLE_CLOUDFLARE=0`** | Omit Cloudflare from default stack                       |
 
 These flags do **not** gate **`all-providers`**.
 
 ## Presets
 
-| `CLAWQL_PROVIDER` | Behavior |
-| ----------------- | -------- |
-| **`default`** / **`default-providers`** | Same as no-config install (+ cloud add-ons above) |
-| **`all-providers`** | Literally every bundled vendor + Google top-50 + AWS top-50 |
-| **`google`**, **`aws`**, **`atlassian`** | Focused merged presets |
-| **`CLAWQL_BUNDLED_PROVIDERS=a,b,…`** | Custom explicit subset |
+| `CLAWQL_PROVIDER`                        | Behavior                                                    |
+| ---------------------------------------- | ----------------------------------------------------------- |
+| **`default`** / **`default-providers`**  | Same as no-config install (+ cloud add-ons above)           |
+| **`all-providers`**                      | Literally every bundled vendor + Google top-50 + AWS top-50 |
+| **`google`**, **`aws`**, **`atlassian`** | Focused merged presets                                      |
+| **`CLAWQL_BUNDLED_PROVIDERS=a,b,…`**     | Custom explicit subset                                      |
 
 Only **`CLAWQL_ENABLE_DOCUMENTS=0`** trims the document/IDP vendor set from **`all-providers`**.
 

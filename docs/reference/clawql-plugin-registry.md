@@ -42,21 +42,21 @@ This page is the **registry** of ClawQL plugins: what exists today, what horizon
 
 When plugin registration lands, each tool will be registered only if its plugin is composed.
 
-| MCP tool(s)                      | Owning plugin (target)    | Package today               | Site reference                                                           |
-| -------------------------------- | ------------------------- | --------------------------- | ------------------------------------------------------------------------ |
-| `search`, `execute`              | Gateway core              | `clawql-api` + `src/` shims | [Gateway core](https://docs.clawql.com/plugins/core) · [MCP tools](../mcp/mcp-tools.md) |
-| `cache`, `audit`                 | Gateway core              | `src/`                      | [Gateway core](https://docs.clawql.com/plugins/core) · [MCP tools](../mcp/mcp-tools.md) |
-| _(spec merge)_                   | Bundled providers         | `providers/`                | [Bundled providers](https://docs.clawql.com/plugins/bundled-providers)   |
-| `memory_ingest`, `memory_recall` | `clawql-memory`           | `clawql-memory`             | [Memory plugin](https://docs.clawql.com/plugins/memory) · [Vault memory](https://docs.clawql.com/learn/vault-memory-between-chats) |
-| `ingest_external_knowledge`      | `clawql-documents`        | `clawql-documents`          | [Documents plugin](https://docs.clawql.com/plugins/documents) · [external-ingest.md](../mcp/external-ingest.md) |
+| MCP tool(s)                      | Owning plugin (target)    | Package today               | Site reference                                                                                                                        |
+| -------------------------------- | ------------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `search`, `execute`              | Gateway core              | `clawql-api` + `src/` shims | [Gateway core](https://docs.clawql.com/plugins/core) · [MCP tools](../mcp/mcp-tools.md)                                               |
+| `cache`, `audit`                 | Gateway core              | `src/`                      | [Gateway core](https://docs.clawql.com/plugins/core) · [MCP tools](../mcp/mcp-tools.md)                                               |
+| _(spec merge)_                   | Bundled providers         | `providers/`                | [Bundled providers](https://docs.clawql.com/plugins/bundled-providers)                                                                |
+| `memory_ingest`, `memory_recall` | `clawql-memory`           | `clawql-memory`             | [Memory plugin](https://docs.clawql.com/plugins/memory) · [Vault memory](https://docs.clawql.com/learn/vault-memory-between-chats)    |
+| `ingest_external_knowledge`      | `clawql-documents`        | `clawql-documents`          | [Documents plugin](https://docs.clawql.com/plugins/documents) · [external-ingest.md](../mcp/external-ingest.md)                       |
 | `knowledge_search_onyx`          | `clawql-documents` (Onyx) | `src/`                      | [Documents plugin](https://docs.clawql.com/plugins/documents) · [Onyx knowledge](https://docs.clawql.com/learn/knowledge-search-onyx) |
-| `schedule`                       | `clawql-automation`       | `clawql-automation`         | [Automation plugin](https://docs.clawql.com/plugins/automation) · [Schedule](https://docs.clawql.com/schedule) |
-| `notify`                         | `clawql-automation`       | `clawql-automation`         | [Automation plugin](https://docs.clawql.com/plugins/automation) · [Notify](https://docs.clawql.com/notify) |
-| `workflow`                       | `clawql-automation`       | `clawql-automation`         | [Automation plugin](https://docs.clawql.com/plugins/automation) · [workflow-tool.md](../mcp/workflow-tool.md) |
-| `argocd`                         | `clawql-automation`       | `clawql-automation`         | [Automation plugin](https://docs.clawql.com/plugins/automation) · [argocd-tool.md](../mcp/argocd-tool.md) |
-| `sandbox_exec`                   | `clawql-sandbox`          | `clawql-sandbox`            | [Sandbox plugin](https://docs.clawql.com/plugins/sandbox) · [Sandbox exec](https://docs.clawql.com/learn/sandbox-exec) |
-| `ouroboros_*`                    | `clawql-ouroboros`        | `clawql-ouroboros`          | [Ouroboros plugin](https://docs.clawql.com/plugins/ouroboros) · [Ouroboros](https://docs.clawql.com/ouroboros) |
-| `hitl_enqueue_label_studio`      | TBD                       | `src/`                      | [HITL plugin](https://docs.clawql.com/plugins/hitl-label-studio) · [HITL](https://docs.clawql.com/hitl-label-studio) |
+| `schedule`                       | `clawql-automation`       | `clawql-automation`         | [Automation plugin](https://docs.clawql.com/plugins/automation) · [Schedule](https://docs.clawql.com/schedule)                        |
+| `notify`                         | `clawql-automation`       | `clawql-automation`         | [Automation plugin](https://docs.clawql.com/plugins/automation) · [Notify](https://docs.clawql.com/notify)                            |
+| `workflow`                       | `clawql-automation`       | `clawql-automation`         | [Automation plugin](https://docs.clawql.com/plugins/automation) · [workflow-tool.md](../mcp/workflow-tool.md)                         |
+| `argocd`                         | `clawql-automation`       | `clawql-automation`         | [Automation plugin](https://docs.clawql.com/plugins/automation) · [argocd-tool.md](../mcp/argocd-tool.md)                             |
+| `sandbox_exec`                   | `clawql-sandbox`          | `clawql-sandbox`            | [Sandbox plugin](https://docs.clawql.com/plugins/sandbox) · [Sandbox exec](https://docs.clawql.com/learn/sandbox-exec)                |
+| `ouroboros_*`                    | `clawql-ouroboros`        | `clawql-ouroboros`          | [Ouroboros plugin](https://docs.clawql.com/plugins/ouroboros) · [Ouroboros](https://docs.clawql.com/ouroboros)                        |
+| `hitl_enqueue_label_studio`      | TBD                       | `src/`                      | [HITL plugin](https://docs.clawql.com/plugins/hitl-label-studio) · [HITL](https://docs.clawql.com/hitl-label-studio)                  |
 
 ---
 

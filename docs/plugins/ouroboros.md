@@ -18,17 +18,17 @@ Specification-first evolutionary loops with optional Postgres lineage storage.
 
 ## MCP tools
 
-| Tool | Purpose |
-| ---- | ------- |
-| **`ouroboros_create_seed_from_document`** | Create a Seed from an input document |
-| **`ouroboros_run_evolutionary_loop`** | Run Wonder/Reflect → Executor/Evaluator cycles |
-| **`ouroboros_get_lineage_status`** | Inspect lineage and convergence state |
+| Tool                                      | Purpose                                        |
+| ----------------------------------------- | ---------------------------------------------- |
+| **`ouroboros_create_seed_from_document`** | Create a Seed from an input document           |
+| **`ouroboros_run_evolutionary_loop`**     | Run Wonder/Reflect → Executor/Evaluator cycles |
+| **`ouroboros_get_lineage_status`**        | Inspect lineage and convergence state          |
 
 ## Enable
 
-| Env | Default | Effect |
-| --- | ------- | ------ |
-| **`CLAWQL_ENABLE_OUROBOROS=1`** | off | Register `OuroborosPlugin` and all three tools |
+| Env                             | Default | Effect                                         |
+| ------------------------------- | ------- | ---------------------------------------------- |
+| **`CLAWQL_ENABLE_OUROBOROS=1`** | off     | Register `OuroborosPlugin` and all three tools |
 
 Optional Postgres lineage: **`CLAWQL_OUROBOROS_DATABASE_URL`** or split **`CLAWQL_OUROBOROS_DB_*`** vars.
 

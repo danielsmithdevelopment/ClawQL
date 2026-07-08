@@ -18,25 +18,25 @@ Runs untrusted code snippets in an isolated backend without giving agents raw sh
 
 ## MCP tools
 
-| Tool | Purpose |
-| ---- | ------- |
+| Tool               | Purpose                                                                    |
+| ------------------ | -------------------------------------------------------------------------- |
 | **`sandbox_exec`** | Execute a code snippet in an isolated environment and return stdout/stderr |
 
 ## Enable
 
-| Env | Default | Effect |
-| --- | ------- | ------ |
-| **`CLAWQL_ENABLE_SANDBOX=1`** | off | Register `SandboxPlugin` and **`sandbox_exec`** |
+| Env                           | Default | Effect                                          |
+| ----------------------------- | ------- | ----------------------------------------------- |
+| **`CLAWQL_ENABLE_SANDBOX=1`** | off     | Register `SandboxPlugin` and **`sandbox_exec`** |
 
 ## Backends (`CLAWQL_SANDBOX_BACKEND`)
 
-| Value | Typical use |
-| ----- | ----------- |
-| **`kata`** | Kubernetes Jobs with Kata Containers (production) |
-| **`docker`** | Docker socket backend (single-node dev) |
-| **`macos-seatbelt`** | macOS Seatbelt sandbox |
-| **`bridge`** | Cloudflare sandbox bridge (default off-cluster) |
-| **`auto`** | Seatbelt → Docker → bridge (or Kata in-cluster when configured) |
+| Value                | Typical use                                                     |
+| -------------------- | --------------------------------------------------------------- |
+| **`kata`**           | Kubernetes Jobs with Kata Containers (production)               |
+| **`docker`**         | Docker socket backend (single-node dev)                         |
+| **`macos-seatbelt`** | macOS Seatbelt sandbox                                          |
+| **`bridge`**         | Cloudflare sandbox bridge (default off-cluster)                 |
+| **`auto`**           | Seatbelt → Docker → bridge (or Kata in-cluster when configured) |
 
 Helm: `enableSandbox: true` plus optional `sandboxKata` / `sandboxDocker` blocks.
 

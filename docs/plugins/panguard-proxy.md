@@ -25,10 +25,10 @@ The Panguard proxy plugin is the synchronous **`beforeCallTool`** chokepoint for
 
 ## Enable / disable
 
-| Env | Default | Effect |
-| --- | ------- | ------ |
-| **`CLAWQL_PANGUARD_PROXY_PLUGIN=0`** | on | Omit the proxy plugin from composition |
-| **`CLAWQL_PANGUARD_IN_PROCESS=1`** | off | Use in-process policy path (active development) |
+| Env                                  | Default | Effect                                          |
+| ------------------------------------ | ------- | ----------------------------------------------- |
+| **`CLAWQL_PANGUARD_PROXY_PLUGIN=0`** | on      | Omit the proxy plugin from composition          |
+| **`CLAWQL_PANGUARD_IN_PROCESS=1`**   | off     | Use in-process policy path (active development) |
 
 ## When to use
 

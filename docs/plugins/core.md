@@ -15,12 +15,12 @@ next: panguard-proxy
 
 ## MCP tools
 
-| Tool | Role |
-| ---- | ---- |
-| **`search`** | Rank operations from the active merged spec index by natural-language intent |
-| **`execute`** | Call a discovered operation by `operationId` (REST, Discovery, native GraphQL/gRPC) |
-| **`audit`** | In-process ring buffer of tool events (not durable — use vault memory for compliance trails) |
-| **`cache`** | Ephemeral in-process LRU key/value scratch state between tool calls |
+| Tool          | Role                                                                                         |
+| ------------- | -------------------------------------------------------------------------------------------- |
+| **`search`**  | Rank operations from the active merged spec index by natural-language intent                 |
+| **`execute`** | Call a discovered operation by `operationId` (REST, Discovery, native GraphQL/gRPC)          |
+| **`audit`**   | In-process ring buffer of tool events (not durable — use vault memory for compliance trails) |
+| **`cache`**   | Ephemeral in-process LRU key/value scratch state between tool calls                          |
 
 ## How it fits the plugin model
 
