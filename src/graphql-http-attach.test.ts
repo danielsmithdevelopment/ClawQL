@@ -9,6 +9,7 @@ import { attachGraphqlHttpToMcpApp } from "./graphql-http-attach.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const minimalSpec = join(here, "test-utils/fixtures/minimal-petstore.json");
+const minimalWidgets = join(here, "test-utils/fixtures/minimal-widgets.json");
 
 function closeHttpServer(server: Server): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -24,6 +25,7 @@ describe("attachGraphqlHttpToMcpApp", () => {
     saved.CLAWQL_PROVIDER = process.env.CLAWQL_PROVIDER;
     saved.CLAWQL_BUNDLED_PROVIDERS = process.env.CLAWQL_BUNDLED_PROVIDERS;
     saved.CLAWQL_SPEC_PATHS = process.env.CLAWQL_SPEC_PATHS;
+    saved.CLAWQL_BUNDLED_PROVIDERS = process.env.CLAWQL_BUNDLED_PROVIDERS;
     resetSpecCache();
   });
 
@@ -63,7 +65,9 @@ describe("attachGraphqlHttpToMcpApp", () => {
 
   it("skips /graphql for merged multi-spec without failing startup", async () => {
     delete process.env.CLAWQL_SPEC_PATH;
-    process.env.CLAWQL_BUNDLED_PROVIDERS = "github,slack";
+    delete process.env.CLAWQL_PROVIDER;
+    delete process.env.CLAWQL_BUNDLED_PROVIDERS;
+    process.env.CLAWQL_SPEC_PATHS = `${minimalSpec},${minimalWidgets}`;
 
     const app = express();
     await expect(attachGraphqlHttpToMcpApp(app)).resolves.toBeUndefined();

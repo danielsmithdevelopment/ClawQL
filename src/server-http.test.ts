@@ -5,7 +5,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { recordNativeGraphqlExecute, resetNativeProtocolMetricsForTests } from "clawql-api";
 import { resetClawqlApiForTests } from "./clawql-api-adapters.js";
 import { getClawqlOptionalToolFlags, resetSpecCache } from "clawql-api";
@@ -52,20 +52,18 @@ const here = dirname(fileURLToPath(import.meta.url));
 const minimalSpec = join(here, "test-utils/fixtures/minimal-petstore.json");
 
 describe("server-http", () => {
-  beforeAll(() => {
-    vi.setConfig({ testTimeout: 15_000 });
-  });
-
   const saved: Record<string, string | undefined> = {};
 
   beforeEach(() => {
     saved.CLAWQL_SPEC_PATH = process.env.CLAWQL_SPEC_PATH;
     saved.CLAWQL_PROVIDER = process.env.CLAWQL_PROVIDER;
     saved.CLAWQL_SPEC_PATHS = process.env.CLAWQL_SPEC_PATHS;
+    saved.CLAWQL_BUNDLED_PROVIDERS = process.env.CLAWQL_BUNDLED_PROVIDERS;
     saved.CLAWQL_CORS_ALLOW_ORIGIN = process.env.CLAWQL_CORS_ALLOW_ORIGIN;
     process.env.CLAWQL_SPEC_PATH = minimalSpec;
     delete process.env.CLAWQL_PROVIDER;
     delete process.env.CLAWQL_SPEC_PATHS;
+    delete process.env.CLAWQL_BUNDLED_PROVIDERS;
     delete process.env.CLAWQL_CORS_ALLOW_ORIGIN;
     resetSpecCache();
     resetSchemaFieldCache();
@@ -217,7 +215,7 @@ describe("server-http", () => {
           graphqlBySource: {},
           grpcBySource: {},
         });
-      });
+      }, FAST_HTTP_APP_OPTS);
     } finally {
       if (saved === undefined) delete process.env.CLAWQL_HEALTHZ_NATIVE_PROTOCOL_METRICS;
       else process.env.CLAWQL_HEALTHZ_NATIVE_PROTOCOL_METRICS = saved;
@@ -243,7 +241,7 @@ describe("server-http", () => {
         expect(body.nativeProtocolMetrics?.graphqlBySource?.["vitest-gql-source"]?.executeOk).toBe(
           1
         );
-      });
+      }, FAST_HTTP_APP_OPTS);
     } finally {
       if (saved === undefined) delete process.env.CLAWQL_HEALTHZ_NATIVE_PROTOCOL_METRICS;
       else process.env.CLAWQL_HEALTHZ_NATIVE_PROTOCOL_METRICS = saved;
@@ -270,7 +268,7 @@ describe("server-http", () => {
         expect(res.ok).toBe(true);
         const body = (await res.json()) as { merkleSnapshot?: { rootHex: string } };
         expect(body.merkleSnapshot?.rootHex).toMatch(/^[0-9a-f]{64}$/);
-      });
+      }, FAST_HTTP_APP_OPTS);
     } finally {
       if (savedVault === undefined) delete process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
       else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = savedVault;
@@ -280,7 +278,7 @@ describe("server-http", () => {
       else process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS = savedHz;
       await rm(dir, { recursive: true, force: true });
     }
-  });
+  }, 15_000);
 
   it("GET /healthz includes cuckoo metrics when CLAWQL_HEALTHZ_MEMORY_ARTIFACTS and Cuckoo enabled", async () => {
     const dir = await mkdtemp(join(tmpdir(), "clawql-hz-"));
@@ -307,7 +305,7 @@ describe("server-http", () => {
         expect(body.cuckooMembershipArtifactsEnabled).toBe(true);
         expect(body.cuckooMetrics?.rebuildCount).toBeGreaterThanOrEqual(1);
         expect(body.cuckooFilterPersistedAt).toMatch(/\d{4}-\d{2}-\d{2}T/);
-      });
+      }, FAST_HTTP_APP_OPTS);
     } finally {
       if (savedVault === undefined) delete process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
       else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = savedVault;
@@ -317,7 +315,7 @@ describe("server-http", () => {
       else process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS = savedHz;
       await rm(dir, { recursive: true, force: true });
     }
-  });
+  }, 15_000);
 
   it("POST /mcp initialize allocates mcp-session-id", async () => {
     await withHttpServer(async (base) => {

@@ -770,10 +770,13 @@ function buildStubLoadedSpec(): LoadedSpec {
 let cachedSpec: LoadedSpec | null = null;
 /** Coalesce concurrent `loadSpec()` calls so env is read once (avoids parallel all-providers loads in tests). */
 let loadInFlight: Promise<LoadedSpec> | null = null;
+/** Bumped on `resetSpecCache()` so in-flight loads from a prior env snapshot cannot repopulate the cache. */
+let loadGeneration = 0;
 
 export function resetSpecCache(): void {
   cachedSpec = null;
   loadInFlight = null;
+  loadGeneration++;
   resetNativeProtocolRegistry();
 }
 
@@ -793,57 +796,67 @@ export function registerSpecCacheShutdownHooks(): void {
 async function loadSpecUncached(): Promise<LoadedSpec> {
   if (shouldLoadNativeProtocolsOnlyMode()) {
     const stub = buildStubLoadedSpec();
-    cachedSpec = await mergeNativeProtocolOperations(stub);
-    if (cachedSpec.operations.length === 0) {
+    const loaded = await mergeNativeProtocolOperations(stub);
+    if (loaded.operations.length === 0) {
       throw new Error(
         "[spec-loader] Native-protocol-only mode: set CLAWQL_GRAPHQL_URL and/or CLAWQL_GRAPHQL_SOURCES / CLAWQL_GRPC_SOURCES so introspection or proto load yields at least one operation."
       );
     }
     console.error(
-      `[spec-loader] Native-protocol-only mode (no OpenAPI/Discovery spec env): ${cachedSpec.operations.length} operations`
+      `[spec-loader] Native-protocol-only mode (no OpenAPI/Discovery spec env): ${loaded.operations.length} operations`
     );
-    return cachedSpec;
+    return loaded;
   }
 
   const multiItems = await resolveMultiSpecItems();
   if (multiItems) {
-    const loaded = await loadMultiSpecFromItems(multiItems);
-    cachedSpec = await mergeNativeProtocolOperations(loaded);
+    const merged = await loadMultiSpecFromItems(multiItems);
+    const loaded = await mergeNativeProtocolOperations(merged);
     console.error(
-      `[spec-loader] Multi-spec: ${multiItems.length} APIs merged → ${cachedSpec.operations.length} operations (REST for OpenAPI; native GraphQL/gRPC when configured)`
+      `[spec-loader] Multi-spec: ${multiItems.length} APIs merged → ${loaded.operations.length} operations (REST for OpenAPI; native GraphQL/gRPC when configured)`
     );
-    return cachedSpec;
+    return loaded;
   }
 
   const source = resolveSpecSource();
   if (source.kind === "bundled-graphql") {
-    const loaded = await loadBundledGraphqlShellSpec(source.entry);
-    cachedSpec = await mergeNativeProtocolOperations(loaded);
+    const built = await loadBundledGraphqlShellSpec(source.entry);
+    const loaded = await mergeNativeProtocolOperations(built);
     console.error(
-      `[spec-loader] Bundled GraphQL provider "${source.entry.id}": ${cachedSpec.operations.length} operations → ${source.entry.graphqlEndpoint}`
+      `[spec-loader] Bundled GraphQL provider "${source.entry.id}": ${loaded.operations.length} operations → ${source.entry.graphqlEndpoint}`
     );
-    return cachedSpec;
+    return loaded;
   }
 
   const raw = await loadRawDocument(source);
-  const loaded = await buildLoadedSpec(raw);
+  const built = await buildLoadedSpec(raw);
   if (source.kind === "url" && !hasApiBaseUrlOverride()) {
-    absolutizeRelativeOpenApiServers(loaded.openapi, source.url);
+    absolutizeRelativeOpenApiServers(built.openapi, source.url);
   }
 
-  cachedSpec = await mergeNativeProtocolOperations(loaded);
+  const loaded = await mergeNativeProtocolOperations(built);
   console.error(
-    `[spec-loader] Loaded ${cachedSpec.operations.length} operations (${loaded.openapi.info?.title ?? "API"})`
+    `[spec-loader] Loaded ${loaded.operations.length} operations (${built.openapi.info?.title ?? "API"})`
   );
-  return cachedSpec;
+  return loaded;
 }
 
 export async function loadSpec(): Promise<LoadedSpec> {
   if (cachedSpec) return cachedSpec;
+  const generation = loadGeneration;
   if (!loadInFlight) {
-    loadInFlight = loadSpecUncached().finally(() => {
-      loadInFlight = null;
-    });
+    loadInFlight = loadSpecUncached()
+      .then((loaded) => {
+        if (generation === loadGeneration) {
+          cachedSpec = loaded;
+        }
+        return loaded;
+      })
+      .finally(() => {
+        if (generation === loadGeneration) {
+          loadInFlight = null;
+        }
+      });
   }
   return loadInFlight;
 }
