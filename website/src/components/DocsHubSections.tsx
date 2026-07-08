@@ -7,6 +7,7 @@ import {
   exampleSiteCards,
   guidesHubCards,
   optionalToolsHubCards,
+  pluginsHubCards,
   referenceHubCards,
   resourcesHubCards,
 } from '@/lib/docs-hub-data'
@@ -37,4 +38,8 @@ export function ResourcesHubGrid() {
 
 export function OptionalToolsHubGrid() {
   return <DocsHubGrid cards={optionalToolsHubCards} />
+}
+
+export function PluginsHubGrid() {
+  return <DocsHubGrid cards={pluginsHubCards} />
 }

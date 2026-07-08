@@ -17,7 +17,8 @@ export default defineConfig({
     command: 'npm run build && npm run start -- -p 4173 -H 127.0.0.1',
     port: 4173,
     reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
+    // prebuild sync + Next build can exceed 2m on CI after plugin page generation
+    timeout: process.env.CI ? 240_000 : 120_000,
   },
   projects: [
     {

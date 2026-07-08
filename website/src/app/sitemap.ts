@@ -1,5 +1,6 @@
 import { type MetadataRoute } from 'next'
 
+import pluginPaths from '@/generated/clawql-plugins/sitemap-paths.json'
 import trainingPaths from '@/generated/security-training/sitemap-paths.json'
 import { getSiteOrigin } from '@/lib/site-url'
 
@@ -48,6 +49,7 @@ const ENTRIES: Array<Entry> = [
   { path: '/resources', changeFrequency: 'monthly', priority: 0.85 },
   { path: '/reference/protocol', changeFrequency: 'monthly', priority: 0.88 },
   { path: '/reference/plugins', changeFrequency: 'monthly', priority: 0.86 },
+  { path: '/plugins', changeFrequency: 'weekly', priority: 0.9 },
   {
     path: '/reference/optional-tools',
     changeFrequency: 'monthly',
@@ -219,7 +221,19 @@ function trainingSitemapEntries(): Entry[] {
   }))
 }
 
-const ALL_ENTRIES: Entry[] = [...ENTRIES, ...trainingSitemapEntries()]
+function pluginSitemapEntries(): Entry[] {
+  return (pluginPaths as string[]).map((p) => ({
+    path: p as Entry['path'],
+    changeFrequency: 'monthly' as const,
+    priority: p === '/plugins' ? 0.9 : 0.87,
+  }))
+}
+
+const ALL_ENTRIES: Entry[] = [
+  ...ENTRIES,
+  ...trainingSitemapEntries(),
+  ...pluginSitemapEntries(),
+]
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = getSiteOrigin().toString().replace(/\/$/, '')

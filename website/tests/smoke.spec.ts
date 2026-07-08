@@ -17,3 +17,10 @@ test('case-study page is reachable', async ({ page }) => {
   await page.goto('/case-studies/cloudflare-docs-mcp')
   await expect(page.getByRole('heading').first()).toBeVisible()
 })
+
+test('plugins hub is reachable', async ({ page }) => {
+  await page.goto('/plugins')
+  const main = page.locator('#main-content')
+  await expect(main.getByRole('heading', { name: /^Plugins$/ })).toBeVisible()
+  await expect(main.getByRole('link', { name: /Bundled providers/i })).toBeVisible()
+})

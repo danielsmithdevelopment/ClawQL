@@ -5,10 +5,11 @@
  * - Local file (JSON or YAML OpenAPI 3 / Swagger 2), or
  * - URL to fetch the same, or
  * - Google Discovery document URL, or
- * - Default: **`all-providers`** — Google Cloud (bundled) + every other bundled spec (document stack
- *   tika / gotenberg / paperless / stirling / onyx omitted when **`CLAWQL_ENABLE_DOCUMENTS=0`**).
- * - Custom merge: **`CLAWQL_BUNDLED_PROVIDERS=a,b,…`** (bundled vendor ids and/or **`google`**) or **`CLAWQL_SPEC_PATHS=…`**.
- * - Optional merged **`CLAWQL_PROVIDER`** presets: **`google`**, **`atlassian`**, **`all-providers`**.
+ * - Default: opinionated bundled stack — **Cloudflare, GitHub, Slack, Linear, Notion, Onyx**; optional
+ *   **`CLAWQL_ENABLE_GOOGLE`** / **`CLAWQL_ENABLE_AWS`** add-ons; omit Cloudflare with **`CLAWQL_ENABLE_CLOUDFLARE=0`**.
+ *   Use **`CLAWQL_PROVIDER=all-providers`** for literally every bundled vendor plus GCP and AWS manifests.
+ * - Custom merge: **`CLAWQL_BUNDLED_PROVIDERS=a,b,…`** (bundled vendor ids and/or **`google`** / **`aws`**) or **`CLAWQL_SPEC_PATHS=…`**.
+ * - Optional merged **`CLAWQL_PROVIDER`** presets: **`google`**, **`aws`**, **`atlassian`**, **`all-providers`**.
  *
  * Produces a flattened Operation list for search + OpenAPI 3 for GraphQL.
  */
@@ -17,6 +18,7 @@ import { readFile } from "node:fs/promises";
 import { resolve as resolvePath } from "node:path";
 import fetch from "node-fetch";
 import { parse as parseYaml } from "yaml";
+import { isAwsSpecLabel, resolveAwsApiBaseUrl } from "../auth/aws-auth.js";
 import { convertObj } from "swagger2openapi";
 import type { Operation, ParameterInfo } from "./operation-types.js";
 import { loadGraphqlNativeOperationsFromConfigs } from "./graphql-native-loader.js";
@@ -31,6 +33,7 @@ import {
   isBundledGraphqlProvider,
   resolveBundledProvider,
   resolveBundledProviderGroup,
+  resolveDefaultBundledProvidersItems,
   resolveItemsFromBundledProviderEnvList,
   type BundledGraphqlProvider,
   type BundledOpenApiProvider,
@@ -641,13 +644,18 @@ async function resolveMultiSpecItems(): Promise<ProviderGroupItem[] | null> {
     const grouped = await resolveBundledProviderGroup(providerRaw);
     if (grouped) return grouped;
   }
-  // No config: only default — full bundled set (Google Cloud manifest + every `BUNDLED_PROVIDERS` entry).
+  // No config: default merge — opinionated bundled stack (see DEFAULT_BUNDLED_PROVIDER_IDS).
   if (!filePath && !specUrl && !discoveryUrl && !providerRaw) {
+    const defaultItems = await resolveDefaultBundledProvidersItems();
+    if (defaultItems.length === 0) {
+      throw new Error(
+        "No bundled providers in default stack. Set CLAWQL_ENABLE_CLOUDFLARE=1 (default), add CLAWQL_ENABLE_GOOGLE=1 and/or CLAWQL_ENABLE_AWS=1, or use CLAWQL_PROVIDER / CLAWQL_BUNDLED_PROVIDERS / CLAWQL_SPEC_PATHS."
+      );
+    }
     console.error(
-      "[spec-loader] No spec env/provider set — using all-providers (Google Cloud bundle + every bundled vendor)"
+      `[spec-loader] No spec env/provider set — using default bundled stack (${defaultItems.length} spec(s); cloud add-ons: google=${process.env.CLAWQL_ENABLE_GOOGLE ?? "0"}, aws=${process.env.CLAWQL_ENABLE_AWS ?? "0"}; cloudflare=${process.env.CLAWQL_ENABLE_CLOUDFLARE ?? "1"})`
     );
-    const defaultGroup = await resolveBundledProviderGroup("all-providers");
-    if (defaultGroup) return defaultGroup;
+    return defaultItems;
   }
   return null;
 }
@@ -762,10 +770,13 @@ function buildStubLoadedSpec(): LoadedSpec {
 let cachedSpec: LoadedSpec | null = null;
 /** Coalesce concurrent `loadSpec()` calls so env is read once (avoids parallel all-providers loads in tests). */
 let loadInFlight: Promise<LoadedSpec> | null = null;
+/** Bumped on `resetSpecCache()` so in-flight loads from a prior env snapshot cannot repopulate the cache. */
+let loadGeneration = 0;
 
 export function resetSpecCache(): void {
   cachedSpec = null;
   loadInFlight = null;
+  loadGeneration++;
   resetNativeProtocolRegistry();
 }
 
@@ -785,57 +796,67 @@ export function registerSpecCacheShutdownHooks(): void {
 async function loadSpecUncached(): Promise<LoadedSpec> {
   if (shouldLoadNativeProtocolsOnlyMode()) {
     const stub = buildStubLoadedSpec();
-    cachedSpec = await mergeNativeProtocolOperations(stub);
-    if (cachedSpec.operations.length === 0) {
+    const loaded = await mergeNativeProtocolOperations(stub);
+    if (loaded.operations.length === 0) {
       throw new Error(
         "[spec-loader] Native-protocol-only mode: set CLAWQL_GRAPHQL_URL and/or CLAWQL_GRAPHQL_SOURCES / CLAWQL_GRPC_SOURCES so introspection or proto load yields at least one operation."
       );
     }
     console.error(
-      `[spec-loader] Native-protocol-only mode (no OpenAPI/Discovery spec env): ${cachedSpec.operations.length} operations`
+      `[spec-loader] Native-protocol-only mode (no OpenAPI/Discovery spec env): ${loaded.operations.length} operations`
     );
-    return cachedSpec;
+    return loaded;
   }
 
   const multiItems = await resolveMultiSpecItems();
   if (multiItems) {
-    const loaded = await loadMultiSpecFromItems(multiItems);
-    cachedSpec = await mergeNativeProtocolOperations(loaded);
+    const merged = await loadMultiSpecFromItems(multiItems);
+    const loaded = await mergeNativeProtocolOperations(merged);
     console.error(
-      `[spec-loader] Multi-spec: ${multiItems.length} APIs merged → ${cachedSpec.operations.length} operations (REST for OpenAPI; native GraphQL/gRPC when configured)`
+      `[spec-loader] Multi-spec: ${multiItems.length} APIs merged → ${loaded.operations.length} operations (REST for OpenAPI; native GraphQL/gRPC when configured)`
     );
-    return cachedSpec;
+    return loaded;
   }
 
   const source = resolveSpecSource();
   if (source.kind === "bundled-graphql") {
-    const loaded = await loadBundledGraphqlShellSpec(source.entry);
-    cachedSpec = await mergeNativeProtocolOperations(loaded);
+    const built = await loadBundledGraphqlShellSpec(source.entry);
+    const loaded = await mergeNativeProtocolOperations(built);
     console.error(
-      `[spec-loader] Bundled GraphQL provider "${source.entry.id}": ${cachedSpec.operations.length} operations → ${source.entry.graphqlEndpoint}`
+      `[spec-loader] Bundled GraphQL provider "${source.entry.id}": ${loaded.operations.length} operations → ${source.entry.graphqlEndpoint}`
     );
-    return cachedSpec;
+    return loaded;
   }
 
   const raw = await loadRawDocument(source);
-  const loaded = await buildLoadedSpec(raw);
+  const built = await buildLoadedSpec(raw);
   if (source.kind === "url" && !hasApiBaseUrlOverride()) {
-    absolutizeRelativeOpenApiServers(loaded.openapi, source.url);
+    absolutizeRelativeOpenApiServers(built.openapi, source.url);
   }
 
-  cachedSpec = await mergeNativeProtocolOperations(loaded);
+  const loaded = await mergeNativeProtocolOperations(built);
   console.error(
-    `[spec-loader] Loaded ${cachedSpec.operations.length} operations (${loaded.openapi.info?.title ?? "API"})`
+    `[spec-loader] Loaded ${loaded.operations.length} operations (${built.openapi.info?.title ?? "API"})`
   );
-  return cachedSpec;
+  return loaded;
 }
 
 export async function loadSpec(): Promise<LoadedSpec> {
   if (cachedSpec) return cachedSpec;
+  const generation = loadGeneration;
   if (!loadInFlight) {
-    loadInFlight = loadSpecUncached().finally(() => {
-      loadInFlight = null;
-    });
+    loadInFlight = loadSpecUncached()
+      .then((loaded) => {
+        if (generation === loadGeneration) {
+          cachedSpec = loaded;
+        }
+        return loaded;
+      })
+      .finally(() => {
+        if (generation === loadGeneration) {
+          loadInFlight = null;
+        }
+      });
   }
   return loadInFlight;
 }
@@ -887,6 +908,12 @@ export function resolveApiBaseUrl(openapi: OpenAPIDoc, specLabel?: string): stri
 
   const override = process.env.CLAWQL_API_BASE_URL || process.env.API_BASE_URL;
   if (override) return override.replace(/\/$/, "");
+
+  const label = specLabel?.trim().toLowerCase();
+  const effective = label || process.env.CLAWQL_PROVIDER?.trim().toLowerCase();
+  if (effective && isAwsSpecLabel(effective)) {
+    return resolveAwsApiBaseUrl(openapi);
+  }
 
   const server = openapi.servers?.[0]?.url;
   if (typeof server === "string" && server.length > 0) {

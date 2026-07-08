@@ -1,0 +1,406 @@
+{
+  "description": "Curated AWS service OpenAPI bundle (top 50): APIs.guru / aws2openapi conversions. Pinned specs under providers/aws/apis/<slug>/openapi.yaml.",
+  "source": "https://api.apis.guru/v2/list.json (amazonaws.com:*)",
+  "apis": [
+    {
+      "slug": "ec2-2016-11-15",
+      "id": "ec2",
+      "version": "2016-11-15",
+      "title": "Amazon Elastic Compute Cloud",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/ec2/2016-11-15/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/ec2/"
+    },
+    {
+      "slug": "s3-2006-03-01",
+      "id": "s3",
+      "version": "2006-03-01",
+      "title": "Amazon Simple Storage Service",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/s3/2006-03-01/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/s3/"
+    },
+    {
+      "slug": "iam-2010-05-08",
+      "id": "iam",
+      "version": "2010-05-08",
+      "title": "AWS Identity and Access Management",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/iam/2010-05-08/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/iam/"
+    },
+    {
+      "slug": "sts-2011-06-15",
+      "id": "sts",
+      "version": "2011-06-15",
+      "title": "AWS Security Token Service",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/sts/2011-06-15/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/sts/"
+    },
+    {
+      "slug": "lambda-2015-03-31",
+      "id": "lambda",
+      "version": "2015-03-31",
+      "title": "AWS Lambda",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/lambda/2015-03-31/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/lambda/"
+    },
+    {
+      "slug": "ecs-2014-11-13",
+      "id": "ecs",
+      "version": "2014-11-13",
+      "title": "Amazon EC2 Container Service",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/ecs/2014-11-13/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/ecs/"
+    },
+    {
+      "slug": "eks-2017-11-01",
+      "id": "eks",
+      "version": "2017-11-01",
+      "title": "Amazon Elastic Kubernetes Service",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/eks/2017-11-01/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/eks/"
+    },
+    {
+      "slug": "rds-2014-10-31",
+      "id": "rds",
+      "version": "2014-10-31",
+      "title": "Amazon Relational Database Service",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/rds/2014-10-31/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/rds/"
+    },
+    {
+      "slug": "dynamodb-2012-08-10",
+      "id": "dynamodb",
+      "version": "2012-08-10",
+      "title": "Amazon DynamoDB",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/dynamodb/2012-08-10/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/dynamodb/"
+    },
+    {
+      "slug": "cloudformation-2010-05-15",
+      "id": "cloudformation",
+      "version": "2010-05-15",
+      "title": "AWS CloudFormation",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/cloudformation/2010-05-15/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/cloudformation/"
+    },
+    {
+      "slug": "logs-2014-03-28",
+      "id": "logs",
+      "version": "2014-03-28",
+      "title": "Amazon CloudWatch Logs",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/logs/2014-03-28/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/logs/"
+    },
+    {
+      "slug": "monitoring-2010-08-01",
+      "id": "monitoring",
+      "version": "2010-08-01",
+      "title": "Amazon CloudWatch",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/monitoring/2010-08-01/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/monitoring/"
+    },
+    {
+      "slug": "sns-2010-03-31",
+      "id": "sns",
+      "version": "2010-03-31",
+      "title": "Amazon Simple Notification Service",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/sns/2010-03-31/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/sns/"
+    },
+    {
+      "slug": "sqs-2012-11-05",
+      "id": "sqs",
+      "version": "2012-11-05",
+      "title": "Amazon Simple Queue Service",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/sqs/2012-11-05/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/sqs/"
+    },
+    {
+      "slug": "route53-2013-04-01",
+      "id": "route53",
+      "version": "2013-04-01",
+      "title": "Amazon Route 53",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/route53/2013-04-01/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/route53/"
+    },
+    {
+      "slug": "elasticloadbalancingv2-2015-12-01",
+      "id": "elasticloadbalancingv2",
+      "version": "2015-12-01",
+      "title": "Elastic Load Balancing",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/elasticloadbalancingv2/2015-12-01/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/elasticloadbalancingv2/"
+    },
+    {
+      "slug": "autoscaling-2011-01-01",
+      "id": "autoscaling",
+      "version": "2011-01-01",
+      "title": "Auto Scaling",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/autoscaling/2011-01-01/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/autoscaling/"
+    },
+    {
+      "slug": "kms-2014-11-01",
+      "id": "kms",
+      "version": "2014-11-01",
+      "title": "AWS Key Management Service",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/kms/2014-11-01/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/kms/"
+    },
+    {
+      "slug": "secretsmanager-2017-10-17",
+      "id": "secretsmanager",
+      "version": "2017-10-17",
+      "title": "AWS Secrets Manager",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/secretsmanager/2017-10-17/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/secretsmanager/"
+    },
+    {
+      "slug": "ecr-2015-09-21",
+      "id": "ecr",
+      "version": "2015-09-21",
+      "title": "Amazon EC2 Container Registry",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/ecr/2015-09-21/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/ecr/"
+    },
+    {
+      "slug": "apigateway-2015-07-09",
+      "id": "apigateway",
+      "version": "2015-07-09",
+      "title": "Amazon API Gateway",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/apigateway/2015-07-09/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/apigateway/"
+    },
+    {
+      "slug": "cloudfront-2020-05-31",
+      "id": "cloudfront",
+      "version": "2020-05-31",
+      "title": "Amazon CloudFront",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/cloudfront/2020-05-31/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/cloudfront/"
+    },
+    {
+      "slug": "events-2015-10-07",
+      "id": "events",
+      "version": "2015-10-07",
+      "title": "Amazon CloudWatch Events",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/events/2015-10-07/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/events/"
+    },
+    {
+      "slug": "ssm-2014-11-06",
+      "id": "ssm",
+      "version": "2014-11-06",
+      "title": "Amazon Simple Systems Manager (SSM)",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/ssm/2014-11-06/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/ssm/"
+    },
+    {
+      "slug": "organizations-2016-11-28",
+      "id": "organizations",
+      "version": "2016-11-28",
+      "title": "AWS Organizations",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/organizations/2016-11-28/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/organizations/"
+    },
+    {
+      "slug": "cloudtrail-2013-11-01",
+      "id": "cloudtrail",
+      "version": "2013-11-01",
+      "title": "AWS CloudTrail",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/cloudtrail/2013-11-01/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/cloudtrail/"
+    },
+    {
+      "slug": "config-2014-11-12",
+      "id": "config",
+      "version": "2014-11-12",
+      "title": "AWS Config",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/config/2014-11-12/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/config/"
+    },
+    {
+      "slug": "guardduty-2017-11-28",
+      "id": "guardduty",
+      "version": "2017-11-28",
+      "title": "Amazon GuardDuty",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/guardduty/2017-11-28/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/guardduty/"
+    },
+    {
+      "slug": "securityhub-2018-10-26",
+      "id": "securityhub",
+      "version": "2018-10-26",
+      "title": "AWS SecurityHub",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/securityhub/2018-10-26/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/securityhub/"
+    },
+    {
+      "slug": "wafv2-2019-07-29",
+      "id": "wafv2",
+      "version": "2019-07-29",
+      "title": "AWS WAFV2",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/wafv2/2019-07-29/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/wafv2/"
+    },
+    {
+      "slug": "elasticache-2015-02-02",
+      "id": "elasticache",
+      "version": "2015-02-02",
+      "title": "Amazon ElastiCache",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/elasticache/2015-02-02/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/elasticache/"
+    },
+    {
+      "slug": "es-2015-01-01",
+      "id": "es",
+      "version": "2015-01-01",
+      "title": "Amazon Elasticsearch Service",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/es/2015-01-01/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/es/"
+    },
+    {
+      "slug": "sagemaker-2017-07-24",
+      "id": "sagemaker",
+      "version": "2017-07-24",
+      "title": "Amazon SageMaker Service",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/sagemaker/2017-07-24/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/sagemaker/"
+    },
+    {
+      "slug": "redshift-2012-12-01",
+      "id": "redshift",
+      "version": "2012-12-01",
+      "title": "Amazon Redshift",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/redshift/2012-12-01/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/redshift/"
+    },
+    {
+      "slug": "glue-2017-03-31",
+      "id": "glue",
+      "version": "2017-03-31",
+      "title": "AWS Glue",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/glue/2017-03-31/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/glue/"
+    },
+    {
+      "slug": "athena-2017-05-18",
+      "id": "athena",
+      "version": "2017-05-18",
+      "title": "Amazon Athena",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/athena/2017-05-18/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/athena/"
+    },
+    {
+      "slug": "elasticmapreduce-2009-03-31",
+      "id": "elasticmapreduce",
+      "version": "2009-03-31",
+      "title": "Amazon EMR",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/elasticmapreduce/2009-03-31/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/elasticmapreduce/"
+    },
+    {
+      "slug": "kinesis-2013-12-02",
+      "id": "kinesis",
+      "version": "2013-12-02",
+      "title": "Amazon Kinesis",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/kinesis/2013-12-02/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/kinesis/"
+    },
+    {
+      "slug": "firehose-2015-08-04",
+      "id": "firehose",
+      "version": "2015-08-04",
+      "title": "Amazon Kinesis Firehose",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/firehose/2015-08-04/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/firehose/"
+    },
+    {
+      "slug": "states-2016-11-23",
+      "id": "states",
+      "version": "2016-11-23",
+      "title": "AWS Step Functions",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/states/2016-11-23/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/states/"
+    },
+    {
+      "slug": "batch-2016-08-10",
+      "id": "batch",
+      "version": "2016-08-10",
+      "title": "AWS Batch",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/batch/2016-08-10/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/batch/"
+    },
+    {
+      "slug": "codebuild-2016-10-06",
+      "id": "codebuild",
+      "version": "2016-10-06",
+      "title": "AWS CodeBuild",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/codebuild/2016-10-06/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/codebuild/"
+    },
+    {
+      "slug": "codepipeline-2015-07-09",
+      "id": "codepipeline",
+      "version": "2015-07-09",
+      "title": "AWS CodePipeline",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/codepipeline/2015-07-09/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/codepipeline/"
+    },
+    {
+      "slug": "codecommit-2015-04-13",
+      "id": "codecommit",
+      "version": "2015-04-13",
+      "title": "AWS CodeCommit",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/codecommit/2015-04-13/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/codecommit/"
+    },
+    {
+      "slug": "codestar-notifications-2019-10-15",
+      "id": "codestar-notifications",
+      "version": "2019-10-15",
+      "title": "AWS CodeStar Notifications",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/codestar-notifications/2019-10-15/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/codestar-notifications/"
+    },
+    {
+      "slug": "acm-2015-12-08",
+      "id": "acm",
+      "version": "2015-12-08",
+      "title": "AWS Certificate Manager",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/acm/2015-12-08/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/acm/"
+    },
+    {
+      "slug": "cognito-idp-2016-04-18",
+      "id": "cognito-idp",
+      "version": "2016-04-18",
+      "title": "Amazon Cognito Identity Provider",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/cognito-idp/2016-04-18/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/cognito-idp/"
+    },
+    {
+      "slug": "sesv2-2019-09-27",
+      "id": "sesv2",
+      "version": "2019-09-27",
+      "title": "Amazon Simple Email Service",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/sesv2/2019-09-27/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/sesv2/"
+    },
+    {
+      "slug": "backup-2018-11-15",
+      "id": "backup",
+      "version": "2018-11-15",
+      "title": "AWS Backup",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/backup/2018-11-15/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/backup/"
+    },
+    {
+      "slug": "elasticfilesystem-2015-02-01",
+      "id": "elasticfilesystem",
+      "version": "2015-02-01",
+      "title": "Amazon Elastic File System",
+      "openapiUrl": "https://api.apis.guru/v2/specs/amazonaws.com/elasticfilesystem/2015-02-01/openapi.yaml",
+      "documentationLink": "https://docs.aws.amazon.com/elasticfilesystem/"
+    }
+  ]
+}

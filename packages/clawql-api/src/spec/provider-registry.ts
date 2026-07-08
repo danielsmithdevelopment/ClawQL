@@ -109,16 +109,6 @@ export const BUNDLED_PROVIDERS: Record<string, BundledProvider> = {
     bundledIntrospectionPath: "providers/slack/introspection.json",
     bundledSchemaSdlPath: "providers/slack/schema.graphql",
   },
-  /** Sentry public API (dereferenced bundle from getsentry/sentry-api-schema). */
-  sentry: {
-    id: "sentry",
-    bundledSpecPath: "providers/sentry/openapi.json",
-    format: "openapi",
-    fallbackUrl:
-      "https://raw.githubusercontent.com/getsentry/sentry-api-schema/main/openapi-derefed.json",
-    bundledIntrospectionPath: "providers/sentry/introspection.json",
-    bundledSchemaSdlPath: "providers/sentry/schema.graphql",
-  },
   /**
    * Notion REST API — official OpenAPI from developers.notion.com.
    * Auth: NOTION_API_TOKEN (Bearer integration token) + required Notion-Version header.
@@ -130,6 +120,16 @@ export const BUNDLED_PROVIDERS: Record<string, BundledProvider> = {
     fallbackUrl: "https://developers.notion.com/openapi.json",
     bundledIntrospectionPath: "providers/notion/introspection.json",
     bundledSchemaSdlPath: "providers/notion/schema.graphql",
+  },
+  /** Sentry public API (dereferenced bundle from getsentry/sentry-api-schema). */
+  sentry: {
+    id: "sentry",
+    bundledSpecPath: "providers/sentry/openapi.json",
+    format: "openapi",
+    fallbackUrl:
+      "https://raw.githubusercontent.com/getsentry/sentry-api-schema/main/openapi-derefed.json",
+    bundledIntrospectionPath: "providers/sentry/introspection.json",
+    bundledSchemaSdlPath: "providers/sentry/schema.graphql",
   },
   /**
    * n8n Public API (bundled spec extracted from Swagger UI; see scripts/providers/fetch-n8n-openapi.mjs).
@@ -252,10 +252,25 @@ async function resolveGoogleTop50Items(): Promise<ProviderGroupItem[]> {
   }));
 }
 
+async function resolveAwsTop50Items(): Promise<ProviderGroupItem[]> {
+  const root = getPackageRoot();
+  const manifestPath = resolvePath(root, "providers/aws/aws-top50-apis.json");
+  const text = await readFile(manifestPath, "utf-8");
+  const data = JSON.parse(text) as { apis: Array<{ slug: string }> };
+  if (!Array.isArray(data.apis)) {
+    throw new Error("aws-top50-apis.json: expected apis[]");
+  }
+  return data.apis.map((a) => ({
+    kind: "openapi" as const,
+    abs: resolvePath(root, "providers/aws/apis", a.slug, "openapi.yaml"),
+    label: a.slug,
+  }));
+}
+
 /**
  * Build a merged load from a comma/semicolon/newline-separated list of **bundled** ids
- * (keys of **`BUNDLED_PROVIDERS`**, case-insensitive) and/or **`google`** (full bundled Google Cloud Discovery set
- * from `google-top50-apis.json`). Use **`CLAWQL_BUNDLED_PROVIDERS`** in `spec-loader`; there is no other default
+ * (keys of **`BUNDLED_PROVIDERS`**, case-insensitive) and/or **`google`** / **`aws`** (manifest-backed cloud bundles).
+ * Use **`CLAWQL_BUNDLED_PROVIDERS`** in `spec-loader`; there is no other default
  * custom merge — only this list, path list, or **`all-providers`**. Deprecated id **`google-top50`** is accepted as
  * an alias for **`google`**.
  */
@@ -281,9 +296,17 @@ export async function resolveItemsFromBundledProviderEnvList(
       }
       continue;
     }
+    if (id === "aws") {
+      for (const a of await resolveAwsTop50Items()) {
+        if (seen.has(a.label)) continue;
+        seen.add(a.label);
+        out.push(a);
+      }
+      continue;
+    }
     const p = BUNDLED_PROVIDERS[id];
     if (!p) {
-      const valid = [...Object.keys(BUNDLED_PROVIDERS), "google"].sort().join(", ");
+      const valid = [...Object.keys(BUNDLED_PROVIDERS), "google", "aws"].sort().join(", ");
       throw new Error(`Unknown id "${part}" in CLAWQL_BUNDLED_PROVIDERS. Valid: ${valid}`);
     }
     if (seen.has(p.id)) continue;
@@ -331,13 +354,49 @@ export const BUNDLED_DOCUMENT_VENDOR_IDS: readonly string[] = [
 
 const BUNDLED_DOCUMENT_VENDOR_SET = new Set(BUNDLED_DOCUMENT_VENDOR_IDS);
 
+/**
+ * Opinionated default install stack — framework-style curated merge when no spec env is set.
+ * **`CLAWQL_PROVIDER=default`** / **`default-providers`** resolves the same list (plus optional cloud add-ons).
+ */
+export const DEFAULT_BUNDLED_PROVIDER_IDS: readonly string[] = [
+  "cloudflare",
+  "github",
+  "slack",
+  "linear",
+  "notion",
+  "onyx",
+];
+
+/**
+ * Default bundled merge when no spec env is set: **`DEFAULT_BUNDLED_PROVIDER_IDS`**, minus Cloudflare when
+ * **`CLAWQL_ENABLE_CLOUDFLARE=0`**, plus **`google`** / **`aws`** when **`CLAWQL_ENABLE_GOOGLE`** /
+ * **`CLAWQL_ENABLE_AWS`** are set. Does not respect **`CLAWQL_ENABLE_DOCUMENTS`** (Onyx stays in the default stack).
+ */
+export async function resolveDefaultBundledProvidersItems(): Promise<ProviderGroupItem[]> {
+  const flags = getClawqlOptionalToolFlags();
+  const ids = DEFAULT_BUNDLED_PROVIDER_IDS.filter((id) => {
+    if (id === "cloudflare" && !flags.enableCloudflare) return false;
+    return true;
+  });
+  const parts = [...ids];
+  if (flags.enableGoogle) parts.push("google");
+  if (flags.enableAws) parts.push("aws");
+  if (parts.length === 0) return [];
+  return resolveItemsFromBundledProviderEnvList(parts.join(","));
+}
+
 async function resolveAllBundledProvidersItems(): Promise<ProviderGroupItem[]> {
   const root = getPackageRoot();
-  const google = await resolveGoogleTop50Items();
-  const allowDocuments = getClawqlOptionalToolFlags().enableDocuments;
-  const labels = BUNDLED_MERGED_VENDOR_LABELS.filter(
-    (id) => allowDocuments || !BUNDLED_DOCUMENT_VENDOR_SET.has(id)
-  );
+  const flags = getClawqlOptionalToolFlags();
+  const cloud: ProviderGroupItem[] = [
+    ...(await resolveGoogleTop50Items()),
+    ...(await resolveAwsTop50Items()),
+  ];
+  const allowDocuments = flags.enableDocuments;
+  const labels = BUNDLED_MERGED_VENDOR_LABELS.filter((id) => {
+    if (!allowDocuments && BUNDLED_DOCUMENT_VENDOR_SET.has(id)) return false;
+    return true;
+  });
   const rest: ProviderGroupItem[] = [];
   for (const id of labels) {
     const p = BUNDLED_PROVIDERS[id]!;
@@ -357,16 +416,24 @@ async function resolveAllBundledProvidersItems(): Promise<ProviderGroupItem[]> {
       });
     }
   }
-  return [...google, ...rest];
+  return [...cloud, ...rest];
 }
 
 export const BUNDLED_PROVIDER_GROUPS: Record<string, BundledProviderGroup> = {
   atlassian: { providers: ["jira", "bitbucket"] },
   /** Merged bundled Google Cloud APIs from `providers/google/google-top50-apis.json` (see providers docs). */
   google: { resolve: resolveGoogleTop50Items },
+  /** Merged bundled AWS APIs from `providers/aws/aws-top50-apis.json` (see providers docs). */
+  aws: { resolve: resolveAwsTop50Items },
   /**
-   * Google Cloud bundle + every other bundled vendor (Jira, Bitbucket, Cloudflare, GitHub, …).
-   * The document stack (**tika**, **gotenberg**, **paperless**, **stirling**, **onyx**, **nextcloud**, **coneshare**, **docling**) is included unless **`CLAWQL_ENABLE_DOCUMENTS=0`**. Default when no spec env.
+   * Opinionated default stack (same as no-config install). Cloud add-ons via **`CLAWQL_ENABLE_GOOGLE`** /
+   * **`CLAWQL_ENABLE_AWS`**; omit Cloudflare with **`CLAWQL_ENABLE_CLOUDFLARE=0`**.
+   */
+  default: { resolve: resolveDefaultBundledProvidersItems },
+  "default-providers": { resolve: resolveDefaultBundledProvidersItems },
+  /**
+   * Literally every bundled vendor plus Google top-50 and AWS top-50. Only **`CLAWQL_ENABLE_DOCUMENTS=0`**
+   * trims the document/IDP stack. Opt in with **`CLAWQL_PROVIDER=all-providers`** — not the no-config default.
    */
   "all-providers": { resolve: resolveAllBundledProvidersItems },
 };
@@ -391,7 +458,7 @@ export function listBundledProviderGroupIds(): string[] {
 
 const REMOVED_BUNDLED_PROVIDER_GROUP_IDS: Readonly<Record<string, string>> = {
   "default-multi-provider":
-    "The default-multi-provider merge was removed. Use CLAWQL_BUNDLED_PROVIDERS (comma-separated ids) or CLAWQL_SPEC_PATHS, or all-providers / CLAWQL_PROVIDER=google, atlassian, all-providers. See README.",
+    "The default-multi-provider merge was removed. Use CLAWQL_BUNDLED_PROVIDERS (comma-separated ids) or CLAWQL_SPEC_PATHS, or all-providers / CLAWQL_PROVIDER=google / aws / atlassian / all-providers. See README.",
 };
 
 export async function resolveBundledProviderGroup(

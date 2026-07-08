@@ -1,0 +1,65 @@
+---
+title: Bundled providers
+description: Opinionated default API stack on install, all-providers for everything, and CLAWQL_ENABLE_* cloud add-ons. Spec merge — not an MCP plugin.
+slug: bundled-providers
+status: default-on
+package: providers/ (on-disk specs)
+order: 5
+prev: documents
+next: automation
+---
+
+# Bundled providers
+
+Bundled providers are **on-disk OpenAPI / Discovery / GraphQL specs** under `providers/`. They power **`search`** and **`execute`** — they are not MCP plugins and have no `Plugin.onRegister` hook.
+
+Think of this as the **framework vs library** install model: an opinionated default stack with escape hatches.
+
+## Default install (no spec env)
+
+Fresh install with no `CLAWQL_*` spec variables loads the **opinionated default stack**:
+
+| Provider       | Notes                                                                             |
+| -------------- | --------------------------------------------------------------------------------- |
+| **Cloudflare** | Edge/DNS/Workers APIs                                                             |
+| **GitHub**     | REST automation                                                                   |
+| **Slack**      | Web API (powers optional **`notify`** when enabled)                               |
+| **Linear**     | Bundled GraphQL-only vendor                                                       |
+| **Notion**     | Official REST OpenAPI                                                             |
+| **Onyx**       | Enterprise search spec (pair with **`CLAWQL_ENABLE_ONYX=1`** for MCP search tool) |
+
+## Cloud add-ons (default stack only)
+
+| Env                              | Effect                                                   |
+| -------------------------------- | -------------------------------------------------------- |
+| **`CLAWQL_ENABLE_GOOGLE=1`**     | Add Google Cloud top-50 Discovery merge to default stack |
+| **`CLAWQL_ENABLE_AWS=1`**        | Add AWS top-50 OpenAPI merge (SigV4 via **`execute`**)   |
+| **`CLAWQL_ENABLE_CLOUDFLARE=0`** | Omit Cloudflare from default stack                       |
+
+These flags do **not** gate **`all-providers`**.
+
+## Presets
+
+| `CLAWQL_PROVIDER`                        | Behavior                                                    |
+| ---------------------------------------- | ----------------------------------------------------------- |
+| **`default`** / **`default-providers`**  | Same as no-config install (+ cloud add-ons above)           |
+| **`all-providers`**                      | Literally every bundled vendor + Google top-50 + AWS top-50 |
+| **`google`**, **`aws`**, **`atlassian`** | Focused merged presets                                      |
+| **`CLAWQL_BUNDLED_PROVIDERS=a,b,…`**     | Custom explicit subset                                      |
+
+Only **`CLAWQL_ENABLE_DOCUMENTS=0`** trims the document/IDP vendor set from **`all-providers`**.
+
+## Precedence
+
+1. `CLAWQL_SPEC_PATHS`
+2. `CLAWQL_BUNDLED_PROVIDERS`
+3. `CLAWQL_PROVIDER` (merged preset)
+4. **Default bundled stack** (when nothing else is set)
+
+Single-spec mode (`CLAWQL_SPEC_PATH`, `CLAWQL_PROVIDER=cloudflare`, …) bypasses the merge rules above.
+
+## Learn more
+
+- [Bundled specs](/bundled-specs)
+- [Spec configuration](/spec-configuration)
+- [providers/README.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/providers/README.md)

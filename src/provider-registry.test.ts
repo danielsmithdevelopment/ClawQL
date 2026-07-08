@@ -1,10 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   BUNDLED_DOCUMENT_VENDOR_IDS,
+  DEFAULT_BUNDLED_PROVIDER_IDS,
   listBundledProviderGroupIds,
   listBundledProviderIds,
   resolveBundledProvider,
   resolveBundledProviderGroup,
+  resolveDefaultBundledProvidersItems,
   resolveItemsFromBundledProviderEnvList,
 } from "clawql-api";
 
@@ -37,9 +39,12 @@ describe("provider-registry", () => {
     expect(p && "graphqlEndpoint" in p ? p.graphqlEndpoint : "").toContain("api.linear.app");
   });
 
-  it("lists merged preset ids including google (not google-top50)", () => {
+  it("lists merged preset ids including google, aws, and default", () => {
     const groups = listBundledProviderGroupIds();
     expect(groups).toContain("google");
+    expect(groups).toContain("aws");
+    expect(groups).toContain("default");
+    expect(groups).toContain("default-providers");
     expect(groups).not.toContain("google-top50");
   });
 
@@ -63,6 +68,16 @@ describe("provider-registry", () => {
     ).toBe(true);
   });
 
+  it("resolves aws merged group from manifest", async () => {
+    const items = await resolveBundledProviderGroup("aws");
+    expect(items).toBeDefined();
+    expect(items!.length).toBe(50);
+    expect(items!.some((x) => x.label === "ec2-2016-11-15")).toBe(true);
+    expect(
+      items!.some((x) => x.abs.endsWith("/providers/aws/apis/ec2-2016-11-15/openapi.yaml"))
+    ).toBe(true);
+  });
+
   it("accepts deprecated google-top50 alias for the google merged group", async () => {
     const canonical = await resolveBundledProviderGroup("google");
     const alias = await resolveBundledProviderGroup("google-top50");
@@ -79,24 +94,52 @@ describe("provider-registry", () => {
     );
   });
 
-  it("resolves all-providers to many bundled vendors", async () => {
+  it("resolves all-providers to every bundled vendor plus google and aws", async () => {
     const items = await resolveBundledProviderGroup("all-providers");
     expect(items).toBeDefined();
-    expect(items!.length).toBeGreaterThan(20);
+    expect(items!.length).toBeGreaterThan(100);
     const labels = new Set(items!.map((x) => x.label));
     expect(labels.has("slack")).toBe(true);
     expect(labels.has("n8n")).toBe(true);
     expect(labels.has("github")).toBe(true);
+    expect(labels.has("notion")).toBe(true);
     expect(labels.has("paperless")).toBe(true);
     expect(labels.has("tika")).toBe(true);
     expect(labels.has("onyx")).toBe(true);
     expect(labels.has("linear")).toBe(true);
-    expect(labels.has("notion")).toBe(true);
+    expect(labels.has("cloudflare")).toBe(true);
+    expect(labels.has("ec2-2016-11-15")).toBe(true);
+    expect(labels.has("compute-v1")).toBe(true);
     expect(
       items!.every((x) =>
         x.kind === "graphql" ? x.schemaAbs.includes("/providers/") : x.abs.includes("/providers/")
       )
     ).toBe(true);
+  });
+
+  it("includes google and aws in all-providers even when CLAWQL_ENABLE_GOOGLE and CLAWQL_ENABLE_AWS are unset", async () => {
+    vi.stubEnv("CLAWQL_ENABLE_GOOGLE", "0");
+    vi.stubEnv("CLAWQL_ENABLE_AWS", "0");
+    try {
+      const items = await resolveBundledProviderGroup("all-providers");
+      const labels = new Set(items!.map((x) => x.label));
+      expect(labels.has("compute-v1")).toBe(true);
+      expect(labels.has("ec2-2016-11-15")).toBe(true);
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  it("includes cloudflare in all-providers even when CLAWQL_ENABLE_CLOUDFLARE=0", async () => {
+    vi.stubEnv("CLAWQL_ENABLE_CLOUDFLARE", "0");
+    try {
+      const items = await resolveBundledProviderGroup("all-providers");
+      const labels = new Set(items!.map((x) => x.label));
+      expect(labels.has("cloudflare")).toBe(true);
+      expect(labels.has("github")).toBe(true);
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 
   it("omits document-stack vendors from all-providers when CLAWQL_ENABLE_DOCUMENTS=0", async () => {
@@ -129,6 +172,13 @@ describe("provider-registry", () => {
     expect(labels.has("compute-v1")).toBe(true);
   });
 
+  it("resolveItemsFromBundledProviderEnvList with aws includes service slugs", async () => {
+    const items = await resolveItemsFromBundledProviderEnvList("github,aws");
+    const labels = new Set(items.map((x) => x.label));
+    expect(labels.has("github")).toBe(true);
+    expect(labels.has("sts-2011-06-15")).toBe(true);
+  });
+
   it("CLAWQL_BUNDLED_PROVIDERS still includes paperless when CLAWQL_ENABLE_DOCUMENTS=0 (explicit list)", async () => {
     vi.stubEnv("CLAWQL_ENABLE_DOCUMENTS", "0");
     try {
@@ -155,5 +205,55 @@ describe("provider-registry", () => {
       expect(items[0].label).toBe("linear");
       expect(items[0].endpoint).toContain("linear.app");
     }
+  });
+
+  it("resolveDefaultBundledProvidersItems loads opinionated default stack", async () => {
+    vi.stubEnv("CLAWQL_ENABLE_GOOGLE", "0");
+    vi.stubEnv("CLAWQL_ENABLE_AWS", "0");
+    delete process.env.CLAWQL_ENABLE_CLOUDFLARE;
+    try {
+      const items = await resolveDefaultBundledProvidersItems();
+      const labels = new Set(items.map((x) => x.label));
+      for (const id of DEFAULT_BUNDLED_PROVIDER_IDS) {
+        expect(labels.has(id)).toBe(true);
+      }
+      expect(labels.has("compute-v1")).toBe(false);
+      expect(labels.has("sts-2011-06-15")).toBe(false);
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  it("resolveDefaultBundledProvidersItems omits cloudflare when CLAWQL_ENABLE_CLOUDFLARE=0", async () => {
+    vi.stubEnv("CLAWQL_ENABLE_CLOUDFLARE", "0");
+    try {
+      const items = await resolveDefaultBundledProvidersItems();
+      const labels = new Set(items.map((x) => x.label));
+      expect(labels.has("cloudflare")).toBe(false);
+      expect(labels.has("github")).toBe(true);
+      expect(labels.has("notion")).toBe(true);
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  it("resolveDefaultBundledProvidersItems adds google and aws when enabled", async () => {
+    vi.stubEnv("CLAWQL_ENABLE_GOOGLE", "1");
+    vi.stubEnv("CLAWQL_ENABLE_AWS", "1");
+    try {
+      const items = await resolveDefaultBundledProvidersItems();
+      const labels = new Set(items.map((x) => x.label));
+      expect(labels.has("compute-v1")).toBe(true);
+      expect(labels.has("sts-2011-06-15")).toBe(true);
+      expect(labels.has("github")).toBe(true);
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  it("default preset matches resolveDefaultBundledProvidersItems", async () => {
+    const fromPreset = await resolveBundledProviderGroup("default");
+    const direct = await resolveDefaultBundledProvidersItems();
+    expect(fromPreset?.map((x) => x.label).sort()).toEqual(direct.map((x) => x.label).sort());
   });
 });

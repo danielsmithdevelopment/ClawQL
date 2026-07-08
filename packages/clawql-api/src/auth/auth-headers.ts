@@ -1,6 +1,9 @@
 /**
  * REST / GraphQL→REST upstream headers: per-`specLabel` auth for merged **`execute`**, plus optional globals.
  *
+ * **AWS:** bundled AWS slugs use **SigV4** in `rest-operation.ts` (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, …).
+ * `mergedAuthHeaders` does not add Bearer tokens for AWS labels.
+ *
  * **Isolation:** each upstream call only receives credentials chosen for **that** merged **`specLabel`** (or
  * **`CLAWQL_PROVIDER`** when no label). There is **no** cross-vendor reuse of `GOOGLE_ACCESS_TOKEN` on GitHub/Cloudflare,
  * and **`CLAWQL_BEARER_TOKEN`** is **not** sent to Slack, Sentry, n8n, or Google Cloud slugs (use vendor env vars or
@@ -13,6 +16,7 @@
  * (becomes `Authorization: Bearer …` unless it already starts with `Bearer `, `Token `, or `Basic `) or a **JSON object**
  * of header names → values (e.g. `{ "Authorization": "Token …", "X-Custom": "1" }`). Use the key **`google`** as a
  * catch-all for every Google Cloud Discovery slug (`compute-v1`, `container-v1`, …) when you do not list each slug.
+ * Use **`aws`** as a catch-all for bundled AWS slugs (`ec2-2016-11-15`, …) for optional extra headers only.
  *
  * **Global non-auth headers:** **`CLAWQL_HTTP_HEADERS`** JSON is merged first. If **`CLAWQL_PROVIDER_AUTH_JSON`** is
  * unset, a single **`Authorization`** entry there still wins for every call (legacy). When **`CLAWQL_PROVIDER_AUTH_JSON`**
@@ -105,15 +109,20 @@ function collapseAuthorization(out: Record<string, string>): Record<string, stri
   return out;
 }
 
+import { isAwsSpecLabel } from "./aws-auth.js";
+
 /**
  * True for merged-preset id `google`, or Google Cloud Discovery API slugs from the bundled manifest
- * (e.g. `compute-v1`, `container-v1`).
+ * (e.g. `compute-v1`, `container-v1`). Does not match AWS date-version slugs (`ec2-2016-11-15`).
  */
 export function isGoogleDiscoverySpecLabel(label: string): boolean {
   const s = label.trim().toLowerCase();
+  if (isAwsSpecLabel(s)) return false;
   if (s === "google") return true;
   return /^[a-z0-9][a-z0-9-]*-v[a-z0-9]+$/i.test(s);
 }
+
+export { isAwsSpecLabel } from "./aws-auth.js";
 
 function envResolvedAuthHeaders(specLabel?: string): Record<string, string> {
   const label = specLabel?.trim().toLowerCase();
@@ -284,7 +293,9 @@ export function mergedAuthHeaders(specLabel?: string): Record<string, string> {
   const exact = labelKey ? providerMap[labelKey] : undefined;
   const googleCatch =
     !exact && labelKey && isGoogleDiscoverySpecLabel(labelKey) ? providerMap["google"] : undefined;
-  const overlay = exact ?? googleCatch;
+  const awsCatch =
+    !exact && !googleCatch && labelKey && isAwsSpecLabel(labelKey) ? providerMap["aws"] : undefined;
+  const overlay = exact ?? googleCatch ?? awsCatch;
   if (overlay) {
     Object.assign(out, overlay);
   }

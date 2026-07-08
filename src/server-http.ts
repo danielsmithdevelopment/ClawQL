@@ -118,6 +118,8 @@ export type CreateMcpHttpAppOptions = {
   host?: string;
   /** Skip spec preload (tests that mock `loadSpec` upstream). */
   skipSpecPreload?: boolean;
+  /** Skip mounting in-process `/graphql` (healthz-only HTTP tests). */
+  skipGraphqlAttach?: boolean;
   /**
    * Snapshot optional tool flags at app build time (tests). Avoids route registration races when a
    * timed-out test restores `process.env` while the next test is calling `createMcpHttpApp`.
@@ -149,7 +151,9 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
 
   app.use(applyCorsIfConfigured);
 
-  await attachGraphqlHttpToMcpApp(app);
+  if (!options.skipGraphqlAttach) {
+    await attachGraphqlHttpToMcpApp(app);
+  }
 
   if (!prometheusDisabledForHttp()) {
     app.get("/metrics", async (_req, res) => {

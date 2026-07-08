@@ -7,6 +7,8 @@ import { Buffer } from "node:buffer";
 import baseFetch from "node-fetch";
 import type { RequestInit as FetchRequestInit, Response } from "node-fetch";
 import { mergedAuthHeaders } from "../auth/auth-headers.js";
+import { isAwsSpecLabel } from "../auth/aws-auth.js";
+import { maybeSignAwsRequest, normalizeAwsExecuteUrl } from "../auth/aws-sigv4.js";
 import type { Operation } from "../spec/operation-types.js";
 import { resolveApiBaseUrlForOperation, type OpenAPIDoc } from "../spec/spec-loader.js";
 
@@ -184,6 +186,7 @@ export async function executeRestOperation(
     if (p?.location !== "query") continue;
     url.searchParams.append(k, String(v));
   }
+  normalizeAwsExecuteUrl(url, pathTemplate, op.specLabel);
 
   const method = op.method.toUpperCase();
   const wantsBinary =
@@ -268,6 +271,43 @@ export async function executeRestOperation(
   }
 
   try {
+    const awsSigned = await maybeSignAwsRequest(
+      url,
+      pathTemplate,
+      {
+        method,
+        headers,
+        body:
+          init.body === undefined
+            ? undefined
+            : typeof init.body === "string"
+              ? init.body
+              : Buffer.isBuffer(init.body)
+                ? init.body
+                : init.body instanceof Uint8Array
+                  ? Buffer.from(init.body)
+                  : undefined,
+      },
+      openapi,
+      op.specLabel
+    );
+    if (awsSigned) {
+      Object.assign(headers, awsSigned.headers);
+      init.headers = headers;
+      if (awsSigned.body !== undefined) {
+        init.body = awsSigned.body as never;
+      }
+    } else if (
+      isAwsSpecLabel(op.specLabel ?? "") ||
+      isAwsSpecLabel(process.env.CLAWQL_PROVIDER?.trim().toLowerCase() ?? "")
+    ) {
+      return {
+        ok: false,
+        error:
+          "AWS execute requires SigV4 credentials. Set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY (or CLAWQL_AWS_* aliases). Optional: AWS_SESSION_TOKEN, AWS_REGION.",
+      };
+    }
+
     const res = await getFetchImplForRest()(url.toString(), init);
     const text = await res.text();
     let payload: unknown = text;

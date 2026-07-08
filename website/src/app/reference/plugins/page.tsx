@@ -40,7 +40,10 @@ export default function PluginsReferencePage() {
       </p>
 
       <div className="not-prose mt-6 mb-8 flex flex-wrap gap-3">
-        <Button href="/tools" arrow="right">
+        <Button href="/plugins" arrow="right">
+          <>Plugins hub</>
+        </Button>
+        <Button href="/tools" variant="outline">
           <>MCP tools</>
         </Button>
         <Button href="/vision/modularization" variant="outline">

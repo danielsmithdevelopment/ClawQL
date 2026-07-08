@@ -51,6 +51,23 @@ const rawOptionalFlagsSchema = z.object({
   CLAWQL_ENABLE_LANGEXTRACT: z.string().optional(),
   /** ([#250](https://github.com/danielsmithdevelopment/ClawQL/issues/250)): Langfuse eval webhook + `ouroboros_propose_seed_revision_from_eval`. Default false. */
   CLAWQL_ENABLE_LANGFUSE_EVAL: z.string().optional(),
+  /**
+   * Bundled Google Cloud manifest (50 Discovery APIs). Default **false** — opt in with `1` / `true` / `yes`.
+   * Adds GCP to the **default install stack**; explicit `CLAWQL_PROVIDER=google` or `CLAWQL_BUNDLED_PROVIDERS=google` still loads GCP.
+   * Does **not** gate **`all-providers`** (that preset always includes Google).
+   */
+  CLAWQL_ENABLE_GOOGLE: z.string().optional(),
+  /**
+   * Omit Cloudflare from the **default install stack** when `0` / `false` / `no`. Default **true** when unset.
+   * Does **not** gate **`all-providers`**. Explicit `CLAWQL_PROVIDER=cloudflare` or listing `cloudflare` in `CLAWQL_BUNDLED_PROVIDERS` still loads it.
+   */
+  CLAWQL_ENABLE_CLOUDFLARE: z.string().optional(),
+  /**
+   * Bundled AWS manifest (50 OpenAPI specs). Default **false** — opt in with `1` / `true` / `yes`.
+   * Adds AWS to the **default install stack**; explicit `CLAWQL_PROVIDER=aws` or `CLAWQL_BUNDLED_PROVIDERS=aws` still loads AWS.
+   * Does **not** gate **`all-providers`** (that preset always includes AWS).
+   */
+  CLAWQL_ENABLE_AWS: z.string().optional(),
 });
 
 export type ClawqlOptionalToolFlags = {
@@ -126,6 +143,18 @@ export type ClawqlOptionalToolFlags = {
    * ([#250](https://github.com/danielsmithdevelopment/ClawQL/issues/250)): **`POST /observability/langfuse/webhook`** + **`ouroboros_propose_seed_revision_from_eval`** (with Ouroboros). Default false.
    */
   enableLangfuseEval: boolean;
+  /**
+   * Adds Google Cloud to the **default install stack**. Default **false** (opt in).
+   */
+  enableGoogle: boolean;
+  /**
+   * Include Cloudflare in the **default install stack**. Default **true** (opt out with `0`).
+   */
+  enableCloudflare: boolean;
+  /**
+   * Adds AWS to the **default install stack**. Default **false** (opt in).
+   */
+  enableAws: boolean;
 };
 
 function rawToFlags(raw: z.infer<typeof rawOptionalFlagsSchema>): ClawqlOptionalToolFlags {
@@ -149,6 +178,9 @@ function rawToFlags(raw: z.infer<typeof rawOptionalFlagsSchema>): ClawqlOptional
     enableIdpClassifier: envTruthy(raw.CLAWQL_ENABLE_IDP_CLASSIFIER),
     enableLangextract: envTruthy(raw.CLAWQL_ENABLE_LANGEXTRACT),
     enableLangfuseEval: envTruthy(raw.CLAWQL_ENABLE_LANGFUSE_EVAL),
+    enableGoogle: envTruthy(raw.CLAWQL_ENABLE_GOOGLE),
+    enableCloudflare: envTruthyWithDefault(raw.CLAWQL_ENABLE_CLOUDFLARE, true),
+    enableAws: envTruthy(raw.CLAWQL_ENABLE_AWS),
   };
 }
 
