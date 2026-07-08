@@ -99,7 +99,7 @@
   },
   "dependencies": {
     "clawql-core": "file:../clawql-core",
-    "effect": "3.21.2",
+    "effect": "3.21.4",
     "zod": "4.3.6",
     "clawql-api": "file:../clawql-api",
     "pg": "^8.21.0",

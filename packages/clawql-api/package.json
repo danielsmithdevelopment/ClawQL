@@ -36,7 +36,7 @@
     "@grpc/proto-loader": "^0.8.1",
     "@omnigraph/openapi": "^0.109.51",
     "clawql-core": "file:../clawql-core",
-    "effect": "3.21.2",
+    "effect": "3.21.4",
     "graphql": "^16.14.0",
     "node-fetch": "^3.3.2",
     "prom-client": "^15.1.3",
