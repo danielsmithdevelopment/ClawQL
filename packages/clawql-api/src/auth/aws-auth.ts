@@ -82,9 +82,7 @@ function substituteServerVariables(template: string, region: string): string {
 export function resolveAwsApiBaseUrl(openapi: OpenAPIDoc): string {
   const region = resolveAwsRegion();
   const servers = openapi.servers ?? [];
-  const urls = servers
-    .map((s) => (typeof s?.url === "string" ? s.url : ""))
-    .filter(Boolean);
+  const urls = servers.map((s) => (typeof s?.url === "string" ? s.url : "")).filter(Boolean);
 
   const preferred =
     urls.find((u) => u.startsWith("https://") && u.includes("{region}")) ??

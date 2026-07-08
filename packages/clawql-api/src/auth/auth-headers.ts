@@ -285,7 +285,8 @@ export function mergedAuthHeaders(specLabel?: string): Record<string, string> {
   const exact = labelKey ? providerMap[labelKey] : undefined;
   const googleCatch =
     !exact && labelKey && isGoogleDiscoverySpecLabel(labelKey) ? providerMap["google"] : undefined;
-  const awsCatch = !exact && !googleCatch && labelKey && isAwsSpecLabel(labelKey) ? providerMap["aws"] : undefined;
+  const awsCatch =
+    !exact && !googleCatch && labelKey && isAwsSpecLabel(labelKey) ? providerMap["aws"] : undefined;
   const overlay = exact ?? googleCatch ?? awsCatch;
   if (overlay) {
     Object.assign(out, overlay);

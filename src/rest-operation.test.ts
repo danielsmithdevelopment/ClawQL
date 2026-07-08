@@ -428,7 +428,11 @@ describe("executeRestOperation", () => {
     delete process.env.CLAWQL_AWS_ACCESS_KEY_ID;
     delete process.env.CLAWQL_AWS_SECRET_ACCESS_KEY;
     const out = await executeRestOperation(
-      makeOp({ specLabel: "sts-2011-06-15", flatPath: "#Action=GetCallerIdentity", path: "#Action=GetCallerIdentity" }),
+      makeOp({
+        specLabel: "sts-2011-06-15",
+        flatPath: "#Action=GetCallerIdentity",
+        path: "#Action=GetCallerIdentity",
+      }),
       {},
       {
         openapi: "3.0.0",
