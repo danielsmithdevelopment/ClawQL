@@ -11,7 +11,11 @@ import { config } from "dotenv";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { getClawqlEnvFilePath, getClawqlHome, getLocalProvidersVaultPath } from "./onboarding/paths.js";
+import {
+  getClawqlEnvFilePath,
+  getClawqlHome,
+  getLocalProvidersVaultPath,
+} from "./onboarding/paths.js";
 import { applyLocalProvidersVaultToEnv } from "./provider-vault/local-store.js";
 
 function loadEnvFile(path: string, override: boolean): void {
@@ -32,12 +36,14 @@ function loadLocalProvidersVaultSync(): void {
     }
     const applied = applyLocalProvidersVaultToEnv(data);
     if (applied.length && process.env.CLAWQL_DEBUG_LOAD_ENV === "1") {
-      console.error(`[clawql-mcp] Loaded provider secrets from ${vaultPath}: ${applied.join(", ")}`);
+      console.error(
+        `[clawql-mcp] Loaded provider secrets from ${vaultPath}: ${applied.join(", ")}`
+      );
     }
   } catch (e: unknown) {
     console.error(
       `[clawql-mcp] Failed to load local provider vault ${vaultPath}:`,
-      e instanceof Error ? e.message : e,
+      e instanceof Error ? e.message : e
     );
   }
 }

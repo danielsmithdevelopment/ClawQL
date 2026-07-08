@@ -5,10 +5,7 @@
 import { chmod, mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { getLocalProvidersVaultPath } from "../onboarding/paths.js";
-import {
-  buildProvidersVaultPayload,
-  vaultProviderDataToEnv,
-} from "./catalog.js";
+import { buildProvidersVaultPayload, vaultProviderDataToEnv } from "./catalog.js";
 
 const PROVIDERS_FILE_MODE = 0o600;
 
@@ -18,7 +15,7 @@ export type LocalProvidersVault = {
 };
 
 export async function readLocalProvidersVault(
-  vaultPath = getLocalProvidersVaultPath(),
+  vaultPath = getLocalProvidersVaultPath()
 ): Promise<LocalProvidersVault | null> {
   try {
     const raw = await readFile(vaultPath, "utf8");
@@ -40,7 +37,7 @@ export async function readLocalProvidersVault(
 
 export async function writeLocalProvidersVault(
   data: Record<string, string>,
-  vaultPath = getLocalProvidersVaultPath(),
+  vaultPath = getLocalProvidersVaultPath()
 ): Promise<void> {
   await mkdir(dirname(vaultPath), { recursive: true });
   const cleaned: Record<string, string> = {};
@@ -57,7 +54,7 @@ export async function writeLocalProvidersVault(
 
 export async function mergeEnvIntoLocalProvidersVault(
   env: Record<string, string>,
-  vaultPath = getLocalProvidersVaultPath(),
+  vaultPath = getLocalProvidersVaultPath()
 ): Promise<LocalProvidersVault> {
   const incoming = buildProvidersVaultPayload(env);
   const existing = (await readLocalProvidersVault(vaultPath))?.data ?? {};
@@ -67,9 +64,7 @@ export async function mergeEnvIntoLocalProvidersVault(
 }
 
 /** Apply local vault secrets to `process.env` (does not override already-set keys). */
-export function applyLocalProvidersVaultToEnv(
-  vaultData: Record<string, string>,
-): string[] {
+export function applyLocalProvidersVaultToEnv(vaultData: Record<string, string>): string[] {
   const applied: string[] = [];
   for (const [envKey, value] of Object.entries(vaultProviderDataToEnv(vaultData))) {
     if (!process.env[envKey]?.trim()) {
@@ -80,8 +75,6 @@ export function applyLocalProvidersVaultToEnv(
   return applied;
 }
 
-export function listConfiguredProviderLabels(
-  vaultData: Record<string, string>,
-): string[] {
+export function listConfiguredProviderLabels(vaultData: Record<string, string>): string[] {
   return Object.keys(vaultData).filter((k) => vaultData[k]?.trim());
 }

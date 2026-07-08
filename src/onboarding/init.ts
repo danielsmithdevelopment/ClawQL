@@ -76,7 +76,7 @@ async function writeClawqlEnv(home: string): Promise<string> {
 
 async function promptToken(
   rl: ReturnType<typeof createInterface>,
-  entry: ProviderVaultKeyEntry,
+  entry: ProviderVaultKeyEntry
 ): Promise<string | undefined> {
   const hint = entry.hint ? ` (${entry.hint})` : "";
   const answer = (
@@ -91,7 +91,7 @@ async function runInteractiveVault(home: string): Promise<string[]> {
   try {
     output.write(
       "\nDefault-stack provider tokens (stored in vault/providers.json, mode 0600).\n" +
-        "Press Enter to skip any vendor you are not using yet.\n\n",
+        "Press Enter to skip any vendor you are not using yet.\n\n"
     );
     const data: Record<string, string> = {
       ...((await readLocalProvidersVault(getLocalProvidersVaultPath(home)))?.data ?? {}),
@@ -154,10 +154,7 @@ export async function runInit(options: InitOptions = {}): Promise<InitResult> {
 
   if (options.fromEnv) {
     const parsed = loadDotenv({ path: resolve(options.fromEnv) }).parsed ?? {};
-    const merged = await mergeEnvIntoLocalProvidersVault(
-      parsed,
-      getLocalProvidersVaultPath(home),
-    );
+    const merged = await mergeEnvIntoLocalProvidersVault(parsed, getLocalProvidersVaultPath(home));
     providerKeys = listKeys(merged.data);
   }
 
@@ -171,7 +168,7 @@ export async function runInit(options: InitOptions = {}): Promise<InitResult> {
     const tmpEnv = `${home}/.clawql-init-push.env`;
     const { vaultProviderDataToEnv } = await import("../provider-vault/catalog.js");
     const envLines = Object.entries(vaultProviderDataToEnv(vault.data)).map(
-      ([k, v]) => `${k}=${v}`,
+      ([k, v]) => `${k}=${v}`
     );
     await writeFile(tmpEnv, `${envLines.join("\n")}\n`, { mode: 0o600 });
     pushedToHashicorpVault = await tryPushHashicorpVault(tmpEnv);

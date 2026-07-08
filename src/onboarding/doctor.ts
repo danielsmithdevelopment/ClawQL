@@ -8,11 +8,7 @@ import { execSync } from "node:child_process";
 import { getObsidianVaultPath } from "clawql-memory/vault/config";
 import { DEFAULT_STACK_VAULT_ENTRIES } from "../provider-vault/catalog.js";
 import { readLocalProvidersVault } from "../provider-vault/local-store.js";
-import {
-  getClawqlEnvFilePath,
-  getClawqlHome,
-  getLocalProvidersVaultPath,
-} from "./paths.js";
+import { getClawqlEnvFilePath, getClawqlHome, getLocalProvidersVaultPath } from "./paths.js";
 
 export type DoctorCheck = {
   level: "ok" | "warn" | "fail";
@@ -152,7 +148,8 @@ export async function runDoctor(verbose = false): Promise<DoctorReport> {
   if (process.env.VAULT_ADDR?.trim() && process.env.VAULT_TOKEN?.trim()) {
     checks.push({
       level: "ok",
-      message: "HashiCorp Vault detected — clawql init --push-vault syncs to secret/clawql/providers",
+      message:
+        "HashiCorp Vault detected — clawql init --push-vault syncs to secret/clawql/providers",
     });
   }
 
@@ -197,7 +194,7 @@ export function formatDoctorReport(report: DoctorReport, verbose = false): strin
     "  npx clawql init --interactive",
     "  npx clawql mcp-config",
     "  https://docs.clawql.com/agent-setup",
-    "",
+    ""
   );
   return lines.join("\n");
 }

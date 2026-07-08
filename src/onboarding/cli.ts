@@ -107,7 +107,7 @@ async function main(): Promise<void> {
       formatMcpConfig({
         transport: flags.http ? "http" : "stdio",
         url: typeof flags.url === "string" ? flags.url : undefined,
-      }),
+      })
     );
     return;
   }

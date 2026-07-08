@@ -44,8 +44,8 @@ Do **not** put provider tokens in **`extraEnv`** or chart-managed **`documentPip
 | `nextcloudAppPassword`  | `NEXTCLOUD_APP_PASSWORD`         | IDP intake/sync                  |
 | `coneshareApiToken`     | `CONESHARE_API_TOKEN`            | VDR sharing                      |
 | `cloudflareApiToken`    | `CLAWQL_CLOUDFLARE_API_TOKEN`    | `cloudflare` provider            |
-| `linearApiKey`          | `LINEAR_API_KEY`                 | `linear` provider                  |
-| `notionApiToken`        | `NOTION_API_TOKEN`               | `notion` provider                  |
+| `linearApiKey`          | `LINEAR_API_KEY`                 | `linear` provider                |
+| `notionApiToken`        | `NOTION_API_TOKEN`               | `notion` provider                |
 | `googleAccessToken`     | `CLAWQL_GOOGLE_ACCESS_TOKEN`     | Google Discovery presets         |
 | `atlassianApiToken`     | `CLAWQL_ATLASSIAN_TOKEN`         | Jira/Bitbucket                   |
 | `labelStudioApiToken`   | `CLAWQL_LABEL_STUDIO_API_TOKEN`  | HITL enqueue                     |

@@ -191,13 +191,9 @@ export const PROVIDER_VAULT_KEY_CATALOG: readonly ProviderVaultKeyEntry[] = [
   },
 ];
 
-export const DEFAULT_STACK_VAULT_ENTRIES = PROVIDER_VAULT_KEY_CATALOG.filter(
-  (e) => e.defaultStack,
-);
+export const DEFAULT_STACK_VAULT_ENTRIES = PROVIDER_VAULT_KEY_CATALOG.filter((e) => e.defaultStack);
 
-export function buildProvidersVaultPayload(
-  parsed: Record<string, string>,
-): Record<string, string> {
+export function buildProvidersVaultPayload(parsed: Record<string, string>): Record<string, string> {
   const out: Record<string, string> = {};
   for (const entry of PROVIDER_VAULT_KEY_CATALOG) {
     for (const alias of entry.envAliases) {
@@ -217,9 +213,7 @@ export function isProvidersVaultPath(logicalPath: string): boolean {
   return logicalPath.replace(/^\/+|\/+$/g, "") === PROVIDERS_VAULT_KV_PATH;
 }
 
-export function vaultProviderDataToEnv(
-  vaultData: Record<string, string>,
-): Record<string, string> {
+export function vaultProviderDataToEnv(vaultData: Record<string, string>): Record<string, string> {
   const out: Record<string, string> = {};
   for (const entry of PROVIDER_VAULT_KEY_CATALOG) {
     const v = vaultData[entry.vaultProperty]?.trim();
@@ -231,7 +225,7 @@ export function vaultProviderDataToEnv(
 export function applyEnvChangesToVaultProviderData(
   currentVault: Record<string, string>,
   literals: Record<string, string>,
-  removeEnvKeys: string[],
+  removeEnvKeys: string[]
 ): Record<string, string> {
   const envToProp = new Map(PROVIDER_VAULT_KEY_CATALOG.map((e) => [e.envKey, e.vaultProperty]));
   const next = { ...currentVault };

@@ -6,10 +6,12 @@ import { Note } from '@/components/mdx'
 Vault-first onboarding: one home for **memory**, **provider secrets**, and **MCP wiring** — better than pasting API keys into client config. {{ className: 'lead' }}
 
 <Note>
-  Run **`clawql init`** before connecting Cursor. Secrets live in **`~/.ClawQL/vault/providers.json`**
-  (same shape as HashiCorp **`secret/clawql/providers`**). Memory tools use **`~/.ClawQL/Memory/`**.
-  Default install loads the **opinionated stack** (Cloudflare, GitHub, Slack, Linear, Notion, Onyx).
-  Use **`CLAWQL_PROVIDER=all-providers`** only for every bundled vendor plus Google top-50 and AWS top-50.
+  Run **`clawql init`** before connecting Cursor. Secrets live in
+  **`~/.ClawQL/vault/providers.json`** (same shape as HashiCorp
+  **`secret/clawql/providers`**). Memory tools use **`~/.ClawQL/Memory/`**.
+  Default install loads the **opinionated stack** (Cloudflare, GitHub, Slack,
+  Linear, Notion, Onyx). Use **`CLAWQL_PROVIDER=all-providers`** only for every
+  bundled vendor plus Google top-50 and AWS top-50.
 </Note>
 
 ## CLI (recommended)
@@ -49,11 +51,11 @@ Highlights the agent should run:
 
 ## Local vs cluster secrets
 
-| Mode | Secrets store |
-| ---- | ------------- |
+| Mode            | Secrets store                                            |
+| --------------- | -------------------------------------------------------- |
 | **Local stdio** | `~/.ClawQL/vault/providers.json` (loaded at MCP startup) |
-| **Kubernetes** | HashiCorp Vault → ESO → `clawql-provider-env` |
-| **Dashboard** | Provider secrets UI → Vault KV |
+| **Kubernetes**  | HashiCorp Vault → ESO → `clawql-provider-env`            |
+| **Dashboard**   | Provider secrets UI → Vault KV                           |
 
 Guide: [local-provider-vault.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/getting-started/local-provider-vault.md)
 

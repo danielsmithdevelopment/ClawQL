@@ -49,14 +49,14 @@ npx -p clawql-mcp clawql mcp-config
 
 Same as **`scripts/kubernetes/provider-vault-key-catalog.ts`** / dashboard **Provider secrets** UI:
 
-| Vault property | Env injected | Default stack |
-|----------------|--------------|---------------|
-| `githubToken` | `CLAWQL_GITHUB_TOKEN` | yes |
-| `slackToken` | `CLAWQL_SLACK_TOKEN` | yes |
-| `linearApiKey` | `LINEAR_API_KEY` | yes |
-| `notionApiToken` | `NOTION_API_TOKEN` | yes |
-| `onyxApiToken` | `ONYX_API_TOKEN` | yes |
-| `cloudflareApiToken` | `CLAWQL_CLOUDFLARE_API_TOKEN` | yes |
+| Vault property       | Env injected                  | Default stack |
+| -------------------- | ----------------------------- | ------------- |
+| `githubToken`        | `CLAWQL_GITHUB_TOKEN`         | yes           |
+| `slackToken`         | `CLAWQL_SLACK_TOKEN`          | yes           |
+| `linearApiKey`       | `LINEAR_API_KEY`              | yes           |
+| `notionApiToken`     | `NOTION_API_TOKEN`            | yes           |
+| `onyxApiToken`       | `ONYX_API_TOKEN`              | yes           |
+| `cloudflareApiToken` | `CLAWQL_CLOUDFLARE_API_TOKEN` | yes           |
 
 Full list: [vault-provider-secrets.md](../deployment/vault-provider-secrets.md).
 
