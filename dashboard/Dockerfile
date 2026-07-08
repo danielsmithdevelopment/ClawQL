@@ -12,6 +12,7 @@ COPY . .
 # Monorepo catalog generators resolve repoRoot as `/` when build context is `./dashboard` only.
 COPY .env.example /.env.example
 COPY scripts/kubernetes/provider-vault-key-catalog.ts /scripts/kubernetes/provider-vault-key-catalog.ts
+COPY src/provider-vault/catalog.ts /src/provider-vault/catalog.ts
 RUN npm run build
 
 FROM node:22-alpine AS runner

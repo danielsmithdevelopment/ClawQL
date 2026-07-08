@@ -5,6 +5,8 @@
 ^packages/mcp-grpc-transport/test-fixtures/
 \.env\.example$
 ^docs/benchmarks/
+^docs/design/
+^website/src/generated/
 ^website/src/lib/oauth-discovery-metadata\.ts$
 \.test\.ts$
 ^\.github/workflows/ci\.yml$
