@@ -348,6 +348,8 @@ async function main() {
   registerSpecCacheShutdownHooks();
   registerPostgresPoolShutdownHooks();
   const app = await createMcpHttpApp();
+  const { logStartupSummary } = await import("./startup-summary.js");
+  await logStartupSummary();
   const grpcPromise = maybeStartGrpcMcpServer({
     createMcpServer: () => createRegisteredMcpServer(),
   });

@@ -25,6 +25,8 @@ async function main() {
   registerPostgresPoolShutdownHooks();
   // Pre-warm the spec cache on startup so the first search call is fast
   await loadSpec();
+  const { logStartupSummary } = await import("./startup-summary.js");
+  await logStartupSummary();
   // Prefer pregenerated introspection.json (bundled or CLAWQL_INTROSPECTION_PATH) over live proxy introspection
   await preloadSchemaFieldCacheFromDisk();
   await validateOrDegradeObsidianVaultAtStartup();

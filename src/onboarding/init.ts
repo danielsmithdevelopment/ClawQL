@@ -10,7 +10,6 @@ import { resolve } from "node:path";
 import { config as loadDotenv } from "dotenv";
 import {
   DEFAULT_STACK_VAULT_ENTRIES,
-  type ProviderVaultKeyEntry,
 } from "../provider-vault/catalog.js";
 import {
   mergeEnvIntoLocalProvidersVault,
@@ -22,6 +21,9 @@ import {
   getLocalProvidersVaultPath,
   INIT_DIRECTORIES,
 } from "./paths.js";
+import { probeHashicorpVault } from "./hashicorp-vault.js";
+import { promptSecret } from "./prompt-secret.js";
+import { writeMcpConfigFile, type McpWriteTarget } from "./mcp-config-write.js";
 
 export type InitOptions = {
   home?: string;
@@ -29,6 +31,7 @@ export type InitOptions = {
   interactive?: boolean;
   fromEnv?: string;
   pushVault?: boolean;
+  writeMcp?: McpWriteTarget;
 };
 
 export type InitResult = {
@@ -74,45 +77,30 @@ async function writeClawqlEnv(home: string): Promise<string> {
   return envPath;
 }
 
-async function promptToken(
-  rl: ReturnType<typeof createInterface>,
-  entry: ProviderVaultKeyEntry
-): Promise<string | undefined> {
-  const hint = entry.hint ? ` (${entry.hint})` : "";
-  const answer = (
-    await rl.question(`${entry.label}${hint}\n  Paste value or Enter to skip: `)
-  ).trim();
-  return answer || undefined;
-}
-
 async function runInteractiveVault(home: string): Promise<string[]> {
-  const rl = createInterface({ input, output });
   const stored: string[] = [];
-  try {
-    output.write(
-      "\nDefault-stack provider tokens (stored in vault/providers.json, mode 0600).\n" +
-        "Press Enter to skip any vendor you are not using yet.\n\n"
-    );
-    const data: Record<string, string> = {
-      ...((await readLocalProvidersVault(getLocalProvidersVaultPath(home)))?.data ?? {}),
-    };
-    for (const entry of DEFAULT_STACK_VAULT_ENTRIES) {
-      if (data[entry.vaultProperty]?.trim()) {
-        output.write(`  ${entry.label}: already set (skip)\n`);
-        continue;
-      }
-      const value = await promptToken(rl, entry);
-      if (value) {
-        data[entry.vaultProperty] = value;
-        stored.push(entry.vaultProperty);
-      }
+  output.write(
+    "\nDefault-stack provider tokens (stored in vault/providers.json, mode 0600).\n" +
+      "Input is hidden on Unix TTY. Press Enter to skip any vendor.\n\n"
+  );
+  const data: Record<string, string> = {
+    ...((await readLocalProvidersVault(getLocalProvidersVaultPath(home)))?.data ?? {}),
+  };
+  for (const entry of DEFAULT_STACK_VAULT_ENTRIES) {
+    if (data[entry.vaultProperty]?.trim()) {
+      output.write(`  ${entry.label}: already set (skip)\n`);
+      continue;
     }
-    if (stored.length) {
-      const { writeLocalProvidersVault } = await import("../provider-vault/local-store.js");
-      await writeLocalProvidersVault(data, getLocalProvidersVaultPath(home));
+    const hint = entry.hint ? ` — ${entry.hint}` : "";
+    const value = await promptSecret(`${entry.label}${hint}`);
+    if (value) {
+      data[entry.vaultProperty] = value;
+      stored.push(entry.vaultProperty);
     }
-  } finally {
-    rl.close();
+  }
+  if (stored.length) {
+    const { writeLocalProvidersVault } = await import("../provider-vault/local-store.js");
+    await writeLocalProvidersVault(data, getLocalProvidersVaultPath(home));
   }
   return stored;
 }
@@ -162,7 +150,25 @@ export async function runInit(options: InitOptions = {}): Promise<InitResult> {
 
   const vault = await readLocalProvidersVault(getLocalProvidersVaultPath(home));
   let pushedToHashicorpVault = false;
-  if (options.pushVault && vault && Object.keys(vault.data).length > 0) {
+
+  const vaultProbe = await probeHashicorpVault();
+  if (vaultProbe.reachable) {
+    output.write(
+      `\n✓ HashiCorp Vault detected (${vaultProbe.source}: ${vaultProbe.addr ?? "unknown"})\n`
+    );
+    if (vaultProbe.hint) output.write(`  ${vaultProbe.hint}\n`);
+  }
+
+  const shouldPush =
+    options.pushVault ||
+    (vaultProbe.reachable &&
+      !options.yes &&
+      vault &&
+      Object.keys(vault.data).length > 0 &&
+      process.env.VAULT_TOKEN?.trim() &&
+      (await promptPushVault()));
+
+  if (shouldPush && vault && Object.keys(vault.data).length > 0) {
     const tmpEnv = `${home}/.clawql-init-push.env`;
     const { vaultProviderDataToEnv } = await import("../provider-vault/catalog.js");
     const envLines = Object.entries(vaultProviderDataToEnv(vault.data)).map(
@@ -170,6 +176,17 @@ export async function runInit(options: InitOptions = {}): Promise<InitResult> {
     );
     await writeFile(tmpEnv, `${envLines.join("\n")}\n`, { mode: 0o600 });
     pushedToHashicorpVault = await tryPushHashicorpVault(tmpEnv);
+  } else if (options.pushVault && !process.env.VAULT_TOKEN?.trim()) {
+    output.write("\n⚠ --push-vault skipped: set VAULT_TOKEN (and VAULT_ADDR if needed)\n");
+  }
+
+  if (options.writeMcp) {
+    const wr = await writeMcpConfigFile(options.writeMcp);
+    output.write(
+      `\n✓ MCP config ${wr.created ? "created" : "updated"}: ${wr.path}` +
+        (wr.backupPath ? ` (backup: ${wr.backupPath})` : "") +
+        "\n"
+    );
   }
 
   return {
@@ -184,4 +201,14 @@ export async function runInit(options: InitOptions = {}): Promise<InitResult> {
 
 function listKeys(data: Record<string, string>): string[] {
   return Object.keys(data).filter((k) => data[k]?.trim());
+}
+
+async function promptPushVault(): Promise<boolean> {
+  const rl = createInterface({ input, output });
+  try {
+    const answer = (await rl.question("Push provider keys to HashiCorp Vault now? [y/N]: ")).trim();
+    return answer.toLowerCase() === "y" || answer.toLowerCase() === "yes";
+  } finally {
+    rl.close();
+  }
 }
