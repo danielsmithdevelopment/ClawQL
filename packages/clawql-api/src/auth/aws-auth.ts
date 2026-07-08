@@ -61,11 +61,32 @@ export function resolveAwsServiceName(specLabel: string | undefined, openapi: Op
   return "aws";
 }
 
+function substituteUrlTemplatePlaceholders(template: string, placeholderValue: string): string {
+  let out = "";
+  let i = 0;
+  while (i < template.length) {
+    const open = template.indexOf("{", i);
+    if (open === -1) {
+      out += template.slice(i);
+      break;
+    }
+    out += template.slice(i, open);
+    const close = template.indexOf("}", open + 1);
+    if (close === -1) {
+      out += template.slice(open);
+      break;
+    }
+    out += placeholderValue;
+    i = close + 1;
+  }
+  return out;
+}
+
 function tryParseHost(url: string | undefined): string | undefined {
   if (!url?.trim()) return undefined;
   try {
     const withProto = url.includes("://") ? url : `https://${url}`;
-    return new URL(withProto.replace(/\{[^}]+\}/g, "us-east-1")).hostname;
+    return new URL(substituteUrlTemplatePlaceholders(withProto, "us-east-1")).hostname;
   } catch {
     return undefined;
   }

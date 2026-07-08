@@ -10,6 +10,16 @@ import { fileURLToPath } from "node:url";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const OUT = join(root, "providers/aws/aws-top50-apis.json");
 
+function stripHtmlTags(value) {
+  let text = String(value);
+  let prev;
+  do {
+    prev = text;
+    text = text.replace(/<[^>]*>/g, "");
+  } while (text !== prev);
+  return text.replace(/[<>]/g, "").trim();
+}
+
 const PRIORITY = [
   "ec2",
   "s3",
@@ -91,7 +101,7 @@ async function main() {
       slug,
       id: svc,
       version: p.version,
-      title: String(p.title).replace(/<[^>]+>/g, "").trim(),
+      title: stripHtmlTags(p.title),
       openapiUrl: `https://api.apis.guru/v2/specs/amazonaws.com/${svc}/${p.version}/openapi.yaml`,
       documentationLink: `https://docs.aws.amazon.com/${svc}/`,
     });

@@ -56,4 +56,14 @@ describe("aws-auth helpers", () => {
     expect(isAwsSpecLabel("lambda-2015-03-31")).toBe(true);
     expect(isAwsSpecLabel("run-v2")).toBe(false);
   });
+
+  it("derives service name from server host when slug and x-serviceName are absent", () => {
+    expect(
+      resolveAwsServiceName(undefined, {
+        openapi: "3.0.0",
+        info: { title: "EC2", version: "1" },
+        servers: [{ url: "https://ec2.{region}.amazonaws.com" }],
+      })
+    ).toBe("ec2");
+  });
 });
