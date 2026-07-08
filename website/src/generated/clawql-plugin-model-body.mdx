@@ -1,6 +1,6 @@
 # ClawQL plugin model — horizontal packages and MCP tools
 
-**Status:** Partially shipped (June 2026)  
+**Status:** Phase 2 shipped (July 2026) — horizontal plugins register via `onRegister`; HITL and third-party API remain roadmap  
 **Audience:** Contributors, integrators, and third-party plugin authors  
 **Related:** [Modularization implementation status](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/modularization-implementation-status.md) · [Effect + plugin plan](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/effect-ts-modularization-rearchitecture-plan.md) · [Plugin registry](/reference/plugins#plugin-registry) · [Contributor Technical Specification §1.1](/contributing/technical-specification)
 
@@ -16,15 +16,15 @@ For memory, documents, and automation, **yes — the plugin’s main visible job
 
 ---
 
-## 2. Today: packages exist, `tools.ts` still owns registration
+## 2. Today: plugins register via `onRegister` (Phase 2 shipped)
 
-Extraction phases 1–9 moved **business logic** into workspace packages. MCP registration did **not** move with it.
+Extraction phases 1–9 moved **business logic** into workspace packages. **Phase 2** (6.4.0+) moved MCP registration into **`Plugin.onRegister`** for Memory, Documents, Automation, Sandbox, and Ouroboros.
 
-| Package             | Logic lives in                                              | MCP tools still registered in                                              |
-| ------------------- | ----------------------------------------------------------- | -------------------------------------------------------------------------- |
-| `clawql-memory`     | `runMemoryIngest`, `runMemoryRecall`, vault, `memory.db`, … | `src/tools.ts` (`if (enableMemory) \{ server.tool("memory_ingest", …) \}`) |
-| `clawql-documents`  | `runIngestExternalKnowledge`, URL formatting                | ✅ **`DocumentsPlugin.onRegister`** (`clawql-documents/plugin`)            |
-| `clawql-automation` | schedule worker, `runNotifySlack`                           | ✅ **`AutomationPlugin.onRegister`** (`clawql-automation/plugin`)          |
+| Package             | Logic lives in                                              | MCP registration                                                  |
+| ------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------- |
+| `clawql-memory`     | `runMemoryIngest`, `runMemoryRecall`, vault, `memory.db`, … | ✅ **`MemoryPlugin.onRegister`**                                  |
+| `clawql-documents`  | `runIngestExternalKnowledge`, URL formatting                | ✅ **`DocumentsPlugin.onRegister`** (`clawql-documents/plugin`)   |
+| `clawql-automation` | schedule worker, `runNotifySlack`                           | ✅ **`AutomationPlugin.onRegister`** (`clawql-automation/plugin`) |
 
 Transport-only concerns stay in `src/` today:
 
@@ -33,7 +33,7 @@ Transport-only concerns stay in `src/` today:
 - `logMcpToolShape` (payload shape logging, no secrets)
 - `CLAWQL_ENABLE_*` gates in `registerTools()`
 
-So the split is **intentionally incomplete**: packages are libraries; **`tools.ts` is still the switchboard** that decides which tools exist.
+**Remaining in `tools.ts`:** HITL and any tools not yet moved to a plugin package.
 
 ---
 

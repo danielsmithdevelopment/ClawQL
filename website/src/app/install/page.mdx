@@ -23,11 +23,19 @@ After install, these commands are on your `PATH` (or use `npx -p clawql-mcp <bin
 
 ## Run without a global install
 
+**Default stack:**
+
+```bash
+npx -p clawql-mcp clawql-mcp
+```
+
+**Full bundle** (every vendor + Google + AWS):
+
 ```bash
 CLAWQL_PROVIDER=all-providers npx -p clawql-mcp clawql-mcp
 ```
 
-Point your MCP client at **`clawql-mcp`** on stdio (see [MCP clients](/mcp-clients)).
+Point your MCP client at **`clawql-mcp`** on stdio (see [MCP clients](/mcp-clients)) or use the [Agent setup](/agent-setup) prompt.
 
 ## Docker and HTTP
 

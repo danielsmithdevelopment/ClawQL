@@ -12,7 +12,8 @@
       ],
       "label": "GitHub token",
       "group": "Core integrations",
-      "hint": "Personal access token or fine-grained token for the GitHub API provider."
+      "hint": "Personal access token or fine-grained token for the GitHub API provider.",
+      "defaultStack": true
     },
     {
       "vaultProperty": "slackToken",
@@ -25,7 +26,20 @@
       ],
       "label": "Slack bot token",
       "group": "Core integrations",
-      "hint": "xoxb-… bot token for notify and Slack-backed workflows."
+      "hint": "xoxb-… bot token for notify and Slack-backed workflows.",
+      "defaultStack": true
+    },
+    {
+      "vaultProperty": "linearApiKey",
+      "envKey": "LINEAR_API_KEY",
+      "envAliases": [
+        "LINEAR_API_KEY",
+        "CLAWQL_LINEAR_API_KEY"
+      ],
+      "label": "Linear API key",
+      "group": "Core integrations",
+      "hint": "Personal API key for the bundled GraphQL Linear provider.",
+      "defaultStack": true
     },
     {
       "vaultProperty": "onyxApiToken",
@@ -36,7 +50,33 @@
       ],
       "label": "Onyx API token",
       "group": "Core integrations",
-      "hint": "Bearer token for knowledge_search_onyx and enterprise evidence."
+      "hint": "Bearer token for knowledge_search_onyx and enterprise evidence.",
+      "defaultStack": true
+    },
+    {
+      "vaultProperty": "notionApiToken",
+      "envKey": "NOTION_API_TOKEN",
+      "envAliases": [
+        "NOTION_API_TOKEN",
+        "CLAWQL_NOTION_API_TOKEN",
+        "NOTION_TOKEN"
+      ],
+      "label": "Notion integration token",
+      "group": "Core integrations",
+      "hint": "Internal integration secret (secret_…) for the Notion REST API provider.",
+      "defaultStack": true
+    },
+    {
+      "vaultProperty": "cloudflareApiToken",
+      "envKey": "CLAWQL_CLOUDFLARE_API_TOKEN",
+      "envAliases": [
+        "CLAWQL_CLOUDFLARE_API_TOKEN",
+        "CLOUDFLARE_API_TOKEN"
+      ],
+      "label": "Cloudflare API token",
+      "group": "Sharing & cloud",
+      "hint": "Token scoped to DNS or Workers as needed by the Cloudflare provider.",
+      "defaultStack": true
     },
     {
       "vaultProperty": "paperlessApiToken",
@@ -106,17 +146,6 @@
       "hint": "JWT or API token for virtual data room sharing."
     },
     {
-      "vaultProperty": "cloudflareApiToken",
-      "envKey": "CLAWQL_CLOUDFLARE_API_TOKEN",
-      "envAliases": [
-        "CLAWQL_CLOUDFLARE_API_TOKEN",
-        "CLOUDFLARE_API_TOKEN"
-      ],
-      "label": "Cloudflare API token",
-      "group": "Sharing & cloud",
-      "hint": "Token scoped to DNS or Workers as needed by the Cloudflare provider."
-    },
-    {
       "vaultProperty": "googleAccessToken",
       "envKey": "CLAWQL_GOOGLE_ACCESS_TOKEN",
       "envAliases": [
@@ -126,6 +155,51 @@
       "label": "Google access token",
       "group": "Sharing & cloud",
       "hint": "OAuth access token for Google Discovery API presets."
+    },
+    {
+      "vaultProperty": "awsAccessKeyId",
+      "envKey": "CLAWQL_AWS_ACCESS_KEY_ID",
+      "envAliases": [
+        "CLAWQL_AWS_ACCESS_KEY_ID",
+        "AWS_ACCESS_KEY_ID"
+      ],
+      "label": "AWS access key ID",
+      "group": "Sharing & cloud",
+      "hint": "IAM access key for SigV4 when using bundled AWS presets."
+    },
+    {
+      "vaultProperty": "awsSecretAccessKey",
+      "envKey": "CLAWQL_AWS_SECRET_ACCESS_KEY",
+      "envAliases": [
+        "CLAWQL_AWS_SECRET_ACCESS_KEY",
+        "AWS_SECRET_ACCESS_KEY"
+      ],
+      "label": "AWS secret access key",
+      "group": "Sharing & cloud",
+      "hint": "IAM secret key paired with AWS access key ID."
+    },
+    {
+      "vaultProperty": "awsSessionToken",
+      "envKey": "CLAWQL_AWS_SESSION_TOKEN",
+      "envAliases": [
+        "CLAWQL_AWS_SESSION_TOKEN",
+        "AWS_SESSION_TOKEN"
+      ],
+      "label": "AWS session token",
+      "group": "Sharing & cloud",
+      "hint": "Optional STS session token for assumed-role credentials."
+    },
+    {
+      "vaultProperty": "awsRegion",
+      "envKey": "CLAWQL_AWS_REGION",
+      "envAliases": [
+        "CLAWQL_AWS_REGION",
+        "AWS_REGION",
+        "AWS_DEFAULT_REGION"
+      ],
+      "label": "AWS region",
+      "group": "Sharing & cloud",
+      "hint": "Default region for regional AWS endpoints (e.g. us-east-1)."
     },
     {
       "vaultProperty": "atlassianApiToken",

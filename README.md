@@ -12,7 +12,7 @@ Feature tiers (aligned with the [architecture diagram](docs/readme/images/clawql
 - Stdio and HTTP MCP server modes
 - Bundled provider specs for offline lookup and multi-provider workflows
 
-Primary package: `clawql-mcp` (current release: **6.4.1** — [`RELEASE_NOTES_v6.4.1.md`](RELEASE_NOTES_v6.4.1.md))  
+Primary package: `clawql-mcp` (current release: **6.4.1** npm tag; **6.5.0** docs/onboarding refresh on `main` — [`RELEASE_NOTES_v6.5.0.md`](RELEASE_NOTES_v6.5.0.md))  
 Repo: https://github.com/danielsmithdevelopment/ClawQL
 
 ### Container images on GHCR (Docker / Helm)
@@ -27,13 +27,21 @@ Install:
 npm install clawql-mcp
 ```
 
-Run with bundled providers:
+Run with the **default bundled stack** (Cloudflare, GitHub, Slack, Linear, Notion, Onyx):
+
+```bash
+npx -p clawql-mcp clawql init --interactive   # vault-first onboarding
+npx -p clawql-mcp clawql mcp-config           # MCP JSON for Cursor
+npx -p clawql-mcp clawql-mcp
+```
+
+For every bundled vendor plus Google top-50 and AWS top-50:
 
 ```bash
 CLAWQL_PROVIDER=all-providers npx clawql-mcp
 ```
 
-Then configure your MCP client (Cursor/Claude Desktop) to connect.
+Then configure your MCP client (Cursor/Claude Desktop) to connect — or paste the [agent setup prompt](docs/getting-started/agent-setup-prompt.md) into your agent.
 
 ## Documentation Map
 
@@ -42,6 +50,8 @@ Top-level docs index: `docs/README.md`
 ### Start here
 
 - Getting started: `docs/readme/getting-started.md`
+- **Set up with your agent:** `docs/getting-started/agent-setup-prompt.md` · init walkthrough spec: `docs/getting-started/clawql-init-walkthrough-spec.md`
+- Plugins hub: `docs/plugins/README.md` — [`/plugins`](https://docs.clawql.com/plugins)
 - Configuration and env precedence: `docs/readme/configuration.md`
 - Deployment and client config: `docs/readme/deployment.md` (Kubernetes list links **`docs/deployment/docker-desktop-istio-observability.md`** for Istio + Prometheus/Grafana/Tempo/Kiali/OTel on Docker Desktop)
 - Benchmarks and case studies: `docs/readme/benchmarks.md`
@@ -92,6 +102,7 @@ Eight bundled vendors (Nextcloud, Docling, Tika, Gotenberg, Stirling, Paperless,
 
 - Provider matrix and presets: `providers/README.md`
 - Google Discovery helpers: `docs/providers/google-apis-lookup.md`
+- AWS top-50 preset: `docs/providers/aws-apis-lookup.md`, `docs/providers/aws-onboarding.md`
 
 ## Architecture (Short Version)
 

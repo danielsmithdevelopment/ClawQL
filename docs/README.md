@@ -36,6 +36,9 @@ This directory is organized by purpose so operational guides, product docs, and 
 ## Getting Started and README Splits
 
 - `readme/getting-started.md`
+- `getting-started/agent-setup-prompt.md` — copy-paste Cursor/Claude onboarding prompt
+- `getting-started/local-provider-vault.md` — ~/.ClawQL secrets vault + memory home
+- `getting-started/clawql-init-walkthrough-spec.md` — Executor comparison and phased init tool design
 - `readme/configuration.md`
 - `readme/deployment.md`
 - `readme/benchmarks.md`
@@ -70,6 +73,7 @@ This directory is organized by purpose so operational guides, product docs, and 
 - `deployment/tailscale-and-headscale-for-clawql.md` (beginner guide: managed Tailscale + self-hosted Headscale, MagicDNS, ClawQL env — [#206](https://github.com/danielsmithdevelopment/ClawQL/issues/206), [#211](https://github.com/danielsmithdevelopment/ClawQL/issues/211), [#213](https://github.com/danielsmithdevelopment/ClawQL/issues/213); website **`/tailscale`**)
 - `deployment/headscale-tailnet.md` + `deployment/headscale-acls-clawql.hujson` (Headscale runbook + least-privilege ACL starter — [#206](https://github.com/danielsmithdevelopment/ClawQL/issues/206), [#213](https://github.com/danielsmithdevelopment/ClawQL/issues/213))
 - `providers/google-apis-lookup.md`
+- `providers/aws-apis-lookup.md`, `providers/aws-onboarding.md`
 
 ## Security
 
