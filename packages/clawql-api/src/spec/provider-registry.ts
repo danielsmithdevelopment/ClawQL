@@ -109,6 +109,18 @@ export const BUNDLED_PROVIDERS: Record<string, BundledProvider> = {
     bundledIntrospectionPath: "providers/slack/introspection.json",
     bundledSchemaSdlPath: "providers/slack/schema.graphql",
   },
+  /**
+   * Notion REST API — official OpenAPI from developers.notion.com.
+   * Auth: NOTION_API_TOKEN (Bearer integration token) + required Notion-Version header.
+   */
+  notion: {
+    id: "notion",
+    bundledSpecPath: "providers/notion/openapi.json",
+    format: "openapi",
+    fallbackUrl: "https://developers.notion.com/openapi.json",
+    bundledIntrospectionPath: "providers/notion/introspection.json",
+    bundledSchemaSdlPath: "providers/notion/schema.graphql",
+  },
   /** Sentry public API (dereferenced bundle from getsentry/sentry-api-schema). */
   sentry: {
     id: "sentry",
@@ -342,53 +354,47 @@ export const BUNDLED_DOCUMENT_VENDOR_IDS: readonly string[] = [
 
 const BUNDLED_DOCUMENT_VENDOR_SET = new Set(BUNDLED_DOCUMENT_VENDOR_IDS);
 
-function cloudflareProviderItem(root: string): ProviderGroupOpenApiItem {
-  const p = BUNDLED_PROVIDERS.cloudflare;
-  if (!p || isBundledGraphqlProvider(p)) {
-    throw new Error('Bundled provider "cloudflare" is missing or not OpenAPI');
-  }
-  return {
-    kind: "openapi",
-    abs: resolvePath(root, p.bundledSpecPath),
-    label: p.id,
-  };
-}
+/**
+ * Opinionated default install stack — framework-style curated merge when no spec env is set.
+ * **`CLAWQL_PROVIDER=default`** / **`default-providers`** resolves the same list (plus optional cloud add-ons).
+ */
+export const DEFAULT_BUNDLED_PROVIDER_IDS: readonly string[] = [
+  "cloudflare",
+  "github",
+  "slack",
+  "linear",
+  "notion",
+  "onyx",
+];
 
 /**
- * Default bundled merge when no spec env is set: only cloud providers enabled via
- * **`CLAWQL_ENABLE_GOOGLE`** / **`CLAWQL_ENABLE_CLOUDFLARE`** / **`CLAWQL_ENABLE_AWS`**.
- * By default only **Cloudflare** is on (`CLAWQL_ENABLE_CLOUDFLARE` defaults true).
+ * Default bundled merge when no spec env is set: **`DEFAULT_BUNDLED_PROVIDER_IDS`**, minus Cloudflare when
+ * **`CLAWQL_ENABLE_CLOUDFLARE=0`**, plus **`google`** / **`aws`** when **`CLAWQL_ENABLE_GOOGLE`** /
+ * **`CLAWQL_ENABLE_AWS`** are set. Does not respect **`CLAWQL_ENABLE_DOCUMENTS`** (Onyx stays in the default stack).
  */
 export async function resolveDefaultBundledProvidersItems(): Promise<ProviderGroupItem[]> {
-  const root = getPackageRoot();
   const flags = getClawqlOptionalToolFlags();
-  const out: ProviderGroupItem[] = [];
-  if (flags.enableGoogle) {
-    out.push(...(await resolveGoogleTop50Items()));
-  }
-  if (flags.enableAws) {
-    out.push(...(await resolveAwsTop50Items()));
-  }
-  if (flags.enableCloudflare) {
-    out.push(cloudflareProviderItem(root));
-  }
-  return out;
+  const ids = DEFAULT_BUNDLED_PROVIDER_IDS.filter((id) => {
+    if (id === "cloudflare" && !flags.enableCloudflare) return false;
+    return true;
+  });
+  const parts = [...ids];
+  if (flags.enableGoogle) parts.push("google");
+  if (flags.enableAws) parts.push("aws");
+  if (parts.length === 0) return [];
+  return resolveItemsFromBundledProviderEnvList(parts.join(","));
 }
 
 async function resolveAllBundledProvidersItems(): Promise<ProviderGroupItem[]> {
   const root = getPackageRoot();
   const flags = getClawqlOptionalToolFlags();
-  const cloud: ProviderGroupItem[] = [];
-  if (flags.enableGoogle) {
-    cloud.push(...(await resolveGoogleTop50Items()));
-  }
-  if (flags.enableAws) {
-    cloud.push(...(await resolveAwsTop50Items()));
-  }
+  const cloud: ProviderGroupItem[] = [
+    ...(await resolveGoogleTop50Items()),
+    ...(await resolveAwsTop50Items()),
+  ];
   const allowDocuments = flags.enableDocuments;
   const labels = BUNDLED_MERGED_VENDOR_LABELS.filter((id) => {
     if (!allowDocuments && BUNDLED_DOCUMENT_VENDOR_SET.has(id)) return false;
-    if (id === "cloudflare" && !flags.enableCloudflare) return false;
     return true;
   });
   const rest: ProviderGroupItem[] = [];
@@ -420,8 +426,14 @@ export const BUNDLED_PROVIDER_GROUPS: Record<string, BundledProviderGroup> = {
   /** Merged bundled AWS APIs from `providers/aws/aws-top50-apis.json` (see providers docs). */
   aws: { resolve: resolveAwsTop50Items },
   /**
-   * Every bundled vendor (respecting **`CLAWQL_ENABLE_DOCUMENTS`** and cloud **`CLAWQL_ENABLE_*`** flags).
-   * Opt in explicitly with **`CLAWQL_PROVIDER=all-providers`** — not the no-config default.
+   * Opinionated default stack (same as no-config install). Cloud add-ons via **`CLAWQL_ENABLE_GOOGLE`** /
+   * **`CLAWQL_ENABLE_AWS`**; omit Cloudflare with **`CLAWQL_ENABLE_CLOUDFLARE=0`**.
+   */
+  default: { resolve: resolveDefaultBundledProvidersItems },
+  "default-providers": { resolve: resolveDefaultBundledProvidersItems },
+  /**
+   * Literally every bundled vendor plus Google top-50 and AWS top-50. Only **`CLAWQL_ENABLE_DOCUMENTS=0`**
+   * trims the document/IDP stack. Opt in with **`CLAWQL_PROVIDER=all-providers`** — not the no-config default.
    */
   "all-providers": { resolve: resolveAllBundledProvidersItems },
 };

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   BUNDLED_DOCUMENT_VENDOR_IDS,
+  DEFAULT_BUNDLED_PROVIDER_IDS,
   listBundledProviderGroupIds,
   listBundledProviderIds,
   resolveBundledProvider,
@@ -21,6 +22,7 @@ describe("provider-registry", () => {
     expect(ids).toContain("stirling");
     expect(ids).toContain("onyx");
     expect(ids).toContain("linear");
+    expect(ids).toContain("notion");
     expect(ids).not.toContain("atlassian"); // group, not concrete provider
   });
 
@@ -37,10 +39,12 @@ describe("provider-registry", () => {
     expect(p && "graphqlEndpoint" in p ? p.graphqlEndpoint : "").toContain("api.linear.app");
   });
 
-  it("lists merged preset ids including google (not google-top50)", () => {
+  it("lists merged preset ids including google, aws, and default", () => {
     const groups = listBundledProviderGroupIds();
     expect(groups).toContain("google");
     expect(groups).toContain("aws");
+    expect(groups).toContain("default");
+    expect(groups).toContain("default-providers");
     expect(groups).not.toContain("google-top50");
   });
 
@@ -90,22 +94,22 @@ describe("provider-registry", () => {
     );
   });
 
-  it("resolves all-providers to many bundled vendors", async () => {
+  it("resolves all-providers to every bundled vendor plus google and aws", async () => {
     const items = await resolveBundledProviderGroup("all-providers");
     expect(items).toBeDefined();
-    expect(items!.length).toBeGreaterThan(8);
+    expect(items!.length).toBeGreaterThan(100);
     const labels = new Set(items!.map((x) => x.label));
     expect(labels.has("slack")).toBe(true);
     expect(labels.has("n8n")).toBe(true);
     expect(labels.has("github")).toBe(true);
+    expect(labels.has("notion")).toBe(true);
     expect(labels.has("paperless")).toBe(true);
     expect(labels.has("tika")).toBe(true);
     expect(labels.has("onyx")).toBe(true);
     expect(labels.has("linear")).toBe(true);
     expect(labels.has("cloudflare")).toBe(true);
-    // Google/AWS off by default unless CLAWQL_ENABLE_GOOGLE / CLAWQL_ENABLE_AWS is set
-    expect(labels.has("ec2-2016-11-15")).toBe(false);
-    expect(labels.has("compute-v1")).toBe(false);
+    expect(labels.has("ec2-2016-11-15")).toBe(true);
+    expect(labels.has("compute-v1")).toBe(true);
     expect(
       items!.every((x) =>
         x.kind === "graphql" ? x.schemaAbs.includes("/providers/") : x.abs.includes("/providers/")
@@ -113,9 +117,9 @@ describe("provider-registry", () => {
     ).toBe(true);
   });
 
-  it("includes google and aws in all-providers when CLAWQL_ENABLE_GOOGLE and CLAWQL_ENABLE_AWS are set", async () => {
-    vi.stubEnv("CLAWQL_ENABLE_GOOGLE", "1");
-    vi.stubEnv("CLAWQL_ENABLE_AWS", "1");
+  it("includes google and aws in all-providers even when CLAWQL_ENABLE_GOOGLE and CLAWQL_ENABLE_AWS are unset", async () => {
+    vi.stubEnv("CLAWQL_ENABLE_GOOGLE", "0");
+    vi.stubEnv("CLAWQL_ENABLE_AWS", "0");
     try {
       const items = await resolveBundledProviderGroup("all-providers");
       const labels = new Set(items!.map((x) => x.label));
@@ -126,12 +130,12 @@ describe("provider-registry", () => {
     }
   });
 
-  it("omits cloudflare from all-providers when CLAWQL_ENABLE_CLOUDFLARE=0", async () => {
+  it("includes cloudflare in all-providers even when CLAWQL_ENABLE_CLOUDFLARE=0", async () => {
     vi.stubEnv("CLAWQL_ENABLE_CLOUDFLARE", "0");
     try {
       const items = await resolveBundledProviderGroup("all-providers");
       const labels = new Set(items!.map((x) => x.label));
-      expect(labels.has("cloudflare")).toBe(false);
+      expect(labels.has("cloudflare")).toBe(true);
       expect(labels.has("github")).toBe(true);
     } finally {
       vi.unstubAllEnvs();
@@ -203,31 +207,53 @@ describe("provider-registry", () => {
     }
   });
 
-  it("resolveDefaultBundledProvidersItems loads cloudflare only by default", async () => {
+  it("resolveDefaultBundledProvidersItems loads opinionated default stack", async () => {
     vi.stubEnv("CLAWQL_ENABLE_GOOGLE", "0");
     vi.stubEnv("CLAWQL_ENABLE_AWS", "0");
     delete process.env.CLAWQL_ENABLE_CLOUDFLARE;
     try {
       const items = await resolveDefaultBundledProvidersItems();
       const labels = new Set(items.map((x) => x.label));
-      expect(labels).toEqual(new Set(["cloudflare"]));
+      for (const id of DEFAULT_BUNDLED_PROVIDER_IDS) {
+        expect(labels.has(id)).toBe(true);
+      }
+      expect(labels.has("compute-v1")).toBe(false);
+      expect(labels.has("sts-2011-06-15")).toBe(false);
     } finally {
       vi.unstubAllEnvs();
     }
   });
 
-  it("resolveDefaultBundledProvidersItems respects CLAWQL_ENABLE_GOOGLE and CLAWQL_ENABLE_AWS", async () => {
-    vi.stubEnv("CLAWQL_ENABLE_GOOGLE", "1");
-    vi.stubEnv("CLAWQL_ENABLE_AWS", "1");
+  it("resolveDefaultBundledProvidersItems omits cloudflare when CLAWQL_ENABLE_CLOUDFLARE=0", async () => {
     vi.stubEnv("CLAWQL_ENABLE_CLOUDFLARE", "0");
     try {
       const items = await resolveDefaultBundledProvidersItems();
       const labels = new Set(items.map((x) => x.label));
       expect(labels.has("cloudflare")).toBe(false);
-      expect(labels.has("compute-v1")).toBe(true);
-      expect(labels.has("sts-2011-06-15")).toBe(true);
+      expect(labels.has("github")).toBe(true);
+      expect(labels.has("notion")).toBe(true);
     } finally {
       vi.unstubAllEnvs();
     }
+  });
+
+  it("resolveDefaultBundledProvidersItems adds google and aws when enabled", async () => {
+    vi.stubEnv("CLAWQL_ENABLE_GOOGLE", "1");
+    vi.stubEnv("CLAWQL_ENABLE_AWS", "1");
+    try {
+      const items = await resolveDefaultBundledProvidersItems();
+      const labels = new Set(items.map((x) => x.label));
+      expect(labels.has("compute-v1")).toBe(true);
+      expect(labels.has("sts-2011-06-15")).toBe(true);
+      expect(labels.has("github")).toBe(true);
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  it("default preset matches resolveDefaultBundledProvidersItems", async () => {
+    const fromPreset = await resolveBundledProviderGroup("default");
+    const direct = await resolveDefaultBundledProvidersItems();
+    expect(fromPreset?.map((x) => x.label).sort()).toEqual(direct.map((x) => x.label).sort());
   });
 });

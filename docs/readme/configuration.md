@@ -24,18 +24,18 @@ Unset means **on**. Set **`0`**, **`false`**, or **`no`** to hide tools or shrin
 | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **ClawQL Memory**    | **`memory_ingest`**, **`memory_recall`**                                                                                                                                                             | **`CLAWQL_ENABLE_MEMORY=0`**                                                                                                                                                                                                                                            |
 | **ClawQL Documents** | **`ingest_external_knowledge`**; **`knowledge_search_onyx`** when also **`CLAWQL_ENABLE_ONYX=1`**; optional **`run_idp_pipeline`**, **`classify_document`**, **`extract_document`** (separate flags) | **`CLAWQL_ENABLE_DOCUMENTS=0`** (drops **docling**, **tika**, **gotenberg**, **paperless**, **stirling**, **onyx**, **nextcloud**, **coneshare** from **`all-providers`**; hides document MCP tools). Explicit **`CLAWQL_BUNDLED_PROVIDERS=…`** can still list those ids. |
-| **Cloudflare bundle** | _(spec merge only — no extra MCP tools)_ | **`CLAWQL_ENABLE_CLOUDFLARE=0`** (omits from no-config default and **`all-providers`**). Default **on** when unset. Explicit **`CLAWQL_PROVIDER=cloudflare`** still loads it. |
+| **Cloudflare bundle** | _(spec merge only — no extra MCP tools)_ | **`CLAWQL_ENABLE_CLOUDFLARE=0`** (omits Cloudflare from the **no-config default stack** only). Default **on** when unset. **`all-providers`** always includes Cloudflare. Explicit **`CLAWQL_PROVIDER=cloudflare`** still loads it. |
 
-### Default off — opt in (cloud bundles)
+### Default off — opt in (cloud add-ons for default stack)
 
-Unset means **off** except Cloudflare (above). Set **`1`** / **`true`** / **`yes`** to include in the no-config default merge and **`all-providers`**:
+Unset means **off**. Set **`1`** / **`true`** / **`yes`** to **add** Google/AWS to the no-config default stack (in addition to Cloudflare, GitHub, Slack, Linear, Notion, Onyx):
 
 | Bundle | Env | Notes |
 | ------ | --- | ----- |
-| **Google Cloud** (50 Discovery APIs) | **`CLAWQL_ENABLE_GOOGLE=1`** | Explicit **`CLAWQL_PROVIDER=google`** still loads GCP regardless. |
-| **AWS** (50 OpenAPI specs) | **`CLAWQL_ENABLE_AWS=1`** | Explicit **`CLAWQL_PROVIDER=aws`** still loads AWS regardless. |
+| **Google Cloud** (50 Discovery APIs) | **`CLAWQL_ENABLE_GOOGLE=1`** | Explicit **`CLAWQL_PROVIDER=google`** or **`all-providers`** still loads GCP regardless. |
+| **AWS** (50 OpenAPI specs) | **`CLAWQL_ENABLE_AWS=1`** | Explicit **`CLAWQL_PROVIDER=aws`** or **`all-providers`** still loads AWS regardless. |
 
-**Fresh install** with no spec env: **Cloudflare only**. Use **`CLAWQL_PROVIDER=all-providers`** for the full SaaS vendor merge (GitHub, Slack, Jira, …) plus any cloud bundles enabled by the flags above.
+**Fresh install** with no spec env: **Cloudflare, GitHub, Slack, Linear, Notion, Onyx**. Use **`CLAWQL_PROVIDER=all-providers`** for literally every bundled vendor plus GCP and AWS manifests.
 
 ### Default off — opt in
 
@@ -70,8 +70,8 @@ ClawQL resolves specs in two stages:
 
 1. `CLAWQL_SPEC_PATHS`
 2. `CLAWQL_BUNDLED_PROVIDERS`
-3. `CLAWQL_PROVIDER` (merged preset such as `google`, `all-providers`, `atlassian`)
-4. **Default cloud bundle** when no single-spec env is set — **`CLAWQL_ENABLE_CLOUDFLARE`** (default on), **`CLAWQL_ENABLE_GOOGLE`**, **`CLAWQL_ENABLE_AWS`** (default off)
+3. `CLAWQL_PROVIDER` (merged preset such as `default`, `google`, `all-providers`, `atlassian`)
+4. **Default bundled stack** when no single-spec env is set — Cloudflare, GitHub, Slack, Linear, Notion, Onyx (+ optional **`CLAWQL_ENABLE_GOOGLE`** / **`CLAWQL_ENABLE_AWS`**; omit Cloudflare with **`CLAWQL_ENABLE_CLOUDFLARE=0`**)
 
 When Stage 1 is active:
 

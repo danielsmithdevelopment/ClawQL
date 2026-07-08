@@ -5,8 +5,9 @@
  * - Local file (JSON or YAML OpenAPI 3 / Swagger 2), or
  * - URL to fetch the same, or
  * - Google Discovery document URL, or
- * - Default: enabled cloud bundles only — **`CLAWQL_ENABLE_CLOUDFLARE`** (default on), **`CLAWQL_ENABLE_GOOGLE`**, **`CLAWQL_ENABLE_AWS`** (default off).
- *   Fresh install loads **Cloudflare** only unless flags or **`CLAWQL_PROVIDER=all-providers`** say otherwise.
+ * - Default: opinionated bundled stack — **Cloudflare, GitHub, Slack, Linear, Notion, Onyx**; optional
+ *   **`CLAWQL_ENABLE_GOOGLE`** / **`CLAWQL_ENABLE_AWS`** add-ons; omit Cloudflare with **`CLAWQL_ENABLE_CLOUDFLARE=0`**.
+ *   Use **`CLAWQL_PROVIDER=all-providers`** for literally every bundled vendor plus GCP and AWS manifests.
  * - Custom merge: **`CLAWQL_BUNDLED_PROVIDERS=a,b,…`** (bundled vendor ids and/or **`google`** / **`aws`**) or **`CLAWQL_SPEC_PATHS=…`**.
  * - Optional merged **`CLAWQL_PROVIDER`** presets: **`google`**, **`aws`**, **`atlassian`**, **`all-providers`**.
  *
@@ -643,16 +644,16 @@ async function resolveMultiSpecItems(): Promise<ProviderGroupItem[] | null> {
     const grouped = await resolveBundledProviderGroup(providerRaw);
     if (grouped) return grouped;
   }
-  // No config: default merge — cloud providers enabled via CLAWQL_ENABLE_GOOGLE / CLOUDFLARE / AWS (Cloudflare on by default).
+  // No config: default merge — opinionated bundled stack (see DEFAULT_BUNDLED_PROVIDER_IDS).
   if (!filePath && !specUrl && !discoveryUrl && !providerRaw) {
     const defaultItems = await resolveDefaultBundledProvidersItems();
     if (defaultItems.length === 0) {
       throw new Error(
-        "No bundled providers enabled. Set CLAWQL_ENABLE_CLOUDFLARE=1 (default), CLAWQL_ENABLE_GOOGLE=1, and/or CLAWQL_ENABLE_AWS=1, or use CLAWQL_PROVIDER / CLAWQL_BUNDLED_PROVIDERS / CLAWQL_SPEC_PATHS."
+        "No bundled providers in default stack. Set CLAWQL_ENABLE_CLOUDFLARE=1 (default), add CLAWQL_ENABLE_GOOGLE=1 and/or CLAWQL_ENABLE_AWS=1, or use CLAWQL_PROVIDER / CLAWQL_BUNDLED_PROVIDERS / CLAWQL_SPEC_PATHS."
       );
     }
     console.error(
-      `[spec-loader] No spec env/provider set — using default cloud bundle (${defaultItems.length} spec(s); enable flags: google=${process.env.CLAWQL_ENABLE_GOOGLE ?? "0"}, cloudflare=${process.env.CLAWQL_ENABLE_CLOUDFLARE ?? "1"}, aws=${process.env.CLAWQL_ENABLE_AWS ?? "0"})`
+      `[spec-loader] No spec env/provider set — using default bundled stack (${defaultItems.length} spec(s); cloud add-ons: google=${process.env.CLAWQL_ENABLE_GOOGLE ?? "0"}, aws=${process.env.CLAWQL_ENABLE_AWS ?? "0"}; cloudflare=${process.env.CLAWQL_ENABLE_CLOUDFLARE ?? "1"})`
     );
     return defaultItems;
   }
