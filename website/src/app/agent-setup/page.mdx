@@ -3,13 +3,24 @@ import { Note } from '@/components/mdx'
 
 # Agent setup
 
-Copy the prompt below into **Cursor**, **Claude Desktop**, or **Claude Code** for a guided first-time install: MCP wiring, one vendor credential, and a smoke **`search`** + **`execute`**. {{ className: 'lead' }}
+Vault-first onboarding: one home for **memory**, **provider secrets**, and **MCP wiring** — better than pasting API keys into client config. {{ className: 'lead' }}
 
 <Note>
-  Default install loads the **opinionated stack** (Cloudflare, GitHub, Slack,
-  Linear, Notion, Onyx). Use **`CLAWQL_PROVIDER=all-providers`** only when you
-  want every bundled vendor plus Google top-50 and AWS top-50.
+  Run **`clawql init`** before connecting Cursor. Secrets live in **`~/.ClawQL/vault/providers.json`**
+  (same shape as HashiCorp **`secret/clawql/providers`**). Memory tools use **`~/.ClawQL/Memory/`**.
+  Default install loads the **opinionated stack** (Cloudflare, GitHub, Slack, Linear, Notion, Onyx).
+  Use **`CLAWQL_PROVIDER=all-providers`** only for every bundled vendor plus Google top-50 and AWS top-50.
 </Note>
+
+## CLI (recommended)
+
+```bash
+npx -p clawql-mcp clawql init --interactive
+npx -p clawql-mcp clawql doctor
+npx -p clawql-mcp clawql mcp-config
+```
+
+Paste **`mcp-config`** output into Cursor MCP settings, then restart the client.
 
 <div className="not-prose my-8 flex flex-wrap gap-3">
   <Button href="/quickstart" arrow="right">
@@ -18,65 +29,37 @@ Copy the prompt below into **Cursor**, **Claude Desktop**, or **Claude Code** fo
   <Button href="/mcp-clients" variant="outline">
     <>MCP clients</>
   </Button>
-  <Button href="/spec-configuration" variant="outline">
-    <>Spec configuration</>
+  <Button href="/learn/vault-memory-between-chats" variant="outline">
+    <>Vault memory</>
   </Button>
 </div>
 
 ## Copy-paste prompt
 
-Select and copy the entire fenced block:
+For agent-guided setup, copy the full prompt from the repo:
+[agent-setup-prompt.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/getting-started/agent-setup-prompt.md)
 
-```
-You are helping me set up ClawQL (MCP server for API search + execute over OpenAPI/Discovery specs).
+Highlights the agent should run:
 
-Goals:
-1. Choose deployment: (A) local stdio via npx, (B) local HTTP via clawql-mcp-http, or (C) Kubernetes Helm full stack — ask me which I prefer if unclear.
-2. Install/run ClawQL without pushing secrets to git.
-3. Configure my MCP client (Cursor or Claude) and remind me to restart the client after MCP config changes.
-4. Pick ONE vendor from the default stack to validate: Cloudflare, GitHub, Slack, Linear, Notion, or Onyx — based on which API token I already have.
-5. Run a smoke test: tools/list (if available), search for one operation, then execute a read-only call.
+1. **`clawql init --interactive`** — `~/.ClawQL`, memory path, provider vault
+2. **`clawql doctor`** — verify memory + secrets coverage
+3. **`clawql mcp-config`** — secret-free MCP JSON
+4. Smoke **`search`** + read-only **`execute`** on one default-stack vendor
+5. Optional **`clawql init --push-vault`** when HashiCorp Vault is available (K8s)
 
-Important facts:
-- Default install (no CLAWQL_* spec env): opinionated stack = Cloudflare, GitHub, Slack, Linear, Notion, Onyx — NOT all-providers.
-- Full framework bundle: CLAWQL_PROVIDER=all-providers (every bundled vendor + Google top-50 + AWS top-50).
-- Add Google/AWS to default stack only: CLAWQL_ENABLE_GOOGLE=1 / CLAWQL_ENABLE_AWS=1.
-- Core MCP tools: search, execute, audit, cache. Optional: memory_*, ingest_external_knowledge, etc. via CLAWQL_ENABLE_*.
-- Docs: https://docs.clawql.com/quickstart https://docs.clawql.com/mcp-clients https://docs.clawql.com/spec-configuration
-- After HTTP start, run: bash scripts/dev/clawql-doctor.sh (or curl /healthz).
+## Local vs cluster secrets
 
-Stdio example (default stack):
-  npx -p clawql-mcp clawql-mcp
+| Mode | Secrets store |
+| ---- | ------------- |
+| **Local stdio** | `~/.ClawQL/vault/providers.json` (loaded at MCP startup) |
+| **Kubernetes** | HashiCorp Vault → ESO → `clawql-provider-env` |
+| **Dashboard** | Provider secrets UI → Vault KV |
 
-HTTP example:
-  PORT=8080 npx -p clawql-mcp clawql-mcp-http
-  curl -s http://localhost:8080/healthz
-
-Cursor MCP config (stdio) — adjust path/command as needed:
-{
-  "mcpServers": {
-    "clawql": {
-      "command": "npx",
-      "args": ["-p", "clawql-mcp", "clawql-mcp"]
-    }
-  }
-}
-
-Do not invent API responses. If execute fails on auth, tell me exactly which env var to set (e.g. GITHUB_TOKEN, SLACK_BOT_TOKEN, LINEAR_API_KEY, NOTION_API_TOKEN, ONYX_API_TOKEN, CLOUDFLARE_API_TOKEN) and link to the matching onboarding doc.
-
-When done, summarize: deployment mode, loaded spec mode, MCP transport, vendor tested, and next optional steps (vault memory, all-providers, Helm IDP stack).
-```
+Guide: [local-provider-vault.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/getting-started/local-provider-vault.md)
 
 ## Health check (HTTP)
 
-After starting **`clawql-mcp-http`**:
-
 ```bash
-CLAWQL_MCP_URL=http://127.0.0.1:8080 bash scripts/dev/clawql-doctor.sh
+PORT=8080 npx -p clawql-mcp clawql-mcp-http
+CLAWQL_MCP_URL=http://127.0.0.1:8080 npx -p clawql-mcp clawql doctor
 ```
-
-Use **`--verbose`** to print the `/healthz` JSON body.
-
-## Design background
-
-The init walkthrough is modeled partly on [Executor](https://executor.sh/docs) (`doctor`, agent-bootstrap prompts). Full phased plan: [clawql-init-walkthrough-spec.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/getting-started/clawql-init-walkthrough-spec.md) in the repo.

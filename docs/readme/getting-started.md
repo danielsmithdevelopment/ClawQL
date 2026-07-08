@@ -25,9 +25,17 @@ CLAWQL_MCP_URL=http://127.0.0.1:8080 bash scripts/dev/clawql-doctor.sh
 
 ## Set up with your agent
 
-Paste the copy-paste block from [agent-setup-prompt.md](../getting-started/agent-setup-prompt.md) into Cursor or Claude for an guided first run (install → MCP → one vendor smoke test).
+Paste the copy-paste block from [agent-setup-prompt.md](../getting-started/agent-setup-prompt.md) into Cursor or Claude for a guided first run.
 
-Design notes (Executor comparison, phased `clawql doctor`): [clawql-init-walkthrough-spec.md](../getting-started/clawql-init-walkthrough-spec.md).
+**Vault-first CLI (recommended):**
+
+```bash
+npx -p clawql-mcp clawql init --interactive
+npx -p clawql-mcp clawql doctor
+npx -p clawql-mcp clawql mcp-config
+```
+
+See [local-provider-vault.md](../getting-started/local-provider-vault.md).
 
 ## TL;DR run modes
 

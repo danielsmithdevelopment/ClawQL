@@ -1,8 +1,20 @@
 # Set up ClawQL with your agent
 
-Copy the block below into **Cursor**, **Claude Desktop**, or **Claude Code** to run an end-to-end first-time setup: install, MCP wiring, one vendor credential, and a smoke `search` + `execute`.
+Copy the block below into **Cursor**, **Claude Desktop**, or **Claude Code** for vault-first onboarding: memory home, provider secrets, MCP wiring, and a smoke `search` + `execute`.
 
 **Website:** [docs.clawql.com/agent-setup](https://docs.clawql.com/agent-setup)
+
+---
+
+## Recommended CLI flow (before the prompt)
+
+```bash
+npx -p clawql-mcp clawql init --interactive   # ~/.ClawQL + vault/providers.json
+npx -p clawql-mcp clawql doctor
+npx -p clawql-mcp clawql mcp-config           # paste into Cursor MCP settings
+```
+
+Provider tokens live in **`~/.ClawQL/vault/providers.json`** (same KV shape as HashiCorp **`secret/clawql/providers`**). Memory tools use **`~/.ClawQL/Memory/`** via **`CLAWQL_OBSIDIAN_VAULT_PATH`**.
 
 ---
 
@@ -12,40 +24,26 @@ Copy the block below into **Cursor**, **Claude Desktop**, or **Claude Code** to 
 You are helping me set up ClawQL (MCP server for API search + execute over OpenAPI/Discovery specs).
 
 Goals:
-1. Choose deployment: (A) local stdio via npx, (B) local HTTP via clawql-mcp-http, or (C) Kubernetes Helm full stack — ask me which I prefer if unclear.
-2. Install/run ClawQL without pushing secrets to git.
-3. Configure my MCP client (Cursor or Claude) and remind me to restart the client after MCP config changes.
-4. Pick ONE vendor from the default stack to validate: Cloudflare, GitHub, Slack, Linear, Notion, or Onyx — based on which API token I already have.
-5. Run a smoke test: tools/list (if available), search for one operation, then execute a read-only call.
+1. Run vault-first onboarding:
+   npx -p clawql-mcp clawql init --interactive
+   npx -p clawql-mcp clawql doctor
+   npx -p clawql-mcp clawql mcp-config
+2. Choose deployment if not using stdio: (A) local stdio (default), (B) local HTTP clawql-mcp-http, or (C) Kubernetes Helm — ask if unclear.
+3. Never put API tokens in mcp.json or git. Secrets go in ~/.ClawQL/vault/providers.json (local) or HashiCorp Vault secret/clawql/providers (K8s). Use clawql init --from-env .env to import, then remove secrets from repo .env.
+4. Configure Cursor/Claude with mcp-config output; remind me to restart the MCP client.
+5. Pick ONE default-stack vendor to smoke-test with search + read-only execute (GitHub, Slack, Linear, Notion, Onyx, or Cloudflare).
+6. Confirm memory_ingest works: CLAWQL_OBSIDIAN_VAULT_PATH should be ~/.ClawQL after init.
 
 Important facts:
-- Default install (no CLAWQL_* spec env): opinionated stack = Cloudflare, GitHub, Slack, Linear, Notion, Onyx — NOT all-providers.
-- Full framework bundle: CLAWQL_PROVIDER=all-providers (every bundled vendor + Google top-50 + AWS top-50).
-- Add Google/AWS to default stack only: CLAWQL_ENABLE_GOOGLE=1 / CLAWQL_ENABLE_AWS=1.
-- Core MCP tools: search, execute, audit, cache. Optional: memory_*, ingest_external_knowledge, etc. via CLAWQL_ENABLE_*.
-- Docs: https://docs.clawql.com/quickstart https://docs.clawql.com/mcp-clients https://docs.clawql.com/spec-configuration
-- After HTTP start, run: bash scripts/dev/clawql-doctor.sh (or curl /healthz).
+- Default install: opinionated stack = Cloudflare, GitHub, Slack, Linear, Notion, Onyx.
+- Full bundle: CLAWQL_PROVIDER=all-providers.
+- MCP loads ~/.ClawQL/clawql.env + vault/providers.json at startup (no secrets in MCP JSON).
+- K8s: make local-k8s-up then clawql init --push-vault with VAULT_TOKEN set.
+- Docs: https://docs.clawql.com/agent-setup https://docs.clawql.com/quickstart
 
-Stdio example (default stack):
-  npx -p clawql-mcp clawql-mcp
+Do not invent API responses. On auth failure, point to vault/providers.json or docs/providers/*-onboarding.md.
 
-HTTP example:
-  PORT=8080 npx -p clawql-mcp clawql-mcp-http
-  curl -s http://localhost:8080/healthz
-
-Cursor MCP config (stdio) — adjust path/command as needed:
-{
-  "mcpServers": {
-    "clawql": {
-      "command": "npx",
-      "args": ["-p", "clawql-mcp", "clawql-mcp"]
-    }
-  }
-}
-
-Do not invent API responses. If execute fails on auth, tell me exactly which env var to set (e.g. GITHUB_TOKEN, SLACK_BOT_TOKEN, LINEAR_API_KEY, NOTION_API_TOKEN, ONYX_API_TOKEN, CLOUDFLARE_API_TOKEN) and link to the matching onboarding doc under docs/providers/.
-
-When done, summarize: deployment mode, loaded spec mode, MCP transport, vendor tested, and next optional steps (vault memory, all-providers, Helm IDP stack).
+When done, summarize: home path, secrets vault path, MCP transport, vendor tested, memory vault status.
 ```
 
 ---
@@ -54,8 +52,9 @@ When done, summarize: deployment mode, loaded spec mode, MCP transport, vendor t
 
 - First-time install on a new machine
 - Onboarding a teammate who already uses Cursor/Claude
-- Validating a fork or release candidate before tagging
+- Validating a release candidate
 
 ## Manual alternative
 
-Follow [Getting started](../readme/getting-started.md) step by step without an agent.
+- [Getting started](../readme/getting-started.md)
+- [Local provider vault](./local-provider-vault.md)

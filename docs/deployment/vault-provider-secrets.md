@@ -20,6 +20,8 @@
 
 Do **not** put provider tokens in **`extraEnv`** or chart-managed **`documentPipeline`/`idpCollaboration` Secrets** for production — use Vault + ESO so rotation and audit stay centralized.
 
+**Local stdio (solo dev):** **`clawql init`** writes the same KV property names to **`~/.ClawQL/vault/providers.json`**; MCP loads them at startup. See **[`local-provider-vault.md`](../getting-started/local-provider-vault.md)**.
+
 ---
 
 ## Vault KV shape
@@ -42,6 +44,8 @@ Do **not** put provider tokens in **`extraEnv`** or chart-managed **`documentPip
 | `nextcloudAppPassword`  | `NEXTCLOUD_APP_PASSWORD`         | IDP intake/sync                  |
 | `coneshareApiToken`     | `CONESHARE_API_TOKEN`            | VDR sharing                      |
 | `cloudflareApiToken`    | `CLAWQL_CLOUDFLARE_API_TOKEN`    | `cloudflare` provider            |
+| `linearApiKey`          | `LINEAR_API_KEY`                 | `linear` provider                  |
+| `notionApiToken`        | `NOTION_API_TOKEN`               | `notion` provider                  |
 | `googleAccessToken`     | `CLAWQL_GOOGLE_ACCESS_TOKEN`     | Google Discovery presets         |
 | `atlassianApiToken`     | `CLAWQL_ATLASSIAN_TOKEN`         | Jira/Bitbucket                   |
 | `labelStudioApiToken`   | `CLAWQL_LABEL_STUDIO_API_TOKEN`  | HITL enqueue                     |

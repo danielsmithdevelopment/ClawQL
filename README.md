@@ -30,7 +30,9 @@ npm install clawql-mcp
 Run with the **default bundled stack** (Cloudflare, GitHub, Slack, Linear, Notion, Onyx):
 
 ```bash
-npx clawql-mcp
+npx -p clawql-mcp clawql init --interactive   # vault-first onboarding
+npx -p clawql-mcp clawql mcp-config           # MCP JSON for Cursor
+npx -p clawql-mcp clawql-mcp
 ```
 
 For every bundled vendor plus Google top-50 and AWS top-50:

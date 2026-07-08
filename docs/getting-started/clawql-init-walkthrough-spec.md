@@ -62,11 +62,13 @@ Executor is a useful reference: one-line install, `doctor`, agent-bootstrap shor
 3. **`scripts/dev/clawql-doctor.sh`:** Node on PATH, `clawql-mcp` resolvable, optional HTTP `/healthz`, common auth env hints for default-stack vendors.
 4. **Migration note:** Pre-6.5.0 “no env = all-providers” → post-6.5.0 opinionated stack.
 
-### Phase 2 — CLI wrapper (future)
+### Phase 2 — CLI wrapper (shipped)
 
-- npm bin `clawql` or `clawql doctor` delegating to doctor script
-- `clawql init` — interactive env file scaffold (`.env` from `.env.example` subset)
-- `clawql mcp-print-config` — emit Cursor/Claude JSON for stdio or HTTP
+- npm bin **`clawql`** — **`init`**, **`doctor`**, **`mcp-config`**
+- **`clawql init`** — `~/.ClawQL` scaffold, **`CLAWQL_OBSIDIAN_VAULT_PATH`**, interactive default-stack tokens → **`vault/providers.json`**
+- **`clawql init --from-env`** / **`--push-vault`** — import + HashiCorp sync
+- MCP **`load-env.ts`** loads local provider vault at startup (vault-first secrets)
+- Guide: [local-provider-vault.md](./local-provider-vault.md)
 
 ### Phase 3 — Guided UI (future, optional)
 

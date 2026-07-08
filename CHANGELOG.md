@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **AWS top-50 bundled preset** ([#528](https://github.com/danielsmithdevelopment/ClawQL/pull/528)): SigV4 **`execute`**, manifest under `providers/aws/`, onboarding [`docs/providers/aws-onboarding.md`](docs/providers/aws-onboarding.md).
 - **Notion bundled provider**: official OpenAPI; **`NOTION_API_TOKEN`** auth; onboarding [`docs/providers/notion-onboarding.md`](docs/providers/notion-onboarding.md).
 - **Plugins docs site**: `docs/plugins/*.md` → `/plugins` hub + per-slug pages.
-- **Init walkthrough (Phase 1)**: [agent setup prompt](docs/getting-started/agent-setup-prompt.md), [design spec](docs/getting-started/clawql-init-walkthrough-spec.md), [`scripts/dev/clawql-doctor.sh`](scripts/dev/clawql-doctor.sh), website [`/agent-setup`](https://docs.clawql.com/agent-setup).
+- **Init walkthrough (Phase 2)**: `clawql` CLI — **`init`**, **`doctor`**, **`mcp-config`**; local **`~/.ClawQL/vault/providers.json`** (HashiCorp KV shape); MCP loads vault at startup; [local-provider-vault.md](docs/getting-started/local-provider-vault.md).
 
 ### Changed
 
