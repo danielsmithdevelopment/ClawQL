@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Notion bundled provider**: official OpenAPI; **`NOTION_API_TOKEN`** auth; onboarding [`docs/providers/notion-onboarding.md`](docs/providers/notion-onboarding.md).
 - **Plugins docs site**: `docs/plugins/*.md` → `/plugins` hub + per-slug pages.
 - **Init walkthrough (Phase 2)**: `clawql` CLI — **`init`**, **`doctor`**, **`mcp-config`**; local **`~/.ClawQL/vault/providers.json`** (HashiCorp KV shape); MCP loads vault at startup; [local-provider-vault.md](docs/getting-started/local-provider-vault.md).
+- **Onboarding Tier 1**: `clawql secrets list|set` (hidden token input), `clawql doctor --smoke`, `clawql mcp-config --write cursor|claude-desktop`, HashiCorp Vault auto-detect on init, MCP startup stderr summary.
 
 ### Changed
 

@@ -9,6 +9,9 @@ import { getObsidianVaultPath } from "clawql-memory/vault/config";
 import { DEFAULT_STACK_VAULT_ENTRIES } from "../provider-vault/catalog.js";
 import { readLocalProvidersVault } from "../provider-vault/local-store.js";
 import { getClawqlEnvFilePath, getClawqlHome, getLocalProvidersVaultPath } from "./paths.js";
+import { inferSpecMode } from "./spec-mode.js";
+import { probeHashicorpVault } from "./hashicorp-vault.js";
+import { runMcpSmoke } from "./smoke.js";
 
 export type DoctorCheck = {
   level: "ok" | "warn" | "fail";
@@ -22,18 +25,8 @@ export type DoctorReport = {
   home: string;
 };
 
-function inferSpecMode(): string {
-  if (
-    process.env.CLAWQL_SPEC_PATH?.trim() ||
-    process.env.CLAWQL_SPEC_URL?.trim() ||
-    process.env.CLAWQL_DISCOVERY_URL?.trim()
-  ) {
-    return "single-spec";
-  }
-  if (process.env.CLAWQL_SPEC_PATHS?.trim()) return "CLAWQL_SPEC_PATHS";
-  if (process.env.CLAWQL_BUNDLED_PROVIDERS?.trim()) return "CLAWQL_BUNDLED_PROVIDERS";
-  if (process.env.CLAWQL_PROVIDER?.trim()) return `CLAWQL_PROVIDER=${process.env.CLAWQL_PROVIDER}`;
-  return "default stack (Cloudflare, GitHub, Slack, Linear, Notion, Onyx)";
+function inferSpecModeFromEnv(): string {
+  return inferSpecMode();
 }
 
 async function pathWritable(dir: string): Promise<boolean> {
@@ -45,7 +38,10 @@ async function pathWritable(dir: string): Promise<boolean> {
   }
 }
 
-export async function runDoctor(verbose = false): Promise<DoctorReport> {
+export async function runDoctor(
+  verbose = false,
+  options: { smoke?: boolean } = {}
+): Promise<DoctorReport> {
   const checks: DoctorCheck[] = [];
   const home = getClawqlHome();
 
@@ -145,11 +141,18 @@ export async function runDoctor(verbose = false): Promise<DoctorReport> {
     }
   }
 
-  if (process.env.VAULT_ADDR?.trim() && process.env.VAULT_TOKEN?.trim()) {
+  const hv = await probeHashicorpVault();
+  if (hv.reachable) {
+    checks.push({
+      level: "ok",
+      message: `HashiCorp Vault reachable (${hv.source}: ${hv.addr ?? "unknown"})`,
+      detail: hv.hint,
+    });
+  } else if (process.env.VAULT_ADDR?.trim() && process.env.VAULT_TOKEN?.trim()) {
     checks.push({
       level: "ok",
       message:
-        "HashiCorp Vault detected — clawql init --push-vault syncs to secret/clawql/providers",
+        "HashiCorp Vault env set — clawql init --push-vault syncs to secret/clawql/providers",
     });
   }
 
@@ -172,9 +175,26 @@ export async function runDoctor(verbose = false): Promise<DoctorReport> {
     }
   }
 
-  checks.push({ level: "ok", message: `Spec mode: ${inferSpecMode()}` });
+  checks.push({ level: "ok", message: `Spec mode: ${inferSpecModeFromEnv()}` });
 
-  return { checks, specMode: inferSpecMode(), home };
+  if (options.smoke) {
+    const smoke = await runMcpSmoke();
+    for (const step of smoke.steps) {
+      checks.push({
+        level: step.status === "pass" ? "ok" : step.status === "warn" ? "warn" : "fail",
+        message: `smoke ${step.name}`,
+        detail: step.detail,
+      });
+    }
+  } else {
+    checks.push({
+      level: "ok",
+      message: "MCP smoke: not run",
+      detail: "clawql doctor --smoke",
+    });
+  }
+
+  return { checks, specMode: inferSpecModeFromEnv(), home };
 }
 
 export function formatDoctorReport(report: DoctorReport, verbose = false): string {
@@ -192,7 +212,8 @@ export function formatDoctorReport(report: DoctorReport, verbose = false): strin
     "",
     "Next:",
     "  npx clawql init --interactive",
-    "  npx clawql mcp-config",
+    "  npx clawql doctor --smoke",
+    "  npx clawql mcp-config --write cursor",
     "  https://docs.clawql.com/agent-setup",
     ""
   );
