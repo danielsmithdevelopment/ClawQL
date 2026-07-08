@@ -20,6 +20,7 @@ test('case-study page is reachable', async ({ page }) => {
 
 test('plugins hub is reachable', async ({ page }) => {
   await page.goto('/plugins')
-  await expect(page.getByRole('heading', { name: /^Plugins$/ })).toBeVisible()
-  await expect(page.getByRole('link', { name: /Bundled providers/i })).toBeVisible()
+  const main = page.locator('#main-content')
+  await expect(main.getByRole('heading', { name: /^Plugins$/ })).toBeVisible()
+  await expect(main.getByRole('link', { name: /Bundled providers/i })).toBeVisible()
 })
