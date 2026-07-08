@@ -105,9 +105,7 @@ async function main(): Promise<void> {
   }
 
   if (cmd === "onboard") {
-    const writeMcp = flags.skipMcpWrite
-      ? false
-      : parseWriteTarget(flags.writeMcp ?? "cursor");
+    const writeMcp = flags.skipMcpWrite ? false : parseWriteTarget(flags.writeMcp ?? "cursor");
     const result = await runOnboard({
       yes: Boolean(flags.yes),
       interactive: Boolean(flags.interactive),
