@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Notion bundled provider**: official OpenAPI from [developers.notion.com/openapi.json](https://developers.notion.com/openapi.json); **`NOTION_API_TOKEN`** + **`Notion-Version`** auth; onboarding [`docs/providers/notion-onboarding.md`](docs/providers/notion-onboarding.md).
+
 > **Note:** Items below are on **`main`** (post-**6.4.1** npm tag) and documented in release notes / IDP wave guides; they will appear in the next semver release entry when tagged.
 
 ### Added
