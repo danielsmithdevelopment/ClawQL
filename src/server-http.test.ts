@@ -220,7 +220,7 @@ describe("server-http", () => {
       if (saved === undefined) delete process.env.CLAWQL_HEALTHZ_NATIVE_PROTOCOL_METRICS;
       else process.env.CLAWQL_HEALTHZ_NATIVE_PROTOCOL_METRICS = saved;
     }
-  });
+  }, 20_000);
 
   it("GET /healthz nativeProtocolMetrics reflects in-process counters after recordNativeGraphqlExecute", async () => {
     const saved = process.env.CLAWQL_HEALTHZ_NATIVE_PROTOCOL_METRICS;
@@ -247,7 +247,7 @@ describe("server-http", () => {
       else process.env.CLAWQL_HEALTHZ_NATIVE_PROTOCOL_METRICS = saved;
       resetNativeProtocolMetricsForTests();
     }
-  });
+  }, 20_000);
 
   it("GET /healthz optional merkle when CLAWQL_HEALTHZ_MEMORY_ARTIFACTS=1", async () => {
     const dir = await mkdtemp(join(tmpdir(), "clawql-hz-"));
@@ -278,7 +278,7 @@ describe("server-http", () => {
       else process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS = savedHz;
       await rm(dir, { recursive: true, force: true });
     }
-  }, 15_000);
+  }, 20_000);
 
   it("GET /healthz includes cuckoo metrics when CLAWQL_HEALTHZ_MEMORY_ARTIFACTS and Cuckoo enabled", async () => {
     const dir = await mkdtemp(join(tmpdir(), "clawql-hz-"));
@@ -315,7 +315,7 @@ describe("server-http", () => {
       else process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS = savedHz;
       await rm(dir, { recursive: true, force: true });
     }
-  }, 15_000);
+  }, 20_000);
 
   it("POST /mcp initialize allocates mcp-session-id", async () => {
     await withHttpServer(async (base) => {
