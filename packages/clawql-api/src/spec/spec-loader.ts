@@ -5,8 +5,8 @@
  * - Local file (JSON or YAML OpenAPI 3 / Swagger 2), or
  * - URL to fetch the same, or
  * - Google Discovery document URL, or
- * - Default: **`all-providers`** — Google Cloud + AWS (bundled) + every other bundled spec (document stack
- *   tika / gotenberg / paperless / stirling / onyx omitted when **`CLAWQL_ENABLE_DOCUMENTS=0`**).
+ * - Default: enabled cloud bundles only — **`CLAWQL_ENABLE_CLOUDFLARE`** (default on), **`CLAWQL_ENABLE_GOOGLE`**, **`CLAWQL_ENABLE_AWS`** (default off).
+ *   Fresh install loads **Cloudflare** only unless flags or **`CLAWQL_PROVIDER=all-providers`** say otherwise.
  * - Custom merge: **`CLAWQL_BUNDLED_PROVIDERS=a,b,…`** (bundled vendor ids and/or **`google`** / **`aws`**) or **`CLAWQL_SPEC_PATHS=…`**.
  * - Optional merged **`CLAWQL_PROVIDER`** presets: **`google`**, **`aws`**, **`atlassian`**, **`all-providers`**.
  *
@@ -32,6 +32,7 @@ import {
   isBundledGraphqlProvider,
   resolveBundledProvider,
   resolveBundledProviderGroup,
+  resolveDefaultBundledProvidersItems,
   resolveItemsFromBundledProviderEnvList,
   type BundledGraphqlProvider,
   type BundledOpenApiProvider,
@@ -642,13 +643,18 @@ async function resolveMultiSpecItems(): Promise<ProviderGroupItem[] | null> {
     const grouped = await resolveBundledProviderGroup(providerRaw);
     if (grouped) return grouped;
   }
-  // No config: only default — full bundled set (Google Cloud manifest + every `BUNDLED_PROVIDERS` entry).
+  // No config: default merge — cloud providers enabled via CLAWQL_ENABLE_GOOGLE / CLOUDFLARE / AWS (Cloudflare on by default).
   if (!filePath && !specUrl && !discoveryUrl && !providerRaw) {
+    const defaultItems = await resolveDefaultBundledProvidersItems();
+    if (defaultItems.length === 0) {
+      throw new Error(
+        "No bundled providers enabled. Set CLAWQL_ENABLE_CLOUDFLARE=1 (default), CLAWQL_ENABLE_GOOGLE=1, and/or CLAWQL_ENABLE_AWS=1, or use CLAWQL_PROVIDER / CLAWQL_BUNDLED_PROVIDERS / CLAWQL_SPEC_PATHS."
+      );
+    }
     console.error(
-      "[spec-loader] No spec env/provider set — using all-providers (Google Cloud bundle + every bundled vendor)"
+      `[spec-loader] No spec env/provider set — using default cloud bundle (${defaultItems.length} spec(s); enable flags: google=${process.env.CLAWQL_ENABLE_GOOGLE ?? "0"}, cloudflare=${process.env.CLAWQL_ENABLE_CLOUDFLARE ?? "1"}, aws=${process.env.CLAWQL_ENABLE_AWS ?? "0"})`
     );
-    const defaultGroup = await resolveBundledProviderGroup("all-providers");
-    if (defaultGroup) return defaultGroup;
+    return defaultItems;
   }
   return null;
 }

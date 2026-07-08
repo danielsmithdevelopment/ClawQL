@@ -145,6 +145,11 @@ enableMemory: true
 # Document stack: tika, gotenberg, paperless, stirling, onyx, nextcloud, coneshare in all-providers merge + ingest_external_knowledge + (with enableOnyx) knowledge_search_onyx. Set false to inject CLAWQL_ENABLE_DOCUMENTS=0.
 enableDocuments: true
 
+# Bundled cloud APIs in default merge (no CLAWQL_PROVIDER) and in all-providers when true.
+enableGoogle: false
+enableCloudflare: true
+enableAws: false
+
 # MCP sandbox_exec — isolated snippets (Kata default in-cluster, Docker, Seatbelt, bridge; #207). Default off.
 enableSandbox: false
 

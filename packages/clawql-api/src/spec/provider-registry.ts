@@ -342,14 +342,55 @@ export const BUNDLED_DOCUMENT_VENDOR_IDS: readonly string[] = [
 
 const BUNDLED_DOCUMENT_VENDOR_SET = new Set(BUNDLED_DOCUMENT_VENDOR_IDS);
 
+function cloudflareProviderItem(root: string): ProviderGroupOpenApiItem {
+  const p = BUNDLED_PROVIDERS.cloudflare;
+  if (!p || isBundledGraphqlProvider(p)) {
+    throw new Error('Bundled provider "cloudflare" is missing or not OpenAPI');
+  }
+  return {
+    kind: "openapi",
+    abs: resolvePath(root, p.bundledSpecPath),
+    label: p.id,
+  };
+}
+
+/**
+ * Default bundled merge when no spec env is set: only cloud providers enabled via
+ * **`CLAWQL_ENABLE_GOOGLE`** / **`CLAWQL_ENABLE_CLOUDFLARE`** / **`CLAWQL_ENABLE_AWS`**.
+ * By default only **Cloudflare** is on (`CLAWQL_ENABLE_CLOUDFLARE` defaults true).
+ */
+export async function resolveDefaultBundledProvidersItems(): Promise<ProviderGroupItem[]> {
+  const root = getPackageRoot();
+  const flags = getClawqlOptionalToolFlags();
+  const out: ProviderGroupItem[] = [];
+  if (flags.enableGoogle) {
+    out.push(...(await resolveGoogleTop50Items()));
+  }
+  if (flags.enableAws) {
+    out.push(...(await resolveAwsTop50Items()));
+  }
+  if (flags.enableCloudflare) {
+    out.push(cloudflareProviderItem(root));
+  }
+  return out;
+}
+
 async function resolveAllBundledProvidersItems(): Promise<ProviderGroupItem[]> {
   const root = getPackageRoot();
-  const google = await resolveGoogleTop50Items();
-  const aws = await resolveAwsTop50Items();
-  const allowDocuments = getClawqlOptionalToolFlags().enableDocuments;
-  const labels = BUNDLED_MERGED_VENDOR_LABELS.filter(
-    (id) => allowDocuments || !BUNDLED_DOCUMENT_VENDOR_SET.has(id)
-  );
+  const flags = getClawqlOptionalToolFlags();
+  const cloud: ProviderGroupItem[] = [];
+  if (flags.enableGoogle) {
+    cloud.push(...(await resolveGoogleTop50Items()));
+  }
+  if (flags.enableAws) {
+    cloud.push(...(await resolveAwsTop50Items()));
+  }
+  const allowDocuments = flags.enableDocuments;
+  const labels = BUNDLED_MERGED_VENDOR_LABELS.filter((id) => {
+    if (!allowDocuments && BUNDLED_DOCUMENT_VENDOR_SET.has(id)) return false;
+    if (id === "cloudflare" && !flags.enableCloudflare) return false;
+    return true;
+  });
   const rest: ProviderGroupItem[] = [];
   for (const id of labels) {
     const p = BUNDLED_PROVIDERS[id]!;
@@ -369,7 +410,7 @@ async function resolveAllBundledProvidersItems(): Promise<ProviderGroupItem[]> {
       });
     }
   }
-  return [...google, ...aws, ...rest];
+  return [...cloud, ...rest];
 }
 
 export const BUNDLED_PROVIDER_GROUPS: Record<string, BundledProviderGroup> = {
@@ -379,8 +420,8 @@ export const BUNDLED_PROVIDER_GROUPS: Record<string, BundledProviderGroup> = {
   /** Merged bundled AWS APIs from `providers/aws/aws-top50-apis.json` (see providers docs). */
   aws: { resolve: resolveAwsTop50Items },
   /**
-   * Google Cloud + AWS bundles + every other bundled vendor (Jira, Bitbucket, Cloudflare, GitHub, …).
-   * The document stack (**tika**, **gotenberg**, **paperless**, **stirling**, **onyx**, **nextcloud**, **coneshare**, **docling**) is included unless **`CLAWQL_ENABLE_DOCUMENTS=0`**. Default when no spec env.
+   * Every bundled vendor (respecting **`CLAWQL_ENABLE_DOCUMENTS`** and cloud **`CLAWQL_ENABLE_*`** flags).
+   * Opt in explicitly with **`CLAWQL_PROVIDER=all-providers`** — not the no-config default.
    */
   "all-providers": { resolve: resolveAllBundledProvidersItems },
 };

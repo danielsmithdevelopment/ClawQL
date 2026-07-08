@@ -5,6 +5,7 @@ import {
   listBundledProviderIds,
   resolveBundledProvider,
   resolveBundledProviderGroup,
+  resolveDefaultBundledProvidersItems,
   resolveItemsFromBundledProviderEnvList,
 } from "clawql-api";
 
@@ -92,7 +93,7 @@ describe("provider-registry", () => {
   it("resolves all-providers to many bundled vendors", async () => {
     const items = await resolveBundledProviderGroup("all-providers");
     expect(items).toBeDefined();
-    expect(items!.length).toBeGreaterThan(20);
+    expect(items!.length).toBeGreaterThan(8);
     const labels = new Set(items!.map((x) => x.label));
     expect(labels.has("slack")).toBe(true);
     expect(labels.has("n8n")).toBe(true);
@@ -101,12 +102,40 @@ describe("provider-registry", () => {
     expect(labels.has("tika")).toBe(true);
     expect(labels.has("onyx")).toBe(true);
     expect(labels.has("linear")).toBe(true);
-    expect(labels.has("ec2-2016-11-15")).toBe(true);
+    expect(labels.has("cloudflare")).toBe(true);
+    // Google/AWS off by default unless CLAWQL_ENABLE_GOOGLE / CLAWQL_ENABLE_AWS is set
+    expect(labels.has("ec2-2016-11-15")).toBe(false);
+    expect(labels.has("compute-v1")).toBe(false);
     expect(
       items!.every((x) =>
         x.kind === "graphql" ? x.schemaAbs.includes("/providers/") : x.abs.includes("/providers/")
       )
     ).toBe(true);
+  });
+
+  it("includes google and aws in all-providers when CLAWQL_ENABLE_GOOGLE and CLAWQL_ENABLE_AWS are set", async () => {
+    vi.stubEnv("CLAWQL_ENABLE_GOOGLE", "1");
+    vi.stubEnv("CLAWQL_ENABLE_AWS", "1");
+    try {
+      const items = await resolveBundledProviderGroup("all-providers");
+      const labels = new Set(items!.map((x) => x.label));
+      expect(labels.has("compute-v1")).toBe(true);
+      expect(labels.has("ec2-2016-11-15")).toBe(true);
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  it("omits cloudflare from all-providers when CLAWQL_ENABLE_CLOUDFLARE=0", async () => {
+    vi.stubEnv("CLAWQL_ENABLE_CLOUDFLARE", "0");
+    try {
+      const items = await resolveBundledProviderGroup("all-providers");
+      const labels = new Set(items!.map((x) => x.label));
+      expect(labels.has("cloudflare")).toBe(false);
+      expect(labels.has("github")).toBe(true);
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 
   it("omits document-stack vendors from all-providers when CLAWQL_ENABLE_DOCUMENTS=0", async () => {
@@ -171,6 +200,34 @@ describe("provider-registry", () => {
     if (items[0]?.kind === "graphql") {
       expect(items[0].label).toBe("linear");
       expect(items[0].endpoint).toContain("linear.app");
+    }
+  });
+
+  it("resolveDefaultBundledProvidersItems loads cloudflare only by default", async () => {
+    vi.stubEnv("CLAWQL_ENABLE_GOOGLE", "0");
+    vi.stubEnv("CLAWQL_ENABLE_AWS", "0");
+    delete process.env.CLAWQL_ENABLE_CLOUDFLARE;
+    try {
+      const items = await resolveDefaultBundledProvidersItems();
+      const labels = new Set(items.map((x) => x.label));
+      expect(labels).toEqual(new Set(["cloudflare"]));
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  it("resolveDefaultBundledProvidersItems respects CLAWQL_ENABLE_GOOGLE and CLAWQL_ENABLE_AWS", async () => {
+    vi.stubEnv("CLAWQL_ENABLE_GOOGLE", "1");
+    vi.stubEnv("CLAWQL_ENABLE_AWS", "1");
+    vi.stubEnv("CLAWQL_ENABLE_CLOUDFLARE", "0");
+    try {
+      const items = await resolveDefaultBundledProvidersItems();
+      const labels = new Set(items.map((x) => x.label));
+      expect(labels.has("cloudflare")).toBe(false);
+      expect(labels.has("compute-v1")).toBe(true);
+      expect(labels.has("sts-2011-06-15")).toBe(true);
+    } finally {
+      vi.unstubAllEnvs();
     }
   });
 });

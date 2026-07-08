@@ -32,7 +32,7 @@ clawql-mcp
 export CLAWQL_BUNDLED_PROVIDERS=google,aws,cloudflare
 ```
 
-**Default `all-providers`:** includes Google Cloud (50 APIs), AWS (50 APIs), and every other bundled vendor.
+**Default `all-providers`:** includes Google/AWS only when **`CLAWQL_ENABLE_GOOGLE=1`** / **`CLAWQL_ENABLE_AWS=1`**. Fresh install with no spec env loads **Cloudflare only** (`CLAWQL_ENABLE_CLOUDFLARE` default on).
 
 ## Authentication
 
