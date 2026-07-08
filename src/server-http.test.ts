@@ -55,15 +55,11 @@ async function closeMcpClient(client: { close(): Promise<void> }): Promise<void>
 }
 
 const STREAMABLE_HTTP_TEST_TIMEOUT_MS = 45_000;
-/** sql.js cold start + memory.db sync can exceed 20s on slow CI Node runners. */
-const MEMORY_ARTIFACT_TEST_TIMEOUT_MS = 45_000;
-/** Healthz enrichment tests can exceed 20s under CI coverage on slow runners. */
-const HTTP_HEALTHZ_TEST_TIMEOUT_MS = 45_000;
 
 const here = dirname(fileURLToPath(import.meta.url));
 const minimalSpec = join(here, "test-utils/fixtures/minimal-petstore.json");
 
-describe("server-http", () => {
+describe("server-http", { timeout: STREAMABLE_HTTP_TEST_TIMEOUT_MS }, () => {
   const saved: Record<string, string | undefined> = {};
 
   beforeAll(async () => {
@@ -246,7 +242,7 @@ describe("server-http", () => {
       if (saved === undefined) delete process.env.CLAWQL_HEALTHZ_NATIVE_PROTOCOL_METRICS;
       else process.env.CLAWQL_HEALTHZ_NATIVE_PROTOCOL_METRICS = saved;
     }
-  }, 20_000);
+  });
 
   it("GET /healthz nativeProtocolMetrics reflects in-process counters after recordNativeGraphqlExecute", async () => {
     const saved = process.env.CLAWQL_HEALTHZ_NATIVE_PROTOCOL_METRICS;
@@ -273,81 +269,73 @@ describe("server-http", () => {
       else process.env.CLAWQL_HEALTHZ_NATIVE_PROTOCOL_METRICS = saved;
       resetNativeProtocolMetricsForTests();
     }
-  }, 20_000);
+  });
 
-  it(
-    "GET /healthz optional merkle when CLAWQL_HEALTHZ_MEMORY_ARTIFACTS=1",
-    async () => {
-      const dir = await mkdtemp(join(tmpdir(), "clawql-hz-"));
-      const savedVault = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
-      const savedMerkle = process.env.CLAWQL_MERKLE_ENABLED;
-      const savedHz = process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS;
-      process.env.CLAWQL_OBSIDIAN_VAULT_PATH = dir;
-      process.env.CLAWQL_MERKLE_ENABLED = "1";
-      process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS = "1";
-      await mkdir(join(dir, "Memory"), { recursive: true });
-      await writeFile(join(dir, "Memory/a.md"), "# A\n", "utf8");
-      const text = await readFile(join(dir, "Memory/a.md"), "utf8");
-      await syncMemoryDbFromDocuments(dir, [{ path: "Memory/a.md", text, mtimeMs: 1 }]);
-      try {
-        await withHttpServer(async (base) => {
-          const res = await fetch(`${base}/healthz`);
-          expect(res.ok).toBe(true);
-          const body = (await res.json()) as { merkleSnapshot?: { rootHex: string } };
-          expect(body.merkleSnapshot?.rootHex).toMatch(/^[0-9a-f]{64}$/);
-        }, FAST_HTTP_APP_OPTS);
-      } finally {
-        if (savedVault === undefined) delete process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
-        else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = savedVault;
-        if (savedMerkle === undefined) delete process.env.CLAWQL_MERKLE_ENABLED;
-        else process.env.CLAWQL_MERKLE_ENABLED = savedMerkle;
-        if (savedHz === undefined) delete process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS;
-        else process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS = savedHz;
-        await rm(dir, { recursive: true, force: true });
-      }
-    },
-    MEMORY_ARTIFACT_TEST_TIMEOUT_MS
-  );
+  it("GET /healthz optional merkle when CLAWQL_HEALTHZ_MEMORY_ARTIFACTS=1", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "clawql-hz-"));
+    const savedVault = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
+    const savedMerkle = process.env.CLAWQL_MERKLE_ENABLED;
+    const savedHz = process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS;
+    process.env.CLAWQL_OBSIDIAN_VAULT_PATH = dir;
+    process.env.CLAWQL_MERKLE_ENABLED = "1";
+    process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS = "1";
+    await mkdir(join(dir, "Memory"), { recursive: true });
+    await writeFile(join(dir, "Memory/a.md"), "# A\n", "utf8");
+    const text = await readFile(join(dir, "Memory/a.md"), "utf8");
+    await syncMemoryDbFromDocuments(dir, [{ path: "Memory/a.md", text, mtimeMs: 1 }]);
+    try {
+      await withHttpServer(async (base) => {
+        const res = await fetch(`${base}/healthz`);
+        expect(res.ok).toBe(true);
+        const body = (await res.json()) as { merkleSnapshot?: { rootHex: string } };
+        expect(body.merkleSnapshot?.rootHex).toMatch(/^[0-9a-f]{64}$/);
+      }, FAST_HTTP_APP_OPTS);
+    } finally {
+      if (savedVault === undefined) delete process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
+      else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = savedVault;
+      if (savedMerkle === undefined) delete process.env.CLAWQL_MERKLE_ENABLED;
+      else process.env.CLAWQL_MERKLE_ENABLED = savedMerkle;
+      if (savedHz === undefined) delete process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS;
+      else process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS = savedHz;
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
 
-  it(
-    "GET /healthz includes cuckoo metrics when CLAWQL_HEALTHZ_MEMORY_ARTIFACTS and Cuckoo enabled",
-    async () => {
-      const dir = await mkdtemp(join(tmpdir(), "clawql-hz-"));
-      const savedVault = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
-      const savedCuckoo = process.env.CLAWQL_CUCKOO_ENABLED;
-      const savedHz = process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS;
-      process.env.CLAWQL_OBSIDIAN_VAULT_PATH = dir;
-      process.env.CLAWQL_CUCKOO_ENABLED = "1";
-      process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS = "1";
-      await mkdir(join(dir, "Memory"), { recursive: true });
-      await writeFile(join(dir, "Memory/a.md"), "# A\n", "utf8");
-      const text = await readFile(join(dir, "Memory/a.md"), "utf8");
-      await syncMemoryDbFromDocuments(dir, [{ path: "Memory/a.md", text, mtimeMs: 1 }]);
-      try {
-        await withHttpServer(async (base) => {
-          const res = await fetch(`${base}/healthz`);
-          expect(res.ok).toBe(true);
-          const body = (await res.json()) as {
-            cuckooMembershipArtifactsEnabled?: boolean;
-            cuckooMetrics?: { rebuildCount: number };
-            cuckooFilterPersistedAt?: string;
-          };
-          expect(body.cuckooMembershipArtifactsEnabled).toBe(true);
-          expect(body.cuckooMetrics?.rebuildCount).toBeGreaterThanOrEqual(1);
-          expect(body.cuckooFilterPersistedAt).toMatch(/\d{4}-\d{2}-\d{2}T/);
-        }, FAST_HTTP_APP_OPTS);
-      } finally {
-        if (savedVault === undefined) delete process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
-        else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = savedVault;
-        if (savedCuckoo === undefined) delete process.env.CLAWQL_CUCKOO_ENABLED;
-        else process.env.CLAWQL_CUCKOO_ENABLED = savedCuckoo;
-        if (savedHz === undefined) delete process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS;
-        else process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS = savedHz;
-        await rm(dir, { recursive: true, force: true });
-      }
-    },
-    MEMORY_ARTIFACT_TEST_TIMEOUT_MS
-  );
+  it("GET /healthz includes cuckoo metrics when CLAWQL_HEALTHZ_MEMORY_ARTIFACTS and Cuckoo enabled", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "clawql-hz-"));
+    const savedVault = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
+    const savedCuckoo = process.env.CLAWQL_CUCKOO_ENABLED;
+    const savedHz = process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS;
+    process.env.CLAWQL_OBSIDIAN_VAULT_PATH = dir;
+    process.env.CLAWQL_CUCKOO_ENABLED = "1";
+    process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS = "1";
+    await mkdir(join(dir, "Memory"), { recursive: true });
+    await writeFile(join(dir, "Memory/a.md"), "# A\n", "utf8");
+    const text = await readFile(join(dir, "Memory/a.md"), "utf8");
+    await syncMemoryDbFromDocuments(dir, [{ path: "Memory/a.md", text, mtimeMs: 1 }]);
+    try {
+      await withHttpServer(async (base) => {
+        const res = await fetch(`${base}/healthz`);
+        expect(res.ok).toBe(true);
+        const body = (await res.json()) as {
+          cuckooMembershipArtifactsEnabled?: boolean;
+          cuckooMetrics?: { rebuildCount: number };
+          cuckooFilterPersistedAt?: string;
+        };
+        expect(body.cuckooMembershipArtifactsEnabled).toBe(true);
+        expect(body.cuckooMetrics?.rebuildCount).toBeGreaterThanOrEqual(1);
+        expect(body.cuckooFilterPersistedAt).toMatch(/\d{4}-\d{2}-\d{2}T/);
+      }, FAST_HTTP_APP_OPTS);
+    } finally {
+      if (savedVault === undefined) delete process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
+      else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = savedVault;
+      if (savedCuckoo === undefined) delete process.env.CLAWQL_CUCKOO_ENABLED;
+      else process.env.CLAWQL_CUCKOO_ENABLED = savedCuckoo;
+      if (savedHz === undefined) delete process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS;
+      else process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS = savedHz;
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
 
   it("POST /mcp initialize allocates mcp-session-id", async () => {
     await withHttpServer(async (base) => {
