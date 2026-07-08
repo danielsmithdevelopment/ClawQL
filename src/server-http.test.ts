@@ -20,6 +20,9 @@ const FAST_HTTP_APP_OPTS: CreateMcpHttpAppOptions = {
   skipGraphqlAttach: true,
 };
 
+/** GraphQL route tests need in-process `/graphql` mounted (slower startup). */
+const GRAPHQL_HTTP_APP_OPTS: CreateMcpHttpAppOptions = { skipSpecPreload: true };
+
 /**
  * Close the HTTP server without hanging the Vitest worker: undici/fetch can leave
  * keep-alive sockets open; `close()` alone may wait indefinitely. Destroying
@@ -104,7 +107,7 @@ describe("server-http", () => {
 
   async function withHttpServer(
     run: (baseUrl: string) => Promise<void>,
-    appOptions: CreateMcpHttpAppOptions = {}
+    appOptions: CreateMcpHttpAppOptions = FAST_HTTP_APP_OPTS
   ): Promise<void> {
     const flags = getClawqlOptionalToolFlags();
     const app = await createMcpHttpApp({
@@ -155,7 +158,7 @@ describe("server-http", () => {
         data?: { __schema?: { queryType?: { name?: string } } };
       };
       expect(body.data?.__schema?.queryType?.name).toBeTruthy();
-    });
+    }, GRAPHQL_HTTP_APP_OPTS);
   });
 
   it("accepts JSON bodies over default Express ~100kb limit (large execute / GraphQL payloads)", async () => {
@@ -170,7 +173,7 @@ describe("server-http", () => {
         }),
       });
       expect(res.status).not.toBe(413);
-    });
+    }, GRAPHQL_HTTP_APP_OPTS);
   });
 
   it("GET /healthz returns ok and endpoint path", async () => {
