@@ -14,13 +14,20 @@ With no spec-related environment variables, ClawQL loads the **opinionated defau
 
 2. Configure your MCP client (Cursor / Claude Desktop) for stdio — see [deployment.md](./deployment.md) and [agent setup prompt](../getting-started/agent-setup-prompt.md).
 
-3. Set credentials for at least one vendor you want to call live (e.g. `GITHUB_TOKEN`, `SLACK_BOT_TOKEN`). Then use **`search`** → **`execute`**.
+3. Set credentials via the vault (recommended):
+
+```bash
+npx -p clawql-mcp clawql onboard --interactive
+# or: clawql init --interactive && clawql secrets set github
+```
+
+Then use **`search`** → **`execute`**.
 
 4. Optional health check after HTTP mode:
 
 ```bash
 PORT=8080 npx -p clawql-mcp clawql-mcp-http
-CLAWQL_MCP_URL=http://127.0.0.1:8080 bash scripts/dev/clawql-doctor.sh
+CLAWQL_MCP_URL=http://127.0.0.1:8080 npx -p clawql-mcp clawql doctor
 ```
 
 ## Set up with your agent
@@ -30,9 +37,15 @@ Paste the copy-paste block from [agent-setup-prompt.md](../getting-started/agent
 **Vault-first CLI (recommended):**
 
 ```bash
+npx -p clawql-mcp clawql onboard --interactive
+```
+
+Or step by step:
+
+```bash
 npx -p clawql-mcp clawql init --interactive
-npx -p clawql-mcp clawql doctor
-npx -p clawql-mcp clawql mcp-config
+npx -p clawql-mcp clawql mcp-config --write cursor
+npx -p clawql-mcp clawql doctor --smoke
 ```
 
 See [local-provider-vault.md](../getting-started/local-provider-vault.md).

@@ -18,8 +18,17 @@ After install, these commands are on your `PATH` (or use `npx -p clawql-mcp <bin
 
 | Command           | Purpose                                                               |
 | ----------------- | --------------------------------------------------------------------- |
+| `clawql`          | Onboarding CLI — **`onboard`**, **`init`**, **`doctor`**, **`secrets`**, **`mcp-config`** |
 | `clawql-mcp`      | MCP server on **stdio** (Cursor, Claude Desktop, etc.)                |
 | `clawql-mcp-http` | MCP over **Streamable HTTP** (`PORT`, `/mcp`, `/healthz`, `/graphql`) |
+
+## First run (recommended)
+
+```bash
+npx -p clawql-mcp clawql onboard --interactive
+```
+
+Point your MCP client at **`clawql-mcp`** on stdio (see [MCP clients](/mcp-clients)) or use the [Agent setup](/agent-setup) prompt.
 
 ## Run without a global install
 
@@ -34,8 +43,6 @@ npx -p clawql-mcp clawql-mcp
 ```bash
 CLAWQL_PROVIDER=all-providers npx -p clawql-mcp clawql-mcp
 ```
-
-Point your MCP client at **`clawql-mcp`** on stdio (see [MCP clients](/mcp-clients)) or use the [Agent setup](/agent-setup) prompt.
 
 ## Docker and HTTP
 

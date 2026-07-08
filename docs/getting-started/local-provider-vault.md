@@ -24,10 +24,13 @@ After **`clawql init`**:
 ## Commands
 
 ```bash
+# End-to-end first run (init + MCP config + smoke)
+npx -p clawql-mcp clawql onboard --interactive
+
 # Scaffold home + memory paths
 npx -p clawql-mcp clawql init
 
-# Prompt for default-stack API tokens → providers.json
+# Prompt for default-stack API tokens → providers.json (hidden input on Unix TTY)
 npx -p clawql-mcp clawql init --interactive
 
 # Import from an existing .env (recognized keys only)
@@ -36,11 +39,17 @@ npx -p clawql-mcp clawql init --from-env .env
 # Push to HashiCorp Vault when VAULT_TOKEN (+ VAULT_ADDR) is set
 npx -p clawql-mcp clawql init --push-vault
 
-# Health: memory vault, provider coverage, HTTP /healthz
+# Manage secrets without editing JSON
+npx -p clawql-mcp clawql secrets list
+npx -p clawql-mcp clawql secrets set github
+
+# Health: memory vault, provider coverage, MCP smoke test
 npx -p clawql-mcp clawql doctor
+npx -p clawql-mcp clawql doctor --smoke
 
 # MCP JSON for Cursor (stdio — secrets not included)
 npx -p clawql-mcp clawql mcp-config
+npx -p clawql-mcp clawql mcp-config --write cursor
 ```
 
 ---

@@ -16,13 +16,21 @@ Vault-first onboarding: one home for **memory**, **provider secrets**, and **MCP
 
 ## CLI (recommended)
 
+**One command:**
+
 ```bash
-npx -p clawql-mcp clawql init --interactive
-npx -p clawql-mcp clawql doctor
-npx -p clawql-mcp clawql mcp-config
+npx -p clawql-mcp clawql onboard --interactive
 ```
 
-Paste **`mcp-config`** output into Cursor MCP settings, then restart the client.
+Or step by step:
+
+```bash
+npx -p clawql-mcp clawql init --interactive
+npx -p clawql-mcp clawql mcp-config --write cursor
+npx -p clawql-mcp clawql doctor --smoke
+```
+
+Restart Cursor or Claude Desktop after MCP config is written.
 
 <div className="not-prose my-8 flex flex-wrap gap-3">
   <Button href="/quickstart" arrow="right">
@@ -43,9 +51,9 @@ For agent-guided setup, copy the full prompt from the repo:
 
 Highlights the agent should run:
 
-1. **`clawql init --interactive`** — `~/.ClawQL`, memory path, provider vault
-2. **`clawql doctor`** — verify memory + secrets coverage
-3. **`clawql mcp-config`** — secret-free MCP JSON
+1. **`clawql onboard --interactive`** — init, write MCP config, smoke test
+2. Or **`clawql init --interactive`** → **`mcp-config --write cursor`** → **`doctor --smoke`**
+3. **`clawql secrets set <provider>`** — add keys without editing JSON
 4. Smoke **`search`** + read-only **`execute`** on one default-stack vendor
 5. Optional **`clawql init --push-vault`** when HashiCorp Vault is available (K8s)
 
