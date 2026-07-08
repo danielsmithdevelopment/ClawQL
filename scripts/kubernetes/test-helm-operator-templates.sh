@@ -31,6 +31,6 @@ helm template test charts/clawql-mcp --namespace clawql \
   --set envFromSecret=clawql-lint-provider-env \
   --set instanceSpec.enabled=true \
   --set instanceSpec.configMapName=clawql-tier-spec \
-  | rg -q 'CLAWQL_INSTANCE_SPEC_FILE'
+  | grep -q 'CLAWQL_INSTANCE_SPEC_FILE'
 
 echo "helm-mcp-instance-spec-mount OK"
