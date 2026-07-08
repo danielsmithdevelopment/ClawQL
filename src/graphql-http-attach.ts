@@ -36,8 +36,6 @@ export async function attachGraphqlHttpToMcpApp(app: Express): Promise<void> {
     );
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error(
-      `[clawql-mcp-http] Skipping /graphql — OpenAPI→GraphQL build failed: ${message}`
-    );
+    console.error(`[clawql-mcp-http] Skipping /graphql — OpenAPI→GraphQL build failed: ${message}`);
   }
 }
