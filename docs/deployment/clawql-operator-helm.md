@@ -60,10 +60,10 @@ instanceSpec:
 
 ## Tier presets
 
-| Tier | Default horizontal profile |
-| ---- | -------------------------- |
-| `local` | Memory only |
-| `standard` | Memory + documents (Onyx off) |
+| Tier         | Default horizontal profile                                          |
+| ------------ | ------------------------------------------------------------------- |
+| `local`      | Memory only                                                         |
+| `standard`   | Memory + documents (Onyx off)                                       |
 | `enterprise` | Memory + documents + Onyx + IDP pipeline + schedule/notify/workflow |
 
 Explicit `spec` fields override preset defaults.

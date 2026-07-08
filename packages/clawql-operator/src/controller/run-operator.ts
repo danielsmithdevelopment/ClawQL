@@ -66,11 +66,11 @@ export async function runOperator(options: RunOperatorOptions = {}): Promise<voi
     if (result.mcpRollout) {
       try {
         await rolloutMcpDeployment(result.mcpRollout, apps);
-        log(`mcp rollout triggered ${result.mcpRollout.namespace}/${result.mcpRollout.deploymentName}`);
-      } catch (err) {
         log(
-          `mcp rollout skipped: ${err instanceof Error ? err.message : String(err)}`
+          `mcp rollout triggered ${result.mcpRollout.namespace}/${result.mcpRollout.deploymentName}`
         );
+      } catch (err) {
+        log(`mcp rollout skipped: ${err instanceof Error ? err.message : String(err)}`);
       }
     }
     log(`status=${result.status.phase} configMap=${result.status.configMapName ?? "none"}`);

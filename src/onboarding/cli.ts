@@ -38,10 +38,8 @@ function parse(argv: string[]): {
     else if (!a.startsWith("-")) positional.push(a);
   }
   const cmd = (positional[0] ?? "help") as Command;
-  const subcmd =
-    cmd === "secrets" || cmd === "operator" ? positional[1] : undefined;
-  const rest =
-    cmd === "secrets" || cmd === "operator" ? positional.slice(2) : positional.slice(1);
+  const subcmd = cmd === "secrets" || cmd === "operator" ? positional[1] : undefined;
+  const rest = cmd === "secrets" || cmd === "operator" ? positional.slice(2) : positional.slice(1);
   return { cmd, subcmd, flags, rest };
 }
 

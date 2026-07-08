@@ -26,6 +26,8 @@ describe("rolloutMcpDeployment", () => {
     const body = patch.mock.calls[0]?.[0] as {
       body: { spec: { template: { metadata: { annotations: Record<string, string> } } } };
     };
-    expect(body.body.spec.template.metadata.annotations["clawql.io/instance-spec-restartedAt"]).toBeTruthy();
+    expect(
+      body.body.spec.template.metadata.annotations["clawql.io/instance-spec-restartedAt"]
+    ).toBeTruthy();
   });
 });

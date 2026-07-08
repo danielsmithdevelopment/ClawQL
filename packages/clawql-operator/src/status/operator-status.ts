@@ -1,8 +1,4 @@
-import {
-  CoreV1Api,
-  CustomObjectsApi,
-  KubeConfig,
-} from "@kubernetes/client-node";
+import { CoreV1Api, CustomObjectsApi, KubeConfig } from "@kubernetes/client-node";
 import { CLAWQL_INSTANCE_CRD } from "../reconcile/reconcile-instance.js";
 
 export type OperatorStatusRow = {
@@ -77,7 +73,9 @@ export function formatOperatorStatus(report: OperatorStatusReport): string {
     lines.push(`  ✗ CRD not installed or unreachable: ${report.error}`);
     lines.push("");
     lines.push("Install:");
-    lines.push("  helm upgrade --install clawql-operator ./charts/clawql-operator -n clawql-system --create-namespace");
+    lines.push(
+      "  helm upgrade --install clawql-operator ./charts/clawql-operator -n clawql-system --create-namespace"
+    );
     lines.push("  kubectl apply -f examples/operator/clawqlinstance-minimal.yaml -n clawql");
     lines.push("");
     return lines.join("\n");
@@ -97,9 +95,7 @@ export function formatOperatorStatus(report: OperatorStatusReport): string {
 }
 
 /** Best-effort: verify tier-spec ConfigMap exists for each Ready instance. */
-export async function verifyTierSpecConfigMaps(
-  report: OperatorStatusReport
-): Promise<string[]> {
+export async function verifyTierSpecConfigMaps(report: OperatorStatusReport): Promise<string[]> {
   const kc = loadKubeConfig();
   if (!kc) return [];
   const core = kc.makeApiClient(CoreV1Api);
