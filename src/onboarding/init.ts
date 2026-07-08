@@ -150,16 +150,14 @@ export async function runInit(options: InitOptions = {}): Promise<InitResult> {
   }
 
   const envFile = await writeClawqlEnv(home);
-  let providerKeys: string[] = [];
 
   if (options.fromEnv) {
     const parsed = loadDotenv({ path: resolve(options.fromEnv) }).parsed ?? {};
-    const merged = await mergeEnvIntoLocalProvidersVault(parsed, getLocalProvidersVaultPath(home));
-    providerKeys = listKeys(merged.data);
+    await mergeEnvIntoLocalProvidersVault(parsed, getLocalProvidersVaultPath(home));
   }
 
   if (options.interactive && !options.yes) {
-    providerKeys = [...new Set([...providerKeys, ...(await runInteractiveVault(home))])];
+    await runInteractiveVault(home);
   }
 
   const vault = await readLocalProvidersVault(getLocalProvidersVaultPath(home));
