@@ -26,13 +26,9 @@ const SHORT_ALIASES: Record<string, string> = {
 export function resolveVaultPropertyId(id: string): string | undefined {
   const key = id.trim().toLowerCase();
   if (SHORT_ALIASES[key]) return SHORT_ALIASES[key];
-  const byProperty = PROVIDER_VAULT_KEY_CATALOG.find(
-    (e) => e.vaultProperty.toLowerCase() === key,
-  );
+  const byProperty = PROVIDER_VAULT_KEY_CATALOG.find((e) => e.vaultProperty.toLowerCase() === key);
   if (byProperty) return byProperty.vaultProperty;
-  const byLabel = PROVIDER_VAULT_KEY_CATALOG.find((e) =>
-    e.label.toLowerCase().includes(key),
-  );
+  const byLabel = PROVIDER_VAULT_KEY_CATALOG.find((e) => e.label.toLowerCase().includes(key));
   return byLabel?.vaultProperty;
 }
 
@@ -82,13 +78,11 @@ export function formatSecretsList(rows: SecretsListRow[]): string {
 export async function setProviderSecret(
   id: string,
   value?: string,
-  home?: string,
+  home?: string
 ): Promise<{ vaultProperty: string; label: string }> {
   const vaultProperty = resolveVaultPropertyId(id);
   if (!vaultProperty) {
-    throw new Error(
-      `Unknown provider id "${id}". Try: ${Object.keys(SHORT_ALIASES).join(", ")}`,
-    );
+    throw new Error(`Unknown provider id "${id}". Try: ${Object.keys(SHORT_ALIASES).join(", ")}`);
   }
   const entry = findCatalogEntry(vaultProperty);
   const secret = value?.trim() || (await promptSecret(entry?.label ?? vaultProperty));

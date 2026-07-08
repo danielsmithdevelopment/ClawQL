@@ -40,16 +40,15 @@ export async function probeHashicorpVault(): Promise<HashicorpVaultProbe> {
   }
 }
 
-async function fetchVaultHealth(
-  addr: string,
-): Promise<{ reachable: boolean; sealed?: boolean }> {
+async function fetchVaultHealth(addr: string): Promise<{ reachable: boolean; sealed?: boolean }> {
   const base = addr.replace(/\/$/, "");
   try {
     const res = await fetch(`${base}/v1/sys/health`, {
       signal: AbortSignal.timeout(2_500),
     });
     // Vault: 200=active, 429=unsealed standby, 501=not init, 503=sealed
-    const reachable = res.status === 200 || res.status === 429 || res.status === 503 || res.status === 501;
+    const reachable =
+      res.status === 200 || res.status === 429 || res.status === 503 || res.status === 501;
     const sealed = res.status === 503;
     return { reachable, sealed };
   } catch {

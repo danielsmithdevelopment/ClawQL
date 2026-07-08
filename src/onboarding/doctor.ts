@@ -38,7 +38,10 @@ async function pathWritable(dir: string): Promise<boolean> {
   }
 }
 
-export async function runDoctor(verbose = false, options: { smoke?: boolean } = {}): Promise<DoctorReport> {
+export async function runDoctor(
+  verbose = false,
+  options: { smoke?: boolean } = {}
+): Promise<DoctorReport> {
   const checks: DoctorCheck[] = [];
   const home = getClawqlHome();
 

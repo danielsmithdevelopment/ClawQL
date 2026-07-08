@@ -29,7 +29,7 @@ export type WriteMcpConfigResult = {
 
 export async function writeMcpConfigFile(
   target: McpWriteTarget,
-  options: McpConfigOptions = {},
+  options: McpConfigOptions = {}
 ): Promise<WriteMcpConfigResult> {
   const path = resolveMcpConfigPath(target);
   await mkdir(dirname(path), { recursive: true });

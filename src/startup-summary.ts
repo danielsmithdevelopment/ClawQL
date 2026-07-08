@@ -64,9 +64,6 @@ export async function logStartupSummary(): Promise<void> {
     const summary = await buildStartupSummary();
     console.error(formatStartupSummary(summary));
   } catch (e: unknown) {
-    console.error(
-      "[clawql-mcp] Startup summary unavailable:",
-      e instanceof Error ? e.message : e,
-    );
+    console.error("[clawql-mcp] Startup summary unavailable:", e instanceof Error ? e.message : e);
   }
 }

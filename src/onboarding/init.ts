@@ -8,9 +8,7 @@ import { stdin as input, stdout as output } from "node:process";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { config as loadDotenv } from "dotenv";
-import {
-  DEFAULT_STACK_VAULT_ENTRIES,
-} from "../provider-vault/catalog.js";
+import { DEFAULT_STACK_VAULT_ENTRIES } from "../provider-vault/catalog.js";
 import {
   mergeEnvIntoLocalProvidersVault,
   readLocalProvidersVault,

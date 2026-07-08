@@ -33,12 +33,12 @@ Helm **`clawql-mcp`** chart may still default to **`all-providers`** for full ID
 
 ## Onboarding CLI (Tier 1)
 
-| Command | Purpose |
-| ------- | ------- |
-| `clawql init --interactive` | Scaffold `~/.ClawQL`, hidden token prompts → `vault/providers.json` |
-| `clawql secrets list` / `secrets set` | Manage provider keys without editing JSON by hand |
-| `clawql doctor --smoke` | MCP `tools/list` + `search` (+ optional `execute`) |
-| `clawql mcp-config --write cursor` | Merge MCP JSON into Cursor / Claude Desktop (with `.bak` backup) |
+| Command                               | Purpose                                                             |
+| ------------------------------------- | ------------------------------------------------------------------- |
+| `clawql init --interactive`           | Scaffold `~/.ClawQL`, hidden token prompts → `vault/providers.json` |
+| `clawql secrets list` / `secrets set` | Manage provider keys without editing JSON by hand                   |
+| `clawql doctor --smoke`               | MCP `tools/list` + `search` (+ optional `execute`)                  |
+| `clawql mcp-config --write cursor`    | Merge MCP JSON into Cursor / Claude Desktop (with `.bak` backup)    |
 
 MCP startup logs a one-line stderr summary: spec mode, vendor count, memory vault path, configured secret count.
 

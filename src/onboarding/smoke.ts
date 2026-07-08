@@ -92,7 +92,7 @@ export async function runMcpSmoke(): Promise<SmokeReport> {
       const hits = Array.isArray(body)
         ? body.length
         : typeof body === "object" && body !== null && "results" in body
-          ? (body as { results: unknown[] }).results?.length ?? 0
+          ? ((body as { results: unknown[] }).results?.length ?? 0)
           : 1;
       steps.push({
         name: "search",
@@ -102,7 +102,9 @@ export async function runMcpSmoke(): Promise<SmokeReport> {
     }
 
     const vault = await readLocalProvidersVault();
-    const secretCount = vault ? Object.keys(vault.data).filter((k) => vault.data[k]?.trim()).length : 0;
+    const secretCount = vault
+      ? Object.keys(vault.data).filter((k) => vault.data[k]?.trim()).length
+      : 0;
     if (secretCount === 0) {
       steps.push({
         name: "execute",
