@@ -113,6 +113,13 @@ export const architectureHubCards: Array<ReferenceCard> = [
     icon: SquaresPlusIcon,
   }),
   card({
+    href: '/plugins',
+    name: 'Plugins hub',
+    description:
+      'Dedicated page per plugin — core, memory, documents, providers, automation, sandbox, Ouroboros.',
+    icon: SquaresPlusIcon,
+  }),
+  card({
     href: '/vision/immutable-releases',
     name: 'Immutable releases (Layer 0)',
     description:
@@ -288,6 +295,12 @@ export const referenceHubCards: Array<ReferenceCard> = [
     icon: SquaresPlusIcon,
   }),
   card({
+    href: '/plugins',
+    name: 'Plugins hub',
+    description: 'One doc page per shipped or planned ClawQL plugin.',
+    icon: SquaresPlusIcon,
+  }),
+  card({
     href: '/tools',
     name: 'MCP tool reference',
     description:
@@ -433,5 +446,70 @@ export const optionalToolsHubCards: Array<ReferenceCard> = [
     name: 'Vault memory',
     description: 'Durable memory_ingest / memory_recall across sessions.',
     icon: ChatBubbleIcon,
+  }),
+]
+
+/** One card per plugin page under /plugins — synced from docs/plugins/*.md */
+export const pluginsHubCards: Array<ReferenceCard> = [
+  card({
+    href: '/plugins/core',
+    name: 'Gateway core',
+    description: 'search, execute, audit, cache — always composed, no opt-out.',
+    icon: BoltIcon,
+  }),
+  card({
+    href: '/plugins/panguard-proxy',
+    name: 'Panguard MCP proxy',
+    description: 'beforeCallTool policy chokepoint for enterprise MCP defense.',
+    icon: ShapesIcon,
+  }),
+  card({
+    href: '/plugins/memory',
+    name: 'Memory (vault)',
+    description: 'memory_ingest / memory_recall — default on, Obsidian vault.',
+    icon: ChatBubbleIcon,
+  }),
+  card({
+    href: '/plugins/documents',
+    name: 'Documents & IDP',
+    description: 'ingest_external_knowledge, Onyx search, optional IDP tools.',
+    icon: DocumentIcon,
+  }),
+  card({
+    href: '/plugins/bundled-providers',
+    name: 'Bundled providers',
+    description:
+      'Default stack: Cloudflare, GitHub, Slack, Linear, Notion, Onyx; all-providers for everything.',
+    icon: PackageIcon,
+  }),
+  card({
+    href: '/plugins/automation',
+    name: 'Automation',
+    description: 'schedule, notify, workflow, argocd — each opt-in via env.',
+    icon: BellIcon,
+  }),
+  card({
+    href: '/plugins/sandbox',
+    name: 'Sandbox',
+    description: 'sandbox_exec — Kata, Docker, Seatbelt, or bridge.',
+    icon: ShapesIcon,
+  }),
+  card({
+    href: '/plugins/ouroboros',
+    name: 'Ouroboros',
+    description: 'Evolutionary loop MCP tools and optional Postgres lineage.',
+    icon: SquaresPlusIcon,
+  }),
+  card({
+    href: '/plugins/hitl-label-studio',
+    name: 'HITL (Label Studio)',
+    description: 'Human-in-the-loop review — planned full plugin wiring.',
+    icon: BellIcon,
+  }),
+  card({
+    href: '/plugins/third-party',
+    name: 'Third-party plugins',
+    description: 'Roadmap and checklist for external clawql-* npm plugins.',
+    icon: LinkIcon,
   }),
 ]

@@ -1,6 +1,8 @@
 # Bundled specs
 
-The npm package ships **`providers/`**—optional on-disk API descriptions so cold start avoids downloading multi‑MB specs. Most **native GraphQL / gRPC** upstreams are configured only via **`CLAWQL_GRAPHQL_SOURCES`** / **`CLAWQL_GRPC_SOURCES`** ([Spec configuration](/spec-configuration)). **Exception:** **Linear** is a **bundled GraphQL-only** vendor (`providers/linear/schema.graphql`); use **`CLAWQL_PROVIDER=linear`** or include **`linear`** in **`CLAWQL_BUNDLED_PROVIDERS`** / **`all-providers`**. For **multi-spec**, the only unconfigured default is the full merge **`all-providers`**. Any other multi-spec load is **explicit**: set `CLAWQL_BUNDLED_PROVIDERS`, `CLAWQL_SPEC_PATHS`, or a merged `CLAWQL_PROVIDER` (for example `google`, `atlassian`, or `all-providers` set on purpose). See [Spec configuration](/spec-configuration). {{ className: 'lead' }}
+The npm package ships **`providers/`**—optional on-disk API descriptions so cold start avoids downloading multi‑MB specs. Most **native GraphQL / gRPC** upstreams are configured only via **`CLAWQL_GRAPHQL_SOURCES`** / **`CLAWQL_GRPC_SOURCES`** ([Spec configuration](/spec-configuration)). **Exception:** **Linear** is a **bundled GraphQL-only** vendor (`providers/linear/schema.graphql`).
+
+**Default install** (no spec env): **Cloudflare, GitHub, Slack, Linear, Notion, Onyx** — see [Bundled providers plugin](/plugins/bundled-providers). **`CLAWQL_PROVIDER=all-providers`** loads literally every bundled vendor plus Google top-50 and AWS top-50. Custom subsets: **`CLAWQL_BUNDLED_PROVIDERS`**, **`CLAWQL_SPEC_PATHS`**, or merged presets (`google`, `atlassian`, `default`, …). {{ className: 'lead' }}
 
 **Learn walkthrough** (Nextcloud → Tika → Gotenberg → Stirling → Paperless → Onyx → Coneshare): [Document pipeline](/learn/document-pipeline) · [IDP pipeline hub (repo)](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/providers/idp-pipeline.md).
 
@@ -12,12 +14,13 @@ Use this as the default-bundle reference for **REST / OpenAPI–heavy** workflow
 | ------------------------------------------------------------ | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
 | `cloudflare`                                                 | `CLAWQL_CLOUDFLARE_API_TOKEN`                        | Edge and DNS operations, Workers deploy/debug paths, docs-site operations                                     |
 | `github`                                                     | `CLAWQL_GITHUB_TOKEN`                                | Issues/PR/repo automation and release workflow actions                                                        |
-| `slack`                                                      | `CLAWQL_SLACK_TOKEN` / `SLACK_BOT_TOKEN`             | Team notifications and Slack API operations; powers optional `notify`                                         |
+| `slack`                                                      | `CLAWQL_SLACK_TOKEN` / `SLACK_BOT_TOKEN`             | Team notifications; **default install**; powers optional `notify`                                           |
+| `notion`                                                     | `NOTION_API_TOKEN` (+ `Notion-Version`)              | Notion workspace automation; **default install**                                                            |
 | `paperless`                                                  | `PAPERLESS_API_TOKEN` (+ `PAPERLESS_BASE_URL`)       | Document archive lookup and ingestion workflows                                                               |
 | `stirling`                                                   | `STIRLING_API_KEY` (+ `STIRLING_BASE_URL`)           | PDF conversion/splitting/merge operations                                                                     |
 | `tika`                                                       | `CLAWQL_BEARER_TOKEN` (+ `TIKA_BASE_URL`)            | Text/metadata extraction from many file types                                                                 |
 | `gotenberg`                                                  | `CLAWQL_BEARER_TOKEN` (+ `GOTENBERG_BASE_URL`)       | HTML/office/markdown to PDF conversion                                                                        |
-| `onyx`                                                       | `ONYX_API_TOKEN` (+ `ONYX_BASE_URL`)                 | Enterprise knowledge search via optional `knowledge_search_onyx`; optional ingestion via `execute`            |
+| `onyx`                                                       | `ONYX_API_TOKEN` (+ `ONYX_BASE_URL`)                 | Enterprise search; **default install** spec; MCP `knowledge_search_onyx` when `CLAWQL_ENABLE_ONYX=1`        |
 | `nextcloud`                                                  | `NEXTCLOUD_USERNAME`, `NEXTCLOUD_APP_PASSWORD`       | WebDAV intake/outbox, OCS shares for IDP                                                                      |
 | `coneshare`                                                  | `CONESHARE_API_TOKEN` (+ `CONESHARE_BASE_URL`)       | Secure share links, VDR; webhook `POST /idp/coneshare/webhook` when `CLAWQL_ENABLE_CONESHARE=1`               |
 | `google`                                                     | `CLAWQL_GOOGLE_ACCESS_TOKEN` / `GOOGLE_ACCESS_TOKEN` | Bundled Google Cloud Discovery merge (multiple APIs); part of default cross-provider search and execute flows |
@@ -32,8 +35,9 @@ Use this as the default-bundle reference for **REST / OpenAPI–heavy** workflow
 
 | Selection                                      | Notes                                                                        |
 | ---------------------------------------------- | ---------------------------------------------------------------------------- |
-| **`CLAWQL_BUNDLED_PROVIDERS=`** _a,b,…_        | Explicit custom merge by id (including optional `google`)                    |
-| `all-providers`                                | **Unconfigured default** merged preset: Google + bundled vendors             |
+| **`default`** / **`default-providers`**        | **No-config install** — Cloudflare, GitHub, Slack, Linear, Notion, Onyx      |
+| **`CLAWQL_BUNDLED_PROVIDERS=`** _a,b,…_        | Explicit custom merge by id (including optional `google` / `aws`)            |
+| `all-providers`                                | Literally every bundled vendor + Google top-50 + AWS top-50                  |
 | `atlassian`                                    | Merged Jira + Bitbucket                                                      |
 | `sentry`, `n8n`, `jira`, `bitbucket`, `linear` | Additional single bundled provider ids (`linear` is GraphQL-only; see above) |
 
@@ -49,4 +53,4 @@ Maintainers refresh specs with **`npm run fetch-provider-specs`** (see [`provide
 
 ## Default first run
 
-With **no** spec-related environment variables, ClawQL loads **`all-providers`** so cross-vendor **`search`** works immediately after install.
+With **no** spec-related environment variables, ClawQL loads the **opinionated default stack** (Cloudflare, GitHub, Slack, Linear, Notion, Onyx). Use **`CLAWQL_PROVIDER=all-providers`** for the full framework bundle.
