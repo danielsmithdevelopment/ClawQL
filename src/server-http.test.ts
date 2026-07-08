@@ -57,6 +57,8 @@ async function closeMcpClient(client: { close(): Promise<void> }): Promise<void>
 const STREAMABLE_HTTP_TEST_TIMEOUT_MS = 45_000;
 /** sql.js cold start + memory.db sync can exceed 20s on slow CI Node runners. */
 const MEMORY_ARTIFACT_TEST_TIMEOUT_MS = 45_000;
+/** Healthz enrichment tests can exceed 20s under CI coverage on slow runners. */
+const HTTP_HEALTHZ_TEST_TIMEOUT_MS = 45_000;
 
 const here = dirname(fileURLToPath(import.meta.url));
 const minimalSpec = join(here, "test-utils/fixtures/minimal-petstore.json");
