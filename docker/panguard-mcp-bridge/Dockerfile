@@ -36,7 +36,7 @@ RUN apt-get update \
   && DEBIAN_FRONTEND=noninteractive apt-get upgrade -y --no-install-recommends \
   && apt-get install -y --no-install-recommends ca-certificates \
   && rm -rf /var/lib/apt/lists/* \
-  && npm install -g npm@latest \
+  && npm install -g npm@11 \
   && npm install -g @panguard-ai/panguard-mcp-proxy@0.1.2 \
   && npm cache clean --force
 
