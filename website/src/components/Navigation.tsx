@@ -254,6 +254,7 @@ export const navigation: Array<NavGroup> = [
     links: [
       { title: 'Overview', href: '/getting-started' },
       { title: 'Quickstart', href: '/quickstart' },
+      { title: 'Agent setup', href: '/agent-setup' },
       { title: 'Install', href: '/install' },
       { title: 'MCP clients', href: '/mcp-clients' },
       { title: 'Choose your tier', href: '/deployment' },

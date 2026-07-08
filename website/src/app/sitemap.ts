@@ -42,6 +42,7 @@ const ENTRIES: Array<Entry> = [
     priority: 0.88,
   },
   { path: '/getting-started', changeFrequency: 'weekly', priority: 0.96 },
+  { path: '/agent-setup', changeFrequency: 'weekly', priority: 0.95 },
   { path: '/architecture', changeFrequency: 'monthly', priority: 0.92 },
   { path: '/guides', changeFrequency: 'weekly', priority: 0.9 },
   { path: '/reference', changeFrequency: 'weekly', priority: 0.9 },

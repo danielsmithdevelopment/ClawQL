@@ -31,9 +31,20 @@ Four-stack Compose ([#251](https://github.com/danielsmithdevelopment/ClawQL/issu
 | From                   | To ClawQL                                                                 |
 | ---------------------- | ------------------------------------------------------------------------- |
 | Raw OpenAPI in context | **`search`** + **`execute`** — specs stay on disk                         |
-| Single-vendor MCP      | **`CLAWQL_PROVIDER=all-providers`** or narrow preset                      |
+| Single-vendor MCP      | Default stack or narrow preset — **`CLAWQL_BUNDLED_PROVIDERS=…`** · **`CLAWQL_PROVIDER=github`** |
+| Full multi-vendor MCP  | **`CLAWQL_PROVIDER=all-providers`** (explicit opt-in)                       |
 | Custom tool servers    | Proxy via gateway or migrate to **`execute`** operations                  |
 | No vault memory        | Enable **`memory_ingest`** / **`memory_recall`** with Obsidian vault path |
+
+## Default stack change (6.5.0)
+
+Before **6.5.0**, an empty spec environment often implied **`all-providers`**. From **6.5.0** onward, bare **`npx clawql-mcp`** loads the **opinionated default stack** (Cloudflare, GitHub, Slack, Linear, Notion, Onyx). To restore the full merge:
+
+```bash
+CLAWQL_PROVIDER=all-providers npx -p clawql-mcp clawql-mcp
+```
+
+Helm **`clawql-mcp`** chart values may still default to **`all-providers`** for full IDP deployments — see [Kubernetes](/deployment/kubernetes).
 
 → [Concepts](/concepts) · [Using search & execute](/learn/search-and-execute-mcp)
 

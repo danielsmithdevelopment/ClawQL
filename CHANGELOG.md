@@ -9,7 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Notion bundled provider**: official OpenAPI from [developers.notion.com/openapi.json](https://developers.notion.com/openapi.json); **`NOTION_API_TOKEN`** + **`Notion-Version`** auth; onboarding [`docs/providers/notion-onboarding.md`](docs/providers/notion-onboarding.md).
+- **Opinionated default bundled stack** ([#528](https://github.com/danielsmithdevelopment/ClawQL/pull/528)): bare `npx clawql-mcp` loads **Cloudflare, GitHub, Slack, Linear, Notion, Onyx**; **`CLAWQL_PROVIDER=all-providers`** remains explicit opt-in for every vendor + Google top-50 + AWS top-50.
+- **AWS top-50 bundled preset** ([#528](https://github.com/danielsmithdevelopment/ClawQL/pull/528)): SigV4 **`execute`**, manifest under `providers/aws/`, onboarding [`docs/providers/aws-onboarding.md`](docs/providers/aws-onboarding.md).
+- **Notion bundled provider**: official OpenAPI; **`NOTION_API_TOKEN`** auth; onboarding [`docs/providers/notion-onboarding.md`](docs/providers/notion-onboarding.md).
+- **Plugins docs site**: `docs/plugins/*.md` → `/plugins` hub + per-slug pages.
+- **Init walkthrough (Phase 1)**: [agent setup prompt](docs/getting-started/agent-setup-prompt.md), [design spec](docs/getting-started/clawql-init-walkthrough-spec.md), [`scripts/dev/clawql-doctor.sh`](scripts/dev/clawql-doctor.sh), website [`/agent-setup`](https://docs.clawql.com/agent-setup).
+
+### Changed
+
+- **Multi-spec HTTP**: `/graphql` is not mounted in merged multi-spec mode (MCP `search`/`execute` unchanged).
+- **First-run docs**: README, getting-started, quickstart, install, and migration guide aligned to default stack vs `all-providers`.
+- **Plugin model/registry docs**: Phase 2 `onRegister` status updated (July 2026).
+
+### Fixed
+
+- **`loadSpec()` cache race** after `resetSpecCache()` — generation counter in spec loader ([#528](https://github.com/danielsmithdevelopment/ClawQL/pull/528)).
+- **HTTP test stability** on CI — fast app opts, sql.js warmup, describe-level timeouts ([#528](https://github.com/danielsmithdevelopment/ClawQL/pull/528)).
 
 > **Note:** Items below are on **`main`** (post-**6.4.1** npm tag) and documented in release notes / IDP wave guides; they will appear in the next semver release entry when tagged.
 

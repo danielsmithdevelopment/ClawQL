@@ -3,7 +3,7 @@
 The optional **`knowledge_search_onyx`** MCP tool queries your **[Onyx](https://www.onyx.app/)** index via **`POST /search/send-search-message`**. It is a thin wrapper over the same **`execute`** path as operation **`onyx::onyx_send_search_message`** when the **`onyx`** bundled spec is in the merge — so you get **typed parameters** (`query`, `num_hits`, …) without hand-building the Onyx JSON each time.
 
 - **Enable:** **`CLAWQL_ENABLE_ONYX=1`** (or `true` / `yes`).
-- **Spec:** The loaded merge must include **`onyx`** (default **`all-providers`**, or add **`onyx`** to **`CLAWQL_BUNDLED_PROVIDERS`**, or **`CLAWQL_PROVIDER=onyx`** for Onyx-only).
+- **Spec:** The loaded merge must include **`onyx`** (included in the **default stack**; full bundle via **`all-providers`**, or add **`onyx`** to **`CLAWQL_BUNDLED_PROVIDERS`**, or **`CLAWQL_PROVIDER=onyx`** for Onyx-only).
 - **Connectivity:** **`ONYX_BASE_URL`** = HTTP API root (often ends with **`/api`**). **Auth:** **`ONYX_API_TOKEN`** or **`CLAWQL_ONYX_API_TOKEN`** as **Bearer**, or **`CLAWQL_PROVIDER_AUTH_JSON`** with an **`onyx`** key.
 - **Provider matrix:** default bundle positioning and auth fields live in one place: [Bundled specs](/bundled-specs).
 

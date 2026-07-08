@@ -1,6 +1,6 @@
 # ClawQL plugin registry
 
-**Status:** Living reference (June 2026)  
+**Status:** Living reference (July 2026)  
 **Audience:** Operators, contributors, third-party plugin authors  
 **Companion:** [ClawQL plugin model](../design/clawql-plugin-model.md) (concepts and target architecture)
 
