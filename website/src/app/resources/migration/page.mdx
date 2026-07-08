@@ -28,13 +28,13 @@ Four-stack Compose ([#251](https://github.com/danielsmithdevelopment/ClawQL/issu
 
 ## From other MCP servers
 
-| From                   | To ClawQL                                                                 |
-| ---------------------- | ------------------------------------------------------------------------- |
-| Raw OpenAPI in context | **`search`** + **`execute`** — specs stay on disk                         |
+| From                   | To ClawQL                                                                                        |
+| ---------------------- | ------------------------------------------------------------------------------------------------ |
+| Raw OpenAPI in context | **`search`** + **`execute`** — specs stay on disk                                                |
 | Single-vendor MCP      | Default stack or narrow preset — **`CLAWQL_BUNDLED_PROVIDERS=…`** · **`CLAWQL_PROVIDER=github`** |
-| Full multi-vendor MCP  | **`CLAWQL_PROVIDER=all-providers`** (explicit opt-in)                       |
-| Custom tool servers    | Proxy via gateway or migrate to **`execute`** operations                  |
-| No vault memory        | Enable **`memory_ingest`** / **`memory_recall`** with Obsidian vault path |
+| Full multi-vendor MCP  | **`CLAWQL_PROVIDER=all-providers`** (explicit opt-in)                                            |
+| Custom tool servers    | Proxy via gateway or migrate to **`execute`** operations                                         |
+| No vault memory        | Enable **`memory_ingest`** / **`memory_recall`** with Obsidian vault path                        |
 
 ## Default stack change (6.5.0)
 

@@ -20,11 +20,11 @@ For memory, documents, and automation, **yes — the plugin’s main visible job
 
 Extraction phases 1–9 moved **business logic** into workspace packages. **Phase 2** (6.4.0+) moved MCP registration into **`Plugin.onRegister`** for Memory, Documents, Automation, Sandbox, and Ouroboros.
 
-| Package             | Logic lives in                                              | MCP registration                                                                 |
-| ------------------- | ----------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| `clawql-memory`     | `runMemoryIngest`, `runMemoryRecall`, vault, `memory.db`, … | ✅ **`MemoryPlugin.onRegister`**                                                 |
-| `clawql-documents`  | `runIngestExternalKnowledge`, URL formatting                | ✅ **`DocumentsPlugin.onRegister`** (`clawql-documents/plugin`)                  |
-| `clawql-automation` | schedule worker, `runNotifySlack`                           | ✅ **`AutomationPlugin.onRegister`** (`clawql-automation/plugin`)                |
+| Package             | Logic lives in                                              | MCP registration                                                  |
+| ------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------- |
+| `clawql-memory`     | `runMemoryIngest`, `runMemoryRecall`, vault, `memory.db`, … | ✅ **`MemoryPlugin.onRegister`**                                  |
+| `clawql-documents`  | `runIngestExternalKnowledge`, URL formatting                | ✅ **`DocumentsPlugin.onRegister`** (`clawql-documents/plugin`)   |
+| `clawql-automation` | schedule worker, `runNotifySlack`                           | ✅ **`AutomationPlugin.onRegister`** (`clawql-automation/plugin`) |
 
 Transport-only concerns stay in `src/` today:
 

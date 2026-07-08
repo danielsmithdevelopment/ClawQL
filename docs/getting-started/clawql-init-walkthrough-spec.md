@@ -18,14 +18,14 @@ Executor is a useful reference: one-line install, `doctor`, agent-bootstrap shor
 
 ## 2. Executor onboarding (reference)
 
-| Step | Executor pattern | User outcome |
-|------|------------------|--------------|
-| Install | `curl -fsSL https://executor.sh/install \| bash` | Binary + managed backend + web UI on PATH |
-| Health | `executor doctor` / `doctor --verbose` | Status, MCP URL, API key, dashboard port |
-| Dashboard | `executor web` → `http://127.0.0.1:5312` | Anonymous workspace; add OpenAPI source in UI |
-| Agent bootstrap | `executor claude -- "task"` or manual MCP JSON | Pre-wired Claude Code session |
-| Docs prompt | Copy-paste block on [executor.sh/docs](https://executor.sh/docs) | Agent picks local vs cloud, installs, connects MCP, adds first integration |
-| First tool use | `tools.search` → `tools.describe` → `execute` in sandbox | One `execute` tool; thousands of integrations behind it |
+| Step            | Executor pattern                                                 | User outcome                                                               |
+| --------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Install         | `curl -fsSL https://executor.sh/install \| bash`                 | Binary + managed backend + web UI on PATH                                  |
+| Health          | `executor doctor` / `doctor --verbose`                           | Status, MCP URL, API key, dashboard port                                   |
+| Dashboard       | `executor web` → `http://127.0.0.1:5312`                         | Anonymous workspace; add OpenAPI source in UI                              |
+| Agent bootstrap | `executor claude -- "task"` or manual MCP JSON                   | Pre-wired Claude Code session                                              |
+| Docs prompt     | Copy-paste block on [executor.sh/docs](https://executor.sh/docs) | Agent picks local vs cloud, installs, connects MCP, adds first integration |
+| First tool use  | `tools.search` → `tools.describe` → `execute` in sandbox         | One `execute` tool; thousands of integrations behind it                    |
 
 **Concepts Executor teaches:** Integration → Connection → Policy; context efficiency (one tool vs catalog explosion).
 
@@ -35,14 +35,14 @@ Executor is a useful reference: one-line install, `doctor`, agent-bootstrap shor
 
 ## 3. ClawQL today (gaps)
 
-| Capability | ClawQL today | Gap |
-|------------|--------------|-----|
-| Install | `npm install clawql-mcp` / `npx clawql-mcp` | No curl installer; acceptable for npm ecosystem |
-| Health | `GET /healthz` on HTTP mode only | No `clawql doctor` CLI; stdio users lack one command |
-| Dashboard | Helm `clawql-dashboard` (K8s) | No local-first “add provider” UI for solo dev |
-| Agent bootstrap | Manual MCP JSON in Cursor/Claude | No copy-paste **agent setup prompt** on docs home |
-| First integration | Per-provider onboarding docs | No end-to-end walkthrough tool tying steps together |
-| Default stack docs | Partially updated post-#528 | README/quickstart still taught `all-providers` as default |
+| Capability         | ClawQL today                                | Gap                                                       |
+| ------------------ | ------------------------------------------- | --------------------------------------------------------- |
+| Install            | `npm install clawql-mcp` / `npx clawql-mcp` | No curl installer; acceptable for npm ecosystem           |
+| Health             | `GET /healthz` on HTTP mode only            | No `clawql doctor` CLI; stdio users lack one command      |
+| Dashboard          | Helm `clawql-dashboard` (K8s)               | No local-first “add provider” UI for solo dev             |
+| Agent bootstrap    | Manual MCP JSON in Cursor/Claude            | No copy-paste **agent setup prompt** on docs home         |
+| First integration  | Per-provider onboarding docs                | No end-to-end walkthrough tool tying steps together       |
+| Default stack docs | Partially updated post-#528                 | README/quickstart still taught `all-providers` as default |
 
 **Existing assets to reuse:**
 
@@ -104,14 +104,14 @@ flowchart TD
 
 ## 6. `clawql doctor` checks (Phase 1)
 
-| Check | Pass criteria |
-|-------|----------------|
-| Node | `node -v` ≥ 22 |
-| Package | `npx -p clawql-mcp clawql-mcp --help` or local `npm run build` |
-| HTTP health | `curl -sf $CLAWQL_MCP_URL/healthz` when URL set |
-| Spec mode | Report inferred mode: default stack / `all-providers` / single-spec / custom merge |
-| Auth hints | Warn if `GITHUB_TOKEN`, `SLACK_BOT_TOKEN`, etc. missing when matching vendor loaded |
-| Vault | If `memory_*` enabled, `CLAWQL_OBSIDIAN_VAULT_PATH` writable |
+| Check       | Pass criteria                                                                       |
+| ----------- | ----------------------------------------------------------------------------------- |
+| Node        | `node -v` ≥ 22                                                                      |
+| Package     | `npx -p clawql-mcp clawql-mcp --help` or local `npm run build`                      |
+| HTTP health | `curl -sf $CLAWQL_MCP_URL/healthz` when URL set                                     |
+| Spec mode   | Report inferred mode: default stack / `all-providers` / single-spec / custom merge  |
+| Auth hints  | Warn if `GITHUB_TOKEN`, `SLACK_BOT_TOKEN`, etc. missing when matching vendor loaded |
+| Vault       | If `memory_*` enabled, `CLAWQL_OBSIDIAN_VAULT_PATH` writable                        |
 
 ---
 

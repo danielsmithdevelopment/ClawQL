@@ -20,11 +20,11 @@ For memory, documents, and automation, **yes — the plugin’s main visible job
 
 Extraction phases 1–9 moved **business logic** into workspace packages. **Phase 2** (6.4.0+) moved MCP registration into **`Plugin.onRegister`** for Memory, Documents, Automation, Sandbox, and Ouroboros.
 
-| Package             | Logic lives in                                              | MCP registration                                                                 |
-| ------------------- | ----------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| `clawql-memory`     | `runMemoryIngest`, `runMemoryRecall`, vault, `memory.db`, … | ✅ **`MemoryPlugin.onRegister`**                                                 |
-| `clawql-documents`  | `runIngestExternalKnowledge`, URL formatting                | ✅ **`DocumentsPlugin.onRegister`** (`clawql-documents/plugin`)                  |
-| `clawql-automation` | schedule worker, `runNotifySlack`                           | ✅ **`AutomationPlugin.onRegister`** (`clawql-automation/plugin`)                |
+| Package             | Logic lives in                                              | MCP registration                                                  |
+| ------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------- |
+| `clawql-memory`     | `runMemoryIngest`, `runMemoryRecall`, vault, `memory.db`, … | ✅ **`MemoryPlugin.onRegister`**                                  |
+| `clawql-documents`  | `runIngestExternalKnowledge`, URL formatting                | ✅ **`DocumentsPlugin.onRegister`** (`clawql-documents/plugin`)   |
+| `clawql-automation` | schedule worker, `runNotifySlack`                           | ✅ **`AutomationPlugin.onRegister`** (`clawql-automation/plugin`) |
 
 Transport-only concerns stay in `src/` today:
 
@@ -50,7 +50,7 @@ createClawQLApi({
     AutomationPlugin, // registers schedule + notify; starts schedule worker
     // future: LendingPlugin, YourCompanyPlugin, …
   ],
-});
+})
 ```
 
 When **`CLAWQL_ENABLE_MEMORY=0`** (or the Operator CRD omits the memory Layer), **`MemoryPlugin` is not composed** → `listTools` has no `memory_ingest` / `memory_recall`, and heavy vault/sql.js paths are not loaded for that process tier.
@@ -71,18 +71,26 @@ The contributor spec defines the **target** contract: `onRegister` receives `Cla
 
 ```typescript
 const MemoryPlugin: Plugin = {
-  id: "clawql-memory",
-  version: "1.0.0",
+  id: 'clawql-memory',
+  version: '1.0.0',
   onRegister: (api) =>
     Effect.gen(function* () {
-      yield* api.registerMcpTool("memory_ingest", memoryIngestSchema, handleMemoryIngest);
-      yield* api.registerMcpTool("memory_recall", memoryRecallSchema, handleMemoryRecall);
+      yield* api.registerMcpTool(
+        'memory_ingest',
+        memoryIngestSchema,
+        handleMemoryIngest,
+      )
+      yield* api.registerMcpTool(
+        'memory_recall',
+        memoryRecallSchema,
+        handleMemoryRecall,
+      )
     }),
   onTeardown: (api) =>
     Effect.gen(function* () {
       // Close pools, flush workers if any
     }),
-};
+}
 ```
 
 Handlers call into **`clawql-memory`** (`runMemoryIngest`, etc.). Transport wrappers (`logMcpToolShape`) may remain in a thin MCP adapter or move behind a small registration helper on `ClawQLApi` — that detail is implementation, not the model.
@@ -173,11 +181,11 @@ Agent (stdio / HTTP / gRPC)
 
 ## 9. References
 
-| Doc                                                                                                       | Use when                                 |
-| --------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
-| [Plugin registry](/reference/plugins#plugin-registry)                                                 | Shipped vs planned plugins, enable flags |
-| [Modularization implementation status](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/modularization-implementation-status.md)                         | Package layout, shims, extraction PRs    |
-| [Effect + plugin plan](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/effect-ts-modularization-rearchitecture-plan.md)                                 | Effect Layers, plugin checklist, CI      |
-| [Contributor Technical Specification §1.1](/contributing/technical-specification) | Full `Plugin` field semantics            |
-| [MCP tools matrix](/tools)                                                                   | Operator-facing tool list and env flags  |
-| [#306](https://github.com/danielsmithdevelopment/ClawQL/issues/306)                                       | Package delivery epic                    |
+| Doc                                                                                                                                                    | Use when                                 |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------- |
+| [Plugin registry](/reference/plugins#plugin-registry)                                                                                                  | Shipped vs planned plugins, enable flags |
+| [Modularization implementation status](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/modularization-implementation-status.md) | Package layout, shims, extraction PRs    |
+| [Effect + plugin plan](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/effect-ts-modularization-rearchitecture-plan.md)         | Effect Layers, plugin checklist, CI      |
+| [Contributor Technical Specification §1.1](/contributing/technical-specification)                                                                      | Full `Plugin` field semantics            |
+| [MCP tools matrix](/tools)                                                                                                                             | Operator-facing tool list and env flags  |
+| [#306](https://github.com/danielsmithdevelopment/ClawQL/issues/306)                                                                                    | Package delivery epic                    |

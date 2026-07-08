@@ -14,10 +14,10 @@
 
 ## Default bundled stack (breaking behavior change)
 
-| Before (≤6.4.x docs implied) | After (6.5.0) |
-|------------------------------|---------------|
-| No spec env → **`all-providers`** | No spec env → **Cloudflare, GitHub, Slack, Linear, Notion, Onyx** |
-| Large cold start, every IDP vendor in index | Faster first run for common SaaS API workflows |
+| Before (≤6.4.x docs implied)                | After (6.5.0)                                                     |
+| ------------------------------------------- | ----------------------------------------------------------------- |
+| No spec env → **`all-providers`**           | No spec env → **Cloudflare, GitHub, Slack, Linear, Notion, Onyx** |
+| Large cold start, every IDP vendor in index | Faster first run for common SaaS API workflows                    |
 
 **Restore full merge:**
 
@@ -66,12 +66,12 @@ Helm **`clawql-mcp`** chart may still default to **`all-providers`** for full ID
 
 Executor-inspired onboarding without a new binary yet:
 
-| Asset | Purpose |
-|-------|---------|
-| [Agent setup prompt](docs/getting-started/agent-setup-prompt.md) | Copy-paste into Cursor/Claude for guided first run |
-| [Init walkthrough spec](docs/getting-started/clawql-init-walkthrough-spec.md) | Phased plan: doctor CLI, `clawql init`, future UI |
-| [`scripts/dev/clawql-doctor.sh`](scripts/dev/clawql-doctor.sh) | Node/package/HTTP health/auth hints |
-| [`/agent-setup`](https://docs.clawql.com/agent-setup) | Website page for the prompt |
+| Asset                                                                         | Purpose                                            |
+| ----------------------------------------------------------------------------- | -------------------------------------------------- |
+| [Agent setup prompt](docs/getting-started/agent-setup-prompt.md)              | Copy-paste into Cursor/Claude for guided first run |
+| [Init walkthrough spec](docs/getting-started/clawql-init-walkthrough-spec.md) | Phased plan: doctor CLI, `clawql init`, future UI  |
+| [`scripts/dev/clawql-doctor.sh`](scripts/dev/clawql-doctor.sh)                | Node/package/HTTP health/auth hints                |
+| [`/agent-setup`](https://docs.clawql.com/agent-setup)                         | Website page for the prompt                        |
 
 ---
 
