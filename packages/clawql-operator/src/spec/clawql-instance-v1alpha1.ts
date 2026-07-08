@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { ClawQLHorizontalTierSpec } from "./horizontal-tier-spec.js";
+import { applyTierPreset } from "./tier-presets.js";
 
 const tierToggleSchema = z
   .object({
@@ -40,6 +41,14 @@ export const clawqlInstanceSpecV1Alpha1Schema = z
       })
       .strict()
       .optional(),
+    mcp: z
+      .object({
+        deploymentName: z.string().min(1).optional(),
+        namespace: z.string().min(1).optional(),
+        rolloutOnTierSpecChange: z.boolean().optional(),
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 
@@ -73,5 +82,6 @@ export function clawqlInstanceSpecToHorizontalTierSpec(
 }
 
 export function parseClawqlInstanceSpec(raw: unknown): ClawQLInstanceSpecV1Alpha1 {
-  return clawqlInstanceSpecV1Alpha1Schema.parse(raw);
+  const parsed = clawqlInstanceSpecV1Alpha1Schema.parse(raw);
+  return applyTierPreset(parsed);
 }

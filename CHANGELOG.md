@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Opinionated default bundled stack** ([#528](https://github.com/danielsmithdevelopment/ClawQL/pull/528)): bare `npx clawql-mcp` loads **Cloudflare, GitHub, Slack, Linear, Notion, Onyx**; **`CLAWQL_PROVIDER=all-providers`** remains explicit opt-in for every vendor + Google top-50 + AWS top-50.
+- **AWS top-50 bundled preset** ([#528](https://github.com/danielsmithdevelopment/ClawQL/pull/528)): SigV4 **`execute`**, manifest under `providers/aws/`, onboarding [`docs/providers/aws-onboarding.md`](docs/providers/aws-onboarding.md).
+- **Notion bundled provider**: official OpenAPI; **`NOTION_API_TOKEN`** auth; onboarding [`docs/providers/notion-onboarding.md`](docs/providers/notion-onboarding.md).
+- **Plugins docs site**: `docs/plugins/*.md` → `/plugins` hub + per-slug pages.
+- **Init walkthrough (Phase 2)**: `clawql` CLI — **`init`**, **`doctor`**, **`mcp-config`**; local **`~/.ClawQL/vault/providers.json`** (HashiCorp KV shape); MCP loads vault at startup; [local-provider-vault.md](docs/getting-started/local-provider-vault.md).
+- **Onboarding Tier 1**: `clawql secrets list|set` (hidden token input), `clawql doctor --smoke`, `clawql mcp-config --write cursor|claude-desktop`, HashiCorp Vault auto-detect on init, MCP startup stderr summary.
+- **ClawQL Operator (phase 2, opt-in)**: `ClawQLInstance` tier presets, continuous reconcile Deployment, MCP rollout on tier-spec change, `clawql operator status`, `make local-k8s-up` operator install ([#255](https://github.com/danielsmithdevelopment/ClawQL/issues/255)).
+
+### Changed
+
+- **Multi-spec HTTP**: `/graphql` is not mounted in merged multi-spec mode (MCP `search`/`execute` unchanged).
+- **First-run docs**: README, getting-started, quickstart, install, and migration guide aligned to default stack vs `all-providers`.
+- **Plugin model/registry docs**: Phase 2 `onRegister` status updated (July 2026).
+
+### Fixed
+
+- **`loadSpec()` cache race** after `resetSpecCache()` — generation counter in spec loader ([#528](https://github.com/danielsmithdevelopment/ClawQL/pull/528)).
+- **HTTP test stability** on CI — fast app opts, sql.js warmup, describe-level timeouts ([#528](https://github.com/danielsmithdevelopment/ClawQL/pull/528)).
+
 > **Note:** Items below are on **`main`** (post-**6.4.1** npm tag) and documented in release notes / IDP wave guides; they will appear in the next semver release entry when tagged.
 
 ### Added

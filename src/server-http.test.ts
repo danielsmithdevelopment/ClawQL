@@ -5,15 +5,23 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { recordNativeGraphqlExecute, resetNativeProtocolMetricsForTests } from "clawql-api";
+import { resetMemoryDbArtifactCachesForTests } from "clawql-memory";
+import { syncMemoryDbFromDocuments } from "clawql-memory/db/memory-db";
 import { resetClawqlApiForTests } from "./clawql-api-adapters.js";
 import { getClawqlOptionalToolFlags, resetSpecCache } from "clawql-api";
 import { createMcpHttpApp, type CreateMcpHttpAppOptions } from "./server-http.js";
 import { resetSchemaFieldCache } from "./tools.js";
 
 /** Optional-flag / webhook HTTP tests — cold `loadSpec()` is unnecessary and flaky on CI. */
-const FAST_HTTP_APP_OPTS: CreateMcpHttpAppOptions = { skipSpecPreload: true };
+const FAST_HTTP_APP_OPTS: CreateMcpHttpAppOptions = {
+  skipSpecPreload: true,
+  skipGraphqlAttach: true,
+};
+
+/** GraphQL route tests need in-process `/graphql` mounted (slower startup). */
+const GRAPHQL_HTTP_APP_OPTS: CreateMcpHttpAppOptions = { skipSpecPreload: true };
 
 /**
  * Close the HTTP server without hanging the Vitest worker: undici/fetch can leave
@@ -51,25 +59,36 @@ const STREAMABLE_HTTP_TEST_TIMEOUT_MS = 45_000;
 const here = dirname(fileURLToPath(import.meta.url));
 const minimalSpec = join(here, "test-utils/fixtures/minimal-petstore.json");
 
-describe("server-http", () => {
-  beforeAll(() => {
-    vi.setConfig({ testTimeout: 15_000 });
-  });
-
+describe("server-http", { timeout: STREAMABLE_HTTP_TEST_TIMEOUT_MS }, () => {
   const saved: Record<string, string | undefined> = {};
+
+  beforeAll(async () => {
+    const dir = await mkdtemp(join(tmpdir(), "clawql-sqljs-warm-"));
+    try {
+      process.env.CLAWQL_OBSIDIAN_VAULT_PATH = dir;
+      await syncMemoryDbFromDocuments(dir, [{ path: "warm.md", text: "# warm\n", mtimeMs: 0 }]);
+    } finally {
+      delete process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
+      await rm(dir, { recursive: true, force: true });
+      resetMemoryDbArtifactCachesForTests();
+    }
+  });
 
   beforeEach(() => {
     saved.CLAWQL_SPEC_PATH = process.env.CLAWQL_SPEC_PATH;
     saved.CLAWQL_PROVIDER = process.env.CLAWQL_PROVIDER;
     saved.CLAWQL_SPEC_PATHS = process.env.CLAWQL_SPEC_PATHS;
+    saved.CLAWQL_BUNDLED_PROVIDERS = process.env.CLAWQL_BUNDLED_PROVIDERS;
     saved.CLAWQL_CORS_ALLOW_ORIGIN = process.env.CLAWQL_CORS_ALLOW_ORIGIN;
     process.env.CLAWQL_SPEC_PATH = minimalSpec;
     delete process.env.CLAWQL_PROVIDER;
     delete process.env.CLAWQL_SPEC_PATHS;
+    delete process.env.CLAWQL_BUNDLED_PROVIDERS;
     delete process.env.CLAWQL_CORS_ALLOW_ORIGIN;
     resetSpecCache();
     resetSchemaFieldCache();
     resetClawqlApiForTests();
+    resetMemoryDbArtifactCachesForTests();
   });
 
   afterEach(() => {
@@ -81,11 +100,12 @@ describe("server-http", () => {
     resetSpecCache();
     resetSchemaFieldCache();
     resetClawqlApiForTests();
+    resetMemoryDbArtifactCachesForTests();
   });
 
   async function withHttpServer(
     run: (baseUrl: string) => Promise<void>,
-    appOptions: CreateMcpHttpAppOptions = {}
+    appOptions: CreateMcpHttpAppOptions = FAST_HTTP_APP_OPTS
   ): Promise<void> {
     const flags = getClawqlOptionalToolFlags();
     const app = await createMcpHttpApp({
@@ -136,7 +156,7 @@ describe("server-http", () => {
         data?: { __schema?: { queryType?: { name?: string } } };
       };
       expect(body.data?.__schema?.queryType?.name).toBeTruthy();
-    });
+    }, GRAPHQL_HTTP_APP_OPTS);
   });
 
   it("accepts JSON bodies over default Express ~100kb limit (large execute / GraphQL payloads)", async () => {
@@ -151,7 +171,7 @@ describe("server-http", () => {
         }),
       });
       expect(res.status).not.toBe(413);
-    });
+    }, GRAPHQL_HTTP_APP_OPTS);
   });
 
   it("GET /healthz returns ok and endpoint path", async () => {
@@ -217,7 +237,7 @@ describe("server-http", () => {
           graphqlBySource: {},
           grpcBySource: {},
         });
-      });
+      }, FAST_HTTP_APP_OPTS);
     } finally {
       if (saved === undefined) delete process.env.CLAWQL_HEALTHZ_NATIVE_PROTOCOL_METRICS;
       else process.env.CLAWQL_HEALTHZ_NATIVE_PROTOCOL_METRICS = saved;
@@ -243,7 +263,7 @@ describe("server-http", () => {
         expect(body.nativeProtocolMetrics?.graphqlBySource?.["vitest-gql-source"]?.executeOk).toBe(
           1
         );
-      });
+      }, FAST_HTTP_APP_OPTS);
     } finally {
       if (saved === undefined) delete process.env.CLAWQL_HEALTHZ_NATIVE_PROTOCOL_METRICS;
       else process.env.CLAWQL_HEALTHZ_NATIVE_PROTOCOL_METRICS = saved;
@@ -261,7 +281,6 @@ describe("server-http", () => {
     process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS = "1";
     await mkdir(join(dir, "Memory"), { recursive: true });
     await writeFile(join(dir, "Memory/a.md"), "# A\n", "utf8");
-    const { syncMemoryDbFromDocuments } = await import("clawql-memory/db/memory-db");
     const text = await readFile(join(dir, "Memory/a.md"), "utf8");
     await syncMemoryDbFromDocuments(dir, [{ path: "Memory/a.md", text, mtimeMs: 1 }]);
     try {
@@ -270,7 +289,7 @@ describe("server-http", () => {
         expect(res.ok).toBe(true);
         const body = (await res.json()) as { merkleSnapshot?: { rootHex: string } };
         expect(body.merkleSnapshot?.rootHex).toMatch(/^[0-9a-f]{64}$/);
-      });
+      }, FAST_HTTP_APP_OPTS);
     } finally {
       if (savedVault === undefined) delete process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
       else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = savedVault;
@@ -292,7 +311,6 @@ describe("server-http", () => {
     process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS = "1";
     await mkdir(join(dir, "Memory"), { recursive: true });
     await writeFile(join(dir, "Memory/a.md"), "# A\n", "utf8");
-    const { syncMemoryDbFromDocuments } = await import("clawql-memory/db/memory-db");
     const text = await readFile(join(dir, "Memory/a.md"), "utf8");
     await syncMemoryDbFromDocuments(dir, [{ path: "Memory/a.md", text, mtimeMs: 1 }]);
     try {
@@ -307,7 +325,7 @@ describe("server-http", () => {
         expect(body.cuckooMembershipArtifactsEnabled).toBe(true);
         expect(body.cuckooMetrics?.rebuildCount).toBeGreaterThanOrEqual(1);
         expect(body.cuckooFilterPersistedAt).toMatch(/\d{4}-\d{2}-\d{2}T/);
-      });
+      }, FAST_HTTP_APP_OPTS);
     } finally {
       if (savedVault === undefined) delete process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
       else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = savedVault;

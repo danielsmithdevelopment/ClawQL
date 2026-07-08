@@ -1,0 +1,39 @@
+---
+title: Automation
+description: schedule, notify, workflow, and argocd MCP tools from clawql-automation. Each tool opt-in via CLAWQL_ENABLE_* flags.
+slug: automation
+status: opt-in
+package: clawql-automation
+order: 6
+prev: bundled-providers
+next: sandbox
+---
+
+# Automation
+
+**Plugin ID:** `clawql-automation`  
+**Package:** `packages/clawql-automation` — `AutomationPlugin`
+
+Registers optional automation and GitOps MCP tools. Each tool is gated independently.
+
+## MCP tools
+
+| Tool           | Enable flag                    | Purpose                                                                                                |
+| -------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| **`schedule`** | **`CLAWQL_ENABLE_SCHEDULE=1`** | Persisted jobs + synthetic HTTP checks                                                                 |
+| **`notify`**   | **`CLAWQL_ENABLE_NOTIFY=1`**   | Slack `chat.postMessage` wrapper                                                                       |
+| **`workflow`** | **`CLAWQL_ENABLE_WORKFLOW=1`** | Argo Workflows submit/wait/logs ([#243](https://github.com/danielsmithdevelopment/ClawQL/issues/243))  |
+| **`argocd`**   | **`CLAWQL_ENABLE_ARGO_CD=1`**  | Argo CD Application observe/sync ([#244](https://github.com/danielsmithdevelopment/ClawQL/issues/244)) |
+
+## Prerequisites
+
+- **`notify`** — Slack in spec merge + bot token (`SLACK_BOT_TOKEN`, `CLAWQL_SLACK_TOKEN`, …)
+- **`workflow`** / **`argocd`** — Kubernetes RBAC, namespace allowlists; see Helm `values.yaml`
+
+## Learn more
+
+- [Schedule synthetic checks](/schedule)
+- [Slack notify](/notify)
+- [Schedule & notify workflows](/learn/schedule-notify-workflows)
+- [Workflow tool (repo)](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/workflow-tool.md)
+- [Argo CD tool (repo)](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/argocd-tool.md)

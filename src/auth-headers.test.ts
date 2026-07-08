@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { isGoogleDiscoverySpecLabel, mergedAuthHeaders } from "clawql-api";
+import { isAwsSpecLabel, isGoogleDiscoverySpecLabel, mergedAuthHeaders } from "clawql-api";
 
 afterEach(() => {
   delete process.env.CLAWQL_HTTP_HEADERS;
@@ -46,6 +46,21 @@ describe("isGoogleDiscoverySpecLabel", () => {
     expect(isGoogleDiscoverySpecLabel("github")).toBe(false);
     expect(isGoogleDiscoverySpecLabel("cloudflare")).toBe(false);
     expect(isGoogleDiscoverySpecLabel("jira")).toBe(false);
+    expect(isGoogleDiscoverySpecLabel("ec2-2016-11-15")).toBe(false);
+  });
+});
+
+describe("isAwsSpecLabel", () => {
+  it("matches AWS manifest slugs and preset id", () => {
+    expect(isAwsSpecLabel("ec2-2016-11-15")).toBe(true);
+    expect(isAwsSpecLabel("sts-2011-06-15")).toBe(true);
+    expect(isAwsSpecLabel("aws")).toBe(true);
+  });
+
+  it("rejects Google and other vendor labels", () => {
+    expect(isAwsSpecLabel("compute-v1")).toBe(false);
+    expect(isAwsSpecLabel("google")).toBe(false);
+    expect(isAwsSpecLabel("cloudflare")).toBe(false);
   });
 });
 

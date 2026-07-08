@@ -82,11 +82,11 @@ jobs:
       # actions/checkout@v7.0.0
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
 
-      # docker/setup-buildx-action@v4.1.0
-      - uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5
+      # docker/setup-buildx-action@v4.2.0
+      - uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c
 
-      # docker/login-action@v4.2.0
-      - uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee
+      # docker/login-action@v4.4.0
+      - uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -95,7 +95,7 @@ jobs:
       # docker/metadata-action@v6.1.0 — only **immutable** tags on registry push; `latest` / `nightly` promoted after gates.
       - name: Docker metadata
         id: meta
-        uses: docker/metadata-action@80c7e94dd9b9319bd5eb7a0e0fe9291e23a2a2e9
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302
         with:
           images: ${{ env.IMAGE_NAME }}
           tags: |
@@ -203,9 +203,9 @@ jobs:
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
 
-      - uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5
+      - uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c
 
-      - uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee
+      - uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -213,7 +213,7 @@ jobs:
 
       - name: Docker metadata
         id: meta
-        uses: docker/metadata-action@80c7e94dd9b9319bd5eb7a0e0fe9291e23a2a2e9
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302
         with:
           images: ${{ env.DASHBOARD_IMAGE_NAME }}
           tags: |
@@ -226,8 +226,15 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y skopeo
 
       # `dashboard/Dockerfile` copies `.env.example` into the image for `prebuild` (env catalog). Build context is `./dashboard` only, so stage the repo-root catalog source first.
-      - name: Stage repo .env.example for dashboard Docker context
-        run: cp "${GITHUB_WORKSPACE}/.env.example" "${GITHUB_WORKSPACE}/dashboard/.env.example"
+      - name: Stage repo sources for dashboard Docker context
+        run: |
+          cp "${GITHUB_WORKSPACE}/.env.example" "${GITHUB_WORKSPACE}/dashboard/.env.example"
+          mkdir -p "${GITHUB_WORKSPACE}/dashboard/scripts/kubernetes"
+          cp "${GITHUB_WORKSPACE}/scripts/kubernetes/provider-vault-key-catalog.ts" \
+            "${GITHUB_WORKSPACE}/dashboard/scripts/kubernetes/provider-vault-key-catalog.ts"
+          mkdir -p "${GITHUB_WORKSPACE}/dashboard/src/provider-vault"
+          cp "${GITHUB_WORKSPACE}/src/provider-vault/catalog.ts" \
+            "${GITHUB_WORKSPACE}/dashboard/src/provider-vault/catalog.ts"
 
       - name: Build OCI layout (single artifact — scanned and pushed)
         run: |
@@ -322,9 +329,9 @@ jobs:
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
 
-      - uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5
+      - uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c
 
-      - uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee
+      - uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -332,7 +339,7 @@ jobs:
 
       - name: Docker metadata
         id: meta
-        uses: docker/metadata-action@80c7e94dd9b9319bd5eb7a0e0fe9291e23a2a2e9
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302
         with:
           images: ${{ env.PANGUARD_BRIDGE_IMAGE_NAME }}
           tags: |
@@ -438,11 +445,11 @@ jobs:
       # actions/checkout@v7.0.0
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
 
-      # docker/setup-buildx-action@v4.1.0
-      - uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5
+      # docker/setup-buildx-action@v4.2.0
+      - uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c
 
-      # docker/login-action@v4.2.0
-      - uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee
+      # docker/login-action@v4.4.0
+      - uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -457,7 +464,7 @@ jobs:
       # docker/metadata-action@v6.1.0 — immutable **`sha-*`** only until promotion (same as MCP image).
       - name: Docker metadata
         id: meta
-        uses: docker/metadata-action@80c7e94dd9b9319bd5eb7a0e0fe9291e23a2a2e9
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302
         with:
           images: ${{ env.WEBSITE_IMAGE_NAME }}
           tags: |

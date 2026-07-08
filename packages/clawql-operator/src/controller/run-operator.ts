@@ -1,4 +1,5 @@
 import {
+  AppsV1Api,
   CoreV1Api,
   CustomObjectsApi,
   KubeConfig,
@@ -10,6 +11,7 @@ import {
   reconcileClawqlInstance,
   type ClawQLInstanceObject,
 } from "../reconcile/reconcile-instance.js";
+import { rolloutMcpDeployment } from "../reconcile/mcp-rollout.js";
 
 export type RunOperatorOptions = {
   readonly namespace?: string;
@@ -37,6 +39,7 @@ export async function runOperator(options: RunOperatorOptions = {}): Promise<voi
   const kc = loadKubeConfig();
   const customObjects = kc.makeApiClient(CustomObjectsApi);
   const core = kc.makeApiClient(CoreV1Api);
+  const apps = kc.makeApiClient(AppsV1Api);
 
   const reconcileCore = {
     readNamespacedConfigMap: (name: string, namespace: string) =>
@@ -60,6 +63,16 @@ export async function runOperator(options: RunOperatorOptions = {}): Promise<voi
       name: instance.metadata.name,
       body: result.status,
     });
+    if (result.mcpRollout) {
+      try {
+        await rolloutMcpDeployment(result.mcpRollout, apps);
+        log(`mcp rollout triggered ${result.mcpRollout.namespace}/${result.mcpRollout.deploymentName}`);
+      } catch (err) {
+        log(
+          `mcp rollout skipped: ${err instanceof Error ? err.message : String(err)}`
+        );
+      }
+    }
     log(`status=${result.status.phase} configMap=${result.status.configMapName ?? "none"}`);
   };
 

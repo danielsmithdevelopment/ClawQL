@@ -42,7 +42,7 @@ RUN mkdir -p /vault && chown 65532:65532 /vault
 # Distroless Node: no shell; only Node + minimal libc / CA bundle for HTTPS fetches.
 # Runtime uses Node 24 (LTS); no nodejs26 image yet. Build stage above may use a newer major.
 # Pin digest — bump when rebuilding images (Trivy gate + Debian base refreshes).
-FROM gcr.io/distroless/nodejs24-debian13@sha256:482fabdb0f0353417ab878532bb3bf45df925e3741c285a68038fb138b714cba AS runtime
+FROM gcr.io/distroless/nodejs24-debian13@sha256:ef5f3caf80da1630edd1a4df7b307a8f7d4553f8eec1dd29852b76e793593903 AS runtime
 WORKDIR /app
 
 ENV NODE_ENV=production

@@ -21,6 +21,11 @@
       "import": "./dist/spec/index.js",
       "require": "./dist/spec/index.cjs"
     },
+    "./status": {
+      "types": "./dist/status/index.d.ts",
+      "import": "./dist/status/index.js",
+      "require": "./dist/status/index.cjs"
+    },
     "./package.json": "./package.json"
   },
   "scripts": {

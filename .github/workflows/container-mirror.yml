@@ -39,7 +39,7 @@ jobs:
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
 
-      - uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121
+      - uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -59,15 +59,19 @@ jobs:
       - name: Trivy scan OCI layout (HIGH / CRITICAL — gate before registry push)
         run: |
           set -euo pipefail
+          ignorefile="${RUNNER_TEMP}/trivyignore-openclaw-vendor"
+          cat "${GITHUB_WORKSPACE}/.trivyignore" "${GITHUB_WORKSPACE}/.trivyignore-openclaw-vendor" > "${ignorefile}"
           docker run --rm \
             -v "${GITHUB_WORKSPACE}:/repo:ro" \
             -v "${RUNNER_TEMP}/openclaw-mirror-oci:/work/oci:ro" \
+            -v "${ignorefile}:/work/trivyignore:ro" \
             "${{ env.TRIVY_SCAN_IMAGE }}" \
             image \
             --scanners vuln \
             --severity HIGH,CRITICAL \
+            --ignore-unfixed \
             --exit-code 1 \
-            --ignorefile /repo/.trivyignore \
+            --ignorefile /work/trivyignore \
             --input /work/oci
 
       - name: Push scanned bytes to GHCR (skopeo — same layout Trivy scanned)

@@ -1,0 +1,13 @@
+[
+  "/plugins",
+  "/plugins/core",
+  "/plugins/panguard-proxy",
+  "/plugins/memory",
+  "/plugins/documents",
+  "/plugins/bundled-providers",
+  "/plugins/automation",
+  "/plugins/sandbox",
+  "/plugins/ouroboros",
+  "/plugins/hitl-label-studio",
+  "/plugins/third-party"
+]

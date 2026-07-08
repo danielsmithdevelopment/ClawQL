@@ -1,6 +1,14 @@
+import { Button } from '@/components/Button'
+
 # Quickstart
 
 You can be up and running in a few minutes with **`npx`**—no global install required. Run **`clawql-mcp`**; for **OpenAPI** single-spec loads, **`execute`** prefers in-process OpenAPI→GraphQL. Optional **`CLAWQL_GRAPHQL_SOURCES`** / **`CLAWQL_GRPC_SOURCES`** add native protocols to the same **`search`** index ([spec configuration](/spec-configuration)). {{ className: 'lead' }}
+
+<div className="not-prose my-6">
+  <Button href="/agent-setup" arrow="right">
+    <>New here? Start with Agent setup</>
+  </Button>
+</div>
 
 <Note>
   The published package is **large on disk** (~90+ MB) because it ships bundled
@@ -9,15 +17,22 @@ You can be up and running in a few minutes with **`npx`**—no global install re
 
 ## 1. Start the MCP server
 
+**Default stack** (Cloudflare, GitHub, Slack, Linear, Notion, Onyx):
+
 ```bash
 npx -p clawql-mcp clawql-mcp
 ```
 
-For every bundled vendor at once:
+For every bundled vendor plus Google top-50 and AWS top-50:
 
 ```bash
 CLAWQL_PROVIDER=all-providers npx -p clawql-mcp clawql-mcp
 ```
+
+<Note>
+  New to MCP wiring? Use the [Agent setup](/agent-setup) copy-paste prompt in
+  Cursor or Claude.
+</Note>
 
 ## 2. Connect your client
 

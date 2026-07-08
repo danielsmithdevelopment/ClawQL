@@ -8,6 +8,7 @@ import {
   serializeTierSpecConfigMap,
   tierSpecConfigMapName,
 } from "./tier-spec-configmap.js";
+import { resolveMcpRolloutTarget, type McpRolloutTarget } from "./mcp-rollout.js";
 
 export const CLAWQL_INSTANCE_CRD = {
   group: "clawql.io",
@@ -52,6 +53,7 @@ export type ReconcileCoreV1 = {
 
 export type ReconcileResult = {
   status: ClawQLInstanceStatusV1Alpha1;
+  mcpRollout?: McpRolloutTarget;
 };
 
 function nowIso(): string {
@@ -92,12 +94,37 @@ export async function reconcileClawqlInstance(
   const serialized = serializeTierSpecConfigMap(cmData);
   const labels = {
     "app.kubernetes.io/name": "clawql-operator",
+    "app.kubernetes.io/managed-by": "clawql-operator",
     "clawql.io/instance": name,
   };
+  const metadata: {
+    name: string;
+    labels: Record<string, string>;
+    ownerReferences?: Array<{
+      apiVersion: string;
+      kind: string;
+      name: string;
+      uid: string;
+      controller?: boolean;
+      blockOwnerDeletion?: boolean;
+    }>;
+  } = { name: cmName, labels };
+  if (instance.metadata.uid) {
+    metadata.ownerReferences = [
+      {
+        apiVersion: `${CLAWQL_INSTANCE_CRD.group}/${CLAWQL_INSTANCE_CRD.version}`,
+        kind: "ClawQLInstance",
+        name,
+        uid: instance.metadata.uid,
+        controller: true,
+        blockOwnerDeletion: true,
+      },
+    ];
+  }
   const body = {
     apiVersion: "v1",
     kind: "ConfigMap",
-    metadata: { name: cmName, labels },
+    metadata,
     data: serialized,
   };
 
@@ -138,5 +165,6 @@ export async function reconcileClawqlInstance(
         },
       ],
     },
+    mcpRollout: resolveMcpRolloutTarget(namespace, name, spec),
   };
 }

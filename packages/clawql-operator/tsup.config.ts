@@ -5,6 +5,7 @@ export default defineConfig({
     index: "src/index.ts",
     cli: "src/cli.ts",
     "spec/index": "src/spec/index.ts",
+    "status/index": "src/status/operator-status.ts",
   },
   format: ["esm", "cjs"],
   dts: true,

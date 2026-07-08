@@ -254,6 +254,7 @@ export const navigation: Array<NavGroup> = [
     links: [
       { title: 'Overview', href: '/getting-started' },
       { title: 'Quickstart', href: '/quickstart' },
+      { title: 'Agent setup', href: '/agent-setup' },
       { title: 'Install', href: '/install' },
       { title: 'MCP clients', href: '/mcp-clients' },
       { title: 'Choose your tier', href: '/deployment' },
@@ -273,6 +274,7 @@ export const navigation: Array<NavGroup> = [
         href: '/vision/technical-enablement',
       },
       { title: 'Modularization v2.1', href: '/vision/modularization' },
+      { title: 'Plugins hub', href: '/plugins' },
       { title: 'Plugin model & registry', href: '/reference/plugins' },
       {
         title: 'Immutable releases (Layer 0)',
@@ -324,6 +326,23 @@ export const navigation: Array<NavGroup> = [
       { title: 'HITL & human interfaces', href: '/reference/hitl' },
       { title: 'Verticals guide', href: '/reference/verticals' },
       { title: 'Troubleshooting', href: '/troubleshooting' },
+    ],
+  },
+  {
+    title: 'Plugins',
+    links: [
+      { title: 'Plugins hub', href: '/plugins' },
+      { title: 'Gateway core', href: '/plugins/core' },
+      { title: 'Panguard proxy', href: '/plugins/panguard-proxy' },
+      { title: 'Memory (vault)', href: '/plugins/memory' },
+      { title: 'Documents & IDP', href: '/plugins/documents' },
+      { title: 'Bundled providers', href: '/plugins/bundled-providers' },
+      { title: 'Automation', href: '/plugins/automation' },
+      { title: 'Sandbox', href: '/plugins/sandbox' },
+      { title: 'Ouroboros', href: '/plugins/ouroboros' },
+      { title: 'HITL (Label Studio)', href: '/plugins/hitl-label-studio' },
+      { title: 'Third-party plugins', href: '/plugins/third-party' },
+      { title: 'Plugin registry (reference)', href: '/reference/plugins' },
     ],
   },
   {
@@ -395,6 +414,7 @@ export function Navigation(props: React.ComponentPropsWithoutRef<'nav'>) {
         <TopLevelNavItem href="/architecture">Architecture</TopLevelNavItem>
         <TopLevelNavItem href="/deployment">Deployment</TopLevelNavItem>
         <TopLevelNavItem href="/learn">Learn</TopLevelNavItem>
+        <TopLevelNavItem href="/plugins">Plugins</TopLevelNavItem>
         <TopLevelNavItem href="https://github.com/danielsmithdevelopment/ClawQL">
           GitHub
         </TopLevelNavItem>

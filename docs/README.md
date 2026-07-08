@@ -21,6 +21,7 @@ This directory is organized by purpose so operational guides, product docs, and 
 - **ClawQL plugin model** (memory/documents/automation as plugins, MCP tools, third-party extensions): [`design/clawql-plugin-model.md`](design/clawql-plugin-model.md) — [`/reference/plugins`](https://docs.clawql.com/reference/plugins)
 - **Operator target architecture** (planned tiers, CRD, NL ops — not shipped): [`design/operator-target-architecture.md`](design/operator-target-architecture.md)
 - **Plugin registry** (shipped vs planned plugins, MCP tool ownership, enable flags): [`reference/clawql-plugin-registry.md`](reference/clawql-plugin-registry.md) — [`/reference/plugins`](https://docs.clawql.com/reference/plugins)
+- **Plugins hub** (one page per plugin — core, memory, documents, bundled providers, …): [`plugins/README.md`](plugins/README.md) — [`/plugins`](https://docs.clawql.com/plugins)
 - **Effect-TS + plugin rearchitecture plan** (Layer composition, plugin checklist): [`design/effect-ts-modularization-rearchitecture-plan.md`](design/effect-ts-modularization-rearchitecture-plan.md)
 - **ClawQL Modularization v1.9** (companion — historical package matrix): [`vision/clawql-modularization.md`](vision/clawql-modularization.md) — package delivery epic [#306](https://github.com/danielsmithdevelopment/ClawQL/issues/306)
 - ClawQL ecosystem (vision deck — core loop, hybrid memory, pipeline, Onyx, Ouroboros, infra, roadmap): [`clawql-ecosystem.md`](clawql-ecosystem.md)
@@ -35,6 +36,9 @@ This directory is organized by purpose so operational guides, product docs, and 
 ## Getting Started and README Splits
 
 - `readme/getting-started.md`
+- `getting-started/agent-setup-prompt.md` — copy-paste Cursor/Claude onboarding prompt
+- `getting-started/local-provider-vault.md` — ~/.ClawQL secrets vault + memory home
+- `getting-started/clawql-init-walkthrough-spec.md` — Executor comparison and phased init tool design
 - `readme/configuration.md`
 - `readme/deployment.md`
 - `readme/benchmarks.md`
@@ -70,6 +74,7 @@ This directory is organized by purpose so operational guides, product docs, and 
 - `deployment/tailscale-and-headscale-for-clawql.md` (beginner guide: managed Tailscale + self-hosted Headscale, MagicDNS, ClawQL env — [#206](https://github.com/danielsmithdevelopment/ClawQL/issues/206), [#211](https://github.com/danielsmithdevelopment/ClawQL/issues/211), [#213](https://github.com/danielsmithdevelopment/ClawQL/issues/213); website **`/tailscale`**)
 - `deployment/headscale-tailnet.md` + `deployment/headscale-acls-clawql.hujson` (Headscale runbook + least-privilege ACL starter — [#206](https://github.com/danielsmithdevelopment/ClawQL/issues/206), [#213](https://github.com/danielsmithdevelopment/ClawQL/issues/213))
 - `providers/google-apis-lookup.md`
+- `providers/aws-apis-lookup.md`, `providers/aws-onboarding.md`
 
 ## Security
 

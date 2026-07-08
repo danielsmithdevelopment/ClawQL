@@ -15,9 +15,10 @@ import sys
 text = open(sys.argv[1], "r", encoding="utf-8").read()
 checks = [
     ("CustomResourceDefinition", "CRD"),
-    ("kind: CronJob", "reconcile CronJob"),
+    ("kind: Deployment", "operator Deployment"),
     ("clawqlinstances.clawql.io", "CRD group/name"),
     ("kind: ClusterRole", "RBAC"),
+    ("deployments", "MCP rollout RBAC"),
 ]
 for needle, label in checks:
     if needle not in text:

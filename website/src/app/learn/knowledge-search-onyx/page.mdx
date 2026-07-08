@@ -26,7 +26,7 @@ All of the following must be true for **`listTools`** to expose **`knowledge_sea
 
 1. **Documents stack on** — the tool is part of the **Documents** tier. **`CLAWQL_ENABLE_DOCUMENTS=0`** hides **`knowledge_search_onyx`** regardless of other flags ([Concepts](/concepts), [configuration](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/readme/configuration.md)).
 2. **Onyx flag on** — set **`CLAWQL_ENABLE_ONYX=1`** (or **`true`** / **`yes`**) on the **MCP server** process and restart.
-3. **Provider in the merge** — default **`all-providers`** includes **`onyx`**, or add **`onyx`** to **`CLAWQL_BUNDLED_PROVIDERS`**, or use **`CLAWQL_PROVIDER=onyx`** for Onyx-only mode ([Bundled specs](/bundled-specs)).
+3. **Provider in the merge** — the **default stack** includes **`onyx`** (Cloudflare, GitHub, Slack, Linear, Notion, Onyx). For IDP-only vendors use **`CLAWQL_PROVIDER=all-providers`**, add **`onyx`** to **`CLAWQL_BUNDLED_PROVIDERS`**, or **`CLAWQL_PROVIDER=onyx`** for Onyx-only mode ([Bundled specs](/bundled-specs)).
 4. **Connectivity** — **`ONYX_BASE_URL`** = API root **without** a trailing slash; include **`/api`** if your deployment mounts the API there (see [Onyx API reference](https://docs.onyx.app/developers/api_reference/search/document_search)).
 5. **Auth** — **`ONYX_API_TOKEN`** or **`CLAWQL_ONYX_API_TOKEN`** as **Bearer**, or a **`onyx`** entry in **`CLAWQL_PROVIDER_AUTH_JSON`**.
 

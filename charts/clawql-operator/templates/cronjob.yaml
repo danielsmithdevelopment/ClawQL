@@ -1,4 +1,4 @@
-{{- if .Values.operator.enabled }}
+{{- if and .Values.operator.enabled (eq .Values.operator.mode "cronjob") }}
 apiVersion: batch/v1
 kind: CronJob
 metadata:

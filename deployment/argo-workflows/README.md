@@ -58,6 +58,19 @@ Reference pack under [`deployment/samples/lending-w2/`](../samples/lending-w2/RE
 kubectl apply -f deployment/samples/lending-w2/workflow-template.yaml -n clawql
 ```
 
+## Real estate transaction samples
+
+Reference packs for residential transaction document intelligence (title commitment + PSA) — intelligent document layer alongside KW Command / Google Drive:
+
+- [`deployment/samples/real-estate/`](../samples/real-estate/README.md) — overview
+- [`deployment/samples/real-estate-title/`](../samples/real-estate-title/README.md) — `clawql-realestate-title-ingest`
+- [`deployment/samples/real-estate-psa/`](../samples/real-estate-psa/README.md) — `clawql-realestate-psa-ingest`
+
+```bash
+kubectl apply -f deployment/samples/real-estate-title/workflow-template.yaml -n clawql
+kubectl apply -f deployment/samples/real-estate-psa/workflow-template.yaml -n clawql
+```
+
 ## Related
 
 - [Smoke test: vault daily digest](SMOKE.md)

@@ -1,0 +1,25 @@
+<View>
+  <Header value="Title commitment — Schedule B exception review (synthetic demo)"/>
+  <Text name="instructions" value="Verify property, policy amount, and Schedule B exceptions. Classify each exception and note curative action if needed."/>
+  <Text name="property_address" toName="doc" value="$property_address"/>
+  <Text name="policy_amount" toName="doc" value="$policy_amount"/>
+  <TextArea name="doc" value="$text" readonly="true"/>
+  <Labels name="doc_type" toName="doc">
+    <Label value="title_commitment" background="#2ECC40"/>
+    <Label value="title_policy" background="#0074D9"/>
+    <Label value="survey" background="#FF851B"/>
+    <Label value="other" background="#AAAAAA"/>
+  </Labels>
+  <TextArea name="schedule_b_exceptions" toName="doc" value="$schedule_b_exceptions" rows="8"/>
+  <Choices name="exception_severity" toName="doc" choice="single">
+    <Choice value="standard"/>
+    <Choice value="requires_curative"/>
+    <Choice value="deal_blocker"/>
+  </Choices>
+  <TextArea name="curative_notes" toName="doc" placeholder="Curative path, endorsement needed, or follow-up with title officer"/>
+  <Choices name="approve" toName="doc" choice="single">
+    <Choice value="approve"/>
+    <Choice value="reject"/>
+    <Choice value="needs_rescan"/>
+  </Choices>
+</View>

@@ -151,6 +151,12 @@ instanceSpec:
   configMapName: ""
   mountPath: /etc/clawql/instance
 
+# Bundled cloud APIs — add Google/AWS to the default install stack; omit Cloudflare with enableCloudflare: false.
+# all-providers always includes Google, AWS, and Cloudflare regardless of these values.
+enableGoogle: false
+enableCloudflare: true
+enableAws: false
+
 # MCP sandbox_exec — isolated snippets (Kata default in-cluster, Docker, Seatbelt, bridge; #207). Default off.
 enableSandbox: false
 

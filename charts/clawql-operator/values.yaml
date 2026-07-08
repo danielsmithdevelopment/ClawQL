@@ -18,11 +18,12 @@ crd:
   install: true
 
 operator:
-  # When false, chart installs CRD/RBAC only (useful for GitOps CRD bootstrap).
+  # cronjob = batch reconcile every 5m; deployment = continuous watch (recommended).
+  mode: deployment
   enabled: true
-  # Reconcile all ClawQLInstance resources cluster-wide.
   watchAllNamespaces: true
   extraArgs: ["--once"]
+  deploymentArgs: []
 
 resources: {}
 

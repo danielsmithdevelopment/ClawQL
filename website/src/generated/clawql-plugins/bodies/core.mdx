@@ -1,0 +1,30 @@
+# Gateway core
+
+**ClawQL Core** is not a plugin — it is the always-composed gateway surface in `clawql-api`. There is no `CLAWQL_ENABLE_*` flag to disable these tools.
+
+## MCP tools
+
+| Tool          | Role                                                                                         |
+| ------------- | -------------------------------------------------------------------------------------------- |
+| **`search`**  | Rank operations from the active merged spec index by natural-language intent                 |
+| **`execute`** | Call a discovered operation by `operationId` (REST, Discovery, native GraphQL/gRPC)          |
+| **`audit`**   | In-process ring buffer of tool events (not durable — use vault memory for compliance trails) |
+| **`cache`**   | Ephemeral in-process LRU key/value scratch state between tool calls                          |
+
+## How it fits the plugin model
+
+Optional **horizontal plugins** (`clawql-memory`, `clawql-documents`, …) register additional tools via `Plugin.onRegister`. Core tools are registered directly by the gateway and are never omitted from a standard `clawql-mcp` process.
+
+## Configuration
+
+Core behavior is driven by **spec selection** (which APIs are in the merge) and global env such as:
+
+- `CLAWQL_PROVIDER`, `CLAWQL_BUNDLED_PROVIDERS`, `CLAWQL_SPEC_PATHS` — see [Bundled providers plugin](/plugins/bundled-providers)
+- `CLAWQL_PROVIDER_AUTH_JSON`, per-vendor tokens — see [Configuration](/spec-configuration)
+
+## Learn more
+
+- [MCP tools reference](/tools)
+- [Search & execute walkthrough](/learn/search-and-execute-mcp)
+- [Audit & observability](/learn/audit-tool-and-observability)
+- [Session cache](/cache)

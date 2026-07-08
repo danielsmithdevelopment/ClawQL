@@ -106,18 +106,24 @@ Each hosted customer receives a dedicated tenant with full isolation at the data
 - Coneshare VDR links scoped to the tenant's Nextcloud instance.
 - mTLS between all tenant services via Istio; tenant-scoped secrets in HashiCorp Vault.
 
-### Hosted Plan: Pricing Model (Proposed)
+### Hosted Plan: Pricing Model (July 2026 — plugin bundles)
 
-The hosted plan is structured around document volume and seat count, with a free tier to drive adoption:
+Managed hosting is structured around **plugin bundles**, not a single document-volume ladder. Gateway-only customers pay dramatically less than IDP customers. There is **no perpetual free hosted tier** — self-host free forever on Apache 2.0, or start a **14-day Developer trial** (no credit card).
 
-| Tier           | Included                                                                              | Target Customer                          |
-| -------------- | ------------------------------------------------------------------------------------- | ---------------------------------------- |
-| **Free**       | 500 documents/month, 1 user, 5 GB storage. Full pipeline, no VDR.                     | Individual evaluation, freelancers.      |
-| **Starter**    | 5,000 documents/month, 5 users, 50 GB storage. Full pipeline + Coneshare VDR.         | Small teams, startups, SMBs.             |
-| **Business**   | 25,000 documents/month, 25 users, 500 GB storage. Priority processing, SLA.           | Growing companies, legal/finance teams.  |
-| **Enterprise** | Unlimited documents, unlimited users, dedicated infrastructure, custom SLA, SSO/SAML. | Large enterprises, regulated industries. |
+| Tier             | Price          | Plugin bundle           | Included                                                                                                  |
+| ---------------- | -------------- | ----------------------- | --------------------------------------------------------------------------------------------------------- |
+| **Developer**    | $29/mo         | Gateway + memory        | Unlimited executions, 1 user, vault memory — no IDP, no GPU. 14-day free trial available.                 |
+| **Teams**        | $99/mo         | Gateway + memory + Onyx | Unlimited executions, 5 users, full Onyx semantic search — no IDP                                         |
+| **Starter**      | $299/mo        | IDP plugin bundle       | Unlimited executions, 5 users, 5,000 documents/mo, VDR, classify/extract, sovereign inference             |
+| **Business**     | $599/mo        | IDP plugin bundle       | Unlimited executions, 25,000 documents/mo, priority queue, full VDR analytics, 99.5% SLA                  |
+| **Professional** | $1,200/mo      | Full stack              | Unlimited executions, 75,000 documents/mo, dedicated namespace, vertical fine-tune, SSO/SAML              |
+| **Enterprise**   | from $3,500/mo | Full stack + security   | Unlimited executions, dedicated node, custom fine-tune, EU multi-region, Sovereign Security Pack included |
 
-> **Note:** these tiers are indicative. Final pricing should be validated against infrastructure cost modeling and customer discovery before launch.
+**Unlimited executions on every tier.** ClawQL does not meter MCP gateway usage or charge execution overage. Stateless gateway workers scale on spot capacity — usage-based execution pricing would only encourage customers to throttle their agents. Real cost drivers are reserved-pool memory (Onyx, Nextcloud per tenant), GPU inference, and document storage (R2). Those are covered by flat subscription tiers and storage overage. executor.sh caps Team at 250,000 executions/mo with $0.20/1,000 overage; ClawQL does not.
+
+Sovereign Security Pack: **+$200/mo** on any paid tier.
+
+> **Note:** tiers are indicative for GTM positioning. Validate against infrastructure cost modeling before launch.
 
 ---
 
@@ -397,14 +403,44 @@ The entire sequence above runs from a single natural-language agent prompt. No c
 
 ## Competitive Positioning
 
-ClawQL competes across three adjacent markets simultaneously: IDP platforms, Virtual Data Rooms, and AI agent infrastructure. Its differentiation is the combination of full-stack sovereignty, native AI orchestration, cryptographic auditability, and a hosted product that requires none of the infrastructure overhead of incumbents.
+ClawQL competes across four adjacent markets — price each plugin bundle against the right incumbent:
 
-| Competitor Category                                                | ClawQL Differentiation                                                                                                                                                                                                           |
-| ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **SaaS IDP Vendors** (Hyperscience, Kofax, ABBYY)                  | Cloud-hosted; data leaves your environment. Per-document pricing becomes expensive at scale. No native MCP/agent interface. ClawQL: self-hosted or tenant-isolated hosted, flat pricing, MCP-native from day one.                |
-| **VDR Incumbents** (Intralinks, Datasite, Ansarada)                | Hosted VDRs with no document processing pipeline. Cannot redact, convert, or semantically index. High per-user/per-GB/per-deal licensing. ClawQL: full pipeline integration, usage-based hosted pricing, Coneshare VDR included. |
-| **Open-source point tools** (Tika, Stirling, Nextcloud standalone) | Individual tools without orchestration. Significant custom integration effort required. No AI agent interface. ClawQL: unified orchestration, Helm deployment, MCP-native agent access out of the box.                           |
-| **AI document platforms** (emerging LLM-native tools)              | Typically cloud-only, limited format support, no VDR, no Merkle audit trail. ClawQL: 1,000+ formats, cryptographic audit, VDR distribution, self-hosted option for regulated industries.                                         |
+| Competitor Category                                                                   | ClawQL tier                                                | ClawQL differentiation                                                                                                                                                                                                                                  |
+| ------------------------------------------------------------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **MCP gateways** ([executor.sh](https://executor.sh/), emerging agent infrastructure) | Developer ($29/mo), Teams ($99/mo)                         | executor.sh meters executions (250K cap + $0.20/1K overage on Team). ClawQL: unlimited executions on every tier. Plus eight efficiency layers, persistent vault memory, Onyx semantic search, and optional full IDP platform executor.sh does not ship. |
+| **SaaS IDP vendors** (Hyperscience, Kofax, ABBYY)                                     | Starter–Professional (IDP bundle)                          | Cloud-hosted; per-document pricing at scale. No native MCP/agent interface. ClawQL: tenant-isolated hosted or self-hosted, flat IDP tiers, MCP-native from day one.                                                                                     |
+| **VDR incumbents** (Intralinks, Datasite, Ansarada)                                   | Starter+ (IDP bundle includes Coneshare)                   | Hosted VDRs with no document processing pipeline. High per-user/per-GB/per-deal licensing. ClawQL: full pipeline integration, Coneshare VDR included in IDP subscription.                                                                               |
+| **Vertical CRMs** (REsimpli, franchise transaction tools)                             | Teams ($99/mo) for agent memory; Starter ($299/mo) for IDP | CRMs track pipeline; Drive folders hold files. ClawQL connects CRM APIs + storage via MCP, indexes documents in Onyx, threads deal context in vault — without replacing Command, Dotloop, or SkySlope.                                                  |
+
+### Real estate vertical
+
+Brokerages on Keller Williams Command, eXp BoldTrail, Follow Up Boss, or Compass share a structural gap: **CRM knows the deal, Drive holds the files** — no semantic link between contacts and transaction PDFs.
+
+| Need                                                             | Recommended tier                  | Why                                                                                                   |
+| ---------------------------------------------------------------- | --------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Connect Command + Drive, semantic search, deal memory            | **Teams ($99/mo)**                | MCP gateway + Onyx + vault — no IDP overhead for teams that do not process documents daily            |
+| Title commitment classify/extract, Coneshare VDR for disclosures | **Starter ($299/mo)**             | IDP plugin bundle — explicitly opted in                                                               |
+| REsimpli comparison                                              | Teams vs REsimpli Basic ($149/mo) | REsimpli is CRM-only for investors; ClawQL unifies CRM integration, document search, and agent memory |
+
+ClawQL does **not** replace Dotloop (forms, e-sign, broker compliance) or MLS listing platforms. It is the intelligent document layer on top.
+
+### MCP gateway: executor.sh (Market 1)
+
+executor.sh is the closest direct competitor to ClawQL's MCP gateway layer. It routes tool calls; ClawQL operates a stateful agent platform.
+
+| Dimension         | executor.sh                           | ClawQL                                                                              |
+| ----------------- | ------------------------------------- | ----------------------------------------------------------------------------------- |
+| Token efficiency  | One layer: search-and-execute only    | Eight compounding layers on top of search/execute                                   |
+| Agent memory      | None — every session starts from zero | Obsidian vault with memory_ingest / memory_recall                                   |
+| Semantic search   | None                                  | Onyx — 40+ connectors, hybrid search, citations                                     |
+| Security          | Host-side secrets, basic audit log    | Kata isolation, WORM Merkle logs, Panguard fail-closed, documented defense-in-depth |
+| Document pipeline | None                                  | Tika → Gotenberg → Stirling → archive → Onyx                                        |
+| VDR               | None                                  | Coneshare included from IDP Starter                                                 |
+| Sovereign LLM     | None                                  | Fine-tuned Qwen inside tenant boundary (IDP tiers)                                  |
+| Execution pricing | 250K cap + $0.20/1K overage on Team   | Unlimited on every tier — no caps, no overage bills                                 |
+| Gateway pricing   | Team $150/org/mo — metered routing    | Developer $29/mo · Teams $99/mo with memory + search · unlimited executions         |
+
+executor.sh is a stateless tool router. ClawQL is a stateful agent operating system with eight compounding token-efficiency layers, persistent memory, semantic search, sovereign AI inference, a full document pipeline, a VDR, and defense-in-depth security that executor.sh cannot match at any price.
 
 ClawQL's MCP-native architecture means it benefits automatically from improvements in AI model capabilities. As frontier models improve, ClawQL's automation depth increases without code changes.
 
@@ -423,7 +459,20 @@ ClawQL deploys via a unified Helm chart that provisions the full stack. All serv
 - Persistent volumes for Obsidian vaults, Nextcloud files, Onyx indexes, and Postgres.
 - Paperless-ngx available via feature toggle for operators who prefer it (self-hosted only).
 
-### Hosted Stack (per tenant)
+### Hosted infrastructure model
+
+Managed hosting uses a **hybrid model** aligned to plugin bundles — without changing the customer-facing MCP endpoint:
+
+| Tier class                                      | Infrastructure                         | What the customer gets                                                                         |
+| ----------------------------------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| **Developer, Teams**                            | Global edge + object storage for vault | MCP gateway, memory vault, cache, audit. Unlimited executions. Low-latency endpoint worldwide. |
+| **Starter, Business, Professional, Enterprise** | Dedicated tenant (Kubernetes)          | Full IDP pipeline, Onyx at scale, Nextcloud archive, Coneshare VDR, sovereign inference.       |
+
+A single routing layer dispatches each request by tenant tier. **Vault documents live in shared object storage** accessible from both gateway and IDP backends — upgrading from Teams to Starter retains full agent memory history without migration. The customer's MCP URL and auth token do not change on upgrade.
+
+AWS (EKS + Karpenter) provisions **only when the first IDP customer signs** — not at gateway-tier launch. This keeps bootstrap burn minimal while gateway tiers validate product-market fit.
+
+### Hosted Stack (per tenant — IDP tiers)
 
 - Dedicated Nextcloud instance, Postgres schema, and Onyx index per tenant.
 - Shared ClawQL core and processing services (Tika, Gotenberg, Stirling-PDF) with tenant-scoped job queues.
@@ -466,7 +515,7 @@ The following outlines planned capabilities beyond the April 2026 release. Roadm
 
 ### Near-Term (Next 1–3 Months)
 
-- Hosted plan beta launch with Free and Starter tiers.
+- Hosted plan beta launch with 14-day Developer trial and Starter tiers.
 - ClawQL Metadata Store REST API for direct metadata query without MCP client.
 - Nextcloud app for in-browser document processing trigger (no agent client required).
 - Automated tenant provisioning and onboarding flow for hosted customers.

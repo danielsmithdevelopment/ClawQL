@@ -485,6 +485,11 @@ const TARGETS = [
     url: "https://raw.githubusercontent.com/getsentry/sentry-api-schema/main/openapi-derefed.json",
     out: "providers/sentry/openapi.json",
   },
+  {
+    id: "notion",
+    url: "https://developers.notion.com/openapi.json",
+    out: "providers/notion/openapi.json",
+  },
 ];
 
 /**

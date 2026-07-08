@@ -452,6 +452,15 @@ fi
 echo "==> Rollout status"
 kubectl_ctx -n "${NAMESPACE}" rollout status deployment/clawql-mcp-http --timeout=300s
 
+if [[ "${CLAWQL_INSTALL_OPERATOR:-${CLAWQL_LOCAL_K8S_FULL_STACK}}" == "1" ]]; then
+  echo ""
+  echo "==> ClawQL operator (ClawQLInstance + MCP tier-spec overlay)"
+  CLAWQL_TARGET_NAMESPACE="${NAMESPACE}" \
+    CLAWQL_LOCAL_K8S_CONTEXT="${KUBE_CONTEXT}" \
+    CLAWQL_HELM_RELEASE="${RELEASE_NAME}" \
+    bash "${ROOT}/scripts/kubernetes/install-clawql-operator-local.sh"
+fi
+
 echo ""
 echo "==> Services"
 kubectl_ctx -n "${NAMESPACE}" get svc

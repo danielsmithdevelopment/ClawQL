@@ -20,3 +20,6 @@ spec:
     enabled: false
   ouroboros:
     enabled: false
+  mcp:
+    deploymentName: clawql-mcp-http
+    rolloutOnTierSpecChange: true

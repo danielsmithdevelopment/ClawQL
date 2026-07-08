@@ -18,12 +18,24 @@ ClawQL groups capabilities into three bands. This matches the **layer diagram** 
 
 ### Default on — opt out
 
-Unset means **on**. Set **`0`**, **`false`**, or **`no`** to hide tools or shrink the default **`all-providers`** merge:
+Unset means **on**. Set **`0`**, **`false`**, or **`no`** to hide tools or shrink merges:
 
-| Band                 | MCP tools                                                                                                                                                                                            | Env to opt out                                                                                                                                                                                                                                                          |
-| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **ClawQL Memory**    | **`memory_ingest`**, **`memory_recall`**                                                                                                                                                             | **`CLAWQL_ENABLE_MEMORY=0`**                                                                                                                                                                                                                                            |
-| **ClawQL Documents** | **`ingest_external_knowledge`**; **`knowledge_search_onyx`** when also **`CLAWQL_ENABLE_ONYX=1`**; optional **`run_idp_pipeline`**, **`classify_document`**, **`extract_document`** (separate flags) | **`CLAWQL_ENABLE_DOCUMENTS=0`** (drops **docling**, **tika**, **gotenberg**, **paperless**, **stirling**, **onyx**, **nextcloud**, **coneshare** from the default merge; hides document MCP tools). Explicit **`CLAWQL_BUNDLED_PROVIDERS=…`** can still list those ids. |
+| Band                  | MCP tools                                                                                                                                                                                            | Env to opt out                                                                                                                                                                                                                                                            |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **ClawQL Memory**     | **`memory_ingest`**, **`memory_recall`**                                                                                                                                                             | **`CLAWQL_ENABLE_MEMORY=0`**                                                                                                                                                                                                                                              |
+| **ClawQL Documents**  | **`ingest_external_knowledge`**; **`knowledge_search_onyx`** when also **`CLAWQL_ENABLE_ONYX=1`**; optional **`run_idp_pipeline`**, **`classify_document`**, **`extract_document`** (separate flags) | **`CLAWQL_ENABLE_DOCUMENTS=0`** (drops **docling**, **tika**, **gotenberg**, **paperless**, **stirling**, **onyx**, **nextcloud**, **coneshare** from **`all-providers`**; hides document MCP tools). Explicit **`CLAWQL_BUNDLED_PROVIDERS=…`** can still list those ids. |
+| **Cloudflare bundle** | _(spec merge only — no extra MCP tools)_                                                                                                                                                             | **`CLAWQL_ENABLE_CLOUDFLARE=0`** (omits Cloudflare from the **no-config default stack** only). Default **on** when unset. **`all-providers`** always includes Cloudflare. Explicit **`CLAWQL_PROVIDER=cloudflare`** still loads it.                                       |
+
+### Default off — opt in (cloud add-ons for default stack)
+
+Unset means **off**. Set **`1`** / **`true`** / **`yes`** to **add** Google/AWS to the no-config default stack (in addition to Cloudflare, GitHub, Slack, Linear, Notion, Onyx):
+
+| Bundle                               | Env                          | Notes                                                                                    |
+| ------------------------------------ | ---------------------------- | ---------------------------------------------------------------------------------------- |
+| **Google Cloud** (50 Discovery APIs) | **`CLAWQL_ENABLE_GOOGLE=1`** | Explicit **`CLAWQL_PROVIDER=google`** or **`all-providers`** still loads GCP regardless. |
+| **AWS** (50 OpenAPI specs)           | **`CLAWQL_ENABLE_AWS=1`**    | Explicit **`CLAWQL_PROVIDER=aws`** or **`all-providers`** still loads AWS regardless.    |
+
+**Fresh install** with no spec env: **Cloudflare, GitHub, Slack, Linear, Notion, Onyx**. Use **`CLAWQL_PROVIDER=all-providers`** for literally every bundled vendor plus GCP and AWS manifests.
 
 ### Default off — opt in
 
@@ -58,8 +70,8 @@ ClawQL resolves specs in two stages:
 
 1. `CLAWQL_SPEC_PATHS`
 2. `CLAWQL_BUNDLED_PROVIDERS`
-3. `CLAWQL_PROVIDER` (merged preset such as `google`, `all-providers`, `atlassian`)
-4. Built-in default merge (`all-providers`) when no single-spec env is set
+3. `CLAWQL_PROVIDER` (merged preset such as `default`, `google`, `all-providers`, `atlassian`)
+4. **Default bundled stack** when no single-spec env is set — Cloudflare, GitHub, Slack, Linear, Notion, Onyx (+ optional **`CLAWQL_ENABLE_GOOGLE`** / **`CLAWQL_ENABLE_AWS`**; omit Cloudflare with **`CLAWQL_ENABLE_CLOUDFLARE=0`**)
 
 When Stage 1 is active:
 

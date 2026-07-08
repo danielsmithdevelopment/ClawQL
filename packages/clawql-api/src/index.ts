@@ -1,4 +1,5 @@
 export * from "./auth/auth-headers.js";
+export * from "./auth/aws-auth.js";
 export * from "./clawql-api-service.js";
 export * from "./config/optional-flags.js";
 export * from "./create-api.js";

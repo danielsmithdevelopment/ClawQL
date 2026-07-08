@@ -28,7 +28,10 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@aws-crypto/sha256-js": "^5.2.0",
     "@graphql-mesh/utils": "^0.104.36",
+    "@smithy/protocol-http": "^5.1.2",
+    "@smithy/signature-v4": "^5.1.2",
     "@grpc/grpc-js": "^1.14.4",
     "@grpc/proto-loader": "^0.8.1",
     "@omnigraph/openapi": "^0.109.51",

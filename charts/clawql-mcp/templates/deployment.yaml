@@ -128,6 +128,12 @@ spec:
             # Always set so chart intent wins over duplicate keys from envFrom Secret (e.g. clawql-provider-env).
             - name: CLAWQL_ENABLE_DOCUMENTS
               value: {{ ternary "1" "0" .Values.enableDocuments | quote }}
+            - name: CLAWQL_ENABLE_GOOGLE
+              value: {{ ternary "1" "0" (.Values.enableGoogle | default false) | quote }}
+            - name: CLAWQL_ENABLE_CLOUDFLARE
+              value: {{ ternary "1" "0" (.Values.enableCloudflare | default true) | quote }}
+            - name: CLAWQL_ENABLE_AWS
+              value: {{ ternary "1" "0" (.Values.enableAws | default false) | quote }}
             {{- if .Values.enableSandbox }}
             - name: CLAWQL_ENABLE_SANDBOX
               value: "1"
