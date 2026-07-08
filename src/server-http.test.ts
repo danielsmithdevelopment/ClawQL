@@ -5,8 +5,10 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { recordNativeGraphqlExecute, resetNativeProtocolMetricsForTests } from "clawql-api";
+import { resetMemoryDbArtifactCachesForTests } from "clawql-memory";
+import { syncMemoryDbFromDocuments } from "clawql-memory/db/memory-db";
 import { resetClawqlApiForTests } from "./clawql-api-adapters.js";
 import { getClawqlOptionalToolFlags, resetSpecCache } from "clawql-api";
 import { createMcpHttpApp, type CreateMcpHttpAppOptions } from "./server-http.js";
@@ -50,12 +52,26 @@ async function closeMcpClient(client: { close(): Promise<void> }): Promise<void>
 }
 
 const STREAMABLE_HTTP_TEST_TIMEOUT_MS = 45_000;
+/** sql.js cold start + memory.db sync can exceed 20s on slow CI Node runners. */
+const MEMORY_ARTIFACT_TEST_TIMEOUT_MS = 45_000;
 
 const here = dirname(fileURLToPath(import.meta.url));
 const minimalSpec = join(here, "test-utils/fixtures/minimal-petstore.json");
 
 describe("server-http", () => {
   const saved: Record<string, string | undefined> = {};
+
+  beforeAll(async () => {
+    const dir = await mkdtemp(join(tmpdir(), "clawql-sqljs-warm-"));
+    try {
+      process.env.CLAWQL_OBSIDIAN_VAULT_PATH = dir;
+      await syncMemoryDbFromDocuments(dir, [{ path: "warm.md", text: "# warm\n", mtimeMs: 0 }]);
+    } finally {
+      delete process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
+      await rm(dir, { recursive: true, force: true });
+      resetMemoryDbArtifactCachesForTests();
+    }
+  });
 
   beforeEach(() => {
     saved.CLAWQL_SPEC_PATH = process.env.CLAWQL_SPEC_PATH;
@@ -71,6 +87,7 @@ describe("server-http", () => {
     resetSpecCache();
     resetSchemaFieldCache();
     resetClawqlApiForTests();
+    resetMemoryDbArtifactCachesForTests();
   });
 
   afterEach(() => {
@@ -82,6 +99,7 @@ describe("server-http", () => {
     resetSpecCache();
     resetSchemaFieldCache();
     resetClawqlApiForTests();
+    resetMemoryDbArtifactCachesForTests();
   });
 
   async function withHttpServer(
@@ -262,7 +280,6 @@ describe("server-http", () => {
     process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS = "1";
     await mkdir(join(dir, "Memory"), { recursive: true });
     await writeFile(join(dir, "Memory/a.md"), "# A\n", "utf8");
-    const { syncMemoryDbFromDocuments } = await import("clawql-memory/db/memory-db");
     const text = await readFile(join(dir, "Memory/a.md"), "utf8");
     await syncMemoryDbFromDocuments(dir, [{ path: "Memory/a.md", text, mtimeMs: 1 }]);
     try {
@@ -281,7 +298,7 @@ describe("server-http", () => {
       else process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS = savedHz;
       await rm(dir, { recursive: true, force: true });
     }
-  }, 20_000);
+  }, MEMORY_ARTIFACT_TEST_TIMEOUT_MS);
 
   it("GET /healthz includes cuckoo metrics when CLAWQL_HEALTHZ_MEMORY_ARTIFACTS and Cuckoo enabled", async () => {
     const dir = await mkdtemp(join(tmpdir(), "clawql-hz-"));
@@ -293,7 +310,6 @@ describe("server-http", () => {
     process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS = "1";
     await mkdir(join(dir, "Memory"), { recursive: true });
     await writeFile(join(dir, "Memory/a.md"), "# A\n", "utf8");
-    const { syncMemoryDbFromDocuments } = await import("clawql-memory/db/memory-db");
     const text = await readFile(join(dir, "Memory/a.md"), "utf8");
     await syncMemoryDbFromDocuments(dir, [{ path: "Memory/a.md", text, mtimeMs: 1 }]);
     try {
@@ -318,7 +334,7 @@ describe("server-http", () => {
       else process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS = savedHz;
       await rm(dir, { recursive: true, force: true });
     }
-  }, 20_000);
+  }, MEMORY_ARTIFACT_TEST_TIMEOUT_MS);
 
   it("POST /mcp initialize allocates mcp-session-id", async () => {
     await withHttpServer(async (base) => {
