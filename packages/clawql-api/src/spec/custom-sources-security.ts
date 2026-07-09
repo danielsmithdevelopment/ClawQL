@@ -91,6 +91,7 @@ export async function fetchSafeSourceUrl(
   fetchFn: typeof fetch = fetch
 ): Promise<{ url: URL; response: Response }> {
   const url = assertSafeSourceFetchUrl(raw);
+  // codeql[js/request-forgery]: href is validated for public HTTPS hosts only (assertSafeSourceFetchUrl).
   const response = await fetchFn(url.href);
   return { url, response };
 }

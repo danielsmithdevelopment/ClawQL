@@ -2,6 +2,7 @@
  * Read/write ~/.ClawQL/sources.json (or $CLAWQL_HOME/sources.json).
  */
 
+import { realpathSync } from "node:fs";
 import { chmod, mkdir, readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, join, resolve, sep } from "node:path";
@@ -109,5 +110,11 @@ export async function ensureSourceCacheDir(
 ): Promise<string> {
   const dir = getCustomSourceCacheDir(id, home);
   await mkdir(dir, { recursive: true });
-  return dir;
+  const base = resolve(join(home, "sources"));
+  const resolvedBase = realpathSync.native(base);
+  const resolvedDir = realpathSync.native(dir);
+  if (resolvedDir !== resolvedBase && !resolvedDir.startsWith(`${resolvedBase}${sep}`)) {
+    throw new Error("Invalid source id path");
+  }
+  return resolvedDir;
 }
