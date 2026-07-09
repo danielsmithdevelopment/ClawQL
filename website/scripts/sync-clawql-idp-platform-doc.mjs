@@ -12,13 +12,13 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+import { prepareMdxBody } from './lib/rewrite-doc-links.mjs'
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const websiteRoot = path.resolve(__dirname, '..')
 const dstDir = path.join(websiteRoot, 'src/generated')
 const dst = path.join(dstDir, 'clawql-idp-platform-body.mdx')
 const srcRelative = path.join('docs', 'vision', 'clawql-idp-platform.md')
-
-const GH_MAIN = 'https://github.com/danielsmithdevelopment/ClawQL/blob/main'
 
 function findRepoRootWithDocsVision() {
   let dir = websiteRoot
@@ -34,57 +34,6 @@ function findRepoRootWithDocsVision() {
     dir = parent
   }
   return null
-}
-
-function escapeLessThanBeforeDigit(body) {
-  return body.replace(/<(?=\d)/g, '&lt;')
-}
-
-function escapeMdxCurlyOutsideFences(body) {
-  const lines = body.split('\n')
-  let inFence = false
-  return lines
-    .map((line) => {
-      const fence = line.match(/^(`{3,}|~{3,})(.*)$/)
-      if (fence) {
-        if (!inFence) inFence = true
-        else if (!fence[2].trim()) inFence = false
-        return line
-      }
-      if (inFence) return line
-      return line
-        .replace(/\\/g, '\\\\')
-        .replace(/\{/g, '\\{')
-        .replace(/\}/g, '\\}')
-    })
-    .join('\n')
-}
-
-function rewriteLinksForSite(body) {
-  return escapeMdxCurlyOutsideFences(
-    escapeLessThanBeforeDigit(
-      body
-        .replaceAll(
-          '](../providers/idp-pipeline.md)',
-          '](/learn/document-pipeline)',
-        )
-        .replaceAll('](../providers/', `](${GH_MAIN}/docs/providers/`)
-        .replaceAll('](../openclaw/', `](${GH_MAIN}/docs/openclaw/`)
-        .replaceAll('](../roadmap/', `](${GH_MAIN}/docs/roadmap/`)
-        .replaceAll('](../dashboard/', `](${GH_MAIN}/docs/dashboard/`)
-        .replaceAll(
-          '](../deployment/clawql-deployment-operations-guide.md)',
-          '](/deployment/operations-guide)',
-        )
-        .replaceAll('](../deployment/', `](${GH_MAIN}/docs/deployment/`)
-        .replaceAll(
-          '](./clawql-master-enablement-guide.md)',
-          '](/vision/technical-enablement)',
-        )
-        .replaceAll('](./clawql-vision-roadmap.md)', '](/vision/roadmap)')
-        .replaceAll('](../../charts/', `](${GH_MAIN}/charts/`),
-    ),
-  )
 }
 
 fs.mkdirSync(dstDir, { recursive: true })
@@ -107,7 +56,7 @@ if (!src || !fs.existsSync(src)) {
 }
 
 const raw = fs.readFileSync(src, 'utf8')
-fs.writeFileSync(dst, rewriteLinksForSite(raw), 'utf8')
+fs.writeFileSync(dst, prepareMdxBody(raw, srcRelative), 'utf8')
 
 execSync('npx prettier --write src/generated/clawql-idp-platform-body.mdx', {
   cwd: websiteRoot,

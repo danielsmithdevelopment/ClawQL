@@ -56,7 +56,7 @@ Canonical list in chart **`values.yaml`** → **`secretSourcing.providerEnvMappi
 
 ---
 
-## Helm defaults (6.4.x+)
+## Helm defaults (7.0.x+)
 
 | Value                                      | Default               | Meaning                                                                              |
 | ------------------------------------------ | --------------------- | ------------------------------------------------------------------------------------ |

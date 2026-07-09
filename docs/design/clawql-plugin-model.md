@@ -18,7 +18,7 @@ For memory, documents, and automation, **yes — the plugin’s main visible job
 
 ## 2. Today: plugins register via `onRegister` (Phase 2 shipped)
 
-Extraction phases 1–9 moved **business logic** into workspace packages. **Phase 2** (6.4.0+) moved MCP registration into **`Plugin.onRegister`** for Memory, Documents, Automation, Sandbox, and Ouroboros.
+Extraction phases 1–9 moved **business logic** into workspace packages. **Phase 2** (7.0.0+) moved MCP registration into **`Plugin.onRegister`** for Memory, Documents, Automation, Sandbox, and Ouroboros.
 
 | Package             | Logic lives in                                              | MCP registration                                                  |
 | ------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------- |

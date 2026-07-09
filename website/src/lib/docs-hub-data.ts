@@ -85,6 +85,13 @@ export const architectureHubCards: Array<ReferenceCard> = [
     icon: BookIcon,
   }),
   card({
+    href: '/vision/ecosystem',
+    name: 'Ecosystem map',
+    description:
+      'Core loop, hybrid memory, IDP pipeline, infra map — shipped vs roadmap appendix.',
+    icon: BookIcon,
+  }),
+  card({
     href: '/vision/idp-platform',
     name: 'IDP Platform',
     description:

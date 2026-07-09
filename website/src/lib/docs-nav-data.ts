@@ -30,6 +30,10 @@ export const docsNavigation: Array<NavGroup> = [
         title: '7.0 setup & migration',
         href: '/getting-started/clawql-7-setup-guide',
       },
+      {
+        title: 'Release manifest (Layer 0)',
+        href: '/getting-started/clawql-release-mvp',
+      },
       { title: 'Agent setup', href: '/agent-setup' },
       { title: 'Install', href: '/install' },
       { title: 'MCP clients', href: '/mcp-clients' },

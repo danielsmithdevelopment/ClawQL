@@ -18,6 +18,8 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+import { prepareMdxBody } from './lib/rewrite-doc-links.mjs'
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const websiteRoot = path.resolve(__dirname, '..')
 const dstDir = path.join(websiteRoot, 'src/generated')
@@ -68,19 +70,7 @@ body = body.replaceAll(
   '../../website/public/vision/clawql-dependency-stack.png',
   '/vision/clawql-dependency-stack.png',
 )
-body = body.replaceAll(
-  '](./clawql-hybrid-decentralized-github-alternative.md)',
-  '](/vision/immutable-releases)',
-)
-body = body.replaceAll(
-  '](../design/clawql-plugin-model.md)',
-  '](/reference/plugins)',
-)
-body = body.replaceAll(
-  '](../design/modularization-implementation-status.md)',
-  `](${GH_MAIN}/docs/design/modularization-implementation-status.md)`,
-)
-fs.writeFileSync(dst, body)
+fs.writeFileSync(dst, prepareMdxBody(body, srcRelative), 'utf8')
 execSync('npx prettier --write src/generated/clawql-modularization-body.mdx', {
   cwd: websiteRoot,
   stdio: 'inherit',

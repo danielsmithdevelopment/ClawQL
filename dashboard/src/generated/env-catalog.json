@@ -328,6 +328,10 @@
           "sensitive": false
         },
         {
+          "key": "CLAWQL_ENABLE_LOKI_PUSH",
+          "sensitive": false
+        },
+        {
           "key": "CLAWQL_LOKI_BEARER_TOKEN",
           "sensitive": true
         },
