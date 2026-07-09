@@ -42,52 +42,52 @@ ClawQL is a modular, production-grade, self-healing, multi-tenant AI memory and 
 
 ### 3.1 Always-Enabled (Foundation)
 
-| Package         | Responsibilities                                                                                                                                                                           |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **clawql-core** | Shared types, ATRClaims, Merkle utilities, Cuckoo filter, Plugin interface, AgentRuntime, error factories                                                                                  |
+| Package         | Responsibilities                                                                                                                                                                                               |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **clawql-core** | Shared types, ATRClaims, Merkle utilities, Cuckoo filter, Plugin interface, AgentRuntime, error factories                                                                                                      |
 | **clawql-api**  | The intelligent MCP gateway. Handles search/execute, plugin registration (native + proxy), routing, ATR/Panguard enforcement, Presidio hooks (roadmap), circuit breakers (roadmap), and observability emission |
 
 ### 3.2 Default-Enabled
 
-| Package          | Responsibilities                                                                                              | Status today                                                                 |
-| ---------------- | ------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| clawql-auth      | Authentication modes, RBAC/ABAC, ATR enrichment                                                               | 📋 Planned package — auth headers + env JSON live in `clawql-api`            |
-| clawql-documents | Document pipeline — 8 bundled IDP vendors + ingest + `DEFAULT_IDP_PIPELINE` + `run_idp_pipeline`              | ✅ Shipped — automated runner with retries/Merkle per hop still roadmap      |
-| clawql-memory    | Memory 2.0 (Vault + Graph + PageIndex + optional Onyx)                                                        | ✅ Shipped — standalone `clawql-pageindex` not extracted yet                  |
-| clawql-pageindex | Standalone MIT vectorless hierarchical indexing                                                               | 📋 Planned                                                                   |
+| Package          | Responsibilities                                                                                 | Status today                                                            |
+| ---------------- | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------- |
+| clawql-auth      | Authentication modes, RBAC/ABAC, ATR enrichment                                                  | 📋 Planned package — auth headers + env JSON live in `clawql-api`       |
+| clawql-documents | Document pipeline — 8 bundled IDP vendors + ingest + `DEFAULT_IDP_PIPELINE` + `run_idp_pipeline` | ✅ Shipped — automated runner with retries/Merkle per hop still roadmap |
+| clawql-memory    | Memory 2.0 (Vault + Graph + PageIndex + optional Onyx)                                           | ✅ Shipped — standalone `clawql-pageindex` not extracted yet            |
+| clawql-pageindex | Standalone MIT vectorless hierarchical indexing                                                  | 📋 Planned                                                              |
 
 ### 3.3 Opt-In Horizontal & Platform
 
-| Package            | Responsibilities                                              | Status today                                      |
-| ------------------ | ------------------------------------------------------------- | ------------------------------------------------- |
-| clawql-automation  | Schedule, notify, Argo workflow/argocd, NATS JetStream, HITL  | ✅ Shipped (workflow/argocd/NATS/HITL opt-in)     |
-| clawql-sandbox     | Isolated code execution (`sandbox_exec`)                      | ✅ Shipped                                        |
-| clawql-ouroboros   | Evolutionary schema/workflow loops                            | ✅ Shipped                                        |
-| clawql-operator    | Kubernetes `ClawQLInstance` CRD, tier-spec, layer composition | 🚧 Scaffold shipped (7.0) — full operator roadmap |
-| clawql-release     | Immutable release manifests (Layer 0)                         | 🚧 MVP shipped (7.0) — Arweave/Rift roadmap       |
-| clawql-telemetry   | OTEL/Langfuse emission package (never imported by others)     | 📋 Planned — OTEL at MCP transport today          |
-| clawql-data        | Structured data / DuckDB leg                                  | 📋 Planned                                        |
-| clawql-printingpress | Document generation                                         | 📋 Planned                                        |
-| clawql-goose       | Migrations                                                    | 📋 Planned                                        |
+| Package              | Responsibilities                                              | Status today                                      |
+| -------------------- | ------------------------------------------------------------- | ------------------------------------------------- |
+| clawql-automation    | Schedule, notify, Argo workflow/argocd, NATS JetStream, HITL  | ✅ Shipped (workflow/argocd/NATS/HITL opt-in)     |
+| clawql-sandbox       | Isolated code execution (`sandbox_exec`)                      | ✅ Shipped                                        |
+| clawql-ouroboros     | Evolutionary schema/workflow loops                            | ✅ Shipped                                        |
+| clawql-operator      | Kubernetes `ClawQLInstance` CRD, tier-spec, layer composition | 🚧 Scaffold shipped (7.0) — full operator roadmap |
+| clawql-release       | Immutable release manifests (Layer 0)                         | 🚧 MVP shipped (7.0) — Arweave/Rift roadmap       |
+| clawql-telemetry     | OTEL/Langfuse emission package (never imported by others)     | 📋 Planned — OTEL at MCP transport today          |
+| clawql-data          | Structured data / DuckDB leg                                  | 📋 Planned                                        |
+| clawql-printingpress | Document generation                                           | 📋 Planned                                        |
+| clawql-goose         | Migrations                                                    | 📋 Planned                                        |
 
 **Vertical packages** (`clawql-lending`, `clawql-legal`, …): 📋 Planned — none shipped.
 
 ### 3.4 Shipped (workspace packages)
 
-| Package              | Status                                                                                                                                                    |
-| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `clawql-mcp`         | ✅ MCP transport (`src/`) — stdio/HTTP/gRPC; core tool registration not yet split to transport-only package                                               |
-| `clawql-core`        | ✅ Audit, Merkle, Cuckoo, `Plugin` types, cache helpers                                                                                                   |
-| `clawql-api`         | ✅ Spec load/search, REST/GraphQL/gRPC/MCP/CLI execute, `createClawQLApi`, Panguard proxy, custom URL sources (7.0)                                       |
-| `clawql-memory`      | ✅ Vault + `memory.db` + ingest/recall + embeddings                                                                                                       |
-| `clawql-documents`   | ✅ External ingest + **`DEFAULT_IDP_PIPELINE`** + **`run_idp_pipeline`**; 8 bundled IDP vendors via `clawql-api`                                        |
-| `clawql-automation`  | ✅ Schedule, notify, **`workflow`**, **`argocd`**; NATS JetStream + HITL when enabled                                                                   |
-| `clawql-sandbox`     | ✅ **`SandboxPlugin`**, Kata default in-cluster **`auto`**                                                                                               |
-| `clawql-ouroboros`   | ✅ Evolutionary loop library + **`OuroborosPlugin`**                                                                                                      |
-| `clawql-operator`    | 🚧 Opt-in scaffold — CRD, tier-spec ConfigMaps, `composeHorizontalPluginLayersFromTierSpec`, auth key reconciliation (7.0)                              |
-| `clawql-release`     | 🚧 Layer 0 MVP — manifest collect/verify/publish, Merkle root, CI artifact (7.0)                                                                            |
-| `mcp-grpc-transport` | ✅ gRPC MCP transport                                                                                                                                     |
-| `panguard-mcp-bridge`| ✅ Enterprise MCP proxy bridge                                                                                                                            |
+| Package               | Status                                                                                                                     |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `clawql-mcp`          | ✅ MCP transport (`src/`) — stdio/HTTP/gRPC; core tool registration not yet split to transport-only package                |
+| `clawql-core`         | ✅ Audit, Merkle, Cuckoo, `Plugin` types, cache helpers                                                                    |
+| `clawql-api`          | ✅ Spec load/search, REST/GraphQL/gRPC/MCP/CLI execute, `createClawQLApi`, Panguard proxy, custom URL sources (7.0)        |
+| `clawql-memory`       | ✅ Vault + `memory.db` + ingest/recall + embeddings                                                                        |
+| `clawql-documents`    | ✅ External ingest + **`DEFAULT_IDP_PIPELINE`** + **`run_idp_pipeline`**; 8 bundled IDP vendors via `clawql-api`           |
+| `clawql-automation`   | ✅ Schedule, notify, **`workflow`**, **`argocd`**; NATS JetStream + HITL when enabled                                      |
+| `clawql-sandbox`      | ✅ **`SandboxPlugin`**, Kata default in-cluster **`auto`**                                                                 |
+| `clawql-ouroboros`    | ✅ Evolutionary loop library + **`OuroborosPlugin`**                                                                       |
+| `clawql-operator`     | 🚧 Opt-in scaffold — CRD, tier-spec ConfigMaps, `composeHorizontalPluginLayersFromTierSpec`, auth key reconciliation (7.0) |
+| `clawql-release`      | 🚧 Layer 0 MVP — manifest collect/verify/publish, Merkle root, CI artifact (7.0)                                           |
+| `mcp-grpc-transport`  | ✅ gRPC MCP transport                                                                                                      |
+| `panguard-mcp-bridge` | ✅ Enterprise MCP proxy bridge                                                                                             |
 
 **Implementation detail:** [Modularization implementation status](../design/modularization-implementation-status.md).
 

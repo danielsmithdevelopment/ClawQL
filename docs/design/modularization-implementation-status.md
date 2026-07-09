@@ -21,10 +21,10 @@ ClawQL is mid-flight on a **strangler extraction** from the root `clawql-mcp` pa
 | `clawql-memory`     | Vault I/O, `memory.db`, embeddings, ingest/recall, enterprise citations                                                                                                                                                                                     |
 | `clawql-documents`  | `ingest_external_knowledge`, **`DEFAULT_IDP_PIPELINE`**, **`run_idp_pipeline`** ([#307](https://github.com/danielsmithdevelopment/ClawQL/issues/307)), **`classify_document`** / **`extract_document`**; bundled IDP merge (**8 vendors** via `clawql-api`) |
 | `clawql-automation` | `schedule` worker, Slack `notify`, Argo **`workflow`** + **`argocd`** tools (opt-in); NATS JetStream publish/consume when enabled ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254))                                                     |
-| `clawql-sandbox`    | `sandbox_exec` via **`SandboxPlugin`** (Kata default in-cluster **`auto`**)                                                                                                                                                                                   |
+| `clawql-sandbox`    | `sandbox_exec` via **`SandboxPlugin`** (Kata default in-cluster **`auto`**)                                                                                                                                                                                 |
 | `clawql-ouroboros`  | Evolutionary loop library + **`OuroborosPlugin`** (`ouroboros_*` tools, opt-in)                                                                                                                                                                             |
-| `clawql-operator`   | Opt-in K8s operator — `ClawQLInstance` CRD, tier-spec ConfigMaps, horizontal layer composition from CRD, auth key reconciliation ([#255](https://github.com/danielsmithdevelopment/ClawQL/issues/255))                                                        |
-| `clawql-release`    | Layer 0 MVP — manifest v0.1, Merkle root, SBOM/npm + GHCR digests, `clawql release *`, CI artifact ([#537](https://github.com/danielsmithdevelopment/ClawQL/pull/537))                                                                                    |
+| `clawql-operator`   | Opt-in K8s operator — `ClawQLInstance` CRD, tier-spec ConfigMaps, horizontal layer composition from CRD, auth key reconciliation ([#255](https://github.com/danielsmithdevelopment/ClawQL/issues/255))                                                      |
+| `clawql-release`    | Layer 0 MVP — manifest v0.1, Merkle root, SBOM/npm + GHCR digests, `clawql release *`, CI artifact ([#537](https://github.com/danielsmithdevelopment/ClawQL/pull/537))                                                                                      |
 
 **7.0 product surface (not separate packages):** custom sources (OpenAPI/Discovery/GraphQL/gRPC/MCP/CLI from URL), harness wrappers (`clawql claude|codex|cursor|opencode`), `curl | bash` install script, ClawQL Desktop (macOS/Windows/Linux). See [custom-sources.md](../getting-started/custom-sources.md) and [clawql-7-setup-guide.md](../getting-started/clawql-7-setup-guide.md).
 
@@ -179,10 +179,10 @@ MCP: `handleScheduleToolInput` shim in `src/clawql-schedule.ts`; `handleNotifyTo
 
 **Next extraction (post–phase 9)** ([plan §6](./effect-ts-modularization-rearchitecture-plan.md#6-mapping-src--packages-first-extraction-order)):
 
-| Order | Target                      | Representative `src/`                     | Status   |
-| ----- | --------------------------- | ----------------------------------------- | -------- |
-| 7     | `clawql-sandbox`            | `sandbox-*.ts`                            | ✅ Done  |
-| 8     | `clawql-ouroboros`          | Effect rewrite + thin MCP glue            | ✅ Done  |
+| Order | Target                      | Representative `src/`                     | Status  |
+| ----- | --------------------------- | ----------------------------------------- | ------- |
+| 7     | `clawql-sandbox`            | `sandbox-*.ts`                            | ✅ Done |
+| 8     | `clawql-ouroboros`          | Effect rewrite + thin MCP glue            | ✅ Done |
 | 9     | Transport-only `clawql-mcp` | `server.ts`, `tools.ts` registration only | 📋 Next |
 
 ---
@@ -250,18 +250,18 @@ From enablement §5.4 and the Effect plan §8:
 
 These vision items are **not** done by package extraction alone:
 
-| Vision item                                   | Status                                                                 |
-| --------------------------------------------- | ---------------------------------------------------------------------- |
-| `clawql-auth` package                         | 📋 Auth headers + env JSON in `clawql-api`; no standalone auth package |
-| `clawql-pageindex`                            | 📋 Not started                                                         |
+| Vision item                                   | Status                                                                  |
+| --------------------------------------------- | ----------------------------------------------------------------------- |
+| `clawql-auth` package                         | 📋 Auth headers + env JSON in `clawql-api`; no standalone auth package  |
+| `clawql-pageindex`                            | 📋 Not started                                                          |
 | Document pipeline (Tika → … → Paperless)      | 🚧 Vendors + `run_idp_pipeline` shipped; retries/Merkle per hop roadmap |
-| NATS / HITL in `clawql-automation`            | ✅ Shipped (JetStream publish + HITL resume consumer)                  |
-| Layer 0 immutable releases                    | 🚧 MVP (`clawql-release`); Arweave/Rift/Radicle roadmap                |
-| Release manifest verification at gateway      | 📋 `clawql release verify` ships; startup/doctor hook not wired yet    |
-| Kubernetes Operator Layer composition         | 🚧 Phase 1 scaffold (CRD + ConfigMap + tier layers; no NL dashboard)   |
-| Transport-only `clawql-mcp` npm package split | 📋 `src/` slimmed; shims removed; transport glue remains               |
-| Presidio gateway hooks                        | 📋 Not started                                                         |
-| All vertical packages                         | 📋 Not started                                                         |
+| NATS / HITL in `clawql-automation`            | ✅ Shipped (JetStream publish + HITL resume consumer)                   |
+| Layer 0 immutable releases                    | 🚧 MVP (`clawql-release`); Arweave/Rift/Radicle roadmap                 |
+| Release manifest verification at gateway      | 📋 `clawql release verify` ships; startup/doctor hook not wired yet     |
+| Kubernetes Operator Layer composition         | 🚧 Phase 1 scaffold (CRD + ConfigMap + tier layers; no NL dashboard)    |
+| Transport-only `clawql-mcp` npm package split | 📋 `src/` slimmed; shims removed; transport glue remains                |
+| Presidio gateway hooks                        | 📋 Not started                                                          |
+| All vertical packages                         | 📋 Not started                                                          |
 
 ---
 
@@ -277,8 +277,8 @@ These vision items are **not** done by package extraction alone:
 | [Vision & roadmap](../vision/clawql-vision-roadmap.md)                    | Public shipped vs planned table           |
 | [MCP tools](../mcp/mcp-tools.md)                                          | Operator-facing tool matrix               |
 | [#306](https://github.com/danielsmithdevelopment/ClawQL/issues/306)       | Package delivery epic                     |
-| [clawql-release MVP](../getting-started/clawql-release-mvp.md)           | Layer 0 manifest commands, CI             |
-| [clawql-operator-helm](../deployment/clawql-operator-helm.md)           | Operator scaffold install                 |
+| [clawql-release MVP](../getting-started/clawql-release-mvp.md)            | Layer 0 manifest commands, CI             |
+| [clawql-operator-helm](../deployment/clawql-operator-helm.md)             | Operator scaffold install                 |
 
 ---
 
@@ -290,14 +290,14 @@ After horizontal extraction, operator scaffold, and Layer 0 MVP, the highest-lev
 
 **Why this over alternatives:**
 
-| Candidate                         | Rationale                                                                 |
-| --------------------------------- | ------------------------------------------------------------------------- |
-| **Manifest verify at doctor/start** | Closes Layer 0 ↔ gateway gap in [modularization v2 §7](../vision/clawql-modularization-v2.md); small scope; `clawql-release` already ships |
-| Tier 1 Docker Compose ([#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251)) | Important for Phase 1 exit but larger; does not consume Layer 0 artifacts |
-| `clawql-auth` package extraction | Phase 1 item; auth helpers already work inside `clawql-api`               |
-| `clawql-pageindex` standalone    | New package; memory works without it today                                |
-| Full Operator / NL dashboard     | Out of scope for 7.0 patch window                                         |
-| Transport-only `clawql-mcp` split | Internal refactor; low immediate user value                               |
+| Candidate                                                                                   | Rationale                                                                                                                                  |
+| ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Manifest verify at doctor/start**                                                         | Closes Layer 0 ↔ gateway gap in [modularization v2 §7](../vision/clawql-modularization-v2.md); small scope; `clawql-release` already ships |
+| Tier 1 Docker Compose ([#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251)) | Important for Phase 1 exit but larger; does not consume Layer 0 artifacts                                                                  |
+| `clawql-auth` package extraction                                                            | Phase 1 item; auth helpers already work inside `clawql-api`                                                                                |
+| `clawql-pageindex` standalone                                                               | New package; memory works without it today                                                                                                 |
+| Full Operator / NL dashboard                                                                | Out of scope for 7.0 patch window                                                                                                          |
+| Transport-only `clawql-mcp` split                                                           | Internal refactor; low immediate user value                                                                                                |
 
 **Second priority (product parity):** dashboard UI for custom sources (`/api/local/sources` exists; add Provider secrets–style panel).
 
