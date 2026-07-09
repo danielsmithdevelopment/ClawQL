@@ -189,7 +189,7 @@ If you use a **minimal spec** without Slack, either add **`CLAWQL_PROVIDER=slack
 
 ## Kubernetes (Helm)
 
-The chart exposes **`enableNotify`** → **`CLAWQL_ENABLE_NOTIFY=1`**. Set the token via **`extraEnv`** or **`envFromSecret`** (do not commit tokens to git). See **[deployment/helm.md](deployment/helm.md)** and **`charts/clawql-mcp/values.yaml`**.
+The chart exposes **`enableNotify`** → **`CLAWQL_ENABLE_NOTIFY=1`**. Set the token via **`extraEnv`** or **`envFromSecret`** (do not commit tokens to git). See **[`docs/deployment/helm.md`](../deployment/helm.md)** and **`charts/clawql-mcp/values.yaml`**.
 
 ---
 

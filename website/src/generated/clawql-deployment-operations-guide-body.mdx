@@ -131,7 +131,7 @@ cp .env.example .env   # set TIKA_BASE_URL, PAPERLESS_API_TOKEN, etc.
 npm run start:http
 ```
 
-Default provider merge with **no** spec env: **opinionated default stack** (Cloudflare, GitHub, Slack, Linear, Notion, Onyx). Use **`CLAWQL_PROVIDER=all-providers`** for every bundled vendor plus Google top-50 and AWS top-50 (Helm chart often sets this for full IDP stacks).
+Default provider merge with **no** spec env: **opinionated default stack** (Cloudflare, GitHub, Slack, Linear, Notion, Onyx). Helm **`provider: default`** matches npm. Use **`CLAWQL_PROVIDER=all-providers`** or **`helm --set provider=all-providers`** for every bundled vendor plus Google top-50 and AWS top-50.
 
 ---
 

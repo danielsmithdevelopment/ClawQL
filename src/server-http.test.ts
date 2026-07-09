@@ -200,17 +200,17 @@ describe("server-http", { timeout: STREAMABLE_HTTP_TEST_TIMEOUT_MS }, () => {
     });
   });
 
-  it("GET /metrics is not mounted when CLAWQL_DISABLE_HTTP_METRICS=1", async () => {
-    const saved = process.env.CLAWQL_DISABLE_HTTP_METRICS;
-    process.env.CLAWQL_DISABLE_HTTP_METRICS = "1";
+  it("GET /metrics is not mounted when CLAWQL_ENABLE_HTTP_METRICS=0", async () => {
+    const saved = process.env.CLAWQL_ENABLE_HTTP_METRICS;
+    process.env.CLAWQL_ENABLE_HTTP_METRICS = "0";
     try {
       await withHttpServer(async (base) => {
         const res = await fetch(`${base}/metrics`);
         expect(res.status).toBe(404);
       });
     } finally {
-      if (saved === undefined) delete process.env.CLAWQL_DISABLE_HTTP_METRICS;
-      else process.env.CLAWQL_DISABLE_HTTP_METRICS = saved;
+      if (saved === undefined) delete process.env.CLAWQL_ENABLE_HTTP_METRICS;
+      else process.env.CLAWQL_ENABLE_HTTP_METRICS = saved;
     }
   });
 

@@ -227,7 +227,7 @@ extraEnv:
   # CLAWQL_LABEL_STUDIO_API_TOKEN and CLAWQL_HITL_WEBHOOK_TOKEN from envFromSecret
 ```
 
-Full keys table: [`docs/deployment/helm.md`](deployment/helm.md).
+Full keys table: [`docs/deployment/helm.md`](../deployment/helm.md).
 
 ---
 
@@ -263,7 +263,7 @@ Full keys table: [`docs/deployment/helm.md`](deployment/helm.md).
 | [`docs/mcp/mcp-tools.md`](mcp-tools.md)                                                    | **`hitl_enqueue_label_studio`** in tools matrix                                                        |
 | [`docs/mcp/notify-tool.md`](notify-tool.md)                                                | Slack **`notify`** ([#77](https://github.com/danielsmithdevelopment/ClawQL/issues/77))                 |
 | [`docs/openclaw/clawql-bootstrap.md`](openclaw/clawql-bootstrap.md)                        | OpenClaw MCP registration                                                                              |
-| [`docs/deployment/helm.md`](deployment/helm.md)                                            | **`enableHitlLabelStudio`**                                                                            |
+| [`docs/deployment/helm.md`](../deployment/helm.md)                                         | **`enableHitlLabelStudio`**                                                                            |
 | [`docs/mcp/enterprise-mcp-tools.md`](enterprise-mcp-tools.md)                              | Feature-flag table                                                                                     |
 | [`deployment/samples/lending-w2/README.md`](../../deployment/samples/lending-w2/README.md) | W-2 HITL + suspend/resume sample ([#253](https://github.com/danielsmithdevelopment/ClawQL/issues/253)) |
 | [Label Studio docs](https://labelstud.io/guide/)                                           | Import API, webhooks, projects                                                                         |

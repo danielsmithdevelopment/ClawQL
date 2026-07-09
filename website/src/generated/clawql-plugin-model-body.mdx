@@ -37,7 +37,7 @@ Transport-only concerns stay in `src/` today:
 
 ---
 
-## 3. Target: each horizontal package ships a `Plugin`
+## 3. Horizontal plugins (shipped)
 
 At gateway startup, composition looks like:
 
@@ -45,9 +45,9 @@ At gateway startup, composition looks like:
 createClawQLApi({
   plugins: [
     PanguardProxyPlugin, // kind: mcp-proxy — policy chokepoint, no new tools
-    MemoryPlugin, // registers memory_* tools when enabled
-    DocumentsPlugin, // registers ingest_external_knowledge when enabled
-    AutomationPlugin, // registers schedule + notify; starts schedule worker
+    MemoryPlugin, // memory_* + pageindex_* when enabled
+    DocumentsPlugin, // ingest_external_knowledge when enabled
+    AutomationPlugin, // schedule + notify; starts schedule worker
     // future: LendingPlugin, YourCompanyPlugin, …
   ],
 })
@@ -55,19 +55,19 @@ createClawQLApi({
 
 When **`CLAWQL_ENABLE_MEMORY=0`** (or the Operator CRD omits the memory Layer), **`MemoryPlugin` is not composed** → `listTools` has no `memory_ingest` / `memory_recall`, and heavy vault/sql.js paths are not loaded for that process tier.
 
-### 3.1 MCP tools each horizontal plugin will register
+### 3.1 MCP tools each horizontal plugin registers
 
-| Plugin (planned)     | MCP tools                        | Notes                                                                                                        |
-| -------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| **MemoryPlugin**     | `memory_ingest`, `memory_recall` | Vault writes, `memory.db` sync, optional vectors                                                             |
-| **DocumentsPlugin**  | `ingest_external_knowledge`      | Today’s bulk Markdown + URL ingest; future document-pipeline tools (Tika, etc.) would register here too      |
-| **AutomationPlugin** | `schedule`, `notify`             | Schedule worker starts in `onRegister` or Layer scope; notify uses execute path for Slack `chat_postMessage` |
+| Plugin               | MCP tools                                              | Notes                                                                                         |
+| -------------------- | ------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| **MemoryPlugin**     | `memory_ingest`, `memory_recall`, `pageindex_*`        | PageIndex via `clawql-pageindex`; hide with `CLAWQL_ENABLE_PAGEINDEX=0`                       |
+| **DocumentsPlugin**  | `ingest_external_knowledge`, optional Onyx / IDP tools | Bulk Markdown + URL ingest; IDP runner when enabled                                           |
+| **AutomationPlugin** | `schedule`, `notify`, `workflow`, `argocd` (opt-in)    | Schedule worker starts in `onRegister`; notify uses execute path for Slack `chat_postMessage` |
 
 Core tools **`search`**, **`execute`**, **`cache`**, and **`audit`** stay in the gateway / core tier — not owned by these horizontal plugins.
 
-### 3.2 Conceptual `onRegister` (not shipped yet)
+### 3.2 `onRegister` contract (shipped)
 
-The contributor spec defines the **target** contract: `onRegister` receives `ClawQLApi` and registers tools via Effect. A simplified illustration:
+Horizontal plugins implement **`Plugin.onRegister`** and register tools via `ClawQLPluginRegistrationApi.registerMcpTool`. Illustration:
 
 ```typescript
 const MemoryPlugin: Plugin = {

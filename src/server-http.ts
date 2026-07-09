@@ -27,7 +27,7 @@ import {
 import { registerPostgresPoolShutdownHooks } from "clawql-memory/vector/pgvector";
 import { getClawqlOptionalToolFlags, type ClawqlOptionalToolFlags } from "clawql-api";
 import { getNativeProtocolMetricsSnapshot, nativeProtocolMetricsEnabled } from "clawql-api";
-import { prometheusDisabledForHttp, renderPrometheusMetrics } from "clawql-api";
+import { httpMetricsEnabledForHttp, renderPrometheusMetrics } from "clawql-api";
 import { maybeInitOtelTracing } from "./otel-tracing.js";
 import { maybeVerifyReleaseManifestAtStartup } from "./release-manifest-startup.js";
 import { handleLabelStudioWebhookRequest } from "clawql-automation/hitl/label-studio";
@@ -133,7 +133,7 @@ export type CreateMcpHttpAppOptions = {
 };
 
 /**
- * Build Express app with `/healthz`, **`/metrics`** (Prometheus unless **`CLAWQL_DISABLE_HTTP_METRICS=1`**), and Streamable HTTP MCP on `mcpPath`.
+ * Build Express app with `/healthz`, **`/metrics`** (Prometheus when **`CLAWQL_ENABLE_HTTP_METRICS`** is on), and Streamable HTTP MCP on `mcpPath`.
  * Each call uses a fresh session transport map (safe for parallel tests).
  */
 export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): Promise<Express> {
@@ -173,7 +173,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
     await attachGraphqlHttpToMcpApp(app);
   }
 
-  if (!prometheusDisabledForHttp()) {
+  if (httpMetricsEnabledForHttp()) {
     app.get("/metrics", async (_req, res) => {
       try {
         const { body, contentType } = await renderPrometheusMetrics();
