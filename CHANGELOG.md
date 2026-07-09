@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Harness wrappers** — `clawql claude`, `clawql codex`, `clawql cursor`, `clawql opencode` write harness-specific MCP config and launch the agent binary on PATH.
 - **One-line install** — `curl -fsSL https://clawql.com/install | bash` (`scripts/install.sh`, served from the docs site).
 - **ClawQL Desktop Windows/Linux** — `make desktop-dist-win`, `make desktop-dist-linux` (NSIS + AppImage/deb).
+- **Dashboard custom sources UI** — Custom sources nav panel in ClawQL Desktop; add/list/remove via `/api/local/sources` (URL auto-detect + CLI).
 
 ## [7.0.0] - 2026-07-09
 

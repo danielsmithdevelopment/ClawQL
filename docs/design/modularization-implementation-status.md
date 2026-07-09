@@ -286,6 +286,6 @@ These vision items are **not** done by package extraction alone:
 
 **Shipped (7.0):** release manifest verification in **`clawql doctor --smoke`** and optional MCP startup via **`CLAWQL_RELEASE_MANIFEST`**.
 
-**Next before npm 7.0.0 tag (product parity):** dashboard UI for custom sources (`/api/local/sources` exists; add Provider secrets–style panel).
+**Second priority (product parity):** ~~dashboard UI for custom sources~~ ✅ Custom sources panel in dashboard (Desktop mode).
 
 **Phase 1 exit (post-7.0):** Tier 1 Docker Compose ([#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251)) + `clawql-auth` + `clawql-pageindex` + Presidio gateway hooks.

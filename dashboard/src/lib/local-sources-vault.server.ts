@@ -1,41 +1,12 @@
 import { chmod, mkdir, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
+import type { LocalCustomSourceEntry, LocalCustomSourcesFile } from '@/lib/custom-sources-types'
 import { getObsidianVaultRoot } from '@/lib/vault-path.server'
 
+export type { LocalCustomSourceEntry, LocalCustomSourceKind, LocalCustomSourcesFile } from '@/lib/custom-sources-types'
+
 const FILE_MODE = 0o600
-
-export type LocalCustomSourceKind =
-  | 'openapi'
-  | 'discovery'
-  | 'graphql'
-  | 'grpc'
-  | 'mcp'
-  | 'cli'
-
-export type LocalCustomSourceEntry = {
-  id: string
-  name: string
-  kind: LocalCustomSourceKind
-  addedAt: string
-  url?: string
-  cachePath?: string
-  graphqlEndpoint?: string
-  grpcEndpoint?: string
-  protoPath?: string
-  grpcInsecure?: boolean
-  mcpUrl?: string
-  mcpCommand?: string
-  mcpArgs?: string[]
-  cliCommand?: string
-  cliArgs?: string[]
-  cliDescription?: string
-}
-
-export type LocalCustomSourcesFile = {
-  version: 1
-  sources: LocalCustomSourceEntry[]
-}
 
 export function getLocalSourcesFilePath(): string {
   return join(getObsidianVaultRoot(), 'sources.json')

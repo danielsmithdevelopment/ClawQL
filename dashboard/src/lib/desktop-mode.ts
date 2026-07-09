@@ -10,8 +10,10 @@ export type DashboardRuntimeConfig = {
   desktopMode: boolean
   vaultRoot: string
   providersVaultPath: string
+  sourcesFilePath: string
   providersLoadUrl: string
   providersSaveUrl: string
+  sourcesApiUrl: string
   openclawConfigured: boolean
   chatStream: boolean
 }

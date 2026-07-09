@@ -6,6 +6,7 @@ export type DashboardSection =
   | 'activity'
   | 'applications'
   | 'configuration'
+  | 'custom-sources'
 
 export type ChatToolStep = { label: string; state: 'done' | 'active' | 'pending' }
 

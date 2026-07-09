@@ -7,6 +7,7 @@ import {
   LayoutGrid,
   ListTodo,
   MessageSquare,
+  Plug,
   Settings,
 } from 'lucide-react'
 
@@ -22,6 +23,7 @@ const NAV: { id: DashboardSection; label: string; icon: typeof MessageSquare }[]
   { id: 'tasks', label: 'Tasks', icon: ListTodo },
   { id: 'activity', label: 'Activity', icon: Activity },
   { id: 'applications', label: 'Applications', icon: LayoutGrid },
+  { id: 'custom-sources', label: 'Custom sources', icon: Plug },
   { id: 'configuration', label: 'Provider secrets', icon: Settings },
 ]
 

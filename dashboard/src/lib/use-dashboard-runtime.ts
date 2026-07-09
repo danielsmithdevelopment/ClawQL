@@ -6,8 +6,10 @@ export type DashboardRuntime = {
   desktopMode: boolean
   vaultRoot: string
   providersVaultPath: string | null
+  sourcesFilePath: string | null
   providersLoadUrl: string
   providersSaveUrl: string
+  sourcesApiUrl: string
   openclawConfigured: boolean
   chatStream: boolean
 }
