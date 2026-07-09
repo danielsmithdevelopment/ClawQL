@@ -107,7 +107,7 @@ describe("HTTP vs gRPC observability surface (parity contract)", () => {
     process.env.CLAWQL_OBSIDIAN_VAULT_PATH = mkdtempSync(join(tmpdir(), "clawql-parity-"));
     process.env.ENABLE_GRPC = "1";
     process.env.ENABLE_GRPC_REFLECTION = "0";
-    delete process.env.CLAWQL_DISABLE_HTTP_METRICS;
+    delete process.env.CLAWQL_ENABLE_HTTP_METRICS;
     resetSpecCache();
     resetSchemaFieldCache();
   });

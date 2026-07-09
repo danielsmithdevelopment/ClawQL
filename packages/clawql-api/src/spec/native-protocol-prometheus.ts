@@ -1,6 +1,6 @@
 /**
  * First-class Prometheus exposition for native GraphQL/gRPC protocol metrics (ADR #191).
- * **`GET /metrics`** on **`clawql-mcp-http`** (unless **`CLAWQL_DISABLE_HTTP_METRICS=1`**).
+ * **`GET /metrics`** on **`clawql-mcp-http`** when **`CLAWQL_ENABLE_HTTP_METRICS`** is on (default).
  */
 
 import { Counter, Gauge, Registry } from "prom-client";
@@ -118,8 +118,16 @@ export function prometheusRecordAuditClear(): void {
   auditBufferGauge.set(0);
 }
 
-export function prometheusDisabledForHttp(): boolean {
-  return process.env.CLAWQL_DISABLE_HTTP_METRICS?.trim() === "1";
+/** `1`, `true`, `yes` → on; unset → default **on**; `0` / `false` / other → off. */
+function envTruthyWithDefault(v: string | undefined, defaultWhenUnset: boolean): boolean {
+  if (v === undefined) return defaultWhenUnset;
+  const t = v.trim().toLowerCase();
+  return t === "1" || t === "true" || t === "yes";
+}
+
+/** Whether **`GET /metrics`** is mounted on MCP HTTP (default **true**). Opt out with **`CLAWQL_ENABLE_HTTP_METRICS=0`**. */
+export function httpMetricsEnabledForHttp(): boolean {
+  return envTruthyWithDefault(process.env.CLAWQL_ENABLE_HTTP_METRICS, true);
 }
 
 export async function renderPrometheusMetrics(): Promise<{ body: string; contentType: string }> {

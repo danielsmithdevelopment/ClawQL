@@ -6,11 +6,11 @@ Operator-facing **metrics + traces + work traces (Langfuse) + LLM eval** wiring 
 
 ## Observability profiles (7.0)
 
-| Profile        | Guide                                               | Langfuse emission                                            |
-| -------------- | --------------------------------------------------- | ------------------------------------------------------------ |
-| **`bundled`**  | [Bundled observability](./bundled-observability.md) | **On by default** (opt-out with `CLAWQL_DISABLE_LANGFUSE=1`) |
-| **`external`** | [Bring your own](./bring-your-own-observability.md) | On when `LANGFUSE_HOST` + keys set; opt-out available        |
-| **`minimal`**  | Metrics + audit ring buffer only                    | Off                                                          |
+| Profile        | Guide                                               | Langfuse emission                                             |
+| -------------- | --------------------------------------------------- | ------------------------------------------------------------- |
+| **`bundled`**  | [Bundled observability](./bundled-observability.md) | **On by default** (opt-out with `CLAWQL_ENABLE_LANGFUSE=0`)   |
+| **`external`** | [Bring your own](./bring-your-own-observability.md) | On when `LANGFUSE_HOST` + keys set; opt-out with `=0`         |
+| **`minimal`**  | Metrics + audit ring buffer only                    | Off                                                           |
 
 Implementation plan: [`7.0-observability-profiles-plan.md`](./7.0-observability-profiles-plan.md).
 

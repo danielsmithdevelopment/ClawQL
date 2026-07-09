@@ -25,7 +25,7 @@ GET http://<mcp-host>:8080/metrics
 Disable only if policy requires it:
 
 ```bash
-CLAWQL_DISABLE_HTTP_METRICS=1
+CLAWQL_ENABLE_HTTP_METRICS=0
 ```
 
 Helm — use your Prometheus Operator `ServiceMonitor` instead of `prometheus.io` annotations:
@@ -74,10 +74,10 @@ LANGFUSE_SECRET_KEY=sk-lf-...
 **Opt out** (infra traces only):
 
 ```bash
-CLAWQL_DISABLE_LANGFUSE=1
+CLAWQL_ENABLE_LANGFUSE=0
 ```
 
-**Alternative:** configure your collector to export LLM spans to Langfuse OTLP (`/api/public/otel`) and set `CLAWQL_DISABLE_LANGFUSE=1` on MCP to avoid duplicate export. See [Langfuse OpenTelemetry](https://langfuse.com/integrations/native/opentelemetry).
+**Alternative:** configure your collector to export LLM spans to Langfuse OTLP (`/api/public/otel`) and set `CLAWQL_ENABLE_LANGFUSE=0` on MCP to avoid duplicate export. See [Langfuse OpenTelemetry](https://langfuse.com/integrations/native/opentelemetry).
 
 ## Helm example
 
@@ -144,7 +144,7 @@ See [`docs/mcp/langfuse-eval-ouroboros.md`](../mcp/langfuse-eval-ouroboros.md).
 
 ```bash
 CLAWQL_OBSERVABILITY_PROFILE=minimal
-CLAWQL_DISABLE_LANGFUSE=1
+CLAWQL_ENABLE_LANGFUSE=0
 ```
 
 Metrics and audit ring buffer still work; synthetic-data export features require a policy-approved trace store.

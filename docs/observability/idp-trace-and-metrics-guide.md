@@ -67,7 +67,7 @@ ClawQL treats Langfuse as the default **work-trace ledger** for token savings, e
 
 - **Bundled profile:** Langfuse ships with Tier 1 Compose `observability` profile (planned 7.0) — [`bundled-observability.md`](./bundled-observability.md)
 - **External profile:** point at your instance — [`bring-your-own-observability.md`](./bring-your-own-observability.md)
-- **Opt-out:** `CLAWQL_DISABLE_LANGFUSE=1` or `CLAWQL_OBSERVABILITY_PROFILE=minimal`
+- **Opt-out:** `CLAWQL_ENABLE_LANGFUSE=0` or `CLAWQL_OBSERVABILITY_PROFILE=minimal`
 
 Deploy separately when not using bundled profile:
 

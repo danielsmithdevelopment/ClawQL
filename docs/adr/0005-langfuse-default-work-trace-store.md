@@ -36,11 +36,11 @@ We need one model that defaults Langfuse **on** for ClawQL-shaped installs while
 
 Introduce **`CLAWQL_OBSERVABILITY_PROFILE`** (and Helm `observability.profile`):
 
-| Profile        | Purpose                       | Bundled backends                                                            | Langfuse emission                                                                       |
-| -------------- | ----------------------------- | --------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| **`bundled`**  | Tier 1 Compose, local k8s lab | OTEL Collector, Prometheus, Loki, Tempo, Grafana, **Langfuse** (toggleable) | **On by default** (opt-out)                                                             |
-| **`external`** | Production / existing stack   | **None** — operator supplies URLs                                           | **On by default** when `LANGFUSE_HOST` + keys set; off with `CLAWQL_DISABLE_LANGFUSE=1` |
-| **`minimal`**  | Metrics-only / strict policy  | None                                                                        | **Off**                                                                                 |
+| Profile        | Purpose                       | Bundled backends                                                            | Langfuse emission                                                                 |
+| -------------- | ----------------------------- | --------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| **`bundled`**  | Tier 1 Compose, local k8s lab | OTEL Collector, Prometheus, Loki, Tempo, Grafana, **Langfuse** (toggleable) | **On by default** (opt-out with `CLAWQL_ENABLE_LANGFUSE=0`)                       |
+| **`external`** | Production / existing stack   | **None** — operator supplies URLs                                           | **On by default** when `LANGFUSE_HOST` + keys set; off with `CLAWQL_ENABLE_LANGFUSE=0` |
+| **`minimal`**  | Metrics-only / strict policy  | None                                                                        | **Off**                                                                           |
 
 **Default by install path:**
 
@@ -54,7 +54,7 @@ Introduce **`CLAWQL_OBSERVABILITY_PROFILE`** (and Helm `observability.profile`):
 In **`bundled`** and **`external`** profiles:
 
 - **Default:** MCP and documented Agent runtimes emit OTLP spans to Langfuse (`/api/public/otel`) when credentials and host are available.
-- **Opt-out:** `CLAWQL_DISABLE_LANGFUSE=1` (or `CLAWQL_LANGFUSE_ENABLED=0`) disables Langfuse export only; infra OTLP (Tempo, etc.) and `/metrics` remain governed separately.
+- **Opt-out:** `CLAWQL_ENABLE_LANGFUSE=0` disables Langfuse export only; infra OTLP (Tempo, etc.) and `/metrics` remain governed separately.
 
 Langfuse is **never embedded inside the `clawql-mcp` process** (no ClickHouse/Postgres in the MCP container). Emission uses **OTLP HTTP** to a Langfuse deployment (bundled or external).
 
@@ -106,7 +106,18 @@ This preserves [#250](https://github.com/danielsmithdevelopment/ClawQL/issues/25
 - Langfuse export is **non-blocking** for MCP tool handlers (async/batch OTLP; drop on backend down).
 - Audit → Loki remains **fire-and-forget** (existing).
 - Production: require `CLAWQL_LANGFUSE_WEBHOOK_TOKEN` when eval webhook is enabled (existing); Langfuse OTLP uses project keys via collector or SDK.
-- Regulated deployments: `CLAWQL_OBSERVABILITY_PROFILE=minimal` or `CLAWQL_DISABLE_LANGFUSE=1`; document that synthetic-data features require a trace store.
+- Regulated deployments: `CLAWQL_OBSERVABILITY_PROFILE=minimal` or `CLAWQL_ENABLE_LANGFUSE=0`; document that synthetic-data features require a trace store.
+
+### 8) Flag naming — all `CLAWQL_ENABLE_*`
+
+Observability and feature gates use **`CLAWQL_ENABLE_<NAME>`** only (no **`CLAWQL_DISABLE_*`**):
+
+| Default | Unset | Opt in | Opt out |
+| ------- | ----- | ------ | ------- |
+| **On** | on | `=1` | `=0` |
+| **Off** | off | `=1` | `=0` |
+
+Examples: **`CLAWQL_ENABLE_HTTP_METRICS`** (default on), **`CLAWQL_ENABLE_LANGFUSE`** (default on in bundled/external), **`CLAWQL_ENABLE_OTEL_TRACING`**, **`CLAWQL_ENABLE_LOKI_PUSH`**. Legacy **`CLAWQL_DISABLE_HTTP_METRICS`** is removed — use **`CLAWQL_ENABLE_HTTP_METRICS=0`**.
 
 ## Consequences
 

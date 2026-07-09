@@ -82,6 +82,22 @@
           "sensitive": true
         },
         {
+          "key": "AWS_ACCESS_KEY_ID",
+          "sensitive": false
+        },
+        {
+          "key": "AWS_SECRET_ACCESS_KEY",
+          "sensitive": true
+        },
+        {
+          "key": "AWS_SESSION_TOKEN",
+          "sensitive": true
+        },
+        {
+          "key": "AWS_REGION",
+          "sensitive": false
+        },
+        {
           "key": "CLAWQL_CLOUDFLARE_API_TOKEN",
           "sensitive": true
         },
@@ -108,6 +124,14 @@
         {
           "key": "LINEAR_API_KEY",
           "sensitive": true
+        },
+        {
+          "key": "NOTION_API_TOKEN",
+          "sensitive": true
+        },
+        {
+          "key": "NOTION_VERSION",
+          "sensitive": false
         },
         {
           "key": "CLAWQL_BEARER_TOKEN",
@@ -142,6 +166,14 @@
           "sensitive": false
         },
         {
+          "key": "DOCLING_BASE_URL",
+          "sensitive": false
+        },
+        {
+          "key": "DOCLING_API_KEY",
+          "sensitive": true
+        },
+        {
           "key": "GOTENBERG_BASE_URL",
           "sensitive": false
         },
@@ -156,6 +188,90 @@
         {
           "key": "ONYX_API_TOKEN",
           "sensitive": true
+        },
+        {
+          "key": "NEXTCLOUD_BASE_URL",
+          "sensitive": false
+        },
+        {
+          "key": "NEXTCLOUD_USERNAME",
+          "sensitive": false
+        },
+        {
+          "key": "NEXTCLOUD_APP_PASSWORD",
+          "sensitive": true
+        },
+        {
+          "key": "CONESHARE_BASE_URL",
+          "sensitive": false
+        },
+        {
+          "key": "CONESHARE_API_TOKEN",
+          "sensitive": true
+        },
+        {
+          "key": "CLAWQL_ENABLE_CONESHARE",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_CONESHARE_WEBHOOK_TOKEN",
+          "sensitive": true
+        },
+        {
+          "key": "CLAWQL_ENABLE_IDP_PIPELINE",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_ENABLE_IDP_CLASSIFIER",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_ENABLE_LANGEXTRACT",
+          "sensitive": false
+        },
+        {
+          "key": "CLASSIFIER_BASE_URL",
+          "sensitive": false
+        },
+        {
+          "key": "LANGEXTRACT_BASE_URL",
+          "sensitive": false
+        },
+        {
+          "key": "LANGEXTRACT_MODEL_ID",
+          "sensitive": false
+        },
+        {
+          "key": "LANGEXTRACT_BACKEND",
+          "sensitive": false
+        },
+        {
+          "key": "OPENROUTER_API_KEY",
+          "sensitive": true
+        },
+        {
+          "key": "OLLAMA_BASE_URL",
+          "sensitive": false
+        },
+        {
+          "key": "LANGEXTRACT_MODE",
+          "sensitive": false
+        },
+        {
+          "key": "CLASSIFIER_MIN_CONFIDENCE",
+          "sensitive": false
+        },
+        {
+          "key": "IDP_DOCUMENT_URL",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_IDP_PIPELINE_MAX_RETRIES",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_IDP_PIPELINE_RETRY_DELAY_MS",
+          "sensitive": false
         }
       ]
     },
@@ -183,8 +299,28 @@
           "sensitive": false
         },
         {
-          "key": "CLAWQL_DISABLE_HTTP_METRICS",
+          "key": "CLAWQL_ENABLE_HTTP_METRICS",
           "sensitive": false
+        },
+        {
+          "key": "CLAWQL_OBSERVABILITY_PROFILE",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_ENABLE_LANGFUSE",
+          "sensitive": false
+        },
+        {
+          "key": "LANGFUSE_HOST",
+          "sensitive": false
+        },
+        {
+          "key": "LANGFUSE_PUBLIC_KEY",
+          "sensitive": true
+        },
+        {
+          "key": "LANGFUSE_SECRET_KEY",
+          "sensitive": true
         },
         {
           "key": "CLAWQL_ENABLE_OTEL_TRACING",
@@ -264,6 +400,38 @@
           "sensitive": false
         },
         {
+          "key": "CLAWQL_ENABLE_PAGEINDEX",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_PAGEINDEX_PATH",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_AUTH_MODE",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_API_KEY",
+          "sensitive": true
+        },
+        {
+          "key": "CLAWQL_ENABLE_PRESIDIO",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_PRESIDIO_ANALYZER_URL",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_PRESIDIO_ANONYMIZER_URL",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_PRESIDIO_FAILURE_POLICY",
+          "sensitive": false
+        },
+        {
           "key": "CLAWQL_MEMORY_INGEST_FILE",
           "sensitive": false
         },
@@ -277,6 +445,18 @@
         },
         {
           "key": "CLAWQL_ENABLE_DOCUMENTS",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_ENABLE_GOOGLE",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_ENABLE_CLOUDFLARE",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_ENABLE_AWS",
           "sensitive": false
         },
         {
@@ -336,6 +516,86 @@
           "sensitive": false
         },
         {
+          "key": "CLAWQL_ENABLE_WORKFLOW",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_WORKFLOW_NAMESPACE_ALLOWLIST",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_WORKFLOW_DEFAULT_NAMESPACE",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_WORKFLOW_KUBECONFIG",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_WORKFLOW_TEMPLATE_ALLOWLIST",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_WORKFLOW_ARGO_UI_BASE_URL",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_WORKFLOW_ALLOW_DELETE",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_WORKFLOW_WAIT_TIMEOUT_SECONDS",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_WORKFLOW_WAIT_POLL_SECONDS",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_WORKFLOW_NOTIFY_ON_TERMINAL",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_WORKFLOW_NOTIFY_CHANNEL",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_VAULT_DIGEST_HOURS",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_NATS_URL",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_NATS_JETSTREAM",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_NATS_ENABLE_PUBLISH",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_NATS_ENABLE_CONSUMER",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_NATS_CONSUMER_RESUME_WORKFLOW",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_NATS_SUBJECT_WORKFLOW",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_NATS_SUBJECT_DOCUMENT",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_HITL_WEBHOOK_RESUME_WORKFLOW",
+          "sensitive": false
+        },
+        {
           "key": "CLAWQL_ENABLE_HITL_LABEL_STUDIO",
           "sensitive": false
         },
@@ -385,6 +645,22 @@
         },
         {
           "key": "CLAWQL_OUROBOROS_DB_NAME",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_ENABLE_LANGFUSE_EVAL",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_LANGFUSE_WEBHOOK_TOKEN",
+          "sensitive": true
+        },
+        {
+          "key": "CLAWQL_LANGFUSE_EVAL_MIN_SCORE",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_LANGFUSE_EVAL_AUTO_APPLY",
           "sensitive": false
         },
         {
@@ -553,6 +829,34 @@
         },
         {
           "key": "CLAWQL_SANDBOX_DOCKER_RUN_EXTRA",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_SANDBOX_KATA_RUNTIME_CLASS",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_SANDBOX_KATA_NAMESPACE",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_SANDBOX_KATA_SERVICE_ACCOUNT",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_SANDBOX_KATA_ENABLED",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_SANDBOX_KATA_IMAGE_PYTHON",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_SANDBOX_KATA_IMAGE_NODE",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_SANDBOX_KATA_IMAGE_SHELL",
           "sensitive": false
         }
       ]

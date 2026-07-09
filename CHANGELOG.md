@@ -7,7 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Breaking
+
+- **`CLAWQL_DISABLE_HTTP_METRICS` removed:** use **`CLAWQL_ENABLE_HTTP_METRICS=0`** to omit **`GET /metrics`** (default **on** when unset).
+
 ### Added
+
+- **ADR 0005 — Langfuse default work-trace store** ([#252](https://github.com/danielsmithdevelopment/ClawQL/issues/252)): observability profiles; **`CLAWQL_ENABLE_LANGFUSE`** (default on in bundled/external; opt out with **`=0`**); all observability gates use **`CLAWQL_ENABLE_*`** naming. Docs: [`docs/adr/0005-langfuse-default-work-trace-store.md`](docs/adr/0005-langfuse-default-work-trace-store.md), [`docs/observability/7.0-observability-profiles-plan.md`](docs/observability/7.0-observability-profiles-plan.md).
 
 - **Layer 0 MVP — `clawql-release`**: `clawql release init|collect|manifest|publish|verify` builds manifest **v0.1** with git commit, npm tarball + CycloneDX SBOM SHA-256, GHCR image digests, and **Merkle root** (`clawql-core`); output under `releases/vX.Y.Z/`. **`clawql doctor --smoke`** verifies the bundle when present; **`CLAWQL_RELEASE_MANIFEST`** enables verify-at-startup for MCP. Package: `packages/clawql-release`. Docs: [`docs/getting-started/clawql-release-mvp.md`](docs/getting-started/clawql-release-mvp.md). Arweave permanent anchor deferred.
 - **Add any source from URL** — `clawql sources add <url>` with auto-detect for OpenAPI, Google Discovery, GraphQL SDL/introspection, gRPC `.proto`, and MCP HTTP endpoints; persisted in **`~/.ClawQL/sources.json`** and merged into MCP `search`/`execute` on startup.
@@ -274,7 +280,7 @@ Major release: **Helm** broker paths migrate to **Dragonfly** only (**breaking**
 
 - **Docker Desktop Istio follow-ups:** **`local-k8s-docker-desktop.sh`** patches **`svc/clawql-mcp-http`** to **`ClusterIP`** when the Istio ingress gateway is installed (**`CLAWQL_ISTIO_MCP_HTTP_SERVICE_CLUSTERIP`**, default **`1`**); **`scripts/kubernetes/smoke-grpcurl-istio-gateway-mcp.sh`** + **`make smoke-grpcurl-istio-gateway-mcp`** for **`grpcurl`** **`grpc.health.v1.Health/Check`** on **`localhost:50051`** ([#155](https://github.com/danielsmithdevelopment/ClawQL/issues/155)).
 
-- **Prometheus (`GET /metrics`, core):** **`prom-client`** OpenMetrics exposition for native GraphQL/gRPC merge gauges and execute counters per **`sourceLabel`**; same signals as optional JSON on **`GET /healthz`**. Disable the HTTP route with **`CLAWQL_DISABLE_HTTP_METRICS=1`** only when necessary ([#191](https://github.com/danielsmithdevelopment/ClawQL/issues/191)).
+- **Prometheus (`GET /metrics`, core):** **`prom-client`** OpenMetrics exposition for native GraphQL/gRPC merge gauges and execute counters per **`sourceLabel`**; same signals as optional JSON on **`GET /healthz`**. Disable the HTTP route with **`CLAWQL_ENABLE_HTTP_METRICS=0`** only when necessary ([#191](https://github.com/danielsmithdevelopment/ClawQL/issues/191)).
 
 - **Optional OTLP traces (Tempo / OTLP backends):** **`CLAWQL_ENABLE_OTEL_TRACING=1`** with **`OTEL_EXPORTER_OTLP_ENDPOINT`** or **`OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`** registers OTLP HTTP export and **`mcp.tool.<name>`** spans for MCP handlers (including **`ouroboros_*`**); OpenTelemetry packages load only when the flag is set ([#160](https://github.com/danielsmithdevelopment/ClawQL/issues/160)).
 

@@ -46,13 +46,13 @@ Open:
 Langfuse is **on by default** in the bundled profile. Disable work-trace export (Tempo/Loki/metrics remain):
 
 ```bash
-CLAWQL_DISABLE_LANGFUSE=1 docker compose --profile observability up -d
+CLAWQL_ENABLE_LANGFUSE=0 docker compose --profile observability up -d
 ```
 
 Or in `.env`:
 
 ```bash
-CLAWQL_DISABLE_LANGFUSE=1
+CLAWQL_ENABLE_LANGFUSE=0
 ```
 
 ## Minimal observability

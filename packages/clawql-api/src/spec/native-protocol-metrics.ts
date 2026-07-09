@@ -2,7 +2,7 @@
  * Lightweight counters for native GraphQL/gRPC merge + execute (ADR #191).
  * Optional **`CLAWQL_HEALTHZ_NATIVE_PROTOCOL_METRICS=1`** exposes a snapshot on **`GET /healthz`**.
  * Prometheus text exposition is always recorded to the native-protocol registry; **`GET /metrics`**
- * serves it unless **`CLAWQL_DISABLE_HTTP_METRICS=1`** (see **`native-protocol-prometheus.ts`**).
+ * serves it when **`CLAWQL_ENABLE_HTTP_METRICS`** is on (default; see **`native-protocol-prometheus.ts`**).
  *
  * **`graphqlBySource`** / **`grpcBySource`**: same totals as top-level counters when summed, split by
  * **`sourceLabel`** from native protocol config (merge counts per load, execute counters cumulative).
