@@ -177,6 +177,13 @@ export const deploymentHubCards: Array<ReferenceCard> = [
     icon: BoltIcon,
   }),
   card({
+    href: '/getting-started/phase-1-platform-guide',
+    name: 'Phase 1 platform guide (7.0)',
+    description:
+      'Auth, PageIndex, Presidio hooks, Tier 1 Compose, and release manifest.',
+    icon: BookIcon,
+  }),
+  card({
     href: '/deployment/kubernetes',
     name: 'Tier 2: Kubernetes & Helm',
     description:
@@ -218,6 +225,13 @@ export const deploymentHubCards: Array<ReferenceCard> = [
 ]
 
 export const guidesHubCards: Array<ReferenceCard> = [
+  card({
+    href: '/getting-started/phase-1-platform-guide',
+    name: 'Phase 1 platform guide (7.0)',
+    description:
+      'Operator guide: clawql-auth, pageindex_*, Presidio, and local Compose.',
+    icon: BookIcon,
+  }),
   card({
     href: '/learn',
     name: 'ClawQL Learn',

@@ -2,6 +2,16 @@
 
 This directory is organized by purpose so operational guides, product docs, and long-form materials are easier to find.
 
+## How to use this library
+
+| Doc type                   | Examples                                                                                                                                     | Status language                      |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| **Ground truth**           | [modularization-implementation-status.md](design/modularization-implementation-status.md), CHANGELOG, RELEASE_NOTES                          | ✅ / 🚧 / 📋 only                    |
+| **Getting started**        | [phase-1-platform-guide.md](getting-started/phase-1-platform-guide.md), [clawql-7-setup-guide.md](getting-started/clawql-7-setup-guide.md)   | What to run today                    |
+| **Public roadmap**         | [clawql-vision-roadmap.md](vision/clawql-vision-roadmap.md)                                                                                  | Phases + honest table                |
+| **Reference architecture** | [clawql-modularization-v2.md](vision/clawql-modularization-v2.md), [operator-target-architecture.md](design/operator-target-architecture.md) | 📋 target; inline 🚧 where partial   |
+| **Historical**             | [clawql-modularization.md](vision/clawql-modularization.md) (v1.9)                                                                           | Fixed date — not for delivery claims |
+
 ## Core Product Docs
 
 - **ClawQL Vision & Roadmap** (**start here** — public edition, honest shipped vs planned status, phased delivery): [`vision/clawql-vision-roadmap.md`](vision/clawql-vision-roadmap.md) — [`/vision/roadmap`](https://docs.clawql.com/vision/roadmap)
@@ -18,12 +28,13 @@ This directory is organized by purpose so operational guides, product docs, and 
 
 - **Token efficiency — layered approach** (Code Mode, response trimming, caching, semantic cache, model routing): [`architecture/clawql-token-efficiency.md`](architecture/clawql-token-efficiency.md) — [`/architecture/token-efficiency`](https://docs.clawql.com/architecture/token-efficiency)
 - **Modularization implementation status** (ground truth — packages, shims, MCP flow, Effect/plugin status, July 2026): [`design/modularization-implementation-status.md`](design/modularization-implementation-status.md)
+- **Phase 1 platform guide (7.0)** — auth, PageIndex, Presidio, Tier 1 Compose: [`getting-started/phase-1-platform-guide.md`](getting-started/phase-1-platform-guide.md)
 - **ClawQL plugin model** (memory/documents/automation as plugins, MCP tools, third-party extensions): [`design/clawql-plugin-model.md`](design/clawql-plugin-model.md) — [`/reference/plugins`](https://docs.clawql.com/reference/plugins)
 - **Operator target architecture** (full operator roadmap — NL ops, verticals): [`design/operator-target-architecture.md`](design/operator-target-architecture.md)
 - **Plugin registry** (shipped vs planned plugins, MCP tool ownership, enable flags): [`reference/clawql-plugin-registry.md`](reference/clawql-plugin-registry.md) — [`/reference/plugins`](https://docs.clawql.com/reference/plugins)
 - **Plugins hub** (one page per plugin — core, memory, documents, bundled providers, …): [`plugins/README.md`](plugins/README.md) — [`/plugins`](https://docs.clawql.com/plugins)
 - **Effect-TS + plugin rearchitecture plan** (Layer composition, plugin checklist): [`design/effect-ts-modularization-rearchitecture-plan.md`](design/effect-ts-modularization-rearchitecture-plan.md)
-- **ClawQL Modularization v1.9** (companion — historical package matrix): [`vision/clawql-modularization.md`](vision/clawql-modularization.md) — package delivery epic [#306](https://github.com/danielsmithdevelopment/ClawQL/issues/306)
+- **ClawQL Modularization v1.9** (companion — **historical** package matrix, May 2026; do not use for 7.0 delivery claims): [`vision/clawql-modularization.md`](vision/clawql-modularization.md) — package delivery epic [#306](https://github.com/danielsmithdevelopment/ClawQL/issues/306)
 - ClawQL ecosystem (vision deck — core loop, hybrid memory, pipeline, Onyx, Ouroboros, infra, roadmap): [`clawql-ecosystem.md`](clawql-ecosystem.md)
 - Feature tiers (always on / default-on opt-out / default-off opt-in): `readme/configuration.md` § **Feature tiers** — diagram: [`readme/images/clawql-feature-tiers.png`](readme/images/clawql-feature-tiers.png)
 - MCP tools and operator guides: [`mcp/mcp-tools.md`](mcp/mcp-tools.md), [`mcp/external-ingest.md`](mcp/external-ingest.md), [`mcp/cache-tool.md`](mcp/cache-tool.md), [`mcp/enterprise-mcp-tools.md`](mcp/enterprise-mcp-tools.md), [`mcp/notify-tool.md`](mcp/notify-tool.md), [`mcp/hitl-label-studio.md`](mcp/hitl-label-studio.md), [`mcp/langfuse-eval-ouroboros.md`](mcp/langfuse-eval-ouroboros.md), [`mcp/onyx-knowledge-tool.md`](mcp/onyx-knowledge-tool.md), [`mcp/schedule-synthetic-checks.md`](mcp/schedule-synthetic-checks.md)
@@ -39,6 +50,8 @@ This directory is organized by purpose so operational guides, product docs, and 
 - `getting-started/agent-setup-prompt.md` — copy-paste Cursor/Claude onboarding prompt
 - `getting-started/local-provider-vault.md` — ~/.ClawQL secrets vault + memory home
 - `getting-started/clawql-7-setup-guide.md` — 7.0 upgrade: default stack, Vault, operator auth
+- `getting-started/phase-1-platform-guide.md` — **teach Phase 1:** clawql-auth, pageindex, Presidio, Tier 1 Compose
+- `getting-started/custom-sources.md` — URL/CLI custom sources (7.0)
 - `design/clawql-desktop-macos.md` — ClawQL Desktop (macOS Electron app)
 - `getting-started/clawql-init-walkthrough-spec.md` — Executor comparison; Phases 1–2b shipped in 7.0.0
 - `readme/configuration.md`

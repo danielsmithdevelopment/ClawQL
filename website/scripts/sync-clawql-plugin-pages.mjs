@@ -67,6 +67,8 @@ function rewriteLinksForSite(body) {
         .replaceAll('](../reference/clawql-plugin-registry.md)', '](/reference/plugins)')
         .replaceAll('](../design/clawql-plugin-model.md)', '](/reference/plugins#plugin-model)')
         .replaceAll('](../mcp/mcp-tools.md)', '](/tools)')
+        .replaceAll('](../getting-started/', '](/getting-started/')
+        .replace(/]\(\/getting-started\/([^)#]+)\.md/g, '](/getting-started/$1')
         .replaceAll('](../../docs/', `](${GH_MAIN}/docs/`)
         .replaceAll('](../', `](${GH_MAIN}/docs/plugins/`),
     ),

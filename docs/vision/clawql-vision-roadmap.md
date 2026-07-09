@@ -7,7 +7,7 @@ Apache 2.0 / MIT · [github.com/clawql/clawql](https://github.com/clawql/clawql)
 
 ## Read This First
 
-ClawQL is under active development. Most of what this document describes is not yet running. The table below is the honest current state. Everything after it describes where ClawQL is going and why.
+ClawQL is under active development. The **horizontal platform through Phase 1 (7.0.0)** is shipped and documented in [Phase 1 platform guide](../getting-started/phase-1-platform-guide.md). The table below is the honest current state. Everything after it describes where ClawQL is going and why.
 
 | Package                    | Status                                                                                                                                                    |
 | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -48,7 +48,7 @@ A practical way to think about it: when an agent needs to process a mortgage doc
 
 **ClawQL is not a generic MCP server.** Generic MCP servers are point integrations — one tool, one backend. ClawQL hosts and manages many tools under one gateway with consistent security, auditing, and memory across all of them.
 
-**ClawQL is not vaporware with a logo.** The MCP server and workspace packages are shipped and in use; horizontal extraction (core → api → memory → documents → automation) is **on `main`** with transport shims retained for compatibility. The **full** gateway, plugin Layers, Operator, and verticals remain ahead — acknowledged throughout this document and in [Modularization implementation status](../design/modularization-implementation-status.md).
+**ClawQL is not vaporware with a logo.** The MCP server and workspace packages are shipped and in use; Phase 1 exit (auth, pageindex, Presidio hooks, Tier 1 Compose) is **complete in 7.0.0**. The **full** Operator (NL dashboard, dynamic Deployments), Layer 0 permanence, and vertical packages remain ahead — acknowledged throughout this document and in [Modularization implementation status](../design/modularization-implementation-status.md).
 
 ---
 
@@ -128,17 +128,15 @@ For technical readers, the full rationale and patterns are in the [Contributor T
 
 **`mcp-grpc-transport`** — gRPC MCP transport for cluster deployments.
 
-**7.0 additions:** **`clawql-release`** (Layer 0 manifest MVP), **`clawql-operator`** (opt-in K8s scaffold), custom sources + harness wrappers, install script, ClawQL Desktop (macOS/Windows/Linux). See [7.0 setup guide](../getting-started/clawql-7-setup-guide.md).
+**7.0 additions:** **`clawql-auth`** (gateway modes), **`clawql-pageindex`** + `pageindex_*` tools, Presidio gateway hooks (opt-in), **`clawql-release`** (Layer 0 manifest MVP), **`clawql-operator`** (opt-in K8s scaffold), custom sources + harness wrappers, install script, ClawQL Desktop, Tier 1 Compose. See [Phase 1 platform guide](../getting-started/phase-1-platform-guide.md) and [7.0 setup guide](../getting-started/clawql-7-setup-guide.md).
 
 **Plugin Phase 2:** All horizontal tiers register MCP tools via **`Plugin.onRegister`** and compose through **`composeHorizontalPluginLayers()`** — see [ClawQL plugin model](../design/clawql-plugin-model.md).
 
-### In Active Development (vision gaps)
+### Partially delivered & planned depth
 
-**`clawql-auth`** — Standalone package for OIDC/SAML/OAuth2/API key modes, RBAC/ABAC, ATR enrichment (helpers live in `clawql-api` today).
+**`clawql-auth` expansion** — OIDC/SAML/OAuth2, RBAC/ABAC beyond gateway `noAuth`/`apiKey` (Phase 1 basics shipped — [Phase 1 platform guide](../getting-started/phase-1-platform-guide.md) §1).
 
-**`clawql-pageindex`** — Standalone MIT vectorless hierarchical indexing (no ClawQL dependencies).
-
-**Intelligent gateway depth** — Presidio redaction on agent I/O, circuit breakers on all paths, Ouroboros position events on every `execute()`, automatic release-manifest verification at startup.
+**Presidio & gateway depth** — Opt-in gateway redaction shipped (`CLAWQL_ENABLE_PRESIDIO=1`); mandatory uniform redaction on every IDP hop, circuit breakers, Ouroboros position events on every `execute()`, and full WORM defaults remain roadmap.
 
 **`clawql-telemetry`** — Dedicated observability package (OTEL at MCP transport today).
 
@@ -146,7 +144,7 @@ For technical readers, the full rationale and patterns are in the [Contributor T
 
 Vertical packages, the **full** Kubernetes Operator (NL dashboard, dynamic Deployments, full auth reconciliation), and remaining horizontal packages (`clawql-data`, `clawql-printingpress`, `clawql-goose`). Layer 0 permanence (Arweave, Rift, Radicle primary). Specifications for not-yet-started packages are written and stable.
 
-**Recommended before npm 7.0.0 tag:** dashboard UI for custom sources (API exists; Provider-secrets-style panel) — see [modularization implementation status §10](../design/modularization-implementation-status.md#10-recommended-next-ship-for-700).
+**Phase 2 focus:** Operator NL surface, third-party vertical plugin contract, transport-only `clawql-mcp` split — see [modularization implementation status §10](../design/modularization-implementation-status.md#10-phase-1-exit--complete-7000).
 
 ---
 
@@ -192,15 +190,15 @@ There are no fixed delivery dates. Priorities are determined by dependency order
 
 That is a fair question and it deserves a direct answer.
 
-**Execution evidence.** Ten workspace packages are shipped and in use (core, api, memory, documents, automation, sandbox, ouroboros, operator scaffold, release MVP, plus transports). The architecture is not speculative — it is written in working TypeScript with enforced dependency rules, passing tests, and a live CI pipeline. The gap between what is specified and what is running is narrowing on horizontal extraction; gateway depth, Layer 0 permanence, auth/pageindex packages, and verticals remain ahead.
+**Execution evidence.** Twelve workspace packages are shipped and in use (core, auth, pageindex, api, memory, documents, automation, sandbox, ouroboros, operator scaffold, release MVP, plus transports). Phase 1 exit criteria are met. The architecture is written in working TypeScript with enforced dependency rules, passing tests, and a live CI pipeline. Gateway depth (full Presidio mandate, circuit breakers), Layer 0 permanence, and verticals remain ahead.
 
 **The specification is the contract.** This document, the Technical Specification, and the Deployment Guide are public and versioned. Interfaces are stable and semver-governed. A breaking change to a public interface requires a major version bump across all dependents. Contributors can build against the specification today knowing that changes will be signalled clearly.
 
 **Demand-driven means the community sets priorities.** “No fixed dates” is not evasiveness — it is an acknowledgment that a small team building open infrastructure should respond to what people actually need rather than committing to a schedule that serves no one. The RFC process, GitHub Discussions, and the phased roadmap above give the community direct influence over what gets prioritised.
 
-**The dependency order is real.** Phase 1 is not taking a long time because of poor execution. It is taking the time it takes because the core abstractions need to be right. Verticals built on a shaky Plugin interface would need to be rebuilt. The investment in getting the foundation correct is what makes Phase 4 parallelisable.
+**Phase 1 is complete.** Evaluate today with [Tier 1 Docker Compose](../../examples/clawql-local-docker-compose/README.md) or Helm; teach operators with [Phase 1 platform guide](../getting-started/phase-1-platform-guide.md).
 
-If none of that is sufficient for your use case, the honest advice is to wait for Phase 1 exit criteria to be met and evaluate then. The Tier 1 quick-start is the right way to do that evaluation.
+If you need production verticals or the full Operator before contributing, track Phase 2–4 in §5 above.
 
 ---
 

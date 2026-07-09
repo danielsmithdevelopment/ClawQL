@@ -149,17 +149,17 @@ _Full design: [Deployment & Operations Guide](../deployment/clawql-deployment-op
 6. Operation is Merkle-stamped, observed in Langfuse + LGTMP; DAOS/Ouroboros swarm coordination applies when deployed (roadmap).
 7. Everything remains auditable and reversible via manifest policy.
 
-## XII. Current Status & Roadmap (June 2026)
+## XII. Current Status & Roadmap (July 2026)
 
-**Shipped:** MCP transport (stdio/HTTP/gRPC), `clawql-ouroboros` evolutionary loop library (not DAOS NSV/SGDOP coordination), Layer 0 tooling, LGTMP reference stack, **horizontal package extraction** (`clawql-core`, `clawql-api`, `clawql-memory`, `clawql-documents`, `clawql-automation`), **seven-vendor IDP pipeline** (bundled providers + Helm + [`idp-pipeline.md`](../providers/idp-pipeline.md)) — see **[Modularization implementation status](../design/modularization-implementation-status.md)**.
+**Shipped (Phase 1 complete — 7.0.0):** MCP transport (stdio/HTTP/gRPC), horizontal packages (`clawql-core`, `clawql-auth`, `clawql-pageindex`, `clawql-api`, `clawql-memory`, `clawql-documents`, `clawql-automation`, `clawql-sandbox`, `clawql-ouroboros`), **Plugin Phase 2** (`onRegister` + `composeHorizontalPluginLayers`), Presidio gateway hooks (opt-in), Tier 1 Docker Compose, release manifest MVP, operator scaffold, custom sources — **[Modularization implementation status](../design/modularization-implementation-status.md)** and **[Phase 1 platform guide](../getting-started/phase-1-platform-guide.md)**.
 
-**In progress:** Effect `Layer` plugins for memory/documents/automation; transport thinning (`tools.ts` → plugin registration); third-party plugin npm contract.
+**In progress (Phase 2):** Full Operator NL surface, third-party vertical plugin contract, transport-only `clawql-mcp` split.
 
-**Effect-TS:** `search` / `execute` + `PluginRegistry` + Panguard proxy run on Effect; extracted domain packages remain mostly `async` during migration ([Effect plan](../design/effect-ts-modularization-rearchitecture-plan.md)).
+**Effect-TS:** `search` / `execute` + `PluginRegistry` + Panguard proxy run on Effect; extracted domain packages remain mostly `async` at IO edges ([Effect plan](../design/effect-ts-modularization-rearchitecture-plan.md)).
 
-**Tier 1:** Runnable today via Docker Compose.
+**Tier 1:** `examples/clawql-local-docker-compose` — runnable today.
 
-**Next:** Plugin Layers → `clawql-sandbox` extraction → Operator dynamic composition → community verticals.
+**Next:** Operator dynamic composition → community verticals → Layer 0 permanence (Arweave/Rift).
 
 _Honest shipped vs planned table: [Vision & Roadmap](./clawql-vision-roadmap.md). Implementation ground truth: [Modularization implementation status](../design/modularization-implementation-status.md). Contracts: [Contributor Technical Specification](../contributing/clawql-contributor-technical-specification.md)._
 

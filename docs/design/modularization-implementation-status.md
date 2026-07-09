@@ -85,7 +85,7 @@ Agent (stdio / HTTP / gRPC)
         │                              ▼
         │                    packages/clawql-api (execute-core, spec-loader, …)
         │
-        ├── memory_ingest / memory_recall ──► clawql-memory (via shims + MCP handlers in src/)
+        ├── memory_ingest / memory_recall / pageindex_* ──► clawql-memory (+ clawql-pageindex)
         ├── ingest_external_knowledge ──► clawql-documents
         ├── schedule / notify ──► clawql-automation (+ configureNotifyDeps from tools.ts)
         └── cache / audit ──► clawql-core (via shims)
@@ -145,7 +145,7 @@ MCP handlers: `src/memory-ingest.ts`, `src/memory-recall.ts` (thin wrappers + `l
 
 **Shipped via MCP + Helm (not a hidden runner):** seven bundled document vendors (**tika**, **gotenberg**, **stirling**, **paperless**, **onyx**, **nextcloud**, **coneshare**) in `clawql-api` — agents compose **`search`/`execute`**; see [`idp-pipeline.md`](../providers/idp-pipeline.md).
 
-**Not yet extracted:** automated orchestration with retries, Merkle per hop, Presidio gateway hooks (vision in [`clawql-modularization-v2.md`](../vision/clawql-modularization-v2.md) §3.2).
+**Not yet extracted to automated orchestration:** retries, Merkle per hop across the full IDP pipeline (vision in [`clawql-modularization-v2.md`](../vision/clawql-modularization-v2.md) §3.2). **Presidio gateway hooks** (execute + memory ingest + external ingest) ship in `clawql-api` when `CLAWQL_ENABLE_PRESIDIO=1` — see [Phase 1 platform guide](../getting-started/phase-1-platform-guide.md) §3.
 
 MCP handler: `src/external-ingest.ts`.
 
@@ -209,7 +209,7 @@ interface Plugin {
 
 - **`PluginRegistry`** (`clawql-api`) — register plugins at `createClawQLApi()` startup; `onRegister` receives `ClawQLPluginRegistrationApi` with `registerMcpTool`.
 - **`PanguardProxyPlugin`** — first `mcp-proxy` plugin; `beforeCallTool` for policy/ATR chokepoint ([#272](https://github.com/danielsmithdevelopment/ClawQL/issues/272)).
-- **`MemoryPlugin`** (`createMemoryPlugin` in `clawql-memory`) — registers `memory_ingest` / `memory_recall` via `makeMemoryLayer()` when `CLAWQL_ENABLE_MEMORY` is on (default).
+- **`MemoryPlugin`** (`createMemoryPlugin` in `clawql-memory`) — registers `memory_ingest` / `memory_recall` and `pageindex_*` tools via `makeMemoryLayer()` when `CLAWQL_ENABLE_MEMORY` is on (default); hide PageIndex only with `CLAWQL_ENABLE_PAGEINDEX=0`.
 - **`DocumentsPlugin`** (`createDocumentsPlugin` in `clawql-documents`) — registers `ingest_external_knowledge` and optionally `knowledge_search_onyx` when documents/Onyx flags are on; composed from `src/clawql-api-adapters.ts`.
 - **`McpProxyPipeline`** — wires registry into MCP tool path via `clawql-api-adapters.ts`.
 
@@ -283,6 +283,7 @@ These vision items are **not** done by package extraction alone:
 | [MCP tools](../mcp/mcp-tools.md)                                          | Operator-facing tool matrix               |
 | [#306](https://github.com/danielsmithdevelopment/ClawQL/issues/306)       | Package delivery epic                     |
 | [clawql-release MVP](../getting-started/clawql-release-mvp.md)            | Layer 0 manifest commands, CI             |
+| [Phase 1 platform guide](../getting-started/phase-1-platform-guide.md)    | Auth, PageIndex, Presidio, Tier 1 Compose |
 | [clawql-operator-helm](../deployment/clawql-operator-helm.md)             | Operator scaffold install                 |
 
 ---
