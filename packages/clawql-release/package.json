@@ -1,0 +1,57 @@
+{
+  "name": "clawql-release",
+  "version": "0.0.1",
+  "description": "ClawQL Layer 0 MVP — verifiable release manifests (Merkle + SHA-256) for npm, SBOM, and container digests",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "clawql-release": "./dist/cli.cjs"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "npm run clean && tsup",
+    "prepublishOnly": "npm run build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "clawql-core": "file:../clawql-core",
+    "zod": "4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "tsup": "^8.3.0",
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.1"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/danielsmithdevelopment/ClawQL.git",
+    "directory": "packages/clawql-release"
+  },
+  "keywords": [
+    "clawql",
+    "release",
+    "sbom",
+    "merkle",
+    "supply-chain"
+  ]
+}

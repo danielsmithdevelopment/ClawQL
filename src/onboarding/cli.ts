@@ -12,6 +12,14 @@ import { onboardExitCode, runOnboard } from "./onboard.js";
 import { runOperatorStatus } from "./operator-cli.js";
 import { runSourcesAdd, runSourcesList, runSourcesRemove } from "./sources-cli.js";
 import { runHarness, type HarnessId } from "./harness-cli.js";
+import {
+  parseImageDigestFlags,
+  runReleaseCollect,
+  runReleaseInit,
+  runReleaseManifest,
+  runReleasePublish,
+  runReleaseVerify,
+} from "./release-cli.js";
 
 type Command =
   | "init"
@@ -21,6 +29,7 @@ type Command =
   | "onboard"
   | "operator"
   | "sources"
+  | "release"
   | "claude"
   | "codex"
   | "cursor"
@@ -58,15 +67,33 @@ function parse(argv: string[]): {
     else if (a === "--id") flags.id = argv[++i] ?? "";
     else if (a === "--command") flags.command = argv[++i] ?? "";
     else if (a === "--args") flags.args = argv[++i] ?? "";
-    else if (!a.startsWith("-")) positional.push(a);
+    else if (a === "--tag") flags.tag = argv[++i] ?? "";
+    else if (a === "--sbom") flags.sbom = argv[++i] ?? "";
+    else if (a === "--npm-tgz") flags.npmTgz = argv[++i] ?? "";
+    else if (a === "--github") flags.github = true;
+    else if (a === "--no-copy") flags.noCopy = true;
+    else if (a.startsWith("--image-digest=")) {
+      const prev = typeof flags.imageDigest === "string" ? flags.imageDigest : "";
+      flags.imageDigest = prev
+        ? `${prev},${a.slice("--image-digest=".length)}`
+        : a.slice("--image-digest=".length);
+    } else if (a === "--image-digest") {
+      const v = argv[++i] ?? "";
+      const prev = typeof flags.imageDigest === "string" ? flags.imageDigest : "";
+      flags.imageDigest = prev ? `${prev},${v}` : v;
+    } else if (!a.startsWith("-")) positional.push(a);
   }
   const cmd = (positional[0] ?? "help") as Command;
   const subcmd =
-    cmd === "secrets" || cmd === "operator" || cmd === "sources" ? positional[1] : undefined;
+    cmd === "secrets" || cmd === "operator" || cmd === "sources" || cmd === "release"
+      ? positional[1]
+      : undefined;
   const rest =
     cmd === "secrets" || cmd === "operator" || cmd === "sources"
       ? positional.slice(2)
-      : positional.slice(1);
+      : cmd === "release"
+        ? positional.slice(2)
+        : positional.slice(1);
   return { cmd, subcmd, flags, rest };
 }
 
@@ -88,6 +115,7 @@ Usage:
   clawql mcp-config [--json] [--write cursor|claude-desktop] [--http] [--url http://host/mcp]
   clawql sources list | add <url> [--name NAME] [--kind openapi|discovery|graphql|grpc|mcp|cli] | remove <id>
   clawql sources add --kind cli --command <bin> [--args a,b] [--name NAME]
+  clawql release init | collect | manifest | publish | verify <path>
   clawql claude | codex | cursor | opencode [-- harness args...]
   clawql operator status
 
@@ -99,6 +127,13 @@ Harness (MCP pre-wired):
 
 Install (local script):
   curl -fsSL https://clawql.com/install | bash
+
+release (Layer 0 MVP — immutable manifest):
+  init            Write .clawql/release.json
+  collect         Print manifest JSON (git commit, SBOM, npm tgz, image digests)
+  manifest        Write releases/vX.Y.Z/manifest.json
+  publish         manifest + optional --github (needs gh CLI)
+  verify <path>   Verify bundle directory or manifest.json
 
 operator:
   status          List ClawQLInstance CRs and tier-spec ConfigMaps (requires kubeconfig)
@@ -258,6 +293,53 @@ async function main(): Promise<void> {
     }
     console.error(
       "Usage: clawql sources list | clawql sources add <url> | clawql sources remove <id>"
+    );
+    process.exitCode = 1;
+    return;
+  }
+
+  if (cmd === "release") {
+    const releaseOpts = {
+      root: typeof flags.home === "string" && flags.home ? flags.home : undefined,
+      tag: typeof flags.tag === "string" && flags.tag ? flags.tag : undefined,
+      sbom: typeof flags.sbom === "string" ? flags.sbom : undefined,
+      npmTgz: typeof flags.npmTgz === "string" ? flags.npmTgz : undefined,
+      imageDigests:
+        typeof flags.imageDigest === "string" && flags.imageDigest
+          ? parseImageDigestFlags(flags.imageDigest.split(","))
+          : undefined,
+      github: Boolean(flags.github),
+      noCopy: Boolean(flags.noCopy),
+      json: Boolean(flags.json),
+    };
+    if (subcmd === "init") {
+      process.exitCode = await runReleaseInit(releaseOpts);
+      return;
+    }
+    if (subcmd === "collect") {
+      process.exitCode = await runReleaseCollect(releaseOpts);
+      return;
+    }
+    if (subcmd === "manifest") {
+      process.exitCode = await runReleaseManifest(releaseOpts);
+      return;
+    }
+    if (subcmd === "publish") {
+      process.exitCode = await runReleasePublish(releaseOpts);
+      return;
+    }
+    if (subcmd === "verify") {
+      const target = rest[0];
+      if (!target) {
+        console.error("Usage: clawql release verify <bundle-dir|manifest.json>");
+        process.exitCode = 1;
+        return;
+      }
+      process.exitCode = await runReleaseVerify(target);
+      return;
+    }
+    console.error(
+      "Usage: clawql release init | collect | manifest | publish | verify <path>"
     );
     process.exitCode = 1;
     return;

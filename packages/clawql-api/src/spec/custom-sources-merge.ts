@@ -2,7 +2,7 @@
  * Merge user-added sources from ~/.ClawQL/sources.json into the operation index.
  */
 
-import { readFile, writeFile } from "node:fs/promises";
+import { writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { convertObj } from "swagger2openapi";
 import type { LoadedSpec } from "./spec-loader.js";
@@ -163,7 +163,6 @@ export async function cacheCustomSourceBody(
     filename = "openapi.yaml";
   else if (entry.kind === "openapi") filename = "openapi.json";
 
-  const abs = join(dir, filename);
   let toWrite = bodyText;
   if (entry.kind === "openapi" && bodyText.includes('"swagger": "2.0"')) {
     const { openapi } = await convertObj(JSON.parse(bodyText) as object, {

@@ -94,7 +94,8 @@ Custom sources persist in **`~/.ClawQL/sources.json`** and merge into **`search`
 | `clawql sources list` / `sources add`             | Custom integrations from URL                  |
 | `clawql doctor --smoke`                           | MCP `tools/list` + `search`                   |
 | `clawql mcp-config --write cursor`                | Merge MCP JSON into Cursor / Claude Desktop   |
-| `clawql claude` / `codex` / `cursor` / `opencode` | Harness launch with MCP pre-wired             |
+| `clawql release publish`                          | Immutable manifest (Layer 0 MVP)                |
+| `clawql claude` / `codex` / `cursor` / `opencode` | Harness launch with MCP pre-wired               |
 | `clawql operator status`                          | Kubernetes: ClawQLInstance + tier-spec health |
 
 ---
@@ -139,6 +140,8 @@ Docling, LangExtract, IDP pipeline runner, NATS/KEDA worker, Langfuse→Ouroboro
 ## Install
 
 ```bash
+curl -fsSL https://clawql.com/install | bash
+# or:
 npm install clawql-mcp@7.0.0
 npx clawql onboard --interactive
 npx clawql-mcp-http
