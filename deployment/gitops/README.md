@@ -31,7 +31,7 @@ workflows-gitops/
 | Lean MCP | `charts/clawql-mcp` | `values.yaml` or env-specific overlay |
 | Full IDP | `charts/clawql-idp` | `values-idp-full.yaml` |
 
-Point Argo CD `source.repoURL` at this GitHub repo (or your fork) and set `targetRevision` to a release tag (e.g. `v6.4.0`).
+Point Argo CD `source.repoURL` at this GitHub repo (or your fork) and set `targetRevision` to a release tag (e.g. `v7.0.0`).
 
 ## Agent promotion path
 

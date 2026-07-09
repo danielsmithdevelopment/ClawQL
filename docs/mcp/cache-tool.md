@@ -72,4 +72,4 @@ Successful **`set`** responses may include **`evicted`**: the number of keys dro
 - **[GitHub #29](https://github.com/danielsmithdevelopment/ClawQL/issues/29)** (open) — separate **index** negative-cache idea; not the MCP **`cache`** tool.
 - **[memory-obsidian.md](../memory/memory-obsidian.md)** — vault pattern and **`memory_*`** tools
 - **[integrations/cursor-vault-memory.md](integrations/cursor-vault-memory.md)** — Cursor rule/skill for vault memory
-- **[deployment/deploy-k8s.md](deployment/deploy-k8s.md)** — running ClawQL in Kubernetes (each replica’s **`cache`** is isolated)
+- **[`docs/deployment/deploy-k8s.md`](../deployment/deploy-k8s.md)** — running ClawQL in Kubernetes (each replica’s **`cache`** is isolated)

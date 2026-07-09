@@ -1,6 +1,6 @@
 {
   "name": "clawql-auth",
-  "version": "0.0.1",
+  "version": "7.0.0",
   "description": "ClawQL gateway auth (noAuth/apiKey, ATR claims) and upstream provider credential headers",
   "license": "Apache-2.0",
   "type": "module",
@@ -50,5 +50,8 @@
     "auth",
     "atr",
     "mcp"
-  ]
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }

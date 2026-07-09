@@ -25,5 +25,5 @@ export const site = {
     contact: 'mailto:hello@clawql.com',
   },
   installCommand: 'npm install -g clawql-mcp',
-  providers: ['GitHub', 'Google Cloud', 'Atlassian', 'Slack', 'Linear', 'Cloudflare'],
+  providers: ['Cloudflare', 'GitHub', 'Slack', 'Linear', 'Notion', 'Onyx'],
 } as const

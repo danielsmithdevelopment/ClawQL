@@ -7,6 +7,14 @@
 
 import type { ClawqlAuditEntry } from "./clawql-audit.js";
 
+function lokiPushEnabled(): boolean {
+  const flag = process.env.CLAWQL_ENABLE_LOKI_PUSH?.trim();
+  if (flag === "0" || flag?.toLowerCase() === "false") {
+    return false;
+  }
+  return Boolean(lokiPushUrl());
+}
+
 function lokiPushUrl(): string | undefined {
   const u = process.env.CLAWQL_LOKI_PUSH_URL?.trim();
   return u || undefined;
@@ -19,14 +27,18 @@ function nsTimestamp(entry: ClawqlAuditEntry): string {
 }
 
 /**
- * Push one audit entry to Loki when **`CLAWQL_LOKI_PUSH_URL`** is set (e.g.
- * `https://loki.example/loki/api/v1/push`).
+ * Push one audit entry to Loki when **`CLAWQL_LOKI_PUSH_URL`** is set and
+ * **`CLAWQL_ENABLE_LOKI_PUSH`** is not **`0`** (default on when URL is set).
  *
  * **Auth:** optional **`CLAWQL_LOKI_BEARER_TOKEN`** (Authorization: Bearer).
  * **Multi-tenant Loki:** optional **`CLAWQL_LOKI_TENANT_ID`** → `X-Scope-OrgID`.
  * **Labels:** `job` from **`CLAWQL_LOKI_JOB`** (default **`clawql-audit`**), plus **`service="clawql-mcp"`**.
  */
 export function maybePushAuditEntryToLoki(entry: ClawqlAuditEntry): void {
+  if (!lokiPushEnabled()) {
+    return;
+  }
+
   const url = lokiPushUrl();
   if (!url) {
     return;

@@ -17,6 +17,16 @@ type Entry = {
 const ENTRIES: Array<Entry> = [
   { path: '/', changeFrequency: 'weekly', priority: 1 },
   {
+    path: '/vision/ecosystem',
+    changeFrequency: 'monthly',
+    priority: 0.9,
+  },
+  {
+    path: '/getting-started/clawql-release-mvp',
+    changeFrequency: 'monthly',
+    priority: 0.9,
+  },
+  {
     path: '/vision/idp-platform',
     changeFrequency: 'monthly',
     priority: 0.92,
@@ -42,6 +52,31 @@ const ENTRIES: Array<Entry> = [
     priority: 0.88,
   },
   { path: '/getting-started', changeFrequency: 'weekly', priority: 0.96 },
+  {
+    path: '/getting-started/phase-1-platform-guide',
+    changeFrequency: 'weekly',
+    priority: 0.97,
+  },
+  {
+    path: '/getting-started/clawql-7-setup-guide',
+    changeFrequency: 'weekly',
+    priority: 0.96,
+  },
+  {
+    path: '/contributing/technical-specification',
+    changeFrequency: 'monthly',
+    priority: 0.88,
+  },
+  {
+    path: '/design/operator-target-architecture',
+    changeFrequency: 'monthly',
+    priority: 0.86,
+  },
+  {
+    path: '/architecture/token-efficiency',
+    changeFrequency: 'monthly',
+    priority: 0.9,
+  },
   { path: '/agent-setup', changeFrequency: 'weekly', priority: 0.95 },
   { path: '/architecture', changeFrequency: 'monthly', priority: 0.92 },
   { path: '/guides', changeFrequency: 'weekly', priority: 0.9 },

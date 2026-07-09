@@ -1,6 +1,6 @@
 {
   "name": "clawql-sandbox",
-  "version": "0.0.1",
+  "version": "7.0.0",
   "description": "ClawQL sandbox_exec: Kata Containers (default in-cluster), Docker, Seatbelt, Cloudflare bridge",
   "license": "Apache-2.0",
   "type": "module",
@@ -28,8 +28,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "clawql-api": "file:../clawql-api",
-    "clawql-core": "file:../clawql-core",
+    "clawql-api": "7.0.0",
+    "clawql-core": "7.0.0",
     "effect": "^3.21.4",
     "zod": "4.3.6"
   },
@@ -56,5 +56,8 @@
     "sandbox",
     "kata",
     "mcp"
-  ]
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }

@@ -1,7 +1,7 @@
 {
   "sections": [
     {
-      "title": "API spec selection",
+      "title": "1. API spec selection",
       "keys": [
         {
           "key": "CLAWQL_SPEC_PATHS",
@@ -38,7 +38,7 @@
       ]
     },
     {
-      "title": "Native GraphQL / gRPC (merged into search + execute; ADR 0002)",
+      "title": "2. Native GraphQL / gRPC (merged into search + execute; ADR 0002)",
       "keys": [
         {
           "key": "CLAWQL_GRAPHQL_URL",
@@ -71,7 +71,7 @@
       ]
     },
     {
-      "title": "Upstream API auth (execute / GraphQL proxy)",
+      "title": "4. Upstream API auth (execute / GraphQL proxy)",
       "keys": [
         {
           "key": "CLAWQL_PROVIDER_AUTH_JSON",
@@ -80,6 +80,22 @@
         {
           "key": "CLAWQL_GOOGLE_ACCESS_TOKEN",
           "sensitive": true
+        },
+        {
+          "key": "AWS_ACCESS_KEY_ID",
+          "sensitive": false
+        },
+        {
+          "key": "AWS_SECRET_ACCESS_KEY",
+          "sensitive": true
+        },
+        {
+          "key": "AWS_SESSION_TOKEN",
+          "sensitive": true
+        },
+        {
+          "key": "AWS_REGION",
+          "sensitive": false
         },
         {
           "key": "CLAWQL_CLOUDFLARE_API_TOKEN",
@@ -110,13 +126,26 @@
           "sensitive": true
         },
         {
+          "key": "NOTION_API_TOKEN",
+          "sensitive": true
+        },
+        {
+          "key": "NOTION_VERSION",
+          "sensitive": false
+        },
+        {
           "key": "CLAWQL_BEARER_TOKEN",
           "sensitive": true
         },
         {
           "key": "CLAWQL_HTTP_HEADERS",
           "sensitive": false
-        },
+        }
+      ]
+    },
+    {
+      "title": "5. Self-hosted document stack (merged specLabel base URLs)",
+      "keys": [
         {
           "key": "PAPERLESS_BASE_URL",
           "sensitive": false
@@ -142,6 +171,14 @@
           "sensitive": false
         },
         {
+          "key": "DOCLING_BASE_URL",
+          "sensitive": false
+        },
+        {
+          "key": "DOCLING_API_KEY",
+          "sensitive": true
+        },
+        {
           "key": "GOTENBERG_BASE_URL",
           "sensitive": false
         },
@@ -156,11 +193,95 @@
         {
           "key": "ONYX_API_TOKEN",
           "sensitive": true
+        },
+        {
+          "key": "NEXTCLOUD_BASE_URL",
+          "sensitive": false
+        },
+        {
+          "key": "NEXTCLOUD_USERNAME",
+          "sensitive": false
+        },
+        {
+          "key": "NEXTCLOUD_APP_PASSWORD",
+          "sensitive": true
+        },
+        {
+          "key": "CONESHARE_BASE_URL",
+          "sensitive": false
+        },
+        {
+          "key": "CONESHARE_API_TOKEN",
+          "sensitive": true
+        },
+        {
+          "key": "CLAWQL_ENABLE_CONESHARE",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_CONESHARE_WEBHOOK_TOKEN",
+          "sensitive": true
+        },
+        {
+          "key": "CLAWQL_ENABLE_IDP_PIPELINE",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_ENABLE_IDP_CLASSIFIER",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_ENABLE_LANGEXTRACT",
+          "sensitive": false
+        },
+        {
+          "key": "CLASSIFIER_BASE_URL",
+          "sensitive": false
+        },
+        {
+          "key": "LANGEXTRACT_BASE_URL",
+          "sensitive": false
+        },
+        {
+          "key": "LANGEXTRACT_MODEL_ID",
+          "sensitive": false
+        },
+        {
+          "key": "LANGEXTRACT_BACKEND",
+          "sensitive": false
+        },
+        {
+          "key": "OPENROUTER_API_KEY",
+          "sensitive": true
+        },
+        {
+          "key": "OLLAMA_BASE_URL",
+          "sensitive": false
+        },
+        {
+          "key": "LANGEXTRACT_MODE",
+          "sensitive": false
+        },
+        {
+          "key": "CLASSIFIER_MIN_CONFIDENCE",
+          "sensitive": false
+        },
+        {
+          "key": "IDP_DOCUMENT_URL",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_IDP_PIPELINE_MAX_RETRIES",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_IDP_PIPELINE_RETRY_DELAY_MS",
+          "sensitive": false
         }
       ]
     },
     {
-      "title": "MCP transport (remote/server deployment)",
+      "title": "7. MCP transport, health, metrics, observability",
       "keys": [
         {
           "key": "PORT",
@@ -183,7 +304,11 @@
           "sensitive": false
         },
         {
-          "key": "CLAWQL_DISABLE_HTTP_METRICS",
+          "key": "CLAWQL_ENABLE_HTTP_METRICS",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_OBSERVABILITY_PROFILE",
           "sensitive": false
         },
         {
@@ -195,12 +320,44 @@
           "sensitive": false
         },
         {
-          "key": "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT",
+          "key": "OTEL_SERVICE_NAME",
           "sensitive": false
         },
         {
-          "key": "OTEL_SERVICE_NAME",
+          "key": "CLAWQL_LOKI_PUSH_URL",
           "sensitive": false
+        },
+        {
+          "key": "CLAWQL_ENABLE_LOKI_PUSH",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_LOKI_BEARER_TOKEN",
+          "sensitive": true
+        },
+        {
+          "key": "CLAWQL_LOKI_TENANT_ID",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_LOKI_JOB",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_ENABLE_LANGFUSE",
+          "sensitive": false
+        },
+        {
+          "key": "LANGFUSE_HOST",
+          "sensitive": false
+        },
+        {
+          "key": "LANGFUSE_PUBLIC_KEY",
+          "sensitive": true
+        },
+        {
+          "key": "LANGFUSE_SECRET_KEY",
+          "sensitive": true
         },
         {
           "key": "CLAWQL_CORS_ALLOW_ORIGIN",
@@ -253,7 +410,7 @@
       ]
     },
     {
-      "title": "Obsidian vault (memory tools)",
+      "title": "9. Obsidian vault (memory tools)",
       "keys": [
         {
           "key": "CLAWQL_OBSIDIAN_VAULT_PATH",
@@ -261,6 +418,38 @@
         },
         {
           "key": "CLAWQL_ENABLE_MEMORY",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_ENABLE_PAGEINDEX",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_PAGEINDEX_PATH",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_AUTH_MODE",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_API_KEY",
+          "sensitive": true
+        },
+        {
+          "key": "CLAWQL_ENABLE_PRESIDIO",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_PRESIDIO_ANALYZER_URL",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_PRESIDIO_ANONYMIZER_URL",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_PRESIDIO_FAILURE_POLICY",
           "sensitive": false
         },
         {
@@ -280,11 +469,32 @@
           "sensitive": false
         },
         {
+          "key": "CLAWQL_ENABLE_GOOGLE",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_ENABLE_CLOUDFLARE",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_ENABLE_AWS",
+          "sensitive": false
+        },
+        {
           "key": "CLAWQL_EXTERNAL_INGEST",
           "sensitive": false
         },
         {
           "key": "CLAWQL_EXTERNAL_INGEST_FETCH",
+          "sensitive": false
+        }
+      ]
+    },
+    {
+      "title": "10. Optional MCP tools",
+      "keys": [
+        {
+          "key": "CLAWQL_AUDIT_MAX_ENTRIES",
           "sensitive": false
         },
         {
@@ -293,30 +503,6 @@
         },
         {
           "key": "CLAWQL_CACHE_MAX_ENTRIES",
-          "sensitive": false
-        },
-        {
-          "key": "CLAWQL_AUDIT_MAX_ENTRIES",
-          "sensitive": false
-        },
-        {
-          "key": "CLAWQL_LOKI_PUSH_URL",
-          "sensitive": false
-        },
-        {
-          "key": "CLAWQL_LOKI_BEARER_TOKEN",
-          "sensitive": true
-        },
-        {
-          "key": "CLAWQL_LOKI_TENANT_ID",
-          "sensitive": false
-        },
-        {
-          "key": "CLAWQL_LOKI_JOB",
-          "sensitive": false
-        },
-        {
-          "key": "CLAWQL_LOKI_PUSH_TIMEOUT_MS",
           "sensitive": false
         },
         {
@@ -333,6 +519,86 @@
         },
         {
           "key": "CLAWQL_TEST_SLACK_FETCH_HTTP_OK",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_ENABLE_WORKFLOW",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_WORKFLOW_NAMESPACE_ALLOWLIST",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_WORKFLOW_DEFAULT_NAMESPACE",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_WORKFLOW_KUBECONFIG",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_WORKFLOW_TEMPLATE_ALLOWLIST",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_WORKFLOW_ARGO_UI_BASE_URL",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_WORKFLOW_ALLOW_DELETE",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_WORKFLOW_WAIT_TIMEOUT_SECONDS",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_WORKFLOW_WAIT_POLL_SECONDS",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_WORKFLOW_NOTIFY_ON_TERMINAL",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_WORKFLOW_NOTIFY_CHANNEL",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_VAULT_DIGEST_HOURS",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_NATS_URL",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_NATS_JETSTREAM",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_NATS_ENABLE_PUBLISH",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_NATS_ENABLE_CONSUMER",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_NATS_CONSUMER_RESUME_WORKFLOW",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_NATS_SUBJECT_WORKFLOW",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_NATS_SUBJECT_DOCUMENT",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_HITL_WEBHOOK_RESUME_WORKFLOW",
           "sensitive": false
         },
         {
@@ -385,6 +651,22 @@
         },
         {
           "key": "CLAWQL_OUROBOROS_DB_NAME",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_ENABLE_LANGFUSE_EVAL",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_LANGFUSE_WEBHOOK_TOKEN",
+          "sensitive": true
+        },
+        {
+          "key": "CLAWQL_LANGFUSE_EVAL_MIN_SCORE",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_LANGFUSE_EVAL_AUTO_APPLY",
           "sensitive": false
         },
         {
@@ -554,6 +836,34 @@
         {
           "key": "CLAWQL_SANDBOX_DOCKER_RUN_EXTRA",
           "sensitive": false
+        },
+        {
+          "key": "CLAWQL_SANDBOX_KATA_RUNTIME_CLASS",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_SANDBOX_KATA_NAMESPACE",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_SANDBOX_KATA_SERVICE_ACCOUNT",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_SANDBOX_KATA_ENABLED",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_SANDBOX_KATA_IMAGE_PYTHON",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_SANDBOX_KATA_IMAGE_NODE",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_SANDBOX_KATA_IMAGE_SHELL",
+          "sensitive": false
         }
       ]
     },
@@ -567,7 +877,12 @@
         {
           "key": "WORKFLOW_CREATE_JIRA_ISSUE",
           "sensitive": false
-        },
+        }
+      ]
+    },
+    {
+      "title": "12. Dashboard — Agent Chat + OpenClaw bridge (dashboard/ only)",
+      "keys": [
         {
           "key": "CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL",
           "sensitive": false

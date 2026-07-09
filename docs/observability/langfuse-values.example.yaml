@@ -1,6 +1,7 @@
-# Example Langfuse Helm values (BYO — not a clawql-mcp subchart)
+# Example Langfuse Helm values (BYO or bundled profile subchart — not embedded in clawql-mcp)
 #
-# Tracking: #252 — deploy Langfuse separately; wire ClawQL-Agent / LangGraph SDK at runtime.
+# Tracking: #252 — ADR 0005: Langfuse is the default work-trace store (opt-out emission).
+# Guides: docs/observability/bundled-observability.md, docs/observability/bring-your-own-observability.md
 # Upstream chart: https://github.com/langfuse/langfuse-k8s (verify version/license before prod).
 #
 # Usage (illustrative — adjust for your cluster):
@@ -34,7 +35,8 @@ serviceMonitor:
   labels:
     release: kube-prometheus-stack
 
-# ClawQL-Agent env (set in Agent deployment, not clawql-mcp):
+# ClawQL MCP + Agent env (set in deployments, not only Agent):
 #   LANGFUSE_HOST=https://langfuse.example.com
 #   LANGFUSE_PUBLIC_KEY=pk-lf-...
 #   LANGFUSE_SECRET_KEY=sk-lf-...
+# Opt-out work-trace export: CLAWQL_ENABLE_LANGFUSE=0

@@ -22,14 +22,14 @@ _Natural language. Any API. Any document. Any knowledge source. On-chain truth +
 
 An MCP (Model Context Protocol) server (`clawql-mcp` on npm) that lets AI assistants and autonomous agents discover and call any REST operation across any OpenAPI-described API — without context bloat, without custom wrappers — plus a complete local-first document pipeline, enterprise-wide semantic knowledge search via Onyx (40+ connectors, Flink real-time sync), durable cross-session Obsidian vault memory, invisible Ouroboros orchestration, Cuckoo Filters, Merkle Trees, and production-grade secrets/storage/security.
 
-**Verify shipped vs roadmap:** [`docs/clawql-ecosystem.md`](../clawql-ecosystem.md) (appendix **Fiction and roadmap**) and [`docs/security/clawql-security-defense-deliverables.md`](../security/clawql-security-defense-deliverables.md).
+**Verify shipped vs roadmap:** [`docs/clawql-ecosystem.md`](/vision/ecosystem) (appendix **Fiction and roadmap**) and [`docs/security/clawql-security-defense-deliverables.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/clawql-security-defense-deliverables.md).
 
 **2026 roadmap (both forks — not all flags exist in this repo today):** public MCP endpoint with **x402 / MPP** micropayments; agentic wallets (**Coinbase AgentKit** + **ERC-4337**); IPFS pinning; blockchain anchoring; **The Graph** (subgraph + x402 where applicable); **Chainlink** (CRE, oracles, **CCIP**, Functions, x402-native patterns); **Hyperledger Fabric** as a permissioned layer ([#187](https://github.com/danielsmithdevelopment/ClawQL/issues/187) — **no** `CLAWQL_ENABLE_FABRIC` or `providers/fabric` in the open-source tree yet).
 
 **PLATFORM HIGHLIGHTS**
 
 - MCP Server (stdio / HTTP / gRPC) + GraphQL projection; OpenAPI 3 + Swagger 2 + Google Discovery
-- **15** bundled vendor specs in `BUNDLED_PROVIDERS` (GitHub, Cloudflare, Slack, Sentry, n8n, Linear, Tika, Gotenberg, Paperless, Stirling, Onyx, **Nextcloud**, **Coneshare**, Jira, Bitbucket) plus **`google`** / **`all-providers`** presets — see [`providers/README.md`](../../providers/README.md)
+- **15** bundled vendor specs in `BUNDLED_PROVIDERS` (GitHub, Cloudflare, Slack, Sentry, n8n, Linear, Tika, Gotenberg, Paperless, Stirling, Onyx, **Nextcloud**, **Coneshare**, Jira, Bitbucket) plus **`google`** / **`all-providers`** presets — see [`providers/README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/providers/README.md)
 - Obsidian vault memory + hybrid sqlite-vec (roadmap)
 - Full document pipeline (1,000+ formats) — Tika → Gotenberg → Stirling → Paperless
 - Onyx enterprise knowledge (40+ connectors, Flink-synced, citation-backed)
@@ -242,7 +242,7 @@ _The two core tools that make any OpenAPI-described API instantly accessible wit
 1. User asks: e.g. “Create a GitHub issue for the Cuckoo filter work,” “Search company pricing policy,” or “**Run OSV-Scanner on the latest ClawQL image** / **rescan** `go.sum` / `package-lock`”
 1. `search()` receives query: `'GitHub create issue POST'`
 1. ClawQL scans all loaded specs — only GitHub in this case
-1. Returns: `operationId issues_create`, path `POST /repos/{owner}/{repo}/issues`
+1. Returns: `operationId issues_create`, path `POST /repos/\{owner\}/\{repo\}/issues`
 1. Also returns: required fields (`title`), optional (`body`, `labels`, `assignees`)
 1. AI sees only the relevant operation — not 50 MB of GitHub’s full spec
 
@@ -250,8 +250,8 @@ _The two core tools that make any OpenAPI-described API instantly accessible wit
 
 1. AI calls `execute()` with `operationId: issues_create`
 1. ClawQL injects `CLAWQL_GITHUB_TOKEN` as Authorization header automatically
-1. Builds POST body: `{ title: "…", body: "…", labels: […] }`
-1. Sends to `https://api.github.com/repos/{owner}/{repo}/issues`
+1. Builds POST body: `\{ title: "…", body: "…", labels: […] \}`
+1. Sends to `https://api.github.com/repos/\{owner\}/\{repo\}/issues`
 1. GraphQL projection strips unused fields from the response
 1. Returns: issue number, URL, and status — exactly what the AI needs, nothing more
 
@@ -340,7 +340,7 @@ _USE CASE: High-throughput internal calls_
 
 Without projection: A Cloudflare zone list returns ~85 fields per zone. A GitHub PR response is ~200 fields. An Onyx semantic search result returns full document chunks, source metadata, and permission data. Dumping any of these into the AI context wastes tokens and buries the useful signal in noise.
 
-With ClawQL’s GraphQL projection: `execute()` passes the response through an in-process GraphQL layer that returns only the fields the AI explicitly requested. A zone list might return only `{id, name, status}`. An Onyx result returns only `{chunk_text, source_name, citation_url, relevance_score}`. An **OSV-Scanner** (or Trivy JSON via adapter) result returns a **vuln list + digest summary**, not full layer tar dumps. **Istio** **Envoy** stats and **Kiali**-driven service metrics can be trimmed the same way when exposed through a load or metrics OpenAPI — keeping mesh observability on-topic in the model.
+With ClawQL’s GraphQL projection: `execute()` passes the response through an in-process GraphQL layer that returns only the fields the AI explicitly requested. A zone list might return only `\{id, name, status\}`. An Onyx result returns only `\{chunk_text, source_name, citation_url, relevance_score\}`. An **OSV-Scanner** (or Trivy JSON via adapter) result returns a **vuln list + digest summary**, not full layer tar dumps. **Istio** **Envoy** stats and **Kiali**-driven service metrics can be trimmed the same way when exposed through a load or metrics OpenAPI — keeping mesh observability on-topic in the model.
 
 ---
 
@@ -382,7 +382,7 @@ _Seven-vendor IDP stack plus security passes — collaboration storage, processi
 
 All layers feed **Obsidian** via **`memory_ingest`**; **memory_recall** surfaces Onyx, Merkle, and (if ingested) OSV summary in one ranked set.
 
-**Recipe:** **`DEFAULT_IDP_PIPELINE`** in **`clawql-documents`** — see [`idp-pipeline.md`](../../providers/idp-pipeline.md).
+**Recipe:** **`DEFAULT_IDP_PIPELINE`** in **`clawql-documents`** — see [`idp-pipeline.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/providers/idp-pipeline.md).
 
 ---
 
@@ -1995,7 +1995,7 @@ _ClawQL is the **operating system** for **sovereign lending and agentic capital 
 
 # 08 — Defense in Depth & Security Operations
 
-_Threat modeling, immutability, supply chain, zero trust, recovery, and how ClawQL maps to each layer. **Full** reference: [`docs/security/clawql-security-defense-in-depth.md`](../security/clawql-security-defense-in-depth.md)._
+_Threat modeling, immutability, supply chain, zero trust, recovery, and how ClawQL maps to each layer. **Full** reference: [`docs/security/clawql-security-defense-in-depth.md`](/security/defense-in-depth)._
 
 ---
 
@@ -2146,9 +2146,9 @@ WORM or append-only log sinks for long-lived audit; **SIEM** correlation of **Fa
 ## Slide 79 — Security Ops, References, and the Full Document
 
 - **Ongoing** work: key rotation, **Falco** tuning, **Istio** upgrades, **quarterly** IR **tabletop** with a supply-chain or **kube**-credential **scenario** (see labs in the reference doc).
-- Pointers: **NIST** SP 800-207, **CISA** Zero Trust, **CIS** Kubernetes benchmark, **MITRE ATT&CK**, **SLSA**, **Sigstore**, **NIST** CSF 2.0 — all expanded in [`../security/clawql-security-defense-in-depth.md`](../security/clawql-security-defense-in-depth.md) with **discussion** **questions** and **hands-on** **lab** ideas.
-- **Engineering audit trail:** [`../security/clawql-security-defense-deliverables.md`](../security/clawql-security-defense-deliverables.md) — control → **status** → **issue** → **Helm/CI/docs** artifact matrix ([#164](https://github.com/danielsmithdevelopment/ClawQL/issues/164)).
-- **Agentic AI security curriculum (30 modules):** [`../security/security-best-practices-series/README.md`](../security/security-best-practices-series/README.md) — supply chain through operator security; on-site at **/security/best-practices** (sections I–X).
+- Pointers: **NIST** SP 800-207, **CISA** Zero Trust, **CIS** Kubernetes benchmark, **MITRE ATT&CK**, **SLSA**, **Sigstore**, **NIST** CSF 2.0 — all expanded in [`../security/clawql-security-defense-in-depth.md`](/security/defense-in-depth) with **discussion** **questions** and **hands-on** **lab** ideas.
+- **Engineering audit trail:** [`../security/clawql-security-defense-deliverables.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/clawql-security-defense-deliverables.md) — control → **status** → **issue** → **Helm/CI/docs** artifact matrix ([#164](https://github.com/danielsmithdevelopment/ClawQL/issues/164)).
+- **Agentic AI security curriculum (30 modules):** [`../security/security-best-practices-series/README.md`](/security/best-practices) — supply chain through operator security; on-site at **/security/best-practices** (sections I–X).
 - **ClawQL**-specific: `search`/`execute` to keep the **MCP** context lean; **Merkle** + **Seeds** + `audit`; optional **Fabric** for **consortium**-grade **receipts**; **Onyx** for **knowledge** governance at the **source** systems.
 
 ---
@@ -2157,33 +2157,33 @@ WORM or append-only log sinks for long-lived audit; **SIEM** correlation of **Fa
 
 # ClawQL Ecosystem
 
-**Ready for production pilots.** Public MCP + lending / RWA + **optional Fabric** on a **Q2 2026** track (see **slides 50–55**, **57**). **Security** **defense in depth** (slides **68–79** + [`../security/clawql-security-defense-in-depth.md`](../security/clawql-security-defense-in-depth.md)).
+**Ready for production pilots.** Public MCP + lending / RWA + **optional Fabric** on a **Q2 2026** track (see **slides 50–55**, **57**). **Security** **defense in depth** (slides **68–79** + [`../security/clawql-security-defense-in-depth.md`](/security/defense-in-depth)).
 
 ### The AI-Orchestrated API, Document & Enterprise Knowledge Automation + Web3 / Fabric
 
 - One core; **two go-to-markets** (public Web3, regulated) without code drift.
 - Natural language from API calls to documents to Onyx to **on-chain and permissioned-ledger** steps in one Ouroboros loop.
 - **9+** bundled provider families, **12+** runtime services, one Helm story (**Trivy** + **OSV-Scanner** + **SBOM** in the **Golden Image** pipeline; **optional Istio** + **Kiali**; **Vault**; **Fabric** sub-chart when enabled).
-- **Engineering status (shipped vs in-flight):** **[deliverables matrix](../security/clawql-security-defense-deliverables.md)** ([#164](https://github.com/danielsmithdevelopment/ClawQL/issues/164)) — does **not** replace this vision; it **audits** what is already in **Git** vs what is **tracked** for the rest of the pipeline (e.g. filesystem **OSV** + **Trivy** in **CI** today; **SBOM** / **Cosign** / image-level gates per **#156** (narrowed: CI + publish + docs), **#132**; MCP OSV / Helm rescan / audit hooks **#202**–**#204**).
+- **Engineering status (shipped vs in-flight):** **[deliverables matrix](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/clawql-security-defense-deliverables.md)** ([#164](https://github.com/danielsmithdevelopment/ClawQL/issues/164)) — does **not** replace this vision; it **audits** what is already in **Git** vs what is **tracked** for the rest of the pipeline (e.g. filesystem **OSV** + **Trivy** in **CI** today; **SBOM** / **Cosign** / image-level gates per **#156** (narrowed: CI + publish + docs), **#132**; MCP OSV / Helm rescan / audit hooks **#202**–**#204**).
 - Cross-session **Obsidian** memory + **Merkle** (and **Fabric** when on) for recall and audit; **supply-chain** and **zero-trust** as **first-class** concerns.
 - **Local-first**; your cluster, your keys, your mesh policy, your scan gates.
 
 **GET STARTED**
 
-| Resource                                | Link                                                                                                                                                                               |
-| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Documentation                           | https://docs.clawql.com                                                                                                                                                            |
-| Defense in depth (reference)            | [`../security/clawql-security-defense-in-depth.md`](../security/clawql-security-defense-in-depth.md) (slides **68–79**)                                                            |
-| Security curriculum (30 modules)        | [`../security/security-best-practices-series/README.md`](../security/security-best-practices-series/README.md)                                                                     |
-| Defense in depth (deliverables / audit) | [`../security/clawql-security-defense-deliverables.md`](../security/clawql-security-defense-deliverables.md) ([#164](https://github.com/danielsmithdevelopment/ClawQL/issues/164)) |
-| GitHub                                  | danielsmithdevelopment/ClawQL                                                                                                                                                      |
-| npm (MCP)                               | `clawql-mcp`                                                                                                                                                                       |
-| Kubernetes                              | https://docs.clawql.com/kubernetes                                                                                                                                                 |
-| Helm Chart                              | https://docs.clawql.com/helm                                                                                                                                                       |
-| Case Studies                            | https://docs.clawql.com/case-studies                                                                                                                                               |
-| Contact                                 | **Daniel Smith** — danielsmithdevelopment@gmail.com                                                                                                                                |
+| Resource                                | Link                                                                                                                                                                                                                                            |
+| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Documentation                           | https://docs.clawql.com                                                                                                                                                                                                                         |
+| Defense in depth (reference)            | [`../security/clawql-security-defense-in-depth.md`](/security/defense-in-depth) (slides **68–79**)                                                                                                                                              |
+| Security curriculum (30 modules)        | [`../security/security-best-practices-series/README.md`](/security/best-practices)                                                                                                                                                              |
+| Defense in depth (deliverables / audit) | [`../security/clawql-security-defense-deliverables.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/clawql-security-defense-deliverables.md) ([#164](https://github.com/danielsmithdevelopment/ClawQL/issues/164)) |
+| GitHub                                  | danielsmithdevelopment/ClawQL                                                                                                                                                                                                                   |
+| npm (MCP)                               | `clawql-mcp`                                                                                                                                                                                                                                    |
+| Kubernetes                              | https://docs.clawql.com/kubernetes                                                                                                                                                                                                              |
+| Helm Chart                              | https://docs.clawql.com/helm                                                                                                                                                                                                                    |
+| Case Studies                            | https://docs.clawql.com/case-studies                                                                                                                                                                                                            |
+| Contact                                 | **Daniel Smith** — danielsmithdevelopment@gmail.com                                                                                                                                                                                             |
 
-_Local. Private. Powerful. Production-ready. **Knowledge-augmented.** **Security-hardened** (Trivy, OSV-Scanner, optional Istio; **Golden Image** + **SBOM** + **Cosign** in the full-stack story — see [deliverables matrix](../security/clawql-security-defense-deliverables.md) for **shipped vs roadmap**). On-chain where you choose. **Enterprise- and agent-trusted**._
+_Local. Private. Powerful. Production-ready. **Knowledge-augmented.** **Security-hardened** (Trivy, OSV-Scanner, optional Istio; **Golden Image** + **SBOM** + **Cosign** in the full-stack story — see [deliverables matrix](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/clawql-security-defense-deliverables.md) for **shipped vs roadmap**). On-chain where you choose. **Enterprise- and agent-trusted**._
 
 ---
 

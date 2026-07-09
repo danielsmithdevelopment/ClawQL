@@ -1,6 +1,6 @@
 # ClawQL Intelligent Document Processing Platform
 
-**Version:** July 2026 (6.4.0+)  
+**Version:** July 2026 (7.0.0+)  
 **Tagline:** Sovereign • Modular • Production-Ready • Hosted & Self-Hosted
 
 **Audience:** Investors · Developers & architects · Operators

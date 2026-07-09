@@ -4,7 +4,7 @@
 
 This document defines package boundaries, the dependency graph, Operator behavior, and the design of the intelligent MCP gateway. It serves as the authoritative reference for contributors and maintainers.
 
-For the full platform vision, see the [Master Enablement Guide](./clawql-master-enablement-guide.md).
+For the full platform vision, see the [Master Enablement Guide](/vision/technical-enablement).
 
 **Implementation status (July 2026):** [Modularization implementation status](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/modularization-implementation-status.md) — what is extracted to `packages/` today vs this document’s target boundaries.
 
@@ -34,7 +34,7 @@ ClawQL is a modular, production-grade, self-healing, multi-tenant AI memory and 
 | 5     | Security & Compliance              | ATRClaims, WORM audit, Vault                                     | Uniform zero-trust and compliance controls                                    |
 | 6     | Observability & Runtime Protection | LGTMP stack (Alloy, Langfuse, Beyla, Tetragon, Falco, Wazuh, k6) | Full visibility and enforcement                                               |
 
-**Layer 0 today:** **`clawql-release` MVP** (manifest v0.1, Merkle root, SBOM/npm + GHCR digests, `clawql release *`, CI artifact) ships in **7.0.0**. Full permanence (Arweave, Rift, Radicle primary, Kyverno policy from manifest) remains roadmap — see [clawql-release MVP](../getting-started/clawql-release-mvp.md) and [Hybrid Decentralized GitHub Alternative](/vision/immutable-releases).
+**Layer 0 today:** **`clawql-release` MVP** (manifest v0.1, Merkle root, SBOM/npm + GHCR digests, `clawql release *`, CI artifact) ships in **7.0.0**. Full permanence (Arweave, Rift, Radicle primary, Kyverno policy from manifest) remains roadmap — see [clawql-release MVP](/getting-started/clawql-release-mvp) and [Hybrid Decentralized GitHub Alternative](/vision/immutable-releases).
 
 ---
 
@@ -160,7 +160,7 @@ The Kubernetes Operator manages a `ClawQLInstance` CRD that controls:
 
 When a horizontal tier or vertical is disabled, its Effect Layer is not composed and contributes zero code or resources.
 
-**Shipped in 7.0 (opt-in scaffold):** CRD validation, tier-spec ConfigMaps, continuous reconcile, `composeHorizontalPluginLayersFromTierSpec()`, `ProviderSecretsReady` / auth key expectations, optional MCP overlay. Does **not** yet include NL dashboard, dynamic Deployment management, or full auth reconciliation beyond vault key lists. Deploy: [clawql-operator-helm.md](../deployment/clawql-operator-helm.md).
+**Shipped in 7.0 (opt-in scaffold):** CRD validation, tier-spec ConfigMaps, continuous reconcile, `composeHorizontalPluginLayersFromTierSpec()`, `ProviderSecretsReady` / auth key expectations, optional MCP overlay. Does **not** yet include NL dashboard, dynamic Deployment management, or full auth reconciliation beyond vault key lists. Deploy: [clawql-operator-helm.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/clawql-operator-helm.md).
 
 ---
 

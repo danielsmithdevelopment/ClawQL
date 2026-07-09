@@ -9,9 +9,9 @@ Apache 2.0 / MIT · [github.com/clawql/clawql](https://github.com/clawql/clawql)
 
 This document is a specification of contracts, not a getting-started guide. It assumes you have already read the Vision & Roadmap document and understand what ClawQL is and where it is in development. It does not repeat that context here.
 
-If you want to run ClawQL locally before reading further, start with the [Deployment & Operations Guide](/deployment/operations-guide) ([Helm](../deployment/helm.md) or `npx clawql-mcp`). Come back here when you are ready to build something.
+If you want to run ClawQL locally before reading further, start with the [Deployment & Operations Guide](/deployment/operations-guide) ([Helm](/helm) or `npx clawql-mcp`). Come back here when you are ready to build something.
 
-**Package extraction (phases 1–9) is on `main`.** Vertical contributions still require a **stable Plugin Layer API** (`onRegister` tool registration, `requiredSpecs`, third-party contract) — see [Plugin model](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/clawql-plugin-model.md) and [implementation status](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/modularization-implementation-status.md). You can write and test a vertical now using the in-memory test layers described in §3.4. Do not merge a vertical to `main` until the **Plugin interface exit criteria** in §1.1 are met for the surfaces your vertical depends on.
+**Package extraction (phases 1–9) is on `main`.** Vertical contributions still require a **stable Plugin Layer API** (`onRegister` tool registration, `requiredSpecs`, third-party contract) — see [Plugin model](/reference/plugins) and [implementation status](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/modularization-implementation-status.md). You can write and test a vertical now using the in-memory test layers described in §3.4. Do not merge a vertical to `main` until the **Plugin interface exit criteria** in §1.1 are met for the surfaces your vertical depends on.
 
 ### Required Familiarity
 
@@ -900,7 +900,7 @@ These are not guidelines. Contributions that violate these contracts will not be
 
 ### 6.1 Presidio Integration Points
 
-**Shipped (7.0, opt-in):** Gateway hooks redact on **`execute`**, **`memory_ingest`**, and **`ingest_external_knowledge`** when **`CLAWQL_ENABLE_PRESIDIO=1`** — see [Phase 1 platform guide](../getting-started/phase-1-platform-guide.md) §3. The contract below still applies to vertical plugins and future pipeline stages.
+**Shipped (7.0, opt-in):** Gateway hooks redact on **`execute`**, **`memory_ingest`**, and **`ingest_external_knowledge`** when **`CLAWQL_ENABLE_PRESIDIO=1`** — see [Phase 1 platform guide](/getting-started/phase-1-platform-guide) §3. The contract below still applies to vertical plugins and future pipeline stages.
 
 Presidio redaction must run before any data is written to persistent storage and before any data is returned across a trust boundary. In practice, this means:
 
@@ -1213,4 +1213,4 @@ import { Effect, Layer, Stream, Option, Context, Schema } from 'effect'
 
 _ClawQL Contributor Technical Specification · May 2026 · Apache 2.0 / MIT_
 _For platform vision and roadmap: see the [Vision & Roadmap document](/vision/roadmap)._
-_For deployment instructions: see the [Deployment & Operations Guide](/deployment/operations-guide). Planned Operator model: [Operator target architecture](../design/operator-target-architecture.md)._
+_For deployment instructions: see the [Deployment & Operations Guide](/deployment/operations-guide). Planned Operator model: [Operator target architecture](/design/operator-target-architecture)._

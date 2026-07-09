@@ -3,7 +3,7 @@
 **For platform engineers and operators · June 2026**  
 Apache 2.0 / MIT · [github.com/danielsmithdevelopment/ClawQL](https://github.com/danielsmithdevelopment/ClawQL)
 
-Operator-focused tier docs and natural-language ops tables remain in **[Operator target architecture (design)](/design/operator-target-architecture)**. An **opt-in operator scaffold** (CRD + reconcile + tier-spec ConfigMaps) is available separately — see **[clawql-operator-helm.md](clawql-operator-helm.md)** ([#255](https://github.com/danielsmithdevelopment/ClawQL/issues/255)).
+Operator-focused tier docs and natural-language ops tables remain in **[Operator target architecture (design)](/design/operator-target-architecture)**. An **opt-in operator scaffold** (CRD + reconcile + tier-spec ConfigMaps) is available separately — see **[clawql-operator-helm.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/clawql-operator-helm.md)** ([#255](https://github.com/danielsmithdevelopment/ClawQL/issues/255)).
 
 ---
 
@@ -14,25 +14,25 @@ Operator-focused tier docs and natural-language ops tables remain in **[Operator
 | Component                                                    | Status             | Canonical doc                                                                                                                                                                                                                                              |
 | ------------------------------------------------------------ | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Helm chart `clawql-mcp`**                                  | ✅ Shipped         | [helm.md](/helm)                                                                                                                                                                                                                                           |
-| **Document pipeline** (Tika, Gotenberg, Stirling, Paperless) | ✅ Shipped         | [idp-pipeline.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/providers/idp-pipeline.md), `documentPipeline.enabled`                                                                                                                   |
+| **Document pipeline** (Tika, Gotenberg, Stirling, Paperless) | ✅ Shipped         | [idp-pipeline.md](/learn/document-pipeline), `documentPipeline.enabled`                                                                                                                                                                                    |
 | **Onyx** (optional + `knowledge_search_onyx`)                | ✅ Shipped         | [onyx-knowledge-tool.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/onyx-knowledge-tool.md)                                                                                                                                       |
 | **Nextcloud + Coneshare** (`idpCollaboration`)               | ✅ Shipped         | [nextcloud-onboarding.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/providers/nextcloud-onboarding.md), [coneshare-onboarding.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/providers/coneshare-onboarding.md) |
 | **Dashboard + docs UI**                                      | ✅ Shipped         | [agent-chat.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/dashboard/agent-chat.md), chart `dashboard` / `docs`                                                                                                                       |
 | **`clawql-mcp` MCP server**                                  | ✅ Shipped         | npm `clawql-mcp`, Streamable HTTP `/mcp`                                                                                                                                                                                                                   |
-| **`ingest_external_knowledge` + `DEFAULT_IDP_PIPELINE`**     | ✅ Shipped         | [idp-pipeline.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/providers/idp-pipeline.md) — agent-composed `search`/`execute`; automated runner [#307](https://github.com/danielsmithdevelopment/ClawQL/issues/307)                     |
+| **`ingest_external_knowledge` + `DEFAULT_IDP_PIPELINE`**     | ✅ Shipped         | [idp-pipeline.md](/learn/document-pipeline) — agent-composed `search`/`execute`; automated runner [#307](https://github.com/danielsmithdevelopment/ClawQL/issues/307)                                                                                      |
 | **Presidio / sparse-MoE agent I/O redaction**                | 📋 Partial         | [#245](https://github.com/danielsmithdevelopment/ClawQL/issues/245)                                                                                                                                                                                        |
 | **Tier 1 four-stack Docker Compose**                         | 📋 Planned         | [#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251) — use Helm today                                                                                                                                                                       |
-| **Kubernetes Operator + `ClawQLInstance` CRD**               | 🚧 Opt-in scaffold | [clawql-operator-helm.md](clawql-operator-helm.md), [operator-target-architecture.md](/design/operator-target-architecture)                                                                                                                                |
+| **Kubernetes Operator + `ClawQLInstance` CRD**               | 🚧 Opt-in scaffold | [clawql-operator-helm.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/clawql-operator-helm.md), [operator-target-architecture.md](/design/operator-target-architecture)                                                     |
 | **Goose / Printing Press / vertical packages**               | 📋 Planned         | —                                                                                                                                                                                                                                                          |
 
 ### Choose a deployment path
 
-| Need                                      | Use today                                                                             |
-| ----------------------------------------- | ------------------------------------------------------------------------------------- |
-| **Local full IDP stack** (Docker Desktop) | `make local-k8s-up` → [helm.md](/helm)                                                |
-| **Minimal MCP only**                      | `npx clawql-mcp` or `npm run start:http` + `.env`                                     |
-| **Remote Kubernetes**                     | [deploy-k8s.md](/deployment/kubernetes) or Helm with your values                      |
-| **Operator / multi-tenant CRD model**     | Opt-in — [clawql-operator-helm.md](clawql-operator-helm.md) (Helm/env remain default) |
+| Need                                      | Use today                                                                                                                                                        |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Local full IDP stack** (Docker Desktop) | `make local-k8s-up` → [helm.md](/helm)                                                                                                                           |
+| **Minimal MCP only**                      | `npx clawql-mcp` or `npm run start:http` + `.env`                                                                                                                |
+| **Remote Kubernetes**                     | [deploy-k8s.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/deploy-k8s.md) or Helm with your values                               |
+| **Operator / multi-tenant CRD model**     | Opt-in — [clawql-operator-helm.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/clawql-operator-helm.md) (Helm/env remain default) |
 
 ---
 
@@ -85,7 +85,7 @@ curl -s -X POST http://clawql-mcp.localhost/mcp \
 | **IDP collaboration**  | `idpCollaboration.enabled: true` (Nextcloud; Coneshare via `externalUrl` in prod)                                                                              |
 | **Feature tiers**      | [configuration.md § Feature tiers](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/readme/configuration.md#feature-tiers-architecture-diagram) |
 
-Base URLs for document vendors are injected by the chart when subcharts are enabled — see [idp-pipeline.md § Helm](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/providers/idp-pipeline.md#helm-enable-the-full-stack).
+Base URLs for document vendors are injected by the chart when subcharts are enabled — see [idp-pipeline.md § Helm](/learn/document-pipeline#helm-enable-the-full-stack).
 
 ---
 
@@ -112,12 +112,12 @@ Adjust **`replicas`** on the MCP Deployment in values, or `kubectl scale` for qu
 
 ### Observability
 
-- **`GET /metrics`** on MCP HTTP — [Grafana dashboard](../grafana/README.md) ([#210](https://github.com/danielsmithdevelopment/ClawQL/issues/210))
-- Docker Desktop stack: [docker-desktop-observability](/docker-desktop-observability)
+- **`GET /metrics`** on MCP HTTP — [Grafana dashboard](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/grafana/README.md) ([#210](https://github.com/danielsmithdevelopment/ClawQL/issues/210))
+- Docker Desktop stack: [docker-desktop-observability](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/docker/docker-desktop-observability.md)
 
 ### Troubleshooting
 
-Start with [troubleshooting](/troubleshooting) and [helm.md](/helm). Common checks: provider auth env, bundled spec load (`CLAWQL_PROVIDER`), Ingress host DNS, and Paperless token from Profile / `POST /api/token/` (not only chart placeholder secrets).
+Start with [troubleshooting](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/readme/troubleshooting.md) and [helm.md](/helm). Common checks: provider auth env, bundled spec load (`CLAWQL_PROVIDER`), Ingress host DNS, and Paperless token from Profile / `POST /api/token/` (not only chart placeholder secrets).
 
 ---
 
@@ -131,7 +131,7 @@ cp .env.example .env   # set TIKA_BASE_URL, PAPERLESS_API_TOKEN, etc.
 npm run start:http
 ```
 
-Default provider merge with **no** spec env: **opinionated default stack** (Cloudflare, GitHub, Slack, Linear, Notion, Onyx). Use **`CLAWQL_PROVIDER=all-providers`** for every bundled vendor plus Google top-50 and AWS top-50 (Helm chart often sets this for full IDP stacks).
+Default provider merge with **no** spec env: **opinionated default stack** (Cloudflare, GitHub, Slack, Linear, Notion, Onyx). Helm **`provider: default`** matches npm. Use **`CLAWQL_PROVIDER=all-providers`** or **`helm --set provider=all-providers`** for every bundled vendor plus Google top-50 and AWS top-50.
 
 ---
 
@@ -139,7 +139,7 @@ Default provider merge with **no** spec env: **opinionated default stack** (Clou
 
 The operator scaffold reconciles `ClawQLInstance` CRs to tier-spec ConfigMaps and optionally rolls MCP when `spec.mcp.rolloutOnTierSpecChange` is set. Helm `CLAWQL_ENABLE_*` workflows remain the default when the operator is not installed.
 
-1. Install CRD + reconcile: [clawql-operator-helm.md](clawql-operator-helm.md)
+1. Install CRD + reconcile: [clawql-operator-helm.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/clawql-operator-helm.md)
 2. Apply a `ClawQLInstance` (`examples/operator/clawqlinstance-minimal.yaml`)
 3. Mount the published tier-spec ConfigMap on MCP (`instanceSpec.enabled: true`)
 
@@ -149,14 +149,14 @@ Full tier/vertical/auth reconciliation and NL ops remain in **[Operator target a
 
 ## Related documentation
 
-| Topic                          | Link                                                                                                                                                                                                            |
-| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Helm chart                     | [helm.md](/helm)                                                                                                                                                                                                |
-| Kustomize / K8s                | [deploy-k8s.md](/deployment/kubernetes)                                                                                                                                                                         |
-| IDP eight-vendor stack         | [idp-pipeline.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/providers/idp-pipeline.md) · [clawql-idp-helm.md](clawql-idp-helm.md) · [observability/README.md](../observability/README.md) |
-| Operator scaffold (opt-in)     | [clawql-operator-helm.md](clawql-operator-helm.md)                                                                                                                                                              |
-| Operator design (full roadmap) | [operator-target-architecture.md](/design/operator-target-architecture)                                                                                                                                         |
-| Vision & roadmap               | [clawql-vision-roadmap.md](/vision/roadmap)                                                                                                                                                                     |
+| Topic                          | Link                                                                                                                                                                                                                                                                                   |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Helm chart                     | [helm.md](/helm)                                                                                                                                                                                                                                                                       |
+| Kustomize / K8s                | [deploy-k8s.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/deploy-k8s.md)                                                                                                                                                                              |
+| IDP eight-vendor stack         | [idp-pipeline.md](/learn/document-pipeline) · [clawql-idp-helm.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/clawql-idp-helm.md) · [observability/README.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/observability/README.md) |
+| Operator scaffold (opt-in)     | [clawql-operator-helm.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/clawql-operator-helm.md)                                                                                                                                                          |
+| Operator design (full roadmap) | [operator-target-architecture.md](/design/operator-target-architecture)                                                                                                                                                                                                                |
+| Vision & roadmap               | [clawql-vision-roadmap.md](/vision/roadmap)                                                                                                                                                                                                                                            |
 
 ---
 

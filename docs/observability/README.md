@@ -1,18 +1,28 @@
 # IDP observability bundle
 
-**Tracking:** [#252](https://github.com/danielsmithdevelopment/ClawQL/issues/252) · Epic [#259](https://github.com/danielsmithdevelopment/ClawQL/issues/259)
+**Tracking:** [#252](https://github.com/danielsmithdevelopment/ClawQL/issues/252) · Epic [#259](https://github.com/danielsmithdevelopment/ClawQL/issues/259) · **ADR:** [0005 Langfuse default work-trace store](../adr/0005-langfuse-default-work-trace-store.md)
 
-Operator-facing **metrics + traces + LLM eval** wiring for the full IDP stack. ClawQL does **not** embed Langfuse inside the MCP process — use sidecar/BYO deployment.
+Operator-facing **metrics + traces + work traces (Langfuse) + LLM eval** wiring for the full IDP stack. ClawQL does **not** embed Langfuse inside the MCP process — deploy as a sidecar stack or use an existing instance.
+
+## Observability profiles (7.0)
+
+| Profile        | Guide                                               | Langfuse emission                                           |
+| -------------- | --------------------------------------------------- | ----------------------------------------------------------- |
+| **`bundled`**  | [Bundled observability](./bundled-observability.md) | **On by default** (opt-out with `CLAWQL_ENABLE_LANGFUSE=0`) |
+| **`external`** | [Bring your own](./bring-your-own-observability.md) | On when `LANGFUSE_HOST` + keys set; opt-out with `=0`       |
+| **`minimal`**  | Metrics + audit ring buffer only                    | Off                                                         |
+
+Implementation plan: [`7.0-observability-profiles-plan.md`](./7.0-observability-profiles-plan.md).
 
 ## Bundle index
 
-| Layer                         | Shipped in ClawQL repo                        | Operator action                                                        |
-| ----------------------------- | --------------------------------------------- | ---------------------------------------------------------------------- |
-| **Prometheus `/metrics`**     | Yes — `GET /metrics` on MCP HTTP              | Enable chart `metrics.prometheusScrapeAnnotations` or `serviceMonitor` |
-| **Grafana dashboards**        | Yes — [`docs/grafana/`](../grafana/)          | Import JSON; point at your Prometheus                                  |
-| **Loki audit push**           | Yes — `CLAWQL_LOKI_PUSH_URL`                  | Optional; pairs with Grafana Loki datasource                           |
-| **Distributed traces (OTLP)** | Partial — `CLAWQL_ENABLE_OTEL_TRACING` on MCP | Export to Tempo/Jaeger collector                                       |
-| **Langfuse (LLM spans)**      | **BYO** — values example only                 | Deploy Langfuse; point ClawQL-Agent / LangGraph at it                  |
+| Layer                         | Shipped in ClawQL repo                                                | Operator action                                                        |
+| ----------------------------- | --------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| **Prometheus `/metrics`**     | Yes — `GET /metrics` on MCP HTTP                                      | Enable chart `metrics.prometheusScrapeAnnotations` or `serviceMonitor` |
+| **Grafana dashboards**        | Yes — [`docs/grafana/`](../grafana/)                                  | Import JSON; point at your Prometheus                                  |
+| **Loki audit push**           | Yes — `CLAWQL_LOKI_PUSH_URL`; opt-out **`CLAWQL_ENABLE_LOKI_PUSH=0`** | Optional; pairs with Grafana Loki datasource                           |
+| **Distributed traces (OTLP)** | Partial — `CLAWQL_ENABLE_OTEL_TRACING` on MCP                         | Export to Tempo via collector                                          |
+| **Langfuse (work traces)**    | **Opt-out emission** (ADR 0005); BYO deploy                           | Bundled profile or existing `LANGFUSE_HOST`                            |
 
 Deep guide: **[`idp-trace-and-metrics-guide.md`](./idp-trace-and-metrics-guide.md)**.
 
@@ -37,7 +47,7 @@ Import dashboards:
 
 Docker Desktop + Istio lab (Tempo + Loki + Prometheus): [`docs/deployment/docker-desktop-istio-observability.md`](../deployment/docker-desktop-istio-observability.md).
 
-Add Langfuse (optional): [`langfuse-values.example.yaml`](./langfuse-values.example.yaml).
+Add Langfuse (bundled profile or BYO): [`bundled-observability.md`](./bundled-observability.md) · [`langfuse-values.example.yaml`](./langfuse-values.example.yaml).
 
 ## Umbrella chart wiring
 

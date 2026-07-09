@@ -4,6 +4,7 @@ import { resetNativeProtocolPrometheusForTests } from "clawql-api";
 
 describe("clawql-audit-loki", () => {
   const savedUrl = process.env.CLAWQL_LOKI_PUSH_URL;
+  const savedEnable = process.env.CLAWQL_ENABLE_LOKI_PUSH;
   const savedToken = process.env.CLAWQL_LOKI_BEARER_TOKEN;
   const savedTenant = process.env.CLAWQL_LOKI_TENANT_ID;
   const savedJob = process.env.CLAWQL_LOKI_JOB;
@@ -16,6 +17,8 @@ describe("clawql-audit-loki", () => {
 
     if (savedUrl === undefined) delete process.env.CLAWQL_LOKI_PUSH_URL;
     else process.env.CLAWQL_LOKI_PUSH_URL = savedUrl;
+    if (savedEnable === undefined) delete process.env.CLAWQL_ENABLE_LOKI_PUSH;
+    else process.env.CLAWQL_ENABLE_LOKI_PUSH = savedEnable;
     if (savedToken === undefined) delete process.env.CLAWQL_LOKI_BEARER_TOKEN;
     else process.env.CLAWQL_LOKI_BEARER_TOKEN = savedToken;
     if (savedTenant === undefined) delete process.env.CLAWQL_LOKI_TENANT_ID;
@@ -64,6 +67,22 @@ describe("clawql-audit-loki", () => {
     expect(line.action).toBe("act");
     expect(line.summary).toBe("hello");
     expect(line.correlationId).toBe("corr-1");
+  });
+
+  it("does not fetch when CLAWQL_ENABLE_LOKI_PUSH=0 even if URL is set", async () => {
+    process.env.CLAWQL_LOKI_PUSH_URL = "http://127.0.0.1:9/loki/api/v1/push";
+    process.env.CLAWQL_ENABLE_LOKI_PUSH = "0";
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    await handleAuditToolInput({
+      operation: "append",
+      category: "c",
+      action: "a",
+      summary: "s",
+    });
+
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("does not fetch when CLAWQL_LOKI_PUSH_URL is unset", async () => {

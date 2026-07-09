@@ -64,7 +64,7 @@ The single surface for all interactions.
 - Proxy support for external MCP, OpenAPI, GraphQL.
 - All operations respect classification levels and cross-vertical purpose requirements.
 
-_Full design: [Modularization v2.1](/vision/modularization) · [Token efficiency (8 layers)](/architecture/token-efficiency)._
+_Full design: [Modularization v2.1](/vision/modularization) · [Token efficiency (8 layers)](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/architecture/clawql-token-efficiency.md)._
 
 ## V. Layer 3: Memory 2.0 (Persistence-First)
 
@@ -75,7 +75,7 @@ _Full design: [Modularization v2.1](/vision/modularization) · [Token efficiency
 
 ## VI. Layer 4: Ouroboros (Strategic Coordination)
 
-**Shipped today:** [`clawql-ouroboros`](../ouroboros/clawql-ouroboros.md) — specification-first seeds, evolutionary loop, ontology convergence gates, optional MCP tools when `CLAWQL_ENABLE_OUROBOROS=1`.
+**Shipped today:** [`clawql-ouroboros`](/ouroboros) — specification-first seeds, evolutionary loop, ontology convergence gates, optional MCP tools when `CLAWQL_ENABLE_OUROBOROS=1`.
 
 **Roadmap (DAOS coordination — not shipped yet):**
 
@@ -83,7 +83,7 @@ _Full design: [Modularization v2.1](/vision/modularization) · [Token efficiency
 - **SGDOP (Semantic GDOP)**: Identifies the exact blind-spot direction in embedding space when convergence is detected, enabling precise recruitment.
 - Reputation system, Diversity Dividends, model fingerprinting, and NATS JetStream Coordinator integration.
 
-_Full target design (vision): [DAOS Unified Architecture v2.7](/ouroboros/daos). Coordination deep dive: [Coordination layer spec](/ouroboros/specification)._
+_Full target design (vision): [DAOS Unified Architecture v2.7](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/ouroboros/daos-unified-architecture-specification-v2.7.md). Coordination deep dive: [Coordination layer spec](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/ouroboros/daos-coordination-layer-specification.md)._
 
 ## VII. Token Efficiency (8 Compounding Layers)
 
@@ -98,7 +98,7 @@ _Full target design (vision): [DAOS Unified Architecture v2.7](/ouroboros/daos).
 
 Layers 1–3 are on by default and deliver the majority of savings.
 
-_Full design: [Token efficiency (8 layers)](/architecture/token-efficiency)._
+_Full design: [Token efficiency (8 layers)](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/architecture/clawql-token-efficiency.md)._
 
 ## VIII. Security & Compliance (Defense-in-Depth)
 
@@ -113,7 +113,7 @@ _Full design: [Token efficiency (8 layers)](/architecture/token-efficiency)._
 
 **Prioritized Rollout (First Five Controls)**: Digest pinning, ATR/Panguard, Presidio block, WORM audit, egress default-deny.
 
-_Full design: [Defense-in-Depth Security Guide](/security/defense-in-depth) · [Security curriculum (32 modules)](/security/best-practices)._
+_Full design: [Defense-in-Depth Security Guide](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/clawql-defense-in-depth-security-guide.md) · [Security curriculum (32 modules)](/security/best-practices)._
 
 ## IX. Observability (LGTMP Stack)
 
@@ -137,7 +137,7 @@ The Kubernetes Operator manages `ClawQLInstance` CRD for tier, vertical enableme
 - Tier 2: Helm + Operator (team scale)
 - Tier 3: Full enterprise (Kata/gVisor, Istio mTLS, dedicated pools)
 
-_Full design: [Deployment & Operations Guide](/deployment/operations-guide) · [Operator target architecture (planned)](../design/operator-target-architecture.md) · [Modularization v2.1](/vision/modularization)._
+_Full design: [Deployment & Operations Guide](/deployment/operations-guide) · [Operator target architecture (planned)](/design/operator-target-architecture) · [Modularization v2.1](/vision/modularization)._
 
 ## XI. How It All Works Together
 
@@ -151,11 +151,11 @@ _Full design: [Deployment & Operations Guide](/deployment/operations-guide) · [
 
 ## XII. Current Status & Roadmap (July 2026)
 
-**Shipped (Phase 1 complete — 7.0.0):** MCP transport (stdio/HTTP/gRPC), horizontal packages (`clawql-core`, `clawql-auth`, `clawql-pageindex`, `clawql-api`, `clawql-memory`, `clawql-documents`, `clawql-automation`, `clawql-sandbox`, `clawql-ouroboros`), **Plugin Phase 2** (`onRegister` + `composeHorizontalPluginLayers`), Presidio gateway hooks (opt-in), Tier 1 Docker Compose, release manifest MVP, operator scaffold, custom sources — **[Modularization implementation status](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/modularization-implementation-status.md)** and **[Phase 1 platform guide](../getting-started/phase-1-platform-guide.md)**.
+**Shipped (Phase 1 complete — 7.0.0):** MCP transport (stdio/HTTP/gRPC), horizontal packages (`clawql-core`, `clawql-auth`, `clawql-pageindex`, `clawql-api`, `clawql-memory`, `clawql-documents`, `clawql-automation`, `clawql-sandbox`, `clawql-ouroboros`), **Plugin Phase 2** (`onRegister` + `composeHorizontalPluginLayers`), Presidio gateway hooks (opt-in), Tier 1 Docker Compose, release manifest MVP, operator scaffold, custom sources — **[Modularization implementation status](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/modularization-implementation-status.md)** and **[Phase 1 platform guide](/getting-started/phase-1-platform-guide)**.
 
 **In progress (Phase 2):** Full Operator NL surface, third-party vertical plugin contract, transport-only `clawql-mcp` split.
 
-**Effect-TS:** `search` / `execute` + `PluginRegistry` + Panguard proxy run on Effect; extracted domain packages remain mostly `async` at IO edges ([Effect plan](../design/effect-ts-modularization-rearchitecture-plan.md)).
+**Effect-TS:** `search` / `execute` + `PluginRegistry` + Panguard proxy run on Effect; extracted domain packages remain mostly `async` at IO edges ([Effect plan](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/effect-ts-modularization-rearchitecture-plan.md)).
 
 **Tier 1:** `examples/clawql-local-docker-compose` — runnable today.
 
@@ -186,23 +186,23 @@ Read the full documentation suite, deploy the Tier 1 stack, and begin building p
 
 ## Documentation suite
 
-| Document                                                                                                                                                   | Role                                                                                         |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| **[Modularization implementation status](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/modularization-implementation-status.md)** | **Ground truth** — monorepo layout, shims, phases, Effect/plugin status (June 2026)          |
-| **[ClawQL plugin model](/reference/plugins)**                                                                                                              | Horizontal plugins — MCP tool registration, lifecycle, third-party path                      |
-| **[Plugin registry](/reference/plugins#plugin-registry)**                                                                                                  | Shipped vs planned plugins, MCP tools, enable flags                                          |
-| [Vision & Roadmap](/vision/roadmap)                                                                                                                        | Public edition — honest shipped vs planned, phased delivery                                  |
-| [Modularization v2.1](/vision/modularization)                                                                                                              | Package boundaries, dependency graph, intelligent MCP gateway                                |
-| **[IDP Platform (April 2026)](/vision/idp-platform)**                                                                                                      | End-to-end IDP: self-hosted + hosted, archive layer, Coneshare VDR, Merkle audit             |
-| [Immutable releases (Layer 0)](/vision/immutable-releases)                                                                                                 | Arweave bundles, Radicle, Rift, `clawql-release`, manifest schema                            |
-| [Contributor Technical Specification](/contributing/technical-specification)                                                                               | Implementation contracts, Effect-TS patterns, CI rules                                       |
-| [Deployment & Operations Guide](/deployment/operations-guide)                                                                                              | Shipped Helm ops — quick start, day-2, health                                                |
-| [Operator scaffold (7.0)](../deployment/clawql-operator-helm.md)                                                                                           | Shipped opt-in CRD + reconcile + tier presets                                                |
-| [Operator target architecture](../design/operator-target-architecture.md)                                                                                  | Full operator roadmap — NL ops, verticals, auth (not shipped)                                |
-| [Dashboard Agent Chat](../dashboard/agent-chat.md)                                                                                                         | Browser UI, SSE, vault threads, IDP attachment JSON contract                                 |
-| [Defense-in-Depth Security Guide](/security/defense-in-depth)                                                                                              | What to deploy — condensed operator reference                                                |
-| [Security curriculum](/security/best-practices)                                                                                                            | 32 modules — why and how to prove controls                                                   |
-| [Token efficiency (8 layers)](/architecture/token-efficiency)                                                                                              | Code Mode through model routing                                                              |
-| [DAOS Unified Architecture v2.7](/ouroboros/daos)                                                                                                          | **Vision / roadmap** — 7-layer platform, Manifest, PEP, Memory 2.0, Circuit Breaker          |
-| [Coordination layer spec](/ouroboros/specification)                                                                                                        | **Vision / roadmap** — transport + NSV/SGDOP, Diversity Dividends, Coordinator (not shipped) |
-| [DAOS build plan v2.7.1](/ouroboros/build-plan)                                                                                                            | **Vision / roadmap** — P0–P3 engineering contract                                            |
+| Document                                                                                                                                                    | Role                                                                                         |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| **[Modularization implementation status](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/modularization-implementation-status.md)**  | **Ground truth** — monorepo layout, shims, phases, Effect/plugin status (June 2026)          |
+| **[ClawQL plugin model](/reference/plugins)**                                                                                                               | Horizontal plugins — MCP tool registration, lifecycle, third-party path                      |
+| **[Plugin registry](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/reference/clawql-plugin-registry.md)**                                  | Shipped vs planned plugins, MCP tools, enable flags                                          |
+| [Vision & Roadmap](/vision/roadmap)                                                                                                                         | Public edition — honest shipped vs planned, phased delivery                                  |
+| [Modularization v2.1](/vision/modularization)                                                                                                               | Package boundaries, dependency graph, intelligent MCP gateway                                |
+| **[IDP Platform (April 2026)](/vision/idp-platform)**                                                                                                       | End-to-end IDP: self-hosted + hosted, archive layer, Coneshare VDR, Merkle audit             |
+| [Immutable releases (Layer 0)](/vision/immutable-releases)                                                                                                  | Arweave bundles, Radicle, Rift, `clawql-release`, manifest schema                            |
+| [Contributor Technical Specification](/contributing/technical-specification)                                                                                | Implementation contracts, Effect-TS patterns, CI rules                                       |
+| [Deployment & Operations Guide](/deployment/operations-guide)                                                                                               | Shipped Helm ops — quick start, day-2, health                                                |
+| [Operator scaffold (7.0)](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/clawql-operator-helm.md)                               | Shipped opt-in CRD + reconcile + tier presets                                                |
+| [Operator target architecture](/design/operator-target-architecture)                                                                                        | Full operator roadmap — NL ops, verticals, auth (not shipped)                                |
+| [Dashboard Agent Chat](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/dashboard/agent-chat.md)                                             | Browser UI, SSE, vault threads, IDP attachment JSON contract                                 |
+| [Defense-in-Depth Security Guide](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/clawql-defense-in-depth-security-guide.md)       | What to deploy — condensed operator reference                                                |
+| [Security curriculum](/security/best-practices)                                                                                                             | 32 modules — why and how to prove controls                                                   |
+| [Token efficiency (8 layers)](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/architecture/clawql-token-efficiency.md)                      | Code Mode through model routing                                                              |
+| [DAOS Unified Architecture v2.7](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/ouroboros/daos-unified-architecture-specification-v2.7.md) | **Vision / roadmap** — 7-layer platform, Manifest, PEP, Memory 2.0, Circuit Breaker          |
+| [Coordination layer spec](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/ouroboros/daos-coordination-layer-specification.md)               | **Vision / roadmap** — transport + NSV/SGDOP, Diversity Dividends, Coordinator (not shipped) |
+| [DAOS build plan v2.7.1](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/ouroboros/daos-build-plan-v2.7.1.md)                               | **Vision / roadmap** — P0–P3 engineering contract                                            |

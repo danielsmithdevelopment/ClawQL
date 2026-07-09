@@ -106,9 +106,9 @@ export const pluginPages: PluginPageMeta[] = [
     slug: 'hitl-label-studio',
     title: 'HITL (Label Studio)',
     description:
-      'hitl_enqueue_label_studio and webhook path for human-in-the-loop review. Planned plugin wiring; CLAWQL_ENABLE_HITL_LABEL_STUDIO=1.',
-    status: 'planned',
-    package: 'src/ (planned clawql-automation or standalone)',
+      'hitl_enqueue_label_studio and webhook path for human-in-the-loop review. CLAWQL_ENABLE_HITL_LABEL_STUDIO=1.',
+    status: 'shipped',
+    package: 'src/',
     prev: 'ouroboros',
     next: 'third-party',
   },

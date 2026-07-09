@@ -85,6 +85,13 @@ export const architectureHubCards: Array<ReferenceCard> = [
     icon: BookIcon,
   }),
   card({
+    href: '/vision/ecosystem',
+    name: 'Ecosystem map',
+    description:
+      'Core loop, hybrid memory, IDP pipeline, infra map — shipped vs roadmap appendix.',
+    icon: BookIcon,
+  }),
+  card({
     href: '/vision/idp-platform',
     name: 'IDP Platform',
     description:
@@ -226,10 +233,10 @@ export const deploymentHubCards: Array<ReferenceCard> = [
 
 export const guidesHubCards: Array<ReferenceCard> = [
   card({
-    href: '/getting-started/phase-1-platform-guide',
-    name: 'Phase 1 platform guide (7.0)',
+    href: '/getting-started/clawql-7-setup-guide',
+    name: '7.0 setup & migration',
     description:
-      'Operator guide: clawql-auth, pageindex_*, Presidio, and local Compose.',
+      'Install paths, env vars, plugin enablement, and verification for ClawQL 7.0.',
     icon: BookIcon,
   }),
   card({

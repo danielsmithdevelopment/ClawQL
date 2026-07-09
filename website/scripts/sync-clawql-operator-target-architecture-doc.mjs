@@ -10,6 +10,8 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+import { prepareMdxBody } from './lib/rewrite-doc-links.mjs'
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const websiteRoot = path.resolve(__dirname, '..')
 const dstDir = path.join(websiteRoot, 'src/generated')
@@ -120,7 +122,11 @@ if (!src || !fs.existsSync(src)) {
   process.exit(1)
 }
 
-fs.writeFileSync(dst, rewriteLinksForSite(fs.readFileSync(src, 'utf8')), 'utf8')
+fs.writeFileSync(
+  dst,
+  prepareMdxBody(fs.readFileSync(src, 'utf8'), srcRelative),
+  'utf8',
+)
 execSync(
   'npx prettier --write src/generated/clawql-operator-target-architecture-body.mdx',
   { cwd: websiteRoot, stdio: 'inherit' },

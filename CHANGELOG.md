@@ -7,8 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Breaking
+
+- **`CLAWQL_DISABLE_HTTP_METRICS` removed:** use **`CLAWQL_ENABLE_HTTP_METRICS=0`** to opt out of **`GET /metrics`** (default on when unset).
+
 ### Added
 
+- **npm distribution — separate `clawql-*` packages (7.0.0):** All horizontal workspace packages aligned to **`7.0.0`** with `publishConfig`; **`clawql-mcp`** uses registry semver dependencies instead of **`bundledDependencies`**. Publish order: [`scripts/release/npm-publish-order.json`](scripts/release/npm-publish-order.json); smoke: [`scripts/dev/test-npm-pack-install.sh`](scripts/dev/test-npm-pack-install.sh). **Not published to npm yet.**
+- **Observability ADR 0005** — Langfuse default work-trace store, bundled/external/minimal profiles ([#252](https://github.com/danielsmithdevelopment/ClawQL/issues/252)).
+- **Docs site:** **`/vision/ecosystem`**, **`/getting-started/clawql-release-mvp`**; shared doc link rewriter for generated MDX.
+- **`CLAWQL_ENABLE_LOKI_PUSH=0`** — opt out of audit Loki push when **`CLAWQL_LOKI_PUSH_URL`** is set.
 - **Layer 0 MVP — `clawql-release`**: `clawql release init|collect|manifest|publish|verify` builds manifest **v0.1** with git commit, npm tarball + CycloneDX SBOM SHA-256, GHCR image digests, and **Merkle root** (`clawql-core`); output under `releases/vX.Y.Z/`. **`clawql doctor --smoke`** verifies the bundle when present; **`CLAWQL_RELEASE_MANIFEST`** enables verify-at-startup for MCP. Package: `packages/clawql-release`. Docs: [`docs/getting-started/clawql-release-mvp.md`](docs/getting-started/clawql-release-mvp.md). Arweave permanent anchor deferred.
 - **Add any source from URL** — `clawql sources add <url>` with auto-detect for OpenAPI, Google Discovery, GraphQL SDL/introspection, gRPC `.proto`, and MCP HTTP endpoints; persisted in **`~/.ClawQL/sources.json`** and merged into MCP `search`/`execute` on startup.
 - **MCP and CLI as source types** — proxy remote MCP tools and wrap local CLI commands as searchable operations (`protocolKind` **`mcp`** / **`cli`**).
@@ -21,6 +29,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **`clawql-pageindex`** — MIT vectorless hierarchical indexing; `pageindex_build_tree`, `pageindex_traverse`, `pageindex_synthesize`, `pageindex_get_content` (default on; `CLAWQL_ENABLE_PAGEINDEX=0` to hide).
   - **Presidio gateway hooks** — `CLAWQL_ENABLE_PRESIDIO=1` redacts `execute` responses, `memory_ingest`, and `ingest_external_knowledge` markdown.
   - **Tier 1 Docker Compose** — `examples/clawql-local-docker-compose` (bootstrap, MCP + Tika + Gotenberg + Paperless + memory); `make compose-tier1-config-test`.
+
+### Changed
+
+- **HITL docs:** **`docs/mcp/hitl-label-studio.md`** is the operator guide; **`docs/plugins/hitl-label-studio.md`** is a short plugin index stub.
+- **Helm / vault docs:** default stack references updated from **6.4.x** to **7.0.x**.
 
 ## [7.0.0] - 2026-07-09
 

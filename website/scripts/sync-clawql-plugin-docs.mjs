@@ -13,10 +13,11 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+import { prepareMdxBody } from './lib/rewrite-doc-links.mjs'
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const websiteRoot = path.resolve(__dirname, '..')
 const dstDir = path.join(websiteRoot, 'src/generated')
-const GH_MAIN = 'https://github.com/danielsmithdevelopment/ClawQL/blob/main'
 
 const JOBS = [
   {
@@ -46,95 +47,24 @@ function findRepoRootWithDocs() {
   return null
 }
 
-function escapeLessThanBeforeDigit(body) {
-  return body.replace(/<(?=\d)/g, '&lt;')
-}
-
-function escapeMdxCurlyOutsideFences(body) {
-  const lines = body.split('\n')
-  let inFence = false
-  return lines
-    .map((line) => {
-      const fence = line.match(/^(`{3,}|~{3,})(.*)$/)
-      if (fence) {
-        if (!inFence) inFence = true
-        else if (!fence[2].trim()) inFence = false
-        return line
-      }
-      if (inFence) return line
-      return line
-        .replace(/\\/g, '\\\\')
-        .replace(/\{/g, '\\{')
-        .replace(/\}/g, '\\}')
-    })
-    .join('\n')
-}
-
-function rewriteLinksForSite(body) {
-  return escapeMdxCurlyOutsideFences(
-    escapeLessThanBeforeDigit(
-      body
-        .replaceAll(
-          '](../design/clawql-plugin-model.md)',
-          '](/reference/plugins#plugin-model)',
-        )
-        .replaceAll(
-          '](./clawql-plugin-model.md)',
-          '](/reference/plugins#plugin-model)',
-        )
-        .replaceAll(
-          '](../reference/clawql-plugin-registry.md)',
-          '](/reference/plugins#plugin-registry)',
-        )
-        .replaceAll(
-          '](./clawql-plugin-registry.md)',
-          '](/reference/plugins#plugin-registry)',
-        )
-        .replaceAll(
-          '](../contributing/clawql-contributor-technical-specification.md)',
-          '](/contributing/technical-specification)',
-        )
-        .replaceAll(
-          '](../design/modularization-implementation-status.md)',
-          `](${GH_MAIN}/docs/design/modularization-implementation-status.md)`,
-        )
-        .replaceAll(
-          '](./modularization-implementation-status.md)',
-          `](${GH_MAIN}/docs/design/modularization-implementation-status.md)`,
-        )
-        .replaceAll(
-          '](./effect-ts-modularization-rearchitecture-plan.md)',
-          `](${GH_MAIN}/docs/design/effect-ts-modularization-rearchitecture-plan.md)`,
-        )
-        .replaceAll('](../mcp/mcp-tools.md)', '](/tools)')
-        .replaceAll('](../mcp/external-ingest.md)', `](${GH_MAIN}/docs/mcp/external-ingest.md)`)
-        .replaceAll(
-          '](https://docs.clawql.com/reference/verticals)',
-          '](/reference/verticals)',
-        )
-        .replaceAll(
-          '](https://docs.clawql.com/learn/vault-memory-between-chats)',
-          '](/learn/vault-memory-between-chats)',
-        )
-        .replaceAll(
-          '](https://docs.clawql.com/learn/knowledge-search-onyx)',
-          '](/learn/knowledge-search-onyx)',
-        )
-        .replaceAll('](https://docs.clawql.com/schedule)', '](/schedule)')
-        .replaceAll('](https://docs.clawql.com/notify)', '](/notify)')
-        .replaceAll(
-          '](https://docs.clawql.com/learn/sandbox-exec)',
-          '](/learn/sandbox-exec)',
-        )
-        .replaceAll('](https://docs.clawql.com/ouroboros)', '](/ouroboros)')
-        .replaceAll(
-          '](https://docs.clawql.com/hitl-label-studio)',
-          '](/hitl-label-studio)',
-        )
-        .replaceAll('](../../docs/', `](${GH_MAIN}/docs/`)
-        .replaceAll('](../docs/', `](${GH_MAIN}/docs/`),
-    ),
-  )
+function rewritePluginDocAnchors(body) {
+  return body
+    .replaceAll(
+      '](../design/clawql-plugin-model.md)',
+      '](../design/clawql-plugin-model.md#plugin-model)',
+    )
+    .replaceAll(
+      '](./clawql-plugin-model.md)',
+      '](./clawql-plugin-model.md#plugin-model)',
+    )
+    .replaceAll(
+      '](../reference/clawql-plugin-registry.md)',
+      '](../reference/clawql-plugin-registry.md#plugin-registry)',
+    )
+    .replaceAll(
+      '](./clawql-plugin-registry.md)',
+      '](./clawql-plugin-registry.md#plugin-registry)',
+    )
 }
 
 fs.mkdirSync(dstDir, { recursive: true })
@@ -159,7 +89,12 @@ for (const job of JOBS) {
     process.exit(1)
   }
   const raw = fs.readFileSync(src, 'utf8')
-  fs.writeFileSync(job.dst, rewriteLinksForSite(raw), 'utf8')
+  const withAnchors = rewritePluginDocAnchors(raw)
+  fs.writeFileSync(
+    job.dst,
+    prepareMdxBody(withAnchors, job.srcRelative),
+    'utf8',
+  )
   execSync(`npx prettier --write ${job.prettierTarget}`, {
     cwd: websiteRoot,
     stdio: 'inherit',
