@@ -250,18 +250,18 @@ From enablement §5.4 and the Effect plan §8:
 
 These vision items are **not** done by package extraction alone:
 
-| Vision item                                   | Status                                                                  |
-| --------------------------------------------- | ----------------------------------------------------------------------- |
-| `clawql-auth` package                         | 📋 Auth headers + env JSON in `clawql-api`; no standalone auth package  |
-| `clawql-pageindex`                            | 📋 Not started                                                          |
-| Document pipeline (Tika → … → Paperless)      | 🚧 Vendors + `run_idp_pipeline` shipped; retries/Merkle per hop roadmap |
-| NATS / HITL in `clawql-automation`            | ✅ Shipped (JetStream publish + HITL resume consumer)                   |
-| Layer 0 immutable releases                    | 🚧 MVP (`clawql-release`); Arweave/Rift/Radicle roadmap                 |
+| Vision item                                   | Status                                                                         |
+| --------------------------------------------- | ------------------------------------------------------------------------------ |
+| `clawql-auth` package                         | 📋 Auth headers + env JSON in `clawql-api`; no standalone auth package         |
+| `clawql-pageindex`                            | 📋 Not started                                                                 |
+| Document pipeline (Tika → … → Paperless)      | 🚧 Vendors + `run_idp_pipeline` shipped; retries/Merkle per hop roadmap        |
+| NATS / HITL in `clawql-automation`            | ✅ Shipped (JetStream publish + HITL resume consumer)                          |
+| Layer 0 immutable releases                    | 🚧 MVP (`clawql-release`); Arweave/Rift/Radicle roadmap                        |
 | Release manifest verification at gateway      | ✅ `clawql doctor --smoke` + optional `CLAWQL_RELEASE_MANIFEST` at MCP startup |
-| Kubernetes Operator Layer composition         | 🚧 Phase 1 scaffold (CRD + ConfigMap + tier layers; no NL dashboard)    |
-| Transport-only `clawql-mcp` npm package split | 📋 `src/` slimmed; shims removed; transport glue remains                |
-| Presidio gateway hooks                        | 📋 Not started                                                          |
-| All vertical packages                         | 📋 Not started                                                          |
+| Kubernetes Operator Layer composition         | 🚧 Phase 1 scaffold (CRD + ConfigMap + tier layers; no NL dashboard)           |
+| Transport-only `clawql-mcp` npm package split | 📋 `src/` slimmed; shims removed; transport glue remains                       |
+| Presidio gateway hooks                        | 📋 Not started                                                                 |
+| All vertical packages                         | 📋 Not started                                                                 |
 
 ---
 
