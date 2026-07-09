@@ -1,6 +1,3 @@
-import { writeFile } from 'node:fs/promises'
-import { join } from 'node:path'
-
 import {
   cacheCustomSourceBody,
   detectSourceFromUrl,
@@ -89,10 +86,8 @@ export async function addLocalSourceFromInput(
       entry = (await cacheCustomSourceBody(entry, detected.bodyText, home)) as LocalCustomSourceEntry
     }
   } else if (detected.kind === 'grpc') {
-    const dir = await ensureSourceCacheDir(id, home)
-    const protoAbs = join(dir, 'service.proto')
     if (detected.bodyText) {
-      await writeFile(protoAbs, detected.bodyText, 'utf8')
+      entry = (await cacheCustomSourceBody(entry, detected.bodyText, home)) as LocalCustomSourceEntry
     }
     entry = {
       ...entry,

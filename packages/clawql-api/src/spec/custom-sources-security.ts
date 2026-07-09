@@ -36,7 +36,15 @@ export function assertSafeSourceId(id: string): string {
   if (!s || s.length > 64) {
     throw new Error("Invalid source id: must be 1–64 characters.");
   }
-  if (!/^[a-z0-9][a-z0-9-]*$/.test(s)) {
+  const first = s[0]!;
+  if (!((first >= "a" && first <= "z") || (first >= "0" && first <= "9"))) {
+    throw new Error("Invalid source id: use lowercase letters, digits, and hyphens only.");
+  }
+  for (let i = 1; i < s.length; i += 1) {
+    const ch = s[i]!;
+    if ((ch >= "a" && ch <= "z") || (ch >= "0" && ch <= "9") || ch === "-") {
+      continue;
+    }
     throw new Error("Invalid source id: use lowercase letters, digits, and hyphens only.");
   }
   return s;

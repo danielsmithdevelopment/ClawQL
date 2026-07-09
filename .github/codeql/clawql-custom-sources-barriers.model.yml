@@ -1,0 +1,12 @@
+extensions:
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: barrierModel
+    data:
+      - ["clawql-api", "Member[assertSafeSourceId].ReturnValue", "path-injection"]
+      - ["clawql-api", "Member[slugifySourceId].ReturnValue", "path-injection"]
+      - ["clawql-api", "Member[resolveSafePathUnder].ReturnValue", "path-injection"]
+      - ["clawql-api", "Member[getCustomSourceCacheDir].ReturnValue", "path-injection"]
+      - ["clawql-api", "Member[ensureSourceCacheDir].ReturnValue", "path-injection"]
+      - ["clawql-api", "Member[assertSafeSourceFetchUrl].ReturnValue", "request-forgery"]
+      - ["clawql-api", "Member[fetchSafeSourceUrl].ReturnValue.Property[url]", "request-forgery"]
