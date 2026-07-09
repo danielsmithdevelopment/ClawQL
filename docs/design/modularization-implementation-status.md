@@ -17,7 +17,9 @@ ClawQL is mid-flight on a **strangler extraction** from the root `clawql-mcp` pa
 | Package             | Role today                                                                                                                                                                                                                                                  |
 | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `clawql-core`       | Audit ring buffer, cache helpers, Merkle + Cuckoo, `Plugin` types, shared errors                                                                                                                                                                            |
-| `clawql-api`        | Spec load/search, REST/GraphQL/gRPC execute, provider registry, `createClawQLApi()`, Panguard proxy plugin                                                                                                                                                  |
+| `clawql-auth`       | Gateway auth (`noAuth` / `apiKey`, ATR claims) + upstream provider credential headers (AWS SigV4, env JSON)                                                                                                                                               |
+| `clawql-pageindex`  | Standalone MIT vectorless hierarchical indexing — build/traverse/synthesize MCP helpers                                                                                                                                                                       |
+| `clawql-api`        | Spec load/search, REST/GraphQL/gRPC execute, provider registry, `createClawQLApi()`, Panguard proxy plugin, Presidio gateway hooks                                                                                                                          |
 | `clawql-memory`     | Vault I/O, `memory.db`, embeddings, ingest/recall, enterprise citations                                                                                                                                                                                     |
 | `clawql-documents`  | `ingest_external_knowledge`, **`DEFAULT_IDP_PIPELINE`**, **`run_idp_pipeline`** ([#307](https://github.com/danielsmithdevelopment/ClawQL/issues/307)), **`classify_document`** / **`extract_document`**; bundled IDP merge (**8 vendors** via `clawql-api`) |
 | `clawql-automation` | `schedule` worker, Slack `notify`, Argo **`workflow`** + **`argocd`** tools (opt-in); NATS JetStream publish/consume when enabled ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254))                                                     |
@@ -48,6 +50,8 @@ ClawQL/
 │   └── *.ts shims                # re-export packages (see §4)
 ├── packages/
 │   ├── clawql-core/
+│   ├── clawql-auth/
+│   ├── clawql-pageindex/
 │   ├── clawql-api/
 │   ├── clawql-memory/
 │   ├── clawql-documents/
@@ -61,7 +65,7 @@ ClawQL/
 └── providers/                    # bundled OpenAPI / GraphQL specs (on disk, not a package)
 ```
 
-**Build order** (root `package.json` `build` script): `clawql-core` → `clawql-api` → `clawql-memory` → `clawql-documents` → `clawql-automation` → `clawql-sandbox` → transports → `clawql-ouroboros` → `panguard-mcp-bridge` → `clawql-operator` → `clawql-release` → root `tsc`.
+**Build order** (root `package.json` `build` script): `clawql-core` → `clawql-auth` → `clawql-pageindex` → `clawql-api` → `clawql-memory` → … → root `tsc`.
 
 ---
 
@@ -252,15 +256,16 @@ These vision items are **not** done by package extraction alone:
 
 | Vision item                                   | Status                                                                  |
 | --------------------------------------------- | ----------------------------------------------------------------------- |
-| `clawql-auth` package                         | 📋 Auth headers + env JSON in `clawql-api`; no standalone auth package  |
-| `clawql-pageindex`                            | 📋 Not started                                                          |
+| `clawql-auth` package                         | ✅ Gateway `noAuth`/`apiKey`, ATR claims, provider headers; HTTP MCP middleware |
+| `clawql-pageindex`                            | ✅ MIT package + `pageindex_*` MCP tools (default on; `CLAWQL_ENABLE_PAGEINDEX=0` to hide) |
 | Document pipeline (Tika → … → Paperless)      | 🚧 Vendors + `run_idp_pipeline` shipped; retries/Merkle per hop roadmap |
 | NATS / HITL in `clawql-automation`            | ✅ Shipped (JetStream publish + HITL resume consumer)                   |
 | Layer 0 immutable releases                    | 🚧 MVP (`clawql-release`); Arweave/Rift/Radicle roadmap                 |
 | Release manifest verification at gateway      | ✅ `clawql doctor --smoke` + optional `CLAWQL_RELEASE_MANIFEST` at MCP startup |
 | Kubernetes Operator Layer composition         | 🚧 Phase 1 scaffold (CRD + ConfigMap + tier layers; no NL dashboard)    |
+| Tier 1 Docker Compose                         | ✅ `examples/clawql-local-docker-compose` + `make compose-tier1-config-test` |
 | Transport-only `clawql-mcp` npm package split | 📋 `src/` slimmed; shims removed; transport glue remains                |
-| Presidio gateway hooks                        | 📋 Not started                                                          |
+| Presidio gateway hooks                        | ✅ Execute + memory ingest + external ingest redaction when `CLAWQL_ENABLE_PRESIDIO=1` |
 | All vertical packages                         | 📋 Not started                                                          |
 
 ---
@@ -282,10 +287,8 @@ These vision items are **not** done by package extraction alone:
 
 ---
 
-## 10. Recommended next ship for 7.0.0
+## 10. Phase 1 exit — complete (7.0.0)
 
-**Shipped (7.0):** release manifest verification in **`clawql doctor --smoke`** and optional MCP startup via **`CLAWQL_RELEASE_MANIFEST`**.
+**Shipped (7.0):** release manifest verification, dashboard custom sources, **`clawql-auth`**, **`clawql-pageindex`**, Presidio gateway hooks, Tier 1 Docker Compose ([#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251)).
 
-**Second priority (product parity):** ~~dashboard UI for custom sources~~ ✅ Custom sources panel in dashboard (Desktop mode).
-
-**Phase 1 exit (post-7.0):** Tier 1 Docker Compose ([#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251)) + `clawql-auth` + `clawql-pageindex` + Presidio gateway hooks.
+**Next (Phase 2):** third-party vertical plugins, full Operator NL ops, contract test suite expansion, transport-only npm split.

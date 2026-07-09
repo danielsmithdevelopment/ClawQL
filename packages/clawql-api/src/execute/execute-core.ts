@@ -13,10 +13,12 @@ import { executeNativeGrpc } from "./native-grpc.js";
 import { executeNativeMcp } from "./native-mcp.js";
 import { executeNativeCli } from "./native-cli.js";
 import { executeRestOperation } from "./rest-operation.js";
+import { maybePresidioRedactText, presidioEnabled } from "../presidio/client.js";
 import type { ExecuteClawqlOperationParams, McpTextContent } from "./types.js";
 
-function textContent(text: string): McpTextContent[] {
-  return [{ type: "text", text }];
+async function textContent(text: string): Promise<McpTextContent[]> {
+  const body = presidioEnabled() ? await maybePresidioRedactText(text) : text;
+  return [{ type: "text", text: body }];
 }
 
 /** Shared execute body — returns MCP text content blocks. */
@@ -30,7 +32,7 @@ export async function executeClawqlOperation(
   const op = operations.find((o) => o.id === operationId);
 
   if (!op) {
-    return textContent(
+    return await textContent(
       JSON.stringify({
         error: `Unknown operationId: "${operationId}". Use search() to find valid operation IDs.`,
       })
@@ -46,7 +48,7 @@ export async function executeClawqlOperation(
     const selectedFields = outputFields?.length ? outputFields.join("\n        ") : "__typename";
     const exec = await executeNativeGraphQL(op as Operation, args, selectedFields);
     if (!exec.ok) {
-      return textContent(
+      return await textContent(
         JSON.stringify({
           error: exec.error,
           specLabel: op.specLabel ?? null,
@@ -59,13 +61,13 @@ export async function executeClawqlOperation(
       root && typeof root === "object" && op.nativeGraphQL.fieldName in root
         ? root[op.nativeGraphQL.fieldName]
         : exec.data;
-    return textContent(JSON.stringify(projectRestByFields(inner, outputFields), null, 2));
+    return await textContent(JSON.stringify(projectRestByFields(inner, outputFields), null, 2));
   }
 
   if (op.protocolKind === "grpc" && op.nativeGrpc) {
     const exec = await executeNativeGrpc(op as Operation, args);
     if (!exec.ok) {
-      return textContent(
+      return await textContent(
         JSON.stringify({
           error: exec.error,
           specLabel: op.specLabel ?? null,
@@ -73,13 +75,13 @@ export async function executeClawqlOperation(
         })
       );
     }
-    return textContent(JSON.stringify(projectRestByFields(exec.data, outputFields), null, 2));
+    return await textContent(JSON.stringify(projectRestByFields(exec.data, outputFields), null, 2));
   }
 
   if (op.protocolKind === "mcp" && op.nativeMcp) {
     const exec = await executeNativeMcp(op as Operation, args);
     if (!exec.ok) {
-      return textContent(
+      return await textContent(
         JSON.stringify({
           error: exec.error,
           specLabel: op.specLabel ?? null,
@@ -87,13 +89,13 @@ export async function executeClawqlOperation(
         })
       );
     }
-    return textContent(JSON.stringify(projectRestByFields(exec.data, outputFields), null, 2));
+    return await textContent(JSON.stringify(projectRestByFields(exec.data, outputFields), null, 2));
   }
 
   if (op.protocolKind === "cli" && op.nativeCli) {
     const exec = await executeNativeCli(op as Operation, args);
     if (!exec.ok) {
-      return textContent(
+      return await textContent(
         JSON.stringify({
           error: exec.error,
           specLabel: op.specLabel ?? null,
@@ -101,13 +103,13 @@ export async function executeClawqlOperation(
         })
       );
     }
-    return textContent(JSON.stringify(projectRestByFields(exec.data, outputFields), null, 2));
+    return await textContent(JSON.stringify(projectRestByFields(exec.data, outputFields), null, 2));
   }
 
   if (multi) {
     const fallback = await executeRestOperation(op as Operation, args, openapiForOp);
     if (!fallback.ok) {
-      return textContent(
+      return await textContent(
         JSON.stringify({
           error: fallback.error,
           specLabel: op.specLabel ?? null,
@@ -115,13 +117,13 @@ export async function executeClawqlOperation(
         })
       );
     }
-    return textContent(JSON.stringify(projectRestByFields(fallback.data, outputFields), null, 2));
+    return await textContent(JSON.stringify(projectRestByFields(fallback.data, outputFields), null, 2));
   }
 
   if (op.requestBody && op.requestBodyContentType?.toLowerCase() === "application/octet-stream") {
     const rest = await executeRestOperation(op as Operation, args, openapiForOp);
     if (!rest.ok) {
-      return textContent(
+      return await textContent(
         JSON.stringify({
           error: rest.error,
           specLabel: op.specLabel ?? null,
@@ -129,7 +131,7 @@ export async function executeClawqlOperation(
         })
       );
     }
-    return textContent(JSON.stringify(projectRestByFields(rest.data, outputFields), null, 2));
+    return await textContent(JSON.stringify(projectRestByFields(rest.data, outputFields), null, 2));
   }
 
   try {
@@ -148,12 +150,12 @@ export async function executeClawqlOperation(
     if (!inProc.ok) {
       throw new Error(inProc.error);
     }
-    return textContent(JSON.stringify(projectRestByFields(inProc.data, outputFields), null, 2));
+    return await textContent(JSON.stringify(projectRestByFields(inProc.data, outputFields), null, 2));
   } catch (err: unknown) {
     const fallback = await executeRestOperation(op as Operation, args, openapiForOp);
     if (!fallback.ok) {
       const reason = err instanceof Error ? err.message : String(err);
-      return textContent(
+      return await textContent(
         JSON.stringify({
           error: reason,
           fallbackError: fallback.error,
@@ -161,6 +163,6 @@ export async function executeClawqlOperation(
         })
       );
     }
-    return textContent(JSON.stringify(projectRestByFields(fallback.data, outputFields), null, 2));
+    return await textContent(JSON.stringify(projectRestByFields(fallback.data, outputFields), null, 2));
   }
 }

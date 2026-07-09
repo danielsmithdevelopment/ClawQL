@@ -35,6 +35,7 @@ import { configureHitlTransportDeps } from "./hitl-transport.js";
 import { handleConeshareWebhookRequest } from "./coneshare-webhook.js";
 import { handleLangfuseEvalWebhookRequest } from "./langfuse-eval-webhook.js";
 import { createWebhookRateLimiter } from "./webhook-rate-limit.js";
+import { resolveAtrClaimsFromHeaders } from "clawql-auth";
 
 const PORT = Number.parseInt(process.env.PORT ?? process.env.MCP_PORT ?? "8080", 10);
 const DEFAULT_MCP_PATH = "/mcp";
@@ -152,6 +153,22 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
 
   app.use(applyCorsIfConfigured);
 
+  /** Gateway auth (Phase 1 `clawql-auth`): enforced on MCP routes when `CLAWQL_AUTH_MODE=apiKey`. */
+  function applyGatewayAuth(
+    req: import("express").Request,
+    res: import("express").Response,
+    next: import("express").NextFunction
+  ): void {
+    const result = resolveAtrClaimsFromHeaders(req.headers);
+    if (!result.ok) {
+      res.status(401).json({ error: result.error });
+      return;
+    }
+    (req as import("express").Request & { clawqlClaims?: typeof result.claims }).clawqlClaims =
+      result.claims;
+    next();
+  }
+
   if (!options.skipGraphqlAttach) {
     await attachGraphqlHttpToMcpApp(app);
   }
@@ -262,7 +279,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
     });
   }
 
-  app.post(mcpPath, async (req, res) => {
+  app.post(mcpPath, applyGatewayAuth, async (req, res) => {
     const sessionId = req.header("mcp-session-id");
     try {
       let transport: StreamableHTTPServerTransport | undefined;
@@ -313,7 +330,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
     }
   });
 
-  app.get(mcpPath, async (req, res) => {
+  app.get(mcpPath, applyGatewayAuth, async (req, res) => {
     const sessionId = req.header("mcp-session-id");
     if (!sessionId) {
       jsonRpcError(res, "Bad Request: missing mcp-session-id.");
@@ -327,7 +344,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
     await transport.handleRequest(req, res);
   });
 
-  app.delete(mcpPath, async (req, res) => {
+  app.delete(mcpPath, applyGatewayAuth, async (req, res) => {
     const sessionId = req.header("mcp-session-id");
     if (!sessionId) {
       jsonRpcError(res, "Bad Request: missing mcp-session-id.");

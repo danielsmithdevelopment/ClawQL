@@ -16,6 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **One-line install** — `curl -fsSL https://clawql.com/install | bash` (`scripts/install.sh`, served from the docs site).
 - **ClawQL Desktop Windows/Linux** — `make desktop-dist-win`, `make desktop-dist-linux` (NSIS + AppImage/deb).
 - **Dashboard custom sources UI** — Custom sources nav panel in ClawQL Desktop; add/list/remove via `/api/local/sources` (URL auto-detect + CLI).
+- **Phase 1 exit (7.0.0 finalized):**
+  - **`clawql-auth`** — gateway `noAuth`/`apiKey`, ATR claims, provider credential headers; HTTP MCP middleware when `CLAWQL_AUTH_MODE=apiKey`.
+  - **`clawql-pageindex`** — MIT vectorless hierarchical indexing; `pageindex_build_tree`, `pageindex_traverse`, `pageindex_synthesize`, `pageindex_get_content` (default on; `CLAWQL_ENABLE_PAGEINDEX=0` to hide).
+  - **Presidio gateway hooks** — `CLAWQL_ENABLE_PRESIDIO=1` redacts `execute` responses, `memory_ingest`, and `ingest_external_knowledge` markdown.
+  - **Tier 1 Docker Compose** — `examples/clawql-local-docker-compose` (bootstrap, MCP + Tika + Gotenberg + Paperless + memory); `make compose-tier1-config-test`.
 
 ## [7.0.0] - 2026-07-09
 

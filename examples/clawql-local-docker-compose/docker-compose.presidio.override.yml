@@ -1,0 +1,27 @@
+# Optional Presidio PII redaction — use with:
+#   docker compose -f docker-compose.yml -f docker-compose.presidio.override.yml up -d
+# Set CLAWQL_ENABLE_PRESIDIO=1 in `.env` (bootstrap writes analyzer/anonymizer URLs).
+services:
+  presidio-analyzer:
+    image: mcr.microsoft.com/presidio-analyzer:latest
+    container_name: clawql-presidio-analyzer
+    restart: unless-stopped
+    ports:
+      - "5001:3000"
+
+  presidio-anonymizer:
+    image: mcr.microsoft.com/presidio-anonymizer:latest
+    container_name: clawql-presidio-anonymizer
+    restart: unless-stopped
+    ports:
+      - "5002:3000"
+
+  clawql-mcp-http:
+    environment:
+      CLAWQL_ENABLE_PRESIDIO: "1"
+      CLAWQL_PRESIDIO_ANALYZER_URL: http://presidio-analyzer:3000
+      CLAWQL_PRESIDIO_ANONYMIZER_URL: http://presidio-anonymizer:3000
+      CLAWQL_PRESIDIO_FAILURE_POLICY: block
+    depends_on:
+      - presidio-analyzer
+      - presidio-anonymizer

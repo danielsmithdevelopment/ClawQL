@@ -13,6 +13,8 @@ RUN apt-get update \
 
 COPY package.json package-lock.json ./
 COPY packages/clawql-core/package.json ./packages/clawql-core/
+COPY packages/clawql-auth/package.json ./packages/clawql-auth/
+COPY packages/clawql-pageindex/package.json ./packages/clawql-pageindex/
 COPY packages/clawql-api/package.json ./packages/clawql-api/
 COPY packages/clawql-memory/package.json ./packages/clawql-memory/
 COPY packages/clawql-documents/package.json ./packages/clawql-documents/

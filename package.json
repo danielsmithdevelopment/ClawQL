@@ -54,8 +54,8 @@
         ".cursor/mcp.json.example"
     ],
     "scripts": {
-        "clean": "rm -rf dist packages/clawql-core/dist packages/clawql-api/dist packages/clawql-memory/dist packages/clawql-documents/dist packages/clawql-automation/dist packages/clawql-sandbox/dist packages/mcp-grpc-transport/dist packages/clawql-ouroboros/dist packages/panguard-mcp-bridge/dist packages/clawql-operator/dist packages/clawql-release/dist",
-        "build": "npm run clean && npm run build -w clawql-core && npm run build -w clawql-api && npm run build -w clawql-memory && npm run build -w clawql-documents && npm run build -w clawql-automation && npm run build -w clawql-sandbox && npm run build -w mcp-grpc-transport && npm run build -w clawql-ouroboros && npm run build -w panguard-mcp-bridge && npm run build -w clawql-operator && npm run build -w clawql-release && tsc",
+        "clean": "rm -rf dist packages/clawql-core/dist packages/clawql-auth/dist packages/clawql-pageindex/dist packages/clawql-api/dist packages/clawql-memory/dist packages/clawql-documents/dist packages/clawql-automation/dist packages/clawql-sandbox/dist packages/mcp-grpc-transport/dist packages/clawql-ouroboros/dist packages/panguard-mcp-bridge/dist packages/clawql-operator/dist packages/clawql-release/dist",
+        "build": "npm run clean && npm run build -w clawql-core && npm run build -w clawql-auth && npm run build -w clawql-pageindex && npm run build -w clawql-api && npm run build -w clawql-memory && npm run build -w clawql-documents && npm run build -w clawql-automation && npm run build -w clawql-sandbox && npm run build -w mcp-grpc-transport && npm run build -w clawql-ouroboros && npm run build -w panguard-mcp-bridge && npm run build -w clawql-operator && npm run build -w clawql-release && tsc",
         "build:turbo": "turbo run build",
         "prepublishOnly": "npm run build",
         "prepack": "npm run build && node scripts/release/prepack-clawql-mcp.mjs",
@@ -112,11 +112,13 @@
     },
     "bundledDependencies": [
         "clawql-api",
+        "clawql-auth",
         "clawql-automation",
         "clawql-core",
         "clawql-documents",
         "clawql-memory",
         "clawql-operator",
+        "clawql-pageindex",
         "clawql-release",
         "clawql-ouroboros",
         "clawql-sandbox"
@@ -133,10 +135,12 @@
         "@opentelemetry/sdk-trace-base": "^2.9.0",
         "@opentelemetry/sdk-trace-node": "^2.9.0",
         "clawql-api": "0.0.1",
+        "clawql-auth": "0.0.1",
         "clawql-automation": "0.0.1",
         "clawql-core": "0.0.1",
         "clawql-documents": "0.0.1",
         "clawql-memory": "0.0.1",
+        "clawql-pageindex": "0.0.1",
         "clawql-operator": "0.0.1",
         "clawql-release": "0.0.1",
         "clawql-ouroboros": "0.1.1",

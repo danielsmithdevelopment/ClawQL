@@ -120,6 +120,17 @@ Custom sources persist in **`~/.ClawQL/sources.json`** and merge into **`search`
 
 ---
 
+## Phase 1 exit (finalized 7.0.0)
+
+- **`clawql-auth`** — `CLAWQL_AUTH_MODE=noAuth|apiKey`, `CLAWQL_API_KEY`, ATR-shaped claims on HTTP MCP
+- **`clawql-pageindex`** — `pageindex_*` MCP tools (default on; `CLAWQL_ENABLE_PAGEINDEX=0` to hide)
+- **Presidio** — `CLAWQL_ENABLE_PRESIDIO=1` + analyzer/anonymizer URLs; redacts execute, memory ingest, external ingest
+- **Tier 1 Compose** — `examples/clawql-local-docker-compose` (`./bootstrap.sh`, `docker compose up`)
+
+→ [modularization-implementation-status.md](docs/design/modularization-implementation-status.md)
+
+---
+
 ## IDP wave (shipped in 7.0)
 
 Docling, LangExtract, IDP pipeline runner, NATS/KEDA worker, Langfuse→Ouroboros, lending Compose stack, dashboard Vault UI — see CHANGELOG **[7.0.0]** Added section.

@@ -7,6 +7,7 @@
  */
 
 import { getClawqlOptionalToolFlags } from "clawql-api";
+import { maybePresidioRedactText, presidioEnabled } from "clawql-api";
 import { buildUrlIngestNote, formatUrlResponseAsMarkdown } from "./url-format.js";
 import { slugifyTitle } from "clawql-memory/ingest/slug";
 import { getObsidianVaultPath } from "clawql-memory/vault/config";
@@ -404,7 +405,11 @@ export async function runIngestExternalKnowledge(
         docErrors.push({ path: d.path, error: e instanceof Error ? e.message : String(e) });
         continue;
       }
-      planned.push({ rel, markdown: d.markdown ?? "" });
+      let markdown = d.markdown ?? "";
+      if (presidioEnabled()) {
+        markdown = await maybePresidioRedactText(markdown);
+      }
+      planned.push({ rel, markdown });
     }
 
     if (planned.length === 0) {

@@ -22,8 +22,8 @@ ClawQL is under active development. Most of what this document describes is not 
 | `clawql-operator`          | 🚧 Scaffold shipped (7.0) — CRD, tier-spec, layer composition; full operator planned                                                                      |
 | `clawql-release`           | 🚧 MVP shipped (7.0) — manifest collect/verify/publish; Arweave/Rift roadmap                                                                              |
 | `mcp-grpc-transport`       | ✅ Shipped                                                                                                                                                |
-| `clawql-auth`              | 📋 Planned (auth helpers live in `clawql-api` today)                                                                                                      |
-| `clawql-pageindex`         | 📋 Planned                                                                                                                                                |
+| `clawql-auth`              | ✅ Shipped — gateway `noAuth`/`apiKey`, ATR claims, provider headers                                                                                    |
+| `clawql-pageindex`         | ✅ Shipped — MIT package + `pageindex_*` MCP tools (opt-out: `CLAWQL_ENABLE_PAGEINDEX=0`)                                                               |
 | `clawql-data`              | 📋 Planned                                                                                                                                                |
 | `clawql-telemetry`         | 📋 Planned                                                                                                                                                |
 | `clawql-printingpress`     | 📋 Planned                                                                                                                                                |
@@ -154,13 +154,13 @@ Vertical packages, the **full** Kubernetes Operator (NL dashboard, dynamic Deplo
 
 There are no fixed delivery dates. Priorities are determined by dependency order and community demand. The phases below reflect the logical sequence — each phase creates the conditions for the next.
 
-### Phase 1: Core Stabilisation
+### Phase 1: Core Stabilisation — **complete (7.0.0)**
 
-**What:** `clawql-core`, `clawql-api`, `clawql-auth`, `clawql-documents`, `clawql-memory`, `clawql-pageindex`
+**What:** `clawql-core`, `clawql-api`, `clawql-auth`, `clawql-documents`, `clawql-memory`, `clawql-pageindex`, Tier 1 Compose, Presidio gateway hooks
 
 **Why first:** Everything else depends on these. The gateway cannot route without a stable Plugin interface. Verticals cannot register without a stable ProviderSpec registry. The Operator cannot compose layers without stable Effect Layer contracts. Rushing past this phase to ship verticals would mean rebuilding everything on an unstable foundation.
 
-**Exit criteria:** Public interfaces are semver-stable, contract tests pass, in-memory test layers work, and a Tier 1 Docker Compose deployment is runnable end-to-end.
+**Exit criteria:** ✅ Shipped — semver-stable horizontal packages, in-memory test layers, **`examples/clawql-local-docker-compose`**, gateway auth, PageIndex MCP tools, Presidio redaction hooks.
 
 ### Phase 2: Operator and Natural Language Surface
 
@@ -208,7 +208,7 @@ If none of that is sufficient for your use case, the honest advice is to wait fo
 
 ### Try it
 
-The fastest way to see the full IDP stack today is **`make local-k8s-up`** (Helm + Docker Desktop) or **`helm upgrade --install`** per [helm.md](../deployment/helm.md). It co-deploys MCP, optional document pipeline services, Onyx, Nextcloud, dashboard, and vault memory. Tier 1 four-stack Docker Compose ([#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251)) is planned but not shipped.
+The fastest way to see the full IDP stack on Kubernetes is **`make local-k8s-up`** (Helm + Docker Desktop) or **`helm upgrade --install`** per [helm.md](../deployment/helm.md). For **Docker Compose on localhost**, use **`examples/clawql-local-docker-compose`** ([#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251)).
 
 ```bash
 git clone https://github.com/clawql/clawql.git

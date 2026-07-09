@@ -102,6 +102,7 @@
     "effect": "^3.21.4",
     "zod": "4.3.6",
     "clawql-api": "file:../clawql-api",
+    "clawql-pageindex": "file:../clawql-pageindex",
     "pg": "^8.21.0",
     "sql.js": "^1.14.1"
   },

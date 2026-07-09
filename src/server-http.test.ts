@@ -836,4 +836,76 @@ describe("server-http", { timeout: STREAMABLE_HTTP_TEST_TIMEOUT_MS }, () => {
     },
     STREAMABLE_HTTP_TEST_TIMEOUT_MS
   );
+
+  it(
+    "POST /mcp returns 401 when CLAWQL_AUTH_MODE=apiKey and key is missing",
+    async () => {
+      const savedMode = process.env.CLAWQL_AUTH_MODE;
+      const savedKey = process.env.CLAWQL_API_KEY;
+      process.env.CLAWQL_AUTH_MODE = "apiKey";
+      process.env.CLAWQL_API_KEY = "secret-key";
+      resetSpecCache();
+      resetSchemaFieldCache();
+      try {
+        await withHttpServer(async (base) => {
+          const res = await fetch(`${base}/mcp`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ jsonrpc: "2.0", method: "initialize", params: {}, id: 1 }),
+          });
+          expect(res.status).toBe(401);
+        }, FAST_HTTP_APP_OPTS);
+      } finally {
+        if (savedMode === undefined) delete process.env.CLAWQL_AUTH_MODE;
+        else process.env.CLAWQL_AUTH_MODE = savedMode;
+        if (savedKey === undefined) delete process.env.CLAWQL_API_KEY;
+        else process.env.CLAWQL_API_KEY = savedKey;
+        resetSpecCache();
+        resetSchemaFieldCache();
+      }
+    },
+    STREAMABLE_HTTP_TEST_TIMEOUT_MS
+  );
+
+  it(
+    "POST /mcp accepts valid API key when CLAWQL_AUTH_MODE=apiKey",
+    async () => {
+      const savedMode = process.env.CLAWQL_AUTH_MODE;
+      const savedKey = process.env.CLAWQL_API_KEY;
+      process.env.CLAWQL_AUTH_MODE = "apiKey";
+      process.env.CLAWQL_API_KEY = "secret-key";
+      resetSpecCache();
+      resetSchemaFieldCache();
+      try {
+        await withHttpServer(async (base) => {
+          const res = await fetch(`${base}/mcp`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer secret-key",
+            },
+            body: JSON.stringify({
+              jsonrpc: "2.0",
+              method: "initialize",
+              params: {
+                protocolVersion: "2024-11-05",
+                capabilities: {},
+                clientInfo: { name: "test", version: "0" },
+              },
+              id: 1,
+            }),
+          });
+          expect(res.status).not.toBe(401);
+        }, FAST_HTTP_APP_OPTS);
+      } finally {
+        if (savedMode === undefined) delete process.env.CLAWQL_AUTH_MODE;
+        else process.env.CLAWQL_AUTH_MODE = savedMode;
+        if (savedKey === undefined) delete process.env.CLAWQL_API_KEY;
+        else process.env.CLAWQL_API_KEY = savedKey;
+        resetSpecCache();
+        resetSchemaFieldCache();
+      }
+    },
+    STREAMABLE_HTTP_TEST_TIMEOUT_MS
+  );
 });

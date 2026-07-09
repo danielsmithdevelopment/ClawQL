@@ -51,10 +51,10 @@ ClawQL is a modular, production-grade, self-healing, multi-tenant AI memory and 
 
 | Package          | Responsibilities                                                                                 | Status today                                                            |
 | ---------------- | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------- |
-| clawql-auth      | Authentication modes, RBAC/ABAC, ATR enrichment                                                  | 📋 Planned package — auth headers + env JSON live in `clawql-api`       |
+| clawql-auth      | Authentication modes, RBAC/ABAC, ATR enrichment                                                  | ✅ Shipped — `noAuth`/`apiKey`, HTTP MCP middleware, provider headers   |
 | clawql-documents | Document pipeline — 8 bundled IDP vendors + ingest + `DEFAULT_IDP_PIPELINE` + `run_idp_pipeline` | ✅ Shipped — automated runner with retries/Merkle per hop still roadmap |
-| clawql-memory    | Memory 2.0 (Vault + Graph + PageIndex + optional Onyx)                                           | ✅ Shipped — standalone `clawql-pageindex` not extracted yet            |
-| clawql-pageindex | Standalone MIT vectorless hierarchical indexing                                                  | 📋 Planned                                                              |
+| clawql-memory    | Memory 2.0 (Vault + Graph + PageIndex + optional Onyx)                                           | ✅ Shipped — PageIndex via `clawql-pageindex` + `pageindex_*` tools     |
+| clawql-pageindex | Standalone MIT vectorless hierarchical indexing                                                  | ✅ Shipped (MIT, zero ClawQL deps)                                      |
 
 ### 3.3 Opt-In Horizontal & Platform
 
@@ -91,7 +91,9 @@ ClawQL is a modular, production-grade, self-healing, multi-tenant AI memory and 
 
 **Implementation detail:** [Modularization implementation status](../design/modularization-implementation-status.md).
 
-**Still planned as standalone packages or full vision:** `clawql-auth`, `clawql-pageindex`, `clawql-telemetry`, Presidio gateway hooks, automatic release-manifest verification at gateway startup, transport-only `clawql-mcp` split, full Operator (NL dashboard, dynamic Deployments), all verticals.
+**Still planned as standalone packages or full vision:** `clawql-telemetry`, full OIDC/SAML in `clawql-auth`, transport-only `clawql-mcp` split, full Operator (NL dashboard, dynamic Deployments), all verticals.
+
+**Phase 1 exit (7.0.0):** `clawql-auth`, `clawql-pageindex`, Presidio gateway hooks, Tier 1 Compose, release manifest verify — shipped.
 
 ---
 
