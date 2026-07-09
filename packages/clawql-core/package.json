@@ -23,10 +23,10 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "effect": "3.21.2"
+    "effect": "^3.21.4"
   },
   "devDependencies": {
-    "@types/node": "^22.0.0",
+    "@types/node": "^26.1.1",
     "tsup": "^8.3.0",
     "typescript": "^6.0.2",
     "vitest": "^4.1.1"

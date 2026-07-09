@@ -41,12 +41,12 @@
     "clawql-api": "file:../clawql-api",
     "clawql-core": "file:../clawql-core",
     "clawql-memory": "file:../clawql-memory",
-    "effect": "3.21.2",
+    "effect": "^3.21.4",
     "node-html-markdown": "^2.0.0",
     "zod": "4.3.6"
   },
   "devDependencies": {
-    "@types/node": "^22.0.0",
+    "@types/node": "^26.1.1",
     "tsup": "^8.3.0",
     "typescript": "^6.0.2",
     "vitest": "^4.1.1"

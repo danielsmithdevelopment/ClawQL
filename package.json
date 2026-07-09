@@ -141,7 +141,7 @@
         "dotenv": "^17.4.2",
         "express": "^5.2.1",
         "express-rate-limit": "^8.5.2",
-        "graphql": "^16.14.0",
+        "graphql": "^16.14.2",
         "graphql-http": "^1.22.4",
         "mcp-grpc-transport": "^0.2.0",
         "node-fetch": "^3.3.2",
@@ -156,7 +156,7 @@
     "devDependencies": {
         "@eslint/js": "^10.0.1",
         "@types/express": "^5.0.6",
-        "@types/node": "^25.9.1",
+        "@types/node": "^26.1.1",
         "@types/pg": "^8.20.0",
         "@types/sql.js": "^1.4.11",
         "@vitest/coverage-v8": "^4.1.7",
@@ -182,13 +182,13 @@
         "picomatch": "4.0.4",
         "postcss": "8.5.10",
         "qs": "6.15.2",
-        "protobufjs": "8.6.5",
+        "protobufjs": "8.7.0",
         "google-proto-files": {
-            "protobufjs": "8.6.5"
+            "protobufjs": "8.7.0"
         },
         "mcp-grpc-transport": {
             "google-proto-files": {
-                "protobufjs": "8.6.5"
+                "protobufjs": "8.7.0"
             }
         },
         "ws": "8.21.0",
@@ -197,5 +197,15 @@
             "esbuild": "0.28.1"
         },
         "yaml@1.10.2": "1.10.3"
-    }
+    },
+    "bundleDependencies": [
+        "clawql-api",
+        "clawql-automation",
+        "clawql-core",
+        "clawql-documents",
+        "clawql-memory",
+        "clawql-operator",
+        "clawql-ouroboros",
+        "clawql-sandbox"
+    ]
 }
