@@ -4,6 +4,7 @@ import { Group, Panel, Separator } from 'react-resizable-panels'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import type { EnvCatalog } from '@/lib/env-catalog'
+import { useDashboardRuntime } from '@/lib/use-dashboard-runtime'
 import { ProviderVaultForm } from '@/components/ProviderVaultForm'
 import {
   createChatThreadApi,
@@ -24,6 +25,8 @@ function sortThreads(threads: ChatThread[]): ChatThread[] {
 }
 
 export function DashboardShell({ catalog: _catalog }: { catalog: EnvCatalog }) {
+  const runtime = useDashboardRuntime()
+  const desktopMode = runtime?.desktopMode ?? false
   const [section, setSection] = useState<DashboardSection>('agent-chat')
   const [threads, setThreads] = useState<ChatThread[]>([])
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null)
@@ -174,8 +177,9 @@ export function DashboardShell({ catalog: _catalog }: { catalog: EnvCatalog }) {
               <div className="mx-auto max-w-5xl">
                 <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-orange-400">Provider secrets</h2>
                 <p className="mb-8 max-w-2xl text-sm text-zinc-500">
-                  Configure bundled vendor API keys without the Vault CLI. Values are stored in{' '}
-                  <code className="rounded bg-white/10 px-1">secret/clawql/providers</code> and synced to your cluster.
+                  {desktopMode
+                    ? 'Configure bundled vendor API keys for local MCP (stdio). Saved to ~/.ClawQL/vault/providers.json — the same KV shape as cluster Vault.'
+                    : 'Configure bundled vendor API keys without the Vault CLI. Values are stored in secret/clawql/providers and synced to your cluster.'}
                 </p>
                 <ProviderVaultForm />
               </div>

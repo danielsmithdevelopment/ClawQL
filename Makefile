@@ -1,4 +1,4 @@
-.PHONY: deploy-cloud-run deploy-k8s deploy-docs local-k8s-up operator-install operator-status bootstrap-vault-eso local-k8s-mcp-delete local-docker-up helm-lint helm-ui-template-tests helm-workflow-template-tests helm-argocd-template-tests helm-nats-keda-template-tests helm-vault-secrets-template-tests helm-docling-template-tests helm-idp-template-tests helm-operator-template-tests compose-lending-config-test distribution-npm-pack-test mcp-docker-workspace-test kustomize-local-lint lint-k8s-manifests smoke-grpcurl-istio-gateway-mcp smoke-mcp-http-istio-gateway smoke-localhost-uis verify-vault-policy verify-mcp-core-tools-local
+.PHONY: deploy-cloud-run deploy-k8s deploy-docs local-k8s-up operator-install operator-status desktop-dev desktop-dist-mac bootstrap-vault-eso local-k8s-mcp-delete local-docker-up helm-lint helm-ui-template-tests helm-workflow-template-tests helm-argocd-template-tests helm-nats-keda-template-tests helm-vault-secrets-template-tests helm-docling-template-tests helm-idp-template-tests helm-operator-template-tests compose-lending-config-test distribution-npm-pack-test mcp-docker-workspace-test kustomize-local-lint lint-k8s-manifests smoke-grpcurl-istio-gateway-mcp smoke-mcp-http-istio-gateway smoke-localhost-uis verify-vault-policy verify-mcp-core-tools-local
 
 # Validate charts/clawql-mcp (requires helm on PATH)
 helm-lint:
@@ -102,7 +102,15 @@ operator-install:
 operator-status:
 	@npx -p clawql-mcp clawql operator status
 
-# Verify ClawQL GHCR container packages are **public** via **GET** (read:packages; GitHub exposes no visibility PATCH API)
+# ClawQL Desktop (macOS) — Electron dev shell (dashboard + OpenClaw bridge)
+desktop-dev:
+	@cd desktop && npm install && npm run dev
+
+# Build macOS .dmg (runs dashboard standalone prepare + electron-builder)
+desktop-dist-mac:
+	@cd desktop && npm install && npm run dist:mac
+
+# Verify ClawQL GHCR container packages are **public**
 ghcr-packages-public:
 	@bash scripts/github/set-clawql-ghcr-packages-public.sh
 

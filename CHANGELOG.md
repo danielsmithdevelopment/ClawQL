@@ -7,35 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-> **Note:** IDP wave items below are on **`main`** and documented in release notes / IDP guides; they will appear in the next semver release entry when tagged.
-
-### Added
-
-- **Lending vertical Docker Compose** ([#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251)): **`docker/compose/lending.compose.yml`** — ClawQL MCP + Docling + reference classifier + LangExtract (demo) + Label Studio CE; env template **`lending.env.example`**; guide **[`docker/compose/README.md`](docker/compose/README.md)**; `make compose-lending-config-test`.
-- **Docling Helm reference deployment + classifier** ([#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248)): opt-in **`documentPipeline.docling`** (`quay.io/docling-project/docling-serve-cpu:v1.14.3`), **`DOCLING_BASE_URL`** wiring, **`docling.localhost`** ingress; MCP **`classify_document`** when **`CLAWQL_ENABLE_IDP_CLASSIFIER=1`**; reference classifier HTTP sample + **`docker/compose/docling-classifier.compose.yml`**; **`DEFAULT_IDP_PIPELINE`** Docling layout-parse hop.
-- **LangExtract extraction layer** ([#246](https://github.com/danielsmithdevelopment/ClawQL/issues/246)): MCP **`extract_document`** when **`CLAWQL_ENABLE_LANGEXTRACT=1`** — grounded extractions via **`LANGEXTRACT_BASE_URL`** or local heuristic; reference Python sidecar (`deployment/samples/langextract-http/`), threat model, onboarding doc. Live-mode pip deps documented in sample README (no committed `requirements.txt` — OSV supply-chain gate).
-- **Vault default provider secrets** ([#241](https://github.com/danielsmithdevelopment/ClawQL/issues/241)): default **`envFromSecret: clawql-provider-env`**, full IDP provider KV catalog, Helm **`secretSourcing.externalSecrets`**, expanded **`import-dotenv-to-vault`**, docs **[`docs/deployment/vault-provider-secrets.md`](docs/deployment/vault-provider-secrets.md)**.
-- **Dashboard Vault UI for provider secrets** ([#242](https://github.com/danielsmithdevelopment/ClawQL/issues/242)): **Provider secrets** panel — friendly labels for all 15 provider keys, Vault **`clawql/providers`** read/write, Kubernetes Secret sync + rollout restart; Helm **`dashboard.vault.path: clawql/providers`**.
-- **KEDA NATS JetStream worker** ([#257](https://github.com/danielsmithdevelopment/ClawQL/issues/257)): optional `nats.worker` Deployment + `nats.keda` ScaledObject for HITL resume consumer lag; bootstrap Job + `nats/cli.js` / `nats/bootstrap-cli.js` in **clawql-automation**; docs **[`docs/deployment/nats-keda-worker.md`](docs/deployment/nats-keda-worker.md)**.
-- **IDP pipeline runner** ([#307](https://github.com/danielsmithdevelopment/ClawQL/issues/307)): MCP **`run_idp_pipeline`** when **`CLAWQL_ENABLE_IDP_PIPELINE=1`** — synchronous **`DEFAULT_IDP_PIPELINE`** execution with per-hop retries, Merkle snapshots, and **`onPipelineHop`** hook; docs **[`docs/mcp/idp-pipeline-runner.md`](docs/mcp/idp-pipeline-runner.md)**.
-- **NATS JetStream workflow events** ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254), [#127](https://github.com/danielsmithdevelopment/ClawQL/issues/127)): opt-in publish (`CLAWQL_NATS_ENABLE_PUBLISH=1`) for HITL/workflow lifecycle; JetStream consumer (`CLAWQL_NATS_ENABLE_CONSUMER=1` + `CLAWQL_NATS_CONSUMER_RESUME_WORKFLOW=1`) resumes Argo workflows on `hitl.completed`; ConeShare viewer events on `clawql.document.*`.
-- **Langfuse eval → Ouroboros** ([#250](https://github.com/danielsmithdevelopment/ClawQL/issues/250)): **`CLAWQL_ENABLE_LANGFUSE_EVAL=1`** + **`CLAWQL_ENABLE_OUROBOROS=1`** — **`POST /observability/langfuse/webhook`**, MCP **`ouroboros_propose_seed_revision_from_eval`**; default dry-run (`CLAWQL_LANGFUSE_EVAL_AUTO_APPLY` off); docs **[`docs/mcp/langfuse-eval-ouroboros.md`](docs/mcp/langfuse-eval-ouroboros.md)**.
-
-### Documentation
-
-- **`docker/compose/README.md`**, gap plan + IDP matrix #251 lending stack.
-- **`docs/mcp/langfuse-eval-ouroboros.md`**, IDP matrix #250 → Shipped.
-- **HITL multi-reviewer RBAC** ([#249](https://github.com/danielsmithdevelopment/ClawQL/issues/249)): CE vs Enterprise capability matrix, ClawQL role mapping, CE workarounds, **dual-project two-person rule** pattern, Helm BYO Label Studio pointers — [`docs/mcp/hitl-label-studio.md`](docs/mcp/hitl-label-studio.md#14-multi-reviewer-rbac-ce-vs-enterprise).
-- **`docs/deployment/nats-keda-worker.md`**, Helm `nats.worker` / `nats.keda` values, IDP matrix #257 → Shipped.
-- **`docs/mcp/idp-pipeline-runner.md`**, IDP matrix #307 → Shipped, plugin registry + **`mcp-tools.md`** **`run_idp_pipeline`** row.
-- HITL + workflow tool guides: NATS dual-path (sync webhook vs async consumer); `.env.example` NATS block.
-
 ## [7.0.0] - 2026-07-09
 
-Major release: **opinionated default stack**, **vault-first onboarding CLI**, and **opt-in ClawQL Operator scaffold**. Release notes: **[`RELEASE_NOTES_v7.0.0.md`](RELEASE_NOTES_v7.0.0.md)**.
+Major release: **opinionated default stack everywhere** (npm + Helm), **vault-first defense in depth**, **ClawQL Operator** with provider-secret reconciliation, and consolidated IDP wave. Release notes: **[`RELEASE_NOTES_v7.0.0.md`](RELEASE_NOTES_v7.0.0.md)**.
+
+### Breaking
+
+- **Helm default provider = npm default stack:** **`charts/clawql-mcp`** and **`values-docker-desktop.yaml`** now set **`provider: default`** (Cloudflare, GitHub, Slack, Linear, Notion, Onyx). Use **`provider: all-providers`** or **`helm --set provider=all-providers`** for the full IDP + every bundled vendor merge.
+- **Legacy env aliases removed:** **`API_BASE_URL`**, **`OPENAPI_SPEC_URL`**, **`GOOGLE_DISCOVERY_URL`**, and merged preset **`google-top50`** are no longer accepted — use **`CLAWQL_API_BASE_URL`**, **`CLAWQL_SPEC_URL`**, **`CLAWQL_DISCOVERY_URL`**, and **`CLAWQL_PROVIDER=google`**.
+- **Vault-backed secrets required by default:** **`secretSourcing.requireVaultBackedSecrets: true`** (default) fails render without **`envFromSecret`** / **`envFromSecrets`**. Set **`false`** only in lab overlays that accept non-Vault env sourcing.
 
 ### Added
 
+- **ClawQL Desktop (macOS):** Electron app (`desktop/`) bundling the dashboard — local **Provider secrets** (`~/.ClawQL/vault/providers.json`) and **Agent Chat** via OpenClaw bridge; `npm run dist:mac` produces a `.dmg`. Design: [`docs/design/clawql-desktop-macos.md`](docs/design/clawql-desktop-macos.md).
 - **Opinionated default bundled stack** ([#528](https://github.com/danielsmithdevelopment/ClawQL/pull/528)): bare `npx clawql-mcp` loads **Cloudflare, GitHub, Slack, Linear, Notion, Onyx**; **`CLAWQL_PROVIDER=all-providers`** remains explicit opt-in for every vendor + Google top-50 + AWS top-50.
 - **AWS top-50 bundled preset** ([#528](https://github.com/danielsmithdevelopment/ClawQL/pull/528)): SigV4 **`execute`**, manifest under `providers/aws/`, onboarding [`docs/providers/aws-onboarding.md`](docs/providers/aws-onboarding.md).
 - **Notion bundled provider**: official OpenAPI; **`NOTION_API_TOKEN`** auth; onboarding [`docs/providers/notion-onboarding.md`](docs/providers/notion-onboarding.md).
@@ -43,12 +27,23 @@ Major release: **opinionated default stack**, **vault-first onboarding CLI**, an
 - **Init walkthrough (Phase 2)**: `clawql` CLI — **`init`**, **`doctor`**, **`mcp-config`**; local **`~/.ClawQL/vault/providers.json`** (HashiCorp KV shape); MCP loads vault at startup; [local-provider-vault.md](docs/getting-started/local-provider-vault.md).
 - **Onboarding Tier 1**: `clawql secrets list|set` (hidden token input), `clawql doctor --smoke`, `clawql mcp-config --write cursor|claude-desktop`, HashiCorp Vault auto-detect on init, MCP startup stderr summary.
 - **Onboarding Tier 2**: `clawql onboard` end-to-end walkthrough; docs/migration/agent-setup aligned to **7.0.0** and Tier 1 CLI commands.
-- **ClawQL Operator scaffold (opt-in)**: `ClawQLInstance` tier presets, continuous reconcile Deployment, MCP rollout on tier-spec change, `clawql operator status`, `make local-k8s-up` operator install ([#255](https://github.com/danielsmithdevelopment/ClawQL/issues/255), [#479](https://github.com/danielsmithdevelopment/ClawQL/pull/479)).
+- **ClawQL Operator scaffold (opt-in)**: `ClawQLInstance` tier presets, continuous reconcile Deployment, MCP rollout on tier-spec change, **`ProviderSecretsReady`** auth reconciliation (default-stack keys; full IDP vault catalog when **`documents.enabled`**), `clawql operator status`, `make local-k8s-up` operator install ([#255](https://github.com/danielsmithdevelopment/ClawQL/issues/255), [#479](https://github.com/danielsmithdevelopment/ClawQL/pull/479)).
+- **Lending vertical Docker Compose** ([#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251)): **`docker/compose/lending.compose.yml`** — ClawQL MCP + Docling + reference classifier + LangExtract (demo) + Label Studio CE; env template **`lending.env.example`**; guide **[`docker/compose/README.md`](docker/compose/README.md)**; `make compose-lending-config-test`.
+- **Docling Helm reference deployment + classifier** ([#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248)): opt-in **`documentPipeline.docling`**, **`DOCLING_BASE_URL`** wiring, MCP **`classify_document`** when **`CLAWQL_ENABLE_IDP_CLASSIFIER=1`**; reference classifier HTTP sample; **`DEFAULT_IDP_PIPELINE`** Docling layout-parse hop.
+- **LangExtract extraction layer** ([#246](https://github.com/danielsmithdevelopment/ClawQL/issues/246)): MCP **`extract_document`** when **`CLAWQL_ENABLE_LANGEXTRACT=1`**; reference Python sidecar, threat model, onboarding doc.
+- **Vault default provider secrets** ([#241](https://github.com/danielsmithdevelopment/ClawQL/issues/241)): default **`envFromSecret: clawql-provider-env`**, full IDP provider KV catalog, Helm **`secretSourcing.externalSecrets`**, expanded **`import-dotenv-to-vault`**, docs **[`docs/deployment/vault-provider-secrets.md`](docs/deployment/vault-provider-secrets.md)**.
+- **Dashboard Vault UI for provider secrets** ([#242](https://github.com/danielsmithdevelopment/ClawQL/issues/242)): **Provider secrets** panel — friendly labels for all provider keys, Vault **`clawql/providers`** read/write, Kubernetes Secret sync + rollout restart.
+- **KEDA NATS JetStream worker** ([#257](https://github.com/danielsmithdevelopment/ClawQL/issues/257)): optional `nats.worker` Deployment + `nats.keda` ScaledObject; docs **[`docs/deployment/nats-keda-worker.md`](docs/deployment/nats-keda-worker.md)**.
+- **IDP pipeline runner** ([#307](https://github.com/danielsmithdevelopment/ClawQL/issues/307)): MCP **`run_idp_pipeline`** when **`CLAWQL_ENABLE_IDP_PIPELINE=1`**; docs **[`docs/mcp/idp-pipeline-runner.md`](docs/mcp/idp-pipeline-runner.md)**.
+- **NATS JetStream workflow events** ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254), [#127](https://github.com/danielsmithdevelopment/ClawQL/issues/127)): opt-in publish/consumer for HITL/workflow lifecycle.
+- **Langfuse eval → Ouroboros** ([#250](https://github.com/danielsmithdevelopment/ClawQL/issues/250)): **`CLAWQL_ENABLE_LANGFUSE_EVAL=1`** + **`CLAWQL_ENABLE_OUROBOROS=1`** — webhook + **`ouroboros_propose_seed_revision_from_eval`**.
+- **7.0 setup guide:** [`docs/getting-started/clawql-7-setup-guide.md`](docs/getting-started/clawql-7-setup-guide.md).
+- **ClawQL Desktop (macOS):** downloadable Electron app — provider secrets + Agent Chat without localhost browser tabs.
 
 ### Changed
 
 - **Multi-spec HTTP**: `/graphql` is not mounted in merged multi-spec mode (MCP `search`/`execute` unchanged).
-- **First-run docs**: README, getting-started, quickstart, install, and migration guide aligned to default stack vs `all-providers`.
+- **First-run docs**: README, getting-started, quickstart, install, migration guide, and Helm defaults aligned to default stack vs `all-providers`.
 - **Plugin model/registry docs**: Phase 2 `onRegister` status updated (July 2026).
 
 ### Fixed

@@ -14,6 +14,17 @@ npm run dev
 
 Open [http://localhost:3040](http://localhost:3040).
 
+### ClawQL Desktop (macOS)
+
+Package the same UI as a native app — local provider secrets + Agent Chat:
+
+```bash
+make desktop-dev      # from repo root
+make desktop-dist-mac # build .dmg
+```
+
+See [`desktop/README.md`](../desktop/README.md) and [`docs/design/clawql-desktop-macos.md`](../docs/design/clawql-desktop-macos.md).
+
 ### Agent Chat + OpenClaw (local)
 
 The **Agent Chat** panel calls `POST /api/agent/chat` (JSON) or **`POST /api/agent/chat/stream`** (SSE when `CLAWQL_DASHBOARD_CHAT_STREAM=1`, default), which proxy to **`CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL`** when set. OpenClaw itself is the **`openclaw` CLI** (WebSocket gateway + `openclaw agent`); it does **not** ship an HTTP `POST /v1/chat` endpoint, so this repo includes a tiny bridge.

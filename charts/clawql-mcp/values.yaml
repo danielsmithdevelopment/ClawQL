@@ -73,9 +73,10 @@ metrics:
     scrapeTimeout: 10s
 
 # Mirrors docker/kustomize/base/deployment-mcp-http.yaml
-# Merged `CLAWQL_PROVIDER`: `all-providers` (default) or e.g. `google`. For a custom id list, set extraEnv / patchDeployment with
+# Merged `CLAWQL_PROVIDER`: `default` (same opinionated stack as bare npm — Cloudflare, GitHub, Slack, Linear, Notion, Onyx).
+# Use `all-providers` for every bundled vendor + Google top-50 + AWS top-50, or set extraEnv / patchDeployment with
 # `CLAWQL_BUNDLED_PROVIDERS=…` and omit `CLAWQL_PROVIDER` if needed (see README "Configure the API spec").
-provider: all-providers
+provider: default
 bundledOffline: "1"
 obsidianVaultPath: /vault
 port: "8080"
@@ -776,6 +777,8 @@ envFromSecret: clawql-provider-env
 envFromSecrets: []
 
 # Vault-backed provider credentials — production default ([#241](https://github.com/danielsmithdevelopment/ClawQL/issues/241)).
+# `requireVaultBackedSecrets: true` (default) fails render without `envFromSecret` / `envFromSecrets`.
+# Set `false` only in lab overlays that accept non-Vault env sourcing (not recommended for production).
 secretSourcing:
   requireVaultBackedSecrets: true
   externalSecrets:

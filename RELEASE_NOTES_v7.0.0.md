@@ -1,67 +1,99 @@
 ## clawql-mcp 7.0.0
 
-**npm:** [clawql-mcp@7.0.0](https://www.npmjs.com/package/clawql-mcp)  
+**npm:** pending tag — see [CHANGELOG.md#700---2026-07-09](https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md#700---2026-07-09)  
 **Full changelog:** [CHANGELOG.md#700---2026-07-09](https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md#700---2026-07-09)  
-**Released:** 2026-07-09
+**Target release:** 2026-07-09
 
 ---
 
 ## Headline
 
-**Smaller default install, vault-first onboarding.** Fresh `npx clawql-mcp` loads a focused **opinionated default stack** instead of implicitly merging every bundled vendor. The **`clawql`** CLI scaffolds **`~/.ClawQL`**, hides token input, writes MCP config, and runs MCP smoke tests — without putting secrets in `mcp.json`.
+**One default everywhere, vault-first defense in depth.** Fresh `npx clawql-mcp` and Helm **`provider: default`** load the same opinionated stack (Cloudflare, GitHub, Slack, Linear, Notion, Onyx). Vault-backed provider secrets are required by default; the operator reconciles expected keys against your synced Secret.
 
 ---
 
-## Default bundled stack (breaking behavior change)
+## Default bundled stack (breaking)
 
-| Before (≤6.4.x docs implied)                | After (7.0.0)                                                     |
-| ------------------------------------------- | ----------------------------------------------------------------- |
-| No spec env → **`all-providers`**           | No spec env → **Cloudflare, GitHub, Slack, Linear, Notion, Onyx** |
-| Large cold start, every IDP vendor in index | Faster first run for common SaaS API workflows                    |
+| Before (≤6.4.x)                      | After (7.0.0)                    |
+| ------------------------------------ | -------------------------------- |
+| npm: no env → growing implicit merge | **Default stack** (6 vendors)    |
+| Helm: **`all-providers`**            | Helm: **`default`** (npm parity) |
 
 **Restore full merge:**
 
 ```bash
 CLAWQL_PROVIDER=all-providers npx -p clawql-mcp clawql-mcp
+# Helm:
+helm upgrade --install clawql ./charts/clawql-mcp --set provider=all-providers
 ```
 
-Helm **`clawql-mcp`** chart may still default to **`all-providers`** for full IDP/Kubernetes stacks — not the same as bare npm first run.
+→ [Migration guide](https://docs.clawql.com/resources/migration) · [7.0 setup guide](docs/getting-started/clawql-7-setup-guide.md)
 
-→ [Migration guide](https://docs.clawql.com/resources/migration)
+---
+
+## Vault required by default
+
+- **`secretSourcing.requireVaultBackedSecrets: true`** (default) — render fails without **`envFromSecret`** / **`envFromSecrets`**
+- Populate **`secret/clawql/providers`** in HashiCorp Vault; sync to **`clawql-provider-env`**
+- Set **`requireVaultBackedSecrets: false`** only in explicit lab overlays
+
+→ [vault-provider-secrets.md](docs/deployment/vault-provider-secrets.md)
+
+---
+
+## Legacy aliases removed
+
+| Removed                | Replacement              |
+| ---------------------- | ------------------------ |
+| `API_BASE_URL`         | `CLAWQL_API_BASE_URL`    |
+| `OPENAPI_SPEC_URL`     | `CLAWQL_SPEC_URL`        |
+| `GOOGLE_DISCOVERY_URL` | `CLAWQL_DISCOVERY_URL`   |
+| `google-top50` preset  | `CLAWQL_PROVIDER=google` |
+
+---
+
+## ClawQL Desktop (macOS)
+
+Downloadable app wrapping the dashboard — **Provider secrets** + **Agent Chat** locally (no Kubernetes required for solo dev).
+
+```bash
+cd desktop && npm install && npm run dist:mac
+# → desktop/dist/ClawQL-7.0.0.dmg
+```
+
+Requires **OpenClaw** on `PATH` for chat. Secrets save to `~/.ClawQL/vault/providers.json` (same as `clawql init`).
+
+→ [Desktop design doc](docs/design/clawql-desktop-macos.md) · [desktop/README.md](desktop/README.md)
 
 ---
 
 ## Onboarding CLI (Tier 1 + Tier 2)
 
-| Command                               | Purpose                                                             |
-| ------------------------------------- | ------------------------------------------------------------------- |
-| `clawql onboard --interactive`        | **Tier 2** — init + MCP config write + doctor smoke in one flow     |
-| `clawql init --interactive`           | Scaffold `~/.ClawQL`, hidden token prompts → `vault/providers.json` |
-| `clawql secrets list` / `secrets set` | Manage provider keys without editing JSON by hand                   |
-| `clawql doctor --smoke`               | MCP `tools/list` + `search` (+ optional `execute`)                  |
-| `clawql mcp-config --write cursor`    | Merge MCP JSON into Cursor / Claude Desktop (with `.bak` backup)    |
-| `clawql operator status`              | Kubernetes: ClawQLInstance + tier-spec ConfigMap health             |
-
-Docs: [Agent setup](docs/getting-started/agent-setup-prompt.md), [local provider vault](docs/getting-started/local-provider-vault.md), [/agent-setup](https://docs.clawql.com/agent-setup)
+| Command                               | Purpose                                       |
+| ------------------------------------- | --------------------------------------------- |
+| `clawql onboard --interactive`        | End-to-end init + MCP config + doctor smoke   |
+| `clawql init --interactive`           | Scaffold `~/.ClawQL` + `vault/providers.json` |
+| `clawql secrets list` / `secrets set` | Manage provider keys                          |
+| `clawql doctor --smoke`               | MCP `tools/list` + `search`                   |
+| `clawql mcp-config --write cursor`    | Merge MCP JSON into Cursor / Claude Desktop   |
+| `clawql operator status`              | Kubernetes: ClawQLInstance + tier-spec health |
 
 ---
 
-## ClawQL Operator (opt-in scaffold)
+## ClawQL Operator — auth reconciliation
 
-- **`ClawQLInstance`** CRD with tier presets (`local` / `standard` / `enterprise`)
-- Continuous reconcile via operator **Deployment** (CronJob optional via `operator.mode`)
-- Tier-spec ConfigMap with owner references; optional MCP Deployment rollout on spec change
-- **`make local-k8s-up`** installs operator on full stack — [`clawql-operator-helm.md`](docs/deployment/clawql-operator-helm.md)
+- **`ProviderSecretsReady`** condition on **`ClawQLInstance`**
+- **`authExpectations.json`** in tier-spec ConfigMap lists required vault keys
+- **`documents.enabled: false`** → default-stack keys only
+- **`documents.enabled: true`** → default stack + all IDP vault keys (Paperless, Stirling, Docling, Nextcloud, …)
 
-Full NL ops, vertical toggles, and auth reconciliation remain roadmap — see [operator-target-architecture.md](docs/design/operator-target-architecture.md).
+→ [clawql-operator-helm.md](docs/deployment/clawql-operator-helm.md)
 
 ---
 
-## AWS top-50, Notion, plugins hub
+## IDP wave (shipped in 7.0)
 
-- **AWS:** curated top-50 OpenAPI presets, SigV4 on `execute`
-- **Notion:** bundled `notion` provider
-- **Plugins:** docs hub at [/plugins](https://docs.clawql.com/plugins) (MCP plugins are opt-in; bundled providers are spec merge only)
+Docling, LangExtract, IDP pipeline runner, NATS/KEDA worker, Langfuse→Ouroboros, lending Compose stack, dashboard Vault UI — see CHANGELOG **[7.0.0]** Added section.
 
 ---
 
@@ -76,10 +108,12 @@ Full NL ops, vertical toggles, and auth reconciliation remain roadmap — see [o
 
 ## Upgrade checklist
 
-1. Read [migration](https://docs.clawql.com/resources/migration) if you relied on implicit **`all-providers`** on bare npm.
-2. Run `npx -p clawql-mcp clawql onboard --interactive` (or `clawql init --interactive` + `mcp-config --write cursor`).
-3. Verify: `clawql doctor --smoke`.
-4. Update **`CLAWQL_*`** env if you need Google/AWS/IDP vendors in local stdio mode.
+1. [Migration](https://docs.clawql.com/resources/migration) + [7.0 setup guide](docs/getting-started/clawql-7-setup-guide.md)
+2. Replace legacy env aliases
+3. Wire Vault → **`clawql-provider-env`**
+4. `clawql onboard --interactive` or import provider KV
+5. `helm upgrade` — choose **`default`** or **`all-providers`**
+6. Operator: confirm **`ProviderSecretsReady=True`**
 
 ---
 
@@ -92,9 +126,3 @@ npx clawql-mcp-http
 
 docker pull ghcr.io/danielsmithdevelopment/clawql-mcp:latest
 ```
-
----
-
-## Contributors
-
-See [CHANGELOG.md](CHANGELOG.md) **[7.0.0]** for full commit-level detail.

@@ -68,6 +68,22 @@ instanceSpec:
 
 Explicit `spec` fields override preset defaults.
 
+## Auth reconciliation (7.0)
+
+The operator publishes **`authExpectations.json`** in the tier-spec ConfigMap and sets **`ProviderSecretsReady`** on **`ClawQLInstance` status`:
+
+| `documents.enabled` | Required vault keys                                                       |
+| ------------------- | ------------------------------------------------------------------------- |
+| `false`             | Default stack only (GitHub, Slack, Linear, Notion, Onyx, Cloudflare)      |
+| `true`              | Default stack + all IDP keys (Paperless, Stirling, Docling, Nextcloud, …) |
+
+Secret name defaults to **`clawql-provider-env`**; override with **`spec.mcp.providerSecretName`**.
+
+```bash
+kubectl get clawqlinstances -n clawql -o jsonpath='{.items[0].status.conditions[?(@.type=="ProviderSecretsReady")]}'
+npx -p clawql-mcp clawql operator status
+```
+
 ## Local development
 
 ```bash
@@ -77,4 +93,4 @@ node packages/clawql-operator/dist/cli.cjs --once --namespace=clawql --instance=
 
 ## Roadmap
 
-Phase 3+: auth reconciliation, vertical toggles, admission webhooks, NL → CRD patches — see [operator-target-architecture.md](../design/operator-target-architecture.md).
+Phase 3+: vertical toggles, admission webhooks, NL → CRD patches — see [operator-target-architecture.md](../design/operator-target-architecture.md). **Auth reconciliation** (provider vault keys) shipped in 7.0.

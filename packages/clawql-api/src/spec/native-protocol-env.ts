@@ -51,9 +51,7 @@ export function wantsOpenAPISpecSelectionEnv(): boolean {
     process.env.OPENAPI_SPEC_PATH?.trim() ||
     process.env.OPENAPI_FILE?.trim() ||
     process.env.CLAWQL_SPEC_URL?.trim() ||
-    process.env.OPENAPI_SPEC_URL?.trim() ||
     process.env.CLAWQL_DISCOVERY_URL?.trim() ||
-    process.env.GOOGLE_DISCOVERY_URL?.trim() ||
     process.env.CLAWQL_SPEC_PATHS?.trim() ||
     process.env.CLAWQL_BUNDLED_PROVIDERS?.trim() ||
     process.env.CLAWQL_PROVIDER?.trim()

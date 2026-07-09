@@ -44,6 +44,8 @@ export async function runOperator(options: RunOperatorOptions = {}): Promise<voi
   const reconcileCore = {
     readNamespacedConfigMap: (name: string, namespace: string) =>
       core.readNamespacedConfigMap({ name, namespace }),
+    readNamespacedSecret: (name: string, namespace: string) =>
+      core.readNamespacedSecret({ name, namespace }),
     createNamespacedConfigMap: (namespace: string, body: V1ConfigMap) =>
       core.createNamespacedConfigMap({ namespace, body }),
     replaceNamespacedConfigMap: (name: string, namespace: string, body: V1ConfigMap) =>

@@ -1,0 +1,51 @@
+import { Button } from '@/components/Button'
+import { Note } from '@/components/mdx'
+
+# ClawQL Desktop (macOS)
+
+Downloadable macOS app for **provider secrets** and **Agent Chat** — no browser tab, no Kubernetes required for solo dev. {{ className: 'lead' }}
+
+<Note>
+  **7.0.0** ships the build pipeline (`make desktop-dist-mac`). Signed `.dmg`
+  downloads from clawql.com follow Apple notarization setup — see the [design
+  doc](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/clawql-desktop-macos.md).
+</Note>
+
+## What you get
+
+| Feature           | Desktop app                                                      |
+| ----------------- | ---------------------------------------------------------------- |
+| Provider API keys | Saved to `~/.ClawQL/vault/providers.json` (MCP loads on startup) |
+| Agent Chat        | OpenClaw bridge + dashboard UI                                   |
+| Kubernetes        | Not required                                                     |
+
+## Build from source
+
+```bash
+git clone https://github.com/danielsmithdevelopment/ClawQL.git
+cd ClawQL/dashboard && npm install
+cd ../desktop && npm install && npm run dist:mac
+```
+
+Artifact: `desktop/dist/ClawQL-7.0.0.dmg`
+
+## Development
+
+```bash
+make desktop-dev
+```
+
+Requires **OpenClaw** on `PATH` and model auth configured — [using OpenClaw with ClawQL](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/openclaw/using-openclaw-with-clawql.md).
+
+## vs Executor desktop
+
+ClawQL Desktop wraps the same dashboard used in Helm deployments, aligned with **7.0 vault-first onboarding** and the **opinionated default provider stack** — not a separate product surface.
+
+<div className="not-prose my-8 flex flex-wrap gap-3">
+  <Button href="/getting-started/clawql-7-setup-guide" arrow="right">
+    <>7.0 setup guide</>
+  </Button>
+  <Button href="/agent-setup" variant="outline">
+    <>Agent setup</>
+  </Button>
+</div>

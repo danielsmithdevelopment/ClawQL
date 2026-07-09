@@ -1,0 +1,48 @@
+{
+  "name": "clawql-desktop",
+  "productName": "ClawQL",
+  "version": "7.0.0",
+  "description": "ClawQL Desktop — local provider secrets + Agent Chat (macOS)",
+  "license": "Apache-2.0",
+  "private": true,
+  "type": "module",
+  "main": "src/main.mjs",
+  "author": "ClawQL",
+  "scripts": {
+    "prepare:standalone": "node scripts/prepare-standalone.mjs",
+    "dev": "CLAWQL_DESKTOP_DEV=1 electron .",
+    "pack:mac": "npm run prepare:standalone && electron-builder --mac dmg --publish never",
+    "dist:mac": "npm run pack:mac"
+  },
+  "build": {
+    "appId": "com.clawql.desktop",
+    "productName": "ClawQL",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "standalone/dashboard",
+        "to": "dashboard",
+        "filter": ["**/*"]
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "target": ["dmg"],
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false
+    },
+    "dmg": {
+      "title": "ClawQL ${version}"
+    }
+  },
+  "devDependencies": {
+    "electron": "^35.7.5",
+    "electron-builder": "^25.1.8"
+  }
+}

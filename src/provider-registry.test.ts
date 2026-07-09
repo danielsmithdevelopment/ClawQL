@@ -78,10 +78,10 @@ describe("provider-registry", () => {
     ).toBe(true);
   });
 
-  it("accepts deprecated google-top50 alias for the google merged group", async () => {
-    const canonical = await resolveBundledProviderGroup("google");
-    const alias = await resolveBundledProviderGroup("google-top50");
-    expect(alias?.length).toBe(canonical?.length);
+  it("rejects removed google-top50 alias", async () => {
+    await expect(resolveBundledProviderGroup("google-top50")).rejects.toThrow(
+      /google-top50 preset id was removed/
+    );
   });
 
   it("returns undefined for unknown group", async () => {

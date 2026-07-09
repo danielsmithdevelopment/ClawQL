@@ -6,12 +6,65 @@ import { Note } from '@/components/mdx'
 Upgrade paths for ClawQL MCP server versions and teams moving from ad-hoc MCP integrations. {{ className: 'lead' }}
 
 <Note>
-  Helm upgrade steps live in the [Deployment & Operations
-  Guide](/deployment/operations-guide) (Day-2 section). This page covers
-  cross-version and cross-platform moves.
+  For **7.0.0** requirements (Vault, Helm defaults, operator auth), see the [7.0
+  setup guide](/getting-started/clawql-7-setup-guide). Helm Day-2 steps live in
+  the [Deployment & Operations Guide](/deployment/operations-guide).
 </Note>
 
-## Upgrading clawql-mcp
+## Upgrading to 7.0.0
+
+### Default provider merge (npm + Helm)
+
+Before **7.0.0**, an empty spec environment often implied **`all-providers`**, and Helm chart values defaulted to **`all-providers`** as well. From **7.0.0** onward:
+
+- Bare **`npx clawql-mcp`** loads the **opinionated default stack** (Cloudflare, GitHub, Slack, Linear, Notion, Onyx)
+- Helm **`charts/clawql-mcp`** defaults to **`provider: default`** — same stack
+
+Restore the full merge explicitly:
+
+```bash
+CLAWQL_PROVIDER=all-providers npx -p clawql-mcp clawql-mcp
+```
+
+```bash
+helm upgrade --install clawql ./charts/clawql-mcp -n clawql --set provider=all-providers
+```
+
+### Vault-backed secrets (breaking default)
+
+**`secretSourcing.requireVaultBackedSecrets`** is **`true`** by default. Helm render fails without **`envFromSecret`** / **`envFromSecrets`** pointing at a Kubernetes Secret (normally synced from HashiCorp Vault KV **`secret/clawql/providers`**).
+
+- Production: wire External Secrets / Vault before upgrade — [Vault provider secrets](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/vault-provider-secrets.md)
+- Lab only: set **`requireVaultBackedSecrets: false`** in a values overlay (not recommended for production)
+
+Local stdio: use **`clawql init`** → **`~/.ClawQL/vault/providers.json`** — [local provider vault](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/getting-started/local-provider-vault.md)
+
+### Removed legacy env aliases
+
+| Removed                        | Use                      |
+| ------------------------------ | ------------------------ |
+| `API_BASE_URL`                 | `CLAWQL_API_BASE_URL`    |
+| `OPENAPI_SPEC_URL`             | `CLAWQL_SPEC_URL`        |
+| `GOOGLE_DISCOVERY_URL`         | `CLAWQL_DISCOVERY_URL`   |
+| `CLAWQL_PROVIDER=google-top50` | `CLAWQL_PROVIDER=google` |
+
+### Operator auth reconciliation
+
+If you use **`ClawQLInstance`**, the operator now sets **`ProviderSecretsReady`** by checking **`clawql-provider-env`** (or **`spec.mcp.providerSecretName`**) against expected vault keys:
+
+- **`documents.enabled: false`** — default-stack keys only
+- **`documents.enabled: true`** — default stack plus all IDP provider keys
+
+### First run on a new machine
+
+```bash
+npx -p clawql-mcp clawql onboard --interactive
+clawql doctor --smoke
+```
+
+→ Full checklist: [7.0 setup guide](/getting-started/clawql-7-setup-guide)
+
+## Upgrading clawql-mcp (general)
 
 1. Check [GitHub Releases](https://github.com/danielsmithdevelopment/ClawQL/releases) for breaking changes
 2. Update **`CLAWQL_*`** env vars if provider or feature-tier defaults changed — [Configuration reference](/spec-configuration)
@@ -24,7 +77,7 @@ Four-stack Compose ([#251](https://github.com/danielsmithdevelopment/ClawQL/issu
 
 ## Kubernetes / Helm
 
-→ [Operations guide](/deployment/operations-guide) · [Helm chart](/helm)
+→ [Operations guide](/deployment/operations-guide) · [Helm chart](/helm) · [7.0 setup guide](/getting-started/clawql-7-setup-guide)
 
 ## From other MCP servers
 
@@ -36,26 +89,13 @@ Four-stack Compose ([#251](https://github.com/danielsmithdevelopment/ClawQL/issu
 | Custom tool servers    | Proxy via gateway or migrate to **`execute`** operations                                         |
 | No vault memory        | Enable **`memory_ingest`** / **`memory_recall`** with Obsidian vault path                        |
 
-## Default stack change (7.0.0)
-
-Before **7.0.0**, an empty spec environment often implied **`all-providers`**. From **7.0.0** onward, bare **`npx clawql-mcp`** loads the **opinionated default stack** (Cloudflare, GitHub, Slack, Linear, Notion, Onyx). To restore the full merge:
-
-```bash
-CLAWQL_PROVIDER=all-providers npx -p clawql-mcp clawql-mcp
-```
-
-**First run on a new machine:**
-
-```bash
-npx -p clawql-mcp clawql onboard --interactive
-```
-
-Helm **`clawql-mcp`** chart values may still default to **`all-providers`** for full IDP deployments — see [Kubernetes](/deployment/kubernetes).
-
 → [Concepts](/concepts) · [Using search & execute](/learn/search-and-execute-mcp)
 
 <div className="not-prose my-8 flex flex-wrap gap-3">
-  <Button href="/deployment/operations-guide" arrow="right">
+  <Button href="/getting-started/clawql-7-setup-guide" arrow="right">
+    <>7.0 setup guide</>
+  </Button>
+  <Button href="/deployment/operations-guide" variant="outline">
     <>Deployment guide</>
   </Button>
   <Button href="/troubleshooting" variant="outline">

@@ -8,6 +8,7 @@ import {
   resolveProviderEnvAlias,
   type ProviderVaultCatalogEntry,
 } from '@/lib/provider-vault-catalog'
+import { useDashboardRuntime } from '@/lib/use-dashboard-runtime'
 
 function defaultNs(): string {
   return process.env.NEXT_PUBLIC_CLAWQL_DASHBOARD_K8S_NAMESPACE ?? 'clawql'
@@ -121,6 +122,10 @@ function ProviderField({
 }
 
 export function ProviderVaultForm() {
+  const runtime = useDashboardRuntime()
+  const desktopMode = runtime?.desktopMode ?? false
+  const providersLoadUrl = runtime?.providersLoadUrl ?? '/api/k8s/secret-env'
+  const providersSaveUrl = runtime?.providersSaveUrl ?? '/api/k8s/sync-secret'
   const sections = useMemo(() => providerCatalogSections(), [])
   const catalogKeys = useMemo(() => providerCatalogEnvKeys(), [])
 
@@ -151,25 +156,31 @@ export function ProviderVaultForm() {
   const [vaultReloadNonce, setVaultReloadNonce] = useState(0)
 
   useEffect(() => {
+    if (!runtime) return
     let cancelled = false
-    fetch('/api/k8s/health')
-      .then((r) => r.json())
-      .then((body: { kubectl?: boolean; syncAllowed?: boolean }) => {
-        if (cancelled) return
-        setHealth({
-          kubectl: Boolean(body.kubectl),
-          syncAllowed: Boolean(body.syncAllowed),
+    if (desktopMode) {
+      setHealth({ kubectl: false, syncAllowed: true })
+    } else {
+      fetch('/api/k8s/health')
+        .then((r) => r.json())
+        .then((body: { kubectl?: boolean; syncAllowed?: boolean }) => {
+          if (cancelled) return
+          setHealth({
+            kubectl: Boolean(body.kubectl),
+            syncAllowed: Boolean(body.syncAllowed),
+          })
         })
-      })
-      .catch(() => {
-        if (!cancelled) setHealth(null)
-      })
+        .catch(() => {
+          if (!cancelled) setHealth(null)
+        })
+    }
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [runtime, desktopMode])
 
   useEffect(() => {
+    if (!runtime) return
     const ac = new AbortController()
     const t = setTimeout(() => {
       void (async () => {
@@ -179,13 +190,13 @@ export function ProviderVaultForm() {
         setRevealed({})
         try {
           const headers: Record<string, string> = {}
-          if (syncToken.trim() !== '') {
+          if (!desktopMode && syncToken.trim() !== '') {
             headers.Authorization = `Bearer ${syncToken.trim()}`
           }
-          const res = await fetch(
-            `/api/k8s/secret-env?namespace=${encodeURIComponent(namespace)}&secretName=${encodeURIComponent(secretName)}`,
-            { headers, signal: ac.signal },
-          )
+          const loadUrl = desktopMode
+            ? providersLoadUrl
+            : `${providersLoadUrl}?namespace=${encodeURIComponent(namespace)}&secretName=${encodeURIComponent(secretName)}`
+          const res = await fetch(loadUrl, { headers, signal: ac.signal })
           const body = (await res.json().catch(() => ({}))) as {
             values?: Record<string, string>
             error?: string
@@ -224,7 +235,17 @@ export function ProviderVaultForm() {
       clearTimeout(t)
       ac.abort()
     }
-  }, [namespace, secretName, syncToken, catalogKeys, initialValues, vaultReloadNonce])
+  }, [
+    runtime,
+    desktopMode,
+    providersLoadUrl,
+    namespace,
+    secretName,
+    syncToken,
+    catalogKeys,
+    initialValues,
+    vaultReloadNonce,
+  ])
 
   const onChange = useCallback((key: string, v: string) => {
     setValues((prev) => ({ ...prev, [key]: v }))
@@ -286,20 +307,24 @@ export function ProviderVaultForm() {
       }
 
       const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (syncToken.trim() !== '') {
+      if (!desktopMode && syncToken.trim() !== '') {
         headers.Authorization = `Bearer ${syncToken.trim()}`
       }
       try {
-        const res = await fetch('/api/k8s/sync-secret', {
+        const res = await fetch(providersSaveUrl, {
           method: 'POST',
           headers,
-          body: JSON.stringify({
-            namespace,
-            secretName,
-            deploymentName,
-            values: literals,
-            removeKeys,
-          }),
+          body: JSON.stringify(
+            desktopMode
+              ? { values: literals, removeKeys }
+              : {
+                  namespace,
+                  secretName,
+                  deploymentName,
+                  values: literals,
+                  removeKeys,
+                },
+          ),
         })
         const body = (await res.json().catch(() => ({}))) as { error?: string; detail?: string }
         if (!res.ok) {
@@ -308,18 +333,22 @@ export function ProviderVaultForm() {
           return
         }
         setStatus('ok')
-        setMessage('Saved to Vault, synced the cluster Secret, and restarted ClawQL.')
+        setMessage(
+          desktopMode
+            ? `Saved to ${runtime?.providersVaultPath ?? '~/.ClawQL/vault/providers.json'}. Restart MCP clients to pick up new credentials.`
+            : 'Saved to Vault, synced the cluster Secret, and restarted ClawQL.',
+        )
 
         setVaultHydrated(false)
         setLoadingVault(true)
         setVaultLoadMessage(null)
         try {
           const h: Record<string, string> = {}
-          if (syncToken.trim() !== '') h.Authorization = `Bearer ${syncToken.trim()}`
-          const r2 = await fetch(
-            `/api/k8s/secret-env?namespace=${encodeURIComponent(namespace)}&secretName=${encodeURIComponent(secretName)}`,
-            { headers: h },
-          )
+          if (!desktopMode && syncToken.trim() !== '') h.Authorization = `Bearer ${syncToken.trim()}`
+          const reloadUrl = desktopMode
+            ? providersLoadUrl
+            : `${providersLoadUrl}?namespace=${encodeURIComponent(namespace)}&secretName=${encodeURIComponent(secretName)}`
+          const r2 = await fetch(reloadUrl, { headers: h })
           const b2 = (await r2.json().catch(() => ({}))) as { values?: Record<string, string>; error?: string }
           if (r2.ok) {
             const vault = b2.values ?? {}
@@ -342,7 +371,7 @@ export function ProviderVaultForm() {
         setMessage(err instanceof Error ? err.message : 'Request failed')
       }
     },
-    [values, vaultBaseline, namespace, secretName, deploymentName, syncToken, catalogKeys, initialValues],
+    [values, vaultBaseline, namespace, secretName, deploymentName, syncToken, catalogKeys, initialValues, desktopMode, providersLoadUrl, providersSaveUrl, runtime?.providersVaultPath],
   )
 
   const q = filter.trim().toLowerCase()
@@ -356,28 +385,47 @@ export function ProviderVaultForm() {
       <section className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-claw-panel sm:p-6">
         <h2 className="text-base font-semibold text-zinc-900 dark:text-white">Provider API keys</h2>
         <p className="mt-2 max-w-2xl text-sm text-zinc-600 dark:text-zinc-400">
-          Paste tokens from your vendor consoles (GitHub, Slack, Paperless, etc.). ClawQL stores them in{' '}
-          <strong className="font-medium text-zinc-800 dark:text-zinc-200">Vault</strong>, syncs the cluster Secret,
-          and restarts the MCP server — no <code className="rounded bg-zinc-100 px-1 dark:bg-white/10">vault</code> CLI
-          required.
+          {desktopMode ? (
+            <>
+              Paste tokens from your vendor consoles. ClawQL stores them locally in{' '}
+              <code className="rounded bg-zinc-100 px-1 dark:bg-white/10">~/.ClawQL/vault/providers.json</code>{' '}
+              (same shape as HashiCorp Vault KV). MCP loads them on startup via{' '}
+              <code className="rounded bg-zinc-100 px-1 dark:bg-white/10">clawql init</code>.
+            </>
+          ) : (
+            <>
+              Paste tokens from your vendor consoles (GitHub, Slack, Paperless, etc.). ClawQL stores them in{' '}
+              <strong className="font-medium text-zinc-800 dark:text-zinc-200">Vault</strong>, syncs the cluster Secret,
+              and restarts the MCP server — no <code className="rounded bg-zinc-100 px-1 dark:bg-white/10">vault</code>{' '}
+              CLI required.
+            </>
+          )}
         </p>
         {health ? (
           <p className="mt-3 text-xs text-zinc-600 dark:text-zinc-400">
-            <span
-              className={
-                health.kubectl ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'
-              }
-            >
-              kubectl {health.kubectl ? 'ready' : 'not found'}
-            </span>
-            {' · '}
-            <span
-              className={
-                health.syncAllowed ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'
-              }
-            >
-              save API {health.syncAllowed ? 'enabled' : 'disabled'}
-            </span>
+            {desktopMode ? (
+              <span className="text-emerald-600 dark:text-emerald-400">
+                Local vault · {runtime?.providersVaultPath ?? '~/.ClawQL/vault/providers.json'}
+              </span>
+            ) : (
+              <>
+                <span
+                  className={
+                    health.kubectl ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'
+                  }
+                >
+                  kubectl {health.kubectl ? 'ready' : 'not found'}
+                </span>
+                {' · '}
+                <span
+                  className={
+                    health.syncAllowed ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'
+                  }
+                >
+                  save API {health.syncAllowed ? 'enabled' : 'disabled'}
+                </span>
+              </>
+            )}
           </p>
         ) : (
           <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">Checking server…</p>
@@ -479,9 +527,15 @@ export function ProviderVaultForm() {
 
       <details className="rounded-xl border border-zinc-200 bg-white dark:border-white/10 dark:bg-claw-panel">
         <summary className="cursor-pointer px-4 py-3 text-sm font-medium text-zinc-700 dark:text-zinc-300 sm:px-6">
-          Advanced cluster targets
+          {desktopMode ? 'Vault location' : 'Advanced cluster targets'}
         </summary>
         <div className="border-t border-zinc-100 px-4 py-4 dark:border-white/10 sm:px-6">
+          {desktopMode ? (
+            <p className="font-mono text-xs text-zinc-600 dark:text-zinc-400">
+              {runtime?.providersVaultPath ?? '~/.ClawQL/vault/providers.json'}
+            </p>
+          ) : (
+            <>
           <div className="grid gap-4 sm:grid-cols-3">
             <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
               Namespace
@@ -528,6 +582,8 @@ export function ProviderVaultForm() {
           >
             Reload credentials
           </button>
+            </>
+          )}
         </div>
       </details>
     </form>

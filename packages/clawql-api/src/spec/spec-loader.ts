@@ -151,7 +151,7 @@ export function sanitizeOpenAPIDocument(doc: OpenAPIDoc): OpenAPIDoc {
   const normalized = normalizeWildcardResponseKeysInDoc(sanitizeOpenAPIObject(doc)) as OpenAPIDoc;
   ensureReferencedSecuritySchemesExist(normalized);
   const components = normalized.components ?? { schemas: {} };
-  const serverOverride = process.env.CLAWQL_API_BASE_URL || process.env.API_BASE_URL;
+  const serverOverride = process.env.CLAWQL_API_BASE_URL;
   const filteredServers = (normalized.servers ?? []).filter(
     (s) => typeof s?.url === "string" && s.url.trim().length > 0
   );
@@ -282,7 +282,7 @@ export function sanitizeOpenAPIObject(value: unknown): unknown {
 }
 
 function hasApiBaseUrlOverride(): boolean {
-  return !!(process.env.CLAWQL_API_BASE_URL?.trim() || process.env.API_BASE_URL?.trim());
+  return !!process.env.CLAWQL_API_BASE_URL?.trim();
 }
 
 /**
@@ -339,8 +339,8 @@ type SpecSource =
 function resolveSpecSource(): SpecSource {
   const filePath =
     process.env.CLAWQL_SPEC_PATH || process.env.OPENAPI_SPEC_PATH || process.env.OPENAPI_FILE;
-  const specUrl = process.env.CLAWQL_SPEC_URL || process.env.OPENAPI_SPEC_URL;
-  const discoveryUrl = process.env.CLAWQL_DISCOVERY_URL || process.env.GOOGLE_DISCOVERY_URL;
+  const specUrl = process.env.CLAWQL_SPEC_URL;
+  const discoveryUrl = process.env.CLAWQL_DISCOVERY_URL;
   const providerRaw = process.env.CLAWQL_PROVIDER;
 
   if (filePath) return { kind: "file", path: filePath };
@@ -621,8 +621,8 @@ export function labelFromSpecPath(relOrAbs: string): string {
 async function resolveMultiSpecItems(): Promise<ProviderGroupItem[] | null> {
   const filePath =
     process.env.CLAWQL_SPEC_PATH || process.env.OPENAPI_SPEC_PATH || process.env.OPENAPI_FILE;
-  const specUrl = process.env.CLAWQL_SPEC_URL || process.env.OPENAPI_SPEC_URL;
-  const discoveryUrl = process.env.CLAWQL_DISCOVERY_URL || process.env.GOOGLE_DISCOVERY_URL;
+  const specUrl = process.env.CLAWQL_SPEC_URL;
+  const discoveryUrl = process.env.CLAWQL_DISCOVERY_URL;
   const providerRaw = process.env.CLAWQL_PROVIDER?.trim().toLowerCase();
   const pathsEnv = process.env.CLAWQL_SPEC_PATHS?.trim();
   const bundledListEnv = process.env.CLAWQL_BUNDLED_PROVIDERS?.trim();
@@ -887,7 +887,7 @@ export function resolveBundledSelfHostedBaseUrl(specLabel?: string): string | un
 /**
  * Resolve REST base URL for the GraphQL proxy.
  * Per-provider self-hosted URLs (PAPERLESS_BASE_URL, …) win for merged `specLabel`.
- * Then CLAWQL_API_BASE_URL (or legacy API_BASE_URL), then OpenAPI `servers[0]`.
+ * Then CLAWQL_API_BASE_URL, then OpenAPI `servers[0]`.
  */
 /**
  * Base URL resolution for `execute`: uses the operation's merged `specLabel`, or
@@ -906,7 +906,7 @@ export function resolveApiBaseUrl(openapi: OpenAPIDoc, specLabel?: string): stri
   const selfHosted = resolveBundledSelfHostedBaseUrl(specLabel);
   if (selfHosted) return selfHosted;
 
-  const override = process.env.CLAWQL_API_BASE_URL || process.env.API_BASE_URL;
+  const override = process.env.CLAWQL_API_BASE_URL;
   if (override) return override.replace(/\/$/, "");
 
   const label = specLabel?.trim().toLowerCase();

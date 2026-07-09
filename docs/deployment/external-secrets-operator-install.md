@@ -251,7 +251,7 @@ helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
   --wait
 ```
 
-Bootstrap note: Helm **`secretSourcing.requireVaultBackedSecrets`** must stay **`true`** (opt-out renders fail). You still need **`envFromSecret`** / **`envFromSecrets`** pointing at a **`Secret`** that exists before pods start. Until ESO succeeds the first reconcile, create an empty/minimal **`Secret`** with the expected name (for example **`clawql-provider-env`**) so the Deployment schedules; External Secrets replaces it once Vault paths and policies are wired.
+Bootstrap note: Helm **`secretSourcing.requireVaultBackedSecrets`** defaults to **`true`**. Set **`false`** only in lab overlays. When **`true`**, you still need **`envFromSecret`** / **`envFromSecrets`** pointing at a **`Secret`** that exists before pods start.
 
 ---
 
