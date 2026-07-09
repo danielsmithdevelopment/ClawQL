@@ -8,10 +8,18 @@ Copy the block below into **Cursor**, **Claude Desktop**, or **Claude Code** for
 
 ## Recommended CLI flow (before the prompt)
 
+**One command (end-to-end):**
+
+```bash
+npx -p clawql-mcp clawql onboard --interactive
+```
+
+Or step by step:
+
 ```bash
 npx -p clawql-mcp clawql init --interactive   # ~/.ClawQL + vault/providers.json
-npx -p clawql-mcp clawql doctor
-npx -p clawql-mcp clawql mcp-config           # paste into Cursor MCP settings
+npx -p clawql-mcp clawql mcp-config --write cursor
+npx -p clawql-mcp clawql doctor --smoke
 ```
 
 Provider tokens live in **`~/.ClawQL/vault/providers.json`** (same KV shape as HashiCorp **`secret/clawql/providers`**). Memory tools use **`~/.ClawQL/Memory/`** via **`CLAWQL_OBSIDIAN_VAULT_PATH`**.
@@ -25,12 +33,11 @@ You are helping me set up ClawQL (MCP server for API search + execute over OpenA
 
 Goals:
 1. Run vault-first onboarding:
-   npx -p clawql-mcp clawql init --interactive
-   npx -p clawql-mcp clawql doctor
-   npx -p clawql-mcp clawql mcp-config
+   npx -p clawql-mcp clawql onboard --interactive
+   (or: clawql init --interactive → clawql mcp-config --write cursor → clawql doctor --smoke)
 2. Choose deployment if not using stdio: (A) local stdio (default), (B) local HTTP clawql-mcp-http, or (C) Kubernetes Helm — ask if unclear.
-3. Never put API tokens in mcp.json or git. Secrets go in ~/.ClawQL/vault/providers.json (local) or HashiCorp Vault secret/clawql/providers (K8s). Use clawql init --from-env .env to import, then remove secrets from repo .env.
-4. Configure Cursor/Claude with mcp-config output; remind me to restart the MCP client.
+3. Never put API tokens in mcp.json or git. Secrets go in ~/.ClawQL/vault/providers.json (local) or HashiCorp Vault secret/clawql/providers (K8s). Use clawql init --from-env .env to import, then remove secrets from repo .env. Add keys later with: clawql secrets set github
+4. MCP config is written to Cursor/Claude automatically by onboard; otherwise use clawql mcp-config --write cursor. Remind me to restart the MCP client.
 5. Pick ONE default-stack vendor to smoke-test with search + read-only execute (GitHub, Slack, Linear, Notion, Onyx, or Cloudflare).
 6. Confirm memory_ingest works: CLAWQL_OBSIDIAN_VAULT_PATH should be ~/.ClawQL after init.
 

@@ -8,9 +8,10 @@ import { runInit } from "./init.js";
 import { formatMcpConfig } from "./mcp-config.js";
 import { writeMcpConfigFile, type McpWriteTarget } from "./mcp-config-write.js";
 import { runSecretsList, runSecretsSet } from "./secrets-cli.js";
+import { onboardExitCode, runOnboard } from "./onboard.js";
 import { runOperatorStatus } from "./operator-cli.js";
 
-type Command = "init" | "doctor" | "mcp-config" | "secrets" | "operator" | "help";
+type Command = "init" | "doctor" | "mcp-config" | "secrets" | "onboard" | "operator" | "help";
 
 function parse(argv: string[]): {
   cmd: Command;
@@ -35,6 +36,8 @@ function parse(argv: string[]): {
     else if (a === "--write") flags.write = argv[++i] ?? "";
     else if (a.startsWith("--write=")) flags.write = a.slice("--write=".length);
     else if (a.startsWith("--write-mcp=")) flags.writeMcp = a.slice("--write-mcp=".length);
+    else if (a === "--skip-smoke") flags.skipSmoke = true;
+    else if (a === "--skip-mcp-write") flags.skipMcpWrite = true;
     else if (!a.startsWith("-")) positional.push(a);
   }
   const cmd = (positional[0] ?? "help") as Command;
@@ -53,6 +56,7 @@ function printHelp(): void {
   console.log(`ClawQL onboarding — vault-first setup (better than copying tokens into mcp.json)
 
 Usage:
+  clawql onboard [--yes] [--interactive] [--from-env .env] [--write-mcp=cursor] [--skip-smoke] [--skip-mcp-write]
   clawql init [--yes] [--interactive] [--from-env .env] [--push-vault] [--write-mcp=cursor] [--home DIR]
   clawql doctor [--verbose] [--smoke]
   clawql secrets list
@@ -62,6 +66,10 @@ Usage:
 
 operator:
   status          List ClawQLInstance CRs and tier-spec ConfigMaps (requires kubeconfig)
+
+onboard:
+  End-to-end first run: init → write MCP config (cursor) → doctor --smoke
+  Same flags as init plus --skip-smoke and --skip-mcp-write
 
 init:
   Creates ~/.ClawQL (Memory/, Dashboard/, vault/providers.json, clawql.env).
@@ -98,6 +106,22 @@ async function main(): Promise<void> {
 
   if (cmd === "help") {
     printHelp();
+    return;
+  }
+
+  if (cmd === "onboard") {
+    const writeMcp = flags.skipMcpWrite ? false : parseWriteTarget(flags.writeMcp ?? "cursor");
+    const result = await runOnboard({
+      yes: Boolean(flags.yes),
+      interactive: Boolean(flags.interactive),
+      fromEnv: typeof flags.fromEnv === "string" ? flags.fromEnv : undefined,
+      pushVault: Boolean(flags.pushVault),
+      home: typeof flags.home === "string" && flags.home ? flags.home : undefined,
+      writeMcp,
+      smoke: !flags.skipSmoke,
+      json: Boolean(flags.json),
+    });
+    process.exitCode = onboardExitCode(result);
     return;
   }
 

@@ -10,7 +10,7 @@ This document compares **Executor** (`executor.sh`) onboarding with ClawQL today
 
 ## 1. Why this spec exists
 
-ClawQL’s default install behavior changed in **6.5.0** ([#528](https://github.com/danielsmithdevelopment/ClawQL/pull/528)): bare `npx clawql-mcp` now loads an **opinionated default stack** (Cloudflare, GitHub, Slack, Linear, Notion, Onyx), not `all-providers`. Docs and first-run UX must match that model and guide users toward credentials, MCP wiring, and first `search` / `execute` calls.
+ClawQL’s default install behavior changed in **7.0.0** ([#528](https://github.com/danielsmithdevelopment/ClawQL/pull/528)): bare `npx clawql-mcp` now loads an **opinionated default stack** (Cloudflare, GitHub, Slack, Linear, Notion, Onyx), not `all-providers`. Docs and first-run UX must match that model and guide users toward credentials, MCP wiring, and first `search` / `execute` calls.
 
 Executor is a useful reference: one-line install, `doctor`, agent-bootstrap shortcuts, and a **“Set up with your agent”** prompt on their docs homepage.
 
@@ -35,14 +35,14 @@ Executor is a useful reference: one-line install, `doctor`, agent-bootstrap shor
 
 ## 3. ClawQL today (gaps)
 
-| Capability         | ClawQL today                                | Gap                                                       |
-| ------------------ | ------------------------------------------- | --------------------------------------------------------- |
-| Install            | `npm install clawql-mcp` / `npx clawql-mcp` | No curl installer; acceptable for npm ecosystem           |
-| Health             | `GET /healthz` on HTTP mode only            | No `clawql doctor` CLI; stdio users lack one command      |
-| Dashboard          | Helm `clawql-dashboard` (K8s)               | No local-first “add provider” UI for solo dev             |
-| Agent bootstrap    | Manual MCP JSON in Cursor/Claude            | No copy-paste **agent setup prompt** on docs home         |
-| First integration  | Per-provider onboarding docs                | No end-to-end walkthrough tool tying steps together       |
-| Default stack docs | Partially updated post-#528                 | README/quickstart still taught `all-providers` as default |
+| Capability         | ClawQL today                                | Gap                                                                |
+| ------------------ | ------------------------------------------- | ------------------------------------------------------------------ |
+| Install            | `npm install clawql-mcp` / `npx clawql-mcp` | No curl installer; acceptable for npm ecosystem                    |
+| Health             | `GET /healthz` on HTTP mode only            | No `clawql doctor` CLI; stdio users lack one command               |
+| Dashboard          | Helm `clawql-dashboard` (K8s)               | No local-first “add provider” UI for solo dev                      |
+| Agent bootstrap    | Manual MCP JSON in Cursor/Claude            | No copy-paste **agent setup prompt** on docs home                  |
+| First integration  | Per-provider onboarding docs                | ~~No end-to-end walkthrough tool~~ → **`clawql onboard`** (Tier 2) |
+| Default stack docs | Partially updated post-#528                 | README/quickstart still taught `all-providers` as default          |
 
 **Existing assets to reuse:**
 
@@ -55,20 +55,27 @@ Executor is a useful reference: one-line install, `doctor`, agent-bootstrap shor
 
 ## 4. Proposed ClawQL init walkthrough (phased)
 
-### Phase 1 — Docs + prompt + doctor (this release)
+### Phase 1 — Docs + prompt + doctor (shipped)
 
 1. **Docs refresh:** Default stack narrative everywhere “first run” is taught; `all-providers` labeled explicit opt-in.
 2. **[Agent setup prompt](./agent-setup-prompt.md)** + website [`/agent-setup`](https://docs.clawql.com/agent-setup): copy-paste block for Cursor/Claude to run install → MCP config → env for one vendor → first `search` / `execute`.
-3. **`scripts/dev/clawql-doctor.sh`:** Node on PATH, `clawql-mcp` resolvable, optional HTTP `/healthz`, common auth env hints for default-stack vendors.
-4. **Migration note:** Pre-6.5.0 “no env = all-providers” → post-6.5.0 opinionated stack.
+3. **`clawql doctor`** (replaces `scripts/dev/clawql-doctor.sh` for most checks).
+4. **Migration note:** Pre-7.0 “no env = all-providers” → post-7.0 opinionated stack.
 
-### Phase 2 — CLI wrapper (shipped)
+### Phase 2 — CLI wrapper (shipped — Tier 1)
 
-- npm bin **`clawql`** — **`init`**, **`doctor`**, **`mcp-config`**
+- npm bin **`clawql`** — **`init`**, **`doctor`**, **`mcp-config`**, **`secrets`**
 - **`clawql init`** — `~/.ClawQL` scaffold, **`CLAWQL_OBSIDIAN_VAULT_PATH`**, interactive default-stack tokens → **`vault/providers.json`**
 - **`clawql init --from-env`** / **`--push-vault`** — import + HashiCorp sync
+- **`clawql doctor --smoke`**, **`clawql mcp-config --write cursor`**, hidden token input, Vault auto-detect
 - MCP **`load-env.ts`** loads local provider vault at startup (vault-first secrets)
 - Guide: [local-provider-vault.md](./local-provider-vault.md)
+
+### Phase 2b — End-to-end onboard (shipped — Tier 2)
+
+- **`clawql onboard --interactive`** — chains init → MCP config write → doctor smoke
+- Docs + migration guide updated for **7.0.0**
+- Agent-setup prompt uses onboard as the primary path
 
 ### Phase 3 — Guided UI (future, optional)
 

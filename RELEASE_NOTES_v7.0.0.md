@@ -31,10 +31,11 @@ Helm **`clawql-mcp`** chart may still default to **`all-providers`** for full ID
 
 ---
 
-## Onboarding CLI (Tier 1)
+## Onboarding CLI (Tier 1 + Tier 2)
 
 | Command                               | Purpose                                                             |
 | ------------------------------------- | ------------------------------------------------------------------- |
+| `clawql onboard --interactive`        | **Tier 2** — init + MCP config write + doctor smoke in one flow     |
 | `clawql init --interactive`           | Scaffold `~/.ClawQL`, hidden token prompts → `vault/providers.json` |
 | `clawql secrets list` / `secrets set` | Manage provider keys without editing JSON by hand                   |
 | `clawql doctor --smoke`               | MCP `tools/list` + `search` (+ optional `execute`)                  |
@@ -65,7 +66,7 @@ Docs: [Agent setup](docs/getting-started/agent-setup-prompt.md), [local provider
 ## Upgrade checklist
 
 1. Read [migration](https://docs.clawql.com/resources/migration) if you relied on implicit **`all-providers`** on bare npm.
-2. Run `npx -p clawql-mcp clawql init --interactive` and `clawql mcp-config --write cursor`.
+2. Run `npx -p clawql-mcp clawql onboard --interactive` (or `clawql init --interactive` + `mcp-config --write cursor`).
 3. Verify: `clawql doctor --smoke`.
 4. Update **`CLAWQL_*`** env if you need Google/AWS/IDP vendors in local stdio mode.
 

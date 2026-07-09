@@ -15,6 +15,14 @@ You can be up and running in a few minutes with **`npx`**—no global install re
   specs under **`providers/`**. That is intentional for offline discovery.
 </Note>
 
+## 0. First-time setup (recommended)
+
+```bash
+npx -p clawql-mcp clawql onboard --interactive
+```
+
+Creates **`~/.ClawQL`**, writes Cursor MCP config, and runs a smoke **`search`**. Provider secrets go in **`vault/providers.json`** — not in `mcp.json`.
+
 ## 1. Start the MCP server
 
 **Default stack** (Cloudflare, GitHub, Slack, Linear, Notion, Onyx):
@@ -30,8 +38,8 @@ CLAWQL_PROVIDER=all-providers npx -p clawql-mcp clawql-mcp
 ```
 
 <Note>
-  New to MCP wiring? Use the [Agent setup](/agent-setup) copy-paste prompt in
-  Cursor or Claude.
+  New to MCP wiring? Run **`clawql onboard --interactive`** or use the [Agent
+  setup](/agent-setup) copy-paste prompt in Cursor or Claude.
 </Note>
 
 ## 2. Connect your client
