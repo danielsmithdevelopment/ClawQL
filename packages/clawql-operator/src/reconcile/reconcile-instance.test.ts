@@ -1,11 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { reconcileClawqlInstance, type ClawQLInstanceObject } from "./reconcile-instance.js";
-import {
-  CLAWQL_INSTANCE_AUTH_EXPECTATIONS_KEY,
-} from "./auth-expectations.js";
-import {
-  CLAWQL_INSTANCE_TIER_SPEC_CONFIGMAP_KEY,
-} from "./tier-spec-configmap.js";
+import { CLAWQL_INSTANCE_AUTH_EXPECTATIONS_KEY } from "./auth-expectations.js";
+import { CLAWQL_INSTANCE_TIER_SPEC_CONFIGMAP_KEY } from "./tier-spec-configmap.js";
 
 const defaultStackSecret = {
   CLAWQL_GITHUB_TOKEN: "ghp",
@@ -45,7 +41,9 @@ describe("reconcileClawqlInstance", () => {
     const body = create.mock.calls[0]?.[1] as { data: Record<string, string> };
     expect(body.data[CLAWQL_INSTANCE_TIER_SPEC_CONFIGMAP_KEY]).toContain('"memory"');
     expect(body.data[CLAWQL_INSTANCE_AUTH_EXPECTATIONS_KEY]).toContain("githubToken");
-    const secretsCondition = result.status.conditions?.find((c) => c.type === "ProviderSecretsReady");
+    const secretsCondition = result.status.conditions?.find(
+      (c) => c.type === "ProviderSecretsReady"
+    );
     expect(secretsCondition?.status).toBe("True");
   });
 
@@ -63,7 +61,9 @@ describe("reconcileClawqlInstance", () => {
       replaceNamespacedConfigMap: vi.fn(),
     });
     expect(result.status.phase).toBe("Degraded");
-    const secretsCondition = result.status.conditions?.find((c) => c.type === "ProviderSecretsReady");
+    const secretsCondition = result.status.conditions?.find(
+      (c) => c.type === "ProviderSecretsReady"
+    );
     expect(secretsCondition?.status).toBe("False");
   });
 

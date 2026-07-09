@@ -8,13 +8,13 @@
 
 ## What changed in 7.0
 
-| Area | 6.4.x and earlier | 7.0.0 |
-|------|-------------------|-------|
+| Area                       | 6.4.x and earlier                 | 7.0.0                                                                          |
+| -------------------------- | --------------------------------- | ------------------------------------------------------------------------------ |
 | **Default provider merge** | Often implied **`all-providers`** | **Opinionated default stack:** Cloudflare, GitHub, Slack, Linear, Notion, Onyx |
-| **Helm `provider` value** | **`all-providers`** | **`default`** (same as npm) |
-| **Provider secrets** | Mixed `.env` / ad-hoc Secrets | **Vault-backed by default** (`secretSourcing.requireVaultBackedSecrets: true`) |
-| **Legacy env names** | Some `API_BASE_URL` aliases | **`CLAWQL_*` only** |
-| **Onboarding** | Manual MCP JSON | **`clawql onboard`** / **`clawql init`** + local vault |
+| **Helm `provider` value**  | **`all-providers`**               | **`default`** (same as npm)                                                    |
+| **Provider secrets**       | Mixed `.env` / ad-hoc Secrets     | **Vault-backed by default** (`secretSourcing.requireVaultBackedSecrets: true`) |
+| **Legacy env names**       | Some `API_BASE_URL` aliases       | **`CLAWQL_*` only**                                                            |
+| **Onboarding**             | Manual MCP JSON                   | **`clawql onboard`** / **`clawql init`** + local vault                         |
 
 ---
 
@@ -55,7 +55,7 @@ Production values require a Kubernetes Secret reference synced from HashiCorp Va
 ```yaml
 envFromSecret: clawql-provider-env
 secretSourcing:
-  requireVaultBackedSecrets: true   # default — set false only for lab overlays
+  requireVaultBackedSecrets: true # default — set false only for lab overlays
 ```
 
 Before first pod schedule:
@@ -78,13 +78,13 @@ You must then supply tokens via **`extraEnv`** or another supported pattern — 
 
 When documents are **off** (`enableDocuments: false` or operator **`documents.enabled: false`**), populate at minimum:
 
-| Vault property | Env key |
-|----------------|---------|
-| `githubToken` | `CLAWQL_GITHUB_TOKEN` |
-| `slackToken` | `CLAWQL_SLACK_TOKEN` |
-| `linearApiKey` | `LINEAR_API_KEY` |
-| `notionApiToken` | `NOTION_API_TOKEN` |
-| `onyxApiToken` | `ONYX_API_TOKEN` |
+| Vault property       | Env key                       |
+| -------------------- | ----------------------------- |
+| `githubToken`        | `CLAWQL_GITHUB_TOKEN`         |
+| `slackToken`         | `CLAWQL_SLACK_TOKEN`          |
+| `linearApiKey`       | `LINEAR_API_KEY`              |
+| `notionApiToken`     | `NOTION_API_TOKEN`            |
+| `onyxApiToken`       | `ONYX_API_TOKEN`              |
 | `cloudflareApiToken` | `CLAWQL_CLOUDFLARE_API_TOKEN` |
 
 When **documents / IDP** are on, also set Paperless, Stirling, Docling, and Nextcloud keys — see the full catalog in [vault-provider-secrets.md](../deployment/vault-provider-secrets.md).
@@ -110,11 +110,11 @@ Point **`spec.mcp.providerSecretName`** at your synced Secret if not using **`cl
 
 ## Removed aliases (update your env)
 
-| Removed | Use instead |
-|---------|-------------|
-| `API_BASE_URL` | `CLAWQL_API_BASE_URL` |
-| `OPENAPI_SPEC_URL` | `CLAWQL_SPEC_URL` |
-| `GOOGLE_DISCOVERY_URL` | `CLAWQL_DISCOVERY_URL` |
+| Removed                        | Use instead              |
+| ------------------------------ | ------------------------ |
+| `API_BASE_URL`                 | `CLAWQL_API_BASE_URL`    |
+| `OPENAPI_SPEC_URL`             | `CLAWQL_SPEC_URL`        |
+| `GOOGLE_DISCOVERY_URL`         | `CLAWQL_DISCOVERY_URL`   |
 | `CLAWQL_PROVIDER=google-top50` | `CLAWQL_PROVIDER=google` |
 
 ---

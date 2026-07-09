@@ -6,9 +6,9 @@ import { Note } from '@/components/mdx'
 Upgrade paths for ClawQL MCP server versions and teams moving from ad-hoc MCP integrations. {{ className: 'lead' }}
 
 <Note>
-  For **7.0.0** requirements (Vault, Helm defaults, operator auth), see the
-  [7.0 setup guide](/getting-started/clawql-7-setup-guide). Helm Day-2 steps
-  live in the [Deployment & Operations Guide](/deployment/operations-guide).
+  For **7.0.0** requirements (Vault, Helm defaults, operator auth), see the [7.0
+  setup guide](/getting-started/clawql-7-setup-guide). Helm Day-2 steps live in
+  the [Deployment & Operations Guide](/deployment/operations-guide).
 </Note>
 
 ## Upgrading to 7.0.0
@@ -41,11 +41,11 @@ Local stdio: use **`clawql init`** → **`~/.ClawQL/vault/providers.json`** — 
 
 ### Removed legacy env aliases
 
-| Removed | Use |
-|---------|-----|
-| `API_BASE_URL` | `CLAWQL_API_BASE_URL` |
-| `OPENAPI_SPEC_URL` | `CLAWQL_SPEC_URL` |
-| `GOOGLE_DISCOVERY_URL` | `CLAWQL_DISCOVERY_URL` |
+| Removed                        | Use                      |
+| ------------------------------ | ------------------------ |
+| `API_BASE_URL`                 | `CLAWQL_API_BASE_URL`    |
+| `OPENAPI_SPEC_URL`             | `CLAWQL_SPEC_URL`        |
+| `GOOGLE_DISCOVERY_URL`         | `CLAWQL_DISCOVERY_URL`   |
 | `CLAWQL_PROVIDER=google-top50` | `CLAWQL_PROVIDER=google` |
 
 ### Operator auth reconciliation

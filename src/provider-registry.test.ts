@@ -79,7 +79,9 @@ describe("provider-registry", () => {
   });
 
   it("rejects removed google-top50 alias", async () => {
-    await expect(resolveBundledProviderGroup("google-top50")).rejects.toThrow(/google-top50 preset id was removed/);
+    await expect(resolveBundledProviderGroup("google-top50")).rejects.toThrow(
+      /google-top50 preset id was removed/
+    );
   });
 
   it("returns undefined for unknown group", async () => {

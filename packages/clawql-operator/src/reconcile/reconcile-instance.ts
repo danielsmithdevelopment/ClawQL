@@ -39,10 +39,7 @@ export type ReconcileCoreV1 = {
     name: string,
     namespace: string
   ): Promise<{ data?: Record<string, string> }>;
-  readNamespacedSecret(
-    name: string,
-    namespace: string
-  ): Promise<{ data?: Record<string, string> }>;
+  readNamespacedSecret(name: string, namespace: string): Promise<{ data?: Record<string, string> }>;
   createNamespacedConfigMap(
     namespace: string,
     body: {
@@ -172,7 +169,11 @@ export async function reconcileClawqlInstance(
     {
       type: "ProviderSecretsReady",
       status: authStatus.ready ? "True" : "False",
-      reason: authStatus.ready ? "AllKeysPresent" : authStatus.secretExists ? "MissingKeys" : "SecretNotFound",
+      reason: authStatus.ready
+        ? "AllKeysPresent"
+        : authStatus.secretExists
+          ? "MissingKeys"
+          : "SecretNotFound",
       message: authStatus.ready
         ? providerSecretName
         : authStatus.missing.length > 0
@@ -202,10 +203,7 @@ async function reconcileProviderSecrets(
   core: ReconcileCoreV1
 ) {
   try {
-    const secret = await core.readNamespacedSecret(
-      expectations.providerSecretName,
-      namespace
-    );
+    const secret = await core.readNamespacedSecret(expectations.providerSecretName, namespace);
     return checkProviderSecret(secret.data, expectations);
   } catch (err: unknown) {
     const statusCode =

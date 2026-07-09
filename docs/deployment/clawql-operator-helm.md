@@ -72,10 +72,10 @@ Explicit `spec` fields override preset defaults.
 
 The operator publishes **`authExpectations.json`** in the tier-spec ConfigMap and sets **`ProviderSecretsReady`** on **`ClawQLInstance` status`:
 
-| `documents.enabled` | Required vault keys |
-|-------------------|---------------------|
-| `false` | Default stack only (GitHub, Slack, Linear, Notion, Onyx, Cloudflare) |
-| `true` | Default stack + all IDP keys (Paperless, Stirling, Docling, Nextcloud, …) |
+| `documents.enabled` | Required vault keys                                                       |
+| ------------------- | ------------------------------------------------------------------------- |
+| `false`             | Default stack only (GitHub, Slack, Linear, Notion, Onyx, Cloudflare)      |
+| `true`              | Default stack + all IDP keys (Paperless, Stirling, Docling, Nextcloud, …) |
 
 Secret name defaults to **`clawql-provider-env`**; override with **`spec.mcp.providerSecretName`**.
 

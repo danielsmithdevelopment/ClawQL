@@ -14,10 +14,10 @@
 
 ## Default bundled stack (breaking)
 
-| Before (≤6.4.x) | After (7.0.0) |
-|-----------------|---------------|
-| npm: no env → growing implicit merge | **Default stack** (6 vendors) |
-| Helm: **`all-providers`** | Helm: **`default`** (npm parity) |
+| Before (≤6.4.x)                      | After (7.0.0)                    |
+| ------------------------------------ | -------------------------------- |
+| npm: no env → growing implicit merge | **Default stack** (6 vendors)    |
+| Helm: **`all-providers`**            | Helm: **`default`** (npm parity) |
 
 **Restore full merge:**
 
@@ -43,25 +43,25 @@ helm upgrade --install clawql ./charts/clawql-mcp --set provider=all-providers
 
 ## Legacy aliases removed
 
-| Removed | Replacement |
-|---------|-------------|
-| `API_BASE_URL` | `CLAWQL_API_BASE_URL` |
-| `OPENAPI_SPEC_URL` | `CLAWQL_SPEC_URL` |
-| `GOOGLE_DISCOVERY_URL` | `CLAWQL_DISCOVERY_URL` |
-| `google-top50` preset | `CLAWQL_PROVIDER=google` |
+| Removed                | Replacement              |
+| ---------------------- | ------------------------ |
+| `API_BASE_URL`         | `CLAWQL_API_BASE_URL`    |
+| `OPENAPI_SPEC_URL`     | `CLAWQL_SPEC_URL`        |
+| `GOOGLE_DISCOVERY_URL` | `CLAWQL_DISCOVERY_URL`   |
+| `google-top50` preset  | `CLAWQL_PROVIDER=google` |
 
 ---
 
 ## Onboarding CLI (Tier 1 + Tier 2)
 
-| Command | Purpose |
-|---------|---------|
-| `clawql onboard --interactive` | End-to-end init + MCP config + doctor smoke |
-| `clawql init --interactive` | Scaffold `~/.ClawQL` + `vault/providers.json` |
-| `clawql secrets list` / `secrets set` | Manage provider keys |
-| `clawql doctor --smoke` | MCP `tools/list` + `search` |
-| `clawql mcp-config --write cursor` | Merge MCP JSON into Cursor / Claude Desktop |
-| `clawql operator status` | Kubernetes: ClawQLInstance + tier-spec health |
+| Command                               | Purpose                                       |
+| ------------------------------------- | --------------------------------------------- |
+| `clawql onboard --interactive`        | End-to-end init + MCP config + doctor smoke   |
+| `clawql init --interactive`           | Scaffold `~/.ClawQL` + `vault/providers.json` |
+| `clawql secrets list` / `secrets set` | Manage provider keys                          |
+| `clawql doctor --smoke`               | MCP `tools/list` + `search`                   |
+| `clawql mcp-config --write cursor`    | Merge MCP JSON into Cursor / Claude Desktop   |
+| `clawql operator status`              | Kubernetes: ClawQLInstance + tier-spec health |
 
 ---
 
@@ -84,10 +84,10 @@ Docling, LangExtract, IDP pipeline runner, NATS/KEDA worker, Langfuse→Ouroboro
 
 ## Helm charts
 
-| Chart | Chart.version | appVersion |
-|-------|---------------|------------|
-| `charts/clawql-mcp` | `0.7.0` | `7.0.0` |
-| `charts/clawql-operator` | `0.2.0` | `7.0.0` |
+| Chart                    | Chart.version | appVersion |
+| ------------------------ | ------------- | ---------- |
+| `charts/clawql-mcp`      | `0.7.0`       | `7.0.0`    |
+| `charts/clawql-operator` | `0.2.0`       | `7.0.0`    |
 
 ---
 
