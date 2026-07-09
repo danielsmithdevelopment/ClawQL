@@ -38,7 +38,9 @@ export async function readManifestFile(manifestPath: string): Promise<ReleaseMan
   return JSON.parse(raw) as ReleaseManifestV01;
 }
 
-export async function buildReleaseManifest(options: CollectOptions & { copyArtifacts?: boolean }): Promise<{
+export async function buildReleaseManifest(
+  options: CollectOptions & { copyArtifacts?: boolean }
+): Promise<{
   manifest: ReleaseManifestV01;
   bundleDir: string;
   manifestPath: string;

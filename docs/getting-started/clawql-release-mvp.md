@@ -18,13 +18,13 @@ clawql release verify releases/v7.0.0/manifest.json
 
 ## What gets recorded
 
-| Field | Source |
-|-------|--------|
-| `repository.commit` | `git rev-parse HEAD` |
-| `artifacts.sbom` | SHA-256 of CycloneDX file |
-| `artifacts.npm` | SHA-256 of `npm pack` tarball |
-| `images.*` | GHCR ref + `sha256:` digest |
-| `merkleRoot` | Merkle tree over all artifact/image leaves |
+| Field               | Source                                     |
+| ------------------- | ------------------------------------------ |
+| `repository.commit` | `git rev-parse HEAD`                       |
+| `artifacts.sbom`    | SHA-256 of CycloneDX file                  |
+| `artifacts.npm`     | SHA-256 of `npm pack` tarball              |
+| `images.*`          | GHCR ref + `sha256:` digest                |
+| `merkleRoot`        | Merkle tree over all artifact/image leaves |
 
 ## CI
 

@@ -15,7 +15,8 @@ export function merkleRootFromLeaves(leaves: MerkleLeafInput[]): {
 }
 
 export function leafHashForReleaseArtifact(id: string, sha256: string): string {
-  return leafHash(id.startsWith("release/") ? id : `release/${id}`, sha256.replace(/^sha256:/i, "")).toString(
-    "hex"
-  );
+  return leafHash(
+    id.startsWith("release/") ? id : `release/${id}`,
+    sha256.replace(/^sha256:/i, "")
+  ).toString("hex");
 }

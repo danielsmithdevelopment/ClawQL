@@ -19,11 +19,7 @@ export function readGitHead(rootDir: string): GitHeadInfo {
   };
 }
 
-function runGit(
-  cwd: string,
-  args: string[],
-  opts: { allowFailure?: boolean } = {}
-): string {
+function runGit(cwd: string, args: string[], opts: { allowFailure?: boolean } = {}): string {
   const r = spawnSync("git", args, { cwd, encoding: "utf8" });
   if (r.status !== 0 && !opts.allowFailure) {
     throw new Error(`git ${args.join(" ")} failed: ${r.stderr || r.stdout}`);

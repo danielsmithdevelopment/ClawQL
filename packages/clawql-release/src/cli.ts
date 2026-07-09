@@ -45,7 +45,9 @@ function parseArgs(argv: string[]): {
     else if (a === "--image-digests-file") flags.imageDigestsFile = argv[++i] ?? "";
     else if (a.startsWith("--image-digest=")) {
       const prev = (flags.imageDigest as string | undefined) ?? "";
-      flags.imageDigest = prev ? `${prev},${a.slice("--image-digest=".length)}` : a.slice("--image-digest=".length);
+      flags.imageDigest = prev
+        ? `${prev},${a.slice("--image-digest=".length)}`
+        : a.slice("--image-digest=".length);
     } else if (a === "--image-digest") {
       const v = argv[++i] ?? "";
       const prev = (flags.imageDigest as string | undefined) ?? "";
@@ -61,7 +63,10 @@ function parseArgs(argv: string[]): {
 function parseImageDigests(flags: Record<string, string | boolean>): Record<string, string> {
   const out: Record<string, string> = {};
   const inline = typeof flags.imageDigest === "string" ? flags.imageDigest : "";
-  for (const part of inline.split(",").map((s) => s.trim()).filter(Boolean)) {
+  for (const part of inline
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean)) {
     const eq = part.indexOf("=");
     if (eq <= 0) continue;
     out[part.slice(0, eq).trim()] = part.slice(eq + 1).trim();

@@ -56,20 +56,22 @@ function attachGitHubRelease(
         "--notes",
         `Immutable release manifest (Layer 0 MVP).\n\nMerkle root: \`${merkleRoot}\``,
       ],
-      { cwd: rootDir, encoding: "utf8",
-        stdio: "pipe" }
+      { cwd: rootDir, encoding: "utf8", stdio: "pipe" }
     );
     if (createRel.status !== 0) {
-      console.error("[clawql-release] gh release create failed:", createRel.stderr || createRel.stdout);
+      console.error(
+        "[clawql-release] gh release create failed:",
+        createRel.stderr || createRel.stdout
+      );
       return undefined;
     }
   }
 
-  const upload = spawnSync(
-    "gh",
-    ["release", "upload", tag, manifestPath, "--clobber"],
-    { cwd: rootDir, encoding: "utf8", stdio: "pipe" }
-  );
+  const upload = spawnSync("gh", ["release", "upload", tag, manifestPath, "--clobber"], {
+    cwd: rootDir,
+    encoding: "utf8",
+    stdio: "pipe",
+  });
   if (upload.status !== 0) {
     console.error("[clawql-release] gh release upload failed:", upload.stderr || upload.stdout);
   }

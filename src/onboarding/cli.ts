@@ -338,9 +338,7 @@ async function main(): Promise<void> {
       process.exitCode = await runReleaseVerify(target);
       return;
     }
-    console.error(
-      "Usage: clawql release init | collect | manifest | publish | verify <path>"
-    );
+    console.error("Usage: clawql release init | collect | manifest | publish | verify <path>");
     process.exitCode = 1;
     return;
   }

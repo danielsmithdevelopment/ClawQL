@@ -35,7 +35,10 @@ export async function readReleaseConfig(rootDir: string): Promise<ReleaseConfigV
   }
 }
 
-export async function writeReleaseConfig(rootDir: string, config?: ReleaseConfigV1): Promise<string> {
+export async function writeReleaseConfig(
+  rootDir: string,
+  config?: ReleaseConfigV1
+): Promise<string> {
   const path = releaseConfigPath(rootDir);
   await mkdir(join(rootDir, ".clawql"), { recursive: true });
   const out = config ?? DEFAULT_RELEASE_CONFIG;
