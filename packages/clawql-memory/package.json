@@ -99,14 +99,14 @@
   },
   "dependencies": {
     "clawql-core": "file:../clawql-core",
-    "effect": "3.21.2",
+    "effect": "^3.21.4",
     "zod": "4.3.6",
     "clawql-api": "file:../clawql-api",
     "pg": "^8.21.0",
     "sql.js": "^1.14.1"
   },
   "devDependencies": {
-    "@types/node": "^22.0.0",
+    "@types/node": "^26.1.1",
     "@types/pg": "^8.20.0",
     "@types/sql.js": "^1.4.11",
     "tsup": "^8.3.0",
