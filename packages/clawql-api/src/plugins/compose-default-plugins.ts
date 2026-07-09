@@ -1,9 +1,6 @@
 import type { Plugin } from "clawql-core";
 import { defaultPlugins } from "./panguard-proxy-plugin.js";
-import {
-  createPresidioGatewayPlugin,
-  presidioPluginEnabled,
-} from "./presidio-gateway-plugin.js";
+import { createPresidioGatewayPlugin, presidioPluginEnabled } from "./presidio-gateway-plugin.js";
 
 /**
  * Default sync plugins for `createClawQLApi()` — Panguard proxy + optional Presidio.

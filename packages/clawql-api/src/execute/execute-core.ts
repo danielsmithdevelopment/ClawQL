@@ -117,7 +117,9 @@ export async function executeClawqlOperation(
         })
       );
     }
-    return await textContent(JSON.stringify(projectRestByFields(fallback.data, outputFields), null, 2));
+    return await textContent(
+      JSON.stringify(projectRestByFields(fallback.data, outputFields), null, 2)
+    );
   }
 
   if (op.requestBody && op.requestBodyContentType?.toLowerCase() === "application/octet-stream") {
@@ -150,7 +152,9 @@ export async function executeClawqlOperation(
     if (!inProc.ok) {
       throw new Error(inProc.error);
     }
-    return await textContent(JSON.stringify(projectRestByFields(inProc.data, outputFields), null, 2));
+    return await textContent(
+      JSON.stringify(projectRestByFields(inProc.data, outputFields), null, 2)
+    );
   } catch (err: unknown) {
     const fallback = await executeRestOperation(op as Operation, args, openapiForOp);
     if (!fallback.ok) {
@@ -163,6 +167,8 @@ export async function executeClawqlOperation(
         })
       );
     }
-    return await textContent(JSON.stringify(projectRestByFields(fallback.data, outputFields), null, 2));
+    return await textContent(
+      JSON.stringify(projectRestByFields(fallback.data, outputFields), null, 2)
+    );
   }
 }

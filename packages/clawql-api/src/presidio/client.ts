@@ -23,8 +23,7 @@ export function presidioEnabled(): boolean {
 
 export function loadPresidioConfig(): PresidioConfig | null {
   if (!presidioEnabled()) return null;
-  const analyzerUrl =
-    process.env.CLAWQL_PRESIDIO_ANALYZER_URL?.trim() ?? "http://127.0.0.1:3000";
+  const analyzerUrl = process.env.CLAWQL_PRESIDIO_ANALYZER_URL?.trim() ?? "http://127.0.0.1:3000";
   const anonymizerUrl =
     process.env.CLAWQL_PRESIDIO_ANONYMIZER_URL?.trim() ?? "http://127.0.0.1:3001";
   const failureRaw = process.env.CLAWQL_PRESIDIO_FAILURE_POLICY?.trim().toLowerCase();

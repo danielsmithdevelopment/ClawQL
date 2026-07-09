@@ -38,9 +38,12 @@ describe("presidio client", () => {
       "fetch",
       vi.fn(async (url: string) => {
         if (url.endsWith("/analyze")) {
-          return new Response(JSON.stringify([{ entity_type: "PERSON", start: 0, end: 4, score: 0.9 }]), {
-            status: 200,
-          });
+          return new Response(
+            JSON.stringify([{ entity_type: "PERSON", start: 0, end: 4, score: 0.9 }]),
+            {
+              status: 200,
+            }
+          );
         }
         return new Response(JSON.stringify({ text: "<REDACTED>" }), { status: 200 });
       })

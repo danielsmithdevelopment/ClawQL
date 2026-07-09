@@ -86,17 +86,17 @@ Custom sources persist in **`~/.ClawQL/sources.json`** and merge into **`search`
 
 ## Onboarding CLI (Tier 1 + Tier 2)
 
-| Command                                           | Purpose                                       |
-| ------------------------------------------------- | --------------------------------------------- |
-| `clawql onboard --interactive`                    | End-to-end init + MCP config + doctor smoke   |
-| `clawql init --interactive`                       | Scaffold `~/.ClawQL` + `vault/providers.json` |
-| `clawql secrets list` / `secrets set`             | Manage provider keys                          |
-| `clawql sources list` / `sources add`             | Custom integrations from URL                  |
+| Command                                           | Purpose                                                                     |
+| ------------------------------------------------- | --------------------------------------------------------------------------- |
+| `clawql onboard --interactive`                    | End-to-end init + MCP config + doctor smoke                                 |
+| `clawql init --interactive`                       | Scaffold `~/.ClawQL` + `vault/providers.json`                               |
+| `clawql secrets list` / `secrets set`             | Manage provider keys                                                        |
+| `clawql sources list` / `sources add`             | Custom integrations from URL                                                |
 | `clawql doctor --smoke`                           | Release manifest verify (when bundle present) + MCP `tools/list` + `search` |
-| `clawql mcp-config --write cursor`                | Merge MCP JSON into Cursor / Claude Desktop   |
-| `clawql release publish`                          | Immutable manifest (Layer 0 MVP)              |
-| `clawql claude` / `codex` / `cursor` / `opencode` | Harness launch with MCP pre-wired             |
-| `clawql operator status`                          | Kubernetes: ClawQLInstance + tier-spec health |
+| `clawql mcp-config --write cursor`                | Merge MCP JSON into Cursor / Claude Desktop                                 |
+| `clawql release publish`                          | Immutable manifest (Layer 0 MVP)                                            |
+| `clawql claude` / `codex` / `cursor` / `opencode` | Harness launch with MCP pre-wired                                           |
+| `clawql operator status`                          | Kubernetes: ClawQLInstance + tier-spec health                               |
 
 ---
 

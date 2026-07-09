@@ -22,8 +22,8 @@ ClawQL is under active development. Most of what this document describes is not 
 | `clawql-operator`          | 🚧 Scaffold shipped (7.0) — CRD, tier-spec, layer composition; full operator planned                                                                      |
 | `clawql-release`           | 🚧 MVP shipped (7.0) — manifest collect/verify/publish; Arweave/Rift roadmap                                                                              |
 | `mcp-grpc-transport`       | ✅ Shipped                                                                                                                                                |
-| `clawql-auth`              | ✅ Shipped — gateway `noAuth`/`apiKey`, ATR claims, provider headers                                                                                    |
-| `clawql-pageindex`         | ✅ Shipped — MIT package + `pageindex_*` MCP tools (opt-out: `CLAWQL_ENABLE_PAGEINDEX=0`)                                                               |
+| `clawql-auth`              | ✅ Shipped — gateway `noAuth`/`apiKey`, ATR claims, provider headers                                                                                      |
+| `clawql-pageindex`         | ✅ Shipped — MIT package + `pageindex_*` MCP tools (opt-out: `CLAWQL_ENABLE_PAGEINDEX=0`)                                                                 |
 | `clawql-data`              | 📋 Planned                                                                                                                                                |
 | `clawql-telemetry`         | 📋 Planned                                                                                                                                                |
 | `clawql-printingpress`     | 📋 Planned                                                                                                                                                |
