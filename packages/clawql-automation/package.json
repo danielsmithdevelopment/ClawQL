@@ -1,6 +1,6 @@
 {
   "name": "clawql-automation",
-  "version": "0.0.1",
+  "version": "7.0.0",
   "description": "ClawQL automation: schedule worker + Slack notify (#307 order 6)",
   "license": "Apache-2.0",
   "type": "module",
@@ -89,9 +89,9 @@
   },
   "dependencies": {
     "@kubernetes/client-node": "^1.3.0",
-    "clawql-api": "file:../clawql-api",
-    "clawql-core": "file:../clawql-core",
-    "clawql-memory": "file:../clawql-memory",
+    "clawql-api": "7.0.0",
+    "clawql-core": "7.0.0",
+    "clawql-memory": "7.0.0",
     "effect": "^3.21.4",
     "nats": "^2.29.3",
     "sql.js": "^1.14.1",
@@ -123,5 +123,8 @@
     "schedule",
     "notify",
     "mcp"
-  ]
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }

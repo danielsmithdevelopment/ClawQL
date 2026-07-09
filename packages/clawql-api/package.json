@@ -1,6 +1,6 @@
 {
   "name": "clawql-api",
-  "version": "0.0.1",
+  "version": "7.0.0",
   "description": "ClawQL composition root: plugin registry, search/execute Effect pipelines (#308)",
   "license": "Apache-2.0",
   "type": "module",
@@ -35,8 +35,8 @@
     "@grpc/grpc-js": "^1.14.4",
     "@grpc/proto-loader": "^0.8.1",
     "@omnigraph/openapi": "^0.109.51",
-    "clawql-auth": "file:../clawql-auth",
-    "clawql-core": "file:../clawql-core",
+    "clawql-auth": "7.0.0",
+    "clawql-core": "7.0.0",
     "effect": "^3.21.4",
     "graphql": "^16.14.0",
     "@modelcontextprotocol/sdk": "^1.29.0",
@@ -70,5 +70,8 @@
     "mcp",
     "api",
     "plugin"
-  ]
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }

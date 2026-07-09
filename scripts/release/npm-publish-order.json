@@ -1,0 +1,23 @@
+{
+  "description": "Topological publish order for clawql-* workspace packages. Publish each row before the next; clawql-mcp is last.",
+  "packages": [
+    "clawql-core",
+    "clawql-auth",
+    "clawql-pageindex",
+    "clawql-api",
+    "clawql-memory",
+    "clawql-release",
+    "clawql-sandbox",
+    "clawql-documents",
+    "clawql-automation",
+    "clawql-ouroboros",
+    "clawql-operator",
+    "clawql-mcp"
+  ],
+  "notes": [
+    "mcp-grpc-transport and panguard-mcp-bridge publish on their own cadence.",
+    "clawql-telemetry is not yet a package (see #313).",
+    "npm publish replaces workspace:* with concrete versions in published package.json.",
+    "Monorepo dev uses matching 7.0.0 semver; npm workspaces link packages locally."
+  ]
+}

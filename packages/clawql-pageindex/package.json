@@ -1,6 +1,6 @@
 {
   "name": "clawql-pageindex",
-  "version": "0.0.1",
+  "version": "7.0.0",
   "description": "Standalone MIT vectorless hierarchical document indexing for ClawQL Memory 2.0",
   "license": "MIT",
   "type": "module",
@@ -53,5 +53,8 @@
     "pageindex",
     "vectorless",
     "memory"
-  ]
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }

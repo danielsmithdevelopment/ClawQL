@@ -9,12 +9,15 @@ This complements the **container** golden-image flow in [`.github/workflows/dock
 
 ## Recommended release pipeline
 
-1. **Same repo gates as containers (already in CI):** OSV-Scanner + Trivy filesystem + Syft SBOM on the workspace (see [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) **`supply-chain`**). A dedicated **`npm-publish`** workflow should **`needs`** those jobs (or duplicate the steps if you keep publish separate).
-2. **One tarball per package:** `npm pack -w <workspace>` (or `npm pack` at the package root) produces **one `.tgz`**. Treat that file as the **only** artifact npm clients will fetch (modulo npm’s CDN replication).
-3. **Scan the tarball (or its unpacked root)** with **Trivy** (`vuln`, **HIGH/CRITICAL**, same **`.trivyignore`** policy as the repo) **before** `npm publish`. Optionally also run **`npm audit --omit=dev`** (or `pnpm audit` / `bun pm`) as a second opinion — it overlaps OSV/Trivy but is cheap.
-4. **Publish once:** `npm publish <path-to.tgz>` (or `npm publish` from CI after the pack step) so you do not rebuild between “scan” and “upload”.
-5. **Provenance:** enable **[npm provenance](https://docs.npmjs.com/generating-provenance-statements)** (`npm publish --provenance` when using **trusted publishing** / OIDC). That does not replace vuln scanning; it ties the published package to **CI identity + git ref**.
-6. **Immutability:** never **overwrite** a semver; use **dist-tags** (`latest`, `next`, `canary`) only after the same gates pass on the version you intend to promote.
+1. **Same repo gates as containers (already in CI):** OSV-Scanner + Trivy filesystem + Syft SBOM on the workspace (see [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) **`supply-chain`**). The **`npm-publish`** workflow **`needs`** those jobs.
+2. **Publish workspace packages in order:** [`scripts/release/npm-publish-order.json`](../../scripts/release/npm-publish-order.json) — `clawql-core` → … → `clawql-mcp` last. Script: [`scripts/release/npm-publish-workspace.mjs`](../../scripts/release/npm-publish-workspace.mjs).
+3. **One tarball per package:** `npm pack -w <workspace>` (or root `npm pack` for `clawql-mcp`) produces **one `.tgz`**. Treat each file as the artifact npm clients fetch.
+4. **Scan the tarball (or its unpacked root)** with **Trivy** (`vuln`, **HIGH/CRITICAL**, same **`.trivyignore`** policy as the repo) **before** `npm publish`. The workflow scans **`clawql-mcp`** after pack; extend to other packages if policy requires.
+5. **Publish once:** `npm publish -w <pkg> --provenance` (workspace packages) or `npm publish clawql-mcp-*.tgz --provenance` (root) — no rebuild between scan and upload.
+6. **Provenance:** enable **[npm provenance](https://docs.npmjs.com/generating-provenance-statements)** (`--provenance` when using **trusted publishing** / OIDC).
+7. **Immutability:** never **overwrite** a semver; use **dist-tags** (`latest`, `next`, `canary`) only after the same gates pass on the version you intend to promote.
+
+**Monorepo dev:** workspace packages use matching **`7.0.0`** semver in `dependencies`; npm workspaces link them locally. **`clawql-mcp`** no longer uses **`bundledDependencies`**.
 
 ## What not to do
 
