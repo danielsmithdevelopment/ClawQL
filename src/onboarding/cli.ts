@@ -154,7 +154,11 @@ init:
 
 doctor:
   Node, ClawQL home, memory vault, provider secrets, optional Vault probe, HTTP /healthz
-  --smoke         Spawn MCP stdio and run tools/list + search (+ execute when secrets exist)
+  --smoke         Release manifest verify (when present) + MCP tools/list + search
+
+Environment (Layer 0):
+  CLAWQL_RELEASE_MANIFEST       Path to manifest.json — verify at MCP startup (optional)
+  CLAWQL_RELEASE_MANIFEST_STRICT=1  Fail startup on verify error (default strict when NODE_ENV=production)
 
 secrets:
   list            Show configured provider keys (masked)

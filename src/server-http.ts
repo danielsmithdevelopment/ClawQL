@@ -29,6 +29,7 @@ import { getClawqlOptionalToolFlags, type ClawqlOptionalToolFlags } from "clawql
 import { getNativeProtocolMetricsSnapshot, nativeProtocolMetricsEnabled } from "clawql-api";
 import { prometheusDisabledForHttp, renderPrometheusMetrics } from "clawql-api";
 import { maybeInitOtelTracing } from "./otel-tracing.js";
+import { maybeVerifyReleaseManifestAtStartup } from "./release-manifest-startup.js";
 import { handleLabelStudioWebhookRequest } from "clawql-automation/hitl/label-studio";
 import { configureHitlTransportDeps } from "./hitl-transport.js";
 import { handleConeshareWebhookRequest } from "./coneshare-webhook.js";
@@ -345,6 +346,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
 
 async function main() {
   await maybeInitOtelTracing();
+  await maybeVerifyReleaseManifestAtStartup();
   registerSpecCacheShutdownHooks();
   registerPostgresPoolShutdownHooks();
   const app = await createMcpHttpApp();

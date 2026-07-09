@@ -36,6 +36,19 @@ npm run release:manifest
 
 Set `CLAWQL_RELEASE_IMAGE_DIGESTS` to a JSON object of image name → digest from the docker-publish workflow.
 
+## Verify at runtime (7.0)
+
+**`clawql doctor --smoke`** auto-resolves `releases/v{version}/manifest.json` from the running package version and verifies Merkle + artifact digests when the bundle exists (typical in a git checkout after `clawql release publish`). When no bundle is present (e.g. bare `npx` install), doctor reports a **warning** — not a failure.
+
+**MCP startup (optional):** set **`CLAWQL_RELEASE_MANIFEST`** to a manifest path (file or bundle directory). The server verifies before serving:
+
+```bash
+export CLAWQL_RELEASE_MANIFEST=releases/v7.0.0/manifest.json
+npx clawql-mcp
+```
+
+Strict mode (exit on failure): **`NODE_ENV=production`** or **`CLAWQL_RELEASE_MANIFEST_STRICT=1`**. In development, verification warnings are logged but startup continues.
+
 ## Verify cosign (containers)
 
 Manifest records digests; image signatures are verified separately:

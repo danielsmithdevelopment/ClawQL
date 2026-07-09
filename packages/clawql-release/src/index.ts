@@ -4,5 +4,6 @@ export * from "./collect.js";
 export * from "./manifest.js";
 export * from "./verify.js";
 export * from "./publish.js";
+export * from "./runtime-check.js";
 export * from "./merkle.js";
 export * from "./git.js";

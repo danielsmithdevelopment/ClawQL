@@ -146,7 +146,7 @@ For technical readers, the full rationale and patterns are in the [Contributor T
 
 Vertical packages, the **full** Kubernetes Operator (NL dashboard, dynamic Deployments, full auth reconciliation), and remaining horizontal packages (`clawql-data`, `clawql-printingpress`, `clawql-goose`). Layer 0 permanence (Arweave, Rift, Radicle primary). Specifications for not-yet-started packages are written and stable.
 
-**Recommended next ship before npm 7.0.0 tag:** wire **`clawql release verify`** into **`clawql doctor --smoke`** (and optional startup when `CLAWQL_RELEASE_MANIFEST` is set) — see [modularization implementation status §10](../design/modularization-implementation-status.md#10-recommended-next-ship-for-700).
+**Recommended before npm 7.0.0 tag:** dashboard UI for custom sources (API exists; Provider-secrets-style panel) — see [modularization implementation status §10](../design/modularization-implementation-status.md#10-recommended-next-ship-for-700).
 
 ---
 

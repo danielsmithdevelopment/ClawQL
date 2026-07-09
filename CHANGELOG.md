@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Layer 0 MVP — `clawql-release`**: `clawql release init|collect|manifest|publish|verify` builds manifest **v0.1** with git commit, npm tarball + CycloneDX SBOM SHA-256, GHCR image digests, and **Merkle root** (`clawql-core`); output under `releases/vX.Y.Z/`. Package: `packages/clawql-release`. Docs: [`docs/getting-started/clawql-release-mvp.md`](docs/getting-started/clawql-release-mvp.md). Arweave permanent anchor deferred.
+- **Layer 0 MVP — `clawql-release`**: `clawql release init|collect|manifest|publish|verify` builds manifest **v0.1** with git commit, npm tarball + CycloneDX SBOM SHA-256, GHCR image digests, and **Merkle root** (`clawql-core`); output under `releases/vX.Y.Z/`. **`clawql doctor --smoke`** verifies the bundle when present; **`CLAWQL_RELEASE_MANIFEST`** enables verify-at-startup for MCP. Package: `packages/clawql-release`. Docs: [`docs/getting-started/clawql-release-mvp.md`](docs/getting-started/clawql-release-mvp.md). Arweave permanent anchor deferred.
 - **Add any source from URL** — `clawql sources add <url>` with auto-detect for OpenAPI, Google Discovery, GraphQL SDL/introspection, gRPC `.proto`, and MCP HTTP endpoints; persisted in **`~/.ClawQL/sources.json`** and merged into MCP `search`/`execute` on startup.
 - **MCP and CLI as source types** — proxy remote MCP tools and wrap local CLI commands as searchable operations (`protocolKind` **`mcp`** / **`cli`**).
 - **Harness wrappers** — `clawql claude`, `clawql codex`, `clawql cursor`, `clawql opencode` write harness-specific MCP config and launch the agent binary on PATH.

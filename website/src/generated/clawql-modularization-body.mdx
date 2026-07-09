@@ -168,7 +168,7 @@ When a horizontal tier or vertical is disabled, its Effect Layer is not composed
 
 **Observability**: OTEL wraps MCP tool handlers today. Full LGTMP stack + `clawql-telemetry` package remain roadmap. Langfuse handles LLM/tool chains where configured.
 
-**Releases**: Every artifact consumed by the platform should verify against a ClawQL release manifest containing Merkle root, policy, and build provenance. **`clawql release verify`** ships in 7.0; automatic verification at gateway install/startup is the recommended next 7.0 close-out (see implementation status §10).
+**Releases**: Every artifact consumed by the platform should verify against a ClawQL release manifest containing Merkle root, policy, and build provenance. **`clawql release verify`**, **`clawql doctor --smoke`**, and optional **`CLAWQL_RELEASE_MANIFEST`** at MCP startup ship in 7.0.
 
 ---
 

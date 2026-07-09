@@ -92,7 +92,7 @@ Custom sources persist in **`~/.ClawQL/sources.json`** and merge into **`search`
 | `clawql init --interactive`                       | Scaffold `~/.ClawQL` + `vault/providers.json` |
 | `clawql secrets list` / `secrets set`             | Manage provider keys                          |
 | `clawql sources list` / `sources add`             | Custom integrations from URL                  |
-| `clawql doctor --smoke`                           | MCP `tools/list` + `search`                   |
+| `clawql doctor --smoke`                           | Release manifest verify (when bundle present) + MCP `tools/list` + `search` |
 | `clawql mcp-config --write cursor`                | Merge MCP JSON into Cursor / Claude Desktop   |
 | `clawql release publish`                          | Immutable manifest (Layer 0 MVP)              |
 | `clawql claude` / `codex` / `cursor` / `opencode` | Harness launch with MCP pre-wired             |
@@ -108,6 +108,15 @@ Custom sources persist in **`~/.ClawQL/sources.json`** and merge into **`search`
 - **`documents.enabled: true`** → default stack + all IDP vault keys (Paperless, Stirling, Docling, Nextcloud, …)
 
 → [clawql-operator-helm.md](docs/deployment/clawql-operator-helm.md)
+
+---
+
+## Layer 0 — release manifest at runtime
+
+- **`clawql doctor --smoke`** verifies `releases/v{version}/manifest.json` when the bundle exists (repo checkout after `clawql release publish`)
+- **`CLAWQL_RELEASE_MANIFEST`** — optional MCP startup verify (strict when `NODE_ENV=production` or `CLAWQL_RELEASE_MANIFEST_STRICT=1`)
+
+→ [clawql-release-mvp.md](docs/getting-started/clawql-release-mvp.md)
 
 ---
 

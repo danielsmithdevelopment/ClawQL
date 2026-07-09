@@ -257,7 +257,7 @@ These vision items are **not** done by package extraction alone:
 | Document pipeline (Tika → … → Paperless)      | 🚧 Vendors + `run_idp_pipeline` shipped; retries/Merkle per hop roadmap |
 | NATS / HITL in `clawql-automation`            | ✅ Shipped (JetStream publish + HITL resume consumer)                   |
 | Layer 0 immutable releases                    | 🚧 MVP (`clawql-release`); Arweave/Rift/Radicle roadmap                 |
-| Release manifest verification at gateway      | 📋 `clawql release verify` ships; startup/doctor hook not wired yet     |
+| Release manifest verification at gateway      | ✅ `clawql doctor --smoke` + optional `CLAWQL_RELEASE_MANIFEST` at MCP startup |
 | Kubernetes Operator Layer composition         | 🚧 Phase 1 scaffold (CRD + ConfigMap + tier layers; no NL dashboard)    |
 | Transport-only `clawql-mcp` npm package split | 📋 `src/` slimmed; shims removed; transport glue remains                |
 | Presidio gateway hooks                        | 📋 Not started                                                          |
@@ -284,21 +284,8 @@ These vision items are **not** done by package extraction alone:
 
 ## 10. Recommended next ship for 7.0.0
 
-After horizontal extraction, operator scaffold, and Layer 0 MVP, the highest-leverage close-out for the **modularization vision** before tagging **npm 7.0.0** is:
+**Shipped (7.0):** release manifest verification in **`clawql doctor --smoke`** and optional MCP startup via **`CLAWQL_RELEASE_MANIFEST`**.
 
-**Wire release manifest verification into the runtime trust path** — e.g. `clawql doctor --smoke` (and optionally MCP startup when `CLAWQL_RELEASE_MANIFEST` is set) calls `clawql-release verify` against `releases/vX.Y.Z/manifest.json` for the running package version.
+**Next before npm 7.0.0 tag (product parity):** dashboard UI for custom sources (`/api/local/sources` exists; add Provider secrets–style panel).
 
-**Why this over alternatives:**
-
-| Candidate                                                                                   | Rationale                                                                                                                                  |
-| ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Manifest verify at doctor/start**                                                         | Closes Layer 0 ↔ gateway gap in [modularization v2 §7](../vision/clawql-modularization-v2.md); small scope; `clawql-release` already ships |
-| Tier 1 Docker Compose ([#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251)) | Important for Phase 1 exit but larger; does not consume Layer 0 artifacts                                                                  |
-| `clawql-auth` package extraction                                                            | Phase 1 item; auth helpers already work inside `clawql-api`                                                                                |
-| `clawql-pageindex` standalone                                                               | New package; memory works without it today                                                                                                 |
-| Full Operator / NL dashboard                                                                | Out of scope for 7.0 patch window                                                                                                          |
-| Transport-only `clawql-mcp` split                                                           | Internal refactor; low immediate user value                                                                                                |
-
-**Second priority (product parity):** dashboard UI for custom sources (`/api/local/sources` exists; add Provider secrets–style panel).
-
-**Phase 1 exit (post-7.0):** Tier 1 Compose + `clawql-auth` + `clawql-pageindex` + Presidio hooks.
+**Phase 1 exit (post-7.0):** Tier 1 Docker Compose ([#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251)) + `clawql-auth` + `clawql-pageindex` + Presidio gateway hooks.
