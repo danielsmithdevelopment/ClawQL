@@ -1,0 +1,32 @@
+# Opt-in operator — does not replace charts/clawql-mcp. Install MCP separately as today.
+
+replicaCount: 1
+
+image:
+  repository: ghcr.io/danielsmithdevelopment/clawql-mcp
+  tag: latest
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  create: true
+  name: ""
+
+rbac:
+  create: true
+
+crd:
+  install: true
+
+operator:
+  # cronjob = batch reconcile every 5m; deployment = continuous watch (recommended).
+  mode: deployment
+  enabled: true
+  watchAllNamespaces: true
+  extraArgs: ["--once"]
+  deploymentArgs: []
+
+resources: {}
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

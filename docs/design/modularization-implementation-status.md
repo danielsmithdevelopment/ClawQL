@@ -165,7 +165,7 @@ MCP: `handleScheduleToolInput` shim in `src/clawql-schedule.ts`; `handleNotifyTo
 | 8     | [#429](https://github.com/danielsmithdevelopment/ClawQL/pull/429) | `clawql-documents` package                                             |
 | 9     | [#430](https://github.com/danielsmithdevelopment/ClawQL/pull/430) | `clawql-automation` (schedule + notify)                                |
 
-**Planned (not extracted):** Kubernetes Operator + **`ClawQLInstance` CRD** — see [`operator-target-architecture.md`](./operator-target-architecture.md) ([#255](https://github.com/danielsmithdevelopment/ClawQL/issues/255)).
+**Operator scaffold (opt-in):** `packages/clawql-operator` + `charts/clawql-operator` — CRD validation, tier-spec ConfigMaps, optional MCP overlay via `instanceSpec.enabled` ([#255](https://github.com/danielsmithdevelopment/ClawQL/issues/255)). Does **not** replace Helm/env defaults. See [`clawql-operator-helm.md`](../deployment/clawql-operator-helm.md).
 
 **Next extraction (post–phase 9)** ([plan §6](./effect-ts-modularization-rearchitecture-plan.md#6-mapping-src--packages-first-extraction-order)):
 
@@ -246,7 +246,7 @@ These vision items are **not** done by package extraction alone:
 | `clawql-pageindex`                            | 📋 Not started                                                         |
 | Document pipeline (Tika → … → Paperless)      | 📋 Orchestration not in `clawql-documents` yet                         |
 | NATS / HITL in `clawql-automation`            | ✅ Shipped (JetStream publish + HITL resume consumer)                  |
-| Kubernetes Operator Layer composition         | 📋 Planned                                                             |
+| Kubernetes Operator Layer composition         | 🚧 Phase 1 scaffold (CRD + ConfigMap; no Deployment management)        |
 | Transport-only `clawql-mcp` npm package split | 📋 `src/` slimmed; shims removed; transport glue remains               |
 
 ---

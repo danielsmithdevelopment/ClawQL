@@ -145,6 +145,12 @@ enableMemory: true
 # Document stack: tika, gotenberg, paperless, stirling, onyx, nextcloud, coneshare in all-providers merge + ingest_external_knowledge + (with enableOnyx) knowledge_search_onyx. Set false to inject CLAWQL_ENABLE_DOCUMENTS=0.
 enableDocuments: true
 
+# Optional ClawQLInstance tier-spec overlay (#255). Default off — Helm `enable*` env flags remain authoritative unless this mount is enabled.
+instanceSpec:
+  enabled: false
+  configMapName: ""
+  mountPath: /etc/clawql/instance
+
 # Bundled cloud APIs — add Google/AWS to the default install stack; omit Cloudflare with enableCloudflare: false.
 # all-providers always includes Google, AWS, and Cloudflare regardless of these values.
 enableGoogle: false

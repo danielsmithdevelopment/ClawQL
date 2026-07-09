@@ -1,7 +1,6 @@
 import {
   createClawQLApi,
   defaultPlugins,
-  getClawqlOptionalToolFlags,
   loadSpec,
   makeExecuteLive,
   makeSearchLive,
@@ -14,6 +13,7 @@ import {
 } from "clawql-api";
 import { Effect, Layer } from "effect";
 import { composeHorizontalPluginLayers } from "./compose-horizontal-plugin-layers.js";
+import { resolvePluginCompositionFlags } from "./resolve-plugin-flags.js";
 
 let loadSpecOverride: LoadSpecFn | undefined;
 
@@ -44,7 +44,7 @@ export function getClawqlApi(): ClawQLApiHandle {
       searchLayer: buildSearchLive(),
       executeLayer: buildExecuteLive(),
       plugins: [...defaultPlugins()],
-      pluginLayers: composeHorizontalPluginLayers(getClawqlOptionalToolFlags()),
+      pluginLayers: composeHorizontalPluginLayers(resolvePluginCompositionFlags()),
     });
   }
   return apiHandle;

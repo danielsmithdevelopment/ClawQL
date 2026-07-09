@@ -1,0 +1,36 @@
+{{- if and .Values.rbac.create .Values.operator.enabled }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "clawql-operator.fullname" . }}
+  labels:
+    {{- include "clawql-operator.labels" . | nindent 4 }}
+rules:
+  - apiGroups: ["clawql.io"]
+    resources: ["clawqlinstances"]
+    verbs: ["get", "list", "watch", "patch", "update"]
+  - apiGroups: ["clawql.io"]
+    resources: ["clawqlinstances/status"]
+    verbs: ["get", "patch", "update"]
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list", "watch", "create", "update", "patch"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "clawql-operator.fullname" . }}
+  labels:
+    {{- include "clawql-operator.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "clawql-operator.fullname" . }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "clawql-operator.fullname" . }}
+    namespace: {{ .Release.Namespace }}
+{{- end }}

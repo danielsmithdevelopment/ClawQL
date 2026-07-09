@@ -39,6 +39,14 @@ Helm **`clawql-mcp`** chart may still default to **`all-providers`** for full ID
 | `clawql secrets list` / `secrets set` | Manage provider keys without editing JSON by hand                   |
 | `clawql doctor --smoke`               | MCP `tools/list` + `search` (+ optional `execute`)                  |
 | `clawql mcp-config --write cursor`    | Merge MCP JSON into Cursor / Claude Desktop (with `.bak` backup)    |
+| `clawql operator status`              | Kubernetes: ClawQLInstance + tier-spec ConfigMap health             |
+
+## ClawQL Operator (opt-in, phase 2)
+
+- **`ClawQLInstance`** CRD with tier presets (`local` / `standard` / `enterprise`)
+- Continuous reconcile via operator **Deployment** (CronJob optional via `operator.mode`)
+- Tier-spec ConfigMap with owner references; optional MCP Deployment rollout on spec change
+- **`make local-k8s-up`** installs operator on full stack — [`clawql-operator-helm.md`](docs/deployment/clawql-operator-helm.md)
 
 MCP startup logs a one-line stderr summary: spec mode, vendor count, memory vault path, configured secret count.
 

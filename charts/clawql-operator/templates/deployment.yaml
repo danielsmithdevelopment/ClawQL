@@ -1,0 +1,30 @@
+{{- if and .Values.operator.enabled (eq .Values.operator.mode "deployment") }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "clawql-operator.fullname" . }}
+  labels:
+    {{- include "clawql-operator.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "clawql-operator.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "clawql-operator.selectorLabels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "clawql-operator.fullname" . }}
+      containers:
+        - name: operator
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["node", "/app/node_modules/clawql-operator/dist/cli.cjs"]
+          args:
+            {{- range .Values.operator.deploymentArgs }}
+            - {{ . | quote }}
+            {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+{{- end }}

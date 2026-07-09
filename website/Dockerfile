@@ -18,7 +18,7 @@ RUN npm run build
 FROM node:25-alpine AS runner
 WORKDIR /app
 RUN apk upgrade --no-cache \
-  && npm install -g npm@latest \
+  && npm install -g npm@11 \
   && npm cache clean --force
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
