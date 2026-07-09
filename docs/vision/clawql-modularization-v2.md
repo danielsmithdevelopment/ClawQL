@@ -42,10 +42,10 @@ ClawQL is a modular, production-grade, self-healing, multi-tenant AI memory and 
 
 ### 3.1 Always-Enabled (Foundation)
 
-| Package         | Responsibilities                                                                                                                                                                                               |
-| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **clawql-core** | Shared types, ATRClaims, Merkle utilities, Cuckoo filter, Plugin interface, AgentRuntime, error factories                                                                                                      |
-| **clawql-api**  | The intelligent MCP gateway. Handles search/execute, plugin registration (native + proxy), routing, ATR/Panguard enforcement, Presidio hooks (roadmap), circuit breakers (roadmap), and observability emission |
+| Package         | Responsibilities                                                                                                                                                                                                                      |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **clawql-core** | Shared types, ATRClaims, Merkle utilities, Cuckoo filter, Plugin interface, AgentRuntime, error factories                                                                                                                             |
+| **clawql-api**  | The intelligent MCP gateway. Handles search/execute, plugin registration (native + proxy), routing, ATR/Panguard enforcement, Presidio hooks (🚧 opt-in gateway redaction), circuit breakers (📋 roadmap), and observability emission |
 
 ### 3.2 Default-Enabled
 
@@ -104,9 +104,9 @@ internals (merkle, cuckoo, utils)
          ↓
      clawql-core
          ↓
-   clawql-api + clawql-pageindex (planned)
+   clawql-api + clawql-pageindex (✅)
          ↓
-(auth, documents, memory)
+(clawql-auth, documents, memory)
          ↓
 (telemetry, sandbox, automation, goose, printingpress, release, operator)
          ↓
@@ -136,8 +136,8 @@ Layer 0 (`clawql-release`) depends only on core utilities and produces bundles c
 **Roadmap (full gateway vision)**
 
 - Native vertical plugins
-- Automatic Memory 2.0 enrichment and **release manifest verification on startup**
-- Uniform Presidio redaction on agent I/O
+- Release manifest verification on startup (✅ `clawql doctor --smoke`, optional `CLAWQL_RELEASE_MANIFEST`)
+- Uniform Presidio redaction on agent I/O (🚧 opt-in hooks shipped; mandatory default 📋)
 - Emission of Ouroboros position events on every `execute()`
 - Circuit breakers on all downstream paths
 - Full observability spans (OpenTelemetry + Langfuse package)
@@ -166,7 +166,7 @@ When a horizontal tier or vertical is disabled, its Effect Layer is not composed
 
 ## 7. Cross-Cutting Concerns
 
-**Security**: Classification gating, external model routing, WORM Merkle audit, and runtime enforcement (Tetragon/Falco) are applied at the gateway. ATR/Panguard chokepoint and Vault-backed provider secrets ship in 7.0; Presidio and full WORM remain roadmap.
+**Security**: Classification gating, external model routing, WORM Merkle audit, and runtime enforcement (Tetragon/Falco) are applied at the gateway. ATR/Panguard chokepoint, Vault-backed provider secrets, and opt-in Presidio gateway hooks ship in 7.0; full mandatory Presidio on every path and full WORM remain roadmap.
 
 **Observability**: OTEL wraps MCP tool handlers today. Full LGTMP stack + `clawql-telemetry` package remain roadmap. Langfuse handles LLM/tool chains where configured.
 

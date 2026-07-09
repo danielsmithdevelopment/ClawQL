@@ -267,11 +267,11 @@ clawql-core  (merkle/, cuckoo/, utils/ — internal modules)
      │
      ├──────────────┐
      │              │
-clawql-api    clawql-pageindex (planned)
+clawql-api    clawql-pageindex (✅)
      │
 ┌────┼────────────────────┐
 │    │                    │
-clawql-auth (planned)  clawql-memory
+clawql-auth (✅)  clawql-memory
 clawql-documents
 clawql-automation
      │
@@ -704,7 +704,7 @@ The CI pipeline runs `pnpm arch:check` which compares the current dependency gra
 
 **Step 12: Community review**
 
-PRs require approval from at least two maintainers. The review checklist is pinned in the PR template. Verticals cannot merge to `main` until Phase 1 exit criteria are met — but they can be reviewed, iterated on, and approved in draft PRs during Phase 1.
+PRs require approval from at least two maintainers. The review checklist is pinned in the PR template. Verticals may merge to `main` when they meet the **Plugin interface** and CI contract (Phase 1 exit is complete as of 7.0.0); product priority for which vertical ships first remains Phase 3+ in the public roadmap.
 
 ### 4.2 Tool Registration in Detail
 
@@ -874,6 +874,8 @@ export const MyProviderLive = Layer.scoped(
 These are not guidelines. Contributions that violate these contracts will not be merged.
 
 ### 6.1 Presidio Integration Points
+
+**Shipped (7.0, opt-in):** Gateway hooks redact on **`execute`**, **`memory_ingest`**, and **`ingest_external_knowledge`** when **`CLAWQL_ENABLE_PRESIDIO=1`** — see [Phase 1 platform guide](../getting-started/phase-1-platform-guide.md) §3. The contract below still applies to vertical plugins and future pipeline stages.
 
 Presidio redaction must run before any data is written to persistent storage and before any data is returned across a trust boundary. In practice, this means:
 

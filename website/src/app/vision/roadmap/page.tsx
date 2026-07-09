@@ -7,7 +7,7 @@ import { docsPageMetadata } from '@/lib/seo'
 export const metadata = docsPageMetadata({
   title: 'Vision & Roadmap',
   description:
-    'ClawQL Vision & Roadmap (May 2026): honest shipped vs in-development status, problem space, phased delivery, and how to contribute.',
+    'ClawQL Vision & Roadmap (July 2026): Phase 1 complete in 7.0.0, honest shipped vs planned status, problem space, phased delivery, and how to contribute.',
   path: '/vision/roadmap',
   ogType: 'article',
 })

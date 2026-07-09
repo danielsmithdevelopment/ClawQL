@@ -6,7 +6,7 @@
 
 ## Document scope & evidence (read this first)
 
-> **Companion only (v1.9).** **Canonical vision** is [`clawql-master-enablement-guide.md`](./clawql-master-enablement-guide.md). **Implementation ground truth (June 2026):** [`../design/modularization-implementation-status.md`](../design/modularization-implementation-status.md). This file is a **historical package-matrix** companion; [`clawql-modularization-v2.md`](./clawql-modularization-v2.md) adds gateway/orchestration notes.
+> **Companion only (v1.9, May 2026).** **Do not use for 7.0 shipped vs planned claims.** **Canonical vision** is [`clawql-master-enablement-guide.md`](./clawql-master-enablement-guide.md). **Implementation ground truth:** [`../design/modularization-implementation-status.md`](../design/modularization-implementation-status.md). **Operator guide for Phase 1:** [`../getting-started/phase-1-platform-guide.md`](../getting-started/phase-1-platform-guide.md). [`clawql-modularization-v2.md`](./clawql-modularization-v2.md) adds gateway/orchestration notes.
 
 This document is a **target modularization and platform architecture** for ClawQL. It mixes **shipped today**, **partial**, and **planned** work in one narrative. In particular, **§2 “To ship”** describes **intended package boundaries and responsibilities**, not “installable npm packages available now,” unless the same name also appears under **§2.4 Shipped**.
 

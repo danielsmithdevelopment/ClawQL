@@ -3,7 +3,7 @@
 **Status:** Design reference for **full** operator (NL ops, verticals, auth) · **July 2026**  
 **Tracking:** [#255](https://github.com/danielsmithdevelopment/ClawQL/issues/255) (Operator / umbrella chart), [#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251) (four Compose stacks)
 
-> **Shipped in 7.0.0:** `ClawQLInstance` CRD, tier presets, tier-spec ConfigMaps, continuous reconcile, optional MCP rollout, `clawql operator status`, `make local-k8s-up` install, and **Tier 1 Docker Compose** (`examples/clawql-local-docker-compose`). Deploy guide: **[clawql-operator-helm.md](../deployment/clawql-operator-helm.md)**. Sections 1–13 below describe the **full** operator vision; items marked shipped (Helm equivalents or Compose) are runnable today.
+> **Shipped in 7.0.0:** `ClawQLInstance` CRD, tier presets, tier-spec ConfigMaps, continuous reconcile, optional MCP rollout, `clawql operator status`, `make local-k8s-up` install, and **Tier 1 Docker Compose** (`examples/clawql-local-docker-compose`). **Teach operators:** [Phase 1 platform guide](../getting-started/phase-1-platform-guide.md). Deploy: **[clawql-operator-helm.md](../deployment/clawql-operator-helm.md)**. Sections 1–13 below describe the **full** operator vision; items marked shipped are runnable today.
 
 This document captures the **planned** three-tier deployment model: **`ClawQLInstance` CRD**, Operator reconciliation, vertical toggles, natural-language operations, and enterprise hardening.
 

@@ -7,16 +7,21 @@ Persists durable session knowledge to an **Obsidian-compatible vault** and recal
 
 ## MCP tools
 
-| Tool                | Purpose                                                                              |
-| ------------------- | ------------------------------------------------------------------------------------ |
-| **`memory_ingest`** | Write structured insights, wikilinks, and optional verbatim tool output to the vault |
-| **`memory_recall`** | Query the vault (text + optional graph depth) before deep work                       |
+| Tool                        | Purpose                                                                              |
+| --------------------------- | ------------------------------------------------------------------------------------ |
+| **`memory_ingest`**         | Write structured insights, wikilinks, and optional verbatim tool output to the vault |
+| **`memory_recall`**         | Query the vault (text + optional graph depth) before deep work                       |
+| **`pageindex_build_tree`**  | Build a vectorless hierarchical index from Markdown (`clawql-pageindex`)             |
+| **`pageindex_traverse`**    | Walk the PageIndex tree under a token budget                                         |
+| **`pageindex_synthesize`**  | Merge selected nodes into agent context                                              |
+| **`pageindex_get_content`** | Read indexed node content                                                            |
 
 ## Enable / disable
 
-| Env                          | Default | Effect                                  |
-| ---------------------------- | ------- | --------------------------------------- |
-| **`CLAWQL_ENABLE_MEMORY=0`** | on      | Omit `MemoryPlugin` and hide both tools |
+| Env                             | Default | Effect                                                |
+| ------------------------------- | ------- | ----------------------------------------------------- |
+| **`CLAWQL_ENABLE_MEMORY=0`**    | on      | Omit `MemoryPlugin` and hide memory + PageIndex tools |
+| **`CLAWQL_ENABLE_PAGEINDEX=0`** | on      | Hide `pageindex_*` only (memory ingest/recall remain) |
 
 ## Prerequisites
 
@@ -33,5 +38,6 @@ Optional hybrid vector index: see [memory-db-hybrid-implementation.md](https://g
 
 ## Learn more
 
+- [Phase 1 platform guide — PageIndex](/getting-started/phase-1-platform-guide#2-pageindex-clawql-pageindex)
 - [Vault memory between chats](/learn/vault-memory-between-chats)
 - [MCP tools § memory](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md)

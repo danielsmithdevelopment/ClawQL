@@ -1,0 +1,66 @@
+import { Button } from '@/components/Button'
+import { Note } from '@/components/mdx'
+
+# Phase 1 platform guide (7.0)
+
+What shipped in **Phase 1 exit (7.0.0)** and how to turn on auth, PageIndex, Presidio, and Tier 1 Compose. {{ className: 'lead' }}
+
+<Note>
+  Full source doc:{' '}
+  [phase-1-platform-guide.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/getting-started/phase-1-platform-guide.md)
+  · Ground truth:{' '}
+  [modularization-implementation-status.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/modularization-implementation-status.md)
+</Note>
+
+## Delivered in Phase 1
+
+| Capability                          | Enable / path                                         |
+| ----------------------------------- | ----------------------------------------------------- |
+| **Gateway auth** (`clawql-auth`)    | `CLAWQL_AUTH_MODE=apiKey`, `CLAWQL_API_KEY`           |
+| **PageIndex** (`pageindex_*` tools) | Default on; `CLAWQL_ENABLE_PAGEINDEX=0` to hide       |
+| **Presidio hooks**                  | `CLAWQL_ENABLE_PRESIDIO=1` + analyzer/anonymizer URLs |
+| **Tier 1 Compose**                  | `examples/clawql-local-docker-compose`                |
+| **Release manifest**                | `clawql doctor --smoke`, `clawql release *`           |
+
+OIDC/SAML/RBAC, full Operator NL ops, and vertical packages remain **roadmap** — see [Vision & Roadmap](/vision/roadmap).
+
+## Quick starts
+
+### API key on HTTP MCP
+
+```bash
+export CLAWQL_AUTH_MODE=apiKey
+export CLAWQL_API_KEY="your-long-random-secret"
+```
+
+### Tier 1 Docker Compose
+
+```bash
+git clone https://github.com/danielsmithdevelopment/ClawQL.git
+cd ClawQL/examples/clawql-local-docker-compose
+./bootstrap.sh && docker compose up -d
+```
+
+Optional Presidio: add `-f docker-compose.presidio.override.yml`.
+
+### Presidio redaction
+
+```bash
+export CLAWQL_ENABLE_PRESIDIO=1
+export CLAWQL_PRESIDIO_ANALYZER_URL=http://presidio-analyzer:3000
+export CLAWQL_PRESIDIO_ANONYMIZER_URL=http://presidio-anonymizer:3000
+```
+
+Redacts on **`execute`**, **`memory_ingest`**, and **`ingest_external_knowledge`** before persistence.
+
+<div className="not-prose my-8 flex flex-wrap gap-3">
+  <Button href="/getting-started/clawql-7-setup-guide" arrow="right">
+    <>7.0 setup guide</>
+  </Button>
+  <Button href="/vision/roadmap" variant="outline">
+    <>Vision & roadmap</>
+  </Button>
+  <Button href="/reference/plugins" variant="outline">
+    <>Plugin registry</>
+  </Button>
+</div>
