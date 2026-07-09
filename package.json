@@ -139,6 +139,7 @@
         "clawql-ouroboros": "0.1.1",
         "clawql-sandbox": "0.0.1",
         "dotenv": "^17.4.2",
+        "effect": "^3.21.4",
         "express": "^5.2.1",
         "express-rate-limit": "^8.5.2",
         "graphql": "^16.14.2",
