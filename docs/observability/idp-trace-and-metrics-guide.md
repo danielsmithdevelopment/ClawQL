@@ -8,8 +8,8 @@ Choose backends for **three signal types** in an IDP deployment:
 | --------------------- | ----------------------------------------------------- | ---------------------------------------------------- |
 | **Metrics**           | Throughput, errors, audit volume, native protocol mix | **Prometheus** (scrape MCP `/metrics`)               |
 | **Logs**              | Structured audit events, operator grep                | **Loki** (`CLAWQL_LOKI_PUSH_URL`) or cluster logging |
-| **Traces**            | Request latency across MCP tools, mesh hops           | **Tempo** (lab) or **Jaeger** (prod) via OTLP        |
-| **LLM / agent spans** | Prompt → tool → model eval                            | **Langfuse** (BYO — not in `clawql-mcp` binary)      |
+| **Traces (infra)**    | Request latency across MCP tools, mesh hops           | **Tempo** (lab) or vendor backend via OTLP collector |
+| **Work traces (LLM)** | Prompt → tool → token savings → eval → export         | **Langfuse** — **opt-out** default ([ADR 0005](../adr/0005-langfuse-default-work-trace-store.md)) |
 
 ## Trace backend choice (ADR 0003)
 
@@ -61,13 +61,19 @@ Requires `monitoring.coreos.com/v1` ServiceMonitor CRD.
 
 Roadmap (not yet on `/metrics`): `clawql_mcp_tool_calls_total`, Ouroboros phase histograms, document pipeline counters — see [`docs/grafana/README.md`](../grafana/README.md).
 
-## Langfuse (BYO)
+## Langfuse (work-trace store — opt-out)
 
-ClawQL does **not** ship Langfuse inside the MCP container. Deploy separately:
+ClawQL treats Langfuse as the default **work-trace ledger** for token savings, eval scores, and future synthetic-data export — not optional debug tooling. See [ADR 0005](../adr/0005-langfuse-default-work-trace-store.md).
+
+- **Bundled profile:** Langfuse ships with Tier 1 Compose `observability` profile (planned 7.0) — [`bundled-observability.md`](./bundled-observability.md)
+- **External profile:** point at your instance — [`bring-your-own-observability.md`](./bring-your-own-observability.md)
+- **Opt-out:** `CLAWQL_DISABLE_LANGFUSE=1` or `CLAWQL_OBSERVABILITY_PROFILE=minimal`
+
+Deploy separately when not using bundled profile:
 
 1. Install Langfuse (cloud or self-hosted) — example values: [`langfuse-values.example.yaml`](./langfuse-values.example.yaml)
-2. Set `LANGFUSE_PUBLIC_KEY` / `LANGFUSE_SECRET_KEY` / `LANGFUSE_HOST` in **ClawQL-Agent** or your LangGraph runtime
-3. Correlate with Prometheus using shared `correlationId` in `audit.append` and Langfuse trace metadata
+2. Set `LANGFUSE_PUBLIC_KEY` / `LANGFUSE_SECRET_KEY` / `LANGFUSE_HOST` on **clawql-mcp** (OTLP) and **ClawQL-Agent** / LangGraph runtimes
+3. Correlate with Prometheus using `clawql.correlation_id` in spans and `audit.append`
 
 Scrape Langfuse's own metrics endpoint if your Langfuse chart exposes `/metrics` for Grafana.
 
