@@ -28,6 +28,7 @@ export default defineConfig({
       "packages/clawql-automation/src/**/*.test.ts",
       "packages/clawql-sandbox/src/**/*.test.ts",
       "packages/clawql-ouroboros/src/**/*.test.ts",
+      "packages/clawql-operator/src/**/*.test.ts",
       "packages/panguard-mcp-bridge/src/**/*.test.ts",
       "scripts/kubernetes/**/*.test.ts",
     ],

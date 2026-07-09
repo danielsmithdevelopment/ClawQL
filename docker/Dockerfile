@@ -20,6 +20,7 @@ COPY packages/clawql-automation/package.json ./packages/clawql-automation/
 COPY packages/clawql-sandbox/package.json ./packages/clawql-sandbox/
 COPY packages/mcp-grpc-transport/package.json ./packages/mcp-grpc-transport/
 COPY packages/clawql-ouroboros/package.json ./packages/clawql-ouroboros/
+COPY packages/clawql-operator/package.json ./packages/clawql-operator/
 # `workspace:*` deps (e.g. clawql-ouroboros) need every workspace package.json present before `npm ci`.
 # `prepare` runs `tsc` before src/ exists — skip lifecycle scripts until deps are installed.
 RUN npm ci --ignore-scripts

@@ -1,0 +1,25 @@
+apiVersion: clawql.io/v1alpha1
+kind: ClawQLInstance
+metadata:
+  name: clawql
+  namespace: clawql
+spec:
+  tier: standard
+  memory:
+    enabled: true
+  documents:
+    enabled: true
+    onyx:
+      enabled: false
+  automation:
+    notify:
+      enabled: false
+    schedule:
+      enabled: false
+  sandbox:
+    enabled: false
+  ouroboros:
+    enabled: false
+  mcp:
+    deploymentName: clawql-mcp-http
+    rolloutOnTierSpecChange: true

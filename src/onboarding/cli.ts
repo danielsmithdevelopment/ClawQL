@@ -9,8 +9,9 @@ import { formatMcpConfig } from "./mcp-config.js";
 import { writeMcpConfigFile, type McpWriteTarget } from "./mcp-config-write.js";
 import { runSecretsList, runSecretsSet } from "./secrets-cli.js";
 import { onboardExitCode, runOnboard } from "./onboard.js";
+import { runOperatorStatus } from "./operator-cli.js";
 
-type Command = "init" | "doctor" | "mcp-config" | "secrets" | "onboard" | "help";
+type Command = "init" | "doctor" | "mcp-config" | "secrets" | "onboard" | "operator" | "help";
 
 function parse(argv: string[]): {
   cmd: Command;
@@ -40,8 +41,8 @@ function parse(argv: string[]): {
     else if (!a.startsWith("-")) positional.push(a);
   }
   const cmd = (positional[0] ?? "help") as Command;
-  const subcmd = cmd === "secrets" ? positional[1] : undefined;
-  const rest = cmd === "secrets" ? positional.slice(2) : positional.slice(1);
+  const subcmd = cmd === "secrets" || cmd === "operator" ? positional[1] : undefined;
+  const rest = cmd === "secrets" || cmd === "operator" ? positional.slice(2) : positional.slice(1);
   return { cmd, subcmd, flags, rest };
 }
 
@@ -61,6 +62,10 @@ Usage:
   clawql secrets list
   clawql secrets set <github|slack|linear|…> [value]
   clawql mcp-config [--json] [--write cursor|claude-desktop] [--http] [--url http://host/mcp]
+  clawql operator status
+
+operator:
+  status          List ClawQLInstance CRs and tier-spec ConfigMaps (requires kubeconfig)
 
 onboard:
   End-to-end first run: init → write MCP config (cursor) → doctor --smoke
@@ -105,9 +110,7 @@ async function main(): Promise<void> {
   }
 
   if (cmd === "onboard") {
-    const writeMcp = flags.skipMcpWrite
-      ? false
-      : parseWriteTarget(flags.writeMcp ?? "cursor");
+    const writeMcp = flags.skipMcpWrite ? false : parseWriteTarget(flags.writeMcp ?? "cursor");
     const result = await runOnboard({
       yes: Boolean(flags.yes),
       interactive: Boolean(flags.interactive),
@@ -167,6 +170,16 @@ async function main(): Promise<void> {
       return;
     }
     console.error("Usage: clawql secrets list | clawql secrets set <provider> [value]");
+    process.exitCode = 1;
+    return;
+  }
+
+  if (cmd === "operator") {
+    if (subcmd === "status") {
+      process.exitCode = await runOperatorStatus();
+      return;
+    }
+    console.error("Usage: clawql operator status");
     process.exitCode = 1;
     return;
   }

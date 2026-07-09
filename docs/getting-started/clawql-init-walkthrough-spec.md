@@ -35,14 +35,14 @@ Executor is a useful reference: one-line install, `doctor`, agent-bootstrap shor
 
 ## 3. ClawQL today (gaps)
 
-| Capability         | ClawQL today                                | Gap                                                       |
-| ------------------ | ------------------------------------------- | --------------------------------------------------------- |
-| Install            | `npm install clawql-mcp` / `npx clawql-mcp` | No curl installer; acceptable for npm ecosystem           |
-| Health             | `GET /healthz` on HTTP mode only            | No `clawql doctor` CLI; stdio users lack one command      |
-| Dashboard          | Helm `clawql-dashboard` (K8s)               | No local-first “add provider” UI for solo dev             |
-| Agent bootstrap    | Manual MCP JSON in Cursor/Claude            | No copy-paste **agent setup prompt** on docs home         |
+| Capability         | ClawQL today                                | Gap                                                                |
+| ------------------ | ------------------------------------------- | ------------------------------------------------------------------ |
+| Install            | `npm install clawql-mcp` / `npx clawql-mcp` | No curl installer; acceptable for npm ecosystem                    |
+| Health             | `GET /healthz` on HTTP mode only            | No `clawql doctor` CLI; stdio users lack one command               |
+| Dashboard          | Helm `clawql-dashboard` (K8s)               | No local-first “add provider” UI for solo dev                      |
+| Agent bootstrap    | Manual MCP JSON in Cursor/Claude            | No copy-paste **agent setup prompt** on docs home                  |
 | First integration  | Per-provider onboarding docs                | ~~No end-to-end walkthrough tool~~ → **`clawql onboard`** (Tier 2) |
-| Default stack docs | Partially updated post-#528                 | README/quickstart still taught `all-providers` as default |
+| Default stack docs | Partially updated post-#528                 | README/quickstart still taught `all-providers` as default          |
 
 **Existing assets to reuse:**
 
