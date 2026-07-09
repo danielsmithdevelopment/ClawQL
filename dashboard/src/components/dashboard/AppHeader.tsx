@@ -5,9 +5,13 @@ import { Github, BookOpen, Search, User } from 'lucide-react'
 import { Logo } from '@/components/Logo'
 import { buttonVariants } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { useDashboardRuntime } from '@/lib/use-dashboard-runtime'
 import { cn } from '@/lib/utils'
 
 export function AppHeader({ className }: { className?: string }) {
+  const runtime = useDashboardRuntime()
+  const desktopMode = runtime?.desktopMode ?? false
+
   return (
     <header
       className={cn(
@@ -17,6 +21,11 @@ export function AppHeader({ className }: { className?: string }) {
     >
       <div className="flex min-w-0 items-center gap-3">
         <Logo className="[&_span]:text-orange-500 [&_span]:font-semibold" />
+        {desktopMode ? (
+          <span className="hidden rounded-full border border-orange-500/30 bg-orange-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-orange-400 sm:inline">
+            Desktop
+          </span>
+        ) : null}
       </div>
       <div className="flex items-center gap-2 sm:gap-3">
         <a

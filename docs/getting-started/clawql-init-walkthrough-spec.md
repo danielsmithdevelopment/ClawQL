@@ -77,10 +77,10 @@ Executor is a useful reference: one-line install, `doctor`, agent-bootstrap shor
 - Docs + migration guide updated for **7.0.0**
 - Agent-setup prompt uses onboard as the primary path
 
-### Phase 3 — Guided UI (future, optional)
+### Phase 3 — Guided UI (shipped in 7.0 Desktop)
 
-- Local dashboard panel: “Connect GitHub” → env checklist (no secret storage in browser)
-- Parity with Executor’s “Add Source” only if it fits ClawQL’s Helm/dashboard roadmap ([#255](https://github.com/danielsmithdevelopment/ClawQL/issues/255) Operator is separate)
+- **ClawQL Desktop (macOS):** Electron app (`desktop/`) — Provider secrets panel + Agent Chat against local `~/.ClawQL` vault
+- Helm/K8s dashboard remains the cluster operator path ([#242](https://github.com/danielsmithdevelopment/ClawQL/issues/242))
 
 ---
 

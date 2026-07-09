@@ -52,6 +52,21 @@ helm upgrade --install clawql ./charts/clawql-mcp --set provider=all-providers
 
 ---
 
+## ClawQL Desktop (macOS)
+
+Downloadable app wrapping the dashboard — **Provider secrets** + **Agent Chat** locally (no Kubernetes required for solo dev).
+
+```bash
+cd desktop && npm install && npm run dist:mac
+# → desktop/dist/ClawQL-7.0.0.dmg
+```
+
+Requires **OpenClaw** on `PATH` for chat. Secrets save to `~/.ClawQL/vault/providers.json` (same as `clawql init`).
+
+→ [Desktop design doc](docs/design/clawql-desktop-macos.md) · [desktop/README.md](desktop/README.md)
+
+---
+
 ## Onboarding CLI (Tier 1 + Tier 2)
 
 | Command                               | Purpose                                       |

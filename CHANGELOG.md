@@ -19,6 +19,7 @@ Major release: **opinionated default stack everywhere** (npm + Helm), **vault-fi
 
 ### Added
 
+- **ClawQL Desktop (macOS):** Electron app (`desktop/`) bundling the dashboard — local **Provider secrets** (`~/.ClawQL/vault/providers.json`) and **Agent Chat** via OpenClaw bridge; `npm run dist:mac` produces a `.dmg`. Design: [`docs/design/clawql-desktop-macos.md`](docs/design/clawql-desktop-macos.md).
 - **Opinionated default bundled stack** ([#528](https://github.com/danielsmithdevelopment/ClawQL/pull/528)): bare `npx clawql-mcp` loads **Cloudflare, GitHub, Slack, Linear, Notion, Onyx**; **`CLAWQL_PROVIDER=all-providers`** remains explicit opt-in for every vendor + Google top-50 + AWS top-50.
 - **AWS top-50 bundled preset** ([#528](https://github.com/danielsmithdevelopment/ClawQL/pull/528)): SigV4 **`execute`**, manifest under `providers/aws/`, onboarding [`docs/providers/aws-onboarding.md`](docs/providers/aws-onboarding.md).
 - **Notion bundled provider**: official OpenAPI; **`NOTION_API_TOKEN`** auth; onboarding [`docs/providers/notion-onboarding.md`](docs/providers/notion-onboarding.md).
@@ -37,6 +38,7 @@ Major release: **opinionated default stack everywhere** (npm + Helm), **vault-fi
 - **NATS JetStream workflow events** ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254), [#127](https://github.com/danielsmithdevelopment/ClawQL/issues/127)): opt-in publish/consumer for HITL/workflow lifecycle.
 - **Langfuse eval → Ouroboros** ([#250](https://github.com/danielsmithdevelopment/ClawQL/issues/250)): **`CLAWQL_ENABLE_LANGFUSE_EVAL=1`** + **`CLAWQL_ENABLE_OUROBOROS=1`** — webhook + **`ouroboros_propose_seed_revision_from_eval`**.
 - **7.0 setup guide:** [`docs/getting-started/clawql-7-setup-guide.md`](docs/getting-started/clawql-7-setup-guide.md).
+- **ClawQL Desktop (macOS):** downloadable Electron app — provider secrets + Agent Chat without localhost browser tabs.
 
 ### Changed
 

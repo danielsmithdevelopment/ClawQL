@@ -119,7 +119,18 @@ Point **`spec.mcp.providerSecretName`** at your synced Secret if not using **`cl
 
 ---
 
-## Upgrade checklist
+## macOS Desktop app
+
+Downloadable **ClawQL Desktop** (Electron) — provider secrets + Agent Chat without running a browser tab.
+
+```bash
+make desktop-dev          # development (requires dashboard npm install)
+make desktop-dist-mac     # build ClawQL-7.0.0.dmg
+```
+
+Install **OpenClaw** and configure model auth for Agent Chat. See [clawql-desktop-macos.md](../design/clawql-desktop-macos.md).
+
+---
 
 1. Read [migration](https://docs.clawql.com/resources/migration) if you relied on implicit **`all-providers`**.
 2. Replace legacy env aliases in `.env`, Helm values, and CI secrets.
