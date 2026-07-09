@@ -214,7 +214,7 @@ export default function Page() {
         <Faq
           id="faq-5"
           question="Is managed hosting available today?"
-          answer="Self-hosting is available now — npm, Helm, and the full Apache 2.0 stack with no license fee. That is your free tier. Hosted gateway starts with a 14-day Developer trial (no credit card): full persistent vault and unlimited executions. IDP bundles from $299/mo onboard with founder-led setup."
+          answer="The open-source MCP core is production-ready today — npm, Helm, case studies, and a Kubernetes operator. Self-host free on Apache 2.0, or start a 14-day Developer trial. Managed IDP hosting is early access with founder-led onboarding. We are pre-revenue on managed hosting; the architecture is shipped, references and compliance history are still building."
         />
         <Faq
           id="faq-6"
