@@ -4,7 +4,7 @@
 
 The operator is an **additive** deployment path. Helm `charts/clawql-mcp`, `make local-k8s-up`, and env-based `CLAWQL_ENABLE_*` flags remain the default when the operator is not installed.
 
-## Architecture (phase 2)
+## Architecture (7.0 scaffold)
 
 ```mermaid
 flowchart LR

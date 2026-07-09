@@ -145,3 +145,15 @@ Use this when enabling in-cluster Flink for real-time Onyx index freshness ([#11
 5. Keep Flink UI private by default; use temporary `kubectl port-forward` for debugging.
 
 Full architecture, values reference, and runbook: [Flink Onyx sync](/flink-onyx-sync). Helm context: [Helm](/helm).
+
+## ClawQL Operator (opt-in, 7.0.0)
+
+The operator scaffold reconciles **`ClawQLInstance`** CRs to tier-spec ConfigMaps and optionally rolls MCP when tier spec changes. It installs automatically with **`make local-k8s-up`** (full stack); skip with **`CLAWQL_INSTALL_OPERATOR=0`**.
+
+```bash
+make operator-install    # CRD + operator Deployment only
+make operator-status     # clawql operator status
+kubectl apply -f examples/operator/clawqlinstance-minimal.yaml -n clawql
+```
+
+Guide: [Operations guide](/deployment/operations-guide) · [Operator target architecture](/design/operator-target-architecture)

@@ -135,15 +135,15 @@ Default provider merge with **no** spec env: **opinionated default stack** (Clou
 
 ---
 
-## Operator scaffold (opt-in)
+## Operator scaffold (opt-in, shipped 7.0.0)
 
-Phase 1 does **not** manage MCP Deployments. Existing Helm and `CLAWQL_ENABLE_*` workflows are unchanged unless you explicitly enable the operator chart and MCP `instanceSpec` mount.
+The operator scaffold reconciles `ClawQLInstance` CRs to tier-spec ConfigMaps and optionally rolls MCP when `spec.mcp.rolloutOnTierSpecChange` is set. Helm `CLAWQL_ENABLE_*` workflows remain the default when the operator is not installed.
 
 1. Install CRD + reconcile: [clawql-operator-helm.md](clawql-operator-helm.md)
 2. Apply a `ClawQLInstance` (`examples/operator/clawqlinstance-minimal.yaml`)
-3. Optionally mount the published tier-spec ConfigMap on MCP (`instanceSpec.enabled: true`)
+3. Mount the published tier-spec ConfigMap on MCP (`instanceSpec.enabled: true`)
 
-Full tier/vertical/auth reconciliation remains in **[Operator target architecture](../design/operator-target-architecture.md)**.
+Full tier/vertical/auth reconciliation and NL ops remain in **[Operator target architecture](../design/operator-target-architecture.md)** (roadmap).
 
 ---
 

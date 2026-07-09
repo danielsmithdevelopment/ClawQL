@@ -1,6 +1,6 @@
 # ClawQL init walkthrough — design spec
 
-**Status:** Draft (July 2026)  
+**Status:** Shipped (7.0.0) — Phases 1–2b complete; Phase 3 UI optional  
 **Audience:** Product, docs, and contributors planning the next major release onboarding UX  
 **Companion:** [Agent setup prompt](./agent-setup-prompt.md) · [Getting started](../readme/getting-started.md)
 
@@ -35,21 +35,21 @@ Executor is a useful reference: one-line install, `doctor`, agent-bootstrap shor
 
 ## 3. ClawQL today (gaps)
 
-| Capability         | ClawQL today                                | Gap                                                                |
-| ------------------ | ------------------------------------------- | ------------------------------------------------------------------ |
-| Install            | `npm install clawql-mcp` / `npx clawql-mcp` | No curl installer; acceptable for npm ecosystem                    |
-| Health             | `GET /healthz` on HTTP mode only            | No `clawql doctor` CLI; stdio users lack one command               |
-| Dashboard          | Helm `clawql-dashboard` (K8s)               | No local-first “add provider” UI for solo dev                      |
-| Agent bootstrap    | Manual MCP JSON in Cursor/Claude            | No copy-paste **agent setup prompt** on docs home                  |
-| First integration  | Per-provider onboarding docs                | ~~No end-to-end walkthrough tool~~ → **`clawql onboard`** (Tier 2) |
-| Default stack docs | Partially updated post-#528                 | README/quickstart still taught `all-providers` as default          |
+| Capability         | ClawQL 7.0.0                                | Remaining gap                                           |
+| ------------------ | ------------------------------------------- | ------------------------------------------------------- |
+| Install            | `npm install clawql-mcp` / `npx clawql-mcp` | No curl installer; acceptable for npm ecosystem         |
+| Health             | `clawql doctor` / `clawql doctor --smoke`   | HTTP-only checks need `CLAWQL_MCP_URL`                  |
+| Dashboard          | Helm `clawql-dashboard` (K8s)               | No local-first “add provider” UI for solo dev (Phase 3) |
+| Agent bootstrap    | `clawql onboard` + agent-setup prompt       | —                                                       |
+| First integration  | `clawql onboard --interactive`              | —                                                       |
+| Default stack docs | README, quickstart, migration aligned       | —                                                       |
 
-**Existing assets to reuse:**
+**Existing assets:**
 
 - [Getting started](../readme/getting-started.md), [Quickstart](https://docs.clawql.com/quickstart), [MCP clients](https://docs.clawql.com/mcp-clients)
 - Per-vendor guides: `docs/providers/*-onboarding.md`
-- [Plugins hub](https://docs.clawql.com/plugins) — core, bundled providers, memory, documents
-- `scripts/dev/clawql-doctor.sh` — lightweight health/MCP wiring checks (Phase 1)
+- [Plugins hub](https://docs.clawql.com/plugins)
+- `scripts/dev/clawql-doctor.sh` — thin wrapper; prefer **`clawql doctor`**
 
 ---
 
@@ -107,7 +107,7 @@ flowchart TD
 - Restart MCP client after config change
 - Default stack list (6 vendors) vs `CLAWQL_PROVIDER=all-providers`
 - Never print or commit secrets; use env / `CLAWQL_PROVIDER_AUTH_JSON`
-- Point to `clawql-doctor.sh` after HTTP start
+- Point to `clawql doctor` after HTTP start (or `clawql doctor --smoke` for stdio MCP)
 
 ---
 

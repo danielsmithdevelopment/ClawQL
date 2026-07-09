@@ -130,7 +130,7 @@ For technical readers, the full rationale and patterns are in the [Contributor T
 
 ### Planned
 
-All vertical packages, the Kubernetes Operator, the natural language dashboard, and the remaining horizontal packages (`clawql-data`, `clawql-sandbox`, `clawql-printingpress`, `clawql-goose`, `clawql-telemetry`) are planned and not yet in development. **`clawql-automation`** is a **scaffold** on `main` (schedule + notify extracted; NATS/HITL planned). Specifications for not-yet-started packages are written and stable; work begins when upstream dependencies stabilize.
+Vertical packages, the **full** Kubernetes Operator (NL dashboard, vertical toggles, auth reconciliation), and the remaining horizontal packages (`clawql-data`, `clawql-sandbox`, `clawql-printingpress`, `clawql-goose`, `clawql-telemetry`) are planned. An **opt-in operator scaffold** shipped in **7.0.0** — see [clawql-operator-helm.md](../deployment/clawql-operator-helm.md). **`clawql-automation`** is a **scaffold** on `main` (schedule + notify extracted; NATS/HITL planned). Specifications for not-yet-started packages are written and stable; work begins when upstream dependencies stabilize.
 
 ---
 

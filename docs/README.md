@@ -19,7 +19,7 @@ This directory is organized by purpose so operational guides, product docs, and 
 - **Token efficiency — layered approach** (Code Mode, response trimming, caching, semantic cache, model routing): [`architecture/clawql-token-efficiency.md`](architecture/clawql-token-efficiency.md) — [`/architecture/token-efficiency`](https://docs.clawql.com/architecture/token-efficiency)
 - **Modularization implementation status** (ground truth — packages, shims, MCP flow, Effect/plugin status, July 2026): [`design/modularization-implementation-status.md`](design/modularization-implementation-status.md)
 - **ClawQL plugin model** (memory/documents/automation as plugins, MCP tools, third-party extensions): [`design/clawql-plugin-model.md`](design/clawql-plugin-model.md) — [`/reference/plugins`](https://docs.clawql.com/reference/plugins)
-- **Operator target architecture** (planned tiers, CRD, NL ops — not shipped): [`design/operator-target-architecture.md`](design/operator-target-architecture.md)
+- **Operator target architecture** (full operator roadmap — NL ops, verticals): [`design/operator-target-architecture.md`](design/operator-target-architecture.md)
 - **Plugin registry** (shipped vs planned plugins, MCP tool ownership, enable flags): [`reference/clawql-plugin-registry.md`](reference/clawql-plugin-registry.md) — [`/reference/plugins`](https://docs.clawql.com/reference/plugins)
 - **Plugins hub** (one page per plugin — core, memory, documents, bundled providers, …): [`plugins/README.md`](plugins/README.md) — [`/plugins`](https://docs.clawql.com/plugins)
 - **Effect-TS + plugin rearchitecture plan** (Layer composition, plugin checklist): [`design/effect-ts-modularization-rearchitecture-plan.md`](design/effect-ts-modularization-rearchitecture-plan.md)
@@ -38,7 +38,7 @@ This directory is organized by purpose so operational guides, product docs, and 
 - `readme/getting-started.md`
 - `getting-started/agent-setup-prompt.md` — copy-paste Cursor/Claude onboarding prompt
 - `getting-started/local-provider-vault.md` — ~/.ClawQL secrets vault + memory home
-- `getting-started/clawql-init-walkthrough-spec.md` — Executor comparison and phased init tool design
+- `getting-started/clawql-init-walkthrough-spec.md` — Executor comparison; Phases 1–2b shipped in 7.0.0
 - `readme/configuration.md`
 - `readme/deployment.md`
 - `readme/benchmarks.md`

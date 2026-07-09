@@ -197,7 +197,8 @@ Read the full documentation suite, deploy the Tier 1 stack, and begin building p
 | [Immutable releases (Layer 0)](./clawql-hybrid-decentralized-github-alternative.md)                  | Arweave bundles, Radicle, Rift, `clawql-release`, manifest schema                            |
 | [Contributor Technical Specification](../contributing/clawql-contributor-technical-specification.md) | Implementation contracts, Effect-TS patterns, CI rules                                       |
 | [Deployment & Operations Guide](../deployment/clawql-deployment-operations-guide.md)                 | Shipped Helm ops — quick start, day-2, health                                                |
-| [Operator target architecture](../design/operator-target-architecture.md)                            | Planned tiers, CRD, verticals, NL ops (not shipped)                                          |
+| [Operator scaffold (7.0)](../deployment/clawql-operator-helm.md)                                     | Shipped opt-in CRD + reconcile + tier presets                                                |
+| [Operator target architecture](../design/operator-target-architecture.md)                            | Full operator roadmap — NL ops, verticals, auth (not shipped)                                |
 | [Dashboard Agent Chat](../dashboard/agent-chat.md)                                                   | Browser UI, SSE, vault threads, IDP attachment JSON contract                                 |
 | [Defense-in-Depth Security Guide](../security/clawql-defense-in-depth-security-guide.md)             | What to deploy — condensed operator reference                                                |
 | [Security curriculum](../security/security-best-practices-series/README.md)                          | 32 modules — why and how to prove controls                                                   |
