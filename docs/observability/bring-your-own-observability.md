@@ -89,7 +89,7 @@ observability:
   bundled:
     enabled: false
   langfuse:
-    enabled: false  # do not install Langfuse subchart
+    enabled: false # do not install Langfuse subchart
 
 clawql-mcp:
   metrics:
@@ -122,10 +122,10 @@ helm upgrade --install clawql charts/clawql-mcp \
 
 Import ClawQL JSON dashboards into **your** Grafana — no need to run the repo’s Grafana:
 
-| Dashboard | File |
-| --------- | ---- |
-| Core MCP | [`docs/grafana/clawql-core-observability.json`](../grafana/clawql-core-observability.json) |
-| IDP | [`docs/grafana/clawql-idp-observability.json`](../grafana/clawql-idp-observability.json) |
+| Dashboard | File                                                                                       |
+| --------- | ------------------------------------------------------------------------------------------ |
+| Core MCP  | [`docs/grafana/clawql-core-observability.json`](../grafana/clawql-core-observability.json) |
+| IDP       | [`docs/grafana/clawql-idp-observability.json`](../grafana/clawql-idp-observability.json)   |
 
 ## Langfuse eval → Ouroboros (unchanged)
 

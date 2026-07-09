@@ -12,13 +12,13 @@ ClawQL’s differentiation includes **token-efficient agent workflows** (plannin
 
 Today the repo treats observability as mostly **opt-in**:
 
-| Signal | Default today |
-| ------ | ------------- |
-| Prometheus `/metrics` | On |
-| OTLP MCP tool spans | Off (`CLAWQL_ENABLE_OTEL_TRACING`) |
-| Audit → Loki push | Off (`CLAWQL_LOKI_PUSH_URL`) |
-| Langfuse trace ingestion | Off — BYO deploy + manual `LANGFUSE_*` in Agent |
-| Langfuse eval → Ouroboros | Off (`CLAWQL_ENABLE_LANGFUSE_EVAL`) |
+| Signal                    | Default today                                   |
+| ------------------------- | ----------------------------------------------- |
+| Prometheus `/metrics`     | On                                              |
+| OTLP MCP tool spans       | Off (`CLAWQL_ENABLE_OTEL_TRACING`)              |
+| Audit → Loki push         | Off (`CLAWQL_LOKI_PUSH_URL`)                    |
+| Langfuse trace ingestion  | Off — BYO deploy + manual `LANGFUSE_*` in Agent |
+| Langfuse eval → Ouroboros | Off (`CLAWQL_ENABLE_LANGFUSE_EVAL`)             |
 
 **Langfuse** is not “another dashboard.” It is the natural **work-trace ledger**: prompts, tool spans, scores, metadata (`seed_id`, `correlationId`), and future export jobs for synthetic datasets. **Loki** and **Tempo** remain important for **infra** signals (audit grep, distributed latency); Langfuse owns **agent work product**.
 
@@ -36,11 +36,11 @@ We need one model that defaults Langfuse **on** for ClawQL-shaped installs while
 
 Introduce **`CLAWQL_OBSERVABILITY_PROFILE`** (and Helm `observability.profile`):
 
-| Profile | Purpose | Bundled backends | Langfuse emission |
-| ------- | ------- | ---------------- | ----------------- |
-| **`bundled`** | Tier 1 Compose, local k8s lab | OTEL Collector, Prometheus, Loki, Tempo, Grafana, **Langfuse** (toggleable) | **On by default** (opt-out) |
-| **`external`** | Production / existing stack | **None** — operator supplies URLs | **On by default** when `LANGFUSE_HOST` + keys set; off with `CLAWQL_DISABLE_LANGFUSE=1` |
-| **`minimal`** | Metrics-only / strict policy | None | **Off** |
+| Profile        | Purpose                       | Bundled backends                                                            | Langfuse emission                                                                       |
+| -------------- | ----------------------------- | --------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| **`bundled`**  | Tier 1 Compose, local k8s lab | OTEL Collector, Prometheus, Loki, Tempo, Grafana, **Langfuse** (toggleable) | **On by default** (opt-out)                                                             |
+| **`external`** | Production / existing stack   | **None** — operator supplies URLs                                           | **On by default** when `LANGFUSE_HOST` + keys set; off with `CLAWQL_DISABLE_LANGFUSE=1` |
+| **`minimal`**  | Metrics-only / strict policy  | None                                                                        | **Off**                                                                                 |
 
 **Default by install path:**
 
@@ -78,14 +78,14 @@ This matches production OTEL patterns (agent → gateway → backends) and lets 
 
 Instrument MCP tool spans and Agent spans with stable ClawQL metadata for Langfuse queries and future export:
 
-| Key | Purpose |
-| --- | ------- |
-| `clawql.correlation_id` | Tie audit, metrics, traces |
-| `clawql.seed_id` / `ouroboros_seed_id` | Ouroboros lineage (existing webhook contract) |
-| `clawql.tool_name` | MCP tool |
-| `clawql.planning_bytes` | Planning-context size for token-efficiency story |
-| `clawql.token_savings_estimate` | Estimated savings vs naive full-spec paste |
-| `clawql.provider` | Active `CLAWQL_PROVIDER` |
+| Key                                    | Purpose                                          |
+| -------------------------------------- | ------------------------------------------------ |
+| `clawql.correlation_id`                | Tie audit, metrics, traces                       |
+| `clawql.seed_id` / `ouroboros_seed_id` | Ouroboros lineage (existing webhook contract)    |
+| `clawql.tool_name`                     | MCP tool                                         |
+| `clawql.planning_bytes`                | Planning-context size for token-efficiency story |
+| `clawql.token_savings_estimate`        | Estimated savings vs naive full-spec paste       |
+| `clawql.provider`                      | Active `CLAWQL_PROVIDER`                         |
 
 Langfuse **scores** (e.g. `token_savings_ratio`, eval accuracy) feed dashboards now and **synthetic-data export** later.
 
@@ -93,11 +93,11 @@ Langfuse **scores** (e.g. `token_savings_ratio`, eval accuracy) feed dashboards 
 
 **Tracing on by default ≠ mutating seeds by default.**
 
-| Capability | Default |
-| ---------- | ------- |
-| Trace emission → Langfuse | **On** (opt-out) in bundled/external |
+| Capability                             | Default                                       |
+| -------------------------------------- | --------------------------------------------- |
+| Trace emission → Langfuse              | **On** (opt-out) in bundled/external          |
 | `POST /observability/langfuse/webhook` | **Off** until `CLAWQL_ENABLE_LANGFUSE_EVAL=1` |
-| `CLAWQL_LANGFUSE_EVAL_AUTO_APPLY` | **Off** — propose-only until operator enables |
+| `CLAWQL_LANGFUSE_EVAL_AUTO_APPLY`      | **Off** — propose-only until operator enables |
 
 This preserves [#250](https://github.com/danielsmithdevelopment/ClawQL/issues/250) safety while making Langfuse the default **read** path for work traces.
 
@@ -125,13 +125,13 @@ This preserves [#250](https://github.com/danielsmithdevelopment/ClawQL/issues/25
 
 ## Alternatives considered
 
-| Alternative | Why not chosen |
-| ----------- | -------------- |
-| Langfuse opt-in globally | Undermines token-savings story and synthetic-data foundation; feels like debug tooling. |
-| Embed Langfuse in `clawql-mcp` | Wrong process boundary; couples MCP releases to Langfuse DB migrations. |
-| Loki/Tempo only for work traces | Poor fit for prompt-level observations, scores, and LLM eval export. |
-| Only ClawQL-Agent sends to Langfuse | Misses MCP-only deployments and tool-span correlation without Agent. |
-| Auto-apply seed revisions when tracing on | Too risky; kept behind explicit `CLAWQL_LANGFUSE_EVAL_AUTO_APPLY`. |
+| Alternative                               | Why not chosen                                                                          |
+| ----------------------------------------- | --------------------------------------------------------------------------------------- |
+| Langfuse opt-in globally                  | Undermines token-savings story and synthetic-data foundation; feels like debug tooling. |
+| Embed Langfuse in `clawql-mcp`            | Wrong process boundary; couples MCP releases to Langfuse DB migrations.                 |
+| Loki/Tempo only for work traces           | Poor fit for prompt-level observations, scores, and LLM eval export.                    |
+| Only ClawQL-Agent sends to Langfuse       | Misses MCP-only deployments and tool-span correlation without Agent.                    |
+| Auto-apply seed revisions when tracing on | Too risky; kept behind explicit `CLAWQL_LANGFUSE_EVAL_AUTO_APPLY`.                      |
 
 ## References
 

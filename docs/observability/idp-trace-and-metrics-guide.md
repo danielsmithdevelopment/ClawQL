@@ -4,11 +4,11 @@
 
 Choose backends for **three signal types** in an IDP deployment:
 
-| Signal                | What it answers                                       | Recommended backend                                  |
-| --------------------- | ----------------------------------------------------- | ---------------------------------------------------- |
-| **Metrics**           | Throughput, errors, audit volume, native protocol mix | **Prometheus** (scrape MCP `/metrics`)               |
-| **Logs**              | Structured audit events, operator grep                | **Loki** (`CLAWQL_LOKI_PUSH_URL`) or cluster logging |
-| **Traces (infra)**    | Request latency across MCP tools, mesh hops           | **Tempo** (lab) or vendor backend via OTLP collector |
+| Signal                | What it answers                                       | Recommended backend                                                                               |
+| --------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| **Metrics**           | Throughput, errors, audit volume, native protocol mix | **Prometheus** (scrape MCP `/metrics`)                                                            |
+| **Logs**              | Structured audit events, operator grep                | **Loki** (`CLAWQL_LOKI_PUSH_URL`) or cluster logging                                              |
+| **Traces (infra)**    | Request latency across MCP tools, mesh hops           | **Tempo** (lab) or vendor backend via OTLP collector                                              |
 | **Work traces (LLM)** | Prompt → tool → token savings → eval → export         | **Langfuse** — **opt-out** default ([ADR 0005](../adr/0005-langfuse-default-work-trace-store.md)) |
 
 ## Trace backend choice (ADR 0003)

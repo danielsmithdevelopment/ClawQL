@@ -16,14 +16,14 @@ Set automatically in Tier 1 Compose when using the `observability` profile.
 
 ## What you get
 
-| Component | Role |
-| --------- | ---- |
-| **Prometheus** | Scrapes MCP `/metrics` (`clawql_audit_*`, `clawql_native_protocol_*`) |
-| **Loki** | Audit log push from MCP |
-| **Tempo** | Infra / MCP tool distributed traces |
-| **Grafana** | Dashboards from [`docs/grafana/`](../grafana/) |
-| **OTEL Collector** | Single OTLP ingress; fans out to Tempo + Langfuse |
-| **Langfuse** | **Work traces** — token usage, tool spans, scores, future synthetic export |
+| Component          | Role                                                                       |
+| ------------------ | -------------------------------------------------------------------------- |
+| **Prometheus**     | Scrapes MCP `/metrics` (`clawql_audit_*`, `clawql_native_protocol_*`)      |
+| **Loki**           | Audit log push from MCP                                                    |
+| **Tempo**          | Infra / MCP tool distributed traces                                        |
+| **Grafana**        | Dashboards from [`docs/grafana/`](../grafana/)                             |
+| **OTEL Collector** | Single OTLP ingress; fans out to Tempo + Langfuse                          |
+| **Langfuse**       | **Work traces** — token usage, tool spans, scores, future synthetic export |
 
 ## Quick start (planned — Tier 1 Compose)
 
@@ -35,10 +35,10 @@ docker compose --profile observability up -d
 
 Open:
 
-| UI | URL (default) |
-| -- | ------------- |
-| Grafana | http://localhost:3001 |
-| Langfuse | http://localhost:3002 |
+| UI          | URL (default)                 |
+| ----------- | ----------------------------- |
+| Grafana     | http://localhost:3001         |
+| Langfuse    | http://localhost:3002         |
 | MCP metrics | http://localhost:8080/metrics |
 
 ## Opt out of Langfuse only
@@ -67,11 +67,11 @@ CLAWQL_OBSERVABILITY_PROFILE=minimal docker compose up -d
 
 ADR 0005 standardizes span metadata for dashboards and export:
 
-| Attribute / score | Meaning |
-| ----------------- | ------- |
-| `clawql.planning_bytes` | Planning-context size on `search` |
+| Attribute / score               | Meaning                                 |
+| ------------------------------- | --------------------------------------- |
+| `clawql.planning_bytes`         | Planning-context size on `search`       |
 | `clawql.token_savings_estimate` | Estimated savings vs full-spec baseline |
-| Score `token_savings_ratio` | Langfuse score for workflow comparisons |
+| Score `token_savings_ratio`     | Langfuse score for workflow comparisons |
 
 Correlate with Prometheus using `clawql.correlation_id`.
 
