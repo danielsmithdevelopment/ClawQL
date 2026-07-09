@@ -1,17 +1,19 @@
-# ClawQL Operator — target architecture (not shipped)
+# ClawQL Operator — target architecture (full roadmap)
 
-**Status:** Design reference · **June 2026**  
+**Status:** Design reference for **full** operator (NL ops, verticals, auth) · **July 2026**  
 **Tracking:** [#255](https://github.com/danielsmithdevelopment/ClawQL/issues/255) (Operator / umbrella chart), [#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251) (four Compose stacks)
 
-This document captures the **planned** three-tier deployment model: **`ClawQLInstance` CRD**, Operator reconciliation, vertical toggles, natural-language operations, and enterprise hardening. **Nothing in sections 1–13 below is runnable today** unless explicitly marked as a shipped Helm equivalent.
+> **Shipped in 7.0.0 (opt-in scaffold):** `ClawQLInstance` CRD, tier presets, tier-spec ConfigMaps, continuous reconcile, optional MCP rollout, `clawql operator status`, `make local-k8s-up` install. Deploy guide: **[clawql-operator-helm.md](../deployment/clawql-operator-helm.md)**. Sections 1–13 below describe the **full** operator vision; only items marked as shipped Helm equivalents are runnable today.
 
-**Deploy today:** [Deployment & Operations Guide](../deployment/clawql-deployment-operations-guide.md) · [Helm (`charts/clawql-mcp`)](../deployment/helm.md) · [IDP pipeline](../providers/idp-pipeline.md) · `make local-k8s-up`
+This document captures the **planned** three-tier deployment model: **`ClawQLInstance` CRD**, Operator reconciliation, vertical toggles, natural-language operations, and enterprise hardening.
+
+**Deploy today:** [Deployment & Operations Guide](../deployment/clawql-deployment-operations-guide.md) · [Operator scaffold](../deployment/clawql-operator-helm.md) · [Helm (`charts/clawql-mcp`)](../deployment/helm.md) · [IDP pipeline](../providers/idp-pipeline.md) · `make local-k8s-up`
 
 ---
 
 ## Overview
 
-Three tiers were designed around a **ClawQL Operator** (not shipped). **Tier 1** Compose/bootstrap is also planned ([#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251)). **Shipped alternative:** Helm **`charts/clawql-mcp`** co-deploys MCP, document pipeline, optional Onyx/Nextcloud/Coneshare, dashboard, and vault memory without an Operator.
+Three tiers were designed around a **ClawQL Operator**. An **opt-in scaffold** shipped in **7.0.0** (CRD + reconcile + tier-spec ConfigMaps) — see [clawql-operator-helm.md](../deployment/clawql-operator-helm.md). **Tier 1** Compose/bootstrap is also planned ([#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251)). **Default path:** Helm **`charts/clawql-mcp`** co-deploys MCP, document pipeline, optional Onyx/Nextcloud/Coneshare, dashboard, and vault memory without enabling the operator.
 
 ### Prerequisites by Tier
 

@@ -1,8 +1,8 @@
-# ClawQL 7.0.0 — Release notes (draft)
+## clawql-mcp 7.0.0
 
-**Target:** Next major release after **6.4.1**  
-**Status:** On `main` — npm tag pending  
-**PRs:** [#528](https://github.com/danielsmithdevelopment/ClawQL/pull/528) (default stack) + onboarding Tier 1 CLI
+**npm:** [clawql-mcp@7.0.0](https://www.npmjs.com/package/clawql-mcp)  
+**Full changelog:** [CHANGELOG.md#700---2026-07-09](https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md#700---2026-07-09)  
+**Released:** 2026-07-09
 
 ---
 
@@ -42,16 +42,18 @@ Helm **`clawql-mcp`** chart may still default to **`all-providers`** for full ID
 | `clawql mcp-config --write cursor`    | Merge MCP JSON into Cursor / Claude Desktop (with `.bak` backup)    |
 | `clawql operator status`              | Kubernetes: ClawQLInstance + tier-spec ConfigMap health             |
 
-## ClawQL Operator (opt-in, phase 2)
+Docs: [Agent setup](docs/getting-started/agent-setup-prompt.md), [local provider vault](docs/getting-started/local-provider-vault.md), [/agent-setup](https://docs.clawql.com/agent-setup)
+
+---
+
+## ClawQL Operator (opt-in scaffold)
 
 - **`ClawQLInstance`** CRD with tier presets (`local` / `standard` / `enterprise`)
 - Continuous reconcile via operator **Deployment** (CronJob optional via `operator.mode`)
 - Tier-spec ConfigMap with owner references; optional MCP Deployment rollout on spec change
 - **`make local-k8s-up`** installs operator on full stack — [`clawql-operator-helm.md`](docs/deployment/clawql-operator-helm.md)
 
-MCP startup logs a one-line stderr summary: spec mode, vendor count, memory vault path, configured secret count.
-
-Docs: [Agent setup](docs/getting-started/agent-setup-prompt.md), [local provider vault](docs/getting-started/local-provider-vault.md), [/agent-setup](https://docs.clawql.com/agent-setup)
+Full NL ops, vertical toggles, and auth reconciliation remain roadmap — see [operator-target-architecture.md](docs/design/operator-target-architecture.md).
 
 ---
 
@@ -60,6 +62,15 @@ Docs: [Agent setup](docs/getting-started/agent-setup-prompt.md), [local provider
 - **AWS:** curated top-50 OpenAPI presets, SigV4 on `execute`
 - **Notion:** bundled `notion` provider
 - **Plugins:** docs hub at [/plugins](https://docs.clawql.com/plugins) (MCP plugins are opt-in; bundled providers are spec merge only)
+
+---
+
+## Helm charts
+
+| Chart                    | Chart.version | appVersion |
+| ------------------------ | ------------- | ---------- |
+| `charts/clawql-mcp`      | `0.7.0`       | `7.0.0`    |
+| `charts/clawql-operator` | `0.2.0`       | `7.0.0`    |
 
 ---
 
@@ -72,6 +83,18 @@ Docs: [Agent setup](docs/getting-started/agent-setup-prompt.md), [local provider
 
 ---
 
+## Install
+
+```bash
+npm install clawql-mcp@7.0.0
+npx clawql onboard --interactive
+npx clawql-mcp-http
+
+docker pull ghcr.io/danielsmithdevelopment/clawql-mcp:latest
+```
+
+---
+
 ## Contributors
 
-See [CHANGELOG.md](CHANGELOG.md) **Unreleased** for full commit-level detail.
+See [CHANGELOG.md](CHANGELOG.md) **[7.0.0]** for full commit-level detail.
