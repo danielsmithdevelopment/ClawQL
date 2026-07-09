@@ -6,6 +6,9 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "${ROOT}"
 
+echo "Building workspace packages before pack smoke..."
+npm run build >/dev/null
+
 INSTALL_ROOT="$(mktemp -d)"
 PACK_DIR="$(mktemp -d)"
 trap 'rm -rf "${INSTALL_ROOT}" "${PACK_DIR}"' EXIT
