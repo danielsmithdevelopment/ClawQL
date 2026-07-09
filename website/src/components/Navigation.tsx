@@ -10,16 +10,15 @@ import { Button } from '@/components/Button'
 import { useIsInsideMobileNavigation } from '@/components/MobileNavigation'
 import { useSectionStore } from '@/components/SectionProvider'
 import { Tag } from '@/components/Tag'
+import {
+  docsMobileShortcuts,
+  docsNavigation,
+  type NavGroup,
+} from '@/lib/docs-nav-data'
 import { remToPx } from '@/lib/remToPx'
 import { CloseButton } from '@headlessui/react'
 
-interface NavGroup {
-  title: string
-  links: Array<{
-    title: string
-    href: string
-  }>
-}
+interface NavGroupProps extends NavGroup {}
 
 function useInitialValue<T>(value: T, condition = true) {
   let initialValue = useRef(value).current
@@ -90,7 +89,7 @@ function VisibleSectionHighlight({
   group,
   pathname,
 }: {
-  group: NavGroup
+  group: NavGroupProps
   pathname: string
 }) {
   let [sections, visibleSections] = useInitialValue(
@@ -133,7 +132,7 @@ function ActivePageMarker({
   group,
   pathname,
 }: {
-  group: NavGroup
+  group: NavGroupProps
   pathname: string
 }) {
   let itemHeight = remToPx(2)
@@ -165,7 +164,7 @@ function NavigationGroup({
   group,
   className,
 }: {
-  group: NavGroup
+  group: NavGroupProps
   className?: string
 }) {
   // If this is the mobile navigation then we always render the initial
@@ -248,176 +247,17 @@ function NavigationGroup({
   )
 }
 
-export const navigation: Array<NavGroup> = [
-  {
-    title: 'Getting started',
-    links: [
-      { title: 'Overview', href: '/getting-started' },
-      { title: 'Quickstart', href: '/quickstart' },
-      { title: 'Agent setup', href: '/agent-setup' },
-      { title: 'Install', href: '/install' },
-      { title: 'MCP clients', href: '/mcp-clients' },
-      { title: 'Choose your tier', href: '/deployment' },
-    ],
-  },
-  {
-    title: 'Architecture & vision',
-    links: [
-      { title: 'Architecture hub', href: '/architecture' },
-      { title: 'Vision & Roadmap', href: '/vision/roadmap' },
-      {
-        title: 'IDP Platform',
-        href: '/vision/idp-platform',
-      },
-      {
-        title: 'Master enablement guide',
-        href: '/vision/technical-enablement',
-      },
-      { title: 'Modularization v2.1', href: '/vision/modularization' },
-      { title: 'Plugins hub', href: '/plugins' },
-      { title: 'Plugin model & registry', href: '/reference/plugins' },
-      {
-        title: 'Immutable releases (Layer 0)',
-        href: '/vision/immutable-releases',
-      },
-      { title: 'DAOS Unified Architecture', href: '/ouroboros/daos' },
-      { title: 'Coordination layer', href: '/ouroboros/specification' },
-      { title: 'DAOS build plan', href: '/ouroboros/build-plan' },
-      { title: 'Ouroboros library', href: '/ouroboros' },
-      { title: 'Slide deck', href: '/vision/slide-deck' },
-    ],
-  },
-  {
-    title: 'Deployment & operations',
-    links: [
-      { title: 'Deployment hub', href: '/deployment' },
-      {
-        title: 'Operations guide (Helm)',
-        href: '/deployment/operations-guide',
-      },
-      {
-        title: 'Operator target architecture (planned)',
-        href: '/design/operator-target-architecture',
-      },
-      { title: 'Tier 2: Kubernetes', href: '/deployment/kubernetes' },
-      { title: 'Helm chart', href: '/helm' },
-      { title: 'Platform ops (HTTP, Docker)', href: '/deployment/platforms' },
-      { title: 'Tailscale & Headscale', href: '/tailscale' },
-      { title: 'Dashboard on Kubernetes', href: '/dashboard-kubernetes' },
-      {
-        title: 'Istio & observability lab',
-        href: '/docker-desktop-observability',
-      },
-      { title: 'OpenClaw + ClawQL', href: '/openclaw' },
-    ],
-  },
-  {
-    title: 'Guides',
-    links: [
-      { title: 'Guides hub', href: '/guides' },
-      { title: 'ClawQL Learn', href: '/learn' },
-      { title: 'Token efficiency', href: '/architecture/token-efficiency' },
-      { title: 'Security overview', href: '/security' },
-      { title: 'Defense in depth', href: '/security/defense-in-depth' },
-      {
-        title: 'Security curriculum (32 modules)',
-        href: '/security/best-practices',
-      },
-      { title: 'HITL & human interfaces', href: '/reference/hitl' },
-      { title: 'Verticals guide', href: '/reference/verticals' },
-      { title: 'Troubleshooting', href: '/troubleshooting' },
-    ],
-  },
-  {
-    title: 'Plugins',
-    links: [
-      { title: 'Plugins hub', href: '/plugins' },
-      { title: 'Gateway core', href: '/plugins/core' },
-      { title: 'Panguard proxy', href: '/plugins/panguard-proxy' },
-      { title: 'Memory (vault)', href: '/plugins/memory' },
-      { title: 'Documents & IDP', href: '/plugins/documents' },
-      { title: 'Bundled providers', href: '/plugins/bundled-providers' },
-      { title: 'Automation', href: '/plugins/automation' },
-      { title: 'Sandbox', href: '/plugins/sandbox' },
-      { title: 'Ouroboros', href: '/plugins/ouroboros' },
-      { title: 'HITL (Label Studio)', href: '/plugins/hitl-label-studio' },
-      { title: 'Third-party plugins', href: '/plugins/third-party' },
-      { title: 'Plugin registry (reference)', href: '/reference/plugins' },
-    ],
-  },
-  {
-    title: 'Reference',
-    links: [
-      { title: 'Reference hub', href: '/reference' },
-      { title: 'Plugin model & registry', href: '/reference/plugins' },
-      { title: 'Protocol v2.1', href: '/reference/protocol' },
-      { title: 'Core concepts', href: '/concepts' },
-      { title: 'MCP tools', href: '/tools' },
-      { title: 'Configuration', href: '/spec-configuration' },
-      {
-        title: 'Contributor specification',
-        href: '/contributing/technical-specification',
-      },
-      { title: 'Optional tools hub', href: '/reference/optional-tools' },
-      { title: 'Ouroboros library', href: '/ouroboros' },
-      { title: 'Bundled specs', href: '/bundled-specs' },
-      { title: 'GraphQL layer', href: '/graphql-proxy' },
-      { title: 'NATS JetStream', href: '/nats-jetstream' },
-      { title: 'Benchmarks', href: '/benchmarks' },
-    ],
-  },
-  {
-    title: 'Examples',
-    links: [
-      { title: 'Examples hub', href: '/examples' },
-      {
-        title: 'Cloudflare docs deploy',
-        href: '/case-studies/cloudflare-docs-mcp',
-      },
-      {
-        title: 'Vault + GitHub session',
-        href: '/case-studies/vault-memory-github-session-2026-04',
-      },
-      {
-        title: 'Cross-thread vault recall',
-        href: '/case-studies/cross-thread-vault-recall',
-      },
-      {
-        title: 'OpenClaw memory_recall',
-        href: '/case-studies/openclaw-clawql-memory-recall-2026-06',
-      },
-    ],
-  },
-  {
-    title: 'Resources',
-    links: [
-      { title: 'Resources hub', href: '/resources' },
-      { title: 'Roadmap', href: '/vision/roadmap' },
-      { title: 'Changelog & releases', href: '/resources/changelog' },
-      { title: 'Migration guide', href: '/resources/migration' },
-      {
-        title: 'GitHub',
-        href: 'https://github.com/danielsmithdevelopment/ClawQL',
-      },
-    ],
-  },
-]
+export const navigation = docsNavigation
 
 export function Navigation(props: React.ComponentPropsWithoutRef<'nav'>) {
   return (
     <nav aria-label="Documentation" {...props}>
       <ul role="list">
-        <TopLevelNavItem href="/">Home</TopLevelNavItem>
-        <TopLevelNavItem href="/getting-started">
-          Getting started
-        </TopLevelNavItem>
-        <TopLevelNavItem href="/architecture">Architecture</TopLevelNavItem>
-        <TopLevelNavItem href="/deployment">Deployment</TopLevelNavItem>
-        <TopLevelNavItem href="/learn">Learn</TopLevelNavItem>
-        <TopLevelNavItem href="/plugins">Plugins</TopLevelNavItem>
-        <TopLevelNavItem href="https://github.com/danielsmithdevelopment/ClawQL">
-          GitHub
-        </TopLevelNavItem>
+        {docsMobileShortcuts.map((item) => (
+          <TopLevelNavItem key={item.href} href={item.href}>
+            {item.title}
+          </TopLevelNavItem>
+        ))}
         {navigation.map((group, groupIndex) => (
           <NavigationGroup
             key={group.title}
