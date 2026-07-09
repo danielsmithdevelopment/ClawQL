@@ -4,6 +4,7 @@
 
 import { loadGraphqlNativeOperations } from "./graphql-native-loader.js";
 import { loadGrpcNativeOperations } from "./grpc-native-loader.js";
+import { mergeCustomSourceOperations } from "./custom-sources-merge.js";
 import { recordNativeMergeFromOperations } from "./native-protocol-metrics.js";
 import type { LoadedSpec } from "./spec-loader.js";
 import type { Operation } from "./operation-types.js";
@@ -50,8 +51,8 @@ export async function mergeNativeProtocolOperations(loaded: LoadedSpec): Promise
         : "Execute routes native ops by protocolKind.")
   );
 
-  return {
+  return mergeCustomSourceOperations({
     ...loaded,
     operations: merged,
-  };
+  });
 }

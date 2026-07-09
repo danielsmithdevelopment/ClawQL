@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { EnvCatalog } from '@/lib/env-catalog'
 import { useDashboardRuntime } from '@/lib/use-dashboard-runtime'
 import { ProviderVaultForm } from '@/components/ProviderVaultForm'
+import { CustomSourcesForm } from '@/components/CustomSourcesForm'
 import {
   createChatThreadApi,
   fetchChatVault,
@@ -172,6 +173,18 @@ export function DashboardShell({ catalog: _catalog }: { catalog: EnvCatalog }) {
                   : 'Loading chat history from vault…'
               }
             />
+          ) : section === 'custom-sources' ? (
+            <div className="h-full overflow-y-auto bg-zinc-950 px-4 py-6 sm:px-8">
+              <div className="mx-auto max-w-5xl">
+                <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-orange-400">Custom sources</h2>
+                <p className="mb-8 max-w-2xl text-sm text-zinc-500">
+                  Add integrations from URL or CLI — OpenAPI, Discovery, GraphQL, gRPC, MCP. Merged into{' '}
+                  <code className="rounded bg-white/10 px-1">search</code> /{' '}
+                  <code className="rounded bg-white/10 px-1">execute</code> on MCP startup.
+                </p>
+                <CustomSourcesForm />
+              </div>
+            </div>
           ) : section === 'configuration' ? (
             <div className="h-full overflow-y-auto bg-zinc-950 px-4 py-6 sm:px-8">
               <div className="mx-auto max-w-5xl">

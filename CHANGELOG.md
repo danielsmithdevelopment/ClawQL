@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Layer 0 MVP — `clawql-release`**: `clawql release init|collect|manifest|publish|verify` builds manifest **v0.1** with git commit, npm tarball + CycloneDX SBOM SHA-256, GHCR image digests, and **Merkle root** (`clawql-core`); output under `releases/vX.Y.Z/`. **`clawql doctor --smoke`** verifies the bundle when present; **`CLAWQL_RELEASE_MANIFEST`** enables verify-at-startup for MCP. Package: `packages/clawql-release`. Docs: [`docs/getting-started/clawql-release-mvp.md`](docs/getting-started/clawql-release-mvp.md). Arweave permanent anchor deferred.
+- **Add any source from URL** — `clawql sources add <url>` with auto-detect for OpenAPI, Google Discovery, GraphQL SDL/introspection, gRPC `.proto`, and MCP HTTP endpoints; persisted in **`~/.ClawQL/sources.json`** and merged into MCP `search`/`execute` on startup.
+- **MCP and CLI as source types** — proxy remote MCP tools and wrap local CLI commands as searchable operations (`protocolKind` **`mcp`** / **`cli`**).
+- **Harness wrappers** — `clawql claude`, `clawql codex`, `clawql cursor`, `clawql opencode` write harness-specific MCP config and launch the agent binary on PATH.
+- **One-line install** — `curl -fsSL https://clawql.com/install | bash` (`scripts/install.sh`, served from the docs site).
+- **ClawQL Desktop Windows/Linux** — `make desktop-dist-win`, `make desktop-dist-linux` (NSIS + AppImage/deb).
+- **Dashboard custom sources UI** — Custom sources nav panel in ClawQL Desktop; add/list/remove via `/api/local/sources` (URL auto-detect + CLI).
+- **Phase 1 exit (7.0.0 finalized):**
+  - **`clawql-auth`** — gateway `noAuth`/`apiKey`, ATR claims, provider credential headers; HTTP MCP middleware when `CLAWQL_AUTH_MODE=apiKey`.
+  - **`clawql-pageindex`** — MIT vectorless hierarchical indexing; `pageindex_build_tree`, `pageindex_traverse`, `pageindex_synthesize`, `pageindex_get_content` (default on; `CLAWQL_ENABLE_PAGEINDEX=0` to hide).
+  - **Presidio gateway hooks** — `CLAWQL_ENABLE_PRESIDIO=1` redacts `execute` responses, `memory_ingest`, and `ingest_external_knowledge` markdown.
+  - **Tier 1 Docker Compose** — `examples/clawql-local-docker-compose` (bootstrap, MCP + Tika + Gotenberg + Paperless + memory); `make compose-tier1-config-test`.
+
 ## [7.0.0] - 2026-07-09
 
 Major release: **opinionated default stack everywhere** (npm + Helm), **vault-first defense in depth**, **ClawQL Operator** with provider-secret reconciliation, and consolidated IDP wave. Release notes: **[`RELEASE_NOTES_v7.0.0.md`](RELEASE_NOTES_v7.0.0.md)**.

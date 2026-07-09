@@ -3,7 +3,7 @@
 **Status:** Design reference for **full** operator (NL ops, verticals, auth) · **July 2026**  
 **Tracking:** [#255](https://github.com/danielsmithdevelopment/ClawQL/issues/255) (Operator / umbrella chart), [#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251) (four Compose stacks)
 
-> **Shipped in 7.0.0 (opt-in scaffold):** `ClawQLInstance` CRD, tier presets, tier-spec ConfigMaps, continuous reconcile, optional MCP rollout, `clawql operator status`, `make local-k8s-up` install. Deploy guide: **[clawql-operator-helm.md](../deployment/clawql-operator-helm.md)**. Sections 1–13 below describe the **full** operator vision; only items marked as shipped Helm equivalents are runnable today.
+> **Shipped in 7.0.0:** `ClawQLInstance` CRD, tier presets, tier-spec ConfigMaps, continuous reconcile, optional MCP rollout, `clawql operator status`, `make local-k8s-up` install, and **Tier 1 Docker Compose** (`examples/clawql-local-docker-compose`). Deploy guide: **[clawql-operator-helm.md](../deployment/clawql-operator-helm.md)**. Sections 1–13 below describe the **full** operator vision; items marked shipped (Helm equivalents or Compose) are runnable today.
 
 This document captures the **planned** three-tier deployment model: **`ClawQLInstance` CRD**, Operator reconciliation, vertical toggles, natural-language operations, and enterprise hardening.
 
@@ -13,7 +13,7 @@ This document captures the **planned** three-tier deployment model: **`ClawQLIns
 
 ## Overview
 
-Three tiers were designed around a **ClawQL Operator**. An **opt-in scaffold** shipped in **7.0.0** (CRD + reconcile + tier-spec ConfigMaps) — see [clawql-operator-helm.md](../deployment/clawql-operator-helm.md). **Tier 1** Compose/bootstrap is also planned ([#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251)). **Default path:** Helm **`charts/clawql-mcp`** co-deploys MCP, document pipeline, optional Onyx/Nextcloud/Coneshare, dashboard, and vault memory without enabling the operator.
+Three tiers were designed around a **ClawQL Operator**. An **opt-in scaffold** shipped in **7.0.0** (CRD + reconcile + tier-spec ConfigMaps) — see [clawql-operator-helm.md](../deployment/clawql-operator-helm.md). **Tier 1** Compose/bootstrap shipped in **7.0.0** ([#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251)) — see `examples/clawql-local-docker-compose/`. **Default path for K8s:** Helm **`charts/clawql-mcp`** co-deploys MCP, document pipeline, optional Onyx/Nextcloud/Coneshare, dashboard, and vault memory without enabling the operator.
 
 ### Prerequisites by Tier
 
@@ -45,9 +45,9 @@ Three tiers were designed around a **ClawQL Operator**. An **opt-in scaffold** s
 
 ---
 
-## 1. Tier 1: Local Developer Deployment (planned — use Helm today)
+## 1. Tier 1: Local Developer Deployment (shipped)
 
-> **Not shipped as written.** There is no `bootstrap.sh` or `clawql.local.yaml` flow in this repo yet ([#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251)). For a local full stack including the **seven-vendor IDP pipeline**, use **`make local-k8s-up`** and [helm.md](helm.md). The commands below are **target** Tier 1 documentation.
+> **Shipped in 7.0.0.** Use `examples/clawql-local-docker-compose/bootstrap.sh` + `docker compose up`. For a local full stack on Kubernetes including the **seven-vendor IDP pipeline**, use **`make local-k8s-up`** and [helm.md](helm.md).
 
 ### 1.1 Installation
 

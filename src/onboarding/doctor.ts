@@ -11,6 +11,7 @@ import { readLocalProvidersVault } from "../provider-vault/local-store.js";
 import { getClawqlEnvFilePath, getClawqlHome, getLocalProvidersVaultPath } from "./paths.js";
 import { inferSpecMode } from "./spec-mode.js";
 import { probeHashicorpVault } from "./hashicorp-vault.js";
+import { runReleaseDoctorCheck } from "./release-doctor-check.js";
 import { runMcpSmoke } from "./smoke.js";
 
 export type DoctorCheck = {
@@ -178,6 +179,7 @@ export async function runDoctor(
   checks.push({ level: "ok", message: `Spec mode: ${inferSpecModeFromEnv()}` });
 
   if (options.smoke) {
+    checks.push(await runReleaseDoctorCheck());
     const smoke = await runMcpSmoke();
     for (const step of smoke.steps) {
       checks.push({

@@ -1,6 +1,6 @@
 # ClawQL dashboard
 
-Small Next.js app (same brand styling as `website/`) with a **Provider secrets** panel for all bundled vendor API keys (GitHub, Slack, Paperless, IDP hops, HITL tokens). Operators paste tokens or `.env` snippets; the server writes **`secret/clawql/providers`**, syncs **`Secret/clawql-provider-env`**, and restarts **`clawql-mcp-http`** — no Vault CLI required ([#242](https://github.com/danielsmithdevelopment/ClawQL/issues/242)).
+Small Next.js app (same brand styling as `website/`) with **Provider secrets** and **Custom sources** panels for local Desktop mode. Provider secrets configure bundled vendor API keys (GitHub, Slack, Paperless, IDP hops, HITL tokens). Custom sources add OpenAPI/Discovery/GraphQL/gRPC/MCP/CLI integrations from URL — same as `clawql sources add`. In cluster mode, the dashboard writes **`secret/clawql/providers`**, syncs **`Secret/clawql-provider-env`**, and restarts **`clawql-mcp-http`** ([#242](https://github.com/danielsmithdevelopment/ClawQL/issues/242)).
 
 An advanced **`.env.example`** catalog (`EnvForm`) remains in the codebase for full env editing when `CLAWQL_DASHBOARD_VAULT_PATH=clawql/dotenv`.
 

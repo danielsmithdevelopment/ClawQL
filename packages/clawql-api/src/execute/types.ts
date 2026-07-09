@@ -13,7 +13,7 @@ export type ExecuteOperation = {
   id: string;
   specIndex?: number;
   specLabel?: string;
-  protocolKind?: "openapi" | "graphql" | "grpc";
+  protocolKind?: "openapi" | "graphql" | "grpc" | "mcp" | "cli";
   requestBody?: string;
   requestBodyContentType?: string;
   nativeGraphQL?: {
@@ -25,5 +25,15 @@ export type ExecuteOperation = {
     sourceLabel: string;
     clientKey: string;
     rpcName: string;
+  };
+  nativeMcp?: {
+    sourceId: string;
+    toolName: string;
+  };
+  nativeCli?: {
+    sourceId: string;
+    command: string;
+    args: string[];
+    env: Record<string, string>;
   };
 };

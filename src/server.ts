@@ -18,9 +18,11 @@ import { preloadSchemaFieldCacheFromDisk } from "./tools.js";
 import { validateOrDegradeObsidianVaultAtStartup } from "./vault-config.js";
 import { registerPostgresPoolShutdownHooks } from "clawql-memory/vector/pgvector";
 import { maybeInitOtelTracing } from "./otel-tracing.js";
+import { maybeVerifyReleaseManifestAtStartup } from "./release-manifest-startup.js";
 
 async function main() {
   await maybeInitOtelTracing();
+  await maybeVerifyReleaseManifestAtStartup();
   registerSpecCacheShutdownHooks();
   registerPostgresPoolShutdownHooks();
   // Pre-warm the spec cache on startup so the first search call is fast

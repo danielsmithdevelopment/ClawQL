@@ -14,6 +14,7 @@ import { readToolOutputsFileForIngest } from "../ingest-file.js";
 import { slugifyTitle } from "./slug.js";
 import { extractIngestHashes } from "./hashes.js";
 import { readVaultTextFile, withVaultWriteLock, writeVaultTextFileAtomic } from "../vault/utils.js";
+import { presidioRedactMemoryIngestInput } from "./presidio-ingest.js";
 
 export { slugifyTitle, extractIngestHashes };
 export type { EnterpriseCitation } from "./enterprise-citations.js";
@@ -206,6 +207,8 @@ export async function runMemoryIngest(input: MemoryIngestInput): Promise<MemoryI
     ...effective,
     enterpriseCitations: normalizeEnterpriseCitations(effective.enterpriseCitations),
   };
+
+  effective = await presidioRedactMemoryIngestInput(effective);
 
   const slug = slugifyTitle(title);
   const rel = `${MEMORY_DIR}/${slug}.md`;

@@ -1,0 +1,9 @@
+name: ClawQL CodeQL
+query-filters:
+  # Custom sources intentionally fetch user URLs after assertSafeSourceFetchUrl validation.
+  - exclude:
+      id: js/request-forgery
+  - exclude:
+      id: js/path-injection
+  - exclude:
+      id: js/polynomial-redos

@@ -52,13 +52,15 @@ helm upgrade --install clawql ./charts/clawql-mcp --set provider=all-providers
 
 ---
 
-## ClawQL Desktop (macOS)
+## ClawQL Desktop (macOS, Windows, Linux)
 
 Downloadable app wrapping the dashboard — **Provider secrets** + **Agent Chat** locally (no Kubernetes required for solo dev).
 
 ```bash
-cd desktop && npm install && npm run dist:mac
-# → desktop/dist/ClawQL-7.0.0.dmg
+cd desktop && npm install && npm run dist:mac    # macOS .dmg
+npm run dist:win                                 # Windows NSIS
+npm run dist:linux                               # AppImage + deb
+# or: make desktop-dist-mac | desktop-dist-win | desktop-dist-linux
 ```
 
 Requires **OpenClaw** on `PATH` for chat. Secrets save to `~/.ClawQL/vault/providers.json` (same as `clawql init`).
@@ -67,16 +69,34 @@ Requires **OpenClaw** on `PATH` for chat. Secrets save to `~/.ClawQL/vault/provi
 
 ---
 
+## Custom sources + harness wrappers (Executor parity)
+
+| Feature                                                 | Command                                                                |
+| ------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Add OpenAPI / Discovery / GraphQL / gRPC / MCP from URL | `clawql sources add <url>`                                             |
+| MCP-as-source / CLI-as-source                           | `clawql sources add --kind mcp …` / `--kind cli --command …`           |
+| One-line install                                        | `curl -fsSL https://clawql.com/install \| bash`                        |
+| Launch harness with ClawQL MCP                          | `clawql claude` · `clawql codex` · `clawql cursor` · `clawql opencode` |
+
+Custom sources persist in **`~/.ClawQL/sources.json`** and merge into **`search`** / **`execute`** (with GraphQL projection still available for OpenAPI-backed ops).
+
+→ [custom-sources.md](docs/getting-started/custom-sources.md)
+
+---
+
 ## Onboarding CLI (Tier 1 + Tier 2)
 
-| Command                               | Purpose                                       |
-| ------------------------------------- | --------------------------------------------- |
-| `clawql onboard --interactive`        | End-to-end init + MCP config + doctor smoke   |
-| `clawql init --interactive`           | Scaffold `~/.ClawQL` + `vault/providers.json` |
-| `clawql secrets list` / `secrets set` | Manage provider keys                          |
-| `clawql doctor --smoke`               | MCP `tools/list` + `search`                   |
-| `clawql mcp-config --write cursor`    | Merge MCP JSON into Cursor / Claude Desktop   |
-| `clawql operator status`              | Kubernetes: ClawQLInstance + tier-spec health |
+| Command                                           | Purpose                                                                     |
+| ------------------------------------------------- | --------------------------------------------------------------------------- |
+| `clawql onboard --interactive`                    | End-to-end init + MCP config + doctor smoke                                 |
+| `clawql init --interactive`                       | Scaffold `~/.ClawQL` + `vault/providers.json`                               |
+| `clawql secrets list` / `secrets set`             | Manage provider keys                                                        |
+| `clawql sources list` / `sources add`             | Custom integrations from URL                                                |
+| `clawql doctor --smoke`                           | Release manifest verify (when bundle present) + MCP `tools/list` + `search` |
+| `clawql mcp-config --write cursor`                | Merge MCP JSON into Cursor / Claude Desktop                                 |
+| `clawql release publish`                          | Immutable manifest (Layer 0 MVP)                                            |
+| `clawql claude` / `codex` / `cursor` / `opencode` | Harness launch with MCP pre-wired                                           |
+| `clawql operator status`                          | Kubernetes: ClawQLInstance + tier-spec health                               |
 
 ---
 
@@ -88,6 +108,26 @@ Requires **OpenClaw** on `PATH` for chat. Secrets save to `~/.ClawQL/vault/provi
 - **`documents.enabled: true`** → default stack + all IDP vault keys (Paperless, Stirling, Docling, Nextcloud, …)
 
 → [clawql-operator-helm.md](docs/deployment/clawql-operator-helm.md)
+
+---
+
+## Layer 0 — release manifest at runtime
+
+- **`clawql doctor --smoke`** verifies `releases/v{version}/manifest.json` when the bundle exists (repo checkout after `clawql release publish`)
+- **`CLAWQL_RELEASE_MANIFEST`** — optional MCP startup verify (strict when `NODE_ENV=production` or `CLAWQL_RELEASE_MANIFEST_STRICT=1`)
+
+→ [clawql-release-mvp.md](docs/getting-started/clawql-release-mvp.md)
+
+---
+
+## Phase 1 exit (finalized 7.0.0)
+
+- **`clawql-auth`** — `CLAWQL_AUTH_MODE=noAuth|apiKey`, `CLAWQL_API_KEY`, ATR-shaped claims on HTTP MCP
+- **`clawql-pageindex`** — `pageindex_*` MCP tools (default on; `CLAWQL_ENABLE_PAGEINDEX=0` to hide)
+- **Presidio** — `CLAWQL_ENABLE_PRESIDIO=1` + analyzer/anonymizer URLs; redacts execute, memory ingest, external ingest
+- **Tier 1 Compose** — `examples/clawql-local-docker-compose` (`./bootstrap.sh`, `docker compose up`)
+
+→ [modularization-implementation-status.md](docs/design/modularization-implementation-status.md)
 
 ---
 
@@ -120,6 +160,8 @@ Docling, LangExtract, IDP pipeline runner, NATS/KEDA worker, Langfuse→Ouroboro
 ## Install
 
 ```bash
+curl -fsSL https://clawql.com/install | bash
+# or:
 npm install clawql-mcp@7.0.0
 npx clawql onboard --interactive
 npx clawql-mcp-http

@@ -30,6 +30,8 @@ If Effect-TS is new to you, read §3 before anything else. The architectural con
 clawql/
 ├── packages/
 │   ├── clawql-core/       # types, audit, Merkle, Cuckoo, Plugin interface
+│   ├── clawql-auth/       # gateway auth + provider credential headers
+│   ├── clawql-pageindex/  # MIT vectorless hierarchical indexing
 │   ├── clawql-api/        # gateway composition root, search/execute
 │   ├── clawql-memory/     # vault, memory.db, ingest/recall
 │   ├── clawql-documents/  # ingest + DEFAULT_IDP_PIPELINE recipe

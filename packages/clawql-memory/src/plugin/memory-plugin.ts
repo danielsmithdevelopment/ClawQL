@@ -1,9 +1,17 @@
-import type { Plugin } from "clawql-core";
-import { logMcpToolShape } from "clawql-api/mcp/tool-shape-log";
 import { Effect } from "effect";
 import { z } from "zod";
+import {
+  pageindexBuildTree,
+  pageindexGetContent,
+  pageindexSynthesize,
+  pageindexTraverse,
+} from "clawql-pageindex/mcp";
+import { logMcpToolShape } from "clawql-api/mcp/tool-shape-log";
 import { runMemoryIngest, type MemoryIngestInput } from "../ingest/ingest.js";
 import { runMemoryRecall, type MemoryRecallInput } from "../recall/recall.js";
+import { pageIndexEnabled } from "../recall/pageindex-recall.js";
+
+import type { Plugin } from "clawql-core";
 
 export const MEMORY_PLUGIN_ID = "clawql-memory";
 
@@ -90,6 +98,32 @@ export const memoryRecallToolSchema = {
     ),
 };
 
+export const pageindexBuildTreeToolSchema = {
+  docId: z.string().min(1).describe("Stable document id for the PageIndex tree."),
+  markdown: z.string().describe("Markdown source (heading hierarchy becomes the tree)."),
+  storagePath: z.string().optional().describe("Optional JSON storage path override."),
+};
+
+export const pageindexTraverseToolSchema = {
+  docId: z.string().min(1),
+  query: z.string().min(1),
+  limit: z.number().int().positive().optional(),
+  storagePath: z.string().optional(),
+};
+
+export const pageindexSynthesizeToolSchema = {
+  docId: z.string().min(1),
+  query: z.string().min(1),
+  tokenBudget: z.number().int().positive().optional(),
+  storagePath: z.string().optional(),
+};
+
+export const pageindexGetContentToolSchema = {
+  docId: z.string().min(1),
+  nodeId: z.string().min(1),
+  storagePath: z.string().optional(),
+};
+
 export async function handleMemoryIngestToolInput(
   params: MemoryIngestInput
 ): Promise<{ content: { type: "text"; text: string }[] }> {
@@ -151,6 +185,45 @@ export function createMemoryPlugin(): Plugin {
           schema: memoryRecallToolSchema,
           handler: (args) => handleMemoryRecallToolInput(args as MemoryRecallInput),
         });
+
+        if (pageIndexEnabled()) {
+          yield* api.registerMcpTool({
+            name: "pageindex_build_tree",
+            schema: pageindexBuildTreeToolSchema,
+            handler: async (args) => ({
+              content: [
+                { type: "text", text: JSON.stringify(await pageindexBuildTree(args), null, 2) },
+              ],
+            }),
+          });
+          yield* api.registerMcpTool({
+            name: "pageindex_traverse",
+            schema: pageindexTraverseToolSchema,
+            handler: async (args) => ({
+              content: [
+                { type: "text", text: JSON.stringify(await pageindexTraverse(args), null, 2) },
+              ],
+            }),
+          });
+          yield* api.registerMcpTool({
+            name: "pageindex_synthesize",
+            schema: pageindexSynthesizeToolSchema,
+            handler: async (args) => ({
+              content: [
+                { type: "text", text: JSON.stringify(await pageindexSynthesize(args), null, 2) },
+              ],
+            }),
+          });
+          yield* api.registerMcpTool({
+            name: "pageindex_get_content",
+            schema: pageindexGetContentToolSchema,
+            handler: async (args) => ({
+              content: [
+                { type: "text", text: JSON.stringify(await pageindexGetContent(args), null, 2) },
+              ],
+            }),
+          });
+        }
       }),
   };
 }

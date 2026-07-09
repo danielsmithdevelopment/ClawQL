@@ -10,6 +10,7 @@ const nextConfig = {
   output: 'standalone',
   /** Monorepo: trace file inclusion from repo root when multiple lockfiles exist. */
   outputFileTracingRoot: path.join(__dirname, '..'),
+  serverExternalPackages: ['clawql-api', 'clawql-core'],
 }
 
 export default nextConfig

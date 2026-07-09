@@ -34,7 +34,7 @@ resolve_bundled_pkg() {
   return 1
 }
 
-for name in clawql-api clawql-core clawql-memory clawql-documents clawql-automation clawql-sandbox clawql-ouroboros clawql-operator; do
+for name in clawql-api clawql-auth clawql-core clawql-memory clawql-pageindex clawql-documents clawql-automation clawql-sandbox clawql-ouroboros clawql-operator clawql-release; do
   resolve_bundled_pkg "${name}"
 done
 
