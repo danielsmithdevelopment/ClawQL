@@ -54,8 +54,11 @@ export function slugifySourceId(input: string): string {
     if ((ch >= "a" && ch <= "z") || (ch >= "0" && ch <= "9")) s += ch;
     else if (ch === "-" || ch === "_" || ch === " " || ch === ".") s += "-";
   }
-  while (s.startsWith("-")) s = s.slice(1);
-  while (s.endsWith("-")) s = s.slice(0, -1);
-  const out = s.length > 0 ? s.slice(0, 64) : "source";
+  let start = 0;
+  let end = s.length;
+  while (start < end && s[start] === "-") start += 1;
+  while (end > start && s[end - 1] === "-") end -= 1;
+  const trimmedDashes = s.slice(start, end);
+  const out = trimmedDashes.length > 0 ? trimmedDashes.slice(0, 64) : "source";
   return assertSafeSourceId(out);
 }

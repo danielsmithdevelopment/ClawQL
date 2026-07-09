@@ -3,6 +3,7 @@
  */
 
 import { isIP } from "node:net";
+import { resolve, sep } from "node:path";
 
 const BLOCKED_HOSTNAMES = new Set(["localhost", "metadata.google.internal", "metadata.google"]);
 
@@ -41,6 +42,16 @@ export function assertSafeSourceId(id: string): string {
   return s;
 }
 
+/** Resolve a relative path under a base directory; rejects traversal outside base. */
+export function resolveSafePathUnder(base: string, relative: string): string {
+  const root = resolve(base);
+  const abs = resolve(root, relative);
+  if (abs !== root && !abs.startsWith(`${root}${sep}`)) {
+    throw new Error("Invalid path: must stay within the source home directory.");
+  }
+  return abs;
+}
+
 /** Allow HTTPS (and optional HTTP) fetches to public hosts only — blocks SSRF to private networks. */
 export function assertSafeSourceFetchUrl(raw: string): URL {
   let parsed: URL;
@@ -64,4 +75,14 @@ export function assertSafeSourceFetchUrl(raw: string): URL {
   }
 
   return parsed;
+}
+
+/** Fetch a user URL only after SSRF validation (single chokepoint for CodeQL + runtime policy). */
+export async function fetchSafeSourceUrl(
+  raw: string,
+  fetchFn: typeof fetch = fetch
+): Promise<{ url: URL; response: Response }> {
+  const url = assertSafeSourceFetchUrl(raw);
+  const response = await fetchFn(url.href);
+  return { url, response };
 }

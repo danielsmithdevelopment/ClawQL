@@ -3,7 +3,7 @@
  */
 
 import { writeFile } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { join, resolve, sep } from "node:path";
 import { convertObj } from "swagger2openapi";
 import type { LoadedSpec } from "./spec-loader.js";
 import { loadOpenAPIFromAbsolutePath } from "./spec-loader.js";
@@ -18,7 +18,7 @@ import {
   getCustomSourceCacheDir,
 } from "./custom-sources-store.js";
 import type { CustomSourceEntry } from "./custom-sources-types.js";
-import { assertSafeSourceId } from "./custom-sources-security.js";
+import { assertSafeSourceId, resolveSafePathUnder } from "./custom-sources-security.js";
 import type { GraphQLSourceConfig } from "./native-protocol-env.js";
 import type { GrpcSourceConfig } from "./native-protocol-env.js";
 
@@ -44,7 +44,7 @@ async function loadOpenApiLikeSource(entry: CustomSourceEntry, home: string): Pr
     console.error(`[spec-loader] Custom source "${entry.id}" missing cachePath`);
     return [];
   }
-  const abs = resolve(home, entry.cachePath);
+  const abs = resolveSafePathUnder(home, entry.cachePath);
   try {
     const loaded = await loadOpenAPIFromAbsolutePath(abs);
     return loaded.operations.map((op) => ({
@@ -64,7 +64,7 @@ async function loadOpenApiLikeSource(entry: CustomSourceEntry, home: string): Pr
 function toGraphqlConfig(entry: CustomSourceEntry, home: string): GraphQLSourceConfig | null {
   const endpoint = entry.graphqlEndpoint?.trim();
   if (!endpoint) return null;
-  const cacheAbs = entry.cachePath ? resolve(home, entry.cachePath) : undefined;
+  const cacheAbs = entry.cachePath ? resolveSafePathUnder(home, entry.cachePath) : undefined;
   const isIntrospection = entry.cachePath?.includes("introspection");
   return {
     name: entry.id,
@@ -84,7 +84,7 @@ function toGrpcConfig(entry: CustomSourceEntry, home: string): GrpcSourceConfig 
   return {
     name: entry.id,
     endpoint,
-    protoPath: resolve(home, protoPath),
+    protoPath: resolveSafePathUnder(home, protoPath),
     insecure: entry.grpcInsecure === true,
   };
 }
@@ -103,7 +103,9 @@ export async function mergeCustomSourceOperations(loaded: LoadedSpec): Promise<L
     operations = mergeOps(operations, ops);
     if (ops.length > 0 && entry.cachePath) {
       try {
-        const built = await loadOpenAPIFromAbsolutePath(resolve(home, entry.cachePath));
+        const built = await loadOpenAPIFromAbsolutePath(
+          resolveSafePathUnder(home, entry.cachePath)
+        );
         openapis.push(built.openapi);
       } catch {
         /* skip */
@@ -157,7 +159,13 @@ export async function cacheCustomSourceBody(
 ): Promise<CustomSourceEntry> {
   const safeEntry = { ...entry, id: assertSafeSourceId(entry.id) };
   const dir = getCustomSourceCacheDir(safeEntry.id, home);
-  let filename = "spec.json";
+  let filename:
+    | "spec.json"
+    | "schema.graphql"
+    | "introspection.json"
+    | "service.proto"
+    | "openapi.yaml"
+    | "openapi.json" = "spec.json";
   if (entry.kind === "graphql" && bodyText.includes("type ")) filename = "schema.graphql";
   else if (entry.kind === "graphql") filename = "introspection.json";
   else if (entry.kind === "grpc") filename = "service.proto";
@@ -175,7 +183,11 @@ export async function cacheCustomSourceBody(
     filename = "openapi.json";
   }
 
-  await writeFile(join(dir, filename), toWrite, "utf8");
+  const filePath = resolve(dir, filename);
+  if (filePath !== dir && !filePath.startsWith(`${dir}${sep}`)) {
+    throw new Error("Invalid cache file path");
+  }
+  await writeFile(filePath, toWrite, "utf8");
   const cachePath = `sources/${safeEntry.id}/${filename}`;
   return { ...safeEntry, cachePath };
 }

@@ -4,7 +4,7 @@
 
 import { chmod, mkdir, readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join, resolve, sep } from "node:path";
 import {
   emptyCustomSourcesFile,
   type CustomSourceEntry,
@@ -26,7 +26,12 @@ export function getCustomSourcesFilePath(home = resolveClawqlHome()): string {
 
 export function getCustomSourceCacheDir(id: string, home = resolveClawqlHome()): string {
   const safeId = assertSafeSourceId(id);
-  return join(home, "sources", safeId);
+  const base = resolve(join(home, "sources"));
+  const dir = resolve(base, safeId);
+  if (dir !== base && !dir.startsWith(`${base}${sep}`)) {
+    throw new Error("Invalid source id path");
+  }
+  return dir;
 }
 
 export async function readCustomSourcesFile(
