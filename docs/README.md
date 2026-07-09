@@ -38,6 +38,7 @@ This directory is organized by purpose so operational guides, product docs, and 
 - `readme/getting-started.md`
 - `getting-started/agent-setup-prompt.md` — copy-paste Cursor/Claude onboarding prompt
 - `getting-started/local-provider-vault.md` — ~/.ClawQL secrets vault + memory home
+- `getting-started/clawql-7-setup-guide.md` — 7.0 upgrade: default stack, Vault, operator auth
 - `getting-started/clawql-init-walkthrough-spec.md` — Executor comparison; Phases 1–2b shipped in 7.0.0
 - `readme/configuration.md`
 - `readme/deployment.md`

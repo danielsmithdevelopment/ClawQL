@@ -46,6 +46,8 @@ export const clawqlInstanceSpecV1Alpha1Schema = z
         deploymentName: z.string().min(1).optional(),
         namespace: z.string().min(1).optional(),
         rolloutOnTierSpecChange: z.boolean().optional(),
+        /** Kubernetes Secret synced from Vault (`envFromSecret`); defaults to clawql-provider-env. */
+        providerSecretName: z.string().min(1).optional(),
       })
       .strict()
       .optional(),

@@ -12,4 +12,12 @@ export {
   tierSpecConfigMapName,
   type TierSpecConfigMapData,
 } from "./reconcile/tier-spec-configmap.js";
+export {
+  CLAWQL_INSTANCE_AUTH_EXPECTATIONS_KEY,
+  buildAuthExpectationsPayload,
+  checkProviderSecret,
+  DEFAULT_PROVIDER_SECRET_NAME,
+  resolveRequiredVaultKeys,
+  type AuthExpectationsPayload,
+} from "./reconcile/auth-expectations.js";
 export { runOperator, type RunOperatorOptions } from "./controller/run-operator.js";

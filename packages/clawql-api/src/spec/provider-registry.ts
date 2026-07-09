@@ -271,8 +271,7 @@ async function resolveAwsTop50Items(): Promise<ProviderGroupItem[]> {
  * Build a merged load from a comma/semicolon/newline-separated list of **bundled** ids
  * (keys of **`BUNDLED_PROVIDERS`**, case-insensitive) and/or **`google`** / **`aws`** (manifest-backed cloud bundles).
  * Use **`CLAWQL_BUNDLED_PROVIDERS`** in `spec-loader`; there is no other default
- * custom merge — only this list, path list, or **`all-providers`**. Deprecated id **`google-top50`** is accepted as
- * an alias for **`google`**.
+ * custom merge — only this list, path list, or **`all-providers`**.
  */
 export async function resolveItemsFromBundledProviderEnvList(
   raw: string
@@ -287,7 +286,12 @@ export async function resolveItemsFromBundledProviderEnvList(
   const seen = new Set<string>();
   const out: ProviderGroupItem[] = [];
   for (const part of parts) {
-    const id = part === "google-top50" ? "google" : part;
+    if (part === "google-top50") {
+      throw new Error(
+        "The google-top50 id was removed in 7.0.0. Use google in CLAWQL_BUNDLED_PROVIDERS."
+      );
+    }
+    const id = part;
     if (id === "google") {
       for (const g of await resolveGoogleTop50Items()) {
         if (seen.has(g.label)) continue;
@@ -438,11 +442,6 @@ export const BUNDLED_PROVIDER_GROUPS: Record<string, BundledProviderGroup> = {
   "all-providers": { resolve: resolveAllBundledProvidersItems },
 };
 
-/** Deprecated merged preset id — resolves the same as `google`. */
-const BUNDLED_PROVIDER_GROUP_ALIASES: Record<string, string> = {
-  "google-top50": "google",
-};
-
 export function resolveBundledProvider(raw: string | undefined): BundledProvider | undefined {
   if (!raw?.trim()) return undefined;
   return BUNDLED_PROVIDERS[raw.trim().toLowerCase()];
@@ -459,6 +458,8 @@ export function listBundledProviderGroupIds(): string[] {
 const REMOVED_BUNDLED_PROVIDER_GROUP_IDS: Readonly<Record<string, string>> = {
   "default-multi-provider":
     "The default-multi-provider merge was removed. Use CLAWQL_BUNDLED_PROVIDERS (comma-separated ids) or CLAWQL_SPEC_PATHS, or all-providers / CLAWQL_PROVIDER=google / aws / atlassian / all-providers. See README.",
+  "google-top50":
+    "The google-top50 preset id was removed in 7.0.0. Use CLAWQL_PROVIDER=google or CLAWQL_BUNDLED_PROVIDERS=google.",
 };
 
 export async function resolveBundledProviderGroup(
@@ -469,7 +470,7 @@ export async function resolveBundledProviderGroup(
   if (REMOVED_BUNDLED_PROVIDER_GROUP_IDS[key]) {
     throw new Error(REMOVED_BUNDLED_PROVIDER_GROUP_IDS[key]);
   }
-  const canonical = BUNDLED_PROVIDER_GROUP_ALIASES[key] ?? key;
+  const canonical = key;
   const group = BUNDLED_PROVIDER_GROUPS[canonical];
   if (!group) return undefined;
   if (group.resolve) return group.resolve();

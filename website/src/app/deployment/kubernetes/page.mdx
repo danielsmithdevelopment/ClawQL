@@ -26,7 +26,7 @@ Or:
 bash scripts/kubernetes/local-k8s-docker-desktop.sh
 ```
 
-**Default:** **`helm upgrade --install`** with **`charts/clawql-mcp/values-docker-desktop.yaml`**: signed **`ghcr.io/danielsmithdevelopment/clawql-mcp:latest`**, **`ghcr.io/danielsmithdevelopment/clawql-website:latest`**, and **`ghcr.io/danielsmithdevelopment/clawql-dashboard:latest`**, **`all-providers`**, Obsidian memory **`vault.hostPath`** at **`$HOME/.ClawQL`** (Helm key **`vault`** — not HashiCorp Vault; override **`CLAWQL_LOCAL_VAULT_HOST_PATH`**). With **default Istio**, chart **Ingress** objects are off and **`svc/clawql-mcp-http`** is **ClusterIP**; north-south **HTTP** is **`clawql-mcp-ingress`** (**LoadBalancer** on docker/rancher kube contexts). With **`CLAWQL_LOCAL_K8S_ISTIO=0`**, **Ingress** serves **`clawql-mcp.localhost`** and **`svc/clawql-mcp-http`** stays **LoadBalancer** for **gRPC** / diagnostics. The script installs **Kyverno** and a **ClusterPolicy** so those images must pass **Cosign** verification in the **`clawql`** namespace (unsigned local **`docker build`** deploys are **not** supported).
+**Default:** **`helm upgrade --install`** with **`charts/clawql-mcp/values-docker-desktop.yaml`**: signed **`ghcr.io/danielsmithdevelopment/clawql-mcp:latest`**, **`ghcr.io/danielsmithdevelopment/clawql-website:latest`**, and **`ghcr.io/danielsmithdevelopment/clawql-dashboard:latest`**, **`provider: default`** (npm parity; **`--set provider=all-providers`** for full IDP lab), Obsidian memory **`vault.hostPath`** at **`$HOME/.ClawQL`** (Helm key **`vault`** — not HashiCorp Vault; override **`CLAWQL_LOCAL_VAULT_HOST_PATH`**). With **default Istio**, chart **Ingress** objects are off and **`svc/clawql-mcp-http`** is **ClusterIP**; north-south **HTTP** is **`clawql-mcp-ingress`** (**LoadBalancer** on docker/rancher kube contexts). With **`CLAWQL_LOCAL_K8S_ISTIO=0`**, **Ingress** serves **`clawql-mcp.localhost`** and **`svc/clawql-mcp-http`** stays **LoadBalancer** for **gRPC** / diagnostics. The script installs **Kyverno** and a **ClusterPolicy** so those images must pass **Cosign** verification in the **`clawql`** namespace (unsigned local **`docker build`** deploys are **not** supported).
 
 **Kustomize:** **`CLAWQL_LOCAL_K8S_INSTALLER=kustomize make local-k8s-up`** — **`kubectl apply -k docker/kustomize/overlays/local`** for the MCP workload; **Helm** still installs **Kyverno** and applies the **ClusterPolicy** template from the chart.
 
@@ -64,7 +64,7 @@ When **`ENABLE_GRPC=1`** (and optionally **`ENABLE_GRPC_REFLECTION=1`** for **`g
 ### What the Helm install sets
 
 - **Namespace:** `clawql`
-- **`CLAWQL_PROVIDER`:** **`all-providers`** in **`values-docker-desktop.yaml`** (full IDP + every bundled vendor + Google + AWS). Bare **`npx clawql-mcp`** without spec env uses the **opinionated default stack** instead — see [Bundled specs](/bundled-specs). Override via **`values-docker-desktop.yaml`** or **`helm --set provider=...`**.
+- **`CLAWQL_PROVIDER`:** **`default`** in **`values-docker-desktop.yaml`** (same opinionated stack as bare **`npx clawql-mcp`**). Use **`all-providers`** for full IDP + every bundled vendor + Google + AWS — see [Bundled specs](/bundled-specs). Override via **`helm --set provider=...`**.
 - **Kube context:** the script prefers **`docker-desktop`** when present so you do not accidentally deploy to another cluster.
 
 Cold start can take a while while specs load. Wait until **`/healthz`** returns **`{"status":"ok",...}`** or the pod is **Ready** before the client connects.

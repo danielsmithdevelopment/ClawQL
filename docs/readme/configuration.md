@@ -132,7 +132,7 @@ On startup, **`clawql-mcp`** / **`clawql-mcp-http`** import **`src/load-env.ts`*
 
 That lets you keep **`CLAWQL_*`** (and tokens) in a repo or project **`.env`** for local runs and Cursor MCP **without** pasting secrets into **`mcp.json`**. Only variables consumed by the server process apply here; the MCP client’s **`url`** for HTTP mode is configured separately (see **`docs/readme/deployment.md`**).
 
-**Prefer `CLAWQL_*`** for new configuration. A few legacy names remain as aliases where noted in **`.env.example`** — for example **`CLAWQL_SPEC_URL`** or **`OPENAPI_SPEC_URL`** (same meaning; prefer **`CLAWQL_SPEC_URL`**), and **`CLAWQL_DISCOVERY_URL`** or **`GOOGLE_DISCOVERY_URL`**. Resolution checks **`CLAWQL_*` first**, then the legacy variable.
+**Use `CLAWQL_*` only** (7.0.0+). Legacy aliases **`API_BASE_URL`**, **`OPENAPI_SPEC_URL`**, **`GOOGLE_DISCOVERY_URL`**, and merged preset **`google-top50`** were removed — use **`CLAWQL_API_BASE_URL`**, **`CLAWQL_SPEC_URL`**, **`CLAWQL_DISCOVERY_URL`**, and **`CLAWQL_PROVIDER=google`**.
 
 ## Full References
 

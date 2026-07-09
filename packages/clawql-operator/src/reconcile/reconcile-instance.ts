@@ -9,6 +9,11 @@ import {
   tierSpecConfigMapName,
 } from "./tier-spec-configmap.js";
 import { resolveMcpRolloutTarget, type McpRolloutTarget } from "./mcp-rollout.js";
+import {
+  checkProviderSecret,
+  DEFAULT_PROVIDER_SECRET_NAME,
+  type AuthExpectationsPayload,
+} from "./auth-expectations.js";
 
 export const CLAWQL_INSTANCE_CRD = {
   group: "clawql.io",
@@ -31,6 +36,10 @@ export type ClawQLInstanceObject = {
 
 export type ReconcileCoreV1 = {
   readNamespacedConfigMap(
+    name: string,
+    namespace: string
+  ): Promise<{ data?: Record<string, string> }>;
+  readNamespacedSecret(
     name: string,
     namespace: string
   ): Promise<{ data?: Record<string, string> }>;
@@ -90,8 +99,10 @@ export async function reconcileClawqlInstance(
   }
 
   const cmName = tierSpecConfigMapName(name);
-  const cmData = buildTierSpecConfigMapData(name, namespace, spec);
+  const providerSecretName = spec.mcp?.providerSecretName ?? DEFAULT_PROVIDER_SECRET_NAME;
+  const cmData = buildTierSpecConfigMapData(name, namespace, spec, providerSecretName);
   const serialized = serializeTierSpecConfigMap(cmData);
+  const authExpectations = cmData.authExpectations;
   const labels = {
     "app.kubernetes.io/name": "clawql-operator",
     "app.kubernetes.io/managed-by": "clawql-operator",
@@ -143,28 +154,67 @@ export async function reconcileClawqlInstance(
     }
   }
 
+  const authStatus = await reconcileProviderSecrets(namespace, authExpectations, core);
+  const conditions: NonNullable<ClawQLInstanceStatusV1Alpha1["conditions"]> = [
+    {
+      type: "Validated",
+      status: "True",
+      reason: "SpecValid",
+      lastTransitionTime: nowIso(),
+    },
+    {
+      type: "TierSpecPublished",
+      status: "True",
+      reason: "ConfigMapReady",
+      message: cmName,
+      lastTransitionTime: nowIso(),
+    },
+    {
+      type: "ProviderSecretsReady",
+      status: authStatus.ready ? "True" : "False",
+      reason: authStatus.ready ? "AllKeysPresent" : authStatus.secretExists ? "MissingKeys" : "SecretNotFound",
+      message: authStatus.ready
+        ? providerSecretName
+        : authStatus.missing.length > 0
+          ? `Missing: ${authStatus.missing.join(", ")}`
+          : `Secret ${providerSecretName} not found`,
+      lastTransitionTime: nowIso(),
+    },
+  ];
+
   return {
     status: {
-      phase: "Ready",
+      phase: authStatus.ready ? "Ready" : "Degraded",
       observedGeneration: generation,
       configMapName: cmName,
-      message: "Tier spec ConfigMap reconciled; MCP consumes via CLAWQL_INSTANCE_SPEC_FILE mount",
-      conditions: [
-        {
-          type: "Validated",
-          status: "True",
-          reason: "SpecValid",
-          lastTransitionTime: nowIso(),
-        },
-        {
-          type: "TierSpecPublished",
-          status: "True",
-          reason: "ConfigMapReady",
-          message: cmName,
-          lastTransitionTime: nowIso(),
-        },
-      ],
+      message: authStatus.ready
+        ? "Tier spec ConfigMap reconciled; provider secrets present"
+        : `Tier spec published; provider secret ${providerSecretName} incomplete`,
+      conditions,
     },
     mcpRollout: resolveMcpRolloutTarget(namespace, name, spec),
   };
+}
+
+async function reconcileProviderSecrets(
+  namespace: string,
+  expectations: AuthExpectationsPayload,
+  core: ReconcileCoreV1
+) {
+  try {
+    const secret = await core.readNamespacedSecret(
+      expectations.providerSecretName,
+      namespace
+    );
+    return checkProviderSecret(secret.data, expectations);
+  } catch (err: unknown) {
+    const statusCode =
+      err && typeof err === "object" && "statusCode" in err
+        ? (err as { statusCode?: number }).statusCode
+        : undefined;
+    if (statusCode === 404) {
+      return checkProviderSecret(undefined, expectations);
+    }
+    throw err;
+  }
 }
