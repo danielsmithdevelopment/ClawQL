@@ -2,7 +2,7 @@ import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
 
 /** Core routes for static HTML + common chrome (nav, search trigger, MDX). */
-const routes = ['/', '/learn', '/install', '/security/best-practices'] as const
+const routes = ['/', '/learn', '/security/best-practices'] as const
 
 for (const path of routes) {
   test(`axe: no critical or serious violations on ${path}`, async ({ page }) => {

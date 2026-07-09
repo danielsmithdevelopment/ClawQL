@@ -3,6 +3,8 @@
  * Complements bundled providers and CLAWQL_* env for OpenAPI, Discovery, GraphQL, gRPC, MCP, and CLI.
  */
 
+import { assertSafeSourceId } from "./custom-sources-security.js";
+
 export type CustomSourceKind = "openapi" | "discovery" | "graphql" | "grpc" | "mcp" | "cli";
 
 export type CustomSourceEntry = {
@@ -46,10 +48,14 @@ export function emptyCustomSourcesFile(): CustomSourcesFile {
 }
 
 export function slugifySourceId(input: string): string {
-  const s = input
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-  return s.length > 0 ? s.slice(0, 64) : "source";
+  const trimmed = input.trim().toLowerCase().slice(0, 128);
+  let s = "";
+  for (const ch of trimmed) {
+    if ((ch >= "a" && ch <= "z") || (ch >= "0" && ch <= "9")) s += ch;
+    else if (ch === "-" || ch === "_" || ch === " " || ch === ".") s += "-";
+  }
+  while (s.startsWith("-")) s = s.slice(1);
+  while (s.endsWith("-")) s = s.slice(0, -1);
+  const out = s.length > 0 ? s.slice(0, 64) : "source";
+  return assertSafeSourceId(out);
 }

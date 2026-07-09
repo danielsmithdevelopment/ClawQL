@@ -33,12 +33,22 @@
     "typescript": "^6.0.2",
     "vitest": "^4.1.1"
   },
-  "files": ["dist", "README.md"],
-  "engines": { "node": ">=22" },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/danielsmithdevelopment/ClawQL.git",
     "directory": "packages/clawql-auth"
   },
-  "keywords": ["clawql", "auth", "atr", "mcp"]
+  "keywords": [
+    "clawql",
+    "auth",
+    "atr",
+    "mcp"
+  ]
 }

@@ -13,8 +13,6 @@ services:
       - tika
       - gotenberg
       - paperless-ngx
-    env_file:
-      - .env
     environment:
       PORT: "8080"
       CLAWQL_PROVIDER: default

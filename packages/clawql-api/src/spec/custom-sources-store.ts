@@ -10,6 +10,7 @@ import {
   type CustomSourceEntry,
   type CustomSourcesFile,
 } from "./custom-sources-types.js";
+import { assertSafeSourceId } from "./custom-sources-security.js";
 
 const FILE_MODE = 0o600;
 
@@ -24,7 +25,8 @@ export function getCustomSourcesFilePath(home = resolveClawqlHome()): string {
 }
 
 export function getCustomSourceCacheDir(id: string, home = resolveClawqlHome()): string {
-  return join(home, "sources", id);
+  const safeId = assertSafeSourceId(id);
+  return join(home, "sources", safeId);
 }
 
 export async function readCustomSourcesFile(
@@ -88,8 +90,9 @@ export async function upsertCustomSource(
 }
 
 export async function removeCustomSource(id: string, home = resolveClawqlHome()): Promise<boolean> {
+  const safeId = assertSafeSourceId(id);
   const file = await readCustomSourcesFile(home);
-  const next = file.sources.filter((s) => s.id !== id);
+  const next = file.sources.filter((s) => s.id !== safeId);
   if (next.length === file.sources.length) return false;
   await writeCustomSourcesFile({ version: 1, sources: next }, home);
   return true;

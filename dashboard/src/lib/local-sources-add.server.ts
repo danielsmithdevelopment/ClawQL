@@ -5,6 +5,7 @@ import {
   cacheCustomSourceBody,
   detectSourceFromUrl,
   ensureSourceCacheDir,
+  getCustomSourceCacheDir,
   slugifySourceId,
   type CustomSourceKind,
 } from 'clawql-api'
@@ -87,7 +88,7 @@ export async function addLocalSourceFromInput(
       entry = (await cacheCustomSourceBody(entry, detected.bodyText, home)) as LocalCustomSourceEntry
     }
   } else if (detected.kind === 'grpc') {
-    const protoAbs = join(home, 'sources', id, 'service.proto')
+    const protoAbs = join(getCustomSourceCacheDir(id, home), 'service.proto')
     if (detected.bodyText) {
       await writeFile(protoAbs, detected.bodyText, 'utf8')
     }

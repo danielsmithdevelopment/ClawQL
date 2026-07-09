@@ -36,12 +36,22 @@
     "typescript": "^6.0.2",
     "vitest": "^4.1.1"
   },
-  "files": ["dist", "README.md"],
-  "engines": { "node": ">=22" },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/danielsmithdevelopment/ClawQL.git",
     "directory": "packages/clawql-pageindex"
   },
-  "keywords": ["clawql", "pageindex", "vectorless", "memory"]
+  "keywords": [
+    "clawql",
+    "pageindex",
+    "vectorless",
+    "memory"
+  ]
 }

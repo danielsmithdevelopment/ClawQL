@@ -12,7 +12,8 @@ export POSTGRES_PASSWORD=compose-config-test
 export PAPERLESS_SECRET_KEY=compose-config-test-secret
 export PAPERLESS_ADMIN_PASSWORD=compose-config-test-admin
 
-docker compose -f docker-compose.yml config >"${OUT}"
+ENV_FILE="${ROOT}/.env.example"
+docker compose -f docker-compose.yml --env-file "${ENV_FILE}" config >"${OUT}"
 
 python3 - "${OUT}" <<'PY'
 import sys
@@ -37,7 +38,7 @@ for needle in required:
 print("OK: Tier 1 docker-compose.yml config valid")
 PY
 
-docker compose -f docker-compose.yml -f docker-compose.presidio.override.yml config >"${OUT}"
+docker compose -f docker-compose.yml -f docker-compose.presidio.override.yml --env-file "${ENV_FILE}" config >"${OUT}"
 
 python3 - "${OUT}" <<'PY'
 import sys

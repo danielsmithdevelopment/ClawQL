@@ -33,7 +33,8 @@ const getContentInput = z.object({
 
 function storageFromPath(storagePath?: string): FilePageIndexStorage {
   const base = process.env.CLAWQL_PAGEINDEX_PATH?.trim();
-  const path = storagePath ?? (base ? defaultPageIndexStoragePath(base) : "./data/pageindex.db.json");
+  const path =
+    storagePath ?? (base ? defaultPageIndexStoragePath(base) : "./data/pageindex.db.json");
   return new FilePageIndexStorage(path);
 }
 

@@ -4,6 +4,7 @@
 
 import { parse as parseYaml } from "yaml";
 import type { CustomSourceKind } from "./custom-sources-types.js";
+import { assertSafeSourceFetchUrl } from "./custom-sources-security.js";
 
 export type DetectedSource = {
   kind: CustomSourceKind;
@@ -97,9 +98,10 @@ export async function detectSourceFromUrl(
     throw new Error("CLI sources require --command; URL detection is not supported for cli kind.");
   }
 
-  const res = await fetchFn(url);
+  const safeUrl = assertSafeSourceFetchUrl(url).toString();
+  const res = await fetchFn(safeUrl);
   if (!res.ok) {
-    throw new Error(`Failed to fetch source URL (${res.status}): ${url}`);
+    throw new Error(`Failed to fetch source URL (${res.status}): ${safeUrl}`);
   }
   const contentType = res.headers.get("content-type")?.toLowerCase() ?? "";
   const bodyText = await res.text();

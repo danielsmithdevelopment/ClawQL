@@ -59,10 +59,10 @@ export function resolveAtrClaimsFromHeaders(
   }
 
   const bearer = headerValue(headers, "authorization");
-  const apiKeyHeader = headerValue(headers, "x-api-key") ?? headerValue(headers, "x-clawql-api-key");
+  const apiKeyHeader =
+    headerValue(headers, "x-api-key") ?? headerValue(headers, "x-clawql-api-key");
   const presented =
-    apiKeyHeader ??
-    (bearer?.toLowerCase().startsWith("bearer ") ? bearer.slice(7).trim() : bearer);
+    apiKeyHeader ?? (bearer?.toLowerCase().startsWith("bearer ") ? bearer.slice(7).trim() : bearer);
 
   if (!config.apiKey) {
     return { ok: false, error: "CLAWQL_AUTH_MODE=apiKey but CLAWQL_API_KEY is unset" };
@@ -81,9 +81,7 @@ export function resolveAtrClaimsFromHeaders(
   };
 }
 
-export function assertGatewayAuth(
-  headers: AuthHeaderSource = {}
-): AtrClaims {
+export function assertGatewayAuth(headers: AuthHeaderSource = {}): AtrClaims {
   const result = resolveAtrClaimsFromHeaders(headers);
   if (!result.ok) {
     throw new Error(result.error);

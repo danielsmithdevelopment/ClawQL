@@ -18,6 +18,7 @@ import {
   getCustomSourceCacheDir,
 } from "./custom-sources-store.js";
 import type { CustomSourceEntry } from "./custom-sources-types.js";
+import { assertSafeSourceId } from "./custom-sources-security.js";
 import type { GraphQLSourceConfig } from "./native-protocol-env.js";
 import type { GrpcSourceConfig } from "./native-protocol-env.js";
 
@@ -154,7 +155,8 @@ export async function cacheCustomSourceBody(
   bodyText: string,
   home = resolveClawqlHome()
 ): Promise<CustomSourceEntry> {
-  const dir = getCustomSourceCacheDir(entry.id, home);
+  const safeEntry = { ...entry, id: assertSafeSourceId(entry.id) };
+  const dir = getCustomSourceCacheDir(safeEntry.id, home);
   let filename = "spec.json";
   if (entry.kind === "graphql" && bodyText.includes("type ")) filename = "schema.graphql";
   else if (entry.kind === "graphql") filename = "introspection.json";
@@ -174,6 +176,6 @@ export async function cacheCustomSourceBody(
   }
 
   await writeFile(join(dir, filename), toWrite, "utf8");
-  const cachePath = `sources/${entry.id}/${filename}`;
-  return { ...entry, cachePath };
+  const cachePath = `sources/${safeEntry.id}/${filename}`;
+  return { ...safeEntry, cachePath };
 }
