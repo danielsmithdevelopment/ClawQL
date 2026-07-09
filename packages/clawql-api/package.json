@@ -37,7 +37,7 @@
     "@omnigraph/openapi": "^0.109.51",
     "clawql-core": "file:../clawql-core",
     "effect": "^3.21.4",
-    "graphql": "^16.14.0",
+    "graphql": "^17.0.2",
     "node-fetch": "^3.3.2",
     "prom-client": "^15.1.3",
     "swagger2openapi": "^7.0.8",
