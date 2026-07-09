@@ -43,6 +43,9 @@
         "claude",
         "cursor"
     ],
+    "publishConfig": {
+        "access": "public"
+    },
     "files": [
         "dist",
         "bin",
@@ -110,19 +113,6 @@
         "release:git-backfill-tags:push": "bash scripts/release/git-backfill-npm-release-tags.sh --push",
         "release:manifest": "node scripts/release/build-release-manifest.mjs"
     },
-    "bundledDependencies": [
-        "clawql-api",
-        "clawql-auth",
-        "clawql-automation",
-        "clawql-core",
-        "clawql-documents",
-        "clawql-memory",
-        "clawql-operator",
-        "clawql-pageindex",
-        "clawql-release",
-        "clawql-ouroboros",
-        "clawql-sandbox"
-    ],
     "dependencies": {
         "@graphql-mesh/utils": "^0.104.36",
         "@grpc/grpc-js": "^1.14.4",
@@ -134,17 +124,17 @@
         "@opentelemetry/resources": "^2.9.0",
         "@opentelemetry/sdk-trace-base": "^2.9.0",
         "@opentelemetry/sdk-trace-node": "^2.9.0",
-        "clawql-api": "0.0.1",
-        "clawql-auth": "0.0.1",
-        "clawql-automation": "0.0.1",
-        "clawql-core": "0.0.1",
-        "clawql-documents": "0.0.1",
-        "clawql-memory": "0.0.1",
-        "clawql-operator": "0.0.1",
-        "clawql-pageindex": "0.0.1",
-        "clawql-release": "0.0.1",
-        "clawql-ouroboros": "0.1.1",
-        "clawql-sandbox": "0.0.1",
+        "clawql-api": "7.0.0",
+        "clawql-auth": "7.0.0",
+        "clawql-automation": "7.0.0",
+        "clawql-core": "7.0.0",
+        "clawql-documents": "7.0.0",
+        "clawql-memory": "7.0.0",
+        "clawql-operator": "7.0.0",
+        "clawql-pageindex": "7.0.0",
+        "clawql-release": "7.0.0",
+        "clawql-ouroboros": "7.0.0",
+        "clawql-sandbox": "7.0.0",
         "dotenv": "^17.4.2",
         "effect": "^3.21.4",
         "express": "^5.2.1",
@@ -205,18 +195,5 @@
             "esbuild": "0.28.1"
         },
         "yaml@1.10.2": "1.10.3"
-    },
-    "bundleDependencies": [
-        "clawql-api",
-        "clawql-auth",
-        "clawql-automation",
-        "clawql-core",
-        "clawql-documents",
-        "clawql-memory",
-        "clawql-operator",
-        "clawql-pageindex",
-        "clawql-release",
-        "clawql-ouroboros",
-        "clawql-sandbox"
-    ]
+    }
 }

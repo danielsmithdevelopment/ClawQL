@@ -1,5 +1,6 @@
-# Publish clawql-mcp to npmjs.com after supply-chain gates on the exact tarball users install.
-# Trigger: annotated tag v<package.json version> (e.g. v6.4.1) or manual workflow_dispatch.
+# Publish clawql-* workspace packages + clawql-mcp to npmjs.com after supply-chain gates.
+# Order: scripts/release/npm-publish-order.json (dependencies before dependents).
+# Trigger: annotated tag v<package.json version> (e.g. v7.0.0) or manual workflow_dispatch.
 # Requires npm trusted publishing (OIDC) and/or NPM_TOKEN secret on the repo.
 name: npm publish
 
@@ -55,7 +56,7 @@ jobs:
           if-no-files-found: error
 
   publish:
-    name: Pack, scan, and publish clawql-mcp
+    name: Pack, scan, and publish workspace packages + clawql-mcp
     needs: [repo-supply-chain]
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -122,13 +123,8 @@ jobs:
             --ignorefile /repo/.trivyignore \
             /work/unpack/package
 
-      - name: Publish to npm (provenance)
-        run: |
-          set -euo pipefail
-          if [[ -n "${NPM_TOKEN:-}" ]]; then
-            export NODE_AUTH_TOKEN="${NPM_TOKEN}"
-          fi
-          npm publish "${{ steps.pack.outputs.tarball }}" --provenance --access public
+      - name: Publish workspace packages then clawql-mcp (provenance)
+        run: node scripts/release/npm-publish-workspace.mjs
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 

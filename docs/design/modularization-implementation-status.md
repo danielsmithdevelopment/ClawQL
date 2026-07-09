@@ -293,3 +293,32 @@ These vision items are **not** done by package extraction alone:
 **Shipped (7.0):** release manifest verification, dashboard custom sources, **`clawql-auth`**, **`clawql-pageindex`**, Presidio gateway hooks, Tier 1 Docker Compose ([#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251)).
 
 **Next (Phase 2):** third-party vertical plugins, full Operator NL ops, contract test suite expansion, transport-only npm split.
+
+---
+
+## 11. npm distribution (7.0.0 — separate packages)
+
+**Model:** Each horizontal **`clawql-*`** package is a **separate publishable unit** at **`7.0.0`**, linked in the monorepo via matching semver (npm workspaces). **`clawql-mcp`** depends on them as normal registry dependencies — **not** `bundledDependencies`.
+
+| Package                      | npm name            | Version     |
+| ---------------------------- | ------------------- | ----------- |
+| `packages/clawql-core`       | `clawql-core`       | 7.0.0       |
+| `packages/clawql-auth`       | `clawql-auth`       | 7.0.0       |
+| `packages/clawql-pageindex`  | `clawql-pageindex`  | 7.0.0 (MIT) |
+| `packages/clawql-api`        | `clawql-api`        | 7.0.0       |
+| `packages/clawql-memory`     | `clawql-memory`     | 7.0.0       |
+| `packages/clawql-documents`  | `clawql-documents`  | 7.0.0       |
+| `packages/clawql-automation` | `clawql-automation` | 7.0.0       |
+| `packages/clawql-sandbox`    | `clawql-sandbox`    | 7.0.0       |
+| `packages/clawql-ouroboros`  | `clawql-ouroboros`  | 7.0.0       |
+| `packages/clawql-operator`   | `clawql-operator`   | 7.0.0       |
+| `packages/clawql-release`    | `clawql-release`    | 7.0.0       |
+| Root                         | `clawql-mcp`        | 7.0.0       |
+
+**Publish order:** [`scripts/release/npm-publish-order.json`](../../scripts/release/npm-publish-order.json) — dependencies before dependents; **`clawql-mcp` last**.
+
+**CI smoke:** [`scripts/dev/test-npm-pack-install.sh`](../../scripts/dev/test-npm-pack-install.sh) packs all workspace packages, installs from tarballs, verifies module resolution.
+
+**Not in this wave:** `clawql-telemetry` ([#313](https://github.com/danielsmithdevelopment/ClawQL/issues/313)); `mcp-grpc-transport` and `panguard-mcp-bridge` keep independent cadence.
+
+**npm publish:** workflow [`.github/workflows/npm-publish.yml`](../../.github/workflows/npm-publish.yml) + [`scripts/release/npm-publish-workspace.mjs`](../../scripts/release/npm-publish-workspace.mjs). **Not published yet** — run on `v7.0.0` tag when ready.

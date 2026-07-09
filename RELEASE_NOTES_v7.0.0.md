@@ -1,6 +1,6 @@
 ## clawql-mcp 7.0.0
 
-**npm:** pending tag — see [CHANGELOG.md#700---2026-07-09](https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md#700---2026-07-09)  
+**npm:** packages aligned at 7.0.0 — publish pending (see [§11 npm distribution](docs/design/modularization-implementation-status.md#11-npm-distribution-70--separate-packages))  
 **Full changelog:** [CHANGELOG.md#700---2026-07-09](https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md#700---2026-07-09)  
 **Target release:** 2026-07-09
 

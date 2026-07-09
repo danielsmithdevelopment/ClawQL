@@ -47,6 +47,26 @@ export function escapeLessThanBeforeDigit(body) {
   return body.replace(/<(?=\d)/g, '&lt;')
 }
 
+/** MDX treats `<http://...>` as JSX; escape autolink angle brackets outside fences. */
+export function escapeAngleBracketAutolinks(body) {
+  const lines = body.split('\n')
+  let inFence = false
+  return lines
+    .map((line) => {
+      const fence = line.match(/^(`{3,}|~{3,})(.*)$/)
+      if (fence) {
+        if (!inFence) inFence = true
+        else if (!fence[2].trim()) inFence = false
+        return line
+      }
+      if (inFence) return line
+      return line.replace(/<https?:\/\/[^>\s]+>/g, (match) =>
+        match.replace(/</g, '&lt;').replace(/>/g, '&gt;'),
+      )
+    })
+    .join('\n')
+}
+
 export function escapeMdxCurlyOutsideFences(body) {
   const lines = body.split('\n')
   let inFence = false
@@ -101,7 +121,9 @@ export function rewriteDocLinks(body, sourceDocPathFromRepoRoot) {
     },
   )
 
-  return escapeMdxCurlyOutsideFences(escapeLessThanBeforeDigit(rewritten))
+  return escapeMdxCurlyOutsideFences(
+    escapeAngleBracketAutolinks(escapeLessThanBeforeDigit(rewritten)),
+  )
 }
 
 /** @param {string} body */

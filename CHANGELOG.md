@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **npm distribution — separate `clawql-*` packages (7.0.0):** All horizontal workspace packages aligned to **`7.0.0`** with `publishConfig`; **`clawql-mcp`** uses registry semver dependencies instead of **`bundledDependencies`**. Publish order: [`scripts/release/npm-publish-order.json`](scripts/release/npm-publish-order.json); smoke: [`scripts/dev/test-npm-pack-install.sh`](scripts/dev/test-npm-pack-install.sh). **Not published to npm yet.**
 - **Observability ADR 0005** — Langfuse default work-trace store, bundled/external/minimal profiles ([#252](https://github.com/danielsmithdevelopment/ClawQL/issues/252)).
 - **Docs site:** **`/vision/ecosystem`**, **`/getting-started/clawql-release-mvp`**; shared doc link rewriter for generated MDX.
 - **`CLAWQL_ENABLE_LOKI_PUSH=0`** — opt out of audit Loki push when **`CLAWQL_LOKI_PUSH_URL`** is set.
@@ -31,7 +32,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **npm `bundledDependencies`:** include **`clawql-auth`** and **`clawql-pageindex`** for publish tarball completeness.
 - **HITL docs:** **`docs/mcp/hitl-label-studio.md`** is the operator guide; **`docs/plugins/hitl-label-studio.md`** is a short plugin index stub.
 - **Helm / vault docs:** default stack references updated from **6.4.x** to **7.0.x**.
 
