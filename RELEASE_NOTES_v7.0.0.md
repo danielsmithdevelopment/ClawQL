@@ -71,12 +71,12 @@ Requires **OpenClaw** on `PATH` for chat. Secrets save to `~/.ClawQL/vault/provi
 
 ## Custom sources + harness wrappers (Executor parity)
 
-| Feature | Command |
-| ------- | ------- |
-| Add OpenAPI / Discovery / GraphQL / gRPC / MCP from URL | `clawql sources add <url>` |
-| MCP-as-source / CLI-as-source | `clawql sources add --kind mcp …` / `--kind cli --command …` |
-| One-line install | `curl -fsSL https://clawql.com/install \| bash` |
-| Launch harness with ClawQL MCP | `clawql claude` · `clawql codex` · `clawql cursor` · `clawql opencode` |
+| Feature                                                 | Command                                                                |
+| ------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Add OpenAPI / Discovery / GraphQL / gRPC / MCP from URL | `clawql sources add <url>`                                             |
+| MCP-as-source / CLI-as-source                           | `clawql sources add --kind mcp …` / `--kind cli --command …`           |
+| One-line install                                        | `curl -fsSL https://clawql.com/install \| bash`                        |
+| Launch harness with ClawQL MCP                          | `clawql claude` · `clawql codex` · `clawql cursor` · `clawql opencode` |
 
 Custom sources persist in **`~/.ClawQL/sources.json`** and merge into **`search`** / **`execute`** (with GraphQL projection still available for OpenAPI-backed ops).
 
@@ -86,16 +86,16 @@ Custom sources persist in **`~/.ClawQL/sources.json`** and merge into **`search`
 
 ## Onboarding CLI (Tier 1 + Tier 2)
 
-| Command                               | Purpose                                       |
-| ------------------------------------- | --------------------------------------------- |
-| `clawql onboard --interactive`        | End-to-end init + MCP config + doctor smoke   |
-| `clawql init --interactive`           | Scaffold `~/.ClawQL` + `vault/providers.json` |
-| `clawql secrets list` / `secrets set` | Manage provider keys                          |
-| `clawql sources list` / `sources add` | Custom integrations from URL                  |
-| `clawql doctor --smoke`               | MCP `tools/list` + `search`                   |
-| `clawql mcp-config --write cursor`    | Merge MCP JSON into Cursor / Claude Desktop   |
-| `clawql claude` / `codex` / `cursor` / `opencode` | Harness launch with MCP pre-wired |
-| `clawql operator status`              | Kubernetes: ClawQLInstance + tier-spec health |
+| Command                                           | Purpose                                       |
+| ------------------------------------------------- | --------------------------------------------- |
+| `clawql onboard --interactive`                    | End-to-end init + MCP config + doctor smoke   |
+| `clawql init --interactive`                       | Scaffold `~/.ClawQL` + `vault/providers.json` |
+| `clawql secrets list` / `secrets set`             | Manage provider keys                          |
+| `clawql sources list` / `sources add`             | Custom integrations from URL                  |
+| `clawql doctor --smoke`                           | MCP `tools/list` + `search`                   |
+| `clawql mcp-config --write cursor`                | Merge MCP JSON into Cursor / Claude Desktop   |
+| `clawql claude` / `codex` / `cursor` / `opencode` | Harness launch with MCP pre-wired             |
+| `clawql operator status`                          | Kubernetes: ClawQLInstance + tier-spec health |
 
 ---
 

@@ -38,10 +38,7 @@ function mergeOps(base: Operation[], extra: Operation[]): Operation[] {
   return merged;
 }
 
-async function loadOpenApiLikeSource(
-  entry: CustomSourceEntry,
-  home: string
-): Promise<Operation[]> {
+async function loadOpenApiLikeSource(entry: CustomSourceEntry, home: string): Promise<Operation[]> {
   if (!entry.cachePath) {
     console.error(`[spec-loader] Custom source "${entry.id}" missing cachePath`);
     return [];
@@ -162,13 +159,17 @@ export async function cacheCustomSourceBody(
   if (entry.kind === "graphql" && bodyText.includes("type ")) filename = "schema.graphql";
   else if (entry.kind === "graphql") filename = "introspection.json";
   else if (entry.kind === "grpc") filename = "service.proto";
-  else if (entry.kind === "openapi" && bodyText.trim().startsWith("openapi:")) filename = "openapi.yaml";
+  else if (entry.kind === "openapi" && bodyText.trim().startsWith("openapi:"))
+    filename = "openapi.yaml";
   else if (entry.kind === "openapi") filename = "openapi.json";
 
   const abs = join(dir, filename);
   let toWrite = bodyText;
   if (entry.kind === "openapi" && bodyText.includes('"swagger": "2.0"')) {
-    const { openapi } = await convertObj(JSON.parse(bodyText) as object, { patch: true, warnOnly: true });
+    const { openapi } = await convertObj(JSON.parse(bodyText) as object, {
+      patch: true,
+      warnOnly: true,
+    });
     toWrite = JSON.stringify(openapi, null, 2);
     filename = "openapi.json";
   }

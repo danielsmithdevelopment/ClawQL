@@ -33,7 +33,11 @@ async function connectMcpClient(entry: CustomSourceEntry): Promise<Client> {
   return client;
 }
 
-function toolToOperation(entry: CustomSourceEntry, toolName: string, description: string): Operation {
+function toolToOperation(
+  entry: CustomSourceEntry,
+  toolName: string,
+  description: string
+): Operation {
   const id = normalizeOperationId("mcp", entry.id, toolName);
   return {
     id,
@@ -60,9 +64,7 @@ function toolToOperation(entry: CustomSourceEntry, toolName: string, description
   };
 }
 
-export async function loadMcpSourceOperations(
-  entries: CustomSourceEntry[]
-): Promise<Operation[]> {
+export async function loadMcpSourceOperations(entries: CustomSourceEntry[]): Promise<Operation[]> {
   const mcpEntries = entries.filter((e) => e.kind === "mcp");
   const ops: Operation[] = [];
 

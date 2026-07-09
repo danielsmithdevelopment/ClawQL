@@ -3,13 +3,7 @@
  * Complements bundled providers and CLAWQL_* env for OpenAPI, Discovery, GraphQL, gRPC, MCP, and CLI.
  */
 
-export type CustomSourceKind =
-  | "openapi"
-  | "discovery"
-  | "graphql"
-  | "grpc"
-  | "mcp"
-  | "cli";
+export type CustomSourceKind = "openapi" | "discovery" | "graphql" | "grpc" | "mcp" | "cli";
 
 export type CustomSourceEntry = {
   /** Stable slug (directory name under ~/.ClawQL/sources/). */

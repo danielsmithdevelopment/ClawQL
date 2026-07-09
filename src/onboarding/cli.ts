@@ -240,7 +240,10 @@ async function main(): Promise<void> {
       const url = rest[0];
       const argsList =
         typeof flags.args === "string" && flags.args
-          ? flags.args.split(",").map((s) => s.trim()).filter(Boolean)
+          ? flags.args
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean)
           : undefined;
       process.exitCode = await runSourcesAdd({
         url,

@@ -57,11 +57,7 @@ function isGraphqlIntrospection(obj: unknown): boolean {
 
 function isGraphqlSdl(text: string): boolean {
   const t = text.trim();
-  return (
-    /\btype\s+Query\b/.test(t) ||
-    /\btype\s+Mutation\b/.test(t) ||
-    /\bschema\s*\{/.test(t)
-  );
+  return /\btype\s+Query\b/.test(t) || /\btype\s+Mutation\b/.test(t) || /\bschema\s*\{/.test(t);
 }
 
 function titleFromOpenApi(obj: unknown): string | undefined {
@@ -142,7 +138,7 @@ export async function detectSourceFromUrl(
     const name =
       typeof (parsed as Record<string, unknown>).name === "string"
         ? String((parsed as Record<string, unknown>).name)
-        : titleFromOpenApi(parsed) ?? new URL(url).hostname;
+        : (titleFromOpenApi(parsed) ?? new URL(url).hostname);
     return { kind: "discovery", name, bodyText, parsed };
   }
 

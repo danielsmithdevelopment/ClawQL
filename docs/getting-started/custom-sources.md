@@ -45,12 +45,12 @@ Requires Node.js 22+.
 
 ## vs bundled providers
 
-| Kind | How it loads |
-|------|----------------|
-| OpenAPI / Discovery | Cached spec under `~/.ClawQL/sources/<id>/` |
-| GraphQL | SDL or introspection file + `graphqlEndpoint` |
-| gRPC | `.proto` on disk + `grpcEndpoint` |
-| MCP | Proxies `tools/list` from remote MCP server |
-| CLI | One `execute` op runs configured command + args |
+| Kind                | How it loads                                    |
+| ------------------- | ----------------------------------------------- |
+| OpenAPI / Discovery | Cached spec under `~/.ClawQL/sources/<id>/`     |
+| GraphQL             | SDL or introspection file + `graphqlEndpoint`   |
+| gRPC                | `.proto` on disk + `grpcEndpoint`               |
+| MCP                 | Proxies `tools/list` from remote MCP server     |
+| CLI                 | One `execute` op runs configured command + args |
 
 ClawQL still wins on **search + execute** with **GraphQL projection** for OpenAPI-backed APIs; custom sources extend the same index.

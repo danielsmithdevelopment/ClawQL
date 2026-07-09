@@ -87,10 +87,7 @@ export async function upsertCustomSource(
   return { path, entry };
 }
 
-export async function removeCustomSource(
-  id: string,
-  home = resolveClawqlHome()
-): Promise<boolean> {
+export async function removeCustomSource(id: string, home = resolveClawqlHome()): Promise<boolean> {
   const file = await readCustomSourcesFile(home);
   const next = file.sources.filter((s) => s.id !== id);
   if (next.length === file.sources.length) return false;
@@ -98,7 +95,10 @@ export async function removeCustomSource(
   return true;
 }
 
-export async function ensureSourceCacheDir(id: string, home = resolveClawqlHome()): Promise<string> {
+export async function ensureSourceCacheDir(
+  id: string,
+  home = resolveClawqlHome()
+): Promise<string> {
   const dir = getCustomSourceCacheDir(id, home);
   await mkdir(dir, { recursive: true });
   return dir;

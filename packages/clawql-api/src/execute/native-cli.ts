@@ -46,9 +46,7 @@ export async function executeNativeCli(
     return { ok: false, error: "Internal error: missing nativeCli metadata" };
   }
 
-  const extraArgs = Array.isArray(args.args)
-    ? args.args.map((a) => String(a))
-    : [];
+  const extraArgs = Array.isArray(args.args) ? args.args.map((a) => String(a)) : [];
   const argv = [...meta.args, ...extraArgs];
   const stdin =
     typeof args.stdin === "string"

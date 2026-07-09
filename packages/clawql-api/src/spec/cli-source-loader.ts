@@ -6,9 +6,7 @@ import type { Operation } from "./operation-types.js";
 import { normalizeOperationId } from "./spec-kind.js";
 import type { CustomSourceEntry } from "./custom-sources-types.js";
 
-export async function loadCliSourceOperations(
-  entries: CustomSourceEntry[]
-): Promise<Operation[]> {
+export async function loadCliSourceOperations(entries: CustomSourceEntry[]): Promise<Operation[]> {
   const ops: Operation[] = [];
 
   for (const entry of entries.filter((e) => e.kind === "cli")) {

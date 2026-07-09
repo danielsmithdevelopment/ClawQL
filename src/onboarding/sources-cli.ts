@@ -35,14 +35,7 @@ export type SourcesAddOptions = {
 function parseKind(raw: string | undefined): CustomSourceKind | undefined {
   if (!raw?.trim()) return undefined;
   const k = raw.trim().toLowerCase();
-  const allowed: CustomSourceKind[] = [
-    "openapi",
-    "discovery",
-    "graphql",
-    "grpc",
-    "mcp",
-    "cli",
-  ];
+  const allowed: CustomSourceKind[] = ["openapi", "discovery", "graphql", "grpc", "mcp", "cli"];
   if (allowed.includes(k as CustomSourceKind)) return k as CustomSourceKind;
   throw new Error(`Unknown kind: ${raw}. Use ${allowed.join("|")}`);
 }
