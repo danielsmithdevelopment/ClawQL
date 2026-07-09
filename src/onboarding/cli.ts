@@ -10,8 +10,23 @@ import { writeMcpConfigFile, type McpWriteTarget } from "./mcp-config-write.js";
 import { runSecretsList, runSecretsSet } from "./secrets-cli.js";
 import { onboardExitCode, runOnboard } from "./onboard.js";
 import { runOperatorStatus } from "./operator-cli.js";
+import { runSourcesAdd, runSourcesList, runSourcesRemove } from "./sources-cli.js";
+import { runHarness, type HarnessId } from "./harness-cli.js";
 
-type Command = "init" | "doctor" | "mcp-config" | "secrets" | "onboard" | "operator" | "help";
+type Command =
+  | "init"
+  | "doctor"
+  | "mcp-config"
+  | "secrets"
+  | "onboard"
+  | "operator"
+  | "sources"
+  | "claude"
+  | "codex"
+  | "cursor"
+  | "opencode"
+  | "install"
+  | "help";
 
 function parse(argv: string[]): {
   cmd: Command;
@@ -38,11 +53,20 @@ function parse(argv: string[]): {
     else if (a.startsWith("--write-mcp=")) flags.writeMcp = a.slice("--write-mcp=".length);
     else if (a === "--skip-smoke") flags.skipSmoke = true;
     else if (a === "--skip-mcp-write") flags.skipMcpWrite = true;
+    else if (a === "--name") flags.name = argv[++i] ?? "";
+    else if (a === "--kind") flags.kind = argv[++i] ?? "";
+    else if (a === "--id") flags.id = argv[++i] ?? "";
+    else if (a === "--command") flags.command = argv[++i] ?? "";
+    else if (a === "--args") flags.args = argv[++i] ?? "";
     else if (!a.startsWith("-")) positional.push(a);
   }
   const cmd = (positional[0] ?? "help") as Command;
-  const subcmd = cmd === "secrets" || cmd === "operator" ? positional[1] : undefined;
-  const rest = cmd === "secrets" || cmd === "operator" ? positional.slice(2) : positional.slice(1);
+  const subcmd =
+    cmd === "secrets" || cmd === "operator" || cmd === "sources" ? positional[1] : undefined;
+  const rest =
+    cmd === "secrets" || cmd === "operator" || cmd === "sources"
+      ? positional.slice(2)
+      : positional.slice(1);
   return { cmd, subcmd, flags, rest };
 }
 
@@ -62,7 +86,19 @@ Usage:
   clawql secrets list
   clawql secrets set <github|slack|linear|…> [value]
   clawql mcp-config [--json] [--write cursor|claude-desktop] [--http] [--url http://host/mcp]
+  clawql sources list | add <url> [--name NAME] [--kind openapi|discovery|graphql|grpc|mcp|cli] | remove <id>
+  clawql sources add --kind cli --command <bin> [--args a,b] [--name NAME]
+  clawql claude | codex | cursor | opencode [-- harness args...]
   clawql operator status
+
+Harness (MCP pre-wired):
+  clawql claude     Claude Code / Claude Desktop MCP config + launch claude on PATH
+  clawql codex      ~/.codex/config.toml + launch codex
+  clawql cursor     ~/.cursor/mcp.json + launch cursor
+  clawql opencode   ~/.config/opencode/opencode.json + launch opencode
+
+Install (local script):
+  curl -fsSL https://clawql.com/install | bash
 
 operator:
   status          List ClawQLInstance CRs and tier-spec ConfigMaps (requires kubeconfig)
@@ -181,6 +217,60 @@ async function main(): Promise<void> {
     }
     console.error("Usage: clawql operator status");
     process.exitCode = 1;
+    return;
+  }
+
+  if (cmd === "sources") {
+    const home = typeof flags.home === "string" && flags.home ? flags.home : undefined;
+    if (subcmd === "list") {
+      process.exitCode = await runSourcesList(home);
+      return;
+    }
+    if (subcmd === "remove") {
+      const id = rest[0];
+      if (!id) {
+        console.error("Usage: clawql sources remove <id>");
+        process.exitCode = 1;
+        return;
+      }
+      process.exitCode = await runSourcesRemove(id, home);
+      return;
+    }
+    if (subcmd === "add") {
+      const url = rest[0];
+      const argsList =
+        typeof flags.args === "string" && flags.args
+          ? flags.args.split(",").map((s) => s.trim()).filter(Boolean)
+          : undefined;
+      process.exitCode = await runSourcesAdd({
+        url,
+        name: typeof flags.name === "string" ? flags.name : undefined,
+        kind: typeof flags.kind === "string" ? (flags.kind as never) : undefined,
+        id: typeof flags.id === "string" ? flags.id : undefined,
+        command: typeof flags.command === "string" ? flags.command : undefined,
+        args: argsList,
+        home,
+      });
+      return;
+    }
+    console.error(
+      "Usage: clawql sources list | clawql sources add <url> | clawql sources remove <id>"
+    );
+    process.exitCode = 1;
+    return;
+  }
+
+  const harnessIds: HarnessId[] = ["claude", "codex", "cursor", "opencode"];
+  if (harnessIds.includes(cmd as HarnessId)) {
+    const dash = argv.indexOf("--");
+    const forwarded = dash >= 0 ? argv.slice(dash + 1) : rest;
+    process.exitCode = await runHarness(cmd as HarnessId, forwarded);
+    return;
+  }
+
+  if (cmd === "install") {
+    console.log("Run: curl -fsSL https://clawql.com/install | bash");
+    console.log("Or: npm install -g clawql-mcp && clawql onboard");
     return;
   }
 

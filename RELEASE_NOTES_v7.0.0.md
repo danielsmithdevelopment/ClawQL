@@ -52,18 +52,35 @@ helm upgrade --install clawql ./charts/clawql-mcp --set provider=all-providers
 
 ---
 
-## ClawQL Desktop (macOS)
+## ClawQL Desktop (macOS, Windows, Linux)
 
 Downloadable app wrapping the dashboard — **Provider secrets** + **Agent Chat** locally (no Kubernetes required for solo dev).
 
 ```bash
-cd desktop && npm install && npm run dist:mac
-# → desktop/dist/ClawQL-7.0.0.dmg
+cd desktop && npm install && npm run dist:mac    # macOS .dmg
+npm run dist:win                                 # Windows NSIS
+npm run dist:linux                               # AppImage + deb
+# or: make desktop-dist-mac | desktop-dist-win | desktop-dist-linux
 ```
 
 Requires **OpenClaw** on `PATH` for chat. Secrets save to `~/.ClawQL/vault/providers.json` (same as `clawql init`).
 
 → [Desktop design doc](docs/design/clawql-desktop-macos.md) · [desktop/README.md](desktop/README.md)
+
+---
+
+## Custom sources + harness wrappers (Executor parity)
+
+| Feature | Command |
+| ------- | ------- |
+| Add OpenAPI / Discovery / GraphQL / gRPC / MCP from URL | `clawql sources add <url>` |
+| MCP-as-source / CLI-as-source | `clawql sources add --kind mcp …` / `--kind cli --command …` |
+| One-line install | `curl -fsSL https://clawql.com/install \| bash` |
+| Launch harness with ClawQL MCP | `clawql claude` · `clawql codex` · `clawql cursor` · `clawql opencode` |
+
+Custom sources persist in **`~/.ClawQL/sources.json`** and merge into **`search`** / **`execute`** (with GraphQL projection still available for OpenAPI-backed ops).
+
+→ [custom-sources.md](docs/getting-started/custom-sources.md)
 
 ---
 
@@ -74,8 +91,10 @@ Requires **OpenClaw** on `PATH` for chat. Secrets save to `~/.ClawQL/vault/provi
 | `clawql onboard --interactive`        | End-to-end init + MCP config + doctor smoke   |
 | `clawql init --interactive`           | Scaffold `~/.ClawQL` + `vault/providers.json` |
 | `clawql secrets list` / `secrets set` | Manage provider keys                          |
+| `clawql sources list` / `sources add` | Custom integrations from URL                  |
 | `clawql doctor --smoke`               | MCP `tools/list` + `search`                   |
 | `clawql mcp-config --write cursor`    | Merge MCP JSON into Cursor / Claude Desktop   |
+| `clawql claude` / `codex` / `cursor` / `opencode` | Harness launch with MCP pre-wired |
 | `clawql operator status`              | Kubernetes: ClawQLInstance + tier-spec health |
 
 ---

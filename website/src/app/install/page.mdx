@@ -10,6 +10,14 @@ npm install clawql-mcp
 # bun add clawql-mcp
 ```
 
+### One-line install
+
+```bash
+curl -fsSL https://clawql.com/install | bash
+```
+
+Requires **Node.js 22+**. The script runs `npm install -g clawql-mcp` when npm is available.
+
 Registry tarballs are ~10 MB compressed; installed size is dominated by bundled specs.
 
 ## Binaries
@@ -18,7 +26,7 @@ After install, these commands are on your `PATH` (or use `npx -p clawql-mcp <bin
 
 | Command           | Purpose                                                                                   |
 | ----------------- | ----------------------------------------------------------------------------------------- |
-| `clawql`          | Onboarding CLI — **`onboard`**, **`init`**, **`doctor`**, **`secrets`**, **`mcp-config`** |
+| `clawql`          | Onboarding CLI — **`onboard`**, **`init`**, **`doctor`**, **`secrets`**, **`mcp-config`**, **`sources`**, harness wrappers |
 | `clawql-mcp`      | MCP server on **stdio** (Cursor, Claude Desktop, etc.)                                    |
 | `clawql-mcp-http` | MCP over **Streamable HTTP** (`PORT`, `/mcp`, `/healthz`, `/graphql`)                     |
 

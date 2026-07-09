@@ -25,6 +25,7 @@ import { loadGraphqlNativeOperationsFromConfigs } from "./graphql-native-loader.
 import { mergeNativeProtocolOperations } from "./native-protocol-merge.js";
 import { shouldLoadNativeProtocolsOnlyMode } from "./native-protocol-env.js";
 import { resetNativeProtocolRegistry } from "./native-protocol-registry.js";
+import { resetMcpSourceRegistry } from "./mcp-source-registry.js";
 import { operationsFromOpenAPI } from "./openapi-operations.js";
 import { getPackageRoot } from "./package-root.js";
 import {
@@ -778,6 +779,7 @@ export function resetSpecCache(): void {
   loadInFlight = null;
   loadGeneration++;
   resetNativeProtocolRegistry();
+  resetMcpSourceRegistry();
 }
 
 let specCacheShutdownHooksRegistered = false;

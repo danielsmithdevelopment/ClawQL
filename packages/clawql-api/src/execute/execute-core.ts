@@ -10,6 +10,8 @@ import type { LoadSpecFn } from "../search/search-live.js";
 import { defaultFields, executeOutputFields, projectRestByFields } from "./field-projection.js";
 import { executeNativeGraphQL } from "./native-graphql.js";
 import { executeNativeGrpc } from "./native-grpc.js";
+import { executeNativeMcp } from "./native-mcp.js";
+import { executeNativeCli } from "./native-cli.js";
 import { executeRestOperation } from "./rest-operation.js";
 import type { ExecuteClawqlOperationParams, McpTextContent } from "./types.js";
 
@@ -68,6 +70,34 @@ export async function executeClawqlOperation(
           error: exec.error,
           specLabel: op.specLabel ?? null,
           hint: "Native gRPC execute failed (check endpoint, TLS/insecure, proto, and arguments).",
+        })
+      );
+    }
+    return textContent(JSON.stringify(projectRestByFields(exec.data, outputFields), null, 2));
+  }
+
+  if (op.protocolKind === "mcp" && op.nativeMcp) {
+    const exec = await executeNativeMcp(op as Operation, args);
+    if (!exec.ok) {
+      return textContent(
+        JSON.stringify({
+          error: exec.error,
+          specLabel: op.specLabel ?? null,
+          hint: "MCP proxy execute failed (check remote server and tool arguments).",
+        })
+      );
+    }
+    return textContent(JSON.stringify(projectRestByFields(exec.data, outputFields), null, 2));
+  }
+
+  if (op.protocolKind === "cli" && op.nativeCli) {
+    const exec = await executeNativeCli(op as Operation, args);
+    if (!exec.ok) {
+      return textContent(
+        JSON.stringify({
+          error: exec.error,
+          specLabel: op.specLabel ?? null,
+          hint: "CLI source execute failed (check command, args, and env).",
         })
       );
     }

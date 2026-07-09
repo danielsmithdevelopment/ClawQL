@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Add any source from URL** — `clawql sources add <url>` with auto-detect for OpenAPI, Google Discovery, GraphQL SDL/introspection, gRPC `.proto`, and MCP HTTP endpoints; persisted in **`~/.ClawQL/sources.json`** and merged into MCP `search`/`execute` on startup.
+- **MCP and CLI as source types** — proxy remote MCP tools and wrap local CLI commands as searchable operations (`protocolKind` **`mcp`** / **`cli`**).
+- **Harness wrappers** — `clawql claude`, `clawql codex`, `clawql cursor`, `clawql opencode` write harness-specific MCP config and launch the agent binary on PATH.
+- **One-line install** — `curl -fsSL https://clawql.com/install | bash` (`scripts/install.sh`, served from the docs site).
+- **ClawQL Desktop Windows/Linux** — `make desktop-dist-win`, `make desktop-dist-linux` (NSIS + AppImage/deb).
+
 ## [7.0.0] - 2026-07-09
 
 Major release: **opinionated default stack everywhere** (npm + Helm), **vault-first defense in depth**, **ClawQL Operator** with provider-secret reconciliation, and consolidated IDP wave. Release notes: **[`RELEASE_NOTES_v7.0.0.md`](RELEASE_NOTES_v7.0.0.md)**.

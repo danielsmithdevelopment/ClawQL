@@ -22,6 +22,10 @@ export function getLocalProvidersVaultPath(home = getClawqlHome()): string {
   return join(home, "vault", "providers.json");
 }
 
+export function getCustomSourcesFilePath(home = getClawqlHome()): string {
+  return join(home, "sources.json");
+}
+
 export function getMemoryDir(home = getClawqlHome()): string {
   return join(home, "Memory");
 }
@@ -31,4 +35,10 @@ export function getDashboardChatsDir(home = getClawqlHome()): string {
 }
 
 /** Subdirs created by `clawql init`. */
-export const INIT_DIRECTORIES = ["Memory", "Dashboard/chats", "Dashboard/logs", "vault"] as const;
+export const INIT_DIRECTORIES = [
+  "Memory",
+  "Dashboard/chats",
+  "Dashboard/logs",
+  "vault",
+  "sources",
+] as const;

@@ -2,7 +2,7 @@
   "name": "clawql-desktop",
   "productName": "ClawQL",
   "version": "7.0.0",
-  "description": "ClawQL Desktop — local provider secrets + Agent Chat (macOS)",
+  "description": "ClawQL Desktop — local provider secrets + Agent Chat (macOS, Windows, Linux)",
   "license": "Apache-2.0",
   "private": true,
   "type": "module",
@@ -12,7 +12,11 @@
     "prepare:standalone": "node scripts/prepare-standalone.mjs",
     "dev": "CLAWQL_DESKTOP_DEV=1 electron .",
     "pack:mac": "npm run prepare:standalone && electron-builder --mac dmg --publish never",
-    "dist:mac": "npm run pack:mac"
+    "pack:win": "npm run prepare:standalone && electron-builder --win nsis --publish never",
+    "pack:linux": "npm run prepare:standalone && electron-builder --linux AppImage deb --publish never",
+    "dist:mac": "npm run pack:mac",
+    "dist:win": "npm run pack:win",
+    "dist:linux": "npm run pack:linux"
   },
   "build": {
     "appId": "com.clawql.desktop",
@@ -36,6 +40,15 @@
       "target": ["dmg"],
       "hardenedRuntime": true,
       "gatekeeperAssess": false
+    },
+    "win": {
+      "target": ["nsis"],
+      "artifactName": "ClawQL-Setup-${version}.${ext}"
+    },
+    "linux": {
+      "target": ["AppImage", "deb"],
+      "category": "Development",
+      "artifactName": "ClawQL-${version}.${ext}"
     },
     "dmg": {
       "title": "ClawQL ${version}"
