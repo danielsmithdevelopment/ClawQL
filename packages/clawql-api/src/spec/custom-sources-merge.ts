@@ -3,7 +3,7 @@
  */
 
 import { writeFile } from "node:fs/promises";
-import { join, resolve, sep } from "node:path";
+import { resolve, sep } from "node:path";
 import { convertObj } from "swagger2openapi";
 import type { LoadedSpec } from "./spec-loader.js";
 import { loadOpenAPIFromAbsolutePath } from "./spec-loader.js";

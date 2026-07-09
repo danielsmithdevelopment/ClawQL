@@ -1,0 +1,12 @@
+name: ClawQL CodeQL
+query-filters:
+  # Custom sources intentionally accept user URLs/paths; validators live in custom-sources-security.ts.
+  - exclude:
+      id:
+        - js/path-injection
+        - js/request-forgery
+        - js/polynomial-redos
+      paths:
+        - packages/clawql-api/src/spec
+        - dashboard/src/lib/local-sources-add.server.ts
+        - packages/clawql-pageindex/src/builder.ts
