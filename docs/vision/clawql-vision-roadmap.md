@@ -12,21 +12,23 @@ ClawQL is under active development. Most of what this document describes is not 
 | Package                    | Status                                                                                                                                                    |
 | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `clawql-mcp`               | ✅ Shipped (transport + MCP registration in `src/`)                                                                                                       |
-| `clawql-ouroboros`         | ✅ Shipped                                                                                                                                                |
-| `mcp-grpc-transport`       | ✅ Shipped                                                                                                                                                |
 | `clawql-core`              | ✅ Shipped (audit, Merkle, Cuckoo, Plugin types)                                                                                                          |
-| `clawql-api`               | ✅ Shipped (spec, execute, gateway scaffold, Panguard plugin)                                                                                             |
+| `clawql-api`               | ✅ Shipped (spec, execute, gateway, Panguard plugin, custom URL sources)                                                                                  |
 | `clawql-memory`            | ✅ Shipped (vault, memory.db, ingest/recall)                                                                                                              |
 | `clawql-documents`         | ✅ Shipped — ingest + **`DEFAULT_IDP_PIPELINE`** + **`run_idp_pipeline`**; 8 bundled IDP vendors; **`classify_document`** / **`extract_document`** opt-in |
 | `clawql-automation`        | ✅ Shipped — schedule, notify, **`workflow`**, **`argocd`**; NATS JetStream opt-in ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254))  |
+| `clawql-sandbox`           | ✅ Shipped — **`SandboxPlugin`**, Kata default in-cluster **`auto`**                                                                                      |
+| `clawql-ouroboros`         | ✅ Shipped — evolutionary loops + **`OuroborosPlugin`**                                                                                                   |
+| `clawql-operator`          | 🚧 Scaffold shipped (7.0) — CRD, tier-spec, layer composition; full operator planned                                                                      |
+| `clawql-release`           | 🚧 MVP shipped (7.0) — manifest collect/verify/publish; Arweave/Rift roadmap                                                                             |
+| `mcp-grpc-transport`       | ✅ Shipped                                                                                                                                                |
 | `clawql-auth`              | 📋 Planned (auth helpers live in `clawql-api` today)                                                                                                      |
 | `clawql-pageindex`         | 📋 Planned                                                                                                                                                |
 | `clawql-data`              | 📋 Planned                                                                                                                                                |
 | `clawql-telemetry`         | 📋 Planned                                                                                                                                                |
-| `clawql-sandbox`           | ✅ Shipped — **`SandboxPlugin`**, Kata default in-cluster **`auto`**                                                                                      |
 | `clawql-printingpress`     | 📋 Planned                                                                                                                                                |
 | `clawql-goose`             | 📋 Planned                                                                                                                                                |
-| Kubernetes Operator        | 📋 Planned                                                                                                                                                |
+| Kubernetes Operator (full) | 📋 Planned — NL dashboard, dynamic Deployments, full auth reconciliation                                                                                  |
 | Natural Language Dashboard | 📋 Planned                                                                                                                                                |
 | All vertical packages      | 📋 Planned — none shipped                                                                                                                                 |
 
@@ -106,31 +108,45 @@ For technical readers, the full rationale and patterns are in the [Contributor T
 
 ## 4. What Exists Today
 
-### Shipped
+### Shipped (horizontal platform)
 
-**`clawql-mcp`** implements the core Model Context Protocol transport layer. This is the communication foundation that all ClawQL tools run over. It is in use and stable.
+**`clawql-mcp`** — MCP transport (stdio/HTTP/gRPC) and tool registration adapter in `src/`.
 
-**`clawql-ouroboros`** provides evolutionary self-improvement loops for extraction schemas and workflows. It ingests human-in-the-loop corrections and agent feedback, runs seed-based evolution over multiple generations, and produces improved schemas automatically. It is in use and stable.
+**`clawql-core`** — Foundational types, Plugin interface, Merkle/Cuckoo, audit ring buffer, cache helpers.
 
-**`mcp-grpc-transport`** provides gRPC transport for MCP communication, enabling low-latency connections in cluster environments. It is in use and stable.
+**`clawql-api`** — Intelligent gateway: `search()` / `execute()`, bundled + custom URL sources, REST/GraphQL/gRPC/MCP/CLI protocols, `createClawQLApi()`, Panguard proxy plugin.
 
-### In Active Development
+**`clawql-memory`** — Vault, `memory.db`, ingest/recall, embeddings, optional pgvector.
 
-**`clawql-core`** defines all foundational types, the Plugin interface, the ProviderSpec registry, Merkle utilities, Cuckoo filter, and base Effect-TS layers. This is the dependency everything else builds on. It needs to stabilise before other packages can ship.
+**`clawql-documents`** — External ingest, **`DEFAULT_IDP_PIPELINE`**, **`run_idp_pipeline`**, eight bundled IDP vendors via `search`/`execute` and Helm — see [`idp-pipeline.md`](../providers/idp-pipeline.md).
 
-**`clawql-api`** is the intelligent gateway — `search()`, `execute()`, routing, ATR enforcement, redaction hooks, Merkle auditing, and circuit breakers. This is the primary product surface.
+**`clawql-automation`** — Schedule worker, Slack notify, Argo **`workflow`** / **`argocd`** (opt-in), NATS JetStream + HITL when enabled.
 
-**`clawql-auth`** handles authentication modes (OIDC, SAML, OAuth2, API key), RBAC/ABAC policy, and ATR claim enrichment.
+**`clawql-sandbox`** — **`sandbox_exec`** via **`SandboxPlugin`** (Kata default in-cluster).
 
-**`clawql-documents`** ships external ingest, the **`DEFAULT_IDP_PIPELINE`** recipe, and stage helpers. **Seven bundled providers** (Nextcloud, Tika, Gotenberg, Stirling, Paperless, Onyx, Coneshare) are available via **`search`/`execute`** and Helm — see [`idp-pipeline.md`](../providers/idp-pipeline.md). Presidio agent I/O redaction and an automated multi-hop runner remain roadmap.
+**`clawql-ouroboros`** — Evolutionary self-improvement loops + **`OuroborosPlugin`**.
 
-**`clawql-memory`** is the hybrid persistent memory system combining a filesystem vault, a graph store, a vectorless hierarchical index (PageIndex), and optional semantic search via Onyx.
+**`mcp-grpc-transport`** — gRPC MCP transport for cluster deployments.
 
-**`clawql-pageindex`** is a standalone MIT package for vectorless hierarchical document indexing. It has no dependencies on other ClawQL packages and can be used independently.
+**7.0 additions:** **`clawql-release`** (Layer 0 manifest MVP), **`clawql-operator`** (opt-in K8s scaffold), custom sources + harness wrappers, install script, ClawQL Desktop (macOS/Windows/Linux). See [7.0 setup guide](../getting-started/clawql-7-setup-guide.md).
+
+**Plugin Phase 2:** All horizontal tiers register MCP tools via **`Plugin.onRegister`** and compose through **`composeHorizontalPluginLayers()`** — see [ClawQL plugin model](../design/clawql-plugin-model.md).
+
+### In Active Development (vision gaps)
+
+**`clawql-auth`** — Standalone package for OIDC/SAML/OAuth2/API key modes, RBAC/ABAC, ATR enrichment (helpers live in `clawql-api` today).
+
+**`clawql-pageindex`** — Standalone MIT vectorless hierarchical indexing (no ClawQL dependencies).
+
+**Intelligent gateway depth** — Presidio redaction on agent I/O, circuit breakers on all paths, Ouroboros position events on every `execute()`, automatic release-manifest verification at startup.
+
+**`clawql-telemetry`** — Dedicated observability package (OTEL at MCP transport today).
 
 ### Planned
 
-Vertical packages, the **full** Kubernetes Operator (NL dashboard, vertical toggles, auth reconciliation), and the remaining horizontal packages (`clawql-data`, `clawql-sandbox`, `clawql-printingpress`, `clawql-goose`, `clawql-telemetry`) are planned. An **opt-in operator scaffold** shipped in **7.0.0** — see [clawql-operator-helm.md](../deployment/clawql-operator-helm.md). **`clawql-automation`** is a **scaffold** on `main` (schedule + notify extracted; NATS/HITL planned). Specifications for not-yet-started packages are written and stable; work begins when upstream dependencies stabilize.
+Vertical packages, the **full** Kubernetes Operator (NL dashboard, dynamic Deployments, full auth reconciliation), and remaining horizontal packages (`clawql-data`, `clawql-printingpress`, `clawql-goose`). Layer 0 permanence (Arweave, Rift, Radicle primary). Specifications for not-yet-started packages are written and stable.
+
+**Recommended next ship before npm 7.0.0 tag:** wire **`clawql release verify`** into **`clawql doctor --smoke`** (and optional startup when `CLAWQL_RELEASE_MANIFEST` is set) — see [modularization implementation status §10](../design/modularization-implementation-status.md#10-recommended-next-ship-for-700).
 
 ---
 
@@ -176,7 +192,7 @@ There are no fixed delivery dates. Priorities are determined by dependency order
 
 That is a fair question and it deserves a direct answer.
 
-**Execution evidence.** Three packages are shipped and in use. The architecture is not speculative — it is written in working TypeScript with enforced dependency rules, passing tests, and a live CI pipeline. The gap between what is specified and what is running is a development gap, not a design gap.
+**Execution evidence.** Ten workspace packages are shipped and in use (core, api, memory, documents, automation, sandbox, ouroboros, operator scaffold, release MVP, plus transports). The architecture is not speculative — it is written in working TypeScript with enforced dependency rules, passing tests, and a live CI pipeline. The gap between what is specified and what is running is narrowing on horizontal extraction; gateway depth, Layer 0 permanence, auth/pageindex packages, and verticals remain ahead.
 
 **The specification is the contract.** This document, the Technical Specification, and the Deployment Guide are public and versioned. Interfaces are stable and semver-governed. A breaking change to a public interface requires a major version bump across all dependents. Contributors can build against the specification today knowing that changes will be signalled clearly.
 
@@ -218,6 +234,6 @@ The public roadmap is tracked in GitHub Discussions with phase-level milestones.
 
 ---
 
-_ClawQL Vision & Roadmap · May 2026 · Apache 2.0 / MIT_  
+_ClawQL Vision & Roadmap · July 2026 · Apache 2.0 / MIT_  
 _For implementation contracts: see the [Contributor Technical Specification](../contributing/clawql-contributor-technical-specification.md)._  
 _For planned Operator / CRD deployment: see [Operator target architecture](../design/operator-target-architecture.md). Shipped installs: [Deployment & Operations Guide](../deployment/clawql-deployment-operations-guide.md)._
