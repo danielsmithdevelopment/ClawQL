@@ -6,7 +6,7 @@ export const site = {
   earlyAccess: {
     badge: '14-day free trial — no credit card required',
     summary:
-      'ClawQL is open source and self-hostable today — that is your free tier. Hosted gateway starts with a 14-day trial of Developer: full persistent vault, unlimited executions, global edge endpoint. Upgrade to Teams or IDP tiers when you are ready.',
+      'ClawQL is an operating system for agents — not an agent framework. The open-source MCP core is production-ready today: search, execute, vault memory, and optional IDP. Self-host free on Apache 2.0, or start a 14-day Developer trial with full persistent memory and unlimited executions.',
     pricingNote:
       'No perpetual free hosted plan — self-host free forever on Apache 2.0, or start a 14-day Developer trial. Gateway tiers deploy at the global edge with unlimited MCP executions, vault memory with no egress penalties on recall, and Onyx search on Teams. IDP tiers (Starter $299+) activate document processing, VDR, and sovereign inference on a dedicated tenant. One MCP endpoint for every tier: upgrade from Teams to Starter without changing your URL, auth token, or vault history.',
   },

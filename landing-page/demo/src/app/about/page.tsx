@@ -20,7 +20,7 @@ export default function Page() {
         headline="The infrastructure layer agents call into."
         subheadline={
           <p>
-            ClawQL is not an agent framework — it does not reason or plan. It is the MCP gateway where agents{' '}
+            ClawQL is not an agent framework — it does not reason or plan. It is the MCP operating system where agents{' '}
             <strong>search</strong> APIs, <strong>execute</strong> operations, <strong>recall</strong> vault knowledge,
             <strong> ingest</strong> documents, and <strong>audit</strong> what happened. Memory and action form a
             closed loop.
@@ -51,11 +51,29 @@ export default function Page() {
             </p>
           </div>
           <div className="rounded-xl bg-mist-950/2.5 p-6 dark:bg-white/5">
+            <h3 className="font-semibold text-mist-950 dark:text-white">Current state</h3>
+            <p className="mt-2">
+              The open-source MCP server is production-ready and self-hostable today — npm, Helm, published case
+              studies, and a v7 operator for Kubernetes. Managed gateway hosting is in early access (14-day Developer
+              trial, then paid tiers). IDP hosted tenants are onboarding with founder-led setup. We are pre-revenue on
+              managed hosting; the core product is not vaporware.
+            </p>
+          </div>
+          <div className="rounded-xl bg-mist-950/2.5 p-6 dark:bg-white/5">
+            <h3 className="font-semibold text-mist-950 dark:text-white">First buyers</h3>
+            <p className="mt-2">
+              Document-heavy teams of 20–200 people in legal, M&A diligence, healthcare operations, and lending — teams
+              that already spend $500–2k/mo on SaaS and need agent memory plus document intelligence, not another CRM.
+              Gateway-only developers evaluating MCP infrastructure start on Developer or Teams; IDP activates when they
+              need classify/extract and VDR.
+            </p>
+          </div>
+          <div className="rounded-xl bg-mist-950/2.5 p-6 dark:bg-white/5">
             <h3 className="font-semibold text-mist-950 dark:text-white">Early access, founder-led</h3>
             <p className="mt-2">
-              Managed hosting is in early access — onboarding the first Professional and shared-tenancy tenants with
-              founder-led setup, not a self-serve checkout. The open-source core is production-ready today; hosted slots
-              are limited while we validate pipeline reliability under real workloads.
+              Managed hosting onboarding is founder-led — not self-serve checkout. Hosted slots are limited while we
+              validate pipeline reliability under real workloads. Architecture earns trust over time; we do not claim
+              compliance certifications or decade-long references we do not have yet.
             </p>
           </div>
           <div className="rounded-xl bg-mist-950/2.5 p-6 sm:col-span-2 lg:col-span-1 dark:bg-white/5">
@@ -72,9 +90,13 @@ export default function Page() {
       <Section
         id="philosophy"
         eyebrow="What we build"
-        headline="Three problems, one platform."
+        headline="Three problems — one platform, activated in layers."
         subheadline={
-          <p>Current agent systems lose context, burn tokens on API specs, and treat documents as afterthoughts.</p>
+          <p>
+            Current agent systems lose context, burn tokens on API specs, and treat documents as afterthoughts. Plugin
+            bundles let you solve gateway and memory first; add IDP and sovereign inference only when your workload
+            needs them.
+          </p>
         }
       >
         <div className="grid grid-cols-1 gap-6 text-sm/7 text-mist-700 sm:grid-cols-3 dark:text-mist-400">

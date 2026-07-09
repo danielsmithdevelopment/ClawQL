@@ -446,7 +446,7 @@ export default function Page() {
         <Faq
           id="faq-3"
           question="How does ClawQL compare to executor.sh?"
-          answer={`executor.sh caps executions (250,000/mo on Team) and charges $0.20/1,000 overage — customers watch a meter. ClawQL offers unlimited executions on every hosted tier, with no egress penalties on vault memory recall. Self-host free forever on Apache 2.0, or start a 14-day Developer trial. ClawQL Developer (${pricing.developer.monthlyPrice}/mo) and Teams (${pricing.teams.monthlyPrice}/mo) add a global edge gateway, seven additional token-efficiency layers, persistent Obsidian vault memory, and Onyx semantic search on Teams. IDP tiers from ${pricing.starter.monthlyPrice}/mo add document processing, Coneshare VDR, and sovereign inference — none of which executor.sh offers.`}
+          answer={`executor.sh is a tool — it routes MCP calls well and has a head start on developer marketing. ClawQL is an operating system for agents: the same Layer 1 search/execute pattern, plus seven additional efficiency layers, persistent vault memory, Onyx search, unlimited executions (no meter), and optional IDP from ${pricing.starter.monthlyPrice}/mo. At gateway tiers, ClawQL Developer (${pricing.developer.monthlyPrice}/mo) and Teams (${pricing.teams.monthlyPrice}/mo) deliver more for less than executor.sh Team ($150/mo + overage). We approached executor.sh about collaboration before publishing comparisons; buyers deserve an honest infrastructure evaluation, not a marketing feud.`}
         />
         <Faq
           id="faq-3b"

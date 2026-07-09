@@ -70,7 +70,7 @@ export function CompetitivePricingSection({ className, ...props }: ComponentProp
 
         <div className="mt-10 rounded-xl border border-mist-950/10 bg-mist-950/2.5 p-6 sm:p-8 dark:border-white/10 dark:bg-white/5">
           <h3 className="text-xl font-semibold text-mist-950 dark:text-white">
-            vs {executorBenchmark.name} — stateless tool router, not a platform
+            vs {executorBenchmark.name} — a tool, not a platform
           </h3>
           <p className="mt-2 text-sm/7 text-mist-700 dark:text-mist-400">{executorBenchmark.positioning}</p>
           <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">

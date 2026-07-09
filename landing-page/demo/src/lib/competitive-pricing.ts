@@ -2,17 +2,17 @@
 
 import { businessAllInMonthly, pricing, unlimitedExecutionsTagline } from './pricing'
 
-export const competitiveHeadline = 'Gateway, memory, and IDP — price each plugin bundle against the right incumbent.'
+export const competitiveHeadline = 'Plugin bundles — price each layer against the right incumbent.'
 
 export const competitiveSummary =
-  'ClawQL is not one product at one price. Developer and Teams tiers replace stateless MCP routers like executor.sh with a global edge gateway, persistent vault memory (no egress penalties on recall), Onyx semantic search, eight compounding token-efficiency layers, and unlimited executions — no meter, no overage. Starter through Professional compete with IDP and VDR incumbents on document volume — a $8,000–15,000/month stack sold separately elsewhere.'
+  'ClawQL is an operating system for agents, not a single SKU. Developer and Teams tiers replace stateless MCP routers like executor.sh with a global edge gateway, persistent vault memory, Onyx semantic search, eight compounding token-efficiency layers, and unlimited executions. Starter through Professional compete with IDP and VDR incumbents — only when you opt into document processing. Gateway buyers should not subsidize GPU inference they never use.'
 
 /** MCP gateway competitor — executor.sh (direct competitor to ClawQL gateway layer). */
 export const executorBenchmark = {
   name: 'executor.sh',
   href: 'https://executor.sh/',
   positioning:
-    'Stateless MCP tool router. Normalizes OpenAPI/GraphQL/MCP into a search-and-execute gateway with host-side secret injection and basic audit logging. That is the complete product.',
+    'A tool — not a platform. executor.sh normalizes OpenAPI/GraphQL/MCP into a search-and-execute gateway with host-side secret injection and basic audit logging. That is the complete product, and it does that job well.',
   pricing: [
     { tier: 'Free', price: '$0', includes: '3 members · 10,000 executions/mo cap' },
     {
@@ -25,9 +25,9 @@ export const executorBenchmark = {
   clawqlResponse: {
     tiers: `Developer ${pricing.developer.monthlyPrice}/mo · Teams ${pricing.teams.monthlyPrice}/mo`,
     advantage:
-      'ClawQL implements the same Layer 1 search/execute pattern, then compounds seven additional efficiency layers on top — plus persistent Obsidian vault memory, Onyx semantic search, and an optional full IDP platform. executor.sh stops at Layer 1.',
+      'executor.sh is a hammer — excellent for routing tool calls. ClawQL is the workshop: the same Layer 1 search/execute pattern, then seven additional efficiency layers, persistent vault memory, Onyx semantic search, defense-in-depth security, and an optional full IDP platform behind one MCP endpoint.',
     closing:
-      'executor.sh is a stateless tool router. ClawQL is a stateful agent operating system. This is not a close comparison.',
+      'Their head start is developer marketing and community mindshare — real advantages. On every dimension that matters for infrastructure decisions — memory, security depth, token efficiency, document pipeline, sovereign inference — ClawQL is categorically different, delivers more, and costs less at comparable gateway tiers.',
   },
 } as const
 
@@ -39,6 +39,19 @@ export type ExecutorComparisonRow = {
 
 /** Dimension-by-dimension comparison — Market 1 (MCP Gateway) from GTM playbook. */
 export const executorComparisonRows: ExecutorComparisonRow[] = [
+  {
+    dimension: 'Category',
+    executor: 'Tool — routes MCP calls, injects secrets, meters executions.',
+    clawql:
+      'Operating system for agents — gateway, memory, search, security, IDP, and optional sovereign inference in one platform.',
+  },
+  {
+    dimension: 'Developer adoption',
+    executor:
+      'Head start: strong developer marketing, YC backing, and growing community mindshare. That is their real advantage.',
+    clawql:
+      'Later entrant with deeper stack — published case studies, open-source core, self-host evaluation path, and production deployments.',
+  },
   {
     dimension: 'Token efficiency architecture',
     executor: 'One layer: search-and-execute pattern only.',
@@ -75,7 +88,8 @@ export const executorComparisonRows: ExecutorComparisonRow[] = [
   {
     dimension: 'Sovereign LLM inference',
     executor: 'None. All inference routes to external APIs.',
-    clawql: 'Fine-tuned Qwen3.6-27B inside tenant boundary — Istio egress block, no tokens leave the namespace.',
+    clawql:
+      'Fine-tuned Qwen3.6-27B inside tenant boundary — Istio egress block, no tokens leave the namespace. Vertical adapters are early; we name maturity risk openly.',
   },
   {
     dimension: 'Execution pricing',
@@ -234,20 +248,36 @@ export const competitorFeatureRows: CompetitorFeatureRow[] = [
 
 export const competitiveHonestyNotes = [
   {
+    title: 'Tool vs operating system',
+    body: 'executor.sh routes tool calls — a focused, well-marketed hammer. ClawQL is the workshop: memory, search, security, document pipeline, and sovereign inference behind one MCP endpoint. Buyers who need routing only should evaluate executor.sh. Buyers who need agent infrastructure should not mistake a tool for a platform.',
+  },
+  {
+    title: 'Where executor.sh leads',
+    body: 'Developer mindshare and go-to-market velocity — YC backing, community growth, and brand recognition in the MCP gateway category. We acknowledge that plainly. Technical depth, security architecture, persistent memory, and platform breadth are where ClawQL competes — not on who shipped Layer 1 routing first.',
+  },
+  {
+    title: 'Collaboration before competition',
+    body: 'Before publishing head-to-head comparisons, we approached executor.sh about collaboration and shared MCP ecosystem work. Those overtures were not engaged. We document our positioning directly for buyers making infrastructure decisions — not to start a marketing feud.',
+  },
+  {
+    title: 'Focus: plugin bundles, not four companies at once',
+    body: 'The surface area is large — gateway, IDP, VDR, sovereign inference, and DAOS coordination on the roadmap. Sales focus follows plugin bundles: Developer/Teams for agent builders connecting tools; Starter+ for document-heavy teams in legal, M&A, healthcare, and lending who opt into IDP explicitly. You only pay for the heavy stack when you activate it.',
+  },
+  {
+    title: 'Shipped today vs roadmap',
+    body: 'ClawQL Core (search, execute, audit, cache), vault memory, Onyx search, the IDP pipeline, and the Ouroboros evolutionary loop library are shipped and documented with case studies. DAOS swarm coordination (NSV, SGDOP, Diversity Dividends) is specified and on the P0–P3 build plan — not production-hardened yet. We separate spec from shipped code in evaluations.',
+  },
+  {
+    title: 'Sovereign inference maturity',
+    body: 'Tenant-bound fine-tuned models (Qwen3.6 family and vertical adapters) are a deliberate differentiation bet. Base weights and adapter tooling are newer than incumbent cloud APIs — we name that risk for regulated buyers who need references and compliance history, not just architecture slides.',
+  },
+  {
     title: 'Unlimited executions — deliberate pricing',
     body: 'Gateway tiers run at the global edge and scale with demand — an extra execution or memory_recall costs us almost nothing in egress. Charging per execution creates a perverse incentive to throttle agents. ClawQL prices on hosting model, storage, and plugin bundles. Unlimited executions on every hosted tier. Self-host free forever on Apache 2.0. executor.sh caps usage and bills $0.20/1,000 overage.',
   },
   {
-    title: 'Plugin bundles, not one-size-fits-all',
-    body: 'Gateway-only buyers should not pay for Stirling, Gotenberg, and GPU inference. Developer ($29) and Teams ($99) run at the global edge with memory, search, and unlimited executions. IDP tiers ($299+) provision dedicated document-processing infrastructure only when you opt in — priced against Hyperscience and Intralinks.',
-  },
-  {
     title: 'Seamless tier upgrades',
     body: 'One MCP endpoint on every tier. Upgrade from Teams to Starter and your URL, auth token, and vault memory history stay the same — agents retain full context without a migration project. IDP infrastructure activates behind the same endpoint.',
-  },
-  {
-    title: 'executor.sh vs ClawQL (MCP gateway)',
-    body: 'executor.sh implements one token-efficiency layer and routes tool calls behind a usage meter. ClawQL compounds eight efficiency layers, ships a global edge gateway, persistent vault memory without egress penalties on recall, Onyx semantic search, unlimited executions, and an optional full IDP platform. executor.sh has no equivalent at any price point beyond Layer 1 routing.',
   },
   {
     title: 'Where incumbents still lead',
