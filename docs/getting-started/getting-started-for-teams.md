@@ -6,13 +6,13 @@ Run ClawQL as a **shared MCP backend** for your team: centralize **Obsidian memo
 
 ## What teams need
 
-| Capability | Why | Start here |
-| ---------- | --- | ---------- |
-| **Shared memory** | Same `Memory/` notes for every agent and engineer via `memory_recall` | [Team vault sync](./team-vault-sync.md) |
-| **Metrics** | Throughput, errors, audit counters on `/metrics` | [IDP trace & metrics guide](../observability/idp-trace-and-metrics-guide.md) |
-| **Audit logs** | Structured MCP tool events for grep and dashboards | [Audit tool & observability](/learn/audit-tool-and-observability) |
-| **Traces** | Request latency across tools and mesh hops | OTEL → Tempo (lab) or your collector |
-| **Work traces** | Token savings, eval scores, LLM spans | Langfuse ([ADR 0005](../adr/0005-langfuse-default-work-trace-store.md)) |
+| Capability        | Why                                                                   | Start here                                                                   |
+| ----------------- | --------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| **Shared memory** | Same `Memory/` notes for every agent and engineer via `memory_recall` | [Team vault sync](./team-vault-sync.md)                                      |
+| **Metrics**       | Throughput, errors, audit counters on `/metrics`                      | [IDP trace & metrics guide](../observability/idp-trace-and-metrics-guide.md) |
+| **Audit logs**    | Structured MCP tool events for grep and dashboards                    | [Audit tool & observability](/learn/audit-tool-and-observability)            |
+| **Traces**        | Request latency across tools and mesh hops                            | OTEL → Tempo (lab) or your collector                                         |
+| **Work traces**   | Token savings, eval scores, LLM spans                                 | Langfuse ([ADR 0005](../adr/0005-langfuse-default-work-trace-store.md))      |
 
 ## Architecture
 
@@ -59,14 +59,14 @@ ClawQL syncs selected paths under `~/.ClawQL` to a **team prefix** in object sto
 
 ### What syncs
 
-| Path | Shared |
-| ---- | ------ |
-| `Memory/` | Yes — team Markdown for `memory_recall` |
-| `sources/` + `sources.json` | Yes |
-| `Dashboard/chats/` | Yes (optional) |
-| `pageindex.db.json` | Yes |
-| `vault/providers.json` | **Never** |
-| `memory.db` | No — rebuilt locally |
+| Path                        | Shared                                  |
+| --------------------------- | --------------------------------------- |
+| `Memory/`                   | Yes — team Markdown for `memory_recall` |
+| `sources/` + `sources.json` | Yes                                     |
+| `Dashboard/chats/`          | Yes (optional)                          |
+| `pageindex.db.json`         | Yes                                     |
+| `vault/providers.json`      | **Never**                               |
+| `memory.db`                 | No — rebuilt locally                    |
 
 ### Kubernetes: `teamSync` Helm values
 
@@ -87,11 +87,11 @@ teamSync:
 
 **Credentials** in Vault / `envFromSecret` (never in `values.yaml`):
 
-| Provider | Vault keys |
-| -------- | ---------- |
-| **R2** (default) | `r2AccessKeyId`, `r2SecretAccessKey`, `cloudflareAccountId` |
-| **S3** | `awsAccessKeyId`, `awsSecretAccessKey` (+ `CLAWQL_AWS_REGION` via `extraEnv` if needed) |
-| **GCS** | `gcsHmacAccessId`, `gcsHmacSecret` |
+| Provider         | Vault keys                                                                              |
+| ---------------- | --------------------------------------------------------------------------------------- |
+| **R2** (default) | `r2AccessKeyId`, `r2SecretAccessKey`, `cloudflareAccountId`                             |
+| **S3**           | `awsAccessKeyId`, `awsSecretAccessKey` (+ `CLAWQL_AWS_REGION` via `extraEnv` if needed) |
+| **GCS**          | `gcsHmacAccessId`, `gcsHmacSecret`                                                      |
 
 ```bash
 helm upgrade --install clawql ./charts/clawql-mcp \
@@ -188,11 +188,11 @@ Set `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, `LANGFUSE_HOST` via Vault / `e
 
 ### Observability profiles
 
-| Profile | Use case |
-| ------- | -------- |
-| `bundled` | Tier 1 Compose lab — Prometheus, Loki, Tempo, Grafana, Langfuse |
+| Profile    | Use case                                                                                        |
+| ---------- | ----------------------------------------------------------------------------------------------- |
+| `bundled`  | Tier 1 Compose lab — Prometheus, Loki, Tempo, Grafana, Langfuse                                 |
 | `external` | Point at existing backends — [bring-your-own](../observability/bring-your-own-observability.md) |
-| `minimal` | Metrics only; disable Langfuse and optional push |
+| `minimal`  | Metrics only; disable Langfuse and optional push                                                |
 
 Index: [Observability bundle](../observability/README.md).
 

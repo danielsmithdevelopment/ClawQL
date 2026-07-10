@@ -4,13 +4,13 @@ This directory is organized by purpose so operational guides, product docs, and 
 
 ## How to use this library
 
-| Doc type                   | Examples                                                                                                                                     | Status language                      |
-| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
-| **Ground truth**           | [modularization-implementation-status.md](design/modularization-implementation-status.md), CHANGELOG, RELEASE_NOTES                          | ✅ / 🚧 / 📋 only                    |
+| Doc type                   | Examples                                                                                                                                             | Status language                      |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| **Ground truth**           | [modularization-implementation-status.md](design/modularization-implementation-status.md), CHANGELOG, RELEASE_NOTES                                  | ✅ / 🚧 / 📋 only                    |
 | **Getting started**        | [phase-1-platform-guide.md](getting-started/phase-1-platform-guide.md), [getting-started-for-teams.md](getting-started/getting-started-for-teams.md) | What to run today                    |
-| **Public roadmap**         | [clawql-vision-roadmap.md](vision/clawql-vision-roadmap.md)                                                                                  | Phases + honest table                |
-| **Reference architecture** | [clawql-modularization-v2.md](vision/clawql-modularization-v2.md), [operator-target-architecture.md](design/operator-target-architecture.md) | 📋 target; inline 🚧 where partial   |
-| **Historical**             | [clawql-modularization.md](vision/clawql-modularization.md) (v1.9)                                                                           | Fixed date — not for delivery claims |
+| **Public roadmap**         | [clawql-vision-roadmap.md](vision/clawql-vision-roadmap.md)                                                                                          | Phases + honest table                |
+| **Reference architecture** | [clawql-modularization-v2.md](vision/clawql-modularization-v2.md), [operator-target-architecture.md](design/operator-target-architecture.md)         | 📋 target; inline 🚧 where partial   |
+| **Historical**             | [clawql-modularization.md](vision/clawql-modularization.md) (v1.9)                                                                                   | Fixed date — not for delivery claims |
 
 ## Core Product Docs
 
