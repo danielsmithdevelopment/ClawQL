@@ -310,6 +310,48 @@ spec:
               value: "1"
             {{- end }}
             {{- end }}
+            {{- if .Values.teamSync.enabled }}
+            {{- if not .Values.teamSync.bucket }}
+            {{- fail "teamSync.enabled requires teamSync.bucket" }}
+            {{- end }}
+            - name: CLAWQL_SYNC_PROVIDER
+              value: {{ .Values.teamSync.provider | default "r2" | quote }}
+            - name: CLAWQL_SYNC_BUCKET
+              value: {{ .Values.teamSync.bucket | quote }}
+            {{- if .Values.teamSync.prefix }}
+            - name: CLAWQL_SYNC_PREFIX
+              value: {{ .Values.teamSync.prefix | quote }}
+            {{- end }}
+            - name: CLAWQL_SYNC_REGION
+              value: {{ .Values.teamSync.region | default "auto" | quote }}
+            {{- if .Values.teamSync.endpoint }}
+            - name: CLAWQL_SYNC_ENDPOINT
+              value: {{ .Values.teamSync.endpoint | quote }}
+            {{- else if eq (.Values.teamSync.provider | default "r2") "gcs" }}
+            - name: CLAWQL_SYNC_ENDPOINT
+              value: "https://storage.googleapis.com"
+            {{- end }}
+            {{- if .Values.teamSync.autoPush }}
+            - name: CLAWQL_SYNC_AUTO
+              value: "1"
+            - name: CLAWQL_SYNC_AUTO_DEBOUNCE_MS
+              value: {{ (.Values.teamSync.autoPushDebounceMs | default 30000) | int | quote }}
+            {{- end }}
+            {{- if .Values.teamSync.autoPull }}
+            - name: CLAWQL_SYNC_AUTO_PULL
+              value: "1"
+            - name: CLAWQL_SYNC_AUTO_PULL_MIN_MS
+              value: {{ (.Values.teamSync.autoPullMinMs | default 60000) | int | quote }}
+            {{- end }}
+            {{- if .Values.teamSync.autoPullOnStart }}
+            - name: CLAWQL_SYNC_AUTO_PULL_ON_START
+              value: "1"
+            {{- end }}
+            {{- if .Values.teamSync.r2.accountId }}
+            - name: CLAWQL_R2_ACCOUNT_ID
+              value: {{ .Values.teamSync.r2.accountId | quote }}
+            {{- end }}
+            {{- end }}
             {{- with .Values.extraEnv }}
             {{- toYaml . | nindent 12 }}
             {{- end }}

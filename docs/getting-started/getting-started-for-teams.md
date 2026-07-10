@@ -1,0 +1,234 @@
+# Getting started for teams
+
+Run ClawQL as a **shared MCP backend** for your team: centralize **Obsidian memory notes** in object storage and wire **observability** so operators can see health, audit volume, and agent work traces.
+
+**Prerequisites:** Helm Kubernetes (or Tier 1 Compose for a lab slice), [Vault provider secrets](../deployment/vault-provider-secrets.md) synced via External Secrets Operator, and at least one shared bucket (R2, S3, or GCS).
+
+## What teams need
+
+| Capability        | Why                                                                   | Start here                                                                   |
+| ----------------- | --------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| **Shared memory** | Same `Memory/` notes for every agent and engineer via `memory_recall` | [Team vault sync](./team-vault-sync.md)                                      |
+| **Metrics**       | Throughput, errors, audit counters on `/metrics`                      | [IDP trace & metrics guide](../observability/idp-trace-and-metrics-guide.md) |
+| **Audit logs**    | Structured MCP tool events for grep and dashboards                    | [Audit tool & observability](/learn/audit-tool-and-observability)            |
+| **Traces**        | Request latency across tools and mesh hops                            | OTEL → Tempo (lab) or your collector                                         |
+| **Work traces**   | Token savings, eval scores, LLM spans                                 | Langfuse ([ADR 0005](../adr/0005-langfuse-default-work-trace-store.md))      |
+
+## Architecture
+
+```text
+  Teammates / agents                Shared backend
+  ─────────────────                 ──────────────
+  Cursor / Claude Desktop    ──►    clawql-mcp-http (Helm)
+  clawql sync pull/push      ◄──►   Object storage bucket
+                                    Memory/ + sources/ (synced)
+                                    Vault KV → ESO → pod env
+                                    Prometheus / Loki / Tempo / Langfuse
+```
+
+- **Secrets** (`vault/providers.json`, API tokens) stay **local or in Vault** — never in the sync bucket.
+- **`memory.db`** is rebuilt per pod after pull; the **Markdown in `Memory/`** is the shared source of truth.
+
+---
+
+## 1. Deploy the shared MCP backend
+
+### Helm (recommended for teams)
+
+```bash
+helm upgrade --install clawql ./charts/clawql-mcp \
+  --namespace clawql \
+  --create-namespace \
+  --set envFromSecret=clawql-provider-env \
+  --wait
+```
+
+Wire provider keys through **HashiCorp Vault** → **External Secrets** → `envFromSecret`. See [Vault provider secrets](../deployment/vault-provider-secrets.md) and the [Operations guide](../deployment/clawql-deployment-operations-guide.md).
+
+**Local lab:** `make local-k8s-up` on Docker Desktop — MCP at `http://clawql-mcp.localhost/mcp`, bundled Vault, Kyverno, ingress.
+
+### Solo dev with team bucket
+
+Engineers can run `npx clawql-mcp` locally and use **`clawql sync pull`** before `memory_recall` and **`clawql sync push`** after `memory_ingest` — same bucket as the cluster. See [Team vault sync](./team-vault-sync.md).
+
+---
+
+## 2. Shared object storage for team memory
+
+ClawQL syncs selected paths under `~/.ClawQL` to a **team prefix** in object storage. **Cloudflare R2 is the default** provider (bundled stack); **S3** and **GCS** (HMAC interop) are first-class peers.
+
+### What syncs
+
+| Path                        | Shared                                  |
+| --------------------------- | --------------------------------------- |
+| `Memory/`                   | Yes — team Markdown for `memory_recall` |
+| `sources/` + `sources.json` | Yes                                     |
+| `Dashboard/chats/`          | Yes (optional)                          |
+| `pageindex.db.json`         | Yes                                     |
+| `vault/providers.json`      | **Never**                               |
+| `memory.db`                 | No — rebuilt locally                    |
+
+### Kubernetes: `teamSync` Helm values
+
+```yaml
+teamSync:
+  enabled: true
+  provider: r2 # r2 | s3 | gcs
+  bucket: acme-clawql-team
+  prefix: teams/engineering/
+  autoPush: true # debounced push after memory_ingest
+  autoPushDebounceMs: 30000
+  autoPull: true # throttled pull before memory_recall
+  autoPullMinMs: 60000
+  autoPullOnStart: true
+  r2:
+    accountId: "<cloudflare-account-id>" # or cloudflareAccountId in provider secret
+```
+
+**Credentials** in Vault / `envFromSecret` (never in `values.yaml`):
+
+| Provider         | Vault keys                                                                              |
+| ---------------- | --------------------------------------------------------------------------------------- |
+| **R2** (default) | `r2AccessKeyId`, `r2SecretAccessKey`, `cloudflareAccountId`                             |
+| **S3**           | `awsAccessKeyId`, `awsSecretAccessKey` (+ `CLAWQL_AWS_REGION` via `extraEnv` if needed) |
+| **GCS**          | `gcsHmacAccessId`, `gcsHmacSecret`                                                      |
+
+```bash
+helm upgrade --install clawql ./charts/clawql-mcp \
+  --set envFromSecret=clawql-provider-env \
+  --set teamSync.enabled=true \
+  --set teamSync.bucket=acme-clawql-team \
+  --set teamSync.prefix=teams/engineering/ \
+  --set teamSync.autoPush=true \
+  --set teamSync.autoPull=true
+```
+
+### CLI (local machines)
+
+```bash
+clawql sync init --interactive
+# provider: r2 (default), bucket, prefix
+
+export CLAWQL_R2_ACCOUNT_ID="..."
+export CLAWQL_SYNC_ACCESS_KEY_ID="..."
+export CLAWQL_SYNC_SECRET_ACCESS_KEY="..."
+
+clawql sync push    # upload Memory/ to team bucket
+clawql sync pull    # download teammate changes
+clawql sync status  # compare local vs remote
+```
+
+**Auto sync env** (MCP runtime): `CLAWQL_SYNC_AUTO=1`, `CLAWQL_SYNC_AUTO_PULL=1` — see [Team vault sync](./team-vault-sync.md).
+
+Full provider quick starts (R2, S3, GCS), conflict handling, and manifest details: **[Team vault sync](./team-vault-sync.md)**.
+
+---
+
+## 3. Observability for team MCP
+
+Operators need three signal types plus optional LLM work traces.
+
+### Metrics (Prometheus)
+
+ClawQL exposes **OpenMetrics** at **`GET /metrics`** when `CLAWQL_ENABLE_HTTP_METRICS=1` (default on HTTP transport).
+
+**Helm — scrape annotations** (default, works with Istio sample Prometheus):
+
+```yaml
+metrics:
+  prometheusScrapeAnnotations:
+    enabled: true
+    path: /metrics
+```
+
+**Helm — ServiceMonitor** (kube-prometheus-stack):
+
+```yaml
+metrics:
+  serviceMonitor:
+    enabled: true
+    labels:
+      release: kube-prometheus-stack
+```
+
+Key series today: `clawql_audit_*`, `clawql_native_protocol_*`. Import dashboards from [`docs/grafana/`](../grafana/README.md).
+
+**Verify:**
+
+```bash
+kubectl -n clawql port-forward svc/clawql-mcp-http 8080:8080
+curl -s localhost:8080/metrics | head
+```
+
+### Audit → Loki
+
+The MCP **`audit`** tool appends structured events. Push to Loki for team grep and Grafana panels:
+
+```bash
+CLAWQL_LOKI_PUSH_URL=http://loki:3100/loki/api/v1/push
+```
+
+See [Audit tool & observability](/learn/audit-tool-and-observability) and [Bring your own observability](../observability/bring-your-own-observability.md).
+
+### Infra traces (OTLP → Tempo)
+
+```bash
+CLAWQL_ENABLE_OTEL_TRACING=1
+OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+OTEL_SERVICE_NAME=clawql-mcp
+```
+
+**Lab stack:** [Docker Desktop observability](/docker-desktop-observability) — Prometheus, Loki, Tempo, Grafana, OTEL collector in one profile.
+
+### Work traces (Langfuse)
+
+Langfuse is the default **work-trace ledger** for token savings and eval — opt out with `CLAWQL_ENABLE_LANGFUSE=0`. See [ADR 0005](../adr/0005-langfuse-default-work-trace-store.md) and [Bundled observability](../observability/bundled-observability.md).
+
+Set `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, `LANGFUSE_HOST` via Vault / `envFromSecret`.
+
+### Observability profiles
+
+| Profile    | Use case                                                                                        |
+| ---------- | ----------------------------------------------------------------------------------------------- |
+| `bundled`  | Tier 1 Compose lab — Prometheus, Loki, Tempo, Grafana, Langfuse                                 |
+| `external` | Point at existing backends — [bring-your-own](../observability/bring-your-own-observability.md) |
+| `minimal`  | Metrics only; disable Langfuse and optional push                                                |
+
+Index: [Observability bundle](../observability/README.md).
+
+---
+
+## 4. Verify end-to-end
+
+Run this checklist after Helm install + team sync + observability wiring:
+
+```bash
+# Health
+kubectl -n clawql get pods
+curl -s http://clawql-mcp.localhost/healthz
+
+# Metrics
+curl -s http://clawql-mcp.localhost/metrics | grep clawql_audit
+
+# Team memory (from a machine with sync configured)
+clawql sync status
+clawql doctor
+
+# MCP memory round-trip
+# memory_ingest a test note → auto-push (if CLAWQL_SYNC_AUTO=1)
+# Teammate: clawql sync pull → memory_recall with the new note
+```
+
+**Grafana:** import [`clawql-core-observability.json`](../grafana/clawql-core-observability.json) and [`clawql-idp-observability.json`](../grafana/clawql-idp-observability.json).
+
+**After pull:** run `clawql doctor` or set `CLAWQL_MEMORY_DB_SYNC_ON_RECALL=1` so `memory.db` reflects new Markdown.
+
+---
+
+## Related
+
+- [Team vault sync](./team-vault-sync.md) — R2 / S3 / GCS reference, CLI, auto sync, Helm
+- [Local provider vault](./local-provider-vault.md) — `~/.ClawQL` layout and secrets
+- [Deployment & Operations guide](../deployment/clawql-deployment-operations-guide.md) — upgrades, secrets, day-2
+- [Helm chart](../deployment/helm.md) — full `values.yaml` reference
+- [Memory / Obsidian](../memory/memory-obsidian.md) — `memory_ingest` / `memory_recall`

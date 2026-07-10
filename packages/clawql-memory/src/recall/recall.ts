@@ -142,6 +142,9 @@ export async function runMemoryRecall(input: MemoryRecallInput): Promise<MemoryR
     };
   }
 
+  const { runBeforeRecallVaultSync } = await import("../sync/vault-sync-hooks.js");
+  await runBeforeRecallVaultSync();
+
   const query = input.query?.trim();
   if (!query) {
     return { ok: false, error: "query is required" };

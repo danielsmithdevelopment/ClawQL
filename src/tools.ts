@@ -42,6 +42,7 @@ import {
 } from "clawql-automation/plugin";
 import { configureDocumentsPluginDeps } from "clawql-documents/plugin";
 import { wrapMcpToolHandler } from "./otel-tracing.js";
+import { configureHomeSyncHooks } from "./configure-home-sync.js";
 
 export { executeOutputFields, projectRestByFields } from "./tools-execute-core.js";
 
@@ -102,6 +103,7 @@ export { SLACK_NOTIFY_OPERATION_ID, handleNotifyToolInput };
 
 configureAutomationPluginDeps({ execute: (params) => handleClawqlExecuteToolInput(params) });
 configureDocumentsPluginDeps({ execute: (params) => handleClawqlExecuteToolInput(params) });
+configureHomeSyncHooks();
 
 /** Register MCP tools declared by composed plugins (Memory, Documents, Automation, Sandbox, Ouroboros, …). */
 function registerPluginMcpTools(server: McpServer): void {

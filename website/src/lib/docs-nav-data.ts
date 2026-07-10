@@ -35,6 +35,8 @@ export const docsNavigation: Array<NavGroup> = [
         href: '/getting-started/clawql-release-mvp',
       },
       { title: 'Agent setup', href: '/agent-setup' },
+      { title: 'For teams', href: '/getting-started/for-teams' },
+      { title: 'Team vault sync', href: '/getting-started/team-vault-sync' },
       { title: 'Install', href: '/install' },
       { title: 'MCP clients', href: '/mcp-clients' },
     ],

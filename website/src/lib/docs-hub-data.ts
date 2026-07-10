@@ -191,6 +191,20 @@ export const deploymentHubCards: Array<ReferenceCard> = [
     icon: BookIcon,
   }),
   card({
+    href: '/getting-started/for-teams',
+    name: 'Getting started for teams',
+    description:
+      'Shared object storage for Memory notes, Prometheus metrics, Loki audit, OTEL traces, Langfuse.',
+    icon: BookIcon,
+  }),
+  card({
+    href: '/getting-started/team-vault-sync',
+    name: 'Team vault sync (R2 / S3 / GCS)',
+    description:
+      'clawql sync push/pull, auto sync on memory_ingest/recall, Helm teamSync values.',
+    icon: BookIcon,
+  }),
+  card({
     href: '/deployment/kubernetes',
     name: 'Tier 2: Kubernetes & Helm',
     description:

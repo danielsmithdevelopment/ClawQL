@@ -19,6 +19,7 @@ export default defineConfig({
     "db/memory-db": "src/db/memory-db.ts",
     "vector/pgvector": "src/vector/pgvector.ts",
     "plugin/index": "src/plugin/index.ts",
+    "sync/vault-sync-hooks": "src/sync/vault-sync-hooks.ts",
   },
   format: ["esm", "cjs"],
   dts: true,

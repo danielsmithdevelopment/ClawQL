@@ -15,6 +15,10 @@ export const DOC_SITE_ROUTES = {
     '/getting-started/clawql-7-setup-guide',
   'docs/getting-started/clawql-release-mvp.md':
     '/getting-started/clawql-release-mvp',
+  'docs/getting-started/getting-started-for-teams.md':
+    '/getting-started/for-teams',
+  'docs/getting-started/team-vault-sync.md':
+    '/getting-started/team-vault-sync',
   'docs/deployment/clawql-deployment-operations-guide.md':
     '/deployment/operations-guide',
   'docs/deployment/helm.md': '/helm',
@@ -36,6 +40,15 @@ export const DOC_SITE_ROUTES = {
     '/design/operator-target-architecture',
   'docs/contributing/clawql-contributor-technical-specification.md':
     '/contributing/technical-specification',
+  'docs/observability/README.md': '/docker-desktop-observability',
+  'docs/observability/idp-trace-and-metrics-guide.md':
+    '/learn/audit-tool-and-observability',
+  'docs/observability/bring-your-own-observability.md':
+    '/learn/audit-tool-and-observability',
+  'docs/observability/bundled-observability.md':
+    '/docker-desktop-observability',
+  'docs/grafana/README.md': '/learn/audit-tool-and-observability',
+  'docs/memory/memory-obsidian.md': '/learn/vault-memory-between-chats',
   'docs/ouroboros/clawql-ouroboros.md': '/ouroboros',
   'docs/security/clawql-security-defense-in-depth.md':
     '/security/defense-in-depth',

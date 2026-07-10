@@ -63,6 +63,16 @@ const ENTRIES: Array<Entry> = [
     priority: 0.96,
   },
   {
+    path: '/getting-started/for-teams',
+    changeFrequency: 'weekly',
+    priority: 0.95,
+  },
+  {
+    path: '/getting-started/team-vault-sync',
+    changeFrequency: 'weekly',
+    priority: 0.94,
+  },
+  {
     path: '/contributing/technical-specification',
     changeFrequency: 'monthly',
     priority: 0.88,

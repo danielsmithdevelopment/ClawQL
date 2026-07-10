@@ -4,13 +4,13 @@ This directory is organized by purpose so operational guides, product docs, and 
 
 ## How to use this library
 
-| Doc type                   | Examples                                                                                                                                     | Status language                      |
-| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
-| **Ground truth**           | [modularization-implementation-status.md](design/modularization-implementation-status.md), CHANGELOG, RELEASE_NOTES                          | ✅ / 🚧 / 📋 only                    |
-| **Getting started**        | [phase-1-platform-guide.md](getting-started/phase-1-platform-guide.md), [clawql-7-setup-guide.md](getting-started/clawql-7-setup-guide.md)   | What to run today                    |
-| **Public roadmap**         | [clawql-vision-roadmap.md](vision/clawql-vision-roadmap.md)                                                                                  | Phases + honest table                |
-| **Reference architecture** | [clawql-modularization-v2.md](vision/clawql-modularization-v2.md), [operator-target-architecture.md](design/operator-target-architecture.md) | 📋 target; inline 🚧 where partial   |
-| **Historical**             | [clawql-modularization.md](vision/clawql-modularization.md) (v1.9)                                                                           | Fixed date — not for delivery claims |
+| Doc type                   | Examples                                                                                                                                             | Status language                      |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| **Ground truth**           | [modularization-implementation-status.md](design/modularization-implementation-status.md), CHANGELOG, RELEASE_NOTES                                  | ✅ / 🚧 / 📋 only                    |
+| **Getting started**        | [phase-1-platform-guide.md](getting-started/phase-1-platform-guide.md), [getting-started-for-teams.md](getting-started/getting-started-for-teams.md) | What to run today                    |
+| **Public roadmap**         | [clawql-vision-roadmap.md](vision/clawql-vision-roadmap.md)                                                                                          | Phases + honest table                |
+| **Reference architecture** | [clawql-modularization-v2.md](vision/clawql-modularization-v2.md), [operator-target-architecture.md](design/operator-target-architecture.md)         | 📋 target; inline 🚧 where partial   |
+| **Historical**             | [clawql-modularization.md](vision/clawql-modularization.md) (v1.9)                                                                                   | Fixed date — not for delivery claims |
 
 ## Core Product Docs
 
@@ -49,6 +49,8 @@ This directory is organized by purpose so operational guides, product docs, and 
 - `readme/getting-started.md`
 - `getting-started/agent-setup-prompt.md` — copy-paste Cursor/Claude onboarding prompt
 - `getting-started/local-provider-vault.md` — ~/.ClawQL secrets vault + memory home
+- `getting-started/getting-started-for-teams.md` — **teams:** shared object storage + observability for shared Memory
+- `getting-started/team-vault-sync.md` — `clawql sync` push/pull (R2 / S3 / GCS), Helm `teamSync.*`
 - `getting-started/clawql-7-setup-guide.md` — 7.0 upgrade: default stack, Vault, operator auth
 - `getting-started/phase-1-platform-guide.md` — **teach Phase 1:** clawql-auth, pageindex, Presidio, Tier 1 Compose
 - `getting-started/custom-sources.md` — URL/CLI custom sources (7.0)
