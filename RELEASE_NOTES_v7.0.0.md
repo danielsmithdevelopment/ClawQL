@@ -1,8 +1,8 @@
 ## clawql-mcp 7.0.0
 
-**npm:** packages aligned at 7.0.0 — publish pending (see [§11 npm distribution](docs/design/modularization-implementation-status.md#11-npm-distribution-70--separate-packages))  
-**Full changelog:** [CHANGELOG.md#700---2026-07-09](https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md#700---2026-07-09)  
-**Target release:** 2026-07-09
+**npm:** packages aligned at **7.0.0** — publish pending (see [§11 npm distribution](docs/design/modularization-implementation-status.md#11-npm-distribution-70--separate-packages))  
+**Full changelog:** [CHANGELOG.md#700---2026-07-10](https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md#700---2026-07-10)  
+**Release date:** 2026-07-10
 
 ---
 
@@ -52,9 +52,61 @@ helm upgrade --install clawql ./charts/clawql-mcp --set provider=all-providers
 
 ---
 
+## Env flag conventions (breaking)
+
+All feature toggles use **`CLAWQL_ENABLE_*`**: unset = default for that flag; **`=0`** opt-out; **`=1`** opt-in when default-off.
+
+| Removed / old                         | Replacement                                      |
+| ------------------------------------- | ------------------------------------------------ |
+| **`CLAWQL_DISABLE_HTTP_METRICS`**     | **`CLAWQL_ENABLE_HTTP_METRICS=0`**               |
+| (implicit Loki push when URL set)     | **`CLAWQL_ENABLE_LOKI_PUSH=0`** to opt out       |
+
+→ [`.env.example`](.env.example) · [configuration.md](docs/readme/configuration.md)
+
+---
+
+## npm distribution (7.0.0)
+
+Horizontal workspace packages publish as separate **`clawql-*`** npm modules at **7.0.0** (replacing **`bundledDependencies`** in **`clawql-mcp@6.4.x`**).
+
+| Package            | Role                                      |
+| ------------------ | ----------------------------------------- |
+| `clawql-core`      | Audit, cache, Merkle, plugin types        |
+| `clawql-auth`      | Gateway auth + upstream credential headers |
+| `clawql-pageindex` | Vectorless hierarchical indexing          |
+| `clawql-api`       | Spec load, search/execute, Presidio hooks |
+| `clawql-memory`    | Vault I/O, embeddings, ingest/recall      |
+| `clawql-documents` | IDP pipeline, classify/extract            |
+| `clawql-automation`| Schedule, notify, Argo workflow/argocd    |
+| `clawql-sandbox`   | `sandbox_exec`                            |
+| `clawql-ouroboros` | Evolutionary loop tools                   |
+| `clawql-operator`  | K8s operator library                      |
+| `clawql-release`   | Layer 0 manifest MVP                      |
+| `clawql-mcp`       | MCP transport (depends on above via semver) |
+
+Publish order: [`scripts/release/npm-publish-order.json`](scripts/release/npm-publish-order.json). Smoke: [`scripts/dev/test-npm-pack-install.sh`](scripts/dev/test-npm-pack-install.sh). **Not published to npm yet** — install from repo checkout or wait for **`clawql-mcp@7.0.0`** on registry.
+
+---
+
+## Observability ADR 0005
+
+Accepted architecture for **Langfuse as default work-trace store** with profile-based deployment ([#252](https://github.com/danielsmithdevelopment/ClawQL/issues/252)):
+
+| Profile      | Use case                         | Langfuse emission                          |
+| ------------ | -------------------------------- | ------------------------------------------ |
+| **`bundled`**  | Tier 1 Compose, local k8s lab    | On by default (`CLAWQL_ENABLE_LANGFUSE=0` to opt out) |
+| **`external`** | Production / existing stack      | On when `LANGFUSE_*` set; same opt-out      |
+| **`minimal`**  | Metrics-only / strict policy     | Off                                        |
+
+**7.0.0 ships ADR + docs + env catalog** — runtime profile wiring is Phase 1 of [`7.0-observability-profiles-plan.md`](docs/observability/7.0-observability-profiles-plan.md). Existing signals unchanged: **`GET /metrics`** on by default; OTLP and Loki push remain opt-in via their env vars.
+
+→ [ADR 0005](docs/adr/0005-langfuse-default-work-trace-store.md) · [bundled observability](docs/observability/bundled-observability.md) · [BYO observability](docs/observability/bring-your-own-observability.md)
+
+---
+
 ## ClawQL Desktop (macOS, Windows, Linux)
 
-Downloadable app wrapping the dashboard — **Provider secrets** + **Agent Chat** locally (no Kubernetes required for solo dev).
+Downloadable app wrapping the dashboard — **Provider secrets** + **Agent Chat** + **Custom sources** locally (no Kubernetes required for solo dev).
 
 ```bash
 cd desktop && npm install && npm run dist:mac    # macOS .dmg
@@ -113,7 +165,8 @@ Custom sources persist in **`~/.ClawQL/sources.json`** and merge into **`search`
 
 ## Layer 0 — release manifest at runtime
 
-- **`clawql doctor --smoke`** verifies `releases/v{version}/manifest.json` when the bundle exists (repo checkout after `clawql release publish`)
+- **`clawql release init|collect|manifest|publish|verify`** — manifest **v0.1** with git commit, npm tarball + CycloneDX SBOM SHA-256, GHCR image digests, Merkle root
+- **`clawql doctor --smoke`** verifies `releases/v{version}/manifest.json` when the bundle exists
 - **`CLAWQL_RELEASE_MANIFEST`** — optional MCP startup verify (strict when `NODE_ENV=production` or `CLAWQL_RELEASE_MANIFEST_STRICT=1`)
 
 → [clawql-release-mvp.md](docs/getting-started/clawql-release-mvp.md)
@@ -137,23 +190,34 @@ Docling, LangExtract, IDP pipeline runner, NATS/KEDA worker, Langfuse→Ouroboro
 
 ---
 
+## Docs site
+
+- **`/vision/ecosystem`** — ecosystem overview synced from docs
+- **`/getting-started/clawql-release-mvp`** — Layer 0 release manifest guide
+- Shared doc link rewriter for generated MDX; consolidated nav via [`docs-nav-data.ts`](website/src/lib/docs-nav-data.ts)
+- HITL: [`docs/mcp/hitl-label-studio.md`](docs/mcp/hitl-label-studio.md) is canonical; plugin index is a stub
+
+---
+
 ## Helm charts
 
 | Chart                    | Chart.version | appVersion |
 | ------------------------ | ------------- | ---------- |
 | `charts/clawql-mcp`      | `0.7.0`       | `7.0.0`    |
 | `charts/clawql-operator` | `0.2.0`       | `7.0.0`    |
+| `charts/clawql-idp`      | `0.1.0`       | `7.0.0`    |
 
 ---
 
-## Upgrade checklist
+## Upgrade checklist (6.4.x → 7.0.0)
 
 1. [Migration](https://docs.clawql.com/resources/migration) + [7.0 setup guide](docs/getting-started/clawql-7-setup-guide.md)
-2. Replace legacy env aliases
+2. Replace legacy env aliases and **`CLAWQL_DISABLE_HTTP_METRICS`** → **`CLAWQL_ENABLE_HTTP_METRICS=0`**
 3. Wire Vault → **`clawql-provider-env`**
 4. `clawql onboard --interactive` or import provider KV
 5. `helm upgrade` — choose **`default`** or **`all-providers`**
 6. Operator: confirm **`ProviderSecretsReady=True`**
+7. npm: expect separate **`clawql-*`** packages once **7.0.0** publishes (no **`bundledDependencies`** tarball)
 
 ---
 
@@ -161,10 +225,12 @@ Docling, LangExtract, IDP pipeline runner, NATS/KEDA worker, Langfuse→Ouroboro
 
 ```bash
 curl -fsSL https://clawql.com/install | bash
-# or:
+# or (after npm publish):
 npm install clawql-mcp@7.0.0
 npx clawql onboard --interactive
 npx clawql-mcp-http
 
 docker pull ghcr.io/danielsmithdevelopment/clawql-mcp:latest
 ```
+
+**Node:** `>=22` (see root `package.json` `engines`).
