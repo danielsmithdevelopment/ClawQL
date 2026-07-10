@@ -119,8 +119,11 @@ export const Header = forwardRef<
 >(function Header({ className, ...props }, ref) {
   let { isOpen: mobileNavIsOpen } = useMobileNavigationStore()
   let isInsideMobileNavigation = useIsInsideMobileNavigation()
-  const { ready: searchReady, openOnMount, activateAndOpen } =
-    useActivateSearchOnIntent()
+  const {
+    ready: searchReady,
+    openOnMount,
+    activateAndOpen,
+  } = useActivateSearchOnIntent()
 
   return (
     <div
