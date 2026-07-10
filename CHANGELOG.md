@@ -7,47 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Breaking
+## [7.0.0] - 2026-07-10
 
-- **`CLAWQL_DISABLE_HTTP_METRICS` removed:** use **`CLAWQL_ENABLE_HTTP_METRICS=0`** to opt out of **`GET /metrics`** (default on when unset).
-
-### Added
-
-- **npm distribution — separate `clawql-*` packages (7.0.0):** All horizontal workspace packages aligned to **`7.0.0`** with `publishConfig`; **`clawql-mcp`** uses registry semver dependencies instead of **`bundledDependencies`**. Publish order: [`scripts/release/npm-publish-order.json`](scripts/release/npm-publish-order.json); smoke: [`scripts/dev/test-npm-pack-install.sh`](scripts/dev/test-npm-pack-install.sh). **Not published to npm yet.**
-- **Observability ADR 0005** — Langfuse default work-trace store, bundled/external/minimal profiles ([#252](https://github.com/danielsmithdevelopment/ClawQL/issues/252)).
-- **Docs site:** **`/vision/ecosystem`**, **`/getting-started/clawql-release-mvp`**; shared doc link rewriter for generated MDX.
-- **`CLAWQL_ENABLE_LOKI_PUSH=0`** — opt out of audit Loki push when **`CLAWQL_LOKI_PUSH_URL`** is set.
-- **Layer 0 MVP — `clawql-release`**: `clawql release init|collect|manifest|publish|verify` builds manifest **v0.1** with git commit, npm tarball + CycloneDX SBOM SHA-256, GHCR image digests, and **Merkle root** (`clawql-core`); output under `releases/vX.Y.Z/`. **`clawql doctor --smoke`** verifies the bundle when present; **`CLAWQL_RELEASE_MANIFEST`** enables verify-at-startup for MCP. Package: `packages/clawql-release`. Docs: [`docs/getting-started/clawql-release-mvp.md`](docs/getting-started/clawql-release-mvp.md). Arweave permanent anchor deferred.
-- **Add any source from URL** — `clawql sources add <url>` with auto-detect for OpenAPI, Google Discovery, GraphQL SDL/introspection, gRPC `.proto`, and MCP HTTP endpoints; persisted in **`~/.ClawQL/sources.json`** and merged into MCP `search`/`execute` on startup.
-- **MCP and CLI as source types** — proxy remote MCP tools and wrap local CLI commands as searchable operations (`protocolKind` **`mcp`** / **`cli`**).
-- **Harness wrappers** — `clawql claude`, `clawql codex`, `clawql cursor`, `clawql opencode` write harness-specific MCP config and launch the agent binary on PATH.
-- **One-line install** — `curl -fsSL https://clawql.com/install | bash` (`scripts/install.sh`, served from the docs site).
-- **ClawQL Desktop Windows/Linux** — `make desktop-dist-win`, `make desktop-dist-linux` (NSIS + AppImage/deb).
-- **Dashboard custom sources UI** — Custom sources nav panel in ClawQL Desktop; add/list/remove via `/api/local/sources` (URL auto-detect + CLI).
-- **Phase 1 exit (7.0.0 finalized):**
-  - **`clawql-auth`** — gateway `noAuth`/`apiKey`, ATR claims, provider credential headers; HTTP MCP middleware when `CLAWQL_AUTH_MODE=apiKey`.
-  - **`clawql-pageindex`** — MIT vectorless hierarchical indexing; `pageindex_build_tree`, `pageindex_traverse`, `pageindex_synthesize`, `pageindex_get_content` (default on; `CLAWQL_ENABLE_PAGEINDEX=0` to hide).
-  - **Presidio gateway hooks** — `CLAWQL_ENABLE_PRESIDIO=1` redacts `execute` responses, `memory_ingest`, and `ingest_external_knowledge` markdown.
-  - **Tier 1 Docker Compose** — `examples/clawql-local-docker-compose` (bootstrap, MCP + Tika + Gotenberg + Paperless + memory); `make compose-tier1-config-test`.
-
-### Changed
-
-- **HITL docs:** **`docs/mcp/hitl-label-studio.md`** is the operator guide; **`docs/plugins/hitl-label-studio.md`** is a short plugin index stub.
-- **Helm / vault docs:** default stack references updated from **6.4.x** to **7.0.x**.
-
-## [7.0.0] - 2026-07-09
-
-Major release: **opinionated default stack everywhere** (npm + Helm), **vault-first defense in depth**, **ClawQL Operator** with provider-secret reconciliation, and consolidated IDP wave. Release notes: **[`RELEASE_NOTES_v7.0.0.md`](RELEASE_NOTES_v7.0.0.md)**.
+Major release: **opinionated default stack everywhere** (npm + Helm), **vault-first defense in depth**, **ClawQL Operator** with provider-secret reconciliation, **npm package separation at 7.0.0**, observability ADR 0005, and consolidated IDP wave. Release notes: **[`RELEASE_NOTES_v7.0.0.md`](RELEASE_NOTES_v7.0.0.md)**.
 
 ### Breaking
 
 - **Helm default provider = npm default stack:** **`charts/clawql-mcp`** and **`values-docker-desktop.yaml`** now set **`provider: default`** (Cloudflare, GitHub, Slack, Linear, Notion, Onyx). Use **`provider: all-providers`** or **`helm --set provider=all-providers`** for the full IDP + every bundled vendor merge.
 - **Legacy env aliases removed:** **`API_BASE_URL`**, **`OPENAPI_SPEC_URL`**, **`GOOGLE_DISCOVERY_URL`**, and merged preset **`google-top50`** are no longer accepted — use **`CLAWQL_API_BASE_URL`**, **`CLAWQL_SPEC_URL`**, **`CLAWQL_DISCOVERY_URL`**, and **`CLAWQL_PROVIDER=google`**.
 - **Vault-backed secrets required by default:** **`secretSourcing.requireVaultBackedSecrets: true`** (default) fails render without **`envFromSecret`** / **`envFromSecrets`**. Set **`false`** only in lab overlays that accept non-Vault env sourcing.
+- **`CLAWQL_DISABLE_HTTP_METRICS` removed:** use **`CLAWQL_ENABLE_HTTP_METRICS=0`** to opt out of **`GET /metrics`** (default on when unset).
 
 ### Added
 
-- **ClawQL Desktop (macOS):** Electron app (`desktop/`) bundling the dashboard — local **Provider secrets** (`~/.ClawQL/vault/providers.json`) and **Agent Chat** via OpenClaw bridge; `npm run dist:mac` produces a `.dmg`. Design: [`docs/design/clawql-desktop-macos.md`](docs/design/clawql-desktop-macos.md).
+- **npm distribution — separate `clawql-*` packages (7.0.0):** All horizontal workspace packages aligned to **`7.0.0`** with `publishConfig`; **`clawql-mcp`** uses registry semver dependencies instead of **`bundledDependencies`**. Publish order: [`scripts/release/npm-publish-order.json`](scripts/release/npm-publish-order.json); smoke: [`scripts/dev/test-npm-pack-install.sh`](scripts/dev/test-npm-pack-install.sh). **Not published to npm yet.**
+- **Observability ADR 0005** — Langfuse default work-trace store, bundled/external/minimal profiles ([#252](https://github.com/danielsmithdevelopment/ClawQL/issues/252)); implementation plan [`docs/observability/7.0-observability-profiles-plan.md`](docs/observability/7.0-observability-profiles-plan.md).
+- **Docs site:** **`/vision/ecosystem`**, **`/getting-started/clawql-release-mvp`**; shared doc link rewriter for generated MDX; consolidated nav.
+- **`CLAWQL_ENABLE_LOKI_PUSH=0`** — opt out of audit Loki push when **`CLAWQL_LOKI_PUSH_URL`** is set.
+- **Layer 0 MVP — `clawql-release`**: `clawql release init|collect|manifest|publish|verify` builds manifest **v0.1** with git commit, npm tarball + CycloneDX SBOM SHA-256, GHCR image digests, and **Merkle root** (`clawql-core`); output under `releases/vX.Y.Z/`. **`clawql doctor --smoke`** verifies the bundle when present; **`CLAWQL_RELEASE_MANIFEST`** enables verify-at-startup for MCP. Package: `packages/clawql-release`. Docs: [`docs/getting-started/clawql-release-mvp.md`](docs/getting-started/clawql-release-mvp.md). Arweave permanent anchor deferred.
+- **Add any source from URL** — `clawql sources add <url>` with auto-detect for OpenAPI, Google Discovery, GraphQL SDL/introspection, gRPC `.proto`, and MCP HTTP endpoints; persisted in **`~/.ClawQL/sources.json`** and merged into MCP `search`/`execute` on startup.
+- **MCP and CLI as source types** — proxy remote MCP tools and wrap local CLI commands as searchable operations (`protocolKind` **`mcp`** / **`cli`**).
+- **Harness wrappers** — `clawql claude`, `clawql codex`, `clawql cursor`, `clawql opencode` write harness-specific MCP config and launch the agent binary on PATH.
+- **One-line install** — `curl -fsSL https://clawql.com/install | bash` (`scripts/install.sh`, served from the docs site).
+- **ClawQL Desktop (macOS, Windows, Linux):** Electron app (`desktop/`) bundling the dashboard — local **Provider secrets** (`~/.ClawQL/vault/providers.json`), **Agent Chat** via OpenClaw bridge, and **Custom sources** UI; `npm run dist:mac|dist:win|dist:linux`. Design: [`docs/design/clawql-desktop-macos.md`](docs/design/clawql-desktop-macos.md).
 - **Opinionated default bundled stack** ([#528](https://github.com/danielsmithdevelopment/ClawQL/pull/528)): bare `npx clawql-mcp` loads **Cloudflare, GitHub, Slack, Linear, Notion, Onyx**; **`CLAWQL_PROVIDER=all-providers`** remains explicit opt-in for every vendor + Google top-50 + AWS top-50.
 - **AWS top-50 bundled preset** ([#528](https://github.com/danielsmithdevelopment/ClawQL/pull/528)): SigV4 **`execute`**, manifest under `providers/aws/`, onboarding [`docs/providers/aws-onboarding.md`](docs/providers/aws-onboarding.md).
 - **Notion bundled provider**: official OpenAPI; **`NOTION_API_TOKEN`** auth; onboarding [`docs/providers/notion-onboarding.md`](docs/providers/notion-onboarding.md).
@@ -66,13 +48,19 @@ Major release: **opinionated default stack everywhere** (npm + Helm), **vault-fi
 - **NATS JetStream workflow events** ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254), [#127](https://github.com/danielsmithdevelopment/ClawQL/issues/127)): opt-in publish/consumer for HITL/workflow lifecycle.
 - **Langfuse eval → Ouroboros** ([#250](https://github.com/danielsmithdevelopment/ClawQL/issues/250)): **`CLAWQL_ENABLE_LANGFUSE_EVAL=1`** + **`CLAWQL_ENABLE_OUROBOROS=1`** — webhook + **`ouroboros_propose_seed_revision_from_eval`**.
 - **7.0 setup guide:** [`docs/getting-started/clawql-7-setup-guide.md`](docs/getting-started/clawql-7-setup-guide.md).
-- **ClawQL Desktop (macOS):** downloadable Electron app — provider secrets + Agent Chat without localhost browser tabs.
+- **Phase 1 exit (7.0.0 finalized):**
+  - **`clawql-auth`** — gateway `noAuth`/`apiKey`, ATR claims, provider credential headers; HTTP MCP middleware when `CLAWQL_AUTH_MODE=apiKey`.
+  - **`clawql-pageindex`** — MIT vectorless hierarchical indexing; `pageindex_build_tree`, `pageindex_traverse`, `pageindex_synthesize`, `pageindex_get_content` (default on; `CLAWQL_ENABLE_PAGEINDEX=0` to hide).
+  - **Presidio gateway hooks** — `CLAWQL_ENABLE_PRESIDIO=1` redacts `execute` responses, `memory_ingest`, and `ingest_external_knowledge` markdown.
+  - **Tier 1 Docker Compose** — `examples/clawql-local-docker-compose` (bootstrap, MCP + Tika + Gotenberg + Paperless + memory); `make compose-tier1-config-test`.
 
 ### Changed
 
 - **Multi-spec HTTP**: `/graphql` is not mounted in merged multi-spec mode (MCP `search`/`execute` unchanged).
 - **First-run docs**: README, getting-started, quickstart, install, migration guide, and Helm defaults aligned to default stack vs `all-providers`.
 - **Plugin model/registry docs**: Phase 2 `onRegister` status updated (July 2026).
+- **HITL docs:** **`docs/mcp/hitl-label-studio.md`** is the operator guide; **`docs/plugins/hitl-label-studio.md`** is a short plugin index stub.
+- **Helm / vault docs:** default stack references updated from **6.4.x** to **7.0.x**.
 
 ### Fixed
 
