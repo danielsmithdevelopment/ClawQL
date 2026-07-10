@@ -100,3 +100,11 @@ Then **`kubectl rollout restart deployment/clawql-mcp-http -n clawql`**.
 - **Persistent agent memory** (`Memory/`) is created in the same init step — not a separate product surface.
 - **Secrets vault** matches production HashiCorp shape — no re-keying when you move to Helm.
 - **MCP config stays secret-free** — Executor puts API keys in HTTP headers in client config; ClawQL loads from vault server-side.
+
+---
+
+## Team shared memory (optional)
+
+To share **`Memory/`** notes across teammates via a central bucket (R2 default):
+
+→ [team-vault-sync.md](./team-vault-sync.md) — `clawql sync init | push | pull | status`

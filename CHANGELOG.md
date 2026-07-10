@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Team vault sync (`clawql sync`)** — push/pull `~/.ClawQL` shared paths (Memory/, sources/, chats/) to **Cloudflare R2** (default), **AWS S3**, or **GCS** (S3-compatible API); `sync.json` for bucket/prefix; secrets never uploaded. Docs: [`docs/getting-started/team-vault-sync.md`](docs/getting-started/team-vault-sync.md).
+
 ## [7.0.0] - 2026-07-10
 
 Major release: **opinionated default stack everywhere** (npm + Helm), **vault-first defense in depth**, **ClawQL Operator** with provider-secret reconciliation, **npm package separation at 7.0.0**, observability ADR 0005, and consolidated IDP wave. Release notes: **[`RELEASE_NOTES_v7.0.0.md`](RELEASE_NOTES_v7.0.0.md)**.

@@ -20,6 +20,12 @@ import {
   runReleasePublish,
   runReleaseVerify,
 } from "./release-cli.js";
+import {
+  runSyncInit,
+  runSyncPullCmd,
+  runSyncPushCmd,
+  runSyncStatusCmd,
+} from "./sync-cli.js";
 
 type Command =
   | "init"
@@ -30,6 +36,7 @@ type Command =
   | "operator"
   | "sources"
   | "release"
+  | "sync"
   | "claude"
   | "codex"
   | "cursor"
@@ -72,6 +79,11 @@ function parse(argv: string[]): {
     else if (a === "--npm-tgz") flags.npmTgz = argv[++i] ?? "";
     else if (a === "--github") flags.github = true;
     else if (a === "--no-copy") flags.noCopy = true;
+    else if (a === "--dry-run") flags.dryRun = true;
+    else if (a === "--force") flags.force = true;
+    else if (a === "--provider") flags.provider = argv[++i] ?? "";
+    else if (a === "--bucket") flags.bucket = argv[++i] ?? "";
+    else if (a === "--prefix") flags.prefix = argv[++i] ?? "";
     else if (a.startsWith("--image-digest=")) {
       const prev = typeof flags.imageDigest === "string" ? flags.imageDigest : "";
       flags.imageDigest = prev
@@ -85,11 +97,15 @@ function parse(argv: string[]): {
   }
   const cmd = (positional[0] ?? "help") as Command;
   const subcmd =
-    cmd === "secrets" || cmd === "operator" || cmd === "sources" || cmd === "release"
+    cmd === "secrets" ||
+    cmd === "operator" ||
+    cmd === "sources" ||
+    cmd === "release" ||
+    cmd === "sync"
       ? positional[1]
       : undefined;
   const rest =
-    cmd === "secrets" || cmd === "operator" || cmd === "sources"
+    cmd === "secrets" || cmd === "operator" || cmd === "sources" || cmd === "sync"
       ? positional.slice(2)
       : cmd === "release"
         ? positional.slice(2)
@@ -116,6 +132,7 @@ Usage:
   clawql sources list | add <url> [--name NAME] [--kind openapi|discovery|graphql|grpc|mcp|cli] | remove <id>
   clawql sources add --kind cli --command <bin> [--args a,b] [--name NAME]
   clawql release init | collect | manifest | publish | verify <path>
+  clawql sync init | push | pull | status [--dry-run] [--force]
   clawql claude | codex | cursor | opencode [-- harness args...]
   clawql operator status
 
@@ -163,6 +180,14 @@ Environment (Layer 0):
 secrets:
   list            Show configured provider keys (masked)
   set             Set one key in vault/providers.json (prompts if value omitted)
+
+sync (team shared memory — R2 default):
+  init            Write ~/.ClawQL/sync.json (bucket + prefix; credentials via env/vault)
+  push            Upload Memory/, sources/, chats/ to the team bucket
+  pull            Download team notes to this machine
+  status          Compare local vs remote manifest
+  Default provider: r2 (Cloudflare). Also: s3, gcs (S3-compatible API).
+  Secrets (providers.json) are never uploaded.
 
 mcp-config:
   Print or write MCP JSON for Cursor / Claude (stdio — secrets loaded from vault at server startup)
@@ -298,6 +323,45 @@ async function main(): Promise<void> {
     console.error(
       "Usage: clawql sources list | clawql sources add <url> | clawql sources remove <id>"
     );
+    process.exitCode = 1;
+    return;
+  }
+
+  if (cmd === "sync") {
+    const home = typeof flags.home === "string" && flags.home ? flags.home : undefined;
+    if (subcmd === "init") {
+      process.exitCode = await runSyncInit({
+        home,
+        interactive: Boolean(flags.interactive),
+        yes: Boolean(flags.yes),
+        provider:
+          typeof flags.provider === "string" && flags.provider
+            ? (flags.provider as "r2" | "s3" | "gcs")
+            : undefined,
+        bucket: typeof flags.bucket === "string" ? flags.bucket : undefined,
+        prefix: typeof flags.prefix === "string" ? flags.prefix : undefined,
+      });
+      return;
+    }
+    if (subcmd === "push") {
+      process.exitCode = await runSyncPushCmd({
+        dryRun: Boolean(flags.dryRun),
+        force: Boolean(flags.force),
+      });
+      return;
+    }
+    if (subcmd === "pull") {
+      process.exitCode = await runSyncPullCmd({
+        dryRun: Boolean(flags.dryRun),
+        force: Boolean(flags.force),
+      });
+      return;
+    }
+    if (subcmd === "status") {
+      process.exitCode = await runSyncStatusCmd();
+      return;
+    }
+    console.error("Usage: clawql sync init | push | pull | status");
     process.exitCode = 1;
     return;
   }
