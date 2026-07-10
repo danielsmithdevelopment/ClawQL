@@ -78,9 +78,7 @@ export function resolveHomeSyncConfig(
   const prefix = normalizePrefix(envTrim("CLAWQL_SYNC_PREFIX") ?? file?.prefix);
   const endpoint = envTrim("CLAWQL_SYNC_ENDPOINT") ?? file?.endpoint;
   const region =
-    envTrim("CLAWQL_SYNC_REGION") ??
-    file?.region ??
-    syncProviderProfile(provider).defaultRegion;
+    envTrim("CLAWQL_SYNC_REGION") ?? file?.region ?? syncProviderProfile(provider).defaultRegion;
   const include = envTrim("CLAWQL_SYNC_INCLUDE")
     ?.split(",")
     .map((s) => s.trim())

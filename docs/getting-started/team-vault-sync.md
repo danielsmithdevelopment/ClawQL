@@ -135,11 +135,11 @@ clawql doctor
 
 ## Environment
 
-| Variable                        | Purpose                                |
-| ------------------------------- | -------------------------------------- |
-| `CLAWQL_SYNC_PROVIDER`          | `r2` (default), `s3`, or `gcs`         |
-| `CLAWQL_SYNC_BUCKET`            | Bucket name (overrides sync.json)      |
-| `CLAWQL_SYNC_PREFIX`            | Shared team prefix, e.g. `teams/acme/` |
+| Variable                        | Purpose                                    |
+| ------------------------------- | ------------------------------------------ |
+| `CLAWQL_SYNC_PROVIDER`          | `r2` (default), `s3`, or `gcs`             |
+| `CLAWQL_SYNC_BUCKET`            | Bucket name (overrides sync.json)          |
+| `CLAWQL_SYNC_PREFIX`            | Shared team prefix, e.g. `teams/acme/`     |
 | `CLAWQL_SYNC_ACCESS_KEY_ID`     | R2 S3 API access key (or generic override) |
 | `CLAWQL_SYNC_SECRET_ACCESS_KEY` | R2 S3 API secret (or generic override)     |
 | `CLAWQL_R2_ACCOUNT_ID`          | Cloudflare account id (R2 endpoint)        |

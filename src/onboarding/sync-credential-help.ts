@@ -17,7 +17,9 @@ export function printSyncCredentialHelp(provider: SyncProvider): void {
   }
   console.log("  CLAWQL_GCS_HMAC_ACCESS_ID       GCS interoperability HMAC access id");
   console.log("  CLAWQL_GCS_HMAC_SECRET          GCS interoperability HMAC secret");
-  console.log("  CLAWQL_SYNC_ENDPOINT            https://storage.googleapis.com (default when unset)");
+  console.log(
+    "  CLAWQL_SYNC_ENDPOINT            https://storage.googleapis.com (default when unset)"
+  );
   console.log("  Or: gcsHmacAccessId / gcsHmacSecret in vault");
   console.log("  GCP: Cloud Storage → Settings → Interoperability → Create HMAC key");
 }
