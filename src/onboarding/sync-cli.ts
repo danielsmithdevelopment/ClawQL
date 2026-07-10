@@ -93,10 +93,7 @@ export async function runSyncInit(opts: SyncInitOptions): Promise<number> {
   return 0;
 }
 
-export async function runSyncPushCmd(opts: {
-  dryRun?: boolean;
-  force?: boolean;
-}): Promise<number> {
+export async function runSyncPushCmd(opts: { dryRun?: boolean; force?: boolean }): Promise<number> {
   try {
     await loadResolvedHomeSyncConfig();
   } catch (e) {
@@ -109,10 +106,7 @@ export async function runSyncPushCmd(opts: {
   return result.conflicts && !opts.force ? 2 : 0;
 }
 
-export async function runSyncPullCmd(opts: {
-  dryRun?: boolean;
-  force?: boolean;
-}): Promise<number> {
+export async function runSyncPullCmd(opts: { dryRun?: boolean; force?: boolean }): Promise<number> {
   try {
     await loadResolvedHomeSyncConfig();
   } catch (e) {

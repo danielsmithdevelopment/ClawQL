@@ -72,11 +72,7 @@ export const PROVIDER_VAULT_KEY_CATALOG: readonly ProviderVaultKeyEntry[] = [
   {
     vaultProperty: "cloudflareAccountId",
     envKey: "CLAWQL_CLOUDFLARE_ACCOUNT_ID",
-    envAliases: [
-      "CLAWQL_CLOUDFLARE_ACCOUNT_ID",
-      "CLAWQL_R2_ACCOUNT_ID",
-      "CLOUDFLARE_ACCOUNT_ID",
-    ],
+    envAliases: ["CLAWQL_CLOUDFLARE_ACCOUNT_ID", "CLAWQL_R2_ACCOUNT_ID", "CLOUDFLARE_ACCOUNT_ID"],
     label: "Cloudflare account ID",
     group: "Sharing & cloud",
     hint: "Account id for R2 S3 endpoint (clawql sync) — Cloudflare dashboard → R2 → Overview.",

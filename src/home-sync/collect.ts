@@ -20,7 +20,11 @@ function isExcludedRel(rel: string): boolean {
   return false;
 }
 
-async function walkFile(absPath: string, home: string, out: Map<string, SyncFileEntry>): Promise<void> {
+async function walkFile(
+  absPath: string,
+  home: string,
+  out: Map<string, SyncFileEntry>
+): Promise<void> {
   const rel = toPosixRel(home, absPath);
   if (isExcludedRel(rel)) return;
   const st = await stat(absPath);
@@ -32,7 +36,11 @@ async function walkFile(absPath: string, home: string, out: Map<string, SyncFile
   });
 }
 
-async function walkDir(absDir: string, home: string, out: Map<string, SyncFileEntry>): Promise<void> {
+async function walkDir(
+  absDir: string,
+  home: string,
+  out: Map<string, SyncFileEntry>
+): Promise<void> {
   const relDir = toPosixRel(home, absDir);
   if (relDir !== "" && isExcludedRel(relDir)) return;
   let entries;

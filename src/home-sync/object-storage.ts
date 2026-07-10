@@ -54,7 +54,8 @@ export function createObjectStorageClient(config: ResolvedHomeSyncConfig): Objec
       } catch (e: unknown) {
         const name = (e as { name?: string })?.name;
         const code = (e as { Code?: string; $metadata?: { httpStatusCode?: number } })?.Code;
-        const status = (e as { $metadata?: { httpStatusCode?: number } })?.$metadata?.httpStatusCode;
+        const status = (e as { $metadata?: { httpStatusCode?: number } })?.$metadata
+          ?.httpStatusCode;
         if (name === "NoSuchKey" || code === "NoSuchKey" || status === 404) return null;
         throw e;
       }
@@ -77,12 +78,17 @@ export function createObjectStorageClient(config: ResolvedHomeSyncConfig): Objec
       } catch (e: unknown) {
         const name = (e as { name?: string })?.name;
         const code = (e as { Code?: string })?.Code;
-        const status = (e as { $metadata?: { httpStatusCode?: number } })?.$metadata?.httpStatusCode;
+        const status = (e as { $metadata?: { httpStatusCode?: number } })?.$metadata
+          ?.httpStatusCode;
         if (name === "NoSuchKey" || code === "NoSuchKey" || status === 404) return null;
         throw e;
       }
     },
-    async putBytes(key: string, body: Buffer, contentType = "application/octet-stream"): Promise<void> {
+    async putBytes(
+      key: string,
+      body: Buffer,
+      contentType = "application/octet-stream"
+    ): Promise<void> {
       await client.send(
         new PutObjectCommand({
           Bucket: config.bucket,

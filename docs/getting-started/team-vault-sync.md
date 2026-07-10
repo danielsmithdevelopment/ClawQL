@@ -4,14 +4,14 @@ Share **`~/.ClawQL`** memory notes across your team via a centralized object-sto
 
 ## What syncs
 
-| Path | Shared |
-|------|--------|
-| `Memory/` | Yes — team Markdown notes for `memory_recall` |
-| `sources/` + `sources.json` | Yes — custom integrations |
-| `Dashboard/chats/` | Yes — optional agent chat threads |
-| `pageindex.db.json` | Yes — PageIndex trees |
-| `vault/providers.json` | **Never** — API secrets stay local |
-| `memory.db` | No — rebuilt locally after pull |
+| Path                        | Shared                                        |
+| --------------------------- | --------------------------------------------- |
+| `Memory/`                   | Yes — team Markdown notes for `memory_recall` |
+| `sources/` + `sources.json` | Yes — custom integrations                     |
+| `Dashboard/chats/`          | Yes — optional agent chat threads             |
+| `pageindex.db.json`         | Yes — PageIndex trees                         |
+| `vault/providers.json`      | **Never** — API secrets stay local            |
+| `memory.db`                 | No — rebuilt locally after pull               |
 
 ## Quick start (R2)
 
@@ -54,35 +54,35 @@ clawql doctor
 
 ## Commands
 
-| Command | Purpose |
-|---------|---------|
-| `clawql sync init` | Write `~/.ClawQL/sync.json` (no secrets) |
-| `clawql sync push` | Upload changed local files + update remote manifest |
-| `clawql sync pull` | Download changed remote files |
-| `clawql sync status` | Compare local vs remote (conflicts listed) |
-| `--dry-run` | Show plan without I/O |
-| `--force` | Overwrite on conflict (push → remote wins locally; pull → remote wins) |
+| Command              | Purpose                                                                |
+| -------------------- | ---------------------------------------------------------------------- |
+| `clawql sync init`   | Write `~/.ClawQL/sync.json` (no secrets)                               |
+| `clawql sync push`   | Upload changed local files + update remote manifest                    |
+| `clawql sync pull`   | Download changed remote files                                          |
+| `clawql sync status` | Compare local vs remote (conflicts listed)                             |
+| `--dry-run`          | Show plan without I/O                                                  |
+| `--force`            | Overwrite on conflict (push → remote wins locally; pull → remote wins) |
 
 ## Providers
 
-| Provider | `sync.json` | Endpoint | Credentials |
-|----------|-------------|----------|-------------|
-| **r2** (default) | `"provider": "r2"` | `https://<account>.r2.cloudflarestorage.com` | R2 S3 API keys |
-| **s3** | `"provider": "s3"` | AWS default | `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` |
-| **gcs** | `"provider": "gcs"` | `https://storage.googleapis.com` | GCS HMAC interop keys |
+| Provider         | `sync.json`         | Endpoint                                     | Credentials                                   |
+| ---------------- | ------------------- | -------------------------------------------- | --------------------------------------------- |
+| **r2** (default) | `"provider": "r2"`  | `https://<account>.r2.cloudflarestorage.com` | R2 S3 API keys                                |
+| **s3**           | `"provider": "s3"`  | AWS default                                  | `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` |
+| **gcs**          | `"provider": "gcs"` | `https://storage.googleapis.com`             | GCS HMAC interop keys                         |
 
 ## Environment
 
-| Variable | Purpose |
-|----------|---------|
-| `CLAWQL_SYNC_PROVIDER` | `r2` (default), `s3`, or `gcs` |
-| `CLAWQL_SYNC_BUCKET` | Bucket name (overrides sync.json) |
-| `CLAWQL_SYNC_PREFIX` | Shared team prefix, e.g. `teams/acme/` |
-| `CLAWQL_SYNC_ACCESS_KEY_ID` | S3-compatible access key |
-| `CLAWQL_SYNC_SECRET_ACCESS_KEY` | S3-compatible secret |
-| `CLAWQL_R2_ACCOUNT_ID` | Cloudflare account id (R2 endpoint) |
-| `CLAWQL_SYNC_ENDPOINT` | Override endpoint URL |
-| `CLAWQL_SYNC_REGION` | Region (`auto` for R2/GCS) |
+| Variable                        | Purpose                                |
+| ------------------------------- | -------------------------------------- |
+| `CLAWQL_SYNC_PROVIDER`          | `r2` (default), `s3`, or `gcs`         |
+| `CLAWQL_SYNC_BUCKET`            | Bucket name (overrides sync.json)      |
+| `CLAWQL_SYNC_PREFIX`            | Shared team prefix, e.g. `teams/acme/` |
+| `CLAWQL_SYNC_ACCESS_KEY_ID`     | S3-compatible access key               |
+| `CLAWQL_SYNC_SECRET_ACCESS_KEY` | S3-compatible secret                   |
+| `CLAWQL_R2_ACCOUNT_ID`          | Cloudflare account id (R2 endpoint)    |
+| `CLAWQL_SYNC_ENDPOINT`          | Override endpoint URL                  |
+| `CLAWQL_SYNC_REGION`            | Region (`auto` for R2/GCS)             |
 
 Config file: **`~/.ClawQL/sync.json`** — safe to commit bucket/prefix in team docs; never put secrets there.
 

@@ -79,10 +79,11 @@ export function resolveHomeSyncConfig(
     envTrim("CLAWQL_SYNC_REGION") ??
     file?.region ??
     (provider === "r2" ? "auto" : provider === "gcs" ? "auto" : undefined);
-  const include =
-    envTrim("CLAWQL_SYNC_INCLUDE")?.split(",").map((s) => s.trim()).filter(Boolean) ??
-    file?.include ??
-    [...DEFAULT_SYNC_INCLUDE];
+  const include = envTrim("CLAWQL_SYNC_INCLUDE")
+    ?.split(",")
+    .map((s) => s.trim())
+    .filter(Boolean) ??
+    file?.include ?? [...DEFAULT_SYNC_INCLUDE];
 
   return {
     version: 1,

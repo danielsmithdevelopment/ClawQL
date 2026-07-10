@@ -20,12 +20,7 @@ import {
   runReleasePublish,
   runReleaseVerify,
 } from "./release-cli.js";
-import {
-  runSyncInit,
-  runSyncPullCmd,
-  runSyncPushCmd,
-  runSyncStatusCmd,
-} from "./sync-cli.js";
+import { runSyncInit, runSyncPullCmd, runSyncPushCmd, runSyncStatusCmd } from "./sync-cli.js";
 
 type Command =
   | "init"
