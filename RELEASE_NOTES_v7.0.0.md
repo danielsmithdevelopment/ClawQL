@@ -71,20 +71,20 @@ All feature toggles use **`CLAWQL_ENABLE_*`**: unset = default for that flag; **
 
 Split **`clawql-*`** workspace packages are **not** published as separate npm modules yet (OIDC trusted publishing requires each package to be linked on npmjs.com first). The release workflow falls back to **`bundledDependencies`** inside the **`clawql-mcp`** tarball — same install story as **6.4.x**, with all eleven horizontal packages vendored under `node_modules/clawql-mcp/node_modules/`.
 
-| Package             | Role                                        |
-| ------------------- | ------------------------------------------- |
-| `clawql-core`       | Audit, cache, Merkle, plugin types          |
-| `clawql-auth`       | Gateway auth + upstream credential headers  |
-| `clawql-pageindex`  | Vectorless hierarchical indexing            |
-| `clawql-api`        | Spec load, search/execute, Presidio hooks   |
-| `clawql-memory`     | Vault I/O, embeddings, ingest/recall        |
-| `clawql-documents`  | IDP pipeline, classify/extract              |
-| `clawql-automation` | Schedule, notify, Argo workflow/argocd      |
-| `clawql-sandbox`    | `sandbox_exec`                              |
-| `clawql-ouroboros`  | Evolutionary loop tools                     |
-| `clawql-operator`   | K8s operator library                        |
-| `clawql-release`    | Layer 0 manifest MVP                        |
-| `clawql-mcp`        | MCP transport (bundles workspace packages)  |
+| Package             | Role                                       |
+| ------------------- | ------------------------------------------ |
+| `clawql-core`       | Audit, cache, Merkle, plugin types         |
+| `clawql-auth`       | Gateway auth + upstream credential headers |
+| `clawql-pageindex`  | Vectorless hierarchical indexing           |
+| `clawql-api`        | Spec load, search/execute, Presidio hooks  |
+| `clawql-memory`     | Vault I/O, embeddings, ingest/recall       |
+| `clawql-documents`  | IDP pipeline, classify/extract             |
+| `clawql-automation` | Schedule, notify, Argo workflow/argocd     |
+| `clawql-sandbox`    | `sandbox_exec`                             |
+| `clawql-ouroboros`  | Evolutionary loop tools                    |
+| `clawql-operator`   | K8s operator library                       |
+| `clawql-release`    | Layer 0 manifest MVP                       |
+| `clawql-mcp`        | MCP transport (bundles workspace packages) |
 
 Publish order (when split packages go live): [`scripts/release/npm-publish-order.json`](scripts/release/npm-publish-order.json). Smoke: [`scripts/dev/test-npm-pack-install.sh`](scripts/dev/test-npm-pack-install.sh).
 
