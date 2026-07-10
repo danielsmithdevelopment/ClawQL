@@ -1,7 +1,7 @@
 import clsx from 'clsx'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
-import { forwardRef, useEffect, useState } from 'react'
+import { forwardRef, useCallback, useEffect, useState } from 'react'
 
 import { Button } from '@/components/Button'
 import { Logo } from '@/components/Logo'
@@ -33,22 +33,63 @@ const MobileSearch = dynamic(
   },
 )
 
-function useDeferSearchChrome() {
+function useActivateSearchOnIntent() {
   const [ready, setReady] = useState(false)
+  const [openOnMount, setOpenOnMount] = useState(false)
+  const activate = useCallback(() => setReady(true), [])
+  const activateAndOpen = useCallback(() => {
+    setOpenOnMount(true)
+    setReady(true)
+  }, [])
 
   useEffect(() => {
     if (ready) return
-    if (typeof window.requestIdleCallback === 'function') {
-      const id = window.requestIdleCallback(() => setReady(true), {
-        timeout: 2500,
-      })
-      return () => window.cancelIdleCallback(id)
-    }
-    const timer = window.setTimeout(() => setReady(true), 1200)
-    return () => window.clearTimeout(timer)
-  }, [ready])
 
-  return ready
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'k' && (event.metaKey || event.ctrlKey)) {
+        event.preventDefault()
+        activateAndOpen()
+      }
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [ready, activateAndOpen])
+
+  return { ready, openOnMount, activate, activateAndOpen }
+}
+
+function SearchPlaceholder({ onActivate }: { onActivate: () => void }) {
+  return (
+    <div className="hidden lg:block lg:max-w-md lg:flex-auto">
+      <button
+        type="button"
+        onClick={onActivate}
+        className="flex h-8 w-full items-center gap-2 rounded-full bg-white pr-3 pl-2 text-sm text-zinc-600 ring-1 ring-zinc-900/10 transition hover:ring-zinc-900/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-claw-cyan dark:bg-white/5 dark:text-zinc-300 dark:ring-white/10 dark:ring-inset dark:hover:ring-white/20 dark:focus-visible:outline-claw-cyan-bright"
+        aria-label="Search documentation"
+      >
+        <span className="ml-1 size-5 shrink-0 rounded-full border border-zinc-400/60 dark:border-zinc-500" />
+        Search documentation…
+        <kbd className="ml-auto text-2xs text-zinc-500 dark:text-zinc-300">
+          <kbd className="font-sans">⌘</kbd>
+          <kbd className="font-sans">K</kbd>
+        </kbd>
+      </button>
+    </div>
+  )
+}
+
+function MobileSearchPlaceholder({ onActivate }: { onActivate: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onActivate}
+      className="relative flex size-6 items-center justify-center rounded-md transition hover:bg-zinc-900/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-claw-cyan lg:hidden dark:hover:bg-white/5 dark:focus-visible:outline-claw-cyan-bright"
+      aria-label="Search documentation"
+    >
+      <span className="size-4 rounded-full border border-zinc-900 dark:border-white" />
+    </button>
+  )
 }
 
 function TopLevelNavItem({
@@ -78,7 +119,8 @@ export const Header = forwardRef<
 >(function Header({ className, ...props }, ref) {
   let { isOpen: mobileNavIsOpen } = useMobileNavigationStore()
   let isInsideMobileNavigation = useIsInsideMobileNavigation()
-  const searchReady = useDeferSearchChrome()
+  const { ready: searchReady, openOnMount, activateAndOpen } =
+    useActivateSearchOnIntent()
 
   return (
     <div
@@ -102,12 +144,9 @@ export const Header = forwardRef<
         )}
       />
       {searchReady ? (
-        <Search />
+        <Search defaultOpen={openOnMount} />
       ) : (
-        <div
-          className="hidden h-8 w-full max-w-md lg:block lg:max-w-md lg:flex-auto"
-          aria-hidden
-        />
+        <SearchPlaceholder onActivate={activateAndOpen} />
       )}
       <div className="flex items-center gap-5 lg:hidden">
         <MobileNavigation />
@@ -129,9 +168,9 @@ export const Header = forwardRef<
         <div className="hidden md:block md:h-5 md:w-px md:bg-zinc-900/10 md:dark:bg-white/15" />
         <div className="flex gap-4">
           {searchReady ? (
-            <MobileSearch />
+            <MobileSearch defaultOpen={openOnMount} />
           ) : (
-            <div className="size-6 shrink-0 lg:hidden" aria-hidden />
+            <MobileSearchPlaceholder onActivate={activateAndOpen} />
           )}
           <ThemeToggle />
         </div>

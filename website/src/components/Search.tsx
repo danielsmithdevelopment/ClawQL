@@ -405,9 +405,9 @@ function SearchDialog({
   )
 }
 
-function useSearchProps() {
+function useSearchProps(defaultOpen = false) {
   let buttonRef = useRef<React.ElementRef<'button'>>(null)
-  let [open, setOpen] = useState(false)
+  let [open, setOpen] = useState(defaultOpen)
 
   let setOpenGuarded = useCallback(
     (next: boolean) => {
@@ -435,10 +435,10 @@ function useSearchProps() {
   }
 }
 
-export function Search() {
+export function Search({ defaultOpen = false }: { defaultOpen?: boolean }) {
   let [modifierKey, setModifierKey] = useState<string>()
   let panelId = useId()
-  let { open, buttonProps, dialogProps } = useSearchProps()
+  let { open, buttonProps, dialogProps } = useSearchProps(defaultOpen)
 
   useSearchHotkey(dialogProps.setOpen, true)
 
@@ -478,10 +478,14 @@ export function Search() {
   )
 }
 
-export function MobileSearch() {
+export function MobileSearch({
+  defaultOpen = false,
+}: {
+  defaultOpen?: boolean
+}) {
   let { close } = useMobileNavigationStore()
   let panelId = useId()
-  let { open, buttonProps, dialogProps } = useSearchProps()
+  let { open, buttonProps, dialogProps } = useSearchProps(defaultOpen)
 
   useSearchHotkey(dialogProps.setOpen, true)
 
