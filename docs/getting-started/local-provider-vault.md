@@ -105,6 +105,8 @@ Then **`kubectl rollout restart deployment/clawql-mcp-http -n clawql`**.
 
 ## Team shared memory (optional)
 
+For the full team setup (Helm, observability, verification), start with [getting-started-for-teams.md](./getting-started-for-teams.md).
+
 To share **`Memory/`** notes across teammates via a central bucket (R2 default):
 
 → [team-vault-sync.md](./team-vault-sync.md) — `clawql sync init | push | pull | status`

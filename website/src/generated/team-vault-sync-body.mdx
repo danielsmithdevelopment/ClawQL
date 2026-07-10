@@ -2,7 +2,7 @@
 
 Share **`~/.ClawQL`** memory notes across your team via a centralized object-storage bucket. **Cloudflare R2 is the default** provider because Cloudflare is in the bundled default stack.
 
-**Team overview** (Helm deploy, observability, verification): [getting-started-for-teams.md](./getting-started-for-teams.md).
+**Team overview** (Helm deploy, observability, verification): [getting-started-for-teams.md](/getting-started/for-teams).
 
 ## What syncs
 
@@ -193,7 +193,7 @@ teamSync:
   autoPullMinMs: 60000
   autoPullOnStart: true
   r2:
-    accountId: "<cloudflare-account-id>" # or cloudflareAccountId in provider secret
+    accountId: '<cloudflare-account-id>' # or cloudflareAccountId in provider secret
 ```
 
 **Credentials** stay in Vault / **`envFromSecret`** — add **`r2AccessKeyId`**, **`r2SecretAccessKey`**, and **`cloudflareAccountId`** to **`secret/clawql/providers`** (same keys as local vault).
@@ -232,6 +232,6 @@ Template smoke: `make helm-team-sync-template-tests`.
 
 ## Related
 
-- [Local provider vault](./local-provider-vault.md)
-- [Memory / Obsidian](../memory/memory-obsidian.md)
-- [Cloudflare provider](../providers/cloudflare-onboarding.md) (API `execute`, not sync)
+- [Local provider vault](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/getting-started/local-provider-vault.md)
+- [Memory / Obsidian](/learn/vault-memory-between-chats)
+- [Cloudflare provider](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/providers/cloudflare-onboarding.md) (API `execute`, not sync)
