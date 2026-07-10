@@ -48,6 +48,7 @@ const nextConfig = {
       './src/app/**/*.mdx',
       './src/generated/security-training/**/*.mdx',
       './src/generated/security-training/sitemap-paths.json',
+      './src/generated/search-index/**/*.json',
     ],
   },
   // Tree-shake heavy barrel imports — smaller RSC + client bundle (helps Workers + hydration).

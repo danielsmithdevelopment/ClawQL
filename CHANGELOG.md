@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Docs site (7.0 polish)** — Lighthouse perf: static header backdrop (no scroll-driven framer-motion), deferred search chrome load, autocomplete mounts only when dialog opens. **SEO:** per-page metadata on hub routes (guides, reference, architecture, examples, resources, getting started, agent setup); sitemap adds clawql-desktop; `SearchAction` JSON-LD; single `robots.txt` route with Content-Signal. **A11y:** expanded axe smoke routes; home skeleton heading matches hydrated content.
+- **Docs site (7.0 polish)** — Lighthouse perf: static header backdrop, deferred search chrome, dialog-only autocomplete, **chunked search index** (lazy JSON per route segment). **SEO:** hub route metadata; sitemap + `SearchAction` JSON-LD; **Article** schema on case studies (dates, breadcrumbs). **A11y:** expanded axe routes; **CSS-only sidebar nav** (no framer-motion); home skeleton heading fix.
 
 ## [7.0.0] - 2026-07-10
 
