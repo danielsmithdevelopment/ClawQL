@@ -1,5 +1,5 @@
-import FlexSearch from 'flexsearch'
 import type { Document, SearchOptions } from 'flexsearch'
+import FlexSearch from 'flexsearch'
 
 import manifest from '@/generated/search-index/manifest.json'
 

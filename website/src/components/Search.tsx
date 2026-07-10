@@ -22,7 +22,7 @@ import {
 import Highlighter from 'react-highlight-words'
 
 import { navigation } from '@/components/Navigation'
-import { type Result, search as runSearch } from '@/mdx/search-runtime'
+import { search as runSearch, type Result } from '@/mdx/search-runtime'
 import { useMobileNavigationStore } from './MobileNavigation'
 
 type EmptyObject = Record<string, never>
