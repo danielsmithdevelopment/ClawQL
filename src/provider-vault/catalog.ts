@@ -94,6 +94,22 @@ export const PROVIDER_VAULT_KEY_CATALOG: readonly ProviderVaultKeyEntry[] = [
     hint: "Secret for R2 S3 API — never commit; pair with r2AccessKeyId.",
   },
   {
+    vaultProperty: "gcsHmacAccessId",
+    envKey: "CLAWQL_GCS_HMAC_ACCESS_ID",
+    envAliases: ["CLAWQL_GCS_HMAC_ACCESS_ID", "GCS_HMAC_ACCESS_ID"],
+    label: "GCS HMAC access id",
+    group: "Sharing & cloud",
+    hint: "GCP Console → Cloud Storage → Settings → Interoperability → HMAC keys (clawql sync gcs).",
+  },
+  {
+    vaultProperty: "gcsHmacSecret",
+    envKey: "CLAWQL_GCS_HMAC_SECRET",
+    envAliases: ["CLAWQL_GCS_HMAC_SECRET", "GCS_HMAC_SECRET"],
+    label: "GCS HMAC secret",
+    group: "Sharing & cloud",
+    hint: "Secret for GCS S3-compatible API — pair with gcsHmacAccessId.",
+  },
+  {
     vaultProperty: "paperlessApiToken",
     envKey: "PAPERLESS_API_TOKEN",
     envAliases: ["PAPERLESS_API_TOKEN", "CLAWQL_PAPERLESS_API_TOKEN"],

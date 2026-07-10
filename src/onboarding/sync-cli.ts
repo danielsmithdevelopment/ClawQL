@@ -16,6 +16,7 @@ import {
   runSyncStatus,
 } from "../home-sync/engine.js";
 import { getSyncConfigPath } from "../home-sync/paths.js";
+import { printSyncCredentialHelp, syncProviderLabel } from "./sync-credential-help.js";
 
 export type SyncInitOptions = {
   home?: string;
@@ -51,7 +52,7 @@ export async function runSyncInit(opts: SyncInitOptions): Promise<number> {
   let prefix = opts.prefix ?? existing?.prefix ?? "";
 
   if (opts.interactive) {
-    const p = await prompt("Provider (r2|s3|gcs)", provider);
+    const p = await prompt("Provider (r2|s3|gcs|gcp)", provider);
     provider = parseSyncProvider(p || provider);
     bucket = await prompt("Bucket name", bucket);
     prefix = await prompt("Team prefix (e.g. teams/acme/)", prefix);
@@ -72,20 +73,10 @@ export async function runSyncInit(opts: SyncInitOptions): Promise<number> {
 
   console.log("Team sync configured\n");
   console.log(`  Config:   ${getSyncConfigPath(home)}`);
-  console.log(`  Provider: ${provider} (default: r2 — Cloudflare R2)`);
+  console.log(`  Provider: ${provider} — ${syncProviderLabel(provider)}`);
   console.log(`  Bucket:   ${config.bucket}`);
   if (config.prefix) console.log(`  Prefix:   ${config.prefix}`);
-  console.log("\nCredentials (not stored in sync.json):");
-  if (provider === "r2") {
-    console.log("  CLAWQL_R2_ACCOUNT_ID          Cloudflare account id");
-    console.log("  CLAWQL_SYNC_ACCESS_KEY_ID   R2 S3 API access key");
-    console.log("  CLAWQL_SYNC_SECRET_ACCESS_KEY R2 S3 API secret");
-    console.log("  Or store r2AccessKeyId / r2SecretAccessKey / cloudflareAccountId in vault");
-  } else if (provider === "s3") {
-    console.log("  AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY / AWS_REGION");
-  } else {
-    console.log("  GCS HMAC keys + CLAWQL_SYNC_ENDPOINT=https://storage.googleapis.com");
-  }
+  printSyncCredentialHelp(provider);
   console.log("\nNext:");
   console.log("  clawql sync push    Upload Memory/ + sources to the team bucket");
   console.log("  clawql sync pull    Download team notes to this machine");

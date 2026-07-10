@@ -52,6 +52,68 @@ clawql sync pull
 clawql doctor
 ```
 
+## Quick start (S3)
+
+1. Create an S3 bucket (e.g. `acme-clawql-team`) and an IAM user with `s3:GetObject`, `s3:PutObject`, `s3:ListBucket` on that bucket.
+2. Configure sync:
+
+```bash
+clawql sync init --provider s3 --bucket acme-clawql-team --prefix teams/engineering/
+
+export CLAWQL_AWS_ACCESS_KEY_ID="<iam-access-key>"
+export CLAWQL_AWS_SECRET_ACCESS_KEY="<iam-secret>"
+export CLAWQL_AWS_REGION="us-east-1"   # or CLAWQL_SYNC_REGION
+```
+
+Or store credentials in the local vault:
+
+```bash
+clawql secrets set awsAccessKeyId
+clawql secrets set awsSecretAccessKey
+```
+
+3. Push and pull as with R2 (`clawql sync push`, `clawql sync pull`).
+
+## Quick start (GCS)
+
+Google Cloud Storage uses the **S3-compatible interoperability API** (HMAC keys), not the native GCS JSON API — same `@aws-sdk/client-s3` client as R2 and S3.
+
+1. Create a GCS bucket (e.g. `acme-clawql-team`) in your GCP project.
+2. Enable interoperability: **Cloud Storage → Settings → Interoperability → Create a key for a service account** (or user HMAC key).
+3. Configure sync:
+
+```bash
+clawql sync init --provider gcs --bucket acme-clawql-team --prefix teams/engineering/
+# interactive: provider accepts gcs or gcp
+
+export CLAWQL_GCS_HMAC_ACCESS_ID="<hmac-access-id>"
+export CLAWQL_GCS_HMAC_SECRET="<hmac-secret>"
+# endpoint defaults to https://storage.googleapis.com (path-style)
+```
+
+Or store credentials in the local vault:
+
+```bash
+clawql secrets set gcsHmacAccessId
+clawql secrets set gcsHmacSecret
+```
+
+4. Push your notes:
+
+```bash
+clawql sync push
+```
+
+5. Teammates pull:
+
+```bash
+clawql sync init --provider gcs --bucket acme-clawql-team --prefix teams/engineering/
+clawql sync pull
+clawql doctor
+```
+
+**Helm:** set `teamSync.provider: gcs` — the chart injects `CLAWQL_SYNC_ENDPOINT=https://storage.googleapis.com`. Put **`gcsHmacAccessId`** and **`gcsHmacSecret`** in the provider secret (via **`envFromSecret`**).
+
 ## Commands
 
 | Command              | Purpose                                                                |
@@ -78,11 +140,16 @@ clawql doctor
 | `CLAWQL_SYNC_PROVIDER`          | `r2` (default), `s3`, or `gcs`         |
 | `CLAWQL_SYNC_BUCKET`            | Bucket name (overrides sync.json)      |
 | `CLAWQL_SYNC_PREFIX`            | Shared team prefix, e.g. `teams/acme/` |
-| `CLAWQL_SYNC_ACCESS_KEY_ID`     | S3-compatible access key               |
-| `CLAWQL_SYNC_SECRET_ACCESS_KEY` | S3-compatible secret                   |
-| `CLAWQL_R2_ACCOUNT_ID`          | Cloudflare account id (R2 endpoint)    |
-| `CLAWQL_SYNC_ENDPOINT`          | Override endpoint URL                  |
-| `CLAWQL_SYNC_REGION`            | Region (`auto` for R2/GCS)             |
+| `CLAWQL_SYNC_ACCESS_KEY_ID`     | R2 S3 API access key (or generic override) |
+| `CLAWQL_SYNC_SECRET_ACCESS_KEY` | R2 S3 API secret (or generic override)     |
+| `CLAWQL_R2_ACCOUNT_ID`          | Cloudflare account id (R2 endpoint)        |
+| `CLAWQL_AWS_ACCESS_KEY_ID`      | S3 IAM access key                          |
+| `CLAWQL_AWS_SECRET_ACCESS_KEY`  | S3 IAM secret                              |
+| `CLAWQL_AWS_REGION`             | S3 region (e.g. `us-east-1`)               |
+| `CLAWQL_GCS_HMAC_ACCESS_ID`     | GCS interoperability HMAC access id        |
+| `CLAWQL_GCS_HMAC_SECRET`        | GCS interoperability HMAC secret           |
+| `CLAWQL_SYNC_ENDPOINT`          | Override endpoint URL                      |
+| `CLAWQL_SYNC_REGION`            | Region (`auto` for R2/GCS)                 |
 
 Config file: **`~/.ClawQL/sync.json`** — safe to commit bucket/prefix in team docs; never put secrets there.
 
@@ -129,10 +196,25 @@ teamSync:
 
 **Credentials** stay in Vault / **`envFromSecret`** — add **`r2AccessKeyId`**, **`r2SecretAccessKey`**, and **`cloudflareAccountId`** to **`secret/clawql/providers`** (same keys as local vault).
 
+**GCS example:**
+
+```yaml
+teamSync:
+  enabled: true
+  provider: gcs
+  bucket: acme-clawql-team
+  prefix: teams/production/
+  autoPush: true
+  autoPull: true
+```
+
+Store **`gcsHmacAccessId`** and **`gcsHmacSecret`** in the provider secret. The chart sets **`CLAWQL_SYNC_ENDPOINT=https://storage.googleapis.com`** automatically.
+
 ```bash
 helm upgrade --install clawql ./charts/clawql-mcp \
   --set envFromSecret=clawql-provider-env \
   --set teamSync.enabled=true \
+  --set teamSync.provider=gcs \
   --set teamSync.bucket=acme-clawql-team \
   --set teamSync.prefix=teams/production/ \
   --set teamSync.autoPush=true \

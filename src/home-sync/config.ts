@@ -8,17 +8,19 @@ import {
   objectKeyForRelPath,
 } from "./paths.js";
 import type { HomeSyncConfigFile, ResolvedHomeSyncConfig, SyncProvider } from "./types.js";
+import { syncProviderProfile } from "./providers.js";
 
 function envTrim(key: string): string | undefined {
   const v = process.env[key]?.trim();
   return v || undefined;
 }
 
+/** Accept common aliases (`gcp` → `gcs`). */
 export function parseSyncProvider(raw: string | undefined): SyncProvider {
   const v = raw?.trim().toLowerCase();
   if (!v || v === "r2") return "r2";
-  if (v === "s3") return "s3";
-  if (v === "gcs") return "gcs";
+  if (v === "s3" || v === "aws") return "s3";
+  if (v === "gcs" || v === "gcp" || v === "google") return "gcs";
   throw new Error(`CLAWQL_SYNC_PROVIDER must be r2, s3, or gcs (got: ${raw})`);
 }
 
@@ -78,7 +80,7 @@ export function resolveHomeSyncConfig(
   const region =
     envTrim("CLAWQL_SYNC_REGION") ??
     file?.region ??
-    (provider === "r2" ? "auto" : provider === "gcs" ? "auto" : undefined);
+    syncProviderProfile(provider).defaultRegion;
   const include = envTrim("CLAWQL_SYNC_INCLUDE")
     ?.split(",")
     .map((s) => s.trim())
@@ -110,19 +112,54 @@ export type SyncCredentials = {
   secretAccessKey: string;
 };
 
-export function resolveSyncCredentials(): SyncCredentials {
-  const accessKeyId =
-    envTrim("CLAWQL_SYNC_ACCESS_KEY_ID") ??
-    envTrim("AWS_ACCESS_KEY_ID") ??
-    envTrim("AWS_ACCESS_KEY");
-  const secretAccessKey =
-    envTrim("CLAWQL_SYNC_SECRET_ACCESS_KEY") ??
-    envTrim("AWS_SECRET_ACCESS_KEY") ??
-    envTrim("AWS_SECRET_KEY");
+export function resolveSyncCredentials(config: ResolvedHomeSyncConfig): SyncCredentials {
+  let accessKeyId: string | undefined;
+  let secretAccessKey: string | undefined;
+
+  if (config.provider === "s3") {
+    accessKeyId =
+      envTrim("CLAWQL_AWS_ACCESS_KEY_ID") ??
+      envTrim("AWS_ACCESS_KEY_ID") ??
+      envTrim("CLAWQL_SYNC_ACCESS_KEY_ID");
+    secretAccessKey =
+      envTrim("CLAWQL_AWS_SECRET_ACCESS_KEY") ??
+      envTrim("AWS_SECRET_ACCESS_KEY") ??
+      envTrim("CLAWQL_SYNC_SECRET_ACCESS_KEY");
+    if (!accessKeyId || !secretAccessKey) {
+      throw new Error(
+        "S3 sync credentials missing — set CLAWQL_AWS_ACCESS_KEY_ID and CLAWQL_AWS_SECRET_ACCESS_KEY " +
+          "(or awsAccessKeyId / awsSecretAccessKey in vault), plus CLAWQL_AWS_REGION or CLAWQL_SYNC_REGION"
+      );
+    }
+    return { accessKeyId, secretAccessKey };
+  }
+
+  if (config.provider === "gcs") {
+    accessKeyId =
+      envTrim("CLAWQL_GCS_HMAC_ACCESS_ID") ??
+      envTrim("GCS_HMAC_ACCESS_ID") ??
+      envTrim("CLAWQL_SYNC_ACCESS_KEY_ID");
+    secretAccessKey =
+      envTrim("CLAWQL_GCS_HMAC_SECRET") ??
+      envTrim("GCS_HMAC_SECRET") ??
+      envTrim("CLAWQL_SYNC_SECRET_ACCESS_KEY");
+    if (!accessKeyId || !secretAccessKey) {
+      throw new Error(
+        "GCS sync credentials missing — create HMAC keys in GCP Console → Cloud Storage → Settings → " +
+          "Interoperability, then set CLAWQL_GCS_HMAC_ACCESS_ID and CLAWQL_GCS_HMAC_SECRET " +
+          "(or gcsHmacAccessId / gcsHmacSecret in vault)"
+      );
+    }
+    return { accessKeyId, secretAccessKey };
+  }
+
+  // R2 (default)
+  accessKeyId = envTrim("CLAWQL_SYNC_ACCESS_KEY_ID") ?? envTrim("R2_ACCESS_KEY_ID");
+  secretAccessKey = envTrim("CLAWQL_SYNC_SECRET_ACCESS_KEY") ?? envTrim("R2_SECRET_ACCESS_KEY");
   if (!accessKeyId || !secretAccessKey) {
     throw new Error(
-      "Sync credentials missing — set CLAWQL_SYNC_ACCESS_KEY_ID and CLAWQL_SYNC_SECRET_ACCESS_KEY " +
-        "(R2: create S3 API tokens in Cloudflare dashboard; store as r2AccessKeyId / r2SecretAccessKey in vault)"
+      "R2 sync credentials missing — set CLAWQL_SYNC_ACCESS_KEY_ID and CLAWQL_SYNC_SECRET_ACCESS_KEY " +
+        "(R2 S3 API tokens in Cloudflare dashboard; or r2AccessKeyId / r2SecretAccessKey in vault)"
     );
   }
   return { accessKeyId, secretAccessKey };
@@ -130,7 +167,8 @@ export function resolveSyncCredentials(): SyncCredentials {
 
 export function resolveSyncEndpoint(config: ResolvedHomeSyncConfig): string | undefined {
   if (config.endpoint?.trim()) return config.endpoint.trim();
-  if (config.provider === "gcs") return "https://storage.googleapis.com";
+  const profile = syncProviderProfile(config.provider);
+  if (profile.defaultEndpoint) return profile.defaultEndpoint;
   if (config.provider === "r2") {
     const accountId =
       envTrim("CLAWQL_R2_ACCOUNT_ID") ??

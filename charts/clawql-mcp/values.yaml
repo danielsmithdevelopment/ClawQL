@@ -869,7 +869,10 @@ persistence:
 
 # Team shared memory — sync Obsidian vault notes to object storage for multi-user recall.
 # Default provider: Cloudflare R2 (bundled default stack). Credentials belong in Vault KV /
-# envFromSecret (r2AccessKeyId, r2SecretAccessKey, cloudflareAccountId) — never in values.
+# envFromSecret — never in values:
+#   r2: r2AccessKeyId, r2SecretAccessKey, cloudflareAccountId
+#   s3: awsAccessKeyId, awsSecretAccessKey (+ CLAWQL_AWS_REGION via extraEnv if needed)
+#   gcs: gcsHmacAccessId, gcsHmacSecret (S3-compatible HMAC interop; endpoint auto-set when provider=gcs)
 # Docs: docs/getting-started/team-vault-sync.md
 teamSync:
   enabled: false

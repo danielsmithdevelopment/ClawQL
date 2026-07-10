@@ -22,4 +22,21 @@ grep -q 'name: CLAWQL_SYNC_AUTO_PULL' "${TMP}"
 grep -q 'name: CLAWQL_R2_ACCOUNT_ID' "${TMP}"
 grep -q 'value: abc123' "${TMP}"
 
-echo "OK: teamSync Helm template assertions passed"
+TMP_GCS="$(mktemp)"
+trap 'rm -f "${TMP}" "${TMP_GCS}"' EXIT
+
+helm template test "${ROOT}/charts/clawql-mcp" --namespace clawql \
+  --set envFromSecret=clawql-lint-provider-env \
+  --set teamSync.enabled=true \
+  --set teamSync.provider=gcs \
+  --set teamSync.bucket=acme-gcs-clawql \
+  --set teamSync.prefix=teams/gcp/ \
+  >"${TMP_GCS}"
+
+grep -q 'name: CLAWQL_SYNC_PROVIDER' "${TMP_GCS}"
+grep -q 'value: gcs' "${TMP_GCS}"
+grep -q 'name: CLAWQL_SYNC_ENDPOINT' "${TMP_GCS}"
+grep -q 'value: https://storage.googleapis.com' "${TMP_GCS}"
+grep -q 'value: acme-gcs-clawql' "${TMP_GCS}"
+
+echo "OK: teamSync Helm template assertions passed (r2 + gcs)"

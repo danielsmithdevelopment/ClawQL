@@ -19,6 +19,9 @@ const SHORT_ALIASES: Record<string, string> = {
   cloudflare: "cloudflareApiToken",
   google: "googleAccessToken",
   aws: "awsAccessKeyId",
+  r2: "r2AccessKeyId",
+  gcs: "gcsHmacAccessId",
+  gcp: "gcsHmacAccessId",
   paperless: "paperlessApiToken",
   atlassian: "atlassianApiToken",
 };

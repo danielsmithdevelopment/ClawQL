@@ -9,6 +9,7 @@ import {
   resolveSyncCredentials,
   resolveSyncEndpoint,
 } from "./config.js";
+import { syncProviderProfile } from "./providers.js";
 import type { ResolvedHomeSyncConfig, SyncManifest } from "./types.js";
 
 export type ObjectStorageClient = {
@@ -32,15 +33,16 @@ async function streamToBuffer(body: unknown): Promise<Buffer> {
 }
 
 export function createObjectStorageClient(config: ResolvedHomeSyncConfig): ObjectStorageClient {
-  const creds = resolveSyncCredentials();
+  const creds = resolveSyncCredentials(config);
   const endpoint = resolveSyncEndpoint(config);
+  const profile = syncProviderProfile(config.provider);
   const clientConfig: S3ClientConfig = {
     credentials: creds,
-    region: config.region ?? "auto",
+    region: config.region ?? profile.defaultRegion ?? "us-east-1",
   };
   if (endpoint) {
     clientConfig.endpoint = endpoint;
-    clientConfig.forcePathStyle = config.provider !== "s3";
+    clientConfig.forcePathStyle = profile.forcePathStyle;
   }
   const client = new S3Client(clientConfig);
 
