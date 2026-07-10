@@ -2,10 +2,19 @@ import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
 
 /** Core routes for static HTML + common chrome (nav, search trigger, MDX). */
-const routes = ['/', '/learn', '/security/best-practices'] as const
+const routes = [
+  '/',
+  '/quickstart',
+  '/install',
+  '/getting-started/for-teams',
+  '/learn',
+  '/security/best-practices',
+] as const
 
 for (const path of routes) {
-  test(`axe: no critical or serious violations on ${path}`, async ({ page }) => {
+  test(`axe: no critical or serious violations on ${path}`, async ({
+    page,
+  }) => {
     await page.goto(path, { waitUntil: 'load' })
     const results = await new AxeBuilder({ page }).analyze()
     const blocking = results.violations.filter(

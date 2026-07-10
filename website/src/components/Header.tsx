@@ -1,8 +1,7 @@
 import clsx from 'clsx'
-import { motion, useScroll, useTransform } from 'framer-motion'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
-import { forwardRef } from 'react'
+import { forwardRef, useEffect, useState } from 'react'
 
 import { Button } from '@/components/Button'
 import { Logo } from '@/components/Logo'
@@ -34,6 +33,24 @@ const MobileSearch = dynamic(
   },
 )
 
+function useDeferSearchChrome() {
+  const [ready, setReady] = useState(false)
+
+  useEffect(() => {
+    if (ready) return
+    if (typeof window.requestIdleCallback === 'function') {
+      const id = window.requestIdleCallback(() => setReady(true), {
+        timeout: 2500,
+      })
+      return () => window.cancelIdleCallback(id)
+    }
+    const timer = window.setTimeout(() => setReady(true), 1200)
+    return () => window.clearTimeout(timer)
+  }, [ready])
+
+  return ready
+}
+
 function TopLevelNavItem({
   href,
   children,
@@ -56,18 +73,15 @@ function TopLevelNavItem({
 }
 
 export const Header = forwardRef<
-  React.ComponentRef<'div'>,
-  React.ComponentPropsWithoutRef<typeof motion.div>
+  HTMLDivElement,
+  React.ComponentPropsWithoutRef<'div'>
 >(function Header({ className, ...props }, ref) {
   let { isOpen: mobileNavIsOpen } = useMobileNavigationStore()
   let isInsideMobileNavigation = useIsInsideMobileNavigation()
-
-  let { scrollY } = useScroll()
-  let bgOpacityLight = useTransform(scrollY, [0, 72], ['50%', '90%'])
-  let bgOpacityDark = useTransform(scrollY, [0, 72], ['20%', '80%'])
+  const searchReady = useDeferSearchChrome()
 
   return (
-    <motion.div
+    <div
       {...props}
       ref={ref}
       className={clsx(
@@ -77,14 +91,8 @@ export const Header = forwardRef<
           'backdrop-blur-xs lg:left-72 xl:left-80 dark:backdrop-blur-sm',
         isInsideMobileNavigation
           ? 'bg-claw-warm-white dark:bg-claw-bg'
-          : 'bg-white/(--bg-opacity-light) dark:bg-claw-bg/(--bg-opacity-dark)',
+          : 'bg-white/80 dark:bg-claw-bg/80',
       )}
-      style={
-        {
-          '--bg-opacity-light': bgOpacityLight,
-          '--bg-opacity-dark': bgOpacityDark,
-        } as React.CSSProperties
-      }
     >
       <div
         className={clsx(
@@ -93,7 +101,14 @@ export const Header = forwardRef<
             'bg-zinc-900/7.5 dark:bg-white/7.5',
         )}
       />
-      <Search />
+      {searchReady ? (
+        <Search />
+      ) : (
+        <div
+          className="hidden h-8 w-full max-w-md lg:block lg:max-w-md lg:flex-auto"
+          aria-hidden
+        />
+      )}
       <div className="flex items-center gap-5 lg:hidden">
         <MobileNavigation />
         <CloseButton as={Link} href="/" aria-label="Home">
@@ -113,13 +128,17 @@ export const Header = forwardRef<
         </nav>
         <div className="hidden md:block md:h-5 md:w-px md:bg-zinc-900/10 md:dark:bg-white/15" />
         <div className="flex gap-4">
-          <MobileSearch />
+          {searchReady ? (
+            <MobileSearch />
+          ) : (
+            <div className="size-6 shrink-0 lg:hidden" aria-hidden />
+          )}
           <ThemeToggle />
         </div>
         <div className="hidden min-[416px]:contents">
           <Button href="https://www.npmjs.com/package/clawql-mcp">npm</Button>
         </div>
       </div>
-    </motion.div>
+    </div>
   )
 })

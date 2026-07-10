@@ -73,6 +73,11 @@ const ENTRIES: Array<Entry> = [
     priority: 0.94,
   },
   {
+    path: '/getting-started/clawql-desktop',
+    changeFrequency: 'monthly',
+    priority: 0.9,
+  },
+  {
     path: '/contributing/technical-specification',
     changeFrequency: 'monthly',
     priority: 0.88,

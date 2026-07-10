@@ -34,6 +34,22 @@ type Autocomplete = AutocompleteApi<
   React.KeyboardEvent
 >
 
+function useSearchHotkey(setOpen: (open: boolean) => void, enabled: boolean) {
+  useEffect(() => {
+    if (!enabled) return
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'k' && (event.metaKey || event.ctrlKey)) {
+        event.preventDefault()
+        setOpen(true)
+      }
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [enabled, setOpen])
+}
+
 function useAutocomplete({ onNavigate }: { onNavigate: () => void }) {
   let id = useId()
   let router = useRouter()
@@ -337,25 +353,6 @@ function SearchDialog({
     setOpen(false)
   }, [pathname, searchParams, setOpen])
 
-  useEffect(() => {
-    if (open) {
-      return
-    }
-
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === 'k' && (event.metaKey || event.ctrlKey)) {
-        event.preventDefault()
-        setOpen(true)
-      }
-    }
-
-    window.addEventListener('keydown', onKeyDown)
-
-    return () => {
-      window.removeEventListener('keydown', onKeyDown)
-    }
-  }, [open, setOpen])
-
   return (
     <Dialog
       open={open}
@@ -445,6 +442,8 @@ export function Search() {
   let panelId = useId()
   let { open, buttonProps, dialogProps } = useSearchProps()
 
+  useSearchHotkey(dialogProps.setOpen, true)
+
   useEffect(() => {
     setModifierKey(
       /(Mac|iPhone|iPod|iPad)/i.test(navigator.platform) ? '⌘' : 'Ctrl ',
@@ -468,13 +467,15 @@ export function Search() {
           <kbd className="font-sans">K</kbd>
         </kbd>
       </button>
-      <Suspense fallback={null}>
-        <SearchDialog
-          className="hidden lg:block"
-          panelId={panelId}
-          {...dialogProps}
-        />
-      </Suspense>
+      {open ? (
+        <Suspense fallback={null}>
+          <SearchDialog
+            className="hidden lg:block"
+            panelId={panelId}
+            {...dialogProps}
+          />
+        </Suspense>
+      ) : null}
     </div>
   )
 }
@@ -483,6 +484,8 @@ export function MobileSearch() {
   let { close } = useMobileNavigationStore()
   let panelId = useId()
   let { open, buttonProps, dialogProps } = useSearchProps()
+
+  useSearchHotkey(dialogProps.setOpen, true)
 
   return (
     <div className="contents lg:hidden">
@@ -498,14 +501,16 @@ export function MobileSearch() {
         <span className="absolute size-12 pointer-fine:hidden" />
         <SearchIcon className="h-5 w-5 stroke-zinc-900 dark:stroke-white" />
       </button>
-      <Suspense fallback={null}>
-        <SearchDialog
-          className="lg:hidden"
-          panelId={panelId}
-          onNavigate={close}
-          {...dialogProps}
-        />
-      </Suspense>
+      {open ? (
+        <Suspense fallback={null}>
+          <SearchDialog
+            className="lg:hidden"
+            panelId={panelId}
+            onNavigate={close}
+            {...dialogProps}
+          />
+        </Suspense>
+      ) : null}
     </div>
   )
 }

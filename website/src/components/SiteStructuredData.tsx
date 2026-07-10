@@ -27,6 +27,14 @@ export function SiteStructuredData() {
         url: origin,
         inLanguage: 'en-US',
         publisher: { '@id': `${origin}/#organization` },
+        potentialAction: {
+          '@type': 'SearchAction',
+          target: {
+            '@type': 'EntryPoint',
+            urlTemplate: `${origin}/?q={search_term_string}`,
+          },
+          'query-input': 'required name=search_term_string',
+        },
       },
       {
         '@type': 'SoftwareSourceCode',

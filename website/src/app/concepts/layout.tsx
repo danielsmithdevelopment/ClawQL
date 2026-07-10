@@ -1,18 +1,14 @@
 import { docsPageMetadata } from '@/lib/seo'
 
+import type { ReactNode } from 'react'
+
 export const metadata = docsPageMetadata({
   title: 'Concepts',
   description:
-    'ClawQL architecture: MCP over stdio, Streamable HTTP, or optional MCP gRPC; in-memory search index, OpenAPI→GraphQL and optional native GraphQL/gRPC execute paths.',
+    'ClawQL concepts: how search and execute save context, MCP tool tiers, and the agent-first API workflow.',
   path: '/concepts',
 })
 
-import type { ReactNode } from 'react'
-
-export default function DocsSegmentLayout({
-  children,
-}: {
-  children: ReactNode
-}) {
+export default function ConceptsLayout({ children }: { children: ReactNode }) {
   return children
 }
