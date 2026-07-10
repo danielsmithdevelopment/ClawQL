@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Team vault sync (`clawql sync`)** — push/pull `~/.ClawQL` shared paths (Memory/, sources/, chats/) to **Cloudflare R2** (default), **AWS S3**, or **GCS** (S3-compatible API); `sync.json` for bucket/prefix; secrets never uploaded. Docs: [`docs/getting-started/team-vault-sync.md`](docs/getting-started/team-vault-sync.md).
+- **Team vault sync (`clawql sync`)** — push/pull `~/.ClawQL` shared paths (Memory/, sources/, chats/) to **Cloudflare R2** (default), **AWS S3**, or **GCS** (S3-compatible API); `sync.json` for bucket/prefix; secrets never uploaded. **Auto sync:** `CLAWQL_SYNC_AUTO=1` debounced push after `memory_ingest`; `CLAWQL_SYNC_AUTO_PULL=1` throttled pull before `memory_recall`. **Helm:** `teamSync.*` values on `charts/clawql-mcp`. Docs: [`docs/getting-started/team-vault-sync.md`](docs/getting-started/team-vault-sync.md).
 
 ## [7.0.0] - 2026-07-10
 

@@ -867,6 +867,26 @@ persistence:
   size: 10Gi
   existingClaim: ""
 
+# Team shared memory — sync Obsidian vault notes to object storage for multi-user recall.
+# Default provider: Cloudflare R2 (bundled default stack). Credentials belong in Vault KV /
+# envFromSecret (r2AccessKeyId, r2SecretAccessKey, cloudflareAccountId) — never in values.
+# Docs: docs/getting-started/team-vault-sync.md
+teamSync:
+  enabled: false
+  provider: r2 # r2 | s3 | gcs (S3-compatible API)
+  bucket: ""
+  prefix: "" # shared key prefix, e.g. teams/engineering/
+  region: auto
+  endpoint: "" # optional override (gcs defaults to https://storage.googleapis.com in template)
+  autoPush: false # CLAWQL_SYNC_AUTO=1 — debounced push after memory_ingest
+  autoPushDebounceMs: 30000
+  autoPull: false # CLAWQL_SYNC_AUTO_PULL=1 — throttled pull before memory_recall
+  autoPullMinMs: 60000
+  autoPullOnStart: false # CLAWQL_SYNC_AUTO_PULL_ON_START=1 — pull once at MCP startup
+  r2:
+    # Non-secret account id (alternative: cloudflareAccountId in provider secret).
+    accountId: ""
+
 # Obsidian memory Markdown on disk (`memory_ingest` / `memory_recall`). Not HashiCorp Vault — #161.
 # Mutually exclusive with persistence.enabled (PVC wins if both are set).
 vault:

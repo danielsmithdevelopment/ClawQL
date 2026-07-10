@@ -88,6 +88,11 @@
       "import": "./dist/plugin/index.js",
       "require": "./dist/plugin/index.cjs"
     },
+    "./sync/vault-sync-hooks": {
+      "types": "./dist/sync/vault-sync-hooks.d.ts",
+      "import": "./dist/sync/vault-sync-hooks.js",
+      "require": "./dist/sync/vault-sync-hooks.cjs"
+    },
     "./package.json": "./package.json"
   },
   "scripts": {

@@ -337,6 +337,8 @@ export async function runMemoryIngest(input: MemoryIngestInput): Promise<MemoryI
       const msg = e instanceof Error ? e.message : String(e);
       console.error(`[clawql-mcp] provider index update after ingest failed: ${msg}`);
     }
+    const { runAfterIngestVaultSync } = await import("../sync/vault-sync-hooks.js");
+    await runAfterIngestVaultSync();
     return { ...result, ...indexExtras };
   }
 

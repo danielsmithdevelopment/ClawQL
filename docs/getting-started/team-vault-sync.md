@@ -86,6 +86,61 @@ clawql doctor
 
 Config file: **`~/.ClawQL/sync.json`** — safe to commit bucket/prefix in team docs; never put secrets there.
 
+## Auto sync (MCP runtime)
+
+When the MCP server runs with sync configured, enable automatic background sync:
+
+| Variable | Behavior |
+|----------|----------|
+| `CLAWQL_SYNC_AUTO=1` | **Debounced push** after each successful **`memory_ingest`** (default debounce 30s) |
+| `CLAWQL_SYNC_AUTO_DEBOUNCE_MS` | Push debounce interval (default `30000`) |
+| `CLAWQL_SYNC_AUTO_PULL=1` | **Throttled pull** before **`memory_recall`** (default min interval 60s) |
+| `CLAWQL_SYNC_AUTO_PULL_MIN_MS` | Min ms between auto-pulls (default `60000`) |
+| `CLAWQL_SYNC_AUTO_PULL_ON_START=1` | Pull once when MCP starts |
+
+Auto sync logs to stderr (`[clawql-mcp] team sync auto-push/...`). Failures are non-fatal — ingest/recall still succeed.
+
+Local dev example:
+
+```bash
+export CLAWQL_SYNC_AUTO=1
+export CLAWQL_SYNC_AUTO_PULL=1
+npx clawql-mcp-http
+```
+
+## Helm (`charts/clawql-mcp`)
+
+Enable team bucket sync for in-cluster MCP pods:
+
+```yaml
+teamSync:
+  enabled: true
+  provider: r2
+  bucket: acme-clawql-team
+  prefix: teams/production/
+  autoPush: true
+  autoPushDebounceMs: 30000
+  autoPull: true
+  autoPullMinMs: 60000
+  autoPullOnStart: true
+  r2:
+    accountId: "<cloudflare-account-id>" # or cloudflareAccountId in provider secret
+```
+
+**Credentials** stay in Vault / **`envFromSecret`** — add **`r2AccessKeyId`**, **`r2SecretAccessKey`**, and **`cloudflareAccountId`** to **`secret/clawql/providers`** (same keys as local vault).
+
+```bash
+helm upgrade --install clawql ./charts/clawql-mcp \
+  --set envFromSecret=clawql-provider-env \
+  --set teamSync.enabled=true \
+  --set teamSync.bucket=acme-clawql-team \
+  --set teamSync.prefix=teams/production/ \
+  --set teamSync.autoPush=true \
+  --set teamSync.autoPull=true
+```
+
+Template smoke: `make helm-team-sync-template-tests`.
+
 ## After pull
 
 - Run **`clawql doctor`** or trigger **`memory_recall`** with `CLAWQL_MEMORY_DB_SYNC_ON_RECALL=1` to refresh `memory.db` from new Markdown.
