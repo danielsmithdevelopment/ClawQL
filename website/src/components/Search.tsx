@@ -34,6 +34,22 @@ type Autocomplete = AutocompleteApi<
   React.KeyboardEvent
 >
 
+function useSearchHotkey(setOpen: (open: boolean) => void, enabled: boolean) {
+  useEffect(() => {
+    if (!enabled) return
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'k' && (event.metaKey || event.ctrlKey)) {
+        event.preventDefault()
+        setOpen(true)
+      }
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [enabled, setOpen])
+}
+
 function useAutocomplete({ onNavigate }: { onNavigate: () => void }) {
   let id = useId()
   let router = useRouter()
@@ -69,20 +85,18 @@ function useAutocomplete({ onNavigate }: { onNavigate: () => void }) {
         navigate,
       },
       getSources({ query }) {
-        return import('@/mdx/search.mjs').then(({ search }) => {
-          return [
-            {
-              sourceId: 'documentation',
-              getItems() {
-                return search(query, { limit: 5 })
-              },
-              getItemUrl({ item }) {
-                return item.url
-              },
-              onSelect: navigate,
+        return import('@/mdx/search.mjs').then(({ search }) => [
+          {
+            sourceId: 'documentation',
+            getItems() {
+              return search(query, { limit: 5 })
             },
-          ]
-        })
+            getItemUrl({ item }: { item: Result }) {
+              return item.url
+            },
+            onSelect: navigate,
+          },
+        ])
       },
     }),
   )
@@ -337,25 +351,6 @@ function SearchDialog({
     setOpen(false)
   }, [pathname, searchParams, setOpen])
 
-  useEffect(() => {
-    if (open) {
-      return
-    }
-
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === 'k' && (event.metaKey || event.ctrlKey)) {
-        event.preventDefault()
-        setOpen(true)
-      }
-    }
-
-    window.addEventListener('keydown', onKeyDown)
-
-    return () => {
-      window.removeEventListener('keydown', onKeyDown)
-    }
-  }, [open, setOpen])
-
   return (
     <Dialog
       open={open}
@@ -410,9 +405,9 @@ function SearchDialog({
   )
 }
 
-function useSearchProps() {
+function useSearchProps(defaultOpen = false) {
   let buttonRef = useRef<React.ElementRef<'button'>>(null)
-  let [open, setOpen] = useState(false)
+  let [open, setOpen] = useState(defaultOpen)
 
   let setOpenGuarded = useCallback(
     (next: boolean) => {
@@ -440,10 +435,12 @@ function useSearchProps() {
   }
 }
 
-export function Search() {
+export function Search({ defaultOpen = false }: { defaultOpen?: boolean }) {
   let [modifierKey, setModifierKey] = useState<string>()
   let panelId = useId()
-  let { open, buttonProps, dialogProps } = useSearchProps()
+  let { open, buttonProps, dialogProps } = useSearchProps(defaultOpen)
+
+  useSearchHotkey(dialogProps.setOpen, true)
 
   useEffect(() => {
     setModifierKey(
@@ -468,21 +465,29 @@ export function Search() {
           <kbd className="font-sans">K</kbd>
         </kbd>
       </button>
-      <Suspense fallback={null}>
-        <SearchDialog
-          className="hidden lg:block"
-          panelId={panelId}
-          {...dialogProps}
-        />
-      </Suspense>
+      {open ? (
+        <Suspense fallback={null}>
+          <SearchDialog
+            className="hidden lg:block"
+            panelId={panelId}
+            {...dialogProps}
+          />
+        </Suspense>
+      ) : null}
     </div>
   )
 }
 
-export function MobileSearch() {
+export function MobileSearch({
+  defaultOpen = false,
+}: {
+  defaultOpen?: boolean
+}) {
   let { close } = useMobileNavigationStore()
   let panelId = useId()
-  let { open, buttonProps, dialogProps } = useSearchProps()
+  let { open, buttonProps, dialogProps } = useSearchProps(defaultOpen)
+
+  useSearchHotkey(dialogProps.setOpen, true)
 
   return (
     <div className="contents lg:hidden">
@@ -498,14 +503,16 @@ export function MobileSearch() {
         <span className="absolute size-12 pointer-fine:hidden" />
         <SearchIcon className="h-5 w-5 stroke-zinc-900 dark:stroke-white" />
       </button>
-      <Suspense fallback={null}>
-        <SearchDialog
-          className="lg:hidden"
-          panelId={panelId}
-          onNavigate={close}
-          {...dialogProps}
-        />
-      </Suspense>
+      {open ? (
+        <Suspense fallback={null}>
+          <SearchDialog
+            className="lg:hidden"
+            panelId={panelId}
+            onNavigate={close}
+            {...dialogProps}
+          />
+        </Suspense>
+      ) : null}
     </div>
   )
 }

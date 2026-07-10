@@ -1,8 +1,7 @@
 import clsx from 'clsx'
-import { motion, useScroll, useTransform } from 'framer-motion'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
-import { forwardRef } from 'react'
+import { forwardRef, useCallback, useEffect, useState } from 'react'
 
 import { Button } from '@/components/Button'
 import { Logo } from '@/components/Logo'
@@ -34,6 +33,65 @@ const MobileSearch = dynamic(
   },
 )
 
+function useActivateSearchOnIntent() {
+  const [ready, setReady] = useState(false)
+  const [openOnMount, setOpenOnMount] = useState(false)
+  const activate = useCallback(() => setReady(true), [])
+  const activateAndOpen = useCallback(() => {
+    setOpenOnMount(true)
+    setReady(true)
+  }, [])
+
+  useEffect(() => {
+    if (ready) return
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'k' && (event.metaKey || event.ctrlKey)) {
+        event.preventDefault()
+        activateAndOpen()
+      }
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [ready, activateAndOpen])
+
+  return { ready, openOnMount, activate, activateAndOpen }
+}
+
+function SearchPlaceholder({ onActivate }: { onActivate: () => void }) {
+  return (
+    <div className="hidden lg:block lg:max-w-md lg:flex-auto">
+      <button
+        type="button"
+        onClick={onActivate}
+        className="flex h-8 w-full items-center gap-2 rounded-full bg-white pr-3 pl-2 text-sm text-zinc-600 ring-1 ring-zinc-900/10 transition hover:ring-zinc-900/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-claw-cyan dark:bg-white/5 dark:text-zinc-300 dark:ring-white/10 dark:ring-inset dark:hover:ring-white/20 dark:focus-visible:outline-claw-cyan-bright"
+        aria-label="Search documentation"
+      >
+        <span className="ml-1 size-5 shrink-0 rounded-full border border-zinc-400/60 dark:border-zinc-500" />
+        Search documentation…
+        <kbd className="ml-auto text-2xs text-zinc-500 dark:text-zinc-300">
+          <kbd className="font-sans">⌘</kbd>
+          <kbd className="font-sans">K</kbd>
+        </kbd>
+      </button>
+    </div>
+  )
+}
+
+function MobileSearchPlaceholder({ onActivate }: { onActivate: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onActivate}
+      className="relative flex size-6 items-center justify-center rounded-md transition hover:bg-zinc-900/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-claw-cyan lg:hidden dark:hover:bg-white/5 dark:focus-visible:outline-claw-cyan-bright"
+      aria-label="Search documentation"
+    >
+      <span className="size-4 rounded-full border border-zinc-900 dark:border-white" />
+    </button>
+  )
+}
+
 function TopLevelNavItem({
   href,
   children,
@@ -56,18 +114,19 @@ function TopLevelNavItem({
 }
 
 export const Header = forwardRef<
-  React.ComponentRef<'div'>,
-  React.ComponentPropsWithoutRef<typeof motion.div>
+  HTMLDivElement,
+  React.ComponentPropsWithoutRef<'div'>
 >(function Header({ className, ...props }, ref) {
   let { isOpen: mobileNavIsOpen } = useMobileNavigationStore()
   let isInsideMobileNavigation = useIsInsideMobileNavigation()
-
-  let { scrollY } = useScroll()
-  let bgOpacityLight = useTransform(scrollY, [0, 72], ['50%', '90%'])
-  let bgOpacityDark = useTransform(scrollY, [0, 72], ['20%', '80%'])
+  const {
+    ready: searchReady,
+    openOnMount,
+    activateAndOpen,
+  } = useActivateSearchOnIntent()
 
   return (
-    <motion.div
+    <div
       {...props}
       ref={ref}
       className={clsx(
@@ -77,14 +136,8 @@ export const Header = forwardRef<
           'backdrop-blur-xs lg:left-72 xl:left-80 dark:backdrop-blur-sm',
         isInsideMobileNavigation
           ? 'bg-claw-warm-white dark:bg-claw-bg'
-          : 'bg-white/(--bg-opacity-light) dark:bg-claw-bg/(--bg-opacity-dark)',
+          : 'bg-white/80 dark:bg-claw-bg/80',
       )}
-      style={
-        {
-          '--bg-opacity-light': bgOpacityLight,
-          '--bg-opacity-dark': bgOpacityDark,
-        } as React.CSSProperties
-      }
     >
       <div
         className={clsx(
@@ -93,7 +146,11 @@ export const Header = forwardRef<
             'bg-zinc-900/7.5 dark:bg-white/7.5',
         )}
       />
-      <Search />
+      {searchReady ? (
+        <Search defaultOpen={openOnMount} />
+      ) : (
+        <SearchPlaceholder onActivate={activateAndOpen} />
+      )}
       <div className="flex items-center gap-5 lg:hidden">
         <MobileNavigation />
         <CloseButton as={Link} href="/" aria-label="Home">
@@ -113,13 +170,17 @@ export const Header = forwardRef<
         </nav>
         <div className="hidden md:block md:h-5 md:w-px md:bg-zinc-900/10 md:dark:bg-white/15" />
         <div className="flex gap-4">
-          <MobileSearch />
+          {searchReady ? (
+            <MobileSearch defaultOpen={openOnMount} />
+          ) : (
+            <MobileSearchPlaceholder onActivate={activateAndOpen} />
+          )}
           <ThemeToggle />
         </div>
         <div className="hidden min-[416px]:contents">
           <Button href="https://www.npmjs.com/package/clawql-mcp">npm</Button>
         </div>
       </div>
-    </motion.div>
+    </div>
   )
 })

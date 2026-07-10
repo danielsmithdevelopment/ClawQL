@@ -1,7 +1,6 @@
 'use client'
 
 import clsx from 'clsx'
-import { AnimatePresence, motion, useIsPresent } from 'framer-motion'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useRef } from 'react'
@@ -100,7 +99,6 @@ function VisibleSectionHighlight({
     useIsInsideMobileNavigation(),
   )
 
-  let isPresent = useIsPresent()
   let firstVisibleSectionIndex = Math.max(
     0,
     [{ id: '_top' }, ...sections].findIndex(
@@ -108,21 +106,15 @@ function VisibleSectionHighlight({
     ),
   )
   let itemHeight = remToPx(2)
-  let height = isPresent
-    ? Math.max(1, visibleSections.length) * itemHeight
-    : itemHeight
+  let height = Math.max(1, visibleSections.length) * itemHeight
   let top =
     group.links.findIndex((link) => linkMatchesPath(link.href, pathname)) *
       itemHeight +
     firstVisibleSectionIndex * itemHeight
 
   return (
-    <motion.div
-      layout
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1, transition: { delay: 0.2 } }}
-      exit={{ opacity: 0 }}
-      className="absolute inset-x-0 top-0 bg-zinc-800/2.5 will-change-transform dark:bg-white/2.5"
+    <div
+      className="absolute inset-x-0 top-0 bg-zinc-800/2.5 transition-[top,height] duration-200 ease-out dark:bg-white/2.5"
       style={{ borderRadius: 8, height, top }}
     />
   )
@@ -143,12 +135,8 @@ function ActivePageMarker({
   let top = offset + activePageIndex * itemHeight
 
   return (
-    <motion.div
-      layout
-      className="absolute left-2 h-6 w-px bg-claw-cyan"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1, transition: { delay: 0.2 } }}
-      exit={{ opacity: 0 }}
+    <div
+      className="absolute left-2 h-6 w-px bg-claw-cyan transition-[top] duration-200 ease-out"
       style={{ top }}
     />
   )
@@ -181,65 +169,42 @@ function NavigationGroup({
 
   return (
     <li className={clsx('relative mt-6', className)}>
-      <motion.p
-        layout="position"
-        className="text-xs font-semibold text-zinc-900 dark:text-white"
-      >
+      <p className="text-xs font-semibold text-zinc-900 dark:text-white">
         {group.title}
-      </motion.p>
+      </p>
       <div className="relative mt-3 pl-2">
-        <AnimatePresence initial={!isInsideMobileNavigation}>
-          {isActiveGroup && (
-            <VisibleSectionHighlight group={group} pathname={pathname} />
-          )}
-        </AnimatePresence>
-        <motion.div
-          layout
-          className="absolute inset-y-0 left-2 w-px bg-zinc-900/10 dark:bg-white/5"
-        />
-        <AnimatePresence initial={false}>
-          {isActiveGroup && (
-            <ActivePageMarker group={group} pathname={pathname} />
-          )}
-        </AnimatePresence>
+        {isActiveGroup ? (
+          <VisibleSectionHighlight group={group} pathname={pathname} />
+        ) : null}
+        <div className="absolute inset-y-0 left-2 w-px bg-zinc-900/10 dark:bg-white/5" />
+        {isActiveGroup ? (
+          <ActivePageMarker group={group} pathname={pathname} />
+        ) : null}
         <ul role="list" className="border-l border-transparent">
           {group.links.map((link) => (
-            <motion.li key={link.href} layout="position" className="relative">
+            <li key={link.href} className="relative">
               <NavLink
                 href={link.href}
                 active={linkMatchesPath(link.href, pathname)}
               >
                 {link.title}
               </NavLink>
-              <AnimatePresence mode="popLayout" initial={false}>
-                {link.href === pathname && sections.length > 0 && (
-                  <motion.ul
-                    role="list"
-                    initial={{ opacity: 0 }}
-                    animate={{
-                      opacity: 1,
-                      transition: { delay: 0.1 },
-                    }}
-                    exit={{
-                      opacity: 0,
-                      transition: { duration: 0.15 },
-                    }}
-                  >
-                    {sections.map((section) => (
-                      <li key={section.id}>
-                        <NavLink
-                          href={`${link.href}#${section.id}`}
-                          tag={section.tag}
-                          isAnchorLink
-                        >
-                          {section.title}
-                        </NavLink>
-                      </li>
-                    ))}
-                  </motion.ul>
-                )}
-              </AnimatePresence>
-            </motion.li>
+              {link.href === pathname && sections.length > 0 ? (
+                <ul role="list">
+                  {sections.map((section) => (
+                    <li key={section.id}>
+                      <NavLink
+                        href={`${link.href}#${section.id}`}
+                        tag={section.tag}
+                        isAnchorLink
+                      >
+                        {section.title}
+                      </NavLink>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </li>
           ))}
         </ul>
       </div>

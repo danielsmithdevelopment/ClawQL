@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Team vault sync (`clawql sync`)** — push/pull `~/.ClawQL` shared paths (Memory/, sources/, chats/) to **Cloudflare R2** (default), **AWS S3**, or **GCS** (S3-compatible HMAC interop API); provider profiles for endpoint/path-style; vault keys **`gcsHmacAccessId`** / **`gcsHmacSecret`** for GCS; `sync.json` for bucket/prefix; secrets never uploaded. **Auto sync:** `CLAWQL_SYNC_AUTO=1` debounced push after `memory_ingest`; `CLAWQL_SYNC_AUTO_PULL=1` throttled pull before `memory_recall`. **Helm:** `teamSync.*` values on `charts/clawql-mcp` (GCS auto-sets endpoint). **Docs:** [`docs/getting-started/getting-started-for-teams.md`](docs/getting-started/getting-started-for-teams.md) (teams hub), [`docs/getting-started/team-vault-sync.md`](docs/getting-started/team-vault-sync.md); site: [`/getting-started/for-teams`](https://docs.clawql.com/getting-started/for-teams).
 
+### Changed
+
+- **Docs site (7.0 polish)** — Lighthouse perf: static header backdrop, **search on user intent** (placeholder + Cmd/Ctrl+K), deferred WebMCP register, dialog-only autocomplete; webpack search index with lazy query load. **SEO:** hub route metadata; sitemap + `SearchAction` JSON-LD; **Article** schema on case studies (dates, breadcrumbs). **A11y:** expanded axe routes; **CSS-only sidebar nav** (no framer-motion); home skeleton heading fix.
+
 ## [7.0.0] - 2026-07-10
 
 Major release: **opinionated default stack everywhere** (npm + Helm), **vault-first defense in depth**, **ClawQL Operator** with provider-secret reconciliation, **npm package separation at 7.0.0**, observability ADR 0005, and consolidated IDP wave. Release notes: **[`RELEASE_NOTES_v7.0.0.md`](RELEASE_NOTES_v7.0.0.md)**.

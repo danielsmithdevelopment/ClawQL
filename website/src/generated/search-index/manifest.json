@@ -1,0 +1,187 @@
+{
+  "version": 1,
+  "generatedAt": "2026-07-10T06:31:20.300Z",
+  "chunks": [
+    {
+      "id": "agent-setup",
+      "file": "chunk-agent-setup.json",
+      "pages": 1
+    },
+    {
+      "id": "architecture",
+      "file": "chunk-architecture.json",
+      "pages": 1
+    },
+    {
+      "id": "benchmarks",
+      "file": "chunk-benchmarks.json",
+      "pages": 1
+    },
+    {
+      "id": "bundled-specs",
+      "file": "chunk-bundled-specs.json",
+      "pages": 1
+    },
+    {
+      "id": "cache",
+      "file": "chunk-cache.json",
+      "pages": 1
+    },
+    {
+      "id": "case-studies",
+      "file": "chunk-case-studies.json",
+      "pages": 7
+    },
+    {
+      "id": "concepts",
+      "file": "chunk-concepts.json",
+      "pages": 1
+    },
+    {
+      "id": "dashboard-kubernetes",
+      "file": "chunk-dashboard-kubernetes.json",
+      "pages": 1
+    },
+    {
+      "id": "deployment",
+      "file": "chunk-deployment.json",
+      "pages": 3
+    },
+    {
+      "id": "docker-desktop-observability",
+      "file": "chunk-docker-desktop-observability.json",
+      "pages": 1
+    },
+    {
+      "id": "examples",
+      "file": "chunk-examples.json",
+      "pages": 1
+    },
+    {
+      "id": "flink-onyx-sync",
+      "file": "chunk-flink-onyx-sync.json",
+      "pages": 1
+    },
+    {
+      "id": "getting-started",
+      "file": "chunk-getting-started.json",
+      "pages": 5
+    },
+    {
+      "id": "graphql-proxy",
+      "file": "chunk-graphql-proxy.json",
+      "pages": 1
+    },
+    {
+      "id": "guides",
+      "file": "chunk-guides.json",
+      "pages": 1
+    },
+    {
+      "id": "helm",
+      "file": "chunk-helm.json",
+      "pages": 1
+    },
+    {
+      "id": "hitl-label-studio",
+      "file": "chunk-hitl-label-studio.json",
+      "pages": 1
+    },
+    {
+      "id": "home-body.mdx",
+      "file": "chunk-home-body.mdx.json",
+      "pages": 1
+    },
+    {
+      "id": "install",
+      "file": "chunk-install.json",
+      "pages": 1
+    },
+    {
+      "id": "learn",
+      "file": "chunk-learn.json",
+      "pages": 12
+    },
+    {
+      "id": "mcp-clients",
+      "file": "chunk-mcp-clients.json",
+      "pages": 1
+    },
+    {
+      "id": "nats-jetstream",
+      "file": "chunk-nats-jetstream.json",
+      "pages": 1
+    },
+    {
+      "id": "notify",
+      "file": "chunk-notify.json",
+      "pages": 1
+    },
+    {
+      "id": "onyx-knowledge",
+      "file": "chunk-onyx-knowledge.json",
+      "pages": 1
+    },
+    {
+      "id": "openclaw",
+      "file": "chunk-openclaw.json",
+      "pages": 1
+    },
+    {
+      "id": "ouroboros",
+      "file": "chunk-ouroboros.json",
+      "pages": 1
+    },
+    {
+      "id": "quickstart",
+      "file": "chunk-quickstart.json",
+      "pages": 1
+    },
+    {
+      "id": "reference",
+      "file": "chunk-reference.json",
+      "pages": 5
+    },
+    {
+      "id": "resources",
+      "file": "chunk-resources.json",
+      "pages": 3
+    },
+    {
+      "id": "schedule",
+      "file": "chunk-schedule.json",
+      "pages": 1
+    },
+    {
+      "id": "security",
+      "file": "chunk-security.json",
+      "pages": 33
+    },
+    {
+      "id": "spec-configuration",
+      "file": "chunk-spec-configuration.json",
+      "pages": 1
+    },
+    {
+      "id": "tailscale",
+      "file": "chunk-tailscale.json",
+      "pages": 1
+    },
+    {
+      "id": "tools",
+      "file": "chunk-tools.json",
+      "pages": 1
+    },
+    {
+      "id": "troubleshooting",
+      "file": "chunk-troubleshooting.json",
+      "pages": 1
+    },
+    {
+      "id": "vision",
+      "file": "chunk-vision.json",
+      "pages": 1
+    }
+  ],
+  "totalPages": 97
+}

@@ -6,7 +6,6 @@ import {
   DialogPanel,
   TransitionChild,
 } from '@headlessui/react'
-import { motion } from 'framer-motion'
 import { Suspense, createContext, useContext } from 'react'
 import { create } from 'zustand'
 
@@ -68,12 +67,9 @@ function MobileNavigationDialog({
         </TransitionChild>
 
         <TransitionChild>
-          <motion.div
-            layoutScroll
-            className="fixed top-14 bottom-0 left-0 w-full overflow-y-auto bg-claw-warm-white px-4 pt-6 pb-4 shadow-lg ring-1 shadow-zinc-900/10 ring-zinc-900/7.5 duration-500 ease-in-out data-closed:-translate-x-full min-[416px]:max-w-sm sm:px-6 sm:pb-10 dark:bg-claw-bg dark:ring-claw-graph/50"
-          >
+          <div className="fixed top-14 bottom-0 left-0 w-full overflow-y-auto bg-claw-warm-white px-4 pt-6 pb-4 shadow-lg ring-1 shadow-zinc-900/10 ring-zinc-900/7.5 transition duration-500 ease-in-out data-closed:-translate-x-full min-[416px]:max-w-sm sm:px-6 sm:pb-10 dark:bg-claw-bg dark:ring-claw-graph/50">
             <Navigation />
-          </motion.div>
+          </div>
         </TransitionChild>
       </DialogPanel>
     </Dialog>

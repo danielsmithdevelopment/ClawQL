@@ -3,7 +3,6 @@ import { type Metadata, type Viewport } from 'next'
 import { Providers } from '@/app/providers'
 import { Layout } from '@/components/Layout'
 import { SiteStructuredData } from '@/components/SiteStructuredData'
-import { WebMcpRegister } from '@/components/WebMcpRegister'
 import {
   DEFAULT_OG_IMAGE_ALT,
   DEFAULT_OG_IMAGE_HEIGHT,
@@ -97,7 +96,6 @@ export default function RootLayout({
         </a>
         <SiteStructuredData />
         <Providers>
-          <WebMcpRegister />
           <div className="w-full">
             <Layout>{children}</Layout>
           </div>

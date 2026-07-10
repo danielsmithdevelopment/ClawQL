@@ -1,0 +1,108 @@
+import { slugifyWithCounter } from '@sindresorhus/slugify'
+import glob from 'fast-glob'
+import * as fs from 'fs'
+import { toString } from 'mdast-util-to-string'
+import * as path from 'path'
+import { remark } from 'remark'
+import remarkMdx from 'remark-mdx'
+import { filter } from 'unist-util-filter'
+import { SKIP, visit } from 'unist-util-visit'
+
+const slugify = slugifyWithCounter()
+
+function isObjectExpression(node) {
+  return (
+    node.type === 'mdxTextExpression' &&
+    node.data?.estree?.body?.[0]?.expression?.type === 'ObjectExpression'
+  )
+}
+
+function excludeObjectExpressions(tree) {
+  return filter(tree, (node) => !isObjectExpression(node))
+}
+
+function extractSections() {
+  return (tree, { sections }) => {
+    slugify.reset()
+
+    visit(tree, (node) => {
+      if (node.type === 'heading' || node.type === 'paragraph') {
+        const content = toString(excludeObjectExpressions(node))
+        if (node.type === 'heading' && node.depth <= 2) {
+          const hash = node.depth === 1 ? null : slugify(content)
+          sections.push([content, hash, []])
+        } else {
+          sections.at(-1)?.[2].push(content)
+        }
+        return SKIP
+      }
+    })
+  }
+}
+
+const processor = remark().use(remarkMdx).use(extractSections)
+
+/**
+ * @param {string} mdx
+ * @param {Map<string, [string, unknown[]]>} cache
+ * @param {string} cacheKey
+ */
+function sectionsForMdx(mdx, cache, cacheKey) {
+  if (cache.get(cacheKey)?.[0] === mdx) {
+    return cache.get(cacheKey)[1]
+  }
+  const sections = []
+  const vfile = { value: mdx, sections }
+  processor.runSync(processor.parse(vfile), vfile)
+  cache.set(cacheKey, [mdx, sections])
+  return sections
+}
+
+/**
+ * @param {{ appDir: string, trainingDir?: string }} opts
+ * @returns {Array<{ url: string, sections: unknown[] }>}
+ */
+export function collectSearchIndexPages({ appDir, trainingDir }) {
+  const cache = new Map()
+  const files = glob.sync('**/*.mdx', { cwd: appDir })
+  const data = files.map((file) => {
+    const url = '/' + file.replace(/(^|\/)page\.mdx$/, '')
+    const mdx = fs.readFileSync(path.join(appDir, file), 'utf8')
+    return { url, sections: sectionsForMdx(mdx, cache, file) }
+  })
+
+  if (trainingDir && fs.existsSync(trainingDir)) {
+    const trainingFiles = glob.sync('*.mdx', { cwd: trainingDir })
+    for (const tf of trainingFiles) {
+      const slug = tf.replace(/\.mdx$/, '')
+      const cacheKey = `training:${tf}`
+      const mdx = fs.readFileSync(path.join(trainingDir, tf), 'utf8')
+      data.push({
+        url: `/security/best-practices/${slug}`,
+        sections: sectionsForMdx(mdx, cache, cacheKey),
+      })
+    }
+  }
+
+  return data
+}
+
+/** @param {string} url */
+export function chunkIdForUrl(url) {
+  const segment = url.split('/').filter(Boolean)[0]
+  return segment ?? 'root'
+}
+
+/**
+ * @param {Array<{ url: string, sections: unknown[] }>} pages
+ */
+export function groupPagesByChunk(pages) {
+  /** @type {Map<string, Array<{ url: string, sections: unknown[] }>>} */
+  const chunks = new Map()
+  for (const page of pages) {
+    const id = chunkIdForUrl(page.url)
+    if (!chunks.has(id)) chunks.set(id, [])
+    chunks.get(id).push(page)
+  }
+  return chunks
+}

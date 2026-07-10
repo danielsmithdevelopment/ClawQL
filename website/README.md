@@ -9,7 +9,7 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). Global search (⌘K) indexes MDX pages via FlexSearch (`src/mdx/search.mjs`).
+Open [http://localhost:3000](http://localhost:3000). Global search (⌘K) indexes MDX via FlexSearch — build emits lazy-loaded chunks in `src/generated/search-index/` (`scripts/generate-search-index.mjs`, runtime in `src/mdx/search-runtime.ts`).
 
 ## Build
 
