@@ -101,9 +101,7 @@ export async function runAutoPullOnStartup(): Promise<void> {
   try {
     await loadResolvedHomeSyncConfig();
     const result = await runSyncPull({});
-    console.error(
-      `[clawql-mcp] team sync startup pull: downloaded ${result.downloaded} file(s)`
-    );
+    console.error(`[clawql-mcp] team sync startup pull: downloaded ${result.downloaded} file(s)`);
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
     console.error(`[clawql-mcp] team sync startup pull failed: ${msg}`);

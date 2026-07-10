@@ -90,13 +90,13 @@ Config file: **`~/.ClawQL/sync.json`** — safe to commit bucket/prefix in team 
 
 When the MCP server runs with sync configured, enable automatic background sync:
 
-| Variable | Behavior |
-|----------|----------|
-| `CLAWQL_SYNC_AUTO=1` | **Debounced push** after each successful **`memory_ingest`** (default debounce 30s) |
-| `CLAWQL_SYNC_AUTO_DEBOUNCE_MS` | Push debounce interval (default `30000`) |
-| `CLAWQL_SYNC_AUTO_PULL=1` | **Throttled pull** before **`memory_recall`** (default min interval 60s) |
-| `CLAWQL_SYNC_AUTO_PULL_MIN_MS` | Min ms between auto-pulls (default `60000`) |
-| `CLAWQL_SYNC_AUTO_PULL_ON_START=1` | Pull once when MCP starts |
+| Variable                           | Behavior                                                                            |
+| ---------------------------------- | ----------------------------------------------------------------------------------- |
+| `CLAWQL_SYNC_AUTO=1`               | **Debounced push** after each successful **`memory_ingest`** (default debounce 30s) |
+| `CLAWQL_SYNC_AUTO_DEBOUNCE_MS`     | Push debounce interval (default `30000`)                                            |
+| `CLAWQL_SYNC_AUTO_PULL=1`          | **Throttled pull** before **`memory_recall`** (default min interval 60s)            |
+| `CLAWQL_SYNC_AUTO_PULL_MIN_MS`     | Min ms between auto-pulls (default `60000`)                                         |
+| `CLAWQL_SYNC_AUTO_PULL_ON_START=1` | Pull once when MCP starts                                                           |
 
 Auto sync logs to stderr (`[clawql-mcp] team sync auto-push/...`). Failures are non-fatal — ingest/recall still succeed.
 
