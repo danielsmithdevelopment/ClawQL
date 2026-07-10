@@ -56,10 +56,10 @@ helm upgrade --install clawql ./charts/clawql-mcp --set provider=all-providers
 
 All feature toggles use **`CLAWQL_ENABLE_*`**: unset = default for that flag; **`=0`** opt-out; **`=1`** opt-in when default-off.
 
-| Removed / old                         | Replacement                                      |
-| ------------------------------------- | ------------------------------------------------ |
-| **`CLAWQL_DISABLE_HTTP_METRICS`**     | **`CLAWQL_ENABLE_HTTP_METRICS=0`**               |
-| (implicit Loki push when URL set)     | **`CLAWQL_ENABLE_LOKI_PUSH=0`** to opt out       |
+| Removed / old                     | Replacement                                |
+| --------------------------------- | ------------------------------------------ |
+| **`CLAWQL_DISABLE_HTTP_METRICS`** | **`CLAWQL_ENABLE_HTTP_METRICS=0`**         |
+| (implicit Loki push when URL set) | **`CLAWQL_ENABLE_LOKI_PUSH=0`** to opt out |
 
 → [`.env.example`](.env.example) · [configuration.md](docs/readme/configuration.md)
 
@@ -69,20 +69,20 @@ All feature toggles use **`CLAWQL_ENABLE_*`**: unset = default for that flag; **
 
 Horizontal workspace packages publish as separate **`clawql-*`** npm modules at **7.0.0** (replacing **`bundledDependencies`** in **`clawql-mcp@6.4.x`**).
 
-| Package            | Role                                      |
-| ------------------ | ----------------------------------------- |
-| `clawql-core`      | Audit, cache, Merkle, plugin types        |
-| `clawql-auth`      | Gateway auth + upstream credential headers |
-| `clawql-pageindex` | Vectorless hierarchical indexing          |
-| `clawql-api`       | Spec load, search/execute, Presidio hooks |
-| `clawql-memory`    | Vault I/O, embeddings, ingest/recall      |
-| `clawql-documents` | IDP pipeline, classify/extract            |
-| `clawql-automation`| Schedule, notify, Argo workflow/argocd    |
-| `clawql-sandbox`   | `sandbox_exec`                            |
-| `clawql-ouroboros` | Evolutionary loop tools                   |
-| `clawql-operator`  | K8s operator library                      |
-| `clawql-release`   | Layer 0 manifest MVP                      |
-| `clawql-mcp`       | MCP transport (depends on above via semver) |
+| Package             | Role                                        |
+| ------------------- | ------------------------------------------- |
+| `clawql-core`       | Audit, cache, Merkle, plugin types          |
+| `clawql-auth`       | Gateway auth + upstream credential headers  |
+| `clawql-pageindex`  | Vectorless hierarchical indexing            |
+| `clawql-api`        | Spec load, search/execute, Presidio hooks   |
+| `clawql-memory`     | Vault I/O, embeddings, ingest/recall        |
+| `clawql-documents`  | IDP pipeline, classify/extract              |
+| `clawql-automation` | Schedule, notify, Argo workflow/argocd      |
+| `clawql-sandbox`    | `sandbox_exec`                              |
+| `clawql-ouroboros`  | Evolutionary loop tools                     |
+| `clawql-operator`   | K8s operator library                        |
+| `clawql-release`    | Layer 0 manifest MVP                        |
+| `clawql-mcp`        | MCP transport (depends on above via semver) |
 
 Publish order: [`scripts/release/npm-publish-order.json`](scripts/release/npm-publish-order.json). Smoke: [`scripts/dev/test-npm-pack-install.sh`](scripts/dev/test-npm-pack-install.sh). **Not published to npm yet** — install from repo checkout or wait for **`clawql-mcp@7.0.0`** on registry.
 
@@ -92,11 +92,11 @@ Publish order: [`scripts/release/npm-publish-order.json`](scripts/release/npm-pu
 
 Accepted architecture for **Langfuse as default work-trace store** with profile-based deployment ([#252](https://github.com/danielsmithdevelopment/ClawQL/issues/252)):
 
-| Profile      | Use case                         | Langfuse emission                          |
-| ------------ | -------------------------------- | ------------------------------------------ |
-| **`bundled`**  | Tier 1 Compose, local k8s lab    | On by default (`CLAWQL_ENABLE_LANGFUSE=0` to opt out) |
-| **`external`** | Production / existing stack      | On when `LANGFUSE_*` set; same opt-out      |
-| **`minimal`**  | Metrics-only / strict policy     | Off                                        |
+| Profile        | Use case                      | Langfuse emission                                     |
+| -------------- | ----------------------------- | ----------------------------------------------------- |
+| **`bundled`**  | Tier 1 Compose, local k8s lab | On by default (`CLAWQL_ENABLE_LANGFUSE=0` to opt out) |
+| **`external`** | Production / existing stack   | On when `LANGFUSE_*` set; same opt-out                |
+| **`minimal`**  | Metrics-only / strict policy  | Off                                                   |
 
 **7.0.0 ships ADR + docs + env catalog** — runtime profile wiring is Phase 1 of [`7.0-observability-profiles-plan.md`](docs/observability/7.0-observability-profiles-plan.md). Existing signals unchanged: **`GET /metrics`** on by default; OTLP and Loki push remain opt-in via their env vars.
 
