@@ -225,17 +225,7 @@ jobs:
       - name: Install skopeo
         run: sudo apt-get update && sudo apt-get install -y skopeo
 
-      # `dashboard/Dockerfile` copies `.env.example` into the image for `prebuild` (env catalog). Build context is `./dashboard` only, so stage the repo-root catalog source first.
-      - name: Stage repo sources for dashboard Docker context
-        run: |
-          cp "${GITHUB_WORKSPACE}/.env.example" "${GITHUB_WORKSPACE}/dashboard/.env.example"
-          mkdir -p "${GITHUB_WORKSPACE}/dashboard/scripts/kubernetes"
-          cp "${GITHUB_WORKSPACE}/scripts/kubernetes/provider-vault-key-catalog.ts" \
-            "${GITHUB_WORKSPACE}/dashboard/scripts/kubernetes/provider-vault-key-catalog.ts"
-          mkdir -p "${GITHUB_WORKSPACE}/dashboard/src/provider-vault"
-          cp "${GITHUB_WORKSPACE}/src/provider-vault/catalog.ts" \
-            "${GITHUB_WORKSPACE}/dashboard/src/provider-vault/catalog.ts"
-
+      # `dashboard/Dockerfile` build context is repo root (clawql-api file: dep + catalog generators).
       - name: Build OCI layout (single artifact — scanned and pushed)
         run: |
           set -euo pipefail
@@ -250,7 +240,7 @@ jobs:
             --cache-to type=gha,mode=max,scope=docker-publish-dashboard \
             --provenance=mode=max \
             --sbom=true \
-            ./dashboard
+            .
 
       - name: Trivy scan OCI layout (HIGH / CRITICAL — before registry push)
         run: |

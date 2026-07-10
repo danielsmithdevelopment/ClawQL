@@ -1,6 +1,6 @@
 ## clawql-mcp 7.0.0
 
-**npm:** packages aligned at **7.0.0** — publish pending (see [§11 npm distribution](docs/design/modularization-implementation-status.md#11-npm-distribution-70--separate-packages))  
+**npm:** [`clawql-mcp@7.0.0`](https://www.npmjs.com/package/clawql-mcp/v/7.0.0) on npmjs.com (workspace packages ship inside the tarball via **`bundledDependencies`** until separate **`clawql-*`** modules are linked for OIDC publish)  
 **Full changelog:** [CHANGELOG.md#700---2026-07-10](https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md#700---2026-07-10)  
 **Release date:** 2026-07-10
 
@@ -67,7 +67,9 @@ All feature toggles use **`CLAWQL_ENABLE_*`**: unset = default for that flag; **
 
 ## npm distribution (7.0.0)
 
-Horizontal workspace packages publish as separate **`clawql-*`** npm modules at **7.0.0** (replacing **`bundledDependencies`** in **`clawql-mcp@6.4.x`**).
+**`clawql-mcp@7.0.0`** is on npm. Install with `npm install clawql-mcp@7.0.0` or `npx -p clawql-mcp@7.0.0 clawql-mcp`.
+
+Split **`clawql-*`** workspace packages are **not** published as separate npm modules yet (OIDC trusted publishing requires each package to be linked on npmjs.com first). The release workflow falls back to **`bundledDependencies`** inside the **`clawql-mcp`** tarball — same install story as **6.4.x**, with all eleven horizontal packages vendored under `node_modules/clawql-mcp/node_modules/`.
 
 | Package             | Role                                        |
 | ------------------- | ------------------------------------------- |
@@ -82,9 +84,9 @@ Horizontal workspace packages publish as separate **`clawql-*`** npm modules at 
 | `clawql-ouroboros`  | Evolutionary loop tools                     |
 | `clawql-operator`   | K8s operator library                        |
 | `clawql-release`    | Layer 0 manifest MVP                        |
-| `clawql-mcp`        | MCP transport (depends on above via semver) |
+| `clawql-mcp`        | MCP transport (bundles workspace packages)  |
 
-Publish order: [`scripts/release/npm-publish-order.json`](scripts/release/npm-publish-order.json). Smoke: [`scripts/dev/test-npm-pack-install.sh`](scripts/dev/test-npm-pack-install.sh). **Not published to npm yet** — install from repo checkout or wait for **`clawql-mcp@7.0.0`** on registry.
+Publish order (when split packages go live): [`scripts/release/npm-publish-order.json`](scripts/release/npm-publish-order.json). Smoke: [`scripts/dev/test-npm-pack-install.sh`](scripts/dev/test-npm-pack-install.sh).
 
 ---
 
@@ -217,7 +219,7 @@ Docling, LangExtract, IDP pipeline runner, NATS/KEDA worker, Langfuse→Ouroboro
 4. `clawql onboard --interactive` or import provider KV
 5. `helm upgrade` — choose **`default`** or **`all-providers`**
 6. Operator: confirm **`ProviderSecretsReady=True`**
-7. npm: expect separate **`clawql-*`** packages once **7.0.0** publishes (no **`bundledDependencies`** tarball)
+7. npm: **`clawql-mcp@7.0.0`** on npm (bundled workspace packages); separate **`clawql-*`** modules when registry linking is complete
 
 ---
 
@@ -225,7 +227,7 @@ Docling, LangExtract, IDP pipeline runner, NATS/KEDA worker, Langfuse→Ouroboro
 
 ```bash
 curl -fsSL https://clawql.com/install | bash
-# or (after npm publish):
+# or:
 npm install clawql-mcp@7.0.0
 npx clawql onboard --interactive
 npx clawql-mcp-http
