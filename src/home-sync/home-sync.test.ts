@@ -151,3 +151,18 @@ describe("resolveHomeSyncConfig", () => {
     }
   });
 });
+
+describe("sync pull manifest verification", () => {
+  it("assertManifestSha256 passes matching digest", async () => {
+    const { assertManifestSha256, sha256HexBuffer } = await import("./verify.js");
+    const body = Buffer.from("# note\n", "utf8");
+    assertManifestSha256("Memory/note.md", body, sha256HexBuffer(body));
+  });
+
+  it("assertManifestSha256 throws on mismatch", async () => {
+    const { assertManifestSha256 } = await import("./verify.js");
+    expect(() =>
+      assertManifestSha256("Memory/note.md", Buffer.from("tampered"), "a".repeat(64))
+    ).toThrow(/Team sync verification failed/);
+  });
+});

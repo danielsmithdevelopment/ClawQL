@@ -1,0 +1,140 @@
+# Golden host image pipeline — validate on PR, cloud builds on release dispatch.
+# VM images complement the GHCR container golden pipeline (Cosign on containers; AMI/GCP IDs recorded in workflow summary).
+
+name: Packer golden host
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "packer/**"
+      - "scripts/packer/**"
+      - "src/home-sync/**"
+      - ".github/workflows/packer-publish.yml"
+  pull_request:
+    paths:
+      - "packer/**"
+      - "scripts/packer/**"
+      - "src/home-sync/**"
+      - ".github/workflows/packer-publish.yml"
+  workflow_dispatch:
+    inputs:
+      clawql_version:
+        description: "clawql-mcp npm version or dist-tag"
+        required: false
+        default: "latest"
+      build_aws:
+        description: "Build AWS AMI (requires secrets)"
+        type: boolean
+        default: false
+      build_gcp:
+        description: "Build GCP image (requires secrets)"
+        type: boolean
+        default: false
+      aws_region:
+        description: "AWS region for AMI"
+        required: false
+        default: "us-east-1"
+      gcp_project_id:
+        description: "GCP project id"
+        required: false
+        default: ""
+
+concurrency:
+  group: packer-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate templates & scripts
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+
+      - name: Install ShellCheck
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y shellcheck unzip
+
+      - name: Golden host script + packer validate
+        run: bash scripts/packer/test-golden-host-scripts.sh
+
+  test-sync-verify:
+    name: Sync pull verification tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+        with:
+          node-version: "25"
+          cache: npm
+
+      - run: npm ci
+      - run: npm test -- --run src/home-sync/home-sync.test.ts
+
+  build-aws:
+    name: Build AWS AMI
+    needs: [validate, test-sync-verify]
+    if: github.event_name == 'workflow_dispatch' && inputs.build_aws == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+
+      - name: Install Packer
+        run: |
+          PACKER_VERSION=1.11.2
+          curl -fsSL "https://releases.hashicorp.com/packer/${PACKER_VERSION}/packer_${PACKER_VERSION}_linux_amd64.zip" -o /tmp/packer.zip
+          unzip -qo /tmp/packer.zip -d /usr/local/bin
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a16d10021e7ce35612f3f6a7
+        with:
+          aws-access-key-id: ${{ secrets.PACKER_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.PACKER_AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ inputs.aws_region }}
+
+      - name: Packer build AWS
+        working-directory: packer
+        run: |
+          packer init .
+          packer build -only=amazon-ebs.clawql \
+            -var "clawql_version=${{ inputs.clawql_version }}" \
+            -var "aws_region=${{ inputs.aws_region }}" .
+
+  build-gcp:
+    name: Build GCP image
+    needs: [validate, test-sync-verify]
+    if: github.event_name == 'workflow_dispatch' && inputs.build_gcp == true && inputs.gcp_project_id != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+
+      - name: Install Packer
+        run: |
+          PACKER_VERSION=1.11.2
+          curl -fsSL "https://releases.hashicorp.com/packer/${PACKER_VERSION}/packer_${PACKER_VERSION}_linux_amd64.zip" -o /tmp/packer.zip
+          unzip -qo /tmp/packer.zip -d /usr/local/bin
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.PACKER_GCP_CREDENTIALS_JSON }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Packer build GCP
+        working-directory: packer
+        run: |
+          packer init .
+          packer build -only=googlecompute.clawql \
+            -var "clawql_version=${{ inputs.clawql_version }}" \
+            -var "gcp_project_id=${{ inputs.gcp_project_id }}" .
