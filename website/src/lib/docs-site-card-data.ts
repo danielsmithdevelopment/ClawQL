@@ -78,7 +78,7 @@ export const learnModuleSiteCards: Array<ReferenceCard> = [
     href: '/learn/sandbox-exec',
     name: 'Sandbox exec',
     description:
-      'Optional `sandbox_exec`: Seatbelt, Docker, or Cloudflare bridge — isolated snippets and safety notes.',
+      'Optional sandbox_exec MCP tool; pair with Local agent sandbox for full harness containment.',
     icon: ShapesIcon,
     pattern: {
       y: 12,

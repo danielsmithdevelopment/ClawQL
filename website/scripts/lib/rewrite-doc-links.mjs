@@ -19,6 +19,10 @@ export const DOC_SITE_ROUTES = {
     '/getting-started/for-teams',
   'docs/getting-started/team-vault-sync.md':
     '/getting-started/team-vault-sync',
+  'docs/getting-started/golden-host-images.md':
+    '/getting-started/golden-host-images',
+  'docs/getting-started/local-agent-sandbox.md':
+    '/getting-started/local-agent-sandbox',
   'docs/deployment/clawql-deployment-operations-guide.md':
     '/deployment/operations-guide',
   'docs/deployment/helm.md': '/helm',

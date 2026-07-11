@@ -86,7 +86,7 @@ export const pluginPages: PluginPageMeta[] = [
     slug: 'sandbox',
     title: 'Sandbox',
     description:
-      'sandbox_exec — isolated code snippets via Kata, Docker, Seatbelt, or bridge. Register with CLAWQL_ENABLE_SANDBOX=1.',
+      'sandbox_exec — isolated code snippets via Kata, Docker, Seatbelt, or bridge. Local agent containment via clawql sandbox init.',
     status: 'opt-in',
     package: 'clawql-sandbox',
     prev: 'automation',
