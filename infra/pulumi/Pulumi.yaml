@@ -1,0 +1,7 @@
+name: clawql-provision
+description: Provision ClawQL golden hosts and team vault infrastructure (AWS / GCP / Cloudflare)
+runtime:
+  name: nodejs
+  options:
+    typescript: true
+main: src/index.ts

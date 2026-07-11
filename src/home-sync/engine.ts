@@ -14,6 +14,7 @@ import type {
   SyncRunResult,
 } from "./types.js";
 import type { ObjectStorageClient } from "./object-storage.js";
+import { assertManifestSha256 } from "./verify.js";
 
 export type SyncRunOptions = {
   dryRun?: boolean;
@@ -96,9 +97,11 @@ async function applyDownloads(
   config: ResolvedHomeSyncConfig,
   home: string,
   actions: SyncPlanEntry[],
-  dryRun: boolean
+  dryRun: boolean,
+  remote: SyncManifest | null
 ): Promise<number> {
   let count = 0;
+  const remoteFiles = remote?.files ?? {};
   for (const a of actions) {
     if (a.action !== "download") continue;
     const key = objectKeyForRelPath(config.prefix ?? "", a.path);
@@ -108,6 +111,10 @@ async function applyDownloads(
     }
     const body = await client.getBytes(key);
     if (!body) continue;
+    const expected = remoteFiles[a.path]?.sha256;
+    if (expected) {
+      assertManifestSha256(a.path, body, expected);
+    }
     const abs = absPathForRel(home, a.path);
     await mkdir(dirname(abs), { recursive: true });
     await writeFile(abs, body);
@@ -151,7 +158,7 @@ export async function runSyncPull(opts: SyncRunOptions = {}): Promise<SyncRunRes
   const localHashes = new Map([...local.entries()].map(([k, v]) => [k, { sha256: v.sha256 }]));
   const actions = planPull(localHashes, remote, Boolean(opts.force));
   const dryRun = Boolean(opts.dryRun);
-  const downloaded = await applyDownloads(client, config, config.home, actions, dryRun);
+  const downloaded = await applyDownloads(client, config, config.home, actions, dryRun, remote);
   return summarize(config, actions, 0, downloaded, dryRun);
 }
 

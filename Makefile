@@ -94,7 +94,13 @@ distribution-npm-pack-test:
 mcp-docker-workspace-test:
 	@bash scripts/dev/test-docker-mcp-workspace-deps.sh
 
-lint-k8s-manifests: helm-lint helm-ui-template-tests helm-workflow-template-tests helm-argocd-template-tests helm-nats-keda-template-tests helm-vault-secrets-template-tests helm-team-sync-template-tests helm-docling-template-tests helm-idp-template-tests helm-operator-template-tests compose-lending-config-test compose-tier1-config-test kustomize-local-lint
+lint-k8s-manifests: helm-lint helm-ui-template-tests helm-workflow-template-tests helm-argocd-template-tests helm-nats-keda-template-tests helm-vault-secrets-template-tests helm-team-sync-template-tests helm-docling-template-tests helm-idp-template-tests helm-operator-template-tests compose-lending-config-test compose-tier1-config-test kustomize-local-lint packer-golden-host-tests pulumi-provision-tests
+
+packer-golden-host-tests:
+	@bash scripts/packer/test-golden-host-scripts.sh
+
+pulumi-provision-tests:
+	@bash scripts/pulumi/test-provision-unit.sh
 
 # Local desktop k8s: default Helm + Istio ambient + Gateway/VS + heavy observability; CLAWQL_LOCAL_K8S_ISTIO=0 skips mesh
 local-k8s-up:

@@ -20,7 +20,8 @@
         "node": ">=22"
     },
     "workspaces": [
-        "packages/*"
+        "packages/*",
+        "infra/pulumi"
     ],
     "repository": {
         "type": "git",

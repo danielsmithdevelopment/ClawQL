@@ -51,6 +51,7 @@ This directory is organized by purpose so operational guides, product docs, and 
 - `getting-started/local-provider-vault.md` — ~/.ClawQL secrets vault + memory home
 - `getting-started/getting-started-for-teams.md` — **teams:** shared object storage + observability for shared Memory
 - `getting-started/team-vault-sync.md` — `clawql sync` push/pull (R2 / S3 / GCS), Helm `teamSync.*`
+- `getting-started/golden-host-images.md` — Packer golden hosts for managed AWS/GCP/Cloudflare tiers
 - `getting-started/clawql-7-setup-guide.md` — 7.0 upgrade: default stack, Vault, operator auth
 - `getting-started/phase-1-platform-guide.md` — **teach Phase 1:** clawql-auth, pageindex, Presidio, Tier 1 Compose
 - `getting-started/custom-sources.md` — URL/CLI custom sources (7.0)
@@ -114,7 +115,7 @@ This directory is organized by purpose so operational guides, product docs, and 
 
 ## Architecture / ADR / Design
 
-- ADRs: `adr/` — includes [**0002 Multi-protocol supergraph**](adr/0002-multi-protocol-supergraph.md) (native GraphQL + gRPC merged via **`CLAWQL_GRAPHQL_SOURCES`** / **`CLAWQL_GRPC_SOURCES`**; epic [#178](https://github.com/danielsmithdevelopment/ClawQL/issues/178)); [**0003 Tempo + Dragonfly for local ops**](adr/0003-tempo-dragonfly-local-operations.md) (Istio Docker Desktop lab: **Tempo-only** traces; **`clawql-mcp`**: **Dragonfly-only** Redis-protocol brokers); [**0004 Argo Workflows + Argo CD providers**](adr/0004-argo-cd-workflows-clawql-pipelines.md) (shipped **`workflow`** + **`argocd`** tools; roadmap [`roadmap/argo-workflows-cd-provider.md`](roadmap/argo-workflows-cd-provider.md), [#239](https://github.com/danielsmithdevelopment/ClawQL/issues/239))
+- ADRs: `adr/` — includes [**0006 Golden host images (Packer)**](adr/0006-golden-host-images-packer.md) (managed tier VM bootstrap + team vault seeding); [**0002 Multi-protocol supergraph**](adr/0002-multi-protocol-supergraph.md) (native GraphQL + gRPC merged via **`CLAWQL_GRAPHQL_SOURCES`** / **`CLAWQL_GRPC_SOURCES`**; epic [#178](https://github.com/danielsmithdevelopment/ClawQL/issues/178)); [**0003 Tempo + Dragonfly for local ops**](adr/0003-tempo-dragonfly-local-operations.md) (Istio Docker Desktop lab: **Tempo-only** traces; **`clawql-mcp`**: **Dragonfly-only** Redis-protocol brokers); [**0004 Argo Workflows + Argo CD providers**](adr/0004-argo-cd-workflows-clawql-pipelines.md) (shipped **`workflow`** + **`argocd`** tools; roadmap [`roadmap/argo-workflows-cd-provider.md`](roadmap/argo-workflows-cd-provider.md), [#239](https://github.com/danielsmithdevelopment/ClawQL/issues/239))
 - Design docs: [`design/effect-ts-modularization-rearchitecture-plan.md`](design/effect-ts-modularization-rearchitecture-plan.md) (Effect-TS + modularization + plugins), [`design/OPENAPI_TO_GRAPHQL_UPSTREAM.md`](design/OPENAPI_TO_GRAPHQL_UPSTREAM.md), [`design/graphql-mesh-node-compatibility.md`](design/graphql-mesh-node-compatibility.md); archived drafts: [`design/archive/`](design/archive/); vector / recall design notes live under **`memory/`** (e.g. [`memory/vector-search-design.md`](memory/vector-search-design.md))
 
 ## Content Collections
