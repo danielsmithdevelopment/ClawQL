@@ -41,6 +41,28 @@ export function isBundledGraphqlProvider(p: BundledProvider): p is BundledGraphq
   return p.format === "graphql";
 }
 
+function normalizeGraphqlEndpoint(endpoint: string): string {
+  const trimmed = endpoint.trim();
+  try {
+    const u = new URL(trimmed);
+    return `${u.origin}${u.pathname}`.replace(/\/$/, "");
+  } catch {
+    return trimmed.replace(/\/$/, "");
+  }
+}
+
+/** Match a custom GraphQL endpoint env value to a bundled provider (e.g. Linear). */
+export function resolveBundledGraphqlByEndpoint(
+  endpoint: string
+): BundledGraphqlProvider | undefined {
+  const target = normalizeGraphqlEndpoint(endpoint);
+  for (const p of Object.values(BUNDLED_PROVIDERS)) {
+    if (!isBundledGraphqlProvider(p)) continue;
+    if (normalizeGraphqlEndpoint(p.graphqlEndpoint) === target) return p;
+  }
+  return undefined;
+}
+
 export type ProviderGroupOpenApiItem = { kind: "openapi"; abs: string; label: string };
 export type ProviderGroupGraphqlItem = {
   kind: "graphql";
