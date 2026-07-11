@@ -44,6 +44,9 @@ next-env.d.ts
 # OpenNext
 .open-next
 
+# Generated at prebuild (see scripts/generate-agent-markdown.mjs)
+/public/agent-markdown.json
+
 # Wrangler local state and secrets (never commit)
 .wrangler/
 .dev.vars

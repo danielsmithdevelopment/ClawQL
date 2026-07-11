@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-import agentMarkdown from '@/generated/agent-markdown.json'
-
-type AgentMarkdownMap = Record<string, string>
-
-const map = agentMarkdown as AgentMarkdownMap
+import { loadAgentMarkdownMap } from '@/lib/agent-markdown-loader'
 
 function tokenEstimate(body: string) {
   return Math.ceil(body.length / 4)
@@ -14,13 +10,14 @@ function tokenEstimate(body: string) {
  * Internal: markdown bodies for agent negotiation (rewritten from middleware).
  * @see https://developers.cloudflare.com/fundamentals/reference/markdown-for-agents/
  */
-export function GET(request: NextRequest) {
+export async function GET(request: NextRequest) {
   const raw = request.nextUrl.searchParams.get('path') ?? '/'
   if (raw.includes('..') || !raw.startsWith('/')) {
     return new NextResponse('Bad Request', { status: 400 })
   }
 
   const path = raw === '' ? '/' : raw
+  const map = await loadAgentMarkdownMap()
   const md = map[path]
   if (md === undefined) {
     return new NextResponse('Not Found', { status: 404 })
