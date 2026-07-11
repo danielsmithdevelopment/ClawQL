@@ -1,5 +1,6 @@
 import clsx from 'clsx'
 import Link from 'next/link'
+import { Children, isValidElement } from 'react'
 
 import { FeedbackClientIsland } from '@/components/FeedbackClientIsland'
 import { Heading } from '@/components/Heading'
@@ -106,15 +107,42 @@ export function Col({
   )
 }
 
+type TableRowProps = { children?: React.ReactNode }
+type TableSectionProps = { children?: React.ReactNode }
+
+/** Count columns from the first header/data row for responsive table layout. */
+function countTableColumns(children: React.ReactNode): number {
+  let cols = 0
+  Children.forEach(children, (section) => {
+    if (!isValidElement<TableSectionProps>(section)) return
+    Children.forEach(section.props.children, (row) => {
+      if (!isValidElement<TableRowProps>(row) || row.type !== 'tr') return
+      let rowCols = 0
+      Children.forEach(row.props.children, (cell) => {
+        if (isValidElement(cell) && (cell.type === 'th' || cell.type === 'td')) {
+          rowCols += 1
+        }
+      })
+      cols = Math.max(cols, rowCols)
+    })
+  })
+  return cols
+}
+
 /** Scrollable table wrapper — keeps column alignment on narrow viewports. */
 export function table({
   children,
   className,
   ...props
 }: React.ComponentPropsWithoutRef<'table'>) {
+  const cols = countTableColumns(children)
   return (
     <div className="docs-table-scroll not-prose">
-      <table className={clsx('docs-table', className)} {...props}>
+      <table
+        className={clsx('docs-table', cols ? `docs-table-cols-${cols}` : null, className)}
+        data-cols={cols > 0 ? cols : undefined}
+        {...props}
+      >
         {children}
       </table>
     </div>

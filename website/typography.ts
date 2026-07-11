@@ -310,6 +310,17 @@ export default {
             boxShadow: 'inset 0 0 0 1px var(--tw-prose-code-ring)',
             backgroundColor: 'var(--tw-prose-code-bg)',
             fontSize: theme('fontSize.2xs')[0],
+            overflowWrap: 'anywhere',
+            wordBreak: 'break-word',
+          },
+          pre: {
+            maxWidth: '100%',
+            overflowX: 'auto',
+          },
+          'pre code': {
+            whiteSpace: 'pre',
+            wordBreak: 'normal',
+            overflowWrap: 'normal',
           },
           ':is(a, h1, h2, h3, blockquote, thead th) code': {
             color: 'inherit',
