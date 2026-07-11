@@ -1,5 +1,4 @@
 import { chmod, mkdir, writeFile } from "node:fs/promises";
-import { homedir } from "node:os";
 import { resolve } from "node:path";
 import { writeClaudeSandboxSettings } from "./claude-sandbox-settings.js";
 import {

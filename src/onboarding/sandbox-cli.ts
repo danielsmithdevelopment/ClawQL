@@ -121,7 +121,7 @@ export async function runSandboxStatusCmd(home?: string): Promise<number> {
       await access(p, constants.R_OK);
       exists = true;
     } catch {
-      exists = false;
+      /* profile missing */
     }
     const layer =
       h === "claude"
