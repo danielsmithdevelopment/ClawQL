@@ -265,6 +265,11 @@ export default {
             overflowWrap: 'anywhere',
             verticalAlign: 'top',
           },
+          ':is(.docs-table th, .docs-table td) code': {
+            whiteSpace: 'normal',
+            wordBreak: 'break-word',
+            overflowWrap: 'anywhere',
+          },
           ':is(tbody, tfoot) td:first-child': {
             paddingLeft: '0',
           },

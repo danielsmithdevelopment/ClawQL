@@ -97,22 +97,47 @@
     border-collapse: collapse;
   }
 
+  /* Force cell content to respect column bounds (prevents overlap). */
+  .prose .docs-table :is(th, td) {
+    max-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    hyphens: auto;
+  }
+
+  .prose .docs-table code {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
   /* Two-column reference tables (Command | Purpose, Variable | Purpose, …) */
   .prose
     .docs-table:has(thead tr > th:nth-child(2):last-child)
     :is(th, td):nth-child(1) {
-    width: 38%;
+    width: 42%;
+    min-width: 10.5rem;
   }
 
   .prose
     .docs-table:has(thead tr > th:nth-child(2):last-child)
     :is(th, td):nth-child(2) {
-    width: 62%;
+    width: 58%;
+    min-width: 12rem;
   }
 
-  /* Four-column provider matrices */
+  .prose .docs-table:has(thead tr > th:nth-child(2):last-child) {
+    min-width: 22.5rem;
+  }
+
+  /* Four-column provider matrices — scroll instead of squashing */
+  .prose .docs-table:has(thead tr > th:nth-child(4):last-child) {
+    min-width: 44rem;
+  }
+
   .prose .docs-table:has(thead tr > th:nth-child(4):last-child) :is(th, td) {
     width: 25%;
+    min-width: 9rem;
   }
 
   /* Three-column tables */
