@@ -131,6 +131,8 @@ clawql doctor
 
 Registered with **`memory_ingest`** / **`memory_recall`** (hide all with **`CLAWQL_ENABLE_MEMORY=0`**). Requires sync bucket + credentials. Use from **Cursor Cloud Agents** (including iOS) instead of shell **`clawql sync`**.
 
+**Cursor iOS:** Cloud Agents have no local **`~/.ClawQL`** on the phone — configure dashboard Secrets, stdio MCP, and end-of-session **`memory_sync`**. Full walkthrough: [cursor-ios-cloud-agent.md](./cursor-ios-cloud-agent.md).
+
 | Field       | Default | Meaning                                                                |
 | ----------- | ------- | ---------------------------------------------------------------------- |
 | `direction` | `auto`  | `auto`: pull remote, then push local. `pull` or `push`: one direction. |
@@ -247,6 +249,7 @@ Template smoke: `make helm-team-sync-template-tests`.
 
 ## Related
 
+- [Cursor iOS + Cloud Agent](./cursor-ios-cloud-agent.md)
 - [Local provider vault](./local-provider-vault.md)
 - [Memory / Obsidian](../memory/memory-obsidian.md)
 - [Cloudflare provider](../providers/cloudflare-onboarding.md) (API `execute`, not sync)

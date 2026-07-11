@@ -34,6 +34,8 @@ CLAWQL_MCP_URL=http://127.0.0.1:8080 npx -p clawql-mcp clawql doctor
 
 Paste the copy-paste block from [agent-setup-prompt.md](../getting-started/agent-setup-prompt.md) into Cursor or Claude for a guided first run.
 
+**Cursor iOS:** use [Cloud Agent + team vault sync](../getting-started/cursor-ios-cloud-agent.md) — stdio MCP on the agent VM, R2/S3/GCS for durable **`Memory/`**, and **`memory_sync`** between sessions.
+
 **Vault-first CLI (recommended):**
 
 ```bash

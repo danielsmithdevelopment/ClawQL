@@ -19,6 +19,8 @@ export const DOC_SITE_ROUTES = {
     '/getting-started/for-teams',
   'docs/getting-started/team-vault-sync.md':
     '/getting-started/team-vault-sync',
+  'docs/getting-started/cursor-ios-cloud-agent.md':
+    '/getting-started/cursor-ios-cloud-agent',
   'docs/getting-started/golden-host-images.md':
     '/getting-started/golden-host-images',
   'docs/getting-started/local-agent-sandbox.md':

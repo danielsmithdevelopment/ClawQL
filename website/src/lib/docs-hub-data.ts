@@ -205,6 +205,13 @@ export const deploymentHubCards: Array<ReferenceCard> = [
     icon: BookIcon,
   }),
   card({
+    href: '/getting-started/cursor-ios-cloud-agent',
+    name: 'Cursor iOS + Cloud Agent',
+    description:
+      'ClawQL from the Cursor iOS app — stdio MCP on the agent VM, team bucket, memory_sync.',
+    icon: BookIcon,
+  }),
+  card({
     href: '/getting-started/golden-host-images',
     name: 'Golden host images (Packer + Pulumi)',
     description:
