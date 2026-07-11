@@ -80,26 +80,22 @@ describe("spec-loader native GraphQL env without native-only flag", () => {
     resetSpecCache();
   });
 
-  it(
-    "falls back to bundled defaults when CLAWQL_GRAPHQL_SOURCES has a missing schemaPath",
-    async () => {
-      process.env.CLAWQL_GRAPHQL_SOURCES = JSON.stringify([
-        {
-          name: "linear",
-          endpoint: "https://api.linear.app/graphql",
-          schemaPath: "/definitely/missing/linear.graphql",
-        },
-      ]);
-      vi.mocked(fetch).mockRejectedValue(new Error("introspection blocked"));
+  it("falls back to bundled defaults when CLAWQL_GRAPHQL_SOURCES has a missing schemaPath", async () => {
+    process.env.CLAWQL_GRAPHQL_SOURCES = JSON.stringify([
+      {
+        name: "linear",
+        endpoint: "https://api.linear.app/graphql",
+        schemaPath: "/definitely/missing/linear.graphql",
+      },
+    ]);
+    vi.mocked(fetch).mockRejectedValue(new Error("introspection blocked"));
 
-      const err = vi.spyOn(console, "error").mockImplementation(() => {});
-      const loaded = await loadSpec();
-      err.mockRestore();
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
+    const loaded = await loadSpec();
+    err.mockRestore();
 
-      expect(loaded.rawSource).not.toMatchObject({ kind: "native-protocols-only" });
-      expect(loaded.operations.length).toBeGreaterThan(0);
-      expect(loaded.operations.some((o) => o.protocolKind !== "graphql")).toBe(true);
-    },
-    120_000
-  );
+    expect(loaded.rawSource).not.toMatchObject({ kind: "native-protocols-only" });
+    expect(loaded.operations.length).toBeGreaterThan(0);
+    expect(loaded.operations.some((o) => o.protocolKind !== "graphql")).toBe(true);
+  }, 120_000);
 });

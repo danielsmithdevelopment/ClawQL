@@ -101,12 +101,12 @@ When Stage 1 is active:
 
 #### Native GraphQL / gRPC pitfalls
 
-| Mistake | Safe default behavior |
-|--------|------------------------|
-| **`CLAWQL_GRAPHQL_SOURCES`** with a bad **`schemaPath`** | Path ignored; HTTP introspection attempted; bundled providers still load |
-| **`CLAWQL_GRAPHQL_URL`** alone expecting bundled Linear | Use **`CLAWQL_PROVIDER=linear`** + **`LINEAR_API_KEY`** instead — no **`CLAWQL_GRAPHQL_*`** required |
-| Want GraphQL/gRPC **only** (no Cloudflare/GitHub defaults) | Set **`CLAWQL_NATIVE_PROTOCOLS_ONLY=1`** explicitly |
-| **`CLAWQL_NATIVE_PROTOCOLS_ONLY=1`** but sources fail to load | Startup error with remediation hints (unset flag or fix sources) |
+| Mistake                                                       | Safe default behavior                                                                                |
+| ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| **`CLAWQL_GRAPHQL_SOURCES`** with a bad **`schemaPath`**      | Path ignored; HTTP introspection attempted; bundled providers still load                             |
+| **`CLAWQL_GRAPHQL_URL`** alone expecting bundled Linear       | Use **`CLAWQL_PROVIDER=linear`** + **`LINEAR_API_KEY`** instead — no **`CLAWQL_GRAPHQL_*`** required |
+| Want GraphQL/gRPC **only** (no Cloudflare/GitHub defaults)    | Set **`CLAWQL_NATIVE_PROTOCOLS_ONLY=1`** explicitly                                                  |
+| **`CLAWQL_NATIVE_PROTOCOLS_ONLY=1`** but sources fail to load | Startup error with remediation hints (unset flag or fix sources)                                     |
 
 ### Auth
 
