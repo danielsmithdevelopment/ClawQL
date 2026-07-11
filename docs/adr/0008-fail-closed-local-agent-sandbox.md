@@ -12,20 +12,21 @@ AI coding agents spawn **subagents** with shell access. Mis-expanded variables (
 
 ## Decision
 
-### 1) `clawql sandbox init` — Seatbelt profiles + verification
+### 1) `clawql sandbox init` — per-harness Seatbelt profiles + verification
 
-- Writes `~/.ClawQL/sandbox/config.json` with `failClosed: true` by default
-- Generates **deny-default** Seatbelt profiles (`clawql-agent.sb`, `clawql-exec.sb`)
-- Installs `clawql-safe` wrapper
+- Writes `~/.ClawQL/sandbox/{claude,codex,cursor,opencode}.sb` with parameterized `(param "WORK_DIR")` rules
+- Writes `~/.claude/settings.json` for Claude Code native `/sandbox` (inner layer)
+- `clawql <harness>` invokes `sandbox-exec -f {harness}.sb -D WORK_DIR=…` (outer layer)
 - Runs containment probes on macOS; **throws on failure** during init when verify runs
 
 ### 2) Fail-closed harness launch
 
 When sandbox is **enabled** in config:
 
-- `clawql codex | claude | cursor | opencode` calls `ensureHarnessSandboxGate()`
+- `clawql codex | claude | cursor | opencode` calls `ensureHarnessSandboxGate(harness)`
+- Uses **harness-specific** profile path
 - Verification must pass; otherwise **exit 1** — agent never launches unsandboxed
-- On macOS with `sandbox-exec`, harness runs as: `sandbox-exec -f profile -- <agent>`
+- `clawql doctor --smoke` re-runs sandbox verify when enabled
 
 ### 3) Escalation tiers (documented, not mutually exclusive)
 

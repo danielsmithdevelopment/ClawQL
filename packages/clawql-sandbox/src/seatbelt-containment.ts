@@ -4,7 +4,12 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { seatbeltBinaryPresent } from "./capabilities.js";
 import type { SandboxContainmentConfig } from "./seatbelt-config.js";
-import { resolvedAllowedPaths, resolvedDeniedPaths } from "./seatbelt-config.js";
+import {
+  resolvedAllowedPaths,
+  resolvedDeniedPaths,
+  seatbeltProfileParams,
+} from "./seatbelt-config.js";
+import { sandboxExecArgv } from "./seatbelt-profile.js";
 
 export type ContainmentCheck = {
   name: string;
@@ -23,10 +28,11 @@ export type ContainmentVerifyResult = {
 function runSandboxProbe(
   profilePath: string,
   shellScript: string,
+  params: Record<string, string>,
   timeoutMs = 8000
 ): Promise<{ exitCode: number; stderr: string }> {
   const exe = "/usr/bin/sandbox-exec";
-  const args = ["-f", profilePath, "--", "/bin/sh", "-c", shellScript];
+  const args = sandboxExecArgv(profilePath, params, "/bin/sh", ["-c", shellScript]);
   return new Promise((resolvePromise, rejectPromise) => {
     const child = spawn(exe, args, { stdio: ["ignore", "ignore", "pipe"] });
     let stderr = "";
@@ -45,10 +51,14 @@ function runSandboxProbe(
   });
 }
 
-async function probeDeniedRead(profilePath: string, deniedPath: string): Promise<ContainmentCheck> {
+async function probeDeniedRead(
+  profilePath: string,
+  params: Record<string, string>,
+  deniedPath: string
+): Promise<ContainmentCheck> {
   const script = `test ! -r "${deniedPath.replace(/"/g, '\\"')}"`;
   try {
-    const { exitCode } = await runSandboxProbe(profilePath, script);
+    const { exitCode } = await runSandboxProbe(profilePath, script, params);
     return {
       name: `deny-read:${deniedPath}`,
       ok: exitCode === 0,
@@ -62,11 +72,12 @@ async function probeDeniedRead(profilePath: string, deniedPath: string): Promise
 
 async function probeAllowedRead(
   profilePath: string,
+  params: Record<string, string>,
   allowedPath: string
 ): Promise<ContainmentCheck> {
   const script = `test -d "${allowedPath.replace(/"/g, '\\"')}" || test -r "${allowedPath.replace(/"/g, '\\"')}"`;
   try {
-    const { exitCode } = await runSandboxProbe(profilePath, script);
+    const { exitCode } = await runSandboxProbe(profilePath, script, params);
     return {
       name: `allow-read:${allowedPath}`,
       ok: exitCode === 0,
@@ -78,35 +89,38 @@ async function probeAllowedRead(
   }
 }
 
-async function probeWriteOutsideAllowed(
+async function probeWriteOutsideWorkDir(
   profilePath: string,
+  params: Record<string, string>,
   home: string
 ): Promise<ContainmentCheck> {
   const outside = join(home, ".clawql-sandbox-probe-outside");
   const script = `rm -f "${outside}" 2>/dev/null; echo probe > "${outside}" 2>/dev/null; test ! -f "${outside}"`;
   try {
-    const { exitCode } = await runSandboxProbe(profilePath, script);
+    const { exitCode } = await runSandboxProbe(profilePath, script, params);
     return {
-      name: "deny-write-outside-allowed",
+      name: "deny-write-outside-work-dir",
       ok: exitCode === 0,
-      detail: exitCode === 0 ? "write outside blocked" : "write outside succeeded",
+      detail: exitCode === 0 ? "write outside WORK_DIR blocked" : "write outside succeeded",
     };
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
-    return { name: "deny-write-outside-allowed", ok: false, detail: msg };
+    return { name: "deny-write-outside-work-dir", ok: false, detail: msg };
   }
 }
 
 /**
- * Run Seatbelt containment probes. On non-macOS returns ok=false when failClosed is expected.
+ * Run Seatbelt containment probes with profile params (-D WORK_DIR=...).
  */
 export async function verifySeatbeltContainment(
   profilePath: string,
   config: SandboxContainmentConfig,
+  workDir: string,
   home = homedir()
 ): Promise<ContainmentVerifyResult> {
   const platform = process.platform;
   const seatbeltPresent = seatbeltBinaryPresent();
+  const params = seatbeltProfileParams(config, workDir, home);
 
   if (platform !== "darwin") {
     return {
@@ -132,16 +146,16 @@ export async function verifySeatbeltContainment(
   const checks: ContainmentCheck[] = [];
   const denied = resolvedDeniedPaths(config, home).slice(0, 3);
   for (const p of denied) {
-    checks.push(await probeDeniedRead(profilePath, p));
+    checks.push(await probeDeniedRead(profilePath, params, p));
   }
 
   const allowed = resolvedAllowedPaths(config, home).slice(0, 2);
   for (const p of allowed) {
     await mkdir(p, { recursive: true }).catch(() => undefined);
-    checks.push(await probeAllowedRead(profilePath, p));
+    checks.push(await probeAllowedRead(profilePath, params, p));
   }
 
-  checks.push(await probeWriteOutsideAllowed(profilePath, home));
+  checks.push(await probeWriteOutsideWorkDir(profilePath, params, home));
 
   const ok = checks.every((c) => c.ok);
   return {

@@ -1,10 +1,14 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { z } from "zod";
-import { expandTilde, resolveSandboxPath } from "./seatbelt-paths.js";
+import { resolveSandboxPath } from "./seatbelt-paths.js";
 
 export const SANDBOX_CONFIG_VERSION = 1;
+
+/** Agent harnesses wrapped by `clawql <harness>`. */
+export const SANDBOX_HARNESS_IDS = ["claude", "codex", "cursor", "opencode"] as const;
+export type SandboxHarnessId = (typeof SANDBOX_HARNESS_IDS)[number];
 
 export const DEFAULT_DENIED_PATHS = [
   "~/.ssh",
@@ -27,6 +31,7 @@ const SandboxContainmentConfigSchema = z.object({
   allowedPaths: z.array(z.string().min(1)),
   deniedPaths: z.array(z.string().min(1)),
   clawqlHome: z.string().min(1).optional(),
+  workDir: z.string().min(1).optional(),
   lastVerifiedAt: z.string().datetime().optional(),
   lastVerifyOk: z.boolean().optional(),
 });
@@ -37,10 +42,11 @@ export type SandboxPaths = {
   home: string;
   sandboxDir: string;
   configPath: string;
-  agentProfilePath: string;
   execProfilePath: string;
   wrapperPath: string;
   verifyResultPath: string;
+  claudeSettingsPath: string;
+  harnessProfilePath: (harness: SandboxHarnessId) => string;
 };
 
 export function defaultClawqlHome(home = homedir()): string {
@@ -53,16 +59,22 @@ export function sandboxPaths(clawqlHome = defaultClawqlHome()): SandboxPaths {
     home: clawqlHome,
     sandboxDir,
     configPath: join(sandboxDir, "config.json"),
-    agentProfilePath: join(sandboxDir, "clawql-agent.sb"),
     execProfilePath: join(sandboxDir, "clawql-exec.sb"),
     wrapperPath: join(sandboxDir, "clawql-safe"),
     verifyResultPath: join(sandboxDir, "verify-last.json"),
+    claudeSettingsPath: join(homedir(), ".claude", "settings.json"),
+    harnessProfilePath: (harness: SandboxHarnessId) => join(sandboxDir, `${harness}.sb`),
   };
+}
+
+export function isSandboxHarnessId(raw: string): raw is SandboxHarnessId {
+  return (SANDBOX_HARNESS_IDS as readonly string[]).includes(raw);
 }
 
 export function defaultContainmentConfig(
   opts: {
     clawqlHome?: string;
+    workDir?: string;
     allowedPaths?: string[];
     deniedPaths?: string[];
   } = {}
@@ -79,6 +91,7 @@ export function defaultContainmentConfig(
     allowedPaths: dedupePaths(allowed),
     deniedPaths: dedupePaths([...DEFAULT_DENIED_PATHS]),
     clawqlHome,
+    workDir: opts.workDir,
   };
 }
 
@@ -100,6 +113,22 @@ export function resolvedAllowedPaths(config: SandboxContainmentConfig, home = ho
 
 export function resolvedDeniedPaths(config: SandboxContainmentConfig, home = homedir()): string[] {
   return dedupePaths(config.deniedPaths).map((p) => resolveSandboxPath(p, home));
+}
+
+/** Seatbelt `-D` parameters for parameterized harness profiles. */
+export function seatbeltProfileParams(
+  config: SandboxContainmentConfig,
+  workDir: string,
+  home = homedir()
+): Record<string, string> {
+  const clawqlDir = config.clawqlHome ?? defaultClawqlHome(home);
+  return {
+    WORK_DIR: resolve(workDir),
+    CLAWQL_DIR: resolve(clawqlDir),
+    HOME_SSH: join(home, ".ssh"),
+    HOME_AWS: join(home, ".aws"),
+    HOME_CONFIG: join(home, ".config"),
+  };
 }
 
 export async function loadContainmentConfig(

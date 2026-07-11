@@ -15,12 +15,12 @@ ClawQL is **TypeScript-native** (core, CLI, operator). Multi-tenant managed tier
 
 ### 1) Pulumi over Terraform for ClawQL provisioning
 
-| Factor                        | Pulumi                                     | Terraform                          |
-| ----------------------------- | ------------------------------------------ | ---------------------------------- |
-| Language                      | TypeScript (same repo/toolchain)           | HCL (context switch)               |
-| Dynamic multi-tenant logic    | Native loops/conditionals                  | Awkward in HCL                     |
-| Programmatic `up` from ClawQL | **Automation API**                         | Terraform Cloud API / exec wrapper |
-| State backends                | Self-hosted S3 / R2 only (no Pulumi Cloud) | S3, Terraform Cloud, etc.          |
+| Factor                        | Pulumi                                       | Terraform                          |
+| ----------------------------- | -------------------------------------------- | ---------------------------------- |
+| Language                      | TypeScript (same repo/toolchain)             | HCL (context switch)               |
+| Dynamic multi-tenant logic    | Native loops/conditionals                    | Awkward in HCL                     |
+| Programmatic `up` from ClawQL | **Automation API**                           | Terraform Cloud API / exec wrapper |
+| State backends                | Self-hosted S3 / R2 only (no Pulumi Cloud)   | S3, Terraform Cloud, etc.          |
 
 **Packer builds the artifact; Pulumi provisions the infrastructure that runs it.** Clean separation of concerns.
 
@@ -39,19 +39,10 @@ Stack config namespace: `clawql:*` (see [`Pulumi.example.yaml`](../../infra/pulu
 
 ClawQL does **not** use Pulumi Cloud. Stack state and encrypted secrets live in object storage you control — aligned with the team-vault sovereignty story.
 
-<<<<<<< HEAD
-
-| Backend                                         | When to use                                                                            |
-| ----------------------------------------------- | -------------------------------------------------------------------------------------- |
-| **Pulumi Cloud** (default for solo/small teams) | Fastest onboarding, built-in secrets encryption, team RBAC, no state bucket to operate |
-| **Self-hosted on R2 or S3**                     | Sovereignty / air-gap; object store you already run for team vault                     |
-| =======                                         |
-| Backend                                         | When to use                                                                            |
-| ---------                                       | -------------                                                                          |
-| **Cloudflare R2** (preferred)                   | Default for managed tiers; same provider as team vault sync                            |
-| **AWS S3** (or S3-compatible)                   | When AWS is already the control plane                                                  |
-
-> > > > > > > 3f1171f (docs(infra): require self-hosted Pulumi state, no Pulumi Cloud)
+| Backend                       | When to use                                               |
+| ----------------------------- | --------------------------------------------------------- |
+| **Cloudflare R2** (preferred) | Default for managed tiers; same provider as team vault sync |
+| **AWS S3** (or S3-compatible) | When AWS is already the control plane                     |
 
 Configure once per operator machine or CI runner:
 

@@ -151,7 +151,7 @@ export async function runHarness(id: HarnessId, forwarded: string[]): Promise<nu
     return 1;
   }
 
-  const gate = await ensureHarnessSandboxGate(getClawqlHome());
+  const gate = await ensureHarnessSandboxGate(id, getClawqlHome(), process.cwd());
   if (!gate.ok) {
     console.error(`[clawql ${id}] ${gate.error}`);
     console.error("Fix: clawql sandbox init && clawql sandbox verify");
@@ -159,7 +159,7 @@ export async function runHarness(id: HarnessId, forwarded: string[]): Promise<nu
   }
 
   const spawnBin = gate.wrap ? "/usr/bin/sandbox-exec" : bin;
-  const spawnArgs = gate.wrap ? ["-f", gate.profilePath, "--", bin, ...forwarded] : forwarded;
+  const spawnArgs = gate.wrap ? gate.sandboxArgv(bin, forwarded) : forwarded;
 
   return new Promise((resolve) => {
     const child = spawn(spawnBin, spawnArgs, {
