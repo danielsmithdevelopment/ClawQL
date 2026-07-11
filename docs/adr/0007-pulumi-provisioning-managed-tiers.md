@@ -15,12 +15,12 @@ ClawQL is **TypeScript-native** (core, CLI, operator). Multi-tenant managed tier
 
 ### 1) Pulumi over Terraform for ClawQL provisioning
 
-| Factor | Pulumi | Terraform |
-|--------|--------|-----------|
-| Language | TypeScript (same repo/toolchain) | HCL (context switch) |
-| Dynamic multi-tenant logic | Native loops/conditionals | Awkward in HCL |
-| Programmatic `up` from ClawQL | **Automation API** | Terraform Cloud API / exec wrapper |
-| State backends | Pulumi Cloud, S3, R2, self-hosted | S3, Terraform Cloud, etc. |
+| Factor                        | Pulumi                            | Terraform                          |
+| ----------------------------- | --------------------------------- | ---------------------------------- |
+| Language                      | TypeScript (same repo/toolchain)  | HCL (context switch)               |
+| Dynamic multi-tenant logic    | Native loops/conditionals         | Awkward in HCL                     |
+| Programmatic `up` from ClawQL | **Automation API**                | Terraform Cloud API / exec wrapper |
+| State backends                | Pulumi Cloud, S3, R2, self-hosted | S3, Terraform Cloud, etc.          |
 
 **Packer builds the artifact; Pulumi provisions the infrastructure that runs it.** Clean separation of concerns.
 
@@ -37,10 +37,10 @@ Stack config namespace: `clawql:*` (see [`Pulumi.example.yaml`](../../infra/pulu
 
 ### 3) State backend — both supported
 
-| Backend | When to use |
-|---------|-------------|
+| Backend                                         | When to use                                                                            |
+| ----------------------------------------------- | -------------------------------------------------------------------------------------- |
 | **Pulumi Cloud** (default for solo/small teams) | Fastest onboarding, built-in secrets encryption, team RBAC, no state bucket to operate |
-| **Self-hosted on R2 or S3** | Sovereignty / air-gap; object store you already run for team vault |
+| **Self-hosted on R2 or S3**                     | Sovereignty / air-gap; object store you already run for team vault                     |
 
 **Recommendation:** start with **Pulumi Cloud** for development and early managed tiers; move production dedicated-tenant stacks to **R2-backed state** when sovereignty or customer contract requires it. Configure via `pulumi login` (cloud) or `pulumi login s3://…` / compatible self-hosted endpoint — not hard-coded in the program.
 
