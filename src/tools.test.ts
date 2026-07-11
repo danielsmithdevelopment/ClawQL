@@ -89,6 +89,19 @@ describe("tools helpers", () => {
     ).toEqual([{ sha: "a" }, { sha: "b" }]);
   });
 
+  it("projectRestByFields parses GraphQL connection field syntax", () => {
+    const data = {
+      nodes: [{ id: "1", name: "Issue" }],
+      pageInfo: { hasNextPage: true },
+    };
+    expect(
+      __testUtils.projectRestByFields(data, ["nodes { id name }", "pageInfo { hasNextPage }"])
+    ).toEqual({
+      nodes: [{ id: "1", name: "Issue" }],
+      pageInfo: { hasNextPage: true },
+    });
+  });
+
   it("executeOutputFields uses GitHub pull defaults when fields omitted", () => {
     expect(__testUtils.executeOutputFields("pulls/create", undefined)).toEqual([
       "html_url",

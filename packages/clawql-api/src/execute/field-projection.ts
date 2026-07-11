@@ -2,6 +2,26 @@
  * Field projection and default GraphQL selection sets for execute output.
  */
 
+/** GraphQL field name (RFC-compliant subset used by most APIs). */
+const GRAPHQL_FIELD_NAME_RE = /^(_[A-Za-z][_0-9A-Za-z]*|[A-Za-z][_0-9A-Za-z]*)/;
+
+/**
+ * Extract top-level field names from GraphQL selection fragments.
+ * `["nodes { id name }", "pageInfo { hasNextPage }"]` → `["nodes", "pageInfo"]`.
+ * Plain keys (`["id", "name"]`) pass through unchanged.
+ */
+export function topLevelProjectionKeys(fields: string[]): string[] {
+  const keys: string[] = [];
+  for (const raw of fields) {
+    const fragment = raw.trim();
+    if (!fragment) continue;
+    const match = GRAPHQL_FIELD_NAME_RE.exec(fragment);
+    const key = match?.[0];
+    if (key && !keys.includes(key)) keys.push(key);
+  }
+  return keys;
+}
+
 function defaultExecuteOutputFields(operationId: string): string[] | undefined {
   switch (operationId) {
     case "pulls/create":
@@ -18,15 +38,18 @@ function defaultExecuteOutputFields(operationId: string): string[] | undefined {
 /**
  * REST execute paths (multi-spec or GraphQL→REST fallback) return the full HTTP JSON body.
  * When the caller passed `fields`, keep only those top-level keys so behavior aligns with
- * the GraphQL selection set (nested GraphQL fragments are not parsed—list top-level names).
+ * the GraphQL selection set. Nested GraphQL fragments (`nodes { id name }`) are parsed to
+ * their top-level name (`nodes`) before projection.
  */
 export function projectRestByFields(data: unknown, fields: string[] | undefined): unknown {
   if (!fields?.length) return data;
+  const projectionKeys = topLevelProjectionKeys(fields);
+  if (!projectionKeys.length) return data;
   const pick = (item: unknown): unknown => {
     if (item !== null && typeof item === "object" && !Array.isArray(item)) {
       const obj = item as Record<string, unknown>;
       const out: Record<string, unknown> = {};
-      for (const f of fields) {
+      for (const f of projectionKeys) {
         if (Object.prototype.hasOwnProperty.call(obj, f)) out[f] = obj[f];
       }
       return out;
