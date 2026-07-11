@@ -15,12 +15,12 @@ ClawQL is **TypeScript-native** (core, CLI, operator). Multi-tenant managed tier
 
 ### 1) Pulumi over Terraform for ClawQL provisioning
 
-| Factor                        | Pulumi                            | Terraform                          |
-| ----------------------------- | --------------------------------- | ---------------------------------- |
-| Language                      | TypeScript (same repo/toolchain)  | HCL (context switch)               |
-| Dynamic multi-tenant logic    | Native loops/conditionals         | Awkward in HCL                     |
-| Programmatic `up` from ClawQL | **Automation API**                | Terraform Cloud API / exec wrapper |
-| State backends                | Pulumi Cloud, S3, R2, self-hosted | S3, Terraform Cloud, etc.          |
+| Factor                        | Pulumi                                       | Terraform                          |
+| ----------------------------- | -------------------------------------------- | ---------------------------------- |
+| Language                      | TypeScript (same repo/toolchain)             | HCL (context switch)               |
+| Dynamic multi-tenant logic    | Native loops/conditionals                    | Awkward in HCL                     |
+| Programmatic `up` from ClawQL | **Automation API**                           | Terraform Cloud API / exec wrapper |
+| State backends                | Self-hosted S3 / R2 only (no Pulumi Cloud)   | S3, Terraform Cloud, etc.          |
 
 **Packer builds the artifact; Pulumi provisions the infrastructure that runs it.** Clean separation of concerns.
 
@@ -35,16 +35,37 @@ Terraform’s ecosystem breadth is acknowledged but does not outweigh TypeScript
 
 Stack config namespace: `clawql:*` (see [`Pulumi.example.yaml`](../../infra/pulumi/Pulumi.example.yaml)).
 
-### 3) State backend — both supported
+### 3) State backend — self-hosted only (no Pulumi Cloud)
 
+ClawQL does **not** use Pulumi Cloud. Stack state and encrypted secrets live in object storage you control — aligned with the team-vault sovereignty story.
+
+<<<<<<< HEAD
 | Backend                                         | When to use                                                                            |
 | ----------------------------------------------- | -------------------------------------------------------------------------------------- |
 | **Pulumi Cloud** (default for solo/small teams) | Fastest onboarding, built-in secrets encryption, team RBAC, no state bucket to operate |
 | **Self-hosted on R2 or S3**                     | Sovereignty / air-gap; object store you already run for team vault                     |
+=======
+| Backend | When to use |
+|---------|-------------|
+| **Cloudflare R2** (preferred) | Default for managed tiers; same provider as team vault sync |
+| **AWS S3** (or S3-compatible) | When AWS is already the control plane |
+>>>>>>> 3f1171f (docs(infra): require self-hosted Pulumi state, no Pulumi Cloud)
 
-**Recommendation:** start with **Pulumi Cloud** for development and early managed tiers; move production dedicated-tenant stacks to **R2-backed state** when sovereignty or customer contract requires it. Configure via `pulumi login` (cloud) or `pulumi login s3://…` / compatible self-hosted endpoint — not hard-coded in the program.
+Configure once per operator machine or CI runner:
 
-Secrets (sync keys) belong in **Pulumi stack secrets** or **AWS SSM** (dedicated tier boot fetch), never in golden images.
+```bash
+# R2 (S3-compatible API) — replace bucket and account id
+export AWS_ACCESS_KEY_ID=...          # R2 API token access key
+export AWS_SECRET_ACCESS_KEY=...      # R2 API token secret
+pulumi login 's3://clawql-pulumi-state?region=auto&endpoint=https://<accountid>.r2.cloudflarestorage.com&awssdk=v2'
+
+# Or AWS S3
+pulumi login s3://clawql-pulumi-state
+```
+
+State bucket layout is standard Pulumi (`s3://<bucket>/.pulumi/`). Not hard-coded in programs — only `pulumi login` / backend URL.
+
+Secrets (sync keys) belong in **Pulumi stack secrets** (encrypted by the self-hosted backend passphrase) or **AWS SSM** (dedicated tier boot fetch), never in golden images.
 
 ### 4) Automation API path
 

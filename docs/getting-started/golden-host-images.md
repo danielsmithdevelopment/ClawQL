@@ -44,7 +44,7 @@ pulumi config set clawql:goldenImageId ami-xxxxxxxx   # Packer output
 pulumi preview   # or pulumi up — requires cloud credentials
 ```
 
-See [`infra/pulumi/README.md`](../../infra/pulumi/README.md) and [ADR 0007](../adr/0007-pulumi-provisioning-managed-tiers.md).
+See [`infra/pulumi/README.md`](../../infra/pulumi/README.md) and [ADR 0007](../adr/0007-pulumi-provisioning-managed-tiers.md). State lives on **self-hosted R2 or S3** — not Pulumi Cloud.
 
 ### 3. Launch with boot-time seeding
 

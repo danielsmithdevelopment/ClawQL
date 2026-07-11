@@ -22,6 +22,11 @@ npm ci
 npm test
 npm run build
 
+# Self-hosted state (R2 preferred — see State backend below)
+export AWS_ACCESS_KEY_ID=...
+export AWS_SECRET_ACCESS_KEY=...
+pulumi login 's3://clawql-pulumi-state?region=auto&endpoint=https://<accountid>.r2.cloudflarestorage.com&awssdk=v2'
+
 # Configure stack (copy and edit)
 cp Pulumi.example.yaml Pulumi.dev.yaml
 pulumi stack init dev
@@ -43,14 +48,21 @@ pulumi preview   # needs cloud credentials
 
 Dedicated AWS stacks default `useSsmSecrets=true`; user-data reads sync credentials from SSM at boot.
 
-## State backend
+## State backend (self-hosted only)
 
-See [ADR 0007](../../docs/adr/0007-pulumi-provisioning-managed-tiers.md).
+See [ADR 0007](../../docs/adr/0007-pulumi-provisioning-managed-tiers.md). **No Pulumi Cloud.**
 
-- **Pulumi Cloud:** `pulumi login` (recommended for dev)
-- **Self-hosted (R2/S3):** `pulumi login s3://your-state-bucket` or compatible backend
+**Preferred:** Cloudflare R2 (S3-compatible, same stack as team vault).
 
-Stack secrets (if any) are encrypted by the backend you choose.
+```bash
+export AWS_ACCESS_KEY_ID=...          # R2 API token
+export AWS_SECRET_ACCESS_KEY=...
+pulumi login 's3://clawql-pulumi-state?region=auto&endpoint=https://<accountid>.r2.cloudflarestorage.com&awssdk=v2'
+```
+
+**Alternative:** AWS S3 — `pulumi login s3://clawql-pulumi-state`
+
+Stack secrets are encrypted with your Pulumi secrets passphrase and stored in the same object-store backend.
 
 ## Automation API (operator / CLI)
 
