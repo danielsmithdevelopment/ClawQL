@@ -69,3 +69,58 @@
     display: none;
   }
 }
+
+@layer components {
+  /* MDX tables: horizontal scroll + column widths on mobile (see mdx.tsx `table`) */
+  .docs-table-scroll {
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+    width: 100%;
+    max-width: none;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  @media (width < 40rem) {
+    .docs-table-scroll {
+      margin-left: -1rem;
+      margin-right: -1rem;
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+  }
+
+  .prose .docs-table {
+    width: 100%;
+    min-width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+  }
+
+  /* Two-column reference tables (Command | Purpose, Variable | Purpose, …) */
+  .prose
+    .docs-table:has(thead tr > th:nth-child(2):last-child)
+    :is(th, td):nth-child(1) {
+    width: 38%;
+  }
+
+  .prose
+    .docs-table:has(thead tr > th:nth-child(2):last-child)
+    :is(th, td):nth-child(2) {
+    width: 62%;
+  }
+
+  /* Four-column provider matrices */
+  .prose .docs-table:has(thead tr > th:nth-child(4):last-child) :is(th, td) {
+    width: 25%;
+  }
+
+  /* Three-column tables */
+  .prose
+    .docs-table:has(thead tr > th:nth-child(3):last-child):not(
+      :has(thead tr > th:nth-child(4))
+    )
+    :is(th, td) {
+    width: 33.333%;
+  }
+}

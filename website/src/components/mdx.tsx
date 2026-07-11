@@ -106,6 +106,21 @@ export function Col({
   )
 }
 
+/** Scrollable table wrapper — keeps column alignment on narrow viewports. */
+export function table({
+  children,
+  className,
+  ...props
+}: React.ComponentPropsWithoutRef<'table'>) {
+  return (
+    <div className="docs-table-scroll not-prose">
+      <table className={clsx('docs-table', className)} {...props}>
+        {children}
+      </table>
+    </div>
+  )
+}
+
 export function Properties({ children }: { children: React.ReactNode }) {
   return (
     <div className="my-6">
