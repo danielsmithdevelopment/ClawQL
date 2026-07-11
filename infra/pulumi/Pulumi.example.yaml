@@ -1,0 +1,23 @@
+config:
+  clawql:cloud:
+    description: Target cloud (aws | gcp | cloudflare)
+  clawql:tier:
+    description: Managed tier (shared | dedicated | enterprise)
+  clawql:tenantId:
+    description: Tenant id (required for dedicated tier)
+  clawql:syncBucket:
+    description: Team vault object storage bucket name
+  clawql:syncProvider:
+    description: Object storage provider for team sync (r2 | s3 | gcs)
+  clawql:syncPrefix:
+    description: Optional override for enterprise tier sync prefix
+  clawql:goldenImageId:
+    description: Packer golden image id (AWS AMI id or GCP image self link)
+  clawql:instanceType:
+    description: VM instance type / machine type
+  clawql:region:
+    description: Cloud region (AWS/GCP)
+  cloudflare:accountId:
+    description: Cloudflare account id (cloudflare stacks)
+  gcp:project:
+    description: GCP project id (gcp stacks)

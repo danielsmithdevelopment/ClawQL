@@ -28,7 +28,25 @@ packer build -only=aws-ami.amazon-ebs.clawql -var 'clawql_version=7.0.0' .
 
 See [`packer/README.md`](../../packer/README.md) for GCP and CI validate targets.
 
-### 2. Launch with boot-time seeding
+### 2. Provision infrastructure (Pulumi)
+
+Packer produces the **artifact** (AMI/GCP image). **Pulumi** provisions the VM, IAM, and boot user-data that references your tier sync prefix.
+
+```bash
+cd infra/pulumi
+npm ci
+pulumi stack init dev
+pulumi config set clawql:cloud aws
+pulumi config set clawql:tier dedicated
+pulumi config set clawql:tenantId acme
+pulumi config set clawql:syncBucket acme-clawql-team
+pulumi config set clawql:goldenImageId ami-xxxxxxxx   # Packer output
+pulumi preview   # or pulumi up — requires cloud credentials
+```
+
+See [`infra/pulumi/README.md`](../../infra/pulumi/README.md) and [ADR 0007](../adr/0007-pulumi-provisioning-managed-tiers.md).
+
+### 3. Launch with boot-time seeding
 
 Set instance user-data / startup script to run:
 
@@ -43,7 +61,7 @@ export CLAWQL_SYNC_SECRET_ACCESS_KEY=...
 
 Or use the repo script path: `scripts/packer/bootstrap-team-vault.sh`.
 
-### 3. Verify
+### 4. Verify
 
 ```bash
 clawql doctor --smoke
@@ -69,10 +87,12 @@ In-cluster MCP uses Helm **`teamSync`** (`autoPullOnStart`, `autoPull`) — same
 ## CI and releases
 
 - **PR / main:** `scripts/packer/test-golden-host-scripts.sh` (ShellCheck + `packer validate`)
+- **PR / main:** `scripts/pulumi/test-provision-unit.sh` (tier/user-data unit tests + TS build)
 - **Release:** [`.github/workflows/packer-publish.yml`](../../.github/workflows/packer-publish.yml) — matrix AWS/GCP on dispatch; docker validate on every run
 
 ## Related
 
 - [Team vault sync](./team-vault-sync.md)
-- [ADR 0006: Golden host images](../adr/0006-golden-host-images-packer.md)
+- [ADR 0006: Golden host images (Packer)](../adr/0006-golden-host-images-packer.md)
+- [ADR 0007: Pulumi provisioning](../adr/0007-pulumi-provisioning-managed-tiers.md)
 - [Golden image pipeline (containers)](../security/golden-image-pipeline.md)

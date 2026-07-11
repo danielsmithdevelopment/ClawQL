@@ -1,0 +1,52 @@
+{
+  "name": "clawql-provision",
+  "version": "7.0.0",
+  "private": true,
+  "description": "Pulumi programs to provision ClawQL golden hosts (AWS/GCP/Cloudflare) — pairs with Packer artifacts",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./tiers": {
+      "types": "./dist/tiers.d.ts",
+      "import": "./dist/tiers.js"
+    },
+    "./user-data": {
+      "types": "./dist/user-data.d.ts",
+      "import": "./dist/user-data.js"
+    },
+    "./automation": {
+      "types": "./dist/automation.d.ts",
+      "import": "./dist/automation.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "preview": "pulumi preview",
+    "up": "pulumi up",
+    "destroy": "pulumi destroy"
+  },
+  "dependencies": {
+    "@pulumi/aws": "^6.83.0",
+    "@pulumi/cloudflare": "^6.4.0",
+    "@pulumi/gcp": "^8.36.0",
+    "@pulumi/pulumi": "^3.210.0",
+    "zod": "4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.1"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
