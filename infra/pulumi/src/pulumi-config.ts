@@ -22,7 +22,8 @@ export function loadProvisionInputs(): ProvisionInputs {
     customPrefix: cfg.get("syncPrefix") ?? undefined,
   });
 
-  const goldenImageId = cfg.require("goldenImageId");
+  const goldenImageId =
+    cloud === "cloudflare" ? (cfg.get("goldenImageId") ?? undefined) : cfg.require("goldenImageId");
   const region = cfg.get("region") ?? (cloud === "aws" ? "us-east-1" : "us-central1");
   const instanceType = cfg.get("instanceType") ?? DEFAULT_INSTANCE_TYPES[cloud];
 

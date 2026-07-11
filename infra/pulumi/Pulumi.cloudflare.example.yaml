@@ -1,0 +1,16 @@
+# Example stack config — copy to Pulumi.<stack>.yaml (do not commit secrets).
+#
+#   cd infra/pulumi
+#   cp Pulumi.cloudflare.example.yaml Pulumi.dev-r2.yaml
+#   pulumi stack init dev-r2
+#   pulumi config set cloudflare:apiToken --secret
+#   pulumi config set cloudflare:accountId <account-id>
+#   pulumi preview && pulumi up
+#
+config:
+  clawql:cloud: cloudflare
+  clawql:tier: dedicated
+  clawql:tenantId: your-handle
+  clawql:syncBucket: clawql-team-vault
+  clawql:syncProvider: r2
+  cloudflare:accountId: "<cloudflare-account-id>"

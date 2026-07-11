@@ -16,7 +16,8 @@ export type AutomationStackConfig = {
   syncBucket: string;
   syncProvider?: SyncProvider;
   syncPrefix?: string;
-  goldenImageId: string;
+  /** Required for `aws` / `gcp`; omit for `cloudflare` R2-only stacks. */
+  goldenImageId?: string;
   region?: string;
   instanceType?: string;
   useSsmSecrets?: boolean;
@@ -38,8 +39,8 @@ function toPulumiConfig(cfg: AutomationStackConfig): Record<string, string> {
     "clawql:tier": cfg.tier,
     "clawql:syncBucket": cfg.syncBucket,
     "clawql:syncProvider": cfg.syncProvider ?? "r2",
-    "clawql:goldenImageId": cfg.goldenImageId,
   };
+  if (cfg.goldenImageId) out["clawql:goldenImageId"] = cfg.goldenImageId;
   if (cfg.tenantId) out["clawql:tenantId"] = cfg.tenantId;
   if (cfg.syncPrefix) out["clawql:syncPrefix"] = cfg.syncPrefix;
   if (cfg.region) out["clawql:region"] = cfg.region;

@@ -23,6 +23,7 @@ PORT=8080 npm run start:http
 Endpoints:
 
 - MCP: **`make local-k8s-up`** (Helm `values-docker-desktop.yaml`): **`http://clawql-mcp.localhost/mcp`** (**Ingress**, same pattern as prod) — **docker-compose**: `http://localhost:8080/mcp`
+- **Cloud Agent + R2 + private Tailscale MCP:** [cloud-agent-r2-tailscale-runbook.md](../deployment/cloud-agent-r2-tailscale-runbook.md)
 - Health: `http://localhost:8080/healthz` — set **`CLAWQL_HEALTHZ_NATIVE_PROTOCOL_METRICS=1`** to include **`nativeProtocolMetrics`** in the JSON body: aggregate merge counts and execute ok/err totals for native HTTP GraphQL and gRPC unary, plus **`graphqlBySource`** and **`grpcBySource`** objects keyed by each native **`sourceLabel`** (merge counts refreshed at spec load; execute counters cumulative per label). ([#191](https://github.com/danielsmithdevelopment/ClawQL/issues/191))
 - **Prometheus:** `http://localhost:8080/metrics` — OpenMetrics text for native-protocol gauges/counters (**`prom-client`**); scrape this target from Prometheus rather than parsing **`/healthz`**. Set **`CLAWQL_ENABLE_HTTP_METRICS=0`** only if the route must be omitted (rare). Optional Grafana dashboard: **[`docs/grafana/clawql-core-observability.json`](../grafana/clawql-core-observability.json)** + **[`docs/grafana/README.md`](../grafana/README.md)** ([#210](https://github.com/danielsmithdevelopment/ClawQL/issues/210)).
 - GraphQL debug endpoint: `http://localhost:8080/graphql`
