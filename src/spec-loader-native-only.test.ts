@@ -78,25 +78,21 @@ describe("spec-loader bundled provider routing from custom env", () => {
     resetSpecCache();
   });
 
-  it(
-    "routes Linear custom env with a missing schemaPath to bundled linear",
-    async () => {
-      process.env.CLAWQL_GRAPHQL_SOURCES = JSON.stringify([
-        {
-          name: "linear",
-          endpoint: "https://api.linear.app/graphql",
-          schemaPath: "/definitely/missing/linear.graphql",
-        },
-      ]);
+  it("routes Linear custom env with a missing schemaPath to bundled linear", async () => {
+    process.env.CLAWQL_GRAPHQL_SOURCES = JSON.stringify([
+      {
+        name: "linear",
+        endpoint: "https://api.linear.app/graphql",
+        schemaPath: "/definitely/missing/linear.graphql",
+      },
+    ]);
 
-      const err = vi.spyOn(console, "error").mockImplementation(() => {});
-      const loaded = await loadSpec();
-      err.mockRestore();
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
+    const loaded = await loadSpec();
+    err.mockRestore();
 
-      expect(String(loaded.rawSource["bundledGraphqlProvider"] ?? "")).toBe("linear");
-      expect(loaded.operations.some((o) => o.resource === "viewer")).toBe(true);
-      expect(loaded.operations.some((o) => o.specLabel === "cloudflare")).toBe(false);
-    },
-    180_000
-  );
+    expect(String(loaded.rawSource["bundledGraphqlProvider"] ?? "")).toBe("linear");
+    expect(loaded.operations.some((o) => o.resource === "viewer")).toBe(true);
+    expect(loaded.operations.some((o) => o.specLabel === "cloudflare")).toBe(false);
+  }, 180_000);
 });
