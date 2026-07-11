@@ -3,7 +3,7 @@
  *
  * Core tools: search, execute, then immediately cache + audit (non-negotiable; must not follow optional branches that could throw). audit = in-process ring buffer (#89); cache = in-process LRU KV (#75).
  * Optional: **`sandbox_exec`** when **`CLAWQL_ENABLE_SANDBOX=1`** — Kata (default in-cluster), Docker, Seatbelt, Cloudflare bridge (`CLAWQL_SANDBOX_BACKEND`).
- * memory_ingest / memory_recall — Obsidian vault notes (default on; set CLAWQL_ENABLE_MEMORY=0 to hide; writable vault).
+ * memory_ingest / memory_recall / memory_sync — Obsidian vault notes (default on; set CLAWQL_ENABLE_MEMORY=0 to hide; writable vault). memory_sync requires team bucket config (CLAWQL_SYNC_*).
  * Optional: ingest_external_knowledge — bulk Markdown + optional URL fetch (GitHub #40); default on; **`CLAWQL_ENABLE_DOCUMENTS=0`** to hide.
  * Optional: knowledge_search_onyx — Onyx when CLAWQL_ENABLE_ONYX and documents enabled; **`CLAWQL_ENABLE_DOCUMENTS=0`** hides (GitHub #118).
  * Optional: schedule — persisted jobs + manual synthetic trigger when CLAWQL_ENABLE_SCHEDULE (GitHub #76).
@@ -18,6 +18,7 @@ import { isAbsolute, resolve as resolvePath } from "node:path";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { Effect } from "effect";
 import { ExecuteService, SearchService } from "clawql-api";
+import { getClawqlOptionalToolFlags } from "clawql-api";
 import { z } from "zod";
 import { getClawqlApi, runMcpProxyBeforeCallTool } from "./clawql-api-adapters.js";
 import { getPackageRoot } from "clawql-api";
@@ -43,6 +44,10 @@ import {
 import { configureDocumentsPluginDeps } from "clawql-documents/plugin";
 import { wrapMcpToolHandler } from "./otel-tracing.js";
 import { configureHomeSyncHooks } from "./configure-home-sync.js";
+import {
+  handleMemorySyncToolInput,
+  memorySyncToolSchema,
+} from "./home-sync/memory-sync.js";
 
 export { executeOutputFields, projectRestByFields } from "./tools-execute-core.js";
 
@@ -177,6 +182,14 @@ export function registerTools(server: McpServer) {
   server.tool("audit", auditToolSchema, wrapMcpToolHandler("audit", handleAuditToolInput));
 
   registerPluginMcpTools(server);
+
+  if (getClawqlOptionalToolFlags().enableMemory) {
+    server.tool(
+      "memory_sync",
+      memorySyncToolSchema,
+      wrapMcpToolHandler("memory_sync", handleMemorySyncToolInput)
+    );
+  }
 }
 
 // ─────────────────────────────────────────────────────────────

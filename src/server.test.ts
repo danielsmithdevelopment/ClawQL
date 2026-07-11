@@ -79,6 +79,7 @@ describe("server (stdio)", () => {
       expect(names.has("sandbox_exec")).toBe(false);
       expect(names.has("memory_ingest")).toBe(true);
       expect(names.has("memory_recall")).toBe(true);
+      expect(names.has("memory_sync")).toBe(true);
       expect(names.has("ingest_external_knowledge")).toBe(true);
       expect(names.has("cache")).toBe(true);
       expect(names.has("audit")).toBe(true);
@@ -151,6 +152,7 @@ describe("server (stdio)", () => {
       const names = new Set(tools.map((t) => t.name));
       expect(names.has("memory_ingest")).toBe(false);
       expect(names.has("memory_recall")).toBe(false);
+      expect(names.has("memory_sync")).toBe(false);
       expect(names.has("cache")).toBe(true);
     } finally {
       await client.close();
