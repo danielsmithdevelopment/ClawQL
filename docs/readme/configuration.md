@@ -95,9 +95,18 @@ When Stage 1 is active:
 - `CLAWQL_DISCOVERY_URL`
 - `CLAWQL_PROVIDER`
 - `CLAWQL_BUNDLED_PROVIDERS`
-- **`CLAWQL_GRAPHQL_URL`** — single GraphQL HTTP endpoint (like **`CLAWQL_SPEC_URL`** for OpenAPI). Optional **`CLAWQL_GRAPHQL_NAME`**, **`CLAWQL_GRAPHQL_HEADERS`**, **`CLAWQL_GRAPHQL_SCHEMA_PATH`** / **`CLAWQL_GRAPHQL_INTROSPECTION_PATH`** when upstream introspection is blocked. When set **without** any OpenAPI/Discovery selection env (**`CLAWQL_SPEC_*`**, **`CLAWQL_PROVIDER`**, **`CLAWQL_BUNDLED_PROVIDERS`**, etc.), ClawQL skips bundled REST defaults and loads **only** native GraphQL (plus **`CLAWQL_GRPC_SOURCES`** if set).
-- **`CLAWQL_GRAPHQL_SOURCES`** — JSON array of `{ name, endpoint, headers?, schemaPath?, introspectionPath? }` merged into **`search`** / **`execute`** (HTTP introspection by default; disk SDL / introspection JSON when set). Combined with **`CLAWQL_GRAPHQL_URL`** when both are set. See `.env.example` and **`docs/mcp/mcp-tools.md`** (native GraphQL section).
-- **`CLAWQL_GRPC_SOURCES`** — JSON array of `{ name, endpoint, protoPath, insecure? }` for unary gRPC. See `.env.example` and **`docs/adr/0002-multi-protocol-supergraph.md`**.
+- **`CLAWQL_GRAPHQL_URL`** — single GraphQL HTTP endpoint (like **`CLAWQL_SPEC_URL`** for OpenAPI). Optional **`CLAWQL_GRAPHQL_NAME`**, **`CLAWQL_GRAPHQL_HEADERS`**, **`CLAWQL_GRAPHQL_SCHEMA_PATH`** / **`CLAWQL_GRAPHQL_INTROSPECTION_PATH`** when upstream introspection is blocked. **By default** native GraphQL sources **merge** with bundled OpenAPI providers. Set **`CLAWQL_NATIVE_PROTOCOLS_ONLY=1`** only when you intentionally want **no** bundled REST defaults (GraphQL/gRPC operations only).
+- **`CLAWQL_GRAPHQL_SOURCES`** — JSON array of `{ name, endpoint, headers?, schemaPath?, introspectionPath? }` merged into **`search`** / **`execute`** (HTTP introspection by default; disk SDL / introspection JSON when set). Combined with **`CLAWQL_GRAPHQL_URL`** when both are set. Missing **`schemaPath`** / **`introspectionPath`** files are logged and ignored (HTTP introspection is tried). See `.env.example` and **`docs/mcp/mcp-tools.md`** (native GraphQL section).
+- **`CLAWQL_GRPC_SOURCES`** — JSON array of `{ name, endpoint, protoPath, insecure? }` for unary gRPC. Entries with missing **`protoPath`** are skipped. See `.env.example` and **`docs/adr/0002-multi-protocol-supergraph.md`**.
+
+#### Native GraphQL / gRPC pitfalls
+
+| Mistake | Safe default behavior |
+|--------|------------------------|
+| **`CLAWQL_GRAPHQL_SOURCES`** with a bad **`schemaPath`** | Path ignored; HTTP introspection attempted; bundled providers still load |
+| **`CLAWQL_GRAPHQL_URL`** alone expecting bundled Linear | Use **`CLAWQL_PROVIDER=linear`** + **`LINEAR_API_KEY`** instead — no **`CLAWQL_GRAPHQL_*`** required |
+| Want GraphQL/gRPC **only** (no Cloudflare/GitHub defaults) | Set **`CLAWQL_NATIVE_PROTOCOLS_ONLY=1`** explicitly |
+| **`CLAWQL_NATIVE_PROTOCOLS_ONLY=1`** but sources fail to load | Startup error with remediation hints (unset flag or fix sources) |
 
 ### Auth
 

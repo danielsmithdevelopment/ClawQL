@@ -801,7 +801,10 @@ async function loadSpecUncached(): Promise<LoadedSpec> {
     const loaded = await mergeNativeProtocolOperations(stub);
     if (loaded.operations.length === 0) {
       throw new Error(
-        "[spec-loader] Native-protocol-only mode: set CLAWQL_GRAPHQL_URL and/or CLAWQL_GRAPHQL_SOURCES / CLAWQL_GRPC_SOURCES so introspection or proto load yields at least one operation."
+        "[spec-loader] CLAWQL_NATIVE_PROTOCOLS_ONLY is set but no GraphQL/gRPC operations loaded. " +
+          "Check CLAWQL_GRAPHQL_URL / CLAWQL_GRAPHQL_SOURCES / CLAWQL_GRPC_SOURCES (endpoints, schema paths, credentials). " +
+          "For bundled Linear use CLAWQL_PROVIDER=linear with LINEAR_API_KEY instead of CLAWQL_GRAPHQL_* alone. " +
+          "Unset CLAWQL_NATIVE_PROTOCOLS_ONLY to merge native sources with default bundled providers."
       );
     }
     console.error(

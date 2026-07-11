@@ -4,6 +4,9 @@
  * @see docs/adr/0002-multi-protocol-supergraph.md
  */
 
+import { existsSync } from "node:fs";
+import { resolve as resolvePath } from "node:path";
+
 export interface GraphQLSourceConfig {
   /** Short label for operation ids and `mergedAuthHeaders(name)`. */
   name: string;
@@ -92,6 +95,51 @@ function parseJsonArrayEnv(raw: string | undefined, envName: string): unknown[] 
   }
 }
 
+function pathExistsOnDisk(pathRel: string): boolean {
+  return existsSync(resolvePath(process.cwd(), pathRel));
+}
+
+function warnLinearBundledAlternative(endpoint: string): void {
+  if (/linear\.app/i.test(endpoint) && !wantsOpenAPISpecSelectionEnv()) {
+    console.error(
+      "[native-protocol] Endpoint looks like Linear and no CLAWQL_PROVIDER is set. " +
+        "Prefer CLAWQL_PROVIDER=linear with LINEAR_API_KEY — bundled SDL under providers/linear/, no CLAWQL_GRAPHQL_* env required."
+    );
+  }
+}
+
+/** Drop missing on-disk schema hints; fall back to HTTP introspection with a clear log line. */
+function sanitizeGraphQLDiskPaths(
+  name: string,
+  schemaPath: string | undefined,
+  introspectionPath: string | undefined
+): { schemaPath?: string; introspectionPath?: string } {
+  let schema = schemaPath;
+  let intro = introspectionPath;
+  if (intro && !pathExistsOnDisk(intro)) {
+    console.error(
+      `[native-protocol] GraphQL source "${name}": introspectionPath not found (${resolvePath(process.cwd(), intro)}); ignoring and falling back to HTTP introspection or SDL`
+    );
+    intro = undefined;
+  }
+  if (schema && !pathExistsOnDisk(schema)) {
+    console.error(
+      `[native-protocol] GraphQL source "${name}": schemaPath not found (${resolvePath(process.cwd(), schema)}); ignoring and falling back to HTTP introspection`
+    );
+    schema = undefined;
+  }
+  return {
+    ...(schema ? { schemaPath: schema } : {}),
+    ...(intro ? { introspectionPath: intro } : {}),
+  };
+}
+
+/** Explicit opt-in: skip bundled OpenAPI defaults and load only native GraphQL/gRPC operations. */
+export function isNativeProtocolsOnlyEnabled(): boolean {
+  const v = process.env.CLAWQL_NATIVE_PROTOCOLS_ONLY?.trim().toLowerCase();
+  return v === "1" || v === "true" || v === "yes";
+}
+
 export function parseGraphQLSourcesEnv(): GraphQLSourceConfig[] {
   const arr = parseJsonArrayEnv(process.env.CLAWQL_GRAPHQL_SOURCES, "CLAWQL_GRAPHQL_SOURCES");
   const out: GraphQLSourceConfig[] = [];
@@ -119,7 +167,9 @@ export function parseGraphQLSourcesEnv(): GraphQLSourceConfig[] {
     }
     const schemaPath = asNonEmptyString(o.schemaPath);
     const introspectionPath = asNonEmptyString(o.introspectionPath);
-    out.push({ name, endpoint, headers, schemaPath, introspectionPath });
+    const disk = sanitizeGraphQLDiskPaths(name, schemaPath, introspectionPath);
+    warnLinearBundledAlternative(endpoint);
+    out.push({ name, endpoint, headers, ...disk });
   }
 
   /** Same idea as `CLAWQL_SPEC_URL` for OpenAPI — one HTTP GraphQL endpoint (e.g. Linear). Appended after JSON array entries. */
@@ -129,12 +179,13 @@ export function parseGraphQLSourcesEnv(): GraphQLSourceConfig[] {
     const headers = parseOptionalJsonHeaders(process.env.CLAWQL_GRAPHQL_HEADERS);
     const schemaPath = process.env.CLAWQL_GRAPHQL_SCHEMA_PATH?.trim();
     const introspectionPath = process.env.CLAWQL_GRAPHQL_INTROSPECTION_PATH?.trim();
+    const disk = sanitizeGraphQLDiskPaths(name, schemaPath, introspectionPath);
+    warnLinearBundledAlternative(singleUrl);
     out.push({
       name,
       endpoint: singleUrl,
       headers,
-      ...(schemaPath ? { schemaPath } : {}),
-      ...(introspectionPath ? { introspectionPath } : {}),
+      ...disk,
     });
   }
 
@@ -148,7 +199,9 @@ export function hasNativeProtocolEnv(): boolean {
 
 /** Load only native GraphQL/gRPC operations — no bundled OpenAPI default (Cloudflare / all-providers). */
 export function shouldLoadNativeProtocolsOnlyMode(): boolean {
-  return hasNativeProtocolEnv() && !wantsOpenAPISpecSelectionEnv();
+  return (
+    isNativeProtocolsOnlyEnabled() && hasNativeProtocolEnv() && !wantsOpenAPISpecSelectionEnv()
+  );
 }
 
 export function parseGrpcSourcesEnv(): GrpcSourceConfig[] {
@@ -163,6 +216,12 @@ export function parseGrpcSourcesEnv(): GrpcSourceConfig[] {
     if (!name || !endpoint || !protoPath) {
       console.error(
         "[native-protocol] CLAWQL_GRPC_SOURCES entry skipped (need name, endpoint, protoPath)"
+      );
+      continue;
+    }
+    if (!pathExistsOnDisk(protoPath)) {
+      console.error(
+        `[native-protocol] gRPC source "${name}": protoPath not found (${resolvePath(process.cwd(), protoPath)}); entry skipped`
       );
       continue;
     }
