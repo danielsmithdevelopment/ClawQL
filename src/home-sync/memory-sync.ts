@@ -13,11 +13,10 @@ export const memorySyncToolSchema = {
   force: z
     .boolean()
     .optional()
-    .describe("When true, overwrite on hash conflicts. Default false — conflicts are reported only."),
-  dryRun: z
-    .boolean()
-    .optional()
-    .describe("Plan only; do not read or write object storage."),
+    .describe(
+      "When true, overwrite on hash conflicts. Default false — conflicts are reported only."
+    ),
+  dryRun: z.boolean().optional().describe("Plan only; do not read or write object storage."),
 };
 
 export type MemorySyncDirection = "auto" | "pull" | "push";

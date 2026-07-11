@@ -131,11 +131,11 @@ clawql doctor
 
 Registered with **`memory_ingest`** / **`memory_recall`** (hide all with **`CLAWQL_ENABLE_MEMORY=0`**). Requires sync bucket + credentials. Use from **Cursor Cloud Agents** (including iOS) instead of shell **`clawql sync`**.
 
-| Field | Default | Meaning |
-| ----- | ------- | ------- |
-| `direction` | `auto` | `auto`: pull remote, then push local. `pull` or `push`: one direction. |
-| `force` | `false` | Overwrite on conflicts; otherwise listed in response only. |
-| `dryRun` | `false` | Plan without object storage I/O. |
+| Field       | Default | Meaning                                                                |
+| ----------- | ------- | ---------------------------------------------------------------------- |
+| `direction` | `auto`  | `auto`: pull remote, then push local. `pull` or `push`: one direction. |
+| `force`     | `false` | Overwrite on conflicts; otherwise listed in response only.             |
+| `dryRun`    | `false` | Plan without object storage I/O.                                       |
 
 ```json
 { "direction": "auto" }

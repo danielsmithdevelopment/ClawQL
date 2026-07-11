@@ -44,10 +44,7 @@ import {
 import { configureDocumentsPluginDeps } from "clawql-documents/plugin";
 import { wrapMcpToolHandler } from "./otel-tracing.js";
 import { configureHomeSyncHooks } from "./configure-home-sync.js";
-import {
-  handleMemorySyncToolInput,
-  memorySyncToolSchema,
-} from "./home-sync/memory-sync.js";
+import { handleMemorySyncToolInput, memorySyncToolSchema } from "./home-sync/memory-sync.js";
 
 export { executeOutputFields, projectRestByFields } from "./tools-execute-core.js";
 
