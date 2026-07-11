@@ -9,8 +9,16 @@ import os from "node:os";
 import path from "node:path";
 import type { SandboxBridgeResponse, SandboxCodeToolInput, SandboxLanguage } from "./types.js";
 import { defaultPersistence, parseTimeoutMs, resolveSandboxId, snippetFilename } from "./shared.js";
-import { defaultClawqlHome, loadContainmentConfig, seatbeltProfileParams } from "./seatbelt-config.js";
-import { buildExecSeatbeltProfile, SEATBELT_EXEC_PROFILE_V1, sandboxExecArgv } from "./seatbelt-profile.js";
+import {
+  defaultClawqlHome,
+  loadContainmentConfig,
+  seatbeltProfileParams,
+} from "./seatbelt-config.js";
+import {
+  buildExecSeatbeltProfile,
+  SEATBELT_EXEC_PROFILE_V1,
+  sandboxExecArgv,
+} from "./seatbelt-profile.js";
 
 export { SEATBELT_EXEC_PROFILE_V1 as SEATBELT_PROFILE_V1 } from "./seatbelt-profile.js";
 
@@ -100,11 +108,21 @@ export async function callMacosSeatbeltSandbox(
 
     const params = containment?.enabled
       ? seatbeltProfileParams(containment, workspace)
-      : { WORK_DIR: workspace, CLAWQL_DIR: defaultClawqlHome(), HOME_SSH: "/dev/null", HOME_AWS: "/dev/null", HOME_CONFIG: "/dev/null" };
+      : {
+          WORK_DIR: workspace,
+          CLAWQL_DIR: defaultClawqlHome(),
+          HOME_SSH: "/dev/null",
+          HOME_AWS: "/dev/null",
+          HOME_CONFIG: "/dev/null",
+        };
 
     const { argv } = execParts(input.language, workspace);
     const seatbeltArgs = sandboxExecArgv(profilePath, params, argv[0]!, argv.slice(1));
-    const { stdout, stderr, exitCode } = await spawnSeatbeltArgs(seatbeltArgs, workspace, timeoutMs);
+    const { stdout, stderr, exitCode } = await spawnSeatbeltArgs(
+      seatbeltArgs,
+      workspace,
+      timeoutMs
+    );
 
     const ok = exitCode === 0;
     return {

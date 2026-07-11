@@ -22,9 +22,7 @@ export type SandboxCliInitOptions = {
   skipVerify?: boolean;
 };
 
-function formatVerifyReport(
-  verify: Awaited<ReturnType<typeof runSandboxVerify>>
-): string {
+function formatVerifyReport(verify: Awaited<ReturnType<typeof runSandboxVerify>>): string {
   const lines = [
     "ClawQL sandbox containment",
     `  platform: ${verify.platform}`,

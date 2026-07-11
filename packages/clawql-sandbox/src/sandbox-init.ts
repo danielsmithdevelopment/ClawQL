@@ -86,10 +86,7 @@ export async function runSandboxInit(opts: SandboxInitOptions = {}): Promise<San
   const paths = await saveContainmentConfig(config, clawqlHome);
   await mkdir(paths.sandboxDir, { recursive: true, mode: 0o700 });
 
-  const harnessProfiles: Record<SandboxHarnessId, string> = {} as Record<
-    SandboxHarnessId,
-    string
-  >;
+  const harnessProfiles: Record<SandboxHarnessId, string> = {} as Record<SandboxHarnessId, string>;
   for (const harness of SANDBOX_HARNESS_IDS) {
     const profile = buildHarnessSeatbeltProfile(config, harness);
     const profilePath = paths.harnessProfilePath(harness);
@@ -171,11 +168,7 @@ export async function runSandboxVerify(
 
   const paths = sandboxPaths(home);
   const wd = resolveWorkDir(config, workDir);
-  const verify = await verifySeatbeltContainment(
-    paths.harnessProfilePath("codex"),
-    config,
-    wd
-  );
+  const verify = await verifySeatbeltContainment(paths.harnessProfilePath("codex"), config, wd);
   config.lastVerifiedAt = new Date().toISOString();
   config.lastVerifyOk = verify.ok;
   await saveContainmentConfig(config, home);

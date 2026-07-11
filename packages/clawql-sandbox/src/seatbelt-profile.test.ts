@@ -33,8 +33,20 @@ describe("seatbelt-profile", () => {
   });
 
   it("sandboxExecArgv passes -D params before command", () => {
-    const argv = sandboxExecArgv("/p.sb", { WORK_DIR: "/repo", CLAWQL_DIR: "/cq" }, "codex", ["--help"]);
-    expect(argv).toEqual(["-f", "/p.sb", "-D", "WORK_DIR=/repo", "-D", "CLAWQL_DIR=/cq", "--", "codex", "--help"]);
+    const argv = sandboxExecArgv("/p.sb", { WORK_DIR: "/repo", CLAWQL_DIR: "/cq" }, "codex", [
+      "--help",
+    ]);
+    expect(argv).toEqual([
+      "-f",
+      "/p.sb",
+      "-D",
+      "WORK_DIR=/repo",
+      "-D",
+      "CLAWQL_DIR=/cq",
+      "--",
+      "codex",
+      "--help",
+    ]);
   });
 
   it("expands tilde paths", () => {
@@ -43,7 +55,10 @@ describe("seatbelt-profile", () => {
   });
 
   it("claude settings restrict to clawql home and work dir", () => {
-    const settings = claudeSandboxSettingsFromConfig(config, `${home}/company-work/cloned-repos/my-app`);
+    const settings = claudeSandboxSettingsFromConfig(
+      config,
+      `${home}/company-work/cloned-repos/my-app`
+    );
     expect(settings.sandbox.enabled).toBe(true);
     expect(settings.sandbox.allowedPaths.some((p) => p.includes(".ClawQL"))).toBe(true);
     expect(settings.sandbox.deniedPaths).toContain("~/.ssh");

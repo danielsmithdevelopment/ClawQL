@@ -16,10 +16,10 @@ clawql codex                   # per-harness sandbox-exec wrapper
 
 ## Architecture: two layers for Claude Code
 
-| Layer | Mechanism |
-|-------|-----------|
+| Layer     | Mechanism                                                          |
+| --------- | ------------------------------------------------------------------ |
 | **Outer** | ClawQL `sandbox-exec -f ~/.ClawQL/sandbox/claude.sb -D WORK_DIR=…` |
-| **Inner** | Claude Code native `/sandbox` via `~/.claude/settings.json` |
+| **Inner** | Claude Code native `/sandbox` via `~/.claude/settings.json`        |
 
 Same defense-in-depth idea as **Kata + Istio** in enterprise — applied locally.
 
@@ -34,12 +34,12 @@ clawql sandbox edit --harness claude   # customize profile in $EDITOR
 
 ### Per-harness profiles
 
-| Harness | Profile | Notes |
-|---------|---------|-------|
-| `claude` | `~/.ClawQL/sandbox/claude.sb` | Seatbelt wrapper + Claude `/sandbox` |
-| `codex` | `~/.ClawQL/sandbox/codex.sb` | `sandbox-exec` only |
-| `cursor` | `~/.ClawQL/sandbox/cursor.sb` | `sandbox-exec` only |
-| `opencode` | `~/.ClawQL/sandbox/opencode.sb` | `sandbox-exec` only |
+| Harness    | Profile                         | Notes                                |
+| ---------- | ------------------------------- | ------------------------------------ |
+| `claude`   | `~/.ClawQL/sandbox/claude.sb`   | Seatbelt wrapper + Claude `/sandbox` |
+| `codex`    | `~/.ClawQL/sandbox/codex.sb`    | `sandbox-exec` only                  |
+| `cursor`   | `~/.ClawQL/sandbox/cursor.sb`   | `sandbox-exec` only                  |
+| `opencode` | `~/.ClawQL/sandbox/opencode.sb` | `sandbox-exec` only                  |
 
 Launch: `clawql <harness>` → `sandbox-exec -f {harness}.sb -D WORK_DIR=$PWD … -- <binary>`
 
@@ -73,12 +73,12 @@ Never silently proceeds unsandboxed when `failClosed: true` (default).
 
 ## Escalation path
 
-| Level | Use when | Tool |
-|-------|----------|------|
-| **1 — Seatbelt** | Daily macOS coding | `clawql sandbox init` |
-| **2 — sandbox_exec MCP** | In-agent snippets | `CLAWQL_ENABLE_SANDBOX=1` |
-| **3 — Kata** | Enterprise K8s | Helm `sandboxKata` |
-| **4 — UTM VM** | Computer Use | Share only company repos folder |
+| Level                    | Use when           | Tool                            |
+| ------------------------ | ------------------ | ------------------------------- |
+| **1 — Seatbelt**         | Daily macOS coding | `clawql sandbox init`           |
+| **2 — sandbox_exec MCP** | In-agent snippets  | `CLAWQL_ENABLE_SANDBOX=1`       |
+| **3 — Kata**             | Enterprise K8s     | Helm `sandboxKata`              |
+| **4 — UTM VM**           | Computer Use       | Share only company repos folder |
 
 ## Related
 

@@ -55,9 +55,7 @@ ${extraDenyWrite}
 }
 
 /** @deprecated Use buildHarnessSeatbeltProfile */
-export function buildAgentSeatbeltProfile(
-  config: SandboxContainmentConfig
-): string {
+export function buildAgentSeatbeltProfile(config: SandboxContainmentConfig): string {
   return buildHarnessSeatbeltProfile(config, "claude");
 }
 
