@@ -193,11 +193,15 @@ Returns ranked **`operationId`** candidates and metadata — no upstream HTTP.
 
 ### Native GraphQL and gRPC (`CLAWQL_GRAPHQL_URL` / `CLAWQL_GRAPHQL_SOURCES` / `CLAWQL_GRPC_SOURCES`)
 
-**GraphQL-only products** (no OpenAPI document—e.g. Linear): prefer **`CLAWQL_PROVIDER=linear`** with **`LINEAR_API_KEY`** (bundled SDL under **`providers/linear/`**). Alternatively set **`CLAWQL_GRAPHQL_URL`** to the HTTP endpoint (load-time introspection + **`execute`** POST target). Optionally **`CLAWQL_GRAPHQL_NAME`** (defaults to **`graphql`**; drives **`normalizeOperationId`** segments and **`mergedAuthHeaders`**) and **`CLAWQL_GRAPHQL_HEADERS`** for static headers. If upstream disables introspection, set **`CLAWQL_GRAPHQL_SCHEMA_PATH`** (`.graphql` / `.gql` SDL) or **`CLAWQL_GRAPHQL_INTROSPECTION_PATH`** (saved JSON: HTTP **`{ "data": … }`** body or bare **`{ "__schema": … }`**). On **`CLAWQL_GRAPHQL_SOURCES`** entries, use **`schemaPath`** / **`introspectionPath`** instead; if both file hints are set, introspection wins. Missing on-disk paths are logged and ignored (HTTP introspection is tried). **`endpoint`** stays required for **`execute`** (POST).
+**Bundled providers** (e.g. **Linear**, **GitHub**, **Cloudflare**): set **`CLAWQL_PROVIDER`** and the provider's auth token. ClawQL picks the best internal connection (**gRPC → GraphQL → OpenAPI**) — users only need **`search`** and **`execute`**.
 
-**Default merge behavior:** **`CLAWQL_GRAPHQL_*`** / **`CLAWQL_GRPC_SOURCES`** merge into the same operation list as bundled OpenAPI/Discovery. Set **`CLAWQL_NATIVE_PROTOCOLS_ONLY=1`** only when you intentionally want **no** bundled REST defaults (native GraphQL/gRPC operations alone). Without that flag, a misconfigured GraphQL source does not prevent startup — bundled providers still load.
+**Linear:** **`CLAWQL_PROVIDER=linear`** + **`LINEAR_API_KEY`**. Do not set **`CLAWQL_GRAPHQL_*`** unless you are connecting a non-bundled GraphQL endpoint.
 
-When **`CLAWQL_GRAPHQL_SOURCES`** / **`CLAWQL_GRPC_SOURCES`** JSON arrays are set, they merge into the same operation list as OpenAPI/Discovery (GraphQL: HTTP introspection or SDL / saved introspection file; gRPC: proto load). **`execute`** routes by internal metadata:
+**Custom GraphQL HTTP provider** (not in the bundled catalog): set **`CLAWQL_GRAPHQL_URL`** (load-time introspection + **`execute`** POST target). Optionally **`CLAWQL_GRAPHQL_NAME`**, **`CLAWQL_GRAPHQL_HEADERS`**, and on-disk **`CLAWQL_GRAPHQL_SCHEMA_PATH`** / **`CLAWQL_GRAPHQL_INTROSPECTION_PATH`** when upstream introspection is blocked. On **`CLAWQL_GRAPHQL_SOURCES`** entries, use **`schemaPath`** / **`introspectionPath`** instead; if both file hints are set, introspection wins. Missing on-disk paths are logged and ignored. Known endpoints (e.g. **`api.linear.app/graphql`**) auto-route to bundled providers. **`endpoint`** stays required for **`execute`** (POST).
+
+**Custom provider only:** when **`CLAWQL_GRAPHQL_*`** / **`CLAWQL_GRPC_SOURCES`** are set **without** **`CLAWQL_PROVIDER`** or other spec env, ClawQL loads **only** those providers — not the default Cloudflare/GitHub/… stack. If the provider cannot be reached, startup fails with a clear error.
+
+When custom endpoints are set **alongside** **`CLAWQL_PROVIDER`** / spec paths, they merge into the same operation index. **`execute`** routes internally by provider metadata:
 
 - **GraphQL** — HTTP POST to the configured endpoint with a built document and variables; auth from **`mergedAuthHeaders(name)`** plus optional per-source **`headers`** / **`CLAWQL_GRAPHQL_HEADERS`**.
 - **gRPC** — unary calls only; **`insecure: true`** selects plaintext; metadata carries the same merged auth pattern where applicable.

@@ -1,13 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  hasNativeProtocolEnv,
-  isNativeProtocolsOnlyEnabled,
+  hasCustomProviderEnv,
   parseGraphQLSourcesEnv,
-  shouldLoadNativeProtocolsOnlyMode,
+  resolveBundledGraphqlFromCustomEnv,
+  shouldLoadCustomProvidersOnly,
   wantsOpenAPISpecSelectionEnv,
 } from "clawql-api";
 
-describe("native-protocol-env", () => {
+describe("custom provider env", () => {
   const saved = { ...process.env };
 
   beforeEach(() => {
@@ -29,31 +29,21 @@ describe("native-protocol-env", () => {
     expect(configs[0]?.headers?.Authorization).toBe("Bearer token");
   });
 
-  it("does not auto-enter native-only mode when only CLAWQL_GRAPHQL_URL is set", () => {
+  it("loads only configured custom providers when CLAWQL_GRAPHQL_URL is set without CLAWQL_PROVIDER", () => {
     vi.stubEnv("CLAWQL_GRAPHQL_URL", "https://api.linear.app/graphql");
     expect(wantsOpenAPISpecSelectionEnv()).toBe(false);
-    expect(hasNativeProtocolEnv()).toBe(true);
-    expect(isNativeProtocolsOnlyEnabled()).toBe(false);
-    expect(shouldLoadNativeProtocolsOnlyMode()).toBe(false);
+    expect(hasCustomProviderEnv()).toBe(true);
+    expect(shouldLoadCustomProvidersOnly()).toBe(true);
   });
 
-  it("enters native-only mode only when CLAWQL_NATIVE_PROTOCOLS_ONLY=1 and no OpenAPI env", () => {
+  it("does not load custom-provider-only mode when CLAWQL_PROVIDER is set", () => {
     vi.stubEnv("CLAWQL_GRAPHQL_URL", "https://api.linear.app/graphql");
-    vi.stubEnv("CLAWQL_NATIVE_PROTOCOLS_ONLY", "1");
-    expect(wantsOpenAPISpecSelectionEnv()).toBe(false);
-    expect(hasNativeProtocolEnv()).toBe(true);
-    expect(shouldLoadNativeProtocolsOnlyMode()).toBe(true);
-  });
-
-  it("does not use native-only mode when CLAWQL_PROVIDER is set", () => {
-    vi.stubEnv("CLAWQL_GRAPHQL_URL", "https://api.linear.app/graphql");
-    vi.stubEnv("CLAWQL_NATIVE_PROTOCOLS_ONLY", "1");
     vi.stubEnv("CLAWQL_PROVIDER", "github");
     expect(wantsOpenAPISpecSelectionEnv()).toBe(true);
-    expect(shouldLoadNativeProtocolsOnlyMode()).toBe(false);
+    expect(shouldLoadCustomProvidersOnly()).toBe(false);
   });
 
-  it("drops missing schemaPath from CLAWQL_GRAPHQL_SOURCES and falls back to introspection", () => {
+  it("drops missing schemaPath from CLAWQL_GRAPHQL_SOURCES and tries introspection instead", () => {
     vi.stubEnv(
       "CLAWQL_GRAPHQL_SOURCES",
       JSON.stringify([
@@ -70,5 +60,13 @@ describe("native-protocol-env", () => {
     expect(configs).toHaveLength(1);
     expect(configs[0]?.schemaPath).toBeUndefined();
     expect(configs[0]?.endpoint).toBe("https://api.example.com/graphql");
+  });
+
+  it("routes a lone Linear endpoint to the bundled linear provider", () => {
+    vi.stubEnv("CLAWQL_GRAPHQL_URL", "https://api.linear.app/graphql");
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
+    const bundled = resolveBundledGraphqlFromCustomEnv();
+    err.mockRestore();
+    expect(bundled?.id).toBe("linear");
   });
 });

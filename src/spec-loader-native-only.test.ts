@@ -8,7 +8,7 @@ vi.mock("node-fetch", () => ({
 import fetch from "node-fetch";
 import { loadSpec, resetSpecCache } from "clawql-api";
 
-describe("spec-loader native-protocol-only", () => {
+describe("spec-loader custom providers only", () => {
   const keysToClear = [
     "CLAWQL_PROVIDER",
     "CLAWQL_SPEC_PATH",
@@ -16,7 +16,7 @@ describe("spec-loader native-protocol-only", () => {
     "CLAWQL_DISCOVERY_URL",
     "CLAWQL_SPEC_PATHS",
     "CLAWQL_BUNDLED_PROVIDERS",
-    "CLAWQL_NATIVE_PROTOCOLS_ONLY",
+    "CLAWQL_GRAPHQL_SOURCES",
   ] as const;
 
   beforeEach(() => {
@@ -25,17 +25,15 @@ describe("spec-loader native-protocol-only", () => {
       delete process.env[k];
     }
     process.env.CLAWQL_GRAPHQL_URL = "https://api.example.com/graphql";
-    process.env.CLAWQL_NATIVE_PROTOCOLS_ONLY = "1";
   });
 
   afterEach(() => {
     delete process.env.CLAWQL_GRAPHQL_URL;
-    delete process.env.CLAWQL_NATIVE_PROTOCOLS_ONLY;
     vi.mocked(fetch).mockReset();
     resetSpecCache();
   });
 
-  it("loads only GraphQL operations when CLAWQL_NATIVE_PROTOCOLS_ONLY=1 without OpenAPI spec env", async () => {
+  it("loads only the configured custom provider when CLAWQL_GRAPHQL_URL is set without CLAWQL_PROVIDER", async () => {
     const iq = introspectionFromSchema(
       buildSchema(`
       type Query { ping: String }
@@ -49,10 +47,11 @@ describe("spec-loader native-protocol-only", () => {
     const loaded = await loadSpec();
     expect(loaded.operations.some((o) => o.resource === "ping")).toBe(true);
     expect(loaded.rawSource).toMatchObject({ kind: "native-protocols-only" });
+    expect(loaded.operations.some((o) => o.specLabel === "cloudflare")).toBe(false);
   });
 });
 
-describe("spec-loader native GraphQL env without native-only flag", () => {
+describe("spec-loader bundled provider routing from custom env", () => {
   const keysToClear = [
     "CLAWQL_PROVIDER",
     "CLAWQL_SPEC_PATH",
@@ -60,7 +59,6 @@ describe("spec-loader native GraphQL env without native-only flag", () => {
     "CLAWQL_DISCOVERY_URL",
     "CLAWQL_SPEC_PATHS",
     "CLAWQL_BUNDLED_PROVIDERS",
-    "CLAWQL_NATIVE_PROTOCOLS_ONLY",
     "CLAWQL_GRAPHQL_URL",
     "CLAWQL_GRAPHQL_SOURCES",
   ] as const;
@@ -80,22 +78,25 @@ describe("spec-loader native GraphQL env without native-only flag", () => {
     resetSpecCache();
   });
 
-  it("falls back to bundled defaults when CLAWQL_GRAPHQL_SOURCES has a missing schemaPath", async () => {
-    process.env.CLAWQL_GRAPHQL_SOURCES = JSON.stringify([
-      {
-        name: "linear",
-        endpoint: "https://api.linear.app/graphql",
-        schemaPath: "/definitely/missing/linear.graphql",
-      },
-    ]);
-    vi.mocked(fetch).mockRejectedValue(new Error("introspection blocked"));
+  it(
+    "routes Linear custom env with a missing schemaPath to bundled linear",
+    async () => {
+      process.env.CLAWQL_GRAPHQL_SOURCES = JSON.stringify([
+        {
+          name: "linear",
+          endpoint: "https://api.linear.app/graphql",
+          schemaPath: "/definitely/missing/linear.graphql",
+        },
+      ]);
 
-    const err = vi.spyOn(console, "error").mockImplementation(() => {});
-    const loaded = await loadSpec();
-    err.mockRestore();
+      const err = vi.spyOn(console, "error").mockImplementation(() => {});
+      const loaded = await loadSpec();
+      err.mockRestore();
 
-    expect(loaded.rawSource).not.toMatchObject({ kind: "native-protocols-only" });
-    expect(loaded.operations.length).toBeGreaterThan(0);
-    expect(loaded.operations.some((o) => o.protocolKind !== "graphql")).toBe(true);
-  }, 120_000);
+      expect(String(loaded.rawSource["bundledGraphqlProvider"] ?? "")).toBe("linear");
+      expect(loaded.operations.some((o) => o.resource === "viewer")).toBe(true);
+      expect(loaded.operations.some((o) => o.specLabel === "cloudflare")).toBe(false);
+    },
+    180_000
+  );
 });

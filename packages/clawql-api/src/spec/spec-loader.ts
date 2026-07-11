@@ -23,7 +23,7 @@ import { convertObj } from "swagger2openapi";
 import type { Operation, ParameterInfo } from "./operation-types.js";
 import { loadGraphqlNativeOperationsFromConfigs } from "./graphql-native-loader.js";
 import { mergeNativeProtocolOperations } from "./native-protocol-merge.js";
-import { shouldLoadNativeProtocolsOnlyMode } from "./native-protocol-env.js";
+import { shouldLoadCustomProvidersOnly, resolveBundledGraphqlFromCustomEnv } from "./native-protocol-env.js";
 import { resetNativeProtocolRegistry } from "./native-protocol-registry.js";
 import { resetMcpSourceRegistry } from "./mcp-source-registry.js";
 import { operationsFromOpenAPI } from "./openapi-operations.js";
@@ -796,19 +796,28 @@ export function registerSpecCacheShutdownHooks(): void {
 }
 
 async function loadSpecUncached(): Promise<LoadedSpec> {
-  if (shouldLoadNativeProtocolsOnlyMode()) {
+  if (shouldLoadCustomProvidersOnly()) {
+    const bundled = resolveBundledGraphqlFromCustomEnv();
+    if (bundled) {
+      const loaded = await loadBundledGraphqlShellSpec(bundled);
+      console.error(
+        `[spec-loader] Loaded provider "${bundled.id}" (${loaded.operations.length} operations)`
+      );
+      return loaded;
+    }
+
     const stub = buildStubLoadedSpec();
     const loaded = await mergeNativeProtocolOperations(stub);
     if (loaded.operations.length === 0) {
       throw new Error(
-        "[spec-loader] CLAWQL_NATIVE_PROTOCOLS_ONLY is set but no GraphQL/gRPC operations loaded. " +
-          "Check CLAWQL_GRAPHQL_URL / CLAWQL_GRAPHQL_SOURCES / CLAWQL_GRPC_SOURCES (endpoints, schema paths, credentials). " +
-          "For bundled Linear use CLAWQL_PROVIDER=linear with LINEAR_API_KEY instead of CLAWQL_GRAPHQL_* alone. " +
-          "Unset CLAWQL_NATIVE_PROTOCOLS_ONLY to merge native sources with default bundled providers."
+        "[spec-loader] Could not load the provider(s) configured via CLAWQL_GRAPHQL_* / CLAWQL_GRPC_SOURCES. " +
+          "Check endpoints, credentials, and on-disk schema/proto paths. " +
+          "For bundled providers use CLAWQL_PROVIDER (e.g. linear + LINEAR_API_KEY). " +
+          "When no provider env is set, the default stack loads automatically."
       );
     }
     console.error(
-      `[spec-loader] Native-protocol-only mode (no OpenAPI/Discovery spec env): ${loaded.operations.length} operations`
+      `[spec-loader] Loaded ${loaded.operations.length} operations from custom provider endpoint(s)`
     );
     return loaded;
   }
