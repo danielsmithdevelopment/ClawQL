@@ -210,13 +210,13 @@ export default {
             marginTop: theme('spacing.2'),
           },
 
-          // Tables
+          // Tables (layout details in tailwind.css `.docs-table`)
           table: {
             width: '100%',
-            tableLayout: 'auto',
+            tableLayout: 'fixed',
             textAlign: 'left',
-            marginTop: theme('spacing.8'),
-            marginBottom: theme('spacing.8'),
+            marginTop: '0',
+            marginBottom: '0',
             lineHeight: theme('lineHeight.6'),
           },
           thead: {
@@ -230,6 +230,8 @@ export default {
             paddingRight: theme('spacing.2'),
             paddingBottom: theme('spacing.2'),
             paddingLeft: theme('spacing.2'),
+            wordBreak: 'break-word',
+            overflowWrap: 'anywhere',
           },
           'thead th:first-child': {
             paddingLeft: '0',
@@ -259,6 +261,9 @@ export default {
             paddingRight: theme('spacing.2'),
             paddingBottom: theme('spacing.2'),
             paddingLeft: theme('spacing.2'),
+            wordBreak: 'break-word',
+            overflowWrap: 'anywhere',
+            verticalAlign: 'top',
           },
           ':is(tbody, tfoot) td:first-child': {
             paddingLeft: '0',
