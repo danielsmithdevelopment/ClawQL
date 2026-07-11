@@ -205,6 +205,20 @@ export const deploymentHubCards: Array<ReferenceCard> = [
     icon: BookIcon,
   }),
   card({
+    href: '/getting-started/golden-host-images',
+    name: 'Golden host images (Packer + Pulumi)',
+    description:
+      'Managed tiers: Packer bakes AMIs/GCP images; Pulumi provisions EC2/GCE/R2 with boot-time team vault.',
+    icon: MapPinIcon,
+  }),
+  card({
+    href: '/getting-started/local-agent-sandbox',
+    name: 'Local agent sandbox',
+    description:
+      'clawql sandbox init — fail-closed Seatbelt for Codex, Claude, Cursor, OpenCode harnesses.',
+    icon: ShapesIcon,
+  }),
+  card({
     href: '/deployment/kubernetes',
     name: 'Tier 2: Kubernetes & Helm',
     description:
@@ -467,7 +481,14 @@ export const optionalToolsHubCards: Array<ReferenceCard> = [
     href: '/learn/sandbox-exec',
     name: 'Sandbox exec',
     description:
-      'Isolated code execution — Seatbelt, Docker, Cloudflare bridge.',
+      'MCP sandbox_exec — Kata, Docker, Seatbelt, or Cloudflare bridge.',
+    icon: ShapesIcon,
+  }),
+  card({
+    href: '/getting-started/local-agent-sandbox',
+    name: 'Local agent sandbox (CLI)',
+    description:
+      'clawql sandbox init — per-harness Seatbelt profiles; fail-closed harness launch.',
     icon: ShapesIcon,
   }),
   card({
@@ -526,7 +547,8 @@ export const pluginsHubCards: Array<ReferenceCard> = [
   card({
     href: '/plugins/sandbox',
     name: 'Sandbox',
-    description: 'sandbox_exec — Kata, Docker, Seatbelt, or bridge.',
+    description:
+      'sandbox_exec MCP + clawql sandbox CLI — Kata, Seatbelt, fail-closed harnesses.',
     icon: ShapesIcon,
   }),
   card({

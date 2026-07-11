@@ -4,6 +4,16 @@ Agents often need to **run short code** (evaluate an expression, transform JSON,
 
 **Canonical reference:** [mcp-tools.md § sandbox_exec](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md#sandbox_exec) · issue [#207](https://github.com/danielsmithdevelopment/ClawQL/issues/207). Agent skill: [clawql-sandbox-exec](https://docs.clawql.com/.well-known/agent-skills/clawql-sandbox-exec/SKILL.md). Bridge deploy: [cloudflare/sandbox-bridge README](https://github.com/danielsmithdevelopment/ClawQL/blob/main/cloudflare/sandbox-bridge/README.md).
 
+## Two sandbox layers (do not confuse them)
+
+| Layer | What | Doc |
+| ----- | ---- | --- |
+| **`sandbox_exec` MCP** | Isolated **snippets** inside the MCP server (Python/JS/shell) | This page |
+| **`clawql sandbox` CLI** | **Full agent harness** containment (Codex, Claude, Cursor, OpenCode) — fail-closed Seatbelt | [Local agent sandbox](/getting-started/local-agent-sandbox) |
+| **Managed host (Kata)** | Production VM/EC2 tiers — Packer bake + Pulumi provision | [Golden host images](/getting-started/golden-host-images) |
+
+Use **`clawql sandbox init`** on developer Macs **before** launching harnesses. Use **`CLAWQL_ENABLE_SANDBOX=1`** when agents need in-session code evaluation via MCP.
+
 ## What sandbox_exec is for
 
 - **Small, untrusted snippets** — safe evaluation paths instead of **`execute`** on arbitrary automation or pasting into a real operator shell.
@@ -105,6 +115,9 @@ Persist **decisions and outputs** you care about later with **`memory_ingest`** 
 
 ## Related guides and references
 
+- [Local agent sandbox](/getting-started/local-agent-sandbox) — `clawql sandbox init`, per-harness Seatbelt, fail-closed harness launch.
+- [Golden host images](/getting-started/golden-host-images) — Packer + Pulumi for managed AWS/GCP/Cloudflare tiers (Kata escalation in-cluster).
+- [Sandbox plugin](/plugins/sandbox) — plugin overview and backends.
 - [Tools](/tools) — full MCP matrix (**`sandbox_exec`** is **default off — opt in** in the feature-tier diagram).
 - [Using search and execute](/learn/search-and-execute-mcp) — calling real APIs after sandbox checks.
 - [Schedule synthetic checks](/schedule) — v1 schedule actions are HTTP checks; heavier patterns may combine with **`sandbox_exec`** under separate review ([schedule-synthetic-checks.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/schedule-synthetic-checks.md)).

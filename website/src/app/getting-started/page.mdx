@@ -24,6 +24,12 @@ Run ClawQL in minutes, deploy the full IDP stack with Helm, then dive into guide
   <Button href="/getting-started/for-teams" variant="outline">
     <>For teams</>
   </Button>
+  <Button href="/getting-started/golden-host-images" variant="outline">
+    <>Golden host (Packer + Pulumi)</>
+  </Button>
+  <Button href="/getting-started/local-agent-sandbox" variant="outline">
+    <>Local agent sandbox</>
+  </Button>
   <Button href="/mcp-clients" variant="outline">
     <>MCP clients</>
   </Button>
@@ -46,6 +52,8 @@ Run ClawQL in minutes, deploy the full IDP stack with Helm, then dive into guide
 | **Tier 1 Compose**  | Full local IDP slice          | [Phase 1 guide](/getting-started/phase-1-platform-guide)                                      |
 | **Helm full stack** | Team K8s, IDP pipeline        | [Kubernetes](/deployment/kubernetes) · [Helm](/helm)                                          |
 | **Teams**           | Shared memory + observability | [For teams](/getting-started/for-teams) · [Team vault sync](/getting-started/team-vault-sync) |
+| **Managed hosts**   | AWS/GCP/Cloudflare VM tiers   | [Golden host images](/getting-started/golden-host-images) — Packer bake + Pulumi provision     |
+| **Agent laptops**   | Fail-closed local containment | [Local agent sandbox](/getting-started/local-agent-sandbox) — `clawql sandbox init`          |
 | **Operations**      | Upgrades, secrets, health     | [Operations guide](/deployment/operations-guide)                                              |
 
 <Note>

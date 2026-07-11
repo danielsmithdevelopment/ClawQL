@@ -37,6 +37,14 @@ export const docsNavigation: Array<NavGroup> = [
       { title: 'Agent setup', href: '/agent-setup' },
       { title: 'For teams', href: '/getting-started/for-teams' },
       { title: 'Team vault sync', href: '/getting-started/team-vault-sync' },
+      {
+        title: 'Golden host (Packer + Pulumi)',
+        href: '/getting-started/golden-host-images',
+      },
+      {
+        title: 'Local agent sandbox',
+        href: '/getting-started/local-agent-sandbox',
+      },
       { title: 'Install', href: '/install' },
       { title: 'MCP clients', href: '/mcp-clients' },
     ],
