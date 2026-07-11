@@ -17,7 +17,8 @@ export type ProvisionInputs = {
   syncBucket: string;
   syncProvider: SyncProvider;
   syncPrefix?: string;
-  goldenImageId: string;
+  /** Required for `aws` / `gcp` golden-host stacks; omitted for `cloudflare` (R2-only). */
+  goldenImageId?: string;
   instanceType: string;
   region: string;
   /** When true, user-data fetches sync credentials from SSM at boot (AWS). */

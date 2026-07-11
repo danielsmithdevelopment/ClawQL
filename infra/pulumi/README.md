@@ -27,14 +27,24 @@ export AWS_ACCESS_KEY_ID=...
 export AWS_SECRET_ACCESS_KEY=...
 pulumi login 's3://clawql-pulumi-state?region=auto&endpoint=https://<accountid>.r2.cloudflarestorage.com&awssdk=v2'
 
-# Configure stack (copy and edit)
+# Cloudflare R2 only (no VM / no golden image)
+cp Pulumi.cloudflare.example.yaml Pulumi.dev-r2.yaml
+pulumi stack init dev-r2
+pulumi config set cloudflare:apiToken --secret
+pulumi config set cloudflare:accountId <account-id>
+pulumi config set clawql:cloud cloudflare
+pulumi config set clawql:tier dedicated
+pulumi config set clawql:tenantId <your-handle>
+pulumi config set clawql:syncBucket clawql-team-vault
+pulumi preview && pulumi up
+
+# AWS / GCP golden host (requires Packer AMI / image)
 cp Pulumi.example.yaml Pulumi.dev.yaml
 pulumi stack init dev
 pulumi config set clawql:cloud aws
 pulumi config set clawql:tier shared
 pulumi config set clawql:syncBucket acme-clawql-team
 pulumi config set clawql:goldenImageId ami-xxxxxxxx   # from Packer output
-
 pulumi preview   # needs cloud credentials
 ```
 
@@ -42,9 +52,10 @@ pulumi preview   # needs cloud credentials
 
 | Tier | Required config | Sync prefix |
 |------|-----------------|-------------|
-| `shared` | `syncBucket`, `goldenImageId` | `shared/` |
+| `shared` | `syncBucket`, `goldenImageId` (AWS/GCP only) | `shared/` |
 | `dedicated` | + `tenantId` | `tenant/{tenantId}/` |
 | `enterprise` | + `syncPrefix` | custom |
+| `cloudflare` (R2 only) | `syncBucket`, `cloudflare:accountId` — **no** `goldenImageId` | per tier |
 
 Dedicated AWS stacks default `useSsmSecrets=true`; user-data reads sync credentials from SSM at boot.
 
@@ -86,6 +97,7 @@ Future: `clawql operator provision --tier dedicated --tenant acme`.
 
 ## Related
 
+- [Cloud Agent + R2 + Tailscale runbook](../../docs/deployment/cloud-agent-r2-tailscale-runbook.md)
 - [Golden host images (Packer)](../../docs/getting-started/golden-host-images.md)
 - [ADR 0006: Packer](../../docs/adr/0006-golden-host-images-packer.md)
 - [ADR 0007: Pulumi](../../docs/adr/0007-pulumi-provisioning-managed-tiers.md)
