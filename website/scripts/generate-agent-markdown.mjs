@@ -15,7 +15,7 @@ import { visit } from 'unist-util-visit'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const appDir = path.join(__dirname, '../src/app')
-const outFile = path.join(__dirname, '../src/generated/agent-markdown.json')
+const outFile = path.join(__dirname, '../public/agent-markdown.json')
 
 function stripImportsAndExports(source) {
   let s = source
