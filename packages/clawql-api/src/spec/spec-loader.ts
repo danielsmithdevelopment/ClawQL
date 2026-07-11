@@ -23,7 +23,10 @@ import { convertObj } from "swagger2openapi";
 import type { Operation, ParameterInfo } from "./operation-types.js";
 import { loadGraphqlNativeOperationsFromConfigs } from "./graphql-native-loader.js";
 import { mergeNativeProtocolOperations } from "./native-protocol-merge.js";
-import { shouldLoadCustomProvidersOnly, resolveBundledGraphqlFromCustomEnv } from "./native-protocol-env.js";
+import {
+  shouldLoadCustomProvidersOnly,
+  resolveBundledGraphqlFromCustomEnv,
+} from "./native-protocol-env.js";
 import { resetNativeProtocolRegistry } from "./native-protocol-registry.js";
 import { resetMcpSourceRegistry } from "./mcp-source-registry.js";
 import { operationsFromOpenAPI } from "./openapi-operations.js";

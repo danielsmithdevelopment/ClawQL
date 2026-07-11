@@ -6,15 +6,15 @@ Provision **ClawQL-ready servers** with team agent context loaded at boot — fo
 
 ## What you get
 
-| Component | Bake time (image) | Boot time (runtime) |
-|-----------|-------------------|---------------------|
-| ClawQL + Node 22 | Yes | — |
-| `~/.ClawQL` skeleton | Yes | — |
-| `sync.json` (bucket/prefix) | Template only | Overridden from metadata/env |
-| Sync credentials | **Never** | Injected (Vault, instance role, secrets manager) |
-| Team `Memory/` notes | — | `clawql sync pull` |
-| SHA-256 verification | — | Every pulled file vs manifest |
-| Health gate | `clawql doctor` (bake) | `clawql doctor --smoke` (boot) |
+| Component                   | Bake time (image)      | Boot time (runtime)                              |
+| --------------------------- | ---------------------- | ------------------------------------------------ |
+| ClawQL + Node 22            | Yes                    | —                                                |
+| `~/.ClawQL` skeleton        | Yes                    | —                                                |
+| `sync.json` (bucket/prefix) | Template only          | Overridden from metadata/env                     |
+| Sync credentials            | **Never**              | Injected (Vault, instance role, secrets manager) |
+| Team `Memory/` notes        | —                      | `clawql sync pull`                               |
+| SHA-256 verification        | —                      | Every pulled file vs manifest                    |
+| Health gate                 | `clawql doctor` (bake) | `clawql doctor --smoke` (boot)                   |
 
 ## Quick start (operators)
 
@@ -52,10 +52,10 @@ clawql sync status
 
 ## Tier seeding
 
-| Tier | Configuration |
-|------|----------------|
-| **Shared** | `CLAWQL_SYNC_PREFIX=shared/` |
-| **Dedicated** | `CLAWQL_SYNC_PREFIX=tenant/<tenant-id>/` |
+| Tier           | Configuration                                        |
+| -------------- | ---------------------------------------------------- |
+| **Shared**     | `CLAWQL_SYNC_PREFIX=shared/`                         |
+| **Dedicated**  | `CLAWQL_SYNC_PREFIX=tenant/<tenant-id>/`             |
 | **Enterprise** | Customer-owned bucket; same image, their credentials |
 
 ## Cloudflare managed tier

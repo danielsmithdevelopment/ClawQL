@@ -21,10 +21,10 @@ Users choose **providers** (`CLAWQL_PROVIDER`, team bucket prefix). Protocol rou
 
 ### 1) Two-phase provisioning (secrets never in the image)
 
-| Phase | When | What |
-|-------|------|------|
-| **Bake** | Packer build | Ubuntu 24.04, Node 22, `clawql` install, `~/.ClawQL` skeleton, `sync.json` template (`CONFIGURE_AT_BOOT` bucket placeholder) |
-| **Boot** | Instance / Worker start | Inject sync credentials (metadata, Vault agent, ESO), `clawql sync pull`, `clawql doctor --smoke` |
+| Phase    | When                    | What                                                                                                                         |
+| -------- | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| **Bake** | Packer build            | Ubuntu 24.04, Node 22, `clawql` install, `~/.ClawQL` skeleton, `sync.json` template (`CONFIGURE_AT_BOOT` bucket placeholder) |
+| **Boot** | Instance / Worker start | Inject sync credentials (metadata, Vault agent, ESO), `clawql sync pull`, `clawql doctor --smoke`                            |
 
 `vault/providers.json` and sync credentials **never** ship in the image (same rule as team sync docs).
 
@@ -43,10 +43,10 @@ Release CI signs container artifacts today (Cosign on GHCR). VM image signing (e
 
 ### 4) Tier seeding via bucket prefix (not image variant)
 
-| Tier | Seeding |
-|------|---------|
-| **Shared** | `CLAWQL_SYNC_PREFIX=shared/`; tenant isolation via operator |
-| **Dedicated** | `CLAWQL_SYNC_PREFIX=tenant/{id}/` from instance metadata |
+| Tier           | Seeding                                                     |
+| -------------- | ----------------------------------------------------------- |
+| **Shared**     | `CLAWQL_SYNC_PREFIX=shared/`; tenant isolation via operator |
+| **Dedicated**  | `CLAWQL_SYNC_PREFIX=tenant/{id}/` from instance metadata    |
 | **Enterprise** | Customer bucket + Vault; ClawQL ships the signed image only |
 
 ## Consequences
