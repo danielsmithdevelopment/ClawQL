@@ -10,10 +10,10 @@ Run **ClawQL Cloud Agents** with a **durable memory vault on Cloudflare R2**, pr
 
 Cloud Agents and private phone access solve **different** problems. Use both:
 
-| Layer | What | Who can reach it |
-| --- | --- | --- |
-| **A — Cloud Agent** | Cursor VM runs `clawql-mcp` (stdio) + R2 sync | You (via Cursor app / web); MCP runs inside the agent VM |
-| **B — Tailscale host** | Your machine or golden host runs `clawql-mcp-http` + **Tailscale Serve** | Only devices on **your tailnet** (laptop, phone) |
+| Layer                  | What                                                                     | Who can reach it                                         |
+| ---------------------- | ------------------------------------------------------------------------ | -------------------------------------------------------- |
+| **A — Cloud Agent**    | Cursor VM runs `clawql-mcp` (stdio) + R2 sync                            | You (via Cursor app / web); MCP runs inside the agent VM |
+| **B — Tailscale host** | Your machine or golden host runs `clawql-mcp-http` + **Tailscale Serve** | Only devices on **your tailnet** (laptop, phone)         |
 
 ```mermaid
 flowchart LR
@@ -109,27 +109,27 @@ Or run `pulumi preview` in the agent after configuring secrets (Phase 2).
 
 This repo ships:
 
-| File | Purpose |
-| --- | --- |
-| [`.cursor/environment.json`](../../.cursor/environment.json) | Build ClawQL + Pulumi; init `~/.ClawQL`; optional R2 pull |
-| [`.cursor/scripts/cloud-agent-install.sh`](../../.cursor/scripts/cloud-agent-install.sh) | Idempotent install script |
+| File                                                                                     | Purpose                                                   |
+| ---------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| [`.cursor/environment.json`](../../.cursor/environment.json)                             | Build ClawQL + Pulumi; init `~/.ClawQL`; optional R2 pull |
+| [`.cursor/scripts/cloud-agent-install.sh`](../../.cursor/scripts/cloud-agent-install.sh) | Idempotent install script                                 |
 
 ### 2a. Cursor Secrets (Dashboard → Cloud Agents → Secrets)
 
 Add these **runtime** secrets (names must match — the install script and MCP child read them):
 
-| Secret | Example / notes |
-| --- | --- |
-| `CLAWQL_HOME` | `/home/ubuntu/.ClawQL` (optional; install script defaults) |
-| `CLAWQL_R2_ACCOUNT_ID` | Cloudflare account id |
-| `CLAWQL_SYNC_BUCKET` | `clawql-team-vault` (or Pulumi output name) |
-| `CLAWQL_SYNC_PREFIX` | `tenant/your-handle/` (from Pulumi `syncPrefix`) |
-| `CLAWQL_SYNC_ACCESS_KEY_ID` | R2 S3 access key |
-| `CLAWQL_SYNC_SECRET_ACCESS_KEY` | R2 S3 secret |
-| `PULUMI_CONFIG_PASSPHRASE` | Pulumi stack encryption passphrase |
-| `AWS_ACCESS_KEY_ID` | Same R2 key (for Pulumi S3 state backend + AWS SDK) |
-| `AWS_SECRET_ACCESS_KEY` | Same R2 secret |
-| `CLOUDFLARE_API_TOKEN` | For `pulumi up` from the agent (optional) |
+| Secret                          | Example / notes                                            |
+| ------------------------------- | ---------------------------------------------------------- |
+| `CLAWQL_HOME`                   | `/home/ubuntu/.ClawQL` (optional; install script defaults) |
+| `CLAWQL_R2_ACCOUNT_ID`          | Cloudflare account id                                      |
+| `CLAWQL_SYNC_BUCKET`            | `clawql-team-vault` (or Pulumi output name)                |
+| `CLAWQL_SYNC_PREFIX`            | `tenant/your-handle/` (from Pulumi `syncPrefix`)           |
+| `CLAWQL_SYNC_ACCESS_KEY_ID`     | R2 S3 access key                                           |
+| `CLAWQL_SYNC_SECRET_ACCESS_KEY` | R2 S3 secret                                               |
+| `PULUMI_CONFIG_PASSPHRASE`      | Pulumi stack encryption passphrase                         |
+| `AWS_ACCESS_KEY_ID`             | Same R2 key (for Pulumi S3 state backend + AWS SDK)        |
+| `AWS_SECRET_ACCESS_KEY`         | Same R2 secret                                             |
+| `CLOUDFLARE_API_TOKEN`          | For `pulumi up` from the agent (optional)                  |
 
 **Provider API tokens** (GitHub, Cloudflare API execute, etc.): use `clawql secrets set` inside the agent session, or add recognized keys to the vault — never commit to git. See [local provider vault](../getting-started/local-provider-vault.md).
 
@@ -137,12 +137,12 @@ Add these **runtime** secrets (names must match — the install script and MCP c
 
 Add a **stdio** server (runs inside the Cloud Agent VM):
 
-| Field | Value |
-| --- | --- |
-| Name | `clawql` |
-| Command | `npx` |
-| Args | `["-p", "clawql-mcp", "clawql-mcp"]` |
-| Env | `CLAWQL_HOME=/home/ubuntu/.ClawQL` (match your VM user) |
+| Field   | Value                                                   |
+| ------- | ------------------------------------------------------- |
+| Name    | `clawql`                                                |
+| Command | `npx`                                                   |
+| Args    | `["-p", "clawql-mcp", "clawql-mcp"]`                    |
+| Env     | `CLAWQL_HOME=/home/ubuntu/.ClawQL` (match your VM user) |
 
 Enable **clawql** in the MCP dropdown when starting each agent run.
 
@@ -247,11 +247,11 @@ Enroll the MCP host with `--advertise-tags=tag:clawql-mcp` (see [headscale ACL s
 
 ### 3c. Cloudflare’s role
 
-| Service | Use | Public? |
-| --- | --- | --- |
-| **R2** | Durable vault + Pulumi state | **No** — S3 API with private keys only |
+| Service                                         | Use                                                | Public?                                                |
+| ----------------------------------------------- | -------------------------------------------------- | ------------------------------------------------------ |
+| **R2**                                          | Durable vault + Pulumi state                       | **No** — S3 API with private keys only                 |
 | **Cloudflare Worker** (`cloudflare/mcp-proxy/`) | Optional CORS edge in front of a **remote** origin | Only if you deploy it; **not** needed for tailnet-only |
-| **Tailscale Serve** | Private HTTPS MCP | **Tailnet only** |
+| **Tailscale Serve**                             | Private HTTPS MCP                                  | **Tailnet only**                                       |
 
 Do **not** expose `clawql-mcp-http` on a public Cloudflare Worker without **Cloudflare Access** or equivalent — Tailscale is the simpler “only me” path.
 
@@ -259,26 +259,26 @@ Do **not** expose `clawql-mcp-http` on a public Cloudflare Worker without **Clou
 
 ## Phase 4 — End-to-end test checklist
 
-| Step | Command / action | Pass |
-| --- | --- | --- |
-| Pulumi R2 bucket | `pulumi up` (cloudflare stack) | `bucketName` in outputs |
-| R2 sync push | `clawql sync push` after `memory_ingest` | Object visible in R2 dashboard |
-| Cloud Agent MCP | `clawql doctor --smoke` in agent | Core tools OK |
-| Memory round-trip | `memory_recall` after new agent run | Note from R2 pull |
-| Tailscale health | `curl https://<host>.<tailnet>.ts.net/healthz` from phone | `status: ok` |
-| ACL | Second Tailscale user / unauthenticated host | Connection denied |
+| Step              | Command / action                                          | Pass                           |
+| ----------------- | --------------------------------------------------------- | ------------------------------ |
+| Pulumi R2 bucket  | `pulumi up` (cloudflare stack)                            | `bucketName` in outputs        |
+| R2 sync push      | `clawql sync push` after `memory_ingest`                  | Object visible in R2 dashboard |
+| Cloud Agent MCP   | `clawql doctor --smoke` in agent                          | Core tools OK                  |
+| Memory round-trip | `memory_recall` after new agent run                       | Note from R2 pull              |
+| Tailscale health  | `curl https://<host>.<tailnet>.ts.net/healthz` from phone | `status: ok`                   |
+| ACL               | Second Tailscale user / unauthenticated host              | Connection denied              |
 
 ---
 
 ## Troubleshooting
 
-| Symptom | Fix |
-| --- | --- |
-| MCP tools missing in Cloud Agent | Enable **clawql** in MCP dropdown; confirm stdio server in dashboard |
-| `sync pull` skipped | Set `CLAWQL_SYNC_*` + `CLAWQL_R2_ACCOUNT_ID` in Cursor Secrets |
-| `pulumi up` fails on cloudflare | Set `cloudflare:apiToken` + `cloudflare:accountId`; no `goldenImageId` needed |
-| Phone cannot reach MCP | Tailscale on phone must be **Connected**; use Serve HTTPS URL, not `localhost` |
-| Cloud Agent cannot use tailnet HTTP MCP | Expected — use stdio MCP in agent; tailnet URL is for laptop/phone direct |
+| Symptom                                 | Fix                                                                            |
+| --------------------------------------- | ------------------------------------------------------------------------------ |
+| MCP tools missing in Cloud Agent        | Enable **clawql** in MCP dropdown; confirm stdio server in dashboard           |
+| `sync pull` skipped                     | Set `CLAWQL_SYNC_*` + `CLAWQL_R2_ACCOUNT_ID` in Cursor Secrets                 |
+| `pulumi up` fails on cloudflare         | Set `cloudflare:apiToken` + `cloudflare:accountId`; no `goldenImageId` needed  |
+| Phone cannot reach MCP                  | Tailscale on phone must be **Connected**; use Serve HTTPS URL, not `localhost` |
+| Cloud Agent cannot use tailnet HTTP MCP | Expected — use stdio MCP in agent; tailnet URL is for laptop/phone direct      |
 
 ---
 
