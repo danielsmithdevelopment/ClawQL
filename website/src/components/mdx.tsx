@@ -119,7 +119,10 @@ function countTableColumns(children: React.ReactNode): number {
       if (!isValidElement<TableRowProps>(row) || row.type !== 'tr') return
       let rowCols = 0
       Children.forEach(row.props.children, (cell) => {
-        if (isValidElement(cell) && (cell.type === 'th' || cell.type === 'td')) {
+        if (
+          isValidElement(cell) &&
+          (cell.type === 'th' || cell.type === 'td')
+        ) {
           rowCols += 1
         }
       })
@@ -139,7 +142,11 @@ export function table({
   return (
     <div className="docs-table-scroll not-prose">
       <table
-        className={clsx('docs-table', cols ? `docs-table-cols-${cols}` : null, className)}
+        className={clsx(
+          'docs-table',
+          cols ? `docs-table-cols-${cols}` : null,
+          className,
+        )}
         data-cols={cols > 0 ? cols : undefined}
         {...props}
       >
