@@ -18,6 +18,11 @@
       "import": "./dist/plugin/index.js",
       "require": "./dist/plugin/index.cjs"
     },
+    "./init": {
+      "types": "./dist/init/index.d.ts",
+      "import": "./dist/init/index.js",
+      "require": "./dist/init/index.cjs"
+    },
     "./package.json": "./package.json"
   },
   "scripts": {

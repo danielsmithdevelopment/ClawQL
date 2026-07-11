@@ -9,12 +9,10 @@ import os from "node:os";
 import path from "node:path";
 import type { SandboxBridgeResponse, SandboxCodeToolInput, SandboxLanguage } from "./types.js";
 import { defaultPersistence, parseTimeoutMs, resolveSandboxId, snippetFilename } from "./shared.js";
+import { defaultClawqlHome, loadContainmentConfig } from "./seatbelt-config.js";
+import { buildExecSeatbeltProfile, SEATBELT_EXEC_PROFILE_V1 } from "./seatbelt-profile.js";
 
-/** Embedded profile — deny outbound network; filesystem tightened further in follow-ups. */
-export const SEATBELT_PROFILE_V1 = `(version 1)
-(allow default)
-(deny network*)
-`;
+export { SEATBELT_EXEC_PROFILE_V1 as SEATBELT_PROFILE_V1 } from "./seatbelt-profile.js";
 
 function workspaceRootFor(sandboxId: string): string {
   const base = path.join(os.tmpdir(), "clawql-seatbelt-workspaces");
@@ -95,7 +93,12 @@ export async function callMacosSeatbeltSandbox(
 
   try {
     await mkdir(workspace, { recursive: true });
-    await writeFile(profilePath, SEATBELT_PROFILE_V1, "utf8");
+    const containment = await loadContainmentConfig(defaultClawqlHome()).catch(() => null);
+    const profileBody =
+      containment?.enabled
+        ? buildExecSeatbeltProfile(containment, workspace)
+        : SEATBELT_EXEC_PROFILE_V1;
+    await writeFile(profilePath, profileBody, "utf8");
     await writeFile(snippetPath, input.code, "utf8");
 
     const { argv } = execParts(input.language, workspace);

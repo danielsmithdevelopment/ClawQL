@@ -1,6 +1,6 @@
 ---
 title: Sandbox
-description: sandbox_exec — isolated code snippets via Kata, Docker, Seatbelt, or bridge. Register with CLAWQL_ENABLE_SANDBOX=1.
+description: sandbox_exec — isolated code snippets via Kata, Docker, Seatbelt, or bridge. Local agent containment via clawql sandbox init.
 slug: sandbox
 status: opt-in
 package: clawql-sandbox
@@ -14,7 +14,24 @@ next: ouroboros
 **Plugin ID:** `clawql-sandbox`  
 **Package:** `packages/clawql-sandbox` — `SandboxPlugin`
 
-Runs untrusted code snippets in an isolated backend without giving agents raw shell on the MCP host.
+Two layers:
+
+1. **`sandbox_exec` MCP** — isolated code snippets inside the MCP server pipeline
+2. **`clawql sandbox`** CLI — macOS Seatbelt containment for **full agent harnesses** (Codex, Claude, Cursor, OpenCode)
+
+## Local agent containment (fail-closed)
+
+Prevent subagent shell incidents (`rm -rf $HOME`, etc.) on developer Macs:
+
+```bash
+clawql sandbox init
+clawql sandbox verify    # macOS — must pass when failClosed
+clawql codex             # launches inside Seatbelt when configured
+```
+
+See [Local agent sandbox](/getting-started/local-agent-sandbox) and [ADR 0008](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/adr/0008-fail-closed-local-agent-sandbox.md).
+
+**Never fail open:** if verification fails, harness launch exits with an error.
 
 ## MCP tools
 
@@ -42,5 +59,6 @@ Helm: `enableSandbox: true` plus optional `sandboxKata` / `sandboxDocker` blocks
 
 ## Learn more
 
+- [Local agent sandbox](/getting-started/local-agent-sandbox)
 - [Sandbox exec walkthrough](/learn/sandbox-exec)
 - [MCP tools § sandbox_exec](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md#sandbox_exec)

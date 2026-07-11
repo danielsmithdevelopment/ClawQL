@@ -12,6 +12,7 @@ import { existsSync } from "node:fs";
 import { buildMcpServerConfig } from "./mcp-config.js";
 import { getClawqlHome } from "./paths.js";
 import { runInit } from "./init.js";
+import { ensureHarnessSandboxGate } from "clawql-sandbox/init";
 
 export type HarnessId = "claude" | "codex" | "cursor" | "opencode";
 
@@ -150,8 +151,20 @@ export async function runHarness(id: HarnessId, forwarded: string[]): Promise<nu
     return 1;
   }
 
+  const gate = await ensureHarnessSandboxGate(getClawqlHome());
+  if (!gate.ok) {
+    console.error(`[clawql ${id}] ${gate.error}`);
+    console.error("Fix: clawql sandbox init && clawql sandbox verify");
+    return 1;
+  }
+
+  const spawnBin = gate.wrap ? "/usr/bin/sandbox-exec" : bin;
+  const spawnArgs = gate.wrap
+    ? ["-f", gate.profilePath, "--", bin, ...forwarded]
+    : forwarded;
+
   return new Promise((resolve) => {
-    const child = spawn(bin, forwarded, {
+    const child = spawn(spawnBin, spawnArgs, {
       stdio: "inherit",
       env: {
         ...process.env,
