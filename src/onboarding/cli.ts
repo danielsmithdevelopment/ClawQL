@@ -21,6 +21,12 @@ import {
   runReleaseVerify,
 } from "./release-cli.js";
 import { runSyncInit, runSyncPullCmd, runSyncPushCmd, runSyncStatusCmd } from "./sync-cli.js";
+import {
+  runSandboxEditCmd,
+  runSandboxInitCmd,
+  runSandboxStatusCmd,
+  runSandboxVerifyCmd,
+} from "./sandbox-cli.js";
 
 type Command =
   | "init"
@@ -32,6 +38,7 @@ type Command =
   | "sources"
   | "release"
   | "sync"
+  | "sandbox"
   | "claude"
   | "codex"
   | "cursor"
@@ -79,6 +86,9 @@ function parse(argv: string[]): {
     else if (a === "--provider") flags.provider = argv[++i] ?? "";
     else if (a === "--bucket") flags.bucket = argv[++i] ?? "";
     else if (a === "--prefix") flags.prefix = argv[++i] ?? "";
+    else if (a === "--path") flags.path = argv[++i] ?? "";
+    else if (a === "--harness") flags.harness = argv[++i] ?? "";
+    else if (a === "--skip-verify") flags.skipVerify = true;
     else if (a.startsWith("--image-digest=")) {
       const prev = typeof flags.imageDigest === "string" ? flags.imageDigest : "";
       flags.imageDigest = prev
@@ -96,11 +106,16 @@ function parse(argv: string[]): {
     cmd === "operator" ||
     cmd === "sources" ||
     cmd === "release" ||
-    cmd === "sync"
+    cmd === "sync" ||
+    cmd === "sandbox"
       ? positional[1]
       : undefined;
   const rest =
-    cmd === "secrets" || cmd === "operator" || cmd === "sources" || cmd === "sync"
+    cmd === "secrets" ||
+    cmd === "operator" ||
+    cmd === "sources" ||
+    cmd === "sync" ||
+    cmd === "sandbox"
       ? positional.slice(2)
       : cmd === "release"
         ? positional.slice(2)
@@ -128,6 +143,7 @@ Usage:
   clawql sources add --kind cli --command <bin> [--args a,b] [--name NAME]
   clawql release init | collect | manifest | publish | verify <path>
   clawql sync init | push | pull | status [--dry-run] [--force]
+  clawql sandbox init | verify | status | edit --harness claude [--path DIR] [--skip-verify]
   clawql claude | codex | cursor | opencode [-- harness args...]
   clawql operator status
 
@@ -183,6 +199,14 @@ sync (team shared memory — R2 default):
   status          Compare local vs remote manifest
   Default provider: r2 (Cloudflare). Also: s3, gcs (S3-compatible API).
   Secrets (providers.json) are never uploaded.
+
+sandbox (local agent containment — macOS Seatbelt, fail-closed):
+  init            Per-harness profiles (claude.sb, codex.sb, …) + Claude settings.json
+  verify          Containment probes — kernel blocks writes outside WORK_DIR
+  status          Active profile per harness
+  edit --harness  Open harness profile in $EDITOR (e.g. claude, codex)
+  Harness launch: sandbox-exec -f ~/.ClawQL/sandbox/{harness}.sb -D WORK_DIR=…
+  Fail closed — never launches unsandboxed when verification fails.
 
 mcp-config:
   Print or write MCP JSON for Cursor / Claude (stdio — secrets loaded from vault at server startup)
@@ -357,6 +381,40 @@ async function main(): Promise<void> {
       return;
     }
     console.error("Usage: clawql sync init | push | pull | status");
+    process.exitCode = 1;
+    return;
+  }
+
+  if (cmd === "sandbox") {
+    const home = typeof flags.home === "string" && flags.home ? flags.home : undefined;
+    if (subcmd === "init") {
+      process.exitCode = await runSandboxInitCmd({
+        home,
+        allowedPath: typeof flags.path === "string" ? flags.path : undefined,
+        workDir: process.cwd(),
+        skipVerify: Boolean(flags.skipVerify),
+      });
+      return;
+    }
+    if (subcmd === "verify") {
+      process.exitCode = await runSandboxVerifyCmd(home);
+      return;
+    }
+    if (subcmd === "status") {
+      process.exitCode = await runSandboxStatusCmd(home);
+      return;
+    }
+    if (subcmd === "edit") {
+      const harness = typeof flags.harness === "string" ? flags.harness : rest[0];
+      if (!harness) {
+        console.error("Usage: clawql sandbox edit --harness claude");
+        process.exitCode = 1;
+        return;
+      }
+      process.exitCode = await runSandboxEditCmd(harness, home);
+      return;
+    }
+    console.error("Usage: clawql sandbox init | verify | status | edit --harness <name>");
     process.exitCode = 1;
     return;
   }

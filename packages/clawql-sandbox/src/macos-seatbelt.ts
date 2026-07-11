@@ -9,12 +9,18 @@ import os from "node:os";
 import path from "node:path";
 import type { SandboxBridgeResponse, SandboxCodeToolInput, SandboxLanguage } from "./types.js";
 import { defaultPersistence, parseTimeoutMs, resolveSandboxId, snippetFilename } from "./shared.js";
+import {
+  defaultClawqlHome,
+  loadContainmentConfig,
+  seatbeltProfileParams,
+} from "./seatbelt-config.js";
+import {
+  buildExecSeatbeltProfile,
+  SEATBELT_EXEC_PROFILE_V1,
+  sandboxExecArgv,
+} from "./seatbelt-profile.js";
 
-/** Embedded profile — deny outbound network; filesystem tightened further in follow-ups. */
-export const SEATBELT_PROFILE_V1 = `(version 1)
-(allow default)
-(deny network*)
-`;
+export { SEATBELT_EXEC_PROFILE_V1 as SEATBELT_PROFILE_V1 } from "./seatbelt-profile.js";
 
 function workspaceRootFor(sandboxId: string): string {
   const base = path.join(os.tmpdir(), "clawql-seatbelt-workspaces");
@@ -36,14 +42,12 @@ function execParts(language: SandboxLanguage, workspace: string): { argv: string
   }
 }
 
-function spawnSeatbelt(
-  profilePath: string,
-  argv: string[],
+function spawnSeatbeltArgs(
+  args: string[],
   cwd: string,
   timeoutMs: number
 ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
   const exe = "/usr/bin/sandbox-exec";
-  const args = ["-f", profilePath, "--", ...argv];
   return new Promise((resolvePromise, rejectPromise) => {
     const child = spawn(exe, args, {
       cwd,
@@ -95,13 +99,27 @@ export async function callMacosSeatbeltSandbox(
 
   try {
     await mkdir(workspace, { recursive: true });
-    await writeFile(profilePath, SEATBELT_PROFILE_V1, "utf8");
+    const containment = await loadContainmentConfig(defaultClawqlHome()).catch(() => null);
+    const profileBody = containment?.enabled
+      ? buildExecSeatbeltProfile(containment, workspace)
+      : SEATBELT_EXEC_PROFILE_V1;
+    await writeFile(profilePath, profileBody, "utf8");
     await writeFile(snippetPath, input.code, "utf8");
 
+    const params = containment?.enabled
+      ? seatbeltProfileParams(containment, workspace)
+      : {
+          WORK_DIR: workspace,
+          CLAWQL_DIR: defaultClawqlHome(),
+          HOME_SSH: "/dev/null",
+          HOME_AWS: "/dev/null",
+          HOME_CONFIG: "/dev/null",
+        };
+
     const { argv } = execParts(input.language, workspace);
-    const { stdout, stderr, exitCode } = await spawnSeatbelt(
-      profilePath,
-      argv,
+    const seatbeltArgs = sandboxExecArgv(profilePath, params, argv[0]!, argv.slice(1));
+    const { stdout, stderr, exitCode } = await spawnSeatbeltArgs(
+      seatbeltArgs,
       workspace,
       timeoutMs
     );

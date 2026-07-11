@@ -13,6 +13,7 @@ import { inferSpecMode } from "./spec-mode.js";
 import { probeHashicorpVault } from "./hashicorp-vault.js";
 import { runReleaseDoctorCheck } from "./release-doctor-check.js";
 import { runMcpSmoke } from "./smoke.js";
+import { sandboxDoctorCheck } from "clawql-sandbox/init";
 
 export type DoctorCheck = {
   level: "ok" | "warn" | "fail";
@@ -180,6 +181,8 @@ export async function runDoctor(
 
   if (options.smoke) {
     checks.push(await runReleaseDoctorCheck());
+    const sandboxCheck = await sandboxDoctorCheck(home, { smoke: true });
+    checks.push(sandboxCheck);
     const smoke = await runMcpSmoke();
     for (const step of smoke.steps) {
       checks.push({

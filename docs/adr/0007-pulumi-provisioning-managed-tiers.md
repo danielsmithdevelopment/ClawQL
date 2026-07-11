@@ -39,19 +39,10 @@ Stack config namespace: `clawql:*` (see [`Pulumi.example.yaml`](../../infra/pulu
 
 ClawQL does **not** use Pulumi Cloud. Stack state and encrypted secrets live in object storage you control — aligned with the team-vault sovereignty story.
 
-<<<<<<< HEAD
-
-| Backend                                         | When to use                                                                            |
-| ----------------------------------------------- | -------------------------------------------------------------------------------------- |
-| **Pulumi Cloud** (default for solo/small teams) | Fastest onboarding, built-in secrets encryption, team RBAC, no state bucket to operate |
-| **Self-hosted on R2 or S3**                     | Sovereignty / air-gap; object store you already run for team vault                     |
-| =======                                         |
-| Backend                                         | When to use                                                                            |
-| ---------                                       | -------------                                                                          |
-| **Cloudflare R2** (preferred)                   | Default for managed tiers; same provider as team vault sync                            |
-| **AWS S3** (or S3-compatible)                   | When AWS is already the control plane                                                  |
-
-> > > > > > > 3f1171f (docs(infra): require self-hosted Pulumi state, no Pulumi Cloud)
+| Backend                       | When to use                                                 |
+| ----------------------------- | ----------------------------------------------------------- |
+| **Cloudflare R2** (preferred) | Default for managed tiers; same provider as team vault sync |
+| **AWS S3** (or S3-compatible) | When AWS is already the control plane                       |
 
 Configure once per operator machine or CI runner:
 

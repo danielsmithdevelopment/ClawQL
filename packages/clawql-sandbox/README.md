@@ -1,6 +1,18 @@
 # clawql-sandbox
 
-Isolated code execution for the **`sandbox_exec`** MCP tool ([#207](https://github.com/danielsmithdevelopment/ClawQL/issues/207)).
+Isolated code execution for the **`sandbox_exec`** MCP tool ([#207](https://github.com/danielsmithdevelopment/ClawQL/issues/207)) and **local agent containment** via `clawql sandbox init`.
+
+## Local agent containment (CLI)
+
+```bash
+clawql sandbox init      # Seatbelt profiles + clawql-safe wrapper
+clawql sandbox verify    # containment probes (macOS)
+clawql codex             # fail-closed harness launch when enabled
+```
+
+Programmatic API: `import { runSandboxInit, ensureHarnessSandboxGate } from "clawql-sandbox/init"`.
+
+See [docs/getting-started/local-agent-sandbox.md](../../docs/getting-started/local-agent-sandbox.md).
 
 ## Plugin entry
 
