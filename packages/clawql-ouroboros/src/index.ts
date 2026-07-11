@@ -35,6 +35,16 @@ export type {
   RegressionResult,
 } from "./convergence.js";
 
+export {
+  measureDrift,
+  classifyDriftBand,
+  driftReportPayload,
+  DRIFT_WEIGHTS,
+  DRIFT_THRESHOLD_ACCEPTABLE,
+  DRIFT_THRESHOLD_EXCELLENT,
+} from "./drift.js";
+export type { DriftReport, DriftBand, DriftComponents, MeasureDriftInput } from "./drift.js";
+
 export { EvolutionaryLoop } from "./evolutionary-loop.js";
 export type { LoopResult, GenerationSnapshot } from "./evolutionary-loop.js";
 

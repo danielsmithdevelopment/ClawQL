@@ -81,6 +81,9 @@ describe("EvolutionaryLoop", () => {
     expect(calls).toBe(result.generations.length);
     expect(result.lineage.status).toBe("converged");
     expect(result.lineage.generations.length).toBe(result.generations.length);
+
+    const driftEvents = store.snapshot("seed_fixture_root").filter((e) => e.type === "drift_measured");
+    expect(driftEvents.length).toBe(result.generations.length);
   });
 
   it("respects maxGenerations override (hard cap terminates the loop)", async () => {

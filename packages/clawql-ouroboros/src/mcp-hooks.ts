@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from "uuid";
 import { SeedSchema, type Seed } from "./seed.js";
 import { EvolutionaryLoop } from "./evolutionary-loop.js";
 import type { EventStore } from "./interfaces.js";
+import { driftReportPayload, measureDrift } from "./drift.js";
 import {
   langfuseEvalAutoApplyEnabled,
   loadLatestSeedFromLineage,
@@ -40,6 +41,21 @@ export const RunOuroborosSchema = z.object({
 
 export const GetLineageStatusSchema = z.object({
   seedId: z.string().min(1),
+});
+
+export const MeasureDriftSchema = z.object({
+  /** Lineage root id (upstream `session_id`). */
+  seedId: z.string().optional(),
+  /** Inline seed object (preferred when not loading from lineage). */
+  seed: z.unknown().optional(),
+  /** Free-form seed text/YAML when a structured seed object is unavailable. */
+  seedContent: z.string().optional(),
+  currentOutput: z.string().min(1),
+  constraintViolations: z.array(z.string()).optional().default([]),
+  currentConcepts: z.array(z.string()).optional().default([]),
+  generationNumber: z.number().int().min(1).optional(),
+  /** When true (default), append `drift_measured` to the event store when `seedId` is set. */
+  persistEvent: z.boolean().optional().default(true),
 });
 
 export const ProposeSeedRevisionFromEvalSchema = z.object({
@@ -182,6 +198,52 @@ function inferOntologyFields(
   ];
 }
 
+async function resolveBaselineSeed(
+  input: z.infer<typeof MeasureDriftSchema>,
+  eventStore: EventStore,
+): Promise<Seed | null> {
+  if (input.seed !== undefined) {
+    return SeedSchema.parse(input.seed);
+  }
+
+  if (input.seedId) {
+    const lineage = await eventStore.getLineage(input.seedId);
+    if (lineage.generations.length > 0) {
+      return lineage.generations[0].seed;
+    }
+  }
+
+  if (input.seedContent?.trim()) {
+    const goalMatch = input.seedContent.match(/goal:\s*["']?([^\n"']+)/i);
+    const goal = goalMatch?.[1]?.trim() || "Unspecified goal from seedContent";
+    return SeedSchema.parse({
+      goal,
+      task_type: "analysis",
+      brownfield_context: {
+        project_type: "brownfield",
+        context_references: [],
+        existing_patterns: [],
+        existing_dependencies: [],
+      },
+      constraints: [],
+      acceptance_criteria: [],
+      ontology_schema: { name: "InlineSeed", description: goal, fields: [] },
+      evaluation_principles: [],
+      exit_conditions: [],
+      metadata: {
+        seed_id: input.seedId ?? `seed_inline_${uuidv4().slice(0, 8)}`,
+        version: "1.0.0",
+        created_at: new Date(),
+        ambiguity_score: 0.15,
+        interview_id: null,
+        parent_seed_id: null,
+      },
+    });
+  }
+
+  return null;
+}
+
 // ---------------------------------------------------------------------------
 
 export const ouroborosMcpTools = {
@@ -286,6 +348,58 @@ export const ouroborosMcpTools = {
 
     handler: async (input: z.infer<typeof GetLineageStatusSchema>, context: OuroborosContext) => {
       return await context.eventStore.getLineage(input.seedId);
+    },
+  },
+
+  measureDrift: {
+    name: "ouroboros_measure_drift" as const,
+    description:
+      "Measure 3-component goal/constraint/ontology drift vs the root Seed (Q00 upstream model; epic #556 / #557)",
+    inputSchema: MeasureDriftSchema,
+
+    handler: async (
+      input: z.infer<typeof MeasureDriftSchema>,
+      context: OuroborosContext,
+    ): Promise<
+      | { ok: true; report: ReturnType<typeof driftReportPayload>; seedId: string | null }
+      | { ok: false; error: string }
+    > => {
+      try {
+        const baselineSeed = await resolveBaselineSeed(input, context.eventStore);
+        if (!baselineSeed) {
+          return {
+            ok: false,
+            error: "Provide `seed`, `seedId` with lineage events, or `seedContent`",
+          };
+        }
+
+        const report = measureDrift({
+          baselineSeed,
+          currentOutput: input.currentOutput,
+          constraintViolations: input.constraintViolations,
+          currentConcepts: input.currentConcepts,
+        });
+
+        const rootSeedId = input.seedId ?? baselineSeed.metadata.seed_id;
+        const payload = driftReportPayload(report, {
+          generation_number: input.generationNumber ?? null,
+          constraint_violations: input.constraintViolations ?? [],
+          current_concepts: input.currentConcepts ?? [],
+        });
+
+        if (input.persistEvent !== false && input.seedId) {
+          await context.eventStore.append({
+            type: "drift_measured",
+            seed_id: input.seedId,
+            data: payload,
+            timestamp: new Date(),
+          });
+        }
+
+        return { ok: true, report: payload, seedId: rootSeedId };
+      } catch (err) {
+        return { ok: false, error: err instanceof Error ? err.message : String(err) };
+      }
     },
   },
 
