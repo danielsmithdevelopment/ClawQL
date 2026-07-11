@@ -42,17 +42,17 @@ clawql sync push   # seed Memory/ from an existing ~/.ClawQL
 
 Add these under **Cursor → Settings → Cloud → Secrets** (or your team's secret store). They are injected into every Cloud Agent run for the repo.
 
-| Secret | Purpose |
-| ------ | ------- |
-| `CLAWQL_HOME` | Vault root on the VM, e.g. `/home/ubuntu/.ClawQL` |
-| `CLAWQL_R2_ACCOUNT_ID` | Cloudflare account id (R2 endpoint) |
-| `CLAWQL_SYNC_BUCKET` | Team bucket name |
-| `CLAWQL_SYNC_PREFIX` | Shared prefix, e.g. `teams/engineering/` |
-| `CLAWQL_SYNC_ACCESS_KEY_ID` | R2 S3 API access key |
-| `CLAWQL_SYNC_SECRET_ACCESS_KEY` | R2 S3 API secret |
-| `CLAWQL_SYNC_AUTO` | `1` — debounced push after **`memory_ingest`** |
-| `CLAWQL_SYNC_AUTO_PULL` | `1` — throttled pull before **`memory_recall`** |
-| `CLAWQL_SYNC_AUTO_PULL_ON_START` | `1` — pull once when MCP starts |
+| Secret                           | Purpose                                           |
+| -------------------------------- | ------------------------------------------------- |
+| `CLAWQL_HOME`                    | Vault root on the VM, e.g. `/home/ubuntu/.ClawQL` |
+| `CLAWQL_R2_ACCOUNT_ID`           | Cloudflare account id (R2 endpoint)               |
+| `CLAWQL_SYNC_BUCKET`             | Team bucket name                                  |
+| `CLAWQL_SYNC_PREFIX`             | Shared prefix, e.g. `teams/engineering/`          |
+| `CLAWQL_SYNC_ACCESS_KEY_ID`      | R2 S3 API access key                              |
+| `CLAWQL_SYNC_SECRET_ACCESS_KEY`  | R2 S3 API secret                                  |
+| `CLAWQL_SYNC_AUTO`               | `1` — debounced push after **`memory_ingest`**    |
+| `CLAWQL_SYNC_AUTO_PULL`          | `1` — throttled pull before **`memory_recall`**   |
+| `CLAWQL_SYNC_AUTO_PULL_ON_START` | `1` — pull once when MCP starts                   |
 
 For **S3** or **GCS**, use the credential variables from [team-vault-sync.md](./team-vault-sync.md#environment) instead of R2 keys.
 
@@ -116,13 +116,13 @@ Teams can add **`.cursor/environment.json`** with an install script that runs **
 
 ## 4. Session workflow (memory)
 
-| Step | Tool / behavior |
-| ---- | ---------------- |
-| Start session | Auto-pull on MCP start (if **`CLAWQL_SYNC_AUTO_PULL_ON_START=1`**) |
-| Recall context | **`memory_recall`** with a focused query |
-| Persist outcomes | **`memory_ingest`** after decisions, debugging, or API contracts |
-| End of session | **`memory_sync`** with **`{ "direction": "auto" }`** — pull remote changes, then push local |
-| Next session (new VM) | Auto-pull → **`memory_recall`** sees prior notes |
+| Step                  | Tool / behavior                                                                             |
+| --------------------- | ------------------------------------------------------------------------------------------- |
+| Start session         | Auto-pull on MCP start (if **`CLAWQL_SYNC_AUTO_PULL_ON_START=1`**)                          |
+| Recall context        | **`memory_recall`** with a focused query                                                    |
+| Persist outcomes      | **`memory_ingest`** after decisions, debugging, or API contracts                            |
+| End of session        | **`memory_sync`** with **`{ "direction": "auto" }`** — pull remote changes, then push local |
+| Next session (new VM) | Auto-pull → **`memory_recall`** sees prior notes                                            |
 
 **`memory_sync`** replaces shell **`clawql sync push`** / **`pull`** on Cloud Agents (no reliance on **`clawql`** CLI in the agent shell). See [team-vault-sync.md — `memory_sync`](./team-vault-sync.md#memory_sync-mcp-tool).
 
@@ -152,13 +152,13 @@ Docs: team vault sync and cursor-ios-cloud-agent getting-started guides in this 
 
 ## Troubleshooting
 
-| Symptom | Check |
-| ------- | ----- |
+| Symptom                               | Check                                                                                              |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------- |
 | **`memory_recall`** empty on a new VM | Secrets set? **`memory_sync` `{ "direction": "pull" }`** or **`CLAWQL_SYNC_AUTO_PULL_ON_START=1`** |
-| **`memory_sync`** errors | **`CLAWQL_SYNC_BUCKET`**, prefix, and R2/S3/GCS credentials in dashboard Secrets |
-| **`execute`** auth failures | Provider keys in **`vault/providers.json`** or matching **`CLAWQL_*`** env secrets |
-| MCP tools missing | Enable **clawql** server for the Cloud Agent run; confirm **`CLAWQL_ENABLE_MEMORY`** is not `0` |
-| Conflicts after parallel runs | **`memory_sync`** response lists conflicts; use **`force: true`** only deliberately |
+| **`memory_sync`** errors              | **`CLAWQL_SYNC_BUCKET`**, prefix, and R2/S3/GCS credentials in dashboard Secrets                   |
+| **`execute`** auth failures           | Provider keys in **`vault/providers.json`** or matching **`CLAWQL_*`** env secrets                 |
+| MCP tools missing                     | Enable **clawql** server for the Cloud Agent run; confirm **`CLAWQL_ENABLE_MEMORY`** is not `0`    |
+| Conflicts after parallel runs         | **`memory_sync`** response lists conflicts; use **`force: true`** only deliberately                |
 
 ## Related
 
