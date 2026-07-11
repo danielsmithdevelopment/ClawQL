@@ -73,3 +73,13 @@ Guide: [local-provider-vault.md](https://github.com/danielsmithdevelopment/ClawQ
 PORT=8080 npx -p clawql-mcp clawql-mcp-http
 CLAWQL_MCP_URL=http://127.0.0.1:8080 npx -p clawql-mcp clawql doctor
 ```
+
+## Cursor iOS (Cloud Agent)
+
+The iOS app cannot run local stdio MCP or keep **`~/.ClawQL`** on the device. Use **Cursor Cloud Agents** instead:
+
+1. **Dashboard Secrets** — `CLAWQL_HOME`, `CLAWQL_SYNC_*`, bucket credentials, and provider API tokens (never in git or **`mcp.json`**).
+2. **stdio MCP** in **`.cursor/mcp.json`** — `npx -p clawql-mcp clawql-mcp`; enable the **clawql** server when starting an agent run from iOS.
+3. **Team bucket** — shared **`Memory/`** via R2, S3, or GCS; end important runs with **`memory_sync`** `{ "direction": "auto" }`.
+
+Full walkthrough: [cursor-ios-cloud-agent.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/getting-started/cursor-ios-cloud-agent.md) (also on the docs site at [Cursor iOS + Cloud Agent](/getting-started/cursor-ios-cloud-agent)).

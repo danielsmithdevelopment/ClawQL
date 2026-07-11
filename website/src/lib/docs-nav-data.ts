@@ -35,6 +35,10 @@ export const docsNavigation: Array<NavGroup> = [
         href: '/getting-started/clawql-release-mvp',
       },
       { title: 'Agent setup', href: '/agent-setup' },
+      {
+        title: 'Cursor iOS + Cloud Agent',
+        href: '/getting-started/cursor-ios-cloud-agent',
+      },
       { title: 'For teams', href: '/getting-started/for-teams' },
       { title: 'Team vault sync', href: '/getting-started/team-vault-sync' },
       {

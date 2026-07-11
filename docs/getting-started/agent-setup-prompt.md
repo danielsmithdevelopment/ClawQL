@@ -55,13 +55,25 @@ When done, summarize: home path, secrets vault path, MCP transport, vendor teste
 
 ---
 
+## Cursor iOS (Cloud Agent)
+
+The iOS app cannot run local stdio MCP or persist **`~/.ClawQL`** on the device. Use **Cursor Cloud Agents** with:
+
+1. **Dashboard Secrets** — `CLAWQL_HOME`, `CLAWQL_SYNC_*`, R2/S3/GCS credentials, provider API tokens
+2. **stdio MCP** — `npx -p clawql-mcp clawql-mcp` in **`.cursor/mcp.json`** (enable **clawql** per agent run)
+3. **Team bucket** — [team-vault-sync.md](./team-vault-sync.md); end sessions with **`memory_sync`** `{ "direction": "auto" }`
+
+Full guide: [cursor-ios-cloud-agent.md](./cursor-ios-cloud-agent.md). Copy-paste prompt for iOS is in that doc.
+
 ## When to use this
 
 - First-time install on a new machine
 - Onboarding a teammate who already uses Cursor/Claude
 - Validating a release candidate
+- **Cursor iOS** — Cloud Agent + team vault sync (see section above)
 
 ## Manual alternative
 
 - [Getting started](../readme/getting-started.md)
+- [Cursor iOS + Cloud Agent](./cursor-ios-cloud-agent.md)
 - [Local provider vault](./local-provider-vault.md)
