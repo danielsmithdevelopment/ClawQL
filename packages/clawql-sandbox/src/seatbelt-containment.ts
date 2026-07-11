@@ -45,10 +45,7 @@ function runSandboxProbe(
   });
 }
 
-async function probeDeniedRead(
-  profilePath: string,
-  deniedPath: string
-): Promise<ContainmentCheck> {
+async function probeDeniedRead(profilePath: string, deniedPath: string): Promise<ContainmentCheck> {
   const script = `test ! -r "${deniedPath.replace(/"/g, '\\"')}"`;
   try {
     const { exitCode } = await runSandboxProbe(profilePath, script);

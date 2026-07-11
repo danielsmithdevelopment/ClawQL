@@ -94,17 +94,11 @@ export function dedupePaths(paths: string[]): string[] {
   return out;
 }
 
-export function resolvedAllowedPaths(
-  config: SandboxContainmentConfig,
-  home = homedir()
-): string[] {
+export function resolvedAllowedPaths(config: SandboxContainmentConfig, home = homedir()): string[] {
   return dedupePaths(config.allowedPaths).map((p) => resolveSandboxPath(p, home));
 }
 
-export function resolvedDeniedPaths(
-  config: SandboxContainmentConfig,
-  home = homedir()
-): string[] {
+export function resolvedDeniedPaths(config: SandboxContainmentConfig, home = homedir()): string[] {
   return dedupePaths(config.deniedPaths).map((p) => resolveSandboxPath(p, home));
 }
 

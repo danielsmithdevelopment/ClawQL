@@ -29,12 +29,12 @@ When sandbox is **enabled** in config:
 
 ### 3) Escalation tiers (documented, not mutually exclusive)
 
-| Tier | Target |
-|------|--------|
-| macOS Seatbelt | Local daily dev |
-| `sandbox_exec` MCP | In-agent code snippets |
-| Kata (Helm) | In-cluster production |
-| UTM VM | Computer Use / maximum isolation |
+| Tier               | Target                           |
+| ------------------ | -------------------------------- |
+| macOS Seatbelt     | Local daily dev                  |
+| `sandbox_exec` MCP | In-agent code snippets           |
+| Kata (Helm)        | In-cluster production            |
+| UTM VM             | Computer Use / maximum isolation |
 
 ### 4) Default path policy
 

@@ -120,9 +120,7 @@ export async function runSandboxVerify(clawqlHome?: string): Promise<Containment
   return verify;
 }
 
-export async function ensureHarnessSandboxGate(
-  clawqlHome?: string
-): Promise<HarnessSandboxGate> {
+export async function ensureHarnessSandboxGate(clawqlHome?: string): Promise<HarnessSandboxGate> {
   const home = clawqlHome ?? defaultClawqlHome();
   const config = await loadContainmentConfig(home);
   if (!config?.enabled) return { ok: true, wrap: false };

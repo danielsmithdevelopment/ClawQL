@@ -94,10 +94,9 @@ export async function callMacosSeatbeltSandbox(
   try {
     await mkdir(workspace, { recursive: true });
     const containment = await loadContainmentConfig(defaultClawqlHome()).catch(() => null);
-    const profileBody =
-      containment?.enabled
-        ? buildExecSeatbeltProfile(containment, workspace)
-        : SEATBELT_EXEC_PROFILE_V1;
+    const profileBody = containment?.enabled
+      ? buildExecSeatbeltProfile(containment, workspace)
+      : SEATBELT_EXEC_PROFILE_V1;
     await writeFile(profilePath, profileBody, "utf8");
     await writeFile(snippetPath, input.code, "utf8");
 

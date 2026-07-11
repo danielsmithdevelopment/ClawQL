@@ -21,11 +21,7 @@ import {
   runReleaseVerify,
 } from "./release-cli.js";
 import { runSyncInit, runSyncPullCmd, runSyncPushCmd, runSyncStatusCmd } from "./sync-cli.js";
-import {
-  runSandboxInitCmd,
-  runSandboxStatusCmd,
-  runSandboxVerifyCmd,
-} from "./sandbox-cli.js";
+import { runSandboxInitCmd, runSandboxStatusCmd, runSandboxVerifyCmd } from "./sandbox-cli.js";
 
 type Command =
   | "init"

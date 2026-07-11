@@ -34,12 +34,12 @@ clawql sandbox init --path ~/company-work/cloned-repos
 
 Writes:
 
-| File | Purpose |
-|------|---------|
-| `~/.ClawQL/sandbox/config.json` | Allowed/denied paths, `failClosed: true` |
-| `~/.ClawQL/sandbox/clawql-agent.sb` | Seatbelt profile for agent harness |
-| `~/.ClawQL/sandbox/clawql-exec.sb` | Tighter profile for `sandbox_exec` MCP |
-| `~/.ClawQL/sandbox/clawql-safe` | Manual wrapper script |
+| File                                | Purpose                                  |
+| ----------------------------------- | ---------------------------------------- |
+| `~/.ClawQL/sandbox/config.json`     | Allowed/denied paths, `failClosed: true` |
+| `~/.ClawQL/sandbox/clawql-agent.sb` | Seatbelt profile for agent harness       |
+| `~/.ClawQL/sandbox/clawql-exec.sb`  | Tighter profile for `sandbox_exec` MCP   |
+| `~/.ClawQL/sandbox/clawql-safe`     | Manual wrapper script                    |
 
 Default **denied** paths: `~/.ssh`, `~/Documents`, `~/Desktop`, `~/Downloads`, `~/.aws`, `~/.config`, `~/.gnupg`, `~/.kube`.
 
@@ -72,12 +72,12 @@ Or manually:
 
 ## Escalation path
 
-| Level | Use when | Tool |
-|-------|----------|------|
-| **1 — Seatbelt** | Daily coding on macOS | `clawql sandbox init` (this guide) |
-| **2 — MCP sandbox_exec** | Isolated snippets from agents | `CLAWQL_ENABLE_SANDBOX=1`, `macos-seatbelt` backend |
-| **3 — Kata Containers** | Enterprise K8s / production MCP | Helm `sandboxKata` |
-| **4 — UTM VM** | Computer Use, max isolation | Share only `~/company-work/cloned-repos` into VM |
+| Level                    | Use when                        | Tool                                                |
+| ------------------------ | ------------------------------- | --------------------------------------------------- |
+| **1 — Seatbelt**         | Daily coding on macOS           | `clawql sandbox init` (this guide)                  |
+| **2 — MCP sandbox_exec** | Isolated snippets from agents   | `CLAWQL_ENABLE_SANDBOX=1`, `macos-seatbelt` backend |
+| **3 — Kata Containers**  | Enterprise K8s / production MCP | Helm `sandboxKata`                                  |
+| **4 — UTM VM**           | Computer Use, max isolation     | Share only `~/company-work/cloned-repos` into VM    |
 
 Same architecture as [Module 11: Sandboxing](../security/security-best-practices-series/11-sandboxing-kata-gvisor-seatbelt.md) — lighter options first, VM when risk demands it.
 

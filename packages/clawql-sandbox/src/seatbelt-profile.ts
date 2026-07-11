@@ -58,12 +58,8 @@ export function buildAgentSeatbeltProfile(
     `(allow file-write* (subpath "${seatbeltSubpathLiteral("/tmp")}"))`,
     "",
     "; --- deny sensitive paths even if broad allows exist ---",
-    ...denied.map(
-      (p) => `(deny file-read* (subpath "${seatbeltSubpathLiteral(p)}"))`
-    ),
-    ...denied.map(
-      (p) => `(deny file-write* (subpath "${seatbeltSubpathLiteral(p)}"))`
-    ),
+    ...denied.map((p) => `(deny file-read* (subpath "${seatbeltSubpathLiteral(p)}"))`),
+    ...denied.map((p) => `(deny file-write* (subpath "${seatbeltSubpathLiteral(p)}"))`),
     "",
     "; --- no outbound network for local agent containment ---",
     "(deny network*)",
@@ -98,12 +94,8 @@ export function buildExecSeatbeltProfile(
     ),
     "",
     "; --- deny sensitive paths ---",
-    ...denied.map(
-      (p) => `(deny file-read* (subpath "${seatbeltSubpathLiteral(p)}"))`
-    ),
-    ...denied.map(
-      (p) => `(deny file-write* (subpath "${seatbeltSubpathLiteral(p)}"))`
-    ),
+    ...denied.map((p) => `(deny file-read* (subpath "${seatbeltSubpathLiteral(p)}"))`),
+    ...denied.map((p) => `(deny file-write* (subpath "${seatbeltSubpathLiteral(p)}"))`),
     "",
     "(deny network*)",
     "",

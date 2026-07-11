@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { expandTilde, resolveSandboxPath } from "./seatbelt-paths.js";
-import {
-  buildAgentSeatbeltProfile,
-  buildExecSeatbeltProfile,
-} from "./seatbelt-profile.js";
+import { buildAgentSeatbeltProfile, buildExecSeatbeltProfile } from "./seatbelt-profile.js";
 import { defaultContainmentConfig } from "./seatbelt-config.js";
 
 describe("seatbelt-profile", () => {

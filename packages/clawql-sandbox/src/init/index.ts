@@ -1,8 +1,4 @@
-export {
-  expandTilde,
-  resolveSandboxPath,
-  seatbeltSubpathLiteral,
-} from "../seatbelt-paths.js";
+export { expandTilde, resolveSandboxPath, seatbeltSubpathLiteral } from "../seatbelt-paths.js";
 
 export {
   SANDBOX_CONFIG_VERSION,

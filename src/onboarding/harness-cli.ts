@@ -159,9 +159,7 @@ export async function runHarness(id: HarnessId, forwarded: string[]): Promise<nu
   }
 
   const spawnBin = gate.wrap ? "/usr/bin/sandbox-exec" : bin;
-  const spawnArgs = gate.wrap
-    ? ["-f", gate.profilePath, "--", bin, ...forwarded]
-    : forwarded;
+  const spawnArgs = gate.wrap ? ["-f", gate.profilePath, "--", bin, ...forwarded] : forwarded;
 
   return new Promise((resolve) => {
     const child = spawn(spawnBin, spawnArgs, {

@@ -16,9 +16,7 @@ export type SandboxCliInitOptions = {
   skipVerify?: boolean;
 };
 
-function formatVerifyReport(
-  verify: Awaited<ReturnType<typeof runSandboxVerify>>
-): string {
+function formatVerifyReport(verify: Awaited<ReturnType<typeof runSandboxVerify>>): string {
   const lines = [
     "ClawQL sandbox containment",
     `  platform: ${verify.platform}`,
@@ -96,7 +94,9 @@ export async function runSandboxStatusCmd(home?: string): Promise<number> {
   console.log(`  allowed:    ${config.allowedPaths.join(", ")}`);
   console.log(`  denied:     ${config.deniedPaths.join(", ")}`);
   if (config.lastVerifiedAt) {
-    console.log(`  lastVerify: ${config.lastVerifiedAt} (${config.lastVerifyOk ? "ok" : "FAILED"})`);
+    console.log(
+      `  lastVerify: ${config.lastVerifiedAt} (${config.lastVerifyOk ? "ok" : "FAILED"})`
+    );
   }
 
   try {
