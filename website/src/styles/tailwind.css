@@ -107,11 +107,16 @@
     word-break: normal;
     white-space: normal;
     box-sizing: border-box;
-    border-bottom: 1px solid color-mix(in oklab, var(--color-zinc-900) 8%, transparent);
+    border-bottom: 1px solid
+      color-mix(in oklab, var(--color-zinc-900) 8%, transparent);
   }
 
   :is(.dark) .docs-table-scroll .docs-table :is(th, td) {
-    border-bottom-color: color-mix(in oklab, var(--color-white) 8%, transparent);
+    border-bottom-color: color-mix(
+      in oklab,
+      var(--color-white) 8%,
+      transparent
+    );
   }
 
   .docs-table-scroll .docs-table thead :is(th, td) {
