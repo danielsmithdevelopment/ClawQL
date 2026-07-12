@@ -5,8 +5,13 @@ import {
   reconcileX402Settlement,
   setupX402Wallet,
   verifyX402PaymentProof,
+  verifyViaConfiguredFacilitator,
+  buildPaymentRequirements,
+  loadX402RuntimeConfig,
+  parseX402PaymentPayloadHeader,
   type X402Asset,
 } from "../x402/index.js";
+import { readFile } from "node:fs/promises";
 
 export type PaymentsX402WalletSetupOptions = {
   address?: string;
@@ -91,12 +96,60 @@ export type PaymentsX402VerifyOptions = {
   signature?: string;
   payer?: string;
   amount?: number;
+  resource?: string;
+  payloadPath?: string;
   json?: boolean;
+  env?: NodeJS.ProcessEnv;
 };
 
 export async function runPaymentsX402Verify(
   options: PaymentsX402VerifyOptions = {}
 ): Promise<number> {
+  const env = options.env ?? process.env;
+
+  if (options.payloadPath?.trim() && options.resource?.trim()) {
+    const rawPayload = await readFile(options.payloadPath, "utf8");
+    const paymentPayload =
+      parseX402PaymentPayloadHeader(rawPayload) ??
+      parseX402PaymentPayloadHeader(Buffer.from(rawPayload.trim(), "base64").toString("utf8"));
+    if (!paymentPayload) {
+      console.error("Could not parse x402 payment payload from --payload file");
+      return 1;
+    }
+
+    const config = await loadX402RuntimeConfig(env);
+    const gate = (await listX402Gates(env)).find((g) => g.resource === options.resource);
+    if (!gate) {
+      console.error(`No x402 gate configured for resource ${options.resource}`);
+      return 1;
+    }
+
+    const paymentRequirements = buildPaymentRequirements({
+      gate,
+      config,
+      resourceUrl: options.resource,
+    });
+
+    const result = await verifyViaConfiguredFacilitator({
+      paymentPayload,
+      paymentRequirements,
+      env,
+    });
+
+    if (options.json) {
+      console.log(JSON.stringify(result, null, 2));
+      return result.verified ? 0 : 1;
+    }
+
+    if (!result.verified) {
+      console.error(`Facilitator rejected payment: ${result.reason}`);
+      return 1;
+    }
+
+    console.log(`Facilitator verified payment${result.payer ? ` from ${result.payer}` : ""}`);
+    return 0;
+  }
+
   const result = verifyX402PaymentProof({
     txHash: options.txHash,
     signature: options.signature,

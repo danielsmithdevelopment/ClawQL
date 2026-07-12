@@ -164,6 +164,8 @@ export async function runPaymentsX402VerifyCmd(options: PaymentsCliOptions = {})
     signature: options.signature,
     payer: options.payer,
     amount: options.amount,
+    resource: options.resource,
+    payloadPath: options.payloadPath,
     json: options.json,
   });
 }

@@ -1,4 +1,5 @@
 import express, { type Express } from "express";
+import { createX402PaymentMiddleware } from "clawql-payments/x402";
 import { createInferenceGateway } from "../gateway.js";
 import type { InferenceGateway } from "../gateway.js";
 import { createProviderRegistry } from "../providers/registry.js";
@@ -30,6 +31,7 @@ export function createInferenceHttpApp(options: CreateInferenceHttpAppOptions = 
       endpoints: ["/v1/chat/completions", "/v1/models"],
     });
   });
+  app.use(createX402PaymentMiddleware({ env }));
   app.use(createVirtualKeyAuthMiddleware({ env }));
   app.use(createOpenAiCompatRouter({ gateway, registry, env }));
   return app;

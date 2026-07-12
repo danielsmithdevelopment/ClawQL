@@ -22,8 +22,9 @@ clawql-payments
 clawql payments plan show
 clawql payments plan upgrade --tier team
 clawql payments usage report --month 2026-07
+```
 
-# Stripe (user billing)
+### Stripe (user billing)
 
 Set `STRIPE_SECRET_KEY` for live API calls. Webhook signing secret is stored locally via setup (never commit secrets).
 
@@ -31,11 +32,13 @@ Set `STRIPE_SECRET_KEY` for live API calls. Webhook signing secret is stored loc
 export STRIPE_SECRET_KEY=sk_test_...
 export STRIPE_PRO_PRICE_ID=price_...
 export STRIPE_TEAM_PRICE_ID=price_...
+export STRIPE_METER_EVENT_NAME=clawql_inference_calls
 
 clawql payments stripe setup --webhook-secret whsec_...
 clawql payments stripe customer create --email user@acme.com
 clawql payments stripe subscription create --customer cus_xxx --plan pro
 clawql payments stripe invoice create --customer cus_xxx --amount 500
+clawql payments stripe meter report --value 1 --customer cus_xxx
 
 # Verify webhook signatures before processing (required before going live)
 clawql payments stripe webhook verify --payload ./event.json --signature "t=...,v1=..." --process
@@ -43,20 +46,27 @@ clawql payments stripe webhook verify --payload ./event.json --signature "t=...,
 
 Payment audit events (`STRIPE_INVOICE_PAID`, `STRIPE_PAYMENT_FAILED`, etc.) are written when verified webhooks are processed — not at invoice creation time.
 
-# x402 micropayments
+## x402 micropayments
+
+Set `CLAWQL_X402_ENFORCE=1` on inference HTTP to return **402 Payment Required** for gated routes. Facilitator verification uses `POST /verify` against x402.org (testnet) or CDP.
+
+```bash
+export CLAWQL_X402_ENFORCE=1
+export CLAWQL_X402_FACILITATOR_URL=https://x402.org/facilitator
+export CLAWQL_X402_NETWORK=eip155:84532
+export CLAWQL_X402_USDC_ASSET=0x036CbD53842c5426634e7929541eC2318f3dCF7e
+# Optional: CLAWQL_X402_FACILITATOR_BEARER or CDP_API_KEY_ID + CDP_API_KEY_SECRET
 
 clawql payments x402 wallet setup --address 0x...
 clawql payments x402 gate --resource /v1/chat/completions --price 0.001 --asset USDC
 clawql payments x402 gate --tool knowledge_search --price 0.0005
-clawql payments x402 verify --tx-hash 0xabc...
+clawql payments x402 verify --payload ./payment.json --resource /v1/chat/completions
 clawql payments x402 reconcile --date 2026-07-11
 
 # Unified reporting
-
 clawql payments spend report --group-by provider
 clawql payments audit --correlation-id xxx
-
-````
+```
 
 ## Programmatic usage
 
@@ -69,7 +79,7 @@ import {
   appendPaymentWormEntry,
   buildX402PaymentReceivedEntry,
 } from "clawql-payments";
-````
+```
 
 ## Config
 
@@ -81,9 +91,13 @@ Local state is stored under `$CLAWQL_HOME/Payments/` (default `~/.clawql/Payment
 
 ## Status
 
-Stripe SDK integration is **live** for customers, subscriptions, invoices, billing portal, meter events (Stripe Billing Meters), and webhook signature verification. Invoice payment audit events are recorded via verified `invoice.paid` webhooks only.
+Stripe SDK integration is **live** for customers, subscriptions, invoices, billing portal, meter events (Stripe Billing Meters), and webhook signature verification. Inference can report meter events when `CLAWQL_PAYMENTS_REPORT_STRIPE_METER=1`. Invoice payment audit events are recorded via verified `invoice.paid` webhooks only.
 
-x402 facilitator HTTP calls and durable WORM persistence remain follow-up work.
+x402 facilitator HTTP verification is **live** (`POST /verify` against x402.org or CDP). Inference HTTP can enforce gates with `CLAWQL_X402_ENFORCE=1`.
+
+Full operator guide: [`docs/payments/clawql-payments.md`](../../docs/payments/clawql-payments.md).
+
+Durable WORM persistence remains follow-up work.
 
 ## Related
 
