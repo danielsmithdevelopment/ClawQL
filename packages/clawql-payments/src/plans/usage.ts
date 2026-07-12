@@ -60,9 +60,7 @@ export function createUsageStore(env: NodeJS.ProcessEnv = process.env): UsageSto
   return {
     async getUsage(tenantId, month = currentMonth()): Promise<MonthlyUsage> {
       const file = await loadUsageFile(env);
-      const existing = file.records.find(
-        (r) => r.tenantId === tenantId && r.month === month
-      );
+      const existing = file.records.find((r) => r.tenantId === tenantId && r.month === month);
       return (
         existing ?? {
           month,

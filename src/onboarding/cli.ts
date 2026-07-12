@@ -755,21 +755,15 @@ async function main(): Promise<void> {
         ? Number.parseFloat(flags.amount)
         : undefined;
     const price =
-      typeof flags.price === "string" && flags.price
-        ? Number.parseFloat(flags.price)
-        : undefined;
+      typeof flags.price === "string" && flags.price ? Number.parseFloat(flags.price) : undefined;
     const limit =
-      typeof flags.limit === "string" && flags.limit
-        ? Number.parseInt(flags.limit, 10)
-        : undefined;
+      typeof flags.limit === "string" && flags.limit ? Number.parseInt(flags.limit, 10) : undefined;
     const paymentsOpts: PaymentsCliOptions = {
       tier: typeof flags.tier === "string" ? flags.tier : undefined,
       month: typeof flags.month === "string" ? flags.month : undefined,
       groupBy:
         typeof flags.groupBy === "string" &&
-        (flags.groupBy === "provider" ||
-          flags.groupBy === "tenant" ||
-          flags.groupBy === "plan")
+        (flags.groupBy === "provider" || flags.groupBy === "tenant" || flags.groupBy === "plan")
           ? flags.groupBy
           : undefined,
       correlationId: typeof flags.correlationId === "string" ? flags.correlationId : undefined,
@@ -791,11 +785,9 @@ async function main(): Promise<void> {
       date: typeof flags.date === "string" ? flags.date : undefined,
       tenantId: typeof flags.tenantId === "string" ? flags.tenantId : undefined,
       accountId: typeof flags.accountId === "string" ? flags.accountId : undefined,
-      publishableKey:
-        typeof flags.publishableKey === "string" ? flags.publishableKey : undefined,
+      publishableKey: typeof flags.publishableKey === "string" ? flags.publishableKey : undefined,
       webhookSecret: typeof flags.webhookSecret === "string" ? flags.webhookSecret : undefined,
-      facilitatorUrl:
-        typeof flags.facilitatorUrl === "string" ? flags.facilitatorUrl : undefined,
+      facilitatorUrl: typeof flags.facilitatorUrl === "string" ? flags.facilitatorUrl : undefined,
     };
 
     if (subcmd === "plan") {
@@ -875,9 +867,7 @@ async function main(): Promise<void> {
       process.exitCode = 1;
       return;
     }
-    console.error(
-      "Usage: clawql payments plan | usage | spend | audit | stripe | x402"
-    );
+    console.error("Usage: clawql payments plan | usage | spend | audit | stripe | x402");
     process.exitCode = 1;
     return;
   }

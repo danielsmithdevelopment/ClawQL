@@ -1,4 +1,9 @@
-import { setupStripe, createStripeCustomer, createStripeSubscription, createStripeInvoice } from "../stripe/index.js";
+import {
+  setupStripe,
+  createStripeCustomer,
+  createStripeSubscription,
+  createStripeInvoice,
+} from "../stripe/index.js";
 import { appendPaymentWormEntry, buildStripeInvoicePaidEntry } from "../audit/index.js";
 
 export type PaymentsStripeSetupOptions = {
@@ -26,7 +31,9 @@ export async function runPaymentsStripeSetup(
     return 0;
   }
 
-  console.log(`Stripe ${result.configured ? "configured" : "partially configured"} → ${result.path}`);
+  console.log(
+    `Stripe ${result.configured ? "configured" : "partially configured"} → ${result.path}`
+  );
   if (result.accountId) console.log(`Account: ${result.accountId}`);
   return 0;
 }
@@ -41,7 +48,9 @@ export async function runPaymentsStripeCustomerCreate(
   options: PaymentsStripeCustomerCreateOptions = {}
 ): Promise<number> {
   if (!options.email?.trim()) {
-    console.error("Usage: clawql payments stripe customer create --email user@acme.com [--name NAME]");
+    console.error(
+      "Usage: clawql payments stripe customer create --email user@acme.com [--name NAME]"
+    );
     return 1;
   }
 
@@ -89,7 +98,9 @@ export async function runPaymentsStripeSubscriptionCreate(
     return 0;
   }
 
-  console.log(`Created subscription ${sub.id} for ${sub.customerId} on ${sub.plan} [${sub.status}]`);
+  console.log(
+    `Created subscription ${sub.id} for ${sub.customerId} on ${sub.plan} [${sub.status}]`
+  );
   return 0;
 }
 
@@ -106,9 +117,7 @@ export async function runPaymentsStripeInvoiceCreate(
   options: PaymentsStripeInvoiceCreateOptions = {}
 ): Promise<number> {
   if (!options.customer?.trim() || options.amount === undefined) {
-    console.error(
-      "Usage: clawql payments stripe invoice create --customer cus_xxx --amount 500"
-    );
+    console.error("Usage: clawql payments stripe invoice create --customer cus_xxx --amount 500");
     return 1;
   }
 
@@ -138,6 +147,8 @@ export async function runPaymentsStripeInvoiceCreate(
 }
 
 export async function runPaymentsStripeWebhookListen(): Promise<number> {
-  console.log("Stripe webhook listener not yet implemented — use stripe listen + clawql payments stripe webhook verify");
+  console.log(
+    "Stripe webhook listener not yet implemented — use stripe listen + clawql payments stripe webhook verify"
+  );
   return 0;
 }

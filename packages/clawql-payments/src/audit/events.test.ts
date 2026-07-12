@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  buildPaymentWormEntry,
-  buildX402PaymentReceivedEntry,
-} from "./events.js";
+import { buildPaymentWormEntry, buildX402PaymentReceivedEntry } from "./events.js";
 
 describe("payment audit events", () => {
   it("builds x402 payment received entry", () => {

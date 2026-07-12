@@ -20,9 +20,7 @@ export type PaymentsPlanShowOptions = {
   env?: NodeJS.ProcessEnv;
 };
 
-export async function runPaymentsPlanShow(
-  options: PaymentsPlanShowOptions = {}
-): Promise<number> {
+export async function runPaymentsPlanShow(options: PaymentsPlanShowOptions = {}): Promise<number> {
   const env = options.env ?? process.env;
   const config = await loadPaymentsConfig(env);
   const entitlements = entitlementsFromPlan(config.plan);
@@ -70,10 +68,7 @@ export async function runPaymentsPlanUpgrade(
   const toPlan = options.tier as ClawqlPlanId;
   const tenantId = options.tenantId ?? current.tenantId ?? "default";
 
-  const { config, path } = await mergePaymentsConfig(
-    { plan: toPlan, tenantId },
-    env
-  );
+  const { config, path } = await mergePaymentsConfig({ plan: toPlan, tenantId }, env);
 
   appendPaymentWormEntry(
     buildPlanChangedEntry({
@@ -107,10 +102,7 @@ export async function runPaymentsUsageReport(
 ): Promise<number> {
   const env = options.env ?? process.env;
   const config = await loadPaymentsConfig(env);
-  const usage = await createUsageStore(env).getUsage(
-    config.tenantId ?? "default",
-    options.month
-  );
+  const usage = await createUsageStore(env).getUsage(config.tenantId ?? "default", options.month);
 
   if (options.json) {
     console.log(JSON.stringify(usage, null, 2));

@@ -49,7 +49,10 @@ export type StripeCustomerResult = {
 export async function createStripeCustomer(
   input: StripeCustomerInput
 ): Promise<StripeCustomerResult> {
-  const slug = input.email.toLowerCase().replace(/[^a-z0-9]+/g, "_").slice(0, 24);
+  const slug = input.email
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .slice(0, 24);
   return {
     id: `cus_stub_${slug}`,
     email: input.email,
@@ -93,9 +96,7 @@ export type StripeInvoiceResult = {
   status: "stub";
 };
 
-export async function createStripeInvoice(
-  input: StripeInvoiceInput
-): Promise<StripeInvoiceResult> {
+export async function createStripeInvoice(input: StripeInvoiceInput): Promise<StripeInvoiceResult> {
   return {
     id: `inv_stub_${input.customerId.replace(/^cus_/, "")}_${input.amountCents}`,
     customerId: input.customerId,
