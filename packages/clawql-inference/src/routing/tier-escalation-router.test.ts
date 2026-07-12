@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { PalAdaptiveRouter } from "./pal-router.js";
+import { TierEscalationRouter } from "./tier-escalation-router.js";
 import type { RoutingFailureSignal } from "./types.js";
-import type { PalRoutingRuntimeConfig } from "./config.js";
+import type { ModelEscalationConfig } from "./config.js";
 
 const tierMap = {
   frugal: "ollama/phi4",
@@ -9,8 +9,8 @@ const tierMap = {
   frontier: "anthropic/claude",
 };
 
-function router(overrides: Partial<PalRoutingRuntimeConfig> = {}): PalAdaptiveRouter {
-  return new PalAdaptiveRouter({
+function router(overrides: Partial<ModelEscalationConfig> = {}): TierEscalationRouter {
+  return new TierEscalationRouter({
     enabled: true,
     tierMap,
     ...overrides,
@@ -23,7 +23,7 @@ const failure: RoutingFailureSignal = {
   generation: 2,
 };
 
-describe("PalAdaptiveRouter.initialTier", () => {
+describe("TierEscalationRouter.initialTier", () => {
   it("starts decomposed children at frugal", () => {
     const decision = router().initialTier({ isDecomposedChild: true, seedId: "child-1" });
     expect(decision.tier).toBe("frugal");
@@ -47,7 +47,7 @@ describe("PalAdaptiveRouter.initialTier", () => {
   });
 });
 
-describe("PalAdaptiveRouter.escalate", () => {
+describe("TierEscalationRouter.escalate", () => {
   it("escalates one notch frugal → standard → frontier", () => {
     const r = router();
     const d0 = r.initialTier({ isDecomposedChild: true, seedId: "s" });
@@ -74,7 +74,7 @@ describe("PalAdaptiveRouter.escalate", () => {
   });
 });
 
-describe("PalAdaptiveRouter.shouldTriggerMoa", () => {
+describe("TierEscalationRouter.shouldTriggerMoa", () => {
   it("returns false until MoA coupling ships (#562)", () => {
     const r = router();
     const d = r.initialTier({ isDecomposedChild: false, seedId: "s" });

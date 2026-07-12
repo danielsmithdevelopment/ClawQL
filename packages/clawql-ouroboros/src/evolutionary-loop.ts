@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
-import type { AdaptiveRouter, EngineCallContext, PalRoutingDecision } from "clawql-inference";
+import type { AdaptiveRouter, EngineCallContext, ModelEscalationDecision } from "clawql-inference";
 import type { Seed } from "./seed.js";
 import type {
   EventStore,
@@ -27,7 +27,7 @@ export interface GenerationSnapshot {
   executionOutput: string;
   evaluation: EvaluationSummary;
   wonder?: WonderOutput;
-  routing?: PalRoutingDecision;
+  routing?: ModelEscalationDecision;
 }
 
 export interface LoopRoutingOptions {
@@ -65,7 +65,7 @@ export class EvolutionaryLoop {
     const generations: GenerationSnapshot[] = [];
     let generationNumber = 1;
     let latestWonder: WonderOutput | undefined;
-    let routingDecision: PalRoutingDecision | undefined;
+    let routingDecision: ModelEscalationDecision | undefined;
 
     while (generationNumber <= maxGenerations) {
       if (this.routingOptions.router && routingDecision === undefined) {

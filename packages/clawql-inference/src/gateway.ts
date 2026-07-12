@@ -1,4 +1,4 @@
-import type { PalRoutingDecision } from "./routing/types.js";
+import type { ModelEscalationDecision } from "./routing/types.js";
 
 export type ChatRole = "system" | "user" | "assistant";
 
@@ -10,7 +10,7 @@ export interface ChatMessage {
 export interface InferenceRequest {
   messages: ChatMessage[];
   model?: string;
-  routing?: PalRoutingDecision;
+  routing?: ModelEscalationDecision;
   correlationId?: string;
 }
 
@@ -24,7 +24,7 @@ export interface InferenceResponse {
   model: string;
   usage?: InferenceUsage;
   cacheHit?: boolean;
-  routing?: PalRoutingDecision;
+  routing?: ModelEscalationDecision;
 }
 
 /**

@@ -1,33 +1,31 @@
 # clawql-inference
 
-TypeScript-native **inference gateway** for ClawQL: PAL adaptive routing, cloud provider adapters, local runtimes (Ollama / vLLM / Llama.cpp), semantic caching, and WORM-auditable observability.
+TypeScript-native **inference gateway** for ClawQL: adaptive model tier escalation, cloud provider adapters, local runtimes (Ollama / vLLM / Llama.cpp), semantic caching, and WORM-auditable observability.
 
-**Status:** Foundation — PAL routing (#560) ships first; provider adapters and OpenAI-compatible HTTP surface follow in dedicated PRs.
+**Status:** Foundation — model escalation routing (#560) ships first; provider adapters and OpenAI-compatible HTTP surface follow in dedicated PRs.
 
-## PAL routing (shipped)
+## Model tier escalation (shipped)
 
 ```typescript
 import {
-  createAdaptiveRouter,
-  loadPalRoutingConfig,
-  type PalRoutingDecision,
+  createModelEscalationRouter,
+  loadModelEscalationConfig,
+  type ModelEscalationDecision,
 } from "clawql-inference";
 
-const router = createAdaptiveRouter(loadPalRoutingConfig(process.env));
+const router = createModelEscalationRouter(loadModelEscalationConfig(process.env));
 const decision = router?.initialTier({ isDecomposedChild: false, seedId: "seed_root" });
 ```
 
 ### Environment
 
-| Variable                           | Default                     | Purpose                              |
-| ---------------------------------- | --------------------------- | ------------------------------------ |
-| `CLAWQL_INFERENCE_ROUTING_ENABLED` | off                         | Enable PAL tier ladder               |
-| `CLAWQL_INFERENCE_MODEL_FRUGAL`    | `ollama/phi4`               | Frugal tier model id                 |
-| `CLAWQL_INFERENCE_MODEL_STANDARD`  | `groq/llama-3.3-70b`        | Standard tier model id               |
-| `CLAWQL_INFERENCE_MODEL_FRONTIER`  | `anthropic/claude-sonnet-4` | Frontier tier model id               |
-| `CLAWQL_INFERENCE_MODEL_PIN`       | —                           | Pin a single model (bypasses ladder) |
-
-Legacy `CLAWQL_PAL_*` env names are also accepted.
+| Variable                           | Default                     | Purpose                                        |
+| ---------------------------------- | --------------------------- | ---------------------------------------------- |
+| `CLAWQL_INFERENCE_ROUTING_ENABLED` | off                         | Enable frugal → standard → frontier escalation |
+| `CLAWQL_INFERENCE_MODEL_FRUGAL`    | `ollama/phi4`               | Frugal tier model id                           |
+| `CLAWQL_INFERENCE_MODEL_STANDARD`  | `groq/llama-3.3-70b`        | Standard tier model id                         |
+| `CLAWQL_INFERENCE_MODEL_FRONTIER`  | `anthropic/claude-sonnet-4` | Frontier tier model id                         |
+| `CLAWQL_INFERENCE_MODEL_PIN`       | —                           | Pin a single model (bypasses ladder)           |
 
 ## Consumers
 
@@ -37,6 +35,6 @@ Legacy `CLAWQL_PAL_*` env names are also accepted.
 
 ## Roadmap
 
-See [`docs/inference/clawql-inference.md`](../../docs/inference/clawql-inference.md) for the full gateway vision, **`clawql inference` CLI surface** (serve, export, finetune, pipeline), and the production → fine-tune → redeploy flywheel.
+See [`docs/inference/clawql-inference.md`](../../docs/inference/clawql-inference.md) for the full gateway vision, **`clawql inference` CLI surface** (serve, export, finetune, pipeline), and the production → fine-tune flywheel.
 
 Epic [#556](https://github.com/danielsmithdevelopment/ClawQL/issues/556).

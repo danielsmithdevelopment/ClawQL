@@ -4,7 +4,7 @@
 **Package:** [`packages/clawql-inference`](../../packages/clawql-inference)  
 **Epic:** [#556](https://github.com/danielsmithdevelopment/ClawQL/issues/556)
 
-`clawql-inference` is ClawQL's TypeScript-native **inference gateway and model-improvement platform** — a LiteLLM-class layer built with ClawQL's trust model: Manifest-governed policies, WORM-auditable routing decisions, semantic cache backed by existing memory/Onyx infrastructure, PAL + MoA integrated from day one, and **production-to-fine-tuning export** with PII scrubbing and provenance manifests.
+`clawql-inference` is ClawQL's TypeScript-native **inference gateway and model-improvement platform** — a LiteLLM-class layer built with ClawQL's trust model: Manifest-governed policies, WORM-auditable routing decisions, semantic cache backed by existing memory/Onyx infrastructure, **model tier escalation** + MoA integrated from day one, and **production-to-fine-tuning export** with PII scrubbing and provenance manifests.
 
 ## The flywheel
 
@@ -23,9 +23,9 @@ LiteLLM routes inference. ClawQL closes the loop: **infer → observe → evalua
 
 ## Shipped today (#560)
 
-- **`AdaptiveRouter`** / **`PalAdaptiveRouter`** — frugal → standard → frontier, one-notch escalation
-- **Tier map** from environment (off by default per Layer 8)
-- **Kill switches** — routing disabled unless explicitly enabled; optional model pin
+- **`AdaptiveRouter`** / **`TierEscalationRouter`** — frugal → standard → frontier, one-notch escalation
+- **Tier map** from environment (off by default)
+- **Kill switches** — escalation disabled unless explicitly enabled; optional model pin
 - **`InferenceGateway`** interface stub for provider adapters
 - **`clawql-ouroboros`** optional routing hooks (`EngineCallContext`)
 
@@ -33,7 +33,7 @@ LiteLLM routes inference. ClawQL closes the loop: **infer → observe → evalua
 
 | Module           | Scope                                                                   |
 | ---------------- | ----------------------------------------------------------------------- |
-| `routing/`       | PAL + `ModelTierMap` (**shipped** foundation)                           |
+| `routing/`       | Model tier escalation + `ModelTierMap` (**shipped** foundation)         |
 | `providers/`     | Anthropic, OpenAI, Google, Groq, Together, Mistral, …                   |
 | `local/`         | Ollama, vLLM, Llama.cpp                                                 |
 | `cache/`         | Semantic cache (embedding similarity, Manifest TTL)                     |
@@ -54,13 +54,13 @@ Each completed inference writes a durable record used by observability **and** e
 | ---------------------------------- | -------------------------------------------------------- |
 | `id`, `correlation_id`             | Link to WORM / agent lineage / ouroboros generation      |
 | `timestamp`                        | Export date-range filters                                |
-| `model_id`, `provider`, `tier`     | Model and PAL tier at call time                          |
+| `model_id`, `provider`, `tier`     | Model and escalation tier at call time                   |
 | `messages` / `prompt` / `response` | Fine-tuning message pairs                                |
 | `system_prompt_hash`               | Cache key + dataset dedup                                |
 | `usage`                            | `input_tokens`, `output_tokens`, estimated cost          |
 | `latency_ms`                       | Quality filtering                                        |
 | `cache_hit`                        | Cost attribution                                         |
-| `pal_decision`                     | Tier, `escalated_from`, failure `trigger`                |
+| `model_escalation_decision`        | Tier, `escalated_from`, failure `trigger`                |
 | `evaluator_verdict`                | `passed` / `failed` / `none` — **primary export filter** |
 | `evaluator_score`                  | Confidence / quality filters                             |
 | `policy_version`                   | Manifest Merkle anchor at call time                      |
@@ -98,15 +98,15 @@ Top-level group under the existing `clawql` binary (`src/onboarding/inference-cl
 clawql inference <subcommand> [options]
 ```
 
-### Gateway & routing
+### Gateway & model escalation
 
 ```bash
 # Start OpenAI-compatible gateway (local or sidecar)
 clawql inference serve [--port 8080] [--config manifest.yaml]
 
-# Inspect PAL tier map and active routing policy
-clawql inference routing show
-clawql inference routing set-tier --tier frugal --model ollama/phi4-custom
+# Inspect tier map and active escalation policy
+clawql inference escalation show
+clawql inference escalation set-tier --tier frugal --model ollama/phi4-custom
 
 # One-shot completion (debug / scripting)
 clawql inference complete \
@@ -203,27 +203,27 @@ clawql inference policy show    # Manifest inference block (tiers, cache TTL, ex
 
 ## Implementation phasing
 
-| Phase       | Deliverable                                                                                                                                                            |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **P0-D** ✅ | `routing/` + ouroboros hooks ([#560](https://github.com/danielsmithdevelopment/ClawQL/issues/560))                                                                     |
-| **P0-F**    | Gateway MVP: `serve`, `complete`, 3 cloud + Ollama adapters                                                                                                            |
-| **P0-G**    | `store/` + `observability/` — log every call with `correlation_id`                                                                                                     |
-| **P0-H**    | `export/` — verdict-filtered JSONL + Presidio + dataset manifest                                                                                                       |
-| **P0-I**    | `finetune/` — Anthropic/OpenAI job API + `register-as` tier                                                                                                            |
-| **P1**      | `pipeline enable` — scheduled auto-export + promote                                                                                                                    |
-| **P1**      | PAL escalation events ([#561](https://github.com/danielsmithdevelopment/ClawQL/issues/561)), MoA ([#562](https://github.com/danielsmithdevelopment/ClawQL/issues/562)) |
+| Phase       | Deliverable                                                                                                                                                                    |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **P0-D** ✅ | `routing/` + ouroboros hooks ([#560](https://github.com/danielsmithdevelopment/ClawQL/issues/560))                                                                             |
+| **P0-F**    | Gateway MVP: `serve`, `complete`, 3 cloud + Ollama adapters                                                                                                                    |
+| **P0-G**    | `store/` + `observability/` — log every call with `correlation_id`                                                                                                             |
+| **P0-H**    | `export/` — verdict-filtered JSONL + Presidio + dataset manifest                                                                                                               |
+| **P0-I**    | `finetune/` — Anthropic/OpenAI job API + `register-as` tier                                                                                                                    |
+| **P1**      | `pipeline enable` — scheduled auto-export + promote                                                                                                                            |
+| **P1**      | Model escalation audit events ([#561](https://github.com/danielsmithdevelopment/ClawQL/issues/561)), MoA ([#562](https://github.com/danielsmithdevelopment/ClawQL/issues/562)) |
 
 ## Differentiation vs LiteLLM
 
-- Outcome-driven PAL escalation tied to agent failure signals (drift, convergence, AC regressions)
+- Outcome-driven model escalation tied to agent failure signals (drift, convergence, AC regressions)
 - Immutable audit trail with `correlation_id` linking inference to agent lineage
 - Manifest-governed tier map, cache policy, **and export policy**
 - **Verdict-filtered fine-tuning export** with PII scrub and provenance manifests
-- **Custom models promoted back into PAL tiers** — compounding cost advantage
+- **Custom models promoted back into frugal/standard tiers** — compounding cost advantage
 - TypeScript-native, catalog-mirrored provider adapters (no Python proxy dependency)
 
 ## References
 
-- [Upstream Q00 sync roadmap](../ouroboros/upstream-q00-sync-roadmap.md)
-- [Token efficiency Layer 8](../architecture/clawql-token-efficiency.md)
-- Issue [#560](https://github.com/danielsmithdevelopment/ClawQL/issues/560) — PAL routing foundation
+- [Upstream Q00 sync roadmap](../ouroboros/upstream-q00-sync-roadmap.md) (upstream naming differs)
+- [Token efficiency architecture](../architecture/clawql-token-efficiency.md)
+- Issue [#560](https://github.com/danielsmithdevelopment/ClawQL/issues/560) — model tier escalation foundation

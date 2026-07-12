@@ -1,18 +1,18 @@
 import type {
   AdaptiveRouter,
+  ModelEscalationDecision,
   ModelTier,
-  PalRoutingDecision,
   RoutingFailureSignal,
 } from "./types.js";
-import type { PalRoutingRuntimeConfig } from "./config.js";
-import { nextPalTier } from "./tiers.js";
+import type { ModelEscalationConfig } from "./config.js";
+import { nextModelTier } from "./tiers.js";
 
-export type { PalRoutingRuntimeConfig };
+export type { ModelEscalationConfig };
 
-export class PalAdaptiveRouter implements AdaptiveRouter {
-  constructor(private readonly config: PalRoutingRuntimeConfig) {}
+export class TierEscalationRouter implements AdaptiveRouter {
+  constructor(private readonly config: ModelEscalationConfig) {}
 
-  initialTier(ctx: { isDecomposedChild: boolean; seedId: string }): PalRoutingDecision {
+  initialTier(ctx: { isDecomposedChild: boolean; seedId: string }): ModelEscalationDecision {
     if (this.config.modelPin) {
       return {
         tier: "standard",
@@ -29,7 +29,10 @@ export class PalAdaptiveRouter implements AdaptiveRouter {
     };
   }
 
-  escalate(decision: PalRoutingDecision, signal: RoutingFailureSignal): PalRoutingDecision {
+  escalate(
+    decision: ModelEscalationDecision,
+    signal: RoutingFailureSignal
+  ): ModelEscalationDecision {
     if (this.config.modelPin) {
       return {
         ...decision,
@@ -38,7 +41,7 @@ export class PalAdaptiveRouter implements AdaptiveRouter {
       };
     }
 
-    const nextTier = nextPalTier(decision.tier);
+    const nextTier = nextModelTier(decision.tier);
     if (!nextTier) {
       return {
         ...decision,
@@ -56,9 +59,9 @@ export class PalAdaptiveRouter implements AdaptiveRouter {
     };
   }
 
-  /** MoA fan-out at Standard exhaustion — implemented in #562. */
+  /** MoA fan-out at standard-tier exhaustion — implemented in #562. */
   shouldTriggerMoa(
-    _pal: PalRoutingDecision,
+    _decision: ModelEscalationDecision,
     _signals: RoutingFailureSignal[],
     _drift?: { combined: number }
   ): boolean {

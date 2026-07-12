@@ -1,5 +1,5 @@
 /**
- * PAL adaptive routing contracts (upstream Q00 v0.50.3 / epic #556).
+ * Model tier escalation contracts (clawql-inference / epic #556).
  */
 
 export interface ModelTierMap {
@@ -20,7 +20,7 @@ export interface RoutingFailureSignal {
   generation: number;
 }
 
-export interface PalRoutingDecision {
+export interface ModelEscalationDecision {
   tier: ModelTier;
   modelId: string;
   retryAttempt: number;
@@ -30,10 +30,13 @@ export interface PalRoutingDecision {
 }
 
 export interface AdaptiveRouter {
-  initialTier(ctx: { isDecomposedChild: boolean; seedId: string }): PalRoutingDecision;
-  escalate(decision: PalRoutingDecision, signal: RoutingFailureSignal): PalRoutingDecision;
+  initialTier(ctx: { isDecomposedChild: boolean; seedId: string }): ModelEscalationDecision;
+  escalate(
+    decision: ModelEscalationDecision,
+    signal: RoutingFailureSignal
+  ): ModelEscalationDecision;
   shouldTriggerMoa(
-    pal: PalRoutingDecision,
+    decision: ModelEscalationDecision,
     signals: RoutingFailureSignal[],
     drift?: { combined: number }
   ): boolean;

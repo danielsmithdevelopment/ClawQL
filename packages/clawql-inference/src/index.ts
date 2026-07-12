@@ -3,17 +3,17 @@ export type {
   ModelTier,
   RoutingFailureKind,
   RoutingFailureSignal,
-  PalRoutingDecision,
+  ModelEscalationDecision,
   AdaptiveRouter,
 } from "./routing/types.js";
 
 export {
-  PAL_TIER_ORDER,
-  nextPalTier,
-  loadPalRoutingConfig,
-  createAdaptiveRouter,
-  PalAdaptiveRouter,
-  type PalRoutingRuntimeConfig,
+  MODEL_TIER_ORDER,
+  nextModelTier,
+  loadModelEscalationConfig,
+  createModelEscalationRouter,
+  TierEscalationRouter,
+  type ModelEscalationConfig,
 } from "./routing/index.js";
 
 export type {
@@ -31,5 +31,5 @@ export { UnconfiguredInferenceGateway } from "./gateway.js";
 export interface EngineCallContext {
   seedId: string;
   generationNumber: number;
-  routing?: import("./routing/types.js").PalRoutingDecision;
+  routing?: import("./routing/types.js").ModelEscalationDecision;
 }

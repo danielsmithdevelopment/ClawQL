@@ -1,28 +1,28 @@
 import { describe, expect, it } from "vitest";
-import { loadPalRoutingConfig, createAdaptiveRouter } from "./config.js";
-import { PalAdaptiveRouter } from "./pal-router.js";
+import { loadModelEscalationConfig, createModelEscalationRouter } from "./config.js";
+import { TierEscalationRouter } from "./tier-escalation-router.js";
 
-describe("loadPalRoutingConfig", () => {
-  it("disables routing by default", () => {
-    const cfg = loadPalRoutingConfig({});
+describe("loadModelEscalationConfig", () => {
+  it("disables model escalation by default", () => {
+    const cfg = loadModelEscalationConfig({});
     expect(cfg.enabled).toBe(false);
     expect(cfg.modelPin).toBeUndefined();
   });
 
-  it("enables routing when CLAWQL_INFERENCE_ROUTING_ENABLED=1", () => {
-    const cfg = loadPalRoutingConfig({ CLAWQL_INFERENCE_ROUTING_ENABLED: "1" });
+  it("enables escalation when CLAWQL_INFERENCE_ROUTING_ENABLED=1", () => {
+    const cfg = loadModelEscalationConfig({ CLAWQL_INFERENCE_ROUTING_ENABLED: "1" });
     expect(cfg.enabled).toBe(true);
     expect(cfg.tierMap.standard).toBe("groq/llama-3.3-70b");
   });
 
-  it("enables routing when model pin is set", () => {
-    const cfg = loadPalRoutingConfig({ CLAWQL_INFERENCE_MODEL_PIN: "openai/gpt-4o" });
+  it("enables escalation when model pin is set", () => {
+    const cfg = loadModelEscalationConfig({ CLAWQL_INFERENCE_MODEL_PIN: "openai/gpt-4o" });
     expect(cfg.enabled).toBe(true);
     expect(cfg.modelPin).toBe("openai/gpt-4o");
   });
 
   it("reads custom tier map from env", () => {
-    const cfg = loadPalRoutingConfig({
+    const cfg = loadModelEscalationConfig({
       CLAWQL_INFERENCE_ROUTING_ENABLED: "true",
       CLAWQL_INFERENCE_MODEL_FRUGAL: "local/phi",
       CLAWQL_INFERENCE_MODEL_STANDARD: "groq/qwen",
@@ -36,15 +36,15 @@ describe("loadPalRoutingConfig", () => {
   });
 });
 
-describe("createAdaptiveRouter", () => {
-  it("returns undefined when routing is disabled", () => {
-    expect(createAdaptiveRouter(loadPalRoutingConfig({}))).toBeUndefined();
+describe("createModelEscalationRouter", () => {
+  it("returns undefined when escalation is disabled", () => {
+    expect(createModelEscalationRouter(loadModelEscalationConfig({}))).toBeUndefined();
   });
 
   it("returns router when enabled", () => {
-    const router = createAdaptiveRouter(
-      loadPalRoutingConfig({ CLAWQL_INFERENCE_ROUTING_ENABLED: "1" })
+    const router = createModelEscalationRouter(
+      loadModelEscalationConfig({ CLAWQL_INFERENCE_ROUTING_ENABLED: "1" })
     );
-    expect(router).toBeInstanceOf(PalAdaptiveRouter);
+    expect(router).toBeInstanceOf(TierEscalationRouter);
   });
 });

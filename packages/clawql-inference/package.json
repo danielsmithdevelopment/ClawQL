@@ -1,7 +1,7 @@
 {
   "name": "clawql-inference",
   "version": "7.0.0",
-  "description": "ClawQL inference gateway: PAL adaptive routing, provider adapters, semantic cache, and WORM-auditable observability (foundation — epic #556 / #560)",
+  "description": "ClawQL inference gateway: model tier escalation, provider adapters, semantic cache, and WORM-auditable observability (foundation — epic #556 / #560)",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.cjs",
