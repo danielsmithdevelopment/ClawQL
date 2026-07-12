@@ -16,7 +16,7 @@ export type StripeSubscriptionResult = {
   status: string;
 };
 
-function resolvePriceId(plan: ClawqlPlanId, env: NodeJS.ProcessEnv): string {
+function resolvePriceId(plan: ClawqlPlanId, _env: NodeJS.ProcessEnv): string {
   const priceId = getPlanDefinition(plan).stripe_price_id;
   if (!priceId) {
     throw new StripeNotConfiguredError(
