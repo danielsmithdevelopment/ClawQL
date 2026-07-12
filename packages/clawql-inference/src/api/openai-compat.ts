@@ -8,6 +8,13 @@ import { resolveRequestModel } from "./model-resolve.js";
 import { createModelsHandlers } from "./models.js";
 import { sendOpenAiError } from "./openai-errors.js";
 import { streamBufferedCompletion, streamCompletionAsOpenAiSse } from "./stream.js";
+import {
+  assertInferenceEntitlement,
+  EntitlementLimitError,
+  isInferenceEntitlementEnforcementActive,
+  recordInferenceUsage,
+  resolveInferenceTenantId,
+} from "../entitlements/enforced-gateway.js";
 
 type OpenAiChatCompletionRequest = {
   model?: string;
@@ -86,6 +93,8 @@ export function createOpenAiCompatRouter(options: CreateOpenAiCompatRouterOption
     };
 
     try {
+      const env = options.env ?? process.env;
+
       if (body.stream) {
         const completionId = `chatcmpl-${randomUUID()}`;
         const created = Math.floor(Date.now() / 1000);
@@ -93,6 +102,15 @@ export function createOpenAiCompatRouter(options: CreateOpenAiCompatRouterOption
         if (resolved && registry) {
           const adapter = getProviderAdapter(registry, resolved.provider);
           if (adapter?.streamComplete) {
+            const tenantId = await resolveInferenceTenantId({ team: keyContext?.team }, env);
+            const enforcementActive = isInferenceEntitlementEnforcementActive(env);
+            if (enforcementActive) {
+              await assertInferenceEntitlement({
+                tenantId,
+                correlationId,
+                env,
+              });
+            }
             await streamCompletionAsOpenAiSse(res, {
               completionId,
               model: publicModelId,
@@ -100,6 +118,9 @@ export function createOpenAiCompatRouter(options: CreateOpenAiCompatRouterOption
               correlationId,
               chunks: adapter.streamComplete(resolved.model, messages, completeOptions),
             });
+            if (enforcementActive) {
+              await recordInferenceUsage({ tenantId, env });
+            }
             return;
           }
         }
@@ -150,6 +171,10 @@ export function createOpenAiCompatRouter(options: CreateOpenAiCompatRouterOption
           : undefined,
       });
     } catch (error) {
+      if (error instanceof EntitlementLimitError) {
+        sendOpenAiError(res, 402, error.message, "insufficient_quota");
+        return;
+      }
       const message = error instanceof Error ? error.message : String(error);
       sendOpenAiError(res, 502, message, "server_error");
     }
