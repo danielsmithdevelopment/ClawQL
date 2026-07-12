@@ -29,37 +29,39 @@
 
 ## Architecture overview
 
-```mermaid
-flowchart TB
-  subgraph clients [Clients]
-    SDK[OpenAI SDK / curl]
-    CLI[clawql inference complete]
-    OB[Ouroboros EvolutionaryLoop]
-  end
+### Entry points
 
-  subgraph http [HTTP layer]
-    AUTH[Virtual key auth middleware]
-    OAI[OpenAI-compat router]
-  end
+| Client | Path into the gateway |
+| ------ | --------------------- |
+| **OpenAI SDK / curl** | Virtual key auth middleware → OpenAI-compat router (`/v1/chat/completions`, `/v1/models`) → gateway stack |
+| **`clawql inference complete`** | Calls the gateway stack directly (no HTTP auth layer) |
+| **Ouroboros `EvolutionaryLoop`** | Calls `ConfiguredInferenceGateway` at the innermost layer (bypasses HTTP) |
 
-  subgraph gateway [Gateway decorator stack — inner to outer]
-    CFG[ConfiguredInferenceGateway]
-    FB[FallbackChainGateway]
-    CACHE[SemanticCachedGateway]
-    ENT[EntitlementEnforcedGateway]
-    OBS[ObservedInferenceGateway]
-  end
+### Gateway decorator stack (inner → outer)
 
-  subgraph backends [Backends]
-    PLG[Provider plugins — openai / anthropic / ollama]
-    STORE[(Inference store — memory / jsonl / postgres)]
-  end
+Each `complete()` call passes **outward** through these layers before reaching a provider:
 
-  SDK --> AUTH --> OAI --> OBS
-  CLI --> OBS
-  OB --> CFG
-  OBS --> ENT --> CACHE --> FB --> CFG --> PLG
-  OBS --> STORE
+1. **`ConfiguredInferenceGateway`** — resolves `provider/model`, invokes the provider adapter
+2. **`FallbackChainGateway`** — tries alternate models on primary failure (when fallback enabled)
+3. **`SemanticCachedGateway`** — embedding-similarity cache lookup (when semantic cache enabled)
+4. **`EntitlementEnforcedGateway`** — plan limit checks via `clawql-payments` (when enforcement enabled)
+5. **`ObservedInferenceGateway`** — appends an `InferenceRecord` to the call store
+
+Call order from outside in: **Observed → Entitlement → Cache → Fallback → Configured → provider**.
+
+### Backends
+
+- **Provider plugins** — built-in OpenAI, Anthropic, Ollama; extensible via the plugin registry
+- **Inference store** — `memory`, `jsonl`, or `postgres` backend for durable call records and export
+
+### Data flow summary
+
+```
+HTTP clients → auth middleware → OpenAI router → [Observed → Entitlement → Cache → Fallback → Configured] → provider plugin
+CLI / library callers ──────────────────────────► [same decorator stack] ────────────────────────────────► provider plugin
+Ouroboros loop ─────────────────────────────────► ConfiguredInferenceGateway (innermost) ───────────────► provider plugin
+
+ObservedInferenceGateway ──writes──► Inference store (jsonl / postgres / memory)
 ```
 
 Every successful `complete()` call flows **outward through decorators** and ends in the call store. HTTP clients additionally pass through virtual-key auth before the OpenAI router invokes the same gateway.
