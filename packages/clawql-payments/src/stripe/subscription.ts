@@ -16,7 +16,7 @@ export type StripeSubscriptionResult = {
   status: string;
 };
 
-function resolvePriceId(plan: ClawqlPlanId, env: NodeJS.ProcessEnv): string {
+function resolvePriceId(plan: ClawqlPlanId, _env: NodeJS.ProcessEnv): string {
   const priceId = getPlanDefinition(plan).stripe_price_id;
   if (!priceId) {
     throw new StripeNotConfiguredError(
@@ -43,9 +43,7 @@ export async function createStripeSubscription(
   return {
     id: subscription.id,
     customerId:
-      typeof subscription.customer === "string"
-        ? subscription.customer
-        : subscription.customer.id,
+      typeof subscription.customer === "string" ? subscription.customer : subscription.customer.id,
     plan: input.plan,
     priceId,
     status: subscription.status,

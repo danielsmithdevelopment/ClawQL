@@ -16,9 +16,7 @@ export type StripeInvoiceResult = {
   hostedInvoiceUrl?: string | null;
 };
 
-export async function createStripeInvoice(
-  input: StripeInvoiceInput
-): Promise<StripeInvoiceResult> {
+export async function createStripeInvoice(input: StripeInvoiceInput): Promise<StripeInvoiceResult> {
   const env = input.env ?? process.env;
   const stripe = createStripeClient(env);
   const currency = input.currency ?? "usd";
@@ -42,9 +40,7 @@ export async function createStripeInvoice(
   }
 
   const finalized =
-    invoice.status === "draft"
-      ? await stripe.invoices.finalizeInvoice(invoice.id)
-      : invoice;
+    invoice.status === "draft" ? await stripe.invoices.finalizeInvoice(invoice.id) : invoice;
 
   return {
     id: finalized.id ?? invoice.id,

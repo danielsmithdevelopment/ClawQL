@@ -6,7 +6,7 @@
 
 `clawql-inference` is ClawQL's TypeScript-native **inference gateway and model-improvement platform** — a LiteLLM-class layer with ClawQL's trust model: WORM-auditable routing, semantic cache, model tier escalation, agent coordination hooks, verdict-filtered export, and fine-tuning flywheel. It is designed as a **drop-in OpenAI replacement** (`OPENAI_BASE_URL=http://127.0.0.1:8080/v1`) while closing the production loop that generic proxies leave open.
 
-**Related docs:** [Inference provider plugins](../plugins/inference-providers.md) · [Token efficiency (Layer 5 cache)](../architecture/clawql-token-efficiency.md) · [Ouroboros library](../ouroboros/clawql-ouroboros.md)
+**Related docs:** [Inference provider plugins](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/plugins/inference-providers.md) · [Token efficiency (Layer 5 cache)](/architecture/token-efficiency) · [Ouroboros library](/ouroboros)
 
 ---
 
@@ -80,18 +80,18 @@ Every successful `complete()` call flows **outward through decorators** and ends
 | 5     | `ObservedInferenceGateway`   | Store not `off`                                      | Appends `InferenceRecord` to call store                       |
 
 ```typescript
-import { createInferenceGateway } from "clawql-inference";
+import { createInferenceGateway } from 'clawql-inference'
 
-const gateway = createInferenceGateway({ env: process.env });
+const gateway = createInferenceGateway({ env: process.env })
 const result = await gateway.complete({
-  model: "anthropic/claude-sonnet-4",
-  messages: [{ role: "user", content: "Summarize this spec" }],
-  correlationId: "seed_abc_gen_2",
-  team: "eng",
-});
+  model: 'anthropic/claude-sonnet-4',
+  messages: [{ role: 'user', content: 'Summarize this spec' }],
+  correlationId: 'seed_abc_gen_2',
+  team: 'eng',
+})
 ```
 
-Disable layers via options: `{ semanticCache: false }`, `{ fallback: false }`, `{ store: null }`.
+Disable layers via options: `\{ semanticCache: false \}`, `\{ fallback: false \}`, `\{ store: null \}`.
 
 ---
 
@@ -153,7 +153,7 @@ Built-ins register via `composeDefaultProviderPlugins()` unless allow/denylisted
 
 Model ids use **`provider/model`** (e.g. `ollama/phi4`, `anthropic/claude-sonnet-4`). Bare public ids like `gpt-4o` resolve through the registry when a matching provider is configured.
 
-Third-party plugins use the same `InferenceProviderPlugin` contract — see [Inference provider plugins](../plugins/inference-providers.md). Subpath export: `clawql-inference/plugin`.
+Third-party plugins use the same `InferenceProviderPlugin` contract — see [Inference provider plugins](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/plugins/inference-providers.md). Subpath export: `clawql-inference/plugin`.
 
 | Env                                           | Effect    |
 | --------------------------------------------- | --------- |
@@ -191,7 +191,7 @@ When `EvolutionaryLoop` runs with an `AdaptiveRouter`:
 1. `router.initialTier()` picks starting tier per seed / decomposed-child context
 2. On generation failure (AC fail, low eval score, drift exceeded), `router.escalate()` moves one notch up
 3. `model_escalation` audit events append to the Ouroboros Postgres / in-memory event store
-4. Correlation id: `{seedId}_gen_{n}`
+4. Correlation id: `\{seedId\}_gen_\{n\}`
 
 See [Agent coordination](#agent-coordination-562) for the Hermes tripwire path.
 
@@ -199,7 +199,7 @@ See [Agent coordination](#agent-coordination-562) for the Hermes tripwire path.
 
 ## Semantic cache
 
-Layer 5 in [token efficiency](../architecture/clawql-token-efficiency.md). Enabled with `CLAWQL_INFERENCE_SEMANTIC_CACHE=1`.
+Layer 5 in [token efficiency](/architecture/token-efficiency). Enabled with `CLAWQL_INFERENCE_SEMANTIC_CACHE=1`.
 
 | Setting                              | Default                  | Purpose                 |
 | ------------------------------------ | ------------------------ | ----------------------- |
@@ -524,9 +524,9 @@ clawql inference <subcommand>
 
 ## References
 
-- [Inference provider plugins](../plugins/inference-providers.md)
-- [Token efficiency architecture](../architecture/clawql-token-efficiency.md)
-- [Ouroboros library](../ouroboros/clawql-ouroboros.md)
-- [Upstream Q00 sync roadmap](../ouroboros/upstream-q00-sync-roadmap.md)
+- [Inference provider plugins](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/plugins/inference-providers.md)
+- [Token efficiency architecture](/architecture/token-efficiency)
+- [Ouroboros library](/ouroboros)
+- [Upstream Q00 sync roadmap](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/ouroboros/upstream-q00-sync-roadmap.md)
 - Issue [#556](https://github.com/danielsmithdevelopment/ClawQL/issues/556) — inference epic
 - Issue [#560](https://github.com/danielsmithdevelopment/ClawQL/issues/560) — model tier escalation

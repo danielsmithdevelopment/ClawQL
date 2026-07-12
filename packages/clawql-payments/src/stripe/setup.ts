@@ -32,9 +32,9 @@ export async function setupStripe(
   return {
     configured: Boolean(
       isStripeConfigured(env) ||
-        config.stripe.accountId ||
-        config.stripe.publishableKey ||
-        config.stripe.webhookSecret
+      config.stripe.accountId ||
+      config.stripe.publishableKey ||
+      config.stripe.webhookSecret
     ),
     apiKeyConfigured: isStripeConfigured(env),
     path,

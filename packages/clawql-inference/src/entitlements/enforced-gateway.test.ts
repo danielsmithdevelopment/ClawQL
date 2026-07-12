@@ -4,13 +4,9 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { InferenceGateway, InferenceRequest, InferenceResponse } from "../gateway.js";
-import { ConfiguredInferenceGateway } from "../gateway.js";
 import { createOpenAiAdapter } from "../plugin/adapters/openai.js";
 import { createUsageStore } from "clawql-payments";
-import {
-  EntitlementLimitError,
-  EntitlementEnforcedGateway,
-} from "./enforced-gateway.js";
+import { EntitlementLimitError, EntitlementEnforcedGateway } from "./enforced-gateway.js";
 
 class StubGateway implements InferenceGateway {
   readonly calls: InferenceRequest[] = [];

@@ -33,6 +33,7 @@ Long pages under `src/generated/` are copied from repo `docs/` at **prebuild** /
 | `/ouroboros/specification` | `docs/ouroboros/daos-coordination-layer-specification.md` | `scripts/sync-daos-coordination-layer-spec-doc.mjs` |
 | `/ouroboros/build-plan` | `docs/ouroboros/daos-build-plan-v2.7.1.md` | `scripts/sync-daos-build-plan-doc.mjs` |
 | `/architecture/token-efficiency` | `docs/architecture/clawql-token-efficiency.md` | `scripts/sync-clawql-token-efficiency-doc.mjs` |
+| `/inference/clawql-inference` | `docs/inference/clawql-inference.md` | `scripts/sync-clawql-inference-doc.mjs` |
 | `/vision/technical-enablement` | `docs/vision/clawql-master-enablement-guide.md` (full technical reference)| `scripts/sync-clawql-master-enablement-doc.mjs` |
 | `/vision/modularization`       | `docs/vision/clawql-modularization-v2.md` (companion)                     | `scripts/sync-clawql-modularization-doc.mjs`    |
 | `/vision/immutable-releases`   | `docs/vision/clawql-hybrid-decentralized-github-alternative.md` (Layer 0) | `scripts/sync-clawql-hybrid-decentralized-doc.mjs` |

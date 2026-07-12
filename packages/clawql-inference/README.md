@@ -222,6 +222,6 @@ Model ids use `provider/model` (e.g. `ollama/phi4`, `anthropic/claude-sonnet-4`)
 
 ## Roadmap
 
-See [`docs/inference/clawql-inference.md`](../../docs/inference/clawql-inference.md) for export/finetune flywheel, observability store, and module phasing.
+See [clawql-inference on docs.clawql.com](https://docs.clawql.com/inference/clawql-inference) for the full gateway reference, architecture, and wiring guide.
 
 Epic [#556](https://github.com/danielsmithdevelopment/ClawQL/issues/556).

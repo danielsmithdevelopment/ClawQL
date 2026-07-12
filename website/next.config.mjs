@@ -90,6 +90,11 @@ const nextConfig = {
         destination: '/examples',
         permanent: true,
       },
+      {
+        source: '/inference',
+        destination: '/inference/clawql-inference',
+        permanent: true,
+      },
     ]
   },
   /**
