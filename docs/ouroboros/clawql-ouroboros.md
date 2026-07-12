@@ -56,7 +56,11 @@ npm install clawql-ouroboros
 3. **Wonder / Reflect** — From generation 2 onward: **wonder**(seed, prior eval) suggests insights; **reflect** produces `Partial<Seed>` updates and a new `seed_id` (child of previous).
 4. **EventStore** — Append-only events; **`getLineage(rootSeedId)`** rebuilds `OntologyLineage` for convergence (includes **`latest_drift`** from `drift_measured` events). **`InMemoryEventStore`** is included for tests and prototypes.
 
-**Drift convergence gate ([#558](https://github.com/danielsmithdevelopment/ClawQL/issues/558)):** when **`combined_drift > 0.3`**, `ConvergenceCriteria` blocks premature converge (similarity, stagnation, oscillation) with reason **`drift_exceeded`** — prefer Reflect / further generations. 5. **Convergence** — `ConvergenceCriteria` compares ontology between completed generations (weighted field similarity), optional eval/regression/wonder gates, stagnation and oscillation shortcuts, and a hard **max generations** cap.
+**Drift convergence gate ([#558](https://github.com/danielsmithdevelopment/ClawQL/issues/558)):** when **`combined_drift > 0.3`**, `ConvergenceCriteria` blocks premature converge (similarity, stagnation, oscillation) with **`reason_code: drift_exceeded`** — prefer Reflect / further generations.
+
+**Stagnation taxonomy ([#559](https://github.com/danielsmithdevelopment/ClawQL/issues/559)):** `ConvergenceSignal.reason_code` names upstream patterns — `no_drift` (unchanged ontology fingerprint window), `oscillation` (A→B→A), `spinning` (repeated execution output), `diminishing_returns` (flat/declining eval scores). `ouroboros_get_lineage_status` exposes **`latest_convergence.reason_code`** from `ouroboros_finished` events.
+
+5. **Convergence** — `ConvergenceCriteria` compares ontology between completed generations (weighted field similarity), optional eval/regression/wonder gates, stagnation and oscillation shortcuts, and a hard **max generations** cap.
 
 ---
 

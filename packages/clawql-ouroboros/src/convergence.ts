@@ -2,9 +2,28 @@ import type { OntologyLineage, ACResult } from "./lineage.js";
 import type { OntologyField } from "./seed.js";
 import { DRIFT_THRESHOLD_ACCEPTABLE, type DriftBand, type DriftReport } from "./drift.js";
 
+/** Upstream Q00 stagnation taxonomy + loop exit codes (epic #556 / #559). */
+export type ConvergenceReasonCode =
+  | "similarity"
+  | "no_drift"
+  | "oscillation"
+  | "spinning"
+  | "diminishing_returns"
+  | "max_generations"
+  | "drift_exceeded"
+  | "eval_gate"
+  | "ac_gate"
+  | "approval_gate"
+  | "regression_gate"
+  | "evolution_required"
+  | "validation_gate"
+  | "continuing";
+
 export interface ConvergenceSignal {
   converged: boolean;
   reason: string;
+  /** Named stagnation / exit code when a detector or gate applies. */
+  reason_code?: ConvergenceReasonCode;
   ontology_similarity: number;
   generation: number;
   failed_acs?: number[];
@@ -23,6 +42,12 @@ export interface ConvergenceConfig {
   minGenerations: number;
   maxGenerations: number;
   enableOscillationDetection: boolean;
+  /** Detect repeated execution output (upstream SPINNING). */
+  enableSpinningDetection: boolean;
+  /** Detect flat or declining eval scores (upstream DIMINISHING_RETURNS). */
+  enableDiminishingReturnsDetection: boolean;
+  /** Minimum per-generation score improvement to avoid diminishing_returns. */
+  diminishingReturnsMinDelta: number;
   evalGateEnabled: boolean;
   evalMinScore: number;
   regressionGateEnabled: boolean;
@@ -38,6 +63,9 @@ const DEFAULT_CONFIG: ConvergenceConfig = {
   minGenerations: 2,
   maxGenerations: 30,
   enableOscillationDetection: true,
+  enableSpinningDetection: true,
+  enableDiminishingReturnsDetection: true,
+  diminishingReturnsMinDelta: 0.01,
   evalGateEnabled: true,
   evalMinScore: 0.7,
   regressionGateEnabled: true,
@@ -182,6 +210,7 @@ export class ConvergenceCriteria {
       return {
         converged: false,
         reason: `Below minimum generations (${numCompleted}/${this.config.minGenerations})`,
+        reason_code: "continuing",
         ontology_similarity: 0,
         generation: currentGen,
       };
@@ -194,6 +223,7 @@ export class ConvergenceCriteria {
         return {
           converged: false,
           reason: evalGateFailure.reason,
+          reason_code: evalGateFailure.reason_code,
           ontology_similarity: latestSim,
           generation: currentGen,
           failed_acs: evalGateFailure.failedAcs,
@@ -206,6 +236,7 @@ export class ConvergenceCriteria {
           return {
             converged: false,
             reason: `Regression gate: ACs [${regression.regressed_ac_indices.join(", ")}] regressed from prior passing state`,
+            reason_code: "regression_gate",
             ontology_similarity: latestSim,
             generation: currentGen,
             failed_acs: regression.regressed_ac_indices,
@@ -217,6 +248,7 @@ export class ConvergenceCriteria {
         return {
           converged: false,
           reason: "Evolution-required gate: Wonder engine signals further refinement needed",
+          reason_code: "evolution_required",
           ontology_similarity: latestSim,
           generation: currentGen,
         };
@@ -227,6 +259,7 @@ export class ConvergenceCriteria {
           return {
             converged: false,
             reason: "Validation gate: empty validation output",
+            reason_code: "validation_gate",
             ontology_similarity: latestSim,
             generation: currentGen,
           };
@@ -238,6 +271,7 @@ export class ConvergenceCriteria {
         return {
           converged: false,
           reason: driftBlock.reason,
+          reason_code: "drift_exceeded",
           ontology_similarity: latestSim,
           generation: currentGen,
           combined_drift: driftBlock.combined_drift,
@@ -248,6 +282,7 @@ export class ConvergenceCriteria {
       return {
         converged: true,
         reason: `Ontology converged: similarity ${latestSim.toFixed(3)} >= ${this.config.convergenceThreshold}`,
+        reason_code: "similarity",
         ontology_similarity: latestSim,
         generation: currentGen,
         combined_drift: latestDrift?.combined_drift,
@@ -260,6 +295,7 @@ export class ConvergenceCriteria {
         return {
           converged: false,
           reason: `Stagnation blocked by ${evalGateFailure.reason}`,
+          reason_code: "no_drift",
           ontology_similarity: latestSim,
           generation: currentGen,
           failed_acs: evalGateFailure.failedAcs,
@@ -270,6 +306,7 @@ export class ConvergenceCriteria {
         return {
           converged: false,
           reason: `Stagnation blocked by ${driftBlock.reason}`,
+          reason_code: "no_drift",
           ontology_similarity: latestSim,
           generation: currentGen,
           combined_drift: driftBlock.combined_drift,
@@ -279,6 +316,7 @@ export class ConvergenceCriteria {
       return {
         converged: true,
         reason: `Stagnation: ontology unchanged for ${this.config.stagnationWindow} consecutive generations`,
+        reason_code: "no_drift",
         ontology_similarity: latestSim,
         generation: currentGen,
         combined_drift: latestDrift?.combined_drift,
@@ -295,6 +333,7 @@ export class ConvergenceCriteria {
         return {
           converged: false,
           reason: `Oscillation blocked by ${evalGateFailure.reason}`,
+          reason_code: "oscillation",
           ontology_similarity: latestSim,
           generation: currentGen,
           failed_acs: evalGateFailure.failedAcs,
@@ -305,6 +344,7 @@ export class ConvergenceCriteria {
         return {
           converged: false,
           reason: `Oscillation blocked by ${driftBlock.reason}`,
+          reason_code: "oscillation",
           ontology_similarity: latestSim,
           generation: currentGen,
           combined_drift: driftBlock.combined_drift,
@@ -314,6 +354,83 @@ export class ConvergenceCriteria {
       return {
         converged: true,
         reason: "Oscillation: ontology cycling between two states (A→B→A)",
+        reason_code: "oscillation",
+        ontology_similarity: latestSim,
+        generation: currentGen,
+        combined_drift: latestDrift?.combined_drift,
+        drift_band: latestDrift?.band,
+      };
+    }
+
+    if (
+      this.config.enableSpinningDetection &&
+      numCompleted >= this.config.stagnationWindow &&
+      this._checkSpinning(lineage)
+    ) {
+      if (evalGateFailure) {
+        return {
+          converged: false,
+          reason: `Spinning blocked by ${evalGateFailure.reason}`,
+          reason_code: "spinning",
+          ontology_similarity: latestSim,
+          generation: currentGen,
+          failed_acs: evalGateFailure.failedAcs,
+        };
+      }
+      const driftBlock = this._driftGateFailure(latestDrift);
+      if (driftBlock) {
+        return {
+          converged: false,
+          reason: `Spinning blocked by ${driftBlock.reason}`,
+          reason_code: "spinning",
+          ontology_similarity: latestSim,
+          generation: currentGen,
+          combined_drift: driftBlock.combined_drift,
+          drift_band: driftBlock.drift_band,
+        };
+      }
+      return {
+        converged: true,
+        reason: `Spinning: identical execution output for ${this.config.stagnationWindow} consecutive generations`,
+        reason_code: "spinning",
+        ontology_similarity: latestSim,
+        generation: currentGen,
+        combined_drift: latestDrift?.combined_drift,
+        drift_band: latestDrift?.band,
+      };
+    }
+
+    if (
+      this.config.enableDiminishingReturnsDetection &&
+      numCompleted >= this.config.stagnationWindow &&
+      this._checkDiminishingReturns(lineage)
+    ) {
+      if (evalGateFailure) {
+        return {
+          converged: false,
+          reason: `Diminishing returns blocked by ${evalGateFailure.reason}`,
+          reason_code: "diminishing_returns",
+          ontology_similarity: latestSim,
+          generation: currentGen,
+          failed_acs: evalGateFailure.failedAcs,
+        };
+      }
+      const driftBlock = this._driftGateFailure(latestDrift);
+      if (driftBlock) {
+        return {
+          converged: false,
+          reason: `Diminishing returns blocked by ${driftBlock.reason}`,
+          reason_code: "diminishing_returns",
+          ontology_similarity: latestSim,
+          generation: currentGen,
+          combined_drift: driftBlock.combined_drift,
+          drift_band: driftBlock.drift_band,
+        };
+      }
+      return {
+        converged: true,
+        reason: `Diminishing returns: eval score improvement below ${this.config.diminishingReturnsMinDelta} for ${this.config.stagnationWindow} generations`,
+        reason_code: "diminishing_returns",
         ontology_similarity: latestSim,
         generation: currentGen,
         combined_drift: latestDrift?.combined_drift,
@@ -325,6 +442,7 @@ export class ConvergenceCriteria {
       return {
         converged: false,
         reason: `Exhausted at max generations (${this.config.maxGenerations})`,
+        reason_code: "max_generations",
         ontology_similarity: latestSim,
         generation: currentGen,
         failed_acs: evalGateFailure?.failedAcs,
@@ -334,6 +452,7 @@ export class ConvergenceCriteria {
     return {
       converged: false,
       reason: `Continuing: similarity ${latestSim.toFixed(3)} < ${this.config.convergenceThreshold}`,
+      reason_code: "continuing",
       ontology_similarity: latestSim,
       generation: currentGen,
     };
@@ -371,11 +490,38 @@ export class ConvergenceCriteria {
     return simAC >= 0.9 && simBC < 0.7;
   }
 
+  /** Same execution output repeated across the stagnation window (upstream SPINNING). */
+  private _checkSpinning(lineage: OntologyLineage): boolean {
+    const completed = lineage.generations.filter((g) => g.phase === "completed");
+    const window = completed.slice(-this.config.stagnationWindow);
+    if (window.length < this.config.stagnationWindow) return false;
+
+    const outputs = window.map((g) => g.execution_output ?? "");
+    const first = outputs[0];
+    return first.length > 0 && outputs.every((o) => o === first);
+  }
+
+  /** Eval score improvement below threshold for the stagnation window (upstream DIMINISHING_RETURNS). */
+  private _checkDiminishingReturns(lineage: OntologyLineage): boolean {
+    const completed = lineage.generations.filter((g) => g.phase === "completed");
+    const window = completed.slice(-this.config.stagnationWindow);
+    if (window.length < this.config.stagnationWindow) return false;
+
+    const scores = window.map((g) => g.evaluation_summary?.score);
+    if (scores.some((s) => s === undefined)) return false;
+
+    for (let i = 1; i < scores.length; i++) {
+      const delta = scores[i]! - scores[i - 1]!;
+      if (delta >= this.config.diminishingReturnsMinDelta) return false;
+    }
+    return true;
+  }
+
   private _evalGateFailure(latestEvaluation?: {
     final_approved: boolean;
     score?: number;
     ac_results: ACResult[];
-  }): { reason: string; failedAcs?: number[] } | null {
+  }): { reason: string; reason_code: ConvergenceReasonCode; failedAcs?: number[] } | null {
     if (!this.config.evalGateEnabled || !latestEvaluation) {
       return null;
     }
@@ -383,6 +529,7 @@ export class ConvergenceCriteria {
     if (latestEvaluation.score !== undefined && latestEvaluation.score < this.config.evalMinScore) {
       return {
         reason: `Eval gate: score ${latestEvaluation.score.toFixed(3)} < minimum ${this.config.evalMinScore}`,
+        reason_code: "eval_gate",
       };
     }
 
@@ -392,6 +539,7 @@ export class ConvergenceCriteria {
     if (failedAcs.length > 0) {
       return {
         reason: `AC gate: ${failedAcs.length} acceptance criteria failing`,
+        reason_code: "ac_gate",
         failedAcs,
       };
     }
@@ -399,6 +547,7 @@ export class ConvergenceCriteria {
     if (latestEvaluation.final_approved === false) {
       return {
         reason: "Approval gate: final_approved is false",
+        reason_code: "approval_gate",
       };
     }
 

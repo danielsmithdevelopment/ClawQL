@@ -37,15 +37,20 @@ function minimalSeed(overrides: Partial<Seed> = {}): Seed {
 function lineageFromFieldsList(
   seedId: string,
   fieldSets: Seed["ontology_schema"]["fields"][],
+  options?: {
+    scores?: number[];
+    executionOutputs?: string[];
+  },
 ): OntologyLineage {
   const generations = fieldSets.map((fields, i) => ({
     generation_number: i + 1,
     seed: minimalSeed({ ontology_schema: { name: "o", description: "d", fields } }),
     phase: "completed" as const,
     ontology_schema: { name: "o", description: "d", fields },
+    execution_output: options?.executionOutputs?.[i],
     evaluation_summary: {
       final_approved: true,
-      score: 0.95,
+      score: options?.scores?.[i] ?? 0.95,
       ac_results: [{ ac_index: 0, ac_content: "c", passed: true, evidence: "e" }],
     },
   }));
@@ -116,6 +121,7 @@ describe("ConvergenceCriteria", () => {
     const latest = lin.generations[1].evaluation_summary!;
     const sig = c.evaluate(lin, { requires_evolution: false }, latest);
     expect(sig.converged).toBe(true);
+    expect(sig.reason_code).toBe("similarity");
     expect(sig.ontology_similarity).toBeGreaterThanOrEqual(0.9);
   });
 
@@ -224,5 +230,87 @@ describe("ConvergenceCriteria", () => {
     });
     expect(sig.converged).toBe(true);
     expect(sig.combined_drift).toBe(0.12);
+  });
+
+  it("converges via no_drift when ontology fingerprint is unchanged across the window", () => {
+    const f1 = [{ name: "a", field_type: "string", description: "alpha one", required: true }];
+    const f2 = [{ name: "a", field_type: "string", description: "bravo two", required: true }];
+    const f3 = [{ name: "a", field_type: "string", description: "charlie three", required: true }];
+    const lin = lineageFromFieldsList("id-no-drift", [f1, f2, f3]);
+    const c = new ConvergenceCriteria({
+      minGenerations: 2,
+      stagnationWindow: 3,
+      convergenceThreshold: 0.999,
+      evalGateEnabled: true,
+      evalMinScore: 0.5,
+    });
+    const latest = lin.generations[2].evaluation_summary!;
+    const sig = c.evaluate(lin, { requires_evolution: false }, latest);
+    expect(sig.converged).toBe(true);
+    expect(sig.reason_code).toBe("no_drift");
+    expect(sig.reason).toContain("Stagnation");
+  });
+
+  it("converges via oscillation when ontology cycles A→B→A", () => {
+    const fA = [{ name: "a", field_type: "string", description: "alpha", required: true }];
+    const fB = [{ name: "b", field_type: "string", description: "beta", required: true }];
+    const lin = lineageFromFieldsList("id-osc-ok", [fA, fB, fA]);
+    const c = new ConvergenceCriteria({
+      minGenerations: 2,
+      convergenceThreshold: 0.999,
+      enableOscillationDetection: true,
+      evalGateEnabled: true,
+      evalMinScore: 0.5,
+    });
+    const latest = lin.generations[2].evaluation_summary!;
+    const sig = c.evaluate(lin, { requires_evolution: false }, latest);
+    expect(sig.converged).toBe(true);
+    expect(sig.reason_code).toBe("oscillation");
+    expect(sig.reason).toContain("Oscillation");
+  });
+
+  it("converges via spinning when execution output repeats across the window", () => {
+    const f1 = [{ name: "a", field_type: "string", description: "gen1", required: true }];
+    const f2 = [{ name: "b", field_type: "string", description: "gen2", required: true }];
+    const f3 = [{ name: "c", field_type: "string", description: "gen3", required: true }];
+    const lin = lineageFromFieldsList("id-spin", [f1, f2, f3], {
+      executionOutputs: ["same-output", "same-output", "same-output"],
+    });
+    const c = new ConvergenceCriteria({
+      minGenerations: 2,
+      stagnationWindow: 3,
+      convergenceThreshold: 0.999,
+      enableSpinningDetection: true,
+      enableOscillationDetection: false,
+      evalGateEnabled: true,
+      evalMinScore: 0.5,
+    });
+    const latest = lin.generations[2].evaluation_summary!;
+    const sig = c.evaluate(lin, { requires_evolution: false }, latest);
+    expect(sig.converged).toBe(true);
+    expect(sig.reason_code).toBe("spinning");
+  });
+
+  it("converges via diminishing_returns when eval scores plateau", () => {
+    const f1 = [{ name: "a", field_type: "string", description: "gen1", required: true }];
+    const f2 = [{ name: "b", field_type: "string", description: "gen2", required: true }];
+    const f3 = [{ name: "c", field_type: "string", description: "gen3", required: true }];
+    const lin = lineageFromFieldsList("id-dim", [f1, f2, f3], {
+      scores: [0.8, 0.795, 0.79],
+    });
+    const c = new ConvergenceCriteria({
+      minGenerations: 2,
+      stagnationWindow: 3,
+      convergenceThreshold: 0.999,
+      enableDiminishingReturnsDetection: true,
+      enableSpinningDetection: false,
+      enableOscillationDetection: false,
+      evalGateEnabled: true,
+      evalMinScore: 0.5,
+    });
+    const latest = lin.generations[2].evaluation_summary!;
+    const sig = c.evaluate(lin, { requires_evolution: false }, latest);
+    expect(sig.converged).toBe(true);
+    expect(sig.reason_code).toBe("diminishing_returns");
   });
 });
