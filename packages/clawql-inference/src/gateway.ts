@@ -10,6 +10,7 @@ import type { InferenceStore } from "./store/types.js";
 import { withSemanticCache, type WithSemanticCacheOptions } from "./cache/cached-gateway.js";
 import { loadFallbackConfig } from "./fallback/config.js";
 import { withFallbackChain, type WithFallbackChainOptions } from "./fallback/fallback-gateway.js";
+import { withEntitlementEnforcement } from "./entitlements/enforced-gateway.js";
 
 export type ChatRole = "system" | "user" | "assistant";
 
@@ -24,6 +25,7 @@ export interface InferenceRequest {
   routing?: ModelEscalationDecision;
   correlationId?: string;
   team?: string;
+  tenantId?: string;
   virtualKeyId?: string;
 }
 
@@ -112,6 +114,7 @@ export function createInferenceGateway(
     options.semanticCache === false
       ? withFallback
       : withSemanticCache(withFallback, { env, ...options.semanticCache });
+  const entitled = withEntitlementEnforcement(cached, env);
   const store = options.store === undefined ? createInferenceStore({ env }) : options.store;
-  return withInferenceStore(cached, store, env);
+  return withInferenceStore(entitled, store, env);
 }

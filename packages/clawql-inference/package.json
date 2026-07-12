@@ -43,6 +43,7 @@
   "dependencies": {
     "clawql-api": "7.0.0",
     "clawql-core": "7.0.0",
+    "clawql-payments": "7.0.0",
     "express": "^5.2.1",
     "pg": "^8.21.0",
     "zod": "^4.3.6"

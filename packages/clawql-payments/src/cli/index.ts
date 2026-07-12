@@ -16,10 +16,12 @@ export {
   runPaymentsStripeSubscriptionCreate,
   runPaymentsStripeInvoiceCreate,
   runPaymentsStripeWebhookListen,
+  runPaymentsStripeWebhookVerify,
   type PaymentsStripeCustomerCreateOptions,
   type PaymentsStripeInvoiceCreateOptions,
   type PaymentsStripeSetupOptions,
   type PaymentsStripeSubscriptionCreateOptions,
+  type PaymentsStripeWebhookVerifyOptions,
 } from "./stripe.js";
 export {
   runPaymentsX402WalletSetup,

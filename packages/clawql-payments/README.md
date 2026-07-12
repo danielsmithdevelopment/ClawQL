@@ -24,10 +24,24 @@ clawql payments plan upgrade --tier team
 clawql payments usage report --month 2026-07
 
 # Stripe (user billing)
-clawql payments stripe setup
+
+Set `STRIPE_SECRET_KEY` for live API calls. Webhook signing secret is stored locally via setup (never commit secrets).
+
+```bash
+export STRIPE_SECRET_KEY=sk_test_...
+export STRIPE_PRO_PRICE_ID=price_...
+export STRIPE_TEAM_PRICE_ID=price_...
+
+clawql payments stripe setup --webhook-secret whsec_...
 clawql payments stripe customer create --email user@acme.com
 clawql payments stripe subscription create --customer cus_xxx --plan pro
 clawql payments stripe invoice create --customer cus_xxx --amount 500
+
+# Verify webhook signatures before processing (required before going live)
+clawql payments stripe webhook verify --payload ./event.json --signature "t=...,v1=..." --process
+```
+
+Payment audit events (`STRIPE_INVOICE_PAID`, `STRIPE_PAYMENT_FAILED`, etc.) are written when verified webhooks are processed — not at invoice creation time.
 
 # x402 micropayments
 clawql payments x402 wallet setup --address 0x...
@@ -64,7 +78,9 @@ Local state is stored under `$CLAWQL_HOME/Payments/` (default `~/.clawql/Payment
 
 ## Status
 
-This package is a **foundation scaffold**. Stripe SDK integration, live x402 facilitator HTTP calls, and durable WORM persistence are follow-up work. CLI commands and plan/limit logic are wired and tested.
+Stripe SDK integration is **live** for customers, subscriptions, invoices, billing portal, meter events (Stripe Billing Meters), and webhook signature verification. Invoice payment audit events are recorded via verified `invoice.paid` webhooks only.
+
+x402 facilitator HTTP calls and durable WORM persistence remain follow-up work.
 
 ## Related
 
