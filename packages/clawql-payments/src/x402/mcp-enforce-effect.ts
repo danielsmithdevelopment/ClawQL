@@ -1,9 +1,6 @@
 import { Effect } from "effect";
 import { isX402McpPaymentError } from "./mcp-errors.js";
-import {
-  runMcpX402BeforeCallTool,
-  type RunMcpX402BeforeCallToolOptions,
-} from "./mcp-enforce.js";
+import { runMcpX402BeforeCallTool, type RunMcpX402BeforeCallToolOptions } from "./mcp-enforce.js";
 
 /**
  * Effect wrapper for in-process MCP x402 enforcement.
@@ -15,6 +12,10 @@ export function mcpX402BeforeCallToolEffect(
   return Effect.tryPromise({
     try: () => runMcpX402BeforeCallTool(options),
     catch: (cause) =>
-      isX402McpPaymentError(cause) ? cause : cause instanceof Error ? cause : new Error(String(cause)),
+      isX402McpPaymentError(cause)
+        ? cause
+        : cause instanceof Error
+          ? cause
+          : new Error(String(cause)),
   });
 }

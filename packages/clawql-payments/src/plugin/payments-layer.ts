@@ -1,13 +1,15 @@
-import type { ClawQLError, McpToolAlreadyRegisteredError, PluginAlreadyRegisteredError } from "clawql-core";
+import type {
+  ClawQLError,
+  McpToolAlreadyRegisteredError,
+  PluginAlreadyRegisteredError,
+} from "clawql-core";
 import { ClawQLApi } from "clawql-api";
 import { Effect, Layer } from "effect";
 import { PaymentAuditService, paymentAuditLiveLayer } from "./payment-audit-service.js";
 import { createPaymentsX402ProxyPlugin } from "./payments-x402-proxy-plugin.js";
 
 export type PaymentsLayerError =
-  | PluginAlreadyRegisteredError
-  | ClawQLError
-  | McpToolAlreadyRegisteredError;
+  PluginAlreadyRegisteredError | ClawQLError | McpToolAlreadyRegisteredError;
 
 export type MakePaymentsLayerOptions = {
   readonly env?: NodeJS.ProcessEnv;

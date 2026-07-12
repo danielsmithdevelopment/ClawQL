@@ -6,4 +6,8 @@ export {
   type PaymentsX402ProxyPluginOptions,
 } from "./payments-x402-proxy-plugin.js";
 export { PaymentAuditService, paymentAuditLiveLayer } from "./payment-audit-service.js";
-export { makePaymentsLayer, type MakePaymentsLayerOptions, type PaymentsLayerError } from "./payments-layer.js";
+export {
+  makePaymentsLayer,
+  type MakePaymentsLayerOptions,
+  type PaymentsLayerError,
+} from "./payments-layer.js";
