@@ -136,7 +136,13 @@ export class EvolutionaryLoop {
         await this.eventStore.append({
           type: "ouroboros_finished",
           seed_id: seed.metadata.seed_id,
-          data: { converged: true, generation_count: generations.length },
+          data: {
+            converged: true,
+            generation_count: generations.length,
+            reason_code: signal.reason_code,
+            reason: signal.reason,
+            ontology_similarity: signal.ontology_similarity,
+          },
           timestamp: new Date(),
         });
         const finalLineage = await this.eventStore.getLineage(seed.metadata.seed_id);
@@ -149,7 +155,12 @@ export class EvolutionaryLoop {
     await this.eventStore.append({
       type: "ouroboros_finished",
       seed_id: seed.metadata.seed_id,
-      data: { converged: false, generation_count: generations.length },
+      data: {
+        converged: false,
+        generation_count: generations.length,
+        reason_code: "max_generations",
+        reason: `Exhausted at max generations (${convergence.config.maxGenerations})`,
+      },
       timestamp: new Date(),
     });
     const lineage = await this.eventStore.getLineage(seed.metadata.seed_id);

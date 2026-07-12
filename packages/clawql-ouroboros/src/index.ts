@@ -16,6 +16,7 @@ export type {
   EvaluationSummary,
   ACResult,
   DriftSummary,
+  ConvergenceSummary,
 } from "./lineage.js";
 
 export type {
@@ -33,6 +34,7 @@ export { ConvergenceCriteria, RegressionDetector } from "./convergence.js";
 export type {
   ConvergenceSignal,
   ConvergenceConfig,
+  ConvergenceReasonCode,
   RegressionResult,
 } from "./convergence.js";
 

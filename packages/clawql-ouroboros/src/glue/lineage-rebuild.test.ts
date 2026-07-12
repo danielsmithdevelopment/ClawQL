@@ -68,4 +68,26 @@ describe("buildOntologyLineageFromEvents", () => {
     expect(lin.latest_drift?.band).toBe("excellent");
     expect(lin.latest_drift?.generation_number).toBe(2);
   });
+
+  it("surfaces latest_convergence from ouroboros_finished events", () => {
+    const seedId = "seed_conv";
+    const events: StoredEvent[] = [
+      {
+        type: "ouroboros_finished",
+        seed_id: seedId,
+        data: {
+          converged: true,
+          generation_count: 3,
+          reason_code: "oscillation",
+          reason: "Oscillation: ontology cycling between two states (A→B→A)",
+          ontology_similarity: 0.42,
+        },
+      },
+    ];
+    const lin = buildOntologyLineageFromEvents(seedId, events);
+    expect(lin.latest_convergence?.reason_code).toBe("oscillation");
+    expect(lin.latest_convergence?.converged).toBe(true);
+    expect(lin.latest_convergence?.generation_count).toBe(3);
+    expect(lin.latest_convergence?.ontology_similarity).toBe(0.42);
+  });
 });

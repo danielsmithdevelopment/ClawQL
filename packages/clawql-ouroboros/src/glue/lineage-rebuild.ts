@@ -2,7 +2,7 @@
  * Rebuild {@link OntologyLineage} from stored events (shared by in-memory semantics and Postgres).
  */
 
-import type { GenerationRecord, OntologyLineage, DriftSummary } from "../lineage.js";
+import type { GenerationRecord, OntologyLineage, DriftSummary, ConvergenceSummary } from "../lineage.js";
 import type { Seed } from "../seed.js";
 import type { StoredEvent } from "../interfaces.js";
 
@@ -18,6 +18,9 @@ interface GenerationCompletedPayload {
 interface OuroborosFinishedPayload {
   converged: boolean;
   generation_count: number;
+  reason_code?: string;
+  reason?: string;
+  ontology_similarity?: number;
 }
 
 function isGenerationPayload(data: unknown): data is GenerationCompletedPayload {
@@ -35,6 +38,20 @@ function isFinishedPayload(data: unknown): data is OuroborosFinishedPayload {
   if (typeof data !== "object" || data === null) return false;
   const d = data as Record<string, unknown>;
   return typeof d.converged === "boolean" && typeof d.generation_count === "number";
+}
+
+function parseConvergenceSummary(data: unknown): ConvergenceSummary | undefined {
+  if (typeof data !== "object" || data === null) return undefined;
+  const d = data as Record<string, unknown>;
+  if (typeof d.converged !== "boolean" || typeof d.generation_count !== "number") return undefined;
+  return {
+    converged: d.converged,
+    generation_count: d.generation_count,
+    reason_code: typeof d.reason_code === "string" ? d.reason_code : undefined,
+    reason: typeof d.reason === "string" ? d.reason : undefined,
+    ontology_similarity:
+      typeof d.ontology_similarity === "number" ? d.ontology_similarity : undefined,
+  };
 }
 
 function parseDriftSummary(data: unknown): DriftSummary | undefined {
@@ -99,5 +116,7 @@ export function buildOntologyLineageFromEvents(
     generations,
     status,
     latest_drift: latestDriftFromEvents(relevant),
+    latest_convergence:
+      finished?.data !== undefined ? parseConvergenceSummary(finished.data) : undefined,
   };
 }
