@@ -41,10 +41,7 @@ export function withEntitlementEnforcement(
   gateway: InferenceGateway,
   env: NodeJS.ProcessEnv = process.env
 ): InferenceGateway {
-  if (
-    !isInferenceEntitlementEnforcementActive(env) &&
-    !isStripeMeterReportingActive(env)
-  ) {
+  if (!isInferenceEntitlementEnforcementActive(env) && !isStripeMeterReportingActive(env)) {
     return gateway;
   }
   return new EntitlementEnforcedGateway(gateway, env);

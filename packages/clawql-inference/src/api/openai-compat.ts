@@ -105,8 +105,7 @@ export function createOpenAiCompatRouter(options: CreateOpenAiCompatRouterOption
           if (adapter?.streamComplete) {
             const tenantId = await resolveInferenceTenantId({ team: keyContext?.team }, env);
             const enforcementActive = isInferenceEntitlementEnforcementActive(env);
-            const billingActive =
-              enforcementActive || isStripeMeterReportingActive(env);
+            const billingActive = enforcementActive || isStripeMeterReportingActive(env);
             if (enforcementActive) {
               await assertInferenceEntitlement({
                 tenantId,

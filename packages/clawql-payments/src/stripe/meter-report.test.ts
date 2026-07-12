@@ -26,9 +26,9 @@ describe("stripe meter reporting", () => {
   });
 
   it("buildInferenceMeterIdentifier uses correlation id when present", () => {
-    expect(
-      buildInferenceMeterIdentifier({ tenantId: "acme", correlationId: "corr-1" })
-    ).toBe("inference:acme:corr-1");
+    expect(buildInferenceMeterIdentifier({ tenantId: "acme", correlationId: "corr-1" })).toBe(
+      "inference:acme:corr-1"
+    );
   });
 
   it("resolveStripeMeterConfig merges payments.json and env", async () => {

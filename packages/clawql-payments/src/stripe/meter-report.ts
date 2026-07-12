@@ -52,8 +52,7 @@ export type ReportInferenceMeterUsageInput = {
 };
 
 export type ReportInferenceMeterUsageResult =
-  | { reported: true; eventId: string; value: number }
-  | { reported: false; reason: string };
+  { reported: true; eventId: string; value: number } | { reported: false; reason: string };
 
 export async function reportInferenceMeterUsageIfEnabled(
   input: ReportInferenceMeterUsageInput

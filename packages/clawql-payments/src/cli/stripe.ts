@@ -86,7 +86,9 @@ export async function runPaymentsStripeCustomerCreate(
       return 0;
     }
 
-    console.log(`Created Stripe customer ${customer.id} (${customer.email}) → saved to payments.json`);
+    console.log(
+      `Created Stripe customer ${customer.id} (${customer.email}) → saved to payments.json`
+    );
     return 0;
   } catch (error) {
     if (error instanceof StripeNotConfiguredError) {
@@ -314,9 +316,7 @@ export async function runPaymentsStripeMeterReport(
 
   const config = await loadPaymentsConfig(env);
   const customerId =
-    options.customer?.trim() ||
-    config.stripe.customerId?.trim() ||
-    env.STRIPE_CUSTOMER_ID?.trim();
+    options.customer?.trim() || config.stripe.customerId?.trim() || env.STRIPE_CUSTOMER_ID?.trim();
   const eventName =
     options.eventName?.trim() ||
     config.stripe.meterEventName?.trim() ||
