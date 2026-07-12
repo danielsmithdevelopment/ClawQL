@@ -29,6 +29,10 @@ import {
 } from "./sandbox-cli.js";
 import {
   runInferenceCompleteCmd,
+  runInferenceExportCmd,
+  runInferenceFinetuneCmd,
+  runInferenceFinetuneRegisterCmd,
+  runInferenceFinetuneStatusCmd,
   runInferenceLogsCmd,
   runInferenceServeCmd,
   runInferenceSpendCmd,
@@ -104,6 +108,25 @@ function parse(argv: string[]): {
     else if (a === "--since") flags.since = argv[++i] ?? "";
     else if (a === "--limit") flags.limit = argv[++i] ?? "";
     else if (a === "--group-by") flags.groupBy = argv[++i] ?? "";
+    else if (a === "--output") flags.output = argv[++i] ?? "";
+    else if (a === "--format") flags.format = argv[++i] ?? "";
+    else if (a === "--verdict") flags.verdict = argv[++i] ?? "";
+    else if (a === "--min-score") flags.minScore = argv[++i] ?? "";
+    else if (a === "--date-from") flags.dateFrom = argv[++i] ?? "";
+    else if (a === "--date-to") flags.dateTo = argv[++i] ?? "";
+    else if (a === "--max-latency-ms") flags.maxLatencyMs = argv[++i] ?? "";
+    else if (a === "--min-token-efficiency") flags.minTokenEfficiency = argv[++i] ?? "";
+    else if (a === "--exclude-cache-hits") flags.excludeCacheHits = true;
+    else if (a === "--no-pii-scrub") flags.noPiiScrub = true;
+    else if (a === "--write-manifest") flags.writeManifest = true;
+    else if (a === "--no-write-manifest") flags.writeManifest = false;
+    else if (a === "--dataset") flags.dataset = argv[++i] ?? "";
+    else if (a === "--manifest") flags.manifest = argv[++i] ?? "";
+    else if (a === "--base-model") flags.baseModel = argv[++i] ?? "";
+    else if (a === "--register-as") flags.registerAs = argv[++i] ?? "";
+    else if (a === "--job-id") flags.jobId = argv[++i] ?? "";
+    else if (a === "--tier") flags.tier = argv[++i] ?? "";
+    else if (a === "--alias") flags.alias = argv[++i] ?? "";
     else if (a === "--skip-verify") flags.skipVerify = true;
     else if (a.startsWith("--image-digest=")) {
       const prev = typeof flags.imageDigest === "string" ? flags.imageDigest : "";
@@ -164,6 +187,9 @@ Usage:
   clawql sandbox init | verify | status | edit --harness claude [--path DIR] [--skip-verify]
   clawql inference serve [--port 8080] | complete --model <provider/model> --message <text>
   clawql inference logs [--model M] [--since 24h] [--limit 50] | trace --correlation-id <id> | spend [--group-by model]
+  clawql inference export --output <path.jsonl> [--verdict passed] [--format openai-jsonl]
+  clawql inference finetune --dataset <path> --base-model <model> [--provider openai|anthropic]
+  clawql inference finetune status --job-id <id> | register --job-id <id> --tier frugal --alias <model>
   clawql claude | codex | cursor | opencode [-- harness args...]
   clawql operator status
 
@@ -237,6 +263,8 @@ inference (gateway MVP):
   logs            Recent inference records from the call store
   trace           Records for a correlation_id (links to ouroboros / WORM lineage)
   spend           Token usage rollup by model, provider, or tier
+  export          Verdict-filtered dataset export with optional Presidio scrub + manifest
+  finetune        Submit fine-tuning job; subcommands: status, register
   Providers: openai, anthropic, ollama via provider/model ids (e.g. ollama/phi4)
   Store: CLAWQL_INFERENCE_STORE=memory|jsonl|off (default jsonl when CLAWQL_HOME set)
   Env: OPENAI_API_KEY, ANTHROPIC_API_KEY, OLLAMA_BASE_URL, CLAWQL_INFERENCE_PORT
@@ -454,6 +482,41 @@ async function main(): Promise<void> {
       typeof flags.port === "string" && flags.port ? Number.parseInt(flags.port, 10) : undefined;
     const limit =
       typeof flags.limit === "string" && flags.limit ? Number.parseInt(flags.limit, 10) : undefined;
+    const minScore =
+      typeof flags.minScore === "string" && flags.minScore
+        ? Number.parseFloat(flags.minScore)
+        : undefined;
+    const maxLatencyMs =
+      typeof flags.maxLatencyMs === "string" && flags.maxLatencyMs
+        ? Number.parseInt(flags.maxLatencyMs, 10)
+        : undefined;
+    const minTokenEfficiency =
+      typeof flags.minTokenEfficiency === "string" && flags.minTokenEfficiency
+        ? Number.parseFloat(flags.minTokenEfficiency)
+        : undefined;
+    const finetuneProvider =
+      typeof flags.provider === "string" &&
+      (flags.provider === "openai" || flags.provider === "anthropic")
+        ? flags.provider
+        : undefined;
+    const tier =
+      typeof flags.tier === "string" &&
+      (flags.tier === "frugal" || flags.tier === "standard" || flags.tier === "frontier")
+        ? flags.tier
+        : undefined;
+    const verdict =
+      typeof flags.verdict === "string" &&
+      (flags.verdict === "passed" || flags.verdict === "failed" || flags.verdict === "none")
+        ? flags.verdict
+        : undefined;
+    const format =
+      typeof flags.format === "string" &&
+      (flags.format === "openai-jsonl" ||
+        flags.format === "anthropic-jsonl" ||
+        flags.format === "raw-jsonl" ||
+        flags.format === "sharegpt")
+        ? flags.format
+        : undefined;
     const inferenceOpts: InferenceCliOptions = {
       port: Number.isFinite(port) ? port : undefined,
       model: typeof flags.model === "string" ? flags.model : undefined,
@@ -468,6 +531,25 @@ async function main(): Promise<void> {
           ? flags.groupBy
           : undefined,
       json: Boolean(flags.json),
+      output: typeof flags.output === "string" ? flags.output : undefined,
+      format,
+      verdict,
+      minScore: Number.isFinite(minScore) ? minScore : undefined,
+      dateFrom: typeof flags.dateFrom === "string" ? flags.dateFrom : undefined,
+      dateTo: typeof flags.dateTo === "string" ? flags.dateTo : undefined,
+      maxLatencyMs: Number.isFinite(maxLatencyMs) ? maxLatencyMs : undefined,
+      minTokenEfficiency: Number.isFinite(minTokenEfficiency) ? minTokenEfficiency : undefined,
+      excludeCacheHits: Boolean(flags.excludeCacheHits),
+      noPiiScrub: Boolean(flags.noPiiScrub),
+      writeManifest: flags.writeManifest === false ? false : undefined,
+      dataset: typeof flags.dataset === "string" ? flags.dataset : undefined,
+      manifest: typeof flags.manifest === "string" ? flags.manifest : undefined,
+      baseModel: typeof flags.baseModel === "string" ? flags.baseModel : undefined,
+      finetuneProvider,
+      registerAs: typeof flags.registerAs === "string" ? flags.registerAs : undefined,
+      jobId: typeof flags.jobId === "string" ? flags.jobId : undefined,
+      tier,
+      alias: typeof flags.alias === "string" ? flags.alias : undefined,
     };
     if (subcmd === "serve") {
       process.exitCode = await runInferenceServeCmd(inferenceOpts);
@@ -489,8 +571,25 @@ async function main(): Promise<void> {
       process.exitCode = await runInferenceSpendCmd(inferenceOpts);
       return;
     }
+    if (subcmd === "export") {
+      process.exitCode = await runInferenceExportCmd(inferenceOpts);
+      return;
+    }
+    if (subcmd === "finetune") {
+      const finetuneAction = rest[0];
+      if (finetuneAction === "status") {
+        process.exitCode = await runInferenceFinetuneStatusCmd(inferenceOpts);
+        return;
+      }
+      if (finetuneAction === "register") {
+        process.exitCode = await runInferenceFinetuneRegisterCmd(inferenceOpts);
+        return;
+      }
+      process.exitCode = await runInferenceFinetuneCmd(inferenceOpts);
+      return;
+    }
     console.error(
-      "Usage: clawql inference serve | complete | logs | trace --correlation-id <id> | spend"
+      "Usage: clawql inference serve | complete | logs | trace --correlation-id <id> | spend | export | finetune [status|register]"
     );
     process.exitCode = 1;
     return;

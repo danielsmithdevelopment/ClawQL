@@ -11,6 +11,7 @@ export {
   MODEL_TIER_ORDER,
   nextModelTier,
   loadModelEscalationConfig,
+  loadModelEscalationConfigAsync,
   createModelEscalationRouter,
   TierEscalationRouter,
   type ModelEscalationConfig,
@@ -49,6 +50,18 @@ export { JsonlInferenceStore } from "./store/jsonl.js";
 export { ObservedInferenceGateway, withInferenceStore } from "./observability/observed-gateway.js";
 export { parseSinceDuration } from "./observability/parse-since.js";
 export { runInferenceLogs, runInferenceTrace, runInferenceSpend } from "./cli/observability.js";
+export { runInferenceExportCli, type InferenceExportCliOptions } from "./cli/export.js";
+export {
+  runInferenceFinetune,
+  runInferenceFinetuneStatus,
+  runInferenceFinetuneRegister,
+  type InferenceFinetuneOptions,
+} from "./cli/finetune.js";
+export { runInferenceExport, type RunInferenceExportOptions } from "./export/run-export.js";
+export type { ExportFormat, DatasetManifest } from "./export/types.js";
+export { submitFinetuneJob, getFinetuneJobStatus, registerFinetuneModel } from "./finetune/jobs.js";
+export type { FinetuneJob, FinetuneProvider } from "./finetune/types.js";
+export { registerModelToTier, loadTierMapOverrides } from "./finetune/tier-registry.js";
 
 export { parseModelId } from "./providers/parse-model-id.js";
 export type {

@@ -21,15 +21,17 @@ Production traffic
 
 LiteLLM routes inference. ClawQL closes the loop: **infer → observe → evaluate → export → fine-tune → redeploy**.
 
-## Shipped today (#560, gateway MVP)
+## Shipped today (#560, gateway MVP, export/finetune)
 
 - **`AdaptiveRouter`** / **`TierEscalationRouter`** — frugal → standard → frontier, one-notch escalation
-- **Tier map** from environment (off by default)
+- **Tier map** from environment (off by default); **`tier-map.json`** overrides after `finetune register`
 - **Kill switches** — escalation disabled unless explicitly enabled; optional model pin
 - **`ConfiguredInferenceGateway`** — provider plugin registry + routing to `provider/model` backends
 - **Provider plugins** — OpenAI, Anthropic, Ollama built-ins via `composeDefaultProviderPlugins()`; third-party extensions use the same contract ([inference providers plugin](../plugins/inference-providers.md))
 - **`clawql inference serve`** — OpenAI-compatible `/v1/chat/completions` + `/healthz`
 - **`clawql inference logs` / `trace` / `spend`** — query the call store by model, `correlation_id`, or token rollup
+- **`clawql inference export`** — verdict-filtered JSONL + Presidio scrub + WORM dataset manifest
+- **`clawql inference finetune`** — OpenAI / Anthropic job submit, status, and tier registration
 - **Call store** — JSONL at `$CLAWQL_HOME/Inference/calls.jsonl` (or `memory` / `off` via env)
 
 ## Planned modules
@@ -211,8 +213,8 @@ clawql inference policy show    # Manifest inference block (tiers, cache TTL, ex
 | **P0-D** ✅ | `routing/` + ouroboros hooks ([#560](https://github.com/danielsmithdevelopment/ClawQL/issues/560))                                                                                            |
 | **P0-F** ✅ | Gateway MVP: `serve`, `complete`, OpenAI / Anthropic / Ollama adapters                                                                                                                        |
 | **P0-G** ✅ | `store/` + observability — log every call with `correlation_id`; `logs`, `trace`, `spend` CLI                                                                                                 |
-| **P0-H**    | `export/` — verdict-filtered JSONL + Presidio + dataset manifest                                                                                                                              |
-| **P0-I**    | `finetune/` — Anthropic/OpenAI job API + `register-as` tier                                                                                                                                   |
+| **P0-H** ✅ | `export/` — verdict-filtered JSONL + Presidio + dataset manifest                                                                                                                              |
+| **P0-I** ✅ | `finetune/` — Anthropic/OpenAI job API + `register-as` tier                                                                                                                                   |
 | **P1**      | `pipeline enable` — scheduled auto-export + promote                                                                                                                                           |
 | **P1**      | Model escalation audit events ([#561](https://github.com/danielsmithdevelopment/ClawQL/issues/561)), agent coordination ([#562](https://github.com/danielsmithdevelopment/ClawQL/issues/562)) |
 

@@ -2,7 +2,7 @@
 
 TypeScript-native **inference gateway** for ClawQL: model tier escalation, cloud provider adapters, local runtimes (Ollama / vLLM / Llama.cpp), semantic caching, and WORM-auditable observability.
 
-**Status:** Gateway MVP shipped — model tier escalation (#560) + provider plugin architecture + `clawql inference serve|complete`.
+**Status:** Gateway MVP + export/finetune — model tier escalation (#560), provider plugins, call store, dataset export, and fine-tune job API.
 
 Built-in provider plugins (OpenAI, Anthropic, Ollama) register automatically. Third parties add backends via `InferenceProviderPlugin` — see [`docs/plugins/inference-providers.md`](../../docs/plugins/inference-providers.md).
 
@@ -18,6 +18,12 @@ clawql inference serve --port 8080
 curl -s http://127.0.0.1:8080/v1/chat/completions \
   -H 'Content-Type: application/json' \
   -d '{"model":"openai/gpt-4o","messages":[{"role":"user","content":"hi"}]}'
+
+# Export evaluator-passed samples for fine-tuning
+clawql inference export --output ./training.jsonl --verdict passed --format openai-jsonl
+
+# Submit fine-tune job (OpenAI)
+clawql inference finetune --dataset ./training.jsonl --base-model gpt-4o-mini --provider openai
 ```
 
 ## Model tier escalation
