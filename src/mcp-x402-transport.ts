@@ -1,7 +1,4 @@
-import {
-  headersFromPlainRecord,
-  runWithMcpX402Context,
-} from "clawql-payments/x402";
+import { headersFromPlainRecord, runWithMcpX402Context } from "clawql-payments/x402";
 import { setMcpMessageContextHook } from "mcp-grpc-transport";
 
 let registered = false;

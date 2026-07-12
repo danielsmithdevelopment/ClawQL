@@ -110,18 +110,12 @@ export async function buildPaymentsWellKnownDocument(
       billing: env.STRIPE_METER_EVENT_NAME?.trim() ? "metered" : "subscription",
       plans: Object.keys(CLAWQL_PLANS),
       meter_event_name:
-        config.stripe?.meterEventName?.trim() ||
-        env.STRIPE_METER_EVENT_NAME?.trim() ||
-        undefined,
+        config.stripe?.meterEventName?.trim() || env.STRIPE_METER_EVENT_NAME?.trim() || undefined,
     });
   }
 
   const defaultMethod: PaymentsWellKnownDocument["default"] =
-    x402Enabled && x402Resources.length > 0
-      ? "x402"
-      : stripeEnabled
-        ? "stripe"
-        : null;
+    x402Enabled && x402Resources.length > 0 ? "x402" : stripeEnabled ? "stripe" : null;
 
   return {
     version: "1",

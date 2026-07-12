@@ -1,7 +1,4 @@
-import {
-  isX402McpPaymentError,
-  runMcpX402BeforeCallTool,
-} from "clawql-payments/x402";
+import { isX402McpPaymentError, runMcpX402BeforeCallTool } from "clawql-payments/x402";
 import { wrapMcpToolHandler } from "./otel-tracing.js";
 
 /**

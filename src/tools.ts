@@ -175,8 +175,16 @@ export function registerTools(server: McpServer) {
 
   // Non-negotiable Core tools: register immediately after search/execute so optional branches
   // below cannot throw and skip cache/audit (#89 #75).
-  server.tool("cache", cacheToolSchema, wrapRegisteredMcpToolHandler("cache", handleCacheToolInput));
-  server.tool("audit", auditToolSchema, wrapRegisteredMcpToolHandler("audit", handleAuditToolInput));
+  server.tool(
+    "cache",
+    cacheToolSchema,
+    wrapRegisteredMcpToolHandler("cache", handleCacheToolInput)
+  );
+  server.tool(
+    "audit",
+    auditToolSchema,
+    wrapRegisteredMcpToolHandler("audit", handleAuditToolInput)
+  );
 
   registerPluginMcpTools(server);
 

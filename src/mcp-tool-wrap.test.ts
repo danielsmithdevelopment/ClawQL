@@ -1,8 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import {
-  X402McpPaymentRequiredError,
-  runMcpX402BeforeCallTool,
-} from "clawql-payments/x402";
+import { X402McpPaymentRequiredError, runMcpX402BeforeCallTool } from "clawql-payments/x402";
 import { wrapRegisteredMcpToolHandler } from "./mcp-tool-wrap.js";
 
 vi.mock("clawql-payments/x402", async (importOriginal) => {

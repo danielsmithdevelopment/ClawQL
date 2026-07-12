@@ -47,9 +47,7 @@ describe("runMcpX402BeforeCallTool", () => {
   });
 
   it("allows ungated tools", async () => {
-    await expect(
-      runMcpX402BeforeCallTool({ toolName: "search", env })
-    ).resolves.toBeUndefined();
+    await expect(runMcpX402BeforeCallTool({ toolName: "search", env })).resolves.toBeUndefined();
   });
 
   it("throws payment required for gated tool without proof", async () => {

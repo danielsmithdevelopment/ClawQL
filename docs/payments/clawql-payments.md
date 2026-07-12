@@ -8,19 +8,19 @@
 
 ## What ships today
 
-| Capability                                       | Status | Notes                                                                           |
-| ------------------------------------------------ | ------ | ------------------------------------------------------------------------------- |
-| Managed plan tiers + entitlements                | ✅     | Local `usage.json` counters; limit enforcement in inference                     |
-| Stripe customers, subscriptions, invoices        | ✅     | Live SDK when `STRIPE_SECRET_KEY` is set                                        |
-| Stripe webhook signature verification            | ✅     | CLI verify/process; audit on `invoice.paid`                                     |
-| Stripe Billing Meters (`meterEvents.create`)     | ✅     | API + inference hook when `CLAWQL_PAYMENTS_REPORT_STRIPE_METER=1`               |
-| x402 gate config + facilitator HTTP verify       | ✅     | `POST /verify` against x402.org or CDP                                          |
-| x402 Express middleware (402 + PAYMENT-REQUIRED) | ✅     | Wired into `clawql-inference` HTTP                                              |
-| x402 MCP in-process enforcement                  | ✅     | `CLAWQL_X402_ENFORCE=1` on stdio / Streamable HTTP / gRPC MCP tool calls        |
-| Payment WORM audit (hash-chained JSONL)          | ✅     | `$CLAWQL_HOME/Payments/audit.jsonl` + `audit verify`                            |
-| Payment WORM audit (Postgres)                    | ✅     | `CLAWQL_PAYMENTS_AUDIT_STORE=postgres` for multi-node deployments               |
-| Payment audit → Loki/SIEM export                 | ✅     | Fire-and-forget push on append when `CLAWQL_LOKI_PUSH_URL` is set               |
-| `.well-known/payments.json` discovery            | ✅     | Dynamic on MCP + inference HTTP; static placeholder on docs site                |
+| Capability                                       | Status | Notes                                                                    |
+| ------------------------------------------------ | ------ | ------------------------------------------------------------------------ |
+| Managed plan tiers + entitlements                | ✅     | Local `usage.json` counters; limit enforcement in inference              |
+| Stripe customers, subscriptions, invoices        | ✅     | Live SDK when `STRIPE_SECRET_KEY` is set                                 |
+| Stripe webhook signature verification            | ✅     | CLI verify/process; audit on `invoice.paid`                              |
+| Stripe Billing Meters (`meterEvents.create`)     | ✅     | API + inference hook when `CLAWQL_PAYMENTS_REPORT_STRIPE_METER=1`        |
+| x402 gate config + facilitator HTTP verify       | ✅     | `POST /verify` against x402.org or CDP                                   |
+| x402 Express middleware (402 + PAYMENT-REQUIRED) | ✅     | Wired into `clawql-inference` HTTP                                       |
+| x402 MCP in-process enforcement                  | ✅     | `CLAWQL_X402_ENFORCE=1` on stdio / Streamable HTTP / gRPC MCP tool calls |
+| Payment WORM audit (hash-chained JSONL)          | ✅     | `$CLAWQL_HOME/Payments/audit.jsonl` + `audit verify`                     |
+| Payment WORM audit (Postgres)                    | ✅     | `CLAWQL_PAYMENTS_AUDIT_STORE=postgres` for multi-node deployments        |
+| Payment audit → Loki/SIEM export                 | ✅     | Fire-and-forget push on append when `CLAWQL_LOKI_PUSH_URL` is set        |
+| `.well-known/payments.json` discovery            | ✅     | Dynamic on MCP + inference HTTP; static placeholder on docs site         |
 
 ## Architecture
 
@@ -300,12 +300,12 @@ sequenceDiagram
 
 **Headers:**
 
-| Header                            | Direction      | Purpose                               |
-| --------------------------------- | -------------- | ------------------------------------- |
-| `PAYMENT-REQUIRED`                | Response (402) | Base64-encoded `PaymentRequired` JSON |
-| `PAYMENT-SIGNATURE` / `X-PAYMENT` | Request        | Client payment proof (JSON or base64) |
+| Header                            | Direction      | Purpose                                                |
+| --------------------------------- | -------------- | ------------------------------------------------------ |
+| `PAYMENT-REQUIRED`                | Response (402) | Base64-encoded `PaymentRequired` JSON                  |
+| `PAYMENT-SIGNATURE` / `X-PAYMENT` | Request        | Client payment proof (JSON or base64)                  |
 | `X-Clawql-Tool`                   | Request        | Gate MCP tools as `tool:{name}` (HTTP middleware path) |
-| `X-Correlation-Id`                | Request        | Audit correlation (optional)          |
+| `X-Correlation-Id`                | Request        | Audit correlation (optional)                           |
 
 ### MCP in-process enforcement
 
@@ -315,11 +315,11 @@ Configure gates with `clawql payments x402 gate --tool <name> --price <usdc>`.
 
 **Payment proof on MCP transports:**
 
-| Transport        | How to attach proof                                              |
-| ---------------- | ---------------------------------------------------------------- |
+| Transport        | How to attach proof                                             |
+| ---------------- | --------------------------------------------------------------- |
 | Streamable HTTP  | `PAYMENT-SIGNATURE` / `X-PAYMENT` on the HTTP request to `/mcp` |
-| gRPC MCP session | Same header names as gRPC metadata (lowercase keys)              |
-| stdio            | No request headers — use Streamable HTTP or gRPC for paid tools  |
+| gRPC MCP session | Same header names as gRPC metadata (lowercase keys)             |
+| stdio            | No request headers — use Streamable HTTP or gRPC for paid tools |
 
 When payment is required, the tool returns an MCP result with `isError: true` and JSON describing the x402 `PaymentRequired` payload (HTTP 402 semantics in tool output). Invalid proofs emit `X402_PAYMENT_FAILED` audit events (same as HTTP deny paths).
 
@@ -561,9 +561,9 @@ See also: [`packages/clawql-inference/README.md`](../../packages/clawql-inferenc
 
 ## Follow-up work
 
-| Item                         | Tracking         |
-| ---------------------------- | ---------------- |
-| Hosted webhook HTTP endpoint | not CLI-only     |
+| Item                         | Tracking     |
+| ---------------------------- | ------------ |
+| Hosted webhook HTTP endpoint | not CLI-only |
 
 ## Related
 

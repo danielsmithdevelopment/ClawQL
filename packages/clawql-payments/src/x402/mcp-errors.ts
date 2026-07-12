@@ -78,7 +78,5 @@ export class X402McpPaymentDeniedError extends Error {
 export function isX402McpPaymentError(
   err: unknown
 ): err is X402McpPaymentRequiredError | X402McpPaymentDeniedError {
-  return (
-    err instanceof X402McpPaymentRequiredError || err instanceof X402McpPaymentDeniedError
-  );
+  return err instanceof X402McpPaymentRequiredError || err instanceof X402McpPaymentDeniedError;
 }

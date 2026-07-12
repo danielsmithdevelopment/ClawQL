@@ -19,9 +19,12 @@ export function getMcpX402Context(): McpX402RequestContext | undefined {
   return mcpX402Storage.getStore();
 }
 
-export function headersFromExpressRequest(
-  req: { headers: Record<string, string | string[] | undefined>; protocol?: string; get?: (name: string) => string | undefined; originalUrl?: string }
-): McpX402RequestContext {
+export function headersFromExpressRequest(req: {
+  headers: Record<string, string | string[] | undefined>;
+  protocol?: string;
+  get?: (name: string) => string | undefined;
+  originalUrl?: string;
+}): McpX402RequestContext {
   const host = req.get?.("host") ?? "localhost";
   const protocol = req.protocol ?? "http";
   const path = req.originalUrl ?? "/mcp";

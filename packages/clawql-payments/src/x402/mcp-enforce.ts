@@ -34,9 +34,7 @@ export async function runMcpX402BeforeCallTool(
 
   const ctx = getMcpX402Context();
   const headers = ctx?.headers ?? {};
-  const requestUrl =
-    ctx?.requestUrl ??
-    `mcp://tool/${encodeURIComponent(options.toolName)}`;
+  const requestUrl = ctx?.requestUrl ?? `mcp://tool/${encodeURIComponent(options.toolName)}`;
 
   const result = await enforceX402Gate({
     resource,
