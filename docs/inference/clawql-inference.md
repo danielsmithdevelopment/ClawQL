@@ -34,6 +34,7 @@ LiteLLM routes inference. ClawQL closes the loop: **infer → observe → evalua
 - **`clawql inference finetune`** — OpenAI / Anthropic job submit, status, and tier registration
 - **Semantic cache** — optional embedding similarity cache (`CLAWQL_INFERENCE_SEMANTIC_CACHE=1`); hits set `cache_hit` on inference records
 - **Fallback chains** — per-tier / per-model provider alternates when primary fails (`CLAWQL_INFERENCE_FALLBACK_ENABLED=1`)
+- **Virtual keys** — per-team API keys with budget and rate limits (`CLAWQL_INFERENCE_KEYS_ENABLED=1`)
 
 ## Planned modules
 
@@ -45,7 +46,7 @@ LiteLLM routes inference. ClawQL closes the loop: **infer → observe → evalua
 | `cache/`         | Semantic cache — embedding similarity, TTL, per-model keys (**shipped**)                            |
 | `observability/` | Langfuse (ADR 0005), OpenTelemetry, WORM `correlation_id`                                           |
 | `fallback/`      | Per-tier provider chains — try alternates before failing (**shipped**)                              |
-| `keys/`          | Virtual keys, per-team budgets                                                                      |
+| `keys/`          | Virtual keys, per-team budgets (**shipped**)                                                        |
 | `api/`           | OpenAI-compatible `/v1/chat/completions`, `/v1/models`, SSE streaming (**shipped**)                 |
 | `store/`         | Inference call log (Postgres) — prompt, response, tier, tokens, verdict                             |
 | `export/`        | Filtered dataset export + PII scrub (Presidio) + WORM dataset manifests (**shipped**)               |

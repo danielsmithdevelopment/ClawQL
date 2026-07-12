@@ -3,6 +3,7 @@ import { createInferenceGateway } from "../gateway.js";
 import type { InferenceGateway } from "../gateway.js";
 import { createProviderRegistry } from "../providers/registry.js";
 import { composeDefaultProviderPlugins } from "../plugin/compose.js";
+import { createVirtualKeyAuthMiddleware } from "./auth.js";
 import { createOpenAiCompatRouter } from "./openai-compat.js";
 
 export type CreateInferenceHttpAppOptions = {
@@ -29,6 +30,7 @@ export function createInferenceHttpApp(options: CreateInferenceHttpAppOptions = 
       endpoints: ["/v1/chat/completions", "/v1/models"],
     });
   });
+  app.use(createVirtualKeyAuthMiddleware({ env }));
   app.use(createOpenAiCompatRouter({ gateway, registry, env }));
   return app;
 }

@@ -23,6 +23,8 @@ export interface InferenceRequest {
   model?: string;
   routing?: ModelEscalationDecision;
   correlationId?: string;
+  team?: string;
+  virtualKeyId?: string;
 }
 
 export interface InferenceUsage {
@@ -111,5 +113,5 @@ export function createInferenceGateway(
       ? withFallback
       : withSemanticCache(withFallback, { env, ...options.semanticCache });
   const store = options.store === undefined ? createInferenceStore({ env }) : options.store;
-  return withInferenceStore(cached, store);
+  return withInferenceStore(cached, store, env);
 }

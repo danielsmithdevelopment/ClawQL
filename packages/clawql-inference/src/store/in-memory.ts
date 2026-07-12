@@ -45,7 +45,9 @@ export class InMemoryInferenceStore implements InferenceStore {
           ? record.provider
           : groupBy === "tier"
             ? (record.tier ?? "unknown")
-            : record.modelId;
+            : groupBy === "team"
+              ? (record.team ?? "unknown")
+              : record.modelId;
       const row = rows.get(key) ?? { key, calls: 0, inputTokens: 0, outputTokens: 0 };
       row.calls += 1;
       row.inputTokens += record.usage?.inputTokens ?? 0;

@@ -5,6 +5,9 @@
 import {
   runInferenceFallbackShow,
   runInferenceCacheStatus,
+  runInferenceKeysCreate,
+  runInferenceKeysList,
+  runInferenceKeysRevoke,
   runInferenceComplete,
   runInferenceEscalationSetTier,
   runInferenceEscalationShow,
@@ -34,7 +37,7 @@ export type InferenceCliOptions = {
   correlationId?: string;
   since?: string;
   limit?: number;
-  groupBy?: "model" | "provider" | "tier";
+  groupBy?: "model" | "provider" | "tier" | "team";
   json?: boolean;
   output?: string;
   format?: ExportFormat;
@@ -60,6 +63,10 @@ export type InferenceCliOptions = {
   targetTier?: ModelTier;
   evaluateBeforePromote?: boolean;
   outputDir?: string;
+  team?: string;
+  budgetUsd?: number;
+  rateLimit?: string;
+  keyId?: string;
 };
 
 export async function runInferenceServeCmd(opts: InferenceCliOptions): Promise<number> {
@@ -210,4 +217,21 @@ export async function runInferenceCacheStatusCmd(opts: InferenceCliOptions): Pro
 
 export async function runInferenceFallbackShowCmd(opts: InferenceCliOptions): Promise<number> {
   return runInferenceFallbackShow({ json: opts.json });
+}
+
+export async function runInferenceKeysCreateCmd(opts: InferenceCliOptions): Promise<number> {
+  return runInferenceKeysCreate({
+    team: opts.team,
+    budgetUsd: opts.budgetUsd,
+    rateLimit: opts.rateLimit,
+    json: opts.json,
+  });
+}
+
+export async function runInferenceKeysListCmd(opts: InferenceCliOptions): Promise<number> {
+  return runInferenceKeysList({ json: opts.json });
+}
+
+export async function runInferenceKeysRevokeCmd(opts: InferenceCliOptions): Promise<number> {
+  return runInferenceKeysRevoke({ id: opts.keyId, json: opts.json });
 }
