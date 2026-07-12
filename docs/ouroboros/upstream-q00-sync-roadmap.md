@@ -28,7 +28,7 @@ This document separates **what to port** from **what to leave alone**, defines p
 | 3-component drift (Goal 50% / Constraint 30% / Ontology 20%, threshold ≤ 0.3) | **Shipped** — `ouroboros_measure_drift` + per-generation `drift_measured` events ([#557](https://github.com/danielsmithdevelopment/ClawQL/issues/557)) | Shipped (`ouroboros_measure_drift`) |
 | PAL / model-tier routing                                                      | **Foundation** — `clawql-inference` model tier escalation ([#560](https://github.com/danielsmithdevelopment/ClawQL/issues/560))                        | **Shipped** (headline v0.50.3)      |
 | Frugality proof / per-AC token attribution                                    | **Not shipped**                                                                                                                                        | Shipped                             |
-| Agent coordination / multi-model consensus                                      | **Not shipped** — DAOS §6.7 roadmap                                                                                                                    | Shipped (Stage 3 + tiers)           |
+| Agent coordination / multi-model consensus                                    | **Not shipped** — DAOS §6.7 roadmap                                                                                                                    | Shipped (Stage 3 + tiers)           |
 | NSV / SGDOP                                                                   | **Not shipped** — DAOS P3 roadmap                                                                                                                      | Partial (consensus triggers)        |
 | Routing                                                                       | `clawql_execute` / `clawql_search` API hints                                                                                                           | LLM tier + runtime routing          |
 
@@ -123,9 +123,9 @@ Every model escalation step and agent coordination trigger writes an auditable e
 | **P0-C** | [#559](https://github.com/danielsmithdevelopment/ClawQL/issues/559) | Stagnation taxonomy reason codes on `ConvergenceSignal`                              | — **shipped**              |
 | **P0-D** | [#560](https://github.com/danielsmithdevelopment/ClawQL/issues/560) | `clawql-inference` model tier escalation + ouroboros hooks                           | — **shipped**              |
 | **P0-E** | [#561](https://github.com/danielsmithdevelopment/ClawQL/issues/561) | `model_escalation` + token attribution events in Postgres event store                | P0-D                       |
-| **P1-A** | [#562](https://github.com/danielsmithdevelopment/ClawQL/issues/562) | Agent coordination trigger at standard-tier failure + drift tripwire                    | P0-A, P0-D, Hermes adapter |
+| **P1-A** | [#562](https://github.com/danielsmithdevelopment/ClawQL/issues/562) | Agent coordination trigger at standard-tier failure + drift tripwire                 | P0-A, P0-D, Hermes adapter |
 | **P1-B** | [#563](https://github.com/danielsmithdevelopment/ClawQL/issues/563) | Align introducing post / clawql-ouroboros.md with shipped drift behavior             | P0-A                       |
-| **P2**   | DAOS P3                                                             | NSV/SGDOP-directed agent coordination model family selection                            | Coordinator, embeddings    |
+| **P2**   | DAOS P3                                                             | NSV/SGDOP-directed agent coordination model family selection                         | Coordinator, embeddings    |
 | **P3**   | [#564](https://github.com/danielsmithdevelopment/ClawQL/issues/564) | Active Conductor attention menus on MCP lineage stream                               | P0-E events                |
 
 **P0-A is the recommended first PR** — small surface, closes marketing/implementation gap, gives model tier escalation / agent coordination a concrete failure signal.
