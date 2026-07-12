@@ -17,7 +17,7 @@ clawql-payments
 
 ## CLI
 
-```bash
+````bash
 # ClawQL managed billing (internal + self-hosted)
 clawql payments plan show
 clawql payments plan upgrade --tier team
@@ -39,11 +39,12 @@ clawql payments stripe invoice create --customer cus_xxx --amount 500
 
 # Verify webhook signatures before processing (required before going live)
 clawql payments stripe webhook verify --payload ./event.json --signature "t=...,v1=..." --process
-```
+````
 
 Payment audit events (`STRIPE_INVOICE_PAID`, `STRIPE_PAYMENT_FAILED`, etc.) are written when verified webhooks are processed — not at invoice creation time.
 
 # x402 micropayments
+
 clawql payments x402 wallet setup --address 0x...
 clawql payments x402 gate --resource /v1/chat/completions --price 0.001 --asset USDC
 clawql payments x402 gate --tool knowledge_search --price 0.0005
@@ -51,9 +52,11 @@ clawql payments x402 verify --tx-hash 0xabc...
 clawql payments x402 reconcile --date 2026-07-11
 
 # Unified reporting
+
 clawql payments spend report --group-by provider
 clawql payments audit --correlation-id xxx
-```
+
+````
 
 ## Programmatic usage
 
@@ -66,7 +69,7 @@ import {
   appendPaymentWormEntry,
   buildX402PaymentReceivedEntry,
 } from "clawql-payments";
-```
+````
 
 ## Config
 

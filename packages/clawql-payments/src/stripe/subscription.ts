@@ -43,9 +43,7 @@ export async function createStripeSubscription(
   return {
     id: subscription.id,
     customerId:
-      typeof subscription.customer === "string"
-        ? subscription.customer
-        : subscription.customer.id,
+      typeof subscription.customer === "string" ? subscription.customer : subscription.customer.id,
     plan: input.plan,
     priceId,
     status: subscription.status,

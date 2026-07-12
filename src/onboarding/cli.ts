@@ -801,8 +801,7 @@ async function main(): Promise<void> {
       accountId: typeof flags.accountId === "string" ? flags.accountId : undefined,
       publishableKey: typeof flags.publishableKey === "string" ? flags.publishableKey : undefined,
       webhookSecret: typeof flags.webhookSecret === "string" ? flags.webhookSecret : undefined,
-      facilitatorUrl:
-        typeof flags.facilitatorUrl === "string" ? flags.facilitatorUrl : undefined,
+      facilitatorUrl: typeof flags.facilitatorUrl === "string" ? flags.facilitatorUrl : undefined,
       payloadPath: typeof flags.payloadPath === "string" ? flags.payloadPath : undefined,
       process: Boolean(flags.process),
     };

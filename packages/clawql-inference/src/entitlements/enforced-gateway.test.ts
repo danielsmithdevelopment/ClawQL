@@ -7,10 +7,7 @@ import type { InferenceGateway, InferenceRequest, InferenceResponse } from "../g
 import { ConfiguredInferenceGateway } from "../gateway.js";
 import { createOpenAiAdapter } from "../plugin/adapters/openai.js";
 import { createUsageStore } from "clawql-payments";
-import {
-  EntitlementLimitError,
-  EntitlementEnforcedGateway,
-} from "./enforced-gateway.js";
+import { EntitlementLimitError, EntitlementEnforcedGateway } from "./enforced-gateway.js";
 
 class StubGateway implements InferenceGateway {
   readonly calls: InferenceRequest[] = [];
