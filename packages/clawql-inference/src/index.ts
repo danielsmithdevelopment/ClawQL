@@ -135,6 +135,21 @@ export {
 } from "./cache/types.js";
 export { cosineSimilarity, resolveInferenceEmbeddingConfig } from "./cache/embedding.js";
 export { buildCacheSignatureText, hashSystemPrompt } from "./cache/signature.js";
+export {
+  withFallbackChain,
+  FallbackChainGateway,
+  isFallbackChainGateway,
+  type WithFallbackChainOptions,
+} from "./fallback/fallback-gateway.js";
+export {
+  loadFallbackConfig,
+  loadFallbackConfigAsync,
+  resolveFallbackChainsPath,
+  saveFallbackChainsFile,
+} from "./fallback/config.js";
+export { resolveFallbackChain, normalizeFallbackChain } from "./fallback/resolve.js";
+export type { FallbackAttempt, FallbackChainMap, FallbackConfig } from "./fallback/types.js";
+export { runInferenceFallbackShow, type InferenceFallbackShowOptions } from "./cli/fallback.js";
 
 /** Optional context passed to host engines (Wonder / Reflect / Execute). */
 export interface EngineCallContext {
