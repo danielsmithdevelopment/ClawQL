@@ -28,11 +28,11 @@ export function buildRoutingFailureSignals(input: {
       generation: input.generationNumber,
     });
   }
-  if (input.driftReport.combined > input.convergenceConfig.driftMaxCombined) {
+  if (input.driftReport.combined_drift > input.convergenceConfig.driftMaxCombined) {
     signals.push({
       kind: "drift_exceeded",
       detail: {
-        combined: input.driftReport.combined,
+        combined: input.driftReport.combined_drift,
         max: input.convergenceConfig.driftMaxCombined,
       },
       generation: input.generationNumber,

@@ -223,7 +223,7 @@ export class EvolutionaryLoop {
             router,
             decision: routingDecision,
             signals: failureSignals,
-            driftCombined: driftReport.combined,
+            driftCombined: driftReport.combined_drift,
             correlationId,
           });
           if (coordination.triggered && coordination.auditEntry) {
