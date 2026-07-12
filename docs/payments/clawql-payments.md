@@ -18,7 +18,7 @@
 | x402 Express middleware (402 + PAYMENT-REQUIRED) | ✅     | Wired into `clawql-inference` HTTP                                              |
 | Payment WORM audit (hash-chained JSONL)          | ✅     | `$CLAWQL_HOME/Payments/audit.jsonl` + `audit verify`                            |
 | Payment WORM audit (Postgres)                    | ✅     | `CLAWQL_PAYMENTS_AUDIT_STORE=postgres` for multi-node deployments               |
-| Payment audit → Loki/SIEM export                 | ✅     | Fire-and-forget push on append when `CLAWQL_LOKI_PUSH_URL` is set                 |
+| Payment audit → Loki/SIEM export                 | ✅     | Fire-and-forget push on append when `CLAWQL_LOKI_PUSH_URL` is set               |
 | `.well-known/payments.json` discovery            | 📋     | Placeholder ([#88](https://github.com/danielsmithdevelopment/ClawQL/issues/88)) |
 
 ## Architecture
@@ -366,25 +366,25 @@ Payment events append to an **append-only, hash-chained audit log** at `$CLAWQL_
 
 A hot in-process mirror still feeds the MCP `audit` ring buffer (summary fields only). **Authoritative** payment history — including full structured `payload` — lives in `audit.jsonl`.
 
-| Event                               | Trigger                        |
-| ----------------------------------- | ------------------------------ |
-| `STRIPE_INVOICE_PAID`               | Verified webhook               |
-| `STRIPE_PAYMENT_FAILED`             | Verified webhook               |
-| `STRIPE_METER_REPORTED`             | Successful meter event         |
-| `X402_PAYMENT_RECEIVED`             | Facilitator verify + reconcile |
+| Event                               | Trigger                                                                       |
+| ----------------------------------- | ----------------------------------------------------------------------------- |
+| `STRIPE_INVOICE_PAID`               | Verified webhook                                                              |
+| `STRIPE_PAYMENT_FAILED`             | Verified webhook                                                              |
+| `STRIPE_METER_REPORTED`             | Successful meter event                                                        |
+| `X402_PAYMENT_RECEIVED`             | Facilitator verify + reconcile                                                |
 | `X402_PAYMENT_FAILED`               | Invalid proof, facilitator error, or misconfiguration (not `require_payment`) |
-| `ENTITLEMENT_LIMIT_REACHED`         | Plan cap hit                   |
-| `PLAN_UPGRADED` / `PLAN_DOWNGRADED` | `clawql payments plan upgrade` |
+| `ENTITLEMENT_LIMIT_REACHED`         | Plan cap hit                                                                  |
+| `PLAN_UPGRADED` / `PLAN_DOWNGRADED` | `clawql payments plan upgrade`                                                |
 
 ### Environment
 
-| Variable                      | Default                     | Purpose                                            |
-| ----------------------------- | --------------------------- | -------------------------------------------------- |
-| `CLAWQL_PAYMENTS_AUDIT_STORE` | `jsonl` (`memory` in tests) | `jsonl` = durable file; `memory` = in-process only; `postgres` = shared DB |
-| `CLAWQL_PAYMENTS_AUDIT_FSYNC` | on                          | `fsync` after each append (set `0` to disable; jsonl only) |
-| `CLAWQL_PAYMENTS_DATABASE_URL` | —                          | Postgres connection string when `AUDIT_STORE=postgres` |
-| `CLAWQL_PAYMENTS_DB_*`        | —                           | Component vars (`HOST`, `USER`, `PASSWORD`, `NAME`, `PORT`) |
-| `CLAWQL_INFERENCE_DATABASE_URL` | —                         | Fallback Postgres URL when payments URL is unset (shared DB) |
+| Variable                        | Default                     | Purpose                                                                    |
+| ------------------------------- | --------------------------- | -------------------------------------------------------------------------- |
+| `CLAWQL_PAYMENTS_AUDIT_STORE`   | `jsonl` (`memory` in tests) | `jsonl` = durable file; `memory` = in-process only; `postgres` = shared DB |
+| `CLAWQL_PAYMENTS_AUDIT_FSYNC`   | on                          | `fsync` after each append (set `0` to disable; jsonl only)                 |
+| `CLAWQL_PAYMENTS_DATABASE_URL`  | —                           | Postgres connection string when `AUDIT_STORE=postgres`                     |
+| `CLAWQL_PAYMENTS_DB_*`          | —                           | Component vars (`HOST`, `USER`, `PASSWORD`, `NAME`, `PORT`)                |
+| `CLAWQL_INFERENCE_DATABASE_URL` | —                           | Fallback Postgres URL when payments URL is unset (shared DB)               |
 
 ### Postgres audit store (enterprise)
 

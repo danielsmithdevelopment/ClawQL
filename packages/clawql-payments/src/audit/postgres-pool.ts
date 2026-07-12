@@ -15,9 +15,10 @@ function parsePort(raw: string | undefined): number | undefined {
   return Math.floor(n);
 }
 
-export function resolvePaymentsPoolConfig(env: NodeJS.ProcessEnv = process.env): PaymentsPgPoolConfig {
-  const url =
-    env.CLAWQL_PAYMENTS_DATABASE_URL?.trim() || env.CLAWQL_INFERENCE_DATABASE_URL?.trim();
+export function resolvePaymentsPoolConfig(
+  env: NodeJS.ProcessEnv = process.env
+): PaymentsPgPoolConfig {
+  const url = env.CLAWQL_PAYMENTS_DATABASE_URL?.trim() || env.CLAWQL_INFERENCE_DATABASE_URL?.trim();
   if (url) return url;
 
   const host = env.CLAWQL_PAYMENTS_DB_HOST?.trim();
