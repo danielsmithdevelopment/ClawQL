@@ -1,6 +1,8 @@
 import express, { type Express } from "express";
 import { createInferenceGateway } from "../gateway.js";
 import type { InferenceGateway } from "../gateway.js";
+import { createProviderRegistry } from "../providers/registry.js";
+import { composeDefaultProviderPlugins } from "../plugin/compose.js";
 import { createOpenAiCompatRouter } from "./openai-compat.js";
 
 export type CreateInferenceHttpAppOptions = {
@@ -9,13 +11,25 @@ export type CreateInferenceHttpAppOptions = {
 };
 
 export function createInferenceHttpApp(options: CreateInferenceHttpAppOptions = {}): Express {
-  const gateway = options.gateway ?? createInferenceGateway({ env: options.env });
+  const env = options.env;
+  const registry = createProviderRegistry({
+    env,
+    plugins: composeDefaultProviderPlugins(),
+  });
+  const gateway = options.gateway ?? createInferenceGateway({ env, providers: registry });
   const app = express();
   app.use(express.json({ limit: "2mb" }));
   app.get("/healthz", (_req, res) => {
     res.json({ status: "ok", service: "clawql-inference" });
   });
-  app.use(createOpenAiCompatRouter(gateway));
+  app.get("/v1", (_req, res) => {
+    res.json({
+      object: "clawql-inference",
+      openai_compatible: true,
+      endpoints: ["/v1/chat/completions", "/v1/models"],
+    });
+  });
+  app.use(createOpenAiCompatRouter({ gateway, registry, env }));
   return app;
 }
 

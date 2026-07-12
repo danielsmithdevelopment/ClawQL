@@ -84,6 +84,20 @@ describe("createInferenceHttpApp", () => {
       expect(health.status).toBe(200);
       expect(health.body).toEqual({ status: "ok", service: "clawql-inference" });
 
+      const models = await httpJson(`http://127.0.0.1:${address.port}/v1/models`);
+      expect(models.status).toBe(200);
+      const modelList = models.body as { data: Array<{ id: string }> };
+      expect(modelList.data.length).toBeGreaterThan(0);
+
+      const bare = await httpJson(`http://127.0.0.1:${address.port}/v1/chat/completions`, {
+        method: "POST",
+        body: JSON.stringify({
+          model: "gpt-4o",
+          messages: [{ role: "user", content: "ping" }],
+        }),
+      });
+      expect(bare.status).toBe(200);
+
       const completion = await httpJson(`http://127.0.0.1:${address.port}/v1/chat/completions`, {
         method: "POST",
         body: JSON.stringify({

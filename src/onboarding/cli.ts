@@ -271,7 +271,7 @@ mcp-config:
   Print or write MCP JSON for Cursor / Claude (stdio — secrets loaded from vault at server startup)
 
 inference (gateway MVP):
-  serve           OpenAI-compatible HTTP gateway (/healthz, /v1/chat/completions)
+  serve           OpenAI-compatible HTTP gateway (/healthz, /v1/models, /v1/chat/completions, stream)
   complete        One-shot completion for scripting/debug
   logs            Recent inference records from the call store
   trace           Records for a correlation_id (links to ouroboros / WORM lineage)

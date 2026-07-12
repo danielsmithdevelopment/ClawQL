@@ -114,6 +114,8 @@ export {
   resolveInferenceHost,
   type CreateInferenceHttpAppOptions,
 } from "./api/server.js";
+export { resolveRequestModel, toPublicModelId } from "./api/model-resolve.js";
+export { collectListedModels } from "./api/models.js";
 
 export { runInferenceServe } from "./cli/serve.js";
 export { runInferenceComplete, type InferenceCompleteOptions } from "./cli/complete.js";

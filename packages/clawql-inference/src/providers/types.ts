@@ -10,9 +10,23 @@ export interface InferenceProviderAdapter {
   complete(
     model: string,
     messages: ChatMessage[],
-    options?: { signal?: AbortSignal }
+    options?: InferenceCompleteOptions
   ): Promise<InferenceResponse>;
+  /** Optional SSE token stream (OpenAI-compatible upstream). */
+  streamComplete?(
+    model: string,
+    messages: ChatMessage[],
+    options?: InferenceCompleteOptions
+  ): AsyncIterable<string>;
 }
+
+export type InferenceCompleteOptions = {
+  signal?: AbortSignal;
+  temperature?: number;
+  maxTokens?: number;
+  topP?: number;
+  stop?: string | string[];
+};
 
 export type ProviderRegistry = Map<string, InferenceProviderAdapter>;
 
