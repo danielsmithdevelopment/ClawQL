@@ -116,6 +116,21 @@ Tenant resolution order: `InferenceRequest.tenantId` → virtual key `team` → 
 
 Streaming requests that bypass the gateway (provider-native SSE) are still entitlement-checked at the HTTP layer.
 
+## x402 micropayments (`clawql-payments`)
+
+When `CLAWQL_X402_ENFORCE=1`, gated HTTP paths (e.g. `/v1/chat/completions`) return **402 Payment Required** with x402 v2 `PAYMENT-REQUIRED` until the configured facilitator verifies the client's payment header.
+
+```bash
+export CLAWQL_X402_ENFORCE=1
+export CLAWQL_X402_FACILITATOR_URL=https://x402.org/facilitator
+
+clawql payments x402 wallet setup --address 0x...
+clawql payments x402 gate --resource /v1/chat/completions --price 0.001
+clawql inference serve --port 8080
+```
+
+Use `X-Clawql-Tool` to gate MCP tool names over HTTP (`tool:knowledge_search`).
+
 ## Quick start
 
 ```bash
