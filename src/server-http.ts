@@ -36,6 +36,12 @@ import { handleConeshareWebhookRequest } from "./coneshare-webhook.js";
 import { handleLangfuseEvalWebhookRequest } from "./langfuse-eval-webhook.js";
 import { createWebhookRateLimiter } from "./webhook-rate-limit.js";
 import { resolveAtrClaimsFromHeaders } from "clawql-auth";
+import { attachPaymentsWellKnownRoutes } from "clawql-payments/discovery";
+import {
+  headersFromExpressRequest,
+  registerMcpX402TransportHooks,
+  runWithMcpX402Context,
+} from "./mcp-x402-transport.js";
 
 const PORT = Number.parseInt(process.env.PORT ?? process.env.MCP_PORT ?? "8080", 10);
 const DEFAULT_MCP_PATH = "/mcp";
@@ -138,6 +144,7 @@ export type CreateMcpHttpAppOptions = {
  */
 export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): Promise<Express> {
   configureHitlTransportDeps();
+  registerMcpX402TransportHooks();
   if (!options.skipSpecPreload) {
     await loadSpec();
     await preloadSchemaFieldCacheFromDisk();
@@ -152,6 +159,8 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   });
 
   app.use(applyCorsIfConfigured);
+
+  attachPaymentsWellKnownRoutes(app, { serverName: "ClawQL MCP" });
 
   /** Gateway auth (Phase 1 `clawql-auth`): enforced on MCP routes when `CLAWQL_AUTH_MODE=apiKey`. */
   function applyGatewayAuth(
@@ -317,7 +326,9 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         jsonRpcError(res, "Bad Request: transport could not be resolved.");
         return;
       }
-      await transport.handleRequest(req, res, req.body);
+      await runWithMcpX402Context(headersFromExpressRequest(req), () =>
+        transport!.handleRequest(req, res, req.body)
+      );
     } catch (err: unknown) {
       console.error("[clawql-mcp-http] POST /mcp error:", err);
       if (!res.headersSent) {
@@ -341,7 +352,9 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
       jsonRpcError(res, "Bad Request: invalid mcp-session-id.");
       return;
     }
-    await transport.handleRequest(req, res);
+    await runWithMcpX402Context(headersFromExpressRequest(req), () =>
+      transport.handleRequest(req, res)
+    );
   });
 
   app.delete(mcpPath, applyGatewayAuth, async (req, res) => {
@@ -355,7 +368,9 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
       jsonRpcError(res, "Bad Request: invalid mcp-session-id.");
       return;
     }
-    await transport.handleRequest(req, res);
+    await runWithMcpX402Context(headersFromExpressRequest(req), () =>
+      transport.handleRequest(req, res)
+    );
   });
 
   return app;

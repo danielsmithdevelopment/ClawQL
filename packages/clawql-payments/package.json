@@ -33,6 +33,11 @@
       "import": "./dist/audit/index.js",
       "require": "./dist/audit/index.cjs"
     },
+    "./discovery": {
+      "types": "./dist/discovery/index.d.ts",
+      "import": "./dist/discovery/index.js",
+      "require": "./dist/discovery/index.cjs"
+    },
     "./package.json": "./package.json"
   },
   "bin": {

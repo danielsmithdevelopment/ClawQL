@@ -42,7 +42,7 @@ import {
   SLACK_NOTIFY_OPERATION_ID,
 } from "clawql-automation/plugin";
 import { configureDocumentsPluginDeps } from "clawql-documents/plugin";
-import { wrapMcpToolHandler } from "./otel-tracing.js";
+import { wrapRegisteredMcpToolHandler } from "./mcp-tool-wrap.js";
 import { configureHomeSyncHooks } from "./configure-home-sync.js";
 import { handleMemorySyncToolInput, memorySyncToolSchema } from "./home-sync/memory-sync.js";
 
@@ -113,7 +113,7 @@ function registerPluginMcpTools(server: McpServer): void {
     server.tool(
       tool.name,
       tool.schema,
-      wrapMcpToolHandler(tool.name, (args) =>
+      wrapRegisteredMcpToolHandler(tool.name, (args) =>
         tool.handler(args).then((result) => ({
           content: result.content.map((c) => ({ type: "text" as const, text: c.text })),
         }))
@@ -141,7 +141,7 @@ export function registerTools(server: McpServer) {
         .default(5)
         .describe("Max number of matching operations to return."),
     },
-    wrapMcpToolHandler("search", handleClawqlSearchToolInput)
+    wrapRegisteredMcpToolHandler("search", handleClawqlSearchToolInput)
   );
 
   server.tool(
@@ -170,13 +170,13 @@ export function registerTools(server: McpServer) {
             "Omit to get a sensible default. E.g. ['name', 'uri', 'latestReadyRevision']"
         ),
     },
-    wrapMcpToolHandler("execute", handleClawqlExecuteToolInput)
+    wrapRegisteredMcpToolHandler("execute", handleClawqlExecuteToolInput)
   );
 
   // Non-negotiable Core tools: register immediately after search/execute so optional branches
   // below cannot throw and skip cache/audit (#89 #75).
-  server.tool("cache", cacheToolSchema, wrapMcpToolHandler("cache", handleCacheToolInput));
-  server.tool("audit", auditToolSchema, wrapMcpToolHandler("audit", handleAuditToolInput));
+  server.tool("cache", cacheToolSchema, wrapRegisteredMcpToolHandler("cache", handleCacheToolInput));
+  server.tool("audit", auditToolSchema, wrapRegisteredMcpToolHandler("audit", handleAuditToolInput));
 
   registerPluginMcpTools(server);
 
@@ -184,7 +184,7 @@ export function registerTools(server: McpServer) {
     server.tool(
       "memory_sync",
       memorySyncToolSchema,
-      wrapMcpToolHandler("memory_sync", handleMemorySyncToolInput)
+      wrapRegisteredMcpToolHandler("memory_sync", handleMemorySyncToolInput)
     );
   }
 }
