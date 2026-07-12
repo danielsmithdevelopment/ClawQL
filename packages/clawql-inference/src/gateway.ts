@@ -38,7 +38,7 @@ export interface InferenceGateway {
 export class UnconfiguredInferenceGateway implements InferenceGateway {
   async complete(_request: InferenceRequest): Promise<InferenceResponse> {
     throw new Error(
-      "clawql-inference gateway is not configured — provider adapters ship in a follow-on PR",
+      "clawql-inference gateway is not configured — provider adapters ship in a follow-on PR"
     );
   }
 }

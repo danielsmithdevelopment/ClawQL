@@ -19,13 +19,13 @@ const decision = router?.initialTier({ isDecomposedChild: false, seedId: "seed_r
 
 ### Environment
 
-| Variable | Default | Purpose |
-|----------|---------|---------|
-| `CLAWQL_INFERENCE_ROUTING_ENABLED` | off | Enable PAL tier ladder |
-| `CLAWQL_INFERENCE_MODEL_FRUGAL` | `ollama/phi4` | Frugal tier model id |
-| `CLAWQL_INFERENCE_MODEL_STANDARD` | `groq/llama-3.3-70b` | Standard tier model id |
-| `CLAWQL_INFERENCE_MODEL_FRONTIER` | `anthropic/claude-sonnet-4` | Frontier tier model id |
-| `CLAWQL_INFERENCE_MODEL_PIN` | — | Pin a single model (bypasses ladder) |
+| Variable                           | Default                     | Purpose                              |
+| ---------------------------------- | --------------------------- | ------------------------------------ |
+| `CLAWQL_INFERENCE_ROUTING_ENABLED` | off                         | Enable PAL tier ladder               |
+| `CLAWQL_INFERENCE_MODEL_FRUGAL`    | `ollama/phi4`               | Frugal tier model id                 |
+| `CLAWQL_INFERENCE_MODEL_STANDARD`  | `groq/llama-3.3-70b`        | Standard tier model id               |
+| `CLAWQL_INFERENCE_MODEL_FRONTIER`  | `anthropic/claude-sonnet-4` | Frontier tier model id               |
+| `CLAWQL_INFERENCE_MODEL_PIN`       | —                           | Pin a single model (bypasses ladder) |
 
 Legacy `CLAWQL_PAL_*` env names are also accepted.
 
