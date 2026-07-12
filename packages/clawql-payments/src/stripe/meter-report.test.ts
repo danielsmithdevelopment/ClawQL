@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { resetDefaultAuditRingBufferForTests } from "clawql-core";
-import { listPaymentAuditEntries } from "../audit/worm.js";
+import { listPaymentAuditEntries, resetPaymentAuditStoreForTests } from "../audit/worm.js";
 import {
   buildInferenceMeterIdentifier,
   isStripeMeterReportingActive,
@@ -17,6 +17,7 @@ import { reportMeteredUsage } from "./metered.js";
 describe("stripe meter reporting", () => {
   beforeEach(() => {
     resetDefaultAuditRingBufferForTests();
+    resetPaymentAuditStoreForTests();
     vi.mocked(reportMeteredUsage).mockClear();
   });
 

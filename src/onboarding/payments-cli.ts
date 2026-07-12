@@ -4,6 +4,7 @@
 
 import {
   runPaymentsAudit,
+  runPaymentsAuditVerify,
   runPaymentsPlanShow,
   runPaymentsPlanUpgrade,
   runPaymentsSpendReport,
@@ -82,6 +83,12 @@ export async function runPaymentsAuditCmd(options: PaymentsCliOptions = {}): Pro
     limit: options.limit,
     json: options.json,
   });
+}
+
+export async function runPaymentsAuditVerifyCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsAuditVerify({ json: options.json });
 }
 
 export async function runPaymentsStripeSetupCmd(options: PaymentsCliOptions = {}): Promise<number> {

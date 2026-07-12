@@ -16,7 +16,7 @@
 | Stripe Billing Meters (`meterEvents.create`)     | ✅     | API + inference hook when `CLAWQL_PAYMENTS_REPORT_STRIPE_METER=1`               |
 | x402 gate config + facilitator HTTP verify       | ✅     | `POST /verify` against x402.org or CDP                                          |
 | x402 Express middleware (402 + PAYMENT-REQUIRED) | ✅     | Wired into `clawql-inference` HTTP                                              |
-| Payment WORM audit (ring buffer)                 | ✅     | Durable WORM writer is follow-up work                                           |
+| Payment WORM audit (hash-chained JSONL)          | ✅     | `$CLAWQL_HOME/Payments/audit.jsonl` + `audit verify`                           |
 | `.well-known/payments.json` discovery            | 📋     | Placeholder ([#88](https://github.com/danielsmithdevelopment/ClawQL/issues/88)) |
 
 ## Architecture
@@ -26,7 +26,7 @@ clawql-payments
 ├── stripe/     Subscriptions, invoices, webhooks, Billing Meters
 ├── x402/       Wallet, gates, facilitator verify/settle, middleware
 ├── plans/      Tier definitions, entitlements, usage.json counters
-├── audit/      Payment events → WORM ring buffer
+├── audit/      Hash-chained append-only JSONL + integrity verify
 └── cli/        clawql payments * implementations
 ```
 
@@ -88,6 +88,8 @@ All local state lives under `$CLAWQL_HOME/Payments/` (default `~/.clawql/Payment
 | `payments.json`   | Tenant id, plan tier, Stripe metadata, x402 wallet/facilitator            |
 | `x402-gates.json` | Payment-gated HTTP paths and MCP tool names                               |
 | `usage.json`      | Monthly counters per tenant (`inference_calls`, `documents`, `memory_mb`) |
+| `audit.jsonl`     | Append-only hash-chained payment audit log                                |
+| `audit.meta.json` | Chain head (`seq`, `last_hash`) for fast append                           |
 
 Example `payments.json`:
 
@@ -358,7 +360,9 @@ Middleware mounts **before** auth in [`packages/clawql-inference/src/api/server.
 
 ## Payment audit (WORM)
 
-Payment events append to ClawQL's WORM ring buffer (durable persistence is follow-up work):
+Payment events append to an **append-only, hash-chained audit log** at `$CLAWQL_HOME/Payments/audit.jsonl`. Each record includes `seq`, `prev_hash`, and `hash` (SHA-256 over canonical JSON) so tampering breaks the chain. By default each append **fsyncs** to disk (`CLAWQL_PAYMENTS_AUDIT_FSYNC=1`).
+
+A hot in-process mirror still feeds the MCP `audit` ring buffer (summary fields only). **Authoritative** payment history — including full structured `payload` — lives in `audit.jsonl`.
 
 | Event                               | Trigger                        |
 | ----------------------------------- | ------------------------------ |
@@ -369,9 +373,33 @@ Payment events append to ClawQL's WORM ring buffer (durable persistence is follo
 | `ENTITLEMENT_LIMIT_REACHED`         | Plan cap hit                   |
 | `PLAN_UPGRADED` / `PLAN_DOWNGRADED` | `clawql payments plan upgrade` |
 
+### Environment
+
+| Variable | Default | Purpose |
+| -------- | ------- | ------- |
+| `CLAWQL_PAYMENTS_AUDIT_STORE` | `jsonl` (`memory` in tests) | `jsonl` = durable file; `memory` = in-process only |
+| `CLAWQL_PAYMENTS_AUDIT_FSYNC` | on | `fsync` after each append (set `0` to disable) |
+
+### CLI
+
 ```bash
 clawql payments audit --correlation-id seed_abc_gen_2
+clawql payments audit verify          # validate hash chain integrity
+clawql payments audit verify --json
 clawql payments spend report --group-by provider
+```
+
+`spend report` now aggregates real `amount_usd` / `amount_usdc` values from persisted payloads (not placeholder data).
+
+### Programmatic verify
+
+```typescript
+import { verifyPaymentAuditLog } from "clawql-payments";
+
+const result = verifyPaymentAuditLog();
+if (!result.ok) {
+  console.error(result.issues);
+}
 ```
 
 ---
@@ -397,6 +425,7 @@ clawql payments x402 wallet setup | gate | gate list | verify | reconcile
 # Audit
 clawql payments spend report --group-by provider
 clawql payments audit --correlation-id xxx
+clawql payments audit verify
 ```
 
 ---
@@ -470,12 +499,12 @@ See also: [`packages/clawql-inference/README.md`](../../packages/clawql-inferenc
 
 ## Follow-up work
 
-| Item                                      | Tracking                                                          |
-| ----------------------------------------- | ----------------------------------------------------------------- |
-| Durable WORM writer (replace ring buffer) | payments README status                                            |
-| Hosted webhook HTTP endpoint              | not CLI-only                                                      |
-| `.well-known/payments.json` discovery     | [#88](https://github.com/danielsmithdevelopment/ClawQL/issues/88) |
-| MCP tool x402 enforcement in-process      | HTTP middleware + `X-Clawql-Tool` today                           |
+| Item | Tracking |
+| ---- | -------- |
+| Postgres audit store (enterprise) | optional `CLAWQL_PAYMENTS_AUDIT_STORE=postgres` |
+| Hosted webhook HTTP endpoint | not CLI-only |
+| `.well-known/payments.json` discovery | [#88](https://github.com/danielsmithdevelopment/ClawQL/issues/88) |
+| MCP tool x402 enforcement in-process | HTTP middleware + `X-Clawql-Tool` today |
 
 ## Related
 

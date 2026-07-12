@@ -4,6 +4,7 @@ export {
   runPaymentsUsageReport,
   runPaymentsSpendReport,
   runPaymentsAudit,
+  runPaymentsAuditVerify,
   type PaymentsAuditOptions,
   type PaymentsPlanShowOptions,
   type PaymentsPlanUpgradeOptions,
