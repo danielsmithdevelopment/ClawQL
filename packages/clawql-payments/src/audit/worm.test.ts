@@ -70,10 +70,7 @@ describe("durable payment audit store", () => {
   });
 
   it("buildSpendReport uses persisted payload amounts", () => {
-    appendPaymentWormEntry(
-      buildStripeInvoicePaidEntry({ tenantId: "t1", amountUsd: 10 }),
-      env
-    );
+    appendPaymentWormEntry(buildStripeInvoicePaidEntry({ tenantId: "t1", amountUsd: 10 }), env);
     appendPaymentWormEntry(
       buildX402PaymentReceivedEntry({
         tenantId: "t2",
@@ -91,14 +88,8 @@ describe("durable payment audit store", () => {
   });
 
   it("verifyPaymentAuditLog returns ok for intact chain", () => {
-    appendPaymentWormEntry(
-      buildStripeInvoicePaidEntry({ tenantId: "t1", amountUsd: 1 }),
-      env
-    );
-    appendPaymentWormEntry(
-      buildStripeInvoicePaidEntry({ tenantId: "t2", amountUsd: 2 }),
-      env
-    );
+    appendPaymentWormEntry(buildStripeInvoicePaidEntry({ tenantId: "t1", amountUsd: 1 }), env);
+    appendPaymentWormEntry(buildStripeInvoicePaidEntry({ tenantId: "t2", amountUsd: 2 }), env);
 
     const result = verifyPaymentAuditLog(env);
     expect(result.ok).toBe(true);

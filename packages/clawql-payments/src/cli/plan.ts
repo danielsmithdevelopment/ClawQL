@@ -171,9 +171,7 @@ export async function runPaymentsAudit(options: PaymentsAuditOptions = {}): Prom
   return 0;
 }
 
-export async function runPaymentsAuditVerify(
-  options: PaymentsAuditOptions = {}
-): Promise<number> {
+export async function runPaymentsAuditVerify(options: PaymentsAuditOptions = {}): Promise<number> {
   const env = options.env ?? process.env;
   const result = verifyPaymentAuditLog(env);
 

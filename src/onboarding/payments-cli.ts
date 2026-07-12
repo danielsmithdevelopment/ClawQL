@@ -85,9 +85,7 @@ export async function runPaymentsAuditCmd(options: PaymentsCliOptions = {}): Pro
   });
 }
 
-export async function runPaymentsAuditVerifyCmd(
-  options: PaymentsCliOptions = {}
-): Promise<number> {
+export async function runPaymentsAuditVerifyCmd(options: PaymentsCliOptions = {}): Promise<number> {
   return runPaymentsAuditVerify({ json: options.json });
 }
 

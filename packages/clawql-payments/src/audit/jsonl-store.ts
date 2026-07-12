@@ -19,10 +19,7 @@ import {
   type PaymentWormRecord,
 } from "./chain.js";
 import type { PaymentWormEntry } from "./events.js";
-import {
-  resolvePaymentAuditJsonlPath,
-  resolvePaymentAuditMetaPath,
-} from "../config/paths.js";
+import { resolvePaymentAuditJsonlPath, resolvePaymentAuditMetaPath } from "../config/paths.js";
 import type { PaymentAuditStore } from "./store.js";
 import { isPaymentAuditFsyncEnabled } from "./store.js";
 
@@ -89,10 +86,7 @@ function loadRecordsFromJsonl(jsonlPath: string): PaymentWormRecord[] {
   }
 }
 
-function resolveChainHead(
-  jsonlPath: string,
-  metaPath: string
-): { seq: number; last_hash: string } {
+function resolveChainHead(jsonlPath: string, metaPath: string): { seq: number; last_hash: string } {
   const meta = readMetaFile(metaPath);
   if (meta) {
     return { seq: meta.seq, last_hash: meta.last_hash };
@@ -179,7 +173,9 @@ export class JsonlPaymentAuditStore implements PaymentAuditStore {
   }
 }
 
-export function createJsonlPaymentAuditStore(env: NodeJS.ProcessEnv = process.env): JsonlPaymentAuditStore {
+export function createJsonlPaymentAuditStore(
+  env: NodeJS.ProcessEnv = process.env
+): JsonlPaymentAuditStore {
   return new JsonlPaymentAuditStore(
     resolvePaymentAuditJsonlPath(env),
     resolvePaymentAuditMetaPath(env),

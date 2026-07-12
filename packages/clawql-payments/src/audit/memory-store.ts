@@ -14,7 +14,9 @@ export class MemoryPaymentAuditStore implements PaymentAuditStore {
 
   append(entry: PaymentWormEntry): PaymentWormRecord {
     const prev_hash =
-      this.records.length > 0 ? this.records[this.records.length - 1]!.hash : PAYMENT_AUDIT_GENESIS_HASH;
+      this.records.length > 0
+        ? this.records[this.records.length - 1]!.hash
+        : PAYMENT_AUDIT_GENESIS_HASH;
     const record = sealPaymentWormRecord({
       entry,
       seq: this.records.length + 1,

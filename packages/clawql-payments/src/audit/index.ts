@@ -19,11 +19,7 @@ export {
   type PaymentAuditVerifyResult,
   type PaymentWormRecord,
 } from "./chain.js";
-export {
-  appendPaymentWormEntry,
-  listPaymentAuditEntries,
-  verifyPaymentAuditLog,
-} from "./worm.js";
+export { appendPaymentWormEntry, listPaymentAuditEntries, verifyPaymentAuditLog } from "./worm.js";
 export {
   createPaymentAuditStore,
   getPaymentAuditStore,

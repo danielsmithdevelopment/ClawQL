@@ -16,7 +16,7 @@
 | Stripe Billing Meters (`meterEvents.create`)     | ✅     | API + inference hook when `CLAWQL_PAYMENTS_REPORT_STRIPE_METER=1`               |
 | x402 gate config + facilitator HTTP verify       | ✅     | `POST /verify` against x402.org or CDP                                          |
 | x402 Express middleware (402 + PAYMENT-REQUIRED) | ✅     | Wired into `clawql-inference` HTTP                                              |
-| Payment WORM audit (hash-chained JSONL)          | ✅     | `$CLAWQL_HOME/Payments/audit.jsonl` + `audit verify`                           |
+| Payment WORM audit (hash-chained JSONL)          | ✅     | `$CLAWQL_HOME/Payments/audit.jsonl` + `audit verify`                            |
 | `.well-known/payments.json` discovery            | 📋     | Placeholder ([#88](https://github.com/danielsmithdevelopment/ClawQL/issues/88)) |
 
 ## Architecture
@@ -375,10 +375,10 @@ A hot in-process mirror still feeds the MCP `audit` ring buffer (summary fields 
 
 ### Environment
 
-| Variable | Default | Purpose |
-| -------- | ------- | ------- |
+| Variable                      | Default                     | Purpose                                            |
+| ----------------------------- | --------------------------- | -------------------------------------------------- |
 | `CLAWQL_PAYMENTS_AUDIT_STORE` | `jsonl` (`memory` in tests) | `jsonl` = durable file; `memory` = in-process only |
-| `CLAWQL_PAYMENTS_AUDIT_FSYNC` | on | `fsync` after each append (set `0` to disable) |
+| `CLAWQL_PAYMENTS_AUDIT_FSYNC` | on                          | `fsync` after each append (set `0` to disable)     |
 
 ### CLI
 
@@ -499,12 +499,12 @@ See also: [`packages/clawql-inference/README.md`](../../packages/clawql-inferenc
 
 ## Follow-up work
 
-| Item | Tracking |
-| ---- | -------- |
-| Postgres audit store (enterprise) | optional `CLAWQL_PAYMENTS_AUDIT_STORE=postgres` |
-| Hosted webhook HTTP endpoint | not CLI-only |
+| Item                                  | Tracking                                                          |
+| ------------------------------------- | ----------------------------------------------------------------- |
+| Postgres audit store (enterprise)     | optional `CLAWQL_PAYMENTS_AUDIT_STORE=postgres`                   |
+| Hosted webhook HTTP endpoint          | not CLI-only                                                      |
 | `.well-known/payments.json` discovery | [#88](https://github.com/danielsmithdevelopment/ClawQL/issues/88) |
-| MCP tool x402 enforcement in-process | HTTP middleware + `X-Clawql-Tool` today |
+| MCP tool x402 enforcement in-process  | HTTP middleware + `X-Clawql-Tool` today                           |
 
 ## Related
 
