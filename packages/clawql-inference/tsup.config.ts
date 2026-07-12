@@ -4,6 +4,7 @@ export default defineConfig({
   entry: {
     index: "src/index.ts",
     "routing/index": "src/routing/index.ts",
+    "api/server": "src/api/server.ts",
   },
   format: ["esm", "cjs"],
   dts: true,

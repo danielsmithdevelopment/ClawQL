@@ -1,4 +1,10 @@
 import type { ModelEscalationDecision } from "./routing/types.js";
+import { parseModelId } from "./providers/parse-model-id.js";
+import {
+  createProviderRegistry,
+  getProviderAdapter,
+  type ProviderRegistry,
+} from "./providers/index.js";
 
 export type ChatRole = "system" | "user" | "assistant";
 
@@ -25,11 +31,11 @@ export interface InferenceResponse {
   usage?: InferenceUsage;
   cacheHit?: boolean;
   routing?: ModelEscalationDecision;
+  correlationId?: string;
 }
 
 /**
  * Unified inference entry point for cloud providers, local runtimes, cache, and observability.
- * Provider adapters and HTTP surface ship in follow-on PRs.
  */
 export interface InferenceGateway {
   complete(request: InferenceRequest): Promise<InferenceResponse>;
@@ -38,7 +44,44 @@ export interface InferenceGateway {
 export class UnconfiguredInferenceGateway implements InferenceGateway {
   async complete(_request: InferenceRequest): Promise<InferenceResponse> {
     throw new Error(
-      "clawql-inference gateway is not configured — provider adapters ship in a follow-on PR"
+      "clawql-inference gateway is not configured — set provider API keys or use createInferenceGateway()"
     );
   }
+}
+
+export type CreateInferenceGatewayOptions = {
+  providers?: ProviderRegistry;
+  env?: NodeJS.ProcessEnv;
+};
+
+export class ConfiguredInferenceGateway implements InferenceGateway {
+  constructor(private readonly providers: ProviderRegistry) {}
+
+  async complete(request: InferenceRequest): Promise<InferenceResponse> {
+    const modelId = request.model ?? request.routing?.modelId;
+    if (!modelId) {
+      throw new Error("InferenceRequest requires model or routing.modelId");
+    }
+
+    const { provider, model } = parseModelId(modelId);
+    const adapter = getProviderAdapter(this.providers, provider);
+    if (!adapter) {
+      throw new Error(`No provider adapter registered for "${provider}"`);
+    }
+
+    const response = await adapter.complete(model, request.messages);
+    return {
+      ...response,
+      model: response.model || modelId,
+      routing: request.routing,
+      correlationId: request.correlationId,
+    };
+  }
+}
+
+export function createInferenceGateway(
+  options: CreateInferenceGatewayOptions = {}
+): ConfiguredInferenceGateway {
+  const providers = options.providers ?? createProviderRegistry(options.env);
+  return new ConfiguredInferenceGateway(providers);
 }

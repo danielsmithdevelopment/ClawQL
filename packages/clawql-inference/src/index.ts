@@ -23,9 +23,36 @@ export type {
   InferenceResponse,
   InferenceUsage,
   InferenceGateway,
+  CreateInferenceGatewayOptions,
 } from "./gateway.js";
 
-export { UnconfiguredInferenceGateway } from "./gateway.js";
+export {
+  UnconfiguredInferenceGateway,
+  ConfiguredInferenceGateway,
+  createInferenceGateway,
+} from "./gateway.js";
+
+export { parseModelId } from "./providers/parse-model-id.js";
+export type { InferenceProviderAdapter, ProviderAdapterConfig } from "./providers/types.js";
+export {
+  createProviderRegistry,
+  getProviderAdapter,
+  createOpenAiAdapter,
+  createAnthropicAdapter,
+  createOllamaAdapter,
+  type ProviderRegistry,
+} from "./providers/index.js";
+
+export {
+  createInferenceHttpApp,
+  runInferenceHttpServer,
+  resolveInferencePort,
+  resolveInferenceHost,
+  type CreateInferenceHttpAppOptions,
+} from "./api/server.js";
+
+export { runInferenceServe } from "./cli/serve.js";
+export { runInferenceComplete, type InferenceCompleteOptions } from "./cli/complete.js";
 
 /** Optional context passed to host engines (Wonder / Reflect / Execute). */
 export interface EngineCallContext {

@@ -27,6 +27,7 @@ import {
   runSandboxStatusCmd,
   runSandboxVerifyCmd,
 } from "./sandbox-cli.js";
+import { runInferenceCompleteCmd, runInferenceServeCmd } from "./inference-cli.js";
 
 type Command =
   | "init"
@@ -39,6 +40,7 @@ type Command =
   | "release"
   | "sync"
   | "sandbox"
+  | "inference"
   | "claude"
   | "codex"
   | "cursor"
@@ -88,6 +90,10 @@ function parse(argv: string[]): {
     else if (a === "--prefix") flags.prefix = argv[++i] ?? "";
     else if (a === "--path") flags.path = argv[++i] ?? "";
     else if (a === "--harness") flags.harness = argv[++i] ?? "";
+    else if (a === "--port") flags.port = argv[++i] ?? "";
+    else if (a === "--model") flags.model = argv[++i] ?? "";
+    else if (a === "--message") flags.message = argv[++i] ?? "";
+    else if (a === "--correlation-id") flags.correlationId = argv[++i] ?? "";
     else if (a === "--skip-verify") flags.skipVerify = true;
     else if (a.startsWith("--image-digest=")) {
       const prev = typeof flags.imageDigest === "string" ? flags.imageDigest : "";
@@ -107,7 +113,8 @@ function parse(argv: string[]): {
     cmd === "sources" ||
     cmd === "release" ||
     cmd === "sync" ||
-    cmd === "sandbox"
+    cmd === "sandbox" ||
+    cmd === "inference"
       ? positional[1]
       : undefined;
   const rest =
@@ -115,7 +122,8 @@ function parse(argv: string[]): {
     cmd === "operator" ||
     cmd === "sources" ||
     cmd === "sync" ||
-    cmd === "sandbox"
+    cmd === "sandbox" ||
+    cmd === "inference"
       ? positional.slice(2)
       : cmd === "release"
         ? positional.slice(2)
@@ -144,6 +152,7 @@ Usage:
   clawql release init | collect | manifest | publish | verify <path>
   clawql sync init | push | pull | status [--dry-run] [--force]
   clawql sandbox init | verify | status | edit --harness claude [--path DIR] [--skip-verify]
+  clawql inference serve [--port 8080] | complete --model <provider/model> --message <text> [--json]
   clawql claude | codex | cursor | opencode [-- harness args...]
   clawql operator status
 
@@ -210,6 +219,12 @@ sandbox (local agent containment — macOS Seatbelt, fail-closed):
 
 mcp-config:
   Print or write MCP JSON for Cursor / Claude (stdio — secrets loaded from vault at server startup)
+
+inference (gateway MVP):
+  serve           OpenAI-compatible HTTP gateway (/healthz, /v1/chat/completions)
+  complete        One-shot completion for scripting/debug
+  Providers: openai, anthropic, ollama via provider/model ids (e.g. ollama/phi4)
+  Env: OPENAI_API_KEY, ANTHROPIC_API_KEY, OLLAMA_BASE_URL, CLAWQL_INFERENCE_PORT
 
 Docs: https://docs.clawql.com/agent-setup
 `);
@@ -415,6 +430,31 @@ async function main(): Promise<void> {
       return;
     }
     console.error("Usage: clawql sandbox init | verify | status | edit --harness <name>");
+    process.exitCode = 1;
+    return;
+  }
+
+  if (cmd === "inference") {
+    const port =
+      typeof flags.port === "string" && flags.port ? Number.parseInt(flags.port, 10) : undefined;
+    const inferenceOpts = {
+      port: Number.isFinite(port) ? port : undefined,
+      model: typeof flags.model === "string" ? flags.model : undefined,
+      message: typeof flags.message === "string" ? flags.message : undefined,
+      correlationId: typeof flags.correlationId === "string" ? flags.correlationId : undefined,
+      json: Boolean(flags.json),
+    };
+    if (subcmd === "serve") {
+      process.exitCode = await runInferenceServeCmd(inferenceOpts);
+      return;
+    }
+    if (subcmd === "complete") {
+      process.exitCode = await runInferenceCompleteCmd(inferenceOpts);
+      return;
+    }
+    console.error(
+      "Usage: clawql inference serve [--port 8080] | clawql inference complete --model <id> --message <text>"
+    );
     process.exitCode = 1;
     return;
   }

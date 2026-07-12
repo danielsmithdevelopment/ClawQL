@@ -21,12 +21,14 @@ Production traffic
 
 LiteLLM routes inference. ClawQL closes the loop: **infer → observe → evaluate → export → fine-tune → redeploy**.
 
-## Shipped today (#560)
+## Shipped today (#560, gateway MVP)
 
 - **`AdaptiveRouter`** / **`TierEscalationRouter`** — frugal → standard → frontier, one-notch escalation
 - **Tier map** from environment (off by default)
 - **Kill switches** — escalation disabled unless explicitly enabled; optional model pin
-- **`InferenceGateway`** interface stub for provider adapters
+- **`ConfiguredInferenceGateway`** — OpenAI, Anthropic, and Ollama provider adapters
+- **`clawql inference serve`** — OpenAI-compatible `/v1/chat/completions` + `/healthz`
+- **`clawql inference complete`** — one-shot CLI completion
 - **`clawql-ouroboros`** optional routing hooks (`EngineCallContext`)
 
 ## Planned modules
@@ -206,7 +208,7 @@ clawql inference policy show    # Manifest inference block (tiers, cache TTL, ex
 | Phase       | Deliverable                                                                                                                                                                                   |
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **P0-D** ✅ | `routing/` + ouroboros hooks ([#560](https://github.com/danielsmithdevelopment/ClawQL/issues/560))                                                                                            |
-| **P0-F**    | Gateway MVP: `serve`, `complete`, 3 cloud + Ollama adapters                                                                                                                                   |
+| **P0-F** ✅ | Gateway MVP: `serve`, `complete`, OpenAI / Anthropic / Ollama adapters                                                                                                                        |
 | **P0-G**    | `store/` + `observability/` — log every call with `correlation_id`                                                                                                                            |
 | **P0-H**    | `export/` — verdict-filtered JSONL + Presidio + dataset manifest                                                                                                                              |
 | **P0-I**    | `finetune/` — Anthropic/OpenAI job API + `register-as` tier                                                                                                                                   |
