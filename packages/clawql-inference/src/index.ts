@@ -150,6 +150,25 @@ export {
 export { resolveFallbackChain, normalizeFallbackChain } from "./fallback/resolve.js";
 export type { FallbackAttempt, FallbackChainMap, FallbackConfig } from "./fallback/types.js";
 export { runInferenceFallbackShow, type InferenceFallbackShowOptions } from "./cli/fallback.js";
+export {
+  runInferenceKeysCreate,
+  runInferenceKeysList,
+  runInferenceKeysRevoke,
+  type InferenceKeysCreateOptions,
+  type InferenceKeysListOptions,
+  type InferenceKeysRevokeOptions,
+} from "./cli/keys.js";
+export { loadKeysConfig, resolveVirtualKeysPath } from "./keys/config.js";
+export {
+  createVirtualKey,
+  revokeVirtualKey,
+  listVirtualKeys,
+  keysEnforcementActive,
+  redactVirtualKey,
+} from "./keys/store.js";
+export { validateVirtualKey, extractPresentedApiKey } from "./keys/validate.js";
+export { createVirtualKeyAuthMiddleware, type VirtualKeyRequest } from "./api/auth.js";
+export type { VirtualKey, VirtualKeyContext, KeysConfig, RateLimitSpec } from "./keys/types.js";
 
 /** Optional context passed to host engines (Wonder / Reflect / Execute). */
 export interface EngineCallContext {

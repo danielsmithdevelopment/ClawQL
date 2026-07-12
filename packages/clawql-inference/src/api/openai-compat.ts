@@ -3,6 +3,7 @@ import express, { type Request, type Response } from "express";
 import type { ChatMessage, InferenceGateway } from "../gateway.js";
 import { getProviderAdapter } from "../providers/registry.js";
 import type { ProviderRegistry } from "../providers/types.js";
+import type { VirtualKeyRequest } from "./auth.js";
 import { resolveRequestModel } from "./model-resolve.js";
 import { createModelsHandlers } from "./models.js";
 import { sendOpenAiError } from "./openai-errors.js";
@@ -52,9 +53,10 @@ export function createOpenAiCompatRouter(options: CreateOpenAiCompatRouterOption
     router.get("/v1/models/:id", models.get);
   }
 
-  router.post("/v1/chat/completions", async (req: Request, res: Response) => {
+  router.post("/v1/chat/completions", async (req: VirtualKeyRequest, res: Response) => {
     const body = req.body as OpenAiChatCompletionRequest;
     const correlationId = readCorrelationId(req, body);
+    const keyContext = req.virtualKey;
     const modelRaw = body.model?.trim();
     if (!modelRaw) {
       sendOpenAiError(res, 400, "model is required", "invalid_request_error");
@@ -106,6 +108,8 @@ export function createOpenAiCompatRouter(options: CreateOpenAiCompatRouterOption
           model: gatewayModelId,
           messages,
           correlationId,
+          team: keyContext?.team,
+          virtualKeyId: keyContext?.id,
         });
         await streamBufferedCompletion(res, {
           model: publicModelId,
@@ -119,6 +123,8 @@ export function createOpenAiCompatRouter(options: CreateOpenAiCompatRouterOption
         model: gatewayModelId,
         messages,
         correlationId,
+        team: keyContext?.team,
+        virtualKeyId: keyContext?.id,
       });
 
       if (correlationId) res.setHeader("X-Correlation-Id", correlationId);

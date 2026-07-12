@@ -75,6 +75,29 @@ clawql inference serve
 
 Responses include `fallback.attempted` and `fallback.succeeded` when a backup model handles the request.
 
+## Virtual keys
+
+Issue per-team API keys with optional USD budgets and rate limits. Keys persist at `$CLAWQL_HOME/Inference/virtual-keys.json`:
+
+```bash
+export CLAWQL_INFERENCE_KEYS_ENABLED=1
+
+clawql inference keys create --team eng --budget-usd 500 --rate-limit 100rpm
+clawql inference keys list
+clawql inference keys revoke --id vk_abc123
+
+# Clients authenticate like OpenAI (Bearer or x-api-key)
+curl -s http://127.0.0.1:8080/v1/chat/completions \
+  -H "Authorization: Bearer sk-clawql-..." \
+  -H 'Content-Type: application/json' \
+  -d '{"model":"gpt-4o","messages":[{"role":"user","content":"hi"}]}'
+
+# Spend by team
+clawql inference spend --group-by team
+```
+
+When keys are enabled (or any active key exists), `/v1/*` requires a valid virtual key. `/healthz` stays open.
+
 ## Quick start
 
 ```bash
@@ -142,28 +165,30 @@ Subpath: `clawql-inference/plugin` for builtin factories and compose helpers.
 
 ### Environment
 
-| Variable                             | Default                     | Purpose                                          |
-| ------------------------------------ | --------------------------- | ------------------------------------------------ |
-| `CLAWQL_INFERENCE_PROVIDERS`         | all builtins                | Allowlist provider plugins (comma-separated ids) |
-| `CLAWQL_INFERENCE_DISABLE_PROVIDERS` | —                           | Denylist provider plugins                        |
-| `OPENAI_API_KEY`                     | —                           | OpenAI chat completions                          |
-| `ANTHROPIC_API_KEY`                  | —                           | Anthropic messages API                           |
-| `OLLAMA_BASE_URL`                    | `http://127.0.0.1:11434`    | Local Ollama runtime                             |
-| `CLAWQL_INFERENCE_PORT`              | `8080`                      | `clawql inference serve` listen port             |
-| `CLAWQL_INFERENCE_ROUTING_ENABLED`   | off                         | Enable frugal → standard → frontier escalation   |
-| `CLAWQL_INFERENCE_MODEL_FRUGAL`      | `ollama/phi4`               | Frugal tier model id                             |
-| `CLAWQL_INFERENCE_MODEL_STANDARD`    | `groq/llama-3.3-70b`        | Standard tier model id                           |
-| `CLAWQL_INFERENCE_MODEL_FRONTIER`    | `anthropic/claude-sonnet-4` | Frontier tier model id                           |
-| `CLAWQL_INFERENCE_MODEL_PIN`         | —                           | Pin a single model (bypasses ladder)             |
-| `CLAWQL_INFERENCE_SEMANTIC_CACHE`    | off                         | Enable embedding similarity cache                |
-| `CLAWQL_INFERENCE_CACHE_THRESHOLD`   | `0.92`                      | Cosine similarity floor for cache hits           |
-| `CLAWQL_INFERENCE_CACHE_TTL`         | `24h`                       | Cache entry TTL (`24h`, `7d`, or `_MS` variant)  |
-| `CLAWQL_INFERENCE_CACHE_MAX_ENTRIES` | `1000`                      | In-memory cache size cap                         |
-| `CLAWQL_EMBEDDING_MODEL`             | `text-embedding-3-small`    | Embeddings model for semantic cache              |
-| `CLAWQL_INFERENCE_FALLBACK_ENABLED`  | off                         | Enable per-tier / per-model fallback chains      |
-| `CLAWQL_INFERENCE_FALLBACK_FRUGAL`   | —                           | Comma-separated fallback chain for frugal tier   |
-| `CLAWQL_INFERENCE_FALLBACK_STANDARD` | —                           | Fallback chain for standard tier                 |
-| `CLAWQL_INFERENCE_FALLBACK_FRONTIER` | —                           | Fallback chain for frontier tier                 |
+| Variable                             | Default                      | Purpose                                              |
+| ------------------------------------ | ---------------------------- | ---------------------------------------------------- |
+| `CLAWQL_INFERENCE_PROVIDERS`         | all builtins                 | Allowlist provider plugins (comma-separated ids)     |
+| `CLAWQL_INFERENCE_DISABLE_PROVIDERS` | —                            | Denylist provider plugins                            |
+| `OPENAI_API_KEY`                     | —                            | OpenAI chat completions                              |
+| `ANTHROPIC_API_KEY`                  | —                            | Anthropic messages API                               |
+| `OLLAMA_BASE_URL`                    | `http://127.0.0.1:11434`     | Local Ollama runtime                                 |
+| `CLAWQL_INFERENCE_PORT`              | `8080`                       | `clawql inference serve` listen port                 |
+| `CLAWQL_INFERENCE_ROUTING_ENABLED`   | off                          | Enable frugal → standard → frontier escalation       |
+| `CLAWQL_INFERENCE_MODEL_FRUGAL`      | `ollama/phi4`                | Frugal tier model id                                 |
+| `CLAWQL_INFERENCE_MODEL_STANDARD`    | `groq/llama-3.3-70b`         | Standard tier model id                               |
+| `CLAWQL_INFERENCE_MODEL_FRONTIER`    | `anthropic/claude-sonnet-4`  | Frontier tier model id                               |
+| `CLAWQL_INFERENCE_MODEL_PIN`         | —                            | Pin a single model (bypasses ladder)                 |
+| `CLAWQL_INFERENCE_SEMANTIC_CACHE`    | off                          | Enable embedding similarity cache                    |
+| `CLAWQL_INFERENCE_CACHE_THRESHOLD`   | `0.92`                       | Cosine similarity floor for cache hits               |
+| `CLAWQL_INFERENCE_CACHE_TTL`         | `24h`                        | Cache entry TTL (`24h`, `7d`, or `_MS` variant)      |
+| `CLAWQL_INFERENCE_CACHE_MAX_ENTRIES` | `1000`                       | In-memory cache size cap                             |
+| `CLAWQL_EMBEDDING_MODEL`             | `text-embedding-3-small`     | Embeddings model for semantic cache                  |
+| `CLAWQL_INFERENCE_FALLBACK_ENABLED`  | off                          | Enable per-tier / per-model fallback chains          |
+| `CLAWQL_INFERENCE_FALLBACK_FRUGAL`   | —                            | Comma-separated fallback chain for frugal tier       |
+| `CLAWQL_INFERENCE_FALLBACK_STANDARD` | —                            | Fallback chain for standard tier                     |
+| `CLAWQL_INFERENCE_FALLBACK_FRONTIER` | —                            | Fallback chain for frontier tier                     |
+| `CLAWQL_INFERENCE_KEYS_ENABLED`      | off                          | Require virtual keys on `/v1/*` (or when keys exist) |
+| `CLAWQL_INFERENCE_STORE`             | jsonl when `CLAWQL_HOME` set | Inference call store backend                         |
 
 Model ids use `provider/model` (e.g. `ollama/phi4`, `anthropic/claude-sonnet-4`).
 

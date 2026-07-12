@@ -30,6 +30,9 @@ import {
 import {
   runInferenceCacheStatusCmd,
   runInferenceFallbackShowCmd,
+  runInferenceKeysCreateCmd,
+  runInferenceKeysListCmd,
+  runInferenceKeysRevokeCmd,
   runInferenceCompleteCmd,
   runInferenceEscalationSetTierCmd,
   runInferenceEscalationShowCmd,
@@ -140,6 +143,9 @@ function parse(argv: string[]): {
     else if (a === "--target-tier") flags.targetTier = argv[++i] ?? "";
     else if (a === "--evaluate-before-promote") flags.evaluateBeforePromote = true;
     else if (a === "--output-dir") flags.outputDir = argv[++i] ?? "";
+    else if (a === "--team") flags.team = argv[++i] ?? "";
+    else if (a === "--budget-usd") flags.budgetUsd = argv[++i] ?? "";
+    else if (a === "--rate-limit") flags.rateLimit = argv[++i] ?? "";
     else if (a === "--skip-verify") flags.skipVerify = true;
     else if (a.startsWith("--image-digest=")) {
       const prev = typeof flags.imageDigest === "string" ? flags.imageDigest : "";
@@ -284,10 +290,12 @@ inference (gateway MVP):
   pipeline        enable | status | disable | run (scheduled auto-export config)
   cache           Semantic cache config (CLAWQL_INFERENCE_SEMANTIC_CACHE=1)
   fallback        Per-tier / per-model provider fallback chains
+  keys            create | list | revoke virtual API keys (per-team budgets)
   Providers: openai, anthropic, ollama via provider/model ids (e.g. ollama/phi4)
   Store: CLAWQL_INFERENCE_STORE=memory|jsonl|off (default jsonl when CLAWQL_HOME set)
   Cache: CLAWQL_INFERENCE_SEMANTIC_CACHE=1, CLAWQL_INFERENCE_CACHE_THRESHOLD=0.92
   Fallback: CLAWQL_INFERENCE_FALLBACK_ENABLED=1, CLAWQL_INFERENCE_FALLBACK_FRUGAL=a,b
+  Keys: CLAWQL_INFERENCE_KEYS_ENABLED=1 (or any active key in virtual-keys.json)
   Env: OPENAI_API_KEY, ANTHROPIC_API_KEY, OLLAMA_BASE_URL, CLAWQL_INFERENCE_PORT
 
 Docs: https://docs.clawql.com/agent-setup
@@ -519,6 +527,10 @@ async function main(): Promise<void> {
       typeof flags.minSamples === "string" && flags.minSamples
         ? Number.parseInt(flags.minSamples, 10)
         : undefined;
+    const budgetUsd =
+      typeof flags.budgetUsd === "string" && flags.budgetUsd
+        ? Number.parseFloat(flags.budgetUsd)
+        : undefined;
     const targetTier =
       typeof flags.targetTier === "string" &&
       (flags.targetTier === "frugal" ||
@@ -559,7 +571,10 @@ async function main(): Promise<void> {
       limit: Number.isFinite(limit) ? limit : undefined,
       groupBy:
         typeof flags.groupBy === "string" &&
-        (flags.groupBy === "model" || flags.groupBy === "provider" || flags.groupBy === "tier")
+        (flags.groupBy === "model" ||
+          flags.groupBy === "provider" ||
+          flags.groupBy === "tier" ||
+          flags.groupBy === "team")
           ? flags.groupBy
           : undefined,
       json: Boolean(flags.json),
@@ -587,6 +602,10 @@ async function main(): Promise<void> {
       targetTier,
       evaluateBeforePromote: Boolean(flags.evaluateBeforePromote),
       outputDir: typeof flags.outputDir === "string" ? flags.outputDir : undefined,
+      team: typeof flags.team === "string" ? flags.team : undefined,
+      budgetUsd: Number.isFinite(budgetUsd) ? budgetUsd : undefined,
+      rateLimit: typeof flags.rateLimit === "string" ? flags.rateLimit : undefined,
+      keyId: typeof flags.id === "string" ? flags.id : undefined,
     };
     if (subcmd === "serve") {
       process.exitCode = await runInferenceServeCmd(inferenceOpts);
@@ -659,8 +678,28 @@ async function main(): Promise<void> {
       process.exitCode = await runInferenceFallbackShowCmd(inferenceOpts);
       return;
     }
+    if (subcmd === "keys") {
+      const keysAction = rest[0];
+      if (keysAction === "create") {
+        process.exitCode = await runInferenceKeysCreateCmd(inferenceOpts);
+        return;
+      }
+      if (keysAction === "list") {
+        process.exitCode = await runInferenceKeysListCmd(inferenceOpts);
+        return;
+      }
+      if (keysAction === "revoke") {
+        process.exitCode = await runInferenceKeysRevokeCmd(inferenceOpts);
+        return;
+      }
+      console.error(
+        "Usage: clawql inference keys create --team <name> | list | revoke --id <vk_...>"
+      );
+      process.exitCode = 1;
+      return;
+    }
     console.error(
-      "Usage: clawql inference serve | complete | logs | trace | spend | export | finetune | escalation | pipeline | cache | fallback"
+      "Usage: clawql inference serve | complete | logs | trace | spend | export | finetune | escalation | pipeline | cache | fallback | keys"
     );
     process.exitCode = 1;
     return;
