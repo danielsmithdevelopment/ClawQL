@@ -7,7 +7,12 @@ export {
   type X402GateInput,
   type X402PaymentRequirement,
 } from "./gate.js";
-export { setupX402Wallet, type X402Asset, type X402WalletSetupInput, type X402WalletSetupResult } from "./wallet.js";
+export {
+  setupX402Wallet,
+  type X402Asset,
+  type X402WalletSetupInput,
+  type X402WalletSetupResult,
+} from "./wallet.js";
 export {
   parseX402ProofHeader,
   verifyX402PaymentProof,

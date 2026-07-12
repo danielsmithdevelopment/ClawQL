@@ -52,15 +52,11 @@ export type PaymentsCliOptions = {
   process?: boolean;
 };
 
-export async function runPaymentsPlanShowCmd(
-  options: PaymentsCliOptions = {}
-): Promise<number> {
+export async function runPaymentsPlanShowCmd(options: PaymentsCliOptions = {}): Promise<number> {
   return runPaymentsPlanShow({ json: options.json });
 }
 
-export async function runPaymentsPlanUpgradeCmd(
-  options: PaymentsCliOptions = {}
-): Promise<number> {
+export async function runPaymentsPlanUpgradeCmd(options: PaymentsCliOptions = {}): Promise<number> {
   return runPaymentsPlanUpgrade({
     tier: options.tier,
     tenantId: options.tenantId,
@@ -68,15 +64,11 @@ export async function runPaymentsPlanUpgradeCmd(
   });
 }
 
-export async function runPaymentsUsageReportCmd(
-  options: PaymentsCliOptions = {}
-): Promise<number> {
+export async function runPaymentsUsageReportCmd(options: PaymentsCliOptions = {}): Promise<number> {
   return runPaymentsUsageReport({ month: options.month, json: options.json });
 }
 
-export async function runPaymentsSpendReportCmd(
-  options: PaymentsCliOptions = {}
-): Promise<number> {
+export async function runPaymentsSpendReportCmd(options: PaymentsCliOptions = {}): Promise<number> {
   return runPaymentsSpendReport({ groupBy: options.groupBy, json: options.json });
 }
 
@@ -88,9 +80,7 @@ export async function runPaymentsAuditCmd(options: PaymentsCliOptions = {}): Pro
   });
 }
 
-export async function runPaymentsStripeSetupCmd(
-  options: PaymentsCliOptions = {}
-): Promise<number> {
+export async function runPaymentsStripeSetupCmd(options: PaymentsCliOptions = {}): Promise<number> {
   return runPaymentsStripeSetup({
     accountId: options.accountId,
     publishableKey: options.publishableKey,
@@ -158,9 +148,7 @@ export async function runPaymentsX402WalletSetupCmd(
   });
 }
 
-export async function runPaymentsX402GateCmd(
-  options: PaymentsCliOptions = {}
-): Promise<number> {
+export async function runPaymentsX402GateCmd(options: PaymentsCliOptions = {}): Promise<number> {
   return runPaymentsX402Gate({
     resource: options.resource,
     tool: options.tool,
@@ -170,9 +158,7 @@ export async function runPaymentsX402GateCmd(
   });
 }
 
-export async function runPaymentsX402VerifyCmd(
-  options: PaymentsCliOptions = {}
-): Promise<number> {
+export async function runPaymentsX402VerifyCmd(options: PaymentsCliOptions = {}): Promise<number> {
   return runPaymentsX402Verify({
     txHash: options.txHash,
     signature: options.signature,

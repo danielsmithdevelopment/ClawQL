@@ -33,6 +33,8 @@ import {
   runInferenceKeysCreateCmd,
   runInferenceKeysListCmd,
   runInferenceKeysRevokeCmd,
+  runInferencePolicyShowCmd,
+  runInferencePipelineWorkerCmd,
   runInferenceCompleteCmd,
   runInferenceEscalationSetTierCmd,
   runInferenceEscalationShowCmd,
@@ -334,12 +336,13 @@ inference (gateway MVP):
   export          Verdict-filtered dataset export with optional Presidio scrub + manifest
   finetune        Submit fine-tuning job; subcommands: status, register
   escalation      show tier map | set-tier --tier <tier> --model <id>
-  pipeline        enable | status | disable | run (scheduled auto-export config)
+  pipeline        enable | status | disable | run | worker (scheduled auto-export)
   cache           Semantic cache config (CLAWQL_INFERENCE_SEMANTIC_CACHE=1)
   fallback        Per-tier / per-model provider fallback chains
   keys            create | list | revoke virtual API keys (per-team budgets)
+  policy          Show effective inference policy (tiers, cache, export rules)
   Providers: openai, anthropic, ollama via provider/model ids (e.g. ollama/phi4)
-  Store: CLAWQL_INFERENCE_STORE=memory|jsonl|off (default jsonl when CLAWQL_HOME set)
+  Store: CLAWQL_INFERENCE_STORE=memory|jsonl|postgres|off (default jsonl when CLAWQL_HOME set)
   Cache: CLAWQL_INFERENCE_SEMANTIC_CACHE=1, CLAWQL_INFERENCE_CACHE_THRESHOLD=0.92
   Fallback: CLAWQL_INFERENCE_FALLBACK_ENABLED=1, CLAWQL_INFERENCE_FALLBACK_FRUGAL=a,b
   Keys: per-team virtual API keys (see clawql-inference README)
@@ -714,6 +717,10 @@ async function main(): Promise<void> {
         process.exitCode = await runInferencePipelineRunCmd(inferenceOpts);
         return;
       }
+      if (pipelineAction === "worker") {
+        process.exitCode = await runInferencePipelineWorkerCmd(inferenceOpts);
+        return;
+      }
       process.exitCode = await runInferencePipelineEnableCmd(inferenceOpts);
       return;
     }
@@ -723,6 +730,10 @@ async function main(): Promise<void> {
     }
     if (subcmd === "fallback") {
       process.exitCode = await runInferenceFallbackShowCmd(inferenceOpts);
+      return;
+    }
+    if (subcmd === "policy") {
+      process.exitCode = await runInferencePolicyShowCmd(inferenceOpts);
       return;
     }
     if (subcmd === "keys") {
@@ -746,7 +757,7 @@ async function main(): Promise<void> {
       return;
     }
     console.error(
-      "Usage: clawql inference serve | complete | logs | trace | spend | export | finetune | escalation | pipeline | cache | fallback | keys"
+      "Usage: clawql inference serve | complete | logs | trace | spend | export | finetune | escalation | pipeline | cache | fallback | keys | policy"
     );
     process.exitCode = 1;
     return;
@@ -758,21 +769,15 @@ async function main(): Promise<void> {
         ? Number.parseFloat(flags.amount)
         : undefined;
     const price =
-      typeof flags.price === "string" && flags.price
-        ? Number.parseFloat(flags.price)
-        : undefined;
+      typeof flags.price === "string" && flags.price ? Number.parseFloat(flags.price) : undefined;
     const limit =
-      typeof flags.limit === "string" && flags.limit
-        ? Number.parseInt(flags.limit, 10)
-        : undefined;
+      typeof flags.limit === "string" && flags.limit ? Number.parseInt(flags.limit, 10) : undefined;
     const paymentsOpts: PaymentsCliOptions = {
       tier: typeof flags.tier === "string" ? flags.tier : undefined,
       month: typeof flags.month === "string" ? flags.month : undefined,
       groupBy:
         typeof flags.groupBy === "string" &&
-        (flags.groupBy === "provider" ||
-          flags.groupBy === "tenant" ||
-          flags.groupBy === "plan")
+        (flags.groupBy === "provider" || flags.groupBy === "tenant" || flags.groupBy === "plan")
           ? flags.groupBy
           : undefined,
       correlationId: typeof flags.correlationId === "string" ? flags.correlationId : undefined,
@@ -794,8 +799,7 @@ async function main(): Promise<void> {
       date: typeof flags.date === "string" ? flags.date : undefined,
       tenantId: typeof flags.tenantId === "string" ? flags.tenantId : undefined,
       accountId: typeof flags.accountId === "string" ? flags.accountId : undefined,
-      publishableKey:
-        typeof flags.publishableKey === "string" ? flags.publishableKey : undefined,
+      publishableKey: typeof flags.publishableKey === "string" ? flags.publishableKey : undefined,
       webhookSecret: typeof flags.webhookSecret === "string" ? flags.webhookSecret : undefined,
       facilitatorUrl:
         typeof flags.facilitatorUrl === "string" ? flags.facilitatorUrl : undefined,
@@ -884,9 +888,7 @@ async function main(): Promise<void> {
       process.exitCode = 1;
       return;
     }
-    console.error(
-      "Usage: clawql payments plan | usage | spend | audit | stripe | x402"
-    );
+    console.error("Usage: clawql payments plan | usage | spend | audit | stripe | x402");
     process.exitCode = 1;
     return;
   }

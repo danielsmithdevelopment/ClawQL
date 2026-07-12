@@ -1,12 +1,7 @@
 import type { ClawqlPlanDefinition, ClawqlPlanId } from "./tiers.js";
 import { getPlanDefinition } from "./tiers.js";
 
-export type EntitlementResource =
-  | "inference_calls"
-  | "documents"
-  | "memory_mb"
-  | "seats"
-  | "x402";
+export type EntitlementResource = "inference_calls" | "documents" | "memory_mb" | "seats" | "x402";
 
 export type Entitlements = {
   planId: ClawqlPlanId;

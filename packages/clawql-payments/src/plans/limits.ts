@@ -4,8 +4,7 @@ import type { MonthlyUsage } from "./usage.js";
 export type LimitResource = "inference_calls" | "documents" | "memory_mb" | "seats";
 
 export type LimitCheckResult =
-  | { allowed: true; remaining: number | null }
-  | { allowed: false; remaining: 0; reason: string };
+  { allowed: true; remaining: number | null } | { allowed: false; remaining: 0; reason: string };
 
 export type LimitEnforcementInput = {
   entitlements: Entitlements;
@@ -14,10 +13,7 @@ export type LimitEnforcementInput = {
   requested?: number;
 };
 
-function limitForResource(
-  entitlements: Entitlements,
-  resource: LimitResource
-): number {
+function limitForResource(entitlements: Entitlements, resource: LimitResource): number {
   switch (resource) {
     case "inference_calls":
       return entitlements.inferenceCallsPerMonth;

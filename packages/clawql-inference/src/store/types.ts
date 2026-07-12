@@ -49,7 +49,7 @@ export interface InferenceStore {
   spendRollup(options?: { since?: Date; groupBy?: SpendGroupBy }): Promise<SpendRow[]>;
 }
 
-export type InferenceStoreBackend = "off" | "memory" | "jsonl";
+export type InferenceStoreBackend = "off" | "memory" | "jsonl" | "postgres";
 
 export function buildInferenceRecord(input: {
   id: string;

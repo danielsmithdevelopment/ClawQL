@@ -11,12 +11,7 @@ export {
   type EntitlementResource,
   type Entitlements,
 } from "./entitlements.js";
-export {
-  createUsageStore,
-  type MonthlyUsage,
-  type UsageMetric,
-  type UsageStore,
-} from "./usage.js";
+export { createUsageStore, type MonthlyUsage, type UsageMetric, type UsageStore } from "./usage.js";
 export {
   checkEntitlementLimit,
   enforceEntitlementLimit,

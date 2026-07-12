@@ -53,9 +53,7 @@ export type PaymentsX402GateOptions = {
   env?: NodeJS.ProcessEnv;
 };
 
-export async function runPaymentsX402Gate(
-  options: PaymentsX402GateOptions = {}
-): Promise<number> {
+export async function runPaymentsX402Gate(options: PaymentsX402GateOptions = {}): Promise<number> {
   if (options.price === undefined || options.price <= 0) {
     console.error(
       "Usage: clawql payments x402 gate --resource /v1/chat/completions --price 0.001 [--asset USDC]"
@@ -118,7 +116,8 @@ export async function runPaymentsX402Verify(
 
   console.log("x402 payment proof valid");
   if (result.payer) console.log(`Payer: ${result.payer}`);
-  if (result.amount !== undefined) console.log(`Amount: ${result.amount} ${result.asset ?? "USDC"}`);
+  if (result.amount !== undefined)
+    console.log(`Amount: ${result.amount} ${result.asset ?? "USDC"}`);
   return 0;
 }
 
@@ -146,7 +145,9 @@ export async function runPaymentsX402Reconcile(
       console.log(JSON.stringify({ date: options.date, gates, tenantId }, null, 2));
       return 0;
     }
-    console.log(`x402 gates (${gates.length}) — use --resource and --amount to reconcile a settlement`);
+    console.log(
+      `x402 gates (${gates.length}) — use --resource and --amount to reconcile a settlement`
+    );
     for (const gate of gates) {
       console.log(`  ${gate.resource}: ${gate.price} ${gate.asset}`);
     }

@@ -7,8 +7,7 @@ export type X402FacilitatorVerifyInput = {
 };
 
 export type X402FacilitatorVerifyResult =
-  | { verified: true; settlementId: string }
-  | { verified: false; reason: string };
+  { verified: true; settlementId: string } | { verified: false; reason: string };
 
 /** Coinbase / Cloudflare facilitator integration stub — HTTP verify lands in follow-up. */
 export async function verifyViaFacilitator(

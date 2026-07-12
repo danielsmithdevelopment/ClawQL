@@ -1,0 +1,12 @@
+{
+  "gates": [
+    {
+      "id": "gate_mrhloaz3",
+      "resource": "tool:knowledge_search",
+      "tool": "knowledge_search",
+      "price": 0.0005,
+      "asset": "USDC",
+      "createdAt": "2026-07-12T09:37:44.079Z"
+    }
+  ]
+}

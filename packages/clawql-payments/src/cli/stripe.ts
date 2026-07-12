@@ -37,7 +37,9 @@ export async function runPaymentsStripeSetup(
     return 0;
   }
 
-  console.log(`Stripe ${result.configured ? "configured" : "partially configured"} → ${result.path}`);
+  console.log(
+    `Stripe ${result.configured ? "configured" : "partially configured"} → ${result.path}`
+  );
   if (result.accountId) console.log(`Account: ${result.accountId}`);
   console.log(
     `API key: ${result.apiKeyConfigured ? "STRIPE_SECRET_KEY set" : "set STRIPE_SECRET_KEY for live API calls"}`
@@ -56,7 +58,9 @@ export async function runPaymentsStripeCustomerCreate(
   options: PaymentsStripeCustomerCreateOptions = {}
 ): Promise<number> {
   if (!options.email?.trim()) {
-    console.error("Usage: clawql payments stripe customer create --email user@acme.com [--name NAME]");
+    console.error(
+      "Usage: clawql payments stripe customer create --email user@acme.com [--name NAME]"
+    );
     return 1;
   }
 
@@ -153,9 +157,7 @@ export async function runPaymentsStripeInvoiceCreate(
   options: PaymentsStripeInvoiceCreateOptions = {}
 ): Promise<number> {
   if (!options.customer?.trim() || options.amount === undefined) {
-    console.error(
-      "Usage: clawql payments stripe invoice create --customer cus_xxx --amount 500"
-    );
+    console.error("Usage: clawql payments stripe invoice create --customer cus_xxx --amount 500");
     return 1;
   }
 
@@ -258,7 +260,9 @@ export async function runPaymentsStripeWebhookVerify(
     }
 
     if (options.json) {
-      console.log(JSON.stringify({ ok: true, type: verified.event.type, id: verified.event.id }, null, 2));
+      console.log(
+        JSON.stringify({ ok: true, type: verified.event.type, id: verified.event.id }, null, 2)
+      );
       return 0;
     }
 
