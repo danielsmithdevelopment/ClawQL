@@ -18,6 +18,7 @@ export async function runInferenceServe(options: InferenceServeOptions = {}): Pr
   });
   console.log(`clawql-inference listening on http://${host}:${port}`);
   console.log("  GET  /healthz");
-  console.log("  POST /v1/chat/completions");
+  console.log("  GET  /v1/models");
+  console.log("  POST /v1/chat/completions  (OpenAI-compatible; supports stream: true)");
   return 0;
 }

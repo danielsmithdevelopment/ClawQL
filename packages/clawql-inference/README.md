@@ -6,6 +6,43 @@ TypeScript-native **inference gateway** for ClawQL: model tier escalation, cloud
 
 Built-in provider plugins (OpenAI, Anthropic, Ollama) register automatically. Third parties add backends via `InferenceProviderPlugin` — see [`docs/plugins/inference-providers.md`](../../docs/plugins/inference-providers.md).
 
+## Drop-in OpenAI replacement
+
+Point any OpenAI SDK or tool at ClawQL inference — **no code changes**:
+
+```bash
+export OPENAI_API_KEY=sk-...          # or ANTHROPIC_API_KEY / OLLAMA_BASE_URL
+export OPENAI_BASE_URL=http://127.0.0.1:8080/v1
+
+# Standalone gateway (npm package bin)
+npx clawql-inference
+# or via clawql CLI
+clawql inference serve --port 8080
+```
+
+**Endpoints** (OpenAI-compatible):
+
+| Method | Path                   | Notes                                                 |
+| ------ | ---------------------- | ----------------------------------------------------- |
+| `GET`  | `/healthz`             | Liveness                                              |
+| `GET`  | `/v1/models`           | Tier map + `CLAWQL_INFERENCE_MODELS` + Ollama tags    |
+| `GET`  | `/v1/models/:id`       | Single model                                          |
+| `POST` | `/v1/chat/completions` | Bare `gpt-4o` or `provider/model`; `stream: true` SSE |
+
+```bash
+# Same request shape as OpenAI — bare model id works
+curl -s http://127.0.0.1:8080/v1/chat/completions \
+  -H 'Content-Type: application/json' \
+  -d '{"model":"gpt-4o","messages":[{"role":"user","content":"hi"}]}'
+
+# Streaming
+curl -N http://127.0.0.1:8080/v1/chat/completions \
+  -H 'Content-Type: application/json' \
+  -d '{"model":"gpt-4o","messages":[{"role":"user","content":"hi"}],"stream":true}'
+```
+
+Set `X-Correlation-Id` on requests for WORM lineage; echoed on responses.
+
 ## Quick start
 
 ```bash

@@ -28,7 +28,7 @@ LiteLLM routes inference. ClawQL closes the loop: **infer → observe → evalua
 - **Kill switches** — escalation disabled unless explicitly enabled; optional model pin
 - **`ConfiguredInferenceGateway`** — provider plugin registry + routing to `provider/model` backends
 - **Provider plugins** — OpenAI, Anthropic, Ollama built-ins via `composeDefaultProviderPlugins()`; third-party extensions use the same contract ([inference providers plugin](../plugins/inference-providers.md))
-- **`clawql inference serve`** — OpenAI-compatible `/v1/chat/completions` + `/healthz`
+- **`clawql inference serve`** / **`npx clawql-inference`** — OpenAI-compatible REST: `/v1/chat/completions` (incl. `stream: true`), `/v1/models`, bare `gpt-4o` ids, `X-Correlation-Id`
 - **`clawql inference logs` / `trace` / `spend`** — query the call store by model, `correlation_id`, or token rollup
 - **`clawql inference export`** — verdict-filtered JSONL + Presidio scrub + WORM dataset manifest
 - **`clawql inference finetune`** — OpenAI / Anthropic job submit, status, and tier registration
@@ -45,10 +45,10 @@ LiteLLM routes inference. ClawQL closes the loop: **infer → observe → evalua
 | `observability/` | Langfuse (ADR 0005), OpenTelemetry, WORM `correlation_id`                                           |
 | `fallback/`      | Per-tier provider chains                                                                            |
 | `keys/`          | Virtual keys, per-team budgets                                                                      |
-| `api/`           | OpenAI-compatible `/v1/chat/completions`                                                            |
+| `api/`           | OpenAI-compatible `/v1/chat/completions`, `/v1/models`, SSE streaming (**shipped**)                |
 | `store/`         | Inference call log (Postgres) — prompt, response, tier, tokens, verdict                             |
-| `export/`        | Filtered dataset export + PII scrub (Presidio) + WORM dataset manifests                             |
-| `finetune/`      | Job submission, status polling, model registration back into tier map                               |
+| `export/`        | Filtered dataset export + PII scrub (Presidio) + WORM dataset manifests (**shipped**)               |
+| `finetune/`      | Job submission, status polling, model registration back into tier map (**shipped**)                 |
 | `cli/`           | `clawql inference` subcommands (see below)                                                          |
 
 ## Inference record (what every call captures)

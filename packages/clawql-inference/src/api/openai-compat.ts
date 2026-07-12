@@ -1,53 +1,133 @@
 import { randomUUID } from "node:crypto";
 import express, { type Request, type Response } from "express";
 import type { ChatMessage, InferenceGateway } from "../gateway.js";
+import { getProviderAdapter } from "../providers/registry.js";
+import type { ProviderRegistry } from "../providers/types.js";
+import { resolveRequestModel } from "./model-resolve.js";
+import { createModelsHandlers } from "./models.js";
+import { sendOpenAiError } from "./openai-errors.js";
+import { streamBufferedCompletion, streamCompletionAsOpenAiSse } from "./stream.js";
 
 type OpenAiChatCompletionRequest = {
   model?: string;
   messages?: Array<{ role?: string; content?: string }>;
   user?: string;
+  stream?: boolean;
+  temperature?: number;
+  max_tokens?: number;
+  top_p?: number;
+  stop?: string | string[];
 };
 
-function readCorrelationId(req: Request): string | undefined {
+export type CreateOpenAiCompatRouterOptions = {
+  gateway: InferenceGateway;
+  registry?: ProviderRegistry;
+  env?: NodeJS.ProcessEnv;
+};
+
+function readCorrelationId(req: Request, body?: OpenAiChatCompletionRequest): string | undefined {
   const header =
     req.header("x-correlation-id") ??
     req.header("x-clawql-correlation-id") ??
     req.header("correlation-id");
-  return header?.trim() || undefined;
+  if (header?.trim()) return header.trim();
+  return body?.user?.trim() || undefined;
 }
 
-export function createOpenAiCompatRouter(gateway: InferenceGateway): express.Router {
+function parseMessages(body: OpenAiChatCompletionRequest): ChatMessage[] | null {
+  if (!Array.isArray(body.messages) || body.messages.length === 0) return null;
+  return body.messages.map((message) => ({
+    role: (message.role ?? "user") as ChatMessage["role"],
+    content: message.content ?? "",
+  }));
+}
+
+export function createOpenAiCompatRouter(options: CreateOpenAiCompatRouterOptions): express.Router {
   const router = express.Router();
+  const registry = options.registry;
+  const models = registry ? createModelsHandlers(registry, options.env) : null;
+
+  if (models) {
+    router.get("/v1/models", models.list);
+    router.get("/v1/models/:id", models.get);
+  }
 
   router.post("/v1/chat/completions", async (req: Request, res: Response) => {
     const body = req.body as OpenAiChatCompletionRequest;
-    const model = body.model?.trim();
-    if (!model) {
-      res.status(400).json({ error: { message: "model is required" } });
-      return;
-    }
-    if (!Array.isArray(body.messages) || body.messages.length === 0) {
-      res.status(400).json({ error: { message: "messages is required" } });
+    const correlationId = readCorrelationId(req, body);
+    const modelRaw = body.model?.trim();
+    if (!modelRaw) {
+      sendOpenAiError(res, 400, "model is required", "invalid_request_error");
       return;
     }
 
-    const messages: ChatMessage[] = body.messages.map((message) => ({
-      role: (message.role ?? "user") as ChatMessage["role"],
-      content: message.content ?? "",
-    }));
+    const messages = parseMessages(body);
+    if (!messages) {
+      sendOpenAiError(res, 400, "messages is required", "invalid_request_error");
+      return;
+    }
+
+    const resolved = registry ? resolveRequestModel(modelRaw, registry) : null;
+    const gatewayModelId = resolved?.gatewayModelId ?? modelRaw;
+    const publicModelId = resolved?.publicModelId ?? modelRaw;
+
+    if (registry && !resolved) {
+      sendOpenAiError(res, 404, `Model '${modelRaw}' is not available`, "invalid_request_error");
+      return;
+    }
+
+    const completeOptions = {
+      temperature: body.temperature,
+      maxTokens: body.max_tokens,
+      topP: body.top_p,
+      stop: body.stop,
+    };
 
     try {
-      const result = await gateway.complete({
-        model,
+      if (body.stream) {
+        const completionId = `chatcmpl-${randomUUID()}`;
+        const created = Math.floor(Date.now() / 1000);
+
+        if (resolved && registry) {
+          const adapter = getProviderAdapter(registry, resolved.provider);
+          if (adapter?.streamComplete) {
+            await streamCompletionAsOpenAiSse(res, {
+              completionId,
+              model: publicModelId,
+              created,
+              correlationId,
+              chunks: adapter.streamComplete(resolved.model, messages, completeOptions),
+            });
+            return;
+          }
+        }
+
+        const result = await options.gateway.complete({
+          model: gatewayModelId,
+          messages,
+          correlationId,
+        });
+        await streamBufferedCompletion(res, {
+          model: publicModelId,
+          correlationId,
+          result: { ...result, model: publicModelId },
+        });
+        return;
+      }
+
+      const result = await options.gateway.complete({
+        model: gatewayModelId,
         messages,
-        correlationId: readCorrelationId(req),
+        correlationId,
       });
-      const created = Math.floor(Date.now() / 1000);
+
+      if (correlationId) res.setHeader("X-Correlation-Id", correlationId);
+
       res.json({
         id: `chatcmpl-${randomUUID()}`,
         object: "chat.completion",
-        created,
-        model: result.model,
+        created: Math.floor(Date.now() / 1000),
+        model: publicModelId,
         choices: [
           {
             index: 0,
@@ -65,7 +145,7 @@ export function createOpenAiCompatRouter(gateway: InferenceGateway): express.Rou
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      res.status(502).json({ error: { message } });
+      sendOpenAiError(res, 502, message, "server_error");
     }
   });
 

@@ -23,7 +23,15 @@
       "import": "./dist/plugin/index.js",
       "require": "./dist/plugin/index.cjs"
     },
+    "./api/server": {
+      "types": "./dist/api/server.d.ts",
+      "import": "./dist/api/server.js",
+      "require": "./dist/api/server.cjs"
+    },
     "./package.json": "./package.json"
+  },
+  "bin": {
+    "clawql-inference": "bin/clawql-inference.mjs"
   },
   "scripts": {
     "clean": "rm -rf dist",
@@ -47,6 +55,7 @@
   },
   "files": [
     "dist",
+    "bin",
     "README.md"
   ],
   "engines": {
