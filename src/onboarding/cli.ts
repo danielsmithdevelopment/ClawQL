@@ -28,6 +28,7 @@ import {
   runSandboxVerifyCmd,
 } from "./sandbox-cli.js";
 import {
+  runInferenceCacheStatusCmd,
   runInferenceCompleteCmd,
   runInferenceEscalationSetTierCmd,
   runInferenceEscalationShowCmd,
@@ -280,10 +281,10 @@ inference (gateway MVP):
   finetune        Submit fine-tuning job; subcommands: status, register
   escalation      show tier map | set-tier --tier <tier> --model <id>
   pipeline        enable | status | disable | run (scheduled auto-export config)
-  escalation      show tier map | set-tier --tier <tier> --model <id>
-  pipeline        enable | status | disable | run (scheduled auto-export config)
+  cache           Semantic cache config (CLAWQL_INFERENCE_SEMANTIC_CACHE=1)
   Providers: openai, anthropic, ollama via provider/model ids (e.g. ollama/phi4)
   Store: CLAWQL_INFERENCE_STORE=memory|jsonl|off (default jsonl when CLAWQL_HOME set)
+  Cache: CLAWQL_INFERENCE_SEMANTIC_CACHE=1, CLAWQL_INFERENCE_CACHE_THRESHOLD=0.92
   Env: OPENAI_API_KEY, ANTHROPIC_API_KEY, OLLAMA_BASE_URL, CLAWQL_INFERENCE_PORT
 
 Docs: https://docs.clawql.com/agent-setup
@@ -647,8 +648,12 @@ async function main(): Promise<void> {
       process.exitCode = await runInferencePipelineEnableCmd(inferenceOpts);
       return;
     }
+    if (subcmd === "cache") {
+      process.exitCode = await runInferenceCacheStatusCmd(inferenceOpts);
+      return;
+    }
     console.error(
-      "Usage: clawql inference serve | complete | logs | trace | spend | export | finetune | escalation | pipeline"
+      "Usage: clawql inference serve | complete | logs | trace | spend | export | finetune | escalation | pipeline | cache"
     );
     process.exitCode = 1;
     return;

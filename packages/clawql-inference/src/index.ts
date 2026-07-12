@@ -119,6 +119,22 @@ export { collectListedModels } from "./api/models.js";
 
 export { runInferenceServe } from "./cli/serve.js";
 export { runInferenceComplete, type InferenceCompleteOptions } from "./cli/complete.js";
+export { runInferenceCacheStatus, type InferenceCacheStatusOptions } from "./cli/cache.js";
+export {
+  withSemanticCache,
+  SemanticCachedGateway,
+  isSemanticCachedGateway,
+  createSemanticCacheStore,
+  type WithSemanticCacheOptions,
+} from "./cache/cached-gateway.js";
+export {
+  loadSemanticCacheConfig,
+  semanticCacheActive,
+  type SemanticCacheConfig,
+  type SemanticCacheStats,
+} from "./cache/types.js";
+export { cosineSimilarity, resolveInferenceEmbeddingConfig } from "./cache/embedding.js";
+export { buildCacheSignatureText, hashSystemPrompt } from "./cache/signature.js";
 
 /** Optional context passed to host engines (Wonder / Reflect / Execute). */
 export interface EngineCallContext {

@@ -43,6 +43,22 @@ curl -N http://127.0.0.1:8080/v1/chat/completions \
 
 Set `X-Correlation-Id` on requests for WORM lineage; echoed on responses.
 
+## Semantic cache
+
+Skip repeat model calls when prompts are semantically similar (Layer 5 in [token efficiency](../../docs/architecture/clawql-token-efficiency.md)):
+
+```bash
+export CLAWQL_INFERENCE_SEMANTIC_CACHE=1
+export OPENAI_API_KEY=sk-...   # embeddings use same key (or CLAWQL_EMBEDDING_API_KEY)
+export CLAWQL_INFERENCE_CACHE_THRESHOLD=0.92   # cosine similarity floor (default 0.92)
+export CLAWQL_INFERENCE_CACHE_TTL=24h        # entry TTL (default 24h)
+
+clawql inference cache    # show active config
+clawql inference serve
+```
+
+Cache hits return stored responses with `cache_hit: true` in the call store. Embedding API failures fail open to live inference.
+
 ## Quick start
 
 ```bash
@@ -123,6 +139,11 @@ Subpath: `clawql-inference/plugin` for builtin factories and compose helpers.
 | `CLAWQL_INFERENCE_MODEL_STANDARD`    | `groq/llama-3.3-70b`        | Standard tier model id                           |
 | `CLAWQL_INFERENCE_MODEL_FRONTIER`    | `anthropic/claude-sonnet-4` | Frontier tier model id                           |
 | `CLAWQL_INFERENCE_MODEL_PIN`         | —                           | Pin a single model (bypasses ladder)             |
+| `CLAWQL_INFERENCE_SEMANTIC_CACHE`    | off                         | Enable embedding similarity cache                |
+| `CLAWQL_INFERENCE_CACHE_THRESHOLD`   | `0.92`                      | Cosine similarity floor for cache hits           |
+| `CLAWQL_INFERENCE_CACHE_TTL`         | `24h`                       | Cache entry TTL (`24h`, `7d`, or `_MS` variant)  |
+| `CLAWQL_INFERENCE_CACHE_MAX_ENTRIES` | `1000`                      | In-memory cache size cap                         |
+| `CLAWQL_EMBEDDING_MODEL`             | `text-embedding-3-small`    | Embeddings model for semantic cache              |
 
 Model ids use `provider/model` (e.g. `ollama/phi4`, `anthropic/claude-sonnet-4`).
 

@@ -3,6 +3,7 @@
  */
 
 import {
+  runInferenceCacheStatus,
   runInferenceComplete,
   runInferenceEscalationSetTier,
   runInferenceEscalationShow,
@@ -200,4 +201,8 @@ export async function runInferencePipelineDisableCmd(opts: InferenceCliOptions):
 
 export async function runInferencePipelineRunCmd(opts: InferenceCliOptions): Promise<number> {
   return runInferencePipelineRun({ json: opts.json });
+}
+
+export async function runInferenceCacheStatusCmd(opts: InferenceCliOptions): Promise<number> {
+  return runInferenceCacheStatus({ json: opts.json });
 }
