@@ -6,6 +6,7 @@ import { composeDefaultProviderPlugins } from "./plugin/compose.js";
 import { withInferenceStore } from "./observability/observed-gateway.js";
 import { createInferenceStore } from "./store/create.js";
 import type { InferenceStore } from "./store/types.js";
+import { withSemanticCache, type WithSemanticCacheOptions } from "./cache/cached-gateway.js";
 
 export type ChatRole = "system" | "user" | "assistant";
 
@@ -55,6 +56,7 @@ export type CreateInferenceGatewayOptions = {
   providerPlugins?: readonly InferenceProviderPlugin[];
   env?: NodeJS.ProcessEnv;
   store?: InferenceStore | null;
+  semanticCache?: WithSemanticCacheOptions | false;
 };
 
 export class ConfiguredInferenceGateway implements InferenceGateway {
@@ -93,6 +95,10 @@ export function createInferenceGateway(
       plugins: options.providerPlugins ?? composeDefaultProviderPlugins(),
     });
   const inner = new ConfiguredInferenceGateway(providers);
+  const cached =
+    options.semanticCache === false
+      ? inner
+      : withSemanticCache(inner, { env, ...options.semanticCache });
   const store = options.store === undefined ? createInferenceStore({ env }) : options.store;
-  return withInferenceStore(inner, store);
+  return withInferenceStore(cached, store);
 }
