@@ -98,6 +98,24 @@ clawql inference spend --group-by team
 
 When keys are enabled (or any active key exists), `/v1/*` requires a valid virtual key. `/healthz` stays open.
 
+## Plan entitlements (`clawql-payments`)
+
+When enabled, inference calls check the tenant's managed plan limits from `clawql-payments` before executing. Over-limit tenants receive **402 `insufficient_quota`** (OpenAI-compatible error shape), not a silent failure.
+
+```bash
+export CLAWQL_PAYMENTS_ENFORCE_INFERENCE=1
+
+clawql payments plan show
+clawql payments usage report
+
+# Hosted ClawQL sets CLAWQL_PAYMENTS_ENFORCE_INFERENCE=1 on managed tiers.
+# Virtual key team maps to the payments tenant id for per-team usage tracking.
+```
+
+Tenant resolution order: `InferenceRequest.tenantId` → virtual key `team` → `payments.json` `tenantId` → `"default"`.
+
+Streaming requests that bypass the gateway (provider-native SSE) are still entitlement-checked at the HTTP layer.
+
 ## Quick start
 
 ```bash

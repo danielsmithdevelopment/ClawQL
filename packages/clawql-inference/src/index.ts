@@ -33,6 +33,17 @@ export {
   createInferenceGateway,
 } from "./gateway.js";
 
+export {
+  EntitlementEnforcedGateway,
+  EntitlementLimitError,
+  assertInferenceEntitlement,
+  isEntitlementLimitError,
+  isInferenceEntitlementEnforcementActive,
+  recordInferenceUsage,
+  resolveInferenceTenantId,
+  withEntitlementEnforcement,
+} from "./entitlements/enforced-gateway.js";
+
 export type {
   InferenceRecord,
   InferenceStore,
