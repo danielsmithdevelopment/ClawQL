@@ -167,9 +167,7 @@ export async function runInferenceEscalationShowCmd(opts: InferenceCliOptions): 
   return runInferenceEscalationShow({ json: opts.json });
 }
 
-export async function runInferenceEscalationSetTierCmd(
-  opts: InferenceCliOptions
-): Promise<number> {
+export async function runInferenceEscalationSetTierCmd(opts: InferenceCliOptions): Promise<number> {
   return runInferenceEscalationSetTier({
     tier: opts.tier,
     model: opts.model,
