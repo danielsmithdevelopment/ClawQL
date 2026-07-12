@@ -46,6 +46,10 @@ next-env.d.ts
 
 # Generated at prebuild (see scripts/generate-agent-markdown.mjs)
 /public/agent-markdown.json
+/public/search-index/
+
+# Legacy search index output (now public/search-index/)
+/src/generated/search-index/
 
 # Wrangler local state and secrets (never commit)
 .wrangler/

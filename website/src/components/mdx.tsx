@@ -5,7 +5,7 @@ import { Children, isValidElement } from 'react'
 import { Pre as CodePre } from '@/components/Code'
 import { FeedbackClientIsland } from '@/components/FeedbackClientIsland'
 import { Heading } from '@/components/Heading'
-import { MermaidDiagram } from '@/components/MermaidDiagram'
+import { MermaidDiagramLazy } from '@/components/MermaidDiagramLazy'
 import { Prose } from '@/components/Prose'
 
 export const a = Link
@@ -69,7 +69,7 @@ type PreProps = React.ComponentPropsWithoutRef<'pre'> & {
 export function pre(props: PreProps) {
   const language = props['data-language'] ?? props.language
   if (language === 'mermaid') {
-    return <MermaidDiagram chart={readPreCodeText(props.children)} />
+    return <MermaidDiagramLazy chart={readPreCodeText(props.children)} />
   }
   return (
     <CodePre {...(props as React.ComponentPropsWithoutRef<typeof CodePre>)} />

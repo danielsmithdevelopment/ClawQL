@@ -1,8 +1,6 @@
 import type { Document, SearchOptions } from 'flexsearch'
 import FlexSearch from 'flexsearch'
 
-import manifest from '@/generated/search-index/manifest.json'
-
 export type Result = {
   url: string
   title: string
@@ -20,8 +18,6 @@ type SearchManifest = {
   version: number
   chunks: Array<{ id: string; file: string; pages: number }>
 }
-
-const searchManifest = manifest as SearchManifest
 
 function createSectionIndex(): Document {
   return new FlexSearch.Document({
@@ -57,16 +53,34 @@ function addPageToIndex(
 }
 
 let indexPromise: Promise<Document> | null = null
+let manifestPromise: Promise<SearchManifest> | null = null
+
+async function loadManifest(): Promise<SearchManifest> {
+  if (!manifestPromise) {
+    manifestPromise = fetch('/search-index/manifest.json').then((res) => {
+      if (!res.ok) {
+        throw new Error(`Failed to load search manifest (${res.status})`)
+      }
+      return res.json() as Promise<SearchManifest>
+    })
+  }
+  return manifestPromise
+}
 
 async function loadSearchIndex(): Promise<Document> {
   const sectionIndex = createSectionIndex()
+  const manifest = await loadManifest()
 
   await Promise.all(
-    searchManifest.chunks.map(async (chunk) => {
-      const pages = (await import(
-        `@/generated/search-index/${chunk.file}`
-      )) as { default: PageIndex[] }
-      for (const page of pages.default) {
+    manifest.chunks.map(async (chunk) => {
+      const res = await fetch(`/search-index/${chunk.file}`)
+      if (!res.ok) {
+        throw new Error(
+          `Failed to load search chunk ${chunk.file} (${res.status})`,
+        )
+      }
+      const pages = (await res.json()) as PageIndex[]
+      for (const page of pages) {
         addPageToIndex(sectionIndex, page)
       }
     }),

@@ -13,7 +13,7 @@ import {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const websiteRoot = path.resolve(__dirname, '..')
-const outDir = path.join(websiteRoot, 'src/generated/search-index')
+const outDir = path.join(websiteRoot, 'public/search-index')
 const appDir = path.join(websiteRoot, 'src/app')
 const trainingDir = path.join(
   websiteRoot,
@@ -63,5 +63,5 @@ fs.writeFileSync(
 )
 
 console.log(
-  `generate-search-index: ${pages.length} pages in ${manifestChunks.length} chunks → src/generated/search-index/`,
+  `generate-search-index: ${pages.length} pages in ${manifestChunks.length} chunks → public/search-index/`,
 )
