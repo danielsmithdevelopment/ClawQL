@@ -74,6 +74,7 @@ export {
   runInferencePipelineStatus,
   runInferencePipelineDisable,
   runInferencePipelineRun,
+  runInferencePipelineWorker,
 } from "./cli/pipeline.js";
 export { AGENT_COORDINATION_DRIFT_TRIPWIRE } from "./routing/tier-escalation-router.js";
 export { loadPipelineConfig, savePipelineConfig } from "./pipeline/config.js";
