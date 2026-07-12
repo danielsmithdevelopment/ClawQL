@@ -37,4 +37,6 @@ Legacy `CLAWQL_PAL_*` env names are also accepted.
 
 ## Roadmap
 
-See [`docs/inference/clawql-inference.md`](../../docs/inference/clawql-inference.md) and epic [#556](https://github.com/danielsmithdevelopment/ClawQL/issues/556).
+See [`docs/inference/clawql-inference.md`](../../docs/inference/clawql-inference.md) for the full gateway vision, **`clawql inference` CLI surface** (serve, export, finetune, pipeline), and the production → fine-tune → redeploy flywheel.
+
+Epic [#556](https://github.com/danielsmithdevelopment/ClawQL/issues/556).
