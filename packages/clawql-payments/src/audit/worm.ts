@@ -2,12 +2,14 @@ import { getDefaultAuditRingBuffer } from "clawql-core";
 import type { PaymentAuditVerifyResult } from "./chain.js";
 import type { PaymentWormEntry } from "./events.js";
 import { getPaymentAuditStore, resetPaymentAuditStoreForTests } from "./factory.js";
+import { maybePushPaymentAuditEntryToLoki } from "./loki.js";
+import { isPaymentAuditLokiPushEnabled } from "./store.js";
 
-export function appendPaymentWormEntry(
+export async function appendPaymentWormEntry(
   entry: PaymentWormEntry,
   env: NodeJS.ProcessEnv = process.env
-): void {
-  getPaymentAuditStore(env).append(entry);
+): Promise<void> {
+  await getPaymentAuditStore(env).append(entry);
 
   // Hot in-process mirror for MCP audit ring buffer (summary-only).
   getDefaultAuditRingBuffer().append({
@@ -17,18 +19,22 @@ export function appendPaymentWormEntry(
     summary: entry.summary,
     correlationId: entry.correlationId,
   });
+
+  if (isPaymentAuditLokiPushEnabled(env)) {
+    maybePushPaymentAuditEntryToLoki(entry, env);
+  }
 }
 
-export function listPaymentAuditEntries(
+export async function listPaymentAuditEntries(
   limit = 100,
   env: NodeJS.ProcessEnv = process.env
-): PaymentWormEntry[] {
+): Promise<PaymentWormEntry[]> {
   return getPaymentAuditStore(env).list(limit);
 }
 
-export function verifyPaymentAuditLog(
+export async function verifyPaymentAuditLog(
   env: NodeJS.ProcessEnv = process.env
-): PaymentAuditVerifyResult {
+): Promise<PaymentAuditVerifyResult> {
   return getPaymentAuditStore(env).verify();
 }
 

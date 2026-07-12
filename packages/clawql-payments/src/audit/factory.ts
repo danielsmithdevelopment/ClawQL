@@ -1,5 +1,7 @@
 import { createJsonlPaymentAuditStore } from "./jsonl-store.js";
 import { MemoryPaymentAuditStore } from "./memory-store.js";
+import { createPostgresPaymentAuditStore } from "./postgres-store.js";
+import { resolvePaymentsPoolConfig } from "./postgres-pool.js";
 import {
   resolvePaymentAuditStoreMode,
   type PaymentAuditStore,
@@ -11,6 +13,10 @@ let defaultStoreKey: string | null = null;
 
 function storeKey(mode: PaymentAuditStoreMode, env: NodeJS.ProcessEnv): string {
   if (mode === "memory") return "memory";
+  if (mode === "postgres") {
+    const config = resolvePaymentsPoolConfig(env);
+    return `postgres:${typeof config === "string" ? config : JSON.stringify(config)}`;
+  }
   return `jsonl:${env.CLAWQL_HOME?.trim() || process.cwd()}`;
 }
 
@@ -18,6 +24,16 @@ export function createPaymentAuditStore(env: NodeJS.ProcessEnv = process.env): P
   const mode = resolvePaymentAuditStoreMode(env);
   if (mode === "memory") {
     return new MemoryPaymentAuditStore();
+  }
+  if (mode === "postgres") {
+    const store = createPostgresPaymentAuditStore(env);
+    if (!store) {
+      throw new Error(
+        "CLAWQL_PAYMENTS_AUDIT_STORE=postgres requires CLAWQL_PAYMENTS_DATABASE_URL " +
+          "(or CLAWQL_INFERENCE_DATABASE_URL / CLAWQL_PAYMENTS_DB_* component vars)"
+      );
+    }
+    return store;
   }
   return createJsonlPaymentAuditStore(env);
 }
@@ -32,9 +48,11 @@ export function getPaymentAuditStore(env: NodeJS.ProcessEnv = process.env): Paym
   return defaultStore;
 }
 
-export function resetPaymentAuditStoreForTests(env: NodeJS.ProcessEnv = process.env): void {
+export async function resetPaymentAuditStoreForTests(
+  env: NodeJS.ProcessEnv = process.env
+): Promise<void> {
   if (defaultStore) {
-    defaultStore.reset();
+    await defaultStore.reset();
   }
   defaultStore = null;
   defaultStoreKey = null;

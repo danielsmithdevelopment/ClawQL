@@ -27,7 +27,7 @@ export async function reconcileX402Settlement(input: {
     settledAt: new Date().toISOString(),
   };
 
-  appendPaymentWormEntry(
+  await appendPaymentWormEntry(
     buildX402PaymentReceivedEntry({
       tenantId: input.tenantId,
       amountUsdc: input.amountUsdc,

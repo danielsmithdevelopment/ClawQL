@@ -340,7 +340,7 @@ export async function runPaymentsStripeMeterReport(
     env,
   });
 
-  appendPaymentWormEntry(
+  await appendPaymentWormEntry(
     buildStripeMeterReportedEntry({
       tenantId,
       value,

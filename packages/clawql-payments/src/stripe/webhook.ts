@@ -78,7 +78,7 @@ export async function processStripeWebhookEvent(
     case "invoice.paid": {
       const invoice = event.data.object as Stripe.Invoice;
       const amountUsd = (invoice.amount_paid ?? 0) / 100;
-      appendPaymentWormEntry(
+      await appendPaymentWormEntry(
         buildStripeInvoicePaidEntry({
           tenantId: tenantFromEvent(event, tenantId),
           amountUsd,
@@ -90,7 +90,7 @@ export async function processStripeWebhookEvent(
     }
     case "invoice.payment_failed": {
       const invoice = event.data.object as Stripe.Invoice;
-      appendPaymentWormEntry(
+      await appendPaymentWormEntry(
         buildPaymentWormEntry({
           eventKind: "STRIPE_PAYMENT_FAILED",
           summary: `Stripe invoice payment failed for ${invoice.id}`,
@@ -107,7 +107,7 @@ export async function processStripeWebhookEvent(
     }
     case "customer.subscription.created": {
       const subscription = event.data.object as Stripe.Subscription;
-      appendPaymentWormEntry(
+      await appendPaymentWormEntry(
         buildPaymentWormEntry({
           eventKind: "STRIPE_SUBSCRIPTION_CREATED",
           summary: `Stripe subscription created ${subscription.id}`,

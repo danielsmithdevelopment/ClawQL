@@ -86,7 +86,7 @@ export async function reportInferenceMeterUsageIfEnabled(
     env,
   });
 
-  appendPaymentWormEntry(
+  await appendPaymentWormEntry(
     buildStripeMeterReportedEntry({
       tenantId: input.tenantId,
       value,

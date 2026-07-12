@@ -48,6 +48,7 @@
   "dependencies": {
     "clawql-core": "7.0.0",
     "stripe": "^18.5.0",
+    "pg": "^8.21.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {

@@ -87,6 +87,24 @@ export function buildX402PaymentReceivedEntry(input: {
   });
 }
 
+export function buildX402PaymentFailedEntry(input: {
+  tenantId: string;
+  resource: string;
+  reason: string;
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "X402_PAYMENT_FAILED",
+    summary: `x402 payment failed for ${input.resource}: ${input.reason}`,
+    correlationId: input.correlationId,
+    payload: {
+      provider: "x402",
+      tenant_id: input.tenantId,
+      resource: input.resource,
+    },
+  });
+}
+
 export function buildEntitlementLimitReachedEntry(input: {
   tenantId: string;
   plan: string;

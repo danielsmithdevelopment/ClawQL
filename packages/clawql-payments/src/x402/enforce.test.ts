@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { resetDefaultAuditRingBufferForTests } from "clawql-core";
+import { listPaymentAuditEntries, resetPaymentAuditStoreForTests } from "../audit/worm.js";
 import { createX402Gate } from "./gate.js";
 import { enforceX402Gate } from "./enforce.js";
 import { parseX402PaymentPayloadHeader } from "./headers.js";
@@ -13,7 +14,11 @@ describe("x402 gate enforcement", () => {
 
   beforeEach(async () => {
     home = await mkdtemp(join(tmpdir(), "clawql-x402-enforce-"));
-    env = { ...process.env, CLAWQL_HOME: home };
+    env = {
+      ...process.env,
+      CLAWQL_HOME: home,
+      CLAWQL_PAYMENTS_AUDIT_STORE: "memory",
+    };
     await mkdir(join(home, "Payments"), { recursive: true });
     await writeFile(
       join(home, "Payments", "payments.json"),
@@ -31,6 +36,7 @@ describe("x402 gate enforcement", () => {
       )}\n`
     );
     resetDefaultAuditRingBufferForTests();
+    await resetPaymentAuditStoreForTests(env);
   });
 
   afterEach(async () => {
@@ -51,6 +57,9 @@ describe("x402 gate enforcement", () => {
     if (result.action === "require_payment") {
       expect(result.body.accepts[0]?.amount).toBe("1000");
     }
+
+    const entries = await listPaymentAuditEntries(10, env);
+    expect(entries.some((e) => e.action === "X402_PAYMENT_FAILED")).toBe(false);
   });
 
   it("verifies payment via facilitator and allows request", async () => {
@@ -80,6 +89,53 @@ describe("x402 gate enforcement", () => {
     if (result.action === "allow") {
       expect(result.payer).toBe("0xpayer");
     }
+  });
+
+  it("records X402_PAYMENT_FAILED when facilitator rejects proof", async () => {
+    await createX402Gate({ resource: "/v1/chat/completions", price: 0.001, asset: "USDC" }, env);
+
+    const payload = {
+      x402Version: 2,
+      payload: { signature: "0xbad" },
+    };
+    const header = Buffer.from(JSON.stringify(payload)).toString("base64");
+
+    const fetchImpl = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      text: async () => JSON.stringify({ isValid: false, invalidReason: "bad sig" }),
+    }));
+
+    const result = await enforceX402Gate({
+      resource: "/v1/chat/completions",
+      requestUrl: "http://127.0.0.1:8080/v1/chat/completions",
+      headers: { "payment-signature": header },
+      correlationId: "corr-deny",
+      env,
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    });
+
+    expect(result.action).toBe("deny");
+    const entries = await listPaymentAuditEntries(10, env);
+    const failed = entries.find((e) => e.action === "X402_PAYMENT_FAILED");
+    expect(failed?.payload.tenant_id).toBe("tenant-a");
+    expect(failed?.payload.resource).toBe("/v1/chat/completions");
+    expect(failed?.correlationId).toBe("corr-deny");
+  });
+
+  it("records X402_PAYMENT_FAILED for invalid payment payload header", async () => {
+    await createX402Gate({ resource: "/v1/chat/completions", price: 0.001, asset: "USDC" }, env);
+
+    const result = await enforceX402Gate({
+      resource: "/v1/chat/completions",
+      requestUrl: "http://127.0.0.1:8080/v1/chat/completions",
+      headers: { "payment-signature": "not-valid-base64-json!!!" },
+      env,
+    });
+
+    expect(result.action).toBe("deny");
+    const entries = await listPaymentAuditEntries(10, env);
+    expect(entries.some((e) => e.action === "X402_PAYMENT_FAILED")).toBe(true);
   });
 
   it("parses base64 payment payload headers", () => {

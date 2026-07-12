@@ -3,7 +3,7 @@ import {
   appendPaymentWormEntry,
   buildPlanChangedEntry,
   buildSpendReport,
-  filterAuditByCorrelationId,
+  loadAuditByCorrelationId,
   listPaymentAuditEntries,
   verifyPaymentAuditLog,
   type SpendGroupBy,
@@ -71,7 +71,7 @@ export async function runPaymentsPlanUpgrade(
 
   const { config, path } = await mergePaymentsConfig({ plan: toPlan, tenantId }, env);
 
-  appendPaymentWormEntry(
+  await appendPaymentWormEntry(
     buildPlanChangedEntry({
       tenantId,
       fromPlan: current.plan,
@@ -125,7 +125,10 @@ export type PaymentsSpendReportOptions = {
 export async function runPaymentsSpendReport(
   options: PaymentsSpendReportOptions = {}
 ): Promise<number> {
-  const report = buildSpendReport(listPaymentAuditEntries(10_000), options.groupBy ?? "provider");
+  const report = buildSpendReport(
+    await listPaymentAuditEntries(10_000),
+    options.groupBy ?? "provider"
+  );
 
   if (options.json) {
     console.log(JSON.stringify(report, null, 2));
@@ -151,8 +154,8 @@ export type PaymentsAuditOptions = {
 
 export async function runPaymentsAudit(options: PaymentsAuditOptions = {}): Promise<number> {
   const entries = options.correlationId
-    ? filterAuditByCorrelationId(options.correlationId)
-    : listPaymentAuditEntries(options.limit ?? 100);
+    ? await loadAuditByCorrelationId(options.correlationId, options.limit ?? 100)
+    : await listPaymentAuditEntries(options.limit ?? 100);
 
   if (options.json) {
     console.log(JSON.stringify({ entries }, null, 2));
@@ -173,7 +176,7 @@ export async function runPaymentsAudit(options: PaymentsAuditOptions = {}): Prom
 
 export async function runPaymentsAuditVerify(options: PaymentsAuditOptions = {}): Promise<number> {
   const env = options.env ?? process.env;
-  const result = verifyPaymentAuditLog(env);
+  const result = await verifyPaymentAuditLog(env);
 
   if (options.json) {
     console.log(JSON.stringify(result, null, 2));
