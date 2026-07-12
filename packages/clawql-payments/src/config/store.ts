@@ -11,6 +11,8 @@ export const PaymentsConfigSchema = z.object({
       accountId: z.string().optional(),
       publishableKey: z.string().optional(),
       webhookSecret: z.string().optional(),
+      customerId: z.string().optional(),
+      meterEventName: z.string().optional(),
     })
     .default({}),
   x402: z

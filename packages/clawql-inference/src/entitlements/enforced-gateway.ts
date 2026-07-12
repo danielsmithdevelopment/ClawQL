@@ -2,9 +2,10 @@ import type { InferenceGateway, InferenceRequest, InferenceResponse } from "../g
 import {
   assertInferenceEntitlement,
   isInferenceEntitlementEnforcementActive,
-  recordInferenceUsage,
+  recordInferenceBilling,
   resolveInferenceTenantId,
 } from "./check.js";
+import { isStripeMeterReportingActive } from "clawql-payments";
 
 export class EntitlementEnforcedGateway implements InferenceGateway {
   constructor(
@@ -13,23 +14,25 @@ export class EntitlementEnforcedGateway implements InferenceGateway {
   ) {}
 
   async complete(request: InferenceRequest): Promise<InferenceResponse> {
-    if (!isInferenceEntitlementEnforcementActive(this.env)) {
-      return this.inner.complete(request);
-    }
-
     const tenantId = await resolveInferenceTenantId(
       { team: request.team, tenantId: request.tenantId },
       this.env
     );
 
-    await assertInferenceEntitlement({
+    if (isInferenceEntitlementEnforcementActive(this.env)) {
+      await assertInferenceEntitlement({
+        tenantId,
+        correlationId: request.correlationId,
+        env: this.env,
+      });
+    }
+
+    const response = await this.inner.complete(request);
+    await recordInferenceBilling({
       tenantId,
       correlationId: request.correlationId,
       env: this.env,
     });
-
-    const response = await this.inner.complete(request);
-    await recordInferenceUsage({ tenantId, env: this.env });
     return response;
   }
 }
@@ -38,7 +41,12 @@ export function withEntitlementEnforcement(
   gateway: InferenceGateway,
   env: NodeJS.ProcessEnv = process.env
 ): InferenceGateway {
-  if (!isInferenceEntitlementEnforcementActive(env)) return gateway;
+  if (
+    !isInferenceEntitlementEnforcementActive(env) &&
+    !isStripeMeterReportingActive(env)
+  ) {
+    return gateway;
+  }
   return new EntitlementEnforcedGateway(gateway, env);
 }
 
@@ -47,5 +55,6 @@ export {
   assertInferenceEntitlement,
   isInferenceEntitlementEnforcementActive,
   recordInferenceUsage,
+  recordInferenceBilling,
   resolveInferenceTenantId,
 } from "./check.js";

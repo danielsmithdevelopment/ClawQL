@@ -2,6 +2,7 @@ export type PaymentEventKind =
   | "STRIPE_SUBSCRIPTION_CREATED"
   | "STRIPE_INVOICE_PAID"
   | "STRIPE_PAYMENT_FAILED"
+  | "STRIPE_METER_REPORTED"
   | "X402_PAYMENT_RECEIVED"
   | "X402_PAYMENT_FAILED"
   | "ENTITLEMENT_LIMIT_REACHED"
@@ -120,6 +121,25 @@ export function buildPlanChangedEntry(input: {
       provider: "stripe",
       tenant_id: input.tenantId,
       plan: input.toPlan,
+    },
+  });
+}
+
+export function buildStripeMeterReportedEntry(input: {
+  tenantId: string;
+  value: number;
+  eventName: string;
+  stripeCustomerId: string;
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "STRIPE_METER_REPORTED",
+    summary: `Stripe meter ${input.eventName} +${input.value} for tenant ${input.tenantId}`,
+    correlationId: input.correlationId,
+    payload: {
+      provider: "stripe",
+      tenant_id: input.tenantId,
+      resource: input.eventName,
     },
   });
 }

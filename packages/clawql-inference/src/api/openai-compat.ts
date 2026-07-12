@@ -12,9 +12,10 @@ import {
   assertInferenceEntitlement,
   EntitlementLimitError,
   isInferenceEntitlementEnforcementActive,
-  recordInferenceUsage,
+  recordInferenceBilling,
   resolveInferenceTenantId,
 } from "../entitlements/enforced-gateway.js";
+import { isStripeMeterReportingActive } from "clawql-payments";
 
 type OpenAiChatCompletionRequest = {
   model?: string;
@@ -104,6 +105,8 @@ export function createOpenAiCompatRouter(options: CreateOpenAiCompatRouterOption
           if (adapter?.streamComplete) {
             const tenantId = await resolveInferenceTenantId({ team: keyContext?.team }, env);
             const enforcementActive = isInferenceEntitlementEnforcementActive(env);
+            const billingActive =
+              enforcementActive || isStripeMeterReportingActive(env);
             if (enforcementActive) {
               await assertInferenceEntitlement({
                 tenantId,
@@ -118,8 +121,8 @@ export function createOpenAiCompatRouter(options: CreateOpenAiCompatRouterOption
               correlationId,
               chunks: adapter.streamComplete(resolved.model, messages, completeOptions),
             });
-            if (enforcementActive) {
-              await recordInferenceUsage({ tenantId, env });
+            if (billingActive) {
+              await recordInferenceBilling({ tenantId, correlationId, env });
             }
             return;
           }
