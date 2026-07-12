@@ -78,6 +78,8 @@ export function MermaidDiagram({ chart }: MermaidDiagramProps) {
     <div
       ref={containerRef}
       className="not-prose my-6 overflow-x-auto rounded-2xl bg-zinc-900/80 p-4 ring-1 ring-zinc-900/10 dark:ring-white/10"
+      tabIndex={0}
+      role="img"
       aria-label="Architecture diagram"
     >
       {svg ? (

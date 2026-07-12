@@ -181,7 +181,12 @@ export function table({
 }: React.ComponentPropsWithoutRef<'table'>) {
   const cols = countTableColumns(children)
   return (
-    <div className="docs-table-scroll not-prose">
+    <div
+      className="docs-table-scroll not-prose"
+      tabIndex={0}
+      role="region"
+      aria-label="Scrollable table"
+    >
       <table
         className={clsx(
           'docs-table',
