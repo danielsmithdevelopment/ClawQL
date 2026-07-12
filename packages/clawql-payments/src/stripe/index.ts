@@ -32,7 +32,4 @@ export {
   type StripeWebhookEvent,
   type StripeWebhookVerifyResult,
 } from "./webhook.js";
-export {
-  StripeNotConfiguredError,
-  StripeWebhookVerificationError,
-} from "./errors.js";
+export { StripeNotConfiguredError, StripeWebhookVerificationError } from "./errors.js";

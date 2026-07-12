@@ -14,8 +14,7 @@ export type StripeWebhookEvent = {
 };
 
 export type StripeWebhookVerifyResult =
-  | { ok: true; event: Stripe.Event }
-  | { ok: false; reason: string };
+  { ok: true; event: Stripe.Event } | { ok: false; reason: string };
 
 export function verifyStripeWebhookSignature(
   payload: string | Buffer,
@@ -62,10 +61,7 @@ export type ProcessStripeWebhookResult = {
   eventId: string;
 };
 
-function tenantFromEvent(
-  event: Stripe.Event,
-  fallbackTenantId: string
-): string {
+function tenantFromEvent(event: Stripe.Event, fallbackTenantId: string): string {
   const object = event.data.object as { metadata?: Record<string, string> };
   return object.metadata?.tenant_id?.trim() || fallbackTenantId;
 }
