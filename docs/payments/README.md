@@ -2,8 +2,8 @@
 
 ClawQL's unified billing layer — Stripe subscriptions, x402 micropayments, managed plan entitlements, and WORM-auditable payment events.
 
-| Doc | Audience | Contents |
-| --- | -------- | -------- |
+| Doc                                          | Audience                             | Contents                                                                                         |
+| -------------------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------ |
 | [**clawql-payments.md**](clawql-payments.md) | Operators, integrators, contributors | Architecture, setup, env vars, HTTP flows, CLI reference, inference integration, troubleshooting |
 
 ## Package and CLI entry points

@@ -255,11 +255,11 @@ Keys persist at `$CLAWQL_HOME/Inference/virtual-keys.json` (secrets stored as SH
 
 The inference HTTP server integrates with [`clawql-payments`](../payments/clawql-payments.md) for three **independent** billing modes:
 
-| Mode | Toggle | Behavior |
-| ---- | ------ | -------- |
-| Plan entitlements | `CLAWQL_PAYMENTS_ENFORCE_INFERENCE=1` | Pre-check monthly caps; 402 `insufficient_quota` when over limit |
-| Stripe meters | `CLAWQL_PAYMENTS_REPORT_STRIPE_METER=1` | Post-call `meterEvents.create` (requires Dashboard meter + customer id) |
-| x402 pay-per-call | `CLAWQL_X402_ENFORCE=1` | Middleware returns 402 until facilitator verifies `PAYMENT-SIGNATURE` |
+| Mode              | Toggle                                  | Behavior                                                                |
+| ----------------- | --------------------------------------- | ----------------------------------------------------------------------- |
+| Plan entitlements | `CLAWQL_PAYMENTS_ENFORCE_INFERENCE=1`   | Pre-check monthly caps; 402 `insufficient_quota` when over limit        |
+| Stripe meters     | `CLAWQL_PAYMENTS_REPORT_STRIPE_METER=1` | Post-call `meterEvents.create` (requires Dashboard meter + customer id) |
+| x402 pay-per-call | `CLAWQL_X402_ENFORCE=1`                 | Middleware returns 402 until facilitator verifies `PAYMENT-SIGNATURE`   |
 
 When plan enforcement is enabled, the gateway checks limits before each completion and increments `inference_calls` in `usage.json` after success. Tenant resolution order:
 

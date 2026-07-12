@@ -8,16 +8,16 @@
 
 ## What ships today
 
-| Capability | Status | Notes |
-| ---------- | ------ | ----- |
-| Managed plan tiers + entitlements | ✅ | Local `usage.json` counters; limit enforcement in inference |
-| Stripe customers, subscriptions, invoices | ✅ | Live SDK when `STRIPE_SECRET_KEY` is set |
-| Stripe webhook signature verification | ✅ | CLI verify/process; audit on `invoice.paid` |
-| Stripe Billing Meters (`meterEvents.create`) | ✅ | API + inference hook when `CLAWQL_PAYMENTS_REPORT_STRIPE_METER=1` |
-| x402 gate config + facilitator HTTP verify | ✅ | `POST /verify` against x402.org or CDP |
-| x402 Express middleware (402 + PAYMENT-REQUIRED) | ✅ | Wired into `clawql-inference` HTTP |
-| Payment WORM audit (ring buffer) | ✅ | Durable WORM writer is follow-up work |
-| `.well-known/payments.json` discovery | 📋 | Placeholder ([#88](https://github.com/danielsmithdevelopment/ClawQL/issues/88)) |
+| Capability                                       | Status | Notes                                                                           |
+| ------------------------------------------------ | ------ | ------------------------------------------------------------------------------- |
+| Managed plan tiers + entitlements                | ✅     | Local `usage.json` counters; limit enforcement in inference                     |
+| Stripe customers, subscriptions, invoices        | ✅     | Live SDK when `STRIPE_SECRET_KEY` is set                                        |
+| Stripe webhook signature verification            | ✅     | CLI verify/process; audit on `invoice.paid`                                     |
+| Stripe Billing Meters (`meterEvents.create`)     | ✅     | API + inference hook when `CLAWQL_PAYMENTS_REPORT_STRIPE_METER=1`               |
+| x402 gate config + facilitator HTTP verify       | ✅     | `POST /verify` against x402.org or CDP                                          |
+| x402 Express middleware (402 + PAYMENT-REQUIRED) | ✅     | Wired into `clawql-inference` HTTP                                              |
+| Payment WORM audit (ring buffer)                 | ✅     | Durable WORM writer is follow-up work                                           |
+| `.well-known/payments.json` discovery            | 📋     | Placeholder ([#88](https://github.com/danielsmithdevelopment/ClawQL/issues/88)) |
 
 ## Architecture
 
@@ -69,11 +69,11 @@ flowchart TB
 
 ClawQL tracks usage in **three independent layers**. Each serves a different purpose:
 
-| Layer | Storage | Purpose | Env / toggle |
-| ----- | ------- | ------- | ------------ |
-| **Plan entitlements** | `$CLAWQL_HOME/Payments/usage.json` | Managed tier caps (inference calls/mo, docs, memory) | `CLAWQL_PAYMENTS_ENFORCE_INFERENCE=1` |
-| **Inference call store** | jsonl / postgres under `$CLAWQL_HOME/Inference/` | Token counts, latency, export/finetune flywheel | `CLAWQL_INFERENCE_STORE` |
-| **Virtual key budgets** | `$CLAWQL_HOME/Inference/virtual-keys.json` | Per-team USD budget + rate limits | `CLAWQL_INFERENCE_KEYS_ENABLED=1` |
+| Layer                    | Storage                                          | Purpose                                              | Env / toggle                          |
+| ------------------------ | ------------------------------------------------ | ---------------------------------------------------- | ------------------------------------- |
+| **Plan entitlements**    | `$CLAWQL_HOME/Payments/usage.json`               | Managed tier caps (inference calls/mo, docs, memory) | `CLAWQL_PAYMENTS_ENFORCE_INFERENCE=1` |
+| **Inference call store** | jsonl / postgres under `$CLAWQL_HOME/Inference/` | Token counts, latency, export/finetune flywheel      | `CLAWQL_INFERENCE_STORE`              |
+| **Virtual key budgets**  | `$CLAWQL_HOME/Inference/virtual-keys.json`       | Per-team USD budget + rate limits                    | `CLAWQL_INFERENCE_KEYS_ENABLED=1`     |
 
 Plan usage drives **quota enforcement** and optional **Stripe Billing Meters**. The call store drives **observability and training data**. Virtual keys drive **per-team spend caps** at auth time.
 
@@ -83,11 +83,11 @@ Plan usage drives **quota enforcement** and optional **Stripe Billing Meters**. 
 
 All local state lives under `$CLAWQL_HOME/Payments/` (default `~/.clawql/Payments/`):
 
-| File | Contents |
-| ---- | -------- |
-| `payments.json` | Tenant id, plan tier, Stripe metadata, x402 wallet/facilitator |
-| `x402-gates.json` | Payment-gated HTTP paths and MCP tool names |
-| `usage.json` | Monthly counters per tenant (`inference_calls`, `documents`, `memory_mb`) |
+| File              | Contents                                                                  |
+| ----------------- | ------------------------------------------------------------------------- |
+| `payments.json`   | Tenant id, plan tier, Stripe metadata, x402 wallet/facilitator            |
+| `x402-gates.json` | Payment-gated HTTP paths and MCP tool names                               |
+| `usage.json`      | Monthly counters per tenant (`inference_calls`, `documents`, `memory_mb`) |
 
 Example `payments.json`:
 
@@ -117,12 +117,12 @@ File modes are `0600`. Never commit secrets or webhook signing keys.
 
 Defined in [`packages/clawql-payments/src/plans/tiers.ts`](../../packages/clawql-payments/src/plans/tiers.ts):
 
-| Plan | Inference calls/mo | Documents/mo | Memory (MB) | Seats | x402 |
-| ---- | ---------------- | ------------ | ----------- | ----- | ---- |
-| free | 100 | 10 | 100 | 1 | off |
-| pro | 10,000 | 500 | 5,000 | 1 | on |
-| team | 100,000 | 5,000 | 50,000 | 20 | on |
-| enterprise | unlimited | unlimited | unlimited | unlimited | on |
+| Plan       | Inference calls/mo | Documents/mo | Memory (MB) | Seats     | x402 |
+| ---------- | ------------------ | ------------ | ----------- | --------- | ---- |
+| free       | 100                | 10           | 100         | 1         | off  |
+| pro        | 10,000             | 500          | 5,000       | 1         | on   |
+| team       | 100,000            | 5,000        | 50,000      | 20        | on   |
+| enterprise | unlimited          | unlimited    | unlimited   | unlimited | on   |
 
 ```bash
 clawql payments plan show
@@ -162,14 +162,14 @@ Implementation: [`packages/clawql-inference/src/entitlements/`](../../packages/c
 
 ### Environment variables
 
-| Variable | Required | Purpose |
-| -------- | -------- | ------- |
-| `STRIPE_SECRET_KEY` | Yes (live API) | Stripe SDK authentication |
-| `STRIPE_PRO_PRICE_ID` | For Pro subs | Flat subscription price id |
-| `STRIPE_TEAM_PRICE_ID` | For Team subs | Flat subscription price id |
-| `STRIPE_CUSTOMER_ID` | Meter reporting | Override when not in `payments.json` |
-| `STRIPE_METER_EVENT_NAME` | Meter reporting | Dashboard meter event name (e.g. `clawql_inference_calls`) |
-| `CLAWQL_PAYMENTS_REPORT_STRIPE_METER` | Meter reporting | Set to `1` to emit meter events after each inference call |
+| Variable                              | Required        | Purpose                                                    |
+| ------------------------------------- | --------------- | ---------------------------------------------------------- |
+| `STRIPE_SECRET_KEY`                   | Yes (live API)  | Stripe SDK authentication                                  |
+| `STRIPE_PRO_PRICE_ID`                 | For Pro subs    | Flat subscription price id                                 |
+| `STRIPE_TEAM_PRICE_ID`                | For Team subs   | Flat subscription price id                                 |
+| `STRIPE_CUSTOMER_ID`                  | Meter reporting | Override when not in `payments.json`                       |
+| `STRIPE_METER_EVENT_NAME`             | Meter reporting | Dashboard meter event name (e.g. `clawql_inference_calls`) |
+| `CLAWQL_PAYMENTS_REPORT_STRIPE_METER` | Meter reporting | Set to `1` to emit meter events after each inference call  |
 
 ### Setup flow
 
@@ -234,26 +234,26 @@ x402 v2 enables **pay-per-request** access to HTTP routes and MCP tools using US
 
 ### When to use x402 vs plan entitlements
 
-| Model | Best for |
-| ----- | -------- |
-| **Plan entitlements** | Managed SaaS tiers with monthly caps |
-| **x402 gates** | Pay-per-call APIs, public endpoints, agent-to-agent micropayments |
-| **Both** | Hybrid: subscription base + overage per call on specific routes |
+| Model                 | Best for                                                          |
+| --------------------- | ----------------------------------------------------------------- |
+| **Plan entitlements** | Managed SaaS tiers with monthly caps                              |
+| **x402 gates**        | Pay-per-call APIs, public endpoints, agent-to-agent micropayments |
+| **Both**              | Hybrid: subscription base + overage per call on specific routes   |
 
 They are independent toggles. A route can be x402-gated without plan enforcement, and vice versa.
 
 ### Environment variables
 
-| Variable | Default | Purpose |
-| -------- | ------- | ------- |
-| `CLAWQL_X402_ENFORCE` | off | Enable middleware (402 until paid) |
-| `CLAWQL_X402_FACILITATOR_URL` | `https://x402.org/facilitator` | Facilitator base URL |
-| `CLAWQL_X402_NETWORK` | `eip155:84532` | CAIP-2 chain id (Base Sepolia testnet) |
-| `CLAWQL_X402_USDC_ASSET` | Base Sepolia USDC | Token contract address |
-| `CLAWQL_X402_SCHEME` | `exact` | Payment scheme (`exact` or `upto`) |
-| `CLAWQL_X402_MAX_TIMEOUT_SECONDS` | `60` | Payment validity window |
-| `CLAWQL_X402_FACILITATOR_BEARER` | — | Bearer token for CDP / private facilitators |
-| `CDP_API_KEY_ID` + `CDP_API_KEY_SECRET` | — | Coinbase Developer Platform auth alternative |
+| Variable                                | Default                        | Purpose                                      |
+| --------------------------------------- | ------------------------------ | -------------------------------------------- |
+| `CLAWQL_X402_ENFORCE`                   | off                            | Enable middleware (402 until paid)           |
+| `CLAWQL_X402_FACILITATOR_URL`           | `https://x402.org/facilitator` | Facilitator base URL                         |
+| `CLAWQL_X402_NETWORK`                   | `eip155:84532`                 | CAIP-2 chain id (Base Sepolia testnet)       |
+| `CLAWQL_X402_USDC_ASSET`                | Base Sepolia USDC              | Token contract address                       |
+| `CLAWQL_X402_SCHEME`                    | `exact`                        | Payment scheme (`exact` or `upto`)           |
+| `CLAWQL_X402_MAX_TIMEOUT_SECONDS`       | `60`                           | Payment validity window                      |
+| `CLAWQL_X402_FACILITATOR_BEARER`        | —                              | Bearer token for CDP / private facilitators  |
+| `CDP_API_KEY_ID` + `CDP_API_KEY_SECRET` | —                              | Coinbase Developer Platform auth alternative |
 
 Wallet and facilitator URL can also be stored in `payments.json` → `x402`.
 
@@ -295,12 +295,12 @@ sequenceDiagram
 
 **Headers:**
 
-| Header | Direction | Purpose |
-| ------ | --------- | ------- |
-| `PAYMENT-REQUIRED` | Response (402) | Base64-encoded `PaymentRequired` JSON |
-| `PAYMENT-SIGNATURE` / `X-PAYMENT` | Request | Client payment proof (JSON or base64) |
-| `X-Clawql-Tool` | Request | Gate MCP tools as `tool:{name}` |
-| `X-Correlation-Id` | Request | Audit correlation (optional) |
+| Header                            | Direction      | Purpose                               |
+| --------------------------------- | -------------- | ------------------------------------- |
+| `PAYMENT-REQUIRED`                | Response (402) | Base64-encoded `PaymentRequired` JSON |
+| `PAYMENT-SIGNATURE` / `X-PAYMENT` | Request        | Client payment proof (JSON or base64) |
+| `X-Clawql-Tool`                   | Request        | Gate MCP tools as `tool:{name}`       |
+| `X-Correlation-Id`                | Request        | Audit correlation (optional)          |
 
 **402 response body** (x402 v2):
 
@@ -308,15 +308,20 @@ sequenceDiagram
 {
   "x402Version": 2,
   "error": "PAYMENT-SIGNATURE header is required",
-  "resource": { "url": "http://localhost:8080/v1/chat/completions", "mimeType": "application/json" },
-  "accepts": [{
-    "scheme": "exact",
-    "network": "eip155:84532",
-    "amount": "1000",
-    "asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-    "payTo": "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
-    "maxTimeoutSeconds": 60
-  }],
+  "resource": {
+    "url": "http://localhost:8080/v1/chat/completions",
+    "mimeType": "application/json"
+  },
+  "accepts": [
+    {
+      "scheme": "exact",
+      "network": "eip155:84532",
+      "amount": "1000",
+      "asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+      "payTo": "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
+      "maxTimeoutSeconds": 60
+    }
+  ],
   "extensions": { "facilitator": "https://x402.org/facilitator" }
 }
 ```
@@ -355,13 +360,13 @@ Middleware mounts **before** auth in [`packages/clawql-inference/src/api/server.
 
 Payment events append to ClawQL's WORM ring buffer (durable persistence is follow-up work):
 
-| Event | Trigger |
-| ----- | ------- |
-| `STRIPE_INVOICE_PAID` | Verified webhook |
-| `STRIPE_PAYMENT_FAILED` | Verified webhook |
-| `STRIPE_METER_REPORTED` | Successful meter event |
-| `X402_PAYMENT_RECEIVED` | Facilitator verify + reconcile |
-| `ENTITLEMENT_LIMIT_REACHED` | Plan cap hit |
+| Event                               | Trigger                        |
+| ----------------------------------- | ------------------------------ |
+| `STRIPE_INVOICE_PAID`               | Verified webhook               |
+| `STRIPE_PAYMENT_FAILED`             | Verified webhook               |
+| `STRIPE_METER_REPORTED`             | Successful meter event         |
+| `X402_PAYMENT_RECEIVED`             | Facilitator verify + reconcile |
+| `ENTITLEMENT_LIMIT_REACHED`         | Plan cap hit                   |
 | `PLAN_UPGRADED` / `PLAN_DOWNGRADED` | `clawql payments plan upgrade` |
 
 ```bash
@@ -465,12 +470,12 @@ See also: [`packages/clawql-inference/README.md`](../../packages/clawql-inferenc
 
 ## Follow-up work
 
-| Item | Tracking |
-| ---- | -------- |
-| Durable WORM writer (replace ring buffer) | payments README status |
-| Hosted webhook HTTP endpoint | not CLI-only |
-| `.well-known/payments.json` discovery | [#88](https://github.com/danielsmithdevelopment/ClawQL/issues/88) |
-| MCP tool x402 enforcement in-process | HTTP middleware + `X-Clawql-Tool` today |
+| Item                                      | Tracking                                                          |
+| ----------------------------------------- | ----------------------------------------------------------------- |
+| Durable WORM writer (replace ring buffer) | payments README status                                            |
+| Hosted webhook HTTP endpoint              | not CLI-only                                                      |
+| `.well-known/payments.json` discovery     | [#88](https://github.com/danielsmithdevelopment/ClawQL/issues/88) |
+| MCP tool x402 enforcement in-process      | HTTP middleware + `X-Clawql-Tool` today                           |
 
 ## Related
 

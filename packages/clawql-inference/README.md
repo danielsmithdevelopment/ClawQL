@@ -226,12 +226,12 @@ Subpath: `clawql-inference/plugin` for builtin factories and compose helpers.
 | `CLAWQL_INFERENCE_STORE`                      | jsonl when `CLAWQL_HOME` set | Inference call store: memory, jsonl, postgres        |
 | `CLAWQL_INFERENCE_DATABASE_URL`               | —                            | Postgres URL when store=postgres                     |
 | `CLAWQL_INFERENCE_PIPELINE_WORKER`            | off                          | Start cron worker with `inference serve`             |
-| `CLAWQL_PAYMENTS_ENFORCE_INFERENCE`           | off                          | Enforce managed plan inference caps                      |
-| `CLAWQL_PAYMENTS_REPORT_STRIPE_METER`         | off                          | Report inference calls to Stripe Billing Meters        |
-| `STRIPE_METER_EVENT_NAME`                     | —                            | Dashboard meter event name                             |
-| `STRIPE_CUSTOMER_ID`                          | —                            | Stripe customer for meter events                       |
-| `CLAWQL_X402_ENFORCE`                         | off                          | x402 402 gate on configured routes                     |
-| `CLAWQL_X402_FACILITATOR_URL`                 | x402.org testnet facilitator | x402 verify/settle endpoint                            |
+| `CLAWQL_PAYMENTS_ENFORCE_INFERENCE`           | off                          | Enforce managed plan inference caps                  |
+| `CLAWQL_PAYMENTS_REPORT_STRIPE_METER`         | off                          | Report inference calls to Stripe Billing Meters      |
+| `STRIPE_METER_EVENT_NAME`                     | —                            | Dashboard meter event name                           |
+| `STRIPE_CUSTOMER_ID`                          | —                            | Stripe customer for meter events                     |
+| `CLAWQL_X402_ENFORCE`                         | off                          | x402 402 gate on configured routes                   |
+| `CLAWQL_X402_FACILITATOR_URL`                 | x402.org testnet facilitator | x402 verify/settle endpoint                          |
 | `CLAWQL_INFERENCE_AGENT_COORDINATION_ENABLED` | off                          | Enable Hermes coordination stub (#562)               |
 | `HERMES_BASE_URL`                             | —                            | Hermes MoA endpoint when coordination enabled        |
 
