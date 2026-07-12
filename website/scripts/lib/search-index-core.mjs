@@ -58,18 +58,51 @@ function sectionsForMdx(mdx, cache, cacheKey) {
   return sections
 }
 
+import { GENERATED_BODY_ROUTES } from './generated-doc-routes.mjs'
+
 /**
- * @param {{ appDir: string, trainingDir?: string }} opts
+ * @param {{ appDir: string, trainingDir?: string, generatedDir?: string, pluginsBodiesDir?: string }} opts
  * @returns {Array<{ url: string, sections: unknown[] }>}
  */
-export function collectSearchIndexPages({ appDir, trainingDir }) {
+export function collectSearchIndexPages({
+  appDir,
+  trainingDir,
+  generatedDir,
+  pluginsBodiesDir,
+}) {
   const cache = new Map()
+  const data = []
+
   const files = glob.sync('**/*.mdx', { cwd: appDir })
-  const data = files.map((file) => {
+  for (const file of files) {
     const url = '/' + file.replace(/(^|\/)page\.mdx$/, '')
     const mdx = fs.readFileSync(path.join(appDir, file), 'utf8')
-    return { url, sections: sectionsForMdx(mdx, cache, file) }
-  })
+    data.push({ url, sections: sectionsForMdx(mdx, cache, file) })
+  }
+
+  if (generatedDir && fs.existsSync(generatedDir)) {
+    for (const [fileName, url] of Object.entries(GENERATED_BODY_ROUTES)) {
+      const filePath = path.join(generatedDir, fileName)
+      if (!fs.existsSync(filePath)) continue
+      const mdx = fs.readFileSync(filePath, 'utf8')
+      data.push({
+        url,
+        sections: sectionsForMdx(mdx, cache, `generated:${fileName}`),
+      })
+    }
+  }
+
+  if (pluginsBodiesDir && fs.existsSync(pluginsBodiesDir)) {
+    const pluginFiles = glob.sync('*.mdx', { cwd: pluginsBodiesDir })
+    for (const fileName of pluginFiles) {
+      const slug = fileName.replace(/\.mdx$/, '')
+      const mdx = fs.readFileSync(path.join(pluginsBodiesDir, fileName), 'utf8')
+      data.push({
+        url: `/plugins/${slug}`,
+        sections: sectionsForMdx(mdx, cache, `plugin:${fileName}`),
+      })
+    }
+  }
 
   if (trainingDir && fs.existsSync(trainingDir)) {
     const trainingFiles = glob.sync('*.mdx', { cwd: trainingDir })

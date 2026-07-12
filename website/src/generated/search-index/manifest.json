@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-07-10T06:31:20.300Z",
+  "generatedAt": "2026-07-12T19:56:40.017Z",
   "chunks": [
     {
       "id": "agent-setup",
@@ -10,7 +10,7 @@
     {
       "id": "architecture",
       "file": "chunk-architecture.json",
-      "pages": 1
+      "pages": 2
     },
     {
       "id": "benchmarks",
@@ -38,6 +38,11 @@
       "pages": 1
     },
     {
+      "id": "contributing",
+      "file": "chunk-contributing.json",
+      "pages": 1
+    },
+    {
       "id": "dashboard-kubernetes",
       "file": "chunk-dashboard-kubernetes.json",
       "pages": 1
@@ -45,7 +50,12 @@
     {
       "id": "deployment",
       "file": "chunk-deployment.json",
-      "pages": 3
+      "pages": 4
+    },
+    {
+      "id": "design",
+      "file": "chunk-design.json",
+      "pages": 1
     },
     {
       "id": "docker-desktop-observability",
@@ -65,7 +75,7 @@
     {
       "id": "getting-started",
       "file": "chunk-getting-started.json",
-      "pages": 5
+      "pages": 10
     },
     {
       "id": "graphql-proxy",
@@ -90,6 +100,11 @@
     {
       "id": "home-body.mdx",
       "file": "chunk-home-body.mdx.json",
+      "pages": 1
+    },
+    {
+      "id": "inference",
+      "file": "chunk-inference.json",
       "pages": 1
     },
     {
@@ -130,7 +145,12 @@
     {
       "id": "ouroboros",
       "file": "chunk-ouroboros.json",
-      "pages": 1
+      "pages": 4
+    },
+    {
+      "id": "plugins",
+      "file": "chunk-plugins.json",
+      "pages": 11
     },
     {
       "id": "quickstart",
@@ -140,7 +160,7 @@
     {
       "id": "reference",
       "file": "chunk-reference.json",
-      "pages": 5
+      "pages": 7
     },
     {
       "id": "resources",
@@ -155,7 +175,7 @@
     {
       "id": "security",
       "file": "chunk-security.json",
-      "pages": 33
+      "pages": 34
     },
     {
       "id": "spec-configuration",
@@ -180,8 +200,8 @@
     {
       "id": "vision",
       "file": "chunk-vision.json",
-      "pages": 1
+      "pages": 8
     }
   ],
-  "totalPages": 97
+  "totalPages": 131
 }
