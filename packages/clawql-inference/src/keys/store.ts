@@ -15,7 +15,7 @@ export function generateVirtualKeyId(): string {
 }
 
 export function generateVirtualKeySecret(): string {
-  return `sk-clawql-${randomBytes(24).toString("base64url")}`;
+  return `clawql-vk-${randomBytes(24).toString("base64url")}`;
 }
 
 function emptyStore(): VirtualKeyStoreFile {

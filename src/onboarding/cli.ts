@@ -295,7 +295,7 @@ inference (gateway MVP):
   Store: CLAWQL_INFERENCE_STORE=memory|jsonl|off (default jsonl when CLAWQL_HOME set)
   Cache: CLAWQL_INFERENCE_SEMANTIC_CACHE=1, CLAWQL_INFERENCE_CACHE_THRESHOLD=0.92
   Fallback: CLAWQL_INFERENCE_FALLBACK_ENABLED=1, CLAWQL_INFERENCE_FALLBACK_FRUGAL=a,b
-  Keys: CLAWQL_INFERENCE_KEYS_ENABLED=1 (or any active key in virtual-keys.json)
+  Keys: per-team virtual API keys (see clawql-inference README)
   Env: OPENAI_API_KEY, ANTHROPIC_API_KEY, OLLAMA_BASE_URL, CLAWQL_INFERENCE_PORT
 
 Docs: https://docs.clawql.com/agent-setup

@@ -38,7 +38,7 @@ describe("virtual key store", () => {
       env
     );
     expect(created.key.id).toMatch(/^vk_/);
-    expect(created.secret).toMatch(/^sk-clawql-/);
+    expect(created.secret).toMatch(/^clawql-vk-/);
 
     const store = loadVirtualKeyStoreSync(env);
     const found = findKeyBySecret(store, created.secret);

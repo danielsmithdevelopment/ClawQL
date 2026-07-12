@@ -88,7 +88,7 @@ clawql inference keys revoke --id vk_abc123
 
 # Clients authenticate like OpenAI (Bearer or x-api-key)
 curl -s http://127.0.0.1:8080/v1/chat/completions \
-  -H "Authorization: Bearer sk-clawql-..." \
+  -H "Authorization: Bearer <virtual-key>" \
   -H 'Content-Type: application/json' \
   -d '{"model":"gpt-4o","messages":[{"role":"user","content":"hi"}]}'
 
