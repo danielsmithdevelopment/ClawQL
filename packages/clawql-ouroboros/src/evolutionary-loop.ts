@@ -1,5 +1,11 @@
 import { v4 as uuidv4 } from "uuid";
-import type { AdaptiveRouter, EngineCallContext, ModelEscalationDecision } from "clawql-inference";
+import {
+  buildModelEscalationAuditEntry,
+  evaluateAgentCoordination,
+  type AdaptiveRouter,
+  type EngineCallContext,
+  type ModelEscalationDecision,
+} from "clawql-inference";
 import type { Seed } from "./seed.js";
 import type {
   EventStore,
@@ -13,6 +19,8 @@ import type {
 import { ConvergenceCriteria, type ConvergenceConfig } from "./convergence.js";
 import { driftReportPayload, measureDrift } from "./drift.js";
 import type { OntologyLineage } from "./lineage.js";
+import { appendInferenceAuditEvent } from "./glue/routing-audit.js";
+import { buildRoutingCorrelationId, buildRoutingFailureSignals } from "./glue/routing-failures.js";
 
 export interface LoopResult {
   lineage: OntologyLineage;
@@ -179,6 +187,53 @@ export class EvolutionaryLoop {
         });
         const finalLineage = await this.eventStore.getLineage(seed.metadata.seed_id);
         return { lineage: finalLineage, converged: true, finalSeed: currentSeed, generations };
+      }
+
+      const router = this.routingOptions.router;
+      if (router && routingDecision) {
+        const failureSignals = buildRoutingFailureSignals({
+          generationNumber,
+          evaluation,
+          driftReport,
+          convergenceConfig: convergence.config,
+        });
+        if (failureSignals.length) {
+          const correlationId = buildRoutingCorrelationId(seed.metadata.seed_id, generationNumber);
+          const before = routingDecision;
+          const after = router.escalate(before, failureSignals[0]!);
+          if (
+            after.tier !== before.tier ||
+            after.modelId !== before.modelId ||
+            after.retryAttempt > before.retryAttempt
+          ) {
+            await appendInferenceAuditEvent(
+              this.eventStore,
+              seed.metadata.seed_id,
+              buildModelEscalationAuditEntry({
+                before,
+                after,
+                correlationId,
+              })
+            );
+            routingDecision = after;
+            snapshot.routing = after;
+          }
+
+          const coordination = await evaluateAgentCoordination({
+            router,
+            decision: routingDecision,
+            signals: failureSignals,
+            driftCombined: driftReport.combined,
+            correlationId,
+          });
+          if (coordination.triggered && coordination.auditEntry) {
+            await appendInferenceAuditEvent(
+              this.eventStore,
+              seed.metadata.seed_id,
+              coordination.auditEntry
+            );
+          }
+        }
       }
 
       generationNumber++;

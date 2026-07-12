@@ -15,6 +15,9 @@ export type InferencePipelineConfig = {
   evaluateBeforePromote: boolean;
   outputDir: string;
   updatedAt: string;
+  lastRunAt?: string;
+  lastRunStatus?: "ok" | "skipped" | "error";
+  lastRunDetail?: string;
 };
 
 export const DEFAULT_PIPELINE_CONFIG: Omit<InferencePipelineConfig, "updatedAt"> = {

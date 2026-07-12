@@ -35,6 +35,10 @@ LiteLLM routes inference. ClawQL closes the loop: **infer → observe → evalua
 - **Semantic cache** — optional embedding similarity cache (`CLAWQL_INFERENCE_SEMANTIC_CACHE=1`); hits set `cache_hit` on inference records
 - **Fallback chains** — per-tier / per-model provider alternates when primary fails (`CLAWQL_INFERENCE_FALLBACK_ENABLED=1`)
 - **Virtual keys** — per-team API keys with budget and rate limits (`CLAWQL_INFERENCE_KEYS_ENABLED=1`)
+- **Postgres call store** — `CLAWQL_INFERENCE_STORE=postgres` with `CLAWQL_INFERENCE_DATABASE_URL`
+- **Ouroboros audit wiring** — `model_escalation` and `agent_coordination` events appended to lineage store (#561, #562)
+- **Policy CLI** — `clawql inference policy show` aggregates effective tier/cache/export config
+- **Pipeline cron worker** — `CLAWQL_INFERENCE_PIPELINE_WORKER=1` or `clawql inference pipeline worker`
 
 ## Planned modules
 
@@ -48,7 +52,7 @@ LiteLLM routes inference. ClawQL closes the loop: **infer → observe → evalua
 | `fallback/`      | Per-tier provider chains — try alternates before failing (**shipped**)                              |
 | `keys/`          | Virtual keys, per-team budgets (**shipped**)                                                        |
 | `api/`           | OpenAI-compatible `/v1/chat/completions`, `/v1/models`, SSE streaming (**shipped**)                 |
-| `store/`         | Inference call log (Postgres) — prompt, response, tier, tokens, verdict                             |
+| `store/`         | Inference call log (Postgres) — prompt, response, tier, tokens, verdict (**shipped** MVP)           |
 | `export/`        | Filtered dataset export + PII scrub (Presidio) + WORM dataset manifests (**shipped**)               |
 | `finetune/`      | Job submission, status polling, model registration back into tier map (**shipped**)                 |
 | `cli/`           | `clawql inference` subcommands (see below)                                                          |

@@ -1,5 +1,6 @@
 import { buildPipelineConfig, loadPipelineConfig, savePipelineConfig } from "../pipeline/config.js";
 import { runPipelineOnce } from "../pipeline/run.js";
+import { startPipelineWorker } from "../pipeline/worker.js";
 import type { InferencePipelineConfig } from "../pipeline/types.js";
 import type { EvaluatorVerdict } from "../store/types.js";
 import type { ExportFormat } from "../export/types.js";
@@ -62,6 +63,9 @@ export async function runInferencePipelineStatus(
     console.log(`target_tier: ${config.targetTier}`);
     console.log(`base_model: ${config.baseModel}`);
     console.log(`provider: ${config.provider}`);
+    if (config.lastRunAt) console.log(`last_run_at: ${config.lastRunAt}`);
+    if (config.lastRunStatus) console.log(`last_run_status: ${config.lastRunStatus}`);
+    if (config.lastRunDetail) console.log(`last_run_detail: ${config.lastRunDetail}`);
     console.log(`updated_at: ${config.updatedAt}`);
   }
   return 0;
@@ -114,4 +118,18 @@ export async function runInferencePipelineRun(
     console.error(error instanceof Error ? error.message : String(error));
     return 1;
   }
+}
+
+export async function runInferencePipelineWorker(
+  options: InferencePipelineCliOptions = {}
+): Promise<number> {
+  const env = options.env ?? process.env;
+  startPipelineWorker({ env });
+  if (options.json) {
+    console.log(JSON.stringify({ worker: "started" }, null, 2));
+    return 0;
+  }
+  console.log("Pipeline worker started (cron evaluation loop). Press Ctrl+C to stop.");
+  await new Promise<void>(() => {});
+  return 0;
 }

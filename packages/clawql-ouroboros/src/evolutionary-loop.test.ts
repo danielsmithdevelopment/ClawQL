@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { EvolutionaryLoop } from "./evolutionary-loop.js";
 import { InMemoryEventStore } from "./in-memory-event-store.js";
+import { TierEscalationRouter } from "clawql-inference";
 import type { Seed } from "./seed.js";
 
 function fixtureSeed(): Seed {
@@ -184,5 +185,47 @@ describe("EvolutionaryLoop", () => {
     expect(result.converged).toBe(false);
     expect(result.generations.length).toBe(4);
     expect(result.lineage.latest_drift?.band).toBe("exceeded");
+  });
+
+  it("appends model_escalation audit events when routing fails", async () => {
+    const store = new InMemoryEventStore();
+    const router = new TierEscalationRouter({
+      enabled: true,
+      tierMap: {
+        frugal: "ollama/phi4",
+        standard: "groq/llama",
+        frontier: "anthropic/claude",
+      },
+    });
+    const loop = new EvolutionaryLoop(
+      store,
+      {
+        wonder: async () => ({
+          insights: [],
+          suggested_refinements: [],
+          requires_evolution: true,
+        }),
+      },
+      {
+        reflect: async () => ({
+          newSeedData: {},
+          rationale: "noop",
+        }),
+      },
+      { execute: async () => "low quality output" },
+      {
+        evaluate: async () => ({
+          final_approved: false,
+          score: 0.1,
+          ac_results: [{ ac_index: 0, ac_content: "always", passed: false, evidence: "" }],
+        }),
+      },
+      { maxGenerations: 2, minGenerations: 1, evalMinScore: 0.7 },
+      { router }
+    );
+
+    await loop.run(fixtureSeed(), { maxGenerations: 2 });
+    const events = store.snapshot("seed_fixture_root");
+    expect(events.some((e) => e.type === "model_escalation")).toBe(true);
   });
 });

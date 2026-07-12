@@ -19,7 +19,9 @@ import {
   runInferencePipelineDisable,
   runInferencePipelineEnable,
   runInferencePipelineRun,
+  runInferencePipelineWorker,
   runInferencePipelineStatus,
+  runInferencePolicyShow,
   runInferenceServe,
   runInferenceSpend,
   runInferenceTrace,
@@ -234,4 +236,12 @@ export async function runInferenceKeysListCmd(opts: InferenceCliOptions): Promis
 
 export async function runInferenceKeysRevokeCmd(opts: InferenceCliOptions): Promise<number> {
   return runInferenceKeysRevoke({ id: opts.keyId, json: opts.json });
+}
+
+export async function runInferencePolicyShowCmd(opts: InferenceCliOptions): Promise<number> {
+  return runInferencePolicyShow({ json: opts.json });
+}
+
+export async function runInferencePipelineWorkerCmd(opts: InferenceCliOptions): Promise<number> {
+  return runInferencePipelineWorker({ json: opts.json });
 }

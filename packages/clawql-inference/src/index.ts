@@ -169,6 +169,29 @@ export {
 export { validateVirtualKey, extractPresentedApiKey } from "./keys/validate.js";
 export { createVirtualKeyAuthMiddleware, type VirtualKeyRequest } from "./api/auth.js";
 export type { VirtualKey, VirtualKeyContext, KeysConfig, RateLimitSpec } from "./keys/types.js";
+export { resolveInferencePolicy, type InferencePolicyView } from "./policy/resolve.js";
+export { runInferencePolicyShow, type InferencePolicyShowOptions } from "./cli/policy.js";
+export {
+  evaluateAgentCoordination,
+  type AgentCoordinationEvaluation,
+} from "./coordination/trigger.js";
+export {
+  invokeAgentCoordination,
+  type AgentCoordinationResult,
+  type AgentCoordinationMode,
+} from "./coordination/hermes-adapter.js";
+export { PostgresInferenceStore } from "./store/postgres.js";
+export {
+  getInferencePgPool,
+  ensureInferenceSchema,
+  closeInferencePgPool,
+} from "./store/postgres-pool.js";
+export { cronMatchesUtc } from "./pipeline/cron.js";
+export {
+  startPipelineWorker,
+  stopPipelineWorker,
+  runPipelineWorkerTickOnce,
+} from "./pipeline/worker.js";
 
 /** Optional context passed to host engines (Wonder / Reflect / Execute). */
 export interface EngineCallContext {
