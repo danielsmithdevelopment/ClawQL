@@ -22,7 +22,7 @@ import {
 import Highlighter from 'react-highlight-words'
 
 import { navigation } from '@/components/Navigation'
-import { type Result } from '@/mdx/search.mjs'
+import { search, type Result } from '@/mdx/search-runtime'
 import { useMobileNavigationStore } from './MobileNavigation'
 
 type EmptyObject = Record<string, never>
@@ -85,11 +85,11 @@ function useAutocomplete({ onNavigate }: { onNavigate: () => void }) {
         navigate,
       },
       getSources({ query }) {
-        return import('@/mdx/search.mjs').then(({ search }) => [
+        return search(query, { limit: 5 }).then((results) => [
           {
             sourceId: 'documentation',
             getItems() {
-              return search(query, { limit: 5 })
+              return results
             },
             getItemUrl({ item }: { item: Result }) {
               return item.url

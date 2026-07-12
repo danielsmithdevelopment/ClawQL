@@ -19,10 +19,20 @@ const trainingDir = path.join(
   websiteRoot,
   'src/generated/security-training/bodies',
 )
+const generatedDir = path.join(websiteRoot, 'src/generated')
+const pluginsBodiesDir = path.join(
+  websiteRoot,
+  'src/generated/clawql-plugins/bodies',
+)
 
 fs.mkdirSync(outDir, { recursive: true })
 
-const pages = collectSearchIndexPages({ appDir, trainingDir })
+const pages = collectSearchIndexPages({
+  appDir,
+  trainingDir,
+  generatedDir,
+  pluginsBodiesDir,
+})
 const chunks = groupPagesByChunk(pages)
 
 const manifestChunks = []
