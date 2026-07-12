@@ -16,6 +16,7 @@ import { CloseButton } from '@headlessui/react'
 const Search = dynamic(
   () => import('@/components/Search').then((m) => ({ default: m.Search })),
   {
+    ssr: false,
     loading: () => (
       <div
         className="hidden h-8 w-full max-w-md lg:block lg:max-w-md lg:flex-auto"
@@ -29,6 +30,7 @@ const MobileSearch = dynamic(
   () =>
     import('@/components/Search').then((m) => ({ default: m.MobileSearch })),
   {
+    ssr: false,
     loading: () => <div className="size-6 shrink-0 lg:hidden" aria-hidden />,
   },
 )
