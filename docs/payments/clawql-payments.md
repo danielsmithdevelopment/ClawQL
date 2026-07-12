@@ -311,6 +311,10 @@ sequenceDiagram
 
 When `CLAWQL_X402_ENFORCE=1`, **native MCP tool calls** (`tools/call` over stdio, Streamable HTTP `/mcp`, or gRPC session transport) run the same `enforceX402Gate()` path as inference HTTP middleware — before the tool handler executes.
 
+Enforcement is registered as **`PaymentsX402ProxyPlugin`** (`kind: mcp-proxy`) on the shared **`McpProxyPipeline`** alongside Panguard — all MCP tools pass through `wrapRegisteredMcpToolHandler` → `runMcpProxyBeforeCallTool`. Disable the plugin with `CLAWQL_PAYMENTS_X402_PROXY_PLUGIN=0` (rare; prefer turning off `CLAWQL_X402_ENFORCE`).
+
+Effect entrypoints: `mcpX402BeforeCallToolEffect` (x402), `PaymentAuditService` + `makePaymentsLayer()` (`clawql-payments/plugin`) for hosts composing custom `createClawQLApi({ pluginLayers })` runtimes.
+
 Configure gates with `clawql payments x402 gate --tool <name> --price <usdc>`.
 
 **Payment proof on MCP transports:**

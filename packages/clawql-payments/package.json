@@ -38,6 +38,11 @@
       "import": "./dist/discovery/index.js",
       "require": "./dist/discovery/index.cjs"
     },
+    "./plugin": {
+      "types": "./dist/plugin/index.d.ts",
+      "import": "./dist/plugin/index.js",
+      "require": "./dist/plugin/index.cjs"
+    },
     "./package.json": "./package.json"
   },
   "bin": {
@@ -51,7 +56,9 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "clawql-api": "7.0.0",
     "clawql-core": "7.0.0",
+    "effect": "^3.21.4",
     "stripe": "^18.5.0",
     "pg": "^8.21.0",
     "zod": "^4.3.6"
