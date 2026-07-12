@@ -251,15 +251,37 @@ Keys persist at `$CLAWQL_HOME/Inference/virtual-keys.json` (secrets stored as SH
 
 ---
 
-## Plan entitlements (`clawql-payments`)
+## Plan entitlements and payments (`clawql-payments`)
 
-When `CLAWQL_PAYMENTS_ENFORCE_INFERENCE=1`, the gateway checks plan limits before each completion and increments `inference_calls` usage after success. Tenant resolution order:
+The inference HTTP server integrates with [`clawql-payments`](../payments/clawql-payments.md) for three **independent** billing modes:
+
+| Mode | Toggle | Behavior |
+| ---- | ------ | -------- |
+| Plan entitlements | `CLAWQL_PAYMENTS_ENFORCE_INFERENCE=1` | Pre-check monthly caps; 402 `insufficient_quota` when over limit |
+| Stripe meters | `CLAWQL_PAYMENTS_REPORT_STRIPE_METER=1` | Post-call `meterEvents.create` (requires Dashboard meter + customer id) |
+| x402 pay-per-call | `CLAWQL_X402_ENFORCE=1` | Middleware returns 402 until facilitator verifies `PAYMENT-SIGNATURE` |
+
+When plan enforcement is enabled, the gateway checks limits before each completion and increments `inference_calls` in `usage.json` after success. Tenant resolution order:
 
 1. `x-clawql-tenant-id` header
 2. Virtual key `team`
-3. `$CLAWQL_HOME/Payments` config default tenant
+3. `$CLAWQL_HOME/Payments/payments.json` default tenant
 
-Limit breaches throw `EntitlementLimitError` (HTTP 402-shaped OpenAI error) and append a WORM payment audit entry. Configure plans via `clawql payments` — see `packages/clawql-payments`.
+Limit breaches throw `EntitlementLimitError` (HTTP 402-shaped OpenAI error) and append a WORM payment audit entry.
+
+**Middleware order** in `createInferenceHttpApp()`: x402 payment middleware → virtual key auth → OpenAI-compat router.
+
+**Do not conflate** plan usage (`usage.json`), inference call-store tokens (`clawql inference spend`), and virtual-key USD budgets — see [Three usage systems](../payments/clawql-payments.md#three-usage-systems-do-not-conflate).
+
+```bash
+export CLAWQL_PAYMENTS_ENFORCE_INFERENCE=1
+export CLAWQL_PAYMENTS_REPORT_STRIPE_METER=1
+export STRIPE_METER_EVENT_NAME=clawql_inference_calls
+export CLAWQL_X402_ENFORCE=1
+
+clawql payments plan show
+clawql inference serve --port 8080
+```
 
 ---
 

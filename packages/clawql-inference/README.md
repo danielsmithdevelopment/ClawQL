@@ -114,6 +114,8 @@ clawql payments usage report
 
 Tenant resolution order: `InferenceRequest.tenantId` → virtual key `team` → `payments.json` `tenantId` → `"default"`.
 
+When `CLAWQL_PAYMENTS_REPORT_STRIPE_METER=1`, each recorded inference call emits a Stripe Billing Meter event (requires customer id and Dashboard meter). See [`docs/payments/clawql-payments.md`](../../docs/payments/clawql-payments.md).
+
 Streaming requests that bypass the gateway (provider-native SSE) are still entitlement-checked at the HTTP layer.
 
 ## x402 micropayments (`clawql-payments`)
@@ -224,6 +226,12 @@ Subpath: `clawql-inference/plugin` for builtin factories and compose helpers.
 | `CLAWQL_INFERENCE_STORE`                      | jsonl when `CLAWQL_HOME` set | Inference call store: memory, jsonl, postgres        |
 | `CLAWQL_INFERENCE_DATABASE_URL`               | —                            | Postgres URL when store=postgres                     |
 | `CLAWQL_INFERENCE_PIPELINE_WORKER`            | off                          | Start cron worker with `inference serve`             |
+| `CLAWQL_PAYMENTS_ENFORCE_INFERENCE`           | off                          | Enforce managed plan inference caps                      |
+| `CLAWQL_PAYMENTS_REPORT_STRIPE_METER`         | off                          | Report inference calls to Stripe Billing Meters        |
+| `STRIPE_METER_EVENT_NAME`                     | —                            | Dashboard meter event name                             |
+| `STRIPE_CUSTOMER_ID`                          | —                            | Stripe customer for meter events                       |
+| `CLAWQL_X402_ENFORCE`                         | off                          | x402 402 gate on configured routes                     |
+| `CLAWQL_X402_FACILITATOR_URL`                 | x402.org testnet facilitator | x402 verify/settle endpoint                            |
 | `CLAWQL_INFERENCE_AGENT_COORDINATION_ENABLED` | off                          | Enable Hermes coordination stub (#562)               |
 | `HERMES_BASE_URL`                             | —                            | Hermes MoA endpoint when coordination enabled        |
 
@@ -237,6 +245,6 @@ Model ids use `provider/model` (e.g. `ollama/phi4`, `anthropic/claude-sonnet-4`)
 
 ## Roadmap
 
-See [clawql-inference on docs.clawql.com](https://docs.clawql.com/inference/clawql-inference) for the full gateway reference, architecture, and wiring guide.
+See [clawql-inference on docs.clawql.com](https://docs.clawql.com/inference/clawql-inference) for the full gateway reference, architecture, and wiring guide. Repo copy: [`docs/inference/clawql-inference.md`](../../docs/inference/clawql-inference.md). Payments: [`docs/payments/clawql-payments.md`](../../docs/payments/clawql-payments.md).
 
 Epic [#556](https://github.com/danielsmithdevelopment/ClawQL/issues/556).
