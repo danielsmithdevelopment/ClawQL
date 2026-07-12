@@ -45,7 +45,7 @@ LiteLLM routes inference. ClawQL closes the loop: **infer → observe → evalua
 | `observability/` | Langfuse (ADR 0005), OpenTelemetry, WORM `correlation_id`                                           |
 | `fallback/`      | Per-tier provider chains                                                                            |
 | `keys/`          | Virtual keys, per-team budgets                                                                      |
-| `api/`           | OpenAI-compatible `/v1/chat/completions`, `/v1/models`, SSE streaming (**shipped**)                |
+| `api/`           | OpenAI-compatible `/v1/chat/completions`, `/v1/models`, SSE streaming (**shipped**)                 |
 | `store/`         | Inference call log (Postgres) — prompt, response, tier, tokens, verdict                             |
 | `export/`        | Filtered dataset export + PII scrub (Presidio) + WORM dataset manifests (**shipped**)               |
 | `finetune/`      | Job submission, status polling, model registration back into tier map (**shipped**)                 |
