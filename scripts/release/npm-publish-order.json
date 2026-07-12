@@ -10,6 +10,7 @@
     "clawql-sandbox",
     "clawql-documents",
     "clawql-automation",
+    "clawql-inference",
     "clawql-ouroboros",
     "clawql-operator",
     "clawql-mcp"
