@@ -60,6 +60,7 @@ import {
   runPaymentsStripeSetupCmd,
   runPaymentsStripeSubscriptionCreateCmd,
   runPaymentsStripeWebhookListenCmd,
+  runPaymentsStripeWebhookVerifyCmd,
   runPaymentsUsageReportCmd,
   runPaymentsX402GateCmd,
   runPaymentsX402GateListCmd,
@@ -182,6 +183,8 @@ function parse(argv: string[]): {
     else if (a === "--account-id") flags.accountId = argv[++i] ?? "";
     else if (a === "--publishable-key") flags.publishableKey = argv[++i] ?? "";
     else if (a === "--webhook-secret") flags.webhookSecret = argv[++i] ?? "";
+    else if (a === "--payload") flags.payloadPath = argv[++i] ?? "";
+    else if (a === "--process") flags.process = true;
     else if (a === "--facilitator-url") flags.facilitatorUrl = argv[++i] ?? "";
     else if (a === "--tenant-id") flags.tenantId = argv[++i] ?? "";
     else if (a === "--skip-verify") flags.skipVerify = true;
@@ -252,7 +255,7 @@ Usage:
   clawql inference pipeline enable [--schedule "0 2 * * 0"] [--min-samples 500] | status | disable | run
   clawql inference finetune status --job-id <id> | register --job-id <id> --tier frugal --alias <model>
   clawql payments plan show | upgrade --tier team | usage report [--month YYYY-MM]
-  clawql payments stripe setup | customer create --email user@acme.com | subscription create | invoice create
+  clawql payments stripe setup | customer create --email user@acme.com | subscription create | invoice create | webhook verify
   clawql payments x402 wallet setup --address 0x... | gate --tool knowledge_search --price 0.001 | verify | reconcile
   clawql payments spend report [--group-by provider|tenant|plan] | audit [--correlation-id ID]
   clawql claude | codex | cursor | opencode [-- harness args...]
@@ -796,6 +799,8 @@ async function main(): Promise<void> {
       webhookSecret: typeof flags.webhookSecret === "string" ? flags.webhookSecret : undefined,
       facilitatorUrl:
         typeof flags.facilitatorUrl === "string" ? flags.facilitatorUrl : undefined,
+      payloadPath: typeof flags.payloadPath === "string" ? flags.payloadPath : undefined,
+      process: Boolean(flags.process),
     };
 
     if (subcmd === "plan") {
@@ -841,8 +846,12 @@ async function main(): Promise<void> {
         process.exitCode = await runPaymentsStripeWebhookListenCmd();
         return;
       }
+      if (stripeAction === "webhook" && rest[1] === "verify") {
+        process.exitCode = await runPaymentsStripeWebhookVerifyCmd(paymentsOpts);
+        return;
+      }
       console.error(
-        "Usage: clawql payments stripe setup | customer create | subscription create | invoice create | webhook listen"
+        "Usage: clawql payments stripe setup | customer create | subscription create | invoice create | webhook listen | webhook verify"
       );
       process.exitCode = 1;
       return;

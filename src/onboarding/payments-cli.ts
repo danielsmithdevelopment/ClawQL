@@ -12,6 +12,7 @@ import {
   runPaymentsStripeSetup,
   runPaymentsStripeSubscriptionCreate,
   runPaymentsStripeWebhookListen,
+  runPaymentsStripeWebhookVerify,
   runPaymentsUsageReport,
   runPaymentsX402Gate,
   runPaymentsX402GateList,
@@ -47,6 +48,8 @@ export type PaymentsCliOptions = {
   publishableKey?: string;
   webhookSecret?: string;
   facilitatorUrl?: string;
+  payloadPath?: string;
+  process?: boolean;
 };
 
 export async function runPaymentsPlanShowCmd(
@@ -122,14 +125,26 @@ export async function runPaymentsStripeInvoiceCreateCmd(
   return runPaymentsStripeInvoiceCreate({
     customer: options.customer,
     amount: options.amount,
-    tenantId: options.tenantId,
-    correlationId: options.correlationId,
     json: options.json,
   });
 }
 
 export async function runPaymentsStripeWebhookListenCmd(): Promise<number> {
   return runPaymentsStripeWebhookListen();
+}
+
+export async function runPaymentsStripeWebhookVerifyCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsStripeWebhookVerify({
+    payloadPath: options.payloadPath,
+    signature: options.signature,
+    webhookSecret: options.webhookSecret,
+    process: options.process,
+    tenantId: options.tenantId,
+    correlationId: options.correlationId,
+    json: options.json,
+  });
 }
 
 export async function runPaymentsX402WalletSetupCmd(
