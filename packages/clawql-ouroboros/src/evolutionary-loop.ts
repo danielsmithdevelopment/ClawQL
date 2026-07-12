@@ -46,7 +46,7 @@ export class EvolutionaryLoop {
     private readonly executor: Executor,
     private readonly evaluator: Evaluator,
     config: Partial<ConvergenceConfig> = {},
-    private readonly routingOptions: LoopRoutingOptions = {},
+    private readonly routingOptions: LoopRoutingOptions = {}
   ) {
     this.convergence = new ConvergenceCriteria(config);
   }
@@ -84,18 +84,14 @@ export class EvolutionaryLoop {
       if (generationNumber > 1) {
         const prevGen = generations[generations.length - 1];
 
-        latestWonder = await this.wonderEngine.wonder(
-          currentSeed,
-          prevGen.evaluation,
-          engineCtx,
-        );
+        latestWonder = await this.wonderEngine.wonder(currentSeed, prevGen.evaluation, engineCtx);
 
         const reflect = await this.reflectEngine.reflect(
           currentSeed,
           prevGen.executionOutput,
           prevGen.evaluation,
           latestWonder,
-          engineCtx,
+          engineCtx
         );
 
         currentSeed = {
@@ -160,7 +156,13 @@ export class EvolutionaryLoop {
 
       const lineage = await this.eventStore.getLineage(seed.metadata.seed_id);
 
-      const signal = convergence.evaluate(lineage, latestWonder, evaluation, undefined, driftReport);
+      const signal = convergence.evaluate(
+        lineage,
+        latestWonder,
+        evaluation,
+        undefined,
+        driftReport
+      );
 
       if (signal.converged) {
         await this.eventStore.append({

@@ -200,7 +200,7 @@ function inferOntologyFields(
 
 async function resolveBaselineSeed(
   input: z.infer<typeof MeasureDriftSchema>,
-  eventStore: EventStore,
+  eventStore: EventStore
 ): Promise<Seed | null> {
   if (input.seed !== undefined) {
     return SeedSchema.parse(input.seed);
@@ -359,7 +359,7 @@ export const ouroborosMcpTools = {
 
     handler: async (
       input: z.infer<typeof MeasureDriftSchema>,
-      context: OuroborosContext,
+      context: OuroborosContext
     ): Promise<
       | { ok: true; report: ReturnType<typeof driftReportPayload>; seedId: string | null }
       | { ok: false; error: string }

@@ -33,7 +33,7 @@ export interface WonderEngine {
   wonder(
     seed: Seed,
     previousEvaluation?: EvaluationSummary,
-    ctx?: EngineCallContext,
+    ctx?: EngineCallContext
   ): Promise<WonderOutput>;
 }
 
@@ -43,7 +43,7 @@ export interface ReflectEngine {
     executionOutput: string,
     evaluation: EvaluationSummary | undefined,
     wonder: WonderOutput,
-    ctx?: EngineCallContext,
+    ctx?: EngineCallContext
   ): Promise<ReflectOutput>;
 }
 
@@ -52,5 +52,9 @@ export interface Executor {
 }
 
 export interface Evaluator {
-  evaluate(executionOutput: string, seed: Seed, ctx?: EngineCallContext): Promise<EvaluationSummary>;
+  evaluate(
+    executionOutput: string,
+    seed: Seed,
+    ctx?: EngineCallContext
+  ): Promise<EvaluationSummary>;
 }

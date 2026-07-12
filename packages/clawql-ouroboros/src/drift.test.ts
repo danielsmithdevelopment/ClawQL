@@ -23,9 +23,24 @@ function baselineSeed(overrides: Partial<Seed> = {}): Seed {
       name: "ReleaseOntology",
       description: "Release automation concepts",
       fields: [
-        { name: "workflow", field_type: "string", description: "GitHub Actions workflow", required: true },
-        { name: "rollback", field_type: "string", description: "Rollback procedure", required: true },
-        { name: "semver", field_type: "string", description: "Semantic version tag", required: true },
+        {
+          name: "workflow",
+          field_type: "string",
+          description: "GitHub Actions workflow",
+          required: true,
+        },
+        {
+          name: "rollback",
+          field_type: "string",
+          description: "Rollback procedure",
+          required: true,
+        },
+        {
+          name: "semver",
+          field_type: "string",
+          description: "Semantic version tag",
+          required: true,
+        },
       ],
     },
     evaluation_principles: [],

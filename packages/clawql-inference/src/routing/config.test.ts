@@ -43,7 +43,7 @@ describe("createAdaptiveRouter", () => {
 
   it("returns router when enabled", () => {
     const router = createAdaptiveRouter(
-      loadPalRoutingConfig({ CLAWQL_INFERENCE_ROUTING_ENABLED: "1" }),
+      loadPalRoutingConfig({ CLAWQL_INFERENCE_ROUTING_ENABLED: "1" })
     );
     expect(router).toBeInstanceOf(PalAdaptiveRouter);
   });

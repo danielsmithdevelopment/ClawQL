@@ -11,11 +11,7 @@ export interface ModelTierMap {
 export type ModelTier = "frugal" | "standard" | "frontier";
 
 export type RoutingFailureKind =
-  | "ac_failed"
-  | "eval_below_min"
-  | "drift_exceeded"
-  | "nsv_below_crit"
-  | "regression";
+  "ac_failed" | "eval_below_min" | "drift_exceeded" | "nsv_below_crit" | "regression";
 
 export interface RoutingFailureSignal {
   kind: RoutingFailureKind;
@@ -39,6 +35,6 @@ export interface AdaptiveRouter {
   shouldTriggerMoa(
     pal: PalRoutingDecision,
     signals: RoutingFailureSignal[],
-    drift?: { combined: number },
+    drift?: { combined: number }
   ): boolean;
 }

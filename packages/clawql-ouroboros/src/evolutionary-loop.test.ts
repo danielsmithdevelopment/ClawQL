@@ -72,7 +72,7 @@ describe("EvolutionaryLoop", () => {
         maxGenerations: 10,
         convergenceThreshold: 0.95,
         evalMinScore: 0.7,
-      },
+      }
     );
 
     const result = await loop.run(fixtureSeed());
@@ -82,7 +82,9 @@ describe("EvolutionaryLoop", () => {
     expect(result.lineage.status).toBe("converged");
     expect(result.lineage.generations.length).toBe(result.generations.length);
 
-    const driftEvents = store.snapshot("seed_fixture_root").filter((e) => e.type === "drift_measured");
+    const driftEvents = store
+      .snapshot("seed_fixture_root")
+      .filter((e) => e.type === "drift_measured");
     expect(driftEvents.length).toBe(result.generations.length);
   });
 
@@ -123,7 +125,7 @@ describe("EvolutionaryLoop", () => {
           ac_results: [{ ac_index: 0, ac_content: "c", passed: false, evidence: "" }],
         }),
       },
-      { maxGenerations: 100 },
+      { maxGenerations: 100 }
     );
 
     const result = await loop.run(fixtureSeed(), { maxGenerations: 3 });
@@ -175,7 +177,7 @@ describe("EvolutionaryLoop", () => {
         convergenceThreshold: 0.9,
         driftGateEnabled: true,
         driftMaxCombined: 0.3,
-      },
+      }
     );
 
     const result = await loop.run(root, { maxGenerations: 4 });

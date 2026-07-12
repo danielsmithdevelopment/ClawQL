@@ -43,7 +43,7 @@ describe("ouroborosMcpTools", () => {
         metadata: { title: "Ignored title" },
         taskType: "analysis",
       },
-      {} as never,
+      {} as never
     );
 
     expect(result.success).toBe(true);
@@ -102,7 +102,10 @@ describe("ouroborosMcpTools", () => {
       eventStore: { getLineage },
     } as never;
 
-    const res = await ouroborosMcpTools.getLineageStatus.handler({ seedId: "seed-lineage" }, context);
+    const res = await ouroborosMcpTools.getLineageStatus.handler(
+      { seedId: "seed-lineage" },
+      context
+    );
     expect(getLineage).toHaveBeenCalledWith("seed-lineage");
     expect(res.seed_id).toBe("seed-lineage");
   });
@@ -144,7 +147,7 @@ describe("ouroborosMcpTools", () => {
         currentOutput: "GitHub Actions workflow without secrets in git",
         currentConcepts: ["workflow"],
       },
-      context,
+      context
     );
 
     expect(res.ok).toBe(true);

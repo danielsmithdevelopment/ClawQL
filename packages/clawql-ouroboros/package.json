@@ -51,7 +51,7 @@
     "uuid": "^14.0.0",
     "zod": "^4.3.6"
   },
-    "devDependencies": {
+  "devDependencies": {
     "@types/node": "^26.1.1",
     "@types/pg": "^8.20.0",
     "tsup": "^8.3.0",

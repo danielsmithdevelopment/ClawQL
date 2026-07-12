@@ -46,7 +46,9 @@ function readTierMap(env: NodeJS.ProcessEnv): ModelTierMap {
  * - `CLAWQL_INFERENCE_ROUTING_ENABLED=0` (or unset) disables routing
  * - `CLAWQL_INFERENCE_MODEL_PIN=<modelId>` pins a model (implies routing on)
  */
-export function loadPalRoutingConfig(env: NodeJS.ProcessEnv = process.env): PalRoutingRuntimeConfig {
+export function loadPalRoutingConfig(
+  env: NodeJS.ProcessEnv = process.env
+): PalRoutingRuntimeConfig {
   const modelPin =
     env.CLAWQL_INFERENCE_MODEL_PIN?.trim() || env.CLAWQL_PAL_MODEL_PIN?.trim() || undefined;
   const enabled =
@@ -62,9 +64,7 @@ export function loadPalRoutingConfig(env: NodeJS.ProcessEnv = process.env): PalR
 }
 
 /** Create a PAL router when routing is enabled or a model pin is set. */
-export function createAdaptiveRouter(
-  config: PalRoutingRuntimeConfig,
-): AdaptiveRouter | undefined {
+export function createAdaptiveRouter(config: PalRoutingRuntimeConfig): AdaptiveRouter | undefined {
   if (!config.enabled && !config.modelPin) return undefined;
   return new PalAdaptiveRouter(config);
 }

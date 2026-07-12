@@ -41,7 +41,7 @@ function tokenize(text: string): Set<string> {
     text
       .toLowerCase()
       .split(/\W+/)
-      .filter((t) => t.length >= 3),
+      .filter((t) => t.length >= 3)
   );
 }
 
@@ -75,7 +75,7 @@ function measureGoalDrift(goal: string, currentOutput: string): number {
 function measureConstraintDrift(
   constraints: string[],
   currentOutput: string,
-  explicitViolations: string[],
+  explicitViolations: string[]
 ): number {
   const violationPenalty = clamp01(Math.min(1, explicitViolations.length * 0.2));
 
@@ -89,9 +89,17 @@ function measureConstraintDrift(
   return clamp01(Math.max(violationPenalty, avgUnsatisfied));
 }
 
-function conceptPresent(concept: string, currentOutput: string, currentConcepts: string[]): boolean {
+function conceptPresent(
+  concept: string,
+  currentOutput: string,
+  currentConcepts: string[]
+): boolean {
   const needle = concept.toLowerCase();
-  if (currentConcepts.some((c) => c.toLowerCase().includes(needle) || needle.includes(c.toLowerCase()))) {
+  if (
+    currentConcepts.some(
+      (c) => c.toLowerCase().includes(needle) || needle.includes(c.toLowerCase())
+    )
+  ) {
     return true;
   }
   return currentOutput.toLowerCase().includes(needle);
@@ -100,19 +108,19 @@ function conceptPresent(concept: string, currentOutput: string, currentConcepts:
 function measureOntologyDrift(
   baselineSeed: Seed,
   currentOutput: string,
-  currentConcepts: string[],
+  currentConcepts: string[]
 ): number {
   const fieldNames = baselineSeed.ontology_schema.fields.map((f) => f.name);
   const expected =
-    currentConcepts.length > 0
-      ? [...new Set([...fieldNames, ...currentConcepts])]
-      : fieldNames;
+    currentConcepts.length > 0 ? [...new Set([...fieldNames, ...currentConcepts])] : fieldNames;
 
   if (expected.length === 0) {
     return 0;
   }
 
-  const matched = expected.filter((name) => conceptPresent(name, currentOutput, currentConcepts)).length;
+  const matched = expected.filter((name) =>
+    conceptPresent(name, currentOutput, currentConcepts)
+  ).length;
   const coverage = matched / expected.length;
   return clamp01(1 - coverage);
 }
@@ -125,14 +133,18 @@ export function measureDrift(input: MeasureDriftInput): DriftReport {
   const constraint_drift = measureConstraintDrift(
     input.baselineSeed.constraints,
     input.currentOutput,
-    constraintViolations,
+    constraintViolations
   );
-  const ontology_drift = measureOntologyDrift(input.baselineSeed, input.currentOutput, currentConcepts);
+  const ontology_drift = measureOntologyDrift(
+    input.baselineSeed,
+    input.currentOutput,
+    currentConcepts
+  );
 
   const combined_drift = clamp01(
     DRIFT_WEIGHTS.goal * goal_drift +
       DRIFT_WEIGHTS.constraint * constraint_drift +
-      DRIFT_WEIGHTS.ontology * ontology_drift,
+      DRIFT_WEIGHTS.ontology * ontology_drift
   );
 
   return {
@@ -150,7 +162,7 @@ export function measureDrift(input: MeasureDriftInput): DriftReport {
 /** Serialize a drift report for event store / MCP responses. */
 export function driftReportPayload(
   report: DriftReport,
-  extras: Record<string, unknown> = {},
+  extras: Record<string, unknown> = {}
 ): Record<string, unknown> {
   return {
     goal_drift: round3(report.goal_drift),

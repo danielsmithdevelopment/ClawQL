@@ -40,7 +40,7 @@ function lineageFromFieldsList(
   options?: {
     scores?: number[];
     executionOutputs?: string[];
-  },
+  }
 ): OntologyLineage {
   const generations = fieldSets.map((fields, i) => ({
     generation_number: i + 1,
@@ -109,7 +109,12 @@ describe("ConvergenceCriteria", () => {
 
   it("converges when ontology is stable and gates pass", () => {
     const fields = [
-      { name: "a", field_type: "string", description: "identical description text", required: true },
+      {
+        name: "a",
+        field_type: "string",
+        description: "identical description text",
+        required: true,
+      },
     ];
     const lin = lineageFromFieldsList("id", [fields, fields]);
     const c = new ConvergenceCriteria({
@@ -127,7 +132,12 @@ describe("ConvergenceCriteria", () => {
 
   it("does not converge when final approval is false", () => {
     const fields = [
-      { name: "a", field_type: "string", description: "identical description text", required: true },
+      {
+        name: "a",
+        field_type: "string",
+        description: "identical description text",
+        required: true,
+      },
     ];
     const lin = lineageFromFieldsList("id", [fields, fields]);
     const c = new ConvergenceCriteria({
@@ -192,7 +202,12 @@ describe("ConvergenceCriteria", () => {
 
   it("blocks similarity convergence when combined drift exceeds threshold", () => {
     const fields = [
-      { name: "a", field_type: "string", description: "identical description text", required: true },
+      {
+        name: "a",
+        field_type: "string",
+        description: "identical description text",
+        required: true,
+      },
     ];
     const lin = lineageFromFieldsList("id-drift", [fields, fields]);
     const c = new ConvergenceCriteria({
@@ -214,7 +229,12 @@ describe("ConvergenceCriteria", () => {
 
   it("allows similarity convergence when drift is within threshold", () => {
     const fields = [
-      { name: "a", field_type: "string", description: "identical description text", required: true },
+      {
+        name: "a",
+        field_type: "string",
+        description: "identical description text",
+        required: true,
+      },
     ];
     const lin = lineageFromFieldsList("id-drift-ok", [fields, fields]);
     const c = new ConvergenceCriteria({

@@ -60,7 +60,7 @@ export class PalAdaptiveRouter implements AdaptiveRouter {
   shouldTriggerMoa(
     _pal: PalRoutingDecision,
     _signals: RoutingFailureSignal[],
-    _drift?: { combined: number },
+    _drift?: { combined: number }
   ): boolean {
     return false;
   }

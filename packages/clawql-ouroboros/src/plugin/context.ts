@@ -43,7 +43,7 @@ export function getOuroborosContext(): OuroborosContext {
       engines.execute,
       engines.evaluate,
       {},
-      { router },
+      { router }
     );
     ctxCache = { ouroborosLoop, eventStore };
   }
