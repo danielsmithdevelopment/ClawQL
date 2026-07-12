@@ -41,7 +41,7 @@ LiteLLM routes inference. ClawQL closes the loop: **infer → observe → evalua
 | `routing/`       | Model tier escalation + `ModelTierMap` (**shipped** foundation)                                     |
 | `providers/`     | **Provider plugins** — builtins (OpenAI, Anthropic, Ollama) + optional extensions (**shipped** MVP) |
 | `local/`         | Ollama, vLLM, Llama.cpp                                                                             |
-| `cache/`         | Semantic cache — embedding similarity, TTL, per-model keys (**shipped**)                          |
+| `cache/`         | Semantic cache — embedding similarity, TTL, per-model keys (**shipped**)                            |
 | `observability/` | Langfuse (ADR 0005), OpenTelemetry, WORM `correlation_id`                                           |
 | `fallback/`      | Per-tier provider chains                                                                            |
 | `keys/`          | Virtual keys, per-team budgets                                                                      |
