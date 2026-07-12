@@ -42,10 +42,7 @@ export {
   buildPaymentRequirements,
   buildPaymentRequired,
 } from "./requirements.js";
-export {
-  parseX402PaymentPayloadHeader,
-  readX402PaymentHeader,
-} from "./headers.js";
+export { parseX402PaymentPayloadHeader, readX402PaymentHeader } from "./headers.js";
 export {
   enforceX402Gate,
   paymentRequiredHeaders,

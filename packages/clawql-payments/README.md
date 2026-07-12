@@ -17,7 +17,7 @@ clawql-payments
 
 ## CLI
 
-```bash
+````bash
 # ClawQL managed billing (internal + self-hosted)
 clawql payments plan show
 clawql payments plan upgrade --tier team
@@ -42,7 +42,7 @@ clawql payments stripe meter report --value 1 --customer cus_xxx
 
 # Verify webhook signatures before processing (required before going live)
 clawql payments stripe webhook verify --payload ./event.json --signature "t=...,v1=..." --process
-```
+````
 
 Payment audit events (`STRIPE_INVOICE_PAID`, `STRIPE_PAYMENT_FAILED`, etc.) are written when verified webhooks are processed — not at invoice creation time.
 

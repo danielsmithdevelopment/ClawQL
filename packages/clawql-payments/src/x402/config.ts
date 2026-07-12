@@ -43,10 +43,7 @@ export async function loadX402RuntimeConfig(
   };
 }
 
-export function resolveFacilitatorEndpoint(
-  baseUrl: string,
-  action: "verify" | "settle"
-): string {
+export function resolveFacilitatorEndpoint(baseUrl: string, action: "verify" | "settle"): string {
   const trimmed = baseUrl.replace(/\/+$/, "");
   if (trimmed.endsWith(`/${action}`)) return trimmed;
   if (trimmed.endsWith("/x402")) return `${trimmed}/${action}`;

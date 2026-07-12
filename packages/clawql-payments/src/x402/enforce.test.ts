@@ -38,10 +38,7 @@ describe("x402 gate enforcement", () => {
   });
 
   it("returns 402 payment required when gate exists and no proof is attached", async () => {
-    await createX402Gate(
-      { resource: "/v1/chat/completions", price: 0.001, asset: "USDC" },
-      env
-    );
+    await createX402Gate({ resource: "/v1/chat/completions", price: 0.001, asset: "USDC" }, env);
 
     const result = await enforceX402Gate({
       resource: "/v1/chat/completions",
@@ -57,10 +54,7 @@ describe("x402 gate enforcement", () => {
   });
 
   it("verifies payment via facilitator and allows request", async () => {
-    await createX402Gate(
-      { resource: "/v1/chat/completions", price: 0.001, asset: "USDC" },
-      env
-    );
+    await createX402Gate({ resource: "/v1/chat/completions", price: 0.001, asset: "USDC" }, env);
 
     const payload = {
       x402Version: 2,

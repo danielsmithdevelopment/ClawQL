@@ -10,7 +10,9 @@ export function buildPaymentRequirements(input: {
 }): X402PaymentRequirements {
   const payTo = input.config.walletAddress;
   if (!payTo?.trim()) {
-    throw new Error("x402 wallet address is not configured — run clawql payments x402 wallet setup");
+    throw new Error(
+      "x402 wallet address is not configured — run clawql payments x402 wallet setup"
+    );
   }
 
   return {

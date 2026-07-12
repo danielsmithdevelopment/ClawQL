@@ -27,8 +27,7 @@ export type X402FacilitatorVerifyResult =
 export type X402FacilitatorSettleInput = X402FacilitatorVerifyInput;
 
 export type X402FacilitatorSettleResult =
-  | { settled: true; transaction: string }
-  | { settled: false; reason: string };
+  { settled: true; transaction: string } | { settled: false; reason: string };
 
 async function postFacilitatorJson<T>(
   url: string,

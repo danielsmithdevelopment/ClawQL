@@ -1,9 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import {
-  resolveFacilitatorEndpoint,
-  usdcAtomicAmount,
-  isX402EnforcementActive,
-} from "./config.js";
+import { resolveFacilitatorEndpoint, usdcAtomicAmount, isX402EnforcementActive } from "./config.js";
 import { verifyViaFacilitator } from "./facilitator.js";
 import type { X402PaymentPayloadV2, X402PaymentRequirements } from "./types.js";
 
@@ -12,9 +8,9 @@ describe("x402 facilitator HTTP", () => {
     expect(resolveFacilitatorEndpoint("https://x402.org/facilitator", "verify")).toBe(
       "https://x402.org/facilitator/verify"
     );
-    expect(resolveFacilitatorEndpoint("https://api.cdp.coinbase.com/platform/v2/x402", "verify")).toBe(
-      "https://api.cdp.coinbase.com/platform/v2/x402/verify"
-    );
+    expect(
+      resolveFacilitatorEndpoint("https://api.cdp.coinbase.com/platform/v2/x402", "verify")
+    ).toBe("https://api.cdp.coinbase.com/platform/v2/x402/verify");
   });
 
   it("converts USDC prices to atomic units", () => {

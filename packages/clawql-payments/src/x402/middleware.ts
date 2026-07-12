@@ -1,6 +1,10 @@
 import type { NextFunction, Request, Response } from "express";
 import { isX402EnforcementActive } from "./config.js";
-import { enforceX402Gate, paymentRequiredHeaders, resolveX402ResourceFromRequest } from "./enforce.js";
+import {
+  enforceX402Gate,
+  paymentRequiredHeaders,
+  resolveX402ResourceFromRequest,
+} from "./enforce.js";
 
 export type X402PaymentRequest = Request & {
   x402Payer?: string;
@@ -13,9 +17,7 @@ export type CreateX402PaymentMiddlewareOptions = {
   resourceResolver?: (req: Request) => string;
 };
 
-export function createX402PaymentMiddleware(
-  options: CreateX402PaymentMiddlewareOptions = {}
-) {
+export function createX402PaymentMiddleware(options: CreateX402PaymentMiddlewareOptions = {}) {
   const env = options.env ?? process.env;
 
   return async function x402PaymentMiddleware(
@@ -40,9 +42,7 @@ export function createX402PaymentMiddleware(
 
     const requestUrl = `${req.protocol}://${req.get("host") ?? "localhost"}${req.originalUrl}`;
     const correlationId =
-      req.header("x-correlation-id") ??
-      req.header("x-clawql-correlation-id") ??
-      undefined;
+      req.header("x-correlation-id") ?? req.header("x-clawql-correlation-id") ?? undefined;
 
     try {
       const result = await enforceX402Gate({
