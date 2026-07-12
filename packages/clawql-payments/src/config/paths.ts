@@ -19,3 +19,11 @@ export function resolveX402GatesPath(env: NodeJS.ProcessEnv = process.env): stri
 export function resolveUsagePath(env: NodeJS.ProcessEnv = process.env): string {
   return join(resolvePaymentsDir(env), "usage.json");
 }
+
+export function resolvePaymentAuditJsonlPath(env: NodeJS.ProcessEnv = process.env): string {
+  return join(resolvePaymentsDir(env), "audit.jsonl");
+}
+
+export function resolvePaymentAuditMetaPath(env: NodeJS.ProcessEnv = process.env): string {
+  return join(resolvePaymentsDir(env), "audit.meta.json");
+}

@@ -66,6 +66,7 @@ clawql payments x402 reconcile --date 2026-07-11
 # Unified reporting
 clawql payments spend report --group-by provider
 clawql payments audit --correlation-id xxx
+clawql payments audit verify
 ```
 
 ## Programmatic usage
@@ -88,6 +89,8 @@ Local state is stored under `$CLAWQL_HOME/Payments/` (default `~/.clawql/Payment
 - `payments.json` — tenant plan, Stripe and x402 wallet config
 - `x402-gates.json` — payment-gated resources and MCP tools
 - `usage.json` — metered usage counters per tenant/month
+- `audit.jsonl` — hash-chained payment audit log (append-only WORM)
+- `audit.meta.json` — chain head metadata
 
 ## Status
 
@@ -95,9 +98,9 @@ Stripe SDK integration is **live** for customers, subscriptions, invoices, billi
 
 x402 facilitator HTTP verification is **live** (`POST /verify` against x402.org or CDP). Inference HTTP can enforce gates with `CLAWQL_X402_ENFORCE=1`.
 
-Full operator guide: [`docs/payments/clawql-payments.md`](../../docs/payments/clawql-payments.md).
+Payment audit is **durable** — hash-chained append-only JSONL at `$CLAWQL_HOME/Payments/audit.jsonl` with `clawql payments audit verify`.
 
-Durable WORM persistence remains follow-up work.
+Full operator guide: [`docs/payments/clawql-payments.md`](../../docs/payments/clawql-payments.md).
 
 ## Related
 

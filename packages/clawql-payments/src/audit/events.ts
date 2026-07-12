@@ -21,7 +21,7 @@ export type PaymentWormPayload = {
   agent_id?: string;
 };
 
-/** WORM-oriented payment audit entry (maps to clawql-core ring buffer today). */
+/** Durable payment audit entry with hash-chained integrity fields on disk. */
 export type PaymentWormEntry = {
   ts: string;
   category: "payment";

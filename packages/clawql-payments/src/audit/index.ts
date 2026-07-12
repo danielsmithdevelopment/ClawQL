@@ -10,7 +10,28 @@ export {
   type PaymentWormEntry,
   type PaymentWormPayload,
 } from "./events.js";
-export { appendPaymentWormEntry, listPaymentAuditEntries } from "./worm.js";
+export {
+  PAYMENT_AUDIT_GENESIS_HASH,
+  hashPaymentAuditLink,
+  sealPaymentWormRecord,
+  verifyPaymentAuditChain,
+  type PaymentAuditVerifyIssue,
+  type PaymentAuditVerifyResult,
+  type PaymentWormRecord,
+} from "./chain.js";
+export { appendPaymentWormEntry, listPaymentAuditEntries, verifyPaymentAuditLog } from "./worm.js";
+export {
+  createPaymentAuditStore,
+  getPaymentAuditStore,
+  resetPaymentAuditStoreForTests,
+} from "./factory.js";
+export {
+  isPaymentAuditFsyncEnabled,
+  resolvePaymentAuditStoreMode,
+  type PaymentAuditStore,
+  type PaymentAuditStoreMode,
+} from "./store.js";
+export { createJsonlPaymentAuditStore } from "./jsonl-store.js";
 export {
   buildSpendReport,
   filterAuditByCorrelationId,

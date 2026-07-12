@@ -1,5 +1,5 @@
 import Stripe from "stripe";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, beforeEach } from "vitest";
 import { resetDefaultAuditRingBufferForTests } from "clawql-core";
 import {
   assertStripeWebhookSignature,
@@ -7,9 +7,14 @@ import {
   verifyStripeWebhookSignature,
 } from "./webhook.js";
 import { StripeWebhookVerificationError } from "./errors.js";
-import { listPaymentAuditEntries } from "../audit/worm.js";
+import { listPaymentAuditEntries, resetPaymentAuditStoreForTests } from "../audit/worm.js";
 
 describe("stripe webhook verification", () => {
+  beforeEach(() => {
+    resetDefaultAuditRingBufferForTests();
+    resetPaymentAuditStoreForTests();
+  });
+
   const secret = "whsec_test_secret_for_clawql_payments";
   const payload = JSON.stringify({
     id: "evt_test_webhook",
@@ -46,7 +51,6 @@ describe("stripe webhook verification", () => {
   });
 
   it("processes invoice.paid into payment audit trail", async () => {
-    resetDefaultAuditRingBufferForTests();
     const signature = Stripe.webhooks.generateTestHeaderString({ payload, secret });
     const event = assertStripeWebhookSignature(payload, signature, secret);
     const result = await processStripeWebhookEvent(event, { tenantId: "default" });

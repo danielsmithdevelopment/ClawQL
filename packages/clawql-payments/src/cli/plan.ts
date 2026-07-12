@@ -5,6 +5,7 @@ import {
   buildSpendReport,
   filterAuditByCorrelationId,
   listPaymentAuditEntries,
+  verifyPaymentAuditLog,
   type SpendGroupBy,
 } from "../audit/index.js";
 import {
@@ -145,6 +146,7 @@ export type PaymentsAuditOptions = {
   correlationId?: string;
   limit?: number;
   json?: boolean;
+  env?: NodeJS.ProcessEnv;
 };
 
 export async function runPaymentsAudit(options: PaymentsAuditOptions = {}): Promise<number> {
@@ -167,4 +169,30 @@ export async function runPaymentsAudit(options: PaymentsAuditOptions = {}): Prom
     console.log(`${entry.ts} ${entry.action}${corr}: ${entry.summary}`);
   }
   return 0;
+}
+
+export async function runPaymentsAuditVerify(options: PaymentsAuditOptions = {}): Promise<number> {
+  const env = options.env ?? process.env;
+  const result = verifyPaymentAuditLog(env);
+
+  if (options.json) {
+    console.log(JSON.stringify(result, null, 2));
+    return result.ok ? 0 : 1;
+  }
+
+  if (result.ok) {
+    console.log(
+      `Payment audit chain OK — ${result.records} record(s), head=${result.head_hash.slice(0, 16)}…`
+    );
+    return 0;
+  }
+
+  console.error(`Payment audit chain FAILED — ${result.issues.length} issue(s)`);
+  for (const issue of result.issues.slice(0, 20)) {
+    console.error(`  seq ${issue.seq}: ${issue.reason}`);
+  }
+  if (result.issues.length > 20) {
+    console.error(`  … and ${result.issues.length - 20} more`);
+  }
+  return 1;
 }

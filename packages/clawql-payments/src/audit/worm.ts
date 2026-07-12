@@ -1,7 +1,15 @@
 import { getDefaultAuditRingBuffer } from "clawql-core";
+import type { PaymentAuditVerifyResult } from "./chain.js";
 import type { PaymentWormEntry } from "./events.js";
+import { getPaymentAuditStore, resetPaymentAuditStoreForTests } from "./factory.js";
 
-export function appendPaymentWormEntry(entry: PaymentWormEntry): void {
+export function appendPaymentWormEntry(
+  entry: PaymentWormEntry,
+  env: NodeJS.ProcessEnv = process.env
+): void {
+  getPaymentAuditStore(env).append(entry);
+
+  // Hot in-process mirror for MCP audit ring buffer (summary-only).
   getDefaultAuditRingBuffer().append({
     ts: entry.ts,
     category: entry.category,
@@ -11,19 +19,17 @@ export function appendPaymentWormEntry(entry: PaymentWormEntry): void {
   });
 }
 
-export function listPaymentAuditEntries(limit = 100): PaymentWormEntry[] {
-  const { entries } = getDefaultAuditRingBuffer().list(limit);
-  return entries
-    .filter((e) => e.category === "payment")
-    .map((e) => ({
-      ts: e.ts,
-      category: "payment" as const,
-      action: e.action as PaymentWormEntry["action"],
-      summary: e.summary,
-      correlationId: e.correlationId,
-      payload: {
-        provider: "stripe" as const,
-        tenant_id: "unknown",
-      },
-    }));
+export function listPaymentAuditEntries(
+  limit = 100,
+  env: NodeJS.ProcessEnv = process.env
+): PaymentWormEntry[] {
+  return getPaymentAuditStore(env).list(limit);
 }
+
+export function verifyPaymentAuditLog(
+  env: NodeJS.ProcessEnv = process.env
+): PaymentAuditVerifyResult {
+  return getPaymentAuditStore(env).verify();
+}
+
+export { resetPaymentAuditStoreForTests };

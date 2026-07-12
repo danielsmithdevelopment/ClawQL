@@ -54,6 +54,7 @@ import {
 } from "./inference-cli.js";
 import {
   runPaymentsAuditCmd,
+  runPaymentsAuditVerifyCmd,
   runPaymentsPlanShowCmd,
   runPaymentsPlanUpgradeCmd,
   runPaymentsSpendReportCmd,
@@ -830,6 +831,10 @@ async function main(): Promise<void> {
       return;
     }
     if (subcmd === "audit") {
+      if (rest[0] === "verify") {
+        process.exitCode = await runPaymentsAuditVerifyCmd(paymentsOpts);
+        return;
+      }
       process.exitCode = await runPaymentsAuditCmd(paymentsOpts);
       return;
     }

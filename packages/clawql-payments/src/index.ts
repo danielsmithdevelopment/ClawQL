@@ -11,4 +11,6 @@ export {
   resolvePaymentsDir,
   resolveUsagePath,
   resolveX402GatesPath,
+  resolvePaymentAuditJsonlPath,
+  resolvePaymentAuditMetaPath,
 } from "./config/paths.js";
