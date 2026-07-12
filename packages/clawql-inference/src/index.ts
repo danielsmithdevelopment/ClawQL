@@ -63,6 +63,23 @@ export { submitFinetuneJob, getFinetuneJobStatus, registerFinetuneModel } from "
 export type { FinetuneJob, FinetuneProvider } from "./finetune/types.js";
 export { registerModelToTier, loadTierMapOverrides } from "./finetune/tier-registry.js";
 
+export {
+  buildModelEscalationAuditEntry,
+  buildAgentCoordinationAuditEntry,
+  type InferenceAuditEntry,
+} from "./audit/events.js";
+export { runInferenceEscalationShow, runInferenceEscalationSetTier } from "./cli/escalation.js";
+export {
+  runInferencePipelineEnable,
+  runInferencePipelineStatus,
+  runInferencePipelineDisable,
+  runInferencePipelineRun,
+} from "./cli/pipeline.js";
+export { AGENT_COORDINATION_DRIFT_TRIPWIRE } from "./routing/tier-escalation-router.js";
+export { loadPipelineConfig, savePipelineConfig } from "./pipeline/config.js";
+export { runPipelineOnce } from "./pipeline/run.js";
+export type { InferencePipelineConfig } from "./pipeline/types.js";
+
 export { parseModelId } from "./providers/parse-model-id.js";
 export type {
   InferenceProviderAdapter,

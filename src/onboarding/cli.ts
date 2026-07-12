@@ -29,11 +29,17 @@ import {
 } from "./sandbox-cli.js";
 import {
   runInferenceCompleteCmd,
+  runInferenceEscalationSetTierCmd,
+  runInferenceEscalationShowCmd,
   runInferenceExportCmd,
   runInferenceFinetuneCmd,
   runInferenceFinetuneRegisterCmd,
   runInferenceFinetuneStatusCmd,
   runInferenceLogsCmd,
+  runInferencePipelineDisableCmd,
+  runInferencePipelineEnableCmd,
+  runInferencePipelineRunCmd,
+  runInferencePipelineStatusCmd,
   runInferenceServeCmd,
   runInferenceSpendCmd,
   runInferenceTraceCmd,
@@ -127,6 +133,11 @@ function parse(argv: string[]): {
     else if (a === "--job-id") flags.jobId = argv[++i] ?? "";
     else if (a === "--tier") flags.tier = argv[++i] ?? "";
     else if (a === "--alias") flags.alias = argv[++i] ?? "";
+    else if (a === "--schedule") flags.schedule = argv[++i] ?? "";
+    else if (a === "--min-samples") flags.minSamples = argv[++i] ?? "";
+    else if (a === "--target-tier") flags.targetTier = argv[++i] ?? "";
+    else if (a === "--evaluate-before-promote") flags.evaluateBeforePromote = true;
+    else if (a === "--output-dir") flags.outputDir = argv[++i] ?? "";
     else if (a === "--skip-verify") flags.skipVerify = true;
     else if (a.startsWith("--image-digest=")) {
       const prev = typeof flags.imageDigest === "string" ? flags.imageDigest : "";
@@ -189,6 +200,8 @@ Usage:
   clawql inference logs [--model M] [--since 24h] [--limit 50] | trace --correlation-id <id> | spend [--group-by model]
   clawql inference export --output <path.jsonl> [--verdict passed] [--format openai-jsonl]
   clawql inference finetune --dataset <path> --base-model <model> [--provider openai|anthropic]
+  clawql inference escalation show | set-tier --tier frugal --model ollama/phi4-custom
+  clawql inference pipeline enable [--schedule "0 2 * * 0"] [--min-samples 500] | status | disable | run
   clawql inference finetune status --job-id <id> | register --job-id <id> --tier frugal --alias <model>
   clawql claude | codex | cursor | opencode [-- harness args...]
   clawql operator status
@@ -265,6 +278,10 @@ inference (gateway MVP):
   spend           Token usage rollup by model, provider, or tier
   export          Verdict-filtered dataset export with optional Presidio scrub + manifest
   finetune        Submit fine-tuning job; subcommands: status, register
+  escalation      show tier map | set-tier --tier <tier> --model <id>
+  pipeline        enable | status | disable | run (scheduled auto-export config)
+  escalation      show tier map | set-tier --tier <tier> --model <id>
+  pipeline        enable | status | disable | run (scheduled auto-export config)
   Providers: openai, anthropic, ollama via provider/model ids (e.g. ollama/phi4)
   Store: CLAWQL_INFERENCE_STORE=memory|jsonl|off (default jsonl when CLAWQL_HOME set)
   Env: OPENAI_API_KEY, ANTHROPIC_API_KEY, OLLAMA_BASE_URL, CLAWQL_INFERENCE_PORT
@@ -494,6 +511,17 @@ async function main(): Promise<void> {
       typeof flags.minTokenEfficiency === "string" && flags.minTokenEfficiency
         ? Number.parseFloat(flags.minTokenEfficiency)
         : undefined;
+    const minSamples =
+      typeof flags.minSamples === "string" && flags.minSamples
+        ? Number.parseInt(flags.minSamples, 10)
+        : undefined;
+    const targetTier =
+      typeof flags.targetTier === "string" &&
+      (flags.targetTier === "frugal" ||
+        flags.targetTier === "standard" ||
+        flags.targetTier === "frontier")
+        ? flags.targetTier
+        : undefined;
     const finetuneProvider =
       typeof flags.provider === "string" &&
       (flags.provider === "openai" || flags.provider === "anthropic")
@@ -550,6 +578,11 @@ async function main(): Promise<void> {
       jobId: typeof flags.jobId === "string" ? flags.jobId : undefined,
       tier,
       alias: typeof flags.alias === "string" ? flags.alias : undefined,
+      schedule: typeof flags.schedule === "string" ? flags.schedule : undefined,
+      minSamples: Number.isFinite(minSamples) ? minSamples : undefined,
+      targetTier,
+      evaluateBeforePromote: Boolean(flags.evaluateBeforePromote),
+      outputDir: typeof flags.outputDir === "string" ? flags.outputDir : undefined,
     };
     if (subcmd === "serve") {
       process.exitCode = await runInferenceServeCmd(inferenceOpts);
@@ -588,8 +621,34 @@ async function main(): Promise<void> {
       process.exitCode = await runInferenceFinetuneCmd(inferenceOpts);
       return;
     }
+    if (subcmd === "escalation") {
+      const escalationAction = rest[0];
+      if (escalationAction === "set-tier") {
+        process.exitCode = await runInferenceEscalationSetTierCmd(inferenceOpts);
+        return;
+      }
+      process.exitCode = await runInferenceEscalationShowCmd(inferenceOpts);
+      return;
+    }
+    if (subcmd === "pipeline") {
+      const pipelineAction = rest[0];
+      if (pipelineAction === "status") {
+        process.exitCode = await runInferencePipelineStatusCmd(inferenceOpts);
+        return;
+      }
+      if (pipelineAction === "disable") {
+        process.exitCode = await runInferencePipelineDisableCmd(inferenceOpts);
+        return;
+      }
+      if (pipelineAction === "run") {
+        process.exitCode = await runInferencePipelineRunCmd(inferenceOpts);
+        return;
+      }
+      process.exitCode = await runInferencePipelineEnableCmd(inferenceOpts);
+      return;
+    }
     console.error(
-      "Usage: clawql inference serve | complete | logs | trace --correlation-id <id> | spend | export | finetune [status|register]"
+      "Usage: clawql inference serve | complete | logs | trace | spend | export | finetune | escalation | pipeline"
     );
     process.exitCode = 1;
     return;
