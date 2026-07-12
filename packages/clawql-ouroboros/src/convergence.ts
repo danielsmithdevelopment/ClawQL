@@ -1,5 +1,6 @@
 import type { OntologyLineage, ACResult } from "./lineage.js";
 import type { OntologyField } from "./seed.js";
+import { DRIFT_THRESHOLD_ACCEPTABLE, type DriftBand, type DriftReport } from "./drift.js";
 
 export interface ConvergenceSignal {
   converged: boolean;
@@ -7,6 +8,8 @@ export interface ConvergenceSignal {
   ontology_similarity: number;
   generation: number;
   failed_acs?: number[];
+  combined_drift?: number;
+  drift_band?: DriftBand;
 }
 
 export interface RegressionResult {
@@ -24,6 +27,9 @@ export interface ConvergenceConfig {
   evalMinScore: number;
   regressionGateEnabled: boolean;
   validationGateEnabled: boolean;
+  /** Block converge when combined drift exceeds threshold (upstream Q00 gate). */
+  driftGateEnabled: boolean;
+  driftMaxCombined: number;
 }
 
 const DEFAULT_CONFIG: ConvergenceConfig = {
@@ -36,6 +42,8 @@ const DEFAULT_CONFIG: ConvergenceConfig = {
   evalMinScore: 0.7,
   regressionGateEnabled: true,
   validationGateEnabled: true,
+  driftGateEnabled: true,
+  driftMaxCombined: DRIFT_THRESHOLD_ACCEPTABLE,
 };
 
 // ---------------------------------------------------------------------------
@@ -68,7 +76,7 @@ export class RegressionDetector {
     for (const failedAc of failedNow) {
       const everPassed = prior.some((gen) => {
         const match = gen.evaluation_summary?.ac_results?.find(
-          (ac) => ac.ac_index === failedAc.ac_index,
+          (ac) => ac.ac_index === failedAc.ac_index
         );
         return match?.passed === true;
       });
@@ -108,7 +116,7 @@ function wordOverlap(a: string, b: string): number {
 
 function computeOntologySimilarity(
   prevFields: OntologyField[],
-  currFields: OntologyField[],
+  currFields: OntologyField[]
 ): number {
   if (prevFields.length === 0 && currFields.length === 0) return 1.0;
   if (prevFields.length === 0 || currFields.length === 0) return 0.0;
@@ -141,7 +149,7 @@ function ontologyFingerprint(fields: OntologyField[]): string {
   return JSON.stringify(
     [...fields]
       .sort((a, b) => a.name.localeCompare(b.name))
-      .map((f) => ({ name: f.name, field_type: f.field_type, required: f.required })),
+      .map((f) => ({ name: f.name, field_type: f.field_type, required: f.required }))
   );
 }
 
@@ -163,6 +171,7 @@ export class ConvergenceCriteria {
     latestWonder?: { requires_evolution?: boolean },
     latestEvaluation?: { final_approved: boolean; score?: number; ac_results: ACResult[] },
     validationOutput?: string,
+    latestDrift?: Pick<DriftReport, "combined_drift" | "band">
   ): ConvergenceSignal {
     const completed = lineage.generations.filter((g) => g.phase === "completed");
     const numCompleted = completed.length;
@@ -224,11 +233,25 @@ export class ConvergenceCriteria {
         }
       }
 
+      const driftBlock = this._driftGateFailure(latestDrift);
+      if (driftBlock) {
+        return {
+          converged: false,
+          reason: driftBlock.reason,
+          ontology_similarity: latestSim,
+          generation: currentGen,
+          combined_drift: driftBlock.combined_drift,
+          drift_band: driftBlock.drift_band,
+        };
+      }
+
       return {
         converged: true,
         reason: `Ontology converged: similarity ${latestSim.toFixed(3)} >= ${this.config.convergenceThreshold}`,
         ontology_similarity: latestSim,
         generation: currentGen,
+        combined_drift: latestDrift?.combined_drift,
+        drift_band: latestDrift?.band,
       };
     }
 
@@ -242,11 +265,24 @@ export class ConvergenceCriteria {
           failed_acs: evalGateFailure.failedAcs,
         };
       }
+      const driftBlock = this._driftGateFailure(latestDrift);
+      if (driftBlock) {
+        return {
+          converged: false,
+          reason: `Stagnation blocked by ${driftBlock.reason}`,
+          ontology_similarity: latestSim,
+          generation: currentGen,
+          combined_drift: driftBlock.combined_drift,
+          drift_band: driftBlock.drift_band,
+        };
+      }
       return {
         converged: true,
         reason: `Stagnation: ontology unchanged for ${this.config.stagnationWindow} consecutive generations`,
         ontology_similarity: latestSim,
         generation: currentGen,
+        combined_drift: latestDrift?.combined_drift,
+        drift_band: latestDrift?.band,
       };
     }
 
@@ -264,11 +300,24 @@ export class ConvergenceCriteria {
           failed_acs: evalGateFailure.failedAcs,
         };
       }
+      const driftBlock = this._driftGateFailure(latestDrift);
+      if (driftBlock) {
+        return {
+          converged: false,
+          reason: `Oscillation blocked by ${driftBlock.reason}`,
+          ontology_similarity: latestSim,
+          generation: currentGen,
+          combined_drift: driftBlock.combined_drift,
+          drift_band: driftBlock.drift_band,
+        };
+      }
       return {
         converged: true,
         reason: "Oscillation: ontology cycling between two states (A→B→A)",
         ontology_similarity: latestSim,
         generation: currentGen,
+        combined_drift: latestDrift?.combined_drift,
+        drift_band: latestDrift?.band,
       };
     }
 
@@ -322,9 +371,11 @@ export class ConvergenceCriteria {
     return simAC >= 0.9 && simBC < 0.7;
   }
 
-  private _evalGateFailure(
-    latestEvaluation?: { final_approved: boolean; score?: number; ac_results: ACResult[] },
-  ): { reason: string; failedAcs?: number[] } | null {
+  private _evalGateFailure(latestEvaluation?: {
+    final_approved: boolean;
+    score?: number;
+    ac_results: ACResult[];
+  }): { reason: string; failedAcs?: number[] } | null {
     if (!this.config.evalGateEnabled || !latestEvaluation) {
       return null;
     }
@@ -351,6 +402,22 @@ export class ConvergenceCriteria {
       };
     }
 
+    return null;
+  }
+
+  private _driftGateFailure(
+    latestDrift?: Pick<DriftReport, "combined_drift" | "band">
+  ): { reason: string; combined_drift: number; drift_band: DriftBand } | null {
+    if (!this.config.driftGateEnabled || !latestDrift) {
+      return null;
+    }
+    if (latestDrift.combined_drift > this.config.driftMaxCombined) {
+      return {
+        reason: `drift_exceeded: combined ${latestDrift.combined_drift.toFixed(3)} > ${this.config.driftMaxCombined}`,
+        combined_drift: latestDrift.combined_drift,
+        drift_band: latestDrift.band,
+      };
+    }
     return null;
   }
 }

@@ -2,7 +2,7 @@
  * Rebuild {@link OntologyLineage} from stored events (shared by in-memory semantics and Postgres).
  */
 
-import type { GenerationRecord, OntologyLineage } from "../lineage.js";
+import type { GenerationRecord, OntologyLineage, DriftSummary } from "../lineage.js";
 import type { Seed } from "../seed.js";
 import type { StoredEvent } from "../interfaces.js";
 
@@ -35,6 +35,28 @@ function isFinishedPayload(data: unknown): data is OuroborosFinishedPayload {
   if (typeof data !== "object" || data === null) return false;
   const d = data as Record<string, unknown>;
   return typeof d.converged === "boolean" && typeof d.generation_count === "number";
+}
+
+function parseDriftSummary(data: unknown): DriftSummary | undefined {
+  if (typeof data !== "object" || data === null) return undefined;
+  const d = data as Record<string, unknown>;
+  if (typeof d.combined_drift !== "number" || typeof d.band !== "string") return undefined;
+  return {
+    combined_drift: d.combined_drift,
+    band: d.band,
+    goal_drift: typeof d.goal_drift === "number" ? d.goal_drift : 0,
+    constraint_drift: typeof d.constraint_drift === "number" ? d.constraint_drift : 0,
+    ontology_drift: typeof d.ontology_drift === "number" ? d.ontology_drift : 0,
+    generation_number:
+      typeof d.generation_number === "number" ? d.generation_number : undefined,
+  };
+}
+
+export function latestDriftFromEvents(events: StoredEvent[]): DriftSummary | undefined {
+  const driftEvents = events.filter((e) => e.type === "drift_measured");
+  if (driftEvents.length === 0) return undefined;
+  const latest = driftEvents[driftEvents.length - 1];
+  return parseDriftSummary(latest.data);
 }
 
 export function buildOntologyLineageFromEvents(
@@ -76,5 +98,6 @@ export function buildOntologyLineageFromEvents(
     current_generation,
     generations,
     status,
+    latest_drift: latestDriftFromEvents(relevant),
   };
 }

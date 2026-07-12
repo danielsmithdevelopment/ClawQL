@@ -183,4 +183,46 @@ describe("ConvergenceCriteria", () => {
     expect(sig.converged).toBe(false);
     expect(sig.reason).toContain("Oscillation blocked by Eval gate");
   });
+
+  it("blocks similarity convergence when combined drift exceeds threshold", () => {
+    const fields = [
+      { name: "a", field_type: "string", description: "identical description text", required: true },
+    ];
+    const lin = lineageFromFieldsList("id-drift", [fields, fields]);
+    const c = new ConvergenceCriteria({
+      minGenerations: 2,
+      convergenceThreshold: 0.9,
+      driftGateEnabled: true,
+      driftMaxCombined: 0.3,
+    });
+    const latest = lin.generations[1].evaluation_summary!;
+    const sig = c.evaluate(lin, { requires_evolution: false }, latest, undefined, {
+      combined_drift: 0.42,
+      band: "exceeded",
+    });
+    expect(sig.converged).toBe(false);
+    expect(sig.reason).toContain("drift_exceeded");
+    expect(sig.combined_drift).toBe(0.42);
+    expect(sig.drift_band).toBe("exceeded");
+  });
+
+  it("allows similarity convergence when drift is within threshold", () => {
+    const fields = [
+      { name: "a", field_type: "string", description: "identical description text", required: true },
+    ];
+    const lin = lineageFromFieldsList("id-drift-ok", [fields, fields]);
+    const c = new ConvergenceCriteria({
+      minGenerations: 2,
+      convergenceThreshold: 0.9,
+      driftGateEnabled: true,
+      driftMaxCombined: 0.3,
+    });
+    const latest = lin.generations[1].evaluation_summary!;
+    const sig = c.evaluate(lin, { requires_evolution: false }, latest, undefined, {
+      combined_drift: 0.12,
+      band: "excellent",
+    });
+    expect(sig.converged).toBe(true);
+    expect(sig.combined_drift).toBe(0.12);
+  });
 });

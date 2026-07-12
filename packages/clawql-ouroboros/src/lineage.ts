@@ -34,9 +34,20 @@ export interface GenerationRecord {
   ontology_schema: Seed["ontology_schema"];
 }
 
+export interface DriftSummary {
+  combined_drift: number;
+  band: string;
+  goal_drift: number;
+  constraint_drift: number;
+  ontology_drift: number;
+  generation_number?: number;
+}
+
 export interface OntologyLineage {
   seed_id: string;
   current_generation: number;
   generations: GenerationRecord[];
   status: "active" | "converged" | "exhausted" | "aborted";
+  /** Latest `drift_measured` event for this lineage root, when present. */
+  latest_drift?: DriftSummary;
 }
