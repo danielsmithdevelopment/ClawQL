@@ -5,7 +5,16 @@ import type { ChatMessage, InferenceGateway } from "../gateway.js";
 type OpenAiChatCompletionRequest = {
   model?: string;
   messages?: Array<{ role?: string; content?: string }>;
+  user?: string;
 };
+
+function readCorrelationId(req: Request): string | undefined {
+  const header =
+    req.header("x-correlation-id") ??
+    req.header("x-clawql-correlation-id") ??
+    req.header("correlation-id");
+  return header?.trim() || undefined;
+}
 
 export function createOpenAiCompatRouter(gateway: InferenceGateway): express.Router {
   const router = express.Router();
@@ -28,7 +37,11 @@ export function createOpenAiCompatRouter(gateway: InferenceGateway): express.Rou
     }));
 
     try {
-      const result = await gateway.complete({ model, messages });
+      const result = await gateway.complete({
+        model,
+        messages,
+        correlationId: readCorrelationId(req),
+      });
       const created = Math.floor(Date.now() / 1000);
       res.json({
         id: `chatcmpl-${randomUUID()}`,

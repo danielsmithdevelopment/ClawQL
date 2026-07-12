@@ -2,14 +2,24 @@
  * `clawql inference` — thin wrapper over clawql-inference gateway MVP.
  */
 
-import { runInferenceComplete, runInferenceServe } from "clawql-inference";
+import {
+  runInferenceComplete,
+  runInferenceLogs,
+  runInferenceServe,
+  runInferenceSpend,
+  runInferenceTrace,
+} from "clawql-inference";
 
 export type InferenceCliOptions = {
   port?: number;
   host?: string;
   model?: string;
+  provider?: string;
   message?: string;
   correlationId?: string;
+  since?: string;
+  limit?: number;
+  groupBy?: "model" | "provider" | "tier";
   json?: boolean;
 };
 
@@ -37,4 +47,33 @@ export async function runInferenceCompleteCmd(opts: InferenceCliOptions): Promis
     console.error(error instanceof Error ? error.message : String(error));
     return 1;
   }
+}
+
+export async function runInferenceLogsCmd(opts: InferenceCliOptions): Promise<number> {
+  return runInferenceLogs({
+    model: opts.model,
+    provider: opts.provider,
+    since: opts.since,
+    limit: opts.limit,
+    json: opts.json,
+  });
+}
+
+export async function runInferenceTraceCmd(opts: InferenceCliOptions): Promise<number> {
+  if (!opts.correlationId?.trim()) {
+    console.error("Usage: clawql inference trace --correlation-id <id>");
+    return 1;
+  }
+  return runInferenceTrace({
+    correlationId: opts.correlationId,
+    json: opts.json,
+  });
+}
+
+export async function runInferenceSpendCmd(opts: InferenceCliOptions): Promise<number> {
+  return runInferenceSpend({
+    groupBy: opts.groupBy,
+    since: opts.since,
+    json: opts.json,
+  });
 }

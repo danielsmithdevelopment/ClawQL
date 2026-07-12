@@ -27,7 +27,14 @@ import {
   runSandboxStatusCmd,
   runSandboxVerifyCmd,
 } from "./sandbox-cli.js";
-import { runInferenceCompleteCmd, runInferenceServeCmd } from "./inference-cli.js";
+import {
+  runInferenceCompleteCmd,
+  runInferenceLogsCmd,
+  runInferenceServeCmd,
+  runInferenceSpendCmd,
+  runInferenceTraceCmd,
+  type InferenceCliOptions,
+} from "./inference-cli.js";
 
 type Command =
   | "init"
@@ -94,6 +101,9 @@ function parse(argv: string[]): {
     else if (a === "--model") flags.model = argv[++i] ?? "";
     else if (a === "--message") flags.message = argv[++i] ?? "";
     else if (a === "--correlation-id") flags.correlationId = argv[++i] ?? "";
+    else if (a === "--since") flags.since = argv[++i] ?? "";
+    else if (a === "--limit") flags.limit = argv[++i] ?? "";
+    else if (a === "--group-by") flags.groupBy = argv[++i] ?? "";
     else if (a === "--skip-verify") flags.skipVerify = true;
     else if (a.startsWith("--image-digest=")) {
       const prev = typeof flags.imageDigest === "string" ? flags.imageDigest : "";
@@ -152,7 +162,8 @@ Usage:
   clawql release init | collect | manifest | publish | verify <path>
   clawql sync init | push | pull | status [--dry-run] [--force]
   clawql sandbox init | verify | status | edit --harness claude [--path DIR] [--skip-verify]
-  clawql inference serve [--port 8080] | complete --model <provider/model> --message <text> [--json]
+  clawql inference serve [--port 8080] | complete --model <provider/model> --message <text>
+  clawql inference logs [--model M] [--since 24h] [--limit 50] | trace --correlation-id <id> | spend [--group-by model]
   clawql claude | codex | cursor | opencode [-- harness args...]
   clawql operator status
 
@@ -223,7 +234,11 @@ mcp-config:
 inference (gateway MVP):
   serve           OpenAI-compatible HTTP gateway (/healthz, /v1/chat/completions)
   complete        One-shot completion for scripting/debug
+  logs            Recent inference records from the call store
+  trace           Records for a correlation_id (links to ouroboros / WORM lineage)
+  spend           Token usage rollup by model, provider, or tier
   Providers: openai, anthropic, ollama via provider/model ids (e.g. ollama/phi4)
+  Store: CLAWQL_INFERENCE_STORE=memory|jsonl|off (default jsonl when CLAWQL_HOME set)
   Env: OPENAI_API_KEY, ANTHROPIC_API_KEY, OLLAMA_BASE_URL, CLAWQL_INFERENCE_PORT
 
 Docs: https://docs.clawql.com/agent-setup
@@ -437,11 +452,21 @@ async function main(): Promise<void> {
   if (cmd === "inference") {
     const port =
       typeof flags.port === "string" && flags.port ? Number.parseInt(flags.port, 10) : undefined;
-    const inferenceOpts = {
+    const limit =
+      typeof flags.limit === "string" && flags.limit ? Number.parseInt(flags.limit, 10) : undefined;
+    const inferenceOpts: InferenceCliOptions = {
       port: Number.isFinite(port) ? port : undefined,
       model: typeof flags.model === "string" ? flags.model : undefined,
+      provider: typeof flags.provider === "string" ? flags.provider : undefined,
       message: typeof flags.message === "string" ? flags.message : undefined,
       correlationId: typeof flags.correlationId === "string" ? flags.correlationId : undefined,
+      since: typeof flags.since === "string" ? flags.since : undefined,
+      limit: Number.isFinite(limit) ? limit : undefined,
+      groupBy:
+        typeof flags.groupBy === "string" &&
+        (flags.groupBy === "model" || flags.groupBy === "provider" || flags.groupBy === "tier")
+          ? flags.groupBy
+          : undefined,
       json: Boolean(flags.json),
     };
     if (subcmd === "serve") {
@@ -452,8 +477,20 @@ async function main(): Promise<void> {
       process.exitCode = await runInferenceCompleteCmd(inferenceOpts);
       return;
     }
+    if (subcmd === "logs") {
+      process.exitCode = await runInferenceLogsCmd(inferenceOpts);
+      return;
+    }
+    if (subcmd === "trace") {
+      process.exitCode = await runInferenceTraceCmd(inferenceOpts);
+      return;
+    }
+    if (subcmd === "spend") {
+      process.exitCode = await runInferenceSpendCmd(inferenceOpts);
+      return;
+    }
     console.error(
-      "Usage: clawql inference serve [--port 8080] | clawql inference complete --model <id> --message <text>"
+      "Usage: clawql inference serve | complete | logs | trace --correlation-id <id> | spend"
     );
     process.exitCode = 1;
     return;
