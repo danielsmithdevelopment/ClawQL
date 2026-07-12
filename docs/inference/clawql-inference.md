@@ -31,39 +31,39 @@ LiteLLM routes inference. ClawQL closes the loop: **infer → observe → evalua
 
 ## Planned modules
 
-| Module           | Scope                                                                        |
-| ---------------- | ---------------------------------------------------------------------------- |
-| `routing/`       | PAL + `ModelTierMap` (**shipped** foundation)                                |
-| `providers/`     | Anthropic, OpenAI, Google, Groq, Together, Mistral, …                        |
-| `local/`         | Ollama, vLLM, Llama.cpp                                                      |
-| `cache/`         | Semantic cache (embedding similarity, Manifest TTL)                          |
-| `observability/` | Langfuse (ADR 0005), OpenTelemetry, WORM `correlation_id`                    |
-| `fallback/`      | Per-tier provider chains                                                     |
-| `keys/`          | Virtual keys, per-team budgets                                               |
-| `api/`           | OpenAI-compatible `/v1/chat/completions`                                     |
-| `store/`         | Inference call log (Postgres) — prompt, response, tier, tokens, verdict      |
-| `export/`        | Filtered dataset export + PII scrub (Presidio) + WORM dataset manifests      |
-| `finetune/`      | Job submission, status polling, model registration back into tier map        |
-| `cli/`           | `clawql inference` subcommands (see below)                                   |
+| Module           | Scope                                                                   |
+| ---------------- | ----------------------------------------------------------------------- |
+| `routing/`       | PAL + `ModelTierMap` (**shipped** foundation)                           |
+| `providers/`     | Anthropic, OpenAI, Google, Groq, Together, Mistral, …                   |
+| `local/`         | Ollama, vLLM, Llama.cpp                                                 |
+| `cache/`         | Semantic cache (embedding similarity, Manifest TTL)                     |
+| `observability/` | Langfuse (ADR 0005), OpenTelemetry, WORM `correlation_id`               |
+| `fallback/`      | Per-tier provider chains                                                |
+| `keys/`          | Virtual keys, per-team budgets                                          |
+| `api/`           | OpenAI-compatible `/v1/chat/completions`                                |
+| `store/`         | Inference call log (Postgres) — prompt, response, tier, tokens, verdict |
+| `export/`        | Filtered dataset export + PII scrub (Presidio) + WORM dataset manifests |
+| `finetune/`      | Job submission, status polling, model registration back into tier map   |
+| `cli/`           | `clawql inference` subcommands (see below)                              |
 
 ## Inference record (what every call captures)
 
 Each completed inference writes a durable record used by observability **and** export:
 
-| Field                | Purpose                                              |
-| -------------------- | ---------------------------------------------------- |
-| `id`, `correlation_id` | Link to WORM / agent lineage / ouroboros generation |
-| `timestamp`          | Export date-range filters                            |
-| `model_id`, `provider`, `tier` | Model and PAL tier at call time            |
-| `messages` / `prompt` / `response` | Fine-tuning message pairs              |
-| `system_prompt_hash` | Cache key + dataset dedup                            |
-| `usage`              | `input_tokens`, `output_tokens`, estimated cost      |
-| `latency_ms`         | Quality filtering                                    |
-| `cache_hit`          | Cost attribution                                     |
-| `pal_decision`       | Tier, `escalated_from`, failure `trigger`            |
-| `evaluator_verdict`  | `passed` / `failed` / `none` — **primary export filter** |
-| `evaluator_score`    | Confidence / quality filters                         |
-| `policy_version`     | Manifest Merkle anchor at call time                  |
+| Field                              | Purpose                                                  |
+| ---------------------------------- | -------------------------------------------------------- |
+| `id`, `correlation_id`             | Link to WORM / agent lineage / ouroboros generation      |
+| `timestamp`                        | Export date-range filters                                |
+| `model_id`, `provider`, `tier`     | Model and PAL tier at call time                          |
+| `messages` / `prompt` / `response` | Fine-tuning message pairs                                |
+| `system_prompt_hash`               | Cache key + dataset dedup                                |
+| `usage`                            | `input_tokens`, `output_tokens`, estimated cost          |
+| `latency_ms`                       | Quality filtering                                        |
+| `cache_hit`                        | Cost attribution                                         |
+| `pal_decision`                     | Tier, `escalated_from`, failure `trigger`                |
+| `evaluator_verdict`                | `passed` / `failed` / `none` — **primary export filter** |
+| `evaluator_score`                  | Confidence / quality filters                             |
+| `policy_version`                   | Manifest Merkle anchor at call time                      |
 
 Export only includes rows matching filters **after** optional Presidio scrubbing.
 
@@ -73,12 +73,12 @@ Export only includes rows matching filters **after** optional Presidio scrubbing
 
 Supported export formats:
 
-| Format           | Target                                           |
-| ---------------- | ------------------------------------------------ |
-| `openai-jsonl`   | OpenAI fine-tuning (`messages` array per line)   |
-| `anthropic-jsonl`| Anthropic fine-tuning message format             |
-| `raw-jsonl`      | Full inference record for custom pipelines       |
-| `sharegpt`       | Optional community tooling interop               |
+| Format            | Target                                         |
+| ----------------- | ---------------------------------------------- |
+| `openai-jsonl`    | OpenAI fine-tuning (`messages` array per line) |
+| `anthropic-jsonl` | Anthropic fine-tuning message format           |
+| `raw-jsonl`       | Full inference record for custom pipelines     |
+| `sharegpt`        | Optional community tooling interop             |
 
 **WORM-anchored dataset manifest** (written alongside every export):
 
@@ -203,15 +203,15 @@ clawql inference policy show    # Manifest inference block (tiers, cache TTL, ex
 
 ## Implementation phasing
 
-| Phase      | Deliverable                                                                                  |
-| ---------- | -------------------------------------------------------------------------------------------- |
-| **P0-D** ✅ | `routing/` + ouroboros hooks ([#560](https://github.com/danielsmithdevelopment/ClawQL/issues/560)) |
-| **P0-F**   | Gateway MVP: `serve`, `complete`, 3 cloud + Ollama adapters                                  |
-| **P0-G**   | `store/` + `observability/` — log every call with `correlation_id`                           |
-| **P0-H**   | `export/` — verdict-filtered JSONL + Presidio + dataset manifest                             |
-| **P0-I**   | `finetune/` — Anthropic/OpenAI job API + `register-as` tier                                  |
-| **P1**     | `pipeline enable` — scheduled auto-export + promote                                          |
-| **P1**     | PAL escalation events ([#561](https://github.com/danielsmithdevelopment/ClawQL/issues/561)), MoA ([#562](https://github.com/danielsmithdevelopment/ClawQL/issues/562)) |
+| Phase       | Deliverable                                                                                                                                                            |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **P0-D** ✅ | `routing/` + ouroboros hooks ([#560](https://github.com/danielsmithdevelopment/ClawQL/issues/560))                                                                     |
+| **P0-F**    | Gateway MVP: `serve`, `complete`, 3 cloud + Ollama adapters                                                                                                            |
+| **P0-G**    | `store/` + `observability/` — log every call with `correlation_id`                                                                                                     |
+| **P0-H**    | `export/` — verdict-filtered JSONL + Presidio + dataset manifest                                                                                                       |
+| **P0-I**    | `finetune/` — Anthropic/OpenAI job API + `register-as` tier                                                                                                            |
+| **P1**      | `pipeline enable` — scheduled auto-export + promote                                                                                                                    |
+| **P1**      | PAL escalation events ([#561](https://github.com/danielsmithdevelopment/ClawQL/issues/561)), MoA ([#562](https://github.com/danielsmithdevelopment/ClawQL/issues/562)) |
 
 ## Differentiation vs LiteLLM
 
