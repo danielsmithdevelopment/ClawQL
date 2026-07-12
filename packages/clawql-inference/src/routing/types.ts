@@ -35,7 +35,7 @@ export interface AdaptiveRouter {
     decision: ModelEscalationDecision,
     signal: RoutingFailureSignal
   ): ModelEscalationDecision;
-  shouldTriggerMoa(
+  shouldTriggerAgentCoordination(
     decision: ModelEscalationDecision,
     signals: RoutingFailureSignal[],
     drift?: { combined: number }

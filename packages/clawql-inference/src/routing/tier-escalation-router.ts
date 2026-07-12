@@ -59,8 +59,8 @@ export class TierEscalationRouter implements AdaptiveRouter {
     };
   }
 
-  /** MoA fan-out at standard-tier exhaustion — implemented in #562. */
-  shouldTriggerMoa(
+  /** Agent coordination at standard-tier exhaustion — implemented in #562. */
+  shouldTriggerAgentCoordination(
     _decision: ModelEscalationDecision,
     _signals: RoutingFailureSignal[],
     _drift?: { combined: number }

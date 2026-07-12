@@ -74,10 +74,10 @@ describe("TierEscalationRouter.escalate", () => {
   });
 });
 
-describe("TierEscalationRouter.shouldTriggerMoa", () => {
-  it("returns false until MoA coupling ships (#562)", () => {
+describe("TierEscalationRouter.shouldTriggerAgentCoordination", () => {
+  it("returns false until agent coordination coupling ships (#562)", () => {
     const r = router();
     const d = r.initialTier({ isDecomposedChild: false, seedId: "s" });
-    expect(r.shouldTriggerMoa(d, [failure], { combined: 0.5 })).toBe(false);
+    expect(r.shouldTriggerAgentCoordination(d, [failure], { combined: 0.5 })).toBe(false);
   });
 });

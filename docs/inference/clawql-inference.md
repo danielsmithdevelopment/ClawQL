@@ -4,7 +4,7 @@
 **Package:** [`packages/clawql-inference`](../../packages/clawql-inference)  
 **Epic:** [#556](https://github.com/danielsmithdevelopment/ClawQL/issues/556)
 
-`clawql-inference` is ClawQL's TypeScript-native **inference gateway and model-improvement platform** — a LiteLLM-class layer built with ClawQL's trust model: Manifest-governed policies, WORM-auditable routing decisions, semantic cache backed by existing memory/Onyx infrastructure, **model tier escalation** + MoA integrated from day one, and **production-to-fine-tuning export** with PII scrubbing and provenance manifests.
+`clawql-inference` is ClawQL's TypeScript-native **inference gateway and model-improvement platform** — a LiteLLM-class layer built with ClawQL's trust model: Manifest-governed policies, WORM-auditable routing decisions, semantic cache backed by existing memory/Onyx infrastructure, **model tier escalation** + **agent coordination** integrated from day one, and **production-to-fine-tuning export** with PII scrubbing and provenance manifests.
 
 ## The flywheel
 
@@ -211,7 +211,7 @@ clawql inference policy show    # Manifest inference block (tiers, cache TTL, ex
 | **P0-H**    | `export/` — verdict-filtered JSONL + Presidio + dataset manifest                                                                                                               |
 | **P0-I**    | `finetune/` — Anthropic/OpenAI job API + `register-as` tier                                                                                                                    |
 | **P1**      | `pipeline enable` — scheduled auto-export + promote                                                                                                                            |
-| **P1**      | Model escalation audit events ([#561](https://github.com/danielsmithdevelopment/ClawQL/issues/561)), MoA ([#562](https://github.com/danielsmithdevelopment/ClawQL/issues/562)) |
+| **P1**      | Model escalation audit events ([#561](https://github.com/danielsmithdevelopment/ClawQL/issues/561)), agent coordination ([#562](https://github.com/danielsmithdevelopment/ClawQL/issues/562)) |
 
 ## Differentiation vs LiteLLM
 
