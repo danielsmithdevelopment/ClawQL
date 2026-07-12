@@ -13,6 +13,7 @@ import {
   runPaymentsStripeSubscriptionCreate,
   runPaymentsStripeWebhookListen,
   runPaymentsStripeWebhookVerify,
+  runPaymentsStripeMeterReport,
   runPaymentsUsageReport,
   runPaymentsX402Gate,
   runPaymentsX402GateList,
@@ -50,6 +51,9 @@ export type PaymentsCliOptions = {
   facilitatorUrl?: string;
   payloadPath?: string;
   process?: boolean;
+  eventName?: string;
+  identifier?: string;
+  value?: number;
 };
 
 export async function runPaymentsPlanShowCmd(options: PaymentsCliOptions = {}): Promise<number> {
@@ -131,6 +135,20 @@ export async function runPaymentsStripeWebhookVerifyCmd(
     signature: options.signature,
     webhookSecret: options.webhookSecret,
     process: options.process,
+    tenantId: options.tenantId,
+    correlationId: options.correlationId,
+    json: options.json,
+  });
+}
+
+export async function runPaymentsStripeMeterReportCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsStripeMeterReport({
+    value: options.value,
+    customer: options.customer,
+    eventName: options.eventName,
+    identifier: options.identifier,
     tenantId: options.tenantId,
     correlationId: options.correlationId,
     json: options.json,

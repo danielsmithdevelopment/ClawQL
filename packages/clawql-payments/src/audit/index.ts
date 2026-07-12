@@ -3,6 +3,7 @@ export {
   buildPaymentWormEntry,
   buildPlanChangedEntry,
   buildStripeInvoicePaidEntry,
+  buildStripeMeterReportedEntry,
   buildX402PaymentReceivedEntry,
   type PaymentEventKind,
   type PaymentProvider,

@@ -21,6 +21,15 @@ export {
   type StripeInvoiceResult,
 } from "./invoice.js";
 export { reportMeteredUsage, type MeteredUsageInput } from "./metered.js";
+export {
+  buildInferenceMeterIdentifier,
+  isStripeMeterReportingActive,
+  reportInferenceMeterUsageIfEnabled,
+  resolveStripeMeterConfig,
+  type ReportInferenceMeterUsageInput,
+  type ReportInferenceMeterUsageResult,
+  type StripeMeterConfig,
+} from "./meter-report.js";
 export { createCustomerPortalSession, type PortalSessionInput } from "./portal.js";
 export {
   assertStripeWebhookSignature,

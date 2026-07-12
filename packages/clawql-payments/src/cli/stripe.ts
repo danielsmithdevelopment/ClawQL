@@ -7,8 +7,10 @@ import {
   verifyAndProcessStripeWebhook,
   verifyStripeWebhookSignature,
   isStripeConfigured,
+  reportMeteredUsage,
 } from "../stripe/index.js";
-import { loadPaymentsConfig } from "../config/store.js";
+import { appendPaymentWormEntry, buildStripeMeterReportedEntry } from "../audit/index.js";
+import { loadPaymentsConfig, mergePaymentsConfig } from "../config/store.js";
 import { StripeNotConfiguredError, StripeWebhookVerificationError } from "../stripe/errors.js";
 
 export type PaymentsStripeSetupOptions = {
@@ -77,12 +79,16 @@ export async function runPaymentsStripeCustomerCreate(
       env,
     });
 
+    await mergePaymentsConfig({ stripe: { customerId: customer.id } }, env);
+
     if (options.json) {
       console.log(JSON.stringify(customer, null, 2));
       return 0;
     }
 
-    console.log(`Created Stripe customer ${customer.id} (${customer.email})`);
+    console.log(
+      `Created Stripe customer ${customer.id} (${customer.email}) → saved to payments.json`
+    );
     return 0;
   } catch (error) {
     if (error instanceof StripeNotConfiguredError) {
@@ -285,5 +291,72 @@ export async function runPaymentsStripeWebhookListen(): Promise<number> {
 
 Store the webhook signing secret via:
   clawql payments stripe setup --webhook-secret whsec_...`);
+  return 0;
+}
+
+export type PaymentsStripeMeterReportOptions = {
+  value?: number;
+  customer?: string;
+  eventName?: string;
+  identifier?: string;
+  tenantId?: string;
+  correlationId?: string;
+  json?: boolean;
+  env?: NodeJS.ProcessEnv;
+};
+
+export async function runPaymentsStripeMeterReport(
+  options: PaymentsStripeMeterReportOptions = {}
+): Promise<number> {
+  const env = options.env ?? process.env;
+  if (!isStripeConfigured(env)) {
+    console.error("STRIPE_SECRET_KEY is required for live Stripe API calls");
+    return 1;
+  }
+
+  const config = await loadPaymentsConfig(env);
+  const customerId =
+    options.customer?.trim() || config.stripe.customerId?.trim() || env.STRIPE_CUSTOMER_ID?.trim();
+  const eventName =
+    options.eventName?.trim() ||
+    config.stripe.meterEventName?.trim() ||
+    env.STRIPE_METER_EVENT_NAME?.trim();
+
+  if (!customerId || !eventName) {
+    console.error(
+      "Usage: clawql payments stripe meter report --value 1 --customer cus_xxx --event-name clawql_inference_calls"
+    );
+    return 1;
+  }
+
+  const value = options.value ?? 1;
+  const tenantId = options.tenantId?.trim() || config.tenantId?.trim() || "default";
+
+  const result = await reportMeteredUsage({
+    eventName,
+    stripeCustomerId: customerId,
+    value,
+    identifier: options.identifier,
+    env,
+  });
+
+  appendPaymentWormEntry(
+    buildStripeMeterReportedEntry({
+      tenantId,
+      value,
+      eventName,
+      stripeCustomerId: customerId,
+      correlationId: options.correlationId,
+    })
+  );
+
+  if (options.json) {
+    console.log(JSON.stringify({ tenantId, ...result, eventName, customerId }, null, 2));
+    return 0;
+  }
+
+  console.log(
+    `Reported Stripe meter ${eventName} +${value} for ${customerId} (id=${result.id}, tenant=${tenantId})`
+  );
   return 0;
 }

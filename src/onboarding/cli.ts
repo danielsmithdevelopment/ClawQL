@@ -63,6 +63,7 @@ import {
   runPaymentsStripeSubscriptionCreateCmd,
   runPaymentsStripeWebhookListenCmd,
   runPaymentsStripeWebhookVerifyCmd,
+  runPaymentsStripeMeterReportCmd,
   runPaymentsUsageReportCmd,
   runPaymentsX402GateCmd,
   runPaymentsX402GateListCmd,
@@ -770,6 +771,8 @@ async function main(): Promise<void> {
         : undefined;
     const price =
       typeof flags.price === "string" && flags.price ? Number.parseFloat(flags.price) : undefined;
+    const value =
+      typeof flags.value === "string" && flags.value ? Number.parseFloat(flags.value) : undefined;
     const limit =
       typeof flags.limit === "string" && flags.limit ? Number.parseInt(flags.limit, 10) : undefined;
     const paymentsOpts: PaymentsCliOptions = {
@@ -804,6 +807,9 @@ async function main(): Promise<void> {
       facilitatorUrl: typeof flags.facilitatorUrl === "string" ? flags.facilitatorUrl : undefined,
       payloadPath: typeof flags.payloadPath === "string" ? flags.payloadPath : undefined,
       process: Boolean(flags.process),
+      eventName: typeof flags.eventName === "string" ? flags.eventName : undefined,
+      identifier: typeof flags.identifier === "string" ? flags.identifier : undefined,
+      value: Number.isFinite(value) ? value : undefined,
     };
 
     if (subcmd === "plan") {
@@ -853,8 +859,12 @@ async function main(): Promise<void> {
         process.exitCode = await runPaymentsStripeWebhookVerifyCmd(paymentsOpts);
         return;
       }
+      if (stripeAction === "meter" && rest[1] === "report") {
+        process.exitCode = await runPaymentsStripeMeterReportCmd(paymentsOpts);
+        return;
+      }
       console.error(
-        "Usage: clawql payments stripe setup | customer create | subscription create | invoice create | webhook listen | webhook verify"
+        "Usage: clawql payments stripe setup | customer create | subscription create | invoice create | meter report | webhook listen | webhook verify"
       );
       process.exitCode = 1;
       return;

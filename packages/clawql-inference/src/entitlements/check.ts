@@ -5,6 +5,7 @@ import {
   createUsageStore,
   entitlementsFromPlan,
   loadPaymentsConfig,
+  reportInferenceMeterUsageIfEnabled,
 } from "clawql-payments";
 import { EntitlementLimitError } from "./errors.js";
 
@@ -72,6 +73,7 @@ export async function assertInferenceEntitlement(
 export type RecordInferenceUsageInput = {
   tenantId: string;
   amount?: number;
+  correlationId?: string;
   env?: NodeJS.ProcessEnv;
 };
 
@@ -84,4 +86,17 @@ export async function recordInferenceUsage(input: RecordInferenceUsageInput): Pr
     input.amount ?? 1,
     config.plan
   );
+}
+
+export async function recordInferenceBilling(input: RecordInferenceUsageInput): Promise<void> {
+  const env = input.env ?? process.env;
+  if (isInferenceEntitlementEnforcementActive(env)) {
+    await recordInferenceUsage(input);
+  }
+  await reportInferenceMeterUsageIfEnabled({
+    tenantId: input.tenantId,
+    value: input.amount ?? 1,
+    correlationId: input.correlationId,
+    env,
+  });
 }
