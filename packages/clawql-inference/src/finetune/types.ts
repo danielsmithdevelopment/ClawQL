@@ -3,12 +3,7 @@ import type { ModelTier } from "../routing/types.js";
 export type FinetuneProvider = "openai" | "anthropic";
 
 export type FinetuneJobStatus =
-  | "validating_files"
-  | "queued"
-  | "running"
-  | "succeeded"
-  | "failed"
-  | "cancelled";
+  "validating_files" | "queued" | "running" | "succeeded" | "failed" | "cancelled";
 
 export type FinetuneJob = {
   id: string;

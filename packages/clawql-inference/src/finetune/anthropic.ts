@@ -60,10 +60,7 @@ export async function submitAnthropicFinetuneJob(input: {
   return toFinetuneJob((await res.json()) as AnthropicJobResponse);
 }
 
-export async function getAnthropicFinetuneJob(
-  jobId: string,
-  apiKey: string
-): Promise<FinetuneJob> {
+export async function getAnthropicFinetuneJob(jobId: string, apiKey: string): Promise<FinetuneJob> {
   const res = await fetch(`${ANTHROPIC_FINETUNE_BASE}/jobs/${encodeURIComponent(jobId)}`, {
     headers: {
       "x-api-key": apiKey,

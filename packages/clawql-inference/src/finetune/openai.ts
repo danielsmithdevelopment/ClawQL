@@ -81,9 +81,12 @@ export async function submitOpenAiFinetuneJob(input: {
 }
 
 export async function getOpenAiFinetuneJob(jobId: string, apiKey: string): Promise<FinetuneJob> {
-  const res = await fetch(`https://api.openai.com/v1/fine_tuning/jobs/${encodeURIComponent(jobId)}`, {
-    headers: { Authorization: `Bearer ${apiKey}` },
-  });
+  const res = await fetch(
+    `https://api.openai.com/v1/fine_tuning/jobs/${encodeURIComponent(jobId)}`,
+    {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    }
+  );
   if (!res.ok) throw new Error(await readHttpError(res));
   return toFinetuneJob((await res.json()) as OpenAiJobResponse);
 }

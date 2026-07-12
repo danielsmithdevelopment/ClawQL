@@ -1,6 +1,12 @@
 import { createHash } from "node:crypto";
 import { buildMerkleSnapshot } from "clawql-core";
-import type { DatasetManifest, ExportFilter, ExportFormat, ExportSampleLine, PiiScrubMode } from "./types.js";
+import type {
+  DatasetManifest,
+  ExportFilter,
+  ExportFormat,
+  ExportSampleLine,
+  PiiScrubMode,
+} from "./types.js";
 
 export function sha256Hex(text: string): string {
   return createHash("sha256").update(text, "utf8").digest("hex");

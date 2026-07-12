@@ -1,4 +1,8 @@
-import { getFinetuneJobStatus, registerFinetuneModel, submitFinetuneJob } from "../finetune/jobs.js";
+import {
+  getFinetuneJobStatus,
+  registerFinetuneModel,
+  submitFinetuneJob,
+} from "../finetune/jobs.js";
 import type { FinetuneProvider } from "../finetune/types.js";
 import type { ModelTier } from "../routing/types.js";
 
@@ -52,7 +56,9 @@ export async function runInferenceFinetuneStatus(
   options: InferenceFinetuneOptions
 ): Promise<number> {
   if (!options.jobId?.trim()) {
-    console.error("Usage: clawql inference finetune status --job-id <id> --provider openai|anthropic");
+    console.error(
+      "Usage: clawql inference finetune status --job-id <id> --provider openai|anthropic"
+    );
     return 1;
   }
   const provider = options.provider ?? "openai";

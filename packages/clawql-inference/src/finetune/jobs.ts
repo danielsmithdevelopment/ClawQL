@@ -2,13 +2,15 @@ import type { ModelTier } from "../routing/types.js";
 import { getAnthropicFinetuneJob, submitAnthropicFinetuneJob } from "./anthropic.js";
 import { getOpenAiFinetuneJob, submitOpenAiFinetuneJob } from "./openai.js";
 import { registerModelToTier } from "./tier-registry.js";
-import type { FinetuneJob, FinetuneProvider, RegisterFinetuneModelInput, SubmitFinetuneJobInput } from "./types.js";
+import type {
+  FinetuneJob,
+  FinetuneProvider,
+  RegisterFinetuneModelInput,
+  SubmitFinetuneJobInput,
+} from "./types.js";
 
 function resolveApiKey(provider: FinetuneProvider, env: NodeJS.ProcessEnv): string {
-  const key =
-    provider === "openai"
-      ? env.OPENAI_API_KEY?.trim()
-      : env.ANTHROPIC_API_KEY?.trim();
+  const key = provider === "openai" ? env.OPENAI_API_KEY?.trim() : env.ANTHROPIC_API_KEY?.trim();
   if (!key) {
     throw new Error(
       provider === "openai"
