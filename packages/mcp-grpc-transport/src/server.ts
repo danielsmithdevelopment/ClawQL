@@ -27,6 +27,17 @@ import { McpProtobufBridge } from "./mcp-protobuf-bridge.js";
 import { TaskCancellationRegistry } from "./mcp-protobuf-tasks.js";
 import { patchProtoLoaderPackageDefinitionForReflection } from "./proto-loader-reflection-patch.js";
 
+export type McpMessageContextHook = (
+  extra: MessageExtraInfo
+) => <T>(fn: () => T | Promise<T>) => Promise<T>;
+
+let mcpMessageContextHook: McpMessageContextHook | undefined;
+
+/** Optional hook to bind transport metadata (e.g. x402 payment headers) around each MCP message. */
+export function setMcpMessageContextHook(hook: McpMessageContextHook | undefined): void {
+  mcpMessageContextHook = hook;
+}
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
 const wellKnownProtoRoot = dirname(require.resolve("google-proto-files/package.json"));
@@ -255,7 +266,19 @@ export class GrpcMcpSessionTransport implements Transport {
           related_request_id: msg.related_request_id ?? undefined,
           resumption_token: msg.resumption_token ?? undefined,
         });
-        this.onmessage?.(message, extra);
+        void (async () => {
+          const deliver = (): void => {
+            this.onmessage?.(message, extra);
+          };
+          if (mcpMessageContextHook) {
+            await mcpMessageContextHook(extra)(deliver);
+          } else {
+            deliver();
+          }
+        })().catch((e) => {
+          const err = e instanceof Error ? e : new Error(String(e));
+          this.onerror?.(err);
+        });
       } catch (e) {
         const err = e instanceof Error ? e : new Error(String(e));
         this.onerror?.(err);

@@ -16,4 +16,4 @@ ClawQL's unified billing layer — Stripe subscriptions, x402 micropayments, man
 
 - [clawql-inference](../inference/clawql-inference.md) — gateway, call store, export/finetune flywheel
 - [clawql-idp-platform](../vision/clawql-idp-platform.md) — product pricing philosophy
-- GitHub [#88](https://github.com/danielsmithdevelopment/ClawQL/issues/88) — `.well-known/payments.json` discovery (placeholder today)
+- GitHub [#88](https://github.com/danielsmithdevelopment/ClawQL/issues/88) — `.well-known/payments.json` discovery (dynamic on self-hosted HTTP; static on docs site)

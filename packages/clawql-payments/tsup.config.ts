@@ -7,6 +7,7 @@ export default defineConfig({
     "x402/index": "src/x402/index.ts",
     "plans/index": "src/plans/index.ts",
     "audit/index": "src/audit/index.ts",
+    "discovery/index": "src/discovery/index.ts",
   },
   format: ["esm", "cjs"],
   dts: true,

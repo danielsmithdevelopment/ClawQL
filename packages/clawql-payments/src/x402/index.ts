@@ -51,6 +51,24 @@ export {
   type EnforceX402GateInput,
 } from "./enforce.js";
 export {
+  runMcpX402BeforeCallTool,
+  mcpToolResourceName,
+  type RunMcpX402BeforeCallToolOptions,
+} from "./mcp-enforce.js";
+export {
+  getMcpX402Context,
+  runWithMcpX402Context,
+  headersFromExpressRequest,
+  headersFromPlainRecord,
+  type McpX402RequestContext,
+} from "./mcp-context.js";
+export {
+  X402McpPaymentDeniedError,
+  X402McpPaymentRequiredError,
+  isX402McpPaymentError,
+  type X402McpToolResult,
+} from "./mcp-errors.js";
+export {
   createX402PaymentMiddleware,
   type CreateX402PaymentMiddlewareOptions,
   type X402PaymentRequest,

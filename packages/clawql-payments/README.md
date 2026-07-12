@@ -98,7 +98,9 @@ Postgres store (`CLAWQL_PAYMENTS_AUDIT_STORE=postgres`) uses `clawql_payments_au
 
 Stripe SDK integration is **live** for customers, subscriptions, invoices, billing portal, meter events (Stripe Billing Meters), and webhook signature verification. Inference can report meter events when `CLAWQL_PAYMENTS_REPORT_STRIPE_METER=1`. Invoice payment audit events are recorded via verified `invoice.paid` webhooks only.
 
-x402 facilitator HTTP verification is **live** (`POST /verify` against x402.org or CDP). Inference HTTP can enforce gates with `CLAWQL_X402_ENFORCE=1`.
+x402 facilitator HTTP verification is **live** (`POST /verify` against x402.org or CDP). Inference HTTP and **native MCP tool calls** can enforce gates with `CLAWQL_X402_ENFORCE=1`.
+
+Payment discovery is served at **`/.well-known/payments.json`** on MCP and inference HTTP apps (dynamic from local gates/config).
 
 Payment audit is **durable** — hash-chained append-only JSONL at `$CLAWQL_HOME/Payments/audit.jsonl` (default), optional Postgres for multi-node, and optional Loki export. Use `clawql payments audit verify` to validate chain integrity.
 
