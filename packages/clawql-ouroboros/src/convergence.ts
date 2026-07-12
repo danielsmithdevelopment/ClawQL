@@ -1,4 +1,4 @@
-import type { OntologyLineage, EvaluationSummary, ACResult, DriftSummary } from "./lineage.js";
+import type { OntologyLineage, ACResult } from "./lineage.js";
 import type { OntologyField } from "./seed.js";
 import { DRIFT_THRESHOLD_ACCEPTABLE, type DriftBand, type DriftReport } from "./drift.js";
 
