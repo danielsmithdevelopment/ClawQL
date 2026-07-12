@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildPaymentWormEntry, buildX402PaymentReceivedEntry } from "./events.js";
+import { buildPaymentWormEntry, buildX402PaymentFailedEntry, buildX402PaymentReceivedEntry } from "./events.js";
 
 describe("payment audit events", () => {
   it("builds x402 payment received entry", () => {
@@ -15,6 +15,20 @@ describe("payment audit events", () => {
     expect(entry.action).toBe("X402_PAYMENT_RECEIVED");
     expect(entry.payload.provider).toBe("x402");
     expect(entry.correlationId).toBe("corr-1");
+  });
+
+  it("builds x402 payment failed entry", () => {
+    const entry = buildX402PaymentFailedEntry({
+      tenantId: "tenant-1",
+      resource: "/v1/chat/completions",
+      reason: "invalid signature",
+      correlationId: "corr-fail",
+    });
+
+    expect(entry.action).toBe("X402_PAYMENT_FAILED");
+    expect(entry.payload.provider).toBe("x402");
+    expect(entry.payload.resource).toBe("/v1/chat/completions");
+    expect(entry.summary).toContain("invalid signature");
   });
 
   it("builds generic payment worm entry", () => {

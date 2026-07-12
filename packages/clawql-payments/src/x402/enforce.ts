@@ -1,4 +1,6 @@
 import { loadPaymentsConfig } from "../config/store.js";
+import { appendPaymentWormEntry } from "../audit/worm.js";
+import { buildX402PaymentFailedEntry } from "../audit/events.js";
 import { loadX402RuntimeConfig } from "./config.js";
 import { findX402GateForResource } from "./gate.js";
 import { parseX402PaymentPayloadHeader, readX402PaymentHeader } from "./headers.js";
@@ -23,12 +25,33 @@ export type EnforceX402GateInput = {
   fetchImpl?: typeof fetch;
 };
 
+async function recordX402PaymentFailed(input: {
+  tenantId: string;
+  resource: string;
+  reason: string;
+  correlationId?: string;
+  env: NodeJS.ProcessEnv;
+}): Promise<void> {
+  await appendPaymentWormEntry(
+    buildX402PaymentFailedEntry({
+      tenantId: input.tenantId,
+      resource: input.resource,
+      reason: input.reason,
+      correlationId: input.correlationId,
+    }),
+    input.env
+  );
+}
+
 export async function enforceX402Gate(input: EnforceX402GateInput): Promise<X402EnforceResult> {
   const env = input.env ?? process.env;
   const gate = await findX402GateForResource(input.resource, env);
   if (!gate) {
     return { action: "allow", resource: input.resource };
   }
+
+  const paymentsConfig = await loadPaymentsConfig(env);
+  const tenantId = paymentsConfig.tenantId ?? "default";
 
   const paymentHeader = readX402PaymentHeader(input.headers);
   if (!paymentHeader) {
@@ -47,20 +70,36 @@ export async function enforceX402Gate(input: EnforceX402GateInput): Promise<X402
 
   const paymentPayload = parseX402PaymentPayloadHeader(paymentHeader);
   if (!paymentPayload) {
+    const reason = "invalid x402 payment payload in PAYMENT-SIGNATURE header";
+    await recordX402PaymentFailed({
+      tenantId,
+      resource: gate.resource,
+      reason,
+      correlationId: input.correlationId,
+      env,
+    });
     return {
       action: "deny",
       status: 402,
-      reason: "invalid x402 payment payload in PAYMENT-SIGNATURE header",
+      reason,
       resource: gate.resource,
     };
   }
 
   const config = await loadX402RuntimeConfig(env);
   if (!config.facilitatorUrl) {
+    const reason = "x402 facilitator URL is not configured";
+    await recordX402PaymentFailed({
+      tenantId,
+      resource: gate.resource,
+      reason,
+      correlationId: input.correlationId,
+      env,
+    });
     return {
       action: "deny",
       status: 402,
-      reason: "x402 facilitator URL is not configured",
+      reason,
       resource: gate.resource,
     };
   }
@@ -80,6 +119,13 @@ export async function enforceX402Gate(input: EnforceX402GateInput): Promise<X402
   });
 
   if (!verified.verified) {
+    await recordX402PaymentFailed({
+      tenantId,
+      resource: gate.resource,
+      reason: verified.reason,
+      correlationId: input.correlationId,
+      env,
+    });
     return {
       action: "deny",
       status: 402,
@@ -87,9 +133,6 @@ export async function enforceX402Gate(input: EnforceX402GateInput): Promise<X402
       resource: gate.resource,
     };
   }
-
-  const paymentsConfig = await loadPaymentsConfig(env);
-  const tenantId = paymentsConfig.tenantId ?? "default";
 
   await reconcileX402Settlement({
     tenantId,

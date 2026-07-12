@@ -58,7 +58,7 @@ export async function assertInferenceEntitlement(
   });
 
   if (!check.allowed) {
-    appendPaymentWormEntry(
+    await appendPaymentWormEntry(
       buildEntitlementLimitReachedEntry({
         tenantId: input.tenantId,
         plan: config.plan,

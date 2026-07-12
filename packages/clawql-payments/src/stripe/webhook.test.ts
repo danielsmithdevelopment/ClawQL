@@ -10,9 +10,9 @@ import { StripeWebhookVerificationError } from "./errors.js";
 import { listPaymentAuditEntries, resetPaymentAuditStoreForTests } from "../audit/worm.js";
 
 describe("stripe webhook verification", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     resetDefaultAuditRingBufferForTests();
-    resetPaymentAuditStoreForTests();
+    await resetPaymentAuditStoreForTests();
   });
 
   const secret = "whsec_test_secret_for_clawql_payments";
@@ -55,7 +55,7 @@ describe("stripe webhook verification", () => {
     const event = assertStripeWebhookSignature(payload, signature, secret);
     const result = await processStripeWebhookEvent(event, { tenantId: "default" });
     expect(result.handled).toBe(true);
-    const entries = listPaymentAuditEntries(10);
+    const entries = await listPaymentAuditEntries(10);
     expect(entries.some((e) => e.action === "STRIPE_INVOICE_PAID")).toBe(true);
   });
 });

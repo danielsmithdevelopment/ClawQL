@@ -1,4 +1,4 @@
-import type { PaymentProvider } from "./events.js";
+import type { PaymentProvider, PaymentWormEntry } from "./events.js";
 import { listPaymentAuditEntries } from "./worm.js";
 
 export type SpendGroupBy = "provider" | "tenant" | "plan";
@@ -18,7 +18,7 @@ export type SpendReport = {
 };
 
 export function buildSpendReport(
-  entries = listPaymentAuditEntries(10_000),
+  entries: PaymentWormEntry[],
   groupBy: SpendGroupBy = "provider"
 ): SpendReport {
   const buckets = new Map<string, SpendReportRow>();
@@ -57,9 +57,25 @@ export function buildSpendReport(
   };
 }
 
+export async function loadSpendReport(
+  groupBy: SpendGroupBy = "provider",
+  limit = 10_000
+): Promise<SpendReport> {
+  const entries = await listPaymentAuditEntries(limit);
+  return buildSpendReport(entries, groupBy);
+}
+
 export function filterAuditByCorrelationId(
   correlationId: string,
-  entries = listPaymentAuditEntries(10_000)
-) {
+  entries: PaymentWormEntry[]
+): PaymentWormEntry[] {
   return entries.filter((e) => e.correlationId === correlationId);
+}
+
+export async function loadAuditByCorrelationId(
+  correlationId: string,
+  limit = 10_000
+): Promise<PaymentWormEntry[]> {
+  const entries = await listPaymentAuditEntries(limit);
+  return filterAuditByCorrelationId(correlationId, entries);
 }

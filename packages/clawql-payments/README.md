@@ -11,7 +11,7 @@ clawql-payments
 ├── stripe/     # Subscriptions, invoices, webhooks, metered usage, customer portal
 ├── x402/       # Wallet setup, resource gating, proof verification, settlement reconcile
 ├── plans/      # ClawQL tier definitions, entitlements, usage tracking, limit enforcement
-├── audit/      # Payment events → WORM (ring buffer today; durable WORM writer follow-up)
+├── audit/      # Payment events → hash-chained WORM (jsonl, postgres, or memory) + optional Loki export
 └── cli/        # `clawql payments *` command implementations
 ```
 
@@ -44,7 +44,7 @@ clawql payments stripe meter report --value 1 --customer cus_xxx
 clawql payments stripe webhook verify --payload ./event.json --signature "t=...,v1=..." --process
 ````
 
-Payment audit events (`STRIPE_INVOICE_PAID`, `STRIPE_PAYMENT_FAILED`, etc.) are written when verified webhooks are processed — not at invoice creation time.
+Payment audit events (`STRIPE_INVOICE_PAID`, `STRIPE_PAYMENT_FAILED`, `X402_PAYMENT_FAILED`, etc.) are written when verified webhooks are processed or x402 enforcement fails — not at invoice creation time or when no payment proof is attached yet.
 
 ## x402 micropayments
 
@@ -89,8 +89,10 @@ Local state is stored under `$CLAWQL_HOME/Payments/` (default `~/.clawql/Payment
 - `payments.json` — tenant plan, Stripe and x402 wallet config
 - `x402-gates.json` — payment-gated resources and MCP tools
 - `usage.json` — metered usage counters per tenant/month
-- `audit.jsonl` — hash-chained payment audit log (append-only WORM)
-- `audit.meta.json` — chain head metadata
+- `audit.jsonl` — hash-chained payment audit log (append-only WORM; default store)
+- `audit.meta.json` — chain head metadata (jsonl store)
+
+Postgres store (`CLAWQL_PAYMENTS_AUDIT_STORE=postgres`) uses `clawql_payments_audit` tables instead of local files. Optional Loki export pushes full payloads when `CLAWQL_LOKI_PUSH_URL` is set.
 
 ## Status
 
@@ -98,7 +100,7 @@ Stripe SDK integration is **live** for customers, subscriptions, invoices, billi
 
 x402 facilitator HTTP verification is **live** (`POST /verify` against x402.org or CDP). Inference HTTP can enforce gates with `CLAWQL_X402_ENFORCE=1`.
 
-Payment audit is **durable** — hash-chained append-only JSONL at `$CLAWQL_HOME/Payments/audit.jsonl` with `clawql payments audit verify`.
+Payment audit is **durable** — hash-chained append-only JSONL at `$CLAWQL_HOME/Payments/audit.jsonl` (default), optional Postgres for multi-node, and optional Loki export. Use `clawql payments audit verify` to validate chain integrity.
 
 Full operator guide: [`docs/payments/clawql-payments.md`](../../docs/payments/clawql-payments.md).
 

@@ -12,7 +12,7 @@ import type { PaymentAuditStore } from "./store.js";
 export class MemoryPaymentAuditStore implements PaymentAuditStore {
   private records: PaymentWormRecord[] = [];
 
-  append(entry: PaymentWormEntry): PaymentWormRecord {
+  async append(entry: PaymentWormEntry): Promise<PaymentWormRecord> {
     const prev_hash =
       this.records.length > 0
         ? this.records[this.records.length - 1]!.hash
@@ -26,20 +26,20 @@ export class MemoryPaymentAuditStore implements PaymentAuditStore {
     return record;
   }
 
-  list(limit = 100): PaymentWormEntry[] {
-    return this.listRecords(limit).map(toPaymentWormEntry);
+  async list(limit = 100): Promise<PaymentWormEntry[]> {
+    return (await this.listRecords(limit)).map(toPaymentWormEntry);
   }
 
-  listRecords(limit = 100): PaymentWormRecord[] {
+  async listRecords(limit = 100): Promise<PaymentWormRecord[]> {
     if (limit <= 0) return [];
     return this.records.slice(-limit);
   }
 
-  verify(): PaymentAuditVerifyResult {
+  async verify(): Promise<PaymentAuditVerifyResult> {
     return verifyPaymentAuditChain(this.records);
   }
 
-  reset(): void {
+  async reset(): Promise<void> {
     this.records = [];
   }
 }

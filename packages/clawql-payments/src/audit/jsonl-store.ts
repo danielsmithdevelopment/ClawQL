@@ -116,7 +116,7 @@ export class JsonlPaymentAuditStore implements PaymentAuditStore {
     return this.cache;
   }
 
-  append(entry: PaymentWormEntry): PaymentWormRecord {
+  async append(entry: PaymentWormEntry): Promise<PaymentWormRecord> {
     const head = resolveChainHead(this.jsonlPath, this.metaPath);
     const record = sealPaymentWormRecord({
       entry,
@@ -144,21 +144,21 @@ export class JsonlPaymentAuditStore implements PaymentAuditStore {
     return record;
   }
 
-  list(limit = 100): PaymentWormEntry[] {
-    return this.listRecords(limit).map(toPaymentWormEntry);
+  async list(limit = 100): Promise<PaymentWormEntry[]> {
+    return (await this.listRecords(limit)).map(toPaymentWormEntry);
   }
 
-  listRecords(limit = 100): PaymentWormRecord[] {
+  async listRecords(limit = 100): Promise<PaymentWormRecord[]> {
     const records = this.loadRecords();
     if (limit <= 0) return [];
     return records.slice(-limit);
   }
 
-  verify(): PaymentAuditVerifyResult {
+  async verify(): Promise<PaymentAuditVerifyResult> {
     return verifyPaymentAuditChain(this.loadRecords());
   }
 
-  reset(): void {
+  async reset(): Promise<void> {
     this.cache = [];
     try {
       writeFileSync(this.jsonlPath, "", { mode: 0o600 });

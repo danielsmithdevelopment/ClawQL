@@ -52,7 +52,7 @@ describe("x402 facilitator HTTP", () => {
     expect(result.verified).toBe(true);
     expect(result.payer).toBe("0xpayer");
     expect(fetchImpl).toHaveBeenCalledOnce();
-    const [url, init] = fetchImpl.mock.calls[0] as [string, RequestInit];
+    const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toBe("https://x402.org/facilitator/verify");
     expect(init.method).toBe("POST");
   });

@@ -15,9 +15,9 @@ vi.mock("./metered.js", () => ({
 import { reportMeteredUsage } from "./metered.js";
 
 describe("stripe meter reporting", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     resetDefaultAuditRingBufferForTests();
-    resetPaymentAuditStoreForTests();
+    await resetPaymentAuditStoreForTests();
     vi.mocked(reportMeteredUsage).mockClear();
   });
 
@@ -79,7 +79,7 @@ describe("stripe meter reporting", () => {
       })
     );
 
-    const entries = listPaymentAuditEntries(5);
+    const entries = await listPaymentAuditEntries(5);
     expect(entries.some((e) => e.action === "STRIPE_METER_REPORTED")).toBe(true);
   });
 });

@@ -4,6 +4,7 @@ export {
   buildPlanChangedEntry,
   buildStripeInvoicePaidEntry,
   buildStripeMeterReportedEntry,
+  buildX402PaymentFailedEntry,
   buildX402PaymentReceivedEntry,
   type PaymentEventKind,
   type PaymentProvider,
@@ -27,14 +28,19 @@ export {
 } from "./factory.js";
 export {
   isPaymentAuditFsyncEnabled,
+  isPaymentAuditLokiPushEnabled,
   resolvePaymentAuditStoreMode,
   type PaymentAuditStore,
   type PaymentAuditStoreMode,
 } from "./store.js";
 export { createJsonlPaymentAuditStore } from "./jsonl-store.js";
+export { createPostgresPaymentAuditStore } from "./postgres-store.js";
+export { maybePushPaymentAuditEntryToLoki } from "./loki.js";
 export {
   buildSpendReport,
   filterAuditByCorrelationId,
+  loadAuditByCorrelationId,
+  loadSpendReport,
   type SpendGroupBy,
   type SpendReport,
   type SpendReportRow,
