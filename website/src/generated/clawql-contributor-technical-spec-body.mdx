@@ -1214,3 +1214,7 @@ import { Effect, Layer, Stream, Option, Context, Schema } from 'effect'
 _ClawQL Contributor Technical Specification · May 2026 · Apache 2.0 / MIT_
 _For platform vision and roadmap: see the [Vision & Roadmap document](/vision/roadmap)._
 _For deployment instructions: see the [Deployment & Operations Guide](/deployment/operations-guide). Planned Operator model: [Operator target architecture](/design/operator-target-architecture)._
+
+export function wrapper({ children }) {
+  return children
+}

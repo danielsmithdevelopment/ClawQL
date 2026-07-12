@@ -147,7 +147,18 @@ export function rewriteDocLinks(body, sourceDocPathFromRepoRoot) {
   )
 }
 
+/** Passthrough wrapper for generated MDX fragments embedded in custom page.tsx shells. */
+const MDX_BODY_WRAPPER_EXPORT = `
+export function wrapper({ children }) {
+  return children
+}
+`
+
 /** @param {string} body */
 export function prepareMdxBody(body, sourceDocPathFromRepoRoot) {
-  return rewriteDocLinks(body, sourceDocPathFromRepoRoot)
+  const rewritten = rewriteDocLinks(body, sourceDocPathFromRepoRoot)
+  if (rewritten.includes('export function wrapper')) {
+    return rewritten
+  }
+  return `${rewritten}${MDX_BODY_WRAPPER_EXPORT}`
 }

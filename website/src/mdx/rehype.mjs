@@ -31,7 +31,10 @@ function rehypeShiki() {
 
         node.properties.code = textNode.value
 
-        if (node.properties.language) {
+        if (
+          node.properties.language &&
+          node.properties.language !== 'mermaid'
+        ) {
           let tokens = highlighter.codeToThemedTokens(
             textNode.value,
             node.properties.language,
