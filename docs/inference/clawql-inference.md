@@ -1,8 +1,7 @@
 # clawql-inference
 
 **Status:** Shipped (July 2026)  
-**Package:** [`packages/clawql-inference`](../../packages/clawql-inference)  
-**Epic:** [#556](https://github.com/danielsmithdevelopment/ClawQL/issues/556)
+**Package:** [`packages/clawql-inference`](../../packages/clawql-inference)
 
 `clawql-inference` is ClawQL's TypeScript-native **inference gateway and model-improvement platform** — a LiteLLM-class layer with ClawQL's trust model: WORM-auditable routing, semantic cache, model tier escalation, agent coordination hooks, verdict-filtered export, and fine-tuning flywheel. It is designed as a **drop-in OpenAI replacement** (`OPENAI_BASE_URL=http://127.0.0.1:8080/v1`) while closing the production loop that generic proxies leave open.
 
@@ -193,7 +192,7 @@ When `EvolutionaryLoop` runs with an `AdaptiveRouter`:
 3. `model_escalation` audit events append to the Ouroboros Postgres / in-memory event store
 4. Correlation id: `{seedId}_gen_{n}`
 
-See [Agent coordination](#agent-coordination-562) for the Hermes tripwire path.
+See [Agent coordination](#agent-coordination) for the Hermes tripwire path.
 
 ---
 
@@ -401,7 +400,7 @@ Config persists at `$CLAWQL_HOME/Inference/pipeline.json`. Cron worker:
 
 ---
 
-## Agent coordination (#562)
+## Agent coordination
 
 `TierEscalationRouter.shouldTriggerAgentCoordination()` fires when:
 
@@ -523,17 +522,17 @@ clawql inference <subcommand>
 
 ## Implementation phasing
 
-| Phase    | Deliverable                                                                                        | Status |
-| -------- | -------------------------------------------------------------------------------------------------- | ------ |
-| P0-D     | `routing/` + Ouroboros hooks ([#560](https://github.com/danielsmithdevelopment/ClawQL/issues/560)) | ✅     |
-| P0-F     | Gateway MVP: `serve`, `complete`, provider adapters                                                | ✅     |
-| P0-G     | Call store + `logs` / `trace` / `spend`                                                            | ✅     |
-| P0-H     | Export + Presidio + dataset manifest                                                               | ✅     |
-| P0-I     | Fine-tune jobs + tier registration                                                                 | ✅     |
-| P1       | Pipeline enable + cron worker                                                                      | ✅     |
-| P1       | Model escalation audit ([#561](https://github.com/danielsmithdevelopment/ClawQL/issues/561))       | ✅     |
-| P1       | Agent coordination ([#562](https://github.com/danielsmithdevelopment/ClawQL/issues/562))           | ✅     |
-| Adoption | OpenAI REST, semantic cache, fallback, virtual keys, Postgres store                                | ✅     |
+| Phase    | Deliverable                                                         | Status |
+| -------- | ------------------------------------------------------------------- | ------ |
+| P0-D     | `routing/` + Ouroboros hooks                                        | ✅     |
+| P0-F     | Gateway MVP: `serve`, `complete`, provider adapters                 | ✅     |
+| P0-G     | Call store + `logs` / `trace` / `spend`                             | ✅     |
+| P0-H     | Export + Presidio + dataset manifest                                | ✅     |
+| P0-I     | Fine-tune jobs + tier registration                                  | ✅     |
+| P1       | Pipeline enable + cron worker                                       | ✅     |
+| P1       | Model escalation audit                                              | ✅     |
+| P1       | Agent coordination                                                  | ✅     |
+| Adoption | OpenAI REST, semantic cache, fallback, virtual keys, Postgres store | ✅     |
 
 ### Planned (not blockers)
 
@@ -550,5 +549,3 @@ clawql inference <subcommand>
 - [Token efficiency architecture](../architecture/clawql-token-efficiency.md)
 - [Ouroboros library](../ouroboros/clawql-ouroboros.md)
 - [Upstream Q00 sync roadmap](../ouroboros/upstream-q00-sync-roadmap.md)
-- Issue [#556](https://github.com/danielsmithdevelopment/ClawQL/issues/556) — inference epic
-- Issue [#560](https://github.com/danielsmithdevelopment/ClawQL/issues/560) — model tier escalation

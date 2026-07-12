@@ -2,13 +2,15 @@ import clsx from 'clsx'
 import Link from 'next/link'
 import { Children, isValidElement } from 'react'
 
+import { Pre as CodePre } from '@/components/Code'
 import { FeedbackClientIsland } from '@/components/FeedbackClientIsland'
 import { Heading } from '@/components/Heading'
+import { MermaidDiagram } from '@/components/MermaidDiagram'
 import { Prose } from '@/components/Prose'
 
 export const a = Link
 export { Button } from '@/components/Button'
-export { Code as code, CodeGroup, Pre as pre } from '@/components/Code'
+export { Code as code, CodeGroup } from '@/components/Code'
 
 /**
  * Markdown `![]()` images: default lazy + async decode to reduce Worker CPU and
@@ -32,6 +34,45 @@ export function img({
       )}
       {...props}
     />
+  )
+}
+
+/** Extract plain text from a fenced-code `pre` child (Shiki HTML or raw string). */
+function readPreCodeText(children: React.ReactNode): string {
+  let text = ''
+  Children.forEach(children, (child) => {
+    if (!isValidElement(child)) {
+      if (typeof child === 'string') text += child
+      return
+    }
+    if (child.type === 'code') {
+      const props = child.props as {
+        children?: React.ReactNode
+        dangerouslySetInnerHTML?: { __html: string }
+      }
+      if (typeof props.children === 'string') {
+        text += props.children
+      } else if (props.dangerouslySetInnerHTML?.__html) {
+        text += props.dangerouslySetInnerHTML.__html.replace(/<[^>]+>/g, '')
+      }
+    }
+  })
+  return text.trim()
+}
+
+type PreProps = React.ComponentPropsWithoutRef<'pre'> & {
+  'data-language'?: string
+  language?: string
+}
+
+/** Route Mermaid fences to a diagram; other languages use the default code block UI. */
+export function pre(props: PreProps) {
+  const language = props['data-language'] ?? props.language
+  if (language === 'mermaid') {
+    return <MermaidDiagram chart={readPreCodeText(props.children)} />
+  }
+  return (
+    <CodePre {...(props as React.ComponentPropsWithoutRef<typeof CodePre>)} />
   )
 }
 
@@ -140,7 +181,12 @@ export function table({
 }: React.ComponentPropsWithoutRef<'table'>) {
   const cols = countTableColumns(children)
   return (
-    <div className="docs-table-scroll not-prose">
+    <div
+      className="docs-table-scroll not-prose"
+      tabIndex={0}
+      role="region"
+      aria-label="Scrollable table"
+    >
       <table
         className={clsx(
           'docs-table',
