@@ -7,12 +7,6 @@ export {
   type OuroborosPluginSearchParams,
 } from "./deps.js";
 
-export {
-  createOuroborosPlugin,
-  OUROBOROS_PLUGIN_ID,
-} from "./ouroboros-plugin.js";
+export { createOuroborosPlugin, OUROBOROS_PLUGIN_ID } from "./ouroboros-plugin.js";
 
-export {
-  getOuroborosContext,
-  resetOuroborosContextForTests,
-} from "./context.js";
+export { getOuroborosContext, resetOuroborosContextForTests } from "./context.js";

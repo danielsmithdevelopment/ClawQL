@@ -44,12 +44,10 @@ describe("startSeedsPoller", () => {
     const markFailed = vi.fn(async () => {});
     const onError = vi.fn(async () => {});
 
-    const poller = startSeedsPoller(
-      { run } as never,
-      fetchPending,
-      markFailed,
-      { pollIntervalMs: 10, onError },
-    );
+    const poller = startSeedsPoller({ run } as never, fetchPending, markFailed, {
+      pollIntervalMs: 10,
+      onError,
+    });
 
     await vi.advanceTimersByTimeAsync(12);
 
@@ -69,16 +67,13 @@ describe("startSeedsPoller", () => {
       () =>
         new Promise<void>((resolve) => {
           resolveRun = resolve;
-        }),
+        })
     );
     const fetchPending = vi.fn(async () => [seed]);
     const markFailed = vi.fn(async () => {});
-    const poller = startSeedsPoller(
-      { run } as never,
-      fetchPending,
-      markFailed,
-      { pollIntervalMs: 10 },
-    );
+    const poller = startSeedsPoller({ run } as never, fetchPending, markFailed, {
+      pollIntervalMs: 10,
+    });
 
     await vi.advanceTimersByTimeAsync(12);
     await vi.advanceTimersByTimeAsync(25);

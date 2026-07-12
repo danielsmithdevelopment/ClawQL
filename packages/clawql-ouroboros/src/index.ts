@@ -28,6 +28,7 @@ export type {
   ReflectOutput,
   Executor,
   Evaluator,
+  EngineCallContext,
 } from "./interfaces.js";
 
 export { ConvergenceCriteria, RegressionDetector } from "./convergence.js";
@@ -49,6 +50,6 @@ export {
 export type { DriftReport, DriftBand, DriftComponents, MeasureDriftInput } from "./drift.js";
 
 export { EvolutionaryLoop } from "./evolutionary-loop.js";
-export type { LoopResult, GenerationSnapshot } from "./evolutionary-loop.js";
+export type { LoopResult, GenerationSnapshot, LoopRoutingOptions } from "./evolutionary-loop.js";
 
 export { InMemoryEventStore } from "./in-memory-event-store.js";

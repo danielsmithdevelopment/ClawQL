@@ -48,7 +48,7 @@ resolve_pkg() {
   return 1
 }
 
-for name in clawql-api clawql-auth clawql-core clawql-memory clawql-pageindex clawql-documents clawql-automation clawql-sandbox clawql-ouroboros clawql-operator clawql-release; do
+for name in clawql-api clawql-auth clawql-core clawql-memory clawql-pageindex clawql-documents clawql-automation clawql-sandbox clawql-inference clawql-ouroboros clawql-operator clawql-release; do
   resolve_pkg "${name}"
 done
 

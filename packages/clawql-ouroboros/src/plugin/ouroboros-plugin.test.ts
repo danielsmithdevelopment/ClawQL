@@ -15,7 +15,12 @@ describe("createOuroborosPlugin", () => {
     const plugin = createOuroborosPlugin();
     expect(plugin.id).toBe(OUROBOROS_PLUGIN_ID);
     Effect.runSync(plugin.onRegister!(api));
-    expect(registry.list().map((t) => t.name).sort()).toEqual([
+    expect(
+      registry
+        .list()
+        .map((t) => t.name)
+        .sort()
+    ).toEqual([
       "ouroboros_create_seed_from_document",
       "ouroboros_get_lineage_status",
       "ouroboros_measure_drift",

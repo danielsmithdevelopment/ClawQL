@@ -2,7 +2,12 @@
  * Rebuild {@link OntologyLineage} from stored events (shared by in-memory semantics and Postgres).
  */
 
-import type { GenerationRecord, OntologyLineage, DriftSummary, ConvergenceSummary } from "../lineage.js";
+import type {
+  GenerationRecord,
+  OntologyLineage,
+  DriftSummary,
+  ConvergenceSummary,
+} from "../lineage.js";
 import type { Seed } from "../seed.js";
 import type { StoredEvent } from "../interfaces.js";
 
@@ -64,8 +69,7 @@ function parseDriftSummary(data: unknown): DriftSummary | undefined {
     goal_drift: typeof d.goal_drift === "number" ? d.goal_drift : 0,
     constraint_drift: typeof d.constraint_drift === "number" ? d.constraint_drift : 0,
     ontology_drift: typeof d.ontology_drift === "number" ? d.ontology_drift : 0,
-    generation_number:
-      typeof d.generation_number === "number" ? d.generation_number : undefined,
+    generation_number: typeof d.generation_number === "number" ? d.generation_number : undefined,
   };
 }
 

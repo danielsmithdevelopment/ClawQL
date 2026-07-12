@@ -27,7 +27,7 @@ export function startSeedsPoller(
   loop: EvolutionaryLoop,
   fetchPending: () => Promise<Seed[]>,
   markFailed: (seedId: string, error: unknown) => Promise<void>,
-  options: SeedPollerOptions = {},
+  options: SeedPollerOptions = {}
 ): { stop: () => void } {
   const { pollIntervalMs = 5_000, onError } = options;
   const withLock = createSkipMutex();

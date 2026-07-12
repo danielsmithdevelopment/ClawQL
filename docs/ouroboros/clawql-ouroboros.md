@@ -2,7 +2,7 @@
 
 **npm consumers:** the **registry README** lives in [`packages/clawql-ouroboros/README.md`](../packages/clawql-ouroboros/README.md) (install, quick start, export table, scope vs Q00). This file is the **longer guide** with full examples.
 
-**Platform design:** [DAOS Unified Architecture v2.7](./daos-unified-architecture-specification-v2.7.md) · [Coordination layer](./daos-coordination-layer-specification.md) · [Build plan v2.7.1](./daos-build-plan-v2.7.1.md) · [Upstream Q00 sync roadmap](./upstream-q00-sync-roadmap.md) (PAL, drift, MoA — planning)
+**Platform design:** [DAOS Unified Architecture v2.7](./daos-unified-architecture-specification-v2.7.md) · [Coordination layer](./daos-coordination-layer-specification.md) · [Build plan v2.7.1](./daos-build-plan-v2.7.1.md) · [Upstream Q00 sync roadmap](./upstream-q00-sync-roadmap.md) (model tier escalation, drift, agent coordination — planning)
 
 TypeScript workspace package at [`packages/clawql-ouroboros`](../packages/clawql-ouroboros): **specification-first** seeds, **Wonder / Reflect** hooks, an **evolutionary loop** over pluggable **Executor** / **Evaluator**, **ontology convergence** (similarity, stagnation, oscillation, regression gates), and optional **MCP-shaped tool definitions** for crystallizing document text into seeds.
 
@@ -231,7 +231,7 @@ stop();
 
 ## See also
 
-- **[Upstream Q00 sync roadmap](./upstream-q00-sync-roadmap.md)** — what to port from [Q00/ouroboros](https://github.com/Q00/ouroboros) v0.50.3+ (PAL Router, drift measurement, PAL+MoA sequencing) and linked GitHub tickets.
+- **[Upstream Q00 sync roadmap](./upstream-q00-sync-roadmap.md)** — what to port from [Q00/ouroboros](https://github.com/Q00/ouroboros) v0.50.3+ (PAL Router upstream, drift measurement, model tier escalation + agent coordination sequencing) and linked GitHub tickets.
 - **[`docs/adr/0001-ouroboros-workflow-engine.md`](../adr/0001-ouroboros-workflow-engine.md)** — architecture decision record for in-process routing, seed contract, and persistence model ([#110](https://github.com/danielsmithdevelopment/ClawQL/issues/110)).
 - **[`docs/mcp/mcp-tools.md`](../mcp/mcp-tools.md)** — ClawQL MCP tools, including optional **`ouroboros_*`** wiring.
 - **[`packages/mcp-grpc-transport/README.md`](../packages/mcp-grpc-transport/README.md)** — other publishable workspace package.
