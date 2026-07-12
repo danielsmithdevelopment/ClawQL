@@ -1,4 +1,3 @@
-import type { ChatMessage, InferenceResponse } from "../gateway.js";
 import { readHttpError } from "./http.js";
 import type { InferenceProviderAdapter, ProviderAdapterConfig } from "./types.js";
 
