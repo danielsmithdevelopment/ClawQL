@@ -20,17 +20,17 @@ This document separates **what to port** from **what to leave alone**, defines p
 
 ## Gap analysis (shipped today)
 
-| Capability                                                                    | `clawql-ouroboros`                                         | Q00 v0.50.3                         |
-| ----------------------------------------------------------------------------- | ---------------------------------------------------------- | ----------------------------------- |
-| Wonder / Reflect / Execute / Evaluate                                         | Shipped                                                    | Shipped                             |
-| Ontology similarity convergence                                               | Shipped (`convergence.ts`)                                 | Shipped (different math)            |
-| Stagnation / oscillation detection                                            | Shipped (fingerprint window)                               | Shipped (4 named patterns)          |
+| Capability                                                                    | `clawql-ouroboros`                                                                                                                                     | Q00 v0.50.3                         |
+| ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------- |
+| Wonder / Reflect / Execute / Evaluate                                         | Shipped                                                                                                                                                | Shipped                             |
+| Ontology similarity convergence                                               | Shipped (`convergence.ts`)                                                                                                                             | Shipped (different math)            |
+| Stagnation / oscillation detection                                            | Shipped (fingerprint window)                                                                                                                           | Shipped (4 named patterns)          |
 | 3-component drift (Goal 50% / Constraint 30% / Ontology 20%, threshold ≤ 0.3) | **Shipped** — `ouroboros_measure_drift` + per-generation `drift_measured` events ([#557](https://github.com/danielsmithdevelopment/ClawQL/issues/557)) | Shipped (`ouroboros_measure_drift`) |
-| PAL / model-tier routing                                                      | **Not shipped** — documented omission                      | **Shipped** (headline v0.50.3)      |
-| Frugality proof / per-AC token attribution                                    | **Not shipped**                                            | Shipped                             |
-| MoA / multi-model consensus                                                   | **Not shipped** — DAOS §6.7 roadmap                        | Shipped (Stage 3 + tiers)           |
-| NSV / SGDOP                                                                   | **Not shipped** — DAOS P3 roadmap                          | Partial (consensus triggers)        |
-| Routing                                                                       | `clawql_execute` / `clawql_search` API hints               | LLM tier + runtime routing          |
+| PAL / model-tier routing                                                      | **Not shipped** — documented omission                                                                                                                  | **Shipped** (headline v0.50.3)      |
+| Frugality proof / per-AC token attribution                                    | **Not shipped**                                                                                                                                        | Shipped                             |
+| MoA / multi-model consensus                                                   | **Not shipped** — DAOS §6.7 roadmap                                                                                                                    | Shipped (Stage 3 + tiers)           |
+| NSV / SGDOP                                                                   | **Not shipped** — DAOS P3 roadmap                                                                                                                      | Partial (consensus triggers)        |
+| Routing                                                                       | `clawql_execute` / `clawql_search` API hints                                                                                                           | LLM tier + runtime routing          |
 
 **Marketing gap:** [`docs/posts/introducing-clawql-ouroboros.md`](../posts/introducing-clawql-ouroboros.md) claims ontological drift tracking; implementation must catch up or copy be revised.
 
