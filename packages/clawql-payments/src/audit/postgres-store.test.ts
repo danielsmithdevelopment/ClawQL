@@ -18,14 +18,12 @@ type MetaRow = {
 function createMockPool(): pg.Pool {
   const records: AuditRow[] = [];
   let meta: MetaRow | null = null;
-  let inTransaction = false;
 
   const client = {
     async query(sql: string, params: unknown[] = []) {
       const normalized = sql.replace(/\s+/g, " ").trim();
 
       if (normalized === "BEGIN" || normalized === "COMMIT" || normalized === "ROLLBACK") {
-        inTransaction = normalized === "BEGIN";
         return { rows: [] };
       }
 
