@@ -1,4 +1,5 @@
 import type { ModelEscalationDecision } from "./routing/types.js";
+import type { FallbackAttempt } from "./fallback/types.js";
 import { parseModelId } from "./providers/parse-model-id.js";
 import { createProviderRegistry, getProviderAdapter } from "./providers/registry.js";
 import type { InferenceProviderPlugin, ProviderRegistry } from "./providers/types.js";
@@ -7,6 +8,8 @@ import { withInferenceStore } from "./observability/observed-gateway.js";
 import { createInferenceStore } from "./store/create.js";
 import type { InferenceStore } from "./store/types.js";
 import { withSemanticCache, type WithSemanticCacheOptions } from "./cache/cached-gateway.js";
+import { loadFallbackConfig } from "./fallback/config.js";
+import { withFallbackChain, type WithFallbackChainOptions } from "./fallback/fallback-gateway.js";
 
 export type ChatRole = "system" | "user" | "assistant";
 
@@ -34,6 +37,7 @@ export interface InferenceResponse {
   cacheHit?: boolean;
   routing?: ModelEscalationDecision;
   correlationId?: string;
+  fallback?: FallbackAttempt;
 }
 
 /**
@@ -57,6 +61,7 @@ export type CreateInferenceGatewayOptions = {
   env?: NodeJS.ProcessEnv;
   store?: InferenceStore | null;
   semanticCache?: WithSemanticCacheOptions | false;
+  fallback?: WithFallbackChainOptions | false;
 };
 
 export class ConfiguredInferenceGateway implements InferenceGateway {
@@ -95,10 +100,16 @@ export function createInferenceGateway(
       plugins: options.providerPlugins ?? composeDefaultProviderPlugins(),
     });
   const inner = new ConfiguredInferenceGateway(providers);
+  const fallbackConfig =
+    options.fallback === false ? null : (options.fallback?.config ?? loadFallbackConfig(env));
+  const withFallback =
+    options.fallback === false || !fallbackConfig
+      ? inner
+      : withFallbackChain(inner, { config: fallbackConfig });
   const cached =
     options.semanticCache === false
-      ? inner
-      : withSemanticCache(inner, { env, ...options.semanticCache });
+      ? withFallback
+      : withSemanticCache(withFallback, { env, ...options.semanticCache });
   const store = options.store === undefined ? createInferenceStore({ env }) : options.store;
   return withInferenceStore(cached, store);
 }

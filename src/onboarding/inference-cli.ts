@@ -3,6 +3,7 @@
  */
 
 import {
+  runInferenceFallbackShow,
   runInferenceCacheStatus,
   runInferenceComplete,
   runInferenceEscalationSetTier,
@@ -205,4 +206,8 @@ export async function runInferencePipelineRunCmd(opts: InferenceCliOptions): Pro
 
 export async function runInferenceCacheStatusCmd(opts: InferenceCliOptions): Promise<number> {
   return runInferenceCacheStatus({ json: opts.json });
+}
+
+export async function runInferenceFallbackShowCmd(opts: InferenceCliOptions): Promise<number> {
+  return runInferenceFallbackShow({ json: opts.json });
 }

@@ -29,6 +29,7 @@ import {
 } from "./sandbox-cli.js";
 import {
   runInferenceCacheStatusCmd,
+  runInferenceFallbackShowCmd,
   runInferenceCompleteCmd,
   runInferenceEscalationSetTierCmd,
   runInferenceEscalationShowCmd,
@@ -282,9 +283,11 @@ inference (gateway MVP):
   escalation      show tier map | set-tier --tier <tier> --model <id>
   pipeline        enable | status | disable | run (scheduled auto-export config)
   cache           Semantic cache config (CLAWQL_INFERENCE_SEMANTIC_CACHE=1)
+  fallback        Per-tier / per-model provider fallback chains
   Providers: openai, anthropic, ollama via provider/model ids (e.g. ollama/phi4)
   Store: CLAWQL_INFERENCE_STORE=memory|jsonl|off (default jsonl when CLAWQL_HOME set)
   Cache: CLAWQL_INFERENCE_SEMANTIC_CACHE=1, CLAWQL_INFERENCE_CACHE_THRESHOLD=0.92
+  Fallback: CLAWQL_INFERENCE_FALLBACK_ENABLED=1, CLAWQL_INFERENCE_FALLBACK_FRUGAL=a,b
   Env: OPENAI_API_KEY, ANTHROPIC_API_KEY, OLLAMA_BASE_URL, CLAWQL_INFERENCE_PORT
 
 Docs: https://docs.clawql.com/agent-setup
@@ -652,8 +655,12 @@ async function main(): Promise<void> {
       process.exitCode = await runInferenceCacheStatusCmd(inferenceOpts);
       return;
     }
+    if (subcmd === "fallback") {
+      process.exitCode = await runInferenceFallbackShowCmd(inferenceOpts);
+      return;
+    }
     console.error(
-      "Usage: clawql inference serve | complete | logs | trace | spend | export | finetune | escalation | pipeline | cache"
+      "Usage: clawql inference serve | complete | logs | trace | spend | export | finetune | escalation | pipeline | cache | fallback"
     );
     process.exitCode = 1;
     return;

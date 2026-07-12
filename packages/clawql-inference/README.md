@@ -59,6 +59,22 @@ clawql inference serve
 
 Cache hits return stored responses with `cache_hit: true` in the call store. Embedding API failures fail open to live inference.
 
+## Fallback chains
+
+Try alternate providers/models within the same tier before surfacing an error — pairs with model tier escalation:
+
+```bash
+export CLAWQL_INFERENCE_FALLBACK_ENABLED=1
+export CLAWQL_INFERENCE_FALLBACK_FRUGAL=ollama/phi4,openai/gpt-4o-mini
+export CLAWQL_INFERENCE_FALLBACK_STANDARD=groq/llama-3.3-70b,anthropic/claude-haiku-4
+
+# Or persist chains at $CLAWQL_HOME/Inference/fallback-chains.json
+clawql inference fallback
+clawql inference serve
+```
+
+Responses include `fallback.attempted` and `fallback.succeeded` when a backup model handles the request.
+
 ## Quick start
 
 ```bash
@@ -144,6 +160,10 @@ Subpath: `clawql-inference/plugin` for builtin factories and compose helpers.
 | `CLAWQL_INFERENCE_CACHE_TTL`         | `24h`                       | Cache entry TTL (`24h`, `7d`, or `_MS` variant)  |
 | `CLAWQL_INFERENCE_CACHE_MAX_ENTRIES` | `1000`                      | In-memory cache size cap                         |
 | `CLAWQL_EMBEDDING_MODEL`             | `text-embedding-3-small`    | Embeddings model for semantic cache              |
+| `CLAWQL_INFERENCE_FALLBACK_ENABLED`  | off                         | Enable per-tier / per-model fallback chains      |
+| `CLAWQL_INFERENCE_FALLBACK_FRUGAL`   | —                           | Comma-separated fallback chain for frugal tier   |
+| `CLAWQL_INFERENCE_FALLBACK_STANDARD` | —                           | Fallback chain for standard tier                 |
+| `CLAWQL_INFERENCE_FALLBACK_FRONTIER` | —                           | Fallback chain for frontier tier                 |
 
 Model ids use `provider/model` (e.g. `ollama/phi4`, `anthropic/claude-sonnet-4`).
 
