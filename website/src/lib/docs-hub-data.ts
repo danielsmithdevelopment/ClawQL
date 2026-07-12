@@ -167,6 +167,13 @@ export const architectureHubCards: Array<ReferenceCard> = [
     description: 'Code Mode through classification-aware model routing.',
     icon: BoltIcon,
   }),
+  card({
+    href: '/inference/clawql-inference',
+    name: 'clawql-inference',
+    description:
+      'OpenAI-compatible gateway, tier escalation, cache, export/finetune flywheel, and Ouroboros wiring.',
+    icon: BoltIcon,
+  }),
 ]
 
 export const deploymentHubCards: Array<ReferenceCard> = [
@@ -289,6 +296,13 @@ export const guidesHubCards: Array<ReferenceCard> = [
     icon: BoltIcon,
   }),
   card({
+    href: '/inference/clawql-inference',
+    name: 'Inference gateway',
+    description:
+      'OpenAI-compatible gateway, flywheel export/finetune, and full wiring reference.',
+    icon: BoltIcon,
+  }),
+  card({
     href: '/security/defense-in-depth',
     name: 'Defense in depth',
     description:
@@ -355,6 +369,13 @@ export const referenceHubCards: Array<ReferenceCard> = [
     name: 'Plugins hub',
     description: 'One doc page per shipped or planned ClawQL plugin.',
     icon: SquaresPlusIcon,
+  }),
+  card({
+    href: '/inference/clawql-inference',
+    name: 'clawql-inference',
+    description:
+      'Gateway stack, tier escalation, cache, virtual keys, export/finetune, Ouroboros audit.',
+    icon: BoltIcon,
   }),
   card({
     href: '/tools',
@@ -563,6 +584,13 @@ export const pluginsHubCards: Array<ReferenceCard> = [
     name: 'Ouroboros',
     description: 'Evolutionary loop MCP tools and optional Postgres lineage.',
     icon: SquaresPlusIcon,
+  }),
+  card({
+    href: '/plugins/inference-providers',
+    name: 'Inference providers',
+    description:
+      'OpenAI, Anthropic, Ollama builtins and third-party clawql-inference plugins.',
+    icon: BoltIcon,
   }),
   card({
     href: '/plugins/hitl-label-studio',

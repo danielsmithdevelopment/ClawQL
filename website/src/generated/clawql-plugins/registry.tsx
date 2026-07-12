@@ -4,12 +4,13 @@ import Body5 from './bodies/automation.mdx'
 import Body4 from './bodies/bundled-providers.mdx'
 import Body0 from './bodies/core.mdx'
 import Body3 from './bodies/documents.mdx'
-import Body8 from './bodies/hitl-label-studio.mdx'
+import Body9 from './bodies/hitl-label-studio.mdx'
+import Body7 from './bodies/inference-providers.mdx'
 import Body2 from './bodies/memory.mdx'
-import Body7 from './bodies/ouroboros.mdx'
+import Body8 from './bodies/ouroboros.mdx'
 import Body1 from './bodies/panguard-proxy.mdx'
 import Body6 from './bodies/sandbox.mdx'
-import Body9 from './bodies/third-party.mdx'
+import Body10 from './bodies/third-party.mdx'
 
 export type PluginPageMeta = {
   slug: string
@@ -93,6 +94,16 @@ export const pluginPages: PluginPageMeta[] = [
     next: 'ouroboros',
   },
   {
+    slug: 'inference-providers',
+    title: 'Inference providers',
+    description:
+      'Optional provider plugins for clawql-inference — OpenAI, Anthropic, and Ollama built-ins plus third-party extensions.',
+    status: 'shipped',
+    package: 'clawql-inference/plugin',
+    prev: 'ouroboros',
+    next: 'hitl-label-studio',
+  },
+  {
     slug: 'ouroboros',
     title: 'Ouroboros',
     description:
@@ -132,9 +143,10 @@ export const pluginBodies: Record<string, ComponentType> = {
   'bundled-providers': Body4,
   automation: Body5,
   sandbox: Body6,
-  ouroboros: Body7,
-  'hitl-label-studio': Body8,
-  'third-party': Body9,
+  'inference-providers': Body7,
+  ouroboros: Body8,
+  'hitl-label-studio': Body9,
+  'third-party': Body10,
 }
 
 export function getPluginMeta(slug: string): PluginPageMeta | undefined {

@@ -89,6 +89,7 @@ export const docsNavigation: Array<NavGroup> = [
         href: '/vision/immutable-releases',
       },
       { title: 'Ouroboros & DAOS', href: '/ouroboros' },
+      { title: 'Inference gateway', href: '/inference/clawql-inference' },
     ],
   },
   {

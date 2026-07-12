@@ -1,19 +1,318 @@
 # clawql-inference
 
-**Status:** Foundation (July 2026)  
+**Status:** Shipped (July 2026)  
 **Package:** [`packages/clawql-inference`](../../packages/clawql-inference)  
 **Epic:** [#556](https://github.com/danielsmithdevelopment/ClawQL/issues/556)
 
-`clawql-inference` is ClawQL's TypeScript-native **inference gateway and model-improvement platform** — a LiteLLM-class layer built with ClawQL's trust model: Manifest-governed policies, WORM-auditable routing decisions, semantic cache backed by existing memory/Onyx infrastructure, **model tier escalation** + **agent coordination** integrated from day one, and **production-to-fine-tuning export** with PII scrubbing and provenance manifests.
+`clawql-inference` is ClawQL's TypeScript-native **inference gateway and model-improvement platform** — a LiteLLM-class layer with ClawQL's trust model: WORM-auditable routing, semantic cache, model tier escalation, agent coordination hooks, verdict-filtered export, and fine-tuning flywheel. It is designed as a **drop-in OpenAI replacement** (`OPENAI_BASE_URL=http://127.0.0.1:8080/v1`) while closing the production loop that generic proxies leave open.
 
-## The flywheel
+**Related docs:** [Inference provider plugins](../plugins/inference-providers.md) · [Token efficiency (Layer 5 cache)](../architecture/clawql-token-efficiency.md) · [Ouroboros library](../ouroboros/clawql-ouroboros.md)
 
+---
+
+## What it does
+
+| Capability | Summary |
+| ---------- | ------- |
+| **Gateway** | OpenAI-compatible REST (`/v1/chat/completions`, `/v1/models`, SSE streaming) |
+| **Providers** | Built-in OpenAI, Anthropic, Ollama; extensible plugin registry |
+| **Routing** | Frugal → standard → frontier tier escalation with kill switches |
+| **Cache** | Embedding similarity semantic cache (cosine threshold + TTL) |
+| **Resilience** | Per-tier / per-model fallback chains before hard failure |
+| **Auth** | Virtual keys (per-team budgets, rate limits) |
+| **Entitlements** | Optional plan limits via `clawql-payments` |
+| **Observability** | Durable call store, `logs` / `trace` / `spend` CLI |
+| **Flywheel** | Verdict-filtered export → fine-tune → register custom model in tier map |
+| **Automation** | Scheduled pipeline worker (cron export when sample threshold met) |
+| **Ouroboros** | `model_escalation` + `agent_coordination` audit events in lineage store |
+
+---
+
+## Architecture overview
+
+```mermaid
+flowchart TB
+  subgraph clients [Clients]
+    SDK[OpenAI SDK / curl]
+    CLI[clawql inference complete]
+    OB[Ouroboros EvolutionaryLoop]
+  end
+
+  subgraph http [HTTP layer]
+    AUTH[Virtual key auth middleware]
+    OAI[OpenAI-compat router]
+  end
+
+  subgraph gateway [Gateway decorator stack — inner to outer]
+    CFG[ConfiguredInferenceGateway]
+    FB[FallbackChainGateway]
+    CACHE[SemanticCachedGateway]
+    ENT[EntitlementEnforcedGateway]
+    OBS[ObservedInferenceGateway]
+  end
+
+  subgraph backends [Backends]
+    PLG[Provider plugins — openai / anthropic / ollama]
+    STORE[(Inference store — memory / jsonl / postgres)]
+  end
+
+  SDK --> AUTH --> OAI --> OBS
+  CLI --> OBS
+  OB --> CFG
+  OBS --> ENT --> CACHE --> FB --> CFG --> PLG
+  OBS --> STORE
 ```
+
+Every successful `complete()` call flows **outward through decorators** and ends in the call store. HTTP clients additionally pass through virtual-key auth before the OpenAI router invokes the same gateway.
+
+---
+
+## Gateway decorator stack
+
+`createInferenceGateway()` composes decorators in this order (inner → outer):
+
+| Layer | Module | When active | Behavior |
+| ----- | ------ | ----------- | -------- |
+| 1 | `ConfiguredInferenceGateway` | Always | Resolves `provider/model`, calls provider adapter |
+| 2 | `FallbackChainGateway` | `CLAWQL_INFERENCE_FALLBACK_ENABLED=1` or chains file | Tries alternates on primary failure; sets `response.fallback` |
+| 3 | `SemanticCachedGateway` | `CLAWQL_INFERENCE_SEMANTIC_CACHE=1` | Embedding similarity lookup; sets `cacheHit` |
+| 4 | `EntitlementEnforcedGateway` | `CLAWQL_PAYMENTS_ENFORCE_INFERENCE=1` | Checks plan limits, records usage |
+| 5 | `ObservedInferenceGateway` | Store not `off` | Appends `InferenceRecord` to call store |
+
+```typescript
+import { createInferenceGateway } from "clawql-inference";
+
+const gateway = createInferenceGateway({ env: process.env });
+const result = await gateway.complete({
+  model: "anthropic/claude-sonnet-4",
+  messages: [{ role: "user", content: "Summarize this spec" }],
+  correlationId: "seed_abc_gen_2",
+  team: "eng",
+});
+```
+
+Disable layers via options: `{ semanticCache: false }`, `{ fallback: false }`, `{ store: null }`.
+
+---
+
+## HTTP API layer
+
+### Entry points
+
+| Command | Binary | Notes |
+| ------- | ------ | ----- |
+| `clawql inference serve` | `clawql` CLI | Wired via `src/onboarding/inference-cli.ts` |
+| `npx clawql-inference` | `packages/clawql-inference/bin` | Standalone sidecar |
+
+`createInferenceHttpApp()` (`packages/clawql-inference/src/api/server.ts`):
+
+1. `express.json()` — 2 MB body limit
+2. `GET /healthz` — liveness (no auth)
+3. `GET /v1` — capability discovery
+4. **`createVirtualKeyAuthMiddleware`** — Bearer / `x-api-key` when keys enabled
+5. **`createOpenAiCompatRouter`** — models list + chat completions
+
+### OpenAI-compatible endpoints
+
+| Method | Path | Notes |
+| ------ | ---- | ----- |
+| `GET` | `/healthz` | Liveness |
+| `GET` | `/v1/models` | Tier map + env models + Ollama tags |
+| `GET` | `/v1/models/:id` | Single model |
+| `POST` | `/v1/chat/completions` | Bare `gpt-4o` or `provider/model`; `stream: true` SSE |
+
+### Request headers
+
+| Header | Purpose |
+| ------ | ------- |
+| `Authorization: Bearer <key>` | Virtual key or upstream-style auth |
+| `x-api-key` / `x-clawql-api-key` | Alternative key header |
+| `x-correlation-id` / `x-clawql-correlation-id` | WORM lineage; echoed on response |
+| `x-clawql-tenant-id` | Plan entitlement tenant override |
+
+### Drop-in OpenAI client
+
+```bash
+export OPENAI_BASE_URL=http://127.0.0.1:8080/v1
+export OPENAI_API_KEY=<virtual-key-or-upstream-key>
+npx clawql-inference
+# or: clawql inference serve --port 8080
+```
+
+---
+
+## Provider plugins
+
+Built-ins register via `composeDefaultProviderPlugins()` unless allow/denylisted:
+
+| Plugin id | Adapter | Credentials |
+| --------- | ------- | ----------- |
+| `openai` | Chat completions | `OPENAI_API_KEY`, `CLAWQL_OPENAI_BASE_URL` |
+| `anthropic` | Messages API | `ANTHROPIC_API_KEY`, `CLAWQL_ANTHROPIC_BASE_URL` |
+| `ollama` | Local `/api/chat` | `OLLAMA_BASE_URL` (default `http://127.0.0.1:11434`) |
+
+Model ids use **`provider/model`** (e.g. `ollama/phi4`, `anthropic/claude-sonnet-4`). Bare public ids like `gpt-4o` resolve through the registry when a matching provider is configured.
+
+Third-party plugins use the same `InferenceProviderPlugin` contract — see [Inference provider plugins](../plugins/inference-providers.md). Subpath export: `clawql-inference/plugin`.
+
+| Env | Effect |
+| --- | ------ |
+| `CLAWQL_INFERENCE_PROVIDERS=openai,anthropic` | Allowlist |
+| `CLAWQL_INFERENCE_DISABLE_PROVIDERS=ollama` | Denylist |
+
+---
+
+## Model tier escalation
+
+`TierEscalationRouter` implements `AdaptiveRouter` with three tiers:
+
+| Tier | Default model (env override) | Role |
+| ---- | ---------------------------- | ---- |
+| **frugal** | `CLAWQL_INFERENCE_MODEL_FRUGAL` → `ollama/phi4` | Cheapest / custom fine-tuned |
+| **standard** | `CLAWQL_INFERENCE_MODEL_STANDARD` → `groq/llama-3.3-70b` | Balanced |
+| **frontier** | `CLAWQL_INFERENCE_MODEL_FRONTIER` → `anthropic/claude-sonnet-4` | Highest capability |
+
+**Kill switches:**
+
+- Escalation is **off by default** unless `CLAWQL_INFERENCE_ROUTING_ENABLED=1` or `CLAWQL_INFERENCE_MODEL_PIN` is set
+- `CLAWQL_INFERENCE_MODEL_PIN=<modelId>` bypasses the ladder
+
+**Tier map overrides** persist at `$CLAWQL_HOME/Inference/tier-map.json` (written by `clawql inference finetune register` or `escalation set-tier`).
+
+```bash
+clawql inference escalation show
+clawql inference escalation set-tier --tier frugal --model ollama/phi4-custom
+```
+
+### Ouroboros integration
+
+When `EvolutionaryLoop` runs with an `AdaptiveRouter`:
+
+1. `router.initialTier()` picks starting tier per seed / decomposed-child context
+2. On generation failure (AC fail, low eval score, drift exceeded), `router.escalate()` moves one notch up
+3. `model_escalation` audit events append to the Ouroboros Postgres / in-memory event store
+4. Correlation id: `{seedId}_gen_{n}`
+
+See [Agent coordination](#agent-coordination-562) for the Hermes tripwire path.
+
+---
+
+## Semantic cache
+
+Layer 5 in [token efficiency](../architecture/clawql-token-efficiency.md). Enabled with `CLAWQL_INFERENCE_SEMANTIC_CACHE=1`.
+
+| Setting | Default | Purpose |
+| ------- | ------- | ------- |
+| `CLAWQL_INFERENCE_CACHE_THRESHOLD` | `0.92` | Cosine similarity floor |
+| `CLAWQL_INFERENCE_CACHE_TTL` | `24h` | Entry TTL |
+| `CLAWQL_INFERENCE_CACHE_MAX_ENTRIES` | `1000` | In-memory cap |
+| `CLAWQL_EMBEDDING_MODEL` | `text-embedding-3-small` | Embedding model |
+
+Cache hits return stored responses with `cacheHit: true` on inference records. Embedding failures **fail open** to live inference.
+
+```bash
+clawql inference cache   # show active config
+```
+
+---
+
+## Fallback chains
+
+When the primary provider/model fails, try configured alternates before surfacing an error.
+
+```bash
+export CLAWQL_INFERENCE_FALLBACK_ENABLED=1
+export CLAWQL_INFERENCE_FALLBACK_FRUGAL=ollama/phi4,openai/gpt-4o-mini
+export CLAWQL_INFERENCE_FALLBACK_STANDARD=groq/llama-3.3-70b,anthropic/claude-haiku-4
+```
+
+Chains also persist at `$CLAWQL_HOME/Inference/fallback-chains.json` (`byTier` / `byModel`). Responses include `fallback.attempted` and `fallback.succeeded`.
+
+```bash
+clawql inference fallback
+```
+
+---
+
+## Virtual keys and HTTP auth
+
+Per-team API keys with optional USD budgets and rate limits (`100rpm`, `10rps`).
+
+```bash
+export CLAWQL_INFERENCE_KEYS_ENABLED=1
+clawql inference keys create --team eng --budget-usd 500 --rate-limit 100rpm
+clawql inference keys list
+clawql inference keys revoke --id vk_abc123
+```
+
+Keys persist at `$CLAWQL_HOME/Inference/virtual-keys.json` (secrets stored as SHA-256 hashes only). When enforcement is active, `/v1/*` requires a valid key; `/healthz` stays open.
+
+`team` and `virtualKeyId` are stamped on inference records; spend rollups support `--group-by team`.
+
+---
+
+## Plan entitlements (`clawql-payments`)
+
+When `CLAWQL_PAYMENTS_ENFORCE_INFERENCE=1`, the gateway checks plan limits before each completion and increments `inference_calls` usage after success. Tenant resolution order:
+
+1. `x-clawql-tenant-id` header
+2. Virtual key `team`
+3. `$CLAWQL_HOME/Payments` config default tenant
+
+Limit breaches throw `EntitlementLimitError` (HTTP 402-shaped OpenAI error) and append a WORM payment audit entry. Configure plans via `clawql payments` — see `packages/clawql-payments`.
+
+---
+
+## Inference call store
+
+Every successful completion writes an `InferenceRecord` used by observability **and** export.
+
+### Backends
+
+| `CLAWQL_INFERENCE_STORE` | Behavior |
+| ------------------------ | -------- |
+| `off` | No persistence |
+| `memory` | In-process (tests) |
+| `jsonl` | Append-only file (default when `CLAWQL_HOME` set) |
+| `postgres` | `clawql_inference_calls` table (JSONB records) |
+
+Postgres: `CLAWQL_INFERENCE_DATABASE_URL` or split `CLAWQL_INFERENCE_DB_*` vars. Default JSONL path: `$CLAWQL_HOME/Inference/calls.jsonl`.
+
+### Record fields
+
+| Field | Purpose |
+| ----- | ------- |
+| `id`, `correlation_id` | Link to WORM / Ouroboros generation |
+| `timestamp` | Export date-range filters |
+| `model_id`, `provider`, `tier` | Model and escalation tier at call time |
+| `team`, `virtual_key_id` | Virtual key attribution |
+| `messages`, `response` | Fine-tuning message pairs |
+| `usage` | Token counts |
+| `latency_ms` | Quality filtering |
+| `cache_hit` | Cost attribution |
+| `routing` | `ModelEscalationDecision` snapshot |
+| `evaluator_verdict` | `passed` / `failed` / `none` — **primary export filter** |
+| `evaluator_score` | Confidence floor filters |
+| `policy_version` | Manifest Merkle anchor (when set) |
+
+### Observability CLI
+
+```bash
+clawql inference logs [--model M] [--tier T] [--since 24h] [--limit 50]
+clawql inference spend [--group-by model|tier|team|provider] [--since 7d]
+clawql inference trace --correlation-id <id>
+```
+
+---
+
+## Export and fine-tuning flywheel
+
+```text
 Production traffic
   → WORM-logged inference (prompt, response, tier, verdict, correlation_id)
   → Evaluator verdicts + quality filters
   → PII-scrubbed dataset export (JSONL)
-  → Fine-tuning job (Anthropic / OpenAI / Together)
+  → Fine-tuning job (Anthropic / OpenAI)
   → Custom model registered in ModelTierMap
   → Deployed to Frugal tier
   → Better cheap-tier results → better verdicts → better training data
@@ -21,220 +320,213 @@ Production traffic
 
 LiteLLM routes inference. ClawQL closes the loop: **infer → observe → evaluate → export → fine-tune → redeploy**.
 
-## Shipped today (#560, gateway MVP, export/finetune)
-
-- **`AdaptiveRouter`** / **`TierEscalationRouter`** — frugal → standard → frontier, one-notch escalation
-- **Tier map** from environment (off by default); **`tier-map.json`** overrides after `finetune register`
-- **Kill switches** — escalation disabled unless explicitly enabled; optional model pin
-- **`ConfiguredInferenceGateway`** — provider plugin registry + routing to `provider/model` backends
-- **Provider plugins** — OpenAI, Anthropic, Ollama built-ins via `composeDefaultProviderPlugins()`; third-party extensions use the same contract ([inference providers plugin](../plugins/inference-providers.md))
-- **`clawql inference serve`** / **`npx clawql-inference`** — OpenAI-compatible REST: `/v1/chat/completions` (incl. `stream: true`), `/v1/models`, bare `gpt-4o` ids, `X-Correlation-Id`
-- **`clawql inference logs` / `trace` / `spend`** — query the call store by model, `correlation_id`, or token rollup
-- **`clawql inference export`** — verdict-filtered JSONL + Presidio scrub + WORM dataset manifest
-- **`clawql inference finetune`** — OpenAI / Anthropic job submit, status, and tier registration
-- **Semantic cache** — optional embedding similarity cache (`CLAWQL_INFERENCE_SEMANTIC_CACHE=1`); hits set `cache_hit` on inference records
-- **Fallback chains** — per-tier / per-model provider alternates when primary fails (`CLAWQL_INFERENCE_FALLBACK_ENABLED=1`)
-- **Virtual keys** — per-team API keys with budget and rate limits (`CLAWQL_INFERENCE_KEYS_ENABLED=1`)
-- **Postgres call store** — `CLAWQL_INFERENCE_STORE=postgres` with `CLAWQL_INFERENCE_DATABASE_URL`
-- **Ouroboros audit wiring** — `model_escalation` and `agent_coordination` events appended to lineage store (#561, #562)
-- **Policy CLI** — `clawql inference policy show` aggregates effective tier/cache/export config
-- **Pipeline cron worker** — `CLAWQL_INFERENCE_PIPELINE_WORKER=1` or `clawql inference pipeline worker`
-
-## Planned modules
-
-| Module           | Scope                                                                                               |
-| ---------------- | --------------------------------------------------------------------------------------------------- |
-| `routing/`       | Model tier escalation + `ModelTierMap` (**shipped** foundation)                                     |
-| `providers/`     | **Provider plugins** — builtins (OpenAI, Anthropic, Ollama) + optional extensions (**shipped** MVP) |
-| `local/`         | Ollama, vLLM, Llama.cpp                                                                             |
-| `cache/`         | Semantic cache — embedding similarity, TTL, per-model keys (**shipped**)                            |
-| `observability/` | Langfuse (ADR 0005), OpenTelemetry, WORM `correlation_id`                                           |
-| `fallback/`      | Per-tier provider chains — try alternates before failing (**shipped**)                              |
-| `keys/`          | Virtual keys, per-team budgets (**shipped**)                                                        |
-| `api/`           | OpenAI-compatible `/v1/chat/completions`, `/v1/models`, SSE streaming (**shipped**)                 |
-| `store/`         | Inference call log (Postgres) — prompt, response, tier, tokens, verdict (**shipped** MVP)           |
-| `export/`        | Filtered dataset export + PII scrub (Presidio) + WORM dataset manifests (**shipped**)               |
-| `finetune/`      | Job submission, status polling, model registration back into tier map (**shipped**)                 |
-| `cli/`           | `clawql inference` subcommands (see below)                                                          |
-
-## Inference record (what every call captures)
-
-Each completed inference writes a durable record used by observability **and** export:
-
-| Field                              | Purpose                                                  |
-| ---------------------------------- | -------------------------------------------------------- |
-| `id`, `correlation_id`             | Link to WORM / agent lineage / ouroboros generation      |
-| `timestamp`                        | Export date-range filters                                |
-| `model_id`, `provider`, `tier`     | Model and escalation tier at call time                   |
-| `messages` / `prompt` / `response` | Fine-tuning message pairs                                |
-| `system_prompt_hash`               | Cache key + dataset dedup                                |
-| `usage`                            | `input_tokens`, `output_tokens`, estimated cost          |
-| `latency_ms`                       | Quality filtering                                        |
-| `cache_hit`                        | Cost attribution                                         |
-| `model_escalation_decision`        | Tier, `escalated_from`, failure `trigger`                |
-| `evaluator_verdict`                | `passed` / `failed` / `none` — **primary export filter** |
-| `evaluator_score`                  | Confidence / quality filters                             |
-| `policy_version`                   | Manifest Merkle anchor at call time                      |
-
-Export only includes rows matching filters **after** optional Presidio scrubbing.
-
-## Dataset export
-
-**Verdict-filtered export** is the default insight: train on **Evaluator-passed** examples, not noise.
-
-Supported export formats:
-
-| Format            | Target                                         |
-| ----------------- | ---------------------------------------------- |
-| `openai-jsonl`    | OpenAI fine-tuning (`messages` array per line) |
-| `anthropic-jsonl` | Anthropic fine-tuning message format           |
-| `raw-jsonl`       | Full inference record for custom pipelines     |
-| `sharegpt`        | Optional community tooling interop             |
-
-**WORM-anchored dataset manifest** (written alongside every export):
-
-- SHA-256 per sample line
-- Filter criteria (model, tier, verdict, date range, score floor, …)
-- Row count, byte size, Merkle root of sample hashes
-- `policy_version` and export timestamp
-- Proves exactly what data trained a model under which policy
-
-**PII scrubbing:** Presidio pass over every exported sample before write — **on by default**, disable only with explicit operator flag.
-
-## `clawql inference` CLI surface
-
-Top-level group under the existing `clawql` binary (`src/onboarding/inference-cli.ts` → `packages/clawql-inference/cli/`).
-
-```
-clawql inference <subcommand> [options]
-```
-
-### Gateway & model escalation
-
-```bash
-# Start OpenAI-compatible gateway (local or sidecar)
-clawql inference serve [--port 8080] [--config manifest.yaml]
-
-# Inspect tier map and active escalation policy
-clawql inference escalation show
-clawql inference escalation set-tier --tier frugal --model ollama/phi4-custom
-
-# One-shot completion (debug / scripting)
-clawql inference complete \
-  --model groq/llama-3.3-70b \
-  --message "Summarize this spec" \
-  --correlation-id seed_abc_gen_2
-```
-
-### Observability
-
-```bash
-# Recent calls (table or JSON)
-clawql inference logs [--model M] [--tier T] [--since 24h] [--limit 50]
-
-# Spend rollup
-clawql inference spend [--group-by model|tier|team] [--since 7d]
-
-# Trace by correlation_id (links to WORM / ouroboros lineage)
-clawql inference trace --correlation-id <id>
-```
-
-### Export (fine-tuning datasets)
+### Export
 
 ```bash
 clawql inference export \
-  --model anthropic/claude-sonnet-4 \
+  --output ./training-data/export.jsonl \
   --verdict passed \
   --tier frugal \
-  --min-score 0.8 \
-  --date-from 2026-06-01 \
-  --date-to 2026-07-11 \
   --format openai-jsonl \
-  --output ./training-data/export-2026-07-11.jsonl
-
-# Quality filters
-  --max-latency-ms 5000          # drop slow outliers
-  --min-token-efficiency 0.3     # output/input ratio floor
-  --exclude-cache-hits           # only net-new generations
-
-# PII (default: scrub on)
-  --pii-scrub presidio           # default
-  --no-pii-scrub                 # operator opt-out (logged in manifest)
-
-# Manifest
-  --write-manifest               # default on — WORM dataset manifest alongside JSONL
+  --min-score 0.8
 ```
 
-### Fine-tune & register
+| Format | Target |
+| ------ | ------ |
+| `openai-jsonl` | OpenAI fine-tuning |
+| `anthropic-jsonl` | Anthropic fine-tuning |
+| `raw-jsonl` | Full inference records |
+| `sharegpt` | Community tooling interop |
+
+**PII scrubbing** (Presidio) is on by default. Every export writes a **WORM dataset manifest** (sample hashes, filter criteria, Merkle root, policy version).
+
+### Fine-tune and register
 
 ```bash
-# Submit fine-tuning job
 clawql inference finetune \
-  --dataset ./training-data/export-2026-07-11.jsonl \
-  --manifest ./training-data/export-2026-07-11.manifest.json \
-  --base-model anthropic/claude-haiku-4 \
-  --provider anthropic \
-  --register-as frugal-custom
+  --dataset ./training-data/export.jsonl \
+  --base-model gpt-4o-mini \
+  --provider openai
 
-# Poll job status
 clawql inference finetune status --job-id ftjob_abc123
-
-# Promote finished model into ModelTierMap
-clawql inference finetune register \
-  --job-id ftjob_abc123 \
-  --tier frugal \
-  --alias ollama/phi4-production-v3
+clawql inference finetune register --job-id ftjob_abc123 --tier frugal --alias ollama/phi4-production-v3
 ```
 
-### Continuous improvement (scheduled)
+---
+
+## Pipeline automation
+
+Scheduled auto-export when sample thresholds are met.
 
 ```bash
-# Auto-export when sample threshold met; optional auto-finetune
 clawql inference pipeline enable \
   --schedule "0 2 * * 0" \
   --min-samples 500 \
   --verdict passed \
   --target-tier frugal \
-  --base-model anthropic/claude-haiku-4 \
-  --evaluate-before-promote   # hold promotion until eval harness passes
+  --base-model gpt-4o-mini
 
 clawql inference pipeline status
-clawql inference pipeline disable
+clawql inference pipeline run          # manual trigger
+clawql inference pipeline worker       # cron sidecar
 ```
 
-### Keys & policy (enterprise)
+Config persists at `$CLAWQL_HOME/Inference/pipeline.json`. Cron worker:
+
+- `CLAWQL_INFERENCE_PIPELINE_WORKER=1` — starts with `inference serve`
+- `CLAWQL_INFERENCE_PIPELINE_POLL_MS` — poll interval (default 60s)
+- Tracks `lastRunAt`, `lastRunStatus`, `lastRunDetail` on each tick
+
+---
+
+## Agent coordination (#562)
+
+`TierEscalationRouter.shouldTriggerAgentCoordination()` fires when:
+
+- Combined drift exceeds **0.3**, or
+- Standard-tier exhaustion with active failure signals
+
+When `CLAWQL_INFERENCE_AGENT_COORDINATION_ENABLED=1`:
+
+1. `evaluateAgentCoordination()` builds an `agent_coordination` audit entry
+2. Hermes stub runs when `HERMES_BASE_URL` is unset; live MoA when configured
+3. Ouroboros appends the event to the lineage store alongside `model_escalation`
+
+---
+
+## Policy
 
 ```bash
-clawql inference keys create --team eng --budget-usd 500 --rate-limit 100rpm
-clawql inference keys list
-clawql inference keys revoke --id vk_abc
-
-clawql inference policy show    # Manifest inference block (tiers, cache TTL, export rules)
+clawql inference policy show [--json]
 ```
 
-## Implementation phasing
+`resolveInferencePolicy()` aggregates the effective view from environment: escalation, cache, fallback, keys, store backend, export defaults, pipeline worker, and agent coordination. Manifest YAML overrides are planned; today the source is **`env`**.
 
-| Phase       | Deliverable                                                                                                                                                                                                   |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **P0-D** ✅ | `routing/` + ouroboros hooks ([#560](https://github.com/danielsmithdevelopment/ClawQL/issues/560))                                                                                                            |
-| **P0-F** ✅ | Gateway MVP: `serve`, `complete`, OpenAI / Anthropic / Ollama adapters                                                                                                                                        |
-| **P0-G** ✅ | `store/` + observability — log every call with `correlation_id`; `logs`, `trace`, `spend` CLI                                                                                                                 |
-| **P0-H** ✅ | `export/` — verdict-filtered JSONL + Presidio + dataset manifest                                                                                                                                              |
-| **P0-I** ✅ | `finetune/` — Anthropic/OpenAI job API + `register-as` tier                                                                                                                                                   |
-| **P1** ✅   | `pipeline enable` — config + `pipeline run` auto-export when sample threshold met                                                                                                                             |
-| **P1** ✅   | Model escalation audit event builders ([#561](https://github.com/danielsmithdevelopment/ClawQL/issues/561)), agent coordination trigger ([#562](https://github.com/danielsmithdevelopment/ClawQL/issues/562)) |
+---
+
+## Persistence layout
+
+All operator state under `$CLAWQL_HOME/Inference/`:
+
+| File | Written by |
+| ---- | ---------- |
+| `calls.jsonl` | Call store (jsonl backend) |
+| `tier-map.json` | `finetune register`, `escalation set-tier` |
+| `fallback-chains.json` | Fallback config merge |
+| `virtual-keys.json` | `keys create` / `revoke` |
+| `pipeline.json` | `pipeline enable` / worker ticks |
+
+Postgres store uses `clawql_inference_calls` (separate from `CLAWQL_INFERENCE_DATABASE_URL`).
+
+---
+
+## CLI wiring
+
+The `clawql` binary dispatches `inference` subcommands in `src/onboarding/cli.ts` → thin wrappers in `src/onboarding/inference-cli.ts` → `packages/clawql-inference/src/cli/*`.
+
+```
+clawql inference <subcommand>
+├── serve              HTTP gateway (+ optional pipeline worker)
+├── complete           One-shot completion
+├── logs | trace | spend
+├── export | finetune [status|register]
+├── escalation [show|set-tier]
+├── pipeline [enable|status|disable|run|worker]
+├── cache | fallback | policy
+└── keys [create|list|revoke]
+```
+
+---
+
+## Environment variables
+
+| Variable | Default | Purpose |
+| -------- | ------- | ------- |
+| `OPENAI_API_KEY` | — | OpenAI provider |
+| `ANTHROPIC_API_KEY` | — | Anthropic provider |
+| `OLLAMA_BASE_URL` | `http://127.0.0.1:11434` | Ollama runtime |
+| `CLAWQL_INFERENCE_PORT` | `8080` | HTTP listen port |
+| `CLAWQL_INFERENCE_HOST` | `0.0.0.0` | HTTP bind address |
+| `CLAWQL_INFERENCE_PROVIDERS` | all builtins | Provider allowlist |
+| `CLAWQL_INFERENCE_DISABLE_PROVIDERS` | — | Provider denylist |
+| `CLAWQL_INFERENCE_ROUTING_ENABLED` | off | Tier escalation |
+| `CLAWQL_INFERENCE_MODEL_FRUGAL` | `ollama/phi4` | Frugal tier model |
+| `CLAWQL_INFERENCE_MODEL_STANDARD` | `groq/llama-3.3-70b` | Standard tier model |
+| `CLAWQL_INFERENCE_MODEL_FRONTIER` | `anthropic/claude-sonnet-4` | Frontier tier model |
+| `CLAWQL_INFERENCE_MODEL_PIN` | — | Pin single model |
+| `CLAWQL_INFERENCE_SEMANTIC_CACHE` | off | Semantic cache |
+| `CLAWQL_INFERENCE_CACHE_THRESHOLD` | `0.92` | Cache similarity floor |
+| `CLAWQL_INFERENCE_CACHE_TTL` | `24h` | Cache TTL |
+| `CLAWQL_INFERENCE_CACHE_MAX_ENTRIES` | `1000` | Cache size cap |
+| `CLAWQL_EMBEDDING_MODEL` | `text-embedding-3-small` | Embeddings model |
+| `CLAWQL_INFERENCE_FALLBACK_ENABLED` | off | Fallback chains |
+| `CLAWQL_INFERENCE_FALLBACK_FRUGAL` | — | Frugal fallback chain |
+| `CLAWQL_INFERENCE_FALLBACK_STANDARD` | — | Standard fallback chain |
+| `CLAWQL_INFERENCE_FALLBACK_FRONTIER` | — | Frontier fallback chain |
+| `CLAWQL_INFERENCE_KEYS_ENABLED` | off | Require virtual keys |
+| `CLAWQL_INFERENCE_STORE` | jsonl when `CLAWQL_HOME` | `memory` / `jsonl` / `postgres` / `off` |
+| `CLAWQL_INFERENCE_DATABASE_URL` | — | Postgres URL |
+| `CLAWQL_INFERENCE_STORE_PATH` | `$CLAWQL_HOME/Inference/calls.jsonl` | JSONL path override |
+| `CLAWQL_INFERENCE_PIPELINE_WORKER` | off | Cron worker with serve |
+| `CLAWQL_INFERENCE_PIPELINE_POLL_MS` | `60000` | Worker poll interval |
+| `CLAWQL_INFERENCE_AGENT_COORDINATION_ENABLED` | off | Agent coordination |
+| `HERMES_BASE_URL` | — | Hermes MoA endpoint |
+| `CLAWQL_PAYMENTS_ENFORCE_INFERENCE` | off | Plan entitlement gate |
+
+---
+
+## Package exports
+
+| Import | Contents |
+| ------ | -------- |
+| `clawql-inference` | Gateway, routing, store, CLI runners, HTTP server, audit builders |
+| `clawql-inference/routing` | `AdaptiveRouter`, tier types, config loaders |
+| `clawql-inference/plugin` | Provider plugin factories, compose helpers |
+| `clawql-inference/api/server` | `createInferenceHttpApp` for embedding |
+
+---
 
 ## Differentiation vs LiteLLM
 
-- Outcome-driven model escalation tied to agent failure signals (drift, convergence, AC regressions)
-- Immutable audit trail with `correlation_id` linking inference to agent lineage
-- Manifest-governed tier map, cache policy, **and export policy**
-- **Verdict-filtered fine-tuning export** with PII scrub and provenance manifests
-- **Custom models promoted back into frugal/standard tiers** — compounding cost advantage
-- TypeScript-native, catalog-mirrored provider adapters (no Python proxy dependency)
+| ClawQL | LiteLLM-class proxies |
+| ------ | --------------------- |
+| Outcome-driven tier escalation from agent failure signals | Static model routing |
+| `correlation_id` → WORM / Ouroboros lineage | Generic request logs |
+| Verdict-filtered export + PII scrub + dataset manifest | Ad-hoc dataset dumps |
+| Custom models promoted back into frugal tier | One-off fine-tunes |
+| Manifest / policy-governed tier map and export rules | Env-only config |
+| TypeScript-native, catalog-mirrored adapters | Python proxy dependency |
+
+---
+
+## Implementation phasing
+
+| Phase | Deliverable | Status |
+| ----- | ----------- | ------ |
+| P0-D | `routing/` + Ouroboros hooks ([#560](https://github.com/danielsmithdevelopment/ClawQL/issues/560)) | ✅ |
+| P0-F | Gateway MVP: `serve`, `complete`, provider adapters | ✅ |
+| P0-G | Call store + `logs` / `trace` / `spend` | ✅ |
+| P0-H | Export + Presidio + dataset manifest | ✅ |
+| P0-I | Fine-tune jobs + tier registration | ✅ |
+| P1 | Pipeline enable + cron worker | ✅ |
+| P1 | Model escalation audit ([#561](https://github.com/danielsmithdevelopment/ClawQL/issues/561)) | ✅ |
+| P1 | Agent coordination ([#562](https://github.com/danielsmithdevelopment/ClawQL/issues/562)) | ✅ |
+| Adoption | OpenAI REST, semantic cache, fallback, virtual keys, Postgres store | ✅ |
+
+### Planned (not blockers)
+
+- Langfuse / OpenTelemetry full wiring (ADR 0005)
+- Manifest YAML inference block overrides for `policy show`
+- Live Hermes MoA HTTP client (stub ships today)
+- Postgres advisory locks for multi-instance pipeline dedup
+
+---
 
 ## References
 
-- [Upstream Q00 sync roadmap](../ouroboros/upstream-q00-sync-roadmap.md) (upstream naming differs)
+- [Inference provider plugins](../plugins/inference-providers.md)
 - [Token efficiency architecture](../architecture/clawql-token-efficiency.md)
-- Issue [#560](https://github.com/danielsmithdevelopment/ClawQL/issues/560) — model tier escalation foundation
+- [Ouroboros library](../ouroboros/clawql-ouroboros.md)
+- [Upstream Q00 sync roadmap](../ouroboros/upstream-q00-sync-roadmap.md)
+- Issue [#556](https://github.com/danielsmithdevelopment/ClawQL/issues/556) — inference epic
+- Issue [#560](https://github.com/danielsmithdevelopment/ClawQL/issues/560) — model tier escalation

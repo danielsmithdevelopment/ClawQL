@@ -56,6 +56,8 @@ export const DOC_SITE_ROUTES = {
   'docs/grafana/README.md': '/learn/audit-tool-and-observability',
   'docs/memory/memory-obsidian.md': '/learn/vault-memory-between-chats',
   'docs/ouroboros/clawql-ouroboros.md': '/ouroboros',
+  'docs/inference/clawql-inference.md': '/inference/clawql-inference',
+  'docs/architecture/clawql-token-efficiency.md': '/architecture/token-efficiency',
   'docs/security/clawql-security-defense-in-depth.md':
     '/security/defense-in-depth',
   'docs/security/security-best-practices-series/README.md':
