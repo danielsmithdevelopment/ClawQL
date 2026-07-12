@@ -4,11 +4,17 @@
 
 import {
   runInferenceComplete,
+  runInferenceEscalationSetTier,
+  runInferenceEscalationShow,
   runInferenceExportCli,
   runInferenceFinetune,
   runInferenceFinetuneRegister,
   runInferenceFinetuneStatus,
   runInferenceLogs,
+  runInferencePipelineDisable,
+  runInferencePipelineEnable,
+  runInferencePipelineRun,
+  runInferencePipelineStatus,
   runInferenceServe,
   runInferenceSpend,
   runInferenceTrace,
@@ -47,6 +53,11 @@ export type InferenceCliOptions = {
   jobId?: string;
   tier?: ModelTier;
   alias?: string;
+  schedule?: string;
+  minSamples?: number;
+  targetTier?: ModelTier;
+  evaluateBeforePromote?: boolean;
+  outputDir?: string;
 };
 
 export async function runInferenceServeCmd(opts: InferenceCliOptions): Promise<number> {
@@ -150,4 +161,45 @@ export async function runInferenceFinetuneRegisterCmd(opts: InferenceCliOptions)
     provider: opts.finetuneProvider,
     json: opts.json,
   });
+}
+
+export async function runInferenceEscalationShowCmd(opts: InferenceCliOptions): Promise<number> {
+  return runInferenceEscalationShow({ json: opts.json });
+}
+
+export async function runInferenceEscalationSetTierCmd(
+  opts: InferenceCliOptions
+): Promise<number> {
+  return runInferenceEscalationSetTier({
+    tier: opts.tier,
+    model: opts.model,
+    json: opts.json,
+  });
+}
+
+export async function runInferencePipelineEnableCmd(opts: InferenceCliOptions): Promise<number> {
+  return runInferencePipelineEnable({
+    schedule: opts.schedule,
+    minSamples: opts.minSamples,
+    verdict: opts.verdict,
+    targetTier: opts.targetTier,
+    baseModel: opts.baseModel,
+    provider: opts.finetuneProvider,
+    format: opts.format,
+    evaluateBeforePromote: opts.evaluateBeforePromote,
+    outputDir: opts.outputDir,
+    json: opts.json,
+  });
+}
+
+export async function runInferencePipelineStatusCmd(opts: InferenceCliOptions): Promise<number> {
+  return runInferencePipelineStatus({ json: opts.json });
+}
+
+export async function runInferencePipelineDisableCmd(opts: InferenceCliOptions): Promise<number> {
+  return runInferencePipelineDisable({ json: opts.json });
+}
+
+export async function runInferencePipelineRunCmd(opts: InferenceCliOptions): Promise<number> {
+  return runInferencePipelineRun({ json: opts.json });
 }

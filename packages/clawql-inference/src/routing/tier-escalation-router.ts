@@ -9,6 +9,9 @@ import { nextModelTier } from "./tiers.js";
 
 export type { ModelEscalationConfig };
 
+/** Combined drift threshold for agent coordination tripwire (#562). */
+export const AGENT_COORDINATION_DRIFT_TRIPWIRE = 0.3;
+
 export class TierEscalationRouter implements AdaptiveRouter {
   constructor(private readonly config: ModelEscalationConfig) {}
 
@@ -59,12 +62,15 @@ export class TierEscalationRouter implements AdaptiveRouter {
     };
   }
 
-  /** Agent coordination at standard-tier exhaustion — implemented in #562. */
+  /** Agent coordination at standard-tier exhaustion + drift tripwire (#562). */
   shouldTriggerAgentCoordination(
-    _decision: ModelEscalationDecision,
-    _signals: RoutingFailureSignal[],
-    _drift?: { combined: number }
+    decision: ModelEscalationDecision,
+    signals: RoutingFailureSignal[],
+    drift?: { combined: number }
   ): boolean {
-    return false;
+    if (!signals.length) return false;
+    const driftTripwire = (drift?.combined ?? 0) > AGENT_COORDINATION_DRIFT_TRIPWIRE;
+    const standardTierFailure = decision.tier === "standard" && signals.length > 0;
+    return driftTripwire || standardTierFailure;
   }
 }

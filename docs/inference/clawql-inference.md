@@ -215,8 +215,8 @@ clawql inference policy show    # Manifest inference block (tiers, cache TTL, ex
 | **P0-G** ✅ | `store/` + observability — log every call with `correlation_id`; `logs`, `trace`, `spend` CLI                                                                                                 |
 | **P0-H** ✅ | `export/` — verdict-filtered JSONL + Presidio + dataset manifest                                                                                                                              |
 | **P0-I** ✅ | `finetune/` — Anthropic/OpenAI job API + `register-as` tier                                                                                                                                   |
-| **P1**      | `pipeline enable` — scheduled auto-export + promote                                                                                                                                           |
-| **P1**      | Model escalation audit events ([#561](https://github.com/danielsmithdevelopment/ClawQL/issues/561)), agent coordination ([#562](https://github.com/danielsmithdevelopment/ClawQL/issues/562)) |
+| **P1** ✅   | `pipeline enable` — config + `pipeline run` auto-export when sample threshold met                                                                                                             |
+| **P1** ✅   | Model escalation audit event builders ([#561](https://github.com/danielsmithdevelopment/ClawQL/issues/561)), agent coordination trigger ([#562](https://github.com/danielsmithdevelopment/ClawQL/issues/562)) |
 
 ## Differentiation vs LiteLLM
 

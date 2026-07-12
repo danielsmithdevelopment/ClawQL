@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { TierEscalationRouter } from "./tier-escalation-router.js";
+import {
+  TierEscalationRouter,
+  AGENT_COORDINATION_DRIFT_TRIPWIRE,
+} from "./tier-escalation-router.js";
 import type { RoutingFailureSignal } from "./types.js";
 import type { ModelEscalationConfig } from "./config.js";
 
@@ -75,9 +78,26 @@ describe("TierEscalationRouter.escalate", () => {
 });
 
 describe("TierEscalationRouter.shouldTriggerAgentCoordination", () => {
-  it("returns false until agent coordination coupling ships (#562)", () => {
+  it("returns false without failure signals", () => {
     const r = router();
     const d = r.initialTier({ isDecomposedChild: false, seedId: "s" });
-    expect(r.shouldTriggerAgentCoordination(d, [failure], { combined: 0.5 })).toBe(false);
+    expect(r.shouldTriggerAgentCoordination(d, [], { combined: 0.5 })).toBe(false);
+  });
+
+  it("triggers on drift tripwire", () => {
+    const r = router();
+    const d = r.initialTier({ isDecomposedChild: true, seedId: "s" });
+    expect(d.tier).toBe("frugal");
+    expect(r.shouldTriggerAgentCoordination(d, [failure], { combined: 0.5 })).toBe(true);
+    expect(r.shouldTriggerAgentCoordination(d, [failure], { combined: 0.2 })).toBe(false);
+    expect(AGENT_COORDINATION_DRIFT_TRIPWIRE).toBe(0.3);
+  });
+
+  it("triggers at standard-tier failure", () => {
+    const r = router();
+    const d = r.initialTier({ isDecomposedChild: false, seedId: "s" });
+    expect(d.tier).toBe("standard");
+    expect(r.shouldTriggerAgentCoordination(d, [failure])).toBe(true);
+    expect(r.shouldTriggerAgentCoordination(d, [failure], { combined: 0.2 })).toBe(true);
   });
 });
