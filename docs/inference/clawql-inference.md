@@ -31,11 +31,11 @@
 
 ### Entry points
 
-| Client | Path into the gateway |
-| ------ | --------------------- |
-| **OpenAI SDK / curl** | Virtual key auth middleware → OpenAI-compat router (`/v1/chat/completions`, `/v1/models`) → gateway stack |
-| **`clawql inference complete`** | Calls the gateway stack directly (no HTTP auth layer) |
-| **Ouroboros `EvolutionaryLoop`** | Calls `ConfiguredInferenceGateway` at the innermost layer (bypasses HTTP) |
+| Client                           | Path into the gateway                                                                                     |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| **OpenAI SDK / curl**            | Virtual key auth middleware → OpenAI-compat router (`/v1/chat/completions`, `/v1/models`) → gateway stack |
+| **`clawql inference complete`**  | Calls the gateway stack directly (no HTTP auth layer)                                                     |
+| **Ouroboros `EvolutionaryLoop`** | Calls `ConfiguredInferenceGateway` at the innermost layer (bypasses HTTP)                                 |
 
 ### Gateway decorator stack (inner → outer)
 
