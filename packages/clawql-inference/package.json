@@ -18,6 +18,11 @@
       "import": "./dist/routing/index.js",
       "require": "./dist/routing/index.cjs"
     },
+    "./plugin": {
+      "types": "./dist/plugin/index.d.ts",
+      "import": "./dist/plugin/index.js",
+      "require": "./dist/plugin/index.cjs"
+    },
     "./package.json": "./package.json"
   },
   "scripts": {

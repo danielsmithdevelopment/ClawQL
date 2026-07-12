@@ -33,15 +33,31 @@ export {
 } from "./gateway.js";
 
 export { parseModelId } from "./providers/parse-model-id.js";
-export type { InferenceProviderAdapter, ProviderAdapterConfig } from "./providers/types.js";
+export type {
+  InferenceProviderAdapter,
+  ProviderAdapterConfig,
+  InferenceProviderPlugin,
+  InferenceProviderRegistrationContext,
+  ProviderRegistry,
+  CreateProviderRegistryOptions,
+} from "./providers/types.js";
 export {
   createProviderRegistry,
+  registerProviderPlugins,
   getProviderAdapter,
+  resolveProviderPluginFlags,
+} from "./providers/registry.js";
+
+export {
+  composeDefaultProviderPlugins,
+  composeProviderPlugins,
+  createOpenAiProviderPlugin,
+  createAnthropicProviderPlugin,
+  createOllamaProviderPlugin,
   createOpenAiAdapter,
   createAnthropicAdapter,
   createOllamaAdapter,
-  type ProviderRegistry,
-} from "./providers/index.js";
+} from "./plugin/index.js";
 
 export {
   createInferenceHttpApp,

@@ -1,10 +1,8 @@
 import type { ModelEscalationDecision } from "./routing/types.js";
 import { parseModelId } from "./providers/parse-model-id.js";
-import {
-  createProviderRegistry,
-  getProviderAdapter,
-  type ProviderRegistry,
-} from "./providers/index.js";
+import { createProviderRegistry, getProviderAdapter } from "./providers/registry.js";
+import type { InferenceProviderPlugin, ProviderRegistry } from "./providers/types.js";
+import { composeDefaultProviderPlugins } from "./plugin/compose.js";
 
 export type ChatRole = "system" | "user" | "assistant";
 
@@ -51,6 +49,7 @@ export class UnconfiguredInferenceGateway implements InferenceGateway {
 
 export type CreateInferenceGatewayOptions = {
   providers?: ProviderRegistry;
+  providerPlugins?: readonly InferenceProviderPlugin[];
   env?: NodeJS.ProcessEnv;
 };
 
@@ -82,6 +81,11 @@ export class ConfiguredInferenceGateway implements InferenceGateway {
 export function createInferenceGateway(
   options: CreateInferenceGatewayOptions = {}
 ): ConfiguredInferenceGateway {
-  const providers = options.providers ?? createProviderRegistry(options.env);
+  const providers =
+    options.providers ??
+    createProviderRegistry({
+      env: options.env,
+      plugins: options.providerPlugins ?? composeDefaultProviderPlugins(),
+    });
   return new ConfiguredInferenceGateway(providers);
 }

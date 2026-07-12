@@ -2,7 +2,7 @@ import { createServer, request, type Server } from "node:http";
 import { once } from "node:events";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ConfiguredInferenceGateway } from "../gateway.js";
-import { createOpenAiAdapter } from "../providers/openai.js";
+import { createOpenAiAdapter } from "../plugin/adapters/openai.js";
 import { createInferenceHttpApp } from "./server.js";
 
 function closeHttpServer(server: Server): Promise<void> {

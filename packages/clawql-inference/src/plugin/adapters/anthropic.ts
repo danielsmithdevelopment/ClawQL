@@ -1,6 +1,6 @@
-import type { ChatMessage } from "../gateway.js";
-import { readHttpError } from "./http.js";
-import type { InferenceProviderAdapter, ProviderAdapterConfig } from "./types.js";
+import type { ChatMessage } from "../../gateway.js";
+import { readHttpError } from "../../providers/http.js";
+import type { InferenceProviderAdapter, ProviderAdapterConfig } from "../../providers/types.js";
 
 type AnthropicMessageResponse = {
   model?: string;

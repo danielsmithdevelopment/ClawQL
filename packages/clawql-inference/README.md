@@ -2,7 +2,9 @@
 
 TypeScript-native **inference gateway** for ClawQL: model tier escalation, cloud provider adapters, local runtimes (Ollama / vLLM / Llama.cpp), semantic caching, and WORM-auditable observability.
 
-**Status:** Gateway MVP shipped — model tier escalation (#560) + OpenAI / Anthropic / Ollama adapters + `clawql inference serve|complete`.
+**Status:** Gateway MVP shipped — model tier escalation (#560) + provider plugin architecture + `clawql inference serve|complete`.
+
+Built-in provider plugins (OpenAI, Anthropic, Ollama) register automatically. Third parties add backends via `InferenceProviderPlugin` — see [`docs/plugins/inference-providers.md`](../../docs/plugins/inference-providers.md).
 
 ## Quick start
 
@@ -43,19 +45,41 @@ const result = await gateway.complete({
 });
 ```
 
+## Provider plugins
+
+```typescript
+import {
+  composeProviderPlugins,
+  createInferenceGateway,
+  createProviderRegistry,
+  type InferenceProviderPlugin,
+} from "clawql-inference";
+
+// Built-ins register automatically; append custom plugins:
+const gateway = createInferenceGateway({
+  providers: createProviderRegistry({
+    plugins: composeProviderPlugins({ extensions: [myGroqPlugin] }),
+  }),
+});
+```
+
+Subpath: `clawql-inference/plugin` for builtin factories and compose helpers.
+
 ### Environment
 
-| Variable                           | Default                     | Purpose                                        |
-| ---------------------------------- | --------------------------- | ---------------------------------------------- |
-| `OPENAI_API_KEY`                   | —                           | OpenAI chat completions                        |
-| `ANTHROPIC_API_KEY`                | —                           | Anthropic messages API                         |
-| `OLLAMA_BASE_URL`                  | `http://127.0.0.1:11434`    | Local Ollama runtime                           |
-| `CLAWQL_INFERENCE_PORT`            | `8080`                      | `clawql inference serve` listen port           |
-| `CLAWQL_INFERENCE_ROUTING_ENABLED` | off                         | Enable frugal → standard → frontier escalation |
-| `CLAWQL_INFERENCE_MODEL_FRUGAL`    | `ollama/phi4`               | Frugal tier model id                           |
-| `CLAWQL_INFERENCE_MODEL_STANDARD`  | `groq/llama-3.3-70b`        | Standard tier model id                         |
-| `CLAWQL_INFERENCE_MODEL_FRONTIER`  | `anthropic/claude-sonnet-4` | Frontier tier model id                         |
-| `CLAWQL_INFERENCE_MODEL_PIN`       | —                           | Pin a single model (bypasses ladder)           |
+| Variable                             | Default                     | Purpose                                          |
+| ------------------------------------ | --------------------------- | ------------------------------------------------ |
+| `CLAWQL_INFERENCE_PROVIDERS`         | all builtins                | Allowlist provider plugins (comma-separated ids) |
+| `CLAWQL_INFERENCE_DISABLE_PROVIDERS` | —                           | Denylist provider plugins                        |
+| `OPENAI_API_KEY`                     | —                           | OpenAI chat completions                          |
+| `ANTHROPIC_API_KEY`                  | —                           | Anthropic messages API                           |
+| `OLLAMA_BASE_URL`                    | `http://127.0.0.1:11434`    | Local Ollama runtime                             |
+| `CLAWQL_INFERENCE_PORT`              | `8080`                      | `clawql inference serve` listen port             |
+| `CLAWQL_INFERENCE_ROUTING_ENABLED`   | off                         | Enable frugal → standard → frontier escalation   |
+| `CLAWQL_INFERENCE_MODEL_FRUGAL`      | `ollama/phi4`               | Frugal tier model id                             |
+| `CLAWQL_INFERENCE_MODEL_STANDARD`    | `groq/llama-3.3-70b`        | Standard tier model id                           |
+| `CLAWQL_INFERENCE_MODEL_FRONTIER`    | `anthropic/claude-sonnet-4` | Frontier tier model id                           |
+| `CLAWQL_INFERENCE_MODEL_PIN`         | —                           | Pin a single model (bypasses ladder)             |
 
 Model ids use `provider/model` (e.g. `ollama/phi4`, `anthropic/claude-sonnet-4`).
 

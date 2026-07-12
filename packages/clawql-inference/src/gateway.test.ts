@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ConfiguredInferenceGateway } from "./gateway.js";
-import { createOpenAiAdapter } from "./providers/openai.js";
+import { createOpenAiAdapter } from "./plugin/adapters/openai.js";
 
 describe("ConfiguredInferenceGateway", () => {
   afterEach(() => {

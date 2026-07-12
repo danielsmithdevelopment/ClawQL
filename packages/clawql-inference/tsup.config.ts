@@ -5,6 +5,7 @@ export default defineConfig({
     index: "src/index.ts",
     "routing/index": "src/routing/index.ts",
     "api/server": "src/api/server.ts",
+    "plugin/index": "src/plugin/index.ts",
   },
   format: ["esm", "cjs"],
   dts: true,
