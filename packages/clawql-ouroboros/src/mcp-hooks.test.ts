@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { InMemoryEventStore } from "./in-memory-event-store.js";
 import { ouroborosMcpTools } from "./mcp-hooks.js";
 import type { Seed } from "./seed.js";
 
@@ -104,5 +105,56 @@ describe("ouroborosMcpTools", () => {
     const res = await ouroborosMcpTools.getLineageStatus.handler({ seedId: "seed-lineage" }, context);
     expect(getLineage).toHaveBeenCalledWith("seed-lineage");
     expect(res.seed_id).toBe("seed-lineage");
+  });
+
+  it("measureDrift returns component breakdown and persists drift_measured when seedId set", async () => {
+    const store = new InMemoryEventStore();
+    const root = minimalSeed("seed-drift");
+    root.goal = "Ship secure GitHub release workflow";
+    root.constraints = ["No secrets in git"];
+    root.ontology_schema.fields = [
+      { name: "workflow", field_type: "string", description: "Actions workflow", required: true },
+    ];
+
+    await store.append({
+      type: "generation_completed",
+      seed_id: "seed-drift",
+      data: {
+        generation_number: 1,
+        seed: root,
+        execution_output: "ok",
+        evaluation_summary: {
+          final_approved: true,
+          score: 0.9,
+          ac_results: [{ ac_index: 0, ac_content: "pass", passed: true, evidence: "ok" }],
+        },
+        phase: "completed",
+        ontology_schema: root.ontology_schema,
+      },
+    });
+
+    const context = {
+      ouroborosLoop: { run: vi.fn() },
+      eventStore: store,
+    } as never;
+
+    const res = await ouroborosMcpTools.measureDrift.handler(
+      {
+        seedId: "seed-drift",
+        currentOutput: "GitHub Actions workflow without secrets in git",
+        currentConcepts: ["workflow"],
+      },
+      context,
+    );
+
+    expect(res.ok).toBe(true);
+    if (res.ok) {
+      expect(res.report.combined_drift).toBeTypeOf("number");
+      expect(res.report.band).toBeDefined();
+      expect(res.report.goal_drift).toBeTypeOf("number");
+    }
+
+    const events = store.snapshot("seed-drift");
+    expect(events.some((e) => e.type === "drift_measured")).toBe(true);
   });
 });

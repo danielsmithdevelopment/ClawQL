@@ -89,6 +89,7 @@ describe("server (stdio)", () => {
       expect(names.has("ouroboros_create_seed_from_document")).toBe(false);
       expect(names.has("ouroboros_run_evolutionary_loop")).toBe(false);
       expect(names.has("ouroboros_get_lineage_status")).toBe(false);
+      expect(names.has("ouroboros_measure_drift")).toBe(false);
     } finally {
       await client.close();
     }
@@ -278,6 +279,7 @@ describe("server (stdio)", () => {
       expect(names.has("ouroboros_create_seed_from_document")).toBe(true);
       expect(names.has("ouroboros_run_evolutionary_loop")).toBe(true);
       expect(names.has("ouroboros_get_lineage_status")).toBe(true);
+      expect(names.has("ouroboros_measure_drift")).toBe(true);
     } finally {
       await client.close();
     }

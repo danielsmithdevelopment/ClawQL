@@ -9,8 +9,7 @@ TypeScript workspace package at [`packages/clawql-ouroboros`](../packages/clawql
 **This is not the full [Q00/ouroboros](https://github.com/Q00/ouroboros) Python product** (interview CLI, PAL routing, Double Diamond execution, LiteLLM, SQL event store, plugin, TUI, and so on). The ClawQL package is a **portable subset** aimed at embedding inside **ClawQL** and other Node runtimes. Conceptual overlap (seed, wonder/reflect, convergence) is intentional; API and feature parity are not.
 
 **Status:** The **`clawql-mcp`** server can register Ouroboros MCP tools when **`CLAWQL_ENABLE_OUROBOROS=1`**:
-**`ouroboros_create_seed_from_document`**, **`ouroboros_run_evolutionary_loop`**, and
-**`ouroboros_get_lineage_status`**. For durable lineage, configure Postgres with
+**`ouroboros_create_seed_from_document`**, **`ouroboros_run_evolutionary_loop`**, **`ouroboros_get_lineage_status`**, and **`ouroboros_measure_drift`** ([#557](https://github.com/danielsmithdevelopment/ClawQL/issues/557) — 3-component goal/constraint/ontology drift vs root Seed). For durable lineage, configure Postgres with
 **`CLAWQL_OUROBOROS_DATABASE_URL`** or split **`CLAWQL_OUROBOROS_DB_*`** env vars. Published npm name:
 **`clawql-ouroboros`** (see `packages/clawql-ouroboros/package.json`).
 

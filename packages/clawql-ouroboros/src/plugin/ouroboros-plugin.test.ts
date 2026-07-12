@@ -18,6 +18,7 @@ describe("createOuroborosPlugin", () => {
     expect(registry.list().map((t) => t.name).sort()).toEqual([
       "ouroboros_create_seed_from_document",
       "ouroboros_get_lineage_status",
+      "ouroboros_measure_drift",
       "ouroboros_run_evolutionary_loop",
     ]);
     Effect.runSync(plugin.onTeardown!());

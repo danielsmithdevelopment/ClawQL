@@ -10,6 +10,7 @@ import type {
   WonderOutput,
 } from "./interfaces.js";
 import { ConvergenceCriteria, type ConvergenceConfig } from "./convergence.js";
+import { driftReportPayload, measureDrift } from "./drift.js";
 import type { OntologyLineage } from "./lineage.js";
 
 export interface LoopResult {
@@ -91,6 +92,27 @@ export class EvolutionaryLoop {
         wonder: latestWonder,
       };
       generations.push(snapshot);
+
+      const failedConstraints = evaluation.ac_results
+        .filter((ac) => !ac.passed)
+        .map((ac) => ac.ac_content);
+      const driftReport = measureDrift({
+        baselineSeed: seed,
+        currentOutput: executionOutput,
+        constraintViolations: failedConstraints,
+        currentConcepts: currentSeed.ontology_schema.fields.map((f) => f.name),
+      });
+
+      await this.eventStore.append({
+        type: "drift_measured",
+        seed_id: seed.metadata.seed_id,
+        data: driftReportPayload(driftReport, {
+          generation_number: generationNumber,
+          constraint_violations: failedConstraints,
+          current_concepts: currentSeed.ontology_schema.fields.map((f) => f.name),
+        }),
+        timestamp: new Date(),
+      });
 
       await this.eventStore.append({
         type: "generation_completed",

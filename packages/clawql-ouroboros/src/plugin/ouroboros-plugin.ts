@@ -5,6 +5,7 @@ import { z } from "zod";
 import {
   CreateSeedFromDocumentSchema,
   GetLineageStatusSchema,
+  MeasureDriftSchema,
   ProposeSeedRevisionFromEvalSchema,
   RunOuroborosSchema,
   ouroborosMcpTools,
@@ -74,6 +75,21 @@ export function createOuroborosPlugin(options: OuroborosPluginOptions = {}): Plu
             });
             const r = await t.getLineageStatus.handler(
               args as z.infer<typeof GetLineageStatusSchema>,
+              getOuroborosContext()
+            );
+            return textResult(r);
+          },
+        });
+        yield* api.registerMcpTool({
+          name: t.measureDrift.name,
+          schema: MeasureDriftSchema.shape,
+          handler: async (args) => {
+            logMcpToolShape(t.measureDrift.name, {
+              seedIdLen: (args as { seedId?: string }).seedId?.length,
+              outputLen: (args as { currentOutput?: string }).currentOutput?.length,
+            });
+            const r = await t.measureDrift.handler(
+              args as z.infer<typeof MeasureDriftSchema>,
               getOuroborosContext()
             );
             return textResult(r);
