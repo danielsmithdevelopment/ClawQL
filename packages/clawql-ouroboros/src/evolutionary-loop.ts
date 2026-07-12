@@ -130,7 +130,7 @@ export class EvolutionaryLoop {
 
       const lineage = await this.eventStore.getLineage(seed.metadata.seed_id);
 
-      const signal = convergence.evaluate(lineage, latestWonder, evaluation);
+      const signal = convergence.evaluate(lineage, latestWonder, evaluation, undefined, driftReport);
 
       if (signal.converged) {
         await this.eventStore.append({

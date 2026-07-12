@@ -15,6 +15,7 @@ export type {
   GenerationPhase,
   EvaluationSummary,
   ACResult,
+  DriftSummary,
 } from "./lineage.js";
 
 export type {

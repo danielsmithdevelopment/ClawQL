@@ -54,7 +54,9 @@ npm install clawql-ouroboros
 1. **Seed** — Validated object (`SeedSchema`): goal, task type, brownfield context, constraints, acceptance criteria, ontology fields, evaluation principles, exit conditions, metadata (`seed_id`, lineage).
 2. **Generation** — One pass: **execute**(seed) → string output → **evaluate**(output, seed) → `EvaluationSummary` (per–acceptance-criterion results + optional score).
 3. **Wonder / Reflect** — From generation 2 onward: **wonder**(seed, prior eval) suggests insights; **reflect** produces `Partial<Seed>` updates and a new `seed_id` (child of previous).
-4. **EventStore** — Append-only events; **`getLineage(rootSeedId)`** rebuilds `OntologyLineage` for convergence. **`InMemoryEventStore`** is included for tests and prototypes.
+4. **EventStore** — Append-only events; **`getLineage(rootSeedId)`** rebuilds `OntologyLineage` for convergence (includes **`latest_drift`** from `drift_measured` events). **`InMemoryEventStore`** is included for tests and prototypes.
+
+**Drift convergence gate ([#558](https://github.com/danielsmithdevelopment/ClawQL/issues/558)):** when **`combined_drift > 0.3`**, `ConvergenceCriteria` blocks premature converge (similarity, stagnation, oscillation) with reason **`drift_exceeded`** — prefer Reflect / further generations.
 5. **Convergence** — `ConvergenceCriteria` compares ontology between completed generations (weighted field similarity), optional eval/regression/wonder gates, stagnation and oscillation shortcuts, and a hard **max generations** cap.
 
 ---

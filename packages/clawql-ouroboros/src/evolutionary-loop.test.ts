@@ -57,7 +57,7 @@ describe("EvolutionaryLoop", () => {
       {
         execute: async () => {
           calls++;
-          return "ok";
+          return "loop test field one description f1";
         },
       },
       {
@@ -130,5 +130,57 @@ describe("EvolutionaryLoop", () => {
     expect(result.generations.length).toBe(3);
     expect(result.converged).toBe(false);
     expect(result.lineage.status).toBe("exhausted");
+  });
+
+  it("does not converge early when execution output drifts from root goal", async () => {
+    const store = new InMemoryEventStore();
+    const root = fixtureSeed();
+    root.goal = "workflow rollback semver release";
+    root.ontology_schema = {
+      name: "ont",
+      description: "d",
+      fields: [
+        { name: "workflow", field_type: "string", description: "workflow field", required: true },
+      ],
+    };
+
+    const loop = new EvolutionaryLoop(
+      store,
+      {
+        wonder: async () => ({
+          insights: [],
+          suggested_refinements: [],
+          requires_evolution: false,
+        }),
+      },
+      {
+        reflect: async () => ({
+          newSeedData: {},
+          rationale: "noop",
+        }),
+      },
+      {
+        execute: async () => "unrelated analytics dashboard refactor only",
+      },
+      {
+        evaluate: async () => ({
+          final_approved: true,
+          score: 0.95,
+          ac_results: [{ ac_index: 0, ac_content: "always", passed: true, evidence: "ok" }],
+        }),
+      },
+      {
+        minGenerations: 2,
+        maxGenerations: 4,
+        convergenceThreshold: 0.9,
+        driftGateEnabled: true,
+        driftMaxCombined: 0.3,
+      },
+    );
+
+    const result = await loop.run(root, { maxGenerations: 4 });
+    expect(result.converged).toBe(false);
+    expect(result.generations.length).toBe(4);
+    expect(result.lineage.latest_drift?.band).toBe("exceeded");
   });
 });

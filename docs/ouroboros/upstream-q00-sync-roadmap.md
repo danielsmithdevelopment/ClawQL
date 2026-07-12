@@ -119,7 +119,7 @@ Every PAL escalation and MoA trigger writes an auditable event (`pal_escalation`
 | Phase    | Ticket                                                              | Deliverable                                                                          | Depends on                 |
 | -------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | -------------------------- |
 | **P0-A** | [#557](https://github.com/danielsmithdevelopment/ClawQL/issues/557) | Drift evaluator + `ouroboros_measure_drift` MCP tool + `drift_measured` events       | — **shipped**              |
-| **P0-B** | [#558](https://github.com/danielsmithdevelopment/ClawQL/issues/558) | Convergence gate: `combined_drift > 0.3` blocks premature converge; triggers reflect | P0-A                       |
+| **P0-B** | [#558](https://github.com/danielsmithdevelopment/ClawQL/issues/558) | Convergence gate: `combined_drift > 0.3` blocks premature converge; triggers reflect | P0-A **shipped**           |
 | **P0-C** | [#559](https://github.com/danielsmithdevelopment/ClawQL/issues/559) | Stagnation taxonomy reason codes on `ConvergenceSignal`                              | —                          |
 | **P0-D** | [#560](https://github.com/danielsmithdevelopment/ClawQL/issues/560) | PAL tier map + `AdaptiveRouter` interface; inject into Wonder/Reflect/Execute        | Layer 8 config sketch      |
 | **P0-E** | [#561](https://github.com/danielsmithdevelopment/ClawQL/issues/561) | `pal_escalation` + token attribution events in Postgres event store                  | P0-D                       |
