@@ -52,6 +52,24 @@ import {
   runInferenceTraceCmd,
   type InferenceCliOptions,
 } from "./inference-cli.js";
+import {
+  runPaymentsAuditCmd,
+  runPaymentsPlanShowCmd,
+  runPaymentsPlanUpgradeCmd,
+  runPaymentsSpendReportCmd,
+  runPaymentsStripeCustomerCreateCmd,
+  runPaymentsStripeInvoiceCreateCmd,
+  runPaymentsStripeSetupCmd,
+  runPaymentsStripeSubscriptionCreateCmd,
+  runPaymentsStripeWebhookListenCmd,
+  runPaymentsUsageReportCmd,
+  runPaymentsX402GateCmd,
+  runPaymentsX402GateListCmd,
+  runPaymentsX402ReconcileCmd,
+  runPaymentsX402VerifyCmd,
+  runPaymentsX402WalletSetupCmd,
+  type PaymentsCliOptions,
+} from "./payments-cli.js";
 
 type Command =
   | "init"
@@ -65,6 +83,7 @@ type Command =
   | "sync"
   | "sandbox"
   | "inference"
+  | "payments"
   | "claude"
   | "codex"
   | "cursor"
@@ -148,6 +167,25 @@ function parse(argv: string[]): {
     else if (a === "--team") flags.team = argv[++i] ?? "";
     else if (a === "--budget-usd") flags.budgetUsd = argv[++i] ?? "";
     else if (a === "--rate-limit") flags.rateLimit = argv[++i] ?? "";
+    else if (a === "--email") flags.email = argv[++i] ?? "";
+    else if (a === "--customer") flags.customer = argv[++i] ?? "";
+    else if (a === "--plan") flags.plan = argv[++i] ?? "";
+    else if (a === "--amount") flags.amount = argv[++i] ?? "";
+    else if (a === "--address") flags.address = argv[++i] ?? "";
+    else if (a === "--asset") flags.asset = argv[++i] ?? "";
+    else if (a === "--resource") flags.resource = argv[++i] ?? "";
+    else if (a === "--tool") flags.tool = argv[++i] ?? "";
+    else if (a === "--price") flags.price = argv[++i] ?? "";
+    else if (a === "--tx-hash") flags.txHash = argv[++i] ?? "";
+    else if (a === "--signature") flags.signature = argv[++i] ?? "";
+    else if (a === "--payer") flags.payer = argv[++i] ?? "";
+    else if (a === "--date") flags.date = argv[++i] ?? "";
+    else if (a === "--month") flags.month = argv[++i] ?? "";
+    else if (a === "--account-id") flags.accountId = argv[++i] ?? "";
+    else if (a === "--publishable-key") flags.publishableKey = argv[++i] ?? "";
+    else if (a === "--webhook-secret") flags.webhookSecret = argv[++i] ?? "";
+    else if (a === "--facilitator-url") flags.facilitatorUrl = argv[++i] ?? "";
+    else if (a === "--tenant-id") flags.tenantId = argv[++i] ?? "";
     else if (a === "--skip-verify") flags.skipVerify = true;
     else if (a.startsWith("--image-digest=")) {
       const prev = typeof flags.imageDigest === "string" ? flags.imageDigest : "";
@@ -168,7 +206,8 @@ function parse(argv: string[]): {
     cmd === "release" ||
     cmd === "sync" ||
     cmd === "sandbox" ||
-    cmd === "inference"
+    cmd === "inference" ||
+    cmd === "payments"
       ? positional[1]
       : undefined;
   const rest =
@@ -177,7 +216,8 @@ function parse(argv: string[]): {
     cmd === "sources" ||
     cmd === "sync" ||
     cmd === "sandbox" ||
-    cmd === "inference"
+    cmd === "inference" ||
+    cmd === "payments"
       ? positional.slice(2)
       : cmd === "release"
         ? positional.slice(2)
@@ -213,6 +253,10 @@ Usage:
   clawql inference escalation show | set-tier --tier frugal --model ollama/phi4-custom
   clawql inference pipeline enable [--schedule "0 2 * * 0"] [--min-samples 500] | status | disable | run
   clawql inference finetune status --job-id <id> | register --job-id <id> --tier frugal --alias <model>
+  clawql payments plan show | upgrade --tier team | usage report [--month YYYY-MM]
+  clawql payments stripe setup | customer create --email user@acme.com | subscription create | invoice create
+  clawql payments x402 wallet setup --address 0x... | gate --tool knowledge_search --price 0.001 | verify | reconcile
+  clawql payments spend report [--group-by provider|tenant|plan] | audit [--correlation-id ID]
   clawql claude | codex | cursor | opencode [-- harness args...]
   clawql operator status
 
@@ -712,6 +756,129 @@ async function main(): Promise<void> {
     console.error(
       "Usage: clawql inference serve | complete | logs | trace | spend | export | finetune | escalation | pipeline | cache | fallback | keys | policy"
     );
+    process.exitCode = 1;
+    return;
+  }
+
+  if (cmd === "payments") {
+    const amount =
+      typeof flags.amount === "string" && flags.amount
+        ? Number.parseFloat(flags.amount)
+        : undefined;
+    const price =
+      typeof flags.price === "string" && flags.price ? Number.parseFloat(flags.price) : undefined;
+    const limit =
+      typeof flags.limit === "string" && flags.limit ? Number.parseInt(flags.limit, 10) : undefined;
+    const paymentsOpts: PaymentsCliOptions = {
+      tier: typeof flags.tier === "string" ? flags.tier : undefined,
+      month: typeof flags.month === "string" ? flags.month : undefined,
+      groupBy:
+        typeof flags.groupBy === "string" &&
+        (flags.groupBy === "provider" || flags.groupBy === "tenant" || flags.groupBy === "plan")
+          ? flags.groupBy
+          : undefined,
+      correlationId: typeof flags.correlationId === "string" ? flags.correlationId : undefined,
+      limit: Number.isFinite(limit) ? limit : undefined,
+      json: Boolean(flags.json),
+      email: typeof flags.email === "string" ? flags.email : undefined,
+      name: typeof flags.name === "string" ? flags.name : undefined,
+      customer: typeof flags.customer === "string" ? flags.customer : undefined,
+      plan: typeof flags.plan === "string" ? flags.plan : undefined,
+      amount: Number.isFinite(amount) ? amount : undefined,
+      address: typeof flags.address === "string" ? flags.address : undefined,
+      asset: typeof flags.asset === "string" && flags.asset === "USDC" ? "USDC" : undefined,
+      resource: typeof flags.resource === "string" ? flags.resource : undefined,
+      tool: typeof flags.tool === "string" ? flags.tool : undefined,
+      price: Number.isFinite(price) ? price : undefined,
+      txHash: typeof flags.txHash === "string" ? flags.txHash : undefined,
+      signature: typeof flags.signature === "string" ? flags.signature : undefined,
+      payer: typeof flags.payer === "string" ? flags.payer : undefined,
+      date: typeof flags.date === "string" ? flags.date : undefined,
+      tenantId: typeof flags.tenantId === "string" ? flags.tenantId : undefined,
+      accountId: typeof flags.accountId === "string" ? flags.accountId : undefined,
+      publishableKey: typeof flags.publishableKey === "string" ? flags.publishableKey : undefined,
+      webhookSecret: typeof flags.webhookSecret === "string" ? flags.webhookSecret : undefined,
+      facilitatorUrl: typeof flags.facilitatorUrl === "string" ? flags.facilitatorUrl : undefined,
+    };
+
+    if (subcmd === "plan") {
+      const action = rest[0];
+      if (action === "upgrade") {
+        process.exitCode = await runPaymentsPlanUpgradeCmd(paymentsOpts);
+        return;
+      }
+      process.exitCode = await runPaymentsPlanShowCmd(paymentsOpts);
+      return;
+    }
+    if (subcmd === "usage") {
+      process.exitCode = await runPaymentsUsageReportCmd(paymentsOpts);
+      return;
+    }
+    if (subcmd === "spend") {
+      process.exitCode = await runPaymentsSpendReportCmd(paymentsOpts);
+      return;
+    }
+    if (subcmd === "audit") {
+      process.exitCode = await runPaymentsAuditCmd(paymentsOpts);
+      return;
+    }
+    if (subcmd === "stripe") {
+      const stripeAction = rest[0];
+      if (stripeAction === "setup") {
+        process.exitCode = await runPaymentsStripeSetupCmd(paymentsOpts);
+        return;
+      }
+      if (stripeAction === "customer" && rest[1] === "create") {
+        process.exitCode = await runPaymentsStripeCustomerCreateCmd(paymentsOpts);
+        return;
+      }
+      if (stripeAction === "subscription" && rest[1] === "create") {
+        process.exitCode = await runPaymentsStripeSubscriptionCreateCmd(paymentsOpts);
+        return;
+      }
+      if (stripeAction === "invoice" && rest[1] === "create") {
+        process.exitCode = await runPaymentsStripeInvoiceCreateCmd(paymentsOpts);
+        return;
+      }
+      if (stripeAction === "webhook" && rest[1] === "listen") {
+        process.exitCode = await runPaymentsStripeWebhookListenCmd();
+        return;
+      }
+      console.error(
+        "Usage: clawql payments stripe setup | customer create | subscription create | invoice create | webhook listen"
+      );
+      process.exitCode = 1;
+      return;
+    }
+    if (subcmd === "x402") {
+      const x402Action = rest[0];
+      if (x402Action === "wallet" && rest[1] === "setup") {
+        process.exitCode = await runPaymentsX402WalletSetupCmd(paymentsOpts);
+        return;
+      }
+      if (x402Action === "gate") {
+        if (rest[1] === "list") {
+          process.exitCode = await runPaymentsX402GateListCmd(paymentsOpts);
+          return;
+        }
+        process.exitCode = await runPaymentsX402GateCmd(paymentsOpts);
+        return;
+      }
+      if (x402Action === "verify") {
+        process.exitCode = await runPaymentsX402VerifyCmd(paymentsOpts);
+        return;
+      }
+      if (x402Action === "reconcile") {
+        process.exitCode = await runPaymentsX402ReconcileCmd(paymentsOpts);
+        return;
+      }
+      console.error(
+        "Usage: clawql payments x402 wallet setup | gate | gate list | verify | reconcile"
+      );
+      process.exitCode = 1;
+      return;
+    }
+    console.error("Usage: clawql payments plan | usage | spend | audit | stripe | x402");
     process.exitCode = 1;
     return;
   }

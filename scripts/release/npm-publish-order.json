@@ -11,6 +11,7 @@
     "clawql-documents",
     "clawql-automation",
     "clawql-inference",
+    "clawql-payments",
     "clawql-ouroboros",
     "clawql-operator",
     "clawql-mcp"
