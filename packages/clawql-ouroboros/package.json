@@ -45,6 +45,7 @@
   "dependencies": {
     "clawql-api": "7.0.0",
     "clawql-core": "7.0.0",
+    "clawql-inference": "7.0.0",
     "effect": "^3.21.4",
     "pg": "^8.21.0",
     "uuid": "^14.0.0",

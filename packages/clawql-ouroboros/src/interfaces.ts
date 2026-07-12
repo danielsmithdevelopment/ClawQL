@@ -1,7 +1,9 @@
 import type { Seed } from "./seed.js";
 import type { OntologyLineage, EvaluationSummary, ACResult } from "./lineage.js";
+import type { EngineCallContext } from "clawql-inference";
 
 export type { EvaluationSummary, ACResult };
+export type { EngineCallContext };
 
 export interface StoredEvent {
   type: string;
@@ -28,7 +30,11 @@ export interface ReflectOutput {
 }
 
 export interface WonderEngine {
-  wonder(seed: Seed, previousEvaluation?: EvaluationSummary): Promise<WonderOutput>;
+  wonder(
+    seed: Seed,
+    previousEvaluation?: EvaluationSummary,
+    ctx?: EngineCallContext,
+  ): Promise<WonderOutput>;
 }
 
 export interface ReflectEngine {
@@ -37,13 +43,14 @@ export interface ReflectEngine {
     executionOutput: string,
     evaluation: EvaluationSummary | undefined,
     wonder: WonderOutput,
+    ctx?: EngineCallContext,
   ): Promise<ReflectOutput>;
 }
 
 export interface Executor {
-  execute(seed: Seed): Promise<string>;
+  execute(seed: Seed, ctx?: EngineCallContext): Promise<string>;
 }
 
 export interface Evaluator {
-  evaluate(executionOutput: string, seed: Seed): Promise<EvaluationSummary>;
+  evaluate(executionOutput: string, seed: Seed, ctx?: EngineCallContext): Promise<EvaluationSummary>;
 }

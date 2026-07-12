@@ -8,6 +8,7 @@ import {
 } from "../glue/postgres-pool.js";
 import type { OuroborosContext } from "../mcp-hooks.js";
 import { getOuroborosPluginDeps } from "./deps.js";
+import { createAdaptiveRouter, loadPalRoutingConfig } from "clawql-inference";
 
 let ctxCache: OuroborosContext | null = null;
 let shutdownHooksRegistered = false;
@@ -34,13 +35,15 @@ export function getOuroborosContext(): OuroborosContext {
         return { content: [...r.content] };
       },
     });
+    const router = createAdaptiveRouter(loadPalRoutingConfig());
     const ouroborosLoop = new EvolutionaryLoop(
       eventStore,
       engines.wonder,
       engines.reflect,
       engines.execute,
       engines.evaluate,
-      {}
+      {},
+      { router },
     );
     ctxCache = { ouroborosLoop, eventStore };
   }

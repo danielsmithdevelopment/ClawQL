@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
+import type { AdaptiveRouter, EngineCallContext, PalRoutingDecision } from "clawql-inference";
 import type { Seed } from "./seed.js";
 import type {
   EventStore,
@@ -26,6 +27,13 @@ export interface GenerationSnapshot {
   executionOutput: string;
   evaluation: EvaluationSummary;
   wonder?: WonderOutput;
+  routing?: PalRoutingDecision;
+}
+
+export interface LoopRoutingOptions {
+  router?: AdaptiveRouter;
+  /** Decomposed child tasks start at frugal tier when routing is enabled. */
+  isDecomposedChild?: boolean;
 }
 
 export class EvolutionaryLoop {
@@ -38,6 +46,7 @@ export class EvolutionaryLoop {
     private readonly executor: Executor,
     private readonly evaluator: Evaluator,
     config: Partial<ConvergenceConfig> = {},
+    private readonly routingOptions: LoopRoutingOptions = {},
   ) {
     this.convergence = new ConvergenceCriteria(config);
   }
@@ -56,18 +65,37 @@ export class EvolutionaryLoop {
     const generations: GenerationSnapshot[] = [];
     let generationNumber = 1;
     let latestWonder: WonderOutput | undefined;
+    let routingDecision: PalRoutingDecision | undefined;
 
     while (generationNumber <= maxGenerations) {
+      if (this.routingOptions.router && routingDecision === undefined) {
+        routingDecision = this.routingOptions.router.initialTier({
+          isDecomposedChild: this.routingOptions.isDecomposedChild ?? false,
+          seedId: seed.metadata.seed_id,
+        });
+      }
+
+      const engineCtx: EngineCallContext = {
+        seedId: seed.metadata.seed_id,
+        generationNumber,
+        routing: routingDecision,
+      };
+
       if (generationNumber > 1) {
         const prevGen = generations[generations.length - 1];
 
-        latestWonder = await this.wonderEngine.wonder(currentSeed, prevGen.evaluation);
+        latestWonder = await this.wonderEngine.wonder(
+          currentSeed,
+          prevGen.evaluation,
+          engineCtx,
+        );
 
         const reflect = await this.reflectEngine.reflect(
           currentSeed,
           prevGen.executionOutput,
           prevGen.evaluation,
           latestWonder,
+          engineCtx,
         );
 
         currentSeed = {
@@ -81,8 +109,8 @@ export class EvolutionaryLoop {
         } as Seed;
       }
 
-      const executionOutput = await this.executor.execute(currentSeed);
-      const evaluation = await this.evaluator.evaluate(executionOutput, currentSeed);
+      const executionOutput = await this.executor.execute(currentSeed, engineCtx);
+      const evaluation = await this.evaluator.evaluate(executionOutput, currentSeed, engineCtx);
 
       const snapshot: GenerationSnapshot = {
         generationNumber,
@@ -90,6 +118,7 @@ export class EvolutionaryLoop {
         executionOutput,
         evaluation,
         wonder: latestWonder,
+        routing: routingDecision,
       };
       generations.push(snapshot);
 
@@ -124,6 +153,7 @@ export class EvolutionaryLoop {
           evaluation_summary: evaluation,
           phase: "completed" as const,
           ontology_schema: currentSeed.ontology_schema,
+          routing_decision: routingDecision,
         },
         timestamp: new Date(),
       });
