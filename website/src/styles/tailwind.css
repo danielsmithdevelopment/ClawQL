@@ -71,7 +71,7 @@
 }
 
 @layer components {
-  /* MDX tables: horizontal scroll + column widths on mobile (see mdx.tsx `table`) */
+  /* MDX tables: horizontal scroll + left-aligned columns (see mdx.tsx `table`) */
   .docs-table-scroll {
     margin-top: 2rem;
     margin-bottom: 2rem;
@@ -89,93 +89,85 @@
       padding-right: 1rem;
       scrollbar-width: thin;
     }
-
-    .docs-table-scroll::after {
-      content: '';
-      display: block;
-      height: 0;
-    }
   }
 
-  .prose .docs-table {
+  /* Tables live inside `not-prose` scroll wrappers — do not scope under `.prose` */
+  .docs-table-scroll .docs-table {
     width: max-content;
-    min-width: 100%;
     table-layout: auto;
     border-collapse: collapse;
+    border-spacing: 0;
   }
 
-  .prose .docs-table :is(th, td) {
-    overflow-wrap: break-word;
-    word-break: normal;
+  .docs-table-scroll .docs-table :is(th, td) {
+    text-align: left;
     vertical-align: top;
-    padding: 0.5rem 0.75rem;
+    padding: 0.5rem 0.875rem;
+    overflow-wrap: anywhere;
+    word-break: normal;
+    white-space: normal;
+    box-sizing: border-box;
+    border-bottom: 1px solid
+      color-mix(in oklab, var(--color-zinc-900) 8%, transparent);
   }
 
-  .prose .docs-table code {
-    white-space: nowrap;
-    word-break: keep-all;
+  :is(.dark) .docs-table-scroll .docs-table :is(th, td) {
+    border-bottom-color: color-mix(
+      in oklab,
+      var(--color-white) 8%,
+      transparent
+    );
+  }
+
+  .docs-table-scroll .docs-table thead :is(th, td) {
+    font-weight: 600;
+    border-bottom-width: 2px;
+  }
+
+  .docs-table-scroll .docs-table code {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
 
   /* Column layouts (data-cols set at build time in mdx.tsx `table`) */
-  .prose .docs-table[data-cols='2'] {
-    min-width: 20rem;
-  }
-
-  .prose .docs-table[data-cols='2'] :is(th, td):nth-child(1) {
-    min-width: 6.5rem;
-    max-width: 11rem;
-  }
-
-  .prose .docs-table[data-cols='2'] :is(th, td):nth-child(2) {
-    min-width: 12rem;
-  }
-
-  .prose .docs-table[data-cols='3'] {
-    min-width: 32rem;
-  }
-
-  .prose .docs-table[data-cols='3'] :is(th, td) {
-    min-width: 9rem;
-  }
-
-  .prose .docs-table[data-cols='4'] {
-    min-width: 40rem;
-  }
-
-  .prose .docs-table[data-cols='4'] :is(th, td) {
-    min-width: 8.5rem;
-  }
-
-  .prose .docs-table[data-cols='5'] {
-    min-width: 48rem;
-  }
-
-  .prose .docs-table[data-cols='5'] :is(th, td) {
-    min-width: 8rem;
-  }
-
-  .prose .docs-table[data-cols='6'] {
-    min-width: 56rem;
-  }
-
-  .prose .docs-table[data-cols='6'] :is(th, td) {
-    min-width: 7.5rem;
-  }
-
-  .prose .docs-table[data-cols='7'] {
-    min-width: 64rem;
-  }
-
-  .prose .docs-table[data-cols='7'] :is(th, td) {
+  .docs-table-scroll .docs-table[data-cols='2'] :is(th, td):nth-child(1) {
     min-width: 7rem;
   }
 
-  /* Wide matrices (plugin registry, etc.) */
-  .prose .docs-table[data-cols='8'] {
-    min-width: 72rem;
+  .docs-table-scroll .docs-table[data-cols='2'] :is(th, td):nth-child(2) {
+    min-width: 14rem;
   }
 
-  .prose .docs-table[data-cols='8'] :is(th, td) {
+  .docs-table-scroll .docs-table[data-cols='3'] :is(th, td):nth-child(1) {
+    min-width: 6rem;
+  }
+
+  .docs-table-scroll .docs-table[data-cols='3'] :is(th, td):nth-child(2) {
+    min-width: 10rem;
+  }
+
+  .docs-table-scroll .docs-table[data-cols='3'] :is(th, td):nth-child(3) {
+    min-width: 10rem;
+  }
+
+  .docs-table-scroll .docs-table[data-cols='4'] :is(th, td) {
+    min-width: 9rem;
+  }
+
+  .docs-table-scroll .docs-table[data-cols='5'] :is(th, td) {
+    min-width: 8rem;
+  }
+
+  .docs-table-scroll .docs-table[data-cols='6'] :is(th, td) {
+    min-width: 7.5rem;
+  }
+
+  .docs-table-scroll .docs-table[data-cols='7'] :is(th, td) {
+    min-width: 7rem;
+  }
+
+  .docs-table-scroll .docs-table[data-cols='8'] :is(th, td) {
     min-width: 6.5rem;
   }
 
