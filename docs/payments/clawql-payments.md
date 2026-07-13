@@ -311,6 +311,26 @@ sequenceDiagram
 
 When `CLAWQL_X402_ENFORCE=1`, **native MCP tool calls** (`tools/call` over stdio, Streamable HTTP `/mcp`, or gRPC session transport) run the same `enforceX402Gate()` path as inference HTTP middleware — before the tool handler executes.
 
+Enforcement is registered as **`PaymentsX402ProxyPlugin`** (`kind: mcp-proxy`) on the shared **`McpProxyPipeline`** alongside Panguard — all MCP tools pass through `wrapRegisteredMcpToolHandler` → `runMcpProxyBeforeCallTool`. Disable the plugin with `CLAWQL_PAYMENTS_X402_PROXY_PLUGIN=0` (rare; prefer turning off `CLAWQL_X402_ENFORCE`).
+
+Effect entrypoints: `paymentsServicesLiveLayer()` merges all services; `runPaymentsEffect()` runs programs at async boundaries (CLI, Express, legacy exports). MCP x402 uses native `mcpX402BeforeCallToolEffect` → `X402EnforcementService` (not a `tryPromise` shim).
+
+**Effect services** (`clawql-payments/plugin`):
+
+| Service                    | Responsibility                                                    |
+| -------------------------- | ----------------------------------------------------------------- |
+| `PaymentsConfigService`    | `payments.json` load/save/merge                                   |
+| `PaymentAuditService`      | WORM audit append/list/verify (+ ring buffer + Loki side effects) |
+| `X402GateService`          | `x402-gates.json` CRUD                                            |
+| `X402RuntimeConfigService` | Network, facilitator, wallet from config + env                    |
+| `X402FacilitatorService`   | Facilitator verify/settle HTTP                                    |
+| `X402EnforcementService`   | Gate enforcement + settlement reconciliation                      |
+| `UsageStoreService`        | Monthly usage counters                                            |
+| `EntitlementService`       | Plan limit checks (`EntitlementLimitError`)                       |
+| `PaymentsDiscoveryService` | `/.well-known/payments.json` builder                              |
+
+Public async exports (`loadPaymentsConfig`, `enforceX402Gate`, `appendPaymentWormEntry`, …) delegate to `runPaymentsEffect`. **Stripe billing** modules remain async wrappers (next migration increment).
+
 Configure gates with `clawql payments x402 gate --tool <name> --price <usdc>`.
 
 **Payment proof on MCP transports:**

@@ -11,6 +11,7 @@ import {
   type LoadedSpec,
   type LoadSpecFn,
 } from "clawql-api";
+import { defaultPaymentsProxyPlugins } from "clawql-payments/plugin";
 import { Effect, Layer } from "effect";
 import { composeHorizontalPluginLayers } from "./compose-horizontal-plugin-layers.js";
 import { resolvePluginCompositionFlags } from "./resolve-plugin-flags.js";
@@ -43,7 +44,7 @@ export function getClawqlApi(): ClawQLApiHandle {
     apiHandle = createClawQLApi({
       searchLayer: buildSearchLive(),
       executeLayer: buildExecuteLive(),
-      plugins: [...defaultPlugins()],
+      plugins: [...defaultPlugins(), ...defaultPaymentsProxyPlugins()],
       pluginLayers: composeHorizontalPluginLayers(resolvePluginCompositionFlags()),
     });
   }
@@ -57,7 +58,7 @@ export function resetClawqlApiForTests(): void {
   apiHandle = undefined;
 }
 
-/** Run mcp-proxy `beforeCallTool` hooks (Panguard in-process policy). */
+/** Run mcp-proxy `beforeCallTool` hooks (Panguard policy, x402 payment gates, …). */
 export async function runMcpProxyBeforeCallTool(toolName: string, args: unknown): Promise<void> {
   await getClawqlApi().run(
     Effect.gen(function* () {

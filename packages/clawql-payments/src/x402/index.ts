@@ -55,6 +55,7 @@ export {
   mcpToolResourceName,
   type RunMcpX402BeforeCallToolOptions,
 } from "./mcp-enforce.js";
+export { mcpX402BeforeCallToolEffect } from "./mcp-enforce-effect.js";
 export {
   getMcpX402Context,
   runWithMcpX402Context,

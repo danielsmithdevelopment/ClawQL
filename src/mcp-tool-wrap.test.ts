@@ -1,13 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
-import { X402McpPaymentRequiredError, runMcpX402BeforeCallTool } from "clawql-payments/x402";
+import { X402McpPaymentRequiredError } from "clawql-payments/x402";
+import { runMcpProxyBeforeCallTool } from "./clawql-api-adapters.js";
 import { wrapRegisteredMcpToolHandler } from "./mcp-tool-wrap.js";
 
-vi.mock("clawql-payments/x402", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("clawql-payments/x402")>();
+vi.mock("./clawql-api-adapters.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./clawql-api-adapters.js")>();
   return {
     ...actual,
-    runMcpX402BeforeCallTool: vi.fn(async () => undefined),
-    isX402McpPaymentError: actual.isX402McpPaymentError,
+    runMcpProxyBeforeCallTool: vi.fn(async () => undefined),
   };
 });
 
@@ -18,7 +18,7 @@ describe("wrapRegisteredMcpToolHandler", () => {
       resource: { url: "mcp://tool/search" },
       accepts: [],
     };
-    vi.mocked(runMcpX402BeforeCallTool).mockRejectedValueOnce(
+    vi.mocked(runMcpProxyBeforeCallTool).mockRejectedValueOnce(
       new X402McpPaymentRequiredError(body)
     );
 
