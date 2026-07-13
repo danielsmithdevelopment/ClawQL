@@ -7,10 +7,8 @@ import {
   type ModelEscalationDecision,
 } from "clawql-inference";
 import type { Seed } from "../seed.js";
-import type { Evaluator, Executor, ReflectEngine, WonderEngine } from "../interfaces.js";
 import { ConvergenceCriteria, type ConvergenceConfig } from "../convergence.js";
 import { driftReportPayload, measureDrift } from "../drift.js";
-import type { LoopRoutingOptions } from "../evolutionary-loop.js";
 import type { GenerationSnapshot, LoopResult, EvolutionaryLoopDeps } from "../evolutionary-loop.js";
 import { appendInferenceAuditEvent } from "../glue/routing-audit.js";
 import { buildRoutingCorrelationId, buildRoutingFailureSignals } from "../glue/routing-failures.js";

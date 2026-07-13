@@ -1,7 +1,4 @@
-import {
-  getOrCreateOuroborosEventStore,
-  resetOuroborosEventStoreForTests,
-} from "../glue/create-event-store.js";
+import { resetOuroborosEventStoreForTests } from "../glue/create-event-store.js";
 import { buildEvolutionaryLoop } from "../glue/build-evolutionary-loop.js";
 import { closeOuroborosPgPool, registerOuroborosPoolShutdownHooks } from "../glue/postgres-pool.js";
 import type { OuroborosContext } from "../mcp-hooks.js";
