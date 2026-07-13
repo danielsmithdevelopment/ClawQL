@@ -15,7 +15,7 @@ const DEFAULT_IGNORE = new Set([
   "venv",
 ]);
 
-const CODE_EXTENSIONS = new Set([".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"]);
+const CODE_EXTENSIONS = new Set([".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".py", ".go"]);
 
 export function isCodeFile(filePath: string): boolean {
   return CODE_EXTENSIONS.has(path.extname(filePath).toLowerCase());

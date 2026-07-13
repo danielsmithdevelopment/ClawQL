@@ -1,20 +1,36 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import type { CodeGraphDocument, CodeGraphEdge, CodeGraphNode } from "../types.js";
+import { codeGraphBackend } from "../config/backend.js";
+import { loadGraphifyDocument } from "../bridge/graphify-delegate.js";
+import { buildAdjacencyFromEdges } from "../import/graph-utils.js";
 import { extractTypeScriptGraph } from "./extract-typescript.js";
-import { relPath, walkCodeFiles } from "./walk-repo.js";
+import { extractWithTreeSitter } from "./extract-tree-sitter.js";
+import { isCodeFile, relPath, walkCodeFiles } from "./walk-repo.js";
 
-function buildAdjacency(edges: CodeGraphEdge[]): Record<string, string[]> {
-  const adj: Record<string, string[]> = {};
-  const add = (from: string, to: string): void => {
-    if (!adj[from]) adj[from] = [];
-    if (!adj[from].includes(to)) adj[from].push(to);
-  };
-  for (const e of edges) {
-    add(e.from, e.to);
-    add(e.to, e.from);
+export { buildAdjacencyFromEdges };
+
+function extLang(filePath: string): "typescript" | "python" | "go" | null {
+  const ext = path.extname(filePath).toLowerCase();
+  if ([".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"].includes(ext)) return "typescript";
+  if (ext === ".py") return "python";
+  if (ext === ".go") return "go";
+  return null;
+}
+
+async function extractFile(absFile: string, rel: string, content: string): Promise<{
+  nodes: CodeGraphNode[];
+  edges: CodeGraphEdge[];
+}> {
+  const lang = extLang(absFile);
+  if (lang === "python" || lang === "go") {
+    try {
+      return await extractWithTreeSitter(lang, rel, content);
+    } catch {
+      return extractTypeScriptGraph(absFile, rel, content);
+    }
   }
-  return adj;
+  return extractTypeScriptGraph(absFile, rel, content);
 }
 
 export type IndexRepoOptions = {
@@ -32,8 +48,12 @@ export type IndexRepoResult = {
   readonly builtAt: string;
 };
 
-/** Walk a repository and build a structural code graph (TypeScript/JavaScript). */
+/** Walk a repository and build a structural code graph (TS/JS/Python/Go). */
 export async function indexRepository(options: IndexRepoOptions): Promise<CodeGraphDocument> {
+  if (codeGraphBackend() === "graphify") {
+    return loadGraphifyDocument({ graphId: options.graphId, rootPath: options.rootPath });
+  }
+
   const rootPath = path.resolve(options.rootPath);
   const graphId = options.graphId ?? defaultGraphId(rootPath);
   const files = await walkCodeFiles(rootPath, { maxFiles: options.maxFiles });
@@ -42,6 +62,7 @@ export async function indexRepository(options: IndexRepoOptions): Promise<CodeGr
   const edges: CodeGraphEdge[] = [];
 
   for (const absFile of files) {
+    if (!isCodeFile(absFile)) continue;
     let content: string;
     try {
       content = await fs.readFile(absFile, "utf8");
@@ -49,7 +70,7 @@ export async function indexRepository(options: IndexRepoOptions): Promise<CodeGr
       continue;
     }
     const rel = relPath(absFile, rootPath);
-    const extracted = extractTypeScriptGraph(absFile, rel, content);
+    const extracted = await extractFile(absFile, rel, content);
     for (const node of extracted.nodes) {
       nodesMap.set(node.id, node);
     }
@@ -66,8 +87,16 @@ export async function indexRepository(options: IndexRepoOptions): Promise<CodeGr
     edgeCount: edges.length,
     nodes,
     edges,
-    adjacency: buildAdjacency(edges),
+    adjacency: buildAdjacencyFromEdges(edges),
   };
+}
+
+export async function importGraphifyFromPath(options: {
+  jsonPath: string;
+  graphId?: string;
+  rootPath?: string;
+}): Promise<CodeGraphDocument> {
+  return loadGraphifyDocument(options);
 }
 
 function defaultGraphId(rootPath: string): string {

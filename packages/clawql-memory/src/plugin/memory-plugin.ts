@@ -2,6 +2,7 @@ import { Effect } from "effect";
 import { z } from "zod";
 import {
   codegraphExplain,
+  codegraphImportGraphify,
   codegraphIndex,
   codegraphNeighbors,
   codegraphPath,
@@ -105,6 +106,16 @@ export const memoryRecallToolSchema = {
     .describe(
       "Minimum keyword match score to seed a note (default: CLAWQL_MEMORY_RECALL_MIN_SCORE or 1)."
     ),
+  includeCodeGraph: z
+    .boolean()
+    .optional()
+    .describe(
+      "When true and CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH=1, merge structural code graph symbol hits into the response."
+    ),
+  codeGraphId: z
+    .string()
+    .optional()
+    .describe("Code graph id for hybrid supplement (default from CLAWQL_CODEGRAPH_ID)."),
 };
 
 export const pageindexBuildTreeToolSchema = {
@@ -180,6 +191,13 @@ export const codegraphSubgraphToolSchema = {
   seedQuery: z.string().min(1),
   maxDepth: z.number().int().min(0).max(6).optional(),
   maxNodes: z.number().int().positive().optional(),
+  storagePath: z.string().optional(),
+};
+
+export const codegraphImportGraphifyToolSchema = {
+  jsonPath: z.string().min(1).describe("Path to Graphify graph.json export."),
+  graphId: z.string().optional(),
+  rootPath: z.string().optional(),
   storagePath: z.string().optional(),
 };
 
@@ -357,6 +375,18 @@ export function createMemoryPlugin(): Plugin {
             handler: async (args) => ({
               content: [
                 { type: "text", text: JSON.stringify(await codegraphSubgraph(args), null, 2) },
+              ],
+            }),
+          });
+          yield* api.registerMcpTool({
+            name: "codegraph_import_graphify",
+            schema: codegraphImportGraphifyToolSchema,
+            handler: async (args) => ({
+              content: [
+                {
+                  type: "text",
+                  text: JSON.stringify(await codegraphImportGraphify(args), null, 2),
+                },
               ],
             }),
           });

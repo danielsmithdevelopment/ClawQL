@@ -20,6 +20,10 @@ import {
   recallVectorPassEffect,
   recallWikilinkEdgesEffect,
 } from "./memory-recall-vector-effect.js";
+import {
+  hybridCodeGraphRecallEnabled,
+  recallCodeGraphSupplement,
+} from "../recall/codegraph-recall.js";
 
 const VAULT_NOT_CONFIGURED =
   "Obsidian vault is not configured. Set CLAWQL_OBSIDIAN_VAULT_PATH to a writable directory.";
@@ -249,6 +253,22 @@ export function executeMemoryRecallCoreEffect(
       truncated,
       scannedFiles: files.length,
     };
+
+    const wantCodeGraph =
+      input.includeCodeGraph !== false &&
+      (input.includeCodeGraph === true || hybridCodeGraphRecallEnabled());
+    if (wantCodeGraph) {
+      const codeGraphHits = yield* memoryFromPromise(() =>
+        recallCodeGraphSupplement({
+          query,
+          graphId: input.codeGraphId,
+          limit: envInt("CLAWQL_MEMORY_RECALL_CODEGRAPH_LIMIT", 8),
+        })
+      );
+      if (codeGraphHits.length > 0) {
+        result.codeGraphHits = codeGraphHits;
+      }
+    }
 
     const merkleSnapshot = yield* recallMerkleSnapshotEffect(vault, recallArtifacts);
     if (merkleSnapshot !== undefined) {

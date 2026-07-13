@@ -21,21 +21,36 @@ export type MemoryRecallInput = {
   maxDepth?: number;
   /** Minimum keyword score to seed recall (default from CLAWQL_MEMORY_RECALL_MIN_SCORE). */
   minScore?: number;
+  /** When true (and CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH=1), merge code graph symbol hits. */
+  includeCodeGraph?: boolean;
+  /** Code graph id for hybrid supplement (default CLAWQL_CODEGRAPH_ID or repo name). */
+  codeGraphId?: string;
 };
 
 export type RecallHit = {
   path: string;
   score: number;
   depth: number;
-  reason: "keyword" | "link" | "vector";
+  reason: "keyword" | "link" | "vector" | "codegraph";
   linkFrom?: string;
   snippet: string;
+};
+
+export type CodeGraphRecallHit = {
+  nodeId: string;
+  name: string;
+  kind: string;
+  filePath?: string;
+  score: number;
+  snippet?: string;
 };
 
 export type MemoryRecallResult = {
   ok: boolean;
   query?: string;
   results?: RecallHit[];
+  /** Structural code symbol hits when hybrid code graph recall is enabled. */
+  codeGraphHits?: CodeGraphRecallHit[];
   truncated?: boolean;
   scannedFiles?: number;
   error?: string;

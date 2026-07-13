@@ -3,7 +3,10 @@ import { Effect } from "effect";
 import { CodeGraphService, runCodeGraphEffect } from "../effect/codegraph-service.js";
 
 const indexInput = z.object({
-  rootPath: z.string().min(1).describe("Repository root to index (absolute or relative path)."),
+  rootPath: z
+    .string()
+    .optional()
+    .describe("Repository root to index (defaults to CLAWQL_CODEGRAPH_ROOT or cwd)."),
   graphId: z.string().optional().describe("Stable graph id (defaults from directory name)."),
   maxFiles: z.number().int().positive().optional().describe("Cap indexed source files."),
   storagePath: z.string().optional().describe("Optional JSON storage path override."),
@@ -42,12 +45,23 @@ const subgraphInput = graphIdInput.extend({
   maxNodes: z.number().int().positive().optional(),
 });
 
+const importGraphifyInput = z.object({
+  jsonPath: z.string().min(1).describe("Path to Graphify graph.json (NetworkX node-link export)."),
+  graphId: z.string().optional(),
+  rootPath: z.string().optional(),
+  storagePath: z.string().optional(),
+});
+
 export async function codegraphIndex(raw: unknown) {
   const input = indexInput.parse(raw);
+  const rootPath =
+    input.rootPath?.trim() ||
+    process.env.CLAWQL_CODEGRAPH_ROOT?.trim() ||
+    process.cwd();
   return runCodeGraphEffect(
     Effect.gen(function* () {
       const svc = yield* CodeGraphService;
-      return yield* svc.index(input);
+      return yield* svc.index({ ...input, rootPath });
     }),
     input.storagePath
   );
@@ -118,6 +132,17 @@ export async function codegraphSubgraph(raw: unknown) {
   );
 }
 
+export async function codegraphImportGraphify(raw: unknown) {
+  const input = importGraphifyInput.parse(raw);
+  return runCodeGraphEffect(
+    Effect.gen(function* () {
+      const svc = yield* CodeGraphService;
+      return yield* svc.importGraphify(input);
+    }),
+    input.storagePath
+  );
+}
+
 export type CodeGraphMcpHandlers = {
   index: typeof codegraphIndex;
   query: typeof codegraphQuery;
@@ -125,6 +150,7 @@ export type CodeGraphMcpHandlers = {
   path: typeof codegraphPath;
   explain: typeof codegraphExplain;
   subgraph: typeof codegraphSubgraph;
+  importGraphify: typeof codegraphImportGraphify;
 };
 
 export function createCodeGraphMcpHandlers(): CodeGraphMcpHandlers {
@@ -135,5 +161,6 @@ export function createCodeGraphMcpHandlers(): CodeGraphMcpHandlers {
     path: codegraphPath,
     explain: codegraphExplain,
     subgraph: codegraphSubgraph,
+    importGraphify: codegraphImportGraphify,
   };
 }
