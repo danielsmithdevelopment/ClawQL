@@ -97,7 +97,6 @@ export function stripeWebhookLiveLayer(): Layer.Layer<
 
       const processEvent = (event: Stripe.Event, options: ProcessStripeWebhookOptions = {}) =>
         Effect.gen(function* () {
-          const env = options.env ?? process.env;
           const config = yield* configService.load();
           const tenantId = options.tenantId ?? config.tenantId ?? "default";
 
