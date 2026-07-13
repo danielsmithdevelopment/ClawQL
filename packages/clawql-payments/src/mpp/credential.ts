@@ -108,7 +108,9 @@ export function extractPaymentCredential(
   return undefined;
 }
 
-export function x402PayloadFromMppCredential(credential: MppCredential): X402PaymentPayloadV2 | undefined {
+export function x402PayloadFromMppCredential(
+  credential: MppCredential
+): X402PaymentPayloadV2 | undefined {
   const payload = credential.payload;
   if (payload.x402Version !== undefined || payload.accepted !== undefined) {
     return {

@@ -58,9 +58,7 @@ export function paymentsServicesLiveLayer(
     Layer.provide(Layer.mergeAll(config, audit, runtimeConfig, facilitator, stripeClient))
   );
   const enforcement = x402EnforcementLiveLayer().pipe(
-    Layer.provide(
-      Layer.mergeAll(config, audit, gate, runtimeConfig, facilitator, mppVerification)
-    )
+    Layer.provide(Layer.mergeAll(config, audit, gate, runtimeConfig, facilitator, mppVerification))
   );
   const discovery = paymentsDiscoveryLiveLayer(env).pipe(
     Layer.provide(Layer.mergeAll(config, runtimeConfig, gate))

@@ -112,9 +112,7 @@ export function createX402PaymentMiddleware(options: CreateX402PaymentMiddleware
         x402Version: 2,
         error: result.reason,
         resource: { url: requestUrl },
-        ...(result.mppVerificationCode
-          ? { mppVerificationCode: result.mppVerificationCode }
-          : {}),
+        ...(result.mppVerificationCode ? { mppVerificationCode: result.mppVerificationCode } : {}),
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);

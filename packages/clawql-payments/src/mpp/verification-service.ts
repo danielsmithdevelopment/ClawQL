@@ -8,10 +8,7 @@ import { StripeApiError, StripeNotConfigured } from "../stripe/stripe-errors.js"
 import { ConfigError, X402Error } from "../errors/payment-errors.js";
 import type { X402Gate } from "../x402/gate.js";
 import { X402FacilitatorService } from "../x402/x402-facilitator-service.js";
-import {
-  usdcAtomicAmount,
-  X402RuntimeConfigService,
-} from "../x402/x402-runtime-config-service.js";
+import { usdcAtomicAmount, X402RuntimeConfigService } from "../x402/x402-runtime-config-service.js";
 import { isMppEnabled } from "./config.js";
 import {
   decodeChallengeRequest,
@@ -91,9 +88,7 @@ function amountMinorUnits(amount: unknown, currency: string): number | undefined
 export class MppVerificationService extends Context.Tag("clawql/MppVerificationService")<
   MppVerificationService,
   {
-    readonly registerChallenges: (
-      challenges: MppPaymentChallenge[]
-    ) => Effect.Effect<void, never>;
+    readonly registerChallenges: (challenges: MppPaymentChallenge[]) => Effect.Effect<void, never>;
     readonly verifyCredential: (
       input: VerifyMppCredentialInput
     ) => Effect.Effect<

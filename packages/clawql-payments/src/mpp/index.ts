@@ -74,6 +74,10 @@ export {
   type VerifyMppCredentialInput,
 } from "./verification-service.js";
 
-export { buildMppPaymentReceipt, mppPaymentReceiptHeader, type MppPaymentReceipt } from "./receipt.js";
+export {
+  buildMppPaymentReceipt,
+  mppPaymentReceiptHeader,
+  type MppPaymentReceipt,
+} from "./receipt.js";
 
 export { registerMppChallenges, verifyMppCredential } from "./verify.js";

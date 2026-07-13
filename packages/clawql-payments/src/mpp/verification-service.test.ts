@@ -162,7 +162,10 @@ describe("MppVerificationService", () => {
   });
 
   it("registers challenges for later single-use verification", async () => {
-    const gate = await createX402Gate({ resource: "/v1/register", price: 0.01, asset: "USDC" }, env);
+    const gate = await createX402Gate(
+      { resource: "/v1/register", price: 0.01, asset: "USDC" },
+      env
+    );
     const configLoaded = {
       walletAddress: "0x209693Bc6afc0C5328bA36FaF03C514EF312287C",
       scheme: "exact" as const,
@@ -227,9 +230,10 @@ describe("MppVerificationService", () => {
           }) as unknown as import("stripe").default,
       })
     );
-    const verification = mppVerificationLiveLayer({ ...env, STRIPE_SECRET_KEY: "sk_test_xxx" }).pipe(
-      Layer.provide(Layer.mergeAll(config, audit, runtimeConfig, facilitator, stripe))
-    );
+    const verification = mppVerificationLiveLayer({
+      ...env,
+      STRIPE_SECRET_KEY: "sk_test_xxx",
+    }).pipe(Layer.provide(Layer.mergeAll(config, audit, runtimeConfig, facilitator, stripe)));
 
     await Effect.runPromise(
       Effect.gen(function* () {

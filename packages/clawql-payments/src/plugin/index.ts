@@ -34,14 +34,8 @@ export {
   X402EnforcementService,
   x402EnforcementLiveLayer,
 } from "../x402/x402-enforcement-service.js";
-export {
-  MppOpenApiService,
-  mppOpenApiLiveLayer,
-} from "../mpp/openapi-service.js";
-export {
-  MppVerificationService,
-  mppVerificationLiveLayer,
-} from "../mpp/verification-service.js";
+export { MppOpenApiService, mppOpenApiLiveLayer } from "../mpp/openapi-service.js";
+export { MppVerificationService, mppVerificationLiveLayer } from "../mpp/verification-service.js";
 export { UsageStoreService, usageStoreLiveLayer } from "../plans/usage-store-service.js";
 export { EntitlementService, entitlementLiveLayer } from "../plans/entitlement-service.js";
 export {

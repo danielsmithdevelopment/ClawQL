@@ -226,8 +226,7 @@ export function x402EnforcementLiveLayer(): Layer.Layer<
                 status: 402 as const,
                 reason,
                 resource: gate.resource,
-                mppVerificationCode:
-                  err instanceof MppVerificationError ? err.code : undefined,
+                mppVerificationCode: err instanceof MppVerificationError ? err.code : undefined,
               };
             }
 
