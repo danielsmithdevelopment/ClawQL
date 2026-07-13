@@ -3,7 +3,6 @@
  * Optional vector seeds when CLAWQL_VECTOR_BACKEND is sqlite (BLOB KNN) or postgres (pgvector).
  */
 
-
 import { readVaultTextFile } from "../vault/utils.js";
 import { slugifyTitle } from "../ingest/slug.js";
 import {

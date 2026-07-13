@@ -7,15 +7,10 @@ import { MemoryIngestService, memoryIngestLiveLayer } from "./memory-ingest-serv
 import { MemoryRecallService, memoryRecallLiveLayer } from "./memory-recall-service.js";
 import { VaultConfigService, vaultConfigLiveLayer } from "./vault-config-service.js";
 
-export type MemoryInfrastructureServices =
-  | VaultConfigService
-  | MemoryDbService
-  | EmbeddingService;
+export type MemoryInfrastructureServices = VaultConfigService | MemoryDbService | EmbeddingService;
 
 export type MemoryServices =
-  | MemoryInfrastructureServices
-  | MemoryIngestService
-  | MemoryRecallService;
+  MemoryInfrastructureServices | MemoryIngestService | MemoryRecallService;
 
 /** Merged Effect Layer for clawql-memory domain + infrastructure services. */
 export function memoryServicesLiveLayer(): Layer.Layer<MemoryServices> {

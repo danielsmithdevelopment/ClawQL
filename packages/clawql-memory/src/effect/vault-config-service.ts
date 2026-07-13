@@ -33,7 +33,9 @@ export function vaultConfigLiveService() {
 
 export const VaultConfigLive = Layer.succeed(VaultConfigService, vaultConfigLiveService());
 
-export function createVaultConfigTestLayer(env: NodeJS.ProcessEnv): Layer.Layer<VaultConfigService> {
+export function createVaultConfigTestLayer(
+  env: NodeJS.ProcessEnv
+): Layer.Layer<VaultConfigService> {
   return Layer.succeed(VaultConfigService, vaultConfigServiceFromEnv(env));
 }
 

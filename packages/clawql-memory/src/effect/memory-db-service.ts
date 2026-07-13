@@ -25,9 +25,7 @@ export class MemoryDbService extends Context.Tag("clawql/MemoryDbService")<
       vaultRoot: string,
       docs: MemoryDbDocument[]
     ) => Effect.Effect<void, MemoryError>;
-    readonly loadVaultMerkleSnapshotFromDb: (
-      vaultRoot: string
-    ) => Effect.Effect<
+    readonly loadVaultMerkleSnapshotFromDb: (vaultRoot: string) => Effect.Effect<
       {
         rootHex: string;
         leafCount: number;
