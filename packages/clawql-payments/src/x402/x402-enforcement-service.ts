@@ -1,10 +1,17 @@
-import { Context, Effect, Layer } from "effect";
+import { Context, Effect, Either, Layer } from "effect";
 import { PaymentsConfigService } from "../config/payments-config-service.js";
 import { PaymentAuditService } from "../plugin/payment-audit-service.js";
 import { ConfigError, X402Error } from "../errors/payment-errors.js";
 import { buildX402PaymentFailedEntry, buildX402PaymentReceivedEntry } from "../audit/events.js";
+import { isMppEnabled } from "../mpp/config.js";
+import { extractPaymentCredential } from "../mpp/credential.js";
+import { buildChallengesFromOffers } from "../mpp/challenge.js";
+import { offersFromX402Required } from "../mpp/offers.js";
+import { MppVerificationError } from "../mpp/verification-errors.js";
+import { MppVerificationService } from "../mpp/verification-service.js";
+import type { MppPaymentChallenge } from "../mpp/types.js";
 import { parseX402PaymentPayloadHeader, readX402PaymentHeader } from "./headers.js";
-import { buildPaymentRequired, buildPaymentRequirements } from "./requirements.js";
+import { buildPaymentRequired, buildPaymentRequirements } from "./payment-requirements.js";
 import type { X402PaymentRequired } from "./types.js";
 import { X402FacilitatorService } from "./x402-facilitator-service.js";
 import { X402GateService } from "./x402-gate-service.js";
@@ -12,9 +19,27 @@ import { X402RuntimeConfigService } from "./x402-runtime-config-service.js";
 import type { X402PaymentProof } from "./verify.js";
 
 export type X402EnforceResult =
-  | { action: "allow"; payer?: string; resource: string }
-  | { action: "require_payment"; status: 402; body: X402PaymentRequired; resource: string }
-  | { action: "deny"; status: 402; reason: string; resource: string };
+  | {
+      action: "allow";
+      payer?: string;
+      resource: string;
+      mppReceipt?: Record<string, unknown>;
+      mppReceiptHeader?: string;
+    }
+  | {
+      action: "require_payment";
+      status: 402;
+      body: X402PaymentRequired;
+      resource: string;
+      mppChallenges?: MppPaymentChallenge[];
+    }
+  | {
+      action: "deny";
+      status: 402;
+      reason: string;
+      resource: string;
+      mppVerificationCode?: number;
+    };
 
 export type EnforceX402GateInput = {
   resource: string;
@@ -60,6 +85,7 @@ export function x402EnforcementLiveLayer(): Layer.Layer<
   | X402GateService
   | X402RuntimeConfigService
   | X402FacilitatorService
+  | MppVerificationService
 > {
   return Layer.effect(
     X402EnforcementService,
@@ -69,6 +95,7 @@ export function x402EnforcementLiveLayer(): Layer.Layer<
       const gates = yield* X402GateService;
       const runtimeConfig = yield* X402RuntimeConfigService;
       const facilitator = yield* X402FacilitatorService;
+      const mppVerification = yield* MppVerificationService;
 
       const recordPaymentFailed = (input: {
         tenantId: string;
@@ -130,9 +157,11 @@ export function x402EnforcementLiveLayer(): Layer.Layer<
 
           const paymentsConfig = yield* configService.load();
           const tenantId = paymentsConfig.tenantId ?? "default";
-
+          const mppOn = isMppEnabled(env);
+          const credential = extractPaymentCredential(input.headers);
           const paymentHeader = readX402PaymentHeader(input.headers);
-          if (!paymentHeader) {
+
+          if (!credential && !paymentHeader) {
             const config = yield* runtimeConfig.load();
             const body = buildPaymentRequired({
               gate,
@@ -143,10 +172,85 @@ export function x402EnforcementLiveLayer(): Layer.Layer<
                 mimeType: "application/json",
               },
             });
+
+            let mppChallenges: MppPaymentChallenge[] | undefined;
+            if (mppOn) {
+              const stripeEnabled = Boolean(env.STRIPE_SECRET_KEY?.trim());
+              const offers = offersFromX402Required(body, stripeEnabled);
+              mppChallenges = buildChallengesFromOffers({
+                offers,
+                resource: gate.resource,
+                x402Body: body,
+              });
+              yield* mppVerification.registerChallenges(mppChallenges);
+            }
+
             return {
               action: "require_payment" as const,
               status: 402 as const,
               body,
+              resource: gate.resource,
+              mppChallenges,
+            };
+          }
+
+          if (mppOn && credential) {
+            const verification = yield* mppVerification
+              .verifyCredential({
+                resource: input.resource,
+                requestUrl: input.requestUrl,
+                gate,
+                headers: input.headers,
+                correlationId: input.correlationId,
+                env,
+                fetchImpl: input.fetchImpl,
+              })
+              .pipe(Effect.either);
+
+            if (Either.isLeft(verification)) {
+              const err = verification.left;
+              const reason =
+                err instanceof MppVerificationError
+                  ? err.reason
+                  : "reason" in err && typeof err.reason === "string"
+                    ? err.reason
+                    : "MPP credential verification failed";
+              yield* recordPaymentFailed({
+                tenantId,
+                resource: gate.resource,
+                reason,
+                correlationId: input.correlationId,
+              });
+              return {
+                action: "deny" as const,
+                status: 402 as const,
+                reason,
+                resource: gate.resource,
+                mppVerificationCode: err instanceof MppVerificationError ? err.code : undefined,
+              };
+            }
+
+            return {
+              action: "allow" as const,
+              payer: verification.right.payer,
+              resource: gate.resource,
+              mppReceipt: verification.right.receipt,
+              mppReceiptHeader: verification.right.receiptHeader,
+            };
+          }
+
+          if (!paymentHeader) {
+            const reason = "payment credential header is required";
+            yield* recordPaymentFailed({
+              tenantId,
+              resource: gate.resource,
+              reason,
+              correlationId: input.correlationId,
+            });
+            return {
+              action: "deny" as const,
+              status: 402 as const,
+              reason,
               resource: gate.resource,
             };
           }

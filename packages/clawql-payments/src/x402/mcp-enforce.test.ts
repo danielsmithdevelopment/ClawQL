@@ -22,6 +22,7 @@ describe("runMcpX402BeforeCallTool", () => {
       CLAWQL_HOME: home,
       CLAWQL_PAYMENTS_AUDIT_STORE: "memory",
       CLAWQL_X402_ENFORCE: "1",
+      CLAWQL_MPP_ENABLED: "1",
     };
     await mkdir(join(home, "Payments"), { recursive: true });
     await writeFile(

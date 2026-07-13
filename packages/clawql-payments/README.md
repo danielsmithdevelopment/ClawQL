@@ -1,6 +1,6 @@
 # clawql-payments
 
-Unified payments layer for ClawQL — Stripe billing, x402 micropayments, managed plan entitlements, and WORM-auditable payment events.
+Unified payments layer for ClawQL — Stripe billing, x402 micropayments, **MPP** (Machine Payments Protocol) discovery and runtime, managed plan entitlements, and WORM-auditable payment events.
 
 ClawQL's own managed tiers (Free / Pro / Team / Enterprise) run on this package internally. The same package is available to ClawQL users to bill their own customers via Stripe, gate MCP tools and HTTP endpoints via x402, and get a correlated payment audit trail across both rails.
 
@@ -10,6 +10,7 @@ ClawQL's own managed tiers (Free / Pro / Team / Enterprise) run on this package 
 clawql-payments
 ├── stripe/     # Subscriptions, invoices, webhooks, metered usage, customer portal
 ├── x402/       # Wallet setup, resource gating, proof verification, settlement reconcile
+├── mpp/        # MPP OpenAPI discovery (`/openapi.json`), Payment 402 challenges, MCP -32042
 ├── plans/      # ClawQL tier definitions, entitlements, usage tracking, limit enforcement
 ├── audit/      # Payment events → hash-chained WORM (jsonl, postgres, or memory) + optional Loki export
 └── cli/        # `clawql payments *` command implementations
@@ -100,7 +101,9 @@ Stripe SDK integration is **live** for customers, subscriptions, invoices, billi
 
 x402 facilitator HTTP verification is **live** (`POST /verify` against x402.org or CDP). Inference HTTP and **native MCP tool calls** can enforce gates with `CLAWQL_X402_ENFORCE=1`.
 
-Payment discovery is served at **`/.well-known/payments.json`** on MCP and inference HTTP apps (dynamic from local gates/config).
+Payment discovery is served at **`/.well-known/payments.json`** and MPP OpenAPI at **`/openapi.json`** on MCP and inference HTTP apps (dynamic from local gates/config).
+
+**MPP** (Machine Payments Protocol): when `CLAWQL_MPP_ENABLED=1` (default when x402 or Stripe is configured), HTTP 402 responses include MPP Payment challenges alongside x402 `PAYMENT-REQUIRED`. MCP tool payment errors include `org.paymentauth/payment-required` metadata. Disable with `CLAWQL_MPP_ENABLED=0`.
 
 Payment audit is **durable** — hash-chained append-only JSONL at `$CLAWQL_HOME/Payments/audit.jsonl` (default), optional Postgres for multi-node, and optional Loki export. Use `clawql payments audit verify` to validate chain integrity.
 
