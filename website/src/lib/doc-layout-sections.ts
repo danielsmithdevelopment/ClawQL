@@ -12,6 +12,7 @@ import { learnAuditObservabilitySections } from '@/lib/learn-audit-observability
 import { learnCacheHandoffSections } from '@/lib/learn-cache-handoff-sections'
 import { learnDocumentPipelineSections } from '@/lib/learn-document-pipeline-sections'
 import { learnEffectTsSections } from '@/lib/learn-effect-ts-sections'
+import { learnMemorySections } from '@/lib/learn-memory-sections'
 import { learnExternalIngestKnowledgeSections } from '@/lib/learn-external-ingest-knowledge-sections'
 import { learnKnowledgeSearchOnyxSections } from '@/lib/learn-knowledge-search-onyx-sections'
 import { learnOpenclawClawqlSections } from '@/lib/learn-openclaw-clawql-sections'
@@ -41,6 +42,7 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
   '/learn/vault-memory-between-chats': learnVaultMemoryHandoffSections,
   '/learn/audit-tool-and-observability': learnAuditObservabilitySections,
   '/learn/effect-ts': learnEffectTsSections,
+  '/learn/memory': learnMemorySections,
   '/case-studies/cloudflare-docs-mcp': caseStudyCloudflareDocsSections,
   '/case-studies/vault-memory-github-session-2026-04':
     caseStudyVaultMemorySessionSections,

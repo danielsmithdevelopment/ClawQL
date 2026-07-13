@@ -157,6 +157,21 @@ export const learnModuleSiteCards: Array<ReferenceCard> = [
     },
   },
   {
+    href: '/learn/memory',
+    name: 'clawql-memory (Memory 2.0)',
+    description:
+      'Vault ingest/recall, wikilink graph, hybrid vectors, PageIndex, team sync, and the inference flywheel.',
+    icon: ChatBubbleIcon,
+    pattern: {
+      y: 14,
+      squares: [
+        [0, 1],
+        [1, 0],
+        [2, 2],
+      ],
+    },
+  },
+  {
     href: '/learn/vault-memory-between-chats',
     name: 'Vault memory between chats',
     description:
