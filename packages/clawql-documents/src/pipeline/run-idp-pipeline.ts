@@ -1,8 +1,7 @@
 import { logMcpToolShape } from "clawql-api/mcp/tool-shape-log";
 import { z } from "zod";
 import { idpPipelineRunnerEnabled } from "./env.js";
-import { runIdpPipeline, type RunIdpPipelineInput } from "./runner.js";
-import { getDocumentsPluginDeps } from "../plugin/deps.js";
+import type { RunIdpPipelineInput } from "./runner.js";
 
 const stageEnum = z.enum([
   "nextcloud",
@@ -98,11 +97,9 @@ export async function handleRunIdpPipelineToolInput(
     };
   }
 
-  const deps = getDocumentsPluginDeps();
-  const result = await runIdpPipeline(params, {
-    execute: (p) => deps.execute(p),
-    onHop: deps.onPipelineHop,
-  });
+  const { runDocumentsEffect, documentsIdpPipelineProgram } =
+    await import("../effect/documents-effect-runtime.js");
+  const result = await runDocumentsEffect(documentsIdpPipelineProgram(params));
 
   return {
     content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
