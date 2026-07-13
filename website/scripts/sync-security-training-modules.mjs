@@ -14,6 +14,8 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+import { appendPassthroughWrapper } from './lib/rewrite-doc-links.mjs'
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const websiteRoot = path.resolve(__dirname, '..')
 const dstRoot = path.join(websiteRoot, 'src/generated/security-training')
@@ -170,7 +172,7 @@ for (const file of names) {
     file,
     slug,
     fm: { title, description, part, total_parts: totalParts, prev, next },
-    body: rewriteLinksForSite(body.trimStart()),
+    body: appendPassthroughWrapper(rewriteLinksForSite(body.trimStart())),
   })
 }
 

@@ -201,3 +201,7 @@ Key Takeaways (Memorize These!)
 - The choice of sandbox runtime is a threat-model decision based on the workload’s trust level and performance requirements, not a one-size-fits-all answer.
 
 You now have a true security boundary between agent code and the host kernel. Even if an attacker achieves arbitrary code execution inside an agent, they are still trapped inside the sandbox. This is the final layer that makes the entire platform resilient to kernel-level escapes.
+
+export function wrapper({ children }) {
+  return children
+}

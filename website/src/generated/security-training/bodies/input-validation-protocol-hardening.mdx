@@ -154,3 +154,7 @@ Key Takeaways (Memorize These!)
 - Tool definition integrity is the attack surface that most operators don’t know exists — sign the tools manifest and monitor for mid-session changes.
 
 You now have a hardened input boundary that ensures every piece of data reaching Panguard and the model is clean, normalized, size-bounded, and free of injection tricks. The enforcement layer in Module 12 can now do its job on trustworthy input. This completes the upstream defenses that make the entire runtime stack reliable.
+
+export function wrapper({ children }) {
+  return children
+}

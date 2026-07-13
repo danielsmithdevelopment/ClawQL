@@ -103,12 +103,17 @@
     text-align: left;
     vertical-align: top;
     padding: 0.5rem 0.875rem;
+    min-width: 5.5rem;
     overflow-wrap: anywhere;
     word-break: normal;
     white-space: normal;
     box-sizing: border-box;
     border-bottom: 1px solid
       color-mix(in oklab, var(--color-zinc-900) 8%, transparent);
+  }
+
+  .docs-table-scroll .docs-table thead :is(th, td) {
+    text-align: left;
   }
 
   :is(.dark) .docs-table-scroll .docs-table :is(th, td) {

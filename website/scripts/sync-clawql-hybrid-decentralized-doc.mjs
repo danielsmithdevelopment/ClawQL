@@ -12,6 +12,8 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+import { appendPassthroughWrapper } from './lib/rewrite-doc-links.mjs'
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const websiteRoot = path.resolve(__dirname, '..')
 const dstDir = path.join(websiteRoot, 'src/generated')
@@ -94,7 +96,9 @@ if (!src || !fs.existsSync(src)) {
   process.exit(1)
 }
 
-const body = rewriteLinksForSite(fs.readFileSync(src, 'utf8'))
+const body = appendPassthroughWrapper(
+  rewriteLinksForSite(fs.readFileSync(src, 'utf8')),
+)
 fs.writeFileSync(dst, body)
 execSync(
   'npx prettier --write src/generated/clawql-hybrid-decentralized-body.mdx',

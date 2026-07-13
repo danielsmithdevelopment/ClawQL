@@ -785,3 +785,7 @@ The transport layer guarantees durable, ordered, safely gated communication over
 The strategic layer measures collective reasoning quality using two complementary signals: NSV as a cheap scalar tripwire for overall clustering, and SGDOP as a directional diagnostic identifying specifically which axis of embedding space the swarm has failed to explore — derived from the same matrix-conditioning logic that gives GPS dilution-of-precision its meaning, not borrowed as a label. Per-turn reputation attribution is baseline-corrected against both an independent success rate and a calibrated similarity floor, protecting dissenters from group-failure penalties. Diversity Dividends extend this into a persistent incentive layer, rewarding agents whose consistent blind-spot coverage over multiple rounds aligns individual utility with global swarm stability.
 
 Two boundaries are named explicitly. Agent positions are plaintext to the Coordinator by design — TLS protects transit, not computation — and a genuinely zero-trust version would require CKKS or a two-party protocol, both deliberately out of scope. The Evaluator gates final candidates, not reasoning trajectories; deterministic process verification at the step level remains unestablished for open-ended swarm reasoning. These are not temporary limitations awaiting a fix; they are the honest boundaries of what this architecture currently delivers.
+
+export function wrapper({ children }) {
+  return children
+}

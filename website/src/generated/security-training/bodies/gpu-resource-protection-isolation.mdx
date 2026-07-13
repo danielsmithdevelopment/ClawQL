@@ -124,3 +124,7 @@ Key Takeaways (Memorize These!)
 - GPU monitoring is a security control as much as an operational one — unexpected GPU consumers are a signal of workload escape or resource theft.
 
 You now have least privilege enforced at the GPU hardware level. Residual data leakage is prevented, resource exhaustion is bounded, and every GPU access is monitored. The compute layer that powers your agents is now as securely isolated as every other component in the platform.
+
+export function wrapper({ children }) {
+  return children
+}

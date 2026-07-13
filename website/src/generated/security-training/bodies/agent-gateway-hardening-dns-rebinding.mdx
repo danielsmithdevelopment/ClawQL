@@ -183,3 +183,7 @@ Key Takeaways (Memorize These!)
 - Every gateway configuration change must be followed by a port audit — silent drift is the operational risk.
 
 The gateway is now hardened end-to-end. It can only be reached in the exact ways we explicitly allow, and the most dangerous browser-based bypass is structurally impossible. This completes the perimeter around the single highest-value component in the entire platform.
+
+export function wrapper({ children }) {
+  return children
+}

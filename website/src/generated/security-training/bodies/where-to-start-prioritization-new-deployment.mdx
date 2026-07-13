@@ -40,3 +40,7 @@ Once the first five are operational and verified, the next priorities — before
 A deployment that implements the first five completely and correctly, and nothing else, is meaningfully more secure than a deployment that implements all thirty modules at 20% completeness each. Partial implementations of structural controls — an ATR system that's enforced for some tools but not others, redaction that runs on most write paths but not all of them, an egress allowlist with a few too-broad entries left in "temporarily" — provide a false sense of coverage that is often worse than no coverage at all, because the gaps are invisible until they're exploited.
 
 Build the five completely. Verify them. Then expand scope, and let the expanding scope tell you which subsequent modules become load-bearing — rather than trying to anticipate all of them at once.
+
+export function wrapper({ children }) {
+  return children
+}

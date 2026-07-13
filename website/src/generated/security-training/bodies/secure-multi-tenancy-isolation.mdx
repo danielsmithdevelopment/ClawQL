@@ -150,3 +150,7 @@ Key Takeaways (Memorize These!)
 - Audit log segregation encrypted with the tenant’s public key gives tenants evidence ownership without requiring platform operator access.
 
 You now have secure multi-tenancy that is architecturally enforced rather than policy-dependent. Cross-tenant leakage is structurally impossible, resource exhaustion is bounded, and audit logs remain clean and tenant-owned. This completes the foundation needed to run multiple tenants safely on the same platform.
+
+export function wrapper({ children }) {
+  return children
+}
