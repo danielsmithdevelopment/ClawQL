@@ -9,11 +9,7 @@ export class FallbackChainGateway implements InferenceGateway {
   ) {}
 
   async complete(request: InferenceRequest): Promise<InferenceResponse> {
-    return runFallbackEffect(
-      completeWithFallbackProgram(request),
-      this.inner,
-      this.config
-    );
+    return runFallbackEffect(completeWithFallbackProgram(request), this.inner, this.config);
   }
 }
 

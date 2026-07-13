@@ -3,10 +3,7 @@ import type { InferenceGateway, InferenceRequest, InferenceResponse } from "../.
 import type { FallbackConfig } from "../types.js";
 import { FallbackExhaustedError } from "./fallback-errors.js";
 import { FallbackChainService, fallbackChainLiveLayer } from "./fallback-chain-service.js";
-import {
-  InferenceGatewayService,
-  inferenceGatewayLiveLayer,
-} from "./inference-gateway-service.js";
+import { InferenceGatewayService, inferenceGatewayLiveLayer } from "./inference-gateway-service.js";
 
 export type FallbackServices = FallbackChainService;
 
