@@ -21,9 +21,7 @@ export async function buildMppOpenApiDocument(
   );
 }
 
-export async function renderMppOpenApiJson(
-  options: BuildMppOpenApiOptions = {}
-): Promise<string> {
+export async function renderMppOpenApiJson(options: BuildMppOpenApiOptions = {}): Promise<string> {
   return runPaymentsEffect(
     Effect.gen(function* () {
       const mpp = yield* MppOpenApiService;

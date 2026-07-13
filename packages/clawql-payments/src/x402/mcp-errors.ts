@@ -45,10 +45,7 @@ export class X402McpPaymentRequiredError extends Error {
 
     const resource = this.body.resource.url ?? "mcp://tool";
     return enrichMcpToolResultWithMpp(base, {
-      offers: offersFromX402Required(
-        this.body,
-        Boolean(env.STRIPE_SECRET_KEY?.trim())
-      ),
+      offers: offersFromX402Required(this.body, Boolean(env.STRIPE_SECRET_KEY?.trim())),
       resource,
       x402Body: this.body,
     });

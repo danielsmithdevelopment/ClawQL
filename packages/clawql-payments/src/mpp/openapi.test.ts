@@ -39,10 +39,7 @@ describe("buildMppOpenApiDocument", () => {
   });
 
   it("emits canonical x-payment-info.offers[] for gated routes", async () => {
-    await createX402Gate(
-      { resource: "/v1/chat/completions", price: 0.001, asset: "USDC" },
-      env
-    );
+    await createX402Gate({ resource: "/v1/chat/completions", price: 0.001, asset: "USDC" }, env);
 
     const doc = await buildMppOpenApiDocument({
       env: { ...env, STRIPE_SECRET_KEY: "sk_test_xxx" },
@@ -50,9 +47,8 @@ describe("buildMppOpenApiDocument", () => {
       serverName: "Test Inference",
     });
 
-    const op = (doc.paths as Record<string, Record<string, unknown>>)[
-      "/v1/chat/completions"
-    ]?.post as Record<string, unknown>;
+    const op = (doc.paths as Record<string, Record<string, unknown>>)["/v1/chat/completions"]
+      ?.post as Record<string, unknown>;
     const paymentInfo = op["x-payment-info"] as { offers: Array<Record<string, unknown>> };
     expect(paymentInfo.offers.length).toBeGreaterThanOrEqual(2);
     expect(paymentInfo.offers[0]).toMatchObject({

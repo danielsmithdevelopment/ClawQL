@@ -29,10 +29,7 @@ export async function handleMppOpenApiRequest(
   res.status(200).send(body);
 }
 
-export function attachMppOpenApiRoutes(
-  app: Express,
-  options: AttachMppOpenApiOptions = {}
-): void {
+export function attachMppOpenApiRoutes(app: Express, options: AttachMppOpenApiOptions = {}): void {
   app.get(MPP_OPENAPI_PATH, (req, res) => {
     void handleMppOpenApiRequest(req, res, options).catch((err: unknown) => {
       console.error("[clawql-payments] GET /openapi.json error:", err);

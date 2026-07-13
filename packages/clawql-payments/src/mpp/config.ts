@@ -10,8 +10,7 @@ export function isMppEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
   }
   // Default on when any payment rail is configured.
   const x402 = env.CLAWQL_X402_ENFORCE?.trim().toLowerCase();
-  const x402On =
-    x402 === "1" || x402 === "true" || x402 === "yes" || x402 === "on";
+  const x402On = x402 === "1" || x402 === "true" || x402 === "yes" || x402 === "on";
   const stripeOn = Boolean(env.STRIPE_SECRET_KEY?.trim());
   return x402On || stripeOn;
 }

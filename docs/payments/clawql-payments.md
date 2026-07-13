@@ -21,8 +21,8 @@
 | Payment WORM audit (Postgres)                    | ✅     | `CLAWQL_PAYMENTS_AUDIT_STORE=postgres` for multi-node deployments        |
 | Payment audit → Loki/SIEM export                 | ✅     | Fire-and-forget push on append when `CLAWQL_LOKI_PUSH_URL` is set        |
 | `.well-known/payments.json` discovery            | ✅     | Dynamic on MCP + inference HTTP; static route on docs site               |
-| MPP `/openapi.json` discovery                    | ✅     | Dynamic on MCP + inference HTTP; canonical `x-payment-info.offers[]`       |
-| MPP HTTP 402 + MCP -32042 runtime                | ✅     | Dual x402 + MPP challenges when `CLAWQL_MPP_ENABLED=1`                     |
+| MPP `/openapi.json` discovery                    | ✅     | Dynamic on MCP + inference HTTP; canonical `x-payment-info.offers[]`     |
+| MPP HTTP 402 + MCP -32042 runtime                | ✅     | Dual x402 + MPP challenges when `CLAWQL_MPP_ENABLED=1`                   |
 
 ## Architecture
 
