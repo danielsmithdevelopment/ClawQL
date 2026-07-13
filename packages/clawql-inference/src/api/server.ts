@@ -78,8 +78,7 @@ export async function runInferenceHttpServer(
     plugins: composeDefaultProviderPlugins(),
   });
   const gateway =
-    options.gateway ??
-    (await createInferenceGatewayAsync({ env, providers: registry }));
+    options.gateway ?? (await createInferenceGatewayAsync({ env, providers: registry }));
   const app = createInferenceHttpApp({ gateway, registry, env });
   const port = options.port ?? resolveInferencePort(env);
   const host = options.host ?? resolveInferenceHost(env);

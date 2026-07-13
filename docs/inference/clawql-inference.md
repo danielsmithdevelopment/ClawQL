@@ -477,57 +477,57 @@ clawql inference <subcommand>
 
 ## Environment variables
 
-| Variable                                      | Default                              | Purpose                                 |
-| --------------------------------------------- | ------------------------------------ | --------------------------------------- |
-| `OPENAI_API_KEY`                              | —                                    | OpenAI provider                         |
-| `ANTHROPIC_API_KEY`                           | —                                    | Anthropic provider                      |
-| `OLLAMA_BASE_URL`                             | `http://127.0.0.1:11434`             | Ollama runtime                          |
-| `CLAWQL_INFERENCE_PORT`                       | `8080`                               | HTTP listen port                        |
-| `CLAWQL_INFERENCE_HOST`                       | `0.0.0.0`                            | HTTP bind address                       |
-| `CLAWQL_INFERENCE_PROVIDERS`                  | all builtins                         | Provider allowlist                      |
-| `CLAWQL_INFERENCE_DISABLE_PROVIDERS`          | —                                    | Provider denylist                       |
-| `CLAWQL_INFERENCE_ROUTING_ENABLED`            | off                                  | Tier escalation                         |
-| `CLAWQL_INFERENCE_MODEL_FRUGAL`               | `ollama/phi4`                        | Frugal tier model                       |
-| `CLAWQL_INFERENCE_MODEL_STANDARD`             | `groq/llama-3.3-70b`                 | Standard tier model                     |
-| `CLAWQL_INFERENCE_MODEL_FRONTIER`             | `anthropic/claude-sonnet-4`          | Frontier tier model                     |
-| `CLAWQL_INFERENCE_MODEL_PIN`                  | —                                    | Pin single model                        |
-| `CLAWQL_INFERENCE_SEMANTIC_CACHE`             | auto when embeddings configured      | Semantic cache (Layer 5)                |
-| `CLAWQL_INFERENCE_TERSE`                      | on                                   | Terse output post-processor (Layer 3)   |
-| `CLAWQL_INFERENCE_PROMPT_CACHE`               | on                                   | Provider prompt-cache markers (Layer 4) |
-| `CLAWQL_INFERENCE_HISTORY_COMPRESS`           | off                                  | History distillation (Layer 6)          |
-| `CLAWQL_INFERENCE_HISTORY_MAX_CHARS`          | `48000`                              | History compress threshold              |
-| `CLAWQL_INFERENCE_HISTORY_KEEP_RECENT`        | `6`                                  | Recent messages to keep verbatim        |
-| `CLAWQL_INFERENCE_PROMPT_COMPRESS`            | off                                  | Final prompt compression (Layer 7)      |
-| `CLAWQL_INFERENCE_PROMPT_COMPRESS_MAX_CHARS`  | `12000`                              | Per-message cap before send             |
-| `CLAWQL_INFERENCE_HTTP_AUTO_ROUTE`            | on when routing enabled              | HTTP `clawql/auto` aliases (Layer 8)    |
-| `CLAWQL_INFERENCE_STRUCTURED_OUTPUT`          | on                                   | Structured output hints (Layer 9)       |
-| `CLAWQL_INFERENCE_TOKEN_BUDGET`               | on                                   | Token budget signaling (Layer 10)       |
-| `CLAWQL_INFERENCE_PREFILL`                    | off                                  | Assistant prefill opener (Layer 11)     |
-| `CLAWQL_INFERENCE_PREFILL_OPENER`             | —                                    | Prefill text when Layer 11 enabled      |
-| `CLAWQL_INFERENCE_CACHE_THRESHOLD`            | `0.92`                               | Cache similarity floor                  |
-| `CLAWQL_INFERENCE_CACHE_TTL`                  | `24h`                                | Cache TTL                               |
-| `CLAWQL_INFERENCE_CACHE_MAX_ENTRIES`          | `1000`                               | Cache size cap                          |
-| `CLAWQL_EMBEDDING_MODEL`                      | `text-embedding-3-small`             | Embeddings model                        |
-| `CLAWQL_INFERENCE_FALLBACK_ENABLED`           | off                                  | Fallback chains                         |
-| `CLAWQL_INFERENCE_FALLBACK_FRUGAL`            | —                                    | Frugal fallback chain                   |
-| `CLAWQL_INFERENCE_FALLBACK_STANDARD`          | —                                    | Standard fallback chain                 |
-| `CLAWQL_INFERENCE_FALLBACK_FRONTIER`          | —                                    | Frontier fallback chain                 |
-| `CLAWQL_INFERENCE_KEYS_ENABLED`               | off                                  | Require virtual keys                    |
-| `CLAWQL_INFERENCE_STORE`                      | jsonl when `CLAWQL_HOME`             | `memory` / `jsonl` / `postgres` / `off` |
-| `CLAWQL_INFERENCE_DATABASE_URL`               | —                                    | Postgres URL                            |
-| `CLAWQL_INFERENCE_STORE_PATH`                 | `$CLAWQL_HOME/Inference/calls.jsonl` | JSONL path override                     |
-| `CLAWQL_INFERENCE_PIPELINE_WORKER`            | off                                  | Cron worker with serve                  |
-| `CLAWQL_INFERENCE_PIPELINE_POLL_MS`           | `60000`                              | Worker poll interval                    |
-| `CLAWQL_INFERENCE_AGENT_COORDINATION_ENABLED` | off                                  | Agent coordination                      |
-| `HERMES_BASE_URL`                             | —                                    | Hermes MoA endpoint                     |
-| `CLAWQL_PAYMENTS_ENFORCE_INFERENCE`           | off                                  | Plan entitlement gate                   |
-| `CLAWQL_OBSERVABILITY_PROFILE`                | `external`                           | `bundled` / `external` / `minimal`      |
-| `CLAWQL_ENABLE_OTEL_TRACING`                  | off                                  | Infra OTLP spans (Tempo / collector)    |
-| `OTEL_EXPORTER_OTLP_ENDPOINT`                  | —                                    | OTLP ingest URL                         |
-| `CLAWQL_ENABLE_LANGFUSE`                      | on when keys set                     | Langfuse work-trace OTLP (opt-out `=0`) |
-| `LANGFUSE_HOST` / `LANGFUSE_PUBLIC_KEY` / `LANGFUSE_SECRET_KEY` | —                    | Langfuse OTLP credentials               |
-| `CLAWQL_INFERENCE_SEMANTIC_CACHE_BACKEND`     | `postgres` when DB configured        | `memory` / `postgres` / `pgvector`      |
-| `CLAWQL_EMBEDDING_DIMENSION`                  | `1536`                               | pgvector column width for cache         |
+| Variable                                                        | Default                              | Purpose                                 |
+| --------------------------------------------------------------- | ------------------------------------ | --------------------------------------- |
+| `OPENAI_API_KEY`                                                | —                                    | OpenAI provider                         |
+| `ANTHROPIC_API_KEY`                                             | —                                    | Anthropic provider                      |
+| `OLLAMA_BASE_URL`                                               | `http://127.0.0.1:11434`             | Ollama runtime                          |
+| `CLAWQL_INFERENCE_PORT`                                         | `8080`                               | HTTP listen port                        |
+| `CLAWQL_INFERENCE_HOST`                                         | `0.0.0.0`                            | HTTP bind address                       |
+| `CLAWQL_INFERENCE_PROVIDERS`                                    | all builtins                         | Provider allowlist                      |
+| `CLAWQL_INFERENCE_DISABLE_PROVIDERS`                            | —                                    | Provider denylist                       |
+| `CLAWQL_INFERENCE_ROUTING_ENABLED`                              | off                                  | Tier escalation                         |
+| `CLAWQL_INFERENCE_MODEL_FRUGAL`                                 | `ollama/phi4`                        | Frugal tier model                       |
+| `CLAWQL_INFERENCE_MODEL_STANDARD`                               | `groq/llama-3.3-70b`                 | Standard tier model                     |
+| `CLAWQL_INFERENCE_MODEL_FRONTIER`                               | `anthropic/claude-sonnet-4`          | Frontier tier model                     |
+| `CLAWQL_INFERENCE_MODEL_PIN`                                    | —                                    | Pin single model                        |
+| `CLAWQL_INFERENCE_SEMANTIC_CACHE`                               | auto when embeddings configured      | Semantic cache (Layer 5)                |
+| `CLAWQL_INFERENCE_TERSE`                                        | on                                   | Terse output post-processor (Layer 3)   |
+| `CLAWQL_INFERENCE_PROMPT_CACHE`                                 | on                                   | Provider prompt-cache markers (Layer 4) |
+| `CLAWQL_INFERENCE_HISTORY_COMPRESS`                             | off                                  | History distillation (Layer 6)          |
+| `CLAWQL_INFERENCE_HISTORY_MAX_CHARS`                            | `48000`                              | History compress threshold              |
+| `CLAWQL_INFERENCE_HISTORY_KEEP_RECENT`                          | `6`                                  | Recent messages to keep verbatim        |
+| `CLAWQL_INFERENCE_PROMPT_COMPRESS`                              | off                                  | Final prompt compression (Layer 7)      |
+| `CLAWQL_INFERENCE_PROMPT_COMPRESS_MAX_CHARS`                    | `12000`                              | Per-message cap before send             |
+| `CLAWQL_INFERENCE_HTTP_AUTO_ROUTE`                              | on when routing enabled              | HTTP `clawql/auto` aliases (Layer 8)    |
+| `CLAWQL_INFERENCE_STRUCTURED_OUTPUT`                            | on                                   | Structured output hints (Layer 9)       |
+| `CLAWQL_INFERENCE_TOKEN_BUDGET`                                 | on                                   | Token budget signaling (Layer 10)       |
+| `CLAWQL_INFERENCE_PREFILL`                                      | off                                  | Assistant prefill opener (Layer 11)     |
+| `CLAWQL_INFERENCE_PREFILL_OPENER`                               | —                                    | Prefill text when Layer 11 enabled      |
+| `CLAWQL_INFERENCE_CACHE_THRESHOLD`                              | `0.92`                               | Cache similarity floor                  |
+| `CLAWQL_INFERENCE_CACHE_TTL`                                    | `24h`                                | Cache TTL                               |
+| `CLAWQL_INFERENCE_CACHE_MAX_ENTRIES`                            | `1000`                               | Cache size cap                          |
+| `CLAWQL_EMBEDDING_MODEL`                                        | `text-embedding-3-small`             | Embeddings model                        |
+| `CLAWQL_INFERENCE_FALLBACK_ENABLED`                             | off                                  | Fallback chains                         |
+| `CLAWQL_INFERENCE_FALLBACK_FRUGAL`                              | —                                    | Frugal fallback chain                   |
+| `CLAWQL_INFERENCE_FALLBACK_STANDARD`                            | —                                    | Standard fallback chain                 |
+| `CLAWQL_INFERENCE_FALLBACK_FRONTIER`                            | —                                    | Frontier fallback chain                 |
+| `CLAWQL_INFERENCE_KEYS_ENABLED`                                 | off                                  | Require virtual keys                    |
+| `CLAWQL_INFERENCE_STORE`                                        | jsonl when `CLAWQL_HOME`             | `memory` / `jsonl` / `postgres` / `off` |
+| `CLAWQL_INFERENCE_DATABASE_URL`                                 | —                                    | Postgres URL                            |
+| `CLAWQL_INFERENCE_STORE_PATH`                                   | `$CLAWQL_HOME/Inference/calls.jsonl` | JSONL path override                     |
+| `CLAWQL_INFERENCE_PIPELINE_WORKER`                              | off                                  | Cron worker with serve                  |
+| `CLAWQL_INFERENCE_PIPELINE_POLL_MS`                             | `60000`                              | Worker poll interval                    |
+| `CLAWQL_INFERENCE_AGENT_COORDINATION_ENABLED`                   | off                                  | Agent coordination                      |
+| `HERMES_BASE_URL`                                               | —                                    | Hermes MoA endpoint                     |
+| `CLAWQL_PAYMENTS_ENFORCE_INFERENCE`                             | off                                  | Plan entitlement gate                   |
+| `CLAWQL_OBSERVABILITY_PROFILE`                                  | `external`                           | `bundled` / `external` / `minimal`      |
+| `CLAWQL_ENABLE_OTEL_TRACING`                                    | off                                  | Infra OTLP spans (Tempo / collector)    |
+| `OTEL_EXPORTER_OTLP_ENDPOINT`                                   | —                                    | OTLP ingest URL                         |
+| `CLAWQL_ENABLE_LANGFUSE`                                        | on when keys set                     | Langfuse work-trace OTLP (opt-out `=0`) |
+| `LANGFUSE_HOST` / `LANGFUSE_PUBLIC_KEY` / `LANGFUSE_SECRET_KEY` | —                                    | Langfuse OTLP credentials               |
+| `CLAWQL_INFERENCE_SEMANTIC_CACHE_BACKEND`                       | `postgres` when DB configured        | `memory` / `postgres` / `pgvector`      |
+| `CLAWQL_EMBEDDING_DIMENSION`                                    | `1536`                               | pgvector column width for cache         |
 
 ---
 

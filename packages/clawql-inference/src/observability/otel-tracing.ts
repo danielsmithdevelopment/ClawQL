@@ -70,10 +70,7 @@ async function initInferenceOtelTracing(
   });
   provider.register();
 
-  const targets = [
-    otelInfraTracingEnabled(env) ? "infra-otlp" : null,
-    langfuse ? "langfuse" : null,
-  ]
+  const targets = [otelInfraTracingEnabled(env) ? "infra-otlp" : null, langfuse ? "langfuse" : null]
     .filter(Boolean)
     .join("+");
   console.log(`[clawql-inference] OTLP tracing enabled (${targets}, service.name=${serviceName})`);
