@@ -328,8 +328,12 @@ Effect entrypoints: `paymentsServicesLiveLayer()` merges all services; `runPayme
 | `UsageStoreService`        | Monthly usage counters                                            |
 | `EntitlementService`       | Plan limit checks (`EntitlementLimitError`)                       |
 | `PaymentsDiscoveryService` | `/.well-known/payments.json` builder                              |
+| `StripeClientService`      | Stripe SDK client lifecycle                                       |
+| `StripeWebhookService`     | Webhook verify + WORM-audited event handling                      |
+| `StripeMeterService`       | Meter events + inference usage reporting                          |
+| `StripeBillingService`     | Setup, customer, subscription, invoice, portal                    |
 
-Public async exports (`loadPaymentsConfig`, `enforceX402Gate`, `appendPaymentWormEntry`, …) delegate to `runPaymentsEffect`. **Stripe billing** modules remain async wrappers (next migration increment).
+Public async exports (`loadPaymentsConfig`, `enforceX402Gate`, `appendPaymentWormEntry`, …) delegate to `runPaymentsEffect`. **Stripe** modules now use Effect services (`StripeClientService`, `StripeWebhookService`, `StripeMeterService`, `StripeBillingService`) with tagged errors (`StripeSignatureError`, `StripeApiError`, …); legacy `Error` subclasses remain at async boundaries for CLI compatibility.
 
 Configure gates with `clawql payments x402 gate --tool <name> --price <usdc>`.
 

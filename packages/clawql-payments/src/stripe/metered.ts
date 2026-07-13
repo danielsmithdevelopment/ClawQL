@@ -1,31 +1,17 @@
-import { createStripeClient } from "./client.js";
+import { Effect } from "effect";
+import { runPaymentsEffect } from "../runtime/payments-effect-runtime.js";
+import { StripeMeterService, type MeteredUsageInput } from "./stripe-meter-service.js";
 
-export type MeteredUsageInput = {
-  eventName: string;
-  stripeCustomerId: string;
-  value: number;
-  identifier?: string;
-  timestamp?: number;
-  env?: NodeJS.ProcessEnv;
-};
+export type { MeteredUsageInput };
 
 export async function reportMeteredUsage(
   input: MeteredUsageInput
 ): Promise<{ id: string; value: number }> {
-  const env = input.env ?? process.env;
-  const stripe = createStripeClient(env);
-  const event = await stripe.billing.meterEvents.create({
-    event_name: input.eventName,
-    payload: {
-      stripe_customer_id: input.stripeCustomerId,
-      value: String(input.value),
-    },
-    identifier: input.identifier,
-    timestamp: input.timestamp,
-  });
-
-  return {
-    id: event.identifier,
-    value: input.value,
-  };
+  return runPaymentsEffect(
+    Effect.gen(function* () {
+      const meter = yield* StripeMeterService;
+      return yield* meter.reportMeteredUsage(input);
+    }),
+    input.env
+  );
 }
