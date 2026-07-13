@@ -14,6 +14,11 @@ export {
 } from "./ouroboros-loop-service.js";
 export { runEvolutionaryLoopBodyEffect } from "./evolutionary-loop-effect.js";
 export {
+  OuroborosPollerService,
+  ouroborosPollerLiveLayer,
+  startSeedsPollerViaServicesEffect,
+} from "./ouroboros-poller-service.js";
+export {
   executeCreateSeedFromDocumentEffect,
   executeGetLineageStatusEffect,
   executeMeasureDriftEffect,
