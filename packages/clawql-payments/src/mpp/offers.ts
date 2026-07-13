@@ -2,6 +2,7 @@ import type { X402PaymentRequired } from "../x402/types.js";
 import type { X402Gate } from "../x402/gate.js";
 import type { X402RuntimeConfig } from "../x402/x402-runtime-config-service.js";
 import { usdcAtomicAmount } from "../x402/x402-runtime-config-service.js";
+import { appendFinanceOffers } from "./providers.js";
 import {
   MPP_METHOD_STRIPE,
   MPP_METHOD_X402,
@@ -47,6 +48,7 @@ export function buildOffersForGate(input: {
   config: X402RuntimeConfig;
   stripeEnabled?: boolean;
   stripeMetered?: boolean;
+  env?: NodeJS.ProcessEnv;
 }): MppPaymentOffer[] {
   const offers: MppPaymentOffer[] = [];
   const x402 = buildX402Offer({ gate: input.gate, config: input.config });
@@ -59,7 +61,11 @@ export function buildOffersForGate(input: {
       })
     );
   }
-  return offers;
+  return appendFinanceOffers({
+    offers,
+    env: input.env,
+    resource: input.gate.resource,
+  });
 }
 
 export function toPaymentInfo(offers: MppPaymentOffer[]): MppPaymentInfo {
@@ -74,7 +80,8 @@ export function paymentInfoFromOffers(offers: MppPaymentOffer[]): MppPaymentInfo
 /** Derive MPP offers from a runtime x402 PaymentRequired body (for 402/MCP enrichment). */
 export function offersFromX402Required(
   body: X402PaymentRequired,
-  stripeEnabled = false
+  stripeEnabled = false,
+  env?: NodeJS.ProcessEnv
 ): MppPaymentOffer[] {
   const offers: MppPaymentOffer[] = [];
   const accept = body.accepts[0];
@@ -90,5 +97,9 @@ export function offersFromX402Required(
   if (stripeEnabled) {
     offers.push(buildStripeOffer({ metered: true }));
   }
-  return offers;
+  return appendFinanceOffers({
+    offers,
+    env,
+    resource: body.resource.url,
+  });
 }

@@ -42,7 +42,8 @@ export function createPaymentsX402ProxyPlugin(
   };
 
   if (!passive) {
-    plugin.beforeCallTool = ({ toolName }) => mcpX402BeforeCallToolEffect({ toolName, env });
+    plugin.beforeCallTool = (({ toolName }) =>
+      mcpX402BeforeCallToolEffect({ toolName, env })) as NonNullable<Plugin["beforeCallTool"]>;
   }
 
   return plugin;

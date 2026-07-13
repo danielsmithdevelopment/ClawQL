@@ -8,22 +8,25 @@
 
 ## What ships today
 
-| Capability                                       | Status | Notes                                                                          |
-| ------------------------------------------------ | ------ | ------------------------------------------------------------------------------ |
-| Managed plan tiers + entitlements                | ✅     | Local `usage.json` counters; limit enforcement in inference                    |
-| Stripe customers, subscriptions, invoices        | ✅     | Live SDK when `STRIPE_SECRET_KEY` is set                                       |
-| Stripe webhook signature verification            | ✅     | CLI verify/process; audit on `invoice.paid`                                    |
-| Stripe Billing Meters (`meterEvents.create`)     | ✅     | API + inference hook when `CLAWQL_PAYMENTS_REPORT_STRIPE_METER=1`              |
-| x402 gate config + facilitator HTTP verify       | ✅     | `POST /verify` against x402.org or CDP                                         |
-| x402 Express middleware (402 + PAYMENT-REQUIRED) | ✅     | Wired into `clawql-inference` HTTP                                             |
-| x402 MCP in-process enforcement                  | ✅     | `CLAWQL_X402_ENFORCE=1` on stdio / Streamable HTTP / gRPC MCP tool calls       |
-| Payment WORM audit (hash-chained JSONL)          | ✅     | `$CLAWQL_HOME/Payments/audit.jsonl` + `audit verify`                           |
-| Payment WORM audit (Postgres)                    | ✅     | `CLAWQL_PAYMENTS_AUDIT_STORE=postgres` for multi-node deployments              |
-| Payment audit → Loki/SIEM export                 | ✅     | Fire-and-forget push on append when `CLAWQL_LOKI_PUSH_URL` is set              |
-| `.well-known/payments.json` discovery            | ✅     | Dynamic on MCP + inference HTTP; static route on docs site                     |
-| MPP `/openapi.json` discovery                    | ✅     | Dynamic on MCP + inference HTTP; canonical `x-payment-info.offers[]`           |
-| MPP HTTP 402 + MCP -32042 runtime                | ✅     | Dual x402 + MPP challenges when `CLAWQL_MPP_ENABLED=1`                         |
-| MPP credential verification + receipts           | ✅     | `MppVerificationService` — x402 facilitator + Stripe SPT (`STRIPE_PROFILE_ID`) |
+| Capability                                       | Status | Notes                                                                            |
+| ------------------------------------------------ | ------ | -------------------------------------------------------------------------------- |
+| Managed plan tiers + entitlements                | ✅     | Local `usage.json` counters; limit enforcement in inference                      |
+| Stripe customers, subscriptions, invoices        | ✅     | Live SDK when `STRIPE_SECRET_KEY` is set                                         |
+| Stripe webhook signature verification            | ✅     | CLI verify/process; audit on `invoice.paid`                                      |
+| Stripe Billing Meters (`meterEvents.create`)     | ✅     | API + inference hook when `CLAWQL_PAYMENTS_REPORT_STRIPE_METER=1`                |
+| x402 gate config + facilitator HTTP verify       | ✅     | `POST /verify` against x402.org or CDP                                           |
+| x402 Express middleware (402 + PAYMENT-REQUIRED) | ✅     | Wired into `clawql-inference` HTTP                                               |
+| x402 MCP in-process enforcement                  | ✅     | `CLAWQL_X402_ENFORCE=1` on stdio / Streamable HTTP / gRPC MCP tool calls         |
+| Payment WORM audit (hash-chained JSONL)          | ✅     | `$CLAWQL_HOME/Payments/audit.jsonl` + `audit verify`                             |
+| Payment WORM audit (Postgres)                    | ✅     | `CLAWQL_PAYMENTS_AUDIT_STORE=postgres` for multi-node deployments                |
+| Payment audit → Loki/SIEM export                 | ✅     | Fire-and-forget push on append when `CLAWQL_LOKI_PUSH_URL` is set                |
+| `.well-known/payments.json` discovery            | ✅     | Dynamic on MCP + inference HTTP; static route on docs site                       |
+| MPP `/openapi.json` discovery                    | ✅     | Dynamic on MCP + inference HTTP; canonical `x-payment-info.offers[]`             |
+| MPP HTTP 402 + MCP -32042 runtime                | ✅     | Dual x402 + MPP challenges when `CLAWQL_MPP_ENABLED=1`                           |
+| MPP credential verification + receipts           | ✅     | `MppVerificationService` — x402 facilitator + Stripe SPT (`STRIPE_PROFILE_ID`)   |
+| MPP optional `mppx` adapter                      | ✅     | `MppxAdapterService` when `CLAWQL_MPPX_ENABLED=1` + optional `mppx` dep          |
+| MCP JSON-RPC payment errors                      | ✅     | `-32042`/`-32043` when `CLAWQL_MPP_MCP_JSONRPC=1` (default: tool-result `_meta`) |
+| Extended finance providers in `offers[]`         | ✅     | `CLAWQL_MPP_FINANCE_PROVIDERS=paypal,adyen,square`                               |
 
 ## Architecture
 

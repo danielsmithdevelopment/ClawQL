@@ -14,7 +14,9 @@ test.describe('agent readiness discovery', () => {
     expect(body).toContain('/.well-known/oauth-protected-resource')
   })
 
-  test('oauth-authorization-server includes agent_auth', async ({ request }) => {
+  test('oauth-authorization-server includes agent_auth', async ({
+    request,
+  }) => {
     const res = await request.get('/.well-known/oauth-authorization-server')
     expect(res.status()).toBe(200)
     const doc = await res.json()
@@ -39,18 +41,20 @@ test.describe('agent readiness discovery', () => {
       expect(iface.protocol_binding).toBeTruthy()
     }
     const extensions = card.capabilities?.extensions ?? []
-    const ap2 = extensions.find(
-      (e: { uri?: string }) => e.uri === AP2_URI,
-    )
+    const ap2 = extensions.find((e: { uri?: string }) => e.uri === AP2_URI)
     expect(ap2?.params?.roles).toContain('merchant')
   })
 
-  test('commerce openapi exposes MPP x-payment-info offers', async ({ request }) => {
+  test('commerce openapi exposes MPP x-payment-info offers', async ({
+    request,
+  }) => {
     const res = await request.get('/openapi.json')
     expect(res.status()).toBe(200)
     const doc = await res.json()
+    expect(doc.info?.['x-commerce']).toBe(true)
     const probe = doc.paths?.['/api/v1']?.get
-    const offers = probe?.['x-payment-info']?.offers
+    const paymentInfo = probe?.['x-payment-info']
+    const offers = paymentInfo?.offers
     expect(offers?.length).toBeGreaterThanOrEqual(2)
     expect(offers.some((o: { method?: string }) => o.method === 'x402')).toBe(
       true,
@@ -58,14 +62,19 @@ test.describe('agent readiness discovery', () => {
     expect(offers.some((o: { method?: string }) => o.method === 'stripe')).toBe(
       true,
     )
+    expect(paymentInfo?.protocols?.length).toBeGreaterThanOrEqual(2)
     expect(probe?.responses?.['402']).toBeTruthy()
   })
 
-  test('x402 probe returns 402 with PAYMENT-REQUIRED', async ({ request }) => {
+  test('x402 probe returns 402 with PAYMENT-REQUIRED and MPP Payment challenge', async ({
+    request,
+  }) => {
     const res = await request.get('/api/v1')
     expect(res.status()).toBe(402)
     const paymentRequired = res.headers()['payment-required']
     expect(paymentRequired).toBeTruthy()
+    const wwwAuth = res.headers()['www-authenticate'] ?? ''
+    expect(wwwAuth.toLowerCase()).toContain('payment')
     const decoded = JSON.parse(
       Buffer.from(paymentRequired!, 'base64').toString('utf8'),
     )

@@ -1,4 +1,5 @@
 import { isX402McpPaymentError } from "clawql-payments/x402";
+import { isMppMcpJsonRpcPaymentError } from "clawql-payments/mpp";
 import { runMcpProxyBeforeCallTool } from "./clawql-api-adapters.js";
 import { wrapMcpToolHandler } from "./otel-tracing.js";
 
@@ -14,6 +15,9 @@ export function wrapRegisteredMcpToolHandler<TArgs extends unknown[], TResult>(
     try {
       await runMcpProxyBeforeCallTool(toolName, args[0]);
     } catch (err: unknown) {
+      if (isMppMcpJsonRpcPaymentError(err)) {
+        return err.toToolResult() as TResult;
+      }
       if (isX402McpPaymentError(err)) {
         return err.toToolResult() as TResult;
       }

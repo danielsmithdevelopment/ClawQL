@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 import {
+  buildCommerce402Headers,
   buildX402PaymentRequired,
-  encodePaymentRequiredHeader,
 } from '@/lib/commerce-discovery'
 
 export function GET(request: NextRequest) {
   const requestUrl = request.nextUrl.origin + request.nextUrl.pathname
   const paymentRequired = buildX402PaymentRequired(requestUrl)
-  const paymentHeader = encodePaymentRequiredHeader(paymentRequired)
   const accepts = paymentRequired.accepts as Array<{
     amount?: string
     network?: string
@@ -17,10 +16,14 @@ export function GET(request: NextRequest) {
 
   return new NextResponse(
     JSON.stringify({
+      type: 'https://paymentauth.org/problems/payment-required',
+      title: 'Payment Required',
+      status: 402,
+      detail: 'Payment is required.',
       protocol: 'x402',
       error: 'payment_required',
       message:
-        'ClawQL docs commerce discovery probe — retry with PAYMENT-SIGNATURE after settling x402 payment.',
+        'ClawQL docs commerce discovery probe — retry with PAYMENT-SIGNATURE or Authorization: Payment after settling.',
       x402Probe: {
         tier: 'discovery',
         amountUsd: '0.001',
@@ -28,33 +31,26 @@ export function GET(request: NextRequest) {
         network: firstAccept?.network,
         documentation: `${request.nextUrl.origin}/payments/clawql-payments`,
       },
+      x402: paymentRequired,
     }),
     {
       status: 402,
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-        'Cache-Control': 'no-store',
-        'WWW-Authenticate': 'x402',
-        'PAYMENT-REQUIRED': paymentHeader,
-        'Access-Control-Expose-Headers':
-          'PAYMENT-REQUIRED, PAYMENT-RESPONSE, WWW-Authenticate',
-      },
+      headers: buildCommerce402Headers({
+        requestUrl,
+        origin: request.nextUrl.origin,
+      }),
     },
   )
 }
 
 export function HEAD(request: NextRequest) {
   const requestUrl = request.nextUrl.origin + request.nextUrl.pathname
-  const paymentRequired = buildX402PaymentRequired(requestUrl)
-  const paymentHeader = encodePaymentRequiredHeader(paymentRequired)
 
   return new NextResponse(null, {
     status: 402,
-    headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-      'Cache-Control': 'no-store',
-      'WWW-Authenticate': 'x402',
-      'PAYMENT-REQUIRED': paymentHeader,
-    },
+    headers: buildCommerce402Headers({
+      requestUrl,
+      origin: request.nextUrl.origin,
+    }),
   })
 }
