@@ -10,11 +10,7 @@ import {
   RunOuroborosSchema,
   ouroborosMcpTools,
 } from "../mcp-hooks.js";
-import {
-  ensureOuroborosPoolShutdownHooks,
-  getOuroborosContext,
-  resetOuroborosContextForTests,
-} from "./context.js";
+import { ensureOuroborosPoolShutdownHooks, resetOuroborosContextForTests } from "./context.js";
 
 export type OuroborosPluginOptions = {
   /** ([#250](https://github.com/danielsmithdevelopment/ClawQL/issues/250)): register `ouroboros_propose_seed_revision_from_eval`. */
@@ -45,9 +41,10 @@ export function createOuroborosPlugin(options: OuroborosPluginOptions = {}): Plu
               documentIdLen: (args as { documentId?: string }).documentId?.length,
               taskType: (args as { taskType?: string }).taskType,
             });
-            const r = await t.createSeedFromDocument.handler(
-              args as z.infer<typeof CreateSeedFromDocumentSchema>,
-              getOuroborosContext()
+            const { runOuroborosEffect, ouroborosCreateSeedProgram } =
+              await import("../effect/ouroboros-effect-runtime.js");
+            const r = await runOuroborosEffect(
+              ouroborosCreateSeedProgram(args as z.infer<typeof CreateSeedFromDocumentSchema>)
             );
             return textResult(r);
           },
@@ -59,9 +56,10 @@ export function createOuroborosPlugin(options: OuroborosPluginOptions = {}): Plu
             logMcpToolShape(t.runEvolutionaryLoop.name, {
               maxGenerations: (args as { maxGenerations?: number }).maxGenerations,
             });
-            const r = await t.runEvolutionaryLoop.handler(
-              args as z.infer<typeof RunOuroborosSchema>,
-              getOuroborosContext()
+            const { runOuroborosEffect, ouroborosRunLoopProgram } =
+              await import("../effect/ouroboros-effect-runtime.js");
+            const r = await runOuroborosEffect(
+              ouroborosRunLoopProgram(args as z.infer<typeof RunOuroborosSchema>)
             );
             return textResult(r);
           },
@@ -73,9 +71,10 @@ export function createOuroborosPlugin(options: OuroborosPluginOptions = {}): Plu
             logMcpToolShape(t.getLineageStatus.name, {
               seedIdLen: (args as { seedId?: string }).seedId?.length,
             });
-            const r = await t.getLineageStatus.handler(
-              args as z.infer<typeof GetLineageStatusSchema>,
-              getOuroborosContext()
+            const { runOuroborosEffect, ouroborosLineageProgram } =
+              await import("../effect/ouroboros-effect-runtime.js");
+            const r = await runOuroborosEffect(
+              ouroborosLineageProgram(args as z.infer<typeof GetLineageStatusSchema>)
             );
             return textResult(r);
           },
@@ -88,9 +87,10 @@ export function createOuroborosPlugin(options: OuroborosPluginOptions = {}): Plu
               seedIdLen: (args as { seedId?: string }).seedId?.length,
               outputLen: (args as { currentOutput?: string }).currentOutput?.length,
             });
-            const r = await t.measureDrift.handler(
-              args as z.infer<typeof MeasureDriftSchema>,
-              getOuroborosContext()
+            const { runOuroborosEffect, ouroborosMeasureDriftProgram } =
+              await import("../effect/ouroboros-effect-runtime.js");
+            const r = await runOuroborosEffect(
+              ouroborosMeasureDriftProgram(args as z.infer<typeof MeasureDriftSchema>)
             );
             return textResult(r);
           },
@@ -104,9 +104,12 @@ export function createOuroborosPlugin(options: OuroborosPluginOptions = {}): Plu
                 hasPayload: (args as { payload?: unknown }).payload !== undefined,
                 scoreValue: (args as { scoreValue?: number }).scoreValue,
               });
-              const r = await t.proposeSeedRevisionFromEval.handler(
-                args as z.infer<typeof ProposeSeedRevisionFromEvalSchema>,
-                getOuroborosContext()
+              const { runOuroborosEffect, ouroborosProposeRevisionProgram } =
+                await import("../effect/ouroboros-effect-runtime.js");
+              const r = await runOuroborosEffect(
+                ouroborosProposeRevisionProgram(
+                  args as z.infer<typeof ProposeSeedRevisionFromEvalSchema>
+                )
               );
               return textResult(r);
             },
