@@ -1,11 +1,10 @@
-import { EvolutionaryLoop, InMemoryEventStore, type EventStore } from "../index.js";
+import { EvolutionaryLoop } from "../index.js";
 import { createDefaultOuroborosEngines } from "../glue/default-engines.js";
-import { PostgresOuroborosEventStore } from "../glue/postgres-event-store.js";
 import {
-  closeOuroborosPgPool,
-  getOuroborosPgPool,
-  registerOuroborosPoolShutdownHooks,
-} from "../glue/postgres-pool.js";
+  getOrCreateOuroborosEventStore,
+  resetOuroborosEventStoreForTests,
+} from "../glue/create-event-store.js";
+import { closeOuroborosPgPool, registerOuroborosPoolShutdownHooks } from "../glue/postgres-pool.js";
 import type { OuroborosContext } from "../mcp-hooks.js";
 import { getOuroborosPluginDeps } from "./deps.js";
 import { createModelEscalationRouter, loadModelEscalationConfig } from "clawql-inference";
@@ -13,18 +12,10 @@ import { createModelEscalationRouter, loadModelEscalationConfig } from "clawql-i
 let ctxCache: OuroborosContext | null = null;
 let shutdownHooksRegistered = false;
 
-function createEventStore(): EventStore {
-  const pgPool = getOuroborosPgPool();
-  if (pgPool) {
-    return new PostgresOuroborosEventStore(pgPool);
-  }
-  return new InMemoryEventStore();
-}
-
 export function getOuroborosContext(): OuroborosContext {
   if (!ctxCache) {
     const { search, execute } = getOuroborosPluginDeps();
-    const eventStore = createEventStore();
+    const eventStore = getOrCreateOuroborosEventStore();
     const engines = createDefaultOuroborosEngines({
       search: async (query, limit) => {
         const r = await search({ query, limit });
@@ -61,5 +52,6 @@ export function ensureOuroborosPoolShutdownHooks(): void {
 export function resetOuroborosContextForTests(): void {
   ctxCache = null;
   shutdownHooksRegistered = false;
+  resetOuroborosEventStoreForTests();
   void closeOuroborosPgPool();
 }

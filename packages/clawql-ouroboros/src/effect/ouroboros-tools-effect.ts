@@ -8,6 +8,7 @@ import type {
   RunOuroborosSchema,
 } from "../mcp-hooks.js";
 import { OuroborosContextService } from "./ouroboros-context-service.js";
+import { OuroborosEventStoreService } from "./ouroboros-event-store-service.js";
 import { OuroborosError } from "./ouroboros-errors.js";
 import { ouroborosFromPromise } from "./ouroboros-effect-utils.js";
 
@@ -54,15 +55,11 @@ export function executeGetLineageStatusEffect(
 ): Effect.Effect<
   Awaited<ReturnType<typeof import("../mcp-hooks.js").ouroborosMcpTools.getLineageStatus.handler>>,
   OuroborosError,
-  OuroborosContextService
+  OuroborosEventStoreService
 > {
   return Effect.gen(function* () {
-    const ctxSvc = yield* OuroborosContextService;
-    const ctx = ctxSvc.getContext();
-    return yield* ouroborosFromPromise(async () => {
-      const { ouroborosMcpTools } = await import("../mcp-hooks.js");
-      return ouroborosMcpTools.getLineageStatus.handler(input, ctx);
-    });
+    const es = yield* OuroborosEventStoreService;
+    return yield* es.getLineage(input.seedId);
   });
 }
 

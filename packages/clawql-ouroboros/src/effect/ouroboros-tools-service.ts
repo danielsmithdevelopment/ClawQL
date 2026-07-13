@@ -8,6 +8,7 @@ import type {
   RunOuroborosSchema,
 } from "../mcp-hooks.js";
 import { OuroborosContextService } from "./ouroboros-context-service.js";
+import { OuroborosEventStoreService } from "./ouroboros-event-store-service.js";
 import { OuroborosError } from "./ouroboros-errors.js";
 import {
   executeCreateSeedFromDocumentEffect,
@@ -48,7 +49,7 @@ export class OuroborosToolsService extends Context.Tag("clawql/OuroborosToolsSer
         ReturnType<typeof import("../mcp-hooks.js").ouroborosMcpTools.getLineageStatus.handler>
       >,
       OuroborosError,
-      OuroborosContextService
+      OuroborosEventStoreService
     >;
     readonly measureDrift: (
       input: z.infer<typeof MeasureDriftSchema>
