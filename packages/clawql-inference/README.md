@@ -1,6 +1,6 @@
 # clawql-inference
 
-TypeScript-native **inference gateway** for ClawQL: model tier escalation, cloud provider adapters, local runtimes (Ollama / vLLM / Llama.cpp), semantic caching, and WORM-auditable observability.
+TypeScript-native **inference gateway** for ClawQL: model tier escalation, cloud provider adapters, local runtimes (Ollama / vLLM / Llama.cpp), semantic caching, token-efficiency layers (3–12), and WORM-auditable observability.
 
 **Status:** Gateway MVP + export/finetune — model tier escalation (#560), provider plugins, call store, dataset export, and fine-tune job API.
 

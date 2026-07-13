@@ -11,6 +11,8 @@ import { withSemanticCache, type WithSemanticCacheOptions } from "./cache/cached
 import { loadFallbackConfig } from "./fallback/config.js";
 import { withFallbackChain, type WithFallbackChainOptions } from "./fallback/fallback-gateway.js";
 import { withEntitlementEnforcement } from "./entitlements/enforced-gateway.js";
+import { withTokenEfficiency } from "./efficiency/efficiency-gateway.js";
+import type { CacheIntent } from "./efficiency/types.js";
 
 export type ChatRole = "system" | "user" | "assistant";
 
@@ -27,6 +29,11 @@ export interface InferenceRequest {
   team?: string;
   tenantId?: string;
   virtualKeyId?: string;
+  /** Layer 5 — read vs write cache safety (`auto` infers from message text). */
+  cacheIntent?: CacheIntent;
+  maxTokens?: number;
+  /** Layer 4 — provider prompt-cache markers (set by TokenEfficiencyGateway). */
+  promptCacheEnabled?: boolean;
 }
 
 export interface InferenceUsage {
@@ -83,7 +90,9 @@ export class ConfiguredInferenceGateway implements InferenceGateway {
       throw new Error(`No provider adapter registered for "${provider}"`);
     }
 
-    const response = await adapter.complete(model, request.messages);
+    const response = await adapter.complete(model, request.messages, {
+      promptCacheEnabled: request.promptCacheEnabled,
+    });
     return {
       ...response,
       model: response.model || modelId,
@@ -114,7 +123,8 @@ export function createInferenceGateway(
     options.semanticCache === false
       ? withFallback
       : withSemanticCache(withFallback, { env, ...options.semanticCache });
-  const entitled = withEntitlementEnforcement(cached, env);
+  const efficient = withTokenEfficiency(cached, { env });
+  const entitled = withEntitlementEnforcement(efficient, env);
   const store = options.store === undefined ? createInferenceStore({ env }) : options.store;
   return withInferenceStore(entitled, store, env);
 }

@@ -17,6 +17,7 @@
 | **Providers**     | Built-in OpenAI, Anthropic, Ollama; extensible plugin registry               |
 | **Routing**       | Frugal → standard → frontier tier escalation with kill switches              |
 | **Cache**         | Embedding similarity semantic cache (cosine threshold + TTL)                 |
+| **Efficiency**    | Layers 3–8 + 9–11 (terse, prompt cache, history/prompt compress, HTTP routing) |
 | **Resilience**    | Per-tier / per-model fallback chains before hard failure                     |
 | **Auth**          | Virtual keys (per-team budgets, rate limits)                                 |
 | **Entitlements**  | Optional plan limits via `clawql-payments`                                   |
@@ -44,10 +45,11 @@ Each `complete()` call passes **outward** through these layers before reaching a
 1. **`ConfiguredInferenceGateway`** — resolves `provider/model`, invokes the provider adapter
 2. **`FallbackChainGateway`** — tries alternate models on primary failure (when fallback enabled)
 3. **`SemanticCachedGateway`** — embedding-similarity cache lookup (when semantic cache enabled)
-4. **`EntitlementEnforcedGateway`** — plan limit checks via `clawql-payments` (when enforcement enabled)
-5. **`ObservedInferenceGateway`** — appends an `InferenceRecord` to the call store
+4. **`TokenEfficiencyGateway`** — Layers 3–8 + 9–11 (terse, compress, route, prompt-cache markers)
+5. **`EntitlementEnforcedGateway`** — plan limit checks via `clawql-payments` (when enforcement enabled)
+6. **`ObservedInferenceGateway`** — appends an `InferenceRecord` to the call store
 
-Call order from outside in: **Observed → Entitlement → Cache → Fallback → Configured → provider**.
+Call order from outside in: **Observed → Entitlement → Efficiency → Cache → Fallback → Configured → provider**.
 
 ### Backends
 
@@ -76,9 +78,10 @@ Every successful `complete()` call flows **outward through decorators** and ends
 | ----- | ---------------------------- | ---------------------------------------------------- | ------------------------------------------------------------- |
 | 1     | `ConfiguredInferenceGateway` | Always                                               | Resolves `provider/model`, calls provider adapter             |
 | 2     | `FallbackChainGateway`       | `CLAWQL_INFERENCE_FALLBACK_ENABLED=1` or chains file | Tries alternates on primary failure; sets `response.fallback` |
-| 3     | `SemanticCachedGateway`      | `CLAWQL_INFERENCE_SEMANTIC_CACHE=1`                  | Embedding similarity lookup; sets `cacheHit`                  |
-| 4     | `EntitlementEnforcedGateway` | `CLAWQL_PAYMENTS_ENFORCE_INFERENCE=1`                | Checks plan limits, records usage                             |
-| 5     | `ObservedInferenceGateway`   | Store not `off`                                      | Appends `InferenceRecord` to call store                       |
+| 3     | `SemanticCachedGateway`      | embeddings configured or `CLAWQL_INFERENCE_SEMANTIC_CACHE=1` | Read-safe semantic cache; write invalidation |
+| 4     | `TokenEfficiencyGateway`     | Always (per-layer kill switches)                           | Terse, compress, route, prompt-cache markers |
+| 5     | `EntitlementEnforcedGateway` | `CLAWQL_PAYMENTS_ENFORCE_INFERENCE=1`                | Checks plan limits, records usage                             |
+| 6     | `ObservedInferenceGateway`   | Store not `off`                                      | Appends `InferenceRecord` to call store                       |
 
 ```typescript
 import { createInferenceGateway } from "clawql-inference";
@@ -485,7 +488,19 @@ clawql inference <subcommand>
 | `CLAWQL_INFERENCE_MODEL_STANDARD`             | `groq/llama-3.3-70b`                 | Standard tier model                     |
 | `CLAWQL_INFERENCE_MODEL_FRONTIER`             | `anthropic/claude-sonnet-4`          | Frontier tier model                     |
 | `CLAWQL_INFERENCE_MODEL_PIN`                  | —                                    | Pin single model                        |
-| `CLAWQL_INFERENCE_SEMANTIC_CACHE`             | off                                  | Semantic cache                          |
+| `CLAWQL_INFERENCE_SEMANTIC_CACHE`             | auto when embeddings configured      | Semantic cache (Layer 5)                |
+| `CLAWQL_INFERENCE_TERSE`                      | on                                   | Terse output post-processor (Layer 3)   |
+| `CLAWQL_INFERENCE_PROMPT_CACHE`               | on                                   | Provider prompt-cache markers (Layer 4) |
+| `CLAWQL_INFERENCE_HISTORY_COMPRESS`           | off                                  | History distillation (Layer 6)          |
+| `CLAWQL_INFERENCE_HISTORY_MAX_CHARS`            | `48000`                              | History compress threshold              |
+| `CLAWQL_INFERENCE_HISTORY_KEEP_RECENT`          | `6`                                  | Recent messages to keep verbatim        |
+| `CLAWQL_INFERENCE_PROMPT_COMPRESS`            | off                                  | Final prompt compression (Layer 7)      |
+| `CLAWQL_INFERENCE_PROMPT_COMPRESS_MAX_CHARS`  | `12000`                              | Per-message cap before send             |
+| `CLAWQL_INFERENCE_HTTP_AUTO_ROUTE`            | on when routing enabled              | HTTP `clawql/auto` aliases (Layer 8)    |
+| `CLAWQL_INFERENCE_STRUCTURED_OUTPUT`          | on                                   | Structured output hints (Layer 9)       |
+| `CLAWQL_INFERENCE_TOKEN_BUDGET`               | on                                   | Token budget signaling (Layer 10)       |
+| `CLAWQL_INFERENCE_PREFILL`                    | off                                  | Assistant prefill opener (Layer 11)     |
+| `CLAWQL_INFERENCE_PREFILL_OPENER`             | —                                    | Prefill text when Layer 11 enabled      |
 | `CLAWQL_INFERENCE_CACHE_THRESHOLD`            | `0.92`                               | Cache similarity floor                  |
 | `CLAWQL_INFERENCE_CACHE_TTL`                  | `24h`                                | Cache TTL                               |
 | `CLAWQL_INFERENCE_CACHE_MAX_ENTRIES`          | `1000`                               | Cache size cap                          |
@@ -548,7 +563,7 @@ clawql inference <subcommand>
 
 - Langfuse / OpenTelemetry full wiring (ADR 0005)
 - Manifest YAML inference block overrides for `policy show`
-- Live Hermes MoA HTTP client (stub ships today)
+- Distributed semantic cache backend (Redis/pgvector) for multi-instance gateways
 - Postgres advisory locks for multi-instance pipeline dedup
 
 ---

@@ -38,8 +38,13 @@ export function loadSemanticCacheConfig(env: NodeJS.ProcessEnv = process.env): S
   const threshold = thresholdRaw ? Number.parseFloat(thresholdRaw) : DEFAULT_THRESHOLD;
   const maxRaw = env.CLAWQL_INFERENCE_CACHE_MAX_ENTRIES?.trim();
   const maxEntries = maxRaw ? Number.parseInt(maxRaw, 10) : DEFAULT_MAX_ENTRIES;
+  const explicit = env.CLAWQL_INFERENCE_SEMANTIC_CACHE?.trim();
+  const enabled =
+    explicit === undefined
+      ? resolveInferenceEmbeddingConfig(env) !== null
+      : parseTruthy(explicit);
   return {
-    enabled: parseTruthy(env.CLAWQL_INFERENCE_SEMANTIC_CACHE),
+    enabled,
     threshold: Number.isFinite(threshold) ? threshold : DEFAULT_THRESHOLD,
     ttlMs: parseTtlMs(env),
     maxEntries: Number.isFinite(maxEntries) && maxEntries > 0 ? maxEntries : DEFAULT_MAX_ENTRIES,
@@ -60,6 +65,8 @@ export type SemanticCacheEntry = {
   response: InferenceResponse;
   createdAt: number;
   expiresAt: number;
+  /** Layer 5 — coarse resource tags for write invalidation. */
+  resourceTags?: string[];
 };
 
 export type SemanticCacheLookupResult = {
@@ -84,6 +91,7 @@ export interface SemanticCacheStore {
     now?: number;
   }): SemanticCacheLookupResult | null;
   put(entry: SemanticCacheEntry): void;
+  invalidateByTags(tags: string[], now?: number): number;
   stats(): SemanticCacheStats;
   prune(now?: number): number;
 }

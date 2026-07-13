@@ -4,6 +4,7 @@ import { loadSemanticCacheConfig } from "../cache/types.js";
 import { loadModelEscalationConfig } from "../routing/config.js";
 import { resolveInferenceStoreBackend, resolveInferenceStorePath } from "../store/create.js";
 import type { InferenceStoreBackend } from "../store/types.js";
+import { loadTokenEfficiencyConfig, listEfficiencyLayerStatus } from "../efficiency/config.js";
 
 export type InferencePolicyView = {
   source: "env";
@@ -30,6 +31,8 @@ export type InferencePolicyView = {
     enabled: boolean;
     hermesBaseUrl?: string;
   };
+  efficiency: ReturnType<typeof loadTokenEfficiencyConfig>;
+  layers: ReturnType<typeof listEfficiencyLayerStatus>;
 };
 
 function parseTruthy(value: string | undefined): boolean {
@@ -80,5 +83,7 @@ export function resolveInferencePolicy(env: NodeJS.ProcessEnv = process.env): In
       enabled: parseTruthy(env.CLAWQL_INFERENCE_AGENT_COORDINATION_ENABLED),
       hermesBaseUrl: env.HERMES_BASE_URL?.trim() || undefined,
     },
+    efficiency: loadTokenEfficiencyConfig(env),
+    layers: listEfficiencyLayerStatus(env),
   };
 }

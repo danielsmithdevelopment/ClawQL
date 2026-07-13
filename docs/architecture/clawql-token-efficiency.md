@@ -157,6 +157,34 @@ A few additional techniques are worth knowing about, separate from the layered a
 
 None of these require the infrastructure the eight layers above do — they're prompt-level techniques you can apply today, and they compose well with everything else described here.
 
+## Layers 9–12 (Inference gateway extensions)
+
+The inference gateway (`clawql-inference`) adds four more layers on top of the MCP-focused stack above. Inspect effective status with `clawql inference policy show`.
+
+| Layer | Name | Default | Package / scope |
+| ----- | ---- | ------- | ---------------- |
+| **9** | Structured output hints | on | `clawql-inference` — injects concise structured-output guidance |
+| **10** | Token budget signaling | on | `clawql-inference` — derives word budget from `max_tokens` |
+| **11** | Prefill opener | off | `clawql-inference` — optional assistant prefill (`CLAWQL_INFERENCE_PREFILL=1`) |
+| **12** | Flywheel | on | `clawql-inference` export → fine-tune → frugal tier registration |
+
+Layer 8 HTTP routing accepts `clawql/auto`, `clawql/frugal`, `clawql/standard`, and `clawql/frontier` model aliases when `CLAWQL_INFERENCE_HTTP_AUTO_ROUTE=1` or tier escalation is enabled.
+
+## Implementation map
+
+| Layer | Implementation |
+| ----- | -------------- |
+| 1 Code Mode | MCP `search` + `execute` (`clawql-api`) — always on |
+| 2 Response trim | `field-projection.ts` on execute output — always on |
+| 3 Terse output | `TokenEfficiencyGateway` post-processor — on (`CLAWQL_INFERENCE_TERSE=0` to disable) |
+| 4 Prompt cache | Anthropic `cache_control` on stable system prefix — on (`CLAWQL_INFERENCE_PROMPT_CACHE=0` to disable) |
+| 5 Semantic cache | `SemanticCachedGateway` with read/write safety — on when embeddings configured |
+| 6 History compress | Rolling transcript distillation — off (`CLAWQL_INFERENCE_HISTORY_COMPRESS=1`) |
+| 7 Prompt compress | Pre-send dedupe + truncation — off (`CLAWQL_INFERENCE_PROMPT_COMPRESS=1`) |
+| 8 Model routing | Ouroboros escalation + HTTP `clawql/*` aliases — off (`CLAWQL_INFERENCE_ROUTING_ENABLED=1`) |
+| 9–11 Extensions | Structured output, token budget, prefill — see env table in [`clawql-inference.md`](../inference/clawql-inference.md) |
+| 12 Flywheel | Export pipeline + `finetune register` |
+
 ## Putting It Together
 
 Each layer targets a different point in the request/response lifecycle:
@@ -170,9 +198,7 @@ Each layer targets a different point in the request/response lifecycle:
 - Layer 7 — final prompt size right before sending
 - Layer 8 — which model handles which sub-task
 
-Layers 1–3 are on by default and require no setup — most of the easy wins come from these alone. Layer 4 requires a one-time setup step. Layer 5 is on by default but its benefit depends heavily on your workload's repetitiveness. Layers 6–8 are off by default, require explicit configuration, and Layers 6–7 only reach their full potential in environments where the whole prompt-assembly pipeline is under your control — not inside third-party IDE integrations.
-
-If you're only running the defaults, you're getting Layers 1–3 (and partial Layer 5) — which on their own represent the large majority of the total possible savings, since Layer 1 alone accounts for roughly 99% input reduction. The remaining layers are real, additive improvements for long-running or high-volume deployments, but they're opt-in for a reason: they require either setup work or specific deployment environments to pay off.
+Layers 1–3 are on by default for MCP workloads (Layers 1–2) and inference gateway responses (Layer 3). Layer 4 and Layer 5 are on by default when the inference gateway runs with embedding credentials configured. Layer 5's benefit depends heavily on your workload's repetitiveness. Layers 6–8 are off by default and require explicit configuration. Layers 9–10 are on by default in the inference gateway; Layer 11 (prefill) is off by default.
 
 ## Known Trade-offs
 
@@ -198,4 +224,4 @@ Token estimates throughout use a roughly 4-characters-per-token approximation, c
 
 ---
 
-_For the search/execute workflow, see [`docs/mcp/mcp-tools.md`](../mcp/mcp-tools.md). For platform context, see the [Vision & Roadmap document](../vision/clawql-vision-roadmap.md)._
+_For the search/execute workflow, see [`docs/mcp/mcp-tools.md`](../mcp/mcp-tools.md). For inference gateway layers and env vars, see [`docs/inference/clawql-inference.md`](../inference/clawql-inference.md). For platform context, see the [Vision & Roadmap document](../vision/clawql-vision-roadmap.md)._

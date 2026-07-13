@@ -86,6 +86,12 @@ export function createOpenAiCompatRouter(options: CreateOpenAiCompatRouterOption
       return;
     }
 
+    const cacheIntentHeader = req.header("x-clawql-cache-intent")?.trim().toLowerCase();
+    const cacheIntent =
+      cacheIntentHeader === "read" || cacheIntentHeader === "write"
+        ? cacheIntentHeader
+        : undefined;
+
     const completeOptions = {
       temperature: body.temperature,
       maxTokens: body.max_tokens,
@@ -133,6 +139,8 @@ export function createOpenAiCompatRouter(options: CreateOpenAiCompatRouterOption
           correlationId,
           team: keyContext?.team,
           virtualKeyId: keyContext?.id,
+          maxTokens: body.max_tokens,
+          cacheIntent,
         });
         await streamBufferedCompletion(res, {
           model: publicModelId,
@@ -148,6 +156,8 @@ export function createOpenAiCompatRouter(options: CreateOpenAiCompatRouterOption
         correlationId,
         team: keyContext?.team,
         virtualKeyId: keyContext?.id,
+        maxTokens: body.max_tokens,
+        cacheIntent,
       });
 
       if (correlationId) res.setHeader("X-Correlation-Id", correlationId);

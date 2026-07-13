@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { loadModelEscalationConfigAsync } from "../routing/config.js";
+import { loadTokenEfficiencyConfig } from "../efficiency/config.js";
 import type { ProviderRegistry } from "../providers/types.js";
 import { parseModelId } from "../providers/parse-model-id.js";
 import { toPublicModelId } from "./model-resolve.js";
@@ -51,6 +52,20 @@ export async function collectListedModels(
   add(config.tierMap.standard);
   add(config.tierMap.frontier);
   for (const id of parseExtraModels(env)) add(id);
+
+  const efficiency = loadTokenEfficiencyConfig(env);
+  if (efficiency.httpAutoRoute || efficiency.escalation.enabled) {
+    for (const id of ["clawql/auto", "clawql/frugal", "clawql/standard", "clawql/frontier"]) {
+      if (seen.has(id)) continue;
+      seen.add(id);
+      models.push({
+        id,
+        object: "model",
+        created: 1_700_000_000,
+        owned_by: "clawql",
+      });
+    }
+  }
 
   if (registry.has("ollama")) {
     try {

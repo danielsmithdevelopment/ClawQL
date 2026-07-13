@@ -6,6 +6,7 @@ export type AgentCoordinationResult = {
   triggered: boolean;
   mode: AgentCoordinationMode;
   message: string;
+  responseText?: string;
 };
 
 function parseTruthy(value: string | undefined): boolean {
@@ -38,9 +39,41 @@ export async function invokeAgentCoordination(input: {
     };
   }
 
-  return {
-    triggered: true,
-    mode: "hermes",
-    message: `Hermes coordination requested at ${baseUrl}`,
-  };
+  const endpoint = `${baseUrl.replace(/\/$/, "")}/v1/coordinate`;
+  try {
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        tier: input.decision.tier,
+        modelId: input.decision.modelId,
+        signals: input.signals,
+      }),
+      signal: AbortSignal.timeout(
+        Number.parseInt(env.HERMES_TIMEOUT_MS?.trim() || "15000", 10)
+      ),
+    });
+    if (!res.ok) {
+      const detail = await res.text();
+      return {
+        triggered: true,
+        mode: "hermes",
+        message: `Hermes coordination failed HTTP ${res.status}: ${detail.slice(0, 200)}`,
+      };
+    }
+    const body = (await res.json()) as { message?: string; content?: string };
+    return {
+      triggered: true,
+      mode: "hermes",
+      message: body.message ?? "Hermes coordination completed",
+      responseText: body.content,
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return {
+      triggered: true,
+      mode: "hermes",
+      message: `Hermes coordination error: ${message}`,
+    };
+  }
 }

@@ -26,6 +26,10 @@ export type InferenceCompleteOptions = {
   maxTokens?: number;
   topP?: number;
   stop?: string | string[];
+  /** Layer 4 — apply provider prompt-cache markers when supported. */
+  promptCacheEnabled?: boolean;
+  /** Layer 11 — assistant prefill opener when supported. */
+  prefillOpener?: string;
 };
 
 export type ProviderRegistry = Map<string, InferenceProviderAdapter>;
