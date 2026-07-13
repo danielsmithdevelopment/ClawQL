@@ -75,7 +75,7 @@ export function createX402PaymentMiddleware(options: CreateX402PaymentMiddleware
       if (result.action === "require_payment") {
         const stripeEnabled = Boolean(env.STRIPE_SECRET_KEY?.trim());
         if (isMppEnabled(env)) {
-          const offers = offersFromX402Required(result.body, stripeEnabled);
+          const offers = offersFromX402Required(result.body, stripeEnabled, env);
           const challenges =
             result.mppChallenges ??
             buildChallengesFromOffers({

@@ -58,6 +58,7 @@ export function composeMppOpenApiDocument(input: {
   stripeEnabled: boolean;
   stripeMetered: boolean;
   serviceInfo?: MppServiceInfo;
+  env?: NodeJS.ProcessEnv;
 }): Record<string, unknown> {
   const paths: Record<string, unknown> = {};
 
@@ -73,6 +74,7 @@ export function composeMppOpenApiDocument(input: {
       },
       stripeEnabled: input.stripeEnabled,
       stripeMetered: input.stripeMetered,
+      env: input.env,
     });
     const paymentInfo = paymentInfoFromOffers(offers);
     if (!paymentInfo) continue;
@@ -192,6 +194,7 @@ export function mppOpenApiLiveLayer(
             stripeEnabled,
             stripeMetered,
             serviceInfo: options.serviceInfo,
+            env: runEnv,
           });
         });
 

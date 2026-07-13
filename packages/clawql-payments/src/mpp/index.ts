@@ -81,3 +81,22 @@ export {
 } from "./receipt.js";
 
 export { registerMppChallenges, verifyMppCredential } from "./verify.js";
+
+export {
+  appendFinanceOffers,
+  buildFinanceOffer,
+  financeProvidersFromEnv,
+  MPP_FINANCE_METHOD_ADYEN,
+  MPP_FINANCE_METHOD_PAYPAL,
+  MPP_FINANCE_METHOD_SQUARE,
+} from "./providers.js";
+
+export { isMppxEnabled, MppxAdapterService, mppxAdapterLiveLayer } from "./mppx-adapter.js";
+
+export { isMppMcpJsonRpcEnabled } from "./mcp-jsonrpc.js";
+
+export {
+  MppMcpJsonRpcPaymentRequiredError,
+  MppMcpJsonRpcVerificationFailedError,
+  isMppMcpJsonRpcPaymentError,
+} from "./mcp-jsonrpc-errors.js";

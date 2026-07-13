@@ -72,24 +72,73 @@ export function encodePaymentRequiredHeader(
   return Buffer.from(JSON.stringify(body), 'utf8').toString('base64')
 }
 
+function financeProvidersForDocs(): string[] {
+  const raw = process.env.DOCS_MPP_FINANCE_PROVIDERS?.trim()
+  if (!raw) return []
+  return raw
+    .split(/[,\s]+/)
+    .map((p) => p.trim().toLowerCase())
+    .filter(Boolean)
+}
+
 function mppPaymentInfo(description: string): Record<string, unknown> {
+  const offers: Array<Record<string, unknown>> = [
+    {
+      intent: 'charge',
+      method: 'x402',
+      amount: getX402ProbeAmountAtomic(),
+      currency: getX402Asset(),
+      description,
+    },
+    {
+      intent: 'charge',
+      method: 'stripe',
+      amount: null,
+      currency: 'usd',
+      description: 'Stripe subscription or metered billing for ClawQL plans.',
+    },
+  ]
+
+  for (const method of financeProvidersForDocs()) {
+    if (method === 'x402' || method === 'stripe') continue
+    offers.push({
+      intent: 'charge',
+      method,
+      amount: null,
+      currency: 'usd',
+      description: `${method} billing for ClawQL plans (discovery).`,
+    })
+  }
+
   return {
-    offers: [
+    offers,
+    authMode: 'paid',
+    protocols: [
       {
-        intent: 'charge',
-        method: 'x402',
-        amount: getX402ProbeAmountAtomic(),
-        currency: getX402Asset(),
-        description,
+        x402: {
+          scheme: 'exact',
+          network: getX402Network(),
+          asset: getX402Asset(),
+          payTo: getX402PayTo(),
+        },
       },
-      {
-        intent: 'charge',
-        method: 'stripe',
-        amount: null,
-        currency: 'usd',
-        description: 'Stripe subscription or metered billing for ClawQL plans.',
-      },
+      { mpp: { method: 'stripe', intent: 'charge' } },
+      ...financeProvidersForDocs()
+        .filter((m) => m !== 'x402' && m !== 'stripe')
+        .map((method) => ({ mpp: { method, intent: 'charge' } })),
     ],
+    price: {
+      mode: 'fixed',
+      currency: 'USD',
+      amount: '0.001',
+      min: '0.001',
+      max: '0.001',
+    },
+    network: getX402Network(),
+    asset: getX402Asset(),
+    payTo: getX402PayTo(),
+    retryHeader: 'PAYMENT-SIGNATURE',
+    recommendedClient: '@x402/fetch',
   }
 }
 
@@ -104,6 +153,9 @@ export function getCommerceOpenApi(): Record<string, unknown> {
       version: '1.0.0',
       description:
         'MPP discovery surface for docs.clawql.com. Paid routes advertise x402 and Stripe offers; runtime 402 challenges are authoritative.',
+      'x-commerce': true,
+      'x-guidance':
+        'Commerce discovery API for agent scanners. Runtime 402 challenges on /api/v1 are authoritative.',
     },
     servers: [{ url: origin }],
     'x-service-info': {
@@ -279,3 +331,49 @@ export function getPaymentsWellKnown(): Record<string, unknown> {
 }
 
 export { AP2_EXTENSION_URI }
+
+/** MPP + x402 response headers for GET /api/v1 discovery probe. */
+export function buildCommerce402Headers(input: {
+  requestUrl: string
+  origin: string
+}): Record<string, string> {
+  const paymentRequired = buildX402PaymentRequired(input.requestUrl)
+  const paymentHeader = encodePaymentRequiredHeader(paymentRequired)
+  const offers = mppPaymentInfo('').offers as Array<Record<string, unknown>>
+  const challenges = offers.map((offer, index) => ({
+    id: `docs-chal-${index}`,
+    intent: offer.intent ?? 'charge',
+    method: offer.method,
+    amount: offer.amount ?? null,
+    currency: offer.currency,
+    resource: '/api/v1',
+    description: offer.description,
+  }))
+  const mppBody = {
+    error: 'payment_required',
+    message: 'Payment required (MPP)',
+    resource: '/api/v1',
+    payment: challenges.map((challenge) => ({
+      protocol: challenge.method,
+      challenge,
+    })),
+    x402: paymentRequired,
+    x402Version: paymentRequired.x402Version,
+  }
+  const mppChallengePayload = Buffer.from(
+    JSON.stringify({ challenges }),
+    'utf8',
+  ).toString('base64url')
+
+  return {
+    'Content-Type': 'application/json; charset=utf-8',
+    'Cache-Control': 'no-store',
+    'WWW-Authenticate': `Payment challenge="${mppChallengePayload}", x402`,
+    'PAYMENT-REQUIRED': paymentHeader,
+    'Payment-Required': Buffer.from(JSON.stringify(mppBody), 'utf8').toString(
+      'base64',
+    ),
+    'Access-Control-Expose-Headers':
+      'PAYMENT-REQUIRED, PAYMENT-RESPONSE, Payment-Required, Payment-Receipt, WWW-Authenticate, Authorization',
+  }
+}

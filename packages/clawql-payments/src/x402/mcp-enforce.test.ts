@@ -59,6 +59,18 @@ describe("runMcpX402BeforeCallTool", () => {
     ).rejects.toBeInstanceOf(X402McpPaymentRequiredError);
   });
 
+  it("throws MppMcpJsonRpcPaymentRequiredError when JSON-RPC mode enabled", async () => {
+    await createX402Gate({ tool: "knowledge_search", price: 0.0005, asset: "USDC" }, env);
+    const { MppMcpJsonRpcPaymentRequiredError } = await import("../mpp/mcp-jsonrpc-errors.js");
+
+    await expect(
+      runMcpX402BeforeCallTool({
+        toolName: "knowledge_search",
+        env: { ...env, CLAWQL_MPP_MCP_JSONRPC: "1" },
+      })
+    ).rejects.toBeInstanceOf(MppMcpJsonRpcPaymentRequiredError);
+  });
+
   it("allows gated tool when facilitator verifies proof from MCP context headers", async () => {
     await createX402Gate({ tool: "knowledge_search", price: 0.0005, asset: "USDC" }, env);
 

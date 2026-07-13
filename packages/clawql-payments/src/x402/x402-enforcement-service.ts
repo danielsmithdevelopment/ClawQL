@@ -176,7 +176,7 @@ export function x402EnforcementLiveLayer(): Layer.Layer<
             let mppChallenges: MppPaymentChallenge[] | undefined;
             if (mppOn) {
               const stripeEnabled = Boolean(env.STRIPE_SECRET_KEY?.trim());
-              const offers = offersFromX402Required(body, stripeEnabled);
+              const offers = offersFromX402Required(body, stripeEnabled, env);
               mppChallenges = buildChallengesFromOffers({
                 offers,
                 resource: gate.resource,

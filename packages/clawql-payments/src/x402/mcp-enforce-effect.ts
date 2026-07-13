@@ -1,5 +1,10 @@
 import { Effect } from "effect";
 import { getMcpX402Context } from "./mcp-context.js";
+import { isMppMcpJsonRpcEnabled } from "../mpp/mcp-jsonrpc.js";
+import {
+  MppMcpJsonRpcPaymentRequiredError,
+  MppMcpJsonRpcVerificationFailedError,
+} from "../mpp/mcp-jsonrpc-errors.js";
 import { X402McpPaymentDeniedError, X402McpPaymentRequiredError } from "./mcp-errors.js";
 import { isX402EnforcementActive } from "./x402-runtime-config-service.js";
 import { X402EnforcementService } from "./x402-enforcement-service.js";
@@ -37,7 +42,21 @@ export function mcpX402BeforeCallToolEffect(
       return;
     }
     if (result.action === "require_payment") {
+      if (isMppMcpJsonRpcEnabled(env)) {
+        return yield* Effect.fail(
+          new MppMcpJsonRpcPaymentRequiredError(result.body, resource, env)
+        );
+      }
       return yield* Effect.fail(new X402McpPaymentRequiredError(result.body));
+    }
+    if (isMppMcpJsonRpcEnabled(env) && result.mppVerificationCode) {
+      return yield* Effect.fail(
+        new MppMcpJsonRpcVerificationFailedError(
+          result.reason,
+          result.resource,
+          result.mppVerificationCode
+        )
+      );
     }
     return yield* Effect.fail(new X402McpPaymentDeniedError(result.reason, result.resource));
   }).pipe(Effect.provide(paymentsServicesLiveLayer(env)));
