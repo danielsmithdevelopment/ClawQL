@@ -40,7 +40,9 @@ export function getX402ProbeAmountAtomic(): string {
 }
 
 /** x402 v2 PAYMENT-REQUIRED body for GET /api/v1 discovery probe. */
-export function buildX402PaymentRequired(requestUrl: string): Record<string, unknown> {
+export function buildX402PaymentRequired(
+  requestUrl: string,
+): Record<string, unknown> {
   return {
     x402Version: 2,
     error: 'Payment required',
@@ -192,8 +194,7 @@ export function getUcpProfile(): Record<string, unknown> {
           {
             version: '2026-04-08',
             spec: 'https://ucp.dev/2026-04-08/specification/checkout',
-            schema:
-              'https://ucp.dev/2026-04-08/schemas/shopping/checkout.json',
+            schema: 'https://ucp.dev/2026-04-08/schemas/shopping/checkout.json',
           },
         ],
       },

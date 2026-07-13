@@ -3,8 +3,8 @@
  * @see https://a2a-protocol.org/latest/specification/#5-agent-discovery-the-agent-card
  */
 
-import { getMcpServerCard } from '@/lib/mcp-server-card'
 import { AP2_EXTENSION_URI } from '@/lib/commerce-discovery'
+import { getMcpServerCard } from '@/lib/mcp-server-card'
 import { getSiteOrigin } from '@/lib/site-url'
 
 function envString(key: string): string | undefined {
@@ -109,7 +109,8 @@ export function getAgentCard(): Record<string, unknown> {
         type: 'http',
         scheme: 'bearer',
         bearerFormat: 'JWT',
-        description: 'OAuth 2.0 access token from agent registration (auth.md).',
+        description:
+          'OAuth 2.0 access token from agent registration (auth.md).',
       },
       x402PaymentSignature: {
         type: 'apiKey',

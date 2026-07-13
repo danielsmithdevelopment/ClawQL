@@ -111,9 +111,7 @@ function agentAuthBlock(origin: string): Record<string, unknown> {
       'service_auth',
     ],
     identity_assertion: {
-      assertion_types_supported: [
-        'urn:ietf:params:oauth:token-type:id-jag',
-      ],
+      assertion_types_supported: ['urn:ietf:params:oauth:token-type:id-jag'],
     },
     events_supported: [
       'https://schemas.workos.com/events/agent/auth/identity/assertion/revoked',
