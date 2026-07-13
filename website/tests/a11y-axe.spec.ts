@@ -7,14 +7,25 @@ const routes = [
   '/quickstart',
   '/install',
   '/getting-started/for-teams',
+  '/getting-started/phase-1-platform-guide',
+  '/reference/protocol',
+  '/deployment/kubernetes',
+  '/inference/clawql-inference',
+  '/plugins',
   '/learn',
   '/security/best-practices',
+  '/security/best-practices/input-validation-protocol-hardening',
 ] as const
 
 for (const path of routes) {
   test(`axe: no critical or serious violations on ${path}`, async ({
     page,
   }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem('theme', 'light')
+      document.documentElement.classList.remove('dark')
+      document.documentElement.style.colorScheme = 'light'
+    })
     await page.goto(path, { waitUntil: 'load' })
     const results = await new AxeBuilder({ page }).analyze()
     const blocking = results.violations.filter(

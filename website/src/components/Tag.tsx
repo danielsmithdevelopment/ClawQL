@@ -12,9 +12,9 @@ const colorStyles = {
       'ring-claw-cyan/35 bg-claw-cyan/10 text-[#0e7490] dark:text-claw-cyan dark:ring-claw-cyan/30',
   },
   sky: {
-    small: 'text-sky-500',
+    small: 'text-sky-800 dark:text-sky-400',
     medium:
-      'ring-sky-300 bg-sky-400/10 text-sky-500 dark:ring-sky-400/30 dark:bg-sky-400/10 dark:text-sky-400',
+      'ring-sky-300 bg-sky-50 text-sky-800 dark:ring-sky-400/30 dark:bg-sky-400/10 dark:text-sky-300',
   },
   amber: {
     small: 'text-amber-500',
@@ -22,9 +22,9 @@ const colorStyles = {
       'ring-amber-300 bg-amber-400/10 text-amber-500 dark:ring-amber-400/30 dark:bg-amber-400/10 dark:text-amber-400',
   },
   rose: {
-    small: 'text-red-500 dark:text-rose-500',
+    small: 'text-rose-800 dark:text-rose-400',
     medium:
-      'ring-rose-200 bg-rose-50 text-red-500 dark:ring-rose-500/20 dark:bg-rose-400/10 dark:text-rose-400',
+      'ring-rose-300 bg-rose-50 text-rose-800 dark:ring-rose-500/20 dark:bg-rose-400/10 dark:text-rose-300',
   },
   zinc: {
     small: 'text-zinc-600 dark:text-zinc-300',

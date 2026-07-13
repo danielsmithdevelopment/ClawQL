@@ -49,6 +49,9 @@ const nextConfig = {
       './src/app/**/*.mdx',
       './src/generated/security-training/**/*.mdx',
       './src/generated/security-training/sitemap-paths.json',
+      './public/llms.txt',
+      './public/AGENTS.md',
+      './public/agent-markdown.json',
     ],
   },
   // Tree-shake heavy barrel imports — smaller RSC + client bundle (helps Workers + hydration).
@@ -111,6 +114,8 @@ const nextConfig = {
             key: 'Link',
             value: [
               `<${docsSiteOrigin}/sitemap.xml>; rel="sitemap"`,
+              `</llms.txt>; rel="alternate"; type="text/plain"`,
+              `</AGENTS.md>; rel="author"`,
               `</.well-known/api-catalog>; rel="api-catalog"`,
               `</tools>; rel="service-doc"`,
               `</spec-configuration>; rel="service-doc"`,
