@@ -59,9 +59,9 @@ describe("MemoryDbService in recall infra", () => {
     const edges = await Effect.runPromise(
       Effect.gen(function* () {
         const db = yield* MemoryDbService;
-        return yield* db.loadWikilinkEdgesFromDatabase("/v", ["a.md"]).pipe(
-          Effect.catchAll(() => Effect.succeed([]))
-        );
+        return yield* db
+          .loadWikilinkEdgesFromDatabase("/v", ["a.md"])
+          .pipe(Effect.catchAll(() => Effect.succeed([])));
       }).pipe(Effect.provide(memoryDbLiveLayer()))
     );
     expect(Array.isArray(edges)).toBe(true);
