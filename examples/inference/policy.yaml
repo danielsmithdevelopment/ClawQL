@@ -1,0 +1,72 @@
+# ClawQL inference operator policy manifest
+# Copy to: $CLAWQL_HOME/Inference/policy.yaml
+# Or set:  CLAWQL_INFERENCE_POLICY_MANIFEST=/path/to/policy.yaml
+#
+# Merged at runtime via resolveInferenceEffectiveEnv() — process env wins on conflicts.
+# Verify: clawql inference policy show
+
+policyVersion: "2026.07.01"
+
+inference:
+  # Tier escalation (Layer 8) — off unless enabled or modelPin set
+  escalation:
+    enabled: true
+    tierMap:
+      frugal: ollama/phi4
+      standard: groq/llama-3.3-70b
+      frontier: anthropic/claude-sonnet-4
+    # modelPin: openai/gpt-4o-mini   # bypass ladder when set
+
+  # Semantic cache (Layer 5) — requires embedding credentials (OPENAI_API_KEY or CLAWQL_EMBEDDING_API_KEY)
+  cache:
+    enabled: true
+    threshold: 0.92
+    ttlMs: 86400000 # 24h
+    maxEntries: 1000
+
+  # Try alternates before hard failure
+  fallback:
+    enabled: false
+
+  # Virtual keys for /v1/* (persist keys with: clawql inference keys create ...)
+  keys:
+    enabled: false
+
+  # Call store backend: memory | jsonl | postgres
+  store:
+    backend: jsonl
+
+  export:
+    defaultVerdict: passed
+    piiScrubDefault: true
+    writeManifestDefault: true
+
+  # Cron export worker (also needs: clawql inference pipeline enable ...)
+  pipelineWorker:
+    enabled: false
+    pollMs: 60000
+
+  agentCoordination:
+    enabled: false
+    # hermesBaseUrl: http://hermes:8080
+
+  observability:
+    profile: external # bundled | external | minimal
+    otelInfra: false
+    langfuse: true
+    semanticCacheBackend: memory # postgres | pgvector when CLAWQL_INFERENCE_DATABASE_URL set
+
+  # Token-efficiency layers (3–11) — terse/promptCache on by default in code
+  efficiency:
+    terse: true
+    promptCache: true
+    historyCompress: false
+    historyMaxChars: 48000
+    historyKeepRecent: 6
+    promptCompress: false
+    promptCompressMaxChars: 12000
+    httpAutoRoute: true
+    structuredOutput: true
+    tokenBudget: true
+    prefill: false
+    # prefillOpener: ""

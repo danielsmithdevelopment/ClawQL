@@ -80,8 +80,25 @@ make local-k8s-up
 
 You can open the bundled dashboard at **`http://clawql.localhost`**, bundled docs UI at **`http://docs.localhost`**, and point MCP clients at **`http://clawql-mcp.localhost/mcp`** (**Ingress** — same hostname + **`/mcp`** pattern as production). The script installs **Kyverno** and only admits **Cosign-signed** ClawQL images from **GHCR** (including MCP, website, and dashboard images) — see [Security](/security) and the repo doc **[golden-image-pipeline.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/golden-image-pipeline.md)**.
 
+## 6. Inference gateway (optional)
+
+Drop-in **OpenAI-compatible** LLM proxy with operator policy in YAML (`$CLAWQL_HOME/Inference/policy.yaml`):
+
+```bash
+export CLAWQL_HOME="${CLAWQL_HOME:-$HOME/.clawql}"
+mkdir -p "$CLAWQL_HOME/Inference"
+cp examples/inference/policy.yaml "$CLAWQL_HOME/Inference/policy.yaml"
+export OPENAI_API_KEY=sk-...   # and/or OLLAMA_BASE_URL=http://127.0.0.1:11434
+
+clawql inference policy show
+clawql inference serve --port 8080
+```
+
+Set `OPENAI_BASE_URL=http://127.0.0.1:8080/v1` on any OpenAI SDK. Walkthrough: [examples/inference/README.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/examples/inference/README.md) · Reference: [clawql-inference](/inference/clawql-inference).
+
 ## Next steps
 
 - [Install](/install) — binaries, Docker, HTTP transport
+- [Inference gateway](/inference/clawql-inference) — OpenAI-compatible proxy, policy YAML, flywheel
 - [Spec configuration](/spec-configuration) — merge rules and environment variables
 - [Tools](/tools) — **`search`** and **`execute`**
