@@ -171,7 +171,9 @@ export async function handleClassifyDocumentToolInput(
     };
   }
 
-  const result = await classifyDocument(params);
+  const { runDocumentsEffect, documentsClassifyProgram } =
+    await import("../effect/documents-effect-runtime.js");
+  const result = await runDocumentsEffect(documentsClassifyProgram(params));
   return {
     content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
   };
