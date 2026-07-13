@@ -1,9 +1,5 @@
 import type { ModelEscalationConfig } from "./config.js";
-import type {
-  AdaptiveRouter,
-  ModelEscalationDecision,
-  RoutingFailureSignal,
-} from "./types.js";
+import type { AdaptiveRouter, ModelEscalationDecision, RoutingFailureSignal } from "./types.js";
 import { Effect } from "effect";
 import {
   AGENT_COORDINATION_DRIFT_TRIPWIRE,

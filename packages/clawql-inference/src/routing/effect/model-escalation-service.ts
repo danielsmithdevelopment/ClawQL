@@ -1,11 +1,7 @@
 import { Context, Effect, Layer } from "effect";
 import type { ModelEscalationConfig } from "../config.js";
 import { nextModelTier } from "../tiers.js";
-import type {
-  ModelEscalationDecision,
-  ModelTier,
-  RoutingFailureSignal,
-} from "../types.js";
+import type { ModelEscalationDecision, ModelTier, RoutingFailureSignal } from "../types.js";
 
 /** Combined drift threshold for agent coordination tripwire (#562). */
 export const AGENT_COORDINATION_DRIFT_TRIPWIRE = 0.3;
