@@ -9,6 +9,10 @@ export const metadata = docsPageMetadata({
   path: '/reference/hitl',
 })
 
-export default function HitlReferenceLayout({ children }: { children: ReactNode }) {
+export default function HitlReferenceLayout({
+  children,
+}: {
+  children: ReactNode
+}) {
   return children
 }

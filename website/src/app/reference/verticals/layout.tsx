@@ -9,6 +9,10 @@ export const metadata = docsPageMetadata({
   path: '/reference/verticals',
 })
 
-export default function VerticalsGuideLayout({ children }: { children: ReactNode }) {
+export default function VerticalsGuideLayout({
+  children,
+}: {
+  children: ReactNode
+}) {
   return children
 }

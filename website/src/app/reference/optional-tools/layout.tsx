@@ -9,6 +9,10 @@ export const metadata = docsPageMetadata({
   path: '/reference/optional-tools',
 })
 
-export default function OptionalToolsLayout({ children }: { children: ReactNode }) {
+export default function OptionalToolsLayout({
+  children,
+}: {
+  children: ReactNode
+}) {
   return children
 }
