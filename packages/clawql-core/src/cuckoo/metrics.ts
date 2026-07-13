@@ -1,3 +1,5 @@
+import { isClawqlCuckooMetricsEnabled } from "../config/env.js";
+
 /**
  * In-process observability for Cuckoo membership (issue #30): rebuild events + optional
  * lookup verification against `vault_chunk` to estimate false-positive rate.
@@ -22,7 +24,7 @@ let verifiedInDb = 0;
 let falsePositives = 0;
 
 export function cuckooMetricsEnabled(): boolean {
-  return process.env.CLAWQL_CUCKOO_METRICS?.trim() === "1";
+  return isClawqlCuckooMetricsEnabled();
 }
 
 export function recordCuckooRebuild(info: CuckooRebuildInfo): void {
