@@ -4,8 +4,9 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Effect } from "effect";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { MemoryIngestService, memoryIngestLiveLayer } from "./memory-ingest-service.js";
-import { MemoryRecallService, memoryRecallLiveLayer } from "./memory-recall-service.js";
+import { MemoryIngestService } from "./memory-ingest-service.js";
+import { MemoryRecallService } from "./memory-recall-service.js";
+import { memoryServicesLiveLayer } from "./memory-effect-runtime.js";
 
 describe("MemoryIngestService", () => {
   let home: string;
@@ -24,7 +25,7 @@ describe("MemoryIngestService", () => {
   });
 
   it("ingests a new vault page", async () => {
-    const layer = memoryIngestLiveLayer();
+    const layer = memoryServicesLiveLayer();
     const result = await Effect.runPromise(
       Effect.gen(function* () {
         const ingest = yield* MemoryIngestService;
@@ -63,7 +64,7 @@ describe("MemoryRecallService", () => {
   });
 
   it("recalls keyword hits from the vault", async () => {
-    const layer = memoryRecallLiveLayer();
+    const layer = memoryServicesLiveLayer();
     const result = await Effect.runPromise(
       Effect.gen(function* () {
         const recall = yield* MemoryRecallService;
