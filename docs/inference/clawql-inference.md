@@ -165,7 +165,7 @@ Third-party plugins use the same `InferenceProviderPlugin` contract — see [Inf
 
 ## Model tier escalation
 
-`TierEscalationRouter` implements `AdaptiveRouter` with three tiers:
+`TierEscalationRouter` implements `AdaptiveRouter` with three tiers. The public router API remains synchronous; internally, tier decisions run through `ModelEscalationService` with `Effect.sync` and `Effect.runSync` at the boundary (for Ouroboros and other callers that use `AdaptiveRouter` directly).
 
 | Tier         | Default model (env override)                                    | Role                         |
 | ------------ | --------------------------------------------------------------- | ---------------------------- |
