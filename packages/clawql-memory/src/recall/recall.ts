@@ -132,7 +132,7 @@ function defaultScanRoot(): string {
   return t === "" ? "" : t;
 }
 
-export async function runMemoryRecall(input: MemoryRecallInput): Promise<MemoryRecallResult> {
+export async function executeMemoryRecall(input: MemoryRecallInput): Promise<MemoryRecallResult> {
   const vault = getObsidianVaultPath();
   if (!vault) {
     return {
@@ -402,4 +402,11 @@ export async function runMemoryRecall(input: MemoryRecallInput): Promise<MemoryR
     result.cuckooVectorChunksDropped = cuckooVectorChunksDropped;
   }
   return result;
+}
+
+/** Public async facade for vault recall (MCP tools, scripts). */
+export async function runMemoryRecall(input: MemoryRecallInput): Promise<MemoryRecallResult> {
+  const { runMemoryEffect, memoryRecallProgram } =
+    await import("../effect/memory-effect-runtime.js");
+  return runMemoryEffect(memoryRecallProgram(input));
 }

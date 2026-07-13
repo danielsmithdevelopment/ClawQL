@@ -173,7 +173,7 @@ function buildFrontmatter(title: string): string {
   ].join("\n");
 }
 
-export async function runMemoryIngest(input: MemoryIngestInput): Promise<MemoryIngestResult> {
+export async function executeMemoryIngest(input: MemoryIngestInput): Promise<MemoryIngestResult> {
   const vault = getObsidianVaultPath();
   if (!vault) {
     return {
@@ -343,4 +343,11 @@ export async function runMemoryIngest(input: MemoryIngestInput): Promise<MemoryI
   }
 
   return result;
+}
+
+/** Public async facade for vault ingest (MCP tools, scripts, automation). */
+export async function runMemoryIngest(input: MemoryIngestInput): Promise<MemoryIngestResult> {
+  const { runMemoryEffect, memoryIngestProgram } =
+    await import("../effect/memory-effect-runtime.js");
+  return runMemoryEffect(memoryIngestProgram(input));
 }
