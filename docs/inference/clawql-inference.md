@@ -165,7 +165,7 @@ Third-party plugins use the same `InferenceProviderPlugin` contract — see [Inf
 
 ## Model tier escalation
 
-`TierEscalationRouter` implements `AdaptiveRouter` with three tiers:
+`TierEscalationRouter` implements `AdaptiveRouter` with three tiers. The public router API remains synchronous; internally, tier decisions run through `ModelEscalationService` with `Effect.sync` and `Effect.runSync` at the boundary (for Ouroboros and other callers that use `AdaptiveRouter` directly).
 
 | Tier         | Default model (env override)                                    | Role                         |
 | ------------ | --------------------------------------------------------------- | ---------------------------- |
@@ -210,6 +210,8 @@ Layer 5 in [token efficiency](../architecture/clawql-token-efficiency.md). Enabl
 | `CLAWQL_EMBEDDING_MODEL`             | `text-embedding-3-small` | Embedding model         |
 
 Cache hits return stored responses with `cacheHit: true` on inference records. Embedding failures **fail open** to live inference.
+
+`SemanticCachedGateway` keeps the public `InferenceGateway` API (`Promise`-based `complete()`). Internally, lookup/store logic runs through Effect services (`SemanticCacheService`, `EmbedderService`, `SemanticCacheStoreService`) with `runSemanticCacheEffect()` at the async boundary.
 
 ```bash
 clawql inference cache   # show active config
@@ -271,6 +273,8 @@ When plan enforcement is enabled, the gateway checks limits before each completi
 3. `$CLAWQL_HOME/Payments/payments.json` default tenant
 
 Limit breaches throw `EntitlementLimitError` (HTTP 402-shaped OpenAI error) and append a WORM payment audit entry.
+
+`EntitlementEnforcedGateway` keeps the public `InferenceGateway` API (`Promise`-based `complete()`). Internally, entitlement checks and billing run through Effect services wired to `clawql-payments` (`EntitlementEnforcementService`, `EntitlementService`, `UsageStoreService`, `StripeMeterService`) with `runEntitlementEffect()` at the async boundary.
 
 **Middleware order** in `createInferenceHttpApp()`: x402 payment middleware → virtual key auth → OpenAI-compat router.
 

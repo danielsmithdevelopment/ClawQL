@@ -1,0 +1,34 @@
+# ClawQL documentation
+
+> ClawQL is an MCP server for OpenAPI, Swagger, and Google Discovery APIs — search and execute tools, optional vault memory, sandbox, schedule, notify, and defense-in-depth controls.
+
+This file helps AI agents and crawlers find canonical documentation. For full-text Markdown of any page, send `Accept: text/markdown` on that URL.
+
+## Getting started
+- [Agent setup](https://docs.clawql.com/agent-setup): Recommended MCP client wiring
+- [Quickstart](https://docs.clawql.com/quickstart): Fastest path to a running gateway
+- [Getting started](https://docs.clawql.com/getting-started): Phase 1 guide and team paths
+- [Install](https://docs.clawql.com/install): npm, Docker, and Helm install options
+
+## Core reference
+- [MCP tools](https://docs.clawql.com/tools): search, execute, audit, cache, and optional tools
+- [Inference](https://docs.clawql.com/inference/clawql-inference): Gateway, flywheel, and wiring
+- [Plugins](https://docs.clawql.com/plugins): Gateway core and optional plugin packages
+- [Protocol](https://docs.clawql.com/reference/protocol): Uniform envelope and approval flows
+- [Spec configuration](https://docs.clawql.com/spec-configuration): OpenAPI and provider sources
+
+## Deployment & security
+- [Deployment](https://docs.clawql.com/deployment): Docker, Kubernetes, and operations
+- [Defense in depth](https://docs.clawql.com/security/defense-in-depth): Layered MCP security model
+- [Security best practices](https://docs.clawql.com/security/best-practices): 32-module agentic AI security series
+
+## Agent discovery
+- [AGENTS.md](https://docs.clawql.com/AGENTS.md): MCP proxy and blocked-tool behavior
+- [Agent skills](https://docs.clawql.com/.well-known/agent-skills/index.json): RFC agent skills index
+- [API catalog](https://docs.clawql.com/.well-known/api-catalog): RFC 9727 linkset
+- [MCP server card](https://docs.clawql.com/.well-known/mcp/server-card.json): MCP server metadata
+
+## Optional
+
+- [GitHub repository](https://github.com/danielsmithdevelopment/ClawQL): source code and issues
+- [Sitemap](https://docs.clawql.com/sitemap.xml): all indexed documentation URLs

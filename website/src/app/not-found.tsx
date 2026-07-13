@@ -1,6 +1,12 @@
 import { Button } from '@/components/Button'
 import { HeroPattern } from '@/components/HeroPattern'
 
+export const metadata = {
+  title: 'Page not found',
+  description: 'The requested ClawQL documentation page could not be found.',
+  robots: { index: false, follow: true },
+}
+
 export default function NotFound() {
   return (
     <>

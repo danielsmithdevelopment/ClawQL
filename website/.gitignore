@@ -8,6 +8,7 @@
 # testing
 /coverage
 /test-results/
+/playwright-report/
 /lighthouse-report.html
 /lighthouse-report.json
 /lighthouse-ci.json

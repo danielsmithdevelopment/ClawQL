@@ -1,6 +1,7 @@
 /**
- * Build step: extract agent-readable Markdown from each app/page.mdx for
- * Accept: text/markdown negotiation (see Cloudflare "Markdown for Agents").
+ * Build step: extract agent-readable Markdown for content negotiation middleware.
+ * Indexes page.mdx routes, generated doc bodies, plugin pages, security training,
+ * and the home page body.
  *
  * Run from website/: node scripts/generate-agent-markdown.mjs
  */
@@ -8,31 +9,39 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+import glob from 'fast-glob'
 import { remark } from 'remark'
 import remarkGfm from 'remark-gfm'
 import remarkMdx from 'remark-mdx'
 import { visit } from 'unist-util-visit'
 
+import { GENERATED_BODY_ROUTES } from './lib/generated-doc-routes.mjs'
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const appDir = path.join(__dirname, '../src/app')
-const outFile = path.join(__dirname, '../public/agent-markdown.json')
+const websiteRoot = path.join(__dirname, '..')
+const appDir = path.join(websiteRoot, 'src/app')
+const generatedDir = path.join(websiteRoot, 'src/generated')
+const pluginsBodiesDir = path.join(
+  websiteRoot,
+  'src/generated/clawql-plugins/bodies',
+)
+const trainingDir = path.join(
+  websiteRoot,
+  'src/generated/security-training/bodies',
+)
+const outFile = path.join(websiteRoot, 'public/agent-markdown.json')
+
+/** Redirect-only routes — canonical content lives elsewhere. */
+const SKIP_ROUTES = new Set(['/cache', '/schedule', '/notify', '/kubernetes'])
 
 function stripImportsAndExports(source) {
   let s = source
-
-  // import ... (optional semicolon)
   s = s.replace(/^import\s+[^\n]+\n/gm, '')
-
-  // export const metadata = docsPageMetadata( ... );
   s = stripFunctionCallExport(s, 'metadata', 'docsPageMetadata')
-
-  // export const sections = ... (single line)
   s = s.replace(/^export const sections\s*=[^\n]+\n/m, '')
-
   return s.trimStart()
 }
 
-/** Remove `export const name = callee( ... )` including nested parens/braces/strings. */
 function stripFunctionCallExport(source, exportName, callee) {
   const needle = `export const ${exportName} = ${callee}`
   const start = source.indexOf(needle)
@@ -112,9 +121,22 @@ function pagePathToRoute(file) {
   return '/' + segs.join('/')
 }
 
-function routeToSlug(route) {
-  if (route === '/') return 'index'
-  return route.slice(1).replace(/\//g, '__')
+function formatMarkdown(route, rawMdx, label = 'ClawQL documentation') {
+  const stripped = stripImportsAndExports(rawMdx)
+  let md
+  try {
+    md = mdxToMarkdown(stripped)
+  } catch (e) {
+    console.warn(`remark failed for ${route}, using stripped source:`, e.message)
+    md = stripped
+  }
+  md = md.trim()
+  const titleMatch = md.match(/^#\s+(.+)$/m)
+  const title = titleMatch ? titleMatch[1].trim() : label
+  if (!md.startsWith('---')) {
+    md = `---\ntitle: ${title}\n---\n\n` + md
+  }
+  return md
 }
 
 function collectMdxFiles(dir, acc = []) {
@@ -130,39 +152,68 @@ function collectMdxFiles(dir, acc = []) {
   return acc
 }
 
+function addGeneratedBodies(map) {
+  for (const [fileName, route] of Object.entries(GENERATED_BODY_ROUTES)) {
+    const filePath = path.join(generatedDir, fileName)
+    if (!fs.existsSync(filePath)) continue
+    const raw = fs.readFileSync(filePath, 'utf8')
+    map[route] = formatMarkdown(route, raw)
+  }
+}
+
+function addPluginBodies(map) {
+  if (!fs.existsSync(pluginsBodiesDir)) return
+  const pluginFiles = glob.sync('*.mdx', { cwd: pluginsBodiesDir })
+  for (const fileName of pluginFiles) {
+    const slug = fileName.replace(/\.mdx$/, '')
+    const route = `/plugins/${slug}`
+    const raw = fs.readFileSync(path.join(pluginsBodiesDir, fileName), 'utf8')
+    map[route] = formatMarkdown(route, raw)
+  }
+}
+
+function addTrainingBodies(map) {
+  if (!fs.existsSync(trainingDir)) return
+  const trainingFiles = glob.sync('*.mdx', { cwd: trainingDir })
+  for (const fileName of trainingFiles) {
+    const slug = fileName.replace(/\.mdx$/, '')
+    const route = `/security/best-practices/${slug}`
+    const raw = fs.readFileSync(path.join(trainingDir, fileName), 'utf8')
+    map[route] = formatMarkdown(route, raw)
+  }
+}
+
+function addHomeBody(map) {
+  const homeBody = path.join(appDir, 'home-body.mdx')
+  if (!fs.existsSync(homeBody)) return
+  const raw = fs.readFileSync(homeBody, 'utf8')
+  map['/'] = formatMarkdown('/', raw, 'ClawQL documentation')
+}
+
+function addHubPages(map) {
+  map['/plugins'] =
+    '---\ntitle: Plugins\n---\n\n# Plugins\n\nClawQL plugins: gateway core, Panguard proxy, memory, documents, bundled providers, automation, sandbox, Ouroboros, and extension roadmap. See individual plugin pages under /plugins/{slug}.\n'
+
+  map['/security/best-practices'] =
+    '---\ntitle: Agentic AI security best practices\n---\n\n# Agentic AI security best practices\n\nThirty-two vendor-neutral security modules synced from the repo security-best-practices-series. See /security/best-practices/{slug} for each module.\n'
+}
+
 function main() {
-  const files = collectMdxFiles(appDir)
   const map = {}
 
-  // Docs home is page.tsx + home-body.mdx — include `/` for Markdown for Agents scans.
-  const homeBody = path.join(appDir, 'home-body.mdx')
-  if (fs.existsSync(homeBody)) {
-    files.unshift(homeBody)
-  }
+  addHomeBody(map)
+  addGeneratedBodies(map)
+  addPluginBodies(map)
+  addTrainingBodies(map)
+  addHubPages(map)
 
+  const files = collectMdxFiles(appDir)
   for (const file of files) {
-    const route =
-      file === homeBody ? '/' : pagePathToRoute(file)
-    if (!route) continue
+    const route = pagePathToRoute(file)
+    if (!route || SKIP_ROUTES.has(route)) continue
+    if (map[route] !== undefined) continue
     const raw = fs.readFileSync(file, 'utf8')
-    const stripped = stripImportsAndExports(raw)
-    let md
-    try {
-      md = mdxToMarkdown(stripped)
-    } catch (e) {
-      console.warn(
-        `remark failed for ${file}, using stripped source:`,
-        e.message,
-      )
-      md = stripped
-    }
-    md = md.trim()
-    const titleMatch = md.match(/^#\s+(.+)$/m)
-    const title = titleMatch ? titleMatch[1].trim() : 'ClawQL documentation'
-    if (!md.startsWith('---')) {
-      md = `---\ntitle: ${title}\n---\n\n` + md
-    }
-    map[route] = md
+    map[route] = formatMarkdown(route, raw)
   }
 
   fs.mkdirSync(path.dirname(outFile), { recursive: true })

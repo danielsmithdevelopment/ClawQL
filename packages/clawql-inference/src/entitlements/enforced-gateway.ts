@@ -1,11 +1,10 @@
 import type { InferenceGateway, InferenceRequest, InferenceResponse } from "../gateway.js";
-import {
-  assertInferenceEntitlement,
-  isInferenceEntitlementEnforcementActive,
-  recordInferenceBilling,
-  resolveInferenceTenantId,
-} from "./check.js";
 import { isStripeMeterReportingActive } from "clawql-payments";
+import {
+  completeWithEnforcementProgram,
+  runEntitlementEffect,
+} from "./effect/entitlement-layer.js";
+import { isInferenceEntitlementEnforcementActive } from "./flags.js";
 
 export class EntitlementEnforcedGateway implements InferenceGateway {
   constructor(
@@ -14,26 +13,7 @@ export class EntitlementEnforcedGateway implements InferenceGateway {
   ) {}
 
   async complete(request: InferenceRequest): Promise<InferenceResponse> {
-    const tenantId = await resolveInferenceTenantId(
-      { team: request.team, tenantId: request.tenantId },
-      this.env
-    );
-
-    if (isInferenceEntitlementEnforcementActive(this.env)) {
-      await assertInferenceEntitlement({
-        tenantId,
-        correlationId: request.correlationId,
-        env: this.env,
-      });
-    }
-
-    const response = await this.inner.complete(request);
-    await recordInferenceBilling({
-      tenantId,
-      correlationId: request.correlationId,
-      env: this.env,
-    });
-    return response;
+    return runEntitlementEffect(completeWithEnforcementProgram(request), this.inner, this.env);
   }
 }
 

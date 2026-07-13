@@ -13,6 +13,10 @@ export function getApiCatalogLinkset(origin: string): {
         anchor: `${base}/`,
         'service-desc': [
           {
+            href: `${base}/openapi.json`,
+            type: 'application/openapi+json',
+          },
+          {
             href: 'https://raw.githubusercontent.com/danielsmithdevelopment/ClawQL/main/providers/github/openapi.yaml',
             type: 'application/yaml',
           },

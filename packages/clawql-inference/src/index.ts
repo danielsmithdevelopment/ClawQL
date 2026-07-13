@@ -14,6 +14,10 @@ export {
   loadModelEscalationConfigAsync,
   createModelEscalationRouter,
   TierEscalationRouter,
+  ModelEscalationService,
+  modelEscalationLiveLayer,
+  resolveModelEscalationService,
+  runModelEscalationEffect,
   type ModelEscalationConfig,
 } from "./routing/index.js";
 
@@ -43,6 +47,18 @@ export {
   resolveInferenceTenantId,
   withEntitlementEnforcement,
 } from "./entitlements/enforced-gateway.js";
+export {
+  EntitlementEnforcementService,
+  assertInferenceEntitlementEffect,
+  completeWithEnforcementProgram,
+  entitlementEnforcementLiveLayer,
+  makeEntitlementLayer,
+  recordInferenceBillingEffect,
+  recordInferenceUsageEffect,
+  resolveInferenceTenantIdEffect,
+  runEntitlementEffect,
+  type EntitlementServices,
+} from "./entitlements/effect/index.js";
 
 export type {
   InferenceRecord,
@@ -147,6 +163,18 @@ export {
 } from "./cache/types.js";
 export { cosineSimilarity, resolveInferenceEmbeddingConfig } from "./cache/embedding.js";
 export { buildCacheSignatureText, hashSystemPrompt } from "./cache/signature.js";
+export {
+  EmbedderService,
+  SemanticCacheService,
+  SemanticCacheStoreService,
+  completeWithSemanticCacheProgram,
+  embedderLiveLayer,
+  makeSemanticCacheLayer,
+  runSemanticCacheEffect,
+  semanticCacheLiveLayer,
+  semanticCacheStoreLiveLayer,
+  type SemanticCacheServices,
+} from "./cache/effect/index.js";
 export {
   withFallbackChain,
   FallbackChainGateway,
