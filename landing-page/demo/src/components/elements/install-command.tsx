@@ -31,6 +31,7 @@ export function InstallCommand({
         command="--copy"
         commandfor="snippet"
         type="button"
+        aria-label="Copy install command"
         className="group relative flex size-9 items-center justify-center rounded-full after:absolute after:-inset-1 hover:bg-mist-950/10 dark:hover:bg-white/10 after:pointer-fine:hidden"
       >
         <Squares2StackedIcon className="group-data-copied:hidden" />

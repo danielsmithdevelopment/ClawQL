@@ -39,3 +39,16 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Generated at prebuild (see scripts/generate-agent-assets.mjs)
+/public/robots.txt
+/public/auth.md
+/public/agent-markdown.json
+/public/llms.txt
+/public/_headers
+/public/.well-known/
+
+# Lighthouse CI artifacts
+/lighthouse-ci.json
+/lighthouse-a11y.json
+/lighthouse-report.html

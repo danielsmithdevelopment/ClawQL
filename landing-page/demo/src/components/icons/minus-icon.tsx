@@ -10,7 +10,7 @@ export function MinusIcon({ className, ...props }: ComponentProps<'svg'>) {
       fill="none"
       stroke="currentColor"
       strokeWidth={1}
-      role="image"
+      aria-hidden="true"
       className={clsx('inline-block', className)}
       {...props}
     >

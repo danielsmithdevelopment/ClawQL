@@ -9,7 +9,7 @@ export function InformationCircleIcon({ className, ...props }: ComponentProps<'s
       viewBox="0 0 13 13"
       fill="none"
       strokeWidth={1}
-      role="image"
+      aria-hidden="true"
       className={clsx('inline-block', className)}
       {...props}
     >

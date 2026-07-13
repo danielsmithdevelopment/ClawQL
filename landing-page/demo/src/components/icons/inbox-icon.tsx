@@ -8,7 +8,7 @@ export function InboxIcon({ className, ...props }: ComponentProps<'svg'>) {
       height={13}
       viewBox="0 0 13 13"
       fill="none"
-      role="image"
+      aria-hidden="true"
       className={clsx('inline-block', className)}
       {...props}
     >

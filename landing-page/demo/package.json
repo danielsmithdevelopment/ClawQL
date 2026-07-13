@@ -2,7 +2,8 @@
   "name": "clawql-landing-page",
   "version": "0.0.1",
   "scripts": {
-    "dev": "next dev",
+    "prebuild": "node scripts/generate-agent-assets.mjs",
+    "dev": "node scripts/generate-agent-assets.mjs && next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"

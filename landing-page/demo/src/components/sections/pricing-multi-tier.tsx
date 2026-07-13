@@ -31,13 +31,13 @@ export function Plan({
       <div className="self-stretch">
         <div className="flex flex-col gap-2">
           {badge && (
-            <p className="text-xs font-medium tracking-wide text-mist-500 uppercase dark:text-mist-400">{badge}</p>
+            <p className="text-xs font-medium tracking-wide text-mist-600 uppercase dark:text-mist-400">{badge}</p>
           )}
           <h3 className="text-xl/8 font-medium tracking-tight text-mist-950 dark:text-white">{name}</h3>
         </div>
         <p className="mt-1 inline-flex gap-1 text-base/7">
           <span className="text-mist-950 dark:text-white">{price}</span>
-          {period && <span className="text-mist-500 dark:text-mist-500">{period}</span>}
+          {period && <span className="text-mist-600 dark:text-mist-600">{period}</span>}
         </p>
         <div className="mt-4 flex flex-col gap-4 text-sm/6 text-mist-700 dark:text-mist-400">{subheadline}</div>
         <ul className="mt-4 space-y-2 text-sm/6 text-mist-700 dark:text-mist-400">

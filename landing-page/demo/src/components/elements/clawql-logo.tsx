@@ -12,7 +12,7 @@ export function ClawQLLogo({
       <div className="relative h-7 w-7 shrink-0 overflow-hidden rounded-md ring-1 ring-black/10 dark:ring-white/15">
         <Image
           src="/ClawQL-logo.jpeg"
-          alt=""
+          alt="ClawQL logo"
           fill
           className="object-cover object-top"
           sizes="28px"

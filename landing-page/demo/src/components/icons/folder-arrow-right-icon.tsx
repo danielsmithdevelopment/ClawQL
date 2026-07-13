@@ -9,7 +9,7 @@ export function FolderArrowRightIcon({ className, ...props }: ComponentProps<'sv
       viewBox="0 0 13 11"
       fill="none"
       strokeWidth={1}
-      role="image"
+      aria-hidden="true"
       className={clsx('inline-block', className)}
       {...props}
     >

@@ -9,7 +9,7 @@ export function ArrowNarrowUpIcon({ className, ...props }: ComponentProps<'svg'>
       viewBox="0 0 7 13"
       fill="none"
       strokeWidth={1}
-      role="image"
+      aria-hidden="true"
       className={clsx('inline-block', className)}
       {...props}
     >
